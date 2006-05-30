@@ -31,6 +31,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#include "classad_distribution.h"
 
 #include <exception>
 #include <unistd.h>
@@ -261,12 +262,15 @@ void Ice::startListener( int listenPort )
     //-----------------now is time to start subUpdater-------------------------
     bool tmp_start_sub_updater = confMgr->getStartSubscriptionUpdater();
     
-    // The following subscriptionUpdater creation also triggers creation of subscriptionManager
-    // (by invoking subscriptionManager::getInstance(). But in this case the creation of the 
-    // subscriptionManager singleton already occurred in the Ice::CTOR (see above).
-    // Furthermore the CTOR of subscriptionUpdater
-    // also sets of the subpscriptionManager's internal variable (m_myname) 
-    // that keeps the listener URL (of this ICE) by calling subscriptionManager::getInstance()->setConsumerURLName(...)
+    // The following subscriptionUpdater creation also triggers
+    // creation of subscriptionManager (by invoking
+    // subscriptionManager::getInstance(). But in this case the
+    // creation of the subscriptionManager singleton already occurred
+    // in the Ice::CTOR (see above).  Furthermore the CTOR of
+    // subscriptionUpdater also sets of the subpscriptionManager's
+    // internal variable (m_myname) that keeps the listener URL (of
+    // this ICE) by calling
+    // subscriptionManager::getInstance()->setConsumerURLName(...)
     if( tmp_start_sub_updater ) {
         util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( confMgr->getHostProxyFile());      
 	if( !subs_updater->isValid() )
@@ -381,9 +385,22 @@ void Ice::resubmit_job( util::CreamJob& j )
 {
     util::iceLBLogger* lb_logger = util::iceLBLogger::instance();
 
-    string resub_request = string("[ version = \"1.0.0\";")
-        +" command = \"jobresubmit\"; arguments = [ id = \"" 
-        + j.getGridJobID() + "\" ] ]";
+    classad::ClassAd command;
+    classad::ClassAd arguments;
+
+    command.InsertAttr( "version", string("1.0.0") );
+    command.InsertAttr( "command", string("jobresubmit") );
+    arguments.InsertAttr( "id", j.getGridJobID() );
+    arguments.InsertAttr( "lb_sequence_code", j.getSequenceCode() );
+    command.Insert( "arguments", arguments.Copy() );
+
+    classad::ClassAdUnParser unparser;
+    string resub_request;
+    unparser.Unparse( resub_request, &command );
+
+//     string resub_request = string("[ version = \"1.0.0\";")
+//         +" command = \"jobresubmit\"; arguments = [ id = \"" 
+//         + j.getGridJobID() + "\" ] ]";
     wmsutils_ns::FileListMutex mx(m_flns);
     wmsutils_ns::FileListLock  lock(mx);
     try {
