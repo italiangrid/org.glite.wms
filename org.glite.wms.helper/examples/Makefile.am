@@ -12,7 +12,8 @@ HELPER_JOBADAPTER = $(top_builddir)/src/jobadapter/libglite_wms_helper_jobadapte
 check_PROGRAMS = \
 	jobwrapperTest \
 	urlTest \
-	jobadapterTest
+	jobadapterTest \
+  gpbox_test
 
 jobadapterTest_SOURCES = jobadapterTest.cpp
 
@@ -54,8 +55,24 @@ urlTest_LDADD   =  \
   ../../src/jobadapter/url.o \
   $(BOOST_LIBS)
 
+gpbox_test_SOURCES = gpbox_test.cpp
+
+gpbox_test_LDADD   = \
+  $(GLITE_WMS_COMMON_CONF_LIBS) \
+  -lpep \
+  -lpci \
+  $(VOMS_LIBS) \
+  $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+  $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+  $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+  $(GLITE_WMSUTILS_CLASSADS_LIBS) \
+  $(GLOBUS_SSL_THR_LIBS) \
+  $(CLASSAD_LIBS) \
+  $(BOOST_LIBS)
+
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
+  $(GLOBUS_THR_CFLAGS) \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) 
