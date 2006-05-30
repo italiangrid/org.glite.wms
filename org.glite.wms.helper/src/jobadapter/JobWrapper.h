@@ -250,6 +250,9 @@ public:
   void prologue(std::string const&);
   void prologue_arguments(std::string const&);
 
+  void epilogue(std::string const&);
+  void epilogue_arguments(std::string const&);
+
 private:
 
   static const std::string s_brokerinfo_default;
