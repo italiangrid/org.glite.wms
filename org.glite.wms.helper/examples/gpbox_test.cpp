@@ -183,6 +183,9 @@ get_tag(matchmaking::match_info const& info)
   std::vector<std::string> acbr_vector;
   EvaluateAttrList(*ad, ACBR_tag, acbr_vector);
 
+  //TODO: by now we simply look for the 'SC:' tag indicating  by convention a
+  //service class. Afterwards, the value has to be passed 'as is' each time
+  //it's not a grouping tag (by now VO: always by convention)
   std::vector<std::string>::iterator const it_end = acbr_vector.end();
   std::vector<std::string>::iterator const it = std::find_if(
     acbr_vector.begin(),
