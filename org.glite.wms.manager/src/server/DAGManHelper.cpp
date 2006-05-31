@@ -530,12 +530,12 @@ public:
     );
     jdl::set_edg_dagid(*result, jdl::get_edg_jobid(*m_dagad));
     bool is_in_jdl = false;
-    int r = jdl::get_retry_count(*result, is_in_jdl);
+    jdl::get_retry_count(*result, is_in_jdl);
     if (!is_in_jdl) {
       jdl::set_retry_count(*result, m_default_retry_count);
     }
     is_in_jdl = false;
-    int s = jdl::get_shallow_retry_count(*result, is_in_jdl);
+    jdl::get_shallow_retry_count(*result, is_in_jdl);
     if (!is_in_jdl) {
       jdl::set_shallow_retry_count(*result, m_default_shallow_retry_count);
     }
