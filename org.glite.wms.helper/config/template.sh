@@ -86,8 +86,8 @@ globus_url_retry_copy() # 1 - source, 2 - dest
 
 doExit() # 1 - status
 {
-  status=$1
-  jw_echo "jw exit status = ${status}"
+  jw_status=$1
+  jw_echo "jw exit status = ${jw_status}"
 
   globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   globus_copy_status=$?
@@ -95,10 +95,10 @@ doExit() # 1 - status
   cd ..
   rm -rf ${newdir}
 
-  if [ ${status} -eq 0 ]; then
+  if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
   else
-    exit ${status}
+    exit ${jw_status}
   fi
 }
 

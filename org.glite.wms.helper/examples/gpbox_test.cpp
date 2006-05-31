@@ -26,115 +26,20 @@
 #include "globus_gss_assist.h"
 
 #include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 #define print(tag, val) std::cout << tag << ": " << val << '\n';
 
 namespace matchmaking = glite::wms::matchmaking;
+namespace classad_utilities = glite::wmsutils::classads;
 
-class NoCompatibleCEs {};
+class NoCompatibleCEs { };
 
 namespace {
 
 static std::string const service_class_tag = "SC:";
 static std::string const not_a_service_class_tag = "NOT_A_SC";
 static std::string ACBR_tag = "GlueCEAccessControlBaseRule";
-
-inline void setValue(classad::Value& value, const std::string& s) { value.SetStringValue(s); }
-inline void setValue(classad::Value& value, double d) { value.SetRealValue(d); }
-inline void setValue(classad::Value& value, bool b) { value.SetBooleanValue(b); }
-inline void setValue(classad::Value& value, int i) { value.SetIntegerValue(i); }
-
-template<class T>
-classad::ExprList* asExprList(const std::vector<T>& v)
-{
-  std::vector< classad::ExprTree* > list;
-  typename std::vector<T>::const_iterator it;
-
-  for(it = v.begin(); it != v.end(); it++) {
-    classad::Value value;
-    setValue(value, (*it));
-    list.push_back(classad::Literal::MakeLiteral(value));
-  }
-
-  classad::ExprList* result = classad::ExprList::MakeExprList(list);
-
-  return result;
-}
-
-template<class T>
-bool InsertAttrList(classad::ClassAd& ad, const std::string& what, const std::vector<T>&l)
-{
-  classad::ExprList* expr_list = asExprList(l);
-
-  if (!expr_list)
-    return false;
-  else
-    return ad.Insert(what,expr_list);
-}
-
-inline bool is_literal(classad::ExprTree const* t) {
-  return t && t->GetKind() == classad::ExprTree::LITERAL_NODE;
-}
-
-template<typename _InputIterator, typename _Tp>
-_Tp
-accumulate(_InputIterator __first, _InputIterator __last, _Tp __init)
-{
-    for ( ; __first != __last; ++__first)
-      __init = __init + *__first;
-    return __init;
-}
-
-template<typename _InputIterator, typename _Tp, typename _BinaryOperation>
-_Tp
-accumulate(_InputIterator __first, _InputIterator __last, _Tp __init, _BinaryOperation __binary_op)
-{ 
-  for ( ; __first != __last; ++__first)
-    __init = __binary_op(__init, *__first);
-  return __init;
-}
-
-inline bool getValue(const classad::Value& value, std::string& s) { return value.IsStringValue(s); }
-inline bool getValue(const classad::Value& value, double& d) { return value.IsRealValue(d); }
-inline bool getValue(const classad::Value& value, bool& b) { return value.IsBooleanValue(b); }
-inline bool getValue(const classad::Value& value, int& i) { return value.IsIntegerValue(i); }
-
-template<class T>
-struct InsertExprInVector : public std::binary_function<std::vector<T>*, classad::ExprTree*, std::vector<T>* >
-{
-  std::vector<T>* operator()(std::vector<T>* v, classad::ExprTree* e)
-  {
-    if (is_literal(e)) {
-      classad::Value value;
-      static_cast<classad::Literal*>(e)->GetValue(value);
-      T s;
-      if (getValue(value, s)) {
-        v->push_back(s);
-      }
-    }
-    return v;
-  }
-};
-
-template<class T>
-bool EvaluateAttrList(
-  const classad::ClassAd& ad,
-  const std::string& what, std::vector<T>&l
-)
-{
-  bool res = false;
-  std::string where;
-  classad::Value list_value;
-  const classad::ExprList *expr_list;
-
-  if( ad.EvaluateAttr(what, list_value) == true &&
-      list_value.IsListValue( expr_list ) == true ) {
-    accumulate(expr_list -> begin(), expr_list -> end(), &l, InsertExprInVector<T>());
-    res = true;
-  }
-
-  return res;
-}
 
 std::string
 get_proxy_distinguished_name(std::string const& proxy_file)
@@ -181,11 +86,8 @@ get_tag(matchmaking::match_info const& info)
 
   classad::ClassAd const* ad = info.getAd();
   std::vector<std::string> acbr_vector;
-  EvaluateAttrList(*ad, ACBR_tag, acbr_vector);
+  classad_utilities::EvaluateAttrList(*ad, ACBR_tag, acbr_vector);
 
-  //TODO: by now we simply look for the 'SC:' tag indicating  by convention a
-  //service class. Afterwards, the value has to be passed 'as is' each time
-  //it's not a grouping tag (by now VO: always by convention)
   std::vector<std::string>::iterator const it_end = acbr_vector.end();
   std::vector<std::string>::iterator const it = std::find_if(
     acbr_vector.begin(),
@@ -509,7 +411,7 @@ main(int argc, char *argv[])
 
     classad::ClassAd* ad1 = new classad::ClassAd;
     ad1->InsertAttr("GlueCEUniqueID", "ce01-lcg.cr.cnaf.infn.it:2119/aaa");
-    InsertAttrList(*ad1, ACBR_tag, VOViewsVector);
+    classad_utilities::InsertAttrList(*ad1, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad1(ad1);
     matchmaking::match_info __ad1(_ad1);
     pair<std::string, matchmaking::match_info> element1(
@@ -524,7 +426,7 @@ main(int argc, char *argv[])
 
     classad::ClassAd* ad2 = new classad::ClassAd;
     ad2->InsertAttr("GlueCEUniqueID", "gridit-ce-001.cnaf.infn.it:2119/bbb");
-    InsertAttrList(*ad2, ACBR_tag, VOViewsVector);
+    classad_utilities::InsertAttrList(*ad2, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad2(ad2);
     matchmaking::match_info __ad2(_ad2);
     pair<std::string, matchmaking::match_info> element2(
@@ -539,7 +441,7 @@ main(int argc, char *argv[])
 
     classad::ClassAd* ad3 = new classad::ClassAd;
     ad3->InsertAttr("GlueCEUniqueID", "pre-ce-01.cnaf.infn.it:2119/jobmanager-lcgpbs-infngrid_low02");
-    InsertAttrList(*ad3, ACBR_tag, VOViewsVector);
+    classad_utilities::InsertAttrList(*ad3, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad3(ad3);
     matchmaking::match_info __ad3(_ad3);
     pair<std::string, matchmaking::match_info> element3(
@@ -552,7 +454,7 @@ main(int argc, char *argv[])
 
     classad::ClassAd* ad4 = new classad::ClassAd;
     ad4->InsertAttr("GlueCEUniqueID", "pre-ce-01.cnaf.infn.it:2119/jobmanager-lcgpbs-infngrid_low03");
-    InsertAttrList(*ad4, ACBR_tag, VOViewsVector);
+    classad_utilities::InsertAttrList(*ad4, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad4(ad4);
     matchmaking::match_info __ad4(_ad4);
     pair<std::string, matchmaking::match_info> element4(
@@ -567,7 +469,7 @@ main(int argc, char *argv[])
 
     classad::ClassAd* ad5 = new classad::ClassAd;
     ad5->InsertAttr("GlueCEUniqueID", "pre-ce-01.cnaf.infn.it:2119/jobmanager-lcgpbs-infngrid_low03");
-    InsertAttrList(*ad5, ACBR_tag, VOViewsVector);
+    classad_utilities::InsertAttrList(*ad5, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad5(ad5);
     matchmaking::match_info __ad5(_ad5);
     pair<std::string, matchmaking::match_info> element5(

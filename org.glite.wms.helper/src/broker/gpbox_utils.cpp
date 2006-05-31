@@ -419,7 +419,6 @@ interact(
 
   if (!broker_subject.empty()) {
     try {
-
       Connection PEP_connection(
                                 PBOX_host_name,
                                 wm_conf->pbox_port_num(),
@@ -439,12 +438,7 @@ interact(
       return false;
     };
  
-    std::string end_msg(
-      "gpbox interaction ended. Elapsed: "
-      +
-      boost::lexical_cast<std::string>(perf_timer.elapsed())
-    );
-    Info(end_msg);
+    Info("gpbox interaction ended. Elapsed: " << perf_timer.elapsed());
 
     return true;
   }
