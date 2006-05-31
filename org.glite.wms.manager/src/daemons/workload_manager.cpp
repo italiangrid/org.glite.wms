@@ -226,6 +226,6 @@ try {
   get_err_stream() << "std::exception " << e.what() << "\n";
   return EXIT_FAILURE;
 } catch (...) {
-  get_err_stream() << "uknown exception\n";
+  get_err_stream() << "unknown exception\n";
   return EXIT_FAILURE;
 }

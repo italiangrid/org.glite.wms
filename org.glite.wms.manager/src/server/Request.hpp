@@ -42,7 +42,7 @@ boost::tuple<
   std::string,
   std::string
 >
-check_request(classad::ClassAd const& command_ad);
+parse_request(classad::ClassAd const& command_ad);
 
 class Request: boost::noncopyable
 {

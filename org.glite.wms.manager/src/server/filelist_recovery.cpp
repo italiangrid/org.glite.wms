@@ -8,6 +8,7 @@
 #include <boost/regex.hpp>
 #include "lb_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
+#include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -84,8 +85,16 @@ void catalog_requests_by_id(
       jobid::JobId id;
       std::string sequence_code;
       std::string x509_proxy;
-      boost::tie(command, id, sequence_code, x509_proxy)
-        = check_request(*command_ad);
+      if (utilities::command_is_valid(*command_ad)) {
+        boost::tie(command, id, sequence_code, x509_proxy)
+          = parse_request(*command_ad);
+      } else {
+        Info("Invalid command: "
+          << *command_ad <<
+          " (doesn't match requirements...)"
+        );
+        continue;
+      }
 
       id_to_requests_type::iterator ite(
         std::find_if(

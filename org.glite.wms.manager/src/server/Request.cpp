@@ -27,7 +27,7 @@ namespace server {
 
 namespace {
 
-time_t const SECONDS_PER_DAY = 86400;
+static time_t const SECONDS_PER_DAY = 24*60*60;
 
 std::string
 aux_get_sequence_code(
@@ -116,19 +116,17 @@ boost::tuple<
   std::string,                  // sequence code
   std::string                   // x509_proxy
 >
-check_request(classad::ClassAd const& command_ad)
+parse_request(classad::ClassAd const& command_ad)
 {
   std::string command;
   jobid::JobId id;
   std::string sequence_code;
   std::string x509_proxy;
 
-  if (utilities::command_is_valid(command_ad)) {
-    command = utilities::command_get_command(command_ad);
-    id = aux_get_id(command_ad, command);
-    sequence_code = aux_get_sequence_code(command_ad, command);
-    x509_proxy = aux_get_x509_proxy(command_ad, command, id);
-  }
+  command = utilities::command_get_command(command_ad);
+  id = aux_get_id(command_ad, command);
+  sequence_code = aux_get_sequence_code(command_ad, command);
+  x509_proxy = aux_get_x509_proxy(command_ad, command, id);
 
   return boost::make_tuple(command, id, sequence_code, x509_proxy);
 }

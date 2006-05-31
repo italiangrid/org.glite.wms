@@ -18,6 +18,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wmsutils/exception/Exception.h"
+#include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "TaskQueue.hpp"
@@ -275,7 +276,7 @@ get_new_requests(
 
     extractor_type::iterator request_it = *it;
     boost::function<void()> cleanup(FLCleanUp(extractor, request_it));
-    // if the request is not valid, cleanup automatically
+    // if the request is not valid, clean it up automatically
     utilities::scope_guard cleanup_guard(cleanup);
 
     std::string const command_ad_str = *request_it;
@@ -285,7 +286,7 @@ get_new_requests(
       classad::ClassAd command_ad;
       classad::ClassAdParser parser;
       if (!parser.ParseClassAd(command_ad_str, command_ad)) {
-        Info("Invalid request " << command_ad_str);
+        Info("Invalid request: " << command_ad_str);
         continue;
       }
 
@@ -293,8 +294,16 @@ get_new_requests(
       jobid::JobId id;
       std::string sequence_code;
       std::string x509_proxy;
-      boost::tie(command, id, sequence_code, x509_proxy)
-        = check_request(command_ad);
+      if (utilities::command_is_valid(command_ad)) {
+        boost::tie(command, id, sequence_code, x509_proxy)
+          = parse_request(command_ad);
+      } else {
+        Info("Invalid command: "
+          << command_ad <<
+          " (doesn't match requirements...)"
+        );
+        continue;
+      }
 
       bool const status_check_is_enabled = get_check_status();
 
@@ -304,6 +313,7 @@ get_new_requests(
         status = job_status(id);
       }
 
+      // TODO
       // for a match, since it doesn'to go anymore to the TQ, probably it does
       // not make sense to get its status and look for it in the TQ
 
@@ -396,7 +406,7 @@ get_new_requests(
 
         }
 
-      } else {
+      } else { //request found in tq
 
         Request& existing_request(*it->second);
 
