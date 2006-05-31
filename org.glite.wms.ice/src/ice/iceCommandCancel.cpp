@@ -156,7 +156,7 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
 
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()
-                   << "Sending cancellation requesto to ["
+                   << "Sending cancellation request to ["
                    << theJob.getCreamURL() << "]"
                    << log4cpp::CategoryStream::ENDLINE
                    );
@@ -180,7 +180,7 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ) );
         throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
     }
-    m_lb_logger->logEvent( new util::cream_cancel_done_event( "User Cancelled" ) );
+    m_lb_logger->logEvent( new util::cream_cancel_done_event( theJob, "User Cancelled" ) );
 
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist

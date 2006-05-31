@@ -298,11 +298,11 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
          * exit code yet.
          */
         if( job_is_done && (exitCode=="W") ) {
-	  CREAM_SAFE_LOG(m_log_dev->debugStream()
-			 << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
-			 << cid <<"] because exitCode is not available yet."
-			 << log4cpp::CategoryStream::ENDLINE);
-	  continue;
+            CREAM_SAFE_LOG(m_log_dev->debugStream()
+                           << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
+                           << cid <<"] because exitCode is not available yet."
+                           << log4cpp::CategoryStream::ENDLINE);
+            continue;
         }
 
         switch( stNum ) {
@@ -310,11 +310,11 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         case api::job_statuses::DONE_FAILED:
         case api::job_statuses::ABORTED:
 
-	  CREAM_SAFE_LOG(m_log_dev->warnStream()
-			 << "eventStatusPoller::checkJobs() - JobID ["
-			 << cid <<"] is failed or aborted. "
-			 << "Removing from cache and resubmitting..."
-			 << log4cpp::CategoryStream::ENDLINE);
+            CREAM_SAFE_LOG(m_log_dev->warnStream()
+                           << "eventStatusPoller::checkJobs() - JobID ["
+                           << cid <<"] is failed or aborted. "
+                           << "Removing from cache and resubmitting..."
+                           << log4cpp::CategoryStream::ENDLINE);
 
             if( m_iceManager ) {
                 
@@ -324,11 +324,11 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
                     m_iceManager->resubmit_job( *jobIt );
                     m_lb_logger->logEvent( new ice_resubmission_event( *jobIt, "Job is failed or aborted" ) );
                 } else {
-		  CREAM_SAFE_LOG(m_log_dev->errorStream()
-				 << "eventStatusPoller::checkJobs() - JobID["
-				 << cid << "] disappeared from the cache. "
-				 << "Hope this is fine..."
-				 << log4cpp::CategoryStream::ENDLINE);
+                    CREAM_SAFE_LOG(m_log_dev->errorStream()
+                                   << "eventStatusPoller::checkJobs() - JobID["
+                                   << cid << "] disappeared from the cache. "
+                                   << "Hope this is fine..."
+                                   << log4cpp::CategoryStream::ENDLINE);
                 }
 
             }
@@ -336,10 +336,10 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
 
         case api::job_statuses::DONE_OK:
         case api::job_statuses::CANCELLED:
-	  CREAM_SAFE_LOG(m_log_dev->infoStream()
-			 << "eventStatusPoller::checkJobs() - Scheduling JobID ["
-			 << cid << "] to be purged"
-			 << log4cpp::CategoryStream::ENDLINE);
+            CREAM_SAFE_LOG(m_log_dev->infoStream()
+                           << "eventStatusPoller::checkJobs() - Scheduling JobID ["
+                           << cid << "] to be purged"
+                           << log4cpp::CategoryStream::ENDLINE);
             jobs_to_purge.push_back(cid);
             break;
         default:

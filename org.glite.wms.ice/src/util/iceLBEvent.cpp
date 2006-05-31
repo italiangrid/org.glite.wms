@@ -218,8 +218,8 @@ int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 // cancel done event
 //
 //////////////////////////////////////////////////////////////////////////////
-cream_cancel_done_event::cream_cancel_done_event( const std::string& reason ) :
-    iceLBEvent( CreamJob(), EDG_WLL_SOURCE_JOB_SUBMISSION, "Job Cancel OK Event" ),
+cream_cancel_done_event::cream_cancel_done_event( const CreamJob& j, const std::string& reason ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Job Cancel OK Event" ),
     m_reason( reason )
 {
 
@@ -317,7 +317,8 @@ job_done_ok_event::job_done_ok_event( const CreamJob& j ) :
 int job_done_ok_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogDoneOK( *(ctx->el_context), 
-                              ctx->el_s_unavailable, 0 ); // FIXME
+                              ctx->el_s_unavailable, 
+                              m_job.get_exit_code() );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -325,10 +326,9 @@ int job_done_ok_event::execute( iceLBContext* ctx )
 // job done failed event
 //
 //////////////////////////////////////////////////////////////////////////////
-job_done_failed_event::job_done_failed_event( const CreamJob& j, const std::string& reason, int exit_code ) :
+job_done_failed_event::job_done_failed_event( const CreamJob& j, const std::string& reason ) :
     iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Done Failed Event" ),
-    m_reason( reason ),
-    m_exit_code( exit_code )
+    m_reason( reason )
 {
 
 }
@@ -336,7 +336,8 @@ job_done_failed_event::job_done_failed_event( const CreamJob& j, const std::stri
 int job_done_failed_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogDoneFAILED( *(ctx->el_context), 
-                                  m_reason.c_str(), m_exit_code );
+                                  m_reason.c_str(), 
+                                  m_job.get_exit_code() );
 }
 
 

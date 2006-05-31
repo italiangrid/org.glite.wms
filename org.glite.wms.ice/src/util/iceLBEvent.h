@@ -198,7 +198,7 @@ namespace glite {
 
                 class cream_cancel_done_event : public iceLBEvent {
                 public:
-                    cream_cancel_done_event( const std::string& reason );
+                    cream_cancel_done_event( const CreamJob& j, const std::string& reason );
                     int execute( iceLBContext* ctx );
                 protected:
                     std::string m_reason;
@@ -246,11 +246,10 @@ namespace glite {
 
                 class job_done_failed_event : public iceLBEvent {
                 public:
-                    job_done_failed_event( const CreamJob& j, const std::string& reason, int exit_code );
+                    job_done_failed_event( const CreamJob& j, const std::string& reason );
                     int execute( iceLBContext* ctx );
                 protected:
                     std::string m_reason;
-                    int m_exit_code;
                 };
 
 

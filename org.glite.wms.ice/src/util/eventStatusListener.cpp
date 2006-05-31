@@ -196,9 +196,6 @@ void iceUtil::eventStatusListener::createObject( void )
 iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
   : CEConsumer(i),
     iceThread( "event status poller" ),
-    //m_status(api::job_statuses::UNKNOWN),
-    //m_proxyfile(hostcert),
-    //m_tcpport(i),
     m_conf(iceUtil::iceConfManager::getInstance()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
@@ -215,9 +212,6 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,
 						  const string& key)
   : CEConsumer(i, cert.c_str(), key.c_str()),
     iceThread( "event status poller" ),
-    //m_status(api::job_statuses::UNKNOWN),
-    //m_proxyfile(hostcert),
-    //m_tcpport(i),
     m_conf(iceUtil::iceConfManager::getInstance()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
@@ -231,10 +225,10 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,
 void iceUtil::eventStatusListener::body( void )
 {
     while( !isStopped() ) {
-      CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		     << "eventStatusListener::body() - "
-		     << "Waiting for job status notification"
-		     << log4cpp::CategoryStream::ENDLINE);
+        CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                       << "eventStatusListener::body() - "
+                       << "Waiting for job status notification"
+                       << log4cpp::CategoryStream::ENDLINE);
         acceptJobStatus();
         sleep(1);
     }
