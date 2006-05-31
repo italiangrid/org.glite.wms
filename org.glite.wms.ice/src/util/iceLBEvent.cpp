@@ -440,7 +440,7 @@ wms_dequeued_event::wms_dequeued_event( const CreamJob& j, const std::string& qn
 int wms_dequeued_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogDeQueued( *(ctx->el_context), 
-                                m_job.getGridJobID().c_str(),
-                                m_qname.c_str()
+                                m_qname.c_str(),
+                                m_job.getGridJobID().c_str()
                                 );
 }
