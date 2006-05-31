@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.33  2006/05/31 09:22:49  fpacini
+	cli-pyton depends on wrap-python
+
 	Revision 1.32  2005/09/27 09:11:16  eronchie
 	Removed wms-ui.partitioner from UI
-
+	
 	Revision 1.31  2005/05/26 15:21:21  zurek
 	inserted module.build.file
 	
@@ -315,7 +318,7 @@
 		</if>
 	</target>
 
-	<target name="cli-python" unless="setenvonly" depends="envset, boost,classads,globus, configuration">
+	<target name="cli-python" unless="setenvonly" depends="envset, boost, classads, globus, configuration, wrap-python">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -331,7 +334,7 @@
 		</if>
 	</target>
 
-	<target name="wrap-python" unless="setenvonly" depends="envset, boost,classads,globus, swig">
+	<target name="wrap-python" unless="setenvonly" depends="envset, boost, classads, globus, swig">
         	<if>
             		<isset property="small.memory" />
             		<then>
@@ -347,7 +350,7 @@
         	</if>
 	</target>
 
-	<target name="wrap-java" unless="setenvonly" depends="envset, boost,classads,globus">
+	<target name="wrap-java" unless="setenvonly" depends="envset, boost, classads, globus">
         	<if>
             		<isset property="small.memory" />
             		<then>
