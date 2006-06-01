@@ -55,6 +55,36 @@ string time_t_to_string( time_t tval ) {
     return string( buf );
 }
 
+
+void makePath(const string& filename) throw(exception&)
+{
+  boost::filesystem::path tmpFile( filename );
+  boost::filesystem::path parent = tmpFile.branch_path();
+  string currentPath("");
+  try {
+    if( !boost::filesystem::exists( parent ) )
+    {
+      for(boost::filesystem::path::iterator it=parent.begin();
+	it != parent.end();
+	++it)
+      {
+	currentPath += (*it) + "/";
+	while(currentPath.find("//", 0) != string::npos)
+	  boost::replace_first( currentPath, "//", "/");
+	//cout << "currentPath=["<<currentPath<<"]"<<endl;
+	boost::filesystem::path tmpPath( currentPath );
+	if( !boost::filesystem::exists( tmpPath ) )
+	  {
+	    //cout << "Creating ["<<currentPath << "]"<<endl;
+	    boost::filesystem::create_directory( tmpPath );
+	  }
+      }
+    } 
+  } catch( std::exception& ex) {
+    throw;// << endl;
+  }
+}
+
 } // namespace util
 } // namespace ice
 } // namespace wms

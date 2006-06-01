@@ -1,29 +1,31 @@
 
 #include "jnlFileManager.h"
-//#include "glite/ce/cream-client-api-c/string_manipulation.h"
+#include "iceUtils.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdio>
 #include <cerrno>
 #include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include "boost/format.hpp"
+#include <boost/format.hpp>
+//#include <boost/filesystem/operations.hpp>
+//#include <boost/filesystem/path.hpp>
+//#include <boost/algorithm/string/split.hpp>
+//#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string/find.hpp>
 
 extern int errno;
 
-using namespace glite::wms::ice::util;
-//using namespace glite::ce::cream_client_api::util;
+namespace iceUtil = glite::wms::ice::util;
 using namespace std;
 
 #define OPERATION_SEPARATOR ":"
 
-const boost::regex jnlFileManager::s_match("^([0-9]+)" OPERATION_SEPARATOR "(.+)");
+const boost::regex iceUtil::jnlFileManager::s_match("^([0-9]+)" OPERATION_SEPARATOR "(.+)");
 
 //______________________________________________________________________________
-jnlFileManager::jnlFileManager(const string& file) 
+iceUtil::jnlFileManager::jnlFileManager(const string& file) 
   throw(jnlFile_ex&) : m_filename(file), 
 		       m_readonly(true), 
 		       m_isempty(false), 
@@ -37,13 +39,24 @@ jnlFileManager::jnlFileManager(const string& file)
    * in readonly OFF mode (by calling readonly(false))
    */
   struct stat stat_buf;
+  if(boost::ends_with(m_filename, "/"))
+    throw jnlFile_ex(string("You provided a path instead of a file for journal file: [")+file+"]");
+  
+  try {
+    iceUtil::makePath(m_filename);
+  } catch(exception& ex) {
+    throw jnlFile_ex(ex.what());
+  }
+  
   if(-1==::stat(m_filename.c_str(), &stat_buf)) {
     if(errno!=ENOENT) {
       throw jnlFile_ex(strerror(errno));
     } else {
+      // try to open it in write mode (if it doesn't exists it is created)
       m_os.open(m_filename.c_str(), ios::out);
       if(!((void*)m_os))
-	throw jnlFile_ex("Error creating an empty journal file");
+	throw jnlFile_ex(string("Error creating an empty journal file [")
+	   + m_filename+"]: "+strerror(errno));
       m_os.close();
       m_isempty=true;
     }
@@ -53,11 +66,12 @@ jnlFileManager::jnlFileManager(const string& file)
 
   m_is.open(m_filename.c_str(), ios::in);
   if(!((void*)m_is))
-    throw jnlFile_ex("Error opening journal file for read");
+    throw jnlFile_ex(string("Error opening journal file [") 
+        + m_filename +"] for read:"+strerror(errno));
 }
 
 //______________________________________________________________________________
-void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&) 
+void iceUtil::jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&) 
 {
   ofstream _os;
 
@@ -70,8 +84,6 @@ void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&)
     throw jnlFileReadOnly_ex("Cannot truncate: the file is in readonly mode");
 
   m_is.close();
-
-//  string tmpName = filename+"."+string_manipulation::make_string(::getpid());
 
   string tmpName = boost::str( boost::format("%1%.%2%") % m_filename % ::getpid() );
 
@@ -92,7 +104,7 @@ void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&)
 }
 
 //______________________________________________________________________________
-void jnlFileManager::logOperation(operation op, const string& param)
+void iceUtil::jnlFileManager::logOperation(operation op, const string& param)
   throw(jnlFile_ex&, jnlFileReadOnly_ex&) 
 {
   /**
@@ -111,7 +123,7 @@ void jnlFileManager::logOperation(operation op, const string& param)
 }
 
 //______________________________________________________________________________
-void jnlFileManager::readonly_mode(const bool& flag) 
+void iceUtil::jnlFileManager::readonly_mode(const bool& flag) 
   throw (jnlFile_ex&)
 {
   /**
@@ -153,7 +165,7 @@ void jnlFileManager::readonly_mode(const bool& flag)
 }
 
 //-----------------------------------------------------------------------------
-bool jnlFileManager::getOperation( operation& op, string& param )
+bool iceUtil::jnlFileManager::getOperation( operation& op, string& param )
     throw(jnlFile_ex&, jnlFileReadOnly_ex&) 
 {
     /**
@@ -192,7 +204,7 @@ bool jnlFileManager::getOperation( operation& op, string& param )
 }
 
 //______________________________________________________________________________
-void jnlFileManager::rewind() throw (jnlFile_ex&)
+void iceUtil::jnlFileManager::rewind() throw (jnlFile_ex&)
 {
   /**
    * Can rewind the file because one could want to reload the entire file
@@ -205,13 +217,13 @@ void jnlFileManager::rewind() throw (jnlFile_ex&)
 }
 
 //______________________________________________________________________________
-void jnlFileManager::lock(void) {
+void iceUtil::jnlFileManager::lock(void) {
     //pthread_mutex_lock(&mutexJnlFile);
     m_mutexJnlFileLock.lock();
 }
 
 //______________________________________________________________________________
-void jnlFileManager::unlock(void) {
+void iceUtil::jnlFileManager::unlock(void) {
     //pthread_mutex_unlock(&mutexJnlFile);
     m_mutexJnlFileLock.unlock();
 }

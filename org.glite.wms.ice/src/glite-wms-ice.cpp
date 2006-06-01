@@ -35,6 +35,7 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
+#include "iceUtils.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
@@ -167,6 +168,14 @@ int main(int argc, char*argv[])
     logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
     hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
   }
+
+  try {
+    iceUtil::makePath( logfile );
+  } catch(exception& ex) {
+    cerr << "Error Creating path for logfile ["<<logfile<<"]: "<<ex.what()<<endl;
+    exit( 1 );
+  }
+
   logger_instance->setLogFile(logfile.c_str());
 
   cout << "Logfile is [" << logfile << "]" << endl;

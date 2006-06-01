@@ -22,6 +22,11 @@
 #include <string>
 #include <stdexcept>
 #include <ctime>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/find.hpp>
 
 namespace glite {
 namespace wms {
@@ -43,6 +48,8 @@ namespace util {
      * @result the textual representation of timestamp tval
      */ 
     std::string time_t_to_string( time_t tval );
+
+    void makePath(const std::string& file) throw(std::exception&);
 
 } // namespace util
 } // namespace ice
