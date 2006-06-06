@@ -1,27 +1,31 @@
 #ifndef  GLITE_WMS_WMPROXYAPICPP_H
 #define GLITE_WMS_WMPROXYAPICPP_H
-
+#include <iostream>
+#include <string>
+#include <vector>
 /**
 * \file wmproxy_api.h
 * \brief wsdl wmproxy service wrapper
 * A wrapper around wmproxy Web Service. It provides primitive or simple structure to access more complicated service methods
 */
-
-/*! \mainpage Workload Manager Proxy API C++
- *
- * \section intro_sec Description
+/** \mainpage Workload Manager Proxy API C++
+*
+* \section intro_sec Description
 * <p>
 * This User Interface API supplies the client applications with a set of  functions providing an easy access to the WMProxy Web Services.<BR>
 * The users are allowed:
 * <UL>
-* <LI>delegating the credential ;
-* <LI>registering and submitting jobs ;
-* <LI>cancelling the job during its life-cycle ;
-* <LI>retrieving information on the location where the job input sandbox files can be stored ;
-* <LI>retrieving the output sandbox files list ;
-* <LI>retrieving a list of possible matching Computer Elements ;
-* <LI> getting JDL templates ;
-* <LI>getting information on the user disk quota on the server .
+*
+*
+* <LI>\link glite::wms::wmproxyapi::getProxyReq delegating the credential \endlink
+* <LI>\link glite::wms::wmproxyapi::jobRegister registering\endlink and \link glite::wms::wmproxyapi::jobSubmit submitting\endlink jobs
+* <LI>\link glite::wms::wmproxyapi::jobCancel cancelling the job  \endlink during its life-cycle
+* <LI>retrieving information on the location \link glite::wms::wmproxyapi::getSandboxDestURI where the job input sandbox files can be stored \endlink
+* <LI> retrieving the \link glite::wms::wmproxyapi::getOutputFileList output sandbox files list \endlink
+* <LI> retrieving a list of \link glite::wms::wmproxyapi::jobListMatch Computer Elements matching the specified JDL\endlink
+* <LI> getting JDL templates for \link glite::wms::wmproxyapi::getJobTemplate jobs\endlink,  \link glite::wms::wmproxyapi::getDAGTemplate Dags\endlink, \link glite::wms::wmproxyapi::getCollectionTemplate collections\endlink, etc
+* <LI> getting information on the \link glite::wms::wmproxyapi::getFreeQuota user disk quota on the server \endlink
+* <LI> retrieving information on the \link glite::wms::wmproxyapi::getJDL JDL submitted to WMProxy or registered to LB \endlink
 * </UL>
 * </p>
 * <p>
@@ -33,28 +37,20 @@
 * <LI>Collection - a set of independent jobs
 * <LI>Parametric - jobs with JDL's containing some parameters
 * </UL>
-*
-*
-*  The API is divided into two groups of functions (see namespace list):
+*  The API is divided into two groups of functions:
 *<UL>
-* <LI><B>wmproxyapi</B> :  with the functions that allow calling the server and handle possible fault exceptions;
-* <LI><B>wmproxyapiutils</B>: with some utility functions that allow handling the X509 user proxy files needed by some functions in wmproxyapi.
+* <LI><B>glite::wms::wmproxyapi</B> :  with the functions that allow calling the server and handle possible fault exceptions;
+* <LI><B>glite::wms::wmproxyapiutils</B>: with some utility functions that allow handling the X509 user proxy files needed by some functions in wmproxyapi.
 *</UL>
 * */
-
-#include <iostream>
-#include <string>
-#include <vector>
-
 
 namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
-enum JdlType {
-  ORIGINAL,
-  REGISTERED
-} ;
+
+
+/**@name Exceptions*/
 
 /**  Base exception wrap */
 struct BaseException {
@@ -78,7 +74,7 @@ struct BaseException {
 * @param description the description of the fault
 * @return a pointer to the object created
 * @see for the <I>BaseException *b_ex</I> input parameter:
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException
 * @see GetQuotaManagementException, NoSuitableResourcesException, JobUnknownException
 * @see OperationNotAllowedException, OperationNotAllowedException, ProxyFileException, GenericException
 */
@@ -105,6 +101,20 @@ struct GrstDelegationException:BaseException{};
 /** Generic problem. More details in the message*/
 struct GenericException:BaseException{};
 
+/**@name Enumeration*/
+
+/** Used to specify the JdlType, whether is original or registered
+ @see #getJDL
+*/
+enum JdlType {
+  /** The original JDL submitted by the user to the WMPROXY service*/
+  ORIGINAL,
+  /** The JDL registered to the LB server by WMProxy service
+  * In some cases (collections, partitionables, parametrics)
+  * it is heavily different from the orinal submitted one
+  **/
+  REGISTERED
+};
 /** Used to specify the jobtype. multiple jobtype can be specified togheter by the bitwise (|) or operation */
 enum jobtype {
 	/**Normal Jobs */
@@ -120,10 +130,11 @@ enum jobtype {
 	/** Checkpointable Jobs */
 	JOBTYPE_CHECKPOINTABLE =32
 };
+
+
 /**
 * Used to define the the structure of a dag
-* the name of the node might be NULL for the first instance (if it's representing the dag itself) while all the children have to be properly initialised.
-*/
+* the name of the node might be NULL for the first instance (if it's representing the dag itself) while all the children have to be properly initialised. */
 struct NodeStruct {
 	/** The name of the node (might be NULL for the first instance) */
 	std::string* nodeName ;
@@ -144,7 +155,10 @@ struct JobIdApi {
 	std::vector< JobIdApi* > children ;
 };
 
-
+/**
+* Used as a member of ProxyInfoStructType
+* @see #ProxyInfoStructType
+*/
 struct VOProxyInfoStructType {
     std::string user ;
     std::string userCA;
@@ -157,7 +171,11 @@ struct VOProxyInfoStructType {
     std::vector<std::string> attribute;
 };
 
-
+/**
+* Used for describing all proxy parameters
+* @see #getDelegatedProxyInfo
+* @see #getJobProxyInfo
+*/
 struct ProxyInfoStructType {
     std::string                          subject;
     std::string                          issuer;
@@ -189,15 +207,8 @@ struct ConfigContext{
 	std::string trusted_cert_dir;
 };
 
-/** Retrieve the service version information
-* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
-* @throws AuthenticationException An authentication problem occurred
-* @throws GenericException A generic problem occurred
-* @throws BaseException any other error occurred
-* @return An alpha-numeric version representation
-* @see AuthenticationException, GenericException, BaseException
-*/
-std::string getVersion(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+/**@name WMProxy Submission services*/
+
 /**
 *   Registers a job for submission.The unique identifier assigned to the job is returned to the client.
 *  This operation only registers the job and assigns it with an identifier.
@@ -220,7 +231,7 @@ std::string getVersion(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
 * @see #getProxyReq, #putProxy (proxy delegation)
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
+* @see thrown exceptions: AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
 JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -246,7 +257,7 @@ JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, g
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
 * @see #getProxyReq, #putProxy (proxy delegation)
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
 JobIdApi jobSubmit(const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -269,9 +280,13 @@ JobIdApi jobSubmit(const std::string &jdl, const std::string &delegationId, glit
 * @throws OperationNotAllowedException The current job status does not allow performing of the requested operation.
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 */
 void jobStart(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+
+/**@name WMProxy Job operation services*/
+
 /**
 *  Sends cancellation request for a previously submitted job identified by its JobId.
 * If the job is still managed by the WM then it is removed from the WM tasks queue.
@@ -287,9 +302,59 @@ void jobStart(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *c
 * @throws OperationNotAllowedException The current job status does not allow performing of the requested operation.
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
+* @see #jobPurge
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 */
 void jobCancel(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+/**
+*  Removes from the WM managed space all files related to the job identified by the jobId provided as input.
+*  It can only be applied for job related files that are managed by the WM.
+*  E.g. Input/Output sandbox files that have been specified in the JDL through a URI will be not subjected to this management.
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @param jobid The string identification of the job
+* @return A pair containing the soft and the hard limit quota
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws InvalidArgumentException If the given jobId is not valid
+* @throws JobUnknownException The provided jobId has not been registered to the system
+* @throws OperationNotAllowedException The current job status does not allow performing of the requested operation.
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
+* @see #jobCancel
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
+**/
+void jobPurge(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+/**
+* Returns the list of CE Ids satisfying the job Requirements specified in the JDL, ordered according to the decreasing Rank.
+* The fault NoSuitableResourcesFault is returned if there are no resources matching job constraints.
+* @param jdl the job description string
+* @param delegationId The id string used to identify a previously delegated proxy
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return A vector containing, for each recource found, its full name and its rank
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws InvalidArgumentException If the given JDL is not valid
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
+* @see #getProxyReq, #putProxy (proxy delegation)
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
+*/
+std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+
+/**@name WMProxy Info retrieval services*/
+
+/** Retrieve the service version information
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
+* @throws AuthenticationException An authentication problem occurred
+* @throws GenericException A generic problem occurred
+* @throws BaseException any other error occurred
+* @return An alpha-numeric version representation
+* @see thrown exceptions:  AuthenticationException, GenericException, BaseException
+*/
+std::string getVersion(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
 /**
 * Returns the maximum Input sandbox size (in bytes) that a user can count on for a job submission if using the space managed by the WM.
 * This is a static value in the WM configuration (on a job-basis) set by the VO administrator
@@ -298,7 +363,7 @@ void jobCancel(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *
 * @throws AuthenticationException An authentication problem occurred
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, GenericException, BaseException
 */
 long getMaxInputSandboxSize(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -329,7 +394,8 @@ std::vector<std::string> getTransferProtocols(glite::wms::wmproxyapi::ConfigCont
 * @throws JobUnknownException The provided jobId has not been registered to the system
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, GenericException, BaseException
+* @see getSandboxBulkDestURI
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, GenericException, BaseException
 */
 std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="" );
 
@@ -358,6 +424,7 @@ std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms
 * @throws JobUnknownException The provided jobId has not been registered to the system
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
+* @see #getSandboxDestURI
 */
  std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
  
@@ -371,7 +438,8 @@ std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms
 * @throws QuotaManagementException Quota management is not active on the WM
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, QuotaManagementException, GenericException, BaseException
+* @see #getTotalQuota
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, QuotaManagementException, GenericException, BaseException
 **/
 std::pair<long, long> getFreeQuota(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -384,26 +452,10 @@ std::pair<long, long> getFreeQuota(glite::wms::wmproxyapi::ConfigContext *cfs=NU
 * @throws QuotaManagementException Quota management is not active on the WM
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, QuotaManagementException, GenericException, BaseException
+* @see #getFreeQuota
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, QuotaManagementException, GenericException, BaseException
 **/
 std::pair<long, long> getTotalQuota(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
-/**
-*  Removes from the WM managed space all files related to the job identified by the jobId provided as input.
-*  It can only be applied for job related files that are managed by the WM.
-*  E.g. Input/Output sandbox files that have been specified in the JDL through a URI will be not subjected to this management.
-* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
-* @param jobid The string identification of the job
-* @return A pair containing the soft and the hard limit quota
-* @throws AuthenticationException An authentication problem occurred
-* @throws AuthorizationException The user is not authorized to perform this operation
-* @throws InvalidArgumentException If the given jobId is not valid
-* @throws JobUnknownException The provided jobId has not been registered to the system
-* @throws OperationNotAllowedException The current job status does not allow performing of the requested operation.
-* @throws GenericException A generic problem occurred
-* @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
-**/
-void jobPurge(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
 *  Retrieves the list of URIs where the output files created during job execution have been stored in the WM managed space and the corresponding sizes in bytes.
 * It can only be applied for files of the Output Sandbox that are managed by the WM (i.e. not specified as URI in the JDL).
@@ -420,25 +472,29 @@ void jobPurge(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *c
 * @throws OperationNotAllowedException The current job status does not allow performing of the requested operation.
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 */
 std::vector <std::pair<std::string , long> > getOutputFileList (const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
+
+
+
 /**
-* Returns the list of CE Ids satisfying the job Requirements specified in the JDL, ordered according to the decreasing Rank.
-* The fault NoSuitableResourcesFault is returned if there are no resources matching job constraints.
-* @param jdl the job description string
-* @param delegationId The id string used to identify a previously delegated proxy
+* Returns the JDL string which identifier is the input JobId
+* @param jobid the identifier of the job
+* @param jdlType the type of the JDL to be retrieved (either ORIGINAL or REGISTERED)
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
-* @return A vector containing, for each recource found, its full name and its rank
-* @throws AuthenticationException An authentication problem occurred
-* @throws AuthorizationException The user is not authorized to perform this operation
-* @throws InvalidArgumentException If the given JDL is not valid
-* @throws GenericException A generic problem occurred
+* @return the string with the JDL
+* @throws AuthenticationFaultException : 	a generic authentication problem occured.
+* @throws AuthorizationFaultException : 	the client is not authorized to perform this operation
+* @throws InvalidArgumentFaultException : 	the given delegation id is not valid.
+* @throws GenericFaultException : 		another problem occured.
 * @throws BaseException Any other error occurred
-* @see #getProxyReq, #putProxy (proxy delegation)
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
-std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::string getJDL(const std::string &jobid, const JdlType &jdlType, ConfigContext *cfs=NULL);
+
+
+/**@name WMProxy Perusal services*/
+
 
 /**
 * Enables file perusal functionalities if not disabled with the specific jdl attribute during job
@@ -459,7 +515,7 @@ std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jd
 * @throws OperationNotAllowedException perusal was disabled with the specific jdl attribute.
 * @see #getPerusalFiles
 * @see #getVersion
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
 */
 void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -470,7 +526,7 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
 *  the version of the server can be retrieved by calling the getVersion service.
 * @param jobid the string with the job identifier
-* @param allchuncks boolean value to specify when to get all chuncks
+* @param allchunks boolean value to specify when to get all chuncks
 * @param jobid the string with the job identifier
 * @param file the name of the perusal file be enabled
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
@@ -485,9 +541,14 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * @throws BaseException Any other error occurred
 * @see #enableFilePerusal
 * @see #getVersion
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
 */
 std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
+
+
+
+/**@name WMProxy Templates creation services*/
+
 
 /**
 * Creates a valid template ready for submission for a job
@@ -503,7 +564,7 @@ std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::s
 * @throws InvalidArgumentException one or more of the provided input parameters is not valid
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getJobTemplate (int type, const std::string &executable,const std::string &arguments,
 			const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
@@ -519,7 +580,7 @@ std::string getJobTemplate (int type, const std::string &executable,const std::s
 * @throws InvalidArgumentException one or more of the provided input parameters is not valid
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getDAGTemplate(NodeStruct dependencies, const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -534,7 +595,7 @@ std::string getDAGTemplate(NodeStruct dependencies, const std::string &requireme
 * @throws InvalidArgumentException one or more of the provided input parameters is not valid
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getCollectionTemplate(int jobNumber, const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -552,7 +613,7 @@ std::string getCollectionTemplate(int jobNumber, const std::string &requirements
 * @throws InvalidArgumentException one or more of the provided input parameters is not valid
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getIntParametricJobTemplate (std::vector<std::string> attributes , int parameters , int start , int step ,
 				const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
@@ -569,10 +630,12 @@ std::string getIntParametricJobTemplate (std::vector<std::string> attributes , i
 * @throws InvalidArgumentException one or more of the provided input parameters is not valid
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getStringParametricJobTemplate (std::vector<std::string>attributes, std::vector<std::string> parameters,
 				const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+/**@name WMProxy Certificates manipulation/info retrieval services*/
 /**
 *  Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call
 *  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
@@ -584,10 +647,10 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 * @throws AuthorizationException The user is not authorized to perform this operation
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
-* @see #getVersion
-* @see BaseException
 * @see getVersion
+* @see BaseException
 */
+
 std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
 *  Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call.
@@ -599,8 +662,7 @@ std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi:
 * @throws BaseException::DelegationException If the request failed
 * @throws BaseException Any other error occurred
 * @see #getVersion
-* @see BaseException
-* @see getVersion
+* @see #BaseException
 */
 std::string grstGetProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
@@ -669,22 +731,21 @@ ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, Conf
 */
 ProxyInfoStructType* getJobProxyInfo(const std::string &jobId, ConfigContext *cfs=NULL);
 
-/**
-* Returns the JDL string which identifier is the input JobId
-* @param jobid the identifier of the job
-* @param type the type of the JDL to be retrieved (either ORIGINAL or REGISTERED)
-* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
-* @return the string with the JDL
-* @throws AuthenticationFaultException : 	a generic authentication problem occured.
-* @throws AuthorizationFaultException : 	the client is not authorized to perform this operation
-* @throws InvalidArgumentFaultException : 	the given delegation id is not valid.
-* @throws GenericFaultException : 		another problem occured.
-* @throws BaseException Any other error occurred
-*/
-std::string getJDL(const std::string &jobid, const JdlType &type, ConfigContext *cfs=NULL);
 
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace
 #endif
 //EOF
+
+
+
+
+
+
+
+
+
+
+
+

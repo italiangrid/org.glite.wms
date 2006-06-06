@@ -3,7 +3,7 @@
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
 /**
-* \file wmproxy_api.h
+* \file wmproxy_api_utilities.h
 * \brief wsdl wmproxy service wrapper
 * A wrapper around wmproxy Web Service. It provides primitive or simple structure to access more complicated service methods
 */
@@ -15,6 +15,7 @@
 namespace glite {
 namespace wms {
 namespace wmproxyapiutils {
+
 /*
 * Gets the current time
 * @return the seconds elapsed since Jan 1, 1970
