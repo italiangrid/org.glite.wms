@@ -61,7 +61,6 @@ libglite_wmsui_LbWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_LbWrapper_la_LIBADD = \
 	-lc \
-	$(GLITE_WMSUTILS_TLS_GSI_SOCKET_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -71,9 +70,6 @@ libglite_wmsui_LbWrapper_la_LIBADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
-        $(GLOBUS_COMMON_NOTHR_LIBS) \
-        $(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_GSS_NOTHR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
 
@@ -85,7 +81,6 @@ libglite_wmsui_LogWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_LogWrapper_la_LIBADD = \
 	-lc \
-	$(GLITE_WMSUTILS_TLS_GSI_SOCKET_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -95,9 +90,6 @@ libglite_wmsui_LogWrapper_la_LIBADD = \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
         $(BOOST_LIBS) \
-        $(GLOBUS_COMMON_NOTHR_LIBS) \
-        $(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_GSS_NOTHR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
 
@@ -127,9 +119,6 @@ libglite_wmsui_NsWrapper_la_LIBADD = \
 	$(GLITE_DGAS_COMMON_XMLUTIL_LIBS) \
 	$(CLASSAD_LIBS) \
         $(BOOST_LIBS) \
-        $(GLOBUS_COMMON_NOTHR_LIBS) \
-        $(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_GSS_NOTHR_LIBS) \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
@@ -142,21 +131,17 @@ libglite_wmsui_AdWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_AdWrapper_la_LIBADD = \
 	-lc \
-	$(GLITE_WMSUTILS_TLS_GSI_SOCKET_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 	$(GLITE_JDL_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-        $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-        $(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
         $(BOOST_LIBS) \
-        $(GLOBUS_COMMON_NOTHR_LIBS) \
-        $(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_GSS_NOTHR_LIBS) \
         $(EXPAT_LIBS) \
 	$(GLITE_WMS_PARTITIONER_LIBS) \
 	$(GLITE_WMS_CHKPT_LIBS) \
