@@ -98,7 +98,11 @@ void proxyRenewal::checkProxies()
                                      jobIt->getUserProxyCertificate(),
                                      theJob );
         } catch( soap_proxy::soap_ex& ex ) {
-            // FIXME: what to do?
+            // FIXME: what to do? for now let's continue with an error message
+	  CREAM_SAFE_LOG( m_log_dev->errorStream() 
+			  << "proxyRenewal::checkProxies() - Proxy renew failed: ["
+			  << ex.what() << "]"
+			  << log4cpp::CategoryStream::ENDLINE);
         }
 
         jobIt->setProxyCertMTime( buf.st_mtime );
