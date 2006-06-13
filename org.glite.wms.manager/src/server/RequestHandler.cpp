@@ -327,6 +327,8 @@ try {
 
 } catch (task::Eof&) {
   Info("RequestHandler: End of input. Exiting...");
+} catch (LB_Unavailable&) {
+  Info("RequestHandler: LB unavailable. Exiting...");
 } catch (std::exception const& e) {
   Error("RequestHandler: " << e.what() << ". Exiting...");
 } catch (...) {

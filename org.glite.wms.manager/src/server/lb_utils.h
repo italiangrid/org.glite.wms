@@ -57,8 +57,6 @@ create_context(
 
 std::string get_user_x509_proxy(wmsutils::jobid::JobId const& jobid);
 std::string get_host_x509_proxy();
-
-std::string get_lb_message(ContextPtr context_ptr);
 std::string get_lb_sequence_code(ContextPtr context_ptr);
 
 void log_dequeued(ContextPtr context, std::string const& from);
