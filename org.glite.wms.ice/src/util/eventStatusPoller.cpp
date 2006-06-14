@@ -37,6 +37,7 @@
 
 // boost includes
 #include <boost/thread/thread.hpp>
+#include <boost/lexical_cast.hpp>
 
 // system includes
 #include <vector>
@@ -289,20 +290,37 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         api::job_statuses::job_status stNum( jobstat::getStatusNum( last_status.getStatusName() ) );
         string exitCode( last_status.getExitCode() );
 
+        //
+        // Lookup the job in cache
+        //
+        jobCache::iterator jobIt = m_cache->lookupByCreamJobID( cid );
+        
+        if ( jobIt == m_cache->end() ) {
+            CREAM_SAFE_LOG(m_log_dev->errorStream()
+                           << "eventStatusPoller::checkJobs() - JobID["
+                           << cid << "] disappeared from the cache. "
+                           << "Skipping this job, hope this is fine..."
+                           << log4cpp::CategoryStream::ENDLINE);
+            continue;
+        }
+
+        //
+        // Check whether the job is terminated
+        //
         bool job_is_done =
             (stNum == cream_api::job_statuses::DONE_FAILED) ||
             (stNum == cream_api::job_statuses::DONE_OK);
 
-        /**
-         * We skip those jobs for which CREAM did not returned the
-         * exit code yet.
-         */
-        if( job_is_done && (exitCode=="W") ) {
+        if( job_is_done && ( 0 == exitCode.compare("W") ) ) {
+            //
+            // We skip those jobs for which CREAM did not returned the
+            // exit code yet.
+            //                
             CREAM_SAFE_LOG(m_log_dev->debugStream()
                            << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
                            << cid <<"] because exitCode is not available yet."
                            << log4cpp::CategoryStream::ENDLINE);
-            continue;
+            continue;        
         }
 
         switch( stNum ) {
@@ -316,22 +334,9 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
                            << "Removing from cache and resubmitting..."
                            << log4cpp::CategoryStream::ENDLINE);
 
-            if( m_iceManager ) {
-                
-                jobCache::iterator jobIt = m_cache->lookupByCreamJobID( cid );
-                
-                if ( jobIt != m_cache->end() ) {
-                    m_iceManager->resubmit_job( *jobIt );
-                    m_lb_logger->logEvent( new ice_resubmission_event( *jobIt, "Job is failed or aborted" ) );
-                } else {
-                    CREAM_SAFE_LOG(m_log_dev->errorStream()
-                                   << "eventStatusPoller::checkJobs() - JobID["
-                                   << cid << "] disappeared from the cache. "
-                                   << "Hope this is fine..."
-                                   << log4cpp::CategoryStream::ENDLINE);
-                }
+            m_iceManager->resubmit_job( *jobIt );
+            m_lb_logger->logEvent( new ice_resubmission_event( *jobIt, "Job is failed or aborted" ) );
 
-            }
             // do NOT break: fall to next case
 
         case api::job_statuses::DONE_OK:
@@ -383,10 +388,10 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
     jobCache::iterator jit( m_cache->lookupByCreamJobID( cid ) );
 
     if ( m_cache->end() == jit ) {
-      CREAM_SAFE_LOG(m_log_dev->errorStream()
-		     << "eventStatusPoller::update_single_job() - cream_jobid ["
-		     << cid << "] disappeared!"
-		     << log4cpp::CategoryStream::ENDLINE);
+        CREAM_SAFE_LOG(m_log_dev->errorStream()
+                       << "eventStatusPoller::update_single_job() - cream_jobid ["
+                       << cid << "] disappeared!"
+                       << log4cpp::CategoryStream::ENDLINE);
         return;
     }
 
@@ -394,18 +399,26 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
 
         glite::ce::cream_client_api::job_statuses::job_status
             stNum = jobstat::getStatusNum( it->getStatusName() );
+        string exitCode( it->getExitCode() );
 
         if ( jit->get_num_logged_status_changes() < count ) {
-
-	  CREAM_SAFE_LOG(m_log_dev->infoStream()
-			 << "eventStatusPoller::update_single_job() - "
-			 << "Updating jobcache with "
-			 << "grid_jobid = [" << jit->getGridJobID() << "] "
-			 << "cream_jobid = [" << cid << "]"
-			 << " status = [" << it->getStatusName() << "]"
-			 << log4cpp::CategoryStream::ENDLINE);
-
+            
+            CREAM_SAFE_LOG(m_log_dev->infoStream()
+                           << "eventStatusPoller::update_single_job() - "
+                           << "Updating jobcache with "
+                           << "grid_jobid = [" << jit->getGridJobID() << "] "
+                           << "cream_jobid = [" << cid << "]"
+                           << " status = [" << it->getStatusName() << "]"
+                           << log4cpp::CategoryStream::ENDLINE);            
             jit->setStatus( stNum );
+            if ( ( !jit->is_active() ) && ( 0 != exitCode.compare("W") ) ) {
+                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                               << "eventStatusPoller::update_single_job() - "
+                               << "Setting ExiitCode=" << exitCode
+                               << " for job " << jit->getJobID()
+                               << log4cpp::CategoryStream::ENDLINE);
+                jit->set_exit_code( boost::lexical_cast< int >( exitCode ) );
+            }
             jit->set_num_logged_status_changes( count );
 
             // Log to L&B

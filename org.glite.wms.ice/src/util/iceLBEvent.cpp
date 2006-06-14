@@ -27,6 +27,7 @@
 
 #include "iceLBEvent.h"
 #include "iceLBContext.h"
+#include "boost/format.hpp"
 
 using namespace glite::wms::ice::util;
 
@@ -309,7 +310,7 @@ int job_suspended_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_done_ok_event::job_done_ok_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Done Ok Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("Job Done Ok Event, ExitCode=%1%" ) % j.get_exit_code() ) )
 {
 
 }
@@ -327,7 +328,7 @@ int job_done_ok_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_done_failed_event::job_done_failed_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Done Failed Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("Job Done Failed Event, ExitCode=%1%") % j.get_exit_code() ) ),
     m_reason( reason )
 {
 
