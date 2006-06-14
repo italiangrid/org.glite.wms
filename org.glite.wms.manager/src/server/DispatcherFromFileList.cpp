@@ -10,10 +10,11 @@
 #include <cctype>
 #include <ctime>
 #include <cstdio>
+
 #include <boost/thread/xtime.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/bind.hpp>
-#include "signal_handling.h"
+
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -21,12 +22,14 @@
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
-#include "TaskQueue.hpp"
-#include "Request.hpp"
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/wms/purger/purger.h"
 #include "glite/lb/producer.h"
+
+#include "signal_handling.h"
 #include "lb_utils.h"
+#include "TaskQueue.hpp"
+#include "Request.hpp"
 #include "submission_utils.h"
 #include "filelist_utils.h"
 #include "filelist_recovery.h"
@@ -188,6 +191,8 @@ void do_transitions_for_submit(
     Info(req->id() << " cancelled");
     break;
 
+  case Request::CANCEL_DELIVERED:
+    break;
   }
 }
 
@@ -272,6 +277,7 @@ get_new_requests(
 
   requests_type::iterator it = new_requests.begin();
   requests_type::iterator const end = new_requests.end();
+
   for ( ; it != end; ++it) {
 
     extractor_type::iterator request_it = *it;
@@ -285,25 +291,25 @@ get_new_requests(
 
       classad::ClassAd command_ad;
       classad::ClassAdParser parser;
+
       if (!parser.ParseClassAd(command_ad_str, command_ad)) {
         Info("Invalid request: " << command_ad_str);
         continue;
       }
 
-      std::string command;
+      std::string jdl_command = utilities::command_get_command(command_ad);
+      if (jdl_command == SUBMIT) {
+      }
+
+      std::string job_command;
       jobid::JobId id;
       std::string sequence_code;
       std::string x509_proxy;
-      if (utilities::command_is_valid(command_ad)) {
-        boost::tie(command, id, sequence_code, x509_proxy)
-          = parse_request(command_ad);
-      } else {
-        Info("Invalid command: "
-          << command_ad <<
-          " (doesn't match requirements...)"
-        );
-        continue;
-      }
+      boost::tie(job_command,
+        id,
+        sequence_code,
+        x509_proxy
+      ) = parse_request(command_ad);
 
       bool const status_check_is_enabled = get_check_status();
 
@@ -321,7 +327,7 @@ get_new_requests(
 
       if (it == tq.end()) {
 
-        if (command == "jobsubmit" || command == "jobresubmit") {
+        if (job_command == SUBMIT || job_command == RESUBMIT) {
 
           bool is_acceptable = true;
           if (status_check_is_enabled) {
@@ -330,14 +336,14 @@ get_new_requests(
 
           if (is_acceptable) {
 
-            Info("new " << command << " for " << id);
+            Info("new " << job_command << " for " << id);
 
             cleanup_guard.dismiss();
-            RequestPtr request(new Request(command_ad, command, id, cleanup));
+            RequestPtr request(new Request(command_ad, job_command, id, cleanup));
 
             log_dequeued(request->lb_context(), input);
 
-            if (command == "jobsubmit") {
+            if (job_command == SUBMIT) {
               if (is_proxy_expired(id)) {
                 request->state(Request::UNRECOVERABLE, "proxy expired");
                 Info(request->id() << " failed (" << request->message() << ')');
@@ -346,14 +352,14 @@ get_new_requests(
                 write_end.write(request);
                 tq.insert(std::make_pair(id.toString(), request));
               }
-            } else { // jobresubmit
+            } else { // resubmit
               // can it be forwarded immediately to the RH?
               tq.insert(std::make_pair(id.toString(), request));
             }
           } else {
 
             Info(
-              "ignoring " << command << " for " << id
+              "ignoring " << job_command << " for " << id
               << " because not compatible with state "
               << status_to_string(status)
             );
@@ -361,7 +367,7 @@ get_new_requests(
           }
 
 
-        } else if (command == "jobcancel") {
+        } else if (job_command == CANCEL) {
 
           bool is_acceptable = true;
           if (status_check_is_enabled) {
@@ -370,10 +376,10 @@ get_new_requests(
 
           if (is_acceptable) {
 
-            Info("new jobcancel for " << id);
+            Info("new " << CANCEL << " for " << id);
 
             cleanup_guard.dismiss();
-            RequestPtr request(new Request(command_ad, command, id, cleanup));
+            RequestPtr request(new Request(command_ad, job_command, id, cleanup));
             // TODO can the request be written immediately into the pipe?
             tq.insert(std::make_pair(id.toString(), request));
 
@@ -382,17 +388,17 @@ get_new_requests(
           } else {
 
             Info(
-              "ignoring jobcancel for " << id
+              "ignoring " << CANCEL << " for " << id
               << " because not compatible with state "
               << status_to_string(status)
             );
 
           }
 
-        } else if (command == "match") {
+        } else if (job_command == MATCH) {
 
           cleanup_guard.dismiss();
-          RequestPtr request(new Request(command_ad, command, id, cleanup));
+          RequestPtr request(new Request(command_ad, job_command, id, cleanup));
           // the request is processed immediately
           // the request is not inserted in the TQ because in case of
           // failure it won't be retried
@@ -402,7 +408,7 @@ get_new_requests(
 
         } else {
 
-          Info("don't know what to do with " << command << " for " << id);
+          Info("don't know what to do with " << job_command << " for " << id);
 
         }
 
@@ -410,14 +416,14 @@ get_new_requests(
 
         Request& existing_request(*it->second);
 
-        if (command == "jobsubmit") {
+        if (job_command == SUBMIT) {
 
           if (existing_request.marked_match()) {
             // abort the new submit
             std::string const message("already existing match request");
             Info(message << ' ' << id);
             // create a fake request to perform the proper actions
-            Request r(command_ad, command, id, cleanup);
+            Request r(command_ad, job_command, id, cleanup);
             cleanup_guard.dismiss();
             r.state(Request::UNRECOVERABLE, message);
           } else {
@@ -425,7 +431,7 @@ get_new_requests(
             Info("ignoring submit " << id);
           }
 
-        } else if (command == "jobresubmit") {
+        } else if (job_command == RESUBMIT) {
 
           if (existing_request.marked_match()) {
             // ignore the resubmit
@@ -447,7 +453,7 @@ get_new_requests(
             // one shot from the input
 
             Debug(
-              "jobresubmit " << id << " when in state " << existing_request.state()
+              RESUBMIT << id << " when in state " << existing_request.state()
             );
             log_dequeued(existing_request.lb_context(), input);
             existing_request.mark_resubmitted();
@@ -455,7 +461,7 @@ get_new_requests(
             cleanup_guard.dismiss();
           }
 
-        } else if (command == "jobcancel") {
+        } else if (job_command == CANCEL) {
 
           if (existing_request.marked_match()) {
             // ignore the cancel
@@ -470,7 +476,7 @@ get_new_requests(
             cleanup_guard.dismiss();
           }
 
-        } else if (command == "match") {
+        } else if (job_command == MATCH) {
 
           // ignore the match, independently if the existing request with the
           // same id is a (re)submit, cancel or match
@@ -485,12 +491,37 @@ get_new_requests(
     } catch (CannotCreateLBContext& e) {
       Info("Cannot create LB context (error code = " << e.error_code() << ')');
     } catch (InvalidRequest& e) {
-      Info("Invalid request: " << command_ad_str);
+      Info("Invalid request (" << e.what() << ") for command: " << command_ad_str);
     }
   }
 }
 
 } // {anonymous}
+
+Request_processor::Request_processor()
+{
+}
+
+Request_processor::Request_processor(JobRequestPtr const& r)
+{
+  m_request = r;
+}
+
+Request_processor::~Request_processor()
+{
+}
+
+void Request_processor::operator()(Submit const& submit) const
+{
+}
+
+void Request_processor::operator()(Cancel const& cancel) const
+{
+}
+
+void Request_processor::operator()(Match const& match) const
+{
+}
 
 struct DispatcherFromFileList::Impl
 {
