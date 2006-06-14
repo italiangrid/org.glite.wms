@@ -416,7 +416,11 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
                                << "Setting ExiitCode=" << exitCode
                                << " for job " << jit->getJobID()
                                << log4cpp::CategoryStream::ENDLINE);
-                jit->set_exit_code( boost::lexical_cast< int >( exitCode ) );
+                try {
+                    jit->set_exit_code( boost::lexical_cast< int >( exitCode ) );
+                } catch( boost::bad_lexical_cast & ) {
+                    jit->set_exit_code( 0 );
+                }
                 if ( stNum == jobstat::ABORTED || stNum == jobstat::DONE_FAILED ) {
                     CREAM_SAFE_LOG(m_log_dev->infoStream()
                                    << "eventStatusPoller::update_single_job() - "
