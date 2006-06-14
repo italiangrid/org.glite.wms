@@ -339,6 +339,8 @@ int main(int argc, char*argv[])
   }
   iceManager->startLeaseUpdater( ); // FIXME: starting this should be user-configurable
   iceManager->startProxyRenewer( );
+  if( iceUtil::iceConfManager::getInstance()->getStartJobKiller() )
+    iceManager->startJobKiller( );
 
   vector<string> url_jid;
   url_jid.reserve(2);

@@ -26,6 +26,7 @@
 #include "eventStatusPoller.h"
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
+#include "jobKiller.h"
 #include "creamJob.h"
 #include "iceThread.h"
 
@@ -86,6 +87,7 @@ namespace glite {
           IceThreadHelper m_updater_thread;
           IceThreadHelper m_lease_updater_thread;
           IceThreadHelper m_proxy_renewer_thread;
+	  IceThreadHelper m_job_killer_thread;
 
           std::string m_ns_filelist;
           std::vector<FLEit> m_requests;
@@ -108,6 +110,7 @@ namespace glite {
           void startPoller( int );
           void startLeaseUpdater( void );
           void startProxyRenewer( void );
+	  void startJobKiller( void );
           virtual void resubmit_job( util::CreamJob& j );
 
       }; // class ice

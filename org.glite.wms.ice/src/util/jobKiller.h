@@ -29,7 +29,9 @@ namespace glite {
       class jobKiller : public iceThread {
 	  bool m_valid;
 	  log4cpp::Category *m_log_dev;
-	  glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy;
+	  glite::ce::cream_client_api::soap_proxy::CreamProxy* m_theProxy;
+	  time_t m_threshold_time;
+	  time_t m_delay;
 
 	  void killJob( const glite::wms::ice::util::CreamJob& ); 
 

@@ -73,6 +73,8 @@ iceConfManager::iceConfManager( )
     m_lease_threshold_time = config->ice()->lease_threshold_time();
     m_poller_purges_jobs= config->ice()->poller_purges_jobs();
     m_listener_enable_authn = config->ice()->listener_enable_authn();
+    m_jobkill_threshold_time= config->ice()->job_cancellation_threshold_time();
+    m_start_job_killer      = config->ice()->start_job_killer();
 }
 
 iceConfManager::~iceConfManager( )

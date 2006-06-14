@@ -24,7 +24,13 @@
 #include "subscriptionCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
-#include "iceThread.h"
+#include "eventStatusListener.h"
+#include "subscriptionUpdater.h"
+#include "eventStatusPoller.h"
+#include "leaseUpdater.h"
+#include "proxyRenewal.h"
+#include "jobKiller.h"
+//#include "iceThread.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -103,6 +109,7 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
     m_updater_thread( "Subscription Updater" ),
     m_lease_updater_thread( "Lease Updater" ),
     m_proxy_renewer_thread( "Proxy Renewer" ),
+    m_job_killer_thread( "Job Killer" ),
     m_ns_filelist( NS_FL ),
     m_fle( WM_FL.c_str() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
@@ -317,6 +324,13 @@ void Ice::startProxyRenewer( void )
 {
     util::proxyRenewal* proxy_renewer = new util::proxyRenewal( );
     m_proxy_renewer_thread.start( proxy_renewer );
+}
+
+//-----------------------------------------------------------------------------
+void Ice::startJobKiller( void )
+{
+  util::jobKiller* jobkiller = new util::jobKiller( );
+  m_job_killer_thread.start( jobkiller );
 }
 
 //____________________________________________________________________________
