@@ -297,14 +297,22 @@ get_new_requests(
         continue;
       }
 
-      std::string jdl_command = utilities::command_get_command(command_ad);
-      if (jdl_command == SUBMIT) {
+      JobRequestPtr job_request(new JobRequest);
+      std::string job_command = utilities::command_get_command(command_ad);
+      if (job_command == SUBMIT) {
+        *JobPrequestPtr = Submit(command_ad_str);
+      } else if (job_command == CANCEL) {
+        *JobPrequestPtr = Cancel(command_ad_str);
+      } else if (job_command == MATCH) {
+        *JobPrequestPtr = Match(command_ad_str);
       }
 
       std::string job_command;
       jobid::JobId id;
       std::string sequence_code;
       std::string x509_proxy;
+      // it will go in the appropriate constructor, yielding a proper
+      // exception in case
       boost::tie(job_command,
         id,
         sequence_code,
@@ -339,6 +347,7 @@ get_new_requests(
             Info("new " << job_command << " for " << id);
 
             cleanup_guard.dismiss();
+            //...to be reviewed
             RequestPtr request(new Request(command_ad, job_command, id, cleanup));
 
             log_dequeued(request->lb_context(), input);
@@ -493,7 +502,8 @@ get_new_requests(
     } catch (InvalidRequest& e) {
       Info("Invalid request (" << e.what() << ") for command: " << command_ad_str);
     }
-  }
+  } // for cycle (invalid requests are catched one by one and
+    // do not invalid the dispatcher at all)
 }
 
 } // {anonymous}

@@ -25,6 +25,20 @@ namespace wms {
 namespace manager {
 namespace server {
 
+InvalidRequest::InvalidRequest(std::string const& r)
+  : m_reason(r)
+{
+}
+
+InvalidRequest::~InvalidRequest() throw()
+{
+}
+
+char const* InvalidRequest::what() const throw()
+{
+  return m_reason.c_str();
+}
+
 namespace {
 
 static time_t const SECONDS_PER_DAY = 24*60*60;
@@ -37,12 +51,12 @@ aux_get_sequence_code(
 {
   std::string sequence_code;
 
-  if (command == "jobsubmit") {
+  if (command == SUBMIT) {
     classad::ClassAd const* job_ad = utilities::submit_command_get_ad(command_ad);
     sequence_code = jdl::get_lb_sequence_code(*job_ad);
-  } else if (command == "jobcancel") {
+  } else if (command == CANCEL) {
     sequence_code = utilities::cancel_command_get_lb_sequence_code(command_ad);
-  } else if (command == "jobresubmit") {
+  } else if (command == RESUBMIT) {
     sequence_code = utilities::resubmit_command_get_lb_sequence_code(command_ad);
   }
 
@@ -58,12 +72,12 @@ aux_get_x509_proxy(
 {
   std::string x509_proxy;
 
-  if (command == "jobsubmit") {
+  if (command == SUBMIT) {
     classad::ClassAd const* job_ad = utilities::submit_command_get_ad(command_ad);
     x509_proxy = jdl::get_x509_user_proxy(*job_ad);
-  } else if (command == "jobcancel") {
+  } else if (command == CANCEL) {
     x509_proxy = get_user_x509_proxy(id);
-  } else if (command == "jobresubmit") {
+  } else if (command == RESUBMIT) {
     x509_proxy = get_user_x509_proxy(id);
   }
 
@@ -73,17 +87,17 @@ aux_get_x509_proxy(
 glite::wmsutils::jobid::JobId
 aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
 {
-  if (command == "jobsubmit") {
+  if (command == SUBMIT) {
     return jobid::JobId(
       jdl::get_edg_jobid(
         *utilities::submit_command_get_ad(command_ad)
       )
     );
-  } else if (command == "jobresubmit") {
+  } else if (command == RESUBMIT) {
     return jobid::JobId(utilities::resubmit_command_get_id(command_ad));
-  } else if (command == "jobcancel") {
+  } else if (command == CANCEL) {
     return jobid::JobId(utilities::cancel_command_get_id(command_ad));
-  } else if (command == "match") {
+  } else if (command == MATCH) {
     bool id_exists;
     jobid::JobId match_jobid;
 
@@ -146,7 +160,7 @@ Request::Request(
   std::string x509_proxy;
   std::string sequence_code;
 
-  if (command == "jobsubmit") {
+  if (command == SUBMIT) {
 
     std::auto_ptr<classad::ClassAd> ad(utilities::submit_command_remove_ad(command_ad));
     m_jdl = ad;
@@ -161,7 +175,7 @@ Request::Request(
     sequence_code = jdl::get_lb_sequence_code(*m_jdl);
     m_lb_context = create_context(m_id, x509_proxy, sequence_code);
 
-  } else if (command == "jobresubmit") {
+  } else if (command == RESUBMIT) {
 
     mark_resubmitted();
 
@@ -169,7 +183,7 @@ Request::Request(
     sequence_code = utilities::resubmit_command_get_lb_sequence_code(command_ad);
     m_lb_context = create_context(m_id, x509_proxy, sequence_code);
 
-  } else if (command == "jobcancel") {
+  } else if (command == CANCEL) {
 
     state(DELIVERED);
 
@@ -179,7 +193,7 @@ Request::Request(
 
     mark_cancelled(m_lb_context);
 
-  } else if (command == "match") {
+  } else if (command == MATCH) {
 
     std::auto_ptr<classad::ClassAd> ad(utilities::match_command_remove_ad(command_ad));
     m_jdl = ad;

@@ -125,7 +125,7 @@ void catalog_requests_by_id(
     } catch (ca::ClassAdError& e) {
       Info(e.what());
     } catch (InvalidRequest& e) {
-      Info(e.str());
+      Info(e.what());
     }
   }
 }

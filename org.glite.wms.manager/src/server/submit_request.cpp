@@ -25,6 +25,24 @@ namespace wms {
 namespace manager {
 namespace server {
 
+struct Submit::Pimpl
+{
+  boost::shared_ptr<classad::ClassAd> m_jdl;
+  glite::wmsutils::jobid::JobId m_id;
+  typedef std::vector<boost::function<void()> > input_cleaners_type;
+  input_cleaners_type m_input_cleaners;
+  State m_state;
+  std::string m_message;
+  std::time_t m_last_processed;
+  ContextPtr m_lb_context;
+  ContextPtr m_cancel_context;
+  bool m_resubmitted;
+
+  //match options: file name, number of results and include or not brokerinfo
+  boost::tuple<std::string, int, bool> m_match_parameters;
+  std::time_t m_expiry_time;
+};
+
 namespace {
 
 static time_t const SECONDS_PER_DAY = 24*60*60;
@@ -96,37 +114,39 @@ Submit::Submit(classad::ClassAd& command_ad,
     jobid::JobId const& id,
     boost::function<void()> const& cleanup
 )
-  : m_id(id),
-    m_state(WAITING),
-    m_last_processed(0),        // make it very old
-    m_resubmitted(false),
-    m_expiry_time(std::time(0) + SECONDS_PER_DAY)
+  : m_pimpl(new Pimpl)
 {
+  m_pimpl->m_id = id;
+  m_pimpl->m_state = WAITING;
+  m_pimpl->m_last_processed = 0;        // make it very old
+  m_pimpl->m_resubmitted = false;
+  m_pimpl->m_expiry_time = std::time(0) + SECONDS_PER_DAY;
+
   std::string x509_proxy;
   std::string sequence_code;
 
   if (command == "jobsubmit") {
 
     std::auto_ptr<classad::ClassAd> ad(utilities::submit_command_remove_ad(command_ad));
-    m_jdl = ad;
+    m_pimpl->m_jdl = ad;
 
     bool exists = false;
-    int expiry_time = jdl::get_expiry_time(*m_jdl, exists);
+    int expiry_time = jdl::get_expiry_time(*(m_pimpl->m_jdl), exists);
     if (exists) {
       m_expiry_time = expiry_time;
     }
 
-    x509_proxy = jdl::get_x509_user_proxy(*m_jdl);
-    sequence_code = jdl::get_lb_sequence_code(*m_jdl);
-    m_lb_context = create_context(m_id, x509_proxy, sequence_code);
+    x509_proxy = jdl::get_x509_user_proxy(*(m_pimpl->m_jdl));
+    sequence_code = jdl::get_lb_sequence_code(*(m_pimpl->m_jdl));
+    m_lb_context = create_context(m_pimpl->m_id, x509_proxy, sequence_code);
 
   } else if (command == "jobresubmit") {
 
     mark_resubmitted();
 
-    x509_proxy = get_user_x509_proxy(m_id);
+    x509_proxy = get_user_x509_proxy(m_pimpl->m_id);
     sequence_code = utilities::resubmit_command_get_lb_sequence_code(command_ad);
-    m_lb_context = create_context(m_id, x509_proxy, sequence_code);
+    m_lb_context = create_context(m_pimpl->m_id, x509_proxy, sequence_code);
 
   } 
 
@@ -167,11 +187,11 @@ Submit::~Submit()
 void
 Submit::jdl(std::auto_ptr<classad::ClassAd> jdl)
 {
-  m_jdl = jdl;
+  m_pimpl->m_jdl = jdl;
 
   // reset the expiry time if the corresponding jdl attribute exists
   bool exists;
-  int expiry_time = jdl::get_expiry_time(*m_jdl, exists);
+  int expiry_time = jdl::get_expiry_time(*(m_pimpl->m_jdl), exists);
   if (exists) {
     m_expiry_time = expiry_time;
   }

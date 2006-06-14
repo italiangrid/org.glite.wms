@@ -31,7 +31,7 @@ boost::tuple<
 >
 parse_request(classad::ClassAd const& command_ad);
 
-class Submit : boost::noncopyable
+class Submit
 {
 public:
   enum State {
@@ -46,6 +46,9 @@ public:
   };
 
 public:
+  struct Pimpl;
+  boost::shared_ptr<pimpl> m_pimpl;
+
   Submit(classad::ClassAd& command_ad,
     std::string const& command,
     jobid::JobId const& id,
@@ -79,22 +82,7 @@ public:
   void add_cleanup(boost::function<void()> const& cleanup);
 
   std::time_t expiry_time() const;
-  
-private:
-  boost::shared_ptr<classad::ClassAd> m_jdl;
-  glite::wmsutils::jobid::JobId m_id;
-  typedef std::vector<boost::function<void()> > input_cleaners_type;
-  input_cleaners_type m_input_cleaners;
-  State m_state;
-  std::string m_message;
-  std::time_t m_last_processed;
-  ContextPtr m_lb_context;
-  ContextPtr m_cancel_context;
-  bool m_resubmitted;
 
-  //match options: file name, number of results and include or not brokerinfo
-  boost::tuple<std::string, int, bool> m_match_parameters;
-  std::time_t m_expiry_time;
 };
 
 }}}} // glite::wms::manager::server

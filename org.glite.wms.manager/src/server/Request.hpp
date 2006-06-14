@@ -18,6 +18,11 @@
 #include "lb_utils.h"
 #include "glite/wmsutils/jobid/JobId.h"
 
+const std::string SUBMIT = "jobsubmit";
+const std::string RESUBMIT = "jobresubmit";
+const std::string CANCEL = "jobcancel";
+const std::string MATCH = "match";
+
 typedef boost::shared_ptr<classad::ClassAd> ClassAdPtr;
 
 namespace glite {
@@ -25,15 +30,15 @@ namespace wms {
 namespace manager {
 namespace server {
 
-class InvalidRequest
+class InvalidRequest: public std::exception
 {
-  std::string m_str;
 public:
-  InvalidRequest(std::string const& str)
-    : m_str(str)
-  {
-  }
-  std::string str() const { return m_str; }
+  InvalidRequest(std::string const&);
+  ~InvalidRequest() throw();
+  char const* what() const throw();
+
+private:
+  std::string m_reason;
 };
 
 boost::tuple<
