@@ -63,7 +63,8 @@ namespace glite {
           time_t m_end_lease; //! The time the lease for this job ends
 	  time_t m_proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
 	  int    m_statusPollRetryCount; //! number of time we tried to get the status of the job
-          int    m_exit_code; // the job exit code
+          int    m_exit_code; //! the job exit code
+          std::string m_failure_reason; //! The job failure reason (if the job is done_failed or aborted)
 
 	public:
 
@@ -72,29 +73,6 @@ namespace glite {
 
           //! Costructor from classad
           CreamJob( const std::string& ad ) throw (ClassadSyntax_ex& );
-
-	  //! Creates a CreamJob object by copying from C
-/* 	  CreamJob( const CreamJob& C ) { */
-/*               m_cream_jobid = C.m_cream_jobid; */
-/*               m_grid_jobid = C.grid_jobid; */
-/*               m_jdl = C.jdl; */
-/*               m_ceid = C.ceid; */
-/*               m_endpoint = C.endpoint; */
-/*               m_cream_address = C.cream_address; */
-/*               m_cream_deleg_address = C.cream_deleg_address; */
-/*               m_status = C.status; */
-/*               m_user_proxyfile = C.user_proxyfile; */
-/*               m_sequence_code = C.sequence_code; */
-/*               m_delegation_id = C.delegation_id; */
-/*               m_wn_sequence_code = C.wn_sequence_code; */
-/*               m_num_logged_status_changes = C.m_num_logged_status_changes; */
-/*               m_last_seen = C.last_seen; */
-/*               m_end_lease = C.end_lease; */
-/* 	      m_proxyCertTimestamp = C.proxyCertTimestamp; */
-/*               m_exit_code = C.m_exit_code; */
-/* 	      // is the following actually needed ? // FIXME */
-/* 	      //statusPollRetryCount = C.statusPollRetryCount; */
-/*           } */
 
 	  //! Sets the status of the CreamJob object
 	  void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_status = st; }
@@ -116,10 +94,14 @@ namespace glite {
           void set_exit_code( int c ) { m_exit_code = c; }
           //! Sets the sequence code for the job sent to the WN
           void set_wn_sequence_code( const std::string& wn_seq ) { m_wn_sequence_code = wn_seq; };
+          //! Sets the job failure reason
+          void set_failure_reason( const std::string f ) { m_failure_reason = f; };
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return m_grid_jobid; }
           //! Gets the job exit code
           int get_exit_code( void ) const { return m_exit_code; }
+          //! Gets the job failure reason
+          std::string get_failure_reason( void ) const { return m_failure_reason; }
 	  //! Gets the unique cream job identifier
           std::string getJobID( void ) const { return m_cream_jobid; }
 	  //! Gets the entire JDL of the job

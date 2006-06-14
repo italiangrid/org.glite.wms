@@ -287,7 +287,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
 
         string cid( the_info.getCreamJobID() );
 
-        api::job_statuses::job_status stNum( jobstat::getStatusNum( last_status.getStatusName() ) );
+        jobstat::job_status stNum( jobstat::getStatusNum( last_status.getStatusName() ) );
         string exitCode( last_status.getExitCode() );
 
         //
@@ -308,8 +308,8 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         // Check whether the job is terminated
         //
         bool job_is_done =
-            (stNum == cream_api::job_statuses::DONE_FAILED) ||
-            (stNum == cream_api::job_statuses::DONE_OK);
+            (stNum == jobstat::DONE_FAILED) ||
+            (stNum == jobstat::DONE_OK);
 
         if( job_is_done && ( 0 == exitCode.compare("W") ) ) {
             //
@@ -325,8 +325,8 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
 
         switch( stNum ) {
 
-        case api::job_statuses::DONE_FAILED:
-        case api::job_statuses::ABORTED:
+        case jobstat::DONE_FAILED:
+        case jobstat::ABORTED:
 
             CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << "eventStatusPoller::checkJobs() - JobID ["
@@ -339,8 +339,8 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
 
             // do NOT break: fall to next case
 
-        case api::job_statuses::DONE_OK:
-        case api::job_statuses::CANCELLED:
+        case jobstat::DONE_OK:
+        case jobstat::CANCELLED:
             CREAM_SAFE_LOG(m_log_dev->infoStream()
                            << "eventStatusPoller::checkJobs() - Scheduling JobID ["
                            << cid << "] to be purged"
@@ -397,8 +397,7 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
 
     for ( it = status_list.begin(), count = 1; it != status_list.end(); ++it, ++count ) {
 
-        glite::ce::cream_client_api::job_statuses::job_status
-            stNum = jobstat::getStatusNum( it->getStatusName() );
+        jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
         string exitCode( it->getExitCode() );
 
         if ( jit->get_num_logged_status_changes() < count ) {
@@ -418,6 +417,15 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
                                << " for job " << jit->getJobID()
                                << log4cpp::CategoryStream::ENDLINE);
                 jit->set_exit_code( boost::lexical_cast< int >( exitCode ) );
+                if ( stNum == jobstat::ABORTED || stNum == jobstat::DONE_FAILED ) {
+                    CREAM_SAFE_LOG(m_log_dev->infoStream()
+                                   << "eventStatusPoller::update_single_job() - "
+                                   << "Setting FailureReason=" << it->getFailureReason()
+                                   << " for job " << jit->getJobID()
+                                   << log4cpp::CategoryStream::ENDLINE);
+
+                    jit->set_failure_reason( it->getFailureReason() );
+                }
             }
             jit->set_num_logged_status_changes( count );
 
@@ -462,11 +470,11 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
                 cid = jit->getJobID();
 
                 if ( is_purge_enabled ) {
-		  CREAM_SAFE_LOG(m_log_dev->infoStream()
-				 << "eventStatusPoller::purgeJobs() - "
-				 << "Calling JobPurge for JobId ["
-				 << cid << "]"
-				 << log4cpp::CategoryStream::ENDLINE);
+                    CREAM_SAFE_LOG(m_log_dev->infoStream()
+                                   << "eventStatusPoller::purgeJobs() - "
+                                   << "Calling JobPurge for JobId ["
+                                   << cid << "]"
+                                   << log4cpp::CategoryStream::ENDLINE);
                     // We cannot accumulate more jobs to purge in a
                     // vector because we must authenticate different
                     // jobs with different user certificates.
@@ -475,12 +483,12 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
                     oneJobToPurge.push_back( jit->getJobID() );
                     m_creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
                 } else {
-		  CREAM_SAFE_LOG(m_log_dev->warnStream()
-				 << "eventStatusPoller::purgeJobs() - "
-				 << "There'are jobs to purge, but PURGE IS DISABLED. "
-				 << "Will not purge JobId ["
-				 << cid << "] (but will be removed from ICE cache)"
-				 << log4cpp::CategoryStream::ENDLINE);
+                    CREAM_SAFE_LOG(m_log_dev->warnStream()
+                                   << "eventStatusPoller::purgeJobs() - "
+                                   << "There'are jobs to purge, but PURGE IS DISABLED. "
+                                   << "Will not purge JobId ["
+                                   << cid << "] (but will be removed from ICE cache)"
+                                   << log4cpp::CategoryStream::ENDLINE);
                 }
 
                 m_cache->erase( jit );

@@ -45,11 +45,11 @@ namespace fs = boost::filesystem;
 //______________________________________________________________________________
 iceUtil::CreamJob::CreamJob( ) :
     m_status( api::job_statuses::UNKNOWN ),
-    m_exit_code( 0 ),
     m_num_logged_status_changes( 0 ),
     m_last_seen( time(0) ),
     m_end_lease( m_last_seen + 60*30 ), // FIXME: remove hardcoded default
-    m_statusPollRetryCount( 0 )
+    m_statusPollRetryCount( 0 ),
+    m_exit_code( 0 )
 {
 
 }
@@ -69,6 +69,7 @@ string iceUtil::CreamJob::serialize( void ) const
     ad.InsertAttr( "cream_jobid", m_cream_jobid );
     ad.InsertAttr( "status", m_status );
     ad.InsertAttr( "exit_code", m_exit_code );
+    ad.InsertAttr( "failure_reason", m_failure_reason );
     ad.InsertAttr( "delegation_id", m_delegation_id );
     ad.InsertAttr( "wn_sequence_code", m_wn_sequence_code );
     ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
@@ -118,9 +119,10 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
          ! ad->EvaluateAttrString( "end_lease", elease ) ||
 	 ! ad->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
          ! ad->EvaluateAttrString( "delegation_id", m_delegation_id ) ||
-         ! ad->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ) {
+         ! ad->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ||
+         ! ad->EvaluateAttrString( "failure_reason", m_failure_reason ) ) {
 
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code" );
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason" );
 
     }
     m_status = (api::job_statuses::job_status)st_number;
@@ -130,6 +132,7 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
     boost::trim_if( lastmtime_proxy, boost::is_any_of("\"" ) );
     boost::trim_if( m_delegation_id, boost::is_any_of("\"") );
     boost::trim_if( m_wn_sequence_code, boost::is_any_of("\"") );
+    boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
     
     try {
         m_end_lease = boost::lexical_cast< time_t >( elease );

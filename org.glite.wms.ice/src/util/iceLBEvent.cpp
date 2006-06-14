@@ -327,9 +327,8 @@ int job_done_ok_event::execute( iceLBContext* ctx )
 // job done failed event
 //
 //////////////////////////////////////////////////////////////////////////////
-job_done_failed_event::job_done_failed_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("Job Done Failed Event, ExitCode=%1%") % j.get_exit_code() ) ),
-    m_reason( reason )
+job_done_failed_event::job_done_failed_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("Job Done Failed Event, ExitCode=%1%, FailureReason=%2%") % j.get_exit_code() % j.get_failure_reason() ) )
 {
 
 }
@@ -337,7 +336,7 @@ job_done_failed_event::job_done_failed_event( const CreamJob& j, const std::stri
 int job_done_failed_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogDoneFAILED( *(ctx->el_context), 
-                                  m_reason.c_str(), 
+                                  m_job.get_failure_reason().c_str(), 
                                   m_job.get_exit_code() );
 }
 
@@ -445,4 +444,21 @@ int wms_dequeued_event::execute( iceLBContext* ctx )
                                 m_qname.c_str(),
                                 m_job.getGridJobID().c_str()
                                 );
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// cream aborted event
+//
+//////////////////////////////////////////////////////////////////////////////
+job_aborted_event::job_aborted_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format("Job aborted event, reason=%1%") % j.get_failure_reason() ) )
+{
+
+}
+
+int job_aborted_event::execute( iceLBContext* ctx )
+{
+    return edg_wll_LogAbort( *(ctx->el_context), 
+                             m_job.get_failure_reason().c_str() );
 }

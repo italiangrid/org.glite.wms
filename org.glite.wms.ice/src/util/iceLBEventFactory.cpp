@@ -41,11 +41,11 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
     case jobstat::HELD:
         return new job_suspended_event( theJob );
     case jobstat::ABORTED:
-        return new job_done_failed_event( theJob, std::string( "aborted" ) );
+        return new job_aborted_event( theJob );
     case jobstat::DONE_OK:
         return new job_done_ok_event( theJob );
     case jobstat::DONE_FAILED:
-        return new job_done_failed_event( theJob, std::string( "done_failed" ) );
+        return new job_done_failed_event( theJob );
     default:
         return 0;
     }
