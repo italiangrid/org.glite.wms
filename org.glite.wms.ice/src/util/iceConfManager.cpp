@@ -75,6 +75,8 @@ iceConfManager::iceConfManager( )
     m_listener_enable_authn = config->ice()->listener_enable_authn();
     m_jobkill_threshold_time= config->ice()->job_cancellation_threshold_time();
     m_start_job_killer      = config->ice()->start_job_killer();
+    m_start_proxy_renewer   = config->ice()->start_proxy_renewer();
+    m_start_lease_updater   = config->ice()->start_lease_updater();
 }
 
 iceConfManager::~iceConfManager( )

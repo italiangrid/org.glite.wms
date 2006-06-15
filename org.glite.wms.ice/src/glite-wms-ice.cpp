@@ -337,8 +337,13 @@ int main(int argc, char*argv[])
     if(iceUtil::iceConfManager::getInstance()->getStartPoller())
       iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
   }
-  iceManager->startLeaseUpdater( ); // FIXME: starting this should be user-configurable
-  iceManager->startProxyRenewer( );
+  
+  if( iceUtil::iceConfManager::getInstance()->getStartLeaseUpdater() )
+    iceManager->startLeaseUpdater( );
+    
+  if( iceUtil::iceConfManager::getInstance()->getStartProxyRenewer() )
+    iceManager->startProxyRenewer( );
+    
   if( iceUtil::iceConfManager::getInstance()->getStartJobKiller() )
     iceManager->startJobKiller( );
 

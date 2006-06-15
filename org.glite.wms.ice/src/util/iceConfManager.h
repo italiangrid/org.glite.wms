@@ -32,7 +32,8 @@ namespace glite {
 	    m_max_jobcache_operation_before_dump, m_notification_frequency, m_lease_delta_time, 
 	    m_lease_threshold_time, m_jobkill_threshold_time;
 	  bool m_startpoller, m_poller_purges_jobs, m_startlistener, m_startsubupder,
-	    m_log_on_console, m_log_on_file, m_listener_enable_authn, m_start_job_killer;
+	    m_log_on_console, m_log_on_file, m_listener_enable_authn, m_start_job_killer,
+	    m_start_lease_updater, m_start_proxy_renewer;
 	  
 
 
@@ -80,6 +81,8 @@ namespace glite {
 	  bool        getPollerPurgesJobs( void ) const { return m_poller_purges_jobs; }
 	  int         getJobKillThresholdTime( void ) const { return m_jobkill_threshold_time; }
 	  bool        getStartJobKiller( void ) const { return m_start_job_killer; }
+	  bool	      getStartProxyRenewer( void ) const { return m_start_proxy_renewer; }
+	  bool	      getStartLeaseUpdater( void ) const { return m_start_lease_updater; }
 
 	  void setHostProxyFile( const std::string& p ) {  m_HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { m_WM_Input_FileList = p; }
