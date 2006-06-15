@@ -633,12 +633,12 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
             jdl->Insert( "OutputSandboxDestURI", newOsbDUList );
         }
         return;
-    }
-
-    if ( 0 == jdl->Lookup( "OutputSandboxBaseDestURI" ) ) {
-        // Put a default OutpuSandboxDestURI attribute
-        jdl->InsertAttr( "OutputSandboxBaseDestURI",  default_osbdURI );
-        return;
+    } else {       
+        if ( 0 == jdl->Lookup( "OutputSandboxBaseDestURI" ) ) {
+            // Put a default OutpuSandboxDestURI attribute
+            jdl->InsertAttr( "OutputSandboxBaseDestURI",  default_osbdURI );
+            return;
+        }
     }
     
 }

@@ -102,7 +102,7 @@ eventStatusPoller::~eventStatusPoller()
 }
 
 //____________________________________________________________________________
-void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_list)
+void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list)
 {
     // This clear is not needed beacuse the arg is created just before to call
     // this method.
@@ -129,7 +129,7 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
 	}
         
 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		       << "eventStatusPoller::getStatus() - "
+		       << "eventStatusPoller::scanJobs() - "
 		       << "Job [" << jobIt->getJobID() << "]"
 		       << " oldness=" << oldness << " threshold=" << threshold
 		       << " listener=" << listener_started 
@@ -142,7 +142,7 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
         }
 
         CREAM_SAFE_LOG(m_log_dev->infoStream()
-		       << "eventStatusPoller::getStatus() - "
+		       << "eventStatusPoller::scanJobs() - "
 		       << "Sending JobStatus request for Job ["
 		       << jobIt->getJobID() << "]"
 		       << log4cpp::CategoryStream::ENDLINE);
@@ -164,14 +164,14 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
             // this exception should not be raised because
             // the CreamJob is created from another valid one
 	  CREAM_SAFE_LOG(m_log_dev->fatalStream()
-			 << "eventStatusPoller::getStatus() - "
+			 << "eventStatusPoller::scanJobs() - "
 			 << "Fatal error: CreamJob creation failed from a valid one!"
 			 << " Exception is [" << ex.what() << "]"
 			 << log4cpp::CategoryStream::ENDLINE);
             exit(1);
         } catch(soap_proxy::auth_ex& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "eventStatusPoller::getStatus() - "
+			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
 			 << jobIt->getJobID()
 			 << "]. Exception is [" << ex.what() << "]"
@@ -180,7 +180,7 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
             continue;
         } catch(soap_proxy::soap_ex& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "eventStatusPoller::getStatus() - "
+			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
 			 << jobIt->getJobID()
 			 << "]. Exception is [" 
@@ -190,7 +190,7 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
             continue;	  
         } catch(cream_api::cream_exceptions::BaseException& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "eventStatusPoller::getStatus() - "
+			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
 			 << jobIt->getJobID()
 			 << "]. Exception is [" 
@@ -200,7 +200,7 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
             continue;
         } catch(cream_api::cream_exceptions::InternalException& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "eventStatusPoller::getStatus() - "
+			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
 			 << jobIt->getJobID()
 			 << "]. Exception is [" 
@@ -212,14 +212,14 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
             // sleep(2); 
 
             // this ex can be raised if the remote service is not
-            // reachable and getStatus is called again
+            // reachable and scanJobs is called again
             // immediately. Untill the service is down this could
             // overload the cpu and the logfile. So let's wait for a
             // while before returning...
 	  
         } catch(cream_api::cream_exceptions::DelegationException& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "eventStatusPoller::getStatus() - "
+			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
 			 << jobIt->getJobID()
 			 << "]. Exception is [" 
@@ -533,7 +533,7 @@ void eventStatusPoller::body( void )
 {
     while( !isStopped() ) {
         vector< soap_proxy::JobInfo > j_status;
-        getStatus( j_status );
+        scanJobs( j_status );
         try {
             updateJobCache( j_status );
         }

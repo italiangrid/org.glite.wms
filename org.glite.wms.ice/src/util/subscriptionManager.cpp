@@ -91,7 +91,8 @@ bool subscriptionManager::subscribe(const string& url)
   m_ceS.setServiceURL(url);
 
   CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribing to ["
-		 << url << "]"
+		 << url << "] ["
+                 << m_myname << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
 
   {

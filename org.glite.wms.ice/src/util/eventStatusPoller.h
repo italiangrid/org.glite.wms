@@ -69,11 +69,14 @@ namespace glite {
            *
            * @param l the resulting list of job states          
            */
-	  void getStatus( std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
+	  void scanJobs( std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
 
           /**
            * Updates the status informations for all jobs in the list
            * l.
+           *
+           * @param l the list of job status informations (this list is
+           * typically the resout of the scanJobs() method call).
            */
 	  void updateJobCache( const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
 
