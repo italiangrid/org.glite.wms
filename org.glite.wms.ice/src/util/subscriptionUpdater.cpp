@@ -53,9 +53,9 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
 //     return;
 //   }
 
-  char* tmp_myname;
+  string tmp_myname;
   try {
-    tmp_myname = (char*)iceUtil::getHostName().c_str();
+    tmp_myname = iceUtil::getHostName();
   } catch( runtime_error& ex) {
     CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - iceUtils::getHostName() returned an ERROR: "
 		   << ex.what()
@@ -68,8 +68,9 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
     boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     if( m_conf->getListenerEnableAuthN() )
       m_myname = boost::str( boost::format("https://%1%:%2%") % tmp_myname % m_conf->getListenerPort() );
-    else
+    else {
       m_myname = boost::str( boost::format("http://%1%:%2%") % tmp_myname % m_conf->getListenerPort() );
+    }
   }
   
   m_subMgr->setConsumerURLName( m_myname );
