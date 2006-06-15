@@ -33,7 +33,7 @@ subscriptionManager::subscriptionManager()
   CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
 		 << log4cpp::CategoryStream::ENDLINE);
   try {
-    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     m_ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
     m_ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
   } catch(exception& ex) {
@@ -95,7 +95,7 @@ bool subscriptionManager::subscribe(const string& url)
 		 << log4cpp::CategoryStream::ENDLINE);
 
   {
-    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     m_ceS.setSubscribeParam( m_myname.c_str(),
 	                     m_T,
 			     m_P,
@@ -122,7 +122,7 @@ bool subscriptionManager::updateSubscription(const string& url,
 					     string& newID)
 {
   try {
-    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     newID = m_ceSMgr.update(url, ID, m_myname, m_T, m_P,
     		          time(NULL)+m_conf->getSubscriptionDuration());
     return true;

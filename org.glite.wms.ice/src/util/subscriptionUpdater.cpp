@@ -65,7 +65,7 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   }
 
   {
-    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     if( m_conf->getListenerEnableAuthN() )
       m_myname = boost::str( boost::format("https://%1%:%2%") % tmp_myname % m_conf->getListenerPort() );
     else {
@@ -139,7 +139,7 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
     {
       time_t timeleft = sit->getExpirationTime() - time(NULL);
       {
-        boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+      //  boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
         if(timeleft < m_conf->getSubscriptionUpdateThresholdTime()) {
           CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
 			 << "Updating subscription ["<<sit->getSubscriptionID() << "]"

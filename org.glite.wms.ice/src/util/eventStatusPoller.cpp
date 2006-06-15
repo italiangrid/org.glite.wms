@@ -123,7 +123,7 @@ void eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
         oldness = time(NULL)-jobIt->getLastSeen();
 
 	{
-            boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+        //    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
             threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
             listener_started = iceConfManager::getInstance()->getStartListener();
 	}
@@ -451,7 +451,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 
     bool is_purge_enabled;
     {
-        boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );        
+        //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );        
         is_purge_enabled = iceConfManager::getInstance()->getPollerPurgesJobs();
     }
 

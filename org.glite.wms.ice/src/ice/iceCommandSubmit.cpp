@@ -76,7 +76,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     m_lb_logger( util::iceLBLogger::instance() )
 {
     try {
-        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+//        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
         m_myname = util::getHostName();
 	if( m_confMgr->getListenerEnableAuthN() ) {
 	  m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );        
@@ -271,7 +271,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
 	string delegID;
         try {	    
             // Locks the configuration manager
-            boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+            //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
 /* 	    m_log_dev->infoStream() << "iceCommandSubmit::execute() - Registering with lease ["
 	    			    << m_confMgr->getLeaseDeltaTime() 
 				    << log4cpp::CategoryStream::ENDLINE; */
@@ -338,14 +338,14 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
      */
     bool tmp_start_listener;
     {
-        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+        //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
         tmp_start_listener = m_confMgr->getStartListener();
     }
 
     if( tmp_start_listener ) {
       string cemon_url;
       {
-        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+        //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
 	boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
 	cemon_url = util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
         CREAM_SAFE_LOG(
@@ -402,7 +402,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
                          );
 
       {
-	    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+	    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
             CREAM_SAFE_LOG(
                            m_log_dev->infoStream()
                            << "iceCommandSubmit::execute() - Subscribing the consumer ["

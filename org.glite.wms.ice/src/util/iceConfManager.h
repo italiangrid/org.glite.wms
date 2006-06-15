@@ -35,14 +35,14 @@ namespace glite {
 	    m_log_on_console, m_log_on_file, m_listener_enable_authn, m_start_job_killer,
 	    m_start_lease_updater, m_start_proxy_renewer;
 	  
-
+	  static boost::recursive_mutex mutex;
 
 	protected:
 	  iceConfManager()
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
 	  
 	public:
-	  static boost::recursive_mutex mutex;
+//	  static boost::recursive_mutex mutex;
 	  
 	  virtual ~iceConfManager();
 	  static iceConfManager* getInstance() 

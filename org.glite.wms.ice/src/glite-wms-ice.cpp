@@ -161,7 +161,7 @@ int main(int argc, char*argv[])
   log4cpp::Category* log_dev = logger_instance->getLogger();
   string hostcert, logfile, hostdn;
   {
-    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
     logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->getLogOnFile() );
     logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->getLogOnConsole() );
@@ -214,7 +214,7 @@ int main(int argc, char*argv[])
 
         // this must be set because other pieces of code
         // have a behaviour that depends on the listener is running or not
-	boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+	//boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
 	iceUtil::iceConfManager::getInstance()->setStartListener( false );
     } else {
         CREAM_SAFE_LOG(
@@ -229,7 +229,7 @@ int main(int argc, char*argv[])
 
     // this must be set because other pieces of code
     // have a behaviour that depends on the listener is running or not
-    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     iceUtil::iceConfManager::getInstance()->setStartListener( false );
   }
 
@@ -238,7 +238,7 @@ int main(int argc, char*argv[])
    ****************************************************************************/
   string jcachefile;
   {
-    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+//    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
   }
   string jsnapfile  = jcachefile+".snapshot";
@@ -269,7 +269,7 @@ int main(int argc, char*argv[])
    ****************************************************************************/ 
   glite::wms::ice::Ice* iceManager;
   try {
-    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     iceManager = new glite::wms::ice::Ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
       CREAM_SAFE_LOG(
@@ -330,7 +330,7 @@ int main(int argc, char*argv[])
    * Starts status poller and/or listener if specified in the config file
    ****************************************************************************/
   {
-    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     if(iceUtil::iceConfManager::getInstance()->getStartListener())
       iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
 

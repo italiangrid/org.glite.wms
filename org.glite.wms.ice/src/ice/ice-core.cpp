@@ -129,7 +129,7 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
         exit( 1 );
     }
 
-    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
 
     util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
     bool tmp_start_listener = confMgr->getStartListener();
@@ -195,7 +195,7 @@ Ice::~Ice( )
 //____________________________________________________________________________
 void Ice::startListener( int listenPort )
 {
-    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
     util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
 
     CREAM_SAFE_LOG(

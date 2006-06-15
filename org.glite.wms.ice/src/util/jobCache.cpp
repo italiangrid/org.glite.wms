@@ -338,7 +338,7 @@ void jobCache::logOperation( const operation& op, const std::string& param )
     m_operation_counter++;
     int max_op_cntr;
     {
-      boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+      //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
       max_op_cntr = iceConfManager::getInstance()->getMaxJobCacheOperationBeforeDump();
     }
 
