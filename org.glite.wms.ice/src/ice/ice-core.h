@@ -95,6 +95,9 @@ namespace glite {
           glite::wms::common::utilities::FileList<std::string> m_flns;
           
           log4cpp::Category* m_log_dev;
+
+	  std::string    m_host_cert;
+	  std::string    m_host_key;
           
       public:
           Ice( const std::string& NS_FL, const std::string& WM_FL )

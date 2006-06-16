@@ -30,7 +30,6 @@
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
 #include "jobKiller.h"
-//#include "iceThread.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -207,13 +206,15 @@ void Ice::startListener( int listenPort )
 
     util::eventStatusListener* listener;
     if( confMgr->getListenerEnableAuthN() ) {
-      const char *host = ::getenv("GLITE_HOST_CERT");
-      const char *key  = ::getenv("GLITE_HOST_KEY");
-      if( (!host) || (!key) ) {
+      m_host_cert = confMgr->getIceHostCert(); //::getenv("GLITE_HOST_CERT");
+      m_host_key  = confMgr->getIceHostKey();  //::getenv("GLITE_HOST_KEY");
+      
+      if( (m_host_cert == "") || (m_host_key == "") ) {
           CREAM_SAFE_LOG(
                          m_log_dev->fatalStream()
-                         << "Ice::startListener() - cannot access to GLITE_HOST_CERT and/or "
-                         << "GLITE_HOST_KEY environmental variables. Cannot start Listener "
+                         << "Ice::startListener() - cannot access to "
+			 << "ice_host_cert and/or ice_host_key "
+                         << "attributes. Cannot start Listener "
                          << "with authentication as requested. Stop."
                          << log4cpp::CategoryStream::ENDLINE
                          );
@@ -221,8 +222,8 @@ void Ice::startListener( int listenPort )
       }
       listener = new util::eventStatusListener(listenPort, 
 					       confMgr->getHostProxyFile(), 
-					       host, 
-					       key);
+					       m_host_cert, 
+					       m_host_key);
     }
     else {
       listener = new util::eventStatusListener(listenPort, confMgr->getHostProxyFile());
