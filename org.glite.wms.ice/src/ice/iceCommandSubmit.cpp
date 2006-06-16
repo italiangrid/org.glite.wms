@@ -166,282 +166,272 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 }
 
 //____________________________________________________________________________
-void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
-{
-    CREAM_SAFE_LOG(
-                   m_log_dev->infoStream()
-                   << "iceCommandSubmit::execute() - "
-                   << "This request is a Submission..."
-                   << log4cpp::CategoryStream::ENDLINE
-                   );   
-
-    util::jobCache* cache( util::jobCache::getInstance() );
-
-    vector<string> url_jid;
-    util::CreamJob theJob;
-    cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
-
-    try {
-        theJob.setJdl( m_jdl );
-        theJob.setStatus( cream_api::job_statuses::UNKNOWN );
-    } catch( util::ClassadSyntax_ex& ex ) {
+    void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+    {
         CREAM_SAFE_LOG(
-                       m_log_dev->errorStream() 
-                       << "Cannot instantiate a job from jdl=" << m_jdl
-                       << " due to classad excaption: " << ex.what()
+                       m_log_dev->infoStream()
+                       << "iceCommandSubmit::execute() - "
+                       << "This request is a Submission..."
                        << log4cpp::CategoryStream::ENDLINE
-                       );
-        throw( iceCommandFatal_ex( ex.what() ) );
-        // TODO: L&B?
-    }
+                       );   
 
-    // Put job in the cache; remember position in job_pos
-    boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-    util::jobCache::iterator job_pos = cache->put( theJob );
+        util::jobCache* cache( util::jobCache::getInstance() );
 
-#ifdef ICE_STANDALONE
-    CREAM_SAFE_LOG(
-                   m_log_dev->infoStream() 
-                   << "iceCommandSubmit::execute() - Registering "
-                   << "gridJobID=\"" << theJob.getGridJobID()
-                   << "\" to L&B service with user proxy=\"" 
-                   << theJob.getUserProxyCertificate() << "\""
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
+        vector<string> url_jid;
+        util::CreamJob theJob;
+        cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
 
-    m_lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be used ONLY if ICE is being tested alone (i.e., not coupled with the WMS)
-#endif
-    m_lb_logger->logEvent( new util::wms_dequeued_event( theJob, util::iceConfManager::getInstance()->getICEInputFile() ) );
-    m_lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
-
-    string modified_jdl;
-    try {    
-        // It is important to get the jdl from the job itself, rather
-        // than using the m_jdl attribute. This is because the
-        // sequence_code attribute inside the jdl classad has been
-        // modified by the L&B calls, and we have to pass to CREAM the
-        // "last" sequence code as the job wrapper will need to log
-        // the "really running" event.
-        modified_jdl = creamJdlHelper( theJob.getJDL() );
-    } catch( util::ClassadSyntax_ex& ex ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream() 
-                       << "Cannot convert jdl=" << m_jdl
-                       << " due to classad exception:" << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
-        cache->erase( job_pos );
-        throw( iceCommandFatal_ex( ex.what() ) );
-    }
-    
-    CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting") );
-    CREAM_SAFE_LOG(
-                   m_log_dev->debugStream() 
-                   << "JDL " << modified_jdl << " to [" 
-                   << theJob.getCreamURL() <<"]["
-                   << theJob.getCreamDelegURL() << "]"
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
-
-    try {
-        theProxy->Authenticate(theJob.getUserProxyCertificate());
-    } catch ( cream_api::soap_proxy::auth_ex& ex ) {
-        m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream()
-                       << "Unable to submit gridJobID=" 
-                       << theJob.getGridJobID()
-                       << " due to authentication error:" << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        ice->resubmit_job( theJob );
-        m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of SOAP exception: ").append( ex.what() ) ) );
-        cache->erase( job_pos );
-        throw( iceCommandFatal_ex( ex.what() ) );
-    }
-
-    { 
-        // lock the listener:
-        // this prevents the eventStatusListener::acceptJobStatus()
-        // to process a notification of a just submitted job that is not
-        // yet present in the jobCache
-        boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
-	//boost::recursive_mutex::scoped_lock lockPoll( util::eventStatusPoller::mutexJobStatusPoll ); // NO NEEDED FOR NOW
-	string delegID;
-        try {	    
-            // Locks the configuration manager
-            //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-/* 	    m_log_dev->infoStream() << "iceCommandSubmit::execute() - Registering with lease ["
-	    			    << m_confMgr->getLeaseDeltaTime() 
-				    << log4cpp::CategoryStream::ENDLINE; */
-            theProxy->Register(
-                               theJob.getCreamURL().c_str(),
-                               theJob.getCreamDelegURL().c_str(),
-                               delegID, // deleg ID not needed because this client
-                               // will always do auto_delegation
-                               modified_jdl,
-                               theJob.getUserProxyCertificate(),
-                               url_jid,
-			       // -1,
-                               m_confMgr->getLeaseDeltaTime(), 
-                               true /*autostart*/
-                               );
-        } catch( exception& ex ) {
+        try {
+            theJob.setJdl( m_jdl );
+            theJob.setStatus( cream_api::job_statuses::UNKNOWN );
+        } catch( util::ClassadSyntax_ex& ex ) {
             CREAM_SAFE_LOG(
-                           m_log_dev->errorStream()
-                           << "iceCommandSubmit::execute() - "
-                           << "Cannot register jobID="
-                           << theJob.getGridJobID() 
-                           << " Exception:" << ex.what()
+                           m_log_dev->errorStream() 
+                           << "Cannot instantiate a job from jdl=" << m_jdl
+                           << " due to classad excaption: " << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
-            ice->resubmit_job( theJob ); // Try to resubmit
-            m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of exception: ").append( ex.what() ) ) );
+            throw( iceCommandFatal_ex( ex.what() ) );
+            // TODO: L&B?
+        }
+
+        // Put job in the cache; remember position in job_pos
+        boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+        util::jobCache::iterator job_pos = cache->put( theJob );
+
+#ifdef ICE_STANDALONE
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream() 
+                       << "iceCommandSubmit::execute() - Registering "
+                       << "gridJobID=\"" << theJob.getGridJobID()
+                       << "\" to L&B service with user proxy=\"" 
+                       << theJob.getUserProxyCertificate() << "\""
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+
+        m_lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be used ONLY if ICE is being tested alone (i.e., not coupled with the WMS)
+#endif
+        m_lb_logger->logEvent( new util::wms_dequeued_event( theJob, util::iceConfManager::getInstance()->getICEInputFile() ) );
+        m_lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
+
+        string modified_jdl;
+        try {    
+            // It is important to get the jdl from the job itself, rather
+            // than using the m_jdl attribute. This is because the
+            // sequence_code attribute inside the jdl classad has been
+            // modified by the L&B calls, and we have to pass to CREAM the
+            // "last" sequence code as the job wrapper will need to log
+            // the "really running" event.
+            modified_jdl = creamJdlHelper( theJob.getJDL() );
+        } catch( util::ClassadSyntax_ex& ex ) {
+            CREAM_SAFE_LOG(
+                           m_log_dev->errorStream() 
+                           << "Cannot convert jdl=" << m_jdl
+                           << " due to classad exception:" << ex.what()
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
+            cache->erase( job_pos );
+            throw( iceCommandFatal_ex( ex.what() ) );
+        }
+    
+        CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting") );
+        CREAM_SAFE_LOG(
+                       m_log_dev->debugStream() 
+                       << "JDL " << modified_jdl << " to [" 
+                       << theJob.getCreamURL() <<"]["
+                       << theJob.getCreamDelegURL() << "]"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+
+        try {
+            theProxy->Authenticate(theJob.getUserProxyCertificate());
+        } catch ( cream_api::soap_proxy::auth_ex& ex ) {
+            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
+            CREAM_SAFE_LOG(
+                           m_log_dev->errorStream()
+                           << "Unable to submit gridJobID=" 
+                           << theJob.getGridJobID()
+                           << " due to authentication error:" << ex.what()
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            ice->resubmit_job( theJob );
+            m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of SOAP exception: ").append( ex.what() ) ) );
             cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
-        CREAM_SAFE_LOG(
-                       m_log_dev->infoStream()
-                       << "iceCommandSubmit::execute() - Returned CREAM-JOBID ["
-                       << url_jid[1] <<"]"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        
-        // no failure: put jobids and status in cache
-        // and remove last request from WM's filelist
-
-        theJob.setJobID(url_jid[1]);
-        theJob.setStatus(cream_api::job_statuses::PENDING);
-        theJob.setEndLease( time(0) + m_confMgr->getLeaseDeltaTime() * 60 );
-        theJob.setDelegationId( delegID );
-        theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
-        theJob.set_wn_sequence_code( theJob.getSequenceCode() );
-
-        m_lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
-
-        // put(...) accepts arg by reference, but
-        // the implementation puts the arg in the memory hash by copying it. So
-        // passing a *pointer should not produce problems
-
-        // The following is redundant, as logEvent as a (wanted) side
-        // effect stores the job
-        cache->put( theJob );
-    } // this end-scope unlock the listener that now can accept new notifications
-
-    /*
-     * here must check if we're subscribed to the CEMon service
-     * in order to receive the status change notifications
-     * of job just submitted. But only if listener is ON
-     */
-    bool tmp_start_listener;
-    {
-        //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-        tmp_start_listener = m_confMgr->getStartListener();
-    }
-
-    if( tmp_start_listener ) {
-      string cemon_url;
-      {
-        //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-	boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-	cemon_url = util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
-        CREAM_SAFE_LOG(
-                       m_log_dev->infoStream() 
-                       << "iceCommandSubmit::execute() - "
-                       << "For current CREAM, cemonUrlCache returned CEMon URL ["
-                       << cemon_url<<"]"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-
-	if( cemon_url.empty() ) {
-	  try {
-	      cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_confMgr->getHostProxyFile() );
-	      cream_api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( theJob.getCreamURL().c_str(), cemon_url );
-              CREAM_SAFE_LOG(
-                             m_log_dev->infoStream() 
-                             << "iceCommandSubmit::execute() - "
-                             << "For current CREAM, query to CREAM service returned "
-                             << "CEMon URL [" << cemon_url<<"]"
-                             << log4cpp::CategoryStream::ENDLINE
-                             );
-              util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
-	    } catch(exception& ex) {
-
+        { 
+            // lock the listener:
+            // this prevents the eventStatusListener::acceptJobStatus()
+            // to process a notification of a just submitted job that is not
+            // yet present in the jobCache
+            boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
+            string delegID;
+            try {	    
+                theProxy->Register(
+                                   theJob.getCreamURL().c_str(),
+                                   theJob.getCreamDelegURL().c_str(),
+                                   delegID, // deleg ID not needed because this client
+                                   // will always do auto_delegation
+                                   modified_jdl,
+                                   theJob.getUserProxyCertificate(),
+                                   url_jid,
+                                   // -1,
+                                   m_confMgr->getLeaseDeltaTime(), 
+                                   true /*autostart*/
+                                   );
+            } catch( exception& ex ) {
                 CREAM_SAFE_LOG(
-                               m_log_dev->errorStream() 
-                               << "iceCommandSubmit::execute() - Error retrieving"
-                               <<" CEMon's URL from CREAM's URL: " << ex.what()
-                               << ". Composing URL from configuration file..."
+                               m_log_dev->errorStream()
+                               << "iceCommandSubmit::execute() - "
+                               << "Cannot register jobID="
+                               << theJob.getGridJobID() 
+                               << " Exception:" << ex.what()
                                << log4cpp::CategoryStream::ENDLINE
                                );
-	      cemon_url = theJob.getCreamURL();
-	      boost::replace_first(cemon_url,
-                                   m_confMgr->getCreamUrlPostfix(),
-                                   m_confMgr->getCEMonUrlPostfix()
-                                  );
-              CREAM_SAFE_LOG(
-                             m_log_dev->infoStream() 
-                             << "Using CEMon URL [" << cemon_url << "]" 
-                             << log4cpp::CategoryStream::ENDLINE
-                             );
-	      util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
-	    }
-	}
-      }
-      boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
-      if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
-            /* MUST SUBSCRIBE TO THIS CEMON */
-          CREAM_SAFE_LOG(
-                         m_log_dev->infoStream()
-                         << "iceCommandSubmit::execute() - Not subscribed to ["
-                         << cemon_url << "]. Going to subscribe to it..."
-                         << log4cpp::CategoryStream::ENDLINE
-                         );
+                m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
+                ice->resubmit_job( theJob ); // Try to resubmit
+                m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of exception: ").append( ex.what() ) ) );
+                cache->erase( job_pos );
+                throw( iceCommandFatal_ex( ex.what() ) );
+            }
 
-      {
-	    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
             CREAM_SAFE_LOG(
                            m_log_dev->infoStream()
-                           << "iceCommandSubmit::execute() - Subscribing the consumer ["
-                           << m_myname_url << "] to ["<<cemon_url
-                           << "] with duration=" << m_confMgr->getSubscriptionDuration()
-                           << " secs"
+                           << "iceCommandSubmit::execute() - Returned CREAM-JOBID ["
+                           << url_jid[1] <<"]"
                            << log4cpp::CategoryStream::ENDLINE
                            );
-      }
+        
+            // no failure: put jobids and status in cache
+            // and remove last request from WM's filelist
 
-      /**
-      * This is the 1st call of
-      * subscriptionManager::getInstance() and it's safe
-      * because the singleton has already been created by
-      * ice-core module.
-      */
-       boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-       if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
-           CREAM_SAFE_LOG(
-                          m_log_dev->errorStream()
-                          << "iceCommandSubmit::execute() - Subscribe to ["
-                          << cemon_url << "] failed! "
-                          << "Will not receive status notifications from it..."
-                          << log4cpp::CategoryStream::ENDLINE
-                          );
-       } else {
-           CREAM_SAFE_LOG(
-                          m_log_dev->infoStream()
-                          << "iceCommandSubmit::execute() - "
-                          << "Subscribed with ID ["
-                          << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
-                          << log4cpp::CategoryStream::ENDLINE
-                          );
+            theJob.setJobID(url_jid[1]);
+            theJob.setStatus(cream_api::job_statuses::PENDING);
+            theJob.setEndLease( time(0) + m_confMgr->getLeaseDeltaTime() * 60 );
+            theJob.setDelegationId( delegID );
+            theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
+            theJob.set_wn_sequence_code( theJob.getSequenceCode() );
 
-         util::subscriptionCache::getInstance()->insert(cemon_url);
-       }
-     }
-   }
-} // execute
+            m_lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
+
+            // put(...) accepts arg by reference, but
+            // the implementation puts the arg in the memory hash by copying it. So
+            // passing a *pointer should not produce problems
+
+            // The following is redundant, as logEvent as a (wanted) side
+            // effect stores the job
+            cache->put( theJob );
+        } // this end-scope unlock the listener that now can accept new notifications
+
+        /*
+         * here must check if we're subscribed to the CEMon service
+         * in order to receive the status change notifications
+         * of job just submitted. But only if listener is ON
+         */
+        bool tmp_start_listener;
+        tmp_start_listener = m_confMgr->getStartListener();
+
+        if( tmp_start_listener ) {
+            string cemon_url;
+            {
+                boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
+                cemon_url = util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
+                CREAM_SAFE_LOG(
+                               m_log_dev->infoStream() 
+                               << "iceCommandSubmit::execute() - "
+                               << "For current CREAM, cemonUrlCache returned CEMon URL ["
+                               << cemon_url<<"]"
+                               << log4cpp::CategoryStream::ENDLINE
+                               );
+            
+                if( cemon_url.empty() ) {
+                    try {
+                        cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_confMgr->getHostProxyFile() );
+                        cream_api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( theJob.getCreamURL().c_str(), cemon_url );
+                        CREAM_SAFE_LOG(
+                                       m_log_dev->infoStream() 
+                                       << "iceCommandSubmit::execute() - "
+                                       << "For current CREAM, query to CREAM service returned "
+                                       << "CEMon URL [" << cemon_url<<"]"
+                                       << log4cpp::CategoryStream::ENDLINE
+                                       );
+                        util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+                    } catch(exception& ex) {
+                    
+                        CREAM_SAFE_LOG(
+                                       m_log_dev->errorStream() 
+                                       << "iceCommandSubmit::execute() - Error retrieving"
+                                       <<" CEMon's URL from CREAM's URL: " << ex.what()
+                                       << ". Composing URL from configuration file..."
+                                       << log4cpp::CategoryStream::ENDLINE
+                                       );
+                        cemon_url = theJob.getCreamURL();
+                        boost::replace_first(cemon_url,
+                                             m_confMgr->getCreamUrlPostfix(),
+                                             m_confMgr->getCEMonUrlPostfix()
+                                             );
+                        CREAM_SAFE_LOG(
+                                       m_log_dev->infoStream() 
+                                       << "Using CEMon URL [" << cemon_url << "]" 
+                                       << log4cpp::CategoryStream::ENDLINE
+                                       );
+                        util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+                    }
+                }
+            }
+            boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
+            if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+                /* MUST SUBSCRIBE TO THIS CEMON */
+                CREAM_SAFE_LOG(
+                               m_log_dev->infoStream()
+                               << "iceCommandSubmit::execute() - Not subscribed to ["
+                               << cemon_url << "]. Going to subscribe to it..."
+                               << log4cpp::CategoryStream::ENDLINE
+                               );
+
+                {
+                    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+                    CREAM_SAFE_LOG(
+                                   m_log_dev->infoStream()
+                                   << "iceCommandSubmit::execute() - Subscribing the consumer ["
+                                   << m_myname_url << "] to ["<<cemon_url
+                                   << "] with duration=" << m_confMgr->getSubscriptionDuration()
+                                   << " secs"
+                                   << log4cpp::CategoryStream::ENDLINE
+                                   );
+                }
+
+                /**
+                 * This is the 1st call of
+                 * subscriptionManager::getInstance() and it's safe
+                 * because the singleton has already been created by
+                 * ice-core module.
+                 */
+                boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+                if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
+                    CREAM_SAFE_LOG(
+                                   m_log_dev->errorStream()
+                                   << "iceCommandSubmit::execute() - Subscribe to ["
+                                   << cemon_url << "] failed! "
+                                   << "Will not receive status notifications from it..."
+                                   << log4cpp::CategoryStream::ENDLINE
+                                   );
+                } else {
+                    CREAM_SAFE_LOG(
+                                   m_log_dev->infoStream()
+                                   << "iceCommandSubmit::execute() - "
+                                   << "Subscribed with ID ["
+                                   << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
+                                   << log4cpp::CategoryStream::ENDLINE
+                                   );
+
+                    util::subscriptionCache::getInstance()->insert(cemon_url);
+                }
+            }
+        }
+    } // execute
 
 //____________________________________________________________________________
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::ClassadSyntax_ex& )
@@ -583,6 +573,11 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 
     if ( 0 != jdl->Lookup( "OutputSandboxDestURI" ) ) {
 
+        // Remove the OutputSandboxBaseDestURI from the classad
+        // OutputSandboxDestURI and OutputSandboxBaseDestURI cannot
+        // be given at the same time.
+        jdl->Delete( "OutputSandboxBaseDestURI" );
+
         // Check if all the entries in the OutputSandboxDestURI
         // are absolute URIs
 
@@ -632,12 +627,10 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
             }
             jdl->Insert( "OutputSandboxDestURI", newOsbDUList );
         }
-        return;
     } else {       
         if ( 0 == jdl->Lookup( "OutputSandboxBaseDestURI" ) ) {
-            // Put a default OutpuSandboxDestURI attribute
+            // Put a default OutpuSandboxBaseDestURI attribute
             jdl->InsertAttr( "OutputSandboxBaseDestURI",  default_osbdURI );
-            return;
         }
     }
     

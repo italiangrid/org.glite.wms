@@ -169,16 +169,6 @@ void iceUtil::eventStatusListener::createObject( void )
 
 
   CREAM_SAFE_LOG(m_log_dev->info( "eventStatusListener::CTOR() - Listener created!" ));
-//   try {
-//       m_pinger.reset( new CEPing(m_proxyfile, "/") );
-//   } catch(exception& ex) {
-//       m_log_dev->fatalStream() 
-//           << "eventStatusListener::CTOR() - "
-//           << "Fatal Error creating a pinger object:" << ex.what()
-//           << log4cpp::CategoryStream::ENDLINE;
-//       m_isOK = false;
-//       return;
-//   }
 
   /**
    * Here we do not need to check if the creation of subscriptionManager
@@ -195,7 +185,7 @@ void iceUtil::eventStatusListener::createObject( void )
 //______________________________________________________________________________
 iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
   : CEConsumer(i),
-    iceThread( "event status poller" ),
+    iceThread( "event status listener" ),
     m_conf(iceUtil::iceConfManager::getInstance()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
@@ -211,7 +201,7 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,
 						  const string& cert,
 						  const string& key)
   : CEConsumer(i, cert.c_str(), key.c_str()),
-    iceThread( "event status poller" ),
+    iceThread( "event status listener" ),
     m_conf(iceUtil::iceConfManager::getInstance()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
