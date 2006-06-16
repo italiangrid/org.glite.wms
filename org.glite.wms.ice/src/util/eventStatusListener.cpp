@@ -237,23 +237,22 @@ void iceUtil::eventStatusListener::body( void )
 //______________________________________________________________________________
 void iceUtil::eventStatusListener::acceptJobStatus(void)
 {
+  if( isStopped() ) {
+    CREAM_SAFE_LOG(m_log_dev->infoStream()
+		   << "eventStatusListener::acceptJobStatus() - "
+		   << "eventStatusListener is ending."
+		   << log4cpp::CategoryStream::ENDLINE);
+    return;
+  }
   /**
    * Waits for an incoming connection
    */
-    if(!this->accept() && !isStopped()) {
-        if(isStopped()) {
-            CREAM_SAFE_LOG(m_log_dev->infoStream()
-			   << "eventStatusListener::acceptJobStatus() - "
-			   << "eventStatusListener is ending"
-			   << log4cpp::CategoryStream::ENDLINE);
-            return;
-        } else {
-	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "eventStatusListener::acceptJobStatus()"
-			 << " - CEConsumer::Accept() returned false."
-			 << log4cpp::CategoryStream::ENDLINE);
-            return;
-        }
+    if( !this->accept() ) {
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "eventStatusListener::acceptJobStatus()"
+		     << " - CEConsumer::Accept() returned false."
+		     << log4cpp::CategoryStream::ENDLINE);
+      return;
     }
 
     CREAM_SAFE_LOG(m_log_dev->infoStream()
