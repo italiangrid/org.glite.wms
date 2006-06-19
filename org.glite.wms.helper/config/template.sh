@@ -1,5 +1,7 @@
 #!/bin/sh
 
+trap 'fatal_error "Job has been terminated by the batch system"' TERM
+
 jw_echo() # 1 - msg
 {
   echo "$1"
@@ -317,8 +319,6 @@ function send_partial_file
   # Do some cleanup
   if [ -f "$LISTFILE" ] ; then rm $LISTFILE ; fi
 }
-
-trap 'fatal_error "Job has been terminated while executing"' TERM
 
 if [ -n "${__gatekeeper_hostname}" ]; then
   export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
