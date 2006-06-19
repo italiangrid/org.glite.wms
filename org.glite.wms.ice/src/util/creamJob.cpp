@@ -73,6 +73,7 @@ string iceUtil::CreamJob::serialize( void ) const
     ad.InsertAttr( "delegation_id", m_delegation_id );
     ad.InsertAttr( "wn_sequence_code", m_wn_sequence_code );
     ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
+    ad.InsertAttr( "worker_node", m_worker_node );
     classad::ClassAdParser parser;
     classad::ClassAd* jdlAd = parser.ParseClassAd( m_jdl );
     // Updates sequence code
@@ -120,9 +121,10 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
 	 ! ad->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
          ! ad->EvaluateAttrString( "delegation_id", m_delegation_id ) ||
          ! ad->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ||
-         ! ad->EvaluateAttrString( "failure_reason", m_failure_reason ) ) {
+         ! ad->EvaluateAttrString( "failure_reason", m_failure_reason ) ||
+         ! ad->EvaluateAttrString( "worker_node", m_worker_node ) ) {
 
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason" );
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node" );
 
     }
     m_status = (api::job_statuses::job_status)st_number;
@@ -133,7 +135,8 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
     boost::trim_if( m_delegation_id, boost::is_any_of("\"") );
     boost::trim_if( m_wn_sequence_code, boost::is_any_of("\"") );
     boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
-    
+    boost::trim_if( m_worker_node, boost::is_any_of("\"") );
+
     try {
         m_end_lease = boost::lexical_cast< time_t >( elease );
         m_last_seen = boost::lexical_cast< time_t >( lseen );

@@ -98,6 +98,12 @@ namespace { // anonymous namespace
          */ 
         int get_exit_code( void ) const { return m_exit_code; };
 
+
+        /**
+         * Returns the worker node
+         */
+        const string& get_worker_node( void ) {return m_worker_node; };
+
         /**
          * Apply this status change notification to job j. This means
          * that the status of j (and possibly its exit code) is changed
@@ -116,6 +122,7 @@ namespace { // anonymous namespace
         bool m_has_exit_code;
         int m_exit_code;
         string m_failure_reason;
+        string m_worker_node;
     };
 
     //
@@ -151,11 +158,13 @@ namespace { // anonymous namespace
             ad->EvaluateAttrString( "FAILURE_REASON", m_failure_reason );
         }
 
+        ad->EvaluateAttrString( "WORKER_NODE", m_worker_node );
     };
 
     void StatusNotification::apply_to_job( iceUtil::CreamJob& j ) const
     {
         j.setStatus( get_status() );
+        j.set_worker_node( m_worker_node );
         if ( has_exit_code() ) {
             j.set_exit_code( get_exit_code() );
             j.set_failure_reason( get_failure_reason() );

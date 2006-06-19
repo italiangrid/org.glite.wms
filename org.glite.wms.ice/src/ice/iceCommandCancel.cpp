@@ -139,7 +139,7 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
         it->setSequenceCode( m_sequence_code );
 
     // Log cancel request event
-    m_lb_logger->logEvent( new util::cream_cancel_request_event( *it ) );    
+    m_lb_logger->logEvent( new util::cream_cancel_request_event( *it, string("User issued cancel request") ) );    
 
     util::CreamJob theJob( *it );
     vector<string> url_jid(1);   

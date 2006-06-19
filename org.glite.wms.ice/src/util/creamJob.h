@@ -65,6 +65,7 @@ namespace glite {
 	  int    m_statusPollRetryCount; //! number of time we tried to get the status of the job
           int    m_exit_code; //! the job exit code
           std::string m_failure_reason; //! The job failure reason (if the job is done_failed or aborted)
+          std::string m_worker_node; //! The worker node on which the job is being executed
 
 	public:
 
@@ -122,6 +123,10 @@ namespace glite {
           void set_num_logged_status_changes( int l ) { m_num_logged_status_changes = l; }
           //! Gets the time when the lease ends
           time_t getEndLease( void ) const { return m_end_lease; }
+          //! Gets the worker node on which the job is being execute (empty string if no worker node has been set)
+          std::string get_worker_node( void ) const { return m_worker_node; }
+          //! Sets the worker node on which the job is being executed
+          void set_worker_node( const std::string& w_node ) { m_worker_node = w_node; }
           //! Gets the time we last got information about this job
           time_t getLastSeen( void ) const { return m_last_seen; }
           //! Gets the WN sequence code

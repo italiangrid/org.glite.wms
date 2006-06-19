@@ -33,11 +33,11 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
     case jobstat::IDLE:
         return new lrms_accepted_event( theJob );
     case jobstat::RUNNING:
-        return new job_running_event( theJob, std::string( "unavailable" ) ); // FIXME
+        return new job_running_event( theJob ); // FIXME
     case jobstat::REALLY_RUNNING:
         return new job_really_running_event( theJob, theJob.get_wn_sequence_code() );
     case jobstat::CANCELLED:
-        return new job_cancelled_event( theJob );
+        return new job_cancelled_event( theJob, std::string("unavailable") );
     case jobstat::HELD:
         return new job_suspended_event( theJob );
     case jobstat::ABORTED:

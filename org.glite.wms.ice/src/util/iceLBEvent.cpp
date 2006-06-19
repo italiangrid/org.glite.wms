@@ -225,8 +225,9 @@ int cream_refused_event::execute( iceLBContext* ctx )
 // cream cancel request event
 //
 //////////////////////////////////////////////////////////////////////////////
-cream_cancel_request_event::cream_cancel_request_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Cancel Request Event" )
+cream_cancel_request_event::cream_cancel_request_event( const CreamJob& j, const std::string& reason ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "Cream Cancel Request Event, reason=%1%" ) % reason ) ),
+    m_reason( reason )
 {
 
 }
@@ -235,11 +236,11 @@ int cream_cancel_request_event::execute( iceLBContext* ctx )
 {
 #ifdef GLITE_WMS_HAVE_LBPROXY
     return edg_wll_LogCancelREQProxy( *(ctx->el_context), 
-                                      ctx->el_s_unavailable 
+                                      m_reason.c_str()
                                       );
 #else
     return edg_wll_LogCancelREQ( *(ctx->el_context), 
-                                 ctx->el_s_unavailable 
+                                 m_reason.c_str()
                                  );
 #endif
 }
@@ -303,9 +304,8 @@ int cream_cancel_done_event::execute( iceLBContext* ctx )
 // job running event
 //
 //////////////////////////////////////////////////////////////////////////////
-job_running_event::job_running_event( const CreamJob& j, const std::string& host ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Runnign Event" ),
-    m_host( host )
+job_running_event::job_running_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("Job running event, worker_node=%1%" ) % j.get_worker_node() ) )
 {
 
 }
@@ -313,9 +313,9 @@ job_running_event::job_running_event( const CreamJob& j, const std::string& host
 int job_running_event::execute( iceLBContext* ctx )
 {
 #ifdef GLITE_WMS_HAVE_LBPROXY
-    return edg_wll_LogRunningProxy( *(ctx->el_context), m_host.c_str() );
+    return edg_wll_LogRunningProxy( *(ctx->el_context), m_job.get_worker_node().c_str() );
 #else
-    return edg_wll_LogRunning( *(ctx->el_context), m_host.c_str() );
+    return edg_wll_LogRunning( *(ctx->el_context), m_job.get_worker_node().c_str() );
 #endif
 }
 
@@ -346,8 +346,9 @@ int job_really_running_event::execute( iceLBContext* ctx )
 // job cancelled event
 //
 //////////////////////////////////////////////////////////////////////////////
-job_cancelled_event::job_cancelled_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Cancelled Event" )
+job_cancelled_event::job_cancelled_event( const CreamJob& j, const std::string& reason ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "Job Cancelled Event, reason=%1%" ) % reason ) ),
+    m_reason( reason )
 {
 
 }

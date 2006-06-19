@@ -83,8 +83,11 @@ namespace glite {
           /**
            * Updates the cache with the job status changes (for a single job)
            * contained in l.
+           *
+           * @param l the list of status change informations related 
            */
-          void update_single_job( const std::vector< glite::ce::cream_client_api::soap_proxy::Status >& l );
+          // void update_single_job( const std::vector< glite::ce::cream_client_api::soap_proxy::Status >& l );
+          void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& s );
 
           /**
            * Checks whether jobs in the list l need to be purged or
