@@ -1,5 +1,7 @@
 #!/bin/sh
 
+trap 'fatal_error "Job has been terminated by the batch system"' TERM
+
 jw_echo() # 1 - msg
 {
   echo "$1"
@@ -17,7 +19,7 @@ log_event() # 1 - event
   || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
-log_error() # 1 - reason
+fatal_error() # 1 - reason
 {
   jw_echo "$1"
 
@@ -367,7 +369,7 @@ if [ ${__create_subdir} -eq 1 ]; then
     newdir="${__jobid_to_filename}"
     mkdir -p .mpi/${newdir}
     if [ $? != 0 ]; then
-      log_error "Cannot create .mpi/${newdir} directory"
+      fatal_error "Cannot create .mpi/${newdir} directory"
     fi
     cd .mpi/${newdir}
   fi
@@ -376,7 +378,7 @@ fi
 #savannah 14866: the test -w on work dir is unsuitable on AFS machines
 tmpfile=`mktemp -q ./tmp.XXXXXX`
 if [ $? != 0 ]; then
-  log_error "Working directory not writable"
+  fatal_error "Working directory not writable"
 else
   rm ${tmpfile}
 fi
@@ -392,11 +394,11 @@ maradona="${__jobid_to_filename}.output"
 touch "${maradona}"
 
 if [ -z "${GLOBUS_LOCATION}" ]; then
-  log_error "GLOBUS_LOCATION undefined"
+  fatal_error "GLOBUS_LOCATION undefined"
 elif [ -r "${GLOBUS_LOCATION}/etc/globus-user-env.sh" ]; then
   . ${GLOBUS_LOCATION}/etc/globus-user-env.sh
 else
-  log_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
+  fatal_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
 fi
 
 for env in ${__environment[@]}
@@ -411,7 +413,7 @@ if [ ${__wmp_support} -eq 0 ]; then
   do
     globus_url_retry_copy "${__input_base_url}${f}" "file://${workdir}/${f}"
     if [ $? != 0 ]; then
-      log_error "Cannot download ${f} from ${__input_base_url}"
+      fatal_error "Cannot download ${f} from ${__input_base_url}"
     fi
   done
 else
@@ -425,7 +427,7 @@ else
       htcp "${f}" "file://${workdir}/${file}"
     fi
     if [ $? != 0 ]; then
-      log_error "Cannot download ${file} from ${f}"
+      fatal_error "Cannot download ${file} from ${f}"
     fi
   done
 fi
@@ -433,7 +435,7 @@ fi
 if [ -f "${__job}" ]; then
   chmod +x "${__job}" 2>/dev/null
 else
-  log_error "${__job} not found or unreadable"
+  fatal_error "${__job} not found or unreadable"
 fi
 
 #user script (before taking the token, shallow-sensitive)
@@ -442,7 +444,7 @@ if [ -f "${__prologue}" ]; then
   ${__prologue} "${__prologue_arguments}"
   prologue_status=$?
   if [ ${prologue_status} -ne 0 ]; then
-    log_error "Prologue failed with error ${prologue_status}"
+    fatal_error "Prologue failed with error ${prologue_status}"
   fi
 fi
 
@@ -477,7 +479,7 @@ if [ -n ${__shallow_resubmission_token} ]; then
     log_event "ReallyRunning"
     jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
   else
-    log_error "Cannot take token for $GLITE_WMS_JOBID"
+    fatal_error "Cannot take token for $GLITE_WMS_JOBID"
   fi
 fi
 
@@ -630,7 +632,7 @@ if [ -f "${__epilogue}" ]; then
   ${__epilogue} "${__epilogue_arguments}"
   epilogue_status=$?
   if [ ${epilogue_status} -ne 0 ]; then
-    log_error "epilogue failed with error ${epilogue_status}"
+    fatal_error "epilogue failed with error ${epilogue_status}"
   fi
 fi
 
@@ -683,7 +685,7 @@ if [ ${__wmp_support} -eq 0 ]; then
         globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
       fi
       if [ $? != 0 ]; then
-        log_error "Cannot upload ${f} into ${__output_base_url}" "Done"
+        fatal_error "Cannot upload ${f} into ${__output_base_url}" "Done"
       fi
     fi #if [ -r "${f}" ]; then
     let "++current_file"
@@ -740,7 +742,7 @@ else #WMP support
       fi
     fi
     if [ $? != 0 ]; then
-      log_error "Cannot upload ${file} into ${f}" "Done"
+      fatal_error "Cannot upload ${file} into ${f}" "Done"
     fi
     let "++current_file"
   done
