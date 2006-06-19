@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE LB Logger Context
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 //
 // This file is heavily based on org.glite.wms.jobsubmission/src/common/EventLogger.cpp
 //
@@ -16,9 +35,6 @@
 #include <boost/filesystem/operations.hpp>
 
 namespace fs = boost::filesystem;
-
-//#include <openssl/pem.h>
-//#include <openssl/x509.h>
 
 #include "glite/lb/producer.h"
 #include "iceLBContext.h"
@@ -43,6 +59,36 @@ const char *iceUtil::iceLBContext::el_s_unavailable = "unavailable";
 const char *iceUtil::iceLBContext::el_s_OK = "OK";
 const char *iceUtil::iceLBContext::el_s_failed = "Failed";
 
+#ifdef GLITE_WMS_HAVE_LBPROXY
+
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+
+namespace {
+    
+    // retrieve the subject_name from a given x509_proxy (thx to giaco)
+    std::string get_proxy_subject(std::string const& x509_proxy)
+    {
+        static std::string const null_string;
+        
+        std::FILE* fd = std::fopen(x509_proxy.c_str(), "r");
+        if (!fd) return null_string;
+        boost::shared_ptr<std::FILE> fd_(fd, std::fclose);
+        
+        ::X509* const cert = ::PEM_read_X509(fd, 0, 0, 0);
+        if (!cert) return null_string;
+        boost::shared_ptr< ::X509> cert_(cert, ::X509_free);
+        
+        char* const s = ::X509_NAME_oneline(::X509_get_subject_name(cert), 0, 0);
+        if (!s) return null_string;
+        boost::shared_ptr<char> s_(s, ::free);
+        
+        return std::string(s);
+    }
+
+}
+
+#endif
 //////////////////////////////////////////////////////////////////////////////
 //
 // iceLogger Exception
@@ -75,16 +121,15 @@ iceUtil::iceLBContext::iceLBContext( void ) :
     m_cache( jobCache::getInstance() )
 {
     edg_wll_InitContext( el_context );
-    //    char name[256];
 
     try {
-      el_s_localhost_name = (char*)iceUtil::getHostName().c_str();
+        el_s_localhost_name = iceUtil::getHostName();
     } catch( runtime_error& ex) {
-      CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "iceLBContext::CTOR() - getHostName() returned an ERROR: "
-		     << ex.what()
-		     << log4cpp::CategoryStream::ENDLINE);
-      el_s_localhost_name = "(unknown host name )"; 
+        CREAM_SAFE_LOG(m_log_dev->errorStream() 
+                       << "iceLBContext::CTOR() - getHostName() returned an ERROR: "
+                       << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE);
+        el_s_localhost_name = "(unknown host name )"; 
     }
 }
 
@@ -229,7 +274,11 @@ void iceUtil::iceLBContext::registerJob( const util::CreamJob& theJob )
     
     edg_wlc_JobIdParse( theJob.getGridJobID().c_str(), &id );
 
+#ifdef GLITE_WMS_HAVE_LBPROXY
+    res = edg_wll_RegisterJobProxy( *el_context, id, EDG_WLL_JOB_SIMPLE, theJob.getJDL().c_str(), theJob.getEndpoint().c_str(), 0, 0, 0 );
+#else
     res = edg_wll_RegisterJob( *el_context, id, EDG_WLL_JOB_SIMPLE, theJob.getJDL().c_str(), theJob.getEndpoint().c_str(), 0, 0, 0 );
+#endif
     edg_wlc_JobIdFree( id );
     if( res != 0 ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
@@ -261,7 +310,13 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
     if ( lbserver ) free( lbserver );
 
     if ( !theJob.getSequenceCode().empty() ) {
+#ifdef GLITE_WMS_HAVE_LBPROXY
+        string const user_dn( get_proxy_subject( theJob.getUserProxyCertificate() ) );
+
+        res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.getSequenceCode().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
+#else
         res |= edg_wll_SetLoggingJob( *el_context, id, theJob.getSequenceCode().c_str(), EDG_WLL_SEQ_NORMAL );
+#endif
     }
 
     edg_wlc_JobIdFree( id );
@@ -282,7 +337,6 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
     pf.normalize();
 
     if( fs::exists(pf) ) {
-
         res = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, 
                                 theJob.getUserProxyCertificate().c_str() );
 
