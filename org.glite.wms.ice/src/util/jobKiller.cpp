@@ -34,32 +34,35 @@ iceUtil::jobKiller::~jobKiller()
 //______________________________________________________________________________
 void iceUtil::jobKiller::body()
 {
-  //vector< iceUtil::creamJob > jobs;
-  iceUtil::jobCache::iterator job_it;
-  time_t proxyTimeLeft;
-  while( !isStopped() ) {
-    CREAM_SAFE_LOG( m_log_dev->infoStream()
-		    << "jobKiller::body() - New iteration..."
-		    << log4cpp::CategoryStream::ENDLINE);
-    { // FIXME: perhaps this locking can be less rough...
-      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-      for(job_it = iceUtil::jobCache::getInstance()->begin(); 
-	  job_it != iceUtil::jobCache::getInstance()->end();
-	  ++job_it)
-	{
-	  proxyTimeLeft = m_theProxy->getProxyTimeLeft( job_it->getUserProxyCertificate() );
-	  if( proxyTimeLeft < m_threshold_time )
-	    {
-	      CREAM_SAFE_LOG( m_log_dev->infoStream() << "jobKiller::body() - Job ["
-			      << job_it->getJobID() << "]"
-			      << " has proxy expiring in 5 minutes. Going to cancel it..."
-			      << log4cpp::CategoryStream::ENDLINE);
-	      killJob( *job_it );
-	    }
-	}
+    //vector< iceUtil::creamJob > jobs;
+    iceUtil::jobCache::iterator job_it;
+    while( !isStopped() ) {
+        CREAM_SAFE_LOG( m_log_dev->infoStream()
+                        << "jobKiller::body() - New iteration..."
+                        << log4cpp::CategoryStream::ENDLINE);
+        { // FIXME: perhaps this locking can be less rough...
+            boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+            for( job_it = iceUtil::jobCache::getInstance()->begin(); 
+                 job_it != iceUtil::jobCache::getInstance()->end();
+                 ++job_it) {
+                time_t proxyTimeLeft = m_theProxy->getProxyTimeLeft( job_it->getUserProxyCertificate() );
+                if( proxyTimeLeft < m_threshold_time ) {
+                    CREAM_SAFE_LOG( m_log_dev->infoStream() 
+                                    << "jobKiller::body() - Job ["
+                                    << job_it->getJobID() << "]"
+                                    << " has proxy expiring in "
+                                    << proxyTimeLeft 
+                                    << " seconds, which is less than "
+                                    << "the threshold ("
+                                    << m_threshold_time << " seconds). "
+                                    << "Going to cancel it..."
+                                    << log4cpp::CategoryStream::ENDLINE);
+                    killJob( *job_it );
+                }
+            }
+        }
+        sleep( m_delay );
     }
-    sleep( m_delay );
-  }
 }
 
 //______________________________________________________________________________

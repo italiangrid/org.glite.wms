@@ -81,22 +81,22 @@ namespace { // anonymous namespace
         /**
          * Returns the CREAM job ID for this notification
          */
-        const string& getCreamJobID( void ) const { return cream_job_id; };
+        const string& get_cream_job_id( void ) const { return m_cream_job_id; };
 
         /**
          * Returns the status for this notification
          */
-        api::job_statuses::job_status  getStatus( void ) const { return job_status; };
+        api::job_statuses::job_status  get_status( void ) const { return m_job_status; };
 
         /**
          * Returns true iff the notification has an exit_code attribute
          */
-        bool hasExitCode( void ) const { return has_exit_code; };
+        bool has_exit_code( void ) const { return m_has_exit_code; };
 
         /**
          * Returns the exit code
          */ 
-        int getExitCode( void ) const { return exit_code; };
+        int get_exit_code( void ) const { return m_exit_code; };
 
         /**
          * Apply this status change notification to job j. This means
@@ -108,19 +108,22 @@ namespace { // anonymous namespace
          */
         void apply_to_job( iceUtil::CreamJob& j ) const;
 
+        const string& get_failure_reason( void ) const { return m_failure_reason; };
+
     protected:
-        string cream_job_id;
-        api::job_statuses::job_status job_status;
-        bool has_exit_code;
-        int exit_code;
+        string m_cream_job_id;
+        api::job_statuses::job_status m_job_status;
+        bool m_has_exit_code;
+        int m_exit_code;
+        string m_failure_reason;
     };
 
     //
     // StatusNotification implementation
     //
     StatusNotification::StatusNotification( const string& ad_string ) throw( iceUtil::ClassadSyntax_ex& ) :
-        has_exit_code( false ),
-        exit_code( 0 ) // default
+        m_has_exit_code( false ),
+        m_exit_code( 0 ) // default
     {
         CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
 		       << "Parsing status change notification "
@@ -132,28 +135,30 @@ namespace { // anonymous namespace
 
         if (!ad)
             throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
-
-        if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cream_job_id ) )
+        
+        if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
             throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
-        boost::trim_if( cream_job_id, boost::is_any_of("\"" ) );
+        boost::trim_if( m_cream_job_id, boost::is_any_of("\"" ) );
 
         string job_status_str;
         if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
         boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
-        job_status = api::job_statuses::getStatusNum( job_status_str );
+        m_job_status = api::job_statuses::getStatusNum( job_status_str );
 
-        if ( ad->EvaluateAttrInt( "EXIT_CODE", exit_code ) ) {
-            has_exit_code = true;
+        if ( ad->EvaluateAttrInt( "EXIT_CODE", m_exit_code ) ) {
+            m_has_exit_code = true;
+            ad->EvaluateAttrString( "FAILURE_REASON", m_failure_reason );
         }
 
     };
 
     void StatusNotification::apply_to_job( iceUtil::CreamJob& j ) const
     {
-        j.setStatus( getStatus() );
-        if ( hasExitCode() ) {
-            j.set_exit_code( getExitCode() );
+        j.setStatus( get_status() );
+        if ( has_exit_code() ) {
+            j.set_exit_code( get_exit_code() );
+            j.set_failure_reason( get_failure_reason() );
         }
     }
 
@@ -434,7 +439,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         }
     }
 
-    if( notifications.begin()->getStatus() == api::job_statuses::PURGED ) {
+    if( notifications.begin()->get_status() == api::job_statuses::PURGED ) {
 	return;
     }
 
@@ -443,14 +448,14 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     // NOTE: we assume that the all the notifications are for the SAME job.
     // This is important! The following code relies on this assumption
 
-    jobCache::iterator jc_it( m_cache->lookupByCreamJobID( notifications.begin()->getCreamJobID() ) );
+    jobCache::iterator jc_it( m_cache->lookupByCreamJobID( notifications.begin()->get_cream_job_id() ) );
 
     // No job found in cache
     if ( jc_it == m_cache->end() ) {
       CREAM_SAFE_LOG(m_log_dev->warnStream()
 		     << "eventStatusListener::handleEvent() - "
 		     << "creamjobid ["
-		     << notifications.begin()->getCreamJobID()
+		     << notifications.begin()->get_cream_job_id()
 		     << "] was not found in the cache. "
 		     << "Ignoring the whole notification..."
 		     << log4cpp::CategoryStream::ENDLINE);
@@ -473,24 +478,22 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         // If the status is "PURGED" the StatusPoller will remove it asap form
         // the cache. So the listener can ignore this job
 
-        if( it->getStatus() == api::job_statuses::PURGED ) 
+        if( it->get_status() == api::job_statuses::PURGED ) 
             return;
 
         CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		       << "eventStatusListener::handleEvent() - "
-		       << "Checking job [" << it->getCreamJobID()
-		       << "] with status [" << api::job_statuses::job_status_str[ it->getStatus() ] << "]"
+		       << "Checking job [" << it->get_cream_job_id()
+		       << "] with status [" << api::job_statuses::job_status_str[ it->get_status() ] << "]"
 		       << " notification count=" << count
 		       << " num already logged=" << jc_it->get_num_logged_status_changes()
 		       << log4cpp::CategoryStream::ENDLINE);
         
         if ( jc_it->get_num_logged_status_changes() < count ) {
-            it->apply_to_job( *jc_it );
-
-            //jc_it->setStatus( it->getStatus() );
-            jc_it->set_num_logged_status_changes( count );
-	    	    	    
-            m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
+            iceUtil::CreamJob tmp_job( *jc_it );
+            it->apply_to_job( tmp_job );
+            tmp_job.set_num_logged_status_changes( count );
+            m_lb_logger->logEvent( iceLBEventFactory::mkEvent( tmp_job ) );
             // The job gets stored in the jobcache anyway by the logEvent method...
         } else {
 	  CREAM_SAFE_LOG(m_log_dev->debugStream()
