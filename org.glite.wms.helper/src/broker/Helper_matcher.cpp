@@ -237,7 +237,10 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
            ++it, ++i) {
 
         std::auto_ptr<classad::ClassAd> ceinfo(new classad::ClassAd);
-        ceinfo->InsertAttr("ce_id", it->first);
+        string const ce_id(
+          utils::evaluate_attribute(*it->second.getAd(), "GlueCEUniqueID")
+        );
+        ceinfo->InsertAttr("ce_id", ce_id);
         ceinfo->InsertAttr("rank", it->second.getRank());
         
         if (include_brokerinfo) {
