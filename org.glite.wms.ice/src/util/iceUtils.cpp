@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <cerrno>
+#include <vector>
+#include <arpa/inet.h>
 
 extern int h_errno;
 extern int errno;
@@ -31,6 +33,7 @@ namespace util {
 
 using namespace std;
 
+//________________________________________________________________________
 string getHostName( void ) throw ( runtime_error& )
 {
     char name[256];
@@ -55,7 +58,7 @@ string time_t_to_string( time_t tval ) {
     return string( buf );
 }
 
-
+//________________________________________________________________________
 void makePath(const string& filename) throw(exception&)
 {
   boost::filesystem::path tmpFile( filename );
@@ -83,6 +86,26 @@ void makePath(const string& filename) throw(exception&)
   } catch( std::exception& ex) {
     throw;// << endl;
   }
+}
+
+//________________________________________________________________________
+string getNotificationClientDN( const string& DN )
+{
+  vector<string> pieces;
+  boost::split(pieces, DN, boost::is_any_of("CN="));
+  if ( pieces.empty() ) return "";
+  vector<string>::const_iterator it = pieces.end() - 1;
+    
+  struct in_addr addr;
+  inet_aton(it->c_str(), &addr);
+
+  struct hostent* H = gethostbyaddr(&addr, sizeof(addr), AF_INET);
+  if(H)
+    return H->h_name;
+  else {
+    return "";
+  }
+
 }
 
 } // namespace util

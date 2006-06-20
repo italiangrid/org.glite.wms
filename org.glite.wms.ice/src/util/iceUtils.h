@@ -51,6 +51,8 @@ namespace util {
 
     void makePath(const std::string& file) throw(std::exception&);
 
+    std::string getNotificationClientDN( const std::string& );
+
 } // namespace util
 } // namespace ice
 } // namespace wms
