@@ -36,6 +36,7 @@ namespace glite {
                 class iceLBEventFactory {
                 public:
                     virtual ~iceLBEventFactory( ) { };
+
                     /**
                      * Factory method used to create an iceLBEvent
                      * object which corresponds to the last (most

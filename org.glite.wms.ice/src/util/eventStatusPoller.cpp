@@ -264,16 +264,12 @@ void eventStatusPoller::updateJobCache( const vector< soap_proxy::JobInfo >& inf
 {
     for ( vector< soap_proxy::JobInfo >::const_iterator it = info_list.begin(); it != info_list.end(); ++it ) {
 
-        //        vector< soap_proxy::Status > status_changes;
-        //        it->getStatusList( status_changes );
-
-        //        update_single_job( status_changes );
         update_single_job( *it );
+
     }
 }
 
 //____________________________________________________________________________
-// void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& status_list )
 void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
 {
     // Locks the cache
@@ -333,7 +329,7 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
 
 
 //____________________________________________________________________________
-void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_list )
+void eventStatusPoller::purge_or_resubmit_jobs( const vector< soap_proxy::JobInfo >& status_list )
 {
 
     /**
@@ -439,11 +435,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
     if( jobs_to_purge.empty() ) 
         return;
 
-    bool is_purge_enabled;
-    {
-        //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );        
-        is_purge_enabled = iceConfManager::getInstance()->getPollerPurgesJobs();
-    }
+    const bool is_purge_enabled = iceConfManager::getInstance()->getPollerPurgesJobs();
 
     string cid;
     for ( vector<string>::const_iterator it = jobs_to_purge.begin();
@@ -533,7 +525,7 @@ void eventStatusPoller::body( void )
 			 << "catched unknown exception"
 			 << log4cpp::CategoryStream::ENDLINE);
         }
-        checkJobs( j_status ); // resubmits aborted/done-failed and/or purges terminated jobs
+        purge_or_resubmit_jobs( j_status ); // resubmits aborted/done-failed and/or purges terminated jobs
         /**
          * We don't use boost::thread::sleep because right now
          * (18/11/2005) the documentation says it will be replaced by

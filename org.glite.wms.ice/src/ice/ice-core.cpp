@@ -413,9 +413,6 @@ void Ice::resubmit_job( util::CreamJob& j )
     string resub_request;
     unparser.Unparse( resub_request, &command );
 
-//     string resub_request = string("[ version = \"1.0.0\";")
-//         +" command = \"jobresubmit\"; arguments = [ id = \"" 
-//         + j.getGridJobID() + "\" ] ]";
     wmsutils_ns::FileListMutex mx(m_flns);
     wmsutils_ns::FileListLock  lock(mx);
     try {
@@ -431,7 +428,7 @@ void Ice::resubmit_job( util::CreamJob& j )
         lb_logger->logEvent( new util::ns_enqueued_ok_event( j, m_ns_filelist ) );
     } catch(std::exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::FATAL, ex.what()) );
-        lb_logger->logEvent( new util::ns_enqueued_fail_event( j, m_ns_filelist ) );
+        lb_logger->logEvent( new util::ns_enqueued_fail_event( j, m_ns_filelist, ex.what() ) );
         exit(1);
     }
 }

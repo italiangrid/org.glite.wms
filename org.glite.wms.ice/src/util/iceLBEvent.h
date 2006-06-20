@@ -271,10 +271,11 @@ namespace glite {
 
                 class ns_enqueued_fail_event : public iceLBEvent {
                 public:
-                    ns_enqueued_fail_event( const CreamJob& j, const std::string& qname );
+                    ns_enqueued_fail_event( const CreamJob& j, const std::string& qname, const std::string& reason );
                     int execute( iceLBContext* ctx );
                 protected:
                     std::string m_qname;
+                    std::string m_reason;
                 };
 
 

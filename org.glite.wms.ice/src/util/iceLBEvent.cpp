@@ -104,7 +104,7 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_fail_event::cream_transfer_fail_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Transfer Fail Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "Cream Transfer Fail Event, reason=%1%") % reason ) ),
     m_reason( reason )
 {
 
@@ -197,7 +197,7 @@ int lrms_accepted_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_refused_event::cream_refused_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Cream Refused Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "Cream Refused Event, reason=%1%") % reason ) ),
     m_reason( reason )
 {
 
@@ -253,7 +253,7 @@ int cream_cancel_request_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_cancel_refuse_event::cream_cancel_refuse_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Cancel Refuse Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format("Cream Cancel Refuse Event, reason=%1%" ) % reason ) ),
     m_reason( reason )
 {
 
@@ -279,7 +279,7 @@ int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_cancel_done_event::cream_cancel_done_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Job Cancel OK Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "Job Cancel OK Event, reason=%1%" ) % reason ) ),
     m_reason( reason )
 {
 
@@ -442,7 +442,7 @@ int job_done_failed_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_start_event::ns_enqueued_start_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued Start Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "NS Enqueued Start Event, qname=%1%" ) % qname ) ),
     m_qname( qname )
 {
 
@@ -471,9 +471,10 @@ int ns_enqueued_start_event::execute( iceLBContext* ctx )
 // ns enqueued fail event
 //
 //////////////////////////////////////////////////////////////////////////////
-ns_enqueued_fail_event::ns_enqueued_fail_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued Fail Event" ),
-    m_qname( qname )
+ns_enqueued_fail_event::ns_enqueued_fail_event( const CreamJob& j, const std::string& qname, const std::string& reason ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format("NS Enqueued Fail Event, queue=%1%, reason=%2%") % qname % reason ) ),
+    m_qname( qname ),
+    m_reason( reason )
 {
 
 }
@@ -484,13 +485,13 @@ int ns_enqueued_fail_event::execute( iceLBContext* ctx )
     return edg_wll_LogEnQueuedFAILProxy( *(ctx->el_context), 
                                          m_qname.c_str(),
                                          m_job.getJobID().c_str(),
-                                         ctx->el_s_unavailable
+                                         m_reason.c_str()
                                          );
 #else
     return edg_wll_LogEnQueuedFAIL( *(ctx->el_context), 
                                     m_qname.c_str(),
                                     m_job.getJobID().c_str(),
-                                    ctx->el_s_unavailable
+                                    m_reason.c_str()
                                     );
 #endif
 }
@@ -501,7 +502,7 @@ int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_ok_event::ns_enqueued_ok_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued OK Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "NS Enqueued OK Event, qname=%1%" ) % qname ) ),
     m_qname( qname )
 {
 
@@ -530,7 +531,7 @@ int ns_enqueued_ok_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ice_resubmission_event::ice_resubmission_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "ICE Resubmission Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format("ICE Resubmission Event, reason=%1%") % reason ) ),
     m_reason( reason )
 {
 
@@ -558,7 +559,7 @@ int ice_resubmission_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 wms_dequeued_event::wms_dequeued_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "WMS Dequeue Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "WMS Dequeue Event, qname=%1%") % qname ) ),
     m_qname( qname )
 {
 
