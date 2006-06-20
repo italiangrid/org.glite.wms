@@ -32,7 +32,15 @@ LineOption  options[] = {
 };
 // if both -v and -l are used, -l has priority
 
+namespace {
+ism_type the_ism[2];
+ism_mutex_type the_ism_mutex[2];
+}
 int main(int argc, char* argv[]) {
+
+  set_ism(the_ism,the_ism_mutex,ce);
+  set_ism(the_ism,the_ism_mutex,se);
+
 
   std::vector<LineOption> optvec( options, options + sizeof(options)/sizeof(LineOption) );
   LineParser options( optvec, 0 );
@@ -56,20 +64,12 @@ int main(int argc, char* argv[]) {
 //    if( options.is_present('b') ) icp.skip_predicate(is_in_black_list(wm_config->ism_black_list()));
 
     icp();
-///////////////////////////////////////////////////////////
-
-//   rgma::create_t* createDli;                //dli::create_t_with_timeout* createDli_with_timeout;
-//   rgma::destroy_t* destroyDli; 
-//   void *dliLibHandle;
 
 
-//////////////////////////////////////////////////////////
+    ism_mutex_type::scoped_lock ce_l(get_ism_mutex(glite::wms::ism::ce));
 
-
-    ism_mutex_type::scoped_lock l(get_ism_mutex());
-
-    for (ism_type::iterator pos=get_ism().begin();
-      pos!= get_ism().end(); ++pos) {
+    for (ism_type::iterator pos=get_ism(glite::wms::ism::ce).begin();
+      pos!= get_ism(glite::wms::ism::ce).end(); ++pos) {
 
       if (options.is_present('s')) {
       
@@ -89,6 +89,32 @@ Debug("-----------------------------------------------------------------");
 Debug("-----------------------------------------------------------------");
      }
     }
+
+    ism_mutex_type::scoped_lock se_l(get_ism_mutex(glite::wms::ism::se));
+
+    for (ism_type::iterator pos=get_ism(glite::wms::ism::se).begin();
+      pos!= get_ism(glite::wms::ism::se).end(); ++pos) {
+
+      if (options.is_present('s')) {
+
+        classad::ClassAd  ad_ism_dump;
+        ad_ism_dump.InsertAttr("id", pos->first);
+        ad_ism_dump.InsertAttr("update_time", boost::tuples::get<0>(pos->second));
+        ad_ism_dump.InsertAttr("expiry_time", boost::tuples::get<1>(pos->second));
+        ad_ism_dump.Insert("info", boost::tuples::get<2>(pos->second).get()->Copy());
+        Debug( ad_ism_dump );
+//to be deleted
+Debug("-----------------------------------------------------------------");
+Debug("-----------------------------------------------------------------");
+     }
+     else {
+        Debug( pos->first );
+//to be deleted
+Debug("-----------------------------------------------------------------");
+     }
+    }
+    
+
   } 
   catch ( LineParsingError &er ) {
     cerr << er << endl;
