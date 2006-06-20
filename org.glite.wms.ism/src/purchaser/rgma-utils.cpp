@@ -1943,12 +1943,12 @@ void collect_voview_info( int rgma_query_timeout,
 
                      try {
                         string GlueCEUniqueIDFromRgma = voview_it->getString("GlueCEUniqueID");
-                        string LocalID = voview_it->getString("LocalID");
+                        string UniqueID = voview_it->getString("UniqueID");
                         boost::shared_ptr<classad::ClassAd> voAd( new ClassAd );
                         if ( ExportClassAd( voAd.get(), *voview_it ) ) {
                            checkGlueCEVOView( voAd.get() );
                            gluece_voview_info_map[GlueCEUniqueIDFromRgma].push_back(
-                                                   std::make_pair(LocalID, voAd));
+                                                   std::make_pair(UniqueID, voAd));
                         }
                         else Warning("Converting "<< GlueCEUniqueIDFromRgma
                            <<" tuple to the ClassAd...FAILED");
@@ -1974,85 +1974,109 @@ void collect_voview_info( int rgma_query_timeout,
 //////////////////////////////
             for (gluece_info_iterator ce_it = gluece_info_container->begin();
                  ce_it != gluece_info_container->end(); ) {
-               
+
                gluece_voview_info_map_type::const_iterator const vo_views(
                   gluece_voview_info_map.find(ce_it->first)
                );
-               if (vo_views!=gluece_voview_info_map.end() 
+               if (vo_views!=gluece_voview_info_map.end()
                    //&&      !vo_views->second.empty()
                   ) {
-     
-                  set<string> mapped_access_control_base_rules;
-                  set<string> ce_access_control_base_rules;
+
+                  //set<string> mapped_access_control_base_rules;
+                  //set<string> ce_access_control_base_rules;
+
+                  //vector<string> mapped_access_control_base_rules;
+                  vector<string> ce_access_control_base_rules;
 
                   utils::EvaluateAttrList(
-                    *(ce_it->second), 
+                    *(ce_it->second),
                     "GlueCEAccessControlBaseRule",
                     ce_access_control_base_rules
                   );
-                  
+
                   vector<pair_string_classad_shared_ptr>::const_iterator
                     vo_view_it( vo_views->second.begin() );
                   vector<pair_string_classad_shared_ptr>::const_iterator const
                     vo_view_e(  vo_views->second.end());
-                  
+
                   for ( ; vo_view_it!=vo_view_e; ++vo_view_it) {
 
-                    set<string> view_access_control_base_rules;
-                    utils::EvaluateAttrList(
-                      *vo_view_it->second,
-                      "GlueCEAccessControlBaseRule",
-                      view_access_control_base_rules
-                    );
-                    // (*) In order to check whether all the CE' 
-                    // GlueCEAccessControlBaseRule are 'mapped' to VOViews ones, 
+                    //set<string> view_access_control_base_rules;
+                     string view_access_control_base_rules;
+                    //utils::EvaluateAttrList(
+                     // *vo_view_it->second,
+                     // "LocalID",
+                     // view_access_control_base_rules
+                    //);
+                     (vo_view_it->second)->EvaluateAttrString("GlueVOViewLocalID",
+                                                              view_access_control_base_rules);
+                     string vo_colon_view_access_control_base_rules = "VO:" + view_access_control_base_rules;
+
+
+                    // (*) In order to check whether all the CE'
+                    // GlueCEAccessControlBaseRule are 'mapped' to VOViews ones,
                     // or not, we have to compute the set intersection...
-                    std::set_intersection(
-                      ce_access_control_base_rules.begin(),
-                      ce_access_control_base_rules.end(),
-                      view_access_control_base_rules.begin(),
-                      view_access_control_base_rules.end(),
-                      insert_iterator<set<string> >(
-                        mapped_access_control_base_rules,
-                        mapped_access_control_base_rules.begin()
-                      )
-                    );
-                    boost::shared_ptr<ClassAd> viewAd(
-                      dynamic_cast<classad::ClassAd*>(ce_it->second->Copy())
-                    );
-                    viewAd->Update(*vo_view_it->second);
-                    gluece_info_container->insert(
-                      std::make_pair(
-                        ce_it->first + "/" + vo_view_it->first,
-                        viewAd
-                      )
-                    );
-                  }
-                  if (ce_access_control_base_rules.size() >
-                      mapped_access_control_base_rules.size()) {
+                    //std::set_intersection(
+                    //  ce_access_control_base_rules.begin(),
+                    //  ce_access_control_base_rules.end(),
+                    //  view_access_control_base_rules.begin(),
+                    //  view_access_control_base_rules.end(),
+                    //  insert_iterator<set<string> >(
+                    //    mapped_access_control_base_rules,
+                    //    mapped_access_control_base_rules.begin()
+                    //  )
+                    //);
+                     vector<string>::iterator vo_match =
+                          find(ce_access_control_base_rules.begin(),
+                               ce_access_control_base_rules.end(),
+                               vo_colon_view_access_control_base_rules);
 
-                    vector<string> not_mapped_access_control_base_rules;
-                    std::set_difference(
-                      ce_access_control_base_rules.begin(),
-                      ce_access_control_base_rules.end(),
-                      mapped_access_control_base_rules.begin(),
-                      mapped_access_control_base_rules.end(),
-                      not_mapped_access_control_base_rules.begin()
-                    );
+                     if ( vo_match != ce_access_control_base_rules.end() ) {
 
-                    ce_it->second->Insert(
-                       "GlueCEAccessControlBaseRule",
-                        utils::asExprList(not_mapped_access_control_base_rules)
+                        boost::shared_ptr<ClassAd> viewAd(
+                           dynamic_cast<classad::ClassAd*>(ce_it->second->Copy())
+                        );
+                        viewAd->Update(*vo_view_it->second);
+                        gluece_info_container->insert(
+                           std::make_pair(
+                             //ce_it->first + "/" + vo_view_it->first,
+                             vo_view_it->first,
+                             viewAd
+                           )
+                        );
+
+                        ce_access_control_base_rules.erase(vo_match);
+                     }
+
+
+                  }   //if ( vo_match != ce_access_control_base_rules.end() )
+
+                  if (ce_access_control_base_rules.size() > 0 ) {
+                  //   mapped_access_control_base_rules.size()) {
+
+                     //vector<string> not_mapped_access_control_base_rules;
+                     //std::set_difference(
+                     //    ce_access_control_base_rules.begin(),
+                     //    ce_access_control_base_rules.end(),
+                     //    mapped_access_control_base_rules.begin(),
+                     //    mapped_access_control_base_rules.end(),
+                     //    not_mapped_access_control_base_rules.begin()
+                     //);
+
+                     ce_it->second->Insert(
+                        "GlueCEAccessControlBaseRule",
+                         //utils::asExprList(not_mapped_access_control_base_rules)
+                         utils::asExprList(ce_access_control_base_rules)
                      );
                   }
                   else {
-                    gluece_info_container->erase(ce_it++);
-                    continue;
+                     gluece_info_container->erase(ce_it++);
+                     continue;
                   }
                } // if (vo_views!=gluece_voview_info_map.end())
-              ce_it++;
+
+               ce_it++;
             }//for
-     /////////////////////////////////////////////////
          }
          else 
             Warning("No VOview information have been collected");
