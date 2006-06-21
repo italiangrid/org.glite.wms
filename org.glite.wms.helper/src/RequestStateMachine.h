@@ -53,7 +53,7 @@ public:
   ~RequestStateMachine();
 
   void start(classad::ClassAd const* ad);
-  classad::ClassAd* next_step(classad::ClassAd* ad);
+  classad::ClassAd* next_step(classad::ClassAd const* ad);
   operator void*() const;
   int operator!() const;
 
