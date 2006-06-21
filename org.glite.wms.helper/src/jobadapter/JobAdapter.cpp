@@ -107,7 +107,7 @@ replace(std::string& where, const std::string& what, const std::string& with)
   }
 }
 
-JobAdapter::JobAdapter(classad::ClassAd const* ad)
+JobAdapter::JobAdapter(classad::ClassAd* ad)
  : m_ad(ad)
 {
 }
@@ -120,8 +120,82 @@ classad::ClassAd*
 JobAdapter::resolve(void)  
 try {
 
-  std::string const ce_id(jdl::get_ce_id(*m_ad));
+  // Figure out the local host name (this should really come from
+  // some common entity).
+  char   hostname[1024];
+  std::string local_host_name;
+  
+  if (gethostname(hostname, sizeof(hostname)) >= 0) {
+    hostent resolved_host;
+    hostent *resolver_result=NULL;
+    int resolver_work_buffer_size = 2048;
+    char* resolver_work_buffer = new char[resolver_work_buffer_size];
+    int resolve_errno = ERANGE;
+    while ((gethostbyname_r(hostname, &resolved_host,
+                            resolver_work_buffer,
+                            resolver_work_buffer_size,
+                            &resolver_result,
+                            &resolve_errno) ) == ERANGE ) {
+      delete[] resolver_work_buffer;
+      resolver_work_buffer_size *= 2;
+      resolver_work_buffer = new char[resolver_work_buffer_size];
+    }
+    if (resolver_result != NULL) {
+      local_host_name.assign(resolved_host.h_name);
+    }
+    delete[] resolver_work_buffer;
+  }
 
+  config::Configuration const& config(
+    *config::Configuration::instance()
+  );
+
+  // Mandatory
+  // InputSandboxPath is always included
+  std::string inputsandboxpath(jdl::get_input_sandbox_path(*m_ad));
+  if (inputsandboxpath.empty()) { 
+    throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
+                                        inputsandboxpath,
+                                        "not empty",
+                                        helper_id);
+  }
+	  
+  boost::scoped_ptr<URL> isb_url;
+  try {
+    isb_url.reset(new URL(inputsandboxpath));
+  } catch (InvalidURL&) {
+    try {
+      isb_url.reset(new URL("gsiftp://" + local_host_name + inputsandboxpath));
+    } catch (InvalidURL& e) {
+      throw CannotCreateJobWrapper(e.what());
+    }
+  }
+
+  // Mandatory for shallow resubmission
+  std::string token_file(config.wm()->token_file());
+
+  std::string ReallyRunningToken;
+  bool shallow_retry_count_attr_exists = false;
+  int shallow_retry_count(
+    jdl::get_shallow_retry_count(*m_ad, shallow_retry_count_attr_exists)
+  );
+  {
+    if (!shallow_retry_count_attr_exists
+        || (shallow_retry_count < 0 && shallow_retry_count != -1)
+    ) {
+      shallow_retry_count = 0;
+    }
+    if (shallow_retry_count != -1) {
+      std::string const isb_url_str = isb_url->as_string();
+      std::string::size_type const p = isb_url_str.rfind("/input");
+      std::string const token_url_str(isb_url_str, 0, p);
+      ReallyRunningToken = token_url_str + '/' + token_file;
+    }
+  }
+  // let's pass the token on to cream (this only)
+  m_ad->InsertAttr("ReallyRunningToken", ReallyRunningToken);
+
+  std::string const ce_id(jdl::get_ce_id(*m_ad));
   boost::regex const cream_ce_id(".+/cream-.+");
   bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
 
@@ -179,16 +253,6 @@ try {
   } catch (InvalidURL&) {
   }
 
-  // Mandatory
-  // InputSandboxPath is always included
-  std::string inputsandboxpath(jdl::get_input_sandbox_path(*m_ad));
-  if (inputsandboxpath.empty()) { 
-    throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
-                                        inputsandboxpath,
-                                        "not empty",
-                                        helper_id);
-  }
-	  
   std::string outputsandboxpath;
   if (!b_osb_dest_uri && !wmpisb_base_uri) {
     /* Mandatory */
@@ -287,32 +351,6 @@ try {
   }
   jdl::set_edg_jobid(*result, job_id);
 
-  // Figure out the local host name (this should really come from
-  // some common entity).
-  char   hostname[1024];
-  std::string local_host_name;
-  
-  if (gethostname(hostname, sizeof(hostname)) >= 0) {
-    hostent resolved_host;
-    hostent *resolver_result=NULL;
-    int resolver_work_buffer_size = 2048;
-    char* resolver_work_buffer = new char[resolver_work_buffer_size];
-    int resolve_errno = ERANGE;
-    while ((gethostbyname_r(hostname, &resolved_host,
-                            resolver_work_buffer,
-                            resolver_work_buffer_size,
-                            &resolver_result,
-                            &resolve_errno) ) == ERANGE ) {
-      delete[] resolver_work_buffer;
-      resolver_work_buffer_size *= 2;
-      resolver_work_buffer = new char[resolver_work_buffer_size];
-    }
-    if (resolver_result != NULL) {
-      local_host_name.assign(resolved_host.h_name);
-    }
-    delete[] resolver_work_buffer;
-  }
-
   /* FIXME: Test whether this is a 'blahpd' or 'condor' resource so that  */
   /* FIXME: the submit file can be adjusted accordingly.      */
   /* FIXME: Eventually, CondorG should be able to handle this */
@@ -341,10 +379,6 @@ try {
 
   /* Mandatory */
   jdl::set_universe(*result, "grid"); 
-
-  config::Configuration const& config(
-    *config::Configuration::instance()
-  );
 
   if (!is_blahp_resource && !is_condor_resource) {
     jdl::set_grid_type(*result, "globus");
@@ -776,9 +810,6 @@ try {
 	
   jdl::set_globus_rsl(*result, globusrsl);
   
-  // Mandatory for shallow resubmission
-  std::string token_file(config.wm()->token_file());
-
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
   jw->standard_error(stderror);
@@ -811,37 +842,14 @@ try {
     }
   }
 
-  boost::scoped_ptr<URL> isb_url;
-  try {
-    isb_url.reset(new URL(inputsandboxpath));
-  } catch (InvalidURL&) {
-    try {
-      isb_url.reset(new URL("gsiftp://" + local_host_name + inputsandboxpath));
-    } catch (InvalidURL& e) {
-      throw CannotCreateJobWrapper(e.what());
-    }
+  if (shallow_retry_count != -1) {
+    jw->enable_shallow_resubmission(ReallyRunningToken);
   }
 
   if (wmpisb_base_uri) {
     jw->wmp_input_sandbox_support(*isb_url, inputsandbox);
   } else {
     jw->input_sandbox(*isb_url, inputsandbox);
-  }
-
-  {
-    bool exists = false;
-    int shallow_retry_count(
-      jdl::get_shallow_retry_count(*m_ad, exists)
-    );
-    if (!exists || (shallow_retry_count < 0 && shallow_retry_count != -1)) {
-      shallow_retry_count = 0;
-    }
-    if (shallow_retry_count != -1) {
-      std::string const isb_url_str = isb_url->as_string();
-      std::string::size_type const p = isb_url_str.rfind("/input");
-      std::string const token_url_str(isb_url_str, 0, p);
-      jw->enable_shallow_resubmission(token_url_str + '/' + token_file);
-    }
   }
 
   if (!wmpisb_base_uri) {
