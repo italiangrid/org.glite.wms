@@ -6,11 +6,7 @@
  *  http://www.edg.org/license.html
  ***************************************************************************/
 
-<<<<<<< JobAdapter.h
 // $Id$
-=======
-// $Id$
->>>>>>> 1.2
 
 #ifndef GLITE_WMS_HELPER_JOBADAPTER_JOBADAPTER_H
 #define GLITE_WMS_HELPER_JOBADAPTER_JOBADAPTER_H
