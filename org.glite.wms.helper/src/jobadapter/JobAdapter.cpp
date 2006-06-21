@@ -107,7 +107,7 @@ replace(std::string& where, const std::string& what, const std::string& with)
   }
 }
 
-JobAdapter::JobAdapter(classad::ClassAd* ad)
+JobAdapter::JobAdapter(const classad::ClassAd* ad)
  : m_ad(ad)
 {
 }
@@ -192,16 +192,16 @@ try {
       ReallyRunningToken = token_url_str + '/' + token_file;
     }
   }
-  // let's pass the token on to cream (this only)
-  m_ad->InsertAttr("ReallyRunningToken", ReallyRunningToken);
 
   std::string const ce_id(jdl::get_ce_id(*m_ad));
-
   boost::regex const cream_ce_id(".+/cream-.+");
   bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
 
   if (is_cream_ce) {
-    return new classad::ClassAd(*m_ad);
+    classad::ClassAd* cream_classad(new classad::ClassAd(*m_ad));
+    // let's pass the token on to cream (this one only)
+    cream_classad->InsertAttr("ReallyRunningToken", ReallyRunningToken);
+    return cream_classad;
   }
 
   std::auto_ptr<classad::ClassAd> result(new classad::ClassAd);
