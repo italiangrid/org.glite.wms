@@ -1,23 +1,20 @@
 /***************************************************************************
-    filename  : NsWrapper.cpp
+    filename  : UcWrapper.cpp
     begin     : Mon May 13
     author    : Annalisa Terracina
     email     : fpacini@datamat.it
     copyright : (C) 2002 by DATAMAT
 ***************************************************************************/
 #include <iostream>
-#include "NsWrapper.h"
-#include "glite/lb/producer.h"
+#include "UcWrapper.h"
 #include <pem.h>
 #include "openssl/ssl.h"
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/jdl/JobAd.h"
-#include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
-// DGAS implementation
-#include "glite/dgas/hlr-clients/job_auth/jobAuthClient.h"
+
 
 using namespace std ;
 using namespace glite::wmsutils::exception ;
+
+
 /************************************************
 *   UserCredential VOMS implementation
 *************************************************/
@@ -25,6 +22,7 @@ using namespace glite::wmsutils::exception ;
  method :load_chain
 ******************************************************************/
 STACK_OF(X509) *load_chain(char *certfile, std::string& vo_error){
+	vo_error="";
 	STACK_OF(X509_INFO) *sk=NULL;
 	STACK_OF(X509) *stack=NULL;
 	BIO *in=NULL;
@@ -166,7 +164,7 @@ int UserCredential::getExpiration(){
 /******************************************************************
 private method: load_voms
 *******************************************************************/
-int  UserCredential::load_voms (vomsdata& d){
+bool UserCredential::load_voms (vomsdata& d){
 	BIO  *in = NULL;
 	X509 *x  = NULL;
 	d.data.clear() ;
@@ -181,8 +179,8 @@ int  UserCredential::load_voms (vomsdata& d){
 				// Couldn't find a valid proxy.
 				vo_data_error =VERR_FORMAT;
 			}
-			string vo_error;
 			chain = load_chain(of, vo_error);
+			if (vo_error.size()){return true;}
 			d.SetVerificationType((verify_type)(VERIFY_SIGN | VERIFY_KEY));
 			if (!d.Retrieve(x, chain, RECURSE_CHAIN)){
 				d.SetVerificationType((verify_type)(VERIFY_NONE));
@@ -199,7 +197,7 @@ int  UserCredential::load_voms (vomsdata& d){
 	vo_data_error = d.error ;
 	// Release memory
 	BIO_free(in);
-	return (vo_data_error==VERR_NONE);
+	return (vo_data_error!=VERR_NONE);
 }
 /******************************************************************
  method:load_groups
@@ -314,7 +312,9 @@ bool UserCredential::containsVo ( const std::string& voname ) {
  method: get_error
 *******************************************************************/
 string UserCredential::get_error() {
-
+	if (!vo_error.size()){
+		return vo_error;
+	}
 	switch ( vo_data_error ){
 		case  VERR_NONE:
 			return "No Error Found" ;
@@ -334,5 +334,3 @@ string UserCredential::get_error() {
 			return "Generic VOMS error found" ;
 	}
 }
-
-

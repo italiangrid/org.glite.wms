@@ -64,7 +64,7 @@ class  UserCredential {
 	private:
 		int vo_data_error , timeleft ;
 		std::string proxy_file, vo_error ;
-		int load_voms ( vomsdata& d ) ;
+		bool load_voms ( vomsdata& d ) ;
 };
 
 #endif

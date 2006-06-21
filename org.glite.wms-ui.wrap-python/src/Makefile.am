@@ -140,8 +140,6 @@ libglite_wmsui_UcWrapper_la_LIBADD = \
 	-lc \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-	$(GLITE_JDL_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	-lstdc++
