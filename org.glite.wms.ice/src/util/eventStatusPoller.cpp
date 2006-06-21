@@ -297,6 +297,21 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
     for ( it = status_changes.begin(), count = 1; it != status_changes.end(); ++it, ++count ) {
 
         jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
+        // before doing anything, check if the job is "purged". If so,
+        // remove from the cache and forget about it.
+        if ( stNum == jobstat::PURGED ) {
+            CREAM_SAFE_LOG(m_log_dev->infoStream()
+                           << "eventStatusPoller::update_single_job() - "
+                           << "Job with cream_job_id = ["
+                           << jit->getJobID()
+                           << "], grid_job_id = ["
+                           << jit->getGridJobID()
+                           << "] is reported as PURGED. Removing from cache"
+                           << log4cpp::CategoryStream::ENDLINE); 
+            m_cache->erase( jit );
+            return;
+        }
+
         string exitCode( it->getExitCode() );
 
         if ( jit->get_num_logged_status_changes() < count ) {
@@ -325,9 +340,20 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
     }
     jit->setLastSeen( time(0) );
     m_cache->put( *jit );
+
+    // Dp the "right think"(tm) with the job
+    if ( jit->can_be_resubmitted() ) {
+        // resubmit job
+        m_iceManager->resubmit_job( jit, "Job resubmitted by ICE poller" );
+    } else {
+        if ( jit->can_be_purged() ) {
+            // purge the job
+            m_iceManager->purge_job( jit, "Job purged by ICE poller" );
+        }
+    }
 }
 
-
+#ifdef DONT_COMPILE
 //____________________________________________________________________________
 void eventStatusPoller::purge_or_resubmit_jobs( const vector< soap_proxy::JobInfo >& status_list )
 {
@@ -366,7 +392,7 @@ void eventStatusPoller::purge_or_resubmit_jobs( const vector< soap_proxy::JobInf
         
         if ( jobIt == m_cache->end() ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::checkJobs() - JobID["
+                           << "eventStatusPoller::purge_or_resubmit_jobs() - JobID["
                            << cid << "] disappeared from the cache. "
                            << "Skipping this job, hope this is fine..."
                            << log4cpp::CategoryStream::ENDLINE);
@@ -386,7 +412,7 @@ void eventStatusPoller::purge_or_resubmit_jobs( const vector< soap_proxy::JobInf
             // exit code yet.
             //                
             CREAM_SAFE_LOG(m_log_dev->debugStream()
-                           << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
+                           << "eventStatusPoller::purge_or_resubmit_jobs() - WILL NOT Purge Job ["
                            << cid <<"] because exitCode is not available yet."
                            << log4cpp::CategoryStream::ENDLINE);
             continue;        
@@ -398,20 +424,18 @@ void eventStatusPoller::purge_or_resubmit_jobs( const vector< soap_proxy::JobInf
         case jobstat::ABORTED:
 
             CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "eventStatusPoller::checkJobs() - JobID ["
+                           << "eventStatusPoller::purge_or_resubmit_jobs() - JobID ["
                            << cid <<"] is failed or aborted. "
                            << "Removing from cache and resubmitting..."
                            << log4cpp::CategoryStream::ENDLINE);
 
-            m_iceManager->resubmit_job( *jobIt );
-            m_lb_logger->logEvent( new ice_resubmission_event( *jobIt, "Job is failed or aborted" ) );
-
-            // do NOT break: fall to next case
+            m_iceManager->resubmit_job( jobIt, "job is failed or aborted" );
+            break;
 
         case jobstat::DONE_OK:
         case jobstat::CANCELLED:
             CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "eventStatusPoller::checkJobs() - Scheduling JobID ["
+                           << "eventStatusPoller::purge_or_resubmit_jobs() - Scheduling JobID ["
                            << cid << "] to be purged"
                            << log4cpp::CategoryStream::ENDLINE);
             jobs_to_purge.push_back(cid);
@@ -431,6 +455,13 @@ void eventStatusPoller::purge_or_resubmit_jobs( const vector< soap_proxy::JobInf
 //____________________________________________________________________________
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 {
+    for ( vector<string>::const_iterator it = jobs_to_purge.begin();
+          it != jobs_to_purge.end(); ++it ) {
+
+        jobCache::iterator jit = m_cache->lookupByCreamJobID( *it );
+
+    
+#ifdef DONT_COMPILE
 
     if( jobs_to_purge.empty() ) 
         return;
@@ -507,8 +538,10 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 			 << log4cpp::CategoryStream::ENDLINE);
         }
     }
-}
+#endif
 
+}
+#endif
 
 //____________________________________________________________________________
 void eventStatusPoller::body( void )
@@ -525,7 +558,7 @@ void eventStatusPoller::body( void )
 			 << "catched unknown exception"
 			 << log4cpp::CategoryStream::ENDLINE);
         }
-        purge_or_resubmit_jobs( j_status ); // resubmits aborted/done-failed and/or purges terminated jobs
+
         /**
          * We don't use boost::thread::sleep because right now
          * (18/11/2005) the documentation says it will be replaced by

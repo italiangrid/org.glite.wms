@@ -255,9 +255,9 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                            << " due to authentication error:" << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            ice->resubmit_job( theJob );
-            m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of SOAP exception: ").append( ex.what() ) ) );
-            cache->erase( job_pos );
+            ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
+            //            m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of SOAP exception: ").append( ex.what() ) ) );
+            //            cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
@@ -291,9 +291,9 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                << log4cpp::CategoryStream::ENDLINE
                                );
                 m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
-                ice->resubmit_job( theJob ); // Try to resubmit
-                m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of exception: ").append( ex.what() ) ) );
-                cache->erase( job_pos );
+                ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
+                // m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of exception: ").append( ex.what() ) ) );
+                // cache->erase( job_pos );
                 throw( iceCommandFatal_ex( ex.what() ) );
             }
 

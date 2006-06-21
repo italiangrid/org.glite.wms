@@ -143,6 +143,24 @@ namespace glite {
           //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, idle, running or held
           bool is_active( void ) const;
 
+          /**
+           * Checke whether a job can be purged (by issuing a "purge"
+           * request to CREAM). Currently, a job can be purged when it
+           * is in done_ok, cancelled, done_ok or aborted states.
+           *
+           * @return true iff the job can be purged; false otherwise.
+           */
+          bool can_be_purged( void ) const;
+
+          /**
+           * Checks whether a job should be resubmitted. Currently, a
+           * job can be resubmitted when it is in done_failed or
+           * aborted state.
+           *
+           * @return true iff the job can be resubmitted; false otherwise.
+           */
+          bool can_be_resubmitted( void ) const;
+
 	  //! Gets the status of the job
           glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { return m_status; }
 

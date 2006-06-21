@@ -270,7 +270,8 @@ int main(int argc, char*argv[])
   glite::wms::ice::Ice* iceManager;
   try {
     //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    iceManager = new glite::wms::ice::Ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
+      // iceManager = new glite::wms::ice::Ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
+      iceManager = glite::wms::ice::Ice::instance( );
   } catch(glite::wms::ice::iceInit_ex& ex) {
       CREAM_SAFE_LOG(
                      log_dev->fatalStream() 

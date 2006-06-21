@@ -39,7 +39,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
-		-DENABLE_LOGGING \
 		$(GLOBUS_THR_CFLAGS) \
 		-pipe
 

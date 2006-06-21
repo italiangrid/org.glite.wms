@@ -93,7 +93,7 @@ namespace glite {
            * resubmitted. This method calls purgeJobs for those who
            * need to be purged.
            */
-	  void purge_or_resubmit_jobs( const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& );
+	  // void purge_or_resubmit_jobs( const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& );
 
           /**
            * Prevents copying

@@ -30,6 +30,8 @@
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
 #include "jobKiller.h"
+#include "iceLBEvent.h"
+#include "iceLBLogger.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -42,82 +44,96 @@
 #include <unistd.h>
 #include <cstdlib>
 
-namespace wmsutils_ns = glite::wms::common::utilities;
 using namespace std;
+using namespace glite::wms::ice;
+
+namespace ice_util = glite::wms::ice::util;
+namespace wmsutils_ns = glite::wms::common::utilities;
+namespace cream_api = glite::ce::cream_client_api;
+namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 
 typedef vector<string>::iterator vstrIt;
 
-namespace glite {
-namespace wms {
-namespace ice {
+Ice* Ice::s_instance = 0;
 
 //
 // Begin Inner class definitions
 //
-    Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
-        m_name( name ),
-        m_thread( 0 ),
-        m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
-    {
+Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
+    m_name( name ),
+    m_thread( 0 ),
+    m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() )
+{
+    
+}
 
-    }
+Ice::IceThreadHelper::~IceThreadHelper( ) 
+{
+    stop( );
+    delete m_thread;
+}
 
-    Ice::IceThreadHelper::~IceThreadHelper( ) 
-    {
-        stop( );
-        delete m_thread;
+void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
+{
+    m_ptr_thread = boost::shared_ptr< util::iceThread >( obj );
+    try {
+        m_thread = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread) );
+    } catch( boost::thread_resource_error& ex ) {
+        throw iceInit_ex( ex.what() );
     }
+}
 
-    void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
-    {
-        m_ptr_thread = boost::shared_ptr< util::iceThread >( obj );
-        try {
-            m_thread = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread) );
-        } catch( boost::thread_resource_error& ex ) {
-            throw iceInit_ex( ex.what() );
-        }
+void Ice::IceThreadHelper::stop( void )
+{
+    if( m_thread && m_ptr_thread->isRunning() ) {
+        CREAM_SAFE_LOG( 
+                       m_log_dev->infoStream()
+                       << "Waiting for thread " << m_name 
+                       << " termination..."
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        m_ptr_thread->stop();
+        m_thread->join();
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream()
+                       << "Thread " << m_name << " finished"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
     }
-
-    void Ice::IceThreadHelper::stop( void )
-    {
-        if( m_thread && m_ptr_thread->isRunning() ) {
-            CREAM_SAFE_LOG( 
-                           m_log_dev->infoStream()
-                           << "Waiting for thread " << m_name 
-                           << " termination..."
-                           << log4cpp::CategoryStream::ENDLINE
-                           );
-            m_ptr_thread->stop();
-            m_thread->join();
-            CREAM_SAFE_LOG(
-                           m_log_dev->infoStream()
-                           << "Thread " << m_name << " finished"
-                           << log4cpp::CategoryStream::ENDLINE
-                           );
-        }
-    }
+}
 
 //
 // End inner class definitions
 //
 
+Ice* Ice::instance( void ) throw( iceInit_ex& )
+{
+    if ( 0 == s_instance ) {
+        s_instance = new Ice( ); // may throw iceInit_ex
+    }
+    return s_instance;
+}
+
 //____________________________________________________________________________
-Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) : 
+Ice::Ice( ) throw(iceInit_ex&) : 
     m_listener_thread( "Event Status Listener" ),
     m_poller_thread( "Event Status Poller" ),
     m_updater_thread( "Subscription Updater" ),
     m_lease_updater_thread( "Lease Updater" ),
     m_proxy_renewer_thread( "Proxy Renewer" ),
     m_job_killer_thread( "Job Killer" ),
-    m_ns_filelist( NS_FL ),
-    m_fle( WM_FL.c_str() ),
-    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
+    m_ns_filelist( ice_util::iceConfManager::getInstance()->getWMInputFile() ),
+    m_fle( ice_util::iceConfManager::getInstance()->getICEInputFile() ),
+    m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
+    m_is_purge_enabled( ice_util::iceConfManager::getInstance()->getPollerPurgesJobs() ),
+    m_lb_logger( ice_util::iceLBLogger::instance() ),
+    m_cache( ice_util::jobCache::getInstance() )
 {
     CREAM_SAFE_LOG( 
                    m_log_dev->log(log4cpp::Priority::INFO, "Ice::CTOR() - Initializing File Extractor object...")
                    );
     try {
-        m_flns.open( NS_FL.c_str() );
+        m_flns.open( m_ns_filelist );
     }
     catch( std::exception& ex ) {
         throw iceInit_ex( ex.what() );
@@ -396,17 +412,18 @@ void Ice::ungetRequest( unsigned int reqNum)
 }
 
 //____________________________________________________________________________
-void Ice::resubmit_job( util::CreamJob& j ) 
+ice_util::jobCache::iterator Ice::resubmit_job( ice_util::jobCache::iterator jit, const string& reason )
 {
-    util::iceLBLogger* lb_logger = util::iceLBLogger::instance();
+    if ( m_cache->end() == jit )
+        return jit;
 
     classad::ClassAd command;
     classad::ClassAd arguments;
 
     command.InsertAttr( "version", string("1.0.0") );
     command.InsertAttr( "command", string("jobresubmit") );
-    arguments.InsertAttr( "id", j.getGridJobID() );
-    arguments.InsertAttr( "lb_sequence_code", j.getSequenceCode() );
+    arguments.InsertAttr( "id", jit->getGridJobID() );
+    arguments.InsertAttr( "lb_sequence_code", jit->getSequenceCode() );
     command.Insert( "arguments", arguments.Copy() );
 
     classad::ClassAdUnParser unparser;
@@ -416,6 +433,7 @@ void Ice::resubmit_job( util::CreamJob& j )
     wmsutils_ns::FileListMutex mx(m_flns);
     wmsutils_ns::FileListLock  lock(mx);
     try {
+        m_lb_logger->logEvent( new ice_util::ice_resubmission_event( *jit, reason ) );
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
                        << "Ice::doOnJobFailure() - Putting ["
@@ -423,16 +441,96 @@ void Ice::resubmit_job( util::CreamJob& j )
                        << log4cpp::CategoryStream::ENDLINE
                        );
 
-        lb_logger->logEvent( new util::ns_enqueued_start_event( j, m_ns_filelist ) );
+        m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( *jit, m_ns_filelist ) );
         m_flns.push_back(resub_request);
-        lb_logger->logEvent( new util::ns_enqueued_ok_event( j, m_ns_filelist ) );
+        m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( *jit, m_ns_filelist ) );
     } catch(std::exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::FATAL, ex.what()) );
-        lb_logger->logEvent( new util::ns_enqueued_fail_event( j, m_ns_filelist, ex.what() ) );
+        m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( *jit, m_ns_filelist, ex.what() ) );
         exit(1);
     }
+    return m_cache->erase( jit );
 }
 
-} // namespace ice
-} // namespace wms
-} // namespace glite
+//----------------------------------------------------------------------------
+ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, const string& reason )
+{
+    if ( jit == m_cache->end() )
+        return jit;
+
+    boost::scoped_ptr< soap_proxy::CreamProxy > creamClient;
+    try {
+        soap_proxy::CreamProxy *p = new soap_proxy::CreamProxy(false);
+        creamClient.reset( p );
+    } catch(soap_proxy::soap_ex& ex) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->errorStream()
+                       << "ice-core::purge_job() - "
+                       << "cannot instantiate cream client: "
+                       << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        return jit;
+    }
+
+
+    try {
+        boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
+        
+        string cid = jit->getJobID();
+        
+        if ( m_is_purge_enabled ) {
+            CREAM_SAFE_LOG(m_log_dev->infoStream()
+                           << "ice-core::purge_job() - "
+                           << "Calling JobPurge for JobId ["
+                           << cid << "]"
+                           << log4cpp::CategoryStream::ENDLINE);
+            // We cannot accumulate more jobs to purge in a
+            // vector because we must authenticate different
+            // jobs with different user certificates.
+            creamClient->Authenticate( jit->getUserProxyCertificate());
+            vector< string > oneJobToPurge;
+            oneJobToPurge.push_back( jit->getJobID() );
+            creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
+        } else {
+            CREAM_SAFE_LOG(m_log_dev->warnStream()
+                           << "ice-core::purge_job() - "
+                           << "There'are jobs to purge, but PURGE IS DISABLED. "
+                           << "Will not purge JobId ["
+                           << cid << "] (but will be removed from ICE cache)"
+                           << log4cpp::CategoryStream::ENDLINE);
+        }
+        
+        jit = m_cache->erase( jit );
+    } catch (ice_util::ClassadSyntax_ex& ex) {
+        /**
+         * this exception should not be raised because
+         * the CreamJob is created from another valid one
+         */
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+                       << "ice-core::purge_job() - "
+                       << "Fatal error: CreamJob creation failed "
+                       << "copying from a valid one!!!"
+                       << log4cpp::CategoryStream::ENDLINE);
+        exit(1);
+    } catch(soap_proxy::auth_ex& ex) {
+        CREAM_SAFE_LOG(m_log_dev->errorStream()
+                       << "ice-core::purge_job() - "
+                       << "Cannot purge job: " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE);
+    } catch(cream_api::cream_exceptions::BaseException& s) {
+        CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR, s.what()));
+    } catch(cream_api::cream_exceptions::InternalException& severe) {
+        CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR, severe.what()));
+        //exit(1);
+    } catch(ice_util::elementNotFound_ex& ex) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->errorStream()
+                       << "ice-core::purge_job() - "
+                       << "Cannot remove [" << jit->getJobID()
+                       << "] from job cache: " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+    }
+    return jit;
+}

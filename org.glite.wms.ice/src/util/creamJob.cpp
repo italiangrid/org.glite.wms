@@ -234,3 +234,18 @@ bool iceUtil::CreamJob::is_active( void ) const
              ( m_status == api::job_statuses::HELD ) ||
 	     ( m_status == api::job_statuses::REALLY_RUNNING) );
 }
+
+bool iceUtil::CreamJob::can_be_purged( void ) const
+{
+    return ( ( m_status == api::job_statuses::DONE_OK ) ||
+             ( m_status == api::job_statuses::CANCELLED ) ||
+             ( m_status == api::job_statuses::DONE_FAILED ) ||
+             ( m_status == api::job_statuses::ABORTED ) );
+}
+
+
+bool iceUtil::CreamJob::can_be_resubmitted( void ) const
+{ 
+    return ( ( m_status == api::job_statuses::DONE_FAILED ) ||
+             ( m_status == api::job_statuses::ABORTED ) );
+}

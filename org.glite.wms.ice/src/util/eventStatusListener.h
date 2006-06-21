@@ -37,6 +37,8 @@ namespace log4cpp {
 namespace glite {
   namespace wms {
     namespace ice {
+        class Ice;
+
       namespace util {
           
           class jobCache;
@@ -66,6 +68,7 @@ namespace glite {
 	  bool                                    m_isOK;
           jobCache*                               m_cache;
 	  subscriptionManager*                    m_subManager;
+          glite::wms::ice::Ice* m_ice_manager;
 
 	  void init(void);
 

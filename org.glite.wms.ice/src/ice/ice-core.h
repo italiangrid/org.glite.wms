@@ -29,6 +29,7 @@
 #include "jobKiller.h"
 #include "creamJob.h"
 #include "iceThread.h"
+#include "jobCache.h"
 
 #include "glite/wms/common/utilities/FLExtractor.h"
 
@@ -49,6 +50,10 @@ namespace log4cpp {
 namespace glite {
   namespace wms {
     namespace ice {
+
+        namespace util {
+            class iceLBLogger;
+        };
 
       class Ice {
 
@@ -98,10 +103,15 @@ namespace glite {
 
 	  std::string    m_host_cert;
 	  std::string    m_host_key;
-          
+          bool m_is_purge_enabled;
+          glite::wms::ice::util::iceLBLogger* m_lb_logger;
+          glite::wms::ice::util::jobCache* m_cache;
+
+          static glite::wms::ice::Ice* s_instance;
+
+          Ice( ) throw(glite::wms::ice::iceInit_ex&);
+
       public:
-          Ice( const std::string& NS_FL, const std::string& WM_FL )
-              throw(glite::wms::ice::iceInit_ex&);
           
           virtual ~Ice();
           
@@ -114,7 +124,44 @@ namespace glite {
           void startLeaseUpdater( void );
           void startProxyRenewer( void );
 	  void startJobKiller( void );
-          virtual void resubmit_job( util::CreamJob& j );
+
+          // Misc job handling functions
+
+          /**
+           * Resubmits a failed job. This method takes care of logging
+           * the relevant L&B events. The job will be removed from the
+           * jobCache.
+           *
+           * @param jit an iterator to the job to resubmit. If
+           * jit==end(), then nothing is done
+           *
+           * @param reason the reason why this job is being resubmitted
+           *
+           * @return the iterator of the next job in cache, or jit if
+           * some error occurred.
+           */
+          util::jobCache::iterator resubmit_job( util::jobCache::iterator jit, const std::string& reason );
+
+          /**
+           * Purge a cancelled/terminated job. This method takes care
+           * of logging the relevant L&B events. The job will be
+           * removed from the jobCache.
+           *
+           * @param j an iterator to the job to purge. If j ==
+           * jobCache.end(), the not action is done.
+           *
+           * @param reason the reason why the job is being purged
+           *
+           * @return an iterator pointing to the next job in cache, if
+           * the purge(and subsequent removal) was succesful. jit if
+           * not.
+           */
+          util::jobCache::iterator purge_job( util::jobCache::iterator j, const std::string& reason );
+
+          /**
+           * returns the singleton instance of this class.
+           */
+          static glite::wms::ice::Ice* instance( void ) throw( glite::wms::ice::iceInit_ex& );
 
       }; // class ice
 

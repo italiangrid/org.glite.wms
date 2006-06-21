@@ -3,8 +3,8 @@
  * is that apparently wms configurator doesn't allow to modify conf params at run time
  */
 
-#ifndef __GLITE_WMS_ICE_UTIL_ICECONFMANAGER_H__
-#define __GLITE_WMS_ICE_UTIL_ICECONFMANAGER_H__
+#ifndef GLITE_WMS_ICE_UTIL_ICECONFMANAGER_H
+#define GLITE_WMS_ICE_UTIL_ICECONFMANAGER_H
 
 #include <string>
 #include <ctime>
