@@ -57,6 +57,15 @@ cream_transfer_start_event::cream_transfer_start_event( const CreamJob& j ) :
 
 int cream_transfer_start_event::execute( iceLBContext* ctx )
 {
+#ifdef GLITE_WMS_HAVE_LBPROXY
+    return edg_wll_LogTransferSTARTProxy( *(ctx->el_context), 
+                                          EDG_WLL_SOURCE_LRMS, 
+                                          m_job.getCreamURL().c_str(),
+                                          ctx->el_s_unavailable,
+                                          m_job.getJDL().c_str(),  
+                                          ctx->el_s_unavailable,
+                                          ctx->el_s_unavailable );
+#else
     return edg_wll_LogTransferSTART( *(ctx->el_context), 
                                      EDG_WLL_SOURCE_LRMS, 
                                      m_job.getCreamURL().c_str(),
@@ -64,6 +73,7 @@ int cream_transfer_start_event::execute( iceLBContext* ctx )
                                      m_job.getJDL().c_str(),  
                                      ctx->el_s_unavailable,
                                      ctx->el_s_unavailable );
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

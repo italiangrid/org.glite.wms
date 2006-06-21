@@ -22,7 +22,7 @@
 // to register the job to the L&B server. This call is NOT done if ICE
 // is used inside the WMS, as the UI takes care of L&B job
 // registration.
-#undef ICE_STANDALONE
+//#define ICE_STANDALONE
 
 // Local includes
 #include "iceCommandSubmit.h"

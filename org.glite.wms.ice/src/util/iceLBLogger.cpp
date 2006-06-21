@@ -22,47 +22,12 @@
 #include "iceLBEvent.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#endif
-
 #include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 
-namespace fs = boost::filesystem;
 using namespace glite::wms::ice::util;
 
 iceLBLogger* iceLBLogger::s_instance = 0;
 boost::recursive_mutex iceLBLogger::s_mutex;
-
-#ifdef GLITE_WMS_HAVE_LBPROXY
-
-namespace {
-    // retrieve the subject_name from a given x509_proxy (thx to giaco)
-    std::string get_proxy_subject(std::string const& x509_proxy)
-    {
-        static std::string const null_string;
-
-        std::FILE* fd = std::fopen(x509_proxy.c_str(), "r");
-        if (!fd) return null_string;
-        boost::shared_ptr<std::FILE> fd_(fd, std::fclose);
-
-        ::X509* const cert = ::PEM_read_X509(fd, 0, 0, 0);
-        if (!cert) return null_string;
-        boost::shared_ptr< ::X509> cert_(cert, ::X509_free);
-
-        char* const s = ::X509_NAME_oneline(::X509_get_subject_name(cert), 0, 0);
-        if (!s) return null_string;
-        boost::shared_ptr<char> s_(s, ::free);
-
-        return std::string(s);
-    }
-}
-
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // 
