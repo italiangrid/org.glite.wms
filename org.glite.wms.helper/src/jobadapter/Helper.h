@@ -21,7 +21,7 @@ public:
 
   std::string id() const;
   std::string output_file_suffix() const;
-  classad::ClassAd* resolve(classad::ClassAd* input_ad) const;
+  classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
 };
 
 } // namespace jobadapter

@@ -60,7 +60,7 @@ Helper::output_file_suffix() const
 }
 
 classad::ClassAd*
-Helper::resolve(classad::ClassAd* input_ad) const
+Helper::resolve(classad::ClassAd const* input_ad) const
 {
   return JobAdapter(input_ad).resolve();
 }
