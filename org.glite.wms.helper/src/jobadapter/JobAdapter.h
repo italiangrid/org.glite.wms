@@ -6,7 +6,11 @@
  *  http://www.edg.org/license.html
  ***************************************************************************/
 
+<<<<<<< JobAdapter.h
 // $Id$
+=======
+// $Id$
+>>>>>>> 1.2
 
 #ifndef GLITE_WMS_HELPER_JOBADAPTER_JOBADAPTER_H
 #define GLITE_WMS_HELPER_JOBADAPTER_JOBADAPTER_H
@@ -34,7 +38,7 @@ public:
   /**
    * Constructor.
    */
-  JobAdapter(classad::ClassAd* ad);
+  JobAdapter(const classad::ClassAd* ad);
   /**
    * Destructor.
    */
@@ -47,7 +51,7 @@ public:
   classad::ClassAd* resolve(void);
   
 private: 
-  classad::ClassAd* m_ad;
+  const classad::ClassAd* m_ad;
 };
 
 } // namespace jobadapter
