@@ -35,7 +35,7 @@ public:
 
   virtual std::string id() const = 0;
   virtual std::string output_file_suffix() const = 0;
-  virtual classad::ClassAd* resolve(classad::ClassAd* input_ad) const = 0;
+  virtual classad::ClassAd* resolve(const classad::ClassAd* input_ad) const = 0;
 };
 
 } // namespace helper
