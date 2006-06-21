@@ -176,7 +176,7 @@ RequestStateMachine::start(classad::ClassAd const* ad)
 }
 
 classad::ClassAd*
-RequestStateMachine::next_step(classad::ClassAd* ad)
+RequestStateMachine::next_step(classad::ClassAd const* ad)
 {
   assert(ad != 0);
 
