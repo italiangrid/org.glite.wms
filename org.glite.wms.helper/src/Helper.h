@@ -38,7 +38,7 @@ public:
   std::string id() const;
 
   std::string resolve(std::string const& input_file) const;
-  classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
+  classad::ClassAd* resolve(classad::ClassAd* input_ad) const;
 };
  
 }}} // glite::wms::helper

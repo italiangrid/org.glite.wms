@@ -79,7 +79,7 @@ main(int argc, char* argv[])
   
   // we define a ClassAds.
   ClassAdParser parser;
-  const ClassAd*      ad = parser.ParseClassAd(input_ad.c_str());
+  ClassAd*      ad = parser.ParseClassAd(input_ad.c_str());
   
   if (ad == 0) 
   {

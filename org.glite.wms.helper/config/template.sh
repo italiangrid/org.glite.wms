@@ -375,7 +375,6 @@ if [ ${__create_subdir} -eq 1 ]; then
   fi
 fi
 
-#savannah 14866: the test -w on work dir is unsuitable on AFS machines
 tmpfile=`mktemp -q ./tmp.XXXXXX`
 if [ $? != 0 ]; then
   fatal_error "Working directory not writable"

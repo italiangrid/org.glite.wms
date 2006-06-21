@@ -34,7 +34,7 @@ public:
   /**
    * Constructor.
    */
-  JobAdapter(const classad::ClassAd* ad);
+  JobAdapter(classad::ClassAd* ad);
   /**
    * Destructor.
    */
@@ -47,7 +47,7 @@ public:
   classad::ClassAd* resolve(void);
   
 private: 
-  const classad::ClassAd* m_ad;
+  classad::ClassAd* m_ad;
 };
 
 } // namespace jobadapter
