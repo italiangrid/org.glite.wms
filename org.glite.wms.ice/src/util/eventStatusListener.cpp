@@ -524,16 +524,8 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                            << log4cpp::CategoryStream::ENDLINE);
         }
 
-        // Dp the "right think"(tm) with the job
-        if ( jc_it->can_be_resubmitted() ) {
-            // resubmit job
-            m_ice_manager->resubmit_job( jc_it, "Job resubmitted by ICE poller" );
-        } else {
-            if ( jc_it->can_be_purged() ) {
-                // purge the job
-                m_ice_manager->purge_job( jc_it, "Job purged by ICE poller" );
-            }
-        }
+        m_ice_manager->resubmit_or_purge_job( jc_it );
+
     }
 }
 

@@ -267,28 +267,7 @@ int main(int argc, char*argv[])
   /*****************************************************************************
    * Initializes ice manager
    ****************************************************************************/ 
-  glite::wms::ice::Ice* iceManager;
-  try {
-    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-      // iceManager = new glite::wms::ice::Ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
-      iceManager = glite::wms::ice::Ice::instance( );
-  } catch(glite::wms::ice::iceInit_ex& ex) {
-      CREAM_SAFE_LOG(
-                     log_dev->fatalStream() 
-                     << "glite-wms-ice::main() - " << ex.what()
-                     << log4cpp::CategoryStream::ENDLINE
-                     );
-      exit(1);
-  } catch(...) {
-      CREAM_SAFE_LOG(
-                     log_dev->fatalStream() 
-                     << "glite-wms-ice::main() - "
-                     << "Catched unknown exception"
-                     << log4cpp::CategoryStream::ENDLINE
-                     );
-      exit(1);
-  }
-
+  glite::wms::ice::Ice* iceManager( glite::wms::ice::Ice::instance( ) );
 
   
   /*****************************************************************************

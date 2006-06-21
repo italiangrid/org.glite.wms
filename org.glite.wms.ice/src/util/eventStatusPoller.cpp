@@ -341,16 +341,7 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
     jit->setLastSeen( time(0) );
     m_cache->put( *jit );
 
-    // Dp the "right think"(tm) with the job
-    if ( jit->can_be_resubmitted() ) {
-        // resubmit job
-        m_iceManager->resubmit_job( jit, "Job resubmitted by ICE poller" );
-    } else {
-        if ( jit->can_be_purged() ) {
-            // purge the job
-            m_iceManager->purge_job( jit, "Job purged by ICE poller" );
-        }
-    }
+    m_iceManager->resubmit_or_purge_job( jit );
 }
 
 #ifdef DONT_COMPILE

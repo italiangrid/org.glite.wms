@@ -129,18 +129,15 @@ namespace glite {
 
           /**
            * Resubmits a failed job. This method takes care of logging
-           * the relevant L&B events. The job will be removed from the
-           * jobCache.
+           * the relevant L&B events. The job is NOT removed from the
+           * job cache!
            *
            * @param jit an iterator to the job to resubmit. If
            * jit==end(), then nothing is done
            *
            * @param reason the reason why this job is being resubmitted
-           *
-           * @return the iterator of the next job in cache, or jit if
-           * some error occurred.
            */
-          util::jobCache::iterator resubmit_job( util::jobCache::iterator jit, const std::string& reason );
+          void resubmit_job( util::jobCache::iterator jit, const std::string& reason );
 
           /**
            * Purge a cancelled/terminated job. This method takes care
@@ -159,9 +156,23 @@ namespace glite {
           util::jobCache::iterator purge_job( util::jobCache::iterator j, const std::string& reason );
 
           /**
+           * Resubmits or purge a given job.
+           *
+           * @param it the iterator to the job to purge or
+           * resubmit. If it == end(), then nothing is done and this
+           * method returns end();
+           *
+           * @return an iterator to the current job, if it is neither
+           * purged nor resubmitted. An interator to the next job, if
+           * the job is purged or resubmitted (and hence removed from
+           * the job cache).
+           */
+          util::jobCache::iterator resubmit_or_purge_job( util::jobCache::iterator it );
+
+          /**
            * returns the singleton instance of this class.
            */
-          static glite::wms::ice::Ice* instance( void ) throw( glite::wms::ice::iceInit_ex& );
+          static glite::wms::ice::Ice* instance( void );
 
       }; // class ice
 

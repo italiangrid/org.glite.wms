@@ -106,10 +106,31 @@ void Ice::IceThreadHelper::stop( void )
 // End inner class definitions
 //
 
-Ice* Ice::instance( void ) throw( iceInit_ex& )
+Ice* Ice::instance( void )
 {
+    log4cpp::Category* m_log_dev = cream_api::util::creamApiLogger::instance()->getLogger();
+
     if ( 0 == s_instance ) {
-        s_instance = new Ice( ); // may throw iceInit_ex
+        try {
+            s_instance = new Ice( ); // may throw iceInit_ex
+        } catch(iceInit_ex& ex) {
+            CREAM_SAFE_LOG(
+                           m_log_dev->fatalStream() 
+                           << "glite::wms::ice::Ice::instance() - " 
+                           << ex.what()
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            exit(1);
+        } catch(...) {
+            CREAM_SAFE_LOG(
+                           m_log_dev->fatalStream() 
+                           << "glite::wms::ice::Ice::instance() - " 
+                           << "Catched unknown exception"
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            exit(1);
+        }
+        
     }
     return s_instance;
 }
@@ -412,10 +433,10 @@ void Ice::ungetRequest( unsigned int reqNum)
 }
 
 //____________________________________________________________________________
-ice_util::jobCache::iterator Ice::resubmit_job( ice_util::jobCache::iterator jit, const string& reason )
+void Ice::resubmit_job( ice_util::jobCache::iterator jit, const string& reason )
 {
     if ( m_cache->end() == jit )
-        return jit;
+        return;
 
     classad::ClassAd command;
     classad::ClassAd arguments;
@@ -449,7 +470,6 @@ ice_util::jobCache::iterator Ice::resubmit_job( ice_util::jobCache::iterator jit
         m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( *jit, m_ns_filelist, ex.what() ) );
         exit(1);
     }
-    return m_cache->erase( jit );
 }
 
 //----------------------------------------------------------------------------
@@ -533,4 +553,22 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
                        );
     }
     return jit;
+}
+
+ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::iterator it )
+{
+    if ( it == m_cache->end() ) {
+        return it;
+    }
+
+    // Dp the "right think"(tm) with the job
+    if ( it->can_be_resubmitted() ) {
+        // resubmit job
+        resubmit_job( it, "Job resubmitted by ICE" );
+    }
+    if ( it->can_be_purged() ) {
+        // purge the job
+        it = purge_job( it, "Job purged by ICE" );
+    }
+    return it;
 }
