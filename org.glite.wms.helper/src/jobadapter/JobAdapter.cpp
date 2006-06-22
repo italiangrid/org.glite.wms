@@ -198,10 +198,12 @@ try {
   bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
 
   if (is_cream_ce) {
-    classad::ClassAd* cream_classad(new classad::ClassAd(*m_ad));
+    classad::ClassAd* cream_jdl(new classad::ClassAd(*m_ad));
     // let's pass the token on to cream (this one only)
-    cream_classad->InsertAttr("ReallyRunningToken", ReallyRunningToken);
-    return cream_classad;
+    jdl::set_really_running_token(*cream_jdl,
+      jdl::JDLPrivate::REALLY_RUNNING_TOKEN
+    );
+    return cream_jdl;
   }
 
   std::auto_ptr<classad::ClassAd> result(new classad::ClassAd);
