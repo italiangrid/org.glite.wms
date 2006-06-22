@@ -200,7 +200,7 @@ try {
     classad::ClassAd* cream_jdl(new classad::ClassAd(*m_ad));
     // let's pass the token on to cream (this one only)
     jdl::set_really_running_token(*cream_jdl,
-      jdl::JDLPrivate::REALLY_RUNNING_TOKEN
+      ReallyRunningToken
     );
 
     return cream_jdl;
