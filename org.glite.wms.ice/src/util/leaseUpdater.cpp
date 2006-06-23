@@ -107,7 +107,7 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
     
     jobids.push_back( j.getJobID() );
 
-    // Renew the lease\
+    // Renew the lease
     
     CREAM_SAFE_LOG(m_log_dev->infoStream()
 		   << "leaseUpdater::update_lease_for_job() - "

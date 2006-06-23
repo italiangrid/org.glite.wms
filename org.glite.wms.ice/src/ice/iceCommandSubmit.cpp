@@ -72,11 +72,10 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
   throw( util::ClassadSyntax_ex&, util::JobRequest_ex& ) :
     iceAbsCommand( ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    m_confMgr( util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
+    m_confMgr( util::iceConfManager::getInstance()),
     m_lb_logger( util::iceLBLogger::instance() )
 {
     try {
-//        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
         m_myname = util::getHostName();
 	if( m_confMgr->getListenerEnableAuthN() ) {
 	  m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );        
@@ -123,18 +122,18 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     classad::ClassAd *rootAD = parser.ParseClassAd( request );
 
     if (!rootAD) {
-        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
+        throw util::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request  ) );        
     }
 
     string commandStr;
     // Parse the "command" attribute
     if ( !rootAD->EvaluateAttrString( "command", commandStr ) ) {
-        throw util::JobRequest_ex("attribute 'command' not found or is not a string");
+        throw util::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request ) );
     }
     boost::trim_if( commandStr, boost::is_any_of("\"") );
 
     if ( !boost::algorithm::iequals( commandStr, "submit" ) ) {
-        throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandSubmit" );
+        throw util::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit:: wrong command parsed: %1%" ) % commandStr ) );
     }
 
     string protocolStr;
@@ -176,6 +175,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                        );   
 
         util::jobCache* cache( util::jobCache::getInstance() );
+        util::cemonUrlCache* cemon_cache( util::cemonUrlCache::getInstance() );
 
         vector<string> url_jid;
         util::CreamJob theJob;
@@ -230,7 +230,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                            << " due to classad exception:" << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
+            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) ) );
             cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
@@ -256,8 +256,6 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                            << log4cpp::CategoryStream::ENDLINE
                            );
             ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
-            //            m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of SOAP exception: ").append( ex.what() ) ) );
-            //            cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
@@ -292,8 +290,6 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                );
                 m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
                 ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
-                // m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of exception: ").append( ex.what() ) ) );
-                // cache->erase( job_pos );
                 throw( iceCommandFatal_ex( ex.what() ) );
             }
 
@@ -337,12 +333,12 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             string cemon_url;
             {
                 boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-                cemon_url = util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
+                cemon_url = cemon_cache->getCEMonUrl( theJob.getCreamURL() );
                 CREAM_SAFE_LOG(
                                m_log_dev->infoStream() 
                                << "iceCommandSubmit::execute() - "
                                << "For current CREAM, cemonUrlCache returned CEMon URL ["
-                               << cemon_url<<"]"
+                               << cemon_url << "]"
                                << log4cpp::CategoryStream::ENDLINE
                                );
             
@@ -354,10 +350,10 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                        m_log_dev->infoStream() 
                                        << "iceCommandSubmit::execute() - "
                                        << "For current CREAM, query to CREAM service returned "
-                                       << "CEMon URL [" << cemon_url<<"]"
+                                       << "CEMon URL [" << cemon_url << "]"
                                        << log4cpp::CategoryStream::ENDLINE
                                        );
-                        util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+                        cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
                     } catch(exception& ex) {
                     
                         CREAM_SAFE_LOG(
@@ -377,7 +373,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                        << "Using CEMon URL [" << cemon_url << "]" 
                                        << log4cpp::CategoryStream::ENDLINE
                                        );
-                        util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+                        cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
                     }
                 }
             }
@@ -391,17 +387,16 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                << log4cpp::CategoryStream::ENDLINE
                                );
 
-                {
-                    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-                    CREAM_SAFE_LOG(
-                                   m_log_dev->infoStream()
-                                   << "iceCommandSubmit::execute() - Subscribing the consumer ["
-                                   << m_myname_url << "] to ["<<cemon_url
-                                   << "] with duration=" << m_confMgr->getSubscriptionDuration()
-                                   << " secs"
-                                   << log4cpp::CategoryStream::ENDLINE
-                                   );
-                }
+                CREAM_SAFE_LOG(
+                               m_log_dev->infoStream()
+                               << "iceCommandSubmit::execute() - "
+                               << "Subscribing the consumer ["
+                               << m_myname_url << "] to ["<<cemon_url
+                               << "] with duration=" 
+                               << m_confMgr->getSubscriptionDuration()
+                               << " secs"
+                               << log4cpp::CategoryStream::ENDLINE
+                               );
 
                 /**
                  * This is the 1st call of
@@ -413,7 +408,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                 if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
                     CREAM_SAFE_LOG(
                                    m_log_dev->errorStream()
-                                   << "iceCommandSubmit::execute() - Subscribe to ["
+                                   << "iceCommandSubmit::execute() - "
+                                   << "Subscribe to ["
                                    << cemon_url << "] failed! "
                                    << "Will not receive status notifications from it..."
                                    << log4cpp::CategoryStream::ENDLINE
@@ -440,7 +436,7 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::Cla
     classad::ClassAd *root = parser.ParseClassAd( oldJdl );
 
     if ( !root ) {
-        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
+        throw util::ClassadSyntax_ex( boost::str( boost::format( "ClassAd parser returned a NULL pointer parsing request=[%1%]") % oldJdl ) );
     }
 
     string ceid;
