@@ -323,14 +323,9 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * status of the related job in the jobCache getting the status from
    * last message of the event.
    */
-  std::for_each( evts.begin(), evts.end(), boost::bind1st( boost::mem_fn( &eventStatusListener::handleEvent ), this ) );
-
-
-  // The line above should be equivalent to the following:
-  //
-  //   for ( vector<monitortypes__Event>::const_iterator it=evts.begin(); it != evts.end(); it++ ) {
-  //       handleEvent( *it );
-  //   }
+  std::for_each( evts.begin(), 
+                 evts.end(), 
+		 boost::bind1st( boost::mem_fn( &eventStatusListener::handleEvent ), this ) );
 
 }
 

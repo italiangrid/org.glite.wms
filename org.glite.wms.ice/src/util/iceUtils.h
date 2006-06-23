@@ -22,6 +22,9 @@
 #include <string>
 #include <stdexcept>
 #include <ctime>
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -53,6 +56,9 @@ namespace util {
 
     std::string getNotificationClientDN( const std::string& );
 
+    std::string getCompleteHostname( const std::string& );
+ 
+   
 } // namespace util
 } // namespace ice
 } // namespace wms

@@ -117,12 +117,14 @@ iceEventLogger::iceEventLogger( void ) :
     if ( gethostname(name, 256) < 0 ) {
         el_s_localhost_name = "(unknown host name )";
     } else {
-        struct hostent *H = gethostbyname(name);
+        el_s_localhost_name = iceUtil::getCompleteHostname( name );
+        if( el_s_localhost_name == "" ) el_s_localhost_name = "(unknown host name )"; 
+        /*struct hostent *H = gethostbyname(name);
         if ( !H ) {
             el_s_localhost_name = "(unknown host name )";            
         } else {
             el_s_localhost_name = H->h_name;
-        }
+        }*/
     }
 }
 

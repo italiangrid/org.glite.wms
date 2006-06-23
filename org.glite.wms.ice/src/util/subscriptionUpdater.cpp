@@ -31,28 +31,6 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   m_iteration_delay = (int)(m_conf->getSubscriptionUpdateThresholdTime()/2);
   if(!m_iteration_delay) m_iteration_delay=5;
   
-  /**
-   * let's Determine our hostname to use as consumerURL
-   */
-//   char name[256];
-//   memset((void*)name, 0, 256);
-
-//   if(gethostname(name, 256) == -1) {
-//     m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
-//                            << strerror(errno)
-//                            << log4cpp::CategoryStream::ENDLINE;
-//     m_valid = false;
-//     return;
-//   }
-//   struct hostent *H=gethostbyname(name);
-//   if(!H) {
-//     m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
-// 			     << strerror(h_errno)
-// 			     << log4cpp::CategoryStream::ENDLINE;
-//     m_valid = false;
-//     return;
-//   }
-
   string tmp_myname;
   try {
     tmp_myname = iceUtil::getHostName();
