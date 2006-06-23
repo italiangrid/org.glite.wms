@@ -142,15 +142,15 @@ namespace { // anonymous namespace
         classad::ClassAd *ad = parser.ParseClassAd( ad_string );
 
         if (!ad)
-            throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
+            throw iceUtil::ClassadSyntax_ex( boost::str( boost::format("StatusNotification() got an error while parsing notification classad: %1%" ) % ad_string ) );
         
         if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
-            throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
+            throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "StatusNotification(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
         boost::trim_if( m_cream_job_id, boost::is_any_of("\"" ) );
 
         string job_status_str;
         if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
-            throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
+            throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "StatusNotification(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
         boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
         m_job_status = api::job_statuses::getStatusNum( job_status_str );
 
