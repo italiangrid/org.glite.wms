@@ -16,6 +16,7 @@
 
 // Boost
 #include <boost/lexical_cast.hpp>
+#include <boost/pool/detail/singleton.hpp>
 #include "boost/filesystem/path.hpp"
 
 #include "wmpcommon.h"
@@ -188,7 +189,7 @@ getJDL(const std::string &job_id, JdlType jdltype,
 	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::getJDL()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpoperations::getJDL()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -203,7 +204,7 @@ getJDL(const std::string &job_id, JdlType jdltype,
 			break;
 		case WMS_JDL_REGISTERED:
 			getJDL_response.jdl = wmputilities::readTextFile(
-				wmputilities::getJobJDLToStartPath(*jid));
+				wmputilities::getJobJDLExistingStartPath(*jid));
 			break;
 		default:
 			break;
@@ -240,8 +241,8 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	} catch (exception &ex) {
 		edglog(severe)<<"Unable to get max input sandbox size: "
 			<<ex.what()<<endl;
-		throw FileSystemException(__FILE__, __LINE__,
-			"getMaxInputSandboxSize()", wmputilities::WMS_IS_FAILURE,
+		throw JobOperationException(__FILE__, __LINE__,
+			"getMaxInputSandboxSize()", wmputilities::WMS_CONFIGURATION_ERROR,
 			"Unable to get max input sandbox size");
 	}
 
@@ -415,118 +416,143 @@ void
 getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	const string &jid, const string &protocol)
 {
-	GLITE_STACK_TRY("getOutputFileList()");
-	edglog_fn("wmpoperations::getOutputFileList");
-	logRemoteHostInfo();
-	edglog(info)<<"Operation requested for job: "<<jid<<endl;
+	// File descriptor for operation lock system:
+	// During jobPurge operation, a check to getOutputFileList lock file is done
+	// If a getOutputFileList is requested, jobPurge operation is aborted
+	int fd = -1;
 	
-	JobId *jobid = new JobId(jid);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
+	try {
+		edglog_fn("wmpoperations::getOutputFileList");
+		logRemoteHostInfo();
+		edglog(info)<<"Operation requested for job: "<<jid<<endl;
 		
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-	} else {
-		auth->authorize("", jid);
-	}
-	delete auth;
-	
-	string jobdirectory = wmputilities::getJobDirectoryPath(*jobid);
-
-	// Checking for maradona file, created if and only if the job is in DONE state
-	edglog(debug)<<"Searching for file: "<<jobdirectory + FILE_SEPARATOR
-		+ MARADONA_FILE<<endl;
-	if (!wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
-		// Initializing logger
-		WMPEventLogger wmplogger(wmputilities::getEndpoint());
-		std::pair<std::string, int> lbaddress_port
-			= conf.getLBLocalLoggerAddressPort();
-		wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
-			conf.getDefaultProtocol(), conf.getDefaultPort());
-		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+		JobId *jobid = new JobId(jid);
 		
-		// Setting user proxy
-		wmplogger.setUserProxy(delegatedproxy);
+		//** Authorizing user
+		edglog(info)<<"Authorizing user..."<<endl;
+		authorizer::WMPAuthorizer *auth = 
+			new authorizer::WMPAuthorizer();
+			
+		// Getting delegated proxy inside job directory
+		string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
+		edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 		
-		// Getting job status to check if is a job and is done success
-		JobStatus status = wmplogger.getStatus(false);
-	
-		if (status.getValInt(JobStatus::CHILDREN_NUM) != 0) {
-			string msg = "getOutputFileList operation not allowed for dag or "
-				"collection type";
-			edglog(error)<<msg<<": "<<jobid<<endl;
-			throw JobOperationException(__FILE__, __LINE__, "getOutputFileList()", 
-				wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
+		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
+		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+		if (vomsproxy.hasVOMSExtension()) {
+			auth->authorize(vomsproxy.getDefaultFQAN(), jid);
+		} else {
+			auth->authorize("", jid);
 		}
+		delete auth;
 		
-		if (((status.status == JobStatus::DONE)
-				&& (status.getValInt(JobStatus::DONE_CODE)
-					== JobStatus::DONE_CODE_FAILED))
-				|| ((status.status != JobStatus::DONE)
-					&& (status.status != JobStatus::ABORTED))) {
-			edglog(error)<<
-				"Job current status doesn't allow getOutputFileList operation"<<endl;
-			throw JobOperationException(__FILE__, __LINE__,
-				"getOutputFileList()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-				"Job current status doesn't allow getOutputFileList operation");
-		}
-	}
+		int fd = wmputilities::operationLock(
+			wmputilities::getGetOutputFileListLockFilePath(*jobid),
+			"getOutputFileList");
+			
+		string jobdirectory = wmputilities::getJobDirectoryPath(*jobid);
 	
-	delete jobid;
-	
-	string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
-	vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
-		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
-		jid, protocol, "output");
-	unsigned int jobdirsize = jobdiruris->size();
-	
-	// Searching files inside directory
-	const boost::filesystem::path p(outputpath, boost::filesystem::native);
-	std::vector<std::string> found;
-	glite::wms::wmproxy::commands::list_files(p, found);
-	edglog(debug)<<"List size is (hidden files included): "
-		<<found.size()<<endl;
-	
-	// Creating the list
-	StringAndLongList *list = new StringAndLongList();
-	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
-	StringAndLongType *item = NULL;
-	string filename;
-	long filesize;
-	
-	vector<string>::iterator iter = found.begin();
-	vector<string>::iterator const end = found.end();
-	for (; iter != end; ++iter) {
-		// Checking for hidden files
-		filename = wmputilities::getFileName(string(*iter));
-		if ((filename != MARADONA_FILE) && (filename
-				!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
-			filesize = wmputilities::computeFileSize(*iter);
-			edglog(debug)<<"Inserting file name: " <<filename<<endl;
-			edglog(debug)<<"Inserting file size: " <<filesize<<endl;
-			for (unsigned int i = 0; i < jobdirsize; i++) {
-				item = new StringAndLongType();
-				item->name = (*jobdiruris)[i] + FILE_SEPARATOR + filename;
-				item->size = filesize;
-				file->push_back(item);
+		// Checking for maradona file, created if and only if the job is in DONE state
+		edglog(debug)<<"Searching for file: "<<jobdirectory + FILE_SEPARATOR
+			+ MARADONA_FILE<<endl;
+		if (!wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
+			// Initializing logger
+			WMPEventLogger wmplogger(wmputilities::getEndpoint());
+			std::pair<std::string, int> lbaddress_port
+				= conf.getLBLocalLoggerAddressPort();
+			wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
+				conf.getDefaultProtocol(), conf.getDefaultPort());
+			wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+			
+			// Setting user proxy
+			wmplogger.setUserProxy(delegatedproxy);
+			
+			// Getting job status to check if is a job and is done success
+			JobStatus status = wmplogger.getStatus(false);
+		
+			if (status.getValInt(JobStatus::CHILDREN_NUM) != 0) {
+				string msg = "getOutputFileList operation not allowed for dag or "
+					"collection type";
+				edglog(error)<<msg<<": "<<jobid<<endl;
+				throw JobOperationException(__FILE__, __LINE__, "getOutputFileList()", 
+					wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
+			}
+			
+			if (((status.status == JobStatus::DONE)
+					&& (status.getValInt(JobStatus::DONE_CODE)
+						== JobStatus::DONE_CODE_FAILED))
+					|| ((status.status != JobStatus::DONE)
+						&& (status.status != JobStatus::ABORTED))) {
+				edglog(error)<<
+					"Job current status doesn't allow getOutputFileList operation"<<endl;
+				throw JobOperationException(__FILE__, __LINE__,
+					"getOutputFileList()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+					"Job current status doesn't allow getOutputFileList operation");
 			}
 		}
+		
+		delete jobid;
+		
+		string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
+		vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+			conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
+			jid, protocol, "output");
+		unsigned int jobdirsize = jobdiruris->size();
+		
+		// Searching files inside directory
+		const boost::filesystem::path p(outputpath, boost::filesystem::native);
+		std::vector<std::string> found;
+		glite::wms::wmproxy::commands::list_files(p, found);
+		edglog(debug)<<"List size is (hidden files included): "
+			<<found.size()<<endl;
+		
+		// Creating the list
+		StringAndLongList *list = new StringAndLongList();
+		vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+		StringAndLongType *item = NULL;
+		string filename;
+		long filesize;
+		
+		vector<string>::iterator iter = found.begin();
+		vector<string>::iterator const end = found.end();
+		for (; iter != end; ++iter) {
+			// Checking for hidden files
+			filename = wmputilities::getFileName(string(*iter));
+			if ((filename != MARADONA_FILE) && (filename
+					!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
+				filesize = wmputilities::computeFileSize(*iter);
+				edglog(debug)<<"Inserting file name: " <<filename<<endl;
+				edglog(debug)<<"Inserting file size: " <<filesize<<endl;
+				for (unsigned int i = 0; i < jobdirsize; i++) {
+					item = new StringAndLongType();
+					item->name = (*jobdiruris)[i] + FILE_SEPARATOR + filename;
+					item->size = filesize;
+					file->push_back(item);
+				}
+			}
+		}
+		list->file = file;
+		getOutputFileList_response.OutputFileAndSizeList = list;
+		
+		edglog(info)<<"Successfully retrieved files: "<<found.size()<<endl;
+		
+		edglog(debug)<<"Removing lock..."<<std::endl;
+		wmputilities::operationUnlock(fd);
+
+ 	} catch (Exception &exc) {
+		edglog(debug)<<"Removing lock..."<<std::endl;
+		wmputilities::operationUnlock(fd);
+		
+		exc.push_back(__FILE__, __LINE__, "getOutputFileList()");
+		throw exc;
+	} catch (exception &ex) {
+		edglog(debug)<<"Removing lock..."<<std::endl;
+		wmputilities::operationUnlock(fd);
+		
+		Exception exc(__FILE__, __LINE__, "getOutputFileList()", 0,
+			"Standard exception: " + std::string(ex.what())); 
+		throw exc;
 	}
-	list->file = file;
-	getOutputFileList_response.OutputFileAndSizeList = list;
-	
-	edglog(info)<<"Successfully retrieved files: "<<found.size()<<endl;
-	
-	GLITE_STACK_CATCH();
 }
 	
 void
@@ -670,7 +696,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"getProxyReq()", wmputilities::WMS_DELEGATION_ERROR,
+			"getProxyReq()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
 	
@@ -680,7 +706,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	
 	GLITE_STACK_CATCH();
 }
-/*
+
 void
 getNewProxyReq(pair<string, string> &retpair)
 {
@@ -704,7 +730,7 @@ getNewProxyReq(pair<string, string> &retpair)
 	
 	GLITE_STACK_CATCH();
 }
-*/
+
 void
 putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	const string &proxy)
@@ -723,7 +749,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"putProxy()", wmputilities::WMS_DELEGATION_ERROR,
+			"putProxy()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
 	
@@ -732,7 +758,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	
 	GLITE_STACK_CATCH();
 }
-/*
+
 void
 destroyProxy(const string &delegation_id)
 {
@@ -750,7 +776,7 @@ destroyProxy(const string &delegation_id)
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"destroyProxy()", wmputilities::WMS_DELEGATION_ERROR,
+			"destroyProxy()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
 	
@@ -778,7 +804,7 @@ getProxyTerminationTime(getProxyTerminationTimeResponse &getProxyTerminationTime
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"getProxyTerminationTime()", wmputilities::WMS_DELEGATION_ERROR,
+			"getProxyTerminationTime()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
 	
@@ -787,7 +813,7 @@ getProxyTerminationTime(getProxyTerminationTimeResponse &getProxyTerminationTime
 	
 	GLITE_STACK_CATCH();
 }
-*/
+
 void
 getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 {
@@ -822,7 +848,7 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::addACLItems()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpoperations::addACLItems()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -837,7 +863,7 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
 	getACLItems_response =
 		gaclmanager.getItems(authorizer::GaclManager::WMPGACL_PERSON_TYPE);
-	
+		
 	edglog(info)<<"getACLItems successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
@@ -878,7 +904,7 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::addACLItems()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpoperations::addACLItems()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -917,8 +943,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
-	string errors = "";
-	
+	string errors = "";	
 	JobId *jid = new JobId(job_id);
 	
 	//** Authorizing user
@@ -944,7 +969,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -969,14 +994,12 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	gaclmanager.removeEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
 		item, errors);
 		
-	if (errors.size( )>0) { 
-       edglog(error)<<"Removal of the gacl item failed: " << errors << "\n"; 
-       throw JobOperationException(__FILE__, __LINE__, 
-               "removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
-               "Removal of the gacl item failed:\n" + errors); 
+	if (errors.size() > 0) { 
+		edglog(error)<<"Removal of the gacl item failed: " << errors << "\n"; 
+		throw AuthorizationException(__FILE__, __LINE__, 
+		"removeACLItem()", wmputilities::WMS_AUTHORIZATION_ERROR, 
+		"Removal of the gacl item failed:\n" + errors); 
 	} 
-	
-		
 	gaclmanager.saveGacl();
 	
 	edglog(info)<<"removeACLItem successfully"<<endl;
@@ -1005,7 +1028,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 		if (id == "") {
 			edglog(error)<<"Provided Job Id not valid"<<endl;
 	  		throw JobOperationException(__FILE__, __LINE__,
-				"getProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+				"getProxyInfo()", wmputilities::WMS_INVALID_ARGUMENT,
 				"Provided Job Id not valid");
 		}
 		auth->authorize("", id);
@@ -1019,7 +1042,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 		if (id == "") {
 			edglog(error)<<"Provided Delegation Id not valid"<<endl;
 	  		throw JobOperationException(__FILE__, __LINE__,
-				"getProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+				"getProxyInfo()", wmputilities::WMS_INVALID_ARGUMENT,
 				"Provided Delegation Id not valid");
 		}
 		proxy = WMPDelegation::getDelegatedProxyPath(id);
@@ -1051,23 +1074,50 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 	// Setting user proxy
 	wmplogger.setUserProxy(delegatedproxy);
 	
-	string jdlpath = wmplogger.retrieveRegJobEvent(jid->toString()).jdl;
+	string jdlpath;
+	jdlpath = wmputilities::getJobJDLExistingStartPath(*jid);
+	
 	edglog(debug)<<"jdlpath: "<<jdlpath<<endl;
-	if (jdlpath == "") {
-		edglog(critical)<<"No Register event found quering LB; unable to get "
-			"registered jdl"<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"checkPerusalFlag()", wmputilities::WMS_IS_FAILURE,
-			"Unable to check perusal availability"
-			"\n(please contact server administrator)");
+	string type;
+	JobAd * jad = NULL;
+	if (!wmputilities::fileExists(jdlpath)) {
+		// Checking if the job is a sub-node
+		string parent = wmplogger.retrieveRegJobEvent(jid->toString()).parent;
+		if (parent == "") {
+			// JDL to start should be present, something went wrong
+			throw JobOperationException(__FILE__, __LINE__,
+		    	"checkPerusalFlag()", wmputilities::WMS_IS_FAILURE,
+				"Unable to check perusal availability"
+				"\n(please contact server administrator)");
+		}
+		
+		// Job is a sub-node, getting JDL from parent JDL
+		JobId *parentjid = new JobId(parent);
+		jdlpath = wmputilities::getJobJDLExistingStartPath(*parentjid);
+
+		WMPExpDagAd *dag = new WMPExpDagAd(wmputilities::readTextFile(jdlpath));
+		jad = new NodeAd(dag->getNode(*jid));
+		delete jid;
+		delete dag;
+		
+		// Supported sub-nodes are standard job, setting type = job
+		type = JDL_TYPE_JOB;
+		
+	} else {
+		// Job is standard job or a compound job parent
+		Ad *ad = new Ad(wmputilities::readTextFile(jdlpath));
+		if (ad->hasAttribute(JDL::TYPE)) {
+			type = glite_wms_jdl_toLower(ad->getString(JDL::TYPE));
+		} else {
+			type = JDL_TYPE_JOB;
+		}
+		if (type == JDL_TYPE_JOB) {
+			jad = new JobAd(*(ad->ad()));
+		}
+		delete ad;
 	}
-	
-	string jdl = wmputilities::readTextFile(jdlpath);
-	edglog(debug)<<"Jdl: "<<jdl<<endl;
-	
-	int type = getType(jdl);
-	if (type == TYPE_JOB) {
-		JobAd * jad = new JobAd(jdl);
+	edglog(info) <<"Type: "<<type<<endl;
+	if (type == JDL_TYPE_JOB) {
 		jad->setLocalAccess(false);
 		
 		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
@@ -1085,6 +1135,8 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 		    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 		    	"Perusal not enabled for this job");
 		}
+		
+		// Checking for attribute JDL::PU_FILES_DEST_URI value
 		if (checkremotepeek) {
 			if (jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
 				string protocol = conf.getDefaultProtocol();
@@ -1137,15 +1189,16 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 					throw JobOperationException(__FILE__, __LINE__,
 				    	"checkPerusalFlag()",
 				    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
-				    	"Perusal peek URI refers to server host, but the path "
-				    		"is not manged by WMProxy:\n" + uri);
+				    	"Remote perusal peek URI refers to server host, but "
+				    		"the path is not manged by WMProxy:\n" + uri);
 				}
 			}
 		}
 		
 		delete jad;
 	} else {
-		edglog(debug)<<"Perusal service not available for dag or collection type"<<endl;
+		edglog(debug)<<"Perusal service not available for dag or collection "
+			"type"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 	    	"checkPerusalFlag()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 	    	"Perusal service not available for dag or collection type");
@@ -1185,10 +1238,10 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if (authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+	if (authorizer::WMPAuthorizer::checkJobDrain()) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::enableFilePerusal()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"enableFilePerusal()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -1251,10 +1304,10 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+	if (authorizer::WMPAuthorizer::checkJobDrain()) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"getPerusalFiles()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -1265,6 +1318,13 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		throw JobOperationException(__FILE__, __LINE__,
 	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_INVALID_ARGUMENT, 
 	    	"Provided file name not valid");
+	}
+	
+	if (!wmputilities::fileExists(wmputilities::getJobJDLStartedPath(*jid))) {
+		edglog(error)<<"The job is not started"<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+	    	"getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+	    	"the job is not started");
 	}
 	
 	checkPerusalFlag(jid, delegatedproxy, true);
@@ -1321,8 +1381,8 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		if (!outfile.good()) {
 			edglog(severe)<<tempfile<<": !outfile.good()"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
-				"getPerusalFiles()", WMS_IS_FAILURE, "Unable to open perusal "
-				"temporary file\n(please contact server administrator)");
+				"getPerusalFiles()", WMS_FILE_SYSTEM_ERROR, "Unable to open "
+				"perusal temporary file\n(please contact server administrator)");
 		}
 		
 		string filetoreturn;
@@ -1345,8 +1405,9 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 				if (!outfile.good()) {
 					edglog(severe)<<tempfile<<": !outfile.good()"<<endl;
 					throw FileSystemException(__FILE__, __LINE__,
-						"getPerusalFiles()", WMS_IS_FAILURE, "Unable to open perusal "
-						"temporary file\n(please contact server administrator)");
+						"getPerusalFiles()", WMS_FILE_SYSTEM_ERROR, "Unable to "
+						"open perusal temporary file\n(please contact server "
+						"administrator)");
 				}
 				totalfilesize = 0;
 				enddate = (*iter).substr((*iter).rfind(".") + 1,
@@ -1360,8 +1421,8 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			if (!infile.good()) {
 				edglog(severe)<<*iter<<": !infile.good()"<<endl;
 				throw FileSystemException(__FILE__, __LINE__,
-					"getPerusalFiles()", WMS_IS_FAILURE, "Unable to open perusal "
-					"input file\n(please contact server administrator)");
+					"getPerusalFiles()", WMS_FILE_SYSTEM_ERROR, "Unable to open "
+					"perusal input file\n(please contact server administrator)");
 			}
 			outfile << infile.rdbuf();
 			infile.close();
@@ -1416,6 +1477,7 @@ getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response
 	edglog(info)<<"Transfer protocols retrieved successfully"<<endl;
 	GLITE_STACK_CATCH();
 }
+
 //} // server
 //} // wmproxy
 //} // wms

@@ -101,7 +101,6 @@ gzUncompress(char *source, char *dest)
 {
 	FILE *out = NULL;
 	char *zmsg = NULL;
-	char *errmsg = NULL;
     gzFile in;
 	int len = 0;
 	int err = 0;

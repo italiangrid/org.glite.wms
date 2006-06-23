@@ -11,9 +11,6 @@
 #include <string>
 #include <iostream>
 
-// boost
-#include <boost/lexical_cast.hpp>
-
 #include "wmpdelegation.h"
 
 // Exceptions
@@ -33,6 +30,7 @@ extern "C" {
 	#include "gridsite.h"
 }
 
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -51,7 +49,7 @@ using namespace glite::wms::wmproxy::server;  //Exception codes
 namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 
-char *
+string
 WMPDelegation::getProxyDir()
 {
 	GLITE_STACK_TRY("getProxyDir()");
@@ -66,13 +64,16 @@ WMPDelegation::getProxyDir()
 			"Unable to get DOCUMENT_ROOT environment variable value\n(please "
 				"contact server administrator)");
 	}
-	char * proxydir = (char*) malloc(1024);
+	
+	char * proxydir;
 	asprintf(&proxydir, "%s/%s", docroot, GRST_PROXYCACHE);
+	string returnproxydir = string(proxydir);
+	free(proxydir);
 	
 	// Creating proxydir if it doesn't exist
-	wmputilities::createSuidDirectory(string(proxydir));
+	wmputilities::createSuidDirectory(returnproxydir);
 	
-	return proxydir;
+	return returnproxydir;
 	
 	GLITE_STACK_CATCH();
 }
@@ -85,65 +86,64 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 	
 	char * user_dn = NULL;
     user_dn = wmputilities::getUserDN();
+    
 	char * request = NULL;
-	if (GRSTx509MakeProxyRequest(&request, getProxyDir(), 
+	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
 			(char*) delegation_id.c_str(), user_dn) != 0) {
 		edglog(critical)<<"Unable to complete Proxy request"<<endl;
+		free(user_dn);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to complete Proxy request");
 	}
 	
-	string proxy_req = "";
-	int i = 0;
-	while (request[i] != '\0') {
-		proxy_req += request[i];
-		i++;
-	}
+	string proxy_req = string(request);
+	
+	free(user_dn);
+	free(request);
+	
 	return proxy_req;
 	
 	GLITE_STACK_CATCH();
 }
-/*
+
 pair<string, string>
 WMPDelegation::getNewProxyRequest()
 {
 	GLITE_STACK_TRY("getNewProxyRequest()");
 	edglog_fn("WMPDelegation::getNewProxyRequest");
 	
-	char * delegation_id = GRSTx509MakeDelegationID();
-	
+	char * delegation_id = NULL;
+	delegation_id = GRSTx509MakeDelegationID();
 	edglog(debug)<<"Generated Delegation ID: "<<delegation_id<<endl;
 	
 	char * user_dn = NULL;
     user_dn = wmputilities::getUserDN();
+    
 	char * request = NULL;
-	edglog(debug)<<"____ HERE 0"<<endl;
-	if (GRSTx509MakeProxyRequest(&request, getProxyDir(), 
+	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
 			delegation_id, user_dn) != 0) {
 		edglog(critical)<<"Unable to complete New Proxy request"<<endl;
+		free(delegation_id);
+		free(user_dn);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to complete New Proxy request");
 	}
-	edglog(debug)<<"____ HERE 1"<<endl;
-	string proxy_req = "";
-	int i = 0;
-	while (request[i] != '\0') {
-		proxy_req += request[i];
-		i++;
-	}
-	edglog(debug)<<"____ HERE 2"<<endl;
 	
 	pair<string, string> retpair;
 	retpair.first = string(delegation_id);
-	retpair.second = proxy_req;
-	edglog(debug)<<"____ HERE 4"<<endl;
+	retpair.second = string(request);
+	
+	free(delegation_id);
+	free(user_dn);
+	free(request);
+	
 	return retpair;
 	
 	GLITE_STACK_CATCH();
 }
-*/
+
 void
 WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
 {
@@ -152,21 +152,26 @@ WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
 	
 	char * user_dn = NULL;
   	user_dn = wmputilities::getUserDN();
-  	edglog(debug)<<"Proxy dir: "<<string(WMPDelegation::getProxyDir())<<endl;
+  	
+  	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
   	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-	if (GRSTx509CacheProxy(WMPDelegation::getProxyDir(),
+  	
+	if (GRSTx509CacheProxy((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn,
 			(char*) proxy_req.c_str()) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to store client Proxy"<<endl;
+		free(user_dn);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"putProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to store client Proxy");
     }
     
+    free(user_dn);
+    
     GLITE_STACK_CATCH();
 }
-/*
+
 void
 WMPDelegation::destroyProxy(const string &delegation_id)
 {
@@ -175,16 +180,21 @@ WMPDelegation::destroyProxy(const string &delegation_id)
 	
 	char * user_dn = NULL;
   	user_dn = wmputilities::getUserDN();
-  	edglog(debug)<<"Proxy dir: "<<string(WMPDelegation::getProxyDir())<<endl;
+  	
+  	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
   	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-	if (GRSTx509ProxyDestroy(WMPDelegation::getProxyDir(),
+  	
+	if (GRSTx509ProxyDestroy((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to destroy Proxy"<<endl;
+		free(user_dn);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"destroyProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to destroy Proxy");
     }
+    
+    free(user_dn);
     
     GLITE_STACK_CATCH();
 }
@@ -196,27 +206,36 @@ WMPDelegation::getTerminationTime(const string &delegation_id) {
 	
 	char * user_dn = NULL;
   	user_dn = wmputilities::getUserDN();
+  	
   	time_t *start = (time_t*) malloc(sizeof(time_t));
   	time_t *finish = (time_t*) malloc(sizeof(time_t));
-  	edglog(debug)<<"Proxy dir: "<<string(WMPDelegation::getProxyDir())<<endl;
+  	
+  	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
   	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-	if (GRSTx509ProxyGetTimes(WMPDelegation::getProxyDir(),
+  	
+	if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn, start, finish) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to get termination time"<<endl;
+		free(user_dn);
+		free(start);
+		free(finish);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to get termination time");
     }
-    time_t time = *finish;
-    free(start);
-    free(finish);
+	time_t time = *finish;
+    
+    free(user_dn);
+	free(start);
+	free(finish);
     
     return time;
     
     GLITE_STACK_CATCH();
 }
-*/
+
+/*
 string
 WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 {
@@ -225,14 +244,14 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 	
 	char * user_dn = NULL;
 	user_dn = wmputilities::getUserDN();
-	edglog(debug)<<"Proxy dir: "<<string(WMPDelegation::getProxyDir())<<endl;
+	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
   	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-	char * delegated_proxy = GRSTx509CachedProxyFind(getProxyDir(), 
+	char * delegated_proxy = GRSTx509CachedProxyFind((char*) getProxyDir().c_str(), 
 		(char*) delegation_id.c_str(), user_dn);
-	if (delegated_proxy == NULL) {
+	if ((delegated_proxy == NULL) || (*delegated_proxy == '\0')) {
 		edglog(critical)<<"Unable to get delegated Proxy"<<endl;
-		throw wmputilities::JobOperationException(__FILE__, __LINE__,
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"regist()", wmputilities::WMS_DELEGATION_ERROR,
 			"Unable to get delegated Proxy");
 	}
@@ -246,6 +265,39 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 	
 	GLITE_STACK_CATCH();
 }
+*/
+
+string
+WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
+{
+	GLITE_STACK_TRY("getDelegatedProxyPath()");
+	edglog_fn("WMPDelegation::getDelegatedProxyPath");
+	
+	char * user_dn = NULL;
+	user_dn = wmputilities::getUserDN();
+	
+	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
+  	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
+  	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
+  	
+  	char * user_dn_enc = NULL;
+  	user_dn_enc = GRSThttpUrlEncode(user_dn);
+  	free(user_dn);
+  	
+  	char * filename = NULL;
+  	asprintf(&filename, "%s/%s/%s/userproxy.pem", (char*) getProxyDir().c_str(),
+  		user_dn_enc, (char*) delegation_id.c_str());
+  	free(user_dn_enc);
+  	
+  	string proxypath = string(filename);
+  	free(filename);
+  	
+  	return proxypath;
+  	//return "/tmp/x509up_u604deleg";
+	
+	GLITE_STACK_CATCH();
+}
+
 
 } // namespace server
 } // namespace wmproxy

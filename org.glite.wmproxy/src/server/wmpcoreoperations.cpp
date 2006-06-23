@@ -17,7 +17,6 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/file.h> // flock
 
 #include "wmp2wm.h"
 #include "wmpcommon.h"
@@ -234,7 +233,7 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 				edglog(error)<<msg<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
 			    	"wmpcoreoperations::jobregister()",
-			    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+			    	wmputilities::WMS_INVALID_JDL_ATTRIBUTE, 
 			    	msg);
 			}
 		}
@@ -262,7 +261,7 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
         		edglog(error)<<"Composite Job Type not yet supported"<<endl;
             	throw JobOperationException(__FILE__, __LINE__,
         			"wmpcoreoperations::jobregister()",
-        			wmputilities::WMS_OPERATION_NOT_ALLOWED,
+        			wmputilities::WMS_INVALID_JDL_ATTRIBUTE,
         			"Composite Job Type not yet supported");
            }
         }
@@ -317,7 +316,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation ID not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobRegister()", wmputilities::WMS_DELEGATION_ERROR,
+			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
 	}
 	
@@ -346,7 +345,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -393,8 +392,8 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 	// Creating sub jobs directories
 	if (jobids.size()) {
 		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
-		wmputilities::managedir(document_root, userid,
-			jobdiruserid, jobids);
+		wmputilities::managedir(document_root, userid, jobdiruserid, jobids);
+		
 		string link;
 		string linkbak;
 		
@@ -411,7 +410,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 			      		<<link<<"\n"<<strerror(errno)<<endl;
 			      
 			      	throw FileSystemException(__FILE__, __LINE__,
-						"setSubjobFileSystem()", wmputilities::WMS_FATAL,
+						"setSubjobFileSystem()", wmputilities::WMS_FILE_SYSTEM_ERROR,
 						"Unable to create symbolic link to proxy file\n"
 							"(please contact server administrator)");
 				}
@@ -427,7 +426,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 			      		<<linkbak<<"\n"<<strerror(errno)<<endl;
 			      
 			      	throw FileSystemException(__FILE__, __LINE__,
-						"setSubjobFileSystem()", wmputilities::WMS_FATAL,
+						"setSubjobFileSystem()", wmputilities::WMS_FILE_SYSTEM_ERROR,
 						"Unable to create symbolic link to backup proxy file\n"
 							"(please contact server administrator)");
 		    	}
@@ -478,7 +477,7 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 		      		<<proxy<<"\n"<<strerror(errno)<<endl;
 		      
 		      	throw FileSystemException(__FILE__, __LINE__,
-					"setJobFileSystem()", wmputilities::WMS_FATAL,
+					"setJobFileSystem()", wmputilities::WMS_FILE_SYSTEM_ERROR,
 					"Unable to create symbolic link to renewal proxy\n(please "
 					"contact server administrator)");
 			}
@@ -985,16 +984,16 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	}
 	
 	// Creating private job directory with delegated Proxy
-	if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
+	/***if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
 		// Creating job directories only for the parent. -> empty vector.
 		vector<string> emptyvector;
 		setJobFileSystem(auth, delegatedproxy, stringjid, emptyvector,
 			jdl, renewalproxy);
-	} else {
+	} else {***/
 		// Sub jobs directory MUST be created now
 		setJobFileSystem(auth, delegatedproxy, stringjid, jobids,
 			jdl, renewalproxy);
-	}
+	/***}***/
 	
 	string dagjdl = dag->toString(ExpDagAd::MULTI_LINES);
 	pair<string, string> returnpair;
@@ -1094,7 +1093,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpcoreoperations::jobStart()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpcoreoperations::jobStart()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -1124,31 +1123,28 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 		throw ex;
 	}
 	
-	string seqcode = wmplogger.isStartAllowed();
-	if (seqcode == "") {
+	pair<string, regJobEvent> startpair = wmplogger.isStartAllowed();
+	if (startpair.first == "") { // seqcode
 		edglog(error)<<"The job has already been started"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 			"The job has already been started");
 	}
-	
-	wmplogger.setSequenceCode(seqcode);
-	wmplogger.incrementSequenceCode();
-	
-	regJobEvent event = wmplogger.retrieveRegJobEvent(job_id);
-
-	if (event.parent != "") {
+	if (startpair.second.parent != "") { // event
 		string msg = "the job is a DAG subjob. The parent is: "
-			+ event.parent;
+			+ startpair.second.parent;
 		edglog(error)<<msg<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 	}
 	
+	wmplogger.setSequenceCode(startpair.first);
+	wmplogger.incrementSequenceCode();
+	
 	string jdlpath = wmputilities::getJobJDLToStartPath(*jid);
 	if (!wmputilities::fileExists(jdlpath)) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+			"jobStart()", wmputilities::WMS_JOB_NOT_FOUND,
 			"Unable to start job");
 	}
 	
@@ -1235,23 +1231,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		} else {
 			// Locking lock file to ensure only one start operation is running
 			// at any time for a specific job
-			string lockfile = wmputilities::getJobStartLockFilePath(*jid);
-			edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
-			fd = open(lockfile.c_str(), O_CREAT | O_RDONLY, S_IRWXU);
-			if (fd == -1) {
-				edglog(debug)<<"Unable to open lock file: "<<lockfile<<endl;
-				throw JobOperationException( __FILE__, __LINE__,
-          			"submit()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-           			"unable to open lock file");
-			}
-			if (flock(fd, LOCK_EX | LOCK_NB)) {
-				edglog(debug)<<"Lock file is locked for job: "<<jid->toString()
-					<<endl;
-				close(fd);
-				throw JobOperationException( __FILE__, __LINE__,
-          			"submit()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-           			"start operation already in progress");
-			}
+			fd = wmputilities::operationLock(
+				wmputilities::getJobStartLockFilePath(*jid), "jobStart");
 		}
 			
 		if (conf.getAsyncJobStart()) {
@@ -1283,7 +1264,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
 			"LOG_ENQUEUE_START", true, true, filelist_global.c_str(),
 			wmputilities::getJobJDLToStartPath(*jid).c_str());
-	
+		
 		// Getting delegated proxy inside job directory
 		string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
 		edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
@@ -1400,7 +1381,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						// TBD Call the method with a vector of file
 						wmputilities::untarFile(jobpath + files[i],
 							targetdir, auth->getUserId(), auth->getUserGroup());
-						
 					}
 			    	wmputilities::setFlagFile(flagfile, true);
 			    } else {
@@ -1604,7 +1584,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    	+ FILE_SEPARATOR + FLAG_FILE_REGISTER_SUBJOBS;
 		    if (!wmputilities::fileExists(flagfile)) {
 		    	wmplogger.registerSubJobs(dag, wmplogger.subjobs);
-		    	edglog(debug)<<"registerSubJobs OK, writing flag file: "<<flagfile<<endl;
+		    	edglog(debug)<<"registerSubJobs OK, writing flag file: "
+		    		<<flagfile<<endl;
 		    	wmputilities::setFlagFile(flagfile, true);
 		    } else {
 		    	edglog(debug)<<"Flag file "<<flagfile<<" already exists. "
@@ -1614,7 +1595,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			// Looking for Zipped ISB
 			if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
 				//Setting file system for subjobs
-				setSubjobFileSystem(auth, parentjobid.toString(), jobids);
+				/***setSubjobFileSystem(auth, parentjobid.toString(), jobids);***/
 				
 				flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
 					+ FLAG_FILE_UNZIP;
@@ -1672,6 +1653,13 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		*/
 		// /\
 		
+		string reason;
+		if (wmplogger.isAborted(reason)) {
+			throw JobOperationException(__FILE__, __LINE__,
+				"submit()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+				"the job has been aborted: " + reason);
+		}
+		
 		string filequeue = configuration::Configuration::instance()->wm()->input();
 		boost::details::pool::singleton_default<WMP2WM>::instance()
 			.init(filequeue, &wmplogger);
@@ -1683,6 +1671,16 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
 			jdltostart);
 			
+		// Moving JDL to start file to JDL started file
+		if (rename(wmputilities::getJobJDLToStartPath(*jid).c_str(),
+				wmputilities::getJobJDLStartedPath(*jid).c_str())) {
+			// Writing a new JDL started file
+			//wmputilities::writeTextFile(wmputilities::getJobJDLStartedPath(*jid),
+			//	jdltostart);
+			// Trying to remove JDL to start file
+			//remove(wmputilities::getJobJDLToStartPath(*jid).c_str());
+		}
+			
 		/*for (backupenv; *backupenv; backupenv++) {
 		    free(*backupenv);
 	    }
@@ -1690,8 +1688,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	    
 	    if (!issubmit) {
 	    	edglog(debug)<<"Removing lock..."<<std::endl;
-		    flock(fd, LOCK_UN);
-		    close(fd);
+	    	wmputilities::operationUnlock(fd);
 	    }
 
 	} catch (Exception &exc) {
@@ -1700,12 +1697,13 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(),
 			wmputilities::getJobJDLToStartPath(*jid).c_str());
 		
-		edglog(debug)<<"Removing lock..."<<std::endl;
-		flock(fd, LOCK_UN);
-	    close(fd);
+		if (!issubmit) {
+			edglog(debug)<<"Removing lock..."<<std::endl;
+			wmputilities::operationUnlock(fd);
+		}
 		
 		if (!conf.getAsyncJobStart()) {
-			exc.push_back(__FILE__, __LINE__, "submit");
+			exc.push_back(__FILE__, __LINE__, "submit()");
 			throw exc;
 		}
 	} catch (exception &ex) {
@@ -1714,13 +1712,14 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(),
 			wmputilities::getJobJDLToStartPath(*jid).c_str());
 		
-		edglog(debug)<<"Removing lock..."<<std::endl;
-		flock(fd, LOCK_UN);
-	    close(fd);
+		if (!issubmit) {
+			edglog(debug)<<"Removing lock..."<<std::endl;
+			wmputilities::operationUnlock(fd);
+		}
 	    
 		if (!conf.getAsyncJobStart()) {
-			Exception exc(__FILE__, __LINE__, "submit", 0, "Standard exception: " 
-				+ std::string(ex.what())); 
+			Exception exc(__FILE__, __LINE__, "submit()", 0,
+				"Standard exception: " + std::string(ex.what())); 
 			throw exc;
 		}
 	}
@@ -1775,7 +1774,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation ID not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobRegister()", wmputilities::WMS_DELEGATION_ERROR,
+			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
 	}
 	
@@ -1804,7 +1803,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -1906,7 +1905,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	delete auth;
 	
 	string jobpath = wmputilities::getJobDirectoryPath(*jid);
-
+  
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
@@ -1920,12 +1919,19 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	// Getting job status to check if cancellation is possible
 	JobStatus status = wmplogger.getStatus(false);
 	
+	if (status.getValBool(JobStatus::CANCELLING)) {
+		edglog(error)<<"Cancel has already been requested"<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"jobCancel()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+			"Cancel has already been requested");
+	}
+	
 	// Getting type from jdl
 	string seqcode = "";
 	JobId * parentjid = new JobId(status.getValJobId(JobStatus::PARENT_JOB));
 	if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
 		string parentjdl = wmputilities::readTextFile(
-			wmputilities::getJobJDLToStartPath(*parentjid));
+			wmputilities::getJobJDLExistingStartPath(*parentjid));
 		
 		Ad * parentad = new Ad();
 		int type = getType(parentjdl, parentad);
@@ -1941,23 +1947,20 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	} else {
 		// Getting sequence code from jdl
 		Ad *ad = new Ad();
-		ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
+		ad->fromFile(wmputilities::getJobJDLExistingStartPath(*jid));
+		//Ad *ad = new Ad(status.getValString(JobStatus::JDL));
 		if (ad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
 			seqcode = ad->getStringValue(JDL::LB_SEQUENCE_CODE)[0];
 		}
 		delete ad;
 	}
 	
-	if (status.getValBool(JobStatus::CANCELLING)) {
-		edglog(error)<<"Cancel has already been requested"<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"jobCancel()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-			"Cancel has already been requested");
-	}
-	
 	if (seqcode == "") {
 		seqcode = wmplogger.getLastEventSeqCode();
 	}
+	
+	// Setting user proxy
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	edglog(debug)<<"Seqcode: "<<seqcode<<endl;
 	if (seqcode != "") {
@@ -1969,7 +1972,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	boost::details::pool::singleton_default<WMP2WM>::instance()
 		.init(filequeue, &wmplogger);
 					
-	wmp_fault_t wmp_fault;
 	string envsandboxpath;
 	
 	switch (status.status) {
@@ -1981,11 +1983,19 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			edglog(debug)<<"Trying to log sync ABORT..."<<endl;
 			wmplogger.setSequenceCode(ABORT_SEQ_CODE);
 			if (!wmplogger.logAbortEventSync("Cancelled by user")) {
-				// If log fails no purge is done
-				// purge would find state different from ABORT and will fail
-				edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
-				jobPurgeResponse jobPurge_response;
-				jobpurge(jobPurge_response, jid, false);
+				// If log fails no jobPurge is performed
+				// jobPurge would find state different from ABORT and will fail
+				if (!wmputilities::isOperationLocked(
+						wmputilities::getJobStartLockFilePath(*jid))) {
+					// purge is done if jobStart is not in progress
+					edglog(debug)<<"jobStart operation is not in progress"<<endl;
+					edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
+					jobPurgeResponse jobPurge_response;
+					jobpurge(jobPurge_response, jid, false);
+				} else {
+					edglog(debug)<<"jobStart operation is in progress, "
+						"skipping jobPurge"<<endl;
+				}
 			} else {
 				edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
 			}
@@ -2118,7 +2128,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation ID not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobListMatch()", wmputilities::WMS_DELEGATION_ERROR,
+			"jobListMatch()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
 	}
 	
@@ -2221,8 +2231,8 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 				if (!getenv(GLITE_HOST_CERT) || ! getenv(GLITE_HOST_KEY)) {
 					edglog(severe)<<"Unable to get values for environment variable "
 						<<string(GLITE_HOST_CERT)<<" and/or "<<string(GLITE_HOST_KEY)<<endl;
-					throw FileSystemException(__FILE__, __LINE__,
-						"jobpurge()", wmputilities::WMS_IS_FAILURE,
+					throw JobOperationException(__FILE__, __LINE__,
+						"jobpurge()", wmputilities::WMS_ENVIRONMENT_ERROR,
 						"Unable to perform job purge. Server error\n(please "
 						"contact server administrator)");
 				} else {
@@ -2246,7 +2256,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 		if (!wmputilities::doPurge(jobid->toString())) {
 			edglog(severe)<<"Unable to complete job purge"<<endl;
 			if (checkstate) {
-				throw FileSystemException(__FILE__, __LINE__,
+				throw JobOperationException(__FILE__, __LINE__,
 					"jobpurge()", wmputilities::WMS_IS_FAILURE,
 					"Unable to complete job purge");
 			}
@@ -2297,6 +2307,16 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 		auth->authorize("", jid);
 	}
 	delete auth;
+	
+	if (wmputilities::isOperationLocked(
+			wmputilities::getGetOutputFileListLockFilePath(*jobid))) {
+		edglog(debug)<<"operation aborted: a getOutputFileList on the same job "
+				"has been requested"<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"jobPurge()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+			"operation aborted: a getOutputFileList on the same job has been "
+				"requested");
+	}
 	
 	jobpurge(jobPurge_response, jobid);
 	

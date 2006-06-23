@@ -3,6 +3,10 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
+//
+// File: wmpexceptions.cpp
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
 #include "wmpexceptions.h"
 
@@ -18,13 +22,6 @@ JobException::JobException(const std::string& file, int line,
 	const std::string& method, int code, const std::string& exception_name)
 	: Exception(file, line, method, code, exception_name)
 {}
-
-/*CannotStartException::CannotStartException(const std::string& file, int line,
-	const std::string& method, int code, const std::string& reason)
-	: Exception(file, line, method, code, "CannotStartException")
-{
-      error_message = reason;
-}*/
 
 JobTimeoutException::JobTimeoutException(const std::string& file, int line,
 	const std::string& method, int code)

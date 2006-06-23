@@ -88,7 +88,7 @@ VOMSAuthZ::getDN()
 			return dn;
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDN", wmputilities::WMS_AUTHZ_ERROR,
+		    	"VOMSAuthZ::getDN", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	errormessage(error));
 		}
 		//free(defaultvoms);
@@ -112,7 +112,7 @@ VOMSAuthZ::getDefaultFQAN()
 			return string(*deffqan);
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDefaultFQAN", wmputilities::WMS_AUTHZ_ERROR,
+		    	"VOMSAuthZ::getDefaultFQAN", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	errormessage(error));
 		}
 		//free(defaultvoms);
@@ -135,7 +135,7 @@ VOMSAuthZ::getDefaultVO()
 			return string(defaultvoms->voname);
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDefaultVO", wmputilities::WMS_AUTHZ_ERROR,
+		    	"VOMSAuthZ::getDefaultVO", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	errormessage(error));
 		}
 		//free(defaultvoms);
@@ -175,7 +175,7 @@ VOMSAuthZ::getDefaultVOProxyInfo()
     		voproxyinfo->attribute = fqanvector;
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDefaultVOProxyInfo", wmputilities::WMS_AUTHZ_ERROR,
+		    	"VOMSAuthZ::getDefaultVOProxyInfo", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	errormessage(error));
 		}
 		//free(defaultvoms);
@@ -287,7 +287,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
 	if (!(this->data = VOMS_Init(vomsdir, certdir))) {
 		edglog(debug)<<"Error in VOMS_Init()"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHZ_ERROR,
+	    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
 	    	"Unable to retrive VOMS Proxy information");
 	}
 	
@@ -307,7 +307,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
         		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
         			"doesn't exist or has bad permissions"<<endl;
         		throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHZ_ERROR,
+			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
       		chain = load_chain(proxypath);
@@ -322,7 +322,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
       			string msg = errormessage(error);
 				edglog(severe)<<"Error in VOMS_SetVerificationType: "<<msg<<endl;
       			throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHZ_ERROR,
+			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	msg);
       		}
   		
@@ -336,7 +336,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
 				string msg = errormessage(error);
 				edglog(severe)<<"Error in VOMS_Retrieve: "<<msg<<endl;
 				throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHZ_ERROR,
+			    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	msg);
       		}
       		BIO_free(in);
@@ -345,13 +345,13 @@ VOMSAuthZ::parseVoms(char * proxypath)
     		edglog(severe)<<"Error in BIO_read_filename: Proxy file doesn't "
     			"exist or has bad permissions"<<endl;
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHZ_ERROR,
+		    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	"Proxy file doesn't exist or has bad permissions");
 		}
 	} else {
 		edglog(severe)<<"Error in BIO_new"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHZ_ERROR,
+	    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHORIZATION_ERROR,
 	    	"Unable to get information from Proxy file");
   	}
 	return 0;

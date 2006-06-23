@@ -3,6 +3,10 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
+//
+// File: wmpexceptions.h
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
 #ifndef GLITE_WMS_WMPROXY_WMPEXCEPTIONS_H
 #define GLITE_WMS_WMPROXY_WMPEXCEPTIONS_H
@@ -21,18 +25,11 @@ class JobException : public glite::wmsutils::exception::Exception {
 		int code, const std::string& exception_name);
 };
 
-/*class CannotStartException : public glite::wmsutils::exception::Exception {
-	public: 
-	CannotStartException(const std::string& file, int line, 
-		const std::string& method, int code, const std::string& reason);
-};*/
-
 class JobTimeoutException : public JobException {
 	public:
 	JobTimeoutException(const std::string& file, int line,
 		const std::string& method, int code);
 };
-
 
 class JobOperationException : public JobException {
 	public:

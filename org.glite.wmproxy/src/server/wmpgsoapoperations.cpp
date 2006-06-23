@@ -908,7 +908,7 @@ ns2__putProxy(struct soap *soap, string delegation_id, string proxy,
 	return return_value;
 	GLITE_STACK_CATCH();
 }
-/*
+
 int
 ns2__getNewProxyReq(struct soap *soap, struct ns2__getNewProxyReqResponse &response)
 {
@@ -1035,7 +1035,7 @@ ns2__destroy(struct soap *soap, string delegation_id,
 	return return_value;
 	GLITE_STACK_CATCH();
 }
-*/
+
 int
 ns1__getACLItems(struct soap *soap, string jobId,
 	struct ns1__getACLItemsResponse &response)

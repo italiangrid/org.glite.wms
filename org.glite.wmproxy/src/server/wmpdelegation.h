@@ -59,15 +59,15 @@ public:
 	/**
 	 * Destroys the delegated Proxy.
 	 * @param delegation_id the delegation id identifing the delegation session
-	 *//*
-	static void destroyProxy(const std::string &delegation_id);*/
+	 */
+	static void destroyProxy(const std::string &delegation_id);
 	
 	/**
 	 * Gets the delegated proxy termination time.
 	 * @param delegation_id the delegation id identifing the delegated session
 	 * @return the termination time
-	 *//*
-	static time_t getTerminationTime(const std::string &delegation_id);*/
+	 */
+	static time_t getTerminationTime(const std::string &delegation_id);
 	
 	/**
 	 * Gets the delegated proxy path. This is the Proxy corresponding to the 
@@ -86,7 +86,7 @@ private:
 	 * delegated Proxies are saved
 	 * @return the delegated Proxy path
 	 */
-	static char* getProxyDir();
+	static std::string getProxyDir();
 	
 	// The proxy cache directory environment variable name
 	static const char* GRST_PROXYCACHE;

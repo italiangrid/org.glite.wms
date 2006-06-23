@@ -11,12 +11,11 @@
 #include "wmpconfiguration.h"
 
 // Utilities
-#include "utilities/wmputils.h"
+#include "utilities/wmputils.h" // getServerHost()
 
 // Logging
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/logger_utils.h"
 
 // TRY CATCH macros
 #include "utilities/wmpexceptions.h"
@@ -25,9 +24,13 @@
 const int LB_SERVER_DEFAULT_PORT = 9000;
 const int LB_LOCAL_LOGGER_DEFAULT_PORT = 9002;
 
-namespace logger        = glite::wms::common::logger;
-namespace configuration = glite::wms::common::configuration;
+const std::string DEFAULT_LISTMATCH_DIR = "/tmp";
+const std::string DEFAULT_SERVER_ADDRESS = "localhost";
+const std::string DEFAULT_FILE_TRANSFER_PROTOCOL = "gsiftp";
+
+
 namespace wmputilities  = glite::wms::wmproxy::utilities;
+namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
 
@@ -52,7 +55,7 @@ parseAddressPort(const string &addressport, string &server,
 			addresspair.second = 0;
 		}
 	} else {
-        server = "localhost";
+        server = DEFAULT_SERVER_ADDRESS;
         addresspair.first = server;
         addresspair.second = 0;
     }
@@ -121,7 +124,7 @@ WMProxyConfiguration::loadConfiguration()
 	// If attribute ListMatchRootPath not present in configuration file then
 	// wmp_config->list_match_root_path() returns ""
 	string path = wmp_config->list_match_root_path();
-	listmatchrootpath = (path != "") ? path : "/tmp";
+	listmatchrootpath = (path != "") ? path : DEFAULT_LISTMATCH_DIR;
 	
 	sandboxstagingpath = wmp_config->sandbox_staging_path();
 	
@@ -139,7 +142,8 @@ WMProxyConfiguration::loadConfiguration()
 	// wmp_config->grid_ftpport() returns 0
 	//pair<string, int> gsiprotocol(string("gsiftp"), wmp_config->grid_ftpport());
 	string confdefprotocol = wmp_config->default_protocol();
-	confdefprotocol = (confdefprotocol != "") ? confdefprotocol : "gsiftp";
+	confdefprotocol = (confdefprotocol != "") ? confdefprotocol 
+		: DEFAULT_FILE_TRANSFER_PROTOCOL;
 	pair<string, int> gsiprotocol(confdefprotocol, wmp_config->grid_ftpport());
 	defaultProtocol = gsiprotocol;
 	protocols.push_back(gsiprotocol);
@@ -215,7 +219,7 @@ WMProxyConfiguration::getLBServerAddressPort()
 {
 	GLITE_STACK_TRY("getLBServerAddressPort()");
 	
-	if (this->lbserverpair.first == "localhost") {
+	if (this->lbserverpair.first == DEFAULT_SERVER_ADDRESS) {
 		this->lbserverpair.first = wmputilities::getServerHost();
 	}
 	return this->lbserverpair;
@@ -228,7 +232,7 @@ WMProxyConfiguration::getLBLocalLoggerAddressPort()
 {	
 	GLITE_STACK_TRY("getLBLocalLoggerAddressPort()");
 	
-	if (this->lblocalloggerpair.first == "localhost") {
+	if (this->lblocalloggerpair.first == DEFAULT_SERVER_ADDRESS) {
 		this->lblocalloggerpair.first = wmputilities::getServerHost();
 	}
 	return this->lblocalloggerpair;

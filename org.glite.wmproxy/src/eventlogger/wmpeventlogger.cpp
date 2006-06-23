@@ -349,7 +349,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	zero_char = jdls_char;
 	jdls_char[jdlssize] = NULL;
 
-	edg_wlc_JobId jids_id [jdlssize];
+	edg_wlc_JobId jids_id[jdlssize];
 	
 	// Create needed structures
 	vector<string>::iterator iter = jdls.begin();
@@ -403,6 +403,9 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		free(jdls_char[i]);
 	}
     free(jdls_char);
+    
+    // Logging children user tags
+	logUserTags(ad->getSubAttributes(JDL::USERTAGS));
     
     GLITE_STACK_CATCH();
 }
@@ -506,7 +509,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	}
 	
 	// Logging children user tags
-	logUserTags(dag->getSubAttributes(JDL::USERTAGS));
+	//logUserTags(dag->getSubAttributes(JDL::USERTAGS));
 	
 	return jobids;
 	
@@ -583,7 +586,7 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 				WMS_LOGGING_ERROR, "Unable to Parse Expression");
 		}
  		if (val.IsStringValue(attrValue)) {
-            edglog(debug)<<"Logging user tag to LB: "<<vect[i].first<<endl;
+            edglog(debug)<<"Logging user tag to LB[Proxy]: "<<vect[i].first<<endl;
             int j = LOG_RETRY_COUNT;
             int outcome = 1;
 			for (; (j > 0) && outcome; j--) {
@@ -1075,7 +1078,84 @@ WMPEventLogger::getLastEventSeqCode()
   	GLITE_STACK_CATCH();
 }
 
-string
+bool
+WMPEventLogger::isAborted(string &reason)
+{
+	GLITE_STACK_TRY("isAborted()");
+	edglog_fn("WMPEventlogger::isAborted");
+	
+	reason = "";
+	
+	edg_wlc_JobId jobid;
+  	// parse the jobID string
+  	if (edg_wlc_JobIdParse((this->id->toString()).c_str(), &jobid)) {
+    	edglog(severe)<<"Error during edg_wlc_JobIdParse"<<endl;
+    	throw LBException(__FILE__, __LINE__,
+			"isAborted()", WMS_OPERATION_NOT_ALLOWED,
+			"Error during edg_wlc_JobIdParse");
+  	}
+	
+	edg_wll_Event * events = NULL;
+  	edg_wll_QueryRec jc[2];
+  	edg_wll_QueryRec ec[2];
+  	memset(jc, 0, sizeof jc);
+  	memset(ec, 0, sizeof ec);
+  
+  	// job condition: JOBID = jobid
+  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	jc[0].value.j = jobid;
+  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+  	
+  	// event condition: Event type = CANCEL
+  	ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
+  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	ec[0].value.i = EDG_WLL_EVENT_ABORT;
+  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+	
+	int error;
+
+#ifdef GLITE_WMS_HAVE_LBPROXY
+	if (lbProxy_b) {
+		edglog(debug)<<"Quering LB Proxy..."<<endl;
+		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
+		if (error == ENOENT) { // no events found
+	   		edglog(debug)<<"No events found quering LB Proxy. Quering LB..."<<endl;
+			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+	  	}
+	} else { // end switch LB PROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
+		edglog(debug)<<"Quering LB..."<<endl;
+		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+#ifdef GLITE_WMS_HAVE_LBPROXY
+	} // end switch LB normal
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
+  	if (error) {
+  		if (error == ENOENT) {
+  			// No cancel event found
+	   		return false;
+  		} else {
+  			string msg = error_message("Unable to query LB and LBProxy\n"
+				"edg_wll_QueryEvents[Proxy]", error);
+			edglog(debug)<<msg<<endl;			
+	    	throw LBException(__FILE__, __LINE__, "isAborted()", 
+	    		WMS_LOGGING_ERROR, msg);
+  		}
+	}
+	
+	reason = events[0].abort.reason;
+	
+  	for (int i = 0; events[i].type; i++) {
+		edg_wll_FreeEvent(&events[i]);
+	}
+	
+  	return true;
+  	
+	GLITE_STACK_CATCH();
+}
+
+pair<string, regJobEvent>
 WMPEventLogger::isStartAllowed()
 {
 	GLITE_STACK_TRY("isStartAllowed()");
@@ -1113,6 +1193,11 @@ WMPEventLogger::isStartAllowed()
   	ec[0].value.c = strdup((char*)this->server.c_str());
   	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;*/
   	
+  	regJobEvent event;
+  	event.instance = "";
+  	event.jdl = "";
+  	event.parent = "";
+  	
   	int error;
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
@@ -1143,7 +1228,19 @@ WMPEventLogger::isStartAllowed()
 	while (events[i].type) {
 		edglog(debug)<<"Event type: "<<events[i].type<<endl;
 		switch (events[i].type) {
-			case EDG_WLL_EVENT_REGJOB: case EDG_WLL_EVENT_USERTAG:
+			case EDG_WLL_EVENT_REGJOB: 
+				if (events[i].regJob.src_instance) {
+			  		event.instance = events[i].regJob.src_instance;
+				}
+			  	if (events[i].regJob.jdl) {
+			  		event.jdl = events[i].regJob.jdl;
+			  	}
+			  	if (events[i].regJob.parent) {
+			  		event.parent 
+			  			= string(edg_wlc_JobIdUnparse(events[i].regJob.parent));
+			  	}
+				break;
+			case EDG_WLL_EVENT_USERTAG:
 				break;
 			case EDG_WLL_EVENT_ACCEPTED: case EDG_WLL_EVENT_ENQUEUED:
 				flag = true;
@@ -1193,7 +1290,11 @@ WMPEventLogger::isStartAllowed()
 		edg_wll_FreeEvent(&events[i]);
 	}
 	
-  	return seqcode;
+	pair<string, regJobEvent> returnpair;
+	returnpair.first = seqcode;
+	returnpair.second = event;
+	
+  	return returnpair;
   
   	GLITE_STACK_CATCH();
 }

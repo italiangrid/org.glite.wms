@@ -36,7 +36,6 @@
 
 extern "C" {
 	// LCMAPS C libraries headers
-	//LCAS CHECK #include "glite/security/lcas/lcas.h"
 	#include "glite/security/lcmaps_without_gsi/lcmaps.h"
 	#include "glite/security/lcmaps_without_gsi/lcmaps_return_poolindex_without_gsi.h"
 }
@@ -187,7 +186,7 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 				edglog(info)<<"User not authorized to perform this operation"
 					<<endl;
 				throw AuthorizationException(__FILE__, __LINE__,
-			    	"authorize()", wmputilities::WMS_AUTHZ_ERROR,
+			    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"User not authorized to perform this operation");
 			}
 		} catch (Exception &ex) {
@@ -195,7 +194,7 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 				edglog(info)<<"Operation permitted only to job owner or "
 					"authorized user"<<endl;
 				throw AuthorizationException(__FILE__, __LINE__,
-			    	"authorize()", wmputilities::WMS_AUTHZ_ERROR,
+			    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Operation permitted only to job owner or authorized user");
 			}
 			throw ex;
@@ -211,7 +210,7 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 			edglog(info)<<"Client proxy FQAN does not match delegated proxy FQAN"
 				<<endl;
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"authorize()", wmputilities::WMS_AUTHZ_ERROR,
+		    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	"Client proxy FQAN does not match delegated proxy FQAN");
 		}
 		// Gacl Authorizing
@@ -220,7 +219,7 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	} else { // Not a VOMS Proxy
 		/*if (!compareDN(dn, wmputilities::getEnvDN())) {
 			throw AuthorizationException(__FILE__, __LINE__,
-		    	"authorize()", wmputilities::WMS_AUTHZ_ERROR,
+		    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	"VOMS FQAN Authorization: user not authorized");
 		}*/
 		// Gacl Authorizing
@@ -244,6 +243,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	
 	edglog(debug)<<"certfqan: "<<certfqan<<endl;
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
+	//setenv("LCMAPS_POLICY_NAME", "standard", 1);
 
 	// Initialising structure
 	if (this->lcmaps_logfile != "") {
@@ -276,7 +276,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
     			<<" is not authorized"<<endl;
     		throw AuthorizationException(__FILE__, __LINE__,
         		"lcmaps_return_poolindex_without_gsi()",
-        		wmputilities::WMS_NOT_AUTHORIZED_USER,
+        		wmputilities::WMS_AUTHORIZATION_ERROR,
         		("LCMAPS failed to map user credential"));
   		}
     }
@@ -318,154 +318,6 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
         	"lcmaps_account_info_clean()", wmputilities::WMS_USERMAP_ERROR,
         	"LCMAPS info clean failure");
   	}
-  	
-  	/*if (certfqan != "") {
-		// Initialising structure
-		if (this->lcmaps_logfile != "") {
-			setenv("LCMAPS_LOG_FILE", this->lcmaps_logfile, 0);
-		}
-		lcmaps_account_info_t plcmaps_account;
-	  	retval = lcmaps_account_info_init(&plcmaps_account);
-	  	if (retval) {
-	    	edglog(error)<<"LCMAPS info initialization failure"<<endl;
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	    		"lcmaps_account_info_init()", wmputilities::WMS_USERMAP_ERROR,
-	    		"LCMAPS info initialization failure");
-	  	}
-	  	
-	  	// Send user mapping request to LCMAPS 
-	  	//char * user_dn = wmputilities::getUserDN();
-	  	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
-	  	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
-		fqan_list[0] = const_cast<char*>(certfqan.c_str());
-	  	edglog(debug)<<"Inserted fqan: "<<string(fqan_list[0])<<endl;
-	  	
-	  	retval = lcmaps_return_poolindex_without_gsi((char *)
-	  		wmputilities::convertDNEMailAddress(user_dn).c_str(),
-	  		fqan_list, fqan_num, &plcmaps_account);
-	  	if (retval) {
-        	retval = lcmaps_return_poolindex_without_gsi(user_dn, 
-        		fqan_list, fqan_num, &plcmaps_account);
-            if (retval) {
-	    		edglog(info)<<"LCMAPS failed authorization: User "<<user_dn 
-	    			<<" is not authorized"<<endl;
-	    		throw AuthorizationException(__FILE__, __LINE__,
-	        		"lcmaps_return_poolindex_without_gsi()",
-	        		wmputilities::WMS_NOT_AUTHORIZED_USER,
-	        		("LCMAPS failed to map user credential"));
-	  		}
-        }
-
-	  	// Getting username from uid
-	  	this->userid = plcmaps_account.uid;
-		user_info = getpwuid(this->userid);
-	  	if (user_info == NULL) {
-	    	edglog(info)<<"LCMAPS could not find the username related to uid: "
-	    		<<this->userid<<endl; 
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	        	"getpwuidn()",
-	        	wmputilities::WMS_USERMAP_ERROR,
-	        	"LCMAPS could not find the username related to uid");
-	  	}
-	  	
-	  	// Checking for mapped user group. The group of the assigned local user
-	  	// MUST be different from the group of user running server
-	  	if (user_info->pw_gid == getgid()) {
-	  		edglog(info)<<"Mapping not allowed, mapped local user group equal "
-	  			"to group of user running server"<<endl; 
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	        	"mapUser()", wmputilities::WMS_USERMAP_ERROR,
-	        	"Mapping not allowed, mapped local user group equal to group"
-	        	" of user running server\n(please contact server administrator)");
-	  	}
-	  	
-	  	// Setting value for username private member
-	  	this->username = string(user_info->pw_name);
-	  
-	  	// Cleaning structure
-	  	retval = lcmaps_account_info_clean(&plcmaps_account);
-	  	if (retval) {
-	    	edglog(error)<<"LCMAPS info clean failure"<<endl;
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	        	"lcmaps_account_info_clean()", wmputilities::WMS_USERMAP_ERROR,
-	        	"LCMAPS info clean failure");
-	  	}
-	  	
-	} else { // certfqan == "" -> authorize using DN
-	  	int npols = 0; // this makes LCMAPS check all policies
-	  	char * request = NULL;
-	  	char ** namep = (char**) malloc(sizeof(char*));
-	  	char ** policynames = NULL; // this makes LCMAPS check all policies
-	  	gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
-	  	
-		edglog(info)<<"LCMAPS log file: " <<this->lcmaps_logfile<<user_dn;
-		FILE * logfile = fopen(this->lcmaps_logfile, "a");
-	  	retval = lcmaps_init(logfile);
-	  	if (retval) {
-	    	edglog(error)<<"LCMAPS initialization failure"<<endl;
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	    		"lcmaps_init()", wmputilities::WMS_USERMAP_ERROR,
-	    		"LCMAPS initialization failure");
-	  	}
-		
-	  	// Send user mapping request to LCMAPS 
-	  	//retval = lcmaps_run_and_return_username(user_dn, user_cred_handle, request, 
-	  	//	namep, npols, policynames);
-	  	retval = lcmaps_run_and_return_username((char *)
-	  		wmputilities::convertDNEMailAddress(user_dn).c_str(),
-	  		user_cred_handle, request, namep, npols, policynames);
-	 
-	  	if (retval) {
-        	retval = lcmaps_run_and_return_username(user_dn,
-        		user_cred_handle, request, namep, npols, policynames);
-            if (retval) {
-	    		edglog(info)<<"LCMAPS failed authorization: User "<<user_dn
-	    			<<" is not authorized"<<endl;
-	    		throw AuthorizationException(__FILE__, __LINE__,
-	        		"lcmaps_run_and_return_username()",
-	        		wmputilities::WMS_NOT_AUTHORIZED_USER,
-	        		("LCMAPS failed to map user credential"));
-	  		}
-        }
-	  
-	  	// Setting value for username private member
-	  	this->username = string(*namep);
-	  
-	  	// Get uid from username
-	  	user_info = getpwnam(*namep);
-	  	if ( user_info == NULL ) {
-	    	edglog(info)<<"LCMAPS could not find the uid related to username: "
-	    		<<*namep<<endl; 
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	        	"getpwnam()", wmputilities::WMS_USERMAP_ERROR,
-	        	"LCMAPS could not find the uid related to username");
-	  	}
-	  	
-	  	// Checking for mapped user group. The group of the assigned local user
-	  	// MUST be different from the group of user running server
-	  	if (user_info->pw_gid == getgid()) {
-	  		edglog(info)<<"Mapping not allowed, mapped local user group equal "
-	  			"to group of user running server"<<endl; 
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	        	"mapUser()", wmputilities::WMS_USERMAP_ERROR,
-	        	"Mapping not allowed, mapped local user group equal to group"
-	        	" of user running server\n(please contact server administrator)");
-	  	}
-	  
-	  	// Terminate the LCMAPS
-	  	retval = lcmaps_term();
-	  	if (retval) {
-	    	edglog(error)<<"LCMAPS termination failure"<<endl;
-	    	throw AuthorizationException(__FILE__, __LINE__,
-	        	"lcmaps_term()", wmputilities::WMS_USERMAP_ERROR,
-	        	"LCMAPS termination failure.");
-	  	}
-	  	
-	  	fclose(logfile);
-
-	  	// Setting value for userid private member
-	  	this->userid = user_info->pw_uid;
-	}*/
 
   	this->mapdone = true;
   	GLITE_STACK_CATCH();
@@ -548,7 +400,7 @@ WMPAuthorizer::checkGaclUserAuthZ()
 			edglog(info)<<"Authorization error: user not authorized"<<endl;
 			throw AuthorizationException(__FILE__, __LINE__,
 				"checkGaclUserAuthZ()",
-				wmputilities::WMS_AUTHZ_ERROR, "Authorization error: "
+				wmputilities::WMS_AUTHORIZATION_ERROR, "Authorization error: "
 				"user not authorized");
 		//LCAS CHECK }
 	}
@@ -947,7 +799,7 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 	if ( vect_ref.empty()){
 		#ifndef GLITE_WMS_WMPROXY_TOOLS
                 throw AuthorizationException(__FILE__, __LINE__,
-                        "compareFQAN(string, string)", WMS_AUTHZ_ERROR,
+                        "compareFQAN(string, string)", WMS_AUTHORIZATION_ERROR,
                         "no valid fields in the FQAN string: [" + ref + "] (please contact the server administrator");
 		#else
 		cerr << "Error - no valid fields in the FQAN string: [" << ref << "]";
@@ -961,7 +813,7 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 	if (vect_in.empty()) {
 		#ifndef GLITE_WMS_WMPROXY_TOOLS
                 throw AuthorizationException(__FILE__, __LINE__,
-                        "compareFQAN(string, string)", WMS_AUTHZ_ERROR,
+                        "compareFQAN(string, string)", WMS_AUTHORIZATION_ERROR,
                         "no valid fields in the user FQAN string: [" + in+ "]");
 		#else
 		cerr << "Error - no valid fields in the user FQAN string: [" << in<< "]";
@@ -1106,7 +958,7 @@ WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
         		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
         			"doesn't exist or has bad permissions"<<endl;
         		throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHZ_ERROR,
+			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
 			timeleft = (VOMSAuthZ::ASN1_UTCTIME_get(X509_get_notAfter(x)) - time(NULL))
@@ -1152,7 +1004,7 @@ WMPAuthorizer::getNotBefore(const string &pxfile)
         		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
         			"doesn't exist or has bad permissions"<<endl;
         		throw AuthorizationException(__FILE__, __LINE__,
-			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHZ_ERROR,
+			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
 			sec = VOMSAuthZ::ASN1_UTCTIME_get(X509_get_notBefore(x));
@@ -1183,6 +1035,7 @@ WMPAuthorizer::checkProxy(const string &proxy)
 	GLITE_STACK_TRY("checkProxy()");
 	edglog_fn("WMPAuthorizer::checkProxy");
 
+	edglog(debug)<<"Proxy path: "<<proxy<<endl;
 	edglog(debug)<<"time(NULL): "<<
 		boost::lexical_cast<std::string>(time(NULL))<<endl;
 	edglog(debug)<<"Not Before: "<<

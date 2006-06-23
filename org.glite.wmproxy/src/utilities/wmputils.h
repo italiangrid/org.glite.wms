@@ -66,6 +66,12 @@ void uncompressFile(const std::string &filename, const std::string &startingpath
 
 void setFlagFile(const std::string &file, bool flag);
 
+int operationLock(const std::string &lockfile, const std::string &opname);
+
+void operationUnlock(int fd);
+
+bool isOperationLocked(const std::string &lockfile);
+
 void createSuidDirectory(const std::string &directory);
 
 void untarFile(const std::string &file, const std::string &untar_starting_path,
@@ -155,6 +161,9 @@ std::string getJobInputSBRelativePath(glite::wmsutils::jobid::JobId jid, int lev
 std::string getJobStartLockFilePath(glite::wmsutils::jobid::JobId jid,
 	int level = 0);
 	
+std::string getGetOutputFileListLockFilePath(glite::wmsutils::jobid::JobId jid,
+	int level = 0);
+
 /** 
  * Returns the job Input Sandbox directory path
  * @param jid the job identifier of the job
@@ -204,6 +213,12 @@ std::string getJobJDLOriginalPath(glite::wmsutils::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
 	
 std::string getJobJDLToStartPath(glite::wmsutils::jobid::JobId jid,
+	bool isrelative = false, int level = 0);
+	
+std::string getJobJDLStartedPath(glite::wmsutils::jobid::JobId jid,
+	bool isrelative = false, int level = 0);
+
+std::string getJobJDLExistingStartPath(glite::wmsutils::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
 	
 /**

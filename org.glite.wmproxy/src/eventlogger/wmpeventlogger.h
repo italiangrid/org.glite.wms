@@ -101,7 +101,9 @@ class WMPEventLogger  {
 		
 		regJobEvent retrieveRegJobEvent(const std::string &jobid_str);
 		
-		std::string isStartAllowed();
+		std::pair<std::string, regJobEvent> isStartAllowed();
+		
+		bool isAborted(std::string &reason);
 		
 		std::string getLastEventSeqCode();
 		

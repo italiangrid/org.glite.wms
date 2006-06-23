@@ -11,18 +11,12 @@
 #ifndef GLITE_WMS_WMPROXY_WMPCONFIGURATION_H
 #define GLITE_WMS_WMPROXY_WMPCONFIGURATION_H
 
+
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMPConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
 
-// Exceptions
-#include "glite/wms/common/configuration/exceptions.h"
-
-#include "classad_distribution.h"
-
-// Boost singleton
-#include <boost/pool/detail/singleton.hpp>
 
 
 /**
@@ -92,6 +86,10 @@ class WMProxyConfiguration {
 		 */
 		std::string getDefaultProtocol();
 		
+		/**
+		 * Returns the value of the configuration attribute HTTPSPort
+		 * @return the attribute value
+		 */
 		int getHTTPSPort();
 
 		/**
@@ -100,6 +98,10 @@ class WMProxyConfiguration {
 		 */
 		int getDefaultPort();
 		
+		/**
+		 * Returns the available file transfer protocols
+		 * @return the available file transfer protocols
+		 */
 		std::vector<std::pair<std::string, int> > getProtocols();
 		
 		/**

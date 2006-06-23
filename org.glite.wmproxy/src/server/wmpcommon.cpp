@@ -118,6 +118,7 @@ logRemoteHostInfo()
 	string msg = "Remote Host IP: ";
 	string msg2 = "Remote CLIENT S DN: ";
 	string msg3 = "Remote GRST CRED: ";
+	string msg4 = "Service GRST PROXY LIMIT: ";
 	edglog(info)
 		<<"-------------------------------- Incoming Request "
 			"--------------------------------"
@@ -147,10 +148,16 @@ logRemoteHostInfo()
 	} else {
 		msg3 += "Not Available";
 	}
+	if (getenv("GRST_GSIPROXY_LIMIT")) {
+		msg4 += string(getenv("GRST_GSIPROXY_LIMIT"));
+	} else {
+		msg4 += "Not Available";
+	}
 	
 	edglog(info)<<msg<<endl;
     edglog(info)<<msg2<<endl;
 	edglog(info)<<msg3<<endl;
+	edglog(info)<<msg4<<endl;
 	edglog(info)
 		<<"----------------------------------------"
 			"------------------------------------------"

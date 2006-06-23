@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h> // wait
+#include <sys/file.h> // flock
 
 // boost
 #include <boost/tokenizer.hpp>
@@ -102,7 +103,10 @@ const string USER_PROXY_NAME_BAK = ".user.proxy.bak";
 
 const string JDL_ORIGINAL_FILE_NAME = "JDLOriginal";
 const string JDL_TO_START_FILE_NAME = "JDLToStart";
-const string START_LOCK_FILE_NAME = ".startLockFile";
+const string JDL_STARTED_FILE_NAME = "JDLStarted";
+
+const string START_LOCK_FILE_NAME = ".startLockFile.lock";
+const string GET_OUTPUT_LOCK_FILE_NAME = ".getOutputLockFile.lock";
 
 const string ALL_PROTOCOLS = "all";
 const string DEFAULT_PROTOCOL = "default";
@@ -459,12 +463,23 @@ getJobInputSBRelativePath(glite::wmsutils::jobid::JobId jid, int level){
 		+ INPUT_SB_DIRECTORY);
 	GLITE_STACK_CATCH();
 }
+
 string
 getJobStartLockFilePath(jobid::JobId jid, int level)
 {
 	GLITE_STACK_TRY("getJobStartLockFilePath()");
 	return string(getenv(DOCUMENT_ROOT) + FILE_SEP
 		+ to_filename(jid, level) + FILE_SEP + START_LOCK_FILE_NAME);
+	GLITE_STACK_CATCH();
+}
+
+
+string
+getGetOutputFileListLockFilePath(jobid::JobId jid, int level)
+{
+	GLITE_STACK_TRY("getGetOutputFileListLockFilePath()");
+	return string(getenv(DOCUMENT_ROOT) + FILE_SEP
+		+ to_filename(jid, level) + FILE_SEP + GET_OUTPUT_LOCK_FILE_NAME);
 	GLITE_STACK_CATCH();
 }
 
@@ -552,6 +567,36 @@ getJobJDLToStartPath(jobid::JobId jid, bool isrelative, int level)
 	} else {
 		return string(to_filename(jid, level)
 			+ FILE_SEP + JDL_TO_START_FILE_NAME);
+	}
+	GLITE_STACK_CATCH();
+}
+
+string
+getJobJDLStartedPath(jobid::JobId jid, bool isrelative, int level)
+{	
+	GLITE_STACK_TRY("getJobJDLStartedPath()");
+	//TBD Check path
+	if (!isrelative) {
+		return string(getenv(DOCUMENT_ROOT) 
+			+ FILE_SEP + to_filename(jid, level)
+			+ FILE_SEP + JDL_STARTED_FILE_NAME);
+	} else {
+		return string(to_filename(jid, level)
+			+ FILE_SEP + JDL_STARTED_FILE_NAME);
+	}
+	GLITE_STACK_CATCH();
+}
+
+string
+getJobJDLExistingStartPath(jobid::JobId jid, bool isrelative, int level)
+{
+	GLITE_STACK_TRY("getJobJDLStartedPath()");
+	
+	string started = getJobJDLStartedPath(jid);
+	if (fileExists(started)) {
+		return started;
+	} else {
+		return getJobJDLToStartPath(jid);
 	}
 	GLITE_STACK_CATCH();
 }
@@ -1329,6 +1374,77 @@ setFlagFile(const string &file, bool flag)
 	} else {
 		remove(file.c_str());	
 	}
+	GLITE_STACK_CATCH();
+}
+
+int
+operationLock(const string &lockfile, const string &opname)
+{
+	GLITE_STACK_TRY("operationLock()");
+	edglog_fn("wmputils::operationLock");
+	
+	edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
+	int fd = open(lockfile.c_str(), O_CREAT | O_RDONLY, S_IRWXU);
+	if (fd == -1) {
+		edglog(debug)<<"Unable to open lock file: "<<lockfile<<endl;
+		throw FileSystemException( __FILE__, __LINE__,
+  			"operationLock()", WMS_FILE_SYSTEM_ERROR,
+   			"unable to open lock file");
+	}
+	if (flock(fd, LOCK_EX | LOCK_NB)) {
+		close(fd);
+		throw JobOperationException( __FILE__, __LINE__,
+  			"operationLock()", WMS_OPERATION_NOT_ALLOWED,
+   			opname + " operation already in progress");
+	}
+	
+	return fd;
+			
+	GLITE_STACK_CATCH();
+}
+
+void
+operationUnlock(int fd)
+{
+	GLITE_STACK_TRY("operationUnlock()");
+	edglog_fn("wmputils::operationUnlock");
+	
+	if (flock(fd, LOCK_UN)) {
+		edglog(severe)<<"Unable to remove lock file, fd: "<<fd<<endl;
+	}
+	close(fd);
+	GLITE_STACK_CATCH();
+}
+
+bool
+isOperationLocked(const string &lockfile)
+{
+	GLITE_STACK_TRY("isOperationLocked()");
+	edglog_fn("wmputils::isOperationLocked");
+	
+	edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
+	int fd = open(lockfile.c_str(), O_CREAT | O_RDONLY, S_IRWXU);
+	if (fd == -1) {
+		edglog(debug)<<"Unable to open lock file: "<<lockfile
+			<<" during lock check"<<endl;
+		// TBC
+		return false;
+	}
+	
+	if (flock(fd, LOCK_EX | LOCK_NB)) {
+		// Unable to lock file, already locked
+		//if (errno == EWOULDBLOCK) {
+			close(fd);
+			return true;
+		//}
+	}
+	if (flock(fd, LOCK_UN)) {
+		edglog(severe)<<"Unable to remove lock file during lock check, fd: "
+			<<fd<<endl;
+	}
+	close(fd);
+	return false;
+	
 	GLITE_STACK_CATCH();
 }
 

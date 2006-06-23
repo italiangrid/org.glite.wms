@@ -49,44 +49,44 @@ getServiceFaultType(int code)
 			return SOAP_TYPE_ns1__AuthenticationFaultType;
 			break;
 
-		case wmputilities::WMS_NOT_AUTHORIZED_USER: // AuthorizationFault
+		case wmputilities::WMS_AUTHORIZATION_ERROR: // AuthorizationFault
+		
 		case wmputilities::WMS_PROXY_ERROR:
+		case wmputilities::WMS_PROXY_EXPIRED:
 		case wmputilities::WMS_DELEGATION_ERROR:
+		case wmputilities::WMS_NOT_A_VOMS_PROXY:
+		case wmputilities::WMS_PROXY_RENEWAL_FAILURE:
+		
+		case wmputilities::WMS_USERMAP_ERROR:
+		
+		case wmputilities::WMS_GACL_FILE:
+		case wmputilities::WMS_GACL_ERROR:
+		case wmputilities::WMS_GACL_ITEM_NOT_FOUND:
 			return SOAP_TYPE_ns1__AuthorizationFaultType;
-			break;
-
-		case wmputilities::WMS_JDL_PARSING: // InvalidArgumentFault
-		case wmputilities::WMS_INVALID_ARGUMENT:
-			return SOAP_TYPE_ns1__InvalidArgumentFaultType;
-			break;
-
-		case wmputilities::WMS_NOT_ENOUGH_QUOTA: // GetQuotaManagementFault
-		case wmputilities::WMS_NOT_ENOUGH_SPACE: // ?
-			return SOAP_TYPE_ns1__GetQuotaManagementFaultType;
-			break;
-
-		case wmputilities::WMS_NO_SUITABLE_RESOURCE: // NoSuitableResourcesFault
-		case wmputilities::WMS_MATCHMAKING: // ?
-			return SOAP_TYPE_ns1__NoSuitableResourcesFaultType;
-			break;
-
-		case wmputilities::WMS_JOB_NOT_FOUND: // JobUnknownFault
-			return SOAP_TYPE_ns1__JobUnknownFaultType;
 			break;
 
 		case wmputilities::WMS_JOB_NOT_DONE: // OperationNotAllowedFault
 		case wmputilities::WMS_OPERATION_NOT_ALLOWED: // Generated inside wmproxy code
 			return SOAP_TYPE_ns1__OperationNotAllowedFaultType;
 			break;
+			
+		case wmputilities::WMS_JDL_PARSING: // InvalidArgumentFault
+		case wmputilities::WMS_INVALID_ARGUMENT:
+			return SOAP_TYPE_ns1__InvalidArgumentFaultType;
+			break;
+		
+		case wmputilities::WMS_JOB_NOT_FOUND: // JobUnknownFault
+			return SOAP_TYPE_ns1__JobUnknownFaultType;
+			break;
 
-		case wmputilities::WMS_FATAL:
-		case wmputilities::WMS_SANDBOX_IO:
-		case wmputilities::WMS_WRONG_COMMAND:
-		case wmputilities::WMS_JOB_SIZE:
-		case wmputilities::WMS_IS_FAILURE:
-		case wmputilities::WMS_MULTI_ATTRIBUTE_FAILURE:
-		case wmputilities::WMS_LOGGING_ERROR:
-			return SOAP_TYPE_ns1__GenericFaultType;
+		case wmputilities::WMS_NO_SUITABLE_RESOURCE: // NoSuitableResourcesFault
+		case wmputilities::WMS_MATCHMAKING: // ?
+			return SOAP_TYPE_ns1__NoSuitableResourcesFaultType;
+			break;
+			
+		case wmputilities::WMS_NOT_ENOUGH_QUOTA: // GetQuotaManagementFault
+		case wmputilities::WMS_NOT_ENOUGH_SPACE: // ?
+			return SOAP_TYPE_ns1__GetQuotaManagementFaultType;
 			break;
 
 		default:

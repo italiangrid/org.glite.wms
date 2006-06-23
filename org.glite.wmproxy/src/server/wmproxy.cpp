@@ -9,8 +9,6 @@
 //
 
 #include <string>
-#include <vector>
-#include <iostream>
 
 // Fast CGI
 #include <fcgi_stdio.h>
@@ -21,25 +19,27 @@
 #include "WMProxy.nsmap"
 #include "soapWMProxyObject.h"
 
+// Boost singleton
+#include <boost/pool/detail/singleton.hpp>
+
 // Logging
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
 // Configuration
-#include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
 #include "glite/wms/common/configuration/exceptions.h"
-#include "glite/wms/common/configuration/WMPConfiguration.h"
+#include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
-// fstream
+// File List
 #include "glite/wms/common/utilities/FileList.h"
 
 #include "wmpconfiguration.h"
-#include "utilities/wmputils.h"
-
 #include "wmpgsoapfaultmanipulator.h"
+
+#include "utilities/wmputils.h" // waitForSeconds(), initsignalhandler()
 
 
 // Global variable for configuration
@@ -49,18 +49,19 @@ WMProxyConfiguration conf;
 std::string sandboxdir_global;
 std::string filelist_global;
 
+
 namespace logger        = glite::wms::common::logger;
-namespace configuration = glite::wms::common::configuration;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
+namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
-using namespace boost::details::pool;
+
 
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
 
-const std::string opt_conf_file("glite_wms.conf");
+const string opt_conf_file("glite_wms.conf");
 
 void
 sendFault(WMProxy &proxy, const string &method, const string &msg, int code)
@@ -73,31 +74,34 @@ sendFault(WMProxy &proxy, const string &method, const string &msg, int code)
 	soap_done(&proxy);
 }
 
+
 int
 main(int argc, char* argv[])
 {
 	try {
 		// Debug only
 		//wmputilities::waitForSeconds(10);
-					
-		std::fstream edglog_stream;
-		singleton_default<WMProxyConfiguration>::instance().init(opt_conf_file,
-        	configuration::ModuleType::workload_manager_proxy);
-        string log_file = singleton_default<WMProxyConfiguration>
-			::instance().wmp_config->log_file();
+
+		extern WMProxyConfiguration conf;
+		conf = boost::details::pool::singleton_default<WMProxyConfiguration>
+			::instance();
+		
+		fstream edglog_stream;
+		conf.init(opt_conf_file,
+			configuration::ModuleType::workload_manager_proxy);
+        string log_file = conf.wmp_config->log_file();
 
 		// Checking for log file
 		if (!log_file.empty()) {
-			if (!std::ifstream(log_file.c_str())) {
-		    	std::ofstream(log_file.c_str());
+			if (!ifstream(log_file.c_str())) {
+		    	ofstream(log_file.c_str());
 		    }
-			edglog_stream.open(log_file.c_str(), std::ios::in | std::ios::out
-				| std::ios::ate);
+			edglog_stream.open(log_file.c_str(), ios::in | ios::out
+				| ios::ate);
 		}
 		if (edglog_stream) {
 			logger::threadsafe::edglog.open(edglog_stream,
-				static_cast<logger::level_t>(singleton_default<WMProxyConfiguration>
-				::instance().wmp_config->log_level()));
+				static_cast<logger::level_t>(conf.wmp_config->log_level()));
 		}
 		
 		edglog_fn("wmproxy::main");
@@ -107,27 +111,20 @@ main(int argc, char* argv[])
 		
 		// Opening log file destination
 		logger::threadsafe::edglog.activate_log_rotation (
-			singleton_default<WMProxyConfiguration>::instance()
-				.wmp_config->log_file_max_size(),
-			singleton_default<WMProxyConfiguration>::instance()
-				.wmp_config->log_rotation_base_file(),
-			singleton_default<WMProxyConfiguration>::instance()
-				.wmp_config->log_rotation_max_file_number());
-		edglog(debug)<<"Log file: "<<singleton_default<WMProxyConfiguration>::instance()
-			.wmp_config->log_rotation_base_file()<<endl;
+			conf.wmp_config->log_file_max_size(),
+			conf.wmp_config->log_rotation_base_file(),
+			conf.wmp_config->log_rotation_max_file_number());
+		edglog(debug)<<"Log file: "<<conf.wmp_config->log_rotation_base_file()
+			<<endl;
 		
 		// Initializing signal handler for 'graceful' stop/restart
 		//wmputilities::initsignalhandler();
 		
-		extern WMProxyConfiguration conf;
-		conf = singleton_default<WMProxyConfiguration>::instance();
-		
-		extern std::string sandboxdir_global;
+		extern string sandboxdir_global;
 		sandboxdir_global = "";
-		extern std::string filelist_global;
+		extern string filelist_global;
 		filelist_global
 			= configuration::Configuration::instance()->wm()->input();
-			
 		
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;
@@ -144,22 +141,22 @@ main(int argc, char* argv[])
 		
     } catch (configuration::CannotOpenFile &file) {
     	string msg = "Cannot open file: " + string(file.what());
-	    edglog(fatal)<<msg<<std::endl;
+	    edglog(fatal)<<msg<<endl;
 	    WMProxy proxy;
 	   	sendFault(proxy, "main", msg, -4);
     } catch (configuration::CannotConfigure &error) {
     	string msg = "Cannot configure: " + string(error.what());
-	    edglog(fatal)<<msg<<std::endl;
+	    edglog(fatal)<<msg<<endl;
         WMProxy proxy;
 	   	sendFault(proxy, "main", msg, -3);
 	} catch (exception &ex) {
 		string msg = "Exception caught: " + string(ex.what());
-	    edglog(fatal)<<msg<<std::endl;
+	    edglog(fatal)<<msg<<endl;
 		WMProxy proxy;
 	   	sendFault(proxy, "main", msg, -2);
  	} catch (...) {
     	string msg = "Uncaught exception";
-	    edglog(fatal)<<msg<<std::endl;
+	    edglog(fatal)<<msg<<endl;
 		WMProxy proxy;
 	   	sendFault(proxy, "main", msg, -1);
   	}
