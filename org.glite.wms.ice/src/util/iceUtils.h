@@ -13,7 +13,8 @@
  *
  * ICE utility functions
  *
- * Author: Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ * Authors: Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ *	    Alvise Dorigo <alvise.dorigo@pd.infn.it>
  */
 
 #ifndef GLITE_WMS_ICE_UTIL_ICEUTILS_HH

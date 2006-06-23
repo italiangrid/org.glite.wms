@@ -269,7 +269,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
     CREAM_SAFE_LOG(m_log_dev->infoStream()
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "Connection accepted from ["
-		   << this->getClientIP() << "]"
+		   << this->getClientName() << "] (" << this->getClientIP() << ")"
 		   << log4cpp::CategoryStream::ENDLINE);
 
   /**
@@ -283,6 +283,15 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 		   << this->getErrorCode() << "]"
 		   << " ErrorMessage=["
 		   << this->getErrorMessage() << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
+    return;
+  }
+
+  string remote_hostname = iceUtil::getNotificationClientDN( this->getClientDN() );
+  if( !iceUtil::cemonUrlCache::getInstance()->hasCemon( remote_hostname ) ) {
+    CREAM_SAFE_LOG(m_log_dev->warnStream() 
+		   << "eventStatusListener::acceptJobStatus() - "
+		   << "Remote notifying client is NOT recognized/authorized. Ignoring this notification..." 
 		   << log4cpp::CategoryStream::ENDLINE);
     return;
   }

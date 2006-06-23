@@ -13,7 +13,8 @@
  *
  * ICE utility functions
  *
- * Author: Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ * Authors: Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ *          Alvise Dorigo <alvise.dorigo@pd.infn.it>
  */
 
 #include "iceUtils.h"
