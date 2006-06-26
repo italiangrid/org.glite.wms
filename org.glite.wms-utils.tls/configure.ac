@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22  2006/06/26 21:19:10  eronchie
+#       Increased version
+#       Fix bug 17601
+#
 #       Revision 1.21  2006/03/20 15:31:38  eronchie
 #       Increased version
 #
@@ -70,7 +74,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Tls], [3.1.0])
+AC_INIT([GLite WMS Utils Tls], [3.1.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ssl_helpers/ssl_inits.h])
