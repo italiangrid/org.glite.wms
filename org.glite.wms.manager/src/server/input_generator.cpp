@@ -48,7 +48,7 @@ namespace fs = boost::filesystem;
 namespace ca = glite::wmsutils::classads;
 
 // HARDCODED:
-static const char* hc_sequence_code = "UI=000001:NS=0000000006:WM=000001:\
+static const char* hc_sequence_code = "UI=000001:NS=0000000001:WM=000001:\
 BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000";
 
 
@@ -128,6 +128,14 @@ create_context_proxy(
 }
 
 std::string
+make_cancel_request(std::string const& job_id) {
+  const classad::ClassAd cmd(
+    utilities::cancel_command_create(job_id)
+  );
+  return ca::unparse_classad(cmd);
+}
+
+std::string
 make_resubmit_request(std::string const& job_id) {
   const classad::ClassAd cmd(
     utilities::resubmit_command_create(job_id, hc_sequence_code)
@@ -169,9 +177,11 @@ make_match_request(
 
 int
 main(int argc, char *argv[])
+//try
 {
 
   if(argc == 5) {
+
     std::ifstream is(argv[2]);
     assert(is);
 
@@ -190,7 +200,7 @@ main(int argc, char *argv[])
     //SUBMIT
     //
     configuration::Configuration const config(
-      "glite_wms.conf",
+      "glite_wms.conf", //GLITE_WMS_CONFIG_DIR has to contain the path
       configuration::ModuleType::workload_manager_proxy
     );
     configuration::NSConfiguration const* const ns_config( config.ns() );
@@ -239,17 +249,21 @@ main(int argc, char *argv[])
         //
         jobid::JobId jid;
         jid.setJobId(lb_address);
-        const std::string stringjid = jid.toString();
+        std::string stringjid = jid.toString();
 
         std::cout << "Registered job id: " << stringjid << '\n';
 
         //
         //LOGGING STUFF
         //
+        std::string user_subject;
         if( !create_context_proxy( local_proxy_full_name , &ctx , jid) )
         {
           std::cout << "LB initialisation failed\n";
           assert(false);
+        } else {
+          user_subject = get_proxy_subject(local_proxy_full_name);
+          std::cout << "LB context created for: " << user_subject << '\n';
         }
 
         //
@@ -267,7 +281,9 @@ main(int argc, char *argv[])
           jdl::set_input_sandbox_path(jdl, isb_path);
           jdl::set_output_sandbox_path(jdl, isb_path);
           jdl::set_x509_user_proxy(jdl, sandbox_root_path + "/user.proxy");
-          jdl::set_user_subject_name(jdl, local_proxy_full_name);
+          if (!user_subject.empty()) {
+            jdl::set_user_subject_name(jdl, user_subject);
+          }
           jdl::set_lb_sequence_code(jdl, std::string(hc_sequence_code));
         }
         catch(jdl::CannotSetAttribute&) {
@@ -407,28 +423,35 @@ main(int argc, char *argv[])
               ""
             );
           
-            //RESUBMIT
-            //make_resubmit_request(stringjid);
-
             rp_guard.dismiss();
             srp_guard.dismiss();
             isp_guard.dismiss();
             osp_guard.dismiss();
+
+            //CANCEL
+            fl.push_back(make_cancel_request(stringjid));
+
+            //RESUBMIT
+            fl.push_back(make_resubmit_request(stringjid));
+
           } else {
             std::cout << "Job registration failed\n";
           }
        } // if a and b and c and d and e
+
+        //LIST MATCH
+        fl.push_back(make_match_request(jdl, "/tmp/match_pipe"));
+    
     } // for
 
-    //
-    //LIST MATCH
-    //
-    //fl.push_back(make_match_request(*jdl, "/tmp/giaco/pipe"));
-    
     r_guard.dismiss();
   }
   else {
     std::cout << "Usage:\n";
     std::cout << "\tbulk #cycles file.jdl input.fl user_proxy\n";
   }
+//} catch (utilities::FileContainerError const& e) {
+//  std::cout << e.what() << '\n';
+//} catch (...) {
+//  std::cout << "Generic error\n";
 }
