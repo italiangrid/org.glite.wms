@@ -45,7 +45,6 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(XML2_LIBS) \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
-		$(CLASSAD_LIBS) \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
 		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
@@ -54,6 +53,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/util/libglite_wms_ice_util.la \
 		../src/ice/libglite_wms_ice.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+		$(CLASSAD_LIBS) \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -70,10 +70,10 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(XML2_LIBS) \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
-		$(CLASSAD_LIBS) \
 		-lglite_ce_monitor_consumer \
 		-lglite_ce_monitor_client \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+		$(CLASSAD_LIBS) \
 		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
