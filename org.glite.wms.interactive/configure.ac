@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2006/06/27 12:06:46  rlops
+#       increased version
+#
 #       Revision 1.8  2006/03/20 22:19:30  eronchie
 #       Increased version
 #       Added optimize
@@ -51,7 +54,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Interactive], [3.1.0])
+AC_INIT([GLite WMS Interactive], [3.1.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/glite_wms_pipe_input.c])
