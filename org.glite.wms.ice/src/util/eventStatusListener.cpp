@@ -287,13 +287,15 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
     return;
   }
 
-  string remote_hostname = iceUtil::getNotificationClientDN( this->getClientDN() );
-  if( !iceUtil::cemonUrlCache::getInstance()->hasCemon( remote_hostname ) ) {
-    CREAM_SAFE_LOG(m_log_dev->warnStream() 
+  if( m_conf->getListenerEnableAuthZ() ) {
+    string remote_hostname = iceUtil::getNotificationClientDN( this->getClientDN() );
+    if( !iceUtil::cemonUrlCache::getInstance()->hasCemon( remote_hostname ) ) {
+      CREAM_SAFE_LOG(m_log_dev->warnStream() 
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "Remote notifying client is NOT recognized/authorized. Ignoring this notification..." 
 		   << log4cpp::CategoryStream::ENDLINE);
-    return;
+      return;
+    }
   }
 
   /**

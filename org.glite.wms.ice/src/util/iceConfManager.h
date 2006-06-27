@@ -32,7 +32,7 @@ namespace glite {
 	    m_max_jobcache_operation_before_dump, m_notification_frequency, m_lease_delta_time, 
 	    m_lease_threshold_time, m_jobkill_threshold_time;
 	  bool m_startpoller, m_poller_purges_jobs, m_startlistener, m_startsubupder,
-	    m_log_on_console, m_log_on_file, m_listener_enable_authn, m_start_job_killer,
+	    m_log_on_console, m_log_on_file, m_listener_enable_authn,  m_listener_enable_authz, m_start_job_killer,
 	    m_start_lease_updater, m_start_proxy_renewer;
 	  
 	  static boost::recursive_mutex mutex;
@@ -75,6 +75,7 @@ namespace glite {
 	  bool        getLogOnFile( void ) const { return m_log_on_file; }
 	  int         getMaxJobCacheOperationBeforeDump( void ) const { return m_max_jobcache_operation_before_dump; }
 	  bool        getListenerEnableAuthN( void ) const { return m_listener_enable_authn; }
+	  bool        getListenerEnableAuthZ( void ) const { return m_listener_enable_authz; }
 	  int         getNotificationFrequency( void ) const { return m_notification_frequency; }
 	  int         getLeaseDeltaTime( void ) const { return m_lease_delta_time; }
 	  int         getLeaseThresholdTime( void ) const { return m_lease_threshold_time; }
