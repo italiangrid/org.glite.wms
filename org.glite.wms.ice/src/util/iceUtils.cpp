@@ -109,12 +109,23 @@ void makePath(const string& filename) throw(exception&)
 //________________________________________________________________________
 string getNotificationClientDN( const string& DN )
 {
-  vector<string> pieces;
-  boost::split(pieces, DN, boost::is_any_of("CN="));
-  if ( pieces.empty() ) return "";
-  vector<string>::const_iterator it = pieces.end() - 1;
+  if( DN.empty() ) return "";
+  unsigned pos = DN.find("CN=");
+  if( pos == string::npos ) return "";
 
-  return getCompleteHostname( *it );
+  string cn = DN.substr(pos+3, DN.length()-(pos+3));
+
+  pos = cn.find("/");
+  if(pos == string::npos) return getCompleteHostname( cn );
+  
+  cn = cn.substr(0,pos);
+//  vector<string> pieces;
+//  boost::split(pieces, DN, boost::is_any_of("/"));
+
+//  if ( pieces.empty() ) return "";
+//  vector<string>::const_iterator it = pieces.end() - 1;
+
+  return getCompleteHostname( cn );
 }
 
 //________________________________________________________________________
