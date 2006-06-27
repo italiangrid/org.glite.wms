@@ -287,7 +287,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
     return;
   }
 
-  if( m_conf->getListenerEnableAuthZ() ) {
+  if( m_conf->getListenerEnableAuthZ() && m_conf->getListenerEnableAuthN() ) {
     string remote_hostname = iceUtil::getNotificationClientDN( this->getClientDN() );
     if( !iceUtil::cemonUrlCache::getInstance()->hasCemon( remote_hostname ) ) {
       CREAM_SAFE_LOG(m_log_dev->warnStream() 
