@@ -192,9 +192,10 @@ main(int argc, char *argv[])
     const bool parsed = parser.ParseClassAd(is, jdl);
     assert(parsed);
 
-    utilities::FileList<std::string> fl(argv[3]);
-    utilities::FileListMutex mx(fl);
-    utilities::FileListLock lock(mx);
+    //useless like this
+    //utilities::FileList<std::string> fl(argv[3]);
+    //utilities::FileListMutex mx(fl);
+    //utilities::FileListLock lock(mx);
 
     //
     //SUBMIT
