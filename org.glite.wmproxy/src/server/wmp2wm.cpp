@@ -59,24 +59,44 @@ using namespace glite::jdl;
 
 namespace {
 
-void f_forward(wmsutilities::FileList<string>& filelist,
-	wmsutilities::FileListMutex& mutex, string const& ad)
-{
-	GLITE_STACK_TRY("f_forward()");
-	edglog_fn("wmp2wm::f_forward");
-	
-	edglog(debug)<<"Request Queue: "<<filelist.filename()<<endl;
-	wmsutilities::FileListLock lock(mutex);
-	try {
-		filelist.push_back(ad);
-	} catch (exception &ex) {
-		throw wmputilities::FileSystemException(__FILE__, __LINE__,
-			"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-			ex.what());
+#ifndef GIACO
+	void f_forward(wmsutilities::FileList<string>& filelist,
+		wmsutilities::FileListMutex& mutex, string const& ad)
+	{
+		GLITE_STACK_TRY("f_forward()");
+		edglog_fn("wmp2wm::f_forward");
+		
+		edglog(debug)<<"Request Queue forwarding"<<endl;
+		edglog(debug)<<"Request Queue: "<<filelist.filename()<<endl;
+		wmsutilities::FileListLock lock(mutex);
+		try {
+			filelist.push_back(ad);
+		} catch (exception &ex) {
+			throw wmputilities::FileSystemException(__FILE__, __LINE__,
+				"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+				ex.what());
+		}
+		
+		GLITE_STACK_CATCH();
 	}
-	
-	GLITE_STACK_CATCH();
-}
+#else
+	void f_forward(wmsutilities::JobDir jd, string const& ad)
+	{
+		GLITE_STACK_TRY("f_forward()");
+		edglog_fn("wmp2wm::f_forward");
+		
+		edglog(debug)<<"JobDir forwarding"<<endl;
+		try {
+			 jd.deliver(ad);
+		} catch (exception &ex) {
+			throw wmputilities::FileSystemException(__FILE__, __LINE__,
+				"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+				ex.what());
+		}
+		
+		GLITE_STACK_CATCH();
+	}
+#endif
 
 string
 toFormattedString(classad::ClassAd &classad)
@@ -115,12 +135,19 @@ WMP2WM::init(const string &filename, eventlogger::WMPEventLogger *wmpeventlogger
 	edglog_fn("wmp2wm::init");
 	
   	edglog(debug)<<"Initializing wmp2wm..."<<endl;
-  	edglog(debug)<<"Request Queue: "<<filename<<endl;
   	
   	this->wmpeventlogger = wmpeventlogger;
-  	
+
+#ifndef GIACO
+  	edglog(debug)<<"Request Queue: "<<filename<<endl;
   	m_filelist.reset(new wmsutilities::FileList<string>(filename));
   	m_mutex.reset(new wmsutilities::FileListMutex(*(m_filelist.get())));
+#else
+	// filename is the base_dir
+	boost::filesystem::path base(filename,  boost::filesystem::native);
+	//wmsutilities::JobDir::create(base);
+	m_jobdir.reset(new wmsutilities::JobDir(base));
+#endif
 
   	edglog(debug)<<"wmp2wm initialization done"<<endl;
   	
@@ -146,7 +173,13 @@ WMP2WM::submit(const string &jdl, const string &jdlpath)
   	
 	string regjdl = (jdlpath != "") ? jdlpath : jdl;
  	try {
+ 		
+#ifndef GIACO
     	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
+#else
+		f_forward(*m_jobdir, command_str);
+#endif
+
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
     		true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
     	edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
@@ -180,8 +213,14 @@ WMP2WM::cancel(const string &jobid, const string &seq_code)
 		<<toFormattedString(jdlAd)<<endl;
 
 	string command_ad(convertedString);
+	
+#ifndef GIACO
 	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
 	
+#else
+	f_forward(*m_jobdir, command_ad);
+#endif
+
 	edglog(debug)<<"Cancel Forwarded"<<endl;
 	
 	GLITE_STACK_CATCH();
@@ -266,7 +305,13 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 	edglog(debug)<<"Converted string (written in filelist): "
 		<<toFormattedString(convertedAd)<<endl;
 	string command_ad(convertedString);
+	
+#ifndef GIACO
 	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
+#else
+	f_forward(*m_jobdir, command_ad);
+#endif
+	
 	edglog(debug)<<"Match Forwarded"<<endl;
 	
 	string resultlist = commands::listjobmatchex(local_path, pipepath);

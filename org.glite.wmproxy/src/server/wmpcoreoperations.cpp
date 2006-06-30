@@ -233,8 +233,7 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 				edglog(error)<<msg<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
 			    	"wmpcoreoperations::jobregister()",
-			    	wmputilities::WMS_INVALID_JDL_ATTRIBUTE, 
-			    	msg);
+			    	wmputilities::WMS_INVALID_JDL_ATTRIBUTE, msg);
 			}
 		}
 	}

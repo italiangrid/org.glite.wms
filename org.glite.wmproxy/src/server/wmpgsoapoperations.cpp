@@ -16,6 +16,9 @@
 // gSOAP
 #include "soapH.h"
 
+// JSDL converter
+#include "jsdl.h"
+
 // Server
 #include "wmpoperations.h"
 #include "wmpcoreoperations.h"
@@ -139,6 +142,68 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 	jobRegisterResponse jobRegister_response;
 
 	try {
+		jobRegister(jobRegister_response, jdl, delegation_id);
+		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
+		job_id_struct->id = jobRegister_response.jobIdStruct->id;
+		job_id_struct->name = jobRegister_response.jobIdStruct->name;
+		if (job_id_struct->path) {
+			job_id_struct->path = jobRegister_response.jobIdStruct->path;
+		} else {
+			job_id_struct->path = NULL;
+		}
+
+		if (jobRegister_response.jobIdStruct->childrenJob) {
+			job_id_struct->childrenJob =
+				*convertToGSOAPJobIdStructTypeVector(jobRegister_response
+				.jobIdStruct->childrenJob);
+		} else {
+			job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
+		}
+		response._jobIdStruct = job_id_struct;
+	} catch (Exception &exc) {
+		setSOAPFault(soap, exc.getCode(), "jobRegister", time(NULL),
+			exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+		setSOAPFault(soap, WMS_IS_FAILURE, "jobRegister", time(NULL),
+			WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+
+	edglog(info)<<"jobRegister operation completed\n"<<endl;
+	
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+typedef char *XML; 
+
+int
+ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
+	string delegation_id, struct ns1__jobRegisterJSDLResponse &response)
+{
+	GLITE_STACK_TRY("ns1__jobRegisterJSDL(struct soap *soap, "
+	"jsdlns__JobDefinition_USCOREType* jsdl, "
+	"string delegation_id, struct ns1__jobRegisterResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns1__jobRegisterJSDL");
+	edglog(info)<<"jobRegisterJSDL operation called"<<endl;
+
+	int return_value = SOAP_OK;
+
+	jobRegisterResponse jobRegister_response;
+
+	try {
+		// Converting JSDL to JDL before calling
+		string jsdl = "";
+		if (soap_get_jsdlns__Description_USCOREType(soap, &jsdl, "JobDefinition",
+				"jsdl:JobDefinition_Type")) {
+			edglog(debug)<<"_____ JSDL: "<<jsdl<<endl;
+		} else {
+			edglog(debug)<<"_____ DES ERROR"<<endl;
+		}
+		
+		string jdl = "";
+		
 		jobRegister(jobRegister_response, jdl, delegation_id);
 		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 		job_id_struct->id = jobRegister_response.jobIdStruct->id;

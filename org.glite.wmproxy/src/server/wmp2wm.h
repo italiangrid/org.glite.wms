@@ -17,9 +17,13 @@
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
-// FileList
-#include "glite/wms/common/utilities/FileList.h"
-#include "glite/wms/common/utilities/FileListLock.h"
+#ifndef GIACO
+	// FileList
+	#include "glite/wms/common/utilities/FileList.h"
+	#include "glite/wms/common/utilities/FileListLock.h"
+#else
+	#include "glite/wms/common/utilities/jobdir.h"
+#endif
 
 // Eventlogger
 #include "eventlogger/wmpeventlogger.h"
@@ -27,8 +31,6 @@
 namespace classad {
   class ClassAd;
 }
-
-class WMPLogger;
 
 namespace glite {
 namespace wms {
@@ -39,10 +41,12 @@ namespace commands {
 
 namespace server {
 
-typedef boost::scoped_ptr<glite::wms::common::utilities::FileList<std::string> >
-	FileListPtr;
-typedef boost::scoped_ptr<glite::wms::common::utilities::FileListMutex>
-	FileListMutexPtr;
+#ifndef GIACO
+	typedef boost::scoped_ptr<glite::wms::common::utilities::FileList<std::string> >
+		FileListPtr;
+	typedef boost::scoped_ptr<glite::wms::common::utilities::FileListMutex>
+		FileListMutexPtr;
+#endif
 
 
 /**
@@ -54,8 +58,11 @@ typedef boost::scoped_ptr<glite::wms::common::utilities::FileListMutex>
 */
 class WMP2WM
 {
+	
+#ifndef GIACO
  	FileListPtr m_filelist;
 	FileListMutexPtr m_mutex;
+#endif
 
 public:
 	/**
@@ -126,6 +133,12 @@ private:
   
 	// Event logger instance
 	glite::wms::wmproxy::eventlogger::WMPEventLogger * wmpeventlogger;
+
+#ifdef GIACO
+	boost::shared_ptr<glite::wms::common::utilities::JobDir> 
+		m_jobdir;
+#endif
+
 };
 
 } // namespace server
