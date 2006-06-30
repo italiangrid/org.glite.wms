@@ -253,13 +253,6 @@ namespace glite {
                 };
 
 
-                class job_aborted_event : public iceLBEvent {
-                public:
-                    job_aborted_event( const CreamJob& j );
-                    int execute( iceLBContext* ctx );
-                };
-
-
                 class ns_enqueued_start_event : public iceLBEvent {
                 public:
                     ns_enqueued_start_event( const CreamJob& j, const std::string& qname );

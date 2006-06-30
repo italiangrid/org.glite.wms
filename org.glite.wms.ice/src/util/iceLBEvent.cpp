@@ -590,24 +590,3 @@ int wms_dequeued_event::execute( iceLBContext* ctx )
 #endif
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//
-// cream aborted event
-//
-//////////////////////////////////////////////////////////////////////////////
-job_aborted_event::job_aborted_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format("Job aborted event, reason=[%1%]") % j.get_failure_reason() ) )
-{
-
-}
-
-int job_aborted_event::execute( iceLBContext* ctx )
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    return edg_wll_LogAbortProxy( *(ctx->el_context), 
-                             m_job.get_failure_reason().c_str() );
-#else
-    return edg_wll_LogAbort( *(ctx->el_context), 
-                             m_job.get_failure_reason().c_str() );
-#endif
-}
