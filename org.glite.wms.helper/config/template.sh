@@ -417,9 +417,10 @@ if [ ${__wmp_support} -eq 0 ]; then
   done
 else
   #WMP support
+  index=0
   for f in ${__wmp_input_base_file[@]}
   do
-    file=`basename $f`
+    file=`basename ${__wmp_input_base_dest_file[$index]}`
     if [ "${f:0:9}" == "gsiftp://" ]; then
       globus_url_retry_copy "${f}" "file://${workdir}/${file}"
     elif [ "${f:0:8}" == "https://" ]; then
@@ -428,6 +429,7 @@ else
     if [ $? != 0 ]; then
       fatal_error "Cannot download ${file} from ${f}"
     fi
+    let "++index"
   done
 fi
 

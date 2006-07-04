@@ -70,8 +70,8 @@ struct JobWrapper::pimpl {
   std::string               m_dsupload;
 
   bool	                    m_wmp_support;
-  std::vector<std::string>  m_wmp_input_files;
   std::vector<std::string>  m_wmp_input_base_files;
+  std::vector<std::string>  m_wmp_input_base_dest_files;
   std::vector<std::string>  m_wmp_output_files;
   std::vector<std::string>  m_wmp_output_dest_files;
   
@@ -268,21 +268,19 @@ JobWrapper::wmp_support(void)
 
 void
 JobWrapper::wmp_input_sandbox_support(const URL& base_url,
-				      const vector<std::string>& input_base_files)
+				      const vector<std::string>& input_base_files,
+				      const vector<std::string>& input_base_dest_files)
 {
   m_pimpl->m_input_base_url.reset(new URL(base_url));
 
-  copy(input_base_files.begin(), input_base_files.end(), back_inserter(m_pimpl->m_wmp_input_base_files));
-
-  for (vector<std::string>::const_iterator it = input_base_files.begin();
-      it != input_base_files.end(); it++) {
-
-    std::string::size_type pos = it->find_last_of("/");
-    if (pos != std::string::npos) {
-      std::string filename = it->substr(pos);
-      m_pimpl->m_wmp_input_files.push_back(filename);
-    }
-  }
+  copy(input_base_files.begin(),
+    input_base_files.end(),
+    back_inserter(m_pimpl->m_wmp_input_base_files)
+  );
+  copy(input_base_dest_files.begin(),
+    input_base_dest_files.end(),
+    back_inserter(m_pimpl->m_wmp_input_base_dest_files)
+  );
 }
 
 void 
@@ -455,10 +453,8 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__vo", m_pimpl->m_vo) &&
     dump(os, "__dsupload", m_pimpl->m_dsupload) &&
     dump(os, "__wmp_support", m_pimpl->m_wmp_support) &&
-    dump(os, "__wmp_input_file", m_pimpl->m_wmp_input_files) &&
-    dump(os, "__wmp_input_base_file", 
-      m_pimpl->m_wmp_input_base_files
-    ) &&
+    dump(os, "__wmp_input_base_file", m_pimpl->m_wmp_input_base_files) &&
+    dump(os, "__wmp_input_base_dest_file", m_pimpl->m_wmp_input_base_dest_files) &&
     dump(os, "__wmp_output_file", m_pimpl->m_wmp_output_files) &&
     dump(os, "__wmp_output_dest_file", 
       m_pimpl->m_wmp_output_dest_files

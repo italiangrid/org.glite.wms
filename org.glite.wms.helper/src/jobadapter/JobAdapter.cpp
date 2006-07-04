@@ -248,6 +248,10 @@ try {
   utils::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
   // Not Mandatory
+  vector<std::string> inputsandboxdestfilename;
+  utils::EvaluateAttrListOrSingle(*m_ad, "inputsandboxdestfilename", inputsandboxdestfilename);
+
+  // Not Mandatory
   boost::scoped_ptr<URL> wmpisb_base_uri;
   try {
     bool no_throw;
@@ -850,7 +854,7 @@ try {
   }
 
   if (wmpisb_base_uri) {
-    jw->wmp_input_sandbox_support(*isb_url, inputsandbox);
+    jw->wmp_input_sandbox_support(*isb_url, inputsandbox, inputsandboxdestfilename);
   } else {
     jw->input_sandbox(*isb_url, inputsandbox);
   }
