@@ -48,6 +48,26 @@ namespace wms{
 namespace client {
 namespace services {
 
+
+/* Static method contains
+* Determine whether an object is already
+* contained in the passed vector.
+* Eventually fills the vector with the element
+* i.e. calling contains twice will return at least one true
+*/
+
+bool contains(const std::string& element, std::vector<std::string> &vect){
+	vector<string>::iterator it = vect.begin() ;
+	vector<string>::iterator const end1 = vect.end();
+	for ( ; it != end1; it++){
+		if (element==*it){
+			return true;
+		}
+	}
+	vect.push_back(element);
+	return false;
+}
+
 /*
 *	Default constructor
 */
@@ -74,6 +94,8 @@ Job::Job(){
 	wmpVersion.major = 0;
 	wmpVersion.minor = 0;
 	wmpVersion.subminor = 0;
+	// Service Discovery
+	sdContacted=false;
 }
 /*
 *	Default destructor
@@ -166,10 +188,11 @@ glite::wms::wmproxyapi::ConfigContext* Job::getContext( ){
 * Returns the endpoint URL
 */
 const std::string Job::getEndPoint (){
-	string endpoint = "";
-	if (endPoint==NULL){ retrieveEndPointURL( );}
-	endpoint = string(*endPoint);
-	return endpoint;
+	if (endPoint==NULL){
+		// Initialize endPoint value
+		retrieveEndPointURL( );
+	}
+	return string(*endPoint);
 }
 /**
 * Sets the UserProxy pathname
@@ -398,7 +421,6 @@ void Job::printServerVersion( ) {
 	ostringstream srv;
 	string *endpoint = NULL;
 	string version = "";
-	vector<string> urls;
  	endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
         if (endpoint) {
 		logInfo->print(WMS_DEBUG, "EndPoint URL from --" +  wmcOpts->getAttributeUsage(Options::ENDPOINT) +" option:", *endpoint);
@@ -417,8 +439,8 @@ void Job::printServerVersion( ) {
 			urls = wmcUtils->getWmps ( );
 			endpoint = new string("");
 		}
-         }
-	checkWmpList (urls, *endpoint, version, true);
+        }
+	lookForWmpEndpoints (*endpoint, version, true);
 }
 /**
 * Prints the UI version
@@ -476,10 +498,9 @@ const std::string Job::delegateProxy( ) {
 *	> the list of URLs specified in the configuration file (In this last case the choice is randomically performed)
 */
 void Job::retrieveEndPointURL (const bool &delegation) {
-	vector<string> urls;
 	string *endpoint = NULL;
 	string version = "";
-	// Reads the credential delegation optionsi
+	// Reads the credential delegation options:
 	if (delegation) {
 		setDelegationId( );
 	} else {
@@ -487,34 +508,36 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 		autodgOpt = false;
 	}
 	// endPoint URL and ConfigurationContext
- 	endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
+ 	endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT);
+	char* ep = getenv("GLITE_WMS_WMPROXY_ENDPOINT");
         if (endpoint){
+		// --endpoint Specified
 		logInfo->print(WMS_DEBUG, "EndPoint URL from user option:", *endpoint);
 		// Gets the server version
+		doneUrls.push_back(*endpoint);
 		version = getWmpVersion (*endpoint);
 		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
 		// Performs CredentialDelegation if auto-delegation has been requested
 		if (autodgOpt){delegateUserProxy(*endpoint);}
-        } else {
-        	char* ep = getenv("GLITE_WMS_WMPROXY_ENDPOINT");
-		if (ep){
-  			endpoint = new string (ep);
-			logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", *endpoint );
-			// Gets the server version
-			version = getWmpVersion (*endpoint);
-			logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
-			// Performs CredentialDelegation if auto-delegation has been requested
-			if (autodgOpt){ delegateUserProxy(*endpoint);}
-                } else {
-			// list of endpoints from the configuration file
-			logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
-			urls = wmcUtils->getWmps ( );
-			endpoint = new string("");
-			checkWmpList(urls, *endpoint, version);
-		}
-         }
+        } else  if (ep){
+		// GLITE_WMS_WMPROXY_ENDPOINT Variable Used
+		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", *endpoint );
+		endpoint = new string (ep);
+		// Gets the server version
+		doneUrls.push_back(*endpoint);
+		version = getWmpVersion (*endpoint);
+		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
+		// Performs CredentialDelegation if auto-delegation has been requested
+		if (autodgOpt){ delegateUserProxy(*endpoint);}
+	} else {
+		// list of endpoints from the configuration file
+		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
+		urls = wmcUtils->getWmps ( );
+		endpoint = new string("");
+		lookForWmpEndpoints(*endpoint, version);
+        }
 	 // sets the attributes related to the version info
-	setVersionNumbers(version);
+	 setVersionNumbers(version);
 	 // Sets the attribute of this class related to the WMP server
 	 endPoint = new string(*endpoint);
 	 cfgCxt = new api::ConfigContext(getProxyPath(),*endpoint, getCertsPath());
@@ -525,7 +548,6 @@ void Job::setEndPoint(const std::string& endpoint, const bool delegation) {
 	endPoint = new string(endpoint);
 	cfgCxt = new api::ConfigContext(getProxyPath(),endpoint, getCertsPath());
 	logInfo->print(WMS_DEBUG, "Endpoint URL: " + cfgCxt->endpoint, "");
-
 		// Gets the server version
 		version = getWmpVersion (endpoint);
 		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
@@ -541,13 +563,46 @@ void Job::setEndPoint(const std::string& endpoint, const bool delegation) {
 /**
 * Endpoint version
 */
-void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, std::string &version, const bool &all) {
-	int n, index  = 0;
-	if (urls.empty( )){
+
+void Job::lookForWmpEndpoints(std::string &endpoint, std::string &version, const bool &all){
+	try{
+		// Look for endpoint inside Configuration:
+		checkWmpList(endpoint, version, all);
+	} catch (WmsClientException &exc){
+		//Loof for endpoint inside Service Discovery:
+		if (sdContacted){
+			// SD already contacted: throw caught exception
+			throw exc;
+		}else{
+			// Try and contact SD
+			checkWmpSDList(endpoint, version, all);
+		}
+	}
+}
+
+
+void Job::checkWmpSDList (std::string &endpoint, std::string &version, const bool &all){
+	// Ask user whether to continue:
+	logInfo->print(WMS_WARNING, "Unable to find any available endpoint where to connect");
+	if (wmcUtils->answerYes ("Do you wish to query Service Discovery for more endpoints?", true, true)){
+		// set boolean contacted value to true
+		sdContacted =true;
+		urls=wmcUtils->lookForWmps(*(wmcUtils->getVirtualOrganisation()));
+		checkWmpList (endpoint, version, all);
+	}else{
 		throw WmsClientException(__FILE__,__LINE__,
-		"getEndPointVersion", ECONNABORTED,
+		"checkWmpSDList", ECONNABORTED,
 		"Operation failed",
 		"Unable to find any endpoint where to connect");
+	}
+}
+void Job::checkWmpList (std::string &endpoint, std::string &version, const bool &all) {
+	int n, index  = 0;
+	if (urls.empty( )){
+			throw WmsClientException(__FILE__,__LINE__,
+			"checkWmpList", ECONNABORTED,
+			"Operation failed",
+			"Unable to find any endpoint where to connect");
 	}
 	while ( ! urls.empty( ) ){
 		n = urls.size( );
@@ -562,14 +617,19 @@ void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, s
 		urls.erase ( (urls.begin( ) + index) );
 		// Retrieves the version of the server
 		try {
-			version = getWmpVersion (endpoint);
-			if (all) {
-				logInfo->print(WMS_INFO, "WMProxy Version: " + version, "" );
-			} else {
-				logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
-				// Credential Delegation in case autodelegation has been requested
-				if (autodgOpt) { delegateUserProxy(endpoint); }
-				break;
+			// Skip endpoints that have already been tested
+			if (!contains(endpoint,doneUrls)){
+				version = getWmpVersion (endpoint);
+				if (all) {
+					// info message printed
+					logInfo->print(WMS_INFO, "WMProxy Version: "  + version, "" );
+				} else {
+					// Debug message printed
+					logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
+					// Credential Delegation in case autodelegation has been requested
+					if (autodgOpt) { delegateUserProxy(endpoint); }
+					break;
+				}
 			}
 		} catch (WmsClientException &exc){
 			if (n==1) {
@@ -583,11 +643,10 @@ void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, s
 				if (urls.empty( ) && all == false){
 					throw WmsClientException(__FILE__,__LINE__,
 					"checkWmpList", ECONNABORTED,
-					"Operation failed", "Unable to contact any specified enpoints");
+					"Operation failed", "Unable to contact any specified enpoint");
 				}
 			}
 		}
-
 	}
 }
 
@@ -653,11 +712,13 @@ void Job::checkFileTransferProtocol(  ) {
 			if ( size > 0 ) {
 				if (Utils::hasElement(protocols, Options::TRANSFER_FILES_DEF_PROTO)) {
 					fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-					logInfo->print(WMS_DEBUG, "FileTransferProtocol not specified;", "using the default protocol: " + *fileProto);
+					logInfo->print(WMS_DEBUG, "FileTransferProtocol not specified;", "using the default protocol: "
+						+ *fileProto);
 				} else if (Utils::hasElement(protocols, Options::TRANSFER_FILES_CURL_PROTO)) {
 					fileProto= new string (Options::TRANSFER_FILES_CURL_PROTO );
 					logInfo->print(WMS_DEBUG,
-					"FileTransferProtocol has not been specified and the server does not support the default protocol ("+Options::TRANSFER_FILES_DEF_PROTO+")",
+					"FileTransferProtocol has not been specified and the server does not support the default protocol ("
+						+Options::TRANSFER_FILES_DEF_PROTO+")",
 						"using: " + *fileProto);
 				} else {
 					info << "The server does not support File Transfer Protocol available for this client.\n";
@@ -672,7 +733,8 @@ void Job::checkFileTransferProtocol(  ) {
 				fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
 				logInfo->print(WMS_DEBUG, "The user has not specified any File Transfer Protocol; default is:",
 				*fileProto);
-				logInfo->result(WMP_GETPROTOCOLS_SERVICE, "could not check the protocol (received list of protocols is empty)");
+				logInfo->result(WMP_GETPROTOCOLS_SERVICE,
+					"could not check the protocol (received list of protocols is empty)");
 			}
 		}
 	} else {
@@ -680,7 +742,6 @@ void Job::checkFileTransferProtocol(  ) {
 			"Job::checkFileTransferProtocol",DEFAULT_ERR_CODE,
 				"Input Option Error",
 				"No information on the available WMProxy-FileTransferProtocol(s)" );
-
 	}
 }
 

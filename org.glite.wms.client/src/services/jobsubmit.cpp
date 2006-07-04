@@ -258,24 +258,23 @@ void JobSubmit::readOptions (int argc,char **argv){
 		}
 		startJob = true;
 	}
-	// checks the JobId argument for the --start option
+	// check --start option
+	// either set or retrieve the ENDPOINT
 	if (startOpt) {
 		*startOpt =string(Utils::checkJobId(*startOpt));
 		// Retrieves the endpoint URL in case of --start
 		logInfo->print(WMS_DEBUG, "Getting the enpoint URL");
 		LbApi lbApi;
 		lbApi.setJobId(*startOpt);
-		Status status=lbApi.getStatus(true,true);
-		setEndPoint(status.getEndpoint());
+		setEndPoint(lbApi.getStatus(true,true).getEndpoint());
 		// checks if --endpoint option has been specified with a different endpoint url
 		string *endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
 		if (endpoint && endpoint->compare(getEndPoint( )) !=0 ) {
 			logInfo->print(WMS_WARNING, "--endpoint " + string(*endpoint) + " : option ignored");
 		}
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-
 	} else {
-		// retrieves the endpoint URL
+		// Normal Behaviour: retrieves the endpoint URL
 		retrieveEndPointURL( );
 	}
 	// file Protocol
@@ -500,7 +499,7 @@ void JobSubmit::checkUserServerQuota(const long &isbSize) {
 		free_quota = api::getFreeQuota(getContext( ));
 	} catch (api::BaseException &exc){
 			throw WmsClientException(__FILE__,__LINE__,
-				"checkInputSandbox", ECONNABORTED,
+				"checkUserServerQuota", ECONNABORTED,
 				"WMProxy Server Error", errMsg(exc));
 	}
 	// soft limit
@@ -515,7 +514,7 @@ void JobSubmit::checkUserServerQuota(const long &isbSize) {
 			err << "Not enough User-FreeQuota (" << limit << " bytes) on the server for the InputSandbox files (" ;
 			err << isbSize << " bytes)";
 			throw WmsClientException( __FILE__,__LINE__,
-				"checkInputSandbox",  DEFAULT_ERR_CODE,
+				"checkUserServerQuota",  DEFAULT_ERR_CODE,
 				"UserFreeQuota Error" ,
 				err.str());
 		} else {
@@ -533,7 +532,7 @@ void JobSubmit::checkUserServerQuota(const long &isbSize) {
 			max_isbsize = api::getMaxInputSandboxSize(getContext( ));
 		} catch (api::BaseException &exc){
 				throw WmsClientException(__FILE__,__LINE__,
-					"checkInputSandbox", ECONNABORTED,
+					"checkUserServerQuota", ECONNABORTED,
 					"WMProxy Server Error", errMsg(exc));
 		}
 		// (2) MAX ISB size -----------
@@ -544,7 +543,7 @@ void JobSubmit::checkUserServerQuota(const long &isbSize) {
 				err << "The size of the InputSandbox (" << isbSize <<" bytes) ";
 				err << "exceeds the MAX InputSandbox size limit on the server (" << max_isbsize << " bytes)";
 				throw WmsClientException( __FILE__,__LINE__,
-					"checkInputSandbox",  DEFAULT_ERR_CODE,
+					"checkUserServerQuota",  DEFAULT_ERR_CODE,
 					"InputSandboxSize Error" , err.str());
 			} else {
 				ostringstream q;
