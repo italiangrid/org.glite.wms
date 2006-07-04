@@ -88,7 +88,7 @@ public:
 	/**
 	* Prompt the users (if --noint option is not active) a question with Y/N answer
 	* @param question the question to be prompted to the user
-	* @param defaultAnswer the default answer if noint is active or enter is typed (true= "YES")
+	* @param defaultAnswer the default answer if enter is typed (true= "YES")
 	* @param defaultValue default value returned in case of interaction is not allowed (--noint option)
 	* @return the answer value or the default value in case of interaction is not allowed
 	*/
@@ -147,6 +147,12 @@ public:
 	* @return  a vector of strings containg the list of addresses
 	*/
 	std::vector<std::string> getWmps( );
+        /**
+	* Query the service discovery for published WMProxy enpoints
+	* @param the VirtualOrganisation to be queried for
+	* @return  a vector of strings containg the list of found addresses
+	*/
+	std::vector<std::string> lookForWmps(const std::string &vo);
         /**
         * Gets the ErrorStorage pathname
         * @return the pathname string

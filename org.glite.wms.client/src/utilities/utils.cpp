@@ -41,8 +41,8 @@
 #define local
 #define CHUNK 16384
 #include <sys/mman.h>
-
-
+// Service Discovery
+#include "ServiceDiscovery.h"
 
 // Voms implementation
 #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
@@ -540,7 +540,45 @@ std::vector<std::string> Utils::getWmps(){
 	}
 	return wmps;
 }
-
+/*
+* Query the service discovery for published WMProxy enpoints
+*/
+std::vector<std::string> Utils::lookForWmps(const string &vo){
+	std::vector<std::string> wmps ;
+	SDServiceList *serviceList=NULL;
+	SDException ex;
+	const char* WMPROXY_SERVICE_NAME ="wmproxy";  // this string requires a better definition TBD
+	// Setup VO instance:
+	char **names = new (char*)[1];
+	names[0] = new char[vo.length() +1];
+	strcpy(names[0], vo.c_str());
+	SDVOList vos = {1, names};
+	// Service Query:
+	logInfo->print (WMS_DEBUG, "Querying service discovery for VO:", vo,true,true);
+	serviceList = SD_listServices( WMPROXY_SERVICE_NAME, NULL, &vos, &ex);
+	if (serviceList != NULL) {
+		if ( serviceList->numServices > 0 )  {
+			for(int k=0; k < serviceList->numServices; k++) {
+				wmps.push_back(strdup(serviceList->services[k]->endpoint));
+			}
+		}
+		SD_freeServiceList(serviceList);
+		delete []names[0];
+		delete []names;
+	} else {
+		if (ex.status == SDStatus_SUCCESS){
+			throw WmsClientException(__FILE__,__LINE__,"lookForWmps",DEFAULT_ERR_CODE,
+			"Service not known",
+			string(WMPROXY_SERVICE_NAME));
+		}
+		else {
+			throw WmsClientException(__FILE__,__LINE__,"lookForWmps",DEFAULT_ERR_CODE,
+			"Service Discovery failed",
+			ex.reason);
+		}
+	}
+	return wmps;
+}
 
 /*
 * Gets the ErrorStorage pathname
