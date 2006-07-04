@@ -1,21 +1,18 @@
 /*
- * glite-wmp-utils.cpp 
+ * glite-wmp-utils.cpp
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  * Contributors are mentioned in the code where appropriate.
  */
-
 #include "excman.h"
 #include "utils.h"
 #include "adutils.h"
 #include <iostream>
 using namespace std ;
 using namespace glite::wms::client::utilities;
-
 Utils *utils =NULL;
-
 void answer(){
 	// ANSWER
-	utils->answerYes("ciao secco ti chiami ale false?", false);
+	utils->answerYes("Your Name is Alessandro Maraschini?", false);
 }
 
 void resolve(){
@@ -43,31 +40,14 @@ void getLbs(){
 	for (unsigned int i=0;i<lbResult.size();i++) cout << "LB: "<<lbResult[i]<< endl ;
 }
 
-/* DEPRECATED 
-void checkLBNS(const string tc){
-	cout << endl<<"=======>" << tc << endl ;
-	std::pair <std::string, unsigned int> ad = utils->checkLb(tc);
-	cout << "found LB: "<< ad.first << "     :      " << ad.second << endl ;
-	ad = utils->checkWmp(tc);
-	cout << "found NS: "<< ad.first << "     :      " << ad.second << endl ;
-}
-*/
-
-
 int main(int argc,char *argv[]){
 try{
 	WMS_EXCM_TRY()
 	try{
 		Options *opts ;
-		// SUBMIT
 		opts= new Options(Options::JOBSUBMIT);
 		opts->readOptions(argc, (const char**)argv);
-		cout << "MAIN::Checking options.."<< endl ;
 		utils=new Utils(opts);
-
-		cout << "Main DBG " << endl ;
-		cout << "getDefaultVo->" << utils->getDefaultVo() << endl ;
-		cout << "SUCCESS" << endl ;
 	}catch (glite::wmsutils::exception::Exception &exc){
 		cerr << exc.what();
 	}

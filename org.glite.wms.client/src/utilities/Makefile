@@ -48,6 +48,7 @@ WMPCLIENT_LD_EXE_FLAGS= \
 	-lz -lpthread -lm \
 	-lvomsapi_gcc32dbg \
 	-lgridsite_globus \
+	-lglite-sd-c \
 	-lglite_wms_wmproxy_api_cpp \
 	-lxml2
 
