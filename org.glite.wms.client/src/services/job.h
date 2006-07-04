@@ -173,32 +173,29 @@ class Job{
 		* An exception is throw if either no endpoint is specified or
 		* all specified endpoints don't allow performing the requested operation.
 		* @param endpoint the url of the contacted endpoint
-		* @param version the version number of the contacted endpoint
 		* @param all if TRUE, it contacts all endpoints specified
 		*/
-		void checkWmpList (std::string &endpoint, std::string &version, const bool &all=false) ;
+		void checkWmpList (std::string &endpoint, const bool &all=false) ;
 		/**
 		* Retrieves the version of one or more WMProxy services, querying the endpoint addresses to the service Discovery
 		* @param urls the list of the endpoint that can be contacted; at the end of the execution this parameter
 		* will contain a list of the endpoints that are not be contacted
 		* @param endpoint the url of the contacted endpoint
-		* @param version the version number of the contacted endpoint
 		* @param all if TRUE, it contacts all endpoints specified
 		*/
-		void checkWmpSDList (std::string &endpoint, std::string &version, const bool &all=false) ;
+		void checkWmpSDList (std::string &endpoint, const bool &all=false) ;
 		/**
 		* Try to connect both to configuration and to Service Discovery endpoints.
 		* @param endpoint the url of the contacted endpoint
-		* @param version the version number of the contacted endpoint
 		* @param all if TRUE, it contacts all endpoints specified
 		*/
-		void lookForWmpEndpoints(std::string &endpoint, std::string &version, const bool &all=false);
+		void lookForWmpEndpoints(std::string &endpoint, const bool &all=false);
 
 		/*
 		* Retrieves the string with WMProxy version information
 		* @return the string with the version information having the format x.y.z
 		*/
-		virtual const std::string getWmpVersion (const std::string &endpoint) ;
+		virtual void retrieveWmpVersion (const std::string &endpoint) ;
 		/**
 		* Sets the attributes of this class related to the version neumbers of the WMProxy server
 		* @param version the version string got calling the getVersion service of the WMProxy server
