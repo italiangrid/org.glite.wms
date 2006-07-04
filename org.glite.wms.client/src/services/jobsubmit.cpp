@@ -862,13 +862,13 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				*collectOpt= Utils::addStarWildCard2Path(*collectOpt);
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
-					"submission",  DEFAULT_ERR_CODE,
+					"checkAd",  DEFAULT_ERR_CODE,
 					"Invalid JDL collection Path",
 					"--collection: no valid collection directory (" + *collectOpt + ")"  );
 			}
 		} catch ( const fs::filesystem_error & ex ){
 			throw WmsClientException(__FILE__,__LINE__,
-				"submission",  DEFAULT_ERR_CODE,
+				"checkAd",  DEFAULT_ERR_CODE,
 				"Invalid JDL collection Path",
 				ex.what()  );
 		}
@@ -912,13 +912,13 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				*dagOpt= Utils::addStarWildCard2Path(*dagOpt);
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
-					"submission",  DEFAULT_ERR_CODE,
+					"checkAd",  DEFAULT_ERR_CODE,
 					"Invalid JDL collection Path",
 					"--dag: no valid collection directory (" + *dagOpt + ")"  );
 			}
 		} catch ( const fs::filesystem_error & ex ){
 			throw WmsClientException(__FILE__,__LINE__,
-				"submission",  DEFAULT_ERR_CODE,
+				"checkAd",  DEFAULT_ERR_CODE,
 				"Invalid JDL DAG Path",
 				ex.what()  );
 		}
@@ -958,7 +958,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 		// JDL submission string
 		jdlString = new string(dagAd->toString()) ;
-
 	} else {
 		// ClassAd: can be anything (reading Type)
 		adObj = new Ad();
@@ -1014,7 +1013,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				if (collectAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE,collectAd->getWarnings() );}
 			}catch (Exception &ex){
 				throw WmsClientException(__FILE__,__LINE__,
-					"submission",  DEFAULT_ERR_CODE,
+					"checkAd",  DEFAULT_ERR_CODE,
 					"Invalid JDL collection",
 					ex.what()   );
 			}
@@ -1162,7 +1161,7 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 	// checks if jdlstring is not null
 	if (!jdlString){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE ,
+			"jobRegOrSub",  DEFAULT_ERR_CODE ,
 			"Null Pointer Error",
 			"null pointer to JDL string\n" + Options::BUG_MSG);
 	}
