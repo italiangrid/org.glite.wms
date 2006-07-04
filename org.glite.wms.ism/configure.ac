@@ -14,11 +14,19 @@
 #       Common configure.ac file for the GLite WMS Common module
 #
 #       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
+<<<<<<< configure.ac
 #       Version info: $Id$
 #       Release: $Name$
+=======
+#       Version info: $Id$
+#       Release: $Name$
+>>>>>>> 1.17.2.9
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.17.2.10  2006/07/04 13:45:18  monforte
+#       Including fix to bug #17877
+#
 #       Revision 1.17.2.9  2006/05/09 11:42:30  monforte
 #       :
 #

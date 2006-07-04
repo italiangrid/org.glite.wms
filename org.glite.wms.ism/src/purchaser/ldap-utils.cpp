@@ -585,7 +585,12 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                 )
               );
             }
-            if (ce_access_control_base_rules.size() > 
+            if (mapped_access_control_base_rules.empty()) {
+              gluece_info_container.insert(
+                std::make_pair((*ce_it)->first, (*ce_it)->second.first)
+              );
+            }
+            else if (ce_access_control_base_rules.size() > 
                 mapped_access_control_base_rules.size()) {
             
               vector<string> not_mapped_access_control_base_rules;
