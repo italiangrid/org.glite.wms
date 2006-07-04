@@ -167,16 +167,33 @@ class Job{
 		* Retrieves the version of one or more WMProxy services.
 		* A set of WMProxy to be contacted can be specified as input by the 'urls'  vector.
 		* If no urls is specified as input, the following objects are checked to retrieve to service to be contacted:
-		* the 'endPoint' private attribute of this class; the specific user environment variable ; the specific list in the configuration file.
+		* the 'endPoint' private attribute of this class;
+		* the specific user environment variable
+		*the specific list in the configuration file.
 		* An exception is throw if either no endpoint is specified or
 		* all specified endpoints don't allow performing the requested operation.
+		* @param endpoint the url of the contacted endpoint
+		* @param version the version number of the contacted endpoint
+		* @param all if TRUE, it contacts all endpoints specified
+		*/
+		void checkWmpList (std::string &endpoint, std::string &version, const bool &all=false) ;
+		/**
+		* Retrieves the version of one or more WMProxy services, querying the endpoint addresses to the service Discovery
 		* @param urls the list of the endpoint that can be contacted; at the end of the execution this parameter
 		* will contain a list of the endpoints that are not be contacted
 		* @param endpoint the url of the contacted endpoint
 		* @param version the version number of the contacted endpoint
 		* @param all if TRUE, it contacts all endpoints specified
 		*/
-		void checkWmpList (std::vector<std::string> &urls, std::string &endpoint, std::string &version, const bool &all=false) ;
+		void checkWmpSDList (std::string &endpoint, std::string &version, const bool &all=false) ;
+		/**
+		* Try to connect both to configuration and to Service Discovery endpoints.
+		* @param endpoint the url of the contacted endpoint
+		* @param version the version number of the contacted endpoint
+		* @param all if TRUE, it contacts all endpoints specified
+		*/
+		void lookForWmpEndpoints(std::string &endpoint, std::string &version, const bool &all=false);
+
 		/*
 		* Retrieves the string with WMProxy version information
 		* @return the string with the version information having the format x.y.z
@@ -214,16 +231,24 @@ class Job{
 		void postOptionchecks(unsigned int proxyMinTime=0);
 		/** Print a particular set (expressed with title) of warning messages (expressed with warnings)*/
 		void printWarnings   (const std::string& title, const std::vector<std::string> &warnings);
-		/** Input arguments */
-		std::string* logOpt ;	// --logfile <file>
-		std::string* outOpt ;	// --output <file>
-		std::string* cfgOpt ; 	// --config <file>
-		std::string* voOpt ;	// --vo <VO_Name>
-		std::string* dgOpt ;	// --delegationid
-		std::string* fileProto; 	// --proto
-		bool autodgOpt ;		// --autm-delegation,
-		bool nointOpt ;		// --noint
-		bool dbgOpt ;		// --debug
+		/** Input argument  --logfile <file> */
+		std::string* logOpt ;
+		/** Input argument  --output <file>  */
+		std::string* outOpt ;
+		/** Input argument  --config <file> */
+		std::string* cfgOpt ;
+		/** Input argument  --vo <VO_Name> */
+		std::string* voOpt ;
+		/** Input argument   --delegationid*/
+		std::string* dgOpt ;
+		/** Input argument  --proto */
+		std::string* fileProto;
+		/** Input argument --autm-delegation */
+		bool autodgOpt ;
+		/** Input argument --noint */
+		bool nointOpt ;
+		/** Input argument --debug*/
+		bool dbgOpt ;
 		/** handles the input options*/
 		glite::wms::client::utilities::Options *wmcOpts ;
 		/** utilities object */
@@ -232,11 +257,14 @@ class Job{
 		glite::wms::client::utilities::Log *logInfo ;
 		/** endpoint*/
 		std::string* endPoint ;
-
 		/** Configuration contex */
 		glite::wms::wmproxyapi::ConfigContext *cfgCxt ;
-
-		private :
+		/** List of possible endpoints*/
+		std::vector<std::string> urls;
+		/** List of already trialed endpoints
+		* (this list is needed for avoiding re-trial to same endpoint)*/
+		std::vector<std::string> doneUrls;
+	private :
 		/*
 		* Version numbers of the server
 		*/
@@ -249,6 +277,9 @@ class Job{
 		* Path to the CertAuth's directory
 		*/
 		std::string* trustedCerts ;
+		/** Remember whehter Service Discovery have been contacted*/
+		bool sdContacted;
+
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOB_H
