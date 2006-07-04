@@ -143,7 +143,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 	// --version (ends the execution)
 	if (wmcOpts->getBoolAttribute(Options::VERSION)){
 		// prints out the message with the client version
-		printClientVersion( );
+		cout << "\n" << Options::getVersionMessage( ) << "\n";
 		// retrieves the server version and print it out
 		printServerVersion();
 		Utils::ending(0);
@@ -155,13 +155,12 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 * So far: proxy time left
 */
 void Job::postOptionchecks(unsigned int proxyMinTime){
-
 	int proxyTimeLeft = apiutils::getProxyTimeLeft(getProxyPath());
 	if (proxyTimeLeft<=0){
 		throw WmsClientException(__FILE__,__LINE__,
 			"postOptionchecks",DEFAULT_ERR_CODE,
 			"Proxy validity Error", "Certificate is expired");
-	} else if (proxyTimeLeft<proxyMinTime){
+	} else if (proxyTimeLeft<(int)proxyMinTime){
 		throw WmsClientException(__FILE__,__LINE__,
 			"postOptionchecks",DEFAULT_ERR_CODE,
 			"Proxy validity Error", "Certificate will expire in less than"
@@ -324,7 +323,7 @@ const std::string Job::getDelegationId  ( ) {
 
 /**
 * Private Method
-* Retrieves the WMProxy version numbers
+* Retrieves the WMProxy version numbers for the specified endpoint
 */
 void Job::retrieveWmpVersion (const std::string &endpoint) {
 	try {
@@ -336,6 +335,7 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 		setVersionNumbers(api::getVersion(cfg));
 		logInfo->result(WMP_VERSION_SERVICE, "Version numbers successfully retrieved");
 	} catch (api::BaseException &exc){
+		// TBD delete cfg???
 		throw WmsClientException(__FILE__,__LINE__,
 			"retrieveWmpVersion", ECONNABORTED,
 			"Operation failed",
@@ -372,7 +372,6 @@ void Job::setVersionNumbers(const string& version) {
 		// Display parsed Version
 		info << "WMProxy: major version[" << wmpVersion.major << "] - minor version[" << wmpVersion.minor << "]";
 		logInfo->print(WMS_DEBUG, info.str(), "",false );
-		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "");
 	} else {
 		wmpVersion.major = 1;
 		wmpVersion.minor = 0;
@@ -419,8 +418,7 @@ bool Job::checkVersionForTransferProtocols( ){
 void Job::printServerVersion( ) {
 	// Initialised needed variables
 	ostringstream srv;
-	string *endpoint = NULL;
-	endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
+	string *endpoint = wmcOpts->getStringAttribute (Options::ENDPOINT) ;
         char* ep = getenv("GLITE_WMS_WMPROXY_ENDPOINT");
         if (endpoint) {
 		// --endpoint option used
@@ -428,20 +426,18 @@ void Job::printServerVersion( ) {
 		urls.push_back (*endpoint);
         } else if (ep){
 		// GLITE_WMS_WMPROXY_ENDPOINT ENV variable used
-		endpoint = new string (ep);
-		//urls.push_back(*endpoint);
 		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", *endpoint );
-		urls.push_back (*endpoint);
+		urls.push_back (string (ep));
 	} else {
 		// just retrieve URLS from configuration file
 		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
 		urls = wmcUtils->getWmps ( );
-		endpoint = new string("");
         }
-	lookForWmpEndpoints (*endpoint, true);
+	lookForWmpEndpoints (true);
 }
 /**
 * Prints the UI version
+* TBD this method may be removed
 */
 void Job::printClientVersion( ){
 	cout << "\n" << Options::getVersionMessage( ) << "\n";
@@ -478,6 +474,7 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 */
 
 const std::string Job::delegateProxy( ) {
+	// TBD internal approach may change (endPoint may be used)
 	string endpoint = "";
 	retrieveEndPointURL(true);
 	endpoint = getEndPoint( );
@@ -492,7 +489,6 @@ const std::string Job::delegateProxy( ) {
 *	> the list of URLs specified in the configuration file (In this last case the choice is randomically performed)
 */
 void Job::retrieveEndPointURL (const bool &delegation) {
-	string *endpoint = NULL;
 	// Reads the credential delegation options:
 	if (delegation) {
 		setDelegationId( );
@@ -500,44 +496,37 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 		dgOpt = wmcOpts->getStringAttribute (Options::DELEGATION) ;
 		autodgOpt = false;
 	}
-	// endPoint URL and ConfigurationContext
- 	endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT);
+	// needed variables
+	string *endpoint = wmcOpts->getStringAttribute (Options::ENDPOINT);
 	char* ep = getenv("GLITE_WMS_WMPROXY_ENDPOINT");
-        if (endpoint){
-		// --endpoint Specified
+	if (endpoint){
+		// --endpoint option used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from user option:", *endpoint);
-		// Gets the server version
-		doneUrls.push_back(*endpoint);
-		retrieveWmpVersion (*endpoint);
-		// Performs CredentialDelegation if auto-delegation has been requested
-		if (autodgOpt){delegateUserProxy(*endpoint);}
+		urls.push_back(*endpoint);
         } else  if (ep){
-		// GLITE_WMS_WMPROXY_ENDPOINT Variable Used
+		// GLITE_WMS_WMPROXY_ENDPOINT Variable used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", *endpoint );
-		endpoint = new string (ep);
-		// Gets the server version
-		doneUrls.push_back(*endpoint);
-		retrieveWmpVersion (*endpoint);
-		// Performs CredentialDelegation if auto-delegation has been requested
-		if (autodgOpt){ delegateUserProxy(*endpoint);}
+		urls.push_back(string (ep));
 	} else {
 		// list of endpoints from the configuration file
 		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
-		urls = wmcUtils->getWmps ( );
-		endpoint = new string("");
-		lookForWmpEndpoints(*endpoint);
+		urls = wmcUtils->getWmps ();
         }
+	// look for endpoint and initilise wmp versions and endPoint variables
+	lookForWmpEndpoints();
+	// Performs CredentialDelegation if auto-delegation has been requested
+	if (autodgOpt) {delegateUserProxy(*endPoint);}
 	// Sets the attribute of this class related to the WMP server
-	endPoint = new string(*endpoint);
-	cfgCxt = new api::ConfigContext(getProxyPath(),*endpoint, getCertsPath());
+	cfgCxt = new api::ConfigContext(getProxyPath(),*endPoint, getCertsPath());
 }
 
 void Job::setEndPoint(const std::string& endpoint, const bool delegation) {
+	if (endPoint){delete endPoint;}
 	endPoint = new string(endpoint);
 	cfgCxt = new api::ConfigContext(getProxyPath(),endpoint, getCertsPath());
 	logInfo->print(WMS_DEBUG, "Endpoint URL: " + cfgCxt->endpoint, "");
 		// Gets the server version
-		retrieveWmpVersion (endpoint);
+		retrieveWmpVersion (endpoint);  // TBD let endpoint to be taken by endpoints
 	if (delegation){
 		// checks the input options related to the credential delegation
 		setDelegationId ( );
@@ -548,41 +537,45 @@ void Job::setEndPoint(const std::string& endpoint, const bool delegation) {
 /**
 * Endpoint version
 */
-void Job::lookForWmpEndpoints(std::string &endpoint, const bool &all){
+void Job::lookForWmpEndpoints(const bool &all){
 	try{
 		// Look for endpoint inside Configuration:
-		checkWmpList(endpoint, all);
+		checkWmpList(all);
+		// Try and contact SD (only when no ep found so far)
+		if (all){checkWmpSDList(all);}
 	} catch (WmsClientException &exc){
-		//Loof for endpoint inside Service Discovery:
-		if (sdContacted){
-			// SD already contacted: throw caught exception
-			throw exc;
-		}else{
-			// Try and contact SD
-			checkWmpSDList(endpoint, all);
+		// Try and contact SD
+		checkWmpSDList(all);
+	}
+	// Check Whether endpoint was found
+	if (!this->endPoint){
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkWmpSDList", ECONNABORTED,
+			"Operation failed",
+			"Unable to find any endpoint where to connect");
+	}
+}
+
+void Job::checkWmpSDList (const bool &all){
+	// Ask user whether to continue:
+	if (!sdContacted){
+		sdContacted =true;
+		if (!this->endPoint){logInfo->print(WMS_WARNING, "Unable to find any available endpoint where to connect");}
+		if (wmcUtils->answerYes ("Do you wish to query Service Discovery for more endpoints?", true, true)){
+			// set boolean contacted value to true
+			urls=wmcUtils->lookForWmps(*(wmcUtils->getVirtualOrganisation()));
+			checkWmpList (all);
+			// SUCCESS, may exit
+			return ;
 		}
 	}
 }
 
-
-void Job::checkWmpSDList (std::string &endpoint, const bool &all){
-	// Ask user whether to continue:
-	logInfo->print(WMS_WARNING, "Unable to find any available endpoint where to connect");
-	if (wmcUtils->answerYes ("Do you wish to query Service Discovery for more endpoints?", true, true)){
-		// set boolean contacted value to true
-		sdContacted =true;
-		urls=wmcUtils->lookForWmps(*(wmcUtils->getVirtualOrganisation()));
-		checkWmpList (endpoint, all);
-	}else{
-		throw WmsClientException(__FILE__,__LINE__,
-		"checkWmpSDList", ECONNABORTED,
-		"Operation failed",
-		"Unable to find any endpoint where to connect");
-	}
-}
-void Job::checkWmpList (std::string &endpoint,const bool &all) {
+void Job::checkWmpList (const bool &all) {
 	int n, index  = 0;
-	if (urls.empty( )){
+
+	string ep; //will store temporary endPoint values
+	if (this->urls.empty( )){
 			throw WmsClientException(__FILE__,__LINE__,
 			"checkWmpList", ECONNABORTED,
 			"Operation failed",
@@ -590,42 +583,38 @@ void Job::checkWmpList (std::string &endpoint,const bool &all) {
 	}
 	while ( ! urls.empty( ) ){
 		n = urls.size( );
-		if (n > 1){
-			// randomic extraction of one URL from the list
-			index = wmcUtils->getRandom(n);
-		} else {
-			index = 0;
-		}
-		endpoint = string (urls[index]);
-		// Removes the extracted URL from the list
+		if (n > 1){index = wmcUtils->getRandom(n);}
+		else { index = 0;}
+		ep=urls[index];
+		// Removes the extracted URL from the list (popping)
 		urls.erase ( (urls.begin( ) + index) );
-		// Retrieves the version of the server
+		// Try and Retrieve server version(s)
 		try {
 			// Skip endpoints that have already been tested
-			if (!contains(endpoint,doneUrls)){
-				retrieveWmpVersion (endpoint);
-				if (all) {
-					// Used to print version
-				} else {
-					// Credential Delegation in case autodelegation has been requested
-					if (autodgOpt) {delegateUserProxy(endpoint);}
+			if (!contains(ep,doneUrls)){
+				retrieveWmpVersion (ep);
+				// initialise Endpoint Value (remove previous possible value)
+				if (this->endPoint){delete endPoint;}
+				this->endPoint =new string(ep);
+				ostringstream info;
+				info <<"WMProxy Version: " << wmpVersion.major << "." << wmpVersion.minor << "."<< wmpVersion.subminor;
+				// "all" variable is used to continue untill list is empty
+				if (all){
+					logInfo->print(WMS_INFO, info.str(), "");
+				}else{
+					logInfo->print(WMS_DEBUG,info.str(), "");
 					break;
 				}
 			}
 		} catch (WmsClientException &exc){
-			if (n==1) {
-				// in case of any error on the only specified endpoint
+			// An error occurred:
+			logInfo->print  (WMS_INFO, "Connection failed:", exc.what());
+			if (!endPoint && urls.empty()){
+				// no more element available
+				// no endpoint found
 				throw WmsClientException(__FILE__,__LINE__,
 					"checkWmpList", ECONNABORTED,
-					"Operation failed",
- 					"Unable to connect to the service: " + endpoint + "\n" + exc.what( ));
-			} else {
-				logInfo->print  (WMS_INFO, "Connection failed:", exc.what());
-				if (urls.empty( ) && all == false){
-					throw WmsClientException(__FILE__,__LINE__,
-					"checkWmpList", ECONNABORTED,
 					"Operation failed", "Unable to contact any specified enpoint");
-				}
 			}
 		}
 	}
@@ -668,8 +657,7 @@ void Job::checkFileTransferProtocol(  ) {
 
 		}
 		// --proto: checks that the chosen protocol is supported
-		if (fileProto) {
-			if ( size > 0 ) {
+		if (fileProto) {			if ( size > 0 ) {
 				// checks whether the WMProxy supports the protocol
 				// that the user has specified (--proto)
 				if (Utils::hasElement(protocols, *fileProto) == false){
