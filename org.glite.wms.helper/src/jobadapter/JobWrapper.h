@@ -202,8 +202,7 @@ public:
    * \ingroup jobadapter
    */
   void wmp_input_sandbox_support(const URL& base_url,
-                                  const std::vector<std::string>& input_base_files,
-                                  const std::vector<std::string>& input_base_dest_files);
+                                  const std::vector<std::string>& input_base_files);
 
   /**
    * Declare which files are in the output sandbox and where they have to be moved.
