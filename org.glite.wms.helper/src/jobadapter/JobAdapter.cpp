@@ -173,7 +173,6 @@ try {
 
   // Mandatory for shallow resubmission
   std::string token_file(config.wm()->token_file());
-
   std::string ReallyRunningToken;
   bool shallow_retry_count_attr_exists = false;
   int shallow_retry_count(
@@ -203,6 +202,7 @@ try {
     jdl::set_really_running_token(*cream_jdl,
       ReallyRunningToken
     );
+
     return cream_jdl;
   }
 
@@ -246,6 +246,10 @@ try {
   // Not Mandatory
   vector<std::string>  inputsandbox;
   utils::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
+
+  // Not Mandatory
+  vector<std::string> inputsandboxdestfilename;
+  utils::EvaluateAttrListOrSingle(*m_ad, "inputsandboxdestfilename", inputsandboxdestfilename);
 
   // Not Mandatory
   boost::scoped_ptr<URL> wmpisb_base_uri;
@@ -850,7 +854,7 @@ try {
   }
 
   if (wmpisb_base_uri) {
-    jw->wmp_input_sandbox_support(*isb_url, inputsandbox);
+    jw->wmp_input_sandbox_support(*isb_url, inputsandbox, inputsandboxdestfilename);
   } else {
     jw->input_sandbox(*isb_url, inputsandbox);
   }
