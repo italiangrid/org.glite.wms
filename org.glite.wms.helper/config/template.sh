@@ -420,10 +420,10 @@ else
   index=0
   for f in ${__wmp_input_base_file[@]}
   do
-    if [ -z "${__wmp_input_base_dest_file[$index]}" ]; then
-      file=${__wmp_input_base_file[$index]}
+    if [ -z "${__wmp_input_base_dest_file}" ]; then
+      file="${__wmp_input_base_file[$index]}"
     else
-      file=${__wmp_input_base_dest_file[$index]}
+      file="${__wmp_input_base_dest_file[$index]}"
     fi
     if [ "${f:0:9}" == "gsiftp://" ]; then
       globus_url_retry_copy "${f}" "file://${workdir}/${file}"
