@@ -561,7 +561,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
         return it;
     }
 
-    // Dp the "right think"(tm) with the job
+    // Do the "right think"(tm) with the job
     if ( it->can_be_resubmitted() ) {
         // resubmit job
         resubmit_job( it, "Job resubmitted by ICE" );

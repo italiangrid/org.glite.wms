@@ -182,9 +182,7 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
     }
     m_lb_logger->logEvent( new util::cream_cancel_done_event( theJob, "User Cancelled" ) );
 
-    // no failure: put jobids and status in cache
-    // and remove last request from WM's filelist
-    util::jobCache::getInstance()->erase( it );
+    // util::jobCache::getInstance()->erase( it );
 }
 
 
