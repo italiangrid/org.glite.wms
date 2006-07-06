@@ -431,7 +431,7 @@ else
       htcp "${f}" "file://${workdir}/${file}"
     fi
     if [ $? != 0 ]; then
-      fatal_error "Cannot download file://${workdir}/${file} from ${f}"
+      fatal_error "Cannot download ${workdir}/${file} from ${f}"
     fi
     let "++index"
   done
