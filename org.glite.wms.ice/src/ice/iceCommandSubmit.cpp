@@ -231,6 +231,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                            << log4cpp::CategoryStream::ENDLINE
                            );
             m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) ) );
+            theJob.set_failure_reason( boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) );
+            m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
             cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
@@ -247,7 +249,9 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
         try {
             theProxy->Authenticate(theJob.getUserProxyCertificate());
         } catch ( cream_api::soap_proxy::auth_ex& ex ) {
+            theJob.set_failure_reason( ex.what() );
             m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
+            m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
                            << "Unable to submit gridJobID=" 
@@ -288,7 +292,9 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                << " Exception:" << ex.what()
                                << log4cpp::CategoryStream::ENDLINE
                                );
+                theJob.set_failure_reason( ex.what() );
                 m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
+                m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
                 ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
                 throw( iceCommandFatal_ex( ex.what() ) );
             }
