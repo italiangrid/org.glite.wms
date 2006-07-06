@@ -421,7 +421,7 @@ else
   for f in ${__wmp_input_base_file[@]}
   do
     if [ -z "${__wmp_input_base_dest_file}" ]; then
-      file="${__wmp_input_base_file[$index]}"
+      file="${f}"
     else
       file="${__wmp_input_base_dest_file[$index]}"
     fi
@@ -431,7 +431,7 @@ else
       htcp "${f}" "file://${workdir}/${file}"
     fi
     if [ $? != 0 ]; then
-      fatal_error "Cannot download ${file} from ${f}"
+      fatal_error "Cannot download file://${workdir}/${file} from ${f}"
     fi
     let "++index"
   done
