@@ -454,6 +454,7 @@ if [ -f "${__prologue}" ]; then
 fi
 
 if [ ${__job_type} -eq 3 ]; then #interactive jobs
+  #extracts 'scheme://host' from the full URL
   base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`}
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
     globus_url_retry_copy "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
