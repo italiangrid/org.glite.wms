@@ -13,10 +13,6 @@
 // Utilities
 #include "utilities/wmputils.h" // getServerHost()
 
-// Logging
-#include "utilities/logging.h"
-#include "glite/wms/common/logger/edglog.h"
-
 // TRY CATCH macros
 #include "utilities/wmpexceptions.h"
 
@@ -63,7 +59,27 @@ parseAddressPort(const string &addressport, string &server,
     GLITE_STACK_CATCH();
 }
 
-
+void
+parseAddressPort(const string &addressport, pair<string, int> &addresspair)
+{
+	GLITE_STACK_TRY("parseAddressPort()");
+	unsigned int pos;
+	if (addressport != "") {
+		if ((pos = addressport.rfind(":", addressport.size()))
+				!= string::npos) {
+			addresspair.first = addressport.substr(0, pos);
+			addresspair.second = 
+				atoi(addressport.substr(pos + 1, addressport.size()).c_str());
+		} else {
+			addresspair.first = addressport;
+			addresspair.second = 0;
+		}
+	} else {
+        addresspair.first = DEFAULT_SERVER_ADDRESS;
+        addresspair.second = 0;
+    }
+	GLITE_STACK_CATCH();
+}
 
 // Constructor
 WMProxyConfiguration::WMProxyConfiguration()
@@ -117,25 +133,56 @@ WMProxyConfiguration::loadConfiguration()
 	// If attribute not present in configuration file then
 	// wmp_config->lbproxy() (dispatcher_threads(), max_input_sandbox_size())
 	// return 0
-	lbproxyavailable = wmp_config->lbproxy();
-	maxinputsandboxsize = wmp_config->max_input_sandbox_size();
-	minperusaltimeinterval = wmp_config->min_perusal_time_interval();
+	this->lbproxyavailable = wmp_config->lbproxy();
+	
+	this->servicediscoveryenabled = wmp_config->enable_service_discovery();
+	this->servicediscoveryinfovaliditytime = wmp_config->enable_service_discovery();
+	
+	this->maxinputsandboxsize = wmp_config->max_input_sandbox_size();
+	this->minperusaltimeinterval = wmp_config->min_perusal_time_interval();
 	
 	// If attribute ListMatchRootPath not present in configuration file then
 	// wmp_config->list_match_root_path() returns ""
 	string path = wmp_config->list_match_root_path();
-	listmatchrootpath = (path != "") ? path : DEFAULT_LISTMATCH_DIR;
+	this->listmatchrootpath = (path != "") ? path : DEFAULT_LISTMATCH_DIR;
 	
-	sandboxstagingpath = wmp_config->sandbox_staging_path();
+	this->sandboxstagingpath = wmp_config->sandbox_staging_path();
 	
-	parseAddressPort(wmp_config->lbserver(), lbserver, lbserverpair);
-    if (lbserverpair.second == 0) {
-    	lbserverpair.second = LB_SERVER_DEFAULT_PORT;
-    }
-    parseAddressPort(wmp_config->lblocal_logger(), lblocallogger,
-    	lblocalloggerpair);
-    if (lblocalloggerpair.second == 0) {
-    	lblocalloggerpair.second = LB_LOCAL_LOGGER_DEFAULT_PORT;
+	// LB server addresses
+	vector<string> lbaddresses = wmp_config->lbserver();
+	pair<string, int> item;
+	if (lbaddresses.size()) {
+		for (unsigned int i = 0; i < lbaddresses.size(); i++) {
+			parseAddressPort(lbaddresses[i], item);
+			if (item.first != DEFAULT_SERVER_ADDRESS) {
+				if (item.second == 0) {
+			    	item.second = LB_SERVER_DEFAULT_PORT;
+			    }
+				this->lbservers.push_back(item);
+			}
+		}
+		// Checking for empty lbservers
+		if (!this->lbservers.size()) {
+			// Inserting default element
+			item.first = DEFAULT_SERVER_ADDRESS;
+			item.second = LB_SERVER_DEFAULT_PORT;
+			this->lbservers.push_back(item);
+		}
+	} else {
+		// Inserting default element
+		item.first = DEFAULT_SERVER_ADDRESS;
+		item.second = LB_SERVER_DEFAULT_PORT;
+		this->lbservers.push_back(item);
+	}
+	
+	this->lbserver = this->lbservers[0].first;
+	this->lbserverpair.first = this->lbserver;
+	this->lbserverpair.second = this->lbservers[0].second;
+    
+    parseAddressPort(wmp_config->lblocal_logger(), this->lblocallogger,
+    	this->lblocalloggerpair);
+    if (this->lblocalloggerpair.second == 0) {
+    	this->lblocalloggerpair.second = LB_LOCAL_LOGGER_DEFAULT_PORT;
     }
 		
 	// If attribute GridFTPPort not present in configuration file then
@@ -145,8 +192,8 @@ WMProxyConfiguration::loadConfiguration()
 	confdefprotocol = (confdefprotocol != "") ? confdefprotocol 
 		: DEFAULT_FILE_TRANSFER_PROTOCOL;
 	pair<string, int> gsiprotocol(confdefprotocol, wmp_config->grid_ftpport());
-	defaultProtocol = gsiprotocol;
-	protocols.push_back(gsiprotocol);
+	this->defaultProtocol = gsiprotocol;
+	this->protocols.push_back(gsiprotocol);
 	
 	this->httpsport = wmp_config->httpsport();
 	/*pair<string, int> httpsprotocol("https", this->httpsport);
@@ -189,6 +236,24 @@ WMProxyConfiguration::isLBProxyAvailable()
 	return this->lbproxyavailable;
 };
 
+bool
+WMProxyConfiguration::isServiceDiscoveryEnabled()
+{
+	return this->servicediscoveryenabled;
+};
+
+long
+WMProxyConfiguration::getServiceDiscoveryInfoValidityTime()
+{
+	return this->servicediscoveryinfovaliditytime;
+};
+
+string
+WMProxyConfiguration::getLBServiceDiscoveryType()
+{
+	return this->lbservicediscoverytype;
+};
+
 double
 WMProxyConfiguration::getMaxInputSandboxSize()
 {
@@ -212,6 +277,12 @@ string
 WMProxyConfiguration::getListMatchRootPath()
 {
 	return this->listmatchrootpath;
+}
+
+vector<pair<string, int> >
+WMProxyConfiguration::getLBServerAddressesPorts()
+{
+	return this->lbservers;
 }
 
 pair<string, int>

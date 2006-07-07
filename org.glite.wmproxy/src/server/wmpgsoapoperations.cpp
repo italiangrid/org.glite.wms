@@ -176,7 +176,6 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 	GLITE_STACK_CATCH();
 }
 
-typedef char *XML; 
 
 int
 ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
@@ -194,15 +193,41 @@ ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
 
 	try {
 		// Converting JSDL to JDL before calling
-		string jsdl = "";
-		if (soap_get_jsdlns__Description_USCOREType(soap, &jsdl, "JobDefinition",
-				"jsdl:JobDefinition_Type")) {
-			edglog(debug)<<"_____ JSDL: "<<jsdl<<endl;
-		} else {
-			edglog(debug)<<"_____ DES ERROR"<<endl;
-		}
+		edglog(debug)<<"_____ JSDL: "<<endl<<jsdl->__any<<endl;
 		
-		string jdl = "";
+		/*jsdlns__JobDefinition_USCOREType *temp
+			= soap_get_jsdlns__JobDefinition_USCOREType(soap,
+				(jsdlns__JobDefinition_USCOREType *) jsdl,
+				"http://schemas.ggf.org/jsdl/2005/11/jsdl:JobDefinition",
+				"http://schemas.ggf.org/jsdl/2005/11/jsdl:JobDefinition_Type");*/
+				
+/*		jsdlns__JobDescription_USCOREType *temp
+			= soap_get_jsdlns__JobDescription_USCOREType(soap,
+				(jsdlns__JobDescription_USCOREType *) jsdl, "jsdl:JobDescription",
+				"jsdl:JobDescription_Type");*/
+			
+		/*if (temp) {
+			edglog(debug)<<"_____ TEMP item: "<<temp->__item<<endl;
+			edglog(debug)<<"_____ TEMP any: "<<temp->__any<<endl;
+		} else {
+			edglog(debug)<<"_____ ERROR: "<<endl;
+		}*/
+		//string jdl = jsdl->__item;
+		
+		string jdl = "["
+			"Type=\"job\";"
+			"Executable = \"/bin/ls\";"
+			"Arguments = \"-las\";"
+			"StdOutput = \"ls.out\" ;"
+			"StdError = \"ls.err\";"
+			"OutputSandbox = {\"ls.out\", \"ls.err\"};"
+			"PerusalFileEnable = true;"
+			"PerusalTimeInterval = 11;"
+			"RetryCount = 0;"
+			"VirtualOrganisation = \"EGEE\";"
+			"requirements = other.GlueCEStateStatus == \"Production\";"
+			"rank = 3;"
+			"]";
 		
 		jobRegister(jobRegister_response, jdl, delegation_id);
 		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();

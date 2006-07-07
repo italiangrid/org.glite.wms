@@ -40,6 +40,15 @@
 #include "wmpgsoapfaultmanipulator.h"
 
 #include "utilities/wmputils.h" // waitForSeconds(), initsignalhandler()
+#include "eventlogger/wmplbselector.h"	// lbselectioninfo struct
+
+
+namespace logger        = glite::wms::common::logger;
+namespace wmputilities  = glite::wms::wmproxy::utilities;
+namespace eventlogger   = glite::wms::wmproxy::eventlogger;
+namespace configuration = glite::wms::common::configuration;
+
+using namespace std;
 
 
 // Global variable for configuration
@@ -48,14 +57,7 @@ WMProxyConfiguration conf;
 // Global variables for configuration attributes (ENV dependant)
 std::string sandboxdir_global;
 std::string filelist_global;
-
-
-namespace logger        = glite::wms::common::logger;
-namespace wmputilities  = glite::wms::wmproxy::utilities;
-namespace configuration = glite::wms::common::configuration;
-
-using namespace std;
-
+eventlogger::WMPLBSelector lbselector;
 
 //namespace glite {
 //namespace wms {
@@ -125,6 +127,12 @@ main(int argc, char* argv[])
 		extern string filelist_global;
 		filelist_global
 			= configuration::Configuration::instance()->wm()->input();
+			
+		extern eventlogger::WMPLBSelector lbselector;
+		lbselector = eventlogger::WMPLBSelector(conf.getLBServerAddressesPorts(),
+			conf.isServiceDiscoveryEnabled(), 
+			conf.getServiceDiscoveryInfoValidityTime(),
+			conf.getLBServiceDiscoveryType());
 		
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;

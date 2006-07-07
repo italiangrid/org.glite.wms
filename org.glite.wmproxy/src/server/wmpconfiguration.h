@@ -112,6 +112,33 @@ class WMProxyConfiguration {
 		bool isLBProxyAvailable();
 		
 		/**
+		 * Checks if the Service Discovery is enabled in the server host
+		 * @return returns true if the EnabledServiceDiscovery attribute is 
+		 * 		present and set to true, false otherwise.
+		 */
+		bool isServiceDiscoveryEnabled();
+		
+		/**
+		 * Returns the value of the configuration attribute 
+		 * ServiceDiscoveryInfoValidityTime
+		 * @return the attribute value
+		 */
+		long getServiceDiscoveryInfoValidityTime();
+		
+		/**
+		 * Returns the value of the configuration attribute LBServiceDiscoveryType
+		 * @return the attribute value
+		 */
+		std::string getLBServiceDiscoveryType();
+		
+		/**
+		 * Returns the value of the configuration attribute LBAddresses
+		 * @return the attribute value
+		 */
+		std::vector<std::pair<std::string, int> >
+			WMProxyConfiguration::getLBServerAddressesPorts();
+			
+		/**
 		 * Returns the value of the configuration attribute LBServer
 		 * @return the attribute value
 		 */
@@ -158,7 +185,11 @@ class WMProxyConfiguration {
 	    int minperusaltimeinterval;
 	    
 	    bool lbproxyavailable;
+	    bool servicediscoveryenabled;
+	    long servicediscoveryinfovaliditytime;
+	    std::string lbservicediscoverytype;
 	    std::string lbserver;
+	    std::vector<std::pair<std::string, int> > lbservers;
 	    std::pair<std::string, int> lbserverpair;
 	    std::string lblocallogger;
 	    std::pair<std::string, int> lblocalloggerpair;

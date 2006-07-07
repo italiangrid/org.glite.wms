@@ -33,6 +33,7 @@
 // Eventlogger
 #include "eventlogger/wmpexpdagad.h"
 #include "eventlogger/wmpeventlogger.h"
+#include "eventlogger/wmplbselector.h"	// lbselector
 
 // Authorizer
 #include "authorizer/wmpauthorizer.h"
@@ -83,9 +84,10 @@
 // Global variables for configuration
 extern WMProxyConfiguration conf;
 extern std::string filelist_global;
+extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 
 // DONE job output file
-const std::string MARADONA_FILE = "Maradona.output";
+//const std::string MARADONA_FILE = "Maradona.output";
 
 // Perusal functionality
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
@@ -663,7 +665,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		string lbaddressport = jad->getString(JDL::LB_ADDRESS);
 		wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
 	} else {
-	 	lbaddress_port = conf.getLBServerAddressPort();
+	 	//lbaddress_port = conf.getLBServerAddressPort();
+	 	lbaddress_port = lbselector.selectLBServer();
 	}
 	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
 	edglog(debug)<<"LB Port: "
@@ -824,7 +827,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Creating unique identifier
 	JobId *jid = new JobId();
 	
-	std::pair<std::string, int> lbaddress_port = conf.getLBServerAddressPort();
+	//std::pair<std::string, int> lbaddress_port = conf.getLBServerAddressPort();
+	std::pair<std::string, int> lbaddress_port;
 	
 	// Checking for attribute JDL::LB_ADDRESS
 	if (jad) {
@@ -832,14 +836,16 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 			string lbaddressport = jad->getString(JDL::LB_ADDRESS);
 			wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
 		} else {
-		 	lbaddress_port = conf.getLBServerAddressPort();
+		 	//lbaddress_port = conf.getLBServerAddressPort();
+		 	lbaddress_port = lbselector.selectLBServer();
 		}
 	} else {
 		if (dag->hasAttribute(JDL::LB_ADDRESS)) {
 			string lbaddressport = dag->getString(JDL::LB_ADDRESS);
 			wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
 		} else {
-		 	lbaddress_port = conf.getLBServerAddressPort();
+		 	//lbaddress_port = conf.getLBServerAddressPort();
+		 	lbaddress_port = lbselector.selectLBServer();
 		}
 	}
 	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
