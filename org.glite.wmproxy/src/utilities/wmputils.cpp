@@ -766,222 +766,31 @@ generateRandomNumber(int lowerlimit, int upperlimit)
 	GLITE_STACK_CATCH();
 }
 
-/* Decompress from file source to file dest until stream ends or EOF.
-   inf() returns Z_OK on success, Z_MEM_ERROR if memory could not be
-   allocated for processing, Z_DATA_ERROR if the deflate data is
-   invalid or incomplete, Z_VERSION_ERROR if the version of zlib.h and
-   the version of the library linked do not match, or Z_ERRNO if there
-   is an error reading or writing the files.
-  *//*
-int gzUncompress (const string &source, const string &dest)
+int
+generateRandomIndex(vector<int> weights)
 {
-	GLITE_STACK_TRY("gzUncompress()");
-    edglog_fn("wmputils::gzUncompress");
-    
-	FILE *out = NULL;
-	string zmsg = "";
-	string errmsg = "";
-    gzFile in;
-	int len = 0;
-	int err = 0;
-	long size = computeFileSize(source);
-	local char buf[size];
-	in = gzopen(source.c_str(), "rb");
-        if (in == NULL) {
-		errmsg = "Unable to uncompress the ISB file: " + source + "\n";
-		errmsg += "(error while opening the file)\n";
-		errmsg += "please, contact the server administrator";
-                edglog(severe)<<errmsg<<endl;
-                throw FileSystemException(__FILE__, __LINE__,
-                                "uncompressFile()", WMS_IS_FAILURE,
-				errmsg);
-        }
-        out = fopen(dest.c_str(), "wb");
-        if (out == NULL) {
-		errmsg = "error while uncompressing the ISB file: " + source + "\n";
-                errmsg += "(unable to create the uncompressed file: " + dest + ")\n";
-                errmsg += "please, contact the server administrator";
-                edglog(severe)<<errmsg<<endl;
-                throw FileSystemException(__FILE__, __LINE__,
-                                "gzUncompress()", WMS_IS_FAILURE,
-				errmsg);
-        }
-	for (;;) {
-		len = gzread(in, buf, sizeof(buf));
-		if (len < 0)  {
-			errmsg = "error while uncompressing the zipped file: " + source + "\n";
-			zmsg = gzerror(in, &err);
-			if (zmsg.size()>0){ errmsg += "(" + zmsg + ")\n";}
-			errmsg += "please, contact the server administrator";
-			edglog(severe)<<errmsg<<endl;
-			throw FileSystemException(__FILE__, __LINE__,
-                                "uncompressFile()", WMS_IS_FAILURE,
-                                errmsg );
-		} else if (len == 0) { break;  }
-		if ((int)fwrite(buf, 1, (unsigned)len, out) != len) {
-			errmsg = "unable to uncompress the zipped file: " + source + "\n";
-			errmsg += "(error while writing the file: "  + dest + ")\n"; 
-			errmsg += "please, contact the server administrator";
-			edglog(severe)<<errmsg<<endl;
-			throw FileSystemException(__FILE__, __LINE__,
-                                "gzUncompress()", WMS_IS_FAILURE,
-                                errmsg );
+	GLITE_STACK_TRY("selectIndex()");
+	
+	int range = 0;
+	for (unsigned int i = 0; i < weights.size(); i++) {
+		range += weights[i];
+	}
+	
+	int random = generateRandomNumber(1, range);
+	
+	for (unsigned int i = 0; i < weights.size(); i++) {
+		random -= weights[i];
+		if (random <= 0) {
+			return i;
 		}
 	}
-	if (fclose(out)!=0) {
-		errmsg = "unable to uncompress the zipped file: " + source + "\n";
-                errmsg += "(error while closing the file: "  + dest + ")\n";
-                errmsg += "please, contact the server administrator";
-		edglog(severe)<<errmsg<<endl;
-                throw FileSystemException(__FILE__, __LINE__,
-                                "gzUncompress()", WMS_IS_FAILURE,
-                                errmsg );
-        }
-	if (gzclose(in) != Z_OK) {
-		edglog(warning)<<"Unable to remove the gz file "
-		"(reason: error in closing the file): "<<string(source)<<endl;
-	} else {
-		remove(source.c_str());
-	} 
-        return Z_OK;
+	
+	// Something bad happened
+	// weights error!?, generating random number
+	return generateRandomNumber(0, weights.size() - 1);
+	
 	GLITE_STACK_CATCH();
 }
-
-
-string gzError(int ret)
-{
-	string err ="";
-	switch (ret) {
-	case Z_ERRNO:
-		err = "i/o error";
-		break;
-	case Z_STREAM_ERROR:
-		err = "invalid compression level";
-		break;
-	case Z_DATA_ERROR:
-		err = "invalid or incomplete deflate data";
-		break;
-	case Z_MEM_ERROR:
-		err = "out of memory\n";
-		break;
-	case Z_VERSION_ERROR:
-		err = "zlib version mismatch";
-		break;
-	}
-	return err;
-}
-
-void
-chmod_tar_extract_all(TAR *t, char *prefix)
-{
-	GLITE_STACK_TRY("chmod_tar_extract_all()");
-	edglog_fn("wmputils::chmod_tar_extract_all");
-
-	char *filename;
-	char buf[MAXPATHLEN];
-	int i;
-
-	mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
-	while ((i = th_read(t)) == 0) {
-		filename = th_get_pathname(t);
-		if (TH_ISREG(t)) {
-			if (t->options & TAR_VERBOSE) {
-				th_print_long_ls(t);
-			}
-			if (prefix != NULL) {
-				snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
-			} else {
-				strncpy(buf, filename, sizeof(buf));
-			}
-			if (fileExists(string(buf))) {
-				edglog(critical)<<"Already existing file in ISB file: "
-					<<string(buf)<<endl;
-				throw FileSystemException(__FILE__, __LINE__,
-					"chmod_tar_extract_all()", WMS_IS_FAILURE,
-					"Already existing file in ISB file");
-				///
-				//TBD Log ABORT after this error
-				///
-			}
-			edglog(debug)<<"Extracting file: "<<string(buf)<<endl;
-			if (tar_extract_file(t, buf)) {
-				edglog(error)<<"Unable to uncompress ISB file: "
-					<<string(buf)<<endl;
-				throw FileSystemException(__FILE__, __LINE__,
-					"chmod_tar_extract_all()", WMS_IS_FAILURE,
-					"Unable to uncompress ISB file: " + string(buf));
-			}
-	
-			int outcome = chmod(string(buf).c_str(), mode);
-			edglog(debug)<<"chmod result: "<<outcome<<endl;
-			if (outcome) {
-				throw FileSystemException(__FILE__, __LINE__,
-					"chmod_tar_extract_all()", WMS_IS_FAILURE,
-					"Unable to change mode for ISB file: " + string(buf));
-			}
-		} else {
-			edglog(debug)<<"Item in ISB file is not a regular file: "
-				<<filename<<endl;
-			edglog(debug)<<"Skipping..."<<endl;
-		}
-	}
-
-    if (i != 1) {
-        throw FileSystemException(__FILE__, __LINE__,
-            "chmod_tar_extract_all()", WMS_IS_FAILURE,
-            "Unable to uncompress ISB archive");
-    }
-
-    GLITE_STACK_CATCH();
-}
-
-void
-uncompressFile(const string &filename, const string &startingpath)
-{
-	GLITE_STACK_TRY("uncompressFile()");
-	edglog_fn("wmputils::uncompressFile");
-	
-	edglog(debug)<<"Uncompressing file: "<<filename<<endl;
-	edglog(debug)<<"Starting path: "<<startingpath<<endl;
-	char * file = const_cast<char*>(filename.c_str());
-	char * prefix = const_cast<char*>(startingpath.c_str());
-	
-	char buf[2048];
-	char * infile = NULL;
-	char * outfile = NULL;
-
-	uInt len = (uInt)strlen(file);
-	strcpy(buf, file);
-
-	if (len > 3 && (strcmp(file + len - 3, ".gz") == 0)) {
-		infile = file;
-		outfile = buf;
-		outfile[len - 3] = '\0';
-	} else {
-		outfile = file;
-		infile = buf;
-		strcat(infile, ".gz");
-	}
-	edglog(debug)<<"Input file: "<<infile<<endl;
-	edglog(debug)<<"Output file: "<<outfile<<endl;
-
-	int result = gzUncompress(infile, outfile);
-	edglog(debug)<<"unzip result: "<<result<<endl;
-	if (result != Z_OK)  {
-		throw FileSystemException(__FILE__, __LINE__,
-			"uncompressFile()", WMS_IS_FAILURE,
-			"Unable to uncompress ISB file: " + gzError(result));
-	}
-
-	TAR * tarfile = NULL;
-	tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
-	chmod_tar_extract_all(tarfile, prefix);
-	tar_close(tarfile);
-
-	remove(outfile);
-
-	GLITE_STACK_CATCH();
-}*/
 
 void 
 fileCopy(const string& source, const string& target)

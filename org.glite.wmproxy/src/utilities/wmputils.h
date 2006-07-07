@@ -29,7 +29,6 @@ enum FQANFields {
 	FQAN_CAPABILITY
 };
 
-
 //
 // File utility methods
 //
@@ -338,6 +337,7 @@ void managedir(const std::string &dir, uid_t userid, uid_t jobuserid,
  * @return true if the attribute is NULL
  */
 bool isNull(std::string field);
+
 /**
    * Generates randomic integer value in the range [lowerlimit, upperlimit]
    * @param lowerlimit the integer value lower limit
