@@ -9,6 +9,7 @@
 //
 
 #include "wmpeventlogger.h"
+#include "wmplbselector.h"
 
 // Boost
 #include <boost/lexical_cast.hpp>
@@ -35,6 +36,7 @@
 
 #include "authorizer/wmpauthorizer.h"
 
+extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 
 // NAMESPACE
 namespace glite {
@@ -309,8 +311,26 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	if (register_result) {
 		string msg = error_message("Register job failed\n"
 			"edg_wll_RegisterJobProxy/Sync", register_result);
+			
+#ifdef GLITE_WMS_HAVE_LBPROXY
+		if (register_result == EAGAIN) {
+			msg += "\nLBProxy could be down.\n"
+				"(please contact server administrator)";
+		} else {
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
+			// Updating selected LB weight -> FAILURE
+			lbselector.updateSelectedIndexWeight(WMPLBSelector::FAILURE);
+			
+#ifdef GLITE_WMS_HAVE_LBPROXY
+		}
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
 		throw LBException(__FILE__, __LINE__, "registerJob()",
 			WMS_LOGGING_ERROR, msg);
+	} else {
+		// Updating selected LB weight -> SUCCESS
+		lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);
 	}
 	if (jad->hasAttribute(JDL::USERTAGS)) {
 		logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
@@ -497,8 +517,26 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	if (register_result) {
 		string msg = error_message("Register DAG failed\n"
 			"edg_wll_RegisterJobProxy/Sync", register_result);
+			
+#ifdef GLITE_WMS_HAVE_LBPROXY
+		if (register_result == EAGAIN) {
+			msg += "\nLBProxy could be down.\n"
+				"(please contact server administrator)";
+		} else {
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
+			// Updating selected LB weight -> FAILURE
+			lbselector.updateSelectedIndexWeight(WMPLBSelector::FAILURE);
+			
+#ifdef GLITE_WMS_HAVE_LBPROXY
+		}
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
+
 		throw LBException(__FILE__, __LINE__, "registerDag()",
 			WMS_LOGGING_ERROR, msg);
+	} else {
+		lbselector.updateSelectedIndexWeight(WMPLBSelector::SUCCESS);	
 	}
 	
 	// Logging parent user tags
@@ -1378,6 +1416,24 @@ WMPEventLogger::getStatus(bool childreninfo)
 // Private methods
 //
 //
+/*
+#ifdef GLITE_WMS_HAVE_LBPROXY
+		// Checking for LB / LBProxy failure
+		if (EAGAIN) {
+			// LBProxy is probably not running
+			if (lbProxy_b) {
+				msg += "\nLBProxy is probably not running\n"
+					"(please contactServerAdministrator)";
+			}
+		} else {
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
+			lbselector.updateSelectedIndexWeight(WMPLBSelector::FAILURE);
+			
+#ifdef GLITE_WMS_HAVE_LBPROXY
+		}
+#endif  //GLITE_WMS_HAVE_LBPROXY
+*/
 
 string
 WMPEventLogger::error_message(const string &message, int exitcode)
