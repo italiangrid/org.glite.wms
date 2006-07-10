@@ -250,7 +250,7 @@ function send_partial_file
     # Retrieve the list of files to be monitored
     if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
       globus-url-copy ${TRIGGERFILE} file://${LISTFILE}
-    elif [ "${TRIGGERFILE:0:8}" == "https://" ]; then
+    else
       htcp ${TRIGGERFILE} file://${LISTFILE}
     fi
     # Skip iteration if unable to get the list
@@ -281,7 +281,7 @@ function send_partial_file
           tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME
           if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
             globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
-          elif [ "${DESTURL:0:8}" == "https://" ]; then
+          else
             htcp file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
           fi
           GLOBUS_RETURN_CODE=$?
@@ -421,13 +421,13 @@ else
   for f in ${__wmp_input_base_file[@]}
   do
     if [ -z "${__wmp_input_base_dest_file}" ]; then
-      file="${f}"
+      file=`basename ${f}`
     else
-      file="${__wmp_input_base_dest_file[$index]}"
+      file=`basename ${__wmp_input_base_dest_file[$index]}`
     fi
     if [ "${f:0:9}" == "gsiftp://" ]; then
       globus_url_retry_copy "${f}" "file://${workdir}/${file}"
-    elif [ "${f:0:8}" == "https://" ]; then
+    else
       htcp "${f}" "file://${workdir}/${file}"
     fi
     if [ $? != 0 ]; then
@@ -638,7 +638,7 @@ if [ -f "${__epilogue}" ]; then
   ${__epilogue} "${__epilogue_arguments}"
   epilogue_status=$?
   if [ ${epilogue_status} -ne 0 ]; then
-    fatal_error "epilogue failed with error ${epilogue_status}"
+    fatal_error "Epilogue failed with error ${epilogue_status}"
   fi
 fi
 
@@ -716,7 +716,7 @@ else #WMP support
       if [ $file_size_acc -le ${__max_osb_size} ]; then
         if [ "${f:0:9}" == "gsiftp://" ]; then
           globus-url-copy "file://$s" "$d"
-        elif [ "${f:0:8}" == "https://" ]; then
+        else
           htcp "file://$s" "$d"
         fi
       else
@@ -734,7 +734,7 @@ else #WMP support
             jw_echo "Truncated last $trunc_len bytes for file ${f}"
             if [ "${f:0:9}" == "gsiftp://" ]; then
               globus-url-copy "file://$s.tail" "$d.tail"
-            elif [ "${f:0:8}" == "https://" ]; then
+            else
               htcp "file://$s.tail" "$d.tail"
             fi
           fi
@@ -743,7 +743,7 @@ else #WMP support
     else #unlimited osb
       if [ "${f:0:9}" == "gsiftp://" ]; then
         globus-url-copy "file://$s" "$d"
-      elif [ "${f:0:8}" == "https://" ]; then
+      else
         htcp "file://$s" "$d"
       fi
     fi
