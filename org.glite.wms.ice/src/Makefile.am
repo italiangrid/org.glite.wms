@@ -30,7 +30,8 @@ putFL_LDADD = 	$(LOG4CPP_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
-		$(GLITE_WMS_COMMON_UT_UTIL_LIBS)
+		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+		-ldb_cxx-4.1
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -38,7 +39,8 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
-		$(GLITE_WMS_COMMON_UT_UTIL_LIBS)
+		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+		-ldb_cxx-4.1
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
@@ -63,7 +65,8 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
-		$(BOOST_PO_LIBS)
+		$(BOOST_PO_LIBS) \
+		-ldb_cxx-4.1
 
 dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
@@ -88,7 +91,8 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
-		-lglite_ce_monitor_consumer
+		-lglite_ce_monitor_consumer \
+		-ldb_cxx-4.1
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
