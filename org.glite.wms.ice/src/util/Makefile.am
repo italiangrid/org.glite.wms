@@ -39,6 +39,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
+		-DGLITE_WMS_HAVELBPROXY \
 		$(GLOBUS_THR_CFLAGS) \
 		-pipe
 

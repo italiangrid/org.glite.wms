@@ -356,9 +356,8 @@ int job_really_running_event::execute( iceLBContext* ctx )
 // job cancelled event
 //
 //////////////////////////////////////////////////////////////////////////////
-job_cancelled_event::job_cancelled_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "Job Cancelled Event, reason=[%1%]" ) % reason ) ),
-    m_reason( reason )
+job_cancelled_event::job_cancelled_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "Job Cancelled Event, reason=[%1%]" ) % j.get_failure_reason() ) )
 {
 
 }
@@ -367,12 +366,12 @@ int job_cancelled_event::execute( iceLBContext* ctx )
 {
 #ifdef GLITE_WMS_HAVE_LBPROXY
     return edg_wll_LogDoneCANCELLEDProxy( *(ctx->el_context), 
-                                          ctx->el_s_unavailable, 
-                                          0 ); // FIXME
+                                          m_job.get_failure_reason().c_str(),
+                                          m_job.get_exit_code() );
 #else
     return edg_wll_LogDoneCANCELLED( *(ctx->el_context), 
-                                     ctx->el_s_unavailable, 
-                                     0 ); // FIXME
+                                     m_job.get_failure_reason().c_str(),
+                                     m_job.get_exit_code() );
 #endif
 }
 

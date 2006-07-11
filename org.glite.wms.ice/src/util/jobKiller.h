@@ -55,7 +55,7 @@ namespace glite {
 	  time_t m_delay;
           iceLBLogger* m_lb_logger;
 
-	  void killJob( const glite::wms::ice::util::CreamJob&, time_t residual_proxy_time ); 
+	  void killJob( glite::wms::ice::util::CreamJob&, time_t residual_proxy_time ); 
 
 	public:
 	  jobKiller();

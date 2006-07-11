@@ -37,7 +37,7 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
     case jobstat::REALLY_RUNNING:
         return new job_really_running_event( theJob, theJob.get_wn_sequence_code() );
     case jobstat::CANCELLED:
-        return new job_cancelled_event( theJob, std::string("unavailable") );
+        return new job_cancelled_event( theJob );
     case jobstat::HELD:
         return new job_suspended_event( theJob );
     case jobstat::ABORTED:

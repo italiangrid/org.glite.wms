@@ -92,7 +92,7 @@ void jobKiller::body()
 }
 
 //______________________________________________________________________________
-void jobKiller::killJob( const CreamJob& J, time_t residual_proxy_time )
+void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
 {
   try {
       m_theProxy->Authenticate( J.getUserProxyCertificate() );
@@ -100,6 +100,8 @@ void jobKiller::killJob( const CreamJob& J, time_t residual_proxy_time )
       url_jid[0] = J.getJobID();
    
       m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by cream::jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
+
+      J.set_failure_reason( boost::str( boost::format( "Killed by cream::jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) );
 
       m_theProxy->Cancel( J.getCreamURL().c_str(), url_jid );
 

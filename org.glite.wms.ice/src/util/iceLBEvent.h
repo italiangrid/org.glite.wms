@@ -225,10 +225,8 @@ namespace glite {
 
                 class job_cancelled_event : public iceLBEvent {
                 public:
-                    job_cancelled_event( const CreamJob& j, const std::string &reason );
+                    job_cancelled_event( const CreamJob& j );
                     int execute( iceLBContext* ctx );
-                protected:
-                    std::string m_reason;
                 };
 
 

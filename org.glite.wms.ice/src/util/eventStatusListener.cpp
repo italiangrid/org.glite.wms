@@ -158,11 +158,13 @@ namespace { // anonymous namespace
             m_has_exit_code = true;
         }
 
-        ad->EvaluateAttrString( "FAILURE_REASON", m_failure_reason );
-        boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
+        if ( ad->EvaluateAttrString( "FAILURE_REASON", m_failure_reason ) ) {
+            boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
+        }
 
-        ad->EvaluateAttrString( "WORKER_NODE", m_worker_node );
-        boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
+        if ( ad->EvaluateAttrString( "WORKER_NODE", m_worker_node ) ) {
+            boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
+        }
 
     };
 
@@ -461,39 +463,39 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 	return;
     }
     
-    boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
-    
-    // NOTE: we assume that the all the notifications are for the SAME job.
-    // This is important! The following code relies on this assumption
-    
-    jobCache::iterator jc_it( m_cache->lookupByCreamJobID( notifications.begin()->get_cream_job_id() ) );
-    
-    // No job found in cache. This is fine, we may be receiving "old"
-    // notifications, for jobs which have been already purged.
-    if ( jc_it == m_cache->end() ) {
-        CREAM_SAFE_LOG(m_log_dev->warnStream()
-                       << "eventStatusListener::handleEvent() - "
-                       << "creamjobid ["
-                       << notifications.begin()->get_cream_job_id()
-                       << "] was not found in the cache. "
-                       << "Ignoring the whole notification..."
-                       << log4cpp::CategoryStream::ENDLINE);
-        return;
-    }
-    
-    // setLastSeen must be called ONLY if the job IS NOT in a TERMINAL state
-    // (that means that more states are coming...),
-    // like DONE-OK; otherwise the eventStatusPoller will never purge it...
-    if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
-        jc_it->setLastSeen( time(0) );
-        m_cache->put( *jc_it );
-    }
-    
     // Now, for each status change notification, check if it has to be logged
     vector<StatusNotification>::const_iterator it;
     int count;
     for ( it = notifications.begin(), count=1; it != notifications.end(); ++it, ++count ) {
-    
+        
+        boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
+        
+        // NOTE: we assume that the all the notifications are for the SAME job.
+        // This is important! The following code relies on this assumption
+        
+        jobCache::iterator jc_it( m_cache->lookupByCreamJobID( notifications.begin()->get_cream_job_id() ) );
+        
+        // No job found in cache. This is fine, we may be receiving "old"
+        // notifications, for jobs which have been already purged.
+        if ( jc_it == m_cache->end() ) {
+            CREAM_SAFE_LOG(m_log_dev->warnStream()
+                           << "eventStatusListener::handleEvent() - "
+                           << "creamjobid ["
+                           << notifications.begin()->get_cream_job_id()
+                           << "] was not found in the cache. "
+                           << "Ignoring the whole notification..."
+                           << log4cpp::CategoryStream::ENDLINE);
+            return;
+        }
+        
+        // setLastSeen must be called ONLY if the job IS NOT in a TERMINAL state
+        // (that means that more states are coming...),
+        // like DONE-OK; otherwise the eventStatusPoller will never purge it...
+        if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
+            jc_it->setLastSeen( time(0) );
+            jc_it = m_cache->put( *jc_it );
+        }
+                
         CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		       << "eventStatusListener::handleEvent() - "
 		       << "Checking job [" << it->get_cream_job_id()
@@ -516,13 +518,14 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             m_cache->erase( jc_it );
             return;
         }
-        
+
         if ( jc_it->get_num_logged_status_changes() < count ) {
             iceUtil::CreamJob tmp_job( *jc_it );
             it->apply_to_job( tmp_job ); // apply status change to job
             tmp_job.set_num_logged_status_changes( count );
             m_lb_logger->logEvent( iceLBEventFactory::mkEvent( tmp_job ) );
             // The job gets stored in the jobcache anyway by the logEvent method...
+            m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
         } else {
             CREAM_SAFE_LOG(m_log_dev->debugStream()
                            << "eventStatusListener::handleEvent() - "
@@ -530,7 +533,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                            << log4cpp::CategoryStream::ENDLINE);
         }
 
-        m_ice_manager->resubmit_or_purge_job( jc_it );
+        // m_ice_manager->resubmit_or_purge_job( jc_it );
 
     }
 }
