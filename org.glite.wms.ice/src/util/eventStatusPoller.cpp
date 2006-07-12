@@ -278,23 +278,38 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
     vector< soap_proxy::Status > status_changes;
     info_obj.getStatusList( status_changes );
     string cid( info_obj.getCreamJobID() ); // Cream job id
-    jobCache::iterator jit( m_cache->lookupByCreamJobID( cid ) );    
-
-    if ( m_cache->end() == jit ) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "eventStatusPoller::update_single_job() - cream_jobid ["
-                       << cid << "] disappeared!"
-                       << log4cpp::CategoryStream::ENDLINE);
-        return;
-    }
-
-    // Update the worker node
-    jit->set_worker_node( info_obj.getWorkerNode() );
 
     int count;
     vector< soap_proxy::Status >::const_iterator it;
 
     for ( it = status_changes.begin(), count = 1; it != status_changes.end(); ++it, ++count ) {
+
+        //
+        // Warning: the following block of code CANNOT be moved
+        // outside the 'for' cycle; the reason is that ICE should be
+        // tolerant to receiving inconsistent notifications, such that
+        // two "DONE-FAILED" events. After the first DONE-FAILED, ICE
+        // would purge the job. This means that the jit iterator would
+        // no longer be valid. Hence, the necessity to check each
+        // time.
+        //
+        jobCache::iterator jit( m_cache->lookupByCreamJobID( cid ) );    
+        
+        if ( m_cache->end() == jit ) {
+            CREAM_SAFE_LOG(m_log_dev->errorStream()
+                           << "eventStatusPoller::update_single_job() - cream_jobid ["
+                           << cid << "] disappeared!"
+                           << log4cpp::CategoryStream::ENDLINE);
+            return;
+        }
+        
+        // Update the worker node
+        jit->set_worker_node( info_obj.getWorkerNode() );
+        //
+        // END block NOT to be moved outside the 'for' loop
+        //
+
+        jit->setLastSeen( time(0) );
 
         jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
         // before doing anything, check if the job is "purged". If so,
@@ -336,12 +351,12 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
 
             // Log to L&B
             m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
+
+            m_cache->put( *jit );
+            
+            m_iceManager->resubmit_or_purge_job( jit );
         }
     }
-    jit->setLastSeen( time(0) );
-    m_cache->put( *jit );
-
-    m_iceManager->resubmit_or_purge_job( jit );
 }
 
 
