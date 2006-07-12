@@ -346,19 +346,35 @@ void
 parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 {
 	GLITE_STACK_TRY("parseAddressPort()");
+	string addressportarg = addressport;
 	unsigned int pos;
-	if (addressport != "") {
-		if ((pos = addressport.rfind(":", addressport.size()))
+	unsigned int addressportsize = addressportarg.size();
+	
+	// Removing final slashes
+	for (unsigned int i = 0; i < addressportsize; i++) {
+		if (addressportarg.substr(addressportsize - 1, addressportsize - 1)
+				== FILE_SEP) {
+			addressportarg = addressportarg.substr(0, addressportsize - 1);
+			addressportsize--;
+		}
+	}
+	
+	if (addressportarg != "") {
+		addressportsize = addressportarg.size();
+		if ((pos = addressportarg.find("://")) != string::npos) {
+			addressportarg = addressportarg.substr(pos + 3, addressportsize - 1);
+		}
+		if ((pos = addressportarg.rfind(":", addressportarg.size()))
 				!= string::npos) {
-			addresspair.first = addressport.substr(0, pos);
+			addresspair.first = addressportarg.substr(0, pos);
 			addresspair.second = 
-				atoi(addressport.substr(pos + 1, addressport.size()).c_str());
+				atoi(addressportarg.substr(pos + 1, addressportarg.size()).c_str());
 		} else {
-			addresspair.first = addressport;
+			addresspair.first = addressportarg;
 			addresspair.second = 0;
 		}
 	} else {
-        addresspair.first = "localhost";
+        addresspair.first = "";
         addresspair.second = 0;
     }
 	GLITE_STACK_CATCH();

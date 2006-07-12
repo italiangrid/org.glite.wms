@@ -135,8 +135,12 @@ WMProxyConfiguration::loadConfiguration()
 	// return 0
 	this->lbproxyavailable = wmp_config->lbproxy();
 	
+	// \/Service Discovery attributes
 	this->servicediscoveryenabled = wmp_config->enable_service_discovery();
-	this->servicediscoveryinfovaliditytime = wmp_config->enable_service_discovery();
+	this->lbservicediscoverytype = wmp_config->lbservice_discovery_type();
+	this->servicediscoveryinfovalidity
+		= wmp_config->service_discovery_info_validity();
+	// /\
 	
 	this->maxinputsandboxsize = wmp_config->max_input_sandbox_size();
 	this->minperusaltimeinterval = wmp_config->min_perusal_time_interval();
@@ -243,9 +247,9 @@ WMProxyConfiguration::isServiceDiscoveryEnabled()
 };
 
 long
-WMProxyConfiguration::getServiceDiscoveryInfoValidityTime()
+WMProxyConfiguration::getServiceDiscoveryInfoValidity()
 {
-	return this->servicediscoveryinfovaliditytime;
+	return this->servicediscoveryinfovalidity;
 };
 
 string

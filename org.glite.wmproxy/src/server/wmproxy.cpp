@@ -131,7 +131,7 @@ main(int argc, char* argv[])
 		extern eventlogger::WMPLBSelector lbselector;
 		lbselector = eventlogger::WMPLBSelector(conf.getLBServerAddressesPorts(),
 			conf.isServiceDiscoveryEnabled(), 
-			conf.getServiceDiscoveryInfoValidityTime(),
+			conf.getServiceDiscoveryInfoValidity(),
 			conf.getLBServiceDiscoveryType());
 		
 		// Running as a Fast CGI application

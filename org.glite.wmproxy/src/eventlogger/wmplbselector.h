@@ -24,29 +24,34 @@ namespace eventlogger {
 class WMPLBSelector {
 
 	public:
-		struct lbselectioninfo {
-			std::string *address;
-			int port;
-			int weight;
-		};
-		
 		enum lbcallresult {
 			SUCCESS,
 			FAILURE	
 		};
 		
+		enum infosource {
+			NO_SOURCE,
+			CONF_FILE,
+			SERVICE_DISCOVERY,
+		};
+		
+		struct lbselectioninfo {
+			std::string *address;
+			int port;
+			int weight;
+			infosource source;
+		};
+		
 		/**
 		 * Constructor
 		 */
-		//WMPLBSelector(const WMPLBSelector &selector);
-		
 		WMPLBSelector();
 			
 		/**
 		 * Constructor
 		 */
 		WMPLBSelector(std::vector<std::pair<std::string, int> > lbservers,
-			bool enableservicediscovery, long servicediscoveryinfovaliditytime,
+			bool enableservicediscovery, long servicediscoveryinfovalidity,
 			const std::string &lbsdtype);
 		
 		/**
@@ -60,13 +65,20 @@ class WMPLBSelector {
 	private:
 		
 		bool enableservicediscovery;
-		long servicediscoveryinfovaliditytime;
+		long servicediscoveryinfovalidity;
 		std::string lbsdtype;
 		lbselectioninfo * selectedlbselectioninfo;
 		std::pair<std::vector<lbselectioninfo*>*, long> lbselection;
 		
-		bool contains(const std::string &lbitem);
+		bool vectorRemovePair(std::vector<std::string> &items,
+			const std::string &address, int port);
 		std::vector<std::string> callServiceDiscovery();
+		bool contains(const std::string &address, int port);
+		void updateServiceDiscoveryLBItems(std::vector<std::string> &items);
+		void addLBItem(const std::string &address, int port, infosource source);
+		void addLBItems(std::vector<std::string> &items, infosource source);
+		void addLBItems(std::vector<std::pair<std::string, int> >
+			&items, infosource source);
 		int generateRandomNumber(int lowerlimit, int upperlimit);
 		
 };

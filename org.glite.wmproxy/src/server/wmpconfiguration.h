@@ -120,10 +120,10 @@ class WMProxyConfiguration {
 		
 		/**
 		 * Returns the value of the configuration attribute 
-		 * ServiceDiscoveryInfoValidityTime
+		 * ServiceDiscoveryInfoValidity
 		 * @return the attribute value
 		 */
-		long getServiceDiscoveryInfoValidityTime();
+		long getServiceDiscoveryInfoValidity();
 		
 		/**
 		 * Returns the value of the configuration attribute LBServiceDiscoveryType
@@ -186,7 +186,7 @@ class WMProxyConfiguration {
 	    
 	    bool lbproxyavailable;
 	    bool servicediscoveryenabled;
-	    long servicediscoveryinfovaliditytime;
+	    long servicediscoveryinfovalidity;
 	    std::string lbservicediscoverytype;
 	    std::string lbserver;
 	    std::vector<std::pair<std::string, int> > lbservers;
