@@ -96,7 +96,7 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome )
     m_invalid_cause = ex.what();
     return;
   } catch(...) {
-    m_invalid_cause = "Unknown error occurred";
+    m_invalid_cause = "jobDbManager::CTOR - Unknown exception catched";
     return;
   }
   
@@ -147,14 +147,14 @@ void iceUtil::jobDbManager::put(const string& creamjob, const string& cid, const
     m_gidDb->put( txn_handler, &gidData, &cidData, 0);
     txn_handler->commit(0);
   } catch(DbException& dbex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( dbex.what() );
   } catch(exception& ex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( ex.what() );
   } catch(...) {
-    txn_handler->abort();
-    throw iceUtil::JobDbException("Unknown exception catched");
+    if(txn_handler) txn_handler->abort();
+    throw iceUtil::JobDbException("jobDbManager::put() - Unknown exception catched");
   }
   
 }
@@ -191,14 +191,14 @@ void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_a
     txn_handler->commit(0);
 
   } catch(DbException& dbex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( dbex.what() );
   } catch(exception& ex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( ex.what() );
   } catch(...) {
-    txn_handler->abort();
-    throw iceUtil::JobDbException("Unknown exception catched");
+    if(txn_handler) txn_handler->abort();
+    throw iceUtil::JobDbException("jobDbManager::mput() - Unknown exception catched");
   }
   
 }
@@ -223,7 +223,7 @@ string iceUtil::jobDbManager::getByCid( const string& cid )
   } catch(exception& ex) {
     throw JobDbException( ex.what() );
   } catch(...) {
-    throw JobDbException( "Unknown exception catched" );
+    throw JobDbException( "jobDbManager::getByCid() - Unknown exception catched" );
   }
 }
 
@@ -279,7 +279,7 @@ void iceUtil::jobDbManager::getAllRecords( vector<string>& destVec )
     throw JobDbException( ex.what() );
   } catch(...) {
     //if(cursor) cursor->close();
-    throw JobDbException( "Unknown exception catched" );
+    throw JobDbException( "jobDbManager::getAllRecords() - Unknown exception catched" );
   }
   //cursor->close();
 }
@@ -290,9 +290,10 @@ void iceUtil::jobDbManager::delByCid( const string& cid )
 {
   Dbt key( (void*)cid.c_str(), cid.length()+1 );
   Dbt gidData;
-  DbTxn* txn_handler = NULL;
+  DbTxn* txn_handler;
   
   try {
+    txn_handler = NULL;
     m_env.txn_begin(NULL, &txn_handler, 0);
     m_creamJobDb->del( txn_handler, &key, 0);
     m_cidDb->get( txn_handler, &key, &gidData, 0);
@@ -300,14 +301,14 @@ void iceUtil::jobDbManager::delByCid( const string& cid )
     m_cidDb->del( txn_handler, &key, 0);
     txn_handler->commit(0);
   } catch(DbException& dbex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( dbex.what() );
   } catch(exception& ex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( ex.what() );
   } catch(...) {
-    txn_handler->abort();
-    throw iceUtil::JobDbException( "Unknown exception catched" );
+    if(txn_handler) txn_handler->abort();
+    throw iceUtil::JobDbException( "jobDbManager::delByCid() - Unknown exception catched" );
   }
 }
 
@@ -317,9 +318,10 @@ void iceUtil::jobDbManager::delByGid( const string& gid )
 {
   Dbt key( (void*)gid.c_str(), gid.length()+1 );
   Dbt cidData;
-  DbTxn* txn_handler = NULL;
+  DbTxn* txn_handler;
   
   try {
+    txn_handler = NULL;
     m_env.txn_begin(NULL, &txn_handler, 0);
     
     m_gidDb->get( txn_handler, &key, &cidData, 0);
@@ -329,13 +331,13 @@ void iceUtil::jobDbManager::delByGid( const string& gid )
     
     txn_handler->commit(0);
   } catch(DbException& dbex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( dbex.what() );
   } catch(exception& ex) {
-    txn_handler->abort();
+    if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( ex.what() );
   } catch(...) {
-    txn_handler->abort();
-    throw iceUtil::JobDbException( "Unknown exception catched" );
+    if(txn_handler) txn_handler->abort();
+    throw iceUtil::JobDbException( "jobDbManager::delByGid() - Unknown exception catched" );
   }
 }
