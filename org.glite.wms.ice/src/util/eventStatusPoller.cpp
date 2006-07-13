@@ -368,8 +368,13 @@ void eventStatusPoller::body( void )
         scanJobs( j_status );
         try {
             updateJobCache( j_status );
-        }
-        catch(...) {
+        } catch(exception& ex) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+			 << "eventStatusPoller::body() - "
+			 << "catched std::exception: "
+			 << ex.what()
+			 << log4cpp::CategoryStream::ENDLINE);
+	} catch(...) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "eventStatusPoller::body() - "
 			 << "catched unknown exception"
