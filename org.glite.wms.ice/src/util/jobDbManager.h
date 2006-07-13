@@ -5,12 +5,21 @@
 #include <db_cxx.h>
 #include <string>
 #include <vector>
+#include <map>
 #include "JobDbException.h"
 
 namespace glite {
 namespace wms {
 namespace ice {
 namespace util {
+
+  class cursorWrapper {
+    Dbc* cursor;
+   public:
+    cursorWrapper( Db* ) throw(DbException&);
+    ~cursorWrapper() throw();
+    int get(Dbt*, Dbt*) throw(DbException&);
+  };
 
   class jobDbManager {
     DbEnv m_env;
@@ -25,6 +34,9 @@ namespace util {
     
     std::string getByID( const std::string& id, Db* db ) throw(DbException&);
     
+    // DO NOT COPY a jobDbManager
+    jobDbManager(const jobDbManager&) : m_env(0) {}
+     
    public:
     jobDbManager(const std::string& env_home); // the directory pointed by env_home
     					       // MUST exist
@@ -38,9 +50,18 @@ namespace util {
 					    
     ~jobDbManager() throw();
     
+    // Puts a string couple (cid, serializedCreamJob) in the database
+    // Also puts the string couple (gid, cid) in a database useful for reverse resolution
+    // (i.e. resolving creamJobID from gridJobID)
     void put(const std::string& serializedCreamJob, 
              const std::string& cid,
 	     const std::string& gid) throw(JobDbException&);
+	 
+    // Like put but for many objects to store with a single transaction (more performant)
+    // The argument is an hash map with creamJobID as key and a string pair
+    // (gridJobID, serializedCreamJob) as value    
+    void mput(const std::map<std::string, std::pair<std::string, std::string> >&) 
+      throw(JobDbException&);// {}     
 	     
     void delByCid( const std::string& cid ) throw(JobDbException&);
     

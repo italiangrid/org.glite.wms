@@ -5,6 +5,31 @@
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
 
+// -------------------- cursorWrapper -------------------------
+
+//____________________________________________________________________
+iceUtil::cursorWrapper::cursorWrapper( Db* aDatabase )
+  throw(DbException&)
+  : cursor(NULL)
+{
+  aDatabase->cursor(NULL, &cursor, 0); // can raise a DbException
+}
+
+//____________________________________________________________________
+iceUtil::cursorWrapper::~cursorWrapper() throw()
+{
+  if(cursor) cursor->close();
+}
+
+//____________________________________________________________________
+int iceUtil::cursorWrapper::get(Dbt* key, Dbt* data) 
+  throw(DbException&)
+{
+  return cursor->get(key, data, DB_NEXT); // can raise a DbException
+}
+
+//---------------- jobDbManager -------------------------------
+
 //____________________________________________________________________
 iceUtil::jobDbManager::jobDbManager( const string& envHome )
   : m_env(0),
@@ -33,10 +58,11 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome )
   // (by the client of this class, i.e. by the jobCache object)
   try {
   
-    // FIXME: for now we do not use the flag DB_THREAD because
+    // FIXME: FOR NOW we do not use the flag DB_THREAD because
     // the concurrency protection will be made at higher level
     // (by the client of this class, i.e. by the jobCache object)
     m_env.open(m_envHome.c_str(), DB_CREATE |
+    				  DB_RECOVER |
     		 		  DB_INIT_LOCK |
 				  DB_INIT_LOG |
 				  DB_INIT_MPOOL |
@@ -82,6 +108,8 @@ iceUtil::jobDbManager::~jobDbManager() throw()
 {
   // FIXME: only one thread at time can call ->close()
   // so these operations should be 'mutex-ed'
+  
+  // Db MUST be close BEFORE closing the DbEnv
   try {
     if(m_creamJobDb && m_cream_open) m_creamJobDb->close(0);
     if(m_cidDb && m_cid_open) m_cidDb->close(0);
@@ -118,6 +146,50 @@ void iceUtil::jobDbManager::put(const string& creamjob, const string& cid, const
     m_cidDb->put( txn_handler, &cidData, &gidData, 0);
     m_gidDb->put( txn_handler, &gidData, &cidData, 0);
     txn_handler->commit(0);
+  } catch(DbException& dbex) {
+    txn_handler->abort();
+    throw iceUtil::JobDbException( dbex.what() );
+  } catch(exception& ex) {
+    txn_handler->abort();
+    throw iceUtil::JobDbException( ex.what() );
+  } catch(...) {
+    txn_handler->abort();
+    throw iceUtil::JobDbException("Unknown exception catched");
+  }
+  
+}
+
+//____________________________________________________________________
+void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_and_data)
+  throw(iceUtil::JobDbException&)
+{
+/*   Dbt cidData( (void *)cid.c_str(), cid.length()+1);
+  Dbt data( (void*)creamjob.c_str(), creamjob.length()+1 );
+  Dbt gidData( (void*)gid.c_str(), gid.length()+1 ); */
+  
+  DbTxn* txn_handler;
+  
+  try {
+    txn_handler = NULL; // this is required because after a commit/abort the
+    			  // transaction handler is not valid anymore
+			  // a new fresh handler is required for another 
+			  // transaction
+    m_env.txn_begin(NULL, &txn_handler, 0);
+    
+    for(map<string, pair<string, string> >::const_iterator cit = key_and_data.begin();
+        cit != key_and_data.end();
+	++cit)
+    {
+      Dbt cidKey( (void*)(cit->first).c_str(), (cit->first).length()+1);
+      Dbt gidKey( (void*)(cit->second.first).c_str(), (cit->second.first).length()+1);
+      Dbt data( (void*)(cit->second.second).c_str(), (cit->second.second).length()+1);
+      m_creamJobDb->put( txn_handler, &cidKey, &data, 0);
+      m_cidDb->put( txn_handler, &cidKey, &gidKey, 0);
+      m_gidDb->put( txn_handler, &gidKey, &cidKey, 0);
+    }
+    
+    txn_handler->commit(0);
+
   } catch(DbException& dbex) {
     txn_handler->abort();
     throw iceUtil::JobDbException( dbex.what() );
@@ -179,7 +251,6 @@ string iceUtil::jobDbManager::getByGid( const string& gid )
 void iceUtil::jobDbManager::getAllRecords( vector<string>& destVec )
   throw(iceUtil::JobDbException&)
 {
-  Dbc *cursor;
   Dbt key, data;
   int ret;
   
@@ -190,24 +261,27 @@ void iceUtil::jobDbManager::getAllRecords( vector<string>& destVec )
     // but the transaction mechanism should make the 
     // modifications visible to this READ only if the 
     // transaction itself is commited.
-    // In future we could put a BDB-lock
-  
-    m_creamJobDb->cursor(NULL, &cursor, 0);
-    while((ret=cursor->get(&key, &data, DB_NEXT)) == 0) {
+    // In future we could put a BDB-lock but probably it's
+    // NOT needed thanks to the isolation provided by the
+    // transaction
+    
+    iceUtil::cursorWrapper C( m_creamJobDb );
+    //m_creamJobDb->cursor(NULL, &cursor, 0);
+    while( (ret = C.get(&key, &data)) == 0 ) {
       destVec.push_back( (char*)data.get_data());
     }
     
   } catch(DbException& dbex) {
-    if(cursor) cursor->close();
+    //if(cursor) cursor->close();
     throw JobDbException( dbex.what() );
   } catch(exception& ex) {
-    if(cursor) cursor->close();
+    //if(cursor) cursor->close();
     throw JobDbException( ex.what() );
   } catch(...) {
-    if(cursor) cursor->close();
+    //if(cursor) cursor->close();
     throw JobDbException( "Unknown exception catched" );
   }
-  cursor->close();
+  //cursor->close();
 }
 
 //____________________________________________________________________
@@ -216,15 +290,9 @@ void iceUtil::jobDbManager::delByCid( const string& cid )
 {
   Dbt key( (void*)cid.c_str(), cid.length()+1 );
   Dbt gidData;
-  DbTxn* txn_handler;
+  DbTxn* txn_handler = NULL;
   
   try {
-    txn_handler = NULL; // this is required because after a commit/abort the
-    			  // transaction handler is not valid anymore and
-			  // a new fresh handler is required for another 
-			  // transaction. Setting it to NULL make it "fresh"
-			  // for the txn_begin func.
-			  
     m_env.txn_begin(NULL, &txn_handler, 0);
     m_creamJobDb->del( txn_handler, &key, 0);
     m_cidDb->get( txn_handler, &key, &gidData, 0);
@@ -249,13 +317,9 @@ void iceUtil::jobDbManager::delByGid( const string& gid )
 {
   Dbt key( (void*)gid.c_str(), gid.length()+1 );
   Dbt cidData;
-  DbTxn* txn_handler;
+  DbTxn* txn_handler = NULL;
   
   try {
-    txn_handler = NULL; // this is required because after a commit/abort the
-    			  // transaction handler is not valid anymore
-			  // a new fresh handler is required for another 
-			  // transaction
     m_env.txn_begin(NULL, &txn_handler, 0);
     
     m_gidDb->get( txn_handler, &key, &cidData, 0);
