@@ -57,7 +57,7 @@ class WMPLBSelector {
 		/**
 		 * Destructor
 		 */
-		virtual ~WMPLBSelector() throw();
+		 ~WMPLBSelector() throw();
 		
 		std::pair<std::string, int> selectLBServer();
 		void updateSelectedIndexWeight(lbcallresult result);

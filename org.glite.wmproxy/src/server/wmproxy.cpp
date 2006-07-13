@@ -42,6 +42,14 @@
 #include "utilities/wmputils.h" // waitForSeconds(), initsignalhandler()
 #include "eventlogger/wmplbselector.h"	// lbselectioninfo struct
 
+// Global variable for configuration
+WMProxyConfiguration conf;
+
+// Global variables for configuration attributes (ENV dependant)
+std::string sandboxdir_global;
+std::string filelist_global;
+glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
+
 
 namespace logger        = glite::wms::common::logger;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
@@ -49,15 +57,6 @@ namespace eventlogger   = glite::wms::wmproxy::eventlogger;
 namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
-
-
-// Global variable for configuration
-WMProxyConfiguration conf;
-
-// Global variables for configuration attributes (ENV dependant)
-std::string sandboxdir_global;
-std::string filelist_global;
-eventlogger::WMPLBSelector lbselector;
 
 //namespace glite {
 //namespace wms {

@@ -169,7 +169,7 @@ void submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	eventlogger::WMPEventLogger &wmplogger, bool issubmit = false);
 	
 int listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
-	const string &delegation_id);
+	const string &delegation_id, const string &delegatedproxyfqan);
 
 void jobpurge(jobPurgeResponse &jobPurge_response, JobId *jid, bool checkstate
 	= true);
@@ -891,7 +891,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		} else {
 			jobListMatchResponse jobListMatch_response;
 			res_num = listmatch(jobListMatch_response,
-				jad->toSubmissionString(), delegation_id);
+				jad->toSubmissionString(), delegation_id, delegatedproxyfqan);
 		}
 		
 		if (jad->hasAttribute(JDL::CHKPT_STEPS)) {
@@ -2054,7 +2054,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 
 int 
 listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
-	const string &delegation_id)
+	const string &delegation_id, const string &delegatedproxyfqan)
 {
 	GLITE_STACK_TRY("listmatch");
 	edglog_fn("wmpcoreoperations::listmatch");
@@ -2071,20 +2071,31 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	
 		// Setting VIRTUAL_ORGANISATION attribute
 		if (!ad->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
+			edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
 			ad->setAttribute(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
+		}
+		
+		if (delegatedproxyfqan != "") {
+			edglog(debug)<<"Setting attribute JDLPrivate::VOMS_FQAN"<<endl;
+			if (ad->hasAttribute(JDLPrivate::VOMS_FQAN)) {
+				ad->delAttribute(JDLPrivate::VOMS_FQAN);
+			}
+			ad->setAttribute(JDLPrivate::VOMS_FQAN, delegatedproxyfqan);
 		}
 		
 		if (ad->hasAttribute(JDL::CERT_SUBJ)) {
 			ad->delAttribute(JDL::CERT_SUBJ);
 		}
+		edglog(debug)<<"Setting attribute JDL::CERT_SUBJ"<<endl;
 		ad->setAttribute(JDL::CERT_SUBJ, 
 			wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
-			
+		
 		// \/
 		// Adding fake JDL::WMPISB_BASE_URI attribute to pass check (toSubmissionString)
 		if (ad->hasAttribute(JDL::WMPISB_BASE_URI)) {
 			ad->delAttribute(JDL::WMPISB_BASE_URI);	
 		}
+		edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
 		ad->setAttribute(JDL::WMPISB_BASE_URI, "protocol://address");
 		
 		ad->check();
@@ -2148,9 +2159,11 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
+	string delegatedproxyfqan = "";
 	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN());
+		delegatedproxyfqan = vomsproxy.getDefaultFQAN();
+		auth->authorize(delegatedproxyfqan);
 	} else {
 		auth->authorize();
 	}
@@ -2159,7 +2172,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	// Checking proxy validity
 	authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
 	
-	listmatch(jobListMatch_response, jdl, delegation_id);
+	listmatch(jobListMatch_response, jdl, delegation_id, delegatedproxyfqan);
 	
 	GLITE_STACK_CATCH();
 }

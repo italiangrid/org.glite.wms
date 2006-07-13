@@ -236,8 +236,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 		getMaxInputSandboxSize_response.size =
 		// WARNING: Temporal cast TBD
 		// WARNING: double temporarely casted into long (soon long will be returned directly
-		(long)singleton_default<WMProxyConfiguration>::instance()
-			.wmp_config->max_input_sandbox_size();
+		(long)conf.wmp_config->max_input_sandbox_size();
 	} catch (exception &ex) {
 		edglog(severe)<<"Unable to get max input sandbox size: "
 			<<ex.what()<<endl;

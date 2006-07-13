@@ -102,15 +102,6 @@ WMPLBSelector::WMPLBSelector(vector<pair<string, int> > lbservers,
 // Destructor
 WMPLBSelector::~WMPLBSelector() throw()
 {
-	/*if (lbselection.first) {
-		vector<lbselectioninfo*> lbitems = *lbselection.first;
-		for (unsigned int i = 0; i < lbitems.size(); i++) {
-			if (lbitems[i]) {
-				free(lbitems[i]);
-			}
-		}
-		free(lbselection.first);
-	}*/
 };
 
 
