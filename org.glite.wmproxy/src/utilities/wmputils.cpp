@@ -782,32 +782,6 @@ generateRandomNumber(int lowerlimit, int upperlimit)
 	GLITE_STACK_CATCH();
 }
 
-int
-generateRandomIndex(vector<int> weights)
-{
-	GLITE_STACK_TRY("selectIndex()");
-	
-	int range = 0;
-	for (unsigned int i = 0; i < weights.size(); i++) {
-		range += weights[i];
-	}
-	
-	int random = generateRandomNumber(1, range);
-	
-	for (unsigned int i = 0; i < weights.size(); i++) {
-		random -= weights[i];
-		if (random <= 0) {
-			return i;
-		}
-	}
-	
-	// Something bad happened
-	// weights error!?, generating random number
-	return generateRandomNumber(0, weights.size() - 1);
-	
-	GLITE_STACK_CATCH();
-}
-
 void 
 fileCopy(const string& source, const string& target)
 {
@@ -902,6 +876,100 @@ searchForDirmanager()
    	GLITE_STACK_CATCH();
 }
 	
+int
+doExecv(const string &command, vector<string> &params)
+{
+	GLITE_STACK_TRY("doExecv()");
+	edglog_fn("wmputils::doExecv");
+	
+	char **argvs;
+	int size = params.size() + 2;
+	argvs = (char **) calloc(size, sizeof(char *));
+	
+	unsigned int i = 0;
+	
+	argvs[i] = (char *) malloc(command.length() + 1);
+	strcpy(argvs[i++], (command).c_str());
+	
+	vector<string>::iterator iter = params.begin();
+	vector<string>::iterator const end = params.end();
+	for (; iter != end; ++iter) {
+		argvs[i] = (char *) malloc((*iter).length() + 1);
+		strcpy(argvs[i++], (*iter).c_str());
+	}
+	argvs[i] = (char *) 0;
+	
+	int outcome = -1;
+	edglog(debug)<<"Forking process..."<<endl;
+	switch (fork()) {
+		case -1:
+			// Unable to fork
+			edglog(critical)<<"Unable to fork process"<<endl;
+			return FAILURE;
+			break;
+		case 0:
+			// child
+	        if (outcome = execv(command.c_str(), argvs)) {
+	        	switch (errno) {
+		        	case E2BIG:
+	        			edglog(debug)<<"Command line too long"<<endl;
+	        		case EACCES:
+	        			edglog(severe)<<"Command not executable"<<endl;
+	        		case EPERM:
+	        			edglog(severe)<<"Wrong execution permissions"<<endl;
+	        		case ENOENT:
+	        			edglog(severe)<<"Unable to find command"<<endl;
+	        		case ENOMEM:
+	        			edglog(severe)<<"Insufficient memory to execute command"
+	        				<<endl;
+	        		case EIO:
+	        			edglog(severe)<<"I/O error"<<endl;
+	        		case ENFILE:
+	        			edglog(severe)<<"Too many opened files"<<endl;
+	        			
+		        	default:
+		        		edglog(severe)<<"Unable to execute command"<<endl;
+		        		return FAILURE;
+						break;
+	        	}
+	        } else {
+	        	edglog(debug)<<"execv succesfully"<<endl;
+	        }
+	        break;
+        default:
+        	// parent
+	    	int status = SUCCESS;
+	    	wait(&status);
+	    	if (WIFEXITED(status)) {
+                edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
+                edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
+            }
+            if (WIFSIGNALED(status)) {
+                edglog(severe)<<"WIFSIGNALED(status)"<<endl;
+                edglog(severe)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
+            }
+            
+#ifdef WCOREDUMP
+			if (WCOREDUMP(status)) {
+				edglog(critical)<<"Child dumped core!!!"<<endl;
+			}
+#endif // WCOREDUMP
+
+	    	if (status) {
+	    		edglog(severe)<<"Child failure, exit code: "<<status<<endl;
+	    		return FAILURE;
+	    	}
+	    	break;
+	}
+	for (unsigned int j = 0; j <= i; j++) {
+		free(argvs[j]);
+	}
+    free(argvs);
+    
+    return SUCCESS;
+    
+    GLITE_STACK_CATCH();
+}
 
 int
 doExecv(const string &command, vector<string> &params, const vector<string> &dirs,

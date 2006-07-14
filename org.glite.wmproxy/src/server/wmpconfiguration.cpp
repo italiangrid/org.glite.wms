@@ -16,6 +16,8 @@
 // TRY CATCH macros
 #include "utilities/wmpexceptions.h"
 
+#include "glite/jdl/Ad.h"
+
 
 const int LB_SERVER_DEFAULT_PORT = 9000;
 const int LB_LOCAL_LOGGER_DEFAULT_PORT = 9002;
@@ -23,6 +25,8 @@ const int LB_LOCAL_LOGGER_DEFAULT_PORT = 9002;
 const std::string DEFAULT_LISTMATCH_DIR = "/tmp";
 const std::string DEFAULT_SERVER_ADDRESS = "localhost";
 const std::string DEFAULT_FILE_TRANSFER_PROTOCOL = "gsiftp";
+
+const std::string ALL_OPERATIONS = "AllOperations";
 
 
 namespace wmputilities  = glite::wms::wmproxy::utilities;
@@ -207,6 +211,8 @@ WMProxyConfiguration::loadConfiguration()
 	
 	this->sdjrequirements = wmp_config->sdjrequirements();
 	
+	this->operationloadscripts = wmp_config->operation_load_scripts();
+	
 	GLITE_STACK_CATCH();
 }
 
@@ -327,3 +333,23 @@ WMProxyConfiguration::getSDJRequirements()
 	return this->sdjrequirements;
 }
 
+classad::ClassAd *
+WMProxyConfiguration::getOperationLoadScripts()
+{
+	return this->operationloadscripts;
+}
+
+string
+WMProxyConfiguration::getOperationLoadScriptPath(const string &operation)
+{
+	string returnvalue = "";
+	if (this->operationloadscripts) {
+		glite::jdl::Ad ad(*this->operationloadscripts);
+		if (ad.hasAttribute(operation)) {
+			returnvalue = ad.getString(operation);
+		} else if (ad.hasAttribute(ALL_OPERATIONS)) {
+			returnvalue = ad.getString(ALL_OPERATIONS);
+		}
+	}
+	return returnvalue;
+}

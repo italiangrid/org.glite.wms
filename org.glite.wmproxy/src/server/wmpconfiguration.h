@@ -165,6 +165,19 @@ class WMProxyConfiguration {
 		classad::ExprTree * getSDJRequirements();
 		
 		/**
+		 * Returns the value of the configuration attribute OperationLoadScripts
+		 * @return the attribute value
+		 */
+		classad::ClassAd * getOperationLoadScripts();
+		
+		/**
+		 * Returns the value of the attribute operation inside classad
+		 * configuration attribute OperationLoadScripts
+		 * @return the attribute value
+		 */
+		std::string getOperationLoadScriptPath(const std::string &operation);
+		
+		/**
 		 * Workload Manager Proxy configuration instance
 		 */
 		glite::wms::common::configuration::WMPConfiguration const* wmp_config;
@@ -201,6 +214,7 @@ class WMProxyConfiguration {
 	    bool asyncjobstart;
 	    
 	    classad::ExprTree * sdjrequirements;
+	    classad::ClassAd * operationloadscripts;
 };
 
 #endif // GLITE_WMS_WMPROXY_WMPCONFIGURATION_H

@@ -10,8 +10,13 @@
 
 #include "wmpcommon.h"
 
+#include <ctype.h> // isspace
+
 // WMP Configuration
 #include "wmpconfiguration.h"
+
+// Utilities
+#include "utilities/wmputils.h"
 
 // WMP Exceptions
 #include "utilities/wmpexceptions.h"
@@ -203,4 +208,54 @@ getType(string jdl, Ad * ad)
 	return return_value;
 
 	GLITE_STACK_CATCH();
+}
+
+void
+callLoadScriptFile(const string &operation)
+{
+	string path = conf.getOperationLoadScriptPath(operation);
+	if (path != "") {
+		path = "./glite-load-monitor --oper Cancel --load1 0 --load5 0 --load15 0 "
+								"--memusage 30 --diskusage 40 --fdnum 50000";
+		
+		string str = "";
+		string command = "";
+		vector<string> params;
+		bool commandfound = false;
+		
+		string::const_iterator iter = path.begin();
+  		string::const_iterator const end = path.end();
+		while (iter != end) {
+			// Removing spaces
+			while ((iter != end) && isspace((char)*iter)) {
+				iter++;
+			}
+			while ((iter != end) && !isspace((char)*iter)) {
+				str += *iter;
+				iter++;
+			}
+			edglog(debug)<<"Found token: "<<str<<endl;
+			if (commandfound) {
+				params.push_back(str);
+			} else {
+				command = str;
+				commandfound = true;
+			}
+			str = "";
+		}
+		
+		if (!wmputilities::fileExists(command)) {
+			edglog(warning)<<"Operation \""<<operation
+				<<"\" load script file does not exist:\n"<<command
+				<<"\nIgnoring load script call..."<<endl;
+		} else {
+			// Executing load script file
+			edglog(debug)<<"Executing load script file: "<<command<<endl;
+			if (int outcome = wmputilities::doExecv(command, params)) {
+				/*switch (outcome) {
+					case 1:
+				}*/
+			}
+		}
+	}
 }

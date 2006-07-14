@@ -50,16 +50,16 @@ const std::string LISTMATCH_REASON_NO_MATCH = "no matching resources found";
 namespace logger       = glite::wms::common::logger;
 namespace eventlogger  = glite::wms::wmproxy::eventlogger;
 namespace wmsutilities = glite::wms::common::utilities;
-namespace utils     = glite::wmsutils::classads;
+namespace utils        = glite::wmsutils::classads;
 namespace wmputilities = glite::wms::wmproxy::utilities;
-namespace commands = glite::wms::wmproxy::commands;
+namespace commands     = glite::wms::wmproxy::commands;
 
 using namespace std;
 using namespace glite::jdl;
 
 namespace {
 
-#ifndef GIACO
+#ifdef GLITE_WMS_USE_FILELIST
 	void f_forward(wmsutilities::FileList<string>& filelist,
 		wmsutilities::FileListMutex& mutex, string const& ad)
 	{
@@ -138,7 +138,7 @@ WMP2WM::init(const string &filename, eventlogger::WMPEventLogger *wmpeventlogger
   	
   	this->wmpeventlogger = wmpeventlogger;
 
-#ifndef GIACO
+#ifdef GLITE_WMS_USE_FILELIST
   	edglog(debug)<<"Request Queue: "<<filename<<endl;
   	m_filelist.reset(new wmsutilities::FileList<string>(filename));
   	m_mutex.reset(new wmsutilities::FileListMutex(*(m_filelist.get())));
@@ -174,20 +174,29 @@ WMP2WM::submit(const string &jdl, const string &jdlpath)
 	string regjdl = (jdlpath != "") ? jdlpath : jdl;
  	try {
  		
-#ifndef GIACO
+#ifdef GLITE_WMS_USE_FILELIST
     	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
-#else
-		f_forward(*m_jobdir, command_str);
-#endif
-
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
     		true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
+#else
+		f_forward(*m_jobdir, command_str);
+		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
+    		true, true, "", regjdl.c_str());
+#endif
+
     	edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
     	edglog(debug)<<"Submit EnQueued OK"<<endl;
   	} catch (exception &e) {
     	// LogEnQueued FAIL if exception occurs
+    	
+#ifdef GLITE_WMS_USE_FILELIST
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
     		e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
+#else
+		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+    		e.what(), true, true, "", regjdl.c_str());
+#endif
+
     	edglog(critical)<<"Submit EnQueued FAIL"<<endl;
   	}
   	
@@ -214,9 +223,8 @@ WMP2WM::cancel(const string &jobid, const string &seq_code)
 
 	string command_ad(convertedString);
 	
-#ifndef GIACO
+#ifdef GLITE_WMS_USE_FILELIST
 	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
-	
 #else
 	f_forward(*m_jobdir, command_ad);
 #endif
@@ -306,7 +314,7 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 		<<toFormattedString(convertedAd)<<endl;
 	string command_ad(convertedString);
 	
-#ifndef GIACO
+#ifdef GLITE_WMS_USE_FILELIST
 	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
 #else
 	f_forward(*m_jobdir, command_ad);

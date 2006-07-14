@@ -16,7 +16,6 @@
 
 // Boost
 #include <boost/lexical_cast.hpp>
-#include <boost/pool/detail/singleton.hpp>
 #include "boost/filesystem/path.hpp"
 
 #include "wmpcommon.h"
@@ -119,7 +118,6 @@ const std::string DEFAULT_PROTOCOL = "default";
 using namespace std;
 using namespace glite::lb; // JobStatus
 using namespace glite::jdl; // DagAd, AdConverter
-using namespace boost::details::pool; //singleton
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 
@@ -148,6 +146,7 @@ getVersion(getVersionResponse &getVersion_response)
 	GLITE_STACK_TRY("getVersion()");
 	edglog_fn("wmpoperations::getVersion");
 	logRemoteHostInfo();
+	callLoadScriptFile("getVersion");
 	
 	getVersion_response.version = WMP_VERSION;
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
@@ -162,6 +161,7 @@ getJDL(const std::string &job_id, JdlType jdltype,
 	GLITE_STACK_TRY("getJDL()");
 	edglog_fn("wmpoperations::getJDL");
 	logRemoteHostInfo();
+	callLoadScriptFile("getJDL");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -224,6 +224,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	GLITE_STACK_TRY("getMaxInputSandboxSize()");
 	edglog_fn("wmpoperations::getMaxInputSandboxSize");
 	logRemoteHostInfo();
+	callLoadScriptFile("getMaxInputSandboxSize");
 
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -255,6 +256,7 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	GLITE_STACK_TRY("getSandboxDestURI()");
 	edglog_fn("wmpoperations::getSandboxDestURI");
 	logRemoteHostInfo();
+	callLoadScriptFile("getSandboxDestURI");
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
 	JobId *jobid = new JobId(jid);
@@ -297,6 +299,7 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	GLITE_STACK_TRY("getSandboxBulkDestURI()");
 	edglog_fn("wmpoperations::getSandboxBulkDestURI");
 	logRemoteHostInfo();
+	callLoadScriptFile("getSandboxBulkDestURI");
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
 	JobId *jobid = new JobId(jid);
@@ -362,6 +365,7 @@ getQuota(getQuotaResponse &getQuota_response)
 	GLITE_STACK_TRY("getQuota()");
 	edglog_fn("wmpoperations::getQuota");
 	logRemoteHostInfo();
+	callLoadScriptFile("getQuota");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -390,6 +394,7 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 	GLITE_STACK_TRY("getFreeQuota()");
 	edglog_fn("wmpoperations::getFreeQuota");
 	logRemoteHostInfo();
+	callLoadScriptFile("getFreeQuota");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -423,6 +428,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	try {
 		edglog_fn("wmpoperations::getOutputFileList");
 		logRemoteHostInfo();
+		callLoadScriptFile("getOutputFileList");
 		edglog(info)<<"Operation requested for job: "<<jid<<endl;
 		
 		JobId *jobid = new JobId(jid);
@@ -562,6 +568,7 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 	GLITE_STACK_TRY("getJobTemplate()");
 	edglog_fn("wmpoperations::getJobTemplate");
 	logRemoteHostInfo();
+	callLoadScriptFile("getJobTemplate");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -586,6 +593,7 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
 	GLITE_STACK_TRY("getDAGTemplate()");
 	edglog_fn("wmpoperations::getDAGTemplate");
 	logRemoteHostInfo();
+	callLoadScriptFile("getDAGTemplate");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -610,6 +618,7 @@ getCollectionTemplate(getCollectionTemplateResponse
 	GLITE_STACK_TRY("getCollectionTemplate()");
 	edglog_fn("wmpoperations::getCollectionTemplate");
 	logRemoteHostInfo();
+	callLoadScriptFile("getCollectionTemplate");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -635,6 +644,7 @@ getIntParametricJobTemplate(getIntParametricJobTemplateResponse
 	GLITE_STACK_TRY("getIntParametricJobTemplate()");
 	edglog_fn("wmpoperations::getIntParametricJobTemplate");
 	logRemoteHostInfo();
+	callLoadScriptFile("getIntParametricJobTemplate");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -660,6 +670,7 @@ getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 	GLITE_STACK_TRY("getStringParametricJobTemplate()");
 	edglog_fn("wmpoperations::getStringParametricJobTemplate");
 	logRemoteHostInfo();
+	callLoadScriptFile("getStringParametricJobTemplate");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -684,6 +695,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	GLITE_STACK_TRY("getProxyReq()");
 	edglog_fn("wmpoperations::getProxyReq");
 	logRemoteHostInfo();
+	callLoadScriptFile("getProxyReq");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -712,6 +724,7 @@ getNewProxyReq(pair<string, string> &retpair)
 	GLITE_STACK_TRY("getNewProxyReq()");
 	edglog_fn("wmpoperations::getNewProxyReq");
 	logRemoteHostInfo();
+	callLoadScriptFile("getNewProxyReq");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -737,6 +750,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	GLITE_STACK_TRY("putProxy()");
 	edglog_fn("wmpoperations::putProxy");
 	logRemoteHostInfo();
+	callLoadScriptFile("putProxy");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -764,6 +778,7 @@ destroyProxy(const string &delegation_id)
 	GLITE_STACK_TRY("destroyProxy()");
 	edglog_fn("wmpoperations::destroyProxy");
 	logRemoteHostInfo();
+	callLoadScriptFile("destroyProxy");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -792,6 +807,7 @@ getProxyTerminationTime(getProxyTerminationTimeResponse &getProxyTerminationTime
 	GLITE_STACK_TRY("getProxyTerminationTime()");
 	edglog_fn("wmpoperations::getProxyTerminationTime");
 	logRemoteHostInfo();
+	callLoadScriptFile("getProxyTerminationTime");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -819,6 +835,7 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 	GLITE_STACK_TRY("getACLItems()");
 	edglog_fn("wmpoperations::getACLItems");
 	logRemoteHostInfo();
+	callLoadScriptFile("getACLItems");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -875,6 +892,7 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 	GLITE_STACK_TRY("addACLItems()");
 	edglog_fn("wmpoperations::addACLItems");
 	logRemoteHostInfo();
+	callLoadScriptFile("addACLItems");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -940,6 +958,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	GLITE_STACK_TRY("removeACLItem()");
 	edglog_fn("wmpoperations::removeACLItem");
 	logRemoteHostInfo();
+	callLoadScriptFile("removeACLItem");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	string errors = "";	
@@ -1014,6 +1033,7 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 	GLITE_STACK_TRY("getProxyInfo()");
 	edglog_fn("wmpoperations::getProxyInfo");
 	logRemoteHostInfo();
+	callLoadScriptFile("getProxyInfo");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -1213,6 +1233,7 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	GLITE_STACK_TRY("enableFilePerusal()");
 	edglog_fn("wmpoperations::enableFilePerusal");
 	logRemoteHostInfo();
+	callLoadScriptFile("enableFilePerusal");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -1279,6 +1300,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	GLITE_STACK_TRY("getPerusalFiles()");
 	edglog_fn("wmpoperations::getPerusalFiles");
 	logRemoteHostInfo();
+	callLoadScriptFile("getPerusalFiles");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -1452,6 +1474,7 @@ getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response
 	GLITE_STACK_TRY("getTransferProtocols()");
 	edglog_fn("wmpoperations::getTransferProtocols");
 	logRemoteHostInfo();
+	callLoadScriptFile("getTransferProtocols");
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -1462,9 +1485,7 @@ getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response
 	
 	getTransferProtocols_response.protocols = new StringList;
 	vector<string> *protocols = new vector<string>();
-	//getTransferProtocols_response.protocols->Item = new vector<string>(0);
 	
-	WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	vector<pair<string, int> > serverprotocols = conf.getProtocols();
 	unsigned int size = serverprotocols.size();
 	for (unsigned int i = 0; i < size; i++) {

@@ -311,6 +311,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	GLITE_STACK_TRY("jobRegister()");
 	edglog_fn("wmpcoreoperations::jobRegister");
 	logRemoteHostInfo();
+	callLoadScriptFile("jobRegister");
 	
 	// Checking delegation id
 	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
@@ -1072,6 +1073,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	GLITE_STACK_TRY("jobStart()");
 	edglog_fn("wmpcoreoperations::jobStart");
 	logRemoteHostInfo();
+	callLoadScriptFile("jobStart");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -1773,6 +1775,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	GLITE_STACK_TRY("jobSubmit()");
 	edglog_fn("wmpcoreoperations::jobSubmit");
 	logRemoteHostInfo();
+	callLoadScriptFile("jobSubmit");
 	
 	// Checking delegation id
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
@@ -1887,6 +1890,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	GLITE_STACK_TRY("jobCancel()");
 	edglog_fn("wmpcoreoperations::jobCancel");
 	logRemoteHostInfo();
+	callLoadScriptFile("jobCancel");
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -2138,6 +2142,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		"const string &jdl, const string &delegation_id)");
 	edglog_fn("wmpcoreoperations::jobListMatch");
 	logRemoteHostInfo();
+	callLoadScriptFile("jobListMatch");
 	
 	// Checking delegation id
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
@@ -2304,6 +2309,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 	GLITE_STACK_TRY("jobPurge()");
 	edglog_fn("wmpcoreoperations::jobPurge");
 	logRemoteHostInfo();
+	callLoadScriptFile("jobPurge");
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
 	JobId *jobid = new JobId(jid);

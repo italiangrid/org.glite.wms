@@ -21,4 +21,5 @@ enum type {
 // Common methods used in both operations and coreoperations
 void setGlobalSandboxDir();
 void logRemoteHostInfo();
+void callLoadScriptFile(const std::string &operation);
 int getType(std::string jdl, glite::jdl::Ad * ad = NULL);
