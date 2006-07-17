@@ -40,12 +40,8 @@ glite-wms-job-<command_name>_<uid>_<pid>_<time>.log
 located under the /var/tmp directory or in the log file specified with --logfile option.
 <<<debug>>>
 
-<<<deleg-del_id>>>
-if this option is specified, the proxy that will be delegated is identified by <id_string>. This proxy can be used for operations like job registration, job submission and job list matching until its expiration specifying the <id_string>. It must be used in place of --autm-delegation option.
-<<<deleg-del_id>>>
-
 <<<delegationid>>>
-if this option is specified, the operations on the WMProxy service will be associated to the credential previously delegated with the id_string delegation string.It must be used in place of --autm-delegation option.
+if this option is specified, the proxy that will be delegated is identified by <id_string>. This proxy can be therefore used for operations like job registration, job submission and job list matching until its expiration specifying the <id_string>. It must be used in place of --autm-delegation option.
 <<<delegationid>>>
 
 <<<deleg-output>>>
@@ -223,14 +219,17 @@ Retrieves and displays information for the proxy delegated with the specified Jo
 
 <<<jdl>>>
 Retrieves and displays the jdl registered to the LB service for the specified JobId: the WMProxy service where the job was submitted is contacted and asked for needed information.
+This option is only available from glite version >= 3.1.
 <<<jdl>>>
 
 <<<jdl-original>>>
 Retrieves and displays the original jdl submitted by the user to the WMProxy service. This information might be quite different from the registered jdl, mostly for parametric and collection of jobs.
+This option is only available from glite version >= 3.1.
 <<<jdl-original>>>
 
 <<<info-output>>>
 Stores the retrieved information into the specified file instead of the standard output. The specified file path can be either a simple name or an absolute path (on the submitting machine). In the former case the file filepath is created in the current working directory.
+This option is only available from glite version >= 3.1.
 <<<info-output>>>
 
 
