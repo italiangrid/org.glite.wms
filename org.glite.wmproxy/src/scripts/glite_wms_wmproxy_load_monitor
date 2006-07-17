@@ -1,0 +1,342 @@
+#!/usr/bin/perl -W
+
+use Getopt::Long;
+
+$glitedir=`printenv GLITE_LOCATION`;
+chomp $glitedir;
+$glitedir='/opt/glite' unless($glitedir);
+
+$wmsconffile="${glitedir}/etc/glite_wms.conf";
+
+%conf=();
+
+#valid keys for %mems:
+#MemTotal:MemFree:MemShared:Buffers:Cached
+#SwapCached:Active:Inactive:HighTotal:HighFree
+#LowTotal:LowFree:SwapTotal:SwapFree
+%mems=();
+
+#valid keys for %load:
+#1min:5min:15min
+%load=();
+
+#valid keys for %diskusage:
+#each mounted partition
+%diskusage=();
+
+%duwarn=();
+
+#valid keys for %load:
+#allocated:free:max
+%fds=();
+
+
+%operations=(    
+                 'jobListMatch'  			=> 1,
+                 'jobSubmit'     			=> 1,
+                 'jobRegister'   			=> 1,
+                 'jobStart'				=> 1,
+                 'jobCancel'       	        	=> 2,
+                 'jobPurge'				=> 2,
+                 'getOutputFileList'        		=> 2,
+                 'getSandboxBulkDestURI'        	=> 2,
+                 'getSandboxDestURI'        		=> 2,
+                 'getVersion'        			=> 3,
+                 'getMaxInputSandboxSize'       	=> 3,
+                 'getFreeQuota'        			=> 3,
+                 'getTotalQuota '        		=> 3,
+                 'getJDL'        			=> 3,
+                 'getProxyReq'        			=> 3,
+                 'putProxy'        			=> 3,
+                 'getDelegatedProxyInfo'        	=> 3,
+                 'getJobProxyInfo '        		=> 3,
+                 'enableFilePerusal'        		=> 3,
+                 'getPerusalFiles'        		=> 3,
+                 'addACLItems'        			=> 3,
+                 'getACLItems'        			=> 3,
+                 'removeACLItem'        		=> 3,
+                 'getJobTemplate'        		=> 3,
+                 'getDAGTemplate'        		=> 3,
+                 'getCollectionTemplate'        	=> 3,
+                 'getIntParametricJobTemplate'  	=> 3,
+                 'getStringParametricJobTemplate'       => 3,
+                 'getTransferProtocols'        		=> 3,
+                 'Default' 				=> 4
+            );
+
+#Default Values
+
+$Load1     = 10;
+$Load5     = 10;
+$Load15    = 10;
+$MemUsage  = 95;
+$FDNum     = 500;
+$DiskUsage = 95;
+$oper      = 'Default';
+$listoper  = 0;
+$show      = 0;
+$help      = 0;
+            
+$return=GetOptions ("load1=i"       => \$Load1,
+            	    "load5=i"       => \$Load5,
+                    "load15=i"      => \$Load15,
+                    "memusage=i"    => \$MemUsage,
+                    "fdnum=i"       => \$FDNum,
+                    "diskusage=i"   => \$DiskUsage,
+                    "oper=s"        => \$oper,
+                    "show"          => \$show,
+                    "list"          => \$listoper,
+                    "help"          => \$help
+                   );
+	    
+exit(1) unless($return);
+            
+$oper='Default' if(!defined $operations{$oper});
+          
+&print_help() if($help);
+&print_list() if($listoper);
+
+&read_conf($wmsconffile);
+
+&get_loadaverage();
+&get_mem_usage();
+&get_fd_usage();
+&get_disk_usage();
+
+&show_value() if($show);
+
+&test_threshold();
+
+#######Functions##########
+
+sub read_conf{
+
+        my $CONF=shift;
+        my $wmp=0;
+        my $cldclose=0;
+	my $i=0;
+        open (CONF, "$CONF") || die "Could not open $CONF for reading: $!";
+        while (<CONF>){
+                $wmp=0 if(/^\s*\]\;/);
+                if (/^\s*(\S+)\s*=\s*(\S+)/){
+		        my $key=$1;
+			my $value=$2;
+                        $wmp=1 if($key eq 'WorkloadManagerProxy' && $value eq '[');
+                        next if($key eq 'SandboxStagingPath' && $wmp==0);
+			
+			$key.=$i++ if($key eq 'Input');
+			
+                        $conf{$key} = $value;
+                }
+        
+        }
+        close (CONF);
+	$conf{'InputCount'}=$i;
+}
+
+sub get_loadaverage{
+
+        my $load=`uptime`;
+        chomp $load;
+        $load=~s/ |load average://g;
+	(my $d1,my $d2,my $d3,$load{'1min'},$load{'5min'},$load{'15min'})=split(/\,/,$load);
+}
+
+sub get_fd_usage{
+
+        open (IN, '/proc/sys/fs/file-nr') || die "Could not open /proc/sys/fs/file-nr for reading: $!";
+#fd allocated:fd free:fd max
+        while (<IN>){
+                if (/(\d+)\s+(\d+)\s+(\d+)/){
+                        $fds{'allocated'}=$1;
+                        $fds{'free'}=$2;
+                        $fds{'max'}=$3;
+                }
+        }
+        close (IN);
+}
+
+sub get_mem_usage{
+
+        open (IN, '/proc/meminfo') || die "Could not open /proc/meminfo for reading: $!";
+        while (<IN>){
+                $mems{$1} = $2 if (/^(\w+):\s*(\d+)\s+kb/i);
+        }
+        close (IN);        
+}
+
+sub get_disk_usage{
+
+        foreach (`df|grep -v Filesystem`){
+                 $diskusage{$3} = $2 if (/^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\%\s+(\S+)/);
+        } 
+}
+
+sub test_threshold{
+
+        my $load1warning  = 0;
+        my $load5warning  = 0;
+        my $load15warning = 0;
+        my $memwarning    = 0;
+        my $fdwarning     = 0;
+        my $duwarning     = 0;
+        
+        my $disablecount  = 0;
+                
+
+        if($load{'1min'}>=$Load1){
+
+                $load1warning = 1;
+                $disablecount++;
+   
+        }
+
+        if(($load{'5min'}>=$Load5) && ($load{'1min'}>$load{'5min'})){
+           
+                $load5warning = 1;
+                $disablecount++;
+   
+        }
+	
+        if(($load{'15min'}>=$Load15) && ($load{'1min'}>$load{'15min'}) && ($load{'5min'}>$load{'15min'})){
+   
+                $load15warning = 1;
+                $disablecount++;
+   
+        }
+
+        if((100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'})>=$MemUsage){
+
+                $memwarning = 1;
+                $disablecount++;
+        
+        }
+
+        if(($fds{'max'}-($fds{'allocated'}-$fds{'free'}))<=$FDNum){
+
+                $fdwarning  = 1;
+                $disablecount++;
+        
+        }
+        
+        my $partptr=GetPartition();
+        
+        foreach my $part(@$partptr){
+        	chomp $part;
+                if($diskusage{$part}>=$DiskUsage){
+
+                        $duwarning  = 1;
+                        $duwarn{$part}=$diskusage{$part};
+                        $disablecount++;
+        
+                }
+        }
+
+        
+        if($disablecount >= $operations{$oper}){
+                print "NOK\n";
+
+                if($load1warning){
+                	print STDERR "Threshold for Load Average(1 min): $Load1 => Detected value for Load Average(1 min): $load{'1min'}\n";
+                }
+                if($load5warning){
+                	print STDERR "Threshold for Load Average(5 min): $Load5 => Detected value for Load Average(5 min): $load{'5min'}\n";
+                }
+                if($load15warning){
+                	print STDERR "Threshold for Load Average(15 min): $Load15 => Detected value for Load Average(15 min): $load{'15min'}\n";
+                }
+                if($memwarning){
+                	print STDERR "Threshold for Memory Usage: $MemUsage => Detected value for Memory Usage: ",100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'},"\%\n";
+
+                }
+                if($fdwarning){
+                	print STDERR "Threshold for FD Usage: $FDNum => Detected value for FD Usage: ",($fds{'max'}-($fds{'allocated'}-$fds{'free'})),"\n";
+                }
+                if($duwarning){
+                	print STDERR "Threshold for Disk Usage: $DiskUsage\% =>\n";
+                        foreach my $k(keys %duwarn){ 
+                        	print STDERR "\t\tDetected value for Partition $k : $duwarn{$k}\%\n";
+                        }
+                }
+                exit(1);
+
+        }else{
+                print "OK\n";
+                exit(0);
+        }
+
+}
+
+sub GetPartition{
+
+        my @list = ();
+
+        push (@list,`df / |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df /tmp |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+	
+        $conf{'SandboxStagingPath'}=~s/\;//;
+        push (@list,`df $conf{'SandboxStagingPath'}|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+	
+	for (my $i=0;$i<$conf{'InputCount'};$i++){
+		my $Inp='Input'.$i;
+        	$conf{$Inp}=~s/\;//;
+        	push (@list,`df $conf{$Inp}|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+	}
+	
+        my %seen = ();
+        foreach my $item (@list) {
+            $seen{$item}++;
+        }
+        my @uniq = keys %seen;
+
+        return \@uniq;
+
+}
+sub show_value{
+
+	my $memperc=100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'};
+	my $fduse=($fds{'max'}-($fds{'allocated'}-$fds{'free'}));
+        my $partptr=GetPartition();
+
+	print  "Load Average(1 min)  : $load{'1min'}\n";
+	print  "Load Average(5 min)  : $load{'5min'}\n";
+	print  "Load Average(15 min) : $load{'15min'}\n";
+	printf "Memory Usage         : %.2f",$memperc;print"\%\n";
+	print  "File Descriptor Usage: $fduse\n";
+	foreach my $k(@$partptr){ 
+		chomp $k;
+		print "Disk Usage for Partition $k : $diskusage{$k}\%\n";
+	}
+
+	exit(0);
+}
+
+sub print_help{
+
+	print "Usage:$0 [OPTIONS]...\n";
+	print "\t\t--load1\t\t threshold for load average (1min)\n";
+	print "\t\t--load5\t\t threshold for load average (5min)\n";
+	print "\t\t--load15\t threshold for load average (15min)\n";
+	print "\t\t--memusage\t threshold for memory usage (\%)\n";
+	print "\t\t--fdnum\t\t threshold for used file descriptor\n";
+	print "\t\t--diskusage\t threshold for disk usage (\%)\n";
+	print "\t\t--oper\t\t operation to monitor (can be listed with --list)\n";
+	print "\t\t--list\t\t list operation supported\n";
+	print "\t\t--show\t\t show all the current values\n";
+	print "\t\t--help\t\t print this help message\n";
+
+	exit(0);
+
+}
+
+sub print_list{
+
+	print "Operation supported:\n";
+	foreach my $k(sort{$operations{$a}<=>$operations{$b}}(keys %operations)){
+                next if($k eq 'Default');
+		print "$k\n";
+	}
+	
+	exit(0);
+	
+}
