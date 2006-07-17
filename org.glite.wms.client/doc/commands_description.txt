@@ -13,15 +13,15 @@ this command.
 Submission can be performed either by using a proxy previously delegated to the WMProxy (for example with the glite-wms-job-delegate-proxy command)
 or delegating a new proxy at each new submission ("automatic delegation").
 
-In the former case the the --delegationId (-d) option must be used, specifying the id string associated with the delegated proxy.
+In the former case the the --delegationid (-d) option must be used, specifying the id string associated with the delegated proxy.
 
 E.g.:
 
-1) glite-wms-job-delegate-proxy --delegationId mydelegID
+1) glite-wms-job-delegate-proxy --delegationid mydelegID
 
-2) glite-wms-job-submit --delegationId mydelegID myjob.jdl
+2) glite-wms-job-submit --delegationid mydelegID myjob.jdl
 
-For automatic delegation the ----autm-delegation (-a) option must be used.
+For automatic delegation the --autm-delegation (-a) option must be used.
 Only one of these two options must be specified.
 
  For job collections there is a further way to perform submission. The --collection option allows indeed to
@@ -104,9 +104,9 @@ When --endpoint (-e) is not specified, the search of an available WMProxy servic
 <<<SYNOPSIS>>>
 <<<DESCRIPTION>>>
 allows delegating a user proxy to the WMProxy service. The user can either specify
-  the delegationId to be associated with the delegated proxy by using the --delegationid option:
+  the delegationid to be associated with the delegated proxy by using the --delegationid option:
 
- glite-wms-job-delegate-proxy -d mydelegationID
+ glite-wms-job-delegate-proxy -d mydelegationiD
 
   or make the command automatically generate an ID by using the --autm-delegation option.
 
@@ -417,7 +417,7 @@ Allow retrieving useful information about the user delegated proxy, the delegate
 Each piece of information has to be queried through the proper option.
 E.g.:
 
-1) glite-wms-job-info --delegationId mydelegationID
+1) glite-wms-job-info --delegationId myDelegationID
 
 2) glite-wms-job-info --jdl mySubmittedJobID
 
