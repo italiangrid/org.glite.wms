@@ -9,11 +9,11 @@
 EXTRA_DIST = \
 	glite_wms_wmproxy_load_monitor
 
-wletcwmdir = $(bindir)
+wletcwmdir = $(sbindir)
 wletcwm_DATA = glite_wms_wmproxy_load_monitor
 
 install-data-hook:
-	/bin/mv $(DESTDIR)$(bindir)/glite_wms_wmproxy_load_monitor $(DESTDIR)$(bindir)/glite_wms_wmproxy_load_monitor.template
+	/bin/mv $(DESTDIR)$(sbindir)/glite_wms_wmproxy_load_monitor $(DESTDIR)$(sbindir)/glite_wms_wmproxy_load_monitor.template
 
 CLEANFILES =
 
