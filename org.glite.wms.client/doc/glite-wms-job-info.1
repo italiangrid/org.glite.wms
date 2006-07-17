@@ -47,15 +47,19 @@ glite-wms-job-info
 
 .SH DESCRIPTION
 
+This command is only available for glite version >= 3.1.
+
 Allow retrieving useful information about the user delegated proxy, the delegated identification details of the user, the jdl of a previously submitted job, etc.
 Each piece of information has to be queried through the proper option.
 E.g.:
 
-1) glite-wms-job-info --delegationId mydelegationID
+1) glite-wms-job-info --delegationId myDelegationID
 
 2) glite-wms-job-info --jdl mySubmittedJobID
 
 3) glite-wms-job-info --proxy mySubmittedJobID
+
+
 
 .SH OPTIONS
 .HP
@@ -116,7 +120,7 @@ if this option is specified, every interactive question to the user is skipped a
 <idstring>
 
 .IP
-if this option is specified, the operations on the WMProxy service will be associated to the credential previously delegated with the id_string delegation string.It must be used in place of --autm-delegation option.
+if this option is specified, the proxy that will be delegated is identified by <id_string>. This proxy can be therefore used for operations like job registration, job submission and job list matching until its expiration specifying the <id_string>. It must be used in place of --autm-delegation option.
 .PP
 .HP
 \fB--proxy\fR, \fB-p\fR
@@ -131,6 +135,7 @@ Retrieves and displays information for the proxy delegated with the specified Jo
 
 .IP
 Retrieves and displays the jdl registered to the LB service for the specified JobId: the WMProxy service where the job was submitted is contacted and asked for needed information.
+This option is only available from glite version >= 3.1.
 .PP
 .HP
 \fB--jdl-original\fR, \fB-j\fR
@@ -138,6 +143,7 @@ Retrieves and displays the jdl registered to the LB service for the specified Jo
 
 .IP
 Retrieves and displays the original jdl submitted by the user to the WMProxy service. This information might be quite different from the registered jdl, mostly for parametric and collection of jobs.
+This option is only available from glite version >= 3.1.
 .PP
 .HP
 \fB--endpoint\fR, \fB-e\fR
@@ -152,6 +158,7 @@ when this option is specified, the operations are performed contacting the WMPro
 
 .IP
 Stores the retrieved information into the specified file instead of the standard output. The specified file path can be either a simple name or an absolute path (on the submitting machine). In the former case the file filepath is created in the current working directory.
+This option is only available from glite version >= 3.1.
 .PP
 
 .SH ENVIRONMENT
@@ -162,7 +169,7 @@ GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation i
 
 GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
 
-GLITE_WMS_WMPROXY_ENDPOINT:		This variable may be set to specify the endpoint URL
+GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL
 
 X509_CERT_DIR: This variable may be set to override the default location of the trusted certificates directory, which is normally /etc/grid-security/certificates
 
@@ -170,10 +177,11 @@ X509_USER_PROXY: This variable may be set to override the default location of th
 
 .SH FILES
 
-voName/glite_wms.conf
-The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc).
+voName/glite_wms.conf: The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc).
+
 Different configuration files can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
-/tmp/x509up_u<uid> A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
+
+/tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
 .SH AUTHORS
 
 Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
@@ -200,3 +208,32 @@ glite-wms-job-info --jdl <JobId> -o <OutputFile>
 
 When --endpoint (-e) is not specified, the search of an available WMProxy service is performed according to the modality reported in the description of the --endpoint option.
 
+.SH FILES
+
+voName/glite_wms.conf: The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc); different configuration files
+can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
+
+/tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
+
+JDL: file The file (containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); multiple jdl files can be used with the --collection option
+.SH ENVIRONMENT
+
+GLITE_WMS_CLIENT_CONFIG:  This variable may be set to specify the path location of the configuration file
+
+GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
+
+GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
+
+GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL
+
+GLOBUS_LOCATION: This variable must be set when the Globus installation is not located in the default path /opt/globus
+
+GLOBUS_TCP_PORT_RANGE="<val min> <val max>": This variable must be set to define a range of ports to be used for inbound connections in the interactivity context
+
+X509_CERT_DIR: This variable may be set to override the default location of the trusted certificates directory, which is normally /etc/grid-security/certificates
+
+X509_USER_PROXY: This variable may be set to override the default location of the user proxy credentials, which is normally /tmp/x509up_u<uid>.
+
+.SH AUTHORS
+
+Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)

@@ -40,10 +40,9 @@ glite-wms-job-delegate-proxy
 
 .SH DESCRIPTION
 
-allows delegating a user proxy to the WMProxy service. The user can either specify
-the delegationId to be associated with the delegated proxy by using the --delegationid option:
+allows delegating a user proxy to the WMProxy service. The user can either specify the delegationid to be associated with the delegated proxy by using the --delegationid option:
 
-glite-wms-job-delegate-proxy -d mydelegationID
+glite-wms-job-delegate-proxy -d mydelegationiD
 
 or make the command automatically generate an ID by using the --autm-delegation option.
 
@@ -109,7 +108,7 @@ if this option is specified, every interactive question to the user is skipped a
 <idstring>
 
 .IP
-if this option is specified, the operations on the WMProxy service will be associated to the credential previously delegated with the id_string delegation string.It must be used in place of --autm-delegation option.
+if this option is specified, the proxy that will be delegated is identified by <id_string>. This proxy can be therefore used for operations like job registration, job submission and job list matching until its expiration specifying the <id_string>. It must be used in place of --autm-delegation option.
 .PP
 .HP
 \fB--autm-delegation\fR, \fB-a\fR
@@ -140,7 +139,7 @@ GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation i
 
 GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
 
-GLITE_WMS_WMPROXY_ENDPOINT	This variable may be set to specify the endpoint URL
+GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL
 
 X509_CERT_DIR: This variable may be set to override the default location of the trusted certificates directory, which is normally /etc/grid-security/certificates
 
@@ -148,11 +147,9 @@ X509_USER_PROXY: This variable may be set to override the default location of th
 
 .SH FILES
 
-voName/glite_wms.conf		The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc); different configuration files
-can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
+voName/glite_wms.conf: The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc); different configuration files can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
 
-/tmp/x509up_u<uid>.A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
-JDL file. The file (containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); multiple jdl files can be used with the --collection option
+/tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
 .SH AUTHORS
 
 Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
@@ -172,3 +169,32 @@ glite-wms-job-delegate -a -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_ser
 
 When --endpoint (-e) is not specified, the search of an available WMProxy service is performed according to the modality reported in the description of the --endpoint option.
 
+.SH FILES
+
+voName/glite_wms.conf: The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc); different configuration files
+can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
+
+/tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
+
+JDL: file The file (containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); multiple jdl files can be used with the --collection option
+.SH ENVIRONMENT
+
+GLITE_WMS_CLIENT_CONFIG:  This variable may be set to specify the path location of the configuration file
+
+GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
+
+GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
+
+GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL
+
+GLOBUS_LOCATION: This variable must be set when the Globus installation is not located in the default path /opt/globus
+
+GLOBUS_TCP_PORT_RANGE="<val min> <val max>": This variable must be set to define a range of ports to be used for inbound connections in the interactivity context
+
+X509_CERT_DIR: This variable may be set to override the default location of the trusted certificates directory, which is normally /etc/grid-security/certificates
+
+X509_USER_PROXY: This variable may be set to override the default location of the user proxy credentials, which is normally /tmp/x509up_u<uid>.
+
+.SH AUTHORS
+
+Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
