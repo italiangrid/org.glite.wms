@@ -79,6 +79,12 @@ class LBException : public JobException {
 		const std::string& method, int code, const std::string& reason);
 };
 
+class ServerOverloadedException : public JobException {
+	public:
+	ServerOverloadedException(const std::string& file, int line,
+		const std::string& method, int code, const std::string& reason);
+};
+
 } // utilities
 } // wmproxy
 } // wms

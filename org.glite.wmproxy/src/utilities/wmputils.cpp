@@ -83,6 +83,7 @@ namespace utilities {
 
 const int SUCCESS = 0;
 const int FAILURE = 1;
+const int CHILD_FAILURE = -1;
 
 // gLite environment variables
 const char* GLITE_LOCATION = "GLITE_LOCATION";
@@ -877,7 +878,7 @@ searchForDirmanager()
 }
 	
 int
-doExecv(const string &command, vector<string> &params)
+doExecv(const string &command, vector<string> &params, string &errormsg)
 {
 	GLITE_STACK_TRY("doExecv()");
 	edglog_fn("wmputils::doExecv");
@@ -899,46 +900,59 @@ doExecv(const string &command, vector<string> &params)
 	}
 	argvs[i] = (char *) 0;
 	
-	int outcome = -1;
 	edglog(debug)<<"Forking process..."<<endl;
 	switch (fork()) {
 		case -1:
 			// Unable to fork
-			edglog(critical)<<"Unable to fork process"<<endl;
+			errormsg = "Unable to fork process";
+			edglog(critical)<<errormsg<<endl;
 			return FAILURE;
 			break;
 		case 0:
 			// child
-	        if (outcome = execv(command.c_str(), argvs)) {
+	        if (execv(command.c_str(), argvs)) {
+        		// execv failed
 	        	switch (errno) {
 		        	case E2BIG:
-	        			edglog(debug)<<"Command line too long"<<endl;
+		        		errormsg = "Command line too long";
+	        			edglog(debug)<<errormsg<<endl;
+	        			return errno;
 	        		case EACCES:
-	        			edglog(severe)<<"Command not executable"<<endl;
+	        			errormsg = "Command not executable";
+	        			edglog(severe)<<errormsg<<endl;
+	        			return errno;
 	        		case EPERM:
-	        			edglog(severe)<<"Wrong execution permissions"<<endl;
+	        			errormsg = "Wrong execution permissions";
+	        			edglog(severe)<<errormsg<<endl;
+	        			return errno;
 	        		case ENOENT:
-	        			edglog(severe)<<"Unable to find command"<<endl;
+	        			errormsg = "Unable to find command";
+	        			edglog(severe)<<errormsg<<endl;
+	        			return errno;
 	        		case ENOMEM:
-	        			edglog(severe)<<"Insufficient memory to execute command"
-	        				<<endl;
+	        			errormsg = "Insufficient memory to execute command";
+	        			edglog(severe)<<errormsg<<endl;
+	        			return errno;
 	        		case EIO:
-	        			edglog(severe)<<"I/O error"<<endl;
+	        			errormsg = "I/O error";
+	        			edglog(severe)<<errormsg<<endl;
+	        			return errno;
 	        		case ENFILE:
-	        			edglog(severe)<<"Too many opened files"<<endl;
-	        			
+	        			errormsg = "Too many opened files";
+	        			edglog(severe)<<errormsg<<endl;
+	       				return errno;
 		        	default:
-		        		edglog(severe)<<"Unable to execute command"<<endl;
-		        		return FAILURE;
-						break;
+		        		errormsg = "Unable to execute command";
+		        		edglog(severe)<<errormsg<<endl;
+		        		return errno;
 	        	}
 	        } else {
-	        	edglog(debug)<<"execv succesfully"<<endl;
+	        	edglog(debug)<<"execv/command succesfully"<<endl;
 	        }
 	        break;
         default:
         	// parent
-	    	int status = SUCCESS;
+	    	int status = 0;
 	    	wait(&status);
 	    	if (WIFEXITED(status)) {
                 edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
@@ -951,13 +965,16 @@ doExecv(const string &command, vector<string> &params)
             
 #ifdef WCOREDUMP
 			if (WCOREDUMP(status)) {
+				errormsg = "Child dumped core";
 				edglog(critical)<<"Child dumped core!!!"<<endl;
+				return CHILD_FAILURE;
 			}
 #endif // WCOREDUMP
 
 	    	if (status) {
+	    		errormsg = "Child failure";
 	    		edglog(severe)<<"Child failure, exit code: "<<status<<endl;
-	    		return FAILURE;
+	    		return CHILD_FAILURE;
 	    	}
 	    	break;
 	}

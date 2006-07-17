@@ -61,7 +61,8 @@ std::string getFileName(const std::string &path);
  */
 void fileCopy(const std::string &source, const std::string &target);
 
-int doExecv(const std::string &command, std::vector<std::string> &params);
+int doExecv(const std::string &command, std::vector<std::string> &params,
+	std::string &errormsg);
 
 void uncompressFile(const std::string &filename, const std::string &startingpath);
 

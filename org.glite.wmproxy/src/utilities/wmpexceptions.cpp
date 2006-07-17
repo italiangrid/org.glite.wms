@@ -86,6 +86,13 @@ LBException::LBException(const std::string& file,
 	error_message += reason;
 }
 
+ServerOverloadedException::ServerOverloadedException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "ServerOverloadedException")
+{
+	error_message += reason;
+}
+
 } // utilities
 } // wmproxy
 } // wms

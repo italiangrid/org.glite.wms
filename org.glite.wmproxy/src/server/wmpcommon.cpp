@@ -213,10 +213,14 @@ getType(string jdl, Ad * ad)
 void
 callLoadScriptFile(const string &operation)
 {
+	GLITE_STACK_TRY("callLoadScriptFile()");
+	edglog_fn("wmpcommon::callLoadScriptFile");
+	
 	string path = conf.getOperationLoadScriptPath(operation);
 	if (path != "") {
-		path = "./glite-load-monitor --oper Cancel --load1 0 --load5 0 --load15 0 "
-								"--memusage 30 --diskusage 40 --fdnum 50000";
+		// Default values:
+		// glite-load-monitor --oper jobRegister --load1 10 --load5 10
+		//        --load15 10 --memusage 95 --diskusage 95 --fdnum 500
 		
 		string str = "";
 		string command = "";
@@ -250,12 +254,26 @@ callLoadScriptFile(const string &operation)
 				<<"\nIgnoring load script call..."<<endl;
 		} else {
 			// Executing load script file
+			string errormsg = "";
 			edglog(debug)<<"Executing load script file: "<<command<<endl;
-			if (int outcome = wmputilities::doExecv(command, params)) {
-				/*switch (outcome) {
-					case 1:
-				}*/
+			if (int outcome = wmputilities::doExecv(command, params, errormsg)) {
+				switch (outcome) {
+					case -1:
+						edglog(critical)<<"WARNING: System load is too high"<<endl;
+						throw ServerOverloadedException( __FILE__, __LINE__,
+	  						"callLoadScriptFile()", 
+	  						wmputilities::WMS_FILE_SYSTEM_ERROR,
+	   						"System load is too high");
+	   					break;
+	   				default:
+	   					edglog(error)<<"Unable to execute load script file:\n"
+	   						<<errormsg<<endl;
+	   					edglog(error)<<"Error code: "<<outcome<<endl;
+	   					break;
+				}
 			}
 		}
 	}
+	
+	GLITE_STACK_CATCH();
 }
