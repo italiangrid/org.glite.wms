@@ -234,7 +234,6 @@ sub test_threshold{
 
         
         if($disablecount >= $operations{$oper}){
-                print "NOK\n";
 
                 if($load1warning){
                 	print STDERR "Threshold for Load Average(1 min): $Load1 => Detected value for Load Average(1 min): $load{'1min'}\n";
@@ -261,7 +260,6 @@ sub test_threshold{
                 exit(1);
 
         }else{
-                print "OK\n";
                 exit(0);
         }
 
