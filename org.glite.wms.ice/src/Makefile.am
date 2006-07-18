@@ -66,7 +66,8 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(BOOST_PO_LIBS) \
-		-ldb_cxx-4.1
+		-ldb_cxx-4.1 \
+		-lvomsapi
 
 dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
@@ -92,7 +93,8 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		-lglite_ce_monitor_consumer \
-		-ldb_cxx-4.1
+		-ldb_cxx-4.1 \
+		-lvomsapi
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
