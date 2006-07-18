@@ -35,9 +35,12 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
     case jobstat::RUNNING:
         return new job_running_event( theJob ); // FIXME
     case jobstat::REALLY_RUNNING:
-        return new job_really_running_event( theJob, theJob.get_wn_sequence_code() );
+        return new job_really_running_event( theJob );
     case jobstat::CANCELLED:
-        return new job_cancelled_event( theJob );
+        if ( theJob.is_killed_by_ice() )
+            return new job_aborted_event( theJob );
+        else
+            return new job_cancelled_event( theJob );
     case jobstat::HELD:
         return new job_suspended_event( theJob );
     case jobstat::ABORTED:

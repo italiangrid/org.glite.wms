@@ -92,7 +92,7 @@ namespace { // anonymous namespace
         /**
          * Returns true iff the notification has an exit_code attribute
          */
-        bool has_exit_code( void ) const { return m_has_exit_code; };
+        // bool has_exit_code( void ) const { return m_has_exit_code; };
 
         /**
          * Returns the exit code
@@ -121,6 +121,7 @@ namespace { // anonymous namespace
         string m_cream_job_id;
         api::job_statuses::job_status m_job_status;
         bool m_has_exit_code;
+        bool m_has_failure_reason;
         int m_exit_code;
         string m_failure_reason;
         string m_worker_node;
@@ -131,6 +132,7 @@ namespace { // anonymous namespace
     //
     StatusNotification::StatusNotification( const string& ad_string ) throw( iceUtil::ClassadSyntax_ex& ) :
         m_has_exit_code( false ),
+        m_has_failure_reason( false ),
         m_exit_code( 0 ) // default
     {
         CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
@@ -159,6 +161,7 @@ namespace { // anonymous namespace
         }
 
         if ( ad->EvaluateAttrString( "FAILURE_REASON", m_failure_reason ) ) {
+            m_has_failure_reason = true;
             boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
         }
 
@@ -172,9 +175,11 @@ namespace { // anonymous namespace
     {
         j.setStatus( get_status() );
         j.set_worker_node( m_worker_node );
-        j.set_failure_reason( get_failure_reason() );
-        if ( has_exit_code() ) {
-            j.set_exit_code( get_exit_code() );
+        if ( m_has_failure_reason ) {
+            j.set_failure_reason( m_failure_reason );
+        }
+        if ( m_has_exit_code ) {
+            j.set_exit_code( m_exit_code );
         }
     }
 

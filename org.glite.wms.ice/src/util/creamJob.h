@@ -66,6 +66,7 @@ namespace glite {
           int    m_exit_code; //! the job exit code
           std::string m_failure_reason; //! The job failure reason (if the job is done_failed or aborted)
           std::string m_worker_node; //! The worker node on which the job is being executed
+          bool m_is_killed_by_ice;
 
 	public:
 
@@ -95,8 +96,21 @@ namespace glite {
           void set_exit_code( int c ) { m_exit_code = c; }
           //! Sets the sequence code for the job sent to the WN
           void set_wn_sequence_code( const std::string& wn_seq ) { m_wn_sequence_code = wn_seq; };
-          //! Sets the job failure reason
-          void set_failure_reason( const std::string f ) { m_failure_reason = f; };
+
+          /**
+           * Sets the job failure reason. NOTE: the failure reason can
+           * be set ONLY ONCE. Attempts to set the failure reason
+           * multiple times will result in only the first attempt to
+           * succeed, and the other ones to silently be ignored. This
+           * would probably need to be fixed. 
+           *
+           */
+          void set_failure_reason( const std::string f ) { 
+              if ( m_failure_reason.empty() ) {
+                  m_failure_reason = f; 
+              }
+          };
+
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return m_grid_jobid; }
           //! Gets the job exit code
@@ -142,6 +156,23 @@ namespace glite {
 	  void   resetStatusPollRetryCount( void ) { m_statusPollRetryCount=0; }
           //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, idle, running or held
           bool is_active( void ) const;
+
+          /**
+           * Returns true iff the job was killed by ICE for some
+           * reason (e.g., because the proxy expired). This is
+           * important as a job which has been killed by ICE should be
+           * reported to be in status ABORTED.
+           */
+          bool is_killed_by_ice( void ) const { return m_is_killed_by_ice; }
+
+
+          /**
+           * This method is used to indicate that this job has been
+           * killed by ICE, instead of by the user. This is used by
+           * logging the appropriate event when the job terminates.
+           */
+          void set_killed_by_ice( void ) { m_is_killed_by_ice = true; }
+
 
           /**
            * Checke whether a job can be purged (by issuing a "purge"

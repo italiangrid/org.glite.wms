@@ -334,9 +334,8 @@ int job_running_event::execute( iceLBContext* ctx )
 // job really running event
 //
 //////////////////////////////////////////////////////////////////////////////
-job_really_running_event::job_really_running_event( const CreamJob& j, const std::string& wn_seq ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Really Running Event" ),
-    m_wn_seq( wn_seq )
+job_really_running_event::job_really_running_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Really Running Event" )
 {
 
 }
@@ -344,9 +343,9 @@ job_really_running_event::job_really_running_event( const CreamJob& j, const std
 int job_really_running_event::execute( iceLBContext* ctx )
 {
 #ifdef GLITE_WMS_HAVE_LBPROXY
-    return edg_wll_LogReallyRunningProxy( *(ctx->el_context), m_wn_seq.c_str() );
+    return edg_wll_LogReallyRunningProxy( *(ctx->el_context), m_job.get_wn_sequence_code().c_str() );
 #else
-    return edg_wll_LogReallyRunning( *(ctx->el_context), m_wn_seq.c_str() );
+    return edg_wll_LogReallyRunning( *(ctx->el_context), m_job.get_wn_sequence_code().c_str() );
 #endif
 }
 
@@ -372,6 +371,29 @@ int job_cancelled_event::execute( iceLBContext* ctx )
     return edg_wll_LogDoneCANCELLED( *(ctx->el_context), 
                                      m_job.get_failure_reason().c_str(),
                                      m_job.get_exit_code() );
+#endif
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// job cancelled event
+//
+//////////////////////////////////////////////////////////////////////////////
+job_aborted_event::job_aborted_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "Job Aborted Event, reason=[%1%]" ) % j.get_failure_reason() ) )
+{
+
+}
+
+int job_aborted_event::execute( iceLBContext* ctx )
+{
+#ifdef GLITE_WMS_HAVE_LBPROXY
+    return edg_wll_LogAbortProxy( *(ctx->el_context), 
+                                  m_job.get_failure_reason().c_str() );
+#else
+    return edg_wll_LogAbort( *(ctx->el_context), 
+                             m_job.get_failure_reason().c_str() );
 #endif
 }
 

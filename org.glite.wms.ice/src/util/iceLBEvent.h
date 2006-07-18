@@ -207,6 +207,14 @@ namespace glite {
                 };
 
 
+                class job_aborted_event : public iceLBEvent {
+                public:
+                    job_aborted_event( const CreamJob& j );
+                    int execute( iceLBContext* ctx );
+                };
+
+
+
                 class job_running_event : public iceLBEvent {
                 public:
                     job_running_event( const CreamJob& j );
@@ -216,10 +224,8 @@ namespace glite {
 
                 class job_really_running_event : public iceLBEvent {
                 public:
-                    job_really_running_event( const CreamJob& j, const std::string& wn_seq );
+                    job_really_running_event( const CreamJob& j );
                     int execute( iceLBContext* ctx );
-                protected:
-                    std::string m_wn_seq;
                 };
 
 

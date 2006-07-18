@@ -165,6 +165,8 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
     
     try {
 	theProxy->Authenticate( theJob.getUserProxyCertificate() );
+        theJob.set_failure_reason( "Aborted by user" );
+        util::jobCache::getInstance()->put( theJob );
 	theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
     } catch(cream_api::soap_proxy::auth_ex& ex) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("auth_ex: ") + ex.what() ) );
@@ -180,7 +182,9 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ) );
         throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
     }
-    m_lb_logger->logEvent( new util::cream_cancel_done_event( theJob, "User Cancelled" ) );
+
+    // This event should be logged AFTER the cancel process has completed
+    // m_lb_logger->logEvent( new util::cream_cancel_done_event( theJob, "User Cancelled" ) );
 
     // util::jobCache::getInstance()->erase( it );
 }

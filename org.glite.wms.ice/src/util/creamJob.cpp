@@ -49,7 +49,8 @@ iceUtil::CreamJob::CreamJob( ) :
     m_last_seen( time(0) ),
     m_end_lease( m_last_seen + 60*30 ), // FIXME: remove hardcoded default
     m_statusPollRetryCount( 0 ),
-    m_exit_code( 0 )
+    m_exit_code( 0 ),
+    m_is_killed_by_ice( false )
 {
 
 }
@@ -74,6 +75,8 @@ string iceUtil::CreamJob::serialize( void ) const
     ad.InsertAttr( "wn_sequence_code", m_wn_sequence_code );
     ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
     ad.InsertAttr( "worker_node", m_worker_node );
+    ad.InsertAttr( "is_killed_by_ice", m_is_killed_by_ice );
+
     classad::ClassAdParser parser;
     classad::ClassAd* jdlAd = parser.ParseClassAd( m_jdl );
     // Updates sequence code
@@ -122,9 +125,10 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
          ! ad->EvaluateAttrString( "delegation_id", m_delegation_id ) ||
          ! ad->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ||
          ! ad->EvaluateAttrString( "failure_reason", m_failure_reason ) ||
-         ! ad->EvaluateAttrString( "worker_node", m_worker_node ) ) {
+         ! ad->EvaluateAttrString( "worker_node", m_worker_node ) ||
+         ! ad->EvaluateAttrBool( "is_killed_by_ice", m_is_killed_by_ice ) ) {
 
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node" );
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node, is_killed_by_ice" );
 
     }
     m_status = (api::job_statuses::job_status)st_number;

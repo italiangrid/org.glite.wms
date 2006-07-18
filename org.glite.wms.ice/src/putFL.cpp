@@ -2,11 +2,6 @@
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileLocker.h"
 #include "glite/wms/common/utilities/FileListLock.h"
-//#include "glite/ce/cream-client-api-c/string_manipulation.h"
-// #include "glite/wmsutils/exception/Exception.h"
-// #include "glite/wmsutils/jobid/JobId.h"
-// #include "glite/wms/jdl/RequestAdExceptions.h"
-// #include "glite/wms/jdl/JobAd.h"
 #include "classad_distribution.h"
 
 #include <string>
@@ -48,7 +43,7 @@ int main(int argc, char* argv[]) {
     Buf += buf;
     //    cout << "Buf = "<<Buf<<endl;
   }
-
+#ifndef PIPPO
   is.close();
   classad::ClassAdParser parser;
   classad::ClassAd *ad = parser.ParseClassAd( Buf.c_str() );
@@ -72,7 +67,9 @@ int main(int argc, char* argv[]) {
 
   string request = "[arguments = [ jobad = " + Buf
     + " ]; command = \"Submit\"; protocol = \"1.0.0\" ]";
-
+#else
+  string request( Buf );
+#endif
   cout << "Adding JDL <" 
        << request << "> to filelist..." << endl;
   {
