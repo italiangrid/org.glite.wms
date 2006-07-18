@@ -10,6 +10,8 @@
 
 #include "wmpconfiguration.h"
 
+#include <boost/regex.hpp>
+
 // Utilities
 #include "utilities/wmputils.h" // getServerHost()
 
@@ -84,6 +86,37 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
     }
 	GLITE_STACK_CATCH();
 }
+
+string
+resolveEnvironmentVariables(const string &envstring)
+{
+	GLITE_STACK_TRY("resolveEnvironmentVariables()");
+	char *value = NULL;
+	string result = envstring;
+	string prima;
+	string variabile;
+	string dopo;
+	boost::match_results<string::const_iterator> pieces;
+	static boost::regex expression( "^(.*)\\$\\{(.+)\\}(.*)$" );
+	static boost::regex other( "^\\[\\[(.*)\\]\\]$" );
+	if (envstring != "") {
+		while (boost::regex_match(result, pieces, expression)) {
+			prima.assign(pieces[1].first, pieces[1].second);
+			variabile.assign(pieces[2].first, pieces[2].second);
+			dopo.assign(pieces[3].first, pieces[3].second);
+	
+			if ((value = getenv(variabile.c_str()))) {
+				result = prima + string(value) + dopo;
+				free(value);
+			} else {
+				result = prima + dopo;
+			}
+		}
+	}
+	return result;
+	GLITE_STACK_CATCH();
+}
+
 
 // Constructor
 WMProxyConfiguration::WMProxyConfiguration()
@@ -346,9 +379,9 @@ WMProxyConfiguration::getOperationLoadScriptPath(const string &operation)
 	if (this->operationloadscripts) {
 		glite::jdl::Ad ad(*this->operationloadscripts);
 		if (ad.hasAttribute(operation)) {
-			returnvalue = ad.getString(operation);
+			returnvalue = resolveEnvironmentVariables(ad.getString(operation));
 		} else if (ad.hasAttribute(ALL_OPERATIONS)) {
-			returnvalue = ad.getString(ALL_OPERATIONS);
+			returnvalue = resolveEnvironmentVariables(ad.getString(ALL_OPERATIONS));
 		}
 	}
 	return returnvalue;
