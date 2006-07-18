@@ -176,11 +176,15 @@ WMPLBSelector::updateSelectedIndexWeight(lbcallresult result)
 		if ((selectedlbselectioninfo->weight + SUCCESS_WEIGHT_STEP)
 				< WEIGHT_UPPER_LIMIT) {
 			selectedlbselectioninfo->weight += SUCCESS_WEIGHT_STEP;
+		} else {
+			selectedlbselectioninfo->weight = WEIGHT_UPPER_LIMIT;
 		}
 	} else {
 		if ((selectedlbselectioninfo->weight - FAIL_WEIGHT_STEP)
-				>= WEIGHT_LOWER_LIMIT) {
+				> WEIGHT_LOWER_LIMIT) {
 			selectedlbselectioninfo->weight -= FAIL_WEIGHT_STEP;
+		} else {
+			selectedlbselectioninfo->weight = WEIGHT_LOWER_LIMIT;
 		}
 	}
 	
@@ -343,10 +347,9 @@ WMPLBSelector::callServiceDiscovery()
     if (this->lbsdtype != "") {
 		SDServiceList *serviceList = NULL;
 		SDException ex;
-		SDVOList vos = {1, NULL};
 		edglog(debug)<<"Querying Service Discovery..."<<endl;
 		// SD_listServices parameters: type, site, volist, exception
-		serviceList = SD_listServices(this->lbsdtype.c_str(), NULL, &vos, &ex);
+		serviceList = SD_listServices(this->lbsdtype.c_str(), NULL, NULL, &ex);
 		if (serviceList) {
 			if (serviceList->numServices > 0) {
 				for (int i = 0; i < serviceList->numServices; i++) {
