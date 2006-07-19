@@ -260,6 +260,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                            << log4cpp::CategoryStream::ENDLINE
                            );
             ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
+            cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
