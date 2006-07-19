@@ -7,7 +7,7 @@
  *
  */
 
-// NEEDED?
+
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wms/common/logger/common.h"
 #include "glite/lb/JobStatus.h"
@@ -23,18 +23,18 @@
  * it allows to check the proxy cerfticate's parameters such us validity, retrieve issuer etc etc.
  * it also allows to manipulate VirtualOrganisation certificate properties, retreving, if present, VO default names and groups
  *
- * @brief LB Event wrapper class
+ * @brief User Credential Event wrapper class
  * @version 0.1
  * @date 15 April 2002
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
-class  UserCredential {
+class  UCredential {
 	public:
 		/** Constructor */
-		UserCredential ( const std::string& proxy_file) ;
+		UCredential ( const std::string& proxy_file) ;
 		/**User Credential default Destructor
 		*/
-		~UserCredential();
+		~UCredential();
 		/** Retrieve the default Virtual Organisation name
 		* @return the default VO
 		*/
@@ -63,7 +63,7 @@ class  UserCredential {
 		std::string get_error () ;
 	private:
 		int vo_data_error , timeleft ;
-		std::string proxy_file, vo_error ;
+		std::string proxy_file;
 		bool load_voms ( vomsdata& d ) ;
 };
 

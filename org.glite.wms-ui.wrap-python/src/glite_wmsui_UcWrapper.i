@@ -32,10 +32,10 @@ namespace std {
 
 %inline %{
 using namespace std;
-class  UserCredential {
+class  UCredential {
 	public:
-		~UserCredential();
-		UserCredential ( const string& proxy_file) ;
+		~UCredential();
+		UCredential ( const string& proxy_file) ;
 		string  getDefaultVoName ();
 		string  getDefaultFQAN ();
 		vector <string> getVoNames ();

@@ -1,8 +1,8 @@
 /***************************************************************************
     filename  : UcWrapper.cpp
     begin     : Mon May 13
-    author    : Annalisa Terracina
-    email     : fpacini@datamat.it
+    author    : Alessandro Maraschini
+    email     : egee@datamat.it
     copyright : (C) 2002 by DATAMAT
 ***************************************************************************/
 #include <iostream>
@@ -16,7 +16,7 @@ using namespace glite::wmsutils::exception ;
 
 
 /************************************************
-*   UserCredential VOMS implementation
+*   UCredential VOMS implementation
 *************************************************/
 /******************************************************************
  method :load_chain
@@ -78,11 +78,11 @@ STACK_OF(X509) *load_chain(char *certfile, std::string& vo_error){
 
 
 /** Constructor */
-UserCredential::UserCredential ( const std::string& file){
+UCredential::UCredential ( const std::string& file){
 	proxy_file = file ;
 };
 /** Default Dtor*/
-UserCredential::~UserCredential()  { }  ;
+UCredential::~UCredential()  { }  ;
 
 
 
@@ -131,7 +131,7 @@ time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 /******************************************************************
 private method:getIssuer
 *******************************************************************/
-std::string  UserCredential::getIssuer(){
+std::string  UCredential::getIssuer(){
 	BIO *in = NULL;
 	X509 *x = NULL;   // It is not used anymore. should be equal to pcd->ucert
 	in = BIO_new(BIO_s_file());
@@ -151,7 +151,7 @@ std::string  UserCredential::getIssuer(){
 /******************************************************************
 private method:getExpiration
 *******************************************************************/
-int UserCredential::getExpiration(){
+int UCredential::getExpiration(){
 	BIO *in = NULL;
 	in = BIO_new(BIO_s_file());
 	if (in) {
@@ -164,10 +164,11 @@ int UserCredential::getExpiration(){
 /******************************************************************
 private method: load_voms
 *******************************************************************/
-bool UserCredential::load_voms (vomsdata& d){
+bool UCredential::load_voms (vomsdata& d){
 	BIO  *in = NULL;
 	X509 *x  = NULL;
 	d.data.clear() ;
+	string vo_error;
 	STACK_OF(X509) *chain = NULL;
 	SSLeay_add_ssl_algorithms();
 	char *of   = const_cast<char *>(proxy_file.c_str());
@@ -218,7 +219,7 @@ vector <string> load_groups( voms &v ){
 /******************************************************************
  method: getDefaultVoName
 *******************************************************************/
-std::string  UserCredential::getDefaultVoName (){
+std::string  UCredential::getDefaultVoName (){
 	vomsdata vo_data ;
 	if (load_voms(  vo_data )  ) return "";
 	voms v;
@@ -235,7 +236,7 @@ std::string  UserCredential::getDefaultVoName (){
 /******************************************************************
  method: getDefaultVoName
 *******************************************************************/
-std::string  UserCredential::getDefaultFQAN (){
+std::string  UCredential::getDefaultFQAN (){
 	vomsdata vo_data ;
 	if (load_voms(  vo_data )  ) return "";
 	voms v;
@@ -256,7 +257,7 @@ std::string  UserCredential::getDefaultFQAN (){
  method: getVoNames
 *******************************************************************/
 
-std::vector <std::string> UserCredential::getVoNames (){
+std::vector <std::string> UCredential::getVoNames (){
 	vector <string> vect ; // contains the vo names
 	vomsdata vo_data ;
 	if (   load_voms(  vo_data )  ) return vect ;
@@ -268,7 +269,7 @@ std::vector <std::string> UserCredential::getVoNames (){
 /******************************************************************
  method: getGroups
 *******************************************************************/
-std::vector <std::string> UserCredential::getGroups ( const std::string& voname ) {
+std::vector <std::string> UCredential::getGroups ( const std::string& voname ) {
 	vomsdata vo_data ;
 	vector<string> empty ;
 	if (   load_voms(  vo_data ) )
@@ -283,7 +284,7 @@ std::vector <std::string> UserCredential::getGroups ( const std::string& voname 
 /******************************************************************
  method: getDefaultGroups
 *******************************************************************/
-std::vector <std::string > UserCredential::getDefaultGroups (){
+std::vector <std::string > UCredential::getDefaultGroups (){
 	vomsdata vo_data ;
 	vector<string> empty ;
 	if (   load_voms(  vo_data )   )
@@ -299,7 +300,7 @@ std::vector <std::string > UserCredential::getDefaultGroups (){
 /******************************************************************
  method: containsVo
 *******************************************************************/
-bool UserCredential::containsVo ( const std::string& voname ) {
+bool UCredential::containsVo ( const std::string& voname ) {
 	vomsdata vo_data ;
 	if (   load_voms(  vo_data ) )
 		return false;
@@ -311,10 +312,12 @@ bool UserCredential::containsVo ( const std::string& voname ) {
 /******************************************************************
  method: get_error
 *******************************************************************/
-string UserCredential::get_error() {
+string UCredential::get_error() {
+	/*
 	if (!vo_error.size()){
 		return vo_error;
 	}
+	*/
 	switch ( vo_data_error ){
 		case  VERR_NONE:
 			return "No Error Found" ;
