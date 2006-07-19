@@ -1,6 +1,7 @@
 
 #include "jobDbManager.h"
 #include <boost/filesystem/operations.hpp>
+#include <sys/vfs.h> // for statfs
 
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
@@ -31,7 +32,7 @@ int iceUtil::cursorWrapper::get(Dbt* key, Dbt* data)
 //---------------- jobDbManager -------------------------------
 
 //____________________________________________________________________
-iceUtil::jobDbManager::jobDbManager( const string& envHome )
+iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
   : m_env(0),
     m_envHome( envHome ), // The directory pointed by
     			  // envHome MUST exist
@@ -52,6 +53,11 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome )
      return;
   }
 
+  // Get the filesystem blocksize
+  struct statfs fsinfo;
+  statfs( m_envHome.c_str(), &fsinfo );
+  
+  
 
   // FIXME: for now we do not use the flag DB_THREAD because
   // the concurrency protection will be made at higher level
@@ -61,19 +67,29 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome )
     // FIXME: FOR NOW we do not use the flag DB_THREAD because
     // the concurrency protection will be made at higher level
     // (by the client of this class, i.e. by the jobCache object)
-    m_env.open(m_envHome.c_str(), DB_CREATE |
-    				  DB_RECOVER |
-    		 		  DB_INIT_LOCK |
-				  DB_INIT_LOG |
-				  DB_INIT_MPOOL |
-				  DB_INIT_TXN,
-				  0);
+    int envFlags = DB_CREATE | DB_INIT_LOCK | 
+		   DB_INIT_LOG | DB_INIT_MPOOL | DB_INIT_TXN;
+    if( recover ) envFlags |= DB_RECOVER; // this flags causes an exception raising by
+					  // the DbEnv::txn_begin call when a another
+					  // process opens the database that is already
+					  // handled by the process doing the txn_begin call.
+
+    
+    m_env.open(m_envHome.c_str(), envFlags, 0);
+
     m_env_open = true;
     // -------------------------------------------------------
 			  
     m_creamJobDb = new Db(&m_env, 0);
     m_cidDb      = new Db(&m_env, 0);
     m_gidDb      = new Db(&m_env, 0);
+    
+    //int psize = 4 * fsinfo.f_bsize;
+    
+    //cout << endl<< "*** Setting database pagesize to ["<< psize <<"]"<<endl<<endl;
+    m_creamJobDb->set_pagesize( fsinfo.f_bsize );
+    m_cidDb->set_pagesize( fsinfo.f_bsize );
+    m_gidDb->set_pagesize( fsinfo.f_bsize );
     
     // -------------------------------------------------------
     

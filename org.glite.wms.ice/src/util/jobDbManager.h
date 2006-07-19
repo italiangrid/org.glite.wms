@@ -38,7 +38,7 @@ namespace util {
     jobDbManager(const jobDbManager&) : m_env(0) {}
      
    public:
-    jobDbManager(const std::string& env_home); // the directory pointed by env_home
+    jobDbManager(const std::string& env_home, bool recover = false); // the directory pointed by env_home
     					       // MUST exist
 					       // If the object creation fails
 					       // this->isValid() returns false
