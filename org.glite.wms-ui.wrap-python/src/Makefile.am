@@ -165,6 +165,7 @@ libglite_wmsui_SdWrapper_la_LIBADD = \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
+	-lglite-sd-c \
 	-lstdc++
 
 

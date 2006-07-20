@@ -7,21 +7,15 @@
  *
  */
 
-
-#include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/common/logger/common.h"
-#include "glite/lb/JobStatus.h"
 #include <vector>
-
-/*********************
-* VOMS includes:
-*********************/
-#include "glite/security/voms/voms_api.h"
+#include <string>
+// Service Discovery include:
+#include "ServiceDiscovery.h"
 
 /**
- * Provide a wrapper that manages user cerificate general information
- * it allows to check the proxy cerfticate's parameters such us validity, retrieve issuer etc etc.
- * it also allows to manipulate VirtualOrganisation certificate properties, retreving, if present, VO default names and groups
+ * Provide a wrapper that manages Service Discovery Query
+ * it allows to Retrieve information about services published on the net
+ * such as LB available servers
  *
  * @brief Service Discovery wrapper class
  * @version 0.1
@@ -31,10 +25,17 @@
 class  ServiceDiscovery {
 	public:
 		/** Constructor */
-		ServiceDiscovery ( const std::string& vo) ;
-		/** Service Discovery default Destructor
-		*/
+		ServiceDiscovery () ;
+		/** Service Discovery default Destructor */
 		~ServiceDiscovery();
+		/** Query the Service Discovery for available services
+		*@param voName the Virtual Organisation the user is working for (empty string for all vo)
+		*@param sdType the Service Type requested
+		*/
+		std::vector<std::string> lookForServices(const std::string &voName,const std::string &sdType);
+		std::string get_error ();
+	private:
+		std::string sdError;	
 };
 
 #endif

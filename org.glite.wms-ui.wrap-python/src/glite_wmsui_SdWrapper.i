@@ -32,10 +32,13 @@ namespace std {
 
 %inline %{
 using namespace std;
-class  ServiceDiscovery {
+typedef std::string String;
+ class  ServiceDiscovery {
 	public:
 		~ServiceDiscovery();
-		ServiceDiscovery (const string& vo);
+		ServiceDiscovery ();
+		vector<String> lookForServices (const string &voName,const string &sdType);
+		std::string get_error ();
 };
 %}
 
