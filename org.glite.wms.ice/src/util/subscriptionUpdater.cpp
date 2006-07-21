@@ -42,23 +42,13 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
     return;
   }
 
-  {
-    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    if( m_conf->getListenerEnableAuthN() )
-      m_myname = boost::str( boost::format("https://%1%:%2%") % tmp_myname % m_conf->getListenerPort() );
-    else {
-      m_myname = boost::str( boost::format("http://%1%:%2%") % tmp_myname % m_conf->getListenerPort() );
-    }
-  }
-  
-  m_subMgr->setConsumerURLName( m_myname );
 }
 
 //______________________________________________________________________________
 void iceUtil::subscriptionUpdater::body( void )
 {
   vector<Subscription> vec;
-  vec.reserve(100);
+  vec.reserve(10);
   set<string> ceurls;
 
   while( !isStopped() ) {
@@ -67,43 +57,21 @@ void iceUtil::subscriptionUpdater::body( void )
 		   << log4cpp::CategoryStream::ENDLINE);
     ceurls.clear();
     retrieveCEURLs(ceurls);
-
     for(set<string>::iterator it=ceurls.begin(); it != ceurls.end(); it++) 
     {
       vec.clear();
-      try {
-	boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
-        m_subMgr->list(*it, vec);
-      }
-      catch(exception& ex) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionUpdater::body() - "
-		       << "Error retrieving list of subscriptions: "
-		       << ex.what() << log4cpp::CategoryStream::ENDLINE);
-	return;
+      //m_subMgr->list( *it, vec );
+      
+      if( !m_subMgr->subscribedTo( *it, vec ) ) {
+        CREAM_SAFE_LOG(m_log_dev->warnStream() << "subscriptionUpdater::body() - "
+ 		       << "Subscription to [" << *it << "] disappeared! Going to re-subscribe to it."
+ 		       << log4cpp::CategoryStream::ENDLINE);
+ 	m_subMgr->subscribe( *it );
       }
       
-      bool lost_subscription = true;
-      for( vector<Subscription>::const_iterator sit=vec.begin();
-           sit != vec.end();
-	   ++sit)
-      {
-	 if( sit->getConsumerURL() == m_myname ) {
-	   lost_subscription = false;
-	   break;
-	 }
-      }
-	
-      if( lost_subscription/*vec.empty()*/ ) 
-      {
-        // this means that ICE is not subscribed to current CEMon
-	// it should be! something happened... must re-subscribe
-	CREAM_SAFE_LOG(m_log_dev->warnStream() << "subscriptionUpdater::body() - "
-		       << "Subscription to [" << *it << "] disappeared! Going to re-subscribe to it."
-		       << log4cpp::CategoryStream::ENDLINE);
-	m_subMgr->subscribe( *it );
-      } else
-        this->renewSubscriptions(vec);
+      this->renewSubscriptions(vec);
     }
+    
     sleep( m_iteration_delay );
   }
 }
@@ -116,9 +84,8 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
       sit++)
     {
       time_t timeleft = sit->getExpirationTime() - time(NULL);
-      {
-      //  boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-        if(timeleft < m_conf->getSubscriptionUpdateThresholdTime()) {
+   
+      if(timeleft < m_conf->getSubscriptionUpdateThresholdTime()) {
           CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
 			 << "Updating subscription ["<<sit->getSubscriptionID() << "]"
 			 << " at [" <<sit->getEndpoint()<<"]"
@@ -140,10 +107,22 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
 			     << newID << "]" << log4cpp::CategoryStream::ENDLINE);
 	      sit->setSubscriptionID(newID);
 	      sit->setExpirationTime( time(NULL) + m_conf->getSubscriptionDuration() );
-	    }
+	    } else {
+	      
+	      
+	      // subscription renewal failed. Try make a new one
+	      if(!m_subMgr->subscribe( sit->getEndpoint() )) {
+	        CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionUpdater::renewSubscriptions() - "
+			       << "Failed while making new subscription. Wont receive notifications... "
+			       << log4cpp::CategoryStream::ENDLINE);
+		// let's proceed without notification. The poller will work for us ;)
+	      }
+	      
+	      
+	    } // else
 	  }
-	} // if(timeleft < ....)
-      }
+       } // if(timeleft < ....)
+      
     }
 }
 
@@ -171,10 +150,7 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
       {
 	jobList.push_back( *it );
       }
-    } // unlock the jobCache (other thread can continue their job)
-    
-//    for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
-//       it != iceUtil::jobCache::getInstance()->end(); ++it) 
+    } 
     for(vector<CreamJob>::iterator it = jobList.begin();
         it != jobList.end();
 	++it)
@@ -188,7 +164,7 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 	      api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_conf->getHostProxyFile() );
 	      api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
 	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
-	      urls.insert( cemonURL );
+	      //urls.insert( cemonURL );
 	  } catch(exception& ex) {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionUpdater::retrieveCEURLs() - Error retrieving"
 			   <<" CEMon's URL from CREAM's URL: "
@@ -202,11 +178,12 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
                                   );
 	      CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionUpdater::retrieveCEURLs() - Using CEMon URL ["
 			     << cemonURL << "]" << log4cpp::CategoryStream::ENDLINE);
-	      urls.insert( cemonURL );
+	      //urls.insert( cemonURL );
 	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
 	  }
-	} else {
+	} /* else {
           urls.insert( cemonURL );
-	}
+	} */
+	urls.insert( cemonURL );
     }
 }

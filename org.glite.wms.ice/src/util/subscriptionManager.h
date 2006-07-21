@@ -34,13 +34,13 @@ namespace util {
     log4cpp::Category *m_log_dev;
     bool m_valid;
     static subscriptionManager* s_instance;
-    std::string m_myname;
+    //std::string m_myname;
     std::string m_myurl;
     std::string m_lastSubscriptionID;
     struct tm m_Time;
     char m_aT[256];
     time_t tp;
-    std::vector<Subscription> m_vec;
+    //std::vector<Subscription> m_vec;
 
    protected:
     subscriptionManager();
@@ -58,16 +58,17 @@ namespace util {
 				   std::string& newID
 				   );
 
-    bool        subscribedTo(const std::string& url);
+    bool        subscribedTo(const std::string& url, std::vector<Subscription>& target);
 
     bool        isValid( void ) const { return m_valid; }
+    
     void        list(const std::string& url, std::vector<Subscription>&)
                   throw(std::exception&);
+		  
     std::string getLastSubscriptionID() const { return m_lastSubscriptionID; }
 
     static boost::recursive_mutex mutex;
     
-    void setConsumerURLName( const std::string& name ) { m_myname = name; }
   };
 
 }

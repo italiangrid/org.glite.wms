@@ -28,10 +28,9 @@ subscriptionManager::subscriptionManager()
     m_conf( iceConfManager::getInstance() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_valid(true),
-    m_myname(""),
+    //m_myname(""),
     m_myurl(""),
-    m_lastSubscriptionID(""),
-    m_vec()
+    m_lastSubscriptionID("")
 {
   CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
 		 << log4cpp::CategoryStream::ENDLINE);
@@ -48,10 +47,10 @@ subscriptionManager::subscriptionManager()
   }
 
   m_T.addDialect(NULL);
-  m_vec.reserve(100);
-  
+  //m_vec.reserve(100);
+  string tmp_myname;
   try {
-    m_myname = getHostName();
+    tmp_myname = getHostName();
     
   } catch(runtime_error& ex) {
     CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR getting local hostname: "
@@ -65,7 +64,7 @@ subscriptionManager::subscriptionManager()
   else
     tmp_prefix = "http";
     
-  m_myurl = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % m_myname % iceConfManager::getInstance()->getListenerPort() );
+  m_myurl = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname % iceConfManager::getInstance()->getListenerPort() );
     
 }
 
@@ -82,14 +81,15 @@ subscriptionManager* subscriptionManager::getInstance()
 void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   throw (exception&)
 {
-  CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::list() - retrieving list of "
+  CREAM_SAFE_LOG(m_log_dev->infoStream() 
+  		 << "subscriptionManager::list() - retrieving list of "
 		 << "subscriptions from [" << url << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
   
   m_ceSMgr.list(url, vec); // can throw an std::exception
   
-  for(vector<Subscription>::const_iterator it = m_vec.begin();
-      it != m_vec.end();
+  for(vector<Subscription>::const_iterator it = vec.begin();
+      it != vec.end();
       it++) 
     {
       tp = it->getExpirationTime();
@@ -111,14 +111,15 @@ bool subscriptionManager::subscribe(const string& url)
 {
   m_ceS.setServiceURL(url);
 
-  CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribing to ["
+  CREAM_SAFE_LOG(m_log_dev->infoStream() 
+  		 << "subscriptionManager::subscribe() - Subscribing to ["
 		 << url << "] ["
-                 << m_myname << "]"
+                 << m_myurl << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
 
   {
     //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    m_ceS.setSubscribeParam( m_myname.c_str(),
+    m_ceS.setSubscribeParam( m_myurl.c_str(),
 	                     m_T,
 			     m_P,
 			     m_conf->getSubscriptionDuration()
@@ -145,36 +146,42 @@ bool subscriptionManager::updateSubscription(const string& url,
 {
   try {
     //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    newID = m_ceSMgr.update(url, ID, m_myname, m_T, m_P,
+    newID = m_ceSMgr.update(url, ID, m_myurl, m_T, m_P,
     		          time(NULL)+m_conf->getSubscriptionDuration());
-    return true;
+    //return true;
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::updateSubscription()"
 		   << " - SubscriptionUpdate Error: "
 		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
     return false;
   }
+  return true;
   //return ""; // unreachable code; just to silent a compilation warning
 }
 
 //______________________________________________________________________________
-bool subscriptionManager::subscribedTo(const string& url)
+bool subscriptionManager::subscribedTo(const string& url,
+					vector<Subscription>& vec)
 {
-  m_vec.clear();
-  try {this->list(url, m_vec);}
+  //m_vec.clear();
+  try {
+    this->list(url, vec);
+  }
   catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::subscribedTo() - "
 		   << "Error retrieving subscription list: "
 		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
   }
   
-  cout << "\n*** m_vec.size() = " << m_vec.size() << endl<<endl;
   
-  for(vector<Subscription>::const_iterator it = m_vec.begin();
-      it != m_vec.end();
+  
+  //cout << "\n*** vec.size() = " << vec.size() << endl<<endl;
+  
+  for(vector<Subscription>::const_iterator it = vec.begin();
+      it != vec.end();
       it++) 
   {
-    cout << "\n*** m_myurl = ["<<m_myurl<<"] it->getConsumerURL() = ["<< it->getConsumerURL() << "]" << endl<<endl;
+    //cout << "\n*** m_myurl = ["<<m_myurl<<"] it->getConsumerURL() = ["<< it->getConsumerURL() << "]" << endl<<endl;
     if( it->getConsumerURL() == m_myurl ) return true;
   }
   

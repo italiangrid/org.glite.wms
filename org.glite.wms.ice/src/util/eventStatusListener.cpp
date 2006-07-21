@@ -359,6 +359,11 @@ void iceUtil::eventStatusListener::init(void)
   string ceurl, cemonURL;
   ostringstream hostport;
 
+   // *******************************************************************
+   // In the following we fill up the cemonUrlCache with all CEMon URL
+   // ICE *MUST* be subscribe to
+   // Later we will check if actually we're still subscribed or not
+   // *******************************************************************
   {
       // Scoped lock to protect concurrent access to the job cache
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );      
@@ -414,7 +419,8 @@ void iceUtil::eventStatusListener::init(void)
 
   /**
    * Now we've got a collection of CEMon urls (without duplicates,
-   * thanks to the set's property) we've to check for subscription
+   * thanks to the set's property) ICE *MUST* be subscribed to.
+   * We're going to check subscriptions
    */
   for( set<string>::const_iterator it = ceurls.begin(); it!=ceurls.end(); it++) {
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
@@ -424,7 +430,8 @@ void iceUtil::eventStatusListener::init(void)
       
       // Must lock the subscription manager due to its singleton nature
       boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
-      if( !m_subManager->subscribedTo(*it) ) {
+      vector<Subscription> fake; // just to comply with subManager::subscribedTo interface
+      if( !m_subManager->subscribedTo(*it, fake) ) {
 	CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		       << "eventStatusListener::init() - Not subscribed to ["
 		       << *it << "]. Subscribing to it..."
