@@ -365,13 +365,16 @@ void iceUtil::eventStatusListener::init(void)
       boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
       for(jobCache::iterator it=m_cache->begin(); it != m_cache->end(); it++) {
           ceurl = it->getCreamURL();
+	  
           cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
           CREAM_SAFE_LOG(m_log_dev->infoStream()
                          << "eventStatusListener::init() - "
-                         << "For current CREAM, cemonUrlCache returned CEMon URL ["
+                         << "For current CREAM ["
+			 << ceurl<<"], cemonUrlCache returned CEMon URL ["
                          << cemonURL<<"]"
                          << log4cpp::CategoryStream::ENDLINE);
           if( cemonURL.empty() ) {
+	      // obtains cemon URL from CREAM service
               try {
                   api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_conf->getHostProxyFile() );
                   api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
@@ -398,10 +401,14 @@ void iceUtil::eventStatusListener::init(void)
                                  << cemonURL << "]" 
                                  << log4cpp::CategoryStream::ENDLINE);
                   
-                  ceurls.insert( cemonURL );
+                  //ceurls.insert( cemonURL );
                   cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
               }              
-          }
+          } //else { // if( cemonURL.empty() ) {
+	  
+	  ceurls.insert( cemonURL );
+	  
+	  //}
       }
   }
 

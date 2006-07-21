@@ -4,10 +4,12 @@
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "iceConfManager.h"
+#include "iceUtils.h"
 #include <cstring> // for memset
 #include <netdb.h>
 #include <sstream>
 #include <ctime>
+#include <boost/format.hpp>
 
 extern int h_errno;
 
@@ -27,6 +29,7 @@ subscriptionManager::subscriptionManager()
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_valid(true),
     m_myname(""),
+    m_myurl(""),
     m_lastSubscriptionID(""),
     m_vec()
 {
@@ -46,6 +49,24 @@ subscriptionManager::subscriptionManager()
 
   m_T.addDialect(NULL);
   m_vec.reserve(100);
+  
+  try {
+    m_myname = getHostName();
+    
+  } catch(runtime_error& ex) {
+    CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR getting local hostname: "
+		   << ex.what()<<". Stop!"
+		   << log4cpp::CategoryStream::ENDLINE);
+    abort();
+  }
+  string tmp_prefix;
+  if( iceConfManager::getInstance()->getListenerEnableAuthN() )
+    tmp_prefix = "https";
+  else
+    tmp_prefix = "http";
+    
+  m_myurl = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % m_myname % iceConfManager::getInstance()->getListenerPort() );
+    
 }
 
 //______________________________________________________________________________
@@ -146,9 +167,16 @@ bool subscriptionManager::subscribedTo(const string& url)
 		   << "Error retrieving subscription list: "
 		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
   }
+  
+  cout << "\n*** m_vec.size() = " << m_vec.size() << endl<<endl;
+  
   for(vector<Subscription>::const_iterator it = m_vec.begin();
       it != m_vec.end();
-      it++) if( it->getConsumerURL() == m_myname ) return true;
-
+      it++) 
+  {
+    cout << "\n*** m_myurl = ["<<m_myurl<<"] it->getConsumerURL() = ["<< it->getConsumerURL() << "]" << endl<<endl;
+    if( it->getConsumerURL() == m_myurl ) return true;
+  }
+  
   return false;
 }

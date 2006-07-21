@@ -35,6 +35,7 @@ namespace util {
     bool m_valid;
     static subscriptionManager* s_instance;
     std::string m_myname;
+    std::string m_myurl;
     std::string m_lastSubscriptionID;
     struct tm m_Time;
     char m_aT[256];
