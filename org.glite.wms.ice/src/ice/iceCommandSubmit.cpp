@@ -297,6 +297,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                 m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
                 m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
                 ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
+                cache->erase( job_pos );
                 throw( iceCommandFatal_ex( ex.what() ) );
             }
 
@@ -333,55 +334,50 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
          * in order to receive the status change notifications
          * of job just submitted. But only if listener is ON
          */
-        bool tmp_start_listener;
-        tmp_start_listener = m_confMgr->getStartListener();
-
-        if( tmp_start_listener ) {
+        if( m_confMgr->getStartListener() ) {
             string cemon_url;
-            {
-                boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-                cemon_url = cemon_cache->getCEMonUrl( theJob.getCreamURL() );
-                CREAM_SAFE_LOG(
-                               m_log_dev->infoStream() 
-                               << "iceCommandSubmit::execute() - "
-                               << "For current CREAM, cemonUrlCache returned CEMon URL ["
-                               << cemon_url << "]"
-                               << log4cpp::CategoryStream::ENDLINE
-                               );
+            boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
+            cemon_url = cemon_cache->getCEMonUrl( theJob.getCreamURL() );
+            CREAM_SAFE_LOG(
+                           m_log_dev->infoStream() 
+                           << "iceCommandSubmit::execute() - "
+                           << "For current CREAM, cemonUrlCache returned CEMon URL ["
+                           << cemon_url << "]"
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
             
-                if( cemon_url.empty() ) {
-                    try {
-                        cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_confMgr->getHostProxyFile() );
-                        cream_api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( theJob.getCreamURL().c_str(), cemon_url );
-                        CREAM_SAFE_LOG(
-                                       m_log_dev->infoStream() 
-                                       << "iceCommandSubmit::execute() - "
-                                       << "For current CREAM, query to CREAM service returned "
-                                       << "CEMon URL [" << cemon_url << "]"
-                                       << log4cpp::CategoryStream::ENDLINE
-                                       );
-                        cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
-                    } catch(exception& ex) {
+            if( cemon_url.empty() ) {
+                try {
+                    cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_confMgr->getHostProxyFile() );
+                    cream_api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( theJob.getCreamURL().c_str(), cemon_url );
+                    CREAM_SAFE_LOG(
+                                   m_log_dev->infoStream() 
+                                   << "iceCommandSubmit::execute() - "
+                                   << "For current CREAM, query to CREAM service returned "
+                                   << "CEMon URL [" << cemon_url << "]"
+                                   << log4cpp::CategoryStream::ENDLINE
+                                   );
+                    cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+                } catch(exception& ex) {
                     
-                        CREAM_SAFE_LOG(
-                                       m_log_dev->errorStream() 
-                                       << "iceCommandSubmit::execute() - Error retrieving"
-                                       <<" CEMon's URL from CREAM's URL: " << ex.what()
-                                       << ". Composing URL from configuration file..."
-                                       << log4cpp::CategoryStream::ENDLINE
-                                       );
-                        cemon_url = theJob.getCreamURL();
-                        boost::replace_first(cemon_url,
-                                             m_confMgr->getCreamUrlPostfix(),
-                                             m_confMgr->getCEMonUrlPostfix()
-                                             );
-                        CREAM_SAFE_LOG(
-                                       m_log_dev->infoStream() 
-                                       << "Using CEMon URL [" << cemon_url << "]" 
-                                       << log4cpp::CategoryStream::ENDLINE
-                                       );
-                        cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
-                    }
+                    CREAM_SAFE_LOG(
+                                   m_log_dev->errorStream() 
+                                   << "iceCommandSubmit::execute() - Error retrieving"
+                                   <<" CEMon's URL from CREAM's URL: " << ex.what()
+                                   << ". Composing URL from configuration file..."
+                                   << log4cpp::CategoryStream::ENDLINE
+                                   );
+                    cemon_url = theJob.getCreamURL();
+                    boost::replace_first(cemon_url,
+                                         m_confMgr->getCreamUrlPostfix(),
+                                         m_confMgr->getCEMonUrlPostfix()
+                                         );
+                    CREAM_SAFE_LOG(
+                                   m_log_dev->infoStream() 
+                                   << "Using CEMon URL [" << cemon_url << "]" 
+                                   << log4cpp::CategoryStream::ENDLINE
+                                   );
+                    cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
                 }
             }
             boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );

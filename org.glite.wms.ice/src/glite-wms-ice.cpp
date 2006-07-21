@@ -159,15 +159,14 @@ int main(int argc, char*argv[])
    ****************************************************************************/
   util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
   log4cpp::Category* log_dev = logger_instance->getLogger();
-  string hostcert, logfile, hostdn;
-  {
-    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
-    logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->getLogOnFile() );
-    logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->getLogOnConsole() );
-    logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
-    hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
-  }
+
+  log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
+  logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->getLogOnFile() );
+  logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->getLogOnConsole() );
+  logger_instance->setMaxLogFileSize( iceUtil::iceConfManager::getInstance()->getMaxLogFileSize() );
+  logger_instance->setMaxLogFileRotations( iceUtil::iceConfManager::getInstance()->getMaxLogFileRotations() );
+  string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
+  string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
 
   try {
     iceUtil::makePath( logfile );
@@ -186,8 +185,10 @@ int main(int argc, char*argv[])
    ****************************************************************************/
 
   //string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
-  //string hostdn;
+
   // Set the creation of CreamProxy with automatic delegetion ON
+
+  string hostdn;
   soap_proxy::CreamProxyFactory::initProxy( true );
   CREAM_SAFE_LOG(
                  log_dev->infoStream()

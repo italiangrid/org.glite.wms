@@ -80,6 +80,8 @@ iceConfManager::iceConfManager( )
     m_start_lease_updater                = config->ice()->start_lease_updater();
     m_ice_host_cert                      = config->ice()->ice_host_cert();
     m_ice_host_key                       = config->ice()->ice_host_key();
+    m_max_logfile_size                   = config->ice()->max_logfile_size();
+    m_max_logfile_rotations              = config->ice()->max_logfile_rotations();
 }
 
 iceConfManager::~iceConfManager( )

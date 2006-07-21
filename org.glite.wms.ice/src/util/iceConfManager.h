@@ -34,7 +34,9 @@ namespace glite {
 	  bool m_startpoller, m_poller_purges_jobs, m_startlistener, m_startsubupder,
 	    m_log_on_console, m_log_on_file, m_listener_enable_authn,  m_listener_enable_authz, m_start_job_killer,
 	    m_start_lease_updater, m_start_proxy_renewer;
-	  
+	  size_t m_max_logfile_size;
+          unsigned int m_max_logfile_rotations;
+
 	  static boost::recursive_mutex mutex;
 
 	protected:
@@ -67,6 +69,8 @@ namespace glite {
 	  std::string getCEMonUrlPostfix( void ) const { return m_cemonurlpostfix; } 
 	  std::string getICETopic( void ) const { return m_icetopic; }
           std::string getDGuser( void ) const { return m_dguser; }
+          size_t      getMaxLogFileSize( void ) const { return m_max_logfile_size; }
+          unsigned int getMaxLogFileRotations( void ) const { return m_max_logfile_rotations; }
 	  int         getPollerDelay( void ) const { return m_pollerdelay; }
 	  int         getSubscriptionDuration( void ) const { return m_subduration; }
 	  time_t      getSubscriptionUpdateThresholdTime( void ) const { return m_subUpdThresholdTime; }

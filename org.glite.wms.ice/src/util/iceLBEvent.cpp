@@ -50,7 +50,7 @@ iceLBEvent::iceLBEvent( const CreamJob& j, edg_wll_Source src, const std::string
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_start_event::cream_transfer_start_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Transfer Start Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Cream Transfer Start Event" )
 {
 
 }
@@ -82,7 +82,7 @@ int cream_transfer_start_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_ok_event::cream_transfer_ok_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Transfer OK Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Cream Transfer OK Event" )
 {
 
 }
@@ -114,7 +114,7 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_fail_event::cream_transfer_fail_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "Cream Transfer Fail Event, reason=[%1%]") % reason ) ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "Cream Transfer Fail Event, reason=[%1%]") % reason ) ),
     m_reason( reason )
 {
 
@@ -177,7 +177,7 @@ int cream_accepted_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 lrms_accepted_event::lrms_accepted_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "LRMS Accepted Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LRMS, "LRMS Accepted Event" )
 {
 
 }
