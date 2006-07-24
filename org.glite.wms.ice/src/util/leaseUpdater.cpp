@@ -42,8 +42,7 @@ using namespace std;
 
 leaseUpdater::leaseUpdater( ) :
     iceThread( "ICE Lease Updater" ),
-    m_threshold( iceConfManager::getInstance()->getLeaseThresholdTime() * 60 ),
-    //m_delay( (iceConfManager::getInstance()->getLeaseThresholdTime()/2) * 60 ), // lease updater wakes up every minute
+    m_threshold( iceConfManager::getInstance()->getLeaseThresholdTime() ),
     m_delta( iceConfManager::getInstance()->getLeaseDeltaTime() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_cache( jobCache::getInstance() ),
@@ -61,7 +60,7 @@ leaseUpdater::leaseUpdater( ) :
 	exit(1);      
     } 
     double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/2.0;
-    m_delay = (time_t)(_delta_time_for_lease * 60);
+    m_delay = (time_t)(_delta_time_for_lease);
 }
 
 leaseUpdater::~leaseUpdater( )
