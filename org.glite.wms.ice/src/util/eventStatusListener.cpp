@@ -456,6 +456,8 @@ void iceUtil::eventStatusListener::init(void)
 		       << "eventStatusListener::init() - Already subscribed to ["
 		       << *it << "]"
 		       << log4cpp::CategoryStream::ENDLINE);
+	boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
+        subscriptionCache::getInstance()->insert(*it);
       }
   }
 }

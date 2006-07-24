@@ -1,6 +1,7 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "subscriptionUpdater.h"
 #include "subscriptionManager.h"
+#include "subscriptionCache.h"
 #include "jobCache.h"
 #include "cemonUrlCache.h"
 #include "iceUtils.h"
@@ -67,6 +68,13 @@ void iceUtil::subscriptionUpdater::body( void )
  		       << "Subscription to [" << *it << "] disappeared! Going to re-subscribe to it."
  		       << log4cpp::CategoryStream::ENDLINE);
  	m_subMgr->subscribe( *it );
+	
+	/**
+	 * this cemon shoud already be in the subscriptionCache
+	 * but re-insert it is safe (see the insert method)
+	 */
+	boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
+        subscriptionCache::getInstance()->insert(*it);
       }
       
       this->renewSubscriptions(vec);
@@ -116,6 +124,9 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
 			       << "Failed while making new subscription. Wont receive notifications... "
 			       << log4cpp::CategoryStream::ENDLINE);
 		// let's proceed without notification. The poller will work for us ;)
+	      } else {
+	        boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
+                subscriptionCache::getInstance()->insert( sit->getEndpoint() );
 	      }
 	      
 	      
