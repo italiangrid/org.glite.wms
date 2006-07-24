@@ -56,7 +56,7 @@ using namespace std;
 namespace api = glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
 
-boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
+// boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
 
 namespace { // anonymous namespace
 
@@ -134,10 +134,6 @@ namespace { // anonymous namespace
         m_has_failure_reason( false ),
         m_exit_code( 0 ) // default
     {
-        CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
-		       << "Parsing status change notification "
-		       << ad_string
-		       << log4cpp::CategoryStream::ENDLINE);
 
         classad::ClassAdParser parser;
         classad::ClassAd *ad = parser.ParseClassAd( ad_string );
@@ -167,6 +163,15 @@ namespace { // anonymous namespace
         if ( ad->EvaluateAttrString( "WORKER_NODE", m_worker_node ) ) {
             boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
         }
+
+        // "Pretty print" the classad
+        string pp_classad;
+        classad::ClassAdUnParser unparser;
+        unparser.Unparse( pp_classad, ad );
+        CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
+		       << "Parsed status change notification "
+		       << pp_classad
+		       << log4cpp::CategoryStream::ENDLINE);
 
     };
 
@@ -488,10 +493,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         
         boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
         
-        // NOTE: we assume that the all the notifications are for the SAME job.
-        // This is important! The following code relies on this assumption
-        
-        jobCache::iterator jc_it( m_cache->lookupByCreamJobID( notifications.begin()->get_cream_job_id() ) );
+        jobCache::iterator jc_it( m_cache->lookupByCreamJobID( it->get_cream_job_id() ) );
         
         // No job found in cache. This is fine, we may be receiving "old"
         // notifications, for jobs which have been already purged.

@@ -196,8 +196,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
         }
 
         // Put job in the cache; remember position in job_pos
-        boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-        util::jobCache::iterator job_pos = cache->put( theJob );
+        // boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+        // util::jobCache::iterator job_pos = cache->put( theJob );
 
 #ifdef ICE_STANDALONE
         CREAM_SAFE_LOG(
@@ -233,7 +233,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) ) );
             theJob.set_failure_reason( boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) );
             m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
-            cache->erase( job_pos );
+            // cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
     
@@ -259,8 +259,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                            << " due to authentication error:" << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
-            cache->erase( job_pos );
+            ice->resubmit_job( theJob, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
+            // cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
@@ -269,7 +269,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             // this prevents the eventStatusListener::acceptJobStatus()
             // to process a notification of a just submitted job that is not
             // yet present in the jobCache
-            boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
+            // boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
             string delegID;
             try {	    
                 theProxy->Register(
@@ -296,8 +296,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                 theJob.set_failure_reason( ex.what() );
                 m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
                 m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
-                ice->resubmit_job( job_pos, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
-                cache->erase( job_pos );
+                ice->resubmit_job( theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
+                // cache->erase( job_pos );
                 throw( iceCommandFatal_ex( ex.what() ) );
             }
 
@@ -323,9 +323,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             // put(...) accepts arg by reference, but
             // the implementation puts the arg in the memory hash by copying it. So
             // passing a *pointer should not produce problems
-
-            // The following is redundant, as logEvent as a (wanted) side
-            // effect stores the job
+            boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
             cache->put( theJob );
         } // this end-scope unlock the listener that now can accept new notifications
 

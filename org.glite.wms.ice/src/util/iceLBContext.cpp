@@ -370,8 +370,10 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
 //////////////////////////////////////////////////////////////////////////////
 void iceUtil::iceLBContext::update_and_store_job( CreamJob& theJob )
 {
-    boost::recursive_mutex::scoped_lock( m_cache->mutex );
+    boost::recursive_mutex::scoped_lock( m_cache->mutex ); // Locks the cache
     string new_seq_code( edg_wll_GetSequenceCode( *el_context ) );
     theJob.setSequenceCode( new_seq_code );    
-    m_cache->put( theJob );
+    if ( m_cache->end() != m_cache->lookupByGridJobID( theJob.getGridJobID() ) ) {
+        m_cache->put( theJob );
+    }
 }

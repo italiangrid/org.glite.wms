@@ -132,12 +132,11 @@ namespace glite {
            * the relevant L&B events. The job is NOT removed from the
            * job cache!
            *
-           * @param jit an iterator to the job to resubmit. If
-           * jit==end(), then nothing is done
+           * @param the_job the job to resubmit.
            *
            * @param reason the reason why this job is being resubmitted
            */
-          void resubmit_job( util::jobCache::iterator jit, const std::string& reason );
+          void resubmit_job( util::CreamJob& the_job, const std::string& reason );
 
           /**
            * Purge a cancelled/terminated job. This method takes care

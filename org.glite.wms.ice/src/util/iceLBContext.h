@@ -61,10 +61,13 @@ namespace glite {
                     std::string getLoggingError( const char *preamble );
 
                     /**
-                     * Modifies the job passed as parameter by changing
-                     * its sequence code. The new sequence code is the on
-                     * in the currently el_context data structure. Furthermore,
-                     * the modified job is stored in the job cache.
+                     * Modifies the job passed as parameter by
+                     * changing its sequence code. The new sequence
+                     * code is the on in the currently el_context data
+                     * structure. ONLY IF IT IS ALREADY IN THE CACHE,
+                     * the modified job is stored in the job cache. If
+                     * the job is currently NOT in the job cache, it
+                     * is *not put there.
                      *
                      * @param theJob the job to be modified and stored
                      */

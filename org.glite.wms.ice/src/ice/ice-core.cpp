@@ -433,18 +433,15 @@ void Ice::ungetRequest( unsigned int reqNum)
 }
 
 //____________________________________________________________________________
-void Ice::resubmit_job( ice_util::jobCache::iterator jit, const string& reason )
+void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
 {
-    if ( m_cache->end() == jit )
-        return;
-
     classad::ClassAd command;
     classad::ClassAd arguments;
 
     command.InsertAttr( "version", string("1.0.0") );
     command.InsertAttr( "command", string("jobresubmit") );
-    arguments.InsertAttr( "id", jit->getGridJobID() );
-    arguments.InsertAttr( "lb_sequence_code", jit->getSequenceCode() );
+    arguments.InsertAttr( "id", the_job.getGridJobID() );
+    arguments.InsertAttr( "lb_sequence_code", the_job.getSequenceCode() );
     command.Insert( "arguments", arguments.Copy() );
 
     classad::ClassAdUnParser unparser;
@@ -454,7 +451,7 @@ void Ice::resubmit_job( ice_util::jobCache::iterator jit, const string& reason )
     wmsutils_ns::FileListMutex mx(m_flns);
     wmsutils_ns::FileListLock  lock(mx);
     try {
-        m_lb_logger->logEvent( new ice_util::ice_resubmission_event( *jit, reason ) );
+        m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
                        << "Ice::doOnJobFailure() - Putting ["
@@ -462,12 +459,12 @@ void Ice::resubmit_job( ice_util::jobCache::iterator jit, const string& reason )
                        << log4cpp::CategoryStream::ENDLINE
                        );
 
-        m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( *jit, m_ns_filelist ) );
+        m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_ns_filelist ) );
         m_flns.push_back(resub_request);
-        m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( *jit, m_ns_filelist ) );
+        m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( the_job, m_ns_filelist ) );
     } catch(std::exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::FATAL, ex.what()) );
-        m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( *jit, m_ns_filelist, ex.what() ) );
+        m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( the_job, m_ns_filelist, ex.what() ) );
         exit(1);
     }
 }
@@ -564,7 +561,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
     // Do the "right think"(tm) with the job
     if ( it->can_be_resubmitted() ) {
         // resubmit job
-        resubmit_job( it, "Job resubmitted by ICE" );
+        resubmit_job( *it, "Job resubmitted by ICE" );
     }
     if ( it->can_be_purged() ) {
         // purge the job
