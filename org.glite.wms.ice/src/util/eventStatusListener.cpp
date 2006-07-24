@@ -484,10 +484,6 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         }
     }
     
-    if( notifications.begin()->get_status() == api::job_statuses::PURGED ) {
-	return;
-    }
-    
     // Now, for each status change notification, check if it has to be logged
     vector<StatusNotification>::const_iterator it;
     int count;
@@ -509,6 +505,20 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                            << log4cpp::CategoryStream::ENDLINE);
             return;
         }
+
+        // If the status is "PURGED", remove the job from cache        
+        if( it->get_status() == api::job_statuses::PURGED ) {
+            CREAM_SAFE_LOG(m_log_dev->infoStream()
+                           << "eventStatusListener::handle_event() - "
+                           << "Job with cream_job_id = ["
+                           << jc_it->getJobID()
+                           << "], grid_job_id = ["
+                           << jc_it->getGridJobID()
+                           << "] is reported as PURGED. Removing from cache"
+                           << log4cpp::CategoryStream::ENDLINE); 
+            m_cache->erase( jc_it );
+            return;
+        }
         
         // setLastSeen must be called ONLY if the job IS NOT in a TERMINAL state
         // (that means that more states are coming...),
@@ -525,21 +535,6 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 		       << " notification count=" << count
 		       << " num already logged=" << jc_it->get_num_logged_status_changes()
 		       << log4cpp::CategoryStream::ENDLINE);
-
-        // If the status is "PURGED", remove the job from cache        
-        if( it->get_status() == api::job_statuses::PURGED ) {
-            CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "eventStatusListener::handle_event() - "
-                           << "Job with cream_job_id = ["
-                           << jc_it->getJobID()
-                           << "], grid_job_id = ["
-                           << jc_it->getGridJobID()
-                           << "] is reported as PURGED. Removing from cache"
-                           << log4cpp::CategoryStream::ENDLINE); 
-
-            m_cache->erase( jc_it );
-            return;
-        }
 
         if ( jc_it->get_num_logged_status_changes() < count ) {
             iceUtil::CreamJob tmp_job( *jc_it );
