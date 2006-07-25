@@ -599,7 +599,9 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                 ce_access_control_base_rules.end(),
                 mapped_access_control_base_rules.begin(),
                 mapped_access_control_base_rules.end(),
-                not_mapped_access_control_base_rules.begin()
+                back_insert_iterator<vector<string> >(
+                  not_mapped_access_control_base_rules
+                )
               );
               (*ce_it)->second.first->Insert(
                 "GlueCEAccessControlBaseRule",
