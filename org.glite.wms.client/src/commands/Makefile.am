@@ -57,6 +57,7 @@ glite_wms_job_delegate_proxy_LDADD = \
 	$(GLITE_JDL_LIBS) \
 	$(WMPROXY_DELEGATE) \
 	$(WMPROXY_UTILS) \
+	-lglite-sd-c \
 	$(CLASSAD_LIBS) \
 	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(BOOST_LIBS) \
@@ -78,15 +79,18 @@ glite_wms_job_info_LDADD = \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+	$(WMPROXY_PROXYINFO) \
 	$(GLITE_JDL_LIBS) \
 	$(WMPROXY_STATUS) \
 	$(WMPROXY_UTILS) \
-	$(WMPROXY_PROXYINFO) \
+	-lglite-sd-c \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
+	$(GLOBUS_COMMON_NOTHR_LIBS) \
+	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
-	$(GRIDSITE_LIBS) \
-	$(GRIDSITE_OPENSSL_LIBS)
+	$(GRIDSITE_GLOBUS_LIBS) \
+	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
 
 glite_wms_job_list_match_SOURCES = \
 	wmp-job-list-match.cpp
@@ -102,11 +106,14 @@ glite_wms_job_list_match_LDADD = \
 	$(GLITE_JDL_LIBS) \
 	$(WMPROXY_LISTMATCH) \
 	$(WMPROXY_UTILS) \
+	-lglite-sd-c \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
-	$(GRIDSITE_LIBS) \
-	$(GRIDSITE_OPENSSL_LIBS)
+	$(GLOBUS_COMMON_NOTHR_LIBS) \
+	$(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GRIDSITE_GLOBUS_LIBS) \
+	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
 
 glite_wms_job_submit_SOURCES = \
 	wmp-job-submit.cpp
@@ -128,6 +135,7 @@ glite_wms_job_submit_LDADD = \
 	$(WMPROXY_SUBMIT) \
 	$(WMPROXY_STATUS) \
 	$(WMPROXY_UTILS) \
+	-lglite-sd-c \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
@@ -162,6 +170,7 @@ glite_wms_job_cancel_LDADD = \
 	$(WMPROXY_CANCEL) \
 	$(WMPROXY_STATUS) \
 	$(WMPROXY_UTILS) \
+	-lglite-sd-c \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
@@ -192,6 +201,7 @@ glite_wms_job_output_LDADD = \
 	$(WMPROXY_OUTPUT) \
 	$(WMPROXY_STATUS) \
 	$(WMPROXY_UTILS) \
+	-lglite-sd-c \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
@@ -224,6 +234,7 @@ glite_wms_job_perusal_LDADD = \
 	$(WMPROXY_PERUSAL) \
 	$(WMPROXY_STATUS) \
 	$(WMPROXY_UTILS) \
+	-lglite-sd-c \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
