@@ -449,7 +449,7 @@ if [ -f "${__prologue}" ]; then
   ${__prologue} "${__prologue_arguments}"
   prologue_status=$?
   if [ ${prologue_status} -ne 0 ]; then
-    fatal_error "Prologue failed with error ${prologue_status}"
+    fatal_error "prologue failed with error ${prologue_status}"
   fi
 fi
 
@@ -638,7 +638,7 @@ if [ -f "${__epilogue}" ]; then
   ${__epilogue} "${__epilogue_arguments}"
   epilogue_status=$?
   if [ ${epilogue_status} -ne 0 ]; then
-    fatal_error "Epilogue failed with error ${epilogue_status}"
+    fatal_error "epilogue failed with error ${epilogue_status}"
   fi
 fi
 
