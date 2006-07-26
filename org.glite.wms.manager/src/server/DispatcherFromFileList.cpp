@@ -310,7 +310,10 @@ get_new_requests(
       JobStatusPtr status;
 
       if (status_check_is_enabled) {
-        status = job_status(id);
+        try {
+          status = job_status(id);
+        } catch (CannotCreateLBContext&) {
+        }
       }
 
       // TODO
