@@ -156,6 +156,7 @@ have_glite_wms_wmproxy=no
 have_glite_security=no
 
 AC_GLITE
+AC_GLITE_SERVICE_DISCOVERY
 AC_OPTIMIZE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
