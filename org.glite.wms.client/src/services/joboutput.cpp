@@ -571,7 +571,7 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
 	string file = "" ;
 	CURLcode res;
 	long	httpcode = 0;
-	char curl_errorstr[CURL_ERROR_SIZE];
+	// char curl_errorstr[CURL_ERROR_SIZE];
 	string httperr = "";
 	string curlMsg = "";
 	string err = "";
@@ -602,7 +602,7 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 
 			// enables error message buffer
-			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+			// curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
                         // files to be downloaded
 			while(paths.empty()==false){
@@ -635,9 +635,11 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
 					// ERROR !!!
 					err += "-  Failure while downloading the file: " + file ;
 					err += " to " + destination + "\n";
+					/*
 					if ( strlen(curl_errorstr)>0 ){
 						err += string(curl_errorstr) + "\n";
 					}
+					*/
 					if (httpcode!=HTTP_OK){
 						httperr = Utils::httpErrorMessage(httpcode) ;
 						if (httperr.size()>0) { errors += httperr + "\n"; }

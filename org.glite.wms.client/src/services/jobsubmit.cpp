@@ -1715,7 +1715,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 	string err;
 	// result message
 	long	httpcode = 0;
-	char curl_errorstr [CURL_ERROR_SIZE] = "";
+	// char curl_errorstr [CURL_ERROR_SIZE] = "";
 	string httperr = "";
 	string curlMsg = "";
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
@@ -1743,7 +1743,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 			// enable uploading
 			curl_easy_setopt(curl, CURLOPT_PUT, 1);
 			// enables error message buffer
-			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+			// curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 			while(paths.empty()==false){
 				// path to local file (to be transferred)
@@ -1795,9 +1795,11 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 					// ERROR !!!
 					err += "- could not transfer the InputSandbox file : " + file ;
 					err += " to " + destination + "\n";
+					/*
 					if ( strlen(curl_errorstr)>0 ){
 						err += string(curl_errorstr) + "\n";
 					}
+					*/
 					if (httpcode!=HTTP_OK){
 						httperr = Utils::httpErrorMessage(httpcode) ;
 						if (httperr.size()>0) { errors += httperr + "\n"; }
