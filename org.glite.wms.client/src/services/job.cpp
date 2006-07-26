@@ -592,7 +592,7 @@ void Job::checkWmpSDList (const bool &all){
 		if (!this->endPoint){logInfo->print(WMS_WARNING, "Unable to find any available endpoint where to connect");}
 		if (wmcUtils->answerYes ("Do you wish to query Service Discovery for more endpoints?", true, true)){
 			// set boolean contacted value to true
-			urls=wmcUtils->lookForWmps(*(wmcUtils->getVirtualOrganisation()));
+			urls=wmcUtils->lookForServiceType(Utils::WMP_SD_TYPE, *(wmcUtils->getVirtualOrganisation()));
 			checkWmpList (all);
 			// SUCCESS, may exit
 			return ;
@@ -605,7 +605,6 @@ void Job::checkWmpSDList (const bool &all){
 */
 void Job::checkWmpList (const bool &all) {
 	int n, index  = 0;
-
 	string ep; //will store temporary endPoint values
 	if (this->urls.empty( )){
 			throw WmsClientException(__FILE__,__LINE__,

@@ -543,41 +543,85 @@ std::vector<std::string> Utils::getWmps(){
 /*
 * Query the service discovery for published WMProxy enpoints
 */
-std::vector<std::string> Utils::lookForWmps(const string &vo){
-	std::vector<std::string> wmps ;
+std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const string &vo){
+	std::vector<std::string> foundServices ;
 	SDServiceList *serviceList=NULL;
 	SDException ex;
-	const char* WMPROXY_SERVICE_NAME ="wmproxy";  // this string requires a better definition TBD
-	// Setup VO instance:
-	char **names = new (char*)[1];
-	names[0] = new char[vo.length() +1];
-	strcpy(names[0], vo.c_str());
-	SDVOList vos = {1, names};
-	// Service Query:
-	logInfo->print (WMS_DEBUG, "Querying service discovery for VO:", vo,true,true);
-	serviceList = SD_listServices( WMPROXY_SERVICE_NAME, NULL, &vos, &ex);
-	if (serviceList != NULL) {
-		if ( serviceList->numServices > 0 )  {
-			for(int k=0; k < serviceList->numServices; k++) {
-				wmps.push_back(strdup(serviceList->services[k]->endpoint));
+	SDVOList *vos = NULL;
+	char **names  = NULL;
+
+	// Setup Service Type
+	const string LBCLIENT_SERVICE_TYPE="org.glite.lb.server";
+	const string WMPROXY_SERVICE_TYPE ="org.glite.wms.wmproxy";
+	string serviceType="";
+	switch (st){
+		case WMP_SD_TYPE:
+			if (wmcConf){serviceType=wmcConf->wmproxy_service_discovery_type();}
+			if (!serviceType.length()){serviceType=WMPROXY_SERVICE_TYPE;}
+			// TBD default value is already present inside configuration
+			break;
+		case LB_SD_TYPE:
+			if (wmcConf){serviceType=wmcConf->wmproxy_service_discovery_type();}
+			if (!serviceType.length()){serviceType=WMPROXY_SERVICE_TYPE;}
+			// TBD default value is already present inside configuration
+			break;
+		default:
+			throw WmsClientException(__FILE__,__LINE__,"lookForServiceType",DEFAULT_ERR_CODE,
+				"Service Discovery not performed", "Unkwnown Service Type requested");
+	}
+
+	// Setup VirtualORganisation
+	if (vo.length()){
+		// Vo specified, check the ENV variable:
+		const char* GLITE_SD_VO ="GLITE_SD_VO";
+		char* sdVo=getenv(GLITE_SD_VO);
+		if (sdVo && vo.compare(string(sdVo))){
+			// Two different VOs: warning message
+			logInfo->print (WMS_WARNING,"$GLITE_SD_VO value ("+string(sdVo) +
+			") will be overriden by default user VO:", vo, true, true);
+			if (!this->answerYes("Do you whish to continue?", true, true) ){
+				return foundServices;
 			}
 		}
+		char **names = new (char*)[1];
+		names[0] = new char[vo.length() +1];
+		strcpy(names[0], vo.c_str());
+		SDVOList vosTmp = {1, names};
+		vos=&vosTmp;
+		logInfo->print (WMS_DEBUG, "Querying service discovery","\n Service Type:"+
+			serviceType +"\nVirtualOrganisation:"+ vo,true,true);
+	}else{
+		logInfo->print (WMS_DEBUG, "Querying service discovery","\n Service Type:"+
+			serviceType,true,true);
+	}
+	// Service Query:
+	//  SD_listServices parameters: type, site, volist, exception
+	serviceList = SD_listServices( serviceType.c_str(), NULL, vos, &ex);
+	if (serviceList != NULL){
+		if ( serviceList->numServices > 0 )  {
+			for(int k=0; k < serviceList->numServices; k++) {
+				foundServices.push_back(strdup(serviceList->services[k]->endpoint));
+			}
+		}else{
+			logInfo->print (WMS_WARNING, "Service Discovery produced no result for VO:", vo,true,true);
+		}
 		SD_freeServiceList(serviceList);
-		delete []names[0];
-		delete []names;
+		if (names){
+			delete []names[0];
+			delete []names;
+		}
 	} else {
 		if (ex.status == SDStatus_SUCCESS){
-			throw WmsClientException(__FILE__,__LINE__,"lookForWmps",DEFAULT_ERR_CODE,
+			throw WmsClientException(__FILE__,__LINE__,"lookForServiceType",DEFAULT_ERR_CODE,
 			"Service not known",
-			string(WMPROXY_SERVICE_NAME));
-		}
-		else {
-			throw WmsClientException(__FILE__,__LINE__,"lookForWmps",DEFAULT_ERR_CODE,
+			string(WMPROXY_SERVICE_TYPE));
+		}else {
+			throw WmsClientException(__FILE__,__LINE__,"lookForServiceType",DEFAULT_ERR_CODE,
 			"Service Discovery failed",
 			ex.reason);
 		}
 	}
-	return wmps;
+	return foundServices;
 }
 
 /*

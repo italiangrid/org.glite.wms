@@ -84,6 +84,14 @@ public:
 		JOBID_TYPE,
 		CE_TYPE
 	};
+	/**Service Discovery Service available types*/
+	enum SdServiceType{
+		/** Logging and bookkeeping server - service type*/
+		LB_SD_TYPE,
+		/** WMProxy endpoint - service type*/
+		WMP_SD_TYPE
+	};
+
 
 	/**
 	* Prompt the users (if --noint option is not active) a question with Y/N answer
@@ -152,7 +160,7 @@ public:
 	* @param the VirtualOrganisation to be queried for
 	* @return  a vector of strings containg the list of found addresses
 	*/
-	std::vector<std::string> lookForWmps(const std::string &vo);
+	std::vector<std::string> lookForServiceType(SdServiceType st, const std::string &vo="");
         /**
         * Gets the ErrorStorage pathname
         * @return the pathname string
