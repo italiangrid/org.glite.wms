@@ -323,8 +323,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             // put(...) accepts arg by reference, but
             // the implementation puts the arg in the memory hash by copying it. So
             // passing a *pointer should not produce problems
-            boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-            cache->put( theJob );
+            
         } // this end-scope unlock the listener that now can accept new notifications
 
         /*
@@ -378,8 +377,13 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                     cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
                 }
             }
-            boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
-            if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+            //boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
+            //if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+	    vector<Subscription> fake;
+	    // must acquire lock, because another thread could be going to do
+	    // the same thing
+	    //boost::recursive_mutex::scoped_lock _M( util::subscriptionManager::mutex );
+	    if( !util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) ) {
                 /* MUST SUBSCRIBE TO THIS CEMON */
                 CREAM_SAFE_LOG(
                                m_log_dev->infoStream()
@@ -405,7 +409,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                  * because the singleton has already been created by
                  * ice-core module.
                  */
-                boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+                //boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
                 if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
                     CREAM_SAFE_LOG(
                                    m_log_dev->errorStream()
@@ -428,6 +432,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                 }
             }
         }
+	boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+        cache->put( theJob );
     } // execute
 
 //____________________________________________________________________________
