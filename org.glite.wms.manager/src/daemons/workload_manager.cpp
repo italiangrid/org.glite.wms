@@ -13,7 +13,13 @@
 #include <unistd.h>             // getpid()
 #include <pwd.h>                // getpwnam()
 #include <boost/program_options.hpp>
+#ifndef GLITE_WMS_HAVE_JOBDIR
 #include "DispatcherFromFileList.h"
+typedef glite::wms::manager::server::DispatcherFromFileList dispatcher_type;
+#else
+#include "DispatcherFromJobDir.h"
+typedef glite::wms::manager::server::DispatcherFromJobDir dispatcher_type;
+#endif
 #include "RequestHandler.h"
 #include "signal_handling.h"
 #include "TaskQueue.hpp"
@@ -26,6 +32,7 @@
 #include "glite/wms/common/logger/logstream_ts.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/ism/ism.h"
 #include "ism_utils.h"
 #include "dynamic_library.h"
@@ -35,6 +42,7 @@ namespace server = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
 namespace task = glite::wms::common::task;
 namespace logger = glite::wms::common::logger;
+namespace utilities = glite::wms::common::utilities;
 
 namespace {
 
@@ -204,11 +212,18 @@ try {
 
   glite::wms::manager::main::ISM_Manager ism_manager;
 
-  server::DispatcherFromFileList dispatcher(
+  dispatcher_type dispatcher(
     config.wm()->input(),
     the_task_queue
   );
   server::RequestHandler request_handler;
+
+  // at scope exit force all threads to exit
+  // this is needed if the dispatcher and request handler threads exit for a
+  // reason not related to a signal
+  utilities::scope_guard force_quit_at_scope_exit(
+    server::set_received_quit_signal
+  );
 
   server::pipe_type d2rh(config.wm()->pipe_depth());
   Info("spawning dispatcher...");
