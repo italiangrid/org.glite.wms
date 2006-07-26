@@ -456,6 +456,7 @@ try {
     hostcertificatesubjectvo.append(certificatesubject);
     hostcertificatesubjectvo.append("/");
     hostcertificatesubjectvo.append(vo);
+    hostcertificatesubjectvo.append(voms_fqan);
     MD5((unsigned char *)hostcertificatesubjectvo.c_str(),
         hostcertificatesubjectvo.length(),
         md5_cert_hash);
