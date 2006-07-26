@@ -76,7 +76,13 @@ void sleep_while(unsigned int seconds, P condition)
   }
 }
 
-std::string get_proxy_subject(std::string const& x509_proxy);
+int
+set_logging_job_proxy(
+  edg_wll_Context context,
+  jobid::JobId const& id,
+  std::string const& x509_proxy,
+  std::string const& sequence_code
+);
 
 }
 
@@ -89,43 +95,41 @@ create_context(
 )
 {
   edg_wll_Context context;
-  int errcode = edg_wll_InitContext(&context);
-  if (errcode) {
-    throw CannotCreateLBContext(errcode);
+  int error = edg_wll_InitContext(&context);
+  if (error) {
+    throw CannotCreateLBContext(error);
   }
 
   ContextPtr result(context, edg_wll_FreeContext);
 
-  errcode |= edg_wll_SetParam(
+  error |= edg_wll_SetParam(
     context,
     EDG_WLL_PARAM_SOURCE,
     source
   );
-  errcode |= edg_wll_SetParam(
+
+  error |= edg_wll_SetParam(
     context,
     EDG_WLL_PARAM_INSTANCE,
     boost::lexical_cast<std::string>(::getpid()).c_str()
   );
 
-  errcode |= edg_wll_SetParam(
+  error |= edg_wll_SetParam(
     context,
     EDG_WLL_PARAM_X509_PROXY,
     x509_proxy.c_str()
   );
 
-  int const flag = EDG_WLL_SEQ_NORMAL;
+  if (error) {
+    throw CannotCreateLBContext(error);
+  }
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
-  std::string const user_dn = get_proxy_subject(x509_proxy);
-  errcode |= edg_wll_SetLoggingJobProxy(
-    context,
-    id,
-    sequence_code.empty() ? 0 : sequence_code.c_str(),
-    user_dn.c_str(),
-    flag
-  );
+  error = set_logging_job_proxy(context, id, x509_proxy, sequence_code);
 #else
-  errcode |= edg_wll_SetLoggingJob(
+  int const flag = EDG_WLL_SEQ_NORMAL;
+
+  error = edg_wll_SetLoggingJob(
     context,
     id,
     sequence_code.c_str(),
@@ -133,11 +137,8 @@ create_context(
   );
 #endif
 
-#warning should retry if the failure happens retrieving \
-the last sequence code from the LBProxy
-
-  if (errcode) {
-    throw CannotCreateLBContext(errcode);
+  if (error) {
+    throw CannotCreateLBContext(error);
   }
 
   return result;
@@ -898,30 +899,53 @@ namespace {
 boost::tuple<int,std::string,std::string> get_error_info(ContextPtr context);
 edg_wll_JobStat* create_job_status();
 void delete_job_status(edg_wll_JobStat* p);
+bool is_fatal(int lb_error);
 
 }
 
 JobStatusPtr job_status(jobid::JobId const& id, ContextPtr context)
 {
-  if (context) {
-    JobStatusPtr status(create_job_status(), delete_job_status);
-    if (status) {
-      int const flags = 0;
-      int const err(
+  JobStatusPtr result(create_job_status(), delete_job_status);
+
+  if (result) {
+    int const flags = 0;
+
+    for (int i = 0; i < 20 && is_lb_available(); ++i) {
+
+      int const error(
         edg_wll_JobStatusProxy(
           context.get(),
           id.getId(),
           flags,
-          status.get()
+          result.get()
         )
       );
-      if (err == 0) {
-        return status;
+      if (error == 0 || is_fatal(error)) {
+        return result;
       }
+
+      // retry
+      std::string message("edg_wll_JobStatusProxy failed (");
+      message += boost::lexical_cast<std::string>(error);
+      message += ')';
+      if (is_lb_available()) {
+        message += " retrying in five seconds";
+        Warning(message);
+        sleep_while(five_seconds, not_received_quit_signal);
+      } else {
+        message += " LB is unavailable, giving up";
+        Error(message);
+      }
+
     }
+
   }
 
-  return JobStatusPtr();
+  if (is_lb_available()) {
+    Error("setting the LB to unavailable");
+    set_lb_available(false);
+  }
+  throw LB_Unavailable();
 }
 
 JobStatusPtr job_status(jobid::JobId const& id)
@@ -931,25 +955,7 @@ JobStatusPtr job_status(jobid::JobId const& id)
   ContextPtr context(
     create_context(id, x509_proxy, sequence_code)
   );
-  if (context) {
-    JobStatusPtr status(create_job_status(), delete_job_status);
-    if (status) {
-      int const flags = 0;
-      int const err(
-        edg_wll_JobStatusProxy(
-          context.get(),
-          id.getId(),
-          flags,
-          status.get()
-        )
-      );
-      if (err == 0) {
-        return status;
-      }
-    }
-  }
-
-  return JobStatusPtr();
+  return job_status(id, context);
 }
 
 std::string status_to_string(JobStatusPtr status)
@@ -995,6 +1001,89 @@ get_proxy_subject(std::string const& x509_proxy)
   boost::shared_ptr<char> s_(s, ::free);
 
   return std::string(s);
+}
+
+bool is_fatal(int lb_error)
+{
+  return lb_error == EINVAL || lb_error == ENOENT;
+}
+
+// non-local operation (it contacts the LB Proxy)
+int
+set_logging_job_proxy(
+  edg_wll_Context context,
+  jobid::JobId const& id,
+  std::string const& x509_proxy
+)
+{
+  int result = 0;
+
+  std::string const user_dn = get_proxy_subject(x509_proxy);
+  int const flag = EDG_WLL_SEQ_NORMAL;
+  char const* const sequence_code = 0;
+
+  for (int i = 0; i < 20 && is_lb_available(); ++i) {
+    
+    result =
+      edg_wll_SetLoggingJobProxy(
+        context,
+        id,
+        sequence_code,
+        user_dn.c_str(),
+        flag
+      );
+
+    if (result == 0 || is_fatal(result)) {
+      return result;
+    }
+
+    // retry
+    std::string message("edg_wll_SetLoggingJobProxy failed (");
+    message += boost::lexical_cast<std::string>(result);
+    message += ')';
+    if (is_lb_available()) {
+      message += " retrying in five seconds";
+      Warning(message);
+      sleep_while(five_seconds, not_received_quit_signal);
+    } else {
+      message += " LB is unavailable, giving up";
+      Error(message);
+    }
+
+  }
+
+  if (is_lb_available()) {
+    Error("setting the LB to unavailable");
+    set_lb_available(false);
+  }
+  throw LB_Unavailable();
+}
+
+int
+set_logging_job_proxy(
+  edg_wll_Context context,
+  jobid::JobId const& id,
+  std::string const& x509_proxy,
+  std::string const& sequence_code
+)
+{
+  int result = 0;
+  if (sequence_code.empty()) {
+    result = set_logging_job_proxy(context, id, x509_proxy);
+  } else {
+    std::string const user_dn = get_proxy_subject(x509_proxy);
+    int const flag = EDG_WLL_SEQ_NORMAL;
+    result =
+      edg_wll_SetLoggingJobProxy(
+        context,
+        id,
+        sequence_code.c_str(),
+        user_dn.c_str(),
+        flag
+      );
+  }
+
+  return result;
 }
 
 bool not_received_quit_signal()
