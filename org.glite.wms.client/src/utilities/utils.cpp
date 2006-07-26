@@ -588,8 +588,8 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 		strcpy(names[0], vo.c_str());
 		SDVOList vosTmp = {1, names};
 		vos=&vosTmp;
-		logInfo->print (WMS_DEBUG, "Querying service discovery","\n Service Type:"+
-			serviceType +"\nVirtualOrganisation:"+ vo,true,true);
+		logInfo->print (WMS_DEBUG, "Querying service discovery","\nService Type: "+
+			serviceType +"\nVirtualOrganisation: "+ vo,true,true);
 	}else{
 		logInfo->print (WMS_DEBUG, "Querying service discovery","\n Service Type:"+
 			serviceType,true,true);
