@@ -64,6 +64,12 @@ X509_CERT_DIR: This variable may be set to override the default location of the 
 
 X509_USER_PROXY: This variable may be set to override the default location of the user proxy credentials, which is normally /tmp/x509up_u<uid>.
 
+GLITE_SD_PLUGIN: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, normally bdii, rgma (or both, separated by comma)
+
+LCG_GFAL_INFOSYS: If Service Discovery querying is needed, this variable cbe used in order to set a specific Server where to perform the queries: for instance LCG_GFAL_INFOSYS='gridit-bdii-01.cnaf.infn.it:2170'
+
+
+
 <<<ENVIRONMENT>>>
 <<<AUTHORS>>>
 Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
