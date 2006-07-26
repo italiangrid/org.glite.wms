@@ -14,8 +14,7 @@ lib_LTLIBRARIES    = \
 libglite_wms_ism_la_LDFLAGS = -all-static
 
 libglite_wms_ism_la_SOURCES = \
-        ism.cpp \
-	purchaser/common.cpp
+        ism.cpp 
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \

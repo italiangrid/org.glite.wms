@@ -14,18 +14,22 @@ lib_LTLIBRARIES    = \
 	libglite_wms_ism_file_purchaser.la 
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
+        common.cpp \
         ldap-utils.cpp \
         ldap-dn-utils.cpp \
         ism-ii-purchaser.cpp
 
 libglite_wms_ism_rgma_purchaser_la_SOURCES = \
+        common.cpp \
 	rgma-utils.cpp \
         ism-rgma-purchaser.cpp
 
 libglite_wms_ism_cemon_purchaser_la_SOURCES = \
+        common.cpp \
 	ism-cemon-purchaser.cpp 
 
 libglite_wms_ism_cemon_asynch_purchaser_la_SOURCES = \
+        common.cpp \
         ism-cemon-asynch-purchaser.cpp
 
 libglite_wms_ism_rgma_purchaser_la_LIBADD = \
@@ -42,6 +46,7 @@ libglite_wms_ism_cemon_asynch_purchaser_la_LIBADD = \
         $(SEC_GSOAP_PLUGIN_276b_THR_LIBS)
 
 libglite_wms_ism_file_purchaser_la_SOURCES = \
+        common.cpp \
         ism-file-purchaser.cpp 
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
