@@ -21,6 +21,9 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.13  2006/07/26 16:52:11  amarasch
+	SD libraries properly linked
+
 	Revision 1.12  2006/03/15 20:48:05  eronchie
 	Updated according to the new location of jdl library and classad_utils library
 
@@ -90,7 +93,7 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 swig.m4 python.m4 glite_wmsutils.m4 glite_jdl.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wms_partitioner.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 swig.m4 python.m4 glite_wmsutils.m4 glite_jdl.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wms_partitioner.m4 glite_service_discovery.m4"/>
 
 
 </project>

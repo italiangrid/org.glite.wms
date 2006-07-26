@@ -7,12 +7,7 @@
  *
  */
 
-
-#include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/common/logger/common.h"
-#include "glite/lb/JobStatus.h"
 #include <vector>
-
 /*********************
 * VOMS includes:
 *********************/
@@ -64,6 +59,7 @@ class  UCredential {
 	private:
 		int vo_data_error , timeleft ;
 		std::string proxy_file;
+		// std::string vo_maraska;
 		bool load_voms ( vomsdata& d ) ;
 };
 

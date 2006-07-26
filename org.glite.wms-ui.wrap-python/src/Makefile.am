@@ -146,9 +146,6 @@ libglite_wmsui_UcWrapper_la_LDFLAGS = \
 libglite_wmsui_UcWrapper_la_LIBADD = \
 	-lc \
 	$(VOMS_CPP_NOTHR_LIBS) \
-	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(CLASSAD_LIBS) \
-	$(BOOST_LIBS) \
 	-lstdc++
 
 
@@ -165,7 +162,7 @@ libglite_wmsui_SdWrapper_la_LIBADD = \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
-	-lglite-sd-c \
+	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
 	-lstdc++
 
 

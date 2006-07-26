@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17  2006/07/26 16:51:58  amarasch
+#       SD libraries properly linked
+#
 #       Revision 1.16  2006/03/20 15:52:38  eronchie
 #       *** empty log message ***
 #
@@ -149,6 +152,7 @@ have_glite_dgas_common=no
 have_glite_security=no
 
 AC_GLITE
+AC_GLITE_SERVICE_DISCOVERY
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])

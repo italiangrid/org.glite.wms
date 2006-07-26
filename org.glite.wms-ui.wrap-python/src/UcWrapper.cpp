@@ -12,8 +12,7 @@
 
 
 using namespace std ;
-using namespace glite::wmsutils::exception ;
-
+string vo_error="";
 
 /************************************************
 *   UCredential VOMS implementation
@@ -168,7 +167,6 @@ bool UCredential::load_voms (vomsdata& d){
 	BIO  *in = NULL;
 	X509 *x  = NULL;
 	d.data.clear() ;
-	string vo_error;
 	STACK_OF(X509) *chain = NULL;
 	SSLeay_add_ssl_algorithms();
 	char *of   = const_cast<char *>(proxy_file.c_str());
@@ -179,9 +177,14 @@ bool UCredential::load_voms (vomsdata& d){
 			if(!x){
 				// Couldn't find a valid proxy.
 				vo_data_error =VERR_FORMAT;
+				vo_error="Couldn't find a valid proxy";
 			}
 			chain = load_chain(of, vo_error);
-			if (vo_error.size()){return true;}
+			if (vo_error.size()){
+				vo_data_error = d.error ;
+				vo_error=d.ErrorMessage();
+				return true;
+			}
 			d.SetVerificationType((verify_type)(VERIFY_SIGN | VERIFY_KEY));
 			if (!d.Retrieve(x, chain, RECURSE_CHAIN)){
 				d.SetVerificationType((verify_type)(VERIFY_NONE));
@@ -193,9 +196,11 @@ bool UCredential::load_voms (vomsdata& d){
 		}else {
 			// Couldn't find a valid proxy.
 			vo_data_error =VERR_FORMAT;
+			vo_error="Couldn't find a valid proxy";
 		}
 	}
 	vo_data_error = d.error ;
+	vo_error=d.ErrorMessage();
 	// Release memory
 	BIO_free(in);
 	return (vo_data_error!=VERR_NONE);
@@ -221,12 +226,14 @@ vector <string> load_groups( voms &v ){
 *******************************************************************/
 std::string  UCredential::getDefaultVoName (){
 	vomsdata vo_data ;
-	if (load_voms(  vo_data )  ) return "";
+	if (load_voms(vo_data)){return "";}
 	voms v;
+	vo_error="";
 	// get Default voms
-	if (   !vo_data.DefaultData(  v  )   ){
+	if (!vo_data.DefaultData(v)){
 		vo_data_error = vo_data.error ;
-		return "" ;
+		vo_error=vo_data.ErrorMessage();
+	return "" ;
 	}
 	return string (  v.voname );
 };
@@ -243,6 +250,7 @@ std::string  UCredential::getDefaultFQAN (){
 	// get Default voms
 	if (   !vo_data.DefaultData(  v  )   ){
 		vo_data_error = vo_data.error ;
+		vo_error=vo_data.ErrorMessage();
 		return "" ;
 	}
 	std::vector<string> fqans = v.fqan;
@@ -279,6 +287,7 @@ std::vector <std::string> UCredential::getGroups ( const std::string& voname ) {
 		if ( voname == it->voname ) return load_groups( *it  ) ;
 	// If this step is reached then the searched voms has not been found
 	vo_data_error = VERR_FORMAT ;
+	vo_error=vo_data.ErrorMessage();
 	return empty ;
 }
 /******************************************************************
@@ -293,6 +302,7 @@ std::vector <std::string > UCredential::getDefaultGroups (){
 	// get Default voms
 	if (!vo_data.DefaultData(v)) {
 		vo_data_error = vo_data.error ;
+		vo_error=vo_data.ErrorMessage();
 		return empty ;
 	}
 	return load_groups( v ) ;
@@ -312,28 +322,6 @@ bool UCredential::containsVo ( const std::string& voname ) {
 /******************************************************************
  method: get_error
 *******************************************************************/
-string UCredential::get_error() {
-	/*
-	if (!vo_error.size()){
-		return vo_error;
-	}
-	*/
-	switch ( vo_data_error ){
-		case  VERR_NONE:
-			return "No Error Found" ;
-		case VERR_NOEXT:
-			return "Unable to find VOMS Extensions inside credential" ;
-		case VERR_SIGN:
-			return "Unable to verify proxy credential signature. Cannot find VOMS Server certificate";
-		case VERR_NODATA:
-			return "Unable to find VOMS extension";
-		case VERR_NOSOCKET:
-			return "VOMS Socket Problems during connection";
-		case VERR_FORMAT:
-			return "VOMS format error" ;
-		case VERR_DIR:
-			return "Unable to find VOMS directory" ;
-		default:
-			return "Generic VOMS error found" ;
-	}
+string UCredential::get_error(){
+	return vo_error;
 }
