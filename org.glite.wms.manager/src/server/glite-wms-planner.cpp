@@ -23,6 +23,7 @@
 #include <boost/random/linear_congruential.hpp>
 #include <boost/random/uniform_smallint.hpp>
 #include <boost/random/variate_generator.hpp>
+#include <boost/program_options.hpp>
 #include <classad_distribution.h>
 
 #include "signal_handling.h"
@@ -58,19 +59,11 @@ namespace jdl = glite::jdl;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace ca = glite::wmsutils::classads;
-namespace fs = boost::filesystem;
 namespace logger = glite::wms::common::logger;
+namespace fs = boost::filesystem;
+namespace po = boost::program_options;
 
 namespace {
-
-std::string program_name;
-
-void usage(std::ostream& os)
-{
-  os
-    << "Usage: " << program_name << " --help\n"
-    << "   or: " << program_name << " SOURCE DEST [log_file]\n";
-}
 
 unsigned int const five_minutes = 300;
 unsigned int const one_day = 86400;
@@ -208,72 +201,95 @@ is_cream_ce(match_type const& ce)
   return boost::regex_match(ce.get<0>(), cream_re);
 }
 
-ClassAdPtr Plan(classad::ClassAd const& jdl, jobid::JobId const& jobid)
+std::string read_file(std::string const& file_name)
 {
-  // generate named pipe name
-  std::string output_file(get_matchpipe_dir());
-  output_file += '/' + jobid.getUnique();
+  std::string result;
 
-  // create fifo
-  if (::mkfifo(output_file.c_str(), S_IRUSR | S_IWUSR) == -1) {
-    throw planning_error(
-      "mkfifo " + output_file + ": " + std::strerror(errno)
+  std::ifstream is(file_name.c_str());
+  std::string line;
+  while (getline(is, line)) {
+    result += line;
+  }
+
+  return result;
+}
+
+ClassAdPtr
+Plan(
+  classad::ClassAd const& jdl,
+  jobid::JobId const& jobid,
+  std::string const& matches_file
+)
+{
+  std::string match_response(read_file(matches_file));
+
+  if (match_response.empty()) {
+
+    // generate named pipe name
+    std::string output_file(get_matchpipe_dir());
+    output_file += '/' + jobid.getUnique();
+
+    // create fifo
+    if (::mkfifo(output_file.c_str(), S_IRUSR | S_IWUSR) == -1) {
+      throw planning_error(
+        "mkfifo " + output_file + ": " + std::strerror(errno)
+      );
+    }
+
+    // be sure the file is unlinked in any case
+    utilities::scope_guard unlink_file(
+      boost::bind(::unlink, output_file.c_str())
     );
-  }
 
-  // be sure the file is unlinked in any case
-  utilities::scope_guard unlink_file(
-    boost::bind(::unlink, output_file.c_str())
-  );
-
-  // open the pipe for reading, non blocking
-  int fd = open(output_file.c_str(), O_RDONLY | O_NONBLOCK);
-  if (fd == -1) {
-    throw planning_error("cannot open pipe for reading");
-  }
-
-  // create a match request and push it in the wm's input fl
-  { // lock
-    utilities::FileList<std::string> fl(get_filelist_name());
-    utilities::FileListMutex mx(fl);
-    utilities::FileListLock lock(mx);
-    fl.push_back(make_match_request(jdl, output_file));
-  }
-
-  std::string match_response;
-  bool done = false;
-  while (!done) {
-
-    // wait for input to be available
-    fd_set read_fds;
-    FD_ZERO(&read_fds);
-    FD_SET(fd, &read_fds);
-    while (select(fd + 1, &read_fds, 0, 0, 0) < 0) {
-      if (errno == EINTR) {
-        continue;
-      } else {
-        throw planning_error(
-          "select failed with errno " + boost::lexical_cast<std::string>(errno)
-        );
-      }
+    // open the pipe for reading, non blocking
+    int fd = open(output_file.c_str(), O_RDONLY | O_NONBLOCK);
+    if (fd == -1) {
+      throw planning_error("cannot open pipe for reading");
     }
 
-    // read available input
-    char buf[4096];
-    int nread;
-    while ((nread = read(fd, buf, 4096)) < 0) {
-      if (errno == EINTR) {
-        continue;
-      } else {
-        throw planning_error(
-          "read failed with errno " + boost::lexical_cast<std::string>(errno)
-        );
-      }
+    // create a match request and push it in the wm's input fl
+    { // lock
+      utilities::FileList<std::string> fl(get_filelist_name());
+      utilities::FileListMutex mx(fl);
+      utilities::FileListLock lock(mx);
+      fl.push_back(make_match_request(jdl, output_file));
     }
-    if (nread == 0) {           // EOF
-      done = true;
-    } else {
-      match_response.append(buf, buf + nread);
+
+    bool done = false;
+    while (!done) {
+
+      // wait for input to be available
+      fd_set read_fds;
+      FD_ZERO(&read_fds);
+      FD_SET(fd, &read_fds);
+      while (select(fd + 1, &read_fds, 0, 0, 0) < 0) {
+        if (errno == EINTR) {
+          continue;
+        } else {
+          throw planning_error(
+            "select failed with errno " + boost::lexical_cast<std::string>(errno)
+          );
+        }
+      }
+
+      // read available input
+      char buf[4096];
+      int nread;
+      while ((nread = read(fd, buf, 4096)) < 0) {
+        if (errno == EINTR) {
+          continue;
+        } else {
+          throw planning_error(
+            "read failed with errno " + boost::lexical_cast<std::string>(errno)
+          );
+        }
+      }
+      if (nread == 0) {           // EOF
+        done = true;
+      } else {
+        match_response.append(buf, buf + nread);
+      }
+
     }
 
   }
@@ -336,7 +352,8 @@ class CannotGenerateSubmitFile {};
 ClassAdPtr do_match(
   classad::ClassAd const& jdl,
   jobid::JobId const& jobid,
-  ContextPtr context
+  ContextPtr context,
+  std::string matches_file
 )
 {
   // keep retrying to match periodically for a while
@@ -357,10 +374,11 @@ ClassAdPtr do_match(
     }
     std::string pending_message("no resources available");
     try {
-      result = Plan(jdl, jobid);
+      result = Plan(jdl, jobid, matches_file);
     } catch (planning_error const& e) {
       pending_message = e.what();
     }
+    matches_file.clear();
     if (!result) {
       log_pending(context, pending_message);
       ::sleep(five_minutes);
@@ -374,7 +392,8 @@ void do_it(
   classad::ClassAd& jdl,
   std::ostream& os,
   ContextPtr context,
-  jobid::JobId const& jobid
+  jobid::JobId const& jobid,
+  std::string const& matches_file
 )
 {
 #warning TODO provide return error for get_interesting_events
@@ -436,7 +455,7 @@ void do_it(
   jdl::set_edg_previous_matches(jdl, previous_matches_simple);
 
   // don't match less than five minutes apart
-  if (!previous_matches.empty()) {
+  if (is_resubmission) {
     unsigned int t = previous_matches.back().second;
     unsigned int now = std::time(0);
     unsigned int p = now - t;
@@ -445,7 +464,7 @@ void do_it(
     }
   }
 
-  ClassAdPtr planned_ad = do_match(jdl, jobid, context);
+  ClassAdPtr planned_ad = do_match(jdl, jobid, context, matches_file);
 
   if (!planned_ad) {
     throw RequestExpired();
@@ -518,18 +537,53 @@ try {
 int
 main(int argc, char* argv[])
 try {
-  program_name = argv[0];
 
-  if (argc == 2 && std::string(argv[1]) == "--help") {
+  std::string input_file;
+  std::string output_file;
+  std::string log_file;
+  std::string matches_file;
 
-    usage(std::cout);
+  po::options_description desc("Usage");
+  desc.add_options()
+    ("help", "display this help and exit")
+    (
+      "input",
+      po::value<std::string>(&input_file),
+      "input file (in classad format)"
+    )
+    (
+      "output",
+      po::value<std::string>(&output_file),
+      "output file (in condor submit file format)"
+    )
+    (
+      "matches",
+      po::value<std::string>(&matches_file),
+      "matches file"
+    )
+    (
+      "log",
+      po::value<std::string>(&log_file),
+      "log file"
+    )
+    ;
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    std::cout << desc << '\n';
     return EXIT_SUCCESS;
+  }
 
-  } else if (argc != 3 && argc != 4) {
+  if (!vm.count("input")) {
+    std::cerr << desc << '\n';
+    return EXIT_ABORT_NODE;
+  }
 
-    usage(std::cerr);
-    return EXIT_FAILURE;
-
+  if (!vm.count("output")) {
+    std::cerr << desc << '\n';
+    return EXIT_ABORT_NODE;
   }
 
 #warning is signal handling needed?
@@ -541,17 +595,18 @@ try {
     configuration::ModuleType::workload_manager
   );
 
-  if (!init_logger(argc == 4 ? argv[3] : 0, config)) {
+  char const* const c_log_file = (log_file.empty()) ? 0 : log_file.c_str();
+  if (!init_logger(c_log_file, config)) {
     return EXIT_FAILURE;
   }
 
-  std::string const input_file(argv[1]);
+  Info("glite-wms-planner starting with pid " << getpid());
+
   std::ifstream is(input_file.c_str());
   if (!is) {
     Error("Cannot open input file " << input_file);
     return EXIT_FAILURE;
   }
-  std::string const output_file(argv[2]);
   std::ofstream os(output_file.c_str());
   if (!os) {
     Error("Cannot open output file " << output_file);
@@ -587,7 +642,7 @@ try {
 
   try {
 
-    do_it(input_ad, os, context, jobid);
+    do_it(input_ad, os, context, jobid, matches_file);
 
   } catch (HitMaxRetryCount& e) {
     error = "hit max retry count ("

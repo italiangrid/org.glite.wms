@@ -178,6 +178,13 @@ get_dagman_log_rotate()
 
 std::string const dag_description_file("dag_description.con");
 
+typedef std::map<std::string, std::string> Id2MatchFile;
+
+std::string get_match_file(std::string const& unique)
+{
+  return "cluster." + unique;
+}
+
 class Paths
 {
   jobid::JobId m_dag_id;
@@ -279,6 +286,17 @@ public:
     fs::path result(m_base_submit_dir);
     result /= fs::path("log." + jobid::to_filename(node_id), fs::native);
 
+    return result;
+  }
+  fs::path match_file(jobid::JobId const& node_id, Id2MatchFile const& match_files) const
+  {
+    fs::path result(m_base_submit_dir);
+    Id2MatchFile::const_iterator it = match_files.find(node_id.getUnique());
+    assert(it != match_files.end());
+    result /= fs::path(
+      get_match_file(it->second),
+      fs::native
+    );
     return result;
   }
   fs::path pre(jobid::JobId const& node_id) const
@@ -628,11 +646,16 @@ public:
 class GeneratePrePost
 {
   jdl::DAGAd* m_dagad;
+  Id2MatchFile const* m_match_files;
   Paths const* m_paths;
 
 public:
-  GeneratePrePost(jdl::DAGAd* dagad, Paths const* paths)
-    : m_dagad(dagad), m_paths(paths)
+  GeneratePrePost(
+    jdl::DAGAd& dagad,
+    Id2MatchFile const& match_files,
+    Paths const& paths
+  )
+    : m_dagad(&dagad), m_match_files(&match_files), m_paths(&paths)
   {
   }
   void operator()(jdl::DAGAd::node_value_type const& node) const
@@ -645,11 +668,31 @@ public:
     assert(ad);
     jobid::JobId node_id = jdl::get_edg_jobid(*ad);
 
-    std::string pre_file = m_paths->pre(node_id).native_file_string();
-    std::string pre_args = m_paths->ad(node_id).native_file_string()
-      + ' ' + m_paths->submit(node_id).native_file_string()
-      + ' ' + m_paths->log(node_id).native_file_string();
-    new_node_info.pre(pre_file, pre_args);
+    std::string const pre_file = m_paths->pre(node_id).native_file_string();
+    std::string const output_file(
+      m_paths->submit(node_id).native_file_string()
+    );
+    std::string const input_file(
+      m_paths->ad(node_id).native_file_string()
+    );
+    std::string const log_file(
+      m_paths->log(node_id).native_file_string()
+    );
+    std::ostringstream pre_args;
+    pre_args << "--output " << output_file
+             << " --input " << input_file
+             << " --log " << log_file;
+
+    if (!m_match_files->empty()) {
+      std::string const match_file(
+        m_paths->match_file(node_id, *m_match_files).native_file_string()
+      );
+      if (!match_file.empty()) {
+        pre_args << " --matches " << match_file;
+      }
+    }
+
+    new_node_info.pre(pre_file, pre_args.str());
 
     std::string post_file = m_paths->post(node_id).native_file_string();
     std::string post_args = m_paths->standard_output(node_id).native_file_string() + ' '
@@ -836,6 +879,147 @@ int get_max_dag_running_nodes()
   return config.jc()->max_dagrunning_nodes();
 }
 
+// do bulk mm iff:
+//   there are no dependencies
+//   bulk mm is enabled at compile time
+//   bulk mm is enabled at run time
+bool do_bulk_mm(jdl::DAGAd const& dagad)
+{
+#ifdef GLITE_WMS_HAVE_BULK_MM
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  if (config.wm()->enable_bulk_mm()) {
+    jdl::DAGAd::dependency_iterator b, e;
+    boost::tie(b, e) = dagad.dependencies();
+    return b == e;
+  } else {
+    return false;
+  }
+#else
+  return false;
+#endif
+}
+
+typedef std::pair<
+  std::string,                  // name
+  std::string                   // value
+> SignificantAttribute;
+typedef std::vector<SignificantAttribute> SignificantAttributes;
+
+struct ClusterKey
+{
+  std::string m_user;
+  SignificantAttributes m_significant_attributes;
+};
+
+bool operator<(ClusterKey const& lhs, ClusterKey const& rhs)
+{
+  return lhs.m_user < rhs.m_user;
+}
+
+ClusterKey make_key(classad::ClassAd const& jdl)
+{
+  return ClusterKey();
+}
+
+enum {
+  jdl_tag,
+  ids_tag,
+  match_tag
+};
+
+typedef boost::tuple<
+  classad::ClassAd,             // template jdl
+  std::vector<std::string>,     // jobid's in this cluster
+  ClassAdPtr                    // match result
+> Cluster;
+
+typedef std::map<
+  ClusterKey,
+  Cluster
+> Clusters;
+
+class clusterize
+{
+  Clusters* m_clusters;
+public:
+  clusterize(Clusters& clusters)
+    : m_clusters(&clusters)
+  {
+  }
+  void operator()(jdl::DAGAd::node_value_type const& v)
+  {
+    jdl::DAGNodeInfo const& node = v.second;
+    classad::ClassAd const& jdl = *node.description_ad();
+    std::string const id = jdl::get_edg_jobid(jdl);
+    ClusterKey key(make_key(jdl));
+    Cluster cluster = (*m_clusters)[key];
+    if (cluster.get<ids_tag>().empty()) {
+      cluster.get<jdl_tag>() = jdl;
+    }
+    cluster.get<ids_tag>().push_back(id);
+  }
+};
+
+void do_clustering(jdl::DAGAd const& dagad, Clusters& clusters)
+{
+  if (do_bulk_mm(dagad)) {
+    jdl::DAGAd::node_iterator node_b;
+    jdl::DAGAd::node_iterator node_e;
+    boost::tie(node_b, node_e) = dagad.nodes();
+
+    std::for_each(node_b, node_e, clusterize(clusters));
+  }
+}
+
+void match(Clusters::value_type& v)
+{
+  Cluster& cluster = v.second;
+  classad::ClassAd jdl = cluster.get<jdl_tag>();
+  bool const include_brokerinfo = true;
+  int const number_of_results = cluster.get<ids_tag>().size(); // needed/useful?
+  jdl.InsertAttr("include_brokerinfo", include_brokerinfo);
+  jdl.InsertAttr("number_of_results", number_of_results);
+  ClassAdPtr match_result(helper::Helper("MatcherHelper").resolve(&jdl));
+
+  cluster.get<match_tag>() = match_result;
+}
+
+class dump_match_file
+{
+  Id2MatchFile* m_match_files;
+  fs::path const* m_submit_dir;
+public:
+  dump_match_file(Id2MatchFile& match_files, fs::path const& submit_dir)
+    : m_match_files(&match_files), m_submit_dir(&submit_dir)
+  {
+  }
+  void operator()(Clusters::value_type const& v)
+  {
+    Cluster const& cluster = v.second;
+    ClassAdPtr match_result = cluster.get<match_tag>();
+    std::vector<std::string> const& ids = cluster.get<ids_tag>();
+    jobid::JobId const template_id(ids.front());
+    std::string const template_unique = template_id.getUnique();
+
+    fs::path const cluster_file(get_match_file(template_unique), fs::native);
+    fs::ofstream os(*m_submit_dir / cluster_file);
+    os << *match_result << '\n';
+
+    std::vector<std::string>::const_iterator it = ids.begin();
+    std::vector<std::string>::const_iterator const end = ids.end();
+    for ( ; it != end; ++it) {
+      jobid::JobId const id(*it);
+      bool ok;
+      boost::tie(boost::tuples::ignore, ok) = m_match_files->insert(
+          std::make_pair(id.getUnique(), template_unique)
+      );
+      assert(ok && "DAGManHelper_bmm: id already existing in match_files");
+    }
+  }
+};
+
 classad::ClassAd* f_resolve(classad::ClassAd const& input_ad)
 try {
 
@@ -876,10 +1060,20 @@ try {
   boost::tie(node_b, node_e) = dagad.nodes();
   NodeAdTransformation node_ad_transformation(dagad, ce_id);
   std::for_each(node_b, node_e, DumpAdToFile(node_ad_transformation, &paths));
+  
+  Clusters clusters;
+  do_clustering(dagad, clusters);
+  std::for_each(clusters.begin(), clusters.end(), match);
+  Id2MatchFile match_files;
+  std::for_each(
+    clusters.begin(),
+    clusters.end(),
+    dump_match_file(match_files, paths.base_submit_dir())
+  );
 
   // generate pre and post scripts
   boost::tie(node_b, node_e) = dagad.nodes();
-  std::for_each(node_b, node_e, GeneratePrePost(&dagad, &paths));
+  std::for_each(node_b, node_e, GeneratePrePost(dagad, match_files, paths));
 
   // replace description ads with (submit) files
   // generate a preliminary submit file containing just the log attribute to
