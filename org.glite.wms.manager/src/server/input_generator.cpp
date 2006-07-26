@@ -207,7 +207,7 @@ main(int argc, char *argv[])
     configuration::NSConfiguration const* const ns_config( config.ns() );
     configuration::WMPConfiguration const* const wmp_config( config.wp() );
 
-    std::string lb_address = wmp_config->lbserver();
+    std::string lb_address = wmp_config->lbserver().front();
     if(lb_address.empty())
     {
       lb_address = wmp_config->lblocal_logger();
