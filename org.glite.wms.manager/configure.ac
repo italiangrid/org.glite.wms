@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.21  2006/07/26 09:07:53  giaco
+#       - no more common subdir
+#       - no more planner script (it's all in the executable)
+#
 #       Revision 1.20  2006/03/20 22:35:06  eronchie
 #       Increased version
 #
@@ -91,7 +95,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS Manager], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/common/WMImpl.h])
+AC_CONFIG_SRCDIR([src/daemons/workload_manager.cpp])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -210,12 +214,10 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([config/glite-wms-wm])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/common/Makefile])
 AC_CONFIG_FILES([src/daemons/Makefile])
 AC_CONFIG_FILES([src/sensors/Makefile])
 AC_CONFIG_FILES([src/server/Makefile])
 AC_CONFIG_FILES([src/server/glite-wms-dag-post.sh])
-AC_CONFIG_FILES([src/server/glite-wms-planner.sh])
 AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT
