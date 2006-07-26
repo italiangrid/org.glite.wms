@@ -468,9 +468,11 @@ void Job::delegateUserProxy(const std::string &endpoint) {
        }
        logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  *dgOpt);
 }
+
 /*
 * Retrieves the endpoint URL and performs
 * the user  credential delegation
+* This method is used only by delegateproxy.cpp
 */
 
 const std::string Job::delegateProxy( ) {
@@ -481,12 +483,35 @@ const std::string Job::delegateProxy( ) {
 	delegateUserProxy(endpoint);
 	return endpoint;
 }
+
+/** Recover the Wmproxy from a certain situation/step */
+void Job::jobRecoverStep(jobRecoveryStep step, bool breakOn){
+	switch (step){
+		case STEP_GET_ENDPOINT:
+			// look for endpoint and initilise wmp versions and this->endPoint variables
+			lookForWmpEndpoints();
+			// Performs CredentialDelegation if auto-delegation has been requested
+			if (autodgOpt) {delegateUserProxy(*endPoint);}
+			// Sets the attribute of this class related to the WMP server
+			cfgCxt = new api::ConfigContext(getProxyPath(),*endPoint, getCertsPath());
+			if (breakOn){break;}
+		// Last Step: Break Anyway
+		break;
+		default:
+			throw WmsClientException(__FILE__,__LINE__,
+			"jobRecoverStep", ECONNABORTED,
+			"Operation failed",
+			"Unable to recover from specified step");
+	}
+ }
+
 /**
 * Sets the endpoint URL where the operation will be performed. The URL is established checking
 * the following objects in this order:
 *	> the --enpoint user option;
 *	> the GLITE_WMS_WMPROXY_ENDPOINT environment variable
 *	> the list of URLs specified in the configuration file (In this last case the choice is randomically performed)
+* needed to initialise cfgCxt instance
 */
 void Job::retrieveEndPointURL (const bool &delegation) {
 	// Reads the credential delegation options:
@@ -512,7 +537,7 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
 		urls = wmcUtils->getWmps ();
         }
-	// look for endpoint and initilise wmp versions and endPoint variables
+	// look for endpoint and initilise wmp versions and this->endPoint variables
 	lookForWmpEndpoints();
 	// Performs CredentialDelegation if auto-delegation has been requested
 	if (autodgOpt) {delegateUserProxy(*endPoint);}
@@ -520,6 +545,9 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 	cfgCxt = new api::ConfigContext(getProxyPath(),*endPoint, getCertsPath());
 }
 
+/**
+* Used by cancel, info, output, perusal, submit (from the Status of a JobId)
+*/
 void Job::setEndPoint(const std::string& endpoint, const bool delegation) {
 	if (endPoint){delete endPoint;}
 	endPoint = new string(endpoint);
@@ -556,6 +584,7 @@ void Job::lookForWmpEndpoints(const bool &all){
 	}
 }
 
+/** Contact Service Discovery and query for more wmproxy endpoints */
 void Job::checkWmpSDList (const bool &all){
 	// Ask user whether to continue:
 	if (!sdContacted){
@@ -571,6 +600,9 @@ void Job::checkWmpSDList (const bool &all){
 	}
 }
 
+/** Parses this-urls variable: try and contact all wmproxy instances
+* removes from urls contacted endpoints
+*/
 void Job::checkWmpList (const bool &all) {
 	int n, index  = 0;
 
@@ -620,7 +652,9 @@ void Job::checkWmpList (const bool &all) {
 	}
 }
 
-
+/**
+* called by output, perusal and submit before file transfering
+**/
 void Job::checkFileTransferProtocol(  ) {
 	vector<string> protocols;
 	ostringstream info;

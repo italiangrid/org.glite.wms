@@ -356,7 +356,7 @@ void JobSubmit::submission ( ){
 	}
 	ostringstream out ;
 	string jobid = "";
-	bool toBretrieved = false;
+	toBretrieved = false;
 	// in case of --start option
 	if (startOpt){
 		jobid = *startOpt;
@@ -489,7 +489,7 @@ const wmsJobType JobSubmit::getJobType( ){
 */
 void JobSubmit::checkUserServerQuota(const long &isbSize) {
 	pair<long, long> free_quota ;
-	long max_isbsize = 0;
+	long maxIsbSize = 0;
 	long limit = 0;
 	//  (1) User free quota -----------
 	logInfo->print (WMS_DEBUG,"Checking the User-FreeQuota on the server", "" );
@@ -529,31 +529,30 @@ void JobSubmit::checkUserServerQuota(const long &isbSize) {
 			// Gets the maxISb size from the WMProxy server
 			logInfo->print(WMS_DEBUG, "Getting the max ISB size from the server", getEndPoint( ) );
 			logInfo->service(WMP_MAXISBSIZE_SERVICE);
-			max_isbsize = api::getMaxInputSandboxSize(getContext( ));
+			maxIsbSize = api::getMaxInputSandboxSize(getContext( ));
 		} catch (api::BaseException &exc){
 				throw WmsClientException(__FILE__,__LINE__,
 					"checkUserServerQuota", ECONNABORTED,
 					"WMProxy Server Error", errMsg(exc));
 		}
 		// (2) MAX ISB size -----------
-		if (max_isbsize>0 ) {
+		if (maxIsbSize>0 ) {
 			logInfo->result(WMP_MAXISBSIZE_SERVICE, "Max ISB size information successfully retrieved");
-			if (isbSize > max_isbsize) {
+			if (isbSize > maxIsbSize) {
 				ostringstream err ;
 				err << "The size of the InputSandbox (" << isbSize <<" bytes) ";
-				err << "exceeds the MAX InputSandbox size limit on the server (" << max_isbsize << " bytes)";
+				err << "exceeds the MAX InputSandbox size limit on the server (" << maxIsbSize << " bytes)";
 				throw WmsClientException( __FILE__,__LINE__,
 					"checkUserServerQuota",  DEFAULT_ERR_CODE,
 					"InputSandboxSize Error" , err.str());
 			} else {
 				ostringstream q;
-				q << "The InputSandbox size (" << isbSize << " bytes) doesn't exceed the max size limit of " << max_isbsize << " bytes:";
+				q << "The InputSandbox size (" << isbSize << " bytes) doesn't exceed the max size limit of " << maxIsbSize << " bytes:";
 				logInfo->print (WMS_DEBUG, q.str(), "File transfer is allowed" );
 			}
 		} else {
 			// User quota is not set on the server: check of Max InputSB size
 			logInfo->result(WMP_MAXISBSIZE_SERVICE, "Max ISB size is not set on the server");
-
 		}
 	}
  }
@@ -752,7 +751,7 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 * either the user free quota or the max ISB size (if the first one is not set)
 */
 int JobSubmit::checkInputSandbox ( ) {
-	long isbsize = 0;
+	isbSize = 0;
 	string message = "";
 	ostringstream err ;
 	logInfo->print (WMS_DEBUG, "Retrieving the list of the local ISB files from the user JDL", "");
@@ -791,14 +790,13 @@ int JobSubmit::checkInputSandbox ( ) {
 	} else {
 		FileAd::setMaxFileSize(Options::getMinimumAllowedFileSize("", zipAllowed));
 	}
-
-	isbsize = extractAd->getTotalSize ( );
-	if (isbsize > 0) {
+	isbSize = extractAd->getTotalSize ( );
+	if (isbSize > 0) {
 		logInfo->print (WMS_DEBUG,
 			"Total size of the ISB file(s) to be transferred to:",
-			boost::lexical_cast<string>(isbsize) );
+			boost::lexical_cast<string>(isbSize) );
 		// Checking whether ISB-total_size is supported by either UserFreeQUota or MAX-ISB =============
-		checkUserServerQuota (isbsize);
+		checkUserServerQuota (isbSize);
 		if (zipAllowed){
 			// Prepares the zipped files
 			toBCopiedZippedFileList( );
@@ -841,7 +839,7 @@ int JobSubmit::checkInputSandbox ( ) {
 		logInfo->print(WMS_DEBUG, "The user JDL does not contain any local ISB file:" ,
 			"no ISB-FileTransfer to be performed");
 	}
-	return isbsize ;
+	return isbSize ;
 }
 
 /**
@@ -1194,8 +1192,6 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			"job"+method, ECONNABORTED,
 			"Operation failed", err.str());
 	}
-
-
 	return this->getJobId( );
 }
 
@@ -1719,7 +1715,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 	string err;
 	// result message
 	long	httpcode = 0;
-	char curl_errorstr[CURL_ERROR_SIZE];
+	char curl_errorstr [CURL_ERROR_SIZE] = "";
 	string httperr = "";
 	string curlMsg = "";
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
@@ -1923,5 +1919,28 @@ void JobSubmit::jobPostProcessing( ){
 		}
 	}
 }
+
+void JobSubmit::submitRecoverStep(submitRecoveryStep step, bool breakOn){
+	// Perform parent (Job) recovery
+	if (!breakOn){jobRecoverStep(STEP_GET_ENDPOINT);}  // RECOVER previous steps
+	switch (step){
+		case STEP_CHECK_ISB:
+			checkUserServerQuota(isbSize);
+			if (breakOn){break;}
+		case STEP_JOB_REGISTER:
+			jobRegOrSub(startJob && !toBretrieved);
+			if (breakOn){break;}
+		// Last Step: Break Anyway
+		break;
+		default:
+			throw WmsClientException(__FILE__,__LINE__,
+			"submitRecoverStep", ECONNABORTED,
+			"Operation failed",
+			"Unable to recover from specified step");
+	}
+ }
+
+
+
 
 }}}} // ending namespaces

@@ -57,6 +57,10 @@ struct wmpVersionType {
 };
 
 
+
+
+
+
 class Job{
 	public :
 		/**
@@ -223,6 +227,13 @@ class Job{
 		void postOptionchecks(unsigned int proxyMinTime=0);
 		/** Print a particular set (expressed with title) of warning messages (expressed with warnings)*/
 		void printWarnings   (const std::string& title, const std::vector<std::string> &warnings);
+		/** Possible recovering steps*/
+		enum jobRecoveryStep {
+			STEP_GET_ENDPOINT,
+			STEP_GET_VERSION
+		};
+		/** FailOver Approach: when a problem occurred, recover from a certain step */
+		void jobRecoverStep(jobRecoveryStep step, bool breakOn=true);
 		/** Input argument  --logfile <file> */
 		std::string* logOpt ;
 		/** Input argument  --output <file>  */

@@ -214,7 +214,8 @@ class JobSubmit : public Job {
 		void gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths,std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors);
                 /*
                 * 	Performs the transfer a set of local files to one(more) remote machine(s) by curl (https protocol)
-                *	@param paths list of files to be transferred (each pair is <source,destination>)			*	@param failed this vector is filled with the information on the files for which was a failure occurred during the transfer operations
+                *	@param paths list of files to be transferred (each pair is <source,destination>)
+		*	@param failed this vector is filled with the information on the files for which was a failure occurred during the transfer operations
 		*	@param errros this parameter is filled with the description of the errors occuring during the file transfer opertions (if any)
                 *	@throw WmsClientException if any error occurs during the operations
                 *	(the local file doesn't exists, defective credential, errors on remote machine)
@@ -267,15 +268,20 @@ class JobSubmit : public Job {
 		* an info message with the list these file is provided.
 		*/
                 std::string collectionJob();
-
 		/**
-                * Checks the user JDL
+		* Checks the user JDL
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
-                */
-                void JobSubmit::checkAd(bool &filestoBtransferred);
+		*/
+		void JobSubmit::checkAd(bool &filestoBtransferred);
+		enum submitRecoveryStep {
+			STEP_CHECK_ISB,
+			STEP_JOB_REGISTER
+		};
+		/** FailOver Approach: when a problem occurred, recover from a certain step */
+		void submitRecoverStep(submitRecoveryStep step, bool breakOn=true);
 		/**
-                *	String input arguments
-                */
+		*	String input arguments
+		*/
 		std::string* chkptOpt ;
 		std::string* collectOpt;
 		std::string* dagOpt ;
@@ -294,14 +300,15 @@ class JobSubmit : public Job {
 		bool nolistenOpt ;
                 bool registerOnly;
 		bool startJob;
+		bool toBretrieved; // indicate whether there are files to be retrieved
 		/**
 		* Final Warning Message
 		*/
 		std::string infoMsg;
-		/**
-		* Time attributes
-		*/
+		/** Time variable*/
 		long expireTime ;
+		/** Sandbox Size variable */
+		long isbSize;
                 /**
                 * JobId's
                 */
