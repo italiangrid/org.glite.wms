@@ -1,8 +1,27 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE LB Logger Context
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 //
 // This file is heavily based on org.glite.wms.jobsubmission/src/common/EventLogger.h
 //
-#ifndef __ICELBCONTEXT_H__
-#define __ICELBCONTEXT_H__
+#ifndef ICELBCONTEXT_H
+#define ICELBCONTEXT_H
 
 #include <exception>
 
@@ -33,8 +52,6 @@ namespace glite {
                     std::string     m_le_reason;
                 };
 
-                // Forward Declaration
-                class jobCache;
 
                 class iceLBContext {
                 public:
@@ -60,19 +77,6 @@ namespace glite {
                     void testCode( int &code, bool retry = false );
                     std::string getLoggingError( const char *preamble );
 
-                    /**
-                     * Modifies the job passed as parameter by
-                     * changing its sequence code. The new sequence
-                     * code is the on in the currently el_context data
-                     * structure. ONLY IF IT IS ALREADY IN THE CACHE,
-                     * the modified job is stored in the job cache. If
-                     * the job is currently NOT in the job cache, it
-                     * is *not put there.
-                     *
-                     * @param theJob the job to be modified and stored
-                     */
-                    void update_and_store_job( CreamJob& theJob );
-
                     edg_wll_Context* el_context;
 
                     static const char *el_s_notLogged, *el_s_unavailable, *el_s_OK, *el_s_failed;
@@ -84,7 +88,6 @@ namespace glite {
                     bool                m_el_hostProxy;
                     unsigned int        m_el_count;
                     log4cpp::Category  *m_log_dev;
-                    jobCache           *m_cache;
 
                     static unsigned int s_el_s_retries, 
 		                        s_el_s_sleep;

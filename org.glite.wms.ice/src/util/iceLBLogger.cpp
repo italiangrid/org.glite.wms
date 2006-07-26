@@ -20,6 +20,7 @@
 #include "iceLBLogger.h"
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
+#include "jobCache.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <boost/scoped_ptr.hpp>
@@ -58,10 +59,16 @@ iceLBLogger::~iceLBLogger( void )
 
 void iceLBLogger::logEvent( iceLBEvent* ev )
 {
-    if ( ev ) {
+    // Do nothing if trying to log the NULL event
+    if ( ! ev ) 
+        return;
 
+    // Destroys the parameter "ev" when exiting this function
+    boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
+
+    std::string new_seq_code;
+    {
         boost::recursive_mutex::scoped_lock L( s_mutex );
-        boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
         
         try {
             m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
@@ -99,6 +106,16 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
             
         } while( res != 0 );        
         
-        m_ctx->update_and_store_job( ev->getJob() );    
-    }
+        new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+    } // unlocks the LB
+
+    { // Now, locks the cache
+        jobCache* m_cache( jobCache::getInstance() );
+        boost::recursive_mutex::scoped_lock( m_cache->mutex );
+        CreamJob theJob( ev->getJob() );
+        theJob.setSequenceCode( new_seq_code );    
+        if ( m_cache->end() != m_cache->lookupByGridJobID( theJob.getGridJobID() ) ) {
+            m_cache->put( theJob );
+        }
+    } // Unlocks the job cache
 }

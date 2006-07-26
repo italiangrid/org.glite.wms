@@ -42,7 +42,7 @@ namespace fs = boost::filesystem;
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
-#include "jobCache.h"
+// #include "jobCache.h"
 #include "iceUtils.h"
 
 //#include <netdb.h>
@@ -117,8 +117,8 @@ iceUtil::iceLBContext::iceLBContext( void ) :
     el_s_localhost_name( ),
     m_el_hostProxy( false ),
     m_el_count( 0 ), 
-    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
-    m_cache( jobCache::getInstance() )
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
+    // m_cache( jobCache::getInstance() )
 {
     edg_wll_InitContext( el_context );
 
@@ -360,20 +360,5 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
 		     << " does not exist. "
 		     << "Trying to use the host proxy cert, and hoping for the best..."
 		     << log4cpp::CategoryStream::ENDLINE);
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//
-//
-//
-//////////////////////////////////////////////////////////////////////////////
-void iceUtil::iceLBContext::update_and_store_job( CreamJob& theJob )
-{
-    boost::recursive_mutex::scoped_lock( m_cache->mutex ); // Locks the cache
-    string new_seq_code( edg_wll_GetSequenceCode( *el_context ) );
-    theJob.setSequenceCode( new_seq_code );    
-    if ( m_cache->end() != m_cache->lookupByGridJobID( theJob.getGridJobID() ) ) {
-        m_cache->put( theJob );
     }
 }

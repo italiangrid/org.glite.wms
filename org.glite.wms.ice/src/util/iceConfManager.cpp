@@ -16,13 +16,13 @@ namespace util {
 iceConfManager* iceConfManager::s_instance = 0;
 string iceConfManager::s_conf_file;
 bool iceConfManager::s_initialized = false;
-boost::recursive_mutex iceConfManager::mutex;
+    //boost::recursive_mutex iceConfManager::mutex;
 
 //______________________________________________________________________________
 iceConfManager* iceConfManager::getInstance( )
   throw ( ConfigurationManager_ex&)
 {
-  boost::recursive_mutex::scoped_lock M( mutex );
+    //  boost::recursive_mutex::scoped_lock M( mutex );
   if( !s_initialized ) {
     throw ConfigurationManager_ex("ConfigurationManager non initialized: must set the configuration filename before use");
   }
@@ -92,7 +92,7 @@ iceConfManager::~iceConfManager( )
 //______________________________________________________________________________
 void iceConfManager::init(const string& filename)
 {
-    boost::recursive_mutex::scoped_lock M( mutex );
+    //    boost::recursive_mutex::scoped_lock M( mutex );
     if ( !s_initialized ) {
         s_conf_file = filename;
         s_initialized = true;

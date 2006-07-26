@@ -9,7 +9,7 @@
 #include <string>
 #include <ctime>
 #include "ConfigurationManager_ex.h"
-#include "boost/thread/recursive_mutex.hpp"
+// #include "boost/thread/recursive_mutex.hpp"
 
 namespace glite {
   namespace wms {
@@ -37,7 +37,7 @@ namespace glite {
 	  size_t m_max_logfile_size;
           unsigned int m_max_logfile_rotations;
 
-	  static boost::recursive_mutex mutex;
+	  // static boost::recursive_mutex mutex;
 
 	protected:
 	  iceConfManager()
