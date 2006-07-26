@@ -38,6 +38,8 @@ libglite_wms_manager_server_la_SOURCES = \
 	DAGManHelper.cpp \
 	DispatcherFromFileList.h \
 	DispatcherFromFileList.cpp \
+	DispatcherFromJobDir.h \
+	DispatcherFromJobDir.cpp \
 	RequestHandler.h \
 	RequestHandler.cpp \
 	WMReal.h \
