@@ -111,7 +111,7 @@ bool successFraction(const char         *name,
 				configuration::Configuration const* const config = configuration::Configuration::instance();			
 				if (config) {
 					configuration::WMPConfiguration const* const wp_config = config->wp();
-					lb_server_config = wp_config->lbserver();
+					lb_server_config = wp_config->lbserver().front();
 				}
 			}
 			if (lb_server_port.empty() && !(lb_server_config.empty())) {
