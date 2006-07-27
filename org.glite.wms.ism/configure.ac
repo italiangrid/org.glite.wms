@@ -14,16 +14,14 @@
 #       Common configure.ac file for the GLite WMS Common module
 #
 #       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
-<<<<<<< configure.ac
-#       Version info: $Id$
+#       Version info: 
 #       Release: $Name$
-=======
-#       Version info: $Id$
-#       Release: $Name$
->>>>>>> 1.17.2.9
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.17.2.11  2006/07/27 12:30:24  eronchie
+#       Decreased version
+#
 #       Revision 1.17.2.10  2006/07/04 13:45:18  monforte
 #       Including fix to bug #17877
 #
@@ -207,7 +205,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [3.1.8])
+AC_INIT([GLite WMS ISM], [3.1.6])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])
