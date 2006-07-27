@@ -179,10 +179,11 @@ sub test_threshold{
         my $load15warning = 0;
         my $memwarning    = 0;
         my $fdwarning     = 0;
-        my $duwarning     = 0;
         
         my $disablecount  = 0;
                 
+	my $memperc=100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'};
+	my $fduse=($fds{'max'}-($fds{'allocated'}-$fds{'free'}));
 
         if($load{'1min'}>=$Load1){
 
@@ -205,14 +206,14 @@ sub test_threshold{
    
         }
 
-        if((100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'})>=$MemUsage){
+        if($memperc>=$MemUsage){
 
                 $memwarning = 1;
                 $disablecount++;
         
         }
 
-        if(($fds{'max'}-($fds{'allocated'}-$fds{'free'}))<=$FDNum){
+        if($fduse<=$FDNum){
 
                 $fdwarning  = 1;
                 $disablecount++;
@@ -225,44 +226,52 @@ sub test_threshold{
         	chomp $part;
                 if($diskusage{$part}>=$DiskUsage){
 
-                        $duwarning  = 1;
                         $duwarn{$part}=$diskusage{$part};
                         $disablecount++;
         
                 }
         }
+	
+	if($load1warning){
+		print STDERR "Threshold for Load Average(1 min): $Load1 => Detected value for Load Average(1 min): $load{'1min'}\n";
+	}else{
+		print STDOUT "Threshold for Load Average(1 min): $Load1 => Detected value for Load Average(1 min): $load{'1min'}\n";
+	}
+	      
+	if($load5warning){
+	        print STDERR "Threshold for Load Average(5 min): $Load5 => Detected value for Load Average(5 min): $load{'5min'}\n";
+	}else{
+	        print STDOUT "Threshold for Load Average(5 min): $Load5 => Detected value for Load Average(5 min): $load{'5min'}\n";
+	}
 
-        
-        if($disablecount >= $operations{$oper}){
+	if($load15warning){
+	        print STDERR "Threshold for Load Average(15 min): $Load15 => Detected value for Load Average(15 min): $load{'15min'}\n";
+	}else{
+	        print STDOUT "Threshold for Load Average(15 min): $Load15 => Detected value for Load Average(15 min): $load{'15min'}\n";
+	}
+	
+	if($memwarning){
+	        printf STDERR "Threshold for Memory Usage: $MemUsage => Detected value for Memory Usage: %.2f",$memperc;print STDERR "\%\n";
+	}else{
+	        printf STDOUT "Threshold for Memory Usage: $MemUsage => Detected value for Memory Usage: %.2f",$memperc;print STDOUT "\%\n";
+	}
 
-                if($load1warning){
-                	print STDERR "Threshold for Load Average(1 min): $Load1 => Detected value for Load Average(1 min): $load{'1min'}\n";
-                }
-                if($load5warning){
-                	print STDERR "Threshold for Load Average(5 min): $Load5 => Detected value for Load Average(5 min): $load{'5min'}\n";
-                }
-                if($load15warning){
-                	print STDERR "Threshold for Load Average(15 min): $Load15 => Detected value for Load Average(15 min): $load{'15min'}\n";
-                }
-                if($memwarning){
-                	print STDERR "Threshold for Memory Usage: $MemUsage => Detected value for Memory Usage: ",100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'},"\%\n";
-
-                }
-                if($fdwarning){
-                	print STDERR "Threshold for FD Usage: $FDNum => Detected value for FD Usage: ",($fds{'max'}-($fds{'allocated'}-$fds{'free'})),"\n";
-                }
-                if($duwarning){
-                	print STDERR "Threshold for Disk Usage: $DiskUsage\% =>\n";
-                        foreach my $k(keys %duwarn){ 
-                        	print STDERR "\t\tDetected value for Partition $k : $duwarn{$k}\%\n";
-                        }
-                }
-                exit(1);
-
-        }else{
-                exit(0);
+	if($fdwarning){
+	        print STDERR "Threshold for Free FD: $FDNum => Detected value for Free FD: $fduse\n";
+	}else{
+	        print STDOUT "Threshold for Free FD: $FDNum => Detected value for Free FD: $fduse\n";
+	}
+		
+	foreach my $k(@$partptr){ 
+        	if(defined $duwarn{$k}){ 
+        		print STDERR "Threshold for Disk Usage: $DiskUsage\% => Detected value for Partition $k : $diskusage{$k}\%\n";
+        	} else{
+        		print STDOUT "Threshold for Disk Usage: $DiskUsage\% => Detected value for Partition $k : $diskusage{$k}\%\n";
+		}
         }
-
+	
+	$disablecount >= $operations{$oper} ? exit(1) : exit(0); 
+	
 }
 
 sub GetPartition{
@@ -338,3 +347,4 @@ sub print_list{
 	exit(0);
 	
 }
+
