@@ -172,8 +172,9 @@ have_glite_wms_part=no
 have_glite_wms_purger=no
 
 AC_GLITE
-
+AC_GLITE_SERVICE_DISCOVERY
 AC_GSOAP
+
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])

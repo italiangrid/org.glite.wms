@@ -41,7 +41,7 @@
 	<!-- ======================================================
               Define general component properties
 	     ====================================================== -->
-	
+
 	<import file="${component.general.properties.file}" />
 						
 	<!-- ======================================================
@@ -51,7 +51,7 @@
 	<property name="wsdl.src.dir" location="../${subsystem.name}.wmproxy-interface/interface" />
 	<property name="wsdl.src.file" location="${wsdl.src.dir}/WMProxy.wsdl" />
 
-	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 ares.m4 expat.m4 fcgi.m4 gridsite.m4 glite.m4 gsoap.m4 glite_lb.m4 glite_wms.m4 glite_security.m4 glite_wmsutils.m4 libtar.m4 zlib.m4 optimize.m4 glite_jp.m4 glite_wms_optional.m4 glite_gpbox.m4 glite_jdl.m4"/>
+	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 ares.m4 expat.m4 fcgi.m4 gridsite.m4 glite.m4 gsoap.m4 glite_lb.m4 glite_wms.m4 glite_security.m4 glite_wmsutils.m4 libtar.m4 zlib.m4 optimize.m4 glite_jp.m4 glite_wms_optional.m4 glite_gpbox.m4 glite_jdl.m4 glite_service_discovery.m4"/>
 
         <property name="build.package.summary" value="Files for gLite WMS WMProxy Service" />
         <property name="build.package.description" value="gLite WMS WMProxy Service executables and libraries" />
