@@ -235,38 +235,6 @@ WMPDelegation::getTerminationTime(const string &delegation_id) {
     GLITE_STACK_CATCH();
 }
 
-/*
-string
-WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
-{
-	GLITE_STACK_TRY("getDelegatedProxyPath()");
-	edglog_fn("WMPDelegation::getDelegatedProxyPath");
-	
-	char * user_dn = NULL;
-	user_dn = wmputilities::getUserDN();
-	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
-  	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
-  	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-	char * delegated_proxy = GRSTx509CachedProxyFind((char*) getProxyDir().c_str(), 
-		(char*) delegation_id.c_str(), user_dn);
-	if ((delegated_proxy == NULL) || (*delegated_proxy == '\0')) {
-		edglog(critical)<<"Unable to get delegated Proxy"<<endl;
-		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
-			"regist()", wmputilities::WMS_DELEGATION_ERROR,
-			"Unable to get delegated Proxy");
-	}
-	string path = "";
-	int i = 0;
-	while (delegated_proxy[i] != '\0') {
-		path += delegated_proxy[i];
-		i++;
-	}
-	return path;
-	
-	GLITE_STACK_CATCH();
-}
-*/
-
 string
 WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 {
@@ -293,7 +261,6 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
   	free(filename);
   	
   	return proxypath;
-  	//return "/tmp/x509up_u604deleg";
 	
 	GLITE_STACK_CATCH();
 }

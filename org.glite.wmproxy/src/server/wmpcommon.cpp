@@ -211,6 +211,18 @@ getType(string jdl, Ad * ad)
 }
 
 void
+throwerror(const string &errorfile)
+{
+	string stderrormsg
+		= wmputilities::readTextFile(errorfile);
+	remove(errorfile.c_str());
+	throw ServerOverloadedException(__FILE__, __LINE__,
+		"callLoadScriptFile()", 
+		wmputilities::WMS_SERVER_OVERLOADED,
+		"System load is too high:\n" + stderrormsg);
+}
+
+void
 callLoadScriptFile(const string &operation)
 {
 	GLITE_STACK_TRY("callLoadScriptFile()");
@@ -226,7 +238,6 @@ callLoadScriptFile(const string &operation)
 		string command = "";
 		vector<string> params;
 		bool commandfound = false;
-		
 		string::const_iterator iter = path.begin();
   		string::const_iterator const end = path.end();
 		while (iter != end) {
@@ -248,22 +259,29 @@ callLoadScriptFile(const string &operation)
 			str = "";
 		}
 		
+		params.push_back("2>");
+		string errorfile = "/tmp/wmpscriptcall.err."
+			+ boost::lexical_cast<std::string>(getpid());
+		edglog(debug)<<"Script error file: "<<errorfile<<endl;
+		params.push_back(errorfile);
+		
 		if (!wmputilities::fileExists(command)) {
 			edglog(warning)<<"Operation \""<<operation
 				<<"\" load script file does not exist:\n"<<command
 				<<"\nIgnoring load script call..."<<endl;
 		} else {
+			// Creating stderr file
+			int fd = open(errorfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
+			dup2(fd, 2);
+			close(fd);
+			
 			// Executing load script file
 			string errormsg = "";
 			edglog(debug)<<"Executing load script file: "<<command<<endl;
 			if (int outcome = wmputilities::doExecv(command, params, errormsg)) {
 				switch (outcome) {
 					case -1:
-						edglog(critical)<<"WARNING: System load is too high"<<endl;
-						throw ServerOverloadedException( __FILE__, __LINE__,
-	  						"callLoadScriptFile()", 
-	  						wmputilities::WMS_FILE_SYSTEM_ERROR,
-	   						"System load is too high");
+						throwerror(errorfile);
 	   					break;
 	   				default:
 	   					edglog(error)<<"Unable to execute load script file:\n"
@@ -272,6 +290,7 @@ callLoadScriptFile(const string &operation)
 	   					break;
 				}
 			}
+			remove(errorfile.c_str());
 		}
 	}
 	

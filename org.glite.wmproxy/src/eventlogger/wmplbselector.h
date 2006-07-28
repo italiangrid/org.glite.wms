@@ -14,8 +14,10 @@
 #include <string>
 #include <vector>
 
-
 namespace glite {
+namespace jdl {
+	class Ad;		
+}
 namespace wms {
 namespace wmproxy {
 namespace eventlogger {
@@ -29,19 +31,6 @@ class WMPLBSelector {
 			FAILURE	
 		};
 		
-		enum infosource {
-			NO_SOURCE,
-			CONF_FILE,
-			SERVICE_DISCOVERY,
-		};
-		
-		struct lbselectioninfo {
-			std::string *address;
-			int port;
-			int weight;
-			infosource source;
-		};
-		
 		/**
 		 * Constructor
 		 */
@@ -51,6 +40,7 @@ class WMPLBSelector {
 		 * Constructor
 		 */
 		WMPLBSelector(std::vector<std::pair<std::string, int> > lbservers,
+			std::string weightscachepath, long weightscachevaliditytime,
 			bool enableservicediscovery, long servicediscoveryinfovalidity,
 			const std::string &lbsdtype);
 		
@@ -64,21 +54,30 @@ class WMPLBSelector {
 	
 	private:
 		
+		std::string lbsdtype;
+		std::string selectedlb;
+		std::vector<std::string> conflbservers;
+		
+		std::string weightsfile;
+		std::string weightscachepath;
+		long weightscachevaliditytime;
+		int weightupperlimit;
+		
 		bool enableservicediscovery;
 		long servicediscoveryinfovalidity;
-		std::string lbsdtype;
-		lbselectioninfo * selectedlbselectioninfo;
-		std::pair<std::vector<lbselectioninfo*>*, long> lbselection;
 		
-		bool vectorRemovePair(std::vector<std::string> &items,
-			const std::string &address, int port);
+		
+		void newLBServerAd(glite::jdl::Ad &lbserverad);
+		void updateLBServerAd(glite::jdl::Ad &lbserveradref,
+			glite::jdl::Ad &lbserveradref);
+			
 		std::vector<std::string> callServiceDiscovery();
-		bool contains(const std::string &address, int port);
-		void updateServiceDiscoveryLBItems(std::vector<std::string> &items);
-		void addLBItem(const std::string &address, int port, infosource source);
-		void addLBItems(std::vector<std::string> &items, infosource source);
-		void addLBItems(std::vector<std::pair<std::string, int> >
-			&items, infosource source);
+		
+		void setWeightsFilePath();
+		void updateWeight(glite::jdl::Ad &lbserverad, lbcallresult result);
+		std::string toLBServerName(const std::string &inputstring);
+		std::string toWeightsFileAttributeName(const std::string &inputstring);
+		
 		int generateRandomNumber(int lowerlimit, int upperlimit);
 		
 };

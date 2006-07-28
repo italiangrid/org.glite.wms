@@ -1416,7 +1416,6 @@ readTextFile(const string &file)
 		throw FileSystemException(__FILE__, __LINE__,
 			"readTextFile()", WMS_IS_FAILURE, "Unable to read file: "
 			+ file + "\n(please contact server administrator)");
-		exit(1);	
 	}
 	string line;
 	string text = "";

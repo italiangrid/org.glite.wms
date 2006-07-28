@@ -89,6 +89,10 @@ getServiceFaultType(int code)
 			return SOAP_TYPE_ns1__GetQuotaManagementFaultType;
 			break;
 
+		case wmputilities::WMS_SERVER_OVERLOADED:
+			return SOAP_TYPE_ns1__ServerOverloadedFaultType;
+			break;
+			
 		default:
 			return SOAP_TYPE_ns1__GenericFaultType;
 			break;
@@ -125,6 +129,9 @@ initializeStackPointer(int code)
 			break;
 		case SOAP_TYPE_ns1__OperationNotAllowedFaultType:
 			sp = new ns1__OperationNotAllowedFaultType;
+			break;
+		case SOAP_TYPE_ns1__ServerOverloadedFaultType:
+			sp = new ns1__ServerOverloadedFaultType;
 			break;
 			
 		default:

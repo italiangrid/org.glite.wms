@@ -129,7 +129,9 @@ main(int argc, char* argv[])
 			
 		extern eventlogger::WMPLBSelector lbselector;
 		lbselector = eventlogger::WMPLBSelector(conf.getLBServerAddressesPorts(),
-			conf.isServiceDiscoveryEnabled(), 
+			conf.getWeightsCachePath(),
+			conf.getWeightsCacheValidity(),
+			conf.isServiceDiscoveryEnabled(),
 			conf.getServiceDiscoveryInfoValidity(),
 			conf.getLBServiceDiscoveryType());
 		

@@ -112,6 +112,20 @@ class WMProxyConfiguration {
 		bool isLBProxyAvailable();
 		
 		/**
+		 * Returns the value of the configuration attribute 
+		 * WeightsCachePath
+		 * @return the attribute value
+		 */
+		std::string getWeightsCachePath();
+		
+		/**
+		 * Returns the value of the configuration attribute 
+		 * WeightsCacheValidity
+		 * @return the attribute value
+		 */
+		long getWeightsCacheValidity();
+		
+		/**
 		 * Checks if the Service Discovery is enabled in the server host
 		 * @return returns true if the EnabledServiceDiscovery attribute is 
 		 * 		present and set to true, false otherwise.
@@ -198,6 +212,8 @@ class WMProxyConfiguration {
 	    int minperusaltimeinterval;
 	    
 	    bool lbproxyavailable;
+	    std::string weightscachepath;
+	    long weightscachevalidity;
 	    bool servicediscoveryenabled;
 	    long servicediscoveryinfovalidity;
 	    std::string lbservicediscoverytype;

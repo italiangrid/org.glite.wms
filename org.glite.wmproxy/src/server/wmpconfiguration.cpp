@@ -107,7 +107,6 @@ resolveEnvironmentVariables(const string &envstring)
 	
 			if ((value = getenv(variabile.c_str()))) {
 				result = prima + string(value) + dopo;
-				free(value);
 			} else {
 				result = prima + dopo;
 			}
@@ -178,6 +177,9 @@ WMProxyConfiguration::loadConfiguration()
 	this->servicediscoveryinfovalidity
 		= wmp_config->service_discovery_info_validity();
 	// /\
+	
+	this->weightscachepath = wmp_config->weights_cache_path();
+	this->weightscachevalidity = wmp_config->weights_cache_validity();
 	
 	this->maxinputsandboxsize = wmp_config->max_input_sandbox_size();
 	this->minperusaltimeinterval = wmp_config->min_perusal_time_interval();
@@ -277,6 +279,18 @@ bool
 WMProxyConfiguration::isLBProxyAvailable()
 {
 	return this->lbproxyavailable;
+};
+
+string 
+WMProxyConfiguration::getWeightsCachePath()
+{
+	return this->weightscachepath;
+};
+
+long 
+WMProxyConfiguration::getWeightsCacheValidity()
+{
+	return this->weightscachevalidity;
 };
 
 bool
