@@ -17,7 +17,7 @@
 #include "soapH.h"
 
 // JSDL converter
-#include "jsdl.h"
+//#include "jsdl.h"
 
 // Server
 #include "wmpoperations.h"
