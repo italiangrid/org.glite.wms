@@ -909,18 +909,37 @@ typedef std::vector<SignificantAttribute> SignificantAttributes;
 
 struct ClusterKey
 {
-  std::string m_user;
   SignificantAttributes m_significant_attributes;
 };
 
 bool operator<(ClusterKey const& lhs, ClusterKey const& rhs)
 {
-  return lhs.m_user < rhs.m_user;
+  return lhs.m_significant_attributes < rhs.m_significant_attributes;
 }
 
 ClusterKey make_key(classad::ClassAd const& jdl)
 {
-  return ClusterKey();
+  ClusterKey result;
+  std::vector<std::string> attributes;
+  bool no_throw;
+  jdl::get_significant_attributes(jdl, attributes, no_throw);
+
+  classad::ClassAdUnParser unparser;
+
+  std::vector<std::string>::const_iterator first = attributes.begin();
+  std::vector<std::string>::const_iterator const last = attributes.end();
+  for ( ; first != last; ++first) {
+    std::string const& attribute = *first;
+    classad::ClassAd const* ignore = 0;
+    classad::ExprTree const* expr = jdl.LookupInScope(attribute, ignore);
+    std::string value;
+    unparser.Unparse(value, expr);
+    result.m_significant_attributes.push_back(
+      std::make_pair(attribute, value)
+    );
+  }
+
+  return result;
 }
 
 enum {
