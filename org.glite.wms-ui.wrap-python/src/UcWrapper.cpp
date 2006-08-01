@@ -13,6 +13,10 @@
 
 using namespace std ;
 string vo_error="";
+void updateError(const string &error){
+	vo_error=error;
+}
+
 
 /************************************************
 *   UCredential VOMS implementation
@@ -21,20 +25,20 @@ string vo_error="";
  method :load_chain
 ******************************************************************/
 STACK_OF(X509) *load_chain(char *certfile, std::string& vo_error){
-	vo_error="";
+	updateError("");
 	STACK_OF(X509_INFO) *sk=NULL;
 	STACK_OF(X509) *stack=NULL;
 	BIO *in=NULL;
 	X509_INFO *xi;
 	int first = 1;
 	if(!(stack = sk_X509_new_null())) {
-		vo_error="Memory allocation failure";
+		updateError("Memory allocation failure");
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
 		return stack;
 	}
 	if(!(in=BIO_new_file(certfile, "r"))) {
-		vo_error="Error opening proxy file";
+		updateError("Error opening proxy file");
 		// goto end;
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
@@ -42,7 +46,7 @@ STACK_OF(X509) *load_chain(char *certfile, std::string& vo_error){
 	}
 	// This loads from a file, a stack of x509/crl/pkey sets
 	if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
-		vo_error="Error reading proxy file";
+		updateError("Error reading proxy file");
 		// goto end;
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
@@ -63,7 +67,7 @@ STACK_OF(X509) *load_chain(char *certfile, std::string& vo_error){
 		X509_INFO_free(xi);
 	}
 	if(!sk_X509_num(stack)) {
-		vo_error= "No certificates in proxy file";
+		updateError("No certificates in proxy file");
 		sk_X509_free(stack);
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
@@ -176,13 +180,16 @@ bool UCredential::load_voms (vomsdata& d){
 			x = PEM_read_bio_X509(in, NULL, 0, NULL);
 			if(!x){
 				// Couldn't find a valid proxy.
-				vo_data_error =VERR_FORMAT;
-				vo_error="Couldn't find a valid proxy";
+				updateError("Couldn't find a valid proxy");
+				vo_data_error=d.error;
 			}
 			chain = load_chain(of, vo_error);
 			if (vo_error.size()){
-				vo_data_error = d.error ;
-				vo_error=d.ErrorMessage();
+				vo_data_error=d.error;
+				if (d.error!=VERR_NONE){
+					updateError(d.ErrorMessage());
+
+				}
 				return true;
 			}
 			d.SetVerificationType((verify_type)(VERIFY_SIGN | VERIFY_KEY));
@@ -190,17 +197,19 @@ bool UCredential::load_voms (vomsdata& d){
 				d.SetVerificationType((verify_type)(VERIFY_NONE));
 				if (d.Retrieve(x, chain, RECURSE_CHAIN)){
 					// WARNING: Unable to verify signature!"
+					updateError(d.ErrorMessage());
+					vo_data_error=d.error;
 				}
 			}
 			sk_X509_free(chain);
 		}else {
-			// Couldn't find a valid proxy.
-			vo_data_error =VERR_FORMAT;
-			vo_error="Couldn't find a valid proxy";
+			updateError("Proxy file doesn't exist or has bad permissions");
+			vo_data_error=d.error;
 		}
+	}else {
+		updateError("Unable to get information from Proxy file");
+		vo_data_error=d.error;
 	}
-	vo_data_error = d.error ;
-	vo_error=d.ErrorMessage();
 	// Release memory
 	BIO_free(in);
 	return (vo_data_error!=VERR_NONE);
@@ -216,7 +225,9 @@ vector <string> load_groups( voms &v ){
 		return vect ;
 	}
 	// appending group names
-	for (  vector<data>::iterator i = v.std.begin() ; i!= v.std.end() ; i++  ) vect.push_back ( string ( i->group )  );
+	for (vector<data>::iterator i=v.std.begin(); i!=v.std.end(); i++){
+		vect.push_back (string(i->group));
+	}
 	return vect ;
 }
 
@@ -233,7 +244,7 @@ std::string  UCredential::getDefaultVoName (){
 	if (!vo_data.DefaultData(v)){
 		vo_data_error = vo_data.error ;
 		vo_error=vo_data.ErrorMessage();
-	return "" ;
+		return "" ;
 	}
 	return string (  v.voname );
 };
