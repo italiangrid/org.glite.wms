@@ -20,7 +20,6 @@ libglite_wms_ice_util_la_SOURCES = \
 				iceLBEvent.cpp \
 				iceLBEventFactory.cpp \
 				subscriptionUpdater.cpp \
-				subscriptionCache.cpp \
 				subscriptionManager.cpp \
 				leaseUpdater.cpp \
 				iceThread.cpp \

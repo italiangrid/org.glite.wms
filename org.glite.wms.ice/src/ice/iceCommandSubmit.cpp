@@ -175,7 +175,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                        );   
 
         util::jobCache* cache( util::jobCache::getInstance() );
-        util::cemonUrlCache* cemon_cache( util::cemonUrlCache::getInstance() );
+        //util::cemonUrlCache* cemon_cache( util::cemonUrlCache::getInstance() );
 
         vector<string> url_jid;
         util::CreamJob theJob;
@@ -332,106 +332,11 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
          * of job just submitted. But only if listener is ON
          */
         if( m_confMgr->getStartListener() ) {
-            string cemon_url;
-            boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-            cemon_url = cemon_cache->getCEMonUrl( theJob.getCreamURL() );
-            CREAM_SAFE_LOG(
-                           m_log_dev->infoStream() 
-                           << "iceCommandSubmit::execute() - "
-                           << "For current CREAM, cemonUrlCache returned CEMon URL ["
-                           << cemon_url << "]"
-                           << log4cpp::CategoryStream::ENDLINE
-                           );
-            
-            if( cemon_url.empty() ) {
-                try {
-                    cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_confMgr->getHostProxyFile() );
-                    cream_api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( theJob.getCreamURL().c_str(), cemon_url );
-                    CREAM_SAFE_LOG(
-                                   m_log_dev->infoStream() 
-                                   << "iceCommandSubmit::execute() - "
-                                   << "For current CREAM, query to CREAM service returned "
-                                   << "CEMon URL [" << cemon_url << "]"
-                                   << log4cpp::CategoryStream::ENDLINE
-                                   );
-                    cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
-                } catch(exception& ex) {
-                    
-                    CREAM_SAFE_LOG(
-                                   m_log_dev->errorStream() 
-                                   << "iceCommandSubmit::execute() - Error retrieving"
-                                   <<" CEMon's URL from CREAM's URL: " << ex.what()
-                                   << ". Composing URL from configuration file..."
-                                   << log4cpp::CategoryStream::ENDLINE
-                                   );
-                    cemon_url = theJob.getCreamURL();
-                    boost::replace_first(cemon_url,
-                                         m_confMgr->getCreamUrlPostfix(),
-                                         m_confMgr->getCEMonUrlPostfix()
-                                         );
-                    CREAM_SAFE_LOG(
-                                   m_log_dev->infoStream() 
-                                   << "Using CEMon URL [" << cemon_url << "]" 
-                                   << log4cpp::CategoryStream::ENDLINE
-                                   );
-                    cemon_cache->putCEMonUrl( theJob.getCreamURL(), cemon_url );
-                }
-            }
-            //boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
-            //if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
-	    vector<Subscription> fake;
-	    // must acquire lock, because another thread could be going to do
-	    // the same thing
-	    //boost::recursive_mutex::scoped_lock _M( util::subscriptionManager::mutex );
-	    if( !util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) ) {
-                /* MUST SUBSCRIBE TO THIS CEMON */
-                CREAM_SAFE_LOG(
-                               m_log_dev->infoStream()
-                               << "iceCommandSubmit::execute() - Not subscribed to ["
-                               << cemon_url << "]. Going to subscribe to it..."
-                               << log4cpp::CategoryStream::ENDLINE
-                               );
-
-                CREAM_SAFE_LOG(
-                               m_log_dev->infoStream()
-                               << "iceCommandSubmit::execute() - "
-                               << "Subscribing the consumer ["
-                               << m_myname_url << "] to ["<<cemon_url
-                               << "] with duration=" 
-                               << m_confMgr->getSubscriptionDuration()
-                               << " secs"
-                               << log4cpp::CategoryStream::ENDLINE
-                               );
-
-                /**
-                 * This is the 1st call of
-                 * subscriptionManager::getInstance() and it's safe
-                 * because the singleton has already been created by
-                 * ice-core module.
-                 */
-                //boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-                if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
-                    CREAM_SAFE_LOG(
-                                   m_log_dev->errorStream()
-                                   << "iceCommandSubmit::execute() - "
-                                   << "Subscribe to ["
-                                   << cemon_url << "] failed! "
-                                   << "Will not receive status notifications from it..."
-                                   << log4cpp::CategoryStream::ENDLINE
-                                   );
-                } else {
-                    CREAM_SAFE_LOG(
-                                   m_log_dev->infoStream()
-                                   << "iceCommandSubmit::execute() - "
-                                   << "Subscribed with ID ["
-                                   << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
-                                   << log4cpp::CategoryStream::ENDLINE
-                                   );
-
-                    util::subscriptionCache::getInstance()->insert(cemon_url);
-                }
-            }
+	
+	  this->doSubscription( theJob.getCreamURL() );
+	
         }
+	    
 	boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
         cache->put( theJob );
     } // execute
@@ -697,6 +602,124 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
 
 }
 
+//______________________________________________________________________________
+void  iceCommandSubmit::doSubscription( const string& ce )
+{
+  string cemon_url;
+  util::cemonUrlCache* cemon_cache( util::cemonUrlCache::getInstance() );
+  {
+    boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );    
+    cemon_url = cemon_cache->getCEMonURL( ce );
+  }         
+  CREAM_SAFE_LOG(
+  		 m_log_dev->infoStream() 
+                  << "iceCommandSubmit::doSubscription() - "
+                  << "For current CREAM, cemonUrlCache returned CEMon URL ["
+                  << cemon_url << "]"
+                  << log4cpp::CategoryStream::ENDLINE
+                );
+            
+  
+	    
+	    
+  // try to determine if we're subscribed to 'cemon_url' by
+  // asking the cemonUrlCache
+  bool foundSubscription;
+  {
+    boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
+    foundSubscription = cemon_cache->hasCEMon( cemon_url );
+  }
+  
+  if( foundSubscription )
+  {
+    // if this a ghost subscription
+    // the subscriptionUpdater will fix it soon
+    CREAM_SAFE_LOG(m_log_dev->infoStream()
+    		   << "iceCommandSubmit::doSubscription() - "
+		   << "Already subsdcribed to CEMon ["
+		   << cemon_url << "] (found in cemonUrlCache)"
+		   << log4cpp::CategoryStream::ENDLINE);
+    return;
+  
+  }	   
+  
+  
+  vector<Subscription> fake;
+  
+  // try to determine with a direct SOAP query to CEMon
+  if( util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) )
+  {
+    if( m_confMgr->getListenerEnableAuthZ() ) {
+      string DN;
+      if( cemon_cache->getCEMonDN( cemon_url, DN ) )
+        {
+      
+          cemon_cache->insertDN( DN );
+          cemon_cache->insertCEMon( cemon_url );
+	  
+        } else {
+          CREAM_SAFE_LOG(m_log_dev->errorStream()
+			<< "iceCommandSubmit::doSubscription() - "
+			<< "CEMon ["<<cemon_url<<"] reported that we're subscribed to it, "
+			<< "but couldn't get it's DN. Will not authorize its job status "
+			<< "notifications."
+			<< log4cpp::CategoryStream::ENDLINE);
+        }
+    } else {
+      cemon_cache->insertCEMon( cemon_url );
+    }
+    CREAM_SAFE_LOG(m_log_dev->infoStream()
+    		   << "iceCommandSubmit::doSubscription() - "
+		   << "Already subscribed to CEMon ["
+		   << cemon_url << "] (asked to CEMon itself)"
+		   << log4cpp::CategoryStream::ENDLINE
+		   );
+  } else {
+      // MUST subscribe
+      string DN;
+      bool can_subscribe = true;
+      if( m_confMgr->getListenerEnableAuthZ() ) {
+        if( !cemon_cache->getCEMonDN( cemon_url, DN ) )
+	{
+	  // Cannot subscribe to a CEMon without it's DN
+	  can_subscribe = false;
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+		         << "iceCommandSubmit::doSubscription() - "
+			 << "Notification authorization is enabled but couldn't "
+			 << "get CEMon's DN. Will not subscribe to it."
+			 << log4cpp::CategoryStream::ENDLINE
+			);
+        } else {
+	  CREAM_SAFE_LOG(m_log_dev->infoStream()
+		         << "iceCommandSubmit::doSubscription() - "
+			 << "Inserting this DN ["
+			 << DN << "] into cemonUrlCache"
+			 << log4cpp::CategoryStream::ENDLINE
+			);
+	  cemon_cache->insertDN( DN );	      
+	}
+      } // if(m_confMgr->getListenerEnableAuthZ() )
+		
+      if(can_subscribe) {
+        if( util::subscriptionManager::getInstance()->subscribe( cemon_url ) )
+	{
+	
+	  cemon_cache->insertCEMon( cemon_url );
+	  
+	} else {
+	  CREAM_SAFE_LOG(
+		         m_log_dev->errorStream()
+			 << "iceCommandSubmit::doSubscription() - "
+			 << "Couldn't subscribe to [" << cemon_url << "]. Will not"
+			 << " receive job status notification from it. Hopefully "
+			 << "the subscriptionUpdater will retry."
+			 << log4cpp::CategoryStream::ENDLINE
+			);
+        }
+      } // if(can_subscribe)
+  } // else -> if(subscribedTo...)
+   
+} // end function
 
 } // namespace ice
 } // namespace wms

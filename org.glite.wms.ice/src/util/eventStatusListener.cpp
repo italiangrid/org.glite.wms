@@ -299,11 +299,19 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   }
 
   if( m_conf->getListenerEnableAuthZ() && m_conf->getListenerEnableAuthN() ) {
-    string remote_hostname = iceUtil::getNotificationClientDN( this->getClientDN() );
-    if( !iceUtil::cemonUrlCache::getInstance()->hasCemon( remote_hostname ) ) {
+    string dn = this->getClientDN();
+    CREAM_SAFE_LOG(m_log_dev->infoStream()
+    		   << "eventStatusListener::acceptJobStatus() - "
+		   << "Got DN ["
+		   << dn << "] for host ["
+		   << this->getClientName() << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
+		   
+    if( !iceUtil::cemonUrlCache::getInstance()->isAuthorized( dn ) ) {
       CREAM_SAFE_LOG(m_log_dev->warnStream() 
 		   << "eventStatusListener::acceptJobStatus() - "
-		   << "Remote notifying client is NOT recognized/authorized. Ignoring this notification..." 
+		   << "Remote notifying client DN has not been found is the"
+		   << " cemonUrlCache. Cannot authorize this notification. Ignoring it..." 
 		   << log4cpp::CategoryStream::ENDLINE);
       return;
     }
@@ -365,65 +373,58 @@ void iceUtil::eventStatusListener::init(void)
   ostringstream hostport;
 
    // *******************************************************************
-   // In the following we fill up the cemonUrlCache with all CEMon URL
-   // ICE *MUST* be subscribe to
+   // In the following we fill up the ceurls set with all CEMon URLs
+   // ICE *MUST* be subscribed to.
    // Later we will check if actually we're still subscribed or not
    // *******************************************************************
   {
-      // Scoped lock to protect concurrent access to the job cache
+      // We acquire a lock on the cemonUrlCache because the 
+      // cemonUrlCache::getCEMonUrl method updates an internal
+      // map CREAM->CEMON
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );      
       boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
       for(jobCache::iterator it=m_cache->begin(); it != m_cache->end(); it++) {
           ceurl = it->getCreamURL();
-	  
-          cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
-          CREAM_SAFE_LOG(m_log_dev->infoStream()
-                         << "eventStatusListener::init() - "
-                         << "For current CREAM ["
-			 << ceurl<<"], cemonUrlCache returned CEMon URL ["
-                         << cemonURL<<"]"
-                         << log4cpp::CategoryStream::ENDLINE);
-          if( cemonURL.empty() ) {
-	      // obtains cemon URL from CREAM service
-              try {
-                  api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_conf->getHostProxyFile() );
-                  api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
-                  CREAM_SAFE_LOG(m_log_dev->infoStream() 
-                                 << "eventStatusListener::init() - "
-                                 << "For current CREAM, query to CREAM service "
-                                 << "returned CEMon URL ["
-                                 << cemonURL << "]"
-                                 << log4cpp::CategoryStream::ENDLINE);
-                  cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
-              } catch(exception& ex) {
-                  
-                  cemonURL = ceurl;
-                  boost::replace_first(cemonURL,
-                                       m_conf->getCreamUrlPostfix(),
-                                       m_conf->getCEMonUrlPostfix()
-                                       );
-                  
-                  CREAM_SAFE_LOG(m_log_dev->errorStream() 
-                                 << "eventStatusListener::init() - Error retrieving"
-                                 << " CEMon's URL from CREAM's URL: "
-                                 << ex.what()
-                                 << ". Composing URL from configuration file: ["
-                                 << cemonURL << "]" 
-                                 << log4cpp::CategoryStream::ENDLINE);
-                  
-                  //ceurls.insert( cemonURL );
-                  cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
-              }              
-          } //else { // if( cemonURL.empty() ) {
-	  
+          cemonURL = cemonUrlCache::getInstance()->getCEMonURL( ceurl );
 	  ceurls.insert( cemonURL );
 	  
-	  //}
-      }
-  }
+
+      } // for loop over the jobs
+  } // unlock the cache and the cemonUrlCache
 
   /**
-   * Now we've got a collection of CEMon urls (without duplicates,
+   * Now, if ListenerEnableAuthZ is ON, we must check that for each
+   * CEMon URLs we can get it's DN
+   */
+  if(m_conf->getListenerEnableAuthZ()) {
+    for(set<string>::const_iterator it = ceurls.begin();
+        it != ceurls.end();
+	++it)
+    {
+      string DN;
+      if( !cemonUrlCache::getInstance()->getCEMonDN( cemonURL, DN ) )
+      {
+        // With notification authorization enabled
+        // and no DN for this CEMon we do not want to
+        // subscribe to it, because the listener would
+        // ignore its notifications anyway.
+	CREAM_SAFE_LOG(m_log_dev->errorStream()
+			<< "eventStatusListener::init() - "
+			<< "Couldn't get DN for CEMon ["
+			<< cemonURL << "] and the notification authorization is "
+			<< "enabled. Then will not subscribe to this CEMon."
+			<< log4cpp::CategoryStream::ENDLINE);
+			
+        ceurls.erase( cemonURL );
+      } else {
+        cemonUrlCache::getInstance()->insertDN( DN );
+      }
+    } // for loop over the CEMon URLs
+  } // if(m_conf->getListenerEnableAuthZ())
+
+
+  /**
+   * Now we've got a collection of CEMon URLs (without duplicates,
    * thanks to the set's property) ICE *MUST* be subscribed to.
    * We're going to check subscriptions
    */
@@ -433,32 +434,43 @@ void iceUtil::eventStatusListener::init(void)
 		   << *it << "]" 
 		   << log4cpp::CategoryStream::ENDLINE);
       
-      // Must lock the subscription manager due to its singleton nature
-      boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
-      vector<Subscription> fake; // just to comply with subManager::subscribedTo interface
-      if( !m_subManager->subscribedTo(*it, fake) ) {
-	CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		       << "eventStatusListener::init() - Not subscribed to ["
-		       << *it << "]. Subscribing to it..."
-		       << log4cpp::CategoryStream::ENDLINE)
+      
+      {
+        boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
+
+        vector<Subscription> fake; // just to comply with subManager::subscribedTo signature
+        
+	if( !m_subManager->subscribedTo(*it, fake) ) {
+	  CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		         << "eventStatusListener::init() - Not subscribed to ["
+		         << *it << "]. Subscribing to it..."
+		         << log4cpp::CategoryStream::ENDLINE)
 
           if( !m_subManager->subscribe(*it) ) {
+	  
+	    // CANNOT SUBSCRIBE!!! WE ONLY CAN TRUST ON THE 
+	    // EVENT STATUS POLLER
+	    
 	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			   << "eventStatusListener::init() - Subscription to ["<< *it 
 			   << "] failed. Will not receives status notifications from it."
+			   << " Will trust on the Poller!"
 			   << log4cpp::CategoryStream::ENDLINE);
-          } else {
-              boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
-              subscriptionCache::getInstance()->insert(*it);
+			   
+          } else { // subscription WENT OK
+              boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
+              cemonUrlCache::getInstance()->insertCEMon( *it );
           }
-      } else {
-	CREAM_SAFE_LOG(m_log_dev->infoStream() 
+	  
+        } else { // we're already subscribed
+	  CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		       << "eventStatusListener::init() - Already subscribed to ["
 		       << *it << "]"
 		       << log4cpp::CategoryStream::ENDLINE);
-	boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
-        subscriptionCache::getInstance()->insert(*it);
-      }
+	  boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
+          cemonUrlCache::getInstance()->insertCEMon( *it );
+        }
+      } // unlock the subscriptionManager mutex
   }
 }
 

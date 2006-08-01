@@ -21,7 +21,8 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
-#include "subscriptionCache.h"
+//#include "subscriptionCache.h"
+#include "cemonUrlCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "eventStatusListener.h"
@@ -201,14 +202,16 @@ Ice::Ice( ) throw(iceInit_ex&) :
 	    exit(1);
         }
         /**
-         * subscriptionCache is used to retrieve the list of cemon we're
+         * cemonUrlCache is used to retrieve the list of cemon we're
          * subscribed. If it's creation failed, it is not the case (at 0-order)
          * to use the listener...
          *
          */
         {
-            boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
-            if( util::subscriptionCache::getInstance() == NULL ) {
+            // this  check with NULL is useless
+	    // becuase if something goes wrong in the
+	    // cemonUrlCache's CTOR the program aborts !
+            if( util::cemonUrlCache::getInstance() == NULL ) {
                 CREAM_SAFE_LOG(
                                m_log_dev->fatalStream() 
                                << "Ice::CTOR() - "

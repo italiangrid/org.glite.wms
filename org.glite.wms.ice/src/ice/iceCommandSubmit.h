@@ -53,6 +53,9 @@ namespace glite {
         namespace ice {
 
             class iceCommandSubmit : public iceAbsCommand {
+	    
+	    private:
+	        void  doSubscription( const std::string& );
 
             public:
                 iceCommandSubmit( const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);

@@ -85,7 +85,8 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   		 << "subscriptionManager::list() - retrieving list of "
 		 << "subscriptions from [" << url << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
-  
+		 
+  m_ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
   m_ceSMgr.list(url, vec); // can throw an std::exception
   
   for(vector<Subscription>::const_iterator it = vec.begin();
@@ -109,6 +110,7 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
 //______________________________________________________________________________
 bool subscriptionManager::subscribe(const string& url)
 {
+  
   m_ceS.setServiceURL(url);
 
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
@@ -126,6 +128,7 @@ bool subscriptionManager::subscribe(const string& url)
 			    );
   }
   try {
+    m_ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
     m_ceS.subscribe();
     m_lastSubscriptionID = m_ceS.getSubscriptionID();
     CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribed with ID ["
@@ -146,6 +149,7 @@ bool subscriptionManager::updateSubscription(const string& url,
 {
   try {
     //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    m_ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
     newID = m_ceSMgr.update(url, ID, m_myurl, m_T, m_P,
     		          time(NULL)+m_conf->getSubscriptionDuration());
     //return true;

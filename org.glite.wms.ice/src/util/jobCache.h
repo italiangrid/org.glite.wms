@@ -30,7 +30,7 @@
 
 // GLite stuff
 #include "ClassadSyntax_ex.h"
-#include "glite/ce/cream-client-api-c/job_statuses.h"
+//#include "glite/ce/cream-client-api-c/job_statuses.h"
 
 // STL stuff
 #include <string>
@@ -49,7 +49,7 @@
 #define DEFAULT_JNLFILE "/tmp/jobCachePersistFile"
 #define DEFAULT_SNAPFILE "/tmp/jobCachePersistFile.snapshot"
 
-namespace api = glite::ce::cream_client_api;
+//namespace api = glite::ce::cream_client_api;
 
 namespace log4cpp {
   class Category;

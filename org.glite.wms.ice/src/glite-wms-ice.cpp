@@ -168,6 +168,7 @@ int main(int argc, char*argv[])
   string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
   string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
 
+
   try {
     iceUtil::makePath( logfile );
   } catch(exception& ex) {
@@ -176,7 +177,7 @@ int main(int argc, char*argv[])
   }
 
   logger_instance->setLogFile(logfile.c_str());
-
+  log_dev->debugStream() << "ICE VersionID is [20060728-13:47]"<<log4cpp::CategoryStream::ENDLINE;
   cout << "Logfile is [" << logfile << "]" << endl;
 
 //   cout << "Poller Threshold time="<<iceUtil::iceConfManager::getInstance()->getPollerStatusThresholdTime()<<endl;
