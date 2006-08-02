@@ -285,7 +285,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 		logInfo->print (WMS_WARNING, "--proto: option ignored (register-only operation doesn't need any file transfer)\n", "", true );
 	} else {
 		try {
-			// --proto
 			checkFileTransferProtocol( );
 		} catch (WmsClientException &exc) {
 			if (fileProto==NULL) {
@@ -355,18 +354,17 @@ void JobSubmit::submission ( ){
 			"Utilities not yet intialised");
 	}
 	ostringstream out ;
-	string jobid = "";
 	toBretrieved = false;
 	// in case of --start option
 	if (startOpt){
-		jobid = *startOpt;
-		jobStarter(jobid);
+		jobStarter(*startOpt);
 	} else {
 		this->checkAd(toBretrieved);
 		// Perform sSubmission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
-		jobid = jobRegOrSub(startJob && !toBretrieved);
-		logInfo->print(WMS_DEBUG, "The JobId is: ", jobid) ;
+		// and initialize internal JobId:
+		submitPerformStep(STEP_REGISTER);
+		logInfo->print(WMS_DEBUG, "The JobId is: ", this->getJobId() ) ;
 		// Perform File Transfer when:
 		// (Registeronly is NOT specified [or specified with --tranfer-file]) AND (some files are to be transferred)
 		if (toBretrieved){
@@ -390,10 +388,10 @@ void JobSubmit::submission ( ){
 		// (RegisterOnly has not been specified in CLI) AND (There were files to transfer)
 		if (startJob && toBretrieved){
 			// Perform JobStart
-			jobStarter(this->getJobId( ));
+			jobStarter(this->getJobId());
 		}
 
-	}  // startOpt = FALSE branch
+	}  // END startOpt = FALSE branch
 	// HEADER OF THE OUTPUT MESSAGE (submission)============================================
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
 	if (registerOnly){
@@ -409,7 +407,7 @@ void JobSubmit::submission ( ){
 	out << this->getJobId( ) << "\n";
 	if (jobShadow!=NULL){
 		// The job is interactive
-		jobShadow->setJobId(jobid);
+		jobShadow->setJobId(this->getJobId());
 		if (jobShadow->isLocalConsole()){
 			// console-shadow running
 			if (nolistenOpt){
@@ -463,7 +461,7 @@ void JobSubmit::submission ( ){
 		if (jobShadow->isLocalConsole()){
 			if (!nolistenOpt){
 				// Interactive console needed
-				logInfo->print(WMS_DEBUG,"Running Listener",jobid);
+				logInfo->print(WMS_DEBUG,"Running Listener",this->getJobId());
 				Listener listener(jobShadow);
 				listener.run();
 			}
@@ -796,7 +794,7 @@ int JobSubmit::checkInputSandbox ( ) {
 			"Total size of the ISB file(s) to be transferred to:",
 			boost::lexical_cast<string>(isbSize) );
 		// Checking whether ISB-total_size is supported by either UserFreeQUota or MAX-ISB =============
-		checkUserServerQuota (isbSize);
+		submitPerformStep(STEP_CHECK_US_QUOTA);
 		if (zipAllowed){
 			// Prepares the zipped files
 			toBCopiedZippedFileList( );
@@ -1153,6 +1151,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 *Performs:
 *	- Job registration when --register-only is selected
 *	-  Job submission otherwise
+* 	TBD: returning string is not used anymore
 */
 std::string JobSubmit::jobRegOrSub(const bool &submit) {
 	string method  = "";
@@ -1192,7 +1191,8 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			"job"+method, ECONNABORTED,
 			"Operation failed", err.str());
 	}
-	return this->getJobId( );
+	// TBD not used anymore (make it void)
+	return this->getJobId();
 }
 
 /**
@@ -1921,28 +1921,64 @@ void JobSubmit::jobPostProcessing( ){
 		}
 	}
 }
-
-void JobSubmit::submitRecoverStep(submitRecoveryStep step, bool breakOn){
-	// Perform parent (Job) recovery
-	if (!breakOn){jobRecoverStep(STEP_GET_ENDPOINT);}  // RECOVER previous steps
+/** Perform a certain operation and, if any problem arises, try and recover all the previous steps */
+void JobSubmit::submitPerformStep(submitRecoveryStep step){
 	switch (step){
-		case STEP_CHECK_ISB:
-			checkUserServerQuota(isbSize);
-			if (breakOn){break;}
-		case STEP_JOB_REGISTER:
-			jobRegOrSub(startJob && !toBretrieved);
-			if (breakOn){break;}
-		// Last Step: Break Anyway
-		break;
+		case STEP_CHECK_FILE_TP:
+			logInfo->print(WMS_DEBUG, "Performing Step", "STEP_CHECK_FILE_TP");
+			try{checkFileTransferProtocol();}
+			catch (WmsClientException &exc) {
+				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
+				submitRecoverStep(step);
+			}
+			break;
+		case STEP_CHECK_US_QUOTA:
+			logInfo->print(WMS_DEBUG, "Performing Step", "STEP_CHECK_US_QUOTA");
+			try{checkUserServerQuota(isbSize);}
+			catch (WmsClientException &exc) {
+				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
+				submitRecoverStep(step);
+			}
+			break;
+		case STEP_REGISTER:
+			logInfo->print(WMS_DEBUG, "Performing Step", "STEP_REGISTER");
+			try{jobRegOrSub(startJob && !toBretrieved);}
+			catch (WmsClientException &exc) {
+				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
+				submitRecoverStep(step);
+			}
+			break;
 		default:
 			throw WmsClientException(__FILE__,__LINE__,
-			"submitRecoverStep", ECONNABORTED,
-			"Operation failed",
-			"Unable to recover from specified step");
+				"submitPerformStep", ECONNABORTED,
+				"Fatal Recovery",
+				"Unable to recover from specified step");
 	}
- }
+}
+void JobSubmit::submitRecoverStep(submitRecoveryStep step){
+	// Perform previous (Job) recovery
+	jobRecoverStep(STEP_JOB_ALL);
 
+	// PERFORM STEP_CHECK_FILE_TP
+	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_CHECK_FILE_TP");
+	submitPerformStep(STEP_CHECK_FILE_TP);
+	if (step==STEP_CHECK_FILE_TP){return;}
 
+	// PERFORM STEP_CHECK_US_QUOTA
+	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_CHECK_US_QUOTA");
+	submitPerformStep(STEP_CHECK_US_QUOTA);
+	if (step==STEP_CHECK_US_QUOTA){return;}
 
+	// PERFORM STEP_REGISTER
+	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_REGISTER");
+	submitPerformStep(STEP_REGISTER);
+	if (step==STEP_REGISTER){return;}
+
+	// no return reached: Unknown STEP
+	throw WmsClientException(__FILE__,__LINE__,
+		"submitRecoverStep", ECONNABORTED,
+		"Fatal Recovery",
+		"Unable to recover from specified step");
+}
 
 }}}} // ending namespaces

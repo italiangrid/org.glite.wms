@@ -49,6 +49,7 @@ namespace client {
 namespace services {
 
 
+
 /* Static method contains
 * Determine whether an object is already
 * contained in the passed vector.
@@ -480,30 +481,54 @@ const std::string Job::delegateProxy( ) {
 	string endpoint = "";
 	retrieveEndPointURL(true);
 	endpoint = getEndPoint( );
-	delegateUserProxy(endpoint);
+	jobPerformStep(STEP_DELEGATE_PROXY);
 	return endpoint;
 }
 
-/** Recover the Wmproxy from a certain situation/step */
-void Job::jobRecoverStep(jobRecoveryStep step, bool breakOn){
+/** Perform a certain operation and, if any problem arises, try and recover all the previous steps */
+void  Job::jobPerformStep(jobRecoveryStep step){
 	switch (step){
 		case STEP_GET_ENDPOINT:
-			// look for endpoint and initilise wmp versions and this->endPoint variables
+			// This Step Does not need the TRY/CATCH block: it is implemented internally
 			lookForWmpEndpoints();
-			// Performs CredentialDelegation if auto-delegation has been requested
-			if (autodgOpt) {delegateUserProxy(*endPoint);}
-			// Sets the attribute of this class related to the WMP server
 			cfgCxt = new api::ConfigContext(getProxyPath(),*endPoint, getCertsPath());
-			if (breakOn){break;}
-		// Last Step: Break Anyway
-		break;
+			break;
+		case STEP_DELEGATE_PROXY:
+			try{delegateUserProxy(*endPoint);}
+			catch (WmsClientException &exc) {
+				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
+				jobRecoverStep(step);
+			}
+			break;
+		case STEP_JOB_ALL:
+			// 'ALL' is not a certain operation: ERROR
 		default:
 			throw WmsClientException(__FILE__,__LINE__,
-			"jobRecoverStep", ECONNABORTED,
-			"Operation failed",
-			"Unable to recover from specified step");
+				"jobPerformStep", ECONNABORTED,
+				"Operation failed",
+				"Unable to recover from specified step");
 	}
- }
+}
+/** Recover the Wmproxy from a certain situation/step */
+void Job::jobRecoverStep(jobRecoveryStep step){
+	// STEP_GET_ENDPOINT
+	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_GET_ENDPOINT");
+	endPoint = NULL ; cfgCxt = NULL;
+	jobPerformStep(STEP_GET_ENDPOINT);
+	if (step==STEP_GET_ENDPOINT){return;}
+
+	// STEP_DELEGATE_PROXY
+	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_DELEGATE_PROXY");
+	jobPerformStep(STEP_DELEGATE_PROXY);
+	if (step==STEP_DELEGATE_PROXY){return;}
+	if (step==STEP_JOB_ALL){return;}
+
+	// no return reached: Unknown STEP
+	throw WmsClientException(__FILE__,__LINE__,
+		"jobRecoverStep", ECONNABORTED,
+		"Operation failed",
+		"Unable to recover from specified step");
+}
 
 /**
 * Sets the endpoint URL where the operation will be performed. The URL is established checking
@@ -538,11 +563,10 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 		urls = wmcUtils->getWmps ();
         }
 	// look for endpoint and initilise wmp versions and this->endPoint variables
-	lookForWmpEndpoints();
+	// And sets the attribute of this class related to the WMP server
+	jobPerformStep(STEP_GET_ENDPOINT);
 	// Performs CredentialDelegation if auto-delegation has been requested
-	if (autodgOpt) {delegateUserProxy(*endPoint);}
-	// Sets the attribute of this class related to the WMP server
-	cfgCxt = new api::ConfigContext(getProxyPath(),*endPoint, getCertsPath());
+	if (autodgOpt){jobPerformStep(STEP_DELEGATE_PROXY);}
 }
 
 /**
@@ -580,7 +604,7 @@ void Job::lookForWmpEndpoints(const bool &all){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkWmpSDList", ECONNABORTED,
 			"Operation failed",
-			"Unable to find any endpoint where to connect");
+			"Unable to find any endpoint where to perform service request");
 	}
 }
 

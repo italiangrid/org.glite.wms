@@ -230,10 +230,13 @@ class Job{
 		/** Possible recovering steps*/
 		enum jobRecoveryStep {
 			STEP_GET_ENDPOINT,
-			STEP_GET_VERSION
+			STEP_DELEGATE_PROXY,
+			STEP_JOB_ALL
 		};
 		/** FailOver Approach: when a problem occurred, recover from a certain step */
-		void jobRecoverStep(jobRecoveryStep step, bool breakOn=true);
+		void jobRecoverStep(jobRecoveryStep step);
+		/** FailOver Approach: Perform a desired step */
+		void jobPerformStep(jobRecoveryStep step);
 		/** Input argument  --logfile <file> */
 		std::string* logOpt ;
 		/** Input argument  --output <file>  */

@@ -273,12 +273,20 @@ class JobSubmit : public Job {
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
 		*/
 		void JobSubmit::checkAd(bool &filestoBtransferred);
+		/** Failover approach: if a service call fails the client may recover
+		from the reached point contacting another wmproxy endpoint */
 		enum submitRecoveryStep {
-			STEP_CHECK_ISB,
-			STEP_JOB_REGISTER
+			STEP_CHECK_FILE_TP,
+			STEP_CHECK_US_QUOTA,
+			STEP_REGISTER,
+			STEP_SUBMIT_ALL
 		};
-		/** FailOver Approach: when a problem occurred, recover from a certain step */
-		void submitRecoverStep(submitRecoveryStep step, bool breakOn=true);
+		/** FailOver Approach: when a problem occurred, recover from a certain step
+		* @param step where the submission arrived so far
+		*/
+		void submitRecoverStep(submitRecoveryStep step);
+		/** FailOver Approach: Perform a desired step */
+		void submitPerformStep(submitRecoveryStep step);
 		/**
 		*	String input arguments
 		*/
@@ -301,9 +309,7 @@ class JobSubmit : public Job {
                 bool registerOnly;
 		bool startJob;
 		bool toBretrieved; // indicate whether there are files to be retrieved
-		/**
-		* Final Warning Message
-		*/
+		/** Final Warning Message*/
 		std::string infoMsg;
 		/** Time variable*/
 		long expireTime ;
