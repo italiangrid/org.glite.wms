@@ -124,13 +124,8 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 	}
 	// file Protocol
 	fileProto= wmcOpts->getStringAttribute(Options::PROTO) ;
-	try{
-		checkFileTransferProtocol( );
-	} catch (WmsClientException &exc) {
-		fileProto = new string (Options::TRANSFER_FILES_DEF_PROTO);
-		logInfo->print (WMS_DEBUG, exc.what( ) ,
-		"Setting File Protocol to default : " + *fileProto);
-	}
+	// Perform Check File Transfer Protocol Step
+	jobPerformStep(STEP_CHECK_FILE_TP);
 }
 /******************************
 *	getOutput method

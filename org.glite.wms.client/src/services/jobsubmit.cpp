@@ -282,21 +282,10 @@ void JobSubmit::readOptions (int argc,char **argv){
 	if (startOpt && fileProto) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (start operation doesn't need any file transfer)\n", "", true );
 	}  else if (registerOnly && fileProto) {
-		logInfo->print (WMS_WARNING, "--proto: option ignored (register-only operation doesn't need any file transfer)\n", "", true );
+		logInfo->print (WMS_WARNING, "--proto: option ignored (register-only operation doesn't need any file transfer)\n", "", true);
 	} else {
-		try {
-			checkFileTransferProtocol( );
-		} catch (WmsClientException &exc) {
-			if (fileProto==NULL) {
-				fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-				logInfo->print (WMS_DEBUG, string(exc.what( ))+ ";",
-				"setting FileTransferProtocol to default: " + string(*fileProto) );
-			} else {
-				logInfo->print (WMS_DEBUG, string(exc.what( ))+ ";",
-					"using the specified protocol: " + string(*fileProto));
-			}
-
-		}
+		// Perform Check File Transfer Protocol Step
+		jobPerformStep(STEP_CHECK_FILE_TP);
 	}
 	// --valid
 	if (validOpt){
@@ -1924,27 +1913,19 @@ void JobSubmit::jobPostProcessing( ){
 /** Perform a certain operation and, if any problem arises, try and recover all the previous steps */
 void JobSubmit::submitPerformStep(submitRecoveryStep step){
 	switch (step){
-		case STEP_CHECK_FILE_TP:
-			logInfo->print(WMS_DEBUG, "Performing Step", "STEP_CHECK_FILE_TP");
-			try{checkFileTransferProtocol();}
-			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
-				submitRecoverStep(step);
-			}
-			break;
 		case STEP_CHECK_US_QUOTA:
-			logInfo->print(WMS_DEBUG, "Performing Step", "STEP_CHECK_US_QUOTA");
-			try{checkUserServerQuota(isbSize);}
+			logInfo->print(WMS_DEBUG, "JobSubmit Performing Step", "STEP_CHECK_US_QUOTA");
+			try{checkUserServerQuota(isbSize); debugStuff(wmcUtils->getRandom(200)); }
 			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
+				logInfo->print(WMS_WARNING, "JobSubmit Recoverable Error caught:", string(exc.what()));
 				submitRecoverStep(step);
 			}
 			break;
 		case STEP_REGISTER:
-			logInfo->print(WMS_DEBUG, "Performing Step", "STEP_REGISTER");
-			try{jobRegOrSub(startJob && !toBretrieved);}
+			logInfo->print(WMS_DEBUG, "JobSubmit Performing Step", "STEP_REGISTER");
+			try{jobRegOrSub(startJob && !toBretrieved);  debugStuff(wmcUtils->getRandom(200)); }
 			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
+				logInfo->print(WMS_WARNING, "Recoverable Error caught:", string(exc.what()));
 				submitRecoverStep(step);
 			}
 			break;
@@ -1959,18 +1940,13 @@ void JobSubmit::submitRecoverStep(submitRecoveryStep step){
 	// Perform previous (Job) recovery
 	jobRecoverStep(STEP_JOB_ALL);
 
-	// PERFORM STEP_CHECK_FILE_TP
-	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_CHECK_FILE_TP");
-	submitPerformStep(STEP_CHECK_FILE_TP);
-	if (step==STEP_CHECK_FILE_TP){return;}
-
 	// PERFORM STEP_CHECK_US_QUOTA
-	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_CHECK_US_QUOTA");
+	logInfo->print(WMS_DEBUG, "JobSubmit Recovering Step", "STEP_CHECK_US_QUOTA");
 	submitPerformStep(STEP_CHECK_US_QUOTA);
 	if (step==STEP_CHECK_US_QUOTA){return;}
 
 	// PERFORM STEP_REGISTER
-	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_REGISTER");
+	logInfo->print(WMS_DEBUG, "JobSubmit Recovering Step", "STEP_REGISTER");
 	submitPerformStep(STEP_REGISTER);
 	if (step==STEP_REGISTER){return;}
 

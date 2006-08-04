@@ -49,6 +49,20 @@ namespace client {
 namespace services {
 
 
+// This Method is used for debug mode
+void debugStuff(int n){
+	/*
+	cout<< "RANDOMICALLY EXCEPTION?"<< n << endl ;
+	if (n%4==0){
+		cout <<"YESSSSS!!!"<< endl ;
+		throw WmsClientException(__FILE__,__LINE__,
+			"debugStuff",DEFAULT_ERR_CODE,
+			"Arrived randomically", "This is my error message");
+	}
+	cout <<"nope, continuing"<< endl ;
+	*/
+}
+
 
 /* Static method contains
 * Determine whether an object is already
@@ -494,9 +508,16 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 			cfgCxt = new api::ConfigContext(getProxyPath(),*endPoint, getCertsPath());
 			break;
 		case STEP_DELEGATE_PROXY:
-			try{delegateUserProxy(*endPoint);}
+			try{delegateUserProxy(*endPoint); debugStuff(wmcUtils->getRandom(200));  }
 			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "Recoverable Error caught", string(exc.what()));
+				logInfo->print(WMS_WARNING, "Recoverable Error caught:", string(exc.what()));
+				jobRecoverStep(step);
+			}
+			break;
+		case STEP_CHECK_FILE_TP:
+			try{checkFileTransferProtocol();  debugStuff(wmcUtils->getRandom(200)); }
+			catch (WmsClientException &exc) {
+				logInfo->print(WMS_WARNING, "Recoverable Error caught:", string(exc.what()));
 				jobRecoverStep(step);
 			}
 			break;
@@ -512,17 +533,22 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 /** Recover the Wmproxy from a certain situation/step */
 void Job::jobRecoverStep(jobRecoveryStep step){
 	// STEP_GET_ENDPOINT
-	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_GET_ENDPOINT");
+	logInfo->print(WMS_DEBUG, "Job Recovering Step", "STEP_GET_ENDPOINT");
 	endPoint = NULL ; cfgCxt = NULL;
 	jobPerformStep(STEP_GET_ENDPOINT);
 	if (step==STEP_GET_ENDPOINT){return;}
 
 	// STEP_DELEGATE_PROXY
-	logInfo->print(WMS_DEBUG, "Recovering Step", "STEP_DELEGATE_PROXY");
+	logInfo->print(WMS_DEBUG, "Job Recovering Step", "STEP_DELEGATE_PROXY");
 	jobPerformStep(STEP_DELEGATE_PROXY);
 	if (step==STEP_DELEGATE_PROXY){return;}
-	if (step==STEP_JOB_ALL){return;}
 
+	// PERFORM STEP_CHECK_FILE_TP
+	logInfo->print(WMS_DEBUG, "Job Recovering Step", "STEP_CHECK_FILE_TP");
+	jobPerformStep(STEP_CHECK_FILE_TP);
+	if (step==STEP_CHECK_FILE_TP){return;}
+
+	if (step==STEP_JOB_ALL){return;}
 	// no return reached: Unknown STEP
 	throw WmsClientException(__FILE__,__LINE__,
 		"jobRecoverStep", ECONNABORTED,
@@ -714,7 +740,7 @@ void Job::checkFileTransferProtocol(  ) {
 
 		}
 		// --proto: checks that the chosen protocol is supported
-		if (fileProto) {			if ( size > 0 ) {
+		if (fileProto) {if ( size > 0 ) {
 				// checks whether the WMProxy supports the protocol
 				// that the user has specified (--proto)
 				if (Utils::hasElement(protocols, *fileProto) == false){
@@ -763,11 +789,13 @@ void Job::checkFileTransferProtocol(  ) {
 					"could not check the protocol (received list of protocols is empty)");
 			}
 		}
+	} else  if (fileProto==NULL) {
+		fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
+		logInfo->print (WMS_DEBUG, "No information on the available WMProxy-FileTransferProtocol(s)",
+		"setting FileTransferProtocol to default: " + string(*fileProto) );
 	} else {
-		throw WmsClientException(__FILE__,__LINE__,
-			"Job::checkFileTransferProtocol",DEFAULT_ERR_CODE,
-				"Input Option Error",
-				"No information on the available WMProxy-FileTransferProtocol(s)" );
+		logInfo->print (WMS_DEBUG, "No information on the available WMProxy-FileTransferProtocol(s)",
+			"using the specified protocol: " + string(*fileProto));
 	}
 }
 

@@ -57,8 +57,8 @@ struct wmpVersionType {
 };
 
 
-
-
+// Debugging mode method
+void debugStuff(int n);
 
 
 class Job{
@@ -231,6 +231,7 @@ class Job{
 		enum jobRecoveryStep {
 			STEP_GET_ENDPOINT,
 			STEP_DELEGATE_PROXY,
+			STEP_CHECK_FILE_TP,
 			STEP_JOB_ALL
 		};
 		/** FailOver Approach: when a problem occurred, recover from a certain step */

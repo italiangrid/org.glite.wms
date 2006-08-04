@@ -276,7 +276,6 @@ class JobSubmit : public Job {
 		/** Failover approach: if a service call fails the client may recover
 		from the reached point contacting another wmproxy endpoint */
 		enum submitRecoveryStep {
-			STEP_CHECK_FILE_TP,
 			STEP_CHECK_US_QUOTA,
 			STEP_REGISTER,
 			STEP_SUBMIT_ALL

@@ -389,14 +389,8 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	int size = 0;
 	try {
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-		try{
-			checkFileTransferProtocol();
-		} catch (WmsClientException &exc) {
-			fileProto = new string (Options::TRANSFER_FILES_DEF_PROTO);
-			logInfo->print (WMS_DEBUG, exc.what( ) ,
-			"Setting File Protocol to default : " + *fileProto);
-		}
-
+		// Perform Check File Transfer Protocol Step
+		jobPerformStep(STEP_CHECK_FILE_TP);
 		if (peekFiles.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet",DEFAULT_ERR_CODE,
