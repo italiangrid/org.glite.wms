@@ -64,6 +64,9 @@ BaseException* createWmpException(struct soap *soap){
 				ns1__BaseFaultType *ex = (ns1__BaseFaultType*)detail->fault;
 				if ( ex ) {
 					switch (detail->__type){
+						case SOAP_TYPE_ns1__ServerOverloadedFaultType:
+							b_ex=new ServerOverloadedException;
+							break;
 						case SOAP_TYPE_ns1__OperationNotAllowedFaultType:
 							b_ex=new OperationNotAllowedException;
 							break;

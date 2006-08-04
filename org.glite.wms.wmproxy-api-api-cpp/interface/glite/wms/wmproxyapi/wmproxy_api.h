@@ -94,6 +94,8 @@ struct NoSuitableResourcesException:BaseException{};
 struct JobUnknownException:BaseException{};
 /** Current job status does not allow requested operation.*/
 struct OperationNotAllowedException:BaseException{};
+/** Server is too busy*/
+struct ServerOverloadedException:BaseException{};
 /** Proxy file errors */
 struct ProxyFileException:BaseException{};
 /** Error during delegation operations with Gridsite methods (grstXXXX)  - since 1.2.0*/
