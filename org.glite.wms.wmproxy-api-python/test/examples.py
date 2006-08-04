@@ -375,6 +375,7 @@ def runTextRunner(level, sublevel):
 	"testDelegatedProxyInfo","testGetJDL"],\
 	}  #END SUITES
 
+	LEV_MAX=len(allSuites.keys())
 	allParsedSuites=[]
 	sIndex=0
 	# Generate Suites

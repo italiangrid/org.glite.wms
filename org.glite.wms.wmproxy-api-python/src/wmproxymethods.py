@@ -120,6 +120,13 @@ class JobIdStruct:
 		Return, if the istance represents a dag node, the name of the node
 		"""
 		return self.nodeName
+	def getPath(self):
+		"""
+		Return, if avaliable, the path
+		"""
+		return self.path
+
+
 
 class BaseException(Exception):
 	"""
@@ -220,7 +227,7 @@ class WMPException(BaseException):
 
 class ApiException(BaseException):
 	"""
-	Exception raised directly from server
+	Exception raised directly from api client
 	"""
 	def __init__(self, method, message):
 		self.origin  = "Wmproxy Api Python"
@@ -1059,4 +1066,3 @@ class Wmproxy:
 			raise HTTPException(err)
 		except socket.error, err:
 			raise SocketException(err)
-
