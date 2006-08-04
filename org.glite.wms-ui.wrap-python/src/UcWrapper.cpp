@@ -170,11 +170,12 @@ private method: load_voms
 bool UCredential::load_voms (vomsdata& d){
 	BIO  *in = NULL;
 	X509 *x  = NULL;
+	vo_data_error=VERR_NONE;
 	d.data.clear() ;
 	STACK_OF(X509) *chain = NULL;
-	SSLeay_add_ssl_algorithms();
 	char *of   = const_cast<char *>(proxy_file.c_str());
 	in = BIO_new(BIO_s_file());
+	SSLeay_add_ssl_algorithms();
 	if (in) {
 		if (BIO_read_filename(in, of) > 0) {
 			x = PEM_read_bio_X509(in, NULL, 0, NULL);
@@ -196,9 +197,10 @@ bool UCredential::load_voms (vomsdata& d){
 			if (!d.Retrieve(x, chain, RECURSE_CHAIN)){
 				d.SetVerificationType((verify_type)(VERIFY_NONE));
 				if (d.Retrieve(x, chain, RECURSE_CHAIN)){
-					// WARNING: Unable to verify signature!"
-					updateError(d.ErrorMessage());
-					vo_data_error=d.error;
+					// it is ONLY a WARNING: Unable to verify signature!"
+					updateError(d.ErrorMessage() +
+					"\n(Please check if the host certificate of the VOMS server that has"+
+					" issued your proxy is installed on this machine)");
 				}
 			}
 			sk_X509_free(chain);
@@ -212,6 +214,7 @@ bool UCredential::load_voms (vomsdata& d){
 	}
 	// Release memory
 	BIO_free(in);
+
 	return (vo_data_error!=VERR_NONE);
 }
 /******************************************************************
@@ -279,9 +282,13 @@ std::string  UCredential::getDefaultFQAN (){
 std::vector <std::string> UCredential::getVoNames (){
 	vector <string> vect ; // contains the vo names
 	vomsdata vo_data ;
-	if (   load_voms(  vo_data )  ) return vect ;
+	if (load_voms(vo_data)){
+		return vect ;
+	}
 	vector <voms> v = vo_data.data;
-	for ( vector<voms>::iterator it = v.begin() ; it!= v.end() ; it++ )  vect.push_back ( string ( it->voname ) ) ;
+	for ( vector<voms>::iterator it = v.begin() ; it!= v.end() ; it++ ){
+		vect.push_back ( string ( it->voname ) ) ;
+	}
 	return vect ;
 };
 
