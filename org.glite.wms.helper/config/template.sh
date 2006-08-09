@@ -62,7 +62,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
   unset tmp_sort_file
 }
 
-globus_url_retry_copy() # 1 - source, 2 - dest
+retry_copy() # 1 - command, 2 - source, 3 - dest
 {
   count=0
   succeded=1
@@ -79,7 +79,7 @@ globus_url_retry_copy() # 1 - source, 2 - dest
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    globus-url-copy $1 $2
+    $1 $2 $3
     succeded=$?
     count=`expr $count + 1`
   done
@@ -91,7 +91,7 @@ doExit() # 1 - status
   jw_status=$1
   jw_echo "jw exit status = ${jw_status}"
 
-  globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   globus_copy_status=$?
 
   cd ..
@@ -410,7 +410,7 @@ umask 022
 if [ ${__wmp_support} -eq 0 ]; then
   for f in ${__input_file[@]}
   do
-    globus_url_retry_copy "${__input_base_url}${f}" "file://${workdir}/${f}"
+    retry_copy "globus-url-copy" "${__input_base_url}${f}" "file://${workdir}/${f}"
     if [ $? != 0 ]; then
       fatal_error "Cannot download ${f} from ${__input_base_url}"
     fi
@@ -426,9 +426,9 @@ else
       file=`basename ${__wmp_input_base_dest_file[$index]}`
     fi
     if [ "${f:0:9}" == "gsiftp://" ]; then
-      globus_url_retry_copy "${f}" "file://${workdir}/${file}"
+      retry_copy "globus-url-copy" "${f}" "file://${workdir}/${file}"
     else
-      htcp "${f}" "file://${workdir}/${file}"
+      retry_copy "htcp" "${f}" "file://${workdir}/${file}"
     fi
     if [ $? != 0 ]; then
       fatal_error "Cannot download ${workdir}/${file} from ${f}"
@@ -457,10 +457,10 @@ if [ ${__job_type} -eq 3 ]; then #interactive jobs
   #extracts 'scheme://host' from the full URL
   base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`}
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
-    globus_url_retry_copy "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
+    retry_copy "globus-url-copy" "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
     chmod +x ${workdir}/${f}
   done
-  globus_url_retry_copy "${base_url}/${GLITE_LOCATION}/lib/libglite-wms-grid-console-agent.so.0" "file://${workdir}/libglite-wms-grid-console-agent.so.0"
+  retry_copy "globus-url-copy" "${base_url}/${GLITE_LOCATION}/lib/libglite-wms-grid-console-agent.so.0" "file://${workdir}/libglite-wms-grid-console-agent.so.0"
 fi
 
 if [ ${__perusal_support} -eq 1 ]; then
@@ -666,7 +666,7 @@ if [ ${__wmp_support} -eq 0 ]; then
           let "file_size_acc += $file_size"
         #fi
         if [ $file_size_acc -le ${__max_osb_size} ]; then
-          globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
+          retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
         else
           jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
           # $current_file is zero-based (being used even
@@ -683,12 +683,12 @@ if [ ${__wmp_support} -eq 0 ]; then
               jw_echo "Could not truncate output sandbox file ${f}, not sending"
             else
               jw_echo "Truncated last $trunc_len bytes for file ${f}"
-              globus_url_retry_copy "file://${workdir}/${f}.tail" "${__output_base_url}${ff}.tail"
+              retry_copy "globus-url-copy" "file://${workdir}/${f}.tail" "${__output_base_url}${ff}.tail"
             fi
           fi
         fi
       else
-        globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
+        retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
       fi
       if [ $? != 0 ]; then
         fatal_error "Cannot upload ${f} into ${__output_base_url}" "Done"
@@ -700,59 +700,57 @@ else #WMP support
   total_files=${#__wmp_output_dest_file[@]}
   for f in ${__wmp_output_dest_file[@]}
   do
-    if [ -r "${__wmp_output_file[$current_file]}" ]; then
-      file=`basename $f`
-      s="${workdir}/${__wmp_output_file[$current_file]}"
-      if [ ${__osb_wildcards_support} -eq 0 ]; then
-        d=${f}
-      else
-        d=${__output_sandbox_base_dest_uri}/${file}
-      fi
-      if [ ${__max_osb_size} -ge 0 ]; then
-        #todo
-        #if hostname=wms
-          file_size=`stat -t $f | awk '{print $2}'`
-          file_size_acc=`expr $file_size_acc + $file_size`
-        #fi
-        if [ $file_size_acc -le ${__max_osb_size} ]; then
-          if [ "${f:0:9}" == "gsiftp://" ]; then
-            globus_url_retry_copy "file://$s" "$d"
-          else
-            htcp "file://$s" "$d"
-          fi
-        else
-          jw_echo "OSB quota exceeded for $s, truncating needed"
-          remaining_files=`expr $total_files \- $current_file + 2`
-          remaining_space=`expr $__max_osb_size \- $file_size_acc`
-          trunc_len=`expr $remaining_space / $remaining_files`||0
-          if [ $trunc_len -lt 10 ]; then #non trivial truncation
-            jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
-          else
-            truncate "$s" $trunc_len "$s.tail"
-            if [ $? != 0 ]; then
-              jw_echo "Could not truncate output sandbox file ${f}, not sending"
-            else
-              jw_echo "Truncated last $trunc_len bytes for file ${f}"
-              if [ "${f:0:9}" == "gsiftp://" ]; then
-                globus_url_retry_copy "file://$s.tail" "$d.tail"
-              else
-                htcp "file://$s.tail" "$d.tail"
-              fi
-            fi
-          fi
-        fi
-      else #unlimited osb
+    file=`basename $f`
+    s="${workdir}/${__wmp_output_file[$current_file]}"
+    if [ ${__osb_wildcards_support} -eq 0 ]; then
+      d=${f}
+    else
+      d=${__output_sandbox_base_dest_uri}/${file}
+    fi
+    if [ ${__max_osb_size} -ge 0 ]; then
+      #todo
+      #if hostname=wms
+        file_size=`stat -t $f | awk '{print $2}'`
+        file_size_acc=`expr $file_size_acc + $file_size`
+      #fi
+      if [ $file_size_acc -le ${__max_osb_size} ]; then
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus_url_retry_copy "file://$s" "$d"
+          globus-url-copy "file://$s" "$d"
         else
           htcp "file://$s" "$d"
         fi
+      else
+        jw_echo "OSB quota exceeded for $s, truncating needed"
+        remaining_files=`expr $total_files \- $current_file + 2`
+        remaining_space=`expr $__max_osb_size \- $file_size_acc`
+        trunc_len=`expr $remaining_space / $remaining_files`||0
+        if [ $trunc_len -lt 10 ]; then #non trivial truncation
+          jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
+        else
+          truncate "$s" $trunc_len "$s.tail"
+          if [ $? != 0 ]; then
+            jw_echo "Could not truncate output sandbox file ${f}, not sending"
+          else
+            jw_echo "Truncated last $trunc_len bytes for file ${f}"
+            if [ "${f:0:9}" == "gsiftp://" ]; then
+              globus-url-copy "file://$s.tail" "$d.tail"
+            else
+              htcp "file://$s.tail" "$d.tail"
+            fi
+          fi
+        fi
       fi
-      if [ $? != 0 ]; then
-        fatal_error "Cannot upload ${file} into ${f}" "Done"
+    else #unlimited osb
+      if [ "${f:0:9}" == "gsiftp://" ]; then
+        globus-url-copy "file://$s" "$d"
+      else
+        htcp "file://$s" "$d"
       fi
-      let "++current_file"
     fi
+    if [ $? != 0 ]; then
+      fatal_error "Cannot upload ${file} into ${f}" "Done"
+    fi
+    let "++current_file"
   done
 fi #WMP support
 
