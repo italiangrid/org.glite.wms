@@ -700,57 +700,59 @@ else #WMP support
   total_files=${#__wmp_output_dest_file[@]}
   for f in ${__wmp_output_dest_file[@]}
   do
-    file=`basename $f`
-    s="${workdir}/${__wmp_output_file[$current_file]}"
-    if [ ${__osb_wildcards_support} -eq 0 ]; then
-      d=${f}
-    else
-      d=${__output_sandbox_base_dest_uri}/${file}
-    fi
-    if [ ${__max_osb_size} -ge 0 ]; then
-      #todo
-      #if hostname=wms
-        file_size=`stat -t $f | awk '{print $2}'`
-        file_size_acc=`expr $file_size_acc + $file_size`
-      #fi
-      if [ $file_size_acc -le ${__max_osb_size} ]; then
-        if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://$s" "$d"
-        else
-          htcp "file://$s" "$d"
-        fi
+    if [ -r "${__wmp_output_file[$current_file]}" ]; then
+      file=`basename $f`
+      s="${workdir}/${__wmp_output_file[$current_file]}"
+      if [ ${__osb_wildcards_support} -eq 0 ]; then
+        d=${f}
       else
-        jw_echo "OSB quota exceeded for $s, truncating needed"
-        remaining_files=`expr $total_files \- $current_file + 2`
-        remaining_space=`expr $__max_osb_size \- $file_size_acc`
-        trunc_len=`expr $remaining_space / $remaining_files`||0
-        if [ $trunc_len -lt 10 ]; then #non trivial truncation
-          jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
-        else
-          truncate "$s" $trunc_len "$s.tail"
-          if [ $? != 0 ]; then
-            jw_echo "Could not truncate output sandbox file ${f}, not sending"
+        d=${__output_sandbox_base_dest_uri}/${file}
+      fi
+      if [ ${__max_osb_size} -ge 0 ]; then
+        #todo
+        #if hostname=wms
+          file_size=`stat -t $f | awk '{print $2}'`
+          file_size_acc=`expr $file_size_acc + $file_size`
+        #fi
+        if [ $file_size_acc -le ${__max_osb_size} ]; then
+          if [ "${f:0:9}" == "gsiftp://" ]; then
+            retry_copy "globus-url-copy" "file://$s" "$d"
           else
-            jw_echo "Truncated last $trunc_len bytes for file ${f}"
-            if [ "${f:0:9}" == "gsiftp://" ]; then
-              globus-url-copy "file://$s.tail" "$d.tail"
+            retry_copy "htcp" "file://$s" "$d"
+          fi
+        else
+          jw_echo "OSB quota exceeded for $s, truncating needed"
+          remaining_files=`expr $total_files \- $current_file + 2`
+          remaining_space=`expr $__max_osb_size \- $file_size_acc`
+          trunc_len=`expr $remaining_space / $remaining_files`||0
+          if [ $trunc_len -lt 10 ]; then #non trivial truncation
+            jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
+          else
+            truncate "$s" $trunc_len "$s.tail"
+            if [ $? != 0 ]; then
+              jw_echo "Could not truncate output sandbox file ${f}, not sending"
             else
-              htcp "file://$s.tail" "$d.tail"
+              jw_echo "Truncated last $trunc_len bytes for file ${f}"
+              if [ "${f:0:9}" == "gsiftp://" ]; then
+                retry_copy "globus-url-copy" "file://$s.tail" "$d.tail"
+              else
+                retry_copy "htcp" "file://$s.tail" "$d.tail"
+              fi
             fi
           fi
         fi
+      else #unlimited osb
+        if [ "${f:0:9}" == "gsiftp://" ]; then
+          retry_copy "globus-url-copy" "file://$s" "$d"
+        else
+          retry_copy "htcp" "file://$s" "$d"
+        fi
       fi
-    else #unlimited osb
-      if [ "${f:0:9}" == "gsiftp://" ]; then
-        globus-url-copy "file://$s" "$d"
-      else
-        htcp "file://$s" "$d"
+      if [ $? != 0 ]; then
+        fatal_error "Cannot upload ${file} into ${f}" "Done"
       fi
+      let "++current_file"
     fi
-    if [ $? != 0 ]; then
-      fatal_error "Cannot upload ${file} into ${f}" "Done"
-    fi
-    let "++current_file"
   done
 fi #WMP support
 
