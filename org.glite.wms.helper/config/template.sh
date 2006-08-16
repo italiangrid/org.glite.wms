@@ -483,7 +483,6 @@ if [ -n ${__shallow_resubmission_token} ]; then
                             $EDG_LOCATION/bin/edg-gridftp-rm \
                             `which edg-gridftp-rm 2>/dev/null` ; do
     if [ -x "${gridftp_rm_command}" ]; then
-      log_event "Couldn't find "${gridftp_rm_command}""
       break;
     fi
   done
