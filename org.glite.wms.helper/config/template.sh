@@ -487,13 +487,17 @@ if [ -n ${__shallow_resubmission_token} ]; then
     fi
   done
 
-  $gridftp_rm_command ${__shallow_resubmission_token}
-  result=$?
-  if [ $result -eq 0 ]; then
-    log_event "ReallyRunning"
-    jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
+  if [ -z "${gridftp_rm_command}" ]; then
+    log_event "No *ftp-rm command found"
   else
-    fatal_error "Cannot take token for $GLITE_WMS_JOBID"
+    $gridftp_rm_command ${__shallow_resubmission_token}
+    result=$?
+    if [ $result -eq 0 ]; then
+      log_event "ReallyRunning"
+      jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
+    else
+      fatal_error "Cannot take token for $GLITE_WMS_JOBID"
+    fi
   fi
 fi
 
