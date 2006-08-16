@@ -682,12 +682,7 @@ if [ ${__wmp_support} -eq 0 ]; then
   for f in "${__output_file[@]}"
   do
     if [ -r "${f}" ]; then
-      output=`dirname $f`
-      if [ "x${output}" = "x." ]; then
-        ff=$f
-      else
-        ff=${f##*/}
-      fi
+      ff=${f##*/}
       if [ ${__max_osb_size} -ge 0 ]; then
         #todo
         #if hostname=wms
