@@ -482,8 +482,8 @@ if [ -n ${__shallow_resubmission_token} ]; then
                             `which glite-gridftp-rm 2>/dev/null` \
                             $EDG_LOCATION/bin/edg-gridftp-rm \
                             `which edg-gridftp-rm 2>/dev/null` ; do
-    if [ -x $gridftp_rm_command ]; then
-      log_event "Couldn't find $gridftp_rm_command"
+    if [ -x "${gridftp_rm_command}" ]; then
+      log_event "Couldn't find "${gridftp_rm_command}""
       break;
     fi
   done
@@ -659,7 +659,7 @@ file_size_acc=0
 current_file=0
 if [ ${__wmp_support} -eq 0 ]; then
   total_files=${#__output_file[@]}
-  for f in ${__output_file[@]}
+  for f in "${__output_file[@]}"
   do
     if [ -r "${f}" ]; then
       ff=${f##*/}
@@ -702,15 +702,15 @@ if [ ${__wmp_support} -eq 0 ]; then
   done
 else #WMP support
   total_files=${#__wmp_output_dest_file[@]}
-  for f in ${__wmp_output_dest_file[@]}
+  for f in "${__wmp_output_dest_file[@]}"
   do
     if [ -r "${__wmp_output_file[$current_file]}" ]; then
       file=`basename $f`
       s="${workdir}/${__wmp_output_file[$current_file]}"
       if [ ${__osb_wildcards_support} -eq 0 ]; then
-        d=${f}
+        d="${f}"
       else
-        d=${__output_sandbox_base_dest_uri}/${file}
+        d="${__output_sandbox_base_dest_uri}/${file}"
       fi
       if [ ${__max_osb_size} -ge 0 ]; then
         #todo
