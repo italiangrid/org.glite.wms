@@ -52,13 +52,13 @@ sort_by_size() # 1 - file names vector, 2 - directory
   fi
   eval tmpvar="$1[@]"
   eval elements="\${$tmpvar}"
-  for fname in ${elements}; do
+  for fname in "${elements}"; do
     fsize=`stat -t $2/$fname 2>/dev/null | awk '{print $2}'`||0
-    echo "$fsize $fname" >> $tmp_sort_file
+    echo "$fsize $fname" >> "$tmp_sort_file"
   done
   unset $1
   eval "$1=(`sort -n $tmp_sort_file|awk '{print $2}'`)"
-  rm -f $tmp_sort_file
+  rm -f "$tmp_sort_file"
   unset tmp_sort_file
 }
 
@@ -81,7 +81,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     fi
     $1 "$2" "$3" 2>std_err
     succeded=$?
-    if [ $succeded != 0]; then
+    if [ $succeded != 0 ]; then
       log_event "`cat std_err`"
     fi
     rm -f std_err
@@ -99,7 +99,7 @@ doExit() # 1 - status
   globus_copy_status=$?
 
   cd ..
-  rm -rf ${newdir}
+  rm -rf "${newdir}"
 
   if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
@@ -284,7 +284,7 @@ function send_partial_file
         if [ "${NEWSIZE}" -gt "${!OLDSIZE}" ] ; then
           let "DIFFSIZE = NEWSIZE - $OLDSIZE"
           SLICENAME=$SRCFILE.`date +%Y%m%d%H%M%S`_${!COUNTER}
-          tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME
+          tail -c "$DIFFSIZE" "${SRCFILE}.${FILESUFFIX}" > "$SLICENAME"
           if [ -r "${DESTURL}" ]; then
             if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
               retry_copy "globus-url-copy" "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
@@ -293,7 +293,7 @@ function send_partial_file
             fi
           fi
           GLOBUS_RETURN_CODE=$?
-          rm ${SRCFILE}.${FILESUFFIX} $SLICENAME
+          rm -f "${SRCFILE}.${FILESUFFIX}" "$SLICENAME"
           if [ "$GLOBUS_RETURN_CODE" -eq "0" ] ; then
             let "$OLDSIZE = NEWSIZE"
             let "$COUNTER += 1"
