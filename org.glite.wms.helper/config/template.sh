@@ -488,7 +488,7 @@ if [ -n ${__shallow_resubmission_token} ]; then
   done
 
   if [ -z "${gridftp_rm_command}" ]; then
-    log_event "No *ftp-rm command found"
+    fatal_error "No *ftp-rm command found"
   else
     $gridftp_rm_command ${__shallow_resubmission_token}
     result=$?
