@@ -277,7 +277,7 @@ function send_partial_file
     if [ -r "${TRIGGERFILE}" ]; then
       if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
         retry_copy "globus-url-copy" ${TRIGGERFILE} file://${LISTFILE}
-      elif [ "${TRIGGERFILE:0:8}" == "https://" -o "${TRIGGERFILE:0:8}" == "http://" ]; then
+      elif [ "${TRIGGERFILE:0:8}" == "https://" -o "${TRIGGERFILE:0:7}" == "http://" ]; then
         retry_copy "htcp" "${f}" "file://${workdir}/${file}"
       else
         false
@@ -312,7 +312,7 @@ function send_partial_file
           if [ -r "${DESTURL}" ]; then
             if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
               retry_copy "globus-url-copy" "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
-            elif [ "${DESTURL:0:8}" == "https://" -o "${DESTURL:0:8}" == "http://" ]; then
+            elif [ "${DESTURL:0:8}" == "https://" -o "${DESTURL:0:7}" == "http://" ]; then
               retry_copy "htcp" "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
             else
               false
@@ -454,10 +454,14 @@ else
   #WMP support
   for f in ${__wmp_input_base_file[@]}
   do
-    file=`basename $f`
+    if [ -z "${__wmp_input_base_dest_file}" ]; then
+      file=`basename ${f}`
+    else
+      file=`basename ${__wmp_input_base_dest_file[$index]}`
+    fi
     if [ "${f:0:9}" == "gsiftp://" ]; then
       retry_copy "globus-url-copy" "${f}" "file://${workdir}/${file}"
-    elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
+    elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
       retry_copy "htcp" "${f}" "file://${workdir}/${file}"
     else
       false
@@ -763,7 +767,7 @@ else #WMP support
         if [ $file_size_acc -le ${__max_osb_size} ]; then
           if [ "${f:0:9}" == "gsiftp://" ]; then
             retry_copy "globus-url-copy" "file://$s" "$d"
-          elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
+          elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
             retry_copy "htcp" "file://$s" "$d"
           else
             false
@@ -783,7 +787,7 @@ else #WMP support
               jw_echo "Truncated last $trunc_len bytes for file ${f}"
               if [ "${f:0:9}" == "gsiftp://" ]; then
                 retry_copy "globus-url-copy" "file://$s.tail" "$d.tail"
-              elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
+              elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
                 retry_copy "htcp" "file://$s.tail" "$d.tail"
               else
                 false
@@ -794,7 +798,7 @@ else #WMP support
       else #unlimited osb
         if [ "${f:0:9}" == "gsiftp://" ]; then
           retry_copy "globus-url-copy" "file://$s" "$d"
-        elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
+        elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
           retry_copy "htcp" "file://$s" "$d"
         else
           false
