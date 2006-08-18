@@ -527,7 +527,7 @@ if [ -n ${__shallow_resubmission_token} ]; then
       remaining=${tkn:${#scheme}:${#tkn}-${#scheme}}
       hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
       token_fullpath=${remaining:${#hostname}:${#remaining}-${#hostname}}
-      $gridftp_rm_command $hostname -a gsi "\"rm ${token_fullpath}\""
+      $gridftp_rm_command $hostname -a gsi "'quote dele ${token_fullpath}'"
     fi
     result=$?
     if [ $result -eq 0 ]; then
