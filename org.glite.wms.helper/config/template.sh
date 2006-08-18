@@ -277,8 +277,10 @@ function send_partial_file
     if [ -r "${TRIGGERFILE}" ]; then
       if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
         retry_copy "globus-url-copy" ${TRIGGERFILE} file://${LISTFILE}
+      elif [ "${TRIGGERFILE:0:8}" == "https://" -o "${TRIGGERFILE:0:8}" == "http://" ]; then
+        retry_copy "htcp" "${f}" "file://${workdir}/${file}"
       else
-        retry_copy "htcp" ${TRIGGERFILE} file://${LISTFILE}
+        false
       fi
     fi
     # Skip iteration if unable to get the list
@@ -310,8 +312,10 @@ function send_partial_file
           if [ -r "${DESTURL}" ]; then
             if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
               retry_copy "globus-url-copy" "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
-            else
+            elif [ "${DESTURL:0:8}" == "https://" -o "${DESTURL:0:8}" == "http://" ]; then
               retry_copy "htcp" "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
+            else
+              false
             fi
           fi
           GLOBUS_RETURN_CODE=$?
@@ -453,8 +457,10 @@ else
     file=`basename $f`
     if [ "${f:0:9}" == "gsiftp://" ]; then
       retry_copy "globus-url-copy" "${f}" "file://${workdir}/${file}"
-    elif [ "${f:0:8}" == "https://" ]; then
+    elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
       retry_copy "htcp" "${f}" "file://${workdir}/${file}"
+    else
+      false
     fi 
     if [ $? != 0 ]; then
       fatal_error "Cannot download ${file} from ${f}"
@@ -479,7 +485,7 @@ if [ -f "${__prologue}" ]; then
 fi
 
 if [ ${__job_type} -eq 3 ]; then #interactive jobs
-  base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`}
+  base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`} #TODO %[xdigit][xdigit] handling
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
     retry_copy "globus-url-copy" "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
     chmod +x ${workdir}/${f}
@@ -497,22 +503,34 @@ if [ -n ${__shallow_resubmission_token} ]; then
   for gridftp_rm_command in $GLITE_LOCATION/bin/glite-gridftp-rm \
                             `which glite-gridftp-rm 2>/dev/null` \
                             $EDG_LOCATION/bin/edg-gridftp-rm \
-                            `which edg-gridftp-rm 2>/dev/null` ; do
+                            `which edg-gridftp-rm 2>/dev/null` \
+                            $GLOBUS_LOCATION/bin/uberftp \
+                            `which uberftp 2>/dev/null`; do
     if [ -x "${gridftp_rm_command}" ]; then
       break;
     fi
   done
 
-  if [ -z "${gridftp_rm_command}" ]; then
-    fatal_error "No *ftp-rm command found"
+  if [ ! -x "${gridftp_rm_command}" ]; then
+    fatal_error "No *ftp for rm command found"
   else
-    $gridftp_rm_command ${__shallow_resubmission_token}
+    is_uberftp=`expr match "${gridftp_rm_command}" '.*uberftp'`
+    if [ $is_uberftp -eq 0 ]; then
+      $gridftp_rm_command ${__shallow_resubmission_token}
+    else #uberftp
+      tkn=${__shallow_resubmission_token} # will reduce lines length
+      scheme=${tkn:0:`expr match "${tkn}" '[[:alpha:]][[:alnum:]+.-]*://'`}
+      remaining=${tkn:${#scheme}:${#tkn}-${#scheme}}
+      hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
+      token_fullpath=${remaining:${#hostname}:${#remaining}-${#hostname}}
+      $gridftp_rm_command $hostname -a gsi "\"rm ${token_fullpath}\""
+    fi
     result=$?
     if [ $result -eq 0 ]; then
       log_event "ReallyRunning"
       jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
     else
-      fatal_error "Cannot take token for $GLITE_WMS_JOBID" 
+      fatal_error "Cannot take token for ${GLITE_WMS_JOBID}"
     fi
   fi
 fi
@@ -745,8 +763,10 @@ else #WMP support
         if [ $file_size_acc -le ${__max_osb_size} ]; then
           if [ "${f:0:9}" == "gsiftp://" ]; then
             retry_copy "globus-url-copy" "file://$s" "$d"
-          elif [ "${f:0:8}" == "https://" ]; then
+          elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
             retry_copy "htcp" "file://$s" "$d"
+          else
+            false
           fi
         else
           jw_echo "OSB quota exceeded for $s, truncating needed"
@@ -763,8 +783,10 @@ else #WMP support
               jw_echo "Truncated last $trunc_len bytes for file ${f}"
               if [ "${f:0:9}" == "gsiftp://" ]; then
                 retry_copy "globus-url-copy" "file://$s.tail" "$d.tail"
-              elif [ "${f:0:8}" == "https://" ]; then
+              elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
                 retry_copy "htcp" "file://$s.tail" "$d.tail"
+              else
+                false
               fi
             fi
           fi
@@ -772,8 +794,10 @@ else #WMP support
       else #unlimited osb
         if [ "${f:0:9}" == "gsiftp://" ]; then
           retry_copy "globus-url-copy" "file://$s" "$d"
-        elif [ "${f:0:8}" == "https://" ]; then
+        elif [ "${f:0:8}" == "https://" -o "${f:0:8}" == "http://" ]; then
           retry_copy "htcp" "file://$s" "$d"
+        else
+          false
         fi
       fi
       if [ $? != 0 ]; then
