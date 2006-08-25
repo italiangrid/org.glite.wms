@@ -184,8 +184,9 @@ void load_voms (vomsdata *vo_data, const char *proxy_file){
 			if (!vo_data->Retrieve( x , chain, RECURSE_CHAIN)  ){
 				vo_data->SetVerificationType((verify_type)(VERIFY_NONE));
 				if (vo_data->Retrieve(x, chain, RECURSE_CHAIN)){
-					throw  WmsClientException(__FILE__,__LINE__, "load_voms",DEFAULT_ERR_CODE,
-						"Parsing Error","Unable to verify signature");
+					// it is ONLY a WARNING: Unable to verify signature!
+					// (Please check if the host certificate of the VOMS server that has
+					// issued your proxy is installed on this machine)
 				}
 			}
 			sk_X509_free(chain);
@@ -219,13 +220,6 @@ const std::string getDefaultVoVoms(const char *pxfile){
 	string defaultVo;
 	// int error = 0;
 	vomsdata *vo_data = new vomsdata() ;
-	char * envval = NULL;
-	char * vomsdir = NULL;
-	char * certdir = NULL;
-	if ((envval = getenv(X509_VOMS_DIR))) { vomsdir = envval;}
-	else {vomsdir = const_cast<char*>(VOMS_DIR);}
-	if ((envval = getenv(X509_CERT_DIR))) {certdir = envval;}
-	else { certdir = const_cast<char*>(CERT_DIR);}
 	load_voms(vo_data, pxfile);
 	voms v;
 	// get Default voms
@@ -881,7 +875,7 @@ std::string Utils::FQANtoVO(const std::string fqan){
 std::string Utils::getDefaultVo(){
 	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
 	if (proxy){
-		return getDefaultVoVoms(proxy);
+		return getDefaultVoVoms(string(proxy).c_str());
 	} else {
 		throw WmsClientException(__FILE__,__LINE__,"getDefaultVo",
 			DEFAULT_ERR_CODE,
