@@ -79,10 +79,10 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    $1 "$2" "$3" 2>std_err
+    $1 "$2" "$3" 2>std_err_0123 # TODO: mktemp
     succeded=$?
     if [ $succeded != 0 ]; then
-      log_event "`cat std_err`"
+      log_event "error during $1 transfer" # TODO: reason
     fi
     rm -f std_err
     count=`expr $count + 1`
