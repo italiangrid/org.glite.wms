@@ -183,6 +183,7 @@ bool UCredential::load_voms (vomsdata& d){
 				// Couldn't find a valid proxy.
 				updateError("Couldn't find a valid proxy");
 				vo_data_error=d.error;
+				return true;
 			}
 			chain = load_chain(of, vo_error);
 			if (vo_error.size()){
