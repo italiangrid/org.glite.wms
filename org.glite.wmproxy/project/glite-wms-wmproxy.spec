@@ -65,6 +65,7 @@ gLite WMS WMProxy Service executables and libraries
 %attr(-, root, root) %{prefix}/etc/lcmaps/lcmaps.db.template
 %attr(-, root, root) %{prefix}/etc/glite_wms_wmproxy_httpd.conf.template
 %attr(-, root, root) %{prefix}/etc/glite_wms_wmproxy.gacl.template
+%attr(-, root, root) %{prefix}/etc/init.d/glite-wms-wmproxy
 %attr(-, root, root) %{prefix}/share/doc/glite-wms-wmproxy-%{version}/LICENSE
 %attr(-, root, root) %{prefix}/share/doc/glite-wms-wmproxy-%{version}/CHANGES
 

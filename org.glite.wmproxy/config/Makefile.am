@@ -8,13 +8,17 @@
 
 EXTRA_DIST = \
 	glite_wms_wmproxy_httpd.conf \
-        glite_wms_wmproxy.gacl
+        glite_wms_wmproxy.gacl \
+	glite-wms-wmproxy
 
 wletcwmdir = $(sysconfdir)
 wletcwm_DATA = glite_wms_wmproxy_httpd.conf glite_wms_wmproxy.gacl
 
 wletcwmsdir = $(sysconfdir)/lcmaps
 wletcwms_DATA = lcmaps.db 
+
+wlinidir = $(sysconfdir)/init.d
+wlini_SCRIPTS = glite-wms-wmproxy
 
 install-data-hook:
 	/bin/mv $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf.template

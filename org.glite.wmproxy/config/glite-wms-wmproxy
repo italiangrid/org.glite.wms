@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+#############
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://public.eu-egee.org/partners/ for details on the copyright holders.
+# For license conditions see the license file or http://www.eu-egee.org/license.html
+#############
+#
+# Startup script for the Apache Web Server
+# for the WMProxy Service
+#
+# processname: httpd
+# pidfile: ${GLITE_LOCATION_VAR-/var/glite}/httpd-wmproxy.pid 
+# config: ${GLITE_LOCATION-/opt/glite}/etc/glite_wms_wmproxy_httpd.conf 
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+#########################################################
+#
+#                               Integration changes
+#. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
+
+. /etc/glite/profile.d/glite_setenv.sh 
+########################################
+
+
+httpd=${GLITE_WMS_WMPROXY_HTTPD-/usr/sbin/httpd}
+config=${GLITE_LOCATION-/opt/glite}/etc/glite_wms_wmproxy_httpd.conf
+prog=httpd
+port=${GLITE_WMS_WMPROXY_PORT-7443}
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+  status)
+        if netstat -anp | grep "^tcp .* 0.0.0.0:$port .*LISTEN .*httpd" >/dev/null 2>&1 ;then
+        echo WMProxy $prog listening on port $port
+        status $httpd
+	RETVAL=$?
+        else
+        echo WMProxy $prog not listening on port $port
+        echo $prog not running 
+        RETVAL=1
+        fi
+	;;
+  start|stop|restart)
+	#$apachectl -k $@ -f $config
+	$httpd -k $@ -f $config
+	RETVAL=$?
+	;;
+  configtest)
+	$httpd -t -f $config
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $prog {start|stop|restart|status|help|configtest}"
+	exit 1
+esac
+
+exit $RETVAL
