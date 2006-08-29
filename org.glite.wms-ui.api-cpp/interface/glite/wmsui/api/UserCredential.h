@@ -53,7 +53,7 @@ class  UserCredential{
 	/** Default Constructor*/
 	UserCredential() ;
 	/** Default Destructor*/
-	UserCredential::~UserCredential();
+	~UserCredential();
 	/**Check if the Proxy Certificate is valid
 	* @param   cred_path   the whole path of the proxy Certificate (if different from the default one)
 	* @throws ProxyException   The proxy certificate is not valid
