@@ -1,5 +1,4 @@
-testName: SandBox-gdebrecz
-testAbbr: gdebrecz
-testTitle: SandBox for Gergo to play with SAM
-testHelp: https://uimon.cern.ch/twiki/bin/view/LCG/SAMEsettings#The_SandBox_service
+testName: FTS2-basic
+testAbbr: basic
+testTitle: Radi's basic FTS test 
 EOT

@@ -1,9 +1,208 @@
 #!/bin/bash
 
-export LFC_HOME=/grid/$SAME_VO/SFT
-export LCG_CATALOG_TYPE=lfc
-timestamp=`date +%s`
-nodeName=$1
+##########################################################################################
+# Script for testing of FTS services (Basic test: PING, FTS BDII, Top Level BDII, Tomcat)#
+##########################################################################################
+#                                                       #
+# Returned values:                                      #
+#                                                       #
+#                 Exit  SAME_OK: Test Passed            #
+#                 Exit  SAME_ERROR: Test Failed         #
+#                 Exit  2: Wrong Input                  #
+#                                                       #
+#########################################################
 
-echo "Checking if a file can be copied back from $nodeName"
+showUsage ()
+{
+ echo "									 		  "
+ echo "Usage:  FTS2-basic --fts <fts hostname> [ --bdii <bdii hostname> ]       "
+ echo "Options:                                                                           "
+ echo "	 obligatory:    								  "
+ echo "		  									  "
+ echo "	         --fts   <fts  hostname>						  "
+ echo "		         The name of the FTS server.					  "
+ echo "	 optional:									  "
+ echo "											  "	
+ echo "	         --bdii  <bdii hostname>  						  "
+ echo "		          The name of the top level BDII. The default is lcg-bdii.cern.ch "
+ echo "											  "
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+fi
+
+until [ -z "$1" ]
+do
+  case "$1" in
+   
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+ 	   else
+                FTS_HOST=$2
+                shift 2
+           fi
+    ;;
+
+    --bdii)
+	   if [ -z "$2" ]; then
+               shift 1 
+ 	   else
+	       BDII_HOST=$2
+ 	       shift 2
+           fi
+    ;;
+
+    *)
+        showUsage
+        exit 2
+    ;;
+  esac	
+done
+
+if [ -z "$FTS_HOST" ]; then
+               echo ""
+               echo ">>> NOTE: FTS hostname is not specified. Option --fts <fts hostname> is obligatory! <<<"
+               showUsage
+               exit 2
+fi
+
+if [ -z "$BDII_HOST" ]; then
+              BDII_HOST=lcg-bdii.cern.ch
+fi
+
+######################################################################
+# >>>> NOTE:  Hardcoded ports for FTS BDII and top level BDII !!! <<<<
+######################################################################
+
+BDII_PORT=2170
+FTS_BDII_PORT=2170
+
+#####################
+# Exporting variables
+#####################
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+export GLITE_SD_PLUGIN=bdii
+
+######################
+# Function definition
+######################
+
+function test_ping
+{
+  echo " Testing ping to $FTS_HOST" 
+  echo ""
+  result=`ping -c 5 $FTS_HOST 2>/dev/null | grep Unreachable | wc -l`
+
+  if [ $result -gt 0 ]; then
+    echo ""
+    echo ">>> NOTE: The $FTS_HOST is not accessible! <<<"
+    echo ""
+    echo "FTS Basic Test: Failed."
+    echo ""
+    exit $SAME_ERROR
+  fi
+}
+
+function test_ldap
+{
+  echo " Testing connection to LDAP server on $FTS_HOST"
+  echo ""  
+  result=`ldapsearch -x -H ldap://$FTS_HOST:$FTS_BDII_PORT -b Mds-vo-name=resource,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
+
+  if [ $result -eq 0 ]; then
+     echo ""
+     echo ">>> NOTE: LDAP Test: Failed. <<<"
+     echo ""
+     echo "FTS Basic Test: Failed."
+     echo ""
+     exit $SAME_ERROR
+  fi
+}
+
+function test_bdii
+{
+  echo " Testing if there is information for $FTS_HOST on $BDII_HOST"
+  echo ""
+
+  result=`ldapsearch -x -H ldap://$BDII_HOST:$BDII_PORT -b Mds-vo-name=local,o=Grid 2>/dev/null | grep $FTS_HOST | wc -l`
+
+  if [ $result -eq 0 ]; then
+    echo ""
+    echo ">>> NOTE: No entries found for FTS Server: $FTS_HOST on the top level BDII: $BDII_HOST! <<<"
+    echo ""
+    echo "FTS Basic Test: Failed."
+    echo ""
+    exit $SAME_ERROR
+  fi
+}
+
+function test_tomcat
+{
+  echo " Testing connection to Tomcat server on $FTS_HOST "
+  echo ""
+
+  result=`nmap -p $1 $FTS_HOST 2>/dev/null | grep open | wc -l`
+
+  if [ $result -eq 0 ]; then
+    echo ""
+    echo ">>> NOTE: The Tomcat server on $FTS_HOST is not accessible! <<<"
+    echo ">>> NOTE: Tomcat Test: Failed. <<<"
+    echo ""
+    echo "FTS Basic Test: Failed."
+    echo ""
+    exit $SAME_ERROR
+  fi
+}
+
+################
+# Start testing
+###############
+
+echo ""
+echo "Testing FTS: $FTS_HOST"
+echo ""
+echo "Using BDII: $BDII_HOST"
+echo ""
+echo "Testing...."
+echo ""
+
+###########################################
+# Checking if the service is up and running
+###########################################
+
+test_ping
+
+#####################################################
+# Checking if LDAP Server on FTS is working properely
+#####################################################
+
+test_ldap
+
+###################################################################
+# Checking if there is information for FTS Server on top level BDII
+##################################################################
+
+test_bdii
+
+#####################################################################
+# Getting Tomcart Port for FTS Server from top level BDII: $BDII_HOST
+#####################################################################
+
+FTS_URL=`glite-sd-query -t org.glite.FileTransfer 2>/dev/null | grep $FTS_HOST | grep Endpoint | sed -e 's/Endpoint://g'`
+FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
+FTS_TOMCAT_PORT=`echo $FTS_URL | awk '{print $2}'`
+
+#######################################################
+# Checking if Tomcat Server on FTS is working properely
+#######################################################
+
+test_tomcat $FTS_TOMCAT_PORT
+
+echo ""
+echo "FTS Basic Test: Passed."
+echo ""
 exit $SAME_OK
