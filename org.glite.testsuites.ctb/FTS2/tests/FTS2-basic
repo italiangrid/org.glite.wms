@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ##########################################################################################
 # Script for testing of FTS services (Basic test: PING, FTS BDII, Top Level BDII, Tomcat)#
 ##########################################################################################
@@ -14,18 +13,9 @@
 
 showUsage ()
 {
- echo "									 		  "
- echo "Usage:  FTS2-basic --fts <fts hostname> [ --bdii <bdii hostname> ]       "
- echo "Options:                                                                           "
- echo "	 obligatory:    								  "
- echo "		  									  "
- echo "	         --fts   <fts  hostname>						  "
- echo "		         The name of the FTS server.					  "
- echo "	 optional:									  "
- echo "											  "	
- echo "	         --bdii  <bdii hostname>  						  "
- echo "		          The name of the top level BDII. The default is lcg-bdii.cern.ch "
- echo "											  "
+ echo "Missing parameter:                                                                 "
+ echo "Usage:  FTS2-basic <fts hostname>                                                  "
+ echo ""
 }
 
 if [ -z "$1" ]; then
@@ -33,52 +23,16 @@ if [ -z "$1" ]; then
   exit 2
 fi
 
-until [ -z "$1" ]
-do
-  case "$1" in
-   
-     --fts)
-           if [ -z "$2" ]; then
-                shift 1
- 	   else
-                FTS_HOST=$2
-                shift 2
-           fi
-    ;;
-
-    --bdii)
-	   if [ -z "$2" ]; then
-               shift 1 
- 	   else
-	       BDII_HOST=$2
- 	       shift 2
-           fi
-    ;;
-
-    *)
-        showUsage
-        exit 2
-    ;;
-  esac	
-done
-
-if [ -z "$FTS_HOST" ]; then
-               echo ""
-               echo ">>> NOTE: FTS hostname is not specified. Option --fts <fts hostname> is obligatory! <<<"
-               showUsage
-               exit 2
+if [ -n "$1" ]; then
+ FTS_HOST=$2
+else
+ echo "ERROR: No FTS host is defined!"
+ exit $SAME_ERROR
 fi
 
-if [ -z "$BDII_HOST" ]; then
-              BDII_HOST=lcg-bdii.cern.ch
-fi
+# Sourcing the configuration
 
-######################################################################
-# >>>> NOTE:  Hardcoded ports for FTS BDII and top level BDII !!! <<<<
-######################################################################
-
-BDII_PORT=2170
-FTS_BDII_PORT=2170
+. $SAME_SENSOR_HOME/config.sh
 
 #####################
 # Exporting variables
@@ -87,9 +41,6 @@ FTS_BDII_PORT=2170
 export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
 export GLITE_SD_PLUGIN=bdii
 
-######################
-# Function definition
-######################
 
 function test_ping
 {
@@ -163,10 +114,7 @@ function test_tomcat
 ###############
 
 echo ""
-echo "Testing FTS: $FTS_HOST"
-echo ""
-echo "Using BDII: $BDII_HOST"
-echo ""
+echo "Start testing with settings: FTS_HOST: $FTS_HOST BDII_HOST: $BDII_HOST"
 echo "Testing...."
 echo ""
 
