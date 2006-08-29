@@ -458,7 +458,7 @@ Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
 <<<EXAMPLES>>>
 
 1) Display information for the proxy delegated to the WMProxy service with the specified identifier:
-	glite-wms-job-info -d <delegationId>
+	glite-wms-job-info -d <delegationid>
 
 2) Display information for the proxy delegated with a previously submitted Job:
 	glite-wms-job-info -p <JobId>
@@ -470,7 +470,7 @@ Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
 	glite-wms-job-info -j <JobId>
 
 5) Send the request to the WMProxy service whose URL is specified with the -e option
-	glite-wms-job-info -d <delegationId> -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_server
+	glite-wms-job-info -d <delegationid> -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_server
 
 6) Store into a file the submission string registered to LB server for a previosly submitted Job:
 	glite-wms-job-info --jdl <JobId> -o <OutputFile>
