@@ -24,7 +24,7 @@ if [ -z "$1" ]; then
 fi
 
 if [ -n "$1" ]; then
- FTS_HOST=$2
+ FTS_HOST=$1
 else
  echo "ERROR: No FTS host is defined!"
  exit $SAME_ERROR
