@@ -2,13 +2,13 @@
 if [ "x$1" == "x--publish" ] ; then
     echo "This sensor does not support publish operation!" >&2
 else
-    echo "prepare-FTS script started." >&2
+    echo "prepare-FTS2 script started." >&2
     echo -n "got nodes:" >&2
     wc -l nodes.map >&2
     cd $SAME_SENSOR_WORK
     echo -n "publishing test definitions... " >&2
     same-publish-tuples TestDef $SAME_SENSOR_HOME/tests/*.def >&2
-    envName=SandBox-`date +%s`
+    envName=FTS2-`date +%s`
     cat <<EOF | same-publish-tuples TestEnvVars
 envName: $envName
 name: dummy
@@ -17,4 +17,3 @@ EOF
     echo $envName > $SAME_SENSOR_WORK/envName
     echo "DONE" >&2
 fi
-
