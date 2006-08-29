@@ -5,5 +5,7 @@ This is the collection of tests developed for CTB.
 - A 'skeleton' sensor SandBox is here to play with, to serve 
 as a starting point.
 
+- For each sensor there should be a short description
+  on: https://twiki.cern.ch/twiki/bin/view/LCG/SAMEsettings
 
 2006/aug/29
