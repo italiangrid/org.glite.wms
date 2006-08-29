@@ -453,7 +453,7 @@ class RaskMan:
 					self.write(parseSpecial,self.commandTags[section])
 					del self.commandTags[section]
 				else:
-					debug ("Available commandTags ARE:", commandTags)
+					debug ("NOT Available Section:", section)
 			"""  Other Unkwnown sections..."""
 			for section in commandTags.keys():
 				self.write(title,section)

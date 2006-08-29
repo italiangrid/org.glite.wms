@@ -131,28 +131,6 @@ when this option is specified, the operations are performed contacting the WMPro
 if this option is specified, the following information is saved in the file specified by filepath: date and time the delegation operation was performed; WMProxy service URL;  id_string associated to the delegated proxy. filepath can be either a simple name or an absolute path (on the submitting machine). In the former case the file is created in the current working directory.
 .PP
 
-.SH ENVIRONMENT
-
-GLITE_WMS_CLIENT_CONFIG:  This variable may be set to specify the path location of the configuration file
-
-GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
-
-GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
-
-GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL
-
-X509_CERT_DIR: This variable may be set to override the default location of the trusted certificates directory, which is normally /etc/grid-security/certificates
-
-X509_USER_PROXY: This variable may be set to override the default location of the user proxy credentials, which is normally /tmp/x509up_u<uid>.
-
-.SH FILES
-
-voName/glite_wms.conf: The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc); different configuration files can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
-
-/tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
-.SH AUTHORS
-
-Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
 .SH EXAMPLES
 
 1) delegates the user credential with "exID" identifier :
@@ -194,6 +172,11 @@ GLOBUS_TCP_PORT_RANGE="<val min> <val max>": This variable must be set to define
 X509_CERT_DIR: This variable may be set to override the default location of the trusted certificates directory, which is normally /etc/grid-security/certificates
 
 X509_USER_PROXY: This variable may be set to override the default location of the user proxy credentials, which is normally /tmp/x509up_u<uid>.
+
+GLITE_SD_PLUGIN: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, normally bdii, rgma (or both, separated by comma)
+
+LCG_GFAL_INFOSYS: If Service Discovery querying is needed, this variable cbe used in order to set a specific Server where to perform the queries: for instance LCG_GFAL_INFOSYS='gridit-bdii-01.cnaf.infn.it:2170'
+
 
 .SH AUTHORS
 
