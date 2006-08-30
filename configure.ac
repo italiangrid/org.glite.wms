@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.4  2006/08/30 16:12:18  gianelle
+#       Remove the "force" parameter from the cancel function (no more used)
+#       Update also the version.
+#
 #       Revision 1.22.2.3  2006/07/26 14:02:50  gianelle
 #       Update version for the tag
 #
@@ -104,7 +108,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS jobsubmission], [3.1.2])
+AC_INIT([GLite WMS jobsubmission], [3.1.3])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/constants.h])
