@@ -138,11 +138,13 @@ public class WMProxyAPI{
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public java.lang.String getProxyReq (java.lang.String delegationId)
 		throws org.glite.wms.wmproxy.AuthenticationFaultException,
 			org.glite.wms.wmproxy.AuthorizationFaultException,
-			org.glite.wms.wmproxy.ServiceException {
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException {
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
 		try {
 			return this.serviceStub.getProxyReq(delegationId) ;
@@ -152,6 +154,9 @@ public class WMProxyAPI{
 		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
 			// AuthorizationFault
 			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.ServerOverloadedFaultException exc) {
+			// ServerOverloadedFaultException
+			throw new org.glite.wms.wmproxy.ServerOverloadedFaultException(this.createExceptionMessage(exc));
 		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
 			// GenericFault ->ServiceException
 			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
@@ -171,11 +176,13 @@ public class WMProxyAPI{
 	*  @return a string representing the proxy
 	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
 	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @since 1.2.0
 	*/
 	public java.lang.String grstGetProxyReq (java.lang.String delegationId)
 		throws org.glite.wms.wmproxy.CredentialException,
-			org.glite.wms.wmproxy.ServiceException {
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
 		try {
 			return this.grstStub.getProxyReq(delegationId) ;
@@ -206,6 +213,7 @@ public class WMProxyAPI{
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @see #getVersion
 	*
 	*/
@@ -213,7 +221,8 @@ public class WMProxyAPI{
 		throws org.glite.wms.wmproxy.AuthenticationFaultException,
 			org.glite.wms.wmproxy.AuthorizationFaultException,
 			org.glite.wms.wmproxy.CredentialException,
-			org.glite.wms.wmproxy.ServiceException {
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: cert=[" + cert+ "]");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
 		logger.debug ("Creating proxy from certificate (CreateProxyfromCertReq)");
@@ -251,12 +260,14 @@ public class WMProxyAPI{
 	*  @param cert the input certificate
 	* @throws CredentialException a problem occurred during the operations of delegation
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @since 1.2.0
 	* @see #getVersion
 	*/
 	public void grstPutProxy(java.lang.String delegationId, java.lang.String cert)
 		throws org.glite.wms.wmproxy.CredentialException,
-		org.glite.wms.wmproxy.ServiceException {
+		org.glite.wms.wmproxy.ServiceException,
+		org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: cert=[" + cert + "]");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
 		logger.debug ("Creating proxy from certificate (CreateProxyfromCertReq)");
@@ -284,6 +295,7 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @see #getProxyReq
 	* @see #grstGetProxyReq
 	* @see #putProxy
@@ -294,7 +306,8 @@ public class WMProxyAPI{
 		throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: delegationId=[" + delegationId + "]");
 		try {
 			return this.serviceStub.getDelegatedProxyInfo(delegationId);
@@ -328,6 +341,7 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @see #getProxyReq
 	* @see #putProxy
 	* @see BaseException
@@ -336,7 +350,8 @@ public class WMProxyAPI{
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobId=[" + jobId + "]");
 		try {
 			return this.serviceStub.getJobProxyInfo(jobId);
@@ -366,10 +381,12 @@ public class WMProxyAPI{
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public java.lang.String getVersion()
 			throws org.glite.wms.wmproxy.AuthenticationFaultException,
-				org.glite.wms.wmproxy.ServiceException {
+				org.glite.wms.wmproxy.ServiceException,
+				org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		try {
 			return this.serviceStub.getVersion() ;
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
@@ -405,11 +422,13 @@ public class WMProxyAPI{
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws InvalidArgumentFaultException the given JDL expression is not valid
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public org.glite.wms.wmproxy.JobIdStructType jobRegister(java.lang.String jdl, java.lang.String delegationId)
 			throws org.glite.wms.wmproxy.AuthenticationFaultException,
 				org.glite.wms.wmproxy.InvalidArgumentFaultException,
-				org.glite.wms.wmproxy.ServiceException {
+				org.glite.wms.wmproxy.ServiceException,
+				org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: JDL=[" + jdl + "]");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
 		try {
@@ -448,8 +467,10 @@ public class WMProxyAPI{
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws JobUnknownFaultException the given job has not been registered to the system
 	* @throws InvalidArgumentFaultException the given job Id is not valid
-	*  @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public void jobStart(java.lang.String jobId)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
@@ -457,7 +478,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
 		try {
 			this.serviceStub.jobStart ( jobId ) ;
@@ -506,13 +528,16 @@ public class WMProxyAPI{
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws InvalidArgumentFaultException the given job Id is not valid
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public org.glite.wms.wmproxy.JobIdStructType jobSubmit(java.lang.String jdl, java.lang.String delegationId)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 
 		logger.debug ("INPUT: JDL=[" + jdl + "]\n");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
@@ -550,7 +575,9 @@ public class WMProxyAPI{
 	* @throws JobUnknownFaultException the given job has not been registered to the system
 	* @throws InvalidArgumentFaultException the given job Id is not valid
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public void jobCancel(java.lang.String jobId)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
@@ -558,7 +585,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
 		try {
 			this.serviceStub.jobCancel(jobId);
@@ -594,10 +622,12 @@ public class WMProxyAPI{
 	*  @return the size of the InputSandbox (in bytes)
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public double getMaxInputSandboxSize()
 		throws org.glite.wms.wmproxy.AuthenticationFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		try {
 			return this.serviceStub.getMaxInputSandboxSize();
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
@@ -620,11 +650,13 @@ public class WMProxyAPI{
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public org.glite.wms.wmproxy.StringList getTransferProtocols( )
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		try {
 			return this.serviceStub.getTransferProtocols();
 		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
@@ -667,6 +699,7 @@ public class WMProxyAPI{
 	* @throws InvalidArgumentFaultException the given job Id is not valid
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public org.glite.wms.wmproxy.StringList getSandboxDestURI(java.lang.String jobId, java.lang.String protocol)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
@@ -674,7 +707,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobid=[" + jobId + "] - protocol [" + protocol +"]");
 		try {
 			return this.serviceStub.getSandboxDestURI(jobId, protocol);
@@ -727,6 +761,7 @@ public class WMProxyAPI{
 	* @throws InvalidArgumentFaultException the given job Id is not valid
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public DestURIsStructType getSandboxBulkDestURI(java.lang.String jobId, java.lang.String protocol)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
@@ -734,7 +769,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
 		try {
 			return this.serviceStub.getSandboxBulkDestURI(jobId, protocol);
@@ -772,11 +808,13 @@ public class WMProxyAPI{
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws GetQuotaManagementFaultException quota management is not active on the WM.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public void getTotalQuota (javax.xml.rpc.holders.LongHolder softLimit, javax.xml.rpc.holders.LongHolder hardLimit)
 		throws org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.GetQuotaManagementFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		try {
 			this.serviceStub.getTotalQuota(softLimit, hardLimit);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
@@ -805,11 +843,13 @@ public class WMProxyAPI{
 	* @throws AuthenticationFaultException a generic authentication problem occurred
 	* @throws GetQuotaManagementFaultException quota management is not active on the WM.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public void getFreeQuota (javax.xml.rpc.holders.LongHolder softLimit, javax.xml.rpc.holders.LongHolder hardLimit)
 		throws org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.GetQuotaManagementFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		try {
 			this.serviceStub. getFreeQuota(softLimit, hardLimit);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
@@ -841,6 +881,7 @@ public class WMProxyAPI{
 	* @throws InvalidArgumentFaultException the given job Id is not valid
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public void jobPurge(java.lang.String jobId)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
@@ -848,7 +889,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
 		try {
@@ -891,6 +933,7 @@ public class WMProxyAPI{
 	* @throws InvalidArgumentFaultException the given job Id is not valid
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public org.glite.wms.wmproxy.StringAndLongList getOutputFileList (java.lang.String jobId, java.lang.String protocol)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
@@ -898,7 +941,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobid=[" + jobId + "] - protocol [" +  protocol + "]");
 		try {
 			return this.serviceStub.getOutputFileList (jobId, protocol);
@@ -940,13 +984,15 @@ public class WMProxyAPI{
 	* @throws NoSuitableResourcesFaultException no suitable resources matching job requirements have been found.
 	* @throws InvalidArgumentFaultException the given job JDL expression is not valid
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
         */
         public org.glite.wms.wmproxy.StringAndLongList jobListMatch (java.lang.String jdl, java.lang.String delegationId)
                 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.NoSuitableResourcesFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
                 logger.debug ("INPUT: JDL=[" + jdl + "] - deleagtionId=[" + delegationId + "]");
                	try {
 			return this.serviceStub.jobListMatch(jdl, delegationId);
@@ -988,6 +1034,7 @@ public class WMProxyAPI{
 	* @throws InvalidArgumentFaultException the given jobId is not valid
 	* @throws OperationNotAllowedFaultException perusal was disabled with the specific jdl attribute.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @see #getPerusalFiles
 	* @see #getVersion
 	*/
@@ -996,7 +1043,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobId=[" +jobId + "]");
 		try {
 			this.serviceStub.enableFilePerusal(jobId, fileList);
@@ -1043,6 +1091,7 @@ public class WMProxyAPI{
 	* @throws JobUnknownFaultException The provided jobId has not been registered to the system
 	* @throws OperationNotAllowedFaultexception perusal was disabled with the specific jdl attribute
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @see #enableFilePerusal
 	* @see #getVersion
 	*/
@@ -1051,7 +1100,8 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		logger.debug ("INPUT: jobId=[" + jobId + "] - file=[" +file + "] - allchunck=[" + allchunks + "] - protocol [" +  protocol + "]");
 		try {
 			return this.serviceStub.getPerusalFiles(jobId, file, allchunks, protocol);
@@ -1090,6 +1140,7 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public java.lang.String getJobTemplate (org.glite.wms.wmproxy.JobTypeList jobType,
 										java.lang.String executable,
@@ -1099,7 +1150,8 @@ public class WMProxyAPI{
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
 
 		logger.debug ("INPUT: executable=[" + executable + "] - arguments=[" + arguments + "]");
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
@@ -1135,6 +1187,7 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*
 	*/
 	public java.lang.String getDAGTemplate (org.glite.wms.wmproxy.GraphStructType dependencies,
@@ -1143,7 +1196,8 @@ public class WMProxyAPI{
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
 		try {
 			return this.serviceStub.getDAGTemplate(dependencies, requirements, rank);
@@ -1179,6 +1233,7 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public java.lang.String getCollectionTemplate (int jobNumber,
 					java.lang.String requirements,
@@ -1186,7 +1241,8 @@ public class WMProxyAPI{
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
 		try {
 			return this.serviceStub.getCollectionTemplate( jobNumber, requirements, rank);
@@ -1227,6 +1283,7 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public java.lang.String getIntParametricJobTemplate (org.glite.wms.wmproxy.StringList attributes,
 													int param,
@@ -1237,7 +1294,8 @@ public class WMProxyAPI{
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
 		logger.debug ("INPUT: param=[" + param + "] - parameterStart=[" + parameterStart + "] - parameterStep=[" + parameterStep + "]");
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
 		try {
@@ -1276,6 +1334,7 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	*/
 	public java.lang.String getStringParametricJobTemplate (org.glite.wms.wmproxy.StringList attributes,
 													 org.glite.wms.wmproxy.StringList param,
@@ -1285,7 +1344,8 @@ public class WMProxyAPI{
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
 		try {
 			return this.serviceStub.getStringParametricJobTemplate(attributes, param, requirements, rank);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
@@ -1317,13 +1377,15 @@ public class WMProxyAPI{
 	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
 	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
 	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
 	* @since 1.5.3
 	*/
 	public java.lang.String getJDL(java.lang.String jobId, JdlType type)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
-					org.glite.wms.wmproxy.ServiceException {
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
 		logger.debug ("INPUT: jobId=[" + jobId + "] - JdlType=[" + type + "]");
 		try {
 			return this.serviceStub.getJDL(jobId, type);
