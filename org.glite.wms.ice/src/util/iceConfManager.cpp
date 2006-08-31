@@ -82,6 +82,7 @@ iceConfManager::iceConfManager( )
     m_ice_host_key                       = config->ice()->ice_host_key();
     m_max_logfile_size                   = config->ice()->max_logfile_size();
     m_max_logfile_rotations              = config->ice()->max_logfile_rotations();
+    m_persist_dir                        = config->ice()->persist_dir();
 }
 
 iceConfManager::~iceConfManager( )

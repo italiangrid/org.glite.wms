@@ -22,15 +22,18 @@ namespace util {
   };
 
   class jobDbManager {
-    DbEnv m_env;
-    Db *m_creamJobDb;
-    Db *m_cidDb;
-    Db *m_gidDb;
-    std::string m_envHome;
-    bool m_valid;
-    std::string m_invalid_cause;
-    DbTxn* m_txn_handler;
-    bool m_cream_open, m_cid_open, m_gid_open, m_env_open;
+    DbEnv         m_env;
+    Db           *m_creamJobDb;
+    Db           *m_cidDb;
+    Db           *m_gidDb;
+    std::string   m_envHome;
+    bool          m_valid;
+    std::string   m_invalid_cause;
+    DbTxn*        m_txn_handler;
+    bool          m_cream_open;
+    bool          m_cid_open;
+    bool          m_gid_open;
+    bool          m_env_open;
     
     std::string getByID( const std::string& id, Db* db ) throw(DbException&);
     
@@ -47,6 +50,10 @@ namespace util {
 					       // of failure.
 					       // For now I do prefer this solution
 					       // to that one of exception raising.
+					       // Only one process should keep open
+					       // a database with recover=true
+					       // otherwise a txn_begin raises an
+					       // exception.
 					    
     ~jobDbManager() throw();
     

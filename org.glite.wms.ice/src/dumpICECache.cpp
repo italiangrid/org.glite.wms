@@ -38,10 +38,14 @@ int main(int argc, char*argv[]) {
   /*****************************************************************************
    * Initializes job cache
    ****************************************************************************/ 
-  string jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
+  /*string jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
   string jsnapfile  = iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot";
   iceUtil::jobCache::setJournalFile(jcachefile);
-  iceUtil::jobCache::setSnapshotFile(jsnapfile);
+  iceUtil::jobCache::setSnapshotFile(jsnapfile);*/
+  string jcachedir = iceUtil::iceConfManager::getInstance()->getCachePersistDirectory();
+  iceUtil::jobCache::setPersistDirectory( jcachedir );
+  iceUtil::jobCache::setRecoverableDb( false );
+  
   iceUtil::jobCache* _jCache = iceUtil::jobCache::getInstance();
 
   /*

@@ -26,8 +26,8 @@ namespace glite {
 	    m_WM_Input_FileList, m_ICE_Input_FileList, m_CachePersistFile, m_LogFile,
 	    m_creamurlprefix, m_creamurlpostfix, m_curldelegprefix,
 	    m_curldelegpostfix, m_cemonurlprefix, m_cemonurlpostfix,
-	    m_icetopic, m_dguser, m_ice_host_cert, m_ice_host_key;
-	  int m_ListenerPort, m_pollerdelay, m_subduration, 
+	    m_icetopic, m_dguser, m_ice_host_cert, m_ice_host_key, m_persist_dir;
+	  int m_ListenerPort, m_pollerdelay, m_subduration,
 	    m_LogLevel, m_subUpdThresholdTime, m_poller_status_threshold_time, 
 	    m_max_jobcache_operation_before_dump, m_notification_frequency, m_lease_delta_time, 
 	    m_lease_threshold_time, m_jobkill_threshold_time;
@@ -90,6 +90,7 @@ namespace glite {
 	  bool	      getStartLeaseUpdater( void ) const { return m_start_lease_updater; }
 	  std::string getIceHostCert( void ) const { return m_ice_host_cert; }
 	  std::string getIceHostKey( void ) const { return m_ice_host_key; }
+	  std::string getCachePersistDirectory( void ) const { return m_persist_dir; }
 
 	  void setHostProxyFile( const std::string& p ) {  m_HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { m_WM_Input_FileList = p; }

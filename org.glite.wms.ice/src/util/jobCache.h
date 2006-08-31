@@ -24,9 +24,10 @@
 // ICE stuff
 #include "jnlFile_ex.h"
 #include "jobCacheOperation.h"
-#include "jnlFileManager.h"
+//#include "jnlFileManager.h"
 #include "elementNotFound_ex.h"
-#include "creamJob.h" 
+#include "creamJob.h"
+#include "jobDbManager.h"
 
 // GLite stuff
 #include "ClassadSyntax_ex.h"
@@ -46,8 +47,9 @@
 
 // #define MAX_OPERATION_COUNTER 10
 
-#define DEFAULT_JNLFILE "/tmp/jobCachePersistFile"
-#define DEFAULT_SNAPFILE "/tmp/jobCachePersistFile.snapshot"
+//#define DEFAULT_JNLFILE "/tmp/jobCachePersistFile"
+//#define DEFAULT_SNAPFILE "/tmp/jobCachePersistFile.snapshot"
+#define DEFAULT_PERSIST_DIR "/tmp/ice_persist_dir"
 
 //namespace api = glite::ce::cream_client_api;
 
@@ -65,9 +67,12 @@ namespace glite {
 
 	private:
             static jobCache *s_instance; ///< The singleton instance of the jobCache class
-            static std::string s_jnlFile; ///< The name of the journal file used to log operations on the cache
-            static std::string s_snapFile; ///< The name of the cache snapshot file, used to save snapshots of the cache content
+	    static bool s_recoverable_db;
+//            static std::string s_jnlFile; ///< The name of the journal file used to log operations on the cache
+//            static std::string s_snapFile; ///< The name of the cache snapshot file, used to save snapshots of the cache content
 
+	    static std::string s_persist_dir; ///< The name of the directory used to save persistency information
+ 
           /**
            * This class represents a sort of "double-keyed hash
            * table", that is, a hash table where each element can be
@@ -184,25 +189,29 @@ namespace glite {
 
           jobCacheTable m_jobs; ///< The in-core data structure holding the set of jobs
 
-	  int m_operation_counter; ///< Number of operations logged on the journal
+//	  int m_operation_counter; ///< Number of operations logged on the journal
 
           /**
            * Loads the journal handled by the jnlMgr object.
            */
-	  void loadJournal(void) 
-	    throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&);
+//	  void loadJournal(void) 
+//	    throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&);
 
+
+	  void load( void ) throw(ClassadSyntax_ex&);
+	  
           /**
            * Loads the snapshot handled by the jnlMgr object.
            */
-	  void loadSnapshot(void) 
-	    throw(jnlFile_ex&, ClassadSyntax_ex&);
+//	  void loadSnapshot(void) 
+//	    throw(jnlFile_ex&, ClassadSyntax_ex&);
 
-	  boost::scoped_ptr< glite::wms::ice::util::jnlFileManager > m_jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
-
+//	  boost::scoped_ptr< glite::wms::ice::util::jnlFileManager > m_jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
+	  boost::scoped_ptr< glite::wms::ice::util::jobDbManager > m_dbMgr;
+	  
 	protected:
 	  jobCache( )
-	    throw(jnlFile_ex&, ClassadSyntax_ex&);
+	    throw(ClassadSyntax_ex&);
 
           /**
            * Logs an operation to the journal manager. The operation
@@ -213,7 +222,7 @@ namespace glite {
            * @param op the operation to log
            * @param param the parameters to that operation
            */
-          void logOperation( const operation& op, const std::string& param );
+//          void logOperation( const operation& op, const std::string& param );
 
 	public:
 
@@ -233,7 +242,7 @@ namespace glite {
            *
            * @return the singleton instance of this class
            */ 
-	  static jobCache* getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&);
+	  static jobCache* getInstance() throw(ClassadSyntax_ex&);
 
           /**
            * Changes the path and filename of the journal file. This method,
@@ -242,8 +251,19 @@ namespace glite {
            *
            * @param jnl the full pathname of the journal file
            */
-	  static void setJournalFile(const std::string& jnl) { s_jnlFile = jnl; }
+//	  static void setJournalFile(const std::string& jnl) { s_jnlFile = jnl; }
 
+	  // Call this once and before invokation of getInstance()
+	  static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
+
+          /**
+           * Changes the directory containing the persistency information. This method,
+           * if used at all, must be called _before_ the first invokation of
+           * the getInstance() method.
+           *
+           * @param dir the directory containing the database of persistency
+           */
+	  static void setPersistDirectory(const std::string& dir) { s_persist_dir = dir; }  
           /**
            * Changes the path and filename of the snapshot file. This method,
            * if used at all, must be called _before_ the first invokation of
@@ -251,7 +271,7 @@ namespace glite {
            *
            * @param snap the full pathname of the snapshot file
            */
-	  static void setSnapshotFile(const std::string& snap) { s_snapFile = snap; }
+//	  static void setSnapshotFile(const std::string& snap) { s_snapFile = snap; }
 
           /**
            * Destructor.
@@ -273,7 +293,7 @@ namespace glite {
            * overwritten
            * @return an iterator to the inserted job
            */
-	  iterator put(const CreamJob& c ) throw(jnlFile_ex&, jnlFileReadOnly_ex&);
+	  iterator put(const CreamJob& c );// throw(jnlFile_ex&, JobDbException&/*, jnlFileReadOnly_ex&*/);
 
           /**
            * Looks up a job by its cream Job ID.
@@ -305,7 +325,7 @@ namespace glite {
            * @return an iterator to the element immediately following
            * the one being removed; end() if it==end().
            */
-          iterator erase( iterator& it );
+          iterator erase( iterator& it );// throw(JobDbException&);
 
 
           // Accessors used to expose jobCacheTable iterator methods
@@ -354,7 +374,7 @@ namespace glite {
 	  // void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
 
         protected:	  
-	  void dump(void) throw(jnlFile_ex&);
+//	  void dump(void) throw(jnlFile_ex&);
 	  void print(std::ostream&);
 	};
       }

@@ -19,7 +19,7 @@
 
 // PROJECT INCLUDES
 #include "jobCache.h"
-#include "jnlFileManager.h"
+//#include "jnlFileManager.h"
 #include "iceConfManager.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -49,8 +49,10 @@ using namespace glite::wms::ice::util;
 namespace apiutil = glite::ce::cream_client_api::util;
 
 jobCache* jobCache::s_instance = 0;
-string jobCache::s_jnlFile = DEFAULT_JNLFILE;
-string jobCache::s_snapFile = DEFAULT_SNAPFILE;
+//string jobCache::s_jnlFile = DEFAULT_JNLFILE;
+//string jobCache::s_snapFile = DEFAULT_SNAPFILE;
+string jobCache::s_persist_dir = DEFAULT_PERSIST_DIR;
+bool   jobCache::s_recoverable_db = false;
 boost::recursive_mutex jobCache::mutex;
 
 // 
@@ -162,24 +164,33 @@ jobCache::jobCacheTable::end( void ) const
 }
 
 //______________________________________________________________________________
-jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
+jobCache* jobCache::getInstance() throw(ClassadSyntax_ex&) 
+{
     if(!s_instance)
         s_instance = new jobCache( ); // can throw jnlFile_ex or
-    // ClassadSyntax_ex
+                                      // ClassadSyntax_ex
     return s_instance;
 }
 
 //______________________________________________________________________________
 jobCache::jobCache( void )
-  throw(jnlFile_ex&, ClassadSyntax_ex&) 
+  throw(ClassadSyntax_ex&) 
     : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-      m_jobs( ),
-      m_operation_counter(0)
+      m_jobs( )
+      //m_operation_counter(0)
 { 
-    jnlFileManager *man = new jnlFileManager( s_jnlFile );
-    m_jnlMgr.reset( man );
-    loadSnapshot();
-    loadJournal();
+//    jnlFileManager *man = new jnlFileManager( s_jnlFile );
+//    m_jnlMgr.reset( man );
+//    loadSnapshot();
+//    loadJournal();
+
+    jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db );
+    if(!dbm->isValid()) {
+      cerr << "SEVERE: " << dbm->getInvalidCause() << endl;
+      abort();
+    }
+    m_dbMgr.reset( dbm );
+    load(); 
 }
 
 //______________________________________________________________________________
@@ -189,83 +200,35 @@ jobCache::~jobCache( )
 }
 
 //______________________________________________________________________________
-void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
+void jobCache::load( void ) throw(ClassadSyntax_ex&)
 {
-  /**
-   * Checks is the snapshot file exists
-   */
-  struct stat stat_buf;
-  int saveerr = 0;
-  if(-1==::stat(s_snapFile.c_str(), &stat_buf)) {
-    saveerr = errno;
-    if(saveerr==ENOENT) return;
-    else
-      throw jnlFile_ex(string("Error loading snapshot file: ") + 
-		       strerror(saveerr));
-
+  // retrieve all records from DB
+  vector<string> records;
+  try{m_dbMgr->getAllRecords( records );}
+  catch(JobDbException& dbex) {
+    // this error is severe: an access to the
+    // underlying database failed 
+    cerr << "SEVERE: " << dbex.what() << endl;
+    abort();
   }
-
-  /**
-   * The creation of a filestreamOpenManager object means calling
-   * is.open(snapFile.c_str(), ios::in).
-   * When this object leaves the current scope the is.close() is called
-   * by its dtor. This ensure file closing under any circumstance 
-   * (unexpected exception raising, forgotting to call ::close() etc.)
-   */
-  ifstream tmpIs(s_snapFile.c_str(), ios::in );
-  /**
-   * Loads jobs from snapshot file
-   */
-  string Buf;
-  while(tmpIs.peek() != EOF) {
-    getline(tmpIs, Buf, '\n');
-    if(tmpIs.fail() || tmpIs.bad()) {
-      tmpIs.close(); // redundant: ifstream's dtor also closes file
-      throw jnlFile_ex("Error reading snapshot file");
-    }
-
-    // CreamJob cj = this->unparse(Buf); // can raise a ClassadSyntax_ex
-    CreamJob cj( Buf ); // can raise ClassadSyntax_ex
+  for(vector<string>::const_iterator it=records.begin();
+      it != records.end();
+      ++it)
+  {
+    CreamJob cj( *it ); // can raise a ClassAdSyntax_ex
     m_jobs.putJob( cj ); // update in-memory data structure
-    m_operation_counter++;
   }
-  tmpIs.close(); // redundant: ifstream's dtor also closes file
 }
 
 //______________________________________________________________________________
-void jobCache::loadJournal(void) 
-  throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&)
-{
-
-    operation op;
-    string param;
-    
-    while ( m_jnlMgr->getOperation(op, param) ) {
-        
-        CreamJob cj( param );
-        
-        switch ( op ) {
-        case PUT:
-            m_jobs.putJob( cj );
-            m_operation_counter++;
-            break;
-        case ERASE:
-            m_jobs.delJob( lookupByGridJobID( cj.getGridJobID() ) );
-            m_operation_counter++;
-            break;
-        default:
-	  CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
-					"Unknown operation parsing the journal"));
-        }
+jobCache::iterator jobCache::put(const CreamJob& cj)// throw (jnlFile_ex&, JobDbException&/*, jnlFileReadOnly_ex&*/)
+{    
+    try{
+      m_dbMgr->put(cj.serialize(), cj.getJobID(), cj.getGridJobID() );
+    } catch(JobDbException& dbex) {
+      cerr << "SEVERE: "<<dbex.what()<<endl;
+      abort();
     }
-}
-
-//______________________________________________________________________________
-jobCache::iterator jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
-{
-    string param= cj.serialize();
-//    std::cout << std::endl << "*** ALVISE DEBUG: PUTTING job [" << cj.getJobID() << "] - status ["<<cj.getStatus()<<"]"<<std::endl;
-    logOperation( PUT, param );
     return m_jobs.putJob( cj );
 }
 
@@ -281,135 +244,37 @@ void jobCache::print(ostream& os) {
 }
 
 //______________________________________________________________________________
-void jobCache::dump() throw (jnlFile_ex&)
-{
-//    string tmpSnapFile = snapFile + ".tmp." +
-//        apiutil::string_manipulation::make_string(::getpid());
-
-    string tmpSnapFile = boost::str( boost::format("%1%.tmp.%2%") % s_snapFile % ::getpid() );
-
-    int saveerr = 0;
-        
-    if(-1==::unlink(tmpSnapFile.c_str())) {
-        saveerr = errno;
-        if(saveerr == ENOENT);
-        else {
-            string err = string("Error removing old snapshot temp file:") +
-                strerror(saveerr);
-            throw jnlFile_ex(err);
-        }
-    }
-    ofstream ofs;
-    {
-        ofstream tmpOs(tmpSnapFile.c_str(), ios::out);
-        if ((void*)tmpOs == 0)
-            throw jnlFile_ex("Error opening temp snapshot file");
-        
-        jobCacheTable::iterator it;
-        
-	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::INFO,
-				      "jobCache::dump() - Dumping snapshot file"));
-        
-        for (it=m_jobs.begin(); it != m_jobs.end(); it++ ) {
-            
-            string param = it->serialize();
-            
-            try{tmpOs << param << endl;}
-            catch(std::exception& ex) {
-                tmpOs.close(); // redundant: ofstream's dtor also closes the file
-                throw jnlFile_ex(string("Error dumping cache: ")+ex.what());
-            }
-            if(tmpOs.fail() || tmpOs.bad() || (!tmpOs.good()) ) {
-                tmpOs.close(); // redundant: ofstream's dtor also closes the file
-                throw jnlFile_ex("Error after writing into temp snapshot file");
-            }
-        }
-        tmpOs.close(); // redundant: ofstream's dtor also closes the file
-    }
-    
-    if(-1==::rename(tmpSnapFile.c_str(), s_snapFile.c_str()))
-        {
-            string err = string("Error renaming temp snapshot file into snapshot file")+
-                strerror(errno);
-            
-	    CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
-					  string("jobCache::dump() - Could't rename snapshot file: ")+err));
-            
-            throw jnlFile_ex(err);
-        }
-}
-
-//-----------------------------------------------------------------------------
-void jobCache::logOperation( const operation& op, const std::string& param )
-{
-    /**
-     * Updates journal file
-     *
-     */
-    m_jnlMgr->readonly_mode(false);
-    m_jnlMgr->logOperation(op, param); // can raise jnlFile_ex and jnlFileReadOnly_ex
-
-    /**
-     * checks if cache-dump and journal-truncation are needed
-     */
-    m_operation_counter++;
-    int max_op_cntr;
-    {
-      //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-      max_op_cntr = iceConfManager::getInstance()->getMaxJobCacheOperationBeforeDump();
-    }
-
-    if( m_operation_counter >= max_op_cntr )
-    {
-      m_operation_counter = 0;
-      try {
-	this->dump(); // can raise a jnlFile_ex
-	m_jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
-      } catch(jnlFile_ex& ex) {
-	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
-				      string("jobCache::logOperation() - ")
-				      + ex.what()));
-	exit(1);
-      } catch(jnlFileReadOnly_ex& ex) {
-	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
-				      ex.what()));
-	exit(1);
-      } catch(std::exception& ex) {
-	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
-				      string("jobCache::logOperation() - ")
-				      + ex.what()));
-	exit(1);
-      } catch(...) {
-	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
-				      string("jobCache::logOperation() - Catched unknown exception")));
-	exit(1);
-      }
-    }
-}
-
 jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
 {
     return m_jobs.findJobByCID( creamJID );
 }
 
+//______________________________________________________________________________
 jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 {
     return m_jobs.findJobByGID( gridJID );
 }
 
-jobCache::iterator jobCache::erase( jobCache::iterator& it )
+//______________________________________________________________________________
+jobCache::iterator jobCache::erase( jobCache::iterator& it )// throw(JobDbException&)
 {
     if ( it == m_jobs.end() ) {
         return it;
     }
 
-//    std::cout << "*** ALVISE DEBUG: ERASING job ["<<it->getJobID() << "] status ["<<it->getStatus()<<"]"<<std::endl;
-
     jobCache::iterator result = it;
     result++; // advance iterator
     string to_string = it->serialize();
     // job found, log operation and remove
-    logOperation( ERASE, to_string );
+//    logOperation( ERASE, to_string );
+
+    try{
+      m_dbMgr->delByCid( it->getJobID() );
+    } catch(JobDbException& dbex) {
+      cerr << "SEVERE: " << dbex.what() << endl;
+      abort();
+    }
+
     m_jobs.delJob( it );    
     return result;
 }

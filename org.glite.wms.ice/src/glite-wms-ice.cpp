@@ -238,24 +238,31 @@ int main(int argc, char*argv[])
   /*****************************************************************************
    * Initializes job cache
    ****************************************************************************/
-  string jcachefile;
+  //string jcachefile;
+  string jcachedir;
   {
 //    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
+    //jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
+    jcachedir = iceUtil::iceConfManager::getInstance()->getCachePersistDirectory();
   }
-  string jsnapfile  = jcachefile+".snapshot";
+  //string jsnapfile  = jcachefile+".snapshot";
   CREAM_SAFE_LOG(
                  log_dev->infoStream() 
-                 << "Initializing jobCache with journal file ["
-                 << jcachefile
-                 << "] and snapshot file ["
-                 << jsnapfile
+                 //<< "Initializing jobCache with journal file ["
+                 << "Initializing jobCache with persistency directory ["
+		 //<< jcachefile
+		 << jcachedir
+                 //<< "] and snapshot file ["
+                 //<< jsnapfile
                  << "]..."
                  << log4cpp::CategoryStream::ENDLINE
                  );
 
-  iceUtil::jobCache::setJournalFile(jcachefile);
-  iceUtil::jobCache::setSnapshotFile(jsnapfile);
+  //iceUtil::jobCache::setJournalFile(jcachefile);
+  //iceUtil::jobCache::setSnapshotFile(jsnapfile);
+
+  iceUtil::jobCache::setPersistDirectory( jcachedir );
+  iceUtil::jobCache::setRecoverableDb( true );
 
   try {
       iceUtil::jobCache::getInstance();

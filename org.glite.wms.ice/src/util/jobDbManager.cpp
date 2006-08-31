@@ -154,9 +154,10 @@ void iceUtil::jobDbManager::put(const string& creamjob, const string& cid, const
   
   try {
     txn_handler = NULL; // this is required because after a commit/abort the
-    			  // transaction handler is not valid anymore
-			  // a new fresh handler is required for another 
-			  // transaction
+    			// transaction handler is not valid anymore
+			// a new fresh handler is required for another 
+			// transaction
+			
     m_env.txn_begin(NULL, &txn_handler, 0);
     m_creamJobDb->put( txn_handler, &cidData, &data, 0);
     m_cidDb->put( txn_handler, &cidData, &gidData, 0);
