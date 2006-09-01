@@ -1,3 +1,9 @@
+#
+# This file is for common BASH functions used by the sensors.
+# It's aim is to help maintening a coherent test output layout.
+# 
+#                             -- gdebrecz
+
 function samPrintERROR {
  echo -n "<font color="red"> Error: </font>"
 }
