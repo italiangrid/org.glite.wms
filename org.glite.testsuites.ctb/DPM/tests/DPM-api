@@ -1,0 +1,35 @@
+#!/bin/bash
+
+. $SAME_SENSOR_HOME/../functions.sh
+. $SAME_SENSOR_HOME/config.sh
+
+MYEXITCODE=$SAME_OK
+
+export DPM_HOST=$1
+export DPNS_HOST=$1
+make -C $SAME_SENSOR_HOME/tests all
+
+echo "<pre>";
+echo "<b>--- C-API --- </b><br>"
+echo "(In testing phase !!!)"
+
+dpmdomain=`dpns-ls /dpm | head -1`
+timeflag=`date | awk '{print $4}' | sed -e 's/://g'`
+export DPM_TEST_PATH="/dpm/$dpmdomain/home/$SAME_VO/sametest.$timeflag"
+
+$SAME_SENSOR_HOME/tests/DPM-api.exe
+retval=$?
+if [ $retval -eq 0 ] ; then
+ passedmessage
+elif [ $retval -eq 1 ] ; then
+ infomessage
+ MYEXITCODE=$SAME_INFO
+else
+ failedmessage
+ MYEXITCODE=$SAME_ERROR
+fi
+echo "<br>"
+echo "<b>--- Python-API --- </b><br>"
+echo "Not yet implemented !"
+echo "</pre>"
+exit $MYEXITCODE
