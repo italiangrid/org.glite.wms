@@ -247,7 +247,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
            std::string const ce_id(
              utils::evaluate_attribute(*it->second.getAd(),"GlueCEUniqueID")
            );
-           BI->retrieveCloseSEsInfo(ce_id);
+           BI->retrieveCloseSEsInfo(*it->second.getAd());
            BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
            ceinfo->Insert("brokerinfo", BI->asClassAd());
         }
