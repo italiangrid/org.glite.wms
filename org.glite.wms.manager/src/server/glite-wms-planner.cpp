@@ -390,7 +390,7 @@ ClassAdPtr do_match(
 
 void do_it(
   classad::ClassAd& jdl,
-  std::ostream& os,
+  std::string const& output_file,
   ContextPtr context,
   jobid::JobId const& jobid,
   std::string const& matches_file
@@ -482,12 +482,36 @@ void do_it(
     throw CannotGenerateSubmitJDL();
   }
 
-  jdl::to_submit_stream(os, *submit_ad);
-
+  std::string const tmp_file(output_file + ".tmp");
+  std::ofstream os(tmp_file.c_str());
   if (!os) {
+    Error("cannot write to " << tmp_file);
     throw CannotGenerateSubmitFile();
   }
 
+  utilities::scope_guard tmp_file_undo(
+    boost::bind(fs::remove, tmp_file)
+  );
+
+  jdl::to_submit_stream(os, *submit_ad);
+
+  if (!os) {
+    Error("cannot generate the submit file");
+    throw CannotGenerateSubmitFile();
+  }
+
+  os.close();
+
+  int e = rename(tmp_file.c_str(), output_file.c_str());
+  if (e) {
+    Error(
+      "cannot rename " << tmp_file << " to " << output_file
+      << " (errno = " << e << ')'
+    );
+    throw CannotGenerateSubmitFile();
+  }
+
+  tmp_file_undo.dismiss();
   create_token_undo.dismiss();
 }
 
@@ -607,11 +631,6 @@ try {
     Error("Cannot open input file " << input_file);
     return EXIT_FAILURE;
   }
-  std::ofstream os(output_file.c_str());
-  if (!os) {
-    Error("Cannot open output file " << output_file);
-    return EXIT_FAILURE;
-  }
 
   std::string const name("dag_node_planner");
 
@@ -642,7 +661,7 @@ try {
 
   try {
 
-    do_it(input_ad, os, context, jobid, matches_file);
+    do_it(input_ad, output_file, context, jobid, matches_file);
 
   } catch (HitMaxRetryCount& e) {
     error = "hit max retry count ("
@@ -663,7 +682,7 @@ try {
   } catch (CannotGenerateSubmitJDL&) {
     error = "cannot generate the submission JDL";
   } catch (CannotGenerateSubmitFile&) {
-    error = "cannot generate the submission file";
+    error = "cannot generate the submit file";
   }
 
   if (error.empty()) {
