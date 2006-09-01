@@ -1,0 +1,608 @@
+#!/bin/bash
+
+#############################################
+# Script for stress testing of FTS channels #
+#########################################################
+#                                                       #
+# Returned values:                                      #
+#                                                       #
+#                 Exit  0: Test Passed                  #
+#                 Exit  1: Test Failed                  #
+#                 Exit  2: Wrong Input                  #
+#                                                       #
+#########################################################
+
+showUsage ()
+{
+ echo "                                                                                                     "
+ echo "Usage: glite-fts-test-stress --site <site name> --pass <myproxy password> [--bdii <bdii hostname> --njob <number of jobs> --nfiles <number of files> ]  "
+ echo "Options:                                                                                             "
+ echo "  obligatory:                                                                                        "
+ echo "                                                                                                     "
+ echo "          --site  <site name>                                                                        "
+ echo "                   The name of the site as it stored in the GOC DB and information system.           "
+ echo "                                                                                                     "
+ echo "          --pass  <myproxy password>                                                                 "
+ echo "                   MyProxy password.                                                                 "
+ echo "                                                                                                     "
+ echo "  optional:                                                                                          "
+ echo "                                                                                                     "
+ echo "          --bdii  <bdii hostname>                                                                    "
+ echo "                   The name of the top level BDII. The default is lcg-bdii.cern.ch                   "
+ echo "													    "
+ echo "          --njobs  <number of jobs>                                                                  "
+ echo "                   The number of jobs to be submitted. The default is 10.                            "
+ echo "                                                                                                     "
+ echo "          --nfiles <number of files>                                                                 "
+ echo "                   The number of files per job. The default is 10.                                   "
+ echo "                                                                                                     "
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+
+     --site)
+           if [ -z "$2" ]; then
+		shift 1
+           else
+		SITE_NAME=$2
+                shift 2
+           fi
+     ;;
+
+     --pass)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                MYPROXY_PASS=$2
+                shift 2
+           fi
+     ;;
+
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+
+     --njobs)
+           if [ -z "$2" ]; then
+
+                shift 1
+           else
+                JobN=$2
+                shift 2
+           fi
+     ;;
+
+     --nfiles)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FileN=$2
+                shift 2
+           fi
+     ;;
+
+         *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
+
+if [ -z "$SITE_NAME" ]; then
+   echo ""
+   echo ">>> NOTE: Site name is not specified. Option --site <site hostname> is obligatory! <<<"
+   showUsage
+   exit 2
+fi
+
+if [ -z "$MYPROXY_PASS" ]; then
+   echo ""
+   echo ">>> NOTE: My Proxy password is not specified. Option --pass <myproxy password> is obligatory! <<<"
+   showUsage
+   exit 2
+fi
+
+if [ -z "$BDII_HOST" ]; then
+   BDII_HOST=lcg-bdii.cern.ch
+fi
+
+if [ -z "$JobN" ]; then
+   JobN=10
+fi
+
+if [ -z "$FileN" ]; then
+   FileN=10
+fi
+
+
+######################################################################
+# >>>> NOTE:  Hardcoded port for top level BDII !!! <<<<
+######################################################################
+
+BDII_PORT=2170
+
+####################
+# Global variables
+####################
+
+# Global variable, store all jobs ID
+
+JobIDs=""
+
+# Global variable, store all failed jobs.
+
+FailedJobs=""
+
+# Global variable, counts all successfully submitted jobs
+
+NumberOfSuccSubJob=0
+
+# Global variable, counts all successfully finished jobs
+
+NumberOfSuccFinJob=0
+
+
+################################
+# Checks if there is valid proxy
+################################
+
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+         echo "Using proxy from: $X509_USER_PROXY"
+else
+         echo ""
+	 echo ">>> NOTE: Valid proxy is needed for this test!"
+         echo ""
+         if [ $ProxyExpired -gt 0 ]; then
+            echo ">>> NOTE: Proxy credential expired!"
+         fi 
+         echo ""
+         exit 1
+fi
+
+#####################
+# Exporting variables
+#####################
+
+echo ""
+echo "Exporting variables..."
+echo ""
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+export GLITE_SD_PLUGIN=bdii
+
+##############################################################################
+# Getting Tomcart Port and FTS Server hostname from top level BDII: $BDII_HOST
+##############################################################################
+
+unset GLITE_SD_SITE
+unset GLITE_SD_VO
+
+FTS_URL=`glite-sd-query -s $SITE_NAME -t org.glite.FileTransfer 2>/dev/null | grep Endpoint | sed -e 's/Endpoint://g'`
+FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
+FTS_HOST=`echo $FTS_URL | awk '{print $1}'`
+
+
+if [ -z "$FTS_HOST" ]; then
+   echo ""
+   echo ">>> NOTE: There is no information for FTS Server of the site: $SITE_NAME on  BDII: $BDII_HOST! <<< "
+   echo "" 
+   exit 1
+fi 
+
+########################
+# Define functions
+########################
+
+function file_transfer()
+{
+
+export GLITE_SD_SITE=$SITE_NAME
+export LCG_CATALOG_TYPE='lfc'	
+
+        SE1_SRM_LOC=$1
+        SE2_SRM_LOC=$2
+        MYPROXY_PASS=$3
+       	SUB_FILE_LOC="$HOME/fts-submission-file"
+	RESULT_FILE="$HOME/fts-test-results"
+
+        if [ -z "$4" ]; then
+		TransferN=1
+	else
+		TransferN=$4
+	fi
+	
+	DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+ 	TMP_FILE="/tmp/FTS_Test_$DATE"
+	TEST_FILE_NAME="FTS_Test_$DATE"
+
+	echo ""
+	echo "Creating 10MB temporary test file for transfer"
+	echo "" > $TMP_FILE
+
+	dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+	
+	echo ""
+	echo "Using the 10MB temporary test file: $TMP_FILE"
+	echo""
+	echo "Copy the test file $TMP_FILE on: $SE1_SRM_LOC"
+        echo ""
+	
+	GUID=`lcg-cr --vo dteam -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+	
+	result=`cat message | wc -l` 
+	
+        if [ $result -gt 0 ]; then
+            echo ">>> NOTE: `cat message`"
+	    echo ""
+            echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+            echo ""
+            NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+            return 
+        fi
+
+	echo ""
+	echo "Removing the 10MB temporary test file: $TMP_FILE"
+
+	rm -rf $TMP_FILE
+
+	echo ""
+	echo "Creating the submission file in $SUB_FILE_LOC"
+	
+	i=0	
+	
+        echo ""
+	echo "" > $SUB_FILE_LOC		
+
+        while test $i -lt $TransferN
+        do
+		echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
+		i=`expr $i + 1`
+        done
+		
+        echo "" 
+	echo "Submitting the transfer"
+
+        SubID=`glite-transfer-submit -p $MYPROXY_PASS -f $SUB_FILE_LOC 2>message`
+	
+	if [ -z "$SubID" ]; then
+           echo ""
+           echo ">>> NOTE: Job submition failed! <<<"
+           echo ""
+           echo ">>> NOTE: `cat message`"
+	   return  
+        fi
+        
+        NumberOfSuccSubJob=`expr $NumberOfSuccSubJob + 1`
+
+	echo ""
+	echo "Transfer ID: $SubID. "
+
+        JobIDs=`echo $JobIDs $SubID`
+        echo ""
+
+}
+
+function get_status_result()
+{
+
+export GLITE_SD_SITE=$SITE_NAME
+export LCG_CATALOG_TYPE='lfc'
+
+        SubID=$1
+        echo ""
+	echo "Checking status for job ID: $SubID"
+        echo ""
+	
+	previous_status="None"
+	
+	while true
+	do
+	 status=`glite-transfer-status $SubID 2>message`
+
+ 	 result=`cat message | wc -l`
+
+         if [ $result -gt 0 ]; then
+            echo ">>> NOTE: `cat message`"
+            echo ""
+            return 
+         fi
+
+
+	 if test $status == $previous_status
+	 then
+	        echo "Waiting for status changes...."
+	 else
+		echo "Status is: $status"
+		previous_status=$status	
+	 fi
+
+	 if test $status == "Done"  
+	  then
+                echo ""
+                echo "Job successfully finish."
+                echo "" 
+                NumberOfSuccFinJob=`expr $NumberOfSuccFinJob + 1`	
+                return
+	  fi
+
+         if test $status == "Failed"
+          then
+		echo ""
+                echo "Job failed!"
+                echo ""
+                FailedJobs=`echo $FailedJobs $SubID`
+                glite-transfer-status -l -v $SubID 
+                echo ""
+                return 
+          fi
+
+          if test $status == "Hold"
+          then
+                echo ""
+                echo "Job failed!"
+                echo ""
+                FailedJobs=`echo $FailedJobs $SubID`
+                glite-transfer-status -l -v $SubID
+                echo ""
+                return
+          fi
+
+
+	 echo "Waiting for status changes...."
+	 sleep 10
+	done
+}
+
+echo ""
+echo "Using FTS Server: $FTS_HOST"
+echo ""
+echo "Using Site Name: $SITE_NAME"
+echo ""
+echo "Using BDII: $BDII_HOST"
+echo ""
+
+
+#########################################
+# FTS stress transfer test
+#########################################
+
+
+export GLITE_SD_SITE=$SITE_NAME
+export LCG_CATALOG_TYPE='lfc'
+
+Channel_List=`glite-transfer-channel-list 2>/dev/null`
+
+for Channel_Name in $Channel_List
+do
+
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+else
+         echo ""
+         echo ">>> NOTE: Proxy credential expired!"
+         echo ""
+         exit 1
+fi
+
+  export GLITE_SD_SITE=$SITE_NAME
+  export LCG_CATALOG_TYPE='lfc'
+  
+  glite-transfer-channel-list $Channel_Name 1>/dev/null 2>message
+  
+  result=`cat message|wc -l`
+
+  if [ $result -gt 0 ]; then 
+     echo ""
+     echo ">>> NOTE:  Channel information is needed! "
+     echo ">>> NOTE:  `cat message`."
+     echo ">>> NOTE: `glite-transfer-channel-list -v | grep \"Service features:\" | sed -e 's/#//g'`"
+     echo ""
+     exit 1
+  fi
+
+   echo "Channel name: $Channel_Name"
+   echo "Testing channel...."
+   echo "INFO:"
+
+
+   isChannelActive=`glite-transfer-channel-list $Channel_Name | grep "State: Active" |wc -l`
+
+   if [ $isChannelActive -eq 0 ];then
+      echo "The channel: $Channel_Name is not Active! "
+      echo "Skipping...."
+      echo ""
+      continue
+   fi
+
+   Channel_Between=`glite-transfer-channel-list $Channel_Name 2>/dev/null | grep Between | sed -e 's/*/STAR/g' | sed -e 's/Between://g' | sed -e 's/and//g'`
+   
+   unset GLITE_SD_SITE
+   unset LCG_CATALOG_TYPE
+   
+   Source_Site=`echo $Channel_Between |  awk '{print $1}'`
+   Destin_Site=`echo $Channel_Between |  awk '{print $2}'`
+
+   echo "Source Site: $Source_Site"
+   echo "Destination Site: $Destin_Site"
+   echo ""
+
+   #####################################
+   # The STAR channels will be skipped.
+   #####################################
+
+   if [ "$Source_Site" = "STAR" ];then
+     echo "The channel: $Channel_Name is with Source Site: *   "
+     echo "Skipping...."
+     echo ""
+     continue
+   fi
+
+   if [ "$Destin_Site" = "STAR" ];then
+     echo "The channel: $Channel_Name  Destination Site: *   "
+     echo "Skipping...."
+     echo ""
+     continue
+   fi
+
+   SRM_Source=`glite-sd-query -s $Source_Site -t SRM 2>/dev/null | wc -l`
+   SRM_Destin=`glite-sd-query -s $Destin_Site -t SRM 2>/dev/null | wc -l`
+
+   if [ $SRM_Source -eq 0 ]; then
+        echo ""
+        echo ">>> NOTE: The source site: $Source_Site is not found on $BDII_HOST or no SRM found!"
+        echo ">>> NOTE: Continue testing other channels......"
+        echo ""
+        continue
+   fi
+
+   if [ $SRM_Destin -eq 0 ]; then
+        echo ""
+        echo ">>> NOTE: The destination site $Destin_Site is not found on $BDII_HOST or no SRM found!"
+        echo ">>> NOTE: Continue testing other channels......"
+        echo ""
+        continue
+   fi 
+
+   Destin_Site_SE=`glite-sd-query -s $Destin_Site -t SRM 2>/dev/null | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | awk '{print $1}'`
+
+   goodSE=0
+
+   for Destin_SE in $Destin_Site_SE
+   do
+
+      glite-gridftp-ls gsiftp://$Destin_SE/ 2>message 1>/dev/null
+
+      result=`cat message | wc -l`
+
+      if [ $result -gt 0 ];then
+         continue
+      else
+         goodSE=1
+         SE2_HOST=$Destin_SE
+         break
+      fi
+   done
+
+   if [ $goodSE -eq 0 ]; then
+      echo ">>> NOTE: No good SRM found on site: $Destin_Site"
+      echo ">>> NOTE: The channel can not be tested!"
+      echo ""
+      continue
+   fi
+
+   Mount=`glite-sd-query --host $SE2_HOST -x 2>/dev/null | grep "Key: dteam:SEMountPoint - Value:" | sed -e 's/Key: dteam:SEMountPoint - Value: //g'`
+
+   SE2_Mount=`echo $Mount | awk '{print $1}'`
+
+   SE2_SRM_LOC="srm://$SE2_HOST/$SE2_Mount"
+
+   Source_Site_SE=`glite-sd-query -s $Source_Site -t SRM 2>/dev/null | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | awk '{print $1}'`
+
+   goodSE=0
+
+    for Source_SE in $Source_Site_SE
+    do
+
+      glite-gridftp-ls gsiftp://$Source_SE/ 2>message 1>/dev/null
+
+      result=`cat message | wc -l`
+
+      if [ $result -gt 0 ];then
+         continue
+      else
+         goodSE=1
+         SE1_HOST=$Source_SE
+         break
+      fi
+   done
+
+   if [ $goodSE -eq 0 ]; then
+      echo ">>> NOTE: No good SRM found on site: $Source_Site"
+      echo ">>> NOTE: The channel can not be tested!"
+      echo ""
+      continue
+   fi
+
+   Mount=`glite-sd-query --host $SE1_HOST -x 2>/dev/null | grep "Key: dteam:SEMountPoint - Value:" | sed -e 's/Key: dteam:SEMountPoint - Value: //g'`
+
+   SE1_Mount=`echo $Mount | awk '{print $1}'`
+
+   SE1_SRM_LOC="srm://$SE1_HOST/$SE1_Mount"
+
+   
+   echo "SE1 SRM Location: $SE1_SRM_LOC"
+   echo "SE2 SRM Location: $SE2_SRM_LOC"
+   echo ""
+   
+   export GLITE_SD_SITE=$SITE_NAME
+   export LCG_CATALOG_TYPE='lfc'
+
+   j=1
+
+   while test $j -le  $JobN
+   do
+    echo ""
+    echo "Trying to submit job number: $j to the channel $Channel_Name"
+    echo ""
+
+    file_transfer $SE1_SRM_LOC $SE2_SRM_LOC $MYPROXY_PASS $FileN
+
+    j=`expr $j + 1`
+
+   done
+done
+
+for i in $JobIDs
+do
+  get_status_result $i
+done
+
+export GLITE_SD_SITE=$SITE_NAME
+export LCG_CATALOG_TYPE='lfc'
+
+echo "Number of successfully submitted jobs: $NumberOfSuccSubJob "
+echo ""
+echo "Number of successfully finished jobs: $NumberOfSuccFinJob "
+echo ""
+
+if [ $NumberOfSuccSubJob -eq $NumberOfSuccFinJob ]; then
+  echo "FTS Test: Passed."
+  echo ""
+  exit 0
+else
+  echo ""
+  echo "FTS Test: Failed."
+  echo ""
+  for job in $FailedJobs
+  do
+    echo ""
+    glite-transfer-status -l -v $job
+    echo ""
+  done
+  echo ""
+  echo "FTS Test: Failed."
+  echo ""
+  exit 1
+fi
+

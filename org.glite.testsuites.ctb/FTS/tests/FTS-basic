@@ -1,0 +1,160 @@
+#!/bin/bash 
+##########################################################################################
+# Script for testing of FTS services (Basic test: PING, FTS BDII, Top Level BDII, Tomcat)#
+##########################################################################################
+#                                                       #
+# Returned values:                                      #
+#                                                       #
+#                 Exit  SAME_OK: Test Passed            #
+#                 Exit  SAME_ERROR: Test Failed         #
+#                 Exit  2: Wrong Input                  #
+#                                                       #
+#########################################################
+
+showUsage ()
+{
+ echo "Missing parameter:                                                                 "
+ echo "Usage:  FTS2-basic <fts hostname>                                                  "
+ echo ""
+}
+
+echo "<pre>"
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+fi
+
+if [ -n "$1" ]; then
+ FTS_HOST=$1
+else
+ echo "ERROR: No FTS host is defined!"
+ echo "</pre>"
+ exit $SAME_ERROR
+fi
+
+# Sourcing the configuration
+
+. $SAME_SENSOR_HOME/config.sh
+
+#####################
+# Exporting variables
+#####################
+
+
+
+function test_ping
+{
+  echo -n " Testing ping to $FTS_HOST" 
+  result=`ping -c 5 $FTS_HOST 2>/dev/null | grep Unreachable | wc -l`
+
+  if [ $result -gt 0 ]; then
+    echo ""
+    echo "<font color="red"> Error </font>: The $FTS_HOST is not accessible! "
+    echo ""
+    echo " <b> FTS Basic Test: </b>  <font color="red"> Failed. </font>"
+    echo "</pre>"
+    exit $SAME_ERROR
+  fi
+  echo "<font color="green"> - OK </font>"
+}
+
+function test_ldap
+{
+  echo ""
+  echo -n " Testing connection to LDAP server on $FTS_HOST"
+  result=`ldapsearch -x -H ldap://$FTS_HOST:$FTS_BDII_PORT -b Mds-vo-name=resource,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
+
+  if [ $result -eq 0 ]; then
+     echo ""
+     echo "<font color="red"> Error: </font> LDAP Test: Failed. "
+     echo ""
+     echo " <b> FTS Basic Test: </b>  <font color="red"> Failed. </font>"
+     echo "</pre>"
+     exit $SAME_ERROR
+  fi
+  echo "<font color="green"> - OK </font>"
+}
+
+function test_bdii
+{
+  echo ""
+  echo -n " Testing if there is information for $FTS_HOST on $BDII_HOST"
+
+  result=`ldapsearch -x -H ldap://$BDII_HOST:$BDII_PORT -b Mds-vo-name=local,o=Grid 2>/dev/null | grep $FTS_HOST | wc -l`
+
+  if [ $result -eq 0 ]; then
+    echo ""
+    echo "<font color="red">Error: </font> No entries found for FTS Server: $FTS_HOST on the top level BDII: $BDII_HOST! "
+    echo ""
+    echo " <b> FTS Basic Test: </b>  <font color="red"> Failed. </font>"
+    echo "</pre>"
+    exit $SAME_ERROR
+  fi
+  echo "<font color="green"> - OK </font>"
+}
+
+function test_tomcat
+{
+  echo ""
+  echo    " FTS's Tomcat is found to be running on port: $FTS_TOMCAT_PORT"
+  echo -n " Testing connection to Tomcat server on $FTS_HOST "
+
+  result=`nmap -p $1 $FTS_HOST 2>/dev/null | grep open | wc -l`
+
+  if [ $result -eq 0 ]; then
+    echo ""
+    echo " <font color="red">   Error: </font> The Tomcat server on $FTS_HOST is not accessible! "
+    echo "  NOTE: Tomcat Test: Failed. Exiting."
+    echo " <b> FTS Basic Test: </b>  <font color="red"> Failed. </font>"
+    echo "</pre>"
+    exit $SAME_ERROR
+  fi
+  echo "<font color="green"> - OK </font>"
+}
+
+################
+# Start testing
+###############
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+export GLITE_SD_PLUGIN=bdii
+
+echo "Start testing with settings: FTS_HOST: $FTS_HOST BDII_HOST: $BDII_HOST"
+echo "Testing...."
+echo ""
+
+###########################################
+# Checking if the service is up and running
+###########################################
+
+test_ping
+
+#####################################################
+# Checking if LDAP Server on FTS is working properely
+#####################################################
+
+test_ldap
+
+###################################################################
+# Checking if there is information for FTS Server on top level BDII
+##################################################################
+
+test_bdii
+
+#####################################################################
+# Getting Tomcart Port for FTS Server from top level BDII: $BDII_HOST
+#####################################################################
+
+FTS_URL=`glite-sd-query -t org.glite.FileTransfer 2>/dev/null | grep $FTS_HOST | grep Endpoint | sed -e 's/Endpoint://g'`
+FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
+FTS_TOMCAT_PORT=`echo $FTS_URL | awk '{print $2}'`
+#######################################################
+# Checking if Tomcat Server on FTS is working properely
+#######################################################
+
+test_tomcat $FTS_TOMCAT_PORT
+
+echo ""
+echo "<b> FTS Basic Test: </b> <font color="green"> Passed. </font>"
+echo "</pre>"
+exit $SAME_OK

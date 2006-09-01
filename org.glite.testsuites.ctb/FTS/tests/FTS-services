@@ -1,0 +1,124 @@
+#!/bin/bash
+
+#########################################################
+# Script for testing FTS services (BDII , List channels)#
+#########################################################
+# 							#	
+# Returned values:					#
+#							#
+#                 Exit  0: Test Passed			#
+#		  Exit  1: Test Failed			#
+#                 Exit  2: Wrong Input  		#
+#							#
+#########################################################
+
+showUsage ()
+{
+ echo "Usage: FTS-services "
+}
+echo "<pre>"
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+fi
+
+. $SAME_SENSOR_HOME/config.sh
+SITE_NAME=`cat $SAME_SENSOR_WORK/nodes/$1/siteName`
+
+################################
+# Checks if there is valid proxy
+################################
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+         echo ""
+         echo " INFO: Using proxy from: $X509_USER_PROXY"
+else
+         echo ""
+         echo " <font color="red"> Error: </font> Valid proxy is needed for this test!"
+         echo ""
+         if [ $ProxyExpired -gt 0 ]; then
+            echo "<font color="red"> Error: </font> Proxy credential expired! Exiting."
+         fi
+         echo ""
+         exit $SAME_ERROR
+fi
+
+
+#####################
+# Exporting variables
+#####################
+
+echo ""
+echo "Exporting variables..."
+echo ""
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+export GLITE_SD_PLUGIN=bdii
+
+##############################################################################
+# Getting Tomcart Port and FTS Server hostname from top level BDII: $BDII_HOST
+##############################################################################
+
+unset $GLITE_SD_SITE
+
+FTS_HOST=$1
+
+export GLITE_SD_SITE=$SITE_NAME
+export LCG_CATALOG_TYPE='lfc'
+
+echo ""
+echo "Using FTS Server: $FTS_HOST"
+echo ""
+echo "Using Site Name: $SITE_NAME"
+echo ""
+echo "Using BDII: $BDII_HOST"
+echo ""
+
+
+##########################################################
+# Checks if there is error message while listing channels
+##########################################################
+
+glite-transfer-channel-list 1>/dev/null 2>message
+
+result=`cat message | grep Fail | wc -l`
+
+if [ $result -eq 0 ]; then
+	echo "Listing FTS channels"
+	echo ""
+
+	glite-transfer-channel-list -v
+      
+        Channel_List=`glite-transfer-channel-list`
+        
+        echo ""
+        echo "Listing FTS channels information"
+        echo ""
+        
+        for Channel_Name in $Channel_List
+        do
+         echo ""
+         glite-transfer-channel-list $Channel_Name 2>message
+         result=`cat message|wc -l`
+         if [ $result -gt 0 ]; then 
+            echo ">>> NOTE:  `cat message`."
+            echo ">>> NOTE: `glite-transfer-channel-list -v | grep \"Service features:\" | sed -e 's/#//g'`"
+         break 
+         fi
+         echo ""
+	done
+
+	echo ""
+	echo "FTS Test: <font color="green"> OK </font>"
+	echo ""
+        exit $SAME_OK
+else
+	echo ">>> NOTE: `cat message`"
+	echo ""
+	echo "FTS Test: <font color="red"> Failed. </font>"
+	echo ""
+        exit $SAME_ERROR
+fi
