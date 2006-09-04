@@ -11,23 +11,21 @@ if [ -z "$1" ]; then
   showUsage
   exit 2
 fi
-DPM_HOST=$1
+MYPROXY_HOST=$1
 
 ### Sourcing the configuration
 
 . $SAME_SENSOR_HOME/../functions.sh
-. $SAME_SENSOR_HOME/config.sh
-
 
 function test_ping
 {
   echo ""
-  echo -n "<li> Testing ping to $DPM_HOST" 
-  result=`ping -c 5 $DPM_HOST 2>/dev/null | grep Unreachable | wc -l`
+  echo -n "<li> Testing ping to $MYPROXY_HOST" 
+  result=`ping -c 5 $MYPROXY_HOST 2>/dev/null | grep Unreachable | wc -l`
 
   if [ $result -gt 0 ]; then
     echo ""
-    samPrintERROR; echo "The $DPM_HOST is not accessible! Exiting !"
+    samPrintERROR; echo "The $MYPROXY_HOST is not accessible! Exiting !"
     echo "</ul>"
     failedmessage
     echo "</pre>"
@@ -80,16 +78,15 @@ export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
 export GLITE_SD_PLUGIN=bdii
 
 echo "<pre>"
-echo "Start testing with settings: DPM_HOST: $DPM_HOST BDII_HOST: $BDII_HOST<br>"
-echo "<b>Starting DPM-basic tests: </b>"
+echo "<b>Starting MyProxy-basic tests: </b>"
 echo "<ul>"
 
 test_ping
-test_ldap
-test_bdii
+#test_ldap
+#test_bdii
 
 echo "</ul>"
 echo ""
-echo -n "<b>DPM-basic successfuly </b>" ; samPrintPASSED
+echo -n "<b>MyProxy-basic test successfuly </b>" ; samPrintPASSED
 echo "</pre>"
 exit $SAME_OK

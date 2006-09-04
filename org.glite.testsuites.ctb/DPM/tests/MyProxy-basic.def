@@ -1,4 +1,4 @@
-testName: DPM-basic
+testName: MyProxy-basic
 testAbbr: basic
-testTitle: Basic tests for DPM node 
+testTitle: Basic tests for MyProxy node 
 EOT

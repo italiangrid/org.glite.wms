@@ -1,4 +1,4 @@
-testName: DPM-cli
+testName: MyProxy-cli
 testAbbr: cli
-testTitle: Test of DPM command line interface
+testTitle: Test of MyProxy command line interface
 EOT

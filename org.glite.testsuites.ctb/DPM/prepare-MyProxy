@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "prepare-DPM script started." >&2
+echo "prepare-MyProxy script started." >&2
 if [ "x$1" == "x--publish" ] ; then
     echo "returning nodes on stdout..." >&2
     cat nodes-priv.map
