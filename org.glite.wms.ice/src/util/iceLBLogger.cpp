@@ -114,8 +114,8 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
         boost::recursive_mutex::scoped_lock( m_cache->mutex );
         CreamJob theJob( ev->getJob() );
         theJob.setSequenceCode( new_seq_code );    
-        if ( m_cache->end() != m_cache->lookupByGridJobID( theJob.getGridJobID() ) ) {
-            m_cache->put( theJob );
-        }
+        // if ( m_cache->end() != m_cache->lookupByGridJobID( theJob.getGridJobID() ) ) {
+        m_cache->put( theJob );
+        // }
     } // Unlocks the job cache
 }
