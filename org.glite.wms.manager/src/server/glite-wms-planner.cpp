@@ -82,6 +82,11 @@ std::string get_matchpipe_dir()
   return ns_config.list_match_root_path();
 }
 
+int get_match_retry_period()
+{
+  return configuration::Configuration::instance()->wm()->match_retry_period();
+}
+
 fs::path get_input_sandbox_path(jobid::JobId const& id)
 {
   configuration::NSConfiguration const& ns_config
@@ -368,6 +373,8 @@ ClassAdPtr do_match(
 
   ClassAdPtr result;
 
+  int const match_retry_period(get_match_retry_period());
+
   while (!result && std::time(0) < timeout) {
     if (is_proxy_expired(jobid)) {
       throw ProxyExpired();
@@ -381,7 +388,7 @@ ClassAdPtr do_match(
     matches_file.clear();
     if (!result) {
       log_pending(context, pending_message);
-      ::sleep(five_minutes);
+      ::sleep(match_retry_period);
     }
   }
 
@@ -459,8 +466,9 @@ void do_it(
     unsigned int t = previous_matches.back().second;
     unsigned int now = std::time(0);
     unsigned int p = now - t;
-    if (p < five_minutes) {
-      ::sleep(five_minutes - p);
+    int const match_retry_period(get_match_retry_period());
+    if (p < match_retry_period) {
+      ::sleep(match_retry_period - p);
     }
   }
 

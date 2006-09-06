@@ -133,13 +133,18 @@ void do_transitions_for_cancel(
   }
 }
 
+int get_match_retry_period()
+{
+  return configuration::Configuration::instance()->wm()->match_retry_period();
+}
+
 void do_transitions_for_submit(
   RequestPtr const& req,
   std::time_t current_time,
   pipe_type::write_end_type& write_end
 )
 {
-  std::time_t threshold = current_time - 300; // 5 minutes
+  std::time_t threshold = current_time - get_match_retry_period();
   Request::State state = req->state();
 
   switch (state) {
