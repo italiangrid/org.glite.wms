@@ -1,37 +1,47 @@
 #! /usr/bin/env python
-import unittest
+from CommonRaskTest import *
+
+
+
+
+###  Define Configuration values:
+Config.allSuites={ \
+# SUBMIT SUITES
+"submitSuite":["testdagSubmit","testcollectionSubmit","testcollectionSubmitOne",\
+"testjobSubmit","testjobListMatch","testcycleJob"],\
+# PERUSAL SUITES
+"PerusalSuite":["testgetPerusalFiles","testenableFilePerusal"],\
+# TEMPLATES SUITES
+"templateSuite":["testgetStringParametricJobTemplate","testgetIntParametricJobTemplate",\
+"testgetCollectionTemplate","testgetDAGTemplate","testgetJobTemplate"],\
+# GETURI SUITES
+"getURISuite":["testgetSandboxDestURI","testgetSandboxBulkDestURI","testgetTransferProtocols","testgetOutputFileList"],\
+# PROXY SUITES
+"proxySuite":["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst",\
+"testDelegatedProxyInfo","testGetJDL"],\
+}  #END SUITES
+# Extra input parameters
+Config.EXTRA_PARAM ="[<jobid>] [<jdl>]"
+# Debug Mode 0/1
+Config.DEBUGMODE = 1
+
+
+
+
+"""
+SPECIFIC part (1/2)
+"""
+
+PYTHONPATH="/opt/glite/externals/lib/python2.2/site-packages"
+sys.path.append(PYTHONPATH)
+PYTHONPATH="/opt/glite/externals/lib/python2.2"
+sys.path.append(PYTHONPATH)
 import SOAPpy
-import sys
 from wmproxymethods import Wmproxy
 from wmproxymethods import Config
 import socket
 
-
-""" DEBUG MODE """
 SOAPpy.Config.debug = 0
-Config.DEBUGMODE = 1
-
-
-def questionYN(question):
-	keep=1
-	question=question+ ' [y/n]n :'
-	while keep:
-		ans=raw_input(question)
-		if (ans=='n')or(ans=='N') or(ans==''):
-			return 0
-			keep=0
-		elif (ans=='y')or(ans=='Y'):
-			return 1
-			keep=0
-
-
-def title(msg, *args):
-	if Config.DEBUGMODE:
-		print "\n########### DBG Message #################"
-		print "* ", msg
-		for arg in args:
-			print " - ", arg
-		print "########### DBG END #################"
 
 class JobId:
 	DEFAULT_JOBID="https://gundam.cnaf.infn.it:9000/a3hAXhGJ66tF9hsAlliXzg"
@@ -129,12 +139,6 @@ JDL Instance
 """
 jdl = Jdl()
 
-# LEVEL/SUBLEVEL MENU
-LEV_DEFAULT=-2
-LEV_HELP=-1
-LEV_MAX=5
-
-
 """
 Setup Test Class for Maraska
 """
@@ -194,30 +198,25 @@ class WmpTest(unittest.TestCase):
 	SUBMISSION
 	"""
 	def testcollectionSubmit(self):
-		title("testcollectionSubmit")
 		dagadInstance=self.wmproxy.jobSubmit(jdl.getJdl(collectionjdl), delegationId)
 		assert dagadInstance, "Empty DAGAD!!!"
 		dagad.setJobId(dagadInstance.getJobId())
 
 	def testcollectionSubmitOne(self):
-		title("testcollectionSubmitOne")
 		dagadInstance=self.wmproxy.jobSubmit(jdl.getJdl(collectionjdlUNO), delegationId)
 		assert dagadInstance, "Empty DAGAD!!!"
 		dagad.setJobId(dagadInstance.getJobId())
 
 	def testdagSubmit(self):
-		title("testdagSubmit")
 		dagadInstance=self.wmproxy.jobSubmit(jdl.getJdl(dagjdl2), delegationId)
 		assert dagadInstance, "Empty DAGAD!!!"
 		dagad.setJobId(dagadInstance.getJobId())
 	def testjobSubmit(self):
-		title("testjobSubmit")
 		jobidInstance =self.wmproxy.jobSubmit(jdl.getJdl(jobjdl), delegationId)
 		assert  jobidInstance , "Empty JobId!!"
 		jobid.setJobId(jobidInstance.getJobId())
 
 	def testjobListMatch(self):
-		title("testcollectionSubmitOne")
 		matchingCEs=self.wmproxy.jobListMatch(jdl.getJdl(jobjdl), delegationId)
 		assert  matchingCEs , "Empty JobId!!"
 
@@ -253,30 +252,25 @@ class WmpTest(unittest.TestCase):
 	TEMPLATES
 	"""
 	def testgetStringParametricJobTemplate(self):
-		title("testgetStringParametricJobTemplate")
 		attributes  = ["Executable" , "Arguments"]
 		param = ["un","dos","tres"]
 		assert self.wmproxy.getStringParametricJobTemplate(attributes, param, requirements, rank), "Empty Template!!"
 	def testgetIntParametricJobTemplate(self):
-		title("testgetIntParametricJobTemplate")
 		attributes  = ["Executable" , "Arguments"]
 		param = 4
 		parameterStart=1
 		parameterStep=1
 		assert self.wmproxy.getIntParametricJobTemplate(attributes, param, parameterStart, parameterStep, requirements, rank), "Empty Template!!"
 	def testgetCollectionTemplate(self):
-		title("testgetCollectionTemplate")
 		jobNumber=5
 		assert  self.wmproxy.getCollectionTemplate(jobNumber, requirements, rank), "Empty Template!!"
 	def testgetJobTemplate(self):
-		title("testgetJobTemplate")
 		jobType =[]
 		executable ="/bin/ls"
 		arguments = "/tmp/*"
 		title(self.wmproxy.getJobTemplate(jobType, executable, arguments, requirements, rank))
 		assert self.wmproxy.getJobTemplate(jobType, executable, arguments, requirements, rank), "Empty Template!!"
 	def testgetDAGTemplate(self):
-		title("testgetDAGTemplate")
 		dependencies={}
 		assert  self.wmproxy.getDAGTemplate(dependencies,requirements, rank), "Empty Template!!"
 
@@ -284,12 +278,10 @@ class WmpTest(unittest.TestCase):
 	Perusal
 	"""
 	def testgetPerusalFiles(self):
-		title("testgetPerusalFiles")
 		file="std.err"
 		allChunks = True
 		assert self.wmproxy.getPerusalFiles(jobid.getJobId(), file, allChunks), "No Perusal file retrieved (perhaps not yet generated)"
 	def testenableFilePerusal(self):
-		title("testenableFilePerusal")
 		fileList=["std.out", "std.err"]
 		self.wmproxy.enableFilePerusal(jobid.getJobId(), fileList)
 	"""
@@ -303,21 +295,16 @@ class WmpTest(unittest.TestCase):
 		title("getProxyReq (grst namespace)", gpr)
 		assert gpr
 	def testputProxy(self):
-		title("testputProxy")
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId())
 	def testgetProxyReqGrst(self):
-		title("testgetProxyReqGrst")
 		assert self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
 	def testputProxyGrst(self):
-		title("testputProxyGrst")
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId(),self.wmproxy.getGrstNs())
 	def testDelegatedProxyInfo(self):
 		pi= self.wmproxy.getDelegatedProxyInfo(delegationId)
-		title("testDelegatedProxyInfo:", pi)
 		return pi
 	def testJobProxyInfo(self):
 		pi=self.wmproxy.getJobProxyInfo(jobid.getJobId())
-		title("testJobProxyInfo:", pi)
 		return pi
 	def testGetJDL(self):
 		for  jdlType in [0,1]:
@@ -328,76 +315,10 @@ class WmpTest(unittest.TestCase):
 	Other
 	"""
 	def testaddACLItems(self):
-		title("testaddACLItems")
 		items=["un", "due", "tre", "prova"]
 		return self.wmproxy.addACLItems(jobid.getJobId(), items)
 
 
-def addSuites(suiteTitle,suites, level, sublevel):
-	mainSuite = unittest.TestSuite()
-	help=""
-	for i in range (len(suites)):
-		if sublevel==LEV_DEFAULT:
-			# Add test
-			mainSuite.addTest(WmpTest(suites[i]))
-		elif sublevel==i:
-			# Add Required test
-			mainSuite.addTest(WmpTest(suites[i]))
-		elif sublevel==LEV_HELP:
-			# generate help
-			if i%2==0 and i!=0:
-				help+="\n"
-			tmpH= "." +str(i) +"  "+ suites[i]
-			help+=tmpH.ljust(45)
-	if help:
-		print "\n**** " + str(level	)+ " "+ suiteTitle +" subtests: ***\n" +help
-	return mainSuite
-
-
-def runTextRunner(level, sublevel):
-	"""
-	Authomatically generate suites
-	if level are set to LEV_HELP it only generates HELP
-	"""
-	allSuites={ \
-	# SUBMIT SUITES
-	"submitSuite":["testdagSubmit","testcollectionSubmit","testcollectionSubmitOne",\
-	"testjobSubmit","testjobListMatch","testcycleJob"],\
-	# PERUSAL SUITES
-	"PerusalSuite":["testgetPerusalFiles","testenableFilePerusal"],\
-	# TEMPLATES SUITES
-	"templateSuite":["testgetStringParametricJobTemplate","testgetIntParametricJobTemplate",\
-	"testgetCollectionTemplate","testgetDAGTemplate","testgetJobTemplate"],\
-	# GETURI SUITES
-	"getURISuite":["testgetSandboxDestURI","testgetSandboxBulkDestURI","testgetTransferProtocols","testgetOutputFileList"],\
-	# PROXY SUITES
-	"proxySuite":["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst",\
-	"testDelegatedProxyInfo","testGetJDL"],\
-	}  #END SUITES
-
-	LEV_MAX=len(allSuites.keys())
-	allParsedSuites=[]
-	sIndex=0
-	# Generate Suites
-	for suiteKey in allSuites.keys():
-		allParsedSuites.append(addSuites(suiteKey,allSuites[suiteKey], sIndex, sublevel))
-		sIndex+=1
-	runner = unittest.TextTestRunner()
-	# Execute Tests
-	if level==LEV_MAX:
-		# EXECUTE ALL SUITES
-		for suite in allParsedSuites:
-			runner.run (suite)
-	elif level<0:
-		# DO NOTHING: not allowed value
-		pass
-	elif level < LEV_MAX:
-		# EXECUTE Selected SUITES
-		runner.run (allParsedSuites[level])
-	else:
-		# DO NOTHING: not allowed value
-		title("Warning!! Test number " + str(level) +"DOES NOT EXIST!")
-		pass
 
 
 
@@ -444,59 +365,16 @@ def custom2():
 	runner = unittest.TextTestRunner()
 	runner.run(customSuite)
 
-
-def printHelp(command, helpLevel=0):
-	print "\nUsage:  ".ljust(25) + command + " 0-"+str(LEV_MAX-1)+"[.<subtest number>]  [<jobid>] [<jdl>]"
-	print "ALL tests:".ljust(25) + command + " -a [<jobid>] [<jdl>]"
-	print "help:     ".ljust(25) + command + " -h"
-
-if __name__=="__main__":
-	try:
-		if len(sys.argv)<2:
-			printHelp(sys.argv[0])
-			sys.argv.append(raw_input("Please Select one test(or type '-h', or press ^C):\n"))
-		if sys.argv[1]=="-h":
-			runTextRunner(LEV_HELP,LEV_HELP)
-			printHelp(sys.argv[0])
-			print " - - - "
-			print "EXAMPLES:"
-			print "\t"+ sys.argv[0] + " 1".ljust(25) +"Will perform all templateSuite TESTS"
-			print "\t"+ sys.argv[0] + " 2.4".ljust(25) +"Will perform testenableFilePerusal from perusalSuite SUITE"
-			sys.argv[1]=(raw_input("Please Select one test(or press ^C):\n"))
-	except KeyboardInterrupt:
-		print "\nbye!"
-		sys.exit(0)
-	level = sys.argv[1]
-	if level=="-a":
-		if questionYN("Are you sure you wish to perform ALL tests?"):
-			level=LEV_MAX
-		else:
-			printHelp(sys.argv[0])
-			sys.exit(0)
-	sublevel= LEV_DEFAULT
+if __name__== "__main__":
+	print "#############################################"
+	print "Using WMPROXY Service: " , url
+	print "Using DELEGATION Id:   " , delegationId
+	print "#############################################"
 	if len(sys.argv)>2:
 		jobid.setJobId(sys.argv[2])
 		dagad.setJobId(sys.argv[2])
 	if len(sys.argv)>3:
 		jdl.loadJdl(sys.argv[3])
-	try:
-		level= int(level)
-		if level>LEV_MAX:
-			print "No such Example (not yet!)"
-			raise 5
-	except:
-		try:
-			level, sublevel = level.split(".")
-			level = int(level)
-			sublevel= int (sublevel)
-		except:
-			printHelp(sys.argv[0])
-			sys.exit(0)
-	print "#############################################"
-	print "Using WMPROXY Service: " , url
-	print "Using DELEGATION Id:   " , delegationId
-	print "Example selected:" , level
-	print "#############################################"
-	runTextRunner(level, sublevel)
-	print " END TEST \n"
+	run_unit(WmpTest)
+
 
