@@ -27,7 +27,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				proxyRenewal.cpp \
 				iceUtils.cpp \
 				jobKiller.cpp \
-				jobDbManager.cpp
+				jobDbManager.cpp \
+				iceThreadPool.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \

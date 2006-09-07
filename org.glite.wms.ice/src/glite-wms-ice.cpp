@@ -36,6 +36,7 @@
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
+#include "iceThreadPool.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
@@ -339,7 +340,12 @@ int main(int argc, char*argv[])
   vector<string> url_jid;
   url_jid.reserve(2);
 
-
+  /*
+   *
+   * Starts the thread pool
+   *
+   */
+  iceUtil::iceThreadPool* threadPool( iceUtil::iceThreadPool::instance() );
   
   /*
    * Initializes the L&B logger
@@ -369,36 +375,35 @@ int main(int argc, char*argv[])
                        << ">"
                        << log4cpp::CategoryStream::ENDLINE
                        );
-        boost::scoped_ptr< glite::wms::ice::iceAbsCommand > cmd;
+        glite::wms::ice::iceAbsCommand* cmd;
         try {
-            glite::wms::ice::iceAbsCommand* tmp = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
-            cmd.reset( tmp ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything
-        }
-        catch(std::exception& ex) {
+            cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
+        } catch( std::exception& ex ) {
             CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
             CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
             iceManager->removeRequest(j);
             continue;
         }
-      try {
-          cmd->execute( iceManager );
-      } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
-          CREAM_SAFE_LOG( 
-                         log_dev->errorStream()
-                         << "Command execution got FATAL exception: "
-                         << ex.what()
-                         << log4cpp::CategoryStream::ENDLINE
-                         );
-      } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
-          CREAM_SAFE_LOG(
-                         log_dev->errorStream()
-                         << "Command execution got TRANSIENT exception: "
-                         << ex.what()
-                         << log4cpp::CategoryStream::ENDLINE
-                         );
-          CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );
+
+//       try {
+//           cmd->execute( iceManager );
+//       } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
+//           CREAM_SAFE_LOG( 
+//                          log_dev->errorStream()
+//                          << "Command execution got FATAL exception: "
+//                          << ex.what()
+//                          << log4cpp::CategoryStream::ENDLINE
+//                          );
+//       } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
+//           CREAM_SAFE_LOG(
+//                          log_dev->errorStream()
+//                          << "Command execution got TRANSIENT exception: "
+//                          << ex.what()
+//                          << log4cpp::CategoryStream::ENDLINE
+//                          );
+//           CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );
           
-      }
+//       }
       CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing submitted request from WM/ICE's filelist..." ) );
       try { 
 	iceManager->removeRequest(j);
@@ -412,6 +417,10 @@ int main(int argc, char*argv[])
                          );
 	exit(1);
       }
+
+      // Submit to the thread pool
+      threadPool->add_request( cmd );
+
     }
     sleep(1);
     requests.clear();
