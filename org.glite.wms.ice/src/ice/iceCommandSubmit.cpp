@@ -179,7 +179,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
         vector<string> url_jid;
         util::CreamJob theJob;
-        cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
+        // cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
+        boost::scoped_ptr< cream_api::soap_proxy::CreamProxy > theProxy( new cream_api::soap_proxy::CreamProxy( true ) );
 
         try {
             theJob.setJdl( m_jdl );
