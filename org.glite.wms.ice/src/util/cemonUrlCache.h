@@ -10,7 +10,7 @@ namespace log4cpp {
     class Category;
 };
 
-class CEInfo;
+//class CEInfo;
 
 namespace glite {
   namespace wms {
@@ -30,11 +30,12 @@ namespace glite {
 	  std::map<std::string, std::string>  mappingCreamCemon;
 	  std::map<std::string, std::string>  mappingCemonDN;
 	  
-	  iceConfManager                      *m_conf;  
-	  subscriptionManager                 *m_subMgr;
-	  static cemonUrlCache                *s_instance;
-	  log4cpp::Category                   *m_log_dev;
-	  CEInfo			      *ceInfo;
+	  iceConfManager                           *m_conf;  
+	  subscriptionManager                      *m_subMgr;
+	  static cemonUrlCache                     *s_instance;
+	  log4cpp::Category                        *m_log_dev;
+	  //CEInfo			           *ceInfo;
+	  //glite::ce::cream_client_api::CreamProxy  *m_creamProxy;
 	  
 	 protected:
 	  cemonUrlCache() throw();

@@ -21,9 +21,7 @@ boost::recursive_mutex subscriptionManager::mutex;
 
 //______________________________________________________________________________
 subscriptionManager::subscriptionManager()
-  : m_ceS(),
-    m_ceSMgr(),
-    m_T( iceConfManager::getInstance()->getICETopic() ),
+  : m_T( iceConfManager::getInstance()->getICETopic() ),
     m_P( iceConfManager::getInstance()->getNotificationFrequency() ),
     m_conf( iceConfManager::getInstance() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
@@ -36,8 +34,10 @@ subscriptionManager::subscriptionManager()
 		 << log4cpp::CategoryStream::ENDLINE);
   try {
     //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    m_ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
-    m_ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+    CESubscription ceS;
+    CESubscriptionMgr ceSMgr;
+    ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+    ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR authenticating: "
 		   << ex.what()
@@ -85,16 +85,19 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   		 << "subscriptionManager::list() - retrieving list of "
 		 << "subscriptions from [" << url << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
-		 
-  m_ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
-  m_ceSMgr.list(url, vec); // can throw an std::exception
+	
+  CESubscriptionMgr ceSMgr;
+  CESubscription ceS;
+	 
+  ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+  ceSMgr.list(url, vec); // can throw an std::exception
   
   for(vector<Subscription>::const_iterator it = vec.begin();
       it != vec.end();
       it++) 
     {
-      tp = it->getExpirationTime();
-      localtime_r( &tp, &m_Time );
+      m_tp = it->getExpirationTime();
+      localtime_r( &m_tp, &m_Time );
       memset( (void*) m_aT, 0, 256 );
       strftime(m_aT, 256, "%a %d %b %Y %T", &m_Time);
       CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::list() - "
@@ -110,8 +113,8 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
 //______________________________________________________________________________
 bool subscriptionManager::subscribe(const string& url)
 {
-  
-  m_ceS.setServiceURL(url);
+  CESubscription ceS;
+  ceS.setServiceURL(url);
 
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
   		 << "subscriptionManager::subscribe() - Subscribing to ["
@@ -121,16 +124,16 @@ bool subscriptionManager::subscribe(const string& url)
 
   {
     //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    m_ceS.setSubscribeParam( m_myurl.c_str(),
+    ceS.setSubscribeParam( m_myurl.c_str(),
 	                     m_T,
 			     m_P,
 			     m_conf->getSubscriptionDuration()
 			    );
   }
   try {
-    m_ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
-    m_ceS.subscribe();
-    m_lastSubscriptionID = m_ceS.getSubscriptionID();
+    ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+    ceS.subscribe();
+    m_lastSubscriptionID = ceS.getSubscriptionID();
     CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribed with ID ["
 		   << m_lastSubscriptionID << "]"
 		   << log4cpp::CategoryStream::ENDLINE);
@@ -149,8 +152,9 @@ bool subscriptionManager::updateSubscription(const string& url,
 {
   try {
     //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    m_ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
-    newID = m_ceSMgr.update(url, ID, m_myurl, m_T, m_P,
+    CESubscriptionMgr ceSMgr;
+    ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+    newID = ceSMgr.update(url, ID, m_myurl, m_T, m_P,
     		          time(NULL)+m_conf->getSubscriptionDuration());
     //return true;
   } catch(exception& ex) {

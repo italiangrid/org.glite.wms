@@ -23,7 +23,7 @@
 #include <unistd.h>             // getpid()
 #include <pwd.h>                // getpwnam()
 
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -191,14 +191,14 @@ int main(int argc, char*argv[])
   // Set the creation of CreamProxy with automatic delegetion ON
 
   string hostdn;
-  soap_proxy::CreamProxyFactory::initProxy( true );
+  soap_proxy::CreamProxy creamProxy(true);//::initProxy( true );
   CREAM_SAFE_LOG(
                  log_dev->infoStream()
                  << "Host proxyfile is [" << hostcert << "]" 
                  << log4cpp::CategoryStream::ENDLINE
                  );
   try {
-    hostdn = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+    hostdn = creamProxy.getDN(hostcert);
     boost::trim_if(hostdn, boost::is_any_of("/"));
     while( hostdn.find("/", 0) != string::npos ) {
       boost::replace_first(hostdn, "/", "_");
@@ -208,7 +208,7 @@ int main(int argc, char*argv[])
       boost::replace_first(hostdn, "=", "_");
     }
 
-    if((soap_proxy::CreamProxyFactory::getProxy()->getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
+    if((creamProxy.getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
         CREAM_SAFE_LOG(
                        log_dev->errorStream() 
                        << "Host proxy certificate is expired. Won't start Listener"
@@ -290,20 +290,20 @@ int main(int argc, char*argv[])
   /*****************************************************************************
    * Initializes CREAM client
    ****************************************************************************/
-  soap_proxy::CreamProxyFactory::initProxy(true);
-  if( !soap_proxy::CreamProxyFactory::getProxy() ) {
-      CREAM_SAFE_LOG(
-                     log_dev->fatalStream() 
-                     << "glite-wms-ice::main() - " 
-                     << "CreamProxy creation failed! Stop"
-                     << log4cpp::CategoryStream::ENDLINE
-                     );
-      exit(1);
-  }
+  //soap_proxy::CreamProxyFactory::initProxy(true);
+//   if( !soap_proxy::CreamProxyFactory::getProxy() ) {
+//       CREAM_SAFE_LOG(
+//                      log_dev->fatalStream() 
+//                      << "glite-wms-ice::main() - " 
+//                      << "CreamProxy creation failed! Stop"
+//                      << log4cpp::CategoryStream::ENDLINE
+//                      );
+//       exit(1);
+//   }
 
-  soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
+  creamProxy.printDebug( true );
   try {
-    soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(hostdn);
+    creamProxy.setSOAPHeaderID(hostdn);
   } catch(soap_proxy::auth_ex& ex) {
       CREAM_SAFE_LOG(
                      log_dev->fatalStream() 

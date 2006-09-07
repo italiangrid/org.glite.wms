@@ -26,7 +26,6 @@
 
 // Local includes
 #include "iceCommandSubmit.h"
-#include "subscriptionCache.h"
 #include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
@@ -44,7 +43,7 @@
 #include "iceUtils.h"
 
 // Other glite includes
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 

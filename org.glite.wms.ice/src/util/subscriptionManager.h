@@ -26,21 +26,21 @@ namespace util {
 
   class subscriptionManager {
 
-    CESubscription m_ceS;
-    CESubscriptionMgr m_ceSMgr;
-    Topic m_T;
-    Policy m_P;
-    iceConfManager* m_conf;
+    //CESubscription     m_ceS;
+    //CESubscriptionMgr  m_ceSMgr;
+    Topic              m_T;
+    Policy             m_P;
+    iceConfManager    *m_conf;
     log4cpp::Category *m_log_dev;
-    bool m_valid;
+    bool               m_valid;
+
     static subscriptionManager* s_instance;
-    //std::string m_myname;
-    std::string m_myurl;
-    std::string m_lastSubscriptionID;
-    struct tm m_Time;
-    char m_aT[256];
-    time_t tp;
-    //std::vector<Subscription> m_vec;
+
+    std::string        m_myurl;
+    std::string        m_lastSubscriptionID;
+    struct tm          m_Time;
+    char               m_aT[256];
+    time_t             m_tp;
 
    protected:
     subscriptionManager();

@@ -25,7 +25,7 @@
 
 // GLITE stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 // STL and Boost stuff
@@ -46,7 +46,7 @@ jobKiller::jobKiller() :
     m_threshold_time( iceConfManager::getInstance()->getJobKillThresholdTime()),
     m_lb_logger( iceLBLogger::instance() )    
 {
-    m_theProxy = cream_api::soap_proxy::CreamProxyFactory::getProxy();
+    m_theProxy = new cream_api::soap_proxy::CreamProxy(false);
     if( m_threshold_time < 60 ) m_threshold_time = 60;
     m_delay = m_threshold_time/2;
 }
@@ -54,7 +54,7 @@ jobKiller::jobKiller() :
 //____________________________________________________________________________
 jobKiller::~jobKiller()
 {
-    
+    delete(m_theProxy);
 }
 
 //____________________________________________________________________________

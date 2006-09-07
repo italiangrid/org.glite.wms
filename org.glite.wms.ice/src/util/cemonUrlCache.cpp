@@ -1,7 +1,6 @@
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/monitor-client-api-c/CEInfo.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "cemonUrlCache.h"
 #include "jobCache.h"
 #include "iceConfManager.h"
@@ -30,17 +29,17 @@ iceUtil::cemonUrlCache::cemonUrlCache() throw() :
   m_conf(iceUtil::iceConfManager::getInstance()),
   m_log_dev(api_util::creamApiLogger::instance()->getLogger())
 {
-  try {
-    ceInfo = new CEInfo( m_conf->getHostProxyFile(), "/" );
-  } catch(exception& ex) {
-    CREAM_SAFE_LOG(m_log_dev->fatalStream()
-    		   << "cemonUrlCache::CTOR() - Couldn't create a CEInfo object: "
-		   << ex.what() << ". STOP!"
-		   << log4cpp::CategoryStream::ENDLINE);
+//   try {
+//     ceInfo = new CEInfo( m_conf->getHostProxyFile(), "/" );
+//   } catch(exception& ex) {
+//     CREAM_SAFE_LOG(m_log_dev->fatalStream()
+//     		   << "cemonUrlCache::CTOR() - Couldn't create a CEInfo object: "
+// 		   << ex.what() << ". STOP!"
+// 		   << log4cpp::CategoryStream::ENDLINE);
 		   
-     // this is severe, must exit
-     abort();
-  }
+//      // this is severe, must exit
+//      abort();
+//   }
   
   m_subMgr = iceUtil::subscriptionManager::getInstance();
   if( !m_subMgr->isValid() )
@@ -82,9 +81,16 @@ string iceUtil::cemonUrlCache::getCEMonURL(const string& creamURL)
   // try to get the CEMon's address directly from the server
   string cemonURL;
   try {
-
-    api::CreamProxyFactory::getProxy()->Authenticate( m_conf->getHostProxyFile() );
-    api::CreamProxyFactory::getProxy()->GetCEMonURL( creamURL.c_str(), cemonURL );
+    // this method is not called frequently because cemonUrlCache
+    // keeps in memory information about CEUrl after the first 
+    // explicit request to CREAM.
+    // So we can create here a CreamProxy object and destroy it when exiting
+    // We cannot use a member CreamProxy because CreamProxy contains a 
+    // gSOAP runtime env that cannot be shared between threads and cemonUrlCache
+    // is a singleton and could be shared between threads
+    api::CreamProxy creamProxy(false);
+    creamProxy.Authenticate( m_conf->getHostProxyFile() );
+    creamProxy.GetCEMonURL( creamURL.c_str(), cemonURL );
 	
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << "cemonUrlCache::getCEMonURL() - "
@@ -125,10 +131,11 @@ bool iceUtil::cemonUrlCache::getCEMonDN( const string& cemonURL,
   }
 
   // try to get DN directly from the server
-  ceInfo->setServiceURL( cemonURL );
+  CEInfo ceInfo(m_conf->getHostProxyFile(), "/");
+  ceInfo.setServiceURL( cemonURL );
   try {
-    ceInfo->authenticate( m_conf->getHostProxyFile().c_str(), "/" );
-    ceInfo->getInfo();
+    ceInfo.authenticate( m_conf->getHostProxyFile().c_str(), "/" );
+    ceInfo.getInfo();
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "cemonUrlCache::getCEMonDN() - "
@@ -139,9 +146,9 @@ bool iceUtil::cemonUrlCache::getCEMonDN( const string& cemonURL,
     return false;
   }
   
-  DN = ceInfo->getDN();
+  DN = ceInfo.getDN();
   mappingCemonDN[cemonURL] = DN;
-  ceInfo->cleanup();
+  ceInfo.cleanup();
   return true;
 }
 

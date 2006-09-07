@@ -5,7 +5,7 @@
 #include "jobCache.h"
 #include "cemonUrlCache.h"
 #include "iceUtils.h"
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <iostream>
 #include <boost/algorithm/string.hpp>

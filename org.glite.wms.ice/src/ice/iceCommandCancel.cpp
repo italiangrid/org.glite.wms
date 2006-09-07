@@ -24,7 +24,7 @@
 #include "iceLBEvent.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include "boost/algorithm/string.hpp"
