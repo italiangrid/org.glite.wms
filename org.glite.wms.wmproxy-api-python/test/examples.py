@@ -4,6 +4,30 @@ from CommonRaskTest import *
 
 
 
+"""
+VALUES:
+"""
+gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
+ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
+tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
+trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
+url = tigerman
+
+
+ns ="http://glite.org/wms/wmproxy"
+
+delegationId = "rask"
+protocol="gsiftp"
+protocol="all"
+requirements ="ther.GlueCEStateStatus == \"Production\""
+rank ="-other.GlueCEStateEstimatedResponseTime"
+
+
+
+
+
+
+
 ###  Define Configuration values:
 Config.allSuites={ \
 # SUBMIT SUITES
@@ -19,6 +43,10 @@ Config.allSuites={ \
 # PROXY SUITES
 "proxySuite":["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst",\
 "testDelegatedProxyInfo","testGetJDL"],\
+# PROXY GRIDSITE SUITES
+"gridSiteSuite":["testgetProxyReqGrst","testputProxyGrst","testgetTerminationTimeGrst",\
+"testrenewProxyReqGrst","testDestroyGrst","testgetNewProxyReqGrst",\
+],\
 }  #END SUITES
 # Extra input parameters
 Config.EXTRA_PARAM ="[<jobid>] [<jdl>]"
@@ -85,23 +113,6 @@ class Jdl:
 			return self.DEFAULT_JDL
 
 
-"""
-CUSTOM VALUES:
-"""
-gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
-ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
-tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
-trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
-url = ghemon
-
-
-ns ="http://glite.org/wms/wmproxy"
-
-delegationId = "rask"
-protocol="gsiftp"
-protocol="all"
-requirements ="ther.GlueCEStateStatus == \"Production\""
-rank ="-other.GlueCEStateEstimatedResponseTime"
 """
 		JOBID
 """
@@ -284,6 +295,17 @@ class WmpTest(unittest.TestCase):
 	def testenableFilePerusal(self):
 		fileList=["std.out", "std.err"]
 		self.wmproxy.enableFilePerusal(jobid.getJobId(), fileList)
+
+	def testJobProxyInfo(self):
+		pi=self.wmproxy.getJobProxyInfo(jobid.getJobId())
+		return pi
+	def testGetJDL(self):
+		for  jdlType in [0,1]:
+			pi=self.wmproxy.getJDL(jobid.getJobId(),jdlType)
+			title("getJDL:", pi)
+		return pi
+
+
 	"""
 	Proxy
 	"""
@@ -296,21 +318,27 @@ class WmpTest(unittest.TestCase):
 		assert gpr
 	def testputProxy(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId())
+	"""
+	GridSite
+	"""
+
 	def testgetProxyReqGrst(self):
 		assert self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
 	def testputProxyGrst(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId(),self.wmproxy.getGrstNs())
 	def testDelegatedProxyInfo(self):
 		pi= self.wmproxy.getDelegatedProxyInfo(delegationId)
+		assert pi
 		return pi
-	def testJobProxyInfo(self):
-		pi=self.wmproxy.getJobProxyInfo(jobid.getJobId())
-		return pi
-	def testGetJDL(self):
-		for  jdlType in [0,1]:
-			pi=self.wmproxy.getJDL(jobid.getJobId(),jdlType)
-			title("getJDL:", pi)
-		return pi
+	def testgetTerminationTimeGrst(self):
+		assert self.wmproxy.getTerminationTime(delegationId,self.wmproxy.getGrstNs())
+	def testrenewProxyReqGrst(self):
+		assert self.wmproxy.renewProxyReq(delegationId,self.wmproxy.getGrstNs())
+	def testDestroyGrst(self):
+		self.wmproxy.destroy(delegationId,self.wmproxy.getGrstNs())
+	def testgetNewProxyReqGrst(self):
+		assert self.wmproxy.getNewProxyReq(self.wmproxy.getGrstNs())
+
 	"""
 	Other
 	"""
