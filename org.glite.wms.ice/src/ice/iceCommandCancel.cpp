@@ -24,7 +24,6 @@
 #include "iceLBEvent.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include "boost/algorithm/string.hpp"
@@ -138,10 +137,11 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
     if ( ! m_sequence_code.empty() )  
         it->setSequenceCode( m_sequence_code );
 
-    // Log cancel request event
-    m_lb_logger->logEvent( new util::cream_cancel_request_event( *it, string("Cancel request issued by user") ) );    
-
     util::CreamJob theJob( *it );
+
+    // Log cancel request event
+    theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ) );    
+
     vector<string> url_jid(1);   
     url_jid[0] = theJob.getJobID();
     CREAM_SAFE_LOG(
@@ -161,7 +161,6 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
-    // cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
     boost::scoped_ptr< cream_api::soap_proxy::CreamProxy > theProxy( new cream_api::soap_proxy::CreamProxy( true ) );
     
     try {
@@ -184,10 +183,6 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
         throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
     }
 
-    // This event should be logged AFTER the cancel process has completed
-    // m_lb_logger->logEvent( new util::cream_cancel_done_event( theJob, "User Cancelled" ) );
-
-    // util::jobCache::getInstance()->erase( it );
 }
 
 

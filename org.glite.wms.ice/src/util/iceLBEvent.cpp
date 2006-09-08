@@ -177,7 +177,7 @@ int cream_accepted_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 lrms_accepted_event::lrms_accepted_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LRMS, "LRMS Accepted Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "LRMS Accepted Event" )
 {
 
 }

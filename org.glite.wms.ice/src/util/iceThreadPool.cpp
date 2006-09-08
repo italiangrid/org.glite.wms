@@ -79,7 +79,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
             iceAbsCommand* cmd_ptr = m_state->m_requests_queue.front();
             cmd.reset( cmd_ptr );
             m_state->m_requests_queue.pop_front();
-        }
+        } // releases lock
         try {
             cmd->execute( glite::wms::ice::Ice::instance( ) );            
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {

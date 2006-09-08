@@ -319,6 +319,12 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
 #endif
     }
 
+//     CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                    << "After SetLoggingJob: "
+//                    << " Seq code from job=[" << theJob.getSequenceCode() << "]"
+//                    << " Seq code from ctx=[" << edg_wll_GetSequenceCode( *el_context ) << "]"
+//                    << log4cpp::CategoryStream::ENDLINE);
+
     edg_wlc_JobIdFree( id );
 
     if( res != 0 ) {

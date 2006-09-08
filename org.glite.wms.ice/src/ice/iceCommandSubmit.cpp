@@ -174,6 +174,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                        );   
 
         util::jobCache* cache( util::jobCache::getInstance() );
+
         //util::cemonUrlCache* cemon_cache( util::cemonUrlCache::getInstance() );
 
         vector<string> url_jid;
@@ -211,8 +212,20 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
         m_lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be used ONLY if ICE is being tested alone (i.e., not coupled with the WMS)
 #endif
-        m_lb_logger->logEvent( new util::wms_dequeued_event( theJob, util::iceConfManager::getInstance()->getICEInputFile() ) );
-        m_lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream()
+                       << "iceCommandSubmit::execute() - Seq Code before: "
+                       << theJob.getSequenceCode()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        theJob = m_lb_logger->logEvent( new util::wms_dequeued_event( theJob, util::iceConfManager::getInstance()->getICEInputFile() ) );
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream()
+                       << "iceCommandSubmit::execute() - Seq Code after: "
+                       << theJob.getSequenceCode()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        theJob = m_lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
 
         string modified_jdl;
         try {    
@@ -230,9 +243,9 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                            << " due to classad exception:" << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) ) );
+            theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) ) );
             theJob.set_failure_reason( boost::str( boost::format( "iceCommandSubmit cannot convert jdl=%1% due to classad exception=%2%") % m_jdl % ex.what() ) );
-            m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
+            theJob = m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
             // cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
@@ -250,8 +263,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             theProxy->Authenticate(theJob.getUserProxyCertificate());
         } catch ( cream_api::soap_proxy::auth_ex& ex ) {
             theJob.set_failure_reason( ex.what() );
-            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
-            m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
+            theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
+            theJob = m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
                            << "Unable to submit gridJobID=" 
@@ -294,8 +307,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                << log4cpp::CategoryStream::ENDLINE
                                );
                 theJob.set_failure_reason( ex.what() );
-                m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
-                m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
+                theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
+                theJob = m_lb_logger->logEvent( new util::job_done_failed_event( theJob ) );
                 ice->resubmit_job( theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
                 // cache->erase( job_pos );
                 throw( iceCommandFatal_ex( ex.what() ) );
@@ -317,8 +330,8 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             theJob.setDelegationId( delegID );
             theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
             theJob.set_wn_sequence_code( theJob.getSequenceCode() );
-
-            m_lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
+            
+            theJob = m_lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
 
             // put(...) accepts arg by reference, but
             // the implementation puts the arg in the memory hash by copying it. So

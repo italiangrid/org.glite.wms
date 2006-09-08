@@ -23,6 +23,7 @@
 #include "iceConfManager.h"
 #include "iceThread.h"
 #include "creamJob.h"
+#include <boost/scoped_ptr.hpp>
 
 namespace log4cpp {
   class Category;
@@ -50,7 +51,7 @@ namespace glite {
       class jobKiller : public iceThread {
 	  bool m_valid;
 	  log4cpp::Category *m_log_dev;
-	  glite::ce::cream_client_api::soap_proxy::CreamProxy* m_theProxy;
+	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
 	  time_t m_threshold_time;
 	  time_t m_delay;
           iceLBLogger* m_lb_logger;

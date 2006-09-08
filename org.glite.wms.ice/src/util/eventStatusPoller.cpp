@@ -350,9 +350,11 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
             jit->set_num_logged_status_changes( count );
 
             // Log to L&B
-            m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
-
-            m_cache->put( *jit );
+            iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
+            if ( ev ) {
+                *jit = m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
+            }
+            jit = m_cache->put( *jit );
             
             m_iceManager->resubmit_or_purge_job( jit );
         }

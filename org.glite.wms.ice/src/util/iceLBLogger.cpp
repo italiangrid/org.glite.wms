@@ -57,11 +57,15 @@ iceLBLogger::~iceLBLogger( void )
 
 }
 
-void iceLBLogger::logEvent( iceLBEvent* ev )
+CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 {
-    // Do nothing if trying to log the NULL event
-    if ( ! ev ) 
-        return;
+    // Abortg if trying to log the NULL event
+    if ( ! ev ) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream()
+                       << "Trying to log NULL event"
+                       << log4cpp::CategoryStream::ENDLINE);
+        abort();        
+    }
 
     // Destroys the parameter "ev" when exiting this function
     boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
@@ -81,7 +85,7 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
                            << " CreamJobID=[" << ev->getJob().getJobID() << "]"
                            << ". Caught exception " << ex.what()
                            << log4cpp::CategoryStream::ENDLINE);
-            return;
+            return ev->getJob();
         }
     
         m_ctx->startLogging();
@@ -94,19 +98,26 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
 			   << " GridJobID=[" 
                            << ev->getJob().getGridJobID() << "]"
 			   << " CreamJobID=[" << ev->getJob().getJobID() << "]"
+                           // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
+                           // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
+
 			   << log4cpp::CategoryStream::ENDLINE);
             
             res = ev->execute( m_ctx );
-            CREAM_SAFE_LOG(m_log_dev->infoStream() 
-			   << "iceLBLogger::logEvent() - ...Got return code " 
-                           << res 
-			   << log4cpp::CategoryStream::ENDLINE);
             
             m_ctx->testCode( res );
             
         } while( res != 0 );        
         
         new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+        CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                       << "iceLBLogger::logEvent() - ...Got return code " 
+                       << res 
+                       // << " Seq code AFTER from job=[" << ev->getJob().getSequenceCode() << "]"
+                       // << " Seq code AFTER from ctx=[" << new_seq_code << "]"
+
+                       << log4cpp::CategoryStream::ENDLINE);
+
     } // unlocks the LB
 
     { // Now, locks the cache
@@ -114,8 +125,7 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
         boost::recursive_mutex::scoped_lock( m_cache->mutex );
         CreamJob theJob( ev->getJob() );
         theJob.setSequenceCode( new_seq_code );    
-        // if ( m_cache->end() != m_cache->lookupByGridJobID( theJob.getGridJobID() ) ) {
         m_cache->put( theJob );
-        // }
+        return theJob;
     } // Unlocks the job cache
 }

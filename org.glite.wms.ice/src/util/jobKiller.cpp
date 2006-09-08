@@ -25,7 +25,6 @@
 
 // GLITE stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 // STL and Boost stuff
@@ -33,9 +32,7 @@
 #include <boost/format.hpp>
 
 using namespace std;
-
 namespace cream_api = glite::ce::cream_client_api;
-
 using namespace glite::wms::ice::util;
 
 //____________________________________________________________________________
@@ -43,10 +40,10 @@ jobKiller::jobKiller() :
     iceThread( "Job Killer" ),
     m_valid( true ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
+    m_theProxy( new cream_api::soap_proxy::CreamProxy( false ) ),
     m_threshold_time( iceConfManager::getInstance()->getJobKillThresholdTime()),
     m_lb_logger( iceLBLogger::instance() )    
 {
-    m_theProxy = new cream_api::soap_proxy::CreamProxy(false);
     if( m_threshold_time < 60 ) m_threshold_time = 60;
     m_delay = m_threshold_time/2;
 }
@@ -54,7 +51,7 @@ jobKiller::jobKiller() :
 //____________________________________________________________________________
 jobKiller::~jobKiller()
 {
-    delete(m_theProxy);
+
 }
 
 //____________________________________________________________________________
@@ -99,7 +96,7 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
       vector<string> url_jid(1);   
       url_jid[0] = J.getJobID();
    
-      m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by cream::jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
+      J = m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by cream::jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
 
       J.set_killed_by_ice();
       J.set_failure_reason( "The job has been killed because its proxy was expiring" );

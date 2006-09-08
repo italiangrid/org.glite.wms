@@ -25,6 +25,7 @@
 #define ICELBLOGGER_H
 
 #include "boost/thread/recursive_mutex.hpp"
+#include "creamJob.h"
 
 // Forward declaration
 namespace log4cpp {
@@ -46,22 +47,37 @@ namespace glite {
                  */
                 class iceLBLogger {
                 public:
-                    static iceLBLogger* instance( void );
-                    /**
-                     * Logs an event to the LB service. 
-                     *
-                     * @param ev the event to log; if ev==0, nothing is done
-                     */
-                    void logEvent( iceLBEvent* ev );
 
                     /**
-                     * This method is only used to register a new job
-                     * to the LB service. Given that this task is
-                     * normally done by the UI, this method will be
-                     * REMOVED once ICE is fully integrated with the
-                     * WMS.
+                     * Returns the singleton instance of this class.
+                     *
+                     * @return the singleton instance of this class
+                     */
+                    static iceLBLogger* instance( void );
+
+                    /**
+                     * Logs an event to the LB service. Caller
+                     * transfers ownership of the passed parameter,
+                     * which is automatically destroyed inside this
+                     * method.  Note that this method updates the job
+                     * cache with the new sequence code assigned to
+                     * the job after it has been logged.
+                     *
+                     * @param ev the event to log; if ev==0, this
+                     * method calls abort().
+                     *
+                     * @return the (modified) CreamJob whose status
+                     * has been logged. The returned CreamJob differs
+                     * from the one stored in the logged event ev in
+                     * the sequence code only.
+                     */
+                    CreamJob logEvent( iceLBEvent* ev );
+
+                    /**
+                     * Returns the logging context.
                      */
                     iceLBContext* getLBContext( void ) const { return m_ctx; };
+
                     ~iceLBLogger( void );
                 protected:
                     iceLBLogger( );
