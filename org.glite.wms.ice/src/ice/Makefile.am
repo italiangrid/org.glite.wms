@@ -22,6 +22,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
+		$(DB_CFLAGS) \
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in
