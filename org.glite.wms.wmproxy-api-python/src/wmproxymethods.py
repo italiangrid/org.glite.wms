@@ -484,6 +484,25 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
+	def removeACLItem(self, jobId, item):
+		"""
+		Method:  removeACLItem
+		IN =  jobId (string)
+		IN =  item (string)
+		This operation remove an item from the job Access Control List. Removal of the item
+		representing the user that has registered the job are not allowed (a fault will be
+		returned to the caller).
+		"""
+		try:
+			self.soapInit()
+			self.remote.removeACLItem(jobId, item)
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
 
 	def getSandboxBulkDestURI(self, jobId, protocol=""):
 		"""
@@ -692,7 +711,7 @@ class Wmproxy:
 		IN =  delegationID (string)
 		IN =  ns  if namespace different from currently used,
 			only this method will be affected
-		OUT = request (string)
+		OUT =  The new proxy certificate in PEM format wiht base64 enconding request (string)
 
 		WARNING: for backward compatibility getProxyReq is provided with both namespaces:
 		defaultWmproxy namespace for WMPROXY servers (version <= 1.x.x)
@@ -714,6 +733,110 @@ class Wmproxy:
 			raise HTTPException(err)
 		except socket.error, err:
 			raise SocketException(err)
+
+
+	def getNewProxyReq(self, ns =""):
+		"""
+		Method:  getNewProxyReq
+		IN =  ns  if namespace different from currently used,
+			only this method will be affected
+		OUT = Server side generated ID of the new delegation session (string)
+		OUT = The new proxy certificate in PEM format wiht base64 enconding request (string)
+
+		WARNING: This method is only available with WMPROXY servers verson >
+
+		This operation starts the delegation procedure by asking for a certificate signing request from the server.
+		The server answers with a certificate signing request which includes the public key for the new delegated credentials.
+		putProxy() has to be called to finish the procedure.
+		"""
+		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
+			self.soapInit()
+			self.setNamespace(oldNs)
+			return self.remote.getNewProxyReq()
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+	def renewProxyReq(self, delegationID, ns =""):
+		"""
+		Method:  renewProxyReq
+		IN =  delegationID (string)
+		IN =  ns  if namespace different from currently used,
+			only this method will be affected
+		OUT = The new proxy certificate in PEM format wiht base64 enconding request (string)
+		WARNING: This method is only available with WMPROXY servers verson >
+		This operation restarts the delegation procedure by asking for a certificate signing request from the server for an already 		existing delegation ID.
+		The server answers with a certificate signing request which includes the public key for new delegated credentials.
+		putProxy() has to be called to finish the procedure.
+		"""
+		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
+			self.soapInit()
+			self.setNamespace(oldNs)
+			return self.remote.renewProxyReq(delegationID)
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+	def getTerminationTime(self, delegationID, ns =""):
+		"""
+		Method:  getTerminationTime
+		IN =  delegationID (string)
+		IN =  ns  if namespace different from currently used,
+			only this method will be affected
+		OUT = The new proxy certificate in PEM format wiht base64 enconding request (string)
+		WARNING: This method is only available with WMPROXY servers verson >
+		This operation returns the termination (expiration) date and time of the credential, associated with the given delegaion ID. 		If there was no delegation ID, then generate one by hashing the client DN and client VOMS attributes.
+		"""
+		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
+			self.soapInit()
+			self.setNamespace(oldNs)
+			return self.remote.getTerminationTime(delegationID)
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+	def destroy(self, delegationID, ns =""):
+		"""
+		Method:  destroy
+		IN =  delegationID (string)
+		IN =  ns  if namespace different from currently used,
+			only this method will be affected
+		WARNING: This method is only available with WMPROXY servers verson >
+		Destroys the delegated credentials associated with the given delegation ID immediately.
+		If there was no delegation ID, then generate one by hashing the client DN and client VOMS attributes.
+		"""
+		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
+			self.soapInit()
+			self.setNamespace(oldNs)
+			self.remote.destroy(delegationID)
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
 	def getVersion(self):
 		"""
 		Method:  getVersion
