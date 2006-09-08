@@ -209,12 +209,10 @@ stop()
 	    echo -ne "\t\tCondorG not running!\n"
 	else
 	    ${CONDOR_OFF} -master > /dev/null 2>&1
-            wait_time=0
-	    sleep_cycle=3
+	    sleep_cycle=5
             # hope this is enough for Condor
-           for (( times = 20; times >= 0; times-- )); do
+           for (( times = 24; times >= 0; times-- )); do
                 sleep $sleep_cycle 
-                (( wait_time+=$sleep_cycle ))
                 if ! checkpid $pid 2>&1; then
                    success
                    echo ""
