@@ -108,7 +108,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     }
 }
 
-void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandCancel::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     CREAM_SAFE_LOG( 
                    m_log_dev->infoStream()
@@ -161,7 +161,7 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
-    boost::scoped_ptr< cream_api::soap_proxy::CreamProxy > theProxy( new cream_api::soap_proxy::CreamProxy( true ) );
+    // boost::scoped_ptr< cream_api::soap_proxy::CreamProxy > theProxy( new cream_api::soap_proxy::CreamProxy( true ) );
     
     try {
 	theProxy->Authenticate( theJob.getUserProxyCertificate() );

@@ -40,7 +40,7 @@ namespace glite {
 
                 virtual ~iceCommandCancel() {};
 
-                void execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
+                void execute( Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
             protected:
                 std::string m_gridJobId;
                 std::string m_sequence_code;

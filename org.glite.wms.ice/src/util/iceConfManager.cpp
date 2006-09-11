@@ -36,53 +36,54 @@ iceConfManager* iceConfManager::getInstance( )
 iceConfManager::iceConfManager( )
     throw ( ConfigurationManager_ex& )
 {
-    conf_ns::Configuration* config;
+    // conf_ns::Configuration* config;
     try {
-        config =  new conf_ns::Configuration(s_conf_file, conf_ns::ModuleType::interface_cream_environment);
+        m_configuration.reset( new conf_ns::Configuration(s_conf_file, conf_ns::ModuleType::interface_cream_environment) );
     } catch(exception& ex) {
         throw ConfigurationManager_ex( ex.what() );
     }
   
-    m_HostProxyFile                      = config->common()->host_proxy_file();
-    m_dguser                             = config->common()->dguser();
-    m_WM_Input_FileList                  = config->wm()->input();
-    m_ICE_Input_FileList                 = config->ice()->input();
-    m_CachePersistFile                   = config->ice()->cache_persist_file();
-    m_ListenerPort                       = config->ice()->listener_port();
-    m_LogFile                            = config->ice()->logfile();
-    m_LogLevel                           = config->ice()->ice_log_level();
-    m_startpoller                        = config->ice()->start_poller();
-    m_startlistener                      = config->ice()->start_listener();
-    m_creamurlprefix                     = config->ice()->cream_url_prefix();
-    m_creamurlpostfix                    = config->ice()->cream_url_postfix();
-    m_pollerdelay                        = config->ice()->poller_delay();
-    m_curldelegprefix                    = config->ice()->creamdelegation_url_prefix();
-    m_curldelegpostfix                   = config->ice()->creamdelegation_url_postfix();
-    m_cemonurlprefix                     = config->ice()->cemon_url_prefix();
-    m_cemonurlpostfix                    = config->ice()->cemon_url_postfix();
-    m_icetopic                           = config->ice()->ice_topic();
-    m_subduration                        = config->ice()->subscription_duration();
-    m_subUpdThresholdTime                = config->ice()->subscription_update_threshold_time();
-    m_startsubupder                      = config->ice()->start_subscription_updater();
-    m_poller_status_threshold_time       = config->ice()->poller_status_threshold_time();
-    m_max_jobcache_operation_before_dump = config->ice()->max_jobcache_operation_before_dump();
-    m_notification_frequency             = config->ice()->notification_frequency();
-    m_log_on_console                     = config->ice()->log_on_console();
-    m_log_on_file                        = config->ice()->log_on_file();
-    m_lease_delta_time                   = config->ice()->lease_delta_time();
-    m_lease_threshold_time               = config->ice()->lease_threshold_time();
-    m_poller_purges_jobs                 = config->ice()->poller_purges_jobs();
-    m_listener_enable_authn              = config->ice()->listener_enable_authn();
-    m_listener_enable_authz              = config->ice()->listener_enable_authz();
-    m_jobkill_threshold_time             = config->ice()->job_cancellation_threshold_time();
-    m_start_job_killer                   = config->ice()->start_job_killer();
-    m_start_proxy_renewer                = config->ice()->start_proxy_renewer();
-    m_start_lease_updater                = config->ice()->start_lease_updater();
-    m_ice_host_cert                      = config->ice()->ice_host_cert();
-    m_ice_host_key                       = config->ice()->ice_host_key();
-    m_max_logfile_size                   = config->ice()->max_logfile_size();
-    m_max_logfile_rotations              = config->ice()->max_logfile_rotations();
-    m_persist_dir                        = config->ice()->persist_dir();
+    m_HostProxyFile                      = m_configuration->common()->host_proxy_file();
+    m_dguser                             = m_configuration->common()->dguser();
+    m_WM_Input_FileList                  = m_configuration->wm()->input();
+    m_ICE_Input_FileList                 = m_configuration->ice()->input();
+    m_CachePersistFile                   = m_configuration->ice()->cache_persist_file();
+    m_ListenerPort                       = m_configuration->ice()->listener_port();
+    m_LogFile                            = m_configuration->ice()->logfile();
+    m_LogLevel                           = m_configuration->ice()->ice_log_level();
+    m_startpoller                        = m_configuration->ice()->start_poller();
+    m_startlistener                      = m_configuration->ice()->start_listener();
+    m_creamurlprefix                     = m_configuration->ice()->cream_url_prefix();
+    m_creamurlpostfix                    = m_configuration->ice()->cream_url_postfix();
+    m_pollerdelay                        = m_configuration->ice()->poller_delay();
+    m_curldelegprefix                    = m_configuration->ice()->creamdelegation_url_prefix();
+    m_curldelegpostfix                   = m_configuration->ice()->creamdelegation_url_postfix();
+    m_cemonurlprefix                     = m_configuration->ice()->cemon_url_prefix();
+    m_cemonurlpostfix                    = m_configuration->ice()->cemon_url_postfix();
+    m_icetopic                           = m_configuration->ice()->ice_topic();
+    m_subduration                        = m_configuration->ice()->subscription_duration();
+    m_subUpdThresholdTime                = m_configuration->ice()->subscription_update_threshold_time();
+    m_startsubupder                      = m_configuration->ice()->start_subscription_updater();
+    m_poller_status_threshold_time       = m_configuration->ice()->poller_status_threshold_time();
+    m_max_jobcache_operation_before_dump = m_configuration->ice()->max_jobcache_operation_before_dump();
+    m_notification_frequency             = m_configuration->ice()->notification_frequency();
+    m_log_on_console                     = m_configuration->ice()->log_on_console();
+    m_log_on_file                        = m_configuration->ice()->log_on_file();
+    m_lease_delta_time                   = m_configuration->ice()->lease_delta_time();
+    m_lease_threshold_time               = m_configuration->ice()->lease_threshold_time();
+    m_poller_purges_jobs                 = m_configuration->ice()->poller_purges_jobs();
+    m_listener_enable_authn              = m_configuration->ice()->listener_enable_authn();
+    m_listener_enable_authz              = m_configuration->ice()->listener_enable_authz();
+    m_jobkill_threshold_time             = m_configuration->ice()->job_cancellation_threshold_time();
+    m_start_job_killer                   = m_configuration->ice()->start_job_killer();
+    m_start_proxy_renewer                = m_configuration->ice()->start_proxy_renewer();
+    m_start_lease_updater                = m_configuration->ice()->start_lease_updater();
+    m_ice_host_cert                      = m_configuration->ice()->ice_host_cert();
+    m_ice_host_key                       = m_configuration->ice()->ice_host_key();
+    m_max_logfile_size                   = m_configuration->ice()->max_logfile_size();
+    m_max_logfile_rotations              = m_configuration->ice()->max_logfile_rotations();
+    m_persist_dir                        = m_configuration->ice()->persist_dir();
+    m_max_ice_threads                    = m_configuration->ice()->max_ice_threads();
 }
 
 iceConfManager::~iceConfManager( )

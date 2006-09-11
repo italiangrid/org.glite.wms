@@ -43,7 +43,6 @@
 #include "iceUtils.h"
 
 // Other glite includes
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 
@@ -71,7 +70,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
   throw( util::ClassadSyntax_ex&, util::JobRequest_ex& ) :
     iceAbsCommand( ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    m_confMgr( util::iceConfManager::getInstance()),
+    m_confMgr( util::iceConfManager::getInstance() ),
     m_lb_logger( util::iceLBLogger::instance() )
 {
     try {
@@ -164,7 +163,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 }
 
 //____________________________________________________________________________
-    void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+    void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy  ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
     {
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
@@ -180,7 +179,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
         vector<string> url_jid;
         util::CreamJob theJob;
         // cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
-        boost::scoped_ptr< cream_api::soap_proxy::CreamProxy > theProxy( new cream_api::soap_proxy::CreamProxy( true ) );
+        // boost::scoped_ptr< cream_api::soap_proxy::CreamProxy > theProxy( new cream_api::soap_proxy::CreamProxy( true ) );
 
         try {
             theJob.setJdl( m_jdl );
@@ -218,7 +217,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                        << theJob.getSequenceCode()
                        << log4cpp::CategoryStream::ENDLINE
                        );
-        theJob = m_lb_logger->logEvent( new util::wms_dequeued_event( theJob, util::iceConfManager::getInstance()->getICEInputFile() ) );
+        theJob = m_lb_logger->logEvent( new util::wms_dequeued_event( theJob, m_confMgr->getICEInputFile() ) );
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
                        << "iceCommandSubmit::execute() - Seq Code after: "
@@ -714,11 +713,9 @@ void  iceCommandSubmit::doSubscription( const string& ce )
       } // if(m_confMgr->getListenerEnableAuthZ() )
 		
       if(can_subscribe) {
-        if( util::subscriptionManager::getInstance()->subscribe( cemon_url ) )
-	{
-	
-	  cemon_cache->insertCEMon( cemon_url );
-	  
+        if( util::subscriptionManager::getInstance()->subscribe( cemon_url ) ) {
+            cemon_cache->insertCEMon( cemon_url );
+            
 	} else {
 	  CREAM_SAFE_LOG(
 		         m_log_dev->errorStream()

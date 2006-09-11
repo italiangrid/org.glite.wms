@@ -62,7 +62,7 @@ namespace glite {
 
                 virtual ~iceCommandSubmit() {};
 
-                virtual void execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+                virtual void execute( Ice* _ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
 
             protected:
 

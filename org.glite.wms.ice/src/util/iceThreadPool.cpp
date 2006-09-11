@@ -22,11 +22,15 @@
 #include "iceAbsCommand.h"
 #include "ice-core.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "iceConfManager.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 
+namespace conf_ns=glite::wms::ice::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
@@ -36,9 +40,10 @@ using namespace std;
 int iceThreadPool::iceThreadPoolWorker::s_threadNum = 0;
 
 iceThreadPool::iceThreadPoolWorker::iceThreadPoolWorker( iceThreadPoolState* st ) :
-    iceThread( ),
+    iceThread( boost::str( boost::format( "iceThreadPoolWorker(%1%)" ) % s_threadNum ) ),
+    m_proxy( new glite::ce::cream_client_api::soap_proxy::CreamProxy( true ) ),
     m_state( st ),
-    m_threadNum( ++s_threadNum )
+    m_threadNum( s_threadNum++ )
 {
 
 }
@@ -51,7 +56,7 @@ iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
     log4cpp::Category* m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );
-
+    
     while( !isStopped() ) {
         boost::scoped_ptr< iceAbsCommand > cmd;
         {
@@ -63,7 +68,16 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                     m_state->m_queue_empty.wait( L );
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
-                    abort(); // FIXME
+                    CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                                    << "iceThreadPoolWorker::body() - "
+                                    << "Worker Thread #" << m_threadNum 
+                                    << " raised the following lock_error "
+                                    << "xception while waiting on the "
+                                    << "command queue: " << err.what()
+                                    << ". Giving up."
+                                    << log4cpp::CategoryStream::ENDLINE
+                                    );
+                    abort();
                 }
             } 
             CREAM_SAFE_LOG(
@@ -80,8 +94,9 @@ void iceThreadPool::iceThreadPoolWorker::body( )
             cmd.reset( cmd_ptr );
             m_state->m_requests_queue.pop_front();
         } // releases lock
+
         try {
-            cmd->execute( glite::wms::ice::Ice::instance( ) );            
+            cmd->execute( glite::wms::ice::Ice::instance( ), m_proxy.get() );
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
                            m_log_dev->errorStream()
@@ -96,21 +111,20 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );
-            
+            CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );            
         }
 
+        boost::recursive_mutex::scoped_lock L( m_state->m_mutex );
         CREAM_SAFE_LOG(
                        m_log_dev->debugStream()
                        << "iceThreadPoolWorker::body() - "
                        << "Worker Thread #" << m_threadNum 
                        << " finished processing request"
-                       << " (Currently " << m_state->m_num_running
-                       << " threads are running)" 
+                       << " (Number of running threads now: " 
+                       << m_state->m_num_running - 1
+                       << ")"
                        << log4cpp::CategoryStream::ENDLINE
-                       );
-
-
+                       );        
     }
 }
 
@@ -126,15 +140,25 @@ iceThreadPool::iceThreadPool( ) :
     m_all_threads( ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
-    m_state->m_num_running = 10; // FIXME: To be moved in iceThreadPoolState constructor?
-    for ( int i=0; i<10; i++ ) { // FIXME: hardcoded default of 10 threads
-        boost::shared_ptr< util::iceThread > m_ptr_thread = 
-            boost::shared_ptr< util::iceThread >( new iceThreadPoolWorker( m_state.get() ) );
+    int n_threads = m_state->m_num_running = ( conf_ns::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads() < 1 ? 1 : conf_ns::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads() ); // FIXME: this check should be moved inside the iceConfManager
+    CREAM_SAFE_LOG( m_log_dev->infoStream()
+                    << "iceThreadPool::iceThreadPool() - "
+                    << "Creating " << m_state->m_num_running 
+                    << " worker threads"
+                    << log4cpp::CategoryStream::ENDLINE
+                    );            
+    for ( int i=0; i<n_threads; i++ ) {
+        boost::shared_ptr< util::iceThread > m_ptr_thread( new iceThreadPoolWorker( m_state.get() ) );
         boost::thread* thr;
         try {
-            thr = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread ) );
+            thr = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread ) ); // FIXME: 
         } catch( boost::thread_resource_error& ex ) {
-            abort(); // FIXME
+            CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                            << "iceThreadPool::iceThreadPool() -"
+                            << "Unable to create worker thread. Giving up."
+                            << log4cpp::CategoryStream::ENDLINE
+                            );            
+            abort();
         }
         m_all_threads.add_thread( thr );
     }

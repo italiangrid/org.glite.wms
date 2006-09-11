@@ -9,10 +9,19 @@
 #include <string>
 #include <ctime>
 #include "ConfigurationManager_ex.h"
+#include <boost/scoped_ptr.hpp>
+#include "glite/wms/common/configuration/Configuration.h"
+
 // #include "boost/thread/recursive_mutex.hpp"
 
 namespace glite {
   namespace wms {
+      namespace common {
+          namespace configuration {
+              class Configuration;
+          }
+      }
+
     namespace ice {
       namespace util {
 
@@ -21,6 +30,8 @@ namespace glite {
 	  static iceConfManager* s_instance;
 	  static std::string s_conf_file;
 	  static bool s_initialized;
+
+          boost::scoped_ptr< glite::wms::common::configuration::Configuration > m_configuration;
 
 	  std::string m_HostProxyFile, 
 	    m_WM_Input_FileList, m_ICE_Input_FileList, m_CachePersistFile, m_LogFile,
@@ -35,7 +46,7 @@ namespace glite {
 	    m_log_on_console, m_log_on_file, m_listener_enable_authn,  m_listener_enable_authz, m_start_job_killer,
 	    m_start_lease_updater, m_start_proxy_renewer;
 	  size_t m_max_logfile_size;
-          unsigned int m_max_logfile_rotations;
+          unsigned int m_max_logfile_rotations, m_max_ice_threads;
 
 	  // static boost::recursive_mutex mutex;
 
@@ -91,6 +102,7 @@ namespace glite {
 	  std::string getIceHostCert( void ) const { return m_ice_host_cert; }
 	  std::string getIceHostKey( void ) const { return m_ice_host_key; }
 	  std::string getCachePersistDirectory( void ) const { return m_persist_dir; }
+          unsigned int getMaxICEThreads( void ) const { return m_max_ice_threads; }
 
 	  void setHostProxyFile( const std::string& p ) {  m_HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { m_WM_Input_FileList = p; }
@@ -122,7 +134,9 @@ namespace glite {
 	  void setLeaseThresholdTime( const int& t) { m_lease_threshold_time = t; }
 	  void setLeaseDeltaTime( const int& t ) { m_lease_delta_time = t; }
   	  void setPollerPurgesJobs( const bool p ) { m_poller_purges_jobs = p; }
+          void setMaxICEThreads( unsigned int n ) { m_max_ice_threads = n; }
 
+          glite::wms::common::configuration::Configuration* getConfiguration() { return m_configuration.get(); }
 	};
       }
     }
