@@ -161,8 +161,6 @@ void iceCommandCancel::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
-    // boost::scoped_ptr< cream_api::soap_proxy::CreamProxy > theProxy( new cream_api::soap_proxy::CreamProxy( true ) );
-    
     try {
 	theProxy->Authenticate( theJob.getUserProxyCertificate() );
         theJob.set_failure_reason( "Aborted by user" );

@@ -1,7 +1,25 @@
-#ifndef _GLITE_WMS_ICE_UTIL_CEMONURLCACHE_H__
-#define _GLITE_WMS_ICE_UTIL_CEMONURLCACHE_H__
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE CEMON URL Cache
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 
-//#include <map>
+#ifndef GLITE_WMS_ICE_UTIL_CEMONURLCACHE_H
+#define GLITE_WMS_ICE_UTIL_CEMONURLCACHE_H
+
 #include <string>
 #include <set>
 #include "boost/thread/recursive_mutex.hpp"
@@ -9,8 +27,6 @@
 namespace log4cpp {
     class Category;
 };
-
-//class CEInfo;
 
 namespace glite {
   namespace wms {
@@ -34,8 +50,6 @@ namespace glite {
 	  subscriptionManager                      *m_subMgr;
 	  static cemonUrlCache                     *s_instance;
 	  log4cpp::Category                        *m_log_dev;
-	  //CEInfo			           *ceInfo;
-	  //glite::ce::cream_client_api::CreamProxy  *m_creamProxy;
 	  
 	 protected:
 	  cemonUrlCache() throw();

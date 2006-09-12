@@ -1,5 +1,25 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE Proxy renewal thread
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 #include "proxyRenewal.h"
 #include "jobCache.h"
+#include "CreamProxyFactory.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -27,20 +47,10 @@ proxyRenewal::proxyRenewal() :
     iceThread( "ICE Proxy Renewer" ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_cache( jobCache::getInstance() ),
-    m_creamClient( 0 ),
+    m_creamClient( CreamProxyFactory::makeCreamProxy( false ) ),
     m_delay( 1*60 ) // proxy renewer wakes up every minute
 {
-    try {        
-        soap_proxy::CreamProxy* p( new soap_proxy::CreamProxy( false ) );
-        m_creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
-    } catch(soap_proxy::soap_ex& ex) {
-        // FIXME: what to do??
-      CREAM_SAFE_LOG(m_log_dev->fatalStream()
-		     << "proxyRenewal::CTOR() - Error creating a CreamProxy instance: "
-		     << ex.what() <<". Stop!"
-		     << log4cpp::CategoryStream::ENDLINE);
-	exit(1);      
-    } 
+
 }
 
 

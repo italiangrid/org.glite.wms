@@ -22,6 +22,7 @@
 #include "jobCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
+#include "CreamProxyFactory.h"
 
 // GLITE stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -40,7 +41,7 @@ jobKiller::jobKiller() :
     iceThread( "Job Killer" ),
     m_valid( true ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
-    m_theProxy( new cream_api::soap_proxy::CreamProxy( false ) ),
+    m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
     m_threshold_time( iceConfManager::getInstance()->getJobKillThresholdTime()),
     m_lb_logger( iceLBLogger::instance() )    
 {

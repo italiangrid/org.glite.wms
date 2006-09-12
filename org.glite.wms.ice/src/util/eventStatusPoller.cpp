@@ -25,6 +25,7 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "iceLBEventFactory.h"
+#include "CreamProxyFactory.h"
 
 // other glite includes
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -82,17 +83,12 @@ eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
   : iceThread( "event status poller" ),
     m_delay( d ),
     m_iceManager( manager ),
-    m_creamClient( 0 ),
+    m_creamClient( CreamProxyFactory::makeCreamProxy( false ) ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger()),
     m_lb_logger( iceLBLogger::instance() ),
     m_cache( jobCache::getInstance() )
 {
-    try {
-        soap_proxy::CreamProxy *p = new soap_proxy::CreamProxy(false);
-        m_creamClient.reset( p );
-    } catch(soap_proxy::soap_ex& ex) {
-        throw eventStatusPoller_ex( ex.what() );
-    }
+
 }
 
 //____________________________________________________________________________

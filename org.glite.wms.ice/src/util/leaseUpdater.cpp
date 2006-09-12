@@ -21,6 +21,7 @@
 #include "jobCache.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
+#include "CreamProxyFactory.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
@@ -46,19 +47,8 @@ leaseUpdater::leaseUpdater( ) :
     m_delta( iceConfManager::getInstance()->getLeaseDeltaTime() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_cache( jobCache::getInstance() ),
-    m_creamClient( 0 )
+    m_creamClient( CreamProxyFactory::makeCreamProxy( false ) )
 {
-    try {        
-        soap_proxy::CreamProxy* p( new soap_proxy::CreamProxy( false ) );
-        m_creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
-    } catch(soap_proxy::soap_ex& ex) {
-        // FIXME: what to do??
-      CREAM_SAFE_LOG(m_log_dev->fatalStream()
-		     << "leaseUpdater::CTOR() - Error creating a CreamProxy instance: "
-		     << ex.what() <<". Stop!"
-		     << log4cpp::CategoryStream::ENDLINE);
-	exit(1);      
-    } 
     double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/2.0;
     m_delay = (time_t)(_delta_time_for_lease);
 }

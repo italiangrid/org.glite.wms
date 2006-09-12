@@ -23,8 +23,6 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "cemonUrlCache.h"
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
