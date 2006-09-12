@@ -19,6 +19,18 @@ log_event() # 1 - event
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
+log_event_reason() # 1 - event, 2 - reason
+{
+  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+    --jobid="$GLITE_WMS_JOBID"\
+    --source=LRMS\
+    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --event="$1"\
+    --reason="$2"\
+    --node=$host\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
+}
+
 fatal_error() # 1 - reason
 {
   jw_echo "$1"
@@ -45,7 +57,7 @@ truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 sort_by_size() # 1 - file names vector, 2 - directory
 {
   tmp_sort_file=`mktemp -q tmp.XXXXXX`
-  if [ $? != 0 ]; then
+  if [ -z $tmp_sort_file ]; then
     jw_echo "Cannot generate temporary file"
     unset tmp_sort_file
     return $?
@@ -69,7 +81,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
   sleep_time=0
   while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
-    time_left=`grid-proxy-info -timeleft 2>/dev/null` || echo 0;
+    time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
     if [ $time_left -lt $sleep_time ]; then
       return 1
     fi
@@ -79,12 +91,16 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    $1 "$2" "$3" 2>std_err_0123 # TODO: mktemp
+    std_err=`mktemp -q std_err.XXXXXX`
+    if [ -z $std_err ]; then
+      std_err="/dev/null"
+    fi
+    $1 "$2" "$3" 2>$std_err
     succeded=$?
     if [ $succeded != 0 ]; then
-      log_event "error during $1 transfer" # TODO: reason
+      log_event_reason "Notice" "`head -c 1023 "$std_err"`"
     fi
-    rm -f std_err
+    rm -f "$std_err"
     count=`expr $count + 1`
   done
   return ${succeded}
@@ -276,7 +292,7 @@ function send_partial_file
     # Retrieve the list of files to be monitored
     if [ -r "${TRIGGERFILE}" ]; then
       if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
-        retry_copy "globus-url-copy" ${TRIGGERFILE} file://${LISTFILE}
+        retry_copy "globus-url-copy" "${TRIGGERFILE}" "file://${LISTFILE}"
       elif [ "${TRIGGERFILE:0:8}" == "https://" -o "${TRIGGERFILE:0:7}" == "http://" ]; then
         retry_copy "htcp" "${f}" "file://${workdir}/${file}"
       else
@@ -288,7 +304,7 @@ function send_partial_file
     if [ "$?" -ne "0" ] ; then
       continue
     fi
-    for SRCFILE in `cat $LISTFILE` ; do
+    for SRCFILE in `cat "$LISTFILE"` ; do
       # SRCFILE must contain the full path
       if [ "$SRCFILE" == "`basename $SRCFILE`" ] ; then
         SRCFILE=`pwd`/$SRCFILE
@@ -359,11 +375,11 @@ host=`hostname -f`
 
 log_event "Running"
 
-if [ "${__input_base_url:-1}" != "/" ]; then
+if [ "X${__input_base_url##*/}" != "X" ]; then
   __input_base_url="${__input_base_url}/"
 fi
 
-if [ "${__output_base_url:-1}" != "/" ]; then
+if [ "X${__output_base_url##*/}" != "X" ]; then
   __output_base_url="${__output_base_url}/"
 fi
 
@@ -410,8 +426,8 @@ if [ ${__create_subdir} -eq 1 ]; then
 fi
 
 #savannah 14866: the test -w on work dir is unsuitable on AFS machines
-tmpfile=`mktemp -q ./tmp.XXXXXX`
-if [ $? != 0 ]; then
+tmpfile=`mktemp -q tmp.XXXXXX`
+if [ -z $tmpfile ]; then
   fatal_error "Working directory not writable"
 else
   rm $tmpfile
@@ -603,13 +619,14 @@ fi
 
   perl -e '
     while (1) {
-      $time_left = `grid-proxy-info -timeleft 2> /dev/null` || echo 0;
+      $time_left = `grid-proxy-info -timeleft 2> /dev/null || echo 0`;
       last if ($time_left <= 0);
       sleep($time_left);
     }
     kill(defined($ENV{"EDG_WL_NOSETPGRP"}) ? 9 : -9, '"$user_job"');
     my $maradona = "'$maradona'";
     my $logger = "'$lb_logevent'";
+    my $err_msg = "Job killed because of user proxy expiration"
     print STDERR $err_msg;
     if (open(DAT,">> ".$maradona)) {
       print DAT $err_msg;
@@ -620,14 +637,11 @@ fi
                   " --source=LRMS".
                   " --sequence=".$ENV{GLITE_WMS_SEQUENCE_CODE}.
                   " --event=\"Done\"".
-                  " --reason=\"Job killed because of user proxy expiration\"".
+                  " --reason=\"$err_msg\"".
                   " --status_code=FAILED".
                   " --exit_code=0 2>/dev/null |")) {
       chomp(my $value = <CMD>);
       close(CMD);
-      my $result = $?;
-      my $exit_value = $result >> 8;
-      $ENV{GLITE_WMS_SEQUENCE_CODE} = $value if ($exit_value == 0);
     }
     exit(1);
   ' &
