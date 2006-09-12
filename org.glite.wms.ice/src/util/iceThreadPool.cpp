@@ -24,7 +24,9 @@
 #include "iceConfManager.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
+#include "CreamProxyFactory.h"
 
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
@@ -43,11 +45,20 @@ int iceThreadPool::iceThreadPoolWorker::s_threadNum = 0;
 
 iceThreadPool::iceThreadPoolWorker::iceThreadPoolWorker( iceThreadPoolState* st ) :
     iceThread( boost::str( boost::format( "iceThreadPoolWorker(%1%)" ) % s_threadNum ) ),
-    m_proxy( new glite::ce::cream_client_api::soap_proxy::CreamProxy( true ) ),
     m_state( st ),
     m_threadNum( s_threadNum++ )
 {
-
+  log4cpp::Category* log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );
+  glite::ce::cream_client_api::soap_proxy::CreamProxy *proxy = CreamProxyFactory::makeCreamProxy(true);
+  if(!proxy) {
+    CREAM_SAFE_LOG( log_dev->fatalStream()
+                    << "iceThreadPoolWorker::CTOR() - "
+                    << "Failed CreamProxy creation. Abort!"
+                    << log4cpp::CategoryStream::ENDLINE
+                   );
+    abort();
+  }       
+  m_proxy.reset( proxy );
 }
 
 iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
@@ -57,8 +68,8 @@ iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
-    log4cpp::Category* m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );
-    
+//    log4cpp::Category* m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );
+    log4cpp::Category* log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );    
     while( !isStopped() ) {
         boost::scoped_ptr< iceAbsCommand > cmd;
         {
@@ -69,7 +80,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                     --m_state->m_num_running;
 
                     CREAM_SAFE_LOG(
-                                   m_log_dev->debugStream()
+                                   log_dev->debugStream()
                                    << "iceThreadPoolWorker::body() - "
                                    << "Worker Thread #" << m_threadNum 
                                    << " is waiting"
@@ -82,7 +93,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                     m_state->m_queue_empty.wait( L );
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
-                    CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                    CREAM_SAFE_LOG( log_dev->fatalStream()
                                     << "iceThreadPoolWorker::body() - "
                                     << "Worker Thread #" << m_threadNum 
                                     << " raised the following lock_error "
@@ -95,7 +106,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                 }
             } 
             CREAM_SAFE_LOG(
-                           m_log_dev->debugStream()
+                           log_dev->debugStream()
                            << "iceThreadPoolWorker::body() - "
                            << "Worker Thread #" << m_threadNum 
                            << " started processing new request"
@@ -113,19 +124,19 @@ void iceThreadPool::iceThreadPoolWorker::body( )
             cmd->execute( glite::wms::ice::Ice::instance( ), m_proxy.get() );
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
-                           m_log_dev->errorStream()
+                           log_dev->errorStream()
                            << "Command execution got FATAL exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
         } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
             CREAM_SAFE_LOG(
-                           m_log_dev->errorStream()
+                           log_dev->errorStream()
                            << "Command execution got TRANSIENT exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );            
+            CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );            
         }
     }
 }

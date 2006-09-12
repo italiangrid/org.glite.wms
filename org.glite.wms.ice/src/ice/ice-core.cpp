@@ -21,7 +21,6 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
-//#include "subscriptionCache.h"
 #include "cemonUrlCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
@@ -33,6 +32,7 @@
 #include "jobKiller.h"
 #include "iceLBEvent.h"
 #include "iceLBLogger.h"
+#include "CreamProxyFactory.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -479,20 +479,25 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
         return jit;
 
     boost::scoped_ptr< soap_proxy::CreamProxy > creamClient;
-    try {
-        soap_proxy::CreamProxy *p = new soap_proxy::CreamProxy(false);
-        creamClient.reset( p );
-    } catch(soap_proxy::soap_ex& ex) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream()
-                       << "ice-core::purge_job() - "
-                       << "cannot instantiate cream client: "
-                       << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        return jit;
-    }
+    //try {
+        
+    soap_proxy::CreamProxy *p = ice_util::CreamProxyFactory::makeCreamProxy(false);//new soap_proxy::CreamProxy(false);
+        
+	
+    if(!p) return jit; // already CreamProxyFactory prints out the error cause
+    
+//     } catch(soap_proxy::soap_ex& ex) {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->errorStream()
+//                        << "ice-core::purge_job() - "
+//                        << "cannot instantiate cream client: "
+//                        << ex.what()
+//                        << log4cpp::CategoryStream::ENDLINE
+//                        );
+//         return jit;
+//     }
 
+    creamClient.reset( p );
 
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );

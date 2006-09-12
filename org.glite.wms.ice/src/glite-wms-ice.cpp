@@ -37,6 +37,7 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "iceThreadPool.h"
+#include "CreamProxyFactory.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
@@ -235,6 +236,8 @@ int main(int argc, char*argv[])
     //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     iceUtil::iceConfManager::getInstance()->setStartListener( false );
   }
+  
+  glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
 
   /*****************************************************************************
    * Initializes job cache
