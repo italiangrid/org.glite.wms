@@ -91,7 +91,7 @@ BaseException* createWmpException(struct soap *soap){
 						case SOAP_TYPE_ns1__GenericFaultType:
 							b_ex=new GenericException;
 							break;
-						case SOAP_TYPE_ns2__DelegationExceptionType:
+						case SOAP_TYPE_ns4__DelegationExceptionType:
 							soap_print_fault(soap, stderr);
 							exit(-1);
 						default:
@@ -162,7 +162,7 @@ BaseException* grstCreateWmpException(struct soap *soap){
 	SOAP_ENV__Fault  *fault = NULL;
 	SOAP_ENV__Detail *detail = NULL;
 
-	ns2__DelegationExceptionType *ex2 = NULL;
+	ns4__DelegationExceptionType *ex2 = NULL;
 	BaseException *b_ex =NULL;
 	char *faultstring =  NULL;
 	char *faultcode = NULL;
@@ -178,10 +178,10 @@ BaseException* grstCreateWmpException(struct soap *soap){
 		if (fault){
         		detail = soap->fault->detail ;
 			if (detail) {
-				 if (detail->__type == SOAP_TYPE_ns2__DelegationExceptionType ) {
-					ex2 = (ns2__DelegationExceptionType*)detail->fault;
+				 if (detail->__type == SOAP_TYPE_ns4__DelegationExceptionType ) {
+					ex2 = (ns4__DelegationExceptionType*)detail->fault;
 				} else { ex2 = NULL; }
-				// if type is ns2__DelegationExceptionType
+				// if type is ns4__DelegationExceptionType
 				if (ex2) {
 					b_ex = new GrstDelegationException ;
 					if (ex2->message) {
@@ -862,8 +862,8 @@ std::string grstGetProxyReq(const std::string &delegationId, ConfigContext *cfs)
 	DelegationSoapBinding deleg;
 	string proxy = "";
 	grstSoapAuthentication(deleg, cfs);
-	ns2__getProxyReqResponse response;
-	if (deleg.ns2__getProxyReq(delegationId, response) == SOAP_OK) {
+	ns4__getProxyReqResponse response;
+	if (deleg.ns4__getProxyReq(delegationId, response) == SOAP_OK) {
 		proxy = response._getProxyReqReturn;
 		soapDestroy(deleg.soap) ;
 	} else grstSoapErrorMng(deleg) ;
@@ -919,8 +919,8 @@ void grstPutProxy(const std::string &delegationId, const std::string &request, C
 		throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
 	}
 	grstSoapAuthentication (deleg, cfs);
-	ns2__putProxyResponse response;
-	if (deleg.ns2__putProxy(delegationId, certtxt, response) == SOAP_OK) {
+	ns4__putProxyResponse response;
+	if (deleg.ns4__putProxy(delegationId, certtxt, response) == SOAP_OK) {
 		soapDestroy(deleg.soap) ;
 	} else grstSoapErrorMng(deleg) ;
 }
