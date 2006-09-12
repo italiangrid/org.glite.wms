@@ -2,9 +2,14 @@
 #include "jobDbManager.h"
 #include <boost/filesystem/operations.hpp>
 #include <sys/vfs.h> // for statfs
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <cerrno>
 
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
+extern int errno;
 
 // -------------------- cursorWrapper -------------------------
 
@@ -53,6 +58,31 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
      return;
   }
 
+  struct stat buf;
+  if(-1==stat( m_envHome.c_str() , &buf) )
+  {
+    m_invalid_cause = string(strerror(errno));
+    return;
+  }
+
+  if( !(buf.st_mode & S_IRUSR))
+  {
+    m_invalid_cause = string("Path [")+m_envHome+"] is not readable by the owner";
+    return;
+  } 
+
+  if( !(buf.st_mode & S_IWUSR))
+  {
+    m_invalid_cause = string("Path [")+m_envHome+"] is not writable by the owner";
+    return;
+  } 
+  
+  if( !(buf.st_mode & S_IXUSR))
+  {
+    m_invalid_cause = string("Path [")+m_envHome+"] is not executable by the owner (cannot cd into it)";
+    return;
+  }
+   
   // Get the filesystem blocksize
   struct statfs fsinfo;
   statfs( m_envHome.c_str(), &fsinfo );
