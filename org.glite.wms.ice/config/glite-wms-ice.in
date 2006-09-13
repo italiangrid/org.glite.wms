@@ -73,15 +73,25 @@ ret_code=0
 start()
 {
     conf_file=glite_wms.conf
-    parse_attribute=ICE
-    . ${GLITE_LOCATION}/libexec/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}
+    # The following two lines are not used at the moment; In order to be
+    # useful, glite-wms-parse-configuration.sh should be modified to
+    # include specific actions for ICE. Currently no special action
+    # is required
+    #parse_attribute=ICE
+    #. ${GLITE_LOCATION}/libexec/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}
+    GET_CONF=${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration
+    if [ -f ${GET_CONF} ]; then
+       err_logfile=`${GET_CONF} ICE.logfile`;
+    else
+       err_logfile="/dev/null"; # redirects output to /dev/null
+    fi
 
     echo -n "starting ICE... "
     if running; then
         echo "ok (already running)"
     else
         rm -f ${pid_file}
-        ${binpath} --conf ${conf_file} --daemon ${pid_file} > /dev/null 2>&1
+        ${binpath} --conf ${conf_file} --daemon ${pid_file} > ${err_logfile} 2>&1
         # there is a race condition due to some delay between becoming
         # a daemon (hence returning control to this script) and
         # writing the pid file; the following sleep should be enough
@@ -111,6 +121,7 @@ stop()
                 ret_code=1
             else
                 echo "ok"
+                rm -f ${pid_file}
             fi
         else
             echo "ok"
