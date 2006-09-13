@@ -552,8 +552,9 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
             if ( ev ) {
                 tmp_job = m_lb_logger->logEvent( ev );
-                jc_it = m_cache->put( tmp_job );
             }
+            jc_it = m_cache->put( tmp_job );
+
             // The job gets stored in the jobcache anyway by the logEvent method...
             m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
         } else {

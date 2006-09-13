@@ -438,23 +438,26 @@ void Ice::ungetRequest( unsigned int reqNum)
 //____________________________________________________________________________
 void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
 {
-    classad::ClassAd command;
-    classad::ClassAd arguments;
-
-    command.InsertAttr( "version", string("1.0.0") );
-    command.InsertAttr( "command", string("jobresubmit") );
-    arguments.InsertAttr( "id", the_job.getGridJobID() );
-    arguments.InsertAttr( "lb_sequence_code", the_job.getSequenceCode() );
-    command.Insert( "arguments", arguments.Copy() );
-
-    classad::ClassAdUnParser unparser;
-    string resub_request;
-    unparser.Unparse( resub_request, &command );
-
     wmsutils_ns::FileListMutex mx(m_flns);
     wmsutils_ns::FileListLock  lock(mx);
     try {
         m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
+
+        the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_ns_filelist ) );
+
+        classad::ClassAd command;
+        classad::ClassAd arguments;
+        
+        command.InsertAttr( "version", string("1.0.0") );
+        command.InsertAttr( "command", string("jobresubmit") );
+        arguments.InsertAttr( "id", the_job.getGridJobID() );
+        arguments.InsertAttr( "lb_sequence_code", the_job.getSequenceCode() );
+        command.Insert( "arguments", arguments.Copy() );
+        
+        classad::ClassAdUnParser unparser;
+        string resub_request;
+        unparser.Unparse( resub_request, &command );        
+
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
                        << "Ice::doOnJobFailure() - Putting ["
@@ -462,13 +465,12 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
                        << log4cpp::CategoryStream::ENDLINE
                        );
 
-        m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_ns_filelist ) );
         m_flns.push_back(resub_request);
-        m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( the_job, m_ns_filelist ) );
+        the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( the_job, m_ns_filelist ) );
     } catch(std::exception& ex) {
-        CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::FATAL, ex.what()) );
+        CREAM_SAFE_LOG( 
+                       m_log_dev->log(log4cpp::Priority::ERROR, ex.what()) );
         m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( the_job, m_ns_filelist, ex.what() ) );
-        exit(1);
     }
 }
 
