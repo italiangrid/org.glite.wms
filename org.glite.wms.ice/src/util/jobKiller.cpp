@@ -27,6 +27,7 @@
 // GLITE stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/certUtil.h"
 
 // STL and Boost stuff
 #include <vector>
@@ -69,7 +70,7 @@ void jobKiller::body()
             for( job_it = jobCache::getInstance()->begin(); 
                  job_it != jobCache::getInstance()->end();
                  ++job_it) {
-                time_t proxyTimeLeft = m_theProxy->getProxyTimeLeft( job_it->getUserProxyCertificate() );
+                time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
                 if( proxyTimeLeft < m_threshold_time ) {
                     CREAM_SAFE_LOG( m_log_dev->infoStream() 
                                     << "jobKiller::body() - Job ["

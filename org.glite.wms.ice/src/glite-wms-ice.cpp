@@ -39,6 +39,8 @@
 #include "iceThreadPool.h"
 #include "CreamProxyFactory.h"
 
+#include "glite/ce/cream-client-api-c/certUtil.h"
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
@@ -192,14 +194,13 @@ int main(int argc, char*argv[])
   // Set the creation of CreamProxy with automatic delegetion ON
 
   string hostdn;
-  soap_proxy::CreamProxy creamProxy(true);//::initProxy( true );
   CREAM_SAFE_LOG(
                  log_dev->infoStream()
                  << "Host proxyfile is [" << hostcert << "]" 
                  << log4cpp::CategoryStream::ENDLINE
                  );
   try {
-    hostdn = creamProxy.getDN(hostcert);
+    hostdn = certUtil::getDN(hostcert);
     boost::trim_if(hostdn, boost::is_any_of("/"));
     while( hostdn.find("/", 0) != string::npos ) {
       boost::replace_first(hostdn, "/", "_");
@@ -209,7 +210,7 @@ int main(int argc, char*argv[])
       boost::replace_first(hostdn, "=", "_");
     }
 
-    if((creamProxy.getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
+    if((certUtil::getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
         CREAM_SAFE_LOG(
                        log_dev->errorStream() 
                        << "Host proxy certificate is expired. Won't start Listener"
@@ -291,39 +292,9 @@ int main(int argc, char*argv[])
   requests.reserve(1000);
 
   /*****************************************************************************
-   * Initializes CREAM client
-   ****************************************************************************/
-  //soap_proxy::CreamProxyFactory::initProxy(true);
-//   if( !soap_proxy::CreamProxyFactory::getProxy() ) {
-//       CREAM_SAFE_LOG(
-//                      log_dev->fatalStream() 
-//                      << "glite-wms-ice::main() - " 
-//                      << "CreamProxy creation failed! Stop"
-//                      << log4cpp::CategoryStream::ENDLINE
-//                      );
-//       exit(1);
-//   }
-
-  creamProxy.printDebug( true );
-  try {
-    creamProxy.setSOAPHeaderID(hostdn);
-  } catch(soap_proxy::auth_ex& ex) {
-      CREAM_SAFE_LOG(
-                     log_dev->fatalStream() 
-                     << "glite-wms-ice::main() - " 
-                     << ex.what()
-                     << log4cpp::CategoryStream::ENDLINE
-                     );
-      exit(1);
-  }
-
-
-
-  /*****************************************************************************
    * Starts status poller and/or listener if specified in the config file
    ****************************************************************************/
   {
-    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     if(iceUtil::iceConfManager::getInstance()->getStartListener())
       iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
 
