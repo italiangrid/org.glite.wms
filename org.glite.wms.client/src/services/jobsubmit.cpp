@@ -333,15 +333,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 * Performs the main operation for the submission
 */
 void JobSubmit::submission ( ){
-	// proxy validity time read from Configuration (default value alway present)
-	if (wmcUtils){
-		postOptionchecks(wmcUtils->getConf()->default_proxy_validity());
-	}else{
-		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE ,
-			"wmcUtils fatal Error",
-			"Utilities not yet intialised");
-	}
 	ostringstream out ;
 	toBretrieved = false;
 	// in case of --start option

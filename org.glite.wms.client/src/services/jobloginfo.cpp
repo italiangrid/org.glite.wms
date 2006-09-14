@@ -82,7 +82,6 @@ void JobLogInfo::readOptions (int argc,char **argv){
 * perfroms the main operations
 */
 void JobLogInfo::getLoggingInfo ( ){
-	postOptionchecks();
 	// checks that the jobids vector is not empty
 	if (jobIds.empty()){
 		throw WmsClientException(__FILE__,__LINE__,

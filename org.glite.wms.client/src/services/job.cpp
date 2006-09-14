@@ -28,6 +28,7 @@
 #include "utilities/options_utils.h"
 // wmproxy-api
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
+#include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // Ad attributes and JDL methods
 #include "glite/jdl/jdl_attributes.h"
 #include "glite/jdl/JDLAttributes.h"
@@ -163,7 +164,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 		printServerVersion();
 		Utils::ending(0);
 	}
-
+	postOptionchecks(wmcUtils->getConf()->default_proxy_validity());
 }
 /**
 * After option parsing, some common check can be performed.

@@ -91,7 +91,6 @@ void JobCancel::readOptions (int argc,char **argv){
 * Perfoms the main operations
 */
 void JobCancel::cancel ( ){
-	postOptionchecks();
         string* cancelled = NULL;
 	ostringstream out ;
 	string err = "";

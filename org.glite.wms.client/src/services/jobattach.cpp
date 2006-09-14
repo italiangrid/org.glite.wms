@@ -22,7 +22,5 @@ namespace services {
 JobAttach::JobAttach( ){
 };
 
-void JobAttach::attach ( ){
-	postOptionchecks();
-};
+void JobAttach::attach ( ){};
 }}}} // ending namespaces

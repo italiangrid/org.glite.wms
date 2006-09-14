@@ -76,7 +76,6 @@ void JobListMatch::readOptions (int argc,char **argv) {
 * performs the main operations
 */
 void JobListMatch::listMatching ( ){
-	postOptionchecks();
 	const int tab = 50 ;
         const string ws = " ";
         int spaces = 0 ;

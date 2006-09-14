@@ -131,7 +131,6 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 *	getOutput method
 ******************************/
 void JobOutput::getOutput ( ){
-	postOptionchecks();
 	int code = FAILED;
 	ostringstream out ;
 	string result="";

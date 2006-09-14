@@ -342,7 +342,6 @@ const std::string JobInfo::adToLines (const std::string& jdl) {
 * Performs the main operations
 */
 void JobInfo::retrieveInfo ( ){
-	postOptionchecks();
 	ostringstream out ;
 	ostringstream header ;
 	ProxyInfoStructType* proxy_info = NULL ;

@@ -57,7 +57,6 @@ void DelegateProxy::readOptions (int argc,char **argv){
 * Performs the main operations
 */
 void DelegateProxy::delegation ( ){
-	postOptionchecks();
 	ostringstream out ;
 	string proxy = "" ;
 	string endpoint = "";

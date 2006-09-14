@@ -330,7 +330,6 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 */
 void JobPerusal::jobPerusal ( ){
 	vector<string> paths;
-	postOptionchecks();
 	// Retrieve Version
 	// checks the status of the job
 	checkStatus( );
