@@ -219,13 +219,10 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
      */
     iceUtil::iceConfManager* conf = iceUtil::iceConfManager::getInstance();
 
-    {
-     // boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-      m_cream_address = conf->getCreamUrlPrefix() 
+    m_cream_address = conf->getCreamUrlPrefix() 
 	+ m_endpoint + conf->getCreamUrlPostfix();
-      m_cream_deleg_address = conf->getCreamUrlDelegationPrefix() 
+    m_cream_deleg_address = conf->getCreamUrlDelegationPrefix() 
 	+ m_endpoint + conf->getCreamUrlDelegationPostfix();
-    }
 }
 
 //______________________________________________________________________________

@@ -39,7 +39,7 @@ namespace glite {
 
                 // Forward declarations
                 class iceLBEvent;
-                class iceLBContext;
+                // class iceLBContext;
 
                 /**
                  * This class implements ICE LB logger.
@@ -73,18 +73,11 @@ namespace glite {
                      */
                     CreamJob logEvent( iceLBEvent* ev );
 
-                    /**
-                     * Returns the logging context.
-                     */
-                    iceLBContext* getLBContext( void ) const { return m_ctx; };
-
                     ~iceLBLogger( void );
                 protected:
                     iceLBLogger( );
 
                     static iceLBLogger* s_instance;
-                    static boost::recursive_mutex s_mutex;
-                    iceLBContext* m_ctx;
                     log4cpp::Category* m_log_dev;
                 };
 

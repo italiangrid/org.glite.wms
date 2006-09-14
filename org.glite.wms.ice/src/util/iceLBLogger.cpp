@@ -45,7 +45,6 @@ iceLBLogger* iceLBLogger::instance( void )
 }
 
 iceLBLogger::iceLBLogger( void ) :
-    m_ctx( new iceLBContext() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
 
@@ -59,7 +58,7 @@ iceLBLogger::~iceLBLogger( void )
 
 CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 {
-    // Abortg if trying to log the NULL event
+    // Aborts if trying to log the NULL event
     if ( ! ev ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream()
                        << "Trying to log NULL event"
@@ -67,58 +66,56 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         abort();        
     }
 
+    // Allocates a new (temporary) LB context
+    boost::scoped_ptr< iceLBContext > m_ctx( new iceLBContext() );
     // Destroys the parameter "ev" when exiting this function
     boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
 
     std::string new_seq_code;
-    {
-        boost::recursive_mutex::scoped_lock L( s_mutex );
         
-        try {
-            m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
-        } catch( iceLBException& ex ) {
-            CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "iceLBLogger::logEvent() - Error logging " 
-                           << ev->describe()
-                           << " GridJobID=[" 
-                           << ev->getJob().getGridJobID() << "]"
-                           << " CreamJobID=[" << ev->getJob().getJobID() << "]"
-                           << ". Caught exception " << ex.what()
-                           << log4cpp::CategoryStream::ENDLINE);
-            return ev->getJob();
-        }
-    
-        m_ctx->startLogging();
-
-        int res = 0;
-        do {
-            CREAM_SAFE_LOG(m_log_dev->infoStream() 
-			   << "iceLBLogger::logEvent() - Logging " 
-                           << ev->describe( )
-			   << " GridJobID=[" 
-                           << ev->getJob().getGridJobID() << "]"
-			   << " CreamJobID=[" << ev->getJob().getJobID() << "]"
-                           // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
-                           // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
-
-			   << log4cpp::CategoryStream::ENDLINE);
-            
-            res = ev->execute( m_ctx );
-            
-            m_ctx->testCode( res );
-            
-        } while( res != 0 );        
-        
-        new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
-        CREAM_SAFE_LOG(m_log_dev->infoStream() 
-                       << "iceLBLogger::logEvent() - ...Got return code " 
-                       << res 
-                       // << " Seq code AFTER from job=[" << ev->getJob().getSequenceCode() << "]"
-                       // << " Seq code AFTER from ctx=[" << new_seq_code << "]"
-
+    try {
+        m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
+    } catch( iceLBException& ex ) {
+        CREAM_SAFE_LOG(m_log_dev->errorStream()
+                       << "iceLBLogger::logEvent() - Error logging " 
+                       << ev->describe()
+                       << " GridJobID=[" 
+                       << ev->getJob().getGridJobID() << "]"
+                       << " CreamJobID=[" << ev->getJob().getJobID() << "]"
+                       << ". Caught exception " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
-
-    } // unlocks the LB
+        return ev->getJob();
+    }
+    
+    m_ctx->startLogging();
+    
+    int res = 0;
+    do {
+        CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                       << "iceLBLogger::logEvent() - Logging " 
+                       << ev->describe( )
+                       << " GridJobID=[" 
+                       << ev->getJob().getGridJobID() << "]"
+                       << " CreamJobID=[" << ev->getJob().getJobID() << "]"
+                       // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
+                       // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
+                       
+                       << log4cpp::CategoryStream::ENDLINE);
+        
+        res = ev->execute( m_ctx.get() );
+        
+        m_ctx->testCode( res );
+        
+    } while( res != 0 );        
+    
+    new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+    CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                   << "iceLBLogger::logEvent() - ...Got return code " 
+                   << res 
+                   // << " Seq code AFTER from job=[" << ev->getJob().getSequenceCode() << "]"
+                   // << " Seq code AFTER from ctx=[" << new_seq_code << "]"
+                   
+                   << log4cpp::CategoryStream::ENDLINE);
 
     { // Now, locks the cache
         jobCache* m_cache( jobCache::getInstance() );
