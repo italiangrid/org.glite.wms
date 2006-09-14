@@ -28,7 +28,6 @@
 using namespace glite::wms::ice::util;
 
 iceLBLogger* iceLBLogger::s_instance = 0;
-boost::recursive_mutex iceLBLogger::s_mutex;
 
 //////////////////////////////////////////////////////////////////////////////
 // 
@@ -37,7 +36,6 @@ boost::recursive_mutex iceLBLogger::s_mutex;
 //////////////////////////////////////////////////////////////////////////////
 iceLBLogger* iceLBLogger::instance( void )
 {
-    boost::recursive_mutex::scoped_lock L( s_mutex );
     if ( 0 == s_instance ) {
         s_instance = new iceLBLogger( );
     }
