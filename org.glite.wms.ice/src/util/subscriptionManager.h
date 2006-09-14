@@ -26,8 +26,6 @@ namespace util {
 
   class subscriptionManager {
 
-    //CESubscription     m_ceS;
-    //CESubscriptionMgr  m_ceSMgr;
     Topic              m_T;
     Policy             m_P;
     iceConfManager    *m_conf;

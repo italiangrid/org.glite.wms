@@ -26,14 +26,12 @@ subscriptionManager::subscriptionManager()
     m_conf( iceConfManager::getInstance() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_valid(true),
-    //m_myname(""),
     m_myurl(""),
     m_lastSubscriptionID("")
 {
   CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
 		 << log4cpp::CategoryStream::ENDLINE);
   try {
-    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     CESubscription ceS;
     CESubscriptionMgr ceSMgr;
     ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
@@ -123,7 +121,6 @@ bool subscriptionManager::subscribe(const string& url)
 		 << log4cpp::CategoryStream::ENDLINE);
 
   {
-    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     ceS.setSubscribeParam( m_myurl.c_str(),
 	                     m_T,
 			     m_P,
@@ -151,7 +148,6 @@ bool subscriptionManager::updateSubscription(const string& url,
 					     string& newID)
 {
   try {
-    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     CESubscriptionMgr ceSMgr;
     ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
     newID = ceSMgr.update(url, ID, m_myurl, m_T, m_P,

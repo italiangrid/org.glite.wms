@@ -39,7 +39,7 @@ boost::recursive_mutex iceUtil::cemonUrlCache::mutex;
 
 //______________________________________________________________________________
 iceUtil::cemonUrlCache* iceUtil::cemonUrlCache::getInstance() {
-  boost::recursive_mutex::scoped_lock M( mutex );
+  //boost::recursive_mutex::scoped_lock M( mutex );
   if( !s_instance ) 
     s_instance = new cemonUrlCache();
   return s_instance;
