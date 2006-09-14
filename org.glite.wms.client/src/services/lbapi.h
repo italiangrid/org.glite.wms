@@ -72,7 +72,9 @@ class Status{
 		* @param retrieve the string representation of the status name
 		*/
 		glite::wmsutils::jobid::JobId getParent();
-		
+		/** Check whether the jobid associated with the status
+		* belong to a dag/collection/parametric job
+		*/
 		bool hasParent ( ) ;
 		/** Retrieve the jobid related to retrieved Status
 		* @return the string representation of the jobid
@@ -90,6 +92,10 @@ class Status{
 		*@return the string representation of the JDL related to the job
 		*/
 		std::string getJdl();
+		/**
+		* Retrieve the string representation of the current status
+		*/
+		std::string getStatusName(){return status.name();}
 	private:
 		glite::lb::JobStatus status;
 };

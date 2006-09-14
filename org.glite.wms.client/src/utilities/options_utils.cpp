@@ -271,6 +271,7 @@ const struct option Options::lsmatchLongOpts[] = {
         {	Options::LONG_AUTODG,           no_argument,			0,		Options::SHORT_AUTODG},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
  	{	Options::LONG_ENDPOINT,        required_argument,		0,		Options::SHORT_E},
+        {	Options::LONG_DEFJDL,    		required_argument,		0,		Options::DEFJDL},
 	{ 	Options::LONG_RANK,              	no_argument,			0,		Options::RANK},
 	{	Options::LONG_CONFIG,             required_argument,		0,		Options::SHORT_CONFIG},
         {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
@@ -611,6 +612,7 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n\n";
         cerr << "\t" << USG_ENDPOINT << "\n";
+	cerr << "\t" << USG_DEFJDL << "\n";	
 	cerr << "\t" << USG_RANK << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";

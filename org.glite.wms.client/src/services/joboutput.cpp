@@ -230,6 +230,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 	glite::wmsutils::jobid::JobId jobid = status.getJobId();
 	id = jobid.toString() ;
 	logInfo->print(WMS_DEBUG,"Checking the status of the job:" , id);
+	logInfo->print(WMS_DEBUG,"Found Status:", status.getStatusName());
 	// Check Status (if needed)
 	int code = status.checkCodes(Status::OP_OUTPUT, errors, child);
 	if (errors.size()>0){
@@ -336,10 +337,10 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		}
 	}
 	bool parent = status.hasParent ( ) ;
-	/* Purge logic: Job can be purged when
-	* enpoint has been specified (parent has specified)
-	* no parent is present
-	* retrieve output successfully done */
+	/* Purge logic: Job can be purged when:
+	* 1) enpoint has been specified (parent has specified)
+	* 2) no parent is present
+	* 3) retrieve output successfully done */
 	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (! parent) && (code==0);
 	id = jobid.toString() ;
 	// checks Children

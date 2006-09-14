@@ -68,16 +68,24 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 		{
 			bool hasChildren= (status.getValInt(JobStatus::CHILDREN_NUM) !=0);
 			if (hasChildren){
-				// In principle, a dag can always continue (unless it has been cleared)
+				// IT is a DAG: can continue unless:
+				// it is SUBMITTED,WAITING or CLEARED
 				if (status.status==JobStatus::CLEARED){
 					throw WmsClientException(__FILE__,__LINE__,
 					"checkCodes", DEFAULT_ERR_CODE,
 					"Output not Allowed",
 					"Output files already retrieved");
-				}else{
+				}else if (status.status==JobStatus::SUBMITTED||status.status==JobStatus::WAITING){
+					throw WmsClientException(__FILE__,__LINE__,
+					"checkCodes", DEFAULT_ERR_CODE,
+					"Output not yet ready",
+					"Output files have not been generated");
+				} else{
+					// OUTPUT allowed: exit switch
 					break;
 				}
 			}
+			// If this point is reached the status is not of a DAG
 			switch (status.status){
 				case JobStatus::DONE:
 					if (status.getValInt(JobStatus::EXIT_CODE) !=0){

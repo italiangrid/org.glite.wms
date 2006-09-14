@@ -34,7 +34,7 @@ namespace services {
 #define WMP_SUBMIT_SERVICE              "jobSubmit"
 #define WMP_CANCEL_SERVICE              "jobCancel"
 #define WMP_OUTPUT_SERVICE              "getOutputFileList"
-#define WMP_PURGE_SERVICE               "jobPurgeQuota"
+#define WMP_PURGE_SERVICE               "jobPurge"
 #define WMP_LISTMATCH_SERVICE           "jobListMatch"
 #define WMP_SETPERUSAL_SERVICE          "enableFilePerusal"
 #define WMP_GETPERUSAL_SERVICE          "getPerusalFiles"
