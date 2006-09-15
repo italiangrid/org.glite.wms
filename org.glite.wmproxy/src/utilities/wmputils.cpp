@@ -70,13 +70,13 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
-// Define File Separator 
+// Define File Separator
 #ifdef WIN
-	// Windows File Separator 
+	// Windows File Separator
 	const string FILE_SEP = "\\";
 #else 
-	// Linux File Separator 
-   	const string FILE_SEP ="/"; 
+	// Linux File Separator
+   	const string FILE_SEP ="/";
 #endif
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
@@ -175,10 +175,10 @@ getJobDirectoryURIsVector(vector<pair<string, int> > protocols,
 {
 	GLITE_STACK_TRY("getJobDirectoryURIsVector()");
 	edglog_fn("wmpoperations::getJobDirectoryURIsVector");
-	
+
 	edglog(debug)<<"Computing job directory URIs for job: "<<jid<<endl;
 	edglog(debug)<<"Requested protocol: "<<protocol<<endl;
-	
+
 	// Protocol + host:port + path
 	string extra = (extradir != "") ? (FILE_SEP + extradir) : "";
 	string httppath = FILE_SEP + to_filename(jobid::JobId(jid), 0) + extra;
@@ -380,6 +380,101 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
     }
 	GLITE_STACK_CATCH();
 }
+
+bool checkGlobusVersion(){
+	const char *GLOBUS_LOCATION = "GLOBUS_LOCATION";
+	const string DEF_GLOBUS_LOCATION= FILE_SEP+"opt"+FILE_SEP+"globus";
+	string globusVersionFile="globus-version";
+
+	// Check ENV var (if necessary set it) and check file globus-version file existence
+	char* globusENV=getenv(GLOBUS_LOCATION);
+	if(globusENV){
+		// ENV found
+		globusVersionFile= string(globusENV)  + FILE_SEP + "bin" + FILE_SEP + globusVersionFile ;
+	}else{
+		// ENV not found, set it up
+		setenv(GLOBUS_LOCATION, DEF_GLOBUS_LOCATION.c_str(),1);
+		globusVersionFile= DEF_GLOBUS_LOCATION+ FILE_SEP + "bin" + FILE_SEP + globusVersionFile ;
+	}
+	if (!fileExists(globusVersionFile)){return false;}  // If file does not exists -> old version of globus detected
+
+	// Set parameters and output/error files
+	string outfile = "/tmp/wmp_glversion_call.out."+ boost::lexical_cast<std::string>(getpid());
+	// edglog(debug)<<"Globus Version output file: "<<outfile<<endl;  // TBD NEEDED?
+	int fdO = open(outfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
+	dup2(fdO, 2);
+	close(fdO);
+
+	// Creating stderr file
+	string errorfile = "/tmp/wmp_glversion_call.err."+ boost::lexical_cast<std::string>(getpid());
+	// edglog(debug)<<"Globus Version error file: "<<errorfile<<endl;  // TBD NEEDED?
+	int fdE = open(errorfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
+	dup2(fdE, 2);
+	close(fdE);
+	vector<string> params;
+	params.push_back(" > ");
+	params.push_back(outfile);
+	params.push_back(" 2> ");
+	params.push_back(errorfile);
+	// System call
+	string errormsg = "";
+	edglog(debug)<<"Executing load script file: "<<globusVersionFile<<endl;
+	int outcome=doExecv(globusVersionFile, params, errormsg);
+	switch (outcome){
+		case 0:
+			// No error, break and continue
+			break;
+		case -1:
+			edglog(error)<<"Error while executing load script file:\n" <<errormsg<<endl;
+			edglog(error)<<"Error code: "<<outcome<<endl;
+			edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+			return false;
+		default:
+			edglog(error)<<"Unable to execute load script file:\n"<<errormsg<<endl;
+			edglog(error)<<"Error code: "<<outcome<<endl;
+			edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+			return false;
+	}
+	remove(errorfile.c_str());
+	// IF this point is reached, no error found
+	// Try and Parse output result
+	string globusVersionString=readTextFile(outfile);
+	boost::char_separator<char> separator(".");
+	boost::tokenizer<boost::char_separator<char> > tok(globusVersionString,separator);
+	// check there are 3 tokens:
+	vector<string> tokens;
+	boost::tokenizer<boost::char_separator<char> >::iterator it = tok.begin();
+	boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+	for (; it != end; it++) {
+			tokens.push_back(string(*it));
+	}
+	if (tokens.size() !=3){
+		edglog(error)<<"Unable to parse globus version"<< globusVersionString <<endl;
+		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+		return false;
+	}
+	try{
+		if (
+			boost::lexical_cast<int>(tokens[0])>=3  &&
+			boost::lexical_cast<int>(tokens[1])>=0  &&
+			boost::lexical_cast<int>(tokens[2])>=2
+		){
+			edglog(debug)<<"Detected Globus version greater than 3.0.2: " << globusVersionString << endl ;
+			return true;
+		}else{
+			edglog(debug)<<"Detected Globus version greater than 3.0.2: " << globusVersionString << endl ;
+			return false;
+		}
+	}catch(boost::bad_lexical_cast &exc) {
+		edglog(error)<<"Unable to cast globus version"<< globusVersionString <<endl;
+		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+		return false;
+	}
+	// This point should never be reached
+	edglog(fatal)<<"Assuming globus version is less than 3.0.2" << endl ;
+	return false;
+}
+
 
 /* // TBR
  * ----- WARNING!! ----------------------------------------------------------

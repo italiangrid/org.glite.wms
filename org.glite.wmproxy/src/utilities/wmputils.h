@@ -108,6 +108,15 @@ void parseAddressPort(const std::string &addressport,
 
 
 
+/**
+* Check whether globus installed version allow DNS direct mapping
+* This method is a patch to grant correct behaviour for components using old
+* version of OpenSSL library (see convertDNEMailAddress method)
+* return true if direct mapping is allowed
+*/
+bool checkGlobusVersion();
+
+
 //
 // Job specific methods
 //
