@@ -232,13 +232,13 @@ void soapErrorMng (const WMProxy &wmp){
 	}
 }
 
-void grstSoapErrorMng (const DelegationSoapBinding &deleg){
+void grstSoapErrorMng (const DelegationSoapBinding &grst){
 	char **fault = NULL ;
 	char **details = NULL ;
         string msg = "";
         // retrieve information on the exception
-        BaseException *b_ex =grstCreateWmpException (deleg.soap);
-	soapDestroy(deleg.soap);
+        BaseException *b_ex =grstCreateWmpException (grst.soap);
+	soapDestroy(grst.soap);
  	if (b_ex){
 		throw *b_ex ;
 	} else{
@@ -285,20 +285,20 @@ void soapAuthentication(WMProxy &wmp,ConfigContext *cfs){
 Performs SSL initialisation
 Updates configuration properties
 ******************************************************************/
-void grstSoapAuthentication(DelegationSoapBinding &deleg,ConfigContext *cfs){
-	deleg.endpoint = (cfs->endpoint).c_str();
+void grstSoapAuthentication(DelegationSoapBinding &grst,ConfigContext *cfs){
+	grst.endpoint = (cfs->endpoint).c_str();
 	const char *proxy = getProxyFile(cfs) ;
 	const char *trusted = getTrustedCert(cfs) ;
 	if ( proxy ){
 		if (trusted){
-			if (soap_ssl_client_context(deleg.soap,
+			if (soap_ssl_client_context(grst.soap,
 				SOAP_SSL_NO_AUTHENTICATION,
 				proxy, /* keyfile: required only when client must authenticate to server */
 				"", /* password to read the key file */
 				NULL, /* optional cacert file to store trusted certificates (needed to verify server) */
 				trusted, /* optional capath to direcoty with trusted certificates */
 				NULL /* if randfile!=NULL: use a file with random data to seed randomness */
-			))grstSoapErrorMng(deleg);
+			))grstSoapErrorMng(grst);
 		} else {
 			throw *createWmpException (new ProxyFileException ,
                         	"Trusted Certificates Location  Error" ,
@@ -858,18 +858,45 @@ std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs){
 	return proxy;
 }
 
+
 std::string grstGetProxyReq(const std::string &delegationId, ConfigContext *cfs){
-	DelegationSoapBinding deleg;
+	DelegationSoapBinding grst;
 	string proxy = "";
-	grstSoapAuthentication(deleg, cfs);
+	grstSoapAuthentication(grst, cfs);
 	ns4__getProxyReqResponse response;
-	if (deleg.ns4__getProxyReq(delegationId, response) == SOAP_OK) {
+	if (grst.ns4__getProxyReq(delegationId, response) == SOAP_OK) {
 		proxy = response._getProxyReqReturn;
-		soapDestroy(deleg.soap) ;
-	} else grstSoapErrorMng(deleg) ;
+		soapDestroy(grst.soap) ;
+	} else grstSoapErrorMng(grst) ;
 	return proxy;
 }
 
+ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
+	DelegationSoapBinding grst;
+	ProxyReqStruct request;
+	struct ns4__getNewProxyReqResponse response;
+	grstSoapAuthentication(grst, cfs);
+	if (grst.ns4__getNewProxyReq(response) == SOAP_OK) {
+		if (response.getNewProxyReqReturn){
+			// Proxy
+			if (response.getNewProxyReqReturn->proxyRequest) {
+				request.proxy = *(response.getNewProxyReqReturn->proxyRequest);
+ 			} else {
+				request.proxy =  "";
+			}
+			// Delegation-Id
+			if (response.getNewProxyReqReturn->delegationID) {
+				request.delegationId = *(response.getNewProxyReqReturn->delegationID);
+			} else {
+				request.delegationId =  "";
+			}
+
+		}
+		soapDestroy(grst.soap) ;
+	} else grstSoapErrorMng(grst) ;
+
+	return request;
+}
 
 /*****************************************************************
 putProxy
@@ -901,8 +928,8 @@ void putProxy(const std::string &delegationId, const std::string &request, Confi
 }
 
 void grstPutProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs){
-	DelegationSoapBinding deleg;
-	grstSoapAuthentication (deleg, cfs);
+	DelegationSoapBinding grst;
+	grstSoapAuthentication (grst, cfs);
 	time_t timeleft ;
 	char *certtxt;
 	// gets the path to the user proxy file
@@ -918,11 +945,11 @@ void grstPutProxy(const std::string &delegationId, const std::string &request, C
 		timeleft) ){
 		throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
 	}
-	grstSoapAuthentication (deleg, cfs);
+	grstSoapAuthentication (grst, cfs);
 	ns4__putProxyResponse response;
-	if (deleg.ns4__putProxy(delegationId, certtxt, response) == SOAP_OK) {
-		soapDestroy(deleg.soap) ;
-	} else grstSoapErrorMng(deleg) ;
+	if (grst.ns4__putProxy(delegationId, certtxt, response) == SOAP_OK) {
+		soapDestroy(grst.soap) ;
+	} else grstSoapErrorMng(grst) ;
 }
 
 ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, ConfigContext *cfs){

@@ -188,6 +188,13 @@ struct ProxyInfoStructType {
     std::string                          endTime;
     std::vector<VOProxyInfoStructType*> vosInfo ;
 };
+
+
+struct ProxyReqStruct {
+    std::string 	proxy;
+    std::string	delegationId;
+};
+
 /**
 * Used to configure non-default properties such as:
 * <UL>
@@ -639,7 +646,7 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 
 /**@name WMProxy Certificates manipulation/info retrieval services*/
 /**
-*  Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call
+*  Generates a proxy certificate in PEM format with Base64 encoding. This method must be followed by a putProxy call
 *  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
 *  but it will be soon deprecated. The version of the server can be retrieved by calling the getVersion service
 * @param delegationId The id of the delegation to be created
@@ -655,7 +662,7 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 
 std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
-*  Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call.
+*   Generates a proxy certificate in PEM format with Base64 encoding. This method must be followed by a putProxy call.
 * This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
 *  the version of the server can be retrieved by calling the getVersion service.
 * @param delegationId The id of the delegation to be created
@@ -667,6 +674,20 @@ std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi:
 * @see #BaseException
 */
 std::string grstGetProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+/**
+* Generates a proxy certificate in PEM format with Base64 encoding that is associated to a server side generated sting identifier (delegation ID)
+* This method must be followed by a putProxy call.
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
+*  the version of the server can be retrieved by calling the getVersion service.
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return A struct contaning two strings: the proxy certificate and the delegationID (generated on the server side)
+* This proxy certificate has to be used as input while performing a putProxy for the created delegation Id
+* @throws BaseException::DelegationException If the request failed
+* @throws BaseException Any other error occurred
+* @see #getVersion
+* @see #BaseException
+*/
+ProxyReqStruct getNewProxyReq(ConfigContext *cfs);
 /**
 * Associates the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
 *  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
