@@ -154,7 +154,7 @@ public class WMProxyAPI{
 		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
 			// AuthorizationFault
 			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
-		} catch (org.glite.wms.wmproxy.ServerOverloadedFaultException exc) {
+		} catch (org.glite.wms.wmproxy.ServerOverloadedFaultType exc) {
 			// ServerOverloadedFaultException
 			throw new org.glite.wms.wmproxy.ServerOverloadedFaultException(this.createExceptionMessage(exc));
 		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
@@ -198,6 +198,23 @@ public class WMProxyAPI{
 		}
 	}
 
+	public org.gridsite.www.namespaces.delegation_1.NewProxyReq getNewProxyReq ( )
+		throws org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
+		try {
+			return this.grstStub.getNewProxyReq( ) ;
+		} catch (org.gridsite.www.namespaces.delegation_1.DelegationExceptionType exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
 
 	/**
 	* This method allows delegating user credential to the WMProxy server:
