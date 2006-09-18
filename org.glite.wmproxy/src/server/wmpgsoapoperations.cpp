@@ -1006,18 +1006,17 @@ ns2__getNewProxyReq(struct soap *soap, struct ns2__getNewProxyReqResponse &respo
 		"ns2__getNewProxyReqResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns2__getNewProxyReq");
 	edglog(info)<<"getNewProxyReq operation called"<<endl;
-	
+
 	int return_value = SOAP_OK;
+	pair<string, string> retpair;
 
 	try {
-		pair<string, string> retpair;
+		response.getNewProxyReqReturn = new ns2__NewProxyReq;
 		getNewProxyReq(retpair);
 		edglog(debug)<<"____ retpair.1: "<<retpair.first<<endl;
 		edglog(debug)<<"____ retpair.2: "<<retpair.second<<endl;
-		response.getNewProxyReqReturn = (ns2__NewProxyReq*)
-			malloc(sizeof(struct ns2__NewProxyReq));
-      	response.getNewProxyReqReturn->proxyRequest = new string(retpair.second);
-      	response.getNewProxyReqReturn->delegationID = new string(retpair.first);
+      		response.getNewProxyReqReturn->proxyRequest = new string(retpair.second);
+      		response.getNewProxyReqReturn->delegationID = new string(retpair.first);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "getNewProxyReq", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -1027,9 +1026,6 @@ ns2__getNewProxyReq(struct soap *soap, struct ns2__getNewProxyReqResponse &respo
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
-	edglog(info)<<"getNewProxyReq operation completed\n"<<endl;
-
 	return return_value;
 	GLITE_STACK_CATCH();
 }
