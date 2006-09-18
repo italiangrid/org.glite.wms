@@ -898,6 +898,38 @@ ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 	return request;
 }
 
+int getProxyTerminationTime (const std::string &delegationId, ConfigContext *cfs){
+	DelegationSoapBinding grst;
+	ns4__getTerminationTimeResponse response;
+	time_t tt = 0;
+	grstSoapAuthentication(grst, cfs);
+	if (grst.ns4__getTerminationTime(delegationId, response) == SOAP_OK) {
+		tt = response._getTerminationTimeReturn;
+		soapDestroy(grst.soap) ;
+	}  else grstSoapErrorMng(grst) ;
+	return tt;
+}
+
+void proxyDestroy (const std::string &delegationId, ConfigContext *cfs){
+	DelegationSoapBinding grst;
+	ns4__destroyResponse response;
+	grstSoapAuthentication(grst, cfs);
+	if (grst.ns4__destroy(delegationId, response) == SOAP_OK) {
+		soapDestroy(grst.soap) ;
+	}  else grstSoapErrorMng(grst) ;
+}
+
+std::string renewProxyReq (const std::string &delegationId, ConfigContext *cfs){
+	DelegationSoapBinding grst;
+	ns4__renewProxyReqResponse response;
+	string id = "";
+	grstSoapAuthentication(grst, cfs);
+	if (grst.ns4__renewProxyReq(delegationId, response) == SOAP_OK) {
+		id = response._renewProxyReqReturn;
+		soapDestroy(grst.soap) ;
+	}  else grstSoapErrorMng(grst) ;
+	return id;
+}
 /*****************************************************************
 putProxy
 *****************************************************************/

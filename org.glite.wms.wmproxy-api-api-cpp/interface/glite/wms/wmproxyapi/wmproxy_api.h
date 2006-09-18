@@ -689,6 +689,34 @@ std::string grstGetProxyReq(const std::string &delegationId, glite::wms::wmproxy
 */
 ProxyReqStruct getNewProxyReq(ConfigContext *cfs);
 /**
+* Returns the time left of the delegated proxy that is identified by the "delegatioId" string.
+* If an empty string is provided as input for delegationID, proxy with default identifier is ocnsidered.
+* @param delegationID the identifier string of the delegated proxy (empty string for the default proxy)
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return the time left of the proxy
+* @throws BaseException::DelegationException If the request failed
+* @throws BaseException Any other error occurred
+*/
+int getProxyTerminationTime (const std::string &delegationId, ConfigContext *cfs);
+/**
+* Sends a request for removing of delegated proxy that is identified by the "delegatioId" string.
+* If an empty string is provided as input for delegationID, proxy with default identifier is ocnsidered.
+* @param delegationID the identifier string of the delegated proxy (empty string for the default proxy)
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @throws BaseException::DelegationException If the request failed
+* @throws BaseException Any other error occurred
+*/
+void proxyDestroy (const std::string &delegationId, ConfigContext *cfs);
+/**
+* Sends a request for renewal of delegated proxy that is identified by the "delegatioId" string.
+* If an empty string is provided as input for delegationID, proxy with default identifier is ocnsidered.
+* @param delegationID the identifier string of the delegated proxy (empty string for the default proxy)
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @throws BaseException::DelegationException If the request failed
+* @throws BaseException Any other error occurred
+*/
+std::string renewProxyReq (const std::string &delegationId, ConfigContext *cfs);
+/**
 * Associates the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
 *  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
 *  but it will be soon deprecated. The version of the server can be retrieved by calling the getVersion service

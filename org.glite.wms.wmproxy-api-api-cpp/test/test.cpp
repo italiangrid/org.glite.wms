@@ -31,6 +31,7 @@ const std::string errMsg (const glite::wms::wmproxyapi::BaseException &b_ex ){
 int main (int argc,char **argv){
 	string endpoint = "";
 	string version = "";
+	string delegID = "delegTest";
 	if (argc < 2  ){
 		cout << "usage " << argv[0] << " <endpoint-url>\n";
 		exit(-1);
@@ -39,30 +40,64 @@ int main (int argc,char **argv){
 	ConfigContext *cxt = new ConfigContext("", endpoint, "");
 	cout << "Testing endpoint: " << endpoint << "\n";
 	cout << "==========================================\n\n";
-	cout << "Connecting to " << endpoint << "\n\n";
+
 	try{
+		cout << "Connecting to " << endpoint << "\n\n";
 		version = getVersion(cxt) ;
 		cout << "WMProxy Version = " << version << "\n\n" ;
-		cout << "Test: getProxyReq\n";
-		cout << "----------------------------------\n\n";
-		string delegID = "delegTest";
-		cout << "Calling getProxyReq service con delegationId: "<< delegID << "\n";
+	} catch (BaseException &exc){
+		cout << "Failed :(((\n";
+		cout << "Exception: " << errMsg(exc)<< "\n";
+	}
+	cout << "Test: getProxyReq\n";
+	cout << "----------------------------------\n\n";
+	cout << "Calling getProxyReq service con delegationId: "<< delegID << "\n";
+	try{
+		cout << "Connecting to " << endpoint << "\n\n";
 		string proxy = grstGetProxyReq(delegID, cxt);
 		cout << "Success !!!\n";
 		cout << "Proxy:\n" << proxy << "\n\n";
-		cout << "Test: getNewProxyReq\n";
-		cout << "----------------------------------\n\n";
-		cout << "Calling getNewProxyReq service .....\n";
+	} catch (BaseException &exc){
+		cout << "Failed :(((\n";
+		cout << "Exception: " << errMsg(exc)<< "\n";
+	}
+	/*
+	cout << "Test: getNewProxyReq\n";
+	cout << "----------------------------------\n\n";
+	cout << "Calling getNewProxyReq service .....\n";
+	try{
+		cout << "Connecting to " << endpoint << "\n\n";
 		ProxyReqStruct newProxy = getNewProxyReq(cxt);
 		cout << "Success !!!\n";
 		cout << "DelegationId = " << newProxy.delegationId << "\n";
 		cout << "Proxy:\n" << newProxy.proxy << "\n\n";
-	 } catch (BaseException &exc){
+	} catch (BaseException &exc){
 	 	cout << "Failed :(((\n";
 		cout << "Exception: " << errMsg(exc)<< "\n";
 	 }
-
-
-
+	 */
+	cout << "Test: getProxyTerminationTime\n";
+	cout << "----------------------------------\n\n";
+	cout << "Calling getProxyTerminationTime service .....\n";
+	try{
+		cout << "Connecting to " << endpoint << "\n\n";
+		int tt = getProxyTerminationTime(delegID, cxt);
+		cout << "Success !!!\n";
+		cout << "Termination time = " << tt << "\n";
+	} catch (BaseException &exc){
+	 	cout << "Failed :(((\n";
+		cout << "Exception: " << errMsg(exc)<< "\n";
+	 }
+	cout << "Test: proxyDestroy\n";
+	cout << "----------------------------------\n\n";
+	cout << "Calling proxyDestroy service .....\n";
+	try{
+		cout << "Connecting to " << endpoint << "\n\n";
+		proxyDestroy(delegID, cxt);
+		cout << "Success !!!\n";
+	} catch (BaseException &exc){
+	 	cout << "Failed :(((\n";
+		cout << "Exception: " << errMsg(exc)<< "\n";
+	 }
 	return 0;
 }
