@@ -56,8 +56,8 @@ truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 
 sort_by_size() # 1 - file names vector, 2 - directory
 {
-  tmp_sort_file=`mktemp -q tmp.XXXXXX`
-  if [ -z $tmp_sort_file ]; then
+  tmp_sort_file=`mktemp -q tmp.XXXXXXXXXX`
+  if [ ! -f "$tmp_sort_file" ]; then
     jw_echo "Cannot generate temporary file"
     unset tmp_sort_file
     return $?
@@ -85,20 +85,20 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     if [ $time_left -lt $sleep_time ]; then
       return 1
     fi
-    sleep "$sleep_time"
+    sleep $sleep_time
     if [ $sleep_time -eq 0 ]; then
       sleep_time=${__copy_retry_first_wait}
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    std_err=`mktemp -q std_err.XXXXXX`
-    if [ -z $std_err ]; then
+    std_err=`mktemp -q std_err.XXXXXXXXXX`
+    if [ ! -f "$std_err" ]; then
       std_err="/dev/null"
     fi
-    $1 "$2" "$3" 2>$std_err
+    $1 "$2" "$3" 2>"$std_err"
     succeded=$?
     if [ $succeded != 0 ]; then
-      log_event_reason "Notice" "`head -c 1023 "$std_err"`"
+      log_event_reason "Notice" "`head -c 65535 "$std_err"`"
     fi
     rm -f "$std_err"
     count=`expr $count + 1`
@@ -426,11 +426,11 @@ if [ ${__create_subdir} -eq 1 ]; then
 fi
 
 #savannah 14866: the test -w on work dir is unsuitable on AFS machines
-tmpfile=`mktemp -q tmp.XXXXXX`
-if [ -z $tmpfile ]; then
+tmpfile=`mktemp -q tmp.XXXXXXXXXX`
+if [ ! -f "$tmpfile" ]; then
   fatal_error "Working directory not writable"
 else
-  rm $tmpfile
+  rm "$tmpfile"
 fi
 unset tmpfile
 
@@ -619,7 +619,7 @@ fi
 
   perl -e '
     while (1) {
-      $time_left = `grid-proxy-info -timeleft 2> /dev/null || echo 0`;
+      $time_left = `grid-proxy-info -timeleft 2>/dev/null || echo 0`;
       last if ($time_left <= 0);
       sleep($time_left);
     }

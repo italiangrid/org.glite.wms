@@ -254,7 +254,7 @@ try {
       Info("Error during gpbox interaction");
   }
 
-  if ( suitable_CEs->empty() ) {
+  if (suitable_CEs->empty()) {
     Info("Empty CE list after gpbox screening");
     throw NoCompatibleCEs();
   }
