@@ -684,13 +684,19 @@ WMPLBSelector::generateRandomNumber(int lowerlimit, int upperlimit)
 {
 	GLITE_STACK_TRY("generateRandomNumber()");
     edglog_fn("WMPLBSelector::generateRandomNumber");
+
+    double lowerd = static_cast<double>(lowerlimit);
+    double upperd = static_cast<double>(upperlimit);
     
     edglog(debug)<<"Generating random between "<<lowerlimit<<" - "
     	<<upperlimit<<endl;
     	
     // Setting seed
 	srand((unsigned) time(0));
-	return lowerlimit + static_cast<int>(rand()%(upperlimit - lowerlimit + 1));
+	//return lowerlimit + static_cast<int>(rand()%(upperlimit - lowerlimit + 1));
+        // ... using high-order bits
+        return lowerlimit + static_cast<int>(upperd*rand()/(RAND_MAX + lowerd));
+
 	
 	GLITE_STACK_CATCH();
 }
