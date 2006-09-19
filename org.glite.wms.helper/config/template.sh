@@ -615,29 +615,45 @@ if [ ${__job_type} -ne 3 ]; then # all but interactive
   fi
 fi
 
-time_cmd=/usr/bin/time
-if [ -x "$time_cmd" ]; then
-  time_cmd="$time_cmd -p"
-  tmp_time_file=`mktemp -q tmp.XXXXXXXXXX`
-  if [ $? -ne 0 ]; then
-    jw_echo "Cannot generate temporary file"
-    unset tmp_time_file 
+if [ 1 -eq 1 ]; then # dump variable to set?
+  time_cmd=/usr/bin/time
+  if [ -x "$time_cmd" ]; then
+    time_cmd="$time_cmd -p"
+    tmp_time_file=`mktemp -q tmp.XXXXXXXXXX`
+    if [ $? -ne 0 ]; then
+      jw_echo "Cannot generate temporary file"
+      unset tmp_time_file 
+    fi
+  else
+    jw_echo "Cannot find 'time' command"
   fi
-else
-  jw_echo "Cannot find 'time' command"
 fi
 
 (
-  $time_cmd perl -e '
-    unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
-      $SIG{"TTIN"} = "IGNORE";
-      $SIG{"TTOU"} = "IGNORE";
-      setpgrp(0, 0);
-    }
-    exec(@ARGV);
-    warn "could not exec $ARGV[0]: $!\n";
-    exit(127);
-  ' "$cmd_line" 3>&2 2>"$tmp_time_file" &
+  if [ -f "$tmp_time_file" ]; then
+    $time_cmd perl -e '
+      unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
+        $SIG{"TTIN"} = "IGNORE";
+        $SIG{"TTOU"} = "IGNORE";
+        setpgrp(0, 0);
+      }
+      exec(@ARGV);
+      warn "could not exec $ARGV[0]: $!\n";
+      exit(127);
+    ' "$cmd_line" 3>&2 2>"$tmp_time_file" &
+  else
+    perl -e '
+      unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
+        $SIG{"TTIN"} = "IGNORE";
+        $SIG{"TTOU"} = "IGNORE";
+        setpgrp(0, 0);
+      }
+      exec(@ARGV);
+      warn "could not exec $ARGV[0]: $!\n";
+      exit(127);
+    ' "$cmd_line" &
+  fi
+
   user_job=$!
 
   exec 2> /dev/null
