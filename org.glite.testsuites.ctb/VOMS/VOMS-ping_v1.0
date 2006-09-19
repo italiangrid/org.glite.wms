@@ -1,0 +1,345 @@
+#!/bin/bash
+#
+##############################################################################################
+#                                                                                            # 
+# VOMS-ping.sh                                                                               # 
+#                                                                                            #
+# This script gives information about the status of the different VOMS processes like        #
+# - middleman                                                                                #
+# - edg-voms                                                                                 #
+# - tomcat                                                                                   #
+#                                                                                            #
+############################################################################################## 
+
+num_vos=0                     # Number of VOs in the VOMS server
+# OBSOLETE num_middleman=0               # Number of middleman processes
+vos=()                        # List of VO names
+middleman_vos=()              # List of VOs whose middleman process is currently running
+edg_vos=()                    # List of VOs whose edg-voms process is currently running
+ora_users=()                  # List of oracle user nams
+voms_admin_vos=()             # List of VOs whose voms-admin is running
+# OBSOLETE ora_users_run=()              # List of oracle user names whose middleman process is urrently running
+
+RES_COL=40
+MOVE_TO_COL="echo -en \\033[${RES_COL}G"
+SETCOLOR_SUCCESS="echo -en \\033[1;32m"
+SETCOLOR_FAILURE="echo -en \\033[1;31m"
+SETCOLOR_WARNING="echo -en \\033[1;33m"
+SETCOLOR_NORMAL="echo -en \\033[0;39m"
+
+###############################################################################
+#                                                                             # 
+# get_vo_info                                                                 #
+#                                                                             # 
+# This function retrieves the number of VOs in the VOMS server,               #
+# the list of VO names in the VOMS server, and the list of the corresponding  #
+# oracle user names for each VO                                               #
+# The global variables that will store this information are:                  #
+#      - num_vos                                                              #
+#      - vos                                                                  #
+#      - ora_users                                                            #
+#                                                                             # 
+###############################################################################
+
+function get_vo_info {
+ for d in "${GLITE_LOCATION}"/etc/voms/*; do
+   vo=`basename $d`
+   #echo "Working with VO $vo"
+   if [ $vo != "voms-oracle.data" ]; then
+     vos[$num_vos]=$vo
+     ora_users[$num_vos]=`cat $GLITE_LOCATION/etc/voms/$vo/voms.conf  | grep '^--username' | sed 's/^--username=//'`
+     num_vos=`expr $num_vos + 1`
+   fi
+ done
+}
+
+############ OBSOLETE #################
+
+###############################################################################
+#                                                                             # 
+# get_middleman_ora_users                                                     # 
+#                                                                             # 
+# This function retrieves the list of oracle users whose  middleman process   #
+# is currently running and the total number of running middleman processes    #
+# The global variables that will store this information are:                  #
+#      - num_middleman                                                        #
+#      - ora_users_run                                                        #
+#                                                                             # 
+###############################################################################
+
+#function get_middleman_ora_users {
+#
+#  i=0
+#  rm -rf middleman_list
+#  ps axo args | grep middleman | cut -d" " -f4 > middleman_list
+#  num_middleman=`wc -l middleman_list`
+#  num_middleman=`echo $num_middleman | cut -d" " -f1`
+#  num_middleman=`expr $num_middleman - 1`
+#  if [ $num_middleman -ne 0 ]; then
+#    while [ $i -lt $num_middleman ]
+#    do
+#      ora_users_run[$i]=`head -n 1 middleman_list`
+#      sed -e '1d' middleman_list > tmp
+#      rm -rf middleman_list
+#      mv tmp middleman_list
+#      i=`expr $i + 1`
+#      j=`expr $j + 1`
+#    done 
+#  fi 
+#  rm -rf middleman_list
+#  return 0 
+#
+#}
+
+###############################################################################
+#                                                                             #
+# get_edg_voms_vos                                                            #
+#                                                                             #
+# This function retrieves the list of vos whose edg-voms process              #
+# is currently running and the total number of running edg-voms processes     #
+# The global variables that will store this information are:                  #
+#      - num_edg_voms                                                         #
+#      - edg_vos                                                              #
+#                                                                             #
+###############################################################################
+
+function get_edg_voms_vos {
+
+  i=0
+  rm -rf edg-voms_list
+  ps axo args | grep edg-voms | cut -d" " -f3 > edg-voms_list
+  while [ $i -lt $num_vos ]
+    do
+      j=`grep -xc "$GLITE_LOCATION/etc/voms/${vos[$i]}/voms.conf" edg-voms_list`
+      if [ $j -eq 2 ]; then
+        edg_vos[$i]=1                       # edg-voms process is running
+      else
+        if [ $j -gt 2 ]; then
+          echo " Too many instances of edg-voms process for ${vos[$i]} VO"
+          exit 1
+        else
+          edg_vos[$i]=0                       # edg-voms process is not running
+        fi
+      fi
+      i=`expr $i + 1`
+    done
+  rm -rf edg-voms_list
+  return 0
+
+}
+
+
+################################################################################
+#                                                                              # 
+# get_middleman_vos                                                            # 
+#                                                                              # 
+# This function indicates which VOs have a running middleman process           #
+# The global variable that will store this information is:                     #
+#       - middleman_vos                                                        #
+#                                                                              # 
+################################################################################
+
+
+function get_middleman_vos {
+
+  i=0
+  rm -rf middleman_list
+  ps axo args | grep middleman | cut -d" " -f4 > middleman_list
+  while [ $i -lt $num_vos ]
+    do
+      j=`grep -xc ${ora_users[$i]} middleman_list`
+      if [ $j -eq 1 ]; then
+        middleman_vos[$i]=1                           # middleman process is running
+      else
+        if [ $j -gt 1 ]; then
+          echo "Too many instances of middleman process for ${vos[$i]} VO"
+          exit 1
+        else
+          middleman_vos[$i]=0                         # middleman process is not running
+        fi
+      fi
+      i=`expr $i + 1`
+    done
+  rm -rf middleman_list
+  return 0
+
+}
+
+
+############# OBSOLETE ###################
+
+#function get_middleman_vos {
+#
+#  if [ $num_middleman -ne 0 ]; then
+#    i=0
+#    found=0
+#    while [ $i -lt $num_vos ]
+#    do
+#    if [ $found -ne $num_middleman ]; then
+#       j=0
+#       while [ $j -lt $num_middleman -a ${ora_users_run[$j]} != ${ora_users[$i]} ]
+#       do
+#         j=`expr $j + 1`
+#       done
+#       if [ ${ora_users_run[$j]} != ${ora_users[$i]} ]; then
+#         middleman_vos[$i]=0                                  #VO not running
+#       else 
+#         middleman_vos[$i]=1                                  #VO running
+#         found=`expr $found + 1` 
+#       fi
+#    else
+#      middleman_vos[$i]=0                                  #VO not running
+#    fi
+#    i=`expr $i + 1`
+#  done
+#  else
+#    j=0
+#    while [ $j -lt $num_vos ]
+#    do
+#      middleman_vos[$j]=0
+#      j=`expr $j + 1`
+#    done
+#  fi
+#  return 0
+#
+#}
+
+################################################################################
+#                                                                              #
+# get_voms_admin_vos                                                           #
+#                                                                              #
+# This function indicates which VOs have a running voms_admin                  #
+# The global variable that will store this information is:                     #
+#       - voms_admin_vos                                                       #
+#                                                                              #
+################################################################################
+
+
+function get_voms_admin_vos {
+
+  i=0
+  while [ $i -lt $num_vos ]
+    do
+      voms-admin -u https://localhost:8443/voms/${vos[$i]} >/dev/null
+      if [ $? -eq 0 ]; then
+        voms_admin_vos[$i]=1                           # voms_admin is running
+      else
+        voms_admin_vos[$i]=0                           # voms_admin is not running
+      fi
+      i=`expr $i + 1`
+    done
+  return 0
+
+}
+
+
+################################################################################
+#                                                                              #
+#   tomcat_run                                                                 #
+#                                                                              #
+#   This function checks if tomcat process is running                          #
+#                                                                              #
+################################################################################
+
+
+function tomcat_run {
+
+  rm -rf tomcat_ps
+  ps axo args | grep tomcat  > tomcat_ps
+  tomcat_runs=`wc -l tomcat_ps`
+  tomcat_runs=`echo $tomcat_runs | cut -d" " -f1`
+  rm -rf tomcat_ps
+  if [ $tomcat_runs -ne 0 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+
+
+################################################################################
+#                                                                              # 
+#   Utilities                                                                  # 
+#                                                                              # 
+################################################################################
+
+
+echo_success() {
+  $MOVE_TO_COL
+  echo -n "[  "
+  $SETCOLOR_SUCCESS
+  echo -n $1
+  $SETCOLOR_NORMAL
+  echo "  ]"
+}
+
+echo_failure() {
+  $MOVE_TO_COL
+  echo -n "[  "
+  $SETCOLOR_FAILURE
+  echo -n $1
+  $SETCOLOR_NORMAL
+  echo "  ]"
+}
+
+function print {
+ i=0
+ #echo "the number of vos is $num_vos"
+ #echo $i
+ while [ $i -lt $num_vos ]
+ do
+   echo " Testing VO ${vos[$i]}"
+   if [ ${middleman_vos[$i]} -eq 0 ]; then
+     if [ ${edg_vos[$i]} -eq 0 ]; then
+       if [ ${voms_admin_vos[$i]} -eq 0 ]; then
+         echo_failure "middleman, edg-voms and voms_admin" 
+       else
+         echo_failure "middleman and edg-voms"
+       fi
+     else
+       if [ ${voms_admin_vos[$i]} -eq 0 ]; then
+         echo_failure "middleman and voms_admin"
+       else
+         echo_failure "middleman"
+       fi
+     fi
+   else 
+     if [ ${edg_vos[$i]} -eq 0 ]; then
+       if [ ${voms_admin_vos[$i]} -eq 0 ]; then
+         echo_failure "edg-voms and voms_admin"
+       else
+         echo_failure "edg-voms"
+       fi
+     else
+       if [ ${voms_admin_vos[$i]} -eq 0 ]; then
+         echo_failure "voms_admin"
+       else
+         echo_success OK
+       fi
+     fi
+   fi
+   i=`expr $i + 1`
+ done
+   echo "**************************"
+   echo "Tomcat"
+   echo "**************************"
+   tomcat_run;
+   if [ $? -eq 0 ]; then
+     echo " Tomcat is running"
+   else
+     echo "Tomcat is not running"
+   fi
+}
+
+echo
+echo "-----------------------------------"
+echo "-------- VOMS ping test -----------"
+echo "-----------------------------------"
+echo
+
+get_vo_info;
+get_middleman_vos;
+get_edg_voms_vos;
+get_voms_admin_vos;
+print;
