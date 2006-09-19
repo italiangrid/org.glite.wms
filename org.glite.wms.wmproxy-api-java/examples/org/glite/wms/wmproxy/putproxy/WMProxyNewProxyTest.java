@@ -15,7 +15,7 @@ import org.gridsite.www.namespaces.delegation_1.NewProxyReq;
 public class WMProxyNewProxyTest {
 
 /*
-	Test of  "putProxy" method in org.glite.wms.wmproxy.WMProxyAPI
+	Test of  "putProxy" and "getNewProxyReq"  in org.glite.wms.wmproxy.WMProxyAPI
 
 */
 	WMProxyNewProxyTest ( ) { }

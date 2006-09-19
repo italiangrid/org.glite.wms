@@ -17,7 +17,7 @@ import org.gridsite.www.namespaces.delegation_1.NewProxyReq;
 public class WMProxyTerminationTimeTest {
 
 /*
-	Test of  "grstGetProxy" method in org.glite.wms.wmproxy.WMProxyAPI
+	Test of  "proxyTerminationTime" method in org.glite.wms.wmproxy.WMProxyAPI
 
 */
 	WMProxyTerminationTimeTest ( ) { }

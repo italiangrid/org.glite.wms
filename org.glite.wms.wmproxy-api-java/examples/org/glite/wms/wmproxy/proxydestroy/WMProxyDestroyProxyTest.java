@@ -16,7 +16,7 @@ import org.w3c.dom.Element;
 public class WMProxyDestroyProxyTest {
 
 /*
-	Test of  "grstGetProxy" method in org.glite.wms.wmproxy.WMProxyAPI
+	Test of  "destroyProxy" method in org.glite.wms.wmproxy.WMProxyAPI
 
 */
 	WMProxyDestroyProxyTest ( ) { }

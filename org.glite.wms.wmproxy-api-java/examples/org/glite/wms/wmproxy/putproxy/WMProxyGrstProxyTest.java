@@ -13,7 +13,7 @@ import org.glite.wms.wmproxy.BaseException;
 public class WMProxyGrstProxyTest {
 
 /*
-	Test of  "putProxy" method in org.glite.wms.wmproxy.WMProxyAPI
+	Test of  "grstPutProxy" method in org.glite.wms.wmproxy.WMProxyAPI
 
 */
 	WMProxyGrstProxyTest ( ) { }
