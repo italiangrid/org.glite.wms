@@ -189,12 +189,17 @@ VOMS_proxy_init(
         if (v.Retrieve(x, chain, RECURSE_CHAIN)) {
           voms vomsdefault;
           v.DefaultData(vomsdefault);
+          bool marked_first_user_attrib = false;
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
           for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
             for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
               std::string name = (*j).group;
               if ((*j).role != std::string("NULL")) {
                 name += "/Role=" + (*j).role;
+              }
+              if (!marked_first_user_attrib) {
+                USER_attribs.push_back(Attribute("primary_group", name, STRING));
+                marked_first_user_attrib = true;
               }
               USER_attribs.push_back(Attribute("group", name, STRING));
             }

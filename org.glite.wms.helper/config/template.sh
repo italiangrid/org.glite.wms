@@ -31,6 +31,19 @@ log_event_reason() # 1 - event, 2 - reason
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
+log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
+{
+  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+    --jobid="$GLITE_WMS_JOBID"\
+    --source=LRMS\
+    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --event=ResourceUsage\
+    --resource="$1"\
+    --quantity="$2"\
+    --unit="$3"\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
+}
+
 fatal_error() # 1 - reason
 {
   jw_echo "$1"
@@ -401,7 +414,7 @@ else
   __max_osb_size=${GLITE_LOCAL_MAX_OSB_SIZE}
 fi
 
-#customization point #1
+# customization point #1
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
@@ -410,12 +423,12 @@ fi
 
 if [ ${__create_subdir} -eq 1 ]; then
   if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
-    #normal or interactive
+    # normal or interactive
     newdir="${__jobid_to_filename}"
     mkdir ${newdir}
     cd ${newdir}
   elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
-    #MPI (LSF or PBS)
+    # MPI (LSF or PBS)
     newdir="${__jobid_to_filename}"
     mkdir -p .mpi/${newdir}
     if [ $? != 0 ]; then
@@ -425,7 +438,7 @@ if [ ${__create_subdir} -eq 1 ]; then
   fi
 fi
 
-#savannah 14866: the test -w on work dir is unsuitable on AFS machines
+# savannah 14866: the test -w on work dir is unsuitable on AFS machines
 tmpfile=`mktemp -q tmp.XXXXXXXXXX`
 if [ ! -f "$tmpfile" ]; then
   fatal_error "Working directory not writable"
@@ -467,7 +480,7 @@ if [ $__wmp_support -eq 0 ]; then
     fi
   done
 else
-  #WMP support
+  # WMP support
   for f in ${__wmp_input_base_file[@]}
   do
     if [ -z "${__wmp_input_base_dest_file}" ]; then
@@ -494,7 +507,7 @@ else
   fatal_error "${__job} not found or unreadable"
 fi
 
-#user script (before taking the token, shallow-sensitive)
+# user script (before taking the token, shallow-sensitive)
 if [ -f "${__prologue}" ]; then
   chmod +x "${__prologue}" 2>/dev/null
   ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
@@ -504,7 +517,7 @@ if [ -f "${__prologue}" ]; then
   fi
 fi
 
-if [ ${__job_type} -eq 3 ]; then #interactive jobs
+if [ ${__job_type} -eq 3 ]; then # interactive jobs
   base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`} #TODO %[xdigit][xdigit] handling
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
     retry_copy "globus-url-copy" "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
@@ -537,7 +550,7 @@ if [ -n ${__shallow_resubmission_token} ]; then
     is_uberftp=`expr match "${gridftp_rm_command}" '.*uberftp'`
     if [ $is_uberftp -eq 0 ]; then
       $gridftp_rm_command ${__shallow_resubmission_token}
-    else #uberftp
+    else # uberftp
       tkn=${__shallow_resubmission_token} # will reduce lines length
       scheme=${tkn:0:`expr match "${tkn}" '[[:alpha:]][[:alnum:]+.-]*://'`}
       remaining=${tkn:${#scheme}:${#tkn}-${#scheme}}
@@ -564,7 +577,7 @@ if [ ${__job_type} -eq 1 ]; then
 elif [ ${__job_type} -eq 2 ]; then
   HOSTFILE=${PBS_NODEFILE}
 fi
-if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then #MPI LSF, PBS
+if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
   for i in `cat $HOSTFILE`; do
     ssh ${i} mkdir -p `pwd`
     /usr/bin/scp -rp ./* "${i}:`pwd`"
@@ -572,15 +585,15 @@ if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then #MPI LSF, PBS
   done
 fi
 
-if [ ${__job_type} -eq 0 ]; then #normal
+if [ ${__job_type} -eq 0 ]; then # normal
   cmd_line="${__job} ${__arguments} $*"
-elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then #MPI LSF, PBS
+elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
   cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job} ${__arguments} $*"
-elif [ ${__job_type} -eq 3 ]; then #interactive
+elif [ ${__job_type} -eq 3 ]; then # interactive
   cmd_line="./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
 fi
 
-if [ ${__job_type} -ne 3 ]; then #all but interactive
+if [ ${__job_type} -ne 3 ]; then # all but interactive
   if [ -n "${__standard_input}" ]; then
     cmd_line="$cmd_line < ${__standard_input}"
   fi
@@ -602,8 +615,19 @@ if [ ${__job_type} -ne 3 ]; then #all but interactive
   fi
 fi
 
+time_cmd=/usr/bin/time
+if [ -x "$time_cmd" ]; then
+  tmp_time_file=`mktemp -q tmp.XXXXXXXXXX`
+  if [ $? -ne 0 ]; then
+    jw_echo "Cannot generate temporary file"
+    unset tmp_time_file 
+  fi
+else
+  jw_echo "Cannot find 'time' command"
+fi
+
 (
-  perl -e '
+  "$time_cmd -p" perl -e '
     unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
       $SIG{"TTIN"} = "IGNORE";
       $SIG{"TTOU"} = "IGNORE";
@@ -612,7 +636,7 @@ fi
     exec(@ARGV);
     warn "could not exec $ARGV[0]: $!\n";
     exit(127);
-  ' "$cmd_line" &
+  ' "$cmd_line" 3>&2 2>"$tmp_time_file" &
   user_job=$!
 
   exec 2> /dev/null
@@ -648,15 +672,23 @@ fi
   watchdog=$!
   wait $user_job
   status=$?
-  #according to what reported (David McBride), the bash kill command 
-  #doesn't appear to work properly on process groups
+  # according to what reported (David McBride), the bash kill command 
+  # doesn't appear to work properly on process groups
   /bin/kill -9 $watchdog $user_job -$user_job
   exit $status
 )
 
 status=$?
 
-#customization point #2
+# report the time usage
+if [ -f "$tmp_time_file" -a -n "$time_cmd" ]; then
+  log_resource_usage "real" `grep real $tmp_time_file | cut -d' ' -f 2` "s"
+  log_resource_usage "user" `grep user $tmp_time_file | cut -d' ' -f 2` "s"
+  log_resource_usage "sys" `grep sys $tmp_time_file | cut -d' ' -f 2` "s"
+  rm -f "$tmp_time_file"
+fi 
+
+# customization point #2
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
@@ -724,7 +756,7 @@ if [ ${__wmp_support} -eq 0 ]; then
     if [ -r "${f}" ]; then
       ff=${f##*/}
       if [ ${__max_osb_size} -ge 0 ]; then
-        #todo
+        # TODO
         #if hostname=wms
           file_size=`stat -t $f | awk '{print $2}'`
           let "file_size_acc += $file_size"
@@ -739,7 +771,7 @@ if [ ${__wmp_support} -eq 0 ]; then
           remaining_files=`expr $total_files \- $current_file + 2`
           remaining_space=`expr $__max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`||0
-          if [ $trunc_len -lt 10 ]; then #non trivial truncation
+          if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
           else
             truncate "${workdir}/${f}" $trunc_len "${workdir}/${f}.tail"
@@ -757,10 +789,10 @@ if [ ${__wmp_support} -eq 0 ]; then
       if [ $? != 0 ]; then
         fatal_error "Cannot upload ${f} into ${__output_base_url}" "Done"
       fi
-    fi #if [ -r "${f}" ]; then
+    fi # if [ -r "${f}" ]; then
     let "++current_file"
   done
-else #WMP support
+else # WMP support
   total_files=${#__wmp_output_dest_file[@]}
   for f in "${__wmp_output_dest_file[@]}"
   do
@@ -773,7 +805,7 @@ else #WMP support
         d="${__output_sandbox_base_dest_uri}/${file}"
       fi
       if [ ${__max_osb_size} -ge 0 ]; then
-        #todo
+        # TODO
         #if hostname=wms
           file_size=`stat -t $f | awk '{print $2}'`
           file_size_acc=`expr $file_size_acc + $file_size`
@@ -791,7 +823,7 @@ else #WMP support
           remaining_files=`expr $total_files \- $current_file + 2`
           remaining_space=`expr $__max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`||0
-          if [ $trunc_len -lt 10 ]; then #non trivial truncation
+          if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
           else
             truncate "$s" $trunc_len "$s.tail"
@@ -809,7 +841,7 @@ else #WMP support
             fi
           fi
         fi
-      else #unlimited osb
+      else # unlimited osb
         if [ "${f:0:9}" == "gsiftp://" ]; then
           retry_copy "globus-url-copy" "file://$s" "$d"
         elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
@@ -824,7 +856,7 @@ else #WMP support
     fi
     let "++current_file"
   done
-fi #WMP support
+fi # WMP support
 
 log_event "Done"
 
@@ -842,7 +874,7 @@ if [ -n "${PBS_JOBID}" ]; then
   fi
 fi
 
-#customization point #3
+# customization point #3
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
