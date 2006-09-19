@@ -10,7 +10,9 @@
 #ifndef GLITE_WMS_BROKER_UTILITY_H_
 #define GLITE_WMS_BROKER_UTILITY_H_
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <vector>
+#include <string>
 #include <set>
 #include <numeric>
 #include <algorithm>
@@ -21,43 +23,47 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-struct insertUnRankedCEsInVector : binary_function<vector<string>*, matchmaking::match_table_t::value_type, vector<string>*>
+struct extract_computing_elements_id : binary_function<
+  set<string>*,
+  brokerinfo::storagemapping::const_iterator,
+  set<string>*
+>
 {
-	vector<string>* operator()(vector<string>* v, matchmaking::match_table_t::value_type mv)
-	{
-		if( mv.second.isRankUndefined() ) v -> push_back( mv.first );
-		return v;
-	}
+  std::set<std::string>*
+  operator()(
+    std::set<std::string>* s,
+    brokerinfo::storagemapping::const_iterator si
+  )
+  {
+    vector<pair<string,string> > const& info(
+      boost::tuples::get<2>(si->second)
+    );
+    vector<pair<string,string> >::const_iterator it(info.begin());
+    vector<pair<string,string> >::const_iterator const e(info.end());
+    for( ; it != e ; ++it ) {
+       
+       s->insert(it->first);
+    }
+    return s;
+  }
 };
 
-struct insertNotInClassCEsInVector : binary_function<vector<string>*, matchmaking::match_table_t::value_type, vector<string>*>
+struct is_storage_close_to
 {
-		insertNotInClassCEsInVector(const std::set<std::string>& c) : CEs_class(c) {}
-	        vector<string>* operator()(vector<string>* v, matchmaking::match_table_t::value_type mv)
-	        {
-	                if( CEs_class.find( mv.first ) == CEs_class.end() ) v -> push_back( mv.first );
-		       	return v;
-		}
-		
-const std::set<std::string>& CEs_class;
-};
-
-struct insertCEsInVector : binary_function<vector<string>*, matchmaking::match_table_t::value_type, vector<string>*>
-{
-		insertCEsInVector() {}
-	        vector<string>* operator()(vector<string>* v, matchmaking::match_table_t::value_type mv)
-	        {
-	                v -> push_back( mv.first );
-		       	return v;
-		}
-};
-
-
-struct removeCEFromMatchTable
-{
-	removeCEFromMatchTable(matchmaking::match_table_t* mt) : suitableCEs( mt ) {}
-	void operator()(const string& ce_name) { suitableCEs -> erase( ce_name); }
-	matchmaking::match_table_t* suitableCEs;
+  is_storage_close_to(string const& id) : m_ceid(id) {}
+  bool operator()(brokerinfo::storagemapping::const_iterator const& v)
+  {
+   vector<pair<string,string> > const& i(
+        boost::tuples::get<2>(v->second)
+   );
+   vector<pair<string,string> >::const_iterator it(i.begin());
+   vector<pair<string,string> >::const_iterator const e(i.end());
+   for( ; it != e ; ++it) {
+     if(boost::starts_with(m_ceid, it->first)) return true;
+   }
+   return false;
+  }
+  string m_ceid;
 };
 
 }; // namespace broker

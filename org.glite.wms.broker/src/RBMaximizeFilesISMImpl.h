@@ -9,8 +9,6 @@
 #define GLITE_WMS_BROKER_RBMAXIMIZEFILESISMIMPL_H
 
 #include "glite/wms/broker/ResourceBroker.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
-#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 
 namespace glite {
 namespace wms {
@@ -18,15 +16,14 @@ namespace broker {
 
 namespace brokerinfo  = wms::brokerinfo;
 
-class RBMaximizeFilesISMImpl : public ResourceBrokerImpl
+struct RBMaximizeFilesISMImpl : ResourceBroker::Impl
 {
-public:
-  RBMaximizeFilesISMImpl(brokerinfo::BrokerInfo<brokerinfo::brokerinfoISMImpl> *, bool do_prefetch=false);
-  ~RBMaximizeFilesISMImpl();
-  matchmaking::match_table_t* findSuitableCEs(const classad::ClassAd* requestAd);
-private:
-  brokerinfo::BrokerInfo<brokerinfo::brokerinfoISMImpl>* BI;
-  bool m_prefetch;
+  boost::tuple<
+    boost::shared_ptr<matchmaking::matchtable>,
+    boost::shared_ptr<brokerinfo::filemapping>,
+    boost::shared_ptr<brokerinfo::storagemapping>
+  >
+  findSuitableCEs(const classad::ClassAd* requestAd);
 };
 
 } // namespace broker

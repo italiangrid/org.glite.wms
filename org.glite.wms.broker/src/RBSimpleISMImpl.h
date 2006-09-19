@@ -14,11 +14,14 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-struct RBSimpleISMImpl: ResourceBrokerImpl
+struct RBSimpleISMImpl : ResourceBroker::Impl
 {
-   RBSimpleISMImpl(bool = false);
-  ~RBSimpleISMImpl();
-  matchmaking::match_table_t* findSuitableCEs(classad::ClassAd const* requestAd);
+  boost::tuple<
+    boost::shared_ptr<matchmaking::matchtable>,
+    boost::shared_ptr<brokerinfo::filemapping>,
+    boost::shared_ptr<brokerinfo::storagemapping>
+  > 
+  findSuitableCEs(classad::ClassAd const*);
 };
 
 }}}

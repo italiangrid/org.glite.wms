@@ -16,14 +16,20 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-class maxRankSelector : public RBSelectionSchema
+struct maxRankSelector : RBSelectionSchema
 {
- public:
-  typedef std::vector<matchmaking::match_table_t::const_iterator> match_container_type;
-  typedef std::map<double, match_container_type> rank_to_match_container_map_type;
+  typedef std::vector<
+    matchmaking::matchtable::const_iterator
+  > match_container_type;
+  typedef std::map<
+    double, 
+    match_container_type
+  > rank_to_match_container_map_type;
+  
   maxRankSelector::maxRankSelector();
   maxRankSelector::~maxRankSelector();	
-  matchmaking::match_const_iterator selectBestCE(const matchmaking::match_table_t& match_table);
+  matchmaking::matchtable::const_iterator 
+  selectBestCE(matchmaking::matchtable const& match_table);
 };	
 
 }; // namespace broker

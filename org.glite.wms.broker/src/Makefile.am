@@ -17,6 +17,7 @@ broker_HEADERS = \
 	utility.h
 
 libglite_wms_broker_la_SOURCES = \
+        ResourceBroker.cpp \
 	RBSimpleISMImpl.cpp \
 	RBMaximizeFilesISMImpl.cpp
 

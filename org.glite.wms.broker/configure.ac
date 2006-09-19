@@ -14,14 +14,6 @@
 #       Common configure.ac file for the GLite WMS Common module
 #
 #       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
-#       Version info: $Id$
-#       Release: $Name$
-#
-#       Revision history:
-#       $Log$
-#       Revision 1.11  2006/03/20 21:36:14  eronchie
-#       Increased version
-#
 #       Revision 1.10  2006/03/17 07:24:07  eronchie
 #       Updated
 #
@@ -79,7 +71,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Broker], [3.1.0])
+AC_INIT([GLite WMS Broker], [3.1.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/utility.h])
@@ -146,7 +138,10 @@ have_glite_wms_common=no
 have_glite_wms_matchmaking=no
 
 AC_GLITE
+AC_GLITE_SERVICE_DISCOVERY
 AC_GLITE_WMSUTILS
+AC_GLITE_WMS_ISM
+AC_GLITE_WMS_MATCHMAKING
 AC_GLITE_JDL([],have_glite_jdl=yes,have_glite_jdl=no)
 AC_GLITE_WMS_COMMON([],have_glite_wms_common=yes,have_glite_wms_common=no)
 AC_GLITE_WMS_MATCHMAKING(],have_glite_wms_matchmaking=yes,have_glite_wms_matchmaking=no)
@@ -158,6 +153,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/selectors/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
-
+AC_CONFIG_FILES([test/Makefile])
 AC_OUTPUT
 

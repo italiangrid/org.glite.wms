@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2006/09/19 13:49:45  monforte
+#       Merge against 3.1 and code review
+#
 #       Revision 1.3  2004/10/11 15:54:07  monforte
 #       rls integration
 #
@@ -42,7 +45,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = interface src 
+SUBDIRS = interface src test
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

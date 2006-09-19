@@ -12,6 +12,7 @@
 
 # include <boost/utility.hpp>
 # include <boost/thread/mutex.hpp>
+# include <boost/shared_ptr.hpp>
 # include <map>
 # include <vector>
 # include <glite/wms/matchmaking/matchmaker.h>
@@ -22,27 +23,27 @@ namespace glite {
 namespace wms {		
 namespace broker {
 		
-class RBSelectionSchema 
+struct RBSelectionSchema 
 {
- public:
-   RBSelectionSchema() {}
-   virtual ~RBSelectionSchema() {}
-   virtual matchmaking::match_const_iterator selectBestCE(const matchmaking::match_table_t& match_table) = 0;
+   virtual ~RBSelectionSchema() {};
+   virtual matchmaking::matchtable::const_iterator 
+   selectBestCE(matchmaking::matchtable const& match_table) = 0;
 };
 
+typedef boost::shared_ptr<RBSelectionSchema> RBSelectionSchemaPtr;
 	
 class RBSelectionSchemaMap : boost::noncopyable
 {
  public:
   RBSelectionSchemaMap();
   ~RBSelectionSchemaMap();
-  static RBSelectionSchema*       getSchema       (const std::string& name);
-  static bool                     registerSchema  (const std::string& name, RBSelectionSchema* schema);
-  static RBSelectionSchema*       unregisterSchema(const std::string& name); 
+  static RBSelectionSchemaPtr getSchema(const std::string& name);
+  static bool registerSchema(const std::string& name, RBSelectionSchemaPtr);
+  static RBSelectionSchemaPtr unregisterSchema(const std::string& name); 
 
  private:
   static boost::mutex m_map_access_mutex;
-  static std::map<std::string, RBSelectionSchema*>* m_selection_schema_map;
+  static std::map<std::string, RBSelectionSchemaPtr>* m_selection_schema_map;
 };
 
 namespace {

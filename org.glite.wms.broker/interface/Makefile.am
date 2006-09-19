@@ -9,8 +9,6 @@
 brokerdir = $(includedir)
 nobase_broker_HEADERS = \
 	glite/wms/broker/ResourceBroker.h \
-	glite/wms/broker/RBMaximizeFilesImpl.h \
-	glite/wms/broker/RBMinimizeAccessCostImpl.h \
 	glite/wms/broker/selectors/RBSelectionSchema.h
 
 MAINTAINERCLEANFILES = Makefile.in

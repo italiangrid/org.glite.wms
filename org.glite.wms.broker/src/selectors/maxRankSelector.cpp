@@ -63,15 +63,20 @@ maxRankSelector::~maxRankSelector()
 {
 }
 
-matchmaking::match_const_iterator
-maxRankSelector::selectBestCE(matchmaking::match_table_t const& match_table)
+matchmaking::matchtable::const_iterator
+maxRankSelector::selectBestCE(matchmaking::matchtable const& match_table)
 {
   rank_to_match_container_map_type clustered_rank_match_table;
 
-  for (matchmaking::match_table_t::const_iterator it = match_table.begin();
-       it != match_table.end(); ++it) {
-
-    clustered_rank_match_table[it->second.getRank()].push_back(it);
+  matchmaking::matchtable::const_iterator it(
+    match_table.begin()
+  );
+  matchmaking::matchtable::const_iterator const e(
+    match_table.end()
+  );
+  for ( ; it != e; ++it) {
+    double r = matchmaking::getRank(it->second);
+    clustered_rank_match_table[r].push_back(it);
   }
   rank_to_match_container_map_type::const_iterator max_cluster =
     std::max_element(
@@ -81,7 +86,7 @@ maxRankSelector::selectBestCE(matchmaking::match_table_t const& match_table)
     );
   // The range is invalid
   if (max_cluster == clustered_rank_match_table.end()) {
-    return match_table.end();
+    return e;
   }
 
   size_t n = max_cluster->second.size();
