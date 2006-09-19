@@ -1,7 +1,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
+#include "glite/wms/brokerinfo/brokerinfo.h"
 
 #include "glite/wms/common/configuration/exceptions.h"
 
@@ -44,6 +44,22 @@ LineOption  options[] = {
 //    { 'v', no_argument, "verbose",     "\t be verbose" },
     { 'l', no_argument, "verbose",     "\t be verbose on log file" }
 };
+
+void
+print_file_mapping_info(filemapping::value_type const& i)
+{
+  std::vector<std::string> const& sfn(
+    i.second
+  );
+  std::string lfn( i.first );
+  std::cout << lfn << " = {\n";
+  std::copy(
+    sfn.begin(),
+    sfn.end(),
+    ostream_iterator<string>(std::cout, "\n")
+  );
+  std::cout << "}\n"; 
+}
 
 int main(int argc, char* argv[])
 {
@@ -88,16 +104,22 @@ int main(int argc, char* argv[])
      edglog(debug) << "BEGIN" << endl;
      edglog(debug) << "---------------------------------------------------" << std::endl;
 
-     BrokerInfo<brokerinfoISMImpl> bi;
-    
      ifstream fin(req_file.c_str());    
      if( fin ) 
      { 
         classad::ClassAdParser parser;
     	classad::ClassAd *reqAd = parser.ParseClassAd(fin);
 
-        for (int i=0; i < count; i++) 
-   	   bi.retrieveSFNsInfo(*reqAd);
+        for (int i=0; i < count; i++) {
+           boost::shared_ptr<filemapping> fm(
+   	     resolve_filemapping_info(*reqAd)
+           );
+           std::for_each(
+             fm->begin(),
+             fm->end(),
+             print_file_mapping_info
+           );
+        }
      }
      else edglog(warning) << "cannot open jdl file" << endl;
 

@@ -19,7 +19,23 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.22  2006/03/20 21:37:46  eronchie
+#       Revision 1.23  2006/09/19 13:47:02  monforte
+#       merge against 3.1 and code review
+#
+#       Revision 1.21.2.5  2006/05/20 17:44:50  eronchie
+#       Increased version
+#
+#       Revision 1.21.2.4  2006/04/07 13:49:25  monforte
+#       Fix for bug #16102
+#
+#       Revision 1.21.2.3  2006/03/30 15:04:45  monforte
+#       Merge against HEAD version to support handling of SE information in ISM
+#       during MM and brokerinfo generation
+#
+#       Revision 1.21.2.2  2006/03/28 16:14:02  rlops
+#       added gsoap plugin macro
+#
+#       Revision 1.21.2.1  2006/03/20 21:44:21  eronchie
 #       Increased version
 #
 #       Revision 1.21  2006/03/20 21:02:32  eronchie
@@ -159,7 +175,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Brokerinfo], [3.1.0])
+AC_INIT([GLite WMS Brokerinfo], [3.1.2])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/glue_attributes.h])
@@ -210,7 +226,6 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 have_boost=no
 have_classads=no
 have_globus=no
-have_cgsi_gsoap=no
 have_replica=no
 
 have_data=no
@@ -263,6 +278,7 @@ fi
 
 AC_OPTIMIZE
 AC_GLITE
+AC_SEC_GSOAP_PLUGIN
 AC_GLITE_WMSUTILS
 AC_GLITE_JDL
 AC_GLITE_WMS_COMMON

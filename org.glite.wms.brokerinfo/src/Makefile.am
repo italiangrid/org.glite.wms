@@ -19,8 +19,9 @@ brokerinfo_HEADERS = \
 libglite_wms_brokerinfo_la_LDFLAGS = -all-static
 
 libglite_wms_brokerinfo_la_SOURCES = \
-	BrokerInfoData.cpp \
-	brokerinfoISMImpl.cpp
+        utils.cpp \
+        dli_utils.cpp \
+        brokerinfodata.cpp 
 
 
 libglite_wms_dli_sici_la_SOURCES = \
@@ -32,7 +33,7 @@ libglite_wms_dli_sici_la_SOURCES = \
 
 
 libglite_wms_dli_sici_la_LIBADD = \
-	-L$(GLITE_LOCATION)/lib -lglite_security_gsoap_plugin_262_gcc32 
+	$(SEC_GSOAP_PLUGIN_262_NOTHR_LIBS)
 
 libglite_wms_rls_la_SOURCES = 
 
