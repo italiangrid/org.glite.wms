@@ -21,7 +21,6 @@ namespace classad_plugin {
 namespace gangmatch {
 		
 extern bool doMatch         	 (const char *, const ArgumentList&, EvalState&, Value&);
-extern bool listAttrRegEx  	 (const char *, const ArgumentList&, EvalState&, Value&);
 extern bool retrieveCloseSEsInfo (const char *, const ArgumentList&, EvalState&, Value&);
 
 static ClassAdFunctionMapping functions[] = 
@@ -29,7 +28,6 @@ static ClassAdFunctionMapping functions[] =
     { "anyMatch",      		(void*) doMatch,       		0  },
     { "allMatch",      		(void*) doMatch,       		0  },
     { "whichMatch",    		(void*) doMatch,       		0  },
-    { "listAttrRegEx", 		(void*) listAttrRegEx, 		0  },
     { "retrieveCloseSEsInfo",	(void*) retrieveCloseSEsInfo,	0  },	
     { "", NULL, 0 }
 };

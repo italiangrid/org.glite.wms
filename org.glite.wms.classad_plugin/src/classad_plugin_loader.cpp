@@ -28,6 +28,7 @@ classad_plugin_loader::classad_plugin_loader()
 	  classad::ClassAdParser parser;
           classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_gangmatch_classad_plugin.so");
           classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_lb_rank_classad_plugin.so");
+          classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_fqan_classad_plugin.so");
   }
 }
 

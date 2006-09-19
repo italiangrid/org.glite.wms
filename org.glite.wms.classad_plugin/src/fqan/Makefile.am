@@ -6,17 +6,14 @@
 ## *
 ## *********************************************************************
 
-## Subdirectories list
-SUBDIRS = gangmatch lb_rank fqan
-
-lib_LTLIBRARIES = libglite_wms_classad_plugin_loader.la
-
-classad_plugindir = $(includedir)/glite/wms/classad_plugin
-classad_plugin_HEADERS = \
-	classad_plugin_loader.h
+lib_LTLIBRARIES = libglite_wms_fqan_classad_plugin.la
  
-libglite_wms_classad_plugin_loader_la_SOURCES = \
-	classad_plugin_loader.cpp
+libglite_wms_fqan_classad_plugin_la_SOURCES = \
+	fqan_classad_plugin.cpp \
+        testMemberEx.cpp 
+
+libglite_wms_fqan_classad_plugin_la_CPPFLAGS = \
+	-fPIC -shared
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \

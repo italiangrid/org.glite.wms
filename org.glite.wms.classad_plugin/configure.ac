@@ -19,6 +19,13 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.13  2006/09/19 15:44:39  monforte
+#       Merge against 3.1 and code review
+#
+#       Revision 1.12.2.1  2006/06/22 06:13:04  monforte
+#       Removed FQAN/ACL check functions from gangmatch plugin library.
+#       Added FQAN/ACL check functions as indipendent plugin library.
+#
 #       Revision 1.12  2006/03/20 21:53:33  eronchie
 #       Increased version
 #
@@ -139,6 +146,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/gangmatch/Makefile])
 AC_CONFIG_FILES([src/lb_rank/Makefile])
-
+AC_CONFIG_FILES([src/fqan/Makefile])
 AC_OUTPUT
 

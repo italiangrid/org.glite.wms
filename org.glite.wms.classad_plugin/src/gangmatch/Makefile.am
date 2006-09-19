@@ -11,7 +11,6 @@ lib_LTLIBRARIES = libglite_wms_gangmatch_classad_plugin.la
 libglite_wms_gangmatch_classad_plugin_la_SOURCES = \
 	gangmatch_classad_plugin.cpp \
 	doMatch.cpp \
-	listAttrRegEx.cpp \
 	retrieveCloseSEsInfo.cpp
 
 libglite_wms_gangmatch_classad_plugin_la_CPPFLAGS = \
@@ -19,6 +18,7 @@ libglite_wms_gangmatch_classad_plugin_la_CPPFLAGS = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
+        $(GLIRW_WMS_ISM) \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
