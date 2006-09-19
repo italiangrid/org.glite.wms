@@ -290,11 +290,11 @@ filter_gpbox_authorizations(
   }
 
   const std::string user_subject(
+    Debug("gpbox: empty user subject");
     get_proxy_distinguished_name(user_cert_file_name)
   );
 
   if(user_subject.empty()) {
-    Debug("gpbox: empty user subject");
     return false;
   }
 
