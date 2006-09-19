@@ -3,20 +3,30 @@ top_src=../../../../../
 package=org.glite.wms.wmproxy.puproxy
 class_1=WMProxyPutProxyTest
 class_2=WMProxyGrstProxyTest
+class_3=WMProxyNewProxyTest
 
 java_file_1=${class_1}.java
-class_file_1=${class_1}.class
+class_file_2=${class_1}.class
+
 
 java_file_2=${class_2}.java
 class_file_2=${class_2}.class
 
+java_file_3=${class_3}.java
+class_file_3=${class_3}.class
 
 #rm class file
 # ------------------
-if test -f ${class_file} ; then
-        echo "Removing "${class_file} 
-        rm -fr ${class_file}
-fi
+for i in\
+	${class_file_1} \
+	${class_file_2} \
+	${class_file_3}
+do
+		if test -f ${i} ; then
+			echo "Removing "${i}
+			rm -fr ${i}
+		fi
+done
 
 ## AXIS ===============
 line=`more ../wmp-api-java-test.cfg | grep AXIS_LOC`
@@ -44,5 +54,5 @@ done
 
 set -x
 
-javac -classpath ${classpath} ${java_file_1} ${java_file_2}
+javac -classpath ${classpath} ${java_file_1} ${java_file_2} ${java_file_3}
 
