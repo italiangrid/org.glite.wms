@@ -617,6 +617,7 @@ fi
 
 time_cmd=/usr/bin/time
 if [ -x "$time_cmd" ]; then
+  time_cmd="$time_cmd -p"
   tmp_time_file=`mktemp -q tmp.XXXXXXXXXX`
   if [ $? -ne 0 ]; then
     jw_echo "Cannot generate temporary file"
@@ -627,7 +628,7 @@ else
 fi
 
 (
-  "$time_cmd -p" perl -e '
+  $time_cmd perl -e '
     unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
       $SIG{"TTIN"} = "IGNORE";
       $SIG{"TTOU"} = "IGNORE";
@@ -672,8 +673,7 @@ fi
   watchdog=$!
   wait $user_job
   status=$?
-  # according to what reported (David McBride), the bash kill command 
-  # doesn't appear to work properly on process groups
+  # the bash kill command doesn't appear to work properly on process groups
   /bin/kill -9 $watchdog $user_job -$user_job
   exit $status
 )
@@ -682,9 +682,9 @@ status=$?
 
 # report the time usage
 if [ -f "$tmp_time_file" -a -n "$time_cmd" ]; then
-  log_resource_usage "real" `grep real $tmp_time_file | cut -d' ' -f 2` "s"
-  log_resource_usage "user" `grep user $tmp_time_file | cut -d' ' -f 2` "s"
-  log_resource_usage "sys" `grep sys $tmp_time_file | cut -d' ' -f 2` "s"
+  log_resource_usage "real" "`grep real $tmp_time_file | cut -d' ' -f 2`" "s"
+  log_resource_usage "user" "`grep user $tmp_time_file | cut -d' ' -f 2`" "s"
+  log_resource_usage "sys" "`grep sys $tmp_time_file | cut -d' ' -f 2`" "s"
   rm -f "$tmp_time_file"
 fi 
 
