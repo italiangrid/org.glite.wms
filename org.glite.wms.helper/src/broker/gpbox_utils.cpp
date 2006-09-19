@@ -285,6 +285,7 @@ filter_gpbox_authorizations(
 )
 {
   if (user_cert_file_name.empty()) {
+    Debug("gpbox: cannot find user certificate");
     return false;
   }
 
@@ -293,6 +294,7 @@ filter_gpbox_authorizations(
   );
 
   if(user_subject.empty()) {
+    Debug("gpbox: empty user subject");
     return false;
   }
 

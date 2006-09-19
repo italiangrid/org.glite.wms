@@ -56,7 +56,7 @@ truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 
 sort_by_size() # 1 - file names vector, 2 - directory
 {
-  tmp_sort_file=`mktemp -q tmp.XXXXXX`
+  tmp_sort_file=`mktemp -q tmp.XXXXXXXXXX`
   if [ -z "$tmp_sort_file" ]; then
     jw_echo "Cannot generate temporary file"
     unset tmp_sort_file
@@ -91,14 +91,14 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    std_err=`mktemp -q std_err.XXXXXX`
+    std_err=`mktemp -q std_err.XXXXXXXXXX`
     if [ -z "$std_err" ]; then
       std_err="/dev/null"
     fi
     $1 "$2" "$3" 2>"$std_err"
     succeded=$?
     if [ $succeded != 0 ]; then
-      log_event_reason "Notice" "`head -c 1023 "$std_err"`"
+      log_event_reason "Notice" "`head -c 65535 "$std_err"`"
     fi
     rm -f "$std_err"
     count=`expr $count + 1`
@@ -403,7 +403,7 @@ if [ ${__create_subdir} -eq 1 ]; then
   fi
 fi
 
-tmpfile=`mktemp -q ./tmp.XXXXXX`
+tmpfile=`mktemp -q ./tmp.XXXXXXXXXX`
 if [ -z "$tmpfile" ]; then
   fatal_error "Working directory not writable"
 else

@@ -255,6 +255,11 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
       result->InsertAttr("reason", std::string("ok"));    
       result->Insert("match_result", classad::ExprList::MakeExprList(hosts));           
     }
+#ifndef GLITE_WMS_DONT_HAVE_GPBOX
+    else {
+      Info("Empty CE list after G-Pbox screening");
+    }
+#endif
   } catch (matchmaking::ISNoResultError const& e) {
     result->InsertAttr(
       "reason",
