@@ -104,7 +104,7 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
     // this method.
     //job_status_list.clear();
 
-    m_creamClient->clearSoap();
+    //m_creamClient->clearSoap();
 
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
@@ -147,6 +147,7 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
         vector< soap_proxy::JobInfo > the_job_status;
 
         job_to_query.push_back( jobIt->getJobID() );
+	
         try {
             m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
             m_creamClient->Info(jobIt->getCreamURL().c_str(),

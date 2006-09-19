@@ -89,7 +89,7 @@ void leaseUpdater::update_lease( void )
 
 void leaseUpdater::update_lease_for_job( CreamJob& j )
 {
-    m_creamClient->clearSoap();
+    //m_creamClient->clearSoap();
 
     map< string, time_t > newLease;
     vector< string > jobids;

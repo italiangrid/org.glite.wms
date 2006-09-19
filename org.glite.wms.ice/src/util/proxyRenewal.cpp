@@ -94,7 +94,7 @@ void proxyRenewal::checkProxies()
 		       << jobIt->getJobID() << "]"
 		       << log4cpp::CategoryStream::ENDLINE);
 
-        m_creamClient->clearSoap( );
+        //m_creamClient->clearSoap( );
 
         try {
             m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
