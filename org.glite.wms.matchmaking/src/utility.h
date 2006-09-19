@@ -21,24 +21,41 @@ namespace glite {
 namespace wms {
 namespace matchmaking {
 
-typedef std::vector< std::pair<match_table_t::key_type,match_table_t::mapped_type> > match_vector_t;
+typedef std::vector< 
+  std::pair<
+    matchtable::key_type,
+    matchtable::mapped_type
+  > 
+> matchvector;
 	
-struct rank_less_than_comparator :
-    public binary_function< match_table_t::value_type&, match_table_t::value_type&, bool>
+struct rank_less_than_comparator : 
+  binary_function< 
+    matchtable::value_type&, 
+    matchtable::value_type&, 
+    bool
+  >
 { 
-	 bool operator()(const match_table_t::value_type& a, const match_table_t::value_type& b)
-	 {
-	    return a.second.getRank() < b.second.getRank();
-	 }
+  bool operator()(
+    const matchtable::value_type& a, 
+    const matchtable::value_type& b)
+  {
+    return getRank(a.second) < getRank(b.second);
+  }
 };
 
 struct rank_greater_than_comparator :
-    public binary_function< match_table_t::value_type&, match_table_t::value_type&, bool>
+  binary_function<
+    matchtable::value_type&,
+    matchtable::value_type&, 
+    bool
+  >
 {
-         bool operator()(const match_table_t::value_type& a, const match_table_t::value_type& b)
-         {
-             return a.second.getRank() > b.second.getRank();
-         }
+  bool operator()(
+    const matchtable::value_type& a, 
+    const matchtable::value_type& b)
+  {
+    return getRank(a.second) > getRank(b.second);
+  }
 };
 
 }; // namespace matchmaking

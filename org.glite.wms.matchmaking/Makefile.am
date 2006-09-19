@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2006/09/19 13:44:24  monforte
+#       merge against 3.1 and code review
+#
 #       Revision 1.4  2006/03/13 14:38:05  monforte
 #       Merge against glite-wms-matchmaking_branch_1_5_0_RC15
 #
@@ -44,7 +47,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = interface src 
+SUBDIRS = interface src
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

@@ -10,26 +10,30 @@
 
 #include "glite/wms/matchmaking/matchmaker.h"
 
+namespace classad {
+class ClassAd;
+}
+
 namespace glite {
 namespace wms {
 namespace matchmaking { 
 
-class matchmakerISMImpl: public MatchMakerImpl
+struct matchmakerISMImpl
 {
-public:
-  void prefetchCEInfo(
-    const classad::ClassAd* requestAd,
-    match_table_t& suitableCEs
-  );
   void checkRequirement(
-    classad::ClassAd& requestAd,
-    match_table_t& suitableCEs,
-    bool use_prefetched_ces = false
+    classad::ClassAd&,
+    matchtable&
   );
+
+  void checkRequirement(
+    classad::ClassAd&,
+    std::set<matchtable::key_type> const&,
+    matchtable&
+  );
+
   void checkRank(
-    classad::ClassAd& requestAd,
-    match_table_t& suitableCEs,
-    bool use_prefetched_ces = false
+    classad::ClassAd&,
+    matchtable&
   );
 };
 

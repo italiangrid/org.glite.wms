@@ -19,6 +19,7 @@ matchmaking_HEADERS = \
 libglite_wms_matchmaking_la_LDFLAGS = -all-static
 
 libglite_wms_matchmaking_la_SOURCES = \
+        matchmaker.cpp \
 	matchmakerISMImpl.cpp \
 	exceptions.cpp 
 
