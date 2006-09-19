@@ -1,4 +1,4 @@
-// File: Helper.cpp
+// File: Helper_matcher_ism.cpp
 // Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
@@ -16,27 +16,19 @@
 
 #include <classad_distribution.h>
 
-#include "Helper_matcher.h"
+#include "Helper_matcher_ism.h"
 
 #include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 
-#include "glite/wms/brokerinfo/brokerinfo.h"
-
-#ifdef MATCHER_HELPER_USE_ISM
-#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 #include "glite/wms/broker/RBSimpleISMImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
-#else
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
-#include "glite/wms/broker/RBSimpleImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesImpl.h"
-#include "glite/wms/broker/RBMinimizeAccessCostImpl.h"
-#endif
 
-#include "glite/wms/matchmaking/exceptions.h"
+#include "glite/wms/brokerinfo/brokerinfo.h"
 #include "glite/wms/matchmaking/utility.h"
+#include "glite/wms/matchmaking/exceptions.h"
+#include "glite/wms/matchmaking/matchmaker.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
@@ -79,11 +71,6 @@ namespace matcher {
 
 namespace {
 
-#ifdef MATCHER_HELPER_USE_ISM
-typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoISMImpl> BrokerInfo;
-#else
-typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
-#endif
 std::string const helper_id("MatcherHelper");
 
 helper::HelperImpl* create_helper()
@@ -137,20 +124,12 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   result->InsertAttr("reason", std::string("no matching resources found"));
   result->Insert("match_result", new classad::ExprList);
     
-#ifdef MATCHER_HELPER_USE_ISM
-  glite::wms::broker::ResourceBroker rb(new glite::wms::broker::RBSimpleISMImpl());
-#elif MATCHER_HELPER_PREFETCH_INFO_FROM_II
-  glite::wms::broker::ResourceBroker rb(new glite::wms::broker::RBSimpleImpl(true));
-#else
-  glite::wms::broker::ResourceBroker rb(new glite::wms::broker::RBSimpleImpl());
-#endif
+  glite::wms::broker::ResourceBroker rb;
 
   bool input_data_exists = false;
   std::vector<std::string> input_data;
   requestad::get_input_data(input_ad, input_data, input_data_exists);
 
-  boost::scoped_ptr<BrokerInfo> BI(new BrokerInfo);
-  
   if (input_data_exists) {
     // Here we have to check if the rank expression in the request
     // is rank = other.dataAccessCost and change the implementation
@@ -159,32 +138,26 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     if (rank_expr) {
       std::vector<std::string> rankAttributes;
       utils::insertAttributeInVector(&rankAttributes, rank_expr, utils::is_reference_to("other"));
-      if (rankAttributes.size() == 1 
-          && rankAttributes.front() == "DataAccessCost") {
-      // RBMinimizeAccessCostImpl doesn't rank based on the
-      // Info Service. So the use_cached_info_for_gris 
-      // flag isn't needed.
-#ifndef MATCHER_HELPER_USE_ISM
-        rb.changeImplementation(new glite::wms::broker::RBMinimizeAccessCostImpl(BI.get()));
-#endif
-      } else {
-#ifdef MATCHER_HELPER_USE_ISM
-        rb.changeImplementation(new glite::wms::broker::RBMaximizeFilesISMImpl(BI.get(),true));
-#elif MATCHER_HELPER_PREFETCH_INFO_FROM_II
-        rb.changeImplementation(new glite::wms::broker::RBMaximizeFilesImpl(BI.get(),true));
-#else
-        rb.changeImplementation(new glite::wms::broker::RBMaximizeFilesImpl(BI.get()));
-#endif
-      }
+      rb.changeImplementation(
+        boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
+          new glite::wms::broker::RBMaximizeFilesISMImpl()
+        )
+      );
     }
   }
 
-  boost::scoped_ptr<matchmaking::match_table_t> suitableCEs;
+  boost::tuple<
+    boost::shared_ptr<matchmaking::matchtable>,
+    boost::shared_ptr<brokerinfo::filemapping>,
+    boost::shared_ptr<brokerinfo::storagemapping>
+  > brokering_result;
   std::string mm_error;
   
   try {
-    suitableCEs.reset(rb.findSuitableCEs(&input_ad));
-
+    brokering_result = rb.findSuitableCEs(&input_ad);
+    boost::shared_ptr<matchmaking::matchtable>& suitableCEs(
+      boost::tuples::get<0>(brokering_result)
+    );
     std::string vo(requestad::get_virtual_organisation(input_ad));    
     std::vector<classad::ExprTree*> hosts;
     bool include_brokerinfo = false;
@@ -215,7 +188,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 #endif
 
     if (!suitableCEs->empty() ) {
-      matchmaking::match_vector_t suitableCEs_vector(
+      matchmaking::matchvector suitableCEs_vector(
         suitableCEs->begin(),
         suitableCEs->end()
       );
@@ -226,10 +199,10 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
         matchmaking::rank_greater_than_comparator()
       );
 
-      matchmaking::match_vector_t::const_iterator it(
+      matchmaking::matchvector::const_iterator it(
         suitableCEs_vector.begin()
       );
-      matchmaking::match_vector_t::const_iterator const end(
+      matchmaking::matchvector::const_iterator const end(
         suitableCEs_vector.end()
       );
       for (int i = 0;
@@ -238,15 +211,23 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 
         std::auto_ptr<classad::ClassAd> ceinfo(new classad::ClassAd);
         ceinfo->InsertAttr("ce_id", it->first);
-        ceinfo->InsertAttr("rank", it->second.getRank());
+        ceinfo->InsertAttr("rank", matchmaking::getRank(it->second));
         
         if (include_brokerinfo) {
            std::string const ce_id(
-             utils::evaluate_attribute(*it->second.getAd(),"GlueCEUniqueID")
+             utils::evaluate_attribute(
+               *matchmaking::getAd(it->second),
+               "GlueCEUniqueID"
+             )
            );
-           BI->retrieveCloseSEsInfo(ce_id);
-           BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
-           ceinfo->Insert("brokerinfo", BI->asClassAd());
+           ceinfo->Insert(
+             "brokerinfo",  
+             brokerinfo::make_brokerinfo_ad(
+               boost::tuples::get<1>(brokering_result),
+               boost::tuples::get<2>(brokering_result),
+               input_ad
+             )
+          );
         }
         hosts.push_back(ceinfo.get());
         ceinfo.release();

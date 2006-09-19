@@ -189,8 +189,8 @@ VOMS_proxy_init(
         if (v.Retrieve(x, chain, RECURSE_CHAIN)) {
           voms vomsdefault;
           v.DefaultData(vomsdefault);
+          bool marked_first_user_attrib = false;
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
-          bool marked_first_user_attrib;
           for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
             for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
               std::string name = (*j).group;
@@ -238,11 +238,11 @@ is_service_class(std::string attribute_value)
 }
 
 std::string
-get_tag(matchmaking::match_info const& info)
+get_tag(matchmaking::matchinfo const& info)
 {
   static std::string const null_string;
 
-  classad::ClassAd const* ad = info.getAd();
+  classad::ClassAd const* ad = matchmaking::getAd(info).get();
   std::vector<std::string> acbr_vector;
   classadutils::EvaluateAttrList(*ad, "GlueCEAccessControlBaseRule", acbr_vector);
 
@@ -279,7 +279,7 @@ get_tag(matchmaking::match_info const& info)
 
 bool
 filter_gpbox_authorizations(
-  matchmaking::match_table_t& suitable_CEs,
+  matchmaking::matchtable& suitable_CEs,
   Connection& PEP_connection,
   std::string const& user_cert_file_name
 )
@@ -290,20 +290,21 @@ filter_gpbox_authorizations(
   }
 
   const std::string user_subject(
-    Debug("gpbox: empty user subject");
     get_proxy_distinguished_name(user_cert_file_name)
   );
 
   if(user_subject.empty()) {
+    Debug("gpbox: empty user subject");
     return false;
   }
 
   Attributes CE_attributes;
   std::string ce_names;
   std::string ce_tags;
-
-  for (matchmaking::match_table_t::iterator it = suitable_CEs.begin();
-       it != suitable_CEs.end();
+  matchmaking::matchtable::iterator it = suitable_CEs.begin();
+  matchmaking::matchtable::iterator const end = suitable_CEs.end();
+  for (;
+       it != end;
        ++it) {
     ce_names += it->first + '#';
     std::string tag(get_tag(it->second));
@@ -395,7 +396,7 @@ interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
   std::string const& PBOX_host_name,
-  matchmaking::match_table_t& suitable_CEs   
+  matchmaking::matchtable& suitable_CEs   
   )
 {
   return interact(config,
@@ -410,7 +411,7 @@ interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
-  matchmaking::match_table_t& suitable_CEs)
+  matchmaking::matchtable& suitable_CEs)
 {
   boost::timer perf_timer;
 
@@ -445,7 +446,12 @@ interact(
       return false;
     };
  
-    Info("gpbox interaction ended. Elapsed: " << perf_timer.elapsed());
+    std::string end_msg(
+      "gpbox interaction ended. Elapsed: "
+      +
+      boost::lexical_cast<std::string>(perf_timer.elapsed())
+    );
+    Info(end_msg);
 
     return true;
   }

@@ -80,11 +80,11 @@ is_service_class(std::string attribute_value)
 }
 
 std::string
-get_tag(matchmaking::match_info const& info)
+get_tag(matchmaking::matchinfo const& info)
 {
   static std::string const null_string;
 
-  classad::ClassAd const* ad = info.getAd();
+  classad::ClassAd const* ad = matchmaking::getAd(info).get();
   std::vector<std::string> acbr_vector;
   classad_utilities::EvaluateAttrList(*ad, ACBR_tag, acbr_vector);
 
@@ -207,9 +207,9 @@ VOMS_proxy_init(
 }
 
 std::string
-get_CE_unique_id(matchmaking::match_info const& info)
+get_CE_unique_id(matchmaking::matchinfo const& info)
 {
-  classad::ClassAd const* ad = info.getAd();
+  classad::ClassAd const* ad = matchmaking::getAd(info).get();
   classad::Value value;
 
   ad->EvaluateExpr("GlueCEUniqueID", value);
@@ -221,7 +221,7 @@ get_CE_unique_id(matchmaking::match_info const& info)
 
 bool
 filter_gpbox_authorizations(
-  matchmaking::match_table_t& suitable_CEs,
+  matchmaking::matchtable& suitable_CEs,
   Connection& PEP_connection,
   std::string const& user_cert_file_name
 )
@@ -244,7 +244,7 @@ filter_gpbox_authorizations(
   std::string ce_names;
   std::string ce_tags;
 
-  for (matchmaking::match_table_t::iterator it = suitable_CEs.begin();
+  for (matchmaking::matchtable::iterator it = suitable_CEs.begin();
        it != suitable_CEs.end();
        ++it) {
     ce_names += it->first + '#';
@@ -304,10 +304,10 @@ filter_gpbox_authorizations(
             //will be a list of unique CE identifiers (if the related info 
             //is correctly published, if not the first added applies) so we can replace
             //the former unique key (CEID/VoViewID) with the real name for the CE
-            matchmaking::match_table_t::iterator it = suitable_CEs.find(answer_id);
+            matchmaking::matchtable::iterator it = suitable_CEs.find(answer_id);
             if (it != suitable_CEs.end()) {
               std::string CE_id = get_CE_unique_id(it->second);
-              matchmaking::match_info CE_ad(it->second);
+              matchmaking::matchinfo CE_ad(it->second);
               suitable_CEs.erase(answer_id);
               suitable_CEs[CE_id] = CE_ad;
               //or else (without defining CE_ad)
@@ -341,7 +341,7 @@ interact(
   std::string const& broker_subject,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
-  matchmaking::match_table_t& suitable_CEs)
+  matchmaking::matchtable& suitable_CEs)
 {
   boost::timer perf_timer;
 
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 
     print("broker subj",broker_subject);
 
-    matchmaking::match_table_t suitable_CEs;
+    matchmaking::matchtable suitable_CEs;
     std::vector<std::string> VOViewsVector;
 
     VOViewsVector.push_back("VO:aaa");
@@ -413,11 +413,16 @@ main(int argc, char *argv[])
     ad1->InsertAttr("GlueCEUniqueID", "ce01-lcg.cr.cnaf.infn.it:2119/aaa");
     classad_utilities::InsertAttrList(*ad1, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad1(ad1);
-    matchmaking::match_info __ad1(_ad1);
-    pair<std::string, matchmaking::match_info> element1(
-      std::string("ce01-lcg.cr.cnaf.infn.it:2119/blablabla"),
-      __ad1
+    matchmaking::matchinfo __ad1 =
+      boost::tuples::make_tuple(
+        std::make_pair(false, 0.0),
+        _ad1
+      );
+    pair<std::string, matchmaking::matchinfo> element1(
+        "ce01-lcg.cr.cnaf.infn.it:2119/blablabla",
+        __ad1
     );
+
     suitable_CEs.insert(element1);
 
     VOViewsVector.clear();
@@ -428,8 +433,12 @@ main(int argc, char *argv[])
     ad2->InsertAttr("GlueCEUniqueID", "gridit-ce-001.cnaf.infn.it:2119/bbb");
     classad_utilities::InsertAttrList(*ad2, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad2(ad2);
-    matchmaking::match_info __ad2(_ad2);
-    pair<std::string, matchmaking::match_info> element2(
+    matchmaking::matchinfo __ad2 = 
+      boost::tuples::make_tuple(
+        std::make_pair(false, 0.0),
+        _ad2
+      );
+    pair<std::string, matchmaking::matchinfo> element2(
       std::string("gridit-ce-001.cnaf.infn.it:2119/blablabla"),
       __ad2
     );
@@ -443,8 +452,12 @@ main(int argc, char *argv[])
     ad3->InsertAttr("GlueCEUniqueID", "pre-ce-01.cnaf.infn.it:2119/jobmanager-lcgpbs-infngrid_low02");
     classad_utilities::InsertAttrList(*ad3, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad3(ad3);
-    matchmaking::match_info __ad3(_ad3);
-    pair<std::string, matchmaking::match_info> element3(
+    matchmaking::matchinfo __ad3 =
+      boost::tuples::make_tuple(
+        std::make_pair(false, 0.0),
+        _ad3
+      );
+    pair<std::string, matchmaking::matchinfo> element3(
       std::string("pre-ce-01.cnaf.infn.it:2119/vkevnewlkvm/VO"),
       __ad3
     );
@@ -456,8 +469,12 @@ main(int argc, char *argv[])
     ad4->InsertAttr("GlueCEUniqueID", "pre-ce-01.cnaf.infn.it:2119/jobmanager-lcgpbs-infngrid_low03");
     classad_utilities::InsertAttrList(*ad4, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad4(ad4);
-    matchmaking::match_info __ad4(_ad4);
-    pair<std::string, matchmaking::match_info> element4(
+    matchmaking::matchinfo __ad4 =
+      boost::tuples::make_tuple(
+        std::make_pair(false, 0.0),
+        _ad4
+      );;
+    pair<std::string, matchmaking::matchinfo> element4(
       std::string("pre-ce-01.cnaf.infn.it:2119/zzzzdfbvfdlk"),
       __ad4
     );
@@ -471,8 +488,12 @@ main(int argc, char *argv[])
     ad5->InsertAttr("GlueCEUniqueID", "pre-ce-01.cnaf.infn.it:2119/jobmanager-lcgpbs-infngrid_low03");
     classad_utilities::InsertAttrList(*ad5, ACBR_tag, VOViewsVector);
     boost::shared_ptr<classad::ClassAd> _ad5(ad5);
-    matchmaking::match_info __ad5(_ad5);
-    pair<std::string, matchmaking::match_info> element5(
+    matchmaking::matchinfo __ad5 =
+      boost::tuples::make_tuple(
+        std::make_pair(false, 0.0),
+        _ad5
+      );
+      pair<std::string, matchmaking::matchinfo> element5(
       std::string("pre-ce-01.cnaf.infn.it:2119/yyyyyyfbvfdlk"),
       __ad5
     );

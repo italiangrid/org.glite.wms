@@ -22,7 +22,7 @@
 #include "glite/wms/broker/RBSimpleISMImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
 
-#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
+#include "glite/wms/brokerinfo/brokerinfo.h"
 
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
@@ -75,8 +75,6 @@ namespace helper {
 namespace broker {
 
 namespace {
-
-typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoISMImpl> BrokerInfo;
 
 std::string const helper_id("BrokerHelper");
 
@@ -203,23 +201,21 @@ std::auto_ptr<classad::ClassAd>
 f_resolve_mm(classad::ClassAd const& input_ad)
 try {
   std::auto_ptr<classad::ClassAd> result;
-  std::auto_ptr<glite::wms::broker::ResourceBrokerImpl> rb_impl;
 
   std::string vo(requestad::get_virtual_organisation(input_ad));
 
-  boost::scoped_ptr<BrokerInfo> BI(new BrokerInfo);
-
+  glite::wms::broker::ResourceBroker rb;
+  
   bool input_data_exists = false;
   std::vector<std::string> input_data;
   requestad::get_input_data(input_ad, input_data, input_data_exists);
   if (input_data_exists) {
-    rb_impl.reset(new glite::wms::broker::RBMaximizeFilesISMImpl(BI.get()));
+    rb.changeImplementation(
+      boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
+        new glite::wms::broker::RBMaximizeFilesISMImpl()
+      )
+    );
   } 
-  else {
-    rb_impl.reset(new glite::wms::broker::RBSimpleISMImpl());
-  }
-
-  glite::wms::broker::ResourceBroker rb(rb_impl.release());
 
   // If fuzzy_rank is true in the request ad we have
   // to use the stochastic selector...
@@ -227,9 +223,16 @@ try {
   if (requestad::get_fuzzy_rank(input_ad, use_fuzzy_rank) && use_fuzzy_rank) {
     rb.changeSelector("stochasticRankSelector");
   }
-
-  boost::scoped_ptr<matchmaking::match_table_t> suitable_CEs(rb.findSuitableCEs(&input_ad));
-
+  boost::tuple<
+    boost::shared_ptr<matchmaking::matchtable>,
+    boost::shared_ptr<brokerinfo::filemapping>,
+    boost::shared_ptr<brokerinfo::storagemapping>
+  > brokering_result(
+    rb.findSuitableCEs(&input_ad)
+  );
+  boost::shared_ptr<matchmaking::matchtable>& suitable_CEs(
+    boost::tuples::get<0>(brokering_result)
+  );
   if (suitable_CEs->empty()) {
     throw NoCompatibleCEs();
   }
@@ -251,24 +254,20 @@ try {
       PBOX_host_name,
       *suitable_CEs
     ))
-      Debug("Error during gpbox interaction");
+      Info("Error during gpbox interaction");
   }
 
-  if ( suitable_CEs->empty() ) {
+  if (suitable_CEs->empty()) {
     Info("Empty CE list after gpbox screening");
     throw NoCompatibleCEs();
   }
 #endif
 
-  matchmaking::match_const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
+  matchmaking::matchtable::const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
  
   std::string const ce_id(
-    utils::evaluate_attribute(*ce_it->second.getAd(),"GlueCEUniqueID")
+    utils::evaluate_attribute(*matchmaking::getAd(ce_it->second),"GlueCEUniqueID")
   );
-
-  // update the brokerinfo
-  BI->retrieveCloseSEsInfo(ce_id); // CE id
-  BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
 
   // Add the .Brokerinfo files to the InputSandbox
   bool input_sandbox_exists = false;
@@ -300,7 +299,13 @@ try {
     throw CannotCreateBrokerinfo(brokerinfo_path);
   }
 
-  boost::scoped_ptr<classad::ClassAd> biAd(BI->asClassAd());
+  boost::scoped_ptr<classad::ClassAd> biAd(
+    brokerinfo::make_brokerinfo_ad(
+      boost::tuples::get<1>(brokering_result),
+      boost::tuples::get<2>(brokering_result),
+      input_ad
+    )
+  );
   classad::ExprTree const* DACexpr = input_ad.Lookup("DataAccessProtocol");
   if (DACexpr) {
     biAd->Insert("DataAccessProtocol", DACexpr->Copy());
@@ -316,8 +321,8 @@ try {
   requestad::set_input_sandbox(*result, ISB);
 
   requestad::set_ce_id(*result, ce_id);
-  matchmaking::match_info const& ce_info = ce_it->second;
-  classad::ClassAd const* ce_ad = ce_info.getAd();
+  matchmaking::matchinfo const& ce_info = ce_it->second;
+  classad::ClassAd const* ce_ad = matchmaking::getAd(ce_info).get();
 
   try {
     std::string flatten_result = flatten_requirements(
