@@ -61,10 +61,6 @@ def debug(*args):
 				print "bye"
 				sys.exit(0)
 
-
-
-
-
 def comment(line, man):
 	""" Generate a comment line """
 	if man==MAN_TAG:
@@ -75,7 +71,6 @@ def comment(line, man):
 		return ""
 	elif man==PLT_TAG:
 		return ""
-
 
 def mainTitle(line, man):
 	""" Generate a title """
@@ -278,19 +273,26 @@ class RaskMan:
 		self.texFile = TXT_OUTPUT + command + ".tex"
 		self.wkiFile = WKI_OUTPUT + command + ".wki"
 		self.pltFile = PLT_OUTPUT # All output appended
-		if GENERATE_MAN:
-			self.manStream = open(self.manFile,"w")
-		if GENERATE_TXT:
-			self.texStream = open(self.texFile,"w")
-		if GENERATE_WKI:
-			self.wkiStream = open(self.wkiFile,"w")
-		if GENERATE_PLT:
-			self.pltStream = open(self.pltFile,"a+")
+		# Opening Input Streams
+		self.manStream=self.tryANDopen(GENERATE_MAN,self.manFile,"w")
+		self.texStream=self.tryANDopen(GENERATE_TXT,self.texFile,"w")
+		self.wkiStream=self.tryANDopen(GENERATE_WKI,self.wkiFile,"w")
+		self.pltStream=self.tryANDopen(GENERATE_PLT,self.pltFile,"a+")
+
 
 	def setCommon(self, common):
 		self.common  = common
 
-	#def writeCommon(self, common):
+	def tryANDopen(self, GENERATE_XYZ, xyzFile, mode):
+		try:
+			if GENERATE_XYZ:
+				return open(xyzFile,mode)
+		except IOError, err:
+			print "Unable to generate "+ xyzFile+ "\nPlease either disable that documentation part or allow writing that directory"
+			sys.exit(0)
+		return 0
+
+
 
 	def write(self, method,arg):
 		"""
