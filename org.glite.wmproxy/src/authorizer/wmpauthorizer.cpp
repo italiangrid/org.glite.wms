@@ -202,16 +202,16 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	}
 	
 	// VOMS Authorizing
+	string envFQAN = wmputilities::getEnvFQAN();
 	edglog(debug)<<"Delegated Proxy FQAN: "<<certfqan<<endl;
-	edglog(debug)<<"Request's Proxy FQAN: "<<wmputilities::getEnvFQAN()<<endl;
+	edglog(debug)<<"Request's Proxy FQAN: "<<envFQAN<<endl;
 	if (certfqan != "") {
 		this->certfqan = certfqan;
-		if (!compareFQAN(certfqan, wmputilities::getEnvFQAN())) {
-			edglog(info)<<"Client proxy FQAN does not match delegated proxy FQAN"
-				<<endl;
+		if (!compareFQAN(certfqan, envFQAN)) {
+			edglog(info)<<"Client proxy FQAN does not match delegated proxy FQAN"<<endl;
 			throw AuthorizationException(__FILE__, __LINE__,
 		    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	"Client proxy FQAN does not match delegated proxy FQAN");
+		    	"Client proxy FQAN ("+envFQAN+") does not match delegated proxy FQAN ("+certfqan+")");
 		}
 		// Gacl Authorizing
  		checkGaclUserAuthZ();
