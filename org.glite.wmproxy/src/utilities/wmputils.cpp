@@ -382,6 +382,7 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 }
 
 bool checkGlobusVersion(){
+	edglog_fn("wmpoperations::checkGlobusVersion");
 	const char *GLOBUS_LOCATION = "GLOBUS_LOCATION";
 	const string DEF_GLOBUS_LOCATION= FILE_SEP+"opt"+FILE_SEP+"globus";
 	string globusVersionFile="globus-version";
@@ -393,10 +394,17 @@ bool checkGlobusVersion(){
 		globusVersionFile= string(globusENV)  + FILE_SEP + "bin" + FILE_SEP + globusVersionFile ;
 	}else{
 		// ENV not found, set it up
+		edglog(error)<<GLOBUS_LOCATION<<" variable not found, set it manually" << endl ;
 		setenv(GLOBUS_LOCATION, DEF_GLOBUS_LOCATION.c_str(),1);
 		globusVersionFile= DEF_GLOBUS_LOCATION+ FILE_SEP + "bin" + FILE_SEP + globusVersionFile ;
+
 	}
-	if (!fileExists(globusVersionFile)){return false;}  // If file does not exists -> old version of globus detected
+	// If file does not exists -> old version of globus assumed
+	if (!fileExists(globusVersionFile)){
+		edglog(error)<<"globus-version binary not found" << endl ;
+		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+		return false;
+	}
 
 	// Set parameters and output/error files
 	string outfile = "/tmp/wmp_glversion_call.out."+ boost::lexical_cast<std::string>(getpid());
