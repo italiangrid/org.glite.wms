@@ -175,11 +175,11 @@ void Job::postOptionchecks(unsigned int proxyMinTime){
 	if (proxyTimeLeft<=0){
 		throw WmsClientException(__FILE__,__LINE__,
 			"postOptionchecks",DEFAULT_ERR_CODE,
-			"Proxy validity Error", "Certificate is expired");
+			"Proxy validity Error", "Your proxy credential has expired");
 	} else if (proxyTimeLeft<(int)proxyMinTime){
 		throw WmsClientException(__FILE__,__LINE__,
 			"postOptionchecks",DEFAULT_ERR_CODE,
-			"Proxy validity Error", "Certificate will expire in less than"
+			"Proxy validity Error", "Your proxy credential will expire in less than"
 			+ boost::lexical_cast<std::string>(proxyMinTime) + "minutes");
 	}
 
