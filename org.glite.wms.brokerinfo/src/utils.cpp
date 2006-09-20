@@ -58,12 +58,10 @@ std::pair<std::string, int>
 make_storage_info(classad::ClassAd const&ad)
 {
   std::string protocol;
-  std::string str_port;
+  int port;
   ad.EvaluateAttrString("GlueSEAccessProtocolType", protocol);
-  ad.EvaluateAttrString("GlueSEAccessProtocolPort", str_port);
-  return std::make_pair(
-    protocol, std::atoi(str_port.c_str())
-  );
+  ad.EvaluateAttrInt("GlueSEAccessProtocolPort", port);
+  return std::make_pair(protocol, port);
 }
 
 std::pair<std::string, std::string>
