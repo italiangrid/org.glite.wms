@@ -56,12 +56,8 @@ RBMaximizeFilesISMImpl::findSuitableCEs(
     classad::ClassAd jdl(*requestAd);
 
     // Collects SFNs and involved SEs.
-    boost::shared_ptr<brokerinfo::filemapping> fm(
-      brokerinfo::resolve_filemapping_info(jdl)
-    );
-    boost::shared_ptr<brokerinfo::storagemapping> sm(
-      brokerinfo::resolve_storagemapping_info(fm)
-    );
+    fm = brokerinfo::resolve_filemapping_info(jdl);
+    sm = brokerinfo::resolve_storagemapping_info(fm);
 
     // Selects only comptatible storage
     vector<string> dap;
@@ -167,7 +163,11 @@ RBMaximizeFilesISMImpl::findSuitableCEs(
       }
     }  
   }
-  return suitableCEs;
+  return boost::tuples::make_tuple(
+    suitableCEs,
+    fm,
+    sm
+  );
 }
 
 } // namespace broker

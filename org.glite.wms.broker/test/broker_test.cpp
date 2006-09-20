@@ -62,6 +62,7 @@ LineOption  options[] = {
     { 'c', 1, "conf_file", "\t use conf_file as configuration file. glite_wms.conf is the default" },
     { 'j', 1, "jdl_file", "\t use jdl_file as input file." },
     { 'C', no_argument, "show-ce-ad", "\t show computing elements classad representation" },
+    { 'B', no_argument, "show-brokerinfo-ad", "\t show brokerinfo classad representation" },
     { 'S', no_argument, "show-se-ad", "\t show storage elements classad representation" },
 //    { 'b', no_argument, "black-list",  "\t use configuration file black-list." },
     { 'v', no_argument, "verbose",     "\t be verbose" },
@@ -304,7 +305,17 @@ int main(int argc, char* argv[])
 
         edglog(debug) << " ----- BEST CE -------" << std::endl;
         edglog(debug) << best_ce_it->first << std::endl;
-
+        if (options.is_present('B')) {
+          edglog(debug) << " ----- BROKEINFO AD -------" << std::endl;
+          boost::scoped_ptr<classad::ClassAd> biAd(
+            glite::wms::brokerinfo::make_brokerinfo_ad(
+             boost::tuples::get<1>(brokering_result),
+             boost::tuples::get<2>(brokering_result),
+             *glite::wms::matchmaking::getAd(best_ce_it->second)
+            )
+          );
+          edglog(debug) << *biAd.get() << std::endl;
+        }
      }
      catch (glite::wms::matchmaking::InformationServiceError const& e) {
      
