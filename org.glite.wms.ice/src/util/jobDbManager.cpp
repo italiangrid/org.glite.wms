@@ -147,6 +147,7 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
   }
   
   m_valid = true;
+  m_env.set_flags( DB_LOG_AUTOREMOVE, 1 ); 
 }
 
 //____________________________________________________________________
