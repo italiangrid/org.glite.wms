@@ -37,7 +37,7 @@ make_input_file_names_section(brokerinfo::filemapping const& fm)
     classad::ClassAd fn_ad;
 
     string lfn(fi->first);
-    ad.InsertAttr("name", lfn);
+    fn_ad.InsertAttr("name", lfn);
 
     vector<string> const& sfns(fi->second);
     vector<string>::const_iterator sfni = sfns.begin();
@@ -102,9 +102,7 @@ make_storage_elements_section(brokerinfo::storagemapping const& sm)
       boost::tie(protocol_name, protocol_port) = *info_it;
       classad::ClassAd protocol_ad;
       protocol_ad.InsertAttr("name", protocol_name);
-      if(protocol_port) {
-        protocol_ad.InsertAttr("port", protocol_port);
-      }
+      protocol_ad.InsertAttr("port", protocol_port);
       protocol_exprs.push_back(protocol_ad.Copy());
     }
     s2p_ad.Insert("protocols", classad::ExprList::MakeExprList(protocol_exprs));
@@ -138,8 +136,8 @@ make_computing_element_section(classad::ClassAd const& ad)
     
     classad::ClassAd* ces(new classad::ClassAd);
     
-    ces->InsertAttr("CloseStorageElements", cse->Copy());
-    ces->InsertAttr("name", cei->Copy());
+    ces->Insert("CloseStorageElements", cse->Copy());
+    ces->Insert("name", cei->Copy());
     return ces;
   }
   return 0; 
@@ -155,18 +153,16 @@ make_brokerinfo_ad(
 )
 {
   classad::ClassAd biAd;
-  biAd.Insert(
-    "ComputingElement", 
-    make_computing_element_section(ad)
-  );
-  biAd.Insert(
-    "InputFNs",
-    make_input_file_names_section(*fm)
-  );
-  biAd.Insert(
-    "StorageElements",
-    make_storage_elements_section(*sm)
-  );
+  boost::shared_ptr<classad::ClassAd> section;
+  
+  section.reset(make_computing_element_section(ad));
+  if(section) biAd.Update(*section);
+  
+  section.reset(make_input_file_names_section(*fm));
+  if(section) biAd.Update(*section);
+
+  section.reset(make_storage_elements_section(*sm));
+  if(section) biAd.Update(*section);
   
   return (
     static_cast<classad::ClassAd*>(biAd.Copy())
