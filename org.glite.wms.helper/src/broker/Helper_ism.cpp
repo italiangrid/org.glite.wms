@@ -303,7 +303,7 @@ try {
     brokerinfo::make_brokerinfo_ad(
       boost::tuples::get<1>(brokering_result),
       boost::tuples::get<2>(brokering_result),
-      input_ad
+      *matchmaking::getAd(ce_it->second)
     )
   );
   classad::ExprTree const* DACexpr = input_ad.Lookup("DataAccessProtocol");

@@ -225,7 +225,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
              brokerinfo::make_brokerinfo_ad(
                boost::tuples::get<1>(brokering_result),
                boost::tuples::get<2>(brokering_result),
-               input_ad
+               *matchmaking::getAd(it->second)
              )
           );
         }
