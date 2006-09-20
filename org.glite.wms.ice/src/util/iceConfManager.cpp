@@ -47,7 +47,6 @@ iceConfManager::iceConfManager( )
     m_dguser                             = m_configuration->common()->dguser();
     m_WM_Input_FileList                  = m_configuration->wm()->input();
     m_ICE_Input_FileList                 = m_configuration->ice()->input();
-    m_CachePersistFile                   = m_configuration->ice()->cache_persist_file();
     m_ListenerPort                       = m_configuration->ice()->listener_port();
     m_LogFile                            = m_configuration->ice()->logfile();
     m_LogLevel                           = m_configuration->ice()->ice_log_level();

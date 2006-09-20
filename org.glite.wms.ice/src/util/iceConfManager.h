@@ -34,7 +34,7 @@ namespace glite {
           boost::scoped_ptr< glite::wms::common::configuration::Configuration > m_configuration;
 
 	  std::string m_HostProxyFile, 
-	    m_WM_Input_FileList, m_ICE_Input_FileList, m_CachePersistFile, m_LogFile,
+	    m_WM_Input_FileList, m_ICE_Input_FileList, m_LogFile,
 	    m_creamurlprefix, m_creamurlpostfix, m_curldelegprefix,
 	    m_curldelegpostfix, m_cemonurlprefix, m_cemonurlpostfix,
 	    m_icetopic, m_dguser, m_ice_host_cert, m_ice_host_key, m_persist_dir;
@@ -65,7 +65,6 @@ namespace glite {
 	  std::string getHostProxyFile( void ) const { return m_HostProxyFile; }
 	  std::string getWMInputFile( void ) const { return m_WM_Input_FileList; }
 	  std::string getICEInputFile( void ) const { return m_ICE_Input_FileList; }
-	  std::string getCachePersistFile( void ) const { return m_CachePersistFile; }
 	  std::string getLogFile( void ) const { return m_LogFile; }
 	  int         getListenerPort( void ) const { return m_ListenerPort; }
           int         getLogLevel( void ) const { return m_LogLevel; }
@@ -107,7 +106,6 @@ namespace glite {
 	  void setHostProxyFile( const std::string& p ) {  m_HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { m_WM_Input_FileList = p; }
 	  void setICEInputFile( const std::string& p )  { m_ICE_Input_FileList = p; }
-	  void setCachePersistFile( const std::string& p )  { m_CachePersistFile = p; }
 	  void setLogFile( const std::string& p )  { m_LogFile = p; }
 	  void setListenerPort( const int& p )  { m_ListenerPort = p; }
           void setLogLevel( const int& p )  { m_LogLevel = p; }
