@@ -49,6 +49,7 @@ WMProxyConfiguration conf;
 std::string sandboxdir_global;
 std::string filelist_global;
 glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
+bool globusDNS_global;
 
 
 namespace logger        = glite::wms::common::logger;
@@ -90,8 +91,7 @@ main(int argc, char* argv[])
 		fstream edglog_stream;
 		conf.init(opt_conf_file,
 			configuration::ModuleType::workload_manager_proxy);
-        string log_file = conf.wmp_config->log_file();
-
+		string log_file = conf.wmp_config->log_file();
 		// Checking for log file
 		if (!log_file.empty()) {
 			if (!ifstream(log_file.c_str())) {
@@ -120,13 +120,13 @@ main(int argc, char* argv[])
 		
 		// Initializing signal handler for 'graceful' stop/restart
 		//wmputilities::initsignalhandler();
-		
+
 		extern string sandboxdir_global;
 		sandboxdir_global = "";
 		extern string filelist_global;
 		filelist_global
 			= configuration::Configuration::instance()->wm()->input();
-			
+
 		extern eventlogger::WMPLBSelector lbselector;
 		lbselector = eventlogger::WMPLBSelector(conf.getLBServerAddressesPorts(),
 			conf.getWeightsCachePath(),
@@ -134,7 +134,11 @@ main(int argc, char* argv[])
 			conf.isServiceDiscoveryEnabled(),
 			conf.getServiceDiscoveryInfoValidity(),
 			conf.getLBServiceDiscoveryType());
-		
+
+		// check Globus Version to determine whether to convert DNS
+		extern bool globusDNS_global;
+		globusDNS_global = wmputilities::checkGlobusVersion();
+
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;
 		edglog(info)<<"Entering the FastCGI accept loop..."<<endl;

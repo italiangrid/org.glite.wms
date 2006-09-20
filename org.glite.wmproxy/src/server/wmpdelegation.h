@@ -58,7 +58,7 @@ public:
 	
 	/**
 	 * Destroys the delegated Proxy.
-	 * @param delegation_id the delegation id identifing the delegation session
+	 * @param delegation_id the delegation id identifying the delegation session
 	 */
 	static void destroyProxy(const std::string &delegation_id);
 	

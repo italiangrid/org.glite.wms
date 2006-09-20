@@ -85,6 +85,7 @@
 extern WMProxyConfiguration conf;
 extern std::string filelist_global;
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
+extern bool globusDNS_global;
 
 // DONE job output file
 //const std::string MARADONA_FILE = "Maradona.output";
@@ -561,9 +562,16 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri,
 	if (jad->hasAttribute(JDL::CERT_SUBJ)) {
 		jad->delAttribute(JDL::CERT_SUBJ);
 	}
-	jad->setAttribute(JDL::CERT_SUBJ,
+	if (globusDNS_global){
+		// NEW globus version: DN conversion is not needed anymore
+		const string dn=wmputilities::getUserDN() ;
+		edglog(debug)<<"DN conversion not needed, using original DN: "<< dn <<endl;
+		jad->setAttribute(JDL::CERT_SUBJ, dn);
+	}else{
+		// Old globus version: DN conversion is needed
+		jad->setAttribute(JDL::CERT_SUBJ,
 		wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
-	
+	}
 	edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
 	if (jad->hasAttribute(JDLPrivate::USERPROXY)) {
 		jad->delAttribute(JDLPrivate::USERPROXY);
@@ -1428,7 +1436,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				}
 			}
 			
-			// \/ Do not separate
+			// Do not separate
 			// Inserting sequence code
 			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
 			if (jad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
@@ -1438,8 +1446,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			
 			// jdltostart MUST contain last seqcode
 			jdltostart = jad->toString();
-			// /\
-			
+			//
 			delete jad;
 		} else {
 			WMPExpDagAd * dag = new WMPExpDagAd(jdl);

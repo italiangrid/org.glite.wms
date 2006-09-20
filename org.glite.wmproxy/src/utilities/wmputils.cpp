@@ -471,7 +471,7 @@ bool checkGlobusVersion(){
 		return false;
 	}
 	// This point should never be reached
-	edglog(fatal)<<"Assuming globus version is less than 3.0.2" << endl ;
+	edglog(fatal)<<"(Unreachable point reached!) Assuming globus version is less than 3.0.2" << endl ;
 	return false;
 }
 
@@ -493,7 +493,6 @@ convertDNEMailAddress(const string & dn)
 {
 	GLITE_STACK_TRY("getEnvFQAN()");
 	edglog_fn("wmputils::convertDNEMailAddress");
-	
 	edglog(debug)<<"Original DN: "<<dn<<endl;
 	string newdn = dn;
     string toreplace = "emailAddress";
