@@ -19,7 +19,6 @@
 
 // PROJECT INCLUDES
 #include "jobCache.h"
-//#include "jnlFileManager.h"
 #include "iceConfManager.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -49,8 +48,6 @@ using namespace glite::wms::ice::util;
 namespace apiutil = glite::ce::cream_client_api::util;
 
 jobCache* jobCache::s_instance = 0;
-//string jobCache::s_jnlFile = DEFAULT_JNLFILE;
-//string jobCache::s_snapFile = DEFAULT_SNAPFILE;
 string jobCache::s_persist_dir = DEFAULT_PERSIST_DIR;
 bool   jobCache::s_recoverable_db = false;
 boost::recursive_mutex jobCache::mutex;
@@ -65,6 +62,7 @@ jobCache::jobCacheTable::jobCacheTable( ) :
     m_cidMap( ),
     m_gidMap( )
 {
+
 }
 
 //______________________________________________________________________________
@@ -73,7 +71,7 @@ jobCache::jobCacheTable::iterator jobCache::jobCacheTable::putJob( const CreamJo
     // Note: the GridJobID of a job MUST always be defined; the creamJobId
     // could be initially empty, so we need to check this.
 
-    _gidMapType::iterator it = m_gidMap.find( c.getGridJobID() );
+    t_gidMapType::iterator it = m_gidMap.find( c.getGridJobID() );
     jobCacheTable::iterator pos;
     if ( it == m_gidMap.end() ) {
         // Inserts a new job
@@ -113,7 +111,7 @@ void jobCache::jobCacheTable::delJob( const jobCacheTable::iterator& pos )
 jobCache::jobCacheTable::iterator 
 jobCache::jobCacheTable::findJobByGID( const std::string& gid )
 {
-    _gidMapType::iterator it = m_gidMap.find( gid );
+    t_gidMapType::iterator it = m_gidMap.find( gid );
 
     if ( it != m_gidMap.end() ) {
         return it->second;
@@ -126,7 +124,7 @@ jobCache::jobCacheTable::findJobByGID( const std::string& gid )
 jobCache::jobCacheTable::iterator 
 jobCache::jobCacheTable::findJobByCID( const std::string& cid )
 {
-    _cidMapType::iterator it = m_cidMap.find( cid );
+    t_cidMapType::iterator it = m_cidMap.find( cid );
 
     if ( it != m_cidMap.end() ) {
         return it->second;
@@ -177,17 +175,11 @@ jobCache::jobCache( void )
   throw(ClassadSyntax_ex&) 
     : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
       m_jobs( )
-      //m_operation_counter(0)
 { 
-//    jnlFileManager *man = new jnlFileManager( s_jnlFile );
-//    m_jnlMgr.reset( man );
-//    loadSnapshot();
-//    loadJournal();
-
     jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db );
     if(!dbm->isValid()) {
-      cerr << "SEVERE: " << dbm->getInvalidCause() << endl;
-      abort();
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbm->getInvalidCause() << log4cpp::CategoryStream::ENDLINE );
+        abort();
     }
     m_dbMgr.reset( dbm );
     load(); 
@@ -202,32 +194,33 @@ jobCache::~jobCache( )
 //______________________________________________________________________________
 void jobCache::load( void ) throw(ClassadSyntax_ex&)
 {
-  // retrieve all records from DB
-  vector<string> records;
-  try{m_dbMgr->getAllRecords( records );}
-  catch(JobDbException& dbex) {
-    // this error is severe: an access to the
-    // underlying database failed 
-    cerr << "SEVERE: " << dbex.what() << endl;
-    abort();
-  }
-  for(vector<string>::const_iterator it=records.begin();
-      it != records.end();
-      ++it)
-  {
-    CreamJob cj( *it ); // can raise a ClassAdSyntax_ex
-    m_jobs.putJob( cj ); // update in-memory data structure
-  }
+    // retrieve all records from DB
+    vector<string> records;
+    try { 
+        m_dbMgr->getAllRecords( records );
+    } catch(JobDbException& dbex) {
+        // this error is severe: an access to the
+        // underlying database failed 
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
+        abort();
+    }
+    for(vector<string>::const_iterator it=records.begin();
+        it != records.end();
+        ++it)
+        {
+            CreamJob cj( *it ); // can raise a ClassAdSyntax_ex
+            m_jobs.putJob( cj ); // update in-memory data structure
+        }
 }
 
 //______________________________________________________________________________
-jobCache::iterator jobCache::put(const CreamJob& cj)// throw (jnlFile_ex&, JobDbException&/*, jnlFileReadOnly_ex&*/)
+jobCache::iterator jobCache::put(const CreamJob& cj)
 {    
-    try{
-      m_dbMgr->put(cj.serialize(), cj.getJobID(), cj.getGridJobID() );
+    try {
+        m_dbMgr->put(cj.serialize(), cj.getJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
-      cerr << "SEVERE: "<<dbex.what()<<endl;
-      abort();
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
+        abort();
     }
     return m_jobs.putJob( cj );
 }
@@ -256,7 +249,7 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 }
 
 //______________________________________________________________________________
-jobCache::iterator jobCache::erase( jobCache::iterator& it )// throw(JobDbException&)
+jobCache::iterator jobCache::erase( jobCache::iterator& it )
 {
     if ( it == m_jobs.end() ) {
         return it;
@@ -266,13 +259,12 @@ jobCache::iterator jobCache::erase( jobCache::iterator& it )// throw(JobDbExcept
     result++; // advance iterator
     string to_string = it->serialize();
     // job found, log operation and remove
-//    logOperation( ERASE, to_string );
 
     try{
       m_dbMgr->delByCid( it->getJobID() );
     } catch(JobDbException& dbex) {
-      cerr << "SEVERE: " << dbex.what() << endl;
-      abort();
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
+        abort();
     }
 
     m_jobs.delJob( it );    

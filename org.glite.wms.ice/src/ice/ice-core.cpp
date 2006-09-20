@@ -406,36 +406,6 @@ void Ice::removeRequest( unsigned int reqNum)
 }
 
 //____________________________________________________________________________
-void Ice::ungetRequest( unsigned int reqNum)
-{
-    wmsutils_ns::FileListMutex mx(m_flns);
-    wmsutils_ns::FileListLock  lock(mx);
-
-    string toResubmit = *m_requests[reqNum];
-    
-    boost::replace_first( toResubmit, "jobsubmit", "jobresubmit");
-    
-    try {
-        CREAM_SAFE_LOG(
-                       m_log_dev->infoStream()
-                       << "Ice::ungetRequest() - Putting ["
-                       << toResubmit << "] to WM's Input file"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        
-        m_flns.push_back(toResubmit);
-    } catch(std::exception& ex) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->fatalStream () 
-                       << "Ice::ungetRequest() - "
-                       << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-      exit(1);
-    }
-}
-
-//____________________________________________________________________________
 void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
 {
     wmsutils_ns::FileListMutex mx(m_flns);

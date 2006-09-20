@@ -98,7 +98,7 @@ namespace glite {
           std::vector<FLEit> m_requests;
           glite::wms::common::utilities::FLExtractor<std::string> m_fle;
           glite::wms::common::utilities::FileList<std::string> m_flns;
-          
+
           log4cpp::Category* m_log_dev;
 
 	  std::string    m_host_cert;
@@ -118,7 +118,6 @@ namespace glite {
           void clearRequests();
           void getNextRequests(std::vector<std::string>&);
           void removeRequest( unsigned int );
-          void ungetRequest( unsigned int );
           void startListener( int );
           void startPoller( int );
           void startLeaseUpdater( void );

@@ -24,14 +24,12 @@
 // ICE stuff
 #include "jnlFile_ex.h"
 #include "jobCacheOperation.h"
-//#include "jnlFileManager.h"
 #include "elementNotFound_ex.h"
 #include "creamJob.h"
 #include "jobDbManager.h"
 
 // GLite stuff
 #include "ClassadSyntax_ex.h"
-//#include "glite/ce/cream-client-api-c/job_statuses.h"
 
 // STL stuff
 #include <string>
@@ -45,13 +43,7 @@
 #include "boost/thread/recursive_mutex.hpp"
 #include "boost/scoped_ptr.hpp"
 
-// #define MAX_OPERATION_COUNTER 10
-
-//#define DEFAULT_JNLFILE "/tmp/jobCachePersistFile"
-//#define DEFAULT_SNAPFILE "/tmp/jobCachePersistFile.snapshot"
 #define DEFAULT_PERSIST_DIR "/tmp/ice_persist_dir"
-
-//namespace api = glite::ce::cream_client_api;
 
 namespace log4cpp {
   class Category;
@@ -61,15 +53,13 @@ namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
-              
+          
           //! jobCache data structure, which holds informations about jobs known to ICE
 	class jobCache {
 
 	private:
             static jobCache *s_instance; ///< The singleton instance of the jobCache class
 	    static bool s_recoverable_db;
-//            static std::string s_jnlFile; ///< The name of the journal file used to log operations on the cache
-//            static std::string s_snapFile; ///< The name of the cache snapshot file, used to save snapshots of the cache content
 
 	    static std::string s_persist_dir; ///< The name of the directory used to save persistency information
  
@@ -93,20 +83,20 @@ namespace glite {
           class jobCacheTable {
           protected:
               // Some useful typedefs, for internal use only...
-              typedef std::list< CreamJob > _jobsType;
-              typedef std::map< std::string, _jobsType::iterator > _cidMapType;
-              typedef std::map< std::string, _jobsType::iterator > _gidMapType;
+              typedef std::list< CreamJob > t_jobsType;
+              typedef std::map< std::string, t_jobsType::iterator > t_cidMapType;
+              typedef std::map< std::string, t_jobsType::iterator > t_gidMapType;
 
-              _jobsType m_jobs; ///< Jobs in the jobCacheTable are stored in a list
-              std::map< std::string, _jobsType::iterator > m_cidMap; ///< This hash table associates Cream jobIDs with job positions in the list _jobs
-              std::map< std::string, _jobsType::iterator > m_gidMap; ///< This hash table associates Grid jobIDs with job positions in the list _jobs
+              t_jobsType m_jobs; ///< Jobs in the jobCacheTable are stored in a list
+              std::map< std::string, t_jobsType::iterator > m_cidMap; ///< This hash table associates Cream jobIDs with job positions in the list _jobs
+              std::map< std::string, t_jobsType::iterator > m_gidMap; ///< This hash table associates Grid jobIDs with job positions in the list _jobs
 
 
           public:
 
               // Typedefs
-              typedef _jobsType::iterator iterator; ///< The standard (modifying) iterator used for containers
-              typedef _jobsType::const_iterator const_iterator; ///< The standard (non-modifying) iterator used for containers
+              typedef t_jobsType::iterator iterator; ///< The standard (modifying) iterator used for containers
+              typedef t_jobsType::const_iterator const_iterator; ///< The standard (non-modifying) iterator used for containers
 
               jobCacheTable();
               virtual ~jobCacheTable() { };             
@@ -189,40 +179,13 @@ namespace glite {
 
           jobCacheTable m_jobs; ///< The in-core data structure holding the set of jobs
 
-//	  int m_operation_counter; ///< Number of operations logged on the journal
-
-          /**
-           * Loads the journal handled by the jnlMgr object.
-           */
-//	  void loadJournal(void) 
-//	    throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&);
-
-
 	  void load( void ) throw(ClassadSyntax_ex&);
 	  
-          /**
-           * Loads the snapshot handled by the jnlMgr object.
-           */
-//	  void loadSnapshot(void) 
-//	    throw(jnlFile_ex&, ClassadSyntax_ex&);
-
-//	  boost::scoped_ptr< glite::wms::ice::util::jnlFileManager > m_jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
 	  boost::scoped_ptr< glite::wms::ice::util::jobDbManager > m_dbMgr;
 	  
 	protected:
 	  jobCache( )
 	    throw(ClassadSyntax_ex&);
-
-          /**
-           * Logs an operation to the journal manager. The operation
-           * count is increased; if the maximum number of operations
-           * is reached, the journal file is truncated, and the cache
-           * content is stored on disk.
-           *
-           * @param op the operation to log
-           * @param param the parameters to that operation
-           */
-//          void logOperation( const operation& op, const std::string& param );
 
 	public:
 
@@ -244,15 +207,6 @@ namespace glite {
            */ 
 	  static jobCache* getInstance() throw(ClassadSyntax_ex&);
 
-          /**
-           * Changes the path and filename of the journal file. This method,
-           * if used at all, must be called _before_ the first invokation of
-           * the getInstance() method.
-           *
-           * @param jnl the full pathname of the journal file
-           */
-//	  static void setJournalFile(const std::string& jnl) { s_jnlFile = jnl; }
-
 	  // Call this once and before invokation of getInstance()
 	  static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
 
@@ -264,14 +218,6 @@ namespace glite {
            * @param dir the directory containing the database of persistency
            */
 	  static void setPersistDirectory(const std::string& dir) { s_persist_dir = dir; }  
-          /**
-           * Changes the path and filename of the snapshot file. This method,
-           * if used at all, must be called _before_ the first invokation of
-           * the getInstance() method.
-           *
-           * @param snap the full pathname of the snapshot file
-           */
-//	  static void setSnapshotFile(const std::string& snap) { s_snapFile = snap; }
 
           /**
            * Destructor.
@@ -293,7 +239,7 @@ namespace glite {
            * overwritten
            * @return an iterator to the inserted job
            */
-	  iterator put(const CreamJob& c );// throw(jnlFile_ex&, JobDbException&/*, jnlFileReadOnly_ex&*/);
+	  iterator put(const CreamJob& c );
 
           /**
            * Looks up a job by its cream Job ID.
@@ -325,7 +271,7 @@ namespace glite {
            * @return an iterator to the element immediately following
            * the one being removed; end() if it==end().
            */
-          iterator erase( iterator& it );// throw(JobDbException&);
+          iterator erase( iterator& it );
 
 
           // Accessors used to expose jobCacheTable iterator methods
@@ -366,15 +312,7 @@ namespace glite {
               return m_jobs.end();
           };
 
-          /**
-           * Gets the list of all IDs of active CREAM jobs.
-           *
-           * @param target the vector where CREAM IDs will be stored
-           */           
-	  // void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
-
         protected:	  
-//	  void dump(void) throw(jnlFile_ex&);
 	  void print(std::ostream&);
 	};
       }
