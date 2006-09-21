@@ -50,6 +50,9 @@ namespace apiutil = glite::ce::cream_client_api::util;
 jobCache* jobCache::s_instance = 0;
 string jobCache::s_persist_dir = DEFAULT_PERSIST_DIR;
 bool   jobCache::s_recoverable_db = false;
+bool   jobCache::s_auto_purge_log = false;
+bool   jobCache::s_read_only = false;
+
 boost::recursive_mutex jobCache::mutex;
 
 // 
@@ -176,10 +179,10 @@ jobCache::jobCache( void )
     : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
       m_jobs( )
 { 
-    jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db );
+    jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db, s_auto_purge_log, s_read_only );
     if(!dbm->isValid()) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbm->getInvalidCause() << log4cpp::CategoryStream::ENDLINE );
-        abort();
+        sleep(1000);//abort();
     }
     m_dbMgr.reset( dbm );
     load(); 

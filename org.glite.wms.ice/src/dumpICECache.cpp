@@ -45,6 +45,8 @@ int main(int argc, char*argv[]) {
   string jcachedir = iceUtil::iceConfManager::getInstance()->getCachePersistDirectory();
   iceUtil::jobCache::setPersistDirectory( jcachedir );
   iceUtil::jobCache::setRecoverableDb( false );
+  iceUtil::jobCache::setAutoPurgeLog( false );
+  iceUtil::jobCache::setReadOnly( true );
   
   iceUtil::jobCache* _jCache = iceUtil::jobCache::getInstance();
 

@@ -37,7 +37,7 @@ int iceUtil::cursorWrapper::get(Dbt* key, Dbt* data)
 //---------------- jobDbManager -------------------------------
 
 //____________________________________________________________________
-iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
+iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, const bool autopurge, const bool read_only)
   : m_env(0),
     m_envHome( envHome ), // The directory pointed by
     			  // envHome MUST exist
@@ -87,6 +87,22 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
   struct statfs fsinfo;
   statfs( m_envHome.c_str(), &fsinfo );
   
+  int envFlags;
+
+//   if( read_only ) {
+//     envFlags = DB_RDONLY | DB_INIT_TXN | DB_INIT_LOG | DB_INIT_MPOOL;
+//     
+//   } else {
+    // FIXME: FOR NOW we do not use the flag DB_THREAD because
+    // the concurrency protection will be made at higher level
+    // (by the client of this class, i.e. by the jobCache object)
+    envFlags = DB_CREATE | DB_INIT_LOCK | 
+		   DB_INIT_LOG | DB_INIT_MPOOL | DB_INIT_TXN;
+    if( recover ) envFlags |= DB_RECOVER; // this flags causes an exception raising by
+					  // the DbEnv::txn_begin call when a another
+					  // process opens the database that is already
+					  // handled by the process doing the txn_begin call.
+//  }
   
 
   // FIXME: for now we do not use the flag DB_THREAD because
@@ -94,15 +110,7 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
   // (by the client of this class, i.e. by the jobCache object)
   try {
   
-    // FIXME: FOR NOW we do not use the flag DB_THREAD because
-    // the concurrency protection will be made at higher level
-    // (by the client of this class, i.e. by the jobCache object)
-    int envFlags = DB_CREATE | DB_INIT_LOCK | 
-		   DB_INIT_LOG | DB_INIT_MPOOL | DB_INIT_TXN;
-    if( recover ) envFlags |= DB_RECOVER; // this flags causes an exception raising by
-					  // the DbEnv::txn_begin call when a another
-					  // process opens the database that is already
-					  // handled by the process doing the txn_begin call.
+
 
     
     m_env.open(m_envHome.c_str(), envFlags, 0);
@@ -117,20 +125,28 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
     //int psize = 4 * fsinfo.f_bsize;
     
     //cout << endl<< "*** Setting database pagesize to ["<< psize <<"]"<<endl<<endl;
-    m_creamJobDb->set_pagesize( fsinfo.f_bsize );
-    m_cidDb->set_pagesize( fsinfo.f_bsize );
-    m_gidDb->set_pagesize( fsinfo.f_bsize );
-    
+    if(!read_only) {
+      m_creamJobDb->set_pagesize( fsinfo.f_bsize );
+      m_cidDb->set_pagesize( fsinfo.f_bsize );
+      m_gidDb->set_pagesize( fsinfo.f_bsize );
+    }
     // -------------------------------------------------------
     
     // FIXME: for now we do not use the flag DB_THREAD because
     // the concurrency protection will be made at higher level
     // (by the client of this class, i.e. by the jobCache object)
-    m_creamJobDb->open(NULL, "cream_job_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT,0);
-    m_cream_open = true;
-    m_cidDb->open(NULL, "cream_jobid_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT,0);
+    if(!read_only) {
+      m_creamJobDb->open(NULL, "cream_job_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT, 0);
+      m_cidDb->open(NULL, "cream_jobid_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT, 0);
+      m_gidDb->open(NULL, "grid_jobid_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT, 0);
+    } else {
+      m_creamJobDb->open(NULL, "cream_job_table.db", NULL, DB_BTREE, DB_RDONLY, 0);
+      m_cidDb->open(NULL, "cream_jobid_table.db", NULL, DB_BTREE, DB_RDONLY, 0);
+      m_gidDb->open(NULL, "grid_jobid_table.db", NULL, DB_BTREE, DB_RDONLY, 0);
+    }
+    
+    m_cream_open = true;  
     m_cid_open = true;
-    m_gidDb->open(NULL, "grid_jobid_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT,0);
     m_gid_open = true;
     
     // -------------------------------------------------------
@@ -147,7 +163,11 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, bool recover )
   }
   
   m_valid = true;
-  m_env.set_flags( DB_LOG_AUTOREMOVE, 1 ); 
+  
+  
+  if( autopurge && !read_only) 
+    m_env.set_flags( DB_LOG_AUTOREMOVE, 1 ); 
+  
 }
 
 //____________________________________________________________________
