@@ -467,19 +467,31 @@ bool checkGlobusVersion(){
 	}
 
 	try{
-		if (
-			boost::lexical_cast<int>(tokens[0])>=3  &&
-			boost::lexical_cast<int>(tokens[1])>=0  &&
-			boost::lexical_cast<int>(tokens[2])>=2
-		){
-			edglog(debug)<<"Detected Globus version greater than 3.0.2: " << globusVersionString << endl ;
+		// Check The version
+		int glmaj, glmed, glmin;
+		const int GLMAJ=3;
+		const int GLMED=0;
+		const int GLMIN=2;
+		bool glDetected_b=false;
+		glmaj=boost::lexical_cast<int>(tokens[0]);
+		glmed=boost::lexical_cast<int>(tokens[1]);
+		glmin=boost::lexical_cast<int>(tokens[2]);
+
+		if (glmaj>GLMAJ){glDetected_b=true; }
+		else if (glmaj==GLMAJ){
+			if (glmed>GLMED){glDetected_b=true; }
+			else if (glmed==GLMED){if (glmin>=GLMIN){glDetected_b=true;}}
+		}
+
+		if (glDetected_b){
+			edglog(debug)<<"Detected Globus version greater than/equal to 3.0.2: " << globusVersionString << endl ;
 			return true;
 		}else{
 			edglog(debug)<<"Detected Globus version less than 3.0.2: " << globusVersionString << endl ;
 			return false;
 		}
 	}catch(boost::bad_lexical_cast &exc) {
-		edglog(error)<<"Unable to cast globus version"<< globusVersionString <<endl;
+		edglog(error)<<"Unable to cast globus version "<< globusVersionString <<endl;
 		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
 		return false;
 	}
