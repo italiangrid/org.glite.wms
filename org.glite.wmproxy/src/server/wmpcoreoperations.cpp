@@ -1904,13 +1904,13 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	
 	//** Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
+	authorizer::WMPAuthorizer *auth =
 		new authorizer::WMPAuthorizer();
-		
+
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
+
 	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
 	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
 	if (vomsproxy.hasVOMSExtension()) {
@@ -1919,38 +1919,40 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		auth->authorize("", job_id);
 	}
 	delete auth;
-	
+
 	string jobpath = wmputilities::getJobDirectoryPath(*jid);
-  
+
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-	
+
 	// Setting user proxy
 	wmplogger.setUserProxy(delegatedproxy);
-	
+
 	// Getting job status to check if cancellation is possible
 	JobStatus status = wmplogger.getStatus(false);
-	
+
 	if (status.getValBool(JobStatus::CANCELLING)) {
 		edglog(error)<<"Cancel has already been requested"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobCancel()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 			"Cancel has already been requested");
 	}
-	
+
 	// Getting type from jdl
 	string seqcode = "";
 	JobId * parentjid = new JobId(status.getValJobId(JobStatus::PARENT_JOB));
 	if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
+		// Load parent JDL and check TYPE
 		string parentjdl = wmputilities::readTextFile(
 			wmputilities::getJobJDLExistingStartPath(*parentjid));
-		
 		Ad * parentad = new Ad();
 		int type = getType(parentjdl, parentad);
+
+/* bug #19652 fix: WMProxy tries to purge DAG node upon cancellation
 		if ((type != TYPE_COLLECTION)
 				&& !parentad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARAMETRIC)) {
 			string msg = "the job is a DAG subjob. The parent is: "
@@ -1959,6 +1961,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			throw JobOperationException(__FILE__, __LINE__,
 				"jobCancel()", wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 		}
+*/
 		delete parentad;
 	} else {
 		// Getting sequence code from jdl
@@ -1989,37 +1992,42 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		.init(filequeue, &wmplogger);
 					
 	string envsandboxpath;
-	
+
 	switch (status.status) {
 		case JobStatus::SUBMITTED: //TBD check this state with call to LBProxy (use events)
 			// The register of the job has been done
-			
-			//wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
-			//	"Cancelled by user", true, true);
-			edglog(debug)<<"Trying to log sync ABORT..."<<endl;
-			wmplogger.setSequenceCode(ABORT_SEQ_CODE);
-			if (!wmplogger.logAbortEventSync("Cancelled by user")) {
-				// If log fails no jobPurge is performed
-				// jobPurge would find state different from ABORT and will fail
-				if (!wmputilities::isOperationLocked(
-						wmputilities::getJobStartLockFilePath(*jid))) {
-					// purge is done if jobStart is not in progress
-					edglog(debug)<<"jobStart operation is not in progress"<<endl;
-					edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
-					jobPurgeResponse jobPurge_response;
-					jobpurge(jobPurge_response, jid, false);
+			if (!((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
+					// #19652 fix: Dag nodes cannot be purged locally,
+					// becatuse the request have to reached WM
+				edglog(debug)<<"Trying to log sync ABORT..."<<endl;
+				wmplogger.setSequenceCode(ABORT_SEQ_CODE);
+				if (!wmplogger.logAbortEventSync("Cancelled by user")) {
+					// If log fails no jobPurge is performed
+					// jobPurge would find state different from ABORT and will fail
+					if (!wmputilities::isOperationLocked(
+							wmputilities::getJobStartLockFilePath(*jid))) {
+						// purge is done if jobStart is not in progress
+						edglog(debug)<<"jobStart operation is not in progress"<<endl;
+						edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
+						jobPurgeResponse jobPurge_response;
+						jobpurge(jobPurge_response, jid, false);
+					} else {
+						edglog(debug)<<"jobStart operation is in progress, "
+							"skipping jobPurge"<<endl;
+					}
 				} else {
-					edglog(debug)<<"jobStart operation is in progress, "
-						"skipping jobPurge"<<endl;
+					edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
 				}
-			} else {
-				edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
+
+				//TBC should I check if MyProxyServer was present in jdl??
+				edglog(debug)<<"Unregistering Proxy renewal..."<<endl;
+				wmplogger.unregisterProxyRenewal();
+				break;
+			} else{
+				// it is a NODE, continuing with
+				// Normal procedure (do not perform purge)
+				edglog(debug)<<"SUBMITTED node of a dag: purge not performed"<<endl;
 			}
-			
-			//TBC should I check if MyProxyServer was present in jdl??
-			edglog(debug)<<"Unregistering Proxy renewal..."<<endl;
-			wmplogger.unregisterProxyRenewal();
-			break;
 		case JobStatus::WAITING:
 		case JobStatus::READY:
 		case JobStatus::SCHEDULED:
