@@ -406,28 +406,31 @@ bool checkGlobusVersion(){
 		return false;
 	}
 
-	// Set parameters and output/error files
+	// prepare Std output/error files
 	string outfile = "/tmp/wmp_glversion_call.out."+ boost::lexical_cast<std::string>(getpid());
-	// edglog(debug)<<"Globus Version output file: "<<outfile<<endl;  // TBD NEEDED?
+	//edglog(debug)<<"Globus Version output file: "<<outfile<<endl;
 	int fdO = open(outfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
-	dup2(fdO, 2);
+	dup2(fdO, 1);
 	close(fdO);
 
-	// Creating stderr file
 	string errorfile = "/tmp/wmp_glversion_call.err."+ boost::lexical_cast<std::string>(getpid());
-	// edglog(debug)<<"Globus Version error file: "<<errorfile<<endl;  // TBD NEEDED?
+	//edglog(debug)<<"Globus Version error file: "<<errorfile<<endl;
 	int fdE = open(errorfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
 	dup2(fdE, 2);
 	close(fdE);
+
+	// prepare input parameters
 	vector<string> params;
-	params.push_back(" > ");
+	params.push_back("1>");
 	params.push_back(outfile);
-	params.push_back(" 2> ");
+	params.push_back("2>");
 	params.push_back(errorfile);
+
 	// System call
 	string errormsg = "";
-	edglog(debug)<<"Executing load script file: "<<globusVersionFile<<endl;
+	edglog(debug)<<"Executing script file: "<<globusVersionFile<<endl;
 	int outcome=doExecv(globusVersionFile, params, errormsg);
+
 	switch (outcome){
 		case 0:
 			// No error, break and continue
@@ -443,10 +446,11 @@ bool checkGlobusVersion(){
 			edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
 			return false;
 	}
-	remove(errorfile.c_str());
 	// IF this point is reached, no error found
 	// Try and Parse output result
 	string globusVersionString=readTextFile(outfile);
+	remove(errorfile.c_str());
+	remove(outfile.c_str());
 	boost::char_separator<char> separator(".");
 	boost::tokenizer<boost::char_separator<char> > tok(globusVersionString,separator);
 	// check there are 3 tokens:
@@ -461,6 +465,7 @@ bool checkGlobusVersion(){
 		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
 		return false;
 	}
+
 	try{
 		if (
 			boost::lexical_cast<int>(tokens[0])>=3  &&
@@ -470,7 +475,7 @@ bool checkGlobusVersion(){
 			edglog(debug)<<"Detected Globus version greater than 3.0.2: " << globusVersionString << endl ;
 			return true;
 		}else{
-			edglog(debug)<<"Detected Globus version greater than 3.0.2: " << globusVersionString << endl ;
+			edglog(debug)<<"Detected Globus version less than 3.0.2: " << globusVersionString << endl ;
 			return false;
 		}
 	}catch(boost::bad_lexical_cast &exc) {
@@ -1002,7 +1007,7 @@ doExecv(const string &command, vector<string> &params, string &errormsg)
 	}
 	argvs[i] = (char *) 0;
 	
-	edglog(debug)<<"Forking process..."<<endl;
+	edglog(debug)<<"Forking process..." << endl;
 	switch (fork()) {
 		case -1:
 			// Unable to fork
