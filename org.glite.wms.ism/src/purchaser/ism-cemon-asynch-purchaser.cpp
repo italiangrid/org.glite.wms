@@ -105,6 +105,10 @@ void ism_cemon_asynch_purchaser::do_purchase()
 	    // ...and depending on the result parse opportunely the message
 	    // supplied with...
 	    Topic* topic = consumer->getEventTopic();
+            if (!topic->getNumOfDialects()) {
+              Warning("Received Topic contains no dialect");
+              continue;
+            }
             string dialect(topic->getDialectAt(0)->getDialectName());
 
 	    gluece_info_container_type gluece_info_container;
