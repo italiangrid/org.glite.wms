@@ -82,16 +82,19 @@ start()
     GET_CONF=${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration
     if [ -f ${GET_CONF} ]; then
        err_logfile=`${GET_CONF} ICE.logfile`;
+       su_dguser=`${GET_CONF} Common.DGUser`;
     else
        err_logfile="/dev/null"; # redirects output to /dev/null
+       su_dguser="root"; # default root user
     fi
+
 
     echo -n "starting ICE... "
     if running; then
         echo "ok (already running)"
     else
         rm -f ${pid_file}
-        ${binpath} --conf ${conf_file} --daemon ${pid_file} > ${err_logfile} 2>&1
+        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} > ${err_logfile} 2>&1"
         # there is a race condition due to some delay between becoming
         # a daemon (hence returning control to this script) and
         # writing the pid file; the following sleep should be enough
