@@ -8,8 +8,6 @@
 
 MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
-#GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
-
 lib_LTLIBRARIES = libglite_wms_manager_server.la 
 
 libexec_SCRIPTS = glite-wms-dag-post.sh
@@ -20,7 +18,6 @@ noinst_PROGRAMS = \
 	glite-wms_input_generator
 
 noinst_HEADERS = \
-        DispatcherFromFileList.h \
         RequestHandler.h \
 	signal_handling.h \
 	listmatch.h \
@@ -36,10 +33,8 @@ libglite_wms_manager_server_la_SOURCES = \
 	plan.cpp \
 	DAGManHelper.h \
 	DAGManHelper.cpp \
-	DispatcherFromFileList.h \
-	DispatcherFromFileList.cpp \
-	DispatcherFromJobDir.h \
-	DispatcherFromJobDir.cpp \
+	dispatcher.h \
+	dispatcher.cpp \
 	RequestHandler.h \
 	RequestHandler.cpp \
 	WMReal.h \
@@ -48,14 +43,22 @@ libglite_wms_manager_server_la_SOURCES = \
 	signal_handling.cpp \
 	match_utils.h \
 	match_utils.cpp \
-	filelist_recovery.h \
-	filelist_recovery.cpp \
         lb_utils.h \
         lb_utils.cpp \
 	dynamic_library.h \
 	dynamic_library.cpp \
 	submission_utils.h \
-	submission_utils.cpp
+	submission_utils.cpp \
+	input_reader.h \
+	input_reader.cpp \
+	filelist_reader.h \
+	filelist_reader.cpp \
+	jobdir_reader.h \
+	jobdir_reader.cpp
+
+# 	filelist_recovery.h \
+# 	filelist_recovery.cpp \
+#
 
 glite_wms_planner_SOURCES = glite-wms-planner.cpp
 glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic
@@ -90,22 +93,22 @@ glite_wms_planner_LDADD   = \
 	$(GLOBUS_GSS_THR_LIBS) \
 	$(BOOST_LIBS)
 
-glite_wms_input_generator_SOURCES = \
-	input_generator.cpp
-glite_wms_input_generator_LDADD = \
-        $(GLITE_WMS_COMMON_CONF_LIBS) \
-        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLITE_WMSUTILS_JOBID_LIBS) \
-        $(GLITE_WMSUTILS_CJOBID_LIBS) \
-	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-        $(GLITE_JDL_LIBS) \
-	$(GLITE_LB_THR_CLIENT_LIBS) \
-        $(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-        $(ARES_LIBS) \
-	$(CLASSAD_LIBS) \
-	$(GLOBUS_GSS_THR_LIBS) \
-        $(BOOST_LIBS)
+# glite_wms_input_generator_SOURCES = \
+# 	input_generator.cpp
+# glite_wms_input_generator_LDADD = \
+#         $(GLITE_WMS_COMMON_CONF_LIBS) \
+#         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+#         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+# 	$(GLITE_WMSUTILS_JOBID_LIBS) \
+#         $(GLITE_WMSUTILS_CJOBID_LIBS) \
+# 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+#         $(GLITE_JDL_LIBS) \
+# 	$(GLITE_LB_THR_CLIENT_LIBS) \
+#         $(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+#         $(ARES_LIBS) \
+# 	$(CLASSAD_LIBS) \
+# 	$(GLOBUS_GSS_THR_LIBS) \
+#         $(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
@@ -113,8 +116,10 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/common \
         $(CLASSAD_CFLAGS) \
+        $(LOG4CXX_CFLAGS) \
         $(BOOST_CFLAGS) \
-	-DGLITE_WMS_HAVE_LBPROXY
+	-DGLITE_WMS_HAVE_LBPROXY \
+	-DGLITE_WMS_HAVE_BULK_MM
 
 EXTRA_DIST = glite-wms-dag-post.sh.in
 
