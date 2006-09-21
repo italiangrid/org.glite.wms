@@ -41,7 +41,7 @@
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 #include "quota.h"
-#include "glite/wms/purger/purger.h" 
+#include "glite/wms/purger/purger.h"
 #include "glite/wms/common/utilities/quota.h"
 
 // Exceptions
@@ -56,6 +56,7 @@
 
 // Global variables for configuration attributes
 extern std::string sandboxdir_global;
+extern bool globusDNS_global;
 
 namespace logger		  = glite::wms::common::logger;
 namespace commonutilities = glite::wms::common::utilities;
@@ -74,7 +75,7 @@ namespace utilities {
 #ifdef WIN
 	// Windows File Separator
 	const string FILE_SEP = "\\";
-#else 
+#else
 	// Linux File Separator
    	const string FILE_SEP ="/";
 #endif
@@ -518,6 +519,11 @@ convertDNEMailAddress(const string & dn)
 {
 	GLITE_STACK_TRY("getEnvFQAN()");
 	edglog_fn("wmputils::convertDNEMailAddress");
+	if (globusDNS_global){
+		//NO conversion needed, return the original
+		edglog(debug)<<"No Conversion needed, use original DN: "<<dn<<endl;
+		return dn;
+	}
 	edglog(debug)<<"Original DN: "<<dn<<endl;
 	string newdn = dn;
     string toreplace = "emailAddress";
