@@ -56,7 +56,7 @@
                                                        
         <property name="build.package.description" value="Interface for CREAM environment" />
 
-        <property name="build.rpm.spec.requires" value="glite-ce-monitor-client-api-c glite-ce-cream-client-api-c" />
+        <property name="build.rpm.spec.requires" value="glite-ce-monitor-client-api-c glite-ce-cream-client-api-c glite-security-voms-api-c" />
 
         <property name="m4files.list" value="db.m4 globus.m4 glite.m4 glite_lb.m4 optimize.m4 boost.m4 gsoap.m4 classad.m4 glite_wmsutils.m4 log4cpp.m4 glite_security.m4 glite_wms_common.m4 glite_wms.m4 gridsite.m4 xml2.m4"/>	
 		
