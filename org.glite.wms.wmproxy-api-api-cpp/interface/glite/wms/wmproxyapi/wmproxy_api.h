@@ -10,6 +10,7 @@
 */
 /** \mainpage Workload Manager Proxy API C++
 *
+* \version 3.1
 * \section intro_sec Description
 * <p>
 * This User Interface API supplies the client applications with a set of  functions providing an easy access to the WMProxy Web Services.<BR>
