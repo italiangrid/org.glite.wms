@@ -403,7 +403,7 @@ bool checkGlobusVersion(){
 	// If file does not exists -> old version of globus assumed
 	if (!fileExists(globusVersionFile)){
 		edglog(error)<<"globus-version binary not found" << endl ;
-		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+		edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
 		return false;
 	}
 
@@ -429,7 +429,7 @@ bool checkGlobusVersion(){
 
 	// System call
 	string errormsg = "";
-	edglog(debug)<<"Executing script file: "<<globusVersionFile<<endl;
+	edglog(debug)<<"Executing Globus version script file: "<<globusVersionFile<<endl;
 	int outcome=doExecv(globusVersionFile, params, errormsg);
 
 	switch (outcome){
@@ -437,14 +437,14 @@ bool checkGlobusVersion(){
 			// No error, break and continue
 			break;
 		case -1:
-			edglog(error)<<"Error while executing load script file:\n" <<errormsg<<endl;
+			edglog(error)<<"Error while executing Globus version script file:\n" <<errormsg<<endl;
 			edglog(error)<<"Error code: "<<outcome<<endl;
-			edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+			edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
 			return false;
 		default:
-			edglog(error)<<"Unable to execute load script file:\n"<<errormsg<<endl;
+			edglog(error)<<"Unable to execute Globus version script file:\n"<<errormsg<<endl;
 			edglog(error)<<"Error code: "<<outcome<<endl;
-			edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+			edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
 			return false;
 	}
 	// IF this point is reached, no error found
@@ -462,8 +462,8 @@ bool checkGlobusVersion(){
 			tokens.push_back(string(*it));
 	}
 	if (tokens.size() !=3){
-		edglog(error)<<"Unable to parse globus version"<< globusVersionString <<endl;
-		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+		edglog(error)<<"Unable to parse Globus version"<< globusVersionString <<endl;
+		edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
 		return false;
 	}
 
@@ -492,12 +492,12 @@ bool checkGlobusVersion(){
 			return false;
 		}
 	}catch(boost::bad_lexical_cast &exc) {
-		edglog(error)<<"Unable to cast globus version "<< globusVersionString <<endl;
-		edglog(error)<<"Assuming globus version is less than 3.0.2" << endl ;
+		edglog(error)<<"Unable to cast Globus version "<< globusVersionString <<endl;
+		edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
 		return false;
 	}
 	// This point should never be reached
-	edglog(fatal)<<"(Unreachable point reached!) Assuming globus version is less than 3.0.2" << endl ;
+	edglog(fatal)<<"(Unreachable point reached!) Assuming Globus version is less than 3.0.2" << endl ;
 	return false;
 }
 
