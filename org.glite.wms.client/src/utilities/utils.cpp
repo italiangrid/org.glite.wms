@@ -70,6 +70,7 @@ const char * X509_VOMS_DIR = "X509_VOMS_DIR";
 const char * X509_CERT_DIR = "X509_CERT_DIR";
 const char * VOMS_DIR = "/etc/grid-security/vomsdir";
 const char * CERT_DIR = "/etc/grid-security/certificates";
+const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July", "Aug", "Sept", "Oct", "Nov", "Dec"};
 
 
 
@@ -660,14 +661,17 @@ const std::string Utils::getDefaultLog ( ){
 		filepath << DEFAULT_ERRSTORAGE << "/";
         }
         //application name
-        appl_name = wmcOpts->getApplicationName();
-        if (appl_name.size( ) == 0){
-                filepath << "wms-client_" ;
-        } else{
-                filepath << appl_name << "_";
-	}
-        filepath << getuid( ) << "_"  << getpid( ) << "_" << time(NULL) << ".log";
-        return  filepath.str();
+	appl_name = wmcOpts->getApplicationName();
+	if (appl_name.size( ) == 0){filepath << "wms-client_" ;}
+	else{filepath << appl_name << "_";}
+	filepath << getuid( ) << "_"  << getpid( ) << "_";
+	// timestamp calculation:
+	time_t now = time(NULL);
+	struct tm *ns = localtime(&now);
+	filepath << (ns->tm_year+1900)  <<  monthStr[ns->tm_mon]  << twoDigits(ns->tm_mday)<<"_";
+	filepath << twoDigits(ns->tm_hour) << "-" << twoDigits(ns->tm_min) << "-" << twoDigits(ns->tm_sec);
+	filepath << ".log";
+	return  filepath.str();
 }
 
 /*
