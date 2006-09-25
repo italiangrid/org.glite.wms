@@ -411,7 +411,9 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
     wmsutils_ns::FileListMutex mx(m_flns);
     wmsutils_ns::FileListLock  lock(mx);
     try {
-        m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
+        boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
+
+        the_job = m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
 
         the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_ns_filelist ) );
 
