@@ -312,8 +312,6 @@ void Job::setDelegationId ( ){
 		logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", *id);
 		dgOpt = new string (*id);
 ####################### */
-{
-
 		dgOpt = new string("");
 		autodgOpt = true;
 	} else {
