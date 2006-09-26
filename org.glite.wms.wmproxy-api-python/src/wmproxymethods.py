@@ -755,7 +755,7 @@ class Wmproxy:
 				self.setNamespace(ns)
 			self.soapInit()
 			self.setNamespace(oldNs)
-			return self.remote.getNewProxyReq()
+			return parseStructType(self.remote.getNewProxyReq(),'delegationID','proxyRequest')
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
