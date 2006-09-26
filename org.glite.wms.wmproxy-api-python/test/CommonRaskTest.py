@@ -8,9 +8,12 @@ LEV_DEFAULT=-2
 LEV_HELP=-1
 LEV_ALLTESTS=-3
 
+
+
 class Config:
 	EXTRA_PARAM =""
 	DEBUGMODE = 1
+	TEST_ADDED=0
 	allSuites={ \
 	"ExampleSuite": ["Please_Add_Suite"  ],\
 	"ExampleSuiteTwo"  : ["Please_Add_Suite","Please_Add_Suite"] \
@@ -41,7 +44,14 @@ def title(msg, *args):
 		print "\n########### DBG Message #################"
 		print "* ", msg
 		for arg in args:
-			print " - ", arg
+			if type(arg)== type([]):
+				for ar in arg:
+					print "     -> ", ar
+			elif type(arg)== type({}):
+				for ar in arg.keys():
+					print  "     -> ", ar, ":",arg[ar]
+			else:
+				print " - ", arg
 		print "########### DBG END #################"
 
 def addSuites(SuiteTest,suiteTitle,suites, level, sublevel):
@@ -49,11 +59,13 @@ def addSuites(SuiteTest,suiteTitle,suites, level, sublevel):
 	help=""
 	for i in range (len(suites)):
 		if sublevel==LEV_DEFAULT:
-			# Add test
+			# default level: alwasy add test
 			mainSuite.addTest(SuiteTest(suites[i]))
+			Config.TEST_ADDED+=1
 		elif sublevel==i:
-			# Add Required test
+			# specified level found: add test
 			mainSuite.addTest(SuiteTest(suites[i]))
+			Config.TEST_ADDED+=1
 		elif sublevel==LEV_HELP:
 			# generate help
 			if i%2==0 and i!=0:
@@ -80,7 +92,10 @@ def runTextRunner(SuiteTest,level, sublevel):
 		sIndex+=1
 	runner = unittest.TextTestRunner()
 	# Execute Tests
-	if level==LEV_ALLTESTS:
+	if not Config.TEST_ADDED:
+		title("Warning!! Required Test DOES NOT EXIST! (Please try and put on some glasses)")
+		pass
+	elif level==LEV_ALLTESTS:
 		# EXECUTE ALL SUITES
 		for suite in allParsedSuites:
 			if Config.DEBUGMODE:

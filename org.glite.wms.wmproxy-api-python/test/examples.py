@@ -17,6 +17,7 @@ url = trinity
 ns ="http://glite.org/wms/wmproxy"
 
 delegationId = "rask"
+delegationId=""
 protocol="gsiftp"
 protocol="all"
 requirements ="ther.GlueCEStateStatus == \"Production\""
@@ -45,7 +46,7 @@ Config.allSuites={ \
 "testDelegatedProxyInfo","testGetJDL"],\
 # PROXY GRIDSITE SUITES
 "gridSiteSuite":["testgetProxyReqGrst","testputProxyGrst","testgetTerminationTimeGrst",\
-"testrenewProxyReqGrst","testDestroyGrst","testgetNewProxyReqGrst",\
+"testrenewProxyReqGrst","testgetNewProxyReqGrst","testDestroyGrst"\
 ],\
 }  #END SUITES
 # Extra input parameters
@@ -323,7 +324,7 @@ class WmpTest(unittest.TestCase):
 
 	def testputProxyGrst(self):
 		proxy= self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
-		title ("testputProxyGrst input:",delegationId,proxy)
+		#title ("testputProxyGrst input:",delegationId,proxy)
 		self.wmproxy.putProxy(delegationId, proxy ,self.wmproxy.getGrstNs())
 
 	def testDelegatedProxyInfo(self):
