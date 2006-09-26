@@ -646,7 +646,7 @@ void Job::checkWmpSDList (const bool &all){
 	if (!sdContacted){
 		sdContacted =true;
 		if (!this->endPoint){logInfo->print(WMS_WARNING, "Unable to find any available endpoint where to connect");}
-		if (wmcUtils->answerYes ("Do you wish to query Service Discovery for more endpoints?", true, true)){
+		if (wmcUtils->answerYes ("Do you wish to query Service Discovery for more WMProxy endpoints?", true, true)){
 			// set boolean contacted value to true
 			urls=wmcUtils->lookForServiceType(Utils::WMP_SD_TYPE, *(wmcUtils->getVirtualOrganisation()));
 			checkWmpList (all);
