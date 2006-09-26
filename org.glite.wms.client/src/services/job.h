@@ -26,8 +26,8 @@ namespace services {
 
 #define WMP_NS1_GETPROXY_SERVICE        "ns1__getProxyReq"
 #define WMP_NS1_PUTPROXY_SERVICE        "ns1__putProxyReq"
-#define WMP_NS2_GETPROXY_SERVICE        "ns2__getProxyReq"
-#define WMP_NS2_PUTPROXY_SERVICE        "ns2__putProxyReq"
+#define WMP_NS4_GETPROXY_SERVICE        "ns4__getProxyReq"
+#define WMP_NS4_PUTPROXY_SERVICE        "ns4__putProxyReq"
 #define WMP_VERSION_SERVICE             "getVersion"
 #define WMP_REGISTER_SERVICE            "jobRegister"
 #define WMP_START_SERVICE               "jobStart"

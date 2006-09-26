@@ -300,6 +300,7 @@ void Job::setDelegationId ( ){
 		dgOpt = new string (*id);
 		autodgOpt = false;
 	} else if (autodg){
+/* #######################
 		// automatic generation of the delegationId string
 		id = Utils::getUniqueString();
 		if (id==NULL){
@@ -310,6 +311,10 @@ void Job::setDelegationId ( ){
 		}
 		logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", *id);
 		dgOpt = new string (*id);
+####################### */
+{
+
+		dgOpt = new string("");
 		autodgOpt = true;
 	} else {
 		ostringstream err ;
@@ -469,13 +474,13 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 		// Proxy Request
 		logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  endpoint);
 		// GetProxy
-		logInfo->service(WMP_NS2_GETPROXY_SERVICE);
+		logInfo->service(WMP_NS4_GETPROXY_SERVICE);
 		proxy = api::grstGetProxyReq(id, cfg) ;
-		logInfo->result(WMP_NS2_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
+		logInfo->result(WMP_NS4_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
 		// PutProxy
-		logInfo->service(WMP_NS2_PUTPROXY_SERVICE);
+		logInfo->service(WMP_NS4_PUTPROXY_SERVICE);
 		api::grstPutProxy(*dgOpt, proxy, cfg);
-		logInfo->result(WMP_NS2_PUTPROXY_SERVICE, string("The proxy has been successfully delegated with the identifier: " + *dgOpt) );
+		logInfo->result(WMP_NS4_PUTPROXY_SERVICE, string("The proxy has been successfully delegated with the identifier: " + *dgOpt) );
 	} catch (api::BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"delegateProxy", ECONNABORTED,
