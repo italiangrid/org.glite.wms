@@ -120,13 +120,6 @@ jobid = JobId()
 dagad = JobId()
 
 
-#jobid.setJobId("https://gundam.cnaf.infn.it:9000/a3hAXhGJ66tF9hsAlliXzg")
-#jobid.setJobId("https://gundam.cnaf.infn.it:9000/FfQ3bgCap3bb8z6K7XF4Wg")
-#jobid.setJobId("https://ghemon.cnaf.infn.it:9000/yFcVefR0QEizUXdOHJ-vvg")
-#jobid.setJobId("https://tigerman.cnaf.infn.it:9000/JKHQx4dF8OyfH8J1jCyWhw")
-#jobid.setJobId("https://ghemon.cnaf.infn.it:9000/Fc1GQj4EFCzXwLdZZr5BQA")
-#dagid.setJobId("https://ghemon.cnaf.infn.it:9000/nbHaY_L91fhZ_vcJoWnIdA")
-
 """
 		JDLS
 """
@@ -323,21 +316,39 @@ class WmpTest(unittest.TestCase):
 	"""
 
 	def testgetProxyReqGrst(self):
-		assert self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
+		prg= self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
+		assert prg
+		title ("testgetProxyReqGrst output:",prg)
+		return prg
+
 	def testputProxyGrst(self):
-		assert self.wmproxy.putProxy(delegationId,jobid.getJobId(),self.wmproxy.getGrstNs())
+		proxy= self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
+		title ("testputProxyGrst input:",delegationId,proxy)
+		self.wmproxy.putProxy(delegationId, proxy ,self.wmproxy.getGrstNs())
+
 	def testDelegatedProxyInfo(self):
 		pi= self.wmproxy.getDelegatedProxyInfo(delegationId)
 		assert pi
+		title ("testDelegatedProxyInfo output:",pi)
 		return pi
+
 	def testgetTerminationTimeGrst(self):
-		assert self.wmproxy.getTerminationTime(delegationId,self.wmproxy.getGrstNs())
+		re=self.wmproxy.getTerminationTime(delegationId,self.wmproxy.getGrstNs())
+		assert re
+		title ("testgetTerminationTimeGrst output:",re)
+
 	def testrenewProxyReqGrst(self):
-		assert self.wmproxy.renewProxyReq(delegationId,self.wmproxy.getGrstNs())
+		re=self.wmproxy.renewProxyReq(delegationId,self.wmproxy.getGrstNs())
+		assert re
+		title ("testrenewProxyReqGrst output:",re)
+
 	def testDestroyGrst(self):
 		self.wmproxy.destroy(delegationId,self.wmproxy.getGrstNs())
+
 	def testgetNewProxyReqGrst(self):
-		assert self.wmproxy.getNewProxyReq(self.wmproxy.getGrstNs())
+		re = self.wmproxy.getNewProxyReq(self.wmproxy.getGrstNs())
+		assert re
+		title ("testgetNewProxyReqGrst output:",re)
 
 	"""
 	Other
@@ -398,6 +409,7 @@ if __name__== "__main__":
 	print "Using WMPROXY Service: " , url
 	print "Using DELEGATION Id:   " , delegationId
 	print "#############################################"
+	# Input parameters:
 	if len(sys.argv)>2:
 		jobid.setJobId(sys.argv[2])
 		dagad.setJobId(sys.argv[2])
