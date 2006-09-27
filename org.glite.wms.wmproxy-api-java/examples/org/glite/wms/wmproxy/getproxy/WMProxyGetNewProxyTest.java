@@ -12,6 +12,8 @@ import org.glite.wms.wmproxy.BaseException;
 import org.apache.axis.AxisFault;
 import org.w3c.dom.Element;
 import org.gridsite.www.namespaces.delegation_1.NewProxyReq;
+
+
 public class WMProxyGetNewProxyTest {
 
 /*

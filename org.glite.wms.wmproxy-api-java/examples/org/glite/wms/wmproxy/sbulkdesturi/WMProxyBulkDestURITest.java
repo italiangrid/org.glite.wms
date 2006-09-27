@@ -12,7 +12,7 @@ import org.glite.wms.wmproxy.DestURIsStructType;
 import org.glite.wms.wmproxy.DestURIStructType;
 import org.glite.wms.wmproxy.StringList ;
 // Retrieves the information on server available protocols
-import org.glite.wms.wmproxy.common.GetProtocols;
+import org.glite.wms.wmproxy.common.GetParameters;
 /*
 	Test of  "getSandboxBulkDestURI" method in org.glite.wms.wmproxy.WMProxyAPI
 
@@ -55,8 +55,8 @@ public class WMProxyBulkDestURITest {
 		 	 client = new WMProxyAPI ( url, proxyFile ) ;
 		 }
 		 // protocol
-		 protocol = GetProtocols.askForProtocol(client);
-		 if (protocol.compareTo(GetProtocols.DEFAULT_PROTOCOL_VALUE)==0) {
+		 protocol = GetParameters.askForProtocol(client);
+		 if (protocol.compareTo(GetParameters.DEFAULT_PROTOCOL_VALUE)==0) {
 			System.out.println ("\nPROTOCOL			= [DEFAULT]\n" );
 		 } else {
 			System.out.println ("\nPROTOCOL			= [" + protocol + "]\n" );

@@ -54,9 +54,9 @@ public class WMProxyTerminationTimeTest {
 		} else{
 			System.out.println ("with default delegationID");
 		}
-		result = client.getProxyTerminationTime (delegId );
+		result = client.getProxyTerminationTime (delegId);
 		System.out.println ("RESULT:\n----------------------------------------------------------------\n");
-		System.out.println ("TerminationTime =[." + result + "]" );
+		System.out.println ("TerminationTime =[" + result + "]" );
 		// end
 		System.out.println ("End of the test\n");
 	}

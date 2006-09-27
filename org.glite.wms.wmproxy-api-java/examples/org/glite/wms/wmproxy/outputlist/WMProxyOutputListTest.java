@@ -14,7 +14,7 @@ import org.glite.wms.wmproxy.StringList ;
 // UI-API-JAVA
 import org.glite.wmsui.apij.JobId ;
 // Retrieves the information on server available protocols
-import org.glite.wms.wmproxy.common.GetProtocols;
+import org.glite.wms.wmproxy.common.GetParameters;
 /*
 	Test of  "getOutputFileList" method in org.glite.wms.wmproxy.WMProxyAPI
 
@@ -57,8 +57,8 @@ public class WMProxyOutputListTest {
 		 	 client = new WMProxyAPI ( url, proxyFile ) ;
 		}
 		// protocol
-		 protocol = GetProtocols.askForProtocol(client);
-		 if (protocol.compareTo(GetProtocols.DEFAULT_PROTOCOL_VALUE)==0) {
+		 protocol = GetParameters.askForProtocol(client);
+		 if (protocol.compareTo(GetParameters.DEFAULT_PROTOCOL_VALUE)==0) {
 			System.out.println ("\nPROTOCOL			= [ALL PROTOCOLS]\n" );
 		 } else {
 			System.out.println ("\nPROTOCOL			= [" + protocol + "]\n" );
