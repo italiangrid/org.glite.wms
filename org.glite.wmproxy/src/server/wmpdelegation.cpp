@@ -146,33 +146,34 @@ WMPDelegation::getNewProxyRequest()
 	user_dn = wmputilities::getUserDN();
 
 	// Check Proxy Path
-	if (wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
-		edglog(critical)<<"Unable to complete New Proxy request: previous proxy already exists"<<endl;
-		free(delegation_id);
-		free(user_dn);
-		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
-			"getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
-			"Unable to complete New Proxy request: previous proxy already exists");
-	}
+	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+		edglog(critical)<<"Previous client delegated proxy not found: proceed with Proxy Request"<<endl;
+	}else{
+		// Check Termination time
+		edglog(critical)<<"Previous client delegated proxy found: check Time validity"<<endl;
 
-	// Check Termination time
-	time_t *start = (time_t*) malloc(sizeof(time_t));
-	time_t *finish = (time_t*) malloc(sizeof(time_t));
-	if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
-			delegation_id, user_dn, start, finish) != GRST_RET_OK) {
-		edglog(critical)<<"Unable to complete New Proxy request: Unable to get termination time"<<endl;
-		free(delegation_id);
-		free(user_dn);
+		time_t *start = (time_t*) malloc(sizeof(time_t));
+		time_t *finish = (time_t*) malloc(sizeof(time_t));
+		if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
+				delegation_id, user_dn, start, finish) != GRST_RET_OK) {
+			edglog(critical)<<"Unable to complete New Proxy request: Error while retrieving termination time"<<endl;
+
+			free(delegation_id);
+			free(user_dn);
+			free(start);
+			free(finish);
+
+			throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+				"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
+				"Unable to complete New Proxy request: Error while retrieving termination time");
+		}
+		edglog(debug)<<"Client delegated proxy Termination Time: "<<*finish <<endl;
 		free(start);
 		free(finish);
-		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
-			"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
-			"Unable to complete New Proxy request: Unable to get termination time");
 	}
-	edglog(debug)<<"Termination Time: "<<*finish <<endl;
+
+	free(delegation_id);
 	free(user_dn);
-	free(start);
-	free(finish);
 
 	// Make Actual Proxy Request
 	char * request = NULL;
