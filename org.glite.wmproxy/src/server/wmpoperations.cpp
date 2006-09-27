@@ -696,10 +696,10 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	edglog_fn("wmpoperations::getProxyReq");
 	logRemoteHostInfo();
 	callLoadScriptFile("getProxyReq");
-	
+
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
+	authorizer::WMPAuthorizer *auth =
 		new authorizer::WMPAuthorizer();
 	auth->authorize();
 	delete auth;
@@ -716,9 +716,35 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	getProxyReq_response.request =
 		WMPDelegation::getProxyRequest(delegation_id);
 	edglog(info)<<"Proxy requested successfully"<<endl;
-	
+
 	GLITE_STACK_CATCH();
 }
+
+
+
+void
+renewProxyReq(renewProxyReqResponse &renewProxyReq_response,
+	const string &delegation_id)
+{
+	GLITE_STACK_TRY("renewProxyReq()");
+	edglog_fn("wmpoperations::renewProxyReq");
+	logRemoteHostInfo();
+	callLoadScriptFile("renewProxyReq");
+
+	// Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth =
+		new authorizer::WMPAuthorizer();
+	auth->authorize();
+	delete auth;
+
+	renewProxyReq_response.request =
+		WMPDelegation::renewProxyRequest(delegation_id);
+	edglog(info)<<"Proxy renewed successfully"<<endl;
+
+	GLITE_STACK_CATCH();
+}
+
 
 void
 getNewProxyReq(pair<string, string> &retpair)

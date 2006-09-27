@@ -83,12 +83,12 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 {
 	GLITE_STACK_TRY("getProxyRequest()");
 	edglog_fn("WMPDelegation::getProxyRequest");
-	
+
 	char * user_dn = NULL;
     user_dn = wmputilities::getUserDN();
-    
+
 	char * request = NULL;
-	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
+	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn) != 0) {
 		edglog(critical)<<"Unable to complete Proxy request"<<endl;
 		free(user_dn);
@@ -96,16 +96,40 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 			"getProxyReq()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to complete Proxy request");
 	}
-	
+
 	string proxy_req = string(request);
-	
+
 	free(user_dn);
 	free(request);
-	
+
 	return proxy_req;
-	
+
 	GLITE_STACK_CATCH();
 }
+
+string
+WMPDelegation::renewProxyRequest(const std::string &delegation_id)
+{
+	GLITE_STACK_TRY("renewProxyRequest()");
+	edglog_fn("WMPDelegation::renewProxyRequest");
+	char * user_dn = NULL;
+	user_dn = wmputilities::getUserDN();
+	char * request = NULL;
+	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
+			(char*) delegation_id.c_str(), user_dn) != 0) {
+		edglog(critical)<<"Unable to complete Proxy request"<<endl;
+		free(user_dn);
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+			"renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+			"Unable to complete Proxy request");
+	}
+	string proxy_req = string(request);
+	free(user_dn);
+	free(request);
+	return proxy_req;
+	GLITE_STACK_CATCH();
+}
+
 
 pair<string, string>
 WMPDelegation::getNewProxyRequest()
@@ -136,14 +160,14 @@ WMPDelegation::getNewProxyRequest()
 	time_t *finish = (time_t*) malloc(sizeof(time_t));
 	if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
 			delegation_id, user_dn, start, finish) != GRST_RET_OK) {
-		edglog(critical)<<"Unable to get termination time"<<endl;
+		edglog(critical)<<"Unable to complete New Proxy request: Unable to get termination time"<<endl;
 		free(delegation_id);
 		free(user_dn);
 		free(start);
 		free(finish);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
-			"Unable to get termination time");
+			"Unable to complete New Proxy request: Unable to get termination time");
 	}
 	edglog(debug)<<"Termination Time: "<<*finish <<endl;
 	free(user_dn);
@@ -174,6 +198,11 @@ WMPDelegation::getNewProxyRequest()
 
 	GLITE_STACK_CATCH();
 }
+
+
+
+
+
 
 void
 WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)

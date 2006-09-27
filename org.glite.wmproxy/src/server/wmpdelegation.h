@@ -36,6 +36,17 @@ public:
 	 * @see putProxy
 	 */
 	static std::string getProxyRequest(const std::string &delegation_id);
+
+	/**
+	 * Restarts the delegation procedure by asking for a certificate signing
+	 * requeste from the server for an already existing delegation ID
+	 * The server Answers with a certificate signing request which includes
+	 * the public key for new delegated credendials.
+	 * putProxy() has to be called to finish the procedure
+	 * @return the Proxy request
+	 * @see putProxy
+	 */
+	static std::string renewProxyRequest(const std::string &delegation_id);
 	
 	/**
 	 * Gets a delegated Proxy request. A Proxy request must be done in order

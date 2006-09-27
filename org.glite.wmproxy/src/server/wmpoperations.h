@@ -69,6 +69,9 @@ void getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 void getProxyReq(getProxyReqResponse &getProxyReq_response,
 	const std::string &delegation_id);
 
+void renewProxyReq(renewProxyReqResponse &renewProxyReq_response,
+	const std::string &delegation_id);
+
 void getNewProxyReq(std::pair<std::string, std::string> &retpair);
 
 void putProxy(putProxyResponse &putProxyReq_response, 

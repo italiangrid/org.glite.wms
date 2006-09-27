@@ -193,6 +193,10 @@ struct getProxyReqResponse {
   std::string request;
 };
 
+struct renewProxyReqResponse {
+  std::string request;
+};
+
 struct putProxyResponse {
 };
 
