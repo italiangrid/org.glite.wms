@@ -703,14 +703,16 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 		new authorizer::WMPAuthorizer();
 	auth->authorize();
 	delete auth;
-	
+
+	/* NEW delegation: empty string accepted, check removed
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
+		throw ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
-	
+	*/
+
 	getProxyReq_response.request =
 		WMPDelegation::getProxyRequest(delegation_id);
 	edglog(info)<<"Proxy requested successfully"<<endl;
@@ -758,13 +760,14 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 		new authorizer::WMPAuthorizer();
 	auth->authorize();
 	delete auth;
-	
+	/* NEW delegation: empty string accepted, check removed
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"putProxy()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
+	*/
 	
 	WMPDelegation::putProxy(delegation_id, proxy);
 	edglog(info)<<"Proxy put successfully"<<endl;
@@ -786,13 +789,14 @@ destroyProxy(const string &delegation_id)
 		new authorizer::WMPAuthorizer();
 	auth->authorize();
 	delete auth;
-	
+	/* NEW delegation: empty string accepted, check removed
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"destroyProxy()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
+	*/
 	
 	WMPDelegation::destroyProxy(delegation_id);
 	edglog(info)<<"destroyProxy successfully"<<endl;
@@ -815,13 +819,14 @@ getProxyTerminationTime(getProxyTerminationTimeResponse &getProxyTerminationTime
 		new authorizer::WMPAuthorizer();
 	auth->authorize();
 	delete auth;
-	
+	/* NEW delegation: empty string accepted, check removed
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
+		throw ProxyOperationException(__FILE__, __LINE__,
 			"getProxyTerminationTime()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
+	*/
 	
 	getProxyTerminationTime_response = WMPDelegation::getTerminationTime(delegation_id);
 	edglog(info)<<"getProxyTerminationTime successfully"<<endl;
@@ -1058,12 +1063,14 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 		edglog(info)<<"Delegation Id: "<<id<<endl;
 		auth->authorize();
 		// Checking delegation id
+		/* NEW delegation: empty string accepted, check removed
 		if (id == "") {
 			edglog(error)<<"Provided Delegation Id not valid"<<endl;
 	  		throw JobOperationException(__FILE__, __LINE__,
 				"getProxyInfo()", wmputilities::WMS_INVALID_ARGUMENT,
 				"Provided Delegation Id not valid");
 		}
+		*/
 		proxy = WMPDelegation::getDelegatedProxyPath(id);
 		edglog(debug)<<"Delegated Proxy: "<<proxy<<endl;
 	}
