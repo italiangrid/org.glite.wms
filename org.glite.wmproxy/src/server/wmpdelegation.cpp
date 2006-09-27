@@ -171,11 +171,8 @@ WMPDelegation::getNewProxyRequest()
 		free(start);
 		free(finish);
 	}
-
-	free(delegation_id);
-	free(user_dn);
-
 	// Make Actual Proxy Request
+
 	char * request = NULL;
 	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
 			delegation_id, user_dn) != 0) {
