@@ -50,7 +50,7 @@ public class WMProxyDestroyProxyTest {
 		if (delegId.length( ) >0) {
 			System.out.println ("with delegationID = " + delegId);
 		} else{
-			System.out.println ("with default delegationID");
+			System.out.println ("with the default delegationID");
 		}
 		client.destroyProxy (delegId );
 		System.out.println ("The proxy has been successfully destroyed\n");
