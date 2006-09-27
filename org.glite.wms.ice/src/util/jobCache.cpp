@@ -50,9 +50,6 @@ namespace apiutil = glite::ce::cream_client_api::util;
 jobCache* jobCache::s_instance = 0;
 string jobCache::s_persist_dir = DEFAULT_PERSIST_DIR;
 bool   jobCache::s_recoverable_db = false;
-bool   jobCache::s_auto_purge_log = false;
-bool   jobCache::s_read_only = false;
-
 boost::recursive_mutex jobCache::mutex;
 
 // 
@@ -179,10 +176,10 @@ jobCache::jobCache( void )
     : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
       m_jobs( )
 { 
-    jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db, s_auto_purge_log, s_read_only );
+    jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db );
     if(!dbm->isValid()) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbm->getInvalidCause() << log4cpp::CategoryStream::ENDLINE );
-        sleep(1000);//abort();
+        abort();
     }
     m_dbMgr.reset( dbm );
     load(); 
@@ -219,6 +216,7 @@ void jobCache::load( void ) throw(ClassadSyntax_ex&)
 //______________________________________________________________________________
 jobCache::iterator jobCache::put(const CreamJob& cj)
 {    
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     try {
         m_dbMgr->put(cj.serialize(), cj.getJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
@@ -242,18 +240,21 @@ void jobCache::print(ostream& os) {
 //______________________________________________________________________________
 jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
 {
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     return m_jobs.findJobByCID( creamJID );
 }
 
 //______________________________________________________________________________
 jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 {
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     return m_jobs.findJobByGID( gridJID );
 }
 
 //______________________________________________________________________________
 jobCache::iterator jobCache::erase( jobCache::iterator& it )
 {
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     if ( it == m_jobs.end() ) {
         return it;
     }

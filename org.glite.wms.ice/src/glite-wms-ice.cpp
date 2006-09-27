@@ -268,8 +268,8 @@ int main(int argc, char*argv[])
 
   iceUtil::jobCache::setPersistDirectory( jcachedir );
   iceUtil::jobCache::setRecoverableDb( true );
-  iceUtil::jobCache::setAutoPurgeLog( true );
-  iceUtil::jobCache::setReadOnly( false );
+  // iceUtil::jobCache::setAutoPurgeLog( true );
+  // iceUtil::jobCache::setReadOnly( false );
 
   try {
       iceUtil::jobCache::getInstance();

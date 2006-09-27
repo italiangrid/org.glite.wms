@@ -60,8 +60,8 @@ namespace glite {
 	private:
             static jobCache *s_instance; ///< The singleton instance of the jobCache class
 	    static bool s_recoverable_db;
-	    static bool s_auto_purge_log;
- 	    static bool s_read_only;
+	    // static bool s_auto_purge_log;
+ 	    // static bool s_read_only;
 
 	    static std::string s_persist_dir; ///< The name of the directory used to save persistency information
  
@@ -211,8 +211,8 @@ namespace glite {
 
 	  // Call this once and before invokation of getInstance()
 	  static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
-	  static void setAutoPurgeLog( const bool autopurge ) { s_auto_purge_log = autopurge; }
-	  static void setReadOnly( const bool rdonly ) { s_read_only = rdonly; }
+	  // static void setAutoPurgeLog( const bool autopurge ) { s_auto_purge_log = autopurge; }
+	  // static void setReadOnly( const bool rdonly ) { s_read_only = rdonly; }
 
           /**
            * Changes the directory containing the persistency information. This method,
