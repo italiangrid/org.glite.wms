@@ -1,4 +1,3 @@
-#!/bin/sh
 
 trap 'fatal_error "Job has been terminated by the batch system"' TERM
 
@@ -303,14 +302,12 @@ function send_partial_file
     trap 'LAST_CYCLE="y"; kill -ALRM $SLEEP_PID >/dev/null 2>&1' USR2
     wait $SLEEP_PID >/dev/null 2>&1
     # Retrieve the list of files to be monitored
-    if [ -r "${TRIGGERFILE}" ]; then
-      if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
-        retry_copy "globus-url-copy" "${TRIGGERFILE}" "file://${LISTFILE}"
-      elif [ "${TRIGGERFILE:0:8}" == "https://" -o "${TRIGGERFILE:0:7}" == "http://" ]; then
-        retry_copy "htcp" "${f}" "file://${workdir}/${file}"
-      else
-        false
-      fi
+    if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
+      globus-url-copy "${TRIGGERFILE}" "file://${LISTFILE}"
+    elif [ "${TRIGGERFILE:0:8}" == "https://" -o "${TRIGGERFILE:0:7}" == "http://" ]; then
+      htcp "${TRIGGERFILE}" "file://${LISTFILE}"
+    else
+      false
     fi
     # Skip iteration if unable to get the list
     # (can be used to switch off monitoring)
