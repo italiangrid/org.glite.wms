@@ -61,6 +61,23 @@ inline bool getValue(const classad::Value& value, bool& b)         { return valu
 inline bool getValue(const classad::Value& value, int& i)          { return value.IsIntegerValue(i); }
   
 template<class T> 
+struct InsertExprInSet : public std::binary_function<std::vector<T>*, classad::ExprTree*, std::set<T>* > 
+{
+  std::set<T>* operator()(std::set<T>* v, classad::ExprTree* e)
+  {
+    if (is_literal(e)) {
+      classad::Value value;
+      static_cast<classad::Literal*>(e)->GetValue(value);
+      T s;
+      if (getValue(value, s)) {
+        v->insert(s);
+      }
+    }
+    return v;
+  }
+};
+
+template<class T> 
 struct InsertExprInVector : public std::binary_function<std::vector<T>*, classad::ExprTree*, std::vector<T>* > 
 {
   std::vector<T>* operator()(std::vector<T>* v, classad::ExprTree* e)
@@ -76,6 +93,23 @@ struct InsertExprInVector : public std::binary_function<std::vector<T>*, classad
     return v;
   }
 };
+
+template<class T> 
+bool EvaluateAttrList(const classad::ClassAd& ad, const std::string& what, std::set<T>&l)
+{
+  bool                     res = false;
+  std::string              where;
+  classad::Value           list_value;
+  const classad::ExprList *expr_list;
+    
+  if( ad.EvaluateAttr(what, list_value) == true &&
+      list_value.IsListValue( expr_list ) == true ) {
+    accumulate(expr_list -> begin(), expr_list -> end(), &l, InsertExprInSet<T>());
+    res = true;
+  }
+    
+  return res;
+}
 
 template<class T> 
 bool EvaluateAttrList(const classad::ClassAd& ad, const std::string& what, std::vector<T>&l)
@@ -144,9 +178,10 @@ template<class T>
 classad::ExprList* asExprList(const std::vector<T>& v)
 {
   std::vector< classad::ExprTree* >          list;
-  typename std::vector<T>::const_iterator    it;
-    
-  for(it = v.begin(); it != v.end(); it++) {
+
+  typename std::vector<T>::const_iterator it = v.begin();
+  typename std::vector<T>::const_iterator const end = v.end();
+  for ( ; it != end; ++it) {
     classad::Value value;
     setValue(value, (*it));
     list.push_back(classad::Literal::MakeLiteral(value));
@@ -260,8 +295,10 @@ std::vector<std::string>* insertAttributeInVector(std::vector<std::string>* v, c
     std::vector<classad::ExprTree*> args;
     std::string fn;
     static_cast<classad::FunctionCall*>(e)->GetComponents(fn, args);
-    for (std::vector<classad::ExprTree*>::const_iterator it = args.begin();
-         it != args.end(); ++it) {
+
+    std::vector<classad::ExprTree*>::const_iterator it = args.begin();
+    std::vector<classad::ExprTree*>::const_iterator const end = args.end();
+    for ( ; it != end; ++it) {
       insertAttributeInVector(v, *it, exprTrace, predicate);
     }
   }
@@ -270,8 +307,9 @@ std::vector<std::string>* insertAttributeInVector(std::vector<std::string>* v, c
   case classad::ExprTree::EXPR_LIST_NODE: {
     std::vector<classad::ExprTree*> args;
     static_cast<classad::ExprList*>(e)->GetComponents(args);
-    for (std::vector<classad::ExprTree*>::const_iterator it = args.begin();
-         it != args.end(); ++it) {
+    std::vector<classad::ExprTree*>::const_iterator it = args.begin();
+    std::vector<classad::ExprTree*>::const_iterator const end = args.end();
+    for ( ; it != end; ++it) {
       insertAttributeInVector(v, *it, exprTrace, predicate);
     }
   }
@@ -418,7 +456,9 @@ bool evaluate(classad::ExprList const& el, std::vector<T>& value)
 {
   bool result = false;
 
-  for (classad::ExprList::const_iterator it = el.begin(); it != el.end(); ++it) {
+  classad::ExprList::const_iterator it = el.begin();
+  classad::ExprList::const_iterator end = el.end();
+  for ( ; it != end; ++it) {
     T t(evaluate(**it));
     value.push_back(t);
   }
@@ -434,13 +474,32 @@ ValueProxy evaluate_expression(classad::ClassAd const& ad,
 
 ValueProxy unparse_expression(classad::ExprTree const& tree);
 
-bool match(classad::ClassAd const& lhs,
-           classad::ClassAd const& rhs,
-           std::string const& match_type);
+bool
+left_matches_right(classad::ClassAd& lhs, classad::ClassAd& rhs);
+bool
+left_matches_right(classad::ClassAd const& lhs, classad::ClassAd& rhs);
+bool
+left_matches_right(classad::ClassAd& lhs, classad::ClassAd const& rhs);
+bool
+left_matches_right(classad::ClassAd const& lhs, classad::ClassAd const& rhs);
 
-bool left_matches_right (classad::ClassAd const& lhs, classad::ClassAd const& rhs);
-bool right_matches_left (classad::ClassAd const& lhs, classad::ClassAd const& rhs);
-bool symmetric_match    (classad::ClassAd const& lhs, classad::ClassAd const& rhs);
+bool
+right_matches_left(classad::ClassAd& lhs, classad::ClassAd& rhs);
+bool
+right_matches_left(classad::ClassAd const& lhs, classad::ClassAd& rhs);
+bool
+right_matches_left(classad::ClassAd& lhs, classad::ClassAd const& rhs);
+bool
+right_matches_left(classad::ClassAd const& lhs, classad::ClassAd const& rhs);
+
+bool
+symmetric_match(classad::ClassAd& lhs, classad::ClassAd& rhs);
+bool
+symmetric_match(classad::ClassAd const& lhs, classad::ClassAd& rhs);
+bool
+symmetric_match(classad::ClassAd& lhs, classad::ClassAd const& rhs);
+bool
+symmetric_match(classad::ClassAd const& lhs, classad::ClassAd const& rhs);
 
 class UndefinedRank: public ClassAdError
 {
@@ -452,15 +511,23 @@ public:
   }
 };
 
-double rank(classad::ClassAd const& lhs,
-            classad::ClassAd const& rhs,
-            std::string const& rank_type);
+double
+left_rank(classad::ClassAd& lhs, classad::ClassAd& rhs);
+double
+left_rank(classad::ClassAd const& lhs, classad::ClassAd& rhs);
+double
+left_rank(classad::ClassAd& lhs, classad::ClassAd const& rhs);
+double
+left_rank(classad::ClassAd const& lhs, classad::ClassAd const& rhs);
 
-double left_rank(classad::ClassAd const& lhs,
-                 classad::ClassAd const& rhs);
-
-double right_rank(classad::ClassAd const& lhs,
-                  classad::ClassAd const& rhs);
+double
+right_rank(classad::ClassAd& lhs, classad::ClassAd& rhs);
+double
+right_rank(classad::ClassAd const& lhs, classad::ClassAd& rhs);
+double
+right_rank(classad::ClassAd& lhs, classad::ClassAd const& rhs);
+double
+right_rank(classad::ClassAd const& lhs, classad::ClassAd const& rhs);
 
 // more traditional interface (to be completed)
 
