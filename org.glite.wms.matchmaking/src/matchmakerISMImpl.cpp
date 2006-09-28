@@ -104,9 +104,6 @@ matchmakerISMImpl::checkRequirement(
 {
   ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::ce));
 
-  ism::ism_type::const_reverse_iterator const ism_rend(
-    ism::get_ism(ism::ce).rend()
-  );
   ism::ism_type::const_iterator const ism_end(
     ism::get_ism(ism::ce).end()
   );
@@ -126,16 +123,6 @@ matchmakerISMImpl::checkRequirement(
 
     if(ism_it == ism_end) continue;
 
-    ism::ism_type::const_reverse_iterator ism_r_it(
-      std::find_if(
-        ism::get_ism(ism::ce).rbegin(),
-        ism::get_ism(ism::ce).rend(),
-        ism::key_starts_with(*ce_ids_it)
-      )
-    );
-
-    if(ism_r_it == ism_rend) continue;
-      
     do {
 
       boost::shared_ptr<classad::ClassAd> ce_ad_ptr(
@@ -153,7 +140,7 @@ matchmakerISMImpl::checkRequirement(
         );
       }
     }
-    while(++ism_it != ism_r_it.base());
+    while(++ism_it != ism_end && ism::key_starts_with(*ce_ids_it)(*ism_it));
   }
 
   typedef std::vector<std::string> previous_matches_type;
