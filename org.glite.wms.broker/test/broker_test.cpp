@@ -29,6 +29,9 @@
 
 #include <glite/wmsutils/classads/classad_utils.h>
 
+#include "glite/wms/classad_plugin/classad_plugin_loader.h"
+
+
 #include <classad_distribution.h>
 
 #include <iostream>
@@ -55,16 +58,22 @@ namespace brokerinfo = glite::wms::brokerinfo;
 typedef boost::shared_ptr<glite::wms::manager::server::DynamicLibrary> DynamicLibraryPtr;
 typedef boost::shared_ptr<ism_purchaser> PurchaserPtr;
 
+//FIXME: should be moved back to ckassad_plugin if/when only this DL is used
+//FIXME: for matchmaking.
+glite::wms::classad_plugin::classad_plugin_loader init;
+
+
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 LineOption  options[] = {
     { 'c', 1, "conf_file", "\t use conf_file as configuration file. glite_wms.conf is the default" },
     { 'j', 1, "jdl_file", "\t use jdl_file as input file." },
+    { 'r', 1, "repeat", "\t repeat n times the matchmaking process." },
     { 'C', no_argument, "show-ce-ad", "\t show computing elements classad representation" },
     { 'B', no_argument, "show-brokerinfo-ad", "\t show brokerinfo classad representation" },
+    { 'q', no_argument, "quiet", "\t do not log anything" },
     { 'S', no_argument, "show-se-ad", "\t show storage elements classad representation" },
-//    { 'b', no_argument, "black-list",  "\t use configuration file black-list." },
     { 'v', no_argument, "verbose",     "\t be verbose" },
     { 'l', no_argument, "verbose",     "\t be verbose on log file" }
 };
@@ -128,9 +137,20 @@ int main(int argc, char* argv[])
 //     if( options.is_present('v') && !options.is_present('l'))   logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
                                                                                         
      if( options.is_present('l') ) logger::threadsafe::edglog.open(ns_config->log_file(), glite::wms::common::logger::debug);
-     else 
-        logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
-
+     else {
+        if( options.is_present('q') ) {
+          logger::threadsafe::edglog.open(
+            "/dev/null",
+            glite::wms::common::logger::debug
+          );
+        } else {
+          logger::threadsafe::edglog.open(
+            std::clog, 
+            glite::wms::common::logger::debug
+          );
+        }
+     }
+     
      if( ! options.is_present('j') )
      {
         edglog(error) << "an input file with the jdl must be passed"<< endl;
@@ -166,13 +186,13 @@ int main(int argc, char* argv[])
     );
     scope_guard clear_ism_ce(
       boost::bind(
-        std::mem_fun(&ism_type::clear), &the_ism[ce]
+        &ism_type::clear, &the_ism[ce]
       )
     );
 
     scope_guard clear_ism_se(
       boost::bind(
-        std::mem_fun(&ism_type::clear), &the_ism[se]
+        &ism_type::clear, &the_ism[se]
       )
     );
     ii_pch->do_purchase();
@@ -186,24 +206,6 @@ int main(int argc, char* argv[])
           get_ism(glite::wms::ism::ce).end(),
           print_ism_entry
         ); 
-/*
-         edglog(debug) << "-----CE ISM----------------" << std::endl;
-         ism::ism_mutex_type::scoped_lock ce_lock ( the_ism[ism::ce_bdii]->mutex );
-
-         ism_slice_type::nth_index<1>::type& ce_index = (the_ism[ism::ce_bdii]->slice)->get<1>();
-
-         ism_slice_type::nth_index<1>::type::iterator ce_iter = ce_index.begin();
-
-         for ( ; ce_iter != ce_index.end() ; ce_iter++ ) {
-                 classad::ClassAd  ad_ism_dump;
-                 ad_ism_dump.InsertAttr( "id", boost::tuples::get<4>(*ce_iter) );
-                 ad_ism_dump.InsertAttr( "expiry_time", boost::tuples::get<1>(*ce_iter) );
-                 ad_ism_dump.Insert( "info",  boost::tuples::get<2>(*ce_iter).get()->Copy() );
-                 edglog(debug) << ad_ism_dump <<std::endl;
-
-         }
-
-*/
      }
      if(options.is_present('S'))
      {
@@ -214,26 +216,6 @@ int main(int argc, char* argv[])
           get_ism(glite::wms::ism::se).end(),
           print_ism_entry
         ); 
-/*
-         edglog(debug) << "-----SE ISM----------------" << std::endl;
-         ism::ism_mutex_type::scoped_lock se_lock ( the_ism[ism::se_bdii]->mutex );
-
-         ism_slice_type::nth_index<1>::type& se_index = (the_ism[ism::se_bdii]->slice)->get<
-1>();
-
-         ism_slice_type::nth_index<1>::type::iterator se_iter = se_index.begin();
-
-         for ( ; se_iter != se_index.end() ; se_iter++ ) {
-                 classad::ClassAd  ad_ism_dump;
-                 ad_ism_dump.InsertAttr( "id", boost::tuples::get<4>(*se_iter) );
-                 ad_ism_dump.InsertAttr( "expiry_time", boost::tuples::get<1>(*se_iter) );
-                 ad_ism_dump.Insert( "info",  boost::tuples::get<2>(*se_iter).get()->Copy()
-);
-                 edglog(debug) << ad_ism_dump <<std::endl;
-
-         }
-
-*/
      }
      edglog(debug) << "-Reading-JDL-------------------------------------------------" << std::endl;
 
@@ -273,49 +255,47 @@ int main(int argc, char* argv[])
           edglog(debug) << "-Using-sthochastic-rank-selections---------------------------" << std::endl;
          
         }
-        boost::tuple<
-          boost::shared_ptr<glite::wms::matchmaking::matchtable>,
-          boost::shared_ptr<glite::wms::brokerinfo::filemapping>,
-          boost::shared_ptr<glite::wms::brokerinfo::storagemapping>
-        > brokering_result(
-          rb.findSuitableCEs(reqAd.get())
-        );
-        boost::shared_ptr<glite::wms::matchmaking::matchtable>& suitable_CEs(
-          boost::tuples::get<0>(brokering_result)
-        );
 
-        edglog(debug) << " ----- SUITABLE CEs -------" << std::endl;
+        size_t n = options.is_present('r') ? options['r'].getIntegerValue() : 0; 
+        do {  
+          boost::shared_ptr<glite::wms::matchmaking::matchtable> suitable_CEs;
+          boost::shared_ptr<glite::wms::brokerinfo::filemapping> filemapping;
+          boost::shared_ptr<glite::wms::brokerinfo::storagemapping> storagemapping;
+          boost::tie(suitable_CEs,filemapping,storagemapping) = rb.findSuitableCEs(reqAd.get());
+        
+          edglog(debug) << " ----- SUITABLE CEs -------" << std::endl;
 
-        glite::wms::matchmaking::matchtable::iterator ces_it = suitable_CEs->begin();
-        glite::wms::matchmaking::matchtable::iterator const ces_end = suitable_CEs->end();
+          glite::wms::matchmaking::matchtable::iterator ces_it = suitable_CEs->begin();
+          glite::wms::matchmaking::matchtable::iterator const ces_end = suitable_CEs->end();
 
-        while( ces_it != ces_end ) {
-           edglog(debug) <<ces_it->first << std::endl;
-           ++ces_it;
-        }
+          while( ces_it != ces_end ) {
+             edglog(debug) <<ces_it->first << std::endl;
+             ++ces_it;
+          }
 
-        glite::wms::matchmaking::matchtable::const_iterator best_ce_it;
-        if ( suitable_CEs->empty() ) {
-          std::cerr << "no suitable ce found" << std::endl;      
-        }
-        else {
-          edglog(debug) << ".....trying selectBestCE" << std::endl;
-          best_ce_it = rb.selectBestCE(*suitable_CEs);
-        }
+          glite::wms::matchmaking::matchtable::const_iterator best_ce_it;
+          if ( suitable_CEs->empty() ) {
+            std::cerr << "no suitable ce found" << std::endl;      
+          }
+          else {
+            edglog(debug) << ".....trying selectBestCE" << std::endl;
+            best_ce_it = rb.selectBestCE(*suitable_CEs);
+          }
 
-        edglog(debug) << " ----- BEST CE -------" << std::endl;
-        edglog(debug) << best_ce_it->first << std::endl;
-        if (options.is_present('B')) {
-          edglog(debug) << " ----- BROKEINFO AD -------" << std::endl;
-          boost::scoped_ptr<classad::ClassAd> biAd(
-            glite::wms::brokerinfo::make_brokerinfo_ad(
-             boost::tuples::get<1>(brokering_result),
-             boost::tuples::get<2>(brokering_result),
-             *glite::wms::matchmaking::getAd(best_ce_it->second)
-            )
-          );
-          edglog(debug) << *biAd.get() << std::endl;
-        }
+          edglog(debug) << " ----- BEST CE -------" << std::endl;
+          edglog(debug) << best_ce_it->first << std::endl;
+          
+          if (options.is_present('B')) {
+            edglog(debug) << " ----- BROKEINFO AD -------" << std::endl;
+            boost::scoped_ptr<classad::ClassAd> biAd(
+              glite::wms::brokerinfo::make_brokerinfo_ad(
+               filemapping,storagemapping,
+               *glite::wms::matchmaking::getAd(best_ce_it->second)
+              )
+            );
+            edglog(debug) << *biAd.get() << std::endl;
+          }
+       } while(n--);
      }
      catch (glite::wms::matchmaking::InformationServiceError const& e) {
      

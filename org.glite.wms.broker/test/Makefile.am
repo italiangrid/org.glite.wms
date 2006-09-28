@@ -27,7 +27,8 @@ glite_wms_broker_test_LDADD = \
 	$(GLOBUS_LDAP_THR_LIBS) \
 	$(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
-	$(CLASSAD_LIBS) \
+	$(CLASSAD_DL_LIBS) \
+        $(top_srcdir)/../org.glite.wms.classad_plugin/build/src/libglite_wms_classad_plugin_loader.la \
 	$(BOOST_LIBS)
 
 
