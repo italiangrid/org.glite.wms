@@ -30,6 +30,23 @@ namespace ism = glite::wms::ism;
 
 namespace {
 
+char const* sa_attributes[] = {
+"GlueSAPath", "GlueSchemaVersionMajor", "GlueSAStateAvailableSpace",
+"GlueSARoot", "GlueSAStateUsedSpace", "GlueSAPolicyMaxFileSize",
+"GlueSchemaVersionMinor", "GlueSAPolicyMinFileSize", "GlueSALocalID",
+"GlueSAPolicyMaxPinDuration", "GlueSAType", "GlueSAPolicyMaxData",
+"GlueSAPolicyMaxNumFiles","GlueSAPolicyQuota", "GlueSAPolicyFileLifeTime",
+"GlueSAAccessControlBaseRule",
+0
+};
+
+char const* se_attributes[] = {
+"GlueSEName", "GlueSEUniqueID", "GlueSEPort"
+"GlueSESizeTotal","GlueSEArchitecture", "GlueSESizeFree"
+"GlueInformationServiceURL",
+0
+};
+
 class gluesa_local_id_matches
 {
   std::string m_id;
@@ -109,6 +126,16 @@ bool retrieveCloseSEsInfo(
             boost::shared_ptr<classad::ClassAd> se_ad_ptr(
               boost::tuples::get<2>(se_it->second)
             );
+            classad::ClassAd sesa_ad;
+            for(int i=0; se_attributes[i]; ++i) {
+              classad::ExprTree* e = se_ad_ptr->Lookup(se_attributes[i]);
+              if(e) { 
+                sesa_ad.Insert(
+                  se_attributes[i],
+                  e->Copy()
+                );
+              }
+            }
             vector<classad::ExprTree*> ads_sa;
             if (evaluate(*se_ad_ptr, "GlueSA", ads_sa)) {
 
@@ -119,14 +146,20 @@ bool retrieveCloseSEsInfo(
                 )
               );
               if (it_sa != ads_sa.end()) {
-                classad::ClassAd* sesa_ad =
-                  static_cast<classad::ClassAd*>((*it_sa)->Copy());
-                  
-                sesa_ad->Update(*static_cast<classad::ClassAd*>(*it));
-                sesa_ads.push_back(sesa_ad);
+                for(int i=0; sa_attributes[i]; ++i) {
+                  classad::ExprTree* e = static_cast<classad::ClassAd*>(*it_sa)->Lookup(sa_attributes[i]);
+                  if (e) {
+                    sesa_ad.Insert(
+                      sa_attributes[i],
+                      e->Copy()
+                    );
+                  }
+                }
               }
             }
+            sesa_ads.push_back(sesa_ad.Copy()); 
           }
+
         }
         result.SetListValue(ExprList::MakeExprList(sesa_ads));
         eval_successful=true;
