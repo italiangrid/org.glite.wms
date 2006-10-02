@@ -20,6 +20,23 @@ namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
+/*****************************************************************
+soap Timeout Support
+******************************************************************/
+int soap_send_timeout=0;	// No timeout set
+int soap_receive_timeout=0;	// No timeout set
+
+void setSoapSendTimeout   (int send_timeout)   {soap_send_timeout=send_timeout;      }
+void setSoapReceiveTimeout(int receive_timeout){soap_receive_timeout=receive_timeout;}
+void soapSetTimeouts(struct soap *soap ){
+	if (soap){
+		soap->send_timeout=soap_send_timeout;
+		soap->recv_timeout=soap_receive_timeout;
+
+	}
+}
+
+
 
 /*****************************************************************
 Performs SSL object destruction
@@ -255,7 +272,9 @@ void soapAuthentication(WMProxy &wmp,ConfigContext *cfs){
 	// change, if needed service endpoint
 	if (cfs!=NULL)if( cfs->endpoint!="")wmp.endpoint=cfs->endpoint.c_str() ;
 	soap_init(wmp.soap);
-	const char *proxy = getProxyFile(cfs) ;
+	// initialise timeout settings
+	soapSetTimeouts(wmp.soap);
+ 	const char *proxy = getProxyFile(cfs) ;
 	const char *trusted = getTrustedCert(cfs) ;
 	if ( proxy ){
 		if (trusted){
