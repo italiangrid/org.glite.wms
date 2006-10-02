@@ -640,16 +640,17 @@ void Job::lookForWmpEndpoints(const bool &all){
 
 /** Contact Service Discovery and query for more wmproxy endpoints */
 void Job::checkWmpSDList (const bool &all){
-	// Ask user whether to continue:
 	if (!sdContacted){
-		sdContacted =true;
-		if (!this->endPoint){logInfo->print(WMS_WARNING, "Unable to find any available endpoint where to connect");}
-		if (wmcUtils->answerYes ("Do you wish to query Service Discovery for more WMProxy endpoints?", true, true)){
-			// set boolean contacted value to true
+		sdContacted =true;  // no further query will be made in the future
+		if (this->wmcUtils->getConf()->enable_service_discovery()){
+			// SD is enabled: Query Service Discovery:
+			logInfo->print(WMS_DEBUG, "Service Discovery enabled by user configuration settings");
+			if (!this->endPoint){logInfo->print(WMS_WARNING, "Unable to find any available WMProxy endpoint where to connect");}
 			urls=wmcUtils->lookForServiceType(Utils::WMP_SD_TYPE, *(wmcUtils->getVirtualOrganisation()));
 			checkWmpList (all);
-			// SUCCESS, may exit
-			return ;
+		}else{
+			// SD is disabled: DO NOTHING
+			logInfo->print(WMS_DEBUG, "Skip Service Discovery query: disabled by user configuration settings");
 		}
 	}
 }
