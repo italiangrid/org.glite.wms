@@ -33,11 +33,8 @@ namespace {
    std::string const gangmatch_storage_ad_str(
     "["
     "  storage =  ["
-    "     CEid = parent.GlueCEUniqueID;"
     "     VO = parent.other.VirtualOrganisation;"
-    "     additionalSESAInfo = listAttrRegEx(\"^GlueS[EA].*\","
-    "       parent.other.requirements);"
-    "     CloseSEs = retrieveCloseSEsInfo( CEid, VO );"
+    "     CloseSEs = retrieveCloseSEsInfo( VO );"
     "  ];"
     "]"
   );
