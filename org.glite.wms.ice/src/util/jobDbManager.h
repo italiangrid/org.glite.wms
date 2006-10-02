@@ -8,6 +8,12 @@
 #include <map>
 #include "JobDbException.h"
 
+//#define MAX_ICE_DB_LOGSIZE 65536
+
+namespace log4cpp {
+    class Category;
+};
+
 namespace glite {
 namespace wms {
 namespace ice {
@@ -34,6 +40,8 @@ namespace util {
     bool          m_cid_open;
     bool          m_gid_open;
     bool          m_env_open;
+    int	 	  m_op_counter;
+    log4cpp::Category* m_log_dev;
     
     std::string getByID( const std::string& id, Db* db ) throw(DbException&);
     
@@ -83,7 +91,10 @@ namespace util {
     bool isValid( void ) const { return m_valid; }
     
     std::string getInvalidCause( void ) const { return m_invalid_cause; }
-    
+   
+    void checkPointing( void );
+   
+    void dbLogPurge( void ); 
   };
 
 }

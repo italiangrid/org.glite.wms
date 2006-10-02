@@ -1,5 +1,6 @@
 
 #include "jobDbManager.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <boost/filesystem/operations.hpp>
 #include <sys/vfs.h> // for statfs
 #include <sys/types.h>
@@ -10,6 +11,8 @@
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
 extern int errno;
+
+#define MAX_ICE_OP_BEFORE_PURGE 10000
 
 // -------------------- cursorWrapper -------------------------
 
@@ -46,7 +49,9 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
     m_cream_open( false ),
     m_cid_open( false ),
     m_gid_open( false ),
-    m_env_open( false )
+    m_env_open( false ),
+    m_op_counter(0),
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
   if( !boost::filesystem::exists( boost::filesystem::path(m_envHome) ) ) {
     m_invalid_cause = string("Path [")+m_envHome+"] doesn't exist";
@@ -125,6 +130,14 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
     //int psize = 4 * fsinfo.f_bsize;
     
     //cout << endl<< "*** Setting database pagesize to ["<< psize <<"]"<<endl<<endl;
+    /**
+     * "Essentially, DB performs data trasnfer based on the 
+     * database page size. That is, it moves data to and from
+     * disk a page at a time. For this reason, if the pase size 
+     * does not match the I/O block size, then the operating
+     * system can introduce inefficiencies in how it responds to
+     * DB's I/O requests.
+     */
     if(!read_only) {
       m_creamJobDb->set_pagesize( fsinfo.f_bsize );
       m_cidDb->set_pagesize( fsinfo.f_bsize );
@@ -165,9 +178,17 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
   m_valid = true;
   
   
-  if( autopurge && !read_only) 
-    m_env.set_flags( DB_LOG_AUTOREMOVE, 1 ); 
-  
+  //if( autopurge && !read_only) 
+  //  m_env.set_flags( DB_LOG_AUTOREMOVE, 1 ); 
+/*
+  try {
+    m_env.set_lg_max( 200000 );  
+  } catch(DbException& dbex) {
+    cerr << dbex.what() << endl;
+    abort();
+  }
+*/
+  this->dbLogPurge();
 }
 
 //____________________________________________________________________
@@ -197,6 +218,7 @@ iceUtil::jobDbManager::~jobDbManager() throw()
 void iceUtil::jobDbManager::put(const string& creamjob, const string& cid, const string& gid)
   throw(iceUtil::JobDbException&)
 {
+
   Dbt cidData( (void *)cid.c_str(), cid.length()+1);
   Dbt data( (void*)creamjob.c_str(), creamjob.length()+1 );
   Dbt gidData( (void*)gid.c_str(), gid.length()+1 );
@@ -224,7 +246,11 @@ void iceUtil::jobDbManager::put(const string& creamjob, const string& cid, const
     if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException("jobDbManager::put() - Unknown exception catched");
   }
-  
+  m_op_counter++;
+  if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
+    this->dbLogPurge();
+    m_op_counter = 0;
+  }
 }
 
 //____________________________________________________________________
@@ -254,6 +280,12 @@ void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_a
       m_creamJobDb->put( txn_handler, &cidKey, &data, 0);
       m_cidDb->put( txn_handler, &cidKey, &gidKey, 0);
       m_gidDb->put( txn_handler, &gidKey, &cidKey, 0);
+      m_op_counter++;
+      if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
+        this->dbLogPurge();
+        m_op_counter = 0;
+      }
+
     }
     
     txn_handler->commit(0);
@@ -268,7 +300,6 @@ void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_a
     if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException("jobDbManager::mput() - Unknown exception catched");
   }
-  
 }
 
 //____________________________________________________________________
@@ -378,6 +409,12 @@ void iceUtil::jobDbManager::delByCid( const string& cid )
     if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( "jobDbManager::delByCid() - Unknown exception catched" );
   }
+  m_op_counter++;
+  if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
+    this->dbLogPurge();
+    m_op_counter = 0;
+  }
+
 }
 
 //____________________________________________________________________
@@ -408,4 +445,64 @@ void iceUtil::jobDbManager::delByGid( const string& gid )
     if(txn_handler) txn_handler->abort();
     throw iceUtil::JobDbException( "jobDbManager::delByGid() - Unknown exception catched" );
   }
+  m_op_counter++;
+  if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
+    this->dbLogPurge();
+    m_op_counter = 0;
+  }
+}
+
+//____________________________________________________________________
+void iceUtil::jobDbManager::dbLogPurge( void )
+{
+  //if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE)
+  //{
+    char **file, **list;
+    try {
+
+      m_env.log_archive( &list, DB_ARCH_ABS );
+      
+      if(list == NULL) {m_op_counter = 0; return;}
+      
+      for (file = list; *file != NULL; ++file) {
+        CREAM_SAFE_LOG(m_log_dev->infoStream() << "jobDbManager::dbLogPurge() - Removing unused DB logfile [" << *file<<"]"<<log4cpp::CategoryStream::ENDLINE);
+        if(-1==::unlink(*file)) 
+        {
+          int saveerr = errno;
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() << "jobDbManager::dbLogPurge() - Error removing DB logfile [" << *file<<"]: " << strerror(saveerr)<<log4cpp::CategoryStream::ENDLINE);
+        }
+      }
+      free(list); // must only free the main reference (NOT all strings in the memory, see DB doc)
+    } catch(DbException& dbex) {
+      cerr << "SEVERE: an ERROR occurred trying to purge unsed DB log files: " << dbex.what()<<endl;
+      // free(files); // FIXME: uncomment this if you decide to continue to run
+      abort();
+      //throw JobDbException( dbex.what() );
+    } catch(exception& ex) {
+      cerr << "SEVERE: an ERROR occurred trying to purge unsed DB log files: " << ex.what()<<endl;
+      // free(files); // FIXME: uncomment this if you decide to continue to run
+      abort();
+    } catch(...) {
+      cerr << "Unknown exception catched! STOP."<<endl;
+      // free(files); // FIXME: uncomment this if you decide to continue to run
+      abort();
+    }
+    //m_op_counter = 0;
+  //}
+}
+
+//____________________________________________________________________
+void checkPointing( void ) 
+{
+
+  /**
+   * MUST think about this carefully. 
+   * Checkpointing reduce recover time, but also increase cache flush
+   * frequency.
+   */
+
+  //if(m_op_counter > MAX_OP_BEFORE_CHECKPOINT)
+  //{
+    
+  //}
 }

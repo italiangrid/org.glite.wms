@@ -215,8 +215,8 @@ void jobCache::load( void ) throw(ClassadSyntax_ex&)
 
 //______________________________________________________________________________
 jobCache::iterator jobCache::put(const CreamJob& cj)
-{    
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
+{   
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
         m_dbMgr->put(cj.serialize(), cj.getJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {

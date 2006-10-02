@@ -181,7 +181,7 @@ int main(int argc, char*argv[])
   }
 
   logger_instance->setLogFile(logfile.c_str());
-  log_dev->debugStream() << "ICE VersionID is [20060728-13:47]"<<log4cpp::CategoryStream::ENDLINE;
+  log_dev->debugStream() << "ICE VersionID is [20061002-17:00]"<<log4cpp::CategoryStream::ENDLINE;
   cout << "Logfile is [" << logfile << "]" << endl;
 
 //   cout << "Poller Threshold time="<<iceUtil::iceConfManager::getInstance()->getPollerStatusThresholdTime()<<endl;
@@ -268,8 +268,6 @@ int main(int argc, char*argv[])
 
   iceUtil::jobCache::setPersistDirectory( jcachedir );
   iceUtil::jobCache::setRecoverableDb( true );
-  // iceUtil::jobCache::setAutoPurgeLog( true );
-  // iceUtil::jobCache::setReadOnly( false );
 
   try {
       iceUtil::jobCache::getInstance();
