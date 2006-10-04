@@ -956,7 +956,7 @@ void putProxy(const std::string &delegationId, const std::string &request, Confi
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	time_t timeleft ;
-	char *certtxt;
+	char *certtxt=NULL;
 	// gets the path to the user proxy file
 	const char *proxy = getProxyFile(cfs);
 	//soapDestroy(wmp.soap) ;
