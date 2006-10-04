@@ -9,19 +9,18 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include "glite/wms/ism/ism.h"
+#include <glite/wms/ism/ism.h>
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
-//#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
-#include "glite/ce/monitor-client-api-c/CEEvent.h"
-#include "glite/ce/monitor-client-api-c/Dialect.h"
-#include "glite/ce/monitor-client-api-c/Topic.h"
-#include "glite/ce/monitor-client-api-c/GenericException.h"
-#include "glite/ce/monitor-client-api-c/TopicNotSupportedException.h"
-#include "glite/ce/monitor-client-api-c/DialectNotSupportedException.h"
-#include "glite/ce/monitor-client-api-c/ServiceNotFoundException.h"
-#include "glite/ce/monitor-client-api-c/AuthenticationException.h"
-#include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wmsutils/classads/classad_utils.h"
+#include <glite/ce/monitor-client-api-c/CEEvent.h>
+#include <glite/ce/monitor-client-api-c/Dialect.h>
+#include <glite/ce/monitor-client-api-c/Topic.h>
+#include <glite/ce/monitor-client-api-c/GenericException.h>
+#include <glite/ce/monitor-client-api-c/TopicNotSupportedException.h>
+#include <glite/ce/monitor-client-api-c/DialectNotSupportedException.h>
+#include <glite/ce/monitor-client-api-c/ServiceNotFoundException.h>
+#include <glite/ce/monitor-client-api-c/AuthenticationException.h>
+#include <glite/wms/common/logger/logger_utils.h>
+#include <glite/wmsutils/classads/classad_utils.h>
 
 using namespace std;
 namespace utils = glite::wmsutils::classads;
@@ -116,6 +115,7 @@ void ism_cemon_purchaser::do_purchase()
     
     gluece_info_container_type gluece_info_container;
     Topic ce_topic(m_topic);
+ 
     vector<string>::const_iterator service_it = m_services.begin();
     vector<string>::const_iterator const service_end = m_services.end();
 
@@ -127,7 +127,8 @@ void ism_cemon_purchaser::do_purchase()
       ceE->setServiceURL(*service_it);
       ceE->setRequestParam(&ce_topic);
 
-      try { 
+      try {
+        ceE->getEvent(); 
         parse_classad_event_messages(ceE.get(), gluece_info_container); 
       }
       catch(CEException& e) {
