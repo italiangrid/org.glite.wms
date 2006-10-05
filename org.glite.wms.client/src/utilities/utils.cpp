@@ -383,15 +383,9 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 		line = Utils::cleanString(string(x));
 		len = line.size( );
 		if ( len == 0 ){
-			// Empty space
-			if ( ! answerYes ( "Do you wish to continue ?", false, true)){
-				// exits from the programme execution
-				cout << "bye\n";
-				Utils::ending(1);
-			} else{
-				// cancellation of all jobs
-				return items;
-			}
+			// Return typed - All items selected
+			// cancellation/output of all jobs
+			return items;
 		} else {
 			// a= all jobs
 			if(line=="a" && multiple) {
