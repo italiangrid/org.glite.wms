@@ -316,11 +316,12 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 					+ AdUtils::JobId2Node(map,children[i].getJobId()) ;
 				msgNodes+= "\n\tJobId:    \t"
 					+ children[i].getJobId().toString();
+
 				msgNodes+= "\n\tDir:      \t"
-					+ dirAbs+logName+"_"
+					+ dirAbs+"/"
 					+ AdUtils::JobId2Node(map,children[i].getJobId()) ;
 				retrieveOutput (result, children[i],
-					dirAbs+logName+"_"+
+					dirAbs+"/"+
 					AdUtils::JobId2Node(map,children[i].getJobId()),true);
 			}
 			// Evantually print info inside file
@@ -330,7 +331,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		}else{
 			for (unsigned int i = 0 ; i < size ;i++){
 				retrieveOutput (result,children[i],
-					dirAbs+logName+"_"+
+					dirAbs+"/"+
 					children[i].getJobId().getUnique(),true);
 			}
 		}
