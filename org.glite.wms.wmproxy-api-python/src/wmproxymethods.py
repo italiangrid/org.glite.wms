@@ -932,6 +932,36 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
+
+	def jobRegisterJSDL(self, jdl, delegationId):
+		"""
+		Method:  jobRegister
+		IN =  jsdl (?)
+		IN =  delegationId (string)
+		OUT = jobIdStruct (JobIdStruct)
+
+
+		This operation registers a job for submission.
+		The JDL description of the job provided by the client is first validated by the service and then registered to the LB.
+		The unique identifier assigned to the job is returned to the client.
+		Note that this operation only registers the job and assign it with an identifier.
+		The actual submission of the job has to be triggered by a call to the jobStart
+		operation after all preparation activities, such as the Input sandbox files upload, have been completed.
+		The service supports registration of simple jobs, parametric jobs, partitionable jobs, DAGs and collections of jobs;
+		the description is always provided through a single JDL description (see "GLite JDL Attributes" document for details).
+		returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
+		"""
+		try:
+			self.soapInit()
+			return JobIdStruct(self.remote.jobRegisterJSDL(jdl, delegationId))
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+
 	def jobRegister(self, jdl, delegationId):
 		"""
 		Method:  jobRegister
