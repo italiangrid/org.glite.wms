@@ -11,6 +11,8 @@
 #include "lb_utils.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/wmsutils/jobid/JobId.h"
@@ -19,6 +21,7 @@
 namespace jobid = glite::wmsutils::jobid;
 namespace jdl = glite::jdl;
 namespace utilities = glite::wms::common::utilities;
+namespace configuration = glite::wms::common::configuration;
 
 namespace glite {
 namespace wms {
@@ -27,7 +30,12 @@ namespace server {
 
 namespace {
 
-static time_t const SECONDS_PER_DAY = 24*60*60;
+int get_expiry_period()
+{
+  configuration::WMConfiguration const& wm_config
+    = *configuration::Configuration::instance()->wm();
+  return wm_config.expiry_period();
+}
 
 std::string
 aux_get_sequence_code(
@@ -141,7 +149,7 @@ Request::Request(
     m_state(WAITING),
     m_last_processed(0),        // make it very old
     m_resubmitted(false),
-    m_expiry_time(std::time(0) + SECONDS_PER_DAY)
+    m_expiry_time(std::time(0) + get_expiry_period())
 {
   std::string x509_proxy;
   std::string sequence_code;

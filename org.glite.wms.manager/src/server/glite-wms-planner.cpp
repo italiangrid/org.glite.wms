@@ -66,7 +66,13 @@ namespace po = boost::program_options;
 namespace {
 
 unsigned int const five_minutes = 300;
-unsigned int const one_day = 86400;
+
+int get_expiry_period()
+{
+  configuration::WMConfiguration const& wm_config
+    = *configuration::Configuration::instance()->wm();
+  return wm_config.expiry_period();
+}
 
 std::string get_filelist_name()
 {
@@ -363,7 +369,7 @@ ClassAdPtr do_match(
 {
   // keep retrying to match periodically for a while
 
-  std::time_t timeout = std::time(0) + one_day;
+  std::time_t timeout = std::time(0) + get_expiry_period();
 
   bool exists = false;
   int expiry_time = jdl::get_expiry_time(jdl, exists);
