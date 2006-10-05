@@ -16,8 +16,9 @@ url = trinity
 
 ns ="http://glite.org/wms/wmproxy"
 
-delegationId = "rask"
 delegationId=""
+delegationId = "rask"
+
 protocol="gsiftp"
 protocol="all"
 requirements ="ther.GlueCEStateStatus == \"Production\""
@@ -33,7 +34,7 @@ rank ="-other.GlueCEStateEstimatedResponseTime"
 Config.allSuites={ \
 # SUBMIT SUITES
 "submitSuite":["testdagSubmit","testcollectionSubmit","testcollectionSubmitOne",\
-"testjobSubmit","testjobListMatch","testcycleJob"],\
+"testjobSubmit","testjobListMatch","testcycleJob", "testJobRegister","testJobRegisterJSDL"],\
 # PERUSAL SUITES
 "PerusalSuite":["testgetPerusalFiles","testenableFilePerusal"],\
 # TEMPLATES SUITES
@@ -90,6 +91,7 @@ class JobId:
 
 class Jdl:
 	DEFAULT_JDL="[ requirements = other.GlueCEStateStatus == \"Production\"; RetryCount = 0; JobType = \"normal\"; Executable = \"/bin/ls\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\";]"
+	DEFAULT_JSDL="[ requirements = other.GlueCEStateStatus == \"Production\"; RetryCount = 0; JobType = \"normal\"; Executable = \"/bin/ls\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\";]"
 	def __init__(self):
 		self.jdl=""
 	def loadJdl(self, jdlFile):
@@ -112,6 +114,17 @@ class Jdl:
 		else:
 			tile ("WARNING: using DEFAULT JDL",self.DEFAULT_JDL )
 			return self.DEFAULT_JDL
+
+	def getJsdl(self, defaultJsdl=""):
+		if self.jsdl:
+			return self.jsdl
+		elif defaultJsdl:
+			return defaultJsdl
+		else:
+			tile ("WARNING: using DEFAULT JS-DL",self.DEFAULT_JSDL )
+			return self.DEFAULT_JSDL
+
+
 
 
 """
@@ -225,6 +238,17 @@ class WmpTest(unittest.TestCase):
 		matchingCEs=self.wmproxy.jobListMatch(jdl.getJdl(jobjdl), delegationId)
 		assert  matchingCEs , "Empty JobId!!"
 
+	def testJobRegisterJSDL(self):
+		for jdl in [jdl.getJdl(jobjdl)]:
+			jobidInstance = self.wmproxy.jobRegister(jdl,delegationId)
+			jobid.setJobId(jobidInstance.getJobId())
+			title("testJobRegister: Registered", jobid.getJobId())
+
+	def testJobRegister(self):
+		for jdl in [jdl.getJdl(jobjdl)]:
+			jobidInstance = self.wmproxy.jobRegister(jdl,delegationId)
+			jobid.setJobId(jobidInstance.getJobId())
+			title("testJobRegister: Registered", jobid.getJobId())
 
 	def testcycleJob(self):
 		for jdl in [jdl.getJdl(jobjdl)]:
