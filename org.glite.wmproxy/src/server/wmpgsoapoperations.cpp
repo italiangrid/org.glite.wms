@@ -1042,10 +1042,10 @@ ns2__renewProxyReq(struct soap *soap, string delegation_id,
 	int return_value = SOAP_OK;
 
 	// N.B. same as getProxyReq
-	getProxyReqResponse getProxyReq_response;
+	renewProxyReqResponse renewProxyReq_response;
 	try {
-		getProxyReq(getProxyReq_response, delegation_id);
-		response._renewProxyReqReturn = getProxyReq_response.request;
+		renewProxyReq(renewProxyReq_response, delegation_id);
+		response._renewProxyReqReturn = renewProxyReq_response.request;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "renewProxyReq", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
