@@ -64,29 +64,35 @@ WMPDelegation::getProxyDir()
 			"Unable to get DOCUMENT_ROOT environment variable value\n(please "
 				"contact server administrator)");
 	}
-	
+
 	char * proxydir;
 	asprintf(&proxydir, "%s/%s", docroot, GRST_PROXYCACHE);
 	string returnproxydir = string(proxydir);
 	free(proxydir);
-	
+
 	// Creating proxydir if it doesn't exist
 	wmputilities::createSuidDirectory(returnproxydir);
-	
+
 	return returnproxydir;
-	
+
 	GLITE_STACK_CATCH();
 }
 
 string
-WMPDelegation::getProxyRequest(const string &delegation_id)
+WMPDelegation::getProxyRequest(const string &original_delegation_id)
 {
 	GLITE_STACK_TRY("getProxyRequest()");
 	edglog_fn("WMPDelegation::getProxyRequest");
 
 	char * user_dn = NULL;
-    user_dn = wmputilities::getUserDN();
+	user_dn = wmputilities::getUserDN();
 
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
+	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	char * request = NULL;
 	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn) != 0) {
@@ -108,12 +114,32 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 }
 
 string
-WMPDelegation::renewProxyRequest(const std::string &delegation_id)
+WMPDelegation::renewProxyRequest(const std::string &original_delegation_id)
 {
 	GLITE_STACK_TRY("renewProxyRequest()");
 	edglog_fn("WMPDelegation::renewProxyRequest");
 	char * user_dn = NULL;
 	user_dn = wmputilities::getUserDN();
+
+	// Initialise delegation_id
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
+	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
+
+	// Check Proxy Path: renewProxyRequest will only work with already existing delegated proxies
+	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+		free(user_dn);
+		edglog(critical)<<"Unable to renew Proxy request: Previous client delegated proxy not found"<<endl;
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+			"renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+			"No previous client delegated proxy found");
+	}else{
+		edglog(debug)<<"Previous client delegated proxy found: proceed with ProxyRequest renewal"<<endl;
+	}
+
 	char * request = NULL;
 	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn) != 0) {
@@ -121,7 +147,7 @@ WMPDelegation::renewProxyRequest(const std::string &delegation_id)
 		free(user_dn);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
-			"Unable to complete Proxy request");
+			"Unable to renew Proxy request");
 	}
 	string proxy_req = string(request);
 	free(user_dn);
@@ -138,43 +164,51 @@ WMPDelegation::getNewProxyRequest()
 	edglog_fn("WMPDelegation::getNewProxyRequest");
 
 	char * delegation_id =  GRSTx509MakeDelegationID();
-
-	delegation_id = GRSTx509MakeDelegationID();
 	edglog(debug)<<"Generated Delegation ID: "<<delegation_id<<endl;
-
-	char * user_dn = NULL;
-	user_dn = wmputilities::getUserDN();
+	char * user_dn = wmputilities::getUserDN();
 
 	// Check Proxy Path
 	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
-		edglog(critical)<<"Previous client delegated proxy not found: proceed with Proxy Request"<<endl;
+		edglog(debug)<<"Previous client delegated proxy not found: proceed with new Proxy Request"<<endl;
+
 	}else{
 		// Check Termination time
-		edglog(critical)<<"Previous client delegated proxy found: check Time validity"<<endl;
-
+		edglog(debug)<<"Previous client delegated proxy found: check Time validity"<<endl;
 		time_t *start = (time_t*) malloc(sizeof(time_t));
 		time_t *finish = (time_t*) malloc(sizeof(time_t));
 		if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
 				delegation_id, user_dn, start, finish) != GRST_RET_OK) {
-			edglog(critical)<<"Unable to complete New Proxy request: Error while retrieving termination time"<<endl;
-
+			free(start);
+			free(finish);
+			free(delegation_id);
+			free(user_dn);
+			edglog(critical)<<"Unable to check already present proxy time validity: Error while retrieving Termination Time"<<endl;
+			throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+				"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
+				"Unable to complete New Proxy request: Error while retrieving termination time");
+		}else if  ( *finish < time(NULL)){
+			// ending time is lower than current time: the delegated proxy expired
+			edglog(debug)<<"Previous client delegated proxy expired: proceed with new Proxy Request"<<endl;
+			// TBD CHECK TIME!!!
+			// PERFORM CHECK TIME!!!
+			free(start);
+			free(finish);
+		}else{
+			free(start);
+			free(finish);
 			free(delegation_id);
 			free(user_dn);
 			free(start);
 			free(finish);
-
+			edglog(critical)<<"Unable to complete New Proxy request: Previous client delegated proxy still valid"<<endl;
 			throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 				"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
-				"Unable to complete New Proxy request: Error while retrieving termination time");
+				"Unable to complete New Proxy request: Previous client delegated proxy still valid");
 		}
-		edglog(debug)<<"Client delegated proxy Termination Time: "<<*finish <<endl;
-		free(start);
-		free(finish);
 	}
 	// Make Actual Proxy Request
-
 	char * request = NULL;
-	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
+	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(),
 			delegation_id, user_dn) != 0) {
 		edglog(critical)<<"Unable to complete New Proxy request"<<endl;
 		free(delegation_id);
@@ -183,7 +217,7 @@ WMPDelegation::getNewProxyRequest()
 			"getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to complete New Proxy request");
 	}
-	
+	// fill the returning result 
 	pair<string, string> retpair;
 	retpair.first = string(delegation_id);
 	retpair.second = string(request);
@@ -203,18 +237,24 @@ WMPDelegation::getNewProxyRequest()
 
 
 void
-WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
+WMPDelegation::putProxy(const string &original_delegation_id, const string &proxy_req)
 {
 	GLITE_STACK_TRY("putProxy()");
 	edglog_fn("WMPDelegation::putProxy");
-	
-	char * user_dn = NULL;
-  	user_dn = wmputilities::getUserDN();
 
-  	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
-  	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
-  	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-  	
+	char * user_dn = NULL;
+	user_dn = wmputilities::getUserDN();
+	// Initialise delegation_id
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
+	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
+
+	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
+	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
+
 	if (GRSTx509CacheProxy((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn,
 			(char*) proxy_req.c_str()) != GRST_RET_OK) {
@@ -223,10 +263,10 @@ WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"putProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to store client Proxy");
-    }
-    
-    free(user_dn);
-    
+	}
+	edglog(debug)<<"Client Proxy successfully stored:\n"<< WMPDelegation::getDelegatedProxyPath(delegation_id) << endl ;
+	free(user_dn);
+
     GLITE_STACK_CATCH();
 }
 
