@@ -84,8 +84,8 @@ void EventGeneric::finalProcess( int cn, const string &message )
   jccommon::generic_event_t               code( static_cast<jccommon::generic_event_t>(cn) );
   ULogEvent                              *event;
   char                                    wbuf[30];
-  string                                  when;
-  jccommon::IdContainer::iterator         position, dagposition;
+  string                                  when, sc;
+  jccommon::IdContainer::iterator         position;
   logger::StatePusher                     pusher( elog::cedglog, "EventGeneric::finalProcess(...)" );
 
   position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
@@ -108,7 +108,7 @@ void EventGeneric::finalProcess( int cn, const string &message )
       elog::cedglog << logger::setlevel( logger::info )
 		    << "Job cancelled by the user, no resubmission should be triggered off. "  << endl;
       // no resubmission, the job has been cancelled by the user
-      this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), ULOG_GENERIC, jccommon::no_resubmission );
+      this->ei_data->md_container->update_pointer( position, position->sequence_code(), ULOG_GENERIC, jccommon::no_resubmission );
       break;
     case jccommon::cancelled_event:
       elog::cedglog << logger::setlevel( logger::info )

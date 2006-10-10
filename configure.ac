@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.7  2006/10/10 11:33:14  gianelle
+#       Install SubmitAdapter.h because it is used by the planner
+#
 #       Revision 1.22.2.6  2006/09/22 08:46:51  eronchie
 #       decreased version
 #
@@ -219,6 +222,7 @@ AC_CONFIG_FILES([src/controller/Makefile])
 AC_CONFIG_FILES([src/logmonitor/Makefile])
 AC_CONFIG_FILES([src/logmonitor/processer/Makefile])
 AC_CONFIG_FILES([src/daemons/Makefile])
+AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT

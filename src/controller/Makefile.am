@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.1  2006/10/10 11:33:15  gianelle
+#       Install SubmitAdapter.h because it is used by the planner
+#
 #       Revision 1.2  2004/08/10 12:01:43  eronchie
 #       Updated
 #
@@ -43,7 +46,6 @@ noinst_HEADERS = \
 	JobControllerClientReal.h \
 	Request.h \
 	RequestExceptions.h \
-	SubmitAdapter.h \
 	SubmitAd.h \
 	SubmitAdExceptions.h
 
@@ -68,6 +70,7 @@ libglite_wms_jss_controller_la_SOURCES = CondorG.cpp \
 libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \

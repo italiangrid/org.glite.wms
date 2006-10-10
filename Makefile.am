@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3.28.1  2006/10/10 11:33:13  gianelle
+#       Install SubmitAdapter.h because it is used by the planner
+#
 #       Revision 1.3  2004/10/08 09:38:23  pandreet
 #       LICENSE in rpm; defined summary and description
 #
@@ -36,7 +39,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = config src test 
+SUBDIRS = config src test interface 
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
