@@ -60,6 +60,7 @@ void DelegateProxy::delegation ( ){
 	ostringstream out ;
 	string proxy = "" ;
 	string endpoint = "";
+	string delegationId=getDelegationId();
 	// Endpoint
 	endpoint = delegateProxy( );
 	// output message
@@ -67,7 +68,8 @@ void DelegateProxy::delegation ( ){
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
 	out << "Your proxy has been successfully delegated to the WMProxy:\n" ;
 	out << getEndPoint( ) << "\n\n";
-	out << "with the delegation identifier: " << getDelegationId( ) << "\n";
+	if (delegationId==""){out << "delegation identifier was automatically generated"<<"\n";}
+	else{ out << "with the delegation identifier: " << getDelegationId( )      <<"\n";}
 	out << infoToFile( ) ;
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
 	out << getLogFileMsg ( ) << "\n";
@@ -80,6 +82,7 @@ void DelegateProxy::delegation ( ){
 std::string DelegateProxy::infoToFile( ){
 	string rm = "";
 	if (outOpt){
+		string delegationId=getDelegationId();
 		char ws = (char)32;
 		time_t now = time(NULL);
 		struct tm *ns = localtime(&now);
@@ -89,11 +92,13 @@ std::string DelegateProxy::infoToFile( ){
 		date << Utils::twoDigits(ns->tm_hour) << ":" << Utils::twoDigits(ns->tm_min) << ":" << Utils::twoDigits(ns->tm_sec) << ws;
 		string msg = wmcOpts->getApplicationName( ) +" (" + date.str() + ")\n";
 		msg += "=========================================================================\n";
-		msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID: " +  getDelegationId( ) + "\n";
+		if (delegationId!=""){msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID: " +  getDelegationId( ) + "\n";}
+		else{msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID was automatically generated"              + "\n";}
 		if( wmcUtils->saveToFile(*outOpt, msg) < 0 ){
 			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
 		} else {
-			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
+			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ",
+				Utils::getAbsolutePath(*outOpt));
 			rm += "\nThe DelegateProxy result  has been saved in the following file:\n";
 			rm += Utils::getAbsolutePath(*outOpt) + "\n";
 		}
