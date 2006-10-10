@@ -6,23 +6,27 @@
 // $Id$
 
 #include <boost/bind.hpp>
-#include "ism_utils.h"
-#include "signal_handling.h"
-#include "dynamic_library.h"
-#include "glite/wms/ism/purchaser/ism-purchaser.h"
+
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wmsutils/classads/classad_utils.h"
+
+#include "ism_utils.h"
+#include "signal_handling.h"
+#include "dynamic_library.h"
+
 #include "glite/wms/ism/ism.h"
+#include "glite/wms/ism/purchaser/ism-purchaser.h"
 
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-cemon-asynch-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-file-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-rgma-purchaser.h"
+
 
 namespace configuration = glite::wms::common::configuration;
 namespace ca = glite::wmsutils::classads;
@@ -32,6 +36,7 @@ namespace ism = glite::wms::ism;
 namespace glite {
 namespace wms {
 namespace manager {
+
 namespace main {
 
 namespace {
@@ -44,9 +49,59 @@ DynamicLibraryPtr make_dll(std::string const& lib_name)
   return DynamicLibraryPtr(new server::DynamicLibrary(lib_name));
 }
 
+void fill_ism_from_dump_file(){
+
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+
+  bool const ism_dump_is_enabled(config.wm()->enable_ism_dump());
+
+  purchaser::skip_predicate_type const skip_predicate(
+    purchaser::is_in_black_list(config.wm()->ism_black_list())
+  );
+
+  if (ism_dump_is_enabled) {
+
+    Info("loading ism dump");
+
+    std::string const dll_name("libglite_wms_ism_file_purchaser.so");
+    DynamicLibraryPtr dll(make_dll(dll_name));
+
+    std::string const create_function_name("create_file_purchaser");
+    purchaser::file::create_t* create_function;
+    dll->lookup(create_function_name, create_function);
+
+    std::string const destroy_function_name("destroy_file_purchaser");
+    purchaser::file::destroy_t* destroy_function;
+    dll->lookup(destroy_function_name, destroy_function);
+
+//    std::string const set_updaters_function_name(
+//      "set_purchaser_entry_update_fns"
+//    );
+//    purchaser::file::set_purchaser_entry_update_fns_t* set_updaters_function;
+//    dll->lookup(set_updaters_function_name, set_updaters_function);
+
+//    set_updaters_function(
+//      ii_update_function,
+//      gris_update_function,
+//      cemon_update_function,
+//      rgma_update_function
+//    );
+
+    PurchaserPtr purchaser(
+      create_function(config.wm()->ism_dump()),
+      destroy_function
+    );
+    purchaser->skip_predicate(skip_predicate);
+    purchaser->do_purchase();
+  }
+}
+
 void load_dlls_and_create_purchasers(
   std::vector<DynamicLibraryPtr>& dlls,
-  std::vector<PurchaserPtr>& purchasers
+  std::vector<PurchaserPtr>& purchasers,
+  std::vector< boost::function<void(void)> >& update_functions
 )
 {
   configuration::Configuration const& config(
@@ -75,10 +130,10 @@ void load_dlls_and_create_purchasers(
 
   bool const ism_dump_is_enabled(config.wm()->enable_ism_dump());
 
-  purchaser::ii::create_entry_update_fn_t* ii_update_function = 0;
-  purchaser::ii_gris::create_entry_update_fn_t* gris_update_function = 0;
-  purchaser::cemon::create_entry_update_fn_t* cemon_update_function = 0;
-  purchaser::rgma::create_entry_update_fn_t* rgma_update_function = 0;
+//  purchaser::ii::create_entry_update_fn_t* ii_update_function = 0;
+//  purchaser::ii_gris::create_entry_update_fn_t* gris_update_function = 0;
+//  purchaser::cemon::create_entry_update_fn_t* cemon_update_function = 0;
+//  purchaser::rgma::create_entry_update_fn_t* rgma_update_function = 0;
 
   {
     Info("loading II purchaser");
@@ -111,10 +166,25 @@ void load_dlls_and_create_purchasers(
     dlls.push_back(dll);
     purchasers.push_back(purchaser);
 
-    if (ism_dump_is_enabled) {
-      std::string const update_function_name("create_ii_entry_update_fn");
-      dll->lookup(update_function_name, ii_update_function);
-    }
+//    if (ism_dump_is_enabled) {
+//      std::string const update_function_name("create_ii_entry_update_fn");
+//      dll->lookup(update_function_name, ii_update_function);
+//    }
+    update_functions.push_back(
+       boost::bind(
+         &ism::purchaser::ism_purchaser::wake_up,
+         purchaser
+       )
+    );
+
+    update_functions.push_back(
+       boost::bind(
+         &ism::purchaser::ism_purchaser::wake_up,
+         purchaser
+       )
+    );
+
+
 
   }
 
@@ -149,10 +219,25 @@ void load_dlls_and_create_purchasers(
     dlls.push_back(dll);
     purchasers.push_back(purchaser);
 
-    if (ism_dump_is_enabled) {
-      std::string const update_function_name("create_rgma_entry_update_fn");
-      dll->lookup(update_function_name, rgma_update_function);
-    }
+//    if (ism_dump_is_enabled) {
+//      std::string const update_function_name("create_rgma_entry_update_fn");
+//      dll->lookup(update_function_name, rgma_update_function);
+//    }
+    update_functions.push_back(
+       boost::bind(
+         &ism::purchaser::ism_purchaser::wake_up,
+         purchaser
+       )
+    );
+
+    update_functions.push_back(
+       boost::bind(
+         &ism::purchaser::ism_purchaser::wake_up,
+         purchaser
+       )
+    );
+
+
 
   }
 
@@ -194,13 +279,21 @@ void load_dlls_and_create_purchasers(
     dlls.push_back(dll);
     purchasers.push_back(purchaser);
 
-    if (ism_dump_is_enabled) {
-      std::string const update_function_name("create_cemon_entry_update_fn");
-      dll->lookup(update_function_name, cemon_update_function);
-    }
+//    if (ism_dump_is_enabled) {
+//      std::string const update_function_name("create_cemon_entry_update_fn");
+//      dll->lookup(update_function_name, cemon_update_function);
+//    }
+    update_functions.push_back(
+       boost::bind(
+         &ism::purchaser::ism_purchaser::wake_up,
+         purchaser
+       )
+    );
+
 
   }
 
+/*
   if (ism_dump_is_enabled) {
 
     Info("loading ism dump");
@@ -216,18 +309,18 @@ void load_dlls_and_create_purchasers(
     purchaser::file::destroy_t* destroy_function;
     dll->lookup(destroy_function_name, destroy_function);
 
-    std::string const set_updaters_function_name(
-      "set_purchaser_entry_update_fns"
-    );
-    purchaser::file::set_purchaser_entry_update_fns_t* set_updaters_function;
-    dll->lookup(set_updaters_function_name, set_updaters_function);
+//    std::string const set_updaters_function_name(
+//      "set_purchaser_entry_update_fns"
+//    );
+//    purchaser::file::set_purchaser_entry_update_fns_t* set_updaters_function;
+//    dll->lookup(set_updaters_function_name, set_updaters_function);
 
-    set_updaters_function(
-      ii_update_function,
-      gris_update_function,
-      cemon_update_function,
-      rgma_update_function
-    );
+//    set_updaters_function(
+//      ii_update_function,
+//      gris_update_function,
+//      cemon_update_function,
+//      rgma_update_function
+//    );
 
     PurchaserPtr purchaser(
       create_function(config.wm()->ism_dump()),
@@ -236,6 +329,8 @@ void load_dlls_and_create_purchasers(
     purchaser->skip_predicate(skip_predicate);
     purchaser->do_purchase();
   }
+*/
+
 
   if (purchasing_from_cemon_asynch_is_enabled) {
 
@@ -268,6 +363,7 @@ void load_dlls_and_create_purchasers(
     purchasers.push_back(purchaser);
 
   }
+
 
 }
 
@@ -337,21 +433,40 @@ void start_periodic_dump()
 struct ISM_Manager::Impl
 {
   ism::ism_type m_ism;
-  ism::ism_mutex_type m_ism_mutex;
+//  ism::ism_mutex_type m_ism_mutex;
   std::vector<DynamicLibraryPtr> m_dlls;
   std::vector<PurchaserPtr> m_purchasers;
   boost::thread_group m_purchasing_threads;
   boost::thread m_updater;
+  std::vector< boost::function < void(void) > > update_functions;
 };
 
 ISM_Manager::ISM_Manager()
   : m_impl(new Impl)
 {
   Info("creating the ISM");
+  load_dlls_and_create_purchasers(m_impl->m_dlls,
+                                  m_impl->m_purchasers,
+                                  m_impl->update_functions);
 
-  ism::set_ism(m_impl->m_ism, m_impl->m_ism_mutex);
+  for(size_t i = 0; i <= ism::ism_index_end; i++ ) {
+    ism::mt_ism_slice_type_ptr elem( new ism::mt_ism_slice_type );
 
-  load_dlls_and_create_purchasers(m_impl->m_dlls, m_impl->m_purchasers);
+    (elem->slice).reset( new ism::ism_slice_type );
+    if( i < m_impl->update_functions.size() )
+      elem->uf = m_impl->update_functions[i];
+
+    (m_impl->m_ism).push_back( elem );
+
+  }
+
+  ism::set_ism( & m_impl->m_ism );
+
+  fill_ism_from_dump_file();
+
+//  ism::set_ism(m_impl->m_ism, m_impl->m_ism_mutex);
+
+//  load_dlls_and_create_purchasers(m_impl->m_dlls, m_impl->m_purchasers);
   start_purchasing_threads(m_impl->m_purchasers, m_impl->m_purchasing_threads);
   start_periodic_update();
   start_periodic_dump();
