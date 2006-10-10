@@ -7,9 +7,11 @@ glite_wms_broker_test_SOURCES = \
 glite_wms_broker_test_LDFLAGS = -Xlinker --export-dynamic
 
 glite_wms_broker_test_LDADD = \
+	$(top_srcdir)/../org.glite.wms.manager/build/src/server/signal_handling.o\
+	$(top_srcdir)/../org.glite.wms.manager/build/src/daemons/ism_utils.o\
+	$(top_srcdir)/../org.glite.wms.manager/build/src/server/dynamic_library.o\
 	$(top_srcdir)/build/src/.libs/libglite_wms_broker.a\
 	$(top_srcdir)/../stage/lib/libglite_wms_brokerinfo.a \
-        $(top_srcdir)/../org.glite.wms.manager/build/src/server/dynamic_library.o \
 	$(GLITE_WMS_MATCHMAKING_LIBS) \
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
@@ -40,6 +42,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
         -I$(top_srcidr)/test \
 	-I$(GLITE_LOCATION)/include \
         -I$(top_srcdir)/../org.glite.wms.manager/src/server \
+	-I$(top_srcdir)/../org.glite.wms.manager/src/daemons \
         $(GSOAP_CFLAGS) \
         $(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \

@@ -40,6 +40,8 @@
 #include <vector>
 
 #include "dynamic_library.h"
+#include "ism_utils.h"
+#include "signal_handling.h"
 
 namespace logger = glite::wms::common::logger;
 
@@ -78,45 +80,26 @@ LineOption  options[] = {
     { 'l', no_argument, "verbose",     "\t be verbose on log file" }
 };
 
-namespace {
-ism_type the_ism[2];
-ism_mutex_type the_ism_mutex[2];
-}
+//namespace {
+//ism_type the_ism[2];
+//ism_mutex_type the_ism_mutex[2];
+//}
 
-void print_ism_entry(ism_type::value_type const& e)
+void print_ism_entry(ism_entry_type const& e)
 {
  classad::ClassAd  ad;
- ad.InsertAttr("id", e.first);
- ad.InsertAttr("update_time", boost::tuples::get<0>(e.second));
- ad.InsertAttr("expiry_time", boost::tuples::get<1>(e.second));
- ad.Insert("info", boost::tuples::get<2>(e.second).get()->Copy());
+ ad.InsertAttr("id", boost::tuples::get<id_type_entry>(e));
+ ad.InsertAttr("update_time", boost::tuples::get<update_time_entry>(e));
+ ad.InsertAttr("expiry_time", boost::tuples::get<expiry_time_entry>(e));
+ ad.Insert("info", boost::tuples::get<ad_ptr_entry>(e).get()->Copy());
  edglog(debug) <<  ad << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
 
-    set_ism(the_ism,the_ism_mutex,ce);
-    set_ism(the_ism,the_ism_mutex,se);
-/*
-    ism_slice_type_ptr bdii_ce_ism_ptr( new ism_slice_type ); // allocate multi_index_container and a pointer
-    ism_slice_type_ptr bdii_se_ism_ptr( new ism_slice_type ); // that takes the ownership
-
-    mt_ism_slice_type_ptr bdii_ce_mx_ism ( new mt_ism_slice_type ); //allocate struct that contains
-    mt_ism_slice_type_ptr bdii_se_mx_ism ( new mt_ism_slice_type ); //multi_index_container_ptr and
-                                                                    //related mutex...and the pointer that takes
-                                                                    // the ownership
-
-    bdii_ce_mx_ism->slice = bdii_ce_ism_ptr; //assign the multi_index_container_ptr to struct field
-    bdii_se_mx_ism->slice = bdii_se_ism_ptr;
-
-    std::vector<mt_ism_slice_type_ptr> the_ism(ism_boundary.second + 1); // allocate vector of pointers to structs
-
-    the_ism[ce_bdii] = bdii_ce_mx_ism ; //insert the pointer to the struct in the vector
-    the_ism[se_bdii] = bdii_se_mx_ism ; //
-
-    set_ism( &the_ism );
-*/
+//    set_ism(the_ism,the_ism_mutex,ce);
+//    set_ism(the_ism,the_ism_mutex,se);
 
   std::vector<LineOption> optvec( options, options + sizeof(options)/sizeof(LineOption) );
   LineParser options( optvec, 0 );
@@ -159,9 +142,43 @@ int main(int argc, char* argv[])
      else
         req_file.assign(options['j'].getStringValue());
 
+     glite::wms::manager::main::ISM_Manager ism_manager;
+
+     if (!glite::wms::manager::server::signal_handling()) {
+       edglog(error) <<"cannot initialize signal handling"<< std::endl;
+       return -1;
+     }
+     sleep(30);
+
+
+/*
+  ism_type the_ism;  
+
+  for(size_t i = 0; i <= ism::ism_index_end; i++ ) {
+    ism::mt_ism_slice_type_ptr elem( new ism::mt_ism_slice_type );
+
+    (elem->slice).reset( new ism::ism_slice_type );
+    //if( i < m_impl->update_functions.size() )
+      //elem->uf = m_impl->update_functions[i];
+
+    the_ism.push_back( elem );
+
+  }
+
+  set_ism(& the_ism);
+
+  ism_ii_purchaser icp(ns_config->ii_contact(), ns_config->ii_port(),
+        ns_config->ii_dn(),ns_config->ii_timeout(), once
+  );
+  icp();
+
+//    ism_file_purchaser icp("/home/emartel/test/ismdump.fl", once);
+//    icp();
+*/
+
 
     
-     
+/*     
     std::string const dll_ii_name("libglite_wms_ism_ii_purchaser.so");
     DynamicLibraryPtr dll_ii(
       new glite::wms::manager::server::DynamicLibrary(
@@ -196,27 +213,32 @@ int main(int argc, char* argv[])
       )
     );
     ii_pch->do_purchase();
-
-    if(options.is_present('C'))
-    {
-
-        ism_mutex_type::scoped_lock ce_l(get_ism_mutex(glite::wms::ism::ce));
+*/
+/*
+    if(options.is_present('C')){
+      for(size_t i = 0; i<= ism_ce_index_end; i++) {
+        ism_mutex_type::scoped_lock lock( the_ism[ism_ce_index[i]]->mutex );
         for_each(
-          get_ism(glite::wms::ism::ce).begin(),
-          get_ism(glite::wms::ism::ce).end(),
+          ( (the_ism[ism_index[i]]->slice)->get<1>() ).begin(),
+          ( (the_ism[ism_index[i]]->slice)->get<1>() ).end(),
           print_ism_entry
         ); 
-     }
-     if(options.is_present('S'))
-     {
-
-        ism_mutex_type::scoped_lock se_l(get_ism_mutex(glite::wms::ism::se));
+      }
+    }
+    if(options.is_present('S')){
+      for(size_t i = 0; i<= ism_se_index_end; i++) {
+        ism_mutex_type::scoped_lock lock( the_ism[ism_se_index[i]]->mutex );
         for_each(
-          get_ism(glite::wms::ism::se).begin(),
-          get_ism(glite::wms::ism::se).end(),
+          ( (the_ism[ism_se_index[i]]->slice)->get<1>() ).begin(),
+          ( (the_ism[ism_se_index[i]]->slice)->get<1>() ).end(),
           print_ism_entry
-        ); 
-     }
+        );
+      }
+    }
+*/
+
+
+
      edglog(debug) << "-Reading-JDL-------------------------------------------------" << std::endl;
 
      ifstream fin(req_file.c_str());    
