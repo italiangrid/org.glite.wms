@@ -29,34 +29,54 @@ matchmakerISMImpl::checkRequirement(
   matchtable& suitableCEs
 )
 {
-  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::ce));
-  ism::ism_type::const_iterator const ism_end(
-    ism::get_ism(ism::ce).end()
-  );
-  ism::ism_type::const_iterator ism_it(
-    ism::get_ism(ism::ce).begin()
-  );
-  for ( ; ism_it != ism_end; ++ism_it) {
-
-    if (ism::is_void_ism_entry(ism_it->second)) {
-      continue;
-    }
-
-    boost::shared_ptr<classad::ClassAd> ce_ad_ptr(
-      boost::tuples::get<2>(ism_it->second)
-    );
-    classad::ClassAd ce_ad(*ce_ad_ptr);
-    std::string const ism_id(ism_it->first);
-
-    if (utils::symmetric_match(ce_ad, jdl)) {
-      Info(ism_id << ": ok!");
-      suitableCEs[ism_id] = boost::tuples::make_tuple(
-        std::make_pair(false, 0.0),
-        ce_ad_ptr
+//  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::ce));
+//  ism::ism_type::const_iterator const ism_end(
+//    ism::get_ism(ism::ce).end()
+//  );
+//  ism::ism_type::const_iterator ism_it(
+//    ism::get_ism(ism::ce).begin()
+//  );
+//  for ( ; ism_it != ism_end; ++ism_it) {
+  for( size_t i = 0; i <= ism::ism_ce_index_end; i ++ ) {
+    if( (*ism::get_ism())[ism::ism_ce_index[i]].get() &&
+       ((*ism::get_ism())[ism::ism_ce_index[i]]->slice).get() ) {
+      ism::ism_mutex_type::scoped_lock lock (
+             (*ism::get_ism())[ism::ism_ce_index[i]]->mutex
       );
+
+      ism::ism_slice_type::nth_index<1>::type& index =
+           ( (*ism::get_ism())[ism::ism_ce_index[i]]->slice)->get<1>();
+
+      ism::ism_slice_type::nth_index<1>::type::iterator ism_it = index.begin();
+
+      ism::ism_slice_type::nth_index<1>::type::iterator ism_end = index.end();
+
+      for ( ; ism_it != ism_end; ++ism_it) {
+
+        if (ism::is_void_ism_entry(*ism_it)) {
+          continue;
+        }
+
+        boost::shared_ptr<classad::ClassAd> ce_ad_ptr =
+               boost::tuples::get<ism::ad_ptr_entry>(*ism_it);
+
+        classad::ClassAd ce_ad(*ce_ad_ptr);
+
+        //std::string const ism_id(ism_it->first);
+        std::string const ism_id(boost::tuples::get<ism::id_type_entry>(*ism_it));
+
+        if (utils::symmetric_match(ce_ad, jdl)) {
+          Info(ism_id << ": ok!");
+          suitableCEs[ism_id] = boost::tuples::make_tuple(
+                                    std::make_pair(false, 0.0),
+                                    ce_ad_ptr
+                                );
+
+        }
+      }
     }
   }
-  
+    
   typedef std::vector<std::string> previous_matches_type;
   previous_matches_type previous_matches;
   
@@ -102,36 +122,83 @@ matchmakerISMImpl::checkRequirement(
   matchtable& suitableCEs
 )
 {
-  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::ce));
+//  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::ce));
 
-  ism::ism_type::const_iterator const ism_end(
-    ism::get_ism(ism::ce).end()
-  );
-
+//  ism::ism_type::const_reverse_iterator const ism_rend(
+//    ism::get_ism(ism::ce).rend()
+//  );
+//  ism::ism_type::const_iterator const ism_end(
+//    ism::get_ism(ism::ce).end()
+//  );
   std::set<matchtable::key_type>::const_iterator ce_ids_it = ce_ids.begin();
   std::set<matchtable::key_type>::const_iterator const ce_ids_end = ce_ids.end();
-  
+
   for( ; ce_ids_it != ce_ids_end ; ++ce_ids_it ) {
-      
-    ism::ism_type::const_iterator ism_it(
-      std::find_if(
-        ism::get_ism(ism::ce).begin(),
-        ism::get_ism(ism::ce).end(),
-        ism::key_starts_with(*ce_ids_it)
-      )
-    );
 
-    if(ism_it == ism_end) continue;
+    ism::ism_slice_type::nth_index<1>::type::iterator slice_it;
 
-    do {
+    ism::ism_slice_type::nth_index<1>::type::iterator slice_end;
+
+    for( size_t i = 0; i <= ism::ism_ce_index_end; ++i ) {
+
+      if( (*ism::get_ism())[ism::ism_ce_index[i]].get() &&
+         ((*ism::get_ism())[ism::ism_ce_index[i]]->slice).get() ) {
+        ism::ism_mutex_type::scoped_lock lock (
+               (*ism::get_ism())[ism::ism_ce_index[i]]->mutex
+        );
+
+        ism::ism_slice_type::nth_index<1>::type& index =
+          ( (*ism::get_ism())[ism::ism_ce_index[i]]->slice)->get<1>();
+  
+        slice_it = index.begin();
+  
+        slice_end = index.end();
+  
+  //    ism::ism_type::const_iterator ism_it(
+  //      std::find_if(
+  //        ism::get_ism(ism::ce).begin(),
+  //        ism::get_ism(ism::ce).end(),
+  //        ism::key_starts_with(*ce_ids_it)
+  //      )
+  //    );
+        ism::ism_slice_type::nth_index<1>::type::iterator slice_iter (
+          std::find_if(
+            slice_it,
+            slice_end,
+            ism::key_starts_with(*ce_ids_it)
+          )
+        );
+  
+  //      if(ism_it == ism_end) continue;
+        if(slice_iter == slice_end) {
+          slice_it = slice_iter;
+          continue;
+        }
+        else {
+          slice_it = slice_iter;
+          break;
+        }
+  
+      } // if( (*ism::get_ism())[is...
+
+    } //for( size_t i = 0; i <= ism::ism_ce_indx_end; i ++ ) {
+
+    if ( slice_it == slice_end ) break;
+
+
+    //do {
+    while( ism::key_starts_with(*ce_ids_it)(*(slice_it)) ) {
 
       boost::shared_ptr<classad::ClassAd> ce_ad_ptr(
-        boost::tuples::get<2>(ism_it->second)
+        //boost::tuples::get<2>(ism_it->second)
+        boost::tuples::get<ism::ad_ptr_entry>(*slice_it)
       );
       classad::ClassAd ce_ad(*ce_ad_ptr);
       if (utils::symmetric_match(ce_ad, jdl)) {
         
-        std::string const ism_id(ism_it->first);
+        std::string const ism_id(
+             boost::tuples::get<ism::id_type_entry>(*slice_it)
+        );
         
         Info(ism_id << ": ok!");
         suitableCEs[ism_id] = boost::tuples::make_tuple(
@@ -139,8 +206,11 @@ matchmakerISMImpl::checkRequirement(
           ce_ad_ptr
         );
       }
+
+      slice_it++;
+      if ( slice_it == slice_end ) break;
     }
-    while(++ism_it != ism_end && ism::key_starts_with(*ce_ids_it)(*ism_it));
+    //while( (slice_it!=slice_end)  && ism::key_starts_with(*ce_ids_it)(*(slice_it)));
   }
 
   typedef std::vector<std::string> previous_matches_type;
