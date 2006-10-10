@@ -8,6 +8,6 @@
 
 jobcontroldir = $(includedir)
 nobase_jobcontrol_HEADERS = \
-        glite/wms/jobcontrol/SubmitAdapter.h 
+        glite/wms/jobsubmission/SubmitAdapter.h 
 
 MAINTAINERCLEANFILES = Makefile.in

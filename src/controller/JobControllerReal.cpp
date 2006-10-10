@@ -52,7 +52,7 @@ namespace fs = boost::filesystem;
 #include "JobControllerReal.h"
 #include "JobControllerExceptions.h"
 #include "CondorG.h"
-#include "glite/wms/jobcontrol/SubmitAdapter.h"
+#include "glite/wms/jobsubmission/SubmitAdapter.h"
 #include "SubmitAd.h"
 #include "SubmitAdExceptions.h"
 
