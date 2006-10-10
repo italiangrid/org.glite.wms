@@ -307,21 +307,20 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 
 void
 jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
-	const string &delegation_id)
+	const string &original_delegation_id)
 {
 	GLITE_STACK_TRY("jobRegister()");
 	edglog_fn("wmpcoreoperations::jobRegister");
 	logRemoteHostInfo();
 	callLoadScriptFile("jobRegister");
-	
-	// Checking delegation id
-	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
-	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation ID not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
-			"Delegation id not valid");
+
+
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
 	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	
 	edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
 	
@@ -1777,21 +1776,19 @@ soap_serve_submit(struct soap *soap, struct ns1__jobSubmitResponse response)
 void
 jobSubmit(struct ns1__jobSubmitResponse &response,
 	jobSubmitResponse &jobSubmit_response, const string &jdl,
-	const string &delegation_id, struct soap *soap)
+	const string &original_delegation_id, struct soap *soap)
 {
 	GLITE_STACK_TRY("jobSubmit()");
 	edglog_fn("wmpcoreoperations::jobSubmit");
 	logRemoteHostInfo();
 	callLoadScriptFile("jobSubmit");
 	
-	// Checking delegation id
-	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
-	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation ID not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
-			"Delegation id not valid");
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
 	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	
 	edglog(debug)<<"JDL to Submit:\n"<<jdl<<endl;
 	
@@ -2151,7 +2148,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 
 void
 jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
-	const string &delegation_id)
+	const string &original_delegation_id)
 {
 	GLITE_STACK_TRY("jobListMatch(jobListMatchResponse &jobListMatch_response, "
 		"const string &jdl, const string &delegation_id)");
@@ -2159,14 +2156,12 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	logRemoteHostInfo();
 	callLoadScriptFile("jobListMatch");
 	
-	// Checking delegation id
-	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
-	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation ID not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
-			"jobListMatch()", wmputilities::WMS_INVALID_ARGUMENT,
-			"Delegation id not valid");
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
 	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	
 	edglog(debug)<<"JDL to find Match:\n"<<jdl<<endl;
 	

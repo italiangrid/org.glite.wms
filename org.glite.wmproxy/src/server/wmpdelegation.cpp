@@ -271,16 +271,21 @@ WMPDelegation::putProxy(const string &original_delegation_id, const string &prox
 }
 
 void
-WMPDelegation::destroyProxy(const string &delegation_id)
+WMPDelegation::destroyProxy(const string &original_delegation_id)
 {
 	GLITE_STACK_TRY("destroyProxy()");
 	edglog_fn("WMPDelegation::destroyProxy");
 	
 	char * user_dn = NULL;
   	user_dn = wmputilities::getUserDN();
-  	
+	// Initialise delegation_id
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
+	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
   	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
-  	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
   	
 	if (GRSTx509ProxyDestroy((char*) getProxyDir().c_str(),
@@ -298,18 +303,25 @@ WMPDelegation::destroyProxy(const string &delegation_id)
 }
 
 time_t
-WMPDelegation::getTerminationTime(const string &delegation_id) {
+WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 	GLITE_STACK_TRY("getTerminationTime()");
 	edglog_fn("WMPDelegation::getTerminationTime");
 
 	char * user_dn = NULL;
-  	user_dn = wmputilities::getUserDN();
+	user_dn = wmputilities::getUserDN();
+	// Initialise delegation_id
+	string delegation_id = original_delegation_id;
+	if (original_delegation_id==""){
+		delegation_id=string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated ";
+	}
+	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
+
 
   	time_t *start = (time_t*) malloc(sizeof(time_t));
   	time_t *finish = (time_t*) malloc(sizeof(time_t));
 
   	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
-  	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
 
 	if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
