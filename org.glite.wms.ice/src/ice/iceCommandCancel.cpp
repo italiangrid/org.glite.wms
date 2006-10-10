@@ -62,9 +62,11 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     if (!rootAD)
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
 
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
+
     string commandStr;
     // Parse the "command" attribute
-    if ( !rootAD->EvaluateAttrString( "command", commandStr ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
         throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
     }
     boost::trim_if(commandStr, boost::is_any_of("\""));
@@ -75,7 +77,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
 
     string protocolStr;
     // Parse the "version" attribute
-    if ( !rootAD->EvaluateAttrString( "protocol", protocolStr ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "protocol", protocolStr ) ) {
         throw util::JobRequest_ex("attribute \"protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
@@ -83,9 +85,9 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
         throw util::JobRequest_ex("Wrong \"Protocol\" for jobCancel: expected 1.0.0, got " + protocolStr );
     }
 
-    classad::ClassAd *argumentsAD = 0;
+    classad::ClassAd *argumentsAD = 0; // no need to free this
     // Parse the "arguments" attribute
-    if ( !rootAD->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
         throw util::JobRequest_ex("attribute \"arguments\" not found or is not a classad");
     }
 

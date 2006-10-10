@@ -122,10 +122,12 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     if (!rootAD) {
         throw util::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request  ) );        
     }
+    
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
 
     string commandStr;
     // Parse the "command" attribute
-    if ( !rootAD->EvaluateAttrString( "command", commandStr ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
         throw util::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request ) );
     }
     boost::trim_if( commandStr, boost::is_any_of("\"") );
@@ -136,7 +138,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
     string protocolStr;
     // Parse the "version" attribute
-    if ( !rootAD->EvaluateAttrString( "Protocol", protocolStr ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
         throw util::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
@@ -144,13 +146,13 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
         throw util::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
     }
 
-    classad::ClassAd *argumentsAD = 0;
+    classad::ClassAd *argumentsAD = 0; // no need to free this
     // Parse the "arguments" attribute
-    if ( !rootAD->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
         throw util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
     }
 
-    classad::ClassAd *adAD = 0;
+    classad::ClassAd *adAD = 0; // no need to free this
     // Look for "ad" attribute inside "arguments"
     if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
         throw util::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
@@ -362,9 +364,11 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::Cla
     if ( !root ) {
         throw util::ClassadSyntax_ex( boost::str( boost::format( "ClassAd parser returned a NULL pointer parsing request=[%1%]") % oldJdl ) );
     }
-
+    
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
+    
     string ceid;
-    if ( !root->EvaluateAttrString( "ce_id", ceid ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", ceid ) ) {
         throw util::ClassadSyntax_ex( "ce_id attribute not found" );
     }
     boost::trim_if( ceid, boost::is_any_of("\"") );
@@ -376,15 +380,15 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::Cla
 
     // Update jdl to insert two new attributes needed by cream:
     // QueueName and BatchSystem.
-    root->InsertAttr( "QueueName", qname );
-    root->InsertAttr( "BatchSystem", bsname );
+    classad_safe_ptr->InsertAttr( "QueueName", qname );
+    classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
 
-    updateIsbList( root );
-    updateOsbList( root );
+    updateIsbList( classad_safe_ptr.get() );
+    updateOsbList( classad_safe_ptr.get() );
 
     string newjdl;
     classad::ClassAdUnParser unparser;
-    unparser.Unparse( newjdl, root );
+    unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
     return newjdl;
 }
 
@@ -427,7 +431,9 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
     classad::ExprList* isbList;
     if ( jdl->EvaluateAttrList( "InputSandbox", isbList ) ) {
         classad::ExprList* newIsbList = new classad::ExprList();
-
+        
+	//boost::scoped_ptr< classad::ExprList > classad_safe_ptr( newIsbList );
+	
 	m_log_dev->infoStream()
             << "iceCommandSubmit::updateIsbList() "
             << "Starting InputSandbox manipulation..."
@@ -503,6 +509,9 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 
         classad::ExprList* osbDUList;
         classad::ExprList* newOsbDUList = new classad::ExprList();
+	
+	//boost::scoped_ptr< classad::ExprList > classad_safe_ptr( newOsbDUList );
+	
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
 
             m_log_dev->infoStream()

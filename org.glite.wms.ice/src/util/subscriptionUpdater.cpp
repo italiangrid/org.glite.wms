@@ -139,7 +139,7 @@ void iceUtil::subscriptionUpdater::body( void )
       }
     } // for loop over CEMon URLs
     
-    sleep( /*m_iteration_delay*/ 60 );
+    sleep( m_iteration_delay );
   } // while( !stopped )
 } // end function
 

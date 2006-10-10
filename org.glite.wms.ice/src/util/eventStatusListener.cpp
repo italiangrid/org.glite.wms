@@ -134,37 +134,40 @@ namespace { // anonymous namespace
 
         classad::ClassAdParser parser;
         classad::ClassAd *ad = parser.ParseClassAd( ad_string );
+	
 
         if (!ad)
             throw iceUtil::ClassadSyntax_ex( boost::str( boost::format("StatusNotification() got an error while parsing notification classad: %1%" ) % ad_string ) );
         
-        if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
+	boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
+	
+        if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
             throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "StatusNotification(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
         boost::trim_if( m_cream_job_id, boost::is_any_of("\"" ) );
 
         string job_status_str;
-        if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
+        if ( !classad_safe_ptr->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
             throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "StatusNotification(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
         boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
         m_job_status = api::job_statuses::getStatusNum( job_status_str );
 
-        if ( ad->EvaluateAttrInt( "EXIT_CODE", m_exit_code ) ) {
+        if ( classad_safe_ptr->EvaluateAttrInt( "EXIT_CODE", m_exit_code ) ) {
             m_has_exit_code = true;
         }
 
-        if ( ad->EvaluateAttrString( "FAILURE_REASON", m_failure_reason ) ) {
+        if ( classad_safe_ptr->EvaluateAttrString( "FAILURE_REASON", m_failure_reason ) ) {
             m_has_failure_reason = true;
             boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
         }
 
-        if ( ad->EvaluateAttrString( "WORKER_NODE", m_worker_node ) ) {
+        if ( classad_safe_ptr->EvaluateAttrString( "WORKER_NODE", m_worker_node ) ) {
             boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
         }
 
         // "Pretty print" the classad
         string pp_classad;
         classad::ClassAdUnParser unparser;
-        unparser.Unparse( pp_classad, ad );
+        unparser.Unparse( pp_classad, classad_safe_ptr.get() );
         CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
 		       << "Parsed status change notification "
 		       << pp_classad

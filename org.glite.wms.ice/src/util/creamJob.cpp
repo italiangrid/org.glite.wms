@@ -79,6 +79,15 @@ string iceUtil::CreamJob::serialize( void ) const
 
     classad::ClassAdParser parser;
     classad::ClassAd* jdlAd = parser.ParseClassAd( m_jdl );
+    if(!jdlAd) {
+      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+		       << "CreamJob::serialize() - ClassAdParser::ParseClassAd() returned a NULL pointer. STOP!"
+		       << log4cpp::CategoryStream::ENDLINE);
+      abort();
+    }
+    
+    //boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
+    
     // Updates sequence code
     jdlAd->InsertAttr( "LB_sequence_code", m_sequence_code );
     ad.Insert( "jdl", jdlAd );
@@ -102,7 +111,7 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
     classad::ClassAdParser parser;
 
     classad::ClassAd *ad;
-    classad::ClassAd *jdlAd;
+    classad::ClassAd *jdlAd; // no need to free it
     int st_number;
     string tstamp; // last status change
     string elease; // end lease
@@ -110,23 +119,25 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
     string lastmtime_proxy; // proxyCertTimestamp
 
     ad = parser.ParseClassAd( buf );
-  
+
     if(!ad)
         throw ClassadSyntax_ex(string("ClassAd parser returned a NULL pointer parsing entire classad ")+buf);
   
-    if ( ! ad->EvaluateAttrString( "cream_jobid", m_cream_jobid ) ||
-         ! ad->EvaluateAttrNumber( "status", st_number ) ||
-         ! ad->EvaluateAttrNumber( "exit_code", m_exit_code ) || 
-         ! ad->EvaluateAttrClassAd( "jdl", jdlAd ) ||
-         ! ad->EvaluateAttrNumber( "num_logged_status_changes", m_num_logged_status_changes ) ||
-         ! ad->EvaluateAttrString( "last_seen", lseen ) ||
-         ! ad->EvaluateAttrString( "end_lease", elease ) ||
-	 ! ad->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
-         ! ad->EvaluateAttrString( "delegation_id", m_delegation_id ) ||
-         ! ad->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ||
-         ! ad->EvaluateAttrString( "failure_reason", m_failure_reason ) ||
-         ! ad->EvaluateAttrString( "worker_node", m_worker_node ) ||
-         ! ad->EvaluateAttrBool( "is_killed_by_ice", m_is_killed_by_ice ) ) {
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
+  
+    if ( ! classad_safe_ptr->EvaluateAttrString( "cream_jobid", m_cream_jobid ) ||
+         ! classad_safe_ptr->EvaluateAttrNumber( "status", st_number ) ||
+         ! classad_safe_ptr->EvaluateAttrNumber( "exit_code", m_exit_code ) || 
+         ! classad_safe_ptr->EvaluateAttrClassAd( "jdl", jdlAd ) ||
+         ! classad_safe_ptr->EvaluateAttrNumber( "num_logged_status_changes", m_num_logged_status_changes ) ||
+         ! classad_safe_ptr->EvaluateAttrString( "last_seen", lseen ) ||
+         ! classad_safe_ptr->EvaluateAttrString( "end_lease", elease ) ||
+	 ! classad_safe_ptr->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
+         ! classad_safe_ptr->EvaluateAttrString( "delegation_id", m_delegation_id ) ||
+         ! classad_safe_ptr->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ||
+         ! classad_safe_ptr->EvaluateAttrString( "failure_reason", m_failure_reason ) ||
+         ! classad_safe_ptr->EvaluateAttrString( "worker_node", m_worker_node ) ||
+         ! classad_safe_ptr->EvaluateAttrBool( "is_killed_by_ice", m_is_killed_by_ice ) ) {
 
         throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node, is_killed_by_ice" );
 
@@ -168,16 +179,18 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
         throw ClassadSyntax_ex( string("CreamJob::setJdl unable to parse jdl=[") + j + string("]") );
     }
 
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
+
     m_jdl = j;
 
     // Look for the "ce_id" attribute
-    if ( !jdlAd->EvaluateAttrString( "ce_id", m_ceid ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", m_ceid ) ) {
         throw ClassadSyntax_ex("CreamJob::setJdl: ce_id attribute not found, or is not a string");
     }
     boost::trim_if(m_ceid, boost::is_any_of("\"") );
     
     // Look for the "X509UserProxy" attribute
-    if ( !jdlAd->EvaluateAttrString( "X509UserProxy", m_user_proxyfile ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "X509UserProxy", m_user_proxyfile ) ) {
         throw ClassadSyntax_ex("CreamJob::setJdl: X509UserProxy attribute not found, or is not a string");
     }
     boost::trim_if(m_user_proxyfile, boost::is_any_of("\""));
@@ -190,18 +203,18 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 		       << "creamJob::setJdl() - The user proxy file ["
 		       << m_user_proxyfile << "] is not stat-able:" << strerror(saverr) 
 		       <<". This could compromise the correct working of proxy renewal thread"
-		       << log4cpp::CategoryStream::ENDLINE)
+		       << log4cpp::CategoryStream::ENDLINE);
     } else {
 	m_proxyCertTimestamp = stat_buf.st_mtime;
     }
 
     // Look for the "LBSequenceCode" attribute (if this attribute is not in the classad, the sequence code is set to the empty string
-    if ( jdlAd->EvaluateAttrString( "LB_sequence_code", m_sequence_code ) ) {
+    if ( classad_safe_ptr->EvaluateAttrString( "LB_sequence_code", m_sequence_code ) ) {
         boost::trim_if(m_sequence_code, boost::is_any_of("\""));
     }
     
     // Look for the "edg_jobid" attribute
-    if ( !jdlAd->EvaluateAttrString( "edg_jobid", m_grid_jobid ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "edg_jobid", m_grid_jobid ) ) {
         throw ClassadSyntax_ex( "CreamJob::setJdl: edg_jobid attribute not found, or is not a string" );
     }
     boost::trim_if(m_grid_jobid, boost::is_any_of("\"") );

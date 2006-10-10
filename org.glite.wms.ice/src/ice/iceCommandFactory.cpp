@@ -23,6 +23,7 @@
 #include "iceCommandCancel.h"
 #include "classad_distribution.h"
 #include "boost/algorithm/string.hpp"
+#include "boost/scoped_ptr.hpp"
 
 using namespace std;
 
@@ -40,8 +41,10 @@ iceAbsCommand* iceCommandFactory::mkCommand( const std::string& request ) throw(
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
     }
 
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAd );
+
     string commandStr;
-    if ( !rootAd->EvaluateAttrString( "command", commandStr ) ) {
+    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
         throw util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
     boost::trim_if(commandStr, boost::is_any_of("\""));
