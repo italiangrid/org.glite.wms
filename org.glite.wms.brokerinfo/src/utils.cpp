@@ -132,10 +132,10 @@ resolve_storagemapping_info(
   boost::shared_ptr<filemapping> fm
 )
 {
-  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::se));
-  ism::ism_type::const_iterator const ism_end(
-    ism::get_ism(ism::se).end()
-  );
+//  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::se));
+//  ism::ism_type::const_iterator const ism_end(
+//    ism::get_ism(ism::se).end()
+//  );
 
   boost::shared_ptr<storagemapping> sm(new storagemapping);
 
@@ -153,12 +153,16 @@ resolve_storagemapping_info(
     for( ; sfni != sfne; ++sfni ) {
        string name = resolve_storage_name(*sfni);
        if(!name.empty()) {
-         ism::ism_type::const_iterator it(
-           ism::get_ism(ism::se).find(name)
-         );
-         if (it != ism_end) {
+         //ism::ism_type::const_iterator it(
+         //  ism::get_ism(ism::se).find(name)
+         //);
+         std::pair<ism::ism_slice_type::nth_index<1>::type::iterator, bool> res =
+                  ism::find( name, ism::ism_se_index, ism::ism_se_index_end);
+         //if (it != ism_end) {
+         if ( res.second ) {
            boost::shared_ptr<classad::ClassAd> se_ad(
-             boost::tuples::get<ism::ad_ptr_entry>(it->second)
+             //boost::tuples::get<ism::ad_ptr_entry>(it->second)
+             boost::tuples::get<ism::ad_ptr_entry>(*res.first)
            );
            storagemapping::iterator i;
            bool ib;

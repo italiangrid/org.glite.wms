@@ -476,6 +476,9 @@ resolve_filemapping_info(
                            fm->insert(
                              std::make_pair(*lfn, resolved_sfn)
                            );
+                           for(int i = 0; i<resolved_sfn.size(); i++){
+                              Debug(resolved_sfn[i]);
+                           }
                         }
                         else {
                            Debug("No replica(s) found!");
@@ -819,6 +822,9 @@ resolve_filemapping_info(
                fm->insert(
                  std::make_pair(*lfn, resolved_sfn)
                );
+               for(int i = 0; i<resolved_sfn.size(); i++){
+                 Debug(resolved_sfn[i]);
+               }
             }
             else {
                // edglog(debug) << "No replica(s) found!" << endl;
