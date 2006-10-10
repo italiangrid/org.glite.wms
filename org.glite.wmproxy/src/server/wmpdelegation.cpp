@@ -251,7 +251,6 @@ WMPDelegation::putProxy(const string &original_delegation_id, const string &prox
 		edglog(debug)<<"Automatically generated ";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
-
 	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
 	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
 
@@ -285,16 +284,24 @@ WMPDelegation::destroyProxy(const string &original_delegation_id)
 		edglog(debug)<<"Automatically generated ";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
-  	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
-  	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-  	
+	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
+	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
+
+	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+		free(user_dn);
+		edglog(critical)<<"Client delegated proxy not found: destroy Proxy not allowed"<<endl;
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+			"destroyProxy()", wmputilities::WMS_PROXY_ERROR,
+			"Client delegated proxy not found: destroy Proxy not allowed");
+	}
+
 	if (GRSTx509ProxyDestroy((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn) != GRST_RET_OK) {
-		edglog(critical)<<"Unable to destroy Proxy"<<endl;
+		edglog(critical)<<"Unable to perform destroy Proxy"<<endl;
 		free(user_dn);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"destroyProxy()", wmputilities::WMS_PROXY_ERROR,
-			"Unable to destroy Proxy");
+			"Unable to perform destroy Proxy");
     }
     
     free(user_dn);
@@ -306,7 +313,6 @@ time_t
 WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 	GLITE_STACK_TRY("getTerminationTime()");
 	edglog_fn("WMPDelegation::getTerminationTime");
-
 	char * user_dn = NULL;
 	user_dn = wmputilities::getUserDN();
 	// Initialise delegation_id
@@ -316,7 +322,14 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 		edglog(debug)<<"Automatically generated ";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
-
+	// Check Proxy Path
+	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
+		free(user_dn);
+		edglog(critical)<<"Client delegated proxy not found: get termination time not allowed"<<endl;
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+			"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
+			"Client delegated proxy not found:  get termination time not allowed");
+	}
 
   	time_t *start = (time_t*) malloc(sizeof(time_t));
   	time_t *finish = (time_t*) malloc(sizeof(time_t));
@@ -326,13 +339,13 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 
 	if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn, start, finish) != GRST_RET_OK) {
-		edglog(critical)<<"Unable to get termination time"<<endl;
+		edglog(critical)<<"Unable to perform get termination time"<<endl;
 		free(user_dn);
 		free(start);
 		free(finish);
 		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
-			"Unable to get termination time");
+			"Unable to perform get termination time");
 	}
 	time_t time = *finish;
 	free(user_dn);
