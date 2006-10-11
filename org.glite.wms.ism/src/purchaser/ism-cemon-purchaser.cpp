@@ -119,15 +119,14 @@ void ism_cemon_purchaser::do_purchase()
     vector<string>::const_iterator service_it = m_services.begin();
     vector<string>::const_iterator const service_end = m_services.end();
 
-    for(; 
-	service_it != service_end; ++service_it) {
+    for(; service_it != service_end; ++service_it) {
       
-      boost::scoped_ptr<CEEvent> ceE(new CEEvent(m_certfile,m_certpath));
-
-      ceE->setServiceURL(*service_it);
-      ceE->setRequestParam(&ce_topic);
-
       try {
+        boost::scoped_ptr<CEEvent> ceE(new CEEvent(m_certfile,m_certpath));
+
+        ceE->setServiceURL(*service_it);
+        ceE->setRequestParam(&ce_topic);
+
         ceE->getEvent(); 
         parse_classad_event_messages(ceE.get(), gluece_info_container); 
       }
