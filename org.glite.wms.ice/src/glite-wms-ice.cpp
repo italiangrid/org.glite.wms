@@ -181,7 +181,7 @@ int main(int argc, char*argv[])
   }
 
   logger_instance->setLogFile(logfile.c_str());
-  log_dev->debugStream() << "ICE VersionID is [20061010-16:00]"<<log4cpp::CategoryStream::ENDLINE;
+  CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061011-16:00]"<<log4cpp::CategoryStream::ENDLINE);
   cout << "Logfile is [" << logfile << "]" << endl;
 
 //   cout << "Poller Threshold time="<<iceUtil::iceConfManager::getInstance()->getPollerStatusThresholdTime()<<endl;
@@ -223,14 +223,17 @@ int main(int argc, char*argv[])
 	iceUtil::iceConfManager::getInstance()->setStartListener( false );
     } else {
         CREAM_SAFE_LOG(
-                       log_dev->log(log4cpp::Priority::INFO,
-                                    string( "Host DN is [" + hostdn + "]") )
+                       log_dev->infoStream() 
+		         << "Host DN is [" << hostdn << "]"
+			 << log4cpp::CategoryStream::ENDLINE
                        );
     }
   } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-    logger_instance->log(log4cpp::Priority::ERROR,
-			 "Unable to extract user DN from Proxy File "
-			 + hostcert + ". Won't start Listener", true, true, true);
+    CREAM_SAFE_LOG(log_dev->errorStream()
+			 << "Unable to extract user DN from Proxy File "
+			 << hostcert 
+			 << ". Won't start Listener"
+			 << log4cpp::CategoryStream::ENDLINE);
 
     // this must be set because other pieces of code
     // have a behaviour that depends on the listener is running or not

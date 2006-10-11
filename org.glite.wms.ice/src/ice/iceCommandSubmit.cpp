@@ -434,10 +434,10 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
         
 	//boost::scoped_ptr< classad::ExprList > classad_safe_ptr( newIsbList );
 	
-	m_log_dev->infoStream()
+	CREAM_SAFE_LOG(m_log_dev->infoStream()
             << "iceCommandSubmit::updateIsbList() "
             << "Starting InputSandbox manipulation..."
-            << log4cpp::CategoryStream::ENDLINE;        
+            << log4cpp::CategoryStream::ENDLINE);
 	
         string newPath;
         for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
@@ -461,10 +461,10 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
                     break;
                 }                
             }
-	    m_log_dev->debugStream()
+	    CREAM_SAFE_LOG(m_log_dev->debugStream()
                 << "iceCommandSubmit::updateIsbList() "
                 << s << " became " << newPath
-                << log4cpp::CategoryStream::ENDLINE;        
+                << log4cpp::CategoryStream::ENDLINE);
 
             // Builds a new value
             classad::Value newV;
@@ -490,11 +490,11 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
     if ( jdl->EvaluateAttrString( "OutputSandboxPath", osbPath ) ) {
         default_osbdURI.append( osbPath );
     } else {
-        m_log_dev->warnStream()
+        CREAM_SAFE_LOG(m_log_dev->warnStream()
             << "iceCommandSubmit::updateOsbList() found no "
             << "\"OutputSandboxPath\" attribute in the JDL. "
             << "Hope this is correct..."
-            << log4cpp::CategoryStream::ENDLINE;        
+            << log4cpp::CategoryStream::ENDLINE);        
     }
 
     if ( 0 != jdl->Lookup( "OutputSandboxDestURI" ) ) {
@@ -514,10 +514,10 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 	
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
 
-            m_log_dev->infoStream()
+            CREAM_SAFE_LOG(m_log_dev->infoStream()
                 << "iceCommandSubmit::updateOsbList() "
                 << "Starting OutputSandboxDestURI manipulation..."
-                << log4cpp::CategoryStream::ENDLINE;        
+                << log4cpp::CategoryStream::ENDLINE);        
           
             string newPath;
             for ( classad::ExprList::iterator it=osbDUList->begin(); 
@@ -543,10 +543,10 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
                     }                
                 }
 
-		m_log_dev->debugStream()
+		CREAM_SAFE_LOG(m_log_dev->debugStream()
                     << "After input sandbox manipulation, "
                     << s << " became " << newPath
-                    << log4cpp::CategoryStream::ENDLINE;        
+                    << log4cpp::CategoryStream::ENDLINE);        
 
                 // Builds a new value
                 classad::Value newV;
