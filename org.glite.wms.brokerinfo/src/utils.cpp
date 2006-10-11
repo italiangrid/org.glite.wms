@@ -132,11 +132,6 @@ resolve_storagemapping_info(
   boost::shared_ptr<filemapping> fm
 )
 {
-//  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::se));
-//  ism::ism_type::const_iterator const ism_end(
-//    ism::get_ism(ism::se).end()
-//  );
-
   boost::shared_ptr<storagemapping> sm(new storagemapping);
 
   filemapping::const_iterator fi = fm->begin(); 
@@ -149,20 +144,17 @@ resolve_storagemapping_info(
     vector<string>::const_iterator sfni = sfns.begin();
     vector<string>::const_iterator const sfne = sfns.end();
 
-//    bool logical_file_name_marked = false;
     for( ; sfni != sfne; ++sfni ) {
        string name = resolve_storage_name(*sfni);
        if(!name.empty()) {
-         //ism::ism_type::const_iterator it(
-         //  ism::get_ism(ism::se).find(name)
-         //);
-         std::pair<ism::ism_slice_type::nth_index<1>::type::iterator, bool> res =
-                  ism::find( name, ism::ism_se_index, ism::ism_se_index_end);
-         //if (it != ism_end) {
-         if ( res.second ) {
+         ism::ism_slice_type::nth_index<1>::type::iterator it;
+         bool found;
+         boost::tie(it,found) = ism::find( 
+           name, ism::ism_se_index, ism::ism_se_index_end
+         );
+         if ( found ) {
            boost::shared_ptr<classad::ClassAd> se_ad(
-             //boost::tuples::get<ism::ad_ptr_entry>(it->second)
-             boost::tuples::get<ism::ad_ptr_entry>(*res.first)
+             boost::tuples::get<ism::ad_ptr_entry>(*it)
            );
            storagemapping::iterator i;
            bool ib;
@@ -177,22 +169,23 @@ resolve_storagemapping_info(
                )
              )
            );
-//           if(!logical_file_name_marked) {
-             boost::tuples::get<1>(i->second).push_back(fi);
-//             logical_file_name_marked = true;
-//           }
+           boost::tuples::get<1>(i->second).push_back(fi);
            {
              vector<classad::ExprTree*> ads;
              if (evaluate(*se_ad, "GlueSEAccessProtocol", ads)) {
 
-               vector<classad::ExprTree*>::const_iterator expr_it(ads.begin());
-               vector<classad::ExprTree*>::const_iterator const expr_e(ads.end());
+               vector<classad::ExprTree*>::const_iterator 
+               expr_it(ads.begin());
+               vector<classad::ExprTree*>::const_iterator const 
+               expr_e(ads.end());
 
                for (; expr_it != expr_e; ++expr_it) {
                  classad::ClassAd const& ad(
                    *static_cast<classad::ClassAd*>(*expr_it)
                  );
-                 boost::tuples::get<0>(i->second).push_back(make_storage_info(ad));
+                 boost::tuples::get<0>(i->second).push_back(
+                   make_storage_info(ad)
+                 );
                }
              }
            }  
@@ -200,14 +193,18 @@ resolve_storagemapping_info(
              vector<classad::ExprTree*> ads;
              if (evaluate(*se_ad, "CloseComputingElements", ads)) {
 
-               vector<classad::ExprTree*>::const_iterator expr_it(ads.begin());
-               vector<classad::ExprTree*>::const_iterator const expr_e(ads.end());
+               vector<classad::ExprTree*>::const_iterator 
+               expr_it(ads.begin());
+               vector<classad::ExprTree*>::const_iterator const 
+               expr_e(ads.end());
 
                for (; expr_it != expr_e; ++expr_it) {
                  classad::ClassAd const& ad(
                    *static_cast<classad::ClassAd*>(*expr_it)
                  );
-                 boost::tuples::get<2>(i->second).push_back(make_ce_bind_info(ad));
+                 boost::tuples::get<2>(i->second).push_back(
+                   make_ce_bind_info(ad)
+                 );
                }
              }
            }  
@@ -255,6 +252,7 @@ select_compatible_storage(
   }
   return result;
 }
+
 size_t
 count_unique_logical_files(
   vector<storagemapping::const_iterator>::const_iterator first,
