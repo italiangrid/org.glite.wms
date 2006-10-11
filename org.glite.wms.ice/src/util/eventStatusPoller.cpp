@@ -119,11 +119,17 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
         oldness = time(NULL)-jobIt->getLastSeen();
 
 	{
-        //    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-            threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
-            listener_started = iceConfManager::getInstance()->getStartListener();
+          //    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+          threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+          listener_started = iceConfManager::getInstance()->getStartListener();
 	}
-        
+	
+        if( jobIt->getJobID() == "" ) {
+	  // This job doesn't have yet the CREAM Job ID. Skipping...
+	  ++jobIt;
+	  continue;
+	}
+	
 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		       << "eventStatusPoller::scanJobs() - "
 		       << "Job [" << jobIt->getJobID() << "]"
@@ -132,11 +138,11 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
 		       << log4cpp::CategoryStream::ENDLINE);
 	
         if ( (oldness <  threshold) && listener_started ) {
-            // This job is not old enough. Skip to next job
-            ++jobIt;
-            continue;
+          // This job is not old enough. Skip to next job
+          ++jobIt;
+          continue;
         }
-
+	
         CREAM_SAFE_LOG(m_log_dev->infoStream()
 		       << "eventStatusPoller::scanJobs() - "
 		       << "Sending JobStatus request for Job ["

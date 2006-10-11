@@ -71,7 +71,8 @@ void leaseUpdater::update_lease( void )
 			 << log4cpp::CategoryStream::ENDLINE);
             it = m_cache->erase( it );
         } else {
-	  CREAM_SAFE_LOG(m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
+	  if( it->getJobID() != "" ) {
+	    CREAM_SAFE_LOG(m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
 			 << "Checking LEASE for Job ["
 			 << it->getJobID() << "] - " 
 			 << " isActive="<<it->is_active()
@@ -82,7 +83,8 @@ void leaseUpdater::update_lease( void )
             if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
                 update_lease_for_job( *it );
             }
-            ++it;
+	  }
+          ++it;
         }
     }
 }
