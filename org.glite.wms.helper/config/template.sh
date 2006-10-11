@@ -1,3 +1,4 @@
+#!/bin/sh
 
 trap 'fatal_error "Job has been terminated by the batch system"' TERM
 
