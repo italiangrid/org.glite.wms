@@ -668,6 +668,9 @@ void  iceCommandSubmit::doSubscription( const string& ce )
   vector<Subscription> fake;
   
   // try to determine with a direct SOAP query to CEMon
+
+  boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
+
   if( util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) )
   {
     if( m_confMgr->getListenerEnableAuthZ() ) {
