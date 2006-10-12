@@ -628,10 +628,18 @@ void  iceCommandSubmit::doSubscription( const string& ce )
 {
   string cemon_url;
   util::cemonUrlCache* cemon_cache( util::cemonUrlCache::getInstance() );
-  {
-    boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );    
-    cemon_url = cemon_cache->getCEMonURL( ce );
-  }         
+  
+  /**
+    The entire method must be mutex-protected, because even getCEMonURL modify the
+    internal member of cemonUrlCache class.
+    If these calls block, this should happen only the first time, because after
+    a succesfull query to CREAM cemonUrlCache should update its internal data
+    structures
+   */
+  boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
+  
+  cemon_url = cemon_cache->getCEMonURL( ce );
+           
   CREAM_SAFE_LOG(
   		 m_log_dev->infoStream() 
                   << "iceCommandSubmit::doSubscription() - "
@@ -640,16 +648,11 @@ void  iceCommandSubmit::doSubscription( const string& ce )
                   << log4cpp::CategoryStream::ENDLINE
                 );
             
-  
-	    
-	    
   // try to determine if we're subscribed to 'cemon_url' by
   // asking the cemonUrlCache
+  
   bool foundSubscription;
-  {
-    boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-    foundSubscription = cemon_cache->hasCEMon( cemon_url );
-  }
+  foundSubscription = cemon_cache->hasCEMon( cemon_url );
   
   if( foundSubscription )
   {
@@ -661,16 +664,12 @@ void  iceCommandSubmit::doSubscription( const string& ce )
 		   << cemon_url << "] (found in cemonUrlCache)"
 		   << log4cpp::CategoryStream::ENDLINE);
     return;
-  
   }	   
   
   
   vector<Subscription> fake;
   
   // try to determine with a direct SOAP query to CEMon
-
-  boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-
   if( util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) )
   {
     if( m_confMgr->getListenerEnableAuthZ() ) {
