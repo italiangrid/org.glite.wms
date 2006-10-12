@@ -336,14 +336,12 @@ function send_partial_file
           let "DIFFSIZE = NEWSIZE - $OLDSIZE"
           SLICENAME=$SRCFILE.`date +%Y%m%d%H%M%S`_${!COUNTER}
           tail -c "$DIFFSIZE" "${SRCFILE}.${FILESUFFIX}" > "$SLICENAME"
-          if [ -r "${DESTURL}" ]; then
-            if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
-              retry_copy "globus-url-copy" "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
-            elif [ "${DESTURL:0:8}" == "https://" -o "${DESTURL:0:7}" == "http://" ]; then
-              retry_copy "htcp" "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
-            else
-              false
-            fi
+          if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
+            globus-url-copy "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
+          elif [ "${DESTURL:0:8}" == "https://" -o "${DESTURL:0:7}" == "http://" ]; then
+            htcp "file://$SLICENAME" "${DESTURL}/`basename $SLICENAME`"
+          else
+            false
           fi
           GLOBUS_RETURN_CODE=$?
           rm -f "${SRCFILE}.${FILESUFFIX}" "$SLICENAME"
