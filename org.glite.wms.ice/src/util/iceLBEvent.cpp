@@ -364,10 +364,18 @@ job_cancelled_event::job_cancelled_event( const CreamJob& j ) :
 int job_cancelled_event::execute( iceLBContext* ctx )
 {
 #ifdef GLITE_WMS_HAVE_LBPROXY
+
+    edg_wll_LogCancelDONEProxy( *(ctx->el_context), 
+                                m_job.get_failure_reason().c_str() );
+
     return edg_wll_LogDoneCANCELLEDProxy( *(ctx->el_context), 
                                           m_job.get_failure_reason().c_str(),
                                           m_job.get_exit_code() );
 #else
+
+    edg_wll_LogCancelDONE( *(ctx->el_context), 
+                           m_job.get_failure_reason().c_str() );
+
     return edg_wll_LogDoneCANCELLED( *(ctx->el_context), 
                                      m_job.get_failure_reason().c_str(),
                                      m_job.get_exit_code() );
