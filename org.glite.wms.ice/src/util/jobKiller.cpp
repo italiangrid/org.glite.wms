@@ -71,7 +71,7 @@ void jobKiller::body()
                  job_it != jobCache::getInstance()->end();
                  ++job_it) {
                 time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
-                if( proxyTimeLeft < m_threshold_time ) {
+                if( proxyTimeLeft < m_threshold_time && proxyTimeLeft > 5 ) {
                     CREAM_SAFE_LOG( m_log_dev->infoStream() 
                                     << "jobKiller::body() - Job ["
                                     << job_it->getJobID() << "]"
@@ -116,7 +116,11 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
                      <<  J.getJobID() << "]"
                      << log4cpp::CategoryStream::ENDLINE);
   } catch(std::exception& ex) {
-      m_lb_logger->logEvent( new cream_cancel_refuse_event( J, ex.what() ) );
+      J = m_lb_logger->logEvent( new cream_cancel_refuse_event( J, ex.what() ) );
+      // The job will not be removed from the job cache. We keep
+      // trying to cancel it until the residual proxy time is less
+      // than a minimum threshold. After that, the statusPoller will
+      // eventually take care of removing it from the cache.
       CREAM_SAFE_LOG (
                       m_log_dev->errorStream() 
                       << "jobKiller::killJob() - Error"
@@ -124,5 +128,8 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
                       << ex.what()
                       << log4cpp::CategoryStream::ENDLINE);
   }
+
+  // The cache is already locked
+  jobCache::getInstance()->put( J ); 
 
 }

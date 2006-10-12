@@ -94,7 +94,7 @@ start()
         echo "ok (already running)"
     else
         rm -f ${pid_file}
-        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} > ${err_logfile} 2>&1"
+        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} >> ${err_logfile} 2>&1"
         # there is a race condition due to some delay between becoming
         # a daemon (hence returning control to this script) and
         # writing the pid file; the following sleep should be enough
