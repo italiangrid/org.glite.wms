@@ -327,7 +327,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
             theJob.setJobID(url_jid[1]);
             theJob.setStatus(cream_api::job_statuses::PENDING);
-            theJob.setEndLease( time(0) + m_confMgr->getLeaseDeltaTime() * 60 );
+            theJob.setEndLease( time(0) + m_confMgr->getLeaseDeltaTime() );
             theJob.setDelegationId( delegID );
             theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
             theJob.set_wn_sequence_code( theJob.getSequenceCode() );
