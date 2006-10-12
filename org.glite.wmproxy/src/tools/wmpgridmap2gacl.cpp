@@ -201,7 +201,7 @@ Log* Converter::createLogFile ( ) {
 	//time stamp
 	time_t now = time(NULL);
         struct tm *ns = localtime(&now);
-        oss << (ns->tm_year+1900) << FILL << ns->tm_mon ;
+        oss << (ns->tm_year+1900) << FILL << (ns->tm_mon+1) ;
 	oss << FILL << ns->tm_mday ;
 	// location
 	env = getenv (Utils::GLITE_LOG_ENV);
@@ -430,7 +430,7 @@ const int Converter::readOptions(int argc,char **argv, converterOpts &opts, stri
 } ;
 
 /**
-*
+* Extracts the <dn> or <fqan> from the input entry 
 */
 int Converter::getEntry(std::string &entry) {
 	int result = Utils::SUCCESS;
@@ -949,5 +949,4 @@ int main (int argc,char **argv){
 		return 0;
 	}
 };
-
 

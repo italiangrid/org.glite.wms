@@ -208,8 +208,8 @@ Log* ProxyCleaner::createLogFile ( ) {
 	//time stamp
 	time_t now = time(NULL);
         struct tm *ns = localtime(&now);
-        oss << (ns->tm_year+1900) << FILL << ns->tm_mon ;
-	oss << FILL << ns->tm_mday ;
+        oss << (ns->tm_year+1900) << FILL ;
+	oss << (ns->tm_mon+1) << FILL << ns->tm_mday ;
 	// location
 	env = getenv (Utils::GLITE_LOG_ENV);
 	if (env) {
@@ -252,7 +252,9 @@ time_t ProxyCleaner::ASN1_UTCTIME_get(const ASN1_UTCTIME *s) {
 
     return timegm(&tm)-offset*60;
 }
-
+/**
+* Returns the proxytimeleft
+*/
 const long ProxyCleaner::get_time_left(const string &file) {
 	ostringstream oss;
 	time_t timeleft = 0;
