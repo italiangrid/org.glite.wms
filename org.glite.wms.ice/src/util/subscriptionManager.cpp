@@ -117,7 +117,9 @@ bool subscriptionManager::subscribe(const string& url)
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
   		 << "subscriptionManager::subscribe() - Subscribing to ["
 		 << url << "] ["
-                 << m_myurl << "]"
+                 << m_myurl << "] [" 
+		 << iceConfManager::getInstance()->getNotificationFrequency()
+		 << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
 
   {

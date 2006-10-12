@@ -163,7 +163,17 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
                                 -1,
                                 -1 );
 
-        } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
+        } catch( cream_api::cream_exceptions::JobUnknownException& ex) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+			 << "eventStatusPoller::scanJobs() - "
+			 << "CREAM responded JobUnknown for JobId=["
+			 << jobIt->getJobID()
+			 << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
+			 << log4cpp::CategoryStream::ENDLINE);
+	  jobIt = m_cache->erase( jobIt );
+	  continue;
+	  
+	} catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
             // the CreamJob is created from another valid one
 	  CREAM_SAFE_LOG(m_log_dev->fatalStream()
@@ -242,7 +252,9 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
 			     << "]/[" << jobIt->getGridJobID()
 			     << "] was not found on CREAM; Retrying later..."
 			     << log4cpp::CategoryStream::ENDLINE);
-                jobIt++;
+                //jobIt++;
+	      jobIt = m_cache->put( *jobIt );
+	      
             } else {
 	      CREAM_SAFE_LOG(m_log_dev->errorStream()
 			     << "Job cream/grid ID=[" << jobIt->getJobID()

@@ -98,7 +98,7 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
       vector<string> url_jid(1);   
       url_jid[0] = J.getJobID();
    
-      J = m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by cream::jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
+      J = m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
 
       J.set_killed_by_ice();
       J.set_failure_reason( "The job has been killed because its proxy was expiring" );
