@@ -181,7 +181,7 @@ int main(int argc, char*argv[])
   }
 
   logger_instance->setLogFile(logfile.c_str());
-  CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061011-16:00]"<<log4cpp::CategoryStream::ENDLINE);
+  CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061013-12:00]"<<log4cpp::CategoryStream::ENDLINE);
   cout << "Logfile is [" << logfile << "]" << endl;
 
 //   cout << "Poller Threshold time="<<iceUtil::iceConfManager::getInstance()->getPollerStatusThresholdTime()<<endl;
