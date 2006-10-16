@@ -34,6 +34,7 @@
 
 #include <vector>
 #include <string>
+#include <list>
 
 using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api;
@@ -49,8 +50,8 @@ leaseUpdater::leaseUpdater( ) :
     m_cache( jobCache::getInstance() ),
     m_creamClient( CreamProxyFactory::makeCreamProxy( false ) )
 {
-    double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/2.0;
-    m_delay = (time_t)(_delta_time_for_lease);
+  double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/4.0;
+  m_delay = (time_t)(_delta_time_for_lease);
 }
 
 leaseUpdater::~leaseUpdater( )
@@ -60,39 +61,58 @@ leaseUpdater::~leaseUpdater( )
 
 void leaseUpdater::update_lease( void )
 {
+  // boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+  //jobCache::iterator it = m_cache->begin();
+  
+  list<CreamJob> jobsToCheck;
+
+  {
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    jobCache::iterator it = m_cache->begin();
-    while ( it != m_cache->end() ) {
-        if ( it->getEndLease() < time(0) ) {
-            // Remove expired job from cache
-	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "leaseUpdater::update_lease() - "
-			 << "Removing lease-expired job [" << it->getJobID() <<"]"
-			 << log4cpp::CategoryStream::ENDLINE);
-            it = m_cache->erase( it );
-        } else {
-	  if( it->getJobID() != "" ) {
-	    CREAM_SAFE_LOG(m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
+    for(jobCache::iterator jit = m_cache->begin();
+	jit != m_cache->end();
+	++jit)
+      jobsToCheck.push_back( *jit );
+  }
+
+  //while ( it != m_cache->end() ) {
+  for( list<CreamJob>::iterator it = jobsToCheck.begin();
+       it != jobsToCheck.end();
+       ++it) 
+    {
+      if ( it->getEndLease() <= time(0) ) {
+	// Remove expired job from cache
+	CREAM_SAFE_LOG(m_log_dev->errorStream()
+		       << "leaseUpdater::update_lease() - "
+		       << "Removing from cache lease-expired job [" << it->getJobID() <<"]"
+		       << log4cpp::CategoryStream::ENDLINE);
+	{
+	  boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	  jobCache::iterator tmp = m_cache->lookupByCreamJobID( it->getJobID() );
+	  it = m_cache->erase( tmp );
+	}
+	
+      } else {
+	if( it->getJobID() != "" ) {
+	  CREAM_SAFE_LOG(m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
 			 << "Checking LEASE for Job ["
 			 << it->getJobID() << "] - " 
 			 << " isActive="<<it->is_active()
 			 << " - remaining="<<(it->getEndLease()-time(0))
 			 << " - threshold="<<m_threshold
 			 << log4cpp::CategoryStream::ENDLINE);
-	                       
-            if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
-                update_lease_for_job( *it );
-            }
+	  
+	  if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
+	    // do not put jobCache's mutex here. It is acquired inside the floowing method
+	    update_lease_for_job( *it );
 	  }
-          ++it;
-        }
+	}
+	//++it;
+      }
     }
 }
 
 void leaseUpdater::update_lease_for_job( CreamJob& j )
 {
-    //m_creamClient->clearSoap();
-
     map< string, time_t > newLease;
     vector< string > jobids;
     
@@ -115,27 +135,37 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 		   << "]"
 		   << log4cpp::CategoryStream::ENDLINE);
         m_creamClient->Authenticate( j.getUserProxyCertificate() );
-	CREAM_SAFE_LOG(m_log_dev->infoStream()
-		   << "leaseUpdater::update_lease_for_job() - "
-		   << "Calling CreamProxy::Lease(...) for job ["
-		   << j.getJobID()
-		   << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
         m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
-	CREAM_SAFE_LOG(m_log_dev->infoStream()
-		   << "leaseUpdater::update_lease_for_job() - "
-		   << "CreamProxy::Lease(...) finished for job ["
-		   << j.getJobID()
-		   << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
-		   
+
+    } catch(cream_exceptions::JobUnknownException& ex) {
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "leaseUpdater::update_lease_for_job() - "
+		     << "CREAM doesn't know the current Job ["
+		     << j.getJobID()<<"]. Removing from cache."
+		     << log4cpp::CategoryStream::ENDLINE);
+      {
+        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	jobCache::iterator tmp = m_cache->lookupByCreamJobID( j.getJobID() );
+	m_cache->erase( tmp );
+      }
+      return;
+      
+    } catch(cream_exceptions::BaseException& ex) {
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "leaseUpdater::update_lease_for_job() - "
+		     << "Error updating lease for job ["
+		     << j.getJobID()<<"]: "<<ex.what()
+		     << log4cpp::CategoryStream::ENDLINE);
+      return;
+      
     } catch ( soap_proxy::soap_ex& ex ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
 		     << "leaseUpdater::update_lease_for_job() - "
-		     << "CreamProxy returned an exception: "
-		     << ex.what()
+		     << "Error updating lease for job ["
+		     << j.getJobID()<<"]: "<<ex.what()
 		     << log4cpp::CategoryStream::ENDLINE);
-        // FIXME: what to do?
+      return;
+        // FIXME: what to do? RETRY LATER...
     }
 
     if ( newLease.find( j.getJobID() ) != newLease.end() ) {
@@ -151,8 +181,11 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 		     << " new lease ends " << time_t_to_string( newLease[ j.getJobID() ] )
 		     << log4cpp::CategoryStream::ENDLINE);
         
-        j.setEndLease( newLease[ j.getJobID() ] );
-        m_cache->put( j ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
+	{
+	  j.setEndLease( newLease[ j.getJobID() ] );
+	  boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+          m_cache->put( j ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
+	}
     } else {
         // there was an error updating the lease
       CREAM_SAFE_LOG(m_log_dev->errorStream()
