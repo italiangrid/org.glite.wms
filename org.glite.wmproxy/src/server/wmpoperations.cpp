@@ -79,15 +79,32 @@ extern WMProxyConfiguration conf;
 
 // Global variables for configuration attributes (ENV dependant)
 extern std::string sandboxdir_global;
+const std::string WMP_POINT_VERSION = ".";
 
 // WMProxy software version
 const std::string WMP_MAJOR_VERSION = "2";
 const std::string WMP_MINOR_VERSION = "2";
 const std::string WMP_RELEASE_VERSION = "0";
-const std::string WMP_POINT_VERSION = ".";
 const std::string WMP_VERSION = WMP_MAJOR_VERSION
 	+ WMP_POINT_VERSION + WMP_MINOR_VERSION
 	+ WMP_POINT_VERSION + WMP_RELEASE_VERSION;
+
+// Delegation software version
+const std::string WMP_DELEG_MAJOR_VERSION = "2";
+const std::string WMP_DELEG_MINOR_VERSION = "0";
+const std::string WMP_DELEG_RELEASE_VERSION = "0";
+const std::string WMP_DELEG_VERSION = WMP_DELEG_MAJOR_VERSION
+	+ WMP_POINT_VERSION + WMP_DELEG_MINOR_VERSION
+	+ WMP_POINT_VERSION + WMP_DELEG_RELEASE_VERSION;
+
+
+// Delegation interface software version
+const std::string WMP_DELEG_INTERFACE_MAJOR_VERSION = "2";
+const std::string WMP_DELEG_INTERFACE_MINOR_VERSION = "0";
+const std::string WMP_DELEG_INTERFACE_RELEASE_VERSION = "0";
+const std::string WMP_DELEG_INTERFACE_VERSION = WMP_DELEG_INTERFACE_MAJOR_VERSION
+	+ WMP_POINT_VERSION + WMP_DELEG_INTERFACE_MINOR_VERSION
+	+ WMP_POINT_VERSION + WMP_DELEG_INTERFACE_RELEASE_VERSION;
 
 // DONE job output file
 const std::string MARADONA_FILE = "Maradona.output";
@@ -147,10 +164,10 @@ getVersion(getVersionResponse &getVersion_response)
 	edglog_fn("wmpoperations::getVersion");
 	logRemoteHostInfo();
 	callLoadScriptFile("getVersion");
-	
+
 	getVersion_response.version = WMP_VERSION;
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
-	
+
 	GLITE_STACK_CATCH();
 }
 
@@ -685,6 +702,31 @@ getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 		
 	edglog(info)<<"String Parametric Job Template retrieved successfully"<<endl;
 	
+	GLITE_STACK_CATCH();
+}
+void
+getDelegationVersion(getVersionResponse &getVersion_response)
+{
+	GLITE_STACK_TRY("getDelegationVersion()");
+	edglog_fn("wmpoperations::getDelegationVersion");
+	logRemoteHostInfo();
+	callLoadScriptFile("getDelegationVersion");
+	getVersion_response.version = WMP_DELEG_VERSION;
+	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
+
+	GLITE_STACK_CATCH();
+}
+void
+getDelegationIntefaceVersion(getVersionResponse&getVersion_response)
+{
+	GLITE_STACK_TRY("getDelegationInterfaceVersion()");
+	edglog_fn("wmpoperations::getDelegationInterfaceVersion");
+	logRemoteHostInfo();
+	callLoadScriptFile("getDelegationInterfaceVersion");
+
+	getVersion_response.version = WMP_DELEG_INTERFACE_VERSION;
+	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
+
 	GLITE_STACK_CATCH();
 }
 

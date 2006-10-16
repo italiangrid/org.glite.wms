@@ -178,10 +178,10 @@ WMPDelegation::getNewProxyRequest()
 		time_t *finish = (time_t*) malloc(sizeof(time_t));
 		if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
 				delegation_id, user_dn, start, finish) != GRST_RET_OK) {
-			free(start);
-			free(finish);
-			free(delegation_id);
-			free(user_dn);
+				free(start);
+				free(finish);
+				free(delegation_id);
+				free(user_dn);
 			edglog(critical)<<"Unable to check already present proxy time validity: Error while retrieving Termination Time"<<endl;
 			throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 				"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,

@@ -65,7 +65,7 @@ void getIntParametricJobTemplate(getIntParametricJobTemplateResponse
 void getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 	&getStringParametricJobTemplate_response, StringList *attributes,
 	StringList *param, const std::string &requirements, const std::string &rank);
-	
+
 void getProxyReq(getProxyReqResponse &getProxyReq_response,
 	const std::string &delegation_id);
 
@@ -74,7 +74,11 @@ void renewProxyReq(renewProxyReqResponse &renewProxyReq_response,
 
 void getNewProxyReq(std::pair<std::string, std::string> &retpair);
 
-void putProxy(putProxyResponse &putProxyReq_response, 
+void getDelegationVersion(getVersionResponse &getVersion_response);
+
+void getDelegationIntefaceVersion(getVersionResponse &getVersion_response);
+
+void putProxy(putProxyResponse &putProxyReq_response,
 	const std::string &delegation_id, const std::string &proxy);
 
 void destroyProxy(const std::string &delegation_id);
