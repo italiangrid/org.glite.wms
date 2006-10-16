@@ -244,6 +244,36 @@ struct ConfigContext{
 * @see thrown exceptions: AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
 JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+
+/**
+*   Registers a job for submission.The unique identifier assigned to the job is returned to the client.
+*  This operation only registers the job and assigns it with an identifier.
+*  The processing of the job (matchmaking, scheduling etc.) within the WM is not started.
+* The job is "held" by the system in the "Registered" status until the jobStart operation is called.
+* Between the two calls the client can perform all preparatory actions needed by the job to run
+* (e.g. the registration of input data, the upload of the job input sandbox files etc); especially
+* those actions requiring the specification of the job identifier.
+* The service supports registration (and consequently submission) of simple jobs, parametric jobs, partitionable jobs, DAGs and collections of jobs.
+* The description is always provided through a single JDL description.
+* When a clients requests for registration of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs (all those requests represent in fact a set of jobs);
+*  the operation returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
+* @param jsdl The JSDL instance that represents the job
+* @param delegationId The id string used to identify a previously delegated proxy
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
+* @return The structure associated to the registered job, with its jobid(s)
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws InvalidArgumentException If the given JDL expression is not valid
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
+* @see #getProxyReq, #putProxy (proxy delegation)
+* @see thrown exceptions: AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
+*/
+JobIdApi jobRegisterJSDL (const std::string &jsdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+
+
 /**
 *  Submits a job: performs registration and triggers the submission
 * The JDL description of the job provided by the client is validated by the service,

@@ -557,6 +557,21 @@ JobIdApi jobRegister (const string &jdl, const string &delegationId, ConfigConte
 	} else soapErrorMng(wmp) ;
 	return jobid;
 }
+/*****************************************************************
+jobRegisterJSDL
+******************************************************************/
+JobIdApi jobRegisterJSDL (const string &jsdl, const string &delegationId, ConfigContext *cfs){
+	WMProxy wmp;
+	JobIdApi jobid ;
+	ns2__JobDefinition_USCOREType * _jsdl;
+	soapAuthentication (wmp, cfs);
+	ns1__jobRegisterJSDLResponse response;
+	if (wmp.ns1__jobRegisterJSDL(_jsdl, delegationId, response) == SOAP_OK) {
+		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
+		soapDestroy(wmp.soap);
+	} else soapErrorMng(wmp) ;
+	return jobid;
+}
 
 /*****************************************************************
 jobSubmit
