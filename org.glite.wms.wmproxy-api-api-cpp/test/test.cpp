@@ -31,7 +31,8 @@ const std::string errMsg (const glite::wms::wmproxyapi::BaseException &b_ex ){
 int main (int argc,char **argv){
 	string endpoint = "";
 	string version = "";
-	string delegID = "delegTest";
+	string delegID =	"";
+	string proxy = "";
 	if (argc < 2  ){
 		cout << "usage " << argv[0] << " <endpoint-url>\n";
 		exit(-1);
@@ -40,7 +41,6 @@ int main (int argc,char **argv){
 	ConfigContext *cxt = new ConfigContext("", endpoint, "");
 	cout << "Testing endpoint: " << endpoint << "\n";
 	cout << "==========================================\n\n";
-
 	try{
 		cout << "Connecting to " << endpoint << "\n\n";
 		version = getVersion(cxt) ;
@@ -49,6 +49,7 @@ int main (int argc,char **argv){
 		cout << "Failed :(((\n";
 		cout << "Exception: " << errMsg(exc)<< "\n";
 	}
+	/*
 	cout << "Test: getProxyReq\n";
 	cout << "----------------------------------\n\n";
 	cout << "Calling getProxyReq service con delegationId: "<< delegID << "\n";
@@ -61,40 +62,54 @@ int main (int argc,char **argv){
 		cout << "Failed :(((\n";
 		cout << "Exception: " << errMsg(exc)<< "\n";
 	}
-	/*
-	cout << "Test: getNewProxyReq\n";
-	cout << "----------------------------------\n\n";
-	cout << "Calling getNewProxyReq service .....\n";
+	*/
+
 	try{
-		cout << "Connecting to " << endpoint << "\n\n";
+		cout << "Test: getDelegationVersion\n";
+		cout << "----------------------------------\n";
+		cout << "Calling  getDelegationVersion service .....\n";
+		cout << "Connecting to " << endpoint << "\n";
+		version = getDelegationVersion(cxt );
+		cout << "DelegationVersion = " << version << "\n";
+		cout << "Test: getDelegationInterfaceVersion\n";
+		cout << "----------------------------------\n";
+		cout << "Calling getDelegationInterfaceVersion service .....\n";
+		cout << "Connecting to " << endpoint << "\n";
+		version = getDelegationInterfaceVersion(cxt );
+		cout << "DelegationInterfaceVersion = " << version << "\n\n";
+
+		cout << "Test: getNewProxyReq\n";
+		cout << "----------------------------------\n";
+		cout << "Calling getNewProxyReq service .....\n";
+		cout << "Connecting to " << endpoint << "\n";
 		ProxyReqStruct newProxy = getNewProxyReq(cxt);
 		cout << "Success !!!\n";
-		cout << "DelegationId = " << newProxy.delegationId << "\n";
-		cout << "Proxy:\n" << newProxy.proxy << "\n\n";
-	} catch (BaseException &exc){
-	 	cout << "Failed :(((\n";
-		cout << "Exception: " << errMsg(exc)<< "\n";
-	 }
-	 */
-	cout << "Test: getProxyTerminationTime\n";
-	cout << "----------------------------------\n\n";
-	cout << "Calling getProxyTerminationTime service .....\n";
-	try{
-		cout << "Connecting to " << endpoint << "\n\n";
-		int tt = getProxyTerminationTime(delegID, cxt);
+		delegID = newProxy.delegationId ;
+		proxy = newProxy.proxy ;
+		cout << "DelegationId = " << delegID << "\n";
+		cout << "Proxy:\n" << proxy << "\n\n";
+		cout << "Test: putProxy\n";
+		cout << "----------------------------------\n";
+		cout << "Calling putProxy service .....\n";
+		cout << "Connecting to " << endpoint << "\n";
+		putProxy(delegID, proxy, cxt);
+		cout << "Success !!!\n\n";
+		cout << "Test: getProxyTerminationTime\n";
+		cout << "----------------------------------\n";
+		cout << "Calling getProxyTerminationTime service .....\n";
+		cout << "Connecting to " << endpoint << "\n";
+		int tt = getProxyTerminationTime("", cxt);
 		cout << "Success !!!\n";
-		cout << "Termination time = " << tt << "\n";
-	} catch (BaseException &exc){
-	 	cout << "Failed :(((\n";
-		cout << "Exception: " << errMsg(exc)<< "\n";
-	 }
-	cout << "Test: proxyDestroy\n";
-	cout << "----------------------------------\n\n";
-	cout << "Calling proxyDestroy service .....\n";
-	try{
+		cout << "Termination time = " << tt << "\n\n";
+
+/*
+		cout << "Test: proxyDestroy\n";
+		cout << "----------------------------------\n\n";
+		cout << "Calling proxyDestroy service .....\n";
 		cout << "Connecting to " << endpoint << "\n\n";
 		proxyDestroy(delegID, cxt);
-		cout << "Success !!!\n";
+		cout << "Success !!!\n\n";
+*/
 	} catch (BaseException &exc){
 	 	cout << "Failed :(((\n";
 		cout << "Exception: " << errMsg(exc)<< "\n";

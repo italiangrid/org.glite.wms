@@ -690,6 +690,25 @@ std::string grstGetProxyReq(const std::string &delegationId, glite::wms::wmproxy
 */
 ProxyReqStruct getNewProxyReq(ConfigContext *cfs);
 /**
+* Returns the version number of the delegation services
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the  object is created with the default parameters
+* @throws BaseException::DelegationException If the request failed
+* @throws BaseException Any other error occurred
+* @see #getVersion
+* @see #BaseException
+*/
+std::string getDelegationVersion(ConfigContext *cfs);
+/**
+* Returns the version number of the delegation interface
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the  object is created with the default parameters
+* @throws BaseException::DelegationException If the request failed
+* @throws BaseException Any other error occurred
+* @see #getVersion
+* @see #BaseException
+*/
+std::string getDelegationInterfaceVersion(ConfigContext *cfs);
+
+/**
 * Returns the time left of the delegated proxy that is identified by the "delegatioId" string.
 * If an empty string is provided as input for delegationID, proxy with default identifier is ocnsidered.
 * @param delegationID the identifier string of the delegated proxy (empty string for the default proxy)

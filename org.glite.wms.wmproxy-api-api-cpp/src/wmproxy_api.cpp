@@ -67,10 +67,6 @@ BaseException* createWmpException(struct soap *soap){
 	SOAP_ENV__Detail *detail = NULL;
 	BaseException *b_ex =NULL;
 	if (soap){
-		//soap_print_fault(soap, stderr);
-		//exit(-1);
-
-
 		if (!*soap_faultcode(soap)){
 			soap_set_fault(soap);
 		}
@@ -108,7 +104,7 @@ BaseException* createWmpException(struct soap *soap){
 						case SOAP_TYPE_ns1__GenericFaultType:
 							b_ex=new GenericException;
 							break;
-						case SOAP_TYPE_ns4__DelegationExceptionType:
+						case SOAP_TYPE__ns4__DelegationException:
 							soap_print_fault(soap, stderr);
 							exit(-1);
 						default:
@@ -179,7 +175,7 @@ BaseException* grstCreateWmpException(struct soap *soap){
 	SOAP_ENV__Fault  *fault = NULL;
 	SOAP_ENV__Detail *detail = NULL;
 
-	ns4__DelegationExceptionType *ex2 = NULL;
+	_ns4__DelegationException *ex2 = NULL;
 	BaseException *b_ex =NULL;
 	char *faultstring =  NULL;
 	char *faultcode = NULL;
@@ -195,14 +191,14 @@ BaseException* grstCreateWmpException(struct soap *soap){
 		if (fault){
         		detail = soap->fault->detail ;
 			if (detail) {
-				 if (detail->__type == SOAP_TYPE_ns4__DelegationExceptionType ) {
-					ex2 = (ns4__DelegationExceptionType*)detail->fault;
+				 if (detail->__type == SOAP_TYPE__ns4__DelegationException) {
+					ex2 = (_ns4__DelegationException*)detail->fault;
 				} else { ex2 = NULL; }
 				// if type is ns4__DelegationExceptionType
 				if (ex2) {
 					b_ex = new GrstDelegationException ;
-					if (ex2->message) {
-						message = *(ex2->message) ;
+					if (ex2->msg) {
+						message = *(ex2->msg) ;
 					} else if (faultstring) {
 						message = string(faultstring);
 					} else {
@@ -896,16 +892,16 @@ ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 	struct ns4__getNewProxyReqResponse response;
 	grstSoapAuthentication(grst, cfs);
 	if (grst.ns4__getNewProxyReq(response) == SOAP_OK) {
-		if (response.getNewProxyReqReturn){
+		if (response.ns4__NewProxyReq){
 			// Proxy
-			if (response.getNewProxyReqReturn->proxyRequest) {
-				request.proxy = *(response.getNewProxyReqReturn->proxyRequest);
+			if (response.ns4__NewProxyReq->proxyRequest) {
+				request.proxy = *(response.ns4__NewProxyReq->proxyRequest);
  			} else {
 				request.proxy =  "";
 			}
 			// Delegation-Id
-			if (response.getNewProxyReqReturn->delegationID) {
-				request.delegationId = *(response.getNewProxyReqReturn->delegationID);
+			if (response.ns4__NewProxyReq->delegationID) {
+				request.delegationId = *(response.ns4__NewProxyReq->delegationID);
 			} else {
 				request.delegationId =  "";
 			}
@@ -913,9 +909,38 @@ ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 		}
 		soapDestroy(grst.soap) ;
 	} else grstSoapErrorMng(grst) ;
-
 	return request;
 }
+
+/*****************************************************************
+getDelegationVersion
+******************************************************************/
+std::string getDelegationVersion(ConfigContext *cfs){
+	DelegationSoapBinding grst;
+	string request;
+	struct ns4__getVersionResponse response;
+	grstSoapAuthentication(grst, cfs);
+	if (grst.ns4__getVersion(response) == SOAP_OK) {
+		request = response.getVersionReturn;
+		soapDestroy(grst.soap) ;
+	} else grstSoapErrorMng(grst) ;
+	return request;
+}
+/*****************************************************************
+getDelegationInterfaceVersion
+******************************************************************/
+std::string getDelegationInterfaceVersion(ConfigContext *cfs){
+	DelegationSoapBinding grst;
+	string request;
+	struct ns4__getInterfaceVersionResponse response;
+	grstSoapAuthentication(grst, cfs);
+	if (grst.ns4__getInterfaceVersion(response) == SOAP_OK) {
+		request = response.getInterfaceVersionReturn;
+		soapDestroy(grst.soap) ;
+	} else grstSoapErrorMng(grst) ;
+	return request;
+}
+
 
 int getProxyTerminationTime (const std::string &delegationId, ConfigContext *cfs){
 	DelegationSoapBinding grst;
