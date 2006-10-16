@@ -108,8 +108,27 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 		   << log4cpp::CategoryStream::ENDLINE);
     
     try {
+        CREAM_SAFE_LOG(m_log_dev->infoStream()
+		   << "leaseUpdater::update_lease_for_job() - "
+		   << "Authenticating for job ["
+		   << j.getJobID()
+		   << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
         m_creamClient->Authenticate( j.getUserProxyCertificate() );
+	CREAM_SAFE_LOG(m_log_dev->infoStream()
+		   << "leaseUpdater::update_lease_for_job() - "
+		   << "Calling CreamProxy::Lease(...) for job ["
+		   << j.getJobID()
+		   << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
         m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
+	CREAM_SAFE_LOG(m_log_dev->infoStream()
+		   << "leaseUpdater::update_lease_for_job() - "
+		   << "CreamProxy::Lease(...) finished for job ["
+		   << j.getJobID()
+		   << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
+		   
     } catch ( soap_proxy::soap_ex& ex ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
 		     << "leaseUpdater::update_lease_for_job() - "

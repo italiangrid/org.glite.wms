@@ -210,7 +210,7 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 {
     urls.clear();
     string ceurl, cemonURL;
-    vector<CreamJob> jobList;
+    list<CreamJob> jobList;
     
     /**
      * The following code is higly HUGLY!!!
@@ -231,7 +231,7 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
       }
     } 
     
-    for(vector<CreamJob>::iterator it = jobList.begin();
+    for(list<CreamJob>::const_iterator it = jobList.begin();
         it != jobList.end();
 	++it)
     {

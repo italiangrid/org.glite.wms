@@ -104,19 +104,36 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
     // this method.
     //job_status_list.clear();
 
-    //m_creamClient->clearSoap();
+  list<CreamJob> jobsToPoll;
 
+  /**
+   * Retrieves the list of all jobs
+   */
+  {
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    for(jobCache::iterator jobIt = m_cache->begin();
+	jobIt != m_cache->end();
+	++jobIt)
+      {
+	jobsToPoll.push_back( jobIt->getJobID() );
+      }
 
-    time_t oldness;// = time(NULL)-jobIt->getLastUpdate();
-    time_t threshold;// = iceConfManager::getInstance()->getPollerStatusThresholdTime();
-    bool listener_started;
+  } // Relases the cache's lock in order to allow other operations on the cache by other threads
+  
+  
+  time_t oldness;// = time(NULL)-jobIt->getLastUpdate();
+  time_t threshold;// = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+  bool listener_started;
+  
+  //  jobCache::iterator jobIt( m_cache->begin() );
 
-    jobCache::iterator jobIt( m_cache->begin() );
+  //   while( jobIt != m_cache->end() ) {
+  for(list<CreamJob>::iterator jit=jobsToPoll.begin();
+      jit != jobsToPoll.end();
+      ++jit)
+    {
 
-    while( jobIt != m_cache->end() ) {
-
-        oldness = time(NULL)-jobIt->getLastSeen();
+        oldness = time(NULL) - jit->getLastSeen();
 
 	{
           //    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
@@ -124,39 +141,39 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
           listener_started = iceConfManager::getInstance()->getStartListener();
 	}
 	
-        if( jobIt->getJobID() == "" ) {
+        if( jit->getJobID() == "" ) {
 	  // This job doesn't have yet the CREAM Job ID. Skipping...
-	  ++jobIt;
+	  ++jit;
 	  continue;
 	}
 	
 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		       << "eventStatusPoller::scanJobs() - "
-		       << "Job [" << jobIt->getJobID() << "]"
+		       << "Job [" << jit->getJobID() << "]"
 		       << " oldness=" << oldness << " threshold=" << threshold
 		       << " listener=" << listener_started 
 		       << log4cpp::CategoryStream::ENDLINE);
 	
         if ( (oldness <  threshold) && listener_started ) {
           // This job is not old enough. Skip to next job
-          ++jobIt;
+          ++jit;
           continue;
         }
 	
         CREAM_SAFE_LOG(m_log_dev->infoStream()
 		       << "eventStatusPoller::scanJobs() - "
 		       << "Sending JobStatus request for Job ["
-		       << jobIt->getJobID() << "]"
+		       << jit->getJobID() << "]"
 		       << log4cpp::CategoryStream::ENDLINE);
 
         vector< string > job_to_query;
         vector< soap_proxy::JobInfo > the_job_status;
 
-        job_to_query.push_back( jobIt->getJobID() );
+        job_to_query.push_back( jit->getJobID() );
 	
         try {
-            m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
-            m_creamClient->Info(jobIt->getCreamURL().c_str(),
+            m_creamClient->Authenticate( jit->getUserProxyCertificate() );
+            m_creamClient->Info(jit->getCreamURL().c_str(),
                                 job_to_query,
                                 vector<string>(),
                                 the_job_status,
@@ -167,10 +184,15 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "eventStatusPoller::scanJobs() - "
 			 << "CREAM responded JobUnknown for JobId=["
-			 << jobIt->getJobID()
+			 << jit->getJobID()
 			 << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
 			 << log4cpp::CategoryStream::ENDLINE);
-	  jobIt = m_cache->erase( jobIt );
+	  //jobIt = m_cache->erase( jobIt );
+	  {
+	    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	    jobCache::iterator thisJobToRemove = m_cache->lookupByCreamJobID( jit->getJobID() );
+	    m_cache->erase( thisJobToRemove );
+	  }
 	  continue;
 	  
 	} catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
@@ -186,40 +208,40 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
-			 << jobIt->getJobID()
+			 << jit->getJobID()
 			 << "]. Exception is [" << ex.what() << "]"
 			 << log4cpp::CategoryStream::ENDLINE);
-            ++jobIt;
+            ++jit;
             continue;
         } catch(soap_proxy::soap_ex& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
-			 << jobIt->getJobID()
+			 << jit->getJobID()
 			 << "]. Exception is [" 
 			 << ex.what() << "]"
 			 << log4cpp::CategoryStream::ENDLINE);
-            ++jobIt;
+            ++jit;
             continue;	  
         } catch(cream_api::cream_exceptions::BaseException& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
-			 << jobIt->getJobID()
+			 << jit->getJobID()
 			 << "]. Exception is [" 
 			 << ex.what() << "]"
 			 << log4cpp::CategoryStream::ENDLINE);
-            ++jobIt;
+            ++jit;
             continue;
         } catch(cream_api::cream_exceptions::InternalException& ex) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
-			 << jobIt->getJobID()
+			 << jit->getJobID()
 			 << "]. Exception is [" 
 			 << ex.what() << "]"
 			 << log4cpp::CategoryStream::ENDLINE);
-            ++jobIt;
+            ++jit;
             continue;
 	  
             // sleep(2); 
@@ -234,41 +256,51 @@ void eventStatusPoller::scanJobs( vector< soap_proxy::JobInfo > &job_status_list
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "eventStatusPoller::scanJobs() - "
 			 << "Cannot query status job for JobId=["
-			 << jobIt->getJobID()
+			 << jit->getJobID()
 			 << "]. Exception is [" 
 			 << ex.what() << "]"
 			 << log4cpp::CategoryStream::ENDLINE);
-            ++jobIt;
+            ++jit;
             continue;
         }
 
         if ( the_job_status.empty() ) {
             // The job is unknown by ICE; remove from the jobCache
 
-            jobIt->incStatusPollRetryCount();
-            if( jobIt->getStatusPollRetryCount() < STATUS_POLL_RETRY_COUNT ) {
+            jit->incStatusPollRetryCount();
+            if( jit->getStatusPollRetryCount() < STATUS_POLL_RETRY_COUNT ) {
 	      CREAM_SAFE_LOG(m_log_dev->warnStream()
-			     << "Job cream/grid ID=[" << jobIt->getJobID()
-			     << "]/[" << jobIt->getGridJobID()
+			     << "Job cream/grid ID=[" << jit->getJobID()
+			     << "]/[" << jit->getGridJobID()
 			     << "] was not found on CREAM; Retrying later..."
 			     << log4cpp::CategoryStream::ENDLINE);
-                //jobIt++;
-	      jobIt = m_cache->put( *jobIt );
+                
+	      //jobIt = m_cache->put( *jobIt );
+	      {
+		boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+		//jobCache::iterator tmp = m_cache->lookupByCreamJobID( jit->getJobID() );
+		m_cache->put( *jit );
+	      }
 	      
             } else {
 	      CREAM_SAFE_LOG(m_log_dev->errorStream()
-			     << "Job cream/grid ID=[" << jobIt->getJobID()
-			     << "]/[" << jobIt->getGridJobID()
+			     << "Job cream/grid ID=[" << jit->getJobID()
+			     << "]/[" << jit->getGridJobID()
 			     << "] was not found on CREAM after " 
 			     << STATUS_POLL_RETRY_COUNT
 			     << "retries; Removing from the job cache"
 			     << log4cpp::CategoryStream::ENDLINE);
-                jobIt = m_cache->erase( jobIt );
+	      {
+		boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+		jobCache::iterator tmp = m_cache->lookupByCreamJobID( jit->getJobID() );
+		m_cache->erase( tmp );
+                //jobIt = m_cache->erase( jobIt );
+	      }
             }
         } else {
             job_status_list.push_back( the_job_status[0] );
-            jobIt->resetStatusPollRetryCount();
-            jobIt++;
+            jit->resetStatusPollRetryCount();
+            jit++;
         }
     }
 }
