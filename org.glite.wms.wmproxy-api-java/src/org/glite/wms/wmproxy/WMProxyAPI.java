@@ -11,8 +11,8 @@
  * University of Helsinki (UH.HIP), Finland
  * University of Bergen (UiB), Norway
  * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
- * 
- * Authors: Marco Sottilaro (marco.sottilaro@datamat.it)
+ *
+ * Authors: Marco Sottilaro (egee@datamat.it)
  */
 
 
@@ -32,12 +32,19 @@ import java.security.cert.CertificateExpiredException;
 import java.util.Calendar ;
 import java.util.Date ;
 
+// JSDL imports
+/*
+import org.w3c.dom.Element;
+import org.ggf.schemas.jsdl._2005._11.jsdl.JobDefinition_Type;
+import org.apache.axis.MessageContext;
+import org.apache.axis.client.AxisClient;
+*/
+
+
+
 import org.gridsite.www.namespaces.delegation_1.*;
-
-
 import org.glite.security.delegation.GrDPX509Util;
 import org.glite.security.delegation.GrDProxyGenerator;
-
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -1426,6 +1433,43 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
 		}
 	}
+
+
+	public org.glite.wms.wmproxy.JobIdStructType jobRegisterJSDL(
+						JobDefinitionHandler jsdl_h,
+						java.lang.String delegationId)
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
+		logger.debug ("INPUT: delegationId=[" + delegationId);
+		try {
+			return this.serviceStub.jobRegisterJSDL(jsdl_h.getJobDefinition(), delegationId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+
+
+
+
 	/**
 	*  Generates a proxy from the input certificate and from the user proxy file on the user local machine
 	* (which path has to be specified as input parameter in one of the class costructors)
