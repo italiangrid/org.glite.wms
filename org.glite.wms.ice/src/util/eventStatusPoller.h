@@ -70,6 +70,8 @@ namespace glite {
            * Gets the list of jobs to poll. The list contains all jobs
            * in the cache whose "oldness" is greater than the threshold
            * defined in ICE configuration file.
+           *
+           * @return the list of Cream Job IDs for jobs to poll.
            */ 
           std::list< CreamJob > get_jobs_to_poll( void );
 
@@ -79,7 +81,7 @@ namespace glite {
            * service reports a "job unknown" exception, that job is
            * also removed from the job cache.
            *
-           * @param job_list the list of CreamJobs whose status has to
+           * @param job_list the list of CREAM job ids whose status has to
            * be checked;
            *
            * @result the list of soap_proxy::JobInfo structures for the

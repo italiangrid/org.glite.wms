@@ -169,6 +169,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
                            << jit->getCreamJobID()
                            << "]. Exception is [" << ex.what() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
+            handle_unreachable_job( jit->getCreamJobID() );
             continue;
             
         } catch(soap_proxy::soap_ex& ex) {
@@ -180,6 +181,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
                            << "]. Exception is [" 
                            << ex.what() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
+            handle_unreachable_job( jit->getCreamJobID() );
             continue;	  
 
         } catch(cream_api::cream_exceptions::BaseException& ex) {
@@ -191,6 +193,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
                            << "]. Exception is [" 
                            << ex.what() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
+            handle_unreachable_job( jit->getCreamJobID() );
             continue;
 
         } catch(cream_api::cream_exceptions::InternalException& ex) {
@@ -202,6 +205,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
                            << "]. Exception is [" 
                            << ex.what() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
+            handle_unreachable_job( jit->getCreamJobID() );
             continue;
 
             // this ex can be raised if the remote service is not
@@ -219,6 +223,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
                            << "]. Exception is [" 
                            << ex.what() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
+            handle_unreachable_job( jit->getCreamJobID() );
             continue;
         }
 
@@ -397,21 +402,25 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
                            << " exit_code = [" << exitCode << "]"
                            << " failure_reason = [" << it->getFailureReason() << "]"
                            << log4cpp::CategoryStream::ENDLINE);            
-            jit->setStatus( stNum );
+
+            // Creates a temporary job
+            CreamJob tmp_job( *jit );
+
+            tmp_job.setStatus( stNum );
             try {
-                jit->set_exit_code( boost::lexical_cast< int >( exitCode ) );
+                tmp_job.set_exit_code( boost::lexical_cast< int >( exitCode ) );
             } catch( boost::bad_lexical_cast & ) {
-                jit->set_exit_code( 0 );
+                tmp_job.set_exit_code( 0 );
             }
-            jit->set_failure_reason( it->getFailureReason() );
-            jit->set_num_logged_status_changes( count );
+            tmp_job.set_failure_reason( it->getFailureReason() );
+            tmp_job.set_num_logged_status_changes( count );
 
             // Log to L&B
-            iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
+            iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
             if ( ev ) {
-                *jit = m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
+                tmp_job = m_lb_logger->logEvent( ev );
             }
-            jit = m_cache->put( *jit );
+            jit = m_cache->put( tmp_job );
             
             m_iceManager->resubmit_or_purge_job( jit );
         }
