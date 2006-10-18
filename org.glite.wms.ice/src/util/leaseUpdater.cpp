@@ -87,7 +87,7 @@ void leaseUpdater::update_lease( void )
 		       << log4cpp::CategoryStream::ENDLINE);
 	{
 	  boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-	  jobCache::iterator tmp = m_cache->lookupByCreamJobID( it->getCreamJobID() );
+	  jobCache::iterator tmp = m_cache->lookupByGridJobID( it->getGridJobID() );
 	  m_cache->erase( tmp );
 	  
 	}
