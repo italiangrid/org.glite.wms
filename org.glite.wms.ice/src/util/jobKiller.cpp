@@ -74,7 +74,7 @@ void jobKiller::body()
                 if( proxyTimeLeft < m_threshold_time && proxyTimeLeft > 5 ) {
                     CREAM_SAFE_LOG( m_log_dev->infoStream() 
                                     << "jobKiller::body() - Job ["
-                                    << job_it->getJobID() << "]"
+                                    << job_it->getCreamJobID() << "]"
                                     << " has proxy expiring in "
                                     << proxyTimeLeft 
                                     << " seconds, which is less than "
@@ -96,7 +96,7 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
   try {
       m_theProxy->Authenticate( J.getUserProxyCertificate() );
       vector<string> url_jid(1);   
-      url_jid[0] = J.getJobID();
+      url_jid[0] = J.getCreamJobID();
    
       J = m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
 
@@ -113,7 +113,7 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
       CREAM_SAFE_LOG(
                      m_log_dev->infoStream() << "jobKiller::killJob() - "
                      << " Cancellation SUCCESFUL for job ["
-                     <<  J.getJobID() << "]"
+                     <<  J.getCreamJobID() << "]"
                      << log4cpp::CategoryStream::ENDLINE);
   } catch(std::exception& ex) {
       J = m_lb_logger->logEvent( new cream_cancel_refuse_event( J, ex.what() ) );
@@ -124,7 +124,7 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
       CREAM_SAFE_LOG (
                       m_log_dev->errorStream() 
                       << "jobKiller::killJob() - Error"
-                      << " killing job [" << J.getJobID() << "]: "
+                      << " killing job [" << J.getCreamJobID() << "]: "
                       << ex.what()
                       << log4cpp::CategoryStream::ENDLINE);
   }

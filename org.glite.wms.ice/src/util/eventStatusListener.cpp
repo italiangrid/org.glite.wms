@@ -520,7 +520,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             CREAM_SAFE_LOG(m_log_dev->infoStream()
                            << "eventStatusListener::handle_event() - "
                            << "Job with cream_job_id = ["
-                           << jc_it->getJobID()
+                           << jc_it->getCreamJobID()
                            << "], grid_job_id = ["
                            << jc_it->getGridJobID()
                            << "] is reported as PURGED. Removing from cache"

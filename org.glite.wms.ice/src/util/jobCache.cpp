@@ -83,8 +83,8 @@ jobCache::jobCacheTable::iterator jobCache::jobCacheTable::putJob( const CreamJo
         *pos = c;
     }
     m_gidMap.insert( make_pair( c.getGridJobID(), pos ) );
-    if ( !c.getJobID().empty() ) {
-        m_cidMap.insert( make_pair( c.getJobID(), pos ) );
+    if ( !c.getCreamJobID().empty() ) {
+        m_cidMap.insert( make_pair( c.getCreamJobID(), pos ) );
     }
     return pos;
 }
@@ -99,8 +99,8 @@ void jobCache::jobCacheTable::delJob( const jobCacheTable::iterator& pos )
     m_gidMap.erase( pos->getGridJobID() );
 
     // Removes from the cidMap
-    if ( !pos->getJobID().empty() ) {
-        m_cidMap.erase( pos->getJobID() );
+    if ( !pos->getCreamJobID().empty() ) {
+        m_cidMap.erase( pos->getCreamJobID() );
     }
 
     // Finally, removes from the joblist
@@ -218,7 +218,7 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
 {   
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
-        m_dbMgr->put(cj.serialize(), cj.getJobID(), cj.getGridJobID() );
+        m_dbMgr->put(cj.serialize(), cj.getCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
         abort();
@@ -231,7 +231,7 @@ void jobCache::print(ostream& os) {
     jobCacheTable::const_iterator it;
     for ( it=m_jobs.begin(); it!=m_jobs.end(); it++ ) {
         os << "GID=" << it->getGridJobID() 
-           << " CID=" << it->getJobID() 
+           << " CID=" << it->getCreamJobID() 
            << " STATUS=" << it->getStatus()
            << endl;
     }
@@ -265,7 +265,7 @@ jobCache::iterator jobCache::erase( jobCache::iterator& it )
     // job found, log operation and remove
 
     try{
-      m_dbMgr->delByCid( it->getJobID() );
+      m_dbMgr->delByCid( it->getCreamJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
         abort();

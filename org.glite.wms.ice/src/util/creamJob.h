@@ -79,7 +79,7 @@ namespace glite {
 	  //! Sets the status of the CreamJob object
 	  void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_status = st; }
 	  //! Sets the cream unique identifier for this job
-          void setJobID( const std::string& cid ) { m_cream_jobid = cid; }
+          void setCreamJobID( const std::string& cid ) { m_cream_jobid = cid; }
           //! Sets the jdl for this job
           void setJdl( const std::string& j ) throw( ClassadSyntax_ex& );
           //! Sets the sequence code
@@ -118,7 +118,7 @@ namespace glite {
           //! Gets the job failure reason
           std::string get_failure_reason( void ) const { return m_failure_reason; }
 	  //! Gets the unique cream job identifier
-          std::string getJobID( void ) const { return m_cream_jobid; }
+          std::string getCreamJobID( void ) const { return m_cream_jobid; }
 	  //! Gets the entire JDL of the job
           std::string getJDL( void ) const { return m_jdl; }
 	  //! Gets the CE identifier for the job (containing the endpoint)

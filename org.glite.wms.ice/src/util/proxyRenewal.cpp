@@ -83,7 +83,7 @@ void proxyRenewal::checkProxies()
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "proxyRenewal::checkProxies() - Cannot stat proxy file ["
 		     << jobIt->getUserProxyCertificate() << "] for job ["
-		     << jobIt->getJobID() << "]. Wont check if it needs to be renewed."
+		     << jobIt->getCreamJobID() << "]. Wont check if it needs to be renewed."
 		     << log4cpp::CategoryStream::ENDLINE);
         // FIXME: what to do?
     } else {
@@ -91,7 +91,7 @@ void proxyRenewal::checkProxies()
 	CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		       << "proxyRenewal::checkProxies() - Need to renew proxy  ["
 		       << jobIt->getUserProxyCertificate() << "] for job ["
-		       << jobIt->getJobID() << "]"
+		       << jobIt->getCreamJobID() << "]"
 		       << log4cpp::CategoryStream::ENDLINE);
 
         //m_creamClient->clearSoap( );
@@ -100,7 +100,7 @@ void proxyRenewal::checkProxies()
             m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
 
             vector< string > theJob;
-            theJob.push_back( jobIt->getJobID() );
+            theJob.push_back( jobIt->getCreamJobID() );
 
             m_creamClient->renewProxy( jobIt->getDelegationId(),
                                      jobIt->getCreamURL(),

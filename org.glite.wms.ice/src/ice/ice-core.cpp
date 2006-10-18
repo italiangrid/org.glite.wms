@@ -457,7 +457,7 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
         
-        string cid = jit->getJobID();
+        string cid = jit->getCreamJobID();
         
         if ( m_is_purge_enabled ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
@@ -470,7 +470,7 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
             // jobs with different user certificates.
             creamClient->Authenticate( jit->getUserProxyCertificate());
             vector< string > oneJobToPurge;
-            oneJobToPurge.push_back( jit->getJobID() );
+            oneJobToPurge.push_back( jit->getCreamJobID() );
             creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
         } else {
             CREAM_SAFE_LOG(m_log_dev->warnStream()
@@ -507,7 +507,7 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
                        << "ice-core::purge_job() - "
-                       << "Cannot remove [" << jit->getJobID()
+                       << "Cannot remove [" << jit->getCreamJobID()
                        << "] from job cache: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );

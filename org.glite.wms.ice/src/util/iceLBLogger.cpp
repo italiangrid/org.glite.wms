@@ -76,7 +76,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        << ev->describe()
                        << " GridJobID=[" 
                        << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getJobID() << "]"
+                       << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
                        << ". Caught exception " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
         return ev->getJob();
@@ -91,7 +91,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        << ev->describe( )
                        << " GridJobID=[" 
                        << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getJobID() << "]"
+                       << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
                        // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
                        // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
                        

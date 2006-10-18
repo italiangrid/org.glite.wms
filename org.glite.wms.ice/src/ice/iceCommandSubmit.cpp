@@ -325,7 +325,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
             // no failure: put jobids and status in cache
             // and remove last request from WM's filelist
 
-            theJob.setJobID(url_jid[1]);
+            theJob.setCreamJobID(url_jid[1]);
             theJob.setStatus(cream_api::job_statuses::PENDING);
             theJob.setEndLease( time(0) + m_confMgr->getLeaseDeltaTime() );
             theJob.setDelegationId( delegID );

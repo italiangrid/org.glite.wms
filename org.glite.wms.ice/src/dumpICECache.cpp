@@ -60,7 +60,7 @@ int main(int argc, char*argv[]) {
   iceUtil::jobCache::iterator it;
   for ( it=_jCache->begin(); it != _jCache->end(); it++ ) {
       iceUtil::CreamJob aJob( *it );
-      cout << aJob.getJobID() << "   "
+      cout << aJob.getCreamJobID() << "   "
            << aJob.getGridJobID() << "   "
            << creamApi::job_statuses::job_status_str[ aJob.getStatus() ] << endl;
   }

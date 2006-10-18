@@ -145,7 +145,7 @@ void iceCommandCancel::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ) );    
 
     vector<string> url_jid(1);   
-    url_jid[0] = theJob.getJobID();
+    url_jid[0] = theJob.getCreamJobID();
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << "Removing job gridJobId [" 

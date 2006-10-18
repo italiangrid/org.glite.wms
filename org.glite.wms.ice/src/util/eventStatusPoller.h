@@ -27,6 +27,8 @@
 #include "boost/scoped_ptr.hpp"
 #include "boost/thread/recursive_mutex.hpp"
 
+#include <list>
+
 namespace log4cpp {
     class Category;
 };
@@ -39,8 +41,9 @@ namespace glite {
 
       namespace util {
 
-          class iceLBLogger; // forward declaration
-          class jobCache; // forward declaration
+          class iceLBLogger; 
+          class jobCache;
+          class CreamJob;
 
 	//! A job status poller
 	/*! \class eventStatusPoller 
@@ -59,17 +62,42 @@ namespace glite {
 	  log4cpp::Category* m_log_dev;
           iceLBLogger* m_lb_logger;
           jobCache* m_cache;
+          time_t m_threshold;
 
 	  void purgeJobs(const std::vector< std::string >& );
 
           /**
-           * Fills vector l with job status informations for all
-           * currently running jobs which did not send status change
-           * notifications for a given threshold.
+           * Gets the list of jobs to poll. The list contains all jobs
+           * in the cache whose "oldness" is greater than the threshold
+           * defined in ICE configuration file.
+           */ 
+          std::list< CreamJob > get_jobs_to_poll( void );
+
+          /**
+           * Actually send JobInfo requests for jobs in the list
+           * passed as parameter. If, for some job(s), the CREAM
+           * service reports a "job unknown" exception, that job is
+           * also removed from the job cache.
            *
-           * @param l the resulting list of job states          
+           * @param job_list the list of CreamJobs whose status has to
+           * be checked;
+           *
+           * @result the list of soap_proxy::JobInfo structures for the
+           * jobs which were polled succesfully.
            */
-	  void scanJobs( std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
+	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_jobs( const std::list< CreamJob > & job_list );
+
+
+          /**
+           * Handle a job which was not accessible through the
+           * "jobInfo" method. We try a number of times before giving
+           * up and removing the job from the jobCache.
+           *
+           * @param job the Job which ICE was unable to access. If the
+           * job is not found in the job cache, this method does
+           * nothing
+           */
+          void handle_unreachable_job( const std::string& cream_job_id );
 
           /**
            * Updates the status informations for all jobs in the list
@@ -78,7 +106,7 @@ namespace glite {
            * @param l the list of job status informations (this list is
            * typically the resout of the scanJobs() method call).
            */
-	  void updateJobCache( const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
+	  void updateJobCache( const std::list< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
 
           /**
            * Updates the cache with the job status changes (for a single job)
@@ -87,13 +115,6 @@ namespace glite {
            * @param s the StatusInfo object from which job informations are updated
            */
           void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& s );
-
-          /**
-           * Checks whether jobs in the list l need to be purged or
-           * resubmitted. This method calls purgeJobs for those who
-           * need to be purged.
-           */
-	  // void purge_or_resubmit_jobs( const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& );
 
           /**
            * Prevents copying
@@ -113,7 +134,7 @@ namespace glite {
 	    \sa ice
 	  */
 	  eventStatusPoller( Ice* iceManager, int d=10 ) 
-	    throw(glite::wms::ice::util::eventStatusPoller_ex&);
+	    throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
 	  
 	  virtual ~eventStatusPoller();
 
