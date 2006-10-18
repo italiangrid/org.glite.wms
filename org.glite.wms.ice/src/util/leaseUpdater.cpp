@@ -88,7 +88,8 @@ void leaseUpdater::update_lease( void )
 	{
 	  boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 	  jobCache::iterator tmp = m_cache->lookupByCreamJobID( it->getJobID() );
-	  it = m_cache->erase( tmp );
+	  m_cache->erase( tmp );
+	  
 	}
 	
       } else {
@@ -101,7 +102,7 @@ void leaseUpdater::update_lease( void )
 			 << " - threshold="<<m_threshold
 			 << log4cpp::CategoryStream::ENDLINE);
 	  
-	  if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
+	  if ( it->is_active() && ( it->getEndLease() - time(0) <= m_threshold ) ) {
 	    // do not put jobCache's mutex here. It is acquired inside the floowing method
 	    update_lease_for_job( *it );
 	  }
@@ -128,12 +129,12 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 		   << log4cpp::CategoryStream::ENDLINE);
     
     try {
-        CREAM_SAFE_LOG(m_log_dev->infoStream()
-		   << "leaseUpdater::update_lease_for_job() - "
-		   << "Authenticating for job ["
-		   << j.getJobID()
-		   << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
+//         CREAM_SAFE_LOG(m_log_dev->infoStream()
+// 		   << "leaseUpdater::update_lease_for_job() - "
+// 		   << "Authenticating for job ["
+// 		   << j.getJobID()
+// 		   << "]"
+// 		   << log4cpp::CategoryStream::ENDLINE);
         m_creamClient->Authenticate( j.getUserProxyCertificate() );
         m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
 
