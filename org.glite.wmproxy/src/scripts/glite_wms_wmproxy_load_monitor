@@ -70,6 +70,7 @@ $Load1     = 10;
 $Load5     = 10;
 $Load15    = 10;
 $MemUsage  = 95;
+$SwapUsage = 95;
 $FDNum     = 500;
 $DiskUsage = 95;
 $oper      = 'Default';
@@ -81,6 +82,7 @@ $return=GetOptions ("load1=i"       => \$Load1,
             	    "load5=i"       => \$Load5,
                     "load15=i"      => \$Load15,
                     "memusage=i"    => \$MemUsage,
+                    "swapusage=i"   => \$SwapUsage,
                     "fdnum=i"       => \$FDNum,
                     "diskusage=i"   => \$DiskUsage,
                     "oper=s"        => \$oper,
@@ -178,11 +180,13 @@ sub test_threshold{
         my $load5warning  = 0;
         my $load15warning = 0;
         my $memwarning    = 0;
+        my $swapwarning   = 0;
         my $fdwarning     = 0;
         
         my $disablecount  = 0;
                 
-	my $memperc=100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'};
+	my $memperc=100*$mems{'Active'}/$mems{'MemTotal'};
+	my $swapperc=100*($mems{'SwapTotal'}-$mems{'SwapFree'})/$mems{'SwapTotal'};
 	my $fduse=($fds{'max'}-($fds{'allocated'}-$fds{'free'}));
 
         if($load{'1min'}>=$Load1){
@@ -209,6 +213,12 @@ sub test_threshold{
         if($memperc>=$MemUsage){
 
                 $memwarning = 1;
+                $disablecount++;
+        
+        }
+        if($swapperc>=$SwapUsage){
+
+                $swapwarning = 1;
                 $disablecount++;
         
         }
@@ -254,6 +264,12 @@ sub test_threshold{
 	        printf STDERR "Threshold for Memory Usage: $MemUsage => Detected value for Memory Usage: %.2f",$memperc;print STDERR "\%\n";
 	}else{
 	        printf STDOUT "Threshold for Memory Usage: $MemUsage => Detected value for Memory Usage: %.2f",$memperc;print STDOUT "\%\n";
+	}
+        
+	if($swapwarning){
+	        printf STDERR "Threshold for Swap Usage: $SwapUsage => Detected value for Swap Usage: %.2f",$swapperc;print STDERR "\%\n";
+	}else{
+	        printf STDOUT "Threshold for Swap Usage: $SwapUsage => Detected value for Swap Usage: %.2f",$swapperc;print STDOUT "\%\n";
 	}
 
 	if($fdwarning){
@@ -301,7 +317,8 @@ sub GetPartition{
 }
 sub show_value{
 
-	my $memperc=100*($mems{'MemTotal'}-$mems{'Active'})/$mems{'MemTotal'};
+	my $memperc=100*$mems{'Active'}/$mems{'MemTotal'};
+	my $swapperc=100*($mems{'SwapTotal'}-$mems{'SwapFree'})/$mems{'SwapTotal'};
 	my $fduse=($fds{'max'}-($fds{'allocated'}-$fds{'free'}));
         my $partptr=GetPartition();
 
@@ -309,6 +326,7 @@ sub show_value{
 	print  "Load Average(5 min)  : $load{'5min'}\n";
 	print  "Load Average(15 min) : $load{'15min'}\n";
 	printf "Memory Usage         : %.2f",$memperc;print"\%\n";
+	printf "Swap Usage           : %.2f",$swapperc;print"\%\n";
 	print  "File Descriptor Usage: $fduse\n";
 	foreach my $k(@$partptr){ 
 		chomp $k;
@@ -325,6 +343,7 @@ sub print_help{
 	print "\t\t--load5\t\t threshold for load average (5min)\n";
 	print "\t\t--load15\t threshold for load average (15min)\n";
 	print "\t\t--memusage\t threshold for memory usage (\%)\n";
+	print "\t\t--swapusage\t threshold for swap usage (\%)\n";
 	print "\t\t--fdnum\t\t threshold for used file descriptor\n";
 	print "\t\t--diskusage\t threshold for disk usage (\%)\n";
 	print "\t\t--oper\t\t operation to monitor (can be listed with --list)\n";
