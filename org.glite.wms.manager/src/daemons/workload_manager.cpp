@@ -13,12 +13,13 @@
 #include <unistd.h>             // getpid()
 #include <pwd.h>                // getpwnam()
 #include <boost/program_options.hpp>
-#ifndef GLITE_WMS_HAVE_JOBDIR
-#include "DispatcherFromFileList.h"
-typedef glite::wms::manager::server::DispatcherFromFileList dispatcher_type;
+#include "dispatcher.h"
+#ifdef GLITE_WMS_USE_FILELIST
+#include "filelist_reader.h"
+typedef glite::wms::manager::server::FileListReader input_reader_type;
 #else
-#include "DispatcherFromJobDir.h"
-typedef glite::wms::manager::server::DispatcherFromJobDir dispatcher_type;
+#include "jobdir_reader.h"
+typedef glite::wms::manager::server::JobDirReader input_reader_type;
 #endif
 #include "RequestHandler.h"
 #include "signal_handling.h"
@@ -92,6 +93,23 @@ bool set_user(std::string const& user)
   return 
     euid == uid
     || (euid == 0 && ::setgid(gid) == 0 && ::setuid(uid) == 0);
+}
+
+boost::shared_ptr<server::InputReader>
+create_input_reader(configuration::Configuration const& config)
+{
+  return boost::shared_ptr<server::InputReader>(
+    new input_reader_type(config.wm()->input())
+  );
+//   if (config.wm()->dispatcher_type() == "filelist") {
+//     return boost::shared_ptr<server::InputReader>(
+//       new server::FileListReader(config.wm()->input())
+//     );
+//   } else {
+//     return boost::shared_ptr<server::InputReader>(
+//       new server::JobDirReader(config.wm()->input())
+//     );
+//   }
 }
 
 } // {anonymous}
@@ -188,6 +206,8 @@ try {
 
   }
 
+  Info("This is the gLite Workload Manager, running with pid " << ::getpid());
+
   if (!server::signal_handling()) {
     Error("cannot initialize signal handling");
     return EXIT_FAILURE;
@@ -212,10 +232,11 @@ try {
 
   glite::wms::manager::main::ISM_Manager ism_manager;
 
-  dispatcher_type dispatcher(
-    config.wm()->input(),
-    the_task_queue
+  boost::shared_ptr<server::InputReader> input_reader(
+    create_input_reader(config)
   );
+
+  server::Dispatcher dispatcher(*input_reader, the_task_queue);
   server::RequestHandler request_handler;
 
   // at scope exit force all threads to exit
