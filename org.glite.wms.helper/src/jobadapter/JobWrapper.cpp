@@ -212,9 +212,9 @@ JobWrapper::arguments(const std::string& args){
 }
 
 void
-JobWrapper::maradona(const std::string& protocol, const std::string& filename)
+JobWrapper::maradona(const std::string& scheme_host, const std::string& path)
 {
-  m_pimpl->m_maradona = protocol + filename;
+  m_pimpl->m_maradona = scheme_host + path;
 }
 
 void

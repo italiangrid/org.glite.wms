@@ -124,7 +124,7 @@ doExit() # 1 - status
   jw_status=$1
   jw_echo "jw exit status = ${jw_status}"
 
-  retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradona}"
   globus_copy_status=$?
 
   cd ..

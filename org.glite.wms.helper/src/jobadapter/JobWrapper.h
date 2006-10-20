@@ -140,8 +140,8 @@ public:
   * @param maradonafile
   * \ingroup maradonafile
   */
-  void maradona(const std::string& protocol, 
-		        const std::string& filename);
+  void maradona(const std::string& scheme_host, 
+		        const std::string& path);
 
   /**
    * Declare gatekeeper_hostname

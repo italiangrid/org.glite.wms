@@ -123,7 +123,7 @@ try {
   // Figure out the local host name (this should really come from
   // some common entity).
   char   hostname[1024];
-  std::string local_host_name;
+  std::string local_hostname;
   
   if (gethostname(hostname, sizeof(hostname)) >= 0) {
     hostent resolved_host;
@@ -141,7 +141,7 @@ try {
       resolver_work_buffer = new char[resolver_work_buffer_size];
     }
     if (resolver_result != NULL) {
-      local_host_name.assign(resolved_host.h_name);
+      local_hostname.assign(resolved_host.h_name);
     }
     delete[] resolver_work_buffer;
   }
@@ -165,7 +165,7 @@ try {
     isb_url.reset(new URL(inputsandboxpath));
   } catch (InvalidURL&) {
     try {
-      isb_url.reset(new URL("gsiftp://" + local_host_name + inputsandboxpath));
+      isb_url.reset(new URL("gsiftp://" + local_hostname + inputsandboxpath));
     } catch (InvalidURL& e) {
       throw CannotCreateJobWrapper(e.what());
     }
@@ -448,14 +448,14 @@ try {
 
     // Without the local host name, the CondorC/BLAH submission
     // will most likely not work. We bail out in this case:
-    if (local_host_name.empty()) {
+    if (local_hostname.empty()) {
       throw helper::InvalidAttributeValue("local hostname",
-                                          local_host_name,
+                                          local_hostname,
                                           "not empty",
                                           helper_id);
     }
 
-    std::string hostcertificatesubjectvo(local_host_name);
+    std::string hostcertificatesubjectvo(local_hostname);
     hostcertificatesubjectvo.append("/");
     hostcertificatesubjectvo.append(certificatesubject);
     hostcertificatesubjectvo.append("/");
@@ -866,7 +866,7 @@ try {
       jw->output_sandbox(outputsandboxpath_url, outputsandbox);
     } catch (InvalidURL&) {
       std::string new_outputsandboxpath(
-        "gsiftp://" + local_host_name + outputsandboxpath
+        "gsiftp://" + local_hostname + outputsandboxpath
       );
       try {
         URL outputsandboxpath_url(new_outputsandboxpath);
@@ -887,22 +887,23 @@ try {
 
   if (!wmpisb_base_uri) {
     // Mandatory
-    // Maradone file path
-    std::string maradonapr(config.lm()->maradona_transport_protocol());
-
+    // Maradona file path
     try {
       fs::path maradona_path(config.ns()->sandbox_staging_path(), fs::native);
       maradona_path /= fs::path(jobid::get_reduced_part(job_id), fs::native);
       maradona_path /= fs::path(jobid_to_file, fs::native);
       maradona_path /= fs::path("Maradona.output", fs::native);
       
-      jw->maradonaprotocol(maradonapr, maradona_path.native_file_string());
+      jw->maradona(
+        config.lm()->maradona_transport_protocol() + "://" + local_hostname + "/",
+        maradona_path.native_file_string()
+      );
     } catch(fs::filesystem_error const&) {
       throw CannotCreateJobWrapper("FS error creating maradona path\n");
     }
 
   } else {
-    jw->maradonaprotocol(wmpisb_base_uri->as_string(), "/Maradona.output");
+    jw->maradona(wmpisb_base_uri->as_string(), "/Maradona.output");
   }
 
   // read the submit file path
