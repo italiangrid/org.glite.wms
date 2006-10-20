@@ -814,7 +814,6 @@ try {
 	
   jdl::set_globus_rsl(*result, globusrsl);
   
-  jw->wms_hostname(local_hostname);
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
   jw->standard_error(stderror);
