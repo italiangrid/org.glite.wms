@@ -136,11 +136,11 @@ public:
   void arguments(const std::string& args);
 
   /*
-  * Declare maradonaprotocol
-  * @param maradonaprotocol
-  * \ingroup maradonaprotocol
+  * Declare maradonafile
+  * @param maradonafile
+  * \ingroup maradonafile
   */
-  void maradonaprotocol(const std::string& protocol, 
+  void maradona(const std::string& protocol, 
 		        const std::string& filename);
 
   /**

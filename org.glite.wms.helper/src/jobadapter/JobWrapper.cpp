@@ -46,7 +46,7 @@ struct JobWrapper::pimpl {
   std::string               m_standard_output;
   std::string               m_standard_error;
   std::string               m_arguments;
-  std::string               m_maradonaprotocol;
+  std::string               m_maradona;
 
   boost::shared_ptr<URL>    m_input_base_url;
   std::vector<std::string>  m_input_files;
@@ -212,9 +212,9 @@ JobWrapper::arguments(const std::string& args){
 }
 
 void
-JobWrapper::maradonaprotocol(const std::string& protocol, const std::string& filename)
+JobWrapper::maradona(const std::string& protocol, const std::string& filename)
 {
-  m_pimpl->m_maradonaprotocol = protocol + filename;
+  m_pimpl->m_maradona = protocol + filename;
 }
 
 void
@@ -437,7 +437,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__standard_output", m_pimpl->m_standard_output) &&
     dump(os, "__standard_error", m_pimpl->m_standard_error) &&
     dump(os, "__arguments", m_pimpl->m_arguments) &&
-    dump(os, "__maradonaprotocol", m_pimpl->m_maradonaprotocol) &&
+    dump(os, "__maradona", m_pimpl->m_maradona) &&
     dump(os, "__input_base_url", (m_pimpl->m_input_base_url == 0 ?
       "" : m_pimpl->m_input_base_url->as_string())) &&
     dump(os, "__input_file", m_pimpl->m_input_files) &&
