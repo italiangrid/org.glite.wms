@@ -125,7 +125,7 @@ main(int argc, char* argv[])
     maradona_path /= fs::path(jobid_to_file, fs::native);
     maradona_path /= fs::path("Maradona.output", fs::native);
 
-    jw->maradonaprotocol(maradonapr + "://" + local_hostname, maradona_path.native_file_string());
+    jw->maradona(maradonapr + "://" + local_hostname, maradona_path.native_file_string());
   } catch(fs::filesystem_error const& ex) {
     cerr << ex.what();
     return -1;
