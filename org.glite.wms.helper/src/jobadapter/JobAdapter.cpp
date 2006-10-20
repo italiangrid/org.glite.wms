@@ -578,15 +578,19 @@ try {
   requirements.append(reqvalue);
   requirements.append("'");
   
-  /* Create globusrsl value */
-  std::string globusrsl("(queue=");
-  globusrsl.append(queuename);
-  globusrsl.append(")(jobtype=single)");
-
-  //globusrsl.append("(environment=(");
+  /* Create globusrsl */
+  std::string globusrsl("(queue=" + queuename + ")(jobtype=single)");
+  globusrsl.append("(environment=(");
   //globusrsl.append(requirements);
-  //globusrsl.append("))");
-
+  bool valid_mw_version;
+  std::string mw_version(
+    jdl::get_mw_version(*m_ad, valid_mw_version)
+  );
+  if (valid_mw_version && !mw_version.empty()) {
+    globusrsl.append("EDG_MW_VERSION '" + mw_version + "'");
+  }
+  globusrsl.append("))");
+  
   /* Not Mandatory */
   bool b_hlr;
   std::string hlrlocation("EDG_WL_HLR_LOCATION");
