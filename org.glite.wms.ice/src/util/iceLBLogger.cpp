@@ -27,7 +27,7 @@
 
 using namespace glite::wms::ice::util;
 
-iceLBLogger* iceLBLogger::s_instance = new iceLBLogger();
+iceLBLogger* iceLBLogger::s_instance = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 // 
@@ -36,6 +36,9 @@ iceLBLogger* iceLBLogger::s_instance = new iceLBLogger();
 //////////////////////////////////////////////////////////////////////////////
 iceLBLogger* iceLBLogger::instance( void )
 {
+    if ( 0 == s_instance ) {
+        s_instance = new iceLBLogger();
+    }
     return s_instance;
 }
 
