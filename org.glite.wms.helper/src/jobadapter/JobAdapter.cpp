@@ -574,19 +574,26 @@ try {
   requirements.append(reqvalue);
   requirements.append("'");
   
-  /* Create globusrsl value */
-  std::string globusrsl("(queue=");
-  globusrsl.append(queuename);
-  globusrsl.append(")(jobtype=single)");
+  /* Create globusrsl */
+  std::string globusrsl("(queue=" + queuename + ")(jobtype=single)");
+  globusrsl.append("(environment=");
+  std::string jidvalue(job_id);
+  replace(jidvalue, "\"", "\\\"");
+  std::string jid("(EDG_WL_JOBID '" + jidvalue + "')");
+  globusrsl.append(jid);
 
-  //globusrsl.append("(environment=(");
   //globusrsl.append(requirements);
-  //globusrsl.append("))");
+
+  bool valid_mw_version;
+  std::string mw_version(
+    jdl::get_mw_version(*m_ad, valid_mw_version)
+  );
+  if (valid_mw_version && !mw_version.empty()) {
+    globusrsl.append("(EDG_MW_VERSION '" + mw_version + "')");
+  }
 
   /* Not Mandatory */
   bool b_hlr;
-  std::string hlrlocation("EDG_WL_HLR_LOCATION");
-  hlrlocation.append(" '");
   std::string hlrvalue(jdl::get_hlrlocation(*m_ad, b_hlr));
   if (!hlrvalue.empty()) {
     if (is_blahp_resource || is_condor_resource) {
@@ -595,21 +602,11 @@ try {
       jdl::set_remote_env(*result,condor_submit_environment);
     }
     replace(hlrvalue, "\"", "\\\"");
-    hlrlocation.append(hlrvalue);
-    hlrlocation.append("'");
-    globusrsl.append("(environment=(");
+    std::string hlrlocation("(EDG_WL_HLR_LOCATION '" + hlrvalue + "')");
     globusrsl.append(hlrlocation);
-    globusrsl.append(") (");
-    std::string jid("EDG_WL_JOBID");
-    jid.append(" '");
-    std::string jidvalue(job_id);
-    replace(jidvalue, "\"", "\\\"");
-    jid.append(jidvalue);
-    jid.append("'");
-    globusrsl.append(jid);
-    globusrsl.append("))");
   }
-  
+  globusrsl.append(")"); //environment
+
   /* Mandatory */
   std::string type(jdl::get_type(*m_ad));
   if (type.empty()) {
