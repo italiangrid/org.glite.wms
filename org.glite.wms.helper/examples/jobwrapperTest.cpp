@@ -96,7 +96,6 @@ main(int argc, char* argv[])
   }
 
   // set the stdin, stdout and stderr for job.sh
-  jw->wms_hostname(std::string(hostname));
   jw->standard_input("job.in");
   jw->standard_output("job.out");
   jw->standard_error("job.err");
