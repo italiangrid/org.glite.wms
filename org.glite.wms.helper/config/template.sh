@@ -124,7 +124,13 @@ doExit() # 1 - status
   jw_status=$1
   jw_echo "jw exit status = ${jw_status}"
 
-  retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradona}"
+  if [ "${__maradona:0:9}" == "gsiftp://" ]; then
+    retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradona}"
+  elif [ "${__maradona:0:8}" == "https://" -o "${__maradona:0:7}" == "http://" ]; then
+    retry_copy "htcp" "file://${workdir}/${maradona}" "${__maradona}"
+  else
+    false
+  fi
   globus_copy_status=$?
 
   cd ..
