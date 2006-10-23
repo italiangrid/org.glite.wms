@@ -29,7 +29,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				jobKiller.cpp \
 				jobDbManager.cpp \
 				CreamProxyFactory.cpp \
-				iceThreadPool.cpp
+				iceThreadPool.cpp \
+				scoped_timer.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
@@ -42,6 +43,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
-		-pipe
+		-pipe 
 
 MAINTAINERCLEANFILES = Makefile.in

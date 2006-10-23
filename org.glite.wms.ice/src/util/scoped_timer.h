@@ -21,9 +21,11 @@
 #define ICE_SCOPED_TIMER_H
 
 #include <string>
+#include <sys/time.h>
 
-#include "boost/timer.hpp"
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+namespace log4cpp {
+    class Category;
+}
 
 namespace glite {
     namespace wms {
@@ -54,7 +56,7 @@ namespace glite {
                 class scoped_timer {
                 protected:
                     const std::string m_name;
-                    boost::timer m_timer;
+                    struct timeval m_start_time;
                     log4cpp::Category  *m_log_dev;
                 public:
 
@@ -67,13 +69,7 @@ namespace glite {
                      * is only used to display the result in the log file,
                      * so no check for uniqueness is performed.
                      */
-                    scoped_timer( const std::string& name ) :
-                        m_name( name ),
-                        m_timer( ),
-                        m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
-                    {
-                        
-                    };
+                    scoped_timer( const std::string& name );
                     
                     /**
                      * The descructor displays in the log file (at
@@ -82,16 +78,7 @@ namespace glite {
                      * costructor), followed by the elapsed time since
                      * creation, in seconds.
                      */
-                    virtual ~scoped_timer( ) {
-                        double elap = m_timer.elapsed( );
-                        CREAM_SAFE_LOG(m_log_dev->infoStream()
-                                       << "scoped_timer "
-                                       << m_name 
-                                       << " "
-                                       << elap 
-                                       << log4cpp::CategoryStream::ENDLINE);
-                        
-                    };
+                    virtual ~scoped_timer( );
                 };
 
             } // namespace util
