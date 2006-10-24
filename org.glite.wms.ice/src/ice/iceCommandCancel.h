@@ -20,6 +20,8 @@
 #ifndef GLITE_WMS_ICE_ICECOMMANDCANCEL_H
 #define GLITE_WMS_ICE_ICECOMMANDCANCEL_H
 
+#include <string>
+
 #include "iceAbsCommand.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
@@ -41,6 +43,8 @@ namespace glite {
                 virtual ~iceCommandCancel() {};
 
                 void execute( Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
+                std::string get_grid_job_id( void ) const { return m_gridJobId; };
+
             protected:
                 std::string m_gridJobId;
                 std::string m_sequence_code;

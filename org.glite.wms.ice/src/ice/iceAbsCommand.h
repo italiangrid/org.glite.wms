@@ -65,6 +65,12 @@ namespace glite {
                  * but could be tried again and succeed.
                  */
                 virtual void execute( Ice* _ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy  ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
+
+                /**
+                 * Returns the Grid jobID for the job this command
+                 * refers to.
+                 */
+                virtual std::string get_grid_job_id( void ) const = 0;
           
             protected:
 

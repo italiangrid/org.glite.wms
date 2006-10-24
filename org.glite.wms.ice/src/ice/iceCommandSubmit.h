@@ -23,6 +23,7 @@
 #include "iceAbsCommand.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
+#include "creamJob.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
@@ -32,25 +33,16 @@
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
 
-// Forward declaration of iceConfManager
 namespace glite {
     namespace wms {
         namespace ice {
-            namespace util {
-                
+
+            // Forward declarations
+            namespace util {                
                 class iceConfManager;
                 class iceLBLogger;
-
             }
-        }
-    }
-};
 
-//class CESubscription;
-
-namespace glite {
-    namespace wms {
-        namespace ice {
 
             class iceCommandSubmit : public iceAbsCommand {
 	    
@@ -62,10 +54,13 @@ namespace glite {
 
                 virtual ~iceCommandSubmit() {};
 
-                virtual void execute( Ice* _ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+                virtual void execute( Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+
+                std::string get_grid_job_id( void ) const { return m_theJob.getGridJobID(); };
 
             protected:
 
+                // Inner class definition, used to manipulate paths
                 class pathName {
                 public:
                     typedef enum { invalid=-1, absolute, uri, relative } pathType_t;
@@ -118,6 +113,7 @@ namespace glite {
 
                 std::string m_myname;	
                 std::string m_jdl;
+                util::CreamJob m_theJob;
                 log4cpp::Category* m_log_dev;
                 glite::wms::ice::util::iceConfManager* m_confMgr;
                 std::string m_myname_url;
