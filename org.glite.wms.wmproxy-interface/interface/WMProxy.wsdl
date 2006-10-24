@@ -2,7 +2,7 @@
 	xmlns:glitens="http://glite.org/wms/wmproxy"
 	xmlns:glitenstypes="http://glite.org/wms/wmproxy"
 	xmlns:glitejsdlns="http://schemas.ggf.org/jsdl/2005/11/jsdl"
-	xmlns:glitedelegns="http://www.gridsite.org/namespaces/delegation-1" 
+	xmlns:glitedelegns="http://www.gridsite.org/namespaces/delegation-2" 
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
 	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
@@ -10,7 +10,7 @@
 	
 	<!-- ==== Import wsdl file for delegation services (client version 1.5 or greater) ==== -->
 	<wsdl:import
-		namespace="http://www.gridsite.org/namespaces/delegation-1"
+		namespace="http://www.gridsite.org/namespaces/delegation-2"
 		location="www.gridsite.org-delegation-2.0.0.wsdl"/>
 	<!--wsdl:import
 		namespace="http://www.gridsite.org/namespaces/delegation-1"
