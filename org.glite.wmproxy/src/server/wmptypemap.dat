@@ -82,6 +82,7 @@ s	= "http://www.soapinterop.org/xsd"
 # Assigning jsdlns namespace instead of ns<progressive number>
 jsdlns = "http://schemas.ggf.org/jsdl/2005/11/jsdl"
 jsdlposixns = "http://schemas.ggf.org/jsdl/2005/11/jsdl-posix"
+besns="http://schemas.ggf.org/bes/2006/08/bes-factory"
 # END
 
 #	Amazon Web Services:
