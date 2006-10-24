@@ -42,7 +42,7 @@ import org.apache.axis.client.AxisClient;
 
 
 
-import org.gridsite.www.namespaces.delegation_1.*;
+import org.gridsite.www.namespaces.delegation_2.*;
 import org.glite.security.delegation.GrDPX509Util;
 import org.glite.security.delegation.GrDProxyGenerator;
 import org.apache.log4j.Logger;
@@ -193,9 +193,9 @@ public class WMProxyAPI{
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
 		try {
 			return this.grstStub.getProxyReq(delegationId) ;
-		} catch ( org.gridsite.www.namespaces.delegation_1.DelegationExceptionType exc)  {
+		} catch ( org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
 			// DelegationException -> CredentialException
-			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
 		} catch (java.rmi.RemoteException exc)  {
 			// RemoteException ->ServiceException
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
@@ -205,15 +205,15 @@ public class WMProxyAPI{
 		}
 	}
 
-	public org.gridsite.www.namespaces.delegation_1.NewProxyReq getNewProxyReq ( )
+	public org.gridsite.www.namespaces.delegation_2.NewProxyReq getNewProxyReq ( )
 		throws org.glite.wms.wmproxy.CredentialException,
 			org.glite.wms.wmproxy.ServiceException,
 			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
 		try {
 			return this.grstStub.getNewProxyReq( ) ;
-		} catch (org.gridsite.www.namespaces.delegation_1.DelegationExceptionType exc)  {
+		} catch (org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
 			// DelegationException -> CredentialException
-			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
 		} catch (java.rmi.RemoteException exc)  {
 			// RemoteException ->ServiceException
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
@@ -299,9 +299,9 @@ public class WMProxyAPI{
 		logger.debug ("Delegating credential (putProxy)");
 		try {
 			this.serviceStub.putProxy(delegationId,proxy) ;
-		} catch (org.gridsite.www.namespaces.delegation_1.DelegationExceptionType exc)  {
+		} catch (org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
 			// DelegationException -> CredentialException
-			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
 		} catch (java.rmi.RemoteException exc)  {
 			// RemoteException ->ServiceException
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
