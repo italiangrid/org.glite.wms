@@ -41,7 +41,7 @@ namespace glite {
 	  int m_ListenerPort, m_pollerdelay, m_subduration,
 	    m_LogLevel, m_subUpdThresholdTime, m_poller_status_threshold_time, 
 	    m_max_jobcache_operation_before_dump, m_notification_frequency, m_lease_delta_time, 
-	    m_lease_threshold_time, m_jobkill_threshold_time;
+	    m_lease_threshold_time, m_jobkill_threshold_time, m_soaptimeout;
 	  bool m_startpoller, m_poller_purges_jobs, m_startlistener, m_startsubupder,
 	    m_log_on_console, m_log_on_file, m_listener_enable_authn,  m_listener_enable_authz, m_start_job_killer,
 	    m_start_lease_updater, m_start_proxy_renewer;
@@ -102,6 +102,7 @@ namespace glite {
 	  std::string getIceHostKey( void ) const { return m_ice_host_key; }
 	  std::string getCachePersistDirectory( void ) const { return m_persist_dir; }
           unsigned int getMaxICEThreads( void ) const { return m_max_ice_threads; }
+	  int         getSoapTimeout( void ) const { return m_soaptimeout; }
 
 	  void setHostProxyFile( const std::string& p ) {  m_HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { m_WM_Input_FileList = p; }

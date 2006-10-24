@@ -83,6 +83,7 @@ iceConfManager::iceConfManager( )
     m_max_logfile_rotations              = m_configuration->ice()->max_logfile_rotations();
     m_persist_dir                        = m_configuration->ice()->persist_dir();
     m_max_ice_threads                    = m_configuration->ice()->max_ice_threads();
+    m_soaptimeout			 = m_configuration->ice()->soap_timeout();
 }
 
 iceConfManager::~iceConfManager( )

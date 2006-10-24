@@ -18,6 +18,7 @@
  */
 
 #include "CreamProxyFactory.h"
+#include "iceConfManager.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -30,7 +31,7 @@ cream_api::soap_proxy::CreamProxy* CreamProxyFactory::makeCreamProxy( const bool
 {
     cream_api::soap_proxy::CreamProxy *aProxy;
     try { 
-        aProxy = new cream_api::soap_proxy::CreamProxy( autom_deleg );
+        aProxy = new cream_api::soap_proxy::CreamProxy( autom_deleg, iceConfManager::getInstance()->getSoapTimeout() );
     } catch( cream_api::soap_proxy::soap_ex& ex) {
     
         CREAM_SAFE_LOG(
