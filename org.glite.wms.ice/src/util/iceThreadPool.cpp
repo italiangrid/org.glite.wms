@@ -68,14 +68,14 @@ iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
-//    log4cpp::Category* m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );
     log4cpp::Category* log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );    
+
     while( !isStopped() ) {
         boost::scoped_ptr< iceAbsCommand > cmd;
         {
             boost::recursive_mutex::scoped_lock L( m_state->m_mutex );
-            // The next while could be replaced by 
-            while ( m_state->m_requests_queue.empty() ) {
+            
+            while ( m_state->m_requests_queue.end() == get_first_request() ) {
                 try {
                     --m_state->m_num_running;
 
@@ -90,7 +90,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                                    << log4cpp::CategoryStream::ENDLINE
                                    );        
 
-                    m_state->m_queue_empty.wait( L );
+                    m_state->m_no_requests_available.wait( L );
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
                     CREAM_SAFE_LOG( log_dev->fatalStream()
@@ -115,9 +115,12 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                            << log4cpp::CategoryStream::ENDLINE
                            );
             // Remove one request from the queue
-            iceAbsCommand* cmd_ptr = m_state->m_requests_queue.front();
+            list< iceAbsCommand* >::iterator req_it = get_first_request( );
+            assert( req_it != m_state->m_requests_queue.end() );
+            iceAbsCommand* cmd_ptr = *req_it;
             cmd.reset( cmd_ptr );
-            m_state->m_requests_queue.pop_front();
+            m_state->m_requests_queue.erase( req_it );
+            m_state->m_pending_jobs.insert( cmd->get_grid_job_id() );
         } // releases lock
 
         try {
@@ -138,8 +141,27 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                            );
             CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );            
         }
+
+        // Now, wake up another worker thread (just in case someone is
+        // waiting for us to complede)
+        boost::recursive_mutex::scoped_lock L( m_state->m_mutex );
+        m_state->m_pending_jobs.erase( cmd->get_grid_job_id() );
+        m_state->m_no_requests_available.notify_all();
+
     }
 }
+
+list< glite::wms::ice::iceAbsCommand* >::iterator iceThreadPool::iceThreadPoolWorker::get_first_request( void )
+{
+    list< glite::wms::ice::iceAbsCommand* >::iterator it = m_state->m_requests_queue.begin();
+    while ( ( it != m_state->m_requests_queue.end() ) &&
+            ( m_state->m_pending_jobs.end() != 
+              m_state->m_pending_jobs.find( (*it)->get_grid_job_id() ) ) ) {
+        ++it;
+    }
+    return it;
+}
+
 
 /**
  *
@@ -194,5 +216,5 @@ void iceThreadPool::add_request( glite::wms::ice::iceAbsCommand* req )
 {
     boost::recursive_mutex::scoped_lock L( m_state->m_mutex );
     m_state->m_requests_queue.push_back( req );
-    m_state->m_queue_empty.notify_one(); // wake up one worker thread
+    m_state->m_no_requests_available.notify_all(); // wake up one worker thread
 }

@@ -75,6 +75,18 @@ namespace glite {
               protected:
                   void body( );
 
+                  /**
+                   * Gets an iterator to the first request into the
+                   * request queue which can be processed. This means,
+                   * gets the first request in the queue which is
+                   * related to a job whose ID is not in the
+                   * m_state->m_pending_jobs set.
+                   *
+                   * @return an iterator to a command in the queue, or
+                   * end() if no such command exists.
+                   */
+                  std::list< iceAbsCommand* >::iterator get_first_request( void );
+
                   boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_proxy;
                   iceThreadPoolState* m_state;
                   const int m_threadNum;

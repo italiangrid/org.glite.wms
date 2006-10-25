@@ -29,11 +29,9 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
 {
     switch( theJob.getStatus() ) {
     case jobstat::PENDING:
-        // "Cream accepted" is actually "accepted by LRMS", and is
-        // logged when 
-        // return new cream_accepted_event( theJob );
     case jobstat::IDLE:
-        return new lrms_accepted_event( theJob );
+        // nothing to log
+        return 0;
     case jobstat::RUNNING:
         return new job_running_event( theJob ); // FIXME
     case jobstat::REALLY_RUNNING:

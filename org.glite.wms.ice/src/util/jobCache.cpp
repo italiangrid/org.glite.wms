@@ -48,7 +48,7 @@ using namespace glite::wms::ice::util;
 namespace apiutil = glite::ce::cream_client_api::util;
 
 jobCache* jobCache::s_instance = 0;
-string jobCache::s_persist_dir = DEFAULT_PERSIST_DIR;
+string jobCache::s_persist_dir( DEFAULT_PERSIST_DIR );
 bool   jobCache::s_recoverable_db = false;
 boost::recursive_mutex jobCache::mutex;
 

@@ -164,11 +164,11 @@ namespace glite {
                  * A job has been accepted by the LRMS. This event
                  * is logged when ICe receives an IDLE status from CREAM.
                  */
-                class lrms_accepted_event : public iceLBEvent {
-                public:
-                    lrms_accepted_event( const CreamJob& j );
-                    int execute( iceLBContext* ctx );
-                };
+//                 class lrms_accepted_event : public iceLBEvent {
+//                 public:
+//                     lrms_accepted_event( const CreamJob& j );
+//                     int execute( iceLBContext* ctx );
+//                 };
 
 
                 class cream_refused_event : public iceLBEvent {

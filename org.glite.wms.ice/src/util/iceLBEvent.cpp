@@ -171,35 +171,37 @@ int cream_accepted_event::execute( iceLBContext* ctx )
 #endif
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//
-// lrms accepted event
-//
-//////////////////////////////////////////////////////////////////////////////
-lrms_accepted_event::lrms_accepted_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "LRMS Accepted Event" )
-{
 
-}
+// //////////////////////////////////////////////////////////////////////////////
+// //
+// // lrms accepted event
+// //
+// //////////////////////////////////////////////////////////////////////////////
+// lrms_accepted_event::lrms_accepted_event( const CreamJob& j ) :
+//     iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "LRMS Accepted Event" )
+// {
 
-int lrms_accepted_event::execute( iceLBContext* ctx )
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    return edg_wll_LogAcceptedProxy( *(ctx->el_context), 
-                                     EDG_WLL_SOURCE_LRMS,
-                                     m_job.getCEID().c_str(),
-                                     ctx->el_s_unavailable,
-                                     m_job.getCreamJobID().c_str()
-                                     );
-#else
-    return edg_wll_LogAccepted( *(ctx->el_context), 
-                                EDG_WLL_SOURCE_LRMS,
-                                m_job.getCEID().c_str(),
-                                ctx->el_s_unavailable,
-                                m_job.getCreamJobID().c_str()
-                                );
-#endif
-}
+// }
+
+// int lrms_accepted_event::execute( iceLBContext* ctx )
+// {
+// #ifdef GLITE_WMS_HAVE_LBPROXY
+//     return edg_wll_LogAcceptedProxy( *(ctx->el_context), 
+//                                      EDG_WLL_SOURCE_LRMS,
+//                                      m_job.getCEID().c_str(),
+//                                      ctx->el_s_unavailable,
+//                                      m_job.getCreamJobID().c_str()
+//                                      );
+// #else
+//     return edg_wll_LogAccepted( *(ctx->el_context), 
+//                                 EDG_WLL_SOURCE_LRMS,
+//                                 m_job.getCEID().c_str(),
+//                                 ctx->el_s_unavailable,
+//                                 m_job.getCreamJobID().c_str()
+//                                 );
+// #endif
+// }
+
 
 //////////////////////////////////////////////////////////////////////////////
 //

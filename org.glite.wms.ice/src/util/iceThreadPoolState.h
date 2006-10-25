@@ -23,6 +23,7 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <list>
+#include <set>
 
 namespace glite {
 namespace wms {
@@ -37,9 +38,10 @@ namespace util {
         iceThreadPoolState( ) { }
         
         int m_num_running; ///< Number of running threads
-        boost::recursive_mutex m_mutex; ///< Mutex to protect
-        boost::condition m_queue_empty; ///< Condition triggered when the queue is not empty
+        boost::recursive_mutex m_mutex; ///< Mutex to protect the shared state object
+        boost::condition m_no_requests_available; ///< Condition triggered when there is a new request in the queue
         std::list< iceAbsCommand* > m_requests_queue; ///< The queue of requests (commands to be issued to CREAM)
+        std::set< std::string > m_pending_jobs; ///< Grei Job IDs of pending jobs (jobs being processed)
     };
 
 } // namespace util

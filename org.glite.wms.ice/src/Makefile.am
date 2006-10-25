@@ -49,6 +49,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(BOOST_REGEX_LIBS) \
 		$(BOOST_PO_LIBS) \
 		-ldb_cxx \
+		-lboost_date_time \
 		-lvomsapi_gcc32pthr
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
@@ -58,6 +59,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+		-lboost_date_time \
 		-ldb_cxx
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
@@ -85,6 +87,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_REGEX_LIBS) \
 		$(BOOST_PO_LIBS) \
 		-ldb_cxx \
+		-lboost_date_time \
 		-lvomsapi_gcc32pthr
 
 dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
@@ -125,6 +128,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-UHAVE_CONFIG_H \
 		$(LOG4CPP_CFLAGS) \
 		$(GLOBUS_THR_CFLAGS) \
-		-pipe
+		-pipe 
 
 MAINTAINERCLEANFILES = Makefile.in
