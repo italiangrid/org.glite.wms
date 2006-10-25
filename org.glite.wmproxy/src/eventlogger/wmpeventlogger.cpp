@@ -1397,17 +1397,27 @@ WMPEventLogger::getStatus(bool childreninfo)
 	}
 
 	// Searching last state
-	int i = 0;
+	/*int i = 0;
 	while (states[i].state) {
 		i++;
 	}
-	i--;
+	i--;*/
 	
 	/*for (int i = 0; events[i].type; i++) {
 		edg_wll_FreeStatus(&states[i]);
 	}*/
+	
+	vector<glite::lb::JobStatus> states_list;
+	edg_wll_JobStat * j = NULL;
+	for(j = states; j->state != EDG_WLL_JOB_UNDEF; j++) {
+		edg_wll_JobStat *jsep = new edg_wll_JobStat;
+ 		if (jsep != NULL) {
+			memcpy(jsep, j, sizeof(*j));
+			states_list.push_back(glite::lb::JobStatus(*jsep));
+		}
+	}
   	
-  	return glite::lb::JobStatus(states[i]);
+  	return states_list[states_list.size() - 1];
   	
   	GLITE_STACK_CATCH();
 }
