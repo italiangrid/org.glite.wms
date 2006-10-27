@@ -42,7 +42,8 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
         else
             return new job_cancelled_event( theJob );
     case jobstat::HELD:
-        return new job_suspended_event( theJob );
+        // ice should NEVER see this event!
+        return 0;
     case jobstat::ABORTED:
         return new job_done_failed_event( theJob );
     case jobstat::DONE_OK:

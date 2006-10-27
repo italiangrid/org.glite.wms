@@ -440,8 +440,10 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
         m_flns.push_back(resub_request);
         the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( the_job, m_ns_filelist ) );
     } catch(std::exception& ex) {
-        CREAM_SAFE_LOG( 
-                       m_log_dev->log(log4cpp::Priority::ERROR, ex.what()) );
+        CREAM_SAFE_LOG( m_log_dev->errorStream() 
+                        << ex.what() 
+                        << log4cpp::CategoryStream::ENDLINE );
+
         m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( the_job, m_ns_filelist, ex.what() ) );
     }
 }
@@ -517,18 +519,17 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
 
 ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::iterator it )
 {
-    if ( it == m_cache->end() ) {
-        return it;
-    }
+    if ( it != m_cache->end() ) {
+        
+        if ( it->can_be_resubmitted() ) {
+            // resubmit job
+            resubmit_job( *it, "Job resubmitted by ICE" );
+        }
+        if ( it->can_be_purged() ) {
+            // purge the job
+            it = purge_job( it, "Job purged by ICE" );
+        }
 
-    // Do the "right think"(tm) with the job
-    if ( it->can_be_resubmitted() ) {
-        // resubmit job
-        resubmit_job( *it, "Job resubmitted by ICE" );
-    }
-    if ( it->can_be_purged() ) {
-        // purge the job
-        it = purge_job( it, "Job purged by ICE" );
     }
     return it;
 }

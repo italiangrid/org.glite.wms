@@ -110,7 +110,7 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// transfer FAIL event
+// CREAM transfer FAIL event
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_fail_event::cream_transfer_fail_event( const CreamJob& j, const std::string& reason ) :
@@ -140,67 +140,6 @@ int cream_transfer_fail_event::execute( iceLBContext* ctx )
                                     ctx->el_s_unavailable );
 #endif
 }
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// cream accepted event
-//
-//////////////////////////////////////////////////////////////////////////////
-cream_accepted_event::cream_accepted_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Accepted Event" )
-{
-
-}
-
-int cream_accepted_event::execute( iceLBContext* ctx )
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    return edg_wll_LogAcceptedProxy( *(ctx->el_context), 
-                                     EDG_WLL_SOURCE_JOB_SUBMISSION, 
-                                     ctx->el_s_localhost_name.c_str(),
-                                     ctx->el_s_unavailable,
-                                     m_job.getCreamJobID().c_str()
-                                     );
-#else
-    return edg_wll_LogAccepted( *(ctx->el_context), 
-                                EDG_WLL_SOURCE_JOB_SUBMISSION, 
-                                ctx->el_s_localhost_name.c_str(),
-                                ctx->el_s_unavailable,
-                                m_job.getCreamJobID().c_str()
-                                );
-#endif
-}
-
-
-// //////////////////////////////////////////////////////////////////////////////
-// //
-// // lrms accepted event
-// //
-// //////////////////////////////////////////////////////////////////////////////
-// lrms_accepted_event::lrms_accepted_event( const CreamJob& j ) :
-//     iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "LRMS Accepted Event" )
-// {
-
-// }
-
-// int lrms_accepted_event::execute( iceLBContext* ctx )
-// {
-// #ifdef GLITE_WMS_HAVE_LBPROXY
-//     return edg_wll_LogAcceptedProxy( *(ctx->el_context), 
-//                                      EDG_WLL_SOURCE_LRMS,
-//                                      m_job.getCEID().c_str(),
-//                                      ctx->el_s_unavailable,
-//                                      m_job.getCreamJobID().c_str()
-//                                      );
-// #else
-//     return edg_wll_LogAccepted( *(ctx->el_context), 
-//                                 EDG_WLL_SOURCE_LRMS,
-//                                 m_job.getCEID().c_str(),
-//                                 ctx->el_s_unavailable,
-//                                 m_job.getCreamJobID().c_str()
-//                                 );
-// #endif
-// }
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -281,32 +220,6 @@ int cream_cancel_refuse_event::execute( iceLBContext* ctx )
     return edg_wll_LogCancelREFUSE( *(ctx->el_context), 
                                     m_reason.c_str()
                                     );
-#endif
-}
-
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// cancel done event
-//
-//////////////////////////////////////////////////////////////////////////////
-cream_cancel_done_event::cream_cancel_done_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "Job Cancel OK Event, reason=[%1%]" ) % reason ) ),
-    m_reason( reason )
-{
-
-}
-
-int cream_cancel_done_event::execute( iceLBContext* ctx )
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    return edg_wll_LogCancelDONEProxy( *(ctx->el_context), 
-                                       m_reason.c_str()
-                                       );
-#else
-    return edg_wll_LogCancelDONE( *(ctx->el_context), 
-                                  m_reason.c_str()
-                                  );
 #endif
 }
 
@@ -407,26 +320,6 @@ int job_aborted_event::execute( iceLBContext* ctx )
 #endif
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// job syspended event
-//
-//////////////////////////////////////////////////////////////////////////////
-job_suspended_event::job_suspended_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Suspended Event" )
-{
-
-}
-
-int job_suspended_event::execute( iceLBContext* ctx )
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    return edg_wll_LogSuspendProxy( *(ctx->el_context), ctx->el_s_unavailable );
-#else
-    return edg_wll_LogSuspend( *(ctx->el_context), ctx->el_s_unavailable );
-#endif
-}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -539,7 +432,7 @@ int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// wms enqueued ok event
+// ns enqueued ok event
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_ok_event::ns_enqueued_ok_event( const CreamJob& j, const std::string& qname ) :

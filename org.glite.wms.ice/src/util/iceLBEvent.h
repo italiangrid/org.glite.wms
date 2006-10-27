@@ -150,27 +150,6 @@ namespace glite {
                 };
 
 
-                /**
-                 * A job has been accepted by CREAM. This event is
-                 * logged when ICE receives a PENDING status from CREAM.
-                 */
-                class cream_accepted_event : public iceLBEvent {
-                public:
-                    cream_accepted_event( const CreamJob& j );
-                    int execute( iceLBContext* ctx );
-                };
-
-                /**
-                 * A job has been accepted by the LRMS. This event
-                 * is logged when ICe receives an IDLE status from CREAM.
-                 */
-//                 class lrms_accepted_event : public iceLBEvent {
-//                 public:
-//                     lrms_accepted_event( const CreamJob& j );
-//                     int execute( iceLBContext* ctx );
-//                 };
-
-
                 class cream_refused_event : public iceLBEvent {
                 public:
                     cream_refused_event( const CreamJob& j, const std::string& reason  );
@@ -192,15 +171,6 @@ namespace glite {
                 class cream_cancel_refuse_event : public iceLBEvent {
                 public:
                     cream_cancel_refuse_event( const CreamJob& j, const std::string& reason );
-                    int execute( iceLBContext* ctx );
-                protected:
-                    std::string m_reason;
-                };
-
-
-                class cream_cancel_done_event : public iceLBEvent {
-                public:
-                    cream_cancel_done_event( const CreamJob& j, const std::string& reason );
                     int execute( iceLBContext* ctx );
                 protected:
                     std::string m_reason;
@@ -232,13 +202,6 @@ namespace glite {
                 class job_cancelled_event : public iceLBEvent {
                 public:
                     job_cancelled_event( const CreamJob& j );
-                    int execute( iceLBContext* ctx );
-                };
-
-
-                class job_suspended_event : public iceLBEvent {
-                public:
-                    job_suspended_event( const CreamJob& j );
                     int execute( iceLBContext* ctx );
                 };
 
