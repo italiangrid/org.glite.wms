@@ -292,7 +292,6 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
         m_theJob.set_failure_reason( ex.what() );
         m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what() ) );
-        m_theJob = m_lb_logger->logEvent( new util::job_done_failed_event( m_theJob ) );
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
                        << "Unable to submit gridJobID=" 
@@ -330,7 +329,6 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
                        );
         m_theJob.set_failure_reason( ex.what() );
         m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what()  ) );
-        m_theJob = m_lb_logger->logEvent( new util::job_done_failed_event( m_theJob ) );
         ice->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
         throw( iceCommandFatal_ex( ex.what() ) );
     }
