@@ -564,8 +564,7 @@ try {
   }  
 
   /* Mandatory */
-  std::string requirements("EDG_WL_JDL_REQ");
-  requirements.append(" '");
+  std::string requirements("EDG_WL_JDL_REQ '");
   std::string reqvalue(jdl::unparse_requirements(*m_ad));
   if (reqvalue.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::REQUIREMENTS,
@@ -575,26 +574,24 @@ try {
   }
   replace(reqvalue, "\"", "\\\"");
   
-  requirements.append(reqvalue);
-  requirements.append("'");
+  requirements += reqvalue + "'";
   
   /* Create globusrsl */
   std::string globusrsl("(queue=" + queuename + ")(jobtype=single)");
-  globusrsl.append("(environment=");
+  globusrsl += "(environment=";
   std::string jidvalue(job_id);
   replace(jidvalue, "\"", "\\\"");
   std::string jid("(EDG_WL_JOBID '" + jidvalue + "')");
-  globusrsl.append(jid);
-
-  //globusrsl.append(requirements);
+  globusrsl += jid;
 
   bool valid_mw_version;
   std::string mw_version(
     jdl::get_mw_version(*m_ad, valid_mw_version)
   );
   if (valid_mw_version && !mw_version.empty()) {
-    globusrsl.append("(EDG_MW_VERSION '" + mw_version + "')");
+    globusrsl += "(EDG_MW_VERSION '" + mw_version + "')";
   }
+
   /* Not Mandatory */
   bool b_hlr;
   std::string hlrvalue(jdl::get_hlrlocation(*m_ad, b_hlr));
@@ -606,9 +603,9 @@ try {
     }
     replace(hlrvalue, "\"", "\\\"");
     std::string hlrlocation("(EDG_WL_HLR_LOCATION '" + hlrvalue + "')");
-    globusrsl.append(hlrlocation);
+    globusrsl += hlrlocation;
   }
-  globusrsl.append(")"); //environment
+  globusrsl += ")"; //environment
   
   /* Mandatory */
   std::string type(jdl::get_type(*m_ad));
@@ -676,12 +673,8 @@ try {
 
     std::string nn(boost::lexical_cast<std::string>(nodenumber));
     
-    globusrsl.append("(count=");
-    globusrsl.append(nn);
-    globusrsl.append(")(hostCount=");
-    globusrsl.append(nn);
-    globusrsl.append(")");
-   
+    globusrsl += "(count=" + nn + ")(hostCount=" + nn + ")";
+
     std::string exec;
     std::string::size_type pos = executable.find("./");
     if (pos == std::string::npos) {
