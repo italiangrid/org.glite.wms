@@ -22,18 +22,16 @@
 #include "ice-core.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
+#include "CreamProxyMethod.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include "boost/algorithm/string.hpp"
 
-using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
-
-namespace glite {
-namespace wms {
-namespace ice {
+using namespace std;
+using namespace glite::wms::ice;
 
 iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( ),
@@ -167,14 +165,14 @@ void iceCommandCancel::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
 	theProxy->Authenticate( theJob.getUserProxyCertificate() );
         theJob.set_failure_reason( "Aborted by user" );
         util::jobCache::getInstance()->put( theJob );
-	theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
+        util::CreamProxy_Cancel( theJob.getCreamURL(), url_jid ).execute( theProxy, 3 );
+	// theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
     } catch(cream_api::soap_proxy::auth_ex& ex) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("auth_ex: ") + ex.what() ) );
         throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
     } catch(cream_api::soap_proxy::soap_ex& ex) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("soap_ex: ") + ex.what() ) );
         throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
-        // HERE MUST RESUBMIT
     } catch(cream_api::cream_exceptions::BaseException& base) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("BaseException: ") + base.what() ) );
         throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
@@ -184,8 +182,3 @@ void iceCommandCancel::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     }
 
 }
-
-
-} // namespace ice
-} // namespace wms
-} // namespace glite

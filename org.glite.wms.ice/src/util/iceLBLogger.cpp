@@ -64,10 +64,11 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         abort();        
     }
 
-    // Allocates a new (temporary) LB context
-    boost::scoped_ptr< iceLBContext > m_ctx( new iceLBContext() );
     // Destroys the parameter "ev" when exiting this function
     boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
+
+    // Allocates a new (temporary) LB context
+    boost::scoped_ptr< iceLBContext > m_ctx( new iceLBContext() );
 
     std::string new_seq_code;
         

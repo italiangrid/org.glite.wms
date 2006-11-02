@@ -22,6 +22,7 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "CreamProxyFactory.h"
+#include "CreamProxyMethod.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
@@ -30,6 +31,7 @@
 #include "glite/ce/cream-client-api-c/BaseException.h"
 #include "glite/ce/cream-client-api-c/InternalException.h"
 #include "glite/ce/cream-client-api-c/DelegationException.h"
+
 #include <boost/thread/thread.hpp>
 
 #include <vector>
@@ -51,8 +53,8 @@ leaseUpdater::leaseUpdater( ) :
     m_cache( jobCache::getInstance() ),
     m_creamClient( CreamProxyFactory::makeCreamProxy( false ) )
 {
-  double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/4.0;
-  m_delay = (time_t)(_delta_time_for_lease);
+    double delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/4.0;
+    m_delay = (time_t)(delta_time_for_lease);
 }
 
 //______________________________________________________________________________
@@ -131,7 +133,8 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
     try {
 
         m_creamClient->Authenticate( j.getUserProxyCertificate() );
-        m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
+        // m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
+        util::CreamProxy_Lease( j.getCreamURL(), jobids, m_delta, newLease ).execute( m_creamClient.get(), 3 );
 
     } catch(cream_exceptions::JobUnknownException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()

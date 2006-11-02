@@ -29,7 +29,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				jobKiller.cpp \
 				jobDbManager.cpp \
 				CreamProxyFactory.cpp \
-				iceThreadPool.cpp
+				iceThreadPool.cpp \
+				CreamProxyMethod.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \

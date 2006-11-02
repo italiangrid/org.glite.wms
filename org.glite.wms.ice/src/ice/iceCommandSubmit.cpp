@@ -35,6 +35,7 @@
 #include "eventStatusListener.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
+#include "CreamProxyMethod.h"
 
 #ifdef ICE_STANDALONE
 #include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
@@ -306,18 +307,20 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     string delegID; // empty delegation id, as we do autodelegation
     try {	    
         api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
-        theProxy->Register(
-                           m_theJob.getCreamURL().c_str(),
-                           m_theJob.getCreamDelegURL().c_str(),
-                           delegID, // deleg ID not needed because this client
-                           // will always do auto_delegation
-                           modified_jdl,
-                           m_theJob.getUserProxyCertificate(),
-                           url_jid,
-                           // -1,
-                           m_confMgr->getLeaseDeltaTime(), 
-                           true /*autostart*/
-                           );
+        util::CreamProxy_Register( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID, modified_jdl, m_theJob.getUserProxyCertificate(), url_jid, m_confMgr->getLeaseDeltaTime(), true ).execute( theProxy, 3 );
+
+//         theProxy->Register(
+//                            m_theJob.getCreamURL().c_str(),
+//                            m_theJob.getCreamDelegURL().c_str(),
+//                            delegID, // deleg ID not needed because this client
+//                            // will always do auto_delegation
+//                            modified_jdl,
+//                            m_theJob.getUserProxyCertificate(),
+//                            url_jid,
+//                            // -1,
+//                            m_confMgr->getLeaseDeltaTime(), 
+//                            true /*autostart*/
+//                            );
     } catch( exception& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
