@@ -31,13 +31,41 @@ namespace wms {
 namespace ice {
 namespace util {
 
+    /**
+     * Wrapper class for CreamProxy methods. Subclasses of this class
+     * can be used to try to send a given request to CREAM up to a
+     * user-defined maximum number of times. This can be useful for
+     * deal with transient communication failures.
+     */
     class CreamProxyMethod {
     public:
         virtual ~CreamProxyMethod( ) { };
-        void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* p, int ntries );
+        /**
+         * Executes the CREAM proxy method represented by this class.
+         * The method is retried if it raises a GeneralException or an
+         * InternalException. All other exceptions are immediately
+         * rethrown; after the maximum retry count has been reached,
+         * further exceptions are rethrown.
+         * 
+         * @param p a pointer to the CreamProxy object to use. Caller
+         * retains ownership of this pointer, thus the caller is
+         * responsible for freeing memory pointed to by p.
+         *
+         * @param ntries the maximum number of times the CREAM method
+         * will be executed. 
+         */
+        void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* p, int ntries ); // may throw anything
     protected:
         CreamProxyMethod( ) { };
-        virtual void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) = 0; // can throw anything
+        /**
+         * This method actually calls a CreamProxy method.
+         *
+         * @param p the CreamProxy object on which the method should
+         * be called. Caller retains ownership of p. Caller should
+         * ensure that p points to a valid CreamProxy instance (i.e.,
+         * p != 0).
+         */
+        virtual void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) = 0; // may throw anything
     };
 
 
@@ -124,8 +152,39 @@ namespace util {
 
         const std::string m_service;
         const std::vector< std::string > m_jobids;
-        int m_increment;
+        const int m_increment;
         std::map< std::string, time_t>& m_leaseTimes;
+    };
+
+    /**
+     * Wrapper class around the Info method of CreamProxy
+     */ 
+    class CreamProxy_Info : public CreamProxyMethod {
+    public:
+        CreamProxy_Info( const std::string& service,
+                         const std::vector<std::string>& JID,
+                         const std::vector<std::string>& STATES,
+                         std::vector<glite::ce::cream_client_api::soap_proxy::JobInfo>& target,
+                         int since=-1,
+                         int to=-1 );
+    protected:        
+        void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
+	    throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,
+		  glite::ce::cream_client_api::cream_exceptions::JobUnknownException&,
+		  glite::ce::cream_client_api::cream_exceptions::InvalidArgumentException&,
+		  glite::ce::cream_client_api::cream_exceptions::GenericException&,
+		  glite::ce::cream_client_api::cream_exceptions::AuthenticationException&,
+		  glite::ce::cream_client_api::cream_exceptions::AuthorizationException&,
+		  glite::ce::cream_client_api::cream_exceptions::InternalException&,
+		  glite::ce::cream_client_api::soap_proxy::invalidTimestamp_ex&,
+		  glite::ce::cream_client_api::soap_proxy::auth_ex&);
+
+        const std::string m_service;
+        const std::vector<std::string> m_jid;
+        const std::vector<std::string> m_states;
+        std::vector<glite::ce::cream_client_api::soap_proxy::JobInfo>& m_target;
+        int m_since;
+        int m_to;
     };
 
 } // namespace util

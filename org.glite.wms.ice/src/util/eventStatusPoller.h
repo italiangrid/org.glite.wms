@@ -89,18 +89,6 @@ namespace glite {
            */
 	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_jobs( const std::list< CreamJob > & job_list );
 
-
-          /**
-           * Handle a job which was not accessible through the
-           * "jobInfo" method. We try a number of times before giving
-           * up and removing the job from the jobCache.
-           *
-           * @param job the Job which ICE was unable to access. If the
-           * job is not found in the job cache, this method does
-           * nothing
-           */
-          void handle_unreachable_job( const std::string& cream_job_id );
-
           /**
            * Updates the status informations for all jobs in the list
            * l.

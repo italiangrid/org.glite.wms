@@ -16,6 +16,7 @@
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
+#include "iceConfManager.h"
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -41,7 +42,7 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
                                 << log4cpp::CategoryStream::ENDLINE );
                 sleep( 1 );
             } else {
-                CREAM_SAFE_LOG( m_log_dev->warnStream()
+                CREAM_SAFE_LOG( m_log_dev->errorStream()
                                 << "Cream operation raised a GenericException "
                                 << ex.what()
                                 << " on try " << t << "/" << ntries
@@ -59,7 +60,7 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
                                 << log4cpp::CategoryStream::ENDLINE );
                 sleep( 1 );
             } else {
-                CREAM_SAFE_LOG( m_log_dev->warnStream()
+                CREAM_SAFE_LOG( m_log_dev->errorStream()
                                 << "Cream operation raised an InternalException "
                                 << ex.what()
                                 << " on try " << t << "/" << ntries
@@ -68,8 +69,9 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
                 throw; // rethrow
             }            
         } catch( ... ) {
-            throw; // retrow anything else
+            throw; // rethrow anything else
         }
+        break; // everything went ok, exit the loop now
     }
 }
 
@@ -168,4 +170,39 @@ void CreamProxy_Lease::method_call( soap_proxy::CreamProxy* p )
 		  soap_proxy::auth_ex&)
 {
     p->Lease( m_service.c_str(), m_jobids, m_increment, m_leaseTimes );
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// Info
+//
+//////////////////////////////////////////////////////////////////////////////
+CreamProxy_Info::CreamProxy_Info( const string& service,
+                                  const vector<string>& JID,
+                                  const vector<string>& STATES,
+                                  vector<soap_proxy::JobInfo>& target,
+                                  int since,
+                                  int to ) :
+    m_service( service ),
+    m_jid( JID ),
+    m_states( STATES ),
+    m_target( target ),
+    m_since( since ),
+    m_to( to )
+{
+
+}
+
+void CreamProxy_Info::method_call( soap_proxy::CreamProxy* p ) 
+    throw( cream_ex::BaseException&,
+           cream_ex::JobUnknownException&,
+           cream_ex::InvalidArgumentException&,
+           cream_ex::GenericException&,
+           cream_ex::AuthenticationException&,
+           cream_ex::AuthorizationException&,
+           cream_ex::InternalException&,
+           soap_proxy::invalidTimestamp_ex&,
+           soap_proxy::auth_ex&)
+{    
+    p->Info( m_service.c_str(), m_jid, m_states, m_target, m_since, m_to );
 }

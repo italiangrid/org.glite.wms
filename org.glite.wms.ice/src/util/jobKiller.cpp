@@ -23,6 +23,7 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "CreamProxyFactory.h"
+#include "CreamProxyMethod.h"
 
 // GLITE stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -103,7 +104,9 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
       J.set_killed_by_ice();
       J.set_failure_reason( "The job has been killed because its proxy was expiring" );
 
-      m_theProxy->Cancel( J.getCreamURL().c_str(), url_jid );
+      
+      // m_theProxy->Cancel( J.getCreamURL().c_str(), url_jid );
+      CreamProxy_Cancel( J.getCreamURL(), url_jid ).execute( m_theProxy.get(), 3 );
 
       // The corresponding "cancel done event" will be notified by the
       // poller/listener, so it is not logged here

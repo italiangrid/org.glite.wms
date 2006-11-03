@@ -48,6 +48,8 @@
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/wms/common/utilities/scope_guard.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 // Boost stuff
 #include "boost/algorithm/string.hpp"
@@ -64,6 +66,7 @@ namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 namespace cream_api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
 namespace wms_utils = glite::wms::common::utilities;
+namespace wms_conf = glite::wms::common::configuration;
 
 using namespace glite::wms::ice;
 
@@ -106,14 +109,15 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     iceAbsCommand( ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_confMgr( util::iceConfManager::getInstance() ),
+    m_configuration( util::iceConfManager::getInstance()->getConfiguration() ),
     m_lb_logger( util::iceLBLogger::instance() )
 {
     try {
         m_myname = util::getHostName();
-	if( m_confMgr->getListenerEnableAuthN() ) {
-	  m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );        
+	if( m_configuration->ice()->listener_enable_authn() ) {
+	  m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
 	} else {
-	  m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );   
+	  m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
 	}
     } catch( runtime_error& ex ) {
         CREAM_SAFE_LOG(
@@ -247,7 +251,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
                    << m_theJob.getSequenceCode()
                    << log4cpp::CategoryStream::ENDLINE
                    );
-    m_theJob = m_lb_logger->logEvent( new util::wms_dequeued_event( m_theJob, m_confMgr->getICEInputFile() ) );
+    m_theJob = m_lb_logger->logEvent( new util::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << "iceCommandSubmit::execute() - Seq Code after: "
@@ -307,7 +311,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     string delegID; // empty delegation id, as we do autodelegation
     try {	    
         api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
-        util::CreamProxy_Register( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID, modified_jdl, m_theJob.getUserProxyCertificate(), url_jid, m_confMgr->getLeaseDeltaTime(), true ).execute( theProxy, 3 );
+        util::CreamProxy_Register( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID, modified_jdl, m_theJob.getUserProxyCertificate(), url_jid, m_configuration->ice()->lease_delta_time(), true ).execute( theProxy, 3 );
 
 //         theProxy->Register(
 //                            m_theJob.getCreamURL().c_str(),
@@ -348,7 +352,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     
     m_theJob.setCreamJobID(url_jid[1]);
     m_theJob.setStatus(cream_api::job_statuses::PENDING);
-    m_theJob.setEndLease( time(0) + m_confMgr->getLeaseDeltaTime() );
+    m_theJob.setEndLease( time(0) + m_configuration->ice()->lease_delta_time() );
     m_theJob.setDelegationId( delegID );
     m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );
@@ -360,7 +364,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
      * in order to receive the status change notifications
      * of job just submitted. But only if listener is ON
      */
-    if( m_confMgr->getStartListener() ) {
+    if( m_configuration->ice()->start_listener() ) {
 	
         this->doSubscription( m_theJob.getCreamURL() );
 	
@@ -686,7 +690,7 @@ void  iceCommandSubmit::doSubscription( const string& ce )
   // try to determine with a direct SOAP query to CEMon
   if( util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) )
   {
-    if( m_confMgr->getListenerEnableAuthZ() ) {
+    if( m_configuration->ice()->listener_enable_authz() ) {
       string DN;
       if( cemon_cache->getCEMonDN( cemon_url, DN ) )
         {
@@ -715,7 +719,7 @@ void  iceCommandSubmit::doSubscription( const string& ce )
       // MUST subscribe
       string DN;
       bool can_subscribe = true;
-      if( m_confMgr->getListenerEnableAuthZ() ) {
+      if( m_configuration->ice()->listener_enable_authz() ) {
         if( !cemon_cache->getCEMonDN( cemon_url, DN ) )
 	{
 	  // Cannot subscribe to a CEMon without it's DN
