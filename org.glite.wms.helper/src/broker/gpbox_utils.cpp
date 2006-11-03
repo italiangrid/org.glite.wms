@@ -1,7 +1,6 @@
 // File: gpbox_utils.cpp
 // Author: Marco Cecchi
-// Copyright (c) 2002 EU DataGrid.
-// For license conditions see http://www.eu-datagrid.org/license.html
+// Copyright (c) Members of the EGEE Collaboration 2004
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
 #include <map>
@@ -17,37 +16,28 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include "classad_distribution.h"
+
 #include "glite/gpbox/Clientcc.h"
-
 #include "glite/lb/producer.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
-#include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
-
 #include "glite/wms/common/logger/logger_utils.h"
-
 #include "glite/wms/matchmaking/matchmaker.h"
-
 #include "glite/wmsutils/classads/classad_utils.h"
-
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
-
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/security/voms/voms_api.h"
-
 #include "gpbox_utils.h"
 #include "globus_gss_assist.h"
-
 #include "glite/lb/context.h"
 #include "glite/lb/consumer.h"
-#include "classad_distribution.h"
 
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
-namespace classadutils      = glite::wmsutils::classads;
+namespace classadutils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -60,102 +50,78 @@ namespace {
 static std::string const service_class_tag = "SC:";
 static std::string const not_a_service_class_tag = "NOT_A_SC";
 
-std::string
-get_user_x509_proxy(jobid::JobId const& jobid,
-  configuration::Configuration const& config)
+boost::shared_ptr<X509>
+certificate(std::string const& filename)
 {
-  static std::string const null_string;
-  char* c_x509_proxy = NULL;
-
-  int err_code = glite_renewal_GetProxy(jobid.toString().c_str(), &c_x509_proxy);
-  if (!err_code) {
-    return null_string;
-  } else {
-    // currently no proxy is registered if renewal is not requested
-    // try to get the original user proxy from the input sandbox
-    boost::shared_ptr<char> _c_x509_proxy(c_x509_proxy, ::free);
-
-    const configuration::NSConfiguration* ns_config = config.ns();
-    assert(ns_config);
-
-    std::string x509_proxy(ns_config->sandbox_staging_path());
-    x509_proxy += "/"
-    + jobid::get_reduced_part(jobid)
-    + "/"
-    + jobid::to_filename(jobid)
-    + "/user.proxy";
-
-    return x509_proxy;
+  boost::shared_ptr<X509> null_ptr;
+  std::FILE* rfd = std::fopen(filename.c_str(), "r");
+  if (!rfd) {
+    return null_ptr;
   }
+  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
+  ::X509* certificate = ::PEM_read_X509(rfd, 0, 0, 0);
+  if (!certificate) {
+    return null_ptr;
+  }
+  return boost::shared_ptr<X509>(certificate, ::X509_free);
 }
 
 std::string
-get_proxy_distinguished_name(std::string const& proxy_file)
+distinguished_name(boost::shared_ptr<X509> certificate)
 {
   static std::string const null_string;
 
-  std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
-  if (!rfd) {
+  if (certificate.get()) {
+    ::X509_NAME* name = ::X509_get_subject_name(certificate.get());
+    if (!name) {
+      return null_string;
+    }
+    char* cp = ::X509_NAME_oneline(name, 0, 0);
+    if (!cp) {
+      return null_string;
+    }
+    boost::shared_ptr<char> cp_(cp, ::free);
+    return std::string(cp);
+  } else {
     return null_string;
   }
-  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
-
-  ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
-  if (!rcert) {
-    return null_string;
-  }
-  boost::shared_ptr<X509> cert(rcert, ::X509_free);
-
-  ::X509_NAME* name = ::X509_get_subject_name(rcert);
-  if (!name) {
-    return null_string;
-  }
-
-  char* cp = ::X509_NAME_oneline(name, NULL, 0);
-  if (!cp) {
-    return null_string;
-  }
-  boost::shared_ptr<char> cp_(cp, ::free);
-
-  return std::string(cp);
 }
 
 STACK_OF(X509) *
 load_chain(const char *certfile)
 {
-  STACK_OF(X509_INFO) *sk = NULL;
-  STACK_OF(X509) *stack = NULL;
-  BIO *in = NULL;
+  STACK_OF(X509_INFO) *sk = 0;
+  STACK_OF(X509) *stack = 0;
+  BIO *in = 0;
   X509_INFO *xi;
   int first = 1;
 
   if (!(stack = sk_X509_new_null())) {
     sk_X509_INFO_free(sk);
-    return NULL;
+    return 0;
   }
   if (!(in = BIO_new_file(certfile, "r"))) {
     sk_X509_INFO_free(sk);
-    return NULL;
+    return 0;
   }
   boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   // This loads from a file, a stack of x509/crl/pkey sets
-  if (!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+  if (!(sk = ::PEM_X509_INFO_read_bio(in, 0, 0, 0))) {
     sk_X509_INFO_free(sk);
-    return NULL;
+    return 0;
   }
-  // scan over it and pull out the certs
+  // scans over it and pull out the certs
   while (sk_X509_INFO_num(sk)) {
-    // skip first cert
-    if (first) {
+    if (first) { // skips first the certificate
       first = 0;
       continue;
     }
     xi = sk_X509_INFO_shift(sk);
     boost::shared_ptr<X509_INFO> _xi(xi, ::X509_INFO_free);
-    if (xi->x509 != NULL) {
+    if (xi->x509) {
       sk_X509_push(stack,xi->x509);
-      xi->x509 = NULL;
+      xi->x509 = 0;
     }
   }
   if (!sk_X509_num(stack)) {
@@ -163,36 +129,38 @@ load_chain(const char *certfile)
     sk_X509_free(stack);
     sk_X509_INFO_free(sk);
 
-    return NULL;
+    return 0;
   }
   return stack;
 }
 
 bool
 VOMS_proxy_init(
-  const std::string& user_cert_file_name, 
-  Attributes& USER_attribs)
+  const std::string& cert_file_name, 
+  Attributes& USER_attribs,
+  std::string& user_subject)
 {
   vomsdata v;
-  X509 *x = NULL;
-  BIO *in = NULL;
-  STACK_OF(X509) *chain = NULL;
+  X509 *x = 0;
+  BIO *in = 0;
+  STACK_OF(X509) *chain = 0;
 
   in = BIO_new(BIO_s_file());
   boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   if (in) {
-    if (BIO_read_filename(in, user_cert_file_name.c_str()) > 0) {
-      x = PEM_read_bio_X509(in, NULL, 0, NULL);
-      chain = load_chain(user_cert_file_name.c_str());
+    if (BIO_read_filename(in, cert_file_name.c_str()) > 0) {
+      x = PEM_read_bio_X509(in, 0, 0, 0);
+      chain = load_chain(cert_file_name.c_str());
       if (x && chain) {
         if (v.Retrieve(x, chain, RECURSE_CHAIN)) {
           voms vomsdefault;
           v.DefaultData(vomsdefault);
           bool marked_first_user_attrib = false;
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
-          for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
-            for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
+          user_subject = vomsdefault.user;
+          for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); ++i) {
+            for (std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); ++j) {
               std::string name = (*j).group;
               if ((*j).role != std::string("NULL")) {
                 name += "/Role=" + (*j).role;
@@ -222,10 +190,8 @@ VOMS_proxy_init(
     if (chain) {
       sk_X509_free(chain);
     }
-
     return true;
-  }
-  else {
+  } else {
     return false;
   }
 }
@@ -256,47 +222,35 @@ get_tag(matchmaking::match_info const& info)
     is_service_class
   );
 
-  if (it != it_end)
-  { 
+  if (it != it_end) { 
     return it->substr(service_class_tag.size());
   } else {
     return not_a_service_class_tag;
   }
 }
 
-//std::string
-//get_CE_unique_id(matchmaking::match_info const& info)
-//{
-//  classad::ClassAd const* ad = info.getAd();
-//  classad::Value value;
-//
-//  ad->EvaluateExpr("GlueCEUniqueID", value);
-//  std::string result;
-//  value.IsStringValue(result);
-//
-//  return result;
-//}
-
 bool
 filter_gpbox_authorizations(
   matchmaking::match_table_t& suitable_CEs,
   Connection& PEP_connection,
-  std::string const& user_cert_file_name
+  std::string const& user_proxy_file_name
 )
 {
-  if (user_cert_file_name.empty()) {
+  if (user_proxy_file_name.empty()) {
     Debug("gpbox: cannot find user certificate");
     return false;
   }
 
+/*
   const std::string user_subject(
-    get_proxy_distinguished_name(user_cert_file_name)
+    distinguished_name(certificate(user_proxy_file_name))
   );
 
   if(user_subject.empty()) {
     Debug("gpbox: empty user subject");
     return false;
   }
+*/
 
   Attributes CE_attributes;
   std::string ce_names;
@@ -317,25 +271,26 @@ filter_gpbox_authorizations(
 
   CE_attributes.push_back(Attribute("aggregation-tag", ce_tags, STRING));
 
-  try {
-
-    PEPClient PEP_request(ce_names, "job-submission", user_subject);
-    PEP_request.Attach(&PEP_connection);
-    PEP_request.SetAttr(CE_attributes, RES);
-    Attributes USER_attribs;
-    PEP_request.SetAttr(USER_attribs, SUBJ);
-
-    if(VOMS_proxy_init(user_cert_file_name,USER_attribs)) {
+  Attributes USER_attribs;
+  std::string user_subject;
+  if (VOMS_proxy_init(user_proxy_file_name, USER_attribs, user_subject)) {
+    if (user_subject.empty()) {
+      Debug("VOMS_proxy_init returned empty DN");
+      return false;
+    }
+    try {
+      PEPClient PEP_request(ce_names, "job-submission", user_subject);
+      PEP_request.Attach(&PEP_connection);
+      PEP_request.SetAttr(CE_attributes, RES);
       PEP_request.SetAttr(USER_attribs, SUBJ);
 
       EvalResults evaluation_of_results;
       static std::string const null_string;
 
-      if( PEP_request.Send(null_string, 0, 0, 0, evaluation_of_results) ) {
+      if (PEP_request.Send(null_string, 0, 0, 0, evaluation_of_results)) {
         for (EvalResults::iterator iter = evaluation_of_results.begin();
           iter != evaluation_of_results.end();
-          ++iter)
-      {
+          ++iter) {
           answer PEP_request_answer = iter->GetResult();
           // INDET may even be returned from an exception coming to the API
           // Send, so we don't even check it (since the policy (permit) is
@@ -353,57 +308,25 @@ filter_gpbox_authorizations(
               PEP_request_answer == INDET ) {
 
             suitable_CEs.erase(answer_id);
-            Info("!!!erased CE");
+            Info("Rejected CE: ---" + answer_id + "---");
           }
-          //else {
-          //  //at this point we've got the certainty that suitableCEs
-          //  //will be a list of unique CE identifiers (if the related info 
-          //  //is correctly published, if not the first added applies) so we can replace
-          //  //the former unique key (CEID/VoViewID) with the real name for the CE
-          //  matchmaking::match_table_t::iterator it = suitable_CEs.find(answer_id);
-          //  if (it != suitable_CEs.end()) {
-          //    std::string CE_id = get_CE_unique_id(it->second);
-          //    matchmaking::match_info CE_ad(it->second);
-          //    suitable_CEs.erase(answer_id);
-          //    suitable_CEs[CE_id] = CE_ad;
-          //  } else {
-          //    Debug("Mismatching CE id got from gpbox answer\n");
-          //  }
-          //}
         }
-      }
-      else {
+      } else {
+        Debug("filter_gbox_authorizations: PEP Send returned false");
         return false;
       }
-    }
-    else {
-      Debug("VOMS_proxy_init returned false");
+    } catch(...) {
+        Debug("gpbox: exception caught during interaction");
       return false;
     }
-  } catch(...) {
-    Debug("filter_gbox_authorizations: PEP Send returned false");
+  } else {
+    Debug("VOMS_proxy_init returned false");
     return false;
   }
-
   return true;
 }
 
 } //empty  namespace
-
-bool
-interact(
-  configuration::Configuration const& config,
-  jobid::JobId const& jobid,
-  std::string const& PBOX_host_name,
-  matchmaking::match_table_t& suitable_CEs   
-  )
-{
-  return interact(config,
-    get_user_x509_proxy(jobid, config),
-    PBOX_host_name,
-    suitable_CEs
-  );
-}
 
 bool
 interact(
@@ -418,7 +341,7 @@ interact(
   assert(common_conf);
 
   const std::string broker_subject(
-    get_proxy_distinguished_name(common_conf->host_proxy_file())
+    distinguished_name(certificate(common_conf->host_proxy_file()))
   );
 
   const configuration::WMConfiguration* wm_conf = config.wm();
@@ -426,7 +349,6 @@ interact(
 
   if (!broker_subject.empty()) {
     try {
-
       Connection PEP_connection(
                                 PBOX_host_name,
                                 wm_conf->pbox_port_num(),
@@ -439,23 +361,19 @@ interact(
                                        x509_user_proxy)) {
         return false;
       }
-    }
-    catch (...) { // exception no_conn from API
+    } catch (...) { // exception no_conn from API
                   // PEP_connection not properly propagated
-      Debug("gpbox: exception caught during interaction");
+      Debug("gpbox: exception caught during connection");
       return false;
     };
  
     std::string end_msg(
-      "gpbox interaction ended. Elapsed: "
-      +
+      "gpbox interaction ended. Elapsed: " +
       boost::lexical_cast<std::string>(perf_timer.elapsed())
     );
     Info(end_msg);
-
     return true;
-  }
-  else {
+  } else {
     Debug("gpbox: unable to find the broker proxy certificate");
     return false;
   }

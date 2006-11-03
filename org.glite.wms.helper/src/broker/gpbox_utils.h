@@ -41,13 +41,6 @@ namespace matchmaking = glite::wms::matchmaking;
 bool
 interact(
   configuration::Configuration const& config,
-  jobid::JobId const& jobid,
-  std::string const& PBOX_host_name,
-  matchmaking::match_table_t& suitable_CEs);
-
-bool
-interact(
-  configuration::Configuration const& config,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
   matchmaking::match_table_t& suitable_CEs);

@@ -239,15 +239,16 @@ try {
   assert(config);
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
-  std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
-  jobid::JobId dg_jobid(dg_jobid_str);
+  std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
+  //std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
+  //jobid::JobId dg_jobid(dg_jobid_str);
 
   std::string PBOX_host_name(config->wm()->pbox_host_name());
 
   if (!PBOX_host_name.empty()) {
     if (!gpbox::interact(
       *config,
-      dg_jobid,
+      x509_user_proxy_file_name, //dg_jobid,
       PBOX_host_name,
       *suitable_CEs
     ))
