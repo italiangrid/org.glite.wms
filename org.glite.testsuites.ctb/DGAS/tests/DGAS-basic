@@ -1,0 +1,97 @@
+#!/bin/bash
+
+#############################################################
+# Script for testing of DGAS services                       # 
+# Basic tests: ping to host, ping to services               #  
+#############################################################
+#                                                           #
+# Input value:                                              #  
+#              The hostname of the HLR                      #
+#                                                           # 
+# Returned values:                                          #
+#                                                           #
+#                 SAME_OK:     Test Passed                  #
+#                 SAME_ERROR:  Test Failed                  #
+#                 2:           Wrong Input                  #
+#                                                           #
+#############################################################
+
+# Sourcing basic functions
+. $SAME_SENSOR_HOME/../functions.sh
+
+if [ $? -gt 0 ]; then
+  exit 2
+fi
+
+showUsage ()
+{
+ samPrintINFO ; echo " Missing parameter!" ; samNewLine
+ echo "Usage: $0 <HLR hostname>" ; samNewLine
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+else
+  HLR=$1
+fi
+
+# Sourcing the configuration
+
+. $SAME_SENSOR_HOME/config.sh
+
+function test_ping
+{
+  samPrintINFO ; echo " Testing ping to $HLR host..." ; samNewLine
+  
+  ping -c 5 $HLR &> /dev/null
+
+  result=$?
+
+  if [ $result -gt 0 ] ; then
+    samPrintFAILED ; echo " >>> The ping command returns error number $result <<<" ; samNewLine
+    exit $SAME_ERROR
+  else
+    samPrintOK ; echo " The HLR machine is up!" ; samNewLine
+  fi
+}
+
+
+function test_hlrping
+{
+  samPrintINFO ; echo " Testing ping to $HLR services..." ; samNewLine
+
+  if [ -x $GLITE_LOCATION/bin/glite-dgas-ping ]; then
+    $GLITE_LOCATION/bin/glite-dgas-ping -s $HLR:$HLR_PORT: --debug -t 0 &> /dev/null
+    result=$?
+  else
+    samPrintFAILED ; echo " >>> $GLITE_LOCATION/bin/glite-dgas-ping not exist! <<<" ; samNewLine
+    samPrintWARNING ; echo " Check the configuration file." ; samNewLine
+    exit $SAME_ERROR
+  fi	
+
+  if [ $result -gt 0 ]; then
+    samPrintFAILED ; echo " >>> Returned error is: $result <<<"; samNewLine
+    exit $SAME_ERROR
+  else
+    samPrintOK ; echo " The HLR services are running!" ; samNewLine
+  fi
+}
+
+
+#################
+# Start testing #
+#################
+
+samPrintINFO ; echo " Start testing with settings: HLR_HOST = $HLR " ; samNewLine
+
+#############################################
+# Checking if the service is up and running #
+#############################################
+
+test_ping
+test_hlrping 
+
+samPrintPASSED ; echo " DGAS Basic Test completed." ; samNewLine
+
+exit $SAME_OK
