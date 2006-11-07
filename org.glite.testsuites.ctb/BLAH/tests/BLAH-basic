@@ -2,11 +2,12 @@
  
 #############################################################
 # Script for testing of BLAH services                       #
-# Basic tests: ping to host, ping to services               #
+# Basic tests: ping to host, ping to services (BLAH Parser) #
 #############################################################
 #                                                           #
 # Input value:                                              #
-#              The hostname of BLAH                         #
+#              The hostname of BLAH
+#              The BLAH Parser Port                         #
 #                                                           #
 # Returned values:                                          #
 #                                                           #
@@ -26,16 +27,17 @@ fi
 showUsage ()
 {
  samPrintINFO ; echo " Missing parameter!" ; samNewLine
- echo "Usage: $0 <BLAH hostname>" ; samNewLine
+ echo "Usage: $0 <BLAH hostname> <BLAH Parser Port>" ; samNewLine
 }
  
-if [ -z "$1" ]; then
+if [ -z "$1" -o  -z "$2" ]; then
   showUsage
   exit 2
 else
   BLAH=$1
+  BLAHParserPort=$2
 fi
- 
+
 # Sourcing the configuration
  
 #. $SAME_SENSOR_HOME/config.sh
@@ -60,11 +62,11 @@ function test_parser
 {
   samPrintINFO ; echo " Testing blah parser to $BLAH host..." ; samNewLine
                                                                                                         
-  result=`(echo TEST/ ; sleep 1)|telnet $BLAH 33333 2>/dev/null|egrep -e \(^YLSF\|^YPBS\)`                                                                                                       
+  result=`(echo TEST/ ; sleep 1)|telnet $BLAH $BLAHParserPort 2>/dev/null|egrep -e \(^YLSF\|^YPBS\)`                                                                                                       
   #result=$?
    
   #echo "results: $result"                                                                                                     
-  if [ $result == "YLSF" ] ; then
+  if [ $result == "YLSF" -o $result == "YPBS" ] ; then
      samPrintOK ; echo " >>> BLAH Parser is up and running on the machine <<<" ; samNewLine
      exit $SAME_OK
   else
