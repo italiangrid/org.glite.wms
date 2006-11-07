@@ -1,0 +1,92 @@
+#!/bin/bash
+ 
+#############################################################
+# Script for testing of BLAH services                       #
+# Basic tests: ping to host, ping to services               #
+#############################################################
+#                                                           #
+# Input value:                                              #
+#              The hostname of BLAH                         #
+#                                                           #
+# Returned values:                                          #
+#                                                           #
+#                 SAME_OK:     Test Passed                  #
+#                 SAME_ERROR:  Test Failed                  #
+#                 2:           Wrong Input                  #
+#                                                           #
+#############################################################
+ 
+# Sourcing basic functions
+. $SAME_SENSOR_HOME/../functions.sh
+ 
+if [ $? -gt 0 ]; then
+  exit 2
+fi
+ 
+showUsage ()
+{
+ samPrintINFO ; echo " Missing parameter!" ; samNewLine
+ echo "Usage: $0 <BLAH hostname>" ; samNewLine
+}
+ 
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+else
+  BLAH=$1
+fi
+ 
+# Sourcing the configuration
+ 
+#. $SAME_SENSOR_HOME/config.sh
+ 
+function test_ping
+{
+  samPrintINFO ; echo " Testing ping to $BLAH host..." ; samNewLine
+   
+  ping -c 5 $BLAH &> /dev/null
+ 
+  result=$?
+ 
+  if [ $result -gt 0 ] ; then
+    samPrintFAILED ; echo " >>> The ping command returns error number $result <<<" ; samNewLine
+    exit $SAME_ERROR
+  else
+    samPrintOK ; echo " The BLAH machine is up!" ; samNewLine
+  fi
+}
+ 
+function test_parser
+{
+  samPrintINFO ; echo " Testing blah parser to $BLAH host..." ; samNewLine
+                                                                                                        
+  result=`(echo TEST/ ; sleep 1)|telnet devel01.cnaf.infn.it 33333 2>/dev/null|egrep -e \(^YLSF\|^YPBS\)`                                                                                                       
+  #result=$?
+   
+  #echo "results: $result"                                                                                                     
+  if [ $result == "YLSF" ] ; then
+     samPrintOK ; echo " >>> BLAH Parser is up and running on the machine <<<" ; samNewLine
+     exit $SAME_OK
+  else
+    samPrintFAILED ; echo " The BLAH parser is not running!" ; samNewLine
+  fi
+}
+ 
+ 
+#################
+# Start testing #
+#################
+ 
+samPrintINFO ; echo " Start testing with settings: BLAH_HOST = $BLAH " ; samNewLine
+ 
+#############################################
+# Checking if the service is up and running #
+#############################################
+ 
+test_ping
+test_parser
+ 
+samPrintPASSED ; echo " BLAH Basic Test completed." ; samNewLine
+ 
+exit $SAME_OK
+
