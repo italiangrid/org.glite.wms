@@ -60,7 +60,7 @@ function test_parser
 {
   samPrintINFO ; echo " Testing blah parser to $BLAH host..." ; samNewLine
                                                                                                         
-  result=`(echo TEST/ ; sleep 1)|telnet devel01.cnaf.infn.it 33333 2>/dev/null|egrep -e \(^YLSF\|^YPBS\)`                                                                                                       
+  result=`(echo TEST/ ; sleep 1)|telnet $BLAH 33333 2>/dev/null|egrep -e \(^YLSF\|^YPBS\)`                                                                                                       
   #result=$?
    
   #echo "results: $result"                                                                                                     
