@@ -9,7 +9,7 @@ Source: %{name}.src.tgz
 BuildArch: noarch
 Packager: project-lcg-deployment-bitface@cern.ch
 BuildRoot: %{_tmppath}/%{name}-%{version}-build
-Prefix: /opt/glite
+Prefix: /opt/lcg/same/client/sensors
 
 %description
  SAM sensors for certification testbed
@@ -22,7 +22,7 @@ make install prefix=%{buildroot}%{prefix}
 
 %files
 %defattr(-,root,root)
-%{prefix}/client/sensors/DPM/
+%{prefix}/DPM/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
