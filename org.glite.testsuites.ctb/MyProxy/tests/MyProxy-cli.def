@@ -1,0 +1,4 @@
+testName: MyProxy-cli
+testAbbr: cli
+testTitle: Test of MyProxy command line interface
+EOT

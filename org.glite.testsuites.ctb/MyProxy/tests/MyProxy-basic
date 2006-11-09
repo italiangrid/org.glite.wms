@@ -1,0 +1,92 @@
+#!/bin/bash 
+
+showUsage ()
+{
+ echo "Missing parameter:                                                                 "
+ echo "Usage:  DPM-basic <fts hostname>                                                  "
+ echo ""
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+fi
+MYPROXY_HOST=$1
+
+### Sourcing the configuration
+
+. $SAME_SENSOR_HOME/../functions.sh
+
+function test_ping
+{
+  echo ""
+  echo -n "<li> Testing ping to $MYPROXY_HOST" 
+  result=`ping -c 5 $MYPROXY_HOST 2>/dev/null | grep Unreachable | wc -l`
+
+  if [ $result -gt 0 ]; then
+    echo ""
+    samPrintERROR; echo "The $MYPROXY_HOST is not accessible! Exiting !"
+    echo "</ul>"
+    failedmessage
+    echo "</pre>"
+    exit $SAME_ERROR
+  fi
+  samPrintOK
+}
+
+function test_ldap
+{
+  echo ""
+  echo -n "<li> Testing connection to LDAP server on $DPM_HOST"
+  result=`ldapsearch -x -H ldap://$DPM_HOST:2170 -b Mds-vo-name=resource,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
+
+  if [ $result -eq 0 ]; then
+     result=`ldapsearch -x -H ldap://$DPM_HOST:2135 -b Mds-vo-name=local,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
+     if [ $result -eq 0 ]; then
+       echo ""
+       samPrintERROR ; echo " LDAP is not contactable. Exiting !"
+       echo "</ul>"
+       failedmessage 
+       echo "</pre>"
+       exit $SAME_ERROR
+    fi
+  fi
+  samPrintOK
+}
+
+function test_bdii
+{
+  echo ""
+  echo -n "<li> Testing if there is information for $DPM_HOST on $BDII_HOST"
+
+  result=`ldapsearch -x -h $BDII_HOST -p $BDII_PORT -b "Mds-vo-name=local,o=Grid" 2>/dev/null | grep $DPM_HOST | wc -l`
+  
+  if [ $result -eq 0 ]; then
+    echo ""
+    samPrintERROR ; echo "No entries found for DPM Server: $DPM_HOST on the top level BDII: $BDII_HOST! Exiting !"
+    echo "</ul>"
+    failedmessage
+    echo "</pre>"
+    exit $SAME_ERROR
+  fi
+  samPrintOK 
+}
+
+### Start testing
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+export GLITE_SD_PLUGIN=bdii
+
+echo "<pre>"
+echo "<b>Starting MyProxy-basic tests: </b>"
+echo "<ul>"
+
+test_ping
+#test_ldap
+#test_bdii
+
+echo "</ul>"
+echo ""
+echo -n "<b>MyProxy-basic test successfuly </b>" ; samPrintPASSED
+echo "</pre>"
+exit $SAME_OK

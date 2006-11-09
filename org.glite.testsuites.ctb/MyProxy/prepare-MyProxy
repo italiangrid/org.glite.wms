@@ -1,0 +1,22 @@
+#!/bin/bash
+echo "prepare-MyProxy script started." >&2
+if [ "x$1" == "x--publish" ] ; then
+    echo "returning nodes on stdout..." >&2
+    cat nodes-priv.map
+else
+    echo -n "got nodes:" >&2
+    wc -l nodes.map >&2
+    echo -n "publishing test definitions... " >&2
+    for test in `cat $SAME_SENSOR_HOME/test-sequence.lst` ; do
+	same-publish-tuples TestDef $SAME_SENSOR_HOME/tests/$test.def >&2
+    done
+    envName=LFC-`date +%s`
+    cat <<EOF | same-publish-tuples TestEnvVars
+envName: $envName
+name: dummy
+value: none
+EOF
+    echo $envName > $SAME_SENSOR_WORK/envName
+    echo "DONE" >&2
+fi
+
