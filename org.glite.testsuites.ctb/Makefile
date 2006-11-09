@@ -7,8 +7,8 @@ all: configure
 # rpm target
 
 dist:
-        @tar --gzip --exclude='*CVS*' -cf build/$(PACKAGE_NAME).src.tgz *
+	@tar --gzip --exclude='*CVS*' -cf $(PACKAGE_NAME).src.tgz *
 
 rpm: dist
-        @rpmbuild -ta build/$(PACKAGE_NAME).src.tgz
+	@rpmbuild -ba lcg-sam-client-sensors-ctb.spec
 
