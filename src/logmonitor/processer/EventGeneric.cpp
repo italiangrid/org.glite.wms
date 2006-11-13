@@ -84,7 +84,7 @@ void EventGeneric::finalProcess( int cn, const string &message )
   jccommon::generic_event_t               code( static_cast<jccommon::generic_event_t>(cn) );
   ULogEvent                              *event;
   char                                    wbuf[30];
-  string                                  when, sc;
+  string                                  when;
   jccommon::IdContainer::iterator         position;
   logger::StatePusher                     pusher( elog::cedglog, "EventGeneric::finalProcess(...)" );
 
