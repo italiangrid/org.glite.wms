@@ -387,10 +387,12 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                 std::make_pair(ceAd, vector_classad_shared_ptr())
               )
             );
-	  if(gluece_info_map_insert) 
-            boost::tuples::get<1>(
-              gluecluster_info_map[glue_cluster_unique_id]
-            ).push_back(it);
+          if (!gluece_info_map_insert) {
+            it->second.first = ceAd;
+          }
+          boost::tuples::get<1>(
+            gluecluster_info_map[glue_cluster_unique_id]
+          ).push_back(it);
 	}
 	else if (is_gluesubcluster_info_dn(ldap_dn_tokens)) {
           ldif2classad::LDIFObject ldif_SC(*ldap_it);
