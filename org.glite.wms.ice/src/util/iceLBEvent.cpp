@@ -336,11 +336,11 @@ int job_done_ok_event::execute( iceLBContext* ctx )
 {
 #ifdef GLITE_WMS_HAVE_LBPROXY
     return edg_wll_LogDoneOKProxy( *(ctx->el_context), 
-                                   ctx->el_s_unavailable, 
+                                   ctx->el_s_succesfully,
                                    m_job.get_exit_code() );
 #else
     return edg_wll_LogDoneOK( *(ctx->el_context), 
-                              ctx->el_s_unavailable, 
+                              ctx->el_s_succesfully,
                               m_job.get_exit_code() );
 #endif
 }

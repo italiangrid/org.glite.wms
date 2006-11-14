@@ -79,7 +79,7 @@ namespace glite {
 
                     edg_wll_Context* el_context;
 
-                    static const char *el_s_notLogged, *el_s_unavailable, *el_s_OK, *el_s_failed;
+                    static const char *el_s_notLogged, *el_s_unavailable, *el_s_OK, *el_s_failed, *el_s_succesfully;
                     static const char *el_s_destination; 
 
                     std::string el_s_localhost_name;

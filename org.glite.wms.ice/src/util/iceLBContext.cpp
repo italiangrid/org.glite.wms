@@ -58,6 +58,7 @@ const char *iceUtil::iceLBContext::el_s_notLogged = "Event not logged, context u
 const char *iceUtil::iceLBContext::el_s_unavailable = "unavailable";
 const char *iceUtil::iceLBContext::el_s_OK = "OK";
 const char *iceUtil::iceLBContext::el_s_failed = "Failed";
+const char *iceUtil::iceLBContext::el_s_succesfully = "Job Terminated Usccesfully";
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
 
