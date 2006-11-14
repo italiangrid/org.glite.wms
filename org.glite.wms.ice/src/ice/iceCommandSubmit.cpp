@@ -108,7 +108,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
   throw( util::ClassadSyntax_ex&, util::JobRequest_ex& ) :
     iceAbsCommand( ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    m_confMgr( util::iceConfManager::getInstance() ),
+    // m_confMgr( util::iceConfManager::getInstance() ),
     m_configuration( util::iceConfManager::getInstance()->getConfiguration() ),
     m_lb_logger( util::iceLBLogger::instance() )
 {
@@ -669,94 +669,92 @@ void  iceCommandSubmit::doSubscription( const string& ce )
   // try to determine if we're subscribed to 'cemon_url' by
   // asking the cemonUrlCache
   
-  bool foundSubscription;
-  foundSubscription = cemon_cache->hasCEMon( cemon_url );
+  bool foundSubscription = cemon_cache->hasCEMon( cemon_url );
   
-  if( foundSubscription )
-  {
-    // if this a ghost subscription
-    // the subscriptionUpdater will fix it soon
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
-    		   << "iceCommandSubmit::doSubscription() - "
-		   << "Already subsdcribed to CEMon ["
-		   << cemon_url << "] (found in cemonUrlCache)"
-		   << log4cpp::CategoryStream::ENDLINE);
-    return;
+  if ( foundSubscription ) {
+      // if this a ghost subscription
+      // the subscriptionUpdater will fix it soon
+      CREAM_SAFE_LOG(m_log_dev->infoStream()
+                     << "iceCommandSubmit::doSubscription() - "
+                     << "Already subsdcribed to CEMon ["
+                     << cemon_url << "] (found in cemonUrlCache)"
+                     << log4cpp::CategoryStream::ENDLINE);
+      return;
   }	   
   
   
   vector<Subscription> fake;
   
   // try to determine with a direct SOAP query to CEMon
-  if( util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) )
-  {
-    if( m_configuration->ice()->listener_enable_authz() ) {
-      string DN;
-      if( cemon_cache->getCEMonDN( cemon_url, DN ) )
-        {
-      
-          cemon_cache->insertDN( DN );
+  if( util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) ) {
+      if( m_configuration->ice()->listener_enable_authz() ) {
+          string DN;
+          if( cemon_cache->getCEMonDN( cemon_url, DN ) ) {
+              
+              cemon_cache->insertDN( DN );
+              cemon_cache->insertCEMon( cemon_url );
+              
+          } else {
+              CREAM_SAFE_LOG(m_log_dev->errorStream()
+                             << "iceCommandSubmit::doSubscription() - "
+                             << "CEMon [" << cemon_url 
+                             << "] reported that we're subscribed to it, "
+                             << "but couldn't get its DN. "
+                             << "Will not authorize its job status "
+                             << "notifications."
+                             << log4cpp::CategoryStream::ENDLINE);
+          }
+      } else {
           cemon_cache->insertCEMon( cemon_url );
-	  
-        } else {
-          CREAM_SAFE_LOG(m_log_dev->errorStream()
-			<< "iceCommandSubmit::doSubscription() - "
-			<< "CEMon ["<<cemon_url<<"] reported that we're subscribed to it, "
-			<< "but couldn't get it's DN. Will not authorize its job status "
-			<< "notifications."
-			<< log4cpp::CategoryStream::ENDLINE);
-        }
-    } else {
-      cemon_cache->insertCEMon( cemon_url );
-    }
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
-    		   << "iceCommandSubmit::doSubscription() - "
-		   << "Already subscribed to CEMon ["
-		   << cemon_url << "] (asked to CEMon itself)"
-		   << log4cpp::CategoryStream::ENDLINE
-		   );
+      }
+      CREAM_SAFE_LOG(m_log_dev->infoStream()
+                     << "iceCommandSubmit::doSubscription() - "
+                     << "Already subscribed to CEMon ["
+                     << cemon_url << "] (asked to CEMon itself)"
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
   } else {
       // MUST subscribe
       string DN;
       bool can_subscribe = true;
-      if( m_configuration->ice()->listener_enable_authz() ) {
-        if( !cemon_cache->getCEMonDN( cemon_url, DN ) )
-	{
-	  // Cannot subscribe to a CEMon without it's DN
-	  can_subscribe = false;
-	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-		         << "iceCommandSubmit::doSubscription() - "
-			 << "Notification authorization is enabled but couldn't "
-			 << "get CEMon's DN. Will not subscribe to it."
-			 << log4cpp::CategoryStream::ENDLINE
-			);
-        } else {
-	  CREAM_SAFE_LOG(m_log_dev->infoStream()
-		         << "iceCommandSubmit::doSubscription() - "
-			 << "Inserting this DN ["
-			 << DN << "] into cemonUrlCache"
-			 << log4cpp::CategoryStream::ENDLINE
-			);
-	  cemon_cache->insertDN( DN );	      
-	}
+      if ( m_configuration->ice()->listener_enable_authz() ) {
+          if( !cemon_cache->getCEMonDN( cemon_url, DN ) ) {
+              // Cannot subscribe to a CEMon without it's DN
+              can_subscribe = false;
+              CREAM_SAFE_LOG(m_log_dev->errorStream()
+                             << "iceCommandSubmit::doSubscription() - "
+                             << "Notification authorization is enabled but couldn't "
+                             << "get CEMon's DN. Will not subscribe to it."
+                             << log4cpp::CategoryStream::ENDLINE
+                             );
+          } else {
+              CREAM_SAFE_LOG(m_log_dev->infoStream()
+                             << "iceCommandSubmit::doSubscription() - "
+                             << "Inserting this DN ["
+                             << DN << "] into cemonUrlCache"
+                             << log4cpp::CategoryStream::ENDLINE
+                             );
+              cemon_cache->insertDN( DN );	      
+          }
       } // if(m_confMgr->getListenerEnableAuthZ() )
-		
+      
       if(can_subscribe) {
-        if( util::subscriptionManager::getInstance()->subscribe( cemon_url ) ) {
-            cemon_cache->insertCEMon( cemon_url );
-            
-	} else {
-	  CREAM_SAFE_LOG(
-		         m_log_dev->errorStream()
-			 << "iceCommandSubmit::doSubscription() - "
-			 << "Couldn't subscribe to [" << cemon_url << "]. Will not"
-			 << " receive job status notification from it. Hopefully "
-			 << "the subscriptionUpdater will retry."
-			 << log4cpp::CategoryStream::ENDLINE
-			);
-        }
+          if( util::subscriptionManager::getInstance()->subscribe( cemon_url ) ) {
+              cemon_cache->insertCEMon( cemon_url );
+              
+          } else {
+              CREAM_SAFE_LOG(
+                             m_log_dev->errorStream()
+                             << "iceCommandSubmit::doSubscription() - "
+                             << "Couldn't subscribe to [" 
+                             << cemon_url << "]. Will not"
+                             << " receive job status notification from it. "
+                             << "Hopefully the subscriptionUpdater will retry."
+                             << log4cpp::CategoryStream::ENDLINE
+                             );
+          }
       } // if(can_subscribe)
   } // else -> if(subscribedTo...)
-   
+  
 } // end function
 

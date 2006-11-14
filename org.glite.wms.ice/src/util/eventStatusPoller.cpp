@@ -37,6 +37,8 @@
 #include "glite/ce/cream-client-api-c/InternalException.h"
 #include "glite/ce/cream-client-api-c/DelegationException.h"
 #include "glite/wms/common/utilities/scope_guard.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 // boost includes
 #include <boost/thread/thread.hpp>
@@ -148,7 +150,7 @@ eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger()),
     m_lb_logger( iceLBLogger::instance() ),
     m_cache( jobCache::getInstance() ),
-    m_threshold( iceConfManager::getInstance()->getPollerStatusThresholdTime() ) // may raise ConfigurationManager_ex
+    m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ) // may raise ConfigurationManager_ex
 {
 
 }

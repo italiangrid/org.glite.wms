@@ -31,6 +31,8 @@
 #include "glite/ce/cream-client-api-c/BaseException.h"
 #include "glite/ce/cream-client-api-c/InternalException.h"
 #include "glite/ce/cream-client-api-c/DelegationException.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <boost/thread/thread.hpp>
 #include <boost/functional.hpp>
@@ -47,13 +49,13 @@ using namespace std;
 //____________________________________________________________________________
 leaseUpdater::leaseUpdater( ) :
     iceThread( "ICE Lease Updater" ),
-    m_threshold( iceConfManager::getInstance()->getLeaseThresholdTime() ),
-    m_delta( iceConfManager::getInstance()->getLeaseDeltaTime() ),
+    m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->lease_threshold_time() ),
+    m_delta( iceConfManager::getInstance()->getConfiguration()->ice()->lease_delta_time() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_cache( jobCache::getInstance() ),
     m_creamClient( CreamProxyFactory::makeCreamProxy( false ) )
 {
-    double delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/4.0;
+    double delta_time_for_lease = ((double)iceConfManager::getInstance()->getConfiguration()->ice()->lease_threshold_time())/4.0;
     m_delay = (time_t)(delta_time_for_lease);
 }
 

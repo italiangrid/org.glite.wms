@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE subscription manager
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 
 #include "subscriptionManager.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
@@ -16,7 +34,7 @@ extern int h_errno;
 using namespace std;
 using namespace glite::wms::ice::util;
 
-subscriptionManager* subscriptionManager::s_instance = NULL;
+subscriptionManager* subscriptionManager::s_instance = 0;
 boost::recursive_mutex subscriptionManager::mutex;
 
 //______________________________________________________________________________
@@ -26,45 +44,46 @@ subscriptionManager::subscriptionManager()
     m_conf( iceConfManager::getInstance() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_valid(true),
-    //m_myname(""),
-    m_myurl(""),
-    m_lastSubscriptionID("")
+    m_myurl(),
+    m_lastSubscriptionID()
 {
-  CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
-		 << log4cpp::CategoryStream::ENDLINE);
-  try {
-    //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    CESubscription ceS;
-    CESubscriptionMgr ceSMgr;
-    ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
-    ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
-  } catch(exception& ex) {
-    CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR authenticating: "
-		   << ex.what()
-		   << log4cpp::CategoryStream::ENDLINE);
-    m_valid = false;
-    return;
-  }
+    CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                   << "subscriptionManager::CTOR - Authenticating..."
+                   << log4cpp::CategoryStream::ENDLINE);
+    try {
+        CESubscription ceS;
+        CESubscriptionMgr ceSMgr;
+        ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+        ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+    } catch(exception& ex) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+                       << "subscriptionManager::CTOR - "
+                       << "Fatal ERROR authenticating: "
+                       << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE);
+        m_valid = false;
+        return;
+    }
 
-  m_T.addDialect(NULL);
-  //m_vec.reserve(100);
-  string tmp_myname;
-  try {
-    tmp_myname = getHostName();
+    m_T.addDialect(NULL);
+    string tmp_myname;
+    try {
+        tmp_myname = getHostName();        
+    } catch(runtime_error& ex) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+                       << "subscriptionManager::CTOR - "
+                       << "Fatal ERROR getting local hostname: "
+                       << ex.what() << ". Stop!"
+                       << log4cpp::CategoryStream::ENDLINE);
+        abort();
+    }
+    string tmp_prefix;
+    if( iceConfManager::getInstance()->getListenerEnableAuthN() )
+        tmp_prefix = "https";
+    else
+        tmp_prefix = "http";
     
-  } catch(runtime_error& ex) {
-    CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR getting local hostname: "
-		   << ex.what()<<". Stop!"
-		   << log4cpp::CategoryStream::ENDLINE);
-    abort();
-  }
-  string tmp_prefix;
-  if( iceConfManager::getInstance()->getListenerEnableAuthN() )
-    tmp_prefix = "https";
-  else
-    tmp_prefix = "http";
-    
-  m_myurl = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname % iceConfManager::getInstance()->getListenerPort() );
+    m_myurl = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname % iceConfManager::getInstance()->getListenerPort() );
     
 }
 
@@ -173,27 +192,21 @@ bool subscriptionManager::updateSubscription(const string& url,
 bool subscriptionManager::subscribedTo(const string& url,
 					vector<Subscription>& vec)
 {
-  //m_vec.clear();
-  try {
-    this->list(url, vec);
-  }
-  catch(exception& ex) {
-    CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::subscribedTo() - "
-		   << "Error retrieving subscription list: "
-		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
-  }
+    try {
+        this->list(url, vec);
+    }
+    catch(exception& ex) {
+        CREAM_SAFE_LOG(m_log_dev->errorStream() 
+                       << "subscriptionManager::subscribedTo() - "
+                       << "Error retrieving subscription list: "
+                       << ex.what() << log4cpp::CategoryStream::ENDLINE);
+        return false;
+    }  
   
-  
-  
-  //cout << "\n*** vec.size() = " << vec.size() << endl<<endl;
-  
-  for(vector<Subscription>::const_iterator it = vec.begin();
-      it != vec.end();
-      it++) 
-  {
-    //cout << "\n*** m_myurl = ["<<m_myurl<<"] it->getConsumerURL() = ["<< it->getConsumerURL() << "]" << endl<<endl;
-    if( it->getConsumerURL() == m_myurl ) return true;
-  }
-  
-  return false;
+    for(vector<Subscription>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+        if( it->getConsumerURL() == m_myurl ) 
+            return true;
+    }
+    
+    return false;
 }

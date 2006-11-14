@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE Configuration Manager
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 
 #include "iceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -5,44 +23,39 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
-using namespace std;
 namespace conf_ns = glite::wms::common::configuration;
-
-namespace glite {
-namespace wms {
-namespace ice {
-namespace util {
+using namespace glite::wms::ice::util;
+using namespace std;
 
 iceConfManager* iceConfManager::s_instance = 0;
 string iceConfManager::s_conf_file;
 bool iceConfManager::s_initialized = false;
-    //boost::recursive_mutex iceConfManager::mutex;
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 iceConfManager* iceConfManager::getInstance( )
-  throw ( ConfigurationManager_ex&)
+    throw ( ConfigurationManager_ex&)
 {
-    //  boost::recursive_mutex::scoped_lock M( mutex );
-  if( !s_initialized ) {
-    throw ConfigurationManager_ex("ConfigurationManager non initialized: must set the configuration filename before use");
-  }
-  if( !s_instance ) {
-      s_instance = new iceConfManager( );
-  }
-  return s_instance;
+    if( !s_initialized ) {
+        throw ConfigurationManager_ex("ConfigurationManager non initialized: must set the configuration filename before use");
+    }
+    if( !s_instance ) {
+        s_instance = new iceConfManager( );
+    }
+    return s_instance;
 }
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 iceConfManager::iceConfManager( )
     throw ( ConfigurationManager_ex& )
 {
-    // conf_ns::Configuration* config;
+    conf_ns::Configuration* config = 0;
     try {
-        m_configuration.reset( new conf_ns::Configuration(s_conf_file, conf_ns::ModuleType::interface_cream_environment) );
+        config = new conf_ns::Configuration(s_conf_file, conf_ns::ModuleType::interface_cream_environment);
     } catch(exception& ex) {
         throw ConfigurationManager_ex( ex.what() );
     }
-  
+    m_configuration.reset( config );
+
     m_HostProxyFile                      = m_configuration->common()->host_proxy_file();
     m_dguser                             = m_configuration->common()->dguser();
     m_WM_Input_FileList                  = m_configuration->wm()->input();
@@ -91,18 +104,11 @@ iceConfManager::~iceConfManager( )
 
 }
 
-//______________________________________________________________________________
-void iceConfManager::init(const string& filename)
+//____________________________________________________________________________
+void iceConfManager::init( const string& filename )
 {
-    //    boost::recursive_mutex::scoped_lock M( mutex );
     if ( !s_initialized ) {
         s_conf_file = filename;
         s_initialized = true;
     }
 }
-
-
-} // namespace util
-} // namespace ice
-} // namespacw wms
-} // namespace glite

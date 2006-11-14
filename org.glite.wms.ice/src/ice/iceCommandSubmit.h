@@ -122,7 +122,7 @@ namespace util {
      std::string m_jdl;
      util::CreamJob m_theJob;
      log4cpp::Category* m_log_dev;
-     glite::wms::ice::util::iceConfManager* m_confMgr;
+     // glite::wms::ice::util::iceConfManager* m_confMgr;
      glite::wms::common::configuration::Configuration* m_configuration;
      std::string m_myname_url;
      util::iceLBLogger *m_lb_logger;
