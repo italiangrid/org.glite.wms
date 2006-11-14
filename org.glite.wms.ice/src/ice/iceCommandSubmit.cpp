@@ -45,7 +45,7 @@
 
 // Other glite includes
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
-#include "glite/ce/cream-client-api-c/scoped_timer.h"
+// #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -218,7 +218,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 //____________________________________________________________________________
 void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy  ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-    api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
+    // api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
     
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
@@ -292,7 +292,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
                    );
     
     try {
-        api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
+        // api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
         theProxy->Authenticate(m_theJob.getUserProxyCertificate());
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
         m_theJob.set_failure_reason( ex.what() );
@@ -310,7 +310,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     
     string delegID; // empty delegation id, as we do autodelegation
     try {	    
-        api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
+        // api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
         util::CreamProxy_Register( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID, modified_jdl, m_theJob.getUserProxyCertificate(), url_jid, m_configuration->ice()->lease_delta_time(), true ).execute( theProxy, 3 );
 
 //         theProxy->Register(
