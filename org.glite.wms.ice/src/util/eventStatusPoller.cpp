@@ -199,7 +199,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
         vector< string > job_to_query;
         vector< soap_proxy::JobInfo > the_job_status;
 
-        wms_utils::scope_guard handle_unreachable_job_guard( handle_job( jit->getCreamJobID() ) );
+        // wms_utils::scope_guard handle_unreachable_job_guard( handle_job( jit->getCreamJobID() ) );
         
         job_to_query.push_back( jit->getCreamJobID() );
 	
@@ -213,9 +213,9 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
 //                                 the_job_status,
 //                                 -1,
 //                                 -1 );
-            handle_unreachable_job_guard.dismiss();
+            // handle_unreachable_job_guard.dismiss();
         } catch( cream_api::cream_exceptions::JobUnknownException& ex) {
-            handle_unreachable_job_guard.dismiss();
+            // handle_unreachable_job_guard.dismiss();
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "eventStatusPoller::check_jobs() - "
                            << "CREAM responded JobUnknown for JobId=["

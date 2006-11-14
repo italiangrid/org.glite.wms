@@ -113,7 +113,7 @@ void leaseUpdater::update_lease( void )
 }
 
 //____________________________________________________________________________
-void leaseUpdater::update_lease_for_job( CreamJob& j )
+void leaseUpdater::update_lease_for_job( CreamJob j )
 {
     map< string, time_t > newLease;
     vector< string > jobids;
@@ -132,7 +132,6 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
     try {
 
         m_creamClient->Authenticate( j.getUserProxyCertificate() );
-        // m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
         util::CreamProxy_Lease( j.getCreamURL(), jobids, m_delta, newLease ).execute( m_creamClient.get(), 3 );
 
     } catch(cream_exceptions::JobUnknownException& ex) {

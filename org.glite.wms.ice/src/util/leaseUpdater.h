@@ -80,7 +80,7 @@ namespace glite {
                *
                * @param j the job whose lease is to be updated
                */
-              void update_lease_for_job( CreamJob& j );
+              void update_lease_for_job( CreamJob j );
 
               virtual void body( void );
 
