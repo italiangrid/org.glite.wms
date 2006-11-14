@@ -13,6 +13,7 @@ using namespace std;
 extern int errno;
 
 #define MAX_ICE_OP_BEFORE_PURGE 10000
+#define MAX_ICE_OP_BEFORE_CHECKPOINT 50
 
 // -------------------- cursorWrapper -------------------------
 
@@ -51,6 +52,7 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
     m_gid_open( false ),
     m_env_open( false ),
     m_op_counter(0),
+    m_op_counter_chkpnt(0),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
   if( !boost::filesystem::exists( boost::filesystem::path(m_envHome) ) ) {
@@ -247,6 +249,17 @@ void iceUtil::jobDbManager::put(const string& creamjob, const string& cid, const
     throw iceUtil::JobDbException("jobDbManager::put() - Unknown exception catched");
   }
   m_op_counter++;
+  m_op_counter_chkpnt++;
+  
+  if(m_op_counter_chkpnt > MAX_ICE_OP_BEFORE_CHECKPOINT)
+  {
+    try{m_env.txn_checkpoint(0,0,0);}
+    catch(DbException& dbex) {
+      throw iceUtil::JobDbException( dbex.what() );
+    }
+    m_op_counter_chkpnt = 0;
+  }
+  
   if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
     this->dbLogPurge();
     m_op_counter = 0;
@@ -281,6 +294,16 @@ void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_a
       m_cidDb->put( txn_handler, &cidKey, &gidKey, 0);
       m_gidDb->put( txn_handler, &gidKey, &cidKey, 0);
       m_op_counter++;
+      m_op_counter_chkpnt++;
+  
+     if(m_op_counter_chkpnt > MAX_ICE_OP_BEFORE_CHECKPOINT)
+     {
+       try{m_env.txn_checkpoint(0,0,0);}
+       catch(DbException& dbex) {
+         throw iceUtil::JobDbException( dbex.what() );
+       }
+       m_op_counter_chkpnt = 0;
+     }
       if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
         this->dbLogPurge();
         m_op_counter = 0;
@@ -410,6 +433,16 @@ void iceUtil::jobDbManager::delByCid( const string& cid )
     throw iceUtil::JobDbException( "jobDbManager::delByCid() - Unknown exception catched" );
   }
   m_op_counter++;
+  m_op_counter_chkpnt++;
+  
+  if(m_op_counter_chkpnt > MAX_ICE_OP_BEFORE_CHECKPOINT)
+  {
+    try{m_env.txn_checkpoint(0,0,0);}
+    catch(DbException& dbex) {
+      throw iceUtil::JobDbException( dbex.what() );
+    }
+    m_op_counter_chkpnt = 0;
+  }
   if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
     this->dbLogPurge();
     m_op_counter = 0;
@@ -446,6 +479,16 @@ void iceUtil::jobDbManager::delByGid( const string& gid )
     throw iceUtil::JobDbException( "jobDbManager::delByGid() - Unknown exception catched" );
   }
   m_op_counter++;
+  m_op_counter_chkpnt++;
+  
+  if(m_op_counter_chkpnt > MAX_ICE_OP_BEFORE_CHECKPOINT)
+  {
+    try{m_env.txn_checkpoint(0,0,0);}
+    catch(DbException& dbex) {
+      throw iceUtil::JobDbException( dbex.what() );
+    }
+    m_op_counter_chkpnt = 0;
+  }
   if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
     this->dbLogPurge();
     m_op_counter = 0;

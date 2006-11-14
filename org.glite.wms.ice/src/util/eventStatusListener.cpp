@@ -436,8 +436,18 @@ void iceUtil::eventStatusListener::init(void)
         boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
 
         vector<Subscription> fake; // just to comply with subManager::subscribedTo signature
-        
-	if( !m_subManager->subscribedTo(*it, fake) ) {
+        bool subscribed;
+	try {subscribed = m_subManager->subscribedTo(*it, fake);}
+	catch(exception& ex) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
+			   << "eventStatusListener::init() - Couldn't determine if we're subscribed to ["<< *it 
+			   << "]. Will not receives status notifications from it or another job will "
+			   << " trigger a successful subscription"
+			   << log4cpp::CategoryStream::ENDLINE);
+	  continue;
+	}
+	
+	if( !subscribed ) {
 	  CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		         << "eventStatusListener::init() - Not subscribed to ["
 		         << *it << "]. Subscribing to it..."

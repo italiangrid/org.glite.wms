@@ -87,7 +87,14 @@ void iceUtil::subscriptionUpdater::body( void )
       bool subscribed;
       {
 	boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
-	subscribed = m_subMgr->subscribedTo( *it, vec );
+	try{subscribed = m_subMgr->subscribedTo( *it, vec );}
+	catch(exception& ex) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionUpdater::body() - "
+		       << "Could not determine if we're subscribed to [" << *it 
+		       << "]. Retrying later."
+		       << log4cpp::CategoryStream::ENDLINE);
+	  continue;
+	}
       }
       if( !subscribed ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream() << "subscriptionUpdater::body() - "
@@ -116,7 +123,7 @@ void iceUtil::subscriptionUpdater::body( void )
 	    
 	  } // if( m_conf->getListenerEnableAuthZ() )
 	
-	if( !m_subMgr->subscribe( *it ) )
+	if( !m_subMgr->subscribe( /* *it*/"https://grid002:8542" ) )
 	  {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
 	    		   << "subscriptionUpdater::body() - "

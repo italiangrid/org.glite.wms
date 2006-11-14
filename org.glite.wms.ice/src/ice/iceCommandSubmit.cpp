@@ -686,7 +686,18 @@ void  iceCommandSubmit::doSubscription( const string& ce )
   vector<Subscription> fake;
   
   // try to determine with a direct SOAP query to CEMon
-  if( util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake ) ) {
+  bool subscribed;
+  try {
+    subscribed = util::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake );
+  } catch(exception& ex) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream()
+                     << "iceCommandSubmit::doSubscription() - "
+                     << "Couldn't determine if we're subscribed to ["
+                     << cemon_url << "]. Another job could trigger a successful subscription."
+                     << log4cpp::CategoryStream::ENDLINE);
+    return;
+  }
+  if( subscribed ) {
       if( m_configuration->ice()->listener_enable_authz() ) {
           string DN;
           if( cemon_cache->getCEMonDN( cemon_url, DN ) ) {

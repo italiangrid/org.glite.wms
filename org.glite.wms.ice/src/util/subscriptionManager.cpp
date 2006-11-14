@@ -189,8 +189,8 @@ bool subscriptionManager::updateSubscription(const string& url,
 }
 
 //______________________________________________________________________________
-bool subscriptionManager::subscribedTo(const string& url,
-					vector<Subscription>& vec)
+bool subscriptionManager::subscribedTo(const string& url, vector<Subscription>& vec)
+  throw(exception&)
 {
     try {
         this->list(url, vec);
@@ -200,12 +200,12 @@ bool subscriptionManager::subscribedTo(const string& url,
                        << "subscriptionManager::subscribedTo() - "
                        << "Error retrieving subscription list: "
                        << ex.what() << log4cpp::CategoryStream::ENDLINE);
-        return false;
+        throw(ex);
     }  
   
     for(vector<Subscription>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
-        if( it->getConsumerURL() == m_myurl ) 
-            return true;
+      if( it->getConsumerURL() == m_myurl ) 
+        return true;
     }
     
     return false;

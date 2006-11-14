@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <exception>
 
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
@@ -56,7 +57,7 @@ namespace util {
 				   std::string& newID
 				   );
 
-    bool        subscribedTo(const std::string& url, std::vector<Subscription>& target);
+    bool        subscribedTo(const std::string& url, std::vector<Subscription>& target) throw(std::exception&);
 
     bool        isValid( void ) const { return m_valid; }
     

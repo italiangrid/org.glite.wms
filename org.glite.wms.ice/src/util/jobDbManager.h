@@ -41,6 +41,7 @@ namespace util {
     bool          m_gid_open;
     bool          m_env_open;
     int	 	  m_op_counter;
+    int		  m_op_counter_chkpnt;
     log4cpp::Category* m_log_dev;
     
     std::string getByID( const std::string& id, Db* db ) throw(DbException&);
