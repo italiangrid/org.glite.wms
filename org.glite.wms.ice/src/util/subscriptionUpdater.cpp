@@ -123,7 +123,7 @@ void iceUtil::subscriptionUpdater::body( void )
 	    
 	  } // if( m_conf->getListenerEnableAuthZ() )
 	
-	if( !m_subMgr->subscribe( /* *it*/"https://grid002:8542" ) )
+	if( !m_subMgr->subscribe( *it ) )
 	  {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
 	    		   << "subscriptionUpdater::body() - "
