@@ -1114,12 +1114,11 @@ doExecv(const string &command, vector<string> &params, string &errormsg)
 }
 
 int
-doExecv(const string &command, vector<string> &params, const vector<string> &dirs,
+doExecvSplit(const string &command, vector<string> &params, const vector<string> &dirs,
 	unsigned int startIndex, unsigned int endIndex)
 {
-	GLITE_STACK_TRY("doExecv()");
-	edglog_fn("wmputils::doExecv");
-	
+	GLITE_STACK_TRY("doExecvSplit()");
+	edglog_fn("wmputils::doExecvSplit");
 	char **argvs;
 	// +3 -> difference between index, command at first position, NULL at the end
 	int size = params.size() + endIndex - startIndex + 3;
@@ -1133,97 +1132,154 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 	vector<string>::iterator iter = params.begin();
 	vector<string>::iterator const end = params.end();
 	for (; iter != end; ++iter) {
-		argvs[i] = (char *) malloc((*iter).length() + 1);
-		strcpy(argvs[i++], (*iter).c_str());
+	        argvs[i] = (char *) malloc((*iter).length() + 1);
+	        strcpy(argvs[i++], (*iter).c_str());
 	}
 	for (unsigned int j = startIndex; j <= endIndex; j++) {
-		argvs[i] = (char *) malloc(dirs[j].length() + 1);
-		strcpy(argvs[i++], (dirs[j]).c_str());
+	        argvs[i] = (char *) malloc(dirs[j].length() + 1);
+	        strcpy(argvs[i++], (dirs[j]).c_str());
 	}
 	argvs[i] = (char *) 0;
 	
-	edglog(debug)<<"Forking process..."<<endl;
-	switch (fork()) {
-		case -1:
-			// Unable to fork
-			edglog(critical)<<"Unable to fork process"<<endl;
-			return FAILURE;
-			break;
-		case 0:
-			// child
-	        if (execv(command.c_str(), argvs)) {
-	        	unsigned int middle;
-	        	switch (errno) {
-		        	case E2BIG:
-	        			edglog(debug)<<"Command line too long, splitting..."<<endl;
-	        			middle = startIndex + (endIndex - startIndex) / 2;
-	                    edglog(debug)<<"Calling from index "<<startIndex
-	                    	<<" to "<<middle<<endl;
-	        			if (doExecv(command, params, dirs, startIndex, middle)) {
-	        				return FAILURE;	
-	        			}
-	        			edglog(debug)<<"Calling from index "<<middle + 1
-	                    	<<" to "<<endIndex<<endl; 
-	        			if (doExecv(command, params, dirs, middle + 1, endIndex)) {
-	        				return FAILURE;
-	        			}
-	        			break;
-	        			
-	        		case EACCES:
-	        			edglog(severe)<<"Command not executable"<<endl;
-	        		case EPERM:
-	        			edglog(severe)<<"Wrong execution permissions"<<endl;
-	        		case ENOENT:
-	        			edglog(severe)<<"Unable to find command"<<endl;
-	        		case ENOMEM:
-	        			edglog(severe)<<"Insufficient memory to execute command"
-	        				<<endl;
-	        		case EIO:
-	        			edglog(severe)<<"I/O error"<<endl;
-	        		case ENFILE:
-	        			edglog(severe)<<"Too many opened files"<<endl;
-	        			
-		        	default:
-		        		edglog(severe)<<"Unable to execute command"<<endl;
-		        		return FAILURE;
+	if (execv(command.c_str(), argvs)) {
+		unsigned int middle;
+	    switch (errno) {
+			case E2BIG:
+				edglog(debug)<<"Command line too long, splitting..."<<endl;
+				middle = startIndex + (endIndex - startIndex) / 2;
+				
+				pid_t pid;
+    			switch (pid = fork()) {
+					case -1:
+						// Unable to fork
+                        edglog(critical)<<"Unable to fork process"<<endl;
+                        return FAILURE;
+                        break;
+					case 0:
+						edglog(debug)<<"Calling from index "<<startIndex
+							<<" to "<<middle<<endl;
+						if (doExecvSplit(command, params, dirs, startIndex, middle)) {
+							return FAILURE;
+						}
 						break;
-	        	}
-	        } else {
-	        	edglog(debug)<<"execv succesfully"<<endl;
-	        }
-	        break;
-        default:
-        	// parent
-	    	int status = SUCCESS;
-	    	wait(&status);
-	    	if (WIFEXITED(status)) {
-                edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
-                edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
-            }
-            if (WIFSIGNALED(status)) {
-                edglog(severe)<<"WIFSIGNALED(status)"<<endl;
-                edglog(severe)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
-            }
-            
+					default:
+						// parent
+						int status = SUCCESS;
+						edglog(debug)<<"Parent PID wait: "<<getpid()
+							<<" waiting for: "<<pid<<endl;
+            			waitpid(pid, &status, 0);
+            			edglog(debug)<<"Parent PID after wait: "<<getpid()
+            				<<" waiting for: "<<pid<<endl;
+						if (WIFEXITED(status)) {
+							edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
+							edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
+						}
+						if (WIFSIGNALED(status)) {
+							edglog(severe)<<"WIFSIGNALED(status)"<<endl;
+							edglog(severe)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
+						}
+
 #ifdef WCOREDUMP
-			if (WCOREDUMP(status)) {
-				edglog(critical)<<"Child dumped core!!!"<<endl;
-			}
+                        if (WCOREDUMP(status)) {
+                                edglog(critical)<<"Child dumped core!!!"<<endl;
+                        }
 #endif // WCOREDUMP
 
-	    	if (status) {
-	    		edglog(severe)<<"Child failure, exit code: "<<status<<endl;
-	    		return FAILURE;
-	    	}
-	    	break;
+						if (status) {
+							edglog(severe)<<"Child failure, exit code: "<<status<<endl;
+							return FAILURE;
+						}
+
+						edglog(debug)<<"Calling from index "<<middle + 1
+							<<" to "<<endIndex<<endl;
+						if (doExecvSplit(command, params, dirs, middle + 1, endIndex)) {
+							return FAILURE;
+						}
+						break;
+					}
+			case EACCES:
+				edglog(severe)<<"Command not executable"<<endl;
+			case EPERM:
+				edglog(severe)<<"Wrong execution permissions"<<endl;
+			case ENOENT:
+				edglog(severe)<<"Unable to find command"<<endl;
+			case ENOMEM:
+				edglog(severe)<<"Insufficient memory to execute command"<<endl;
+			case EIO:
+				edglog(severe)<<"I/O error"<<endl;
+			case ENFILE:
+				edglog(severe)<<"Too many opened files"<<endl;
+
+			default:
+				edglog(severe)<<"Unable to execute command"<<endl;
+				return FAILURE;
+				break;
+		}
+	} else {
+		edglog(debug)<<"execv succesfully"<<endl;
 	}
+
 	for (unsigned int j = 0; j <= i; j++) {
 		free(argvs[j]);
 	}
-    free(argvs);
-    
+	free(argvs);
+
+	return SUCCESS;
+
+	GLITE_STACK_CATCH();
+}
+
+int
+doExecv(const string &command, vector<string> &params, const vector<string> &dirs,
+	unsigned int startIndex, unsigned int endIndex)
+{
+	GLITE_STACK_TRY("doExecv()");
+    edglog_fn("wmputils::doExecv");
+
+    edglog(debug)<<"Forking process..."<<endl;
+    pid_t pid;
+    switch (pid = fork()) {
+        case -1:
+            // Unable to fork
+            edglog(critical)<<"Unable to fork process"<<endl;
+            return FAILURE;
+            break;
+        case 0:
+            // child
+            if (doExecvSplit(command, params, dirs, startIndex, endIndex)) {
+				return FAILURE;
+            }
+        break;
+        default:
+            // parent
+            int status = SUCCESS;
+            edglog(debug)<<"Parent PID wait: "<<getpid()<<" waiting for: "<<pid<<endl;
+            waitpid(pid, &status, 0);
+            edglog(debug)<<"Parent PID after wait: "<<getpid()<<" waiting for: "<<pid<<endl;
+            if (WIFEXITED(status)) {
+                edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
+                edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
+			}
+			if (WIFSIGNALED(status)) {
+				edglog(severe)<<"WIFSIGNALED(status)"<<endl;
+				edglog(severe)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
+			}
+
+#ifdef WCOREDUMP
+            if (WCOREDUMP(status)) {
+                edglog(critical)<<"Child dumped core!!!"<<endl;
+            }
+#endif // WCOREDUMP
+
+            if (status) {
+                edglog(severe)<<"Child failure, exit code: "<<status<<endl;
+                return FAILURE;
+            }
+            break;
+    }
+
     return SUCCESS;
-    
+
     GLITE_STACK_CATCH();
 }
 
