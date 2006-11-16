@@ -19,6 +19,18 @@ log_event() # 1 - event
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
+log_done_ok() # 1 - exit code
+{
+  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+    --jobid="$GLITE_WMS_JOBID"\
+    --source=LRMS\
+    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --event="Done"\
+    --status_code=OK\
+    --exit_code="$1"\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
+}
+
 log_event_reason() # 1 - event, 2 - reason
 {
   GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
@@ -870,7 +882,7 @@ else # WMP support
   done
 fi # WMP support
 
-log_event "Done"
+log_done_ok "${status}"
 
 if [ -n "${LSB_JOBID}" ]; then
   cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
