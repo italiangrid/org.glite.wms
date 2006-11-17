@@ -37,7 +37,7 @@ compile:
 install: 
 	@echo installing ...
 	mkdir -p $(prefix)/
-	cp -R DPM $(prefix)/
+	cp -R DPM FTS RGMA MyProxy VOMS gRB BDII sBDII CE gCE SRM $(prefix)/
 
 ####################################################################
 # Documentation
