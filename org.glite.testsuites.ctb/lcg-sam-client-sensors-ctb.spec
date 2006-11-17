@@ -1,8 +1,8 @@
 Summary: SAM sensors for certification testbed
 Name: lcg-sam-client-sensors-ctb
-Version: 1.0.0
+Version: 0.1
 Vendor: LCG/CERN
-Release: 1
+Release: 18
 License: LCG
 Group: LCG
 Source: %{name}.src.tgz

@@ -8,4 +8,25 @@ This is the collection of tests developed for CTB.
 - For each sensor there should be a short description
   on: https://twiki.cern.ch/twiki/bin/view/LCG/SAMTests
 
+- CVS settings for SSH:
+
+  export CVSROOT=:ext:<afs-user-name>@glite.cvs.cern.ch:/cvs/glite
+  export CVS_RSH=ssh
+
+- Check out and launch 'make rpm' 
+
+- How to submit:
+
+  Has to be submitted separately from the official SAM tests, i.e:
+
+  /opt/lcg/same/client-ctb/bin/same-exec CE  - will launch Piotr's CE tests
+
+  while
+
+  /opt/lcg/same/client-ctb/bin/same-exec CE - will launch our CE tests
+
+- AFS installation:
+
+  /afs/cern.ch/project/gd/yaim-server/same/
+
 2006/aug/29

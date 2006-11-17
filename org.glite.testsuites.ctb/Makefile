@@ -36,10 +36,11 @@ compile:
 
 install: 
 	@echo installing ...
-	cp -R  /opt/lcg/same/client/* $(prefix)
-	rm -rf $(prefix)/sensors
 	mkdir -p $(prefix)/sensors
+	cp -R  /opt/lcg/same/client/* $(prefix)/
+	rm -rf $(prefix)/sensors/*
 	cp -R DPM FTS RGMA MyProxy VOMS gRB BDII sBDII CE gCE SRM $(prefix)/sensors/
+	cp functions.sh README $(prefix)/sensors/
 
 ####################################################################
 # Documentation
