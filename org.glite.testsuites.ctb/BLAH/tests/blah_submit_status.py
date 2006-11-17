@@ -1,8 +1,8 @@
 #!/usr/bin/python
  
 ##########################################################################################
-# Script for testing the  BLAH_JOB_SUBMIT and BLAH_JOB_STATUS commands works             #
-# It is to be ran directly on the machine where BLAH and the LRMS are running            #
+# Script for testing the  BLAH_JOB_SUBMIT and BLAH_JOB_STATUS commands                   #
+# It is to be run directly on the machine where BLAH and the LRMS are running            #
 ##########################################################################################
 # It submits a blah_job_submit and a blah_job_status    #
 # command on the subsequent classad jobs from the file  #
@@ -12,7 +12,6 @@
 #                                                       #
 #                 Exit  SAME_OK: Test Passed            #
 #                 Exit  SAME_ERROR: Test Failed         #
-#                 Exit  2: Wrong Input                  #
 #                                                       #
 #########################################################
 
@@ -50,7 +49,7 @@ def test_blah_job():
     #-------------------------------------------------------------------
     #Call the get_results function to loop until some results are found
     #------------------------------------------------------------------- 
-    res = blah_def.get_results(numLines,fout,fin)
+    res = blah_def.get_results(numLines,fout,fin,20)
     numLines = blah_def.to_int(res.split()[-1])
 
     #------------------------------------------------------------------
@@ -99,7 +98,7 @@ def test_blah_job():
     #--------------------------------------------------------------------
     #Call the get_results function to loop until some results are found
     #------------------------------------------------------------------- 
-    res = blah_def.get_results(numLines,fout,fin)
+    res = blah_def.get_results(numLines,fout,fin,20)
     numLines = blah_def.to_int(res.split()[-1])
     
     #------------------------------------------------------------------

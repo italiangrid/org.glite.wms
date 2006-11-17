@@ -28,11 +28,11 @@ def read_line(buff):
     while line[-1:] != '\n': line += os.read(buff.fileno(), 1)
     return line
 
-def get_results(numLines,buffout,buffin):
+def get_results(numLines,buffout,buffin,wait):
 #----------------------------------------------
 #loop until some results are found or up to 40
 #----------------------------------------------
-    time.sleep(20)
+    time.sleep(wait)
     count = 0
     while ((numLines == 0) and (count <= 40)):
              os.write(buffin.fileno(), 'results\n')

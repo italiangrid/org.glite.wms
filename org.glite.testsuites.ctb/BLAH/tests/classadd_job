@@ -1,4 +1,2 @@
-[cmd="/bin/echo";x509userproxy="/home/egee002/x509up_u500";queue="egee";gridtype="lsf";args="Hello!"]
-[cmd="/bin/echo";x509userproxy="/home/egee002/x509up_u500";queue="egee";gridtype="lsf";args="Hello!"]
-[cmd="/bin/echo";x509userproxy="/home/egee002/x509up_u500";queue="egee";gridtype="lsf";args="Hello!"]
-[cmd="/bin/echo";x509userproxy="/home/egee002/x509up_u500";queue="egee";gridtype="lsf";args="Hello!"]
+[cmd="/bin/echo";x509userproxy="/home/egee002/user_proxy";queue="egee";gridtype="lsf";args="Hello!"]
+[cmd="/bin/echo";x509userproxy="/home/egee002/user_proxy";queue="egee";gridtype="lsf";args="Hello!"]
