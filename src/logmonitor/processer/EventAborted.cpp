@@ -103,10 +103,10 @@ void EventAborted::process_event( void )
       this->ei_data->md_logger->aborted_by_user_event();
 
       if( this->ei_data->md_isDagLog )
-	jccommon::JobFilePurger( this->ei_data->md_dagId, position->edg_id() ).do_purge( true );
+	jccommon::JobFilePurger( this->ei_data->md_dagId, position->edg_id() ).do_purge( true ); // Remove also Sandbox
       else {
 	jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
-	jccommon::JobFilePurger( position->edg_id() ).do_purge( true );
+	jccommon::JobFilePurger( position->edg_id() ).do_purge( true ); // Remove also Sandbox
       }
     }
 
