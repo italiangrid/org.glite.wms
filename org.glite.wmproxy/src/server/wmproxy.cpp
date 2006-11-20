@@ -55,6 +55,8 @@ limitations under the License.
 #include "utilities/wmputils.h" // waitForSeconds(), initsignalhandler()
 #include "eventlogger/wmplbselector.h"	// lbselectioninfo struct
 
+#include "glite/wmsutils/exception/Exception.h"
+
 // Global variable for configuration
 WMProxyConfiguration conf;
 
@@ -66,6 +68,7 @@ bool globusDNS_global;
 
 
 namespace logger        = glite::wms::common::logger;
+namespace wmsexception  = glite::wmsutils::exception;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
 namespace eventlogger   = glite::wms::wmproxy::eventlogger;
 namespace configuration = glite::wms::common::configuration;
@@ -175,7 +178,7 @@ main(int argc, char* argv[])
 	    edglog(fatal)<<msg<<endl;
         WMProxy proxy;
 	   	sendFault(proxy, "main", msg, -4);
-	} catch (Exception &exc) {
+	} catch (wmsexception::Exception &exc) {
 		string msg = "Exception caught: " + string(exc.what());
 	    edglog(fatal)<<msg<<endl;
 		WMProxy proxy;
