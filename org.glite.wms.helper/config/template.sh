@@ -523,6 +523,8 @@ if [ -f "${__prologue}" ]; then
   if [ ${prologue_status} -ne 0 ]; then
     fatal_error "prologue failed with error ${prologue_status}"
   fi
+else
+  fatal_error "prologue ${__prologue} not found"
 fi
 
 if [ ${__job_type} -eq 3 ]; then # interactive jobs
@@ -765,6 +767,8 @@ if [ -f "${__epilogue}" ]; then
   if [ ${epilogue_status} -ne 0 ]; then
     fatal_error "epilogue failed with error ${epilogue_status}"
   fi
+else
+  fatal_error "epilogue ${__epilogue} not found"
 fi
 
 # uncomment this one below if the order in the osb originally 
