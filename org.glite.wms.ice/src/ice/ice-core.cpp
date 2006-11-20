@@ -34,7 +34,13 @@
 #include "iceLBLogger.h"
 #include "CreamProxyFactory.h"
 
+#include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/wms/purger/purger.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#ifdef GLITE_WMS_ICE_HAVE_RENEWAL
+#include "glite/security/proxyrenewal/renewal.h"
+#endif
 
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
@@ -520,6 +526,62 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
 ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::iterator it )
 {
     if ( it != m_cache->end() ) {
+
+        if ( ! it->is_active() ) {
+
+#ifdef GLITE_WMS_ICE_HAVE_RENEWAL
+            
+            // must deregister proxy renewal
+            int      err = 0;
+            
+            err = glite_renewal_UnregisterProxy( it->getUserProxyCertificate().c_str(), NULL );
+            
+            if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+                CREAM_SAFE_LOG(
+                               m_log_dev->errorStream()
+                               << "ICE cannot unregister the proxy " 
+                               << "for job [" << it->getGridJobID() << "] "
+                               << "Reason: \"" << edg_wlpr_GetErrorText(err) 
+                               << "\"."
+                               << log4cpp::CategoryStream::ENDLINE
+                               );
+            } else {
+                if ( err == EDG_WLPR_PROXY_NOT_REGISTERED ) {
+                    CREAM_SAFE_LOG(
+                                   m_log_dev->errorStream()
+                                   << "Job proxy not registered for job ["
+                                   << it->getGridJobID() << "]. "
+                                   << " Going ahead." 
+                                   << log4cpp::CategoryStream::ENDLINE
+                                   );
+                }
+            }
+#else
+            CREAM_SAFE_LOG(
+                           m_log_dev->warnStream()
+                           << "Proxy unregistration support not compiled in ICE." 
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+#endif
+            
+        }
+        if ( cream_api::job_statuses::ABORTED == it->getStatus() ) {
+            // must purge job within WMS
+            try {
+                glite::wmsutils::jobid::JobId j_id( it->getGridJobID() );
+                wms::purger::purgeStorage( j_id );
+            } catch( std::exception& ex ) {
+                CREAM_SAFE_LOG(
+                               m_log_dev->errorStream()
+                               << "ice-core::resubmit_or_purge_job() - "
+                               << "Cannot purge storage for job [" 
+                               << it->getGridJobID()
+                               << "] due to exception: " << ex.what()
+                               << log4cpp::CategoryStream::ENDLINE
+                               );
+                
+            }
+        }
         
         if ( it->can_be_resubmitted() ) {
             // resubmit job

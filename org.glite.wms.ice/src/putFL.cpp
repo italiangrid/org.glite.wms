@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
     
-    int j, howmany;
+    // int j, howmany;
     utils::FileList<string> fl;
     
     ifstream is( opt_ad.c_str() );

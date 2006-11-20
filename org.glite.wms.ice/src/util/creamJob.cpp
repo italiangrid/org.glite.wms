@@ -245,8 +245,8 @@ bool iceUtil::CreamJob::is_active( void ) const
              ( m_status == api::job_statuses::PENDING ) ||
              ( m_status == api::job_statuses::IDLE ) ||
              ( m_status == api::job_statuses::RUNNING ) ||
-             ( m_status == api::job_statuses::HELD ) ||
-	     ( m_status == api::job_statuses::REALLY_RUNNING) );
+	     ( m_status == api::job_statuses::REALLY_RUNNING) ||
+             ( m_status == api::job_statuses::HELD ) );
 }
 
 bool iceUtil::CreamJob::can_be_purged( void ) const

@@ -65,6 +65,7 @@ have_glite_wms_common=no
 have_gridsite=no
 have_xml2=no
 have_db=no
+have_glite_wms_purger=no
 
 AC_OPTIMIZE
 AC_GLITE
@@ -78,11 +79,13 @@ AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_DB([], have_db=yes, have_db=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["DB found $have_db"])
+AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 
 AC_XML2([], have_xml2=yes, have_xml2=no)
 AC_MSG_RESULT(["XML2 found $have_xml2"])

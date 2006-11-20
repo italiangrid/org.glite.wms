@@ -154,7 +154,7 @@ namespace glite {
 	  int    getStatusPollRetryCount( void ) const { return m_statusPollRetryCount; }
 	  void   incStatusPollRetryCount( void ) { m_statusPollRetryCount++; }
 	  void   resetStatusPollRetryCount( void ) { m_statusPollRetryCount=0; }
-          //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, idle, running or held
+          //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, running, reslly_running or held
           bool is_active( void ) const;
 
           /**
