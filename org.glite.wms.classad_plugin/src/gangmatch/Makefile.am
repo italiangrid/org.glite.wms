@@ -13,7 +13,7 @@ libglite_wms_gangmatch_classad_plugin_la_SOURCES = \
 	doMatch.cpp \
 	retrieveCloseSEsInfo.cpp
 
-libglite_wms_gangmatch_classad_plugin_la_CPPFLAGS = \
+libglite_wms_gangmatch_classad_plugin_la_CXXFLAGS = \
 	-fPIC -shared
 
 AM_CPPFLAGS = \
