@@ -553,7 +553,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
                                << "ice-core::resubmit_or_purge_job() - "
                                << "ICE cannot unregister the proxy " 
                                << "for Grid job [" << it->getGridJobID() << "] "
-                               << " CREAM job [" << id->getCreamJobID() << "] "
+                               << " CREAM job [" << it->getCreamJobID() << "] "
                                << "Reason: \"" << edg_wlpr_GetErrorText(err) 
                                << "\"."
                                << log4cpp::CategoryStream::ENDLINE
