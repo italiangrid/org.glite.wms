@@ -10,7 +10,7 @@ jw_echo() # 1 - msg
 
 log_event() # 1 - event
 {
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -19,9 +19,22 @@ log_event() # 1 - event
   || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
+log_done() # 1 - exit code, 2 - status code, 3 - reason
+{
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+    --jobid="$GLITE_WMS_JOBID"\
+    --source=LRMS\
+    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --event="Done"\
+    --reason="$3"\
+    --status_code="$2"\
+    --exit_code="$1"\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
+}
+
 log_event_reason() # 1 - event, 2 - reason
 {
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -33,7 +46,7 @@ log_event_reason() # 1 - event, 2 - reason
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 {
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -47,17 +60,7 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 fatal_error() # 1 - reason
 {
   jw_echo "$1"
-
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-    --jobid="$GLITE_WMS_JOBID"\
-    --source=LRMS\
-    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-    --event="Done"\
-    --reason="$1"\
-    --status_code=FAILED\
-    --exit_code=0\
-  || echo $GLITE_WMS_SEQUENCE_CODE`
-
+  log_done "0" "FAILED" "$1"
   doExit 1
 }
 
@@ -493,12 +496,16 @@ else
 fi
 
 #user script (before taking the token, shallow-sensitive)
-if [ -f "${__prologue}" ]; then
-  chmod +x "${__prologue}" 2>/dev/null
-  ${__prologue} "${__prologue_arguments}"
-  prologue_status=$?
-  if [ ${prologue_status} -ne 0 ]; then
-    fatal_error "prologue failed with error ${prologue_status}"
+if [ -n "${__prologue}" ]; then
+  if [ -f "${__prologue}" ]; then
+    chmod +x "${__prologue}" 2>/dev/null
+    ${__prologue} "${__prologue_arguments}"
+    prologue_status=$?
+    if [ ${prologue_status} -ne 0 ]; then
+      fatal_error "prologue failed with error ${prologue_status}"
+    fi
+  else
+    fatal_error "prologue ${__prologue} not found"
   fi
 fi
 
@@ -729,12 +736,16 @@ fi
 
 jw_echo "job exit status = ${status}"
 
-if [ -f "${__epilogue}" ]; then
-  chmod +x "${__epilogue}" 2>/dev/null
-  ${__epilogue} "${__epilogue_arguments}"
-  epilogue_status=$?
-  if [ ${epilogue_status} -ne 0 ]; then
-    fatal_error "epilogue failed with error ${epilogue_status}"
+if [ -n "${__epilogue}" ]; then
+  if [ -f "${__epilogue}" ]; then
+    chmod +x "${__epilogue}" 2>/dev/null
+    ${__epilogue} "${__epilogue_arguments}"
+    epilogue_status=$?
+    if [ ${epilogue_status} -ne 0 ]; then
+      fatal_error "epilogue failed with error ${epilogue_status}"
+    fi
+  else
+    fatal_error "epilogue ${__epilogue} not found"
   fi
 fi
 
@@ -853,7 +864,7 @@ else #WMP support
   done
 fi #WMP support
 
-log_event "Done"
+log_done "Done" "OK" "Successfully completed"
 
 if [ -n "${LSB_JOBID}" ]; then
   cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
