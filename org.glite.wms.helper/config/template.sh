@@ -516,15 +516,17 @@ else
 fi
 
 # user script (before taking the token, shallow-sensitive)
-if [ -f "${__prologue}" ]; then
-  chmod +x "${__prologue}" 2>/dev/null
-  ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
-  prologue_status=$?
-  if [ ${prologue_status} -ne 0 ]; then
-    fatal_error "prologue failed with error ${prologue_status}"
+if [ -n "${__prologue}" ]; then
+  if [ -f "${__prologue}" ]; then
+    chmod +x "${__prologue}" 2>/dev/null
+    ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
+    prologue_status=$?
+    if [ ${prologue_status} -ne 0 ]; then
+      fatal_error "prologue failed with error ${prologue_status}"
+    fi
+  else
+    fatal_error "prologue ${__prologue} not found"
   fi
-else
-  fatal_error "prologue ${__prologue} not found"
 fi
 
 if [ ${__job_type} -eq 3 ]; then # interactive jobs
@@ -760,15 +762,17 @@ fi
 
 jw_echo "job exit status = ${status}"
 
-if [ -f "${__epilogue}" ]; then
-  chmod +x "${__epilogue}" 2>/dev/null
-  ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
-  epilogue_status=$?
-  if [ ${epilogue_status} -ne 0 ]; then
-    fatal_error "epilogue failed with error ${epilogue_status}"
+if [ -n "${__epilogue}" ]; then
+  if [ -f "${__epilogue}" ]; then
+    chmod +x "${__epilogue}" 2>/dev/null
+    ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
+    epilogue_status=$?
+    if [ ${epilogue_status} -ne 0 ]; then
+      fatal_error "epilogue failed with error ${epilogue_status}"
+    fi
+  else
+    fatal_error "epilogue ${__epilogue} not found"
   fi
-else
-  fatal_error "epilogue ${__epilogue} not found"
 fi
 
 # uncomment this one below if the order in the osb originally 
