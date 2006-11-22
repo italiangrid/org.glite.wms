@@ -17,9 +17,9 @@ namespace broker {
 struct RBSimpleISMImpl : ResourceBroker::Impl
 {
   boost::tuple<
-    boost::shared_ptr<matchmaking::matchtable>,
-    boost::shared_ptr<brokerinfo::filemapping>,
-    boost::shared_ptr<brokerinfo::storagemapping>
+    boost::shared_ptr<matchtable>,
+    boost::shared_ptr<filemapping>,
+    boost::shared_ptr<storagemapping>
   > 
   findSuitableCEs(classad::ClassAd const*);
 };

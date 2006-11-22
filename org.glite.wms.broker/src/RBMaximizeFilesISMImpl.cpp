@@ -15,11 +15,8 @@
 #include "glite/jdl/ManipulationExceptions.h"
 #include "glite/jdl/JobAdManipulation.h"
 
-#include "glite/wms/matchmaking/matchmakerISMImpl.h"
-#include "glite/wms/matchmaking/glue_attributes.h"
-#include "glite/wms/matchmaking/jdl_attributes.h"
+#include "matchmaking.h"
 #include "RBMaximizeFilesISMImpl.h"
-#include "utility.h"
 
 #include "glite/wms/common/logger/logger_utils.h"
 
@@ -34,36 +31,33 @@ namespace logger        = common::logger;
 
 namespace broker {
 
-namespace brokerinfo  = wms::brokerinfo;
-namespace matchmaking = wms::matchmaking;
-
 boost::tuple<
-  boost::shared_ptr<matchmaking::matchtable>,
-  boost::shared_ptr<brokerinfo::filemapping>,
-  boost::shared_ptr<brokerinfo::storagemapping>
+  boost::shared_ptr<matchtable>,
+  boost::shared_ptr<filemapping>,
+  boost::shared_ptr<storagemapping>
 >
 RBMaximizeFilesISMImpl::findSuitableCEs(
   const classad::ClassAd* requestAd
 ) {
 
-  boost::shared_ptr<matchmaking::matchtable> suitableCEs;
-  boost::shared_ptr<brokerinfo::filemapping> fm;
-  boost::shared_ptr<brokerinfo::storagemapping> sm;
+  boost::shared_ptr<matchtable> suitableCEs;
+  boost::shared_ptr<filemapping> fm;
+  boost::shared_ptr<storagemapping> sm;
 
   if (requestAd) {
 
-    suitableCEs.reset(new matchmaking::matchtable);
+    suitableCEs.reset(new matchtable);
     classad::ClassAd jdl(*requestAd);
 
     // Collects SFNs and involved SEs.
-    fm = brokerinfo::resolve_filemapping_info(jdl);
-    sm = brokerinfo::resolve_storagemapping_info(fm);
+    fm = broker::resolve_filemapping_info(jdl);
+    sm = broker::resolve_storagemapping_info(fm);
 
     // Selects only comptatible storage
     vector<string> dap;
     requestad::get_data_access_protocol(jdl, dap);
-    vector<brokerinfo::storagemapping::const_iterator> compatible_storage(
-      brokerinfo::select_compatible_storage(*sm,dap)
+    vector<storagemapping::const_iterator> compatible_storage(
+     select_compatible_storage(*sm,dap)
     );
 
     std::set<std::string> close_computing_elements_id;
@@ -77,48 +71,41 @@ RBMaximizeFilesISMImpl::findSuitableCEs(
     );     
     
     // Filter computing elements on requirements/rank
-    matchmaking::MatchMaker MM;
 
-    MM.checkRequirement(
+    match(
       jdl,
       close_computing_elements_id, 
       *suitableCEs);
 
-    MM.checkRank(jdl, *suitableCEs);
-
-    matchmaking::matchtable::iterator ce_it = suitableCEs->begin();
-    matchmaking::matchtable::iterator const ce_end = suitableCEs->end();
+    matchtable::iterator ce_it = suitableCEs->begin();
+    matchtable::iterator const ce_end = suitableCEs->end();
     
     map<
       size_t, 
-      vector<matchmaking::matchtable::const_iterator> 
+      vector<matchtable::const_iterator> 
     > unique_logical_files_per_ce;
     
     size_t max_files = 0;
     for( ; ce_it != ce_end; ) {
  
-      // Remove invalid matchinfo
-      if(matchmaking::isRankUndefined(ce_it->second)) {
-        suitableCEs->erase(ce_it++);
-        continue;
-      }
-      vector<brokerinfo::storagemapping::const_iterator>::iterator
+      string const& id = boost::tuples::get<0>(*ce_it);
+      vector<storagemapping::const_iterator>::iterator
       storage_part_end(
         std::partition(
           compatible_storage.begin(),
           compatible_storage.end(),
-          is_storage_close_to(ce_it->first)
+          is_storage_close_to(id)
         )
       );
       
       size_t n =
-        brokerinfo::count_unique_logical_files(
+        count_unique_logical_files(
           compatible_storage.begin(),
           storage_part_end
       );
 
       Debug(
-        ce_it->first << " has #" << 
+        id << " has #" << 
         storage_part_end - compatible_storage.begin() << 
         " close compatible storage element(s) providing #" << n <<
         " accessible file(s)"
@@ -128,12 +115,12 @@ RBMaximizeFilesISMImpl::findSuitableCEs(
       
       map<
         size_t, 
-        vector<matchmaking::matchtable::const_iterator> 
+        vector<matchtable::const_iterator> 
       >::iterator it;
       bool inserted = false;
       boost::tie(it,inserted) =
         unique_logical_files_per_ce.insert(
-          std::make_pair(n,vector<matchmaking::matchtable::const_iterator>())
+          std::make_pair(n,vector<matchtable::const_iterator>())
         );
       it->second.push_back(ce_it);
       ++ce_it;
@@ -144,11 +131,11 @@ RBMaximizeFilesISMImpl::findSuitableCEs(
       !jdl.EvaluateAttrBool("FullListMatchResult", FullListMatchResult) || 
       !FullListMatchResult) {
 
-      vector<matchmaking::matchtable::const_iterator> const& max_logical_files_ces(
+      vector<matchtable::const_iterator> const& max_logical_files_ces(
          unique_logical_files_per_ce[max_files]
       );
-      matchmaking::matchtable::iterator it = suitableCEs->begin();
-      matchmaking::matchtable::iterator const e = suitableCEs->end();
+      matchtable::iterator it = suitableCEs->begin();
+      matchtable::iterator const e = suitableCEs->end();
       for( ; it != e ; ) {
         if( std::find(
              max_logical_files_ces.begin(),

@@ -10,8 +10,6 @@
 
 #include "glite/wms/broker/selectors/RBSelectionSchema.h"
 
-namespace matchmaking = glite::wms::matchmaking;
-
 namespace glite {
 namespace wms {
 namespace broker {
@@ -19,7 +17,7 @@ namespace broker {
 struct maxRankSelector : RBSelectionSchema
 {
   typedef std::vector<
-    matchmaking::matchtable::const_iterator
+    matchtable::const_iterator
   > match_container_type;
   typedef std::map<
     double, 
@@ -28,8 +26,8 @@ struct maxRankSelector : RBSelectionSchema
   
   maxRankSelector::maxRankSelector();
   maxRankSelector::~maxRankSelector();	
-  matchmaking::matchtable::const_iterator 
-  selectBestCE(matchmaking::matchtable const& match_table);
+  matchtable::const_iterator 
+  selectBestCE(matchtable const& match_table);
 };	
 
 }; // namespace broker

@@ -8,8 +8,8 @@
 #ifndef _GLITE_WMS_BROKER_RESOURCEBROKER_H_
 #define _GLITE_WMS_BROKER_RESOURCEBROKER_H_
 
-#include "glite/wms/matchmaking/matchmaker.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
+#include "matchmaking.h"
+#include "glite/wms/broker/brokerinfo.h"
 #include "glite/wms/broker/selectors/RBSelectionSchema.h"	
 
 #include <boost/utility.hpp>
@@ -36,13 +36,13 @@ public:
   void changeImplementation(boost::shared_ptr<Impl>);
   void changeSelector(const std::string&); 
   
-  matchmaking::matchtable::const_iterator 
-  selectBestCE(matchmaking::matchtable const&); 
+  matchtable::const_iterator 
+  selectBestCE(matchtable const&); 
   
   boost::tuple<
-    boost::shared_ptr<matchmaking::matchtable>,
-    boost::shared_ptr<brokerinfo::filemapping>,
-    boost::shared_ptr<brokerinfo::storagemapping>
+    boost::shared_ptr<matchtable>,
+    boost::shared_ptr<filemapping>,
+    boost::shared_ptr<storagemapping>
   >
   findSuitableCEs(const classad::ClassAd*);
   
@@ -55,9 +55,9 @@ struct ResourceBroker::Impl : boost::noncopyable
 {
   virtual 
   boost::tuple<
-    boost::shared_ptr<matchmaking::matchtable>,
-    boost::shared_ptr<brokerinfo::filemapping>,
-    boost::shared_ptr<brokerinfo::storagemapping>
+    boost::shared_ptr<matchtable>,
+    boost::shared_ptr<filemapping>,
+    boost::shared_ptr<storagemapping>
   >
   findSuitableCEs(const classad::ClassAd*) = 0;
   virtual ~Impl() {};

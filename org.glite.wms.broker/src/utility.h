@@ -23,48 +23,30 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-struct extract_computing_elements_id : binary_function<
-  set<string>*,
-  brokerinfo::storagemapping::const_iterator,
-  set<string>*
->
+struct rank_less_than_comparator :
+  binary_function< matchinfo&, matchinfo&, bool >
 {
-  std::set<std::string>*
-  operator()(
-    std::set<std::string>* s,
-    brokerinfo::storagemapping::const_iterator si
-  )
+  bool operator()(
+    const matchinfo& a,
+    const matchinfo& b)
   {
-    vector<pair<string,string> > const& info(
-      boost::tuples::get<2>(si->second)
-    );
-    vector<pair<string,string> >::const_iterator it(info.begin());
-    vector<pair<string,string> >::const_iterator const e(info.end());
-    for( ; it != e ; ++it ) {
-       
-       s->insert(it->first);
-    }
-    return s;
+    return boost::tuples::get<Rank>(a) <
+      boost::tuples::get<Rank>(b);
   }
 };
 
-struct is_storage_close_to
+struct rank_less_than_comparator :
+  binary_function< matchinfo&, matchinfo&, bool >
 {
-  is_storage_close_to(string const& id) : m_ceid(id) {}
-  bool operator()(brokerinfo::storagemapping::const_iterator const& v)
+  bool operator()(
+    const matchinfo& a,
+    const matchinfo& b)
   {
-   vector<pair<string,string> > const& i(
-        boost::tuples::get<2>(v->second)
-   );
-   vector<pair<string,string> >::const_iterator it(i.begin());
-   vector<pair<string,string> >::const_iterator const e(i.end());
-   for( ; it != e ; ++it) {
-     if(boost::starts_with(m_ceid, it->first)) return true;
-   }
-   return false;
+    return boost::tuples::get<Rank>(a) > 
+      boost::tuples::get<Rank>(b);
   }
-  string m_ceid;
 };
+
 
 }; // namespace broker
 }; // namespace wms

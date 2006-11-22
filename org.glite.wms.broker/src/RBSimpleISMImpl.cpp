@@ -9,19 +9,18 @@
 #include <vector> 
 
 #include <classad_distribution.h>
-#include "glite/wms/matchmaking/matchmakerISMImpl.h"
 
+#include "matchmaking.h"
 #include "RBSimpleISMImpl.h"
-#include "utility.h"
 
 namespace glite {
 namespace wms {
 namespace broker {
 
 boost::tuple<
-  boost::shared_ptr<matchmaking::matchtable>,
-  boost::shared_ptr<brokerinfo::filemapping>,
-  boost::shared_ptr<brokerinfo::storagemapping>
+  boost::shared_ptr<matchtable>,
+  boost::shared_ptr<filemapping>,
+  boost::shared_ptr<storagemapping>
 >
 RBSimpleISMImpl::findSuitableCEs(
   classad::ClassAd const* requestAd
@@ -29,38 +28,24 @@ RBSimpleISMImpl::findSuitableCEs(
 
   if (!requestAd) {
     return boost::tuples::make_tuple(
-      boost::shared_ptr<matchmaking::matchtable>(),
-      boost::shared_ptr<brokerinfo::filemapping>(),
-      boost::shared_ptr<brokerinfo::storagemapping>()
+      boost::shared_ptr<matchtable>(),
+      boost::shared_ptr<filemapping>(),
+      boost::shared_ptr<storagemapping>()
     );
   }
 
   classad::ClassAd jdl(*requestAd);
 
-  boost::shared_ptr<matchmaking::matchtable> suitableCEs(
-    new matchmaking::matchtable
+  boost::shared_ptr<matchtable> suitableCEs(
+    new matchtable
   );
 
-  matchmaking::MatchMaker MM;
-  MM.checkRequirement(jdl, *suitableCEs);
-  MM.checkRank       (jdl, *suitableCEs);
-
-  matchmaking::matchtable::iterator it(suitableCEs->begin());
-  matchmaking::matchtable::iterator const e(suitableCEs->end());
-
-  for( ; it != e ; ) {
-    if(matchmaking::isRankUndefined(it->second)) {
-      suitableCEs->erase(it++);
-    }
-    else {
-      ++it;
-    }
-  }
+  match(jdl, *suitableCEs);
 
   return boost::tuples::make_tuple(
     suitableCEs,
-    boost::shared_ptr<brokerinfo::filemapping>(),
-    boost::shared_ptr<brokerinfo::storagemapping>()
+    boost::shared_ptr<filemapping>(),
+    boost::shared_ptr<storagemapping>()
   );
 }
 

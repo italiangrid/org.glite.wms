@@ -38,8 +38,8 @@ ResourceBroker::changeSelector(const std::string& name)
 }
 
 
-matchmaking::matchtable::const_iterator 
-ResourceBroker::selectBestCE(matchmaking::matchtable const& match_table)
+matchtable::const_iterator 
+ResourceBroker::selectBestCE(matchtable const& match_table)
 {
   if(RBSelectionSchemaPtr schema = m_selection_schema.lock() ) {
     return schema -> selectBestCE( match_table );
@@ -48,9 +48,9 @@ ResourceBroker::selectBestCE(matchmaking::matchtable const& match_table)
 }
 
 boost::tuple<
-  boost::shared_ptr<matchmaking::matchtable>,
-  boost::shared_ptr<brokerinfo::filemapping>,
-  boost::shared_ptr<brokerinfo::storagemapping>
+  boost::shared_ptr<matchtable>,
+  boost::shared_ptr<filemapping>,
+  boost::shared_ptr<storagemapping>
 > 
 ResourceBroker::findSuitableCEs(const classad::ClassAd* requestAd)
 { 

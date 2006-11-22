@@ -63,19 +63,15 @@ maxRankSelector::~maxRankSelector()
 {
 }
 
-matchmaking::matchtable::const_iterator
-maxRankSelector::selectBestCE(matchmaking::matchtable const& match_table)
+matchtable::const_iterator
+maxRankSelector::selectBestCE(matchtable const& match_table)
 {
   rank_to_match_container_map_type clustered_rank_match_table;
 
-  matchmaking::matchtable::const_iterator it(
-    match_table.begin()
-  );
-  matchmaking::matchtable::const_iterator const e(
-    match_table.end()
-  );
+  matchtable::const_iterator it(match_table.begin());
+  matchtable::const_iterator const e(match_table.end());
   for ( ; it != e; ++it) {
-    double r = matchmaking::getRank(it->second);
+    double r = boost::tuples::get<Rank>(*it);
     clustered_rank_match_table[r].push_back(it);
   }
   rank_to_match_container_map_type::const_iterator max_cluster =

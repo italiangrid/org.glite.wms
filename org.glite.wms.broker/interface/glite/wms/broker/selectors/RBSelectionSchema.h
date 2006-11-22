@@ -15,9 +15,7 @@
 # include <boost/shared_ptr.hpp>
 # include <map>
 # include <vector>
-# include <glite/wms/matchmaking/matchmaker.h>
-
-namespace matchmaking = glite::wms::matchmaking;
+# include "matchmaking.h"
 
 namespace glite {
 namespace wms {		
@@ -26,8 +24,8 @@ namespace broker {
 struct RBSelectionSchema 
 {
    virtual ~RBSelectionSchema() {};
-   virtual matchmaking::matchtable::const_iterator 
-   selectBestCE(matchmaking::matchtable const& match_table) = 0;
+   virtual matchtable::const_iterator 
+   selectBestCE(matchtable const& match_table) = 0;
 };
 
 typedef boost::shared_ptr<RBSelectionSchema> RBSelectionSchemaPtr;

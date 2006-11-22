@@ -1,19 +1,19 @@
 #include "glite/wms/ism/ism.h"
-#include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
+#include "glite/wms/ism/ii-purchaser.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
+#include "glite/wms/broker/brokerinfo.h"
 
 #include "glite/wms/common/configuration/exceptions.h"
 
 #include "glite/wms/broker/ResourceBroker.h"
-#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
-#include "glite/wms/broker/RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
+#include "RBSimpleISMImpl.h"
 #include "glite/jdl/JobAdManipulation.h"
 
-#include "glite/wms/matchmaking/matchmaker.h"
-#include "glite/wms/matchmaking/exceptions.h"
+#include "matchmaking.h"
+#include "exceptions.h"
 #include "glite/jdl/ManipulationExceptions.h"
 
 #include <boost/scoped_ptr.hpp>
@@ -30,10 +30,10 @@
 #include <glite/wmsutils/classads/classad_utils.h>
 
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
-
+#include "glite/wms/brokerinfo/brokerinfo.h"
 
 #include <classad_distribution.h>
-
+#include <boost/progress.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -49,16 +49,13 @@ using namespace std;
 using namespace glite;
 using namespace glite::wms;
 using namespace glite::wms::ism;
-using namespace glite::wms::ism::purchaser;
 using namespace glite::wms::common::utilities;
 using namespace glite::wmsutils::classads;
 using namespace glite::wms::common::configuration;
-
-namespace matchmaking = glite::wms::matchmaking;
-namespace brokerinfo = glite::wms::brokerinfo;
+using namespace glite::wms::broker;
 
 typedef boost::shared_ptr<glite::wms::manager::server::DynamicLibrary> DynamicLibraryPtr;
-typedef boost::shared_ptr<ism_purchaser> PurchaserPtr;
+typedef boost::shared_ptr<ism::purchaser> PurchaserPtr;
 
 //FIXME: should be moved back to ckassad_plugin if/when only this DL is used
 //FIXME: for matchmaking.
@@ -72,6 +69,7 @@ LineOption  options[] = {
     { 'c', 1, "conf_file", "\t use conf_file as configuration file. glite_wms.conf is the default" },
     { 'j', 1, "jdl_file", "\t use jdl_file as input file." },
     { 'r', 1, "repeat", "\t repeat n times the matchmaking process." },
+    { 'w', 1, "wait", "\t time to wait before starting the actual MM." },
     { 'C', no_argument, "show-ce-ad", "\t show computing elements classad representation" },
     { 'B', no_argument, "show-brokerinfo-ad", "\t show brokerinfo classad representation" },
     { 'q', no_argument, "quiet", "\t do not log anything" },
@@ -80,33 +78,34 @@ LineOption  options[] = {
     { 'l', no_argument, "verbose",     "\t be verbose on log file" }
 };
 
-//namespace {
-//ism_type the_ism[2];
-//ism_mutex_type the_ism_mutex[2];
-//}
-
-void print_ism_entry(ism_entry_type const& e)
+void
+show_slice_content(MutexSlicePtr const& mt_slice)
 {
- classad::ClassAd  ad;
- ad.InsertAttr("id", boost::tuples::get<id_type_entry>(e));
- ad.InsertAttr("update_time", boost::tuples::get<update_time_entry>(e));
- ad.InsertAttr("expiry_time", boost::tuples::get<expiry_time_entry>(e));
- ad.Insert("info", boost::tuples::get<ad_ptr_entry>(e).get()->Copy());
- edglog(debug) <<  ad << std::endl;
+  Mutex::scoped_lock l(mt_slice->mutex);
+  Slice::const_iterator it = mt_slice->slice->begin();
+  Slice::const_iterator const e = mt_slice->slice->end();
+  for( ; it != e; ++it) cout << *it << endl;
+/*
+  copy(
+    mt_slice->slice->begin(),
+    mt_slice->slice->end(),
+    ostream_iterator<slice_type::value_type>(cout, "\n")
+  );
+*/
 }
 
 int main(int argc, char* argv[])
 {
 
-//    set_ism(the_ism,the_ism_mutex,ce);
-//    set_ism(the_ism,the_ism_mutex,se);
-
   std::vector<LineOption> optvec( options, options + sizeof(options)/sizeof(LineOption) );
   LineParser options( optvec, 0 );
 
   string conf_file;
-
+  size_t time_2_wait;
   string req_file;
+
+  Ism the_ism;
+  set_ism(&the_ism);
 
   try {
      options.parse( argc, argv );
@@ -117,8 +116,9 @@ int main(int argc, char* argv[])
      NSConfiguration const* const ns_config(conf.ns());
      WMConfiguration const* const wm_config(conf.wm());
 
-//     if( options.is_present('v') && !options.is_present('l'))   logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
-                                                                                        
+     if( options.is_present('v') && !options.is_present('l'))   logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
+                     
+     time_2_wait = options.is_present('w') ? options['w'].getIntegerValue() : 20;
      if( options.is_present('l') ) logger::threadsafe::edglog.open(ns_config->log_file(), glite::wms::common::logger::debug);
      else {
         if( options.is_present('q') ) {
@@ -142,40 +142,13 @@ int main(int argc, char* argv[])
      else
         req_file.assign(options['j'].getStringValue());
 
-     glite::wms::manager::main::ISM_Manager ism_manager;
-
      if (!glite::wms::manager::server::signal_handling()) {
        edglog(error) <<"cannot initialize signal handling"<< std::endl;
        return -1;
      }
-     sleep(30);
 
-
-/*
-  ism_type the_ism;  
-
-  for(size_t i = 0; i <= ism::ism_index_end; i++ ) {
-    ism::mt_ism_slice_type_ptr elem( new ism::mt_ism_slice_type );
-
-    (elem->slice).reset( new ism::ism_slice_type );
-    //if( i < m_impl->update_functions.size() )
-      //elem->uf = m_impl->update_functions[i];
-
-    the_ism.push_back( elem );
-
-  }
-
-  set_ism(& the_ism);
-
-  ism_ii_purchaser icp(ns_config->ii_contact(), ns_config->ii_port(),
-        ns_config->ii_dn(),ns_config->ii_timeout(), once
-  );
-  icp();
-
-//    ism_file_purchaser icp("/home/emartel/test/ismdump.fl", once);
-//    icp();
-*/
-
+     glite::wms::manager::main::ISM_Manager ism_manager;
+     sleep(time_2_wait);
 
     
 /*     
@@ -214,29 +187,17 @@ int main(int argc, char* argv[])
     );
     ii_pch->do_purchase();
 */
-/*
     if(options.is_present('C')){
-      for(size_t i = 0; i<= ism_ce_index_end; i++) {
-        ism_mutex_type::scoped_lock lock( the_ism[ism_ce_index[i]]->mutex );
-        for_each(
-          ( (the_ism[ism_index[i]]->slice)->get<1>() ).begin(),
-          ( (the_ism[ism_index[i]]->slice)->get<1>() ).end(),
-          print_ism_entry
-        ); 
-      }
+      for_each(the_ism.computing.begin(), the_ism.computing.end(),
+       show_slice_content
+      );
     }
-    if(options.is_present('S')){
-      for(size_t i = 0; i<= ism_se_index_end; i++) {
-        ism_mutex_type::scoped_lock lock( the_ism[ism_se_index[i]]->mutex );
-        for_each(
-          ( (the_ism[ism_se_index[i]]->slice)->get<1>() ).begin(),
-          ( (the_ism[ism_se_index[i]]->slice)->get<1>() ).end(),
-          print_ism_entry
-        );
-      }
-    }
-*/
 
+    if(options.is_present('S')){
+      for_each(the_ism.storage.begin(), the_ism.storage.end(),
+       show_slice_content
+      );
+    }
 
 
      edglog(debug) << "-Reading-JDL-------------------------------------------------" << std::endl;
@@ -279,23 +240,25 @@ int main(int argc, char* argv[])
         }
 
         size_t n = options.is_present('r') ? options['r'].getIntegerValue() : 0; 
+        size_t matches = n;
+        boost::timer t0;
         do {  
-          boost::shared_ptr<glite::wms::matchmaking::matchtable> suitable_CEs;
-          boost::shared_ptr<glite::wms::brokerinfo::filemapping> filemapping;
-          boost::shared_ptr<glite::wms::brokerinfo::storagemapping> storagemapping;
+          boost::shared_ptr<matchtable> suitable_CEs;
+          boost::shared_ptr<filemapping> filemapping;
+          boost::shared_ptr<storagemapping> storagemapping;
           boost::tie(suitable_CEs,filemapping,storagemapping) = rb.findSuitableCEs(reqAd.get());
         
           edglog(debug) << " ----- SUITABLE CEs -------" << std::endl;
 
-          glite::wms::matchmaking::matchtable::iterator ces_it = suitable_CEs->begin();
-          glite::wms::matchmaking::matchtable::iterator const ces_end = suitable_CEs->end();
+          matchtable::iterator ces_it = suitable_CEs->begin();
+          matchtable::iterator const ces_end = suitable_CEs->end();
 
           while( ces_it != ces_end ) {
-             edglog(debug) <<ces_it->first << std::endl;
+             edglog(debug) << boost::tuples::get<broker::Id>(*ces_it) << std::endl;
              ++ces_it;
           }
 
-          glite::wms::matchmaking::matchtable::const_iterator best_ce_it;
+          matchtable::const_iterator best_ce_it;
           if ( suitable_CEs->empty() ) {
             std::cerr << "no suitable ce found" << std::endl;      
           }
@@ -305,26 +268,27 @@ int main(int argc, char* argv[])
           }
 
           edglog(debug) << " ----- BEST CE -------" << std::endl;
-          edglog(debug) << best_ce_it->first << std::endl;
+          edglog(debug) << boost::tuples::get<broker::Id>(*best_ce_it) << std::endl;
           
           if (options.is_present('B')) {
             edglog(debug) << " ----- BROKEINFO AD -------" << std::endl;
             boost::scoped_ptr<classad::ClassAd> biAd(
-              glite::wms::brokerinfo::make_brokerinfo_ad(
+              glite::wms::broker::make_brokerinfo_ad(
                filemapping,storagemapping,
-               *glite::wms::matchmaking::getAd(best_ce_it->second)
+               *boost::tuples::get<broker::Ad>(*best_ce_it)
               )
             );
             edglog(debug) << *biAd.get() << std::endl;
           }
        } while(n--);
+       edglog(debug) << matches << " matchmaking iterations performed in " << t0.elapsed() << " seconds." << std::endl;
      }
-     catch (glite::wms::matchmaking::InformationServiceError const& e) {
+     catch (InformationServiceError const& e) {
      
        std::cerr << "matchmaking::InformationServiceError: "
                  <<e.what() << std::endl;
      
-     } catch (glite::wms::matchmaking::RankingError const& e) {
+     } catch (RankingError const& e) {
      
        std::cerr << "matchmaking::RankingError: "
                  << e.what() << std::endl;

@@ -24,8 +24,8 @@ class stochasticRankSelector : public RBSelectionSchema
  public:
   stochasticRankSelector::stochasticRankSelector();
   stochasticRankSelector::~stochasticRankSelector();	
-  matchmaking::matchtable::const_iterator 
-  selectBestCE(matchmaking::matchtable const& match_table);
+  matchtable::const_iterator 
+  selectBestCE(matchtable const& match_table);
 };	
 
 }; // namespace broker

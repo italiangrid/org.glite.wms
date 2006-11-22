@@ -47,9 +47,9 @@ stochasticRankSelector::~stochasticRankSelector()
 {
 }	  
 
-matchmaking::matchtable::const_iterator 
+matchtable::const_iterator 
 stochasticRankSelector::selectBestCE(
-  matchmaking::matchtable const& match_table
+ matchtable const& match_table
 )
 {
   if( match_table.empty() ) return match_table.end();
@@ -58,12 +58,12 @@ stochasticRankSelector::selectBestCE(
   rank.reserve(match_table.size());
 
   double rank_sum = 0.0;
-  matchmaking::matchtable::const_iterator it = match_table.begin();
-  matchmaking::matchtable::const_iterator const e = match_table.end();
+  matchtable::const_iterator it = match_table.begin();
+  matchtable::const_iterator const e = match_table.end();
 
   for( ; it != e; ++it) {
 
-    double r = matchmaking::getRank(it->second);
+    double r = boost::tuples::get<Rank>(*it);
     rank.push_back(r);
     rank_sum += r;
   }
@@ -92,8 +92,8 @@ stochasticRankSelector::selectBestCE(
   double prob_sum   = 0.0;
   double p = f_unirand01() * rank_sum;
   size_t i = 0;
-  matchmaking::matchtable::const_iterator retval;
-  matchmaking::matchtable::const_iterator best = match_table.begin();
+  matchtable::const_iterator retval;
+  matchtable::const_iterator best = match_table.begin();
   do {
     retval = best;
     prob_sum += rank[i++];
