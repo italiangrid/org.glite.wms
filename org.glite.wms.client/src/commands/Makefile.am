@@ -30,7 +30,7 @@ WMPROXY_STATUS = $(top_builddir)/src/services/libglite_wms_client_jobstatus.la
 WMPROXY_SUBMIT = $(top_builddir)/src/services/libglite_wms_client_jobsubmit.la
 WMPROXY_UTILS = $(top_builddir)/src/utilities/libglite_wms_client_utilities.la
 CURL = -L/usr/lib -lcurl
-WSSE_LIBS=-lwsse -lssl -lcrypto
+#WSSE_LIBS=-lwsse -lssl -lcrypto
 
 
 #wmpex_bindir = $(prefix)/examples
