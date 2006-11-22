@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2006/11/22 15:35:12  emartel
+#       added StorageIndex and DLI catalog interfaces
+#
 #       Revision 1.2  2004/10/11 15:29:44  eronchie
 #       Added LICENSE handling
 #
@@ -34,7 +37,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = interface src 
+SUBDIRS = interface src test
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

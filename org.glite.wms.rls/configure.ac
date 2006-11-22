@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11  2006/11/22 15:35:12  emartel
+#       added StorageIndex and DLI catalog interfaces
+#
 #       Revision 1.10  2006/06/27 12:12:59  rlops
 #       increased version
 #
@@ -76,7 +79,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS RLS], [3.1.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/ReplicaServiceException.h])
+#AC_CONFIG_SRCDIR([src/ReplicaServiceException.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -122,25 +125,42 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 have_boost=no
+have_globus=no
 have_replica=no
 have_gsoap=no
+have_classads=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
+AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_REPLICA([], have_replica=yes, have_replica=no)
 AC_GSOAP([], have_gsoap=yes, have_gsoap=no)
+AC_CLASSADS([], have_classads=yes, have_classads=no)
+
 
 AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["REPLICA found $have_replica"])
 AC_MSG_RESULT(["GSOAP found $have_gsoap"])
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
+AC_MSG_RESULT(["REPLICA found $have_replica"])
+AC_MSG_RESULT(["CLASSADS found $have_replica"])
 
 AC_GLITE
+AC_SEC_GSOAP_PLUGIN
+AC_GLITE_SERVICE_DISCOVERY
+AC_GLITE_JDL
+AC_GLITE_WMSUTILS
+AC_GLITE_WMS_COMMON
+AC_OPTIMIZE
+
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
+AC_CONFIG_FILES([src/RLS/Makefile])
+AC_CONFIG_FILES([src/DLI_SI/Makefile])
 
 AC_OUTPUT
 

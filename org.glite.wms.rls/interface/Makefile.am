@@ -8,7 +8,6 @@
 
 replicaservicedir = $(includedir)
 nobase_replicaservice_HEADERS = \
-	glite/wms/rls/ReplicaService.h \
-	glite/wms/rls/ReplicaServiceReal.h
+	glite/wms/rls/catalog_access_utils.h
 
 MAINTAINERCLEANFILES = Makefile.in

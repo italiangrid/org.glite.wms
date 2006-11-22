@@ -11,61 +11,22 @@
 #ifndef GLIDE_WMS_RLS_REPLICASERVICEEXCEPTION_H
 #define GLIDE_WMS_RLS_REPLICASERVICEEXCEPTION_H
 
-#include <exception>
 #include <string>
 
 namespace glite {
 namespace wms {
 namespace rls {
 
-class ReplicaServiceException : public std::exception {
-public:
-  ReplicaServiceException(void);
-  virtual ~ReplicaServiceException(void) throw();
+class ReplicaServiceException  {
 
+  std::string what;
 public:
-  virtual std::string reason(void) const = 0;
-  virtual const char* what(void) const throw();
+  ReplicaServiceException(const std::string& str);
+  ~ReplicaServiceException();
+
+  const std::string reason() const;
 };
 
-class VoException : public ReplicaServiceException {
-public:
-  VoException(const std::string& par);
-  virtual ~VoException(void) throw();
-
-public:
-  virtual std::string reason(void) const;
-  const std::string& parameter(void) const;
-
-private:
-  std::string m_voex_parameter;
-};
-
-class LfnException : public ReplicaServiceException {
-public:
-  LfnException(const std::string& par);
-  virtual ~LfnException(void) throw();
-
-public:
-  virtual std::string reason(void) const;
-  const std::string& parameter(void) const;
-
-private:
-  std::string m_lfnex_parameter;
-};
-
-class InvalidRLS : public ReplicaServiceException {
-public:
-  InvalidRLS(const std::string& par);
-  virtual ~InvalidRLS(void) throw();
-
-public:
-  virtual std::string reason(void) const;
-  const std::string& parameter(void) const;
-
-private:
-  std::string m_rlsex_parameter;
-};
 
 } // namespace rls
 } // namespace wms

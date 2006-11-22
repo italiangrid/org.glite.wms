@@ -20,6 +20,9 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.7  2006/11/22 15:35:12  emartel
+	added StorageIndex and DLI catalog interfaces
+
 	Revision 1.6  2004/10/17 14:57:21  eronchie
 	......
 
@@ -86,6 +89,6 @@
 	<!-- ======================================================
 	      Define extra properties here ...
 	     ====================================================== -->
-	<property name="m4files.list" value="boost.m4 replica.m4 gsoap.m4 glite.m4 cppunit.m4"/>
+	<property name="m4files.list" value="boost.m4 globus.m4 replica.m4 gsoap.m4 classads.m4 glite.m4 glite_service_discovery.m4 glite_jdl.m4 glite_security.m4 cppunit.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_jdl.m4 optimize.m4"/>
 		
 </project>
