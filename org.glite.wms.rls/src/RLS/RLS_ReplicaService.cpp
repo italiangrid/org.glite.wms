@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "RLS_ReplicaService.h" 
-#include "glite/wms/rls/ReplicaServiceException.h"
+#include "ReplicaServiceException.h"
 
 #include <EdgReplicaManager/ReplicaManagerImpl.h>
 #include <EdgReplicaManager/ReplicaManagerExceptions.h>

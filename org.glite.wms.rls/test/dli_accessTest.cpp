@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 #include "DLI_ReplicaService.h"
-#include "glite/wms/rls/ReplicaServiceException.h"
+#include "ReplicaServiceException.h"
 
 using namespace glite::wms::rls::DLI;
 using namespace glite::wms::rls;
