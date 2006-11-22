@@ -39,7 +39,8 @@ libglite_wms_ism_rgma_purchaser_la_LIBADD = \
         $(LOG4CXX_LIBS) 
 
 libglite_wms_ism_cemon_purchaser_la_LIBADD = \
-	$(GLITE_LOCATION)/lib/libglite_ce_monitor_client.a 
+	$(GLITE_LOCATION)/lib/libglite_ce_monitor_client.a \
+        $(SEC_GSOAP_PLUGIN_276b_THR_LIBS)
 
 libglite_wms_ism_cemon_asynch_purchaser_la_LIBADD = \
         $(GLITE_LOCATION)/lib/libglite_ce_monitor_consumer.a \
