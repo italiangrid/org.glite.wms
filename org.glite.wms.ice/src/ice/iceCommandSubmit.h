@@ -26,12 +26,15 @@
 #include "creamJob.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
 
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
+
+#include <boost/scoped_ptr.hpp>
 
 namespace glite {
 namespace wms {
@@ -50,18 +53,23 @@ namespace util {
     class iceLBLogger;
 }
      
-     
+  
  class iceCommandSubmit : public iceAbsCommand {
      
  private:
      void  doSubscription( const std::string& );
      
+     //boost::scoped_ptr< Ice > m_theIce;
+     Ice *m_theIce;
+     boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+     //glite::ce::cream_client_api::soap_proxy::CreamProxy* m_theProxy;
+     
  public:
-     iceCommandSubmit( const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+     iceCommandSubmit( Ice*, glite::ce::cream_client_api::soap_proxy::CreamProxy*, const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
      
-     virtual ~iceCommandSubmit() {};
+     virtual ~iceCommandSubmit() { if(m_theProxy) delete( m_theProxy ); }
      
-     virtual void execute( Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+     virtual void execute( /* Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy */) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      
      std::string get_grid_job_id( void ) const { return m_theJob.getGridJobID(); };
      
@@ -81,6 +89,7 @@ namespace util {
          const std::string& getFileName( void ) const { return m_fileName; }
          
      protected:
+         
          log4cpp::Category* m_log_dev;
          const std::string m_fullName;
          pathType_t m_pathType;

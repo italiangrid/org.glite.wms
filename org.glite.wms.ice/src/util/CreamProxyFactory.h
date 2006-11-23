@@ -21,6 +21,7 @@
 #define GLITE_WMS_ICE_UTIL_CREAMPROXYFACTORY_H
 
 #include <string>
+#include "boost/thread/recursive_mutex.hpp"
 
 namespace glite {
     namespace ce {
@@ -42,7 +43,8 @@ namespace glite {
                 class CreamProxyFactory {
 
                     static std::string hostdn;
-                    
+                    static boost::recursive_mutex mutex;
+		    
                 public:
                     
                     static void setHostDN( const std::string& hdn ) { 

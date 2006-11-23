@@ -64,7 +64,7 @@ namespace glite {
                  * @throw an iceCommandTransient_ex if the command failed
                  * but could be tried again and succeed.
                  */
-                virtual void execute( Ice* _ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy  ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
+                virtual void execute( /* Ice* _ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy */ ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
 
                 /**
                  * Returns the Grid jobID for the job this command

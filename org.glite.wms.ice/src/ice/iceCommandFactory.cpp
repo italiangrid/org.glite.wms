@@ -24,6 +24,8 @@
 #include "classad_distribution.h"
 #include "boost/algorithm/string.hpp"
 #include "boost/scoped_ptr.hpp"
+#include "CreamProxyFactory.h"
+#include "ice-core.h"
 
 using namespace std;
 
@@ -50,9 +52,9 @@ iceAbsCommand* iceCommandFactory::mkCommand( const std::string& request ) throw(
     boost::trim_if(commandStr, boost::is_any_of("\""));
 
     if ( boost::algorithm::iequals( commandStr, "submit" ) ) {
-        result = new iceCommandSubmit( request );
+        result = new iceCommandSubmit( glite::wms::ice::Ice::instance( ), util::CreamProxyFactory::makeCreamProxy(true), request );
     } else if ( boost::algorithm::iequals( commandStr, "cancel" ) ) {
-        result = new iceCommandCancel( request );
+        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(true), request );
     } else {
         throw util::JobRequest_ex( "Unknown command " + commandStr + " in request classad" );
     }

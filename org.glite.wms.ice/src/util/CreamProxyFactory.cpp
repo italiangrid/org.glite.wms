@@ -26,9 +26,13 @@ using namespace glite::wms::ice::util;
 namespace cream_api=glite::ce::cream_client_api;
 
 std::string CreamProxyFactory::hostdn = std::string();
+boost::recursive_mutex CreamProxyFactory::mutex;
 
 cream_api::soap_proxy::CreamProxy* CreamProxyFactory::makeCreamProxy( const bool autom_deleg )
 {
+
+    boost::recursive_mutex::scoped_lock M( CreamProxyFactory::mutex );
+
     cream_api::soap_proxy::CreamProxy *aProxy;
     try { 
         aProxy = new cream_api::soap_proxy::CreamProxy( autom_deleg, iceConfManager::getInstance()->getSoapTimeout() );

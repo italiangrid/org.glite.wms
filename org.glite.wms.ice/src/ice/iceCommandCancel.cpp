@@ -33,7 +33,7 @@ namespace cream_api = glite::ce::cream_client_api;
 using namespace std;
 using namespace glite::wms::ice;
 
-iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
+iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( ),
     m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
     m_lb_logger( util::iceLBLogger::instance() )
@@ -106,9 +106,11 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     } else {
         boost::trim_if(m_sequence_code, boost::is_any_of("\""));        
     }
+    
+    m_theProxy.reset( _theProxy );
 }
 
-void iceCommandCancel::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandCancel::execute( /* Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy */) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     CREAM_SAFE_LOG( 
                    m_log_dev->infoStream()
@@ -162,10 +164,10 @@ void iceCommandCancel::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
                    );
 
     try {
-	theProxy->Authenticate( theJob.getUserProxyCertificate() );
+	m_theProxy->Authenticate( theJob.getUserProxyCertificate() );
         theJob.set_failure_reason( "Aborted by user" );
         util::jobCache::getInstance()->put( theJob );
-        util::CreamProxy_Cancel( theJob.getCreamURL(), url_jid ).execute( theProxy, 3 );
+        util::CreamProxy_Cancel( theJob.getCreamURL(), url_jid ).execute( m_theProxy.get(), 3 );
 	// theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
     } catch(cream_api::soap_proxy::auth_ex& ex) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("auth_ex: ") + ex.what() ) );

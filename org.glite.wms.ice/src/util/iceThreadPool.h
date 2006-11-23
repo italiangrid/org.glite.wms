@@ -21,7 +21,7 @@
 #define GLITE_WMS_ICE_THREADPOOL_H
 
 #include "iceThread.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
 
@@ -87,7 +87,7 @@ namespace glite {
                    */
                   std::list< iceAbsCommand* >::iterator get_first_request( void );
 
-                  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_proxy;
+                  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_proxy;
                   iceThreadPoolState* m_state;
                   const int m_threadNum;
                   static int s_threadNum;

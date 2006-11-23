@@ -58,7 +58,7 @@ iceThreadPool::iceThreadPoolWorker::iceThreadPoolWorker( iceThreadPoolState* st 
                    );
     abort();
   }       
-  m_proxy.reset( proxy );
+  //m_proxy.reset( proxy );
 }
 
 iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
@@ -124,7 +124,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
         } // releases lock
 
         try {
-            cmd->execute( glite::wms::ice::Ice::instance( ), m_proxy.get() );
+            cmd->execute( /*glite::wms::ice::Ice::instance( ), m_proxy.get()*/ );
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
                            log_dev->errorStream()

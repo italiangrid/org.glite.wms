@@ -104,9 +104,10 @@ namespace { // Anonymous namespace
 }; // end anonymous namespace
 
 //____________________________________________________________________________
-iceCommandSubmit::iceCommandSubmit( const string& request )
+iceCommandSubmit::iceCommandSubmit( Ice* _theIce, glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const string& request )
   throw( util::ClassadSyntax_ex&, util::JobRequest_ex& ) :
     iceAbsCommand( ),
+    m_theIce( _theIce ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     // m_confMgr( util::iceConfManager::getInstance() ),
     m_configuration( util::iceConfManager::getInstance()->getConfiguration() ),
@@ -213,10 +214,12 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                        );
         throw( util::ClassadSyntax_ex( ex.what() ) );
     }
+    
+    m_theProxy.reset( _theProxy );
 }
 
 //____________________________________________________________________________
-void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy  ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandSubmit::execute( /*Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy */ ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     // api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
     
@@ -293,7 +296,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
     
     try {
         // api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
-        theProxy->Authenticate(m_theJob.getUserProxyCertificate());
+        m_theProxy->Authenticate(m_theJob.getUserProxyCertificate());
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
@@ -305,14 +308,15 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
         m_theJob.set_failure_reason( ex.what() );
         m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what() ) );
         m_theJob = m_lb_logger->logEvent( new util::job_done_failed_event( m_theJob ) ); // added in order to have the failure reason shown in the UI
-        ice->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
+        m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
     string delegID; // empty delegation id, as we do autodelegation
     try {	    
         // api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
-        util::CreamProxy_Register( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID, modified_jdl, m_theJob.getUserProxyCertificate(), url_jid, m_configuration->ice()->lease_delta_time(), true ).execute( theProxy, 3 );
+        util::CreamProxy_Register( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID,
+	modified_jdl,m_theJob.getUserProxyCertificate(), url_jid, m_configuration->ice()->lease_delta_time(), true ).execute(m_theProxy.get(), 3 );
 
 //         theProxy->Register(
 //                            m_theJob.getCreamURL().c_str(),
@@ -338,7 +342,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
         m_theJob.set_failure_reason( ex.what() );
         m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what()  ) );
 
-        ice->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
+        m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
