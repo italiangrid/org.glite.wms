@@ -1,6 +1,7 @@
 #ifndef _GLITE_WMS_BROKER_STORAGE_UTILS_H_
 #define _GLITE_WMS_BROKER_STORAGE_UTILS_H_
 
+#include "glite/wms/rls/catalog_access_utils.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -21,11 +22,7 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-typedef
-std::map<
-  std::string,             // lfn
-  std::vector<std::string> // sfns
-> filemapping;
+typedef glite::wms::rls::filemapping filemapping;
 
 typedef
 std::map<

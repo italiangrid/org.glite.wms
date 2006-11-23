@@ -323,7 +323,7 @@ resolve_filemapping_info(
   const classad::ClassAd& requestAd
 )
 {
-  return brokerinfo::resolve_filemapping_info(requestAd);
+  return glite::wms::rls::resolve_filemapping_info(requestAd);
 }
 
 } // namespace broker

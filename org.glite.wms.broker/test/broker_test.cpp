@@ -3,11 +3,10 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-#include "glite/wms/broker/brokerinfo.h"
 
 #include "glite/wms/common/configuration/exceptions.h"
 
-#include "glite/wms/broker/ResourceBroker.h"
+#include "ResourceBroker.h"
 #include "RBMaximizeFilesISMImpl.h"
 #include "RBSimpleISMImpl.h"
 #include "glite/jdl/JobAdManipulation.h"
@@ -30,7 +29,7 @@
 #include <glite/wmsutils/classads/classad_utils.h>
 
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
+#include "brokerinfo.h"
 
 #include <classad_distribution.h>
 #include <boost/progress.hpp>

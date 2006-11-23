@@ -135,16 +135,14 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 have_glite_jdl=no
 have_glite_wms_common=no
-have_glite_wms_matchmaking=no
 
 AC_GLITE
+AC_GLITE_WMS_RLS
 AC_GLITE_SERVICE_DISCOVERY
 AC_GLITE_WMSUTILS
 AC_GLITE_WMS_ISM
-AC_GLITE_WMS_MATCHMAKING
 AC_GLITE_JDL([],have_glite_jdl=yes,have_glite_jdl=no)
 AC_GLITE_WMS_COMMON([],have_glite_wms_common=yes,have_glite_wms_common=no)
-AC_GLITE_WMS_MATCHMAKING(],have_glite_wms_matchmaking=yes,have_glite_wms_matchmaking=no)
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

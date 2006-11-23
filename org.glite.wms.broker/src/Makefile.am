@@ -6,21 +6,23 @@
 ## *
 ## *********************************************************************
 
+noinst_LTLIBRARIES = \
+        libglite_wms_broker.la
+
 lib_LTLIBRARIES = \
-  	libglite_wms_broker.la \
 	libglite_wms_broker_helper.la
 
 libglite_wms_broker_la_SOURCES = \
         ResourceBroker.cpp \
-	RBSimpleISMImpl.cpp \
-	RBMaximizeFilesISMImpl.cpp \
+        RBSimpleISMImpl.cpp \
+        RBMaximizeFilesISMImpl.cpp \
         matchmaking.cpp \
         exceptions.cpp \
         storage_utils.cpp \
         brokerinfo.cpp \
-       	RBSelectionSchema.cpp \
-	maxRankSelector.cpp \
-	stochasticRankSelector.cpp
+        RBSelectionSchema.cpp \
+        maxRankSelector.cpp \
+        stochasticRankSelector.cpp
 
 libglite_wms_broker_helper_la_SOURCES = \
         Helper.h \
@@ -29,16 +31,15 @@ libglite_wms_broker_helper_la_SOURCES = \
         Helper_matcher.cpp \
         Helper_exceptions.cpp
 
+
 libglite_wms_broker_helper_la_LIBADD = \
-        $(GLITE_WMS_BROKER_LIBS) \
-        -L$(top_srcdir)/../org.glite.wms.rls/build/src/ -lglite_wms_rls \
+        $(top_srcdir)/build/src/libglite_wms_broker.la \
+        $(GLITE_WMS_RLS_LIBS) \
         $(GLITE_WMS_OPTIONAL_GPBOX_LIBS) \
         $(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
         $(GLITE_WMS_ISM_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	-I$(top_srcdir)/interface \
-	-I$(top_srcdir)/src/selectors \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
         $(GLOBUS_THR_CFLAGS) \
