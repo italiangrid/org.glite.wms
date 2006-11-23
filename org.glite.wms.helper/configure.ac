@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.24  2006/11/23 10:08:00  monforte
+#       Removed ism/broker/brokerinfo/matchmaking dependencies
+#
 #       Revision 1.23  2006/03/21 16:10:05  eronchie
 #       Added macro
 #
@@ -237,10 +240,6 @@ fi
 have_glite_wmsutils=no
 have_glite_wms_common=no
 have_glite_wms_jdl=no
-have_glite_wms_broker=no
-have_glite_wms_brokerinfo=no
-have_glite_wms_matchmaking=no
-have_glite_wms_ism=no
 
 AC_GLITE
 AC_OPTIMIZE
@@ -248,20 +247,12 @@ AC_GLITE_WMS_OPTIONAL
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
-AC_GLITE_WMS_BROKER([], have_glite_wms_broker=yes, have_glite_wms_broker=no)
-AC_GLITE_WMS_BROKERINFO([], have_glite_wms_brokerinfo=yes, have_glite_wms_brokerinfo=no)
-AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
-AC_GLITE_WMS_MATCHMAKING([], have_glite_wms_matchmaking=yes, have_glite_wms_matchmaking=no)
 
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
-AC_MSG_RESULT(["GLITE_WMS_BROKERINFO found $have_glite_wms_brokerinfo"])
-AC_MSG_RESULT(["GLITE_WMS_BROKER found $have_glite_wms_broker"])
-AC_MSG_RESULT(["GLITE_WMS_MATCHMAKING found $have_glite_wms_matchmaking"])
-AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
 
 have_security=no
 have_gpbox=no
@@ -280,7 +271,6 @@ AC_CONFIG_FILES([examples/Makefile])
 # AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/broker/Makefile])
 AC_CONFIG_FILES([src/jobadapter/Makefile])
 
 AC_OUTPUT

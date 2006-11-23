@@ -6,7 +6,7 @@
 ## *
 ## *********************************************************************
 
-SUBDIRS = jobadapter broker
+SUBDIRS = jobadapter
 
 lib_LTLIBRARIES = libglite_wms_helper.la
 
