@@ -25,8 +25,8 @@
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 
-#include "glite/wms/broker/RBSimpleISMImpl.h"
-#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
+#include "RBSimpleISMImpl.h"
+#include "RBMaximizeFilesISMImpl.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"

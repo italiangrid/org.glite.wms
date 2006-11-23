@@ -6,16 +6,9 @@
 ## *
 ## *********************************************************************
 
-SUBDIRS = selectors 
-
 lib_LTLIBRARIES = \
   	libglite_wms_broker.la \
 	libglite_wms_broker_helper.la
-
-brokerdir = $(includedir)/glite/wms/broker
-broker_HEADERS = \
-	RBSimpleISMImpl.h \
-	RBMaximizeFilesISMImpl.h 
 
 libglite_wms_broker_la_SOURCES = \
         ResourceBroker.cpp \
@@ -24,11 +17,10 @@ libglite_wms_broker_la_SOURCES = \
         matchmaking.cpp \
         exceptions.cpp \
         storage_utils.cpp \
-        brokerinfo.cpp 
-
-libglite_wms_broker_la_LDFLAGS = -all-static
-libglite_wms_broker_la_LIBADD = \
-        ./selectors/libglite_wms_broker_selectors.la
+        brokerinfo.cpp \
+       	RBSelectionSchema.cpp \
+	maxRankSelector.cpp \
+	stochasticRankSelector.cpp
 
 libglite_wms_broker_helper_la_SOURCES = \
         Helper.h \

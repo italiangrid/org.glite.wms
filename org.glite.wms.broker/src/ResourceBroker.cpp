@@ -5,7 +5,7 @@
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
  
-#include "glite/wms/broker/ResourceBroker.h"
+#include "ResourceBroker.h"
 #include "RBSimpleISMImpl.h"
 
 namespace glite {

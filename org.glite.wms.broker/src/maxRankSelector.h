@@ -5,10 +5,10 @@
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
  
-#ifndef GLITE_WMS_BROKER_SELECTORS_MAXRANKSELECTOR_H_
-#define GLITE_WMS_BROKER_SELECTORS_MAXRANKSELECTOR_H_
+#ifndef GLITE_WMS_BROKER_MAXRANKSELECTOR_H_
+#define GLITE_WMS_BROKER_MAXRANKSELECTOR_H_
 
-#include "glite/wms/broker/selectors/RBSelectionSchema.h"
+#include "RBSelectionSchema.h"
 
 namespace glite {
 namespace wms {

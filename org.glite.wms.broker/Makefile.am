@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2006/11/23 09:33:10  monforte
+#       *** empty log message ***
+#
 #       Revision 1.4  2006/09/19 13:49:45  monforte
 #       Merge against 3.1 and code review
 #
@@ -45,7 +48,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = interface src test
+SUBDIRS = src test
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

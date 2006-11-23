@@ -4,7 +4,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "glite/wms/broker/brokerinfo.h"
+#include "brokerinfo.h"
 #include "storage_utils.h"
 
 using namespace std;

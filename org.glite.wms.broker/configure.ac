@@ -151,8 +151,6 @@ AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/selectors/Makefile])
-AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([test/Makefile])
 AC_OUTPUT
 
