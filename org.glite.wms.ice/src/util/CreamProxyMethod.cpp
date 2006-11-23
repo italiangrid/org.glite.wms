@@ -29,41 +29,46 @@ using namespace std;
 void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries ) 
 {
     log4cpp::Category* m_log_dev( api_util::creamApiLogger::instance()->getLogger() );
-    for ( int t=1; ; ++t ) {
+    bool do_retry = true;
+    int retry_count = 1;
+    for ( retry_count = 1; do_retry; ++retry_count ) {
         try {
             this->method_call( p );            
+            do_retry = false; // if everything goes well, do not retry
         } catch( cream_ex::GenericException& ex ) {
-            if ( t < ntries ) {
+            if ( retry_count < ntries ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream()
                                 << "Cream operation raised a GenericException "
                                 << ex.what()
-                                << " on try " << t << "/" << ntries
+                                << " on try " << retry_count << "/" << ntries
                                 << ". Trying again..."
                                 << log4cpp::CategoryStream::ENDLINE );
+                do_retry = true; // superfluous
                 sleep( 1 );
             } else {
                 CREAM_SAFE_LOG( m_log_dev->errorStream()
                                 << "Cream operation raised a GenericException "
                                 << ex.what()
-                                << " on try " << t << "/" << ntries
+                                << " on try " << retry_count << "/" << ntries
                                 << ". Giving up."
                                 << log4cpp::CategoryStream::ENDLINE );
                 throw; // rethrow
             }            
         } catch( cream_ex::InternalException& ex ) {
-            if ( t < ntries ) {
+            if ( retry_count < ntries ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream()
                                 << "Cream operation raised an InternalException "
                                 << ex.what()
-                                << " on try " << t << "/" << ntries
+                                << " on try " << retry_count << "/" << ntries
                                 << ". Trying again..."
                                 << log4cpp::CategoryStream::ENDLINE );
+                do_retry = true; // superfluous
                 sleep( 1 );
             } else {
                 CREAM_SAFE_LOG( m_log_dev->errorStream()
                                 << "Cream operation raised an InternalException "
                                 << ex.what()
-                                << " on try " << t << "/" << ntries
+                                << " on try " << retry_count << "/" << ntries
                                 << ". Giving up."
                                 << log4cpp::CategoryStream::ENDLINE );
                 throw; // rethrow
@@ -71,7 +76,6 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
         } catch( ... ) {
             throw; // rethrow anything else
         }
-        break; // everything went ok, exit the loop now
     }
 }
 

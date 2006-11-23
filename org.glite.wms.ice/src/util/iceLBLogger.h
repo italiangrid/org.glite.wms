@@ -76,7 +76,8 @@ namespace glite {
                     ~iceLBLogger( void );
                 protected:
                     iceLBLogger( );
-
+                    
+                    static boost::recursive_mutex s_mutex; 
                     static iceLBLogger* s_instance;
                     log4cpp::Category* m_log_dev;
                 };

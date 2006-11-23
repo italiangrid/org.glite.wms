@@ -28,6 +28,7 @@
 using namespace glite::wms::ice::util;
 
 iceLBLogger* iceLBLogger::s_instance = 0;
+boost::recursive_mutex iceLBLogger::s_mutex;
 
 //////////////////////////////////////////////////////////////////////////////
 // 
@@ -71,43 +72,48 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     boost::scoped_ptr< iceLBContext > m_ctx( new iceLBContext() );
 
     std::string new_seq_code;
-        
-    try {
-        m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
-    } catch( iceLBException& ex ) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceLBLogger::logEvent() - Error logging " 
-                       << ev->describe()
-                       << " GridJobID=[" 
-                       << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
-                       << ". Caught exception " << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE);
-        return ev->getJob();
-    }
-    
-    m_ctx->startLogging();
-    
     int res = 0;
-    do {
-        CREAM_SAFE_LOG(m_log_dev->infoStream() 
-                       << "iceLBLogger::logEvent() - Logging " 
-                       << ev->describe( )
-                       << " GridJobID=[" 
-                       << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
-                       // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
-                       // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
-                       
-                       << log4cpp::CategoryStream::ENDLINE);
+
+    { // locks LB
+        boost::recursive_mutex::scoped_lock L( s_mutex );
         
-        res = ev->execute( m_ctx.get() );
+        try {
+            m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
+        } catch( iceLBException& ex ) {
+            CREAM_SAFE_LOG(m_log_dev->errorStream()
+                           << "iceLBLogger::logEvent() - Error logging " 
+                           << ev->describe()
+                           << " GridJobID=[" 
+                           << ev->getJob().getGridJobID() << "]"
+                           << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
+                           << ". Caught exception " << ex.what()
+                           << log4cpp::CategoryStream::ENDLINE);
+            return ev->getJob();
+        }
         
-        m_ctx->testCode( res );
+        m_ctx->startLogging();
         
-    } while( res != 0 );        
+        do {
+            CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                           << "iceLBLogger::logEvent() - Logging " 
+                           << ev->describe( )
+                           << " GridJobID=[" 
+                           << ev->getJob().getGridJobID() << "]"
+                           << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
+                           // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
+                           // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
+                           
+                           << log4cpp::CategoryStream::ENDLINE);
+            
+            res = ev->execute( m_ctx.get() );
+            
+            m_ctx->testCode( res );
+            
+        } while( res != 0 );        
+        
+        new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+    } // unlocks the LB
     
-    new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
                    << "iceLBLogger::logEvent() - ...Got return code " 
                    << res 
@@ -115,6 +121,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                    // << " Seq code AFTER from ctx=[" << new_seq_code << "]"
                    
                    << log4cpp::CategoryStream::ENDLINE);
+
 
     { // Now, locks the cache
         jobCache* m_cache( jobCache::getInstance() );

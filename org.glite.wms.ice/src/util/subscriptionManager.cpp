@@ -125,7 +125,7 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
 		     << "] [" << it->getConsumerURL() << "]"
 		     << " [" << it->getTopicName()<<"]"
 		     << " [" << m_aT << "] ["
-		     << it->getRate() << "]"
+                     << it->getRate() << "]"
 		     << log4cpp::CategoryStream::ENDLINE);
     }
 }
