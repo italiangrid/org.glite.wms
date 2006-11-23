@@ -295,8 +295,6 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
         // api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
         theProxy->Authenticate(m_theJob.getUserProxyCertificate());
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
-        m_theJob.set_failure_reason( ex.what() );
-        m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what() ) );
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
                        << "Unable to submit gridJobID=" 
@@ -304,6 +302,9 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
                        << " due to authentication error:" << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
+        m_theJob.set_failure_reason( ex.what() );
+        m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what() ) );
+        m_theJob = m_lb_logger->logEvent( new util::job_done_failed_event( m_theJob ) ); // added in order to have the failure reason shown in the UI
         ice->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
@@ -336,6 +337,7 @@ void iceCommandSubmit::execute( Ice* ice, cream_api::soap_proxy::CreamProxy* the
                        );
         m_theJob.set_failure_reason( ex.what() );
         m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what()  ) );
+
         ice->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
         throw( iceCommandFatal_ex( ex.what() ) );
     }

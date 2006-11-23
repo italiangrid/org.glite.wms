@@ -132,7 +132,11 @@ int main(int argc, char* argv[]) {
         struct timeval T;
         gettimeofday(&T, 0);
         
-        ad->InsertAttr("edg_jobid", boost::str( boost::format( "https://grid005.pd.infn.it:9000/000%1%.%2%" ) % time(NULL) % T.tv_usec ) );
+        string job_id;
+        job_id = boost::str( boost::format( "%1%%2%1234567890" ) % time(NULL) % T.tv_usec );
+        job_id.resize( 22, 'X' );
+        ad->InsertAttr( "edg_jobid", boost::str( boost::format("https://grid005.pd.infn.it:9000/%1%") % job_id ) );
+        // ad->InsertAttr("edg_jobid", "https://ghemon.cnaf.infn.it:9000/VPju3g1taAiCGNpUgR7OwA" );
         
         classad::ClassAdUnParser unp;
         

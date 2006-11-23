@@ -35,40 +35,21 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
         try {
             this->method_call( p );            
             do_retry = false; // if everything goes well, do not retry
-        } catch( cream_ex::GenericException& ex ) {
+        } catch( cream_ex::ConnectionTimeoutException& ex ) {
             if ( retry_count < ntries ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream()
-                                << "Cream operation raised a GenericException "
+                                << "Connection timed out to CREAM: \""
                                 << ex.what()
-                                << " on try " << retry_count << "/" << ntries
-                                << ". Trying again..."
+                                << "\" on try " << retry_count << "/" << ntries
+                                << ". Trying again in 1 sec..."
                                 << log4cpp::CategoryStream::ENDLINE );
                 do_retry = true; // superfluous
                 sleep( 1 );
             } else {
                 CREAM_SAFE_LOG( m_log_dev->errorStream()
-                                << "Cream operation raised a GenericException "
+                                << "Connection timed out to CREAM: \""
                                 << ex.what()
-                                << " on try " << retry_count << "/" << ntries
-                                << ". Giving up."
-                                << log4cpp::CategoryStream::ENDLINE );
-                throw; // rethrow
-            }            
-        } catch( cream_ex::InternalException& ex ) {
-            if ( retry_count < ntries ) {
-                CREAM_SAFE_LOG( m_log_dev->warnStream()
-                                << "Cream operation raised an InternalException "
-                                << ex.what()
-                                << " on try " << retry_count << "/" << ntries
-                                << ". Trying again..."
-                                << log4cpp::CategoryStream::ENDLINE );
-                do_retry = true; // superfluous
-                sleep( 1 );
-            } else {
-                CREAM_SAFE_LOG( m_log_dev->errorStream()
-                                << "Cream operation raised an InternalException "
-                                << ex.what()
-                                << " on try " << retry_count << "/" << ntries
+                                << "\" on try " << retry_count << "/" << ntries
                                 << ". Giving up."
                                 << log4cpp::CategoryStream::ENDLINE );
                 throw; // rethrow
@@ -108,6 +89,7 @@ CreamProxy_Register::CreamProxy_Register( const string& service,
 void CreamProxy_Register::method_call( soap_proxy::CreamProxy* p )  
     throw(cream_ex::BaseException&,
           cream_ex::InvalidArgumentException&,
+          cream_ex::ConnectionTimeoutException&,
           cream_ex::GridProxyDelegationException&,
           cream_ex::JobSubmissionDisabledException&,
           cream_ex::GenericException&,
@@ -135,6 +117,7 @@ CreamProxy_Cancel::CreamProxy_Cancel( const std::string& service, const std::vec
 void CreamProxy_Cancel::method_call( soap_proxy::CreamProxy* p )  
     throw(cream_ex::BaseException&,
           cream_ex::JobUnknownException&,
+          cream_ex::ConnectionTimeoutException&,
           cream_ex::InvalidArgumentException&,
           cream_ex::JobStatusInvalidException&,
           cream_ex::GenericException&,
@@ -166,6 +149,7 @@ CreamProxy_Lease::CreamProxy_Lease( const string& service,
 void CreamProxy_Lease::method_call( soap_proxy::CreamProxy* p ) 
             throw(cream_ex::BaseException&,
 		  cream_ex::GenericException&,
+                  cream_ex::ConnectionTimeoutException&,
 		  cream_ex::AuthenticationException&,
 		  cream_ex::AuthorizationException&,
 		  cream_ex::InternalException&,
@@ -201,6 +185,7 @@ void CreamProxy_Info::method_call( soap_proxy::CreamProxy* p )
     throw( cream_ex::BaseException&,
            cream_ex::JobUnknownException&,
            cream_ex::InvalidArgumentException&,
+           cream_ex::ConnectionTimeoutException&,
            cream_ex::GenericException&,
            cream_ex::AuthenticationException&,
            cream_ex::AuthorizationException&,

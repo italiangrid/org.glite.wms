@@ -87,6 +87,7 @@ namespace util {
     protected:
         void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
             throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,
+                  glite::ce::cream_client_api::cream_exceptions::ConnectionTimeoutException&,
                   glite::ce::cream_client_api::cream_exceptions::InvalidArgumentException&,
                   glite::ce::cream_client_api::cream_exceptions::GridProxyDelegationException&,
                   glite::ce::cream_client_api::cream_exceptions::JobSubmissionDisabledException&,
@@ -116,6 +117,7 @@ namespace util {
     protected:
         void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
             throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,
+                  glite::ce::cream_client_api::cream_exceptions::ConnectionTimeoutException&,
 		  glite::ce::cream_client_api::cream_exceptions::JobUnknownException&,
 		  glite::ce::cream_client_api::cream_exceptions::InvalidArgumentException&,
 		  glite::ce::cream_client_api::cream_exceptions::JobStatusInvalidException&,
@@ -142,6 +144,7 @@ namespace util {
     protected:
         void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
             throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,
+                  glite::ce::cream_client_api::cream_exceptions::ConnectionTimeoutException&,
 		  glite::ce::cream_client_api::cream_exceptions::GenericException&,
 		  glite::ce::cream_client_api::cream_exceptions::AuthenticationException&,
 		  glite::ce::cream_client_api::cream_exceptions::AuthorizationException&,
@@ -170,6 +173,7 @@ namespace util {
     protected:        
         void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
 	    throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,
+                  glite::ce::cream_client_api::cream_exceptions::ConnectionTimeoutException&,
 		  glite::ce::cream_client_api::cream_exceptions::JobUnknownException&,
 		  glite::ce::cream_client_api::cream_exceptions::InvalidArgumentException&,
 		  glite::ce::cream_client_api::cream_exceptions::GenericException&,
