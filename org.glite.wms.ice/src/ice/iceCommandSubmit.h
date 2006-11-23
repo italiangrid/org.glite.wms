@@ -67,7 +67,7 @@ namespace util {
  public:
      iceCommandSubmit( Ice*, glite::ce::cream_client_api::soap_proxy::CreamProxy*, const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
      
-     virtual ~iceCommandSubmit() { if(m_theProxy) delete( m_theProxy ); }
+     virtual ~iceCommandSubmit() { /*if(m_theProxy) delete( m_theProxy ); */ }
      
      virtual void execute( /* Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy */) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      
