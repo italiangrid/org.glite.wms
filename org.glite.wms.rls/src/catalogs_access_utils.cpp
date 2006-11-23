@@ -400,13 +400,13 @@ operator()(
 };
 
 
-boost::shared_ptr<glite::wms::brokerinfo::filemapping>
+boost::shared_ptr<filemapping>
 resolve( const lfns_2B_resolved& lfns, const string& proxy){
 
 //print_lfns(lfns);
 
-   boost::shared_ptr<glite::wms::brokerinfo::filemapping> fm(
-      new glite::wms::brokerinfo::filemapping()
+   boost::shared_ptr<filemapping> fm(
+      new filemapping()
    );
 
    rls_lfns_ptr rls_c= lfns.get<_RLS>();
@@ -658,7 +658,7 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
 
 } //anonymous namespace
 
-boost::shared_ptr<glite::wms::brokerinfo::filemapping> 
+boost::shared_ptr<filemapping> 
 resolve_filemapping_info(
    const classad::ClassAd& requestAd 
 ) 
@@ -668,8 +668,8 @@ resolve_filemapping_info(
    string vo = requestad::get_virtual_organisation(requestAd, voInJdl);
    if ( !voInJdl ) {
       Warning("No VO defined in the JDL");
-      boost::shared_ptr<glite::wms::brokerinfo::filemapping> fm(
-         new glite::wms::brokerinfo::filemapping()
+      boost::shared_ptr<filemapping> fm(
+         new filemapping()
       );
       return fm;
    }

@@ -11,15 +11,26 @@
 
 #include<boost/shared_ptr.hpp>
 
-#include "glite/wms/brokerinfo/brokerinfo.h"
+#include<string>
+#include<vector>
+#include<map>
 
-using namespace std;
+namespace classad
+{
+class ClassAd;
+}
 
 namespace glite {
 namespace wms {
 namespace rls {
 
-boost::shared_ptr<glite::wms::brokerinfo::filemapping>
+typedef
+std::map<
+  std::string,             // lfn
+  std::vector<std::string> // sfns
+> filemapping;
+
+boost::shared_ptr<filemapping>
 resolve_filemapping_info(
    const classad::ClassAd& requestAd
 );
