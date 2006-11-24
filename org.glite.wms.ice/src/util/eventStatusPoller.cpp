@@ -101,8 +101,8 @@ namespace { // anonymous namespace for local definitions
                 
                 CREAM_SAFE_LOG(log_dev->warnStream()
                                << "eventStatusPoller::handle_unreachable_job() - "
-                               << "Job cream/grid ID=[" << jit->getCreamJobID()
-                               << "]/[" << jit->getGridJobID()
+                               << "cream_job_id [" << jit->getCreamJobID()
+                               << "], grid_job_id [" << jit->getGridJobID()
                                << "] was not found on CREAM; Retrying later..."
                                << log4cpp::CategoryStream::ENDLINE);
                 
@@ -112,8 +112,8 @@ namespace { // anonymous namespace for local definitions
                 
                 CREAM_SAFE_LOG(log_dev->errorStream()
                                << "eventStatusPoller::handle_unreachable_job() - "
-                               << "Job cream/grid ID=[" << jit->getCreamJobID()
-                               << "]/[" << jit->getGridJobID()
+                               << "cream_job_id [" << jit->getCreamJobID()
+                               << "], grid_job_id [" << jit->getGridJobID()
                                << "] was not found on CREAM after " 
                                << STATUS_POLL_RETRY_COUNT
                                << "retries; Removing from the job cache"
@@ -178,7 +178,8 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
 	
         CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		       << "eventStatusPoller::get_jobs_to_poll() - "
-		       << "Job [" << jit->getCreamJobID() << "]"
+		       << "cream_job_id [" << jit->getCreamJobID() << "],"
+                       << "grid_job_id [" << jit->getGridJobID() << "]"
 		       << " oldness=" << oldness << " threshold=" << m_threshold
 		       << log4cpp::CategoryStream::ENDLINE);
 	
@@ -202,6 +203,14 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
         // wms_utils::scope_guard handle_unreachable_job_guard( handle_job( jit->getCreamJobID() ) );
         
         job_to_query.push_back( jit->getCreamJobID() );
+
+        CREAM_SAFE_LOG(m_log_dev->debugStream()
+                       << "eventStatusPoller::check_jobs() - "
+                       << "Polling job with cream_job_id ["
+                       << jit->getCreamJobID()
+                       << "], grid_job_id [" 
+                       << jit->getGridJobID() << "]"
+                       << log4cpp::CategoryStream::ENDLINE);
 	
         try {
             m_creamClient->Authenticate( jit->getUserProxyCertificate() );
@@ -218,7 +227,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
             // handle_unreachable_job_guard.dismiss();
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "eventStatusPoller::check_jobs() - "
-                           << "CREAM responded JobUnknown for JobId=["
+                           << "CREAM responded JobUnknown for cream_job_id ["
                            << jit->getCreamJobID()
                            << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
                            << log4cpp::CategoryStream::ENDLINE);
@@ -233,7 +242,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
 
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "eventStatusPoller::check_jobs() - "
-                           << "Cannot query status job for JobId=["
+                           << "Cannot query status job for cream_job_id ["
                            << jit->getCreamJobID()
                            << "]. Exception is [" << ex.what() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
@@ -244,7 +253,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
 
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "eventStatusPoller::check_jobs() - "
-                           << "Cannot query status job for JobId=["
+                           << "Cannot query status job for cream_job_id ["
                            << jit->getCreamJobID()
                            << "]. Exception is [" 
                            << ex.what() << "]"
@@ -256,7 +265,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
 
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "eventStatusPoller::check_jobs() - "
-                           << "Cannot query status job for JobId=["
+                           << "Cannot query status job for cream_job_id ["
                            << jit->getCreamJobID()
                            << "]. Exception is [" 
                            << ex.what() << "]"
@@ -268,7 +277,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
             
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "eventStatusPoller::check_jobs() - "
-                           << "Cannot query status job for JobId=["
+                           << "Cannot query status job for cream_job_id ["
                            << jit->getCreamJobID()
                            << "]. Exception is [" 
                            << ex.what() << "]"
@@ -286,7 +295,7 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
             
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "eventStatusPoller::check_jobs() - "
-                           << "Cannot query status job for JobId=["
+                           << "Cannot query status job for cream_job_id ["
                            << jit->getCreamJobID()
                            << "]. Exception is [" 
                            << ex.what() << "]"
@@ -340,7 +349,7 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
         
         if ( m_cache->end() == jit ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::update_single_job() - cream_jobid ["
+                           << "eventStatusPoller::update_single_job() - cream_job_id ["
                            << cid << "] disappeared!"
                            << log4cpp::CategoryStream::ENDLINE);
             return;
@@ -360,9 +369,9 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
         if ( stNum == jobstat::PURGED ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
                            << "eventStatusPoller::update_single_job() - "
-                           << "Job with cream_job_id = ["
+                           << "Job with cream_job_id ["
                            << jit->getCreamJobID()
-                           << "], grid_job_id = ["
+                           << "], grid_job_id ["
                            << jit->getGridJobID()
                            << "] is reported as PURGED. Removing from cache"
                            << log4cpp::CategoryStream::ENDLINE); 
@@ -377,8 +386,8 @@ void eventStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
             CREAM_SAFE_LOG(m_log_dev->infoStream()
                            << "eventStatusPoller::update_single_job() - "
                            << "Updating jobcache with "
-                           << "grid_jobid = [" << jit->getGridJobID() << "] "
-                           << "cream_jobid = [" << cid << "]"
+                           << "grid_job_id [" << jit->getGridJobID() << "] "
+                           << "cream_job_id [" << cid << "]"
                            << " status = [" << it->getStatusName() << "]"
                            << " exit_code = [" << exitCode << "]"
                            << " failure_reason = [" << it->getFailureReason() << "]"
