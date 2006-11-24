@@ -81,7 +81,7 @@ namespace util {
    time_t m_threshold_time;
    //time_t m_delay;
    glite::wms::ice::util::iceLBLogger* m_lb_logger;
-   void killJob( glite::wms::ice::util::CreamJob&, time_t );
+   void killJob( glite::wms::ice::util::CreamJob&, const time_t );
    
   public:
    iceCommandJobKill( glite::ce::cream_client_api::soap_proxy::CreamProxy*, 
