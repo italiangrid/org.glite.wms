@@ -24,6 +24,9 @@ libglite_wms_broker_la_SOURCES = \
         maxRankSelector.cpp \
         stochasticRankSelector.cpp
 
+libglite_wms_broker_helper_la_DEPENDENCIES = \
+	libglite_wms_broker.la
+
 libglite_wms_broker_helper_la_SOURCES = \
         Helper.h \
         Helper.cpp \
