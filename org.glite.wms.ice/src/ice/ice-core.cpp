@@ -36,8 +36,10 @@
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#ifdef GLITE_WMS_ICE_HAVE_PURGER
 #include "glite/wms/purger/purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
+#endif
 #ifdef GLITE_WMS_ICE_HAVE_RENEWAL
 #include "glite/security/proxyrenewal/renewal.h"
 #endif
@@ -575,7 +577,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
             CREAM_SAFE_LOG(
                            m_log_dev->warnStream()
                            << "ice-core::resubmit_or_purge_job() - "
-                           << "Proxy unregistration support not compiled." 
+                           << "Proxy unregistration support not enabled." 
                            << log4cpp::CategoryStream::ENDLINE
                            );
 #endif
@@ -583,6 +585,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
         }
         if ( cream_api::job_statuses::CANCELLED == it->getStatus() ) {
             // must purge job within WMS
+#ifdef GLITE_WMS_ICE_HAVE_PURGER
             try {
                 CREAM_SAFE_LOG(
                                m_log_dev->infoStream()
@@ -608,6 +611,14 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
                                );
                 
             }
+#else
+            CREAM_SAFE_LOG(
+                           m_log_dev->warnStream()
+                           << "ice-core::resubmit_or_purge_job() - "
+                           << "WMS job purger not enabled."
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+#endif
         }
         
         if ( it->can_be_resubmitted() ) {
