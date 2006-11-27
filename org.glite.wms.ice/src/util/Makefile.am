@@ -31,7 +31,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				CreamProxyFactory.cpp \
 				iceThreadPool.cpp \
 				CreamProxyMethod.cpp \
-				iceCommandJobKill.cpp
+				iceCommandJobKill.cpp \
+				iceCommandSubUpdater.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
