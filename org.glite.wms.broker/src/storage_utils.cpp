@@ -9,7 +9,7 @@
 #include <classad_distribution.h>
 
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/brokerinfo/brokerinfo.h"
+#include "brokerinfo.h"
 #include "glite/wms/ism/ism.h"
 #include "storage_utils.h"
 
