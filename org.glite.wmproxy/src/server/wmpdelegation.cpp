@@ -88,9 +88,9 @@ WMPDelegation::getProxyRequest(const string &original_delegation_id)
 	user_dn = wmputilities::getUserDN();
 
 	string delegation_id = original_delegation_id;
-	if (original_delegation_id==""){
+	if (original_delegation_id == ""){
 		delegation_id=string(GRSTx509MakeDelegationID());
-		edglog(debug)<<"Automatically generated ";
+		edglog(debug)<<"Automatically generated Delegation ID";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	char * request = NULL;
@@ -123,9 +123,9 @@ WMPDelegation::renewProxyRequest(const std::string &original_delegation_id)
 
 	// Initialise delegation_id
 	string delegation_id = original_delegation_id;
-	if (original_delegation_id==""){
+	if (original_delegation_id== "" ){
 		delegation_id=string(GRSTx509MakeDelegationID());
-		edglog(debug)<<"Automatically generated ";
+		edglog(debug)<<"Automatically generated Delegation ID";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 
@@ -231,13 +231,9 @@ WMPDelegation::getNewProxyRequest()
 	GLITE_STACK_CATCH();
 }
 
-
-
-
-
-
 void
-WMPDelegation::putProxy(const string &original_delegation_id, const string &proxy_req)
+WMPDelegation::putProxy(const string &original_delegation_id,
+	const string &proxy_req)
 {
 	GLITE_STACK_TRY("putProxy()");
 	edglog_fn("WMPDelegation::putProxy");
@@ -246,9 +242,9 @@ WMPDelegation::putProxy(const string &original_delegation_id, const string &prox
 	user_dn = wmputilities::getUserDN();
 	// Initialise delegation_id
 	string delegation_id = original_delegation_id;
-	if (original_delegation_id==""){
-		delegation_id=string(GRSTx509MakeDelegationID());
-		edglog(debug)<<"Automatically generated ";
+	if (original_delegation_id == "") {
+		delegation_id = string(GRSTx509MakeDelegationID());
+		edglog(debug)<<"Automatically generated Delegation ID";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
@@ -263,7 +259,8 @@ WMPDelegation::putProxy(const string &original_delegation_id, const string &prox
 			"putProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to store client Proxy");
 	}
-	edglog(debug)<<"Client Proxy successfully stored:\n"<< WMPDelegation::getDelegatedProxyPath(delegation_id) << endl ;
+	edglog(debug)<<"Client Proxy successfully stored:\n"
+		<<WMPDelegation::getDelegatedProxyPath(delegation_id)<<endl;
 	free(user_dn);
 
     GLITE_STACK_CATCH();
@@ -279,9 +276,9 @@ WMPDelegation::destroyProxy(const string &original_delegation_id)
   	user_dn = wmputilities::getUserDN();
 	// Initialise delegation_id
 	string delegation_id = original_delegation_id;
-	if (original_delegation_id==""){
+	if (original_delegation_id == "") {
 		delegation_id=string(GRSTx509MakeDelegationID());
-		edglog(debug)<<"Automatically generated ";
+		edglog(debug)<<"Automatically generated Delegation ID";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
@@ -319,7 +316,7 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 	string delegation_id = original_delegation_id;
 	if (original_delegation_id==""){
 		delegation_id=string(GRSTx509MakeDelegationID());
-		edglog(debug)<<"Automatically generated ";
+		edglog(debug)<<"Automatically generated Delegation ID";
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	// Check Proxy Path

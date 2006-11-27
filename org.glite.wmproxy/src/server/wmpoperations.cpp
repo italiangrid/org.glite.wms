@@ -1,8 +1,21 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpoperations.cpp
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
@@ -187,7 +200,12 @@ getJDL(const std::string &job_id, JdlType jdltype,
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-		
+	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jid);
+	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
@@ -282,11 +300,15 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-		
+	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jobid);
+	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
 
 	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
 	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
@@ -325,7 +347,12 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-		
+	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jobid);
+	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
@@ -454,7 +481,12 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		edglog(info)<<"Authorizing user..."<<endl;
 		authorizer::WMPAuthorizer *auth = 
 			new authorizer::WMPAuthorizer();
-			
+		
+		// Checking job existency (if the job directory doesn't exist:
+		// The job has not been registered from this Workload Manager Proxy
+		// or it has been purged)
+		checkJobDirectoryExistence(*jobid);
+	
 		// Getting delegated proxy inside job directory
 		string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 		edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
@@ -917,7 +949,12 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-		
+	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jid);
+	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
@@ -974,6 +1011,11 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
+	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jid);
 	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
@@ -1041,6 +1083,11 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
+	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jid);
 	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
@@ -1318,6 +1365,11 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
 	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jid);
+	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
@@ -1384,6 +1436,11 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
+	
+	// Checking job existency (if the job directory doesn't exist:
+	// The job has not been registered from this Workload Manager Proxy
+	// or it has been purged)
+	checkJobDirectoryExistence(*jid);
 	
 	// Getting delegated proxy inside job directory
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);

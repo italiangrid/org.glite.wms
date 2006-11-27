@@ -1,8 +1,21 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpcommon.cpp
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
@@ -22,15 +35,18 @@
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
 
+#include "glite/jdl/ExpDagAd.h"
+
 // JDL Attributes
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/jdl_attributes.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
 
 // Logger
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
-
 
 // Global variables for configuration
 extern WMProxyConfiguration conf;
@@ -171,6 +187,21 @@ logRemoteHostInfo()
 	setGlobalSandboxDir();
 		
 	GLITE_STACK_CATCH();
+}
+
+void
+checkJobDirectoryExistence(glite::wmsutils::jobid::JobId jid, int level)
+{
+	// TODO change it with boost::isDirectory (or similar)
+	if (!wmputilities::fileExists(wmputilities::getJobDirectoryPath(jid))) {
+		edglog(error)<<"The job has not been registered from this Workload "
+			"Manager Proxy server or it has been purged"<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"checkJobDirectoryExistence()", 
+			wmputilities::WMS_OPERATION_NOT_ALLOWED,
+			"The job has not been registered from this Workload Manager Proxy "
+			"server (" + wmputilities::getEndpoint() + ") or it has been purged");
+	}
 }
 
 /**
