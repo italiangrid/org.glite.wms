@@ -24,6 +24,7 @@
 #include "iceLBEvent.h"
 #include "CreamProxyFactory.h"
 #include "CreamProxyMethod.h"
+#include "iceCommandJobKill.h"
 
 // GLITE stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -71,20 +72,22 @@ void jobKiller::body()
             for( job_it = jobCache::getInstance()->begin(); 
                  job_it != jobCache::getInstance()->end();
                  ++job_it) {
-                time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
-                if( proxyTimeLeft < m_threshold_time && proxyTimeLeft > 5 ) {
-                    CREAM_SAFE_LOG( m_log_dev->infoStream() 
-                                    << "jobKiller::body() - Job ["
-                                    << job_it->getCreamJobID() << "]"
-                                    << " has proxy expiring in "
-                                    << proxyTimeLeft 
-                                    << " seconds, which is less than "
-                                    << "the threshold ("
-                                    << m_threshold_time << " seconds). "
-                                    << "Going to cancel it..."
-                                    << log4cpp::CategoryStream::ENDLINE);
-                    killJob( *job_it, proxyTimeLeft );
-                }
+//                 time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
+//                 if( proxyTimeLeft < m_threshold_time && proxyTimeLeft > 5 ) {
+//                     CREAM_SAFE_LOG( m_log_dev->infoStream() 
+//                                     << "jobKiller::body() - Job ["
+//                                     << job_it->getCreamJobID() << "]"
+//                                     << " has proxy expiring in "
+//                                     << proxyTimeLeft 
+//                                     << " seconds, which is less than "
+//                                     << "the threshold ("
+//                                     << m_threshold_time << " seconds). "
+//                                     << "Going to cancel it..."
+//                                     << log4cpp::CategoryStream::ENDLINE);
+//                     killJob( *job_it, proxyTimeLeft );
+//                 }
+		iceCommandJobKill cmd( util::CreamProxyFactory::makeCreamProxy(true), &(*job_it) );
+		cmd.execute();
             }
         }
         sleep( m_delay );
@@ -92,47 +95,47 @@ void jobKiller::body()
 }
 
 //______________________________________________________________________________
-void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
-{
-  try {
-      m_theProxy->Authenticate( J.getUserProxyCertificate() );
-      vector<string> url_jid(1);   
-      url_jid[0] = J.getCreamJobID();
-   
-      J = m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
-
-      J.set_killed_by_ice();
-      J.set_failure_reason( "The job has been killed because its proxy was expiring" );
-
-      
-      // m_theProxy->Cancel( J.getCreamURL().c_str(), url_jid );
-      CreamProxy_Cancel( J.getCreamURL(), url_jid ).execute( m_theProxy.get(), 3 );
-
-      // The corresponding "cancel done event" will be notified by the
-      // poller/listener, so it is not logged here
-
-      // The poller takes care of purging jobs
-      // theProxy->Purge( J.getCreamURL().c_str(), url_jid) ;
-      CREAM_SAFE_LOG(
-                     m_log_dev->infoStream() << "jobKiller::killJob() - "
-                     << " Cancellation SUCCESFUL for job ["
-                     <<  J.getCreamJobID() << "]"
-                     << log4cpp::CategoryStream::ENDLINE);
-  } catch(std::exception& ex) {
-      J = m_lb_logger->logEvent( new cream_cancel_refuse_event( J, ex.what() ) );
-      // The job will not be removed from the job cache. We keep
-      // trying to cancel it until the residual proxy time is less
-      // than a minimum threshold. After that, the statusPoller will
-      // eventually take care of removing it from the cache.
-      CREAM_SAFE_LOG (
-                      m_log_dev->errorStream() 
-                      << "jobKiller::killJob() - Error"
-                      << " killing job [" << J.getCreamJobID() << "]: "
-                      << ex.what()
-                      << log4cpp::CategoryStream::ENDLINE);
-  }
-
-  // The cache is already locked
-  jobCache::getInstance()->put( J ); 
-
-}
+// void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
+// {
+//   try {
+//       m_theProxy->Authenticate( J.getUserProxyCertificate() );
+//       vector<string> url_jid(1);   
+//       url_jid[0] = J.getCreamJobID();
+//    
+//       J = m_lb_logger->logEvent( new cream_cancel_request_event( J, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
+// 
+//       J.set_killed_by_ice();
+//       J.set_failure_reason( "The job has been killed because its proxy was expiring" );
+// 
+//       
+//       // m_theProxy->Cancel( J.getCreamURL().c_str(), url_jid );
+//       CreamProxy_Cancel( J.getCreamURL(), url_jid ).execute( m_theProxy.get(), 3 );
+// 
+//       // The corresponding "cancel done event" will be notified by the
+//       // poller/listener, so it is not logged here
+// 
+//       // The poller takes care of purging jobs
+//       // theProxy->Purge( J.getCreamURL().c_str(), url_jid) ;
+//       CREAM_SAFE_LOG(
+//                      m_log_dev->infoStream() << "jobKiller::killJob() - "
+//                      << " Cancellation SUCCESFUL for job ["
+//                      <<  J.getCreamJobID() << "]"
+//                      << log4cpp::CategoryStream::ENDLINE);
+//   } catch(std::exception& ex) {
+//       J = m_lb_logger->logEvent( new cream_cancel_refuse_event( J, ex.what() ) );
+//       // The job will not be removed from the job cache. We keep
+//       // trying to cancel it until the residual proxy time is less
+//       // than a minimum threshold. After that, the statusPoller will
+//       // eventually take care of removing it from the cache.
+//       CREAM_SAFE_LOG (
+//                       m_log_dev->errorStream() 
+//                       << "jobKiller::killJob() - Error"
+//                       << " killing job [" << J.getCreamJobID() << "]: "
+//                       << ex.what()
+//                       << log4cpp::CategoryStream::ENDLINE);
+//   }
+// 
+//   // The cache is already locked
+//   jobCache::getInstance()->put( J ); 
+// 
+// }

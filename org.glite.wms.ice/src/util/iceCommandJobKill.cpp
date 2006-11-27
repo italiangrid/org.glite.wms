@@ -77,7 +77,7 @@ void iceCommandJobKill::execute( ) throw()
                     << "Going to cancel it..."
                     << log4cpp::CategoryStream::ENDLINE);
 		    
-   killJob( *m_theJob, proxyTimeLeft );
+    killJob( *m_theJob, proxyTimeLeft );
   }
 }
 

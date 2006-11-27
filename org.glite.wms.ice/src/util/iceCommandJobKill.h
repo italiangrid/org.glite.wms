@@ -23,11 +23,11 @@
 #include "iceAbsCommand.h"
 //#include "jobCache.h"
 //
-//#include "creamJob.h"
+#include "creamJob.h"
 
 #include <boost/scoped_ptr.hpp>
 
-namespace glite {
+/* namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
@@ -36,7 +36,7 @@ namespace glite {
       }
       }
       }
-      };
+      }; */
 
 namespace glite {
   namespace ce {
@@ -90,6 +90,8 @@ namespace util {
    virtual void execute( ) throw( );
    
    virtual ~iceCommandJobKill() {  }
+   
+   std::string get_grid_job_id( void ) const { if(m_theJob) return m_theJob->getGridJobID(); else return ""; }
  };
 
 } // namespace ice
