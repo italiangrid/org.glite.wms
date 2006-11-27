@@ -79,9 +79,10 @@ void leaseUpdater::update_lease( void )
         }
     } // releases lock on job cache
     
-    for ( cj_list_t::iterator it = jobs_to_check.begin(); it != jobs_to_check.end(); ) {
+    for ( cj_list_t::iterator it = jobs_to_check.begin(); it != jobs_to_check.end(); ++it) {
         if ( it->getEndLease() <= time(0) ) {
             // Remove expired job from cache
+	    
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "leaseUpdater::update_lease() - "
                            << "Removing from cache lease-expired job [" 
@@ -90,7 +91,7 @@ void leaseUpdater::update_lease( void )
 
             boost::recursive_mutex::scoped_lock M( jobCache::mutex );
             jobCache::iterator tmp( m_cache->lookupByGridJobID( it->getGridJobID() ) );
-            it = m_cache->erase( tmp );              
+            m_cache->erase( tmp );              
         } else {
             if( ! it->getCreamJobID().empty() ) {
                 CREAM_SAFE_LOG(m_log_dev->infoStream() 
@@ -107,7 +108,7 @@ void leaseUpdater::update_lease( void )
                     update_lease_for_job( *it );
                 }
             }
-            ++it;
+            
         }
     } // end for
 }
