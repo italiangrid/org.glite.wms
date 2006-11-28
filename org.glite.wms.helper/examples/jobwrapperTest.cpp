@@ -108,7 +108,7 @@ main(int argc, char* argv[])
 
   // set EDG_WL_JOBID to the default value
   jobid::JobId j("https://edt003.cnaf.infn.it:9000/131.154.99.82/092250216745692?edt003.cnaf.infn.it:7771");
-  jw->job_Id(j.toString());
+  jw->job_id(j.toString());
 
   // set EDG_WL_SEQUENCE_CODE to the default value
   //jw->sequence_code("UI=1:NS=1:WM=3:BH=3:JSS=2:LM=1:LRMS=1:APP=0");
