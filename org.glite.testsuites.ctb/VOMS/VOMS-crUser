@@ -1,0 +1,119 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Create one user using its user certificate                       #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#       - User certificate file path                                                        #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#       - user certificate                                                                  #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+
+source $SAME_SENSOR_HOME/tests/config_file
+
+voms_host=$1
+
+voms_tmp=/tmp/$voms_host"_tmp"
+voms_stderr=/tmp/$voms_host"_stderr"
+tempo=/tmp/$voms_host"_string"
+
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo ""
+date
+echo "VOMS-crUser - started, VO=$vo_name, User=$USER"
+
+echo "-------- Extract by openssl from usercert.pem ------"
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+user_CN="/"`openssl x509 -in $USER -noout -subject | cut -d"/" -f5-6`
+user_CA=`openssl x509 -in $USER -noout -issuer | cut -d" " -f2-4`
+
+echo "DN=$user_subject"
+echo "CN=$user_CN"
+echo "CA=$user_CA"
+
+echo "SCENARIO 1: User doesn't exist"
+echo "Create new user"
+
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+
+echo "Check list users"
+#rm -rf $voms_tmp
+voms-admin --vo=$vo_name -h $voms_host list-users > $voms_tmp
+
+#cat $voms_tmp
+
+echo "Check Subject name, "
+#rm -rf $tempo
+grep "$user_subject" $voms_tmp > $tempo
+
+
+if [ $? == 1 ]; then
+   echo "User not created: LIST:<<"
+   cat $voms_tmp
+   echo ">>"
+   echo "DN=$user_subject"
+   echo "Test has failed"
+   exit $SAME_ERROR
+else
+   echo "DN - correct"
+fi
+
+echo "Check CN, "
+grep "$user_CN" $tempo # > /dev/null
+
+if [ $? == 0 ]; then 
+    echo "CN - correct!"
+else 
+    echo "User CN - noncorrect, test has failed"
+    exit $SAME_ERROR
+fi
+
+echo "Check CA, "
+grep "$user_CA" $tempo # > /dev/null
+
+if [ $? == 0 ]; then 
+    echo "CA - correct!"
+else
+   echo "CA - noncorrect, test has failed"
+   exit $SAME_ERROR
+fi
+echo "SCENARIO 1 - OK"
+
+echo "SCENARIO 2: Create user who already exists in the VO"
+rm -rf $voms_stderr
+voms-admin --vo=$vo_name -h $voms_host create-user $USER 2> $voms_stderr # redirect standard error to a temp file
+
+# Check error message is correct
+cat $voms_stderr
+
+grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr > /dev/null
+# Add exit code if OK or failure
+
+if [ $? == 1 ]; then
+    echo "Not defined ERROR:<<"
+    cat $voms_stderr
+    echo >">, Test has failed"
+    exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks: Leave VO empty "
+echo "Remove user"
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER   2> $voms_stderr
+cat $voms_stderr
+
+echo "Test is OK"
+exit $SAME_OK

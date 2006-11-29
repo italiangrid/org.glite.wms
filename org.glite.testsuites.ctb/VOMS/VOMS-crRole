@@ -1,0 +1,80 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Create Role for VO                                               #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                       #
+#       - VO host name                                                                      #
+#       - Role                                                                              #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+###########################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+
+source $SAME_SENSOR_HOME/tests/config_file
+
+voms_host=$1
+
+voms_tmp=/tmp/$voms_host"_tmp"
+voms_stderr=/tmp/$voms_host"_stderr"
+tempo=/tmp/$voms_host"_string"
+
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo ""
+date
+echo "test VOMS-crRole - started, VO=$vo_name, Role=$ROLE"
+
+echo "SCENARIO 1: Role not exists"
+
+
+echo "Create new Role"
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
+
+echo "Check list roles"
+voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
+
+echo "Check role"
+grep "$ROLE" $voms_tmp  # > /dev/null
+
+
+if [ $? == 1 ]; then
+    echo "Role not created,LIST:<"
+    cat $voms_tmp
+    echo ">,  Test has failed"
+   exit $SAME_ERROR
+fi
+echo "Scenario 1 - OK"
+
+echo "SCENARIO 2: Role exists"
+
+echo "Create new Role"
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLE 2> $voms_stderr
+#echo "STDERR:"
+#cat $voms_stderr
+
+grep "org.glite.security.voms.service.AlreadyExist" $voms_stderr  # > /dev/null
+
+if [ $? == 1 ]; then
+   echo "Not defined diagnose:<<"
+   cat $voms_stderr
+   echo ">> Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "Scenario 2 - OK"
+echo "Remove Role"
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+echo "Test is OK"
+exit $SAME_OK
+
