@@ -28,18 +28,7 @@
 
 #include <ctime>
 
-// Forward declaratino for the CreamProxy
-namespace glite {
-  namespace ce {
-    namespace cream_client_api {
-      namespace soap_proxy {
-	class CreamProxy;
-      }
-    }
-  }
-};
-
-// Forward declaration for the logger
+// Forward declaration for the log4cpp logger
 namespace log4cpp {
     class Category;
 };
@@ -58,14 +47,11 @@ namespace glite {
 
           protected:
               
-              time_t m_threshold; //! Residual lease durations less than this threshold are prolonged.
-              time_t m_delay; //! Delay between two updates, in seconds.
-              time_t m_delta; //! The amount of the lease update, in seconds.
-
+	time_t m_delay; //! Delay between two updates, in seconds.
+              
               log4cpp::Category *m_log_dev;
               jobCache *m_cache;
-              boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_creamClient;
-
+              
               /**
                * Actually updates the lease for all active jobs in the cache.
                * This uses the is_active() method of CreamJob to check
@@ -74,23 +60,13 @@ namespace glite {
                */
               void update_lease( void );
 
-              /**
-               * Updates the lease for a single job. No check is done
-               * to see whether the job lease is about to expire.
-               *
-               * @param j the job whose lease is to be updated
-               */
-              void update_lease_for_job( CreamJob j );
-
-              virtual void body( void );
+	virtual void body( void );
 
           public:
 
               leaseUpdater( );
               virtual ~leaseUpdater( );
-
           };
-
       }
     }
   }
