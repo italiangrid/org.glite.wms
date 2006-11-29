@@ -328,18 +328,18 @@ void Ice::startListener( int listenPort )
     // this ICE) by calling
     // subscriptionManager::getInstance()->setConsumerURLName(...)
     if( tmp_start_sub_updater ) {
-        util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( confMgr->getHostProxyFile());      
-	if( !subs_updater->isValid() )
-	{
-            CREAM_SAFE_LOG(
-                           m_log_dev->fatalStream()
-                           << "Ice::startListener() - "
-                           << "subscriptionUpdater object creation failed. Stop!"
-                           << log4cpp::CategoryStream::ENDLINE;
-                           );
-	  exit(1);
-	             
-	}
+        util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( );      
+	//if( !subs_updater->isValid() )
+/*
+         CREAM_SAFE_LOG(
+                        m_log_dev->fatalStream()
+                        << "Ice::startListener() - "
+                        << "subscriptionUpdater object creation failed. Stop!"
+                        << log4cpp::CategoryStream::ENDLINE;
+                        );
+	exit(1);
+*/	             
+	//}
         m_updater_thread.start( subs_updater );
     }
 }

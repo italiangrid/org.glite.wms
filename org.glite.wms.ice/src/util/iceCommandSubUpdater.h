@@ -62,14 +62,14 @@ namespace util {
    subscriptionManager *m_subMgr;
    
    
-   //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-   //glite::wms::ice::util::CreamJob* m_theJob;
+// boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+// glite::wms::ice::util::CreamJob* m_theJob;
    log4cpp::Category *m_log_dev;
    
    iceConfManager *m_conf;
    
 //   time_t m_threshold_time;
-   //time_t m_delay;
+//   time_t m_delay;
 //   glite::wms::ice::util::iceLBLogger* m_lb_logger;
 //   void killJob( glite::wms::ice::util::CreamJob&, const time_t );
 
@@ -77,7 +77,7 @@ namespace util {
    void renewSubscriptions( std::vector<Subscription>& vec );
 
   public:
-   iceCommandSubUpdater( const std::string& certfile ) throw();
+   iceCommandSubUpdater( ) throw( );
    
    virtual void execute( ) throw( );
    

@@ -66,8 +66,8 @@ iceUtil::cemonUrlCache::cemonUrlCache() throw() :
   if( !m_subMgr->isValid() )
   {
     CREAM_SAFE_LOG(m_log_dev->fatalStream()
-    		   << "cemonUrlCache::CTOR() - Couldn't create "
-		   << "a subscriptionManager object. STOP!"
+    		   << "cemonUrlCache::CTOR() - Couldn't access to "
+		   << "the subscriptionManager instance. STOP!"
 		   << log4cpp::CategoryStream::ENDLINE);
 		   
     // this is severe, must exit

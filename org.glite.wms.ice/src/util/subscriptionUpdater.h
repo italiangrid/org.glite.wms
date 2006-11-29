@@ -25,24 +25,24 @@ namespace glite {
 
 	class subscriptionUpdater : public iceThread {
 
-		std::string m_proxyfile;
-		iceConfManager* m_conf;
-		log4cpp::Category *m_log_dev;
-		subscriptionManager *m_subMgr;
+		//std::string m_proxyfile;
+		//iceConfManager* m_conf;
+		//log4cpp::Category *m_log_dev;
+		//subscriptionManager *m_subMgr;
 		int m_iteration_delay;
 		//std::string m_myname;
-		bool m_valid;
+		//bool m_valid;
 
         public:
-		subscriptionUpdater(const std::string& cert);
+		subscriptionUpdater( );
 
-		virtual ~subscriptionUpdater() {}
-		bool isValid( void ) const { return m_valid; }
+		virtual ~subscriptionUpdater() { }
+		//bool isValid( void ) const { return m_valid; }
 		virtual void body( void );
 		
-        protected:
-		void renewSubscriptions(std::vector<Subscription>&);
-		void retrieveCEURLs(std::set<std::string>&);
+        //protected:
+		//void renewSubscriptions(std::vector<Subscription>&);
+		//void retrieveCEURLs(std::set<std::string>&);
 	};
         
       }

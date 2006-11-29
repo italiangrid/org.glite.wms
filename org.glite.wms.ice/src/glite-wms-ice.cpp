@@ -38,6 +38,7 @@
 #include "iceUtils.h"
 #include "iceThreadPool.h"
 #include "CreamProxyFactory.h"
+#include "subscriptionManager.h"
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
@@ -242,6 +243,14 @@ int main(int argc, char*argv[])
   }
   
   glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
+
+  if( iceUtil::iceConfManager::getInstance()->getStartListener() ) {
+    iceUtil::subscriptionManager::getInstance();
+    if( !iceUtil::subscriptionManager::getInstance()->isValid() ) {
+      cerr << "glite-wms-ice::main() - ERROR Creating a subscriptionManager Object! STOP." << endl;
+      abort();
+    }
+  }
 
   /*****************************************************************************
    * Initializes job cache

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2004 on behalf of the EU EGEE Project:
  * The European Organization for Nuclear Research (CERN),
  * Istituto Nazionale di Fisica Nucleare (INFN), Italy
@@ -36,10 +36,10 @@ namespace cream_api = glite::ce::cream_client_api;
 namespace ice_util  = glite::wms::ice::util;
 
 //______________________________________________________________________________
-ice_util::iceCommandSubUpdater::iceCommandSubUpdater( const string& certfile) throw() : 
-  m_proxyfile( certfile ),
+ice_util::iceCommandSubUpdater::iceCommandSubUpdater( ) throw() : 
   m_subMgr( ice_util::subscriptionManager::getInstance() ),
-  m_conf( ice_util::iceConfManager::getInstance() )			     
+  m_conf( ice_util::iceConfManager::getInstance() ),
+  m_log_dev( api_util::creamApiLogger::instance()->getLogger() )		     
 {
 }
 
@@ -48,26 +48,27 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 {
   set<string> ceurls;
   vector<Subscription> vec;
-  vec.reserve(10);
+  //vec.reserve(10);
   
   CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandSubUpdater::execute() - Checking "
 		   << "subscription's time validity..."
 		   << log4cpp::CategoryStream::ENDLINE);
-  ceurls.clear();
     
   retrieveCEURLs(ceurls);
     
-  for(set<string>::iterator it=ceurls.begin(); it != ceurls.end(); ++it) 
+  for( set<string>::iterator it = ceurls.begin(); it != ceurls.end(); ++it ) 
   {
     vec.clear();
       
-      
     bool subscribed;
+    
     {
       boost::recursive_mutex::scoped_lock M( ice_util::subscriptionManager::mutex );
-      try{subscribed = m_subMgr->subscribedTo( *it, vec );}
+      try{
+        subscribed = m_subMgr->subscribedTo( *it, vec );
+      }
       catch(exception& ex) {
-	CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionUpdater::body() - "
+	CREAM_SAFE_LOG(m_log_dev->errorStream() << "iceCommandSubUpdater::execute() - "
 		       << "Could not determine if we're subscribed to [" << *it 
 		       << "]. Retrying later."
 		       << log4cpp::CategoryStream::ENDLINE);
@@ -76,7 +77,7 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
     }
     
     if( !subscribed ) {
-	CREAM_SAFE_LOG(m_log_dev->warnStream() << "subscriptionUpdater::body() - "
+	CREAM_SAFE_LOG(m_log_dev->warnStream() << "iceCommandSubUpdater::execute() - "
 		       << "!!! DISAPPEARED subscription to [" << *it 
 		       << "]. Going to re-subscribe to it."
 		       << log4cpp::CategoryStream::ENDLINE);
@@ -88,7 +89,7 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 	    if( !cemonUrlCache::getInstance()->getCEMonDN( *it, DN ) )
 	      {
 		CREAM_SAFE_LOG(m_log_dev->errorStream()
-			       << "subscriptionUpdater::body() - "
+			       << "iceCommandSubUpdater::execute() - "
 			       << "Couldn't get DN for CEMon ["
 			       << *it << "]. Cannot subscribe to it because "
 			       << "notification authorization is enabled."
@@ -96,7 +97,6 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 		ceurls.erase( *it );
 		continue;
 	      } else {
-	      boost::recursive_mutex::scoped_lock M( cemonUrlCache::mutex );
 	      cemonUrlCache::getInstance()->insertDN( DN );
 	    }
 	    
@@ -105,10 +105,10 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 	if( !m_subMgr->subscribe( *it ) )
 	  {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
-	    		   << "subscriptionUpdater::body() - "
+	    		   << "iceCommandSubUpdater::execute() - "
 			   << "Couldn't subscribe to ["
 			   << *it << "]. The Status Poller will take care "
-			   << "of job status; subscriptionUpdater or the next job submission will "
+			   << "of job status; the next iteration or the next job submission will "
 			   << "try to subscribe"
 			   << log4cpp::CategoryStream::ENDLINE);
 	    continue;
@@ -180,13 +180,13 @@ void ice_util::iceCommandSubUpdater::renewSubscriptions(vector<Subscription>& ve
    
       if(timeleft < m_conf->getSubscriptionUpdateThresholdTime()) {
           CREAM_SAFE_LOG(m_log_dev->infoStream() 
-			 << "subscriptionUpdater::renewSubscriptions() - "
+			 << "iceCommandSubUpdater::renewSubscriptions() - "
 			 << "Updating subscription ["<<sit->getSubscriptionID() 
 			 << "] to CEMon [" <<sit->getEndpoint()<<"]"
 			 << log4cpp::CategoryStream::ENDLINE);
 
 	  CREAM_SAFE_LOG(m_log_dev->infoStream()  
-			 << "subscriptionUpdater::renewSubscriptions() - "
+			 << "iceCommandSubUpdater::renewSubscriptions() - "
 			 << "Update params: "
 			 << "ConsumerURL=["<<sit->getConsumerURL()
 			 << "] - TopicName=[" << sit->getTopicName() << "] - "
@@ -201,7 +201,7 @@ void ice_util::iceCommandSubUpdater::renewSubscriptions(vector<Subscription>& ve
  	    if(m_subMgr->updateSubscription( sit->getEndpoint(), 
 					     sit->getSubscriptionID(), newID )) 
 	      {
-		CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
+		CREAM_SAFE_LOG(m_log_dev->infoStream() << "iceCommandSubUpdater::renewSubscriptions() - "
 			       << "New subscription ID after renewal is ["
 			       << newID << "]" << log4cpp::CategoryStream::ENDLINE);
 		sit->setSubscriptionID(newID);
@@ -210,7 +210,7 @@ void ice_util::iceCommandSubUpdater::renewSubscriptions(vector<Subscription>& ve
 	      // subscription renewal failed. Try make a new one
 	      if(!m_subMgr->subscribe( sit->getEndpoint() )) {
 	        CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			       << "subscriptionUpdater::renewSubscriptions() - "
+			       << "iceCommandSubUpdater::renewSubscriptions() - "
 			       << "Failed while making new subscription. "
 			       << "Wont receive notifications... "
 			       << log4cpp::CategoryStream::ENDLINE);
@@ -227,6 +227,5 @@ void ice_util::iceCommandSubUpdater::renewSubscriptions(vector<Subscription>& ve
 	    } // else
 	  }
        } // if(timeleft < ....)
-      
-    }
-}
+    } // for
+} // end func
