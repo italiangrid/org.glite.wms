@@ -1,0 +1,80 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Delete Role for VO                                               #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                       #
+#       - VO host name                                                                      #
+#       - file config_file (Role)                                                           #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+###########################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+
+source $SAME_SENSOR_HOME/tests/config_file
+
+voms_host=$1
+voms_tmp=/tmp/$voms_host"_tmp"
+voms_stderr=/tmp/$voms_host"_stderr"
+tempo=/tmp/$voms_host"_string"
+
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+
+echo ""
+date
+echo "VOMS-delRole - started, VO=$vo_name, Role=$ROLE"
+echo "             SCENARIO 1, Role  not exist...                 "
+
+
+echo "Delete  Role"
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE 2> $voms_stderr
+
+#echo "OK, check stderr: <<"
+#cat $voms_stderr
+#echo ">>"
+
+grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr  # > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Not defined ERROR: <<"
+    cat $voms_stderr
+    echo ">>, Test has failed"
+    exit $SAME_ERROR
+fi
+                
+
+echo "               SCENARIO 2  Role exists          "
+echo "Create new Role"
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
+
+echo "Delete this Role"
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+
+echo "Check list roles"
+voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
+
+grep "$ROLE" $voms_tmp > /dev/null
+
+
+if [ $? == 1 ]; then
+   echo "Test is OK"
+   exit $SAME_OK
+fi
+
+echo "Role not deleted, LIST:<<"
+cat $voms_tmp
+echo ">>,     Test has failed"
+exit $SAME_ERROR
+
+

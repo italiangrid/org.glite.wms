@@ -1,0 +1,119 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Test subgroups list command                                      #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#                                                                                           #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+
+source $SAME_SENSOR_HOME/tests/config_file
+
+voms_host=$1
+
+voms_tmp=/tmp/$voms_host"_tmp"
+voms_stderr=/tmp/$voms_host"_stderr"
+tempo=/tmp/$voms_host"_string"
+
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo ""
+date
+echo "VOMS-listSubGroups - started, VO=$vo_name"
+
+
+group1="GROUP1"
+group2="GROUP2"
+group3="GROUP3"
+group4="GROUP4"
+
+echo "Step 1: Create 4 subgroups in main group /$vo_name: $group1, $group2, $group3, $group4"
+
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1"
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1/$group2"
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1/$group2/$group3"
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1/$group2/$group3/$group4"
+
+echo "OK"
+
+echo "Step 2: Check group list"
+
+voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name" > $voms_tmp
+
+#cat $voms_tmp
+
+echo "Check 4 groups, "
+
+grep "$group1" $voms_tmp
+
+if [ $? == 1 ]; then
+   echo "Group $group1 not created: LIST:<<"
+   cat $voms_tmp
+   echo ">>"
+   echo "Test has failed"
+   exit $SAME_ERROR
+fi
+
+voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1" > $voms_tmp
+
+grep "$group2" $voms_tmp
+
+if [ $? == 1 ]; then
+   echo "Group $group2 not created"
+   echo "LIST:<"
+   cat $voms_tmp
+   echo ">"
+   echo "Test has failed"
+   exit $SAME_ERROR
+fi
+
+
+voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1/$group2" > $voms_tmp
+grep "$group3" $voms_tmp
+
+if [ $? == 1 ]; then
+   echo "Group $group3 not created"
+   echo "LIST:<"
+   cat $voms_tmp
+   echo ">"
+   echo "Test has failed"
+   exit $SAME_ERROR
+fi
+
+
+voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1/$group2/$group3" > $voms_tmp
+grep "$group4" $voms_tmp
+
+if [ $? == 1 ]; then
+   echo "Group $group4 not created"
+   echo "LIST:<"
+   cat $voms_tmp
+   echo ">"
+   echo "Test has failed"
+   exit $SAME_ERROR
+fi
+echo "OK, Leave empty VO"
+
+echo "Clear Created groups"
+voms-admin --vo=$vo_name delete-group "$vo_name/$group1/$group2/$group3/$group4"
+voms-admin --vo=$vo_name delete-group "$vo_name/$group1/$group2/$group3"
+voms-admin --vo=$vo_name delete-group "$vo_name/$group1/$group2"
+voms-admin --vo=$vo_name delete-group "$vo_name/$group1"
+
+echo "Test is OK"
+exit $SAME_OK

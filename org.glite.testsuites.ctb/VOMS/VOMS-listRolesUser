@@ -1,0 +1,140 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: List roles for the specified user in VO                          #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - User certificate file path                                                       #
+#       - VO host name                                                                      #
+#       - Role                                                                              #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+###########################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+
+source $SAME_SENSOR_HOME/tests/config_file
+
+voms_host=$1
+
+voms_tmp=/tmp/$voms_host"_tmp"
+voms_stderr=/tmp/$voms_host"_stderr"
+tempo=/tmp/$voms_host"_string"
+
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+
+echo ""
+date
+echo "test VOMS-listRolesUser - started, VO=$vo_name, Role=$ROLE, Group=$GROUP User=$USER"
+
+echo "SCENARIO: VO - empty"
+
+echo "List nonexisting Roles of  nonexisting user in nonexisting group"
+
+voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER 2> $voms_stderr
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr
+
+if [ $? == 1 ]; then
+    echo "Noncorrect diagnose: <<"
+    cat $voms_stderr
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Create user"
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+
+echo "Again list roles for specified user"
+voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER 2> $voms_stderr
+
+grep "No roles are returned" $voms_stderr
+if [ $? == 1 ]; then
+    echo "Noncorrect diagnose: <<"
+    cat $voms_stderr
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Create new Role"
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
+
+echo "Again list roles for specified user"
+voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER 2> $voms_stderr
+
+grep "No roles are returned" $voms_stderr
+if [ $? == 1 ]; then
+    echo "Noncorrect diagnose: <<"
+    cat $voms_stderr
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Assign Role"
+voms-admin --vo=$vo_name -h $voms_host  assign-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr
+if [ $? == 1 ]; then
+    echo "Noncorrect diagnose: <<"
+    cat $voms_stderr
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Create new group"
+voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name "/"$GROUP
+
+echo "Again assign Role"
+voms-admin --vo=$vo_name -h $voms_host  assign-role "/"$vo_name"/"$GROUP $ROLE $USER
+
+echo "Again list roles for specified user"
+voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER > $voms_tmp
+
+expect="/"$vo_name"/"$GROUP"/Role="$ROLE
+
+grep "$expect" $voms_tmp
+if [ $? == 1 ]; then
+    echo "Nonexpected result: <<"
+    cat $voms_tmp
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "Additional verify:Check user list who have this Role=$ROLE"
+
+voms-admin --vo=$vo_name -h $voms_host  list-users-with-role "/"$vo_name"/"$GROUP $ROLE > $voms_tmp
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "No users for this Role=$ROLE: <<"
+    cat $voms_tmp
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+
+echo "Test - ok, leave empty VO"
+echo "Delete user"
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+
+echo "Delete group"
+voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+
+echo "Delete Role"
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+
+echo "Test is OK"
+exit $SAME_OK
+
