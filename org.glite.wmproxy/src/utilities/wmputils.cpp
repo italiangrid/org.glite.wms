@@ -1,8 +1,21 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmputils.cpp
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
@@ -1037,40 +1050,9 @@ doExecv(const string &command, vector<string> &params, string &errormsg)
 			// child
 	        if (execv(command.c_str(), argvs)) {
         		// execv failed
-	        	switch (errno) {
-		        	case E2BIG:
-		        		errormsg = "Command line too long";
-	        			edglog(debug)<<errormsg<<endl;
-	        			return errno;
-	        		case EACCES:
-	        			errormsg = "Command not executable";
-	        			edglog(severe)<<errormsg<<endl;
-	        			return errno;
-	        		case EPERM:
-	        			errormsg = "Wrong execution permissions";
-	        			edglog(severe)<<errormsg<<endl;
-	        			return errno;
-	        		case ENOENT:
-	        			errormsg = "Unable to find command";
-	        			edglog(severe)<<errormsg<<endl;
-	        			return errno;
-	        		case ENOMEM:
-	        			errormsg = "Insufficient memory to execute command";
-	        			edglog(severe)<<errormsg<<endl;
-	        			return errno;
-	        		case EIO:
-	        			errormsg = "I/O error";
-	        			edglog(severe)<<errormsg<<endl;
-	        			return errno;
-	        		case ENFILE:
-	        			errormsg = "Too many opened files";
-	        			edglog(severe)<<errormsg<<endl;
-	       				return errno;
-		        	default:
-		        		errormsg = "Unable to execute command";
-		        		edglog(severe)<<errormsg<<endl;
-		        		return errno;
-	        	}
+        		errormsg = strerror(errno);
+    			edglog(severe)<<errormsg<<endl;
+    			return errno;
 	        } else {
 	        	edglog(debug)<<"execv/command succesfully"<<endl;
 	        }
@@ -1197,21 +1179,10 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 						}
 						break;
 					}
-			case EACCES:
-				edglog(severe)<<"Command not executable"<<endl;
-			case EPERM:
-				edglog(severe)<<"Wrong execution permissions"<<endl;
-			case ENOENT:
-				edglog(severe)<<"Unable to find command"<<endl;
-			case ENOMEM:
-				edglog(severe)<<"Insufficient memory to execute command"<<endl;
-			case EIO:
-				edglog(severe)<<"I/O error"<<endl;
-			case ENFILE:
-				edglog(severe)<<"Too many opened files"<<endl;
-
+				break;
+				
 			default:
-				edglog(severe)<<"Unable to execute command"<<endl;
+				edglog(severe)<<strerror(errno)<<endl;
 				return FAILURE;
 				break;
 		}
