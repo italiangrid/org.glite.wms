@@ -444,6 +444,7 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
          if (!rlsLibHandle) {
             Warning("cannot load RLS helper lib " << rlsLib );
             Warning("dlerror returns: " << dlerror());
+            break;
          }
          else {
             createRls = (RLS::create_RLS_t*)dlsym(rlsLibHandle,"create_RLS");
@@ -524,6 +525,7 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
          if (!dliLibHandle) {
             Warning("cannot load DLI helper lib " << dliLib );
             Warning("dlerror returns: " << dlerror());
+            break;
          }
          else {
             createDli = (DLI::create_DLI_t*)dlsym(dliLibHandle,"create_DLI");
@@ -601,6 +603,7 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
          if (!siLibHandle) {
             Warning("cannot load SI helper lib " << siLib );
             Warning("dlerror returns: " << dlerror());
+            break;
          }
          else {
             createSi = (SI::create_SI_t*)dlsym(siLibHandle,"create_SI");
