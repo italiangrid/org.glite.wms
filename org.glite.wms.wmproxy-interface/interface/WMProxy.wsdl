@@ -830,6 +830,7 @@
 			<wsdl:output name="getQuotaResponse" message="glitens:getTotalQuotaResponse"/>
 			<wsdl:fault name="GetQuotaManagementFault" message="glitens:GetQuotaManagementFault"/>
 			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
@@ -854,6 +855,7 @@
 			<wsdl:output name="getFreeQuotaResponse" message="glitens:getFreeQuotaResponse"/>
 			<wsdl:fault name="GetQuotaManagementFault" message="glitens:GetQuotaManagementFault"/>
 			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
