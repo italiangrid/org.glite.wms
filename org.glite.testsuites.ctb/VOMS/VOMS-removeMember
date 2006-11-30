@@ -19,19 +19,12 @@
 #                                                                                           #
 #############################################################################################
 
-
+export voms_host=$1
 source $SAME_SENSOR_HOME/tests/config_file
-
-voms_host=$1
-
-voms_tmp=/tmp/$voms_host"_tmp"
-voms_stderr=/tmp/$voms_host"_stderr"
-tempo=/tmp/$voms_host"_string"
-
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-rm -rf $tempo
+#rm -rf $tempo
 
 echo ""
 date
@@ -48,9 +41,9 @@ voms-admin --vo=$vo_name -h $voms_host remove-member "/"$vo_name"/"$GROUP $USER 
 grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr
 
 if [ $? == 1 ]; then
-   echo "Noncorrect diagnose <"
+   echo "Noncorrect diagnose <<"
    cat $voms_stderr
-   echo ">"
+   echo ">>"
    echo "Test has failed"
    exit $SAME_ERROR
 else
@@ -123,6 +116,9 @@ echo "Delete group"
 voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
 echo "Delete user"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
 
 echo "Test - OK"
 exit $SAME_OK

@@ -20,19 +20,12 @@
 # provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
-
+export voms_host=$1
 source $SAME_SENSOR_HOME/tests/config_file
-
-voms_host=$1
-
-voms_tmp=/tmp/$voms_host"_tmp"
-voms_stderr=/tmp/$voms_host"_stderr"
-tempo=/tmp/$voms_host"_string"
-
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-rm -rf $tempo
+#rm -rf $tempo
 
 echo ""
 date
@@ -52,7 +45,7 @@ grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr # > /dev/null
 
 if [ $? == 1 ]; then
     echo "Noncorrect diagnose: <<"    
-    cat voms_stderr
+    cat $voms_stderr
     echo ">> Test has failed"
    exit $SAME_ERROR
 fi
@@ -74,10 +67,12 @@ grep "$user_subject" $voms_tmp # > /dev/null
 if [ $? == 0 ]; then
    echo "User not deleted: <<"
     cat $voms_tmp
-    echo "><,    Test has failed"
+    echo ">>,    Test has failed"
    exit $SAME_ERROR
-else
+fi
+   rm -rf $voms_tmp
+   rm -rf $voms_stderr
+ 
    echo "Test is OK"
    exit $SAME_OK
-fi
 
