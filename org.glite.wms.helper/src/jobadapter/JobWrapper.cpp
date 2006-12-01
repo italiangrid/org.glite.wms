@@ -90,6 +90,8 @@ struct JobWrapper::pimpl {
 
   int                       m_job_type;
   bool                      m_osb_wildcards_support;
+
+  std::string               m_broker_hostname;
 };
 
 const std::string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
@@ -299,6 +301,12 @@ void JobWrapper::set_osb_wildcards_support(bool value)
 }
 
 void
+JobWrapper::broker_hostname(std::string const& _)
+{
+  m_pimpl->m_broker_hostname = _;
+}
+
+void
 JobWrapper::enable_shallow_resubmission(std::string const& token)
 {
   m_pimpl->m_shallow_resubmission_token = token;
@@ -432,13 +440,13 @@ JobWrapper::dump_vars(std::ostream& os) const
 
   return dump(os, "__brokerinfo", m_pimpl->m_brokerinfo) &&
     dump(os, "__create_subdir", m_pimpl->m_create_subdir) &&
-    dump(os, "__gatekeeper_hostname", m_pimpl->m_gatekeeper_hostname) &&
     dump(os, "__jobid", m_pimpl->m_jobid) &&
     dump(os, "__job", m_pimpl->m_job) &&
     dump(os, "__standard_input", m_pimpl->m_standard_input) &&
     dump(os, "__standard_output", m_pimpl->m_standard_output) &&
     dump(os, "__standard_error", m_pimpl->m_standard_error) &&
     dump(os, "__arguments", m_pimpl->m_arguments) &&
+    dump(os, "__gatekeeper_hostname", m_pimpl->m_gatekeeper_hostname) &&
     dump(os, "__maradonaprotocol", m_pimpl->m_maradonaprotocol) &&
     dump(os, "__input_base_url", (m_pimpl->m_input_base_url == 0 ?
       "" : m_pimpl->m_input_base_url->as_string())) &&
@@ -481,6 +489,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_lfn", logical_file_names) &&
     dump(os, "__output_se", storage_elements) &&
     dump(os, "__osb_wildcards_support", m_pimpl->m_osb_wildcards_support) &&
+    dump(os, "__broker_hostname", m_pimpl->m_broker_hostname) &&
     dump(os, "__output_sandbox_base_dest_uri", 
       (m_pimpl->m_output_sandbox_base_dest_uri == 0 ? "" 
       : m_pimpl->m_output_sandbox_base_dest_uri->as_string())

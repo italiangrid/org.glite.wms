@@ -253,6 +253,7 @@ public:
   void epilogue(std::string const&);
   void epilogue_arguments(std::string const&);
 
+  void broker_hostname(std::string const&);
 private:
 
   static const std::string s_brokerinfo_default;

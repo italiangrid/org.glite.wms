@@ -823,6 +823,7 @@ try {
   jw->epilogue_arguments(epilogue_arguments);
   jw->job_Id(job_id);
   jw->job_id_to_filename(jobid_to_file);
+  jw->broker_hostname(local_hostname);
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
