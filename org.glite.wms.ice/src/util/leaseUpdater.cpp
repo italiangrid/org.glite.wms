@@ -22,10 +22,10 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "CreamProxyFactory.h"
+#include "CreamProxyMethod.h"
 #include "iceCommandLeaseUpdater.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h" // this is necessary, because CreamProxyFactory and iceCommandLeaseUpdater header only have a forward declaration of CreamProxy
 
 #include "glite/wms/common/configuration/Configuration.h"
@@ -38,9 +38,6 @@
 #include <list>
 
 namespace ice_util = glite::wms::ice::util;
-//using namespace glite::ce::cream_client_api;
-//using namespace glite::ce::cream_client_api::job_statuses;
-//using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
 //____________________________________________________________________________
@@ -76,6 +73,38 @@ void ice_util::leaseUpdater::update_lease( void )
     for ( cj_list_t::iterator it = jobs_to_check.begin(); it != jobs_to_check.end(); ++it) {
         if ( it->getEndLease() <= time(0) ) {
             // Remove expired job from cache
+            vector<string> job_to_cancel;
+            job_to_cancel.push_back( it->getCreamJobID() );
+            try {
+                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                               << "leaseUpdater::update_lease() - "
+                               << "Job with cream jobID=["
+                               << it->getCreamJobID() << "], grid jobID=["
+                               << it->getGridJobID() << "] got lease expired. "
+                               << "Attempting to cancel it"
+                               << log4cpp::CategoryStream::ENDLINE);
+
+                ice_util::CreamProxy_Cancel( it->getCreamURL(), job_to_cancel );
+                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                               << "leaseUpdater::update_lease() - "
+                               << "Job with cream jobID=["
+                               << it->getCreamJobID() << "], grid jobID=["
+                               << it->getGridJobID() << "] got lease expired. "
+                               << "Attempting to purge it"
+                               << log4cpp::CategoryStream::ENDLINE);
+
+                ice_util::CreamProxy_Purge( it->getCreamURL(), job_to_cancel );
+            } catch( exception& ex ) {
+                CREAM_SAFE_LOG(m_log_dev->warnStream()
+                               << "leaseUpdater::update_lease() - "
+                               << "Error trying to Cancel/Purge "
+                               << "job with cream jobID=["
+                               << it->getCreamJobID() << "], grid jobID=["
+                               << it->getGridJobID() << "] got lease expired. "
+                               << "Ignoring the error and going on."
+                               << log4cpp::CategoryStream::ENDLINE);
+                
+            }
 	    
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "leaseUpdater::update_lease() - "

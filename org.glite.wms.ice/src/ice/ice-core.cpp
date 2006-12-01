@@ -1,15 +1,19 @@
-/*
- * Copyright (c) 2004 on behalf of the EU EGEE Project:
- * The European Organization for Nuclear Research (CERN),
- * Istituto Nazionale di Fisica Nucleare (INFN), Italy
- * Datamat Spa, Italy
- * Centre National de la Recherche Scientifique (CNRS), France
- * CS Systeme d'Information (CSSI), France
- * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
- * Universiteit van Amsterdam (UvA), Netherlands
- * University of Helsinki (UH.HIP), Finland
- * University of Bergen (UiB), Norway
- * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+/* 
+ * Copyright (c) Members of the EGEE Collaboration. 2004. 
+ * See http://www.eu-egee.org/partners/ for details on the copyright
+ * holders.  
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0 
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.
  *
  * ICE core class
  *
@@ -36,6 +40,7 @@
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/certUtil.h"
 #ifdef GLITE_WMS_ICE_HAVE_PURGER
 #include "glite/wms/purger/purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
@@ -43,6 +48,9 @@
 #ifdef GLITE_WMS_ICE_HAVE_RENEWAL
 #include "glite/security/proxyrenewal/renewal.h"
 #endif
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
@@ -60,6 +68,7 @@ namespace ice_util = glite::wms::ice::util;
 namespace wmsutils_ns = glite::wms::common::utilities;
 namespace cream_api = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
+namespace cert_util = glite::ce::cream_client_api::certUtil;
 
 typedef vector<string>::iterator vstrIt;
 
@@ -90,6 +99,11 @@ void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
     } catch( boost::thread_resource_error& ex ) {
         throw iceInit_ex( ex.what() );
     }
+}
+
+bool Ice::IceThreadHelper::is_started( void ) const 
+{
+    return ( 0 != m_thread );
 }
 
 void Ice::IceThreadHelper::stop( void )
@@ -152,85 +166,32 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_lease_updater_thread( "Lease Updater" ),
     m_proxy_renewer_thread( "Proxy Renewer" ),
     m_job_killer_thread( "Job Killer" ),
-    m_ns_filelist( ice_util::iceConfManager::getInstance()->getWMInputFile() ),
-    m_fle( ice_util::iceConfManager::getInstance()->getICEInputFile() ),
+
+    // m_ns_filelist( ice_util::iceConfManager::getInstance()->getWMInputFile() ),
+    // m_fle( ice_util::iceConfManager::getInstance()->getICEInputFile() ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
-    m_is_purge_enabled( ice_util::iceConfManager::getInstance()->getPollerPurgesJobs() ),
     m_lb_logger( ice_util::iceLBLogger::instance() ),
-    m_cache( ice_util::jobCache::getInstance() )
+    m_cache( ice_util::jobCache::getInstance() ),
+    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() ),
+    m_ns_filelist( m_configuration->wm()->input() ),
+    m_fle( m_configuration->ice()->input() )
 {
-    CREAM_SAFE_LOG( 
-                   m_log_dev->log(log4cpp::Priority::INFO, "Ice::CTOR() - Initializing File Extractor object...")
-                   );
+    CREAM_SAFE_LOG( m_log_dev->infoStream()
+                    << "Ice::CTOR() - Initializing File Extractor object..."
+                    << log4cpp::CategoryStream::ENDLINE
+                    );
     try {
         m_flns.open( m_ns_filelist );
-    }
-    catch( std::exception& ex ) {
+    } catch( std::exception& ex ) {
         throw iceInit_ex( ex.what() );
     } catch( ... ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->log(log4cpp::Priority::FATAL, "Ice::CTOR() - Catched unknown exception")
-                       );
+        CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                        << "Ice::CTOR() - Catched unknown exception"
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
         exit( 1 );
     }
 
-    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-
-    util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
-    bool tmp_start_listener = confMgr->getStartListener();
-    
-    // this could be useful if some other module need to quickly know if the 
-    // subscription updater is running or not
-    if( !tmp_start_listener )
-      confMgr->setStartSubscriptionUpdater( false );
-
-    if( tmp_start_listener ) {
-        /**
-         * The listener and the iceCommandSubmit need to subscribe to
-         * CEMon in order to make ICE able to receive job status
-         * notifications.  So now as preliminary operation it's the
-         * case to check that the subscriptionManager singleton can be
-         * created without problems.
-         *
-         * The subscriptionManager initialization also setups
-         * authentication.
-         */
-	{ 
-          boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-          util::subscriptionManager::getInstance();
-	}
-        if( !util::subscriptionManager::getInstance()->isValid() ) {
-            CREAM_SAFE_LOG(
-                           m_log_dev->fatalStream() 
-                           << "Ice::CTOR() - "
-                           << "Fatal error creating the subscriptionManager "
-                           << "instance. Stop!"
-                           << log4cpp::CategoryStream::ENDLINE
-                           );
-	    exit(1);
-        }
-        /**
-         * cemonUrlCache is used to retrieve the list of cemon we're
-         * subscribed. If it's creation failed, it is not the case (at 0-order)
-         * to use the listener...
-         *
-         */
-        {
-            // this  check with NULL is useless
-	    // becuase if something goes wrong in the
-	    // cemonUrlCache's CTOR the program aborts !
-            if( util::cemonUrlCache::getInstance() == NULL ) {
-                CREAM_SAFE_LOG(
-                               m_log_dev->fatalStream() 
-                               << "Ice::CTOR() - "
-                               << "Fatal error creating the subscriptionCache instance. "
-                               << "Stop!."
-                               << log4cpp::CategoryStream::ENDLINE
-                               );
-		exit(1);
-            }
-        }
-    }
 }
 
 //____________________________________________________________________________
@@ -240,45 +201,132 @@ Ice::~Ice( )
 }
 
 //____________________________________________________________________________
-void Ice::startListener( int listenPort )
+void Ice::startListener( void )
 {
-    //boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-    util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
+    if ( ! m_configuration->ice()->start_listener() ) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream()
+                       << "Ice::startListener() - "
+                       << "Listener not enabled, not started."
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        return;
+    }
 
+    // Checks host proxy file validity
+    string hostdn;
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
-                   << "Ice::startListener() - "
-                   << "Creating a CEMon listener object..."
+                   << "Host proxyfile is [" 
+                   << m_configuration->common()->host_proxy_file()
+                   << "]" 
                    << log4cpp::CategoryStream::ENDLINE
                    );
-
-    util::eventStatusListener* listener;
-    if( confMgr->getListenerEnableAuthN() ) {
-      m_host_cert = confMgr->getIceHostCert(); //::getenv("GLITE_HOST_CERT");
-      m_host_key  = confMgr->getIceHostKey();  //::getenv("GLITE_HOST_KEY");
-      
-      if( (m_host_cert == "") || (m_host_key == "") ) {
-          CREAM_SAFE_LOG(
-                         m_log_dev->fatalStream()
-                         << "Ice::startListener() - cannot access to "
-			 << "ice_host_cert and/or ice_host_key "
-                         << "attributes. Cannot start Listener "
-                         << "with authentication as requested. Stop."
-                         << log4cpp::CategoryStream::ENDLINE
-                         );
-	exit(1);
-      }
-      listener = new util::eventStatusListener(listenPort, 
-					       confMgr->getHostProxyFile(), 
-					       m_host_cert, 
-					       m_host_key);
+    try {
+        hostdn = cert_util::getDN( m_configuration->common()->host_proxy_file() );
+    } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+        CREAM_SAFE_LOG( 
+                       m_log_dev->errorStream()
+                       << "Unable to extract user DN from Proxy File "
+                       << m_configuration->common()->host_proxy_file()
+                       << ". Won't start Listener"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        return;
     }
-    else {
-      listener = new util::eventStatusListener(listenPort, confMgr->getHostProxyFile());
+
+    if( (cert_util::getProxyTimeLeft( m_configuration->common()->host_proxy_file() ) <= 0) || ( hostdn.empty() ) ) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->errorStream() 
+                       << "Host proxy certificate is expired. "
+                       << "Won't start Listener"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        return;
+    } else {
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream() 
+                       << "Host DN is [" << hostdn << "]"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+    }
+
+
+    /**
+     * The listener and the iceCommandSubmit need to subscribe to
+     * CEMon in order to make ICE able to receive job status
+     * notifications.  So now as preliminary operation it's the case
+     * to check that the subscriptionManager singleton can be created
+     * without problems.
+     *
+     * The subscriptionManager initialization also setups
+     * authentication.
+     */
+    { 
+        boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+        util::subscriptionManager::getInstance();
+    }
+    if( !util::subscriptionManager::getInstance()->isValid() ) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->fatalStream() 
+                       << "Ice::CTOR() - "
+                       << "Fatal error creating the subscriptionManager "
+                       << "instance. Stop!"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        exit(1);
+    }
+    
+    util::eventStatusListener* listener;
+    if( m_configuration->ice()->listener_enable_authn() ) {
+
+        if( m_configuration->ice()->ice_host_cert().empty() ||
+            m_configuration->ice()->ice_host_key().empty() ) {
+            CREAM_SAFE_LOG(
+                           m_log_dev->fatalStream()
+                           << "Ice::startListener() - "
+                           << "ice_host_cert and/or ice_host_key are not undefined. "
+                           << "Cannot start Listener "
+                           << "with authentication as requested. Stop."
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            exit(1);
+        }
+
+        CREAM_SAFE_LOG(
+               m_log_dev->infoStream()
+               << "Ice::startListener() - "
+               << "Creating a CEMon listener object: port="
+               << m_configuration->ice()->listener_port()
+               << " proxyfile=" 
+               << m_configuration->common()->host_proxy_file()
+               << " hostkey="
+               << m_configuration->ice()->ice_host_key()
+               << " hostcert="
+               << m_configuration->ice()->ice_host_cert()
+               << log4cpp::CategoryStream::ENDLINE
+               );
+        
+        listener = new util::eventStatusListener(m_configuration->ice()->listener_port(),
+                                                 m_configuration->common()->host_proxy_file(),
+                                                 m_configuration->ice()->ice_host_cert(),
+                                                 m_configuration->ice()->ice_host_key() );
+    } else {
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream()
+                       << "Ice::startListener() - "
+                       << "Creating a CEMon listener object: port="
+                       << m_configuration->ice()->listener_port()
+                       << " proxyfile=" 
+                       << m_configuration->common()->host_proxy_file()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        
+        listener = new util::eventStatusListener( m_configuration->ice()->listener_port(), m_configuration->common()->host_proxy_file() );
     }
     
     if( !listener->isOK() ) {
-
+        
         CREAM_SAFE_LOG(        
                        m_log_dev->errorStream()
                        << "CEMon listener creation went wrong. Won't start it."
@@ -287,10 +335,10 @@ void Ice::startListener( int listenPort )
         
         // this must be set because other pieces of code
         // have a behaviour that depends on the listener is running or not
-        confMgr->setStartListener( false );
+        // confMgr->setStartListener( false ); FIXME
         return;
     }
-    int bind_retry=0;
+    int bind_retry = 0;
     while( !listener->bind() ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
@@ -308,62 +356,62 @@ void Ice::startListener( int listenPort )
                            << "Ice::startListener() - Too many bind retries (5000 secs). Giving up..."
                            << log4cpp::CategoryStream::ENDLINE
                            );
-	  exit(1);
+            exit(1);
 	}  
         sleep(5);
     }
     
     m_listener_thread.start( listener );
     
-    //-----------------now is time to start subUpdater-------------------------
-    bool tmp_start_sub_updater = confMgr->getStartSubscriptionUpdater();
-    
-    // The following subscriptionUpdater creation also triggers
-    // creation of subscriptionManager (by invoking
-    // subscriptionManager::getInstance(). But in this case the
-    // creation of the subscriptionManager singleton already occurred
-    // in the Ice::CTOR (see above).  Furthermore the CTOR of
-    // subscriptionUpdater also sets of the subpscriptionManager's
-    // internal variable (m_myname) that keeps the listener URL (of
-    // this ICE) by calling
-    // subscriptionManager::getInstance()->setConsumerURLName(...)
-    if( tmp_start_sub_updater ) {
+    // Starts the subscription updater
+    if( m_configuration->ice()->start_subscription_updater() ) {
         util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( );      
-	//if( !subs_updater->isValid() )
-/*
-         CREAM_SAFE_LOG(
-                        m_log_dev->fatalStream()
-                        << "Ice::startListener() - "
-                        << "subscriptionUpdater object creation failed. Stop!"
-                        << log4cpp::CategoryStream::ENDLINE;
-                        );
-	exit(1);
-*/	             
-	//}
         m_updater_thread.start( subs_updater );
     }
 }
 
 //____________________________________________________________________________
-void Ice::startPoller( int poller_delay )
+void Ice::startPoller( void )
 {
-  util::eventStatusPoller* poller;
-  try {
-    poller = new util::eventStatusPoller( this, poller_delay );
-    m_poller_thread.start( poller );
-  } catch(util::eventStatusPoller_ex& ex) {
-      CREAM_SAFE_LOG(
-                     m_log_dev->fatalStream()
-                     << "Ice::startPoller() - eventStatusPoller object creation failed. Stop!"
-                     << log4cpp::CategoryStream::ENDLINE
-                     );
-    exit(1);
-  }
+    if ( ! m_configuration->ice()->start_poller() ) {
+        CREAM_SAFE_LOG( m_log_dev->infoStream()
+                        << "Ice::startPoller() - "
+                        << "Poller disabled in configuration file. "
+                        << "Not started"
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
+        return;
+    }
+    
+    util::eventStatusPoller* poller;
+    try {
+        poller = new util::eventStatusPoller( this, m_configuration->ice()->poller_delay() );
+        m_poller_thread.start( poller );
+    } catch(util::eventStatusPoller_ex& ex) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->fatalStream()
+                       << "Ice::startPoller() - "
+                       << "eventStatusPoller object creation failed "
+                       << "due to exception \"" << ex.what()
+                       << "\". Stop!"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        exit(1);
+    }
 }
 
 //----------------------------------------------------------------------------
 void Ice::startLeaseUpdater( void ) 
 {
+    if ( !m_configuration->ice()->start_lease_updater() ) {
+        CREAM_SAFE_LOG( m_log_dev->infoStream()
+                        << "Ice::startLeaseUpdater() - "
+                        << "Lease Updater disabled in configuration file. "
+                        << "Not started"
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
+        return;
+    }
     util::leaseUpdater* lease_updater = new util::leaseUpdater( );
     m_lease_updater_thread.start( lease_updater );
 }
@@ -371,6 +419,15 @@ void Ice::startLeaseUpdater( void )
 //-----------------------------------------------------------------------------
 void Ice::startProxyRenewer( void ) 
 {
+    if ( !m_configuration->ice()->start_proxy_renewer() ) {
+        CREAM_SAFE_LOG( m_log_dev->infoStream()
+                        << "Ice::startProxyRenewer() - "
+                        << "Proxy Renewer disabled in configuration file. "
+                        << "Not started"
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
+        return;
+    }
     util::proxyRenewal* proxy_renewer = new util::proxyRenewal( );
     m_proxy_renewer_thread.start( proxy_renewer );
 }
@@ -378,8 +435,17 @@ void Ice::startProxyRenewer( void )
 //-----------------------------------------------------------------------------
 void Ice::startJobKiller( void )
 {
-  util::jobKiller* jobkiller = new util::jobKiller( );
-  m_job_killer_thread.start( jobkiller );
+    if ( !m_configuration->ice()->start_job_killer() ) {
+        CREAM_SAFE_LOG( m_log_dev->infoStream()
+                        << "Ice::startJobKiller() - "
+                        << "Job Killer disabled in configuration file. "
+                        << "Not started"
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
+        return;
+    }
+    util::jobKiller* jobkiller = new util::jobKiller( );
+    m_job_killer_thread.start( jobkiller );
 }
 
 //____________________________________________________________________________
@@ -392,7 +458,7 @@ void Ice::clearRequests()
 void Ice::getNextRequests(vector<string>& ops) 
 {
   try { 
-    m_requests = m_fle.get_all_available();
+      m_requests = m_fle.get_all_available();
   }
   catch( exception& ex ) {
       CREAM_SAFE_LOG(
@@ -400,10 +466,10 @@ void Ice::getNextRequests(vector<string>& ops)
                      << "Ice::getNextRequest() - " << ex.what()
                      << log4cpp::CategoryStream::ENDLINE
                      );
-    exit(1);
+      exit(1);
   }
   for ( unsigned j=0; j < m_requests.size(); j++ ) {
-    ops.push_back(*m_requests[j]);
+      ops.push_back(*m_requests[j]);
   }
 }
 
@@ -413,6 +479,31 @@ void Ice::removeRequest( unsigned int reqNum)
     m_fle.erase(m_requests[reqNum]);
 }
 
+bool Ice::is_listener_started( void ) const
+{
+    return m_listener_thread.is_started( );
+}
+
+bool Ice::is_poller_started( void ) const
+{
+    return m_poller_thread.is_started( );
+}
+
+bool Ice::is_lease_updater_started( void ) const
+{
+    return m_updater_thread.is_started( );
+}
+
+bool Ice::is_proxy_renewer_started( void ) const
+{
+    return m_proxy_renewer_thread.is_started( );
+}
+
+bool Ice::is_job_killer_started( void ) const
+{
+    return m_job_killer_thread.is_started( );
+}
+
 //____________________________________________________________________________
 void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
 {
@@ -420,11 +511,11 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
     wmsutils_ns::FileListLock  lock(mx);
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
-
+        
         the_job = m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
-
+        
         the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_ns_filelist ) );
-
+        
         classad::ClassAd command;
         classad::ClassAd arguments;
         
@@ -469,7 +560,7 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
         
         string cid = jit->getCreamJobID();
         
-        if ( m_is_purge_enabled ) {
+        if ( m_configuration->ice()->poller_purges_jobs() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
                            << "ice-core::purge_job() - "
                            << "Calling JobPurge for JobId ["
@@ -633,3 +724,4 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
     }
     return it;
 }
+

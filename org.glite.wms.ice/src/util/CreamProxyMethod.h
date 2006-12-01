@@ -191,6 +191,31 @@ namespace util {
         int m_to;
     };
 
+
+    /**
+     * Wrapper class around the Purge method of CreamProxy
+     */ 
+    class CreamProxy_Purge : public CreamProxyMethod {
+    public:
+        CreamProxy_Purge( const std::string& service,
+                          const std::vector<std::string>& jobids );
+    protected:        
+        void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
+            throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,                  glite::ce::cream_client_api::cream_exceptions::JobUnknownException&,
+                  glite::ce::cream_client_api::cream_exceptions::InvalidArgumentException&,
+                  glite::ce::cream_client_api::cream_exceptions::GenericException&,
+                  glite::ce::cream_client_api::cream_exceptions::AuthenticationException&,
+                  glite::ce::cream_client_api::cream_exceptions::AuthorizationException&,
+                  glite::ce::cream_client_api::cream_exceptions::InternalException&,
+                  glite::ce::cream_client_api::cream_exceptions::ConnectionTimeoutException&,
+                  glite::ce::cream_client_api::soap_proxy::auth_ex&);
+        
+        const std::string m_service;
+        const std::vector<std::string> m_jid;
+    };
+
+
+
 } // namespace util
 } // namespace ice
 } // namespace wms

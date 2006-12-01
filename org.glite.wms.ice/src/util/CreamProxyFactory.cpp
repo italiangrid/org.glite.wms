@@ -22,11 +22,22 @@
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
-using namespace glite::wms::ice::util;
-namespace cream_api=glite::ce::cream_client_api;
+#include <boost/algorithm/string.hpp>
 
-std::string CreamProxyFactory::hostdn = std::string();
+namespace cream_api=glite::ce::cream_client_api;
+using namespace glite::wms::ice::util;
+using namespace std;
+
+string CreamProxyFactory::hostdn = string();
 boost::recursive_mutex CreamProxyFactory::mutex;
+
+void CreamProxyFactory::setHostDN( const string& hdn )
+{
+    hostdn = hdn;
+    boost::trim_if(hostdn, boost::is_any_of("/"));
+    boost::replace_all( hostdn, "/", "_" );
+    boost::replace_all( hostdn, "=", "_" );
+}
 
 cream_api::soap_proxy::CreamProxy* CreamProxyFactory::makeCreamProxy( const bool autom_deleg )
 {

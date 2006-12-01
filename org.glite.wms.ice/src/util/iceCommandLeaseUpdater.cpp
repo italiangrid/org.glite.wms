@@ -98,6 +98,7 @@ void ice_util::iceCommandLeaseUpdater::execute( ) throw()
     ice_util::CreamProxy_Lease( m_theJob.getCreamURL(), jobids, m_delta, newLease ).execute( m_theProxy.get(), 3 );
     
   } catch( cream_exceptions::JobUnknownException& ex ) {
+
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "iceCommandLeaseUpdater::execute() - "
 		   << "CREAM doesn't know the current Job ["

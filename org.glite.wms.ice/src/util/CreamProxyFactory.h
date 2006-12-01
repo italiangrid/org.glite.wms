@@ -24,49 +24,50 @@
 #include "boost/thread/recursive_mutex.hpp"
 
 namespace glite {
-    namespace ce {
-        namespace cream_client_api {
-            namespace soap_proxy {
+namespace ce {
+namespace cream_client_api {
+namespace soap_proxy {
 
-                class CreamProxy;
+    class CreamProxy;
   
-            }
-        }
-    }
+}
+}
+}
 };
 
 namespace glite {
-    namespace wms {
-        namespace ice {
-            namespace util {
+namespace wms {
+namespace ice {
+namespace util {
                 
-                class CreamProxyFactory {
-
-                    static std::string hostdn;
-                    static boost::recursive_mutex mutex;
-		    
-                public:
-                    
-                    static void setHostDN( const std::string& hdn ) { 
-                        hostdn = hdn; 
-                    }
-
-                    /**
-                     * Creates a new CreamProxy object. Ownership of
-                     * the returned pointer is transferred to the
-                     * caller.
-                     *
-                     * @param auto_del if true, the returned
-                     * CreamProxy object will do automatic delegation.
-                     */
-                    static glite::ce::cream_client_api::soap_proxy::CreamProxy* 
-                        makeCreamProxy( const bool auto_del );
-                    
-                };
-                
-            }
-        }
-    }
-};
+    class CreamProxyFactory {
+        
+        static std::string hostdn;
+        static boost::recursive_mutex mutex;
+        
+    public:
+        
+        static void setHostDN( const std::string& hdn );
+        
+        /**
+         * Creates a new CreamProxy object. Ownership of
+         * the returned pointer is transferred to the
+         * caller.
+         *
+         * @param auto_del if true, the returned
+         * CreamProxy object will do automatic delegation.
+         *
+         * @return a new CreamProxy object. The caller is responsible
+         * for freeing the returned pointer.
+         */
+        static glite::ce::cream_client_api::soap_proxy::CreamProxy* 
+            makeCreamProxy( const bool auto_del );
+        
+    };
+    
+} // namespace util
+} // namespace ice
+} // namespace wms
+}; // namespace glite
 
 #endif

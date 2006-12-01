@@ -28,6 +28,10 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
+
 #include "ice-core.h"
 #include "iceAbsCommand.h"
 #include "iceCommandFactory.h"
@@ -44,40 +48,37 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
-#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
 namespace po = boost::program_options;
 
-#define USE_STATUS_POLLER true
-#define USE_STATUS_LISTENER false
-
-
 // change the uid and gid to those of user no-op if user corresponds
-// to the current effective uid only root can set the uid
-// (this function was originally taken from org.glite.wms.manager/src/daemons/workload_manager.cpp
+// to the current effective uid only root can set the uid (this
+// function was originally taken from
+// org.glite.wms.manager/src/daemons/workload_manager.cpp
 bool set_user(std::string const& user)
 {
-  uid_t euid = ::geteuid();
+    uid_t euid = ::geteuid();
  
-  if (euid == 0 && user.empty()) {
-    return false;
-  }
+    if (euid == 0 && user.empty()) {
+        return false;
+    }
  
-  ::passwd* pwd(::getpwnam(user.c_str()));
-  if (pwd == 0) {
-    return false;
-  }
-  ::uid_t uid = pwd->pw_uid;
-  ::gid_t gid = pwd->pw_gid;
+    ::passwd* pwd(::getpwnam(user.c_str()));
+    if (pwd == 0) {
+        return false;
+    }
+    ::uid_t uid = pwd->pw_uid;
+    ::gid_t gid = pwd->pw_gid;
  
-  return
-    euid == uid
-    || (euid == 0 && ::setgid(gid) == 0 && ::setuid(uid) == 0);
+    return
+        euid == uid
+        || (euid == 0 && ::setgid(gid) == 0 && ::setuid(uid) == 0);
 }
  
+
 int main(int argc, char*argv[]) 
 {
     string opt_pid_file;
@@ -128,288 +129,201 @@ int main(int argc, char*argv[])
         pid_file << ::getpid();
     }
 
-  /**
-   * - creates an ICE object
-   * - initializes the job cache
-   * - starts the async event consumer and status poller
-   * - opens the WM's and the NS's filelist
-   */    
+    /**
+     * - creates an ICE object
+     * - initializes the job cache
+     * - starts the async event consumer and status poller
+     * - opens the WM's and the NS's filelist
+     */    
 
-  /*****************************************************************************
-   * Initializes configuration manager (that in turn loads configurations)
-   ****************************************************************************/
-  iceUtil::iceConfManager::init( opt_conf_file );
-  try{
-    iceUtil::iceConfManager::getInstance();
-  }
-  catch(iceUtil::ConfigurationManager_ex& ex) {
-    cerr << "glite-wms-ice::main() - ERROR: " << ex.what() << endl;
-    exit(1);
-  }
-
-  //
-  // Change user id to become the "dguser" specified in the configuratoin file
-  //
-  string dguser( iceUtil::iceConfManager::getInstance()->getDGuser() );
-  if (!set_user(dguser)) {
-      cerr << "glite-wms-ice::main() - ERROR: cannot set the user id to " 
-	   << dguser << endl;
-      exit( 1 );
-  }
-
-
-
-  /*****************************************************************************
-   * Sets the log file
-   ****************************************************************************/
-  util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
-  log4cpp::Category* log_dev = logger_instance->getLogger();
-
-  log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
-  logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->getLogOnFile() );
-  logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->getLogOnConsole() );
-  logger_instance->setMaxLogFileSize( iceUtil::iceConfManager::getInstance()->getMaxLogFileSize() );
-  logger_instance->setMaxLogFileRotations( iceUtil::iceConfManager::getInstance()->getMaxLogFileRotations() );
-  string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
-  string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
-
-
-  try {
-    iceUtil::makePath( logfile );
-  } catch(exception& ex) {
-    cerr << "Error Creating path for logfile ["<<logfile<<"]: "<<ex.what()<<endl;
-    exit( 1 );
-  }
-
-  logger_instance->setLogFile(logfile.c_str());
-  CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061024-17:30]"<<log4cpp::CategoryStream::ENDLINE);
-  cout << "Logfile is [" << logfile << "]" << endl;
-
-//   cout << "Poller Threshold time="<<iceUtil::iceConfManager::getInstance()->getPollerStatusThresholdTime()<<endl;
-  /*****************************************************************************
-   * Gets the distinguished name from the host proxy certificate
-   ****************************************************************************/
-
-  //string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
-
-  // Set the creation of CreamProxy with automatic delegetion ON
-
-  string hostdn;
-  CREAM_SAFE_LOG(
-                 log_dev->infoStream()
-                 << "Host proxyfile is [" << hostcert << "]" 
-                 << log4cpp::CategoryStream::ENDLINE
-                 );
-  try {
-    hostdn = certUtil::getDN(hostcert);
-    boost::trim_if(hostdn, boost::is_any_of("/"));
-    while( hostdn.find("/", 0) != string::npos ) {
-      boost::replace_first(hostdn, "/", "_");
+    /*****************************************************************************
+     * Initializes configuration manager (that in turn loads configurations)
+     ****************************************************************************/
+    iceUtil::iceConfManager::init( opt_conf_file );
+    try{
+        iceUtil::iceConfManager::getInstance();
+    }
+    catch(iceUtil::ConfigurationManager_ex& ex) {
+        cerr << "glite-wms-ice::main() - ERROR: " << ex.what() << endl;
+        exit(1);
     }
 
-    while( hostdn.find("=", 0) != string::npos ) {
-      boost::replace_first(hostdn, "=", "_");
+    glite::wms::common::configuration::Configuration* conf = iceUtil::iceConfManager::getInstance()->getConfiguration();
+
+    //
+    // Change user id to become the "dguser" specified in the configuratoin file
+    //
+    string dguser( conf->common()->dguser() );
+    if (!set_user(dguser)) {
+        cerr << "glite-wms-ice::main() - ERROR: cannot set the user id to " 
+             << dguser << endl;
+        exit( 1 );
     }
 
-    if((certUtil::getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
-        CREAM_SAFE_LOG(
-                       log_dev->errorStream() 
-                       << "Host proxy certificate is expired. Won't start Listener"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
 
-        // this must be set because other pieces of code
-        // have a behaviour that depends on the listener is running or not
-	//boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-	iceUtil::iceConfManager::getInstance()->setStartListener( false );
-    } else {
-        CREAM_SAFE_LOG(
-                       log_dev->infoStream() 
-		         << "Host DN is [" << hostdn << "]"
-			 << log4cpp::CategoryStream::ENDLINE
-                       );
+
+    /*****************************************************************************
+     * Sets the log file
+     ****************************************************************************/
+    util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
+    log4cpp::Category* log_dev = logger_instance->getLogger();
+
+    log_dev->setPriority( conf->ice()->ice_log_level() );
+    logger_instance->setLogfileEnabled( conf->ice()->log_on_file() );
+    logger_instance->setConsoleEnabled( conf->ice()->log_on_console() );
+    logger_instance->setMaxLogFileSize( conf->ice()->max_logfile_size() );
+    logger_instance->setMaxLogFileRotations( conf->ice()->max_logfile_rotations() );
+    string logfile = conf->ice()->logfile();
+    string hostcert = conf->common()->host_proxy_file();
+
+
+    try {
+        iceUtil::makePath( logfile );
+    } catch(exception& ex) {
+        cerr << "Error Creating path for logfile ["<<logfile<<"]: "<<ex.what()<<endl;
+        exit( 1 );
     }
-  } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-    CREAM_SAFE_LOG(log_dev->errorStream()
-			 << "Unable to extract user DN from Proxy File "
-			 << hostcert 
-			 << ". Won't start Listener"
-			 << log4cpp::CategoryStream::ENDLINE);
 
-    // this must be set because other pieces of code
-    // have a behaviour that depends on the listener is running or not
-    //boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    iceUtil::iceConfManager::getInstance()->setStartListener( false );
-  }
+    logger_instance->setLogFile(logfile.c_str());
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061024-17:30]"<<log4cpp::CategoryStream::ENDLINE);
+    cout << "Logfile is [" << logfile << "]" << endl;
+
+    /*****************************************************************************
+     * Gets the distinguished name from the host proxy certificate
+     ****************************************************************************/
+
+    CREAM_SAFE_LOG(
+                   log_dev->infoStream()
+                   << "Host proxyfile is [" << hostcert << "]" 
+                   << log4cpp::CategoryStream::ENDLINE
+                   );
+
+    try {
+        string hostdn( certUtil::getDN(hostcert) );
+        glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
+    } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+        CREAM_SAFE_LOG(log_dev->errorStream()
+                       << "Unable to extract user DN from Proxy File "
+                       << hostcert 
+                       << ". Won't set SOAP header"
+                       << log4cpp::CategoryStream::ENDLINE);
+    }
   
-  glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
 
-  if( iceUtil::iceConfManager::getInstance()->getStartListener() ) {
-    iceUtil::subscriptionManager::getInstance();
-    if( !iceUtil::subscriptionManager::getInstance()->isValid() ) {
-      cerr << "glite-wms-ice::main() - ERROR Creating a subscriptionManager Object! STOP." << endl;
-      abort();
+//     if( iceUtil::iceConfManager::getInstance()->getStartListener() ) {
+//         iceUtil::subscriptionManager::getInstance();
+//         if( !iceUtil::subscriptionManager::getInstance()->isValid() ) {
+//             cerr << "glite-wms-ice::main() - ERROR Creating a subscriptionManager Object! STOP." << endl;
+//             abort();
+//         }
+//     }
+
+    /*****************************************************************************
+     * Initializes job cache
+     ****************************************************************************/
+    string jcachedir( conf->ice()->persist_dir() );
+
+    CREAM_SAFE_LOG(
+                   log_dev->infoStream() 
+                   << "Initializing jobCache with persistency directory ["
+                   << jcachedir
+                   << "]..."
+                   << log4cpp::CategoryStream::ENDLINE
+                   );
+
+    iceUtil::jobCache::setPersistDirectory( jcachedir );
+    iceUtil::jobCache::setRecoverableDb( true );
+
+    try {
+        iceUtil::jobCache::getInstance();
     }
-  }
-
-  /*****************************************************************************
-   * Initializes job cache
-   ****************************************************************************/
-  //string jcachefile;
-  string jcachedir;
-  {
-//    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    //jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
-    jcachedir = iceUtil::iceConfManager::getInstance()->getCachePersistDirectory();
-  }
-  //string jsnapfile  = jcachefile+".snapshot";
-  CREAM_SAFE_LOG(
-                 log_dev->infoStream() 
-                 //<< "Initializing jobCache with journal file ["
-                 << "Initializing jobCache with persistency directory ["
-		 //<< jcachefile
-		 << jcachedir
-                 //<< "] and snapshot file ["
-                 //<< jsnapfile
-                 << "]..."
-                 << log4cpp::CategoryStream::ENDLINE
-                 );
-
-  //iceUtil::jobCache::setJournalFile(jcachefile);
-  //iceUtil::jobCache::setSnapshotFile(jsnapfile);
-
-  iceUtil::jobCache::setPersistDirectory( jcachedir );
-  iceUtil::jobCache::setRecoverableDb( true );
-
-  try {
-      iceUtil::jobCache::getInstance();
-  }
-  catch(exception& ex) {
-      CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );
-      exit( 1 );
-  }
+    catch(exception& ex) {
+        CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );
+        exit( 1 );
+    }
 
 
-  /*****************************************************************************
-   * Initializes ice manager
-   ****************************************************************************/ 
-  glite::wms::ice::Ice* iceManager( glite::wms::ice::Ice::instance( ) );
+    /*****************************************************************************
+     * Initializes ice manager
+     ****************************************************************************/ 
+    glite::wms::ice::Ice* iceManager( glite::wms::ice::Ice::instance( ) );
 
   
-  /*****************************************************************************
-   * Prepares a vector that will contains requests fetched from input file
-   * list. Its initial capacity is set large enough... to tune...
-   ****************************************************************************/
-  vector<string> requests;
-  requests.reserve(1000);
+    /*****************************************************************************
+     * Prepares a vector that will contains requests fetched from input file
+     * list. Its initial capacity is set large enough... to tune...
+     ****************************************************************************/
+    vector<string> requests;
+    // requests.reserve(1000);
 
-  /*****************************************************************************
-   * Starts status poller and/or listener if specified in the config file
-   ****************************************************************************/
-  {
-    if(iceUtil::iceConfManager::getInstance()->getStartListener())
-      iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
-
-    if(iceUtil::iceConfManager::getInstance()->getStartPoller())
-      iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
-  }
-  
-  if( iceUtil::iceConfManager::getInstance()->getStartLeaseUpdater() )
+    /*****************************************************************************
+     * Starts status poller and/or listener if specified in the config file
+     ****************************************************************************/
+    iceManager->startListener( );    
+    iceManager->startPoller( );  
     iceManager->startLeaseUpdater( );
-    
-  if( iceUtil::iceConfManager::getInstance()->getStartProxyRenewer() )
     iceManager->startProxyRenewer( );
-    
-  if( iceUtil::iceConfManager::getInstance()->getStartJobKiller() )
     iceManager->startJobKiller( );
 
-  vector<string> url_jid;
-  url_jid.reserve(2);
-
-  /*
-   *
-   * Starts the thread pool
-   *
-   */
-  iceUtil::iceThreadPool* threadPool( iceUtil::iceThreadPool::instance() );
+    /*
+     *
+     * Starts the thread pool
+     *
+     */
+    iceUtil::iceThreadPool* threadPool( iceUtil::iceThreadPool::instance() );
   
-  /*
-   * Initializes the L&B logger
-   */
-  // iceUtil::iceEventLogger* iceLogger = iceUtil::iceEventLogger::instance();
-
-  /*****************************************************************************
-   * Main loop that fetch requests from input filelist, submit/cancel the jobs,
-   * removes requests from input filelist.
-   ****************************************************************************/
-  while(true) {
+    /*****************************************************************************
+     * Main loop that fetch requests from input filelist, submit/cancel the jobs,
+     * removes requests from input filelist.
+     ****************************************************************************/
+    while(true) {
     
-    iceManager->getNextRequests(requests);
+        iceManager->getNextRequests(requests);
     
-    if( requests.size() )
-        CREAM_SAFE_LOG(
-                       log_dev->infoStream()
-                       << "*** Found " << requests.size() << " new request(s)"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
+        if( requests.size() )
+            CREAM_SAFE_LOG(
+                           log_dev->infoStream()
+                           << "*** Found " << requests.size() << " new request(s)"
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
 
-    for(unsigned int j=0; j < requests.size( ); j++) {
-        CREAM_SAFE_LOG(
-                       log_dev->infoStream()
-                       << "*** Unparsing request <"
-                       << requests[j] 
-                       << ">"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        glite::wms::ice::iceAbsCommand* cmd;
-        try {
-            cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
-        } catch( std::exception& ex ) {
-            CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
-            CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
-            iceManager->removeRequest(j);
-            continue;
+        for(unsigned int j=0; j < requests.size( ); j++) {
+            CREAM_SAFE_LOG(
+                           log_dev->infoStream()
+                           << "*** Unparsing request <"
+                           << requests[j] 
+                           << ">"
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            glite::wms::ice::iceAbsCommand* cmd;
+            try {
+                cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
+            } catch( std::exception& ex ) {
+                CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
+                CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
+                iceManager->removeRequest(j);
+                continue;
+            }
+            CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing submitted request from WM/ICE's filelist..." ) );
+            try { 
+                iceManager->removeRequest(j);// FIXME
+            } catch(exception& ex) {
+                CREAM_SAFE_LOG(
+                               log_dev->fatalStream() 
+                               << "glite-wms-ice::main() - "
+                               << "Error removing request from FL: "
+                               << ex.what()
+                               << log4cpp::CategoryStream::ENDLINE
+                               );
+                exit(1);
+            }
+
+            // Submit to the thread pool
+            threadPool->add_request( cmd );
+
         }
-
-//       try {
-//           cmd->execute( iceManager );
-//       } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
-//           CREAM_SAFE_LOG( 
-//                          log_dev->errorStream()
-//                          << "Command execution got FATAL exception: "
-//                          << ex.what()
-//                          << log4cpp::CategoryStream::ENDLINE
-//                          );
-//       } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
-//           CREAM_SAFE_LOG(
-//                          log_dev->errorStream()
-//                          << "Command execution got TRANSIENT exception: "
-//                          << ex.what()
-//                          << log4cpp::CategoryStream::ENDLINE
-//                          );
-//           CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );
-          
-//       }
-      CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing submitted request from WM/ICE's filelist..." ) );
-      try { 
-	iceManager->removeRequest(j);
-      } catch(exception& ex) {
-          CREAM_SAFE_LOG(
-                         log_dev->fatalStream() 
-                         << "glite-wms-ice::main() - "
-                         << "Error removing request from FL: "
-                         << ex.what()
-                         << log4cpp::CategoryStream::ENDLINE
-                         );
-	exit(1);
-      }
-
-      // Submit to the thread pool
-      threadPool->add_request( cmd );
-
+        sleep(1);
+        requests.clear();
     }
-    sleep(1);
-    requests.clear();
-  }
-  return 0;
+    return 0;
 }

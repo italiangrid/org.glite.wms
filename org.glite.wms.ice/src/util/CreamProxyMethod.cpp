@@ -195,3 +195,31 @@ void CreamProxy_Info::method_call( soap_proxy::CreamProxy* p )
 {    
     p->Info( m_service.c_str(), m_jid, m_states, m_target, m_since, m_to );
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// Purge
+//
+//////////////////////////////////////////////////////////////////////////////
+CreamProxy_Purge::CreamProxy_Purge( const string& service,
+                                   const vector<string>& jobids ) :
+    m_service( service ),
+    m_jid( jobids )
+{
+
+}
+
+void CreamProxy_Purge::method_call( soap_proxy::CreamProxy* p ) 
+    throw(cream_ex::BaseException&,                  
+          cream_ex::JobUnknownException&,
+          cream_ex::InvalidArgumentException&,
+          cream_ex::GenericException&,
+          cream_ex::AuthenticationException&,
+          cream_ex::AuthorizationException&,
+          cream_ex::InternalException&,
+          cream_ex::ConnectionTimeoutException&,
+          soap_proxy::auth_ex&)
+{    
+    p->Purge( m_service.c_str(), m_jid );
+}
+
