@@ -738,6 +738,12 @@ try {
     jw->set_job_type(NORMAL);
   }
  
+  // GlueCEInfoApplicationDir
+  std::string application_dir = jdl::get_ce_application_dir(*m_ad, is_in_jdl);
+  if (is_in_jdl) {
+    jw->ce_application_dir(application_dir);
+  }
+
   // PerusalFileEnable is not mandatory
   bool b_perusal;
   bool perusal = jdl::get_perusal_file_enable(*m_ad, b_perusal);

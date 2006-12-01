@@ -92,6 +92,7 @@ struct JobWrapper::pimpl {
   bool                      m_osb_wildcards_support;
 
   std::string               m_broker_hostname;
+  std::string               m_ce_application_dir;
 };
 
 const std::string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
@@ -307,6 +308,12 @@ JobWrapper::broker_hostname(std::string const& _)
 }
 
 void
+JobWrapper::ce_application_dir(std::string const& _)
+{
+  m_pimpl->m_ce_application_dir = _;
+}
+
+void
 JobWrapper::enable_shallow_resubmission(std::string const& token)
 {
   m_pimpl->m_shallow_resubmission_token = token;
@@ -490,6 +497,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_se", storage_elements) &&
     dump(os, "__osb_wildcards_support", m_pimpl->m_osb_wildcards_support) &&
     dump(os, "__broker_hostname", m_pimpl->m_broker_hostname) &&
+    dump(os, "__ce_application_dir", m_pimpl->m_ce_application_dir) &&
     dump(os, "__output_sandbox_base_dest_uri", 
       (m_pimpl->m_output_sandbox_base_dest_uri == 0 ? "" 
       : m_pimpl->m_output_sandbox_base_dest_uri->as_string())

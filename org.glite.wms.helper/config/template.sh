@@ -368,6 +368,17 @@ function send_partial_file
   rm -f "$LISTFILE" # some cleanup
 }
 
+# first of all, the VO hook
+vo_hook="lcg-jobwrapper-hook.sh" # now it's hard-coded, but we hope in a better naming convention
+if [ -n "${__ce_application_dir}" ]; then
+  if [ -r "${__ce_application_dir}" ]; then
+    . "${__ce_application_dir}/${vo_hook}"
+  else
+    fatal_error "${__ce_application_dir}/lcg-jobwrapper-hook.sh not found or not readable"
+  fi
+fi
+unset vo_hook
+
 if [ -n "${__gatekeeper_hostname}" ]; then
   export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
 fi

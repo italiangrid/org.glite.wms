@@ -264,7 +264,7 @@ try {
   matchmaking::match_const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
  
   std::string const ce_id(
-    utils::evaluate_attribute(*ce_it->second.getAd(),"GlueCEUniqueID")
+    utils::evaluate_attribute(*ce_it->second.getAd(), "GlueCEUniqueID")
   );
 
   // update the brokerinfo
@@ -356,6 +356,10 @@ try {
     requestad::set_ce_id(
       *result,
       utils::evaluate_attribute(*ce_ad, "CEid")
+    );
+    requestad::set_ce_application_dir(
+      *result,
+      utils::evaluate_attribute(*ce_ad, "GlueCEInfoApplicationDir")
     );
 
   } catch (utils::InvalidValue const& e) {
