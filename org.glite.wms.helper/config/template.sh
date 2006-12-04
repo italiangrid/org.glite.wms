@@ -369,12 +369,18 @@ function send_partial_file
 }
 
 # first of all, the VO hook
-vo_hook="lcg-jobwrapper-hook.sh" # now it's hard-coded, but we hope in a better naming convention
+vo_hook="lcg-jobwrapper-hook.sh" # common-agreed (vo_hook.sh would be better)
 if [ -n "${__ce_application_dir}" ]; then
-  if [ -r "${__ce_application_dir}" ]; then
-    . "${__ce_application_dir}/${vo_hook}"
+  if [ -d "${__ce_application_dir}" ]; then
+    if [ -r "${__ce_application_dir}/${vo_hook}" ]; then
+      . "${__ce_application_dir}/${vo_hook}"
+    elif [ -r "${__ce_application_dir}/${__vo}/${vo_hook}" ]; then
+      . "${__ce_application_dir}/${__vo}/${vo_hook}"
+    else
+      fatal_error "lcg-jobwrapper-hook.sh not readable"
+    fi
   else
-    fatal_error "${__ce_application_dir}/lcg-jobwrapper-hook.sh not found or not readable"
+    fatal_error "${__ce_application_dir} not found or not a directory"
   fi
 fi
 unset vo_hook
