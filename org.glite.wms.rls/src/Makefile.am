@@ -12,10 +12,10 @@ SUBDIRS = \
 	
 
 lib_LTLIBRARIES = \
-	libglite_wms_rls.la
+	libglite_wms_replicaservice.la
 
 
-libglite_wms_rls_la_SOURCES = \
+libglite_wms_replicaservice_la_SOURCES = \
 	ReplicaService.cpp \
 	ReplicaServiceException.cpp \
 	catalogs_access_utils.cpp

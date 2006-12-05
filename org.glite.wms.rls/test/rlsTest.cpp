@@ -1,7 +1,6 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-#include "glite/wms/brokerinfo/brokerinfo.h"
 #include "glite/wms/rls/catalog_access_utils.h"
 
 #include "glite/wms/common/configuration/exceptions.h"
@@ -48,7 +47,7 @@ LineOption  options[] = {
 
 void
 print_file_mapping_info(
-   glite::wms::brokerinfo::filemapping::value_type const& i
+   filemapping::value_type const& i
 )
 {
   std::vector<std::string> const& sfn(
@@ -115,7 +114,7 @@ int main(int argc, char* argv[])
         edglog(debug) << *reqAd << std::endl;
 
         for (int i=0; i < count; i++) {
-           boost::shared_ptr<glite::wms::brokerinfo::filemapping> fm(
+           boost::shared_ptr<filemapping> fm(
    	     resolve_filemapping_info(*reqAd)
            );
            std::for_each(
