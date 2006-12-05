@@ -14,3 +14,5 @@ export tempo=/tmp/$voms_host.$UID"_string"
 
 export ROLE="sam_tester"      # Greate/delete Role
 export GROUP="sam_group"      # Create/delete Group
+export OP="list"              # Operation value (list, all, add,... ) for test ACL management
+export ALLOW="allow"          # Value  (allow or deny) for test ACL management
