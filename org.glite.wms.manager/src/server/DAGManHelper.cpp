@@ -1135,7 +1135,9 @@ try {
 
   return result.release();
 
-} catch (jdl::InvalidDAG const& e) {
+} catch (jdl::DAG_NodeError const& e) {
+  throw DAGManHelperError();
+} catch (jdl::DAG_Error const& e) {
   throw DAGManHelperError();
 } catch (fs::filesystem_error const& ex) {
   throw helper::FileSystemError("DAGManHelper", ex);
