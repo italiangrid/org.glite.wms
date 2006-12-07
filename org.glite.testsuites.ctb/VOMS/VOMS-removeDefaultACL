@@ -1,0 +1,90 @@
+#!/bin/bash
+# Date: 01/12/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Remove default ACL entry of group                                #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#       - groupname                                                                         #
+#       - fake user certificate file path                                                   #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo ""
+date
+echo "VOMS-removeDefaultACL - started, VO=$vo_name, group=$GROUP, fake user=$USER"
+
+
+echo "SCENARIO 1: empty VO"
+
+voms-admin --vo=$vo_name -h $voms_host remove-default-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER 2> $voms_stderr
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr
+
+if [ $? == 1 ]; then
+   echo "Not defined ERROR: <<"
+   cat $voms_stderr
+   echo ">>"
+   echo "Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "SCENARIO 2: Create group <$GROUP> and add ACL entries"
+voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name "/"$GROUP
+
+
+echo "Again remove-acl-entry"
+voms-admin --vo=$vo_name -h $voms_host remove-default-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER 2> $voms_stderr
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: There is no entry in ACL for group" $voms_stderr
+if [ $? == 1 ]; then
+   echo "Not correct diagnose: <<$voms_stderr>>, Test has filed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Create ACL entry for fake user in group $GROUP"
+voms-admin --vo=$vo_name -h $voms_host add-default-acl-entry  "/"$vo_name"/"$GROUP $ALLOW $OP $USER
+
+echo "Again remove-acl-entry"
+voms-admin --vo=$vo_name -h $voms_host remove-default-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER
+
+echo "-------- Extract by openssl from usercert.pem ------"
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+
+echo "Check result using get-acl"
+
+voms-admin --vo=$vo_name -h $voms_host get-default-acl "/"$vo_name"/"$GROUP > $voms_tmp
+
+grep "$user_subject" $voms_tmp
+
+if [ $? == 0 ]; then
+   echo "LIST: <<$ops>>, Test has filed"
+   exit $SAME_ERROR
+fi
+echo "OK, ACL entry has removed"
+
+echo "Clear VO"
+voms-admin --vo=$vo_name delete-group "/"$vo_name"/"$GROUP
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+rm -rf $tempo
+
+echo "Test is OK"
+exit $SAME_OK
