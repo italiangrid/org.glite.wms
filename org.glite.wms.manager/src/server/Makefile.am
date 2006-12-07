@@ -93,22 +93,22 @@ glite_wms_planner_LDADD   = \
 	$(GLOBUS_GSS_THR_LIBS) \
 	$(BOOST_LIBS)
 
-# glite_wms_input_generator_SOURCES = \
-# 	input_generator.cpp
-# glite_wms_input_generator_LDADD = \
-#         $(GLITE_WMS_COMMON_CONF_LIBS) \
-#         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-#         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-# 	$(GLITE_WMSUTILS_JOBID_LIBS) \
-#         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-# 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-#         $(GLITE_JDL_LIBS) \
-# 	$(GLITE_LB_THR_CLIENT_LIBS) \
-#         $(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-#         $(ARES_LIBS) \
-# 	$(CLASSAD_LIBS) \
-# 	$(GLOBUS_GSS_THR_LIBS) \
-#         $(BOOST_LIBS)
+ glite_wms_input_generator_SOURCES = \
+ 	input_generator.cpp
+ glite_wms_input_generator_LDADD = \
+  $(GLITE_WMS_COMMON_CONF_LIBS) \
+  $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+  $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+ 	$(GLITE_WMSUTILS_JOBID_LIBS) \
+  $(GLITE_WMSUTILS_CJOBID_LIBS) \
+ 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+  $(GLITE_JDL_LIBS) \
+ 	$(GLITE_LB_THR_CLIENT_LIBS) \
+  $(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+  $(ARES_LIBS) \
+ 	$(CLASSAD_LIBS) \
+ 	$(GLOBUS_GSS_THR_LIBS) \
+  $(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
@@ -118,8 +118,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
         $(CLASSAD_CFLAGS) \
         $(LOG4CXX_CFLAGS) \
         $(BOOST_CFLAGS) \
-	-DGLITE_WMS_HAVE_LBPROXY \
-	-DGLITE_WMS_HAVE_BULK_MM
+	-DGLITE_WMS_HAVE_LBPROXY #\
+	#-DGLITE_WMS_HAVE_BULK_MM
 
 EXTRA_DIST = glite-wms-dag-post.sh.in
 
