@@ -66,7 +66,7 @@ function test_parser
   #result=$?
    
   #echo "results: $result"                                                                                                     
-  if [ $result == "YLSF" -o $result == "YPBS" ] ; then
+  if [ "$result" == "YLSF" -o "$result" == "YPBS" ] ; then
      samPrintOK ; echo " >>> BLAH Parser is up and running on the machine <<<" ; samNewLine
      exit $SAME_OK
   else
