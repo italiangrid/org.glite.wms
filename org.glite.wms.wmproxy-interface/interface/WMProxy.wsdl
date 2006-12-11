@@ -531,6 +531,7 @@
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
 					AuthorizationFault: 	client is not authorized to perform this operation.
+					JobUnknownFault:		the provided job has not been registered to the system.
 					GenericFault: 					another problem occured.
 					
              </wsdl:documentation>
@@ -540,6 +541,7 @@
 			<wsdl:fault name="InvalidArgumentFault" message="glitens:InvalidArgumentFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
+			<wsdl:fault name="JobUnknownFault" message="glitens:JobUnknownFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
 		<wsdl:operation name="jobRegister" parameterOrder="jdl delegationId">
