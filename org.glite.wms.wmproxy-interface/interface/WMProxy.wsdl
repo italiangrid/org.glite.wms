@@ -530,6 +530,7 @@
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
+					AuthorizationFault: 	client is not authorized to perform this operation.
 					GenericFault: 					another problem occured.
 					
              </wsdl:documentation>
