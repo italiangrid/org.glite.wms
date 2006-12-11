@@ -718,6 +718,7 @@
 			<wsdl:output name="getMaxInputSandboxSizeResponse" message="glitens:getMaxInputSandboxSizeResponse"/>
 			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
 		<wsdl:operation name="getSandboxDestURI" parameterOrder="jobId protocol">
