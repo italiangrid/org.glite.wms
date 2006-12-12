@@ -16,7 +16,7 @@
 # Source function library
 . /etc/rc.d/init.d/functions
 
-GLITE_LOCATION=${GLITE_LOCATION:-@prefix@}
+GLITE_LOCATION=${GLITE_LOCATION:-/opt/glite}
 
 . ${GLITE_LOCATION}/etc/glite-wms-vars.sh
 . ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh

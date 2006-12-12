@@ -5,7 +5,7 @@ echo "Condor log recycle dir cleaner started at: `/bin/date`"
 # Exit status of the script
 status=0
 
-EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
+EDG_WL_LOCATION=${EDG_WL_LOCATION:-/opt/glite}
 
 if [ -z "$EDG_WL_USER" || -z "$EDG_WL_CONFIG_DIR" ]; then
    . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
