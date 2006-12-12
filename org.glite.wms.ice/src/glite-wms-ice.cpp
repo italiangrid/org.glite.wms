@@ -185,7 +185,7 @@ int main(int argc, char*argv[])
     }
 
     logger_instance->setLogFile(logfile.c_str());
-    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061024-17:30]"<<log4cpp::CategoryStream::ENDLINE);
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061212-11:35]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
 
     /*****************************************************************************

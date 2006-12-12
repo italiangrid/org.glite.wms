@@ -123,6 +123,20 @@ void ice_util::iceCommandLeaseUpdater::execute( ) throw()
 		   << m_theJob.getCreamJobID()<<"]: "<<ex.what()
 		   << log4cpp::CategoryStream::ENDLINE);
     return;
+  } catch( exception& ex ) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream()
+		   << "iceCommandLeaseUpdater::execute() - "
+		   << "Error updating lease for job ["
+		   << m_theJob.getCreamJobID()<<"]: "<<ex.what()
+		   << log4cpp::CategoryStream::ENDLINE);
+    return;
+  } catch(...) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream()
+		   << "iceCommandLeaseUpdater::execute() - "
+		   << "Error updating lease for job ["
+		   << m_theJob.getCreamJobID()<<"]: Unknown catched exception."
+		   << log4cpp::CategoryStream::ENDLINE);
+    return;
   }
   
   if ( newLease.find( m_theJob.getCreamJobID() ) != newLease.end() ) {

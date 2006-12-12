@@ -46,14 +46,11 @@ using namespace glite::wms::ice::util;
 //____________________________________________________________________________
 jobKiller::jobKiller() : 
     iceThread( "Job Killer" ),
-    m_valid( true ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
-    m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
-    m_threshold_time( iceConfManager::getInstance()->getJobKillThresholdTime()),
-    m_lb_logger( iceLBLogger::instance() )    
+    m_threshold_time( iceConfManager::getInstance()->getJobKillThresholdTime())
 {
     if( m_threshold_time < 60 ) m_threshold_time = 60;
-    m_delay = m_threshold_time/2;
+    m_delay = m_threshold_time/4;
 }
 
 //____________________________________________________________________________

@@ -73,8 +73,8 @@ void iceCommandJobKill::execute( ) throw()
                         << m_threshold_time << " seconds). "
                         << "Going to cancel it..."
                         << log4cpp::CategoryStream::ENDLINE);
-        
-        killJob( proxyTimeLeft );
+        if( !m_theJob.is_killed_by_ice() )
+	  killJob( proxyTimeLeft );
     }
 }
 
