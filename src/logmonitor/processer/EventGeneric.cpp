@@ -76,7 +76,7 @@ EventGeneric::EventGeneric( ULogEvent *event, MonitorData *data ) : EventInterfa
 EventGeneric::~EventGeneric( void )
 {}
 
-void EventGeneric::finalProcess( int cn, const string &message )
+void EventGeneric::finalProcess( int cn )
 {
   const configuration::LMConfiguration   *conf = configuration::Configuration::instance()->lm();
 
@@ -249,7 +249,7 @@ void EventGeneric::process_event( void )
     elog::cedglog << logger::setlevel( logger::debug ) << "Yes, it is a message from my beloved JobController !" << endl
 		  << logger::setlevel( logger::info ) << "Message in the event says: \"" << message << "\"." << endl;
 
-    this->finalProcess( boost::lexical_cast<int>(code), message );
+    this->finalProcess( boost::lexical_cast<int>(code) );
   }
   else if( boost::regex_match(info, match_pieces, lmexpr) ) {
     code.assign( match_pieces[1].first, match_pieces[1].second );
@@ -258,7 +258,7 @@ void EventGeneric::process_event( void )
     elog::cedglog << logger::setlevel( logger::debug ) << "This seems to be a message coming from an expired timeout !" << endl
 		  << logger::setlevel( logger::info ) << "Message in the event says: \"" << message << "\"." << endl;
 
-    this->finalProcess( boost::lexical_cast<int>(code), message );
+    this->finalProcess( boost::lexical_cast<int>(code) );
   }
   else
     elog::cedglog << logger::setlevel( logger::warning )
