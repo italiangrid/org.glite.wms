@@ -19,6 +19,7 @@
 # provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
+echo "<pre>"
 export voms_host=$1
 source $SAME_SENSOR_HOME/tests/config_file
 

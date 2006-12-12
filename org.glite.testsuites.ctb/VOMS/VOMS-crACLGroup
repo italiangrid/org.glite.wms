@@ -20,6 +20,7 @@
 #                                                                                           #
 #############################################################################################
 export voms_host=$1
+echo "<pre>"
 source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
