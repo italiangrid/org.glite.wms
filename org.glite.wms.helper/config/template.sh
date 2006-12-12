@@ -10,7 +10,7 @@ jw_echo() # 1 - msg
 
 log_event() # 1 - event
 {
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -21,7 +21,7 @@ log_event() # 1 - event
 
 log_done_ok() # 1 - exit code
 {
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -33,7 +33,7 @@ log_done_ok() # 1 - exit code
 
 log_event_reason() # 1 - event, 2 - reason
 {
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -45,7 +45,7 @@ log_event_reason() # 1 - event, 2 - reason
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 {
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -60,7 +60,7 @@ fatal_error() # 1 - reason
 {
   jw_echo "$1"
 
-  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
    --jobid="$GLITE_WMS_JOBID"\
    --source=LRMS\
    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -377,7 +377,7 @@ if [ -n "${__ce_application_dir}" ]; then
     elif [ -r "${__ce_application_dir}/${__vo}/${vo_hook}" ]; then
       . "${__ce_application_dir}/${__vo}/${vo_hook}"
     else
-      fatal_error "lcg-jobwrapper-hook.sh not readable"
+      fatal_error "${vo_hook} not readable"
     fi
   else
     fatal_error "${__ce_application_dir} not found or not a directory"
