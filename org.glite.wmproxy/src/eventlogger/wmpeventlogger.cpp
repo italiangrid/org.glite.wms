@@ -833,7 +833,7 @@ WMPEventLogger::logAbortEventSync(char* reason)
 }
 
 int
-WMPEventLogger::logAcceptEventSync()
+WMPEventLogger::logAcceptEventSync(const char * fromclient)
 {
 	GLITE_STACK_TRY("logAcceptEventSync()");
 	
@@ -841,7 +841,7 @@ WMPEventLogger::logAcceptEventSync()
 	edglog(debug)<<"Logging Accept event (sync)"<<endl;
 	
   	char * s_from = edg_wll_SourceToString(EDG_WLL_SOURCE_NETWORK_SERVER);
-	
+  	
 	int outcome = 1;
 	int i = LOG_RETRY_COUNT;
 #ifdef GLITE_WMS_HAVE_LBPROXY
@@ -849,7 +849,7 @@ WMPEventLogger::logAcceptEventSync()
 		edglog(debug)<<"Logging to LB Proxy..."<<endl;
 		for (; (i > 0) && outcome; i--) {
 			outcome = edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_ACCEPTED,
-				EDG_WLL_FORMAT_ACCEPTED, s_from, "", "", "");
+				EDG_WLL_FORMAT_ACCEPTED, s_from, fromclient, "", "");
 			if (outcome) {
 				edglog(severe)<<error_message("Register log accept failed\n"
 					"edg_wll_LogEventProxy", outcome)<<endl;
@@ -861,7 +861,7 @@ WMPEventLogger::logAcceptEventSync()
 		edglog(debug)<<"Logging to LB..."<<endl;
 		for (; (i > 0) && outcome; i--) {
 			outcome = edg_wll_LogEventSync(ctx, EDG_WLL_EVENT_ACCEPTED,
-				EDG_WLL_FORMAT_ACCEPTED, s_from, "", "", "");
+				EDG_WLL_FORMAT_ACCEPTED, s_from, fromclient, "", "");
 			if (outcome) {
 				edglog(severe)<<error_message("Register log sync accept failed\n"
 					"edg_wll_LogEventSync", outcome)<<endl;
@@ -935,7 +935,7 @@ WMPEventLogger::setUserProxy(const string &proxy)
 		if (!getenv(GLITE_HOST_KEY) || !getenv(GLITE_HOST_CERT)) {
 			edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
 			throw AuthenticationException(__FILE__, __LINE__,
-				"setJobLoggingProxy()", WMS_AUTHENTICATION_ERROR,
+				"setJobLoggingProxy()", WMS_AUTHORIZATION_ERROR,
 				"Unable to set User Proxy for LB context");
 		} else {
 			if (edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY, NULL)

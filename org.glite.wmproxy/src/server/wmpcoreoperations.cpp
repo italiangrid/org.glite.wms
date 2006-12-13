@@ -1277,7 +1277,16 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		}
 		
 		edglog(debug)<<"Logging LOG_ACCEPT..."<<endl;
-		int error = wmplogger.logAcceptEventSync();
+		char * fromclient = NULL;
+		if (getenv("REMOTE_HOST")) {
+			fromclient = getenv("REMOTE_HOST");
+		} else if (getenv("REMOTE_ADDR")) {
+			fromclient = getenv("REMOTE_ADDR");
+		}
+		int error = wmplogger.logAcceptEventSync(fromclient);
+		if (fromclient) {
+			free(fromclient);	
+		}
 		if (error) {
 			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
 			
@@ -1678,7 +1687,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			wmputilities::setFlagFile(flagfile, true);
 	
 			throw AuthenticationException(__FILE__, __LINE__,
-				"submit()", wmputilities::WMS_AUTHENTICATION_ERROR,
+				"submit()", wmputilities::WMS_AUTHORIZATION_ERROR,
 				"Unable to set User Proxy for LB context");
 		}
 		*/
