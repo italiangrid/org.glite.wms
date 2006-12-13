@@ -1,4 +1,4 @@
 testName: VOMS-crUser
 testAbbr: crUsr	
-testTitle: voms-admin: Test "create-user" option
+testTitle: voms-admin: Test "create-user CERTIFICATE.PEM" option
 EOT
