@@ -1,0 +1,4 @@
+testName: VOMS-crUserNocert
+testAbbr: crUserNocert
+testTitle: test for creation of single user using DN, CA, CN, e-mail
+EOT

@@ -1,0 +1,4 @@
+testName: VOMS-delUser
+testAbbr: delUsr
+testTitle: voms-admin: Test "delete-user USE" option
+EOT

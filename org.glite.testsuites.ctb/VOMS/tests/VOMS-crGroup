@@ -1,0 +1,73 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Create new group for VO                                          #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - voms_host                                                                         #
+#       - VO name                                                                           #                       #
+#       - group name                                                                        #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+###########################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+#rm -rf $tempo
+
+
+echo ""
+date
+echo "VOMS-crGroup - started, VO=$vo_name, group=$GROUP"
+echo "             SCENARIO 1, group not exist...                 "
+
+echo "Create new group"
+voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name" "/$GROUP"
+
+echo "Check list groups"
+voms-admin --vo=$vo_name -h $voms_host list-groups > $voms_tmp
+
+
+echo "Check list groupnames"
+grep "$GROUP" $voms_tmp        #> /dev/null
+
+
+if [ $? == 1 ]; then
+   echo "Group  not created LIST:<"
+   cat $voms_tmp
+   echo "> Test has failed"
+   exit $SAME_ERROR
+fi
+echo "OK"
+echo "           SCENARIO 2:  group exist            "
+echo "Create new group"
+voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name" "/$GROUP" 2> $voms_stderr
+
+echo "OK, check stderr"
+# Check error message is correct
+#cat $voms_stderr
+
+grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr    # > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Not defined ERROR<"
+    cat $voms_stderr
+    echo ">, Test has failed"
+    exit $SAME_ERROR
+fi
+                
+echo "OK,  Cleaning tasks: Leave VO empty "
+echo "Remove group"
+voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name"/"$GROUP"
+echo "Test is OK"
+exit $SAME_OK

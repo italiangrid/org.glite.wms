@@ -1,0 +1,98 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Test group list of user                                          #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #                                    
+#       - VO host name                                                                      #
+#       - path user certificate file -  usercert.pem                                        #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO which is empty                                                    #
+#                                                                                           #
+#                                                                                           #                                                               
+#############################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+#rm -rf $tempo
+
+echo ""
+date
+echo "VOMS-listGroups - started, VO=$vo_name, user=$USER"
+
+echo "SCENARIO: empty VO"
+
+echo "List group command for empty VO:"
+voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER 2> $voms_stderr
+#cat $voms_stderr
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr
+
+if [ $? == 1 ]; then
+   echo "User exist: <<"
+   cat $voms_stderr
+   echo ">>   Test has failed"
+   exit $SAME_ERROR
+fi
+echo "OK, user not exist, create new user in VO"
+
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+echo "List users"
+voms-admin --vo=$vo_name -h $voms_host list-users
+
+voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER > $voms_tmp
+mainGroup=`cat $voms_tmp`
+echo "Main group: $mainGroup" 
+
+if [ $mainGroup = "/"$vo_name ]; then
+   echo "Only main group $vo_name exists"
+fi
+
+
+echo "OK"
+
+echo "Create new group $GROUP"
+voms-admin --vo=$vo_name  -h $voms_host create-group "/"$vo_name "/"$GROUP
+echo "List groups"
+voms-admin --vo=$vo_name  -h $voms_host list-groups
+
+echo "Add member into this group"
+voms-admin --vo=$vo_name  -h $voms_host add-member "/"$vo_name"/"$GROUP $USER
+
+echo "List members of this group"
+voms-admin --vo=$vo_name  -h $voms_host list-members "/"$vo_name"/"$GROUP
+
+echo "List user groups"
+voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER > $voms_tmp
+cat $voms_tmp
+
+echo "Check groupname for this user"
+grep "$GROUP" $voms_tmp
+
+if [ $? == 1 ]; then
+   echo "No group for this user $USER: <<"
+   cat $voms_tmp
+   echo ">> Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "Leave empty VO:"
+echo "Remove group member"
+voms-admin --vo=$vo_name  -h $voms_host remove-member "/"$vo_name"/"$GROUP $USER
+
+echo "Remove group"
+voms-admin --vo=$vo_name  -h $voms_host delete-group "/"$vo_name"/"$GROUP
+echo "Remove user"
+voms-admin --vo=$vo_name  -h $voms_host delete-user $USER
+echo "Test is OK"
+exit $SAME_OK

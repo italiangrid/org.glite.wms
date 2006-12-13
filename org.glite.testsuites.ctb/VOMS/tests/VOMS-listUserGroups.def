@@ -1,0 +1,4 @@
+testName: VOMS-listUserGroups
+testAbbr: lstUsrgr
+testTitle: voms-admin: Test "list-user-groups USER" option
+EOT

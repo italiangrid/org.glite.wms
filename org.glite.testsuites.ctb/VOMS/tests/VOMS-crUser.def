@@ -1,0 +1,4 @@
+testName: VOMS-crUser
+testAbbr: crUsr	
+testTitle: voms-admin: Test "create-user" option
+EOT

@@ -1,0 +1,125 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: List which users have certain role                               #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - VO host name                                                                      #
+#       - Role                                                                              #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+###########################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+#rm -rf $tempo
+
+
+echo ""
+echo "test VOMS-listUsersRole - started, VO=$vo_name, Role=$ROLE, Group=$GROUP"
+
+echo "SCENARIO: VO - empty"
+
+echo "List users for nonexisting Role in nonexisting group"
+
+voms-admin --vo=$vo_name -h $voms_host list-users-with-role "/"$vo_name"/"$GROUP $ROLE 2> $voms_stderr
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: role" $voms_stderr
+
+if [ $? == 1 ]; then
+    echo "Noncorrect diagnose: <<"
+    cat $voms_stderr
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Create new Role"
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
+
+echo "OK, Again list users"
+voms-admin --vo=$vo_name -h $voms_host  list-users-with-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr
+if [ $? == 1 ]; then
+    echo "Noncorrect diagnose: <<"
+    cat $voms_stderr
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Create new group"
+voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name "/"$GROUP
+
+echo "Again list users with  Role"
+voms-admin --vo=$vo_name -h $voms_host  list-users-with-role "/"$vo_name"/"$GROUP $ROLE 2> $voms_stderr
+grep "No users are returned" $voms_stderr
+
+if [ $? == 1 ]; then
+    echo "Noncorrect diagnose: <<"
+    cat $voms_stderr
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "OK, Create user"
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+
+echo "Assign Role"
+voms-admin --vo=$vo_name -h $voms_host  assign-role "/"$vo_name"/"$GROUP $ROLE $USER
+
+echo "List user roles:"
+voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER > $voms_tmp
+
+expect="/"$vo_name"/"$GROUP"/Role="$ROLE
+grep "$expect" $voms_tmp
+if [ $? == 1 ]; then
+    echo "Nonexpected result: <<"
+    cat $voms_tmp
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+echo "Role has assigned, verify it:"
+echo "Check user list who have this Role=$ROLE"
+
+voms-admin --vo=$vo_name -h $voms_host  list-users-with-role "/"$vo_name"/"$GROUP $ROLE > $voms_tmp
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "No users for this Role=$ROLE: <<"
+    cat $voms_tmp
+    echo ">>,  Test has failed"
+   exit $SAME_ERROR
+fi
+
+
+echo "Test - ok, leave empty VO"
+echo "Delete user"
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+
+echo "Delete group"
+voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+
+echo "Delete Role"
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test is OK"
+exit $SAME_OK
+

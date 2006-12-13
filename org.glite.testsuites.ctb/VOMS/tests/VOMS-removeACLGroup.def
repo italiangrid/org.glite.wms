@@ -1,0 +1,4 @@
+testName: VOMS-removeACLGroup
+testAbbr: rmACLgr
+testTitle: voms-admin: Test "remove-acl-entry CONTAINER ALLOW OPERATION USER" where CONTAINER is a group
+EOT

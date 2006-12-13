@@ -1,0 +1,4 @@
+testName: VOMS-crRole
+testAbbr: crRol
+testTitle: voms-admin: Test "create-role ROLENAME" option
+EOT

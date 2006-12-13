@@ -1,0 +1,4 @@
+testName: VOMS-listDefaultACL
+testAbbr: lstDefACL
+testTitle: voms-admin: Test "get-default-acl GROUPNAME" option
+EOT

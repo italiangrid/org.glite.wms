@@ -1,0 +1,4 @@
+testName: VOMS-removeDefaultACL
+testAbbr: rmDefACL
+testTitle: voms-admin "remove-default-acl-entry GROUPNAME ALLOW OPERATION USER" option
+EOT

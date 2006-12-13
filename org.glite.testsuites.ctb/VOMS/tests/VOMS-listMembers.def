@@ -1,0 +1,4 @@
+testName: VOMS-listMembers
+testAbbr: lstMem
+testTitle: voms-admin: Test "list-members GROUPNAME" option
+EOT
