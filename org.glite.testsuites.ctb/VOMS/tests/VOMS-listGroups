@@ -99,10 +99,10 @@ fi
 echo "OK"
 
 echo "Clear Created groups"
-voms-admin --vo=$vo_name delete-group $vo_name/$group1
-voms-admin --vo=$vo_name delete-group $vo_name/$group2
-voms-admin --vo=$vo_name delete-group $vo_name/$group3
-voms-admin --vo=$vo_name delete-group $vo_name/$group4
+voms-admin --vo=$vo_name -h $voms_host delete-group $vo_name/$group1
+voms-admin --vo=$vo_name -h $voms_host delete-group $vo_name/$group2
+voms-admin --vo=$vo_name -h $voms_host delete-group $vo_name/$group3
+voms-admin --vo=$vo_name -h $voms_host delete-group $vo_name/$group4
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

@@ -89,7 +89,7 @@ fi
 
 
 echo "Clear VO"
-voms-admin --vo=$vo_name delete-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

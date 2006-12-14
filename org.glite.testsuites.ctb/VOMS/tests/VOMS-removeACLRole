@@ -81,7 +81,7 @@ fi
 
 echo "OK, ACL entry has removed"
 echo "Clear VO, delete Role"
-voms-admin --vo=$vo_name delete-role $ROLE
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

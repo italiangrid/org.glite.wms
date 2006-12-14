@@ -98,10 +98,10 @@ fi
 echo "OK"
 
 echo "Clear Created users"
-voms-admin --vo=$vo_name delete-user --nousercert "$user1" "$CA"
-voms-admin --vo=$vo_name delete-user --nousercert "$user2" "$CA"
-voms-admin --vo=$vo_name delete-user --nousercert "$user3" "$CA"
-voms-admin --vo=$vo_name delete-user --nousercert "$user4" "$CA"
+voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
+voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user2" "$CA"
+voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user3" "$CA"
+voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user4" "$CA"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

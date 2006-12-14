@@ -103,7 +103,7 @@ fi
 
 
 echo "Clear VO"
-voms-admin --vo=$vo_name delete-role $ROLE
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

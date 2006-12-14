@@ -99,10 +99,10 @@ fi
 echo "OK"
 
 echo "Clear Created roles"
-voms-admin --vo=$vo_name delete-role $role1
-voms-admin --vo=$vo_name delete-role $role2
-voms-admin --vo=$vo_name delete-role $role3
-voms-admin --vo=$vo_name delete-role $role4
+voms-admin --vo=$vo_name -h $voms_host delete-role $role1
+voms-admin --vo=$vo_name -h $voms_host delete-role $role2
+voms-admin --vo=$vo_name -h $voms_host delete-role $role3
+voms-admin --vo=$vo_name -h $voms_host delete-role $role4
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
