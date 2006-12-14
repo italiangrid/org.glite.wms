@@ -81,13 +81,13 @@ LDFLAGS=$(GLITE_LIBS) $(EXTERNAL_LIBS)
 
 
 
-all: uc match dag job jobs status loginfo
+all: uc match dag job jobs status loginfo logquery
 	@echo "TEST SUCCESSFULLY COMPILED:"
 	@ls glite-test-*
 
 uc:
 	@echo "compiling USER CREDENTIAL  ....."
-	@$(CPP) $(CFLAGS) -o glite-test-user-credential glite-user-credential.cpp $(LDFLAGS)
+	$(CPP) $(CFLAGS) -o glite-test-user-credential glite-user-credential.cpp $(LDFLAGS)
 	@echo "DONE glite-test-user-credential"
 match:
 	@echo "compiling LIST  MATCH....."
@@ -113,6 +113,10 @@ loginfo:
 	@echo "compiling JOB LOGGING INFO....."
 	@$(CPP) $(CFLAGS) -o glite-test-job-logging-info glite-job-logging-info.cpp $(LDFLAGS)
 	@echo "DONE glite-test-job-logging-info"
+logquery:
+	@echo "compiling JOB LOGGING QUERY....."
+	@$(CPP) $(CFLAGS) -o glite-test-job-logging-query glite-job-logging-query.cpp $(LDFLAGS)
+	@echo "DONE glite-test-job-logging-query"
 
 clean:
 	@rm glite-test*
