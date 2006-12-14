@@ -13,7 +13,7 @@ This is the collection of tests developed for CTB.
   export CVSROOT=:ext:<afs-user-name>@glite.cvs.cern.ch:/cvs/glite
   export CVS_RSH=ssh
 
-- Check out and launch 'make rpm' 
+- Check out, change the RPM release number in lcg-sam-client-sensors-ctb.spec and launch 'make rpm' 
 
 - How to submit:
 
