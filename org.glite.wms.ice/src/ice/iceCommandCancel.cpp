@@ -23,20 +23,24 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "CreamProxyMethod.h"
+#include "filelist_request_purger.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/wms/common/utilities/scope_guard.h"
 
 #include "boost/algorithm/string.hpp"
 
 namespace cream_api = glite::ce::cream_client_api;
+namespace wms_utils = glite::wms::common::utilities;
 using namespace std;
 using namespace glite::wms::ice;
 
-iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
+iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const filelist_request& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( ),
     m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-    m_lb_logger( util::iceLBLogger::instance() )
+    m_lb_logger( util::iceLBLogger::instance() ),
+    m_request( request )
 {
 
     /*
@@ -55,7 +59,7 @@ iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::Cre
 
 */
     classad::ClassAdParser parser;
-    classad::ClassAd *rootAD = parser.ParseClassAd( request );
+    classad::ClassAd *rootAD = parser.ParseClassAd( request.get_request() );
 
     if (!rootAD)
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
@@ -110,7 +114,7 @@ iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::Cre
     m_theProxy.reset( _theProxy );
 }
 
-void iceCommandCancel::execute( /* Ice* ice, cream_api::soap_proxy::CreamProxy* theProxy */) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     CREAM_SAFE_LOG( 
                    m_log_dev->infoStream()
@@ -118,6 +122,8 @@ void iceCommandCancel::execute( /* Ice* ice, cream_api::soap_proxy::CreamProxy* 
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
+    wms_utils::scope_guard remove_request_guard( filelist_request_purger( m_request ) );
+    
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
     // Lookup the job in the jobCache

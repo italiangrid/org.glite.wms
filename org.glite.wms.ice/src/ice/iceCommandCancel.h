@@ -25,6 +25,7 @@
 #include "iceAbsCommand.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
+#include "filelist_request.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <boost/scoped_ptr.hpp>
@@ -43,7 +44,7 @@ namespace glite {
 	      //glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy;
                 
             public:
-                iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy*, const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+                iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy*, const filelist_request& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
 
                 virtual ~iceCommandCancel() { }
 
@@ -56,6 +57,7 @@ namespace glite {
                 std::string m_sequence_code;
                 log4cpp::Category* m_log_dev;
                 util::iceLBLogger *m_lb_logger;
+                filelist_request m_request;
             };
         } // namespace ice
     } // namespace wms

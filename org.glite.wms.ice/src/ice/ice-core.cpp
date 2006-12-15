@@ -449,14 +449,15 @@ void Ice::startJobKiller( void )
 }
 
 //____________________________________________________________________________
-void Ice::clearRequests() 
-{
-    m_requests.clear();
-}
+// void Ice::clearRequests() 
+// {
+//     // m_requests.clear();
+// }
 
 //____________________________________________________________________________
-void Ice::getNextRequests(vector<string>& ops) 
+void Ice::getNextRequests(vector< filelist_request >& ops) 
 {
+    std::vector<FLEit> m_requests;
   try { 
       m_requests = m_fle.get_all_available();
   }
@@ -469,14 +470,15 @@ void Ice::getNextRequests(vector<string>& ops)
       exit(1);
   }
   for ( unsigned j=0; j < m_requests.size(); j++ ) {
-      ops.push_back(*m_requests[j]);
+      ops.push_back( filelist_request( m_requests[j] ) );
   }
 }
 
 //____________________________________________________________________________
-void Ice::removeRequest( unsigned int reqNum) 
+void Ice::removeRequest( const filelist_request& req ) 
 {
-    m_fle.erase(m_requests[reqNum]);
+    m_fle.erase( req.get_iterator() );
+    // m_fle.erase(m_requests[reqNum]);
 }
 
 bool Ice::is_listener_started( void ) const

@@ -36,6 +36,8 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "CreamProxyMethod.h"
+#include "filelist_request.h"
+#include "filelist_request_purger.h"
 
 #ifdef ICE_STANDALONE
 #include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
@@ -104,21 +106,21 @@ namespace { // Anonymous namespace
 }; // end anonymous namespace
 
 //____________________________________________________________________________
-iceCommandSubmit::iceCommandSubmit( Ice* _theIce, glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const string& request )
+iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const filelist_request& request )
   throw( util::ClassadSyntax_ex&, util::JobRequest_ex& ) :
     iceAbsCommand( ),
-    m_theIce( _theIce ),
+    m_theIce( Ice::instance() ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    // m_confMgr( util::iceConfManager::getInstance() ),
     m_configuration( util::iceConfManager::getInstance()->getConfiguration() ),
-    m_lb_logger( util::iceLBLogger::instance() )
+    m_lb_logger( util::iceLBLogger::instance() ),
+    m_request( request )
 {
     try {
         m_myname = util::getHostName();
 	if( m_configuration->ice()->listener_enable_authn() ) {
-	  m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
+            m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
 	} else {
-	  m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
+            m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
 	}
     } catch( runtime_error& ex ) {
         CREAM_SAFE_LOG(
@@ -129,7 +131,7 @@ iceCommandSubmit::iceCommandSubmit( Ice* _theIce, glite::ce::cream_client_api::s
                        );
         exit( 1 );
     }
-
+    
     /*
 
 [
@@ -155,12 +157,13 @@ iceCommandSubmit::iceCommandSubmit( Ice* _theIce, glite::ce::cream_client_api::s
 ]
 
 */
-
+            
+                
     classad::ClassAdParser parser;
-    classad::ClassAd *rootAD = parser.ParseClassAd( request );
+    classad::ClassAd *rootAD = parser.ParseClassAd( request.get_request() );
 
     if (!rootAD) {
-        throw util::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request  ) );        
+        throw util::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request.get_request()  ) );        
     }
     
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
@@ -168,7 +171,7 @@ iceCommandSubmit::iceCommandSubmit( Ice* _theIce, glite::ce::cream_client_api::s
     string commandStr;
     // Parse the "command" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-        throw util::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request ) );
+        throw util::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request.get_request() ) );
     }
     boost::trim_if( commandStr, boost::is_any_of("\"") );
 
@@ -233,8 +236,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     util::jobCache* cache( util::jobCache::getInstance() );
     
     vector<string> url_jid;
-
-    wms_utils::scope_guard remove_job_guard( remove_job_from_cache( m_theJob.getGridJobID() ) );
+    filelist_request_purger purger_f( m_request );
+    wms_utils::scope_guard remove_request_guard( purger_f );
+    remove_job_from_cache remove_f( m_theJob.getGridJobID() );
+    wms_utils::scope_guard remove_job_guard( remove_f );
     
 #ifdef ICE_STANDALONE
     CREAM_SAFE_LOG(

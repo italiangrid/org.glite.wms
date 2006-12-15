@@ -22,6 +22,7 @@
 
 #include "ClassadSyntax_ex.h"
 #include "JobRequest_ex.h"
+#include "filelist_request.h"
 #include <string>
 
 namespace glite {
@@ -52,7 +53,7 @@ namespace glite {
                  *
                  * @return a dynamically allocated iceAbsCommand object.
                  */ 
-                static iceAbsCommand* mkCommand( const std::string& request ) throw( glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+                static iceAbsCommand* mkCommand( const filelist_request& request ) throw( glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
                 
             protected:
                 iceCommandFactory( ) { };

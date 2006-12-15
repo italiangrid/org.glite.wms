@@ -24,6 +24,7 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "creamJob.h"
+#include "filelist_request.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -59,17 +60,15 @@ namespace util {
  private:
      void  doSubscription( const std::string& );
      
-     //boost::scoped_ptr< Ice > m_theIce;
      Ice *m_theIce;
      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-     //glite::ce::cream_client_api::soap_proxy::CreamProxy* m_theProxy;
      
  public:
-     iceCommandSubmit( Ice*, glite::ce::cream_client_api::soap_proxy::CreamProxy*, const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+     iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy*, const glite::wms::ice::filelist_request& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
      
-     virtual ~iceCommandSubmit() { /*if(m_theProxy) delete( m_theProxy ); */ }
+     virtual ~iceCommandSubmit() { }
      
-     virtual void execute( /* Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy */) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+     virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      
      std::string get_grid_job_id( void ) const { return m_theJob.getGridJobID(); };
      
@@ -131,10 +130,10 @@ namespace util {
      std::string m_jdl;
      util::CreamJob m_theJob;
      log4cpp::Category* m_log_dev;
-     // glite::wms::ice::util::iceConfManager* m_confMgr;
      glite::wms::common::configuration::Configuration* m_configuration;
      std::string m_myname_url;
      util::iceLBLogger *m_lb_logger;
+     filelist_request m_request;
 };
 
 } // namespace ice

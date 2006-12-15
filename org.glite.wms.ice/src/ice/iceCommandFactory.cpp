@@ -33,11 +33,11 @@ namespace glite {
 namespace wms {
 namespace ice {
 
-iceAbsCommand* iceCommandFactory::mkCommand( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
+iceAbsCommand* iceCommandFactory::mkCommand( const filelist_request& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
 {
     iceAbsCommand* result = 0;
     classad::ClassAdParser parser;
-    classad::ClassAd *rootAd = parser.ParseClassAd( request );
+    classad::ClassAd *rootAd = parser.ParseClassAd( request.get_request() );
 
     if ( !rootAd ) {
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
@@ -52,7 +52,7 @@ iceAbsCommand* iceCommandFactory::mkCommand( const std::string& request ) throw(
     boost::trim_if(commandStr, boost::is_any_of("\""));
 
     if ( boost::algorithm::iequals( commandStr, "submit" ) ) {
-        result = new iceCommandSubmit( glite::wms::ice::Ice::instance( ), util::CreamProxyFactory::makeCreamProxy(true), request );
+        result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(true), request );
     } else if ( boost::algorithm::iequals( commandStr, "cancel" ) ) {
         result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(true), request );
     } else {

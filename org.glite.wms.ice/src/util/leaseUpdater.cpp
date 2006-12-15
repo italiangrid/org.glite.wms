@@ -120,8 +120,14 @@ void ice_util::leaseUpdater::update_lease( void )
             ice_util::jobCache::iterator tmp( m_cache->lookupByGridJobID( it->getGridJobID() ) );
             m_cache->erase( tmp );              
         } else { 
-	  ice_util::iceCommandLeaseUpdater cmd( ice_util::CreamProxyFactory::makeCreamProxy( false ), *it );
-	  cmd.execute();
+            try {
+                ice_util::iceCommandLeaseUpdater cmd( ice_util::CreamProxyFactory::makeCreamProxy( false ), *it );
+                cmd.execute();
+            } catch( exception& ex ) {
+
+            } catch( ... ) {
+
+            }
         }
     } // end for
 }

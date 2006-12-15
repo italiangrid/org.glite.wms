@@ -23,7 +23,6 @@
 #include <unistd.h>             // getpid()
 #include <pwd.h>                // getpwnam()
 
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -42,7 +41,7 @@
 #include "iceUtils.h"
 #include "iceThreadPool.h"
 #include "CreamProxyFactory.h"
-#include "subscriptionManager.h"
+#include "filelist_request.h"
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
@@ -210,14 +209,6 @@ int main(int argc, char*argv[])
     }
   
 
-//     if( iceUtil::iceConfManager::getInstance()->getStartListener() ) {
-//         iceUtil::subscriptionManager::getInstance();
-//         if( !iceUtil::subscriptionManager::getInstance()->isValid() ) {
-//             cerr << "glite-wms-ice::main() - ERROR Creating a subscriptionManager Object! STOP." << endl;
-//             abort();
-//         }
-//     }
-
     /*****************************************************************************
      * Initializes job cache
      ****************************************************************************/
@@ -253,8 +244,7 @@ int main(int argc, char*argv[])
      * Prepares a vector that will contains requests fetched from input file
      * list. Its initial capacity is set large enough... to tune...
      ****************************************************************************/
-    vector<string> requests;
-    // requests.reserve(1000);
+    vector< glite::wms::ice::filelist_request > requests;
 
     /*****************************************************************************
      * Starts status poller and/or listener if specified in the config file
@@ -277,7 +267,8 @@ int main(int argc, char*argv[])
      * removes requests from input filelist.
      ****************************************************************************/
     while(true) {
-    
+
+        requests.clear();
         iceManager->getNextRequests(requests);
     
         if( requests.size() )
@@ -291,7 +282,7 @@ int main(int argc, char*argv[])
             CREAM_SAFE_LOG(
                            log_dev->infoStream()
                            << "*** Unparsing request <"
-                           << requests[j] 
+                           << requests[j].get_request()
                            << ">"
                            << log4cpp::CategoryStream::ENDLINE
                            );
@@ -301,21 +292,8 @@ int main(int argc, char*argv[])
             } catch( std::exception& ex ) {
                 CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
                 CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
-                iceManager->removeRequest(j);
+                iceManager->removeRequest( requests[j] );
                 continue;
-            }
-            CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing submitted request from WM/ICE's filelist..." ) );
-            try { 
-                iceManager->removeRequest(j);// FIXME
-            } catch(exception& ex) {
-                CREAM_SAFE_LOG(
-                               log_dev->fatalStream() 
-                               << "glite-wms-ice::main() - "
-                               << "Error removing request from FL: "
-                               << ex.what()
-                               << log4cpp::CategoryStream::ENDLINE
-                               );
-                exit(1);
             }
 
             // Submit to the thread pool
@@ -323,7 +301,6 @@ int main(int argc, char*argv[])
 
         }
         sleep(1);
-        requests.clear();
     }
     return 0;
 }

@@ -34,6 +34,7 @@
 #include "creamJob.h"
 #include "iceThread.h"
 #include "jobCache.h"
+#include "filelist_request.h"
 
 #include "glite/wms/common/utilities/FLExtractor.h"
 
@@ -110,7 +111,7 @@ namespace ice {
         IceThreadHelper m_proxy_renewer_thread;
         IceThreadHelper m_job_killer_thread;
         
-        std::vector<FLEit> m_requests;
+        // std::vector<FLEit> m_requests;
         glite::wms::common::utilities::FileList<std::string> m_flns;
         
         log4cpp::Category* m_log_dev;
@@ -129,9 +130,9 @@ namespace ice {
         
         virtual ~Ice();
         
-        void clearRequests();
-        void getNextRequests(std::vector<std::string>&);
-        void removeRequest( unsigned int );
+        // void clearRequests();
+        void getNextRequests(std::vector< filelist_request >&);
+        void removeRequest( const filelist_request& r );
 
         // Starter methods
         void startListener( void );

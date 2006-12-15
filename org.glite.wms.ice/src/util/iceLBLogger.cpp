@@ -104,10 +104,12 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                            // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
                            
                            << log4cpp::CategoryStream::ENDLINE);
-            
+#define GLITE_WMS_ICE_DISABLE_LB
+#ifndef GLITE_WMS_ICE_DISABLE_LB            
             res = ev->execute( m_ctx.get() );
             
             m_ctx->testCode( res );
+#endif
             
         } while( res != 0 );        
         
