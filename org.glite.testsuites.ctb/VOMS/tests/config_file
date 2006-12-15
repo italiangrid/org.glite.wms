@@ -2,10 +2,12 @@
 
 export vo_name="dteam"       # Virtuale organization
 #export USER="/afs/cern.ch/user/v/vgalakti/.globus/usercert.pem"
-export USER="/opt/lcg/same/client/sensors/VOMS/tests/test_user_1_cert.pem"
+export USER="$SAME_SENSOR_HOME/tests/test_user_1_cert.pem"
+#export USER="$HOME/same/client-ctb/sensors/VOMS/tests/test_user_1_cert.pem"
+#export USER="/opt/lcg/same/client/sensors/VOMS/tests/test_user_1_cert.pem"
 export CA="/C=CH/O=CERN/OU=GD/CN=The Certification CA"
 #export USER="/afs/cern.ch/user/m/malandes/.globus/usercert.pem"
-#export CA="/C=CH/O=CERN/OU=GRID/CN=CERN CA"
+export CA_CERN="/C=CH/O=CERN/OU=GRID/CN=CERN CA"
 
 #--------- temporary files ---------------
 export voms_tmp=/tmp/$voms_host.$UID"_tmp"
