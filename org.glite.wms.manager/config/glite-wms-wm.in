@@ -36,18 +36,21 @@ pid_file=${GLITE_WMS_TMP}/${program_name}.pid
 
 #set -x
 
+# 0 - daemon is running,
+# 1 = daemon is stopped and lock file is present,
+# 2 = daemon is stopped.
 running()
 {
     # no pidfile
     if [ ! -r ${pid_file} ]; then
-        return 3
+        return 2
     fi
 
     pid=`cat ${pid_file} 2> /dev/null`
 
     # no pid
     if [ -z "${pid}" ]; then
-        return 1
+        return 2
     fi
     
     local cmdline=`ps hwwwp ${pid} o command` # BSD style
