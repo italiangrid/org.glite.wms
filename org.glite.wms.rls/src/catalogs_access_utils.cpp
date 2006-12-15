@@ -457,7 +457,7 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
             }
             else {
                try {
-                  the_rls = createRls(rls_c_it->get<1>());
+                  the_rls = createRls(rls_c_it->get<VO>());
                   rls_plugin = true;
                }
                catch( const ReplicaServiceException& ex){
