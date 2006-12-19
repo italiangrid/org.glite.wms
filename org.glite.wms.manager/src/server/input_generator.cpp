@@ -284,7 +284,7 @@ main(int argc, char *argv[])
         bool a = true;
         try {
           jdl::set_input_sandbox_path(jdl, isb_path);
-          jdl::set_output_sandbox_path(jdl, isb_path);
+          jdl::set_output_sandbox_path(jdl, osb_path);
           jdl::set_x509_user_proxy(jdl, sandbox_root_path + "/user.proxy");
           if (!user_subject.empty()) {
             jdl::set_user_subject_name(jdl, user_subject);
