@@ -78,6 +78,81 @@ bool evaluate(
   return result;
 }
 
+struct generate_storage_info : std::binary_function<
+  vector<classad::ExprTree*>*, 
+  classad::ExprTree*, 
+  vector<classad::ExprTree*>*
+>
+{
+std::string _vo;
+  generate_storage_info(
+    std::string const& vo) 
+  : _vo(vo)
+  {
+  }
+  vector<classad::ExprTree*>*
+  operator()(
+    vector<classad::ExprTree*>* c,
+    classad::ExprTree* e
+  )
+  {
+    std::string name;
+    static_cast<classad::ClassAd*>(e)->EvaluateAttrString(
+      "name",name
+    );
+    ism::Ism const& the_ism = *ism::get_ism();
+    std::vector<ism::MutexSlicePtr>::const_iterator first = the_ism.storage.begin();
+    std::vector<ism::MutexSlicePtr>::const_iterator const last = the_ism.storage.end();
+    for( ; first != last; ++first ) {
+    
+      ism::Mutex::scoped_lock l((*first)->mutex);
+      ism::OrderedSliceIndex& ordered_index(
+        (*first)->slice->get<ism::SliceIndex::Ordered>()
+      );
+      ism::OrderedSliceIndex::iterator const slice_end(ordered_index.end());
+      ism::OrderedSliceIndex::iterator se_it = ordered_index.find(name);
+      if ( se_it != slice_end ) {    
+        boost::shared_ptr<classad::ClassAd> se_ad(
+          boost::tuples::get<ism::Ad>(*se_it)
+        );
+        classad::ClassAd sesa_ad;
+        for(int i=0; se_attributes[i]; ++i) {
+          classad::ExprTree* expr = se_ad->Lookup(se_attributes[i]);
+          if(expr) { 
+            sesa_ad.Insert(
+              se_attributes[i],
+              expr->Copy()
+            );
+          }
+        }
+        vector<classad::ExprTree*> sa_ads;
+        if (evaluate(*se_ad, "GlueSA", sa_ads)) {
+
+          vector<classad::ExprTree*>::const_iterator sa_it(
+            std::find_if(
+              sa_ads.begin(), sa_ads.end(),
+              gluesa_local_id_matches(_vo)
+            )
+          );
+          if (sa_it != sa_ads.end()) {
+            for(int i=0; sa_attributes[i]; ++i) {
+              classad::ExprTree* expr = static_cast<classad::ClassAd*>(*sa_it)->Lookup(sa_attributes[i]);
+              if (expr) {
+                sesa_ad.Insert(
+                  sa_attributes[i],expr->Copy()
+                );
+              }
+            }
+          }
+        }
+        c->push_back(sesa_ad.Copy());
+        break; // no need to scan the next slice
+      }
+    }
+   return c;
+  }
+};
+
 }
 
 bool retrieveCloseSEsInfo(
@@ -101,67 +176,19 @@ bool retrieveCloseSEsInfo(
       classad::ClassAd const* thiscead = 
         static_cast<const classad::ClassAd*>(arguments[0] -> GetParentScope());
 
-      vector<classad::ExprTree*> ads;
-      if (evaluate(*thiscead, "CloseStorageElements", ads)) {
+      vector<classad::ExprTree*> close_storage_elements;
+      if (evaluate(*thiscead, "CloseStorageElements", close_storage_elements)) {
           
-        vector<classad::ExprTree*>::const_iterator it = ads.begin();
-        vector<classad::ExprTree*>::const_iterator const e = ads.end();
-        
-        ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex(ism::se));
-        ism::ism_type::const_iterator const ism_end(
-          ism::get_ism(ism::se).end()
+        vector<classad::ExprTree*> storage_info_ads;
+
+        std::accumulate(
+          close_storage_elements.begin(),
+          close_storage_elements.end(),
+          &storage_info_ads,
+          generate_storage_info(vo)
         );
 
-        vector<classad::ExprTree*> sesa_ads;
-        for( ; it != e; ++it ) {
-
-          std::string name;
-          static_cast<classad::ClassAd*>(*it)->EvaluateAttrString(
-            "name",name
-          );
-          ism::ism_type::const_iterator se_it(
-            ism::get_ism(ism::se).find(name)
-          );
-          if (se_it != ism_end) {
-            boost::shared_ptr<classad::ClassAd> se_ad_ptr(
-              boost::tuples::get<2>(se_it->second)
-            );
-            classad::ClassAd sesa_ad;
-            for(int i=0; se_attributes[i]; ++i) {
-              classad::ExprTree* e = se_ad_ptr->Lookup(se_attributes[i]);
-              if(e) { 
-                sesa_ad.Insert(
-                  se_attributes[i],
-                  e->Copy()
-                );
-              }
-            }
-            vector<classad::ExprTree*> ads_sa;
-            if (evaluate(*se_ad_ptr, "GlueSA", ads_sa)) {
-
-              vector<classad::ExprTree*>::const_iterator it_sa(
-                std::find_if(
-                  ads_sa.begin(), ads_sa.end(),
-                  gluesa_local_id_matches(vo)
-                )
-              );
-              if (it_sa != ads_sa.end()) {
-                for(int i=0; sa_attributes[i]; ++i) {
-                  classad::ExprTree* e = static_cast<classad::ClassAd*>(*it_sa)->Lookup(sa_attributes[i]);
-                  if (e) {
-                    sesa_ad.Insert(
-                      sa_attributes[i],
-                      e->Copy()
-                    );
-                  }
-                }
-              }
-            }
-            sesa_ads.push_back(sesa_ad.Copy()); 
-          }
-
-        }
-        result.SetListValue(ExprList::MakeExprList(sesa_ads));
+        result.SetListValue(ExprList::MakeExprList(storage_info_ads));
         eval_successful=true;
       }
       else {
