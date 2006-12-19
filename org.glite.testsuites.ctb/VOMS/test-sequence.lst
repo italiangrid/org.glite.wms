@@ -1,4 +1,5 @@
 VOMS-crUser
+VOMS-crUserNocert
 VOMS-delUser
 VOMS-listUsers
 VOMS-crRole
@@ -25,5 +26,6 @@ VOMS-crACLRole
 VOMS-crDefaultACL
 VOMS-removeDefaultACL
 VOMS-listDefaultACL
+VOMS-genGM
 
 
