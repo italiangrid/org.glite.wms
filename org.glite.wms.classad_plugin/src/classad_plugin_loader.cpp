@@ -17,29 +17,15 @@ namespace glite {
 namespace wms {
 namespace classad_plugin {
 
-boost::mutex	classad_plugin_loader::mtx;
-int 		    classad_plugin_loader::count;
-
-classad_plugin_loader::classad_plugin_loader()	
-{
-  boost::mutex::scoped_lock lk(mtx);
-  if (count++ == 0) {
-	  // TODO: change code to allow reading of plugin modules to be loaded froma configuration file	
-	  classad::ClassAdParser parser;
-          classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_gangmatch_classad_plugin.so");
-          classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_lb_rank_classad_plugin.so");
-          classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_fqan_classad_plugin.so");
-  }
+namespace {
+classad::ClassAdParser f_parser;
+boost::mutex f_mtx;
 }
 
-classad_plugin_loader::~classad_plugin_loader()
+init::init(std::string const& name)	
 {
-  boost::mutex::scoped_lock lk(mtx);
-  if (--count == 0) {
-  
-	  // the classad library does not provide any function to
-	  // unregister previous registered functions..
-  }
+  boost::mutex::scoped_lock lk(f_mtx);
+  classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_"+name+"classad_plugin.so");
 }
 
 } // namespace classad_plugin
