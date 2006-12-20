@@ -1179,6 +1179,7 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 						}
 						break;
 					}
+					
 				break;
 				
 			default:
@@ -1444,6 +1445,106 @@ operationLock(const string &lockfile, const string &opname)
 {
 	GLITE_STACK_TRY("operationLock()");
 	edglog_fn("wmputils::operationLock");
+
+	edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
+	int fd = open(lockfile.c_str(), O_CREAT | O_RDWR, S_IRWXU);
+	if (fd == -1) {
+		edglog(debug)<<"Unable to open lock file: "<<lockfile<<endl;
+		throw FileSystemException( __FILE__, __LINE__,
+		"operationLock()", WMS_FILE_SYSTEM_ERROR,
+		"unable to open lock file");
+	}
+
+	struct flock flockstruct;
+	memset(&flockstruct, 0, sizeof(flockstruct));
+
+	// \/ Exclusive write lock
+	flockstruct.l_type = F_WRLCK;
+
+	// Blocking lock
+	if (fcntl(fd, F_SETLKW, &flockstruct) == -1) {
+		edglog(debug)<<"Unable to lock file: "<<lockfile<<endl;
+		edglog(debug)<<strerror(errno)<<endl;
+		close(fd);
+		throw JobOperationException( __FILE__, __LINE__,
+			"operationLock()", WMS_OPERATION_NOT_ALLOWED,
+			opname + " operation already in progress");
+	}
+	// /\
+        
+	return fd;
+
+	GLITE_STACK_CATCH();
+}
+
+void
+operationUnlock(int fd)
+{
+	GLITE_STACK_TRY("operationUnlock()");
+	edglog_fn("wmputils::operationUnlock");
+
+	struct flock flockstruct;
+	memset(&flockstruct, 0, sizeof(flockstruct));
+
+	// \/ Unlocking file
+	flockstruct.l_type = F_WRLCK;
+	if (fcntl(fd, F_SETLKW, &flockstruct) == -1) {
+		edglog(severe)<<"Unable to remove lock file, fd: "<<fd<<endl;
+	}
+	close(fd);
+	// /\
+        
+	GLITE_STACK_CATCH();
+}
+
+bool
+isOperationLocked(const string &lockfile)
+{
+	GLITE_STACK_TRY("isOperationLocked()");
+	edglog_fn("wmputils::isOperationLocked");
+
+	edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
+	int fd = open(lockfile.c_str(), O_CREAT | O_WRONLY, S_IRWXU);
+	if (fd == -1) {
+		edglog(debug)<<"Unable to open lock file: "<<lockfile
+			<<" during lock check"<<endl;
+		throw FileSystemException( __FILE__, __LINE__,
+			"operationLock()", WMS_FILE_SYSTEM_ERROR,
+			"Unable to open lock file");
+	}
+
+	struct flock flockstruct;
+	memset(&flockstruct, 0, sizeof(flockstruct));
+
+	// \/ Checking lock
+	flockstruct.l_type = F_WRLCK;
+	flockstruct.l_start = 0;
+	flockstruct.l_whence = SEEK_SET;
+	flockstruct.l_len = 0; // EOF
+
+	if (fcntl(fd, F_GETLK, &flockstruct) < 0) {
+		edglog(debug)<<"Unable to check if the file is locked, fd: "<<fd<<endl;
+ 		throw FileSystemException( __FILE__, __LINE__,
+			"operationLock()", WMS_FILE_SYSTEM_ERROR,
+			"Unable to check if the file is locked");
+	}
+	if (flockstruct.l_type != F_UNLCK) {
+		return true;
+	}
+	// /\
+        
+	close(fd);
+	return false;
+
+	GLITE_STACK_CATCH();
+}
+
+/*
+int
+operationLock(const string &lockfile, const string &opname)
+{
+	GLITE_STACK_TRY("operationLock()");
+	edglog_fn("wmputils::operationLock");
 	
 	edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
 	int fd = open(lockfile.c_str(), O_CREAT | O_RDONLY, S_IRWXU);
@@ -1509,6 +1610,7 @@ isOperationLocked(const string &lockfile)
 	
 	GLITE_STACK_CATCH();
 }
+*/
 
 void
 createSuidDirectory(const string &directory)
