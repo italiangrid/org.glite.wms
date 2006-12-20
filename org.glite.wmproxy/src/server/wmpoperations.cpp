@@ -905,8 +905,8 @@ destroyProxy(const string &delegation_id)
 }
 
 void
-getProxyTerminationTime(getProxyTerminationTimeResponse &getProxyTerminationTime_response,
-	const string &delegation_id)
+getProxyTerminationTime(getProxyTerminationTimeResponse 
+	&getProxyTerminationTime_response, const string &delegation_id)
 {
 	GLITE_STACK_TRY("getProxyTerminationTime()");
 	edglog_fn("wmpoperations::getProxyTerminationTime");
@@ -1132,7 +1132,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	gaclmanager.removeEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
 		item, errors);
 		
-	if (errors.size() > 0) { 
+	if (errors.size() > 0) {
 		edglog(error)<<"Removal of the gacl item failed: " << errors << "\n"; 
 		throw AuthorizationException(__FILE__, __LINE__, 
 		"removeACLItem()", wmputilities::WMS_AUTHORIZATION_ERROR, 
