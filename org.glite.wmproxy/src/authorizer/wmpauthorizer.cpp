@@ -95,6 +95,9 @@ const string WMPAuthorizer::VOMS_GACL_FILE = "glite_wms_wmproxy.gacl";
 const char* WMPAuthorizer::VOMS_GACL_VAR = "GRST_CRED_2";
 
 const string LCMAPS_LOG_FILE = "lcmaps.log";
+
+const int PROXY_TIME_MISALIGNMENT_TOLERANCE = 5;
+
 #endif
 
 // FQAN strings
@@ -1051,17 +1054,29 @@ WMPAuthorizer::checkProxy(const string &proxy)
 	edglog_fn("WMPAuthorizer::checkProxy");
 
 	edglog(debug)<<"Proxy path: "<<proxy<<endl;
-	edglog(debug)<<"time(NULL): "<<
-		boost::lexical_cast<std::string>(time(NULL))<<endl;
-	edglog(debug)<<"Not Before: "<<
-		boost::lexical_cast<std::string>(getNotBefore(proxy))<<endl;
-		
-	if (time(NULL) < getNotBefore(proxy)) {
+	
+	time_t now = time(NULL);
+	edglog(debug)<<"Time now: "<<
+		boost::lexical_cast<std::string>(now)<<endl;
+	time_t proxytime = getNotBefore(proxy);
+	edglog(debug)<<"Proxy Not Before: "<<
+		boost::lexical_cast<std::string>(proxytime)<<endl;
+	
+	double timediff = proxytime - now;
+	edglog(debug)<<"Time difference (proxy - now): "<<
+		boost::lexical_cast<std::string>(timediff)<<endl;
+	if (timediff > PROXY_TIME_MISALIGNMENT_TOLERANCE) {
 		edglog(info)<<"Proxy validity starting time in the future"<<endl;
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"checkProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Proxy validity starting time in the future"
 			"\nPlease check client date/time");
+	} else {
+		if (timediff > 0) {
+			edglog(debug)<<"Proxy validity starting time in the future: "
+				<<timediff<<" sec."<<endl;
+			edglog(debug)<<"Tolerating..."<<endl;
+		}
 	}
 	
 	long timeleft = getProxyTimeLeft(proxy);
@@ -1075,7 +1090,6 @@ WMPAuthorizer::checkProxy(const string &proxy)
 	}
 	
 	GLITE_STACK_CATCH();
-
 }
 
 void
