@@ -158,11 +158,15 @@ make_brokerinfo_ad(
   section.reset(make_computing_element_section(ad));
   if(section) biAd.Update(*section);
   
-  section.reset(make_input_file_names_section(*fm));
-  if(section) biAd.Update(*section);
+  if(fm) {
+    section.reset(make_input_file_names_section(*fm));
+    if(section) biAd.Update(*section);
+  }
 
-  section.reset(make_storage_elements_section(*sm));
-  if(section) biAd.Update(*section);
+  if(sm) {
+    section.reset(make_storage_elements_section(*sm));
+    if(section) biAd.Update(*section);
+  }
   
   return (
     static_cast<classad::ClassAd*>(biAd.Copy())
