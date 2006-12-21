@@ -6,20 +6,23 @@
  */
 
 // $Id$
+#ifndef GLITE_WMS_CLASSAD_PLUGIN_LOADER_H
+#define GLITE_WMS_CLASSAD_PLUGIN_LOADER_H
 
-#include <boost/utility.hpp>
-#include <boost/thread/mutex.hpp>
+#include <vector>
 #include <string>
 
 namespace glite {
 namespace wms {
 namespace classad_plugin {
 
-class init : boost::noncopyable
+struct init
 {
-  explicit init(std::string const& name);
+  bool operator()(std::string const&);
+  bool operator()(std::vector<std::string> const&);
 };
 
 } // namespace classad_plugin
 } // namespace wms
 } // namespace glite
+#endif

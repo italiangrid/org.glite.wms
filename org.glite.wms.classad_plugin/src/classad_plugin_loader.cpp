@@ -10,7 +10,10 @@
 #define ENABLE_SHARED_LIBRARY_FUNCTIONS
 
 #include "classad_plugin_loader.h"
+
+#include <boost/thread/mutex.hpp>
 #include <classad_distribution.h>
+
 #include <fnCall.h>
 
 namespace glite {
@@ -18,14 +21,28 @@ namespace wms {
 namespace classad_plugin {
 
 namespace {
-classad::ClassAdParser f_parser;
 boost::mutex f_mtx;
 }
 
-init::init(std::string const& name)	
+bool init::operator()(std::string const& name)	
 {
+  static classad::ClassAdParser init_parser;
   boost::mutex::scoped_lock lk(f_mtx);
-  classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_"+name+"classad_plugin.so");
+  bool result(
+    classad::FunctionCall::RegisterSharedLibraryFunctions(
+      std::string("libglite_wms_"+name+"_classad_plugin.so").c_str())
+  );
+  if(!result) std::cerr << name << "plugin initialization failure: " << classad::CondorErrMsg << std::endl;
+  return result;
+}
+
+bool init::operator()(std::vector<std::string> const& names)
+{
+  std::vector<std::string>::const_iterator it = names.begin();
+  std::vector<std::string>::const_iterator const e = names.end();
+  bool result = true;
+  for( ; it != e; ++it) result &= this->operator()(*it);
+  return result;
 }
 
 } // namespace classad_plugin
