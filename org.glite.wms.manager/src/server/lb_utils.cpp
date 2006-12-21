@@ -8,6 +8,7 @@
 #include "lb_utils.h"
 #include "signal_handling.h"
 #include <sys/types.h>
+#include <sys/errno.h>
 #include <unistd.h>
 #include <map>
 #include <boost/tuple/tuple.hpp>
@@ -35,38 +36,7 @@ namespace server {
 
 namespace {
 
-unsigned int const one_minute = 60;
-unsigned int const ten_seconds = 10;
 unsigned int const five_seconds = 5;
-
-}
-
-CannotCreateLBContext::CannotCreateLBContext(int errcode)
-  : m_errcode(errcode),
-    m_what(
-      "cannot create LB context ("
-      + boost::lexical_cast<std::string>(m_errcode) + ')'
-    )
-{
-}
-
-CannotCreateLBContext::~CannotCreateLBContext() throw ()
-{
-}
-
-char const*
-CannotCreateLBContext::what() const throw()
-{
-  return m_what.c_str();
-}
-
-int
-CannotCreateLBContext::error_code() const
-{
-  return m_errcode;
-}
-
-namespace {
 
 template <typename P>
 void sleep_while(unsigned int seconds, P condition)
@@ -76,15 +46,105 @@ void sleep_while(unsigned int seconds, P condition)
   }
 }
 
+// what's not retryable is considered to be fatal
+bool is_retryable(int lb_error)
+{
+  return lb_error == ETIMEDOUT
+    || lb_error == ENOTCONN
+    || lb_error == ECONNREFUSED
+    || lb_error == EAGAIN;
+}
+
+std::string
+get_proxy_subject(std::string const& x509_proxy)
+{
+  static std::string const null_string;
+
+  std::FILE* fd = std::fopen(x509_proxy.c_str(), "r");
+  if (!fd) return null_string;
+  boost::shared_ptr<std::FILE> fd_(fd, std::fclose);
+
+  ::X509* const cert = ::PEM_read_X509(fd, 0, 0, 0);
+  if (!cert) return null_string;
+  boost::shared_ptr< ::X509> cert_(cert, ::X509_free);
+
+  char* const s = ::X509_NAME_oneline(::X509_get_subject_name(cert), 0, 0);
+  if (!s) return null_string;
+  boost::shared_ptr<char> s_(s, ::free);
+
+  return std::string(s);
+}
+
+bool not_received_quit_signal()
+{
+  return !received_quit_signal();
+}
+
+int
+set_logging_job_proxy(
+  edg_wll_Context context,
+  jobid::JobId const& id,
+  std::string const& x509_proxy
+)
+{
+  std::string const user_dn = get_proxy_subject(x509_proxy);
+  int const flag = EDG_WLL_SEQ_NORMAL;
+  char const* const sequence_code = 0;
+
+  while (not_received_quit_signal()) {
+    
+    int const result = edg_wll_SetLoggingJobProxy(
+      context,
+      id,
+      sequence_code,
+      user_dn.c_str(),
+      flag
+    );
+
+    if (result == 0) {
+      return result;
+    }
+
+    std::string message("edg_wll_SetLoggingJobProxy failed:");
+    if (is_retryable(result)) {
+      Warning(message << " retrying in " << five_seconds << " seconds");
+      sleep_while(five_seconds, not_received_quit_signal);
+    } else {
+      Error(message << " LB is unavailable, giving up");
+      assert(false);
+    }
+  }
+  Error("set_logging_job_proxy: fatal error");
+  assert(false);
+}
+
 int
 set_logging_job_proxy(
   edg_wll_Context context,
   jobid::JobId const& id,
   std::string const& x509_proxy,
   std::string const& sequence_code
-);
+)
+{
+  int result = 0;
+  if (sequence_code.empty()) {
+    result = set_logging_job_proxy(context, id, x509_proxy);
+  } else {
+    std::string const user_dn = get_proxy_subject(x509_proxy);
+    int const flag = EDG_WLL_SEQ_NORMAL;
+    result = edg_wll_SetLoggingJobProxy(
+      context,
+      id,
+      sequence_code.c_str(),
+      user_dn.c_str(),
+      flag
+    );
+  }
 
+  return result;
 }
+
+} // anonymous namespace
 
 ContextPtr
 create_context(
@@ -95,51 +155,54 @@ create_context(
 )
 {
   edg_wll_Context context;
-  int error = edg_wll_InitContext(&context);
-  if (error) {
-    throw CannotCreateLBContext(error);
+  int errcode = edg_wll_InitContext(&context);
+  if (errcode == ENOMEM) {
+    throw std::bad_alloc();
+  }
+  else if (errcode) {
+    Error("edg_wll_InitContext: unexpected error");
+    assert(false);
   }
 
   ContextPtr result(context, edg_wll_FreeContext);
 
-  error |= edg_wll_SetParam(
+  errcode = edg_wll_SetParam(
     context,
     EDG_WLL_PARAM_SOURCE,
     source
   );
-
-  error |= edg_wll_SetParam(
+  errcode |= edg_wll_SetParam(
     context,
     EDG_WLL_PARAM_INSTANCE,
     boost::lexical_cast<std::string>(::getpid()).c_str()
   );
-
-  error |= edg_wll_SetParam(
-    context,
-    EDG_WLL_PARAM_X509_PROXY,
-    x509_proxy.c_str()
+  errcode |= edg_wll_SetParam(
+      context,
+      EDG_WLL_PARAM_X509_PROXY,
+      x509_proxy.c_str()
   );
-
-  if (error) {
-    throw CannotCreateLBContext(error);
+  if (errcode) {
+    Error("edg_wll_SetParam: unexpected error");
+    assert(false);
   }
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
-  error = set_logging_job_proxy(context, id, x509_proxy, sequence_code);
+  errcode = set_logging_job_proxy(
+    context,
+    id,
+    x509_proxy,
+    sequence_code
+  );
 #else
   int const flag = EDG_WLL_SEQ_NORMAL;
 
-  error = edg_wll_SetLoggingJob(
+  errcode = edg_wll_SetLoggingJob(
     context,
     id,
     sequence_code.c_str(),
     flag
   );
 #endif
-
-  if (error) {
-    throw CannotCreateLBContext(error);
-  }
 
   return result;
 }
@@ -176,7 +239,6 @@ get_user_x509_proxy(jobid::JobId const& jobid)
       + "/user.proxy";
 
     result = x509_proxy;
-
   }
 
   return result;
@@ -609,32 +671,10 @@ LB_Events::LB_Events(edg_wll_Event* events)
   }
 }
 
-LB_Unavailable::~LB_Unavailable() throw()
-{
-}
-
-char const*
-LB_Unavailable::what() const throw()
-{
-  return "LB unavailable";
-}
-
 namespace {
-
-bool set_lb_available(bool b = true);
-bool is_lb_available();
-bool not_received_quit_signal();
 
 std::string
 format_log_message(std::string const& function_name, ContextPtr context);
-
-std::string
-format_log_message(
-  std::string const& function_name,
-  int error,
-  ContextPtr user_context,
-  ContextPtr last_context
-);
 
 bool is_deep_resubmission(edg_wll_Event const& event);
 bool is_shallow_resubmission(edg_wll_Event const& event);
@@ -645,10 +685,6 @@ LB_Events::const_iterator find_last_deep_resubmission(LB_Events const& events);
 LB_Events
 get_interesting_events(ContextPtr context, jobid::JobId const& id)
 {
-  if (!is_lb_available()) {
-    throw LB_Unavailable();
-  }
-
   edg_wll_QueryRec jobid[2];
   jobid[0].attr    = EDG_WLL_QUERY_ATTR_JOBID;
   jobid[0].op      = EDG_WLL_QUERY_OP_EQUAL;
@@ -704,8 +740,7 @@ get_interesting_events(ContextPtr context, jobid::JobId const& id)
   static char const* const function_name = "edg_wll_QueryEventsExt";
 #endif
 
-  bool done = false;
-  for (int i = 0; i < 20 && !done && is_lb_available(); ++i) {
+  while (not_received_quit_signal()) {
 
     edg_wll_Event* events = 0;
     edg_wll_Context ctx = context.get();
@@ -713,36 +748,25 @@ get_interesting_events(ContextPtr context, jobid::JobId const& id)
     int const error(
       query_function(ctx, job_conditions, event_conditions, &events)
     );
+
+    LB_Events result(events); // guarantees cleanup (even in case of failure)
+
     // no events is not necessarily an error
-    done = error == 0 || error == ENOENT;
-
-    LB_Events result(events);   // guarantees cleanup even in case of failure
-
-    if (done) {
+    if (error == 0 || error == ENOENT) {
       return result;
     }
 
-    std::string message(
-      format_log_message(function_name, context)
-    );
-
-    if (is_lb_available()) {
-      message += " retrying in five seconds";
-      Warning(message);
+    std::string message(format_log_message(function_name, context));
+    if (is_retryable(error)) {
+      Warning(message << " retrying in " << five_seconds << " seconds");
       sleep_while(five_seconds, not_received_quit_signal);
     } else {
-      message += " LB is unavailable, giving up";
-      Error(message);
+      Error(message << " LB is unavailable, giving up");
+      assert(false);
     }
   }
 
-  assert(!done);
-
-  if (is_lb_available()) {
-    Error("setting the LB to unavailable");
-    set_lb_available(false);
-  }
-  throw LB_Unavailable();
+  return LB_Events(0);
 }
 
 std::vector<std::pair<std::string, int> >
@@ -795,10 +819,6 @@ get_retry_counts(LB_Events const& events)
 std::string
 get_original_jdl(ContextPtr context, jobid::JobId const& id)
 {
-  if (!is_lb_available()) {
-    throw LB_Unavailable();
-  }
-
   edg_wll_QueryRec job_conditions[2];
   job_conditions[0].attr    = EDG_WLL_QUERY_ATTR_JOBID;
   job_conditions[0].op      = EDG_WLL_QUERY_OP_EQUAL;
@@ -836,19 +856,16 @@ get_original_jdl(ContextPtr context, jobid::JobId const& id)
   static char const* const function_name = "edg_wll_QueryEvents";
 #endif
 
-  bool done = false;
-  for (int i = 0; i < 20 && !done && is_lb_available(); ++i) {
-
+  while (not_received_quit_signal()) {
     edg_wll_Event* events = 0;
     edg_wll_Context ctx = context.get();
 
     int const error(
       query_function(ctx, job_conditions, event_conditions, &events)
     );
-    // no events is not necessarily an error
-    done = error == 0 || error == ENOENT;
 
-    if (done) {
+    // no events is not necessarily an error
+    if (error == 0 || error == ENOENT) {
 
       std::string result;
 
@@ -867,31 +884,21 @@ get_original_jdl(ContextPtr context, jobid::JobId const& id)
       }
 
       return result;
-
     }
 
     std::string message(
       format_log_message(function_name, context)
     );
-
-    if (is_lb_available()) {
-      message += " retrying in five seconds";
-      Warning(message);
+    if (is_retryable(error)) {
+      Warning(message << " retrying in " << five_seconds << " seconds");
       sleep_while(five_seconds, not_received_quit_signal);
     } else {
-      message += " LB is unavailable, giving up";
-      Error(message);
+      Error(message << " LB is unavailable, giving up");
+      assert(false);
     }
-
   }
 
-  assert(!done);
-
-  if (is_lb_available()) {
-    Error("setting the LB to unavailable");
-    set_lb_available(false);
-  }
-  throw LB_Unavailable();
+  return std::string();
 }
 
 namespace {
@@ -899,18 +906,16 @@ namespace {
 boost::tuple<int,std::string,std::string> get_error_info(ContextPtr context);
 edg_wll_JobStat* create_job_status();
 void delete_job_status(edg_wll_JobStat* p);
-bool is_fatal(int lb_error);
 
 }
 
 JobStatusPtr job_status(jobid::JobId const& id, ContextPtr context)
 {
   JobStatusPtr result(create_job_status(), delete_job_status);
-
   if (result) {
     int const flags = 0;
 
-    for (int i = 0; i < 20 && is_lb_available(); ++i) {
+    while (not_received_quit_signal()) {
 
       int const error(
         edg_wll_JobStatusProxy(
@@ -920,32 +925,22 @@ JobStatusPtr job_status(jobid::JobId const& id, ContextPtr context)
           result.get()
         )
       );
-      if (error == 0 || is_fatal(error)) {
+      if (error == 0) {
         return result;
       }
 
-      // retry
-      std::string message("edg_wll_JobStatusProxy failed (");
-      message += boost::lexical_cast<std::string>(error);
-      message += ')';
-      if (is_lb_available()) {
-        message += " retrying in five seconds";
-        Warning(message);
+      std::string message("edg_wll_JobStatusProxy failed:");
+      if (is_retryable(error)) {
+        Warning(message << " retrying in " << five_seconds << " seconds");
         sleep_while(five_seconds, not_received_quit_signal);
       } else {
-        message += " LB is unavailable, giving up";
-        Error(message);
+        Error(message << " LB is unavailable, giving up");
+        assert(false);
       }
-
     }
-
   }
-
-  if (is_lb_available()) {
-    Error("setting the LB to unavailable");
-    set_lb_available(false);
-  }
-  throw LB_Unavailable();
+  Error("Cannot create job status");
+  assert(false);
 }
 
 JobStatusPtr job_status(jobid::JobId const& id)
@@ -982,131 +977,6 @@ bool is_cancelled(JobStatusPtr status)
 }
 
 namespace {
-
-std::string
-get_proxy_subject(std::string const& x509_proxy)
-{
-  static std::string const null_string;
-
-  std::FILE* fd = std::fopen(x509_proxy.c_str(), "r");
-  if (!fd) return null_string;
-  boost::shared_ptr<std::FILE> fd_(fd, std::fclose);
-
-  ::X509* const cert = ::PEM_read_X509(fd, 0, 0, 0);
-  if (!cert) return null_string;
-  boost::shared_ptr< ::X509> cert_(cert, ::X509_free);
-
-  char* const s = ::X509_NAME_oneline(::X509_get_subject_name(cert), 0, 0);
-  if (!s) return null_string;
-  boost::shared_ptr<char> s_(s, ::free);
-
-  return std::string(s);
-}
-
-bool is_fatal(int lb_error)
-{
-  return lb_error == EINVAL || lb_error == ENOENT;
-}
-
-// non-local operation (it contacts the LB Proxy)
-int
-set_logging_job_proxy(
-  edg_wll_Context context,
-  jobid::JobId const& id,
-  std::string const& x509_proxy
-)
-{
-  int result = 0;
-
-  std::string const user_dn = get_proxy_subject(x509_proxy);
-  int const flag = EDG_WLL_SEQ_NORMAL;
-  char const* const sequence_code = 0;
-
-  for (int i = 0; i < 20 && is_lb_available(); ++i) {
-    
-    result =
-      edg_wll_SetLoggingJobProxy(
-        context,
-        id,
-        sequence_code,
-        user_dn.c_str(),
-        flag
-      );
-
-    if (result == 0 || is_fatal(result)) {
-      return result;
-    }
-
-    // retry
-    std::string message("edg_wll_SetLoggingJobProxy failed (");
-    message += boost::lexical_cast<std::string>(result);
-    message += ')';
-    if (is_lb_available()) {
-      message += " retrying in five seconds";
-      Warning(message);
-      sleep_while(five_seconds, not_received_quit_signal);
-    } else {
-      message += " LB is unavailable, giving up";
-      Error(message);
-    }
-
-  }
-
-  if (is_lb_available()) {
-    Error("setting the LB to unavailable");
-    set_lb_available(false);
-  }
-  throw LB_Unavailable();
-}
-
-int
-set_logging_job_proxy(
-  edg_wll_Context context,
-  jobid::JobId const& id,
-  std::string const& x509_proxy,
-  std::string const& sequence_code
-)
-{
-  int result = 0;
-  if (sequence_code.empty()) {
-    result = set_logging_job_proxy(context, id, x509_proxy);
-  } else {
-    std::string const user_dn = get_proxy_subject(x509_proxy);
-    int const flag = EDG_WLL_SEQ_NORMAL;
-    result =
-      edg_wll_SetLoggingJobProxy(
-        context,
-        id,
-        sequence_code.c_str(),
-        user_dn.c_str(),
-        flag
-      );
-  }
-
-  return result;
-}
-
-bool not_received_quit_signal()
-{
-  return !received_quit_signal();
-}
-
-bool f_lb_is_available = true;
-boost::mutex::mutex f_mx;
-
-bool set_lb_available(bool b)
-{
-  boost::mutex::scoped_lock l(f_mx);
-  bool const old = f_lb_is_available;
-  f_lb_is_available = b;
-  return old;
-}
-
-bool is_lb_available()
-{
-  boost::mutex::scoped_lock l(f_mx);
-  return f_lb_is_available;
-}
 
 void free_events(edg_wll_Event* events)
 {
@@ -1198,7 +1068,6 @@ format_log_message(std::string const& function_name, ContextPtr context)
   edg_wlc_JobIdFree(c_jobid);
   
   result += jobid.toString();
-
   result += '(' + get_lb_message(context) + ')';
 
   return result;
@@ -1210,31 +1079,21 @@ void lb_proxy_log(
   std::string const& function_name
 )
 {
-  bool done = false;
-  for (int i = 1; i < 20 && !done && is_lb_available(); ++i) {
-    int const lb_error = log(context.get());
-    done = lb_error == 0;
-    if (!done) {
-      std::string message(
-        format_log_message(function_name, context)
-      );
-      if (is_lb_available()) {
-        message += " retrying in 10 seconds.";
-        Warning(message);
-        sleep_while(ten_seconds, not_received_quit_signal);
-      } else {
-        message += " LB is unavailable, giving up.";
-        Error(message);
-      }
+  while (not_received_quit_signal()) {
+    int const error = log(context.get());
+    if (error == 0) {
+      return;
     }
-  }
-
-  if (!done) {
-    if (is_lb_available()) {
-      Error("setting the LB to unavailable");
-      set_lb_available(false);
+    std::string message(
+      format_log_message(function_name, context)
+    );
+    if (is_retryable(error)) {
+      Warning(message << " retrying in " << five_seconds << " seconds");
+      sleep_while(five_seconds, not_received_quit_signal);
+    } else {
+      Error(message << " LB is unavailable, giving up");
+      assert(false);
     }
-    throw LB_Unavailable();
   }
 }
 
@@ -1254,38 +1113,28 @@ void lb_log(
   std::string const& function_name
 )
 {
-  if (!is_lb_available()) {
-    throw LB_Unavailable();
-  }
-
-  bool done = false;
   bool try_with_host_proxy = false;
 
-  for (int i = 1; i < 3 && !done; ++i) {
+  while (not_received_quit_signal()) {
 
-    int const lb_error = log(context.get());
+    int const error = log(context.get());
 
-    if (lb_error == EDG_WLL_ERROR_GSS) {
+    if (error == EDG_WLL_ERROR_GSS) {
       try_with_host_proxy = true;
       break;
+    } else if (error == 0) {
+      return;
     }
 
-    done = lb_error == 0;
-    if (!done) {
-
-      std::string message(
-        format_log_message(function_name, context)
-      );
-      if (is_lb_available()) {
-        message += " retrying in one minute";
-        Warning(message);
-        sleep_while(one_minute, not_received_quit_signal);
-
-      } else {
-        message += " LB is unavailable, giving up";
-        Error(message);
-        throw LB_Unavailable();
-      }
+    std::string message(
+      format_log_message(function_name, context)
+    );
+    if (is_retryable(error)) {
+      Warning(message << " retrying in " << five_seconds << " seconds");
+      sleep_while(five_seconds, not_received_quit_signal);
+    } else {
+      Error(message << " LB is unavailable, giving up");
+      assert(false);
     }
   }
 
@@ -1293,101 +1142,32 @@ void lb_log(
     std::string message(
       format_log_message(function_name, context)
     );
-    message += " retrying with the host proxy";
-    Warning(message);
+    Warning(message << " retrying with the host proxy");
 
-    try {
-      jobid::JobId const jobid(get_jobid(context));
-      std::string const host_x509_proxy(get_host_x509_proxy());
-      std::string const sequence_code(get_lb_sequence_code(context));
-      ContextPtr host_context(
-        create_context(jobid, host_x509_proxy, sequence_code)
-      );
+    jobid::JobId const jobid(get_jobid(context));
+    std::string const host_x509_proxy(get_host_x509_proxy());
+    std::string const sequence_code(get_lb_sequence_code(context));
+    ContextPtr host_context(
+      create_context(jobid, host_x509_proxy, sequence_code)
+    );
 
-      for (int k = 0; k < 3 && !done; ++k) {
-        int const lb_error = log(host_context.get());
-        done = lb_error == 0;
-        if (!done) {
-          std::string message(
-            format_log_message(function_name, host_context)
-          );
-          if (is_lb_available()) {
-            message += " retrying in one minute";
-            Warning(message);
-            sleep_while(one_minute, not_received_quit_signal);
-          } else {
-            message += " LB is unavailable, giving up";
-            Error(message);
-            throw LB_Unavailable();
-          }
-        }
+    while (not_received_quit_signal()) {
+      int const error = log(host_context.get());
+      if (error == 0) {
+        return;
       }
-    } catch (CannotCreateLBContext&) {
-      Warning("Cannot create the host proxy");
+      std::string message(
+        format_log_message(function_name, host_context)
+      );
+      if (is_retryable(error)) {
+        Warning(message << " retrying in " << five_seconds << " seconds");
+        sleep_while(five_seconds, not_received_quit_signal);
+      } else {
+        Error(message << " LB is unavailable, giving up");
+        assert(false);
+      }
     }
   }
-
-  if (!done) {
-    if (is_lb_available()) {
-      Error("setting the LB to unavailable");
-      set_lb_available(false);
-    }
-    throw LB_Unavailable();
-  }
-
-  Error("setting the LB to unavailable");
-  set_lb_available(false);
-  throw LB_Unavailable();
-}
-
-std::string
-format_log_message(
-  std::string const& function_name,
-  int error,
-  ContextPtr user_context,
-  ContextPtr last_context
-)
-{
-  std::string result(function_name);
-  result += " failed for ";
-
-  edg_wlc_JobId c_jobid;
-  int e = edg_wll_GetLoggingJob(user_context.get(), &c_jobid);
-  assert(e == 0);
-  jobid::JobId jobid(c_jobid);
-  edg_wlc_JobIdFree(c_jobid);
-  
-  result += jobid.toString();
-
-  switch (error) {
-  case 0:
-    assert(error != 0);
-    break;
-  case 1:
-    // SSL error with user proxy, success with host proxy
-    result += "(" + get_lb_message(user_context)
-      + ") with the user proxy. Success with host proxy.";
-    break;
-  case 2:
-    if (user_context == last_context) {
-      // no-SSL error with user proxy, no retry with host proxy
-      result += "(" + get_lb_message(user_context) + ")";
-    } else {
-      // SSL error with user proxy, failure also with host proxy
-      result += "(" + get_lb_message(user_context)
-        + ") with the user proxy. Failed with host proxy too ("
-        + get_lb_message(last_context) + ")";
-    }
-    break;
-  case 3:
-    // SSL error with the user proxy, cannot retry with the host proxy
-    result += "(" + get_lb_message(user_context)
-      + ") with the user proxy. Cannot retry with the host proxy";
-    break;
-  }
-
-  return result;
-  
 }
 
 edg_wll_JobStat* create_job_status()

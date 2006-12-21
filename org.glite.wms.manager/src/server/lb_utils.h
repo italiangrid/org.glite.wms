@@ -35,18 +35,6 @@ typedef boost::shared_ptr<
   boost::remove_pointer<edg_wll_Context>::type
 > ContextPtr;
 
-class CannotCreateLBContext: public std::exception
-{
-  int m_errcode;
-  std::string m_what;
-
-public:
-  CannotCreateLBContext(int errcode);
-  ~CannotCreateLBContext() throw ();
-  char const* what() const throw();
-  int error_code() const;
-};
-
 ContextPtr
 create_context(
   wmsutils::jobid::JobId const& id,
@@ -139,13 +127,6 @@ public:
   {
     return const_reverse_iterator(begin());
   }
-};
-
-class LB_Unavailable: public std::exception
-{
-public:
-  ~LB_Unavailable() throw ();
-  char const* what() const throw();
 };
 
 LB_Events

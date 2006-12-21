@@ -318,10 +318,7 @@ void dispatch::operator()(InputReader::requests_type::value_type const& v)
     JobStatusPtr status;
 
     if (status_check_is_enabled) {
-      try {
-        status = job_status(id);
-      } catch (CannotCreateLBContext&) {
-      }
+      status = job_status(id);
     }
 
     // for a match, since it doesn'to go anymore to the TQ, probably it does
@@ -492,8 +489,6 @@ void dispatch::operator()(InputReader::requests_type::value_type const& v)
 
   } catch (ca::ClassAdError& e) {
     Info(e.what());
-  } catch (CannotCreateLBContext& e) {
-    Info("Cannot create LB context (error code = " << e.error_code() << ')');
   } catch (InvalidRequest& e) {
     Info("Invalid request");
   }
