@@ -1877,10 +1877,6 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
 		delegation_id, delegatedproxy, delegatedproxyfqan, auth);
 		
-	/*if (auth) {
-		delete auth;	
-	}*/
-	
 	// Getting job identifier from register response
 	string jobid = reginfo.first;
 	edglog(debug)<<"Starting registered job: "<<jobid<<endl;

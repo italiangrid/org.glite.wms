@@ -1376,7 +1376,8 @@ WMPEventLogger::getStatus(bool childreninfo)
 	if (lbProxy_b) {
 		edglog(debug)<<"Quering LB Proxy..."<<endl;
 		error = edg_wll_QueryJobsProxy(ctx, jc, flag, NULL, &states);
-		if (error == ENOENT) { // no events found
+		// OR operator not necessary, workaround for the LB bug #22442
+		if ((error == ENOENT) || (states[0].state == EDG_WLL_JOB_UNDEF)) { // no events found
 	   		edglog(debug)<<"No status found quering LB Proxy. Quering LB..."<<endl;
 			error = edg_wll_QueryJobs(ctx, jc, flag, NULL, &states);
 	  	}
@@ -1387,8 +1388,9 @@ WMPEventLogger::getStatus(bool childreninfo)
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
 #endif  //GLITE_WMS_HAVE_LBPROXY
-
-  	if (error) {
+	
+	// OR operator not necessary, workaround for the LB bug #22442
+  	if (error || (states[0].state == EDG_WLL_JOB_UNDEF)) {
   		string msg = error_message("Unable to get job status\n"
 			"edg_wll_QueryJobs[Proxy]", error);
 		edglog(severe)<<msg<<endl;
@@ -1397,27 +1399,17 @@ WMPEventLogger::getStatus(bool childreninfo)
 	}
 
 	// Searching last state
-	/*int i = 0;
+	int i = 0;
 	while (states[i].state) {
 		i++;
 	}
-	i--;*/
+	i--;
 	
 	/*for (int i = 0; events[i].type; i++) {
 		edg_wll_FreeStatus(&states[i]);
 	}*/
-	
-	vector<glite::lb::JobStatus> states_list;
-	edg_wll_JobStat * j = NULL;
-	for(j = states; j->state != EDG_WLL_JOB_UNDEF; j++) {
-		edg_wll_JobStat *jsep = new edg_wll_JobStat;
- 		if (jsep != NULL) {
-			memcpy(jsep, j, sizeof(*j));
-			states_list.push_back(glite::lb::JobStatus(*jsep));
-		}
-	}
   	
-  	return states_list[states_list.size() - 1];
+  	return glite::lb::JobStatus(states[i]);
   	
   	GLITE_STACK_CATCH();
 }
