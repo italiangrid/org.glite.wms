@@ -195,16 +195,16 @@ setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time
 				"------------------------------------------"
 			<<endl;
 
-	if (code == SOAP_TYPE__ns2__DelegationException) {
+	if (code == SOAP_TYPE__delegationns__DelegationException) {
 		// Generating a fault
-		_ns2__DelegationException *sp = new _ns2__DelegationException;
+		_delegationns__DelegationException *sp = new _delegationns__DelegationException;
 		
 		// Filling fault field
 		sp->msg = new string(description);
 		
 		// Sending fault
 		soap_receiver_fault(soap, "Stack dump", NULL);
-		setFaultDetails(soap, SOAP_TYPE__ns2__DelegationException, sp);
+		setFaultDetails(soap, SOAP_TYPE__delegationns__DelegationException, sp);
 	} else {
 		// Generating a fault
 		ns1__BaseFaultType *sp = (ns1__BaseFaultType*)initializeStackPointer(code);
