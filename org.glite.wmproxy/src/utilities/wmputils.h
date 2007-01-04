@@ -29,6 +29,12 @@ enum FQANFields {
 	FQAN_CAPABILITY
 };
 
+enum jobdirectorytype {
+	DIRECTORY_ALL,
+	DIRECTORY_INPUT,
+	DIRECTORY_OUTPUT
+};
+
 //
 // File utility methods
 //
@@ -340,7 +346,7 @@ bool getUserFreeQuota(std::pair<long, long>& result, std::string uname);
  * @param userid the id of the user
  */
 void managedir(const std::string &dir, uid_t userid, uid_t jobuserid,
-	std::vector<std::string> jobids);
+	std::vector<std::string> jobids, jobdirectorytype dirtype);
 
 /**
  * Checks if the input string (representing an attribute name=value)

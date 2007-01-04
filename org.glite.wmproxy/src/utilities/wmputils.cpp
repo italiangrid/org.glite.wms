@@ -1300,7 +1300,7 @@ untarFile(const string &file, const string &untar_starting_path,
 
 void 
 managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
-	vector<string> jobids)
+	vector<string> jobids, jobdirectorytype dirtype)
 {
 	GLITE_STACK_TRY("managedir()");
 	edglog_fn("wmputils::managedir");
@@ -1388,9 +1388,25 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		   	// Job directories
 		   	path = document_root + FILE_SEP + allpath;
 		    jobdirs.push_back(path);
-		    jobdirs.push_back(path + FILE_SEP + INPUT_SB_DIRECTORY);
-		    jobdirs.push_back(path + FILE_SEP + OUTPUT_SB_DIRECTORY);
-		    jobdirs.push_back(path + FILE_SEP + PEEK_DIRECTORY);
+		    path += FILE_SEP;
+		    
+		    switch (dirtype) {
+				case DIRECTORY_ALL:
+					jobdirs.push_back(path + INPUT_SB_DIRECTORY);
+			    	jobdirs.push_back(path + OUTPUT_SB_DIRECTORY);
+			    	jobdirs.push_back(path + PEEK_DIRECTORY);
+					break;
+				case DIRECTORY_INPUT:
+					jobdirs.push_back(path + INPUT_SB_DIRECTORY);
+					break;
+				case DIRECTORY_OUTPUT:
+					jobdirs.push_back(path + OUTPUT_SB_DIRECTORY);
+			    	jobdirs.push_back(path + PEEK_DIRECTORY);
+					break;
+				default:
+					break;
+				
+			}
 		}
 		
 		// Creating reduced directories
