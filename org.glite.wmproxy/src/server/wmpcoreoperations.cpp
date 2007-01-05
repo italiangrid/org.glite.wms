@@ -1286,9 +1286,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			fromclient = getenv("REMOTE_ADDR");
 		}
 		int error = wmplogger.logAcceptEventSync(fromclient);
-		if (fromclient) {
+		/*if (fromclient) {
 			free(fromclient);	
-		}
+		}*/
 		if (error) {
 			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
 			
