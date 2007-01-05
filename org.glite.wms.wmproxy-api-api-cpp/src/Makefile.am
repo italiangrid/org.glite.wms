@@ -22,7 +22,7 @@ wm.h :
 	@#Create the files
 	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/wsdl2h -o wm.h \
-	-t$(GSOAP_LOCATION)/typemap.dat \
+	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
 	$(GLITE_LOCATION)/interface/WMProxy.wsdl
 
 soapC.cpp : wm.h
