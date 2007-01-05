@@ -1996,7 +1996,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		string parentjdl = wmputilities::readTextFile(
 			wmputilities::getJobJDLExistingStartPath(*parentjid));
 		Ad * parentad = new Ad();
-		int type = getType(parentjdl, parentad);
+		//int type = getType(parentjdl, parentad);
 
 /* bug #19652 fix: WMProxy tries to purge DAG node upon cancellation
 		if ((type != TYPE_COLLECTION)
