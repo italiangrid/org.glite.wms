@@ -1,0 +1,388 @@
+#!/bin/bash
+
+#############################################################
+# Script for testing DGAS services                          #
+# HLR Local Account Management                              #
+#############################################################
+#                                                           # 
+# WARNING: This test MUST be run locally to the HLR         #
+# It test all the commands used inside an HLR to manage     #
+# the accounting (i.e. add, delete and query), These        # 
+# commands are used to manage the VOs, the Groups, the      #
+# Resources and the Users.                                  #
+#                                                           #
+# Returned values:                                          #
+#                                                           #
+#                 SAME_OK:     Test Passed                  #
+#                 SAME_ERROR:  Test Failed                  #
+#                 2:           Wrong Env                    #
+#                                                           #
+#############################################################
+
+# Sourcing basic functions
+. $SAME_SENSOR_HOME/functions.sh
+
+if [ $? -gt 0 ]; then
+  exit 2
+fi
+
+# Sourcing config file
+. $SAME_SENSOR_HOME/config.sh
+
+# Sourcing the utilities file
+. $SAME_SENSOR_HOME/utilities.sh
+
+### Extract the DN of the host certificate
+function setDN
+{
+  CERT_DN=`openssl x509 -in $HOSTCERT -subject -noout | sed -e "s/[a-Z]\+=\ //"`
+  if [ $? -gt 0 ]; then
+    samPrintFAILED ; echo " >>> Failed to extract the DN of the certificate. <<< " ; samNewLine
+    samPrintWARNING ; echo " Check the installation." ; samNewLine
+    exit $SAME_ERROR
+  fi
+}
+
+### Add and delete a "test" VO
+function addvo
+{
+  samPrintINFO ; echo " Add resource VO metagroup selfTestVO..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-addvo -f selfTestVO -d selfTestVO 2> /dev/null
+  return $?
+}
+
+function delvo
+{
+  samPrintINFO ; echo " Remove resource VO metagroup selfTestVO..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-delvo -f selfTestVO 2> /dev/null
+  return $?
+}
+
+### Add and delete a "test" group
+function addgrp
+{
+  samPrintINFO ; echo " Add resource group selfTestGroup..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-addgroup -g selfTestGroup -d selfTestGroup -f selfTestVO 2> /dev/null
+  return $?
+}
+
+function delgrp
+{
+  samPrintINFO ; echo " Remove resource group selfTestGroup..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-delgroup -g selfTestGroup -f selfTestVO 2> /dev/null
+  return $?
+}
+
+### Add and delete a "test" resource
+function addres
+{
+  samPrintINFO ; echo " Add resource selfTestResource..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-addresource -r selfTestResource -e root@localhost -d selfTestResource -c selfTestResource.self.test.domain:2119/jobmanager-selftest-queue -S "$CERT_DN" -g selfTestGroup -f selfTestVO 2> /dev/null
+  return $?
+}
+
+function delres
+{
+  samPrintINFO ; echo " Remove resource selfTestResource..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-delresource -rselfTestResource -g selfTestGroup -f selfTestVO 2> /dev/null
+  return $?
+}
+
+
+### Add and delete a "test" user
+function adduser
+{
+  samPrintINFO ; echo " Add user selfTestUser..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-adduser -u selfTestUser -e self.test@user -d selfTestUser -c selfTestUserDN -g selfTestGroup -f selfTestVO 2> /dev/null
+  return $?
+}
+
+function deluser
+{
+  samPrintINFO ; echo " Remove user selfTestUser..." ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-deluser -u selfTestUser -g selfTestGroup -f selfTestVO 2> /dev/null
+  return $?
+}
+
+### Queries
+function queryvo
+{
+  samPrintINFO ; echo " Query VO " ; samNewLine
+ 
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-queryvo -f selfTestVO &> /dev/null
+  return $?	
+}
+
+function querygroup
+{
+  samPrintINFO ; echo " Query group " ; samNewLine
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-querygroup -g selfTestGroup &> /dev/null
+  return $?
+}
+
+function queryresource
+{
+  ret=0
+  samPrintINFO ; echo " Query resource by resourceID and ceID " ; samNewLine
+  
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-queryresource -R -r selfTestResource &> /dev/null
+  ret=$(( $ret + $? ))
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-queryresource -R -c selfTestResource.self.test.domain:2119/jobmanager-selftest-queue &> /dev/null
+  ret=$(( $ret + $? ))
+ 
+  return $ret
+}
+
+function queryuser
+{
+  ret=0
+  samPrintINFO ; echo " Query user by uid, email and DN " ; samNewLine  
+
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-queryuser -U -u selfTestUser &> /dev/null
+  ret=$(( $ret + $? ))  
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-queryuser -U -e self.test@user &> /dev/null
+  ret=$(( $ret + $? ))
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-queryuser -U -c selfTestUserDN &> /dev/null
+  ret=$(( $ret + $? ))
+
+  return $ret
+}
+
+### Clean the added elements
+function clean 
+{
+for exe in deluser delres delgrp delvo ; do
+  $exe 1> /dev/null
+done
+}
+
+
+#################
+# Start testing #
+#################
+
+### Check the installation
+
+check_env "GLITE_LOCATION HOSTCERT"
+check_command "
+$GLITE_LOCATION/sbin/glite-dgas-hlr-addvo $GLITE_LOCATION/sbin/glite-dgas-hlr-addgroup 
+$GLITE_LOCATION/sbin/glite-dgas-hlr-addresource $GLITE_LOCATION/sbin/glite-dgas-hlr-adduser 
+$GLITE_LOCATION/sbin/glite-dgas-hlr-delvo $GLITE_LOCATION/sbin/glite-dgas-hlr-delgroup 
+$GLITE_LOCATION/sbin/glite-dgas-hlr-delresource $GLITE_LOCATION/sbin/glite-dgas-hlr-deluser 
+$GLITE_LOCATION/sbin/glite-dgas-hlr-queryvo $GLITE_LOCATION/sbin/glite-dgas-hlr-querygroup 
+$GLITE_LOCATION/sbin/glite-dgas-hlr-queryresource $GLITE_LOCATION/sbin/glite-dgas-hlr-queryuser"
+
+### Set some useful variables
+setDN
+count=0
+TQ=0
+
+### Start Tests
+samNewLine; samPrintINFO ; echo " Start testing the local account management of the HLR " ; samNewLine
+
+### TEST Add
+
+samNewLine; samPrintINFO ; echo " Try to add a VO, a group, a resource and a user... " ; samNewLine
+
+for i in addvo addgrp addres adduser ; do
+  $i
+  result=$?
+  if [ $result -gt 0 ]; then
+    samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  else
+    count=$(($count + 1));
+    samPrintOK ; samNewLine	
+  fi
+done
+
+if [ $count -eq 4 ] ; then # all goes well
+  count=0
+else  
+  samPrintFAILED ; echo " >>> TEST Failed <<<"; samNewLine
+  clean
+  exit SAME_ERROR
+fi  
+
+### TEST Duplicate add (commands must failed)
+
+samNewLine; samPrintINFO ; echo " No duplication should be allow..." ; samNewLine
+
+for i in addvo addgrp ; do
+
+  $i
+  result=$?
+  if [ $result -eq 1 ]; then
+    count=$(($count + 1));
+    samPrintOK ; samNewLine
+  else
+    samPrintFAILED ; echo " >>> Add two times the same element (return $result) <<<"; samNewLine
+  fi
+
+done
+
+for i in addres adduser ; do
+
+  $i
+  result=$?
+  if [ $result -eq 3 ]; then
+    count=$(($count + 1));
+    samPrintOK ; samNewLine
+  else
+    samPrintFAILED ; echo " >>> Add two times the same element (return $result) <<<"; samNewLine
+  fi
+
+done
+
+if [ $count -eq 4 ] ; then # all goes well
+  count=0
+else
+  samPrintFAILED ; echo " >>> TEST Failed <<<"; samNewLine
+  clean
+  exit $SAME_ERROR
+fi
+
+### TEST Query
+
+samNewLine; samPrintINFO ; echo " Test the queries... " ; samNewLine
+
+for i in queryvo querygroup queryresource queryuser ; do
+ 
+  $i
+  result=$?
+  if [ $result -gt 0 ]; then
+    samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  else
+   count=$(($count + 1));
+   samPrintOK ; samNewLine
+  fi
+
+done
+
+if [ $count -ne 4 ] ; then
+  samPrintFAILED ; echo " >>> Some queries failed! <<<"; samNewLine
+  TQ=$(( 4 - $count )) 
+fi
+count=0
+
+### TEST Delete
+
+samNewLine; samPrintINFO ; echo " Try to remove the user, the resource, the group and the VO... " ; samNewLine
+
+for i in deluser delres delgrp delvo ; do
+
+  $i
+  result=$?
+  if [ $result -gt 0 ]; then
+    samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  else
+   count=$(($count + 1));
+   samPrintOK ; samNewLine
+  fi
+
+done
+
+if [ $count -eq 4 ] ; then # all goes well
+  count=0
+else
+  samPrintFAILED ; echo " >>> TEST Failed <<<"; samNewLine
+  clean
+  exit SAME_ERROR
+fi
+
+### TEST Delete not existent element (commands must failed)
+
+samNewLine; samPrintINFO ; echo " Try to remove elements which are not in the database... " ; samNewLine
+
+deluser
+result=$?
+if [ $result -ne 1 ]; then
+  samPrintFAILED ; echo " >>> Return code: $result <<<"; samNewLine
+else
+ count=$(($count + 1));
+ samPrintOK ; samNewLine
+fi
+
+delres
+result=$?
+if [ $result -ne 6 ]; then
+  samPrintFAILED ; echo " >>> Return code: $result <<<"; samNewLine
+else
+ count=$(($count + 1));
+ samPrintOK ; samNewLine
+fi
+
+for i in delgrp delvo ; do
+
+  $i
+  result=$?
+  if [ $result -ne 1 ]; then
+    samPrintFAILED ; echo " >>> Return code: $result <<<"; samNewLine
+  else
+   count=$(($count + 1));
+   samPrintOK ; samNewLine
+  fi
+
+done
+
+if [ $count -eq 4 ] ; then # all goes well
+  count=0
+else
+  samPrintFAILED ; echo " >>> TEST Failed <<<"; samNewLine
+  clean
+  exit $SAME_ERROR
+fi
+
+### Test Query to non existent element
+
+samNewLine; samPrintINFO ; echo " Test queries to non existent element... " ; samNewLine
+
+queryvo
+if [ $? -ne 1 ]; then
+  samPrintFAILED ; echo " >>> Query not worked as expected! <<<"; samNewLine
+  TQ=$(( $TQ + 1 ))
+else
+  samPrintOK ; samNewLine
+fi
+
+querygroup
+if [ $? -ne 1 ]; then
+  samPrintFAILED ; echo " >>> Query not worked as expected! <<<"; samNewLine
+  TQ=$(( $TQ + 1 ))
+else
+  samPrintOK ; samNewLine
+fi
+
+queryresource
+result=$?
+if [ $result -ne 2 ]; then
+  samPrintFAILED ; echo " >>> Query not worked as expected! <<<"; samNewLine
+  TQ=$(( $TQ + 2 - $result ))
+else
+  samPrintOK ; samNewLine
+fi
+
+queryuser
+result=$?
+if [ $result -ne 3 ]; then
+  samPrintFAILED ; echo " >>> Query not worked as expected! <<<"; samNewLine
+  TQ=$(( $TQ + 3 - $result ))
+else
+  samPrintOK ; samNewLine
+fi
+
+if [ $TQ -ne 0 ] ; then
+  samPrintFAILED ; echo " >>> $TQ queries failed <<<"; samNewLine
+  exit $SAME_ERROR  
+else
+  samPrintPASSED ; echo " HLR Account Management Test completed." ; samNewLine
+  exit $SAME_OK
+fi
