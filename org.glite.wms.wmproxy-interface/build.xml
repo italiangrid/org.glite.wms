@@ -119,6 +119,9 @@
                                 <include name="*.wsdl" />
                                 <include name="*.xsd" />
                         </fileset>
+			<fileset dir="${module.config.dir}">
+                                <include name="*.dat" />
+                        </fileset>
                 </copy>
 		<echo>Done!</echo>
         </target>
@@ -129,6 +132,9 @@
                          <fileset dir="${module.int.dir}">
                                  <include name="*.wsdl"/>
                                  <include name="*.xsd"/>
+                         </fileset>
+			 <fileset dir="${module.config.dir}">
+                                 <include name="*.dat"/>
                          </fileset>
                  </copy>
          </target>
