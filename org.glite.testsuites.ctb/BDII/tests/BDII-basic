@@ -60,7 +60,6 @@ function test_infoBDII
 {
    #run the following query to check if the bdii is publishing info
   result=`ldapsearch -h $BDII -p 2170 -b "o=grid" -x | egrep Success`
-  #echo "results: $result"
   if [ "$result" != "" ] ; then
     samPrintOK ; echo " >>> BDII is publishing info <<<" ; samNewLine
     exit $SAME_OK
