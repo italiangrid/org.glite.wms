@@ -1,0 +1,89 @@
+#!/bin/bash
+ 
+#############################################################
+# Script for testing of BDII services                       #
+# Basic tests: ping to host                                 #
+#############################################################
+#                                                           #
+# Input value:                                              #
+#              The hostname of BDII                         # 
+#                                                           #
+# Returned values:                                          #
+#                                                           #
+#                 SAME_OK:     Test Passed                  #
+#                 SAME_ERROR:  Test Failed                  #
+#                 2:           Wrong Input                  #
+#                                                           #
+#############################################################
+ 
+# Sourcing basic functions
+. $SAME_SENSOR_HOME/../functions.sh
+ 
+if [ $? -gt 0 ]; then
+  exit 2
+fi
+ 
+showUsage ()
+{
+ samPrintINFO ; echo " Missing parameter!" ; samNewLine
+ echo "Usage: $0 <BDII hostname>" ; samNewLine
+}
+ 
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+else
+  BDII=$1
+fi
+
+# Sourcing the configuration
+ 
+#. $SAME_SENSOR_HOME/config.sh
+ 
+function test_ping
+{
+  samPrintINFO ; echo " Testing ping to $BDII host..." ; samNewLine
+   
+  ping -c 5 $BDII &> /dev/null
+ 
+  result=$?
+ 
+  if [ $result -gt 0 ] ; then
+    samPrintFAILED ; echo " >>> The ping command returns error number $result <<<" ; samNewLine
+    exit $SAME_ERROR
+  else
+    samPrintOK ; echo " The BDII machine is up!" ; samNewLine
+  fi
+}
+
+function test_infoBDII
+{
+   #run the following query to check if the bdii is publishing info
+  result=`ldapsearch -h $BDII -p 2170 -b "o=grid" -x | egrep Success`
+  #echo "results: $result"
+  if [ "$result" != "" ] ; then
+    samPrintOK ; echo " >>> BDII is publishing info <<<" ; samNewLine
+    exit $SAME_OK
+  else
+    samPrintFAILED ; echo " The BDII is not publishing any info!" ; samNewLine
+    exit $SAME_ERROR
+  fi
+} 
+ 
+#################
+# Start testing #
+#################
+ 
+samPrintINFO ; echo " Start testing with settings: BDII = $BDII " ; samNewLine
+ 
+#############################################
+# Checking if the service is up and running #
+#############################################
+ 
+test_ping
+test_infoBDII
+ 
+samPrintPASSED ; echo " BDII Basic Test completed." ; samNewLine
+ 
+exit $SAME_OK
+
