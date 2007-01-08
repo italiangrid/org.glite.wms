@@ -6,7 +6,7 @@
 #############################################################
 #                                                           # 
 # WARNING: This test MUST be run locally to the HLR         #
-# It test all the commands used inside an HLR to manage     #
+# It tests all the commands used inside an HLR to manage    #
 # the accounting (i.e. add, delete and query), These        # 
 # commands are used to manage the VOs, the Groups, the      #
 # Resources and the Users.                                  #

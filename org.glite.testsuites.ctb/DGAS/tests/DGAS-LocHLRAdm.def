@@ -1,0 +1,4 @@
+testName: DGAS-LocHLRAdm.def
+testAbbr: LocHLRAdm
+testTitle: Layer 2 - Test that the local admin commands work
+EOT

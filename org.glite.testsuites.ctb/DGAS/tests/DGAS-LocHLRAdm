@@ -1,0 +1,133 @@
+#!/bin/bash
+
+#############################################################
+# Script for testing DGAS services                          #
+# HLR Local Admin                                           #
+#############################################################
+#                                                           # 
+# WARNING: This test MUST be run locally to the HLR         #
+# It tests the commands used to admin an HLR service:       #
+# glite-dgas-hlr-addadmin                                   #
+# glite-dgas-hlr-queryadmin                                 #
+# glite-dgas-hlr-deladmin                                   #
+#                                                           #
+# Returned values:                                          #
+#                                                           #
+#                 SAME_OK:     Test Passed                  #
+#                 SAME_ERROR:  Test Failed                  #
+#                 2:           Wrong Env                    #
+#                                                           #
+#############################################################
+
+# Sourcing basic functions
+. $SAME_SENSOR_HOME/functions.sh
+
+if [ $? -gt 0 ]; then
+  exit 2
+fi
+
+# Sourcing config file
+. $SAME_SENSOR_HOME/config.sh
+
+# Sourcing the utilities file
+. $SAME_SENSOR_HOME/utilities.sh
+
+### Add and delete an admin
+function addadmin
+{
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-addadmin -a "selfTestUserDN" 2> /dev/null
+  return $?
+}
+
+function deladmin
+{
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-deladmin -a "selfTestUserDN" 2> /dev/null
+  return $?
+}
+
+### Query
+function queryadmin
+{
+  $GLITE_LOCATION/sbin/glite-dgas-hlr-queryadmin -A "selfTestUserDN" &> /dev/null
+  return $?	
+}
+
+#################
+# Start testing #
+#################
+
+### Check the installation
+
+check_env "GLITE_LOCATION"
+check_command "
+$GLITE_LOCATION/sbin/glite-dgas-hlr-addadmin $GLITE_LOCATION/sbin/glite-dgas-hlr-deladmin
+$GLITE_LOCATION/sbin/glite-dgas-hlr-queryadmin"
+
+count=0
+
+### Start Tests
+samNewLine; samPrintINFO ; echo " Start testing the local admin command of the HLR " ; samNewLine
+
+samNewLine; samPrintINFO ; echo " Try to add a new admin... " ; samNewLine
+
+addadmin
+result=$?
+if [ $result -gt 0 ]; then
+  samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  count=$(( $count + 1 ))
+else
+  samPrintOK ; samNewLine
+fi
+
+samNewLine; samPrintINFO ; echo " Try to add again the same admin... " ; samNewLine
+
+addadmin
+result=$?
+if [ $result -ne 1 ]; then
+  samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  count=$(( $count + 1 ))
+else
+  samPrintOK ; samNewLine
+fi
+
+samNewLine; samPrintINFO ; echo " Try to query for the added admin... " ; samNewLine
+
+queryadmin
+result=$?
+if [ $result -gt 0 ]; then
+  samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  count=$(( $count + 1 ))
+else
+  samPrintOK ; samNewLine
+fi
+
+samNewLine; samPrintINFO ; echo " Try to delete the added admin... " ; samNewLine
+
+deladmin
+result=$?
+if [ $result -gt 0 ]; then
+  samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  count=$(( $count + 1 ))
+else
+  samPrintOK ; samNewLine
+fi
+
+samNewLine; samPrintINFO ; echo " Try to delete a non existent admin... " ; samNewLine
+
+deladmin
+result=$?
+if [ $result -ne 1 ]; then
+  samPrintFAILED ; echo " >>> Error is: $result <<<"; samNewLine
+  count=$(( $count + 1 ))
+else
+  samPrintOK ; samNewLine
+fi
+
+
+if [ $count -ne 0 ] ; then # some tests failed
+  samPrintFAILED ; echo " >>> $count tests failed <<<"; samNewLine
+  exit $SAME_ERROR  
+else
+  samPrintPASSED ; echo " HLR Admin Tests completed." ; samNewLine
+  exit $SAME_OK
+fi
