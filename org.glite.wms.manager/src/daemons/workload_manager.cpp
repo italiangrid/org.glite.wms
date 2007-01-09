@@ -255,7 +255,7 @@ try {
   Info("running...");
 
 } catch (boost::program_options::unknown_option& e) {
-  get_out_stream() << e.what() << '\n';
+  get_err_stream() << e.what() << '\n';
   return EXIT_FAILURE;
 } catch (server::CannotLoadDynamicLibrary& e) {
   get_err_stream() << "cannot load dynamic library " << e.filename()
