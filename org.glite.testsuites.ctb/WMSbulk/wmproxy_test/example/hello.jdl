@@ -1,0 +1,7 @@
+[
+Executable = "/bin/echo";
+Arguments  = "hello World";
+StdOutput  = "hello.out";
+StdError   = "hello.err";
+OutputSandBox = {"hello.out","hello.err"};
+]
