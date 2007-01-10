@@ -1,0 +1,78 @@
+#!/bin/bash 
+
+. $SAME_SENSOR_HOME/config.sh
+export WMPROXY_TEST_HOME
+export TOTALJOBNUMBER
+echo "WMS Bulk Test"
+echo "<br>"
+echo "Test and validate the functionalities of both gLite WMProxy server and WMProxy client"
+echo "<br><br>"
+
+
+echo "[" > $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "   WmsClient = [" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        virtualorganisation = \"dteam\";" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        requirements = other.GlueCEStateStatus == \"Production\";" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        MyProxyServer = \"lxb2020.cern.ch\";" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        WMProxyEndpoints = {\"https://$1:7443/glite_wms_wmproxy_server\"};" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        ListenerStorage = \"/tmp/glite/glite-ui\";" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        ErrorStorage = \"/tmp/glite/glite-ui\";" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        ShallowRetryCount = 10;" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        AllowZippedISB = true;" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        PerusalFileEnable = false;" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        rank =- other.GlueCEStateEstimatedResponseTime;" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        OutputStorage = \"/tmp/glite/glite-ui\";" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "        RetryCount = 3;" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "    ];" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+echo "]" >> $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1
+
+
+echo "<br>"
+echo "<br>"
+echo "$WMPROXY_TEST_HOME/conf/glite_wms.conf.$1 Configuration file created for $1"
+echo "<br><br>"
+
+idtest="idtest.$1"
+
+
+if [ -f $WMPROXY_TEST_HOME/$idtest ]; then
+ echo "[$WMPROXY_TEST_HOME/$idtest existing:"
+ rm $WMPROXY_TEST_HOME/$idtest && echo " deleted to start new test]"
+fi
+
+echo "<pre>"
+
+echo "$WMPROXY_TEST_HOME/bin/glite-wmproxy-test-daemon -o $WMPROXY_TEST_HOME/$idtest -t $TOTALJOBNUMBER -s $WMPROXY_TEST_HOME/example/hello.jdl -c $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1"
+
+$WMPROXY_TEST_HOME/bin/glite-wmproxy-test-daemon -o $WMPROXY_TEST_HOME/$idtest -t $TOTALJOBNUMBER -s $WMPROXY_TEST_HOME/example/hello.jdl -c $WMPROXY_TEST_HOME/conf/glite_wms.conf.$1 
+
+status=$?
+
+#echo "$idtest finished" >> /tmp/$idtest
+
+if [ $status -eq 0 ]; then
+  echo "-> Test completed successfully!"
+
+  echo "-> Retrieving results ..."
+  $WMPROXY_TEST_HOME/bin/glite-wmproxy-test-display -i $WMPROXY_TEST_HOME/$idtest
+
+  result=`$WMPROXY_TEST_HOME/bin/glite-wmproxy-test-display -i $WMPROXY_TEST_HOME/$idtest | grep "The bulk job status: "|awk '{print $5}'`
+
+ #rm $WMPROXY_TEST_HOME/$idtest
+
+  echo "Result:  $result"
+else
+  echo "Error occurred while executing test [Error: $status]"
+  result="Error"
+fi
+
+echo "</pre>"
+
+if [ "$result" == "Done" ]; then 
+  echo "Exiting with [OK] status"
+  exit $SAME_OK
+else
+  echo "Exiting with [ERROR] status"
+  exit $SAME_ERROR
+fi
+

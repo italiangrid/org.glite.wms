@@ -1,0 +1,453 @@
+#!/bin/bash
+
+#glite-wmproxy-test-daemon [-f <user-defined logfile>] [-g <parallel DAG node number>] [-o <user-defined id file>] [-c <wms configuration file>] [-t <total job assignment number>] [-q <job assignment number for each queue>] [-s <jdl>] [-e <time interval>] [-n <interval number>] [-b <temporary database>] [-p <program repository>] [-x <queue-job assignment list>] [-l <queue-job assignment list file>]
+
+##############################################################################
+
+wmproxyHome="myPath"
+wmproxyBase=$wmproxyHome
+seconds=20
+intervalNums=300
+DAG=-1
+DAGMAX=100
+
+function DAGDEP {
+  N=$1
+  W=$2
+
+  ((L=N/W+2))
+
+  i=1
+  while ((i<=W))
+  do
+    S1=$i
+    j=1
+    while ((j<=L))
+    do
+      ((S2=S1+W))
+      if ((S2>N)); then
+        break
+      fi
+      S="$S{N$S1,N$S2},"
+      S1=$S2
+      ((j=j+1)) 
+    done
+    ((i=i+1))
+  done
+
+  echo $S|/bin/sed s/,$//g
+}
+
+if [ ! -z "$WMPROXY_TEST_HOME" ]; then
+  wmproxyBase=$WMPROXY_TEST_HOME
+fi
+
+if [ ! -e "$wmproxyBase" ]; then
+  echo "Please set the environment variable \$WMPROXY_TEST_HOME"
+  exit 2
+fi
+
+wmsJobCollection="$wmproxyBase/.wmproxy_test/col"
+wmsRptCollection="$wmproxyBase/.wmproxy_test/rpt"
+perlGrep="$wmproxyBase/bin/glite-wmproxy-test-grep"
+GLITE_WMS_CLIENT_CONFIG="$wmproxyBase/conf/glite_wms.conf"
+
+
+if [ -z "$GIITE_LOCATION" ]; then
+  GLITE_LOCATION=/opt/glite
+fi
+GLITE_BIN="$GLITE_LOCATION/bin"
+
+if [ -z "$GLITE_WMS_LOCATION" ]; then
+  GLITE_WMS_LOCATION="$GLITE_LOCATION"
+fi
+
+
+while getopts "o:c:t:q:s:r:b:p:x:l:g:n:e:f:h" flag
+do
+   case $flag in
+    c)
+       wmsConf="$OPTARG"
+       GLITE_WMS_CLIENT_CONFIG="$wmsConf"
+       ;;
+    t)
+       totaljobNum="$OPTARG"
+       jobNum=0
+       submiType=2
+       ;;
+    q)
+       jobNum="$OPTARG"
+       totaljobNum=0
+       submiType=1
+       ;;
+    x)
+       CEList=`/bin/echo "$OPTARG"|/bin/sed s/,/\\\n/g`
+       submiType=3
+       ;;
+    l)
+       CEList=`/bin/cat "$OPTARG"`
+       submiType=3
+       ;;
+    s)
+       jdl="$OPTARG"
+       ;;
+    o)
+       idFile="$OPTARG"
+       ;;
+    e)
+       seconds="$OPTARG"
+       ;;
+    n)
+       intervalNums="$OPTARG"
+       ;;
+    r)
+       idFile0="$wmsRptCollection/$OPTARG.tmp"
+       wmsJobCollection="$wmsJobCollection/$OPTARG"
+       ;;
+    b)
+       wmsJobCollection="$OPTARG/col"
+       wmsRptCollection="$OPTARG/rpt"
+       ;;
+    p)
+       perlGrep="$OPTARG/glite-wmproxy-test-grep"
+       ;;
+    h)
+       /bin/cat $wmproxyHome/readme/glite-wmproxy-test-daemon.readme
+       exit 0 
+       ;;
+    g) 
+       DAG="$OPTARG"
+       ;;
+    f)
+       logfile="$OPTARG"
+       ;;
+    *)
+/bin/echo "glite-wmproxy-test-daemon -f [user-defined logfile] -g [paralell DAG node number] -o [user-defined id file] -c [wms configuration file] -t [total job assignment number] -q [job assignment number for each queue] -s [jdl] -e [time interval] -n [interval number] -b [temporary database] -p [program repository] -x [queue-job assignment list] -l [queue-job assignment list file]"
+exit 0
+       ;; 
+   esac
+done
+
+
+if [ -z "$idFile0" ]; then
+  timeStamp=`/bin/date +%s`
+  idFile0="$wmsRptCollection/$timeStamp.tmp"
+  wmsJobCollection="$wmsJobCollection/$timeStamp"
+fi
+
+if [ -z "$wmsConf" ]; then
+  wmsConf=$GLITE_WMS_CLIENT_CONFIG
+fi
+
+export GLITE_WMS_LOCATION
+export GLITE_WMS_CLIENT_CONFIG
+
+if [ -n "$logfile" ]; then
+  /bin/touch $logfile &> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "Please check if you specify the path of logfile ($logfile) correctly" | /usr/bin/tee $idFile0
+    exit 2
+  fi
+else
+  logfile="${idFile0}.log"
+fi
+
+if [ ! -f "$jdl" ]; then
+  echo "Please check if you specify the jdl ($jdl) correctly"
+  exit 2
+fi
+
+`$GLITE_BIN/glite-voms-proxy-info -exists`;
+if [ $? -ne 0 ]; then
+  echo "Please check if the user proxy is valid"
+  exit 2
+fi
+
+
+/bin/mkdir -p $wmsJobCollection
+/bin/mkdir -p $wmsRptCollection
+
+if [ -n "$logfile" ]; then
+  echo "$(date) [Start the glite-wmproxy-test-daemon command] glite-wmproxy-test-daemon $@" >> $logfile
+fi
+
+jobMatchCmd="$GLITE_BIN/glite-wms-job-list-match -c $wmsConf -a $jdl"
+$jobMatchCmd &> "${idFile0}.tmp"
+if [ $? -ne 0 ]; then
+  /bin/date >> $idFile0
+  /bin/echo "[Error] $jobMatchCmd" >> $idFile0
+  /bin/cat "${idFile0}.tmp" >> $idFile0
+  /bin/rm "${idFile0}.tmp"
+  if [ -n "$logfile" ]; then
+    /bin/cat $idFile0 >> $logfile
+  fi
+  exit 1
+fi
+CEIds="`/bin/cat ${idFile0}.tmp|/bin/awk -F'- ' '/ - /{print $2}'|/usr/bin/tr -s '\n' ' '`"
+/bin/rm "${idFile0}.tmp"
+
+if [ -n "$logfile" ]; then
+  /bin/echo "$(date) [Run the glite-wms-job-list-match command successfully] $jobMatchCmd" >> $logfile
+  /bin/echo ">> The available CE queues: $CEIds" >> $logfile
+fi
+
+
+case "$submiType" in
+1) for CEId in $CEIds 
+   do
+       for((i=1;i<=$jobNum;i++))
+       do
+         /bin/cat $jdl|/bin/sed "/]$/i\Requirements = other.GlueCEUniqueID == \"$CEId\"" \
+         > "$wmsJobCollection/`/bin/echo $CEId|/bin/sed 's/\//-/g'`-test${i}.jdl"
+        ((totaljobNum++))
+       done
+   done
+   ;;
+
+2) for((i=1;i<=totaljobNum;i++))
+   do
+     /bin/cp $jdl $wmsJobCollection/test${i}.jdl
+   done
+   ;;
+
+3)
+export jdl
+export wmsJobCollection
+export regexp="(`/bin/echo ${CEIds[*]}|/bin/sed 's/ /|/g'`)"
+totaljobNum=`/bin/echo -e "$CEList"|/bin/awk -F'[# ]' '\
+BEGIN {
+         cmd1 = "/bin/echo $wmsJobCollection";
+         cmd2 = "/bin/cat $jdl";
+         cmd3 = "/bin/echo $regexp";
+         cmd1 | getline wmsJobCollection;
+         while( cmd2 | getline s) {
+            sub(/\]$/,"",s);
+            template = template s "\n";
+         }
+         sub(/\n$/,"",template);
+         cmd3 | getline regexp;
+         totaljobNum = 0;
+      }
+     {
+         for ( i = 1; i <= $2; i++) {
+           if(match(regexp,$1)) {
+             id = $1;
+             sub(/\//,"",id);
+             print template "Requirements = other.GlueCEUniqueID == " "\"" $1 "\"" "\n" "]"  > \
+                   wmsJobCollection "/" id "_" i ".jdl";
+             totaljobNum++;
+           } else {
+             exit 1;
+           }
+         }
+      }
+END  {
+       close(cmd1);
+       close(cmd2);
+       close(cmd3);
+       print totaljobNum;
+     }
+'`
+if [ $? -ne 0 ]; then
+  /bin/echo "[Error] the CEId you specified doesn't appear in the CE list!" > $idFile0
+  if [ -n "$logfile" ]; then
+    /bin/cat $idFile0 >> $logfile
+  fi
+  exit 1
+fi
+   ;;
+
+*)
+   ;;
+esac
+
+if (($DAG>=0)); then
+  if (($DAG==0)); then
+    DAG=$DAGMAX
+  fi
+  i=0
+  /bin/echo "[" > "${idFile0}.jdl"
+  /bin/echo "  Type = \"dag\";" >> "${idFile0}.jdl"
+  /bin/echo "  nodes = [" >> "${idFile0}.jdl"
+  for jdl in $wmsJobCollection/*.jdl
+  do
+    ((i=i+1))
+    /bin/echo "     N${i} = [file = \"$jdl\"];" >> "${idFile0}.jdl"
+  done
+  /bin/echo "  ];" >> "${idFile0}.jdl"
+  /bin/echo "  dependencies = {$(DAGDEP $totaljobNum $DAG)};" >> "${idFile0}.jdl"
+  /bin/echo "]" >>  "${idFile0}.jdl"
+  jobSubmitCmd="$GLITE_BIN/glite-wms-job-submit -a -c $wmsConf ${idFile0}.jdl"
+else
+  jobSubmitCmd="$GLITE_BIN/glite-wms-job-submit -a -c $wmsConf --collection $wmsJobCollection"
+fi
+
+$jobSubmitCmd &> "${idFile0}.tmp"
+if [ $? -ne 0 ]; then
+  /bin/date >> $idFile0
+  /bin/echo "[Error] $jobSubmitCmd" >> $idFile0
+  /bin/cat "${idFile0}.tmp" >> $idFile0
+  /bin/rm -f "${idFile0}.tmp"
+  if [ -n "$logfile" ]; then
+    /bin/cat $idFile0 >> $logfile
+  fi
+  exit 1
+fi
+jobIdentifier=`/bin/cat "${idFile0}.tmp"|/bin/grep -P 'job identifier is.*\W\W.*'|/usr/bin/tail -1` 
+/bin/echo $jobIdentifier > $idFile0
+/bin/rm -f "${idFile0}.tmp"
+
+jobIdFilePath="$wmsRptCollection/`/bin/echo $jobIdentifier|/bin/sed 's/\///g'`"
+if [ -n "$logfile" ]; then
+  /bin/echo "$(date) [Run the glite-wms-job-submit command sucessfully] $jobSubmitCmd" >> $logfile
+  if [ $logfile == "${idFile0}.log" ]; then 
+    /bin/mv $logfile "${jobIdFilePath}.log"
+    logfile="${jobIdFilePath}.log"
+  fi
+fi
+
+jobIdFile="${jobIdFilePath}.txt"
+monIdFile="${jobIdFilePath}.mon"
+monLockFile="${jobIdFilePath}.lock"
+if [ -n "$idFile" ]; then
+ /bin/echo $jobIdentifier > $idFile
+fi
+
+if [ -n "$logfile" ]; then
+  /bin/echo "$(date) [Start the monitoring process for the bulk job] $jobIdentifier" >> $logfile 
+  /bin/echo ">> The daemon will keep polling the LB for the bulk job information for at most $intervalNums interations and each interation sleeps $seconds seconds" >> $logfile
+fi
+
+intervals=0
+exitStat=2
+status='Running'
+while (( $intervals < $intervalNums ))
+do
+
+`$GLITE_BIN/glite-voms-proxy-info -exists`;
+if [ $? -ne 0 ]; then
+  status="Proxy expired"
+  break;
+fi
+
+
+`$GLITE_BIN/glite-wms-job-status $jobIdentifier > "${jobIdFilePath}.tmp"`
+if [ $? -eq 0 ]; then
+  mv "${jobIdFilePath}.tmp" $jobIdFile
+fi
+
+sleep $seconds
+
+/bin/touch "$monLockFile"
+
+allDone="`/bin/cat $jobIdFile|/bin/grep -P '\WBOOKKEEPING INFORMATION:\W.*\W.*\W.*\W'|/bin/egrep 'Done|Aborted|Cancelled'`"
+if [ $? -eq 0 ]; then
+  allDone="`echo $allDone|awk -F':' 'NR==1{sub(/^ +*/,"",$2); print $2;}'`"
+  if [ "$allDone" = "Done (Success)" ]; then
+    exitStat=0
+  else
+    exitStat=1
+  fi
+  status=$allDone
+fi
+
+if (( exitStat==2 && intervals+1==intervalNums )); then
+  status="Time out"
+fi
+
+/bin/echo "<WMProxyTask id=\"$jobIdentifier\" date=\"`/bin/date`\" status=\"$status\">" > "$monIdFile"
+
+queueNum=0
+
+/bin/echo "  <CEIds>" >> $monIdFile
+
+waitingNum=0
+readyNum=0
+scheduledNum=0
+runningNum=0
+successNum=0
+failedNum=0
+cancelledNum=0
+abortedNum=0
+for CEId in $CEIds
+do
+  jobNums="`$perlGrep $jobIdFile $CEId`"
+  set $jobNums
+  ((waitingNum=$waitingNum+$1))
+  ((readyNum=$readyNum+$2))
+  ((scheduledNum=$scheduledNum+$3))
+  ((runningNum=$runningNum+$4))
+  ((successNum=$successNum+$5))
+  ((failedNum=$failedNum+$6))
+  ((cancelledNum=$cancellNum+$7))
+  ((abortedNum=$abortedNum+$8)) 
+  /bin/echo "   <CEId name=\"$CEId\">" >> "$monIdFile"
+  /bin/echo "     <Waiting>$1</Waiting>" >> "$monIdFile"
+  /bin/echo "     <Ready>$2</Ready>" >> "$monIdFile"
+  /bin/echo "     <Scheduled>$3</Scheduled>" >> "$monIdFile"
+  /bin/echo "     <Running>$4</Running>" >> "$monIdFile"
+  /bin/echo "     <Success>$5</Success>" >> "$monIdFile"
+  /bin/echo "     <Failed>$6</Failed>" >> "$monIdFile"
+  /bin/echo "     <Cancelled>$7</Cancelled>" >> "$monIdFile"
+  /bin/echo "     <Aborted>$8</Aborted>" >> "$monIdFile"
+  /bin/echo "   </CEId>" >> "$monIdFile"
+done
+
+/bin/echo "  </CEIds>" >> $monIdFile
+
+#submittedNum="`$perlGrep $jobIdFile`"
+((submittedNum=totaljobNum-waitingNum-readyNum-scheduledNum-runningNum-successNum-failedNum-cancelledNum-abortedNum))
+
+/bin/echo "  <Summary>" >> "$monIdFile"
+/bin/echo "    <Submitted>$submittedNum</Submitted>" >> "$monIdFile"
+/bin/echo "    <Waiting>$waitingNum</Waiting>" >> "$monIdFile"
+/bin/echo "    <Ready>$readyNum</Ready>" >> "$monIdFile"
+/bin/echo "    <Scheduled>$scheduledNum</Scheduled>" >> "$monIdFile"
+/bin/echo "    <Running>$runningNum</Running>" >> "$monIdFile"
+/bin/echo "    <Success>$successNum</Success>" >> "$monIdFile"
+/bin/echo "    <Failed>$failedNum</Failed>" >> "$monIdFile"
+/bin/echo "    <Cancelled>$cancelledNum</Cancelled>" >> "$monIdFile"
+/bin/echo "    <Aborted>$abortedNum</Aborted>" >> "$monIdFile"
+/bin/echo "  </Summary>" >> "$monIdFile"
+
+((intervals++))
+
+/bin/echo "</WMProxyTask>" >> "$monIdFile"
+/bin/rm -f "$monLockFile"
+
+if [ -n "$logfile" ]; then
+  echo "$(date) [Run the monitoring process for the bulk job] $jobIdentifier" >> $logfile
+  echo ">> Interation $intervals, the job status: $status" >> $logfile
+  echo ">> Jobs being terminated Ratio: $((successNum+failedNum+cancelledNum+abortedNum))/$totaljobNum" >> $logfile
+fi 
+
+if (( exitStat < 2 )); then
+  break;
+fi
+
+done
+
+
+
+/bin/rm -f "$monLockFile"
+/bin/rm -rf $wmsJobCollection
+
+if [ -n "$logfile" ]; then
+  /bin/echo "$(date) [End the monitoring process for the bulk job] $jobIdentifier" >> $logfile
+  case $exitStat in
+  0) 
+    /bin/echo ">> The bulk job terminated ($status) sucessfully" >> $logfile
+    ;;
+  1)
+    /bin/echo ">> The bulk job failed ($status)" >> $logfile
+    ;;
+  2)
+    /bin/echo ">> The monitoring process failed ($status)" >> $logfile
+    ;;
+  *)
+    /bin/echo ">> The monitoring process error" >> $logfile
+    ;;
+  esac
+fi
+
+exit $exitStat
