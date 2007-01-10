@@ -1435,6 +1435,8 @@ public class WMProxyAPI{
 	}
 
 
+
+/*
 	public org.glite.wms.wmproxy.JobIdStructType jobRegisterJSDL(
 						JobDefinitionHandler jsdl_h,
 						java.lang.String delegationId)
@@ -1466,7 +1468,7 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
 		}
 	}
-
+*/
 
 
 
