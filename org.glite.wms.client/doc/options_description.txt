@@ -232,6 +232,10 @@ Stores the retrieved information into the specified file instead of the standard
 This option is only available from glite version >= 3.1.
 <<<info-output>>>
 
+<<<info-input>>>
+Allow the user to select the desired job among the ones contained in the file located in filepath. This option cannot be used if the jobId has been specified. A job has to be selected specifying the numbers associated to the job identifier
+<<<info-input>>>
+
 
 
 

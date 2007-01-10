@@ -26,6 +26,9 @@ glite-wms-job-info
 .HP
 \fB--noint\fR
 .HP
+\fB--input\fR, \fB-i\fR
+<filepath>
+.HP
 \fB--delegationid\fR, \fB-d\fR
 <idstring>
 .HP
@@ -111,6 +114,13 @@ When this option is specified, a command log file (whose pathname is filepath) i
 
 .IP
 if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)
+.PP
+.HP
+\fB--input\fR, \fB-i\fR
+<filepath>
+
+.IP
+Allow the user to select the desired job among the ones contained in the file located in filepath. This option cannot be used if the jobId has been specified. A job has to be selected specifying the numbers associated to the job identifier
 .PP
 .HP
 \fB--delegationid\fR, \fB-d\fR
