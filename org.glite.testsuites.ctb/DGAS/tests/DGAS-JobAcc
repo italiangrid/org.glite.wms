@@ -1,0 +1,135 @@
+#!/bin/bash
+
+#############################################################
+# Script for testing DGAS services                          #
+# DGAS job accounting                                       #
+#############################################################
+#                                                           #
+# Accounting and verify a single job                        #
+#                                                           #
+# Returned values:                                          #
+#                                                           #
+#                 SAME_OK:     Test Passed                  #
+#                 SAME_ERROR:  Test Failed                  #
+#                 2:           Wrong Env                    #
+#                                                           #
+#############################################################
+
+# Sourcing basic functions
+. $SAME_SENSOR_HOME/../functions.sh
+
+if [ $? -gt 0 ]; then
+  exit 2
+fi
+
+# Sourcing config file
+. $SAME_SENSOR_HOME/config.sh
+
+# Sourcing the utilities file
+. $SAME_SENSOR_HOME/utilities.sh
+
+# Build a "jobid" in this format: hostname:PID/TestJobID-time.num
+# Parameter: a progressive number which defines variable "NUM"
+function createJobID
+{
+HOST=`hostname -f`
+TIME=`date +%s`
+NUM=`printf %0.3d $1`
+JOBID=$HOST:$$/TestJobID-$TIME.$NUM
+
+return 0
+}
+
+
+#################
+# Start testing #
+#################
+
+### Check the installation
+
+check_env "GLITE_LOCATION HLR_HOSTNAME HLR_PORT"
+check_command "
+$GLITE_LOCATION/libexec/glite_dgas_atmClient $GLITE_LOCATION/bin/glite-dgas-hlr-query"
+
+### Start Tests
+samNewLine; samPrintINFO ; echo " Start the test accounting a job to the HLR " ; samNewLine
+
+### define some variables
+TIMESTAMP=`date +%s`
+HLR="$HLR_HOSTNAME:$HLR_PORT:"
+RESOURCE="TestResource.test.domain:2119/jobmanager-test-queue"
+USER="TestUser"
+USERDN="TestUserDN"
+QUEUE="queue"
+VO="TestVO"
+GROUP="TestGroup"
+DATE=`date`
+CPU=130
+WALL=305
+PMEM=2048
+VMEM=7476
+
+createJobID 1
+
+${GLITE_LOCATION}/libexec/glite_dgas_atmClient -j "$JOBID" -t "$TIMESTAMP"  -l "$HLR" -C "$RESOURCE" -U "$USERDN" -r "$RESOURCE" "CPU_TIME=$CPU" "WALL_TIME=$WALL" "PMEM=$PMEM" "VMEM=$VMEM" "QUEUE=$QUEUE" "USER=$USER" "LRMSID=LRMS_001" "URCREATION=$DATE" "start=$TIMESTAMP" "end=$TIMESTAMP" "ctime=$TIMESTAMP" "qtime=$TIMESTAMP" "etime=$TIMESTAMP" "exitStatus=0" "si2k=1" "sf2k=1" "tz=+0200" userVo="$VO" "group=$GROUP" jobName="TestID_001" -3 &> /dev/null
+
+result=$?
+if [ $result -ne 0 ]; then
+  samPrintFAILED ; echo " >>> Job has not been accounted: error is $result! <<<"; samNewLine
+else
+  samPrintOK ; samNewLine
+fi
+
+samNewLine; samPrintINFO ; echo " Quering the HLR $HLR for the job $JOBID " ; samNewLine
+samNewLine; samPrintINFO ; echo " Be patient, this can take several minutes... " ; samNewLine
+
+result=99
+timeout=300 # We wait at most 5 minutes before to decide that the job has not been accounted
+while [ $result -ne 0 ] && [ $timeout -gt 0 ] ; do
+  sleep 5
+	$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceJobList -j $JOBID &> /dev/null
+	result=$?
+	timeout=$(( $timeout - 5 ))
+done
+if [ $result -ne 0 ]; then
+	samPrintFAILED ; echo " >>> Job has not been found: error is $result! Or the account informations have not yet been transfered, try later.<<<"; samNewLine
+  exit $SAME_ERROR
+else
+	samPrintOK ; samNewLine
+fi
+
+samNewLine; samPrintINFO ; echo " Quering the HLR for the job data... " ; samNewLine
+count=0
+
+ct=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(cpuTime)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(cpuTime)"`
+if [ -z $ct ] || [ $ct -ne $CPU ]; then
+  samPrintFAILED ; echo " >>> CpuTime is not exact: answer is $ct expected is $CPU <<<"; samNewLine
+  count=$(( $count + 1 ))
+fi
+
+wt=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(wallTime)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(wallTime)"`
+if [ -z $wt ] || [ $wt -ne $WALL ]; then
+  samPrintFAILED ; echo " >>> wallTime is not exact: answer is $wt expected is $WALL <<<"; samNewLine
+  count=$(( $count + 1 ))
+fi
+
+pm=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(pmem)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(pmem)"`
+if [ -z $pm  ] || [ $pm -ne $PMEM ]; then
+  samPrintFAILED ; echo " >>> physicalmem is not exact: answer is $pm expected is $PMEM <<<"; samNewLine
+  count=$(( $count + 1 ))
+fi
+
+vm=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(vmem)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(vmem)"`
+if [ -z $vm ] || [ $vm -ne $VMEM ]; then
+  samPrintFAILED ; echo " >>> virtualmem is not exact: answer is $vm expected is $VMEM <<<"; samNewLine
+  count=$(( $count + 1 ))
+fi
+
+if [ $count -ne 0 ] ; then # some tests failed
+  samPrintFAILED ; echo " >>> $count queries failed <<<"; samNewLine
+  exit $SAME_ERROR
+else
+  samPrintPASSED ; echo " Job account test completed." ; samNewLine
+  exit $SAME_OK
+fi
+
