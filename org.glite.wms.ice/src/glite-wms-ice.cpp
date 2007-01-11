@@ -47,11 +47,16 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/path.hpp>
+
+#include <list>
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 // change the uid and gid to those of user no-op if user corresponds
 // to the current effective uid only root can set the uid (this
@@ -160,6 +165,36 @@ int main(int argc, char*argv[])
     }
 
 
+    /*
+     * Build all paths needed for files referred into the configuration file
+     *
+     * This code is taken from JC/LM (thanks to Ale)
+     */
+    std::list< fs::path > paths;
+
+    try {
+        paths.push_back(fs::path(conf->ice()->input(), fs::native));
+        paths.push_back(fs::path(conf->ice()->persist_dir() + "/boh", fs::native));
+        paths.push_back(fs::path(conf->ice()->logfile(), fs::native));
+    } catch( ... ) {
+        cerr << "glite-wms-ice::main() - ERROR: cannot create paths; "
+             << "check ICE configuration file"
+             << endl;
+        exit( 1 );
+    }
+    
+    for( std::list< fs::path >::iterator pathIt = paths.begin(); pathIt != paths.end(); ++pathIt ) {
+        if( (!pathIt->native_file_string().empty()) && !fs::exists(pathIt->branch_path()) ) {
+            try {
+                fs::create_directories( pathIt->branch_path() );
+            } catch( ... ) {
+                cerr << "glite-wms-ice::main() - ERROR: cannot create path "
+                     << pathIt->branch_path().string() 
+                     << endl;
+                exit( 1 );
+            }
+        }
+    }
 
     /*****************************************************************************
      * Sets the log file
@@ -176,12 +211,12 @@ int main(int argc, char*argv[])
     string hostcert = conf->common()->host_proxy_file();
 
 
-    try {
-        iceUtil::makePath( logfile );
-    } catch(exception& ex) {
-        cerr << "Error Creating path for logfile ["<<logfile<<"]: "<<ex.what()<<endl;
-        exit( 1 );
-    }
+//     try {
+//         iceUtil::makePath( logfile );
+//     } catch(exception& ex) {
+//         cerr << "Error Creating path for logfile ["<<logfile<<"]: "<<ex.what()<<endl;
+//         exit( 1 );
+//     }
 
     logger_instance->setLogFile(logfile.c_str());
     CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061212-11:35]"<<log4cpp::CategoryStream::ENDLINE);

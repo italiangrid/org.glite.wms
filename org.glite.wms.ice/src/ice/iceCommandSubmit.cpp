@@ -253,19 +253,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     
     m_lb_logger->getLBContext()->registerJob( m_theJob ); // FIXME: to be used ONLY if ICE is being tested alone (i.e., not coupled with the WMS)
 #endif
-    CREAM_SAFE_LOG(
-                   m_log_dev->infoStream()
-                   << "iceCommandSubmit::execute() - Seq Code before: "
-                   << m_theJob.getSequenceCode()
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
     m_theJob = m_lb_logger->logEvent( new util::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
-    CREAM_SAFE_LOG(
-                   m_log_dev->infoStream()
-                   << "iceCommandSubmit::execute() - Seq Code after: "
-                   << m_theJob.getSequenceCode()
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
     m_theJob = m_lb_logger->logEvent( new util::cream_transfer_start_event( m_theJob ) );
     
     string modified_jdl;

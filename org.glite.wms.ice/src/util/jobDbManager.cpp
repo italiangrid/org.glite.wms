@@ -80,21 +80,16 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
     if( !boost::filesystem::exists( boost::filesystem::path(m_envHome) ) ) {
-        CREAM_SAFE_LOG( m_log_dev->warnStream()
+        CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << "jobDbManager::jobDbManager() - "
-                        << "Creating job DB Path "
+                        << "job DB Path "
                         << m_envHome 
+                        << " does not exist. Job DB initializatoin failed."
                         << log4cpp::CategoryStream::ENDLINE
                         );      
-        try {
-            if ( !boost::filesystem::create_directories( boost::filesystem::path( m_envHome ) ) ) {
-                m_invalid_cause = boost::str( boost::format( "Cannot create path %1%" ) % m_envHome );
-                return;
-            }
-        } catch( ... ) {
-            m_invalid_cause = string("Path [")+m_envHome+"] doesn't exist and cannot be created";
-            return;
-        }
+        
+        m_invalid_cause = string("Path [")+m_envHome+"] doesn't exist and cannot be created";
+        return;
     }
     
     if( !boost::filesystem::is_directory( boost::filesystem::path(m_envHome) ) ) {

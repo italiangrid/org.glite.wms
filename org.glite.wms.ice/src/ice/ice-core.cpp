@@ -223,7 +223,7 @@ void Ice::startListener( void )
                    << log4cpp::CategoryStream::ENDLINE
                    );
     try {
-        hostdn = cert_util::getDN( m_configuration->common()->host_proxy_file() );
+       hostdn = cert_util::getDN( m_configuration->common()->host_proxy_file() );
     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG( 
                        m_log_dev->errorStream()
@@ -623,8 +623,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
     if ( it != m_cache->end() ) {
 
         if ( cream_api::job_statuses::CANCELLED == it->getStatus() ||
-             cream_api::job_statuses::DONE_OK == it->getStatus() ||
-             cream_api::job_statuses::DONE_FAILED == it->getStatus() ) {
+             cream_api::job_statuses::DONE_OK == it->getStatus() ) {
 
 #ifdef GLITE_WMS_ICE_HAVE_RENEWAL
             

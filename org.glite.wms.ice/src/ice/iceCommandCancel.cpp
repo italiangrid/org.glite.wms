@@ -140,10 +140,21 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") + m_gridJobId + string("], as the job does not appear to exist") );
     }
 
-    // Set Sequence code, if any...
-    // FIXME: Remove the if() statement. Sequence code MUST be present
-    if ( ! m_sequence_code.empty() )  
-        it->setSequenceCode( m_sequence_code );
+    // According to the following mail, the sequence from a cancel
+    // request should NOT be replaced. Hence, this code has been
+    // commented out and will be removed
+    //
+    // Date: Wed, 6 Dec 2006 15:18:05 +0100 From: Zdenek Salvet <salvet@ics.muni.cz> To: Local EGEE JRA1 group <egee-jra1@lindir.ics.muni.cz> Cc: Milos Mulac <mulac@civ.zcu.cz>, Alessio Gianelle <gianelle@pd.infn.it>, Massimo Sgaravatto - INFN Padova <massimo.sgaravatto@pd.infn.it> Subject: Re: [Egee-jra1] Problem with LB & ICE On Wed, Dec 06, 2006 at 03:01:54PM +0100, Moreno Marzolla wrote:
+
+    // I don't think the problem is caused by this race, LB and its
+    // event sequence codes has been designed with this in mind.  It
+    // appears to me that ICE(LogMonitor) replaces its stored LB
+    // sequence code for the running job with the one coming in cancel
+    // request. Then, ReallyRunning appears to be logically following
+    // cancellation. It should not do that.
+
+    // if ( ! m_sequence_code.empty() )  
+    // it->setSequenceCode( m_sequence_code );
 
     util::CreamJob theJob( *it );
 
