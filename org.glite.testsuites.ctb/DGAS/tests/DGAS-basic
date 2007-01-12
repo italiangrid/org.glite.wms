@@ -5,9 +5,6 @@
 # Basic tests: ping to host, ping to services               #  
 #############################################################
 #                                                           #
-# Input value:                                              #  
-#              The hostname of the HLR                      #
-#                                                           # 
 # Returned values:                                          #
 #                                                           #
 #                 SAME_OK:     Test Passed                  #
@@ -21,19 +18,6 @@
 
 if [ $? -gt 0 ]; then
   exit 2
-fi
-
-showUsage ()
-{
- samPrintINFO ; echo " Missing parameter!" ; samNewLine
- echo "Usage: $0 <HLR hostname>" ; samNewLine
-}
-
-if [ -z "$1" ]; then
-  showUsage
-  exit 2
-else
-  HLR=$1
 fi
 
 # Sourcing the configuration and the utilities
@@ -78,14 +62,12 @@ function test_hlrping
 # Start testing #
 #################
 
-samPrintINFO ; echo " Start testing with settings: HLR_HOST = $HLR " ; samNewLine
-
-#############################################
-# Checking if the service is up and running #
-#############################################
-
-check_env "GLITE_LOCATION HLR_PORT"
+check_env "GLITE_LOCATION HLR_HOSTNAME HLR_PORT"
 check_command "$GLITE_LOCATION/bin/glite-dgas-ping"
+
+HLR=$HLR_HOSTNAME
+
+samPrintINFO ; echo " Start testing with settings: HLR_HOST = $HLR " ; samNewLine
 
 test_ping
 test_hlrping 

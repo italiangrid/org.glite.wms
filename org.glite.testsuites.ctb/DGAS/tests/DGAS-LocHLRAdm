@@ -20,7 +20,7 @@
 #############################################################
 
 # Sourcing basic functions
-. $SAME_SENSOR_HOME/functions.sh
+. $SAME_SENSOR_HOME/../functions.sh
 
 if [ $? -gt 0 ]; then
   exit 2
