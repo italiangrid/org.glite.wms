@@ -521,14 +521,14 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 		case STEP_DELEGATE_PROXY:
 			try{delegateUserProxy(*endPoint); debugStuff(wmcUtils->getRandom(200));  }
 			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "Recoverable Error caught:", string(exc.what()));
+				logInfo->print(WMS_WARNING, string(exc.what()), "");
 				jobRecoverStep(step);
 			}
 			break;
 		case STEP_CHECK_FILE_TP:
 			try{checkFileTransferProtocol();  debugStuff(wmcUtils->getRandom(200)); }
 			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "Recoverable Error caught:", string(exc.what()));
+				logInfo->print(WMS_WARNING, string(exc.what()),"");
 				jobRecoverStep(step);
 			}
 			break;
@@ -544,18 +544,18 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 /** Recover the Wmproxy from a certain situation/step */
 void Job::jobRecoverStep(jobRecoveryStep step){
 	// STEP_GET_ENDPOINT
-	logInfo->print(WMS_DEBUG, "Job Recovering Step", "STEP_GET_ENDPOINT");
 	endPoint = NULL ; cfgCxt = NULL;
+	logInfo->print(WMS_INFO, "Switching to next WMProxy Server...","");
 	jobPerformStep(STEP_GET_ENDPOINT);
 	if (step==STEP_GET_ENDPOINT){return;}
 
 	// STEP_DELEGATE_PROXY
-	logInfo->print(WMS_DEBUG, "Job Recovering Step", "STEP_DELEGATE_PROXY");
+	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_DELEGATE_PROXY");
 	jobPerformStep(STEP_DELEGATE_PROXY);
 	if (step==STEP_DELEGATE_PROXY){return;}
 
 	// PERFORM STEP_CHECK_FILE_TP
-	logInfo->print(WMS_DEBUG, "Job Recovering Step", "STEP_CHECK_FILE_TP");
+	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_CHECK_FILE_TP");
 	jobPerformStep(STEP_CHECK_FILE_TP);
 	if (step==STEP_CHECK_FILE_TP){return;}
 

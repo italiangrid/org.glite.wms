@@ -1,3 +1,4 @@
+
 /**
 *        Copyright (c) Members of the EGEE Collaboration. 2004.
 *        See http://public.eu-egee.org/partners/ for details on the copyright holders.
@@ -1905,18 +1906,18 @@ void JobSubmit::jobPostProcessing( ){
 void JobSubmit::submitPerformStep(submitRecoveryStep step){
 	switch (step){
 		case STEP_CHECK_US_QUOTA:
-			logInfo->print(WMS_DEBUG, "JobSubmit Performing Step", "STEP_CHECK_US_QUOTA");
+			// logInfo->print(WMS_DEBUG, "JobSubmit Performing", "STEP_CHECK_US_QUOTA");
 			try{checkUserServerQuota(isbSize); debugStuff(wmcUtils->getRandom(200)); }
 			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "JobSubmit Recoverable Error caught:", string(exc.what()));
+				logInfo->print(WMS_WARNING, "", string(exc.what()));
 				submitRecoverStep(step);
 			}
 			break;
 		case STEP_REGISTER:
-			logInfo->print(WMS_DEBUG, "JobSubmit Performing Step", "STEP_REGISTER");
+			// logInfo->print(WMS_DEBUG, "JobSubmit: Performing", "STEP_REGISTER");
 			try{jobRegOrSub(startJob && !toBretrieved);  debugStuff(wmcUtils->getRandom(200)); }
 			catch (WmsClientException &exc) {
-				logInfo->print(WMS_WARNING, "Recoverable Error caught:", string(exc.what()));
+				logInfo->print(WMS_WARNING, "", string(exc.what()));
 				submitRecoverStep(step);
 			}
 			break;
@@ -1930,17 +1931,14 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 void JobSubmit::submitRecoverStep(submitRecoveryStep step){
 	// Perform previous (Job) recovery
 	jobRecoverStep(STEP_JOB_ALL);
-
 	// PERFORM STEP_CHECK_US_QUOTA
-	logInfo->print(WMS_DEBUG, "JobSubmit Recovering Step", "STEP_CHECK_US_QUOTA");
+	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_CHECK_US_QUOTA");
 	submitPerformStep(STEP_CHECK_US_QUOTA);
 	if (step==STEP_CHECK_US_QUOTA){return;}
-
 	// PERFORM STEP_REGISTER
-	logInfo->print(WMS_DEBUG, "JobSubmit Recovering Step", "STEP_REGISTER");
+	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_REGISTER");
 	submitPerformStep(STEP_REGISTER);
 	if (step==STEP_REGISTER){return;}
-
 	// no return reached: Unknown STEP
 	throw WmsClientException(__FILE__,__LINE__,
 		"submitRecoverStep", ECONNABORTED,
