@@ -655,7 +655,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
             } else {
                 if ( err == EDG_WLPR_PROXY_NOT_REGISTERED ) {
                     CREAM_SAFE_LOG(
-                                   m_log_dev->errorStream()
+                                   m_log_dev->warnStream()
                                    << "ice-core::resubmit_or_purge_job() - "
                                    << "Job proxy not registered for Grid job ["
                                    << it->getGridJobID() << "]"
