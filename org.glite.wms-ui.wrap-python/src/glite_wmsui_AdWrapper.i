@@ -14,13 +14,17 @@
 %include "std_string.i"
 %include "std_vector.i"
 
+
 %typemap(python,argout) std::string& err {
   PyObject *o;
-  o = PyList_New(1);
+  o = PyList_New(2);
   PyList_SetItem(o,0,$result);
-  PyList_Append(o,Py_BuildValue("s#",$1->c_str(),$1->size()));
+  PyList_SetItem(o,1,Py_BuildValue("s#",$1->c_str(),$1->size()));
+  delete $1;
   $result = o;
 }
+
+
 
 %typemap(in,numinputs=0) std::string& err {
  $1 = new std::string;
