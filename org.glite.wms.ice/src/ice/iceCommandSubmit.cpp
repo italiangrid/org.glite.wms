@@ -364,6 +364,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     remove_job_guard.dismiss(); // dismiss guard, job will NOT be removed from cache
     
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+    m_theJob.setLastSeen( time(0) );
     cache->put( m_theJob );
 } // execute
 

@@ -100,10 +100,10 @@ list< CreamJob > eventStatusPoller::get_jobs_to_poll( void )
         }
         
         time_t t_now( time(NULL) );
-        time_t t_last_seen( jit->getLastSeen() );
+        time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
         time_t oldness = t_now - t_last_seen;
 
-        if ( oldness >= m_threshold ) {
+        if ( ( t_last_seen > 0 ) && oldness >= m_threshold ) {
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
                            << "eventStatusPoller::get_jobs_to_poll() - "
                            << "GridJobID=[" << jit->getGridJobID() << "] "

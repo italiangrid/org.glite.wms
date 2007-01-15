@@ -59,7 +59,7 @@ namespace glite {
           std::string m_wn_sequence_code; //! The sequence code for the job sent to the worker node      
 	  glite::ce::cream_client_api::job_statuses::job_status m_status;
           int m_num_logged_status_changes; //! Number of status changes which have been logged to L&B
-          time_t m_last_seen; //! The time of the last received notification for the job
+          time_t m_last_seen; //! The time of the last received notification for the job. For newly created jobs, this value is set to zero.
           time_t m_end_lease; //! The time the lease for this job ends
 	  time_t m_proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
 	  int    m_statusPollRetryCount; //! number of time we tried to get the status of the job

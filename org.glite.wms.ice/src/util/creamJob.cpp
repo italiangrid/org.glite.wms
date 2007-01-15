@@ -46,7 +46,7 @@ namespace fs = boost::filesystem;
 iceUtil::CreamJob::CreamJob( ) :
     m_status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
-    m_last_seen( time(0) ),
+    m_last_seen( 0 ),
     m_end_lease( m_last_seen + 60*30 ), // FIXME: remove hardcoded default
     m_statusPollRetryCount( 0 ),
     m_exit_code( 0 ),
