@@ -66,13 +66,19 @@ class JobInfo : public Job {
 		/**
 		* Specific user input option
 		*/
-		std::string *jdlOpt;
-		std::string *origOpt;
-		std::string *proxyOpt ;
+
+		std::string* inOpt ;
+		/**
+                *	Boolean input arguments
+                */
+		bool nointOpt ;
+		bool jdlOpt ;
+		bool origOpt ;
+		bool proxyOpt ;
 		/**
 		* JobId
 		*/
-		std::string jobId ;
+                std::string jobId ;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_PROXYINFO_H

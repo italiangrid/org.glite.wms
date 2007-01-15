@@ -53,60 +53,98 @@ const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July",
 *	Default constructor
 */
 JobInfo::JobInfo( ){
-	jdlOpt = NULL;
-	origOpt = NULL;
-	proxyOpt = NULL;
+	jdlOpt = false;
+	origOpt = false;
+	proxyOpt = false;
+	inOpt = NULL;
+	nointOpt = false;
 	jobId = string("");
 };
 /*
 *	Default destructor
 */
 JobInfo::~JobInfo( ){
-	// "free memory" for the string  attributes
+	/* "free memory" for the string  attributes
 	if (jdlOpt) { free(jdlOpt);}
 	if (origOpt ) { free(origOpt);}
 	if (proxyOpt ) { free(proxyOpt);}
-
+	*/
 };
+
 /*
 * Handles the command line arguments
 */
-void JobInfo::readOptions (int argc,char **argv){
-	string err = "";
+void JobInfo::readOptions (int argc,char **argv) {
+	ostringstream err ;
+	int njobs = 0;
+	vector<string> jobids;
         Job::readOptions  (argc, argv, Options::JOBINFO);
-	jdlOpt = wmcOpts->getStringAttribute(Options::JDL);
-	origOpt = wmcOpts->getStringAttribute(Options::JDLORIG);
-	proxyOpt = wmcOpts->getStringAttribute(Options::PROXY);
+        inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	jdlOpt = wmcOpts->getBoolAttribute(Options::JDL);
+	origOpt = wmcOpts->getBoolAttribute(Options::JDLORIG);
+	proxyOpt = wmcOpts->getBoolAttribute(Options::PROXY);
 	dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
-	if (jdlOpt == NULL && origOpt == NULL &&
-		proxyOpt == NULL && dgOpt == NULL) {
-		err = "A mandatory option is missing; specify one of these operations:\n" ;
-		err += wmcOpts->getAttributeUsage(Options::JDL) + " \n";
-		err += wmcOpts->getAttributeUsage(Options::JDLORIG) + " \n";
-		err += wmcOpts->getAttributeUsage(Options::PROXY) + " \n";
-		err += wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
+	if ( jdlOpt == false && origOpt == false &&
+		proxyOpt == false && dgOpt == NULL) {
+		err << "A mandatory option is missing; specify one of these operations:\n" ;
+		err << wmcOpts->getAttributeUsage(Options::JDL) + " \n";
+		err << wmcOpts->getAttributeUsage(Options::JDLORIG) + " \n";
+		err << wmcOpts->getAttributeUsage(Options::PROXY) + " \n";
+		err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
 	} else if ( (jdlOpt && origOpt) ||
 		(jdlOpt && proxyOpt) ||
 		(jdlOpt && dgOpt) ||
 		(origOpt && proxyOpt) ||
 		(origOpt && dgOpt) ||
 		(proxyOpt && dgOpt) ) {
-		err = "The following options cannot be specified together:\n" ;
-		err += wmcOpts->getAttributeUsage(Options::JDL) + "\n";
-		err += wmcOpts->getAttributeUsage(Options::JDLORIG) + "\n";
-		err += wmcOpts->getAttributeUsage(Options::PROXY) + "\n";
-		err += wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
-	} else if (jdlOpt) {
-		jobId = Utils::checkJobId (*jdlOpt);
-	} else if (origOpt){
-		jobId = Utils::checkJobId (*origOpt);
-	} else if (proxyOpt){
-		jobId = Utils::checkJobId (*proxyOpt);
-	}
-	if (err.size()>0) {
+		err << "The following options cannot be specified together:\n" ;
+		err << wmcOpts->getAttributeUsage(Options::JDL) + "\n";
+		err << wmcOpts->getAttributeUsage(Options::JDLORIG) + "\n";
+		err << wmcOpts->getAttributeUsage(Options::PROXY) + "\n";
+		err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
+		} else if ( jdlOpt || proxyOpt || origOpt ) {
+				if (inOpt) {
+				// no Jobid with --input
+				if (jobId.size() > 0) {
+					throw WmsClientException(__FILE__,__LINE__,
+						"JobInfo::readOptions", DEFAULT_ERR_CODE,
+						"Too many arguments"  ,
+						"The jobId mustn't be specified with the option:\n"
+						+ wmcOpts->getAttributeUsage(Options::INPUT));
+				}
+				// From input file
+				*inOpt = Utils::getAbsolutePath(*inOpt);
+				logInfo->print (WMS_INFO, "Reading the jobId from the input file:", *inOpt);
+				jobids = wmcUtils->getItemsFromFile(*inOpt);
+				jobids = wmcUtils->checkJobIds (jobids);
+				njobs = jobids.size( ) ;
+				if (njobs > 1){
+					if (nointOpt) {
+						err << "Unable to get the jobId from the input file:" << *inOpt << "\n";
+						err << "interactive questions disabled (" << wmcOpts->getAttributeUsage(Options::NOINT) << ")\n";
+						err << "and multiple jobIds found in the file (this command accepts only one JobId).\n";
+						err << "Adjust the file or remove the " << wmcOpts->getAttributeUsage(Options::NOINT) << " option\n";
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions",DEFAULT_ERR_CODE,
+							"Input Option Error", err.str());
+					}
+					logInfo->print (WMS_DEBUG, "JobId(s) in the input file:", Utils::getList (jobids), false);
+					logInfo->print (WMS_INFO, "Multiple JobIds found:", "asking for choosing one id in the list ", true);
+					jobids = wmcUtils->askMenu(jobids, Utils::MENU_SINGLEJOBID);
+					jobId = Utils::checkJobId(jobids[0]);
+				}
+				jobId = Utils::checkJobId(jobids[0]);
+				logInfo->print (WMS_DEBUG, "JobId by input file :", jobId );
+				} else {
+				// from command line
+					jobId = wmcOpts->getJobId();
+					logInfo->print (WMS_DEBUG, "JobId:", jobId );
+				}
+		}
+	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err);
+				"Input Option Error", err.str());
 	}
 
 };

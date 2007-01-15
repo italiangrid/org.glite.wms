@@ -340,13 +340,14 @@ const struct option Options::jobInfoLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
-	{	Options::LONG_PROXY,		required_argument,		0,		Options::SHORT_P},
+	{	Options::LONG_PROXY,			no_argument,		0,		Options::SHORT_P},
 	{	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
-	{	Options::LONG_JDLORIG,	  	required_argument,		0,		Options::SHORT_JDLORIG},
-	{	Options::LONG_JDL	,	  	required_argument,		0,		Options::JDL},
+	{	Options::LONG_JDLORIG,	  		no_argument,		0,		Options::SHORT_JDLORIG},
+	{	Options::LONG_JDL	,	  		no_argument,		0,		Options::JDL},
 	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
+	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
 	{	Options::LONG_OUTPUT,             required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
@@ -612,7 +613,7 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n\n";
         cerr << "\t" << USG_ENDPOINT << "\n";
-	cerr << "\t" << USG_DEFJDL << "\n";	
+	cerr << "\t" << USG_DEFJDL << "\n";
 	cerr << "\t" << USG_RANK << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
@@ -696,6 +697,7 @@ void Options::jobinfo_usage(const char* &exename, const bool &long_usg){
         cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
+        cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -725,7 +727,7 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_VERSION << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
-	cerr << "\t" << USG_INPUT << "\n";	
+	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_DIR << "\n";
 	cerr << "\t" << USG_PROTO << "\n";	
 	cerr << "\t" << USG_ALL << " (**)\n";
@@ -949,9 +951,10 @@ Options::Options (const WMPCommands &command){
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c%c%c%c%c",
 				Options::SHORT_E,  			short_required_arg, // endpoint
-				Options::SHORT_P,			short_required_arg, // proxy
-				Options::SHORT_JDLORIG,		short_required_arg,
+				Options::SHORT_P,			short_no_arg, // proxy
+				Options::SHORT_JDLORIG,		short_no_arg,
 				Options::SHORT_DELEGATION, 	short_required_arg,
+				Options::SHORT_INPUT, 		short_required_arg,
 				Options::SHORT_OUTPUT, 		short_required_arg,
 				Options::SHORT_CONFIG,		short_required_arg);
 
@@ -1235,7 +1238,7 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			}
 			break ;
 		}
-		case(PROXY) : {
+		/*case(PROXY) : {
 			if (proxy) {
 				value = new string (*proxy);
 			}
@@ -1252,7 +1255,7 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 				value = new string (*jdl);
 			}
 			break ;
-		}
+		}*/
 		default : {
 			// returns NULL
 			break ;
@@ -1360,6 +1363,24 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 		}
                 case(RANK) : {
 			value = rank;
+			break ;
+		}
+		case(PROXY) : {
+			if (proxy) {
+				value = proxy;
+			}
+			break ;
+		}
+                case(JDLORIG) : {
+			if (jdlorig) {
+				value = jdlorig;
+			}
+			break ;
+		}
+                case(JDL) : {
+			if (jdl) {
+				value = jdl;
+			}
 			break ;
 		}
 		default : {
@@ -1711,9 +1732,9 @@ void Options::readOptions(const int &argc, const char **argv){
         // the name of the the specific command (submit, cancel, etc.....)
 	// that has called this method
         try{
-        	//fs::path cp (Utils::normalizePath(argv[0]), fs::system_specific);  boost 1.29.1
-		fs::path cp (Utils::normalizePath(argv[0]), fs::native);
- 		applName = cp.leaf( );
+			//fs::path cp (Utils::normalizePath(argv[0]), fs::system_specific);  boost 1.29.1
+			fs::path cp (Utils::normalizePath(argv[0]), fs::native);
+			applName = cp.leaf( );
         } catch (fs::filesystem_error &ex){
 		applName = getDefaultApplicationName( );
         }
@@ -1728,11 +1749,13 @@ void Options::readOptions(const int &argc, const char **argv){
 						shortOpts, longOpts, NULL);
 			// error
 			if (next_opt == '?') {
+				printUsage(applName.c_str());
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
 					"Arguments Error"  ,
-					"Invalid Option" );
+					"Invalid Option");
 			} else if ( next_opt != -1 && arg.size() > 0 && checkOpts(arg) < 0  ){
+				printUsage(applName.c_str());
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
 					"Arguments Error"  ,
@@ -1767,9 +1790,9 @@ void Options::readOptions(const int &argc, const char **argv){
 				cmdType == JOBCANCEL ||
 				cmdType == JOBOUTPUT ) {
 						throw WmsClientException(__FILE__,__LINE__,
-								"readOptions", DEFAULT_ERR_CODE,
-								"Arguments Error",
-								"Last argument(s) of the command must be a JobId or a list of JobId's");
+						"readOptions", DEFAULT_ERR_CODE,
+						"Arguments Error",
+						"Last argument(s) of the command must be a JobId or a list of JobId's");
 			}
 		} else
 		 // ========================================
@@ -1846,66 +1869,66 @@ void Options::readOptions(const int &argc, const char **argv){
 				}
 			 }
 		} else
-			// =========================================================
-			// JobProxyInfo : needs Jobid or --delegatioID option
-			// ========================================================
-			if ( cmdType == JOBINFO){
-			/*		if (optind == argc-1 ) {
-						jobid = Utils::checkJobId (argv[optind]);
-						jobIds.push_back(jobid);
-						if(delegation){
-							ostringstream err ;
-							err << "The following option cannot used with the jobId:\n";
-							err << getAttributeUsage(Options::DELEGATION) << "\n";
-							err << "Specify\n";
-							err << "- JobId : for a delegated proxy used to submit the job identified by the JobId string ;\n";
-							err << "- delegationId : for a proxy previously delegated and identified by the delegationId string.\n";
-							throw WmsClientException(__FILE__,__LINE__,
-								"readOptions", DEFAULT_ERR_CODE,
-								"Incompatible Options"  ,
-								err.str());
-						}
-					} else
-					// all the options have been processed by getopt (JobId file is missing)
-					if (optind == argc ) {
-						if(delegation == NULL){
-							throw WmsClientException(__FILE__,__LINE__,
-								"readOptions", DEFAULT_ERR_CODE,
-								"Wrong Option"  ,
-								"Last argument of the command must be a JobId or specify a proxy delegationId string with the option:\n"
-									+ getAttributeUsage(Options::DELEGATION) );
-						}
-					} else
+		        // =========================================================
+                        // JobProxyInfo : needs Jobid or --delegatioID option
+                        // =========================================================
+                        if ( cmdType == JOBINFO){
+                        /*              if (optind == argc-1 ) {
+                                                jobid = Utils::checkJobId (argv[optind]);
+                                                jobIds.push_back(jobid);
+                                                if(delegation){
+                                                        ostringstream err ;
+                                                        err << "The following option cannot used with the jobId:\n";
+                                                        err << getAttributeUsage(Options::DELEGATION) << "\n";
+                                                        err << "Specify\n";
+                                                        err << "- JobId : for a delegated proxy used to submit the job identified by the JobId string ;\n";
+                                                        err << "- delegationId : for a proxy previously delegated and identified by the delegationId string.\n";
+                                                        throw WmsClientException(__FILE__,__LINE__,
+                                                                "readOptions", DEFAULT_ERR_CODE,
+                                                                "Incompatible Options"  ,
+                                                                err.str());
+                                                }
+                                        } else
+                                        // all the options have been processed by getopt (JobId file is missing)
+                                        if (optind == argc ) {
+                                                if(delegation == NULL){
+                                                        throw WmsClientException(__FILE__,__LINE__,
+                                                                "readOptions", DEFAULT_ERR_CODE,
+                                                                "Wrong Option"  ,
+                                                                "Last argument of the command must be a JobId or specify a proxy delegationId string with the option:\n"
+                                                                        + getAttributeUsage(Options::DELEGATION) );
+                                                }
+                                        } else
 
-					// all the options have been processed by getopt and we still have more than an argument
-					 if (optind != (argc-1) ) {
-						ostringstream err ;
-						err << "Too many arguments:\n";
-						for (int i = optind; i < argc; i++){
-							err << argv[i++] ;
-						}
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Arguments Error",
-							err.str() );
-					} else {
-						ostringstream err ;
-						err << "Wrong arguments:\n";
-						for (int i = optind; i < argc; i++){
-							err << argv[i++] ;
-						}
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Arguments Error",
-							err.str() );
-					}*/
-			} else
+                                        // all the options have been processed by getopt and we still have more than an argument
+                                         if (optind != (argc-1) ) {
+                                                ostringstream err ;
+                                                err << "Too many arguments:\n";
+                                                for (int i = optind; i < argc; i++){
+                                                        err << argv[i++] ;
+                                                }
+                                                throw WmsClientException(__FILE__,__LINE__,
+                                                        "readOptions", DEFAULT_ERR_CODE,
+                                                        "Arguments Error",
+                                                        err.str() );
+                                        } else {
+                                                ostringstream err ;
+                                                err << "Wrong arguments:\n";
+                                                for (int i = optind; i < argc; i++){
+                                                        err << argv[i++] ;
+                                                }
+                                                throw WmsClientException(__FILE__,__LINE__,
+                                                        "readOptions", DEFAULT_ERR_CODE,
+                                                        "Arguments Error",
+                                                        err.str() );
+                                        }*/
+                        } else
 
 			// =========================================================
 			// JobPerusal /JobAttach : need only one jobid as last argument
 			// ========================================================
 			 if ( cmdType == JOBPERUSAL ||
-			 	cmdType == JOBATTACH ){
+			 	cmdType == JOBATTACH ) {
 				if (input==NULL){
 					// all the options have been processed by getopt (JobId file is missing)
 					if (input == NULL && optind == argc){
@@ -2541,8 +2564,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                 	if (jdl){
 				dupl = new string(LONG_JDL) ;
     			} else {
-				jdl = new string(checkArg(LONG_JDL ,optarg, Options::JDL)) ;
-  				inCmd += px + LONG_JDL + ws + *jdl + ";" + ws ;
+				jdl = true ;
+  				inCmd += px + LONG_JDL + ws +  ";" + ws ;
                      	 }
                         break ;
 		};
@@ -2550,8 +2573,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                 	if (jdlorig){
 				dupl = new string(LONG_JDLORIG) ;
     			} else {
-				jdlorig = new string(checkArg(LONG_JDLORIG ,optarg, Options::JDLORIG, string(1,Options::SHORT_JDLORIG))) ;
-  				inCmd += px + LONG_JDLORIG + ws + *jdlorig + ";" + ws ;
+				jdlorig = true ;
+  				inCmd += px + LONG_JDLORIG + ws +  ";" + ws ;
                      	 }
                         break ;
 		};
@@ -2559,8 +2582,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                 	if (unset){
 				dupl = new string(LONG_PROXY) ;
     			} else {
-				proxy = new string(checkArg(LONG_PROXY ,optarg, Options::PROXY, string(1,Options::SHORT_P))) ;
-  				inCmd += px + LONG_PROXY + ws + *proxy + ";" + ws ;
+				proxy = true ;
+  				inCmd += px + LONG_PROXY + ws + ";" + ws ;
                      	 }
                         break ;
 		};
