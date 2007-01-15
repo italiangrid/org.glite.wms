@@ -6,8 +6,7 @@
  * Contributors are mentioned in the code where appropriate.
  *
  */
-
-#include "NSClient.h"
+#include "glite/wms/ns-client/NSClient.h"
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wms/common/logger/common.h"
 #include "glite/lb/JobStatus.h"

@@ -61,11 +61,8 @@ install-exec-hook:
 	ln -fs lib$$file _$$file; \
 	done
 
-GLITE_WMS_MANAGER_NS_CLIENT_LIBS = -L$(top_srcdir)/../org.glite.wms.manager-ns-client/build/src \
-	-L$(top_srcdir)/../org.glite.wms.manager-ns-commands/build/src \
-	-L$(top_srcdir)/../org.glite.wms.manager-ns-fsm/build/src \
-	-L$(top_srcdir)/../org.glite.wms.manager-ns-versions/build/src \
-	-lglite_wms_manager_ns_client -lnsclientcommands -lnsfsm -lglite_wms_manager-ns-versions 
+GLITE_WMS_MANAGER_NS_CLIENT_LIBS = -L$(GLITE_LOCATION) \
+	-lglite_wms_manager_ns_client -lnsclientcommands
 
 libglite_wmsui_LbWrapper_la_SOURCES = \
 	LbWrapper_wrap.cpp \
@@ -290,7 +287,6 @@ WMS_UI_COM_GLITE = glite_wmsui_AdWrapper.a \
 	glite_wmsui_SdWrapper.so.0.0.0
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	-I$(top_srcdir)/../org.glite.wms.manager-ns-client/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
