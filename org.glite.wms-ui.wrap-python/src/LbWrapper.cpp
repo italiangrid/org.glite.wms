@@ -313,7 +313,18 @@ try{
 		result = string (  edg_wll_LevelToString ( (edg_wll_Level) event_retrieved.getValInt(fieldAttr) ) ) ;
 			break;
 		case Event::STATUS_CODE:
-			result = string(edg_wll_CancelStatus_codeToString((edg_wll_CancelStatus_code)event_retrieved.getValInt(fieldAttr))) ;
+			switch (event_retrieved.type){
+				case Event::CANCEL:
+					result = string
+					(edg_wll_CancelStatus_codeToString (
+					(edg_wll_CancelStatus_code)event_retrieved.getValInt(fieldAttr) ) ) ;
+				break;
+				default:
+					result = string
+					(edg_wll_DoneStatus_codeToString (
+					(edg_wll_DoneStatus_code)event_retrieved.getValInt(fieldAttr) ) ) ;
+				break;
+			}
 			break;
 		case Event::EXIT_CODE:
 		case Event::PRIORITY:
