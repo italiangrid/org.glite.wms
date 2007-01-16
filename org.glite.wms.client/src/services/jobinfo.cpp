@@ -102,7 +102,7 @@ void JobInfo::readOptions (int argc,char **argv) {
 		err << wmcOpts->getAttributeUsage(Options::JDLORIG) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::PROXY) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
-		} else if ( jdlOpt || proxyOpt || origOpt ) {
+		} else if ( jdlOpt == true || proxyOpt == true || origOpt == true) {
 				if (inOpt) {
 				// no Jobid with --input
 				if (jobId.size() > 0) {

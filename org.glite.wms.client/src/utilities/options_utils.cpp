@@ -1238,24 +1238,6 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			}
 			break ;
 		}
-		/*case(PROXY) : {
-			if (proxy) {
-				value = new string (*proxy);
-			}
-			break ;
-		}
-                case(JDLORIG) : {
-			if (jdlorig) {
-				value = new string (*jdlorig);
-			}
-			break ;
-		}
-                case(JDL) : {
-			if (jdl) {
-				value = new string (*jdl);
-			}
-			break ;
-		}*/
 		default : {
 			// returns NULL
 			break ;
@@ -1869,11 +1851,34 @@ void Options::readOptions(const int &argc, const char **argv){
 				}
 			 }
 		} else
-		        // =========================================================
-                        // JobProxyInfo : needs Jobid or --delegatioID option
-                        // =========================================================
-                        if ( cmdType == JOBINFO){
-                        /*              if (optind == argc-1 ) {
+                        // ===========================================================
+                        // JobProxyInfo : needs Jobid (from input file or command line), or --delegation-id
+                        // ===========================================================
+                        if ( cmdType == JOBINFO) {
+			     if (input == NULL && delegation == NULL ) {
+				jobid = Utils::checkJobId (argv[argc-1]);
+				if ( jobid.size( ) >0 )  {
+						jobIds.push_back(jobid);
+					} else {
+						invalid = string(jobid)  ;
+					}
+					// checks the read jobid
+					if (invalid.size() > 0) {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Input Arguments" ,
+							"invalid arguments: " + invalid );
+					} else  if ( jobIds.empty()) {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Input Arguments"  ,
+							"Last argument of the command must be a JobId" );
+					} else {
+						this->singleId = string(jobIds[0]);
+					}
+				}
+
+                                /*  if (optind == argc-1 ) {
                                                 jobid = Utils::checkJobId (argv[optind]);
                                                 jobIds.push_back(jobid);
                                                 if(delegation){
@@ -1888,7 +1893,7 @@ void Options::readOptions(const int &argc, const char **argv){
                                                                 "Incompatible Options"  ,
                                                                 err.str());
                                                 }
-                                        } else
+                                        } else if (input)
                                         // all the options have been processed by getopt (JobId file is missing)
                                         if (optind == argc ) {
                                                 if(delegation == NULL){
@@ -1918,12 +1923,10 @@ void Options::readOptions(const int &argc, const char **argv){
                                                         err << argv[i++] ;
                                                 }
                                                 throw WmsClientException(__FILE__,__LINE__,
-                                                        "readOptions", DEFAULT_ERR_CODE,
-                                                        "Arguments Error",
+                                                        "readOptions", DEFAULT_ERR_CODE,                                                        									"Arguments Error",
                                                         err.str() );
-                                        }*/
+                                        } */
                         } else
-
 			// =========================================================
 			// JobPerusal /JobAttach : need only one jobid as last argument
 			// ========================================================
