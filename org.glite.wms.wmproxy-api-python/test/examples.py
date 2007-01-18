@@ -66,9 +66,22 @@ PYTHONPATH="/opt/glite/externals/lib/python2.2/site-packages"
 sys.path.append(PYTHONPATH)
 PYTHONPATH="/opt/glite/externals/lib/python2.2"
 sys.path.append(PYTHONPATH)
-import SOAPpy
-from wmproxymethods import Wmproxy
-from wmproxymethods import Config
+try:
+	import SOAPpy
+except:
+	print "Unable to find SOAPpy module!"
+	sys.exit(1)
+
+try:
+	# The preferred path is ../src
+	sys.path.append("../src")
+	from wmproxymethods import Wmproxy
+	from wmproxymethods import Config
+except:
+	print "Unable to find wmproxymethods module!"
+	print "Please add the location of wmproxymethods.py to PYTHONPATH ENV variable"
+	sys.exit(1)
+
 import socket
 
 SOAPpy.Config.debug = 0
