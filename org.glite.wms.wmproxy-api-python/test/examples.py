@@ -22,7 +22,6 @@ delegationId = "rask"
 protocol="gsiftp"
 protocol="all"
 
-proxy = "/tmp/x509up_u613"
 
 requirements ="ther.GlueCEStateStatus == \"Production\""
 rank ="-other.GlueCEStateEstimatedResponseTime"
@@ -80,6 +79,7 @@ try:
 	sys.path.append("../src")
 	from wmproxymethods import Wmproxy
 	from wmproxymethods import Config
+	from wmproxymethods import getDefaultProxy
 except:
 	print "Unable to find wmproxymethods module!"
 	print "Please add the location of wmproxymethods.py to PYTHONPATH ENV variable"
@@ -353,13 +353,15 @@ class WmpTest(unittest.TestCase):
 	def testMakeProxyCert(self):
 		import os
 		proxycert = self.wmproxy.getProxyReq(delegationId)
-		title("getProxyReq (wmp namespace)", proxycert)
+		# title("getProxyReq (wmp namespace)", proxycert)
 		assert proxycert
-		print proxycert
-		proxycert = proxycert.replace("\n", "" )
-		proxycert = '"'+proxycert+'"'
-		print proxycert
-		os.system("../examples/proxy-cert" + " " + proxycert + " " + proxy + " " + ">" + "tmpProxyCert")
+		# print proxycert
+		os.environ["PROXY_REQUEST"]=proxycert
+		# proxycert = proxycert.replace("\n", "" )
+		# proxycert = '"'+proxycert+'"'
+		# print proxycert
+		print "Launching....",	"../examples/proxy-cert", getDefaultProxy()
+		os.system("../examples/proxy-cert" + " " + " " + getDefaultProxy())# + " " + ">" + "tmpProxyCert")
 		#lines = open("tmpProxyCert").readlines()
 		#print lines
 		#assert self.wmproxy.putProxy(delegationId,

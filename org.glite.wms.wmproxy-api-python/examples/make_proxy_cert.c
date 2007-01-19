@@ -379,17 +379,22 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
   return GRST_RET_OK;
 }
 
+const char* PROXY_REQUEST="PROXY_REQUEST";
 
 int main(int argc, char *argv[])
  {
   char *certtxt;
   time_t timeleft;
-  const char* request = (char*)argv[1];
-  const char* proxy = (char*)argv[2];
+  // const char* request = (char*)argv[1];
+  const char* request = getenv (PROXY_REQUEST);
+  const char* proxy = (char*)argv[1];
   /*printf("argc = %d\n", argc);
   int i;
   for(i=1; i<argc; i++)
      printf("Parametro %d = %s\n", i, argv[i]);*/
+  // printf ("Parameter %s " ,request );
+  // printf ("Parameter %s " ,proxy);
+  // printf ("\n\n\n");
   if (proxy == NULL)
      {
        printf( "Error while reading proxy from input: NULL\n");
