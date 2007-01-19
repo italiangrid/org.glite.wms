@@ -11,7 +11,7 @@ gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
-url = trinity
+url = ghemon
 
 
 ns ="http://glite.org/wms/wmproxy"
@@ -21,6 +21,9 @@ delegationId = "rask"
 
 protocol="gsiftp"
 protocol="all"
+
+proxy = "/tmp/x509up_u613"
+
 requirements ="ther.GlueCEStateStatus == \"Production\""
 rank ="-other.GlueCEStateEstimatedResponseTime"
 
@@ -43,10 +46,10 @@ Config.allSuites={ \
 # GETURI SUITES
 "getURISuite":["testgetSandboxDestURI","testgetSandboxBulkDestURI","testgetTransferProtocols","testgetOutputFileList"],\
 # PROXY SUITES
-"proxySuite":["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst",\
+"proxySuite":["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst","testMakeProxyCert",\
 "testDelegatedProxyInfo","testGetJDL"],\
 # PROXY GRIDSITE SUITES
-"gridSiteSuite":["testgetProxyReqGrst","testputProxyGrst","testgetTerminationTimeGrst",\
+"gridSiteSuite":["testgetProxyReqGrst","testMakeProxyCert","testputProxyGrst","testgetTerminationTimeGrst",\
 "testrenewProxyReqGrst","testgetNewProxyReqGrst","testDestroyGrst"\
 ],\
 }  #END SUITES
@@ -347,6 +350,19 @@ class WmpTest(unittest.TestCase):
 		gpr = self.wmproxy.getProxyReq(delegationId, self.wmproxy.getGrstNs())
 		title("getProxyReq (grst namespace)", gpr)
 		assert gpr
+	def testMakeProxyCert(self):
+		import os
+		proxycert = self.wmproxy.getProxyReq(delegationId)
+		title("getProxyReq (wmp namespace)", proxycert)
+		assert proxycert
+		print proxycert
+		proxycert = proxycert.replace("\n", "" )
+		proxycert = '"'+proxycert+'"'
+		print proxycert
+		os.system("../examples/proxy-cert" + " " + proxycert + " " + proxy + " " + ">" + "tmpProxyCert")
+		#lines = open("tmpProxyCert").readlines()
+		#print lines
+		#assert self.wmproxy.putProxy(delegationId,
 	def testputProxy(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId())
 	"""
