@@ -139,7 +139,10 @@ bool cancelJob( const string &condorid, string &info )
                                                                                                                                                             
     result = CondorG::instance()->set_command( CondorG::remove, parameters )->execute( info );
   }
-                                                                                                                                                            
+
+  if( !result )
+    elog::cedglog << logger::setlevel( logger::info ) << "Job has been succesfully removed." << endl;
+                                                                                                                                                          
   return !result;
 }
 

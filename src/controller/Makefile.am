@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2.28.2  2007/01/22 15:46:05  gianelle
+#       Add support for JobDir (for the moment only the read part)
+#
 #       Revision 1.2.28.1  2006/10/10 11:33:15  gianelle
 #       Install SubmitAdapter.h because it is used by the planner
 #
@@ -44,6 +47,7 @@ noinst_HEADERS = \
 	JobControllerClient.h \
 	JobControllerClientImpl.h \
 	JobControllerClientReal.h \
+	JobControllerClientJD.h \
 	Request.h \
 	RequestExceptions.h \
 	SubmitAd.h \
@@ -65,7 +69,9 @@ libglite_wms_jss_controller_la_SOURCES = CondorG.cpp \
 	JobControllerReal.cpp \
 	JobControllerFake.cpp \
 	JobControllerClient.cpp \
+	JobControllerClientJD.cpp \
 	JobControllerClientReal.cpp
+
 
 libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)
 
