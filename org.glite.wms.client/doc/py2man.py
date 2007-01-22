@@ -77,7 +77,7 @@ common_options=[ "version", "help", "config", "vo", "debug", "logfile", "noint"]
 
 commands2options={
 "glite-wms-job-delegate-proxy":["delegationid", "autm-delegation", "endpoint", "deleg-output"], \
-"glite-wms-job-submit":["submit-input", "resource","nodes-resource",  "nolisten", "nomsg","lrms", "to", "valid", "register-only", \
+"glite-wms-job-submit":["delegationid", "autm-delegation","submit-input", "resource","nodes-resource",  "nolisten", "nomsg","lrms", "to", "valid", "register-only", \
    "transfer-files", "proto-submit", "start", "submit-output", "collection","dag","default-jdl"], \
 "glite-wms-job-cancel":["cancel-input","cancel-output"], \
 "glite-wms-job-list-match":["delegationid", "autm-delegation", "endpoint", "rank","match-output"], \

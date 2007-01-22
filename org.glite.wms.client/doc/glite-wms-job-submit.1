@@ -26,6 +26,11 @@ glite-wms-job-submit
 .HP
 \fB--noint\fR
 .HP
+\fB--delegationid\fR, \fB-d\fR
+<idstring>
+.HP
+\fB--autm-delegation\fR, \fB-a\fR
+.HP
 \fB--input\fR, \fB-i\fR
 <filepath>
 .HP
@@ -158,6 +163,19 @@ When this option is specified, a command log file (whose pathname is filepath) i
 
 .IP
 if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)
+.PP
+.HP
+\fB--delegationid\fR, \fB-d\fR
+<idstring>
+
+.IP
+if this option is specified, the proxy that will be delegated is identified by <id_string>. This proxy can be therefore used for operations like job registration, job submission and job list matching until its expiration specifying the <id_string>. It must be used in place of --autm-delegation option.
+.PP
+.HP
+\fB--autm-delegation\fR, \fB-a\fR
+
+.IP
+this option is specified to make automatic generation of the identifier string (delegationid) that will be associated to the delegated proxy. It must be used in place of the --delegationid (-d) option.
 .PP
 .HP
 \fB--input\fR, \fB-i\fR
