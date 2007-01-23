@@ -56,6 +56,10 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 				case JobStatus::RUNNING:
 				case JobStatus::UNKNOWN:
 				break;
+				case JobStatus::DONE:
+					if (status.getValInt(JobStatus::DONE_CODE) == JobStatus::DONE_CODE_FAILED){
+						break;
+					}
 				default:
 					throw WmsClientException(__FILE__,__LINE__,
 					"checkCodes", DEFAULT_ERR_CODE,
