@@ -345,7 +345,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 	//bool parent = status.hasParent ( ) ;
 	/* Purge logic: Job can be purged when:
 	* 1) enpoint has been specified (parent has specified)
-	* 2) no parent is present
+	* 2) --nopurge is not active
 	* 3) retrieve output successfully done */
 	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (!nopgOpt) && (code==0) && (firstCall);
 	id = jobid.toString() ;
