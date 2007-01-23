@@ -60,6 +60,8 @@ JobOutput::JobOutput () : Job() {
 	dirCfg = "/tmp";
 	// init of the boolean attributes
 	listOnlyOpt = false;
+	nopgOpt = false;
+	firstCall = false;
 	// list of files
 	childrenFileList = "";
 	parentFileList = "";
@@ -79,6 +81,8 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 	unsigned int njobs = 0;
 	ostringstream err ;
  	Job::readOptions  (argc, argv, Options::JOBOUTPUT);
+	//--nopurg
+	nopgOpt = wmcOpts->getBoolAttribute(Options::NOPURG);
         // --input
         // input file
         inOpt = wmcOpts->getStringAttribute(Options::INPUT);
@@ -161,6 +165,7 @@ void JobOutput::getOutput ( ){
 			setEndPoint (status.getEndpoint());
 			// Properly set destination Directory
 			if (dirOpt){
+				firstCall = true ;
 				if ( size == 1 ){
 					retrieveOutput (result,status,Utils::getAbsolutePath(*dirOpt));
 				} else {
@@ -330,18 +335,19 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 				+": Nodes and JobIds info stored inside file:",dirAbs+"/"+GENERATED_JN_FILE);
 		}else{
 			for (unsigned int i = 0 ; i < size ;i++){
+				firstCall = false ;
 				retrieveOutput (result,children[i],
 					dirAbs+"/"+
-					children[i].getJobId().getUnique(),true);
+					children[i].getJobId().getUnique(), true);
 			}
 		}
 	}
-	bool parent = status.hasParent ( ) ;
+	//bool parent = status.hasParent ( ) ;
 	/* Purge logic: Job can be purged when:
 	* 1) enpoint has been specified (parent has specified)
 	* 2) no parent is present
 	* 3) retrieve output successfully done */
-	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (! parent) && (code==0);
+	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (!nopgOpt) && (code==0) && (firstCall);
 	id = jobid.toString() ;
 	// checks Children
 	if (checkChildren && children.size()>0){
@@ -363,7 +369,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		}
 		result += "No output files to be retrieved for the job:\n" + id + "\n\n";
 	}
-	if (purge){
+	 if (purge) {
 		try {
 			// Check Dir/purge
 			logInfo->service(WMP_PURGE_SERVICE, id);

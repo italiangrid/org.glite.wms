@@ -96,6 +96,8 @@ class JobOutput  : public Job {
                 *	Boolean input arguments
                 */
                 bool listOnlyOpt ;
+		bool nopgOpt ;
+		bool firstCall ;
                 /**
                 * JobId's
                 */

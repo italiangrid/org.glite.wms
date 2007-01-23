@@ -69,6 +69,7 @@ class Options
 			NOINT ,
 			NOLISTEN ,
 			NOMSG ,
+			NOPURG ,
 			OUTPUT ,
 			PORT ,
 			PROTO,
@@ -320,7 +321,7 @@ class Options
 		static const char* TRANSFER_FILES_PROTOCOLS[ ];
 		/**
 		* Constant string to allow specifing "Retrieve all protocols"
-		* when calling WMP services with "protocol" input parameter 
+		* when calling WMP services with "protocol" input parameter
 		*/
 		static const std::string WMP_ALL_PROTOCOLS;
 		/**
@@ -463,6 +464,9 @@ class Options
 		static const char* LONG_JDL ;
 		static const char* LONG_JDLORIG ;
 		static const char SHORT_JDLORIG ;
+		// no purger
+		static const char* LONG_NOPURG ;
+		static const char SHORT_NOPURG ;
 		/**
 		*	short usage constants
 		*/
@@ -494,6 +498,7 @@ class Options
 		static const std::string USG_NOINT ;
 		static const std::string USG_NOLISTEN ;
 		static const std::string USG_NOMSG	;
+		static const std::string USG_NOPURG ;
 		static const std::string USG_OUTPUT ;
 		static const std::string USG_PORT ;
 		static const std::string USG_PROTO ;
@@ -536,12 +541,9 @@ class Options
 		std::string* fileprotocol ;
 		std::string* from ;
 		std::string* input ;
-		//std::string *jdl;
-		//std::string *jdlorig;
 		std::string* lrms ;
 		std::string* logfile ;
 		std::string* output ;
-		//std::string* proxy ;
 		std::string* resource ;
 		std::string* start ;
 		std::string* status ;
@@ -566,6 +568,7 @@ class Options
 		bool noint ;
 		bool nolisten ;
 		bool nomsg ;
+		bool nopurg ;
 		bool proxy ;
 		bool rank ;
                 bool registeronly;
