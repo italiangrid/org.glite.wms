@@ -1,6 +1,7 @@
-#!/usr/bin/perl -W
+#!/usr/bin/perl
 
-use Getopt::Long;
+require Carp;
+require Getopt::Long;
 
 $glitedir=`printenv GLITE_LOCATION`;
 chomp $glitedir;
@@ -78,13 +79,13 @@ $listoper  = 0;
 $show      = 0;
 $help      = 0;
             
-$return=GetOptions ("load1=i"       => \$Load1,
-            	    "load5=i"       => \$Load5,
-                    "load15=i"      => \$Load15,
-                    "memusage=i"    => \$MemUsage,
-                    "swapusage=i"   => \$SwapUsage,
+$return=Getopt::Long::GetOptions ("load1=f"       => \$Load1,
+            	    "load5=f"       => \$Load5,
+                    "load15=f"      => \$Load15,
+                    "memusage=f"    => \$MemUsage,
+                    "swapusage=f"   => \$SwapUsage,
                     "fdnum=i"       => \$FDNum,
-                    "diskusage=i"   => \$DiskUsage,
+                    "diskusage=f"   => \$DiskUsage,
                     "oper=s"        => \$oper,
                     "show"          => \$show,
                     "list"          => \$listoper,
