@@ -722,7 +722,7 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
              cream_api::job_statuses::DONE_OK == tmp_job.getStatus() ) {
             deregister_proxy_renewal( tmp_job );            
         }
-        if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ||
+        if ( cream_api::job_statuses::DONE_FAILED == tmp_job.getStatus() ||
              cream_api::job_statuses::ABORTED == tmp_job.getStatus() ) {
             resubmit_job( tmp_job, "Job resubmitted by ICE" );            
         }        
