@@ -643,7 +643,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job )
                        m_log_dev->errorStream()
                        << "ice-core::deregister_proxy_renewal() - "
                        << "ICE cannot unregister the proxy " 
-                       << "for Grid job [" << jobgetGridJobID() << "] "
+                       << "for Grid job [" << job.getGridJobID() << "] "
                        << " CREAM job [" << job.getCreamJobID() << "] "
                        << "Reason: \"" << edg_wlpr_GetErrorText(err) 
                        << "\"."
