@@ -111,7 +111,6 @@ namespace ice {
         IceThreadHelper m_proxy_renewer_thread;
         IceThreadHelper m_job_killer_thread;
         
-        // std::vector<FLEit> m_requests;
         glite::wms::common::utilities::FileList<std::string> m_flns;
         
         log4cpp::Category* m_log_dev;
@@ -125,6 +124,10 @@ namespace ice {
         static glite::wms::ice::Ice* s_instance; ///< Singleton instance of this class
         
         Ice( ) throw(glite::wms::ice::iceInit_ex&);
+
+        // Some utility functions
+        void deregister_proxy_renewal( const util::CreamJob& job );
+        void purge_wms_storage( const util::CreamJob& job );
         
     public:
         

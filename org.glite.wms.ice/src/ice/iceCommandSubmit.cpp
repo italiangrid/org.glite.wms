@@ -301,7 +301,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         m_theJob.set_failure_reason( ex.what() );
         m_theJob = m_lb_logger->logEvent( new util::cream_transfer_fail_event( m_theJob, ex.what() ) );
         m_theJob.set_failure_reason( boost::str( boost::format( "Submission to CREAM failed due to exception: %1%" ) % ex.what() ) );
-        m_theJob = m_lb_logger->logEvent( new util::job_aborted_event( m_theJob ) );
+        m_theJob = m_lb_logger->logEvent( new util::job_done_failed_event( m_theJob ) ); // Ref: Ale, 25 jan 2007
         m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
