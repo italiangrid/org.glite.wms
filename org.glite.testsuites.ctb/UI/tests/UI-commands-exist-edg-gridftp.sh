@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test whether the EDG GRID FTP commands can be found
+# Test whether the EDG GridFTP commands and globus-url-copy can be found
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version info: $Id$
