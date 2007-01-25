@@ -326,7 +326,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         // The next event is used to show the failure reason in the status info
         // JC+LM log transfer-fail / aborted in case of condor transfers fail
         m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() ) );
-        m_theJob = m_lb_logger->logEvent( new util::job_aborted_event( m_theJob ) );
+        m_theJob = m_lb_logger->logEvent( new util::job_done_failed_event( m_theJob ) );
         m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
         throw( iceCommandFatal_ex( ex.what() ) );
     }
