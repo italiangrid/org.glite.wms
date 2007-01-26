@@ -51,11 +51,14 @@ limitations under the License.
 
 #include "wmpconfiguration.h"
 #include "wmpgsoapfaultmanipulator.h"
+#include "wmpsignalhandler.h"
 
-#include "utilities/wmputils.h" // waitForSeconds(), initsignalhandler()
+#include "utilities/wmputils.h" // waitForSeconds()
 #include "eventlogger/wmplbselector.h"	// lbselectioninfo struct
 
+// Exceptions
 #include "glite/wmsutils/exception/Exception.h"
+
 
 // Global variable for configuration
 WMProxyConfiguration conf;
@@ -136,7 +139,7 @@ main(int argc, char* argv[])
 			<<endl;
 		
 		// Initializing signal handler for 'graceful' stop/restart
-		//wmputilities::initsignalhandler();
+		glite::wms::wmproxy::server::initsignalhandler();
 
 		extern string sandboxdir_global;
 		sandboxdir_global = "";

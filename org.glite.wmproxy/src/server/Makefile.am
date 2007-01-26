@@ -47,6 +47,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	wmpdelegation.cpp \
 	wmp2wm.cpp \
 	wmpstructconverter.cpp \
+	wmpsignalhandler.cpp \
 	stdsoap2.cpp
 
 
@@ -61,7 +62,8 @@ noinst_HEADERS = \
 	wmpoperations.h \
 	wmpcoreoperations.h \
 	wmpstructconverter.h \
-	wmpresponsestruct.h 
+	wmpresponsestruct.h \
+	wmpsignalhandler.h
 	
 glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic
 
