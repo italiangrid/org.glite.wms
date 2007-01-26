@@ -39,6 +39,8 @@
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/PrivateAttributes.h"
 
+// Global variables for configuration
+extern std::string dispatcher_type_global;
 
 // Listmatch classad attributes
 const char * LISTMATCH_REASON = "reason";
@@ -46,6 +48,11 @@ const char * LISTMATCH_MATCH_RESULT = "match_result";
 
 const std::string LISTMATCH_REASON_OK = "ok";
 const std::string LISTMATCH_REASON_NO_MATCH = "no matching resources found";
+
+// Dispatcher type possible choices
+const std::string DISPATCHER_TYPE_FILELIST = "filelist";
+const std::string DISPATCHER_TYPE_JOBDIR = "jobdir";
+
 
 namespace logger       = glite::wms::common::logger;
 namespace eventlogger  = glite::wms::wmproxy::eventlogger;
@@ -59,44 +66,44 @@ using namespace glite::jdl;
 
 namespace {
 
-#ifdef GLITE_WMS_USE_FILELIST
-	void f_forward(wmsutilities::FileList<string>& filelist,
-		wmsutilities::FileListMutex& mutex, string const& ad)
-	{
-		GLITE_STACK_TRY("f_forward()");
-		edglog_fn("wmp2wm::f_forward");
-		
-		edglog(debug)<<"Request Queue forwarding"<<endl;
-		edglog(debug)<<"Request Queue: "<<filelist.filename()<<endl;
-		wmsutilities::FileListLock lock(mutex);
-		try {
-			filelist.push_back(ad);
-		} catch (exception &ex) {
-			throw wmputilities::FileSystemException(__FILE__, __LINE__,
-				"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-				ex.what());
-		}
-		
-		GLITE_STACK_CATCH();
+void
+f_forward(wmsutilities::FileList<string>& filelist,
+	wmsutilities::FileListMutex& mutex, string const& ad)
+{
+	GLITE_STACK_TRY("f_forward()");
+	edglog_fn("wmp2wm::f_forward");
+	
+	edglog(debug)<<"Request Queue forwarding"<<endl;
+	edglog(debug)<<"Request Queue: "<<filelist.filename()<<endl;
+	wmsutilities::FileListLock lock(mutex);
+	try {
+		filelist.push_back(ad);
+	} catch (exception &ex) {
+		throw wmputilities::FileSystemException(__FILE__, __LINE__,
+			"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+			ex.what());
 	}
-#else
-	void f_forward(wmsutilities::JobDir jd, string const& ad)
-	{
-		GLITE_STACK_TRY("f_forward()");
-		edglog_fn("wmp2wm::f_forward");
-		
-		edglog(debug)<<"JobDir forwarding"<<endl;
-		try {
-			 jd.deliver(ad);
-		} catch (exception &ex) {
-			throw wmputilities::FileSystemException(__FILE__, __LINE__,
-				"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-				ex.what());
-		}
-		
-		GLITE_STACK_CATCH();
+	
+	GLITE_STACK_CATCH();
+}
+
+void
+f_forward(wmsutilities::JobDir jd, string const& ad)
+{
+	GLITE_STACK_TRY("f_forward()");
+	edglog_fn("wmp2wm::f_forward");
+	
+	edglog(debug)<<"JobDir forwarding"<<endl;
+	try {
+		 jd.deliver(ad);
+	} catch (exception &ex) {
+		throw wmputilities::FileSystemException(__FILE__, __LINE__,
+			"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+			ex.what());
 	}
-#endif
+	
+	GLITE_STACK_CATCH();
+}
 
 string
 toFormattedString(classad::ClassAd &classad)
@@ -138,16 +145,19 @@ WMP2WM::init(const string &filename, eventlogger::WMPEventLogger *wmpeventlogger
   	
   	this->wmpeventlogger = wmpeventlogger;
 
-#ifdef GLITE_WMS_USE_FILELIST
-  	edglog(debug)<<"Request Queue: "<<filename<<endl;
-  	m_filelist.reset(new wmsutilities::FileList<string>(filename));
-  	m_mutex.reset(new wmsutilities::FileListMutex(*(m_filelist.get())));
-#else
-	// filename is the base_dir
-	boost::filesystem::path base(filename,  boost::filesystem::native);
-	//wmsutilities::JobDir::create(base);
-	m_jobdir.reset(new wmsutilities::JobDir(base));
-#endif
+	if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
+	  	edglog(debug)<<"Request Queue: "<<filename<<endl;
+	  	m_filelist.reset(new wmsutilities::FileList<string>(filename));
+	  	m_mutex.reset(new wmsutilities::FileListMutex(*(m_filelist.get())));
+	} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
+		// filename is the base_dir
+		boost::filesystem::path base(filename,  boost::filesystem::native);
+		//wmsutilities::JobDir::create(base);
+		m_jobdir.reset(new wmsutilities::JobDir(base));
+	} else {
+		// Dispatcher type not known
+		edglog(fatal)<<"FATAL ERROR: dispatcher type not known"<<endl;
+	}
 
   	edglog(debug)<<"wmp2wm initialization done"<<endl;
   	
@@ -174,28 +184,28 @@ WMP2WM::submit(const string &jdl, const string &jdlpath)
 	string regjdl = (jdlpath != "") ? jdlpath : jdl;
  	try {
  		
-#ifdef GLITE_WMS_USE_FILELIST
-    	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
-    	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-    		true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
-#else
-		f_forward(*m_jobdir, command_str);
-		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-    		true, true, "", regjdl.c_str());
-#endif
-
+		if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
+	    	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
+	    	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
+	    		true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
+		} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
+			f_forward(*m_jobdir, command_str);
+			wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
+	    		true, true, "", regjdl.c_str());
+		}
+		
     	edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
     	edglog(debug)<<"Submit EnQueued OK"<<endl;
   	} catch (exception &e) {
     	// LogEnQueued FAIL if exception occurs
     	
-#ifdef GLITE_WMS_USE_FILELIST
-    	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-    		e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
-#else
-		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-    		e.what(), true, true, "", regjdl.c_str());
-#endif
+		if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
+	    	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+	    		e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
+		} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
+			wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+	    		e.what(), true, true, "", regjdl.c_str());
+		}
 
     	edglog(critical)<<"Submit EnQueued FAIL"<<endl;
   	}
@@ -223,11 +233,11 @@ WMP2WM::cancel(const string &jobid, const string &seq_code)
 
 	string command_ad(convertedString);
 	
-#ifdef GLITE_WMS_USE_FILELIST
-	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
-#else
-	f_forward(*m_jobdir, command_ad);
-#endif
+	if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
+		f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
+	} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
+		f_forward(*m_jobdir, command_ad);
+	}
 
 	edglog(debug)<<"Cancel Forwarded"<<endl;
 	
@@ -314,11 +324,11 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 		<<toFormattedString(convertedAd)<<endl;
 	string command_ad(convertedString);
 	
-#ifdef GLITE_WMS_USE_FILELIST
-	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
-#else
-	f_forward(*m_jobdir, command_ad);
-#endif
+	if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
+		f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
+	} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
+		f_forward(*m_jobdir, command_ad);
+	}
 	
 	edglog(debug)<<"Match Forwarded"<<endl;
 	
