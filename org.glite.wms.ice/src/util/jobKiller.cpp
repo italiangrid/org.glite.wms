@@ -24,6 +24,7 @@
 #include "iceLBEvent.h"
 #include "CreamProxyFactory.h"
 #include "CreamProxyMethod.h"
+#include "iceCommandJobKill.h"
 
 // GLITE stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -73,7 +74,7 @@ void jobKiller::body()
             for( job_it = jobCache::getInstance()->begin(); 
                  job_it != jobCache::getInstance()->end();
                  ++job_it) {
-                time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
+/*                 time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
                 if( proxyTimeLeft < m_threshold_time && proxyTimeLeft > 5 ) {
                     CREAM_SAFE_LOG( m_log_dev->infoStream() 
                                     << "jobKiller::body() - Job ["
@@ -84,17 +85,20 @@ void jobKiller::body()
                                     << "the threshold ("
                                     << m_threshold_time << " seconds). "
                                     << "Going to cancel it..."
-                                    << log4cpp::CategoryStream::ENDLINE);
-                    killJob( *job_it, proxyTimeLeft );
-                }
-            }
-        }
-        sleep( m_delay );
-    }
+                                    << log4cpp::CategoryStream::ENDLINE); 
+                    killJob( *job_it, proxyTimeLeft ); */
+		    
+		    iceCommandJobKill killer( *job_it );
+		    killer.execute();
+              } //loop over all jobCache's jobs
+        } // unlock of the cache
+	sleep( m_delay );
+    } // while(!stopped)
+    //sleep( m_delay );
 }
 
 //______________________________________________________________________________
-void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
+/* void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
 {
   try {
       m_theProxy->Authenticate( J.getUserProxyCertificate() );
@@ -137,4 +141,4 @@ void jobKiller::killJob( CreamJob& J, time_t residual_proxy_time )
   // The cache is already locked
   jobCache::getInstance()->put( J ); 
 
-}
+} */

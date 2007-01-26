@@ -61,8 +61,7 @@ namespace util {
         void killJob( const time_t );
         
     public:
-        iceCommandJobKill( glite::ce::cream_client_api::soap_proxy::CreamProxy*, 
-                           const glite::wms::ice::util::CreamJob& ) throw();
+        iceCommandJobKill( const glite::wms::ice::util::CreamJob& ) throw();
         
         virtual void execute( ) throw( );
         
