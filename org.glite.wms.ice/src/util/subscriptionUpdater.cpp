@@ -23,6 +23,8 @@
 #include "jobCache.h"
 #include "cemonUrlCache.h"
 #include "iceUtils.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 namespace iceUtil = glite::wms::ice::util;
 namespace api = glite::ce::cream_client_api;
@@ -32,7 +34,7 @@ using namespace std;
 iceUtil::subscriptionUpdater::subscriptionUpdater( ) :
   iceThread( "subscription Updater" )
 {
-  m_iteration_delay = (int)(iceUtil::iceConfManager::getInstance()->getSubscriptionUpdateThresholdTime()/2);
+  m_iteration_delay = (int)(iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->subscription_update_threshold_time()/2);
   if(!m_iteration_delay) m_iteration_delay=5;
 
 }

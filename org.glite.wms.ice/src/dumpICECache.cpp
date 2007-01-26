@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 #include <unistd.h>
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 using namespace std;
 namespace creamApi = glite::ce::cream_client_api;
@@ -42,7 +44,7 @@ int main(int argc, char*argv[]) {
   string jsnapfile  = iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot";
   iceUtil::jobCache::setJournalFile(jcachefile);
   iceUtil::jobCache::setSnapshotFile(jsnapfile);*/
-  string jcachedir = iceUtil::iceConfManager::getInstance()->getCachePersistDirectory();
+  string jcachedir = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir();
   iceUtil::jobCache::setPersistDirectory( jcachedir );
   iceUtil::jobCache::setRecoverableDb( false );
   // iceUtil::jobCache::setAutoPurgeLog( false );

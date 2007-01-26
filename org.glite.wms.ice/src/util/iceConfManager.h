@@ -1,24 +1,6 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * Wrapper class for WMS configuration
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+/**
+ * This is a wrapper of the wms's configurator. The motivation of this wrapper
+ * is that apparently wms configurator doesn't allow to modify conf params at run time
  */
 
 #ifndef GLITE_WMS_ICE_UTIL_ICECONFMANAGER_H
@@ -30,6 +12,7 @@
 #include <boost/scoped_ptr.hpp>
 #include "glite/wms/common/configuration/Configuration.h"
 
+// #include "boost/thread/recursive_mutex.hpp"
 
 namespace glite {
   namespace wms {
@@ -50,7 +33,7 @@ namespace glite {
 
           boost::scoped_ptr< glite::wms::common::configuration::Configuration > m_configuration;
 
-	  std::string m_HostProxyFile, 
+	/*   std::string m_HostProxyFile, 
 	    m_WM_Input_FileList, m_ICE_Input_FileList, m_LogFile,
 	    m_creamurlprefix, m_creamurlpostfix, m_curldelegprefix,
 	    m_curldelegpostfix, m_cemonurlprefix, m_cemonurlpostfix,
@@ -63,7 +46,7 @@ namespace glite {
 	    m_log_on_console, m_log_on_file, m_listener_enable_authn,  m_listener_enable_authz, m_start_job_killer,
 	    m_start_lease_updater, m_start_proxy_renewer;
 	  size_t m_max_logfile_size;
-          unsigned int m_max_logfile_rotations, m_max_ice_threads;
+          unsigned int m_max_logfile_rotations, m_max_ice_threads; */
 
 	  // static boost::recursive_mutex mutex;
 
@@ -79,7 +62,7 @@ namespace glite {
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
 	  static void init(const std::string&);
 
-	  std::string getHostProxyFile( void ) const { return m_HostProxyFile; }
+/* 	  std::string getHostProxyFile( void ) const { return m_HostProxyFile; }
 	  std::string getWMInputFile( void ) const { return m_WM_Input_FileList; }
 	  std::string getICEInputFile( void ) const { return m_ICE_Input_FileList; }
 	  std::string getLogFile( void ) const { return m_LogFile; }
@@ -119,9 +102,9 @@ namespace glite {
 	  std::string getIceHostKey( void ) const { return m_ice_host_key; }
 	  std::string getCachePersistDirectory( void ) const { return m_persist_dir; }
           unsigned int getMaxICEThreads( void ) const { return m_max_ice_threads; }
-	  int         getSoapTimeout( void ) const { return m_soaptimeout; }
+	  int         getSoapTimeout( void ) const { return m_soaptimeout; } */
 
-	  void setHostProxyFile( const std::string& p ) {  m_HostProxyFile = p; }
+/* 	  void setHostProxyFile( const std::string& p ) {  m_HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { m_WM_Input_FileList = p; }
 	  void setICEInputFile( const std::string& p )  { m_ICE_Input_FileList = p; }
 	  void setLogFile( const std::string& p )  { m_LogFile = p; }
@@ -150,7 +133,7 @@ namespace glite {
 	  void setLeaseThresholdTime( const int& t) { m_lease_threshold_time = t; }
 	  void setLeaseDeltaTime( const int& t ) { m_lease_delta_time = t; }
   	  void setPollerPurgesJobs( const bool p ) { m_poller_purges_jobs = p; }
-          void setMaxICEThreads( unsigned int n ) { m_max_ice_threads = n; }
+          void setMaxICEThreads( unsigned int n ) { m_max_ice_threads = n; } */
 
           glite::wms::common::configuration::Configuration* getConfiguration() { return m_configuration.get(); }
 	};

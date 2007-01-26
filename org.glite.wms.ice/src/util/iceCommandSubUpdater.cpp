@@ -23,6 +23,8 @@
 #include "jobCache.h"
 #include "cemonUrlCache.h"
 #include "subscriptionManager.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <string>
 #include <vector>
@@ -82,7 +84,7 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 		       << "]. Going to re-subscribe to it."
 		       << log4cpp::CategoryStream::ENDLINE);
 	
-	if( m_conf->getListenerEnableAuthZ() )
+	if( m_conf->getConfiguration()->ice()->listener_enable_authz() )
 	  {
 	    string DN;
 	    boost::recursive_mutex::scoped_lock M( cemonUrlCache::mutex );
@@ -178,7 +180,7 @@ void ice_util::iceCommandSubUpdater::renewSubscriptions(vector<Subscription>& ve
     {
       time_t timeleft = sit->getExpirationTime() - time(NULL);
    
-      if(timeleft < m_conf->getSubscriptionUpdateThresholdTime()) {
+      if(timeleft < m_conf->getConfiguration()->ice()->subscription_update_threshold_time()) {
           CREAM_SAFE_LOG(m_log_dev->infoStream() 
 			 << "iceCommandSubUpdater::renewSubscriptions() - "
 			 << "Updating subscription ["<<sit->getSubscriptionID() 
@@ -190,9 +192,9 @@ void ice_util::iceCommandSubUpdater::renewSubscriptions(vector<Subscription>& ve
 			 << "Update params: "
 			 << "ConsumerURL=["<<sit->getConsumerURL()
 			 << "] - TopicName=[" << sit->getTopicName() << "] - "
-			 << "Duration=" << m_conf->getSubscriptionDuration()
+			 << "Duration=" << m_conf->getConfiguration()->ice()->subscription_duration()
 			 << " secs since now - rate="
-			 << m_conf->getNotificationFrequency()
+			 << m_conf->getConfiguration()->ice()->notification_frequency()
 			 << " secs"
 			 << log4cpp::CategoryStream::ENDLINE);
           {
@@ -205,7 +207,7 @@ void ice_util::iceCommandSubUpdater::renewSubscriptions(vector<Subscription>& ve
 			       << "New subscription ID after renewal is ["
 			       << newID << "]" << log4cpp::CategoryStream::ENDLINE);
 		sit->setSubscriptionID(newID);
-		sit->setExpirationTime( time(NULL) + m_conf->getSubscriptionDuration() );
+		sit->setExpirationTime( time(NULL) + m_conf->getConfiguration()->ice()->subscription_duration() );
 	      } else {
 	      // subscription renewal failed. Try make a new one
 	      if(!m_subMgr->subscribe( sit->getEndpoint() )) {

@@ -30,6 +30,8 @@
 #include "iceLBEvent.h"
 #include "jobCache.h"
 #include "CreamProxyMethod.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <string>
 #include <vector>
@@ -48,7 +50,7 @@ iceCommandJobKill::iceCommandJobKill( cream_api::soap_proxy::CreamProxy* theProx
     m_theProxy( theProxy ),
     m_theJob( theJob ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    m_threshold_time( ice_util::iceConfManager::getInstance()->getJobKillThresholdTime() ),
+    m_threshold_time( ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() ),
     m_lb_logger( ice_util::iceLBLogger::instance() )
 {
     //     m_theProxy.reset( theProxy );

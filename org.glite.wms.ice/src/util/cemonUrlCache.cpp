@@ -28,6 +28,9 @@
 #include "CreamProxyFactory.h"
 #include <iostream>
 #include <boost/scoped_ptr.hpp>
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
 
 using namespace std;
 namespace iceUtil = glite::wms::ice::util;
@@ -66,8 +69,8 @@ iceUtil::cemonUrlCache::cemonUrlCache() throw() :
   if( !m_subMgr->isValid() )
   {
     CREAM_SAFE_LOG(m_log_dev->fatalStream()
-    		   << "cemonUrlCache::CTOR() - Couldn't access to "
-		   << "the subscriptionManager instance. STOP!"
+    		   << "cemonUrlCache::CTOR() - Couldn't create "
+		   << "a subscriptionManager object. STOP!"
 		   << log4cpp::CategoryStream::ENDLINE);
 		   
     // this is severe, must exit
@@ -110,7 +113,7 @@ string iceUtil::cemonUrlCache::getCEMonURL(const string& creamURL)
     // gSOAP runtime env that cannot be shared between threads and cemonUrlCache
     // is a singleton and could be shared between threads
     boost::scoped_ptr< api::CreamProxy > creamProxy( iceUtil::CreamProxyFactory::makeCreamProxy( false ) );
-    creamProxy->Authenticate( m_conf->getHostProxyFile() );
+    creamProxy->Authenticate( m_conf->getConfiguration()->common()->host_proxy_file() );
     creamProxy->GetCEMonURL( creamURL.c_str(), cemonURL );
 	
   } catch(exception& ex) {
@@ -121,8 +124,8 @@ string iceUtil::cemonUrlCache::getCEMonURL(const string& creamURL)
 		   << log4cpp::CategoryStream::ENDLINE);
     cemonURL = creamURL;
     boost::replace_first(cemonURL,
-                         m_conf->getCreamUrlPostfix(),
-                         m_conf->getCEMonUrlPostfix()
+                         m_conf->getConfiguration()->ice()->cream_url_postfix(),
+                         m_conf->getConfiguration()->ice()->cemon_url_postfix()
                         );
 
   }
@@ -152,10 +155,10 @@ bool iceUtil::cemonUrlCache::getCEMonDN( const string& cemonURL,
   }
 
   // try to get DN directly from the server
-  CEInfo ceInfo(m_conf->getHostProxyFile(), "/");
+  CEInfo ceInfo(m_conf->getConfiguration()->common()->host_proxy_file(), "/");
   ceInfo.setServiceURL( cemonURL );
   try {
-    ceInfo.authenticate( m_conf->getHostProxyFile().c_str(), "/" );
+    ceInfo.authenticate( m_conf->getConfiguration()->common()->host_proxy_file().c_str(), "/" );
     ceInfo.getInfo();
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()

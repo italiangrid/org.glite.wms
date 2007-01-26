@@ -18,6 +18,8 @@
  */
 #include "creamJob.h"
 #include "iceConfManager.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -230,12 +232,12 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     /**
      * No need to lock the mutex because getInstance already does that
      */
-    iceUtil::iceConfManager* conf = iceUtil::iceConfManager::getInstance();
+    //iceUtil::iceConfManager* conf = iceUtil::iceConfManager::getInstance();
 
-    m_cream_address = conf->getCreamUrlPrefix() 
-	+ m_endpoint + conf->getCreamUrlPostfix();
-    m_cream_deleg_address = conf->getCreamUrlDelegationPrefix() 
-	+ m_endpoint + conf->getCreamUrlDelegationPostfix();
+    m_cream_address = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
+	+ m_endpoint + iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
+    m_cream_deleg_address = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
+	+ m_endpoint + iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
 }
 
 //______________________________________________________________________________

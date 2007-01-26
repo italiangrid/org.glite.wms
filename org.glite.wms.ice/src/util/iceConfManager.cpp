@@ -56,7 +56,7 @@ iceConfManager::iceConfManager( )
     }
     m_configuration.reset( config );
 
-    m_HostProxyFile                      = m_configuration->common()->host_proxy_file();
+/*     m_HostProxyFile                      = m_configuration->common()->host_proxy_file();
     m_dguser                             = m_configuration->common()->dguser();
     m_WM_Input_FileList                  = m_configuration->wm()->input();
     m_ICE_Input_FileList                 = m_configuration->ice()->input();
@@ -96,7 +96,7 @@ iceConfManager::iceConfManager( )
     m_max_logfile_rotations              = m_configuration->ice()->max_logfile_rotations();
     m_persist_dir                        = m_configuration->ice()->persist_dir();
     m_max_ice_threads                    = m_configuration->ice()->max_ice_threads();
-    m_soaptimeout			 = m_configuration->ice()->soap_timeout();
+    m_soaptimeout			 = m_configuration->ice()->soap_timeout(); */
 }
 
 iceConfManager::~iceConfManager( )

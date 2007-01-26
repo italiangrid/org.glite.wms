@@ -22,6 +22,8 @@
 #include "glite/wms/common/utilities/FileListLock.h"
 #include "classad_distribution.h"
 #include "iceConfManager.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <string>
 #include <iostream>
@@ -132,11 +134,7 @@ int main(int argc, char* argv[]) {
         struct timeval T;
         gettimeofday(&T, 0);
         
-        string job_id;
-        job_id = boost::str( boost::format( "%1%%2%1234567890" ) % time(NULL) % T.tv_usec );
-        job_id.resize( 22, 'X' );
-        ad->InsertAttr( "edg_jobid", boost::str( boost::format("https://grid005.pd.infn.it:9000/%1%") % job_id ) );
-        // ad->InsertAttr("edg_jobid", "https://ghemon.cnaf.infn.it:9000/VPju3g1taAiCGNpUgR7OwA" );
+        ad->InsertAttr("edg_jobid", boost::str( boost::format( "https://grid005.pd.infn.it:9000/000%1%.%2%" ) % time(NULL) % T.tv_usec ) );
         
         classad::ClassAdUnParser unp;
         
@@ -148,7 +146,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    string filelist_name( iceUtil::iceConfManager::getInstance()->getICEInputFile() );
+    string filelist_name( iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->input() );
 
     cout << "Adding JDL <" << request << "> to filelist " << filelist_name << endl;
 

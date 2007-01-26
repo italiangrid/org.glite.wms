@@ -36,6 +36,16 @@ namespace log4cpp {
 
 namespace glite {
   namespace wms {
+    namespace common {
+      namespace configuration {
+        class ICEConfiguration;
+      }
+    }
+  }
+}
+
+namespace glite {
+  namespace wms {
     namespace ice {
         class Ice;
 
@@ -61,14 +71,15 @@ namespace glite {
 	  //std::vector<std::string> m_activeSubscriptions;
 	  //std::string m_proxyfile;
 	  //int m_tcpport;
-	  std::string                             m_myname;
-	  glite::wms::ice::util::iceConfManager*  m_conf;
-          log4cpp::Category                      *m_log_dev;
-          iceLBLogger                            *m_lb_logger;
-	  bool                                    m_isOK;
-          jobCache*                               m_cache;
-	  subscriptionManager*                    m_subManager;
-          glite::wms::ice::Ice* m_ice_manager;
+	  std::string                                            m_myname;
+	  //glite::wms::ice::util::iceConfManager*               m_conf;
+	  const glite::wms::common::configuration::ICEConfiguration*  m_conf;
+          log4cpp::Category                                     *m_log_dev;
+          iceLBLogger                                           *m_lb_logger;
+	  bool                                                   m_isOK;
+          jobCache*                                              m_cache;
+	  subscriptionManager*                                   m_subManager;
+          glite::wms::ice::Ice*                                  m_ice_manager;
 
 	  void init(void);
 

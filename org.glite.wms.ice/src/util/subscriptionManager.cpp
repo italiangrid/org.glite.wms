@@ -22,6 +22,10 @@
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "iceConfManager.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
+
 #include "iceUtils.h"
 #include <cstring> // for memset
 #include <netdb.h>
@@ -39,8 +43,8 @@ boost::recursive_mutex subscriptionManager::mutex;
 
 //______________________________________________________________________________
 subscriptionManager::subscriptionManager()
-  : m_T( iceConfManager::getInstance()->getICETopic() ),
-    m_P( iceConfManager::getInstance()->getNotificationFrequency() ),
+  : m_T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() ),
+    m_P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() ),
     m_conf( iceConfManager::getInstance() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_valid(true),
@@ -53,8 +57,8 @@ subscriptionManager::subscriptionManager()
     try {
         CESubscription ceS;
         CESubscriptionMgr ceSMgr;
-        ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
-        ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+        ceS.authenticate(m_conf->getConfiguration()->common()->host_proxy_file().c_str(), "/");
+        ceSMgr.authenticate(m_conf->getConfiguration()->common()->host_proxy_file().c_str(), "/");
     } catch(exception& ex) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() 
                        << "subscriptionManager::CTOR - "
@@ -78,12 +82,13 @@ subscriptionManager::subscriptionManager()
         abort();
     }
     string tmp_prefix;
-    if( iceConfManager::getInstance()->getListenerEnableAuthN() )
+    if( m_conf->getConfiguration()->ice()->listener_enable_authn() )
         tmp_prefix = "https";
     else
         tmp_prefix = "http";
     
-    m_myurl = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname % iceConfManager::getInstance()->getListenerPort() );
+    m_myurl = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname %
+    m_conf->getConfiguration()->ice()->listener_port() );
     
 }
 
@@ -108,7 +113,7 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   CESubscriptionMgr ceSMgr;
   CESubscription ceS;
 	 
-  ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+  ceSMgr.authenticate(m_conf->getConfiguration()->common()->host_proxy_file().c_str(), "/");
   ceSMgr.list(url, vec); // can throw an std::exception
   
   for(vector<Subscription>::const_iterator it = vec.begin();
@@ -140,7 +145,7 @@ bool subscriptionManager::subscribe(const string& url)
   		 << "subscriptionManager::subscribe() - Subscribing to ["
 		 << url << "] ["
                  << m_myurl << "] notification freq ["
-		 << iceConfManager::getInstance()->getNotificationFrequency() << "]"
+		 << m_conf->getConfiguration()->ice()->notification_frequency() << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
 
   {
@@ -148,11 +153,11 @@ bool subscriptionManager::subscribe(const string& url)
     ceS.setSubscribeParam( m_myurl.c_str(),
 	                     m_T,
 			     m_P,
-			     m_conf->getSubscriptionDuration()
+			     m_conf->getConfiguration()->ice()->subscription_duration()
 			    );
   }
   try {
-    ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+    ceS.authenticate(m_conf->getConfiguration()->common()->host_proxy_file().c_str(), "/");
     ceS.subscribe();
     m_lastSubscriptionID = ceS.getSubscriptionID();
     CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribed with ID ["
@@ -174,9 +179,9 @@ bool subscriptionManager::updateSubscription(const string& url,
   try {
     //boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     CESubscriptionMgr ceSMgr;
-    ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
+    ceSMgr.authenticate(m_conf->getConfiguration()->common()->host_proxy_file().c_str(), "/");
     newID = ceSMgr.update(url, ID, m_myurl, m_T, m_P,
-    		          time(NULL)+m_conf->getSubscriptionDuration());
+    		          time(NULL)+m_conf->getConfiguration()->ice()->subscription_duration());
     //return true;
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::updateSubscription()"

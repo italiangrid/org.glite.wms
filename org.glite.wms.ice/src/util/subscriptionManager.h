@@ -18,6 +18,8 @@ class Policy;*/
 
 namespace log4cpp { class Category; }
 
+
+
 namespace glite {
 namespace wms {
 namespace ice {
