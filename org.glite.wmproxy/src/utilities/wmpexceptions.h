@@ -85,6 +85,12 @@ class ServerOverloadedException : public JobException {
 		const std::string& method, int code, const std::string& reason);
 };
 
+class ConfigurationException : public JobException {
+	public:
+	ConfigurationException(const std::string& file, int line,
+		const std::string& method, int code, const std::string& reason);
+};
+
 } // utilities
 } // wmproxy
 } // wms

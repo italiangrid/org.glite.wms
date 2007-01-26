@@ -53,6 +53,7 @@ extern WMProxyConfiguration conf;
 
 // Global variables for configuration attributes (ENV dependant)
 extern std::string sandboxdir_global;
+extern std::string dispatcher_type_global;
 
 // Document root variable
 const char * DOC_ROOT = "DOCUMENT_ROOT";
@@ -74,6 +75,26 @@ using namespace glite::wms::wmproxy::utilities; //Exception
 namespace logger         = glite::wms::common::logger;
 namespace wmputilities	 = glite::wms::wmproxy::utilities;
 
+
+void
+checkConfiguration()
+{
+	if (dispatcher_type_global == "") {
+		dispatcher_type_global = "filelist";
+	} else {
+		if ((dispatcher_type_global != "filelist")
+				&& (dispatcher_type_global != "jobdir")) {
+			edglog(error)<<"Configuration error: dispatcher type not known"
+				"\nThe value \""<<dispatcher_type_global<<"\" is not possible "
+				"for configuration attribute DispatcherType\n"
+				"Please try with \"filelist\" or \"jobdir\""<<endl;
+			throw ConfigurationException(__FILE__, __LINE__,
+    			"checkConfiguration()", wmputilities::WMS_CONFIGURATION_ERROR,
+    			"Configuration error: dispatcher type not known"
+    			"\n(please contact server administrator)");
+		}
+	}
+}
 
 void
 setGlobalSandboxDir()
@@ -184,6 +205,7 @@ logRemoteHostInfo()
 			"------------------------------------------"
 	<<endl;
 
+	checkConfiguration();
 	setGlobalSandboxDir();
 		
 	GLITE_STACK_CATCH();

@@ -62,6 +62,7 @@ WMProxyConfiguration conf;
 
 // Global variables for configuration attributes (ENV dependant)
 std::string sandboxdir_global;
+std::string dispatcher_type_global;
 std::string filelist_global;
 glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 bool globusDNS_global;
@@ -139,6 +140,12 @@ main(int argc, char* argv[])
 
 		extern string sandboxdir_global;
 		sandboxdir_global = "";
+		
+		extern string dispatcher_type_global;
+		dispatcher_type_global
+			= configuration::Configuration::instance()->wm()->dispatcher_type();
+		edglog(debug)<<"DispatcherType: "<<dispatcher_type_global<<endl;
+		
 		extern string filelist_global;
 		filelist_global
 			= configuration::Configuration::instance()->wm()->input();

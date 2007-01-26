@@ -93,6 +93,13 @@ ServerOverloadedException::ServerOverloadedException(const std::string& file,
 	error_message += reason;
 }
 
+ConfigurationException::ConfigurationException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "ConfigurationException")
+{
+	error_message += reason;
+}
+
 } // utilities
 } // wmproxy
 } // wms
