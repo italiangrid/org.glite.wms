@@ -174,7 +174,7 @@ const char* Options::LONG_JDL			= "jdl";
 const char* Options::LONG_JDLORIG		= "jdl-original";
 const char Options::SHORT_JDLORIG		= 'j';
 // no purger
-const char* Options::LONG_NOPURG		= "nopurg";
+const char* Options::LONG_NOPURG		= "nopurge";
 const char Options::SHORT_NOPURG	= 'n';
 
 // Semicolon and white-space strings used in the definition of the short options
@@ -416,9 +416,9 @@ const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
-const string Options::USG_JDL = "--" + string(LONG_JDL)+ "\t<jobid>" ;
+const string Options::USG_JDL = "--" + string(LONG_JDL) ;
 
-const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG)+ ", -" + SHORT_JDLORIG + " <jobid>" ;
+const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG)+ ", -" + SHORT_JDLORIG ;
 
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
@@ -450,7 +450,7 @@ const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_P + "
 
 const string Options::USG_PROTO  = "--" + string(LONG_PROTO ) + "\t\t<protocol>";
 
-const string Options::USG_PROXY = "--" + string(LONG_PROXY) + ", -" + SHORT_P + "\t<jobid>";
+const string Options::USG_PROXY = "--" + string(LONG_PROXY) + ", -" + SHORT_P ;
 
 const string Options::USG_RANK = "--" + string(LONG_RANK ) ;
 
@@ -694,22 +694,23 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 */
 void Options::jobinfo_usage(const char* &exename, const bool &long_usg){
 	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
-	cerr << "Usage: " << exename <<   " [options] <operation options> [other options]\n\n";
+	cerr << "Usage: " << exename <<   " [options] <operation options> <job Id>\n\n";
 	cerr << "operation options (mandatory):\n";
-	cerr << "\t" << USG_JDL << " (registered)\n";
+	cerr << "\t" << USG_JDL << "\n";
 	cerr << "\t" << USG_JDLORIG << "\n";
 	cerr << "\t" << USG_PROXY << "\n";
-	cerr << "\t" << USG_DELEGATION << "\n";
+	cerr << "\t" << USG_DELEGATION << " (*)\n";
         cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
         cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
-        cerr << "\t" << USG_INPUT << "\n";
+        cerr << "\t" << USG_INPUT << " (*)\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
+	cerr << "\t" << "(*) argument <job Id> is not required\n";
 	cerr << "Please report any bug at:\n" ;
 	cerr << "\t" << HELP_EMAIL << "\n";
 	if (long_usg){
@@ -1897,6 +1898,13 @@ void Options::readOptions(const int &argc, const char **argv){
 				} else {
 					this->singleId = string(jobIds[0]);
 				}
+			} else if ((delegation || input) && optind != argc) {
+				throw WmsClientException(__FILE__,__LINE__,
+					"readOptions", DEFAULT_ERR_CODE,
+					"Too Many Arguments",
+					"The jobId must not be specified with the option:\n"
+					 +getAttributeUsage(Options::DELEGATION)+"\n"
+					 +getAttributeUsage(Options::INPUT));
 			}
                } else
 			// =========================================================

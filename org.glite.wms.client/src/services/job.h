@@ -154,6 +154,10 @@ class Job{
 		* available on the WMProxy server
 		* (according to the WMProxy version)
 		*/
+		virtual bool checkWMProxyRelease ( );
+		/**
+		deprecated
+		*/
 		virtual bool checkVersionForTransferProtocols ( );
 		/**
 		* Checks if the WMProxy server supports the File Transfer Protocol

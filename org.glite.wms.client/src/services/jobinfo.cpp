@@ -96,15 +96,17 @@ void JobInfo::readOptions (int argc,char **argv) {
 		(jdlOpt && dgOpt) ||
 		(origOpt && proxyOpt) ||
 		(origOpt && dgOpt) ||
-		(proxyOpt && dgOpt) ) {
+		(proxyOpt && dgOpt) ||
+		(inOpt &&dgOpt) ) {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::JDL) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::JDLORIG) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::PROXY) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
-		} else if ( jdlOpt == true || proxyOpt == true || origOpt == true) {
+  		} else if ( jdlOpt == true || proxyOpt == true || origOpt == true) {
 				if (inOpt) {
 				// no Jobid with --input
+				jobId = wmcOpts->getJobId();
 				if (jobId.size() > 0) {
 					throw WmsClientException(__FILE__,__LINE__,
 						"JobInfo::readOptions", DEFAULT_ERR_CODE,
@@ -382,6 +384,7 @@ const std::string JobInfo::adToLines (const std::string& jdl) {
 void JobInfo::retrieveInfo ( ){
 	ostringstream out ;
 	ostringstream header ;
+	ostringstream err ;
 	ProxyInfoStructType* proxy_info = NULL ;
 	string jdl = "";
 	vector <pair<string , string> > params;
@@ -410,6 +413,12 @@ void JobInfo::retrieveInfo ( ){
 		Status status = lbApi.getStatus(true,true);
 		setEndPoint(status.getEndpoint(), false);
 		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobId);
+		if ( (!checkWMProxyRelease( ))  && ( jdlOpt || origOpt  || proxyOpt ) ) {
+			err << "Requested information not supported by: " << getEndPoint ( ) << "\n";
+			throw WmsClientException(__FILE__,__LINE__,
+			"retrieveInfo", ECONNABORTED,
+			"WMProxy Server Error", err.str( ) );
+		}
 		try {
 			if (proxyOpt) {
 				// log-info

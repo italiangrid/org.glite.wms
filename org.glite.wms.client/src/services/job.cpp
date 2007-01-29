@@ -341,7 +341,6 @@ const std::string Job::getDelegationId  ( ) {
 	}
         return (*id);
 }
-
 /**
 * Private Method
 * Retrieves the WMProxy version numbers for the specified endpoint
@@ -354,7 +353,8 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 		// Version string number
 		logInfo->service(WMP_VERSION_SERVICE);
 		setVersionNumbers(api::getVersion(cfg));
-		logInfo->result(WMP_VERSION_SERVICE, "Version numbers successfully retrieved");
+		string v = api::getVersion(cfg);
+		logInfo->result(WMP_VERSION_SERVICE, " : "+ v );
 	} catch (api::BaseException &exc){
 		// TBD delete cfg???
 		throw WmsClientException(__FILE__,__LINE__,
@@ -400,11 +400,40 @@ void Job::setVersionNumbers(const string& version) {
 			"setting the version to 1.0.0",false);
 	}
 }
-
 /**
 * Checks if the getProtocolsTransfer service is
 * available on the WMProxy server
 * (according to the version)
+*/
+bool Job::checkWMProxyRelease( ){
+	bool check = false;
+	// Version = MAJOR.MINOR.SUBMINOR
+	// CHECK if    major > WMPROXY_GETPROTOCOLS_VERSION
+	if ( wmpVersion.major > Options::WMPROXY_GETPROTOCOLS_VERSION ) {
+		check =true;
+	} else
+	// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
+	//			minor > WMPROXY_GETPROTOCOLS_MINOR_VERSION
+	if ( wmpVersion.major == Options::WMPROXY_GETPROTOCOLS_VERSION ) {
+		if (wmpVersion.minor > Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION) {
+			check = true;
+		} else
+		// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
+		//			minor = WMPROXY_GETPROTOCOLS_MINOR_VERSION
+		//			subminor >= WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION
+		if (wmpVersion.minor == Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION &&
+		wmpVersion.subminor >= Options::WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION){
+			check = true;
+		} else {
+			check = false;
+		}
+	} else {
+		check = false;
+	}
+	return check;
+}
+/**
+deprecated
 */
 bool Job::checkVersionForTransferProtocols( ){
 	bool check = false;
@@ -494,13 +523,11 @@ void Job::delegateUserProxy(const std::string &endpoint) {
        }
        logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  *dgOpt);
 }
-
 /*
 * Retrieves the endpoint URL and performs
 * the user  credential delegation
 * This method is used only by delegateproxy.cpp
 */
-
 const std::string Job::delegateProxy( ) {
 	// TBD internal approach may change (endPoint may be used)
 	string endpoint = "";
@@ -509,7 +536,6 @@ const std::string Job::delegateProxy( ) {
 	jobPerformStep(STEP_DELEGATE_PROXY);
 	return endpoint;
 }
-
 /** Perform a certain operation and, if any problem arises, try and recover all the previous steps */
 void  Job::jobPerformStep(jobRecoveryStep step){
 	switch (step){
@@ -566,7 +592,6 @@ void Job::jobRecoverStep(jobRecoveryStep step){
 		"Operation failed",
 		"Unable to recover from specified step");
 }
-
 /**
 * Sets the endpoint URL where the operation will be performed. The URL is established checking
 * the following objects in this order:
@@ -605,7 +630,6 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 	// Performs CredentialDelegation if auto-delegation has been requested
 	if (autodgOpt){jobPerformStep(STEP_DELEGATE_PROXY);}
 }
-
 /**
 * Used by cancel, info, output, perusal, submit (from the Status of a JobId)
 */
@@ -644,7 +668,6 @@ void Job::lookForWmpEndpoints(const bool &all){
 			"Unable to find any endpoint where to perform service request");
 	}
 }
-
 /** Contact Service Discovery and query for more wmproxy endpoints */
 void Job::checkWmpSDList (const bool &all){
 	if (!sdContacted){
@@ -661,7 +684,6 @@ void Job::checkWmpSDList (const bool &all){
 		}
 	}
 }
-
 /** Parses this-urls variable: try and contact all wmproxy instances
 * removes from urls contacted endpoints
 */
@@ -712,7 +734,6 @@ void Job::checkWmpList (const bool &all) {
 		}
 	}
 }
-
 /**
 * called by output, perusal and submit before file transfering
 **/
@@ -721,7 +742,7 @@ void Job::checkFileTransferProtocol(  ) {
 	ostringstream info;
 	ostringstream msg;
 	int size = 0;
-	if (checkVersionForTransferProtocols()) {
+	if (checkWMProxyRelease( )) {
 		// ==== > getTransferProtocol service available
 		logInfo->service(WMP_GETPROTOCOLS_SERVICE);
 		// List of WMProxy available protocols
