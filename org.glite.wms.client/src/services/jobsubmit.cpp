@@ -1228,7 +1228,7 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
         // The destinationURI's vector is empty: the WMProxy service will be called
         if (dsURIs.empty( )){
 		// check the WMP version in order to establish the avaiability of the getTransferProtocols service
-		protoInfo = checkVersionForTransferProtocols( );
+		protoInfo = checkWMProxyRelease( );
 		if (protoInfo){
 			// jobPath is needed for the creation of the Zip files (The path used to archive the files)
 			// If this information is not available in the struct returned by the jobReg/jobSubm service,
