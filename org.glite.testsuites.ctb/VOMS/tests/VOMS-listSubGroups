@@ -25,11 +25,12 @@ source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-#rm -rf $tempo
 
-echo ""
 date
-echo "VOMS-listSubGroups - started, VO=$vo_name"
+echo "<br>"
+echo "Test VOMS-listSubgroups:"
+echo "VO=$vo_name"
+echo "<br>"
 
 
 group1="GROUP1"
@@ -37,81 +38,89 @@ group2="GROUP2"
 group3="GROUP3"
 group4="GROUP4"
 
-echo "Step 1: Create 4 subgroups in main group /$vo_name: $group1, $group2, $group3, $group4"
+echo "SCENARIO: Create 4 groups: $group1, $group2, $group3, $group4"
+echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1"
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1/$group2"
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1/$group2/$group3"
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name" "/$group1/$group2/$group3/$group4"
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1"
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1/$group2"
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1/$group2/$group3"
+voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1/$group2/$group3/$group4"
 
-echo "OK"
-
-echo "Step 2: Check group list"
-
+echo "SCENARIO: List groups"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name" > $voms_tmp
-
-#cat $voms_tmp
-
 echo "Check 4 groups, "
+echo "<br>"
 
-grep "$group1" $voms_tmp
+grep "$group1" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $group1 not created: LIST:<<"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   echo "Error creating group $group1"
+   echo "<br>"
    cat $voms_tmp
-   echo ">>"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
 
 voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1" > $voms_tmp
-
-grep "$group2" $voms_tmp
+grep "$group2" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $group2 not created"
-   echo "LIST:<"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   echo "Error creating group $group2"
+   echo "<br>"
    cat $voms_tmp
-   echo ">"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-
 
 voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1/$group2" > $voms_tmp
-grep "$group3" $voms_tmp
+grep "$group3" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $group3 not created"
-   echo "LIST:<"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   echo "Error creating group $group3"
+   echo "<br>"
    cat $voms_tmp
-   echo ">"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-
 
 voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1/$group2/$group3" > $voms_tmp
-grep "$group4" $voms_tmp
+grep "$group4" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $group4 not created"
-   echo "LIST:<"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   echo "Error creating group $group4"
+   echo "<br>"
    cat $voms_tmp
-   echo ">"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-echo "OK, Leave empty VO"
 
-echo "Clear Created groups"
+echo "Cleaning tasks"
 voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
 voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
 voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
 voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
-
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-
-echo "Test is OK"
+echo "Test OK"
 exit $SAME_OK

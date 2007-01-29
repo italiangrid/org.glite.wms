@@ -14,8 +14,6 @@
 #                                                                                           #                                                               
 #############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -23,127 +21,102 @@ export voms_host=$1
 source $SAME_SENSOR_HOME/tests/config_file
 
 export mkgrid="/opt/edg/libexec/edg-mkgridmap"
-#export conf="$HOME/SAM/SAME/gridmap.conf"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
 
-echo ""
 date
-echo "VOMS-genGM - started, VO=$vo_name, CA1=$CA, CA2=$CA_CERN"
+echo "<br>"
+echo "Test VOMS-genGM:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "CA1=$CA"
+echo "<br>"
+echo "CA2=$CA_CERN"
+echo "<br>"
+
 user1="DN_USER1"
 user2="DN_USER2"
 
-echo "Error stderr" > $voms_stderr
-
-echo "Step 1: Create grid-mapfile for empty VO"
-
+echo "SCENARIO: Create gridmap file for empty VO"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host list-users 2> $voms_stderr
-
 grep "No users are returned" $voms_stderr
 
 if [ $? == 1 ]; then
-   echo "VO - not empty: LIST:<<"
-   cat $voms_stderr
-   echo ">> Test has failed"
-   exit $SAME_ERROR
+    echo "The VO is not empty. Test needs an empty VO"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "Generate grid-mapfile for empty VO"
-$mkgrid/edg-mkgridmap.pl --conf=$GRIDMAP --output=$voms_tmp
+echo "Generate gridmap file for empty VO"
+echo "<br>"
+$mkgrid --conf=$GRIDMAP --output=$voms_tmp
 
-#/opt/edg/sbin/edg-mkgridmap --output=$voms_tmp
-echo "Check grid-mapfile"
-
+echo "Check gridmap file"
+echo "<br>"
 if test -s $voms_tmp
 then
-   echo "Non zero file size"
+   echo "gridmap file should be empty for an empty VO"
+   echo "<br>"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
-else
-   echo "Zero file size, continue"
 fi
 
-echo "Step 2: Create one fake user"
-
+echo "SCENARIO: Create gridmap file for one user"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user1" "$CA" "CN-User1" "user1@cern.ch"
-
 rm -rf $tempo
-#/opt/edg/sbin/edg-mkgridmap --output=$voms_tmp
-$mkgrid/edg-mkgridmap.pl --conf=$GRIDMAP --output=$voms_tmp
-echo "grid-mapfile:"
+$mkgrid --conf=$GRIDMAP --output=$voms_tmp
 usr=`cat $voms_tmp | cut -d" " -f1`
 acc=`cat $voms_tmp | cut -d" " -f2`
-echo "User=$usr"
-echo "Account=$acc"
-
-#echo "$user1" > $voms_tmp
 grep "$user1" $voms_tmp > $tempo
-echo "Check user DN"
+
 if [ $? == 1 ]; then
-   echo "User DN not found in grid-mapfile:<<"
+   echo "Incorrect User DN in gridmap file"
+   echo "<br>"
    cat $voms_tmp
-   echo ">> Test has failed"
+   echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-echo "OK"
-echo "Check user account"
-#ACCOUNT=".dteam"
 
 if [ $acc != $ACCOUNT ]; then
-   echo "Noncorect mapped user account<<"
+   echo "Incorrect user account in gridmap file"
+   echo "<br>"
    echo $acc
-   echo ">> Test has failed"
+   echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-echo "OK"
 
-#cho "User DN has found in grid-mapfile"
-
-echo "Step 3: Create second user with the same DN, but another CA"
-
+echo "SCENARIO: Create gridmap file for same user DN but different CA"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user1" "$CA_CERN" "CN-User1" "user1@cern.ch"
-
-echo "Generate grid-mapfile"
-
-#/opt/edg/sbin/edg-mkgridmap --output=$voms_tmp
-$mkgrid/edg-mkgridmap.pl --conf=$GRIDMAP --output=$voms_tmp
-echo "grid-mapfile:"
-cat $voms_tmp
-
-
-echo "Check grid-mapfile"
-#echo "$user1" > $voms_tmp
-
-grep "$user1" $voms_tmp > $tempo
-
-if [ $? == 1 ]; then
-   echo "User DN not found in grid-mapfile:<<"
-   cat $voms_tmp
-   echo ">> Test has failed"
-   exit $SAME_ERROR
-fi
-echo "User DN has found in grid-mapfile"
+$mkgrid --conf=$GRIDMAP --output=$voms_tmp
 lines=`grep -c "$user1" $voms_tmp` 
-echo "Find $lines lines"
 
 if [ $lines != 1 ]; then
-   echo "More then 1 entry in gridmap file"
+   echo "Incorrect gridmap file"
+   echo "<br>"
+   cat $voms_tmp
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-
-
-echo "Clear Created users"
 voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
 voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA_CERN"
 
+
 UMAX=3
-
-echo "Step 4: Generate $UMAX users and $UMAX entries in grid-mapfile"
-
-echo "4.1. Create $UMAX users in VO"
+echo "SCENARIO: Create gridmap file for $UMAX users"
+echo "<br>"
 counter=0
 while [ $counter -lt $UMAX ]; do
   user="DN User"$counter
@@ -151,23 +124,7 @@ while [ $counter -lt $UMAX ]; do
   let counter=counter+1
 done
 
-echo "4.2. Generate grid-mapfile for $UMAX users"
-counter=0
-#echo "" > $voms_tmp
-
-$mkgrid/edg-mkgridmap.pl --conf=$GRIDMAP --output=$voms_tmp
-#echo "grid-mapfile:"
-#cat $voms_tmp
-#/opt/edg/sbin/edg-mkgridmap --output=$voms_tm
-
-#while [ $counter -lt $UMAX ]; do
-#  user="DN User"$counter
-#  echo "$user " >> $voms_tmp
-#  let counter=counter+1
-#done
-
-echo "4.3. Check grid-mapfile"
-#cat $voms_tmp
+$mkgrid --conf=$GRIDMAP --output=$voms_tmp
 
 counter=0
 while [ $counter -lt $UMAX ]; do
@@ -175,15 +132,16 @@ while [ $counter -lt $UMAX ]; do
   grep "$user" $voms_tmp > /dev/null
   
   if [ $? == 1 ]; then
-   echo "User DN=$user  not found in grid-mapfile:<<"
+   echo "User DN=$user is not mapped in the gridmap file"
+   echo "<br>"
    cat $voms_tmp
-   echo ">> Test has failed"
+   echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
   let counter=counter+1
 done
 
-echo "4.4. Remove users in VO"
 counter=0
 while [ $counter -lt $UMAX ]; do
   user="DN User"$counter
@@ -191,9 +149,13 @@ while [ $counter -lt $UMAX ]; do
   let counter=counter+1
 done
 
+echo "Cleaning tasks"
+echo "<br>"
+
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
 
 echo "Test is OK"
+echo "</pre>"
 exit $SAME_OK

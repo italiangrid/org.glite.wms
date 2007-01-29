@@ -12,8 +12,6 @@
 #                                                                                           #                                                               
 #############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -23,86 +21,96 @@ source $SAME_SENSOR_HOME/tests/config_file
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
+
 DN="/Fake User DN"
 CN="/Fake User CN"
 EMAIL="fakeuser@cern.ch"
 
-echo ""
 date
-echo "VOMS-crUserNocert - started, VO=$vo_name, User=$DN"
+echo "<br>"
+echo "Test VOMS-crUserNocert:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "User=$DN"
+echo "<br>"
 
-
-echo "SCENARIO 1: User doesn't exist"
+echo "SCENARIO: User doesn't exist"
+echo "<br>"
 echo "Create new user"
-
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$DN" "$CA" "$CN" "$EMAIL"
-
-echo "Check list users"
-
 voms-admin --vo=$vo_name -h $voms_host list-users > $voms_tmp
-
-#cat $voms_tmp
-
-echo "Check Subject name, "
-
-grep "$DN" $voms_tmp > $tempo
-
+echo "Check DN"
+echo "<br>"
+grep "$user_subject" $voms_tmp > $tempo
 
 if [ $? == 1 ]; then
-   echo "User not created: LIST:<<"
-   cat $voms_tmp
-   echo ">>"
+   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   echo "Error creating the user: wrong DN"
+   echo "<br>"
+   cat $tempo
+   echo "<br>"
    echo "Test has failed"
-   exit $SAME_ERROR
-else
-   echo "DN - correct"
-fi
-
-echo "Check CN, "
-grep "$CN" $tempo  > /dev/null
-
-if [ $? == 0 ]; then 
-    echo "CN - correct!"
-else 
-    echo "User CN - noncorrect, test has failed"
-    exit $SAME_ERROR
-fi
-
-echo "Check CA, "
-grep "$CA" $tempo  > /dev/null
-
-if [ $? == 0 ]; then 
-    echo "CA - correct!"
-else
-   echo "CA - noncorrect, test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-echo "SCENARIO 1 - OK"
 
-echo "SCENARIO 2: Create user who already exists in the VO"
+echo "Check CN"
+echo "<br>"
+grep "$user_CN" $tempo  > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   echo "Error creating the user: wrong CN"
+   echo "<br>"
+   cat $tempo
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+echo "Check CA"
+echo "<br>"
+grep "$user_CA" $tempo  > /dev/null
+
+if [ $? == 1 ]; then
+   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   echo "Error creating the user: wrong CA"
+   echo "<br>"
+   cat $tempo
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+
+echo "SCENARIO: User already exists in the VO"
+echo "<br>"
 rm -rf $voms_stderr
 voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$DN" "$CA" "$CN" "$EMAIL" 2> $voms_stderr
-
-# Check error message is correct
-cat $voms_stderr
-
 grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr > /dev/null
-# Add exit code if OK or failure
 
 if [ $? == 1 ]; then
-    echo "Not defined ERROR:<<"
-    cat $voms_stderr
-    echo >">, Test has failed"
-    exit $SAME_ERROR
+   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   echo "Incorrect error message:"
+   echo "<br>"
+   cat $voms_stderr
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
 fi
 
-echo "Cleaning tasks: Leave VO empty "
-echo "Remove user"
-
+echo "Cleaning tasks"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
-echo "Test is OK"
+
+echo "Test OK"
+echo "</pre>"
 exit $SAME_OK

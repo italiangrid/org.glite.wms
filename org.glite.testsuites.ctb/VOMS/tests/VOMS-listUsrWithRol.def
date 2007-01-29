@@ -1,4 +1,4 @@
-testName: VOMS-listUsersRole
-testAbbr: lstUsrRo
+testName: VOMS-listUsrWithRol
+testAbbr: lstUsrWithRo
 testTitle: voms-admin: Test "list-users-with-role GROUPNAME ROLENAME" option
 EOT

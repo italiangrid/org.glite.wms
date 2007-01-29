@@ -14,8 +14,6 @@
 #                                                                                           #                                                               
 #############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -24,88 +22,108 @@ source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-#rm -rf $tempo
 
-echo ""
 date
-echo "VOMS-listRoles - started, VO=$vo_name"
-
+echo "<br>"
+echo "Test VOMS-listRoles:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Role=$ROLE"
+echo "<br>"
 
 role1="ROLE1"
 role2="ROLE2"
 role3="ROLE3"
 role4="ROLE4"
 
-echo "Step 1: Create 4 Roles : $role1, $role2, $role3, $role4"
+echo "SCENARIO: Create 4 roles : $role1, $role2, $role3, $role4"
+echo "<br>"
 
 voms-admin --vo=$vo_name -h $voms_host create-role  $role1
 voms-admin --vo=$vo_name -h $voms_host create-role  $role2
 voms-admin --vo=$vo_name -h $voms_host create-role  $role3
 voms-admin --vo=$vo_name -h $voms_host create-role  $role4
 
-echo "OK"
-
-echo "Step 2: Check roles list"
-
+echo "SCENARIO: List roles"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
-
-#cat $voms_tmp
-
-echo "Check 4 roles, "
-
-grep "$role1" $voms_tmp
+echo "Check roles"
+echo "<br>"
+grep "$role1" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $role1 not created"
-   echo "LIST:<"
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role1
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role2
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role3
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role4
+   echo "Error creating role $role1"
+   echo "<br>"
    cat $voms_tmp
-   echo ">"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
 
-grep "$role2" $voms_tmp
+grep "$role2" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $role2 not created"
-   echo "LIST:<"
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role1
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role2
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role3
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role4
+   echo "Error creating role $role2"
+   echo "<br>"
    cat $voms_tmp
-   echo ">"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
 
-grep "$role3" $voms_tmp
+grep "$role3" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $role3 not created"
-   echo "LIST:<"
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role1
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role2
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role3
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role4
+   echo "Error creating role $role3"
+   echo "<br>"
    cat $voms_tmp
-   echo ">"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
 
-grep "$role4" $voms_tmp
+grep "$role4" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Group $role4 not created"
-   echo "LIST:<"
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role1
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role2
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role3
+   voms-admin --vo=$vo_name -h $voms_host delete-role $role4
+   echo "Error creating role $role4"
+   echo "<br>"
    cat $voms_tmp
-   echo ">"
    echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
-echo "OK"
 
-echo "Clear Created roles"
+
+echo "Cleaning tasks"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host delete-role $role1
 voms-admin --vo=$vo_name -h $voms_host delete-role $role2
 voms-admin --vo=$vo_name -h $voms_host delete-role $role3
 voms-admin --vo=$vo_name -h $voms_host delete-role $role4
 
+echo "Cleaning tasks"
+echo "<br>"
+
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
-echo "Test is OK"
+echo "Test OK"
+echo "</pre>"
 exit $SAME_OK

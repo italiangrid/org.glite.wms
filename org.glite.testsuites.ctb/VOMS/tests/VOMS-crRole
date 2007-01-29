@@ -13,8 +13,6 @@
 #                                                                                           #
 ###########################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -23,56 +21,59 @@ source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-#rm -rf $tempo
 
-echo ""
 date
-echo "test VOMS-crRole - started, VO=$vo_name, Role=$ROLE"
+echo "<br>"
+echo "Test VOMS-crRole:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Role=$ROLE"
+echo "<br>"
 
-echo "SCENARIO 1: Role not exists"
-
-
+echo "SCENARIO: Role doesn't exist"
+echo "<br>"
 echo "Create new Role"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
-
-echo "Check list roles"
 voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
-
 echo "Check role"
-grep "$ROLE" $voms_tmp  # > /dev/null
-
+grep "$ROLE" $voms_tmp   > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Role not created,LIST:<"
+    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    echo "Error creating the role"
+    echo "<br>"
     cat $voms_tmp
-    echo ">,  Test has failed"
-   exit $SAME_ERROR
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
-echo "Scenario 1 - OK"
 
-echo "SCENARIO 2: Role exists"
-
-echo "Create new Role"
+echo "SCENARIO 2: Role already exists in the VO"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-role $ROLE 2> $voms_stderr
-#echo "STDERR:"
-#cat $voms_stderr
-
-grep "org.glite.security.voms.service.AlreadyExist" $voms_stderr  # > /dev/null
+grep "org.glite.security.voms.service.AlreadyExist" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Not defined diagnose:<<"
+   voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+   echo "Incorrect error message:"
+   echo "<br>"
    cat $voms_stderr
-   echo ">> Test has failed"
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
 
-echo "Scenario 2 - OK"
-echo "Remove Role"
+echo "Cleaning tasks"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
-echo "Test is OK"
+echo "Test OK"
+echo "</pre>"
 exit $SAME_OK
-

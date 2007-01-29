@@ -1,16 +1,16 @@
 #!/bin/bash
 # Date: 09/11/2006                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
-# Description of the test: Remove user's Role                                               #
+# Description of the test: List roles for the specified user in VO                          #
 #                                                                                           #
 # Input Parameters:                                                                         #
 #       - VO name                                                                           #
 #       - User certificate file path                                                        #
-#       - Group                                                                             #
+#       - VO host name                                                                      #
 #       - Role                                                                              #
 # Requisites:                                                                               #
 #	- VOMS server                                                                       #
-#       - 1 configured and empty VO                                                         #
+#       - 1 configured VO                                                                   #
 #                                                                                           #
 #############################################################################################
 #                                                                                           #
@@ -23,11 +23,9 @@ source $SAME_SENSOR_HOME/tests/config_file
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
-USER_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-
 date
 echo "<br>"
-echo "test VOMS-dismissRole:"
+echo "test VOMS-listUserRoles:"
 echo "<br>"
 echo "VO=$vo_name"
 echo "<br>"
@@ -40,13 +38,31 @@ echo "<br>"
 
 echo "SCENARIO: VO empty"
 echo "<br>"
-echo "Remove non existing role of non existing user in non existing group"
+echo "List non existing roles of non existing user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: role " $voms_stderr > /dev/null
+voms-admin --vo=$vo_name -h $voms_host list-user-roles $USER 2> $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Incorrect error message:"   
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Create user"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+echo "List roles (user doesn't have roles)"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host list-user-roles $USER 2> $voms_stderr
+grep "No roles are returned" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
     echo "Test has failed"
@@ -57,12 +73,31 @@ fi
 echo "SCENARIO: Create new role"
 echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
-echo "Dismiss role $ROLE in group $GROUP (group doesn't exist)"
+echo "List roles (user hasn't been assigned to role)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
+voms-admin --vo=$vo_name -h $voms_host list-user-roles $USER 2> $voms_stderr
+grep "No roles are returned" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Assign role to user"
+echo "<br>"
+echo "Assign role $ROLE in group $GROUP (group doesn't exist)"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host assign-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
 grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
     echo "Incorrect error message:"
     echo "<br>"
@@ -75,53 +110,18 @@ fi
 echo "SCENARIO: Create new group"
 echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name"/"$GROUP
-echo "Dismiss role $ROLE in group $GROUP (user doesn't exist)"
+echo "Assign role $ROLE in group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr > /dev/null
-
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Incorrect error message:"
-    echo "<br>"
-    cat $voms_stderr
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
-fi
-
-echo "SCENARIO: Create user"
-echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
-echo "Dismiss role $ROLE in group $GROUP (user doesn't have the role)"
-echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
-grep "does not have role" $voms_stderr  > /dev/null
-
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Incorrect error message:"
-    echo "<br>"
-    cat $voms_stderr
-    echo "Test has failed"
-    echo
-    exit $SAME_ERROR
-fi
-
-echo "SCENARIO: Assign role to user"
-echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  assign-role "/"$vo_name"/"$GROUP $ROLE $USER
+voms-admin --vo=$vo_name -h $voms_host assign-role "/"$vo_name"/"$GROUP $ROLE $USER
 voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER > $voms_tmp
-grep "$ROLE" $voms_tmp > /dev/null
+expect="/"$vo_name"/"$GROUP"/Role="$ROLE
+grep "$expect" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
     voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Error when assigning role to user:"
+    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    echo "Error when listing user roles:"
     echo "<br>"
     cat $voms_tmp
     echo "Test has failed"
@@ -129,30 +129,14 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-echo "Dismiss role $ROLE in group $GROUP"
-echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER
-voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER 2> $voms_stderr 
-grep "$ROLE" $voms_stderr > /dev/null
-
-if [ $? == 0 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Error when removing role from user:"
-    echo "<br>"
-    cat $voms_stderr
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
-fi
+echo "Cleaning tasks"
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
 
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 

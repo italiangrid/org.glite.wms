@@ -14,8 +14,6 @@
 #                                                                                           #                                                               
 #############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -24,118 +22,99 @@ source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-#rm -rf $tempo
 
-echo ""
 date
-echo "VOMS-addMember - started, VO=$vo_name, User=$USER, Group=$GROUP"
+echo "<br>"
+echo "test VOMS-addMember:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Group=$GROUP"
+echo "<br>"
+echo "User=$USER"
+echo "<br>"
 
-echo "-------- Extract by openssl from usercert.pem ------"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 
-echo "DN=$user_subject"
-echo "SCENARIO 1: VO - empty"
-
+echo "SCENARIO: VO empty"
+echo "<br>"
+echo "Add non existing user in non existing group"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host add-member "/"$vo_name"/"$GROUP $USER 2> $voms_stderr
-
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Noncorrect diagnose: <<"
-   cat $voms_stderr
-   echo ">>"
-   echo "Test has failed"
-   exit $SAME_ERROR
-else
-   echo "Diag  - correct"
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "Create group $GROUP"
-
-voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name "/"$GROUP
-
-echo "Group has created, again add member"
+echo "SCENARIO: Create new group"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name"/"$GROUP
+echo "Add non existing user in group $GROUP"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host add-member "/"$vo_name"/"$GROUP $USER 2> $voms_stderr
-
-
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Noncorrect diagnose <"
-   cat $voms_stderr
-   echo ">"
-   echo "Test has failed"
-   exit $SAME_ERROR
-else
-   echo "Diag  - correct"
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "Create user"
-
+echo "SCENARIO: Create user"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-
-echo "User has created, again add member to group"
-
+echo "Add user in group $GROUP"
+echo "<br>"
 voms-admin --vo=$vo_name  -h $voms_host add-member "/"$vo_name"/"$GROUP $USER
-
-echo "Check members list"
 voms-admin --vo=$vo_name  -h $voms_host list-members "/"$vo_name"/"$GROUP > $voms_tmp
-#echo "Members list:"
-#cat $voms_tmp
-grep "$user_subject" $voms_tmp
+grep "$user_subject" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Member  not created"
-   echo "LIST:<"
-   cat $voms_tmp
-   echo ">"
-   echo "DN=$user_subject"
-   echo "Test has failed"
-   exit $SAME_ERROR
-fi
-echo "Check groups of this user"
-
-voms-admin --vo=$vo_name -h $voms_host  list-user-groups $USER > $voms_tmp
-
-grep "$GROUP" $voms_tmp
-
-if [ $? == 1 ]; then
-   echo "Not exist expected group for this user:<<"
-   cat $voms_tmp
-   echo ">>"
-   echo "Test has failed"
-   exit $SAME_ERROR
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Error when adding user to group:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
 fi
 
-
-echo "SCENARIO 2: User exist as member"
-echo "Add member"
-
+echo "SCENARIO: User is already a member of the group"
+echo "<br>"
 voms-admin --vo=$vo_name  -h $voms_host add-member "/"$vo_name"/"$GROUP $USER 2> $voms_stderr
-
-grep "is already a member of group" $voms_stderr
+grep "is already a member of group" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Nonexpected diagnose:<<"
-   cat $voms_stderr
-   echo ">>"
-   echo "Test has failed"
-   exit $SAME_ERROR
+    voms-admin --vo=$vo_name -h $voms_host remove-member "/"$vo_name"/"$GROUP $USER
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "Test - Ok, leave empty VO"
-
-echo "Remove group member"
+echo "Cleaning tasks"
 
 voms-admin --vo=$vo_name -h $voms_host remove-member "/"$vo_name"/"$GROUP $USER
-echo "Delete group"
 voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-echo "Delete user"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
-echo "Test - OK"
+echo "Test OK"
 echo "</pre>"
 exit $SAME_OK

@@ -15,8 +15,6 @@
 #                                                                                           #                                                               
 #############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 export voms_host=$1
@@ -27,96 +25,107 @@ rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
 
-echo ""
 date
-echo "VOMS-crDefaultACL - started, VO=$vo_name, group=$GROUP, fake user=$USER"
+echo "<br>"
+echo "Test VOMS-crDefaultACL:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "group=$GROUP"
+echo "<br>"
+echo "fake user=$USER"
+echo "<br>"
+
 oper=( all create delete add remove set-acl get-acl set-default-acl get-default-acl list )
 
-echo "SCENARIO 1: empty VO"
-
+echo "SCENARIO: empty VO"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host add-default-acl-entry  "/"$vo_name"/"$GROUP $ALLOW $OP $USER 2> $voms_stderr
-#cat $voms_stderr
-
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Not defined ERROR: <<"
-   cat $voms_stderr
-   echo ">>"
-   echo "Test has failed"
-   exit $SAME_ERROR
+    echo "Incorrect error message"
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "SCENARIO 2: Create group <$GROUP> and add 10 ACL entries"
-voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name "/"$GROUP
-
+echo "SCENARIO: Create group <$GROUP> and add 10 ACL entries"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name"/"$GROUP
 for ind in 0 1 2 3 4 5 6 7 8 9
 do
  OP=${oper[ind]}
- echo "Create ACL entry <$OP > for fake user in group $GROUP"
+ echo "Create ACL entry $OP for user in group $GROUP"
  voms-admin --vo=$vo_name -h $voms_host add-default-acl-entry  "/"$vo_name"/"$GROUP $ALLOW $OP $USER
 done
-
-echo "Check added default operations for group"
 voms-admin --vo=$vo_name -h $voms_host get-default-acl "/"$vo_name"/"$GROUP > $voms_tmp
 
-#cat $voms_tmp
-
-echo "-------- Extract by openssl from usercert.pem ------"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 grep "$user_subject" $voms_tmp > $tempo
-#echo "Cat grep result:"
-#cat $tempo
 
 echo "Check added ACL entries"
+echo "<br>"
 ops=`cat $tempo | cut -d"|" -f3`
 echo $ops > $tempo
-
-cat $tempo
-
 for ind in 0 1 2 3 4 5 6 7 8 9
 do
  OP=${oper[ind]}
  grep $OP $tempo > /dev/null
- 
- if [ $? = 1 ]; then
-     echo "Not find added operation in LIST: <<"
-     cat $tempo
-     echo ">>, Test has failed"
-     exit $SAME_ERROR
+
+ if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Error creating the ACL"
+    echo "<br>"
+    cat $tempo
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
  fi
 done
 
-echo -e "\nSCENARIO 2: Add new operation for existing group with assigned ACL operation"
+echo "SCENARIO: Add existing ACL entry in group $GROUP"
 voms-admin --vo=$vo_name -h $voms_host add-default-acl-entry  "/"$vo_name"/"$GROUP $ALLOW "list" $USER 2> $voms_stderr
+grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr > /dev/null
 
-grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr
-
-if [ $? = 1 ]; then
-   echo "Non correct diagnose: <<"
-   cat $voms_stderr
-   echo ">>, Test has failed"
-   exit $SAME_ERROR
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Incorrect error message"
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
-echo "Check diagnose for noncorrect operation name <lllist>:"
+
+echo "SCENARIO: Try to create an ACL entry for an unknown operation:"
 voms-admin --vo=$vo_name -h $voms_host add-default-acl-entry  "/"$vo_name"/"$GROUP $ALLOW "lllist" $USER 2> $voms_stderr
+grep "Unknown operation:" $voms_stderr > /dev/null
 
-#cat $voms_stderr
-grep "Unknown operation:" $voms_stderr
-
-if [ $? = 1 ]; then
-   echo "Non correct diagnose: <<"
-   cat $voms_stderr
-   echo ">>, Test has failed"
-   exit $SAME_ERROR
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Incorrect error message"
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "OK, Clear VO"
-voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+echo "Cleaning tasks"
+echo "<br>"
 
+voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
 
-echo "Test is OK"
+echo "Test OK"
+echo "</pre>"
 exit $SAME_OK

@@ -15,8 +15,6 @@
 #                                                                                           #                                                               
 #############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -27,65 +25,75 @@ rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
 
-echo ""
 date
-echo "VOMS-removeACLRole - started, VO=$vo_name, Role=$ROLE, fake user=$USER"
+echo "<br>"
+echo "Test VOMS-removeACLRole:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Role=$ROLE"
+echo "<br>"
+echo "fake user=$USER"
+echo "<br>"
 
-echo "SCENARIO 1: empty VO"
-
+echo "SCENARIO: empty VO"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host remove-acl-entry "Role=$ROLE"  $ALLOW $OP $USER 2> $voms_stderr
-
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: role" $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: role" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   echo "Not defined ERROR: <<"
-   cat $voms_stderr
-   echo ">>"
-   echo "Test has failed"
-   exit $SAME_ERROR
+    echo "Incorrect error message"
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "SCENARIO 2: Create role <$ROLE> and add ACL entries"
+echo "SCENARIO: Create role <$ROLE> and add ACL entry"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
-
-
-echo "Again remove-acl-entry"
-
 voms-admin --vo=$vo_name -h $voms_host remove-acl-entry "Role=$ROLE"  $ALLOW $OP $USER 2> $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: There is no entry in ACL for role" $voms_stderr > /dev/null
 
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: There is no entry in ACL for role" $voms_stderr
 if [ $? == 1 ]; then
-   echo "Not correct diagnose: <<$voms_stderr>>, Test has filed"
-   exit $SAME_ERROR
+    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    echo "Incorrect error message"
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
 
-echo "OK, Create ACL entry for fake user for Role $ROLE"
 voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "Role=$ROLE" $ALLOW $OP $USER
-
-echo "Again remove-acl-entry"
 voms-admin --vo=$vo_name -h $voms_host remove-acl-entry "Role=$ROLE"  $ALLOW $OP $USER
 
-echo "-------- Extract user subject-name by openssl from usercert.pem ------"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-
-echo "Check result using get-acl"
-
 voms-admin --vo=$vo_name -h $voms_host get-acl "Role=$ROLE" > $voms_tmp
+grep "$user_subject" $voms_tmp > /dev/null
 
-grep "$user_subject" $voms_tmp
+ if [ $? == 0 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    echo "Error removing the ACL"
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+ fi
 
-if [ $? == 0 ]; then
-   echo "LIST: <<$ops>>, Test has failed"
-   exit $SAME_ERROR
-fi
+echo "Cleaning tasks"
+echo "<br>"
 
-echo "OK, ACL entry has removed"
-echo "Clear VO, delete Role"
 voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
 
-echo "Test is OK"
+echo "Test OK"
+echo "</pre>"
 exit $SAME_OK

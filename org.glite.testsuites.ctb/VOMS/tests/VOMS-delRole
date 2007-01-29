@@ -11,10 +11,8 @@
 #	- VOMS server                                                                       #
 #       - 1 configured VO                                                                   #
 #                                                                                           #
-###########################################################################################
+#############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -23,56 +21,58 @@ source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-#rm -rf $tempo
 
-
-echo ""
 date
-echo "VOMS-delRole - started, VO=$vo_name, Role=$ROLE"
-echo "             SCENARIO 1, Role  not exist...                 "
+echo "<br>"
+echo "Test VOMS-delRole:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Role=$ROLE"
+echo "<br>"
 
-
-echo "Delete  Role"
+echo "SCENARIO: Role doesn't exist"
+echo "<br>"
+echo "Delete Role"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE 2> $voms_stderr
-
-#echo "OK, check stderr: <<"
-#cat $voms_stderr
-#echo ">>"
-
-grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr  # > /dev/null
+grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr   > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Not defined ERROR: <<"
-    cat $voms_stderr
-    echo ">>, Test has failed"
-    exit $SAME_ERROR
-fi
-                
-
-echo "               SCENARIO 2  Role exists          "
-echo "Create new Role"
-voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
-
-echo "Delete this Role"
-voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-
-echo "Check list roles"
-voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
-
-grep "$ROLE" $voms_tmp > /dev/null
-
-
-if [ $? == 0 ]; then
-   echo "Role not deleted, LIST:<<"
-   cat $voms_tmp
-   echo ">>,     Test has failed"
+   echo "Incorrect error message:"
+   echo "<br>"
+   cat $voms_stderr
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
+
+echo "SCENARIO: Role already exists in the VO"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
+grep "$ROLE" $voms_tmp > /dev/null
+
+if [ $? == 0 ]; then
+   echo "Error deleting the role"
+   echo "<br>"
+   cat $voms_tmp
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks"
+echo "<br>"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
-echo "Test is OK"
+echo "Test OK"
+echo "</pre>"
 exit $SAME_OK
 
 

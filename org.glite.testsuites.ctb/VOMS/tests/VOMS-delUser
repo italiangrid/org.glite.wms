@@ -16,8 +16,6 @@
 #                                                                                           #
 #############################################################################################
 #                                                                                           #
-# Note on security issues: the host and user certificates used by this test are dummy ones  #
-# provided by the test utils package.                                                       #
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
@@ -26,54 +24,62 @@ source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
-#rm -rf $tempo
 
-echo ""
 date
-echo "VOMS-delUser - started, VO=$vo_name, User=$USER"
+echo "<br>"
+echo "Test VOMS-delUser:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "User=$USER"
+echo "<br>"
 
-echo "-------- Extract by openssl from usercert.pem ------"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 
 echo "DN=$user_subject"
+echo "<br>"
 
-echo "SCENARIO 1: User doesn't exist"
-
-echo "Remove  not existing user"
+echo "SCENARIO: User doesn't exist"
+echo "<br>"
+echo "Remove non existing user"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER 2> $voms_stderr
-#cat $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr # > /dev/null
+grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr  > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Noncorrect diagnose: <<"    
-    cat $voms_stderr
-    echo ">> Test has failed"
+   echo "Incorrect error message:"
+   echo "<br>"
+   cat $voms_stderr
+   echo "Test has failed"
+   echo "<br>"
    exit $SAME_ERROR
 fi
 
-echo "SCENARIO 2, Create and then remove user"
+echo "SCENARIO: User already exists in the VO"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-
-echo "Remove created user"
+echo "Remove existing user"
+echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-
-
-echo "Check list users after user deletion"
 voms-admin --vo=$vo_name -h $voms_host list-users > $voms_tmp
-
-
-grep "$user_subject" $voms_tmp # > /dev/null
-
+grep "$user_subject" $voms_tmp  > /dev/null
 
 if [ $? == 0 ]; then
-   echo "User not deleted: <<"
+    echo "Error deleting the user"
+    echo "<br>"
     cat $voms_tmp
-    echo ">>,    Test has failed"
-   exit $SAME_ERROR
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
 fi
-   rm -rf $voms_tmp
-   rm -rf $voms_stderr
- 
-   echo "Test is OK"
-   exit $SAME_OK
 
+
+echo "Cleaning tasks"
+echo "<br>"
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK
