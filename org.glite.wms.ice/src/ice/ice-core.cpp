@@ -41,6 +41,8 @@
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
+
 #ifdef GLITE_WMS_ICE_HAVE_PURGER
 #include "glite/wms/purger/purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
@@ -384,10 +386,14 @@ void Ice::startPoller( void )
     }
     
     util::eventStatusPoller* poller;
-    try {
+    
+    // I removed the try/catch because in the new schema using the iceCommandStatusPoller
+    // there is not anymore that exception
+    
+    //try {
         poller = new util::eventStatusPoller( this, m_configuration->ice()->poller_delay() );
         m_poller_thread.start( poller );
-    } catch(util::eventStatusPoller_ex& ex) {
+    /* } catch(util::eventStatusPoller_ex& ex) {
         CREAM_SAFE_LOG(
                        m_log_dev->fatalStream()
                        << "Ice::startPoller() - "
@@ -397,7 +403,7 @@ void Ice::startPoller( void )
                        << log4cpp::CategoryStream::ENDLINE
                        );
         exit(1);
-    }
+    } */
 }
 
 //----------------------------------------------------------------------------

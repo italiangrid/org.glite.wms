@@ -21,13 +21,13 @@
 #define GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H
 
 #undef soapStub_H
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
-#include "eventStatusPoller_ex.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "eventStatusPoller_ex.h"
 #include "iceThread.h"
-#include "boost/scoped_ptr.hpp"
-#include "boost/thread/recursive_mutex.hpp"
+//#include "boost/scoped_ptr.hpp"
+//#include "boost/thread/recursive_mutex.hpp"
 
-#include <list>
+//#include <list>
 
 namespace log4cpp {
     class Category;
@@ -58,13 +58,13 @@ namespace glite {
 
 	  int m_delay;
 	  Ice* m_iceManager;
-	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_creamClient;
+	  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_creamClient;
 	  log4cpp::Category* m_log_dev;
-          iceLBLogger* m_lb_logger;
-          jobCache* m_cache;
-          time_t m_threshold;
+          //iceLBLogger* m_lb_logger;
+          //jobCache* m_cache;
+          //time_t m_threshold;
 
-	  void purgeJobs(const std::vector< std::string >& );
+	  //void purgeJobs(const std::vector< std::string >& );
 
           /**
            * Gets the list of jobs to poll. The list contains all jobs
@@ -73,7 +73,7 @@ namespace glite {
            *
            * @return the list of Cream Job IDs for jobs to poll.
            */ 
-          std::list< CreamJob > get_jobs_to_poll( void );
+          //std::list< CreamJob > get_jobs_to_poll( void );
 
           /**
            * Actually send JobInfo requests for jobs in the list
@@ -87,7 +87,7 @@ namespace glite {
            * @result the list of soap_proxy::JobInfo structures for the
            * jobs which were polled succesfully.
            */
-	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_jobs( const std::list< CreamJob > & job_list );
+	  //std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_jobs( const std::list< CreamJob > & job_list );
 
           /**
            * Updates the status informations for all jobs in the list
@@ -96,7 +96,7 @@ namespace glite {
            * @param l the list of job status informations (this list is
            * typically the resout of the scanJobs() method call).
            */
-	  void updateJobCache( const std::list< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
+	  //void updateJobCache( const std::list< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
 
           /**
            * Updates the cache with the job status changes (for a single job)
@@ -104,7 +104,7 @@ namespace glite {
            *
            * @param s the StatusInfo object from which job informations are updated
            */
-          void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& s );
+          //void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& s );
 
           /**
            * Prevents copying
@@ -113,7 +113,7 @@ namespace glite {
 
 	public:
 
-	  static boost::recursive_mutex mutexJobStatusPoll;
+	  //static boost::recursive_mutex mutexJobStatusPoll;
 
 	  //! eventStatusPoller constructor
 	  /*!
@@ -123,8 +123,7 @@ namespace glite {
 	    \throw eventStatusPoller_ex& if the creation of the internal cream communication client failed
 	    \sa ice
 	  */
-	  eventStatusPoller( Ice* iceManager, int d=10 ) 
-	    throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
+	  eventStatusPoller( Ice* iceManager, int d=10 ); // throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
 	  
 	  virtual ~eventStatusPoller();
 

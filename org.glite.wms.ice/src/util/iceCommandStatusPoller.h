@@ -29,6 +29,7 @@
 #include "iceAbsCommand.h"
 #include "creamJob.h"
 #include "glite/ce/cream-client-api-c/JobInfo.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -40,17 +41,17 @@ namespace log4cpp {
   class Category;
 };
 
-namespace glite {
-    namespace ce {
-        namespace cream_client_api {
-            namespace soap_proxy {
-                
-                class CreamProxy;
-                
-            }
-        }
-    }
-};
+// namespace glite {
+//     namespace ce {
+//         namespace cream_client_api {
+//             namespace soap_proxy {
+//                 
+//                 class CreamProxy;
+//                 
+//             }
+//         }
+//     }
+// };
 
 namespace glite {
   namespace wms {
@@ -71,7 +72,7 @@ namespace glite {
 	  jobCache* m_cache;
 	  time_t m_threshold;
 	  
-	  void purgeJobs( const std::vector< std::string >& );
+	  //void purgeJobs( const std::vector< std::string >& );
 
 	  /**
            * Gets the list of jobs to poll. The list contains all jobs
@@ -80,7 +81,7 @@ namespace glite {
            *
            * @return the list of Cream Job IDs for jobs to poll.
            */ 
-	  void get_jobs_to_poll( std::list< glite::wms::ice::util::CreamJob >& );
+	  std::list< glite::wms::ice::util::CreamJob >  get_jobs_to_poll( void );
 	  
 	  /**
            * Updates the status informations for all jobs in the list
@@ -104,6 +105,8 @@ namespace glite {
            */
           iceCommandStatusPoller( const iceCommandStatusPoller& ) { }
 
+	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_jobs( const std::list< glite::wms::ice::util::CreamJob >&	  job_list );
+
 	public:
 	  //static boost::recursive_mutex mutexJobStatusPoll;
 	  
@@ -116,7 +119,7 @@ namespace glite {
             \throw eventStatusPoller_ex& if the creation of the internal cream communication client failed
             \sa ice
           */
-          iceCommandStatusPoller( Ice*, glite::ce::cream_client_api::soap_proxy::CreamProxy* ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
+          iceCommandStatusPoller( Ice* ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
           
           virtual ~iceCommandStatusPoller() { } 
 
