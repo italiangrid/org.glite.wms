@@ -22,7 +22,7 @@
 
 #include "iceAbsCommand.h"
 #include "creamJob.h"
-
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <boost/scoped_ptr.hpp>
 
 #include <ctime>
@@ -31,17 +31,17 @@ namespace log4cpp {
   class Category;
 };
 
-namespace glite {
-    namespace ce {
-        namespace cream_client_api {
-            namespace soap_proxy {
-                
-                class CreamProxy;
-                
-            }
-        }
-    }
-};
+// namespace glite {
+//     namespace ce {
+//         namespace cream_client_api {
+//             namespace soap_proxy {
+//                 
+//                 class CreamProxy;
+//                 
+//             }
+//         }
+//     }
+// };
 
 namespace glite {
   namespace wms {
@@ -49,26 +49,31 @@ namespace glite {
       namespace util {
 	
 	class iceLBLogger;
-
+	class jobCache;
+	
 	class iceCommandLeaseUpdater : public iceAbsCommand {
 	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
 	  log4cpp::Category *m_log_dev;
 	  glite::wms::ice::util::iceLBLogger* m_lb_logger;
-	  glite::wms::ice::util::CreamJob m_theJob;
+	  //glite::wms::ice::util::CreamJob m_theJob;
 	  time_t m_delta;
 	  time_t m_threshold;
-
+	  glite::wms::ice::util::jobCache* m_cache;
+	  
+	  void update_lease( void );
+	  void update_lease_for_job( const CreamJob& j );
+	  
 	public:
-	  iceCommandLeaseUpdater( glite::ce::cream_client_api::soap_proxy::CreamProxy*,
-				  const glite::wms::ice::util::CreamJob& ) throw();
+	  iceCommandLeaseUpdater( ) throw();
 
 	  ~iceCommandLeaseUpdater( ) { }
 	  
 	  void execute( ) throw();
-
+	  
+	  
 	  std::string get_grid_job_id( void ) const 
 	  { 
-                  return m_theJob.getGridJobID(); 
+                  return "";//m_theJob.getGridJobID(); 
 	  }
 	};
 
