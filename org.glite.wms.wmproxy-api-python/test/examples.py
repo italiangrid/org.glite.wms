@@ -11,13 +11,13 @@ gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
-url = ghemon
+url = tigerman
 
 
 ns ="http://glite.org/wms/wmproxy"
 
 delegationId=""
-delegationId = "rask"
+delegationId = "luca"
 
 protocol="gsiftp"
 protocol="all"
@@ -106,7 +106,7 @@ class JobId:
 		sys.exit(1)
 
 class Jdl:
-	DEFAULT_JDL="[ requirements = other.GlueCEStateStatus == \"Production\"; RetryCount = 0; JobType = \"normal\"; Executable = \"/bin/ls\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\";]"
+	DEFAULT_JDL="[ requirements = other.GlueCEStateStatus == \"Production\"; RetryCount = 0; JobType = \"normal\"; Executable = \"/bin/ls\"; VirtualOrganisation = \"infngrid\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\";]"
 	DEFAULT_JSDL="[ requirements = other.GlueCEStateStatus == \"Production\"; RetryCount = 0; JobType = \"normal\"; Executable = \"/bin/ls\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\";]"
 	def __init__(self):
 		self.jdl=""
@@ -351,20 +351,23 @@ class WmpTest(unittest.TestCase):
 		title("getProxyReq (grst namespace)", gpr)
 		assert gpr
 	def testMakeProxyCert(self):
+		import time
 		import os
+		result = ""
 		proxycert = self.wmproxy.getProxyReq(delegationId)
-		# title("getProxyReq (wmp namespace)", proxycert)
 		assert proxycert
-		# print proxycert
 		os.environ["PROXY_REQUEST"]=proxycert
-		# proxycert = proxycert.replace("\n", "" )
-		# proxycert = '"'+proxycert+'"'
-		# print proxycert
 		print "Launching....",	"../examples/proxy-cert", getDefaultProxy()
-		os.system("../examples/proxy-cert" + " " + " " + getDefaultProxy())# + " " + ">" + "tmpProxyCert")
-		#lines = open("tmpProxyCert").readlines()
-		#print lines
-		#assert self.wmproxy.putProxy(delegationId,
+		os.system("../examples/proxy-cert" + " " + " " + getDefaultProxy())
+		proxyres = open("proxyresult.log")
+		lines = proxyres.readlines()
+		for line in lines:
+			result += line
+		os.environ["PROXY_RESULT"]=result
+		print "Executing putProxy...."
+		self.wmproxy.putProxy(delegationId,os.environ["PROXY_RESULT"] )
+		print "Executing job submission...."
+		self.wmproxy.jobSubmit(jdl.DEFAULT_JDL, delegationId)
 	def testputProxy(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId())
 	"""

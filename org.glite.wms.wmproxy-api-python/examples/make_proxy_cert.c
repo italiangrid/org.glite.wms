@@ -1,4 +1,3 @@
-
 /// Make a GSI Proxy chain from a request, certificate and private key
 /**
  *  The proxy chain is returned in *proxychain. If debugfp is non-NULL,
@@ -160,6 +159,7 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
   //X509_EXTENSION *subjAltName;
   //STACK_OF (X509_EXTENSION) * req_exts;
   FILE *fp;
+  FILE *proxyresult;
   BIO *reqmem , *certmem;
   time_t notAfter;
 
@@ -188,13 +188,14 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
       return GRST_RET_FAILED;
     }
 
-  if (X509_REQ_verify(req, pkey) != 1)
+  /* 
+   if (X509_REQ_verify(req, pkey) != 1)
     {
       mpcerror(debugfp,
             "MakeProxyCert(): error verifying signature on certificate\n");
       return GRST_RET_FAILED;
     }
-
+  */
   /* read in the signing certificate */
   if (!(fp = fopen(cert, "r")))
     {
@@ -313,8 +314,6 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
     }
 
   /* go through chain making sure this proxy is not longer lived */
-  printf( ASN1_STRING_data(X509_get_notAfter(certs[0])), "pippo ASN1_STTRING");
-  fflush(stdout);
 
   notAfter = GRSTasn1TimeToTimeT(ASN1_STRING_data(X509_get_notAfter(certs[0])), 0);
 
@@ -374,7 +373,9 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
 
   *proxychain = certchain;
 
-   //printf("SUCCESS, PROXY CERT: \n",*proxychain);
+   proxyresult = fopen("proxyresult.log", "w+");
+   fprintf(proxyresult, *proxychain);
+   fclose(proxyresult);
 
   return GRST_RET_OK;
 }
