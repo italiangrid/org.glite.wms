@@ -60,8 +60,8 @@ JobOutput::JobOutput () : Job() {
 	dirCfg = "/tmp";
 	// init of the boolean attributes
 	listOnlyOpt = false;
-	nopgOpt = false;
-	firstCall = false;
+	//nopgOpt = false;
+	firstCall = true;
 	// list of files
 	childrenFileList = "";
 	parentFileList = "";
@@ -176,7 +176,6 @@ void JobOutput::getOutput ( ){
 			}
 			// if the output has been successfully retrieved for at least one job
 			code = SUCCESS;
-
 		} catch (WmsClientException &exc){
 			// cancellation not allowed due to its current status
 			// If the request contains only one jobid, an exception is thrown
@@ -296,7 +295,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		if (GENERATE_NODE_NAME){
 			msgNodes = "Dag JobId: " + jobid.toString() ;
 			std::map< std::string, std::string > map;
-			if (checkVersionForTransferProtocols()){
+			if (checkWMProxyRelease()){
 				// Calling wmproxy Server method
 				try {
 					logInfo->service(WMP_JDL_SERVICE, jobid.toString());
@@ -347,7 +346,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 	* 1) enpoint has been specified (parent has specified)
 	* 2) --nopurge is not active
 	* 3) retrieve output successfully done */
-	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (!nopgOpt) && (code==0) && (firstCall);
+	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (nopgOpt == false) && (code==0) && (firstCall == true);
 	id = jobid.toString() ;
 	// checks Children
 	if (checkChildren && children.size()>0){
