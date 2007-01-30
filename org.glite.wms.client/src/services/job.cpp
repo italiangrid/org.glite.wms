@@ -354,7 +354,7 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 		logInfo->service(WMP_VERSION_SERVICE);
 		setVersionNumbers(api::getVersion(cfg));
 		string v = api::getVersion(cfg);
-		logInfo->result(WMP_VERSION_SERVICE, " : "+ v );
+		logInfo->result(WMP_VERSION_SERVICE, " Version successfully retrieved : "+ v );
 	} catch (api::BaseException &exc){
 		// TBD delete cfg???
 		throw WmsClientException(__FILE__,__LINE__,
