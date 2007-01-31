@@ -46,50 +46,35 @@ Request_source_jobdir::~Request_source_jobdir( )
 
 }
 
-typedef boost::function<void()> cleanup_type;
-
 list<Request*> Request_source_jobdir::get_requests( void )
 {
-    //   requests_type result;
-
-  utilities::JobDir::iterator b, e;
-  boost::tie(b, e) = m_jobdir.new_entries();
-
-  // classad::ClassAdParser parser;
-
-  for ( ; b != e; ++b) {
-
-    fs::path const& new_file = *b;
-    fs::path const old_file = m_jobdir.set_old(new_file);
-    cleanup_type cleanup(boost::bind(fs::remove, old_file));
-    // if the request is not valid, clean it up automatically
-    utilities::scope_guard cleanup_guard(cleanup);
-
-    fs::ifstream is(old_file);
-    // ClassAdPtr command_ad(parser.ParseClassAd(is));
-//     if (command_ad) {
-//       cleanup_guard.dismiss();
-//       result.push_back(std::make_pair(command_ad, cleanup));
-//     } else {
-//       Info("invalid request");
-//       continue;
-//     }
-
-  }
-
-  //  return result;
+    list< Request* > result;
+    
+    utilities::JobDir::iterator b, e;
+    boost::tie(b, e) = m_jobdir.new_entries();
+    
+    for ( ; b != e; ++b) {
+        
+        fs::path const& new_file = *b;
+        fs::path const old_file = m_jobdir.set_old(new_file);
+        fs::ifstream is(old_file);
+    
+        result.push_back( new Request_jobdir( old_file ) );
+    }
+    
+    return result;
 }
 
 void Request_source_jobdir::remove_request( Request* req )
 {
     Request_jobdir* req_jobdir = dynamic_cast< Request_jobdir* >( req );
     if ( 0 != req_jobdir ) {
-        fs::remove( req_jobdir->get_path() );
+        fs::remove( req_jobdir->get_path() ); // FIXME? does it throw something?
     }
 }
 
 void Request_source_jobdir::put_request( const string& ad )
 {
-
+    // FIXME: todo
 }
 

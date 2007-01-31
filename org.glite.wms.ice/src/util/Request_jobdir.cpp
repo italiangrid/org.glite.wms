@@ -32,8 +32,9 @@ Request_jobdir::Request_jobdir( boost::filesystem::path old_path ) :
 {
     std::ifstream is( old_path.string().c_str() );
     while ( !is.eof() ) {
-        std::string val;
-        is >> val;
-        m_request.append( val );
+        std::string line;
+        std::getline( is, line );
+        m_request.append( line );
+        m_request.append( "\n" );
     }
 }
