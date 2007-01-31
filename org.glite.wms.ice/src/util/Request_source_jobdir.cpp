@@ -57,7 +57,6 @@ list<Request*> Request_source_jobdir::get_requests( void )
         
         fs::path const& new_file = *b;
         fs::path const old_file = m_jobdir.set_old(new_file);
-        fs::ifstream is(old_file);
     
         result.push_back( new Request_jobdir( old_file ) );
     }
