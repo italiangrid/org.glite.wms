@@ -290,8 +290,6 @@ check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
 	if ((ret < 0) && (errno == ENOENT) && opt_create){
 		// Optionally create the directory in case it doesn't exist
 		// Trying to create the directory
-  		fprintf(stderr, "trying to create directory %s (uid: %d gid: %d)\n",
-  			dir, create_uid, new_group);
 		if (mkdir(dir, new_mode) < 0){
 			fprintf(stderr, "Cannot create dir %s:%s\n", dir, strerror(errno));
 			return ADJUST_DIRECTORY_ERR_MKDIR;
@@ -306,6 +304,9 @@ check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
 			return ADJUST_DIRECTORY_ERR_CHOWN;
 			}
 		}
+		
+		fprintf(stderr, "Created directory: %s (uid: %d gid: %d)\n",
+  			dir, create_uid, new_group);
 		ret = stat(dir, &stat_result);
 	}
 	if (ret < 0){
