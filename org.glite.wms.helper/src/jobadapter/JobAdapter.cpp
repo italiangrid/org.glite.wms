@@ -1,6 +1,7 @@
 /***************************************************************************
  *  filename  : JobAdapter.cpp
  *  authors   : Elisabetta Ronchieri <elisbetta.ronchieri@cnaf.infn.it>
+ *              Marco Cecchi <marco.cecchi@cnaf.infn.it>
  *  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
  *  For license conditions see LICENSE file or
  *  http://www.edg.org/license.html
@@ -152,7 +153,8 @@ try {
 
   // Mandatory
   // InputSandboxPath is always included
-  std::string inputsandboxpath(jdl::get_input_sandbox_path(*m_ad));
+  bool exists;
+  std::string inputsandboxpath(jdl::get_input_sandbox_path(*m_ad, exists));
   if (inputsandboxpath.empty()) { 
     throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
                                         inputsandboxpath,
@@ -208,8 +210,8 @@ try {
 
   std::auto_ptr<classad::ClassAd> result(new classad::ClassAd);
   
-  /* Mandatory */
-  std::string executable(jdl::get_executable(*m_ad));
+  // Mandatory
+  std::string executable(jdl::get_executable(*m_ad, exists));
   if (executable.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::EXECUTABLE,
                                         executable,
@@ -219,7 +221,7 @@ try {
   
   // Mandatory
   // It is renamed as usersubjectname and reinserted with
-  std::string certificatesubject(jdl::get_certificate_subject(*m_ad));
+  std::string certificatesubject(jdl::get_certificate_subject(*m_ad), exists);
   if (certificatesubject.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::CERT_SUBJ,
                                         certificatesubject,
@@ -254,16 +256,15 @@ try {
   // Not Mandatory
   boost::scoped_ptr<URL> wmpisb_base_uri;
   try {
-    bool no_throw;
-    std::string const s(jdl::get_wmpinput_sandbox_base_uri(*m_ad, no_throw));
+    std::string const s(jdl::get_wmpinput_sandbox_base_uri(*m_ad, exists));
     wmpisb_base_uri.reset(new URL(s));
   } catch (InvalidURL&) {
   }
 
   std::string outputsandboxpath;
   if (!b_osb_dest_uri && !wmpisb_base_uri) {
-    /* Mandatory */
-    outputsandboxpath.append(jdl::get_output_sandbox_path(*m_ad));
+    // Mandatory
+    outputsandboxpath.append(jdl::get_output_sandbox_path(*m_ad, exists));
     if (outputsandboxpath.empty()) {
       throw helper::InvalidAttributeValue(jdl::JDLPrivate::OUTPUT_SANDBOX_PATH,
                                           outputsandboxpath,
@@ -301,9 +302,11 @@ try {
   vector<std::string> env;
   utils::EvaluateAttrListOrSingle(*m_ad, jdl::JDL::ENVIRONMENT, env);
 
-  /* Mandatory */
+  // Mandatory
   /* It is renamed in globusscheduler. (Below) */
-  std::string globusresourcecontactstring(jdl::get_globus_resource_contact_string(*m_ad));
+  std::string globusresourcecontactstring(
+    jdl::get_globus_resource_contact_string(*m_ad, exists)
+  );
   if (globusresourcecontactstring.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
                                         globusresourcecontactstring,
@@ -321,9 +324,9 @@ try {
   }
   std::string gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
  
-  /* Mandatory */
+  // Mandatory
   /* x509 user proxy is mandatory for the condor submit file. */
-  std::string userproxy(jdl::get_x509_user_proxy(*m_ad));
+  std::string userproxy(jdl::get_x509_user_proxy(*m_ad, exists));
   if (userproxy.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDLPrivate::USERPROXY,
                                         userproxy,
@@ -331,9 +334,9 @@ try {
                                         helper_id);
   }
  
-  /* Mandatory */
+  // Mandatory
   /* queuname is mandatory to build the globusrsl string. */
-  std::string queuename(jdl::get_queue_name(*m_ad));
+  std::string queuename(jdl::get_queue_name(*m_ad, exists));
   if (queuename.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::QUEUENAME,
                                         queuename,
@@ -344,12 +347,12 @@ try {
   /* Mandatory */
   /* lrms type is mandatory for the mpich job */
   /* and forwarded to Condor-C in any case.   */
-  std::string lrmstype(jdl::get_lrms_type(*m_ad));
+  std::string lrmstype(jdl::get_lrms_type(*m_ad, exists));
 
-  /* Mandatory */
+  // Mandatory
   /* job id is mandatory to build the globusrsl string and to create the */
   /* job wrapper                                                         */
-  std::string job_id(jdl::get_edg_jobid(*m_ad));
+  std::string job_id(jdl::get_edg_jobid(*m_ad, exists));
   if (job_id.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::JOBID,
                                         job_id,
@@ -384,7 +387,7 @@ try {
 
   std::string condor_submit_environment;
 
-  /* Mandatory */
+  // Mandatory
   jdl::set_universe(*result, "grid"); 
 
   if (!is_blahp_resource && !is_condor_resource) {
@@ -543,7 +546,7 @@ try {
   jdl::set_globus_scheduler(*result, globusresourcecontactstring);
   jdl::set_x509_user_proxy(*result, userproxy);
 
-  /* Mandatory */
+  // Mandatory
   jdl::set_notification(*result, "never");
 
   /* Not Mandatory */
@@ -565,7 +568,7 @@ try {
 
   /* Mandatory */
   std::string requirements("EDG_WL_JDL_REQ '");
-  std::string reqvalue(jdl::unparse_requirements(*m_ad));
+  std::string reqvalue(jdl::unparse_requirements(*m_ad, exists));
   if (reqvalue.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::REQUIREMENTS,
                                         reqvalue,
@@ -607,8 +610,8 @@ try {
   }
   globusrsl += ")"; //environment
   
-  /* Mandatory */
-  std::string type(jdl::get_type(*m_ad));
+  // Mandatory
+  std::string type(jdl::get_type(*m_ad, exists));
   if (type.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::TYPE,
                                         type,
@@ -617,9 +620,9 @@ try {
   }
   jdl::set_type(*result, type);
   
-  /* Mandatory */
+  // Mandatory
   /* job type is mandatory to build the correct job wrapper file */
-  std::string jobtype(jdl::get_job_type(*m_ad));
+  std::string jobtype(jdl::get_job_type(*m_ad, exists));
   if (jobtype.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::JOBTYPE,
                                         jobtype,
