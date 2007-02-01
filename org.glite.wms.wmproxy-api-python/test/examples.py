@@ -358,7 +358,7 @@ class WmpTest(unittest.TestCase):
 		assert proxycert
 		os.environ["PROXY_REQUEST"]=proxycert
 		print "Launching....",	"../examples/proxy-cert", getDefaultProxy()
-		os.system("../examples/proxy-cert" + " " + " " + getDefaultProxy())
+		os.system("../examples/proxy-cert" + " " + "-e PROXY_REQUEST " + getDefaultProxy())
 		proxyres = open("proxyresult.log")
 		lines = proxyres.readlines()
 		for line in lines:

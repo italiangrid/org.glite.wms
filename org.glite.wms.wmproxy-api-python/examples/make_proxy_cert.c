@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdarg.h>
 #include <time.h>
 #include <stdarg.h>
@@ -37,6 +38,15 @@
 #define GRST_RET_OK                     0
 
 
+const char* PROXY_REQUEST="PROXY_REQUEST";
+const char* output_file = "proxyresult.log" ;
+const char* env = "-e";
+const char* proxyinp = "-p";
+const char* output = "-o";
+bool envOpt = false ;
+bool proxyOpt = false ;
+bool outputOpt = false ;
+
 
 static void mpcerror(FILE *debugfp, char *msg)
 {
@@ -46,6 +56,46 @@ static void mpcerror(FILE *debugfp, char *msg)
       ERR_print_errors_fp(debugfp);
     }
 }
+
+
+int checkOption (const char* option) {
+
+  if ( strcmp( option , env ) == 0 )
+  {
+  envOpt = true;
+  return 1;
+  }
+  else if ( strcmp (option , proxyinp) == 0 )
+  {
+  proxyOpt = true;
+  return 1;
+  }
+  else if ( strcmp (option , output ) == 0 )
+  {
+  outputOpt = true;
+  return 1;
+  }
+  else
+    {
+      printf("Wrong input option, please use:\n");
+      printf("-e <environment variable>\n");
+      printf("-p <proxy string>\n");
+      printf("-o <output file>\n");
+      fflush(stdout);
+      return 0;
+    }
+  return 0;
+}
+
+
+void HELP_USAGE () {
+
+       printf("-e  <environment variable>\n");
+       printf("-p  <proxy string>\n");
+       printf("-o  <output file>\n");
+       fflush(stdout);
+}
+
 
 
 time_t GRSTasn1TimeToTimeT(char *asn1time, size_t len)
@@ -188,7 +238,7 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
       return GRST_RET_FAILED;
     }
 
-  /* 
+  /*
    if (X509_REQ_verify(req, pkey) != 1)
     {
       mpcerror(debugfp,
@@ -258,7 +308,7 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
       mpcerror(debugfp,
             "MakeProxyCert(): error setting certificate version\n");
       return GRST_RET_FAILED;
-    }    
+    }
 
   ASN1_INTEGER_set (X509_get_serialNumber (certs[0]), serial++);
 
@@ -296,10 +346,10 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
       mpcerror(debugfp,
       "MakeProxyCert(): error setting public key of the certificate\n");
       return GRST_RET_FAILED;
-    }    
+    }
 
   /* set duration for the certificate */
-  if (!(X509_gmtime_adj (X509_get_notBefore(certs[0]), 0)))
+  if (!(X509_gmtime_adj (X509_get_notBefore(certs[0]), -300)))
     {
       mpcerror(debugfp,
       "MakeProxyCert(): error setting beginning time of the certificate\n");
@@ -322,7 +372,7 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
            GRSTasn1TimeToTimeT(ASN1_STRING_data(X509_get_notAfter(certs[i])),
                                0))
          {
-           notAfter = 
+           notAfter =
             GRSTasn1TimeToTimeT(ASN1_STRING_data(X509_get_notAfter(certs[i])),
                                 0);
 
@@ -373,32 +423,100 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
 
   *proxychain = certchain;
 
-   proxyresult = fopen("proxyresult.log", "w+");
+   //prints the proxy processed in a file "proxyresult.log"
+   proxyresult = fopen(output_file, "w+");
    fprintf(proxyresult, *proxychain);
    fclose(proxyresult);
 
   return GRST_RET_OK;
 }
 
-const char* PROXY_REQUEST="PROXY_REQUEST";
+
+char* findProxyFileName(void)
+{
+  char *p;
+
+  p = getenv("X509_USER_PROXY");
+
+  if (p != NULL) return strdup(p);
+
+  p = malloc(sizeof("/tmp/x509up_uXYYYXXXYYY"));
+
+  sprintf(p, "/tmp/x509up_u%d", getuid());
+
+  return p;
+}
+
 
 int main(int argc, char *argv[])
  {
   char *certtxt;
   time_t timeleft;
-  // const char* request = (char*)argv[1];
-  const char* request = getenv (PROXY_REQUEST);
-  const char* proxy = (char*)argv[1];
-  /*printf("argc = %d\n", argc);
-  int i;
-  for(i=1; i<argc; i++)
-     printf("Parametro %d = %s\n", i, argv[i]);*/
-  // printf ("Parameter %s " ,request );
-  // printf ("Parameter %s " ,proxy);
-  // printf ("\n\n\n");
+  const char* request = NULL;
+  const char* proxy = findProxyFileName();
+  int optind = 1;
+
+  if ( ( argc < 3 ) || ( checkOption(argv[optind]) == 0))
+      {
+       printf("Mandatory option and/or his argument missing, please use:\n");
+       printf("-e  <environment variable>\n");
+       printf("-p  <proxy string>\n" );
+       fflush(stdout);
+       return GRST_RET_FAILED;
+     }
+     else if ( argc > 7 )
+     {
+       printf( "Too many arguments, please use:\n");
+       HELP_USAGE();
+       fflush(stdout);
+       return GRST_RET_FAILED;
+     }
+     else {
+        while ( optind < argc )
+	{
+	if (checkOption (argv[optind]) == 1) {
+          if ( envOpt == true) {
+    	   PROXY_REQUEST = (char*)argv[optind+1] ;
+    	  } else if ( proxyOpt == true) {
+    	   proxy = (char*)argv[optind+1] ;
+   	   } else if ( outputOpt == true ) {
+     	  output_file = (char*)argv[optind+1] ;
+   	   } else
+	   {
+           printf( "Wrong input option, please use:\n");
+	   HELP_USAGE();
+           fflush(stdout);
+           return GRST_RET_FAILED;
+    	   }
+         }
+         optind = optind +2 ;
+        }
+  }
+
+  if ((envOpt == true) && (proxyOpt == true))
+   {
+    printf( "The following options cannot be specified together, please use:\n");
+    printf("-e  <environment variable>\n");
+    printf("-p  <proxy string>\n");
+    fflush(stdout);
+    return GRST_RET_FAILED;
+   }
+
+  request = getenv (PROXY_REQUEST);
+
+  if ( request == NULL )
+     {
+       printf( "Error while reading proxy request from input: NULL\n");
+       HELP_USAGE();
+       fflush(stdout);
+       return GRST_RET_FAILED;
+     }
+
+
   if (proxy == NULL)
      {
        printf( "Error while reading proxy from input: NULL\n");
+       HELP_USAGE();
        fflush(stdout);
        return GRST_RET_FAILED;
      }
