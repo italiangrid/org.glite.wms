@@ -53,17 +53,15 @@ sleepcnt=200; #cancel job if it's not yet finished after given number of cycles
 #
 ===========================================
 
-generated JDL file example:
+generated JDL file example (as Executable used paramjob.sh):
 
 [
  JobType = "Parametric";
- Executable ="paramjob.pl";
+ Executable ="paramjob.sh";
  Arguments = "_PARAM_";
  StdOutput="stdout__PARAM_";
  StdError="stderr__PARAM_";
  Parameters={str1,str2};
- InputSandbox = {"paramjob.pl","tmp/inpdata__PARAM_"};
+ InputSandbox = {"paramjob.sh","inpdata__PARAM_"};
  OutputSandbox={"stdout__PARAM_","stderr__PARAM_","outdata__PARAM_"};
- Requirements=RegExp(".*cern.*",other.GlueCEUniqueID);
- RetryCount=2;
 ]

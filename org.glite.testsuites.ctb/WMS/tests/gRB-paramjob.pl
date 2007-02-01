@@ -359,7 +359,6 @@ sub createJdl{
  $jdlPar
  InputSandbox = {"file://$bindir/paramjob.sh","file://$tmpdir/inpdata__PARAM_"};
  OutputSandbox={"stdout__PARAM_","stderr__PARAM_","outdata__PARAM_"};
- Requirements=RegExp(".*lxb20.*",other.GlueCEUniqueID);
  $inp{expandJdl}
 ] 
 ~;
