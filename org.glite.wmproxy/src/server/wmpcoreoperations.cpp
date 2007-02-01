@@ -1285,10 +1285,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		} else if (getenv("REMOTE_ADDR")) {
 			fromclient = getenv("REMOTE_ADDR");
 		}
+		
+		// ASYNCH log
 		int error = wmplogger.logAcceptEventSync(fromclient);
-		/*if (fromclient) {
-			free(fromclient);	
-		}*/
 		if (error) {
 			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
 			
@@ -1302,6 +1301,24 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				"submit()", wmputilities::WMS_LOGGING_ERROR,
 				"unable to complete operation");
 		}
+		
+		// ASYNCH log
+		/*try {
+			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT,
+				fromclient, true, true);
+		} catch (LBException lbe) {
+			edglog(debug)<<"LOG_ACCEPT failed"<<endl;
+			
+			// Logging event start to begin iter before fail log in above catch
+			edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
+			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
+				"LOG_ENQUEUE_START", true, true, filelist_global.c_str(),
+				wmputilities::getJobJDLToStartPath(*jid).c_str());
+			
+			lbe.push_back(__FILE__, __LINE__, "submit()");
+				
+			throw lbe;
+		}*/
 		
 		edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,

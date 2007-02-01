@@ -1522,7 +1522,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 			case LOG_ACCEPT:
 				edglog(debug)<<"Logging Accept event..."<<endl;
 				return edg_wll_LogAcceptedProxy(ctx, EDG_WLL_SOURCE_WM_PROXY,
-					server.c_str(),"","");
+					server.c_str(), reason, ""); // resoan is "From Client"
 				break;
 			case LOG_ENQUEUE_START:
 				edglog(debug)<<"Logging Enqueue START event..."<<endl;
@@ -1569,7 +1569,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 			case LOG_ACCEPT:
 				edglog(debug)<<"Logging Accept event..."<<endl;
 				return edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY,
-					server.c_str(), "", "");
+					server.c_str(), reason, ""); // resoan is "From Client"
 				break;
 			case LOG_REFUSE:
 				edglog(debug)<<"Logging Refuse event..."<<endl;
