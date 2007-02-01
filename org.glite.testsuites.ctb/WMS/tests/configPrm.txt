@@ -1,0 +1,25 @@
+# Example of the config file for Parametric job testing
+#
+############ Parametric as list of strings
+#
+nJobs=2;            #number of jobs
+typePar=1;          #1-string parameters, 2-numbers parameters
+strVal=str;         #node names (str1,str2.....)
+############ Parametric is defined through numbers
+#
+Param=8;            #JDL attribute Parameters
+ParamStart=2;       #JDL attribute ParamStart
+ParamStep=2;        #JDL attribute ParamStep 
+#
+lenInpfile=10;      #length of input files
+############ Additional attributes for JDL file
+<expandJdl>
+ Requirements=RegExp(".*lxb2018.*",other.GlueCEUniqueID);
+#Requirements=RegExp(".*cern.*",other.GlueCEUniqueID);
+# RetryCount=2;
+</expandJdl>
+############ Monitoring
+sleep=30;           #sleep seconds before next status check
+sleepcnt=100;        #cancel job if it's not yet finished after given number of status retrievals
+#
+#jdlOnly=1;         #if need only JDL file without subbmittion

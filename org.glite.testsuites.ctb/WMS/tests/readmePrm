@@ -1,0 +1,69 @@
+                Parametric job testing
+
+The test script does the following:
+1. Generation of the JDL file for parametric job using parameters
+from parameters config file.
+2. Submit parametric job
+3. Status monitoring
+4. Retrieve output files for each node.
+5. Check correctness of the following:
+- the parametric names and the number of the nodes submitted
+- parametric Arguments for executable (proper argument for each node)
+- parametric OutputSandbox(proper named output files from each node)
+- parametric InputSandbox (proper named file  for each node)
+
+Test is OK if all nodes have status "Done (Success)"  and 
+all checking OK.
+
+   Input:
+ -c <WMS config file>
+ -p <Parameters config file>
+ -j  if test used for JDL generation only
+        Following options used if -p options is absent
+ -n N subjobs
+ -t parametric type: 1-string, 2-numbers (default 1)
+ -d sleep seconds before next status checking (default 30)
+ -s N cycles status checkinng before timeout  (default 200)
+ -l path to the log file
+
+======================================
+Config file example:
+
+# Config file for Parametric job testing
+#
+############ if Parametric as list of strings
+#
+typePar=1;          #1-string parameters, 2-number parameters
+nJobs=3;            #number of jobs
+strVal=str;         #node names (str1,str2.....)
+############ if Parametric is defined through numbers
+# when typePar=2
+Param=8;            #JDL attribute Parameters
+ParamStart=2;       #JDL attribute ParamStart
+ParamStep=2;        #JDL attribute ParamStep
+#
+############ Additional attributes for JDL file
+<expandJdl>
+Requirements=RegExp(".*cern.*",other.GlueCEUniqueID);
+RetryCount=2;
+</expandJdl>
+############ Monitoring parameter
+sleep=30;      #sleep seconds before next status check
+sleepcnt=200; #cancel job if it's not yet finished after given number of cycles
+#
+===========================================
+
+generated JDL file example:
+
+[
+ JobType = "Parametric";
+ Executable ="paramjob.pl";
+ Arguments = "_PARAM_";
+ StdOutput="stdout__PARAM_";
+ StdError="stderr__PARAM_";
+ Parameters={str1,str2};
+ InputSandbox = {"paramjob.pl","tmp/inpdata__PARAM_"};
+ OutputSandbox={"stdout__PARAM_","stderr__PARAM_","outdata__PARAM_"};
+ Requirements=RegExp(".*cern.*",other.GlueCEUniqueID);
+ RetryCount=2;
+]
