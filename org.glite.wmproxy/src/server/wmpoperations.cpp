@@ -218,18 +218,6 @@ getJDL(const std::string &job_id, JdlType jdltype,
 		auth->authorize("", job_id);
 	}
 	delete auth;
-
-	// GACL Authorizing
-	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
-		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::getJDL()", wmputilities::WMS_AUTHORIZATION_ERROR, 
-	    	"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-	//** END
 	
 	getJDL_response.jdl = "";
 	switch (jdltype) {
@@ -968,19 +956,6 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 	}
 	delete auth;
 
-	// GACL Authorizing
-	edglog(debug)<<"checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
-		edglog(error)<<"Unavailable service (the server is temporarily drained)"
-			<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::addACLItems()", wmputilities::WMS_AUTHORIZATION_ERROR, 
-	    	"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-	//** END
-	
 	string jobpath = wmputilities::getJobDirectoryPath(*jid);
 	
 	edglog(debug)<<"GACL File: "<<jobpath + FILE_SEPARATOR
@@ -1029,19 +1004,6 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 		auth->authorize("", job_id);
 	}
 	delete auth;
-
-	// GACL Authorizing
-	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
-		edglog(error)<<"Unavailable service (the server is temporarily drained)"
-			<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::addACLItems()", wmputilities::WMS_AUTHORIZATION_ERROR, 
-	    	"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-	//** END
 	
 	string jobpath = wmputilities::getJobDirectoryPath(*jid);
 
@@ -1102,18 +1064,6 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	}
 	delete auth;
 
-	// GACL Authorizing
-	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
-		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHORIZATION_ERROR, 
-	    	"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-	//** END
-	
 	// TBD change test in: item == owner
 	if (item == wmputilities::getUserDN()) {
 		edglog(error)<<"Removal of the item representing user that has "
@@ -1383,18 +1333,6 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	}
 	delete auth;
 
-	// GACL Authorizing
-	edglog(debug)<<"Checking for drain..."<<endl;
-	if (authorizer::WMPAuthorizer::checkJobDrain()) {
-		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"enableFilePerusal()", wmputilities::WMS_AUTHORIZATION_ERROR, 
-	    	"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-	//** END
-	
 	checkPerusalFlag(jid, delegatedproxy, false);
 	
 	string filename = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR
@@ -1455,18 +1393,6 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	}
 	delete auth;
 
-	// GACL Authorizing
-	edglog(debug)<<"Checking for drain..."<<endl;
-	if (authorizer::WMPAuthorizer::checkJobDrain()) {
-		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"getPerusalFiles()", wmputilities::WMS_AUTHORIZATION_ERROR, 
-	    	"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-	//** END
-	
 	if (fileName == "") {
 		throw JobOperationException(__FILE__, __LINE__,
 	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_INVALID_ARGUMENT, 

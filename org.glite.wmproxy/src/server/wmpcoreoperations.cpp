@@ -1863,7 +1863,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHORIZATION_ERROR, 
+	    	"wmpcoreoperations::jobSubmit()", wmputilities::WMS_AUTHORIZATION_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -2232,6 +2232,18 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		auth->authorize();
 	}
 	delete auth;
+	
+	// GACL Authorizing
+	edglog(debug)<<"Checking for drain..."<<endl;
+	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+		edglog(error)<<"Unavailable service (the server is temporarily drained)"
+			<<endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+	    	"wmpcoreoperations::jobListMatch()", wmputilities::WMS_AUTHORIZATION_ERROR, 
+	    	"Unavailable service (the server is temporarily drained)");
+	} else {
+		edglog(debug)<<"No drain"<<endl;
+	}
 	
 	// Checking proxy validity
 	authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
