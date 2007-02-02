@@ -11,6 +11,8 @@
  * University of Helsinki (UH.HIP), Finland
  * University of Bergen (UiB), Norway
  * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ * 
+ * Authors: Marco Sottilaro (marco.sottilaro@datamat.it)
  *
  * Authors: Marco Sottilaro (egee@datamat.it)
  */
@@ -22,8 +24,14 @@ package org.glite.wms.wmproxy;
 import java.net.URL;
 import java.io.File ;
 import java.io.FileNotFoundException ;
-
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream ;
+import java.io.IOException;
+
 import java.security.cert.X509Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateException;
@@ -39,7 +47,6 @@ import org.ggf.schemas.jsdl._2005._11.jsdl.JobDefinition_Type;
 import org.apache.axis.MessageContext;
 import org.apache.axis.client.AxisClient;
 */
-
 
 
 import org.gridsite.www.namespaces.delegation_2.*;
@@ -80,48 +87,90 @@ import org.apache.log4j.PropertyConfigurator;
  */
 
 public class WMProxyAPI{
-
-	/**
-	*  Constructor
-	*  @param url WMProxy service URL
-	*  @param proxyFile the path location of the user proxy file
-	*  @throws  ServiceException If any error in calling the service
-	*  @throws ServiceURLException malformed service URL specified as input
-	*  @throws CredentialException in case of any error with the user proxy file
-	*/
+        /**
+        *  Constructor
+        *  @param url WMProxy service URL
+        *  @param proxyFile the path location of the user proxy file
+        *  @throws  ServiceException If any error in calling the service
+        *  @throws ServiceURLException malformed service URL specified as input
+        *  @throws CredentialException in case of any error with the user proxy file
+        */
 	public WMProxyAPI (String url, String proxyFile) throws org.glite.wms.wmproxy.ServiceException,
 					org.glite.wms.wmproxy.ServiceURLException,
 					org.glite.wms.wmproxy.CredentialException {
-		logger = Logger.getLogger(WMProxyAPI.class);
-		logger.debug ("url=[" + url + "] - proxyFile = [" + proxyFile + "]");
-		try {
-			// service URL
-			this.serviceURL = new URL (url);
-		} catch (java.net.MalformedURLException exc) {
-			throw new org.glite.wms.wmproxy.ServiceURLException (exc.getMessage());
-		}
-		// proxyFile
-		this.proxyFile = proxyFile;
-		// CAs path
-		this.certsPath = "";
-		// Sets up the connection
-		this.setUpService ( );
+                FileInputStream proxyStream = null;
+                      try {
+                            proxyStream = new FileInputStream (proxyFile);
+                            } catch (FileNotFoundException e) {
+	                        System.out.println("Failed retrieving proxy from path:"+e.toString());
+                            }
+                certsPath = "";
+                this.WMProxyAPIConstructor(url, proxyStream, certsPath);
+
 	}
-	/**
-	*  Constructor that allows setting of the Log4j tool by configuration file
-	*  @param url WMProxy service URL
-	*  @param proxyFile the path location of the user proxy file
-	*  @param logPropFille the path location of the log4j properties file
-	*  @throws ServiceException If any error occurs in calling the service
-	*  @throws CredentialException in case of any error with the user proxy file
-	*  @throws ServiceURLException malformed service URL specified as input
-	*/
+        /**
+        *  Constructor that allows setting of the Log4j tool by configuration file
+        *  @param url WMProxy service URL
+        *  @param proxyFile the path location of the user proxy file
+        *  @param logPropFille the path location of the log4j properties file
+	*  @throws  ServiceException If any error in calling the service
+        *  @throws CredentialException in case of any error with the user proxy file
+        *  @throws ServiceURLException malformed service URL specified as input
+        */
 	public WMProxyAPI (String url, String proxyFile, String certsPath) throws org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServiceURLException,
+					org.glite.wms.wmproxy.CredentialException {
+                FileInputStream proxyStream = null;
+                      try {
+                            proxyStream = new FileInputStream (proxyFile);
+                            } catch (FileNotFoundException e) {
+                                System.out.println("Failed retrieving proxy from path:"+e.toString());
+                            }
+                this.WMProxyAPIConstructor(url, proxyStream, certsPath);
+	}
+        /**
+        *  Constructor
+        *  @param url WMProxy service URL
+        *  @param proxyFile the proxy in input as a stream
+	*  @throws  ServiceException If any error in calling the service
+        *  @throws CredentialException in case of any error with the user proxy file
+        *  @throws ServiceURLException malformed service URL specified as input
+        */
+	public WMProxyAPI (String url, InputStream proxyFile) throws org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServiceURLException,
+					org.glite.wms.wmproxy.CredentialException {
+		String certsPath = "";
+		this.WMProxyAPIConstructor (url, proxyFile, certsPath);
+	}
+        /**
+        *  Constructor that allows setting of the Log4j tool by configuration file
+        *  @param url WMProxy service URL
+        *  @param proxyFile the proxy in input as a stream
+        *  @param logPropFille the path location of the log4j properties file
+	*  @throws  ServiceException If any error in calling the service
+        *  @throws CredentialException in case of any error with the user proxy file
+        *  @throws ServiceURLException malformed service URL specified as input
+        */
+         public WMProxyAPI (String url, InputStream proxyFile, String certsPath) throws org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServiceURLException,
+					org.glite.wms.wmproxy.CredentialException {
+		this.WMProxyAPIConstructor (url, proxyFile, certsPath);
+	}
+        /**
+        *  Method that serves the constructors of the class
+        *  @param url WMProxy service URL
+        *  @param proxyFile the proxy in input as a stream
+        *  @param logPropFille the path location of the log4j properties file
+	*  @throws  ServiceException If any error in calling the service
+        *  @throws CredentialException in case of any error with the user proxy file
+        *  @throws ServiceURLException malformed service URL specified as input
+        */
+	private void WMProxyAPIConstructor (String url, InputStream proxyFile, String certsPath) throws org.glite.wms.wmproxy.ServiceException,
 					org.glite.wms.wmproxy.ServiceURLException,
 					org.glite.wms.wmproxy.CredentialException {
 
 		logger = Logger.getLogger(WMProxyAPI.class);
-		logger.debug ("INPUT: url=[" + url + "] - proxyFile = [" + proxyFile + "] - certsPath=[" + certsPath + "]");
+		logger.debug ("INPUT: url=[" + url + "] - proxyFile = [" + proxyFile.toString() + "] - certsPath=[" + certsPath + "]");
 		try {
 			// service URL
 			this.serviceURL = new URL (url);
@@ -130,7 +179,19 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceURLException (exc.getMessage());
 		}
 		// proxyFile
-		this.proxyFile = proxyFile;
+		try {
+                        BufferedReader in = new BufferedReader (new InputStreamReader (proxyFile));
+			String s, s2 = new String();
+			while ( (s = in.readLine()) != null)
+			     s2 += s + "\n";
+                        in.close();
+                        String proxyString = s2;
+			this.proxyFile = proxyString;
+		} catch (FileNotFoundException e) {
+	                     System.out.println("Failed retrieving proxy:"+e.toString());
+                } catch (IOException ioe) {
+	                     System.out.println("Failed reading proxy:"+ioe.toString());
+                }
 		// CAs path
 		this.certsPath = certsPath;
 		// Sets up the connection
@@ -1493,13 +1554,16 @@ public class WMProxyAPI{
 			// generator object
 			GrDProxyGenerator generator = new GrDProxyGenerator ( );
 			// user proxy file
-			File file = new File ( this.proxyFile);
-			if ( file.isFile ( ) != true ) {
+			/*File file = new File ( this.proxyFile);
+			if ( file.isFile ( ) != true ) */
+			String proxyStream = System.getProperty("gridProxyStream");
+                        if (proxyStream == null) {
 				throw new org.glite.wms.wmproxy.CredentialException  ( "proxy file not found at: "+ this.proxyFile );
 			}
 			try{
-				// gets the local proxy as array of bye
-				proxy = GrDPX509Util.getFilesBytes( file );
+				// gets the local proxy as array of byte
+				//proxy = GrDPX509Util.getFileBytes( File );
+				proxy = proxyStream.getBytes();
 				// reads the proxy time-left
 				stream = new ByteArrayInputStream(proxy);
 				cf = CertificateFactory.getInstance("X.509");
@@ -1548,11 +1612,7 @@ public class WMProxyAPI{
 		// Sets security properties for https connections
 		if ( protocol.compareTo("https") == 0 ){
 			System.setProperty("axis.socketSecureFactory","org.glite.security.trustmanager.axis.AXISSocketFactory");
-			File file = new File ( proxyFile) ;
-			if ( file.isFile ( ) == true )
-				System.setProperty("gridProxyFile", proxyFile);
-			else
-				throw new org.glite.wms.wmproxy.CredentialException ("proxy file not found : " + proxyFile);
+		        System.setProperty("gridProxyStream", proxyFile);
 		}
 		if (certsPath.length()>0){
 			System.setProperty(org.glite.security.trustmanager.ContextWrapper.CA_FILES, certsPath);
@@ -1617,7 +1677,7 @@ public class WMProxyAPI{
 	/** Service URL */
 	private URL serviceURL = null;
 	/** Proxy file location */
-	private String proxyFile= null;
+	private String proxyFile = null;
 	/** Certificate Authorities files location */
 	private String certsPath = null;
 	/** Service location */
