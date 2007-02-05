@@ -243,7 +243,7 @@ struct ConfigContext{
 * @see #getProxyReq, #putProxy (proxy delegation)
 * @see thrown exceptions: AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
-JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 
 
 /**
@@ -270,7 +270,7 @@ JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, g
 * @see #getProxyReq, #putProxy (proxy delegation)
 * @see thrown exceptions: AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
-JobIdApi jobRegisterJSDL (const std::string &jsdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+JobIdApi jobRegisterJSDL (const std::string &jsdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 
 
 
@@ -299,7 +299,7 @@ JobIdApi jobRegisterJSDL (const std::string &jsdl, const std::string &delegation
 * @see #getProxyReq, #putProxy (proxy delegation)
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
-JobIdApi jobSubmit(const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+JobIdApi jobSubmit(const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 *  Triggers the submission of a previously registered job. It starts the actual processing of the registered job within the Workload Manager.
 * It is assumed that when this operation is called, all the work preparatory to the job
@@ -322,7 +322,7 @@ JobIdApi jobSubmit(const std::string &jdl, const std::string &delegationId, glit
 * @throws BaseException Any other error occurred
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 */
-void jobStart(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+void jobStart(const std::string &jobid, ConfigContext *cfs=NULL);
 
 
 /**@name WMProxy Job operation services*/
@@ -345,7 +345,7 @@ void jobStart(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *c
 * @see #jobPurge
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 */
-void jobCancel(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+void jobCancel(const std::string &jobid, ConfigContext *cfs=NULL);
 /**
 *  Removes from the WM managed space all files related to the job identified by the jobId provided as input.
 *  It can only be applied for job related files that are managed by the WM.
@@ -363,7 +363,7 @@ void jobCancel(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *
 * @see #jobCancel
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 **/
-void jobPurge(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+void jobPurge(const std::string &jobid, ConfigContext *cfs=NULL);
 
 /**
 * Returns the list of CE Ids satisfying the job Requirements specified in the JDL, ordered according to the decreasing Rank.
@@ -380,7 +380,7 @@ void jobPurge(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *c
 * @see #getProxyReq, #putProxy (proxy delegation)
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
-std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 
 
 /**@name WMProxy Info retrieval services*/
@@ -393,7 +393,7 @@ std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jd
 * @return An alpha-numeric version representation
 * @see thrown exceptions:  AuthenticationException, GenericException, BaseException
 */
-std::string getVersion(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::string getVersion(ConfigContext *cfs=NULL);
 
 /**
 * Returns the maximum Input sandbox size (in bytes) that a user can count on for a job submission if using the space managed by the WM.
@@ -405,7 +405,7 @@ std::string getVersion(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 * @throws BaseException Any other error occurred
 * @see thrown exceptions:  AuthenticationException, GenericException, BaseException
 */
-long getMaxInputSandboxSize(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+long getMaxInputSandboxSize(ConfigContext *cfs=NULL);
 /**
 * Returns a list with the available transfer protocols on the WMProxy server
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
@@ -414,7 +414,7 @@ long getMaxInputSandboxSize(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 * @throws AuthorizationExceptionBaseException The user is not authorized to perform this operation
 * @throws GenericException A generic problem occurred
 */
-std::vector<std::string> getTransferProtocols(glite::wms::wmproxyapi::ConfigContext *cfs);
+std::vector<std::string> getTransferProtocols(ConfigContext *cfs);
 /**
 * Returns a list of destination URI's associated to the job (identified by the jobId provided as input)
 * where the job input sandbox files can be uploaded by the client.
@@ -437,7 +437,7 @@ std::vector<std::string> getTransferProtocols(glite::wms::wmproxyapi::ConfigCont
 * @see getSandboxBulkDestURI
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, GenericException, BaseException
 */
-std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="" );
+std::vector<std::string>  getSandboxDestURI(const std::string &jobid, ConfigContext *cfs=NULL, const std::string &protocol="" );
 
 /**
 * Returns a list of destination URI's associated to the job and its children in case of DAG's and collections, where the job input sandbox files can be uploaded
@@ -466,8 +466,8 @@ std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms
 * @throws BaseException Any other error occurred
 * @see #getSandboxDestURI
 */
- std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
- 
+ std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, ConfigContext *cfs=NULL, const std::string &protocol="");
+
 /*
 * Returns the available user space quota on the storage managed by the WM.
 * The fault GetQuotaManagementFault is returned if the quota management is not active on the WM.
@@ -481,7 +481,7 @@ std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms
 * @see #getTotalQuota
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, QuotaManagementException, GenericException, BaseException
 **/
-std::pair<long, long> getFreeQuota(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::pair<long, long> getFreeQuota(ConfigContext *cfs=NULL);
 /**
 * Returns the remaining free part of available user disk quota (in bytes).
 * The fault GetQuotaManagementFault is returned if the quota management is not active.
@@ -495,7 +495,7 @@ std::pair<long, long> getFreeQuota(glite::wms::wmproxyapi::ConfigContext *cfs=NU
 * @see #getFreeQuota
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, QuotaManagementException, GenericException, BaseException
 **/
-std::pair<long, long> getTotalQuota(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::pair<long, long> getTotalQuota(ConfigContext *cfs=NULL);
 /**
 *  Retrieves the list of URIs where the output files created during job execution have been stored in the WM managed space and the corresponding sizes in bytes.
 * It can only be applied for files of the Output Sandbox that are managed by the WM (i.e. not specified as URI in the JDL).
@@ -514,7 +514,7 @@ std::pair<long, long> getTotalQuota(glite::wms::wmproxyapi::ConfigContext *cfs=N
 * @throws BaseException Any other error occurred
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 */
-std::vector <std::pair<std::string , long> > getOutputFileList (const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
+std::vector <std::pair<std::string , long> > getOutputFileList (const std::string &jobid, ConfigContext *cfs=NULL, const std::string &protocol="");
 
 
 
@@ -557,7 +557,7 @@ std::string getJDL(const std::string &jobid, const JdlType &jdlType, ConfigConte
 * @see #getVersion
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
 */
-void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, ConfigContext *cfs=NULL);
 /**
 * Gets the URIs of perusal files generated during job execution for the specified file file.
 * If allChunks is set to true all perusal URIs will be returned; also the URIs already requested with a
@@ -583,7 +583,7 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * @see #getVersion
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
 */
-std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
+std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, ConfigContext *cfs=NULL, const std::string &protocol="");
 
 
 
@@ -607,7 +607,7 @@ std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::s
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getJobTemplate (int type, const std::string &executable,const std::string &arguments,
-			const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+			const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Creates a valid template ready for submission for a DAG
 * @param dependencies The dependency structure of the dag: each node must list all the nodes that depends on it.
@@ -622,7 +622,7 @@ std::string getJobTemplate (int type, const std::string &executable,const std::s
 * @throws BaseException Any other error occurred
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
-std::string getDAGTemplate(NodeStruct dependencies, const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::string getDAGTemplate(NodeStruct dependencies, const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Creates a valid template JDL for a collection of jobs
 * @param jobNumber  The number of jobs to be created for the collection
@@ -637,7 +637,7 @@ std::string getDAGTemplate(NodeStruct dependencies, const std::string &requireme
 * @throws BaseException Any other error occurred
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
-std::string getCollectionTemplate(int jobNumber, const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::string getCollectionTemplate(int jobNumber, const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Creates a valid template JDL for a parametric job
 * @param attributes All the attributes containing a reference to a parameter. Multiple attributes can be specified toghegher through the bitwise '|' operator ( as specified in attribute)
@@ -656,7 +656,7 @@ std::string getCollectionTemplate(int jobNumber, const std::string &requirements
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getIntParametricJobTemplate (std::vector<std::string> attributes , int parameters , int start , int step ,
-				const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+				const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Creates a valid template JDL for a parametric job
 * @param attributes All the attributes that contains reference to a parameter. Multiple attributes can be specified toghegher through the bitwise '|' operator ( as specified in attribute)
@@ -673,7 +673,7 @@ std::string getIntParametricJobTemplate (std::vector<std::string> attributes , i
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::string getStringParametricJobTemplate (std::vector<std::string>attributes, std::vector<std::string> parameters,
-				const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+				const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 
 /**@name WMProxy Certificates manipulation/info retrieval services*/
 /**
@@ -691,7 +691,7 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 * @see BaseException
 */
 
-std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 *   Generates a proxy certificate in PEM format with Base64 encoding. This method must be followed by a putProxy call.
 * This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
@@ -704,7 +704,7 @@ std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi:
 * @see #getVersion
 * @see #BaseException
 */
-std::string grstGetProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::string grstGetProxyReq(const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 * Generates a proxy certificate in PEM format with Base64 encoding that is associated to a server side generated sting identifier (delegation ID)
 * This method must be followed by a putProxy call.
@@ -781,7 +781,7 @@ std::string renewProxyReq (const std::string &delegationId, ConfigContext *cfs);
 * @see #getVersion
 * @see BaseException
 */
-void putProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+void putProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs=NULL);
 /**
 * Associates the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
 * This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
@@ -796,7 +796,7 @@ void putProxy(const std::string &delegationId, const std::string &request, glite
 * @see #getVersion
 * @see BaseException
 */
-void grstPutProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+void grstPutProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs=NULL);
 /**
 * Returns the Delegated Proxy information identified by the delegationId string
 * @param delegationId The id of the delegation created previously (by a getProxyReq call)
