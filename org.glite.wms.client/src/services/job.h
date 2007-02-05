@@ -24,10 +24,12 @@ namespace wms{
 namespace client {
 namespace services {
 
-#define WMP_NS1_GETPROXY_SERVICE        "ns1__getProxyReq"
-#define WMP_NS1_PUTPROXY_SERVICE        "ns1__putProxyReq"
-#define WMP_NS4_GETPROXY_SERVICE        "ns4__getProxyReq"
-#define WMP_NS4_PUTPROXY_SERVICE        "ns4__putProxyReq"
+// Delegation endpoint services
+#define WMP_NS4_GETPROXY_SERVICE        "delegationns__getProxyReq"
+#define WMP_NS4_PUTPROXY_SERVICE        "delegationns__putProxyReq"
+// WMProxy endpoint Services
+#define WMP_NS1_GETPROXY_SERVICE        "getProxyReq"
+#define WMP_NS1_PUTPROXY_SERVICE        "putProxyReq"
 #define WMP_VERSION_SERVICE             "getVersion"
 #define WMP_REGISTER_SERVICE            "jobRegister"
 #define WMP_START_SERVICE               "jobStart"
