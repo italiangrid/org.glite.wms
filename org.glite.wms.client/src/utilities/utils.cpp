@@ -662,7 +662,7 @@ const std::string Utils::getDefaultLog ( ){
 	// timestamp calculation:
 	time_t now = time(NULL);
 	struct tm *ns = localtime(&now);
-	filepath << (ns->tm_year+1900)  <<  monthStr[ns->tm_mon]  << twoDigits(ns->tm_mday)<<"_";
+	filepath << (ns->tm_year+1900)  <<  twoDigits(ns->tm_mon+1)  << twoDigits(ns->tm_mday)<<"_";
 	filepath << twoDigits(ns->tm_hour) << "-" << twoDigits(ns->tm_min) << "-" << twoDigits(ns->tm_sec);
 	filepath << ".log";
 	return  filepath.str();
