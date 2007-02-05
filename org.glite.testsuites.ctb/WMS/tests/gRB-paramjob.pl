@@ -37,7 +37,7 @@ sub Usage{
   Usage: 
   prmtest.pl <-c WMS config file> <-p Parameters config file> -j
   or
-  prmtest.pl <-n N subjobs> <-t parametric type> 
+  prmtest.pl <-n N subjobs> <-t parametric type> <-l logfile>
  };
 }
 #--------------------------------------------------------------
@@ -47,7 +47,7 @@ if(defined $ENV{PRM_BASE_DIR}){$basedir=$ENV{PRM_BASE_DIR}}
 else{$basedir=$ENV{PWD}};
 my $tmpdir;
 if(defined $ENV{PRM_TMP_DIR}){$tmpdir=$ENV{PRM_TMP_DIR}}
-else{$tmpdir="$basedir/tmp"};
+else{$tmpdir="$basedir/tmp$$"};
 my $bindir;
 if(defined $ENV{PRM_BIN_DIR}){$bindir=$ENV{PRM_BIN_DIR}}
 else{$bindir=$basedir};
@@ -57,9 +57,13 @@ createTmpDir();
 #   return codes:
 
 my $retOK=0;
+if(defined $ENV{SAME_OK}){$retOK=$ENV{SAME_OK}};
 my $retFail=1;   #test failed
+if(defined $ENV{SAME_ERROR}){$retOK=$ENV{SAME_ERROR}};
 my $retWar=2;    #test warning
+if(defined $ENV{SAME_WARNING}){$retWar=$ENV{SAME_WARNING}};
 my $retInp=10;   #something wrong in input. Can't run
+if(defined $ENV{SAME_ERROR}){$retInp=$ENV{SAME_ERROR}};
 #--------------------------------------------------------------
                          #Input parameters
 my %inp=(); #hash for input parameters
@@ -112,9 +116,13 @@ if ($rt){ #error in input parameters
 # Create JDL file
 printMsg("------------------------ Parametric job testing $tim\n",1);
 printMsg("------------------------ JDL file was created:\n",1);
-createJdl(); #create JDL file and input data files
-system("cat $tmpdir/prm.jdl");
-exit if $inp{jdlOnly};   #create JDL only
+my $jdl=createJdl(); #create JDL file and input data files
+unless($jdl){
+ printMsg("Can't create input data file",2);
+ exit($retFail);
+};
+printMsg("$jdl",1);
+exit($retOK) if $inp{jdlOnly};   #create JDL only
 #--------------------------------------------------------------
 #    Run job
 
@@ -138,6 +146,8 @@ if($ejob < $inp{nJobs}){ # not all jobs finished (timeout)
  };
  system("$cmdCancel $id");
  clearTmpDir();
+ $tim=getTime();
+ printMsg("$tim: Test failed",2);
  exit($retFail);
 };
 #--------------------------------------------------------------
@@ -300,6 +310,12 @@ sub checkJobsOutput{
    $nods{$node}[8]=-2;
    printMsg("$node: No StdOutput file",3);
    $ret=1;
+  }else{ #output file contain of $nod value(argument for subjob)
+    my $s=`cat $fname 2>&1`;
+   unless($s=~/$nod/){#invalid arguments for subjob
+    printMsg("$node: invalid arguments for subjob",3);
+    $ret=1;
+   };
   };
   $fname="$dir/stderr_$nod";
   unless(-e $fname){
@@ -362,7 +378,7 @@ sub createJdl{
  $inp{expandJdl}
 ] 
 ~;
- open(OUT,">$jdlname");
+ open(OUT,">$jdlname") or return 0;
  print(OUT $jdl);
  close(OUT);
  my $dat='0123456789';
@@ -371,11 +387,12 @@ sub createJdl{
  for my $i (0..$inp{nJobs}-1){
   my $f="inpdata_$params[$i]";
 #  system("ln -s $tmpdir/inpdata $tmpdir/$f"); 
-  open(OUT,">$tmpdir/$f");
+  open(OUT,">$tmpdir/$f") or return 0;
   print(OUT $dat);
   close(OUT);
 #  print "$f,\n";
  };
+ return $jdl;
 }
 #--------------------------------------------------------------
 #      Total statistic for nodes
@@ -467,6 +484,7 @@ sub createTmpDir{
 sub clearTmpDir{
  clearDir("$tmpdir/out");  #clear dir for output files
  clearDir("$tmpdir");      #clear tmp dir
+ rmdir "$tmpdir";
 }
 sub clearDir{
 my $dir=shift;
