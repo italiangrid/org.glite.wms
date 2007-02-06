@@ -148,7 +148,7 @@ fi
 myecho "going into status check loop, using  ${job_status}"
 echo ""
 
-TMP_STATUS_OUTPUT=/tmp/job_submit_`id -u`_$$
+TMP_STATUS_OUTPUT=/tmp/job_status_`id -u`_$$
 NUM_STATUS_RETRIEVALS=40
 SLEEP_TIME=15
 VERBOSITY_OPTIONS=" --verbosity 2"
@@ -214,6 +214,8 @@ do
   myecho "Extracted Status line: <${STATUS_LINE}>"
   echo ""
   
+  rm -f $TMP_STATUS_OUTPUT
+
   # ... exit if it is Aborted
   if grep -q "Aborted" <<<"$STATUS_LINE"; then
     myecho "Job was Aborted !"
@@ -247,8 +249,6 @@ do
   VERBOSITY_OPTIONS=""
 
 done
-
-rm -f $TMP_STATUS_OUTPUT
 
 # ... show final job status
 echo ""
