@@ -24,9 +24,9 @@ for VAR_NAME_TEST in PATH LD_LIBRARY_PATH PYTHONPATH PERLLIB PERL5LIB MANPATH ; 
   # ... note that printenv is executed in a subshell, so variables not marked for export will not be seen
   # ... and this is actually what we want since external (gLite) commands will not see such variables either
 
-  for DIR_NAME_TO_TEST in `printenv $VAR_NAME_TEST | sed 's/:/\n/g' | sort` ; do
+  for DIR_NAME_TEST in `printenv $VAR_NAME_TEST | sed 's/:/\n/g' | sort` ; do
 
-    if [ -d "$DIR_NAME_TO_TEST" ]; then
+    if [ -d "$DIR_NAME_TEST" ]; then
       echo "info   : $VAR_NAME_TEST has $DIR_NAME_TEST"
     else
       echo "WARNING: $VAR_NAME_TEST lists a non-existing location $DIR_NAME_TEST"
