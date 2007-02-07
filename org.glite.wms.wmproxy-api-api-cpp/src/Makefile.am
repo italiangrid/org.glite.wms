@@ -51,7 +51,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	-DWITH_OPENSSL \
-	-UHAVE_CONFIG_H
+	-UHAVE_CONFIG_H \
+	-DDEBUG
 	
 
 
