@@ -114,6 +114,12 @@ void do_transitions_for_cancel(
       // do nothing; these are unstable states, subject to race conditions
       // wait for a stable one; in particular don't clear the jdl because
       // it may be in use (or shortly be) by the RequestHandler
+      req->clear_jdl();         // this, together with marked_cancelled(),
+                                // tells the RequestHandler that it should
+                                // process the cancel request
+      req->marked_cancelled();
+      req->state(Request::READY);
+      write_end.write(req);
       break;
     case Request::UNRECOVERABLE:
       // don't change state; this will cause the job to be aborted rather than
@@ -152,13 +158,23 @@ void do_transitions_for_submit(
   case Request::WAITING:
 
     if (older_than(req, threshold)) {
+
       Info("considering (re)submit of " << req->id());
 
-      if (is_proxy_expired(req->id())) {
+      bool proxy_expired = true;
+      try {
+        proxy_expired = is_proxy_expired(req->proxy(), req->id());
+      } catch (MissingProxy&) {
+        req->state(Request::UNRECOVERABLE, "X509 proxy not found or I/O error");
+        break;
+      } catch (InvalidProxy&) {
+        req->state(Request::UNRECOVERABLE, "invalid X509 proxy");
+        break;
+      }
+      if (proxy_expired) {
         req->state(Request::UNRECOVERABLE, "proxy expired");
         break;
       }
-
       req->state(Request::READY);
       write_end.write(req);
     }
@@ -315,10 +331,7 @@ get_new_requests(
       JobStatusPtr status;
 
       if (status_check_is_enabled) {
-        try {
-          status = job_status(id);
-        } catch (CannotCreateLBContext&) {
-        }
+        status = job_status(id);
       }
 
       // TODO
@@ -346,7 +359,25 @@ get_new_requests(
             log_dequeued(request->lb_context(), input);
 
             if (command == "jobsubmit") {
-              if (is_proxy_expired(id)) {
+              bool proxy_expired = true;
+              try {
+                proxy_expired = is_proxy_expired(request->proxy(), id);
+              } catch(MissingProxy&) {
+                request->state(
+                  Request::UNRECOVERABLE,
+                  "X509 proxy not found or I/O error"
+                );
+                Info(request->id() << " failed (" << request->message() << ')');
+                continue;
+              } catch(InvalidProxy&) {
+                request->state(
+                  Request::UNRECOVERABLE,
+                  "invalid X509 proxy"
+                );
+                Info(request->id() << " failed (" << request->message() << ')');
+                continue;
+              }
+              if (proxy_expired) {
                 request->state(Request::UNRECOVERABLE, "proxy expired");
                 Info(request->id() << " failed (" << request->message() << ')');
               } else {
@@ -359,16 +390,12 @@ get_new_requests(
               tq.insert(std::make_pair(id.toString(), request));
             }
           } else {
-
             Info(
               "ignoring " << command << " for " << id
               << " because not compatible with state "
               << status_to_string(status)
             );
-
           }
-
-
         } else if (command == "jobcancel") {
 
           bool is_acceptable = true;
