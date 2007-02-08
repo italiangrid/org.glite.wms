@@ -25,6 +25,8 @@
 #include <boost/random/variate_generator.hpp>
 #include <boost/program_options.hpp>
 #include <classad_distribution.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "signal_handling.h"
 #include "match_utils.h"
@@ -364,12 +366,15 @@ ClassAdPtr do_match(
   classad::ClassAd const& jdl,
   jobid::JobId const& jobid,
   ContextPtr context,
-  std::string matches_file
+  std::string matches_file,
+  std::string const& x509_user_proxy
 )
 {
   // keep retrying to match periodically for a while
 
   std::time_t timeout = std::time(0) + get_expiry_period();
+
+  boost::shared_ptr<X509> proxy(read_proxy(x509_user_proxy));
 
   bool exists = false;
   int expiry_time = jdl::get_expiry_time(jdl, exists);
@@ -382,7 +387,7 @@ ClassAdPtr do_match(
   int const match_retry_period(get_match_retry_period());
 
   while (!result && std::time(0) < timeout) {
-    if (is_proxy_expired(jobid)) {
+    if (is_proxy_expired(proxy, jobid)) {
       throw ProxyExpired();
     }
     std::string pending_message("no resources available");
@@ -406,7 +411,8 @@ void do_it(
   std::string const& output_file,
   ContextPtr context,
   jobid::JobId const& jobid,
-  std::string const& matches_file
+  std::string const& matches_file,
+  std::string const& x509_user_proxy
 )
 {
 #warning TODO provide return error for get_interesting_events
@@ -478,7 +484,12 @@ void do_it(
     }
   }
 
-  ClassAdPtr planned_ad = do_match(jdl, jobid, context, matches_file);
+  ClassAdPtr planned_ad = do_match(jdl,
+    jobid,
+    context,
+    matches_file,
+    x509_user_proxy
+  );
 
   if (!planned_ad) {
     throw RequestExpired();
@@ -675,7 +686,7 @@ try {
 
   try {
 
-    do_it(input_ad, output_file, context, jobid, matches_file);
+    do_it(input_ad, output_file, context, jobid, matches_file, x509_user_proxy);
 
   } catch (HitMaxRetryCount& e) {
     error = "hit max retry count ("
@@ -691,6 +702,10 @@ try {
       + boost::lexical_cast<std::string>(e.count()) + ')';
   } catch (RequestExpired&) {
     error = "request expired";
+ } catch (MissingProxy&) {
+    error = "X509 proxy not found or I/O error";
+ } catch (InvalidProxy&) {
+    error = "invalid X509 proxy";
   } catch (ProxyExpired&) {
     error = "X509 proxy expired";
   } catch (CannotGenerateSubmitJDL&) {
