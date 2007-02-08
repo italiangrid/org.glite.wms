@@ -7,8 +7,6 @@
 
 #include "submission_utils.h"
 #include <classad_distribution.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
 #include "lb_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -149,19 +147,37 @@ void create_token(fs::path const& p)
   fs::ofstream _(p);
 }
 
+boost::shared_ptr<X509> read_proxy(std::string const& proxy_file)
+{
+  std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
+  if (!rfd) {
+    throw MissingProxy();
+  }
+  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
+  ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
+  if (!rcert) {
+    throw InvalidProxy();
+  }
+  boost::shared_ptr<X509> cert(rcert, ::X509_free);
+  return cert;
+}
+
 bool is_proxy_expired(jobid::JobId const& id)
 {
   std::string proxy_file = get_user_x509_proxy(id);
+  return X509_cmp_current_time(X509_get_notAfter(read_proxy(proxy_file))) <= 0;
+}
 
-  std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
-  if (!rfd) return true;
-  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
-
-  ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
-  if (!rcert) return true;
-  boost::shared_ptr<X509> cert(rcert, ::X509_free);
-
-  return X509_cmp_current_time(X509_get_notAfter(rcert)) <= 0;
+bool is_proxy_expired(boost::shared_ptr<X509>& cert, jobid::JobId const& id)
+{
+  bool expired = X509_cmp_current_time(X509_get_notAfter(cert)) <= 0;
+  if (expired) {
+    std::string proxy_file = get_user_x509_proxy(id);
+    cert = read_proxy(proxy_file);
+    return X509_cmp_current_time(X509_get_notAfter(cert)) <= 0;
+  } else {
+    return false;
+  }
 }
 
 }}}} // glite::wms::manager::server
