@@ -136,6 +136,7 @@ unless($id=~/https/){    #something wrong
  clearTmpDir(); exit($retFail);
 };
 chomp($id);
+system(qq{echo "$id" > $tmpdir/jobID});
 printMsg("$tim Parametric job submitted (N subjobs=$inp{nJobs})\n ID=$id",1);
 #--------------------------------------------------------------
 #    Job monitoring
@@ -260,25 +261,33 @@ sub checkReason{
 #--------------------------------------------------------------
 sub printMsg{
  my $msg=shift; my $tp=shift; my $msgType;
+ my $nl="\n";
+ if(defined $ENV{SAME_OK}){  #SAM environment
+  $nl='<br>';
+  $msg=~s/\n/\<br\>/sg;
+ };
  if($tp==1){
   unless($stmsg==1){
-   $msg="============ Info =============\n$msg";
-   $stmsg=1;
+   if(defined $ENV{SAME_OK}){print "<font color=black><br>"};
+   $msg="============ Info =============$nl$msg";
+   $stmsg=1; 
   };
  } #info message
  elsif($tp==2){
   unless($stmsg==2){
-   $msg="============ Error =============\n$msg";
-   $stmsg=2;
+   if(defined $ENV{SAME_OK}){print "<font color=red><br>"};
+   $msg="============ Error =============$nl$msg";
+   $stmsg=2; 
   }; 
  }    #error message
  elsif($tp==3){
   unless($stmsg==3){
-   $msg="============ Warning =============\n$msg";
-   $stmsg=3;
+   if(defined $ENV{SAME_OK}){print "<font color=blue><br>"};
+   $msg="============ Warning =============$nl$msg";
+   $stmsg=3; 
   };
  }  #warning message
- print("$msg\n");
+ print("$msg$nl");
  if(exists $inp{logfile}){
   my $f="$inp{logfile}";
   `echo "$msg" >> $f`;
@@ -371,18 +380,18 @@ sub checkJobsOutput{
 #      Job status monitoring
 #--------------------------------------------------------------
 sub Monitor{
- my $ejob=0;
+ my $ejob=0; my $s;
  while($inp{sleepcnt}){ 
   $inp{sleepcnt}--;
   checkStatus($id);     
   getCurrentJobStatus();
   $ejob=0;
-  print "$inp{sleepcnt}: ";
+  $s="$inp{sleepcnt}: ";
   for my $st(sort keys %state){
-   print "$st: $state{$st} *** ";
+   $s.="$st: $state{$st} *** ";
    if($st=~/Done \(Success\)/ || $st=~/Abort/ || $st=~/Cancel/){$ejob+=$state{$st}};
   };
-  print "\n";
+  printMsg("$s",1);
   if($ejob==$inp{nJobs}){last};
   sleep($inp{sleep});
  }
@@ -444,7 +453,8 @@ sub runJob{
  open(INP,"$cmd");
  my $id='';
  while(my $s=<INP>){
-  print $s;
+  chomp $s;
+  printMsg($s,1);
   next if $s=~/^\s*$/;
   $id.=$s; #last;
  };
