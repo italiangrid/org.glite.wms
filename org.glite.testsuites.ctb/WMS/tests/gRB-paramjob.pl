@@ -60,7 +60,7 @@ createTmpDir();
 my $retOK=0;
 if(defined $ENV{SAME_OK}){$retOK=$ENV{SAME_OK}};
 my $retFail=1;   #test failed
-if(defined $ENV{SAME_ERROR}){$retOK=$ENV{SAME_ERROR}};
+if(defined $ENV{SAME_ERROR}){$retFail=$ENV{SAME_ERROR}};
 my $retWar=2;    #test warning
 if(defined $ENV{SAME_WARNING}){$retWar=$ENV{SAME_WARNING}};
 my $retInp=10;   #something wrong in input. Can't run
