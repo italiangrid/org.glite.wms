@@ -1,20 +1,16 @@
-#!/bin/bash
+# This is a "multishell" script.
 
 # Test whether the VOMS proxy commands can be found by the OS
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
-# Version info: $Id$
-# Release: $Name$
+# Version: $Id$
 
 echo "    === Existence test of voms-proxy-* ===    "
 
-. $(dirname $0)/command-exist.sh
-
-command_exist voms-proxy-init     || exit $?
-command_exist voms-proxy-destroy  || exit $?
-command_exist voms-proxy-info	  || exit $?
-command_exist voms-proxy-list	  || exit $?
-command_exist voms-proxy-fake	  || exit $?
+source `dirname $0`/command-exist.sh voms-proxy-init    || exit 1
+source `dirname $0`/command-exist.sh voms-proxy-destroy || exit 1
+source `dirname $0`/command-exist.sh voms-proxy-info    || exit 1
+source `dirname $0`/command-exist.sh voms-proxy-list    || exit 1
+source `dirname $0`/command-exist.sh voms-proxy-fake    || exit 1
 
 echo "    ===  Ok  ===    "
-
