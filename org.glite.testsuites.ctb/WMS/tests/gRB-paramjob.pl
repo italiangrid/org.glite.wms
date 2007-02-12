@@ -30,6 +30,7 @@ use strict;
 # -d sleep seconds before next status checking (default 30)
 # -s N cycles status checkinng before timeout  (default 200)
 # -l path to the log file
+# -m N cycles by 15 sec waiting for the main job get status Done
 #--------------------------------------------------------------
 
 sub Usage{
@@ -67,7 +68,7 @@ if(defined $ENV{SAME_ERROR}){$retInp=$ENV{SAME_ERROR}};
 #--------------------------------------------------------------
                          #Input parameters
 my %inp=(); #hash for input parameters
-my %opt=(); getopts("c:p:n:t:d:s:l:j",\%opt);
+my %opt=(); getopts("c:p:n:t:d:s:l:m:j",\%opt);
 
 if(defined $opt{c}){$inp{confWms}=$opt{c}}; #wms config file
 if(defined $opt{p}){$inp{confPar}=$opt{p}}; #parameters file
@@ -86,6 +87,8 @@ if (exists $inp{confPar}){  #parameters are defined in the file
  else{$inp{sleep}=30};
  if(defined $opt{s}){$inp{sleepcnt}=$opt{s}}#number of cycles of status checking
  else{$inp{sleepcnt}=200};
+ if(defined $opt{m}){$inp{waitDone}=$opt{m}} #wait for main job will get status Done (15*10 sec)
+ else{$inp{waitDone}=15};
  if( $inp{typePar}==2){# define attr Parameters,ParamStart, ParamStep
   $inp{Param}=$inp{nJobs};      #JDL Parameters attribute
   $inp{ParamStart}=0; #JDL ParameterStart attribute
@@ -123,6 +126,7 @@ unless($jdl){
 };
 printMsg("$jdl",1);
 exit($retOK) if $inp{jdlOnly};   #create JDL only
+
 #--------------------------------------------------------------
 #    Run job
 
@@ -152,6 +156,28 @@ if($ejob < $inp{nJobs}){ # not all jobs finished (timeout)
 };
 #--------------------------------------------------------------
 #   Final jobs status
+printMsg("All subjobs finished.\nNow waiting for the main job get status Done",1);
+my $cnt=$inp{waitDone}; my $sw;
+while($cnt){
+ $cnt--;
+ open(INP,"$cmdStatus $id |");
+ while($sw=<INP>){
+  next unless $sw=~/Current Status:/;
+  last;
+ };
+ close(INP);
+ if($sw=~/Done/){last};
+ sleep(15);
+};
+unless($cnt){ #time out
+ printMsg("Timeout: Main job can't get status Done",2);
+ printMsg("Job $id is canceling",1);
+ system("$cmdCancel $id");
+ clearTmpDir();
+ $tim=getTime();
+ printMsg("$tim: Test failed",2);
+ exit($retFail);
+};
 
 printMsg("Parametric job finished. ID=$id\n",1);
 printMsg("------------------------ Final status:\n",1);
@@ -372,9 +398,11 @@ sub createJdl{
  Arguments = "_PARAM_";
  StdOutput="stdout__PARAM_";
  StdError="stderr__PARAM_";
+ ShallowRetryCount=5;
  $jdlPar
  InputSandbox = {"file://$bindir/paramjob.sh","file://$tmpdir/inpdata__PARAM_"};
  OutputSandbox={"stdout__PARAM_","stderr__PARAM_","outdata__PARAM_"};
+# Requirements=RegExp(".*lxb20*.*",other.GlueCEUniqueID);
  $inp{expandJdl}
 ] 
 ~;
@@ -416,6 +444,7 @@ sub runJob{
  open(INP,"$cmd");
  my $id='';
  while(my $s=<INP>){
+  print $s;
   next if $s=~/^\s*$/;
   $id.=$s; #last;
  };
