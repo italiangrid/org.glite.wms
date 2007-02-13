@@ -17,6 +17,13 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1  2007/02/13 12:30:27  gianelle
+#       - Fix for bug #23401
+#       - Add support for jobdir to LM
+#       - Log a cancel refused event when the cancel failed (it was a rare circumstance
+#       which is not considered before)
+#       - Some cleanup in the "include" instructions
+#
 #       Revision 1.11  2006/03/16 17:28:39  gianelle
 #       Migration to "new" jdl library
 #

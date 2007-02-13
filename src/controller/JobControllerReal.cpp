@@ -44,10 +44,10 @@ namespace fs = boost::filesystem;
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "../common/IdContainer.h"
-#include "../common/RamContainer.h"
-#include "../common/JobFilePurger.h"
-#include "../common/ProxyUnregistrar.h"
+#include "common/IdContainer.h"
+#include "common/RamContainer.h"
+#include "common/JobFilePurger.h"
+#include "common/ProxyUnregistrar.h"
 
 #include "JobControllerReal.h"
 #include "JobControllerExceptions.h"
@@ -268,7 +268,13 @@ try {
 
       parameters.assign( "-d " ); parameters.append( sad->submit_file() ); parameters.append( " 2>&1" );
 
-      result = CondorG::instance()->set_command( CondorG::submit, parameters )->execute( info );
+      int count = 3;	      
+
+      while ( ( count > 0 ) && ( result ) ) { // fix for bug #23401
+      	result = CondorG::instance()->set_command( CondorG::submit, parameters )->execute( info );
+	count--;
+        sleep( 2 * count );
+      }	
 
       if( result || !boost::regex_match(info, pieces, expr) ) {
 	// The condor command has failed... Do the right thing
@@ -369,8 +375,11 @@ bool JobControllerReal::cancel( const glite::wmsutils::jobid::JobId &id, const c
       this->jcr_logger.job_cancel_refused_event( info );
     }
   }
-  else
+  else {
     elog::cedglog << logger::setlevel( logger::null ) << "I'm not able to retrieve the condor ID." << endl;
+    this->jcr_logger.job_cancel_refused_event( "I'm not able to retrieve the condor ID." );
+    good = false;
+  }
 
   return good;
 }

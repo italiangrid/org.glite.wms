@@ -80,10 +80,10 @@ JobControllerClientImpl *JobControllerFactory::create_client( void )
   JobControllerClientImpl                 *result = NULL;
 
   if( configure->get_module() == configuration::ModuleType::job_controller )
-    if ( configure->jc()->input_type() == "jobdir" )
-      result = new JobControllerClientJD();
-    else
+    if ( configure->jc()->input_type() == "filelist" )
       result = new JobControllerClientReal();
+    else
+      result = new JobControllerClientJD();
   else
     result = new JobControllerClientUnknown();
 

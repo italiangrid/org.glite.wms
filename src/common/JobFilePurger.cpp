@@ -19,8 +19,8 @@ namespace fs = boost::filesystem;
 #ifdef GLITE_WMS_HAVE_PURGER
 #include "glite/wms/purger/purger.h"
 #endif
-#include "../jobcontrol_namespace.h"
-#include "../common/files.h"
+#include "jobcontrol_namespace.h"
+#include "common/files.h"
 
 #include "JobFilePurger.h"
 
