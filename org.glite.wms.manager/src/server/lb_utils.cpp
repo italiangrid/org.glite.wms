@@ -80,8 +80,41 @@ bool not_received_quit_signal()
   return !received_quit_signal();
 }
 
-int
-set_logging_job_proxy(
+int set_logging_job(
+  edg_wll_Context context,
+  jobid::JobId const& id,
+  std::string const& sequence_code
+)
+{
+  int const flag = EDG_WLL_SEQ_NORMAL;
+
+  while (not_received_quit_signal()) {
+    
+    int const result = edg_wll_SetLoggingJob(
+      context,
+      id,
+      sequence_code.c_str(),
+      flag
+    );
+
+    if (result == 0) {
+      return result;
+    }
+
+    std::string message("edg_wll_SetLoggingJobProxy failed:");
+    if (is_retryable(result)) {
+      Warning(message << " retrying in " << five_seconds << " seconds");
+      sleep_while(five_seconds, not_received_quit_signal);
+    } else {
+      Error(message << " LB is unavailable, giving up");
+      assert(false);
+    }
+  }
+  Error("set_logging_job_proxy: fatal error");
+  assert(false);
+}
+
+int set_logging_job_proxy(
   edg_wll_Context context,
   jobid::JobId const& id,
   std::string const& x509_proxy
@@ -118,8 +151,7 @@ set_logging_job_proxy(
   assert(false);
 }
 
-int
-set_logging_job_proxy(
+int set_logging_job_proxy(
   edg_wll_Context context,
   jobid::JobId const& id,
   std::string const& x509_proxy,
@@ -187,21 +219,14 @@ create_context(
   }
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
-  errcode = set_logging_job_proxy(
+  set_logging_job_proxy(
     context,
     id,
     x509_proxy,
     sequence_code
   );
 #else
-  int const flag = EDG_WLL_SEQ_NORMAL;
-
-  errcode = edg_wll_SetLoggingJob(
-    context,
-    id,
-    sequence_code.c_str(),
-    flag
-  );
+  set_logging_job(context, id, sequence_code);
 #endif
 
   return result;
