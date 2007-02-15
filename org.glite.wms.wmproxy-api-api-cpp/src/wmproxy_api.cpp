@@ -104,7 +104,7 @@ BaseException* createWmpException(struct soap *soap){
 						case SOAP_TYPE_ns1__GenericFaultType:
 							b_ex=new GenericException;
 							break;
-						case SOAP_TYPE__delegationns__DelegationException:
+						case SOAP_TYPE_delegationns__DelegationExceptionType:
 							soap_print_fault(soap, stderr);
 							exit(-1);
 						default:
@@ -175,7 +175,7 @@ BaseException* grstCreateWmpException(struct soap *soap){
 	SOAP_ENV__Fault  *fault = NULL;
 	SOAP_ENV__Detail *detail = NULL;
 
-	_delegationns__DelegationException *ex2 = NULL;
+	delegationns__DelegationExceptionType *ex2 = NULL;
 	BaseException *b_ex =NULL;
 	char *faultstring =  NULL;
 	char *faultcode = NULL;
@@ -191,14 +191,14 @@ BaseException* grstCreateWmpException(struct soap *soap){
 		if (fault){
         		detail = soap->fault->detail ;
 			if (detail) {
-				 if (detail->__type == SOAP_TYPE__delegationns__DelegationException) {
-					ex2 = (_delegationns__DelegationException*)detail->fault;
+				 if (detail->__type == SOAP_TYPE_delegationns__DelegationExceptionType) {
+					ex2 = (delegationns__DelegationExceptionType*)detail->fault;
 				} else { ex2 = NULL; }
 				// if type is delegationns__DelegationExceptionType
 				if (ex2) {
 					b_ex = new GrstDelegationException ;
-					if (ex2->msg) {
-						message = *(ex2->msg) ;
+					if (ex2->message) {
+						message = *(ex2->message) ;
 					} else if (faultstring) {
 						message = string(faultstring);
 					} else {
@@ -560,6 +560,7 @@ JobIdApi jobRegister (const string &jdl, const string &delegationId, ConfigConte
 /*****************************************************************
 jobRegisterJSDL
 ******************************************************************/
+/*
 JobIdApi jobRegisterJSDL (const string &jsdl, const string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	JobIdApi jobid ;
@@ -890,17 +891,17 @@ std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs){
 
 
 std::string grstGetProxyReq(const std::string &delegationId, ConfigContext *cfs){
-	DelegationSoapBinding grst;
+	DelegationSoapBinding deleg;
 	string proxy = "";
-	grstSoapAuthentication(grst, cfs);
+	grstSoapAuthentication(deleg, cfs);
 	delegationns__getProxyReqResponse response;
-	if (grst.delegationns__getProxyReq(delegationId, response) == SOAP_OK) {
+	if (deleg.delegationns__getProxyReq(delegationId, response) == SOAP_OK) {
 		proxy = response._getProxyReqReturn;
-		soapDestroy(grst.soap) ;
-	} else grstSoapErrorMng(grst) ;
+		soapDestroy(deleg.soap) ;
+	} else grstSoapErrorMng(deleg) ;
 	return proxy;
 }
-
+/*
 ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 	DelegationSoapBinding grst;
 	ProxyReqStruct request;
@@ -930,6 +931,7 @@ ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 /*****************************************************************
 getDelegationVersion
 ******************************************************************/
+/*
 std::string getDelegationVersion(ConfigContext *cfs){
 	DelegationSoapBinding grst;
 	string request;
@@ -944,6 +946,7 @@ std::string getDelegationVersion(ConfigContext *cfs){
 /*****************************************************************
 getDelegationInterfaceVersion
 ******************************************************************/
+/*
 std::string getDelegationInterfaceVersion(ConfigContext *cfs){
 	DelegationSoapBinding grst;
 	string request;
@@ -1019,8 +1022,8 @@ void putProxy(const std::string &delegationId, const std::string &request, Confi
 }
 
 void grstPutProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs){
-	DelegationSoapBinding grst;
-	grstSoapAuthentication (grst, cfs);
+	DelegationSoapBinding deleg;
+	grstSoapAuthentication (deleg, cfs);
 	time_t timeleft ;
 	char *certtxt;
 	// gets the path to the user proxy file
@@ -1036,11 +1039,11 @@ void grstPutProxy(const std::string &delegationId, const std::string &request, C
 		timeleft) ){
 		throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
 	}
-	grstSoapAuthentication (grst, cfs);
+	grstSoapAuthentication (deleg, cfs);
 	delegationns__putProxyResponse response;
-	if (grst.delegationns__putProxy(delegationId, certtxt, response) == SOAP_OK) {
-		soapDestroy(grst.soap) ;
-	} else grstSoapErrorMng(grst) ;
+	if (deleg.delegationns__putProxy(delegationId, certtxt, response) == SOAP_OK) {
+		soapDestroy(deleg.soap) ;
+	} else grstSoapErrorMng(deleg) ;
 }
 
 ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, ConfigContext *cfs){
