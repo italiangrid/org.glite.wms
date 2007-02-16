@@ -49,7 +49,9 @@ bool expand_information_service_info(gluece_info_type& gluece_info)
   bool result = false;
   try {
 
-    isURL = utils::evaluate_attribute(*gluece_info, "GlueInformationServiceURL");
+    isURL = static_cast<std::string>(
+      utils::evaluate_attribute(*gluece_info, "GlueInformationServiceURL")
+    );
     static boost::regex  expression_gisu("\\S.*://(.*):([0-9]+)/(.*)");
     boost::smatch        pieces_gisu;
 
