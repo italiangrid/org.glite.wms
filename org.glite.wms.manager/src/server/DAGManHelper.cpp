@@ -643,6 +643,18 @@ public:
   }
 };
 
+int get_match_retry_period()
+{
+  return configuration::Configuration::instance()->wm()->match_retry_period();
+}
+
+int get_max_planners()
+{
+  return static_cast<const int>(
+    configuration::Configuration::instance()->wm()->worker_threads() * 1.6 + 0.5
+  );
+}
+
 class GeneratePrePost
 {
   jdl::DAGAd* m_dagad;
@@ -679,6 +691,12 @@ public:
       m_paths->log(node_id).native_file_string()
     );
     std::ostringstream pre_args;
+
+    pre_args << "-max " << get_max_planners()
+             << " -rwait " << get_match_retry_period()
+             << " -rcode " << boost::lexical_cast<std::string>(EXIT_RETRY_NODE)
+             << " -- ";
+
     pre_args << "--output " << output_file
              << " --input " << input_file
              << " --log " << log_file;

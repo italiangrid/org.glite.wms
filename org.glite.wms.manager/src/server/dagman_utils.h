@@ -13,6 +13,7 @@ namespace wms {
 namespace manager {
 namespace server {
 
+int const EXIT_RETRY_NODE = 98;
 int const EXIT_ABORT_NODE = 99;
 
 }}}}

@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <cstring>
 #include <dlfcn.h>              // dlopen()
 #include <sys/types.h>          // mkfifo()
@@ -88,11 +89,6 @@ std::string get_matchpipe_dir()
   configuration::NSConfiguration const& ns_config
     = *configuration::Configuration::instance()->ns();
   return ns_config.list_match_root_path();
-}
-
-int get_match_retry_period()
-{
-  return configuration::Configuration::instance()->wm()->match_retry_period();
 }
 
 fs::path get_input_sandbox_path(jobid::JobId const& id)
@@ -370,38 +366,23 @@ ClassAdPtr do_match(
   std::string const& x509_user_proxy
 )
 {
-  // keep retrying to match periodically for a while
-
   std::time_t timeout = std::time(0) + get_expiry_period();
-
-  boost::shared_ptr<X509> proxy(read_proxy(x509_user_proxy));
-
   bool exists = false;
   int expiry_time = jdl::get_expiry_time(jdl, exists);
   if (exists) {
     timeout = expiry_time;
   }
-
-  ClassAdPtr result;
-
-  int const match_retry_period(get_match_retry_period());
-
-  while (!result && std::time(0) < timeout) {
-    if (is_proxy_expired(proxy, jobid)) {
-      throw ProxyExpired();
-    }
-    std::string pending_message("no resources available");
-    try {
-      result = Plan(jdl, jobid, matches_file);
-    } catch (planning_error const& e) {
-      pending_message = e.what();
-    }
-    matches_file.clear();
-    if (!result) {
-      log_pending(context, pending_message);
-      ::sleep(match_retry_period);
-    }
+  if (std::time(0) > timeout) {
+    throw RequestExpired();
   }
+
+  boost::shared_ptr<X509> proxy(read_proxy(x509_user_proxy));
+  if (is_proxy_expired(proxy, jobid)) {
+    throw ProxyExpired();
+  }
+
+  ClassAdPtr result = Plan(jdl, jobid, matches_file);
+  matches_file.clear();
 
   return result;
 }
@@ -473,17 +454,6 @@ void do_it(
   jdl::set_edg_previous_matches_ex(jdl, previous_matches);
   jdl::set_edg_previous_matches(jdl, previous_matches_simple);
 
-  // don't match less than five minutes apart
-  if (is_resubmission) {
-    unsigned int t = previous_matches.back().second;
-    unsigned int now = std::time(0);
-    unsigned int p = now - t;
-    int const match_retry_period(get_match_retry_period());
-    if (p < match_retry_period) {
-      ::sleep(match_retry_period - p);
-    }
-  }
-
   ClassAdPtr planned_ad = do_match(jdl,
     jobid,
     context,
@@ -492,7 +462,7 @@ void do_it(
   );
 
   if (!planned_ad) {
-    throw RequestExpired();
+    throw std::runtime_error("unexpected planning failure");
   }
 
   std::string const ce_id(jdl::get_ce_id(*planned_ad));
@@ -683,6 +653,7 @@ try {
   log_helper_called(context, name);
 
   std::string error;
+  bool pending_error = false;
 
   try {
 
@@ -712,15 +683,27 @@ try {
     error = "cannot generate the submission JDL";
   } catch (CannotGenerateSubmitFile&) {
     error = "cannot generate the submit file";
+  } catch (planning_error const& e) {
+    pending_error = true;
+    error = e.what();
   }
 
   if (error.empty()) {
+    Info("success");
     log_helper_return(context, name, EXIT_SUCCESS);
     return EXIT_SUCCESS;
   } else {
-    log_helper_return(context, name, EXIT_ABORT_NODE);
-    log_abort(context, error);
-    return EXIT_ABORT_NODE;
+    if (pending_error) {
+      Info("postponing (" << error << ')');
+      log_pending(context, error);
+      log_helper_return(context, name, EXIT_RETRY_NODE);
+      return EXIT_RETRY_NODE;
+    } else {
+      Error(error);
+      log_helper_return(context, name, EXIT_ABORT_NODE);
+      log_abort(context, error);
+      return EXIT_ABORT_NODE;
+    }
   }
 
 } catch (std::exception const& e) {

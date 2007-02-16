@@ -12,7 +12,7 @@ lib_LTLIBRARIES = libglite_wms_manager_server.la
 
 libexec_SCRIPTS = glite-wms-dag-post.sh
 
-libexec_PROGRAMS = glite-wms-planner
+libexec_PROGRAMS = glite-wms-planner glite-wms-planner_real
 
 noinst_PROGRAMS = \
 	glite-wms_input_generator
@@ -60,9 +60,12 @@ libglite_wms_manager_server_la_SOURCES = \
 # 	filelist_recovery.cpp \
 #
 
-glite_wms_planner_SOURCES = glite-wms-planner.cpp
-glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic
-glite_wms_planner_LDADD   = \
+glite_wms_planner_SOURCES = \
+        glite-process-counter-args.c
+
+glite_wms_planner_real_SOURCES = glite-wms-planner.cpp
+glite_wms_planner_real_LDFLAGS = -Xlinker --export-dynamic
+glite_wms_planner_real_LDADD   = \
 	libglite_wms_manager_server.la \
 	$(GLITE_WMS_HELPER_LIBS) \
 	$(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
