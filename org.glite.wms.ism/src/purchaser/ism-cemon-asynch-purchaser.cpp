@@ -19,6 +19,7 @@
 
 using namespace std;
 namespace utils = glite::wmsutils::classads;
+namespace utilities = glite::wms::common::utilities;
 
 namespace glite {
 namespace wms {
@@ -90,10 +91,29 @@ void ism_cemon_asynch_purchaser::do_purchase()
      boost::shared_ptr<CEConsumer> consumer(new CEConsumer(m_listening_port));
      if (consumer->bind()) {
 
-       Debug("CEConsumer socket connection successful on port " << consumer->getLocalPort() 
-             << " socket #" << consumer->getLocalSocket() << endl);
+       int const local_socket = consumer->getLocalSocket();
+
+       Debug(
+         "CEConsumer socket connection successful on port "
+         << consumer->getLocalPort() << " socket #" << local_socket
+       );
+
        do {
-       
+
+         fd_set read_set;
+         FD_ZERO(&read_set);
+         FD_SET(local_socket, &read_set);
+         struct timeval tv;
+         tv.tv_sec = 1;
+         tv.tv_usec = 0;
+         int select_error = select(local_socket + 1, &read_set, 0, 0, &tv);
+         if (select_error == -1) { // error
+           ::sleep(1);
+           continue;
+         } else if (select_error == 0) { // timeout expired
+           continue;
+         }
+
          if (consumer->accept()) {
 
           Debug("CEConsumer accepted connection from " << consumer->getClientIP() 
@@ -133,7 +153,7 @@ void ism_cemon_asynch_purchaser::do_purchase()
                     it->second->InsertAttr("PurchasedBy","ism_cemon_asynch_purchaser");
                     ism_type::iterator ism_it = get_ism(ism::ce).find(it->first);
                     if (ism_it != get_ism(ism::ce).end()) {
-                      ism_type::data_type& data = ism_it->second;
+                      ism_type::mapped_type& data = ism_it->second;
                       boost::tuples::get<0>(data) = current_time;
                       boost::tuples::get<2>(data) = it->second;
                     } 
@@ -160,8 +180,11 @@ void ism_cemon_asynch_purchaser::do_purchase()
       } while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
     } // bind
     else if (m_mode == loop) {
-      Error("CEConsumer::bind failure:" << consumer->getErrorMessage() << " #" << consumer->getErrorCode());
-      if (m_mode) { sleep(m_interval); }
+      Error(
+        "CEConsumer::bind failure:" << consumer->getErrorMessage()
+        << " #" << consumer->getErrorCode()
+      );
+      ::sleep(m_interval); 
     }
   } while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 }    

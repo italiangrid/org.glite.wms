@@ -160,7 +160,7 @@ void ism_cemon_purchaser::do_purchase()
           it->second->InsertAttr("PurchasedBy","ism_cemon_purchaser");
           ism_type::iterator ism_it = get_ism(ism::ce).find(it->first);
           if (ism_it != get_ism(ism::ce).end()) {
-            ism_type::data_type& data = ism_it->second;
+            ism_type::mapped_type& data = ism_it->second;
             boost::tuples::get<0>(data) = current_time;
             boost::tuples::get<2>(data) = it->second;
           } else {
