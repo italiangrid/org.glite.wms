@@ -53,7 +53,7 @@ lfc-rmgrpmap
 lfc-rmusrmap
 
 
-lfc-rmdir # [Does not exist in gLite 3.0] 
+#lfc-rmdir # [Does not exist in gLite 3.0] 
 
 lcg-cp
 lcg-cr
@@ -71,14 +71,16 @@ lcg-lg
 lcg-lr
 
 
+# LCG user tools are optional
 lcg-job-monitor 
-lcg-job-status.py
-lcg-getJobStats
-lcg-getJobTimes 
-lcg-getJobStats.py
-lcg-getJobTimes.py
-lcg_jobConsumedTimes.py
-lcg_jobStats.py
+#lcg-job-status.py
+#lcg-getJobStats
+#lcg-getJobTimes 
+#lcg-getJobStats.py
+#lcg-getJobTimes.py
+#lcg_jobConsumedTimes.py
+#lcg_jobStats.py
+
 lcg-ManageVOTag
 
 glite-transfer-submit
@@ -128,25 +130,25 @@ edg-gridftp-rmdir
 
 globus-url-copy
 
-
-nsls
-nsfind
-nsmkdir
-nsrm
-nschmod
-nschown
-nsrename
-nsln
-nstouch
-nssetcomment
-nsdelcomment
-nssetchecksum
-nssetacl
-nschclass
-nsdeleteclass
-nsenterclass
-nslistclass
-nsmodifyclass
+# CASTOR commands are now considered optional on the UI
+#nsls
+#nsfind
+#nsmkdir
+#nsrm
+#nschmod
+#nschown
+#nsrename
+#nsln
+#nstouch
+#nssetcomment
+#nsdelcomment
+#nssetchecksum
+#nssetacl
+#nschclass
+#nsdeleteclass
+#nsenterclass
+#nslistclass
+#nsmodifyclass
 
 
 rfcp
@@ -156,6 +158,6 @@ rfcat
 
 dccp
 
-
-submitter_general.pl
-get_output.pl
+# these are not really part of the distribution
+#submitter_general.pl
+#get_output.pl
