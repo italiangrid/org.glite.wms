@@ -42,6 +42,7 @@ echo "# commands missing: $nmissing"
 
 if [ -z "$NOT_FOUND" ]; then
   echo "All commands are present in the system"
+  echo " === test PASSED === "
   exit 0
 fi
 
@@ -54,4 +55,5 @@ do
 done
 
 echo " --- end of list --- "
+echo " === test NOT passed === "
 exit 1
