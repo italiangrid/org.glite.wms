@@ -206,7 +206,8 @@ JobControllerReal::~JobControllerReal( void )
 
 int JobControllerReal::submit( const classad::ClassAd *pad )
 try {
-  int                                result, numberId = -1;
+  int                                result = 1;
+  int  															 numberId = -1;
   string                             rsl, parameters, info, condorid, seqcode;
   SubmitAdapter                      sad( *pad );
   logger::StatePusher                pusher( elog::cedglog, "JobControllerReal::submit(...)" );
@@ -272,7 +273,7 @@ try {
 
       while ( ( count > 0 ) && ( result ) ) { // fix for bug #23401
       	result = CondorG::instance()->set_command( CondorG::submit, parameters )->execute( info );
-	count--;
+				count--;
         sleep( 2 * count );
       }	
 
