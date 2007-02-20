@@ -19,6 +19,7 @@ AC_INIT([GLite WMS client], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/commands/wmp-job-submit.cpp])
+AC_CONFIG_SRCDIR([config/glite_wmsclient.conf])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -184,6 +185,7 @@ AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/utilities/Makefile])
 AC_CONFIG_FILES([src/services/Makefile])
