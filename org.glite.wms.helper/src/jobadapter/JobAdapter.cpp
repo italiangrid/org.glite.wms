@@ -405,7 +405,7 @@ try {
     if (!vo.empty()) {
       jdl::set_remote_remote_virtual_organisation(*result, vo);
     }
-    if (is_condor_resource || lrmstype == "condor") {
+    if (is_condor_resource && lrmstype == "condor") {
       // condor resource, as per Nate Mueller's May 4, 2005 recipe
       jdl::set_remote_job_universe(*result, 9);
       jdl::set_remote_job_grid_type(*result, "condor");
@@ -420,7 +420,7 @@ try {
       jdl::set_remote_remote_uid_system_domain(*result, gatekeeper_hostname);
       jdl::set_remote_remote_should_transfer_files(*result, "YES");
       jdl::set_remote_remote_when_to_transfer_output(*result, "ON_EXIT");
-    } else {
+    } else if (is_blahp_resource) {
       // blah resource
       jdl::set_remote_job_universe(*result, 9);
       jdl::set_remote_sub_universe(*result, "blah");
@@ -437,6 +437,11 @@ try {
       } catch (jdl::CannotGetAttribute const& e) {
         // Ignore the remote_remote_requirements if they aren't there.
       }
+    } else {
+      throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
+                                          globusresourcecontactstring,
+                                          "cannot find a suitable resource",
+                                          helper_id);
     }
 
     unsigned char md5_cert_hash[MD5_DIGEST_LENGTH];
