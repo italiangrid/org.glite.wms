@@ -221,7 +221,7 @@ try {
   
   // Mandatory
   // It is renamed as usersubjectname and reinserted with
-  std::string certificatesubject(jdl::get_certificate_subject(*m_ad), exists);
+  std::string certificatesubject(jdl::get_certificate_subject(*m_ad, exists));
   if (certificatesubject.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::CERT_SUBJ,
                                         certificatesubject,
