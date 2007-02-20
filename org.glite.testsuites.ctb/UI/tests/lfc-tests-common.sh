@@ -121,6 +121,10 @@ function lfc_test_startup() {
     myecho "LFC working directory is not defined - will use /grid/<vo>=$LFC_DIR"
   fi
 
+  export LFC_CONNTIMEOUT=10 # connect timeout in seconds 
+  export LFC_CONRETRY=5     # number of retries
+  export LFC_CONRETRYINT=3  # retry interval in seconds
+
   echo ""
   myecho "LFC environment  : LFC_HOST=$LFC_HOST"
   myecho "LFC environment  : LFC_HOME=$LFC_HOME"
