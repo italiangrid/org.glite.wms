@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Test voms-proxy-info with different options
-
+# Test voms-proxy-info with different options.
+#
+# Note: this test might fail for proxy with no VOMS extension if voms-proxy-info does.
+#
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version info: $Id$
 # Release: $Name$
@@ -9,6 +11,7 @@
 function myexit() {
 
   if [ $1 -ne 0 ]; then
+    echo ""
     echo " *** something went wrong *** "
     echo " *** test NOT passed *** "
     exit $1
@@ -97,5 +100,50 @@ voms-proxy-info -exists  -valid 10:00 && echo "YES" || echo "NO"
 echo ""
 myecho "voms-proxy-info -exists -valid 24:00 ..."
 voms-proxy-info -exists  -valid 24:00 && echo "YES" || echo "NO"
+
+echo ""
+myecho "voms-proxy-info -vo ..."
+voms-proxy-info -vo || myexit 1
+
+echo ""
+myecho "voms-proxy-info -fqan ..."
+voms-proxy-info -fqan || myexit 1
+
+echo ""
+myecho "voms-proxy-info -acissuer ..."
+voms-proxy-info -acissuer || myexit 1
+
+echo ""
+myecho "voms-proxy-info -actimeleft ..."
+voms-proxy-info -actimeleft || myexit 1
+
+echo ""
+myecho "voms-proxy-info -serial ..."
+voms-proxy-info -serial || myexit 1
+
+echo ""
+VO=`voms-proxy-info -vo`
+if [ -n "$VO" ]; then
+  myecho "voms-proxy-info -acexists $VO ..."
+  voms-proxy-info -acexists $VO
+  if [ $? -eq 0 ]; then
+    echo "YES"
+  else 
+    echo "NO"
+    myexit 1
+  fi
+fi
+
+echo ""
+VO=for_sure_non_existing_VO
+myecho "voms-proxy-info -acexists $VO ..."
+voms-proxy-info -acexists $VO
+if [ $? -eq 0 ]; then
+  echo ""
+  myecho "ERROR: voms-proxy-info claims $VO exists!"
+  myexit 1
+else
+  echo "Of course not!"
+fi
 
 myexit 0
