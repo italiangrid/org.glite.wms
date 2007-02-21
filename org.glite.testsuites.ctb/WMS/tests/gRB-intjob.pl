@@ -74,15 +74,15 @@ else{$inp{jtimeout}=120};
 #------------------------------------
 #  Used commands
 #------------------------------------
-my $cmdSubmit='glite-wms-job-submit -a --nolisten ';
-my $cmdCancel='glite-wms-job-cancel --noint ';
-my $cmdStatus='glite-wms-job-status ';
-my $cmdJobOutput="glite-wms-job-output --noint --dir $tmpdir ";
+#my $cmdSubmit='glite-wms-job-submit -a --nolisten ';
+#my $cmdCancel='glite-wms-job-cancel --noint ';
+#my $cmdStatus='glite-wms-job-status ';
+#my $cmdJobOutput="glite-wms-job-output --noint --dir $tmpdir ";
 
-#my $cmdSubmit='glite-job-submit --nolisten --nogui ';
-#my $cmdCancel='glite-job-cancel --noint ';
-#my $cmdStatus='glite-job-status';
-#my $cmdJobOutput="glite-job-output --noint --dir $tmpdir ";
+my $cmdSubmit='glite-job-submit --nolisten --nogui ';
+my $cmdCancel='glite-job-cancel --noint ';
+my $cmdStatus='glite-job-status';
+my $cmdJobOutput="glite-job-output --noint --dir $tmpdir ";
 #------------------------------------
 #  Create tmp directory
 #------------------------------------
