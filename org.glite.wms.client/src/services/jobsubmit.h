@@ -141,9 +141,8 @@ class JobSubmit : public Job {
 		* the limitation that could be set on the server
 		* (UserFreeQuota and max InputSandbox size)
 		* A WmsClientException is thrown if the total ISB size exceeds one of these limitations
-		* @param isbSize the total size of the local file in the ISB
 		*/
-		void checkUserServerQuota(const long &isbSize) ;
+		void checkUserServerQuota() ;
 		/**
 		* Returns a relative path that is used to archive the ISB local file in the tar files.
 		* This relative path is related to the job node which JDL name is provided as input parameter.
@@ -314,6 +313,8 @@ class JobSubmit : public Job {
 		long expireTime ;
 		/** Sandbox Size variable */
 		long isbSize;
+		/** Max Single Job Size variable */
+		long maxJobIsbSize;
                 /**
                 * JobId's
                 */

@@ -466,7 +466,7 @@ const wmsJobType JobSubmit::getJobType( ){
 * limitation that could be set on the server
 * (UserFreeQuota and max InputSandbox size)
 */
-void JobSubmit::checkUserServerQuota(const long &isbSize) {
+void JobSubmit::checkUserServerQuota() {
 	pair<long, long> free_quota ;
 	long maxIsbSize = 0;
 	long limit = 0;
@@ -517,16 +517,16 @@ void JobSubmit::checkUserServerQuota(const long &isbSize) {
 		// (2) MAX ISB size -----------
 		if (maxIsbSize>0 ) {
 			logInfo->result(WMP_MAXISBSIZE_SERVICE, "Max ISB size information successfully retrieved");
-			if (isbSize > maxIsbSize) {
+			if (maxJobIsbSize > maxIsbSize) {
 				ostringstream err ;
-				err << "The size of the InputSandbox (" << isbSize <<" bytes) ";
+				err << "The max job size of the InputSandbox (" << maxJobIsbSize <<" bytes) ";
 				err << "exceeds the MAX InputSandbox size limit on the server (" << maxIsbSize << " bytes)";
 				throw WmsClientException( __FILE__,__LINE__,
 					"checkUserServerQuota",  DEFAULT_ERR_CODE,
 					"InputSandboxSize Error" , err.str());
 			} else {
 				ostringstream q;
-				q << "The InputSandbox size (" << isbSize << " bytes) doesn't exceed the max size limit of " << maxIsbSize << " bytes:";
+				q << "The max job size (" << maxJobIsbSize << " bytes) doesn't exceed the max size limit of " << maxIsbSize << " bytes:";
 				logInfo->print (WMS_DEBUG, q.str(), "File transfer is allowed" );
 			}
 		} else {
@@ -731,6 +731,7 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 */
 int JobSubmit::checkInputSandbox ( ) {
 	isbSize = 0;
+	maxJobIsbSize = 0;
 	string message = "";
 	ostringstream err ;
 	logInfo->print (WMS_DEBUG, "Retrieving the list of the local ISB files from the user JDL", "");
@@ -769,11 +770,20 @@ int JobSubmit::checkInputSandbox ( ) {
 	} else {
 		FileAd::setMaxFileSize(Options::getMinimumAllowedFileSize("", zipAllowed));
 	}
+	
+	// Get the Total of the Input Sandbox
 	isbSize = extractAd->getTotalSize ( );
+	
+	// Get the highest file size from all the available in the input sandbox
+	maxJobIsbSize = extractAd->getMaxJobFileSize();
+	
 	if (isbSize > 0) {
 		logInfo->print (WMS_DEBUG,
 			"Total size of the ISB file(s) to be transferred to:",
 			boost::lexical_cast<string>(isbSize) );
+		logInfo->print (WMS_DEBUG,
+			"Max single job size of the ISB file(s) to be transferred to:",
+			boost::lexical_cast<string>(maxJobIsbSize) );
 		// Checking whether ISB-total_size is supported by either UserFreeQUota or MAX-ISB =============
 		submitPerformStep(STEP_CHECK_US_QUOTA);
 		if (zipAllowed){
@@ -1907,7 +1917,7 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 	switch (step){
 		case STEP_CHECK_US_QUOTA:
 			// logInfo->print(WMS_DEBUG, "JobSubmit Performing", "STEP_CHECK_US_QUOTA");
-			try{checkUserServerQuota(isbSize); debugStuff(wmcUtils->getRandom(200)); }
+			try{checkUserServerQuota(); debugStuff(wmcUtils->getRandom(200)); }
 			catch (WmsClientException &exc) {
 				logInfo->print(WMS_WARNING, string(exc.what()), "");
 				submitRecoverStep(step);
