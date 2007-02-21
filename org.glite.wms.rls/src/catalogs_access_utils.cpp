@@ -7,9 +7,9 @@
 
 #include "DLI_ReplicaService.h"
 #include "SI_ReplicaService.h"
-#include "RLS_ReplicaService.h"
-#include "ReplicaServiceException.h"
 #include "glite/wms/rls/catalog_access_utils.h"
+
+#include "ReplicaServiceException.h"
 
 #include <ServiceDiscovery.h>
 
@@ -49,42 +49,28 @@ namespace {
 typedef boost::shared_ptr< vector<string> > lfn_list_ptr;
 typedef boost::shared_ptr< vector<string> > endpoints_ptr;
 
-typedef boost::tuple< lfn_list_ptr,             //lfns
-                      string,                   //vo
-                      bool                      //resolution check
-                    > rls_lfn;                  //  -we try DLI in case
-                                                //  in case of failure
 typedef boost::tuple< lfn_list_ptr,             //lfns to be resolved
-                      endpoints_ptr             //endpoints through SD
+                      endpoints_ptr             //endpoints gathered through SD
                     > dli_lfn;
 
 typedef boost::tuple< lfn_list_ptr,             //lfns to be resolved
-                      endpoints_ptr             //endpoints through SD
+                      endpoints_ptr             //endpoints gathered through SD
                     > si_lfn;
 
-typedef vector<rls_lfn> rls_lfns;
 typedef vector<dli_lfn> dli_lfns;
 typedef vector<si_lfn> si_lfns;
 
-typedef boost::shared_ptr<rls_lfns> rls_lfns_ptr;
 typedef boost::shared_ptr<dli_lfns> dli_lfns_ptr;
 typedef boost::shared_ptr<si_lfns>  si_lfns_ptr;
 
-typedef boost::tuple< rls_lfns_ptr,
-                      dli_lfns_ptr,
-                      si_lfns_ptr
-                    > lfns_2B_resolved;
+typedef boost::tuple< 
+           dli_lfns_ptr,
+           si_lfns_ptr
+        > lfns_2B_resolved;
 
 enum {
-   _RLS = 0,
-   _DLI,
+   _DLI = 0,
    _SI
-};
-
-enum {
-  RLS_LFNS = 0, 
-  VO,
-  JDL_CHECK
 };
 
 enum {
@@ -95,23 +81,8 @@ enum {
 
 //void print_lfns(const lfns_2B_resolved& lfns){
 //
-//   rls_lfns_ptr rls_c= lfns.get<_RLS>();
 //   dli_lfns_ptr dli_c = lfns.get<_DLI>();
 //   si_lfns_ptr si_c = lfns.get<_SI>();
-//
-//   Debug("RLS");
-//   for( rls_lfns::iterator rls_it = rls_c->begin() ;
-//        rls_it != rls_c->end();
-//        rls_it++ ){
-//      lfn_list_ptr elem = rls_it->get<RLS_LFNS>(); 
-//      for( vector<string>::iterator it = elem->begin();
-//           it != elem->end();
-//           it++){
-//      
-//         Debug(*it);
-//      } 
-//      Debug(rls_it->get<VO>());
-//   }
 //
 //   Debug("DLI");
 //   for( dli_lfns::iterator dli_it = dli_c->begin() ;
@@ -207,11 +178,11 @@ void get_catalog_url(
 struct old_jdl_check{
 
 string m_vo;
-endpoints_ptr m_sd_endpoints;
+//endpoints_ptr m_sd_endpoints;
 
 old_jdl_check(string vo): m_vo(vo) {
 
-   m_sd_endpoints.reset( new vector< string > );
+//   m_sd_endpoints.reset( new vector< string > );
 }
 
 lfns_2B_resolved*
@@ -222,11 +193,9 @@ operator()(
    // we rely on the fact that all the containers in c
    // has only one element
 
-   rls_lfns_ptr rls_c= c->get<_RLS>();
    dli_lfns_ptr dli_c = c->get<_DLI>();
    si_lfns_ptr si_c = c->get<_SI>();
 
-   lfn_list_ptr the_rls_lfns = (*rls_c)[0].get<RLS_LFNS>();
    lfn_list_ptr the_dli_lfns = (*dli_c)[0].get<DLI_SI_LFNS>();
    lfn_list_ptr the_si_lfns = (*si_c)[0].get<DLI_SI_LFNS>();
 
@@ -253,20 +222,6 @@ operator()(
       );
 
 
-   if( lfn_or_guid_found && !si_endpoints_in_jdl ){
-      the_rls_lfns->push_back(e);
-      if ( !dli_endpoints_in_jdl ){
-         string dli_service_name =
-            (configuration::Configuration::instance()->wm())->
-                 dli_service_name();
-         get_catalog_url( m_vo,
-                          dli_service_name,
-                          *jdl_dli_endpoints
-         );
-         dli_endpoints_in_jdl = true;
-      }
-   }
-      
    if( 
        (lfn_or_guid_found && si_endpoints_in_jdl) ||
        si_lfn_or_guid_found
@@ -283,7 +238,7 @@ operator()(
       }
    }
 
-   if( lds_or_query_found ){
+   if( lds_or_query_found || (lfn_or_guid_found && !si_endpoints_in_jdl) ){
 
       the_dli_lfns->push_back(e);
       if ( !dli_endpoints_in_jdl ){
@@ -346,15 +301,8 @@ operator()(
       *endpoints,
       getEndpoint
    );
-   if ( dataCatalogType == "RLS" ) {
-      c->get<_RLS>()->push_back( boost::make_tuple( 
-                                    input_data,
-                                    m_vo,
-                                    false
-                                 )
-      );
-   }
-   else if ( dataCatalogType == "DLI" ) {
+
+   if ( dataCatalogType == "DLI" ) {
       if ( !getEndpoint ) {
          if ( m_sd_endpoints->empty() ){
             string dli_service_name = 
@@ -409,7 +357,6 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
       new filemapping()
    );
 
-   rls_lfns_ptr rls_c= lfns.get<_RLS>();
    dli_lfns_ptr dli_c = lfns.get<_DLI>();
    si_lfns_ptr si_c = lfns.get<_SI>();
 
@@ -418,93 +365,10 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
          dli_si_catalog_timeout();
 
 
-/////////RLS HANDLING
-   rls_lfns::iterator rls_c_it = rls_c->begin();
-   rls_lfns::const_iterator rls_c_e = rls_c->end();
-
-   vector<string> rls_lfns_failed;
-   bool old_syntax_check;
-   if( rls_c_it != rls_c_e )
-      old_syntax_check = rls_c_it->get<JDL_CHECK>();
-   else
-      old_syntax_check = false;
-   bool rls_plugin = false;
-   void* rlsLibHandle = NULL;
-   RLS::create_RLS_t* createRls;  RLS::destroy_RLS_t* destroyRls;
-   RLS::RLS_ReplicaService* the_rls;
-   string rlsLib = "libglite_wms_rls_rls.so";
-   for(;rls_c_it != rls_c_e; rls_c_it++){
-
-      lfn_list_ptr rls_lfn_group = rls_c_it->get<RLS_LFNS>();
-
-      if ( rls_lfn_group->empty() ) continue;
-      if( !rls_plugin ) {
-
-         rlsLibHandle = dlopen (rlsLib.c_str(), RTLD_NOW);
-         if (!rlsLibHandle) {
-            Warning("cannot load RLS helper lib " << rlsLib );
-            Warning("dlerror returns: " << dlerror());
-            break;
-         }
-         else {
-            createRls = (RLS::create_RLS_t*)dlsym(rlsLibHandle,"create_RLS");
-            destroyRls = (RLS::destroy_RLS_t*)dlsym(rlsLibHandle,"destroy_RLS");
-            if (!createRls || !destroyRls) {
-               Warning("cannot load RLS helper symbols");
-               Warning("dlerror returns: " << dlerror());
-               dlclose(rlsLibHandle);
-               break;
-            }
-            else {
-               try {
-                  the_rls = createRls(rls_c_it->get<VO>());
-                  rls_plugin = true;
-               }
-               catch( const ReplicaServiceException& ex){
-                  Error(ex.reason());
-               }      
-            }
-         }
-      }
-
-      vector<string>::iterator lfns_it = rls_lfn_group->begin();
-      vector<string>::const_iterator lfns_e = rls_lfn_group->end();
-     
-      for(;lfns_it!=lfns_e;lfns_it++){
-         vector<string> sfns;
-         try {
-            the_rls->listReplica(*lfns_it, sfns);
-         }
-         catch(const ReplicaServiceException&  ex){
-            Error(ex.reason());
-            if( old_syntax_check ) rls_lfns_failed.push_back(*lfns_it);
-            continue;
-         }
-         fm->insert(std::make_pair(*lfns_it, sfns));
-      }
-
-   }
-
-   if(rls_plugin){
-      destroyRls(the_rls);
-      dlclose(rlsLibHandle);
-   } 
-
 ///////////////DLI HANDLING
 
    dli_lfns::iterator dli_c_it = dli_c->begin();
    dli_lfns::const_iterator dli_c_e = dli_c->end();
-
-   //to be modified
-   if ( old_syntax_check ) {
-      vector<string>::iterator i = rls_lfns_failed.begin();
-      vector<string>::iterator e = rls_lfns_failed.end();
-      for(;i!=e;i++){
-         dli_c_it->get<DLI_SI_LFNS>()->push_back(*i);
-      }
-   }
-
-//print_lfns(lfns);
 
    bool dli_plugin = false;
    void* dliLibHandle = NULL;
@@ -681,7 +545,6 @@ resolve_filemapping_info(
    string proxy = jdl::get_x509_user_proxy(requestAd, proxyInAd);
    
    lfns_2B_resolved lfns = boost::make_tuple (
-                              rls_lfns_ptr(new rls_lfns),
                               dli_lfns_ptr(new dli_lfns),
                               si_lfns_ptr(new si_lfns)
                            );
@@ -707,16 +570,9 @@ resolve_filemapping_info(
       endpoints_ptr si_catalogs( new vector<string> );
       requestad::get_storage_index(requestAd, *si_catalogs, getStorageIndex);
 
-      lfn_list_ptr the_rls_lfns( new vector<string> );
       lfn_list_ptr the_dli_lfns( new vector<string> );
       lfn_list_ptr the_si_lfns( new vector<string> );
 
-      lfns.get<_RLS>()->push_back( boost::make_tuple(
-                                      the_rls_lfns,
-                                      vo,
-                                      true
-                                   )
-      );
       lfns.get<_DLI>()->push_back( boost::make_tuple(
                                       the_dli_lfns,
                                       dli_catalogs 
