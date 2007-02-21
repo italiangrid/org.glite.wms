@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.25  2007/02/21 10:18:21  mcecchi
+#       lb libs added (new dependency carried by wms.common)
+#
 #       Revision 1.24  2006/11/23 10:08:00  monforte
 #       Removed ism/broker/brokerinfo/matchmaking dependencies
 #
@@ -237,19 +240,21 @@ if test "$have_cppunit" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 
-have_glite_wmsutils=no
-have_glite_wms_common=no
-have_glite_wms_jdl=no
-
 AC_GLITE
 AC_OPTIMIZE
 AC_GLITE_WMS_OPTIONAL
 
+have_glite_wmsutils=no
+have_glite_wms_common=no
+have_glite_wms_jdl=no
+have_glite_lb=no
+
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
-
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 
+AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
