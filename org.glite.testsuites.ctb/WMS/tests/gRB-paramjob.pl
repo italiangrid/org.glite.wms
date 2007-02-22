@@ -4,7 +4,7 @@ use Getopt::Std;
 use strict;
 
 #--------------------------------------------------------------
-#                Parametric job testing
+#                Parametric job testing  
 #
 #   The test script does the following:
 # 1. Generation of the JDL file for parametric job using input parameters
