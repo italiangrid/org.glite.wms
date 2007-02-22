@@ -427,7 +427,7 @@ sub cleanUp{
  if(-e $pipein){unlink($pipein)};
  if(-e $pipeout){unlink($pipeout)};
  if(-e "$tmpdir/submitlog"){unlink("$tmpdir/submitlog")};
- if(-e "$intout"){unlink("$intout")};
+ if(defined($intout) and -e "$intout"){unlink("$intout")};
  clearTmpDir();
 # unless($ok){
 #  if($id=~/https/){ 
