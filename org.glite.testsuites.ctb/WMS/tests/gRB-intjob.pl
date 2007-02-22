@@ -53,7 +53,7 @@ else{$bindir=$basedir};
 #  Input parameters
 #------------------------------------
 my %inp=(); #hash for input parameters
-my %opt=(); getopts("c:r:l:d:s:t:j:",\%opt);
+my %opt=(); getopts("c:r:l:d:s:t:j:w",\%opt);
 
 if(defined $opt{c}){$inp{confWms}=$opt{c}}; #wms config file
 if(defined $opt{r}){$inp{reqJdl}=$opt{r}}; #additional parameters for jdl
@@ -70,19 +70,24 @@ else{$inp{ncycles}=2};
 if(defined $opt{j}){$inp{jtimeout}=$opt{j}}
 else{$inp{jtimeout}=120};
 
+if(defined $opt{w}){$inp{cmdtype}='cmdProxy'}
+else{$inp{cmdtype}='cmdNS'};
 
 #------------------------------------
 #  Used commands
 #------------------------------------
-#my $cmdSubmit='glite-wms-job-submit -a --nolisten ';
-#my $cmdCancel='glite-wms-job-cancel --noint ';
-#my $cmdStatus='glite-wms-job-status ';
-#my $cmdJobOutput="glite-wms-job-output --noint --dir $tmpdir ";
-
-my $cmdSubmit='glite-job-submit --nolisten --nogui ';
-my $cmdCancel='glite-job-cancel --noint ';
-my $cmdStatus='glite-job-status';
-my $cmdJobOutput="glite-job-output --noint --dir $tmpdir ";
+my ($cmdSubmit,$cmdCancel,$cmdStatus,$cmdJobOutput);
+if($inp{cmdtype} eq 'cmdProxy'){
+ $cmdSubmit='glite-wms-job-submit -a --nolisten ';
+ $cmdCancel='glite-wms-job-cancel --noint ';
+ $cmdStatus='glite-wms-job-status ';
+ $cmdJobOutput="glite-wms-job-output --noint --dir $tmpdir ";
+}else{
+ $cmdSubmit='glite-job-submit --nolisten --nogui ';
+ $cmdCancel='glite-job-cancel --noint ';
+ $cmdStatus='glite-job-status';
+ $cmdJobOutput="glite-job-output --noint --dir $tmpdir ";
+};
 #------------------------------------
 #  Create tmp directory
 #------------------------------------
@@ -122,21 +127,24 @@ printMsg("=================================================================",1);
 #------------------------------------
 #  Check pipes and shadow process
 #------------------------------------
+my $env=1;
 my $rt=`ps -af | grep shadow.*$port | sed /grep/d | wc -l`;
 chomp $rt;
 unless($rt){ # no shadow process
  printMsg("No grid-console-shadow in memory",2);
- printMsg("Test failed",2);
- exit($retFail);
+ $env=0;
 };
-unless(-e $pipein){
- printMsg("No input pipe $pipein",2);
- printMsg("Test failed",2);
- exit($retFail);
+unless( -e $pipein){
+  printMsg("Input pipe does not exists",2);
+  $env=0;  
 };
-unless(-e $pipeout){
- printMsg("No output pipe $pipeout",2);
- printMsg("Test failed",2);
+unless( -e $pipeout){
+  printMsg("Output pipe does not exists",2);
+  $env=0;
+};
+unless($env){
+ printMsg("Test Failed",2);
+ cleanUp(0);
  exit($retFail);
 };
 
@@ -239,6 +247,7 @@ sub runJob{
  my $jdl=shift; my $st=0;
  my $wms=' '; $wms="-c $inp{confWms}" if exists $inp{confWms};
  my $cmd="$cmdSubmit $wms $jdl > $tmpdir/submitlog |";
+# my $cmd="glite-job-submit $wms --nolisten --nogui --debug $jdl > $tmpdir/submitlog |";
  open(CMD,"$cmd");
  while(<CMD>){print}; close(CMD);
  open(INP,"$tmpdir/submitlog");
@@ -420,14 +429,14 @@ sub cleanUp{
  if(-e "$tmpdir/submitlog"){unlink("$tmpdir/submitlog")};
  if(-e "$intout"){unlink("$intout")};
  clearTmpDir();
- unless($ok){
-  if($id=~/https/){ 
-   printMsg("===================================================",1);
-   open(INP,"glite-job-logging-info -v 3 $id |");
-   while(my $s=<INP>){chomp $s; printMsg($s,1)}; close(INP);
-  };
- };
+# unless($ok){
+#  if($id=~/https/){ 
+#   printMsg("===================================================",1);
+#   open(INP,"glite-job-logging-info -v 3 $id |");
+#   while(my $s=<INP>){chomp $s; printMsg($s,1)}; close(INP);
+#  };
+# };
  if($mod){
-  system("$cmdCancel $id 2>&1 >/dev/null");
+  system("$cmdCancel $id 2>&1 >/dev/null") if $id=~/https/;
  };
 }
