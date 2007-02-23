@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Test voms-proxy-info with different options.
 #
@@ -122,10 +122,21 @@ myecho "voms-proxy-info -serial ..."
 voms-proxy-info -serial || myexit 1
 
 echo ""
+myecho "Analysing output of voms-proxy-info -vo ..."
 VO=`voms-proxy-info -vo`
+
 if [ -n "$VO" ]; then
+
+  # ... check for the bug when vo appears twice after a new line
+  N=`grep -c "$VO" <<<"$VO"`
+  if [ $N -ne 1 ]; then
+    echo "VO name \"$VO\" is a malformed"
+    myexit 1
+  fi
+
   myecho "voms-proxy-info -acexists $VO ..."
   voms-proxy-info -acexists $VO
+
   if [ $? -eq 0 ]; then
     echo "YES"
   else 
