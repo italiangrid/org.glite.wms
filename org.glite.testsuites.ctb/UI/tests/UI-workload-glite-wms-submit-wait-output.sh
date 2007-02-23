@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # The submit - status - get output test for gLite WMS workload system
 
