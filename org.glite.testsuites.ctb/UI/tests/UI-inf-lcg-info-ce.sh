@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Run lcg-info with --list-ce.
 # Usage: UI-inf-lcg-info-ce.sh [--vo <vo>]

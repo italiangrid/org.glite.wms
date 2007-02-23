@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Basic test of the myproxy-init/info/destroy command chain
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # A set of ldapsearch requests with different attributes.
 # Usage: UI-inf-lcg-info-ce.sh [-H giishost:port]

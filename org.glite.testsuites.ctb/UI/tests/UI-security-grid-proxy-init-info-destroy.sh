@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Test grid-proxy-init/info/destroy chain.
 # The following options of grid-proxy-init are used: -verify -debug -limited -valid -bits -out

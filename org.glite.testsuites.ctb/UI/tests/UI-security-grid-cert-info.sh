@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Test grid-cert-info with different options
 

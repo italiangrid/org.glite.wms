@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Runs lcg-infosites with various options and report failures if any.
 # Usage: UI-inf-lcg-infosites.sh [--vo <vo>]

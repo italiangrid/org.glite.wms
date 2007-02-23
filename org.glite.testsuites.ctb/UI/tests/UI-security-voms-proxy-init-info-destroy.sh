@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Test voms-proxy-init/info/destroy chain.
 # The following options of voms-proxy-init are used: -verify -debug -limited -valid -bits -out
