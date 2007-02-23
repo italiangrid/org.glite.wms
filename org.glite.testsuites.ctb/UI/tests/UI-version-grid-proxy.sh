@@ -1,31 +1,17 @@
-#!/bin/bash
+# This is a "multishell" script.
 
 # Try grid-proxy-init/info/destroy and grid-cert-info with -version
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version info: $Id$
-# Release: $Name$
-
-function test_version_or_exit() {
-
-echo "testing version of $1 ..."
-
-if $1 -version; then
-   echo ""
-else
-   echo "Error! Problem getting version of $1!"
-   exit 1
-fi
-
-}
 
 echo "    == Version test of grid-proxy-* and grid-cert-info === "
 echo ""
 
-test_version_or_exit grid-proxy-init
-test_version_or_exit grid-proxy-info
-test_version_or_exit grid-proxy-destroy
-test_version_or_exit grid-cert-info
+source `dirname $0`/command-version.sh grid-proxy-init	  -version || exit $?
+source `dirname $0`/command-version.sh grid-proxy-info	  -version || exit $?
+source `dirname $0`/command-version.sh grid-proxy-destroy -version || exit $?
+source `dirname $0`/command-version.sh grid-cert-info	  -version || exit $?
 
 echo " == all Ok == "
 exit 0

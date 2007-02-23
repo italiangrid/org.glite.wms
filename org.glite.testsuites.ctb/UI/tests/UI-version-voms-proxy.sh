@@ -1,33 +1,18 @@
-#!/bin/bash
+# This is a "multishell" script.
 
 # Try VOMS proxy commands with --version
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version info: $Id$
-# Release: $Name$
-
-function test_version_or_exit() {
-
-echo "testing version of $1 ..."
-
-if $1 --version; then
-   echo ""
-else
-   echo "Error! Problem getting version of $1!"
-   exit 1
-fi
-
-}
 
 echo "    === Version test of voms-proxy-* ==="
 echo ""
 
-test_version_or_exit voms-proxy-init
-test_version_or_exit voms-proxy-destroy
-test_version_or_exit voms-proxy-info
-test_version_or_exit voms-proxy-list
-test_version_or_exit voms-proxy-fake
+source `dirname $0`/command-version.sh voms-proxy-init	  --version || exit $?
+source `dirname $0`/command-version.sh voms-proxy-destroy --version || exit $?
+source `dirname $0`/command-version.sh voms-proxy-info	  --version || exit $?
+source `dirname $0`/command-version.sh voms-proxy-list	  --version || exit $?
+source `dirname $0`/command-version.sh voms-proxy-fake	  --version || exit $?
 
 echo " == all Ok == "
 exit 0
-

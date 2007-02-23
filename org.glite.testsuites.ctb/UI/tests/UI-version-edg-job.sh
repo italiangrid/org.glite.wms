@@ -1,35 +1,21 @@
-#!/bin/bash
+# This is a "multishell" script.
 
 # Try gLite EDG job submission commands with --version
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version info: $Id$
-# Release: $Name$
-
-function test_version_or_exit() {
-
-echo "testing version of $1 ..."
-
-if $1 --version; then
-   echo ""
-else
-   echo "Error! Problem getting version of $1!"
-   exit 1
-fi
-
-}
 
 echo "    === Version test of edg-job-*  ===     "
 echo ""
 
-test_version_or_exit edg-job-submit
-test_version_or_exit edg-job-status
-test_version_or_exit edg-job-list-match
-test_version_or_exit edg-job-cancel
-test_version_or_exit edg-job-attach
-test_version_or_exit edg-job-get-output
-test_version_or_exit edg-job-get-logging-info
-test_version_or_exit edg-job-get-chkpt
+source `dirname $0`/command-version.sh edg-job-submit	        --version || exit $?
+source `dirname $0`/command-version.sh edg-job-status	        --version || exit $?
+source `dirname $0`/command-version.sh edg-job-list-match       --version || exit $?
+source `dirname $0`/command-version.sh edg-job-cancel	        --version || exit $?
+source `dirname $0`/command-version.sh edg-job-attach	        --version || exit $?
+source `dirname $0`/command-version.sh edg-job-get-output       --version || exit $?
+source `dirname $0`/command-version.sh edg-job-get-logging-info --version || exit $?
+source `dirname $0`/command-version.sh edg-job-get-chkpt        --version || exit $?
 
 echo "    ===    seems Ok    ===    "
 exit 0
