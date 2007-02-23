@@ -11,15 +11,14 @@
 SYSTEM_VOMS_FILE=${GLITE_LOCATION}/etc/vomses
 USER_VOMS_FILE=${HOME}/.glite/vomses
 
-TMP_SYSTEM_VOMS_FILE=/tmp/systemvomses.test-voms-proxy_`id -un`
-TMP_USER_VOMS_FILE=/tmp/uservomses.test-voms-proxy_`id -un`
+TMP_VOMS_FILE=/tmp/vomses.test-voms-proxy_`id -un`
 
 function myexit() {
 
-  rm -f $TMP_SYSTEM_VOMS_FILE
-  rm -f $TMP_USER_VOMS_FILE
+  rm -f $TMP_VOMS_FILE
 
   if [ $1 -ne 0 ]; then
+    echo ""
     echo " *** something went wrong *** "
     echo " *** test NOT passed *** "
     exit $1
@@ -48,7 +47,7 @@ TMPPROXY=/tmp/proxy_`id  -u`
 echo ""
 myecho "trying to guess user's VO ..."
 if voms-proxy-info -vo; then
-  myecho "voms-proxy-info -vo succeded"
+  myecho "voms-proxy-info -vo succeeded"
   USER_VO=`voms-proxy-info -vo`
 fi
 if [ -n "$USER_VO" ]; then
@@ -59,44 +58,27 @@ else
 fi
 
 echo ""
-echo "    === Part I: -userconf === "
+echo "    === Preparations === "
+
+touch $TMP_VOMS_FILE
+chmod 644 $TMP_VOMS_FILE
+ls -l $TMP_VOMS_FILE
 
 if [ -f ${USER_VOMS_FILE} ]; then
 
   echo ""
   myecho "user-level VOMS file found: ${USER_VOMS_FILE}"
-  myecho " -> will test -userconf option"
+  myecho " -> adding entries containing $USER_VO content to the test vomses file"
+  awk -F ' ' '/[:print:]/ {$1="\"testvoms\""} {print $0}' $USER_VOMS_FILE | grep "$USER_VO" > $TMP_VOMS_FILE
 
-  echo ""
-  myecho "making a slightly modified test copy"
-  awk -F ' ' '/[:print:]/ {$1="\"testvoms\""} {print $0}' $USER_VOMS_FILE | grep "$USER_VO" > $TMP_USER_VOMS_FILE
-
-  chmod 644 $TMP_USER_VOMS_FILE
-  cat $TMP_USER_VOMS_FILE
-
-  echo ""
-  myecho "trying  voms-proxy-init -voms testvoms -userconf $TMP_USER_VOMS_FILE -out $TMPPROXY"
-  voms-proxy-init -voms testvoms  -userconf $TMP_USER_VOMS_FILE  -out $TMPPROXY || myexit $?
-
-  echo ""
-  myecho "destroying proxy ..."
-  voms-proxy-destroy -file $TMPPROXY || myexit $?
-
-  echo "    --- Part I succeeded --- "
+  cat $TMP_VOMS_FILE
 
 elif [ -d ${USER_VOMS_FILE} ]; then
 
     myecho "the use directory of user-defined voms files is not supported by the current version of this test, sorry"
     myexit 1
 
-else
-
-  myecho "Warning: ${USER_VOMS_FILE} not found - have to skip this test"
-
 fi
-
-echo ""
-echo "    === Part II: -confile === "
 
 if [ -e ${SYSTEM_VOMS_FILE} ]; then
 
@@ -104,18 +86,14 @@ if [ -e ${SYSTEM_VOMS_FILE} ]; then
 
     echo ""
     myecho "system-wide VOMS file found: ${SYSTEM_VOMS_FILE}"
-    myecho " -> will test -confile option"
-    echo ""
-    myecho "making a slightly modified test copy"
-    awk -F ' ' '/[:print:]/ {$1="\"testvoms\""} {print $0}' $SYSTEM_VOMS_FILE | grep "$USER_VO" > $TMP_SYSTEM_VOMS_FILE
+    myecho " -> adding entries containing $USER_VO to the test vomses file"
+    awk -F ' ' '/[:print:]/ {$1="\"testvoms\""} {print $0}' $SYSTEM_VOMS_FILE | grep "$USER_VO" >> $TMP_VOMS_FILE
 
   elif [ -d ${SYSTEM_VOMS_FILE} ]; then
 
     myecho "${SYSTEM_VOMS_FILE} is a directory "
-    myecho " -> will merge its files into a test voms file"
-    echo ""
-    myecho "making a test voms file"
-    cat ${SYSTEM_VOMS_FILE}/* | grep "CN" | awk -F ' ' '/[:print:]/ {$1="\"testvoms\""} {print $0}' /dev/stdin | grep "$USER_VO" > ${TMP_SYSTEM_VOMS_FILE}
+    myecho " -> will scan directory and merge all entries containing $USER_VO into the test voms file"
+    cat ${SYSTEM_VOMS_FILE}/* | grep "CN" | awk -F ' ' '/[:print:]/ {$1="\"testvoms\""} {print $0}' /dev/stdin | grep "$USER_VO" >> ${TMP_VOMS_FILE}
 
   else
     
@@ -124,18 +102,19 @@ if [ -e ${SYSTEM_VOMS_FILE} ]; then
     
   fi
   
-  chmod 644 $TMP_SYSTEM_VOMS_FILE
-  cat $TMP_SYSTEM_VOMS_FILE
-
-  echo ""
-  myecho "trying voms-proxy-init -debug -voms testvoms -confile $TMP_SYSTEM_VOMS_FILE -out $TMPPROXY"
-  voms-proxy-init -debug -voms testvoms  -confile $TMP_SYSTEM_VOMS_FILE  -out $TMPPROXY || myexit $?
+  cat $TMP_VOMS_FILE
 
 else
 
-  myecho "WARNING: ${SYSTEM_VOMS_FILE} does not exists - VOMS extension can not be tested"
+  myecho "WARNING: ${SYSTEM_VOMS_FILE} does not exists"
   
 fi
+
+echo "    === Part I: -userconf === "
+
+echo ""
+myecho "trying  voms-proxy-init -voms testvoms -userconf $TMP_VOMS_FILE -out $TMPPROXY"
+voms-proxy-init -voms testvoms  -userconf $TMP_VOMS_FILE  -out $TMPPROXY || myexit $?
 
 echo ""
 myecho "trying voms-proxy-info -all -file $TMPPROXY ... "
@@ -145,5 +124,25 @@ voms-proxy-info -all -file $TMPPROXY || myexit $?
 echo ""
 myecho "destroying proxy ..."
 voms-proxy-destroy -file $TMPPROXY || myexit $?
+
+echo "    --- Part I succeeded --- "
+echo ""
+echo "    === Part II: -confile === "
+
+echo ""
+myecho "trying voms-proxy-init -debug -voms testvoms -confile $TMP_VOMS_FILE -out $TMPPROXY"
+voms-proxy-init -debug -voms testvoms  -confile $TMP_VOMS_FILE  -out $TMPPROXY || myexit $?
+
+
+echo ""
+myecho "trying voms-proxy-info -all -file $TMPPROXY ... "
+echo ""
+voms-proxy-info -all -file $TMPPROXY || myexit $?
+
+echo ""
+myecho "destroying proxy ..."
+voms-proxy-destroy -file $TMPPROXY || myexit $?
+
+echo "    --- Part II succeeded --- "
 
 myexit 0
