@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-# A job-list-match test for the gLite submissoin system.
+# A job-list-match test for the gLite submission system.
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version: $Id$
