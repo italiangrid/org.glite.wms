@@ -4,11 +4,14 @@
 #include <numeric>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/timer.hpp>
 #include "matchmaking.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wmsutils/classads/classad_utils.h"
+#include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/JobAdManipulation.h"
 #include "glite/wms/ism/ism.h"
 #include "exceptions.h"
 
@@ -65,7 +68,10 @@ classad::ClassAd* jdl_ptr;
     ism::MutexSlicePtr mt_slice
   )
   {
+    std::string const job_id(jdl::get_edg_jobid(jdl));
+    boost::timer t;
     ism::Mutex::scoped_lock l(mt_slice->mutex);
+    double t_lock = t.elapsed();
     
     ism::Slice::const_iterator it = mt_slice->slice->begin();
     ism::Slice::const_iterator const e = mt_slice->slice->end();
@@ -77,14 +83,13 @@ classad::ClassAd* jdl_ptr;
       boost::shared_ptr<classad::ClassAd> ce_ad_ptr =
         boost::tuples::get<ism::Ad>(*it);
 
-      classad::ClassAd ce_ad(*ce_ad_ptr);
+      classad::ClassAd& ce_ad(*ce_ad_ptr);
 
       std::string const& ism_id(boost::tuples::get<ism::Id>(*it));
 
       try {
         double rank;
         if (match_and_rank(&ce_ad, jdl_ptr, rank)) {
-          Info(ism_id << ": ok!");
           suitableCEs->push_back(
             boost::tuples::make_tuple( ism_id, rank, ce_ad_ptr )
           );
@@ -93,6 +98,9 @@ classad::ClassAd* jdl_ptr;
         Error("Unexpected result while ranking " << ism_id);
       }
     }
+    l.unlock();
+    Info("MM for job: " << job_id << " (" << t_lock << ", " << t.elapsed() << ')');
+
     return suitableCEs;
   }
 };
