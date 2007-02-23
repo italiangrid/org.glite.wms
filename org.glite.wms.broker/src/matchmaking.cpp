@@ -68,7 +68,7 @@ classad::ClassAd* jdl_ptr;
     ism::MutexSlicePtr mt_slice
   )
   {
-    std::string const job_id(jdl::get_edg_jobid(jdl));
+    std::string const job_id(jdlc::get_edg_jobid(jdl));
     boost::timer t;
     ism::Mutex::scoped_lock l(mt_slice->mutex);
     double t_lock = t.elapsed();
