@@ -406,6 +406,22 @@ do
   eval export $env
 done
 
+vo_hook="lcg-jobwrapper-hook.sh" # common-agreed (vo_hook.sh would be better)
+if [ -n "${__ce_application_dir}" ]; then
+  if [ -d "${__ce_application_dir}" ]; then
+    if [ -r "${__ce_application_dir}/${vo_hook}" ]; then
+      . "${__ce_application_dir}/${vo_hook}"
+    elif [ -r "${__ce_application_dir}/${__vo}/${vo_hook}" ]; then
+      . "${__ce_application_dir}/${__vo}/${vo_hook}"
+    else
+      jw_echo "${vo_hook} not readable"
+    fi
+  else
+    jw_echo "${__ce_application_dir} not found or not a directory"
+  fi
+fi
+unset vo_hook
+
 #customization point #1
 if [ -n "${hooks_directory}" ]; then
   if [ -f "${hooks_directory}/cp_1.sh" ]; then
