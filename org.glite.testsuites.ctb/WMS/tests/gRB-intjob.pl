@@ -245,7 +245,12 @@ sub createJdl{
 #------------------------------------
 sub runJob{
  my $jdl=shift; my $st=0;
- my $wms=' '; $wms="-c $inp{confWms}" if exists $inp{confWms};
+ my $wms=' '; 
+ if(exists $inp{confWms}){ #config file
+  if($inp{cmdtype} eq 'cmdProxy'){$wms="-c $inp{confWms}"}
+  else{$wms="--config-vo $inp{confWms}"};
+ };
+# $wms="-c $inp{confWms}" if exists $inp{confWms};
  my $cmd="$cmdSubmit $wms $jdl > $tmpdir/submitlog |";
 # my $cmd="glite-job-submit $wms --nolisten --nogui --debug $jdl > $tmpdir/submitlog |";
  open(CMD,"$cmd");
