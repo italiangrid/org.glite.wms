@@ -29,6 +29,7 @@ while [ $i -le $ncyc ]; do
   sleep 2
  done
  echo "$i: Get data \"$data\" (Length=$len)" >> out.txt
+ echo "Send echo to submitter" >> out.txt
  echo "$i: Get data \"$data\" (Length=$len)"
  let i=i+1
  sleep 5
