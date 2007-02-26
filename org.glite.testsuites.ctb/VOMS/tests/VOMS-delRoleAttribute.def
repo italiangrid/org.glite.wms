@@ -1,0 +1,4 @@
+testName: VOMS-delRoleAttribute
+testAbbr: delRA
+testTitle: voms-admin "delete-role-attribute GROUPNAME ROLENAME ATTRIBUTE" option
+EOT

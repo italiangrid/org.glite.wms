@@ -1,0 +1,119 @@
+#!/bin/bash
+# Date: 09/02/2007                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Remove user's Attribute                                          #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - User certificate file path                                                        #
+#       - Attribute                                                                         #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured and empty VO                                                         #
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+date
+echo "<br>"
+echo "test VOMS-delUserAttribute:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Attribute=$ATTRIBUTE"
+echo "<br>"
+echo "User=$USER"
+echo "<br>"
+
+echo "SCENARIO: VO empty"
+echo "<br>"
+echo "Remove non existing Attribute of non existing user"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host  delete-user-attribute $USER "$ATTRIBUTE" 2> $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: user " $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"   
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Create user"
+echo "<br>Create user"
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+echo "delete-user-attribute"
+voms-admin --vo=$vo_name -h $voms_host delete-user-attribute $USER "$ATTRIBUTE" 2> $voms_stderr
+
+
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: Attribute" $voms_stderr > /dev/null
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "Assign attribute to user"	
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host set-user-attribute  $USER "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
+
+
+echo "Check user attribute"
+voms-admin --vo=$vo_name -h $voms_host list-user-attributes $USER > $voms_tmp
+
+grep "$ATTRIBUTE" $voms_tmp > /dev/null
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Incorrect list message:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "<br>Delete user attribute"
+
+voms-admin --vo=$vo_name -h $voms_host  delete-user-attribute $USER "$ATTRIBUTE"
+
+echo "<br>Check deleted user attribute"
+echo "list-user-attributes"
+
+voms-admin --vo=$vo_name -h $voms_host list-user-attributes  $USER 2> $voms_stderr
+
+grep "No attributes are returned" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks"
+echo "<br>"
+
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK

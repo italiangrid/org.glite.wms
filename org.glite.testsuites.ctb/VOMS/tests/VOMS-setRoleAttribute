@@ -1,0 +1,192 @@
+#!/bin/bash
+# Date: 12/02/2007                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Set Attribute to group Role                                      #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - Group name                                                                        #
+#       - Role name                                                                         #
+#       - VO host name                                                                      #
+#       - Attribute                                                                         #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+date
+echo "<br>"
+echo "test VOMS-setRoleAttribute:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Attribute=$ATTRIBUTE"
+echo "<br>"
+echo "Attribute value=$ATTVALUE"
+echo "<br>"
+echo "Attribute description=$ATTDESC"
+echo "<br>"
+echo "Group=$GROUP"
+echo "Role=$ROLE"
+echo "<br>"
+
+echo "1. SCENARIO: VO empty"
+echo "<br>"
+echo "1.1. set-role-attribute"
+voms-admin --vo=$vo_name -h $voms_host  set-role-attribute  2> $voms_stderr
+grep "No group name given" $voms_stderr 2> /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+echo "1.2. Set role attribute (without Role)"
+voms-admin --vo=$vo_name -h $voms_host  set-role-attribute "/$vo_name/$GROUP" 2> $voms_stderr
+grep "No role name given" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+
+echo "1.3. Set role attribute (without attribute)"
+voms-admin --vo=$vo_name -h $voms_host  set-role-attribute "/$vo_name/$GROUP" "$ROLE" 2> $voms_stderr
+grep "No attribute name specified!" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+echo "1.4. Set role attribute for nonexisting group"
+voms-admin --vo=$vo_name -h $voms_host  set-role-attribute "/$vo_name/$GROUP" $ROLE "$ATTRIBUTE" 2> $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "2. SCENARIO: Create group"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name/$GROUP"
+
+
+echo "2.1. set-role-attribute"
+voms-admin --vo=$vo_name -h $voms_host  set-role-attribute  "/$vo_name/$GROUP" "Role=$ROLE" "$ATTRIBUTE"  2> $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: role" $voms_stderr 2> /dev/null
+    
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+echo "<br>"
+echo "2.2. create new Role"
+voms-admin --vo=$vo_name -h $voms_host create-role "Role=$ROLE"
+echo "2.3. set-role-attribute"
+voms-admin --vo=$vo_name -h $voms_host  set-role-attribute "/$vo_name/$GROUP" "Role=$ROLE" "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
+
+echo "2.4.  OK, list-role-attributes"
+voms-admin --vo=$vo_name -h $voms_host  list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" > $voms_tmp
+
+echo "2.5. Check result"
+echo "2.6. Check attribute"
+grep "$ATTRIBUTE" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+    echo "Error when assigning attribute to group role:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
+fi
+
+echo "2.6. Check attribute value"
+grep "$ATTVALUE" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+    echo "Error when assigning attribute to group role:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
+fi
+
+
+echo "2.6. Check attribute description"
+grep "$ATTDESC" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+    echo "Error when assigning attribute to group role:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
+fi
+
+
+echo "OK"
+
+echo "Cleaning tasks"
+echo "<br>"
+    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"        
+    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+	
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK
+

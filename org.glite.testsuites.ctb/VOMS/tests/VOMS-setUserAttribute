@@ -1,0 +1,145 @@
+#!/bin/bash
+# Date: 09/11/2006                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: Set Attribute to user                                            #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - User certificate file path                                                        #
+#       - VO host name                                                                      #
+#       - Attribute                                                                         #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+date
+echo "<br>"
+echo "test VOMS-setUserAttribute:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Attribute=$ATTRIBUTE"
+echo "<br>"
+echo "Attribute value=$ATTVALUE"
+echo "<br>"
+echo "Attribute description=$ATTDESC"
+echo "<br>"
+echo "User=$USER"
+echo "<br>"
+
+echo "SCENARIO: VO empty"
+echo "<br>"
+
+voms-admin --vo=$vo_name -h $voms_host  set-user-attribute  2> $voms_stderr
+grep "No certificate file is" $voms_stderr #> /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+voms-admin --vo=$vo_name -h $voms_host  set-user-attribute $USER  2> $voms_stderr
+grep "No attribute name specified!" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+voms-admin --vo=$vo_name -h $voms_host  set-user-attribute $USER "$ATTRIBUTE" 2> $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Create user"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+echo "Assign attribte  $ATTRIBUTE, value=$ATTVALUE and description=$ATTDESC to new user $USER"
+echo "<br>"
+echo "set-user-attribute"
+voms-admin --vo=$vo_name -h $voms_host  set-user-attribute $USER "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
+echo "list-user-attribute"
+voms-admin --vo=$vo_name -h $voms_host  list-user-attributes $USER > $voms_tmp
+
+grep "$ATTRIBUTE" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    echo "Error when assigning attribute to user:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
+fi
+
+grep "$ATTVALUE" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    echo "Error when assigning attribute to user:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
+fi
+
+grep "$ATTDESC" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    echo "Error when assigning attribute to user:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo
+    exit $SAME_ERROR
+fi
+
+
+
+echo "Cleaning tasks"
+echo "<br>"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK
+

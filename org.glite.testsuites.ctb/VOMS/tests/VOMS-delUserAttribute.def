@@ -1,0 +1,4 @@
+testName: VOMS-delUserAttribute
+testAbbr: delUA
+testTitle: voms-admin "delete-user-attribute USER ATTRIBUTE" option
+EOT

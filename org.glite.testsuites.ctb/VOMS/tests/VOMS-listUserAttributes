@@ -1,0 +1,143 @@
+#!/bin/bash
+# Date: 09/02/2007                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: List attributes for the specified user in VO                     #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - User certificate file path                                                        #
+#       - VO host name                                                                      #
+#                                                                                           #
+# Requisites:                                                                               #
+#	- VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/config_file
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+date
+echo "<br>"
+echo "test VOMS-listUserAttributes:"
+echo "<br>"
+echo "VO=$vo_name"
+echo "<br>"
+echo "Attribute=$ATTRIBUTE"
+echo "<br>"
+echo "User=$USER"
+echo "<br>"
+
+echo "1. SCENARIO: VO empty"
+echo "<br>"
+echo "1.1. List non existing attributes of non existing user"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host list-user-attributes 2> $voms_stderr
+grep "No certificate file is specified!" $voms_stderr > /dev/null
+    
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+voms-admin --vo=$vo_name -h $voms_host list-user-attributes $USER 2> $voms_stderr
+grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "OK"
+
+echo "2. SCENARIO: Create user"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+
+echo "2.1. List attributes (user doesn't have attributes)"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host list-user-attributes $USER 2> $voms_stderr
+grep "No attributes are returned" $voms_stderr > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Incorrect error message:"
+    echo "<br>"
+    cat $voms_stderr
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "OK"
+echo "2.2. SCENARIO: Set new 3 user attributes"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host set-user-attribute $USER "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
+voms-admin --vo=$vo_name -h $voms_host set-user-attribute $USER "ATTRIBUTE1" "ATTVALUE1" "ATTDESC1"
+voms-admin --vo=$vo_name -h $voms_host set-user-attribute $USER "ATTRIBUTE2" "ATTVALUE2" "ATTDESC2"
+
+echo "2.3. List user attributes"
+echo "<br>"
+voms-admin --vo=$vo_name -h $voms_host list-user-attributes $USER > $voms_tmp
+
+grep "$ATTRIBUTE" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Error when listing user attributes:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+grep "ATTRIBUTE1" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Error when listing user attributes:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+grep "ATTRIBUTE2" $voms_tmp > /dev/null
+
+if [ $? == 1 ]; then
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Error when listing user attributes:"
+    echo "<br>"
+    cat $voms_tmp
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "OK"
+echo "Cleaning tasks"
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+
+rm -rf $voms_tmp
+rm -rf $voms_stderr
+
+echo "Test OK"
+echo "</pre>"
+exit $SAME_OK
