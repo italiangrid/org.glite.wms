@@ -27,5 +27,17 @@ VOMS-crDefaultACL
 VOMS-removeDefaultACL
 VOMS-listDefaultACL
 VOMS-genGM
+VOMS-crAttribute
+VOMS-delAttribute
+VOMS-listAttributes
+VOMS-setUserAttribute
+VOMS-listUserAttributes
+VOMS-delUserAttribute
+VOMS-setGroupAttribute
+VOMS-delGroupAttribute
+VOMS-listGroupAttributes
+VOMS-setRoleAttribute
+VOMS-delRoleAttribute
+VOMS-listRoleAttributes
 
 
