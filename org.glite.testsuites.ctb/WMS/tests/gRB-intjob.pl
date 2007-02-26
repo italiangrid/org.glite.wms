@@ -122,6 +122,9 @@ unless($id){         #job was't submitted
  printMsg("Submitting failed",2);
  cleanUp(0);  exit($retFail);
 };
+chomp($id);
+system(qq{echo "$id" > $tmpdir/jobID});
+
 printMsg("=================================================================",1);
 #print "jobID=$id\nHost=$host\nShadowID=$shadowID\npipeIN=$pipein\npipeOUT=$pipeout\n";
 #------------------------------------
