@@ -80,22 +80,32 @@ function lcg_test_startup() {
   SE_HOST=""
   GUID=""
   
-  # ... parse options
+  # ... Parse options
+  #     Quotation is disabled to allow constructions like "--vo $2" to work correctly
+  #     But beware you can not pass a vo name containing spaces or other special characters because of that
 
-  if [ "$1" == "--vo" ] && [ -n "$2" ]; then
-    myecho "VO given in command line: $2"
-    VO_OPTIONS="--vo $2"
-    myecho "Will use VO Options:" $VO_OPTIONS
-    shift
-    shift
-  fi
+  OPTS=`getopt --unquoted --longoptions "vo:" --options "d:" -- "$@"` || myexit 1
 
-  if [ "$1" == "-d" ] && [ -n "$2" ]; then
-    myecho "SE host given in command line: $2"
-    SE_HOST=$2
-    shift
-    shift
-  fi
+  set -- $OPTS
+  
+  while [ ! -z "$1" ]
+  do
+    case "$1" in
+
+      --vo) myecho "VO given in command line: $2"
+            VO_OPTIONS="--vo $2"
+            myecho "Will use VO Options:" $VO_OPTIONS
+            shift
+	    shift 
+            ;;
+      -d) myecho "SE host given in command line: $2"
+	  SE_HOST=$2
+	  shift
+	  shift
+	  ;;
+       *) break;;
+    esac
+  done
   
   # ... define VO options
 
