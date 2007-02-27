@@ -55,6 +55,32 @@ AC_HEADER_TIME
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
+#
+# The following block is a TEMPORARY FIX to build problems on SLC4.
+# This block should be removed and placed in an appropriate file in 
+# org.glite.build.common-cpp
+#
+AC_LANG_SAVE
+AC_LANG_CPLUSPLUS
+old_LIBS=$LIBS
+bdb_lib_list="db_cxx db_cxx-4.2"
+for bdb_lib in $bdb_lib_list
+do
+        LIBS="-lpthread -l$bdb_lib $old_LIBS"
+        AC_TRY_LINK( [ #include <db_cxx.h> ],
+                     [ Db db(NULL,0); ], [ BDB_LIBS="-l$bdb_lib"; break ] )
+done
+if test "x$BDB_LIBS" == "x"; then
+   AC_MSG_ERROR( "Unable to found a proper version of libdb_cxx (should be one of $bdb_lib_list)" )
+fi
+LIBS=$old_LIBS
+AC_MSG_RESULT( "LIBS used for the Berkeley DB: $BDB_LIBS" )
+AC_SUBST(BDB_LIBS)
+AC_LANG_RESTORE
+#
+# End temporary fix block
+#
+
 have_classads=no
 have_boost=no
 have_glite_wmsutils=no
@@ -64,7 +90,7 @@ have_glite_security=no
 have_glite_wms_common=no
 have_gridsite=no
 have_xml2=no
-have_db=no
+#have_db=no
 have_glite_wms_purger=no
 
 AC_OPTIMIZE
@@ -77,14 +103,14 @@ AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GSOAP([])
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_BOOST([], have_boost=yes, have_boost=no)
-AC_DB([], have_db=yes, have_db=no)
+#AC_DB([], have_db=yes, have_db=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
-AC_MSG_RESULT(["DB found $have_db"])
+#AC_MSG_RESULT(["DB found $have_db"])
 AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 
 AC_XML2([], have_xml2=yes, have_xml2=no)
@@ -94,7 +120,6 @@ AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
 AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
-#AC_GLITE_SECURITY()
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 AC_SEC_GSOAP_PLUGIN
