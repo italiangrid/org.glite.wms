@@ -69,19 +69,36 @@ function exit_success() {
 
 function lfc_test_startup() {
 
-  if [ "$1" == "--lfchost" ] && [ -n "$2" ]; then
-    myecho "LFC host given in command line: $2"
-    export LFC_HOST=$2
-    shift
-    shift
+  # ... Parse options
+  #     Quotation is disabled to allow constructions like "--vo $2" to work correctly
+  #     But beware you can not pass a vo name containing spaces or other special characters because of that
+
+  OPTS=`getopt --unquoted --longoptions "lfchost:,lfcdir:" --options "" -- "$@"`
+
+  if [ $? -ne 0 ]; then
+    echo "Usage: $0 [--lfchost <lfchost>] [--lfcdir <lfcdir>]"
+    exit_failure
   fi
 
-  if [ "$1" == "--lfcdir" ] && [ -n "$2" ]; then
-    myecho "LFC directory given in command line: $2"
-    LFC_DIR=$2
-    shift
-    shift
-  fi
+  set -- $OPTS
+  
+  while [ ! -z "$1" ]
+  do
+    case "$1" in
+
+      --lfchost) myecho "LFC host given in command line: $2"
+		 export LFC_HOST=$2
+		 shift
+		 shift
+		 ;;
+      --lfcdir) myecho "LFC directory given in command line: $2"
+		LFC_DIR=$2
+		shift
+		shift
+		;;
+       *) break;;
+    esac
+  done
 
   if [ -z "$LFC_DIR" ] && [ -n "$LFC_HOME" ]; then
     myecho "Will use LFC_HOME as working directory"
