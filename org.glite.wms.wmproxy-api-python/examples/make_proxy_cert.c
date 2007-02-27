@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
 
   if ( ( argc < 3 ) || ( checkOption(argv[optind]) == 0))
       {
-       printf("Mandatory option and/or his argument missing, please use:\n");
+       printf("Mandatory option or his argument missing, please use:\n");
        printf("-e  <environment variable>\n");
        printf("-p  <proxy string>\n" );
        fflush(stdout);

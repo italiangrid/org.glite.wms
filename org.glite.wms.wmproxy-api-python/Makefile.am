@@ -24,7 +24,7 @@ doc_DATA = LICENSE
 
 ## Subdirectories list
 #SUBDIRS = src interface examples
-SUBDIRS = src
+SUBDIRS = src examples
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
