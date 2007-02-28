@@ -71,7 +71,7 @@ do
                      [ Db db(NULL,0); ], [ BDB_LIBS="-l$bdb_lib"; break ] )
 done
 if test "x$BDB_LIBS" == "x"; then
-   AC_MSG_ERROR( "Unable to found a proper version of libdb_cxx (should be one of $bdb_lib_list)" )
+   AC_MSG_ERROR( "Unable to find a proper version of libdb_cxx (should be one of $bdb_lib_list)" )
 fi
 LIBS=$old_LIBS
 AC_MSG_RESULT( "LIBS used for the Berkeley DB: $BDB_LIBS" )
