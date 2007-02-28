@@ -193,6 +193,11 @@ AC_CONFIG_FILES([src/lbclient/Makefile])
 AC_CONFIG_FILES([src/commands/Makefile])
 AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([wms-client.dox])
+AC_CONFIG_FILES([config/glite-wmsclient.csh])
+AC_CONFIG_FILES([config/glite-wmsclient.sh])
+AC_CONFIG_FILES([config/glite-wmsclient-vars.csh])
+AC_CONFIG_FILES([config/glite-wmsclient-vars.sh])
+
 
 AC_OUTPUT
 

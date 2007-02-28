@@ -1,4 +1,4 @@
-	// PRIMITIVE
+ // PRIMITIVE
 #include "netdb.h" // gethostbyname (resolveHost)
 #include "iostream" // cin/cout     ()
 #include "fstream" // filestream (ifstream)
@@ -76,6 +76,7 @@ const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July",
 
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
+const char*  GLITE_CLIENTCONF_FILENAME 		= "glite_wmsclient.conf";
 const char*  GLITE_CONF_FILENAME 			= "glite_wms.conf";
 const string DEFAULT_LB_PROTOCOL			=	"https";
 const string DEFAULT_OUTSTORAGE			=	"/tmp";
@@ -956,8 +957,15 @@ std::string* Utils::checkConf(){
 	logInfo->print(WMS_DEBUG, "VirtualOrganisation value :", voName,true,true);
 	// check the Installation path
 	checkPrefix( );
-	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
-	string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
+	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CLIENTCONF_FILENAME ;
+	string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CLIENTCONF_FILENAME ;
+	if ( (!(isFile(cfDefault))) && (!(isFile(cfGeneral))))
+	{
+	//checking old configuration file glite_wms.conf for compatibility purpose if glite_wmsclient.conf was not found
+		string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
+		string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
+	}
+	logInfo->print(WMS_DEBUG, cfDefault, cfGeneral, true, true);
 	wmcConf=new glite::wms::common::configuration::WMCConfiguration(wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName));
 	return new string(voName);
 }

@@ -12,6 +12,7 @@
 // HEADER
 #include "adutils.h"
 #include "excman.h"
+#include "utils.h"
 using namespace std ;
 using namespace glite::jdl ;
 
@@ -19,7 +20,8 @@ namespace glite {
 namespace wms{
 namespace client {
 namespace utilities {
-const string DEFAULT_UI_CONFILE		=	"glite_wms.conf";  //Used in utils as well
+const string DEFAULT_UI_CLIENTCONFILE	=	"glite_wmsclient.conf";  //Used in utils as well
+const string DEFAULT_UI_CONFILE			=	"glite_wms.conf";  // kept for compatibility purpose with older versions
 const string JDL_WMS_CLIENT		=	"WmsClient";
 const string JDL_WMPROXY_ENDPOINT	=	"WmProxyEndPoints";
 const string JDL_LB_ENDPOINT		=	"LBEndPoints";
@@ -45,7 +47,13 @@ AdUtils::~AdUtils( ){ }
 *  AdUtils class methods:
 *******************************/
 string AdUtils::generateVoPath(string& voName){
-	return string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CONFILE;
+	//new approach
+	string conf = string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CLIENTCONFILE;
+	if (Utils::isFile(conf))
+		return conf;
+	else
+	//checking for old configuration file
+		return string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CONFILE;
 }
 void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 	switch (src){

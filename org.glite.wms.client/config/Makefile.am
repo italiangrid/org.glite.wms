@@ -10,9 +10,7 @@ wletcdir = $(sysconfdir)
 wletc_SCRIPTS = glite-wmsclient-vars.sh glite-wmsclient-vars.csh
 
 wletcutilsdir = $(sysconfdir)/profile.d
-wletcutils_SCRIPTS = glite-wmsclient.sh glite-wmsclient.csh \
-	glite-wmsclient-env.csh glite-wmsclient-env.sh \
-        glite-wmsclient-gui-env.csh glite-wmsclient-gui-env.sh
+wletcutils_SCRIPTS = glite-wmsclient.sh glite-wmsclient.csh 
 
 wletcwmdir = $(sysconfdir)/vo_template
 wletcwm_DATA = glite_wmsclient.conf
