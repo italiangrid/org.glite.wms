@@ -87,7 +87,7 @@ result=99
 timeout=300 # We wait at most 5 minutes before to decide that the job has not been accounted
 while [ $result -ne 0 ] && [ $timeout -gt 0 ] ; do
   sleep 5
-	$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceJobList -j $JOBID &> /dev/null
+	query=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceJobList -j $JOBID 2> /dev/null`
 	result=$?
 	timeout=$(( $timeout - 5 ))
 done
@@ -98,28 +98,29 @@ else
 	samPrintOK ; samNewLine
 fi
 
-samNewLine; samPrintINFO ; echo " Quering the HLR for the job data... " ; samNewLine
+samNewLine; samPrintINFO ; echo " Check for the job data... " ; samNewLine
 count=0
 
-ct=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(cpuTime)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(cpuTime)"`
+ct=`echo $query | cut -d "|" -f 8 | cut -d "=" -f 2`
+wt=`echo $query | cut -d "|" -f 9 | cut -d "=" -f 2`
+pm=`echo $query | cut -d "|" -f 10 | cut -d "=" -f 2`
+vm=`echo $query | cut -d "|" -f 11 | cut -d "=" -f 2`
+
 if [ -z $ct ] || [ $ct -ne $CPU ]; then
   samPrintFAILED ; echo " >>> CpuTime is not exact: answer is $ct expected is $CPU <<<"; samNewLine
   count=$(( $count + 1 ))
 fi
 
-wt=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(wallTime)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(wallTime)"`
 if [ -z $wt ] || [ $wt -ne $WALL ]; then
   samPrintFAILED ; echo " >>> wallTime is not exact: answer is $wt expected is $WALL <<<"; samNewLine
   count=$(( $count + 1 ))
 fi
 
-pm=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(pmem)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(pmem)"`
 if [ -z $pm  ] || [ $pm -ne $PMEM ]; then
   samPrintFAILED ; echo " >>> physicalmem is not exact: answer is $pm expected is $PMEM <<<"; samNewLine
   count=$(( $count + 1 ))
 fi
 
-vm=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceAggregate -j $JOBID -A "SUM(vmem)" | sed -e 's/\s//g' | cut -d "|" -f 3 | grep -v "SUM(vmem)"`
 if [ -z $vm ] || [ $vm -ne $VMEM ]; then
   samPrintFAILED ; echo " >>> virtualmem is not exact: answer is $vm expected is $VMEM <<<"; samNewLine
   count=$(( $count + 1 ))

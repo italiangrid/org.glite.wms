@@ -1,0 +1,211 @@
+#!/bin/bash
+
+#############################################################
+# Script for testing DGAS services                          #
+# DGAS multiple jobs accounting                             #
+#############################################################
+#                                                           #
+# Accounting and verify n jobs                              #
+# Parameter: n the numer of jobs                            #
+#                                                           #
+# Returned values:                                          #
+#                                                           #
+#                 SAME_OK:     Test Passed                  #
+#                 SAME_ERROR:  Test Failed                  #
+#                 2:           Wrong Env                    #
+#                                                           #
+#############################################################
+
+# Sourcing basic functions
+. $SAME_SENSOR_HOME/../functions.sh
+
+if [ $? -gt 0 ]; then
+  exit 2
+fi
+
+# Sourcing config file
+. $SAME_SENSOR_HOME/config.sh
+
+# Sourcing the utilities file
+. $SAME_SENSOR_HOME/utilities.sh
+
+showUsage ()
+{
+ samPrintINFO ; echo " Missing parameter!" ; samNewLine
+ echo "Usage: $0 <jobs number>" ; samNewLine
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  exit 2
+else
+  NUM=$1
+fi
+
+# Build a "jobid" with this format: hostname:PID/TestJobID-time.num
+# Parameter: a progressive number which defines variable "NUM"
+function createJobID
+{
+local host=`hostname -f`
+local time=`date +%s`
+local num=`printf %0.3d $1`
+JOBID=$host:$$/TestJobID-$time.$num
+
+return 0
+}
+
+# Create a record of job data using random values
+# Parameter: a vector index (int) which defines the point where data are stored
+# It sets the dataArrays: CPU, WALL, PMEM, VMEM, START, END and the variable TIMESTAMP
+function createJobData 
+{
+TIMESTAMP=`date +%s`
+
+CPU[$1]=$RANDOM 
+WALL[$1]=$RANDOM
+PMEM[$1]=$RANDOM
+VMEM[$1]=$RANDOM
+START[$1]=$TIMESTAMP
+END[$1]=$(( $TIMESTAMP + $RANDOM ))
+
+return 0
+}
+
+# Query the HRL for the given job
+# Parameter: a string with the jobId
+# It sets the "QUERY" variable with the result of the query in any
+# Returns the exit code of the query command
+function queryHLR
+{
+local result=99
+local timeout=300 # We wait at most 5 minutes before to decide that the job has not been accounted
+while [ $result -ne 0 ] && [ $timeout -gt 0 ] ; do
+  sleep 5
+  QUERY=`$GLITE_LOCATION/bin/glite-dgas-hlr-query -H $HLR -Q resourceJobList -j $1 2> /dev/null`
+  result=$?
+  timeout=$(( $timeout - 5 ))
+done
+
+return $result
+}
+
+# Extract the job data from the string returned by the query programm
+# Parameter: a string with the query result
+# It fills the array RES with this order:
+# CpuTime, WallTime, PhysicalMemory, VirtualMemory, StartTime, EndTime
+function extractJobData
+{
+RES[0]=`echo $* | cut -d "|" -f 8 | cut -d "=" -f 2`
+RES[1]=`echo $* | cut -d "|" -f 9 | cut -d "=" -f 2`
+RES[2]=`echo $* | cut -d "|" -f 10 | cut -d "=" -f 2`
+RES[3]=`echo $* | cut -d "|" -f 11 | cut -d "=" -f 2`
+RES[4]=`echo $* | cut -d "|" -f 17 | cut -d "=" -f 2`
+RES[5]=`echo $* | cut -d "|" -f 18 | cut -d "=" -f 2`
+
+return 0
+}
+
+# Check if the data saved in the RES array are equal to the data stored in the dataArrays
+# Parameter: the index (int) where data are stored (see function createJobData)
+# Returns 0 if match 1 otherwise
+function checkResult
+{
+if [ ${#RES[@]} -eq 6 ] && 
+	[ ${RES[0]} -eq ${CPU[$1]} ] &&
+	[ ${RES[1]} -eq ${WALL[$1]} ] &&
+	[ ${RES[2]} -eq ${PMEM[$1]} ] &&
+	[ ${RES[3]} -eq ${VMEM[$1]} ] &&
+	[ ${RES[4]} -eq ${START[$1]} ] &&
+	[ ${RES[5]} -eq ${END[$1]} ] ; then
+	return 0
+else
+	return 1
+fi
+}
+
+#################
+# Start testing #
+#################
+
+### Check the installation
+
+check_env "GLITE_LOCATION HLR_HOSTNAME HLR_PORT"
+check_command "
+$GLITE_LOCATION/libexec/glite_dgas_atmClient $GLITE_LOCATION/bin/glite-dgas-hlr-query"
+
+### Start Tests
+samNewLine; samPrintINFO ; echo " Start the test accounting a job to the HLR " ; samNewLine
+
+### Set some common values
+HLR="$HLR_HOSTNAME:$HLR_PORT:"
+RESOURCE="TestResource.test.domain:2119/jobmanager-test-queue"
+USER="TestUser"
+USERDN="TestUserDN"
+QUEUE="queue"
+VO="TestVO"
+GROUP="TestGroup"
+DATE=`date`
+exitStatus=0
+
+### Set some variables
+i=0
+count=0
+failedqry=0
+maxjob=$NUM
+
+start=`date +%s`
+
+### Account the jobs
+while [ $count -lt $maxjob ] ; do
+	createJobID $count
+  createJobData $count
+	${GLITE_LOCATION}/libexec/glite_dgas_atmClient -j "$JOBID" -t "$TIMESTAMP"  -l "$HLR" -C "$RESOURCE" -U "$USERDN" -r "$RESOURCE" "CPU_TIME=${CPU[$count]}" "WALL_TIME=${WALL[$count]}" "PMEM=${PMEM[$count]}" "VMEM=${VMEM[$count]}" "QUEUE=$QUEUE" "USER=$USER" "LRMSID=LRMS_$count" "URCREATION=$DATE" "start=${START[$count]}" "end=${END[$count]}" "ctime=$TIMESTAMP" "qtime=$TIMESTAMP" "etime=$TIMESTAMP" "exitStatus=$exitStatus" "si2k=1" "sf2k=1" "tz=+0200" userVo="$VO" "group=$GROUP" jobName="TestID_$count" -3 &> /dev/null
+	result=$?
+	if [ $result -ne 0 ]; then
+    samPrintFAILED ; echo " >>> Job $JOBID has not been accounted: error is $result! <<<"; samNewLine
+		maxjob=$(( $maxjob - 1 ))
+	else
+		JOBIDS[$count]=$JOBID
+		count=$(( $count + 1 ))
+	fi
+done
+
+stop=`date +%s`
+
+samNewLine; samPrintINFO ; echo " $count jobs accounted in $(( $stop - $start )) seconds " ; samNewLine
+samNewLine; samPrintINFO ; echo " Quering the HLR $HLR for the jobs " ; samNewLine
+samNewLine; samPrintINFO ; echo " Be patient, this can take several minutes... " ; samNewLine
+
+### Query for the accounted jobs
+while [ $i -lt $count ] ; do
+  queryHLR ${JOBIDS[$i]}
+	result=$?	
+  if [ $result -ne 0 ]; then
+		samPrintFAILED ; echo " >>> Query for job ${JOBIDS[$i]} failed with error: $result! <<<"; samNewLine
+    failedqry=$(( $failedqry + 1 ))
+  else
+    unset RES
+    extractJobData $QUERY
+		checkResult $i
+		result=$?
+		if [ $result -ne 0 ]; then
+    	failedqry=$(( $failedqry + 1 ))
+    fi
+	fi
+	i=$(( $i + 1 ))
+done
+
+end=`date +%s`	
+
+samNewLine; samPrintINFO ; echo " Queries take  $(( $end - $stop )) seconds " ; samNewLine
+
+fail=$(( $NUM - $count + $failedqry ))
+
+if [ $fail -ne 0 ] ; then # some tests failed
+  samPrintFAILED ; echo " >>> $(( $maxjob - $count ))  have not been accounted and $failedqry queries failed. <<<"; samNewLine
+  exit $SAME_ERROR
+else
+  samPrintPASSED ; echo " $count jobs have been successfully accounted." ; samNewLine
+  exit $SAME_OK
+fi
+

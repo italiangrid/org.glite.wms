@@ -1,0 +1,4 @@
+testName: DGAS-MultJobAcc
+testAbbr: MultJobAcc
+testTitle: Accounting and verify multiple job (the number should be specify as parameter) 
+EOT
