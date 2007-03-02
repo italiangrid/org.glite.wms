@@ -76,7 +76,7 @@ void JobListMatch::readOptions (int argc,char **argv) {
 * performs the main operations
 */
 void JobListMatch::listMatching ( ){
-	const int tab = 50 ;
+	const int tab = 65 ;
         const string ws = " ";
         int spaces = 0 ;
         string ce = "";
@@ -99,7 +99,7 @@ void JobListMatch::listMatching ( ){
 		out << "\n The following CE(s) matching your job requirements have been found:\n";
 		out << "\n\t*CEId*";
 		if (rankOpt) {
-			spaces = tab -14 ;
+			spaces = tab -14  ;
 			for ( int i = 0; i < spaces ; i++ ) { out << ws ; }
 			out << "*Rank*\n";
 		}
