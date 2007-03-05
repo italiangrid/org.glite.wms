@@ -17,31 +17,34 @@ class JobId;
 }
 
 namespace wms {
+
 namespace common {
 namespace configuration {
 class Configuration;
 }
 }
 
+namespace helper {
 namespace broker {
 namespace gpbox {
 
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
+namespace matchmaking = glite::wms::matchmaking;
 
 bool
 interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
   std::string const& PBOX_host_name,
-  matchtable& suitable_CEs);
+  matchmaking::match_table_t& suitable_CEs);
 
 bool
 interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
-  matchtable& suitable_CEs);
+  matchmaking::match_table_t& suitable_CEs);
 
-}}}}
+}}}}}
 #endif

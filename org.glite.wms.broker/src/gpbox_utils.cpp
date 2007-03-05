@@ -1,12 +1,14 @@
 // File: gpbox_utils.cpp
 // Author: Marco Cecchi
+//         Francesco Giacomini
+//         Francesco Grimaldi
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
+#include <map>
 #include <unistd.h>
 #include <sys/types.h>
-#include <deque>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
@@ -17,7 +19,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#include "glite/gpbox/Clientcc.h"
+#include "glite/gpbox/pep_connection.h"
 
 #include "glite/lb/producer.h"
 
@@ -28,7 +30,7 @@
 
 #include "glite/wms/common/logger/logger_utils.h"
 
-#include "matchmaking.h"
+#include "glite/wms/matchmaking/matchmaker.h"
 
 #include "glite/wmsutils/classads/classad_utils.h"
 
@@ -47,33 +49,16 @@
 
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
-namespace classadutils      = glite::wmsutils::classads;
+namespace classadutils = glite::wmsutils::classads;
+namespace pep = glite::gpbox::pep;
 
 namespace glite {
 namespace wms {
+namespace helper {
 namespace broker {
 namespace gpbox {
 
 namespace {
-
-struct in 
-{
-  std::deque<std::string>::iterator _first, _last;
-
-  in( std::deque<std::string>::iterator first,
-    std::deque<std::string>::iterator last ) :
-  _first(first), _last(last)
-  {
-  }
-  bool operator()(matchinfo const& i)
-  {
-    return std::find(
-      _first,
-      _last,
-      boost::tuples::get<Id>(i)
-    ) != _last;
-  }
-};
 
 static std::string const service_class_tag = "SC:";
 static std::string const not_a_service_class_tag = "NOT_A_SC";
@@ -189,7 +174,7 @@ load_chain(const char *certfile)
 bool
 VOMS_proxy_init(
   const std::string& user_cert_file_name, 
-  Attributes& USER_attribs)
+  pep::Attributes& USER_attribs)
 {
   vomsdata v;
   X509 *x = NULL;
@@ -208,7 +193,7 @@ VOMS_proxy_init(
           voms vomsdefault;
           v.DefaultData(vomsdefault);
           bool marked_first_user_attrib = false;
-          USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
+          USER_attribs.push_back(pep::Attribute("voname", vomsdefault.voname));
           for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
             for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
               std::string name = (*j).group;
@@ -216,10 +201,10 @@ VOMS_proxy_init(
                 name += "/Role=" + (*j).role;
               }
               if (!marked_first_user_attrib) {
-                USER_attribs.push_back(Attribute("primary_group", name, STRING));
+                USER_attribs.push_back(pep::Attribute("primary_group", name));
                 marked_first_user_attrib = true;
               }
-              USER_attribs.push_back(Attribute("group", name, STRING));
+              USER_attribs.push_back(pep::Attribute("group", name));
             }
           }
         }
@@ -256,11 +241,11 @@ is_service_class(std::string attribute_value)
 }
 
 std::string
-get_tag(matchinfo const& info)
+get_tag(matchmaking::matchinfo const& info)
 {
   static std::string const null_string;
 
-  classad::ClassAd const* ad = boost::tuples::get<Ad>(info).get();
+  classad::ClassAd const* ad = matchmaking::getAd(info).get();
   std::vector<std::string> acbr_vector;
   classadutils::EvaluateAttrList(*ad, "GlueCEAccessControlBaseRule", acbr_vector);
 
@@ -282,9 +267,22 @@ get_tag(matchinfo const& info)
   }
 }
 
+//std::string
+//get_CE_unique_id(matchmaking::match_info const& info)
+//{
+//  classad::ClassAd const* ad = info.getAd();
+//  classad::Value value;
+//
+//  ad->EvaluateExpr("GlueCEUniqueID", value);
+//  std::string result;
+//  value.IsStringValue(result);
+//
+//  return result;
+//}
+
 bool
 filter_gpbox_authorizations(
-  matchtable& suitable_CEs,
+  matchmaking::matchtable& suitable_CEs,
   Connection& PEP_connection,
   std::string const& user_cert_file_name
 )
@@ -303,16 +301,16 @@ filter_gpbox_authorizations(
     return false;
   }
 
-  Attributes CE_attributes;
+  pep::Attributes CE_attributes;
   std::string ce_names;
   std::string ce_tags;
-  matchtable::iterator it = suitable_CEs.begin();
-  matchtable::iterator const end = suitable_CEs.end();
+  matchmaking::matchtable::iterator it = suitable_CEs.begin();
+  matchmaking::matchtable::iterator const end = suitable_CEs.end();
   for (;
        it != end;
        ++it) {
-    ce_names += boost::tuples::get<Id>(*it) + '#';
-    std::string tag(get_tag(*it));
+    ce_names += it->first + '#';
+    std::string tag(get_tag(it->second));
     ce_tags += tag.empty() ? "error" : tag + '#';
   }
   ce_names.erase(ce_names.size() - 1);
@@ -321,61 +319,34 @@ filter_gpbox_authorizations(
   Info(ce_names);
   Info(ce_tags);
 
-  CE_attributes.push_back(Attribute("aggregation-tag", ce_tags, STRING));
+  CE_attributes.push_back(pep::Attribute("aggregation-tag", ce_tags));
 
   try {
 
-    PEPClient PEP_request(ce_names, "job-submission", user_subject);
-    PEP_request.Attach(&PEP_connection);
-    PEP_request.SetAttr(CE_attributes, RES);
-    Attributes USER_attribs;
-    PEP_request.SetAttr(USER_attribs, SUBJ);
+    pep::Attributes CE_attributes;
+    pep::Attributes SUB_attributes;
+
+    pep::Action const action("job-submission");
+
+    pep::Request request(ce_names, action, user_subject);
+    request.attributes(CE_attributes, pep::Request::RESOURCE);
 
     if(VOMS_proxy_init(user_cert_file_name,USER_attribs)) {
-      PEP_request.SetAttr(USER_attribs, SUBJ);
+      request.attributes(SUB_attributes, pep::Request::SUBJECT);
+      //PEP_request.SetAttr(USER_attribs, SUBJ);
 
-      EvalResults evaluation_of_results;
-      static std::string const null_string;
-
-      if( PEP_request.Send(null_string, 0, 0, 0, evaluation_of_results) ) {
-
-
-        std::deque<std::string> removing;
-        for (EvalResults::iterator iter = evaluation_of_results.begin();
-          iter != evaluation_of_results.end();
-          ++iter)
+      pep::Responses resp = PEP_connection.query(request);
+      for (Responses::const_iterator it = resp.begin(); it != resp.end(); ++it)
       {
-          answer PEP_request_answer = iter->GetResult();
-          // INDET may even be returned from an exception coming to the API
-          // Send, so we don't even check it (since the policy (permit) is
-          // according)), its content being untrustable
-
-          std::string answer_id = iter->GetId();
-          Info(answer_id);
-
-          // NOTE: borderline cases are filtered off without questioning
-          // because of the resubmission costs even if the RB should promote'em
-          if( PEP_request_answer == DENY
-              or
-              PEP_request_answer == NOTA
-              or 
-              PEP_request_answer == INDET ) {
-             
-            // suitable_CEs.erase(iter);
-            removing.push_back(answer_id);
-            Info("!!!erased CE");
-          }
+        Info(it->resource());
+        if (
+          it->decision() == pep::Answer::DENY ||
+          it->decision() == pep::Answer::NOT_APPLICABLE ||
+          it->decision() == pep::Answer::INDETERMINATE
+        ) {
+          suitable_CEs.erase(it->resource());
+          Info("!!!erased CE");
         }
-
-        matchtable::iterator it =
-        remove_if(suitable_CEs.begin(), suitable_CEs.end(),
-          in(removing.begin(), removing.end())
-        );
-        suitable_CEs.erase(it, suitable_CEs.end());
-        
-      }
-      else {
-        return false;
       }
     }
     else {
@@ -397,7 +368,7 @@ interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
   std::string const& PBOX_host_name,
-  matchtable& suitable_CEs   
+  matchmaking::matchtable& suitable_CEs   
   )
 {
   return interact(config,
@@ -412,7 +383,7 @@ interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
-  matchtable& suitable_CEs)
+  matchmaking::matchtable& suitable_CEs)
 {
   boost::timer perf_timer;
 
@@ -462,5 +433,5 @@ interact(
   }
 }
 
-}}}} //glite::wms::helper::broker::gpbox
+}}}}} //glite::wms::helper::broker::gpbox
 #endif
