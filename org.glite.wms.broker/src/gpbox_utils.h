@@ -8,6 +8,9 @@
 
 #include <string>
 
+#include "glite/wms/common/configuration/Configuration.h"
+#include "matchmaking.h"
+
 namespace glite {
 
 namespace wmsutils {
@@ -24,27 +27,26 @@ class Configuration;
 }
 }
 
-namespace helper {
 namespace broker {
 namespace gpbox {
 
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
-namespace matchmaking = glite::wms::matchmaking;
+namespace matchmaking = glite::wms::broker;
 
 bool
 interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
   std::string const& PBOX_host_name,
-  matchmaking::match_table_t& suitable_CEs);
+  matchmaking::matchtable& suitable_CEs);
 
 bool
 interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
-  matchmaking::match_table_t& suitable_CEs);
+  matchmaking::matchtable& suitable_CEs);
 
-}}}}}
+}}}}
 #endif

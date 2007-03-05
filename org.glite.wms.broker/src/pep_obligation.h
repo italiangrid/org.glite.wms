@@ -5,7 +5,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
-#include "attribute.h"
+#include "pep_attribute.h"
 
 namespace glite {
 namespace gpbox {

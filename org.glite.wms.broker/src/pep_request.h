@@ -1,12 +1,12 @@
 #ifndef GLITE_GPBOX_PEP_REQUEST_H
 #define GLITE_GPBOX_PEP_REQUEST_H
 
-#include "attribute.h"
-
 #include <vector>
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+
+#include "pep_attribute.h"
 
 namespace glite {
 namespace gpbox {

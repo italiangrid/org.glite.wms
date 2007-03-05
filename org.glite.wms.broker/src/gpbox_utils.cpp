@@ -19,7 +19,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#include "glite/gpbox/pep_connection.h"
+#include "pep_connection.h"
 
 #include "glite/lb/producer.h"
 
@@ -51,11 +51,11 @@ namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
 namespace classadutils = glite::wmsutils::classads;
 namespace pep = glite::gpbox::pep;
+namespace matchmaking = glite::wms::matchmaking
 
 namespace glite {
 namespace wms {
 namespace helper {
-namespace broker {
 namespace gpbox {
 
 namespace {
@@ -433,5 +433,5 @@ interact(
   }
 }
 
-}}}}} //glite::wms::helper::broker::gpbox
+}}}} //glite::wms::helper::gpbox
 #endif

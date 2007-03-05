@@ -5,7 +5,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "obligation.h"
+#include "pep_obligation.h"
 
 namespace glite {
 namespace gpbox {

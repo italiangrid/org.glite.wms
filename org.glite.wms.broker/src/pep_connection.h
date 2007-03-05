@@ -1,7 +1,7 @@
 #ifndef GLITE_GPBOX_PEP_CONNECTION_H
 #define GLITE_GPBOX_PEP_CONNECTION_H
 
-#include "response.h"
+#include "pep_response.h"
 
 #include <string>
 
