@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.13  2007/03/05 11:44:11  mcecchi
+#       lb dependencies newly carried by by wms_utils
+#
 #       Revision 1.12  2007/02/21 16:21:39  emartel
 #       removed edg-replica catalog
 #
@@ -131,17 +134,20 @@ have_boost=no
 have_globus=no
 have_gsoap=no
 have_classads=no
+have_glite_lb=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_GSOAP([], have_gsoap=yes, have_gsoap=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 
 
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GSOAP found $have_gsoap"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
+AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
 AC_GLITE
 AC_SEC_GSOAP_PLUGIN
