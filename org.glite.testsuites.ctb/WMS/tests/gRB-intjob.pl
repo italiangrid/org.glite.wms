@@ -44,11 +44,12 @@ my $basedir;
 if(defined $ENV{INT_BASE_DIR}){$basedir=$ENV{INT_BASE_DIR}}
 else{$basedir=$ENV{PWD}};
 my $tmpdir;
-if(defined $ENV{INT_TMP_DIR}){$tmpdir=$ENV{INT_TMP_DIR}}
+if(defined $ENV{INT_TMP_DIR}){$tmpdir="$ENV{INT_TMP_DIR}/tmp$$"}
 else{$tmpdir="$basedir/tmp$$"};
 my $bindir;
 if(defined $ENV{INT_BIN_DIR}){$bindir=$ENV{INT_BIN_DIR}}
 else{$bindir=$basedir};
+
 #------------------------------------
 #  Input parameters
 #------------------------------------
