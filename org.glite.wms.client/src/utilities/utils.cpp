@@ -941,7 +941,7 @@ std::string* Utils::checkConf(){
 			voPath=*(wmcOpts->getPath2Jdl());
 			// Read jdl (voName is still an empty string)
 			wmcAd->parseVo(src,voPath,voName);
-			logInfo->print (WMS_DEBUG, "Vo read from", "JDL option",true,true);
+			logInfo->print (WMS_DEBUG, "Vo read from", "JDL",true,true);
 		}
 	}else if (src==NONE){
 		// If this point is reached no possible VO source found
@@ -965,7 +965,6 @@ std::string* Utils::checkConf(){
 		string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
 		string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
 	}
-	logInfo->print(WMS_DEBUG, cfDefault, cfGeneral, true, true);
 	wmcConf=new glite::wms::common::configuration::WMCConfiguration(wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName));
 	return new string(voName);
 }
