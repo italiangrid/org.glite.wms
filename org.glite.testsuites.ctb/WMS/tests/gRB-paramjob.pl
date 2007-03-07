@@ -47,7 +47,7 @@ my $basedir;
 if(defined $ENV{PRM_BASE_DIR}){$basedir=$ENV{PRM_BASE_DIR}}
 else{$basedir=$ENV{PWD}};
 my $tmpdir;
-if(defined $ENV{PRM_TMP_DIR}){$tmpdir=$ENV{PRM_TMP_DIR}}
+if(defined $ENV{PRM_TMP_DIR}){$tmpdir="$ENV{PRM_TMP_DIR}/tmp$$"}
 else{$tmpdir="$basedir/tmp$$"};
 my $bindir;
 if(defined $ENV{PRM_BIN_DIR}){$bindir=$ENV{PRM_BIN_DIR}}
