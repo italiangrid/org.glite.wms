@@ -68,7 +68,8 @@ classad::ClassAd* jdl_ptr;
     ism::MutexSlicePtr mt_slice
   )
   {
-    std::string const job_id(jdlc::get_edg_jobid(jdl));
+    bool has_jobid = false;
+    std::string const job_id(jdlc::get_edg_jobid(jdl, has_jobid));
     boost::timer t;
     ism::Mutex::scoped_lock l(mt_slice->mutex);
     double t_lock = t.elapsed();
@@ -99,7 +100,12 @@ classad::ClassAd* jdl_ptr;
       }
     }
     l.unlock();
-    Info("MM for job: " << job_id << " (" << t_lock << ", " << t.elapsed() << ')');
+
+    if (has_jobid) {
+      Info("MM for job: " << job_id << " (" << t_lock << ", " << t.elapsed() << ')');
+    } else {
+      Info("MM listmatch (" << t_lock << ", " << t.elapsed() << ')');
+    }
 
     return suitableCEs;
   }
