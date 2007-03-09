@@ -16,7 +16,7 @@ wletcwmdir = $(sysconfdir)/vo_template
 wletcwm_DATA = glite_wmsclient.conf
 
 install-data-hook:
-	/bin/cp $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsclient.conf $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsclient.conf.template
+	/bin/mv $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsclient.conf $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsclient.conf.template
 
 EXTRA_DIST = \
         glite_wmsclient.conf 
