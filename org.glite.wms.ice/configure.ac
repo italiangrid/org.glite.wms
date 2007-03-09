@@ -133,7 +133,10 @@ AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([config/glite-wms-ice])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/util/Makefile])
+AC_CONFIG_FILES([src/iceUtils/Makefile])
 AC_CONFIG_FILES([src/ice/Makefile])
+AC_CONFIG_FILES([src/iceCommands/Makefile])
+AC_CONFIG_FILES([src/iceThreads/Makefile])
+
 
 AC_OUTPUT
