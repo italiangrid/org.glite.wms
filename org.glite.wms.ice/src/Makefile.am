@@ -12,7 +12,7 @@
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
 
-SUBDIRS = util ice
+SUBDIRS = iceCommands ice iceThreads iceUtils
 
 bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache
 
@@ -34,8 +34,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
-		../src/util/libglite_wms_ice_util.la \
-		../src/ice/libglite_wms_ice.la \
+		../src/iceUtils/libglite_wms_iceUtils.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -45,13 +44,13 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
 		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-		$(GLITE_WMS_PURGER_LIBS) \
-		$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+                $(GLITE_WMS_PURGER_LIBS) \
+                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(BOOST_PO_LIBS) \
-		$(BDB_LIBS) \
+		-ldb_cxx \
 		-lboost_date_time \
 		-lvomsapi_gcc32pthr
 
@@ -63,7 +62,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(CLASSAD_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 		-lboost_date_time \
-		$(BDB_LIBS)
+		-ldb_cxx
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
@@ -75,7 +74,9 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
-		../src/util/libglite_wms_ice_util.la \
+		../src/iceUtils/libglite_wms_iceUtils.la \
+		../src/iceThreads/libglite_wms_iceThreads.la \
+		../src/iceCommands/libglite_wms_iceCommands.la \
 		../src/ice/libglite_wms_ice.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
@@ -86,13 +87,13 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
 		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-		$(GLITE_WMS_PURGER_LIBS) \
-		$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+                $(GLITE_WMS_PURGER_LIBS) \
+                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(BOOST_PO_LIBS) \
-		$(BDB_LIBS) \
+		-ldb_cxx \
 		-lboost_date_time \
 		-lvomsapi_gcc32pthr
 
@@ -108,8 +109,7 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
-		../src/util/libglite_wms_ice_util.la \
-		../src/ice/libglite_wms_ice.la \
+		../src/iceUtils/libglite_wms_iceUtils.la \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -117,17 +117,19 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
 	        $(GLITE_LB_THR_COMMON_LIBS) \
 		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-		$(GLITE_WMS_PURGER_LIBS) \
-		$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+                $(GLITE_WMS_PURGER_LIBS) \
+                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		-lglite_ce_monitor_consumer \
-		$(BDB_LIBS) \
+		-ldb_cxx \
 		-lvomsapi_gcc32pthr
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-		-I$(top_srcdir)/src/util \
+		-I$(top_srcdir)/src/iceUtils \
+		-I$(top_srcdir)/src/iceThreads \
+		-I$(top_srcdir)/src/iceCommands \
 		-I$(top_srcdir)/src/ice \
 		$(GLITE_CFLAGS) \
 		$(GSOAP_CFLAGS) \

@@ -35,6 +35,7 @@
 #include "iceAbsCommand.h"
 #include "iceCommandFactory.h"
 #include "jobCache.h"
+//#include "cemonUrlCache.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
@@ -219,7 +220,7 @@ int main(int argc, char*argv[])
 //     }
 
     logger_instance->setLogFile(logfile.c_str());
-    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20061212-11:35]"<<log4cpp::CategoryStream::ENDLINE);
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070301-10:40]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
 
     /*****************************************************************************
@@ -259,9 +260,13 @@ int main(int argc, char*argv[])
 
     iceUtil::jobCache::setPersistDirectory( jcachedir );
     iceUtil::jobCache::setRecoverableDb( true );
+    //iceUtil::cemonUrlCache::setPersistDirectory( jcachedir );
+    //iceUtil::cemonUrlCache::setRecoverableDb( true );
+
 
     try {
         iceUtil::jobCache::getInstance();
+	//iceUtil::cemonUrlCache::getInstance();
     }
     catch(exception& ex) {
         CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );

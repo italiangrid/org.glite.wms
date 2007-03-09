@@ -30,7 +30,8 @@ using namespace glite::wms::ice;
 void filelist_request_purger::operator()( void )
 {
     log4cpp::Category* log_dev = api_util::creamApiLogger::instance()->getLogger();
-    CREAM_SAFE_LOG(
+    if(!getenv("NO_FL_MESS"))
+	CREAM_SAFE_LOG(
                    log_dev->infoStream()
                    << "filelist_request_purger - "
                    << "removing request "
@@ -40,13 +41,13 @@ void filelist_request_purger::operator()( void )
     try { 
         Ice::instance()->removeRequest( m_req );
     } catch(std::exception& ex) {
-        CREAM_SAFE_LOG(
-                       log_dev->fatalStream() 
-                       << "filelist_request_purger - "
-                       << "Error removing request from FL: "
-                       << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
+        if(!getenv("NO_FL_MESS")) CREAM_SAFE_LOG(
+                       				log_dev->fatalStream() 
+                       				<< "filelist_request_purger - "
+                       				<< "Error removing request from FL: "
+                       				<< ex.what()
+                       				<< log4cpp::CategoryStream::ENDLINE
+                      				 );
         exit(1);
     }
 }

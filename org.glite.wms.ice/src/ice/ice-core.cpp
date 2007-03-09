@@ -25,7 +25,8 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
-#include "cemonUrlCache.h"
+//#include "cemonUrlCache.h"
+#include "subscriptionManager.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "eventStatusListener.h"
@@ -268,7 +269,7 @@ void Ice::startListener( void )
         boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
         util::subscriptionManager::getInstance();
     }
-    if( !util::subscriptionManager::getInstance()->isValid() ) {
+    /*if( !util::subscriptionManager::getInstance()->isValid() ) {
         CREAM_SAFE_LOG(
                        m_log_dev->fatalStream() 
                        << "Ice::CTOR() - "
@@ -277,7 +278,7 @@ void Ice::startListener( void )
                        << log4cpp::CategoryStream::ENDLINE
                        );
         exit(1);
-    }
+    }*/
     
     util::eventStatusListener* listener;
     if( m_configuration->ice()->listener_enable_authn() ) {
@@ -349,7 +350,7 @@ void Ice::startListener( void )
                        << " - error code="
                        << listener->getErrorCode()
                        << "Retrying in 5 seconds..."
-                       << log4cpp::CategoryStream::ENDLINE;
+                       << log4cpp::CategoryStream::ENDLINE
                        );
 	bind_retry++;
 	if( bind_retry > 1000 ) {
