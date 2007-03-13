@@ -15,7 +15,7 @@
 #include "glite/wms/ism/ism.h"
 #include "exceptions.h"
 
-namespace jdlc = glite::jdl;
+namespace jdl = glite::jdl;
 
 namespace glite {
 namespace classad_utils = wmsutils::classads;
@@ -69,7 +69,7 @@ classad::ClassAd* jdl_ptr;
   )
   {
     bool has_jobid = false;
-    std::string const job_id(jdlc::get_edg_jobid(jdl, has_jobid));
+    std::string const job_id(jdl::get_edg_jobid(*jdl_ptr, has_jobid));
     boost::timer t;
     ism::Mutex::scoped_lock l(mt_slice->mutex);
     double t_lock = t.elapsed();
@@ -200,7 +200,7 @@ match(
   previous_matches_type previous_matches;
   
   bool previous_matches_exists = false;
-  jdlc::get_edg_previous_matches(
+  jdl::get_edg_previous_matches(
     jdl, 
     previous_matches, 
     previous_matches_exists
@@ -243,7 +243,7 @@ match(
   previous_matches_type previous_matches;
   
   bool previous_matches_exists = false;
-  jdlc::get_edg_previous_matches(
+  jdl::get_edg_previous_matches(
     jdl, 
     previous_matches, 
     previous_matches_exists
