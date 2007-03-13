@@ -6,6 +6,10 @@
 ## *
 ## *********************************************************************
 
+XERCES_DIR = $(top_srcdir)/../repository/xerces-c/2.5/rhel30_gcc32
+XERCESC_CFLAGS=-I$(XERCES_DIR)/include
+XERCESC_LIBS=-L$(XERCES_DIR)/lib
+
 noinst_LTLIBRARIES = \
         libglite_wms_broker.la
 
@@ -55,8 +59,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
   $(XERCESC_CFLAGS) \
 	$(BOOST_CFLAGS) \
-        $(GLOBUS_THR_CFLAGS) \
+  $(GLOBUS_THR_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-        $(GLITE_WMS_OPTIONAL_GPBOX_CFLAGS)
+  $(GLITE_WMS_OPTIONAL_GPBOX_CFLAGS)
  
 MAINTAINERCLEANFILES = Makefile.in

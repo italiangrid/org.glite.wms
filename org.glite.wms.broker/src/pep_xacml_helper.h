@@ -8,17 +8,18 @@
 #include <boost/shared_array.hpp>
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 class Request;
 class Response;
 
-typedef boost::shared_array<std::vector<char> > Buffer;
+typedef boost::shared_ptr<std::vector<char> > Buffer;
 
 std::string make_request(Request const& request);
 boost::shared_ptr<Responses> get_responses(Buffer const& pdp_answer);
 
-}}}
+}}}}
 
 #endif

@@ -8,8 +8,9 @@
 #include "pep_attribute.h"
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 enum Answer {
   PERMIT,
@@ -37,6 +38,6 @@ private:
 
 typedef std::vector<Obligation> Obligations;
 
-}}}
+}}}}
 
 #endif

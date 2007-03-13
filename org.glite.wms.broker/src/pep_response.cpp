@@ -1,8 +1,9 @@
 #include "pep_response.h"
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 struct Response::Impl
 {
@@ -41,4 +42,4 @@ Response::obligations() const
   return m_impl->obligations;
 }
 
-}}}
+}}}}

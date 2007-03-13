@@ -7,8 +7,9 @@
 #include <boost/shared_ptr.hpp>
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 class PEPError : public std::exception
 {
@@ -32,6 +33,6 @@ public:
   ConnectionError(std::string const& err_msg);
 };
 
-}}}
+}}}}
 
 #endif

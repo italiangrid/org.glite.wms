@@ -15,6 +15,11 @@
 
 #include <boost/lexical_cast.hpp>
 
+namespace glite {
+namespace wms {
+namespace broker {
+namespace gpbox {
+
 namespace {
 
 void 
@@ -35,7 +40,7 @@ read_timeout(int sock_fd, char* buf, int n, int timeout_sec)
       if (errno == EINTR) {
         continue;
       } else {
-        throw glite::gpbox::pep::ConnectionError(
+        throw ConnectionError(
           "Select failed. Errno " + boost::lexical_cast<std::string>(errno)
         );
       }
@@ -46,18 +51,18 @@ read_timeout(int sock_fd, char* buf, int n, int timeout_sec)
         if (errno == EINTR) {
           continue;
         } else {
-          throw glite::gpbox::pep::ConnectionError(
+          throw ConnectionError(
             "Read failed. Errno " + boost::lexical_cast<std::string>(errno)
           );
         }
       }      
       if (nread == 0) {
-        throw glite::gpbox::pep::ConnectionError("Connection closed by peer");
+        throw ConnectionError("Connection closed by peer");
       }
       n -= nread;
       buf += nread;
     } else {
-      throw glite::gpbox::pep::ConnectionError("Connection timed out");
+      throw ConnectionError("Connection timed out");
     }
   }
 }
@@ -80,7 +85,7 @@ write_timeout(int sock_fd, char const* buf, int n, int timeout_sec)
       if (errno == EINTR) {
         continue;
       } else {
-        throw glite::gpbox::pep::ConnectionError(
+        throw ConnectionError(
           "Select failed. Errno " + boost::lexical_cast<std::string>(errno)
         );
       }
@@ -91,7 +96,7 @@ write_timeout(int sock_fd, char const* buf, int n, int timeout_sec)
         if (errno == EINTR) {
           continue;
         } else {
-          throw glite::gpbox::pep::ConnectionError(
+          throw ConnectionError(
             "Write failed. Errno " + boost::lexical_cast<std::string>(errno)
           );
         }
@@ -100,7 +105,7 @@ write_timeout(int sock_fd, char const* buf, int n, int timeout_sec)
       buf += nwrite;
       std::cout << nwrite << "\n";
     } else {
-      throw glite::gpbox::pep::ConnectionError("Connection timed out");
+      throw ConnectionError("Connection timed out");
     }
   }
 }
@@ -124,10 +129,6 @@ add_responses_tag(char* buf, int length)
 }
 
 }
-
-namespace glite {
-namespace gpbox {
-namespace pep {
 
 struct Connection::Impl
 {
@@ -261,4 +262,4 @@ Connection::query(Request const& request)
   return boost::shared_ptr<Responses>(get_responses(read_body(m_impl->sock_fd, length)));
 }
 
-}}}
+}}}}

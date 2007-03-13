@@ -3,8 +3,9 @@
 #include <string>
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 struct PEPError::Impl
 {
@@ -37,4 +38,4 @@ ConnectionError::ConnectionError(std::string const& err_msg)
 {
 }
 
-}}}
+}}}}

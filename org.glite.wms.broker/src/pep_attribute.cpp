@@ -1,8 +1,9 @@
 #include "pep_attribute.h"
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 Attribute::Attribute(
   std::string const& name,
@@ -24,4 +25,4 @@ Attribute::value() const
   return m_value;
 }
 
-}}}
+}}}}

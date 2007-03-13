@@ -10,6 +10,7 @@
 #include <string>
 #include <deque>
 #include <set>
+#include <vector>
 
 namespace classad
 {
@@ -26,9 +27,10 @@ typedef boost::tuple<
   boost::shared_ptr<classad::ClassAd> // the ce classad representation
 > matchinfo;
 
-enum { Id, Rank, Ad}; 
+enum { Id, Rank, Ad }; 
 
-typedef std::deque<matchinfo> matchtable;
+//typedef std::deque<matchinfo> matchtable;
+typedef std::vector<matchinfo> matchtable;
 
 void
 match(

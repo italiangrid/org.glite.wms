@@ -37,8 +37,9 @@ attribute_entry(
 }
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 class GetValueType : public boost::static_visitor<std::string>
 {
@@ -65,13 +66,13 @@ add_attributes(std::ostream& ostr, Attributes const& attributes)
 }
 
 std::string
-pack(Resources const& resources)
+pack(std::vector<std::string> const& resources)
 {
   if (resources.empty()) {
     return std::string();
   }
-  Resources::const_iterator i = resources.begin();
-  Resources::const_iterator const end = resources.end();
+  std::vector<std::string>::const_iterator i = resources.begin();
+  std::vector<std::string>::const_iterator const end = resources.end();
   std::string result(*i);
   ++i;
   for ( ; i != end; ++i) {
@@ -145,4 +146,4 @@ make_request(Request const& request)
   return ostr.str();
 }
 
-}}}
+}}}}

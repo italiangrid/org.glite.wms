@@ -1,8 +1,9 @@
 #include "pep_obligation.h"
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 struct Obligation::Impl
 {
@@ -41,4 +42,4 @@ Obligation::attributes() const
   return m_impl->attributes;
 }
 
-}}}
+}}}}

@@ -8,8 +8,9 @@
 #include <boost/variant/variant.hpp>
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 class URI
 {
@@ -54,6 +55,6 @@ private:
 
 typedef std::vector<Attribute> Attributes;
 
-}}}
+}}}}
 
 #endif

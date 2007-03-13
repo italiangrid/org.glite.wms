@@ -9,8 +9,9 @@
 #include <boost/shared_ptr.hpp>
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 class Request;
 
@@ -29,6 +30,6 @@ private:
   boost::shared_ptr<Impl> m_impl;
 };
 
-}}}
+}}}}
 
 #endif

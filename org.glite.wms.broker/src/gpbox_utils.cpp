@@ -1,7 +1,7 @@
 // File: gpbox_utils.cpp
 // Author: Marco Cecchi
 //         Francesco Giacomini
-//         Francesco Grimaldi
+//         Filippo Grimaldi
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
@@ -19,8 +19,6 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#include "pep_connection.h"
-
 #include "glite/lb/producer.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
@@ -30,8 +28,6 @@
 
 #include "glite/wms/common/logger/logger_utils.h"
 
-#include "glite/wms/matchmaking/matchmaker.h"
-
 #include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
@@ -40,22 +36,26 @@
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/security/voms/voms_api.h"
 
-#include "gpbox_utils.h"
 #include "globus_gss_assist.h"
 
 #include "glite/lb/context.h"
 #include "glite/lb/consumer.h"
 #include "classad_distribution.h"
 
+#include "pep_connection.h"
+#include "pep_attribute.h"
+#include "pep_request.h"
+
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
 namespace classadutils = glite::wmsutils::classads;
-namespace pep = glite::gpbox::pep;
-namespace matchmaking = glite::wms::matchmaking
+
+#include "matchmaking.h"
+namespace mm = glite::wms::broker;
 
 namespace glite {
 namespace wms {
-namespace helper {
+namespace broker {
 namespace gpbox {
 
 namespace {
@@ -174,7 +174,7 @@ load_chain(const char *certfile)
 bool
 VOMS_proxy_init(
   const std::string& user_cert_file_name, 
-  pep::Attributes& USER_attribs)
+  Attributes& USER_attribs)
 {
   vomsdata v;
   X509 *x = NULL;
@@ -193,7 +193,7 @@ VOMS_proxy_init(
           voms vomsdefault;
           v.DefaultData(vomsdefault);
           bool marked_first_user_attrib = false;
-          USER_attribs.push_back(pep::Attribute("voname", vomsdefault.voname));
+          USER_attribs.push_back(Attribute("voname", vomsdefault.voname));
           for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
             for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
               std::string name = (*j).group;
@@ -201,10 +201,10 @@ VOMS_proxy_init(
                 name += "/Role=" + (*j).role;
               }
               if (!marked_first_user_attrib) {
-                USER_attribs.push_back(pep::Attribute("primary_group", name));
+                USER_attribs.push_back(Attribute("primary_group", name));
                 marked_first_user_attrib = true;
               }
-              USER_attribs.push_back(pep::Attribute("group", name));
+              USER_attribs.push_back(Attribute("group", name));
             }
           }
         }
@@ -240,12 +240,18 @@ is_service_class(std::string attribute_value)
   return boost::regex_match(attribute_value, service_class);
 }
 
+boost::shared_ptr<classad::ClassAd> 
+getAd(mm::matchinfo const& i)
+{
+  return boost::tuples::get<2>(i);
+}
+
 std::string
-get_tag(matchmaking::matchinfo const& info)
+get_tag(mm::matchinfo const& info)
 {
   static std::string const null_string;
 
-  classad::ClassAd const* ad = matchmaking::getAd(info).get();
+  classad::ClassAd const* ad = getAd(info).get();
   std::vector<std::string> acbr_vector;
   classadutils::EvaluateAttrList(*ad, "GlueCEAccessControlBaseRule", acbr_vector);
 
@@ -282,7 +288,7 @@ get_tag(matchmaking::matchinfo const& info)
 
 bool
 filter_gpbox_authorizations(
-  matchmaking::matchtable& suitable_CEs,
+  mm::matchtable& suitable_CEs,
   Connection& PEP_connection,
   std::string const& user_cert_file_name
 )
@@ -301,58 +307,55 @@ filter_gpbox_authorizations(
     return false;
   }
 
-  pep::Attributes CE_attributes;
-  std::string ce_names;
+  Attributes CE_attributes;
+  std::vector<std::string> ce_names;
   std::string ce_tags;
-  matchmaking::matchtable::iterator it = suitable_CEs.begin();
-  matchmaking::matchtable::iterator const end = suitable_CEs.end();
+  mm::matchtable::iterator it = suitable_CEs.begin();
+  mm::matchtable::iterator const end = suitable_CEs.end();
   for (;
        it != end;
        ++it) {
-    ce_names += it->first + '#';
-    std::string tag(get_tag(it->second));
+    ce_names.push_back(boost::tuples::get<0>(*it));
+    std::string tag(get_tag(*it));
     ce_tags += tag.empty() ? "error" : tag + '#';
   }
-  ce_names.erase(ce_names.size() - 1);
   ce_tags.erase(ce_tags.size() - 1);
 
-  Info(ce_names);
-  Info(ce_tags);
-
-  CE_attributes.push_back(pep::Attribute("aggregation-tag", ce_tags));
+  CE_attributes.push_back(Attribute("aggregation-tag", ce_tags));
 
   try {
 
-    pep::Attributes CE_attributes;
-    pep::Attributes SUB_attributes;
+    Attributes CE_attributes;
+    Attributes SUB_attributes;
 
-    pep::Action const action("job-submission");
+    std::string const action("job-submission");
 
-    pep::Request request(ce_names, action, user_subject);
-    request.attributes(CE_attributes, pep::Request::RESOURCE);
+    Request request(ce_names, action, user_subject);
+    request.attributes(CE_attributes, Request::RESOURCE);
 
-    if(VOMS_proxy_init(user_cert_file_name,USER_attribs)) {
-      request.attributes(SUB_attributes, pep::Request::SUBJECT);
-      //PEP_request.SetAttr(USER_attribs, SUBJ);
+    if (VOMS_proxy_init(user_cert_file_name, SUB_attributes)) {
+      request.attributes(SUB_attributes, Request::SUBJECT);
 
-      pep::Responses resp = PEP_connection.query(request);
-      for (Responses::const_iterator it = resp.begin(); it != resp.end(); ++it)
-      {
+      Responses response = *PEP_connection.query(request);
+      for (Responses::const_iterator it = response.begin();
+        it != response.end();
+        ++it
+      ) {
         Info(it->resource());
         if (
-          it->decision() == pep::Answer::DENY ||
-          it->decision() == pep::Answer::NOT_APPLICABLE ||
-          it->decision() == pep::Answer::INDETERMINATE
+          it->decision() == DENY ||
+          it->decision() == NOT_APPLICABLE ||
+          it->decision() == INDETERMINATE
         ) {
-          suitable_CEs.erase(it->resource());
+          //suitable_CEs.erase(it->resource());
           Info("!!!erased CE");
         }
       }
-    }
-    else {
+    } else {
       Debug("VOMS_proxy_init returned false");
       return false;
     }
+
   } catch(...) {
     Debug("filter_gbox_authorizations: PEP Send returned false");
     return false;
@@ -361,17 +364,18 @@ filter_gpbox_authorizations(
   return true;
 }
 
-} //empty  namespace
+} //empty namespace
 
 bool
 interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
   std::string const& PBOX_host_name,
-  matchmaking::matchtable& suitable_CEs   
+  mm::matchtable& suitable_CEs   
   )
 {
-  return interact(config,
+  return interact(
+    config,
     get_user_x509_proxy(jobid, config),
     PBOX_host_name,
     suitable_CEs
@@ -383,7 +387,7 @@ interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
-  matchmaking::matchtable& suitable_CEs)
+  mm::matchtable& suitable_CEs)
 {
   boost::timer perf_timer;
 
@@ -433,5 +437,5 @@ interact(
   }
 }
 
-}}}} //glite::wms::helper::gpbox
+}}}} //glite::wms::broker::gpbox
 #endif

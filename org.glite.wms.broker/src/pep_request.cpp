@@ -1,21 +1,22 @@
 #include "pep_request.h"
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 struct Request::Impl
 {
-  Resources resources;
-  Action action;
-  Subject subject;
+  std::vector<std::string> resources;
+  std::string action;
+  std::string subject;
   Attributes attributes[3];
 };
 
 Request::Request(
-  Resources const& resources,
-  Action const& action,
-  Subject const& subject
+  std::vector<std::string> const& resources,
+  std::string const& action,
+  std::string const& subject
 )
   : m_impl(new Impl)
 {
@@ -31,19 +32,19 @@ Request::attributes(Attributes const& attributes, Scope scope)
   return *this;
 }
 
-Resources const&
+std::vector<std::string> const&
 Request::resources() const
 {
   return m_impl->resources;
 }
 
-Subject const&
+std::string const&
 Request::subject() const
 {
   return m_impl->subject;
 }
 
-Action const&
+std::string const&
 Request::action() const
 {
   return m_impl->action;
@@ -55,4 +56,4 @@ Request::attributes(Scope scope) const
   return m_impl->attributes[scope];
 }
 
-}}}
+}}}}

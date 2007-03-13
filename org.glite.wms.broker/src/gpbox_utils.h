@@ -32,21 +32,21 @@ namespace gpbox {
 
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
-namespace matchmaking = glite::wms::broker;
+namespace mm = glite::wms::broker;
 
 bool
 interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
   std::string const& PBOX_host_name,
-  matchmaking::matchtable& suitable_CEs);
+  mm::matchtable& suitable_CEs);
 
 bool
 interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
   std::string const& PBOX_host_name,
-  matchmaking::matchtable& suitable_CEs);
+  mm::matchtable& suitable_CEs);
 
 }}}}
 #endif

@@ -8,8 +8,9 @@
 #include "pep_obligation.h"
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 class Response
 {
@@ -30,6 +31,6 @@ private:
 
 typedef std::vector<Response> Responses;
 
-}}}
+}}}}
 
 #endif

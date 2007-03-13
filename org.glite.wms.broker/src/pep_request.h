@@ -9,12 +9,9 @@
 #include "pep_attribute.h"
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
-
-typedef std::vector<std::string> Resources;
-typedef std::string Action;
-typedef std::string Subject;
 
 class Request
 {
@@ -26,14 +23,14 @@ public:
   };
   
   Request(
-    Resources const& resources,
-    Action const& action,
-    Subject const& subject
+    std::vector<std::string> const& resources,
+    std::string const& action,
+    std::string const& subject
   );
   Request& attributes(Attributes const& attributes, Scope scope);
-  Resources const& resources() const;
-  Subject const& subject() const;
-  Action const& action() const;
+  std::vector<std::string> const& resources() const;
+  std::string const& subject() const;
+  std::string const& action() const;
   Attributes const& attributes(Scope scope) const;
   
 private:
@@ -41,6 +38,6 @@ private:
   boost::shared_ptr<Impl> m_impl;
 };
 
-}}}
+}}}}
 
 #endif

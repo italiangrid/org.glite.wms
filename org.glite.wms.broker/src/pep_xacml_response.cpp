@@ -1,9 +1,3 @@
-#include "pep_attribute.h"
-#include "pep_request.h"
-#include "pep_response.h"
-#include "pep_xacml_helper.h"
-#include "pep_exceptions.h"
-
 #include <map>
 #include <string>
 #include <stack>
@@ -17,11 +11,18 @@
 #include <xercesc/parsers/SAXParser.hpp>
 #include <xercesc/util/XMLString.hpp>
 
+#include "pep_attribute.h"
+#include "pep_request.h"
+#include "pep_response.h"
+#include "pep_xacml_helper.h"
+#include "pep_exceptions.h"
+
 XERCES_CPP_NAMESPACE_USE
 
 namespace glite {
+namespace wms {
+namespace broker {
 namespace gpbox {
-namespace pep {
 
 Answer 
 string_to_answer(std::string const& in_string)
@@ -208,4 +209,4 @@ get_responses(Buffer const& pdp_answer)
   return handler.responses();
 }
 
-}}}
+}}}}
