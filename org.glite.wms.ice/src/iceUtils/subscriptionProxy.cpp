@@ -227,6 +227,11 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
   T.addDialect( m_D );
   string iceid =  glite::ce::cream_client_api::certUtil::getDN( m_conf->getConfiguration()->common()->host_proxy_file() );
   string expr = "ICE_ID == \"";
+
+  boost::trim_if(iceid, boost::is_any_of("/"));
+  boost::replace_all( iceid, "/", "_" );
+  boost::replace_all( iceid, "=", "_" );
+
   expr.append(iceid);
   expr.append("\"");
   Q.setExpression(expr /* "<![CDATA[ ICE_ID == \"RUNNING\"]]>" */);

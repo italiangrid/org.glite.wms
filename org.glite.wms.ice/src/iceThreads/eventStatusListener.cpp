@@ -515,11 +515,31 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
             if ( ev ) {
 	      //	      api::util::scoped_timer T2("*** NOTIF HANDLING -handleEvent -> logEvent- ***");
+	      //cout << endl << "**** LOGGING Event ****" << endl<<endl;
+	      CREAM_SAFE_LOG(m_log_dev->debugStream() 
+			     << "eventStatusListener::handleEvent() - "
+			     << "**** LOGGING Event ****"
+			     << log4cpp::CategoryStream::ENDLINE);
                 tmp_job = m_lb_logger->logEvent( ev );
+		 CREAM_SAFE_LOG(m_log_dev->debugStream() 
+			     << "eventStatusListener::handleEvent() - "
+			     << "**** LOGGING Event DONE ****"
+			     << log4cpp::CategoryStream::ENDLINE);
+		 //cout << endl << "**** LOGGING Event DONE ****" << endl<<endl;
             }
 	    {
 	      //	      api::util::scoped_timer T3("*** NOTIF HANDLING -handleEvent -> jobCache::put()- ***");
+	      //cout << endl << "**** PUTTING IN CACHE ****" << endl<<endl;
+	      CREAM_SAFE_LOG(m_log_dev->debugStream() 
+			     << "eventStatusListener::handleEvent() - "
+			     << "**** PUTTING IN CACHE ****"
+			     << log4cpp::CategoryStream::ENDLINE);
 	      jc_it = m_cache->put( tmp_job );
+	      //cout << endl << "**** PUTTING IN CACHE DONE ****" << endl<<endl;
+	      CREAM_SAFE_LOG(m_log_dev->debugStream() 
+			     << "eventStatusListener::handleEvent() - "
+			     << "**** PUTTING IN CACHE DONE ****"
+			     << log4cpp::CategoryStream::ENDLINE);
 	    }
             // The job gets stored in the jobcache anyway by the logEvent method...
             m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
@@ -530,6 +550,13 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                            << "Skipping current notification because contains old states"
                            << log4cpp::CategoryStream::ENDLINE);
         }
+
+	if(!getenv("NO_LISTENER_MESS"))
+	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+			 << "eventStatusListener::handleEvent() - "
+			 << "Job [" << it->get_cream_job_id()
+			 << "] CHECKED!"
+			 << log4cpp::CategoryStream::ENDLINE);
 
         // m_ice_manager->resubmit_or_purge_job( jc_it );
 
