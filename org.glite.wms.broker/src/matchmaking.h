@@ -10,7 +10,6 @@
 #include <string>
 #include <deque>
 #include <set>
-#include <vector>
 
 namespace classad
 {
@@ -29,8 +28,7 @@ typedef boost::tuple<
 
 enum { Id, Rank, Ad }; 
 
-//typedef std::deque<matchinfo> matchtable;
-typedef std::vector<matchinfo> matchtable;
+typedef std::deque<matchinfo> matchtable;
 
 void
 match(

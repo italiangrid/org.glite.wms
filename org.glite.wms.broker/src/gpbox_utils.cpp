@@ -347,8 +347,9 @@ filter_gpbox_authorizations(
           it->decision() == NOT_APPLICABLE ||
           it->decision() == INDETERMINATE
         ) {
+          Info("gpbox filtered CE:" + it->resource());
+          // TODO ???
           //suitable_CEs.erase(it->resource());
-          Info("!!!erased CE");
         }
       }
     } else {
