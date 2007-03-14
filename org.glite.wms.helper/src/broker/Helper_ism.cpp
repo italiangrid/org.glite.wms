@@ -226,6 +226,11 @@ try {
   bool use_fuzzy_rank = false;
   if (requestad::get_fuzzy_rank(input_ad, use_fuzzy_rank) && use_fuzzy_rank) {
     rb.changeSelector("stochasticRankSelector");
+    bool change_fuzzy_factor;
+    double fuzzy_factor = requestad::get_fuzzy_factor(input_ad, change_fuzzy_factor);
+    if (change_fuzzy_factor) {
+      glite::wms::broker::RBSelectionSchema::FuzzyFactor = fuzzy_factor;
+    }
   }
 
   boost::scoped_ptr<matchmaking::match_table_t> suitable_CEs(rb.findSuitableCEs(&input_ad));
