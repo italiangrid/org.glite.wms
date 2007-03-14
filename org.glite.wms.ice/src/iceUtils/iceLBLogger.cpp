@@ -69,7 +69,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     // Aborts if trying to log the NULL event
     if ( ! ev ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream()
-                       << "Trying to log NULL event"
+                       << "iceLBLogger::logEvent() - Trying to log NULL event"
                        << log4cpp::CategoryStream::ENDLINE);
         abort();        
     }
@@ -80,7 +80,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     // If logging is disable, simply return
     if ( ! m_lb_enabled ) {
         CREAM_SAFE_LOG( m_log_dev->warnStream()
-                        << "LB disabled for log event \""
+                        << "iceLBLogger::logEvent() - LB disabled for log event \""
                         << ev->describe()
                         << "\" for gridJobId=["
                         << ev->getJob().getGridJobID() 

@@ -90,7 +90,7 @@ namespace glite {
            * @param l the list of job status informations (this list is
            * typically the resout of the scanJobs() method call).
            */
-          void updateJobCache( const std::list< glite::ce::cream_client_api::soap_proxy::JobInfo >& );
+          void updateJobCache( const std::list< glite::ce::cream_client_api::soap_proxy::JobInfo >& ) throw();
 
 	  /**
            * Updates the cache with the job status changes (for a single job)
@@ -98,7 +98,7 @@ namespace glite {
            *
            * @param s the StatusInfo object from which job informations are updated
            */
-          void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& );
+          void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& ) throw();
 
 	  /**
            * Prevents copying
@@ -121,7 +121,7 @@ namespace glite {
           */
           iceCommandStatusPoller( Ice* ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
           
-          virtual ~iceCommandStatusPoller() { } 
+          virtual ~iceCommandStatusPoller() throw() { } 
 
 	  void execute( ) throw();
 	  

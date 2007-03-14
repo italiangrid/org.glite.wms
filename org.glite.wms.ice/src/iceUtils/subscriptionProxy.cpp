@@ -32,7 +32,6 @@
 #include <netdb.h>
 #include <sstream>
 #include <ctime>
-//#include <boost/format.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -65,7 +64,6 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
 //______________________________________________________________________________
 iceUtil::subscriptionProxy::~subscriptionProxy() throw()
 {
-  //delete m_D;
 }
 
 //______________________________________________________________________________
@@ -110,7 +108,6 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
 		   << userProxy << "]: Unknown exception catched"
 		   << log4cpp::CategoryStream::ENDLINE);
 
-    //throw exception("CESubscriptionMgr::list raised an unknown exception");
     return;
   }
   
@@ -140,7 +137,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
 {
   CESubscription ceS;
   ceS.setServiceURL(endpoint);
-  //DialectW *D = new DialectW( "CLASSAD" );
+
   Topic T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() );
   T.addDialect( m_D ); // this doesn't copy but put the argument into an array
   Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
@@ -196,18 +193,13 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
 
     sub.setSubscriptionID( ceS.getSubscriptionID() );
     sub.setExpirationTime( time(NULL) + m_conf->getConfiguration()->ice()->subscription_duration() );
-    //sub.setUserProxyIfLonger( proxy );
 
     return true;
   } catch(exception& ex) {
     CREAM_SAFE_LOG( m_log_dev->errorStream() << "subscriptionProxy::subscribe() - Subscription Error: "
 		    << ex.what() << log4cpp::CategoryStream::ENDLINE);
     return false;
-  }//  catch(...) {
-//     CREAM_SAFE_LOG( m_log_dev->errorStream() << "subscriptionProxy::subscribe() - Catched unknown exception."
-// 		    << log4cpp::CategoryStream::ENDLINE);
-//     return false;
-//   }
+  }
 }
 
 //______________________________________________________________________________
@@ -221,7 +213,7 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
   ActionW A1("SendNotification", "", true);
   ActionW A2("DoNotSendNotification", "", false);
   QueryW Q;
-  //DialectW *D = new DialectW( "CLASSAD" );
+
   Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
   
   T.addDialect( m_D );
@@ -246,21 +238,13 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
     ceSMgr.authenticate(proxy.c_str(), "/");
     newID = ceSMgr.update(endpoint, ID, m_myurl, T, P, time(NULL)+m_conf->getConfiguration()->ice()->subscription_duration());
     
-    //       CREAM_SAFE_LOG( m_log_dev->debugStream() << "subscriptionProxy::updateSubscription()"
-    //       	 	      << " - SubscriptionUpdate update ok: new ID is [" << newID
-    // 		      << ex.what() << log4cpp::CategoryStream::ENDLINE);
-    
   } catch(exception& ex) {
     CREAM_SAFE_LOG( m_log_dev->errorStream() << "subscriptionProxy::updateSubscription()"
 		    << " - SubscriptionUpdate Error: "
 		    << ex.what() << log4cpp::CategoryStream::ENDLINE);
     return false;
-  } // catch(...) {
-//     CREAM_SAFE_LOG( m_log_dev->errorStream() << "subscriptionProxy::updateSubscription()"
-// 		    << " - Unknown subscription catched."
-// 		    << log4cpp::CategoryStream::ENDLINE);
-//     return false;
-//   }
+  } 
+
   return true;
 }
 
@@ -291,7 +275,6 @@ bool iceUtil::subscriptionProxy::subscribedTo( const string& proxy,
 	
 	newSub.setSubscriptionID( it->getSubscriptionID() );
 	newSub.setExpirationTime( it->getExpirationTime() );
-	//	newSub.setUserProxyIfLonger( proxy );
 
 	return true;
       }

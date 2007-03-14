@@ -203,7 +203,7 @@ list< ice_util::CreamJob > ice_util::iceCommandStatusPoller::get_jobs_to_poll( v
 
 
 //----------------------------------------------------------------------------
-void ice_util::iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfo >& info_list )
+void ice_util::iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfo >& info_list ) throw()
 {
     for ( list< soap_proxy::JobInfo >::const_iterator it = info_list.begin(); it != info_list.end(); ++it ) {
 
@@ -213,7 +213,7 @@ void ice_util::iceCommandStatusPoller::updateJobCache( const list< soap_proxy::J
 }
 
 //____________________________________________________________________________
-void ice_util::iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj )
+void ice_util::iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj ) throw()
 {
     // Locks the cache
     boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
