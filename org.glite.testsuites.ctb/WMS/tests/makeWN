@@ -1,0 +1,102 @@
+CC=gcc
+CPP=g++
+COFLAGS=-O2
+CWFLAGS=-Wall
+CIFLAGS=
+CMFLAGS=
+
+#CLASSAD=usr/local
+CLASSAD=$(GLITE_LOCATION)/../classads/gcc-3.2.3
+BOOST=$(GLITE_LOCATION)/../boost/gcc-3.2.3
+
+
+GLOBUS_FLAVOR=gcc32dbg
+
+CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(CMFLAGS) -DDEBUG \
+	-DWANT_NAMESPACES \
+	-I$(CLASSAD)/include \
+	-I$(BOOST)/include/boost \
+	-I$(GLITE_LOCATION)/include
+#	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR)
+
+
+#        -lglite_wmsutils_classads \
+#-lglite_wms_wmproxy_api_cpp \
+#        -lglite_wmsutils_tls_gsisocket_pp \
+#        -lglite_dgas_jobAuthClient \
+#        -lglite_wmsui_client \
+#        -lglite_wmsutils_cjobid \
+#        -lglite_wms_globus_ftp_util \
+#        -lglite_lb_clientpp_gcc32dbg \
+#        -lglite_dgas_xmlutil
+#        -lvomsapi \
+#        -lglite_wms_logger \
+#        -lglite_wms_jdl \
+#        -lglite_wms_partitioner \
+
+
+#MYLIB= -L. libglite_wms_jdl.a 
+#MYLIB= -L../myclassad/lib -lclassad_ns 
+
+
+GLITE_LIBS= -L$(GLITE_LOCATION)/lib \
+        -lglite_wmsutils_jobid \
+  	-lglite_wmsutils_exception \
+        -lglite_wms_util \
+	-lglite_wms_checkpointing \
+	-lglite_lb_client_gcc32dbg 
+#        -lglite_lb_common_gcc32dbg
+
+##  BOOST 1.32 approach  ##
+#BOOST_FLAVOUR=gcc-mt
+#BOOST_LIBS=-L$(BOOST_LOCATION)/lib \
+#	-lboost_thread-$(BOOST_FLAVOUR)-d \
+#	-lboost_filesystem-$(BOOST_FLAVOUR) \
+#	-lboost_regex-$(BOOST_FLAVOUR)
+
+BOOST_LIBS=-L$(BOOST_LOCATION)/lib \
+        -lboost_thread \
+        -lboost_filesystem \
+        -lboost_regex
+
+
+#       -L$(ARES_LOCATION)/lib -lares \
+#       -lpthread \
+#-lclassad_ns
+
+EXTERNAL_LIBS= -L$(CLASSAD)/lib -lclassad\
+	-L$(GLOBUS_LOCATION)/lib \
+	-lglobus_common_$(GLOBUS_FLAVOR) \
+	$(BOOST_LIBS)
+LDFLAGS=$(GLITE_LIBS) $(EXTERNAL_LIBS) 
+#$(MYLIB) 
+
+#       -lglobus_gss_assist_$(GLOBUS_FLAVOR) \
+#       -lglobus_gssapi_gsi_$(GLOBUS_FLAVOR) \
+#       -lcrypto_$(GLOBUS_FLAVOR) \
+#       -lglobus_ftp_client_$(GLOBUS_FLAVOR) \
+#       -lglobus_ftp_control_$(GLOBUS_FLAVOR) \
+#       -lssl_$(GLOBUS_FLAVOR) \
+#       -lglobus_io_$(GLOBUS_FLAVOR) \
+#       -lglobus_openssl_error_$(GLOBUS_FLAVOR) \
+#       -lglobus_proxy_ssl_$(GLOBUS_FLAVOR) \
+#       -lglobus_openssl_$(GLOBUS_FLAVOR) \
+#       -lglobus_gsi_cert_utils_$(GLOBUS_FLAVOR) \
+#       -lglobus_gsi_sysconfig_$(GLOBUS_FLAVOR) \
+#       -lglobus_oldgaa_$(GLOBUS_FLAVOR) \
+#       -lglobus_gsi_callback_$(GLOBUS_FLAVOR) \
+#       -lglobus_gsi_credential_$(GLOBUS_FLAVOR) \
+#       -lglobus_gsi_proxy_core_$(GLOBUS_FLAVOR) \
+
+
+#all: uc match dag job jobs status loginfo logquery
+#	@echo "TEST SUCCESSFULLY COMPILED:"
+#	@ls glite-test-*
+
+all:        cp
+
+cp: 
+	@$(CPP) $(CFLAGS) -o chkjob chkjob.cpp $(LDFLAGS)
+
+clean:
+	@rm chkjob.o
