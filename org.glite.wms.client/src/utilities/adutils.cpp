@@ -165,7 +165,7 @@ classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
 		if (!checkConfigurationAd(adGeneral,pathGeneral)){
 			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded generic configuration file:\n",pathGeneral,true);}
 		}
-	}	
+	}
 	if (pathDefault!=""){
 		if(!checkConfigurationAd(adDefault,pathDefault)){
 			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Vo specific configuration file:\n",pathDefault,true);}
