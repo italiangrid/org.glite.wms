@@ -5,12 +5,10 @@ How to run: blah_submit_status.py, blah_cancel.py, blah_hold_resume.py
 
 On the CE node:
 
-0) The testing scripts under 'org.glite.testsuites.ctb/BLAH/tests/' together with 'functions.py'  have to be 
+1) The testing scripts under 'org.glite.testsuites.ctb/BLAH/tests/' together with 'functions.py'  have to be 
    copied and run directly on the CE where BLAH is running, under the user dir for which a valid user proxy 
    is owned
  
-1) Copy the testing scripts and 'functions.py' directly under the user dir (for example '/home/egee002/')
-
 2) Copy also the classadd_job file on the CE (under the same dir) and use as it is or add the particular 
    classadd job that has to be tested. The format should be the same as the ones that are already in 
    the 'classad_job' file, add a new line for each new classad job file. 
