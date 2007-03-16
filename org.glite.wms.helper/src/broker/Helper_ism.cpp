@@ -210,9 +210,13 @@ try {
   boost::scoped_ptr<BrokerInfo> BI(new BrokerInfo);
 
   bool input_data_exists = false;
+  bool data_requiremets_exist = false;
+
   std::vector<std::string> input_data;
   requestad::get_input_data(input_ad, input_data, input_data_exists);
-  if (input_data_exists) {
+  requestad::get_data_requirements(input_ad, data_requiremets_exist);
+
+  if (input_data_exists || data_requiremets_exist) {
     rb_impl.reset(new glite::wms::broker::RBMaximizeFilesISMImpl(BI.get()));
   } 
   else {

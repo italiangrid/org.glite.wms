@@ -146,12 +146,15 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 #endif
 
   bool input_data_exists = false;
+  bool data_requirements_exists = false;
+
   std::vector<std::string> input_data;
   requestad::get_input_data(input_ad, input_data, input_data_exists);
+  requestad::get_data_requirements(input_ad, data_requirements_exists);
 
   boost::scoped_ptr<BrokerInfo> BI(new BrokerInfo);
   
-  if (input_data_exists) {
+  if (input_data_exists || data_requirements_exists) {
     // Here we have to check if the rank expression in the request
     // is rank = other.dataAccessCost and change the implementation
     // of the broker (RBMinimizeAccessCost)
