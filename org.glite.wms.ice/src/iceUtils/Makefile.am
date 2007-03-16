@@ -23,7 +23,10 @@ libglite_wms_iceUtils_la_SOURCES = \
 				jobDbManager.cpp \
 				CEDbManager.cpp \
 				CreamProxyFactory.cpp \
-				CreamProxyMethod.cpp
+				CreamProxyMethod.cpp \
+				Request_jobdir.cpp \
+				Request_source_filelist.cpp \
+				Request_source_jobdir.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
