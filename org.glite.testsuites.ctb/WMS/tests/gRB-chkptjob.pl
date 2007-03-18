@@ -59,7 +59,7 @@ if(defined $ENV{SAME_ERROR}){$retInp=$ENV{SAME_ERROR}};
 #--------------------------------------------------------------
                          #Input parameters
 my %inp=(); #hash for input parameters
-my %opt=(); getopts("c:r:l:d:j:n:s:mw",\%opt);
+my %opt=(); getopts("t:c:r:l:d:j:n:s:mw",\%opt);
 
 if(defined $opt{c}){$inp{confWms}=$opt{c}}; #wms config file
 if(defined $opt{r}){$inp{reqJdl}=$opt{r}}; #additional parameters for jdl
