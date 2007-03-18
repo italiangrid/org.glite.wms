@@ -24,10 +24,11 @@ use strict;
 #    * -r additional attributes (requirements) for JDL
 #    * -t job steps type (1-number, 2- list of string default=2)
 #    * -j N cycles for job monitoring  (default 300)
-#    * -d sleep seconds before next status checking (default 30)
+#    * -d sleep seconds before next job status checking (default 30)
 #    * -n N steps
 #    * -s current step (default 1)
 #    * -l path to the log file
+#    * -m try to make job on WN
 #    * -w use glite-wms-* commands
 #--------------------------------------------------------------
 my $deb=0; my $id; 
@@ -58,7 +59,7 @@ if(defined $ENV{SAME_ERROR}){$retInp=$ENV{SAME_ERROR}};
 #--------------------------------------------------------------
                          #Input parameters
 my %inp=(); #hash for input parameters
-my %opt=(); getopts("c:r:l:d:j:n:s:w",\%opt);
+my %opt=(); getopts("c:r:l:d:j:n:s:mw",\%opt);
 
 if(defined $opt{c}){$inp{confWms}=$opt{c}}; #wms config file
 if(defined $opt{r}){$inp{reqJdl}=$opt{r}}; #additional parameters for jdl
@@ -73,8 +74,11 @@ if(defined $opt{t}){$inp{tSteps}=$opt{t}} #steps string or numbers
 else{$inp{tSteps}=2};
 if(defined $opt{n}){$inp{nSteps}=$opt{n}} #n steps
 else{$inp{nSteps}=5};
-if(defined $opt{s}){$inp{cStep}=$opt{s}}
+if(defined $opt{s}){$inp{cStep}=$opt{s}}  #CurrentStep
 else{$inp{cStep}=2};
+if(defined $opt{m}){$inp{makeWN}=1}
+else{$inp{makeWN}=0};
+
 
 if(defined $opt{w}){$inp{cmdtype}='cmdProxy'}
 else{$inp{cmdtype}='cmdNS'};
@@ -170,7 +174,7 @@ unless($OK){
  exit($retFail);
 };
 #--------------------------------------------------------------
-#    Get and check subjobs checkpoints
+#    Get and check job checkpointing states
 #--------------------------------------------------------------
 
 #printMsg("------------------------ Check checkpoints:",1);
@@ -248,7 +252,7 @@ sub Monitor{
   $status=$st;
   $tim=getTime();
   printMsg("$tim $tcnt Job: $st $dest",1); 
-  if($st=~/Done/ || $st=~/Abort/ || $st=~/Cancel/){return 0};
+  if($st=~/Success/ || $st=~/Abort/ || $st=~/Cancel/){return 0};
   sleep($inp{sleep});
  }
  return 1;
@@ -274,11 +278,13 @@ sub createJdl{
  my $jdl=qq~[
  JobType = "Checkpointable";
  Executable ="chkptmake.sh";
+ Arguments="$inp{makeWN}";
  StdOutput = "stdout.log";
  StdError = "stderr.log";
  OutputSandbox = {"stdout.log", "stderr.log"};
  InputSandbox={"file://chkjob.cpp","file://chkptmake.sh","file://makeWN","chkjob1"};
  CurrentStep=$inp{cStep};
+# Requirements=RegExp(".*cern.*",other.GlueCEUniqueID);
 ~;
 my $jsteps='JobSteps=';
 if($inp{tSteps}==1){$jsteps.="$inp{nSteps};\n"}
@@ -410,7 +416,7 @@ sub checkChkpts{
    printMsg("Error: Retrieving failed",2); return 0;
   };
   
-  printMsg("=================================== Check job user data and checkpointing",1);
+  printMsg("=================================== Check job user data and checkpointing states",1);
          #print Job steps
  printMsg("---------- Job steps must be:",1);
  $s='';
