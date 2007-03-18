@@ -278,7 +278,6 @@ sub createJdl{
  StdError = "stderr.log";
  OutputSandbox = {"stdout.log", "stderr.log"};
  InputSandbox={"file://chkjob.cpp","file://chkptmake.sh","file://makeWN","chkjob1"};
- Requirements=RegExp(".*lxb2018.*",other.GlueCEUniqueID);
  CurrentStep=$inp{cStep};
 ~;
 my $jsteps='JobSteps=';
