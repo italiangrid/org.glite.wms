@@ -64,6 +64,7 @@ namespace ice {
 
     namespace util {
         class iceLBLogger;
+        class Request_source;
     };
     
     class Ice {
@@ -111,8 +112,10 @@ namespace ice {
         IceThreadHelper m_proxy_renewer_thread;
         IceThreadHelper m_job_killer_thread;
         
-        glite::wms::common::utilities::FileList<std::string> m_flns;
-        
+        glite::wms::common::utilities::FileList<std::string> m_flns;        
+
+        glite::wms::ice::util::Request_source* m_wms_input_queue; ///< Input queue for the WM
+        glite::wms::ice::util::Request_source* m_ice_input_queue; ///< Input queue for ICE
         log4cpp::Category* m_log_dev;
         
         glite::wms::ice::util::iceLBLogger* m_lb_logger;

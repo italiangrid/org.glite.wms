@@ -24,6 +24,7 @@
 #include "Request_jobdir.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include <vector>
+#include <iostream>
 #include <boost/tuple/tuple.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -35,15 +36,25 @@ namespace fs=boost::filesystem;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name ) :
-    m_jobdir( jdir_name )
+Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name, bool create ) :
+    m_jobdir( 0 )
 {
+    if ( create ) {
+        // Tries to create the directory structure
+        utilities::JobDir::create( jdir_name );
+    }
 
+    try {
+        m_jobdir = new utilities::JobDir( jdir_name );
+    } catch( std::exception& ex ) {
+        cerr << "Jobdir creation failed!" << endl;
+        abort(); // FIXME
+    }
 }
  
 Request_source_jobdir::~Request_source_jobdir( )
 {
-
+    delete m_jobdir; // FIXME: use a scoped_ptr instead?
 }
 
 list<Request*> Request_source_jobdir::get_requests( void )
@@ -51,12 +62,12 @@ list<Request*> Request_source_jobdir::get_requests( void )
     list< Request* > result;
     
     utilities::JobDir::iterator b, e;
-    boost::tie(b, e) = m_jobdir.new_entries();
+    boost::tie(b, e) = m_jobdir->new_entries();
     
     for ( ; b != e; ++b) {
         
         fs::path const& new_file = *b;
-        fs::path const old_file = m_jobdir.set_old(new_file);
+        fs::path const old_file = m_jobdir->set_old(new_file);
     
         result.push_back( new Request_jobdir( old_file ) );
     }
@@ -74,6 +85,6 @@ void Request_source_jobdir::remove_request( Request* req )
 
 void Request_source_jobdir::put_request( const string& ad )
 {
-    // FIXME: todo
+    m_jobdir->deliver( ad );
 }
 

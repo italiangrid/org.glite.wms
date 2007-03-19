@@ -63,6 +63,9 @@ namespace util {
          */
         virtual void put_request( const std::string& ad ) = 0;
     protected:
+        /**
+         * Creates a new request source object.
+         */
         Request_source( ) { };
     };
 

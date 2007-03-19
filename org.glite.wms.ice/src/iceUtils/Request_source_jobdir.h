@@ -33,7 +33,7 @@ namespace util {
 
     class Request_source_jobdir : public Request_source {
     public:
-        Request_source_jobdir( const std::string& jdir_name );
+        Request_source_jobdir( const std::string& jdir_name, bool create );
 
         virtual ~Request_source_jobdir( );
 
@@ -52,7 +52,7 @@ namespace util {
          */
         void put_request( const std::string& ad );
     protected:
-        glite::wms::common::utilities::JobDir m_jobdir;
+        glite::wms::common::utilities::JobDir* m_jobdir;
     };
 
 } // namespace util

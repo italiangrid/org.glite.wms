@@ -180,6 +180,8 @@ Ice::Ice( ) throw(iceInit_ex&) :
 
     // m_ns_filelist( ice_util::iceConfManager::getInstance()->getWMInputFile() ),
     // m_fle( ice_util::iceConfManager::getInstance()->getICEInputFile() ),
+    m_wms_input_queue( 0 ),
+    m_ice_input_queue( 0 ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( ice_util::iceLBLogger::instance() ),
     m_cache( ice_util::jobCache::getInstance() ),

@@ -22,18 +22,35 @@
  */
 #include "Request_source_filelist.h"
 #include "Request_filelist.h"
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/convenience.hpp>
 #include <vector>
 
 namespace wmsutils_ns=glite::wms::common::utilities;
+namespace fs = boost::filesystem;
 using namespace glite::wms::ice::util;
 using namespace std;
 
 typedef wmsutils_ns::FLExtractor<std::string>::iterator FLEit;
 
-Request_source_filelist::Request_source_filelist( const std::string& fl_name ) :
+Request_source_filelist::Request_source_filelist( const std::string& fl_name, bool create ) :
     m_fl_name( fl_name ),
     m_filelist_extractor( m_fl_name )
 {
+    if ( create ) {
+        fs::path fl_p( fl_name, fs::native );
+        
+        if( ( !fl_p.native_file_string().empty()) && 
+            !fs::exists(fl_p.branch_path()) ) {
+            try {
+                fs::create_directories( fl_p.branch_path() );
+            } catch( ... ) {
+                cerr << "Filelist creation failed!" << endl;
+                abort(); // FIXME
+            }
+        }
+    }
+
     try {
         m_filelist.open( m_fl_name );
     } catch( ... ) {
@@ -41,7 +58,7 @@ Request_source_filelist::Request_source_filelist( const std::string& fl_name ) :
 //                         << "Ice::CTOR() - Catched unknown exception"
 //                         << log4cpp::CategoryStream::ENDLINE
 //                         );
-        exit( 1 );
+        exit( 1 ); // FIXME
     }
 }
  
@@ -63,7 +80,7 @@ list<Request*> Request_source_filelist::get_requests( void )
 //                        << "Ice::getNextRequest() - " << ex.what()
 //                        << log4cpp::CategoryStream::ENDLINE
 //                        );
-        exit(1);
+        exit(1); // FIXME
     }
     for ( unsigned j=0; j < requests.size(); j++ ) {
         result.push_back( new Request_filelist( requests[j] ) );

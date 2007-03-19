@@ -34,7 +34,15 @@ namespace util {
 
     class Request_source_filelist : public Request_source {
     public:
-        Request_source_filelist( const std::string& fl_name );
+        /**
+         * Creates a new request source object for reading from a filelist.
+         *
+         * @param fl_name the name of the file containing the filelist
+         *
+         * @param create if true, the filellist is created if it does
+         * not exist yed
+         */
+        Request_source_filelist( const std::string& fl_name, bool create );
 
         ~Request_source_filelist( );
 
