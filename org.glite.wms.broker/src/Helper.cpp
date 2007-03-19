@@ -19,8 +19,9 @@
 
 #include "Helper.h"
 #include "Helper_exceptions.h"
-#include "RBSimpleISMImpl.h"
-#include "RBMaximizeFilesISMImpl.h"
+#include "simple_strategy.h"
+#include "maximize_files_strategy.h"
+#include "stochastic_selector.h"
 #include "exceptions.h"
 #include "storage_utils.h"
 
@@ -67,10 +68,6 @@ namespace helper {
 namespace {
 
 std::string const helper_id("BrokerHelper");
-
-//FIXME: should be moved back to ckassad_plugin if/when only this DL is used
-//FIXME: for matchmaking.
-glite::wms::classad_plugin::classad_plugin_loader init;
 
 glite::wms::helper::HelperImpl* create_helper()
 {
@@ -203,22 +200,32 @@ try {
   glite::wms::broker::ResourceBroker rb;
   
   bool input_data_exists = false;
+  bool data_requirements_exists = false;
+
   std::vector<std::string> input_data;
   requestad::get_input_data(input_ad, input_data, input_data_exists);
-  if (input_data_exists) {
-    rb.changeImplementation(
-      boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
-        new glite::wms::broker::RBMaximizeFilesISMImpl()
-      )
-    );
+  requestad::get_data_requirements(input_ad, data_requirements_exists);
+  
+  if (input_data_exists || data_requirements_exists) 
+  {
+    rb.changeStrategy( maximize_files() );
   } 
 
   // If fuzzy_rank is true in the request ad we have
   // to use the stochastic selector...
   bool use_fuzzy_rank = false;
-  if (requestad::get_fuzzy_rank(input_ad, use_fuzzy_rank) && use_fuzzy_rank) {
-    rb.changeSelector("stochasticRankSelector");
+  if (requestad::get_fuzzy_rank(input_ad, use_fuzzy_rank) && use_fuzzy_rank) 
+  {
+    double factor = 1;
+    try {
+      factor = requestad::get_fuzzy_factor(input_ad);
+    } 
+    catch(...)
+    {
+    }
+    rb.changeSelector(stochastic_selector(factor));
   }
+
   boost::tuple<
     boost::shared_ptr<matchtable>,
     boost::shared_ptr<filemapping>,
@@ -317,7 +324,7 @@ try {
   requestad::set_input_sandbox(*result, ISB);
 
   requestad::set_ce_id(*result, ce_id);
-  matchinfo const& ce_info = boost::tuples::get<Id>(*ce_it);
+  matchinfo const& ce_info = *ce_it;
   classad::ClassAd const* ce_ad = boost::tuples::get<Ad>(ce_info).get();
 
   try {

@@ -10,13 +10,11 @@
 
 #include "matchmaking.h"
 #include "brokerinfo.h"
-#include "RBSelectionSchema.h"	
 
 #include <boost/utility.hpp>
-#include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
-
+#include <boost/function.hpp>
 
 namespace classad
 {
@@ -29,15 +27,30 @@ namespace broker {
 
 class ResourceBroker : boost::noncopyable
 {
-public: 
-  class Impl;
+  class impl;
+  boost::shared_ptr<impl> m_impl;
+
+public:
+
+  typedef boost::function<
+    matchtable::iterator(matchtable&)
+  > selector;
+ 
+  typedef boost::function< 
+    boost::tuple<
+      boost::shared_ptr<matchtable>,
+      boost::shared_ptr<filemapping>,
+      boost::shared_ptr<storagemapping>
+    >(const classad::ClassAd*)
+  > strategy;
 
   ResourceBroker();
-  void changeImplementation(boost::shared_ptr<Impl>);
-  void changeSelector(const std::string&); 
-  
-  matchtable::const_iterator 
-  selectBestCE(matchtable const&); 
+
+  void changeSelector(selector);
+  void changeStrategy(strategy);
+
+  matchtable::iterator
+  selectBestCE(matchtable&);
   
   boost::tuple<
     boost::shared_ptr<matchtable>,
@@ -45,26 +58,8 @@ public:
     boost::shared_ptr<storagemapping>
   >
   findSuitableCEs(const classad::ClassAd*);
-  
-private:
-  boost::shared_ptr<Impl> m_impl;
-  boost::weak_ptr<RBSelectionSchema> m_selection_schema;
 };
 
-struct ResourceBroker::Impl : boost::noncopyable
-{
-  virtual 
-  boost::tuple<
-    boost::shared_ptr<matchtable>,
-    boost::shared_ptr<filemapping>,
-    boost::shared_ptr<storagemapping>
-  >
-  findSuitableCEs(const classad::ClassAd*) = 0;
-  virtual ~Impl() {};
-};
-
-}; // namespace broker
-}; // namespace wms
-}; // namespace glite
+}}} 
 
 #endif

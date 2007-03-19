@@ -47,11 +47,10 @@ struct rank_less_than_comparator :
   std::binary_function< matchinfo&, matchinfo&, bool >
 {
   bool operator()(
-    const matchinfo& a,
-    const matchinfo& b)
+    matchinfo& a,
+    matchinfo& b)
   {
-    return boost::tuples::get<Rank>(a) <
-      boost::tuples::get<Rank>(b);
+    return a.get<Rank>() < b.get<Rank>();
   }
 };
 
@@ -62,10 +61,25 @@ struct rank_greater_than_comparator :
     const matchinfo& a,
     const matchinfo& b)
   {
-    return boost::tuples::get<Rank>(a) > 
-      boost::tuples::get<Rank>(b);
+    return a.get<Rank>() > b.get<Rank>();
   }
 };
+
+class rank_greater_than
+  : public std::unary_function<matchinfo&, bool>
+{
+  double m_rank;
+public:
+  rank_greater_than(double rank)
+    : m_rank(rank)
+  {
+  }
+  bool operator()(matchinfo const& match)
+  {
+    return match.get<Rank>() > m_rank;
+  }
+};
+
 
 }}}
 

@@ -18,15 +18,14 @@ lib_LTLIBRARIES = \
 
 libglite_wms_broker_la_SOURCES = \
         ResourceBroker.cpp \
-        RBSimpleISMImpl.cpp \
-        RBMaximizeFilesISMImpl.cpp \
+        simple_strategy.cpp \
+        maximize_files_strategy.cpp \
+        max_selector.cpp \
+        stochastic_selector.cpp \
         matchmaking.cpp \
         exceptions.cpp \
         storage_utils.cpp \
-        brokerinfo.cpp \
-        RBSelectionSchema.cpp \
-        maxRankSelector.cpp \
-        stochasticRankSelector.cpp
+        brokerinfo.cpp
 
 libglite_wms_broker_helper_la_DEPENDENCIES = \
 	libglite_wms_broker.la

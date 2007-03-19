@@ -6,45 +6,71 @@
  */
  
 #include "ResourceBroker.h"
-#include "RBSimpleISMImpl.h"
+#include "simple_strategy.h"
+#include "max_selector.h"
+
+#include <boost/random/linear_congruential.hpp>
+#include <boost/random/uniform_smallint.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <algorithm>
 
 namespace glite {
 namespace wms {
 namespace broker {
 
-ResourceBroker::ResourceBroker() 
+namespace {
+
+struct ResourceBroker::impl : boost::noncopyable
 {
-  changeImplementation(
-    boost::shared_ptr<Impl>(new RBSimpleISMImpl())
-  ); 
-  m_selection_schema = boost::weak_ptr<RBSelectionSchema>(
-    RBSelectionSchemaMap::getSchema("maxRankSelector")
-  );
+  ResourceBroker::strategy _strategy;
+  ResourceBroker::selector _selector;
+  impl(
+    ResourceBroker::strategy strategy, 
+    ResourceBroker::selector selector
+  ) : _strategy(strategy), _selector(selector)
+  {
+  }
+
+  matchtable::iterator
+  selectBestCE(matchtable& matches) 
+  {
+    return _selector(matches);  
+  }
+  
+  boost::tuple<
+    boost::shared_ptr<matchtable>,
+    boost::shared_ptr<filemapping>,
+    boost::shared_ptr<storagemapping>
+  >
+  findSuitableCEs(const classad::ClassAd* requestAd)
+  {
+    return _strategy(requestAd);
+  }
+};
+
+} // anonymous namespace
+
+ResourceBroker::ResourceBroker() :
+  m_impl( new ResourceBroker::impl(simple(), max_selector) )
+{
 } 
 
 void 
-ResourceBroker::changeImplementation(boost::shared_ptr<Impl> impl) 
+ResourceBroker::changeStrategy(strategy s) 
 { 
-  m_impl = impl; 
+  m_impl->_strategy = s;
+}
+
+void
+ResourceBroker::changeSelector(selector s)
+{
+  m_impl->_selector = s;
 }
   
-void
-ResourceBroker::changeSelector(const std::string& name)
+matchtable::iterator 
+ResourceBroker::selectBestCE(matchtable& matches)
 {
-  boost::weak_ptr<RBSelectionSchema> s(
-    RBSelectionSchemaMap::getSchema(name)
-  );
-  if(s.lock()) m_selection_schema = s;
-}
-
-
-matchtable::const_iterator 
-ResourceBroker::selectBestCE(matchtable const& match_table)
-{
-  if(RBSelectionSchemaPtr schema = m_selection_schema.lock() ) {
-    return schema -> selectBestCE( match_table );
-  }
-  return match_table.end();
+  return m_impl->selectBestCE(matches); 
 }
 
 boost::tuple<
@@ -54,7 +80,7 @@ boost::tuple<
 > 
 ResourceBroker::findSuitableCEs(const classad::ClassAd* requestAd)
 { 
-  return m_impl -> findSuitableCEs( requestAd ); 
+  return m_impl->findSuitableCEs(requestAd); 
 }
 
 }; // namespace broker
