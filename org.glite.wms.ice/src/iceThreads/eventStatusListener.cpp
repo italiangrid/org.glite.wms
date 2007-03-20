@@ -476,12 +476,12 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
           msg_it != ev.Message.end(); ++msg_it, ++count ) {
 
         if ( count <= jc_it->get_num_logged_status_changes() ) {
-            if (!getenv("NO_LISTENER_MESS")) {
-                CREAM_SAFE_LOG(m_log_dev->debugStream()
-                               << "eventStatusListener::handleEvent() - "
-                               << "Skipping current notification because contains old states"
-                               << log4cpp::CategoryStream::ENDLINE);
-            }
+//             if (!getenv("NO_LISTENER_MESS")) {
+//                 CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                                << "eventStatusListener::handleEvent() - "
+//                                << "Skipping current notification because contains old states"
+//                                << log4cpp::CategoryStream::ENDLINE);
+//             }
             continue; // skip to the next job
         }
 
