@@ -300,9 +300,7 @@ void Job::setDelegationId ( ){
 		dgOpt = new string (*id);
 		autodgOpt = false;
 	} else if (autodg){
-
-/* #######################
-		// automatic generation of the delegationId string
+		// automatic generation of the delegationId string ONLY FOR WMPROXY 3.0 - 3.1
 		id = Utils::getUniqueString();
 		if (id==NULL){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -312,9 +310,7 @@ void Job::setDelegationId ( ){
 		}
 		logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", *id);
 		dgOpt = new string (*id);
-####################### */
 		logInfo->print  (WMS_DEBUG, "Delegation ID automatically generated");
-		dgOpt = new string("");
 		autodgOpt = true;
 	} else {
 		ostringstream err ;
