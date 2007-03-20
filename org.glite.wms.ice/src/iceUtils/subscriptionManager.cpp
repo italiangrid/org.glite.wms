@@ -33,6 +33,8 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
+#define MAX_SUBSCRIPTION_OLDNESS 60
+
 using namespace std;
 namespace iceUtil = glite::wms::ice::util;
 namespace api_util = glite::ce::cream_client_api::util;
@@ -183,7 +185,6 @@ bool iceUtil::subscriptionManager::getCEMonDN(
   CEInfo ceInfo(m_conf->getConfiguration()->common()->host_proxy_file(), "/");
   ceInfo.setServiceURL( cemonURL );
   try {
-    //ceInfo.authenticate( m_conf->getConfiguration()->common()->host_proxy_file().c_str(), "/" );
     ceInfo.authenticate( proxy.c_str(), "/");
     ceInfo.getInfo();
   } catch(exception& ex) {
@@ -274,13 +275,7 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
 		     << log4cpp::CategoryStream::ENDLINE);
       continue;
 
-    } // catch(...) {
-//       CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		     << "subscriptionManager::checkSubscription() - "
-// 		     << "Unknown exception catched. Will not receive notifications from this CEMon for this user."
-// 		     << log4cpp::CategoryStream::ENDLINE);
-//       continue;
-//     }
+    } 
 
     if( subscribed ) {
       
@@ -308,20 +303,9 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
 		     << it->first << "] DISAPPEARED! Recreating it..."
 		     << log4cpp::CategoryStream::ENDLINE);
       
-      //bool subscribeSuccessful;
-      //try {
 
       bool subscribeSuccessful = m_subProxy->subscribe( proxy, *sit, sub );// also sets the sub's internal data members
 
-//       } catch(exception& ex) {
-// 	CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		       << "subscriptionManager::checkSubscription() - "
-// 		       << "Error subscribing: "
-// 		       << ex.what() <<". Will not receive notifications for proxy ["
-// 		       << proxy<<"] from CEMon [" << *sit <<"]"
-// 		       << log4cpp::CategoryStream::ENDLINE);
-// 	continue;
-//       }
 
       if( !subscribeSuccessful )
       {
@@ -339,6 +323,38 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
     m_Subs[ make_pair( it->first, *sit)].setExpirationTime( sub.getExpirationTime() );
     
   }
+}
+
+//______________________________________________________________________________
+/**
+ * Remove OLD subscriptions
+ */
+void iceUtil::subscriptionManager::purgeOldSubscription( map<string, set<string> >::const_iterator it ) 
+ throw()
+{
+  // it->first is the user DN
+  // it->second is the set of cemons to check for subscriptions
+
+  for(set<string>::const_iterator sit=it->second.begin(); sit!=it->second.end(); ++sit)
+    {
+      map< pair<string, string> , iceSubscription, ltstring >::const_iterator subit = m_Subs.find( make_pair(it->first, *sit) );
+      if( subit == m_Subs.end() ) return;
+      
+      CREAM_SAFE_LOG(m_log_dev->infoStream()  
+		     << "subscriptionManager::purgeOldSubscription() - Subscription for DN ["
+		     << it->first << "] to CEMon [" << *sit << "]: expir time=["
+		     << subit->second.getExpirationTime() << "] time(null)+OLDNESS=["
+		     << (time(NULL)+MAX_SUBSCRIPTION_OLDNESS) << "]"
+		     << log4cpp::CategoryStream::ENDLINE);
+
+      if( subit->second.getExpirationTime() > (time(NULL)+MAX_SUBSCRIPTION_OLDNESS)) {
+	CREAM_SAFE_LOG(m_log_dev->infoStream()  
+		       << "subscriptionManager::purgeOldSubscription() - Subscription for DN ["
+		       << it->first << "] to CEMon [" << *sit << "] is older than "
+		       << MAX_SUBSCRIPTION_OLDNESS << " seconds. Removing it from ICE's memory."
+		       << log4cpp::CategoryStream::ENDLINE);
+      }
+    }
 }
 
 //______________________________________________________________________________

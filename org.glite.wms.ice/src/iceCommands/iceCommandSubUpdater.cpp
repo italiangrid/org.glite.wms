@@ -22,7 +22,6 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
-//#include "subscriptionProxy.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
@@ -67,6 +66,8 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 		   << "Checking Subscriptions for owner of the DN ["
 		   << it->first<< "]."
 		   << log4cpp::CategoryStream::ENDLINE);
+
+    //subManager->purgeOldSubscription( it );
 
     subManager->checkSubscription( it );
     

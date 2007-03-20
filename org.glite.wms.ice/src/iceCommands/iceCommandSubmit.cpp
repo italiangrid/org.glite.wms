@@ -31,7 +31,6 @@
 #include "iceConfManager.h"
 #include "iceSubscription.h"
 #include "jobCache.h"
-//#include "cemonUrlCache.h"
 #include "creamJob.h"
 #include "ice-core.h"
 #include "eventStatusListener.h"
@@ -49,7 +48,6 @@
 
 // Other glite includes
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
-// #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/wms/common/utilities/scope_guard.h"
@@ -74,7 +72,6 @@ namespace wms_utils = glite::wms::common::utilities;
 namespace wms_conf = glite::wms::common::configuration;
 namespace iceUtil = glite::wms::ice::util;
 namespace ice     = glite::wms::ice;
-//using namespace glite::wms::ice;
 
 namespace { // Anonymous namespace
     

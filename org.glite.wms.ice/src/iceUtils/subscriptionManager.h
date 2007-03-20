@@ -164,7 +164,8 @@ namespace glite {
 	  
 	  void renewSubscription(const std::string& userProxy, const std::string& cemon) throw();
 	  void checkSubscription(std::map<std::string, std::set<std::string> >::const_iterator) throw();
-	  
+	  void purgeOldSubscription( std::map<std::string, std::set<std::string> >::const_iterator it ) throw();
+
 	  static void setPersistDirectory(const std::string& dir) { s_persist_dir = dir; }
 	  static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
 	  

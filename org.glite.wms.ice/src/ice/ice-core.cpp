@@ -25,7 +25,6 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
-//#include "cemonUrlCache.h"
 #include "subscriptionManager.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
@@ -571,25 +570,25 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
     if ( jit == m_cache->end() )
         return jit;
 
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
-                           << "**** CALLING CreamProxyFactory::makeCreamProxy **** "
-                           << log4cpp::CategoryStream::ENDLINE);
+//     CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                            << "ice-core::purge_job() - "
+//                            << "**** CALLING CreamProxyFactory::makeCreamProxy **** "
+//                            << log4cpp::CategoryStream::ENDLINE);
 
     boost::scoped_ptr< soap_proxy::CreamProxy > creamClient( ice_util::CreamProxyFactory::makeCreamProxy(false) );
 
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
-                           << "**** CALLING CreamProxyFactory::makeCreamProxy DONE **** "
-                           << log4cpp::CategoryStream::ENDLINE);
+//     CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                            << "ice-core::purge_job() - "
+//                            << "**** CALLING CreamProxyFactory::makeCreamProxy DONE **** "
+//                            << log4cpp::CategoryStream::ENDLINE);
 
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); // this can be called by eventStatusListener::handleEvent that already acquired this mutex; this is not a problem 'cause the mutexes are recursive
         
-	CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
-                           << "**** MUTEX ACQUIRED !!  **** "
-                           << log4cpp::CategoryStream::ENDLINE);
+// 	CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                            << "ice-core::purge_job() - "
+//                            << "**** MUTEX ACQUIRED !!  **** "
+//                            << log4cpp::CategoryStream::ENDLINE);
 
         string cid = jit->getCreamJobID();
         
@@ -603,34 +602,34 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
             // vector because we must authenticate different
             // jobs with different user certificates.
 
-	    CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
-                           << "**** CALLING creamClient->Authenticate ****"
-                           << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                            << "ice-core::purge_job() - "
+//                            << "**** CALLING creamClient->Authenticate ****"
+//                            << log4cpp::CategoryStream::ENDLINE);
 
             creamClient->Authenticate( jit->getUserProxyCertificate() );
 
-	    CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
-                           << "**** CALLING creamClient->Authenticate DONE ****"
-                           << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                            << "ice-core::purge_job() - "
+//                            << "**** CALLING creamClient->Authenticate DONE ****"
+//                            << log4cpp::CategoryStream::ENDLINE);
 
             vector< string > oneJobToPurge;
             oneJobToPurge.push_back( jit->getCreamJobID() );
 
-	    CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
-                           << "**** CALLING creamClient->Purge ****"
-                           << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                            << "ice-core::purge_job() - "
+//                            << "**** CALLING creamClient->Purge ****"
+//                            << log4cpp::CategoryStream::ENDLINE);
 
             //creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
 
 	    glite::wms::ice::util::CreamProxy_Purge( jit->getCreamURL(), oneJobToPurge ).execute( creamClient.get(), 3 );
 
-	    CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
-                           << "**** CALLING creamClient->Purge DONE ****"
-                           << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->infoStream()
+//                            << "ice-core::purge_job() - "
+//                            << "**** CALLING creamClient->Purge DONE ****"
+//                            << log4cpp::CategoryStream::ENDLINE);
 
         } else {
             CREAM_SAFE_LOG(m_log_dev->warnStream()
@@ -773,55 +772,55 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job )
 ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::iterator it )
 {
 
-    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "****  ENTERING ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+//     CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "****  ENTERING ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
     if ( it != m_cache->end() ) {
 
-        CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "****  CREATING CreamJob OBJECT ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+//         CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "****  CREATING CreamJob OBJECT ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
         ice_util::CreamJob tmp_job( *it ); ///< This is necessary because the purge_job() method REMOVES the job from the cache; so we need to keep a local copy and work on that copy
 
-        CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "****  CREATING CreamJob OBJECT DONE ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+//         CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "****  CREATING CreamJob OBJECT DONE ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
         if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ||
              cream_api::job_statuses::DONE_OK == tmp_job.getStatus() ) {
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING deregister_proxy_renewal ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING deregister_proxy_renewal ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
             deregister_proxy_renewal( tmp_job );
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING deregister_proxy_renewal DONE ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING deregister_proxy_renewal DONE ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
         }
         if ( cream_api::job_statuses::DONE_FAILED == tmp_job.getStatus() ||
              cream_api::job_statuses::ABORTED == tmp_job.getStatus() ) {
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING resubmit_job ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING resubmit_job ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
             resubmit_job( tmp_job, "Job resubmitted by ICE" );
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING resubmit_job DONE ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING resubmit_job DONE ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
         }        
         if ( cream_api::job_statuses::DONE_OK == tmp_job.getStatus() ||
@@ -830,38 +829,38 @@ ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::ite
              cream_api::job_statuses::ABORTED == tmp_job.getStatus() ) {
             // WARNING: the next line removes the job from the job cache!
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING purge_job ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING purge_job ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
             purge_job( it, "Job purged by ICE" );
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING purge_job DONE ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING purge_job DONE ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
         }
         if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ) {
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING purge_wms_storage ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING purge_wms_storage ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
 
             purge_wms_storage( tmp_job );
 
-	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                         << "Ice::resubmit_or_purge_job() - "
-                         << "**** CALLING purge_wms_storage DONE ****"
-                         << log4cpp::CategoryStream::ENDLINE);
+// 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                          << "Ice::resubmit_or_purge_job() - "
+//                          << "**** CALLING purge_wms_storage DONE ****"
+//                          << log4cpp::CategoryStream::ENDLINE);
         }
     }
-    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                   << "Ice::resubmit_or_purge_job() - "
-                   << "****  EXITING ****"
-                   << log4cpp::CategoryStream::ENDLINE);
+//     CREAM_SAFE_LOG(m_log_dev->debugStream()
+//                    << "Ice::resubmit_or_purge_job() - "
+//                    << "****  EXITING ****"
+//                    << log4cpp::CategoryStream::ENDLINE);
 
     return it;
 }

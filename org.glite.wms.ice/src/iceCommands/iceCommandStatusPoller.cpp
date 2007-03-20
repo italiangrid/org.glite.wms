@@ -282,7 +282,7 @@ void ice_util::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
                            << " status = [" << it->getStatusName() << "]"
                            << " exit_code = [" << exitCode << "]"
                            << " failure_reason = [" << it->getFailureReason() << "]"
-                           << log4cpp::CategoryStream::ENDLINE);            
+                           << log4cpp::CategoryStream::ENDLINE);
 
             // Creates a temporary job
             ice_util::CreamJob tmp_job( *jit );
