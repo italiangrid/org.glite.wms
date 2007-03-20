@@ -475,7 +475,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     for ( msg_it = ev.Message.begin(), count = 1;
           msg_it != ev.Message.end(); ++msg_it, ++count ) {
 
-        if ( jc_it->get_num_logged_status_changes() < count ) {
+        if ( count <= jc_it->get_num_logged_status_changes() ) {
             if (!getenv("NO_LISTENER_MESS")) {
                 CREAM_SAFE_LOG(m_log_dev->debugStream()
                                << "eventStatusListener::handleEvent() - "
