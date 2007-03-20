@@ -425,145 +425,123 @@ void iceUtil::eventStatusListener::init(void)
 //______________________________________________________________________________
 void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 {
-  
-  //  api::util::scoped_timer T("*** NOTIF HANDLING -handleEvent- ***");
- 
-    if( ev.Message.empty() ) return;
-    
-    // First, convert the vector of messages into a vector of StatusNotification objects
-    vector<StatusNotification> notifications;
-    
-    for ( vector<string>::const_iterator it = ev.Message.begin(); it != ev.Message.end(); ++it ) {
-        try {
-            notifications.push_back( StatusNotification( *it ) );
-        } catch( iceUtil::ClassadSyntax_ex ex ) {
-            if(!getenv("NO_LISTENER_MESS"))
-	      CREAM_SAFE_LOG(m_log_dev->errorStream()
-			     << "eventStatusListenre::handleEvent() - "
-			     << "received a notification "
-			     << *it << " which could not be understood; error is: "
-			     << ex.what() << ". "
-			     << "Skipping this notification and hoping for the best..."
-			     << log4cpp::CategoryStream::ENDLINE);
-        }
+    if( ev.Message.empty() ) 
+        return;
+
+    std::string cream_job_id;
+
+    // First, we need to get the jobID for which this notification 
+    // refers. In order to do so, we need to parse at least the first
+    // notification in the event.
+    try {
+        StatusNotification first_notification( *(ev.Message.begin()) );
+        cream_job_id = first_notification.get_cream_job_id();
+    } catch( iceUtil::ClassadSyntax_ex& ex ) {
+        CREAM_SAFE_LOG( m_log_dev->errorStream()
+                        << "eventStatusListener::handleEvent() - "
+                        << "Cannot parse the first notification "
+                        << *(ev.Message.begin())
+                        << " due to error: "
+                        << ex.what() << ". "
+                        << "Skipping the whole monitor event and hoping for the best..." 
+                        << log4cpp::CategoryStream::ENDLINE);
+        return;
     }
+
+    // Now that we (hopefully) have the jobid, we lock the cache
+    // and find the job
+    boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );    
+    jobCache::iterator jc_it( m_cache->lookupByCreamJobID( cream_job_id ) );
     
-    // Now, for each status change notification, check if it has to be logged
-    vector<StatusNotification>::const_iterator it;
-    int count;
-    for ( it = notifications.begin(), count=1; it != notifications.end(); ++it, ++count ) {
-        
-        boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
-        
-        jobCache::iterator jc_it( m_cache->lookupByCreamJobID( it->get_cream_job_id() ) );
-        
-        // No job found in cache. This is fine, we may be receiving "old"
-        // notifications, for jobs which have been already purged.
-        if ( jc_it == m_cache->end() ) {
-	  if(!getenv("NO_LISTENER_MESS"))
+    // No job found in cache. This is fine, we may be receiving "old"
+    // notifications, for jobs which have been already purged.
+    if ( jc_it == m_cache->end() ) {
+        if(!getenv("NO_LISTENER_MESS"))
 	    CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << "eventStatusListener::handleEvent() - "
                            << "creamjobid ["
-                           << notifications.begin()->get_cream_job_id()
+                           << cream_job_id
                            << "] was not found in the cache. "
                            << "Ignoring the whole notification..."
                            << log4cpp::CategoryStream::ENDLINE);
-            return;
+        return;
+    }
+
+
+    // Now, for each status change notification, check if it has to be logged
+    // vector<StatusNotification>::const_iterator it;
+    int count;
+    vector<string>::const_iterator msg_it;
+    for ( msg_it = ev.Message.begin(), count = 1;
+          msg_it != ev.Message.end(); ++msg_it, ++count ) {
+
+        if ( jc_it->get_num_logged_status_changes() < count ) {
+            if (!getenv("NO_LISTENER_MESS")) {
+                CREAM_SAFE_LOG(m_log_dev->debugStream()
+                               << "eventStatusListener::handleEvent() - "
+                               << "Skipping current notification because contains old states"
+                               << log4cpp::CategoryStream::ENDLINE);
+            }
+            continue; // skip to the next job
+        }
+
+        boost::scoped_ptr< StatusNotification > notif_ptr;
+        try {
+            StatusNotification* n = new StatusNotification( *msg_it );
+            notif_ptr.reset( n );
+        } catch( iceUtil::ClassadSyntax_ex ex ) {
+            if (!getenv("NO_LISTENER_MESS"))
+                CREAM_SAFE_LOG(m_log_dev->errorStream()
+                               << "eventStatusListenre::handleEvent() - "
+                               << "received a notification "
+                               << *msg_it << " which could not be understood; error is: "
+                               << ex.what() << ". "
+                               << "Skipping this notification and hoping for the best..."
+                               << log4cpp::CategoryStream::ENDLINE);
+            continue;
         }
 
         // If the status is "PURGED", remove the job from cache        
-        if( it->get_status() == api::job_statuses::PURGED ) {
-            if(!getenv("NO_LISTENER_MESS"))
-	      CREAM_SAFE_LOG(m_log_dev->infoStream()
-			     << "eventStatusListener::handle_event() - "
-			     << "Job with cream_job_id = ["
-			     << jc_it->getCreamJobID()
-			     << "], grid_job_id = ["
-			     << jc_it->getGridJobID()
-			     << "] is reported as PURGED. Removing from cache"
-			     << log4cpp::CategoryStream::ENDLINE); 
+        if( notif_ptr->get_status() == api::job_statuses::PURGED ) {
+            if (!getenv("NO_LISTENER_MESS"))
+                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                               << "eventStatusListener::handle_event() - "
+                               << iceUtil::describe_job( *jc_it )
+                               << " is reported as PURGED. Removing from cache"
+                               << log4cpp::CategoryStream::ENDLINE); 
             m_cache->erase( jc_it );
             return;
         }
         
-        // setLastSeen must be called ONLY if the job IS NOT in a TERMINAL state
-        // (that means that more states are coming...),
-        // like DONE-OK; otherwise the eventStatusPoller will never purge it...
+        // setLastSeen must be called ONLY if the job IS NOT in a
+        // TERMINAL state (that means that more states are coming...),
+        // like DONE-OK; otherwise the eventStatusPoller will never
+        // purge it...
         if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
-	  //	  api::util::scoped_timer T3("*** NOTIF HANDLING -handleEvent -> setLastSeen+jobCache::put()- ***");
             jc_it->setLastSeen( time(0) );
             jc_it = m_cache->put( *jc_it );
         }
-                
-        if(!getenv("NO_LISTENER_MESS"))
-	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
-			 << "eventStatusListener::handleEvent() - "
-			 << "Checking job [" << it->get_cream_job_id()
-			 << "] with status [" << api::job_statuses::job_status_str[ it->get_status() ] << "]"
-			 << " notification count=" << count
-			 << " num already logged=" << jc_it->get_num_logged_status_changes()
-			 << log4cpp::CategoryStream::ENDLINE);
-
-        if ( jc_it->get_num_logged_status_changes() < count ) {
-            iceUtil::CreamJob tmp_job( *jc_it );
-            it->apply_to_job( tmp_job ); // apply status change to job
-            tmp_job.set_num_logged_status_changes( count );
-            iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
-            if ( ev ) {
-	      //	      api::util::scoped_timer T2("*** NOTIF HANDLING -handleEvent -> logEvent- ***");
-	      //cout << endl << "**** LOGGING Event ****" << endl<<endl;
-// 	      CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 			     << "eventStatusListener::handleEvent() - "
-// 			     << "**** LOGGING Event ****"
-// 			     << log4cpp::CategoryStream::ENDLINE);
-                tmp_job = m_lb_logger->logEvent( ev );
-// 		 CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 			     << "eventStatusListener::handleEvent() - "
-// 			     << "**** LOGGING Event DONE ****"
-// 			     << log4cpp::CategoryStream::ENDLINE);
-		 //cout << endl << "**** LOGGING Event DONE ****" << endl<<endl;
-            }
-	    {
-	      //	      api::util::scoped_timer T3("*** NOTIF HANDLING -handleEvent -> jobCache::put()- ***");
-	      //cout << endl << "**** PUTTING IN CACHE ****" << endl<<endl;
-// 	      CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 			     << "eventStatusListener::handleEvent() - "
-// 			     << "**** PUTTING IN CACHE ****"
-// 			     << log4cpp::CategoryStream::ENDLINE);
-	      jc_it = m_cache->put( tmp_job );
-	      //cout << endl << "**** PUTTING IN CACHE DONE ****" << endl<<endl;
-// 	      CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 			     << "eventStatusListener::handleEvent() - "
-// 			     << "**** PUTTING IN CACHE DONE ****"
-// 			     << log4cpp::CategoryStream::ENDLINE);
-	    }
-            // The job gets stored in the jobcache anyway by the logEvent method...
-// 	    CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 			   << "eventStatusListener::handleEvent() - "
-// 			   << "**** calling  m_ice_manager->resubmit_or_purge_job ****"
-// 			   << log4cpp::CategoryStream::ENDLINE);
-            m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
-// 	    CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 			   << "eventStatusListener::handleEvent() - "
-// 			   << "**** calling  m_ice_manager->resubmit_or_purge_job DONE ****"
-// 			   << log4cpp::CategoryStream::ENDLINE);
-        } else {
-	  if(!getenv("NO_LISTENER_MESS"))
-            CREAM_SAFE_LOG(m_log_dev->debugStream()
+        
+        if (!getenv("NO_LISTENER_MESS"))
+            CREAM_SAFE_LOG(m_log_dev->debugStream() 
                            << "eventStatusListener::handleEvent() - "
-                           << "Skipping current notification because contains old states"
+                           << "Checking job [" << notif_ptr->get_cream_job_id()
+                           << "] with status [" 
+                           << api::job_statuses::job_status_str[ notif_ptr->get_status() ] << "]"
+                           << " This is CEMON notification notification count=" << count
+                           << " num already logged=" 
+                           << jc_it->get_num_logged_status_changes()
                            << log4cpp::CategoryStream::ENDLINE);
+        
+        iceUtil::CreamJob tmp_job( *jc_it );
+        notif_ptr->apply_to_job( tmp_job ); // apply status change to job
+        tmp_job.set_num_logged_status_changes( count );
+        iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
+        if ( ev ) {
+            tmp_job = m_lb_logger->logEvent( ev );
         }
-
-// 	if(!getenv("NO_LISTENER_MESS"))
-// 	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 			 << "eventStatusListener::handleEvent() - "
-// 			 << "Job [" << it->get_cream_job_id()
-// 			 << "] CHECKED!"
-// 			 << log4cpp::CategoryStream::ENDLINE);
-
-        // m_ice_manager->resubmit_or_purge_job( jc_it );
-
+        jc_it = m_cache->put( tmp_job );
+        m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
     }
 }
 
