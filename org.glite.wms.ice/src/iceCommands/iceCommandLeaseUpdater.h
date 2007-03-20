@@ -31,18 +31,6 @@ namespace log4cpp {
   class Category;
 };
 
-// namespace glite {
-//     namespace ce {
-//         namespace cream_client_api {
-//             namespace soap_proxy {
-//                 
-//                 class CreamProxy;
-//                 
-//             }
-//         }
-//     }
-// };
-
 namespace glite {
   namespace wms {
     namespace ice {
@@ -55,12 +43,10 @@ namespace glite {
 	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
 	  log4cpp::Category *m_log_dev;
 	  glite::wms::ice::util::iceLBLogger* m_lb_logger;
-	  //glite::wms::ice::util::CreamJob m_theJob;
 	  time_t m_delta;
 	  time_t m_threshold;
 	  glite::wms::ice::util::jobCache* m_cache;
 	  
-	  void update_lease( void ) throw();
 	  void update_lease_for_job( const CreamJob& j ) throw();
 	  
 	public:

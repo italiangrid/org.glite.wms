@@ -33,6 +33,7 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "creamJob.h"
+#include "ice-core.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -42,146 +43,26 @@
 
 namespace api_util  = glite::ce::cream_client_api::util;
 namespace cream_api = glite::ce::cream_client_api;
-namespace ice_util  = glite::wms::ice::util;
 namespace cream_exceptions = glite::ce::cream_client_api::cream_exceptions;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 
-//using namespace glite::wms::ice::util;
+using namespace glite::wms::ice::util;
 using namespace std;
 
 //____________________________________________________________________________
-ice_util::iceCommandLeaseUpdater::iceCommandLeaseUpdater( ) throw() : 
+iceCommandLeaseUpdater::iceCommandLeaseUpdater( ) throw() : 
   m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
   m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
-  m_lb_logger( ice_util::iceLBLogger::instance() ),
-  //m_theJob( theJob ),
-  m_delta( ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->lease_delta_time() ),
-  m_threshold( ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->lease_threshold_time() ),
-  m_cache( ice_util::jobCache::getInstance() )
+  m_lb_logger( iceLBLogger::instance() ),
+  m_delta( iceConfManager::getInstance()->getConfiguration()->ice()->lease_delta_time() ),
+  m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->lease_threshold_time() ),
+  m_cache( jobCache::getInstance() )
 {
+
 }
 
 //____________________________________________________________________________
-void ice_util::iceCommandLeaseUpdater::execute( ) throw()
-{
-
-  this->update_lease();
-  
-//   if( m_theJob.getCreamJobID().empty() ) {
-//     return;
-//   }
-//   
-//   CREAM_SAFE_LOG(m_log_dev->infoStream() 
-// 		 << "leaseUpdater::update_lease() - "
-// 		 << "Checking LEASE for Job ["
-// 		 << m_theJob.getCreamJobID() << "] - " 
-// 		 << " isActive=" << m_theJob.is_active()
-// 		 << " - remaining=" << (m_theJob.getEndLease()-time(0))
-// 		 << " - threshold=" << m_threshold
-// 		 << log4cpp::CategoryStream::ENDLINE);
-//   
-//   if ( (!m_theJob.is_active()) || ( m_theJob.getEndLease() - time(0) > m_threshold ) ) {
-//     return;
-//   }
-//   
-//   map< string, time_t > newLease;
-//   vector< string > jobids;
-//   
-//   jobids.push_back( m_theJob.getCreamJobID() );
-//   
-//   // Renew the lease
-//   
-//   CREAM_SAFE_LOG(m_log_dev->infoStream()
-// 		 << "iceCommandLeaseUpdater::execute() - "
-// 		 << "updating lease for cream jobid=["
-// 		 << m_theJob.getCreamJobID()
-// 		 << "] m_delta=" << m_delta
-// 		 << log4cpp::CategoryStream::ENDLINE);
-//   
-//   try {
-//     
-//     m_theProxy->Authenticate( m_theJob.getUserProxyCertificate() );
-//     ice_util::CreamProxy_Lease( m_theJob.getCreamURL(), jobids, m_delta, newLease ).execute( m_theProxy.get(), 3 );
-//     
-//   } catch( cream_exceptions::JobUnknownException& ex ) {
-// 
-//     CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		   << "iceCommandLeaseUpdater::execute() - "
-// 		   << "CREAM doesn't know the current Job ["
-// 		   << m_theJob.getCreamJobID()<<"]. Removing from cache."
-// 		   << log4cpp::CategoryStream::ENDLINE);
-// 
-//     boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
-//     ice_util::jobCache::iterator tmp = ice_util::jobCache::getInstance()->lookupByCreamJobID( m_theJob.getCreamJobID() );
-//     ice_util::jobCache::getInstance()->erase( tmp );
-//     return;
-//     
-//   } catch( cream_exceptions::BaseException& ex ) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		   << "iceCommandLeaseUpdater::execute() - "
-// 		   << "Error updating lease for job ["
-// 		   << m_theJob.getCreamJobID()<<"]: "<<ex.what()
-// 		   << log4cpp::CategoryStream::ENDLINE);
-//     return;      
-//   } catch ( soap_proxy::soap_ex& ex ) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		   << "iceCommandLeaseUpdater::execute() - "
-// 		   << "Error updating lease for job ["
-// 		   << m_theJob.getCreamJobID()<<"]: "<<ex.what()
-// 		   << log4cpp::CategoryStream::ENDLINE);
-//     return;
-//   } catch( exception& ex ) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		   << "iceCommandLeaseUpdater::execute() - "
-// 		   << "Error updating lease for job ["
-// 		   << m_theJob.getCreamJobID()<<"]: "<<ex.what()
-// 		   << log4cpp::CategoryStream::ENDLINE);
-//     return;
-//   } catch(...) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		   << "iceCommandLeaseUpdater::execute() - "
-// 		   << "Error updating lease for job ["
-// 		   << m_theJob.getCreamJobID()<<"]: Unknown catched exception."
-// 		   << log4cpp::CategoryStream::ENDLINE);
-//     return;
-//   }
-//   
-//   if ( newLease.find( m_theJob.getCreamJobID() ) != newLease.end() ) {
-//     
-//     // The lease for this job has been updated
-//     // So update the job cache as well...
-//     
-//     CREAM_SAFE_LOG(m_log_dev->infoStream()
-// 		   << "iceCommandLeaseUpdater::execute() - "
-// 		   << "updating lease for cream jobid=["
-// 		   << m_theJob.getCreamJobID()
-// 		   << "]; old lease ends " << ice_util::time_t_to_string( m_theJob.getEndLease() )
-// 		   << " new lease ends " << ice_util::time_t_to_string( newLease[ m_theJob.getCreamJobID() ] )
-// 		   << log4cpp::CategoryStream::ENDLINE);
-//     
-//     boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
-//     
-//     // re-read the current job from the cache in order
-//     // to get modifications (if any) made by other threads
-//     ice_util::jobCache::iterator tmpJob = ice_util::jobCache::getInstance()->lookupByCreamJobID( m_theJob.getCreamJobID() );
-//     if(tmpJob != ice_util::jobCache::getInstance()->end() ) {
-//       tmpJob->setEndLease( newLease[ m_theJob.getCreamJobID() ] );
-//       ice_util::jobCache::getInstance()->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
-//     }
-//     
-//   } else {
-//     // there was an error updating the lease
-//     CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 		   << "iceCommandLeaseUpdater::execute() - "
-// 		   << "unable to update lease for cream jobid=["
-// 		   << m_theJob.getCreamJobID()
-// 		   << "]; old lease ends " << time_t_to_string( m_theJob.getEndLease() )
-// 		   << log4cpp::CategoryStream::ENDLINE);
-//   }
-}
-
-//____________________________________________________________________________
-void ice_util::iceCommandLeaseUpdater::update_lease( void ) throw()
+void iceCommandLeaseUpdater::execute( ) throw()
 {
     typedef list<CreamJob> cj_list_t;
 
@@ -199,21 +80,24 @@ void ice_util::iceCommandLeaseUpdater::update_lease( void ) throw()
         if ( it->getEndLease() <= time(0) ) {
             // Remove expired job from cache
             CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "iceCommandLeaseUpdater::update_lease() - "
+                           << "iceCommandLeaseUpdater::execute() - "
                            << "Removing from cache lease-expired job "
-                           << ice_util::describe_job( *it )
+                           << describe_job( *it )
                            << log4cpp::CategoryStream::ENDLINE);
+            CreamJob tmp_job( *it );
 
+            tmp_job.set_failure_reason( "Lease expired" );
+            m_lb_logger->logEvent( new job_done_failed_event( tmp_job ) );
+            glite::wms::ice::Ice::instance()->resubmit_job( tmp_job, "Lease expired" );
             boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-            jobCache::iterator tmp( m_cache->lookupByGridJobID( it->getGridJobID() ) );
-            //it = m_cache->erase( tmp );              
+            jobCache::iterator tmp( m_cache->lookupByGridJobID( tmp_job.getGridJobID() ) );
 	    m_cache->erase( tmp );
         } else {
             if( ! it->getCreamJobID().empty() ) {
                 CREAM_SAFE_LOG(m_log_dev->infoStream() 
-                               << "iceCommandLeaseUpdater::update_lease() - "
+                               << "iceCommandLeaseUpdater::execute() - "
                                << "Checking LEASE for job "
-                               << ice_util::describe_job( *it )
+                               << describe_job( *it )
                                << " isActive=" << it->is_active()
                                << " - remaining=" << (it->getEndLease()-time(0))
                                << " - threshold=" << m_threshold
@@ -224,13 +108,12 @@ void ice_util::iceCommandLeaseUpdater::update_lease( void ) throw()
                     update_lease_for_job( *it );
                 }
             }
-            //++it;
         }
     } // end for
 }
 
 //____________________________________________________________________________
-void ice_util::iceCommandLeaseUpdater::update_lease_for_job( const CreamJob& j ) throw()
+void iceCommandLeaseUpdater::update_lease_for_job( const CreamJob& j ) throw()
 {
     map< string, time_t > newLease;
     vector< string > jobids;
@@ -240,9 +123,9 @@ void ice_util::iceCommandLeaseUpdater::update_lease_for_job( const CreamJob& j )
     // Renew the lease
     
     CREAM_SAFE_LOG(m_log_dev->infoStream()
-		   << "iceCommandLeaseUpdater::update_lease() - "
+		   << "iceCommandLeaseUpdater::update_lease_for_job() - "
 		   << "updating lease for job "
-                   << ice_util::describe_job( j )
+                   << describe_job( j )
 		   << " m_delta=" << m_delta
 		   << log4cpp::CategoryStream::ENDLINE);
     
@@ -253,9 +136,9 @@ void ice_util::iceCommandLeaseUpdater::update_lease_for_job( const CreamJob& j )
 
     } catch(cream_exceptions::JobUnknownException& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
                        << "CREAM doesn't know the current job "
-                       << ice_util::describe_job( j ) 
+                       << describe_job( j ) 
                        <<". Removing from cache."
                        << log4cpp::CategoryStream::ENDLINE);
         boost::recursive_mutex::scoped_lock M( jobCache::mutex );
@@ -265,31 +148,31 @@ void ice_util::iceCommandLeaseUpdater::update_lease_for_job( const CreamJob& j )
       
     } catch(cream_exceptions::BaseException& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
                        << "Error updating lease for job "
-                       << ice_util::describe_job( j )
+                       << describe_job( j )
                        << ": "<< ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
         return;      
     } catch ( soap_proxy::soap_ex& ex ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
                        << "Error updating lease for job "
-                       << ice_util::describe_job( j ) << ": " << ex.what()
+                       << describe_job( j ) << ": " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
         return;
     } catch(exception& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
-		     << "iceCommandLeaseUpdater::update_lease() - "
+		     << "iceCommandLeaseUpdater::update_lease_for_job() - "
 		     << "Error updating lease for job "
-		     << ice_util::describe_job( j ) << ": " << ex.what()
+		     << describe_job( j ) << ": " << ex.what()
 		     << log4cpp::CategoryStream::ENDLINE);
       return;
     } catch(...) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
-		     << "iceCommandLeaseUpdater::update_lease() - "
+		     << "iceCommandLeaseUpdater::update_lease_for_job() - "
 		     << "Error updating lease for job "
-		     << ice_util::describe_job( j ) << ": Unkonwn exception catched"
+		     << describe_job( j ) << ": Unkonwn exception catched"
 		     << log4cpp::CategoryStream::ENDLINE);
       return;
     }
@@ -300,9 +183,9 @@ void ice_util::iceCommandLeaseUpdater::update_lease_for_job( const CreamJob& j )
         // So update the job cache as well...
 
         CREAM_SAFE_LOG(m_log_dev->infoStream()
-                       << "iceCommandLeaseUpdater::update_lease() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
                        << "updating lease for job "
-                       << ice_util::describe_job( j )
+                       << describe_job( j )
                        << "; old lease ends " << time_t_to_string( j.getEndLease() )
                        << " new lease ends " << time_t_to_string( newLease[ j.getCreamJobID() ] )
                        << log4cpp::CategoryStream::ENDLINE);
@@ -320,9 +203,9 @@ void ice_util::iceCommandLeaseUpdater::update_lease_for_job( const CreamJob& j )
     } else {
         // there was an error updating the lease
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
                        << "unable to update lease for job "
-                       << ice_util::describe_job( j )
+                       << describe_job( j )
                        << "; old lease ends " << time_t_to_string( j.getEndLease() )
                        << log4cpp::CategoryStream::ENDLINE);
     }
