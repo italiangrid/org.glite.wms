@@ -295,11 +295,11 @@ int main(int argc, char*argv[])
      ****************************************************************************/
     while(true) {
 
-        if ( iceThreadPool::instance()->get_command_count() > 100 ) {
+        if ( threadPool->get_command_count() > 100 ) {
             CREAM_SAFE_LOG(log_dev->infoStream()
                            << "glite-wms-ice::main() - "
                            << "There are currently too many requests ("
-                           << iceThreadPool::instance()->get_command_count()
+                           << threadPool->get_command_count()
                            << ") in the internal command queue. "
                            << "Will check again in 30 seconds."
                            << log4cpp::CategoryStream::ENDLINE
