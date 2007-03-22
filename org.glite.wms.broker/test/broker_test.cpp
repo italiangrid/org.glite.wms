@@ -7,8 +7,9 @@
 #include "glite/wms/common/configuration/exceptions.h"
 
 #include "ResourceBroker.h"
-#include "RBMaximizeFilesISMImpl.h"
-#include "RBSimpleISMImpl.h"
+#include "maximize_files_strategy.h"
+#include "simple_strategy.h"
+#include "stochastic_selector.h"
 #include "glite/jdl/JobAdManipulation.h"
 
 #include "matchmaking.h"
@@ -33,6 +34,7 @@
 
 #include <classad_distribution.h>
 #include <boost/progress.hpp>
+#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -56,25 +58,21 @@ using namespace glite::wms::broker;
 typedef boost::shared_ptr<glite::wms::manager::server::DynamicLibrary> DynamicLibraryPtr;
 typedef boost::shared_ptr<ism::purchaser> PurchaserPtr;
 
-//FIXME: should be moved back to ckassad_plugin if/when only this DL is used
-//FIXME: for matchmaking.
-glite::wms::classad_plugin::classad_plugin_loader init;
-
-
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 LineOption  options[] = {
     { 'c', 1, "conf_file", "\t use conf_file as configuration file. glite_wms.conf is the default" },
     { 'j', 1, "jdl_file", "\t use jdl_file as input file." },
-    { 'r', 1, "repeat", "\t repeat n times the matchmaking process." },
+    { 'R', 1, "repeat", "\t repeat n times the matchmaking process." },
     { 'w', 1, "wait", "\t time to wait before starting the actual MM." },
     { 'C', no_argument, "show-ce-ad", "\t show computing elements classad representation" },
     { 'B', no_argument, "show-brokerinfo-ad", "\t show brokerinfo classad representation" },
     { 'q', no_argument, "quiet", "\t do not log anything" },
     { 'S', no_argument, "show-se-ad", "\t show storage elements classad representation" },
     { 'v', no_argument, "verbose",     "\t be verbose" },
-    { 'l', no_argument, "verbose",     "\t be verbose on log file" }
+    { 'l', no_argument, "verbose",     "\t be verbose on log file" },
+    { 'r', no_argument, "show-rank", "\t show rank value." }
 };
 
 void
@@ -149,43 +147,6 @@ int main(int argc, char* argv[])
      glite::wms::manager::main::ISM_Manager ism_manager;
      sleep(time_2_wait);
 
-    
-/*     
-    std::string const dll_ii_name("libglite_wms_ism_ii_purchaser.so");
-    DynamicLibraryPtr dll_ii(
-      new glite::wms::manager::server::DynamicLibrary(
-        dll_ii_name,
-        glite::wms::manager::server::DynamicLibrary::immediate_binding)
-    );
-
-    std::string const create_ii_function_name("create_ii_purchaser");
-    purchaser::ii::create_t* create_ii_function;
-    dll_ii->lookup(create_ii_function_name, create_ii_function);
-
-    std::string const destroy_ii_function_name("destroy_ii_purchaser");
-    purchaser::ii::destroy_t* destroy_ii_function;
-    dll_ii->lookup(destroy_ii_function_name, destroy_ii_function);
-
-    PurchaserPtr ii_pch(
-      create_ii_function( 
-        ns_config->ii_contact(), ns_config->ii_port(),
-        ns_config->ii_dn(),ns_config->ii_timeout(), once 
-      ),
-      destroy_ii_function
-    );
-    scope_guard clear_ism_ce(
-      boost::bind(
-        &ism_type::clear, &the_ism[ce]
-      )
-    );
-
-    scope_guard clear_ism_se(
-      boost::bind(
-        &ism_type::clear, &the_ism[se]
-      )
-    );
-    ii_pch->do_purchase();
-*/
     if(options.is_present('C')){
       for_each(the_ism.computing.begin(), the_ism.computing.end(),
        show_slice_content
@@ -222,23 +183,19 @@ int main(int argc, char* argv[])
 
         glite::wms::broker::ResourceBroker rb;
         if (input_data_exists) {
-          rb.changeImplementation( 
-            boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
-              new glite::wms::broker::RBMaximizeFilesISMImpl()
-            )
-          );
+          rb.changeStrategy( maximize_files() );
           edglog(debug) << "-Using-RBMaximizeFiles-implementation------------------------" << std::endl;
         }
         // If fuzzy_rank is true in the request ad we have
         // to use the stochastic selector...
         bool use_fuzzy_rank = false;
         if (jdl::get_fuzzy_rank(*(reqAd.get()), use_fuzzy_rank) && use_fuzzy_rank) {
-          rb.changeSelector("stochasticRankSelector");
+          rb.changeSelector(stochastic_selector());
           edglog(debug) << "-Using-sthochastic-rank-selections---------------------------" << std::endl;
          
         }
 
-        size_t n = options.is_present('r') ? options['r'].getIntegerValue() : 0; 
+        size_t n = options.is_present('R') ? options['R'].getIntegerValue() : 0; 
         size_t matches = n;
         boost::timer t0;
         do {  
@@ -253,7 +210,12 @@ int main(int argc, char* argv[])
           matchtable::iterator const ces_end = suitable_CEs->end();
 
           while( ces_it != ces_end ) {
-             edglog(debug) << boost::tuples::get<broker::Id>(*ces_it) << std::endl;
+             edglog(debug) << ces_it->get<broker::Id>() << 
+             std::string(
+               options.is_present('r') ?
+               ", "+boost::lexical_cast<string>(ces_it->get<broker::Rank>()) 
+               : ""
+             ) << std::endl;
              ++ces_it;
           }
 

@@ -22,10 +22,10 @@ boost::tuple<
   boost::shared_ptr<filemapping>,
   boost::shared_ptr<storagemapping>
 >
-simple::operator()(
+simple(
   classad::ClassAd const* requestAd
-){
-
+)
+{
   if (!requestAd) {
     return boost::tuples::make_tuple(
       boost::shared_ptr<matchtable>(),

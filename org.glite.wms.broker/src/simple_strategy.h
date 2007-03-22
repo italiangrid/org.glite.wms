@@ -14,15 +14,12 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-struct simple : ResourceBroker::strategy
-{
-  boost::tuple<
+boost::tuple<
     boost::shared_ptr<matchtable>,
     boost::shared_ptr<filemapping>,
     boost::shared_ptr<storagemapping>
-  > 
-  operator()(classad::ClassAd const*);
-};
+>
+simple(classad::ClassAd const*);
 
 }}}
 

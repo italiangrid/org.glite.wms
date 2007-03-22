@@ -80,6 +80,21 @@ public:
   }
 };
 
+class rank_equal_to
+  : public std::unary_function<matchinfo&, bool>
+{
+  double m_rank;
+public:
+  rank_equal_to(double rank)
+    : m_rank(rank)
+  {
+  }
+  bool operator()(matchinfo const& match)
+  {
+    return match.get<Rank>() == m_rank;
+  }
+};
+
 
 }}}
 

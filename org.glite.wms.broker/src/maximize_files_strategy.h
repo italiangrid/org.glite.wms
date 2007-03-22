@@ -3,19 +3,19 @@
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
-// $Id: 
+// $Id$
 
 #ifndef GLITE_WMS_BROKER_MAXIMIZE_FILES_H
 #define GLITE_WMS_BROKER_MAXIMIZE_FILES_H
 
-#include "ResourceBroker.h"
+#include <ResourceBroker.h>
 
 namespace glite {
 namespace wms {
 namespace broker {
 
 
-struct maximize_files : ResourceBroker::strategy
+struct maximize_files
 {
   boost::tuple<
     boost::shared_ptr<matchtable>,

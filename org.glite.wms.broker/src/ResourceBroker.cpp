@@ -51,7 +51,7 @@ struct ResourceBroker::impl : boost::noncopyable
 } // anonymous namespace
 
 ResourceBroker::ResourceBroker() :
-  m_impl( new ResourceBroker::impl(simple(), max_selector) )
+  m_impl( new ResourceBroker::impl(simple, max_selector) )
 {
 } 
 

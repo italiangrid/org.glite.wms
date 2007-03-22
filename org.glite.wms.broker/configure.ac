@@ -74,7 +74,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS Broker], [3.1.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/utility.h])
+AC_CONFIG_SRCDIR([src/ResourceBroker.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project

@@ -34,7 +34,7 @@ matchtable::iterator max_partition(matchtable& matches)
   return std::partition(
     matches.begin(),
     matches.end(),
-    rank_greater_than(max->get<Rank>())
+    rank_equal_to(max->get<Rank>())
   );
 }
 
