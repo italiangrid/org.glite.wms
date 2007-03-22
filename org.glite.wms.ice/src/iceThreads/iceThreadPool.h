@@ -63,7 +63,14 @@ namespace util {
          * @param req The request (command) to enqueue/execute
          */
         void add_request( glite::wms::ice::iceAbsCommand* req );
-        
+
+        /**
+         * Gets the number of requests currently in the queue.
+         *
+         * @return the number of requests (commands) currently in the queue
+         */        
+        int get_command_count( void ) const;
+
     protected:
         
         iceThreadPool( );

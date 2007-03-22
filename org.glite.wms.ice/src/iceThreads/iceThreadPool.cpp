@@ -234,3 +234,9 @@ void iceThreadPool::add_request( glite::wms::ice::iceAbsCommand* req )
     m_state->m_requests_queue.push_back( req );
     m_state->m_no_requests_available.notify_all(); // wake up one worker thread
 }
+
+int iceThreadPool::get_command_count( void ) const
+{
+    boost::recursive_mutex::scoped_lock L( m_state->m_mutex );
+    return m_state->m_requests_queue.size();
+}

@@ -35,7 +35,6 @@
 #include "iceAbsCommand.h"
 #include "iceCommandFactory.h"
 #include "jobCache.h"
-//#include "cemonUrlCache.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
@@ -211,14 +210,6 @@ int main(int argc, char*argv[])
     string logfile = conf->ice()->logfile();
     string hostcert = conf->common()->host_proxy_file();
 
-
-//     try {
-//         iceUtil::makePath( logfile );
-//     } catch(exception& ex) {
-//         cerr << "Error Creating path for logfile ["<<logfile<<"]: "<<ex.what()<<endl;
-//         exit( 1 );
-//     }
-
     logger_instance->setLogFile(logfile.c_str());
     CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070301-10:40]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
@@ -260,13 +251,9 @@ int main(int argc, char*argv[])
 
     iceUtil::jobCache::setPersistDirectory( jcachedir );
     iceUtil::jobCache::setRecoverableDb( true );
-    //iceUtil::cemonUrlCache::setPersistDirectory( jcachedir );
-    //iceUtil::cemonUrlCache::setRecoverableDb( true );
-
 
     try {
         iceUtil::jobCache::getInstance();
-	//iceUtil::cemonUrlCache::getInstance();
     }
     catch(exception& ex) {
         CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );
@@ -307,6 +294,19 @@ int main(int argc, char*argv[])
      * removes requests from input filelist.
      ****************************************************************************/
     while(true) {
+
+        if ( iceThreadPool::instance()->get_command_count() > 100 ) {
+            CREAM_SAFE_LOG(log_dev->infoStream()
+                           << "glite-wms-ice::main() - "
+                           << "There are currently too many requests ("
+                           << iceThreadPool::instance()->get_command_count()
+                           << ") in the internal command queue. "
+                           << "Will check again in 30 seconds."
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            sleep( 30 );
+            continue;
+        }
 
         requests.clear();
         iceManager->getNextRequests(requests);
