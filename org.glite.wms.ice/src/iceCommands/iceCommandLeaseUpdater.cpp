@@ -77,6 +77,16 @@ void iceCommandLeaseUpdater::execute( ) throw()
     } // releases lock on job cache
     
     for ( cj_list_t::iterator it = jobs_to_check.begin(); it != jobs_to_check.end(); ++it) {
+
+        CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                       << "iceCommandLeaseUpdater::execute() - "
+                       << "Checking LEASE for job "
+                       << describe_job( *it )
+                       << " isActive=" << it->is_active()
+                       << " - remaining=" << (it->getEndLease()-time(0))
+                       << " - threshold=" << m_threshold
+                       << log4cpp::CategoryStream::ENDLINE);        
+
         if ( it->getEndLease() && it->getEndLease() <= time(0) ) {
             // Remove expired job from cache
             CREAM_SAFE_LOG(m_log_dev->warnStream()
@@ -93,20 +103,10 @@ void iceCommandLeaseUpdater::execute( ) throw()
             jobCache::iterator tmp( m_cache->lookupByGridJobID( tmp_job.getGridJobID() ) );
 	    m_cache->erase( tmp );
         } else {
-            if( ! it->getCreamJobID().empty() ) {
-                CREAM_SAFE_LOG(m_log_dev->infoStream() 
-                               << "iceCommandLeaseUpdater::execute() - "
-                               << "Checking LEASE for job "
-                               << describe_job( *it )
-                               << " isActive=" << it->is_active()
-                               << " - remaining=" << (it->getEndLease()-time(0))
-                               << " - threshold=" << m_threshold
-                               << log4cpp::CategoryStream::ENDLINE);
-                
-                if ( it->is_active() && 
-                     ( it->getEndLease() - time(0) <= m_threshold ) ) {
-                    update_lease_for_job( *it );
-                }
+            if( !it->getCreamJobID().empty() &&
+                it->is_active() && 
+                ( it->getEndLease() - time(0) <= m_threshold ) ) {
+                update_lease_for_job( *it );
             }
         }
     } // end for
