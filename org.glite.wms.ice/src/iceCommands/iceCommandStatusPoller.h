@@ -41,18 +41,6 @@ namespace log4cpp {
   class Category;
 };
 
-// namespace glite {
-//     namespace ce {
-//         namespace cream_client_api {
-//             namespace soap_proxy {
-//                 
-//                 class CreamProxy;
-//                 
-//             }
-//         }
-//     }
-// };
-
 namespace glite {
   namespace wms {
     namespace ice {
@@ -71,7 +59,8 @@ namespace glite {
           Ice* m_iceManager;
 	  jobCache* m_cache;
 	  time_t m_threshold;
-	  
+	  bool m_poll_all_jobs;
+
 	  //void purgeJobs( const std::vector< std::string >& );
 
 	  /**
@@ -119,7 +108,7 @@ namespace glite {
             \throw eventStatusPoller_ex& if the creation of the internal cream communication client failed
             \sa ice
           */
-          iceCommandStatusPoller( Ice* ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
+          iceCommandStatusPoller( Ice*, bool poll_all_jobs = false ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
           
           virtual ~iceCommandStatusPoller() throw() { } 
 

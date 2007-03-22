@@ -52,14 +52,16 @@ namespace ice_util   = glite::wms::ice::util;
 using namespace std;
 
 //____________________________________________________________________________
-ice_util::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce ) :
+ice_util::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bool poll_all_jobs ) :
   m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
   m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
   m_lb_logger( iceLBLogger::instance() ),
   m_iceManager( theIce ),
   m_cache( ice_util::jobCache::getInstance() ),
-  m_threshold( ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() )
+  m_threshold( ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
+  m_poll_all_jobs( poll_all_jobs )
 {
+
 }
 
 
@@ -80,7 +82,8 @@ list< ice_util::CreamJob > ice_util::iceCommandStatusPoller::get_jobs_to_poll( v
         time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
         time_t oldness = t_now - t_last_seen;
 
-        if ( ( t_last_seen > 0 ) && oldness >= m_threshold ) {
+        if ( m_poll_all_jobs ||
+	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ) {
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
                            << "eventStatusPoller::get_jobs_to_poll() - "
                            << "GridJobID=[" << jit->getGridJobID() << "] "

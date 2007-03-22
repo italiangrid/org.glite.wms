@@ -136,9 +136,11 @@ namespace ice {
         
         virtual ~Ice();
         
-        // void clearRequests();
         void getNextRequests(std::vector< filelist_request >&);
         void removeRequest( const filelist_request& r );
+
+	// This should be used to poll all jobs in the cache
+	void init_cache( void );
 
         // Starter methods
         void startListener( void );

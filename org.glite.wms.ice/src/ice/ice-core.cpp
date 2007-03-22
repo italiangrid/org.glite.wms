@@ -38,6 +38,7 @@
 #include "iceLBLogger.h"
 #include "CreamProxyFactory.h"
 #include "CreamProxyMethod.h"
+#include "iceCommandStatusPoller.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -165,6 +166,7 @@ Ice* Ice::instance( void )
         }
         
     }
+    s_instance->init_cache();
     return s_instance;
 }
 
@@ -176,9 +178,6 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_lease_updater_thread( "Lease Updater" ),
     m_proxy_renewer_thread( "Proxy Renewer" ),
     m_job_killer_thread( "Job Killer" ),
-
-    // m_ns_filelist( ice_util::iceConfManager::getInstance()->getWMInputFile() ),
-    // m_fle( ice_util::iceConfManager::getInstance()->getICEInputFile() ),
     m_wms_input_queue( 0 ),
     m_ice_input_queue( 0 ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
@@ -210,6 +209,12 @@ Ice::Ice( ) throw(iceInit_ex&) :
 Ice::~Ice( )
 {
 
+}
+
+void Ice::init_cache( void )
+{
+	util::iceCommandStatusPoller p( this, true );
+	p.execute( );	
 }
 
 //____________________________________________________________________________
@@ -278,16 +283,6 @@ void Ice::startListener( void )
         boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
         util::subscriptionManager::getInstance();
     }
-    /*if( !util::subscriptionManager::getInstance()->isValid() ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->fatalStream() 
-                       << "Ice::CTOR() - "
-                       << "Fatal error creating the subscriptionManager "
-                       << "instance. Stop!"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        exit(1);
-    }*/
     
     util::eventStatusListener* listener;
     if( m_configuration->ice()->listener_enable_authn() ) {
@@ -400,20 +395,9 @@ void Ice::startPoller( void )
     // I removed the try/catch because in the new schema using the iceCommandStatusPoller
     // there is not anymore that exception
     
-    //try {
-        poller = new util::eventStatusPoller( this, m_configuration->ice()->poller_delay() );
-        m_poller_thread.start( poller );
-    /* } catch(util::eventStatusPoller_ex& ex) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->fatalStream()
-                       << "Ice::startPoller() - "
-                       << "eventStatusPoller object creation failed "
-                       << "due to exception \"" << ex.what()
-                       << "\". Stop!"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        exit(1);
-    } */
+    poller = new util::eventStatusPoller( this, m_configuration->ice()->poller_delay() );
+    m_poller_thread.start( poller );
+
 }
 
 //----------------------------------------------------------------------------
@@ -468,27 +452,26 @@ void Ice::startJobKiller( void )
 void Ice::getNextRequests(vector< filelist_request >& ops) 
 {
     std::vector<FLEit> m_requests;
-  try { 
-      m_requests = m_fle.get_all_available();
-  }
-  catch( exception& ex ) {
-      CREAM_SAFE_LOG(
-                     m_log_dev->fatalStream() 
-                     << "Ice::getNextRequest() - " << ex.what()
-                     << log4cpp::CategoryStream::ENDLINE
-                     );
-      exit(1);
-  }
-  for ( unsigned j=0; j < m_requests.size(); j++ ) {
-      ops.push_back( filelist_request( m_requests[j] ) );
-  }
+    try { 
+        m_requests = m_fle.get_all_available();
+    }
+    catch( exception& ex ) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->fatalStream() 
+                       << "Ice::getNextRequest() - " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        exit(1);
+    }
+    for ( unsigned j=0; j < m_requests.size(); j++ ) {
+        ops.push_back( filelist_request( m_requests[j] ) );
+    }
 }
 
 //____________________________________________________________________________
 void Ice::removeRequest( const filelist_request& req ) 
 {
     m_fle.erase( req.get_iterator() );
-    // m_fle.erase(m_requests[reqNum]);
 }
 
 //____________________________________________________________________________
