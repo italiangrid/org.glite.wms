@@ -77,7 +77,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
     } // releases lock on job cache
     
     for ( cj_list_t::iterator it = jobs_to_check.begin(); it != jobs_to_check.end(); ++it) {
-        if ( it->getEndLease() <= time(0) ) {
+        if ( it->getEndLease() && it->getEndLease() <= time(0) ) {
             // Remove expired job from cache
             CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << "iceCommandLeaseUpdater::execute() - "

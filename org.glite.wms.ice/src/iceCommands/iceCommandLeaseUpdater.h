@@ -32,40 +32,37 @@ namespace log4cpp {
 };
 
 namespace glite {
-  namespace wms {
-    namespace ice {
-      namespace util {
+namespace wms {
+namespace ice {
+namespace util {
 	
-	class iceLBLogger;
-	class jobCache;
-	
-	class iceCommandLeaseUpdater : public iceAbsCommand {
-	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-	  log4cpp::Category *m_log_dev;
-	  glite::wms::ice::util::iceLBLogger* m_lb_logger;
-	  time_t m_delta;
-	  time_t m_threshold;
-	  glite::wms::ice::util::jobCache* m_cache;
-	  
-	  void update_lease_for_job( const CreamJob& j ) throw();
-	  
-	public:
-	  iceCommandLeaseUpdater( ) throw();
-
-	  ~iceCommandLeaseUpdater( ) throw() { }
-	  
-	  void execute( ) throw();
-	  
-	  
-	  std::string get_grid_job_id( void ) const 
-	  { 
-                  return "";//m_theJob.getGridJobID(); 
-	  }
-	};
-
-      }
-    }
-  }
-}
+    class iceLBLogger;
+    class jobCache;
+    
+    class iceCommandLeaseUpdater : public iceAbsCommand {
+        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+        log4cpp::Category *m_log_dev;
+        glite::wms::ice::util::iceLBLogger* m_lb_logger;
+        time_t m_delta;
+        time_t m_threshold;
+        glite::wms::ice::util::jobCache* m_cache;
+        
+        void update_lease_for_job( const CreamJob& j ) throw();
+        
+    public:
+        iceCommandLeaseUpdater( ) throw();
+        
+        ~iceCommandLeaseUpdater( ) throw() { }
+        
+        void execute( ) throw();
+                
+        std::string get_grid_job_id( void ) const { return std::string(); } 
+        
+    };
+    
+} // namespace util
+} // namespace ice
+} // namespace wms
+} // namespace glite
 
 #endif
