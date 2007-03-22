@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.14  2007/03/22 15:53:56  rlops
+#       increased version
+#
 #       Revision 1.22.2.13  2007/03/19 15:50:51  rlops
 #       increased versions
 #
@@ -173,7 +176,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Helper], [3.1.11])
+AC_INIT([GLite WMS Helper], [3.1.12])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])
