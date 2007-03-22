@@ -425,6 +425,7 @@ void iceUtil::eventStatusListener::init(void)
 //______________________________________________________________________________
 void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 {
+
     if( ev.Message.empty() ) 
         return;
 
@@ -448,26 +449,6 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         return;
     }
 
-    // Now that we (hopefully) have the jobid, we lock the cache
-    // and find the job
-    boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );    
-    jobCache::iterator jc_it( m_cache->lookupByCreamJobID( cream_job_id ) );
-    
-    // No job found in cache. This is fine, we may be receiving "old"
-    // notifications, for jobs which have been already purged.
-    if ( jc_it == m_cache->end() ) {
-        if(!getenv("NO_LISTENER_MESS"))
-	    CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "eventStatusListener::handleEvent() - "
-                           << "creamjobid ["
-                           << cream_job_id
-                           << "] was not found in the cache. "
-                           << "Ignoring the whole notification..."
-                           << log4cpp::CategoryStream::ENDLINE);
-        return;
-    }
-
-
     // Now, for each status change notification, check if it has to be logged
     // vector<StatusNotification>::const_iterator it;
     int count;
@@ -475,13 +456,25 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     for ( msg_it = ev.Message.begin(), count = 1;
           msg_it != ev.Message.end(); ++msg_it, ++count ) {
 
+        // First, we find the job in the cache
+        boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );    
+        jobCache::iterator jc_it( m_cache->lookupByCreamJobID( cream_job_id ) );
+        
+        // No job found in cache. This is fine, we may be receiving "old"
+        // notifications, for jobs which have been already purged.
+        if ( jc_it == m_cache->end() ) {
+            if(!getenv("NO_LISTENER_MESS"))
+                CREAM_SAFE_LOG(m_log_dev->warnStream()
+                               << "eventStatusListener::handleEvent() - "
+                               << "creamjobid ["
+                               << cream_job_id
+                               << "] was not found in the cache. "
+                               << "Ignoring the whole notification..."
+                               << log4cpp::CategoryStream::ENDLINE);
+            return;
+        }
+        
         if ( count <= jc_it->get_num_logged_status_changes() ) {
-//             if (!getenv("NO_LISTENER_MESS")) {
-//                 CREAM_SAFE_LOG(m_log_dev->debugStream()
-//                                << "eventStatusListener::handleEvent() - "
-//                                << "Skipping current notification because contains old states"
-//                                << log4cpp::CategoryStream::ENDLINE);
-//             }
             continue; // skip to the next job
         }
 
