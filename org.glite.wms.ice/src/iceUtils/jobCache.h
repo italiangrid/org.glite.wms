@@ -275,7 +275,7 @@ namespace glite {
            * @return an iterator to the element immediately following
            * the one being removed; end() if it==end().
            */
-          iterator erase( iterator& it );
+          iterator erase( iterator it );
 
 
           // Accessors used to expose jobCacheTable iterator methods

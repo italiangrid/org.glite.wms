@@ -252,7 +252,7 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 }
 
 //______________________________________________________________________________
-jobCache::iterator jobCache::erase( jobCache::iterator& it )
+jobCache::iterator jobCache::erase( jobCache::iterator it )
 {
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     if ( it == m_jobs.end() ) {
@@ -261,7 +261,6 @@ jobCache::iterator jobCache::erase( jobCache::iterator& it )
 
     jobCache::iterator result = it;
     result++; // advance iterator
-    string to_string = it->serialize();
     // job found, log operation and remove
 
     try{
