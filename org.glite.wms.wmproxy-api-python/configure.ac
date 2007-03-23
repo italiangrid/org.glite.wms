@@ -61,6 +61,9 @@ AC_GLITE
 AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
 AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 
+AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
