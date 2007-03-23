@@ -14,33 +14,20 @@
 #       Authors: Luca Petronzio <luca.petronzio@elsagdatamat.com>
 #
 
-## CONFIGURATION VALUES ##
-GLITE_REPOSITORY=../../..
-
-GLITE_EXTERNALS=$(GLITE_REPOSITORY)/repository
-
-FLAVOUR=rhel30_gcc32
-GLOBUS_LOCATION=$(GLITE_EXTERNALS)/globus/2.4.3-VDT-1.2.2/$(FLAVOUR)
-GLOBUS_FLAVOR=gcc32dbg
-
-
 WMPROXY_UTILS = $(top_builddir)/examples/libmake_proxy_cert.la
-CURL = -L/usr/lib -lcurl
 
 bin_PROGRAMS = \
 	glite-proxy-cert
 
 glite_proxy_cert_SOURCES = \
 	make_proxy_cert.c
-glite_proxy_cert_LDFLAGS = -Xlinker --export-dynamic
+glite_proxy_cert_LDFLAGS = --cflags -Xlinker --export-dynamic
 glite_proxy_cert_LDADD = \
-	-L$(GLOBUS_LOCATION)/lib \
-	-lglobus_openssl_$(GLOBUS_FLAVOR)
+	$(GRIDSITE_OPENSSL_LIBS) 
 
-
-AM_CPPFLAGS = -I$(top_srcdir)/examples \
+AM_CFLAGS = -I$(top_srcdir)/examples \
 	-I$(top_srcdir)/build/examples \
-	$(OPENSSL_CFLAGS) \
+	$(GRIDSITE_OPENSSL_CFLAGS) \
 	-DWANT_NAMESPACES
 
 

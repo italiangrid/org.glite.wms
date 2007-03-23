@@ -58,6 +58,10 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 AC_GLITE
 
+AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
+AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
+
+
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
