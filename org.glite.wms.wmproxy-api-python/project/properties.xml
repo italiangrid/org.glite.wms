@@ -21,6 +21,9 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.4  2007/03/23 13:39:24  lpetronz
+	added globus.m4
+
 	Revision 1.3  2007/03/23 11:49:38  lpetronz
 	Modified build autotools with macro
 
@@ -66,7 +69,7 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="gridsite.m4 glite.m4"/>
+	<property name="m4files.list" value="gridsite.m4 glite.m4 globus.m4"/>
  
         <property name="build.package.summary" value="Files for gLite WMS WMProxy client Python API" />
         <property name="build.package.description" value="gLite WMS WMProxy client Python API library" />
