@@ -164,9 +164,8 @@ Ice* Ice::instance( void )
                            );
             exit(1);
         }
-        
+        s_instance->init_cache();    
     }
-    s_instance->init_cache();
     return s_instance;
 }
 
