@@ -16,18 +16,18 @@ namespace rls {
 
 
 ReplicaServiceException::ReplicaServiceException(const string& str) 
-            : what(str)
+            : exception(), m_str(str)
 {
 }
 
-ReplicaServiceException::~ReplicaServiceException()
-{
+const char* 
+ReplicaServiceException::what() const throw()
+{ 
+   return m_str.c_str(); 
 }
 
-const string
-ReplicaServiceException::reason() const 
+ReplicaServiceException::~ReplicaServiceException() throw()
 {
-   return what;
 }
 
 

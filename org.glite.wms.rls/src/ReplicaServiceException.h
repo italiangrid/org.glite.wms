@@ -12,19 +12,20 @@
 #define GLIDE_WMS_RLS_REPLICASERVICEEXCEPTION_H
 
 #include <string>
+#include <exception>
 
 namespace glite {
 namespace wms {
 namespace rls {
 
-class ReplicaServiceException  {
+class ReplicaServiceException  : public std::exception {
 
-  std::string what;
+  std::string m_str;
 public:
   ReplicaServiceException(const std::string& str);
-  ~ReplicaServiceException();
+  ~ReplicaServiceException() throw();
 
-  const std::string reason() const;
+  const char* what() const throw();
 };
 
 
