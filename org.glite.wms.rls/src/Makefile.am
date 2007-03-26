@@ -6,8 +6,7 @@
 ## *
 ## *********************************************************************
 
-SUBDIRS = \
-	DLI_SI
+SUBDIRS = DLI
 	
 
 lib_LTLIBRARIES = \
@@ -22,8 +21,7 @@ libglite_wms_replicaservice_la_SOURCES = \
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/interface \
         -I$(top_srcdir)/src \
-	-I$(top_srcdir)/src/RLS \
-	-I$(top_srcdir)/src/DLI_SI \
+	-I$(top_srcdir)/src/DLI \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
