@@ -97,7 +97,7 @@ main() {
      );
   }
   catch( const ReplicaServiceException& ex){
-    std::cout << ex.reason() << std:: endl;
+    std::cout << ex.what() << std:: endl;
     return -1;
   }
 
