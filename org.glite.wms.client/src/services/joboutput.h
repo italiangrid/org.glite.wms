@@ -88,8 +88,8 @@ class JobOutput  : public Job {
         	 /**
                 *	String input arguments
                 */
-		std::string* inOpt ; 	// --input <file>
-		std::string* dirOpt ; 	// --dir <dir_path>
+		std::string m_inOpt ; 	// --input <file>
+		std::string m_dirOpt ; 	// --dir <dir_path>
 		std::string logName;  // string to append to directory
 		std::string dirCfg ; 	// OutputStorage configuration value
                 /**
@@ -121,7 +121,7 @@ class JobOutput  : public Job {
 		/**
 		* List of warning messages
 		*/
-		std::string* warnsList ;
+		std::string m_warnsList ;
   };
 }}}} // ending namespaces
 

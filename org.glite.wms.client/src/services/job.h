@@ -19,6 +19,8 @@
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
+#include <boost/scoped_ptr.hpp>
+
 namespace glite {
 namespace wms{
 namespace client {
@@ -245,17 +247,17 @@ class Job{
 		/** FailOver Approach: Perform a desired step */
 		void jobPerformStep(jobRecoveryStep step);
 		/** Input argument  --logfile <file> */
-		std::string* logOpt ;
+		std::string m_logOpt ;
 		/** Input argument  --output <file>  */
-		std::string* outOpt ;
+		std::string m_outOpt ;
 		/** Input argument  --config <file> */
-		std::string* cfgOpt ;
+		std::string m_cfgOpt ;
 		/** Input argument  --vo <VO_Name> */
-		std::string* voOpt ;
+		std::string m_voOpt ;
 		/** Input argument   --delegationid*/
-		std::string* dgOpt ;
+		std::string m_dgOpt ;
 		/** Input argument  --proto */
-		std::string* fileProto;
+		std::string m_fileProto;
 		/** Input argument --autm-delegation */
 		bool autodgOpt ;
 		/** Input argument --noint */
@@ -269,9 +271,9 @@ class Job{
 		/** log file */
 		glite::wms::client::utilities::Log *logInfo ;
 		/** endpoint*/
-		std::string* endPoint ;
+		std::string m_endPoint ;
 		/** Configuration contex */
-		glite::wms::wmproxyapi::ConfigContext *cfgCxt ;
+		boost::scoped_ptr<glite::wms::wmproxyapi::ConfigContext> m_cfgCxt;
 		/** List of possible endpoints*/
 		std::vector<std::string> urls;
 		/** List of already trialed endpoints
@@ -285,11 +287,11 @@ class Job{
 		/**
 		* Path to the local user proxy
 		*/
-		std::string* proxyFile ;
+		std::string m_proxyFile ;
 		/**
 		* Path to the CertAuth's directory
 		*/
-		std::string* trustedCerts ;
+		std::string m_trustedCerts ;
 		/** Remember whehter Service Discovery have been contacted*/
 		bool sdContacted;
 

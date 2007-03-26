@@ -783,30 +783,30 @@ void Options::attach_usage(const char* &exename, const bool &long_usg){
 *	@param command command to be handled
 */
 Options::Options (const WMPCommands &command){
-	jdlFile = NULL ;
+	m_jdlFile = "" ;
 	// init of the string attributes
-	chkpt = NULL;
-        collection = NULL;
-	config = NULL;
-	dag = NULL;
-        delegation = NULL;
-	def_jdl = NULL;
-	dir = NULL;
-        endpoint = NULL;
-	exclude = NULL;
-	from = NULL;
-	input = NULL;
-	lrms = NULL;
-	logfile = NULL;
-	nodesres = NULL;
-	output = NULL;
-	resource = NULL ;
-	start = NULL;
-	status = NULL;
-	to = NULL;
-	valid = NULL ;
-        vo = NULL ;
-	inputfile = NULL;
+	m_chkpt = "";
+        m_collection = "";
+	m_config = "";
+	m_dag = "";
+        m_delegation = "";
+	m_def_jdl = "";
+	m_dir = "";
+        m_endpoint = "";
+	m_exclude = "";
+	m_from = "";
+	m_input = "";
+	m_lrms = "";
+	m_logfile = "";
+	m_nodesres = "";
+	m_output = "";
+	m_resource = "";
+	m_start = "";
+	m_status = "";
+	m_to = "";
+	m_valid = "";
+        m_vo = "";
+	m_inputfile = "";
 	// init of the boolean attributes
 	all  = false ;
         autodg = false;
@@ -837,7 +837,7 @@ Options::Options (const WMPCommands &command){
 	port = NULL ;
 	verbosity = NULL ;
 	// Default protocol for File Transfer
-	fileprotocol = NULL;
+	m_fileprotocol = "";
 	// definitions of short and long options
 	switch (command){
 		case (JOBSUBMIT) :{
@@ -863,11 +863,11 @@ Options::Options (const WMPCommands &command){
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c%c%c" ,
-				Options::SHORT_E,  		short_required_arg, // endpoint
+				Options::SHORT_E,  	short_required_arg, // endpoint
 				Options::SHORT_OUTPUT, 	short_required_arg,
 				Options::SHORT_INPUT,	short_required_arg,
 				Options::SHORT_CONFIG,	short_required_arg,
-				Options::SHORT_V,		short_required_arg//verbosity
+				Options::SHORT_V,	short_required_arg//verbosity
 			);
 			// long options
 			longOpts = statusLongOpts ;
@@ -920,12 +920,11 @@ Options::Options (const WMPCommands &command){
 		case(JOBOUTPUT) :{
 			// short options
 			asprintf (&shortOpts,
-				"%c%c%c%c%c%c%c" ,
-				Options::SHORT_INPUT,		short_required_arg,
-				Options::SHORT_OUTPUT, 	short_required_arg,
-				Options::SHORT_NOPURG, 	short_no_arg,
-				Options::SHORT_CONFIG,		short_required_arg
-			);
+				"%c%c%c%c%c%c%c%c" ,
+				Options::SHORT_INPUT, short_required_arg,
+				Options::SHORT_OUTPUT, short_required_arg,
+				Options::SHORT_NOPURG, short_no_arg,
+				Options::SHORT_CONFIG, short_required_arg);
 			// long options
 			longOpts = outputLongOpts ;
 			numOpts = (sizeof(outputLongOpts)/sizeof(option)) -1;
@@ -935,9 +934,9 @@ Options::Options (const WMPCommands &command){
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c" ,
-				Options::SHORT_P	,	 	short_required_arg,
-				Options::SHORT_INPUT,		short_required_arg,
-				Options::SHORT_CONFIG,		short_required_arg);
+				Options::SHORT_P, short_required_arg,
+				Options::SHORT_INPUT, short_required_arg,
+				Options::SHORT_CONFIG, short_required_arg);
 			// long options
 			longOpts = attachLongOpts ;
 			numOpts = (sizeof(attachLongOpts)/sizeof(option)) -1;
@@ -947,7 +946,7 @@ Options::Options (const WMPCommands &command){
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c%c%c",
-				Options::SHORT_E,  			short_required_arg, // endpoint
+				Options::SHORT_E,  		short_required_arg, // endpoint
 				Options::SHORT_AUTODG, 		short_no_arg,
 				Options::SHORT_DELEGATION, 	short_required_arg,
 				Options::SHORT_OUTPUT, 		short_required_arg,
@@ -961,14 +960,14 @@ Options::Options (const WMPCommands &command){
 		case (JOBINFO) :{
 			// short options
 			asprintf (&shortOpts,
-				"%c%c%c%c%c%c%c%c%c%c%c%c",
-				Options::SHORT_E,  			short_required_arg, // endpoint
-				Options::SHORT_P,			short_no_arg, // proxy
-				Options::SHORT_JDLORIG,		short_no_arg,
-				Options::SHORT_DELEGATION, 	short_required_arg,
-				Options::SHORT_INPUT, 		short_required_arg,
-				Options::SHORT_OUTPUT, 		short_required_arg,
-				Options::SHORT_CONFIG,		short_required_arg);
+				"%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				Options::SHORT_E, short_required_arg, // endpoint
+				Options::SHORT_P, short_no_arg, // proxy
+				Options::SHORT_JDLORIG, short_no_arg,
+				Options::SHORT_DELEGATION, short_required_arg,
+				Options::SHORT_INPUT, short_required_arg,
+				Options::SHORT_OUTPUT, short_required_arg,
+				Options::SHORT_CONFIG, short_required_arg);
 
 			// long options
 			longOpts = jobInfoLongOpts ;
@@ -1003,31 +1002,9 @@ Options::Options (const WMPCommands &command){
 * Default destructor
 */
 Options::~Options( ) {
-	if (chkpt) { delete(chkpt);}
-	if (collection ) { delete(collection );}
-	if (config) { delete( config);}
-	if (dag) { delete(dag);}
-	if (def_jdl) { delete(def_jdl);}
-	if (delegation) { delete( delegation);}
-	if (dir) { delete(dir );}
-	if (endpoint  ) { delete(endpoint  );}
-	if ( exclude) { delete( exclude);}
-	if (fileprotocol) { delete(fileprotocol);}
-	if (from ) { delete( from);}
-	if ( input ) { delete(input  );}
-	if ( lrms) { delete( lrms);}
-	if (logfile ) { delete(logfile );}
-	if (nodesres) { delete(nodesres);}
-	if (output  ) { delete( output );}
 	if (port ) { free(port);}
-	if (resource) { delete(resource);}
-	if (start ) { delete( start);}
-	if (status ) { delete( status);}
-	if (to) { delete(to);}
-	if (valid ) { delete(valid);}
 	if (verbosity  ) { free (verbosity );}
-	if (vo) { delete(vo);}
-	if (inputfile) { delete(inputfile);}
+	if (shortOpts) { free(shortOpts); }
 }
 /**
 * Returns a string with the version numbers of this client
@@ -1127,127 +1104,87 @@ const int Options::checkOpts(const std::string& opt) {
 /*
 *	Gets the value of the option string-attribute
 */
-string* Options::getStringAttribute (const OptsAttributes &attribute){
-	string *value = NULL ;
+string Options::getStringAttribute (const OptsAttributes &attribute){
+	string value = "";
 	switch (attribute){
         	case(COLLECTION) : {
-			if (collection){
-				value = new string (*collection) ;
-			}
+			value = m_collection;
 			break ;
 		}
 		case(DIR) : {
-			if (dir){
-				value = new string (*dir) ;
-			}
+			value = m_dir;
 			break ;
 		}
 		case(LOGFILE) : {
-			if (logfile){
-				value = new string (*logfile) ;
-			}
+			value = m_logfile;
 			break ;
 		}
 		case(DAG) : {
-			if (dag){
-				value = new string (*dag) ;
-			}
+			value = m_dag;
 			break ;
 		}
 		case(DEFJDL) : {
-			if (def_jdl){
-				value = new string (*def_jdl) ;
-			}
+			value = m_def_jdl;
 			break ;
 		}
                 case(DELEGATION) : {
-			if (delegation){
-				value = new string (*delegation) ;
-			}
+			value = m_delegation;
 			break ;
 		}
 		case(ENDPOINT) : {
-			if (endpoint){
-				value = new string (*endpoint) ;
-			}
+			value = m_endpoint;
 			break ;
 		}
                 case(CHKPT) : {
-			if (chkpt){
-				value = new string (*chkpt) ;
-			}
+			value = m_chkpt;
 			break ;
 		}
 		case(LRMS) : {
-			if (lrms){
-				value = new string (*lrms) ;
-			}
+			value = m_lrms;
 			break ;
 		}
 		case(VALID) : {
-			if (valid){
-				value = new string (*valid) ;
-			}
+			value = m_valid;
 			break ;
 		}
 		case(TO) : {
-			if (to){
-				value = new string (*to) ;
-			}
+			value = m_to;
 			break ;
 		}
 		case(OUTPUT) : {
-			if (output){
-				value = new string (*output) ;
-			}
+			value = m_output;
 			break ;
 		}
 		case(PROTO) : {
-			if (fileprotocol){
-				value = new string (*fileprotocol) ;
-			}
+			value = m_fileprotocol;
 			break ;
 		}
 		case(INPUT) : {
-			if (input){
-				value = new string (*input) ;
-			}
+			value = m_input;
 			break ;
 		}
 		case(CONFIG) : {
-			if (config){
-				value = new string (*config) ;
-			}
+			value = m_config;
 			break ;
 		}
                 case(VO) : {
-			if (vo){
-				value = new string (*vo) ;
-			}
+			value = m_vo;
 			break ;
 		}
 		case(RESOURCE) : {
-			if (resource){
-				value = new string (*resource) ;
-			}
+			value = m_resource;
 			break ;
 		}
 		case(NODESRES) : {
-			if (nodesres){
-				value = new string (*nodesres) ;
-			}
+			value = m_nodesres;
 			break ;
 		}
 		case(INPUTFILE) : {
-			if (inputfile){
-				value = new string (*inputfile) ;
-			}
+			value = m_inputfile;
 			break ;
 		}
 		case(START) : {
-			if (start) {
-				value = new string (*start);
-			}
+			value = m_start;
 			break ;
 		}
 		default : {
@@ -1652,8 +1589,8 @@ const string Options::getJobId () {
 *	gets the path to the JDL file
 *	@return the filepath string
 */
-string* Options::getPath2Jdl () {
-	return jdlFile ;
+string Options::getPath2Jdl () {
+	return m_jdlFile ;
 };
 
 
@@ -1804,7 +1741,7 @@ void Options::readOptions(const int &argc, const char **argv){
 		// ========================================
 		if (  cmdType == JOBSUBMIT   ||
 			cmdType == JOBMATCH  ){
-			if (!collection && !start && !dag){
+			if (m_collection.empty() && m_start.empty() && m_dag.empty()){
 				 if (optind < (argc-1) ){
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
@@ -1812,7 +1749,7 @@ void Options::readOptions(const int &argc, const char **argv){
 						"Wrong Input Argument: " + string(argv[optind]) );
 				} else if ( optind == (argc-1) ) {
 					if (Utils::isFile( last_arg ) ) {
-						jdlFile = new string(last_arg) ;
+						m_jdlFile = last_arg;
 					} else {
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
@@ -1835,7 +1772,7 @@ void Options::readOptions(const int &argc, const char **argv){
 				}
 
   			 } else {
-				if (optind < argc && collection) {
+				if (optind < argc && !m_collection.empty()) {
 					ostringstream err ;
 					err << "Unknown or incompatible option used with --" << LONG_COLLECTION << ":\n";
 					err << string(argv[optind]) ;
@@ -1843,7 +1780,7 @@ void Options::readOptions(const int &argc, const char **argv){
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						err.str() );
-				} else if (optind < argc && dag) {
+				} else if (optind < argc && !m_dag.empty()) {
 					ostringstream err ;
 					err << "Unknown or incompatible option used with --" << LONG_DAG<< ":\n";
 					err << string(argv[optind]) ;
@@ -1851,7 +1788,7 @@ void Options::readOptions(const int &argc, const char **argv){
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						err.str() );
-				} else if (optind < argc && start) {
+				} else if (optind < argc && !m_start.empty()) {
 					ostringstream err ;
 					err << "Unknown or incompatible option used with --" << LONG_START << ":\n";
 					err << string(argv[optind]) ;
@@ -1861,7 +1798,7 @@ void Options::readOptions(const int &argc, const char **argv){
 						err.str() );
 				}
 				// --dag & --collection are incomptaible
-				if (dag && collection) {
+				if (!m_dag.empty() && !m_collection.empty()) {
 					ostringstream err ;
 					err << "The following options cannot be specified together:\n" ;
 					err << getAttributeUsage(Options::DAG) << "\n";
@@ -1877,7 +1814,7 @@ void Options::readOptions(const int &argc, const char **argv){
                         // JobProxyInfo : needs Jobid (from input file or command line), or --delegation-id
                         // ===========================================================
                         if ( cmdType == JOBINFO) {
-			     if (input == NULL && delegation == NULL ) {
+			     if (m_input.empty() && m_delegation.empty()) {
 				jobid = Utils::checkJobId (argv[argc-1]);
 				if ( jobid.size( ) >0 )  {
 					jobIds.push_back(jobid);
@@ -1898,7 +1835,7 @@ void Options::readOptions(const int &argc, const char **argv){
 				} else {
 					this->singleId = string(jobIds[0]);
 				}
-			} else if ((delegation || input) && optind != argc) {
+			} else if ((!m_delegation.empty() || !m_input.empty()) && optind != argc) {
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
 					"Too Many Arguments",
@@ -1912,14 +1849,14 @@ void Options::readOptions(const int &argc, const char **argv){
 			// ========================================================
 			 if ( cmdType == JOBPERUSAL ||
 			 	cmdType == JOBATTACH ) {
-				if (input==NULL){
+				if (m_input.empty()){
 					// all the options have been processed by getopt (JobId file is missing)
-					if (input == NULL && optind == argc){
+					if (m_input.empty() && optind == argc){
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
 							"Wrong Option: " + string(last_arg)  ,
 							"Last argument of the command must be a JobId" );
-					} else if (input == NULL && optind != argc-1) {
+					} else if (m_input.empty() && optind != argc-1) {
 						for (int i = optind ; i < argc ; i++ ){
 							invalid += string(argv[i]) + " " ;
 							jobid = Utils::checkJobId (argv[i]);
@@ -1962,7 +1899,7 @@ void Options::readOptions(const int &argc, const char **argv){
 						this->singleId = string(jobIds[0]);
 					}
 				} else
-				if (input && optind != argc) {
+				if (!m_input.empty() && optind != argc) {
 					// Reads the wrong option !!
 					jobid = Utils::checkJobId (argv[argc-1]);
 					if ( jobid.size( ) >0 ) {
@@ -1989,7 +1926,7 @@ void Options::readOptions(const int &argc, const char **argv){
 				 cmdType == JOBPERUSAL ||
                         	cmdType == JOBOUTPUT ) {
 				// all the options have been processed by getopt (JobId file is missing)
-				if ( ! input && argc==optind){
+				if (m_input.empty() && argc==optind){
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option: " + string(last_arg)  ,
@@ -1998,12 +1935,12 @@ void Options::readOptions(const int &argc, const char **argv){
                                 for (int i = optind ; i < argc ; i++ ){
      						jobIds.push_back(argv[i]);
                                 }
-                                if ( input && ! jobIds.empty( )){
+                                if (!m_input.empty() && ! jobIds.empty( )){
                                         throw WmsClientException(__FILE__,__LINE__,
                                                         "readOptions", DEFAULT_ERR_CODE,
                                                         "Too many arguments",
                                                         "JobId(s) mustn't be specified with the option:\n" + getAttributeUsage(Options::INPUT));
-                                } else  if ( jobIds.empty( ) && ! input){
+                                } else  if ( jobIds.empty( ) && m_input.empty()){
                                         throw WmsClientException(__FILE__,__LINE__,
                                                         "readOptions", DEFAULT_ERR_CODE,
                                                         "Wrong Option",
@@ -2130,14 +2067,14 @@ const std::string  Options::checkArg(const std::string &opt, const std::string &
 *	sets the value of the option attribute
 */
 void Options::setAttribute (const int &in_opt, const char **argv) {
-	string* dupl = NULL;
+	string dupl = "";
         string px = "--";
         string ws = " ";
 	string list = "";
 	switch (in_opt){
 		case ( Options::SHORT_AUTODG ) : {
 			if (autodg){
-				dupl = new string(LONG_AUTODG) ;
+				dupl = LONG_AUTODG;
 			} else {
 				autodg = true;
 				inCmd += px + LONG_AUTODG + ";" + ws ;
@@ -2145,71 +2082,71 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 		case ( Options::SHORT_OUTPUT ) : {
-			if (output){
-				dupl = new string(LONG_OUTPUT) ;
+			if (m_output.empty()){
+				m_output = checkArg(LONG_OUTPUT , optarg , Options::OUTPUT, string(1, Options::SHORT_OUTPUT));
+                                inCmd += px + LONG_OUTPUT + ws + m_output + ";" + ws ;
 			} else {
-				output = new string (checkArg(LONG_OUTPUT , optarg , Options::OUTPUT, string(1, Options::SHORT_OUTPUT)) );
-                                inCmd += px + LONG_OUTPUT + ws + *output + ";" + ws ;
+				dupl = LONG_OUTPUT;
 			}
 			break ;
 		};
 		case ( Options::SHORT_INPUT) : {
-			if (input){
-				dupl = new string(LONG_INPUT) ;
+			if (m_input.empty()){
+				m_input = checkArg(LONG_INPUT ,optarg,Options::INPUT, string(1, Options::SHORT_INPUT));
+                                inCmd += px + LONG_INPUT + ws + m_input  + ";" + ws ;
 			} else {
-				input = new string (checkArg(LONG_INPUT ,optarg,Options::INPUT, string(1, Options::SHORT_INPUT))  );
-                                inCmd += px + LONG_INPUT + ws + *input  + ";" + ws ;
+				dupl = LONG_INPUT;
 			}
 			break ;
 		};
 		case ( Options::SHORT_CONFIG) : {
-			if (config){
-				dupl = new string(LONG_CONFIG) ;
+			if (m_config.empty()){
+				m_config = checkArg(LONG_CONFIG ,optarg, Options::CONFIG, string(1, Options::SHORT_CONFIG));
+				inCmd += px + LONG_CONFIG + ws + m_config +  ";" + ws ;
 			} else {
-				config = new string (checkArg(LONG_CONFIG ,optarg, Options::CONFIG, string(1, Options::SHORT_CONFIG)) );
-				inCmd += px + LONG_CONFIG + ws + *config +  ";" + ws ;
+				dupl = LONG_CONFIG;
 			}
 			break ;
 		};
                 case ( Options::SHORT_DELEGATION) : {
-			if (delegation){
-				dupl = new string(LONG_DELEGATION) ;
+			if (m_delegation.empty()){
+				m_delegation = checkArg( LONG_DELEGATION,optarg, Options::DELEGATION, string(1, Options::SHORT_DELEGATION));
+				inCmd += px + LONG_DELEGATION + ws + m_delegation +  ";" + ws ;
 			} else {
-				delegation = new string (checkArg( LONG_DELEGATION,optarg, Options::DELEGATION, string(1, Options::SHORT_DELEGATION)));
-				inCmd += px + LONG_DELEGATION + ws + *delegation +  ";" + ws ;
+				dupl = LONG_DELEGATION;
 			}
 			break ;
 		};
   		case ( Options::SHORT_RESOURCE) : {
-			if (resource){
-				dupl = new string(LONG_RESOURCE) ;
+			if (m_resource.empty()){
+				m_resource = checkArg(LONG_RESOURCE ,optarg, Options::RESOURCE, string(1,  Options::SHORT_RESOURCE));
+                                inCmd += px + LONG_RESOURCE + ws + m_resource  + ";" + ws ;
 			} else {
-				resource = new string (checkArg(LONG_RESOURCE ,optarg, Options::RESOURCE, string(1,  Options::SHORT_RESOURCE)));
-                                inCmd += px + LONG_RESOURCE + ws + *resource  + ";" + ws ;
+				dupl = LONG_RESOURCE;
 			}
 			break ;
 		};
 		case ( Options::NODESRES) : {
-			if (nodesres){
-				dupl = new string(LONG_NODESRES) ;
+			if (m_nodesres.empty()){
+				m_nodesres = checkArg( LONG_NODESRES, optarg,Options::NODESRES );
+                                inCmd += px + LONG_NODESRES + ws + m_nodesres  + ";" + ws ;
 			} else {
-				nodesres = new string (checkArg( LONG_NODESRES, optarg,Options::NODESRES ) );
-                                inCmd += px + LONG_NODESRES + ws + *nodesres  + ";" + ws ;
+				dupl = LONG_NODESRES;
 			}
 			break ;
 		};
 		case ( Options::VALID ) : {
-			if (valid){
-				dupl = new string(LONG_VALID) ;
+			if (m_valid.empty()){
+				m_valid = checkArg(LONG_VALID ,optarg,Options::VALID);
+                                inCmd += px + LONG_VALID + ws + m_valid +  ";" + ws ;
 			} else {
-				valid = new string(checkArg(LONG_VALID ,optarg,Options::VALID) );
-                                inCmd += px + LONG_VALID + ws + *valid +  ";" + ws ;
+				dupl = LONG_VALID;
 			}
 			break ;
 		};
 		case ( Options::VERBOSE ) : {
 			if (verbosity){
-				dupl = new string(LONG_VERBOSE) ;
+				dupl = LONG_VERBOSE;
 			}else {
 				verbosity = (unsigned int*) malloc (sizeof(int));
                                 ostringstream v ;
@@ -2221,102 +2158,102 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 		case ( Options::SHORT_STATUS ) : {
-			if (status){
-				dupl = new string(LONG_STATUS) ;
+			if (m_status.empty()){
+				m_status = checkArg( LONG_STATUS,optarg,Options::STATUS, string(1, Options::SHORT_STATUS ) );
+                                inCmd += px + LONG_STATUS + ws + m_status +";" + ws ;
 			} else {
-				status = new string (checkArg( LONG_STATUS,optarg,Options::STATUS, string(1, Options::SHORT_STATUS ) ) );
-                                inCmd += px + LONG_STATUS + ws + *status +";" + ws ;
+				dupl = LONG_STATUS;
 			}
 			break ;
 		};
 		case ( Options::EXCLUDE ) : {
-			if (exclude) {
-				dupl = new string(LONG_EXCLUDE) ;
+			if (m_exclude.empty()) {
+				m_exclude = checkArg(LONG_EXCLUDE ,optarg, Options::EXCLUDE, string(1,Options::SHORT_E));
+				inCmd += px + LONG_EXCLUDE + ws + m_exclude +";" + ws ;
 			} else {
-				exclude = new string (checkArg(LONG_EXCLUDE ,optarg, Options::EXCLUDE, string(1,Options::SHORT_E)) );
-				inCmd += px + LONG_EXCLUDE + ws + *exclude +";" + ws ;
+				dupl = LONG_EXCLUDE;
 			}
 			break;
 		} ;
 		case ( Options::ENDPOINT ) : {
-			if (endpoint){
-				dupl = new string(LONG_ENDPOINT) ;
+			if (m_endpoint.empty()){
+				m_endpoint = checkArg( LONG_ENDPOINT,optarg, Options::ENDPOINT, string(1,Options::SHORT_E) );
+				inCmd += px + LONG_ENDPOINT + ws + m_endpoint  + ";" + ws ;
 			} else {
-				endpoint = new string (checkArg( LONG_ENDPOINT,optarg, Options::ENDPOINT, string(1,Options::SHORT_E) ) );
-				inCmd += px + LONG_ENDPOINT + ws + *endpoint  + ";" + ws ;
+				dupl = LONG_ENDPOINT;
 			}
 			break ;
 		};
 		case ( Options::CHKPT ) : {
-			if (chkpt){
-				dupl = new string(LONG_CHKPT) ;
+			if (m_chkpt.empty()){
+				m_chkpt = checkArg( LONG_CHKPT, optarg, Options::CHKPT);
+                                inCmd += px + LONG_CHKPT + ws + m_chkpt +";" + ws;
 			} else {
-				chkpt = new string (checkArg( LONG_CHKPT, optarg, Options::CHKPT) );
-                                inCmd += px + LONG_CHKPT + ws + *chkpt +";" + ws;
+				dupl = LONG_CHKPT;
 			}
 			break ;
 		};
                 case ( Options::COLLECTION ) : {
-			if (collection){
-				dupl = new string(LONG_COLLECTION) ;
+			if (m_collection.empty()){
+				m_collection = checkArg(LONG_COLLECTION, optarg, Options::COLLECTION);
+                                inCmd += px + LONG_COLLECTION + ws + m_collection  + ";" + ws ;
 			} else {
-				collection = new string (checkArg(LONG_COLLECTION, optarg, Options::COLLECTION) );
-                                inCmd += px + LONG_COLLECTION + ws + *collection  + ";" + ws ;
+				dupl = LONG_COLLECTION;
 			}
 			break ;
 		};
 		case ( Options::DAG ) : {
-			if (dag){
-				dupl = new string(LONG_DAG) ;
+			if (m_dag.empty()){
+				m_dag = checkArg(LONG_DAG, optarg, Options::DAG);
+                                inCmd += px + LONG_DAG + ws + m_dag  + ";" + ws ;
 			} else {
-				dag = new string (checkArg(LONG_DAG, optarg, Options::DAG) );
-                                inCmd += px + LONG_DAG + ws + *dag  + ";" + ws ;
+				dupl = LONG_DAG;
 			}
 			break ;
 		};
 		case ( Options::DEFJDL ) : {
-			if (def_jdl){
-				dupl = new string(LONG_DEFJDL) ;
+			if (m_def_jdl.empty()){
+				m_def_jdl = checkArg(LONG_DEFJDL, optarg, Options::DEFJDL);
+                                inCmd += px + LONG_DEFJDL + ws + m_def_jdl + ";" + ws ;
 			} else {
-				def_jdl = new string (checkArg(LONG_DEFJDL, optarg, Options::DEFJDL) );
-                                inCmd += px + LONG_DEFJDL + ws + *def_jdl + ";" + ws ;
+				dupl = LONG_DEFJDL;
 			}
 			break ;
 		};
 		case ( Options::DIR ) : {
-			if (dir){
-				dupl = new string(LONG_DIR ) ;
+			if (m_dir.empty()){
+				m_dir = checkArg(LONG_DIR, optarg , Options::DIR);
+                                inCmd += px + LONG_DIR + ws + m_dir + ";" + ws  ;
 			} else {
-				dir = new string (checkArg(LONG_DIR, optarg , Options::DIR) );
-                                inCmd += px + LONG_DIR + ws + *dir + ";" + ws  ;
+				dupl = LONG_DIR;
 			}
 			break ;
 		};
 
 		case ( Options::FROM ) : {
-			if (from){
-				dupl = new string(LONG_FROM) ;
+			if (m_from.empty()){
+				m_from = checkArg(LONG_FROM, optarg, Options::FROM);
+                                inCmd += px + LONG_FROM + ws + m_from + ";" + ws  ;
 			} else {
-				from = new string (checkArg(LONG_FROM, optarg, Options::FROM) );
-                                inCmd += px + LONG_FROM + ws + *from + ";" + ws  ;
+				dupl = LONG_FROM;
 			}
 			break ;
 		};
 		case ( Options::PROTO) : {
-			if (from){
-				dupl = new string(LONG_PROTO) ;
-			} else {
-				fileprotocol = new string (checkArg(LONG_PROTO ,optarg, Options::PROTO) );
+			if (m_fileprotocol.empty()){
+				m_fileprotocol = checkArg(LONG_PROTO ,optarg, Options::PROTO);
 				inCmd += px + LONG_PROTO + ";" + ws ;
+			} else {
+				dupl = LONG_PROTO;
 			}
 			break ;
 		};
 		case ( Options::START ) : {
-			if (start){
-				dupl = new string(LONG_START) ;
+			if (m_start.empty()){
+				m_start = checkArg(LONG_START ,optarg, Options::START);
+				inCmd += px + LONG_START + ws + m_start + ";" + ws ;
 			} else {
-				start = new string(checkArg(LONG_START ,optarg, Options::START) );
-				inCmd += px + LONG_START + ws + *start + ";" + ws ;
+				dupl = LONG_START;
 			}
 			break ;
 		};
@@ -2327,7 +2264,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::ALL ) : {
 			if (all){
-				dupl = new string(LONG_ALL) ;
+				dupl = LONG_ALL;
 			} else {
 				all = true;
 				inCmd += px + LONG_ALL + ";" + ws ;
@@ -2336,7 +2273,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::LISTONLY ) : {
 			if (listonly){
-				dupl = new string(LONG_LISTONLY) ;
+				dupl = LONG_LISTONLY;
 			} else {
 				listonly = true;
 				inCmd += px + LONG_LISTONLY + ";" + ws ;
@@ -2345,7 +2282,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::REGISTERONLY ) : {
 			if (registeronly){
-				dupl = new string(LONG_REGISTERONLY) ;
+				dupl = LONG_REGISTERONLY;
 			} else {
 				registeronly = true;
 				inCmd += px + LONG_REGISTERONLY + ";" + ws ;
@@ -2354,7 +2291,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::TRANSFER ) : {
 			if (transfer){
-				dupl = new string(LONG_TRANSFER) ;
+				dupl = LONG_TRANSFER;
 			} else {
 				transfer = true;
 				inCmd += px + LONG_TRANSFER + ";" + ws ;
@@ -2362,44 +2299,44 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 		case ( Options::LRMS ) : {
-			if (lrms){
-				dupl = new string(LONG_LRMS) ;
-			} else {
-				lrms = new string (checkArg(LONG_LRMS,optarg,Options::LRMS ) );
+			if (m_lrms.empty()){
+				m_lrms = checkArg(LONG_LRMS,optarg,Options::LRMS );
 				inCmd += px + LONG_LRMS + ";" + ws ;
+			} else {
+				dupl = LONG_LRMS;
 			}
 			break ;
 		};
 		case ( Options::LOGFILE ) : {
-			if (logfile){
-				dupl = new string(LONG_LOGFILE) ;
+			if (m_logfile.empty()){
+				m_logfile = checkArg(LONG_LOGFILE ,optarg,Options::LOGFILE );
+				inCmd += px + LONG_LOGFILE + ws + m_logfile + ";" + ws ;
 			} else {
-				logfile = new string (checkArg(LONG_LOGFILE ,optarg,Options::LOGFILE ) );
-				inCmd += px + LONG_LOGFILE + ws + *logfile + ";" + ws ;
+				dupl = LONG_LOGFILE;
 			}
 			break ;
 		};
                 case ( Options::VO) : {
-			if (vo){
-				dupl = new string(LONG_VO) ;
-			} else {
-				vo = new string (checkArg(LONG_VO,optarg,Options::VO ) );
+			if (m_vo.empty()){
+				m_vo = checkArg(LONG_VO,optarg,Options::VO );
 				inCmd += px + LONG_VO + ";" + ws ;
+			} else {
+				dupl = LONG_VO;
 			}
 			break ;
 		};
                 case ( Options::INPUTFILE) : {
-			if (inputfile){
-				dupl = new string(LONG_INPUTFILE) ;
-			} else {
-				inputfile = new string (checkArg(LONG_INPUTFILE,optarg,Options::INPUTFILE ) );
+			if (m_inputfile.empty()){
+				m_inputfile = checkArg(LONG_INPUTFILE,optarg,Options::INPUTFILE );
 				inCmd += px + LONG_INPUTFILE+ ";" + ws ;
+			} else {
+				dupl = LONG_INPUTFILE;
 			}
 			break ;
 		};
 		case ( Options::PORT ) : {
 			if (port){
-				dupl = new string(LONG_PORT) ;
+				dupl = LONG_PORT;
 			}else {
 				port= (unsigned int*) malloc (sizeof(int));
 				string arg = checkArg(LONG_PORT ,optarg, Options::PORT, string(1,Options::SHORT_P)) ;
@@ -2410,17 +2347,17 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
                 case ( Options::TO ) : {
-			if (to){
-				dupl = new string(LONG_TO) ;
+			if (m_to.empty()){
+				m_to = checkArg(LONG_TO,optarg,Options::TO );
+				inCmd += px + LONG_TO + ws + m_to + ";" + ws ;
 			} else {
-				to = new string (checkArg(LONG_TO,optarg,Options::TO ) );
-				inCmd += px + LONG_TO + ws + *to + ";" + ws ;
+				dupl = LONG_TO;
 			}
 			break ;
 		};
                 case ( Options::DBG ) : {
                 	if (debug){
-				dupl = new string(LONG_DEBUG) ;
+				dupl = LONG_DEBUG;
     			} else {
 				debug = true;
   				inCmd += px + LONG_DEBUG + ";" + ws ;
@@ -2429,7 +2366,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::RANK ) : {
                 	if (rank){
-				dupl = new string(LONG_RANK) ;
+				dupl = LONG_RANK;
     			} else {
 				rank = true;
   				inCmd += px + LONG_RANK  + ";" + ws ;
@@ -2438,7 +2375,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::NOGUI ) : {
                 	if (nogui){
-				dupl = new string(LONG_NOGUI) ;
+				dupl = LONG_NOGUI;
     			} else {
 				nogui= true;
  				inCmd += px + LONG_NOGUI + ";" + ws ;
@@ -2447,7 +2384,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                  case ( Options::NOINT ) : {
                 	if (noint){
-				dupl = new string(LONG_NOINT) ;
+				dupl = LONG_NOINT;
     			} else {
 				noint= true;
   				inCmd += px + LONG_NOINT + ";" + ws ;
@@ -2456,7 +2393,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::NOLISTEN ) : {
                 	if (nolisten){
-				dupl = new string(LONG_NOLISTEN) ;
+				dupl = LONG_NOLISTEN;
     			} else {
 				nolisten= true;
   				inCmd += px + LONG_NOLISTEN + ";" + ws ;
@@ -2465,7 +2402,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::NOMSG ) : {
                 	if (nomsg){
-				dupl = new string(LONG_NOMSG) ;
+				dupl = LONG_NOMSG;
     			} else {
 				nomsg = true;
   				inCmd += px + LONG_NOMSG + ";" + ws ;
@@ -2474,7 +2411,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::SHORT_NOPURG ) : {
                 	if (nopurg){
-				dupl = new string(LONG_NOPURG) ;
+				dupl = LONG_NOPURG;
     			} else {
 				nopurg = true;
   				inCmd += px + LONG_NOPURG + ws + ";" + ws ;
@@ -2483,7 +2420,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::VERSION ) : {
                 	if (version){
-				dupl = new string(LONG_VERSION) ;
+				dupl = LONG_VERSION;
     			} else {
 				version = true;
   				inCmd += px + LONG_VERSION + ";" + ws ;
@@ -2492,7 +2429,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::NODISPLAY ) : {
                 	if (nodisplay){
-				dupl = new string(LONG_NODISPLAY) ;
+				dupl = LONG_NODISPLAY;
     			} else {
 				nodisplay = true;
   				inCmd += px + LONG_NODISPLAY + ";" + ws ;
@@ -2501,7 +2438,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::GET ) : {
                 	if (get){
-				dupl = new string(LONG_GET) ;
+				dupl = LONG_GET;
     			} else {
 				get = true;
   				inCmd += px + LONG_GET + ";" + ws ;
@@ -2510,7 +2447,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SET ) : {
                 	if (set){
-				dupl = new string(LONG_SET) ;
+				dupl = LONG_SET;
     			} else {
 				set = true;
   				inCmd += px + LONG_SET + ";" + ws ;
@@ -2519,7 +2456,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::UNSET ) : {
                 	if (unset){
-				dupl = new string(LONG_UNSET) ;
+				dupl = LONG_UNSET;
     			} else {
 				unset = true;
   				inCmd += px + LONG_UNSET + ";" + ws ;
@@ -2554,7 +2491,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::JDL ) : {
                 	if (jdl){
-				dupl = new string(LONG_JDL) ;
+				dupl = LONG_JDL;
     			} else {
 				jdl = true ;
   				inCmd += px + LONG_JDL + ws +  ";" + ws ;
@@ -2563,7 +2500,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_JDLORIG ) : {
                 	if (jdlorig){
-				dupl = new string(LONG_JDLORIG) ;
+				dupl = LONG_JDLORIG;
     			} else {
 				jdlorig = true ;
   				inCmd += px + LONG_JDLORIG + ws +  ";" + ws ;
@@ -2572,7 +2509,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::PROXY ) : {
                 	if (unset){
-				dupl = new string(LONG_PROXY) ;
+				dupl = LONG_PROXY;
     			} else {
 				proxy = true ;
   				inCmd += px + LONG_PROXY + ws + ";" + ws ;
@@ -2587,11 +2524,11 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 	};
-	if (dupl) {
+	if (!dupl.empty()) {
 		throw WmsClientException(__FILE__,__LINE__,"setAttribute",
 				DEFAULT_ERR_CODE,
 				"Input Option Error",
-				string("option already specified: " + *dupl) );
+				string("option already specified: " + dupl) );
 	}
 };
 

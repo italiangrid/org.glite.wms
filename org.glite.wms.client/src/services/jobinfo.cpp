@@ -56,7 +56,7 @@ JobInfo::JobInfo( ){
 	jdlOpt = false;
 	origOpt = false;
 	proxyOpt = false;
-	inOpt = NULL;
+	m_inOpt = "";
 	nointOpt = false;
 	jobId = string("");
 };
@@ -64,11 +64,6 @@ JobInfo::JobInfo( ){
 *	Default destructor
 */
 JobInfo::~JobInfo( ){
-	/* "free memory" for the string  attributes
-	if (jdlOpt) { free(jdlOpt);}
-	if (origOpt ) { free(origOpt);}
-	if (proxyOpt ) { free(proxyOpt);}
-	*/
 };
 
 /*
@@ -79,13 +74,13 @@ void JobInfo::readOptions (int argc,char **argv) {
 	int njobs = 0;
 	vector<string> jobids;
         Job::readOptions  (argc, argv, Options::JOBINFO);
-        inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+        m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	jdlOpt = wmcOpts->getBoolAttribute(Options::JDL);
 	origOpt = wmcOpts->getBoolAttribute(Options::JDLORIG);
 	proxyOpt = wmcOpts->getBoolAttribute(Options::PROXY);
-	dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
+	m_dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
 	if ( jdlOpt == false && origOpt == false &&
-		proxyOpt == false && dgOpt == NULL) {
+		proxyOpt == false && m_dgOpt.empty()) {
 		err << "A mandatory option is missing; specify one of these operations:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::JDL) + " \n";
 		err << wmcOpts->getAttributeUsage(Options::JDLORIG) + " \n";
@@ -93,18 +88,18 @@ void JobInfo::readOptions (int argc,char **argv) {
 		err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
 	} else if ( (jdlOpt && origOpt) ||
 		(jdlOpt && proxyOpt) ||
-		(jdlOpt && dgOpt) ||
+		(jdlOpt && !m_dgOpt.empty()) ||
 		(origOpt && proxyOpt) ||
-		(origOpt && dgOpt) ||
-		(proxyOpt && dgOpt) ||
-		(inOpt &&dgOpt) ) {
+		(origOpt && !m_dgOpt.empty()) ||
+		(proxyOpt && !m_dgOpt.empty()) ||
+		(!m_inOpt.empty() && !m_dgOpt.empty()) ) {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::JDL) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::JDLORIG) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::PROXY) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
   		} else if ( jdlOpt == true || proxyOpt == true || origOpt == true) {
-				if (inOpt) {
+				if (!m_inOpt.empty()) {
 				// no Jobid with --input
 				jobId = wmcOpts->getJobId();
 				if (jobId.size() > 0) {
@@ -115,14 +110,14 @@ void JobInfo::readOptions (int argc,char **argv) {
 						+ wmcOpts->getAttributeUsage(Options::INPUT));
 				}
 				// From input file
-				*inOpt = Utils::getAbsolutePath(*inOpt);
-				logInfo->print (WMS_INFO, "Reading the jobId from the input file:", *inOpt);
-				jobids = wmcUtils->getItemsFromFile(*inOpt);
+				m_inOpt = Utils::getAbsolutePath(m_inOpt);
+				logInfo->print (WMS_INFO, "Reading the jobId from the input file:", m_inOpt);
+				jobids = wmcUtils->getItemsFromFile(m_inOpt);
 				jobids = wmcUtils->checkJobIds (jobids);
 				njobs = jobids.size( ) ;
 				if (njobs > 1){
 					if (nointOpt) {
-						err << "Unable to get the jobId from the input file:" << *inOpt << "\n";
+						err << "Unable to get the jobId from the input file:" << m_inOpt << "\n";
 						err << "interactive questions disabled (" << wmcOpts->getAttributeUsage(Options::NOINT) << ")\n";
 						err << "and multiple jobIds found in the file (this command accepts only one JobId).\n";
 						err << "Adjust the file or remove the " << wmcOpts->getAttributeUsage(Options::NOINT) << " option\n";
@@ -180,7 +175,11 @@ const long JobInfo::convDate(const std::string &data) {
   	char     *p;
   	int       i;
   	struct tm tm;
-  	int       size;
+  	int       size = 0;
+	
+	memset(&offset, 0, sizeof(time_t));
+  	memset(&newtime, 0, sizeof(time_t));
+	
 	ASN1_TIME *ctm = ASN1_TIME_new();
 	ctm->data   = (unsigned char *)(data.data());
 	ctm->length = data.size();
@@ -388,16 +387,16 @@ void JobInfo::retrieveInfo ( ){
 	ProxyInfoStructType* proxy_info = NULL ;
 	string jdl = "";
 	vector <pair<string , string> > params;
-	if (dgOpt) {
+	if (!m_dgOpt.empty()) {
 		retrieveEndPointURL(false);
 		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy with identifier: ",
-			string("\""+ *dgOpt + "\"") );
+			string("\""+ m_dgOpt + "\"") );
 		try {
 			// log-info
-			params.push_back(make_pair("delegationID", *dgOpt));
+			params.push_back(make_pair("delegationID", m_dgOpt));
 			logInfo->service(WMP_DELEG_PROXYINFO, params);
 			// calling the service ....
-			proxy_info = getDelegatedProxyInfo(*dgOpt, cfgCxt);
+			proxy_info = getDelegatedProxyInfo(m_dgOpt, m_cfgCxt.get());
 			logInfo->result(WMP_DELEG_PROXYINFO, "Info on delegated proxy successfully retrieved");
 		} catch (BaseException &exc) {
 			throw WmsClientException(__FILE__,__LINE__,
@@ -405,7 +404,7 @@ void JobInfo::retrieveInfo ( ){
 			"WMProxy Server Error", errMsg(exc));
 		}
 		header << "Your proxy delegated to the endpoint "  << getEndPoint( ) << "\n";
-		header << "with delegationID " << *dgOpt << ": \n";
+		header << "with delegationID " << m_dgOpt << ": \n";
 	} else {
 		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
 		LbApi lbApi;
@@ -423,7 +422,7 @@ void JobInfo::retrieveInfo ( ){
 			if (proxyOpt) {
 				// log-info
 				logInfo->service(WMP_JOB_PROXYINFO, jobId);
-				proxy_info = getJobProxyInfo(jobId, cfgCxt);
+				proxy_info = getJobProxyInfo(jobId, m_cfgCxt.get());
 				// calling the service ....
 				logInfo->result(WMP_JOB_PROXYINFO, "Proxy info successfully retrieved");
 				header << "Your proxy delegated to the endpoint "  << getEndPoint( ) << "\n";
@@ -433,7 +432,7 @@ void JobInfo::retrieveInfo ( ){
 				params.push_back(make_pair("JDL-type", "ORIGINAL"));
 				// calling the service ...
 				logInfo->service(WMP_JDL_SERVICE, params);
-				jdl = getJDL(jobId, ORIGINAL, cfgCxt);
+				jdl = getJDL(jobId, ORIGINAL, m_cfgCxt.get());
 				logInfo->result(WMP_JDL_SERVICE, "JDL info successfully retrieved");
 				header << "The original JDL\n" ;
 			} else if (jdlOpt) {
@@ -442,7 +441,7 @@ void JobInfo::retrieveInfo ( ){
 				params.push_back(make_pair("JDL-type", "REGISTERED"));
 				logInfo->service(WMP_JDL_SERVICE, params);
 				// calling the service ...
-				jdl = getJDL(jobId, REGISTERED, cfgCxt);
+				jdl = getJDL(jobId, REGISTERED, m_cfgCxt.get());
 				logInfo->result(WMP_JDL_SERVICE, "JDL info successfully retrieved");
 				header << "The registered JDL\n" ;
 			}
@@ -468,8 +467,8 @@ void JobInfo::retrieveInfo ( ){
 			out << "Unable to retrieve information on ";
 			if (proxyOpt) {
 				out << "the proxy for the job: " << jobId << "\n";
-			} else if (dgOpt) {
-				out << "your proxy with delegationId: " << *dgOpt << "\n";
+			} else if (!m_dgOpt.empty()) {
+				out << "your proxy with delegationId: " << m_dgOpt << "\n";
 			} else if (origOpt) {
 				out << "the Original JDL of  the job: " << jobId << "\n";
 			} else {
@@ -479,13 +478,13 @@ void JobInfo::retrieveInfo ( ){
 	}
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
 	out << getLogFileMsg ( ) << "\n";
-	if (outOpt) {
-		if( wmcUtils->saveToFile(*outOpt, out.str()) < 0 ){
-			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
+	if (!m_outOpt.empty()) {
+		if( wmcUtils->saveToFile(m_outOpt, out.str()) < 0 ){
+			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(m_outOpt));
 		} else {
-			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
+			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ", Utils::getAbsolutePath(m_outOpt));
 			out << "The DelegateProxy result  has been saved in the following file:\n";
-			out << Utils::getAbsolutePath(*outOpt) << "\n\n";
+			out << Utils::getAbsolutePath(m_outOpt) << "\n\n";
 		}
 	}
         // ==============================================================

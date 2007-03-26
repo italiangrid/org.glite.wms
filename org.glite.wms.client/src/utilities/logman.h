@@ -39,11 +39,7 @@ class Log {
 		* @param path the log file pathname
                 * @param verbosity level
                 */
-                Log(std::string* path, LogLevel level = WMSLOG_WARNING);
-                /**
-		* Default destructor
-		*/
-		~Log( ) ;
+                Log(LogLevel level = WMSLOG_WARNING);
   		/**
 		* Creates a log file at the specified path
 		* @param path pathname to the log files
@@ -91,14 +87,14 @@ class Log {
                 * get the absolute pathname of the log file
                 *@return the pathname string
                 */
-                std::string* getPathName ( );
+                std::string getPathName (void) { return m_logFile; };
 
 
 	private :
         	/**
                 * log-file pathname
                 */
-                std::string* logFile ;
+                std::string m_logFile ;
         	/**
                 * log-cache
                 */

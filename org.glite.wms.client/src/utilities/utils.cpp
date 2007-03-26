@@ -219,16 +219,22 @@ void load_voms (vomsdata *vo_data, const char *proxy_file){
 
 
 const std::string getDefaultVoVoms(const char *pxfile){
-	string defaultVo;
 	// int error = 0;
 	vomsdata *vo_data = new vomsdata() ;
 	load_voms(vo_data, pxfile);
 	voms v;
 	// get Default voms
 	if (!vo_data->DefaultData(v)){
+		// Free the memory allocated	
+		delete(vo_data);
+
 		// Unable to load default VO value: return empty string
 		return "";
 	}
+
+	// Free the memory allocated	
+	delete(vo_data);
+	
 	return string (v.voname);
 }
 
@@ -244,7 +250,7 @@ Utils::Utils(Options *wmcOpts){
 	this->wmcOpts=wmcOpts;
 	// verbosity level
         vbLevel = (LogLevel)wmcOpts->getVerbosityLevel();
-	logInfo = new Log (NULL , vbLevel);
+	logInfo = new Log(vbLevel);
 	string file_header = Utils::getStripe(80, "*")+ "\n";
 	file_header += string(Options::HELP_UI) +  " - " + string(Options::HELP_VERSION) +  " - Log File\n";
 	file_header += Utils::getStripe(80, "*");
@@ -260,15 +266,16 @@ Utils::Utils(Options *wmcOpts){
 	// debug information
 	debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
 	// log-file
-	string *log_file = this->generateLogFile();
-	if (log_file){ logInfo->createLogFile (*log_file);}
+	string log_file = this->generateLogFile();
+	if (!log_file.empty()){ logInfo->createLogFile (log_file);}
 }
 /*************************************
 *** Destructor **********************
 **************************************/
 Utils::~Utils( ){
-	if (wmcAd){ free(wmcAd); }
-        if (logInfo){ free(logInfo); }
+	if (wmcAd){ delete(wmcAd); }
+        if (logInfo){ delete(logInfo); }
+        if (wmcConf){ delete(wmcConf); }
 }
 
 /*************************************
@@ -515,10 +522,10 @@ const int Utils::getRandom (const unsigned int &max ){
 std::vector<std::string> Utils::getWmps(){
 	std::vector<std::string> wmps ;
 	char *ep = NULL;
-	string *eps = NULL;
+	string eps = "";
 	// URL by the command line options
 	eps = wmcOpts->getStringAttribute(Options::ENDPOINT);
-	if (eps){ wmps.push_back(*eps);}
+	if (!eps.empty()){ wmps.push_back(eps);}
 	else {
 		// URL by the environment
 		ep = getenv(  GLITE_WMS_WMPROXY_ENDPOINT);
@@ -672,34 +679,44 @@ const std::string Utils::getDefaultLog ( ){
 /*
 * Gets the log filename
 */
-std::string* Utils::getLogFileName ( ){
+std::string Utils::getLogFileName (void){
 	string path = "";
-        string *log = NULL;
-        if (logInfo){
+	string log = "";
+
+	if (logInfo){
         	// if logInfo object has been already set
-        	log = logInfo->getPathName( );
-        } else if (wmcOpts->getStringAttribute(Options::LOGFILE)){
-        	// by --log option
-        	log = wmcOpts->getStringAttribute(Options::LOGFILE) ;
-        } else  if (wmcOpts->getBoolAttribute(Options::DBG)){
-		log = new string(this->getDefaultLog( ));
+        	log = logInfo->getPathName();
+        } 
+	else if (!wmcOpts->getStringAttribute(Options::LOGFILE).empty()){
+	       	// by --log option
+        	log = wmcOpts->getStringAttribute(Options::LOGFILE);	
+	} 
+	else  if (wmcOpts->getBoolAttribute(Options::DBG)){
+		log = string(this->getDefaultLog( ));
 	}
-        return log;
+
+	return log;
 };
 
 /*
 * Generate the log filename
 */
-std::string* Utils::generateLogFile ( ){
+std::string Utils::generateLogFile ( ){
+
 	string path = "";
-        string *log = NULL;
-	 if (wmcOpts->getStringAttribute(Options::LOGFILE)){
+	string log = "";
+
+        if (!wmcOpts->getStringAttribute(Options::LOGFILE).empty()){
         	// by --log option
-        	log = wmcOpts->getStringAttribute(Options::LOGFILE) ;
-        } else  if (wmcOpts->getBoolAttribute(Options::DBG)){
-		log = new string(this->getDefaultLog( ));
+        	log = wmcOpts->getStringAttribute(Options::LOGFILE);
+
+	} 
+	else  if (wmcOpts->getBoolAttribute(Options::DBG)){
+		log = string(this->getDefaultLog( ));
 	}
-        return log;
+
+	return log;
+
 };
 
 /*
@@ -881,14 +898,14 @@ std::string Utils::getDefaultVo(){
 			"Proxy File Not Found", "Unable to find a valid proxy file");
 	}
 }
-std::string* Utils::checkConf(){
+std::string Utils::checkConf(){
 	string voPath, voName;
 	// config-file pathname
-	string* cfg = wmcOpts->getStringAttribute( Options::CONFIG ) ;
+	string cfg = wmcOpts->getStringAttribute( Options::CONFIG ) ;
 	// vo-name
-	string *vo = wmcOpts->getStringAttribute( Options::VO ) ;
+	string vo = wmcOpts->getStringAttribute( Options::VO ) ;
 	// they can't set together !
-	if (vo && cfg){
+	if (!vo.empty() && !cfg.empty()){
 		ostringstream err ;
 		err << "the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::VO) << "\n";
@@ -908,23 +925,23 @@ std::string* Utils::checkConf(){
 		logInfo->print (WMS_DEBUG, "Unable to read VOMS extension from proxy certificate", "",true,true);
 	}
 	// OTHER OPTIONS PARSING.........
-	if (vo && src!=NONE){
+	if (!vo.empty() && src!=NONE){
 		// VO name forcing ignored
 		logInfo->print (WMS_WARNING, "--vo option ignored","" , true,true);
-	}else if (vo){
+	}else if (!vo.empty()){
 		// vo option point to the file
 		// SCR is definitely NONE
-		voName=*vo;
+		voName=vo;
 		src=VO_OPT;
 		logInfo->print (WMS_DEBUG, "Vo read from", "--vo option", true,true);
-	}else if (cfg){
-		*cfg = Utils::getAbsolutePath (*cfg);
+	}else if (!cfg.empty()){
+		cfg = Utils::getAbsolutePath (cfg);
 		// config option point to the file
 		if (src==NONE){
 			logInfo->print (WMS_DEBUG, "Vo read from", "--config option",true,true);
 		}
 		// Store config path value
-		voPath= *cfg;
+		voPath= cfg;
 		src=CONFIG_OPT;
 	}else if(getenv(WMS_CLIENT_CONFIG)){
 		// env variable point to the file
@@ -934,11 +951,11 @@ std::string* Utils::checkConf(){
 		// Store config path value
 		voPath=string(getenv(WMS_CLIENT_CONFIG));
 		src=CONFIG_VAR;
-	}else if (wmcOpts->getPath2Jdl()){
+	}else if (!wmcOpts->getPath2Jdl().empty()){
 		// JDL specified(submit||listmatch) read the vo plain name
 		if (src==NONE){
 			src=JDL_FILE;
-			voPath=*(wmcOpts->getPath2Jdl());
+			voPath=wmcOpts->getPath2Jdl();
 			// Read jdl (voName is still an empty string)
 			wmcAd->parseVo(src,voPath,voName);
 			logInfo->print (WMS_DEBUG, "Vo read from", "JDL",true,true);
@@ -970,7 +987,7 @@ std::string* Utils::checkConf(){
 		cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
 	}
 	wmcConf=new glite::wms::common::configuration::WMCConfiguration(wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName));
-	return new string(voName);
+	return voName;
 }
 void Utils::checkPrefix( ){
 	// Look for GLITE installation path
@@ -1319,7 +1336,7 @@ const char * Utils::str2md5Base64(const char *s)
 /*
 * generate a unique string
 */
-std::string* Utils::getUniqueString (){
+std::string Utils::getUniqueString (){
 
         struct hostent* he;
         struct timeval tv;
@@ -1340,9 +1357,9 @@ std::string* Utils::getUniqueString (){
         //gets back the generated del-id
        unique = ((char*)str2md5Base64(hostname) );
        if (unique){
-       		return ( new string(unique));
+       		return string(unique);
        } else{
-       		return NULL;
+       		return "";
        }
 }
 /*
@@ -1543,16 +1560,16 @@ void Utils::removeFile(const std::string &file) {
 /*
 * Reads the content of a  file
 */
-std::string* Utils::fromFile (const std::string &path) {
+std::string Utils::fromFile (const std::string &path) {
 	ostringstream bfr;
         string s = "";
-	string *txt = NULL;
+	string txt = "";
 	if (isFile(path)) {
 		ifstream inputstream(path.c_str()) ;
              	if (inputstream.is_open() ) {
 			while(getline(inputstream, s)){ bfr << s << "\n";}
    			inputstream.close();
-			txt = new string(bfr.str());
+			txt = string(bfr.str());
 		}
  	}
         return txt;
@@ -1647,16 +1664,16 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 */
 const int Utils::saveJobIdToFile (const std::string &path, const std::string jobid){
 	string outmsg = "";
-        string *fromfile = NULL;
+        string fromfile = "";
 	try {
         	// reads the file if it already exists
-		fromfile =Utils::fromFile(path);
-       		if (fromfile){
-                        if ( fromfile->find(Utils::JOBID_FILE_HEADER)==string::npos){
-                        	string *outfile = wmcOpts->getStringAttribute (Options::OUTPUT);
-                                if (outfile &&
+		fromfile = Utils::fromFile(path);
+       		if (!fromfile.empty()){
+                        if ( fromfile.find(Utils::JOBID_FILE_HEADER)==string::npos){
+                        	string outfile = wmcOpts->getStringAttribute (Options::OUTPUT);
+                                if (!outfile.empty() &&
                                 	Utils::answerYes("\nThe following pathname is not a valid submission output file:\n"+
-                                        	string(Utils::getAbsolutePath(*outfile) ) +
+                                        	string(Utils::getAbsolutePath(outfile) ) +
                                         "\nDo you want to overwrite it ?"   , false, true )  ){
 						// no list of jobid's
  						outmsg = Utils::JOBID_FILE_HEADER + "\n";
@@ -1665,7 +1682,7 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
                                         }
                         } else {
                         	// list of jobid's = yes
-				outmsg = cleanString((char*)fromfile->c_str());
+				outmsg = cleanString(fromfile.c_str());
                                 if ( outmsg.find("\n", outmsg.size()-1)==string::npos){outmsg +="\n";}
                         }
     		} else {
@@ -1769,10 +1786,10 @@ std::string  Utils::getFileName (const std::string& path) {
 */
 std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 	vector<string> items;
-        string *bfr = fromFile(path);
-	if (bfr){
+        string bfr = fromFile(path);
+	if (!bfr.empty()){
 		boost::char_separator<char> separator("\n");
-		boost::tokenizer<boost::char_separator<char> > tok(*bfr, separator);
+		boost::tokenizer<boost::char_separator<char> > tok(bfr, separator);
 		boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
 		boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
 		for ( ; token != end; ++token) {

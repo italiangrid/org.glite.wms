@@ -130,7 +130,7 @@ class Options
 		*	@param attribute name of the attribute
 		*	@return the pointer to the string attribute value (NULL if the attribute has not been set)
 		*/
-		std::string* getStringAttribute (const Options::OptsAttributes &attribute);
+		std::string getStringAttribute (const Options::OptsAttributes &attribute);
 		/**
 		*	Returns the value of the option string-attribute
 		*	@param attribute name of the attribute
@@ -179,7 +179,7 @@ class Options
 		*	Returns the path to the JDL file
 		*	@return a pointer to the string of the JDL pathname
 		*/
-		std::string* Options::getPath2Jdl ();
+		std::string Options::getPath2Jdl ();
 		/**
 		*	Displays the usage help message for the submission
 		*	@param exename name of the programme executable
@@ -528,29 +528,29 @@ class Options
 		/**
 		*	std::string attributes
 		*/
-		std::string* chkpt ;
-		std::string* dag ;
-		std::string* def_jdl ;
-                std::string* collection ;
-		std::string* config ;
-                std::string* delegation ;
-		std::string* nodesres;
-		std::string* dir ;
-		std::string* endpoint;
-		std::string* exclude ;
-		std::string* fileprotocol ;
-		std::string* from ;
-		std::string* input ;
-		std::string* lrms ;
-		std::string* logfile ;
-		std::string* output ;
-		std::string* resource ;
-		std::string* start ;
-		std::string* status ;
-		std::string* to ;
-		std::string* valid ;
-		std::string* vo ;
-		std::string* inputfile ;
+		std::string m_chkpt ;
+		std::string m_dag ;
+		std::string m_def_jdl ;
+                std::string m_collection ;
+		std::string m_config ;
+                std::string m_delegation ;
+		std::string m_nodesres;
+		std::string m_dir ;
+		std::string m_endpoint;
+		std::string m_exclude ;
+		std::string m_fileprotocol ;
+		std::string m_from ;
+		std::string m_input ;
+		std::string m_lrms ;
+		std::string m_logfile ;
+		std::string m_output ;
+		std::string m_resource ;
+		std::string m_start ;
+		std::string m_status ;
+		std::string m_to ;
+		std::string m_valid ;
+		std::string m_vo ;
+		std::string m_inputfile ;
 
 		/**
 		*	boolean attributes
@@ -628,7 +628,7 @@ class Options
 		/**
 		*	path of the user JDL file
 		*/
-		std::string* jdlFile ;
+		std::string m_jdlFile ;
 		/**
 		*	jobIds vector
 		*/

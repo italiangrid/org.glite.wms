@@ -54,8 +54,8 @@ const string GENERATED_JN_FILE  ="ids_nodes.map" ; // Determine the id/nodes fil
 */
 JobOutput::JobOutput () : Job() {
 	// init of the string  attributes
-	inOpt = NULL;
-	dirOpt = NULL;
+	m_inOpt = "";
+	m_dirOpt = "";
 	// init of the output storage location
 	dirCfg = "/tmp";
 	// init of the boolean attributes
@@ -67,16 +67,14 @@ JobOutput::JobOutput () : Job() {
 	parentFileList = "";
 	hasFiles = false ;
 	successRt = false;
-	warnsList = NULL;
+	m_warnsList = "";
 }
 /*
 * Default Destructor
 */
 JobOutput::~JobOutput ()  {
-	// "free memory" for the string  attributes
-	if (inOpt) { free(inOpt);}
-	if (dirOpt ) { free(dirOpt);}
 }
+
 void JobOutput::readOptions ( int argc,char **argv)  {
 	unsigned int njobs = 0;
 	ostringstream err ;
@@ -85,12 +83,13 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 	nopgOpt = wmcOpts->getBoolAttribute(Options::NOPURG);
         // --input
         // input file
-        inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+        m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	
 	// JobId's
-        if (inOpt){
+        if (!m_inOpt.empty()){
 		// From input file
-		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(*inOpt));
-        	jobIds = wmcUtils->getItemsFromFile(*inOpt);
+		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(m_inOpt));
+        	jobIds = wmcUtils->getItemsFromFile(m_inOpt);
 		logInfo->print (WMS_DEBUG, "JobId(s) in the input file:", Utils::getList (jobIds), false);
         } else {
         	jobIds = wmcOpts->getJobIds();
@@ -105,10 +104,11 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 		}
          }
         // --dir , OutputStorage or DEFAULT_OUTPUT value
-        dirOpt = wmcOpts->getStringAttribute(Options::DIR);
+        m_dirOpt = wmcOpts->getStringAttribute(Options::DIR);
+	
 	  // --listonly
         listOnlyOpt = wmcOpts->getBoolAttribute( Options::LISTONLY ) ;
-	if (listOnlyOpt &&dirOpt) {
+	if (listOnlyOpt && !m_dirOpt.empty()) {
 		ostringstream info ;
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::DIR) << "\n";
@@ -118,16 +118,17 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 				"Input Option Error", info.str());
 	}
 	if (!listOnlyOpt){
-		if (!dirOpt){
+		if (m_dirOpt.empty()){
 			dirCfg =Utils::getAbsolutePath(wmcUtils->getOutputStorage()) ;
 			logInfo->print(WMS_DEBUG, "Output Storage (by configuration file):", dirCfg);
 		} else {
-			*dirOpt = Utils::getAbsolutePath(*dirOpt);
-			logInfo->print(WMS_DEBUG, "Output Storage (by --dir option):", *dirOpt);
+			m_dirOpt = Utils::getAbsolutePath(m_dirOpt);
+			logInfo->print(WMS_DEBUG, "Output Storage (by --dir option):", m_dirOpt);
 		}
 	}
 	// file Protocol
-	fileProto= wmcOpts->getStringAttribute(Options::PROTO) ;
+	m_fileProto = wmcOpts->getStringAttribute(Options::PROTO) ;
+
 	// Perform Check File Transfer Protocol Step
 	jobPerformStep(STEP_CHECK_FILE_TP);
 }
@@ -164,12 +165,12 @@ void JobOutput::getOutput ( ){
 			// Initialize ENDPOINT (start a new (thread of) job (s)
 			setEndPoint (status.getEndpoint());
 			// Properly set destination Directory
-			if (dirOpt){
+			if (!m_dirOpt.empty()){
 				firstCall = true ;
 				if ( size == 1 ){
-					retrieveOutput (result,status,Utils::getAbsolutePath(*dirOpt));
+					retrieveOutput (result,status,Utils::getAbsolutePath(m_dirOpt));
 				} else {
-					retrieveOutput (result,status,Utils::getAbsolutePath(*dirOpt)+logName+"_"+Utils::getUnique(*it));
+					retrieveOutput (result,status,Utils::getAbsolutePath(m_dirOpt)+logName+"_"+Utils::getUnique(*it));
 				}
 			}else{
 				retrieveOutput (result,status,dirCfg+logName+"_"+Utils::getUnique(*it));
@@ -201,8 +202,8 @@ void JobOutput::getOutput ( ){
 		}
 		out << wmcUtils->getStripe(80, "=" , "" ) << "\n\n";
 		// Warnings/errors messages
-		if (  wmcOpts->getBoolAttribute(Options::DBG) && warnsList) {
-			out << *warnsList << "\n";
+		if (  wmcOpts->getBoolAttribute(Options::DBG) && !m_warnsList.empty()) {
+			out << m_warnsList << "\n";
 		}
 
 	} else {
@@ -392,7 +393,7 @@ bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const s
 	try {
 		// gets the list of the out-files from the EndPoint
 		logInfo->service(WMP_OUTPUT_SERVICE, jobid);
-		files = getOutputFileList(jobid, getContext(), *fileProto);
+		files = getOutputFileList(jobid, getContext(), m_fileProto);
 		logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
 		hasFiles = hasFiles || (files.size()>0);
 	} catch (BaseException &exc) {
@@ -423,12 +424,12 @@ bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const s
 				filename = Utils::getFileName(files[i].first);
 				paths.push_back( make_pair (files[i].first, string(dirAbs +"/" + filename) ) );
 			}
-			if (fileProto->compare(Options::TRANSFER_FILES_GUC_PROTO)==0) {
+			if (m_fileProto.compare(Options::TRANSFER_FILES_GUC_PROTO)==0) {
 				this->gsiFtpGetFiles(paths, errors);
-			} else if (fileProto->compare(Options::TRANSFER_FILES_CURL_PROTO)==0) {
+			} else if (m_fileProto.compare(Options::TRANSFER_FILES_CURL_PROTO)==0) {
 				this->curlGetFiles(paths, errors);
 			} else {
-				err = "File Protocol not supported: " + *fileProto;
+				err = "File Protocol not supported: " + m_fileProto;
 				err += "List of available protocols for this client:" + Options::getProtocolsString( ) ;
 				throw WmsClientException(__FILE__,__LINE__,
 					"retrieveFiles", DEFAULT_ERR_CODE,
@@ -489,13 +490,12 @@ void JobOutput::createWarnMsg(const std::string &msg ){
 	int size = msg.size();
 	if (size>0) {
 		logInfo->print(WMS_WARNING, msg , "" , true );
-		if (warnsList ){
-			*warnsList += "- " + msg + "\n";
+		if (!m_warnsList.empty() ){
+			m_warnsList += "- " + msg + "\n";
 		} else if (size>0 ){
-			warnsList = new string( );
-			*warnsList = "The following warnings/errors have been found during the operation(s):\n";
-			*warnsList += "========================================================================\n";
-			*warnsList += "- " + msg + "\n";
+			m_warnsList = "The following warnings/errors have been found during the operation(s):\n";
+			m_warnsList += "========================================================================\n";
+			m_warnsList += "- " + msg + "\n";
 		}
 	}
 }

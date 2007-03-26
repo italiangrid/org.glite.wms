@@ -54,7 +54,7 @@ class JobCancel : public Job {
         	/*
                 *	String input arguments
                 */
-		std::string* inOpt ;
+		std::string m_inOpt ;
                 /*
                 * JobId's
                 */

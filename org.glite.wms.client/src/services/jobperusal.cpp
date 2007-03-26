@@ -53,9 +53,10 @@ const int TRANSFER_OK = 0;
 */
 JobPerusal::JobPerusal () : Job() {
 	// init of the string  options
-	inFileOpt = NULL;
-	outOpt = NULL;
-	dirOpt = NULL;
+	m_inOpt = "";
+	m_inFileOpt = "";
+	m_outOpt = "";
+	m_dirOpt = "";
 	// boolean options
 	getOpt = false;
 	setOpt = false;
@@ -69,10 +70,6 @@ JobPerusal::JobPerusal () : Job() {
 * Default Destructor
 */
 JobPerusal::~JobPerusal ()  {
-	// "free memory" for the string  attributes
-	if (inFileOpt) { free(inFileOpt);}
-	if (outOpt ) { free(outOpt);}
-	if (dirOpt ) { free(dirOpt);}
 }
 /**
 * Reads the input arguments
@@ -124,9 +121,9 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	*/
 	jobId = wmcOpts->getJobId( );
 	// --input
-	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	// JobId's
-        if (inOpt){
+        if (!m_inOpt.empty()){
 		// no Jobid with --input
 		if (jobId.size() > 0) {
 			throw WmsClientException(__FILE__,__LINE__,
@@ -136,14 +133,14 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				+ wmcOpts->getAttributeUsage(Options::INPUT));
 		}
 		// From input file
-		*inOpt = Utils::getAbsolutePath(*inOpt);
-		logInfo->print (WMS_INFO, "Reading the jobId from the input file:", *inOpt);
-		jobids = wmcUtils->getItemsFromFile(*inOpt);
+		m_inOpt = Utils::getAbsolutePath(m_inOpt);
+		logInfo->print (WMS_INFO, "Reading the jobId from the input file:", m_inOpt);
+		jobids = wmcUtils->getItemsFromFile(m_inOpt);
 		jobids = wmcUtils->checkJobIds (jobids);
 		njobs = jobids.size( ) ;
 		if (njobs > 1){
 			if (nointOpt) {
-				err << "Unable to get the jobId from the input file:" << *inOpt << "\n";
+				err << "Unable to get the jobId from the input file:" << m_inOpt << "\n";
 				err << "interactive questions disabled (" << wmcOpts->getAttributeUsage(Options::NOINT) << ")\n";
 				err << "and multiple jobIds found in the file (this command accepts only one JobId).\n";
 				err << "Adjust the file or remove the " << wmcOpts->getAttributeUsage(Options::NOINT) << " option\n";
@@ -164,10 +161,10 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		logInfo->print (WMS_DEBUG, "JobId:", jobId );
         }
 	// --input-file
-        inFileOpt = wmcOpts->getStringAttribute(Options::INPUTFILE);
+        m_inFileOpt = wmcOpts->getStringAttribute(Options::INPUTFILE);
 	// -- filename
 	peekFiles = wmcOpts->getListAttribute(Options::FILENAME);
-	if (inFileOpt && peekFiles.size() > 0 && (getOpt||setOpt) ) {
+	if (!m_inFileOpt.empty() && peekFiles.size() > 0 && (getOpt||setOpt) ) {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
@@ -183,13 +180,13 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"Input Option Error", err.str());
 	}
 	// --input
-        if (inFileOpt && (setOpt||getOpt)) {
-        	peekFiles = wmcUtils->getItemsFromFile(*inFileOpt);
+        if (!m_inFileOpt.empty() && (setOpt||getOpt)) {
+        	peekFiles = wmcUtils->getItemsFromFile(m_inFileOpt);
 		if (peekFiles.empty()) {
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error",
-				"The input file is empty: " + Utils::getAbsolutePath(*inFileOpt) );
+				"The input file is empty: " + Utils::getAbsolutePath(m_inFileOpt) );
 		} else if (peekFiles.size() == 1) {
 			logInfo->print (WMS_DEBUG, "filename read by input file: ", peekFiles[0] );
 		} else if (nointOpt && getOpt) {
@@ -203,11 +200,11 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"Input Option Error", err.str());
 
 		} else if (getOpt && nointOpt == false) {
-			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
+			cout << "Filenames in the input file: " << Utils::getAbsolutePath(m_inFileOpt) << "\n";
 			cout << wmcUtils->getStripe(74, "-") << "\n";
 			peekFiles = wmcUtils->askMenu(peekFiles, Utils::MENU_SINGLEFILE);
 		} else if (setOpt && nointOpt == false) {
-			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
+			cout << "Filenames in the input file: " << Utils::getAbsolutePath(m_inFileOpt) << "\n";
 			peekFiles =  wmcUtils->askMenu(peekFiles, Utils::MENU_FILE);
 		}
 		// Writes in the log file the list of filenames chosen by the input file
@@ -227,18 +224,21 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			"Input Arguments Error",
 			err.str());
 	}
+
 	// file Protocol
-	fileProto= wmcOpts->getStringAttribute(Options::PROTO) ;
-	if ( (setOpt || unsetOpt)  && fileProto){
+	m_fileProto = wmcOpts->getStringAttribute(Options::PROTO) ;
+	
+	if ( (setOpt || unsetOpt)  && !m_fileProto.empty()){
 		logInfo->print (WMS_WARNING, "--proto: option ignored (set/unset operation doesn't need any file transfer)\n", "", true );
-		fileProto=NULL;
+		m_fileProto = "";
 	}
 
-
 	// output file
-	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
+	m_outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
+	
 	// File directory for --get
-	dirOpt = wmcOpts->getStringAttribute(Options::DIR);
+	m_dirOpt = wmcOpts->getStringAttribute(Options::DIR);
+	
 	// --nodisplay
 	nodisplayOpt = wmcOpts->getBoolAttribute(Options::NODISPLAY);
 	// WARNING MESSAGES
@@ -251,7 +251,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			warn << "--filename " + peekFiles[i]  + " (unset operation disables perusal of all job's files)\n";
 		}
 		// --input-file
-		if (inFileOpt) {
+		if (!m_inFileOpt.empty()) {
 			warn << wmcOpts->getAttributeUsage(Options::INPUTFILE)  << " (unset operation disables perusal of all job's files)\n";
 		}
 		if (warn.str().size()>0 ){
@@ -273,12 +273,12 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			warn << wmcOpts->getAttributeUsage(Options::NODISPLAY) << " (no files to be displayed on the standard output)\n";
 		}
 		//--dir
-		if (dirOpt){
-			warn << "--dir " << *dirOpt << " (no files to be retrieved)\n";
+		if (!m_dirOpt.empty()){
+			warn << "--dir " << m_dirOpt << " (no files to be retrieved)\n";
 		}
 		//--output
-		if (outOpt) {
-			warn << "--output " << *outOpt <<" (no useful information to be saved into a file)\n";
+		if (!m_outOpt.empty()) {
+			warn << "--output " << m_outOpt <<" (no useful information to be saved into a file)\n";
 		}
 		if (warn.str().size()>0) {
 			logInfo->print(WMS_WARNING,
@@ -287,8 +287,8 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		}
 	} else if (setOpt) {
 		//--dir
-		if (dirOpt){
-			warn << "--dir " << *dirOpt << " (no files to be retrieved)\n";
+		if (!m_dirOpt.empty()){
+			warn << "--dir " << m_dirOpt << " (no files to be retrieved)\n";
 		}
 		// --nodisplay
 		if (nodisplayOpt) {
@@ -302,25 +302,25 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 
 	} else if (getOpt) {
 		// Directory path for file downloading (only for --get)
-		if (!dirOpt){
+		if (m_dirOpt.empty()){
 			char* environ=getenv("LOGNAME");
 			if (environ){logname="/"+string(environ);}
 			else{logname="/jobPerusal";}
 			dircfg = Utils::getAbsolutePath(wmcUtils->getOutputStorage()) ;
 			logInfo->print(WMS_DEBUG, "Output Storage (by configuration file):", dircfg);
-			dirOpt = new string (dircfg + logname + "_" + Utils::getUnique(jobId));
+			m_dirOpt = dircfg + logname + "_" + Utils::getUnique(jobId);
 		} else {
-			*dirOpt = Utils::getAbsolutePath(*dirOpt);
-			logInfo->print(WMS_DEBUG, "Output Storage (by --dir option):", *dirOpt);
+			m_dirOpt = Utils::getAbsolutePath(m_dirOpt);
+			logInfo->print(WMS_DEBUG, "Output Storage (by --dir option):", m_dirOpt);
 		}
 		// makes directory
-		if (! Utils::isDirectory(*dirOpt)) {
-			logInfo->print(WMS_DEBUG, "Creating directory:", *dirOpt);
-			if (mkdir(dirOpt->c_str(), 0755)){
+		if (! Utils::isDirectory(m_dirOpt)) {
+			logInfo->print(WMS_DEBUG, "Creating directory:", m_dirOpt);
+			if (mkdir(m_dirOpt.c_str(), 0755)){
 				// Error while creating directory
 				throw WmsClientException(__FILE__,__LINE__,
 				"retrieveOutput", ECONNABORTED,
-				"Unable create dir: ",*dirOpt);
+				"Unable create dir: ",m_dirOpt);
 			}
 		}
 	}
@@ -371,9 +371,9 @@ void JobPerusal::checkStatus( ){
 		// Initialize ENDPOINT (start a new (thread of) job (s)
 		setEndPoint (status.getEndpoint());
 		// checks if --endpoint option has been specified with a different endpoint url
-		string *endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
-		if (endpoint && endpoint->compare(getEndPoint( )) !=0 ) {
-			logInfo->print(WMS_WARNING, "--endpoint " + string(*endpoint) + " : option ignored", "");
+		string endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
+		if (endpoint.compare(getEndPoint( )) !=0 ) {
+			logInfo->print(WMS_WARNING, "--endpoint " + endpoint + " : option ignored", "");
 		}
 	}
 }
@@ -408,12 +408,12 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	size = uris.size();
 	if (size>0) {
 		logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; number of files to be retrieved :" + boost::lexical_cast<string>(size));
-		if (fileProto->compare(Options::TRANSFER_FILES_GUC_PROTO)==0) {
+		if (m_fileProto.compare(Options::TRANSFER_FILES_GUC_PROTO)==0) {
 			this->gsiFtpGetFiles(uris, paths, errors);
-		} else if (fileProto->compare(Options::TRANSFER_FILES_CURL_PROTO)==0) {
+		} else if (m_fileProto.compare(Options::TRANSFER_FILES_CURL_PROTO)==0) {
 			this->curlGetFiles(uris, paths, errors);
 		} else {
-			errors = "File Protocol not supported: " + *fileProto;
+			errors = "File Protocol not supported: " + m_fileProto;
 			errors += "List of available protocols for this client:" + Options::getProtocolsString( ) ;
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet", DEFAULT_ERR_CODE,
@@ -491,7 +491,7 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 		}
 		// command
 		source = uris[0];
-		destination = *dirOpt + "/" + Utils::getFileName (source) ;
+		destination = m_dirOpt + "/" + Utils::getFileName (source) ;
 		if (wmcUtils->askForFileOverwriting(destination)){
 			cmd+= source + " file://"  + destination ;
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n", cmd);
@@ -568,7 +568,7 @@ void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std:
                         // files to be downloaded
 			while(paths.empty()==false){
 				source = uris[0];
-				destination = *dirOpt + "/" + Utils::getFileName (source) ;
+				destination = m_dirOpt + "/" + Utils::getFileName (source) ;
                                 curl_easy_setopt(curl, CURLOPT_URL, source.c_str());
                                 ostringstream info ;
                                 info << "\nFile:\t" << source << "\n";
@@ -649,14 +649,14 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 		out << subj << ws << "has been successfully enabled for the job:\n";
 		out << jobId << "\n";
 		// saves the result
-		if (outOpt){
+		if (!m_outOpt.empty()){
 			header = "###" + subj + ws + "enabled for the job " + jobId + "###";
-			if ( wmcUtils->saveListToFile(*outOpt,  peekFiles, header) < 0 ){
+			if ( wmcUtils->saveListToFile(m_outOpt,  peekFiles, header) < 0 ){
 				logInfo->print (WMS_WARNING, "unable to save the result into the output file " ,
-						 Utils::getAbsolutePath(*outOpt));
+						 Utils::getAbsolutePath(m_outOpt));
 			} else {
 				out << "\nThe" + ws + count + ws + "to peruse" + ws + "has been saved in the following file:\n";
-				out << Utils::getAbsolutePath(*outOpt) << "\n";
+				out << Utils::getAbsolutePath(m_outOpt) << "\n";
 			}
 		}
 	} else if (operation == PERUSAL_GET) {
@@ -665,15 +665,15 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 			out << jobId << "\n";
 		} else {
 			out << "The retrieved files have been successfully stored in:\n";
-			out << *dirOpt << "\n";
-			if (outOpt){
+			out << m_dirOpt << "\n";
+			if (!m_outOpt.empty()){
 				header = "###Perusal: file(s) retrieved for the job " + jobId + "###";
-				if ( wmcUtils->saveListToFile(*outOpt, paths, header) < 0 ){
+				if ( wmcUtils->saveListToFile(m_outOpt, paths, header) < 0 ){
 					logInfo->print (WMS_WARNING, "unable to save" + ws + count +  ws + "to peruse" + ws + "in the output file " ,
-						Utils::getAbsolutePath(*outOpt));
+						Utils::getAbsolutePath(m_outOpt));
 				} else {
 					out << "\nThe"<< ws << count <<  ws << "to peruse" << ws << "is stored in the file:\n";
-					out << Utils::getAbsolutePath(*outOpt) << "\n";
+					out << Utils::getAbsolutePath(m_outOpt) << "\n";
 				}
 			}
 		}

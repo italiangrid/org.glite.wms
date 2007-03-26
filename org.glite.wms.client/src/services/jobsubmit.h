@@ -288,17 +288,17 @@ class JobSubmit : public Job {
 		/**
 		*	String input arguments
 		*/
-		std::string* chkptOpt ;
-		std::string* collectOpt;
-		std::string* dagOpt ;
-		std::string* defJdlOpt ;
-		std::string* lrmsOpt ;
-		std::string* toOpt ;
-		std::string* inOpt ;
-		std::string* resourceOpt ;
-		std::string* nodesresOpt ;
-		std::string* validOpt ;
-		std::string* startOpt ;
+		std::string m_chkptOpt ;
+		std::string m_collectOpt;
+		std::string m_dagOpt ;
+		std::string m_defJdlOpt ;
+		std::string m_lrmsOpt ;
+		std::string m_toOpt ;
+		std::string m_inOpt ;
+		std::string m_resourceOpt ;
+		std::string m_nodesresOpt ;
+		std::string m_validOpt ;
+		std::string m_startOpt ;
 		/**
                 *	Boolean input arguments
                 */
@@ -334,11 +334,11 @@ class JobSubmit : public Job {
 		/**
 		*	path to the JDL file
 		*/
-		std::string *jdlFile ;
+		std::string m_jdlFile ;
 		/**
 		*	string of the user JDL
 		*/
-		std::string *jdlString ;
+		std::string m_jdlString ;
 
 		/**
 		* The name of the ISB tar/zip files

@@ -41,8 +41,8 @@ JobListMatch::JobListMatch(){
 	// init of the boolean attributes
         rankOpt  = false ;
 	// parameters
-        jdlFile = NULL ;
-        jdlString = NULL ;
+        m_jdlFile = "";
+        m_jdlString = "";
         //Ad
         jobAd = NULL;
   };
@@ -50,8 +50,6 @@ JobListMatch::JobListMatch(){
 *	Default destructor
 */
 JobListMatch::~JobListMatch( ){
-	if (jdlFile) { delete(jdlFile);}
-        if (jdlString) { delete(jdlString);}
         if (jobAd) { delete(jobAd);}
 };
 /*
@@ -60,13 +58,13 @@ JobListMatch::~JobListMatch( ){
 void JobListMatch::readOptions (int argc,char **argv) {
 	Job::readOptions  (argc, argv, Options::JOBMATCH);
  	// path to the JDL file
-  	jdlFile = wmcOpts->getPath2Jdl( );
+  	m_jdlFile = wmcOpts->getPath2Jdl( );
 	//EndPoint
 	retrieveEndPointURL( );
 	// rank
         rankOpt =  wmcOpts->getBoolAttribute (Options::RANK);
 	// checks if the output file already exists
-	if (outOpt && ! wmcUtils->askForFileOverwriting(*outOpt) ){
+	if (!m_outOpt.empty() && !wmcUtils->askForFileOverwriting(m_outOpt) ){
 		cout << "bye\n";
 		getLogFileMsg ( );
 		Utils::ending(ECONNABORTED);
@@ -118,16 +116,16 @@ void JobListMatch::listMatching ( ){
 		}
 	}
         // saves the result
-        if (outOpt){
+        if (!m_outOpt.empty()){
         	string tofile = "\n" + out.str() + "\n" + wmcUtils->getStripe(74, "=") + "\n";
-                if ( wmcUtils->saveToFile(*outOpt, tofile) < 0 ){
-                        logInfo->print (WMS_WARNING, "Unable to write the list of CeId's to the output file: " , Utils::getAbsolutePath(*outOpt));
+                if ( wmcUtils->saveToFile(m_outOpt, tofile) < 0 ){
+                        logInfo->print (WMS_WARNING, "Unable to write the list of CeId's to the output file: " , Utils::getAbsolutePath(m_outOpt));
                 } else{
                         logInfo->print (WMS_DEBUG, "Computing Element(s) matching your job requirements have been stored in the file:",
-				Utils::getAbsolutePath(*outOpt), false);
+				Utils::getAbsolutePath(m_outOpt), false);
 			os << wmcUtils->getStripe(84, "=" , string (wmcOpts->getApplicationName() + " success") ) << "\n";
                         os << "\nComputing Element(s) matching your job requirements have been stored in the file:\n";
-                        os << Utils::getAbsolutePath(*outOpt) << "\n";
+                        os << Utils::getAbsolutePath(m_outOpt) << "\n";
 			os << "\n" << wmcUtils->getStripe(84, "=") << "\n\n";
 			cout << os.str();
                 }
@@ -151,14 +149,14 @@ void JobListMatch::checkAd ( ){
 	if ( !jobAd ){
 		jobAd = new Ad ( );
         }
-	if (! jdlFile){
+	if (m_jdlFile.empty()){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
 			"JDL File Missing",
                          "uknown JDL file pathame  (Last argument of the command must be a JDL file)"   );
         }
-	logInfo->print (WMS_DEBUG, "The JDL file is:", Utils::getAbsolutePath(*jdlFile));
-	jobAd->fromFile (*jdlFile);
+	logInfo->print (WMS_DEBUG, "The JDL file is:", Utils::getAbsolutePath(m_jdlFile));
+	jobAd->fromFile (m_jdlFile);
         // check submitTo
 	 if ( jobAd->hasAttribute(JDL::SUBMIT_TO) ){
 		throw WmsClientException(__FILE__,__LINE__,
@@ -180,14 +178,14 @@ void JobListMatch::checkAd ( ){
 	}
 	// Simple Ad manipulation
 	if (!jobAd->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
-		jobAd->setAttribute(JDL::VIRTUAL_ORGANISATION, *(wmcUtils->getVirtualOrganisation()));
+		jobAd->setAttribute(JDL::VIRTUAL_ORGANISATION, wmcUtils->getVirtualOrganisation());
 	}
 	AdUtils::setDefaultValuesAd(jobAd,wmcConf);
 	JobAd *pass= new JobAd(*(jobAd->ad()));
 	AdUtils::setDefaultValues(pass,wmcConf);
 	// JDL STRING
-	jdlString = new string(pass->toSubmissionString());
-	logInfo->print(WMS_DEBUG, "JDL" , *jdlString );
+	m_jdlString = pass->toSubmissionString();
+	logInfo->print(WMS_DEBUG, "JDL" , m_jdlString );
 };
 
 /*
@@ -196,7 +194,7 @@ void JobListMatch::checkAd ( ){
 std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
 	vector <pair<string , long> > list ;
 	// checks if jdlstring is not null
-        if (!jdlString){
+        if (m_jdlString.empty()){
                 throw WmsClientException(__FILE__,__LINE__,
                         "jobMatching",  DEFAULT_ERR_CODE ,
                         "Null Pointer Error",
@@ -206,7 +204,7 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
  	try{
   		// ListMatch
 		logInfo->service(WMP_LISTMATCH_SERVICE);
-    		list = jobListMatch(*jdlString, getDelegationId( ), getContext());
+    		list = jobListMatch(m_jdlString, getDelegationId( ), getContext());
 		logInfo->result(WMP_LISTMATCH_SERVICE, "The MatchMaking operations have been successfully performed");
       } catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,

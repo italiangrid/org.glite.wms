@@ -73,11 +73,11 @@ class JobListMatch : public Job {
                 /*
 		*	Path to the JDL file
 		*/
-		std::string *jdlFile ;
+		std::string m_jdlFile ;
 		/*
 		*	String with the user JDL
 		*/
-		std::string *jdlString ;
+		std::string m_jdlString ;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBLISTMATCH_H

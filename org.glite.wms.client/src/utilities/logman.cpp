@@ -25,27 +25,15 @@ namespace utilities{
 /**
 * Default constructor
 */
-Log::Log (std::string* path, LogLevel level){
+Log::Log (LogLevel level){
         dbgLevel = level;
-	// check writing permission
-	if (path){
-		this->createLogFile(*path);
-	} else{
-		logFile = NULL;
-	}
-}
-
-/**
-* Default destructor
-*/
-Log::~Log( ) {
-	if (logFile) { delete(logFile);}
+	m_logFile = "";
 }
 
 void Log::createLogFile(const std::string &path){
 	ofstream outputstream(path.c_str(), ios::app);
 	if (outputstream.is_open() ) {
-		logFile = new string (path) ;
+		m_logFile = path;
 		if (logCache.size() > 0 ) {
 			// writes the content of the cache into the new file
 			outputstream << logCache ;
@@ -59,7 +47,7 @@ void Log::createLogFile(const std::string &path){
 				"I/O error",
 				"unable to open the logfile: " + path ,
 				true);
-			logFile = NULL;
+			m_logFile = "";
 		}
 	}
 }
@@ -71,7 +59,7 @@ void Log::print (severity sev, const std::string &header,glite::wmsutils::except
 	string message = "";
 	const string stripe= "-----------------------------------------";
         if ( debug &&  (int)sev >= (int)dbgLevel){ dbg = true;}
-        message = errMsg(sev, header, exc, dbg, logFile);
+        message = errMsg(sev, header, exc, dbg, &m_logFile);
 	// adds the message to the internal cache
 	if (cache) { logCache += stripe + "\n" + message ;}
 }
@@ -83,7 +71,7 @@ void Log::print (severity sev, const std::string &header, const std::string &msg
 	string message = "";
 	const string stripe= "------------------------------------------";
         if ( debug && (int)sev >= (int)dbgLevel){ dbg = true;}
-        message = errMsg(sev, header, msg, dbg, logFile);
+        message = errMsg(sev, header, msg, dbg, &m_logFile);
 	// adds the message to the internal cache
 	if (cache) { logCache +=  stripe + "\n" + message ;}
 }
@@ -120,16 +108,6 @@ void Log::service(const std::string& service, const std::vector <std::pair<std::
 */
 void Log::result(const std::string& service, const std::string msg) {
 	print(WMS_DEBUG, string(service + " - ") , msg );
-}
-/**
-* Gets the log file pathname
-*/
-std::string* Log::getPathName( ){
-	if (logFile){
-                return new string(Utils::getAbsolutePath(*logFile));
- 	} else{
-		return NULL;
-        }
 }
 
 }}}} // ending namespaces

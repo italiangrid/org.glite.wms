@@ -81,7 +81,7 @@ void DelegateProxy::delegation ( ){
 
 std::string DelegateProxy::infoToFile( ){
 	string rm = "";
-	if (outOpt){
+	if (!m_outOpt.empty()){
 		string delegationId=getDelegationId();
 		char ws = (char)32;
 		time_t now = time(NULL);
@@ -94,13 +94,13 @@ std::string DelegateProxy::infoToFile( ){
 		msg += "=========================================================================\n";
 		if (delegationId!=""){msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID: " +  getDelegationId( ) + "\n";}
 		else{msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID was automatically generated"              + "\n";}
-		if( wmcUtils->saveToFile(*outOpt, msg) < 0 ){
-			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
+		if( wmcUtils->saveToFile(m_outOpt, msg) < 0 ){
+			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(m_outOpt));
 		} else {
 			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ",
-				Utils::getAbsolutePath(*outOpt));
+				Utils::getAbsolutePath(m_outOpt));
 			rm += "\nThe DelegateProxy result  has been saved in the following file:\n";
-			rm += Utils::getAbsolutePath(*outOpt) + "\n";
+			rm += Utils::getAbsolutePath(m_outOpt) + "\n";
 		}
 	}
         return rm;

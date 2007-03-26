@@ -41,14 +41,13 @@ namespace services {
 */
 JobCancel::JobCancel() {
 	// init of the string attributes
-        inOpt=NULL  ;
+        m_inOpt = "";
 };
 
 /**
 * Default destructor
 */
 JobCancel::~JobCancel( ) {
-	if (inOpt){ delete(inOpt);}
 };
 
 /**
@@ -58,12 +57,13 @@ void JobCancel::readOptions (int argc,char **argv){
 	unsigned int njobs = 0;
 	Job::readOptions  (argc, argv, Options::JOBCANCEL);
         // input file
-        inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+        m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	
 	// JobId's
-        if (inOpt){
+        if (!m_inOpt.empty()){
 		// From input file
-		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(*inOpt));
-		jobIds = wmcUtils->getItemsFromFile(*inOpt);
+		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(m_inOpt));
+		jobIds = wmcUtils->getItemsFromFile(m_inOpt);
 		jobIds = wmcUtils->checkJobIds (jobIds);
 		logInfo->print (WMS_DEBUG, "JobId(s) in the input file:", Utils::getList (jobIds), false);
         } else {
@@ -80,7 +80,7 @@ void JobCancel::readOptions (int argc,char **argv){
 		}
          }
 	// checks if the output file already exists
-	if (outOpt && ! wmcUtils->askForFileOverwriting(*outOpt) ){
+	if (!m_outOpt.empty() && ! wmcUtils->askForFileOverwriting(m_outOpt) ){
 		cout << "bye\n";
 		getLogFileMsg ( );
 		Utils::ending(ECONNABORTED);
@@ -183,22 +183,22 @@ void JobCancel::cancel ( ){
 		// success message
 		out << "The cancellation request has been successfully submitted for the following job(s):\n\n";
 		out << *cancelled ;
-		if (outOpt) {
+		if (!m_outOpt.empty()) {
 			out << "\n" << wmcUtils->getStripe(88, "=" ) << "\n";
                 	// save the result in the output file
-			if ( ! wmcUtils->saveToFile(*outOpt, out.str( )) ){
+			if ( ! wmcUtils->saveToFile(m_outOpt, out.str( )) ){
                         	// print the result of saving on the std output
                         	ostringstream os;
 				os << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
                                 os << "Cancellation results for the specified job(s) are stored in the file:\n";
-                                os << Utils::getAbsolutePath(*outOpt) << "\n";
+                                os << Utils::getAbsolutePath(m_outOpt) << "\n";
 				os << "\n" << wmcUtils->getStripe(74, "=" ) << "\n\n";
                                 cout << os.str( );
 			} else{
                         	// couldn't save the results (prints the result message on the stdout)
                         	logInfo->print (WMS_WARNING,
                                 	"unable to write the to cancellation results in the output file " ,
-                                	Utils::getAbsolutePath(*outOpt));
+                                	Utils::getAbsolutePath(m_outOpt));
 				out << "\n" << wmcUtils->getStripe(88, "=" ) << "\n\n";
                                 cout << out.str( );
    			}

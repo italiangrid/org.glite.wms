@@ -175,7 +175,7 @@ public:
         * Gets the log file pathname
         * @return the pathname string
         */
-        std::string* getLogFileName ( );
+        std::string getLogFileName(void);
 	/**
 	* Match the most relevant HTTP status codes with the corresponding error message strings
 	* (some of them are: 400, 401, 404, 407, 408, 414, 500, 501, 505)
@@ -281,12 +281,12 @@ public:
 	* generate a unique string
         * @return the generated string
 	*/
-        static std::string* getUniqueString ( ) ;
+        static std::string getUniqueString(void);
         /**
         * Gets the virtualOrganisation associated to this option
 	* @return the point to the virtualOrganisation string
         */
-        std::string* getVirtualOrganisation(){return virtualOrganisation;}
+        std::string getVirtualOrganisation(void){return virtualOrganisation;}
         /**
         * checks if a pathname is a valid file
         *@param pathname the pathname that has to be checked
@@ -325,7 +325,7 @@ public:
         * @return the text read from the file
         * @throw WmsClientException if the file doesn't exist or in case of any error occured during the reading operations
         */
-        std::string* fromFile (const std::string &path) ;
+        std::string fromFile (const std::string &path) ;
 	/**
 	* Saves a message into a file after checking whether it already exists.
 	* If it does and user interaction has not been disabled (by --noint),
@@ -464,7 +464,7 @@ private:
 	* Check the WMS client configuration file
 	@return definite VirtualOrganisation found value
 	*/
-	std::string* checkConf();
+	std::string checkConf();
 	/** Look for possible configuration file */
 	/**
 	*	convert the input time string to number of seconds form 1970
@@ -496,7 +496,7 @@ private:
 	* The file is created only if either --debug or --logfile has been spevified among the user input options.
         * @return a pointer to a string with the pathname, NULL if no logfile has been generated
         */
-        std::string* generateLogFile ( );
+        std::string generateLogFile ( );
         /**
         * Gets the default Log File pathname
         * /<OutStorage-path>/<commandname>_<UID>_<PID>_<timestamp>.log
@@ -540,7 +540,7 @@ private:
 	// General configuration inner values
 	std::string prefix;
 	// Virutal Organisation value
-	std::string *virtualOrganisation;
+	std::string virtualOrganisation;
 
 }; // end class definition
 

@@ -67,7 +67,7 @@ class JobInfo : public Job {
 		* Specific user input option
 		*/
 
-		std::string* inOpt ;
+		std::string m_inOpt ;
 		/**
                 *	Boolean input arguments
                 */

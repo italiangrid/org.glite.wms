@@ -78,24 +78,23 @@ const int TRANSFER_OK = 0;
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
-	chkptOpt  = NULL; // TBD
-	collectOpt = NULL;
-	dagOpt = NULL;
-	defJdlOpt = NULL;
-	fileProto= NULL;
-	lrmsOpt = NULL ;
-	toOpt = NULL ;
-	inOpt  = NULL;
-	resourceOpt = NULL ;
-	startOpt = NULL ;
+	m_chkptOpt  = "";
+	m_collectOpt = "";
+	m_dagOpt = "";
+	m_defJdlOpt = "";
+	m_lrmsOpt = "";
+	m_toOpt = "";
+	m_inOpt = "";
+	m_resourceOpt = "";
+	m_startOpt = "";
 	// init of the valid attribute (long type)
-	validOpt = 0 ;
+	m_validOpt = "";
 	// init of the boolean attributes
 	nomsgOpt = false ;
 	nolistenOpt = false ;
 	startJob = false ;
 	// JDL file
-	jdlFile = NULL ;
+	m_jdlFile = "" ;
 	// Ad's
 	adObj = NULL;
 	jobAd = NULL;
@@ -116,15 +115,6 @@ JobSubmit::JobSubmit( ){
 *	Default destructor
 */
 JobSubmit::~JobSubmit( ){
-	if (collectOpt){ delete(collectOpt); }
-	if (chkptOpt){ delete(chkptOpt); } //TBD
-	if (dagOpt){ delete(dagOpt); }
-	if (defJdlOpt){ delete(defJdlOpt); }
-	if (fileProto){ delete(fileProto); }
-	if (lrmsOpt){ delete(lrmsOpt); }
-	if (toOpt){ delete(toOpt); }
-	if (inOpt){ delete(inOpt); }
-	if (jdlFile){ delete(jdlFile); }
 	if (adObj){ delete(adObj); }
 	if (jobAd){ delete(jobAd); }
 	if (dagAd){ delete(dagAd); }
@@ -148,10 +138,11 @@ void JobSubmit::readOptions (int argc,char **argv){
 	int m = 0;
 	Job::readOptions  (argc, argv, Options::JOBSUBMIT);
 	// input & resource (no together)
-	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
-	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
-	nodesresOpt = wmcOpts->getStringAttribute(Options::NODESRES);
-	if (inOpt && (resourceOpt||nodesresOpt) ){
+	m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	m_resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
+	m_nodesresOpt = wmcOpts->getStringAttribute(Options::NODESRES);
+
+	if (!m_inOpt.empty() && (!m_resourceOpt.empty() || !m_nodesresOpt.empty()) ){
 		info << "The following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
@@ -160,9 +151,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", info.str());
 	}
-	if (inOpt){
+	if (!m_inOpt.empty()){
 		// Retrieves and check resources from file
-		resources= wmcUtils->getItemsFromFile(*inOpt);
+		resources= wmcUtils->getItemsFromFile(m_inOpt);
 		resources = wmcUtils->checkResources (resources);
 		if (resources.empty()){
 			// Not even a right resource
@@ -173,33 +164,41 @@ void JobSubmit::readOptions (int argc,char **argv){
 		} else{
 			if ( resources.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
 				resources = wmcUtils->askMenu(resources, Utils::MENU_SINGLECE);
-				resourceOpt = new string(resources[0]);
+				m_resourceOpt = resources[0];
 			} else {
-				resourceOpt = new string(resources[0]);
+				m_resourceOpt = resources[0];
 			}
-			logInfo->print(WMS_DEBUG,   "--input option: The job will be submitted to the resource", *resourceOpt);
+			logInfo->print(WMS_DEBUG,   "--input option: The job will be submitted to the resource", m_resourceOpt);
 		}
 	}
 	// --chkpt TBD !!!
-	chkptOpt =  wmcOpts->getStringAttribute( Options::CHKPT) ;
+	m_chkptOpt = wmcOpts->getStringAttribute( Options::CHKPT) ;
+	
 	// --collect
-	collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
+	m_collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
+		
 	// --dag
-	dagOpt = wmcOpts->getStringAttribute(Options::DAG);
+	m_dagOpt = wmcOpts->getStringAttribute(Options::DAG);
+	
 	// --default-jdl
-	defJdlOpt = wmcOpts->getStringAttribute(Options::DEFJDL);
+	m_defJdlOpt = wmcOpts->getStringAttribute(Options::DEFJDL);
+		
 	// register-only & start
-	startOpt = wmcOpts->getStringAttribute(Options::START);
+	m_startOpt = wmcOpts->getStringAttribute(Options::START);
 	registerOnly = wmcOpts->getBoolAttribute(Options::REGISTERONLY);
+	
 	// --valid & --to
-	validOpt = wmcOpts->getStringAttribute(Options::VALID);
-	toOpt = wmcOpts->getStringAttribute(Options::TO);
+	m_validOpt = wmcOpts->getStringAttribute(Options::VALID);
+	m_toOpt = wmcOpts->getStringAttribute(Options::TO);
+	
 	// --start: incompatible options
-	if (startOpt &&
-		(registerOnly || inOpt || resourceOpt || nodesresOpt || toOpt || validOpt ||
-			chkptOpt || collectOpt || dagOpt || defJdlOpt ||
-			(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
-			wmcOpts->getBoolAttribute(Options::AUTODG)  )){
+	if (!m_startOpt.empty() &&
+		(registerOnly || !m_inOpt.empty() || !m_resourceOpt.empty() || !m_nodesresOpt.empty() || !m_toOpt.empty() || 
+			!m_validOpt.empty() ||
+			!m_chkptOpt.empty() || !m_collectOpt.empty() ||
+			!m_dagOpt.empty() || !m_defJdlOpt.empty() ||
+			!wmcOpts->getStringAttribute(Options::DELEGATION).empty()) ||
+			wmcOpts->getBoolAttribute(Options::AUTODG)  ){
 		info << "The following options cannot be specified together with --start:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
@@ -219,7 +218,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 				info.str());
 	}
 	// "valid" & "to" (no together)
-	if (validOpt && toOpt){
+	if (!m_validOpt.empty() && !m_toOpt.empty()){
 		info << "The following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
@@ -228,8 +227,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error", info.str());
 	}
 	// lrms has to be used with input o resource
-	lrmsOpt = wmcOpts->getStringAttribute(Options::LRMS);
-	if (lrmsOpt && !( resourceOpt || inOpt ) ){
+	m_lrmsOpt = wmcOpts->getStringAttribute(Options::LRMS);
+	
+	if (!m_lrmsOpt.empty() && !( !m_resourceOpt.empty() || !m_inOpt.empty() ) ){
 		info << "LRMS option cannot be specified without a resource:\n";
 		info << "use " + wmcOpts->getAttributeUsage(Options::LRMS) << " with\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
@@ -259,17 +259,17 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 	// check --start option
 	// either set or retrieve the ENDPOINT
-	if (startOpt) {
-		*startOpt =string(Utils::checkJobId(*startOpt));
+	if (!m_startOpt.empty()) {
+		m_startOpt = string(Utils::checkJobId(m_startOpt));
 		// Retrieves the endpoint URL in case of --start
 		logInfo->print(WMS_DEBUG, "Getting the enpoint URL");
 		LbApi lbApi;
-		lbApi.setJobId(*startOpt);
+		lbApi.setJobId(m_startOpt);
 		setEndPoint(lbApi.getStatus(true,true).getEndpoint());
 		// checks if --endpoint option has been specified with a different endpoint url
-		string *endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
-		if (endpoint && endpoint->compare(getEndPoint( )) !=0 ) {
-			logInfo->print(WMS_WARNING, "--endpoint " + string(*endpoint) + " : option ignored");
+		string endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
+		if (endpoint.compare(getEndPoint( )) !=0 ) {
+			logInfo->print(WMS_WARNING, "--endpoint " + endpoint + " : option ignored");
 		}
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 	} else {
@@ -277,19 +277,20 @@ void JobSubmit::readOptions (int argc,char **argv){
 		retrieveEndPointURL( );
 	}
 	// file Protocol
-	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
-	if (startOpt && fileProto) {
+	m_fileProto = wmcOpts->getStringAttribute( Options::PROTO) ;
+	
+	if (!m_startOpt.empty() && !m_fileProto.empty()) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (start operation doesn't need any file transfer)\n", "", true );
-	}  else if (registerOnly && fileProto) {
+	}  else if (registerOnly && !m_fileProto.empty()) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (register-only operation doesn't need any file transfer)\n", "", true);
 	} else {
 		// Perform Check File Transfer Protocol Step
 		jobPerformStep(STEP_CHECK_FILE_TP);
 	}
 	// --valid
-	if (validOpt){
+	if (!m_validOpt.empty()){
 		try{
-			expireTime =  Utils::checkTime(*validOpt, d, h, m, Options::TIME_VALID) ;
+			expireTime =  Utils::checkTime(m_validOpt, d, h, m, Options::TIME_VALID) ;
 		} catch (WmsClientException &exc) {
 			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::VALID) << ")\n";
 			throw WmsClientException(__FILE__,__LINE__,
@@ -298,9 +299,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 		}
 	}
 	// --to
-	if (toOpt) {
+	if (!m_toOpt.empty()) {
 		try{
-			expireTime= Utils::checkTime(*toOpt, d, h, m,Options::TIME_TO) ;
+			expireTime= Utils::checkTime(m_toOpt, d, h, m,Options::TIME_TO) ;
 		} catch (WmsClientException &exc) {
 			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::TO) <<")\n";
 			throw WmsClientException(__FILE__,__LINE__,
@@ -316,16 +317,16 @@ void JobSubmit::readOptions (int argc,char **argv){
 		if (d > 0){ info << d << " days, ";}
 		if (h > 0){ info << h << " hours and ";}
 		info << m << " minutes";
-		if (validOpt) {
+		if (!m_validOpt.empty()) {
 			logInfo->print(WMS_DEBUG,  "--valid option:", info.str( ) );
-		} else if (toOpt)  {
+		} else if (!m_toOpt.empty())  {
 			logInfo->print(WMS_DEBUG, "--to option:", info.str( ) );
 		}
 	}
 	// --nolisten
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
 	// path to the JDL file
-	jdlFile = wmcOpts->getPath2Jdl( );
+	m_jdlFile = wmcOpts->getPath2Jdl( );
 }
 
 /**
@@ -335,8 +336,8 @@ void JobSubmit::submission ( ){
 	ostringstream out ;
 	toBretrieved = false;
 	// in case of --start option
-	if (startOpt){
-		jobStarter(*startOpt);
+	if (!m_startOpt.empty()){
+		jobStarter(m_startOpt);
 	} else {
 		this->checkAd(toBretrieved);
 		// Perform sSubmission when:
@@ -375,7 +376,7 @@ void JobSubmit::submission ( ){
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
 	if (registerOnly){
 		out << "The job has been successfully registered to the WMProxy\n";
-	} else if (startOpt){
+	} else if (!m_startOpt.empty()){
 		out << "The job has been successfully started to the WMProxy\n";
 	} else {
 		// OUTPUT MESSAGE (register+start)============================================
@@ -416,13 +417,13 @@ void JobSubmit::submission ( ){
 	}
 
 	// saves the result
-	if (outOpt){
-		if ( wmcUtils->saveJobIdToFile(*outOpt, this->getJobId( )) < 0 ){
-			logInfo->print (WMS_WARNING, "Unable to write the jobid to the output file " , Utils::getAbsolutePath(*outOpt));
+	if (!m_outOpt.empty()){
+		if ( wmcUtils->saveJobIdToFile(m_outOpt, this->getJobId( )) < 0 ){
+			logInfo->print (WMS_WARNING, "Unable to write the jobid to the output file " , Utils::getAbsolutePath(m_outOpt));
 		} else{
-			logInfo->print (WMS_DEBUG, "The JobId has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
+			logInfo->print (WMS_DEBUG, "The JobId has been saved in the output file ", Utils::getAbsolutePath(m_outOpt));
 			out << "\nThe job identifier has been saved in the following file:\n";
-			out << Utils::getAbsolutePath(*outOpt) << "\n";
+			out << Utils::getAbsolutePath(m_outOpt) << "\n";
 		}
 	}
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
@@ -552,11 +553,11 @@ void JobSubmit::toBCopiedZippedFileList() {
 	int nc = 0;
 	int i = 0;
 	// Unique string to be used for the name of the tar.gz files
-	string *us = Utils::getUniqueString( );
-	if (us==NULL) {
+	string us = Utils::getUniqueString( );
+	if (us.empty()) {
 		ostringstream u ;
 		u << getpid( ) << "_" << getuid( );
-		us = new string(u.str());
+		us = u.str();
 	}
 	logInfo->print(WMS_DEBUG,
 		"Computing the composition of the zipped files" ,
@@ -570,7 +571,7 @@ void JobSubmit::toBCopiedZippedFileList() {
 	// zipStructs :   ZipFileAd {std::string filename ; FILEAD filead;}
 	zipStruct = new ZipFileAd ();
 	jobFiles = new JobFileAd ( );
-	zipStruct->filename = ISBFILE_DEFAULT + "_" + *us + "_" + boost::lexical_cast<string>(ntar)
+	zipStruct->filename = ISBFILE_DEFAULT + "_" + us + "_" + boost::lexical_cast<string>(ntar)
 		+ Utils::getArchiveExtension( ) + Utils::getZipExtension( ) ;
 	fileads = extractAd->getFiles ( );
 	n = fileads.size( );
@@ -599,7 +600,7 @@ void JobSubmit::toBCopiedZippedFileList() {
 				zipStruct = new ZipFileAd ();
 				jobFiles = new JobFileAd ( );
 				// new filename
-				zipStruct->filename = ISBFILE_DEFAULT + "_" + *us + "_" + boost::lexical_cast<string>(ntar)
+				zipStruct->filename = ISBFILE_DEFAULT + "_" + us + "_" + boost::lexical_cast<string>(ntar)
 					+ Utils::getArchiveExtension( ) + Utils::getZipExtension( ) ;
 				jobFiles->jobid = extractAd->getJobId ( );
 				jobFiles->node = "";
@@ -643,7 +644,7 @@ void JobSubmit::toBCopiedZippedFileList() {
 					delete(zipStruct);
 					zipStruct = new ZipFileAd( );
 					jobFiles = new JobFileAd ( );
-					zipStruct->filename = ISBFILE_DEFAULT + "_" + *us + "_" + boost::lexical_cast<string>(ntar)
+					zipStruct->filename = ISBFILE_DEFAULT + "_" + us + "_" + boost::lexical_cast<string>(ntar)
 						+ Utils::getArchiveExtension( ) + Utils::getZipExtension( ) ;
 					// node-name
 					jobFiles->jobid = extractAd->getJobId ( );
@@ -762,8 +763,8 @@ int JobSubmit::checkInputSandbox ( ) {
 			"null pointer to extractAd\n"+ Options::BUG_MSG);
 	}
 	// Sets the max size allowed for file transfer
-	if (fileProto) {
-		FileAd::setMaxFileSize(Options::getMinimumAllowedFileSize(*fileProto, zipAllowed));
+	if (!m_fileProto.empty()) {
+		FileAd::setMaxFileSize(Options::getMinimumAllowedFileSize(m_fileProto, zipAllowed));
 	} else {
 		FileAd::setMaxFileSize(Options::getMinimumAllowedFileSize("", zipAllowed));
 	}
@@ -837,18 +838,18 @@ void JobSubmit::checkAd(bool &toBretrieved){
 	const string JDL_WARNING_TITLE= "Following Warning(s) found while parsing JDL:";
 	glite::wms::common::configuration::WMCConfiguration* wmcConf = wmcUtils->getConf();
 	// COLLECTION (--collection)
-	if (collectOpt) {
+	if (!m_collectOpt.empty()) {
 		jobType = WMS_COLLECTION ;
 		try {
 			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
-			fs::path cp ( Utils::normalizePath(*collectOpt), fs::native);
+			fs::path cp ( Utils::normalizePath(m_collectOpt), fs::native);
 			if ( fs::is_directory( cp ) ) {
-				*collectOpt= Utils::addStarWildCard2Path(*collectOpt);
+				m_collectOpt= Utils::addStarWildCard2Path(m_collectOpt);
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
 					"checkAd",  DEFAULT_ERR_CODE,
 					"Invalid JDL collection Path",
-					"--collection: no valid collection directory (" + *collectOpt + ")"  );
+					"--collection: no valid collection directory (" + m_collectOpt + ")"  );
 			}
 		} catch ( const fs::filesystem_error & ex ){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -857,15 +858,15 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				ex.what()  );
 		}
 		logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted; JDL files in:",
-			Utils::getAbsolutePath( *collectOpt));
-		collectAd = AdConverter::createCollectionFromPath (*collectOpt,*(wmcUtils->getVirtualOrganisation()));
+			Utils::getAbsolutePath( m_collectOpt));
+		collectAd = AdConverter::createCollectionFromPath (m_collectOpt, wmcUtils->getVirtualOrganisation());
 		collectAd->setLocalAccess(true);
 		// Simple Ad manipulation
-		AdUtils::setDefaultValuesAd(collectAd,wmcConf,defJdlOpt);
+		AdUtils::setDefaultValuesAd(collectAd,wmcConf, m_defJdlOpt);
 		// Collect Ad manipulation
 		AdUtils::setDefaultValues(collectAd,wmcConf);
-		if (nodesresOpt) {
-			collectAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+		if (!m_nodesresOpt.empty()) {
+			collectAd->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
 		}
 		// JDL string
 		collectAd = collectAd->check();
@@ -886,19 +887,20 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		// Checks if there are local ISB file(s) to be transferred to
 		toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 		// JDL submission string
-		jdlString = new string(collectAd->toString());
-	} else if (dagOpt) {
+		m_jdlString = collectAd->toString();
+	} else if (!m_dagOpt.empty()) {
 		/*** NEW APPROACH SUPPORTED ***/
 		jobType = WMS_DAG ;
 		try {
-			fs::path cp ( Utils::normalizePath(*dagOpt), fs::native);
+			fs::path cp ( Utils::normalizePath(m_dagOpt), fs::native);
 			if ( fs::is_directory( cp ) ) {
-				*dagOpt= Utils::addStarWildCard2Path(*dagOpt);
+				m_dagOpt= Utils::addStarWildCard2Path(m_dagOpt);
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
 					"checkAd",  DEFAULT_ERR_CODE,
 					"Invalid JDL collection Path",
-					"--dag: no valid collection directory (" + *dagOpt + ")"  );
+					"--dag: no valid collection directory ("
+					+ m_dagOpt + ")"  );
 			}
 		} catch ( const fs::filesystem_error & ex ){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -906,11 +908,11 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				"Invalid JDL DAG Path",
 				ex.what()  );
 		}
-		logInfo->print (WMS_DEBUG, "A DAG is being submitted; JDL files in:", Utils::getAbsolutePath( *dagOpt));
+		logInfo->print (WMS_DEBUG, "A DAG is being submitted; JDL files in:", Utils::getAbsolutePath(m_dagOpt));
 
-		adObj =  AdConverter::createDagAdFromPath(*dagOpt, *(wmcUtils->getVirtualOrganisation()));
+		adObj =  AdConverter::createDagAdFromPath(m_dagOpt, wmcUtils->getVirtualOrganisation());
 		// Simple Ad manipulation
-		AdUtils::setDefaultValuesAd(adObj,wmcConf,defJdlOpt);
+		AdUtils::setDefaultValuesAd(adObj,wmcConf, m_defJdlOpt);
 
 		// Checking the ALLOW_ZIPPED_ISB attribute
 		if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
@@ -929,8 +931,8 @@ void JobSubmit::checkAd(bool &toBretrieved){
 
 		// Last refinements
 		logInfo->print (WMS_DEBUG, "A DAG job is being submitted");
-		if (nodesresOpt) {
-			adObj->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+		if (!m_nodesresOpt.empty()) {
+			adObj->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
 		}
 		dagAd = new ExpDagAd (adObj);
 		dagAd->setLocalAccess(true);
@@ -941,27 +943,27 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		// Checks if there are local ISB file(s) to be transferred to
 		toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 		// JDL submission string
-		jdlString = new string(dagAd->toString()) ;
+		m_jdlString = dagAd->toString();
 	} else {
 		// ClassAd: can be anything (reading Type)
 		adObj = new Ad();
-		if (jdlFile==NULL){
+		if (m_jdlFile.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
 				"",  DEFAULT_ERR_CODE,
 				"JDL File Missing",
 				"uknown JDL file pathame (Last Argument of the command must be a JDL file)"   );
 		}
-		logInfo->print (WMS_DEBUG, "The JDL file is:", Utils::getAbsolutePath(*jdlFile));
-		adObj->fromFile (*jdlFile);
+		logInfo->print (WMS_DEBUG, "The JDL file is:", Utils::getAbsolutePath(m_jdlFile));
+		adObj->fromFile (m_jdlFile);
 		// Adds ExpireTime JDL attribute
 		if ((int)expireTime>0) {
 			adObj->addAttribute (JDL::EXPIRY_TIME, (double)expireTime);
 		}
 		// Simple Ad manipulation (common)
 		if (!adObj->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
-			adObj->setAttribute(JDL::VIRTUAL_ORGANISATION, *(wmcUtils->getVirtualOrganisation()));
+			adObj->setAttribute(JDL::VIRTUAL_ORGANISATION, wmcUtils->getVirtualOrganisation());
 		}
-		AdUtils::setDefaultValuesAd(adObj,wmcConf,defJdlOpt);
+		AdUtils::setDefaultValuesAd(adObj,wmcConf, m_defJdlOpt);
 		// Checking the ALLOW_ZIPPED_ISB attribute
 		if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 				zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
@@ -985,15 +987,15 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				collectAd->setLocalAccess(true);
 				// Collect Ad manipulation
 				AdUtils::setDefaultValues(collectAd,wmcConf);
-				if (nodesresOpt) {
-					collectAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+				if (!m_nodesresOpt.empty()) {
+					collectAd->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
 				}
 				// JDL string
 				collectAd = collectAd->check();
 				// Checks if there are local ISB file(s) to be transferred to
 				toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 				// JDL submission string
-				jdlString = new string(collectAd->toString());
+				m_jdlString = collectAd->toString();
 				if (collectAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE,collectAd->getWarnings() );}
 			}catch (Exception &ex){
 				throw WmsClientException(__FILE__,__LINE__,
@@ -1006,8 +1008,8 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		if ( adObj->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
 				logInfo->print (WMS_DEBUG, "A DAG job is being submitted");
 				jobType = WMS_DAG ;
-				if (nodesresOpt) {
-					adObj->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+				if (!m_nodesresOpt.empty()) {
+					adObj->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
 				}
 				dagAd = new ExpDagAd (adObj);
 				dagAd->setLocalAccess(true);
@@ -1017,7 +1019,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				// Checks if there are local ISB file(s) to be transferred to
 				toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 				// JDL submission string
-				jdlString = new string(dagAd->toString()) ;
+				m_jdlString = dagAd->toString();
 				if (dagAd->hasWarnings()){ printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
 		} else {
 		// JOB  =========================================
@@ -1025,13 +1027,13 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			jobAd = new JobAd(*(adObj->ad()));
 			AdUtils::setDefaultValues(jobAd,wmcConf);
 			// resource <ce_id> ----> SubmitTo JDL attribute
-			if (resourceOpt) {
+			if (!m_resourceOpt.empty()) {
 				if (jobAd->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
 					throw WmsClientException(__FILE__,__LINE__,
 						"checkAd",  DEFAULT_ERR_CODE,
 						"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
 						"cannot be used for  DAG, collection, partitionable and parametric jobs");
-				}else{jobAd->setAttribute(JDL::SUBMIT_TO, *resourceOpt);}
+				}else{jobAd->setAttribute(JDL::SUBMIT_TO, m_resourceOpt);}
 			}
 			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
 				// check JobAd without restoring attributes  (WHY?)
@@ -1075,17 +1077,17 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			// MPICH ==================================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
 				// MpiCh Job:
-				if (lrmsOpt){
+				if (!m_lrmsOpt.empty()){
 					// Override previous value (if present)
 					if (jobAd->hasAttribute(JDL::LRMS_TYPE)){jobAd->delAttribute(JDL::LRMS_TYPE);}
-					jobAd->setAttribute(JDL::LRMS_TYPE,*lrmsOpt);
+					jobAd->setAttribute(JDL::LRMS_TYPE, m_lrmsOpt);
 				}
 			}
 			// PARAMETRIC  ===============================================
 			if (jobType == WMS_PARAMETRIC) {
 				logInfo->print (WMS_DEBUG, "A parametric job is being submitted");
-				if (nodesresOpt) {
-					jobAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+				if (!m_nodesresOpt.empty()) {
+					jobAd->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
 				}
 				// InputSandbox for the parametric job
 				if (jobAd->hasAttribute(JDL::INPUTSB)) {
@@ -1109,22 +1111,22 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			// Submission string
 			if (jobType==WMS_PARAMETRIC){
 				// JobAd already Checked
-				jdlString = new string(jobAd->toString());
+				m_jdlString = jobAd->toString();
 			}else if  (jobType==WMS_JOB){
 				// JobAd not yet Checked
-				jdlString = new string(jobAd->toSubmissionString());
+				m_jdlString = jobAd->toSubmissionString();
 			}
 		}
 	}
 	// --resource : incompatible argument
-	if( (resourceOpt) && (jobType != WMS_JOB)){
+	if( (!m_resourceOpt.empty()) && (jobType != WMS_JOB)){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
 			"cannot be used for  DAG, collection, partitionable and parametric jobs");
-	} else if (resourceOpt) {
-		logInfo->print (WMS_DEBUG, "--resource option: The job will be submitted to this resource", *resourceOpt );
-	}else if( (nodesresOpt) && (jobType == WMS_JOB)){
+	} else if (!m_resourceOpt.empty()) {
+		logInfo->print (WMS_DEBUG, "--resource option: The job will be submitted to this resource", m_resourceOpt );
+	}else if( (!m_nodesresOpt.empty()) && (jobType == WMS_JOB)){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::NODESRES),
@@ -1144,7 +1146,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 std::string JobSubmit::jobRegOrSub(const bool &submit) {
 	string method  = "";
 	// checks if jdlstring is not null
-	if (!jdlString){
+	if (m_jdlString.empty()){
 		throw WmsClientException(__FILE__,__LINE__,
 			"jobRegOrSub",  DEFAULT_ERR_CODE ,
 			"Null Pointer Error",
@@ -1154,20 +1156,20 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 		if (submit){
 			// jobSubmit
 			method = "submit";
-			logInfo->print(WMS_DEBUG, "Submitting JDL", *jdlString);
+			logInfo->print(WMS_DEBUG, "Submitting JDL", m_jdlString);
 			logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
 			//Suibmitting....
 			logInfo->service(WMP_SUBMIT_SERVICE);
-			jobIds = api::jobSubmit(*jdlString, *dgOpt, getContext( ));
+			jobIds = api::jobSubmit(m_jdlString, m_dgOpt, getContext( ));
 			logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
 		} else {
 			// jobRegister
 			method = "register";
-			logInfo->print(WMS_DEBUG, "Registering JDL", *jdlString);
+			logInfo->print(WMS_DEBUG, "Registering JDL", m_jdlString);
 			logInfo->print(WMS_DEBUG, "Registering the job to the service", getEndPoint());
 			// registering ...
 			logInfo->service(WMP_REGISTER_SERVICE);
-			jobIds = api::jobRegister(*jdlString , *dgOpt, getContext( ));
+			jobIds = api::jobRegister(m_jdlString , m_dgOpt, getContext( ));
 			logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
 		}
 	} catch (api::BaseException &exc) {
@@ -1210,8 +1212,8 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 */
 
 std::string JobSubmit::getJobId( ) {
-	if (startOpt) {
-		return (*startOpt);
+	if (!m_startOpt.empty()) {
+		return (m_startOpt);
 	} else {
 		return (jobIds.jobid) ;
 	}
@@ -1244,29 +1246,29 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 				proto = protocol;
 			} else if (jobIds.jobPath == NULL && zipAllowed) {
 				// JobId struct does not contain info on the jobPath
-				if (fileProto == NULL) {
+				if (m_fileProto.empty()) {
 					// no specified protocol ==> ALL_PROTOCOLS will be requested
 					proto = string(Options::WMP_ALL_PROTOCOLS) ;
-				} else if  (*fileProto == Options::JOBPATH_URI_PROTO) {
+				} else if  (m_fileProto == Options::JOBPATH_URI_PROTO) {
 					// specified protocol: the same protocol as the  jobPath-URI
-					proto = *fileProto ;
+					proto = m_fileProto ;
 				} else {
 					// ALL PROTOCOLS
 					proto = string(Options::WMP_ALL_PROTOCOLS) ;
 				}
 			} else
 			// JobId struct contains info on the jobPath
-			if (fileProto == NULL) {
+			if (m_fileProto.empty()) {
 				proto = string(Options::WMP_ALL_PROTOCOLS) ;
 			} else {
-				proto = *fileProto;
+				proto = m_fileProto;
 			}
 		} else{
 			// getTransferProtocols service is not available
 			if (protocol.size (  ) > 0) {
 				proto = protocol ;
-			} else if (fileProto) {
-				proto = *fileProto;
+			} else if (!m_fileProto.empty()) {
+				proto = m_fileProto;
 			}
 		}
                 try{
@@ -1324,8 +1326,8 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 		// The destinationURI's vector is not empty: needed protocol
 		if (protocol.size (  ) > 0) {
 			proto = protocol ;
-		} else if (fileProto) {
-			proto = *fileProto;
+		} else if (!m_fileProto.empty()) {
+			proto = m_fileProto;
 		}
 	}
 	  if (child.size()>0){
@@ -1803,7 +1805,7 @@ void JobSubmit::transferFiles(std::vector<std::pair<glite::jdl::FileAd,std::stri
 	vector<pair<FileAd, string > > failed;
 	string errors = "";
 		// File Transfer according to the chosen protocol
-		if (fileProto && *fileProto == Options::TRANSFER_FILES_CURL_PROTO ) {
+		if (m_fileProto == Options::TRANSFER_FILES_CURL_PROTO ) {
 			this->htcpTransfer (to_bcopied, failed, errors);
 		} else {
 			this->gsiFtpTransfer (to_bcopied, failed, errors);

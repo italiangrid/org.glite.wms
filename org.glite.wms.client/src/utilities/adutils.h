@@ -60,7 +60,7 @@ class AdUtils{
 			const std::string& voName);
 		static void setDefaultValuesAd(glite::jdl::Ad* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf,
-			std::string* pathOpt=NULL);
+			const std::string& pathOpt="");
 		static void setDefaultValues(glite::jdl::JobAd* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf);
 		static void setDefaultValues(glite::jdl::ExpDagAd* jdl,
