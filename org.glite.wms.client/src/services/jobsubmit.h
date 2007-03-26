@@ -212,14 +212,14 @@ class JobSubmit : public Job {
 		*/
 		void gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths,std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors);
                 /*
-                * 	Performs the transfer a set of local files to one(more) remote machine(s) by curl (https protocol)
+                * 	Performs the transfer a set of local files to one(more) remote machine(s) by htcp (https protocol)
                 *	@param paths list of files to be transferred (each pair is <source,destination>)
 		*	@param failed this vector is filled with the information on the files for which was a failure occurred during the transfer operations
 		*	@param errros this parameter is filled with the description of the errors occuring during the file transfer opertions (if any)
                 *	@throw WmsClientException if any error occurs during the operations
                 *	(the local file doesn't exists, defective credential, errors on remote machine)
                 */
-                void curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors);
+                void htcpTransfer (std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors);
 		/*
 		*	Gets the list of the InputSandbox files to be transferred to the DestinationURI's
 		*	@param paths the list of files that still need to be transferred

@@ -73,7 +73,6 @@ const string ISBFILE_DEFAULT = "ISBfiles";
 const string TMP_DEFAULT_LOCATION = "/tmp";
 const int HTTP_OK = 200;
 const int TRANSFER_OK = 0;
-
 /**
 *	Default constructor
 */
@@ -134,7 +133,6 @@ JobSubmit::~JobSubmit( ){
 	// (keep being alive,at least Listener will kill it)
 	// if (jobShadow){ delete( jobShadow); }
 }
-
 
 /*
 * Handles the command line options
@@ -694,8 +692,7 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 		// ROOT =========
 		fileads = extractAd->getFiles( );
 		// JobId (root)
-		//jobid = extractAd->getJobId( );
-		jobid = this->getJobId( ) ;
+		jobid = this->getJobId( );
 		// DestinationURI (root)
 		destURI = getDestinationURI (jobid);
 		// List of root ISB files
@@ -1685,134 +1682,81 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 	}
 }
 
-
-
 /**
-* File transfer by CURL (https protocol)
+* File transfer by HTCP (https protocol)
 */
-
-void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed,
- std::string &errors) {
-	// curl struct
-	CURL *curl = NULL;
-	// curl result code
-	CURLcode res;
-	// file struct
-	FILE * hd_src  = NULL;
-	// local filepath
-	string file = "" ;
-	// destination
+void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
+	int code = 0;
+	string protocol = "";
+	string source = "";
 	string destination = "";
-	string err;
-	// result message
-	long	httpcode = 0;
-	// char curl_errorstr [CURL_ERROR_SIZE] = "";
-	string httperr = "";
-	string curlMsg = "";
+	string cmd = "";
+	// Globus Url Copy Path finder
+	string htcp="htcp";
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
-		"using curl to transfer the local InputSandBox file(s) to the submission endpoint");
-	if ( paths.empty()==false ){
-		// curl init
-		curl_global_init(CURL_GLOBAL_ALL);
-		curl = curl_easy_init();
-		if(curl) {
-			// curl options: Debug function
-			curl_easy_setopt(curl, CURLOPT_DEBUGDATA, &curlMsg);
-			curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, Utils::curlDebugCb);
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-			// curl options: proxy
-			curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-			curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath( ));
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath( ));
-			curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
-			// curl option: trusted cert dir
-			curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
-			// curl options: no verify the ssl properties
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-			// enable uploading
-			curl_easy_setopt(curl, CURLOPT_PUT, 1);
-			// enables error message buffer
-			// curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
-			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-			while(paths.empty()==false){
-				// path to local file (to be transferred)
-				file = (paths[0].first).file;
-				// destinationURI where to transfer the file
-				destination = paths[0].second ;
-				// curl options: source (first element of the vector)
-				hd_src = fopen(file.c_str(), "rb");
-				if (hd_src == NULL) {
-					throw WmsClientException(__FILE__,__LINE__,
-						"curlTransfer",  DEFAULT_ERR_CODE,
-						"File Not Found", "no such file : " + file );
-				}
-				// Reads the local file
-				curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
-				curl_easy_setopt(curl,CURLOPT_INFILESIZE, (paths[0].first).size);
-				// curl options: destination (the 2nd elemnt of the vector)
-				curl_easy_setopt(curl,CURLOPT_URL, destination.c_str());
-				// log-debug message
-				ostringstream info ;
-				info << "\nInputSandbox file : " << file << "\n";
-				info << "Destination URI : " << destination ;
-				info << "\nsize : " << (paths[0].first).size << " byte(s)";
-				logInfo->print(WMS_DEBUG, "Performing File", info.str());
-				// FILE TRANSFER ------------------------------------
-				res = curl_easy_perform(curl);
-				// Writing DEBUG info into the log file (if created)
-				if (curlMsg.size()>0){
-					logInfo->print(WMS_DEBUG, curlMsg, "", false);
-					curlMsg = "";
-				}
-				// If an error occurred during the file transfer
-				curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
-				// result
-				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
-					// SUCCESS !!!
-					logInfo->print(WMS_DEBUG, "FileTransfer (https):","Transfer successfully done");
-					// Removes the zip file just transferred
-					if (zipAllowed) {
-						try {
-							Utils::removeFile(file);
-						} catch (WmsClientException &exc) {
-							logInfo->print (WMS_WARNING,
-							"The following error occured during the removal of the file:",
-							exc.what(),false);
-						}
-					}
-				} else {
-					// ERROR !!!
-					err += "- could not transfer the InputSandbox file : " + file ;
-					err += " to " + destination + "\n";
-					/*
-					if ( strlen(curl_errorstr)>0 ){
-						err += string(curl_errorstr) + "\n";
-					}
-					*/
-					if (httpcode!=HTTP_OK){
-						httperr = Utils::httpErrorMessage(httpcode) ;
-						if (httperr.size()>0) { errors += httperr + "\n"; }
-						err += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
-					}
-					logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:\n", err);
-					// Adding this error description to the final message that will be returned
-					errors += string(err) ;
-					failed.push_back(paths[0]);
-				}
-				// Removes the file info from the vector
-				paths.erase(paths.begin());
-				// closes the source file
-				fclose(hd_src);
-			}
-			// cleanup
-			curl_easy_cleanup(curl);
-		}
-	} else {
-		logInfo->print (WMS_DEBUG, "JDL_INPUTSB", "No local InputSB files to be transferred");
+		"using htcp to transfer the local InputSandBox file(s) to the submission endpoint");
+	if (getenv("GLITE_LOCATION")){
+		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
+	}else if (Utils::isDirectory ("/opt/glite/bin")){
+		htcp="/opt/glite/bin/"+htcp;
+	}else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"httpsGetFiles", ECONNABORTED,
+			"File  Error",
+			"Unable to find htcp path");
 	}
- }
+	// look for file
+	if (!Utils::isFile (htcp)){
+		throw WmsClientException(__FILE__,__LINE__,
+			"httpsGetFiles", ECONNABORTED,
+			"File Error",
+			"Unable to find:\n" + htcp);
+	}
+	char* reason = NULL;
+	while (paths.empty()==false) {
+		// source
+		source = (paths[0].first).file ;
+		// destination
+		destination = paths[0].second ;
+		// Protocol has to be added only if not yet present
+		protocol = (source.find("://")==string::npos)?FILE_PROTOCOL:"";
+		// command
+		cmd= htcp +" "+ string (protocol+source) + " " + destination;
+		logInfo->print(WMS_DEBUG, "File Transfer (https)\n" , cmd);
+		// launches the command
+		code = system( cmd.c_str() );
+		if (code != 0){
+			ostringstream err;
+			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+			reason = strerror(code);
+			if (reason!=NULL) {
+				err << "   " << reason << "\n";
+				logInfo->print(WMS_DEBUG,
+					"FileTransfer (https) - Transfer Failed (ErrorCode="
+						+ boost::lexical_cast<string>(code)+"):",
+						reason );
+			} else {
+				logInfo->print(WMS_DEBUG, "FileTransfer (https) - Transfer Failed:",
+					"ErrorCode=" + boost::lexical_cast<string>(code) );
+			}
+			failed.push_back(paths[0]);
+			errors+=err.str();
+		} else{
+			logInfo->print(WMS_DEBUG, "File Transfer (https)", "Transfer successfully done");
+			// Removes the zip file just transferred
+			if (zipAllowed) {
+				try {
+					Utils::removeFile(source);
+				} catch (WmsClientException &exc) {
+					logInfo->print (WMS_WARNING,
+						"The following error occured during the removal of the file:",
+						exc.what());
+				}
+			}
+		}
+		paths.erase(paths.begin());
+	}
+}
 
 /**
 * Message for InputSB files that need to be transferred
@@ -1860,7 +1804,7 @@ void JobSubmit::transferFiles(std::vector<std::pair<glite::jdl::FileAd,std::stri
 	string errors = "";
 		// File Transfer according to the chosen protocol
 		if (fileProto && *fileProto == Options::TRANSFER_FILES_CURL_PROTO ) {
-			this->curlTransfer (to_bcopied, failed, errors);
+			this->htcpTransfer (to_bcopied, failed, errors);
 		} else {
 			this->gsiFtpTransfer (to_bcopied, failed, errors);
 		}
@@ -1955,5 +1899,6 @@ void JobSubmit::submitRecoverStep(submitRecoveryStep step){
 		"Fatal Recovery",
 		"Unable to recover from specified step");
 }
+
 
 }}}} // ending namespaces
