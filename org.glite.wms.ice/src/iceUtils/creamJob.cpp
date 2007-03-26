@@ -38,14 +38,14 @@
 
 extern int errno;
 
-using namespace std;
-
-namespace iceUtil = glite::wms::ice::util;
 namespace api = glite::ce::cream_client_api;
 namespace fs = boost::filesystem;
 
+using namespace std;
+using namespace glite::wms::ice::util;
+
 //______________________________________________________________________________
-iceUtil::CreamJob::CreamJob( ) :
+CreamJob::CreamJob( ) :
     m_status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
     m_last_seen( time(0) ),
@@ -59,13 +59,13 @@ iceUtil::CreamJob::CreamJob( ) :
 }
 
 //______________________________________________________________________________
-iceUtil::CreamJob::CreamJob( const std::string& ad ) throw ( ClassadSyntax_ex& ) 
+CreamJob::CreamJob( const std::string& ad ) throw ( ClassadSyntax_ex& ) 
 {
     unserialize( ad );
 }
 
 //______________________________________________________________________________
-string iceUtil::CreamJob::serialize( void ) const
+string CreamJob::serialize( void ) const
 {
     string res;
 
@@ -110,7 +110,7 @@ string iceUtil::CreamJob::serialize( void ) const
 }
 
 //______________________________________________________________________________
-void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
+void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
 
@@ -175,7 +175,7 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
 }
 
 //______________________________________________________________________________
-void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
+void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
     classad::ClassAd *jdlAd = parser.ParseClassAd( j );
@@ -236,16 +236,16 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     /**
      * No need to lock the mutex because getInstance already does that
      */
-    //iceUtil::iceConfManager* conf = iceUtil::iceConfManager::getInstance();
+    //iceConfManager* conf = iceConfManager::getInstance();
 
-    m_cream_address = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
-	+ m_endpoint + iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
-    m_cream_deleg_address = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
-	+ m_endpoint + iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
+    m_cream_address = iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
+	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
+    m_cream_deleg_address = iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
+	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
 }
 
 //______________________________________________________________________________
-bool iceUtil::CreamJob::is_active( void ) const
+bool CreamJob::is_active( void ) const
 {
     return ( ( m_status == api::job_statuses::REGISTERED ) ||
              ( m_status == api::job_statuses::PENDING ) ||
@@ -255,7 +255,7 @@ bool iceUtil::CreamJob::is_active( void ) const
              ( m_status == api::job_statuses::HELD ) );
 }
 
-bool iceUtil::CreamJob::can_be_purged( void ) const
+bool CreamJob::can_be_purged( void ) const
 {
     return ( ( m_status == api::job_statuses::DONE_OK ) ||
              ( m_status == api::job_statuses::CANCELLED ) ||
@@ -264,8 +264,19 @@ bool iceUtil::CreamJob::can_be_purged( void ) const
 }
 
 
-bool iceUtil::CreamJob::can_be_resubmitted( void ) const
+bool CreamJob::can_be_resubmitted( void ) const
 { 
     return ( ( m_status == api::job_statuses::DONE_FAILED ) ||
              ( m_status == api::job_statuses::ABORTED ) );
+}
+
+string CreamJob::describe( void ) const
+{
+    string result;
+    result.append( "gridJobID=\"" );
+    result.append( getGridJobID() );
+    result.append( "\" CREAMJobID=\"" );
+    result.append( getCreamJobID() );
+    result.append( "\"" );
+    return result;
 }

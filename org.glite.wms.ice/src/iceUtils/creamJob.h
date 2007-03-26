@@ -219,6 +219,17 @@ namespace glite {
            */
           void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
 
+          /**
+           * This function outputs a string containing the CREAM and
+           * grid jobid for this job. This function should be used
+           * whenever any information related to a job needs to be
+           * logged into the log files.
+           *
+           * @return the string containing cream and grid job id, in
+           * human-readable form
+           */
+          std::string describe( void ) const;
+
 	};
       }
     }
