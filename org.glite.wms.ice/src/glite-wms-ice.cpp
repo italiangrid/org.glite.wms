@@ -52,6 +52,10 @@
 
 #include <list>
 
+void sigpipe_handle(int x) { 
+  //std::cerr << "glite-wms-ice::sigpipe_handle - PIPE handled; int x = [" << x << "]" << std::endl;
+}
+
 using namespace std;
 using namespace glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
@@ -132,6 +136,8 @@ int main(int argc, char*argv[])
         }
         pid_file << ::getpid();
     }
+
+    signal(SIGPIPE, sigpipe_handle);
 
     /**
      * - creates an ICE object
