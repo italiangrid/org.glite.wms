@@ -6,7 +6,6 @@
 #include <numeric>
 
 #include "DLI_ReplicaService.h"
-#include "SI_ReplicaService.h"
 #include "glite/wms/rls/catalog_access_utils.h"
 
 #include "ReplicaServiceException.h"
