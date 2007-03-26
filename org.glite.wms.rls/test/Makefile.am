@@ -9,8 +9,7 @@ glite_wms_rls_dli_accessTest_SOURCES = \
 
 glite_wms_rls_dli_accessTest_LDADD = \
 	$(top_srcdir)/build/src/libglite_wms_replicaservice.la\
-	$(top_srcdir)/build/src/DLI_SI/libglite_wms_rls_dli.la\
-	$(top_srcdir)/build/src/DLI_SI/libglite_wms_rls_si.la\
+	$(top_srcdir)/build/src/DLI/libglite_wms_rls_dli.la\
 	$(GLITE_JDL_LIBS)\
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)\
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
