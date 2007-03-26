@@ -53,24 +53,24 @@ typedef boost::tuple< lfn_list_ptr,             //lfns to be resolved
                       endpoints_ptr             //endpoints gathered through SD
                     > dli_lfn;
 
-typedef boost::tuple< lfn_list_ptr,             //lfns to be resolved
-                      endpoints_ptr             //endpoints gathered through SD
-                    > si_lfn;
+///typedef boost::tuple< lfn_list_ptr,             //lfns to be resolved
+///                      endpoints_ptr             //endpoints gathered through SD
+///                    > si_lfn;
 
 typedef vector<dli_lfn> dli_lfns;
-typedef vector<si_lfn> si_lfns;
+//typedef vector<si_lfn> si_lfns;
 
 typedef boost::shared_ptr<dli_lfns> dli_lfns_ptr;
-typedef boost::shared_ptr<si_lfns>  si_lfns_ptr;
+//typedef boost::shared_ptr<si_lfns>  si_lfns_ptr;
 
 typedef boost::tuple< 
-           dli_lfns_ptr,
-           si_lfns_ptr
+           dli_lfns_ptr
+//           si_lfns_ptr
         > lfns_2B_resolved;
 
 enum {
-   _DLI = 0,
-   _SI
+   _DLI = 0
+//   _SI
 };
 
 enum {
@@ -82,7 +82,7 @@ enum {
 //void print_lfns(const lfns_2B_resolved& lfns){
 //
 //   dli_lfns_ptr dli_c = lfns.get<_DLI>();
-//   si_lfns_ptr si_c = lfns.get<_SI>();
+//   //si_lfns_ptr si_c = lfns.get<_SI>();
 //
 //   Debug("DLI");
 //   for( dli_lfns::iterator dli_it = dli_c->begin() ;
@@ -105,7 +105,7 @@ enum {
 //      }
 //
 //   }
-//
+//   /*
 //   Debug("SI");
 //   for( si_lfns::iterator si_it = si_c->begin() ;
 //        si_it != si_c->end();
@@ -127,7 +127,7 @@ enum {
 //      }
 //
 //   }
-//
+//   */
 //
 //}
 
@@ -178,11 +178,9 @@ void get_catalog_url(
 struct old_jdl_check{
 
 string m_vo;
-//endpoints_ptr m_sd_endpoints;
 
 old_jdl_check(string vo): m_vo(vo) {
 
-//   m_sd_endpoints.reset( new vector< string > );
 }
 
 lfns_2B_resolved*
@@ -194,17 +192,14 @@ operator()(
    // has only one element
 
    dli_lfns_ptr dli_c = c->get<_DLI>();
-   si_lfns_ptr si_c = c->get<_SI>();
 
    lfn_list_ptr the_dli_lfns = (*dli_c)[0].get<DLI_SI_LFNS>();
-   lfn_list_ptr the_si_lfns = (*si_c)[0].get<DLI_SI_LFNS>();
 
    endpoints_ptr jdl_dli_endpoints = (*dli_c)[0].get<ENDPOINTS>();
-   endpoints_ptr jdl_si_endpoints = (*si_c)[0].get<ENDPOINTS>();
 
    bool dli_endpoints_in_jdl = !jdl_dli_endpoints->empty();
-   bool si_endpoints_in_jdl = !jdl_si_endpoints->empty();
 
+/*
    bool lfn_or_guid_found = 
       boost::algorithm::starts_with(e,"lfn") ||
       boost::algorithm::starts_with(e,"guid");
@@ -220,38 +215,18 @@ operator()(
          boost::algorithm::starts_with(e,"query") ||
          boost::algorithm::starts_with(e,"lds")
       );
+*/
 
-
-   if( 
-       (lfn_or_guid_found && si_endpoints_in_jdl) ||
-       si_lfn_or_guid_found
-   ){
-      the_si_lfns->push_back(e);
-      if ( !si_endpoints_in_jdl ){  
-         string si_service_name =
-            (configuration::Configuration::instance()->wm())->
-                 si_service_name();
-         get_catalog_url( m_vo,
-                          si_service_name,
-                          *jdl_si_endpoints
-         );
-      }
-   }
-
-   if( lds_or_query_found || (lfn_or_guid_found && !si_endpoints_in_jdl) ){
-
-      the_dli_lfns->push_back(e);
-      if ( !dli_endpoints_in_jdl ){
-         string dli_service_name =
-            (configuration::Configuration::instance()->wm())->
-                 dli_service_name();
-         get_catalog_url( m_vo,
-                          dli_service_name,
-                          *jdl_dli_endpoints
-         );
-            
-      }
-
+   the_dli_lfns->push_back(e);
+   if ( !dli_endpoints_in_jdl ){
+      string dli_service_name =
+         (configuration::Configuration::instance()->wm())->
+              dli_service_name();
+      get_catalog_url( m_vo,
+                       dli_service_name,
+                       *jdl_dli_endpoints
+      );
+         
    }
 
    return c;
@@ -321,25 +296,8 @@ operator()(
                                  )
       );
    }
-   else if ( dataCatalogType == "SI" ) {
-      if ( !getEndpoint ) {
-         if ( m_sd_endpoints->empty() ){
-            string si_service_name =
-               (configuration::Configuration::instance()->wm())->
-                  si_service_name();
-            get_catalog_url( m_vo,
-                             si_service_name,
-                             *m_sd_endpoints
-            );
-         }
-         endpoints = m_sd_endpoints;
-      }
-      c->get<_SI>()->push_back( boost::make_tuple(
-                                   input_data,
-                                   endpoints
-                                )
-      );
-   }
+   else 
+      Warning("Unknown Data Catalog Type");
 
    return c;
 
@@ -358,7 +316,6 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
    );
 
    dli_lfns_ptr dli_c = lfns.get<_DLI>();
-   si_lfns_ptr si_c = lfns.get<_SI>();
 
    int timeout =
       (configuration::Configuration::instance()->ns())->
@@ -425,7 +382,7 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
                the_dli->listReplica(*lfns_it, sfns);
             }
             catch(const ReplicaServiceException&  ex){
-               Error(ex.reason());
+               Error(ex.what());
                destroyDli(the_dli);
                continue;
             }
@@ -441,85 +398,7 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
    if(dli_plugin){
       dlclose(dliLibHandle);
    } 
-
    
-///////////////SI HANDLING
-
-   si_lfns::iterator si_c_it = si_c->begin();
-   si_lfns::const_iterator si_c_e = si_c->end();
-
-   bool si_plugin = false;
-   void* siLibHandle = NULL;
-   SI::create_SI_t* createSi; 
-   SI::destroy_SI_t* destroySi;
-   SI::SI_ReplicaService* the_si;
-   string siLib = "libglite_wms_rls_si.so";
-   for(;si_c_it != si_c_e; si_c_it++){
-
-      lfn_list_ptr si_lfn_group = si_c_it->get<DLI_SI_LFNS>();
-      endpoints_ptr si_endpoints_group =
-         si_c_it->get<ENDPOINTS>();
-
-      if ( si_lfn_group->empty() ) continue;
-      if( !si_plugin ) {
-
-         siLibHandle = dlopen (siLib.c_str(), RTLD_NOW);
-         if (!siLibHandle) {
-            Warning("cannot load SI helper lib " << siLib );
-            Warning("dlerror returns: " << dlerror());
-            break;
-         }
-         else {
-            createSi = (SI::create_SI_t*)dlsym(siLibHandle,"create_SI");
-            destroySi = (SI::destroy_SI_t*)dlsym(siLibHandle,"destroy_SI");
-            if (!createSi || !destroySi) {
-               Warning("cannot load SI helper symbols");
-               Warning("dlerror returns: " << dlerror());
-               dlclose(siLibHandle);
-               break;
-            }
-            else 
-               si_plugin = true;
-         }
-      }
-
-      vector<string>::iterator lfns_it = si_lfn_group->begin();
-      vector<string>::const_iterator lfns_e = si_lfn_group->end();
-     
-      for(;lfns_it!=lfns_e;lfns_it++){
-         vector<string> sfns;
-         vector<string>::iterator endpoints_it = 
-            si_endpoints_group->begin();
-         vector<string>::const_iterator endpoints_e = 
-            si_endpoints_group->end();
-         for(;endpoints_it!=endpoints_e; endpoints_it++){
-            the_si = createSi(
-                            *endpoints_it,
-                            proxy,
-                            timeout
-                     );
-
-            try{
-               the_si->listReplica(*lfns_it, sfns);
-            }
-            catch(const ReplicaServiceException&  ex){
-               Error(ex.reason());
-               destroySi(the_si);
-               continue;
-            }
-            destroySi(the_si);
-            fm->insert(std::make_pair(*lfns_it, sfns));
-            break;
-         }
- 
-      }
-
-   }
-
-   if(si_plugin){
-      dlclose(siLibHandle);
-   } 
-
    return fm;
 }
 
@@ -545,13 +424,12 @@ resolve_filemapping_info(
    string proxy = jdl::get_x509_user_proxy(requestAd, proxyInAd);
    
    lfns_2B_resolved lfns = boost::make_tuple (
-                              dli_lfns_ptr(new dli_lfns),
-                              si_lfns_ptr(new si_lfns)
+                              dli_lfns_ptr(new dli_lfns)
                            );
                               
    bool exist_data_req = false;
    classad::ExprTree* classAdList = 
-        glite::jdl::get_data_requirements(requestAd, exist_data_req);
+      glite::jdl::get_data_requirements(requestAd, exist_data_req);
    if(exist_data_req){
      classad::ExprList* expr_list =
          static_cast<classad::ExprList*>(classAdList) ;
@@ -566,22 +444,13 @@ resolve_filemapping_info(
       bool getDataCatalog;
       endpoints_ptr dli_catalogs( new vector<string> );
       requestad::get_data_catalog(requestAd, *dli_catalogs, getDataCatalog);
-      bool getStorageIndex;
-      endpoints_ptr si_catalogs( new vector<string> );
-      requestad::get_storage_index(requestAd, *si_catalogs, getStorageIndex);
 
       lfn_list_ptr the_dli_lfns( new vector<string> );
-      lfn_list_ptr the_si_lfns( new vector<string> );
 
       lfns.get<_DLI>()->push_back( boost::make_tuple(
                                       the_dli_lfns,
                                       dli_catalogs 
                                    )
-      );
-      lfns.get<_SI>()->push_back( boost::make_tuple(
-                                     the_si_lfns,
-                                     si_catalogs
-                                  )
       );
 
       vector<string> input_data;
