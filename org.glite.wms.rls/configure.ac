@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.14  2007/03/26 13:23:24  emartel
+#       removed Storage Index client
+#
 #       Revision 1.13  2007/03/05 11:44:11  mcecchi
 #       lb dependencies newly carried by by wms_utils
 #
@@ -165,7 +168,7 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
-AC_CONFIG_FILES([src/DLI_SI/Makefile])
+AC_CONFIG_FILES([src/DLI/Makefile])
 
 AC_OUTPUT
 
