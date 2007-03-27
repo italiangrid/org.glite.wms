@@ -12,7 +12,6 @@ noinst_LTLIBRARIES = \
 	libglite_wms_client_jobsubmit.la \
 	libglite_wms_client_joboutput.la \
 	libglite_wms_client_jobcancel.la \
-	libglite_wms_client_jobstatus.la \
 	libglite_wms_client_joblistmatch.la	\
 	libglite_wms_client_jobperusal.la
 	
@@ -66,21 +65,6 @@ libglite_wms_client_jobperusal_la_SOURCES = \
 	jobperusal.cpp \
 	lbapi.cpp \
 	job.cpp
-
-libglite_wms_client_jobstatus_la_SOURCES = \
-	jobstatus.cpp \
-	lbapi.cpp \
-	job.cpp
-
-#libglite_wms_client_jobloginfo_la_SOURCES = \
-#	jobloginfo.cpp \
-#	lbapi.cpp \
-#	job.cpp
-
-#libglite_wms_client_jobgetchkpt_la_SOURCES = \
-#	jobgetchkpt.cpp \
-#	lbapi.cpp \
-#	job.cpp
 
 AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \
