@@ -75,6 +75,7 @@ done
 case "$WMSTYPE" in
 
      EDG)
+	delegate_proxy=''
 	job_submit='edg-job-submit'
 	job_status='edg-job-status'
 	job_cancel='edg-job-cancel --noint'
@@ -82,6 +83,7 @@ case "$WMSTYPE" in
         ;;
 
      gLite)
+	delegate_proxy=''
 	job_submit='glite-job-submit'
 	job_status='glite-job-status'
 	job_cancel='glite-job-cancel --noint'
@@ -89,7 +91,16 @@ case "$WMSTYPE" in
         ;;
 
      gLite-WMS)
+	delegate_proxy=''
 	job_submit='glite-wms-job-submit -a'
+	job_status='glite-wms-job-status'
+	job_cancel='glite-wms-job-cancel --noint'
+	job_output='glite-wms-job-output'
+        ;;
+
+     gLite-WMS-d)
+	delegate_proxy="glite-wms-job-delegate-proxy -d $$"
+	job_submit="glite-wms-job-submit -d $$"
 	job_status='glite-wms-job-status'
 	job_cancel='glite-wms-job-cancel --noint'
 	job_output='glite-wms-job-output'
@@ -120,6 +131,19 @@ START_TIME=`date +%H:%M:%S`
 # ... submit a job
 
 myecho "current time: $START_TIME"
+
+if [ -n "$delegate_proxy" ]; then
+
+  myecho "delegating proxy with $delegate_proxy"
+  $delegate_proxy
+
+  if [ $? -ne 0 ]; then
+    myecho "ERROR: could not delegate proxy"
+    exit_failure 1
+  fi
+
+fi
+
 myecho "submitting a job with ${job_submit}"
 echo ""
 
