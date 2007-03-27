@@ -1,0 +1,4 @@
+testName: VOMS-pr-hlp
+testAbbr: pr-hlp
+testTitle: voms-proxy-init: Test "help" option
+EOT

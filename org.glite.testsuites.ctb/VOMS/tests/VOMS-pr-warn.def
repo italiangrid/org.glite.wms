@@ -1,0 +1,4 @@
+testName: VOMS-pr-warn
+testAbbr: pr-wrn
+testTitle: voms-proxy-init: Test "failonwarn" option
+EOT

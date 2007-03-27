@@ -1,0 +1,4 @@
+testName: VOMS-pr-cert
+testAbbr: pr-cert
+testTitle: voms-proxy-init: Test "cert CERTFILE" option
+EOT

@@ -1,0 +1,4 @@
+testName: VOMS-pr-usrcnf
+testAbbr: pr-ucnf
+testTitle: voms-proxy-init: Test "userconf FILE" option
+EOT

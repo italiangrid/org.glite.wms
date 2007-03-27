@@ -1,0 +1,46 @@
+#!/bin/bash
+# Date: 21/03/2007                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: check option 'version' for voms-proxy-init                       #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - VO host name                                                                      #
+#       - User certificate                                                                  #
+# Requisites:                                                                               #
+#       - VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#       - user certificate                                                                  #
+#       - user key                                                                          #
+#       - vomses:  VOMS description                                                         # 
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+echo "<pre>"
+source $SAME_SENSOR_HOME/tests/pr_config_file
+export voms_host=$1
+
+OPTION="version"
+rm -rf $voms_tmp
+
+echo
+date
+echo "VOMS-PROXY-INIT: check option - $OPTION"
+
+voms-proxy-init -voms $vo_name  -$OPTION
+
+if [ $? = 0 ]; then
+   echo "Test is OK"
+   exit $SAME_OK
+else 
+   echo "Test is failed"
+   exit $SAME_ERROR
+fi
+
+echo "/pre"
+
+

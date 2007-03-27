@@ -1,0 +1,4 @@
+testName: VOMS-pr-ign
+testAbbr: pr-ign
+testTitle: voms-proxy-init: Test "ignorewarn" option
+EOT

@@ -1,0 +1,4 @@
+testName: VOMS-pr-confl
+testAbbr: pr-confl
+testTitle: voms-proxy-init: Test "confile FILE" option
+EOT

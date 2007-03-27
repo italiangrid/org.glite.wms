@@ -39,5 +39,26 @@ VOMS-listGroupAttributes
 VOMS-setRoleAttribute
 VOMS-delRoleAttribute
 VOMS-listRoleAttributes
+VOMS-pr-pwst
+VOMS-pr-hours
+VOMS-pr-limit
+VOMS-pr-list
+VOMS-pr-quiet
+VOMS-pr-valid
+VOMS-pr-verify
+VOMS-pr-vers
+VOMS-pr-dbg
+VOMS-pr-cert
+VOMS-pr-key
+VOMS-pr-out
+VOMS-pr-usrcnf
+VOMS-pr-confl
+VOMS-pr-vomses
+VOMS-pr-vlf
+VOMS-pr-warn
+VOMS-pr-ign
+VOMS-pr-bits
+VOMS-pr-hlp
+VOMS-pr-usg
 
 
