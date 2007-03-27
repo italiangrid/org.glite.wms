@@ -52,15 +52,21 @@
 
 #include <list>
 
-void sigpipe_handle(int x) { 
-  //std::cerr << "glite-wms-ice::sigpipe_handle - PIPE handled; int x = [" << x << "]" << std::endl;
-}
+
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
+
+void sigpipe_handle(int x) { 
+  //std::cerr << "glite-wms-ice::sigpipe_handle - PIPE handled; argument x=[" << x << "]" << std::endl;
+  CREAM_SAFE_LOG(util::creamApiLogger::instance()->getLogger()->debugStream() 
+		 << "glite-wms-ice::sigpipe_handle: Captured SIGPIPE. x argument=["
+		 << x 
+		 << "]" << log4cpp::CategoryStream::ENDLINE);
+}
 
 // change the uid and gid to those of user no-op if user corresponds
 // to the current effective uid only root can set the uid (this
@@ -137,7 +143,7 @@ int main(int argc, char*argv[])
         pid_file << ::getpid();
     }
 
-    signal(SIGPIPE, sigpipe_handle);
+    
 
     /**
      * - creates an ICE object
@@ -217,8 +223,11 @@ int main(int argc, char*argv[])
     string hostcert = conf->common()->host_proxy_file();
 
     logger_instance->setLogFile(logfile.c_str());
-    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070301-10:40]"<<log4cpp::CategoryStream::ENDLINE);
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070326-14:00]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
+
+    
+    signal(SIGPIPE, sigpipe_handle);
 
     /*****************************************************************************
      * Gets the distinguished name from the host proxy certificate
