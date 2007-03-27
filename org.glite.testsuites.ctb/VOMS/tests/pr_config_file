@@ -8,6 +8,7 @@ export CA_CERN="/C=CH/O=CERN/OU=GRID/CN=CERN CA"
 export voms_tmp=/tmp/$voms_host.$UID"_tmp"
 export voms_stderr=/tmp/$voms_host.$UID"_stderr"
 export tempo=/tmp/$voms_host.$UID"_string"
+export cert_dir=/tmp/$voms_host.$UID"_certdir"
 
 export VOMSES="$SAME_SENSOR_HOME/vomses-1928"
 export USERCERT="$SAME_SENSOR_HOME/tests/test_user_cert.pem"
