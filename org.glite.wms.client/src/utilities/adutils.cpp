@@ -113,7 +113,6 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 	}
 	// Check VoName definitely present (refer to previous check)
 	if (voName==""){
-		cout <<"AdUtils::parseVo dbg00 Checking VO: " << endl ;
 		voName=ad.getString(JDL::VIRTUAL_ORGANISATION);
 
 	}else if ( (glite_wms_client_toLower(voName))
