@@ -5,7 +5,7 @@
 #
 #   The test script does the following:
 # 1. Generation of the JDL file for interactive job using input parameters
-# 2. Submit  job (glite-job-submit --nolisten)
+# 2. Submit  job (with  --nolisten option)
 # 3. Status monitoring
 # 4 Job status monitoring
 # 5 Provide dialog with the submitted job
@@ -20,6 +20,7 @@
 #    * -d sleep seconds before next status checking (default 30)
 #    * -s N cycles status checking before timeout (default 200)
 #    * -l path to the log file 
+#    * -w use glite-wms-* commands
 #--------------------------------------------------------------
 
 use strict;
