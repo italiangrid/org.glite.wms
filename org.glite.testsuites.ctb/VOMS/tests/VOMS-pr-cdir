@@ -44,9 +44,8 @@ cp $USERKEY $cert_dir/userkey.pem
 
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-proxy-init -voms $vo_name -userconf $VOMSES -$OPTION $cert_dir -cert $USERCERT -key $USERKEY -pwstdin < $PWS
-#voms-admin --vo=$vo_name -h voms_host list-users
-
+#voms-proxy-init -voms $vo_name -userconf $VOMSES -$OPTION $cert_dir -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+voms-proxy-init -voms $vo_name -userconf $VOMSES -$OPTION $cert_dir -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"
