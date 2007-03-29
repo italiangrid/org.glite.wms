@@ -529,7 +529,7 @@ try {
     // Cause the job to pop out of the Condor queue if no successful
     // match with 'B' daemons could occur in 15 (default) minutes.
     utilities::oedgstrstream periodic_hold_expression;
-    periodic_hold_expression << "Matched =!= TRUE && CurrentTime > QDate + ";
+    periodic_hold_expression << "JobStatus == 1 && Matched =!= TRUE && CurrentTime > QDate + ";
     periodic_hold_expression << config.jc()->maximum_time_allowed_for_condor_match();
     jdl::set_periodic_hold(*result,periodic_hold_expression.str());
 
