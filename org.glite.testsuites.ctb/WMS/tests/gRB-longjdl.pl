@@ -24,8 +24,6 @@ use strict;
 #         -i <N files>:<file size in KB>:<flie name length>
 #    * -o OutputSandbox params:
 #         -o <N files>:<file size in KB>:<flie name length>
-#    * -d data with InputSandboxBaseURI
-#         -d <N files>:<file size in KB>:<BaseURI>
 #    * -z => AllowZippedISB=false
 #    
 #--------------------------------------------------------------
@@ -66,8 +64,6 @@ if(defined $opt{h}){
 #         -i <N files>:<file size in KB>:<flie name length>
 #    * -o OutputSandbox params:
 #         -o <N files>:<file size in KB>:<flie name length>
-#    * -d data with InputSandboxBaseURI
-#         -d <N files>:<file size in KB>:<BaseURI>
 #    * -z => AllowZippedISB=false
  };
  exit($retOK);
@@ -78,7 +74,7 @@ if(defined $opt{r}){$inp{reqJdl}=$opt{r}}; #additional parameters for jdl
 if(defined $opt{l}){$inp{logfile}=$opt{l}}; #log file
 
               #Job monitoring time parameters
-if(defined $opt{d}){$inp{sleep}=$opt{d}}   #sleep seconds
+if(defined $opt{s}){$inp{sleep}=$opt{s}}   #sleep seconds
 else{$inp{sleep}=30};
 if(defined $opt{n}){$inp{sleepcnt}=$opt{n}}#number of cycles of status monitoring
 else{$inp{sleepcnt}=300};
