@@ -88,6 +88,9 @@ namespace util {
                              std::vector< std::string >& result,
                              const int lease_time,
                              const bool autostart );
+
+	int retrieveNewLeaseTime( void ) {return m_lease_time;}
+
     protected:
         void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
             throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,
@@ -108,7 +111,7 @@ namespace util {
         const std::string m_JDL;
         const std::string m_certfile;
         std::vector< std::string >& m_result;
-        const int m_lease_time;
+        int m_lease_time;
         const bool m_autostart;
     };
 

@@ -308,11 +308,17 @@ void ice::iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceComma
     }
     
     string delegID; // empty delegation id, as we do autodelegation
+
+    int newLease = m_configuration->ice()->lease_delta_time();
+
     try {	    
         // api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
-        iceUtil::CreamProxy_Register( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID,
-	modified_jdl,m_theJob.getUserProxyCertificate(), url_jid, m_configuration->ice()->lease_delta_time(), true ).execute(m_theProxy.get(), 3 );
+        iceUtil::CreamProxy_Register pr( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID,
+					 modified_jdl,m_theJob.getUserProxyCertificate(), url_jid, newLease/*m_configuration->ice()->lease_delta_time()*/, true );
+	pr.execute(m_theProxy.get(), 3 );
 
+	newLease = pr.retrieveNewLeaseTime();
+	
     } catch( exception& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
@@ -344,7 +350,7 @@ void ice::iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceComma
     
     m_theJob.setCreamJobID(url_jid[1]);
     m_theJob.setStatus(cream_api::job_statuses::PENDING);
-    m_theJob.setEndLease( time(0) + m_configuration->ice()->lease_delta_time() );
+    m_theJob.setEndLease( time(0) + newLease/*m_configuration->ice()->lease_delta_time()*/ );
     m_theJob.setDelegationId( delegID );
     m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );
