@@ -15,6 +15,7 @@ use strict;
 #    * -s sleep seconds before next job status checking (default 30)
 #    * -h usage
 #    * -e submit job with --debug option
+#    * -w use glite-wms-* commands
 # 
 ###### JDL generation parameters:
 #    * -v Environment params:
@@ -57,6 +58,7 @@ if(defined $opt{h}){
 #    * -s sleep seconds before next job status checking (default 30)
 #    * -h usage
 #    * -e submit job with --debug option
+#    * -w use glite-wms-* commands
 ###### JDL generation parameters:
 #    * -v Environment params:
 #         -v <N pairs>:<length of the parname and value>
@@ -108,7 +110,8 @@ if(defined $opt{o}){ #-------------- OutputSandbox parameters
 
 if(defined $opt{j}){$inp{jdlOnly}=1};  #create JDL only
 if(defined $opt{z}){$inp{zip}=1};  #AllowZippedISB=false
-$inp{cmdtype}='cmdProxy';
+if(defined $opt{w}){$inp{cmdtype}='cmdProxy'}
+else{$inp{cmdtype}='cmdNS'};
 
 sub checkPars{
  my ($a1,$a2)=@_;
@@ -132,17 +135,19 @@ else{$bindir=$basedir};
 createTmpDir();
 #--------------------------------------------------------------
 #   Used commands:
-my ($cmdSubmit,$cmdCancel,$cmdStatus,$cmdJobOutput,$cmdGetChkpt);
+my ($cmdSubmit,$cmdCancel,$cmdStatus,$cmdJobOutput,$cmdInfo);
 if($inp{cmdtype} eq 'cmdProxy'){
  $cmdSubmit='glite-wms-job-submit -a  ';
  $cmdCancel='glite-wms-job-cancel --noint ';
  $cmdStatus='glite-wms-job-status ';
  $cmdJobOutput="glite-wms-job-output --noint --dir $tmpdir/out ";
+ $cmdInfo="glite-wms-job-logging-info ";
 }else{
  $cmdSubmit='glite-job-submit ';
  $cmdCancel='glite-job-cancel --noint ';
  $cmdStatus='glite-job-status ';
  $cmdJobOutput="glite-job-output --noint --dir $tmpdir/out ";
+ $cmdInfo="glite-job-logging-info "
 };
 if(defined $opt{e}){$cmdSubmit.='--debug '};
 #--------------------------------------------------------------
@@ -194,6 +199,14 @@ printMsg("=================================== Start job status monitoring",1);
 #    Job monitoring
 my ($status, $dest, $ecode, $rea)=qw(? ? ? ?);
 my $st=Monitor();  #monitoring job execution
+printMsg("End monitoring",1);
+printMsg("=================================== Show all reasons:",1);
+my $cmd="$cmdInfo -v 2 $id 2>&1 | grep reason | sort | uniq |";
+open(INP,"$cmd");
+while(my $s=<INP>){
+ printMsg("$s",1);
+};
+close(INP);
 
 if($st){ # job not finished (timeout)
  printMsg("Timeout: Job not finished",2);
@@ -217,6 +230,8 @@ if($st=~/Succes/){ #try retrieve std output and error
 };
 printMsg("================================================",1);
 printMsg("$jdlsize",1);
+printMsg("JDL creation time=$timjdl sec\nJob submission time=$timrun sec",1);
+
 clearTmpDir();
 
 unless($OK){
@@ -288,7 +303,7 @@ sub Monitor{
   printMsg("$tim $tcnt Job: $st $dest",1); 
   if($st=~/Done/ || $st=~/Exit/ || $st=~/Abort/ || $st=~/Cancel/){return 0};
   sleep($inp{sleep});
-  my $cmd="glite-wms-job-logging-info -v 2 $id 2>&1 | grep -B 3 FAILED |";
+  my $cmd="$cmdInfo -v 2 $id 2>&1 | grep -B 3 FAILED |";
   my $resub=0;
   open(INP,"$cmd");
   while(my $s=<INP>){
@@ -296,7 +311,9 @@ sub Monitor{
   };
   close(INP);
   if($resub){
-   $status="Done(Failed)\nReason=$resub\n"; return 0;
+   if($resub=~/Cannot download/){
+    $status="Done(Failed). Job will be cancelled \nReason=$resub\n"; return 0;
+   };    
   };
  }
  return 1;
@@ -324,8 +341,8 @@ sub createJdl{
  StdError="stderr.log";
  StdOutput="stdout.log";
  RetryCount=0;
- ShallowRetryCount=0;
- Requirements=RegExp(".*cern.*",other.GlueCEUniqueID);
+# ShallowRetryCount=0;
+# Requirements=RegExp(".*lxb2018.*",other.GlueCEUniqueID);
  };
  if(exists $inp{zip}){$jdl.="AllowZippedISB=false;\n"};
 
@@ -578,7 +595,7 @@ sub getResub{
 my $id=shift; my $rh=shift;
 
 my ($dest,$ecode,$rea)=();
-my $cmd="glite-wms-job-logging-info -v 3 $id |";
+my $cmd="$cmdInfo -v 3 $id |";
 my $st=1; #1-Event: Match, 2-dest_id, 3-Event: Done, 4-exit_code,5-reason
 
 open(INP,"$cmd");
