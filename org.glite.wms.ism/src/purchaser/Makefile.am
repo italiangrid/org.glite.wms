@@ -33,8 +33,7 @@ libglite_wms_ism_cemon_asynch_purchaser_la_SOURCES = \
         ism-cemon-asynch-purchaser.cpp
 
 libglite_wms_ism_rgma_purchaser_la_LIBADD = \
-        $(GLITE_LOCATION)/lib/libglite-rgma-cpp-impl.a \
-        $(GLITE_LOCATION)/lib/libglite-rgma-cpp.a \
+	$(GLITE_RGMA_API_LIBS)\
         $(XERCESC_LIBS) \
         $(LOG4CXX_LIBS) 
 

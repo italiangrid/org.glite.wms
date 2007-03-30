@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.17.2.17  2007/03/30 10:53:48  emartel
+#       using rgma shared libs instead of static ones
+#
 #       Revision 1.17.2.16  2007/03/01 11:47:56  rlops
 #       increased versions
 #
@@ -334,6 +337,7 @@ AC_GLITE
 
 AC_GSOAP
 AC_XERCES
+AC_GLITE_RGMA
 
 AC_OPTIMIZE
 AC_SEC_GSOAP_PLUGIN
