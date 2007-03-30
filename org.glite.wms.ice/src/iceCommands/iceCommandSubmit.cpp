@@ -350,7 +350,13 @@ void ice::iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceComma
     
     m_theJob.setCreamJobID(url_jid[1]);
     m_theJob.setStatus(cream_api::job_statuses::PENDING);
-    m_theJob.setEndLease( time(0) + newLease/*m_configuration->ice()->lease_delta_time()*/ );
+
+    //cerr << "\n RESETTING LEASE TO NEW VALUE=[" << newLease << "]" << endl;
+
+    //m_theJob.setEndLease( time(0) + newLease/*m_configuration->ice()->lease_delta_time()*/ );
+
+    m_theJob.setEndLease( newLease );
+    
     m_theJob.setDelegationId( delegID );
     m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );
