@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.17.2.18  2007/03/30 13:02:24  rlops
+#       increased version
+#
 #       Revision 1.17.2.17  2007/03/30 10:53:48  emartel
 #       using rgma shared libs instead of static ones
 #
@@ -223,7 +226,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [3.1.11])
+AC_INIT([GLite WMS ISM], [3.1.12])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])
