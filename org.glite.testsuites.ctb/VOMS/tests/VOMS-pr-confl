@@ -62,9 +62,9 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 echo "Test is OK"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-exit $SAME_OK                  
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER                  
 
-echo "/pre"
+echo "</pre>"
+exit $SAME_OK
 
 

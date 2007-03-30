@@ -37,7 +37,6 @@ echo "VOMS-PROXY-INIT: check option - $OPTION"
 echo "Create directory: $cert_dir"
 mkdir $cert_dir
 
-echo "Copy user certificate and key into new directory $cert_dir"
 cp $USERCERT $cert_dir/usercert.pem
 cp $USERKEY $cert_dir/userkey.pem
 
@@ -51,8 +50,7 @@ else
    echo "Test is failed"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    rm -rf $voms_tmp
-   rm -rf $cert_dir/*
-   rmdir $cert_dir
+   rmdir --ignore-fail-on-non-empty $cert_dir
    exit $SAME_ERROR
 fi
 
@@ -71,8 +69,7 @@ if [ $? == 1 ]; then
     echo "Test has failed"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     rm -rf $voms_tmp
-    rm -rf $cert_dir/*
-    rmdir $cert_dir
+    rmdir --ignore-fail-on-non-empty $cert_dir
     exit $SAME_ERROR
 fi
 echo "Test is OK"
@@ -81,8 +78,8 @@ rm -rf $voms_tmp
 rm -rf $cert_dir/*
 rmdir $cert_dir
 
-exit $SAME_OK                  
 
-echo "/pre"
+echo "</pre>"
+exit $SAME_OK
 
 

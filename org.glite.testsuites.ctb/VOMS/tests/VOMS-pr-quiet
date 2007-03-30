@@ -61,9 +61,5 @@ if [ $? == 1 ]; then
 fi
         echo "Test is OK"
         voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-        exit $SAME_OK
-
-
-echo "/pre"
-
-
+echo "</pre>"
+exit $SAME_OK

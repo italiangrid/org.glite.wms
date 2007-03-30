@@ -30,19 +30,11 @@ rm -rf $voms_tmp
 echo
 date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
-echo "VO: $vo_name"
-echo "VOMS: $VOMSES"
-echo "cert: $USERCERT"
-echo "key: $USERKEY"
-echo "PWS": $PWS"
-
-
 
 
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
 voms-proxy-init -voms $vo_name -userconf $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
-voms-admin --vo=$vo_name -h voms_host list-users
 
 if [ $? = 0 ]; then
    echo "Test is OK"
@@ -71,8 +63,7 @@ if [ $? == 1 ]; then
 fi
 echo "Test is OK"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-exit $SAME_OK                  
-
-echo "/pre"
+echo "</pre>"
+exit $SAME_OK
 
 

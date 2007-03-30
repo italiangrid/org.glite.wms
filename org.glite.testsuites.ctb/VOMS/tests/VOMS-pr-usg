@@ -40,7 +40,6 @@ else
    echo "Test is failed"
    exit $SAME_ERROR
 fi
-
-echo "/pre"
-
+echo "</pre>"
+exit $SAME_OK
 
