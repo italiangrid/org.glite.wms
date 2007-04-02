@@ -34,7 +34,7 @@ std::vector<std::string> ServiceDiscovery::lookForServices(const string &voName,
 
 	// Setup VO instance (if not-empty string):
 	if (!voName.empty()){
-		names = new (char*)[1];
+		names = new char*[1];
 		names[0] = new char[voName.length() +1];
 		strcpy(names[0], voName.c_str());
 		SDVOList vosAPP = {1, names};

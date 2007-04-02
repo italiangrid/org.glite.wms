@@ -65,14 +65,22 @@ class Status {
 	/**Set an attribute value (of string type)
 	* @param err the string description passed by reference. Python will consider it as a returning parameter
 	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
-	*/     
+	*/
 	int get_error (std::string& err) ;
+
 	/**
 	* retrieve a Job Status from the downloaded ones
 	*@param status_number : the status to be retrieved
 	*@return a vector of strings representing all the Status intance values as specified in Job.py, JobStatus class
 	*/
 	std::vector< std::string  > loadStatus( int status_number= 0) ;
+
+	/**
+	* Retrieve the Names of all available Status
+	* TODO  once static method is provided by LB put this method static
+	*/
+	std::vector<std::string> getStatusNames() ;
+
 	/**
 	* Perform a query to the Lb Server allowing the user to specify several parameters
 	*@param host the LB server host name
@@ -135,6 +143,14 @@ class Eve{
 	* @return a couple of strings [ <attribute name > , <attribute value> ]
 	*/
 	std::string getVal (int field , std::string& attrValue , int event_number);
+
+
+	/**
+	* Retrieve the Names of all available Event
+	* TODO  once static method is provided by LB put this method static
+	*/
+	std::vector<std::string> getEventNames() ;
+
 	/**
 	* Perform a query to the Lb Server allowing the user to specify several parameters
 	*@param host the LB server host name
@@ -155,6 +171,7 @@ class Eve{
 		const std::vector<int>& excludes, const std::vector<int>& includes,
 		std::string issuer,int from, int to ,int ad);
 	int get_error (std::string& err) ;
+	std::string getEventName(std::string& result, int event_number);
   private:
 	std::list<glite::lb::Event> events ;
 	std::string error;

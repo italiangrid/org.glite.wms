@@ -32,7 +32,7 @@ AdWrapper::AdWrapper( int level ){
 }
 // Destructor
 AdWrapper::~AdWrapper() {
-	// if (jad!= NULL) delete jad ;
+	if (jad!= NULL) delete jad ;
 }
 int AdWrapper::get_error (string& err){
 	err= error ;

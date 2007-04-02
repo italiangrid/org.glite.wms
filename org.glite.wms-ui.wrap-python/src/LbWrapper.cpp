@@ -26,7 +26,7 @@ using namespace glite::lb ;
 using namespace glite::wmsutils::exception ;
 
 glite::lb::Job lbJob;
-const int VECT_DIM = 43 ;
+const int VECT_DIM = JobStatus::ATTR_MAX + 3;
 const int STATUS = VECT_DIM  - 3 ;
 const int STATUS_CODE = VECT_DIM - 2  ;
 const int HIERARCHY  =VECT_DIM - 1  ;
@@ -129,8 +129,10 @@ int Status::size(int status_number){
    return attrList.size() ;
 }
 
+
 int Status::size(){  return states.size() ; }
-int Eve::size(){ return events.size() ;  }
+int Eve::size(){ return events.size()     ; }
+
 
 int Eve::size(int event_number){
    error_code = false ;
@@ -140,6 +142,24 @@ int Eve::size(int event_number){
    std::vector<pair<Event::Attr,Event::AttrType> > attrList = event_retrieved.getAttrs();
    return attrList.size() ;
 }
+
+
+
+std::vector<std::string> Eve::getEventNames(){
+	//  TODO  once static method is provided by LB, remove first lines
+	std::vector<std::string> result ;
+	// get the first available EVENTS
+	if (events.size()>0){
+	   	list<glite::lb::Event>::iterator itLbEvent = events.begin();
+		int lb_attr;
+		for (lb_attr =0;(Event::Attr) lb_attr < Event::ATTR_MAX;lb_attr++){
+			result.push_back(itLbEvent->getAttrName( (Event::Attr)lb_attr ));
+		}
+	}
+	return result;
+}
+
+
 
 void Eve::log_error ( const std::string& err) {    error_code = true ; error = err ;};
 int Eve::get_error (std::string& err) {
@@ -270,17 +290,17 @@ return states.size();
 } ;
 
 
-// Retrieve The States for the specified JobId
+// Retrieve The Events for the specified JobId
 int Eve::getEvents (const  std::string& jobid) {
 	error_code = false ;
 	vector<Event> events_vector;
 	events.resize( 0 ) ;
 	try{
 		lbJob = glite::wmsutils::jobid::JobId ( jobid );
-		// OLD APPROACH:    glite::lb::Job    lbJob ( j )   ;
 		lbJob.log(  events_vector   );
-		for (unsigned int i = 0 ; i< events_vector.size() ; i++) 
+		for (unsigned int i = 0 ; i< events_vector.size() ; i++){
 			events.push_back (   events_vector[i]    ) ;
+		}
 	}catch (Exception &exc){
 		if (exc.getCode()  ==E2BIG )  log_error ("Unable to retrieve all events from: " +jobid ) ;
 		log_error ("Unable to retrieve the Job Events for: " +jobid+"\n" + string (exc.what() ) ) ;
@@ -291,20 +311,38 @@ int Eve::getEvents (const  std::string& jobid) {
 } ;
 
 
+
+
+string Eve::getEventName(string& result, int event_number){
+	error_code = false ;
+	// Position to the desired event number
+	list<glite::lb::Event>::iterator it = events.begin();
+	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
+	result = it->name() ;
+	return "Event" ;
+}
+
+
 std::string Eve::getVal (int field , string& result , int event_number) {
 	error_code = false ;
+	// Position to the desired event number
 	list<glite::lb::Event>::iterator it = events.begin();
 	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
 	glite::lb::Event event_retrieved = *it ;
 	string attrName = "" ;
+/*
 	int EVENT = 56 ;
 	if ( field == EVENT) {
 		result = event_retrieved.name() ;
-		return "event" ;
+		return "Event" ;
 	}
+*/
+
 	Event::Attr fieldAttr = (Event::Attr) field ;
-	if (fieldAttr < Event::ATTR_MAX)
-	    attrName = event_retrieved.getAttrName(fieldAttr) ;
+	if (fieldAttr < Event::ATTR_MAX) {
+		attrName = event_retrieved.getAttrName(fieldAttr);
+	}
+	// TODO remove this hardcoded dimension
 	char tmp [1024] ;
 try{
 	switch ( fieldAttr ){
@@ -509,6 +547,23 @@ try{
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
   return attrName;
   } ;
+
+std::vector<std::string> Status::getStatusNames(){
+	//  TODO  once static method is provided by LB, remove first lines
+	std::vector<std::string> result ;
+	// get the first available Status
+	if (states.size()>0){
+		list<glite::lb::JobStatus>::iterator itLbStatus = states.begin();
+		int lb_attr;
+		for (lb_attr =0;(JobStatus::Attr) lb_attr < JobStatus::ATTR_MAX;lb_attr++){
+			result.push_back(itLbStatus->getAttrName( (JobStatus::Attr)lb_attr ));
+		}
+	}
+	return result;
+}
+
+
+
 
 
 void push_status( JobStatus status_retrieved , std::vector<std::string>& result , int hierarchy ){
