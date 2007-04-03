@@ -7,8 +7,7 @@ VOMS-delRole
 VOMS-listRoles
 VOMS-assignRole
 VOMS-dismissRole
-VOMS-listUsersRole
-VOMS-listRolesUser
+VOMS-listUserRoles
 VOMS-crGroup
 VOMS-delGroup
 VOMS-listGroups
@@ -51,8 +50,6 @@ VOMS-pr-dbg
 VOMS-pr-cert
 VOMS-pr-key
 VOMS-pr-out
-VOMS-pr-usrcnf
-VOMS-pr-confl
 VOMS-pr-vomses
 VOMS-pr-vlf
 VOMS-pr-warn
@@ -61,4 +58,3 @@ VOMS-pr-bits
 VOMS-pr-hlp
 VOMS-pr-usg
 VOMS-pr-cdir
-
