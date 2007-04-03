@@ -737,7 +737,7 @@ int JobSubmit::checkInputSandbox ( ) {
 	wmsJobType job = this->getJobType() ;
 	switch (job) {
 		case WMS_JOB : {
-			extractAd = jobAd->getExtractedAd( );
+			extractAd = jobAdSP.getExtractedAd( );
 			break;
 		}
 		case WMS_DAG:
@@ -795,7 +795,7 @@ int JobSubmit::checkInputSandbox ( ) {
 				case WMS_PARAMETRIC:
 				{
 					for ( ; it1 != end1; it1++){
-						jobAd->addAttribute(JDLPrivate::ZIPPED_ISB, it1->filename);
+						jobAdSP.addAttribute(JDLPrivate::ZIPPED_ISB, it1->filename);
 					}
 					break;
 				}
@@ -1024,44 +1024,49 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		} else {
 		// JOB  =========================================
 			jobType = WMS_JOB ;
-			jobAd = new JobAd(*(adObj->ad()));
-			AdUtils::setDefaultValues(jobAd,wmcConf);
+
+			// jobAd = new JobAd(*(adObj->ad()));
+
+			jobAdSP.fromClassAd (  *(adObj->ad()) ) ;
+
+			AdUtils::setDefaultValues(&jobAdSP,wmcConf);
+
 			// resource <ce_id> ----> SubmitTo JDL attribute
 			if (!m_resourceOpt.empty()) {
-				if (jobAd->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
+				if (jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
 					throw WmsClientException(__FILE__,__LINE__,
 						"checkAd",  DEFAULT_ERR_CODE,
 						"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
 						"cannot be used for  DAG, collection, partitionable and parametric jobs");
-				}else{jobAd->setAttribute(JDL::SUBMIT_TO, m_resourceOpt);}
+				}else{jobAdSP.setAttribute(JDL::SUBMIT_TO, m_resourceOpt);}
 			}
-			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
+			if (jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
 				// check JobAd without restoring attributes  (WHY?)
 				jobType = WMS_PARAMETRIC;
-				jobAd->check(false);
+				jobAdSP.check(false);
 			}else{
-				jobAd->check();
+				jobAdSP.check();
 			}
-			if (jobAd->hasWarnings()){ printWarnings(JDL_WARNING_TITLE, jobAd->getWarnings() ); }
+			if (jobAdSP.hasWarnings()){ printWarnings(JDL_WARNING_TITLE, jobAdSP.getWarnings() ); }
 			// INTERACTIVE =================================
-			if (  jobAd->hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
+			if (  jobAdSP.hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
 				// Interactive Job management
 				logInfo->print (WMS_DEBUG, "An interactive job is being submitted.");
 				jobShadow = new Shadow();
 				jobShadow->setPrefix(wmcUtils->getPrefix()+"/bin");
 				// Insert jdl attributes port/pipe/host inside shadow(if present)
-				if (jobAd->hasAttribute(JDL::SHPORT)){
-					jobShadow->setPort(jobAd->getInt ( JDL::SHPORT ));
+				if (jobAdSP.hasAttribute(JDL::SHPORT)){
+					jobShadow->setPort(jobAdSP.getInt ( JDL::SHPORT ));
 				}
-				if (jobAd->hasAttribute(JDL::SHPIPEPATH)){
-					jobShadow->setPipe(jobAd->getString(JDL::SHPIPEPATH));
+				if (jobAdSP.hasAttribute(JDL::SHPIPEPATH)){
+					jobShadow->setPipe(jobAdSP.getString(JDL::SHPIPEPATH));
 				}else{
-					jobAd->setAttribute(JDL::SHPIPEPATH,jobShadow->getPipe());
+					jobAdSP.setAttribute(JDL::SHPIPEPATH,jobShadow->getPipe());
 				}
-				if (jobAd->hasAttribute(JDL::SHHOST)){
-					jobShadow->setHost(jobAd->getString(JDL::SHHOST));
+				if (jobAdSP.hasAttribute(JDL::SHHOST)){
+					jobShadow->setHost(jobAdSP.getString(JDL::SHHOST));
 				}else{
-					jobAd->setAttribute(JDL::SHHOST,jobShadow->getHost());
+					jobAdSP.setAttribute(JDL::SHHOST,jobShadow->getHost());
 				}
 				// Launch console
 				if (jobShadow->isLocalConsole()){
@@ -1070,29 +1075,29 @@ void JobSubmit::checkAd(bool &toBretrieved){
 					jobShadow->console();
 					logInfo->print(WMS_DEBUG,"Console properly started");
 					// Insert listening port number (if necessary replace old value)
-					if (jobAd->hasAttribute(JDL::SHPORT)){jobAd->delAttribute(JDL::SHPORT);}
-					jobAd->setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
+					if (jobAdSP.hasAttribute(JDL::SHPORT)){jobAdSP.delAttribute(JDL::SHPORT);}
+					jobAdSP.setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
 				}
 			}
 			// MPICH ==================================================
-			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
+			if (  jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
 				// MpiCh Job:
 				if (!m_lrmsOpt.empty()){
 					// Override previous value (if present)
-					if (jobAd->hasAttribute(JDL::LRMS_TYPE)){jobAd->delAttribute(JDL::LRMS_TYPE);}
-					jobAd->setAttribute(JDL::LRMS_TYPE, m_lrmsOpt);
+					if (jobAdSP.hasAttribute(JDL::LRMS_TYPE)){jobAdSP.delAttribute(JDL::LRMS_TYPE);}
+					jobAdSP.setAttribute(JDL::LRMS_TYPE, m_lrmsOpt);
 				}
 			}
 			// PARAMETRIC  ===============================================
 			if (jobType == WMS_PARAMETRIC) {
 				logInfo->print (WMS_DEBUG, "A parametric job is being submitted");
 				if (!m_nodesresOpt.empty()) {
-					jobAd->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
+					jobAdSP.setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
 				}
 				// InputSandbox for the parametric job
-				if (jobAd->hasAttribute(JDL::INPUTSB)) {
+				if (jobAdSP.hasAttribute(JDL::INPUTSB)) {
 					// InputSandbox Files Check
-					dagAd = AdConverter::bulk2dag(jobAd);
+					dagAd = AdConverter::bulk2dag(&jobAdSP);
 					// Print Pre-check Errors
 					if (dagAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
 					AdUtils::setDefaultValues(dagAd, wmcConf);
@@ -1103,7 +1108,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 					logInfo->print (WMS_DEBUG, "No InputSandbox in the user JDL", "");
 					// NO ISB found, convert ONLY first STEP
 					// (it is only slight check, the conversion is done on server side)
-					dagAd = AdConverter::bulk2dag(jobAd,1);
+					dagAd = AdConverter::bulk2dag(&jobAdSP,1);
 				}
 			}
 			// Checks if there are local ISB file(s) to be transferred to
@@ -1111,10 +1116,10 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			// Submission string
 			if (jobType==WMS_PARAMETRIC){
 				// JobAd already Checked
-				m_jdlString = jobAd->toString();
+				m_jdlString = jobAdSP.toString();
 			}else if  (jobType==WMS_JOB){
 				// JobAd not yet Checked
-				m_jdlString = jobAd->toSubmissionString();
+				m_jdlString = jobAdSP.toSubmissionString();
 			}
 		}
 	}

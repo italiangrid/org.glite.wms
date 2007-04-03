@@ -324,6 +324,7 @@ class JobSubmit : public Job {
 		*/
                 glite::jdl::Ad *adObj ;
                 glite::jdl::JobAd *jobAd ;
+		glite::jdl::JobAd jobAdSP;
 		glite::jdl::ExpDagAd *dagAd  ;
         	glite::jdl::CollectionAd *collectAd ;
 		glite::jdl::ExtractedAd *extractAd ;
