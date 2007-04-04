@@ -2,12 +2,16 @@
 
 # Analyse a list of commands and report those missing in the system.
 
-# Note that "missing in the system" here means that the command could not be found
+# Note 1: "Missing in the system" here means that the command could not be found
 # in the search path at the time the test was running.
 # In principle the search path seen by the test could differ from that of the parent
 # shell as well as other shell invocations.
 # The simple sh shell is chosen for this script in order to minimize that effect.
 # However keep in mind that shell environment may need extra attention.
+
+# Note 2: This script currently uses the bash builtin, 'type', to locate a command.
+# Older versions used 'which', but it appeared that 'which' is not installed on some systems.
+# Another standard system command, 'whereis', runs slower than 'which' and may not find some commands.
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version: $Id$
@@ -21,16 +25,17 @@ nmissing=0;
 
 for name in `awk -F '#' '{print $1}' commands.list`
 do
-   /usr/bin/which $name
 
-   if [ $? -ne 0 ]; then
+   type -p $name
+
+   if [ $? -ne 0 ] || [ "`type -t $name`" != "file" ]; then
+     echo "-> $name not found"
      NOT_FOUND="$NOT_FOUND $name"
      ((nmissing=$nmissing+1))
    fi
 
    ((ntotal=$ntotal+1))
 
-   # man -P "head | grep $name" $name || NOT_FOUND="$NOT_FOUND $name"
 done
 
 echo ""
