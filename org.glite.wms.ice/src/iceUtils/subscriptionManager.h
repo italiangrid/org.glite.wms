@@ -59,24 +59,24 @@ namespace glite {
 	  
 	  std::set<std::string>                   		  m_cemonURL;
 	  
-	  struct ltstring {
-	    bool operator()( const std::pair<std::string, std::string>& s1, 
-			     const std::pair<std::string, std::string>& s2) const
-	    {
+/* 	  struct ltstring { */
+/* 	    bool operator()( const std::pair<std::string, std::string>& s1,  */
+/* 			     const std::pair<std::string, std::string>& s2) const */
+/* 	    { */
 
-	      if ( s1.first.compare(s2.first) < 0 ) return true;
-	      else {
-		if(s2.first.compare(s1.first) < 0 ) return false;
-		else {
-		  if( s1.second.compare(s2.second) < 0 ) return true;
-		  else return false;
-		}
-	      }
+/* 	      if ( s1.first.compare(s2.first) < 0 ) return true; */
+/* 	      else { */
+/* 		if(s2.first.compare(s1.first) < 0 ) return false; */
+/* 		else { */
+/* 		  if( s1.second.compare(s2.second) < 0 ) return true; */
+/* 		  else return false; */
+/* 		} */
+/* 	      } */
 
-	    }
-	  };
+/* 	    } */
+/* 	  }; */
 
-	  std::map< std::pair<std::string, std::string> , iceSubscription, ltstring >  m_Subs;
+	  std::map< std::pair<std::string, std::string> , iceSubscription, glite::wms::ice::util::ltstring >  m_Subs;
 	  
 	  std::set<std::string>                   		  m_DN;
 	  std::map<std::string, std::string>      		  m_mappingCreamCemon;

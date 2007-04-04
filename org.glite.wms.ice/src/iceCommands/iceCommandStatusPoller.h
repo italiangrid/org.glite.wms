@@ -60,7 +60,7 @@ namespace glite {
 	  jobCache* m_cache;
 	  time_t m_threshold;
 	  bool m_poll_all_jobs;
-
+	  
 	  //void purgeJobs( const std::vector< std::string >& );
 
 	  /**
@@ -88,6 +88,8 @@ namespace glite {
            * @param s the StatusInfo object from which job informations are updated
            */
           void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& ) throw();
+	  //void update_multiple_job( const std::list<glite::ce::cream_client_api::soap_proxy::JobInfo>& ) throw();
+	  void remove_unknown_jobs_from_cache(std::vector< const glite::ce::cream_client_api::soap_proxy::JobInfo >&) throw();
 
 	  /**
            * Prevents copying
@@ -95,6 +97,10 @@ namespace glite {
           iceCommandStatusPoller( const iceCommandStatusPoller& ) { }
 
 	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_jobs( const std::list< glite::wms::ice::util::CreamJob >&	  job_list );
+
+	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::list< glite::wms::ice::util::CreamJob >&	  job_list );
+
+	  void remove_unknown_jobs_from_cache(const std::vector<std::string>&, const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >&, std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >&) throw();
 
 	public:
 	  //static boost::recursive_mutex mutexJobStatusPoll;

@@ -25,6 +25,7 @@
 #include <set>
 #include <stdexcept>
 #include <ctime>
+#include <utility>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -43,6 +44,23 @@ namespace util {
 
     class jobCache;
 
+    struct ltstring {
+      bool operator()( const std::pair<std::string, std::string>& s1, 
+		       const std::pair<std::string, std::string>& s2) const
+      {
+	
+	if ( s1.first.compare(s2.first) < 0 ) return true;
+	else {
+	  if(s2.first.compare(s1.first) < 0 ) return false;
+	  else {
+	    if( s1.second.compare(s2.second) < 0 ) return true;
+	    else return false;
+	  }
+	}
+	
+      }
+    };
+  
     /**
      * Utility function to return the hostname
      *
