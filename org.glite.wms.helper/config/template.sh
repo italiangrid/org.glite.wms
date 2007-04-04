@@ -539,7 +539,7 @@ if [ ${__perusal_support} -eq 1 ]; then
   send_partial_file ${__perusal_listfileuri} ${__perusal_filesdesturi} ${__perusal_timeinterval} & send_pid=$!
 fi
 
-if [ -n ${__shallow_resubmission_token} ]; then
+if [ -n "${__shallow_resubmission_token}" ]; then
   # Look for an executable gridftp_rm command
   for gridftp_rm_command in $GLITE_LOCATION/bin/glite-gridftp-rm \
                             `which glite-gridftp-rm 2>/dev/null` \
