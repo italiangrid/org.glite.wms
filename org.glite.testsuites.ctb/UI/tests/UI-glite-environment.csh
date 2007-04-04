@@ -16,10 +16,10 @@ foreach VAR_NAME_TEST ( GLITE_LOCATION GLITE_LOCATION_VAR GLITE_LOCATION_LOG GLI
 
   set DIR_NAME_TEST=`printenv $VAR_NAME_TEST`
 
-  if ( -z "$DIR_NAME_TEST" ) then
+  if ( "x$DIR_NAME_TEST" == "x" ) then
     echo "WARNING: $VAR_NAME_TEST is not defined"
   else if ( -d "$DIR_NAME_TEST" ) then
-    echo "info   :  $VAR_NAME_TEST  \t= $DIR_NAME_TEST"
+    echo "info   : $VAR_NAME_TEST  \t= $DIR_NAME_TEST"
   else
       echo "ERROR  : $VAR_NAME_TEST is set to non-existing location $DIR_NAME_TEST"
       echo " === test NOT passed === "

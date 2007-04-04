@@ -40,7 +40,7 @@ foreach VAR_NAME_TEST ( JAVA_HOME JAVA_INSTALL_PATH )
 
   set DIR_NAME_TEST=`printenv $VAR_NAME_TEST`
   
-  if ( -z "$DIR_NAME_TEST" ) then
+  if ( "x$DIR_NAME_TEST" == "x" ) then
     echo "info    : $VAR_NAME_TEST is not defined"
   else if ( -d "$DIR_NAME_TEST" ) then
     echo "info   : $VAR_NAME_TEST is set to $DIR_NAME_TEST"
