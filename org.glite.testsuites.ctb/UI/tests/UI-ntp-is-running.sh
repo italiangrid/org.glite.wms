@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# Test whether system time is being synchronized with ntp
+# Test whether system time is being synchronized with ntp.
+# Return exit status of ntpstat.
+# If ntpstat is not available then grep the process list.
 
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version: $Id$
@@ -9,7 +11,7 @@ echo ""
 echo "    === ntp test ===    "
 echo ""
 
-if which ntpstat >/dev/null; then
+if type -p ntpstat >/dev/null; then
 
   echo " # UI ntp test # ntpstat says: "
   echo ""
