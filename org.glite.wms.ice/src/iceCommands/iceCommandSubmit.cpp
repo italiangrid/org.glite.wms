@@ -28,6 +28,7 @@
 #include "iceCommandSubmit.h"
 #include "subscriptionManager.h"
 #include "subscriptionProxy.h"
+#include "DNProxyManager.h"
 #include "iceConfManager.h"
 #include "iceSubscription.h"
 #include "jobCache.h"
@@ -784,6 +785,7 @@ void  ice::iceCommandSubmit::doSubscription( /*const string& ce, const string& u
 {
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );
+  iceUtil::DNProxyManager* dnprxMgr( iceUtil::DNProxyManager::getInstance() );
   
   string userDN    = aJob.getUserDN(); //glite::ce::cream_client_api::certUtil::getDN( userProxy );
   string userProxy = aJob.getUserProxyCertificate();
@@ -835,7 +837,8 @@ void  ice::iceCommandSubmit::doSubscription( /*const string& ce, const string& u
       // map, we must update it with the current one.
       // This is because it is better to be sure that the subscription Updater
       // will use always the most long-lived proxy to renew subscriptions.
-      subMgr->setUserProxyIfLonger( userDN, userProxy );
+      //subMgr->setUserProxyIfLonger( userDN, userProxy );
+      dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
 
       return;
     }	   
@@ -876,7 +879,7 @@ void  ice::iceCommandSubmit::doSubscription( /*const string& ce, const string& u
       if( subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
 	    
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
-	subMgr->setUserProxyIfLonger( userDN, userProxy );
+	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
 	
       } else {
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
@@ -892,7 +895,7 @@ void  ice::iceCommandSubmit::doSubscription( /*const string& ce, const string& u
     } else {
       
 	  subMgr->insertSubscription( userProxy, cemon_url, sub );
-	  subMgr->setUserProxyIfLonger( userDN, userProxy );
+	  dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
     }
     CREAM_SAFE_LOG(m_log_dev->infoStream()
 		   << "iceCommandSubmit::doSubscription() - "
@@ -928,7 +931,7 @@ void  ice::iceCommandSubmit::doSubscription( /*const string& ce, const string& u
 	//cout << "iceCommandSubmit::doSubscription - sub.getUserProxyFile() = " << sub.getUserProxyFile() <<endl;
 	
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
-	subMgr->setUserProxyIfLonger( userDN, userProxy );
+	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
 
 // 	cout << "iceCommandSubmit::doSubscription - Subscription OK for proxy [" 
 // 	     << userProxy << "] to [" << cemon_url << "] sub.ID = ["

@@ -27,6 +27,7 @@
 #include "iceConfManager.h"
 #include "subscriptionProxy.h"
 #include "CreamProxyFactory.h"
+#include "DNProxyManager.h"
 #include <iostream>
 #include <boost/scoped_ptr.hpp>
 #include "glite/wms/common/configuration/Configuration.h"
@@ -261,7 +262,7 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
     string cemondn;
     bool subscribed;
 
-    string proxy = this->getBetterProxyByDN(it->first);
+    string proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it->first );
 
     try { 
 
@@ -468,7 +469,7 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
 
     //tmpTarget[ jit->getUserProxyCertificate() ].insert( cemon );
     tmpTarget[ jit->getUserDN() ].insert( cemon );
-    this->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
+    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
    
 
     if( m_authz && m_authn ) {
@@ -568,55 +569,55 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
   
 }
 
-//________________________________________________________________________
-void iceUtil::subscriptionManager::setUserProxyIfLonger( const string& prx ) 
-{ 
+// //________________________________________________________________________
+// void iceUtil::subscriptionManager::setUserProxyIfLonger( const string& prx ) 
+// { 
 
-  string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
+//   string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
 
-  this->setUserProxyIfLonger( dn, prx );
+//   this->setUserProxyIfLonger( dn, prx );
 
-}
+// }
 
-//________________________________________________________________________
-void iceUtil::subscriptionManager::setUserProxyIfLonger( const string& dn, 
-							 const string& prx 
-							 ) 
-{ 
+// //________________________________________________________________________
+// void iceUtil::subscriptionManager::setUserProxyIfLonger( const string& dn, 
+// 							 const string& prx 
+// 							 ) 
+// { 
 
-  //string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
+//   //string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
 
-  if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
-    m_DNProxyMap[ dn ] = prx;
-    return;
-  }
+//   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
+//     m_DNProxyMap[ dn ] = prx;
+//     return;
+//   }
 
-  if (prx == m_DNProxyMap[ dn ] ) return;
+//   if (prx == m_DNProxyMap[ dn ] ) return;
 
-  time_t newT, oldT;
+//   time_t newT, oldT;
 
-  try {
-    newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft(prx);
-  } catch(...) {
-    //cout << "subscriptionManager::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
-    return;
-  }
+//   try {
+//     newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft(prx);
+//   } catch(...) {
+//     //cout << "subscriptionManager::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
+//     return;
+//   }
   
-  try {
-    oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ] );
-  } catch(...) {
-    // cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["
-// 	<<  prx
-// 	<< "] because cannot retrieve time for ["<< m_DNProxyMap[ dn ] <<"]" <<endl;
-    m_DNProxyMap[ dn ] = prx;
-    return;
-  }
+//   try {
+//     oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ] );
+//   } catch(...) {
+//     // cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["
+// // 	<<  prx
+// // 	<< "] because cannot retrieve time for ["<< m_DNProxyMap[ dn ] <<"]" <<endl;
+//     m_DNProxyMap[ dn ] = prx;
+//     return;
+//   }
 
-  if(newT > oldT) {
-    //cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["<<prx<<"]" <<endl;
-    m_DNProxyMap[ dn ] = prx;
-  } else {
-    // cout<< "subscriptionManager::setUserProxyIfLonger - Leaving current proxy ["<< m_DNProxyMap[ dn ] 
-// 	<<"] beacuse will expire later" <<endl;
-  }
-}
+//   if(newT > oldT) {
+//     //cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["<<prx<<"]" <<endl;
+//     m_DNProxyMap[ dn ] = prx;
+//   } else {
+//     // cout<< "subscriptionManager::setUserProxyIfLonger - Leaving current proxy ["<< m_DNProxyMap[ dn ] 
+// // 	<<"] beacuse will expire later" <<endl;
+//   }
+// }

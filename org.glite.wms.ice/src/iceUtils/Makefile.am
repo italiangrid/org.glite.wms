@@ -19,6 +19,7 @@ libglite_wms_iceUtils_la_SOURCES = \
 				iceLBEventFactory.cpp \
 				subscriptionManager.cpp \
 				subscriptionProxy.cpp \
+				DNProxyManager.cpp \
 				iceUtils.cpp \
 				jobDbManager.cpp \
 				CEDbManager.cpp \

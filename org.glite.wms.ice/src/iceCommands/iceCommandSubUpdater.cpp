@@ -22,6 +22,7 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
+#include "DNProxyManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
@@ -95,15 +96,26 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 	
 	time_t timeleft = sub.getExpirationTime() - time(NULL);
 	if(timeleft < m_conf->getConfiguration()->ice()->subscription_update_threshold_time()) {
+	  string betterProxy( ice_util::DNProxyManager::getInstance()->getBetterProxyByDN(it->first) );
+
+	  if(betterProxy == "") {
+	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+			   << "iceCommandSubUpdater::execute() - "
+			   << "Cannot get better proxy file for DN ["
+			   << it->first << "]. Skipping..."
+			   << log4cpp::CategoryStream::ENDLINE);
+	    return;
+	  }
+
 	  CREAM_SAFE_LOG(m_log_dev->infoStream() 
 			 << "iceCommandSubUpdater::execute() - "
 			 << "Updating subscription ["<<sub.getSubscriptionID() 
 			 << "] to CEMon [" << *cit <<"] for user DN ["
 			 << it->first << "] using proxy ["
-			 << subManager->getBetterProxyByDN(it->first) << "]."
+			 << betterProxy << "]."
 			 << log4cpp::CategoryStream::ENDLINE);
 
-	  subManager->renewSubscription( subManager->getBetterProxyByDN(it->first) , *cit );
+	  subManager->renewSubscription( betterProxy , *cit );
 	}
       }
 

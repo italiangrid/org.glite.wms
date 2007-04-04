@@ -36,7 +36,7 @@
 #define DEFAULT_PERSIST_DIR "/tmp/ice_persist_dir"
 #endif
 
-using namespace std;
+//using namespace std;
 
 namespace log4cpp {
     class Category;
@@ -82,7 +82,7 @@ namespace glite {
 	  std::map<std::string, std::string>      		  m_mappingCreamCemon;
 	  std::map<std::string, std::string>      		  m_mappingCemonDN;
 	  
-	  std::map<std::string, std::string>                      m_DNProxyMap;
+	  //std::map<std::string, std::string>                      m_DNProxyMap;
 
 	  iceConfManager                         		 *m_conf;  
 	  subscriptionProxy                     		 *m_subProxy;
@@ -171,14 +171,14 @@ namespace glite {
 	  
 	  int numOfSubscriptionKeys( void ) const { return m_Subs.size(); }
 
-	  void setUserProxyIfLonger( const std::string& proxy);
-	  void setUserProxyIfLonger( const std::string& dn, const std::string& proxy);
+	  //void setUserProxyIfLonger( const std::string& proxy);
+	  //void setUserProxyIfLonger( const std::string& dn, const std::string& proxy);
 
-	  std::string getBetterProxyByDN( const std::string& dn ) const throw() {
-	    std::map<std::string, std::string>::const_iterator it = m_DNProxyMap.find( dn );
-	    if( it == m_DNProxyMap.end()) return "";
-	    return it->second;
-	  }
+// 	  std::string getBetterProxyByDN( const std::string& dn ) const throw() {
+// 	    std::map<std::string, std::string>::const_iterator it = m_DNProxyMap.find( dn );
+// 	    if( it == m_DNProxyMap.end()) return "";
+// 	    return it->second;
+// 	  }
 
 	  bool getSubscriptionByDNCEMon( const std::string& dn, const std::string& cemon, iceSubscription& target) {
 	    

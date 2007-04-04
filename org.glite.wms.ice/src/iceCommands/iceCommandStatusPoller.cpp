@@ -36,7 +36,7 @@
 #include "CreamProxyMethod.h"
 #include "iceUtils.h"
 #include "subscriptionManager.h"
-
+#include "DNProxyManager.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -244,7 +244,18 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
       existing_job_status.clear();
 
       try {
-	string proxy( iceUtil::subscriptionManager::getInstance()->getBetterProxyByDN(jit->first.first) );
+	string proxy( iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN(jit->first.first) );
+
+	if(proxy == "")
+	  {
+	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+			   << "eventStatusPoller::check_multiple_jobs() - "
+			   << "A Proxy file for DN ["
+			   << jit->first.first
+			   << "] is not yet available !!! Skipping..."
+			   << log4cpp::CategoryStream::ENDLINE);
+	    continue;
+	  }
 
 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		       << "eventStatusPoller::check_multiple_jobs() - "
