@@ -1,0 +1,304 @@
+#!/bin/sh
+#
+# SAM wrapper for the basic SRM 2.2 tests from the s2 package (http://s-2.sourceforge.net)
+#
+# This script needs the location of the basic srm2.2 tests to be defined in $S2_TESTS_LOCATION.
+# It also needs the s2 binary to be foundable (in the $PATH).
+# A list of preferred SEs can be defined in $RESTRICT_TESTS_TO, all other SEs will be ignored then.
+# By default VO name from voms proxy is sued. Another VO name can be specified using $VO.
+# A good place to set these parameters is the config file $SAME_SENSOR_HOME/config.sh
+# which is sourced by this script (if launched from SAM).
+#
+# Example usage:
+#
+# > ../../../bin/same-exec SRM
+# - run all SRM tests for all SRM nodes
+#
+# > ../../../bin/same-exec SRM nodename=lxb2036.cern.ch
+# - run all SRM tests for lxb2036.cern.ch
+#
+# > source ../config.sh
+# > ./SRM-s2-srmv2.2 lxb2036.cern.ch
+# - run this test for lxb2036.cern.ch only
+# (requires write access to s2 tests directory, does not publish results, useful for debugging).
+#
+# Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
+# Version: $Id$
+
+function exit_failure() {
+
+  if [ -n "$SAME_ERROR" ]; then  # ... if in SAM
+    echo "</pre>"
+    echo " =============== [ <font color=\"#FF0000\"> FAILED </font> ] =============== <br>"
+    exit $SAME_ERROR
+  else  # ... if not
+    echo " =============== [ FAILED ] =============== "
+    exit 1
+  fi
+}
+
+function exit_untested() {
+
+  if [ -n "$SAME_INFO" ]; then  # ... if in SAM
+    echo "</pre>"
+    echo " =============== [ <font color=\"#0000FF\"> UNTESTED </font> ] =============== <br>"
+    exit $SAME_INFO
+  else  # ... if not
+    echo " =============== [ UNTESTED ] =============== "
+    exit 1
+  fi
+}
+
+# ... do html formatting when in SAM
+
+if [ -n "$SAME_OK" ]; then
+  echo "<pre>"
+  OK="[ <font color=\"#00FF00\"> OK </font> ]"
+  FAILED="[ <font color=\"#FF0000\"> FAILED </font> ]"
+else
+  OK="[ OK ]"
+  FAILED="[ FAILED ]"
+fi
+
+echo "  === basic s2 tests of SRM 2.2 === "
+echo ""
+echo "Running on" `hostname -f` "at" `date '+%Y-%b-%d %H:%M:%S'`
+echo ""
+
+# ... source the config file
+
+if [ -n "$SAME_SENSOR_HOME" ] && [ -f $SAME_SENSOR_HOME/config.sh ]; then
+  echo "sourcing $SAME_SENSOR_HOME/config.sh"
+  . $SAME_SENSOR_HOME/config.sh
+fi
+
+# ... locate the tests
+
+if [ -n "$S2_TESTS_LOCATION" ]; then
+  echo "S2 test directory defined S2_TESTS_LOCATION=$S2_TESTS_LOCATION"
+else
+  echo "Please define S2 test directory in S2_TESTS_LOCATION (e.g. export S2_TESTS_LOCATION=~/testing/scripts/protos/srm/2.2/basic)"
+  exit_failure
+fi
+
+if [ ! -d $S2_TESTS_LOCATION ]; then
+  echo "S2 test directory $S2_TESTS_LOCATION does not exists"
+  exit_failure
+fi
+
+# ... if launched from SAM define log files directory (this allows running several test instances simultaneusely without conflict)
+
+if [ -n "$SAME_OK" ]; then
+  export S2_LOGS_DIR=`pwd`
+  echo "Log files directory set to $S2_LOGS_DIR"
+else
+  S2_LOGS_DIR=$S2_TESTS_LOCATION
+  echo "Log files directory is $S2_LOGS_DIR"
+fi
+
+# ... make sure SRM host is specified
+
+SRM_HOST=$1
+
+if [ -z "$SRM_HOST" ]; then
+  echo "Warning! SRM host name not given - using default"
+  SRM_HOST=lxb2036.cern.ch
+fi
+
+# ... if a restriction list is defined but SRM host is not in the list then skip it
+
+if [ -n "$RESTRICT_TESTS_TO" ]; then
+  echo "restriction list defined by RESTRICT_TESTS_TO: $RESTRICT_TESTS_TO"
+  grep "\<$SRM_HOST\>" <<<$RESTRICT_TESTS_TO &>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "Host $SRM_HOST does not appear in restriction list ($RESTRICT_TESTS_TO) and will be skipped"
+    exit_untested
+  else
+    echo "$SRM_HOST is in the list"
+  fi
+fi
+
+# ... check proxy, determine user VO (needed for SAPath)
+
+echo ""
+echo "checking proxy ..."
+voms-proxy-info -exists -valid 0:10 || exit_untested
+
+if [ -z "$VO" ]; then
+  VO=`voms-proxy-info -vo`
+  if [ $? -ne 0 ] || [ -z "$VO" ]; then
+    echo "Warning: could not determine VO with voms-proxy-info - will use dteam"
+    VO="dteam"
+  fi
+fi
+
+echo " "
+echo "using VO                              : $VO"
+
+# ... ask the tested SE for SRM 2.2 Service Endpoint
+
+#echo "Interrogating the GRIS on $SRM_HOST ..."
+
+LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2135 -b "mds-vo-name=local, o=grid" '(& (objectclass=GlueService) (GlueServiceVersion=2.2*))' GlueServiceEndpoint`
+
+if [ $? -ne 0 ] || [ -z "$LDAP_RESULT" ]; then
+
+  echo "ldapsearch result:"
+  echo "$LDAP_RESULT"
+  echo "Error: could not find SRM2.2 endpoint for $SRM_HOST. Possibly it is not published by $SRM_HOST GIIS."
+  exit_failure
+fi
+
+ENDPOINT=`echo "$LDAP_RESULT" | grep 'GlueServiceEndpoint:' | awk -F ' ' '{print $2}'`
+
+# ... in case we got few endpoints take the first one
+
+ENDPOINT=`echo $ENDPOINT | awk -F ' ' '{print $1}'`
+
+echo "SRM 2.2 endpoint published by SRM host: $ENDPOINT"
+
+# ... ask the SE for SAPath for the VO
+
+echo "SRM host to be tested                 : $SRM_HOST"
+
+LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2135 -b "mds-vo-name=local, o=grid" "(& (objectclass=GlueSAAccessControlBase) (GlueSAAccessControlBaseRule=$VO))" GlueSAPath`
+
+if [ $? -ne 0 ] || [ -z "$LDAP_RESULT" ]; then
+
+  echo "ldapsearch result:"
+  echo "$LDAP_RESULT"
+  echo "Error: could not determine SE Path for $SRM_HOST. Possibly it is not published by $SRM_HOST GIIS."
+  exit_failure
+fi
+
+SE_PATH=`echo "$LDAP_RESULT" | grep 'GlueSAPath:' | awk -F ' ' '{print $2}'`
+
+if [ -z "$SE_PATH" ]; then
+  echo "Error! could not determine SE Path for $SRM_HOST"
+  exit_failure
+fi
+
+echo "SE Path published by SRM host         : $SE_PATH"
+
+# ... finally define the endpoint
+
+#PORT=`echo $ENDPOINT | awk -F ':' '{print $3}' | awk -F '/' '{print $1}'`
+#ENDPOINT=srm://$SRM_HOST:$PORT
+#echo "Basic part of the endpoint            : $ENDPOINT"
+
+ENDPOINT=${ENDPOINT/httpg/srm}
+
+export SRM_ENDPOINT=${ENDPOINT}?SFN=$SE_PATH
+
+#export SRM_ENDPOINT=srm://$SRM_HOST:8446/srm/managerv2?SFN=$SE_PATH
+
+echo "The following endpoint will be used   : $SRM_ENDPOINT"
+echo ""
+
+# ... define counters
+
+ndone=0
+nfailed=0
+
+# ... run tests one by one
+
+echo "running tests ..."
+echo ""
+
+for name in Ping PrepareToPut StatusOfPutRequest PutDone PrepareToGet StatusOfGetRequest BringOnline StatusOfBringOnlineRequest \
+            AbortRequest AbortFiles ReleaseFiles GetRequestSummary GetRequestTokens GetTransferProtocols Ls Mkdir Rmdir Rm Mv \
+            ReserveSpace StatusOfReserveSpaceRequest ReleaseSpace GetSpaceTokens GetSpaceMetaData ExtendFileLifeTime
+do
+
+  echo "  ---" `date '+%H:%M:%S'` ": $name --- "
+
+  if [ -x $S2_TESTS_LOCATION/$name.sh ]; then
+
+    rm -f $S2_LOGS_DIR/$name.log
+    rm -f $S2_LOGS_DIR/$name.out
+ 
+    LASTDIR=`pwd`
+    cd $S2_TESTS_LOCATION
+    
+    $S2_TESTS_LOCATION/$name.sh fast --timeout=15000000
+
+    TEST_RESULT=$?
+
+    cd $LASTDIR
+    
+    if [ -f $S2_LOGS_DIR/$name.log ]; then
+      cat $S2_LOGS_DIR/$name.log
+    else
+      echo ""
+      echo "(log output not available)"
+    fi
+
+    echo " "
+
+    if [ -f $S2_LOGS_DIR/$name.out ]; then
+      cat $S2_LOGS_DIR/$name.out
+    else
+      echo "(summary output not available)"
+    fi
+
+    echo ""
+    
+    [ -n "$SAME_OK" ] && echo "</pre>"
+    
+    if [ $TEST_RESULT -eq 0 ]; then
+      echo "  --- $name $OK --- "
+    else
+      ((nfailed=$nfailed+1))
+      echo "  --- $name $FAILED --- "
+    fi
+
+    [ -n "$SAME_OK" ] && echo "<pre>"
+
+    ((ndone=$ndone+1))
+    
+  else
+
+    echo "Internal error! $name.sh not found"
+    echo "Please make sure that:"
+    echo "1. You have the s2 package installed"
+    echo "3. The s2 binary is in your PATH"
+    echo "2. S2_TESTS_LOCATION points to <path>/testing/scripts/protos/srm/2.2/basic"
+    echo "3. You have the symbolic links there (\"make ln\")"
+    echo "4. You have write access to the log files directory $S2_LOGS_DIR"
+    echo ""
+    exit_failure
+  fi
+
+  echo ""
+
+done
+
+# ... report results and finish
+
+echo ""
+echo "# tests performed: $ndone"
+echo "# tests failed   : $nfailed"
+
+if [ $ndone -eq $nfailed ]; then
+  echo ""
+  echo "All tests failed"
+  echo "Make sure you give correct SRM host name as command line argument \$1"
+  echo "If get complaints \"Couldn't find s2 binary.\" make sure that the s2 is in your PATH (e.g. export PATH=$PATH:/opt/s2/bin)"
+  echo "And of course don't forget to have a proxy"
+fi
+
+echo ""
+
+if [ $nfailed -ne 0 ]; then
+  echo "  === Overal status of $SRM_HOST [ FAILED ] ===  "
+  exit_failure
+fi
+
+if [ -n "$SAME_OK" ]; then
+  echo "</pre>"
+  echo "  === Overal status of $SRM_HOST [ <font color=\"#00FF00\"> OK </font> ] ===  <br>"
+  exit $SAME_OK
+else
+  echo "  === Overal status of $SRM_HOST [ OK ] ===  "
+  exit 0
+fi
