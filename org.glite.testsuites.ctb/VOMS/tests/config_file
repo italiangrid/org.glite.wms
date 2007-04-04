@@ -1,29 +1,24 @@
 #!/bin/bash
-
-export vo_name="test"       # Virtuale organization
+#    Config file for test of voms-admin command
+export vo_name="test"         # Virtuale organization
 export USER="$SAME_SENSOR_HOME/tests/test_user_1_cert.pem"
-#export USER="$HOME/same/client-ctb/sensors/VOMS/tests/test_user_1_cert.pem"
+
 export CA="/C=CH/O=CERN/OU=GD/CN=The Certification CA"
-#export USER="/afs/cern.ch/user/m/malandes/.globus/usercert.pem"
 export CA_CERN="/C=CH/O=CERN/OU=GRID/CN=CERN CA"
 export GRIDMAP="$SAME_SENSOR_HOME/tests/gridmap.conf"
-export ACCOUNT=".dteam"       # Mapped user account for grid_mapfile
-
-#--------- temporary files ---------------
-export voms_tmp=$SAME_SENSOR_WORK/nodes/$nodeName/voms_tmp
-export voms_stderr=$SAME_SENSOR_WORK/nodes/$nodeName/voms_stderr
-export tempo=$SAME_SENSOR_WORK/nodes/$nodeName/voms_tempo
-export cert_dir=$SAME_SENSOR_WORK/nodes/$nodeName/voms_certdir
-
-
-#export voms_tmp=/tmp/$voms_host.$UID"_tmp"
-#export voms_stderr=/tmp/$voms_host.$UID"_stderr"
-#export tempo=/tmp/$voms_host.$UID"_string"
-
-export ATTRIBUTE="TEST_ATTRIBUTE"
-export ATTVALUE="TEST Attribute value"
-export ATTDESC="Test Attribute description"
+export ACCOUNT=".$vo_name"    # Mapped user account for grid_mapfile
 export ROLE="sam_tester"      # Greate/delete Role
 export GROUP="sam_group"      # Create/delete Group
 export OP="list"              # Operation value (list, all, add,... ) for test ACL management
 export ALLOW="allow"          # Value  (allow or deny) for test ACL management
+
+#---------- Values for attributes in voms-admin commands
+export ATTRIBUTE="TEST_ATTRIBUTE"
+export ATTVALUE="TEST Attribute value"
+export ATTDESC="Test Attribute description"
+
+#--------- temporary files ------------------------------------
+export voms_tmp=$SAME_SENSOR_WORK/nodes/$nodeName/voms_tmp
+export voms_stderr=$SAME_SENSOR_WORK/nodes/$nodeName/voms_stderr
+export tempo=$SAME_SENSOR_WORK/nodes/$nodeName/voms_tempo
+export cert_dir=$SAME_SENSOR_WORK/nodes/$nodeName/voms_certdir

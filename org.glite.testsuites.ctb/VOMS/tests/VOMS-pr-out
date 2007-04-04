@@ -33,7 +33,7 @@ echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-proxy-init -voms $vo_name -userconf $VOMSES -$OPTION $tempo -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION $tempo -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"

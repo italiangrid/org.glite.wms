@@ -26,6 +26,9 @@ export voms_host=$1
 source $SAME_SENSOR_HOME/tests/pr_config_file
 
 OPTION="certdir"
+echo "CA.0: $CA_0"
+echo "CA.signing_policy: $CA_policy"
+
 rm -rf $voms_tmp
 
 echo "Remove directory $cert_dir"
@@ -37,12 +40,13 @@ echo "VOMS-PROXY-INIT: check option - $OPTION"
 echo "Create directory: $cert_dir"
 mkdir $cert_dir
 
-cp $USERCERT $cert_dir/usercert.pem
-cp $USERKEY $cert_dir/userkey.pem
+echo "Copy CA files into new direcxtory"
+cp $CA_0  $cert_dir
+cp $CA_policy $cert_dir
 
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-proxy-init -voms $vo_name -userconf $VOMSES -$OPTION $cert_dir -pwstdin < $PWS
+voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION $cert_dir -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"
@@ -50,7 +54,8 @@ else
    echo "Test is failed"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    rm -rf $voms_tmp
-   rmdir --ignore-fail-on-non-empty $cert_dir
+    rm -rf $cert_dir/*
+   rmdir $cert_dir
    exit $SAME_ERROR
 fi
 
@@ -69,7 +74,8 @@ if [ $? == 1 ]; then
     echo "Test has failed"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     rm -rf $voms_tmp
-    rmdir --ignore-fail-on-non-empty $cert_dir
+    rm -rf $cert_dir/*
+    rmdir  $cert_dir
     exit $SAME_ERROR
 fi
 echo "Test is OK"
