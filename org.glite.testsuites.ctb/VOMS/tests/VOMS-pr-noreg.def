@@ -1,0 +1,4 @@
+testName: VOMS-pr-noreg
+testAbbr: pr-nrg
+testTitle: voms-proxy-init: Test "noregen" option
+EOT

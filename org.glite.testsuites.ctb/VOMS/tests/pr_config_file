@@ -12,6 +12,7 @@ export VOMSES="$SAME_SENSOR_HOME/vomses-1928"                  # vomses file for
 export USERCERT="$SAME_SENSOR_HOME/tests/test_user_cert.pem"   # test_user_2_cert.pem
 export USERKEY="$SAME_SENSOR_HOME/tests/test_user_key.pem"     # test_user_2_key.pem
 export PWS="$SAME_SENSOR_HOME/tests/pws"                       # password file for $USER
+export VOMS_CNF="$SAME_SENSOR_HOME/tests/voms.profile"         # config file for option -conf
 
 #--------- temporary files ---------------
 export voms_tmp=$SAME_SENSOR_WORK/nodes/$nodeName/voms_tmp

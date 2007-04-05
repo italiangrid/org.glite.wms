@@ -1,7 +1,7 @@
 #!/bin/bash
 # Date: 21/03/2007                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
-# Description of the test: check option 'confile' for voms-proxy-init                       #
+# Description of the test: check option 'conf' for voms-proxy-init                          #
 #                                                                                           #
 # Input Parameters:                                                                         #
 #       - VO name                                                                           #
@@ -24,17 +24,19 @@ echo "<pre>"
 export voms_host=$1
 source $SAME_SENSOR_HOME/tests/pr_config_file
 
-OPTION="confile"
+OPTION="conf"
 rm -rf $voms_tmp
 
 echo
 date
-
 echo "VOMS-PROXY-INIT: check option - $OPTION"
+
 
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-proxy-init -voms $vo_name -confile $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+echo "1.1. voms-proxy-init"
+voms-proxy-init -vomses $VOMSES -cert $USERCERT -key $USERKEY -conf $VOMS_CNF -pwstdin < $PWS
+#voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"
@@ -62,9 +64,6 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 echo "Test is OK"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER                  
-
+voms-admin --vo=$vo_name -h $voms_host delete-user $USER
 echo "</pre>"
 exit $SAME_OK
-
-
