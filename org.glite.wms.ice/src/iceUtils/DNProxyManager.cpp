@@ -54,6 +54,12 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 		 << log4cpp::CategoryStream::ENDLINE);
   
   for(iceUtil::jobCache::iterator jit = cache->begin(); jit != cache->end(); ++jit) {
+    CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		   << "DNProxyManager::CTOR() - "
+		   << "Found DN ["
+		   << jit->getUserDN() << "] -> Proxy ["
+		   << jit->getUserProxyCertificate() << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
     this->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate());
   }
 }
@@ -77,6 +83,12 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
   //string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
 
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "DN ["
+		   << dn << "] not found. Inserting the proxy ["
+		   << prx << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
     m_DNProxyMap[ dn ] = prx;
     return;
   }
