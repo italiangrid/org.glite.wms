@@ -18,7 +18,11 @@
  */
 
 #include "DNProxyManager.h"
+#include "jobCache.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+
+#include <iostream>
 
 namespace iceUtil = glite::wms::ice::util;
 
@@ -38,6 +42,22 @@ iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
   return s_instance;
 }
 
+//______________________________________________________________________________
+iceUtil::DNProxyManager::DNProxyManager( void ) throw()
+{
+  m_log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
+  iceUtil::jobCache *cache = iceUtil::jobCache::getInstance();
+
+  CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		 << "DNProxyManager::CTOR() - "
+		 << "Populating DN -> Proxy cache by scannig the jobCache..."
+		 << log4cpp::CategoryStream::ENDLINE);
+  
+  for(iceUtil::jobCache::iterator jit = cache->begin(); jit != cache->end(); ++jit) {
+    this->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate());
+  }
+}
+
 //________________________________________________________________________
 void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 { 
@@ -50,7 +70,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 
 //________________________________________________________________________
 void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn, 
-							 const string& prx 
+						    const string& prx 
 						    ) throw()
 { 
 
@@ -68,25 +88,46 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
   try {
     newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft(prx);
   } catch(...) {
-    //cout << "subscriptionManager::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "Cannot retrieve time left for proxy ["
+		   << prx << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
+    //    cout << "subscriptionManager::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
     return;
   }
   
   try {
     oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ] );
   } catch(...) {
-    // cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["
-// 	<<  prx
-// 	<< "] because cannot retrieve time for ["<< m_DNProxyMap[ dn ] <<"]" <<endl;
+//     cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["
+//  	<<  prx
+//  	<< "] because cannot retrieve time for ["<< m_DNProxyMap[ dn ] <<"]" <<endl;
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "Cannot retrieve time left for old proxy ["
+		   << m_DNProxyMap[ dn ] << "]. Setting user proxy to the new one ["
+		   << prx << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
     m_DNProxyMap[ dn ] = prx;
     return;
   }
 
   if(newT > oldT) {
     //cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["<<prx<<"]" <<endl;
+    CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "Setting user proxy to [ "
+		   << prx
+		   << "] because the old one is less long-lived."
+		   << log4cpp::CategoryStream::ENDLINE);
     m_DNProxyMap[ dn ] = prx;
   } else {
-    // cout<< "subscriptionManager::setUserProxyIfLonger - Leaving current proxy ["<< m_DNProxyMap[ dn ] 
-// 	<<"] beacuse will expire later" <<endl;
+    //cout<< "subscriptionManager::setUserProxyIfLonger - Leaving current proxy ["<< m_DNProxyMap[ dn ] 
+    //	<<"] beacuse will expire later" <<endl;
+    CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		   << "Leaving current proxy ["
+		   << m_DNProxyMap[ dn ] <<"] beacuse it will expire later"
+		   << log4cpp::CategoryStream::ENDLINE);
   }
 }

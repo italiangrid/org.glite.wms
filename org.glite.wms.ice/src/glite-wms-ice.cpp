@@ -40,6 +40,7 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "iceThreadPool.h"
+#include "DNProxyManager.h"
 #include "CreamProxyFactory.h"
 #include "filelist_request.h"
 
@@ -275,6 +276,13 @@ int main(int argc, char*argv[])
         exit( 1 );
     }
 
+    /**
+     * Now the cache is ready and filled with all job's information
+     * Let's create the DNProxyManager that also load all DN->ProxyFile mappping
+     * by scanning the cache
+     */
+    iceUtil::DNProxyManager::getInstance();
+    
 
     /*****************************************************************************
      * Initializes ice manager

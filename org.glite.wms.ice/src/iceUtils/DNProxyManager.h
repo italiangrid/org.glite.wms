@@ -24,6 +24,10 @@
 #include <map>
 #include <boost/thread/recursive_mutex.hpp>
 
+namespace log4cpp {
+  class Category;
+};
+
 namespace glite {
   namespace wms {
     namespace ice {
@@ -33,9 +37,11 @@ namespace glite {
 
 	  static DNProxyManager               *s_instance;
 	  std::map<std::string, std::string>   m_DNProxyMap;
+	  log4cpp::Category *m_log_dev;
+
 	protected:
 
-	  DNProxyManager() throw() {};
+	  DNProxyManager() throw();
 	  ~DNProxyManager() throw() {}
 	  
 	public:

@@ -365,7 +365,12 @@ void ice::iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceComma
 
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_ok_event( m_theJob ) );
     
-    
+    // now the job is in cache and has been registered
+    // we can save its proxy into the DN-Proxy Manager's cache
+    {
+      boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+      iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( m_theJob.getUserDN(), m_theJob.getUserProxyCertificate() );
+    }
 
     /*
      * here must check if we're subscribed to the CEMon service
@@ -781,7 +786,7 @@ ice::iceCommandSubmit::pathName::pathName( const string& p ) :
 // } // end function
 
 //______________________________________________________________________________
-void  ice::iceCommandSubmit::doSubscription( /*const string& ce, const string& userProxy*/ const iceUtil::CreamJob& aJob )
+void  ice::iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 {
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );

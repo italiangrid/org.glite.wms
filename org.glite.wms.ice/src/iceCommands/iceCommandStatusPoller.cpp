@@ -88,7 +88,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
         if ( m_poll_all_jobs ||
 	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ) {
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
-                           << "eventStatusPoller::get_jobs_to_poll() - "
+                           << "iceCommandStatusPoller::get_jobs_to_poll() - "
                            << jit->describe()
                            << " t_now=" << t_now
                            << " t_last_seen=" << t_last_seen
@@ -115,7 +115,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
         job_to_query.push_back( jit->getCreamJobID() );
 
         CREAM_SAFE_LOG(m_log_dev->debugStream() 
-                       << "eventStatusPoller::check_jobs() - "
+                       << "iceCommandStatusPoller::check_jobs() - "
                        << "Polling job "
                        << jit->describe()
                        << log4cpp::CategoryStream::ENDLINE);
@@ -126,7 +126,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
 
         } catch( cream_api::cream_exceptions::JobUnknownException& ex) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::check_jobs() - "
+                           << "iceCommandStatusPoller::check_jobs() - "
                            << "CREAM responded JobUnknown for JobId=["
                            << jit->getCreamJobID()
                            << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
@@ -141,7 +141,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
         } catch(soap_proxy::auth_ex& ex) {
 
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::check_jobs() - "
+                           << "iceCommandStatusPoller::check_jobs() - "
                            << "Cannot query status job for JobId=["
                            << jit->describe()
                            << "]. Exception is [" << ex.what() << "]"
@@ -151,7 +151,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
         } catch(soap_proxy::soap_ex& ex) {
 
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::check_jobs() - "
+                           << "iceCommandStatusPoller::check_jobs() - "
                            << "Cannot query status job for JobId=["
                            << jit->describe()
                            << "]. Exception is [" 
@@ -162,7 +162,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
         } catch(cream_api::cream_exceptions::BaseException& ex) {
 
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::check_jobs() - "
+                           << "iceCommandStatusPoller::check_jobs() - "
                            << "Cannot query status job for JobId=["
                            << jit->describe()
                            << "]. Exception is [" 
@@ -173,7 +173,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
         } catch(cream_api::cream_exceptions::InternalException& ex) {
             
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::check_jobs() - "
+                           << "iceCommandStatusPoller::check_jobs() - "
                            << "Cannot query status job for JobId=["
                            << jit->describe()
                            << "]. Exception is [" 
@@ -190,7 +190,7 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
         } catch(cream_api::cream_exceptions::DelegationException& ex) {
             
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::check_jobs() - "
+                           << "iceCommandStatusPoller::check_jobs() - "
                            << "Cannot query status job for JobId=["
                            << jit->describe()
                            << "]. Exception is [" 
@@ -224,7 +224,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
       ++jit)
     {
       CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		     << "eventStatusPoller::check_multiple_jobs() - "
+		     << "iceCommandStatusPoller::check_multiple_jobs() - "
 		     << "Will poll jobs of the user ["
 		     << jit->first.first << "] to CREAM ["
 		     << jit->first.second << "]"
@@ -234,7 +234,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
 	  ++thisJob)
 	{
 	  CREAM_SAFE_LOG(m_log_dev->infoStream() 
-			 << "eventStatusPoller::check_multiple_jobs() - "
+			 << "iceCommandStatusPoller::check_multiple_jobs() - "
 			 << "Will poll job ["
 			 << *thisJob << "]"
 			 << log4cpp::CategoryStream::ENDLINE);
@@ -249,7 +249,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
 	if(proxy == "")
 	  {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			   << "eventStatusPoller::check_multiple_jobs() - "
+			   << "iceCommandStatusPoller::check_multiple_jobs() - "
 			   << "A Proxy file for DN ["
 			   << jit->first.first
 			   << "] is not yet available !!! Skipping..."
@@ -258,7 +258,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
 	  }
 
 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		       << "eventStatusPoller::check_multiple_jobs() - "
+		       << "iceCommandStatusPoller::check_multiple_jobs() - "
 		       << "Authenticating with proxy ["
 		       << proxy
 		       << "]"
@@ -267,7 +267,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
 	m_theProxy->Authenticate( proxy );
 
 	CREAM_SAFE_LOG(m_log_dev->debugStream()
-                       << "eventStatusPoller::check_multiple_jobs() - "
+                       << "iceCommandStatusPoller::check_multiple_jobs() - "
                        << "Connecting to ["
                        << jit->first.second
                        << "]"
@@ -282,7 +282,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
 
       } catch( cream_api::cream_exceptions::JobUnknownException& ex) {
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
-		       << "eventStatusPoller::check_multiple_jobs() - "
+		       << "iceCommandStatusPoller::check_multiple_jobs() - "
 		       << "CREAM responded JobUnknown for DN=["
 		       << jit->first.first
 		       << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
@@ -302,7 +302,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
       } catch(soap_proxy::auth_ex& ex) {
 	
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
-		       << "eventStatusPoller::check_multiple_jobs() - "
+		       << "iceCommandStatusPoller::check_multiple_jobs() - "
 		       << "Cannot query status job for DN=["
 		       << jit->first.first
 		       << "]. Exception is [" << ex.what() << "]"
@@ -312,7 +312,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
       } catch(soap_proxy::soap_ex& ex) {
 	
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
-		       << "eventStatusPoller::check_multiple_jobs() - "
+		       << "iceCommandStatusPoller::check_multiple_jobs() - "
 		       << "Cannot query status job for DN=["
 		       << jit->first.first
 		       << "]. Exception is [" 
@@ -323,7 +323,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
       } catch(cream_api::cream_exceptions::BaseException& ex) {
 	
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
-		       << "eventStatusPoller::check_multiple_jobs() - "
+		       << "iceCommandStatusPoller::check_multiple_jobs() - "
 		       << "Cannot query status job for DN=["
 		       << jit->first.first
 		       << "]. Exception is [" 
@@ -334,7 +334,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
       } catch(cream_api::cream_exceptions::InternalException& ex) {
 	
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
-		       << "eventStatusPoller::check_multiple_jobs() - "
+		       << "iceCommandStatusPoller::check_multiple_jobs() - "
 		       << "Cannot query status job for DN=["
 		       << jit->first.first
 		       << "]. Exception is [" 
@@ -351,7 +351,7 @@ list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_multiple_jobs
       } catch(cream_api::cream_exceptions::DelegationException& ex) {
 	
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
-		       << "eventStatusPoller::check_multiple_jobs() - "
+		       << "iceCommandStatusPoller::check_multiple_jobs() - "
 		       << "Cannot query status job for DN "
 		       << jit->first.first
 		       << "]. Exception is [" 
@@ -390,7 +390,7 @@ void iceUtil::iceCommandStatusPoller::update_single_job( const soap_proxy::JobIn
     iceUtil::jobCache::const_iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
     if ( m_cache->end() != job_pos ) {
         CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << "eventStatusPoller::update_single_job() - "
+                        << "iceCommandStatusPoller::update_single_job() - "
                         << " Managing Job "
                         << job_pos->describe()
                         << " for which I already processed "
@@ -419,7 +419,7 @@ void iceUtil::iceCommandStatusPoller::update_single_job( const soap_proxy::JobIn
         
         if ( m_cache->end() == jit ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "eventStatusPoller::update_single_job() -  cream_jobid ["
+                           << "iceCommandStatusPoller::update_single_job() -  cream_jobid ["
                            << cid << "] disappeared!"
                            << log4cpp::CategoryStream::ENDLINE);
             return;
@@ -438,7 +438,7 @@ void iceUtil::iceCommandStatusPoller::update_single_job( const soap_proxy::JobIn
         // remove from the cache and forget about it.
         if ( stNum == jobstat::PURGED ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "eventStatusPoller::update_single_job() - "
+                           << "iceCommandStatusPoller::update_single_job() - "
                            << "Job "
                            << jit->describe()
                            << " is reported as PURGED. Removing from cache"
@@ -452,7 +452,7 @@ void iceUtil::iceCommandStatusPoller::update_single_job( const soap_proxy::JobIn
         if ( jit->get_num_logged_status_changes() < count ) {
             
             CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "eventStatusPoller::update_single_job() - "
+                           << "iceCommandStatusPoller::update_single_job() - "
                            << "Updating jobcache for "
                            << jit->describe()
                            << " status = [" << it->getStatusName() << "]"
@@ -488,9 +488,9 @@ void iceUtil::iceCommandStatusPoller::update_single_job( const soap_proxy::JobIn
 void iceUtil::iceCommandStatusPoller::execute( ) throw()
 {
   list< iceUtil::CreamJob > j_list( get_jobs_to_poll() );
-  list< soap_proxy::JobInfo > j_status( check_jobs( j_list ) );
+  //list< soap_proxy::JobInfo > j_status( check_jobs( j_list ) );
   
-  //list< soap_proxy::JobInfo > j_status( check_multiple_jobs( j_list ) );
+  list< soap_proxy::JobInfo > j_status( check_multiple_jobs( j_list ) );
   
   try {
   
