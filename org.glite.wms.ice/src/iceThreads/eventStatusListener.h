@@ -21,12 +21,6 @@
 #define GLITE_WMS_ICE_UTIL_EVENTSTATUSLISTENER_H
 
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
-
-//#include "glite/ce/monitor-client-api-c/CEPing.h"
-#include "glite/ce/cream-client-api-c/job_statuses.h"
-#include "boost/thread/recursive_mutex.hpp"
-#include "boost/scoped_ptr.hpp"
-
 #include "iceThread.h"
 
 // Forward declaration for the logger
@@ -51,10 +45,7 @@ namespace glite {
 
       namespace util {
           
-          class jobCache;
           class iceConfManager;
-          class iceLBLogger;
-	  class subscriptionManager;
 
 	//! A class that receives notification from CEMon about job status changes
 	/**!
@@ -65,36 +56,21 @@ namespace glite {
 
 	*/
 	class eventStatusListener : public CEConsumer, public iceThread {
-	    //std::string m_grid_JOBID, m_cream_JOBID;
-	  //glite::ce::cream_client_api::job_statuses::job_status m_status;
-	  //boost::scoped_ptr<CEPing> m_pinger;
-	  //std::vector<std::string> m_activeSubscriptions;
-	  //std::string m_proxyfile;
-	  //int m_tcpport;
 	  std::string                                            m_myname;
-	  //glite::wms::ice::util::iceConfManager*               m_conf;
 	  const glite::wms::common::configuration::ICEConfiguration*  m_conf;
           log4cpp::Category                                     *m_log_dev;
-          iceLBLogger                                           *m_lb_logger;
 	  bool                                                   m_isOK;
-          jobCache*                                              m_cache;
-	  subscriptionManager*                                   m_subManager;
           glite::wms::ice::Ice*                                  m_ice_manager;
 
-	  void init(void);
-
-          void handleEvent( const monitortypes__Event& ev );
-
 	protected:
+
 	  eventStatusListener(const eventStatusListener&) : 
               CEConsumer(9999)
-	    //m_pinger(0)
               {}
 
 	  void createObject();
 
 	public:
-	  // static boost::recursive_mutex mutexJobStatusUpdate;
 
 	  eventStatusListener(const int& i, const std::string& hostcert);
 	  

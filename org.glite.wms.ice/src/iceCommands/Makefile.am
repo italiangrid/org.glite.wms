@@ -8,7 +8,7 @@
 
 lib_LTLIBRARIES = libglite_wms_iceCommands.la
 
-libglite_wms_iceCommands_la_SOURCES = iceCommandSubmit.cpp iceCommandCancel.cpp iceCommandFactory.cpp iceCommandJobKill.cpp iceCommandLeaseUpdater.cpp iceCommandProxyRenewal.cpp iceCommandStatusPoller.cpp iceCommandSubUpdater.cpp 
+libglite_wms_iceCommands_la_SOURCES = iceCommandSubmit.cpp iceCommandCancel.cpp iceCommandFactory.cpp iceCommandJobKill.cpp iceCommandLeaseUpdater.cpp iceCommandProxyRenewal.cpp iceCommandStatusPoller.cpp iceCommandSubUpdater.cpp iceCommandUpdateStatus.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
