@@ -20,6 +20,12 @@
 
         Revision history:
         $Log$
+        Revision 1.5  2007/04/06 10:15:14  amarasch
+        Merged From 3.1 (configuration files)
+
+        Revision 1.4.2.1  2007/01/17 16:12:49  rlops
+        added a flag to produce what ui is needed when ns build is disabled
+
         Revision 1.4  2006/03/15 10:31:12  amarasch
         Ares migration to c-ares
 
@@ -34,7 +40,7 @@
         
 <project name="configure options">                                                                        
 	<property name="configure.args"
-               value="--prefix=${workspace.abs.dir}/stage --with-globus-prefix=${with.globus.prefix} --with-globus-thr-flavor=${with.globus.thr.flavor} --with-globus-nothr-flavor=${with.globus.nothr.flavor} --with-classads-prefix=${with.classads.prefix} --with-boost-prefix=${with.boost.prefix} --with-expat-prefx=${with.expat.prefix} --enable-boost_debug=${enable.boost.debug} --with-swig-prefix=${with.swig.prefix} --with-glite-location=${with.glite.location} --with-dist-location=${with.dist.location}"/>
+               value="--prefix=${workspace.abs.dir}/stage --with-globus-prefix=${with.globus.prefix} --with-globus-thr-flavor=${with.globus.thr.flavor} --with-globus-nothr-flavor=${with.globus.nothr.flavor} --with-classads-prefix=${with.classads.prefix} --with-boost-prefix=${with.boost.prefix} --with-expat-prefx=${with.expat.prefix} --enable-boost_debug=${enable.boost.debug} --with-swig-prefix=${with.swig.prefix} --with-glite-location=${with.glite.location} --with-dist-location=${with.dist.location} --enable-wms-ns-integration=${enable.wms.ns.integration} "/>
 
 	 <property name="build.make.arguments" value="SWIG_LIB=${with.swig.prefix}/lib/swig1.3"/>
 </project>

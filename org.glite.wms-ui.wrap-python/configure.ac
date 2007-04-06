@@ -19,8 +19,56 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.17  2006/07/26 16:51:58  amarasch
-#       SD libraries properly linked
+#       Revision 1.18  2007/04/06 10:15:14  amarasch
+#       Merged From 3.1 (configuration files)
+#
+#       Revision 1.16.2.16  2007/04/03 15:27:51  amarasch
+#       Minor version upgraded due to important changes: LB automatic generation
+#
+#       Revision 1.16.2.15  2007/04/03 08:06:50  rlops
+#       increased version
+#
+#       Revision 1.16.2.14  2007/02/21 17:50:38  amarasch
+#       AC PYTHON set to 2.2.3
+#
+#       Revision 1.16.2.13  2007/02/21 17:42:24  amarasch
+#       version updated to 3.1.9 (python version for SL4
+#
+#       Revision 1.16.2.12  2007/02/21 17:40:02  amarasch
+#       ETICS python version updated
+#
+#       Revision 1.16.2.11  2007/02/20 13:55:34  rlops
+#       increased version
+#
+#       Revision 1.16.2.10  2007/02/08 16:18:25  rlops
+#       increased version
+#
+#       Revision 1.16.2.9  2007/01/25 13:47:04  amarasch
+#       ns m4 added to compilation (yet still not working, libraries specified by hand)
+#
+#       Revision 1.16.2.8  2007/01/17 16:12:49  rlops
+#       added a flag to produce what ui is needed when ns build is disabled
+#
+#       Revision 1.16.2.7  2006/12/06 17:40:42  eronchie
+#       Increased version
+#
+#       Revision 1.16.2.6  2006/11/22 11:28:15  eronchie
+#       Increased version
+#
+#       Revision 1.16.2.5  2006/09/22 10:00:55  amarasch
+#       version updated for new tag 3.1.4
+#
+#       Revision 1.16.2.4  2006/08/01 10:08:06  amarasch
+#       Version 3.1.3: voms parsed correctly
+#
+#       Revision 1.16.2.3  2006/07/26 16:16:29  amarasch
+#       Service Discovery library properly linked
+#
+#       Revision 1.16.2.2  2006/06/27 16:08:40  amarasch
+#       bug #17601 fix: WMS RPMS should not contain Change me for i in org.glite.wms-ui.api-cpp  org.glite.wms-ui.api-java org.glite.wms-ui.cli-python org.glite.wms-ui.configuration org.glite.wms-ui.gui-java org.glite.wms-ui.wrap-java org.glite.wms-ui.wrap-python ; do echo ********; echo org.glite.wms-ui.wrap-python ; echo ********* ; \! in summary / description
+#
+#       Revision 1.16.2.1  2006/04/19 15:15:25  amarasch
+#       version updated for incoming new tag (bugfix #16029)
 #
 #       Revision 1.16  2006/03/20 15:52:38  eronchie
 #       *** empty log message ***
@@ -66,11 +114,11 @@
 #       Start adding wrap-python
 #
 #
-                                                                                                                                                             
+
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI Wrap python], [3.1.0])
+AC_INIT([GLite WMS UI Wrap python], [3.2.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/NsWrapper.h])
@@ -152,7 +200,15 @@ have_glite_dgas_common=no
 have_glite_security=no
 
 AC_GLITE
+
 AC_GLITE_SERVICE_DISCOVERY
+
+
+AC_GLITE_WMS_NS_CLIENT([], have_glite_wms_ns_client=yes, have_glite_wms_ns_client=no)
+AC_MSG_RESULT(["GLITE_WMS_NS_CLIENT found $have_glite_wms_ns_client"])
+
+AC_GLITE_WMS_NS_COMMON([], have_glite_wms_ns_common=yes, have_glite_wms_ns_common=no)
+AC_MSG_RESULT(["GLITE_WMS_NS_COMMON found $have_glite_wms_ns_common"])
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
@@ -180,6 +236,8 @@ AC_MSG_RESULT(["GLITE_WMS_CHKPT found $have_glite_wms_chkpt"])
 
 AC_GLITE_WMS_PARTITIONER([], have_glite_wms_part=yes, have_glite_wms_part=no)
 AC_MSG_RESULT(["GLITE_WMS_PARTITIONER found $have_glite_wms_part"])
+
+AC_GLITE_WMS_UI_OPTIONAL
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
