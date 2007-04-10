@@ -20,6 +20,7 @@
 #include "proxyRenewal.h"
 #include "jobCache.h"
 #include "CreamProxyFactory.h"
+#include "iceUtils.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -38,8 +39,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-using namespace glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
+using namespace glite::ce::cream_client_api;
 using namespace std;
 
 //______________________________________________________________________________
@@ -57,12 +58,11 @@ proxyRenewal::proxyRenewal() :
 //______________________________________________________________________________
 void proxyRenewal::body( void )
 {
-    while( !isStopped() ) {
-
-      CREAM_SAFE_LOG(m_log_dev->infoStream()
-		     << "proxyRenewal::body() - new iteration"
-		     << log4cpp::CategoryStream::ENDLINE);
-
+    while( !isStopped() ) {        
+        CREAM_SAFE_LOG(m_log_dev->infoStream()
+                       << "proxyRenewal::body() - new iteration"
+                       << log4cpp::CategoryStream::ENDLINE);
+        
 	checkProxies();
         sleep( m_delay );
     }
@@ -71,56 +71,60 @@ void proxyRenewal::body( void )
 //______________________________________________________________________________
 void proxyRenewal::checkProxies()
 {
-  boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
-  for(jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
-      if ( ! jobIt->is_active() ) 
-          continue; // skip terminated jobs
+    for(jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
+        if ( ! jobIt->is_active() ) 
+            continue; // skip terminated jobs
 
-    struct stat buf;
-    if( ::stat( jobIt->getUserProxyCertificate().c_str(), &buf) == 1 )
-    {
-      CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "proxyRenewal::checkProxies() - Cannot stat proxy file ["
-		     << jobIt->getUserProxyCertificate() << "] for job ["
-		     << jobIt->getCreamJobID() << "]. Wont check if it needs to be renewed."
-		     << log4cpp::CategoryStream::ENDLINE);
-        // FIXME: what to do?
-    } else {
-      if( buf.st_mtime > jobIt->getProxyCertLastMTime() ) {
-	CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		       << "proxyRenewal::checkProxies() - Need to renew proxy  ["
-		       << jobIt->getUserProxyCertificate() << "] for job ["
-		       << jobIt->getCreamJobID() << "]"
-		       << log4cpp::CategoryStream::ENDLINE);
-
-        //m_creamClient->clearSoap( );
-
-        try {
-            m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
-
-            vector< string > theJob;
-            theJob.push_back( jobIt->getCreamJobID() );
-
-            m_creamClient->renewProxy( jobIt->getDelegationId(),
-                                     jobIt->getCreamURL(),
-                                     jobIt->getCreamDelegURL(),
-                                     jobIt->getUserProxyCertificate(),
-                                     theJob );
-        } catch( soap_proxy::soap_ex& ex ) {
-            // FIXME: what to do? for now let's continue with an error message
-	  CREAM_SAFE_LOG( m_log_dev->errorStream() 
-			  << "proxyRenewal::checkProxies() - Proxy renew failed: ["
-			  << ex.what() << "]"
-			  << log4cpp::CategoryStream::ENDLINE);
+        struct stat buf;
+        if( ::stat( jobIt->getUserProxyCertificate().c_str(), &buf) == 1 ) {
+            CREAM_SAFE_LOG(m_log_dev->errorStream() 
+                           << "proxyRenewal::checkProxies() - Cannot stat proxy file ["
+                           << jobIt->getUserProxyCertificate() << "] for job "
+                           << jobIt->describe() << ". Cannot check if it needs to be renewed."
+                           << log4cpp::CategoryStream::ENDLINE);
+            return;
+            // FIXME: what to do?
         }
 
-        jobIt->setProxyCertMTime( buf.st_mtime );
-        m_cache->put( *jobIt );
 
-	// update of lastmodification time of proxy file
-	// put in cache
-      }
+        CREAM_SAFE_LOG(m_log_dev->infoStream()
+                       << "proxyRenewal::checkProxies() - "
+                       << "Proxy file ["
+                       << jobIt->getUserProxyCertificate()
+                       << "] was modified on " 
+                       << time_t_to_string( buf.st_mtime )
+                       << ", the last proxy file modification time recorded by ICE is "
+                       << time_t_to_string( jobIt->getProxyCertLastMTime() )
+                       << log4cpp::CategoryStream::ENDLINE);
+
+        if( buf.st_mtime > jobIt->getProxyCertLastMTime() ) {
+            
+            try {
+                m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
+                
+                vector< string > theJob;
+                theJob.push_back( jobIt->getCreamJobID() );
+                
+                m_creamClient->renewProxy( jobIt->getDelegationId(),
+                                           jobIt->getCreamURL(),
+                                           jobIt->getCreamDelegURL(),
+                                           jobIt->getUserProxyCertificate(),
+                                           theJob );
+            } catch( soap_proxy::soap_ex& ex ) {
+                // FIXME: what to do? for now let's continue with an error message
+                CREAM_SAFE_LOG( m_log_dev->errorStream() 
+                                << "proxyRenewal::checkProxies() - Proxy renew failed: ["
+                                << ex.what() << "]"
+                                << log4cpp::CategoryStream::ENDLINE);
+            }
+            
+            jobIt->setProxyCertMTime( buf.st_mtime );
+            m_cache->put( *jobIt );
+            
+            // update of lastmodification time of proxy file
+            // put in cache
+        }
     }
-  }
 }
