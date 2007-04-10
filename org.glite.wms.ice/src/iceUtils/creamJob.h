@@ -84,7 +84,7 @@ namespace glite {
           //! Sets the jdl for this job
           void setJdl( const std::string& j ) throw( ClassadSyntax_ex& );
           //! Sets the sequence code
-          void setSequenceCode( const std::string& seq ) { m_sequence_code = seq; }
+          void setSequenceCode( const std::string& seq ); // { m_sequence_code = seq; }
           //! Sets the delegation id
           void setDelegationId( const std::string& delid ) { m_delegation_id = delid; }
           //! Sets the new lease end time

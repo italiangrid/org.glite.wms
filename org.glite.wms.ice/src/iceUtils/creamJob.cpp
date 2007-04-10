@@ -39,6 +39,7 @@
 extern int errno;
 
 namespace api = glite::ce::cream_client_api;
+namespace api_util = glite::ce::cream_client_api::util;
 namespace fs = boost::filesystem;
 
 using namespace std;
@@ -51,8 +52,8 @@ CreamJob::CreamJob( ) :
     m_last_seen( time(0) ),
     m_end_lease( 0 ), 
     m_statusPollRetryCount( 0 ),
+    //    m_user_dn(""),
     m_exit_code( 0 ),
-    m_user_dn(""),
     m_is_killed_by_ice( false )
 {
 
@@ -279,4 +280,25 @@ string CreamJob::describe( void ) const
     result.append( getCreamJobID() );
     result.append( "\"" );
     return result;
+}
+
+void CreamJob::setSequenceCode( const std::string& seq )
+{
+    m_sequence_code = seq;
+
+    // Update the jdl
+    classad::ClassAdParser parser;
+    classad::ClassAd* jdl_ad = parser.ParseClassAd( m_jdl );
+    
+    if (!jdl_ad) {
+        CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
+		       << "CreamJob::update_jdl() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
+                       << m_jdl << "]. STOP!"
+		       << log4cpp::CategoryStream::ENDLINE);
+        abort();
+    }
+    jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
+
+    classad::ClassAdUnParser unparser;
+    unparser.Unparse( m_jdl, jdl_ad );
 }
