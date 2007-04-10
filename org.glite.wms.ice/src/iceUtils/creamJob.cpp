@@ -292,7 +292,7 @@ void CreamJob::setSequenceCode( const std::string& seq )
     
     if (!jdl_ad) {
         CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
-		       << "CreamJob::update_jdl() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
+		       << "CreamJob::setSequenceCode() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
                        << m_jdl << "]. STOP!"
 		       << log4cpp::CategoryStream::ENDLINE);
         abort();
