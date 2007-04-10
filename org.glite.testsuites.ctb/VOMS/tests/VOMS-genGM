@@ -17,11 +17,18 @@
 #                                                                                           #
 #############################################################################################
 echo "<pre>"
+echo " for correct starting this test, use Maarten recommendation:"
+echo "proxy=\${X509_USER_PROXY:-/tmp/x509up_u\`id -u\`}"
+echo "export X509_USER_CERT=\$proxy"
+echo "export X509_USER_KEY=\$proxy"
+echo "export HTTPS_CA_FILE=\$proxy"
+
 export voms_host=$1
 source $SAME_SENSOR_HOME/tests/config_file
+source $SAME_SENSOR_HOME/tests/maarten
 
-export mkgrid="/opt/edg/libexec/edg-mkgridmap"
-
+#export mkgrid="/opt/edg/libexec/edg-mkgridmap"                    # (strange!!!) noncorrect
+export mkgrid="/opt/edg/libexec/edg-mkgridmap/edg-mkgridmap.pl"    # Correct
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
@@ -36,6 +43,7 @@ echo "CA1=$CA"
 echo "<br>"
 echo "CA2=$CA_CERN"
 echo "<br>"
+echo "$ACCOUNT"
 
 user1="DN_USER1"
 user2="DN_USER2"
@@ -54,7 +62,7 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-echo "Generate gridmap file for empty VO"
+echo "Scenario: generate gridmap file for empty VO"
 echo "<br>"
 $mkgrid --conf=$GRIDMAP --output=$voms_tmp
 
@@ -69,6 +77,8 @@ then
    exit $SAME_ERROR
 fi
 
+echo "OK"
+
 echo "SCENARIO: Create gridmap file for one user"
 echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user1" "$CA" "CN-User1" "user1@cern.ch"
@@ -76,7 +86,16 @@ rm -rf $tempo
 $mkgrid --conf=$GRIDMAP --output=$voms_tmp
 usr=`cat $voms_tmp | cut -d" " -f1`
 acc=`cat $voms_tmp | cut -d" " -f2`
+
+#echo "DEBUG 1 =============="
+#echo $usr
+#echo $acc
+#cat $voms_tmp
+#echo "=================="
+
+
 grep "$user1" $voms_tmp > $tempo
+#grep "$usr" $voms_tmp > $tempo
 
 if [ $? == 1 ]; then
    echo "Incorrect User DN in gridmap file"
@@ -96,10 +115,19 @@ if [ $acc != $ACCOUNT ]; then
    exit $SAME_ERROR
 fi
 
+echo "OK"
+
 echo "SCENARIO: Create gridmap file for same user DN but different CA"
 echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user1" "$CA_CERN" "CN-User1" "user1@cern.ch"
 $mkgrid --conf=$GRIDMAP --output=$voms_tmp
+
+
+#echo "Debug 2 ============"
+#cat $voms_tmp
+#echo "================="
+
+
 lines=`grep -c "$user1" $voms_tmp` 
 
 if [ $lines != 1 ]; then
@@ -113,6 +141,7 @@ fi
 voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
 voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA_CERN"
 
+echo "OK"
 
 UMAX=3
 echo "SCENARIO: Create gridmap file for $UMAX users"
@@ -125,6 +154,11 @@ while [ $counter -lt $UMAX ]; do
 done
 
 $mkgrid --conf=$GRIDMAP --output=$voms_tmp
+
+#echo "DEBUG 3 ====================="
+#cat $voms_tmp
+#echo "========================="
+
 
 counter=0
 while [ $counter -lt $UMAX ]; do
@@ -148,6 +182,7 @@ while [ $counter -lt $UMAX ]; do
   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user" "$CA"
   let counter=counter+1
 done
+echo "OK"
 
 echo "Cleaning tasks"
 echo "<br>"
