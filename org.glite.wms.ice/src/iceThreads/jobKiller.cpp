@@ -88,18 +88,19 @@ void jobKiller::body()
                                     << log4cpp::CategoryStream::ENDLINE); 
 		    
 		    iceCommandJobKill( *job_it ).execute();
+
                 } else {
-                    CREAM_SAFE_LOG( m_log_dev->infoStream() 
-                                    << "jobKiller::body() - Job ["
-                                    << job_it->getCreamJobID() << "]"
-                                    << " has proxy expiring in "
-                                    << proxyTimeLeft 
-                                    << " seconds, which is already/about "
-                                    << "to expire, or more than "
-                                    << "the threshold ("
-                                    << m_threshold_time << " seconds). "
-                                    << "Going to cancel it..."
-                                    << log4cpp::CategoryStream::ENDLINE); 
+//                     CREAM_SAFE_LOG( m_log_dev->infoStream() 
+//                                     << "jobKiller::body() - Job ["
+//                                     << job_it->getCreamJobID() << "]"
+//                                     << " has proxy expiring in "
+//                                     << proxyTimeLeft 
+//                                     << " seconds, which is already/about "
+//                                     << "to expire, or more than "
+//                                     << "the threshold ("
+//                                     << m_threshold_time << " seconds). "
+//                                     << "Going to cancel it..."
+//                                     << log4cpp::CategoryStream::ENDLINE); 
 
                 }
             } //loop over all jobCache's jobs
