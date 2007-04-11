@@ -190,15 +190,14 @@ void JobSubmit::readOptions (int argc,char **argv){
 	// --valid & --to
 	m_validOpt = wmcOpts->getStringAttribute(Options::VALID);
 	m_toOpt = wmcOpts->getStringAttribute(Options::TO);
-	
 	// --start: incompatible options
 	if (!m_startOpt.empty() &&
-		(registerOnly || !m_inOpt.empty() || !m_resourceOpt.empty() || !m_nodesresOpt.empty() || !m_toOpt.empty() || 
+		(registerOnly || !m_inOpt.empty() || !m_resourceOpt.empty() || !m_nodesresOpt.empty() || !m_toOpt.empty() ||
 			!m_validOpt.empty() ||
 			!m_chkptOpt.empty() || !m_collectOpt.empty() ||
 			!m_dagOpt.empty() || !m_defJdlOpt.empty() ||
-			!wmcOpts->getStringAttribute(Options::DELEGATION).empty()) ||
-			wmcOpts->getBoolAttribute(Options::AUTODG)  ){
+			!wmcOpts->getStringAttribute(Options::DELEGATION).empty() ||
+			wmcOpts->getBoolAttribute(Options::AUTODG) ) ){
 		info << "The following options cannot be specified together with --start:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
@@ -271,7 +270,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 		if (endpoint.compare(getEndPoint( )) !=0 ) {
 			logInfo->print(WMS_WARNING, "--endpoint " + endpoint + " : option ignored");
 		}
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 	} else {
 		// Normal Behaviour: retrieves the endpoint URL
 		retrieveEndPointURL( );
