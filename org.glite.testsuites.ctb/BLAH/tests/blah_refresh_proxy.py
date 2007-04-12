@@ -98,7 +98,6 @@ def test_blah_job():
     #-------------------------------------------------------------------------------
     os.write(fin.fileno(), 'results\n')
     res = blah_def.read_line(fout)
-    print res
     numLines = blah_def.to_int(res.split()[-1])
                                                                                                                    
     #--------------------------------------------------------------------
@@ -136,15 +135,12 @@ def test_blah_job():
             functions.samNewLine()
             sys.exit(2)
     else :
-            print res
-            print "The Job was successfully submitted via the blah_job_submit command, the jobid is: " + jobid + " and the job status is: " + res[res.find("JobStatus") + 14]
+            #print "The Job was successfully submitted via the blah_job_submit command, the jobid is: " + jobid + " and the job status is: " + res[res.find("JobStatus") + 14]
             jobstatus =  res[res.find("JobStatus") + 14]
             if ((jobstatus == "1") or (jobstatus == "2")):
-              print "about to launch the refresh proxy command" 
     #-------------------------------------------------------------------------------
     #Launch the job_refresh_proxy command and get first result from output
     #-------------------------------------------------------------------------------
-              print proxy_file 
               os.write(fin.fileno(), 'blah_job_refresh_proxy 3 ' + jobid + ' ' + proxy_file + '\n')
               blah_def.read_line(fout)
                                                                                                                        
@@ -181,8 +177,6 @@ def test_blah_job():
     #Get the Jobid returned, in case everything is ok,
     #else check if an error is returned
     #---------------------------------------------------------------------------------
-              print "refresh proxy return code"
-              print res[2]
               if (res[2] != '0'):
                  functions.samPrintFAILED()
                  print "Problem with refresh proxy command"
