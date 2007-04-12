@@ -103,6 +103,46 @@ list< iceUtil::CreamJob > iceUtil::iceCommandStatusPoller::get_jobs_to_poll( voi
 }
 
 //____________________________________________________________________________
+int iceUtil::iceCommandStatusPoller::get_jobs_to_poll_max_num( list<iceUtil::CreamJob>& result, const int max_num ) 
+{
+  result.clear();
+  boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+  
+  int counter = 0;
+
+  for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
+    
+    if( jit->getCreamJobID().empty() ) {
+      // This job doesn't have yet the CREAM Job ID. Skipping...
+      continue;
+    }
+    
+    time_t t_now( time(NULL) );
+    time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
+    time_t oldness = t_now - t_last_seen;
+    
+    if ( m_poll_all_jobs ||
+	 ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ) {
+      CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		     << "iceCommandStatusPoller::get_jobs_to_poll() - "
+		     << jit->describe()
+		     << " t_now=" << t_now
+		     << " t_last_seen=" << t_last_seen
+		     << " oldness=" << oldness 
+		     << " threshold=" << m_threshold
+		     << log4cpp::CategoryStream::ENDLINE);
+      
+      result.push_back( *jit );
+      if( (++counter) >= max_num )
+	break;
+    }
+  }
+
+  return result.size();
+  
+}
+
+//____________________________________________________________________________
  list< soap_proxy::JobInfo > iceUtil::iceCommandStatusPoller::check_jobs( const list< CreamJob > & job_list ) 
 {
     list< soap_proxy::JobInfo > result;
@@ -487,27 +527,38 @@ void iceUtil::iceCommandStatusPoller::update_single_job( const soap_proxy::JobIn
 //____________________________________________________________________________
 void iceUtil::iceCommandStatusPoller::execute( ) throw()
 {
-  list< iceUtil::CreamJob > j_list( get_jobs_to_poll() );
+  /**
+   * OLD CODE TO POLL JOB BY JOB
+   */
+  //list< iceUtil::CreamJob > j_list( get_jobs_to_poll() );
   //list< soap_proxy::JobInfo > j_status( check_jobs( j_list ) );
   
-  list< soap_proxy::JobInfo > j_status( check_multiple_jobs( j_list ) );
   
-  try {
-  
-    updateJobCache( j_status );
-  
-  } catch(exception& ex) {
-    CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "iceCommandStatusPoller::execute() - "
-			 << "catched std::exception: "
-			 << ex.what()
-			 << log4cpp::CategoryStream::ENDLINE);
-  } catch(...) {
-    CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "iceCommandStatusPoller::execute() - "
-			 << "catched unknown exception"
-			 << log4cpp::CategoryStream::ENDLINE);
+  list< iceUtil::CreamJob > j_list;
+  while( get_jobs_to_poll_max_num(j_list, 100) > 0 ) {
+    
+    list< soap_proxy::JobInfo > j_status( check_multiple_jobs( j_list ) );
+    
+    
+    
+    try {
+      
+      updateJobCache( j_status );
+      
+    } catch(exception& ex) {
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "iceCommandStatusPoller::execute() - "
+		     << "catched std::exception: "
+		     << ex.what()
+		     << log4cpp::CategoryStream::ENDLINE);
+    } catch(...) {
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "iceCommandStatusPoller::execute() - "
+		     << "catched unknown exception"
+		     << log4cpp::CategoryStream::ENDLINE);
+    }
   }
+
 }
 
 //____________________________________________________________________________
