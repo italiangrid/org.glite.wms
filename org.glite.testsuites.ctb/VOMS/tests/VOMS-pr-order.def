@@ -1,0 +1,4 @@
+testName: VOMS-pr-order
+testAbbr: pr-ordr
+testTitle: voms-proxy-init: Test groups "order" option
+EOT

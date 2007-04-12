@@ -34,8 +34,8 @@ echo "Role=$ROLE"
 echo "<br>"
 echo "Group=$GROUP"
 echo "<br>"
-echo "User=$USER_subject"
-echo "<br>"
+#echo "User=$USER_subject"
+#echo "<br>"
 
 echo "SCENARIO: VO empty"
 echo "<br>"
@@ -93,11 +93,15 @@ fi
 echo "SCENARIO: Create user"
 echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+echo "User subject=$user_subject"
+
 voms-admin --vo=$vo_name -h $voms_host  assign-role "/"$vo_name"/"$GROUP $ROLE $USER
 echo "List users of role $ROLE in group $GROUP"
 echo "<br>"
 voms-admin --vo=$vo_name -h $voms_host list-users-with-role "/"$vo_name"/"$GROUP $ROLE > $voms_tmp
-grep "$USER_subject" $voms_tmp > /dev/null
+#cat $voms_tmp
+grep "$user_subject" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER

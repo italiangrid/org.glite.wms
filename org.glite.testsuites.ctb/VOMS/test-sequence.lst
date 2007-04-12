@@ -8,6 +8,7 @@ VOMS-listRoles
 VOMS-assignRole
 VOMS-dismissRole
 VOMS-listUserRoles
+VOMS-listUsrWithRol
 VOMS-crGroup
 VOMS-delGroup
 VOMS-listGroups
@@ -61,4 +62,4 @@ VOMS-pr-attr
 VOMS-pr-noreg
 VOMS-pr-pver
 VOMS-pr-conf
-VOMS-pr-cdir
+VOMS-pr-order

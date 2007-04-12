@@ -1,0 +1,200 @@
+#!/bin/bash
+# Date: 10/04/2007                                                                          #
+# Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Description of the test: check "groups order' for voms-proxy-init                         #
+#                                                                                           #
+# Input Parameters:                                                                         #
+#       - VO name                                                                           #
+#       - VO host name                                                                      #
+#       - User certificate                                                                  #
+# Requisites:                                                                               #
+#       - VOMS server                                                                       #
+#       - 1 configured VO                                                                   #
+#       - user certificate                                                                  #
+#       - user key                                                                          #
+#       - vomses:  VOMS description                                                         # 
+#                                                                                           #
+#############################################################################################
+#                                                                                           #
+# Note on security issues: the host and user certificates used by this test are dummy ones  #
+# provided by the test utils package.                                                       #
+#                                                                                           #
+#############################################################################################
+Groups=( "group1" "group2" "group3" "group4" "group5" )
+Subgroups=( "sgroup_11" "sgroup_12" "sgroup_13" "sgroup_14" "sgroup_15" )
+
+function crGroups {
+for group in ${Groups[*]}
+do
+    groupi="$vo_name/$group"
+    #echo "Create group: $groupi"
+    voms-admin --vo=$vo_name -h $voms_host create-group "$groupi"
+done
+}
+
+function crSubgroups {
+work="/$vo_name/${Groups[0]}"
+for group in ${Subgroups[*]}
+do 
+    groupi="$work/$group"
+    #echo "Create group: $groupi"
+    voms-admin --vo=$vo_name -h $voms_host create-group "$groupi"
+    work="$groupi"    
+done
+}
+
+function delSubgroups {
+    work="/$vo_name/${Groups[0]}"
+    count=0
+    for group in ${Subgroups[*]}
+    do
+	groupi="$work/$group"
+	groupArray[count]=$work
+	work="$groupi"
+	let count=count+1
+    done
+    groupArray[count]=$work
+    ng=${#groupArray[*]}
+                                       
+    let count=$ng-1
+                                               
+    while [ $count -gt 0 ]
+    do
+	groupi=${groupArray[$count]}
+	echo "Delete sub-group: $groupi"
+	voms-admin --vo=$vo_name -h $voms_host delete-group "$groupi"
+	let count=count-1
+    done
+}                                                   
+
+function delGroups {
+for group in ${Groups[*]}
+do
+    groupi="/$vo_name/$group"
+    echo "Delete group: $groupi"
+    voms-admin --vo=$vo_name -h $voms_host delete-group $groupi
+done
+}
+
+function clearTask {
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    delSubgroups
+    delGroups
+}
+
+echo "<pre>"
+export voms_host=$1
+source $SAME_SENSOR_HOME/tests/pr_config_file
+
+rm -rf $voms_tmp
+
+OPTION="order"
+echo
+date
+echo "VOMS-PROXY-INIT: check option - $OPTION for groups"
+echo "VO: $vo_name"
+echo "VOMS: $VOMSES"
+echo "cert: $USERCERT"
+echo "key: $USERKEY"
+echo "PWS: $PWS"
+NG=${#Groups[*]}
+
+echo "1. Create new user"
+voms-admin --vo=$vo_name -h $voms_host create-user $USER
+
+echo "List users:"
+voms-admin --vo=$vo_name -h $voms_host list-users
+
+echo "1.1. Create $NG groups"
+
+crGroups
+
+echo "List groups"
+voms-admin --vo=$vo_name -h $voms_host list-groups
+
+echo "1.2. Create subgroups, list all groups"
+crSubgroups
+voms-admin --vo=$vo_name -h $voms_host list-groups
+
+echo "1.3. Add user to groups as group member"
+
+for group in ${Groups[*]}
+do
+    groupi="/$vo_name/$group"
+    echo "Add member to group: $groupi"
+    voms-admin --vo=$vo_name -h $voms_host add-member $groupi $USER
+done
+
+echo "1.4. Add user to subgroups as group member"
+work="/$vo_name/${Groups[0]}"
+
+for group in ${Subgroups[*]}
+do 
+    groupi="$work/$group"
+    echo "Add member to sub-group: $groupi"
+    voms-admin --vo=$vo_name -h $voms_host add-member "$groupi" $USER
+    work="$groupi"    
+done
+
+echo "1.5. List user groups:"
+voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER
+
+echo "2. Check proxy info"
+echo "Create proxy"
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -order "/$vo_name/${Groups[0]}" -order "/$vo_name/${Groups[0]}/sgroup_11" -order "/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14" -pwstdin < $PWS
+
+echo "2.1. Execute voms-proxy-info -fqan"
+voms-proxy-info -fqan > $voms_tmp
+
+cat $voms_tmp
+
+echo "2.2. Check result -fqan"
+
+patt1="/$vo_name/group1/Role=NULL/Capability=NULL"
+patt2="/$vo_name/group1/sgroup_11/Role=NULL/Capability=NULL"
+patt3="/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14/Role=NULL/Capability=NULL"
+
+echo "Check 1 order (expected 1 line):"
+#grep -n "$patt1" $voms_tmp
+
+num=`grep -n "$patt1" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 1 ]; then
+   echo "Test has failed"
+   clearTask
+   exit $SAME_FAILED
+fi
+echo "OK"
+
+echo "Check 2 order (expected 2 line):"
+#grep -n "$patt2" $voms_tmp
+num=`grep -n "$patt2" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+
+if [ $num != 2 ]; then
+   echo "Test has failed"
+   clearTask
+   exit $SAME_FAILED
+fi
+echo "OK"
+
+echo "Check 3 order (expected 3 line):"
+#grep -n "$patt3" $voms_tmp
+
+num=`grep -n "$patt3" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 3 ]; then
+   echo "Test has failed"
+   clearTask
+   exit $SAME_FAILED
+fi
+
+echo "OK"
+echo "Clear task"
+clearTask
+echo "Test is OK"
+echo "</pre>"
+exit $SAME_OK
