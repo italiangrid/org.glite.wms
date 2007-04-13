@@ -123,7 +123,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     $1 "$2" "$3" 2>"$std_err"
     succeded=$?
     if [ $succeded != 0 ]; then
-      log_event_reason "Notice" "`head -c 65535 "$std_err"`"
+      log_event_reason "Notice" "`head -c 65535 \"$std_err\"`"
     fi
     rm -f "$std_err"
     count=`expr $count + 1`
@@ -367,6 +367,10 @@ function send_partial_file
   done
   rm -f "$LISTFILE" # some cleanup
 }
+
+if [ -r "${OSG_GRID}/setup.sh" ]; then
+  source "${OSG_GRID}/setup.sh" &>/dev/null
+fi
 
 if [ -n "${__gatekeeper_hostname}" ]; then
   export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
