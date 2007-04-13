@@ -22,6 +22,7 @@
 //#include "CreamProxyFactory.h"
 #include "iceUtils.h"
 #include "iceCommandProxyRenewal.h"
+#include "ice-core.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 // #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -40,16 +41,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace iceUtil=glite::wms::ice::util;
+using namespace glite::wms::ice::util;
 //using namespace glite::ce::cream_client_api;
 using namespace std;
 
 //______________________________________________________________________________
-iceUtil::proxyRenewal::proxyRenewal() :
+proxyRenewal::proxyRenewal() :
     iceThread( "ICE Proxy Renewer" ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
-    //m_cache( jobCache::getInstance() ),
-    //m_creamClient( CreamProxyFactory::makeCreamProxy( false ) ),
     m_delay( 1*60 ) // proxy renewer wakes up every minute
 {
 
@@ -57,16 +56,17 @@ iceUtil::proxyRenewal::proxyRenewal() :
 
 
 //______________________________________________________________________________
-void iceUtil::proxyRenewal::body( void )
+void proxyRenewal::body( void )
 {
     while( !isStopped() ) {        
         CREAM_SAFE_LOG(m_log_dev->infoStream()
                        << "proxyRenewal::body() - new iteration"
                        << log4cpp::CategoryStream::ENDLINE);
         
-	//checkProxies();
-	iceUtil::iceCommandProxyRenewal PR;
-	PR.execute();
+        glite::wms::ice::Ice::instance()->get_ice_commands_pool()->add_request( new iceCommandProxyRenewal() );
+
+	// iceCommandProxyRenewal PR;
+	// PR.execute();
         sleep( m_delay );
     }
 }

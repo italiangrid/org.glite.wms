@@ -48,29 +48,30 @@ namespace glite {
 };
 
 namespace glite {
-  namespace wms {
-    namespace ice {
-      namespace util {
+namespace wms {
+namespace ice {
+namespace util {
+    
+    class jobCache;
+    
+    class iceCommandProxyRenewal : public iceAbsCommand {
+        log4cpp::Category* m_log_dev;
+        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+        jobCache* m_cache;
         
-	class jobCache;
+        iceCommandProxyRenewal( const iceCommandProxyRenewal& );
+        
+    public:
+        iceCommandProxyRenewal( );
+        virtual ~iceCommandProxyRenewal( ) {}
+        void execute( void ) throw();
+        
+        std::string get_grid_job_id() const { return ""; }
+    };
 
-        class iceCommandProxyRenewal : public iceAbsCommand {
-	  log4cpp::Category* m_log_dev;
-	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-	  jobCache* m_cache;
-	  void checkProxies();
-	  iceCommandProxyRenewal( const iceCommandProxyRenewal& );
-	  
-	public:
-	  iceCommandProxyRenewal( );
-	  virtual ~iceCommandProxyRenewal( ) {}
-	  void execute( void ) throw();
-	  
-	  std::string get_grid_job_id() const { return ""; }
-	};
-      }
-    }
-  }
-}
+} // namespace util
+} // namespace ice
+} // namespace wms
+} // namespace glite
 
 #endif

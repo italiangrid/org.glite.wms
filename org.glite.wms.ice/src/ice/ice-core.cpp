@@ -180,7 +180,7 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_cache( ice_util::jobCache::getInstance() ),
     m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() ),
     m_requests_pool( new util::iceThreadPool("ICE Requests Pool", m_configuration->ice()->max_ice_threads() ) ),
-    m_ice_commands_pool( new util::iceThreadPool( "ICE Internal Commands Pool", 5 ) )
+    m_ice_commands_pool( new util::iceThreadPool( "ICE Internal Commands Pool", 5 ) ) // FIXME: remove hardcoded default
 {
     CREAM_SAFE_LOG( m_log_dev->infoStream()
                     << "Ice::CTOR() - Done"
