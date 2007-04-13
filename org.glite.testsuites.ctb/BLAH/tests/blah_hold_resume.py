@@ -128,8 +128,11 @@ def test_blah_job():
             functions.samNewLine()
             sys.exit(2)
     else :
-            jobstatus = blah_def.to_int(res[5])
-            if ((jobstatus == 1) or (jobstatus == 2)):
+            #jobstatus = blah_def.to_int(res[5])
+            jobstatus =  res[res.find("JobStatus") + 14]
+            #print "Job status"
+            #print jobstatus
+            if ((jobstatus == '1') or (jobstatus == '2')):
     #-------------------------------------------------------------------------------
     #Launch the job_hold command and get first result from output
     #-------------------------------------------------------------------------------
@@ -223,7 +226,7 @@ def test_blah_job():
                   functions.samNewLine()
                   sys.exit(2)
               else :
-                  jobstatus = res[5]
+                  jobstatus = res[res.find("JobStatus") + 14]
 
               functions.samPrintOK()
               print "The Job was successfully put on hold via the blah_job_hold command, the jobid is: " + jobid
