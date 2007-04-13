@@ -180,7 +180,7 @@ StatusNotification::StatusNotification( const string& ad_string ) throw( Classad
     unparser.Unparse( pp_classad, classad_safe_ptr.get() );
     if(!getenv("NO_LISTENER_MESS"))
         CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
-                       << "Parsed status change notification "
+                       << "StatusNotification::CTOR() - Parsed status change notification "
                        << pp_classad
                        << log4cpp::CategoryStream::ENDLINE);
 
