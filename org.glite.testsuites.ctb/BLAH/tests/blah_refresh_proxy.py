@@ -1,7 +1,7 @@
 #!/usr/bin/python
  
 ##########################################################################################
-# Script for testing the  BLAH_JOB_SUBMIT and BLAH_JOB_STATUS commands                   #
+# Script for testing the  BLAH_JOB_REFRESH_PROXY command                                 #
 # It is to be run directly on the machine where BLAH and the LRMS are running            #
 ##########################################################################################
 # It submits a blah_job_submit and a blah_job_refresh_proxy #
