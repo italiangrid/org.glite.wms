@@ -34,6 +34,8 @@ namespace util {
     class Request; // forward declaration
 
     class Request_source {
+    protected:
+        const std::string m_name; // the name of this request source
     public:
         virtual ~Request_source( ) { };
 
@@ -62,11 +64,16 @@ namespace util {
          * @param ad the request to add to the request source.
          */
         virtual void put_request( const std::string& ad ) = 0;
+
+        /**
+         * Gets the name of this request source
+         */
+        std::string get_name( void ) const { return m_name; };
     protected:
         /**
          * Creates a new request source object.
          */
-        Request_source( ) { };
+        Request_source( const std::string& name ) : m_name( name ) { };
     };
 
 } // namespace util

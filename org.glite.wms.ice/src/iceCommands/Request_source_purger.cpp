@@ -15,27 +15,33 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * ICE filelist request purger class
+ * ICE request source purger class
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "filelist_request_purger.h"
+#include "Request_source_purger.h"
+#include "Request.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include <boost/scoped_ptr.hpp>
 
 namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice;
 
-void filelist_request_purger::operator()( void )
+void Request_source_purger::operator()( void )
 {
+    // This ensures that the requests gets deallocated if it is
+    // removed from the input queue
+    boost::scoped_ptr< util::Request > m_req_scoped_ptr( m_req );
+
     log4cpp::Category* log_dev = api_util::creamApiLogger::instance()->getLogger();
     if(!getenv("NO_FL_MESS"))
 	CREAM_SAFE_LOG(
                    log_dev->infoStream()
                    << "filelist_request_purger - "
                    << "removing request "
-                   << m_req.get_request()
+                   << m_req->to_string()
                    << log4cpp::CategoryStream::ENDLINE
                    );
     try { 

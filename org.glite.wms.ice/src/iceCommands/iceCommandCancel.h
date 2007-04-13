@@ -25,42 +25,42 @@
 #include "iceAbsCommand.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
-#include "filelist_request.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <boost/scoped_ptr.hpp>
 
 namespace glite {
-    namespace wms {
-        namespace ice {
+namespace wms {
+namespace ice {
 
-            namespace util {
-                class iceLBLogger;                 // Forward declaration
-            };
+    namespace util {
+        class iceLBLogger;                 // Forward declaration
+        class Request;
+    };
 
-            class iceCommandCancel : public iceAbsCommand {
-	    
-	      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-	      //glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy;
-                
-            public:
-                iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy*, const filelist_request& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+    class iceCommandCancel : public iceAbsCommand {
+        
+        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+        
+    public:
+        iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy*, util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+        
+        virtual ~iceCommandCancel() { }
+        
+        void execute( void ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
+        std::string get_grid_job_id( void ) const { return m_gridJobId; };
+        
+    protected:
+        
+        std::string m_gridJobId;
+        std::string m_sequence_code;
+        log4cpp::Category* m_log_dev;
+        util::iceLBLogger *m_lb_logger;
+        util::Request* m_request;
+    };
 
-                virtual ~iceCommandCancel() { }
-
-                void execute( /* Ice* ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy */) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
-                std::string get_grid_job_id( void ) const { return m_gridJobId; };
-
-            protected:
-	        
-		std::string m_gridJobId;
-                std::string m_sequence_code;
-                log4cpp::Category* m_log_dev;
-                util::iceLBLogger *m_lb_logger;
-                filelist_request m_request;
-            };
-        } // namespace ice
-    } // namespace wms
+} // namespace ice
+} // namespace wms
 } // namespace glite
 
 #endif

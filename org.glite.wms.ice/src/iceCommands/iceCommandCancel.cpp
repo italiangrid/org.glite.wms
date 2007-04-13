@@ -23,7 +23,8 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "CreamProxyMethod.h"
-#include "filelist_request_purger.h"
+#include "Request_source_purger.h"
+#include "Request.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -36,7 +37,7 @@ namespace wms_utils = glite::wms::common::utilities;
 using namespace std;
 using namespace glite::wms::ice;
 
-iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const filelist_request& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
+iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, util::Request* request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( ),
     m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
     m_lb_logger( util::iceLBLogger::instance() ),
@@ -59,7 +60,7 @@ iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::Cre
 
 */
     classad::ClassAdParser parser;
-    classad::ClassAd *rootAD = parser.ParseClassAd( request.get_request() );
+    classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
 
     if (!rootAD)
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
@@ -122,7 +123,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
-    wms_utils::scope_guard remove_request_guard( filelist_request_purger( m_request ) );
+    wms_utils::scope_guard remove_request_guard( Request_source_purger( m_request ) );
     
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 

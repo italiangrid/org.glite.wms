@@ -22,7 +22,6 @@
 // to register the job to the L&B server. This call is NOT done if ICE
 // is used inside the WMS, as the UI takes care of L&B job
 // registration.
-//#define ICE_STANDALONE
 
 // Local includes
 #include "iceCommandSubmit.h"
@@ -38,12 +37,8 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "CreamProxyMethod.h"
-#include "filelist_request.h"
-#include "filelist_request_purger.h"
-
-#ifdef ICE_STANDALONE
-#include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
-#endif
+#include "Request.h"
+#include "Request_source_purger.h"
 
 #include "iceUtils.h"
 
@@ -70,9 +65,9 @@ namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 namespace cream_api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
 namespace wms_utils = glite::wms::common::utilities;
-namespace wms_conf = glite::wms::common::configuration;
+//namespace wms_conf = glite::wms::common::configuration;
 namespace iceUtil = glite::wms::ice::util;
-namespace ice     = glite::wms::ice;
+using namespace glite::wms::ice;
 
 namespace { // Anonymous namespace
     
@@ -108,7 +103,7 @@ namespace { // Anonymous namespace
 }; // end anonymous namespace
 
 //____________________________________________________________________________
-ice::iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, const filelist_request& request )
+iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, iceUtil::Request* request )
   throw( iceUtil::ClassadSyntax_ex&, iceUtil::JobRequest_ex& ) :
     iceAbsCommand( ),
     m_theIce( Ice::instance() ),
@@ -162,10 +157,10 @@ ice::iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy
             
                 
     classad::ClassAdParser parser;
-    classad::ClassAd *rootAD = parser.ParseClassAd( request.get_request() );
+    classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
 
     if (!rootAD) {
-        throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request.get_request()  ) );        
+        throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
     }
     
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
@@ -173,7 +168,7 @@ ice::iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy
     string commandStr;
     // Parse the "command" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-        throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request.get_request() ) );
+        throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
     }
     boost::trim_if( commandStr, boost::is_any_of("\"") );
 
@@ -224,7 +219,7 @@ ice::iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy
 }
 
 //____________________________________________________________________________
-void ice::iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     // api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
     
@@ -238,23 +233,11 @@ void ice::iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceComma
     iceUtil::jobCache* cache( iceUtil::jobCache::getInstance() );
     
     vector<string> url_jid;
-    filelist_request_purger purger_f( m_request );
+    Request_source_purger purger_f( m_request );
     wms_utils::scope_guard remove_request_guard( purger_f );
     remove_job_from_cache remove_f( m_theJob.getGridJobID() );
     wms_utils::scope_guard remove_job_guard( remove_f );
     
-#ifdef ICE_STANDALONE
-    CREAM_SAFE_LOG(
-                   m_log_dev->infoStream() 
-                   << "iceCommandSubmit::execute() - Registering "
-                   << "gridJobID=\"" << m_theJob.getGridJobID()
-                   << "\" to L&B service with user proxy=\"" 
-                   << m_theJob.getUserProxyCertificate() << "\""
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
-    
-    m_lb_logger->getLBContext()->registerJob( m_theJob ); // FIXME: to be used ONLY if ICE is being tested alone (i.e., not coupled with the WMS)
-#endif
     m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_start_event( m_theJob ) );
     
@@ -393,7 +376,7 @@ void ice::iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceComma
 
 
 //____________________________________________________________________________
-string ice::iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::ClassadSyntax_ex& )
+string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
     classad::ClassAd *root = parser.ParseClassAd( oldJdl );
@@ -430,7 +413,7 @@ string ice::iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceU
 }
 
 //______________________________________________________________________________
-void ice::iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
+void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
 {
     string default_isbURI = "gsiftp://";
     default_isbURI.append( m_myname );
@@ -512,7 +495,7 @@ void ice::iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
 }
 
 //______________________________________________________________________________
-void ice::iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
+void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 {
     // If no OutputSandbox attribute is defined, then nothing has to be done
     if ( 0 == jdl->Lookup( "OutputSandbox" ) )
@@ -601,7 +584,7 @@ void ice::iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 //-----------------------------------------------------------------------------
 // URI utility class
 //-----------------------------------------------------------------------------
-ice::iceCommandSubmit::pathName::pathName( const string& p ) :
+iceCommandSubmit::pathName::pathName( const string& p ) :
   m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
   m_fullName( p ),
   m_pathType( invalid )
@@ -657,7 +640,7 @@ ice::iceCommandSubmit::pathName::pathName( const string& p ) :
 }
 
 //______________________________________________________________________________
-// void  ice::iceCommandSubmit::doSubscription( const string& ce )
+// void  iceCommandSubmit::doSubscription( const string& ce )
 // {
 //   string cemon_url;
 //   iceUtil::subscriptionManager* subManager( iceUtil::subscriptionManager::getInstance() );
@@ -786,7 +769,7 @@ ice::iceCommandSubmit::pathName::pathName( const string& p ) :
 // } // end function
 
 //______________________________________________________________________________
-void  ice::iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
+void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 {
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );

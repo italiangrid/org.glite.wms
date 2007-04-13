@@ -274,6 +274,15 @@ void iceCommandUpdateStatus::execute( ) throw( )
     for ( msg_it = m_ev.Message.begin(), count = 1;
           msg_it != m_ev.Message.end(); ++msg_it, ++count ) {
 
+        // setLastSeen must be called ONLY if the job IS NOT in a
+        // TERMINAL state (that means that more states are coming...),
+        // like DONE-OK; otherwise the eventStatusPoller will never
+        // purge it...
+        if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
+            jc_it->setLastSeen( time(0) );
+            jc_it = m_cache->put( *jc_it );
+        }
+        
         if ( count <= jc_it->get_num_logged_status_changes() ) {
             if (!getenv("NO_LISTENER_MESS")) {
                 CREAM_SAFE_LOG(m_log_dev->debugStream()
@@ -310,15 +319,6 @@ void iceCommandUpdateStatus::execute( ) throw( )
                                << log4cpp::CategoryStream::ENDLINE); 
             m_cache->erase( jc_it );
             return;
-        }
-        
-        // setLastSeen must be called ONLY if the job IS NOT in a
-        // TERMINAL state (that means that more states are coming...),
-        // like DONE-OK; otherwise the eventStatusPoller will never
-        // purge it...
-        if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
-            jc_it->setLastSeen( time(0) );
-            jc_it = m_cache->put( *jc_it );
         }
         
         if (!getenv("NO_LISTENER_MESS"))

@@ -37,6 +37,7 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name, bool create ) :
+    Request_source( jdir_name ),
     m_jobdir( 0 )
 {
     if ( create ) {

@@ -33,16 +33,15 @@
 #include "jobKiller.h"
 #include "creamJob.h"
 #include "iceThread.h"
+#include "iceThreadPool.h"
 #include "jobCache.h"
-#include "filelist_request.h"
-
-#include "glite/wms/common/utilities/FLExtractor.h"
 
 #include "ClassadSyntax_ex.h"
 
 #include <string>
+#include <list>
 
-typedef glite::wms::common::utilities::FLExtractor<std::string>::iterator FLEit;
+#include <boost/shared_ptr.hpp>
 
 namespace boost {
   class thread;
@@ -65,6 +64,7 @@ namespace ice {
     namespace util {
         class iceLBLogger;
         class Request_source;
+        class Request;
     };
     
     class Ice {
@@ -101,10 +101,13 @@ namespace ice {
             
             const std::string m_name; //! The name of this thread (can be any string)
             boost::thread* m_thread; //! The dynamically created thread object. 
-            boost::shared_ptr< util::iceThread > m_ptr_thread; //! Used to instantiate the thread.
+            boost::shared_ptr< glite::wms::ice::util::iceThread > m_ptr_thread; //! Used to instantiate the thread.
             log4cpp::Category* m_log_dev; //! Logging device
         };
-        
+
+        // 
+        // ICE threads
+        //        
         IceThreadHelper m_listener_thread;
         IceThreadHelper m_poller_thread;
         IceThreadHelper m_updater_thread;
@@ -112,17 +115,25 @@ namespace ice {
         IceThreadHelper m_proxy_renewer_thread;
         IceThreadHelper m_job_killer_thread;
         
-        glite::wms::common::utilities::FileList<std::string> m_flns;        
-
+        // 
+        // ICE request sources
+        //
         glite::wms::ice::util::Request_source* m_wms_input_queue; ///< Input queue for the WM
         glite::wms::ice::util::Request_source* m_ice_input_queue; ///< Input queue for ICE
+
+
         log4cpp::Category* m_log_dev;
         
-        glite::wms::ice::util::iceLBLogger* m_lb_logger;
-        glite::wms::ice::util::jobCache* m_cache;
+        util::iceLBLogger* m_lb_logger;
+        util::jobCache* m_cache;
         glite::wms::common::configuration::Configuration* m_configuration;
-        std::string m_ns_filelist;
-        glite::wms::common::utilities::FLExtractor<std::string> m_fle;
+
+        // 
+        // ICE thread pools
+        //
+        glite::wms::ice::util::iceThreadPool* m_requests_pool; ///< This pool is used to process submission/cancellation requests coming from the input queue
+        glite::wms::ice::util::iceThreadPool* m_ice_commands_pool; ///< This pool is used to process ICE internal commands (proxy renewal, lease updates and so on)
+
 
         static glite::wms::ice::Ice* s_instance; ///< Singleton instance of this class
         
@@ -131,16 +142,16 @@ namespace ice {
         // Some utility functions
         void deregister_proxy_renewal( const util::CreamJob& job );
         void purge_wms_storage( const util::CreamJob& job );
+
+	// This should be used to poll all jobs in the cache
+	void init_cache( void );
         
     public:
         
         virtual ~Ice();
         
-        void getNextRequests(std::vector< filelist_request >&);
-        void removeRequest( const filelist_request& r );
-
-	// This should be used to poll all jobs in the cache
-	void init_cache( void );
+        void getNextRequests(std::list< util::Request* >&);
+        void removeRequest( util::Request* r );
 
         // Starter methods
         void startListener( void );
@@ -203,6 +214,19 @@ namespace ice {
          * returns the singleton instance of this class.
          */
         static glite::wms::ice::Ice* instance( void );
+
+        /**
+         * Returns the thread pool responsible for processing
+         * submissions and cancellation requests
+         */
+        glite::wms::ice::util::iceThreadPool* get_requests_pool( void ) { return m_requests_pool; };
+
+        /**
+         * Returns the thread pool responsible for processing internal
+         * ICE commands (i.e., proxy renewal, lease updates and so
+         * on).
+         */
+        glite::wms::ice::util::iceThreadPool* get_ice_commands_pool( void ) { return m_ice_commands_pool; };
         
     }; // class ice
     

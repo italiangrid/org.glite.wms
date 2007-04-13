@@ -24,7 +24,6 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "creamJob.h"
-#include "filelist_request.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -50,8 +49,8 @@ namespace ice {
      
 // Forward declarations
 namespace util {                
-    class iceConfManager;
     class iceLBLogger;
+    class Request;
 }
      
   
@@ -66,7 +65,7 @@ namespace util {
      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
      
  public:
-     iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy*, const glite::wms::ice::filelist_request& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+     iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy*, util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
      
      virtual ~iceCommandSubmit() { }
      
@@ -135,7 +134,7 @@ namespace util {
      glite::wms::common::configuration::Configuration* m_configuration;
      std::string m_myname_url;
      util::iceLBLogger *m_lb_logger;
-     filelist_request m_request;
+     util::Request* m_request;
 };
 
 } // namespace ice

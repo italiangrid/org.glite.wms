@@ -27,6 +27,7 @@
 #include "iceThread.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
+#include <string>
 
 // Forward declaration
 namespace log4cpp {
@@ -45,15 +46,20 @@ namespace util {
     
     class iceThreadPool {
     public:
-        virtual ~iceThreadPool( );
-        
+
         /**
-         * Gets the singleton instance of this class.
+         * Creates a new thread pool. 
          *
-         * @return a pointer to the singleton instance of this class
+         * @param name the name of the thread pool
+         *
+         * @param s the number of worker threads in this pool.  If
+         * s<1, then the pool will have exactly one thread in the
+         * pool.
          */
-        static iceThreadPool* instance( );
-        
+        iceThreadPool( const std::string& name, int s );
+
+        virtual ~iceThreadPool( );
+                
         /**
          * Adds a request to the thread pool. The request is
          * assigned (and executed) immediately if a thread is
@@ -71,16 +77,14 @@ namespace util {
          */        
         int get_command_count( void ) const;
 
-    protected:
-        
-        iceThreadPool( );
+    protected:       
         
         /**
          * The class of worker threads
          */
         class iceThreadPoolWorker : public iceThread {
         public:
-            iceThreadPoolWorker( iceThreadPoolState* st );
+            iceThreadPoolWorker( iceThreadPoolState* st, int id );
             virtual ~iceThreadPoolWorker( );
         protected:
             void body( );
@@ -97,16 +101,13 @@ namespace util {
             std::list< iceAbsCommand* >::iterator get_first_request( void );
             
             iceThreadPoolState* m_state;
-            const int m_threadNum;
-            static int s_threadNum;
+            const int m_threadNum; //!< the id of this thread
+            log4cpp::Category* m_log_dev;
         };
         
         boost::scoped_ptr< iceThreadPoolState > m_state;
         boost::thread_group m_all_threads;
         log4cpp::Category* m_log_dev;
-        
-        static iceThreadPool* s_instance;
-        
     };
     
 } // namespace util

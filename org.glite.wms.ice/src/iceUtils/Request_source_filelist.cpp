@@ -34,8 +34,8 @@ using namespace std;
 typedef wmsutils_ns::FLExtractor<std::string>::iterator FLEit;
 
 Request_source_filelist::Request_source_filelist( const std::string& fl_name, bool create ) :
-    m_fl_name( fl_name ),
-    m_filelist_extractor( m_fl_name )
+    Request_source( fl_name ),
+    m_filelist_extractor( fl_name )
 {
     if ( create ) {
         fs::path fl_p( fl_name, fs::native );
@@ -52,7 +52,7 @@ Request_source_filelist::Request_source_filelist( const std::string& fl_name, bo
     }
 
     try {
-        m_filelist.open( m_fl_name );
+        m_filelist.open( m_name );
     } catch( ... ) {
 //         CREAM_SAFE_LOG( m_log_dev->fatalStream()
 //                         << "Ice::CTOR() - Catched unknown exception"

@@ -8,7 +8,7 @@
 
 lib_LTLIBRARIES = libglite_wms_ice.la
 
-libglite_wms_ice_la_SOURCES = ice-core.cpp filelist_request_purger.cpp
+libglite_wms_ice_la_SOURCES = ice-core.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \

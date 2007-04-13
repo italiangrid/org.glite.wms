@@ -24,6 +24,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <list>
 #include <set>
+#include <string>
 
 namespace glite {
 namespace wms {
@@ -35,9 +36,18 @@ namespace util {
 
     class iceThreadPoolState {
     public:
-        iceThreadPoolState( ) { }
+        /**
+         * @param name the name of this thread pool
+         *
+         * @param n the number of threads in the pool
+         */
+        iceThreadPoolState( const std::string& name, int n ) :
+            m_num_running( ( n < 1 ? 1 : n ) ),
+            m_name( name )
+            { }
         
         int m_num_running; ///< Number of running threads
+        const std::string m_name; ///< name of the pool
         boost::recursive_mutex m_mutex; ///< Mutex to protect the shared state object
         boost::condition m_no_requests_available; ///< Condition triggered when there is a new request in the queue
         std::list< iceAbsCommand* > m_requests_queue; ///< The queue of requests (commands to be issued to CREAM)

@@ -45,24 +45,13 @@ using namespace std;
 /**
  * Definition of the inner worker thread class
  */
-int iceThreadPool::iceThreadPoolWorker::s_threadNum = 0;
-
-iceThreadPool::iceThreadPoolWorker::iceThreadPoolWorker( iceThreadPoolState* st ) :
-    iceThread( boost::str( boost::format( "iceThreadPoolWorker(%1%)" ) % s_threadNum ) ),
+iceThreadPool::iceThreadPoolWorker::iceThreadPoolWorker( iceThreadPoolState* st, int id ) :
+    iceThread( boost::str( boost::format( "iceThreadPoolWorker(pool=%1%, id=%2%)" ) % st->m_name % id ) ),
     m_state( st ),
-    m_threadNum( s_threadNum++ )
+    m_threadNum( id ),
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
-  log4cpp::Category* log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );
-  glite::ce::cream_client_api::soap_proxy::CreamProxy *proxy = CreamProxyFactory::makeCreamProxy(true);
-  if(!proxy) {
-    CREAM_SAFE_LOG( log_dev->fatalStream()
-                    << "iceThreadPoolWorker::CTOR() - "
-                    << "Failed CreamProxy creation. Abort!"
-                    << log4cpp::CategoryStream::ENDLINE
-                   );
-    abort();
-  }       
-  //m_proxy.reset( proxy );
+
 }
 
 iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
@@ -72,8 +61,6 @@ iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
-    log4cpp::Category* log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() );    
-
     while( !isStopped() ) {
         boost::scoped_ptr< iceAbsCommand > cmd;
         {
@@ -82,24 +69,13 @@ void iceThreadPool::iceThreadPoolWorker::body( )
             while ( m_state->m_requests_queue.end() == get_first_request() ) {
                 try {
                     --m_state->m_num_running;
-
-                    /* CREAM_SAFE_LOG(
-                                   log_dev->debugStream()
-                                   << "iceThreadPoolWorker::body() - "
-                                   << "Worker Thread #" << m_threadNum 
-                                   << " is waiting"
-                                   << " (Number of running threads now: " 
-                                   << m_state->m_num_running
-                                   << ")"
-                                   << log4cpp::CategoryStream::ENDLINE
-                                   );        */
-
                     m_state->m_no_requests_available.wait( L );
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
-                    CREAM_SAFE_LOG( log_dev->fatalStream()
+                    CREAM_SAFE_LOG( m_log_dev->fatalStream()
                                     << "iceThreadPoolWorker::body() - "
-                                    << "Worker Thread #" << m_threadNum 
+                                    << "Worker Thread " 
+                                    << m_state->m_name << "/" << m_threadNum 
                                     << " raised the following lock_error "
                                     << "xception while waiting on the "
                                     << "command queue: " << err.what()
@@ -110,9 +86,10 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                 }
             } 
             CREAM_SAFE_LOG(
-                           log_dev->debugStream()
+                           m_log_dev->debugStream()
                            << "iceThreadPoolWorker::body() - "
-                           << "Worker Thread #" << m_threadNum 
+                           << "Worker Thread "
+                           << m_state->m_name << "/" << m_threadNum 
                            << " started processing new request"
                            << " (Currently " << m_state->m_num_running
                            << " threads are running)" 
@@ -131,28 +108,28 @@ void iceThreadPool::iceThreadPoolWorker::body( )
             cmd->execute( );
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
-                           log_dev->errorStream()
+                           m_log_dev->errorStream()
                            << "Command execution got FATAL exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
         } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
             CREAM_SAFE_LOG(
-                           log_dev->errorStream()
+                           m_log_dev->errorStream()
                            << "Command execution got TRANSIENT exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
         } catch( exception& ex ) {
             CREAM_SAFE_LOG(
-                           log_dev->errorStream()
+                           m_log_dev->errorStream()
                            << "Command execution got exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
         } catch( ... ) {
             CREAM_SAFE_LOG(
-                           log_dev->errorStream()
+                           m_log_dev->errorStream()
                            << "Command execution got unknown exception"
                            << log4cpp::CategoryStream::ENDLINE
                            );
@@ -184,28 +161,28 @@ list< glite::wms::ice::iceAbsCommand* >::iterator iceThreadPool::iceThreadPoolWo
  * Implementation of the iceThreadPool class
  *
  */
-iceThreadPool* iceThreadPool::s_instance = 0;
-
-iceThreadPool::iceThreadPool( ) :
-    m_state( new iceThreadPoolState() ),
+iceThreadPool::iceThreadPool( const std::string& name, int s ) :
+    m_state( new iceThreadPoolState(name, s) ),
     m_all_threads( ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
-    int n_threads = m_state->m_num_running = ( conf_ns::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads() < 1 ? 1 : conf_ns::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads() ); // FIXME: this check should be moved inside the iceConfManager
+    int n_threads = m_state->m_num_running;
     CREAM_SAFE_LOG( m_log_dev->infoStream()
-                    << "iceThreadPool::iceThreadPool() - "
+                    << "iceThreadPool::iceThreadPool("
+                    << m_state->m_name << ") - "
                     << "Creating " << m_state->m_num_running 
                     << " worker threads"
                     << log4cpp::CategoryStream::ENDLINE
                     );            
     for ( int i=0; i<n_threads; i++ ) {
-        boost::shared_ptr< util::iceThread > m_ptr_thread( new iceThreadPoolWorker( m_state.get() ) );
+        boost::shared_ptr< util::iceThread > m_ptr_thread( new iceThreadPoolWorker( m_state.get(), i ) );
         boost::thread* thr;
         try {
             thr = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread ) );
         } catch( boost::thread_resource_error& ex ) {
             CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                            << "iceThreadPool::iceThreadPool() -"
+                            << "iceThreadPool::iceThreadPool("
+                            << m_state->m_name << ") -"
                             << "Unable to create worker thread. Giving up."
                             << log4cpp::CategoryStream::ENDLINE
                             );            
@@ -218,14 +195,6 @@ iceThreadPool::iceThreadPool( ) :
 iceThreadPool::~iceThreadPool( )
 {
 
-}
-
-iceThreadPool* iceThreadPool::instance( )
-{
-    if ( 0 == s_instance ) {
-        s_instance = new iceThreadPool( );
-    }
-    return s_instance;
 }
 
 void iceThreadPool::add_request( glite::wms::ice::iceAbsCommand* req )

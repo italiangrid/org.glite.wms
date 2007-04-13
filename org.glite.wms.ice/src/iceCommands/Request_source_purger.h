@@ -15,32 +15,35 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * ICE filelist request purger class
+ * ICE input queue request purger class
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef GLITE_WMS_ICE_FILELIST_REQUEST_PURGER_H
-#define GLITE_WMS_ICE_FILELIST_REQUEST_PURGER_H
+#ifndef GLITE_WMS_ICE_REQUEST_SOURCE_PURGER_H
+#define GLITE_WMS_ICE_REQUEST_SOURCE_PURGER_H
 
-#include "filelist_request.h"
 #include "ice-core.h"
 
 namespace glite {
 namespace wms {
 namespace ice {
 
-    class filelist_request_purger {
+    namespace util {
+        class Request;
+    }
+
+    class Request_source_purger {
     protected:
-        filelist_request m_req;
+        glite::wms::ice::util::Request* m_req;
     public:
-        filelist_request_purger( const filelist_request& req ) :
+        Request_source_purger( glite::wms::ice::util::Request* req ) :
             m_req( req )
             { };
 
         /**
-         * Actually removes the request from the filelist
+         * Actually removes the request from the request source
          */
         void operator()( void );
 

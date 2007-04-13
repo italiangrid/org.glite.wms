@@ -42,7 +42,7 @@
 #include "iceThreadPool.h"
 #include "DNProxyManager.h"
 #include "CreamProxyFactory.h"
-#include "filelist_request.h"
+#include "Request.h"
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
@@ -291,10 +291,10 @@ int main(int argc, char*argv[])
 
   
     /*****************************************************************************
-     * Prepares a vector that will contains requests fetched from input file
-     * list. Its initial capacity is set large enough... to tune...
+     * Prepares a listr that will contains requests fetched from input file
+     * list.
      ****************************************************************************/
-    vector< glite::wms::ice::filelist_request > requests;
+    list< iceUtil::Request* > requests;
 
     /*****************************************************************************
      * Starts status poller and/or listener if specified in the config file
@@ -310,7 +310,7 @@ int main(int argc, char*argv[])
      * Starts the thread pool
      *
      */
-    iceUtil::iceThreadPool* threadPool( iceUtil::iceThreadPool::instance() );
+    iceUtil::iceThreadPool* threadPool( iceManager->get_requests_pool() );
   
     /*****************************************************************************
      * Main loop that fetch requests from input filelist, submit/cancel the jobs,
@@ -341,21 +341,22 @@ int main(int argc, char*argv[])
                            << log4cpp::CategoryStream::ENDLINE
                            );
 
-        for(unsigned int j=0; j < requests.size( ); j++) {
+        for( list< iceUtil::Request* >::iterator it = requests.begin();
+             it != requests.end(); ++it ) {
             CREAM_SAFE_LOG(
                            log_dev->infoStream()
                            << "*** Unparsing request <"
-                           << requests[j].get_request()
+                           << (*it)->to_string()
                            << ">"
                            << log4cpp::CategoryStream::ENDLINE
                            );
             glite::wms::ice::iceAbsCommand* cmd;
             try {
-                cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
+                cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
             } catch( std::exception& ex ) {
                 CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
                 CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
-                iceManager->removeRequest( requests[j] );
+                iceManager->removeRequest( *it );
                 continue;
             }
 

@@ -9,7 +9,6 @@
 lib_LTLIBRARIES = libglite_wms_iceUtils.la
 
 libglite_wms_iceUtils_la_SOURCES = \
-				jnlFileManager.cpp \
 				jobCache.cpp \
 				creamJob.cpp \
 				iceConfManager.cpp \

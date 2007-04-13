@@ -26,6 +26,7 @@
 #include "boost/scoped_ptr.hpp"
 #include "CreamProxyFactory.h"
 #include "ice-core.h"
+#include "Request.h"
 
 using namespace std;
 
@@ -33,11 +34,11 @@ namespace glite {
 namespace wms {
 namespace ice {
 
-iceAbsCommand* iceCommandFactory::mkCommand( const filelist_request& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
+iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
 {
     iceAbsCommand* result = 0;
     classad::ClassAdParser parser;
-    classad::ClassAd *rootAd = parser.ParseClassAd( request.get_request() );
+    classad::ClassAd *rootAd = parser.ParseClassAd( request->to_string() );
 
     if ( !rootAd ) {
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");

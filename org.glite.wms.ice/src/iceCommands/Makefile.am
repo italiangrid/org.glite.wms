@@ -8,7 +8,17 @@
 
 lib_LTLIBRARIES = libglite_wms_iceCommands.la
 
-libglite_wms_iceCommands_la_SOURCES = iceCommandSubmit.cpp iceCommandCancel.cpp iceCommandFactory.cpp iceCommandJobKill.cpp iceCommandLeaseUpdater.cpp iceCommandProxyRenewal.cpp iceCommandStatusPoller.cpp iceCommandSubUpdater.cpp iceCommandUpdateStatus.cpp
+libglite_wms_iceCommands_la_SOURCES = \
+	iceCommandSubmit.cpp \
+	iceCommandCancel.cpp \
+	iceCommandFactory.cpp \
+	iceCommandJobKill.cpp \
+	iceCommandLeaseUpdater.cpp \
+	iceCommandProxyRenewal.cpp \
+	iceCommandStatusPoller.cpp \
+	iceCommandSubUpdater.cpp \
+	iceCommandUpdateStatus.cpp \
+	Request_source_purger.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
@@ -23,8 +33,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(LOG4CPP_CFLAGS) \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
-		-DGLITE_WMS_ICE_HAVE_PURGER \
-		-DGLITE_WMS_ICE_HAVE_RENEWAL \
 		$(GLOBUS_THR_CFLAGS) \
 		-pipe
 

@@ -240,7 +240,7 @@ void eventStatusListener::acceptJobStatus(void)
       return;
     }
     
-    iceThreadPool* threadPool( iceThreadPool::instance() );
+    iceThreadPool* threadPool( m_ice_manager->get_ice_commands_pool() );
 
     std::vector< monitortypes__Event >::const_iterator it;
     const vector< monitortypes__Event >& events( getEvents() );

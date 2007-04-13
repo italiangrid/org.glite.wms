@@ -93,7 +93,8 @@ void proxyRenewal::checkProxies()
                        << "proxyRenewal::checkProxies() - "
                        << "Proxy file ["
                        << jobIt->getUserProxyCertificate()
-                       << "] was modified on " 
+                       << "] for job "
+                       << jobIt->describe() << " was modified on " 
                        << time_t_to_string( buf.st_mtime )
                        << ", the last proxy file modification time recorded by ICE is "
                        << time_t_to_string( jobIt->getProxyCertLastMTime() )
@@ -115,7 +116,8 @@ void proxyRenewal::checkProxies()
             } catch( soap_proxy::soap_ex& ex ) {
                 // FIXME: what to do? for now let's continue with an error message
                 CREAM_SAFE_LOG( m_log_dev->errorStream() 
-                                << "proxyRenewal::checkProxies() - Proxy renew failed: ["
+                                << "proxyRenewal::checkProxies() - Proxy renew failed for job "
+                                << jobIt->describe() << ". Reason is: ["
                                 << ex.what() << "]"
                                 << log4cpp::CategoryStream::ENDLINE);
             }
