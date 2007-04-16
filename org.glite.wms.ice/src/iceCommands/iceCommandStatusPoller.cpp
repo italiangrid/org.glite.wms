@@ -537,9 +537,13 @@ void iceUtil::iceCommandStatusPoller::execute( ) throw()
   list< iceUtil::CreamJob > j_list;
   while( get_jobs_to_poll_max_num(j_list, 100) > 0 ) {
     
+    if( j_list.empty() ) continue;
+    
     list< soap_proxy::JobInfo > j_status( check_multiple_jobs( j_list ) );
-    
-    
+
+    j_list.clear();
+
+    if(j_status.empty()) continue;
     
     try {
       
@@ -558,7 +562,7 @@ void iceUtil::iceCommandStatusPoller::execute( ) throw()
 		     << log4cpp::CategoryStream::ENDLINE);
     }
   }
-
+  
 }
 
 //____________________________________________________________________________

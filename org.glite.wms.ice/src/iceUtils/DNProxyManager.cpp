@@ -83,7 +83,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
   //string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
 
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
-    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+    CREAM_SAFE_LOG(m_log_dev->warnStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - "
 		   << "DN ["
 		   << dn << "] not found. Inserting the proxy ["
