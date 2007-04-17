@@ -37,8 +37,6 @@
 #include "options_utils.h"
 #include "adutils.h"
 
-// CURL
-#include "curl/curl.h"
 
 namespace glite {
 namespace wms{
@@ -51,13 +49,6 @@ namespace wms{
 namespace client {
 namespace utilities {
 
-/*
-* Struct for files to be transferred with CURL
-*/
-struct httpfile {
-	char *filename;
-	FILE* stream;
-} ;
 
 class Utils{
 public:
@@ -127,7 +118,7 @@ public:
         * @param max the maxium value of the range
         * @return the generated number
         */
-       static const int getRandom (const unsigned int &max );
+        static const int getRandom (const unsigned int &max );
 	/**
 	*  Retrieves the client installation path
         * @return the installation path string representation
@@ -183,15 +174,6 @@ public:
 	* @return the string with the error message, or empty string if no matching has been found
 	*/
 	static std::string httpErrorMessage(const int &code);
-
-	/**
-	* Writing callback for curl operations
-	*/
-	static int curlWritingCb(void *buffer, size_t size, size_t nmemb, void *stream) ;
-	/**
-	* Debug callback for curl operations
-	*/
-	static int curlDebugCb (CURL *handle, curl_infotype type, unsigned char *data, size_t size, void *stream);
 	/**
         * Gets the conf pathname
         * @return the pathname string
@@ -442,6 +424,19 @@ public:
 	* @return the Default VO string
 	*/
 	static std::string getDefaultVo() ;	
+        /**
+        * Forks the process and executes command line
+        * @command the command to execute
+        * @params the params of the command line
+        * @errormsg the error message in case of failure
+        */
+        int doExecv(const std::string &command, std::vector<std::string> &params, std::string &errormsg, const int &delay);
+        /**
+        * Gets a relative path and extracts the IP address of the host
+        * @relpath the relative path
+        * @return the IP address of the host
+        */
+        std::string resolveAddress(std::string relpath) ;
 private:
 	/**
 	* Performs parsing on the FQAN fields an retrurns a vector which elements
@@ -455,7 +450,6 @@ private:
 	* @return the string with the VO
 	*/
 	static std::string FQANtoVO(const std::string fqan);
-
 	/**
 	* Check the WMS client installation path
 	*/
@@ -525,7 +519,7 @@ private:
         * @return the result of the conversion
         */
  	static  const char *str2md5Base64(const char *s);
-        // Ad configuration files:
+	// Ad configuration files:
 	glite::wms::common::configuration::WMCConfiguration *wmcConf;
 	// Option files:
 	Options *wmcOpts;
@@ -541,6 +535,7 @@ private:
 	std::string prefix;
 	// Virutal Organisation value
 	std::string virtualOrganisation;
+	
 
 }; // end class definition
 

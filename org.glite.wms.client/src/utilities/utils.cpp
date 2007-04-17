@@ -4,10 +4,15 @@
 #include "fstream" // filestream (ifstream)
 #include "time.h" // time (getTime)
 #include "sstream" //to convert number in to string
+#include <signal.h>
+#include <errno.h>
 #include <stdlib.h>	// srandom
 #include <sys/stat.h> //mkdir
+#include <sys/wait.h> //wait
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 // BOOST
-#include "boost/lexical_cast.hpp" // types conversion
 #include "boost/tokenizer.hpp"
 #include "boost/filesystem/operations.hpp"  // prefix & files procedures
 #include "boost/filesystem/path.hpp" // prefix & files procedures
@@ -48,6 +53,9 @@
 #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
 #include "glite/security/voms/voms_api.h"  // voms parsing
 
+
+
+
 namespace glite {
 namespace wms{
 namespace client {
@@ -64,7 +72,14 @@ namespace configuration = glite::wms::common::configuration;
 namespace fs = boost::filesystem ;
 
 
-
+// Define File Separator
+#ifdef WIN
+        // Windows File Separator
+        const string FILE_SEP = "\\";
+#else
+        // Linux File Separator
+        const string FILE_SEP ="/";
+#endif
 
 const char * X509_VOMS_DIR = "X509_VOMS_DIR";
 const char * X509_CERT_DIR = "X509_CERT_DIR";
@@ -72,7 +87,9 @@ const char * VOMS_DIR = "/etc/grid-security/vomsdir";
 const char * CERT_DIR = "/etc/grid-security/certificates";
 const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July", "Aug", "Sept", "Oct", "Nov", "Dec"};
 
-
+// gLite environment variables
+const char* GLITE_LOCATION = "GLITE_LOCATION";
+const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
 
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
@@ -83,6 +100,12 @@ const string DEFAULT_OUTSTORAGE			=	"/tmp";
 const string DEFAULT_ERRSTORAGE			=	"/tmp";
 const string PROTOCOL					=	"://";
 const string TIME_SEPARATOR				=	":";
+const int SUCCESS = 0;
+const int FAILURE = 1;
+const int FORK_FAILURE = -1;
+const int COREDUMP_FAILURE = -2;
+
+
 
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_WMP_PORT	=	7772;
@@ -100,6 +123,9 @@ const string FILE_PROTOCOL = "file://" ;
 const char* GZ_SUFFIX = ".gz";
 const char* TAR_SUFFIX = ".tar";
 const string GZ_MODE = "wb6f";
+
+bool handled_sign = false ;
+int status = 0;
 
 
 
@@ -771,57 +797,6 @@ std::string Utils::httpErrorMessage(const int &code){
 	};
 	return msg;
 };
-/**
-* Writing callback for curl operations
-*/
-int Utils::curlWritingCb (void *buffer, size_t size, size_t nmemb, void *stream) {
-	struct httpfile *out_stream=(struct httpfile*)stream;
-	if(out_stream && !out_stream->stream) {
-		// open stream
-		out_stream->stream=fopen(out_stream->filename, "wb");
-		if(!out_stream->stream) {
-			return -1;
-		}
-   	}
-	return fwrite(buffer, size, nmemb, out_stream->stream);
- }
-
-/**
-* Debug callback for curl operations
-*/
-int Utils::curlDebugCb (CURL *handle, curl_infotype type, unsigned char *data, size_t size, void *stream) {
-	string hd = "";
-	string *msg= (string*)stream;
-	switch (type) {
-		case CURLINFO_TEXT: {
-			hd = "Info";
-			break;
-		}
-		case CURLINFO_HEADER_OUT: {
-			hd = "=> Send header";
-			break;
-		}
-		case CURLINFO_DATA_OUT: {
-			hd = "=> Send data";
-			break;}
-		case CURLINFO_HEADER_IN: {
-			hd = "<= Recv header";
-			break;
-		}
-		case CURLINFO_DATA_IN: {
-			hd = "<= Recv data";
-			break;
-		}
-		default:{
-			break;
-		}
-	}
-	if(data) {
-		*msg += hd + ": " + string((char*)data) ;
-	}
-	return 0;
- }
-
 /** Static private method **/
 std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 						const std::string& DEFAULT_PROTOCOL,
@@ -1925,8 +1900,7 @@ std::string Utils::gzError(int code) {
 	}
 	return compr;
 }
-
- /**
+/**
 * Checks if a vector of strings contains a string item
 */
 bool Utils::hasElement (const std::vector<std::string> &vect, std::string item) {
@@ -1940,6 +1914,202 @@ bool Utils::hasElement (const std::vector<std::string> &vect, std::string item) 
 	}
 	return found ;
 }
+/**
+* handles the signal returned by the child of the process, sets handled_sign at true
+* @int sign, the signal
+*/
+void childSignalHandler ( int sign ) {
+	cout <<  "Handling signal: " << sign << endl ;
+	handled_sign = true;
+	if (SIGCHLD) {
+		wait(&status);
+	}
+}
+/**
+* Prints error and output caught on stream on a file
+* @string script, name of the script generated
+*/
+void dupStreams( string script ) {
+	string outfile = "/tmp/"+script+".out."+ boost::lexical_cast<std::string>(getpid());
+	int fdO = open(outfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
+	dup2(fdO, 1);
+	close(fdO);
+
+	string errorfile = "/tmp/"+script+".err."+ boost::lexical_cast<std::string>(getpid());
+	int fdE = open(errorfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
+	dup2(fdE, 2);
+	close(fdE);
+}
+/**
+* Forks the process and execute command line
+*/
+int Utils::doExecv(const string &command, vector<string> &params, string &errormsg, const int &delay) {
+	GLITE_STACK_TRY("doExecv()");
+
+	handled_sign = false;
+	status = 0;
+
+	signal ( SIGCHLD, childSignalHandler)  ;
+
+	char **argvs;
+	int size = params.size() + 2;
+	argvs = (char **) calloc(size, sizeof(char *));
+	unsigned int i = 0;
+
+	argvs[0] = (char *) malloc(command.length() + 1);
+	strcpy(argvs[0], command.c_str());
+	i = 1;
+	vector<string>::iterator iter = params.begin();
+	vector<string>::iterator const end = params.end();
+	while(iter != end) {
+		argvs[i] = (char *) malloc((*iter).length() + 1);
+		strcpy(argvs[i], (*iter).c_str());
+		i++;
+		iter++;
+	}
+	argvs[i] = NULL;
+
+	switch (fork()) {
+		case -1:
+			// Unable to fork
+			errormsg = "Unable to fork process";
+			logInfo->print (WMS_WARNING, "Method doExecv: ", errormsg,true,true);
+			return FORK_FAILURE;
+			break;
+			case 0:
+			//duplicates the std.out and std.err of the command into a file
+			dupStreams("doExecv") ;
+			// child: execute the required command, on success does not return
+			if (execv (command.c_str(), argvs)) {
+				// execv failed
+				errormsg = strerror(errno);
+				logInfo -> print(WMS_WARNING, "Method doExecv: Error message: ", errormsg, true, true) ;
+				//doExit();
+				}
+			// the child does not return
+			break;
+		default:
+			//parent
+			time_t current = time(NULL);
+			//pseudocodice, il numero va converito nel nuovo argomento timeout del metodo doExecv
+			const time_t timeout = current+delay ;
+			while ( (!handled_sign) || (current < timeout) ) {
+				sleep( 1 );
+				current++ ;
+			}
+			if (WIFEXITED(status)) {
+				errormsg =WIFEXITED(status);
+			}
+			if (WIFSIGNALED(status)) {
+				errormsg = WIFSIGNALED(status);
+				logInfo-> print(WMS_DEBUG, "Method doExecv:  " , errormsg, true, true) ;
+			}
+#ifdef WCOREDUMP
+			if (WCOREDUMP(status)) {
+					errormsg = "Child dumped core";
+				logInfo ->print(WMS_ERROR, "Method doExecv: ", errormsg, true, true) ;
+				return COREDUMP_FAILURE;
+			}
+#endif // WCOREDUMP
+			if (status) {
+				if (WIFEXITED(status)) {
+					errormsg = strerror(WEXITSTATUS(status));
+				} else {
+					errormsg = "Child failure";
+				}
+				logInfo-> print(WMS_ERROR, "Method doExecv: ", errormsg, true, true);
+				return WIFEXITED(status);
+			}
+		break;
+	}
+	for (unsigned int j = 0; j <= i; j++) {
+		free(argvs[j]);
+	}
+	free(argvs);
+	return SUCCESS;
+	GLITE_STACK_CATCH();
+}
+/**
+* A forked child process may remain appended:
+* a simple call to glite_wms_wmproxy_exit make
+* sure the process successfully ends
+TO_DO no need still
+void doExit() {
+	GLITE_STACK_TRY("doExit()");
+	logInfo->print (WMS_DEBUG, "Method: ", "doExit",true,true);
+	// Calling exit script to "terminate" forked WMProxy process
+	// returning the exit value to the parent
+	string location = "";
+	if (char * glitelocation = getenv(GLITE_WMS_LOCATION)) {
+		location = string(glitelocation);
+	} else if (char * glitelocation = getenv(GLITE_LOCATION)) {
+		location = string(glitelocation);
+	} else {
+		location = FILE_SEP + "opt" + FILE_SEP + "glite";
+	}
+	string command = location + string(FILE_SEP + "sbin" + FILE_SEP
+		+ "glite_wms_wmproxy_exit");
+	logInfo->print (WMS_DEBUG, "Method doExit: ", "Executing command: "+command,true,true);
+	string param = boost::lexical_cast<string>(errno);
+	char **argvs;
+	argvs = (char **) calloc(3, sizeof(char *));
+	argvs[0] = (char *) malloc(command.length() + 1);
+	strcpy(argvs[0], command.c_str());
+	argvs[1] = (char *) malloc(param.length() + 1);
+	strcpy(argvs[1], param.c_str());
+	argvs[2] = (char *) 0;
+	if (execv(command.c_str(), argvs)) {
+	logInfo->print (WMS_WARNING, "Method doExecv: ", "Unable to execute WMProxy exit script" ,true,true);
+	logInfo->print (WMS_WARNING, "Method doExecv: ", strerror(errno) ,true,true);
+	}
+	for (unsigned int j = 0; j <= 3; j++) {
+		free(argvs[j]);
+	}
+	free(argvs);
+	GLITE_STACK_CATCH();
+}
+/**
+* Gets an URL in input, extracts the IP address, and returns the same URL
+* with the hostname instead of the address
+*/
+string Utils::resolveAddress( string relpath ) {
+	int it = 0;
+	string pathtemp = "";
+	string address = "";
+	struct hostent *result = NULL;
+	string hostname = "";
+	if (relpath ==""){
+		throw WmsClientException(__FILE__,__LINE__,"resolveAddress",
+			DEFAULT_ERR_CODE,
+			"Wrong Value", "Unable to parse empty address");
+	}
+	boost::char_separator<char> separator(":/");
+ 	boost::tokenizer<boost::char_separator<char> >tok(relpath, separator);
+	boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+	boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+	for( ; token != end; token++) {
+		if ( it == 1 ) {
+			address = *token ;
+		}
+		if (it > 1 && it < 7) {
+			pathtemp += *token + "/"  ;
+		}
+		if (it == 7) {
+			pathtemp += *token  ;
+		}
+		it++;
+	}
+	struct sockaddr_in ip;
+	inet_aton( address.c_str(), &ip.sin_addr ) ;
+	if( (result = gethostbyaddr( (char*)&ip.sin_addr, sizeof(ip.sin_addr), AF_INET)) == NULL ){
+		throw WmsClientException(__FILE__,__LINE__,"resolveAddress",DEFAULT_ERR_CODE,
+				"Wrong Value","Unable to resolve address: "+address);
+	}
+	hostname = result->h_name;
+	string path = "https://"+hostname+":"+pathtemp ;
+	return path ;
+}
+
 
 } // glite
 } // wms
