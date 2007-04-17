@@ -67,7 +67,9 @@ ZipFileAd::ZipFileAd( ) {
 	this->filename  = "";
 };
 
-
+const int SUCCESS = 0;
+const int FAILED = -1;
+const int COREDUMP_FAILURE = -2;
 const string FILE_PROTOCOL = "file://" ;
 const string ISBFILE_DEFAULT = "ISBfiles";
 const string TMP_DEFAULT_LOCATION = "/tmp";
@@ -1615,11 +1617,10 @@ void JobSubmit::createZipFile (
 * File transfer by globus-url-copy (gsiftp protocol)
 */
 void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
-	int code = 0;
+	vector<string> params ;
 	string protocol = "";
 	string source = "";
 	string destination = "";
-	string cmd = "";
 	// Globus Url Copy Path finder
 	string globusUrlCopy="globus-url-copy";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
@@ -1641,7 +1642,6 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 			"File Error",
 			"Unable to find:\n" +globusUrlCopy);
 	}
-	char* reason = NULL;
 	while (paths.empty()==false) {
 		// source
 		source = (paths[0].first).file ;
@@ -1649,28 +1649,28 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		destination = paths[0].second ;
 		// Protocol has to be added only if not yet present
 		protocol = (source.find("://")==string::npos)?FILE_PROTOCOL:"";
-		// command
-		cmd= globusUrlCopy +" "+ string (protocol+source) + " " + destination;
-		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n" , cmd);
+		//params
+		params.resize(0);
+		params.push_back(string (protocol+source));
+		params.push_back(destination);
+		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+globusUrlCopy+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
+		string errormsg = "";
+		int timeout = 10 ;
 		// launches the command
-		code = system( cmd.c_str() );
-		if (code != 0){
-			ostringstream err;
-			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
-			reason = strerror(code);
-			if (reason!=NULL) {
-				err << "   " << reason << "\n";
-				logInfo->print(WMS_DEBUG,
-					"FileTransfer (gsiftp) - Transfer Failed (ErrorCode="
-						+ boost::lexical_cast<string>(code)+"):",
-						reason );
-			} else {
-				logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp) - Transfer Failed:",
-					"ErrorCode=" + boost::lexical_cast<string>(code) );
-			}
-			failed.push_back(paths[0]);
-			errors+=err.str();
-		} else{
+		if (int outcome = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
+			// EXIT CODE !=0
+                                switch (outcome) {
+                                        case FAILED:
+                                        case COREDUMP_FAILURE:
+                                                // either Unable to fork process or coredump
+						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed:", "Unable to fork process", true, true );
+                                                break;
+                                        default:
+                                                // Exit Code >= 1 => Error executing command
+						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
+                                                break;
+                                }
+                        } else {
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)", "Transfer successfully done");
 			// Removes the zip file just transferred
 			if (zipAllowed) {
@@ -1691,16 +1691,17 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 * File transfer by HTCP (https protocol)
 */
 void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
-	int code = 0;
+	vector<string> params;
 	string protocol = "";
 	string source = "";
 	string destination = "";
-	string cmd = "";
 	// Globus Url Copy Path finder
 	string htcp="htcp";
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
 		"using htcp to transfer the local InputSandBox file(s) to the submission endpoint");
-	if (getenv("GLITE_LOCATION")){
+      	if (Utils::isDirectory ("/usr/bin")){
+		htcp="/usr/bin/"+htcp;
+	} else if (getenv("GLITE_LOCATION")){
 		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
 	}else if (Utils::isDirectory ("/opt/glite/bin")){
 		htcp="/opt/glite/bin/"+htcp;
@@ -1717,7 +1718,6 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 			"File Error",
 			"Unable to find:\n" + htcp);
 	}
-	char* reason = NULL;
 	while (paths.empty()==false) {
 		// source
 		source = (paths[0].first).file ;
@@ -1725,28 +1725,28 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 		destination = paths[0].second ;
 		// Protocol has to be added only if not yet present
 		protocol = (source.find("://")==string::npos)?FILE_PROTOCOL:"";
-		// command
-		cmd= htcp +" "+ string (protocol+source) + " " + destination;
-		logInfo->print(WMS_DEBUG, "File Transfer (https)\n" , cmd);
+		//params
+		params.resize(0);
+		params.push_back(string (protocol+source));
+		params.push_back(destination);
+		logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+htcp+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
+		string errormsg = "";
+		int timeout = 10 ;
 		// launches the command
-		code = system( cmd.c_str() );
-		if (code != 0){
-			ostringstream err;
-			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
-			reason = strerror(code);
-			if (reason!=NULL) {
-				err << "   " << reason << "\n";
-				logInfo->print(WMS_DEBUG,
-					"FileTransfer (https) - Transfer Failed (ErrorCode="
-						+ boost::lexical_cast<string>(code)+"):",
-						reason );
-			} else {
-				logInfo->print(WMS_DEBUG, "FileTransfer (https) - Transfer Failed:",
-					"ErrorCode=" + boost::lexical_cast<string>(code) );
-			}
-			failed.push_back(paths[0]);
-			errors+=err.str();
-		} else{
+		if (int outcome = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
+			// EXIT CODE !=0
+                                switch (outcome) {
+                                        case FAILED:
+                                        case COREDUMP_FAILURE:
+                                                // either Unable to fork process or coredump
+						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed:", "Unable to fork process", true, true );
+                                                break;
+                                        default:
+                                                // Exit Code >= 1 => Error executing command
+						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
+                                                break;
+                                }
+                        } else{
 			logInfo->print(WMS_DEBUG, "File Transfer (https)", "Transfer successfully done");
 			// Removes the zip file just transferred
 			if (zipAllowed) {
@@ -1808,7 +1808,7 @@ void JobSubmit::transferFiles(std::vector<std::pair<glite::jdl::FileAd,std::stri
 	vector<pair<FileAd, string > > failed;
 	string errors = "";
 		// File Transfer according to the chosen protocol
-		if (m_fileProto == Options::TRANSFER_FILES_CURL_PROTO ) {
+		if (m_fileProto == Options::TRANSFER_FILES_HTCP_PROTO ) {
 			this->htcpTransfer (to_bcopied, failed, errors);
 		} else {
 			this->gsiFtpTransfer (to_bcopied, failed, errors);

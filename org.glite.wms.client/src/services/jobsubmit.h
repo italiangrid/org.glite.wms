@@ -110,7 +110,7 @@ class JobSubmit : public Job {
 		* the server.
 		* If there are local files referenced in the InputSandbox, the total size of these files is compared to the limitations that
 		* can be set  :
-		*	- limitation on the file size allowed by tools used for the file transfer operations (globus-url-copy, CURL)
+		*	- limitation on the file size allowed by tools used for the file transfer operations (globus-url-copy, htcp)
 		* 	- the first limitation is the available User Free Quota on the server (the remaining free part of available user disk quota)
 		* 	- the second one is the max InputSanbox size on the server
 		* The max InputSanbox size is checked only if theUser Free Quota has been set. The submission operations go on
