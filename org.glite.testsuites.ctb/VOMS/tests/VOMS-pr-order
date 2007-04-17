@@ -102,6 +102,10 @@ NG=${#Groups[*]}
 echo "1. Create new user"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
 
+echo "Extract by openssl from usercert.pem"
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+echo "DN=$user_subject"
+
 echo "List users:"
 voms-admin --vo=$vo_name -h $voms_host list-users
 
@@ -140,21 +144,45 @@ echo "1.5. List user groups:"
 voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER
 
 echo "2. Check proxy info"
-echo "Create proxy"
+echo "Destroy and Create proxy"
+echo "Command:"
+echo "voms-proxy-init -voms $vo_name:/$vo_name/Role=$ROLEA -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS"
+voms-proxy-destroy
 voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -order "/$vo_name/${Groups[0]}" -order "/$vo_name/${Groups[0]}/sgroup_11" -order "/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14" -pwstdin < $PWS
 
-echo "2.1. Execute voms-proxy-info -fqan"
-voms-proxy-info -fqan > $voms_tmp
+echo "2.1. Check exit code and subject name"
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_ERROR
+fi
+echo "exit code - OK"
+
+echo "2.1. Execute voms-proxy-info -all"
+voms-proxy-info -all > $voms_tmp
 
 cat $voms_tmp
 
-echo "2.2. Check result -fqan"
+echo "2.2. Check user DN"
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_ERROR
+fi
 
 patt1="/$vo_name/group1/Role=NULL/Capability=NULL"
 patt2="/$vo_name/group1/sgroup_11/Role=NULL/Capability=NULL"
 patt3="/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14/Role=NULL/Capability=NULL"
 
-echo "Check 1 order (expected 1 line):"
+echo "Check -fqan"
+voms-proxy-info -fqan > $voms_tmp
+cat $voms_tmp
+
+
+
+echo "Check 1 order (expected 1 line: $patt1):"
 #grep -n "$patt1" $voms_tmp
 
 num=`grep -n "$patt1" $voms_tmp | cut -d":" -f1`
@@ -167,7 +195,7 @@ if [ $num != 1 ]; then
 fi
 echo "OK"
 
-echo "Check 2 order (expected 2 line):"
+echo "Check 2 order (expected 2 line: $patt2):"
 #grep -n "$patt2" $voms_tmp
 num=`grep -n "$patt2" $voms_tmp | cut -d":" -f1`
 echo "Nline=$num"
@@ -180,7 +208,7 @@ if [ $num != 2 ]; then
 fi
 echo "OK"
 
-echo "Check 3 order (expected 3 line):"
+echo "Check 3 order (expected 3 line: $patt3):"
 #grep -n "$patt3" $voms_tmp
 
 num=`grep -n "$patt3" $voms_tmp | cut -d":" -f1`

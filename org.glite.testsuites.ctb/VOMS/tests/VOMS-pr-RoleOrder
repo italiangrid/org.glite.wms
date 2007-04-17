@@ -1,7 +1,7 @@
 #!/bin/bash
-# Date: 21/03/2007                                                                          #
+# Date: 13/04/2007                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
-# Description of the test: check "attribute' for voms-proxy-init                            #
+# Description of the test: check "Rolw ordered' for voms-proxy-init                         #
 #                                                                                           #
 # Input Parameters:                                                                         #
 #       - VO name                                                                           #
@@ -22,11 +22,14 @@
 #############################################################################################
 Groups=( "group1" "group2" "group3" "group4" "group5" )
 Roles=( "Role1" "Role2" "Role3" "Role4" "Role5" )
+ROLEA="ROLE_A"
+ROLEB="ROLE_B"
+
 
 function crGroups {
 for group in ${Groups[*]}
 do
-    groupi="$vo_name/$group"
+    groupi="/$vo_name/$group"
     #echo "Create group: $groupi"
     voms-admin --vo=$vo_name -h $voms_host create-group "$groupi"
 done
@@ -34,12 +37,14 @@ done
 function delGroups {
 for group in ${Groups[*]}
 do
-    groupi="$vo_name/$group"
+    groupi="/$vo_name/$group"
     #echo "Delete group: $groupi"
     voms-admin --vo=$vo_name -h $voms_host delete-group $groupi
 done
 }
 function crRoles {
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLEA
+voms-admin --vo=$vo_name -h $voms_host create-role $ROLEB
 for rolei in ${Roles[*]}
 do
     #echo "Create Role=$rolei"
@@ -47,6 +52,8 @@ do
 done
 }
 function delRoles {
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLEA
+voms-admin --vo=$vo_name -h $voms_host delete-role $ROLEB
 for rolei in ${Roles[*]}
 do
     #echo "Delete Role=$rolei"
@@ -54,9 +61,11 @@ do
 done
 }
 function clearTask {
-    echo "Delete user, groups, roles"
+    echo "Delete user"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    echo "Delete all groups"
     delGroups
+    echo "Delete all roles"
     delRoles
 }
 echo "<pre>"
@@ -67,7 +76,7 @@ rm -rf $voms_tmp
 
 echo
 date
-echo "VOMS-PROXY-INIT: check option: voms-proxy-init with attributes"
+echo "VOMS-PROXY-INIT: check option - 'Role ordered'"
 echo "VO: $vo_name"
 echo "VOMS: $VOMSES"
 echo "cert: $USERCERT"
@@ -75,9 +84,13 @@ echo "key: $USERKEY"
 echo "PWS: $PWS"
 NG=${#Groups[*]}
 
-echo "1. Create new user"
+echo "1. Create new user and proxy"
 #voms-admin --vo=$vo_name -h $voms_host delete-user $USER
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
+echo "Extract by openssl from usercert.pem"
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+echo "DN=$user_subject"
+
 #voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 echo "List users:"
@@ -101,61 +114,62 @@ echo "1.3. Add user to groups as group member"
 for group in ${Groups[*]}
 do
     groupi="/$vo_name/$group"
-    echo "Add member to group: $groupi"
+    #echo "Add member to group: $groupi"
     voms-admin --vo=$vo_name -h $voms_host add-member $groupi $USER
 done
 
 
-echo "1.3.1. List user groups:"
-voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER
+#echo "1.3.1. List user groups:"
+#voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER
 
-echo "1.3.2. Check members for each group - list members"
-for group in ${Groups[*]}
-do
-    groupi="/$vo_name/$group"
-    echo "Members in  group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host list-members $groupi
-done
+#echo "1.3.2. Check members for each group - list members"
+#for group in ${Groups[*]}
+#do
+#    groupi="/$vo_name/$group"
+#    echo "Members in  group: $groupi"
+#    voms-admin --vo=$vo_name -h $voms_host list-members $groupi
+#done
 
 
-echo "1.4. Assign Roles to users in 5 groups"
+echo "1.4. Assign Roles to users in group /$vo_name ($ROLEA, $ROLEB) and in 5 groups"
+    voms-admin --vo=$vo_name -h $voms_host assign-role /$vo_name "$ROLEA" $USER
+    voms-admin --vo=$vo_name -h $voms_host assign-role /$vo_name "$ROLEB" $USER
 
 co=0
 for group in ${Groups[*]}
 do
     role=${Roles[co]}
     groupi="/$vo_name/$group"
-    echo "Assign role=$role in  group $groupi to user"
+    #echo "Assign role=$role in  group $groupi to user"
     voms-admin --vo=$vo_name -h $voms_host assign-role $groupi $role $USER
     let co=co+1
 done
 
-
 echo "1.4.1. List user roles:"
 voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER
 
+echo
+echo "2. Destroy and create proxy with 1 Role=$ROLEA"
+echo "Command:"
 
-echo "2. Destroy, Create and check proxy"
+echo "voms-proxy-init -voms $vo_name:/$vo_name/Role=$ROLEA -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS"
 voms-proxy-destroy
-echo "Create proxy"
-voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
-echo "2.1. Check exit code"
-if [ $? = 0 ]; then
-   echo "Exit code  is OK"
-else
-    echo "Test is failed"
-    clearTask        
-    exit $SAME_ERROR
+voms-proxy-init -voms $vo_name:/$vo_name/Role=$ROLEA -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+excod=$?
+
+echo "2.1. Check exit code and subject name"
+if [ $? == 1 ]; then
+	echo "Test has failed"
+	clearTask
+	exit $SAME_ERROR
 fi
-               
-echo "2.2.Extract by openssl from usercert.pem"
-user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-echo "DN=$user_subject"
 
-echo "2.3. Check user DN"
+echo "Exit code - OK ($excod)"
+
 voms-proxy-info -all > $voms_tmp
-
 cat $voms_tmp
+
+echo "2.2. Check user DN"
 grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
@@ -163,29 +177,73 @@ if [ $? == 1 ]; then
     clearTask
     exit $SAME_ERROR
 fi
-
-echo "Check result -fqan"
-
+echo "Test DN is OK"
+            
+echo "2.1. Check result -fqan"
 voms-proxy-info -fqan > $voms_tmp
+cat $voms_tmp
 
-grep "$vo_name/Role=NULL/Capability=NULL" $voms_tmp
+patt1="/$vo_name/Role=$ROLEA/Capability=NULL"
+echo "Check 1 order (expected 1 line '$patt1'):"
+
+num=`grep -n "$patt1" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_FAILED
+fi
+echo "First part (1 Role)- OK"
+
+echo
+echo "3. Destroy and create proxy with 2 Roles: $ROLEA, $ROLEB and role order: $ROLEB"
+echo "Command:"
+echo "	voms-proxy-init -voms $vo_name:/$vo_name/Role=$ROLEA -voms $vo_name:/$vo_name/Role=$ROLEB"
+echo "	-order $vo_name:/$vo_name/Role=$ROLEB  -vomses $VOMSES  -cert $USERCERT -key $USERKEY -pwstdin < $PWS"
+
+voms-proxy-destroy
+voms-proxy-init -voms "$vo_name:/$vo_name/Role=$ROLEA" -voms "$vo_name:/$vo_name/Role=$ROLEB"  -order "/$vo_name/Role=$ROLEB"  -vomses $VOMSES  -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+
+echo "3.1. Check exit code and subject name"
 if [ $? == 1 ]; then
 	echo "Test has failed"
 	clearTask
 	exit $SAME_ERROR
 fi
+echo "Exit code - OK"
 
-for group in ${Groups[*]}
-do
-    groupi="/$vo_name/$group"
-    grep "$groupi/Role=NULL/Capability=NULL" $voms_tmp
-	if [ $? == 1 ]; then
-	    echo "Test has failed"
-	    clearTask
-	    exit $SAME_ERROR
-	fi
-done
 
+voms-proxy-info -all > $voms_tmp
+cat $voms_tmp
+
+echo "3.2. Check user DN"
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_ERROR
+fi
+echo "Test DN is OK"
+
+
+echo "4. Check result -fqan"
+voms-proxy-info -fqan > $voms_tmp
+cat $voms_tmp
+
+patt1="/$vo_name/Role=$ROLEB/Capability=NULL"
+echo "Check 1 order (expected 1 line: '$patt1'):"
+
+num=`grep -n "$patt1" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_FAILED
+fi
+echo "OK"
 
 echo "Test is OK"
 echo "Clear task"
