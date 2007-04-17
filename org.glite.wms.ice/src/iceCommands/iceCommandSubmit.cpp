@@ -278,6 +278,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
+                       << "iceCommandSubmit::execute() - "
                        << "Unable to submit gridJobID=" 
                        << m_theJob.getGridJobID()
                        << " due to authentication error:" << ex.what()
@@ -295,6 +296,15 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 
     int newLease = m_configuration->ice()->lease_delta_time();
 
+    CREAM_SAFE_LOG(
+                   m_log_dev->infoStream()
+                   << "iceCommandSubmit::execute() - "
+                   << "Sequence code for job "
+                   << m_theJob.describe()
+                   << " is "
+                   << m_theJob.getSequenceCode()
+                   << log4cpp::CategoryStream::ENDLINE                   
+                   );
     try {	    
         // api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
         iceUtil::CreamProxy_Register pr( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID,

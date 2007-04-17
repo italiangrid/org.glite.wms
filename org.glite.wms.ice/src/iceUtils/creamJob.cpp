@@ -285,6 +285,7 @@ string CreamJob::describe( void ) const
 void CreamJob::setSequenceCode( const std::string& seq )
 {
     m_sequence_code = seq;
+    string old_jdl( m_jdl );
 
     // Update the jdl
     classad::ClassAdParser parser;
@@ -301,4 +302,10 @@ void CreamJob::setSequenceCode( const std::string& seq )
 
     classad::ClassAdUnParser unparser;
     unparser.Unparse( m_jdl, jdl_ad );
+
+    CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->infoStream()
+                    << "CreamJob::setSequenceCode() - "
+                    << "old jdl=[" << old_jdl << "] new jdl=["
+                    << m_jdl << "]"
+                    << log4cpp::CategoryStream::ENDLINE);
 }

@@ -59,6 +59,7 @@ namespace glite {
           Ice* m_iceManager;
 	  jobCache* m_cache;
 	  time_t m_threshold;
+          const unsigned int m_max_chunk_size; ///< maximum number of jobs which will be used in a cumulative request to CREAM
 	  bool m_poll_all_jobs;
 	  
 	  //void purgeJobs( const std::vector< std::string >& );
@@ -71,8 +72,18 @@ namespace glite {
            * @return the list of Cream Job IDs for jobs to poll.
            */ 
 	  std::list< glite::wms::ice::util::CreamJob >  get_jobs_to_poll( void );
-	  int get_jobs_to_poll_max_num( std::list<glite::wms::ice::util::CreamJob>&, const int);
- 
+
+          /**
+           * Breaks the list of jobs into sublists of size at most max_size
+           *
+           * @param jobs the list of jobs
+           *
+           * @param max_size the max size of the returned sublists
+           *
+           * @return the list of chunks
+           */
+          std::list< std::list< glite::wms::ice::util::CreamJob > > create_chunks( const std::list< glite::wms::ice::util::CreamJob >& jobs, unsigned int max_size );
+
 	  /**
            * Updates the status informations for all jobs in the list
            * l.
@@ -89,7 +100,7 @@ namespace glite {
            * @param s the StatusInfo object from which job informations are updated
            */
           void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& ) throw();
-	  //void update_multiple_job( const std::list<glite::ce::cream_client_api::soap_proxy::JobInfo>& ) throw();
+
 	  void remove_unknown_jobs_from_cache(std::vector< const glite::ce::cream_client_api::soap_proxy::JobInfo >&) throw();
 
 	  /**
@@ -97,11 +108,27 @@ namespace glite {
            */
           iceCommandStatusPoller( const iceCommandStatusPoller& ) { }
 
-	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_jobs( const std::list< glite::wms::ice::util::CreamJob >&	  job_list );
+          /**
+           *
+           */
+	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::string& user_dn, const std::string& cream_url, const std::list< glite::wms::ice::util::CreamJob >& job_list );
 
-	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::list< glite::wms::ice::util::CreamJob >&	  job_list );
-
-	  void remove_unknown_jobs_from_cache(const std::vector<std::string>&, const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >&, std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >&) throw();
+          /**
+           * This method removes jobs which have been reported as not found by
+           * CREAM from the job cache. 
+           *
+           * @param all_jobs the vector of all CREAM job IDs which
+           * were passed to the cumulative CREAM call. Upon succesful
+           * completion (if no job is missing), we expect that
+           * jobs_found contains exactly JobInfo structures for the
+           * exact same job IDs in all_jobs.
+           *
+           * @param jobs_found the vector of JobInfo structures
+           * returned by the cumulative CREAM call. This vector
+           * contains *at most* one element for each CREAM job ID
+           * in the all_jobs vector.
+           */
+	  void remove_unknown_jobs_from_cache(const std::vector<std::string>& all_jobs, const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& jobs_found ) throw();
 
 	public:
 	  //static boost::recursive_mutex mutexJobStatusPoll;
@@ -121,7 +148,7 @@ namespace glite {
 
 	  void execute( ) throw();
 	  
-	  std::string get_grid_job_id() const { return ""; }
+	  std::string get_grid_job_id() const { return std::string(); }
 	};
       }
     }
