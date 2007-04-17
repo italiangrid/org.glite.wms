@@ -54,12 +54,17 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 		 << log4cpp::CategoryStream::ENDLINE);
   
   for(iceUtil::jobCache::iterator jit = cache->begin(); jit != cache->end(); ++jit) {
+    
+    if( this->getBetterProxyByDN( jit->getUserDN() ) == jit->getUserProxyCertificate() )
+      continue;
+
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		   << "DNProxyManager::CTOR() - "
 		   << "Found DN ["
 		   << jit->getUserDN() << "] -> Proxy ["
 		   << jit->getUserProxyCertificate() << "]"
 		   << log4cpp::CategoryStream::ENDLINE);
+    
     this->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate());
   }
 }

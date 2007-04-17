@@ -22,6 +22,7 @@
 
 #include <string>
 #include <map>
+#include <list>
 #include <set>
 #include <stdexcept>
 #include <ctime>
@@ -98,6 +99,8 @@ namespace util {
 
     std::string getCompleteHostname( const std::string& );
  
+    void createChunksOfCreamJobs(const std::list< CreamJob >&, std::list< std::list< CreamJob > >&, const unsigned int);
+
 } // namespace util
 } // namespace ice
 } // namespace wms
