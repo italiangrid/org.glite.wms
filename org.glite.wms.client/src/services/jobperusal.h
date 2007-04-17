@@ -91,13 +91,13 @@ class JobPerusal  : public Job {
 		void gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
 				/**
 		* Performs downloading of the peeks files to the local machine from
-		* the Destination URI's provided as input with CURL;
+		* the Destination URI's provided as input with htcp;
 		* it gets back a list of pathnames of the downloaded files
 		* @param uris the list of Destination URi's of the files to be retrieved
 		* @param paths gets the list of local pathnames to the downloaded files
 		* @param errors string with information on errors occurred during the downloading operations
 		*/
-		void curlGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
+		void htcpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
 		/**
 		* Prints out information on the operation results on the standard output
 		* @param operation type of operation (set, get or unset)

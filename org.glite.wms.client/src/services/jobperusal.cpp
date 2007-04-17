@@ -30,8 +30,7 @@
 #include"lbapi.h"
 //BOOST
 #include "boost/lexical_cast.hpp" // types conversion
-// CURL
-#include "curl/curl.h"
+
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
@@ -43,6 +42,9 @@ namespace wms {
 namespace client {
 namespace services {
 
+const int SUCCESS = 0;
+const int FAILED = -1;
+const int COREDUMP_FAILURE = -2;
 const string DEFAULT_STORAGE_LOCATION = "/tmp";
 const string DISPLAY_CMD = "more";
 const int HTTP_OK = 200;
@@ -370,24 +372,24 @@ void JobPerusal::checkStatus( ){
 	if (code == 0){
 		// Initialize ENDPOINT (start a new (thread of) job (s)
 		setEndPoint (status.getEndpoint());
-		// checks if --endpoint option has been specified with a different endpoint url
+		// checks if --endpoint optstatus.getEndpoint()ion has been specified with a different endpoint url
 		string endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
-		if (endpoint.compare(getEndPoint( )) !=0 ) {
-			logInfo->print(WMS_WARNING, "--endpoint " + endpoint + " : option ignored", "");
+		if (!endpoint.empty()){
+			if (endpoint.compare(getEndPoint( )) !=0 ) {
+				logInfo->print(WMS_WARNING, "--endpoint " + endpoint + " : option ignored", "");
+			}
 		}
 	}
 }
 /**
 * GET operation
 */
-
 void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	vector<string> uris;
 	string errors = "";
 	string file = "";
 	int size = 0;
 	try {
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		// Perform Check File Transfer Protocol Step
 		jobPerformStep(STEP_CHECK_FILE_TP);
 		if (peekFiles.empty()){
@@ -410,8 +412,8 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 		logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; number of files to be retrieved :" + boost::lexical_cast<string>(size));
 		if (m_fileProto.compare(Options::TRANSFER_FILES_GUC_PROTO)==0) {
 			this->gsiFtpGetFiles(uris, paths, errors);
-		} else if (m_fileProto.compare(Options::TRANSFER_FILES_CURL_PROTO)==0) {
-			this->curlGetFiles(uris, paths, errors);
+		} else if (m_fileProto.compare(Options::TRANSFER_FILES_HTCP_PROTO)==0) {
+			this->htcpGetFiles(uris, paths, errors);
 		} else {
 			errors = "File Protocol not supported: " + m_fileProto;
 			errors += "List of available protocols for this client:" + Options::getProtocolsString( ) ;
@@ -439,7 +441,6 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 */
 void JobPerusal::perusalSet ( ){
 	try {
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		logInfo->service(WMP_SETPERUSAL_SERVICE, jobId);
 		enableFilePerusal (jobId, peekFiles, getContext());
 		
@@ -455,7 +456,6 @@ void JobPerusal::perusalSet ( ){
 */
 void JobPerusal::perusalUnset( ){
 	vector<string> empty;
-        logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
         logInfo->print(WMS_DEBUG, "Calling the " + string(WMP_SETPERUSAL_SERVICE) + " to unset the peeking for the job", jobId);
         try {
 		enableFilePerusal (jobId, empty, getContext());
@@ -469,16 +469,15 @@ void JobPerusal::perusalUnset( ){
 * File downloading with globus-url-copy
 */
 void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
-	int code = 0;
+	vector<string> params ;
 	ostringstream err ;
-	char *reason = NULL;
 	string source = "";
 	string destination = "";
 	string cmd = "";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
 		"using globus-url-copy to retrieve the file(s)");
 	 while ( uris.empty() == false ){
-		cmd= "globus-url-copy ";
+		cmd= "globus-url-copy";
 		if (getenv("GLOBUS_LOCATION")){
 			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
 		} else if (Utils::isDirectory ("/opt/globus/bin")){
@@ -493,24 +492,30 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 		source = uris[0];
 		destination = m_dirOpt + "/" + Utils::getFileName (source) ;
 		if (wmcUtils->askForFileOverwriting(destination)){
-			cmd+= source + " file://"  + destination ;
-			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n", cmd);
+			params.resize(0);
+			params.push_back(source);
+			params.push_back("file://"+destination);
+			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
+			string errormsg = "";
+			int timeout = 10 ;
 			// launches the command
-			code = system( cmd.c_str() );
-			if (code <  0) {
-				err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
-				reason = strerror(code);
-				if (reason!=NULL) {
-					err << "   " << reason << "\n";
-					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
-				} else {
-					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
-				}
-			} else {
+			if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
+                                // EXIT CODE !=0
+                                switch (outcome) {
+                                        case FAILED:
+                                        case COREDUMP_FAILURE:
+                                                // either Unable to fork process or coredump
+						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed:", "Unable to fork process", true, true );
+                                                break;
+                                        default:
+                                                // Exit Code >= 1 => Error executing command
+						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
+                                                break;
+                                }
+                        } else {
 				paths.push_back(destination);
 				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) -", "File successfully retrieved");
 			}
-
 		} else {
 			logInfo->print(WMS_DEBUG, "WARNING - existing file not overwritten:", destination);
 			errors += "Warning - existing file not overwritten: " + destination + "\n";
@@ -521,113 +526,91 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 		errors = "Error while downloading the following file(s):\n" + err.str( );
 	}
 }
-
 /**
-* File downloading with CURL
+* File downloading with htcp
 */
-void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
-	CURL *curl = NULL;
-	string source = "" ;
-	string destination = "" ;
-	string file = "" ;
-	CURLcode res;
-	long	httpcode = 0;
-	// char curl_errorstr[CURL_ERROR_SIZE];
-	string httperr = "";
-	string curlMsg = "";
-	string err = "";
-	// user proxy
-	if (uris.empty()==false){
-		logInfo->print(WMS_DEBUG, "FileTransfer (https):",
-			"using curl to retrieve the file(s)");
-                // curl init
-                curl_global_init(CURL_GLOBAL_ALL);
-                curl = curl_easy_init();
-                if ( curl ) {
-			// curl options: Debug function
-			curl_easy_setopt(curl, CURLOPT_DEBUGDATA, &curlMsg);
-			curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, Utils::curlDebugCb);
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-                        // writing function
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
-                        // user proxy
-                        curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
-                        curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
-                        curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-                        curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath() );
-                        curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
-                        //trusted certificate directory
-                        curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
-                        //ssl options (no verify)
-                        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-                        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-
-			// enables error message buffer
-			// curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
-			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-                        // files to be downloaded
-			while(paths.empty()==false){
-				source = uris[0];
-				destination = m_dirOpt + "/" + Utils::getFileName (source) ;
-                                curl_easy_setopt(curl, CURLOPT_URL, source.c_str());
-                                ostringstream info ;
-                                info << "\nFile:\t" << source << "\n";
-                                info << "Destination:\t" << destination <<"\n";
-                                logInfo->print(WMS_DEBUG, "File Transfer (https)", info.str());
-                                struct httpfile params={
-                                        (char*)destination.c_str() ,
-                                        NULL
-                                };
-                                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
-                                // downloading
-                                res = curl_easy_perform(curl);
-				// Writing DEBUG info into the log file (if created)
-				if (curlMsg.size()>0){
-					logInfo->print(WMS_DEBUG, curlMsg, "", false);
-					curlMsg = "";
-				}
-				// If an error occurred during the file transfer
-				curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
-				// result
-				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
-					// SUCCESS !!!
-					logInfo->print(WMS_DEBUG,  "File Transfer (https)", "Transfer successfully done");
-					paths.push_back(destination);
-				} else {
-					// ERROR !!!
-					err += "-  Failure while downloading the file: " + file ;
-					err += " to " + destination + "\n";
-					/*
-					if ( strlen(curl_errorstr)>0 ){
-						err += string(curl_errorstr) + "\n";
-					}
-					*/
-					if (httpcode!=HTTP_OK){
-						httperr = Utils::httpErrorMessage(httpcode) ;
-						if (httperr.size()>0) { errors += httperr + "\n"; }
-						err += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
-					}
-					logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:\n", err);
-					// Adding this error description to the final message that will be returned
-					errors += string(err) ;
-				}
-				// Removes the file info from the vector
-				uris.erase(uris.begin());
-			}
-			// cleanup
-			curl_easy_cleanup(curl);
-		}
- 	 } else {
-		logInfo->print (WMS_DEBUG,  "No remote OutputSB files to be retrieved", "");
+void JobPerusal::htcpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
+	ostringstream err ;
+	vector<string> params ;
+	string source = "";
+	string destination = "";
+	string cmd= "";
+	string htcp = "htcp";
+	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
+		"using htcp to retrieve the file(s)");
+	if (Utils::isDirectory ("/usr/bin")){
+		htcp="/usr/bin/"+htcp;
+	} else if (getenv("GLITE_LOCATION")){
+		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
+	}else if (Utils::isDirectory ("/opt/glite/bin")){
+		htcp="/opt/glite/bin/"+htcp;
+	}else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"htcpGetFiles", ECONNABORTED,
+			"Unable to find",
+			"htcp executable");
 	}
-
+	 while ( uris.empty() == false ){
+		// command
+		cmd= "htcp";
+		logInfo->print(WMS_DEBUG, "FileTransfer (https):",
+			"using " + cmd +" to retrieve the file(s)");
+		if (Utils::isDirectory ("/usr/bin")){
+			cmd="/usr/bin/"+cmd;
+		} else if (getenv("GLITE_LOCATION")){
+			cmd=string(getenv("GLITE_LOCATION"))+"/bin/"+cmd;
+		}else if (Utils::isDirectory ("/opt/glite/bin")){
+			cmd="/opt/glite/bin/"+cmd;
+		}else {
+			throw WmsClientException(__FILE__,__LINE__,
+				"htcpGetFiles", ECONNABORTED,
+				"Unable to find",
+				"htcp executable");
+		}
+		//command
+		source = uris[0];
+		destination = m_dirOpt + "/" + Utils::getFileName (source) ;
+		if (wmcUtils->askForFileOverwriting(destination)){
+			params.resize(0);
+			params.push_back(source);
+			params.push_back("file://"+destination);
+			logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
+			string errormsg = "";
+			int timeout = 10 ;
+			// launches the command
+			if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
+                                // EXIT CODE !=0
+                                switch (outcome) {
+                                        case FAILED:
+                                        case COREDUMP_FAILURE:
+                                                // either Unable to fork process or coredump
+						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed:", "Unable to fork process", true, true );
+                                                break;
+                                        default:
+                                                // Exit Code >= 1 => Error executing command
+						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
+                                                break;
+                                }
+                        } else {
+				paths.push_back(destination);
+				logInfo->print(WMS_DEBUG, "File Transfer (https) -", "File successfully retrieved");
+			}
+		} else {
+			logInfo->print(WMS_DEBUG, "WARNING - existing file not overwritten:", destination);
+			errors += "Warning - existing file not overwritten: " + destination + "\n";
+		}
+		uris.erase(uris.begin());
+	}
+	if ((err.str()).size() >0){
+		errors = "Error while downloading the following file(s):\n" + err.str( );
+	}
 }
-
 /**
 * Prints out the final results on the std-out
 */
 void JobPerusal::printResult(const perusalOperations &operation, std::vector<std::string> &paths){
 	ostringstream out;
+	vector<string> params ;
 	string subj = "";
 	string verb = "";
 	string count = "";
@@ -681,7 +664,6 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 		out << "File(s) perusal has been successfully disabled for the job:" << endl;
 		out << jobId << "\n";
 	}
-
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
 	out << getLogFileMsg ( ) << "\n";
 	// Prints out the msg on the std out
@@ -693,10 +675,26 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 			cout << wmcUtils->getStripe(74, "-") << "\n";
 			cout << "file " << (i+1) << "/" << size << ": " << Utils::getFileName(paths[i]) << "\n";
 			cout << wmcUtils->getStripe(74, "-") << "\n\n";
-			cmd = DISPLAY_CMD + " " + string(paths[i]);
-			system(cmd.c_str());
+			params.resize(0);
+			params.push_back(string(paths[i]));
+			string errormsg = "";
+			cmd = DISPLAY_CMD;
+			int timeout = 10 ;
+			if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
+                                // EXIT CODE !=0
+                                switch (outcome) {
+                                        case FAILED:
+                                        case COREDUMP_FAILURE:
+                                                // either Unable to fork process or coredump
+						logInfo->print(WMS_ERROR, "Method printResult: ", "Unable to fork process", true, true );
+                                                break;
+                                        default:
+                                                // Exit Code >= 1 => Error executing command
+						logInfo->print(WMS_ERROR, "Method printResult:  \n", errormsg, true, true );
+                                                break;
+        	                }
+			}
 		}
 	}
 }
 }}}} // ending namespaces
-
