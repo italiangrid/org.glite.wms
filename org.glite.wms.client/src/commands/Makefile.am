@@ -27,7 +27,6 @@ WMPROXY_LISTMATCH = $(top_builddir)/src/services/libglite_wms_client_joblistmatc
 WMPROXY_OUTPUT = $(top_builddir)/src/services/libglite_wms_client_joboutput.la
 WMPROXY_SUBMIT = $(top_builddir)/src/services/libglite_wms_client_jobsubmit.la
 WMPROXY_UTILS = $(top_builddir)/src/utilities/libglite_wms_client_utilities.la
-CURL = -L/usr/lib -lcurl
 #WSSE_LIBS=-lwsse -lssl -lcrypto
 
 
@@ -148,7 +147,6 @@ glite_wms_job_submit_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
-	$(CURL) \
 	$(LIBTAR_LIBS) \
 	$(WSSE_LIBS) \
 	$(ZLIB_LIBS)
@@ -216,8 +214,7 @@ glite_wms_job_output_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
-	$(WSSE_LIBS) \
-	$(CURL)
+	$(WSSE_LIBS) 
 
 glite_wms_job_perusal_SOURCES = \
 	wmp-job-perusal.cpp
@@ -250,8 +247,7 @@ glite_wms_job_perusal_LDADD = \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
-	$(WSSE_LIBS) \
-	$(CURL) 
+	$(WSSE_LIBS) 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src \

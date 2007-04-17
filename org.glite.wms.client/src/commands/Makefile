@@ -54,7 +54,6 @@ EXC_LIB=-lglite_wmsutils_exception
 #GRIDSITE_LIBS=-lgridsite -lxml2
 GRIDSITE_GLOBUS_STAGE_LIBS=-lgridsite_globus
 GRIDSITE_GLOBUS_LIBS = -L/usr/lib -lxml2
-CURL=-L/usr/lib -lcurl
 LIBTAR=-L/usr/local/lib -ltar
 ZLIB=-L/usr/local/lib -lz
 
@@ -106,7 +105,6 @@ COMMON_LD_FLAGS=\
 -L../services \
 -L../utilities \
 $(STAGELIBS) \
-$(CURL) \
 $(GRIDSITE_GLOBUS_LIBS) \
 $(BOOST_LIBS)
 
