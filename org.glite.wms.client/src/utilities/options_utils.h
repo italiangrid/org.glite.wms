@@ -308,9 +308,9 @@ class Options
 		*/
 		static const std::string JOBPATH_URI_PROTO;
 		/**
-		* Default protocol for file transfer operations by CURL
+		* Default protocol for file transfer operations by htcp
 		*/
-		static const std::string TRANSFER_FILES_CURL_PROTO;
+		static const std::string TRANSFER_FILES_HTCP_PROTO;
 		/**
 		* Default protocol for file transfer operations by globus-url-copy
 		*/
@@ -341,9 +341,9 @@ class Options
 		static const long MAX_GUC_SIZE ;
 		/**
 		* Limitations on File sizes:
-		* max size (bytes) allowed for CURL
+		* max size (bytes) allowed for htcp
 		*/
-		static const long MAX_CURL_SIZE;
+		static const long MAX_HTCP_SIZE;
 		/**
 		* Byte offset for tar files
 		*/

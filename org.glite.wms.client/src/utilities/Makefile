@@ -17,7 +17,6 @@ BOOST=$(repository)/boost/1.32.0-slc3/rhel30_gcc32
 BOOST_SUFFIX=-gcc-mt-d
 BOOST_SUFFIX=
 CLASSAD=$(repository)/classads/0.9.7-opt/rhel30_gcc32
-CURL=-L/usr/lib -lcurl
 GLOBUS=$(repository)/globus/2.4.3-VDT-1.2.2/rhel30_gcc32/
 GLOBUS_FLAVOR=gcc32dbg
 
@@ -38,7 +37,6 @@ WMPCLIENT_LD_FLAGS= \
 
 WMPCLIENT_LD_EXE_FLAGS= \
 	$(WMPCLIENT_LD_FLAGS) \
-	$(CURL) \
 	-L$(GLOBUS)/lib \
 	-lglite_wmsutils_classads \
 	-lboost_filesystem$(BOOST_SUFFIX) \

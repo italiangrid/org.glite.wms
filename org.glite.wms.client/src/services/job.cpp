@@ -14,8 +14,6 @@
 // streams
 #include <sstream>
 #include <iostream>
-// CURL
-#include <curl/curl.h>
 // fstat
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -787,8 +785,8 @@ void Job::checkFileTransferProtocol(  ) {
 					m_fileProto = Options::TRANSFER_FILES_DEF_PROTO;
 					logInfo->print(WMS_DEBUG, "FileTransferProtocol not specified;", "using the default protocol: "
 						+ m_fileProto);
-				} else if (Utils::hasElement(protocols, Options::TRANSFER_FILES_CURL_PROTO)) {
-					m_fileProto = Options::TRANSFER_FILES_CURL_PROTO;
+				} else if (Utils::hasElement(protocols, Options::TRANSFER_FILES_HTCP_PROTO)) {
+					m_fileProto = Options::TRANSFER_FILES_HTCP_PROTO;
 					logInfo->print(WMS_DEBUG,
 					"FileTransferProtocol has not been specified and the server does not support the default protocol ("
 						+Options::TRANSFER_FILES_DEF_PROTO+")",

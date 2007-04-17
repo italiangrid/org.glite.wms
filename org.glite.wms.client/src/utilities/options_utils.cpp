@@ -62,13 +62,13 @@ const std::string Options::BUG_MSG = "(please report to " + HELP_EMAIL +")";
 /*
 * Protocols for file transferring operations
 */
-const string Options::TRANSFER_FILES_CURL_PROTO = "https" ;
+const string Options::TRANSFER_FILES_HTCP_PROTO = "https" ;
 const string Options::TRANSFER_FILES_GUC_PROTO = "gsiftp" ;
 const string Options::TRANSFER_FILES_DEF_PROTO = Options::TRANSFER_FILES_GUC_PROTO ;
 const string Options::JOBPATH_URI_PROTO ="https" ;
 const char* Options::TRANSFER_FILES_PROTOCOLS[ ] = {
 	Options::TRANSFER_FILES_GUC_PROTO.c_str(),
-	Options::TRANSFER_FILES_CURL_PROTO.c_str()
+	Options::TRANSFER_FILES_HTCP_PROTO.c_str()
 };
 /**
 * Constant string to allow specifing "Retrieve all protocols"
@@ -87,8 +87,8 @@ const long Options::MAX_DEFAULT_FILE_SIZE = 2147483647;
 const long Options::MAX_TAR_SIZE = Options::MAX_DEFAULT_FILE_SIZE - Options::TAR_OFFSET;
 // Max file size for globus-url-copy
 const long Options::MAX_GUC_SIZE = Options::MAX_DEFAULT_FILE_SIZE;
-// Max file size for CURL
-const long Options::MAX_CURL_SIZE = Options::MAX_DEFAULT_FILE_SIZE;
+// Max file size for HTCP
+const long Options::MAX_HTCP_SIZE = Options::MAX_DEFAULT_FILE_SIZE;
 
 /*
 * Verbosity level
@@ -1052,8 +1052,8 @@ const long Options::getMinimumAllowedFileSize (const std::string &protocol, cons
 	long proto = 0;
 	long min = 0;
 	if (protocol.size ( ) > 0) {
-		if (protocol.compare(TRANSFER_FILES_CURL_PROTO)==0) {
-			proto = MAX_CURL_SIZE ;
+		if (protocol.compare(TRANSFER_FILES_HTCP_PROTO)==0) {
+			proto = MAX_HTCP_SIZE ;
 		} else if (protocol.compare(TRANSFER_FILES_GUC_PROTO)==0) {
 			proto = MAX_GUC_SIZE ;
 		} else {
