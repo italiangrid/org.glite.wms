@@ -49,7 +49,7 @@ class JobOutput  : public Job {
 		void getOutput ( ) ;
 
         private :
-		int  retrieveOutput(std::string &result, Status& status, const std::string& dirAbs, const bool &child=false);
+		int  retrieveOutput(std::string &result, Status& status, const std::string& dirAbs, bool firstCall, const bool &child=false);
 		/**
 		* Retrieves the output files
 		*/
@@ -68,10 +68,6 @@ class JobOutput  : public Job {
 		* @param msg the message to be added
 		*/
 		void createWarnMsg(const std::string &msg ) ;
-  		/**
-		*	struct for files
-		*/
-		struct httpfile { char *filename; FILE* stream; } ;
                 /**
                 * File downloading with globus-url-copy
                 * @param files list of files to be downloaded and their destination
@@ -79,12 +75,11 @@ class JobOutput  : public Job {
                 */
 		void gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) ;
                 /**
-                * File downloading with CURL
-                * @param files list of files to be downloaded and their destination
-		*@param failed this vector is filled with the information on the files for which was a failure occurred during the transfer operations
+                * File downloading with htcp
+                * @param paths list of files to be downloaded and their destination
 		* @param errors string with messages of errors occurred during the operations
                 */
-		void curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) ;
+		void htcpGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) ;
         	 /**
                 *	String input arguments
                 */
