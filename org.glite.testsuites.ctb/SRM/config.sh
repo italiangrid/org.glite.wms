@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Config file for the SRM-s2-srmv2.2 test
+# Config file for the SRM tests
 #
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version: $Id$
@@ -16,3 +16,6 @@ export RESTRICT_TESTS_TO="lxb2036.cern.ch lxb1921.cern.ch"
 
 # VO to use in SAPath query (empty = use VO from voms proxy)
 export VO=dteam
+
+# location of SRM 2.2 tests from LCG-DM package (Gilbert's tests)
+export LCGDM_SRM22_TEST_LOCATION=/afs/cern.ch/user/z/zaborov/public/srm2.2-tests
