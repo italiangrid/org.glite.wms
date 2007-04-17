@@ -146,7 +146,6 @@ void JobCancel::cancel ( ){
 			}
 
   			try{
-				logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint(),false);
 	                        //  performs cancelling
 				logInfo->service(WMP_CANCEL_SERVICE, jobid);
                                 jobCancel(jobid, getContext( ) );
