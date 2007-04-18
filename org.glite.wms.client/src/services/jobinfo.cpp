@@ -396,6 +396,10 @@ void JobInfo::retrieveInfo ( ){
 			params.push_back(make_pair("delegationID", m_dgOpt));
 			logInfo->service(WMP_DELEG_PROXYINFO, params);
 			// calling the service ....
+			
+			// Set the SOAP timeout
+			setSoapTimeout(m_cfgCxt.get(), SOAP_GET_DELEGATED_PROXY_INFO_TIMEOUT);
+			
 			proxy_info = getDelegatedProxyInfo(m_dgOpt, m_cfgCxt.get());
 			logInfo->result(WMP_DELEG_PROXYINFO, "Info on delegated proxy successfully retrieved");
 		} catch (BaseException &exc) {
@@ -422,6 +426,10 @@ void JobInfo::retrieveInfo ( ){
 			if (proxyOpt) {
 				// log-info
 				logInfo->service(WMP_JOB_PROXYINFO, jobId);
+			
+				// Set the SOAP timeout
+				setSoapTimeout(m_cfgCxt.get(), SOAP_GET_JOB_PROXY_INFO_TIMEOUT);
+			
 				proxy_info = getJobProxyInfo(jobId, m_cfgCxt.get());
 				// calling the service ....
 				logInfo->result(WMP_JOB_PROXYINFO, "Proxy info successfully retrieved");
@@ -432,6 +440,10 @@ void JobInfo::retrieveInfo ( ){
 				params.push_back(make_pair("JDL-type", "ORIGINAL"));
 				// calling the service ...
 				logInfo->service(WMP_JDL_SERVICE, params);
+			
+				// Set the SOAP timeout
+				setSoapTimeout(m_cfgCxt.get(), SOAP_GET_JDL_TIMEOUT);
+			
 				jdl = getJDL(jobId, ORIGINAL, m_cfgCxt.get());
 				logInfo->result(WMP_JDL_SERVICE, "JDL info successfully retrieved");
 				header << "The original JDL\n" ;
@@ -441,6 +453,10 @@ void JobInfo::retrieveInfo ( ){
 				params.push_back(make_pair("JDL-type", "REGISTERED"));
 				logInfo->service(WMP_JDL_SERVICE, params);
 				// calling the service ...
+			
+				// Set the SOAP timeout
+				setSoapTimeout(m_cfgCxt.get(), SOAP_GET_JDL_TIMEOUT);
+			
 				jdl = getJDL(jobId, REGISTERED, m_cfgCxt.get());
 				logInfo->result(WMP_JDL_SERVICE, "JDL info successfully retrieved");
 				header << "The registered JDL\n" ;

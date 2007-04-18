@@ -21,7 +21,7 @@ namespace wms{
 namespace client {
 namespace utilities {
 const string DEFAULT_UI_CLIENTCONFILE	=	"glite_wmsclient.conf";  //Used in utils as well
-const string DEFAULT_UI_CONFILE			=	"glite_wms.conf";  // kept for compatibility purpose with older versions
+const string DEFAULT_UI_CONFILE		=	"glite_wms.conf";  // kept for compatibility purpose with older versions
 const string JDL_WMS_CLIENT		=	"WmsClient";
 const string JDL_WMPROXY_ENDPOINT	=	"WmProxyEndPoints";
 const string JDL_LB_ENDPOINT		=	"LBEndPoints";
@@ -284,6 +284,7 @@ void setMissingBool(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& 
 void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf,
 	const std::string& pathOpt){
+		
 	if (!conf){return;}
 	try{
 		if (conf->jdl_default_attributes()){
@@ -459,6 +460,64 @@ void AdUtils::setDefaultValues(glite::jdl::CollectionAd* jdl,
 		if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
 	}
 }
+
+/******************
+* SOAP Timeout
+*******************/
+int  AdUtils::getSoapTimeout(const std::string& timeoutName, glite::wms::common::configuration::WMCConfiguration* p_conf)
+{
+	// Initialise the SOAP Timeout (0 == no timeout)
+	int soap_timeout = 0;
+
+	// Check if the configuration is valid
+	if (NULL == p_conf) {
+		// Throw the exception
+		throw WmsClientException(__FILE__,__LINE__,"AdUtils::getSoapTimeout",DEFAULT_ERR_CODE,
+			"Missing configuration","No configuration set by the caller");
+	}
+
+	// Check if the SOAP Class AD has been read
+	if (p_conf->soap_timeouts()) {
+
+		// Initialise the searched Timeout 
+		std::string searchedTimeout = "";
+
+		/* Retrieve the SOAP Timeouts Class AD */
+		Ad soapAd(*(p_conf->soap_timeouts()));
+		
+		// Check if exists a global SOAP timeout
+		if(soapAd.hasAttribute(SOAP_GLOBAL_TIMEOUT)) {
+ 			// Set the searched timeout
+			searchedTimeout = SOAP_GLOBAL_TIMEOUT;
+		}
+		else {
+		
+			// Check if the needed Timeout has been set
+			if(soapAd.hasAttribute(timeoutName)) {
+				// Set the passed SOAP Timeout name as the searched one
+				searchedTimeout = timeoutName;
+			}
+		}
+		
+		// Check if is present a SOAP timeout
+		if(!searchedTimeout.empty()) {
+			// Check if the attribute is of the correcy type
+			if(soapAd.getType(searchedTimeout) != Ad::TYPE_INTEGER) {
+			 	// Throw the exception
+				throw WmsClientException(__FILE__,__LINE__,"AdUtils::getSoapTimeout",DEFAULT_ERR_CODE,
+					"Invalid SOAP Timeout", "An invalid SOAP Timeout passed for " + searchedTimeout);
+			}
+		
+			// Read the SOAP Timeout		
+			soap_timeout = soapAd.getInt(searchedTimeout);
+		}
+		
+	}
+	
+	// Return the SOAP Timeout
+	return 	soap_timeout;
+}
+
 /***********************
 *  JobId - Node mapping
 ************************/

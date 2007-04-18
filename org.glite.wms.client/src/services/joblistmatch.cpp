@@ -204,6 +204,10 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
  	try{
   		// ListMatch
 		logInfo->service(WMP_LISTMATCH_SERVICE);
+			
+		// Set the SOAP timeout
+		setSoapTimeout(SOAP_JOB_LIST_MATCH_TIMEOUT);
+			
     		list = jobListMatch(m_jdlString, getDelegationId( ), getContext());
 		logInfo->result(WMP_LISTMATCH_SERVICE, "The MatchMaking operations have been successfully performed");
       } catch (BaseException &exc) {

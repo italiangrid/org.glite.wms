@@ -401,6 +401,10 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 			file = peekFiles[0] ;
 		}
 		logInfo->service(WMP_GETPERUSAL_SERVICE, jobId);
+			
+		// Set the SOAP timeout
+		setSoapTimeout(SOAP_GET_PERUSAL_FILES_TIMEOUT);
+			
 		uris = getPerusalFiles (jobId, file , allOpt, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -442,6 +446,10 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 void JobPerusal::perusalSet ( ){
 	try {
 		logInfo->service(WMP_SETPERUSAL_SERVICE, jobId);
+			
+		// Set the SOAP timeout
+		setSoapTimeout(SOAP_ENABLE_FILE_PERUSAL_TIMEOUT);
+			
 		enableFilePerusal (jobId, peekFiles, getContext());
 		
 	} catch (BaseException &exc) {
@@ -458,6 +466,10 @@ void JobPerusal::perusalUnset( ){
 	vector<string> empty;
         logInfo->print(WMS_DEBUG, "Calling the " + string(WMP_SETPERUSAL_SERVICE) + " to unset the peeking for the job", jobId);
         try {
+			
+		// Set the SOAP timeout
+		setSoapTimeout(SOAP_ENABLE_FILE_PERUSAL_TIMEOUT);
+			
 		enableFilePerusal (jobId, empty, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,

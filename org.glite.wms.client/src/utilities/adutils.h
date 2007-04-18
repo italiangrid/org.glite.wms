@@ -39,8 +39,38 @@ enum voSrc {
 	JDL_FILE	//  only vo
 };
 
+
+#define SOAP_GLOBAL_TIMEOUT          			"globalTimeout"
+#define SOAP_GET_VERSION_TIMEOUT     			"getVersionTimeout"
+#define SOAP_JOB_LIST_MATCH_TIMEOUT			"jobListMatchTimeout"
+#define SOAP_JOB_SUBMIT_TIMEOUT				"jobSubmitTimeout"
+#define SOAP_JOB_REGISTER_TIMEOUT			"jobRegisterTimeout"
+#define SOAP_JOB_START_TIMEOUT				"jobStartTimeout"
+#define SOAP_JOB_CANCEL_TIMEOUT				"jobCancelTimeout"
+#define SOAP_JOB_PURGE_TIMEOUT				"jobPurgeTimeout"
+#define SOAP_GET_OUTPUT_FILE_LIST_TIMEOUT		"getOutputFileListTimeout"
+#define SOAP_GET_SANDBOX_DEST_URI_TIMEOUT		"getSandboxDestURITimeout"
+#define SOAP_GET_SANDBOX_BULK_DEST_URI_TIMEOUT		"getSandboxBulkDestURITimeout"
+#define SOAP_GET_MAX_INPUT_SANBOX_SIZE_TIMEOUT  	"getMaxInputSandboxTimeout"
+#define SOAP_GET_FREE_QUOTA_TIMEOUT			"getFreeQuotaTimeout"
+#define SOAP_GET_STRING_PARAMETRI_JOB_TEMPLATE_TIMEOUT	"getStringParametricJobTemplateTimeout"
+#define SOAP_GET_TRANSFER_PROTOCOLS_TIMEOUT		"getTransferProtocolsTimeout"
+#define SOAP_GET_TOTAL_QUOTA_TIMEOUT			"getTotalQuotaTimeout"
+#define SOAP_GET_JDL_TIMEOUT				"getJDLTimeout"
+#define SOAP_GET_PROXY_REQ_TIMEOUT			"getProxyReqTimeout"
+#define SOAP_PUT_PROXY_TIMEOUT				"putProxyTimeout"
+#define SOAP_GET_DELEGATED_PROXY_INFO_TIMEOUT		"getDelegatedProxyInfoTimeout"
+#define SOAP_GET_JOB_PROXY_INFO_TIMEOUT			"getJobProxyInfoTimeout"
+#define SOAP_ENABLE_FILE_PERUSAL_TIMEOUT		"enableFilePerusalTimeout"
+#define SOAP_GET_PERUSAL_FILES_TIMEOUT			"getPerusalFilesTimeout"
+#define SOAP_GET_JOB_TEMPLATE_TIMEOUT			"getJobTemplateTimeout"
+#define SOAP_GET_DAG_TEMPLATE_TIMEOUT			"getDAGTemplateTimeout"
+#define SOAP_GET_COLLECTION_TEMPLATE_TIMEOUT		"getCollectionTemplateTimeout"
+#define SOAP_GET_INT_PARAMETRIC_JOB_TEMPLATE_TIMEOUT	"getIntParametricJobTemplateTimeout"
+	
 class AdUtils{
 	public:
+	
 		/*
 		*Default constructor
 		*/
@@ -67,6 +97,8 @@ class AdUtils{
 			glite::wms::common::configuration::WMCConfiguration* conf);
 		static void setDefaultValues(glite::jdl::CollectionAd* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf);
+		static int getSoapTimeout(const std::string& timeoutName, 
+			glite::wms::common::configuration::WMCConfiguration* p_conf);
 		/** look for, check, parse and retrieve VO name and value */
 		void parseVo(voSrc src, std::string& voPath, std::string& voName);
 		/** Return the list of all unknown values*/

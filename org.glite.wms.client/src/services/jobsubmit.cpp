@@ -474,6 +474,10 @@ void JobSubmit::checkUserServerQuota() {
 	try{
 		// Gets the user-free quota from the WMProxy server
 		logInfo->service(WMP_FREEQUOTA_SERVICE);
+			
+		// Set the SOAP timeout
+		setSoapTimeout(SOAP_GET_FREE_QUOTA_TIMEOUT);
+			
 		free_quota = api::getFreeQuota(getContext( ));
 	} catch (api::BaseException &exc){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -507,6 +511,10 @@ void JobSubmit::checkUserServerQuota() {
 			// Gets the maxISb size from the WMProxy server
 			logInfo->print(WMS_DEBUG, "Getting the max ISB size from the server", getEndPoint( ) );
 			logInfo->service(WMP_MAXISBSIZE_SERVICE);
+			
+			// Set the SOAP timeout
+			setSoapTimeout(SOAP_GET_MAX_INPUT_SANBOX_SIZE_TIMEOUT);
+			
 			maxIsbSize = api::getMaxInputSandboxSize(getContext( ));
 		} catch (api::BaseException &exc){
 				throw WmsClientException(__FILE__,__LINE__,
@@ -1165,6 +1173,10 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
 			//Suibmitting....
 			logInfo->service(WMP_SUBMIT_SERVICE);
+			
+			// Set the SOAP timeout
+			setSoapTimeout(SOAP_JOB_SUBMIT_TIMEOUT);
+			
 			jobIds = api::jobSubmit(m_jdlString, m_dgOpt, getContext( ));
 			logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
 		} else {
@@ -1174,6 +1186,10 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			logInfo->print(WMS_DEBUG, "Registering the job to the service", getEndPoint());
 			// registering ...
 			logInfo->service(WMP_REGISTER_SERVICE);
+			
+			// Set the SOAP timeout
+			setSoapTimeout(SOAP_JOB_REGISTER_TIMEOUT);
+			
 			jobIds = api::jobRegister(m_jdlString , m_dgOpt, getContext( ));
 			logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
 		}
@@ -1202,6 +1218,10 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 		// START
 		logInfo->print(WMS_DEBUG, "Starting the job: " , jobid);
 		logInfo->service(WMP_START_SERVICE);
+			
+		// Set the SOAP timeout
+		setSoapTimeout(SOAP_JOB_START_TIMEOUT);
+			
 		api::jobStart(jobid, getContext( ));
 	} catch (api::BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1230,7 +1250,7 @@ std::string JobSubmit::getJobId( ) {
 * For a child node both the main JobId and the child JobId must be provided.
 */
 std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::string &child, const std::string &protocol) {
-      	string *destURI= NULL;
+      	string destURI= "";
 	string msg = "";
 	string look_for = "";
 	vector<string> uris ;
@@ -1284,6 +1304,10 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
                        			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));
 					logInfo->print (WMS_DEBUG,
 							"Calling the WMProxy " + service + " service with " + proto + " protocol", "" );
+			
+					// Set the SOAP timeout
+					setSoapTimeout(SOAP_GET_SANDBOX_DEST_URI_TIMEOUT);
+			
 					uris = api::getSandboxDestURI(jobid, getContext( ), proto);
 					dsURIs.push_back(make_pair(jobid,uris));
 				} else {
@@ -1293,6 +1317,10 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 
 					logInfo->print (WMS_DEBUG,
 							"Calling the WMProxy " + service  + " service with " + proto + " protocol", "" );
+			
+					// Set the SOAP timeout
+					setSoapTimeout(SOAP_GET_SANDBOX_BULK_DEST_URI_TIMEOUT);
+			
 					dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ), proto);
 				}
 			} else {
@@ -1302,6 +1330,10 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
                        			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));
 					logInfo->print (WMS_DEBUG,
 							"Calling the WMProxy " + service + " service with no request of specific protocol (all available protocols requested)" );
+			
+					// Set the SOAP timeout
+					setSoapTimeout(SOAP_GET_SANDBOX_DEST_URI_TIMEOUT);
+			
 					uris = api::getSandboxDestURI(jobid, getContext( ), proto);
 					dsURIs.push_back(make_pair(jobid,uris));
 				} else {
@@ -1310,8 +1342,11 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 					logInfo->print (WMS_DEBUG,
 						"Calling the WMProxy " + service +
 							" service with no request of specific protocol (all available protocols requested)");
+			
+					// Set the SOAP timeout
+					setSoapTimeout(SOAP_GET_SANDBOX_BULK_DEST_URI_TIMEOUT);
+			
 					dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ));
-
 				}
 			}
                 } catch (api::BaseException &exc){
@@ -1365,18 +1400,18 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 			for (; it2 != end2  ; it2++) {
 				// 1st check >>>> Looks for the destURi for file transfer
 				if ( it2->substr (0, (proto.size())) ==  proto){
-					destURI= new string(*it2);
+					destURI= *it2;
 					if (ch) {
-						logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *destURI, false);
+						logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + destURI, false);
 					} else {
-						logInfo->print(WMS_DEBUG,  "DestinationURI:", *destURI);
+						logInfo->print(WMS_DEBUG,  "DestinationURI:", destURI);
 					}
 					break ;
 				}
 			}
 		}
 	}
-	if (destURI==NULL) {
+	if (destURI.empty()) {
 		if (ch){
 			throw WmsClientException(__FILE__,__LINE__, "getDestinationURI",DEFAULT_ERR_CODE,
 			"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid );
@@ -1385,7 +1420,7 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 			"Missing Information","unable to retrieve the InputSB DestinationURI for the child node: " + child  );
 		}
 	}
-        return *destURI;
+        return destURI;
 }
 /**
 * Returns a relative path that is used to archive the ISB local file in the tar files.

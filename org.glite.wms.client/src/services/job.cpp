@@ -174,7 +174,6 @@ void Job::postOptionchecks(unsigned int proxyMinTime){
 			"Proxy validity Error", "Your proxy credential will expire in less than"
 			+ boost::lexical_cast<std::string>(proxyMinTime) + "minutes");
 	}
-
 }
 /**
 * Returns the WMProxy Context containing the following information:
@@ -188,6 +187,26 @@ glite::wms::wmproxyapi::ConfigContext* Job::getContext( ){
 		m_cfgCxt.reset(new api::ConfigContext(getProxyPath(), getEndPoint(), getCertsPath()));
 	}
 	return m_cfgCxt.get();
+}
+/**
+* Set the WMProxy SOAP Timeout for the default Config Context
+*/
+void Job::setSoapTimeout(std::string timeoutName){
+	// Get the Current Config Context
+	glite::wms::wmproxyapi::ConfigContext* p_configContext = getContext();
+
+	// Set the SOAP Timeout
+	setSoapTimeout(p_configContext, timeoutName);
+}
+/**
+* Set the WMProxy SOAP Timeout for a specific Config Context
+*/
+void Job::setSoapTimeout(glite::wms::wmproxyapi::ConfigContext* p_configContext, std::string timeoutName){
+	// Get the WMC Configuration
+	glite::wms::common::configuration::WMCConfiguration* wmcConf = wmcUtils->getConf();
+
+	// Set the SOAP Timeout for the getVersion
+	p_configContext->soap_timeout = AdUtils::getSoapTimeout(timeoutName, wmcConf);
 }
 /**
 * Returns the endpoint URL
@@ -333,8 +352,13 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 	try {
 		boost::scoped_ptr<api::ConfigContext> sp_cfg(new api::ConfigContext (getProxyPath(), endpoint, getCertsPath()));
 		logInfo->print (WMS_INFO, "Connecting to the service", endpoint);
+		
 		// Version string number
 		logInfo->service(WMP_VERSION_SERVICE);
+		
+		// Set the SOAP time out
+		setSoapTimeout(sp_cfg.get(), SOAP_GET_VERSION_TIMEOUT);
+		
 		string v = api::getVersion(sp_cfg.get());
 		setVersionNumbers( v );
 		logInfo->result(WMP_VERSION_SERVICE, " Version successfully retrieved : "+ v );
@@ -487,10 +511,18 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 		logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  endpoint);
 		// GetProxy
 		logInfo->service(WMP_NS4_GETPROXY_SERVICE);
+
+		// Set the SOAP time out
+		setSoapTimeout(sp_cfg.get(), SOAP_GET_PROXY_REQ_TIMEOUT);
+		
 		const string proxyReq = api::grstGetProxyReq(id, sp_cfg.get()) ;
 		logInfo->result(WMP_NS4_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
 		// PutProxy
 		logInfo->service(WMP_NS4_PUTPROXY_SERVICE);
+
+		// Set the SOAP time out
+		setSoapTimeout(sp_cfg.get(), SOAP_PUT_PROXY_TIMEOUT);
+		
 		api::grstPutProxy(id, proxyReq, sp_cfg.get());
 		if (id==""){
 			logInfo->result(WMP_NS4_PUTPROXY_SERVICE,
@@ -733,6 +765,10 @@ void Job::checkFileTransferProtocol(  ) {
 		logInfo->service(WMP_GETPROTOCOLS_SERVICE);
 		// List of WMProxy available protocols
 		try {
+
+			// Set the SOAP time out
+			setSoapTimeout(m_cfgCxt.get(), SOAP_GET_TRANSFER_PROTOCOLS_TIMEOUT);
+		
 			protocols = api::getTransferProtocols(m_cfgCxt.get());
 			size = protocols.size();
 			msg << "Available protocols: ";

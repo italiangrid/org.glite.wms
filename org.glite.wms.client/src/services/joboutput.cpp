@@ -301,6 +301,10 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 				try {
 					logInfo->service(WMP_JDL_SERVICE, jobid.toString());
 					// Retrieve JDL
+			
+					// Set the SOAP timeout
+					setSoapTimeout(SOAP_GET_JDL_TIMEOUT);
+			
 					string JDLretrieved=getJDL(jobid.toString(), glite::wms::wmproxyapi::REGISTERED,getContext());
 					map = AdUtils::getJobIdMap(JDLretrieved);
 					logInfo->result(WMP_JDL_SERVICE, "JDL successfully retrieved for jobid: "+jobid.toString());
@@ -371,6 +375,10 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		try {
 			// Check Dir/purge
 			logInfo->service(WMP_PURGE_SERVICE, id);
+
+			// Set the SOAP timeout
+			setSoapTimeout(SOAP_JOB_PURGE_TIMEOUT);
+
 			jobPurge(jobid.toString(),getContext());
                         logInfo->result(WMP_PURGE_SERVICE, "The purging request has been successfully sent");
 		} catch (BaseException &exc) {
@@ -390,6 +398,10 @@ bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const s
 	try {
 		// gets the list of the out-files from the EndPoint
 		logInfo->service(WMP_OUTPUT_SERVICE, jobid);
+			
+		// Set the SOAP timeout
+		setSoapTimeout(SOAP_GET_OUTPUT_FILE_LIST_TIMEOUT);
+			
 		files = getOutputFileList(jobid, getContext(), m_fileProto);
 		logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
 		hasFiles = hasFiles || (files.size()>0);

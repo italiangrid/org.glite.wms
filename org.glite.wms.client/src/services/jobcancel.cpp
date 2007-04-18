@@ -148,6 +148,10 @@ void JobCancel::cancel ( ){
   			try{
 	                        //  performs cancelling
 				logInfo->service(WMP_CANCEL_SERVICE, jobid);
+
+				// Set the SOAP timeout
+				setSoapTimeout(SOAP_JOB_CANCEL_TIMEOUT);
+			
                                 jobCancel(jobid, getContext( ) );
 				logInfo->result(WMP_CANCEL_SERVICE, "The cancellation request has been successfully sent" );
                          	 // list of jobs successfully cancelled
