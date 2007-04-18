@@ -137,6 +137,16 @@ namespace { // begin anonymous namespace
         return first;
     }
 
+    template <class InputIterator, class Size, class OutputIterator, class UnaryOperation>
+    InputIterator transform_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest, UnaryOperation f ) {
+        for ( ; n > 0 && first != end; --n ) {
+            *dest = f ( *first );
+            ++first;
+            ++dest;
+        }
+        return first;
+    }
+
 }; // end anonymous namespace
 
 //____________________________________________________________________________
@@ -662,6 +672,7 @@ void iceCommandStatusPoller::execute( ) throw()
         while ( it != list_end ) {
             vector< string > jobs_to_poll;
             it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
+            // it = transform_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ), mem_fun_ref( &CreamJob::getCreamJobID ) );
 
             list< soap_proxy::JobInfo > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) );
 
@@ -687,6 +698,7 @@ void iceCommandStatusPoller::remove_unknown_jobs_from_cache(const vector<string>
 
     set< string > all_job_ids;
     copy( all_jobs.begin(), all_jobs.end(), inserter( all_job_ids, all_job_ids.begin() ) );
+    // copy( all_jobs.begin(), all_jobs.end(), insert_iterator( all_job_ids ) );
 
     // Step 2: do the difference on the sorted vectors
     // set< string > missing_job_ids;
