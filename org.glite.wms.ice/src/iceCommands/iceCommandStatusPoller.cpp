@@ -67,7 +67,6 @@ namespace { // begin anonymous namespace
     protected:
         jobCache* m_cache;
     public:
-        typedef jobCache container_type;
         typedef output_iterator_tag iterator_category;
         typedef void value_type;
         typedef void difference_type;
@@ -140,7 +139,7 @@ namespace { // begin anonymous namespace
     template <class InputIterator, class Size, class OutputIterator, class UnaryOperation>
     InputIterator transform_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest, UnaryOperation f ) {
         for ( ; n > 0 && first != end; --n ) {
-            *dest = f ( *first );
+            *dest = f( *first );
             ++first;
             ++dest;
         }
