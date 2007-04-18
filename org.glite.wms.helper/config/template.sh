@@ -1,6 +1,27 @@
-#!/bin/sh
+#!/bin/sh 
 
 trap 'fatal_error "Job has been terminated by the batch system"' TERM
+trap 'fatal_error "Job has been signalled by the batch system"' XCPU
+trap 'fatal_error "Job has been signalled by the batch system"' INT
+trap 'fatal_error "Job has been signalled by the batch system"' QUIT
+# bg processes are supposed to inherit the whole mask and in particular the following:
+trap '' TTIN
+trap '' TTOU
+
+proxy_checker()
+{
+  while [ 1 -eq 1 ]; do
+    time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`
+    if [ $time_left -lt 0 ]; then
+      break;
+    else
+      sleep $time_left
+    fi
+  done
+
+  kill -9 -$user_job
+  fatal_error "Job killed because of user proxy expiration"
+}
 
 jw_echo() # 1 - msg
 {
@@ -288,7 +309,7 @@ function send_partial_file
     # Go to sleep, but be ready to wake up when the user job finishes
     sleep $POLL_INTERVAL & SLEEP_PID=$!
     trap 'LAST_CYCLE="y"; kill -ALRM $SLEEP_PID >/dev/null 2>&1' USR2
-    wait $SLEEP_PID >/dev/null 2>&1
+    wait $SLEEP_PID &>/dev/null
     # Retrieve the list of files to be monitored
     if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
       globus-url-copy ${TRIGGERFILE} file://${LISTFILE}
@@ -506,7 +527,7 @@ else
 fi
 
 if [ -f "${__job}" ]; then
-  chmod +x "${__job}" 2>/dev/null
+  chmod +x "${__job}" &>/dev/null
 else
   fatal_error "${__job} not found or unreadable"
 fi
@@ -514,8 +535,8 @@ fi
 #user script (before taking the token, shallow-sensitive)
 if [ -n "${__prologue}" ]; then
   if [ -f "${__prologue}" ]; then
-    chmod +x "${__prologue}" 2>/dev/null
-    ${__prologue} "${__prologue_arguments}"
+    chmod +x "${__prologue}" &>/dev/null
+    ${__prologue} "${__prologue_arguments}" &>/dev/null
     prologue_status=$?
     if [ ${prologue_status} -ne 0 ]; then
       fatal_error "prologue failed with error ${prologue_status}"
@@ -557,14 +578,14 @@ if [ -n "${__shallow_resubmission_token}" ]; then
   else
     is_uberftp=`expr match "${gridftp_rm_command}" '.*uberftp'`
     if [ $is_uberftp -eq 0 ]; then
-      $gridftp_rm_command ${__shallow_resubmission_token}
+      $gridftp_rm_command ${__shallow_resubmission_token} &>/dev/null
     else #uberftp
       tkn=${__shallow_resubmission_token} # will reduce lines length
       scheme=${tkn:0:`expr match "${tkn}" '[[:alpha:]][[:alnum:]+.-]*://'`}
       remaining=${tkn:${#scheme}:${#tkn}-${#scheme}}
       hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
       token_fullpath=${remaining:${#hostname}:${#remaining}-${#hostname}}
-      $gridftp_rm_command $hostname -a gsi "'quote dele ${token_fullpath}'"
+      $gridftp_rm_command $hostname -a gsi "quote dele ${token_fullpath}" &>/dev/null
     fi
     if [ $? -eq 0 ]; then
       log_event "ReallyRunning"
@@ -636,67 +657,27 @@ if [ 1 -eq 1 ]; then # dump variable to set?
   fi
 fi
 
-if [ -f "$tmp_time_file" ]; then
-  $time_cmd perl -e '
-    unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
-      $SIG{"TTIN"} = "IGNORE";
-      $SIG{"TTOU"} = "IGNORE";
-      setpgrp(0, 0);
-    }
-    exec(@ARGV);
-    warn "could not exec $ARGV[0]: $!\n";
-    exit(127);
-  ' "$cmd_line" 3>&2 2>"$tmp_time_file" &
+if [ -n "EDG_WL_NOSETPGRP" ]; then
 else
-  perl -e '
-    unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
-      $SIG{"TTIN"} = "IGNORE";
-      $SIG{"TTOU"} = "IGNORE";
-      setpgrp(0, 0);
-    }
-    exec(@ARGV);
-    warn "could not exec $ARGV[0]: $!\n";
-    exit(127);
-  ' "$cmd_line" &
+fi
+
+if [ -f "$tmp_time_file" ]; then
+  $time_cmd "$cmd_line" &>"$tmp_time_file" &
+else
+  "$cmd_line" &
 fi
 
 user_job=$!
 exec 2> /dev/null
 
-perl -e '
-  while (1) {
-    $time_left = `grid-proxy-info -timeleft 2> /dev/null || echo 0`;
-    last if ($time_left <= 0);
-    sleep($time_left);
-  }
-  kill(defined($ENV{"EDG_WL_NOSETPGRP"}) ? 9 : -9, '"$user_job"');
-  my $maradona = "'$maradona'";
-  my $logger = "'$lb_logevent'";
-  my $err_msg = "Job killed because of user proxy expiration"
-  print STDERR $err_msg;
-  if (open(DAT,">> ".$maradona)) {
-    print DAT $err_msg;
-    close(DAT);
-  }
-  if (open(CMD, $logger.
-                " --jobid=\"".$ENV{GLITE_WMS_JOBID}."\"".
-                " --source=LRMS".
-                " --sequence=".$ENV{GLITE_WMS_SEQUENCE_CODE}.
-                " --event=\"Done\"".
-                " --reason=\"$err_msg\"".
-                " --status_code=FAILED".
-                " --exit_code=0 2>/dev/null |")) {
-    chomp(my $value = <CMD>);
-    close(CMD);
-  }
-  exit(1);
-' &
-
+#proxy_checker &
 watchdog=$!
+
 wait $user_job
 status=$?
-#the bash kill command doesn't appear to work properly on process groups
-/bin/kill -9 $watchdog $user_job -$user_job
+#the bash kill command doesn't appear to work fine on process groups
+enable -n kill
+kill -9 $watchdog $user_job -$user_job
 
 # report the time usage
 if [ -f "$tmp_time_file" -a -n "$time_cmd" ]; then
@@ -754,8 +735,8 @@ jw_echo "job exit status = ${status}"
 
 if [ -n "${__epilogue}" ]; then
   if [ -f "${__epilogue}" ]; then
-    chmod +x "${__epilogue}" 2>/dev/null
-    ${__epilogue} "${__epilogue_arguments}"
+    chmod +x "${__epilogue}" &>/dev/null
+    ${__epilogue} "${__epilogue_arguments}" &>/dev/null
     epilogue_status=$?
     if [ ${epilogue_status} -ne 0 ]; then
       fatal_error "epilogue failed with error ${epilogue_status}"
