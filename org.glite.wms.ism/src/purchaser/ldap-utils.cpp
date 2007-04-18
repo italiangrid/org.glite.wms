@@ -539,13 +539,12 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
           if (vo_views!=gluece_voview_info_map.end() &&
             !vo_views->second.empty()) {
             
-	    set<string> mapped_access_control_base_rules;
-            set<string> ce_access_control_base_rules;
+            set<string> left_access_control_base_rules;
 
             classadutils::EvaluateAttrList(
               *((*ce_it)->second.first),
               "GlueCEAccessControlBaseRule",
-              ce_access_control_base_rules
+              left_access_control_base_rules
             );
             vector<pair_string_classad_shared_ptr>::const_iterator
               vo_view_it(vo_views->second.begin());
@@ -560,20 +559,23 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                 "GlueCEAccessControlBaseRule",
                 view_access_control_base_rules
               );
-              // (*) In order to check whether all the CE' 
-              // GlueCEAccessControlBaseRule are 'mapped' to VOViews ones, 
-              // or not, we have to compute the set intersection...
-              std::set_intersection(
-                ce_access_control_base_rules.begin(),
-                ce_access_control_base_rules.end(),
+
+              if (view_access_control_base_rules.empty() )
+              {
+                Info(vo_view_it->first << ": skipped due to empty ACBR.");
+                continue;
+              }
+              set<string> _;
+              std::set_difference(
+                left_access_control_base_rules.begin(),
+                left_access_control_base_rules.end(),
                 view_access_control_base_rules.begin(),
                 view_access_control_base_rules.end(),
-                insert_iterator<set<string> >(
-                  mapped_access_control_base_rules,
-                  mapped_access_control_base_rules.begin()
-                )
+                insert_iterator<set<string> >(_, _.begin())
               );
-                 
+
+              left_access_control_base_rules.swap(_);
+   
               classad_shared_ptr viewAd(
                 dynamic_cast<classad::ClassAd*>(
                   (*ce_it)->second.first->Copy()
@@ -587,27 +589,14 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                 )
               );
             }
-            if (mapped_access_control_base_rules.empty()) {
-              gluece_info_container.insert(
-                std::make_pair((*ce_it)->first, (*ce_it)->second.first)
-              );
-            }
-            else if (ce_access_control_base_rules.size() > 
-                mapped_access_control_base_rules.size()) {
-            
-              vector<string> not_mapped_access_control_base_rules;
-              std::set_difference(
-                ce_access_control_base_rules.begin(),
-                ce_access_control_base_rules.end(),
-                mapped_access_control_base_rules.begin(),
-                mapped_access_control_base_rules.end(),
-                back_insert_iterator<vector<string> >(
-                  not_mapped_access_control_base_rules
-                )
+            if (!left_access_control_base_rules.empty()) {
+              std::vector<std::string> v(
+                left_access_control_base_rules.begin(),
+                left_access_control_base_rules.end()
               );
               (*ce_it)->second.first->Insert(
                 "GlueCEAccessControlBaseRule",
-                classadutils::asExprList(not_mapped_access_control_base_rules)
+                classadutils::asExprList(v)
               );
               gluece_info_container.insert(
                 std::make_pair((*ce_it)->first, (*ce_it)->second.first)
