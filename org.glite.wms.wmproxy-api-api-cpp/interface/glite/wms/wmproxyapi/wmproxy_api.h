@@ -215,6 +215,8 @@ struct ConfigContext{
 	std::string endpoint;
 	/** Trusted certificates location (default value is: <I>/etc/grid-security/certificates</I>) */
 	std::string trusted_cert_dir;
+	/** SOAP Timeout */
+	int soap_timeout;
 };
 
 /**@name WMProxy Submission services*/
@@ -326,7 +328,6 @@ void jobStart(const std::string &jobid, ConfigContext *cfs=NULL);
 
 
 /**@name WMProxy Job operation services*/
-
 /**
 *  Sends cancellation request for a previously submitted job identified by its JobId.
 * If the job is still managed by the WM then it is removed from the WM tasks queue.

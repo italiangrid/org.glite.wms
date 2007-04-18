@@ -20,19 +20,11 @@ namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
-/*****************************************************************
-soap Timeout Support
-******************************************************************/
-int soap_send_timeout=0;	// No timeout set
-int soap_receive_timeout=0;	// No timeout set
+void setSoapTimeout(struct soap *soap, int timeout){
 
-void setSoapSendTimeout   (int send_timeout)   {soap_send_timeout=send_timeout;      }
-void setSoapReceiveTimeout(int receive_timeout){soap_receive_timeout=receive_timeout;}
-void soapSetTimeouts(struct soap *soap ){
 	if (soap){
-		soap->send_timeout=soap_send_timeout;
-		soap->recv_timeout=soap_receive_timeout;
-
+		soap->send_timeout = timeout;
+		soap->recv_timeout = timeout;
 	}
 }
 
@@ -264,12 +256,12 @@ void grstSoapErrorMng (const DelegationSoapBinding &grst){
 Performs SSL initialisation
 Updates configuration properties
 ******************************************************************/
-void soapAuthentication(WMProxy &wmp,ConfigContext *cfs){
+void setSoapConfiguration(WMProxy &wmp,ConfigContext *cfs){
 	// change, if needed service endpoint
 	if (cfs!=NULL)if( cfs->endpoint!="")wmp.endpoint=cfs->endpoint.c_str() ;
 	soap_init(wmp.soap);
 	// initialise timeout settings
-	soapSetTimeouts(wmp.soap);
+	setSoapTimeout(wmp.soap, cfs->soap_timeout);
  	const char *proxy = getProxyFile(cfs) ;
 	const char *trusted = getTrustedCert(cfs) ;
 	if ( proxy ){
@@ -304,6 +296,8 @@ void grstSoapAuthentication(DelegationSoapBinding &grst,ConfigContext *cfs){
 	grst.endpoint = (cfs->endpoint).c_str();
 	const char *proxy = getProxyFile(cfs) ;
 	const char *trusted = getTrustedCert(cfs) ;
+	// initialise timeout settings
+	setSoapTimeout(grst.soap, cfs->soap_timeout);
 	if ( proxy ){
 		if (trusted){
 			if (soap_ssl_client_context(grst.soap,
@@ -535,7 +529,7 @@ getVersion
 string getVersion(ConfigContext *cfs){
 	string version = "";
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getVersionResponse response;
 	if (wmp.ns1__getVersion(response) == SOAP_OK) {
 		version = response.version;
@@ -549,7 +543,7 @@ jobRegister
 JobIdApi jobRegister (const string &jdl, const string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	JobIdApi jobid ;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__jobRegisterResponse response;
 	if (wmp.ns1__jobRegister(jdl, delegationId, response) == SOAP_OK) {
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
@@ -565,7 +559,7 @@ JobIdApi jobRegisterJSDL (const string &jsdl, const string &delegationId, Config
 	WMProxy wmp;
 	JobIdApi jobid ;
 	jsdlns__JobDefinition_USCOREType * _jsdl;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__jobRegisterJSDLResponse response;
 	if (wmp.ns1__jobRegisterJSDL(_jsdl, delegationId, response) == SOAP_OK) {
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
@@ -580,7 +574,7 @@ jobSubmit
 JobIdApi jobSubmit(const string &jdl, const string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	JobIdApi jobid ;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__jobSubmitResponse response;
 	if (wmp.ns1__jobSubmit(jdl, delegationId, response) == SOAP_OK) {
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
@@ -593,7 +587,7 @@ jobStart
 ******************************************************************/
 void jobStart(const std::string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__jobStartResponse response;
 	if (wmp.ns1__jobStart(jobid, response) == SOAP_OK) {
 		soapDestroy(wmp.soap) ;
@@ -605,7 +599,7 @@ jobCancel
 ******************************************************************/
 void jobCancel(const std::string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__jobCancelResponse response;
 	if (wmp.ns1__jobCancel(jobid, response) == SOAP_OK) {
 		soapDestroy(wmp.soap) ;
@@ -617,7 +611,7 @@ getMaxInputSandboxSize
 long getMaxInputSandboxSize(ConfigContext *cfs){
 	WMProxy wmp;
 	long size = 0;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getMaxInputSandboxSizeResponse response;
 	if (wmp.ns1__getMaxInputSandboxSize(response) == SOAP_OK) {
 		size =  response.size;
@@ -632,7 +626,7 @@ std::vector<std::string> getTransferProtocols(glite::wms::wmproxyapi::ConfigCont
 	WMProxy wmp;
 	ns1__StringList *ns1_string_list;
 	vector<string> vect;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getTransferProtocolsResponse response;
 	if (wmp.ns1__getTransferProtocols(response) == SOAP_OK) {
 		ns1_string_list = response.items;
@@ -654,7 +648,7 @@ std::vector<std::string> getSandboxDestURI(const std::string &jobid, ConfigConte
 	WMProxy wmp;
 	ns1__StringList *ns1_string_list;
 	vector<string> vect;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getSandboxDestURIResponse response;
 	if (wmp.ns1__getSandboxDestURI(jobid, protocol, response) == SOAP_OK) {
 		ns1_string_list = response._path;
@@ -676,7 +670,7 @@ getSandboxBulkDestURI
 	WMProxy wmp;
 	vector< pair<string ,vector<string > > > vect;
 	vector<string> uris;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getSandboxBulkDestURIResponse response;
 	if ( wmp.ns1__getSandboxBulkDestURI(jobid, protocol, response) == SOAP_OK) {
 		vect = destURISoap2cpp(response._DestURIsStructType);
@@ -689,7 +683,7 @@ getTotalQuota
 pair<long, long> getTotalQuota(ConfigContext *cfs){
 	WMProxy wmp;
 	pair<long, long> quota;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getTotalQuotaResponse response;
 	if (wmp.ns1__getTotalQuota(response) == SOAP_OK) {
 		quota = make_pair( (long)response.hardLimit, (long)response.softLimit );
@@ -703,7 +697,7 @@ getFreeQuota
 pair<long, long>getFreeQuota(ConfigContext *cfs){
 	WMProxy wmp;
 	pair<long, long> quota;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getFreeQuotaResponse response;
 	if (wmp.ns1__getFreeQuota(response) == SOAP_OK) {
 		quota = make_pair( (long)response.hardLimit, (long)response.softLimit );
@@ -716,7 +710,7 @@ jobPurge
 ******************************************************************/
 void jobPurge(const std::string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__jobPurgeResponse response;
 	if (wmp.ns1__jobPurge(jobid, response) == SOAP_OK) {
 		soapDestroy(wmp.soap) ;
@@ -729,7 +723,7 @@ getOutputFileList
 std::vector <std::pair<std::string , long> > getOutputFileList (const std::string &jobid, ConfigContext *cfs, const std::string &protocol ){
 	WMProxy wmp;
 	vector <pair<string , long> > vect ;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getOutputFileListResponse response;
 	if (wmp.ns1__getOutputFileList(jobid, protocol, response) == SOAP_OK) {
 		vect = fileSoap2cpp (response._OutputFileAndSizeList);
@@ -744,7 +738,7 @@ jobListMatch
 std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId,ConfigContext *cfs){
 	WMProxy wmp;
 	vector <pair<string , long> > vect ;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__jobListMatchResponse response;
 	if (wmp.ns1__jobListMatch(jdl, delegationId, response) == SOAP_OK) {
 		 vect = fileSoap2cpp (response._CEIdAndRankList);
@@ -759,7 +753,7 @@ enableFilePerusal
 void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, ConfigContext *cfs){
 	WMProxy wmp;
 	ns1__StringList *ns1_string_list;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__enableFilePerusalResponse response;
 	ns1_string_list = vect2soap(files);
 	if (wmp.ns1__enableFilePerusal(jobid, ns1_string_list, response) == SOAP_OK) {
@@ -774,7 +768,7 @@ std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::s
 	WMProxy wmp;
 	ns1__StringList *ns1_string_list;
 	vector<string> vect;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getPerusalFilesResponse response;
 	if (wmp.ns1__getPerusalFiles(jobid, file, allchunks, protocol, response) == SOAP_OK) {
 		vect = listSoap2cpp (response._fileList);
@@ -807,7 +801,7 @@ ns1__JobTypeList *createJobTypeList(int type) {
 std::string  getJobTemplate (int jobType, const std::string &executable,const std::string &arguments,const std::string &requirements,const std::string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	string tpl = "";
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getJobTemplateResponse response;
 	if (wmp.ns1__getJobTemplate(createJobTypeList(jobType), executable, arguments, requirements, rank, response) == SOAP_OK) {
 		tpl = response._jdl ;
@@ -822,7 +816,7 @@ getDAGTemplate
 std::string getDAGTemplate(NodeStruct dependencies, const std::string &requirements,const std::string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	string tpl = "";
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getDAGTemplateResponse response;
 	if (wmp.ns1__getDAGTemplate( node2soap(&dependencies), requirements, rank, response) == SOAP_OK) {
 		tpl = response._jdl ;
@@ -837,7 +831,7 @@ getCollectionTemplate
 std::string getCollectionTemplate(int jobNumber, const std::string &requirements,const std::string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	string tpl = "";
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getCollectionTemplateResponse response;
 	if (wmp.ns1__getCollectionTemplate(jobNumber, requirements, rank, response) == SOAP_OK) {
 		tpl = response._jdl ;
@@ -852,7 +846,7 @@ getIntParametricJobTemplate
 std::string getIntParametricJobTemplate (std::vector<std::string> attributes , int parameters , int start , int step , const std::string &requirements, const std::string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	string tpl = "";
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getIntParametricJobTemplateResponse response;
 	if (wmp.ns1__getIntParametricJobTemplate(vect2soap(attributes), parameters, start, step, requirements, rank, response) == SOAP_OK) {
 		tpl = response._jdl ;
@@ -866,7 +860,7 @@ getStringParametricJobTemplate
 std::string getStringParametricJobTemplate (std::vector<std::string>attributes, std::vector<std::string> parameters, const std::string &requirements,const std::string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	string tpl = "";
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getStringParametricJobTemplateResponse response;
 	if (wmp.ns1__getStringParametricJobTemplate(vect2soap(attributes), vect2soap(parameters), requirements, rank, response) == SOAP_OK) {
 		tpl = response._jdl ;
@@ -880,7 +874,7 @@ getProxyReq
 std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	string proxy = "";
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__getProxyReqResponse response;
 	if (wmp.ns1__getProxyReq(delegationId, response) == SOAP_OK) {
 		proxy = response._request;
@@ -997,7 +991,7 @@ putProxy
 *****************************************************************/
 void putProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs){
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	time_t timeleft ;
 	char *certtxt=NULL;
 	// gets the path to the user proxy file
@@ -1014,7 +1008,7 @@ void putProxy(const std::string &delegationId, const std::string &request, Confi
 		throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
 	}
 
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ns1__putProxyResponse response;
 	if (wmp.ns1__putProxy(delegationId, certtxt, response) == SOAP_OK) {
 		soapDestroy(wmp.soap) ;
@@ -1048,7 +1042,7 @@ void grstPutProxy(const std::string &delegationId, const std::string &request, C
 
 ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ProxyInfoStructType *result = NULL;
 	ns1__getDelegatedProxyInfoResponse response;
 	if (wmp.ns1__getDelegatedProxyInfo(delegationId, response) == SOAP_OK) {
@@ -1060,7 +1054,7 @@ ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, Conf
 
 ProxyInfoStructType*getJobProxyInfo(const std::string &jobId, ConfigContext *cfs){
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	ProxyInfoStructType *result = NULL;
 	ns1__getJobProxyInfoResponse response;
 	if (wmp.ns1__getJobProxyInfo(jobId, response) == SOAP_OK) {
@@ -1071,7 +1065,7 @@ ProxyInfoStructType*getJobProxyInfo(const std::string &jobId, ConfigContext *cfs
 }
 std::string getJDL(const std::string &jobid, const JdlType &type, ConfigContext *cfs){
 	WMProxy wmp;
-	soapAuthentication (wmp, cfs);
+	setSoapConfiguration (wmp, cfs);
 	string jdl = "";
 	ns1__getJDLResponse response;
 	if (wmp.ns1__getJDL(jobid, (ns1__JdlType)type, response) == SOAP_OK) {
