@@ -429,6 +429,7 @@ public:
         * @command the command to execute
         * @params the params of the command line
         * @errormsg the error message in case of failure
+	* @return the exit code of the command
         */
         int doExecv(const std::string &command, std::vector<std::string> &params, std::string &errormsg, const int &delay);
         /**

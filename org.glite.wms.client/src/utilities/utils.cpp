@@ -104,6 +104,7 @@ const int SUCCESS = 0;
 const int FAILURE = 1;
 const int FORK_FAILURE = -1;
 const int COREDUMP_FAILURE = -2;
+const int TIMEOUT_FAILURE = -3 ;
 
 
 
@@ -127,8 +128,24 @@ const string GZ_MODE = "wb6f";
 bool handled_sign = false ;
 int status = 0;
 
-
-
+class Dup {
+public:
+        /**
+        * Default constructor
+        */
+        Dup( std::string script);
+        /**
+        * Default destructor
+        */
+        ~Dup( );
+        /**
+        * Retrieve infos in the files if they are not empty
+        */
+        std::string getInfo();
+private:
+	string outfile ;
+	string errorfile ;
+};
 //                 VOMS METHODS (BEGIN)
 
 
@@ -1919,38 +1936,68 @@ bool Utils::hasElement (const std::vector<std::string> &vect, std::string item) 
 * @int sign, the signal
 */
 void childSignalHandler ( int sign ) {
-	cout <<  "Handling signal: " << sign << endl ;
 	handled_sign = true;
 	if (SIGCHLD) {
 		wait(&status);
 	}
 }
+
+
 /**
-* Prints error and output caught on stream on a file
+* Dup class constructor,
 * @string script, name of the script generated
 */
-void dupStreams( string script ) {
-	string outfile = "/tmp/"+script+".out."+ boost::lexical_cast<std::string>(getpid());
+Dup::Dup( string script ) {
+	outfile = "/tmp/"+script+ boost::lexical_cast<std::string>(getpid());
 	int fdO = open(outfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
 	dup2(fdO, 1);
 	close(fdO);
 
-	string errorfile = "/tmp/"+script+".err."+ boost::lexical_cast<std::string>(getpid());
+	errorfile = "/tmp/"+script+ boost::lexical_cast<std::string>(getpid());
 	int fdE = open(errorfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
 	dup2(fdE, 2);
 	close(fdE);
+}
+/**
+* Dup class destructor
+*/
+Dup::~Dup() {
+	remove( outfile.c_str() ) ;
+	remove( errorfile.c_str() ) ;
+}
+/**
+* getInfo, prints the lines of the file in a string, and returns it if not empty
+*/
+std::string Dup::getInfo( ) {
+	if ( outfile != "" ) {
+		return outfile ;
+	}
+	if ( errorfile != "" ) {
+		return errorfile ;
+	}
+	return "" ;
 }
 /**
 * Forks the process and execute command line
 */
 int Utils::doExecv(const string &command, vector<string> &params, string &errormsg, const int &delay) {
 	GLITE_STACK_TRY("doExecv()");
+	status = 0;
+	pid_t pid ;
 
 	handled_sign = false;
-	status = 0;
-
 	signal ( SIGCHLD, childSignalHandler)  ;
 
+	// Set the timeout value
+	int timeout = delay;
+
+	// Check if the timeout is valid
+	if(timeout <= 0) {
+		// Reset
+		timeout = INT_MAX;
+	}
+
+	//initialize command and arguments to be passed to the execv in the child process
 	char **argvs;
 	int size = params.size() + 2;
 	argvs = (char **) calloc(size, sizeof(char *));
@@ -1976,14 +2023,23 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 			logInfo->print (WMS_WARNING, "Method doExecv: ", errormsg,true,true);
 			return FORK_FAILURE;
 			break;
-			case 0:
-			//duplicates the std.out and std.err of the command into a file
-			dupStreams("doExecv") ;
+		case 0:
 			// child: execute the required command, on success does not return
+			pid = getpid ();
 			if (execv (command.c_str(), argvs)) {
-				// execv failed
+				//execv failed
+				//duplicates the std.out and std.err of the command into two files
+				Dup* dupout = new Dup ( "doExecvOut" ) ;
+				Dup* duperr = new Dup ( "doExecvErr" ) ;
+				string output = dupout->getInfo( );
+				string error = duperr->getInfo( );
+				string outFileString = fromFile( output ) ;
+				string errFileString = fromFile( error ) ;
 				errormsg = strerror(errno);
-				logInfo -> print(WMS_WARNING, "Method doExecv: Error message: ", errormsg, true, true) ;
+				logInfo -> print(WMS_WARNING, "Method doExecv: Error message: \n", outFileString+"\n"+errFileString, true, true) ;
+				//deletes the files created
+				delete( dupout ) ;
+				delete( duperr ) ;
 				//doExit();
 				}
 			// the child does not return
@@ -1991,18 +2047,26 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 		default:
 			//parent
 			time_t current = time(NULL);
-			//pseudocodice, il numero va converito nel nuovo argomento timeout del metodo doExecv
-			const time_t timeout = current+delay ;
-			while ( (!handled_sign) || (current < timeout) ) {
+			//initialize the time_t timeout for the child process
+			const time_t timeout = current+timeout ;
+			while ( (!handled_sign) && (current < timeout) ) {
 				sleep( 1 );
 				current++ ;
 			}
+			//timeout limit has been reached, the child process will be killed
+			if (handled_sign == false) {
+				logInfo -> print (WMS_WARNING, "Method doExecv: ", "Timeout reached, killing child process...", true, true) ;
+				//kills the child
+				kill( pid, SIGKILL ) ;
+				return TIMEOUT_FAILURE ;
+			}
 			if (WIFEXITED(status)) {
+				//TO_DO child wait succesfully
 				errormsg =WIFEXITED(status);
 			}
 			if (WIFSIGNALED(status)) {
 				errormsg = WIFSIGNALED(status);
-				logInfo-> print(WMS_DEBUG, "Method doExecv:  " , errormsg, true, true) ;
+				logInfo-> print(WMS_WARNING, "Method doExecv:  " , errormsg, true, true) ;
 			}
 #ifdef WCOREDUMP
 			if (WCOREDUMP(status)) {
@@ -2068,6 +2132,7 @@ void doExit() {
 	free(argvs);
 	GLITE_STACK_CATCH();
 }
+*/
 /**
 * Gets an URL in input, extracts the IP address, and returns the same URL
 * with the hostname instead of the address
