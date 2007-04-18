@@ -536,6 +536,7 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 	string source = "";
 	string destination = "";
 	string cmd= "";
+	char* reason = NULL ;
 	string globurlcp = "globus-url-copy";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
 		"using globus-url-copy to retrieve the file(s)");
@@ -576,20 +577,17 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 		int timeout = wmcUtils->getConf()->system_call_timeout();
 
 		// launches the command
-		if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
-                                // EXIT CODE !=0
-                                switch (outcome) {
-                                        case FAILED:
-                                        case COREDUMP_FAILURE:
-                                                // either Unable to fork process or coredump
-						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed:", "Unable to fork process", true, true );
-                                                break;
-                                        default:
-                                                // Exit Code >= 1 => Error executing command
-						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
-                                                break;
-                                }
-                        } else {
+		if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
+			// EXIT CODE !=0
+			err << " - " <<  source << " to " << destination << " - ErrorCode: " << code << "\n";
+			reason = strerror(code);
+			if (reason!=NULL) {
+				err << "   " << reason << "\n";
+				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+			} else {
+				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+			}
+                } else {
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp):", "File successfully retrieved");
 		}
 		paths.erase(paths.begin());
@@ -608,6 +606,7 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 	string destination = "";
 	string cmd= "";
 	string htcp = "htcp";
+	char* reason = NULL ;
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
 		"using htcp to retrieve the file(s)");
 	if (Utils::isDirectory ("/usr/bin")){
@@ -654,20 +653,17 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 		int timeout = wmcUtils->getConf()->system_call_timeout();
 
 		// launches the command
-		if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
-                                // EXIT CODE !=0
-                                switch (outcome) {
-                                        case FAILED:
-                                        case COREDUMP_FAILURE:
-                                                // either Unable to fork process or coredump
-						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed:", "Unable to fork process", true, true );
-                                                break;
-                                        default:
-                                                // Exit Code >= 1 => Error executing command
-						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
-                                                break;
-                                }
-                        } else {
+		if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
+			// EXIT CODE !=0
+			err << " - " <<  source << " to " << destination << " - ErrorCode: " << code << "\n";
+			reason = strerror(code);
+			if (reason!=NULL) {
+				err << "   " << reason << "\n";
+				logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:", reason );
+			} else {
+				logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+			}
+                } else {
 			logInfo->print(WMS_DEBUG, "File Transfer (https):", "File successfully retrieved");
 		}
 		paths.erase(paths.begin());

@@ -68,7 +68,7 @@ ZipFileAd::ZipFileAd( ) {
 };
 
 const int SUCCESS = 0;
-const int FAILED = -1;
+const int TIMEOUT_FAILURE = -3;
 const int COREDUMP_FAILURE = -2;
 const string FILE_PROTOCOL = "file://" ;
 const string ISBFILE_DEFAULT = "ISBfiles";
@@ -1656,6 +1656,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 	string protocol = "";
 	string source = "";
 	string destination = "";
+	char* reason = "";
 	// Globus Url Copy Path finder
 	string globusUrlCopy="globus-url-copy";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
@@ -1695,20 +1696,24 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		int timeout = wmcUtils->getConf()->system_call_timeout();
 
 		// launches the command
-		if (int outcome = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
-			// EXIT CODE !=0
-                                switch (outcome) {
-                                        case FAILED:
-                                        case COREDUMP_FAILURE:
-                                                // either Unable to fork process or coredump
-						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed:", "Unable to fork process", true, true );
-                                                break;
-                                        default:
-                                                // Exit Code >= 1 => Error executing command
-						logInfo->print(WMS_ERROR, "File Transfer (gsiftp) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
-                                                break;
-                                }
-                        } else {
+		if (int code = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
+			// EXIT CODE !=0 TO_DO modify error message handling
+			ostringstream err;
+			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+			reason = strerror(code);
+			if (reason!=NULL) {
+				err << "   " << reason << "\n";
+				logInfo->print(WMS_DEBUG,
+					"FileTransfer (gsiftp) - Transfer Failed (ErrorCode="
+						+ boost::lexical_cast<string>(code)+"):",
+						reason );
+			} else {
+				logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp) - Transfer Failed:",
+					"ErrorCode=" + boost::lexical_cast<string>(code) );
+			}
+			failed.push_back(paths[0]);
+			errors+=err.str();
+		} else{
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)", "Transfer successfully done");
 			// Removes the zip file just transferred
 			if (zipAllowed) {
@@ -1733,6 +1738,7 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 	string protocol = "";
 	string source = "";
 	string destination = "";
+	char* reason = "";
 	// Globus Url Copy Path finder
 	string htcp="htcp";
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
@@ -1774,20 +1780,24 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 		int timeout = wmcUtils->getConf()->system_call_timeout();
 
 		// launches the command
-		if (int outcome = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
-			// EXIT CODE !=0
-                                switch (outcome) {
-                                        case FAILED:
-                                        case COREDUMP_FAILURE:
-                                                // either Unable to fork process or coredump
-						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed:", "Unable to fork process", true, true );
-                                                break;
-                                        default:
-                                                // Exit Code >= 1 => Error executing command
-						logInfo->print(WMS_ERROR, "File Transfer (https) - Transfer Failed: Unable to execute command \n", errormsg, true, true );
-                                                break;
-                                }
-                        } else{
+		if (int code = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
+			// EXIT CODE !=0 - TO_DO modify error message handling
+			ostringstream err;
+			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+			reason = strerror(code);
+			if (reason!=NULL) {
+				err << "   " << reason << "\n";
+				logInfo->print(WMS_DEBUG,
+					"FileTransfer (https) - Transfer Failed (ErrorCode="
+						+ boost::lexical_cast<string>(code)+"):",
+						reason );
+			} else {
+				logInfo->print(WMS_DEBUG, "FileTransfer (https) - Transfer Failed:",
+					"ErrorCode=" + boost::lexical_cast<string>(code) );
+			}
+			failed.push_back(paths[0]);
+			errors+=err.str();
+		} else{
 			logInfo->print(WMS_DEBUG, "File Transfer (https)", "Transfer successfully done");
 			// Removes the zip file just transferred
 			if (zipAllowed) {
