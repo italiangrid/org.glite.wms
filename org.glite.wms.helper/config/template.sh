@@ -123,7 +123,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     $1 "$2" "$3" 2>"$std_err"
     succeded=$?
     if [ $succeded != 0 ]; then
-      log_event_reason "Notice" "`head -c 65535 \"$std_err\"`"
+      log_event_reason "Notice" "`head -c 65535 "$std_err"`"
     fi
     rm -f "$std_err"
     count=`expr $count + 1`
@@ -582,14 +582,14 @@ if [ -n "${__shallow_resubmission_token}" ]; then
   else
     is_uberftp=`expr match "${gridftp_rm_command}" '.*uberftp'`
     if [ $is_uberftp -eq 0 ]; then
-      $gridftp_rm_command ${__shallow_resubmission_token}
+      $gridftp_rm_command ${__shallow_resubmission_token} &>/dev/null
     else # uberftp
       tkn=${__shallow_resubmission_token} # will reduce lines length
       scheme=${tkn:0:`expr match "${tkn}" '[[:alpha:]][[:alnum:]+.-]*://'`}
       remaining=${tkn:${#scheme}:${#tkn}-${#scheme}}
       hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
       token_fullpath=${remaining:${#hostname}:${#remaining}-${#hostname}}
-      $gridftp_rm_command $hostname -a gsi "'quote dele ${token_fullpath}'"
+      $gridftp_rm_command $hostname -a gsi "quote dele ${token_fullpath}" &>/dev/null
     fi
     result=$?
     if [ $result -eq 0 ]; then
