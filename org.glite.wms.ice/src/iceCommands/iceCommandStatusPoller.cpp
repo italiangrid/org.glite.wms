@@ -56,6 +56,89 @@ namespace jobstat    = glite::ce::cream_client_api::job_statuses;
 using namespace glite::wms::ice::util;
 using namespace std;
 
+namespace { // begin anonymous namespace
+
+    /**
+     * This class represents an iterator; the operator=(), instead of
+     * inserting something into the container, removes an element from the
+     * job cache.
+     */
+    class job_cache_remover {
+    protected:
+        jobCache* m_cache;
+    public:
+        typedef jobCache container_type;
+        typedef output_iterator_tag iterator_category;
+        typedef void value_type;
+        typedef void difference_type;
+        typedef void pointer;
+        typedef void pointer;
+        typedef void reference;
+        
+        job_cache_remover( ) : m_cache( jobCache::getInstance() ) { };
+        /**
+         * Removes an element from the jobCache. The cache is locked before
+         * attempting to remove the element.
+         *
+         * @param job_id the Cream JobID to remove; if this Cream JobID is
+         * not found in the cache, nothing is done.
+         *
+         * @return this iterator object.
+         */
+        job_cache_remover& operator=( const string& job_id ) {
+            boost::recursive_mutex::scoped_lock M( jobCache::mutex );        
+            jobCache::iterator it = m_cache->lookupByCreamJobID( job_id );
+            m_cache->erase( it );
+            return *this;
+        };
+        job_cache_remover& operator*() { return *this; }
+        job_cache_remover& operator++() { return *this; }
+        job_cache_remover& operator++(int) { return *this; }
+    };    
+
+    /**
+     * Ad-hoc implementation of the copy_n algorithm, returning an
+     * InputIterator. There actually is a copy_n algorithm defined in
+     * GNU C++ implementation of the STL
+     * (/usr/include/g++-3/stl_algobase.h), but it says that it is not
+     * part of the C++ standard.
+     *
+     * This function copies at most n elements from the range
+     * [InputIterator, InputIterator+n-1] (bounds included) into the
+     * range [OutputIterator, OutputIterator+n-1] (bounds included).
+     * If the source range is less than n elements wide, only the
+     * elements in the range are copied.
+     *
+     * This function assumes that first and end are iterators to a
+     * container of CreamJob objects. dest must be an iterator to a
+     * container of string objects. This function copies the CREAM Job
+     * ID from object referenced by the first iterator into the second
+     * iterator.
+     *
+     * @param first the iterator of the first element in the source range
+     *
+     * @param end the iterator of the end of the source range. This
+     * iterator is used to check if the input range is less than n
+     * elements wide.
+     *
+     * @param n the maximum number of items to copy
+     *
+     * @param dest the iterator to the first element in the destination range
+     *
+     * @return an iterator to the input element PAST the last element copied.
+     */
+    template <class InputIterator, class Size, class OutputIterator>
+    InputIterator copy_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest ) {
+        for ( ; n > 0 && first != end; --n ) {
+            *dest = first->getCreamJobID();
+            ++first;
+            ++dest;
+        }
+        return first;
+    }
+
+}; // end anonymous namespace
+
 //____________________________________________________________________________
 iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bool poll_all_jobs ) :
   m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
@@ -278,7 +361,7 @@ list< list< CreamJob > > iceCommandStatusPoller::create_chunks( const list< Crea
 
 
 //____________________________________________________________________________
-list< soap_proxy::JobInfo > iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const list< CreamJob >& job_list ) 
+list< soap_proxy::JobInfo > iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< string >& cream_job_ids ) 
 {
   list< soap_proxy::JobInfo > result;
 
@@ -291,14 +374,14 @@ list< soap_proxy::JobInfo > iceCommandStatusPoller::check_multiple_jobs( const s
                  << cream_url << "]"
                  << log4cpp::CategoryStream::ENDLINE);
 
-  vector< string > cream_job_ids;
-  for(list< CreamJob >::const_iterator thisJob = job_list.begin(); thisJob != job_list.end(); ++thisJob) {
+  // vector< string > cream_job_ids;
+  for(vector< string >::const_iterator thisJob = cream_job_ids.begin(); thisJob != cream_job_ids.end(); ++thisJob) {
       CREAM_SAFE_LOG(m_log_dev->infoStream() 
                      << "iceCommandStatusPoller::check_multiple_jobs() - "
-                     << "Will poll job "
-                     << thisJob->describe()
+                     << "Will poll job with CREAM job id=["
+                     << *thisJob << "]"
                      << log4cpp::CategoryStream::ENDLINE);
-      cream_job_ids.push_back( thisJob->getCreamJobID() );
+      // cream_job_ids.push_back( *thisJob );
   }
 
   the_job_status.clear();
@@ -568,56 +651,25 @@ void iceCommandStatusPoller::execute( ) throw()
         
         const string user_dn( jit->first.first );
         const string cream_url( jit->first.second );
-        list< list< CreamJob > > chunks( create_chunks( jit->second, m_max_chunk_size ) );
+        // list< list< CreamJob > > chunks( create_chunks( jit->second, m_max_chunk_size ) );
         
         // Step 2a. Interates over each chunk
-        for ( list< list< CreamJob > >::iterator chunk_it = chunks.begin();
-              chunk_it != chunks.end(); ++chunk_it ) {
-            
-            list< soap_proxy::JobInfo > j_status( check_multiple_jobs( user_dn, cream_url, *chunk_it ) );
+        // for ( list< list< CreamJob > >::iterator chunk_it = chunks.begin();
+        // chunk_it != chunks.end(); ++chunk_it ) {
+
+        list< CreamJob >::const_iterator it = (jit->second).begin();
+        list< CreamJob >::const_iterator list_end = (jit->second).end();
+        while ( it != list_end ) {
+            vector< string > jobs_to_poll;
+            it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
+
+            list< soap_proxy::JobInfo > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) );
 
             updateJobCache( j_status );      
         }        
     }
 }
 
-/**
- * This class represents an iterator; the operator=(), instead of
- * inserting something into the container, removes an element from the
- * job cache.
- */
-class job_cache_remover {
-protected:
-    jobCache* m_cache;
-public:
-    typedef jobCache container_type;
-    typedef output_iterator_tag iterator_category;
-    typedef void value_type;
-    typedef void difference_type;
-    typedef void pointer;
-    typedef void pointer;
-    typedef void reference;
-    
-    job_cache_remover( ) : m_cache( jobCache::getInstance() ) { };
-    /**
-     * Removes an element from the jobCache. The cache is locked before
-     * attempting to remove the element.
-     *
-     * @param job_id the Cream JobID to remove; if this Cream JobID is
-     * not found in the cache, nothing is done.
-     *
-     * @return this iterator object.
-     */
-    job_cache_remover& operator=( const string& job_id ) {
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );        
-        jobCache::iterator it = m_cache->lookupByCreamJobID( job_id );
-        m_cache->erase( it );
-        return *this;
-    };
-    job_cache_remover& operator*() { return *this; }
-    job_cache_remover& operator++() { return *this; }
-    job_cache_remover& operator++(int) { return *this; }
-};
 
 //____________________________________________________________________________
 void iceCommandStatusPoller::remove_unknown_jobs_from_cache(const vector<string>& all_jobs, const vector< soap_proxy::JobInfo >& jobs_found ) throw()

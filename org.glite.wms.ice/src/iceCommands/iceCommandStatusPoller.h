@@ -111,7 +111,7 @@ namespace glite {
           /**
            *
            */
-	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::string& user_dn, const std::string& cream_url, const std::list< glite::wms::ice::util::CreamJob >& job_list );
+	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::string& user_dn, const std::string& cream_url, const std::vector< std::string >& cream_job_ids );
 
           /**
            * This method removes jobs which have been reported as not found by
