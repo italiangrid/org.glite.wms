@@ -1690,7 +1690,10 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		params.push_back(destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+globusUrlCopy+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-		int timeout = 10 ;
+	
+		// Retrieve the System Call timeout
+		int timeout = wmcUtils->getConf()->system_call_timeout();
+
 		// launches the command
 		if (int outcome = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
 			// EXIT CODE !=0
@@ -1766,7 +1769,10 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 		params.push_back(destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+htcp+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-		int timeout = 10 ;
+	
+		// Retrieve the System Call timeout
+		int timeout = wmcUtils->getConf()->system_call_timeout();
+
 		// launches the command
 		if (int outcome = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
 			// EXIT CODE !=0

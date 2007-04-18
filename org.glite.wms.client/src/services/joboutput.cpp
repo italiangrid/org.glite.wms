@@ -571,7 +571,10 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 		params.push_back("file://"+destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-		int timeout = 10 ;
+	
+		// Retrieve the System Call timeout
+		int timeout = wmcUtils->getConf()->system_call_timeout();
+
 		// launches the command
 		if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
                                 // EXIT CODE !=0
@@ -646,7 +649,10 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 		params.push_back("file://"+destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-		int timeout = 10 ;
+	
+		// Retrieve the System Call timeout
+		int timeout = wmcUtils->getConf()->system_call_timeout();
+
 		// launches the command
 		if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
                                 // EXIT CODE !=0

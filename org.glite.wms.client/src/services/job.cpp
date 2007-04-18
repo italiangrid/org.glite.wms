@@ -26,7 +26,6 @@
 #include "utilities/options_utils.h"
 // wmproxy-api
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
-#include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // Ad attributes and JDL methods
 #include "glite/jdl/jdl_attributes.h"
 #include "glite/jdl/JDLAttributes.h"
