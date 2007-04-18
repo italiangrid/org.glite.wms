@@ -54,9 +54,9 @@ void iceCommandProxyRenewal::execute( void ) throw()
     for(jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
         if ( ! jobIt->is_active() ) 
             continue; // skip terminated jobs
-
+        
         struct stat buf;
-
+        
         if( ::stat( jobIt->getUserProxyCertificate().c_str(), &buf) == 1 ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream() 
                            << "iceCommandProxyRenewal::execute() - "
@@ -67,7 +67,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
             continue; // skip to next job
             // FIXME: what to do?
         }
-
+        
         if( buf.st_mtime > jobIt->getProxyCertLastMTime() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream() 
                            << "iceCommandProxyRenewal::execute() - "
@@ -103,7 +103,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
                                << jobIt->describe() << " - Proxy file is ["
                                << jobIt->getUserProxyCertificate() << "]"
                                << log4cpp::CategoryStream::ENDLINE);	
-                                
+                
             } catch( cream_api::soap_proxy::soap_ex& ex ) {
                 // FIXME: what to do? for now let's continue with an error message
                 CREAM_SAFE_LOG( m_log_dev->errorStream() 
@@ -113,8 +113,20 @@ void iceCommandProxyRenewal::execute( void ) throw()
                                 << " failed: ["
                                 << ex.what() << "]"
                                 << log4cpp::CategoryStream::ENDLINE);
-            }
-            
+            }            
+        } else {
+            CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                           << "iceCommandProxyRenewal::execute() - "
+                           << "Proxy file ["
+                           << jobIt->getUserProxyCertificate() << "] for job "
+                           << jobIt->describe()
+                           << " was modified on "
+                           << time_t_to_string( buf.st_mtime )
+                           << ", the last proxy file modification time "
+                           << "recorded by ICE is "
+                           << time_t_to_string( jobIt->getProxyCertLastMTime() )
+                           << ". Nothing to do."
+                           << log4cpp::CategoryStream::ENDLINE);            
         }
     }
 }
