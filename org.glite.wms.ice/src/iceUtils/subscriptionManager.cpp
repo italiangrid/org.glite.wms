@@ -262,7 +262,11 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
     string cemondn;
     bool subscribed;
 
-    string proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it->first );
+    string proxy;
+    {
+      boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+      proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it->first );
+    }
 
     try { 
 
@@ -428,12 +432,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 		   << "Failed while renewing subscription: "
 		   << ex.what()
 		   << log4cpp::CategoryStream::ENDLINE);
-  }//  catch(...) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream() 
-// 		   << "subscriptionManager::renewSubscription() - "
-// 		   << "Unknown exception catched."
-// 		   << log4cpp::CategoryStream::ENDLINE);
-//   }
+  }
 }
 
 //________________________________________________________________________
@@ -454,8 +453,6 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
   map< string, set<string> > tmpTarget;
   string tmpDN;
 
-  //string dn;
-
   for(iceUtil::jobCache::iterator jit=iceUtil::jobCache::getInstance()->begin();
       jit != iceUtil::jobCache::getInstance()->end();
       ++jit)
@@ -467,10 +464,11 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
     this->getCEMonURL( jit->getUserProxyCertificate(), jit->getCreamURL(), cemon );
 
 
-    //tmpTarget[ jit->getUserProxyCertificate() ].insert( cemon );
     tmpTarget[ jit->getUserDN() ].insert( cemon );
-    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
-   
+    {
+      boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+      iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
+    }
 
     if( m_authz && m_authn ) {
 
@@ -534,34 +532,15 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
 }
 
 //________________________________________________________________________
-// void iceUtil::subscriptionManager::updateSubscriptionProxy( const std::string& userProxy,
-// 							    const std::string& cemonURL)
-// {
-//   string dn = glite::ce::cream_client_api::certUtil::getDN( userProxy );
-//   //m_Subs[ make_pair( dn, cemonURL) ].setUserProxyIfLonger( userProxy );
-// }
-
-//________________________________________________________________________
 bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy, 
 						    const std::string& cemon ) const throw()
 {
   
-//   cout << "subscriptionManager::hasSubscription - method called with userProxy="
-//        << userProxy << "] - cemon = ["
-//        << cemon <<"]" << endl;
-  
-  //return ( m_Subs.find(s) != m_Subs.end() );  
-
   string dn = glite::ce::cream_client_api::certUtil::getDN( userProxy );
 
   std::map< std::pair<std::string, std::string>, iceSubscription>::const_iterator it = m_Subs.find( make_pair( dn, cemon));
   if( it != m_Subs.end() ) {
-    
-//     cout << "subscriptionManager::hasSubscription - userProxy=[" 
-// 	 << it->first.first << "] - CEMonURL = ["
-// 	 << it->first.second << "]"
-// 	 << endl;
-    
+ 
     return true;
   } else {
     return false;
@@ -569,55 +548,3 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
   
 }
 
-// //________________________________________________________________________
-// void iceUtil::subscriptionManager::setUserProxyIfLonger( const string& prx ) 
-// { 
-
-//   string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
-
-//   this->setUserProxyIfLonger( dn, prx );
-
-// }
-
-// //________________________________________________________________________
-// void iceUtil::subscriptionManager::setUserProxyIfLonger( const string& dn, 
-// 							 const string& prx 
-// 							 ) 
-// { 
-
-//   //string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
-
-//   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
-//     m_DNProxyMap[ dn ] = prx;
-//     return;
-//   }
-
-//   if (prx == m_DNProxyMap[ dn ] ) return;
-
-//   time_t newT, oldT;
-
-//   try {
-//     newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft(prx);
-//   } catch(...) {
-//     //cout << "subscriptionManager::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
-//     return;
-//   }
-  
-//   try {
-//     oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ] );
-//   } catch(...) {
-//     // cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["
-// // 	<<  prx
-// // 	<< "] because cannot retrieve time for ["<< m_DNProxyMap[ dn ] <<"]" <<endl;
-//     m_DNProxyMap[ dn ] = prx;
-//     return;
-//   }
-
-//   if(newT > oldT) {
-//     //cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["<<prx<<"]" <<endl;
-//     m_DNProxyMap[ dn ] = prx;
-//   } else {
-//     // cout<< "subscriptionManager::setUserProxyIfLonger - Leaving current proxy ["<< m_DNProxyMap[ dn ] 
-// // 	<<"] beacuse will expire later" <<endl;
-//   }
-// }

@@ -98,8 +98,67 @@ namespace util {
     std::string getNotificationClientDN( const std::string& );
 
     std::string getCompleteHostname( const std::string& );
- 
-    void createChunksOfCreamJobs(const std::list< CreamJob >&, std::list< std::list< CreamJob > >&, const unsigned int);
+    /**
+      * Breaks the list of jobs into sublists of size at most max_size
+      *
+      * @param jobs the list of jobs
+      *
+      * @param max_size the max size of the returned sublists
+      *
+      * @return the list of chunks
+      */
+    //void createChunksOfCreamJobs(const std::list< CreamJob >&, std::list< std::list< CreamJob > >&, const unsigned int);
+
+  	/**
+	 * Ad-hoc implementation of the copy_n algorithm, returning an
+	 * InputIterator. There actually is a copy_n algorithm defined in
+	 * GNU C++ implementation of the STL
+	 * (/usr/include/g++-3/stl_algobase.h), but it says that it is not
+	 * part of the C++ standard.
+	 *
+	 * This function copies at most n elements from the range
+	 * [InputIterator, InputIterator+n-1] (bounds included) into the
+	 * range [OutputIterator, OutputIterator+n-1] (bounds included).
+	 * If the source range is less than n elements wide, only the
+	 * elements in the range are copied.
+	 *
+	 * This function assumes that first and end are iterators to a
+	 * container of CreamJob objects. dest must be an iterator to a
+	 * container of string objects. This function copies the CREAM Job
+	 * ID from object referenced by the first iterator into the second
+	 * iterator.
+	 *
+	 * @param first the iterator of the first element in the source range
+	 *
+	 * @param end the iterator of the end of the source range. This
+	 * iterator is used to check if the input range is less than n
+	 * elements wide.
+	 *
+	 * @param n the maximum number of items to copy
+	 *
+	 * @param dest the iterator to the first element in the destination range
+	 *
+	 * @return an iterator to the input element PAST the last element copied.
+	 */
+    template <class InputIterator, class Size, class OutputIterator> 
+    InputIterator copy_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest) {
+      for ( ; n > 0 && first != end; --n ) {
+	*dest = first->getCreamJobID();
+	++first;
+	++dest;
+      }
+      return first;
+    }
+
+    template <class InputIterator, class Size, class OutputIterator, class UnaryOperation> 
+    InputIterator transform_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest, UnaryOperation f) {
+      for ( ; n > 0 && first != end; --n ) {
+	*dest = f( *first );
+	++first;
+	++dest;
+      }
+      return first;
+    }
 
 } // namespace util
 } // namespace ice

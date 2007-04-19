@@ -55,9 +55,9 @@ int resolveHostAddr(const char *InetName, struct sockaddr &InetAddr, char  **err
 using namespace std;
 
 namespace glite {
-namespace wms {
-namespace ice {
-namespace util {
+  namespace wms {
+    namespace ice {
+      namespace util {
 
   //________________________________________________________________________
     string describe_job( const CreamJob& job )
@@ -72,36 +72,36 @@ namespace util {
     }
   
   //________________________________________________________________________
-  void createChunksOfCreamJobs(const list< CreamJob >& jobs, 
-			       list< list< CreamJob > >& result, 
-			       const unsigned int max_chunk_size)
-  {
-    //list< list< CreamJob > > result;
-    result.clear();
-    list< CreamJob >::const_iterator it;
-    list< CreamJob > current_chunk;
-    list< CreamJob >::size_type chunk_size = 0;
+//   void createChunksOfCreamJobs(const list< CreamJob >& jobs, 
+// 			       list< list< CreamJob > >& result, 
+// 			       const unsigned int max_chunk_size)
+//   {
+//     //list< list< CreamJob > > result;
+//     result.clear();
+//     list< CreamJob >::const_iterator it;
+//     list< CreamJob > current_chunk;
+//     list< CreamJob >::size_type chunk_size = 0;
     
-    for ( it=jobs.begin(); it!=jobs.end(); ++it ) {
-      // NOTE: According to STL documentation, current_chunk.size()
-      // should not be assumed to take constant time; it may take
-      // O(N) time, with N=list size. To make things constant, we
-      // explicitly handle a chunk_size variable, so that the size
-      // check can be done in constant time.
-      if ( chunk_size >= max_chunk_size ) { 
-	result.push_back( current_chunk );
-	current_chunk.clear();
-	chunk_size = 0;
-      }
-      current_chunk.push_back( *it );
-      ++chunk_size;
-    }
-    // Push back any remaining chunk
-    if ( !current_chunk.empty() ) {
-      result.push_back( current_chunk );
-    }
-    //return result;
-  }
+//     for ( it=jobs.begin(); it!=jobs.end(); ++it ) {
+//       // NOTE: According to STL documentation, current_chunk.size()
+//       // should not be assumed to take constant time; it may take
+//       // O(N) time, with N=list size. To make things constant, we
+//       // explicitly handle a chunk_size variable, so that the size
+//       // check can be done in constant time.
+//       if ( chunk_size >= max_chunk_size ) { 
+// 	result.push_back( current_chunk );
+// 	current_chunk.clear();
+// 	chunk_size = 0;
+//       }
+//       current_chunk.push_back( *it );
+//       ++chunk_size;
+//     }
+//     // Push back any remaining chunk
+//     if ( !current_chunk.empty() ) {
+//       result.push_back( current_chunk );
+//     }
+//     //return result;
+//   }
 
 
 //________________________________________________________________________

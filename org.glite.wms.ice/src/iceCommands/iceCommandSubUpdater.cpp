@@ -96,7 +96,11 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 	
 	time_t timeleft = sub.getExpirationTime() - time(NULL);
 	if(timeleft < m_conf->getConfiguration()->ice()->subscription_update_threshold_time()) {
-	  string betterProxy( ice_util::DNProxyManager::getInstance()->getBetterProxyByDN(it->first) );
+	  string betterProxy;
+	  {
+	    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+	    betterProxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN(it->first);
+	  }
 
 	  if(betterProxy == "") {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream() 

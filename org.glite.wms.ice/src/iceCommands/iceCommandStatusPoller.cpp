@@ -53,7 +53,7 @@ namespace cream_api  = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace jobstat    = glite::ce::cream_client_api::job_statuses;
 
-using namespace glite::wms::ice::util;
+namespace iceUtils = glite::wms::ice::util;
 using namespace std;
 
 namespace { // begin anonymous namespace
@@ -65,7 +65,7 @@ namespace { // begin anonymous namespace
      */
     class job_cache_remover {
     protected:
-        jobCache* m_cache;
+      iceUtils::jobCache* m_cache;
     public:
         typedef output_iterator_tag iterator_category;
         typedef void value_type;
@@ -74,7 +74,7 @@ namespace { // begin anonymous namespace
         typedef void pointer;
         typedef void reference;
         
-        job_cache_remover( ) : m_cache( jobCache::getInstance() ) { };
+      job_cache_remover( ) : m_cache( iceUtils::jobCache::getInstance() ) { };
         /**
          * Removes an element from the jobCache. The cache is locked before
          * attempting to remove the element.
@@ -85,8 +85,8 @@ namespace { // begin anonymous namespace
          * @return this iterator object.
          */
         job_cache_remover& operator=( const string& job_id ) {
-            boost::recursive_mutex::scoped_lock M( jobCache::mutex );        
-            jobCache::iterator it = m_cache->lookupByCreamJobID( job_id );
+	    boost::recursive_mutex::scoped_lock M( iceUtils::jobCache::mutex );        
+	    iceUtils::jobCache::iterator it = m_cache->lookupByCreamJobID( job_id );
             m_cache->erase( it );
             return *this;
         };
@@ -95,61 +95,10 @@ namespace { // begin anonymous namespace
         job_cache_remover& operator++(int) { return *this; }
     };    
 
-    /**
-     * Ad-hoc implementation of the copy_n algorithm, returning an
-     * InputIterator. There actually is a copy_n algorithm defined in
-     * GNU C++ implementation of the STL
-     * (/usr/include/g++-3/stl_algobase.h), but it says that it is not
-     * part of the C++ standard.
-     *
-     * This function copies at most n elements from the range
-     * [InputIterator, InputIterator+n-1] (bounds included) into the
-     * range [OutputIterator, OutputIterator+n-1] (bounds included).
-     * If the source range is less than n elements wide, only the
-     * elements in the range are copied.
-     *
-     * This function assumes that first and end are iterators to a
-     * container of CreamJob objects. dest must be an iterator to a
-     * container of string objects. This function copies the CREAM Job
-     * ID from object referenced by the first iterator into the second
-     * iterator.
-     *
-     * @param first the iterator of the first element in the source range
-     *
-     * @param end the iterator of the end of the source range. This
-     * iterator is used to check if the input range is less than n
-     * elements wide.
-     *
-     * @param n the maximum number of items to copy
-     *
-     * @param dest the iterator to the first element in the destination range
-     *
-     * @return an iterator to the input element PAST the last element copied.
-     */
-    template <class InputIterator, class Size, class OutputIterator>
-    InputIterator copy_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest ) {
-        for ( ; n > 0 && first != end; --n ) {
-            *dest = first->getCreamJobID();
-            ++first;
-            ++dest;
-        }
-        return first;
-    }
-
-    template <class InputIterator, class Size, class OutputIterator, class UnaryOperation>
-    InputIterator transform_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest, UnaryOperation f ) {
-        for ( ; n > 0 && first != end; --n ) {
-            *dest = f( *first );
-            ++first;
-            ++dest;
-        }
-        return first;
-    }
-
 }; // end anonymous namespace
 
 //____________________________________________________________________________
-iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bool poll_all_jobs ) :
+iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bool poll_all_jobs ) :
   m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
   m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
   m_lb_logger( iceLBLogger::instance() ),
@@ -163,10 +112,10 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bo
 }
 
 
-list< CreamJob > iceCommandStatusPoller::get_jobs_to_poll( void ) 
+list< iceUtils::CreamJob > iceUtils::iceCommandStatusPoller::get_jobs_to_poll( void ) 
 {
-    list<CreamJob> result;
-    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    list<iceUtils::CreamJob> result;
+    boost::recursive_mutex::scoped_lock M( iceUtils::jobCache::mutex );
     
     for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
 
@@ -197,33 +146,33 @@ list< CreamJob > iceCommandStatusPoller::get_jobs_to_poll( void )
 }
 
 
-list< list< CreamJob > > iceCommandStatusPoller::create_chunks( const list< CreamJob >& jobs, unsigned int max_size )
-{
-    list< list< CreamJob > > result;
-    list< CreamJob >::const_iterator it;
-    list< CreamJob > current_chunk;
-    list< CreamJob >::size_type chunk_size = 0;
+// list< list< iceUtils::CreamJob > > iceUtils::iceCommandStatusPoller::create_chunks( const list< iceUtils::CreamJob >& jobs, unsigned int max_size )
+// {
+//     list< list< CreamJob > > result;
+//     list< CreamJob >::const_iterator it;
+//     list< CreamJob > current_chunk;
+//     list< CreamJob >::size_type chunk_size = 0;
 
-    for ( it=jobs.begin(); it!=jobs.end(); ++it ) {
-        // NOTE: According to STL documentation, current_chunk.size()
-        // should not be assumed to take constant time; it may take
-        // O(N) time, with N=list size. To make things constant, we
-        // explicitly handle a chunk_size variable, so that the size
-        // check can be done in constant time.
-        if ( chunk_size >= max_size ) { 
-            result.push_back( current_chunk );
-            current_chunk.clear();
-            chunk_size = 0;
-        }
-        current_chunk.push_back( *it );
-        ++chunk_size;
-    }
-    // Push back any remaining chunk
-    if ( !current_chunk.empty() ) {
-        result.push_back( current_chunk );
-    }
-    return result;
-}
+//     for ( it=jobs.begin(); it!=jobs.end(); ++it ) {
+//         // NOTE: According to STL documentation, current_chunk.size()
+//         // should not be assumed to take constant time; it may take
+//         // O(N) time, with N=list size. To make things constant, we
+//         // explicitly handle a chunk_size variable, so that the size
+//         // check can be done in constant time.
+//         if ( chunk_size >= max_size ) { 
+//             result.push_back( current_chunk );
+//             current_chunk.clear();
+//             chunk_size = 0;
+//         }
+//         current_chunk.push_back( *it );
+//         ++chunk_size;
+//     }
+//     // Push back any remaining chunk
+//     if ( !current_chunk.empty() ) {
+//         result.push_back( current_chunk );
+//     }
+//     return result;
+// }
 
 //____________________________________________________________________________
 // int iceCommandStatusPoller::get_jobs_to_poll_max_num( list<CreamJob>& result, const int max_num ) 
@@ -370,7 +319,7 @@ list< list< CreamJob > > iceCommandStatusPoller::create_chunks( const list< Crea
 
 
 //____________________________________________________________________________
-list< soap_proxy::JobInfo > iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< string >& cream_job_ids ) 
+list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< string >& cream_job_ids ) 
 {
   list< soap_proxy::JobInfo > result;
 
@@ -395,7 +344,11 @@ list< soap_proxy::JobInfo > iceCommandStatusPoller::check_multiple_jobs( const s
 
   the_job_status.clear();
 
-  string proxy( DNProxyManager::getInstance()->getBetterProxyByDN( user_dn ) );
+  string proxy;
+  {
+    boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
+    proxy = DNProxyManager::getInstance()->getBetterProxyByDN( user_dn );
+  }
   
   if ( proxy.empty() ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
@@ -510,7 +463,7 @@ list< soap_proxy::JobInfo > iceCommandStatusPoller::check_multiple_jobs( const s
 }
 
 //----------------------------------------------------------------------------
-void iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfo >& info_list ) throw()
+void iceUtils::iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfo >& info_list ) throw()
 {
     for ( list< soap_proxy::JobInfo >::const_iterator it = info_list.begin(); it != info_list.end(); ++it ) {
 
@@ -520,7 +473,7 @@ void iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfo >& 
 }
 
 //____________________________________________________________________________
-void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj ) throw()
+void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfo& info_obj ) throw()
 {
     // Locks the cache
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
@@ -627,7 +580,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfo& info_
 }
 
 //____________________________________________________________________________
-void iceCommandStatusPoller::execute( ) throw()
+void iceUtils::iceCommandStatusPoller::execute( ) throw()
 {
     /**
      * OLD CODE TO POLL JOB BY JOB
@@ -666,12 +619,12 @@ void iceCommandStatusPoller::execute( ) throw()
         // for ( list< list< CreamJob > >::iterator chunk_it = chunks.begin();
         // chunk_it != chunks.end(); ++chunk_it ) {
 
-        list< CreamJob >::const_iterator it = (jit->second).begin();
-        list< CreamJob >::const_iterator list_end = (jit->second).end();
+        list< iceUtils::CreamJob >::const_iterator it = (jit->second).begin();
+        list< iceUtils::CreamJob >::const_iterator list_end = (jit->second).end();
         while ( it != list_end ) {
             vector< string > jobs_to_poll;
-            it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
-            // it = transform_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ), mem_fun_ref( &CreamJob::getCreamJobID ) );
+            //it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
+            it = iceUtils::transform_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ), mem_fun_ref( &iceUtils::CreamJob::getCreamJobID ) );
 
             list< soap_proxy::JobInfo > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) );
 
@@ -682,7 +635,7 @@ void iceCommandStatusPoller::execute( ) throw()
 
 
 //____________________________________________________________________________
-void iceCommandStatusPoller::remove_unknown_jobs_from_cache(const vector<string>& all_jobs, const vector< soap_proxy::JobInfo >& jobs_found ) throw()
+void iceUtils::iceCommandStatusPoller::remove_unknown_jobs_from_cache(const vector<string>& all_jobs, const vector< soap_proxy::JobInfo >& jobs_found ) throw()
 {
     if ( all_jobs.size() == jobs_found.size() )
         return; // for all jobs in jobVec there's a corresponding JobInfo object in to_check

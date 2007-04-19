@@ -82,7 +82,7 @@ namespace glite {
            *
            * @return the list of chunks
            */
-          std::list< std::list< glite::wms::ice::util::CreamJob > > create_chunks( const std::list< glite::wms::ice::util::CreamJob >& jobs, unsigned int max_size );
+          //std::list< std::list< glite::wms::ice::util::CreamJob > > create_chunks( const std::list< glite::wms::ice::util::CreamJob >& jobs, unsigned int max_size );
 
 	  /**
            * Updates the status informations for all jobs in the list
@@ -101,7 +101,7 @@ namespace glite {
            */
           void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& ) throw();
 
-	  void remove_unknown_jobs_from_cache(std::vector< const glite::ce::cream_client_api::soap_proxy::JobInfo >&) throw();
+	  //void remove_unknown_jobs_from_cache(std::vector< const glite::ce::cream_client_api::soap_proxy::JobInfo >&) throw();
 
 	  /**
            * Prevents copying

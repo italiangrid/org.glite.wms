@@ -836,6 +836,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // This is because it is better to be sure that the subscription Updater
       // will use always the most long-lived proxy to renew subscriptions.
       //subMgr->setUserProxyIfLonger( userDN, userProxy );
+      boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
       dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
 
       return;
@@ -877,6 +878,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       if( subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
 	    
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
+	boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
 	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
 	
       } else {
@@ -893,6 +895,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     } else {
       
 	  subMgr->insertSubscription( userProxy, cemon_url, sub );
+	  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
 	  dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
     }
     CREAM_SAFE_LOG(m_log_dev->infoStream()
@@ -929,6 +932,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 	//cout << "iceCommandSubmit::doSubscription - sub.getUserProxyFile() = " << sub.getUserProxyFile() <<endl;
 	
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
+	boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
 	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
 
 // 	cout << "iceCommandSubmit::doSubscription - Subscription OK for proxy [" 

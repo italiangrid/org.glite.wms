@@ -22,6 +22,8 @@
 
 #include "iceAbsCommand.h"
 #include "creamJob.h"
+#include "jobCache.h"
+#include "iceUtils.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <boost/scoped_ptr.hpp>
 
@@ -37,7 +39,6 @@ namespace ice {
 namespace util {
 	
     class iceLBLogger;
-    class jobCache;
     
     class iceCommandLeaseUpdater : public iceAbsCommand {
         boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
@@ -47,8 +48,11 @@ namespace util {
         time_t m_threshold;
         glite::wms::ice::util::jobCache* m_cache;
         
-        void update_lease_for_job( const CreamJob& j ) throw();
-        
+      //void update_lease_for_job( const CreamJob& j ) throw();
+      void update_lease_for_multiple_jobs( const std::vector<std::string>& jobids, const std::string& userproxy, const std::string& endpoint ) throw();
+      void check_lease_expired( const CreamJob& ) throw();
+      void handle_jobs(const std::pair< std::pair<std::string, std::string>, std::list< CreamJob > >&) throw();
+
     public:
         iceCommandLeaseUpdater( ) throw();
         
