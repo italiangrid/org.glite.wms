@@ -262,7 +262,7 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
     jobs_to_update.clear();
     
     // prepare job_to_update as a chunk of all jobs
-    it = transform_n_elements( it, list_end, 5, back_inserter( jobs_to_update ), mem_fun_ref( &CreamJob::getCreamJobID ) );
+    it = transform_n_elements( it, list_end, 100, back_inserter( jobs_to_update ), mem_fun_ref( &CreamJob::getCreamJobID ) );
     
     update_lease_for_multiple_jobs( jobs_to_update, proxy, jobs.first.second );
 
