@@ -70,7 +70,7 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 
     //subManager->purgeOldSubscription( it );
 
-    subManager->checkSubscription( it );
+    subManager->checkSubscription( *it );
     
     for(set<string>::const_iterator cit = it->second.begin();
 	cit != it->second.end();

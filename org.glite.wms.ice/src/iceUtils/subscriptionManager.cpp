@@ -34,6 +34,9 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
+#include <algorithm>
+#include "boost/functional.hpp"
+
 #define MAX_SUBSCRIPTION_OLDNESS 60
 
 using namespace std;
@@ -238,24 +241,23 @@ void iceUtil::subscriptionManager::init( void ) throw()
 
   this->getUserCEMonMapping( UsersCEMons, true );// get all subscriptions only for active jobs, and also populate the mapping DN->BetterProxy
   
-  // now loop over all users's proxies and check subscription
-  for(map<string, set<string> >::const_iterator mit = UsersCEMons.begin(); mit!=UsersCEMons.end(); ++mit)
-  { 
-    this->checkSubscription( mit );
-  }
+  for_each(UsersCEMons.begin(), 
+	   UsersCEMons.end(), 
+	   boost::bind1st( boost::mem_fn( &subscriptionManager::checkSubscription ), this ) );
+
 } // unlock jobCache
 
 //______________________________________________________________________________
 /**
  * Checks subscription for a user proxy: if it finds some ghost recreate it
  */
-void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >::const_iterator it ) 
+void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<string> >& it ) 
  throw()
 {
-  // it->first is the user DN
-  // it->second is the set of cemons to check for subscriptions
+  // it.first is the user DN
+  // it.second is the set of cemons to check for subscriptions
 
-  for(set<string>::const_iterator sit=it->second.begin(); sit!=it->second.end(); ++sit)
+  for(set<string>::const_iterator sit=it.second.begin(); sit!=it.second.end(); ++sit)
   {
     
     iceSubscription sub("", 0);
@@ -265,7 +267,7 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
     string proxy;
     {
       boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-      proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it->first );
+      proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it.first );
     }
 
     try { 
@@ -275,7 +277,7 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
     } catch(exception& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
 		     << "subscriptionManager::checkSubscription() - Error checking subscription to ["
-		     << *sit << "] for DN [" << it->first << "]: "
+		     << *sit << "] for DN [" << it.first << "]: "
 		     << ex.what() << ". Will not receive notifications from this CEMon for this user."
 		     << log4cpp::CategoryStream::ENDLINE);
       continue;
@@ -305,7 +307,7 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
       CREAM_SAFE_LOG(m_log_dev->errorStream()
       		     << "subscriptionManager::checkSubscription() - "
 		     << "Subscription to [" << *sit << "] for proxy ["
-		     << it->first << "] DISAPPEARED! Recreating it..."
+		     << it.first << "] DISAPPEARED! Recreating it..."
 		     << log4cpp::CategoryStream::ENDLINE);
       
 
@@ -316,7 +318,7 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
       {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::checkSubscription() - "
-		   << "Owner of proxy ["<<it->first<<"] couldn't subscribe to CEMon ["
+		   << "Owner of proxy ["<<it.first<<"] couldn't subscribe to CEMon ["
 		   << *sit << "]. Skipping..."
 		   << log4cpp::CategoryStream::ENDLINE);
 	continue;
@@ -324,8 +326,8 @@ void iceUtil::subscriptionManager::checkSubscription( map<string, set<string> >:
     }
    
     
-    m_Subs[ make_pair( it->first, *sit)].setSubscriptionID( sub.getSubscriptionID() );
-    m_Subs[ make_pair( it->first, *sit)].setExpirationTime( sub.getExpirationTime() );
+    m_Subs[ make_pair( it.first, *sit)].setSubscriptionID( sub.getSubscriptionID() );
+    m_Subs[ make_pair( it.first, *sit)].setExpirationTime( sub.getExpirationTime() );
     
   }
 }

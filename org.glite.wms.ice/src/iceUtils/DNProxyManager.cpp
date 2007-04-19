@@ -23,6 +23,7 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <iostream>
+#include <algorithm>
 
 namespace iceUtil = glite::wms::ice::util;
 
@@ -30,6 +31,31 @@ using namespace std;
 
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::s_instance = NULL;
 boost::recursive_mutex iceUtil::DNProxyManager::mutex;
+
+//______________________________________________________________________________
+namespace {
+  class dnprxUpdater {
+    iceUtil::DNProxyManager* m_mgr;
+    log4cpp::Category *m_log_dev;
+
+  public:
+    dnprxUpdater( iceUtil::DNProxyManager* mgr, log4cpp::Category *log_dev ) : m_mgr( mgr ), m_log_dev( log_dev ) {}
+    
+    void operator()( iceUtil::CreamJob& aJob ) {
+      if( m_mgr->getBetterProxyByDN( aJob.getUserDN() ) == aJob.getUserProxyCertificate() )
+	return;
+      
+      CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		     << "dnprxUpdater::operator()() - "
+		     << "Found DN ["
+		     << aJob.getUserDN() << "] -> Proxy ["
+		     << aJob.getUserProxyCertificate() << "]"
+		     << log4cpp::CategoryStream::ENDLINE);
+      
+      m_mgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate());
+    }
+  };
+}
 
 //______________________________________________________________________________
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
@@ -53,20 +79,27 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 		 << "Populating DN -> Proxy cache by scannig the jobCache..."
 		 << log4cpp::CategoryStream::ENDLINE);
   
-  for(iceUtil::jobCache::iterator jit = cache->begin(); jit != cache->end(); ++jit) {
-    
-    if( this->getBetterProxyByDN( jit->getUserDN() ) == jit->getUserProxyCertificate() )
-      continue;
+  boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 
-    CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		   << "DNProxyManager::CTOR() - "
-		   << "Found DN ["
-		   << jit->getUserDN() << "] -> Proxy ["
-		   << jit->getUserProxyCertificate() << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
+  
+  dnprxUpdater updater( this, m_log_dev );
+  for_each(cache->begin(), cache->end(), updater);
+  
+
+//   for(iceUtil::jobCache::iterator jit = cache->begin(); jit != cache->end(); ++jit) {
     
-    this->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate());
-  }
+//     if( this->getBetterProxyByDN( jit->getUserDN() ) == jit->getUserProxyCertificate() )
+//       continue;
+
+//     CREAM_SAFE_LOG(m_log_dev->infoStream() 
+// 		   << "DNProxyManager::CTOR() - "
+// 		   << "Found DN ["
+// 		   << jit->getUserDN() << "] -> Proxy ["
+// 		   << jit->getUserProxyCertificate() << "]"
+// 		   << log4cpp::CategoryStream::ENDLINE);
+    
+//     this->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate());
+//   }
 }
 
 //________________________________________________________________________

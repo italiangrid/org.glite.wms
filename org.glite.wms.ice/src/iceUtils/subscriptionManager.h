@@ -163,7 +163,7 @@ namespace glite {
 				    const bool only_active_jobs = false ) throw();
 	  
 	  void renewSubscription(const std::string& userProxy, const std::string& cemon) throw();
-	  void checkSubscription(std::map<std::string, std::set<std::string> >::const_iterator) throw();
+	  void checkSubscription(const std::pair<std::string, std::set<std::string> >&) throw();
 	  void purgeOldSubscription( std::map<std::string, std::set<std::string> >::const_iterator it ) throw();
 
 	  static void setPersistDirectory(const std::string& dir) { s_persist_dir = dir; }
