@@ -20,6 +20,9 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.11  2007/04/19 12:46:07  rlops
+	bug #25574
+
 	Revision 1.10  2006/03/17 17:02:11  eronchie
 	Updated
 
@@ -90,6 +93,6 @@
                                                                                                                           
         <property name="build.package.description" value="WMS manager: service and task queue" />
 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 expat.m4 ares.m4 log4cxx.m4 glite.m4 glite_wms.m4 glite_lb.m4 glite_wmsutils.m4 glite_security.m4 glite_wms_common.m4 glite_wms_helper.m4 glite_wms_jss.m4 glite_wms_ism.m4 glite_service_discovery.m4 cppunit.m4 optimize.m4 glite_jdl.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 expat.m4 log4cxx.m4 glite.m4 glite_wms.m4 glite_lb.m4 glite_wmsutils.m4 glite_security.m4 glite_wms_common.m4 glite_wms_helper.m4 glite_wms_jss.m4 glite_wms_ism.m4 glite_service_discovery.m4 cppunit.m4 optimize.m4 glite_jdl.m4"/>
 	
 </project>

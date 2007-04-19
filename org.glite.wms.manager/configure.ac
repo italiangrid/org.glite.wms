@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22  2007/04/19 12:46:07  rlops
+#       bug #25574
+#
 #       Revision 1.21  2006/07/26 09:07:53  giaco
 #       - no more common subdir
 #       - no more planner script (it's all in the executable)
@@ -147,21 +150,18 @@ AC_OPTIMIZE
 have_boost=no
 have_classads=no
 have_globus=no
-have_ares=no
 have_expat=no
 have_cppunit=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_ARES([], have_ares=yes, have_ares=no)
 AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
                                                                                
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
-AC_MSG_RESULT(["ARES found $have_ares"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 

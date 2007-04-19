@@ -37,7 +37,6 @@ glite_wms_workload_manager_LDADD   = \
   $(GLITE_LB_THR_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
 	$(EXPAT_LIBS) \
-	$(ARES_LIBS) \
 	$(CLASSAD_DL_LIBS) \
 	$(top_srcdir)/../org.glite.wms.classad_plugin/build/src/libglite_wms_classad_plugin_loader.la \
 	$(GLOBUS_LDAP_THR_LIBS) \
