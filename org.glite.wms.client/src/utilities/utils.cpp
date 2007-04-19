@@ -1997,6 +1997,7 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 		timeout = INT_MAX;
 	}
 
+
 	//initialize command and arguments to be passed to the execv in the child process
 	char **argvs;
 	int size = params.size() + 2;
@@ -2046,16 +2047,16 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 			break;
 		default:
 			//parent
-			time_t current = time(NULL);
-			//initialize the time_t timeout for the child process
-			const time_t timeout = current+timeout ;
-			while ( (!handled_sign) && (current < timeout) ) {
+			int current = 0 ;
+			//initialize the time limit for the child process
+			int limit = current+timeout ;
+			while ( (!handled_sign) && (current < limit) ) {
 				sleep( 1 );
 				current++ ;
 			}
 			//timeout limit has been reached, the child process will be killed
 			if (handled_sign == false) {
-				logInfo -> print (WMS_WARNING, "Method doExecv: ", "Timeout reached, killing child process...", true, true) ;
+				logInfo -> print (WMS_WARNING, "Method doExecv: ", "Timeout reached, command execution will be killed now", true, true) ;
 				//kills the child
 				kill( pid, SIGKILL ) ;
 				return TIMEOUT_FAILURE ;
