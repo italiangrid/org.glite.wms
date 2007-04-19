@@ -140,8 +140,9 @@ public:
         ~Dup( );
         /**
         * Retrieve infos in the files if they are not empty
+	* @stream, the stream to be caught
         */
-        std::string getInfo();
+        std::string getInfo(std::string stream);
 private:
 	string outfile ;
 	string errorfile ;
@@ -1936,9 +1937,13 @@ bool Utils::hasElement (const std::vector<std::string> &vect, std::string item) 
 * @int sign, the signal
 */
 void childSignalHandler ( int sign ) {
-	handled_sign = true;
-	if (SIGCHLD) {
+	if ( sign == SIGCHLD) {
+		handled_sign = true;
 		wait(&status);
+	}
+	if ( sign == SIGINT ){
+		wait(&status);
+		throw WmsClientException(__FILE__,__LINE__, "doExecv",DEFAULT_ERR_CODE,"Interrupt signal","User killed the command execution") ;
 	}
 }
 
@@ -1968,14 +1973,14 @@ Dup::~Dup() {
 /**
 * getInfo, prints the lines of the file in a string, and returns it if not empty
 */
-std::string Dup::getInfo( ) {
-	if ( outfile != "" ) {
+std::string Dup::getInfo( string stream ) {
+	if (( stream.compare("output") == 0 ) && (outfile != "" )) {
 		return outfile ;
-	}
-	if ( errorfile != "" ) {
+	} else if (( stream.compare("error") == 0 ) && ( errorfile != "" )) {
 		return errorfile ;
-	}
+	} else {
 	return "" ;
+	}
 }
 /**
 * Forks the process and execute command line
@@ -1987,6 +1992,7 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 
 	handled_sign = false;
 	signal ( SIGCHLD, childSignalHandler)  ;
+	signal ( SIGINT, childSignalHandler ) ;
 
 	// Set the timeout value
 	int timeout = delay;
@@ -2030,17 +2036,15 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 			if (execv (command.c_str(), argvs)) {
 				//execv failed
 				//duplicates the std.out and std.err of the command into two files
-				Dup* dupout = new Dup ( "doExecvOut" ) ;
-				Dup* duperr = new Dup ( "doExecvErr" ) ;
-				string output = dupout->getInfo( );
-				string error = duperr->getInfo( );
+				Dup* dupoe = new Dup ( "doExecv" ) ;
+				string output = dupoe->getInfo( "output" );
+				string error = dupoe->getInfo( "error" );
 				string outFileString = fromFile( output ) ;
 				string errFileString = fromFile( error ) ;
 				errormsg = strerror(errno);
 				logInfo -> print(WMS_WARNING, "Method doExecv: Error message: \n", outFileString+"\n"+errFileString, true, true) ;
 				//deletes the files created
-				delete( dupout ) ;
-				delete( duperr ) ;
+				delete( dupoe ) ;
 				//doExit();
 				}
 			// the child does not return
