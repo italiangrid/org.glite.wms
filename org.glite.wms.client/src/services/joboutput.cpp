@@ -386,7 +386,10 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 			if (exc.Description){ wmsg +=" (" + *(exc.Description)+ ")"; }
 			logInfo->print (WMS_WARNING, "JobPurging not allowed",wmsg, true );
 		}
-	}
+	} else if ( nopgOpt == true ) {
+			string wmsg = "Option --nopurge specified" ;
+			logInfo->print (WMS_DEBUG, "Skipping JobPurging: ",wmsg, true );
+		}
 	return 0;
 }
 bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const std::string& jobid, const std::string& dirAbs, const bool &child){
@@ -538,8 +541,6 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 	string cmd= "";
 	char* reason = NULL ;
 	string globurlcp = "globus-url-copy";
-	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
-		"using globus-url-copy to retrieve the file(s)");
 	if (getenv("GLOBUS_LOCATION")){
 		globurlcp=string(getenv("GLOBUS_LOCATION"))+"/bin/"+globurlcp;
 	}else if (Utils::isDirectory ("/opt/globus/bin")){
@@ -607,8 +608,6 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 	string cmd= "";
 	string htcp = "htcp";
 	char* reason = NULL ;
-	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
-		"using htcp to retrieve the file(s)");
 	if (Utils::isDirectory ("/usr/bin")){
 		htcp="/usr/bin/"+htcp;
 	} else if (getenv("GLITE_LOCATION")){
