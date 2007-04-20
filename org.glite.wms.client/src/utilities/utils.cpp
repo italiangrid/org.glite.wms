@@ -113,7 +113,7 @@ const unsigned int DEFAULT_WMP_PORT	=	7772;
 
 
 const string Utils::JOBID_FILE_HEADER = "###Submitted Job Ids###";
-const string Utils::JOBID_FAILED_HEADER = "#* Job Registered but submission failed (try use --start option) *#";
+const string Utils::JOBID_FAILED_HEADER = "#* Following Job Registered but Submission failed (try use --start option) *#";
 
 const string PROTOCOL_SEPARATOR= "://";
 
