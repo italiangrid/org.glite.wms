@@ -60,50 +60,17 @@ namespace glite {
       namespace util {
 
   //________________________________________________________________________
-    string describe_job( const CreamJob& job )
-    {
-        string result;
-        result.append( "gridJobID=\"" );
-        result.append( job.getGridJobID() );
-        result.append( "\" CREAMJobID=\"" );
-        result.append( job.getCreamJobID() );
-        result.append( "\"" );
-        return result;
-    }
+//     string describe_job( const CreamJob& job )
+//     {
+//         string result;
+//         result.append( "gridJobID=\"" );
+//         result.append( job.getGridJobID() );
+//         result.append( "\" CREAMJobID=\"" );
+//         result.append( job.getCreamJobID() );
+//         result.append( "\"" );
+//         return result;
+//     }
   
-  //________________________________________________________________________
-//   void createChunksOfCreamJobs(const list< CreamJob >& jobs, 
-// 			       list< list< CreamJob > >& result, 
-// 			       const unsigned int max_chunk_size)
-//   {
-//     //list< list< CreamJob > > result;
-//     result.clear();
-//     list< CreamJob >::const_iterator it;
-//     list< CreamJob > current_chunk;
-//     list< CreamJob >::size_type chunk_size = 0;
-    
-//     for ( it=jobs.begin(); it!=jobs.end(); ++it ) {
-//       // NOTE: According to STL documentation, current_chunk.size()
-//       // should not be assumed to take constant time; it may take
-//       // O(N) time, with N=list size. To make things constant, we
-//       // explicitly handle a chunk_size variable, so that the size
-//       // check can be done in constant time.
-//       if ( chunk_size >= max_chunk_size ) { 
-// 	result.push_back( current_chunk );
-// 	current_chunk.clear();
-// 	chunk_size = 0;
-//       }
-//       current_chunk.push_back( *it );
-//       ++chunk_size;
-//     }
-//     // Push back any remaining chunk
-//     if ( !current_chunk.empty() ) {
-//       result.push_back( current_chunk );
-//     }
-//     //return result;
-//   }
-
-
 //________________________________________________________________________
 string getHostName( void ) throw ( runtime_error& )
 {
@@ -140,6 +107,7 @@ string getURL( void ) throw ( runtime_error& )
   string url = boost::str( boost::format("%1%://%2%:%3%") % tmp_prefix % tmp_myname % iceConfManager::getInstance()->getConfiguration()->ice()->listener_port() );
   return url;
 }
+
 //________________________________________________________________________
 string time_t_to_string( time_t tval ) {
     char buf[26]; // ctime_r wants a buffer of at least 26 bytes
@@ -193,23 +161,15 @@ string getNotificationClientDN( const string& DN )
 //________________________________________________________________________
 string getCompleteHostname( const string& hostname )
 {
-  //struct sockaddr_in netaddr;
-  char *hosterrmsg;// = 0;
-  
-  //cerr << "Resolving ["<< hostname << "]"<<endl;
+  char *hosterrmsg;
   
   char *fullname = resolveHostName( hostname.c_str(), &hosterrmsg);
   
   if( strcmp(fullname, "0.0.0.0") == 0 )
   {
-    //cerr << "Error resolving hostname: " << *hosterrmsg << endl;;
-    //throw exception(string("Cannot resolve hostname [") + hostname + "]");
     return "";
   }
   
-  //cerr << "*** Complete hostname is [" << fullname << "]"<<endl;
-  
-  //exit(1);
   string FullName = fullname;
   free( fullname );
   return FullName;

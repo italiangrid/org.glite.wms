@@ -314,7 +314,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->infoStream()
                                << "eventStatusListener::handle_event() - "
-                               << describe_job( *jc_it )
+                               << jc_it->describe()
                                << " is reported as PURGED. Removing from cache"
                                << log4cpp::CategoryStream::ENDLINE); 
             m_cache->erase( jc_it );

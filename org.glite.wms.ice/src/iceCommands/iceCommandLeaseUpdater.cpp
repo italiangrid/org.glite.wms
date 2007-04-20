@@ -300,7 +300,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << "iceCommandLeaseUpdater::update_lease_for_job() - "
                        << "CREAM doesn't know the current job "
-                       << describe_job( *(job_ids.begin()) ) 
+                       << *(job_ids.begin())
                        <<". Removing from cache."
                        << log4cpp::CategoryStream::ENDLINE);
 
@@ -365,15 +365,15 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 			 << "unable to update lease for job "
-			 << describe_job( j )
+			 << j.describe()
 			 << log4cpp::CategoryStream::ENDLINE);
 	  continue;
 	}
 
-	CREAM_SAFE_LOG(m_log_dev->infoStream()
+        CREAM_SAFE_LOG(m_log_dev->infoStream()
 		       << "iceCommandLeaseUpdater::update_lease_for_job() - "
 		       << "updating lease for job "
-		       << describe_job( j )
+		       << j.describe()
 		       << "; old lease ends " << time_t_to_string( j.getEndLease() )
 		       << " new lease ends " << time_t_to_string( newLease[ j.getCreamJobID() ] )
 		       << log4cpp::CategoryStream::ENDLINE);
@@ -400,7 +400,7 @@ void iceCommandLeaseUpdater::check_lease_expired( const CreamJob& job ) throw()
     CREAM_SAFE_LOG(m_log_dev->warnStream()
 		   << "iceCommandLeaseUpdater::check_lease_expired() - "
 		   << "Removing from cache lease-expired job "
-		   << describe_job( job )
+		   << job.describe()
 		   << log4cpp::CategoryStream::ENDLINE);
     
     CreamJob tmp_job( job );

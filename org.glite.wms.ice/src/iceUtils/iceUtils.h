@@ -91,7 +91,7 @@ namespace util {
      * @return the string containing cream and grid job id, in
      * human-readable form
      */
-    std::string describe_job( const CreamJob& job );
+    //std::string describe_job( const CreamJob& job );
 
     void makePath(const std::string& file) throw(std::exception&); // FIXME: never used?
 
