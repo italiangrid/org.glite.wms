@@ -605,6 +605,7 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
     map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
     
     for ( list< CreamJob >::const_iterator jit = j_list.begin(); jit != j_list.end(); ++jit ) {
+      if( !jit->getCreamJobID().empty() )
         jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
     }
     

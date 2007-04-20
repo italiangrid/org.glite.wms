@@ -85,7 +85,8 @@ void iceCommandLeaseUpdater::execute( ) throw()
 	// (even those which are not expiring)
         for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
 
-	  jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
+	  if( !jit->getCreamJobID().empty() )
+	    jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
 	  
         }
 
