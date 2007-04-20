@@ -45,7 +45,9 @@ namespace services {
 
 const int SUCCESS = 0;
 const int FAILED = -1;
+const int FORK_FAILURE = -1;
 const int COREDUMP_FAILURE = -2;
+const int TIMEOUT_FAILURE = -3;
 const int HTTP_OK = 200;
 const int TRANSFER_OK = 0;
 const bool   GENERATE_NODE_NAME =true;  // Determine whether to use or not node approach
@@ -579,14 +581,26 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 
 		// launches the command
 		if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
-			// EXIT CODE !=0
-			err << " - " <<  source << " to " << destination << " - ErrorCode: " << code << "\n";
-			reason = strerror(code);
-			if (reason!=NULL) {
-				err << "   " << reason << "\n";
-				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
-			} else {
-				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+			if (code > 0) {
+				// EXIT CODE > 0
+				err << " - " <<  source << " to " << destination << " - ErrorCode: " << code << "\n";
+				reason = strerror(code);
+				if (reason!=NULL) {
+					err << "   " << reason << "\n";
+					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+				}
+			}else {
+				switch (code) {
+					case FORK_FAILURE:
+						err << "Fork Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed: ", "Fork Failure");
+					case TIMEOUT_FAILURE:
+						err << "Timeout Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (gsfitp) - Transfer Failed: ", "Timeout Failure");
+					case COREDUMP_FAILURE:
+						err << "Coredump Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (gsfitp) - Transfer Failed: ", "Coredump Failure");
+				}
 			}
                 } else {
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp):", "File successfully retrieved");
@@ -653,14 +667,26 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 
 		// launches the command
 		if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
-			// EXIT CODE !=0
-			err << " - " <<  source << " to " << destination << " - ErrorCode: " << code << "\n";
-			reason = strerror(code);
-			if (reason!=NULL) {
-				err << "   " << reason << "\n";
-				logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:", reason );
+			if (code > 0) {
+				// EXIT CODE > 0
+				err << " - " <<  source << " to " << destination << " - ErrorCode: " << code << "\n";
+				reason = strerror(code);
+				if (reason!=NULL) {
+					err << "   " << reason << "\n";
+					logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:", reason );
+				}
 			} else {
-				logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+				switch (code) {
+					case FORK_FAILURE:
+						err << "Fork Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Fork Failure");
+					case TIMEOUT_FAILURE:
+						err << "Timeout Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Timeout Failure");
+					case COREDUMP_FAILURE:
+						err << "Coredump Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Coredump Failure");
+				}
 			}
                 } else {
 			logInfo->print(WMS_DEBUG, "File Transfer (https):", "File successfully retrieved");

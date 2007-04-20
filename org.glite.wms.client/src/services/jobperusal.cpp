@@ -44,7 +44,9 @@ namespace services {
 
 const int SUCCESS = 0;
 const int FAILED = -1;
+const int FORK_FAILURE = -1;
 const int COREDUMP_FAILURE = -2;
+const int TIMEOUT_FAILURE = -3;
 const string DEFAULT_STORAGE_LOCATION = "/tmp";
 const string DISPLAY_CMD = "more";
 const int HTTP_OK = 200;
@@ -426,7 +428,6 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 				"Protocol Error",
 				errors);
 		}
-
 		if (paths.empty() && errors.size( )>0){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet", DEFAULT_ERR_CODE,
@@ -516,20 +517,31 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 
 			// launches the command
 			if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
-				// EXIT CODE !=0
-				err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
-				reason = strerror(code);
-				if (reason!=NULL) {
-					err << "   " << reason << "\n";
-					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+				if (code > 0) {
+					// EXIT CODE > 0
+					err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+					reason = strerror(code);
+					if (reason!=NULL) {
+						err << "   " << reason << "\n";
+						logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+					}
 				} else {
-					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+					switch (code) {
+						case FORK_FAILURE:
+							err << "Fork Failure" << "\n" ;
+							logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed: ", "Fork Failure");
+						case TIMEOUT_FAILURE:
+							err << "Timeout Failure" << "\n" ;
+							logInfo->print(WMS_DEBUG, "File Transfer (gsfitp) - Transfer Failed: ", "Timeout Failure");
+						case COREDUMP_FAILURE:
+							err << "Coredump Failure" << "\n" ;
+							logInfo->print(WMS_DEBUG, "File Transfer (gsfitp) - Transfer Failed: ", "Coredump Failure");
+					}
 				}
 			} else {
 				paths.push_back(destination);
 				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) -", "File successfully retrieved");
 			}
-
 		} else {
 			logInfo->print(WMS_DEBUG, "WARNING - existing file not overwritten:", destination);
 			errors += "Warning - existing file not overwritten: " + destination + "\n";
@@ -597,20 +609,31 @@ void JobPerusal::htcpGetFiles (std::vector <std::string> &uris, std::vector<std:
 
 			// launches the command
 			if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
-				// EXIT CODE !=0
-				err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
-				reason = strerror(code);
-				if (reason!=NULL) {
-					err << "   " << reason << "\n";
-					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+				if (code > 0) {
+					// EXIT CODE > 0
+					err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+					reason = strerror(code);
+					if (reason!=NULL) {
+						err << "   " << reason << "\n";
+						logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:", reason );
+					}
 				} else {
-					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+					switch (code) {
+						case FORK_FAILURE:
+							err << "Fork Failure" << "\n" ;
+							logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Fork Failure");
+						case TIMEOUT_FAILURE:
+							err << "Timeout Failure" << "\n" ;
+							logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Timeout Failure");
+						case COREDUMP_FAILURE:
+							err << "Coredump Failure" << "\n" ;
+							logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Coredump Failure");
+					}
 				}
 			} else {
 				paths.push_back(destination);
-				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) -", "File successfully retrieved");
+				logInfo->print(WMS_DEBUG, "File Transfer (https) -", "File successfully retrieved");
 			}
-
 		} else {
 			logInfo->print(WMS_DEBUG, "WARNING - existing file not overwritten:", destination);
 			errors += "Warning - existing file not overwritten: " + destination + "\n";
@@ -702,19 +725,20 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 			// launches the command
 			if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
                                 // EXIT CODE !=0
-                                switch (outcome) {
-                                        case FAILED:
-                                        case COREDUMP_FAILURE:
-                                                // either Unable to fork process or coredump
-						logInfo->print(WMS_ERROR, "Method printResult: ", "Unable to fork process", true, true );
-                                                break;
-                                        default:
-                                                // Exit Code >= 1 => Error executing command
-						logInfo->print(WMS_ERROR, "Method printResult:  \n", errormsg, true, true );
-                                                break;
-        	                }
+				switch (outcome) {
+					case FORK_FAILURE:
+						logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed: ", "Fork Failure");
+						break;
+					case TIMEOUT_FAILURE:
+						logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed: ", "Timeout Failure");
+						break;
+					case COREDUMP_FAILURE:
+						logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed: ", "Coredump Failure");
+						break;
+				}
 			}
 		}
 	}
 }
+
 }}}} // ending namespaces
