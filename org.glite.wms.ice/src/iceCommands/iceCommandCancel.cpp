@@ -123,7 +123,8 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
-    wms_utils::scope_guard remove_request_guard( Request_source_purger( m_request ) );
+    Request_source_purger r( m_request );
+    wms_utils::scope_guard remove_request_guard( r );
     
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
