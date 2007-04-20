@@ -332,7 +332,7 @@ public:
 	* @param jobid the job identifier string
         * @return 0 if the jobid has been successfully saved (-1 otherwise)
         */
-         const int saveJobIdToFile (const std::string &path, const std::string jobid);
+         const int saveJobIdToFile (const std::string &path, const std::string jobid, std::string failed = "");
         /**
         * Reads a file and gets the list of items contained in it
         * @param the pathname of the file to be read
@@ -419,6 +419,7 @@ public:
         *	header for JobId output files
         */
         static const std::string JOBID_FILE_HEADER ;
+	static const std::string JOBID_FAILED_HEADER ;
 	/**
 	* Returns the Default VO retrieved by the user proxy
 	* @return the Default VO string

@@ -68,6 +68,7 @@ ZipFileAd::ZipFileAd( ) {
 };
 
 const int SUCCESS = 0;
+const int FORK_FAILURE = -1;
 const int TIMEOUT_FAILURE = -3;
 const int COREDUMP_FAILURE = -2;
 const string FILE_PROTOCOL = "file://" ;
@@ -144,11 +145,12 @@ void JobSubmit::readOptions (int argc,char **argv){
 	m_resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
 	m_nodesresOpt = wmcOpts->getStringAttribute(Options::NODESRES);
 
-	if (!m_inOpt.empty() && (!m_resourceOpt.empty() || !m_nodesresOpt.empty()) ){
+	if (!m_inOpt.empty() && (!m_resourceOpt.empty() || !m_nodesresOpt.empty() ) ){
 		info << "The following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::NODESRES) << "\n";
+
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", info.str());
@@ -194,14 +196,16 @@ void JobSubmit::readOptions (int argc,char **argv){
 	m_toOpt = wmcOpts->getStringAttribute(Options::TO);
 	// --start: incompatible options
 	if (!m_startOpt.empty() &&
-		(registerOnly || !m_inOpt.empty() || !m_resourceOpt.empty() || !m_nodesresOpt.empty() || !m_toOpt.empty() ||
-			!m_validOpt.empty() ||
+		(registerOnly || !m_resourceOpt.empty() || !m_inOpt.empty() ||
+			 !m_nodesresOpt.empty() || !m_toOpt.empty() ||
+			!m_validOpt.empty() || !m_outOpt.empty() ||
 			!m_chkptOpt.empty() || !m_collectOpt.empty() ||
 			!m_dagOpt.empty() || !m_defJdlOpt.empty() ||
 			!wmcOpts->getStringAttribute(Options::DELEGATION).empty() ||
 			wmcOpts->getBoolAttribute(Options::AUTODG) ) ){
 		info << "The following options cannot be specified together with --start:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::OUTPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::NODESRES) << "\n";
@@ -340,7 +344,7 @@ void JobSubmit::submission ( ){
 		jobStarter(m_startOpt);
 	} else {
 		this->checkAd(toBretrieved);
-		// Perform sSubmission when:
+		// Perform Submission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
 		// and initialize internal JobId:
 		submitPerformStep(STEP_REGISTER);
@@ -351,6 +355,17 @@ void JobSubmit::submission ( ){
 			try{
 				this->jobPostProcessing( );
 			}catch (Exception &exc){
+				string failed = "failed";
+				// saves the jobid
+				if (!m_outOpt.empty()){
+					if ( wmcUtils->saveJobIdToFile(m_outOpt, this->getJobId( ), failed ) < 0){
+					logInfo->print (WMS_WARNING, "Unable to write the jobid to the output file ", 						Utils::getAbsolutePath(m_outOpt));
+				} else{
+					logInfo->print (WMS_DEBUG, "The JobId has been saved in the output file ", 						Utils::getAbsolutePath(m_outOpt));
+					out << "\nThe job identifier has been saved in the following file:\n";
+					out << Utils::getAbsolutePath(m_outOpt) << "\n";
+					}
+				}
 				throw WmsClientException(__FILE__,__LINE__,
 					"submission",  DEFAULT_ERR_CODE ,
 					"The job has been successfully registered (the JobId is: " + this->getJobId( ) + "),"+
@@ -416,6 +431,7 @@ void JobSubmit::submission ( ){
 		}
 	}
 
+
 	// saves the result
 	if (!m_outOpt.empty()){
 		if ( wmcUtils->saveJobIdToFile(m_outOpt, this->getJobId( )) < 0 ){
@@ -426,6 +442,7 @@ void JobSubmit::submission ( ){
 			out << Utils::getAbsolutePath(m_outOpt) << "\n";
 		}
 	}
+
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
 
 	if (infoMsg.size() > 0) {
@@ -1653,6 +1670,7 @@ void JobSubmit::createZipFile (
 */
 void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
 	vector<string> params ;
+	ostringstream err;
 	string protocol = "";
 	string source = "";
 	string destination = "";
@@ -1697,19 +1715,28 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 
 		// launches the command
 		if (int code = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
-			// EXIT CODE !=0 TO_DO modify error message handling
-			ostringstream err;
-			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
-			reason = strerror(code);
-			if (reason!=NULL) {
-				err << "   " << reason << "\n";
-				logInfo->print(WMS_DEBUG,
-					"FileTransfer (gsiftp) - Transfer Failed (ErrorCode="
-						+ boost::lexical_cast<string>(code)+"):",
-						reason );
+			if (code > 0 ) {
+				// EXIT CODE > 0
+				err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+				reason = strerror(code);
+				if (reason!=NULL) {
+					err << "   " << reason << "\n";
+					logInfo->print(WMS_DEBUG,
+						"FileTransfer (gsiftp) - Transfer Failed (ErrorCode="
+						+ boost::lexical_cast<string>(code)+"):",reason );
+				}
 			} else {
-				logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp) - Transfer Failed:",
-					"ErrorCode=" + boost::lexical_cast<string>(code) );
+				switch (code) {
+					case FORK_FAILURE:
+						err << "Fork Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed: ", "Fork Failure");
+					case TIMEOUT_FAILURE:
+						err << "Timeout Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (gsfitp) - Transfer Failed: ", "Timeout Failure");
+					case COREDUMP_FAILURE:
+						err << "Coredump Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (gsfitp) - Transfer Failed: ", "Coredump Failure");
+				}
 			}
 			failed.push_back(paths[0]);
 			errors+=err.str();
@@ -1735,6 +1762,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 */
 void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
 	vector<string> params;
+	ostringstream err;
 	string protocol = "";
 	string source = "";
 	string destination = "";
@@ -1781,19 +1809,28 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 
 		// launches the command
 		if (int code = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
-			// EXIT CODE !=0 - TO_DO modify error message handling
-			ostringstream err;
-			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
-			reason = strerror(code);
-			if (reason!=NULL) {
-				err << "   " << reason << "\n";
-				logInfo->print(WMS_DEBUG,
-					"FileTransfer (https) - Transfer Failed (ErrorCode="
-						+ boost::lexical_cast<string>(code)+"):",
-						reason );
-			} else {
-				logInfo->print(WMS_DEBUG, "FileTransfer (https) - Transfer Failed:",
-					"ErrorCode=" + boost::lexical_cast<string>(code) );
+			// EXIT CODE > 0
+			if (code > 0) {
+				err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+				reason = strerror(code);
+				if (reason!=NULL) {
+					err << "   " << reason << "\n";
+					logInfo->print(WMS_DEBUG,
+						"FileTransfer (https) - Transfer Failed (ErrorCode="
+						+ boost::lexical_cast<string>(code)+"):", reason );
+				}
+			}else {
+				switch (code) {
+					case FORK_FAILURE:
+						err << "Fork Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Fork Failure");
+					case TIMEOUT_FAILURE:
+						err << "Timeout Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Timeout Failure");
+					case COREDUMP_FAILURE:
+						err << "Coredump Failure" << "\n" ;
+						logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed: ", "Coredump Failure");
+				}
 			}
 			failed.push_back(paths[0]);
 			errors+=err.str();
@@ -1849,7 +1886,7 @@ std::string JobSubmit::transferFilesList(const std::vector <std::pair<glite::jdl
 		}
 		info << "\nthen " ;
 	}
-	info << "start the job by issuing a submissiong with the option:\n --start " << this->getJobId( ) << "\n";
+	info << "start the job by issuing a submission with the option:\n --start " << this->getJobId( ) << "\n";
 	return info.str();
 }
 /*
@@ -1925,7 +1962,7 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 			break;
 		case STEP_REGISTER:
 			// logInfo->print(WMS_DEBUG, "JobSubmit: Performing", "STEP_REGISTER");
-			try{jobRegOrSub(startJob && !toBretrieved);  debugStuff(wmcUtils->getRandom(200)); }
+			try{jobRegOrSub(startJob && !toBretrieved); debugStuff(wmcUtils->getRandom(200)); }
 			catch (WmsClientException &exc) {
 				logInfo->print(WMS_WARNING, string(exc.what()), "");
 				submitRecoverStep(step);

@@ -113,6 +113,7 @@ const unsigned int DEFAULT_WMP_PORT	=	7772;
 
 
 const string Utils::JOBID_FILE_HEADER = "###Submitted Job Ids###";
+const string Utils::JOBID_FAILED_HEADER = "#* Job Registered but submission failed (try use --start option) *#";
 
 const string PROTOCOL_SEPARATOR= "://";
 
@@ -1655,7 +1656,7 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 /*
 * Stores a jobid in a file
 */
-const int Utils::saveJobIdToFile (const std::string &path, const std::string jobid){
+const int Utils::saveJobIdToFile (const std::string &path, const std::string jobid, std::string failed ){
 	string outmsg = "";
         string fromfile = "";
 	try {
@@ -1684,6 +1685,9 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
    		}
 	} catch (WmsClientException &exc){
 		outmsg = Utils::JOBID_FILE_HEADER + "\n";
+        }
+	if (!failed.empty()){
+		outmsg += Utils::JOBID_FAILED_HEADER + "\n";
         }
         outmsg += jobid ;
 	return (toFile(path, outmsg));
@@ -2060,7 +2064,7 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 			}
 			//timeout limit has been reached, the child process will be killed
 			if (handled_sign == false) {
-				logInfo -> print (WMS_WARNING, "Method doExecv: ", "Timeout reached, command execution will be killed now", true, true) ;
+				logInfo -> print (WMS_WARNING, "Method doExecv: ", "Timeout reached, command execution will be terminated now", true, true) ;
 				//kills the child
 				kill( pid, SIGKILL ) ;
 				return TIMEOUT_FAILURE ;
