@@ -60,8 +60,7 @@ CXXFLAGS = -g
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
-	-I$(top_srcdir)/src/DLI_SI \
-	-I$(top_srcdir)/src/RLS \
+	-I$(top_srcdir)/src/DLI \
 	-I$(GLITE_LOCATION)/include \
 	$(GSOAP_CFLAGS) \
 	$(GLITE_CFLAGS) \
