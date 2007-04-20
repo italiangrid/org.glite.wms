@@ -19,15 +19,15 @@ libglite_wms_rls_dli_la_LIBADD = \
 
 envC.cpp: $(top_srcdir)/src/DLI/env.h; \
 	$(SOAPCPP2) -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include \
-	-d. -penv $(top_srcdir)/src/DLI/env.h
+	-C -d. -penv $(top_srcdir)/src/DLI/env.h
 
 datalocationinterfaceClientLib.cpp: datalocationinterface.h ; \
 	$(SOAPCPP2) -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include \
-	-d. -n -pdatalocationinterface $(top_srcdir)/src/DLI/datalocationinterfaceNS.h
+	-C -d. -n -pdatalocationinterface $(top_srcdir)/src/DLI/datalocationinterfaceNS.h
 
-datalocationinterface.h: $(GLITE_LOCATION)/interface/DataLocationInterface.wsdl ; \
+datalocationinterface.h: ; \
 	$(WSDL2H) -t $(top_srcdir)/src/DLI/catalogs_typemap.dat -o ./datalocationinterface.h \
-	$(GLITE_LOCATION)/interface/DataLocationInterface.wsdl
+	http://cmsdoc.cern.ch/cms/grid/doc/DataLocationInterface.wsdl	
 
 
 AM_CPPFLAGS = \
