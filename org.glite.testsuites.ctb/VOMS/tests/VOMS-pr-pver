@@ -32,29 +32,73 @@ date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 
-echo "1. Create new user and proxy"
+echo "Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-echo "1.1. voms-proxy-init"
-echo "Used proxy version=2, for Globus 2"
+echo "List users:"
+voms-admin --vo=$vo_name -h $voms_host list-users
 
-voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION $GLOBUS -pwstdin < $PWS
+echo "Extract by openssl from usercert.pem"
+user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
+echo "DN=$user_subject"
+
+echo
+echo "1.1. voms-proxy-init, ver=2"
+voms-proxy-destroy
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 2 -pwstdin < $PWS
 
 if [ $? = 0 ]; then
-   echo "Test is OK"
-   #exit $SAME_OK
+   echo "OK"
 else 
    echo "Test is failed"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    exit $SAME_ERROR
 fi
 
-echo "2. Check proxy info"
-echo "2.1.Extract by openssl from usercert.pem"
-user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-echo "DN=$user_subject"
+echo "1.2. Check proxy info"
 
-echo "2.2. Execute voms-proxy-info"
-voms-proxy-info > $voms_tmp
+voms-proxy-info -all > $voms_tmp
+cat $voms_tmp
+
+echo "1.3. Check user DN"
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+
+echo "1.4. Use grid-proxy-info for check type of proxy" 
+
+grid-proxy-info >$voms_tmp
+cat $voms_tmp
+
+patt="type     : full legacy globus proxy"
+grep "$pat" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+
+echo
+echo "2.1. voms-proxy-init, proxyver=3"
+voms-proxy-destroy
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 2 -pwstdin < $PWS
+
+if [ $? = 0 ]; then
+   echo "OK"
+else 
+   echo "Test is failed"
+   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   exit $SAME_ERROR
+fi
+
+echo "2.2. Check proxy info"
+
+voms-proxy-info -all > $voms_tmp
+cat $voms_tmp
 
 echo "2.3. Check user DN"
 grep "$user_subject" $voms_tmp
@@ -64,6 +108,65 @@ if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+
+echo "2.4. Use grid-proxy-info for check type of proxy" 
+
+grid-proxy-info >$voms_tmp
+cat $voms_tmp
+
+patt="type     : Proxy draft compliant impersonation proxy"
+#grep "$pat" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+
+echo
+echo "3.1. voms-proxy-init, proxyver=4"
+
+voms-admin --vo=$vo_name -h $voms_host list-users
+voms-proxy-destroy
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 2 -pwstdin < $PWS
+
+if [ $? = 0 ]; then
+   echo "OK"
+else 
+   echo "Test is failed"
+   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   exit $SAME_ERROR
+fi
+
+echo "2.2. Check proxy info"
+
+voms-proxy-info -all > $voms_tmp
+cat $voms_tmp
+
+echo "2.3. Check user DN"
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+
+echo "2.4. Use grid-proxy-info for check type of proxy" 
+
+grid-proxy-info >$voms_tmp
+cat $voms_tmp
+
+patt="type     : end entity credential"
+#grep "$pat" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+
+
 echo "Test is OK"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
 echo "</pre>"

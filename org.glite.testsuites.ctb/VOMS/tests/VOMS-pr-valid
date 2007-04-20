@@ -55,6 +55,8 @@ echo "2.1.Extract by openssl from usercert.pem"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 echo "DN=$user_subject"
 
+sleep 5
+
 echo "2.2. Execute voms-proxy-info"
 voms-proxy-info > $voms_tmp
 cat $voms_tmp
@@ -76,11 +78,15 @@ H2="$H:$M"
 
 echo "Compare $H1(valid) and $H2 (left)"
 if [ ${H2} == ${H1} ]; then
-   echo "OK"
+   echo "OK 1"
 else
-    echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    exit $SAME_ERROR
+    if [ ${H2} \< ${H1} ]; then
+    echo "OK 2"
+    else 
+        echo "Test has failed"
+        voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+        exit $SAME_ERROR
+    fi
 fi
                
 
