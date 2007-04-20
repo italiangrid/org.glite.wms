@@ -37,8 +37,9 @@ echo "VOMS-PROXY-INIT: check option - $OPTION"
 echo "1. Create new user and proxy"
 echo "User=$USER"
 
+H1="11:00:00"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-proxy-init -voms $vo_name  -$OPTION "33:33" -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+voms-proxy-init -voms $vo_name  -$OPTION $H1 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"
@@ -56,6 +57,7 @@ echo "DN=$user_subject"
 
 echo "2.2. Execute voms-proxy-info"
 voms-proxy-info > $voms_tmp
+cat $voms_tmp
 
 echo "2.3. Check user DN"
 grep "$user_subject" $voms_tmp
@@ -65,6 +67,24 @@ if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+
+echo "Check timeleft"
+H1="11:00"
+H=`grep "timeleft" $voms_tmp | cut -d":" -f2`
+M=`grep "timeleft" $voms_tmp | cut -d":" -f3`
+H2="$H:$M"
+
+echo "Compare $H1(valid) and $H2 (left)"
+if [ ${H2} == ${H1} ]; then
+   echo "OK"
+else
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+               
+
+
         echo "Test is OK"
         voms-admin --vo=$vo_name -h $voms_host delete-user $USER
 echo "</pre>"

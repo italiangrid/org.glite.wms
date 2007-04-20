@@ -30,7 +30,8 @@ rm -rf $voms_tmp
 echo
 date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
-
+echo "conf file $VOMS_CNF :"
+cat $VOMS_CNF
 
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
@@ -52,8 +53,12 @@ echo "2.1.Extract by openssl from usercert.pem"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 echo "DN=$user_subject"
 
+sleep 5
+
 echo "2.2. Execute voms-proxy-info"
 voms-proxy-info > $voms_tmp
+cat $voms_tmp
+
 
 echo "2.3. Check user DN"
 grep "$user_subject" $voms_tmp
@@ -63,6 +68,45 @@ if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+
+echo "2.4. Check strength"
+grep "strength  : 512 bits" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+echo "2.5. Check vomslife"
+
+echo "Check timeleft"
+H1="12"
+H2=`grep "timeleft" $voms_tmp | cut -d":" -f2`
+
+echo "Compare $H1 (set time)  and $H2 (left time)"
+
+if [ ${H2} \< ${H1} ]; then
+   echo "OK"
+else
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+               
+echo "2.6. Check VO:"
+VO="VO        : $vo_name"
+voms-proxy-info -all > $voms_tmp
+
+grep "$VO" $voms_tmp
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi               
+               
+
 echo "Test is OK"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
 echo "</pre>"

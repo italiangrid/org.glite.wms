@@ -59,8 +59,8 @@ VOMS-pr-bits
 VOMS-pr-hlp
 VOMS-pr-usg
 VOMS-pr-attr
+VOMS-pr-genattr
 VOMS-pr-noreg
 VOMS-pr-pver
 VOMS-pr-conf
 VOMS-pr-order
-VOMS-pr-RoleOrder

@@ -45,9 +45,9 @@ if [ $? = 1 ]; then
     exit $SAME_ERROR
 fi
 echo "Execute voms-proxy-info"
-voms-proxy-info > $voms_tmp
+voms-proxy-info -all > $voms_tmp
 
-echo "2.3. Check user DN"
+echo "1.2. Check user DN"
 grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
@@ -56,7 +56,18 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-echo "1.2. Check 1024 bits"
+echo "1.3. Check strength"
+grep "strength  : 512 bits" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+
+echo "2. Check 1024 bits"
 voms-proxy-init -voms $vo_name  -$OPTION 1024 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 1 ]; then
@@ -67,7 +78,7 @@ fi
 echo "Execute voms-proxy-info"
 voms-proxy-info > $voms_tmp
 
-echo "2.3. Check user DN"
+echo "2.1. Check user DN"
 grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
@@ -75,9 +86,17 @@ if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+echo "2.2. Check strength"
+grep "strength  : 1024 bits" $voms_tmp
 
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+echo "OK"
 
-echo "1.3. Check 2048  bits"
+echo "3. Check 2048  bits"
 voms-proxy-init -voms $vo_name  -$OPTION 2048 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
     echo "Test is failed"
@@ -87,7 +106,7 @@ fi
 echo "Execute voms-proxy-info"
 voms-proxy-info > $voms_tmp
 
-echo "Check user DN"
+echo "3.1. Check user DN"
 grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
@@ -96,8 +115,17 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
+echo "3.2. Check strength"
+grep "strength  : 2048 bits" $voms_tmp
 
-echo "1.4. Check 4096 bits"
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+echo "OK"
+
+echo "4. Check 4096 bits"
 voms-proxy-init -voms $vo_name  -$OPTION 4096 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
    echo "Test is failed"
@@ -107,8 +135,16 @@ fi
 echo "Execute voms-proxy-info"
 voms-proxy-info > $voms_tmp
 
-echo "2.3. Check user DN"
+echo "4.1. Check user DN"
 grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+echo "4.2. Check strength"
+grep "strength  : 4096 bits" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
