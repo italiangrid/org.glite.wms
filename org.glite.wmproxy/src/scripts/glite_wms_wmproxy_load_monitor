@@ -183,12 +183,25 @@ sub test_threshold{
         my $memwarning    = 0;
         my $swapwarning   = 0;
         my $fdwarning     = 0;
+
+	my $memperc       = 0;
+	my $swapperc      = 0;
+	my $fduse         = 0;
         
         my $disablecount  = 0;
-                
-	my $memperc=100*$mems{'Active'}/$mems{'MemTotal'};
-	my $swapperc=100*($mems{'SwapTotal'}-$mems{'SwapFree'})/$mems{'SwapTotal'};
-	my $fduse=($fds{'max'}-($fds{'allocated'}-$fds{'free'}));
+               
+	if($mems{'MemTotal'} == 0){
+		$memperc=100;
+	}else{
+		$memperc=100*$mems{'Active'}/$mems{'MemTotal'};
+	}
+	if($mems{'SwapTotal'} == 0){
+		$swapperc=100;
+	}else{
+		$swapperc=100*($mems{'SwapTotal'}-$mems{'SwapFree'})/$mems{'SwapTotal'};
+	}
+
+	$fduse=($fds{'max'}-($fds{'allocated'}-$fds{'free'}));
 
         if($load{'1min'}>=$Load1){
 
@@ -318,8 +331,20 @@ sub GetPartition{
 }
 sub show_value{
 
-	my $memperc=100*$mems{'Active'}/$mems{'MemTotal'};
-	my $swapperc=100*($mems{'SwapTotal'}-$mems{'SwapFree'})/$mems{'SwapTotal'};
+	my $memperc  = 0;
+	my $swapperc = 0;
+
+        if($mems{'MemTotal'} == 0){
+                $memperc=100;
+        }else{
+                $memperc=100*$mems{'Active'}/$mems{'MemTotal'};
+        }
+        if($mems{'SwapTotal'} == 0){
+                $swapperc=100;
+        }else{
+                $swapperc=100*($mems{'SwapTotal'}-$mems{'SwapFree'})/$mems{'SwapTotal'};
+        }
+
 	my $fduse=($fds{'max'}-($fds{'allocated'}-$fds{'free'}));
         my $partptr=GetPartition();
 
