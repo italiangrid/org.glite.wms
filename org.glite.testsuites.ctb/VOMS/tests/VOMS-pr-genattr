@@ -79,11 +79,11 @@ echo "2. Destroy, Create and check proxy"
 voms-proxy-destroy
 echo "Create proxy"
 voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
-echo "2.1. Check exit code"
+#echo "2.1. Check exit code"
 if [ $? = 0 ]; then
    echo "Exit code  is OK"
 else
-    echo "Test is failed"
+    echo "Test is failed, exit code=1"
     clearTask        
     exit $SAME_ERROR
 fi
@@ -104,9 +104,6 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-#echo "Check result voms-proxy-info -fqan"
-#voms-proxy-info -fqan > $voms_tmp
-#cat $voms_tmp
 
 echo "Check result voms-proxy-ibfo -all"
 voms-proxy-info -all > $voms_tmp

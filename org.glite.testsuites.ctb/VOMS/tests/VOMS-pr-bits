@@ -40,7 +40,7 @@ echo "DN=$user_subject"
 echo "1.1. Check 512 bits"
 voms-proxy-init -voms $vo_name  -$OPTION 512 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
-    echo "Test is failed"
+    echo "Test is failed, exit code=1"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
@@ -51,7 +51,7 @@ echo "1.2. Check user DN"
 grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
-    echo "Test has failed"
+    echo "Test is failed"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
@@ -71,7 +71,7 @@ echo "2. Check 1024 bits"
 voms-proxy-init -voms $vo_name  -$OPTION 1024 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 1 ]; then
-    echo "Test is failed"
+    echo "Test is failed, exit code=1"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
@@ -99,7 +99,7 @@ echo "OK"
 echo "3. Check 2048  bits"
 voms-proxy-init -voms $vo_name  -$OPTION 2048 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
-    echo "Test is failed"
+    echo "Test is failed, exit code=1"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
@@ -128,7 +128,7 @@ echo "OK"
 echo "4. Check 4096 bits"
 voms-proxy-init -voms $vo_name  -$OPTION 4096 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
-   echo "Test is failed"
+   echo "Test is failed, exit code=1 "
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi

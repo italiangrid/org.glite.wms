@@ -35,9 +35,9 @@ voms-proxy-init -voms $vo_name  -$OPTION
 
 if [ $? = 0 ]; then
    echo "Test is OK"
-   #exit $SAME_OK
+   exit $SAME_OK
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1"
    exit $SAME_ERROR
 fi
 echo "</pre>"

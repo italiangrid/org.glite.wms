@@ -35,8 +35,7 @@ voms-admin --vo=$vo_name -h $voms_host create-user $USER
 voms-proxy-init -voms $vo_name  -$OPTION -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 0 ]; then
-   echo "Test is OK"
-   #exit $SAME_OK
+   echo "OK"
 else 
    echo "Test is failed"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER

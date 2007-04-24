@@ -49,7 +49,7 @@ voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$O
 if [ $? = 0 ]; then
    echo "OK"
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1 "
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    exit $SAME_ERROR
 fi
@@ -81,16 +81,19 @@ if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+echo "Test proxyver=2 - OK"
+
 
 echo
 echo "2.1. voms-proxy-init, proxyver=3"
 voms-proxy-destroy
-voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 2 -pwstdin < $PWS
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 3 -pwstdin < $PWS
+
 
 if [ $? = 0 ]; then
    echo "OK"
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    exit $SAME_ERROR
 fi
@@ -115,25 +118,26 @@ grid-proxy-info >$voms_tmp
 cat $voms_tmp
 
 patt="type     : Proxy draft compliant impersonation proxy"
-#grep "$pat" $voms_tmp
+grep "$pat" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+echo "Test proxyver=3 - OK"
 
 echo
 echo "3.1. voms-proxy-init, proxyver=4"
 
 voms-admin --vo=$vo_name -h $voms_host list-users
 voms-proxy-destroy
-voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 2 -pwstdin < $PWS
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 4 -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "OK"
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    exit $SAME_ERROR
 fi
@@ -158,7 +162,7 @@ grid-proxy-info >$voms_tmp
 cat $voms_tmp
 
 patt="type     : end entity credential"
-#grep "$pat" $voms_tmp
+grep "$pat" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"

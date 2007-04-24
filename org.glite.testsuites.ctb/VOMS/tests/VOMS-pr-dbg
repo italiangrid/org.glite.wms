@@ -26,6 +26,8 @@ source $SAME_SENSOR_HOME/tests/pr_config_file
 
 OPTION="debug"
 rm -rf $voms_tmp
+rm -rf $tempo
+
 
 echo
 date
@@ -33,16 +35,16 @@ echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION -cert $USERCERT -key $USERKEY -pwstdin < $PWS 1> $tempo
 
 if [ $? = 0 ]; then
-   echo "Test is OK"
-   #exit $SAME_OK
+   echo "OK"
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    exit $SAME_ERROR
 fi
+
 
 echo "2. Check proxy info"
 echo "2.1.Extract by openssl from usercert.pem"
@@ -60,6 +62,40 @@ if [ $? == 1 ]; then
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+
+echo "3. Check debug info"
+cat $tempo
+
+grep "Detected Globus version: 22" $tempo
+
+if [ $? = 0 ]; then
+   echo "OK"
+else 
+   echo "Test is failed"
+   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   exit $SAME_ERROR
+fi
+
+grep "Unspecified proxy version, settling on Globus version: 2" $tempo
+
+if [ $? = 0 ]; then
+   echo "OK"
+else 
+   echo "Test is failed"
+   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   exit $SAME_ERROR
+fi
+grep "Number of bits in key :512" $tempo
+
+if [ $? = 0 ]; then
+   echo "OK"
+else 
+   echo "Test is failed"
+   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   exit $SAME_ERROR
+fi
+
+
 echo "Test is OK"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
 echo "</pre>"

@@ -32,35 +32,41 @@ date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 
-echo "1. Create new user and proxy"
+echo "1. Create new user and proxy with warning"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
-if [ $? = 0 ]; then
-   echo "Test is OK"
-   #exit $SAME_OK
-else 
-   echo "Test is failed"
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-   exit $SAME_ERROR
-fi
-
-echo "2. Check proxy info"
-echo "2.1.Extract by openssl from usercert.pem"
-user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-echo "DN=$user_subject"
-
-echo "2.2. Execute voms-proxy-info"
-voms-proxy-info > $voms_tmp
-
-echo "2.3. Check user DN"
-grep "$user_subject" $voms_tmp
-
-if [ $? == 1 ]; then
-    echo "Test has failed"
+voms-proxy-init -voms $vo_name -vomses $VOMSES -valid 200:59 -cert $USERCERT -key $USERKEY -pwstdin < $PWS 2> $voms_tmp
+if [ $? = 1 ]; then
+    echo "Test is failed, exit code=1"
     voms-admin --vo=$vo_name -h $voms_host delete-user $USER
     exit $SAME_ERROR
 fi
+
+cat $voms_tmp
+
+grep "Warning" $voms_tmp
+
+if [ $? = 0 ]; then
+   echo "OK, Warning exists"
+else
+    echo "Test is failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+            
+echo "2. Create proxy with option -$OPTION"
+            
+voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION -valid 200:59   -cert $USERCERT -key $USERKEY -pwstdin < $PWS 2> $voms_tmp
+
+grep "Warning" $voms_tmp
+            
+if [ $? = 0 ]; then
+    echo "Test is failed"
+    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    exit $SAME_ERROR
+fi
+echo "No warnings"                 
+
 echo "Test is OK"
 voms-admin --vo=$vo_name -h $voms_host delete-user $USER
 echo "</pre>"

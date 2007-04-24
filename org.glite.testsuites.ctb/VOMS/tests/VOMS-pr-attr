@@ -139,7 +139,7 @@ echo "2. Destroy, Create and check proxy"
 voms-proxy-destroy
 echo "Create proxy"
 voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
-echo "2.1. Check exit code"
+#echo "2.1. Check exit code"
 if [ $? = 0 ]; then
    echo "Exit code  is OK"
 else

@@ -37,9 +37,8 @@ voms-proxy-init -voms $vo_name  -$OPTION -vomses $VOMSES -cert $USERCERT -key $U
 
 if [ $? = 0 ]; then
    echo "Test is OK"
-   #exit $SAME_OK
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    exit $SAME_ERROR
 fi

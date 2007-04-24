@@ -36,14 +36,14 @@ cat $VOMS_CNF
 echo "1. Create new user and proxy"
 voms-admin --vo=$vo_name -h $voms_host create-user $USER
 echo "1.1. voms-proxy-init"
+voms-proxy-destroy
 voms-proxy-init -vomses $VOMSES -cert $USERCERT -key $USERKEY -conf $VOMS_CNF -pwstdin < $PWS
 #voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 0 ]; then
-   echo "Test is OK"
-   #exit $SAME_OK
+   echo "OK"
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1"
    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
    exit $SAME_ERROR
 fi

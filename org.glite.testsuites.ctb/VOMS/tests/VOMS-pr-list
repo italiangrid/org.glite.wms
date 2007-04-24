@@ -69,14 +69,11 @@ voms-proxy-init -voms $vo_name  -$OPTION -vomses $VOMSES -cert $USERCERT -key $U
 
 if [ $? = 0 ]; then
    echo "OK"
-   #exit $SAME_OK
 else 
-   echo "Test is failed"
+   echo "Test is failed, exit code=1"
    clearTASK
    exit $SAME_ERROR
 fi
-#echo "Result of voms-proxy-init:"
-#cat $voms_tmp
 
 patt1="/$vo_name/Role=NULL/Capability=NULL"
 patt2="$groupi/Role=$role/Capability=NULL"

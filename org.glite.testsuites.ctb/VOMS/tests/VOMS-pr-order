@@ -147,12 +147,13 @@ echo "2. Check proxy info"
 echo "Destroy and Create proxy"
 echo "Command:"
 echo "voms-proxy-init -voms $vo_name:/$vo_name/Role=$ROLEA -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS"
+
 voms-proxy-destroy
 voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -order "/$vo_name/${Groups[0]}" -order "/$vo_name/${Groups[0]}/sgroup_11" -order "/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14" -pwstdin < $PWS
 
-echo "2.1. Check exit code and subject name"
+#echo "2.1. Check exit code and subject name"
 if [ $? == 1 ]; then
-    echo "Test has failed"
+    echo "Test has failed, exit code=1"
     clearTask
     exit $SAME_ERROR
 fi
@@ -179,8 +180,6 @@ patt3="/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14/Role=NULL/Capabi
 echo "Check -fqan"
 voms-proxy-info -fqan > $voms_tmp
 cat $voms_tmp
-
-
 
 echo "Check 1 order (expected 1 line: $patt1):"
 #grep -n "$patt1" $voms_tmp
