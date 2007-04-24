@@ -52,7 +52,7 @@ echo "voms-proxy-info:"
 voms-proxy-info
 
 echo "1.3. Create proxy with option -noregen"
-voms-proxy-init -voms $vo_name -vomses $VOMSES  -noregen #cert $USERCERT -key $USERKEY -noregen #"-$OPTION #  -pwstdin < $PWS
+voms-proxy-init -voms $vo_name -vomses $VOMSES  -valid 5:00 -noregen #cert $USERCERT -key $USERKEY -noregen #"-$OPTION #  -pwstdin < $PWS
 
 if [ $? == 1 ]; then
     #echo "Exit code=$?"
