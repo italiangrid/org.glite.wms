@@ -81,7 +81,6 @@ const int TRANSFER_OK = 0;
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
-	m_chkptOpt  = "";
 	m_collectOpt = "";
 	m_dagOpt = "";
 	m_defJdlOpt = "";
@@ -175,8 +174,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 			logInfo->print(WMS_DEBUG,   "--input option: The job will be submitted to the resource", m_resourceOpt);
 		}
 	}
-	// --chkpt TBD !!!
-	m_chkptOpt = wmcOpts->getStringAttribute( Options::CHKPT) ;
 	
 	// --collect
 	m_collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
@@ -196,10 +193,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 	m_toOpt = wmcOpts->getStringAttribute(Options::TO);
 	// --start: incompatible options
 	if (!m_startOpt.empty() &&
-		(registerOnly || !m_resourceOpt.empty() || !m_inOpt.empty() ||
-			 !m_nodesresOpt.empty() || !m_toOpt.empty() ||
-			!m_validOpt.empty() || !m_outOpt.empty() ||
-			!m_chkptOpt.empty() || !m_collectOpt.empty() ||
+		(registerOnly || !m_inOpt.empty() || !m_resourceOpt.empty() || !m_nodesresOpt.empty() || !m_toOpt.empty() ||
+			!m_validOpt.empty() ||
+			!m_collectOpt.empty() ||
 			!m_dagOpt.empty() || !m_defJdlOpt.empty() ||
 			!wmcOpts->getStringAttribute(Options::DELEGATION).empty() ||
 			wmcOpts->getBoolAttribute(Options::AUTODG) ) ){
@@ -1055,15 +1051,19 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			jobAdSP.fromClassAd (  *(adObj->ad()) ) ;
 
 			AdUtils::setDefaultValues(&jobAdSP,wmcConf);
+			
+			// Check for DEPRECATED JDL Job Types: Partitionable & Checkpointable
+			if (jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE) || 
+       			    jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)){
+				throw WmsClientException(__FILE__,__LINE__,
+					"checkAd",  DEFAULT_ERR_CODE,
+					"Deprecated Job Types",
+					"Partitionable and Checkpointable Job Types have been deprecated.");
+			}
 
 			// resource <ce_id> ----> SubmitTo JDL attribute
 			if (!m_resourceOpt.empty()) {
-				if (jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
-					throw WmsClientException(__FILE__,__LINE__,
-						"checkAd",  DEFAULT_ERR_CODE,
-						"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
-						"cannot be used for  DAG, collection, partitionable and parametric jobs");
-				}else{jobAdSP.setAttribute(JDL::SUBMIT_TO, m_resourceOpt);}
+				jobAdSP.setAttribute(JDL::SUBMIT_TO, m_resourceOpt);
 			}
 			if (jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
 				// check JobAd without restoring attributes  (WHY?)

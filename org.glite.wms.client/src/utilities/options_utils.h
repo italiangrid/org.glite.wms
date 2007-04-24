@@ -528,7 +528,6 @@ class Options
 		/**
 		*	std::string attributes
 		*/
-		std::string m_chkpt ;
 		std::string m_dag ;
 		std::string m_def_jdl ;
                 std::string m_collection ;

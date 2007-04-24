@@ -785,7 +785,6 @@ void Options::attach_usage(const char* &exename, const bool &long_usg){
 Options::Options (const WMPCommands &command){
 	m_jdlFile = "" ;
 	// init of the string attributes
-	m_chkpt = "";
         m_collection = "";
 	m_config = "";
 	m_dag = "";
@@ -1133,10 +1132,6 @@ string Options::getStringAttribute (const OptsAttributes &attribute){
 		}
 		case(ENDPOINT) : {
 			value = m_endpoint;
-			break ;
-		}
-                case(CHKPT) : {
-			value = m_chkpt;
 			break ;
 		}
 		case(LRMS) : {
@@ -2185,12 +2180,11 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 		case ( Options::CHKPT ) : {
-			if (m_chkpt.empty()){
-				m_chkpt = checkArg( LONG_CHKPT, optarg, Options::CHKPT);
-                                inCmd += px + LONG_CHKPT + ws + m_chkpt +";" + ws;
-			} else {
-				dupl = LONG_CHKPT;
-			}
+		
+			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
+						DEFAULT_ERR_CODE,
+						"Input Option Error",
+						string("Options: ")  + optarg + string(" DEPRECATED."));
 			break ;
 		};
                 case ( Options::COLLECTION ) : {

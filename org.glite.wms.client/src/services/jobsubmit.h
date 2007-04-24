@@ -288,7 +288,6 @@ class JobSubmit : public Job {
 		/**
 		*	String input arguments
 		*/
-		std::string m_chkptOpt ;
 		std::string m_collectOpt;
 		std::string m_dagOpt ;
 		std::string m_defJdlOpt ;
