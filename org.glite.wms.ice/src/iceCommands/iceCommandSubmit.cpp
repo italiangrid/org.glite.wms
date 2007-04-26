@@ -355,7 +355,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );
     try {
-      m_theJob.setUserDN( glite::ce::cream_client_api::certUtil::getCertSubj(m_theJob.getUserProxyCertificate()) );
+      m_theJob.setUserDN( glite::ce::cream_client_api::certUtil::getDNFQAN(m_theJob.getUserProxyCertificate()) );
     } catch(exception& ex) {
       CREAM_SAFE_LOG(
                    m_log_dev->errorStream()
@@ -802,7 +802,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );
   iceUtil::DNProxyManager* dnprxMgr( iceUtil::DNProxyManager::getInstance() );
   
-  string userDN    = aJob.getUserDN(); //glite::ce::cream_client_api::certUtil::getDN( userProxy );
+  string userDN    = aJob.getUserDN();
   string userProxy = aJob.getUserProxyCertificate();
   string ce        = aJob.getCreamURL();
 

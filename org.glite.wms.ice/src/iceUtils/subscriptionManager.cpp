@@ -390,7 +390,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
     string dn = "";
     
     try {
-      dn = glite::ce::cream_client_api::certUtil::getCertSubj( userProxy );
+      dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
     } catch(exception& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()  
 		     << "subscriptionManager::renewSubscription() - "
@@ -533,15 +533,6 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
 }
 
 //________________________________________________________________________
-// void iceUtil::subscriptionManager::removeSubscription( const std::string& userProxy, 
-// 						       const std::string& cemon) throw()
-// {
-//   string dn = glite::ce::cream_client_api::certUtil::getDN( userProxy );
-  
-//   m_Subs.erase( make_pair( dn, cemon) );
-// }
-
-//________________________________________________________________________
 void iceUtil::subscriptionManager::insertSubscription( const std::string& userProxy,
 						       const std::string& cemonURL,
 						       const iceSubscription& S ) throw()
@@ -549,7 +540,7 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
   
   string dn;
   try {
-    dn = glite::ce::cream_client_api::certUtil::getCertSubj( userProxy );
+    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::insertSubscription() - "
@@ -571,7 +562,7 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
   
   string dn;
   try {
-    dn= glite::ce::cream_client_api::certUtil::getCertSubj( userProxy );
+    dn= glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::hasSubscription() - "

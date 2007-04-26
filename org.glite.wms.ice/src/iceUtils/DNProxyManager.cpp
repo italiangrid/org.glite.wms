@@ -108,7 +108,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 
   string dn;
   try {
-    dn = glite::ce::cream_client_api::certUtil::getCertSubj( prx );
+    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( prx );
   } catch(exception& ex) {
      CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - "
