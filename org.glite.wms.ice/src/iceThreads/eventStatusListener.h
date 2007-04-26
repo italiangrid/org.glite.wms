@@ -72,10 +72,9 @@ namespace glite {
 
 	public:
 
-	  eventStatusListener(const int& i, const std::string& hostcert);
+	  eventStatusListener(const int& i);
 	  
 	  eventStatusListener(const int& i, 
-	     		      const std::string& hostcert,
 			      const std::string& cert,
 			      const std::string& key);
 			      

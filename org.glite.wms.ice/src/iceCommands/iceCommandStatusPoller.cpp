@@ -105,7 +105,7 @@ iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* 
   m_iceManager( theIce ),
   m_cache( jobCache::getInstance() ),
   m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
-  m_max_chunk_size( 100 ), // FIXME: remove hardcoded default
+  m_max_chunk_size( iceUtils::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() ), 
   m_poll_all_jobs( poll_all_jobs )
 {
 

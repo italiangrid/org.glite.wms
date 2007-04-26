@@ -68,7 +68,7 @@ void eventStatusListener::createObject( void )
 }
 
 //______________________________________________________________________________
-eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
+eventStatusListener::eventStatusListener(const int& i)
     : CEConsumer(i),
       iceThread( "event status listener" ),
       m_conf(iceConfManager::getInstance()->getConfiguration()->ice()),
@@ -81,7 +81,6 @@ eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
 
 //______________________________________________________________________________
 eventStatusListener::eventStatusListener(const int& i,
-						  const string& hostcert,
 						  const string& cert,
 						  const string& key)
   : CEConsumer(i, cert.c_str(), key.c_str()),

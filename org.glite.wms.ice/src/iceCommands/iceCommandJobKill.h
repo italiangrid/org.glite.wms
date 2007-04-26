@@ -25,6 +25,7 @@
 
 #include "iceAbsCommand.h"
 #include "creamJob.h"
+#include "iceUtils.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -53,15 +54,20 @@ namespace util {
     
     class iceCommandJobKill : public iceAbsCommand {
         
-        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-        glite::wms::ice::util::CreamJob m_theJob;
+      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+        //glite::wms::ice::util::CreamJob m_theJob;
         log4cpp::Category *m_log_dev;
         time_t m_threshold_time;
         glite::wms::ice::util::iceLBLogger* m_lb_logger;
-        void killJob( const time_t ) throw();
-        
+        //void killJob( const time_t ) throw();
+        void killJob( const std::pair< std::pair<std::string, std::string>, std::list< glite::wms::ice::util::CreamJob > >& ) throw();
+	bool cancel_jobs(const std::string& proxy, const std::string& endpoint, 
+					    const std::vector<std::string>& jobIdList) throw();
+	void updateCacheAndLog( const std::pair< std::pair<std::string, std::string>, std::list< glite::wms::ice::util::CreamJob > >& aList ) throw();
+	void checkExpiring( std::map< std::pair<std::string, std::string>, std::list<glite::wms::ice::util::CreamJob>,  glite::wms::ice::util::ltstring >& all ) throw();
+
     public:
-        iceCommandJobKill( const glite::wms::ice::util::CreamJob& ) throw();
+        iceCommandJobKill( /*const glite::wms::ice::util::CreamJob&*/ ) throw();
         
         virtual void execute( ) throw( );
         
@@ -70,7 +76,7 @@ namespace util {
         
         std::string get_grid_job_id( void ) const 
         { 
-            return m_theJob.getGridJobID(); 
+	  return "";//m_theJob.getGridJobID(); 
         }
     };
 

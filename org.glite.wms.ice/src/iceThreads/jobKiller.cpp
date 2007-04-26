@@ -63,48 +63,38 @@ jobKiller::~jobKiller()
 //____________________________________________________________________________
 void jobKiller::body()
 {
-    jobCache::iterator job_it;
-    while( !isStopped() ) {
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << "jobKiller::body() - New iteration..."
-                        << log4cpp::CategoryStream::ENDLINE);
-        { 
-            // FIXME: perhaps this locking can be less rough...
-            boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-            for( job_it = jobCache::getInstance()->begin(); 
-                 job_it != jobCache::getInstance()->end();
-                 ++job_it) {
-                time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
-                if( proxyTimeLeft < m_threshold_time && proxyTimeLeft > 5 ) {
-                    CREAM_SAFE_LOG( m_log_dev->debugStream() 
-                                    << "jobKiller::body() - Job "
-                                    << job_it->describe()
-                                    << " has proxy expiring in "
-                                    << proxyTimeLeft 
-                                    << " seconds, which is less than "
-                                    << "the threshold ("
-                                    << m_threshold_time << " seconds). "
-                                    << "Going to cancel it..."
-                                    << log4cpp::CategoryStream::ENDLINE); 
-		    
-		    iceCommandJobKill( *job_it ).execute();
-
-                } else {
-//                     CREAM_SAFE_LOG( m_log_dev->infoStream() 
-//                                     << "jobKiller::body() - Job ["
-//                                     << job_it->getCreamJobID() << "]"
+//     jobCache::iterator job_it;
+  while( !isStopped() ) {
+//         CREAM_SAFE_LOG( m_log_dev->infoStream()
+//                         << "jobKiller::body() - New iteration..."
+//                         << log4cpp::CategoryStream::ENDLINE);
+//         { 
+//             // FIXME: perhaps this locking can be less rough...
+//             boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+//             for( job_it = jobCache::getInstance()->begin(); 
+//                  job_it != jobCache::getInstance()->end();
+//                  ++job_it) {
+//                 time_t proxyTimeLeft = cream_api::certUtil::getProxyTimeLeft( job_it->getUserProxyCertificate() );
+//                 if( proxyTimeLeft < m_threshold_time && proxyTimeLeft > 5 ) {
+//                     CREAM_SAFE_LOG( m_log_dev->debugStream() 
+//                                     << "jobKiller::body() - Job "
+//                                     << job_it->describe()
 //                                     << " has proxy expiring in "
 //                                     << proxyTimeLeft 
-//                                     << " seconds, which is already/about "
-//                                     << "to expire, or more than "
+//                                     << " seconds, which is less than "
 //                                     << "the threshold ("
 //                                     << m_threshold_time << " seconds). "
 //                                     << "Going to cancel it..."
 //                                     << log4cpp::CategoryStream::ENDLINE); 
+		    
+// 		    iceCommandJobKill( *job_it ).execute();
 
-                }
-            } //loop over all jobCache's jobs
-        } // unlock of the cache
-	sleep( m_delay );
-    } // while(!stopped)
+//                 } else {
+
+//                 }
+//             } //loop over all jobCache's jobs
+//         } // unlock of the cache
+    iceCommandJobKill( ).execute();
+    sleep( m_delay );
+  } // while(!stopped)
 }

@@ -221,10 +221,10 @@ int main(int argc, char*argv[])
     logger_instance->setMaxLogFileSize( conf->ice()->max_logfile_size() );
     logger_instance->setMaxLogFileRotations( conf->ice()->max_logfile_rotations() );
     string logfile = conf->ice()->logfile();
-    string hostcert = conf->common()->host_proxy_file();
+    string hostcert = conf->ice()->ice_host_cert();
 
     logger_instance->setLogFile(logfile.c_str());
-    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070326-14:00]"<<log4cpp::CategoryStream::ENDLINE);
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070423-11:00]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
 
     
@@ -236,7 +236,7 @@ int main(int argc, char*argv[])
 
     CREAM_SAFE_LOG(
                    log_dev->infoStream()
-                   << "Host proxyfile is [" << hostcert << "]" 
+                   << "Host certificate is [" << hostcert << "]" 
                    << log4cpp::CategoryStream::ENDLINE
                    );
 

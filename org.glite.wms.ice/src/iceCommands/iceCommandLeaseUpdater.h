@@ -45,7 +45,6 @@ namespace util {
         log4cpp::Category *m_log_dev;
         glite::wms::ice::util::iceLBLogger* m_lb_logger;
         time_t m_delta;
-        time_t m_threshold;
         glite::wms::ice::util::jobCache* m_cache;
         
       //void update_lease_for_job( const CreamJob& j ) throw();

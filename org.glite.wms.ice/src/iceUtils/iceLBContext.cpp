@@ -41,7 +41,7 @@ namespace fs = boost::filesystem;
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/CommonConfiguration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 // #include "jobCache.h"
 #include "iceUtils.h"
 
@@ -166,7 +166,7 @@ void iceUtil::iceLBContext::testCode( int &code, bool retry )
         
     }
 
-    const configuration::CommonConfiguration *conf = configuration::Configuration::instance()->common();
+    const configuration::ICEConfiguration *conf = configuration::Configuration::instance()->ice();
     int          ret;
     string       cause, host_proxy;
 
@@ -196,7 +196,7 @@ void iceUtil::iceLBContext::testCode( int &code, bool retry )
                 code = 0; // Don't retry...
             }
             else {
-                host_proxy = conf->host_proxy_file();
+	      host_proxy = conf->ice_host_cert();
 
                 CREAM_SAFE_LOG(m_log_dev->infoStream()
 			       << "Retrying using host proxy certificate [" 

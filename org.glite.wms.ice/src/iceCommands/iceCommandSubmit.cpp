@@ -354,7 +354,24 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     m_theJob.setDelegationId( delegID );
     m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );
-    m_theJob.setUserDN( glite::ce::cream_client_api::certUtil::getDN(m_theJob.getUserProxyCertificate()) );
+    try {
+      m_theJob.setUserDN( glite::ce::cream_client_api::certUtil::getCertSubj(m_theJob.getUserProxyCertificate()) );
+    } catch(exception& ex) {
+      CREAM_SAFE_LOG(
+                   m_log_dev->errorStream()
+                   << "iceCommandSubmit::execute() - Cannot set the user DN for current job: "
+		   << ex.what() << ""
+                   << log4cpp::CategoryStream::ENDLINE
+                   );
+      m_theJob.set_failure_reason( ex.what() );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
+      // The next event is used to show the failure reason in the status info
+      // JC+LM log transfer-fail / aborted in case of condor transfers fail
+      m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() ) );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
+      m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
+      throw( iceCommandFatal_ex( ex.what() ) );
+    }
 
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_ok_event( m_theJob ) );
     

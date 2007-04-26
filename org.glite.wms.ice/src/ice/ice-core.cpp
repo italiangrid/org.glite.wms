@@ -213,32 +213,25 @@ void Ice::startListener( void )
         return;
     }
 
-    // Checks host proxy file validity
     string hostdn;
-    CREAM_SAFE_LOG(
-                   m_log_dev->infoStream()
-                   << "Host proxyfile is [" 
-                   << m_configuration->common()->host_proxy_file()
-                   << "]" 
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
+
     try {
-       hostdn = cert_util::getDN( m_configuration->common()->host_proxy_file() );
+       hostdn = cert_util::getDN( m_configuration->ice()->ice_host_cert() );
     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG( 
                        m_log_dev->errorStream()
-                       << "Unable to extract user DN from Proxy File "
-                       << m_configuration->common()->host_proxy_file()
+                       << "Unable to extract user DN from ["
+		       <<  m_configuration->ice()->ice_host_cert() << "]"
                        << ". Won't start Listener"
                        << log4cpp::CategoryStream::ENDLINE
                        );
         return;
     }
 
-    if( (cert_util::getProxyTimeLeft( m_configuration->common()->host_proxy_file() ) <= 0) || ( hostdn.empty() ) ) {
+    if( hostdn.empty() ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
-                       << "Host proxy certificate is expired. "
+                       << "Host certificate has an empty subject. "
                        << "Won't start Listener"
                        << log4cpp::CategoryStream::ENDLINE
                        );
@@ -286,33 +279,28 @@ void Ice::startListener( void )
         CREAM_SAFE_LOG(
                m_log_dev->infoStream()
                << "Ice::startListener() - "
-               << "Creating a CEMon listener object: port="
-               << m_configuration->ice()->listener_port()
-               << " proxyfile=" 
-               << m_configuration->common()->host_proxy_file()
-               << " hostkey="
-               << m_configuration->ice()->ice_host_key()
-               << " hostcert="
-               << m_configuration->ice()->ice_host_cert()
+               << "Creating a CEMon listener object: port=["
+               << m_configuration->ice()->listener_port() << "]"
+               << " hostkey=["
+               << m_configuration->ice()->ice_host_key() << "]"
+               << " hostcert=["
+               << m_configuration->ice()->ice_host_cert() << "]"
                << log4cpp::CategoryStream::ENDLINE
                );
         
         listener = new util::eventStatusListener(m_configuration->ice()->listener_port(),
-                                                 m_configuration->common()->host_proxy_file(),
                                                  m_configuration->ice()->ice_host_cert(),
                                                  m_configuration->ice()->ice_host_key() );
     } else {
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
                        << "Ice::startListener() - "
-                       << "Creating a CEMon listener object: port="
-                       << m_configuration->ice()->listener_port()
-                       << " proxyfile=" 
-                       << m_configuration->common()->host_proxy_file()
+                       << "Creating a CEMon listener object: port=["
+                       << m_configuration->ice()->listener_port() <<"]"
                        << log4cpp::CategoryStream::ENDLINE
                        );
         
-        listener = new util::eventStatusListener( m_configuration->ice()->listener_port(), m_configuration->common()->host_proxy_file() );
+        listener = new util::eventStatusListener( m_configuration->ice()->listener_port() );
     }
     
     if( !listener->isOK() ) {
@@ -529,7 +517,7 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
 
         string cid = jit->getCreamJobID();
         
-        if ( m_configuration->ice()->poller_purges_jobs() ) {
+        if ( m_configuration->ice()->purge_jobs() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
                            << "ice-core::purge_job() - "
                            << "Calling JobPurge for JobId ["

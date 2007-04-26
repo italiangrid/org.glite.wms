@@ -148,7 +148,21 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
   
   QueryW Q;
   
-   string iceid =  glite::ce::cream_client_api::certUtil::getDN( m_conf->getConfiguration()->common()->host_proxy_file() );
+  string iceid;
+  try {
+    iceid=  glite::ce::cream_client_api::certUtil::getCertSubj( m_conf->getConfiguration()->ice()->ice_host_cert() );
+  } catch(exception& ex) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "subscriptionProxy::subscribe() - Cannot determine the certificate's Subject to put in the iceid of the subscription: "
+		   << ex.what() << ". Won't subscribe"
+		   << log4cpp::CategoryStream::ENDLINE);
+    return false;
+  } catch(...) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "subscriptionProxy::subscribe() - Cannot determine the certificate's Subject to put in the iceid of the subscription: Unknown exception catched. Won't subscribe"
+		   << log4cpp::CategoryStream::ENDLINE);
+    return false;
+  }
 
   boost::trim_if(iceid, boost::is_any_of("/"));
   boost::replace_all( iceid, "/", "_" );
@@ -217,7 +231,22 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
   Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
   
   T.addDialect( m_D );
-  string iceid =  glite::ce::cream_client_api::certUtil::getDN( m_conf->getConfiguration()->common()->host_proxy_file() );
+  string iceid;
+  try {
+    iceid=  glite::ce::cream_client_api::certUtil::getCertSubj( m_conf->getConfiguration()->ice()->ice_host_cert() );
+  }  catch(exception& ex) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "subscriptionProxy::updateSubscription() - Cannot determine the certificate's Subject to put in the iceid of the subscription: "
+		   << ex.what() << ". Won't update subscription"
+		   << log4cpp::CategoryStream::ENDLINE);
+    return false;
+  } catch(...) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "subscriptionProxy::updateSubscription() - Cannot determine the certificate's Subject to put in the iceid of the subscription: Unknown exception catched. Won't update subscription"
+		   << log4cpp::CategoryStream::ENDLINE);
+    return false;
+  }
+
   string expr = "ICE_ID == \"";
 
   boost::trim_if(iceid, boost::is_any_of("/"));

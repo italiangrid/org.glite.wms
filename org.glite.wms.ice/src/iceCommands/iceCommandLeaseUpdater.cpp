@@ -59,7 +59,6 @@ iceCommandLeaseUpdater::iceCommandLeaseUpdater( ) throw() :
   m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
   m_lb_logger( iceLBLogger::instance() ),
   m_delta( iceConfManager::getInstance()->getConfiguration()->ice()->lease_delta_time() ),
-  m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->lease_threshold_time() ),
   m_cache( jobCache::getInstance() )
 {
 
@@ -77,7 +76,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
         boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
 	// First of all let's removes from cache the lease-expired jobs
-	for_each(m_cache->begin(), m_cache->end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::check_lease_expired ), this ));
+	for_each(m_cache->begin(), m_cache->end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::check_lease_expired ), this )); // removes from cache the lease-expired jobs
 
 
 	// Populates the mapping ( userDN, CEMonURL) -> array[JobID]
@@ -263,7 +262,10 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
     jobs_to_update.clear();
     
     // prepare job_to_update as a chunk of all jobs
-    it = transform_n_elements( it, list_end, 100, back_inserter( jobs_to_update ), mem_fun_ref( &CreamJob::getCreamJobID ) );
+    it = transform_n_elements( it, 
+			       list_end, 
+			       iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
+			       back_inserter( jobs_to_update ), mem_fun_ref( &CreamJob::getCreamJobID ) );
     
     update_lease_for_multiple_jobs( jobs_to_update, proxy, jobs.first.second );
 
@@ -298,7 +300,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
       // this happen if the vector job_ids contains only one job
 
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
                        << "CREAM doesn't know the current job "
                        << *(job_ids.begin())
                        <<". Removing from cache."
@@ -314,7 +316,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
       
     } catch(cream_exceptions::BaseException& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
                        << "Error updating lease for userproxy ["
                        << userproxy << "]"
                        << ": "<< ex.what()
@@ -322,14 +324,14 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
         return;      
     } catch ( soap_proxy::soap_ex& ex ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease_for_job() - "
+                       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
                        << "Error updating lease for userproxy ["
                        << userproxy << "]: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
         return;
     } catch(exception& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
-		     << "iceCommandLeaseUpdater::update_lease_for_job() - "
+		     << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		     << "Error updating lease for userproxy ["
 		     << userproxy
 		     << "]: " << ex.what()
@@ -337,7 +339,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
       return;
     } catch(...) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
-		     << "iceCommandLeaseUpdater::update_lease_for_job() - "
+		     << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		     << "Error updating lease for userproxy ["
 		     << userproxy << "]: Unkonwn exception catched"
 		     << log4cpp::CategoryStream::ENDLINE);
@@ -347,11 +349,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
     // now have to compare the vector jobs with the returned map newLease to 
     // check if some job's lease has not been updated.
 
-    /**
-
-         TODO
-
-    */
+  
     for(vector<string>::const_iterator jobid=job_ids.begin();
 	jobid != job_ids.end();
 	++jobid)
@@ -371,7 +369,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	}
 
         CREAM_SAFE_LOG(m_log_dev->infoStream()
-		       << "iceCommandLeaseUpdater::update_lease_for_job() - "
+		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		       << "updating lease for job "
 		       << j.describe()
 		       << "; old lease ends " << time_t_to_string( j.getEndLease() )

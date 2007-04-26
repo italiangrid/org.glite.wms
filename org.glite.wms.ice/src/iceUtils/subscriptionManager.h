@@ -157,7 +157,7 @@ namespace glite {
 	  
 	  bool hasSubscription( const std::string& userProxy, const std::string& cemon ) const throw();
 	  
-	  void removeSubscription( const std::string& userProxy, const std::string& cemon) throw();
+	  //void removeSubscription( const std::string& userProxy, const std::string& cemon) throw();
 	  
 	  void getUserCEMonMapping( std::map< std::string, std::set<std::string> >& target, 
 				    const bool only_active_jobs = false ) throw();

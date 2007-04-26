@@ -106,7 +106,18 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 { 
 
-  string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
+  string dn;
+  try {
+    dn = glite::ce::cream_client_api::certUtil::getCertSubj( prx );
+  } catch(exception& ex) {
+     CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "Cannot retrieve the Subject for the proxy ["
+		   << prx << "]. ICE will continue to use the old proxy."
+		    << ex.what()
+		   << log4cpp::CategoryStream::ENDLINE);
+     return;
+  }
 
   this->setUserProxyIfLonger( dn, prx );
 
@@ -137,11 +148,12 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 
   try {
     newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft(prx);
-  } catch(...) {
+  } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - "
 		   << "Cannot retrieve time left for proxy ["
-		   << prx << "]"
+		   << prx << "]: "
+		   << ex.what()
 		   << log4cpp::CategoryStream::ENDLINE);
     //    cout << "subscriptionManager::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
     return;
@@ -149,15 +161,13 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
   
   try {
     oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ] );
-  } catch(...) {
-//     cout<< "subscriptionManager::setUserProxyIfLonger - Setting user proxy to ["
-//  	<<  prx
-//  	<< "] because cannot retrieve time for ["<< m_DNProxyMap[ dn ] <<"]" <<endl;
+  } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - "
 		   << "Cannot retrieve time left for old proxy ["
 		   << m_DNProxyMap[ dn ] << "]. Setting user proxy to the new one ["
-		   << prx << "]"
+		   << prx << "]: "
+		   << ex.what()
 		   << log4cpp::CategoryStream::ENDLINE);
     m_DNProxyMap[ dn ] = prx;
     return;
