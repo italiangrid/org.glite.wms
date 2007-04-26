@@ -304,9 +304,9 @@ void CreamJob::setSequenceCode( const std::string& seq )
     m_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
     unparser.Unparse( m_jdl, jdl_ad );
 
-    CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->infoStream()
-                    << "CreamJob::setSequenceCode() - "
-                    << "old jdl=[" << old_jdl << "] new jdl=["
-                    << m_jdl << "]"
-                    << log4cpp::CategoryStream::ENDLINE);
+    // CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->infoStream()
+    //                     << "CreamJob::setSequenceCode() - "
+    //                     << "old jdl=[" << old_jdl << "] new jdl=["
+    //                     << m_jdl << "]"
+    //                     << log4cpp::CategoryStream::ENDLINE);
 }
