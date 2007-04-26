@@ -89,11 +89,9 @@ void iceCommandLeaseUpdater::execute( ) throw()
 	  
         }
 
-    } // releases lock on job cache
-    
-    for_each(jobMap.begin(), jobMap.end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::handle_jobs ), this ));
+	for_each(jobMap.begin(), jobMap.end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::handle_jobs ), this ));
 
-
+    }// releases lock on job cache
 
 
 //     for ( cj_list_t::iterator it = jobs_to_check.begin(); it != jobs_to_check.end(); ++it) {
@@ -236,13 +234,13 @@ void iceCommandLeaseUpdater::execute( ) throw()
 //____________________________________________________________________________
 void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list< CreamJob > >& jobs) throw()
 {
-  boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+  //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
   CREAM_SAFE_LOG(m_log_dev->infoStream()
 		 << "iceCommandLeaseUpdater::handle_jobs() - "
 		 << "Updating lease for all " 
 		 << jobs.second.size() 
-		 << " jobs of the user ["
+		 << " job(s) of the user ["
 		 << jobs.first.first << "] to CREAM ["
 		 << jobs.first.second << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
@@ -250,7 +248,6 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
   list< CreamJob >::const_iterator it = jobs.second.begin();
   list< CreamJob >::const_iterator list_end = jobs.second.end();
   vector< string > jobs_to_update;
-
  
   string proxy;
   {
@@ -288,10 +285,11 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
         m_theProxy->Authenticate( userproxy );
 
 	CREAM_SAFE_LOG(m_log_dev->infoStream()
-		     << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-		     << "Connecting to CREAM ["
-		     << endpoint << "]"
-		     << log4cpp::CategoryStream::ENDLINE);
+		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+		       << "Updating Lease for ["
+		       << job_ids.size() << "] job(s). Connecting to CREAM ["
+		       << endpoint << "]"
+		       << log4cpp::CategoryStream::ENDLINE);
 
         util::CreamProxy_Lease( endpoint, job_ids, m_delta, newLease ).execute( m_theProxy.get(), 3 );
 
