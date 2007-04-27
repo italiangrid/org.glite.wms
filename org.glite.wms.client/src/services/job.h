@@ -19,9 +19,6 @@
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
-// WMCConfiguration
-#include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
-
 #include <boost/scoped_ptr.hpp>
 
 namespace glite {

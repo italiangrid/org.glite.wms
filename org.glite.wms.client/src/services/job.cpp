@@ -155,7 +155,13 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 		printServerVersion();
 		Utils::ending(0);
 	}
-	postOptionchecks(wmcUtils->getConf()->default_proxy_validity());
+	
+	// Check if exists the attribute JDL_DEFAULT_PROXY_VALIDITY
+	if(wmcUtils->getConf()->hasAttribute(JDL_DEFAULT_PROXY_VALIDITY)) {
+		// Default Proxy Validity from the configuration file
+		postOptionchecks(wmcUtils->getConf()->getInt(JDL_DEFAULT_PROXY_VALIDITY));
+	}
+
 }
 /**
 * After option parsing, some common check can be performed.
@@ -202,7 +208,7 @@ void Job::setSoapTimeout(std::string timeoutName){
 */
 void Job::setSoapTimeout(glite::wms::wmproxyapi::ConfigContext* p_configContext, std::string timeoutName){
 	// Get the WMC Configuration
-	glite::wms::common::configuration::WMCConfiguration* wmcConf = wmcUtils->getConf();
+	glite::jdl::Ad* wmcConf = wmcUtils->getConf();
 
 	// Set the SOAP Timeout for the getVersion
 	p_configContext->soap_timeout = AdUtils::getSoapTimeout(timeoutName, wmcConf);
@@ -690,7 +696,16 @@ void Job::lookForWmpEndpoints(const bool &all){
 void Job::checkWmpSDList (const bool &all){
 	if (!sdContacted){
 		sdContacted =true;  // no further query will be made in the future
-		if (this->wmcUtils->getConf()->enable_service_discovery()){
+		
+		bool enable_service_discovery = false;
+		
+		// Check if the EnableServiceDiscovery attribute has been defined
+		if(this->wmcUtils->getConf()->hasAttribute(JDL_ENABLE_SERVICE_DISCOVERY)) {
+			// Retrieve and Set the EnableServicerDiscovery attribute
+			enable_service_discovery = this->wmcUtils->getConf()->getBool(JDL_ENABLE_SERVICE_DISCOVERY);
+		}
+		
+		if (enable_service_discovery){
 			// SD is enabled: Query Service Discovery:
 			logInfo->print(WMS_DEBUG, "Service Discovery enabled by user configuration settings");
 			if (this->m_endPoint.empty()){logInfo->print(WMS_WARNING, "Unable to find any available WMProxy endpoint where to connect");}

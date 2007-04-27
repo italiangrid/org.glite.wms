@@ -25,8 +25,6 @@
 #include <map>
 // wmproxy-API
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
-// Configuration
-#include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // Ad attributes and JDL methods
 #include "glite/jdl/jdl_attributes.h"
 #include "glite/jdl/JDLAttributes.h"
@@ -857,7 +855,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 	string message = "";
 	jobType = WMS_JOB;
 	const string JDL_WARNING_TITLE= "Following Warning(s) found while parsing JDL:";
-	glite::wms::common::configuration::WMCConfiguration* wmcConf = wmcUtils->getConf();
+	glite::jdl::Ad *wmcConf = wmcUtils->getConf();
 	// COLLECTION (--collection)
 	if (!m_collectOpt.empty()) {
 		jobType = WMS_COLLECTION ;
@@ -1710,9 +1708,15 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+globusUrlCopy+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
 	
-		// Retrieve the System Call timeout
-		int timeout = wmcUtils->getConf()->system_call_timeout();
+		// Set the default value;
+		int timeout = 0;
 
+		// Check if exists the attribute SystemCallTimeout
+		if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
+			// Retrieve and set the attribute SystemCallTimeout
+			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
+		}
+			
 		// launches the command
 		if (int code = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
 			if (code > 0 ) {
@@ -1804,9 +1808,15 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 		logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+htcp+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
 	
-		// Retrieve the System Call timeout
-		int timeout = wmcUtils->getConf()->system_call_timeout();
+		// Set the default value;
+		int timeout = 0;
 
+		// Check if exists the attribute SystemCallTimeout
+		if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
+			// Retrieve and set the attribute SystemCallTimeout
+			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
+		}
+			
 		// launches the command
 		if (int code = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
 			// EXIT CODE > 0

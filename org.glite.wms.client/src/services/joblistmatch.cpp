@@ -145,7 +145,7 @@ void JobListMatch::listMatching ( ){
 * checks the JDL
 */
 void JobListMatch::checkAd ( ){
-	glite::wms::common::configuration::WMCConfiguration* wmcConf =wmcUtils->getConf();
+	glite::jdl::Ad *wmcConf =wmcUtils->getConf();
 	if ( !jobAd ){
 		jobAd = new Ad ( );
         }

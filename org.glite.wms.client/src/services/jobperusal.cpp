@@ -512,9 +512,15 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 			string errormsg = "";
 	
-			// Retrieve the System Call timeout
-			int timeout = wmcUtils->getConf()->system_call_timeout();
-
+			// Set the default value;
+			int timeout = 0;
+	
+			// Check if exists the attribute SystemCallTimeout
+			if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
+				// Retrieve and set the attribute SystemCallTimeout
+				timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
+			}
+			
 			// launches the command
 			if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
 				if (code > 0) {
@@ -604,9 +610,15 @@ void JobPerusal::htcpGetFiles (std::vector <std::string> &uris, std::vector<std:
 			logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 			string errormsg = "";
 	
-			// Retrieve the System Call timeout
-			int timeout = wmcUtils->getConf()->system_call_timeout();
-
+			// Set the default value;
+			int timeout = 0;
+	
+			// Check if exists the attribute SystemCallTimeout
+			if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
+				// Retrieve and set the attribute SystemCallTimeout
+				timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
+			}
+			
 			// launches the command
 			if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
 				if (code > 0) {
@@ -719,8 +731,14 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 			string errormsg = "";
 			cmd = DISPLAY_CMD;
 	
-			// Retrieve the System Call timeout
-			int timeout = wmcUtils->getConf()->system_call_timeout();
+			// Set the default value;
+			int timeout = 0;
+	
+			// Check if exists the attribute SystemCallTimeout
+			if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
+				// Retrieve and set the attribute SystemCallTimeout
+				timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
+			}
 
 			// launches the command
 			if (int outcome = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {

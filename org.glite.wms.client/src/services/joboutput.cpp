@@ -576,9 +576,15 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
 	
-		// Retrieve the System Call timeout
-		int timeout = wmcUtils->getConf()->system_call_timeout();
-
+		// Set the default value;
+		int timeout = 0;
+	
+		// Check if exists the attribute SystemCallTimeout
+		if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
+			// Retrieve and set the attribute SystemCallTimeout
+			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
+		}
+			
 		// launches the command
 		if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
 			if (code > 0) {
@@ -662,9 +668,15 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 		logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
 	
-		// Retrieve the System Call timeout
-		int timeout = wmcUtils->getConf()->system_call_timeout();
-
+		// Set the default value;
+		int timeout = 0;
+	
+		// Check if exists the attribute SystemCallTimeout
+		if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
+			// Retrieve and set the attribute SystemCallTimeout
+			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
+		}
+			
 		// launches the command
 		if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
 			if (code > 0) {
