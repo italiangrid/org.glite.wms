@@ -156,10 +156,18 @@ private method:getExpiration
 *******************************************************************/
 int UCredential::getExpiration(){
 	BIO *in = NULL;
+	X509 *x  = NULL;
 	in = BIO_new(BIO_s_file());
 	if (in) {
 		if (BIO_read_filename(in, proxy_file.c_str()) > 0)
-			return ASN1_UTCTIME_get    (   X509_get_notAfter    (PEM_read_bio_X509(in, NULL, 0, NULL)  )    )    ;
+			x = PEM_read_bio_X509(in, NULL, 0, NULL);
+			if(!x){
+				// Couldn't find a valid proxy.
+				updateError("Couldn't find a valid proxy");
+				return 1;
+			} else {
+			 return ASN1_UTCTIME_get( X509_get_notAfter ( x ))  ;
+			}
 	}
 	return 0 ;
 }
