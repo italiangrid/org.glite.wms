@@ -37,15 +37,8 @@
 #include "options_utils.h"
 #include "adutils.h"
 
-
 namespace glite {
 namespace wms{
-	// Wms Client Configuration class declaration
-	namespace common {
-		namespace configuration{
-			class WMCConfiguration ;
-		}
-	}
 namespace client {
 namespace utilities {
 
@@ -178,7 +171,7 @@ public:
         * Gets the conf pathname
         * @return the pathname string
         */
-        glite::wms::common::configuration::WMCConfiguration* getConf(){return wmcConf;}
+        glite::jdl::Ad* getConf(){return wmcConf;}
 	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
@@ -522,7 +515,7 @@ private:
         */
  	static  const char *str2md5Base64(const char *s);
 	// Ad configuration files:
-	glite::wms::common::configuration::WMCConfiguration *wmcConf;
+	glite::jdl::Ad *wmcConf;
 	// Option files:
 	Options *wmcOpts;
         // Ad utilities

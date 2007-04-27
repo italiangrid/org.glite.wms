@@ -20,12 +20,9 @@
 #include <boost/lexical_cast.hpp> // string->int conversion
 // GLITE
 #include "glite/wmsutils/jobid/JobId.h" // JobId
-#include  "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
-// Configuration
-#include "glite/wms/common/configuration/WMCConfiguration.h"
 // WMProxy API's
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
@@ -54,21 +51,19 @@
 #include "glite/security/voms/voms_api.h"  // voms parsing
 
 
-
-
 namespace glite {
 namespace wms{
 namespace client {
 namespace utilities {
 
 using namespace std ;
+using namespace glite::jdl;
 using namespace glite::wmsutils::jobid ;
+
 //using namespace boost ;
-using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapiutils;
 using namespace glite::wmsutils::exception;
-namespace configuration = glite::wms::common::configuration;
 namespace fs = boost::filesystem ;
 
 
@@ -96,8 +91,6 @@ const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
 const char*  GLITE_CLIENTCONF_FILENAME 		= "glite_wmsclient.conf";
 const char*  GLITE_CONF_FILENAME 			= "glite_wms.conf";
 const string DEFAULT_LB_PROTOCOL			=	"https";
-const string DEFAULT_OUTSTORAGE			=	"/tmp";
-const string DEFAULT_ERRSTORAGE			=	"/tmp";
 const string PROTOCOL					=	"://";
 const string TIME_SEPARATOR				=	":";
 const int SUCCESS = 0;
@@ -576,8 +569,11 @@ std::vector<std::string> Utils::getWmps(){
 		ep = getenv(  GLITE_WMS_WMPROXY_ENDPOINT);
 		if (ep){ wmps.push_back(ep);}
 		else if (wmcConf){
-			// URL's by the configuration file
-			wmps = wmcConf->wm_proxy_end_points();
+			// Check if exists the attribute WmProxyEndPoints
+			if(wmcConf->hasAttribute(JDL_WMPROXY_ENDPOINT)) {
+				// Retrieve and set the attribute WmProxyEndPoints
+				wmps = wmcConf->getStringValue(JDL_WMPROXY_ENDPOINT);
+			}
 		}
 	}
 	return wmps;
@@ -592,19 +588,29 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 	SDVOList *vos = NULL;
 	char **names  = NULL;
 
-	// Setup Service Type
-	const string LBCLIENT_SERVICE_TYPE="org.glite.lb.server";
-	const string WMPROXY_SERVICE_TYPE ="org.glite.wms.wmproxy";
 	string serviceType="";
+	
 	switch (st){
 		case WMP_SD_TYPE:
-			if (wmcConf){serviceType=wmcConf->wmproxy_service_discovery_type();}
-			if (!serviceType.length()){serviceType=WMPROXY_SERVICE_TYPE;}
+			if (wmcConf){
+				// Check if exists the attribute WMProxyServiceDiscoveryType
+				if(wmcConf->hasAttribute(JDL_WMPROXY_SERVICE_DISCOVERY_TYPE)) {
+					// Retrieve and set the attribute WMProxyServiceDiscoveryType
+					serviceType=wmcConf->getString(JDL_WMPROXY_SERVICE_DISCOVERY_TYPE);
+				}
+			}
+			if (serviceType.empty()){serviceType=DEFAULT_WMPROXY_SERVICE_TYPE;}
 			// TBD default value is already present inside configuration
 			break;
 		case LB_SD_TYPE:
-			if (wmcConf){serviceType=wmcConf->wmproxy_service_discovery_type();}
-			if (!serviceType.length()){serviceType=WMPROXY_SERVICE_TYPE;}
+			if (wmcConf){
+				// Check if exists the attribute WMProxyServiceDiscoveryType
+				if(wmcConf->hasAttribute(JDL_WMPROXY_SERVICE_DISCOVERY_TYPE)) {
+					// Retrieve and set the attribute WMProxyServiceDiscoveryType
+					serviceType=wmcConf->getString(JDL_WMPROXY_SERVICE_DISCOVERY_TYPE);
+				}
+			}
+			if (serviceType.empty()){serviceType=DEFAULT_LBCLIENT_SERVICE_TYPE;}
 			// TBD default value is already present inside configuration
 			break;
 		default:
@@ -656,7 +662,7 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 		if (ex.status == SDStatus_SUCCESS){
 			throw WmsClientException(__FILE__,__LINE__,"lookForServiceType",DEFAULT_ERR_CODE,
 			"Service not known",
-			string(WMPROXY_SERVICE_TYPE));
+			string(DEFAULT_WMPROXY_SERVICE_TYPE));
 		}else {
 			throw WmsClientException(__FILE__,__LINE__,"lookForServiceType",DEFAULT_ERR_CODE,
 			"Service Discovery failed",
@@ -670,25 +676,45 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 * Gets the ErrorStorage pathname
 */
 const std::string Utils::getErrorStorage( ){
-	string storage = "";
-        if (wmcConf){ ;
-		storage = wmcConf->error_storage();
-	 }
+	// Initialise the ErrorStorage
+	string storage = DEFAULT_ERROR_STORAGE;
+	
+	// Check if exists the configuration
+        if (wmcConf){
+		// Check if exists the attribute ErrorStorage
+		if(wmcConf->hasAttribute(JDL_ERROR_STORAGE)) {
+			// Retrieve and set the attribute ErrorStorage
+			storage = wmcConf->getString(JDL_ERROR_STORAGE);
+		}
+	}
+	
+	// Return the ErrorStorage
 	return storage;
  }
 /*
 * Get&check the OuputStorage pathname
 */
 std::string Utils::getOutputStorage( ){
-	string storage = "" ;
-	// Default Storage location:
-	if (wmcConf){storage = wmcConf->output_storage();}
-	else {storage = DEFAULT_OUTSTORAGE; }
+	// Initialise the OutputStorage
+	string storage = DEFAULT_OUTPUT_STORAGE;
+
+	// Check if exists the configuration
+        if (wmcConf){
+		// Check if exists the attribute OutputStorage
+		if(wmcConf->hasAttribute(JDL_OUTPUT_STORAGE)) {
+			// Retrieve and set the attribute OutputStorage
+			storage = wmcConf->getString(JDL_OUTPUT_STORAGE);
+		}
+	}
+	
+	// Check if the storage is a directory
 	if(!this->isDirectory(storage)){
 		throw WmsClientException(__FILE__,__LINE__,"getOutputStorage",DEFAULT_ERR_CODE,
 				"Configuration Error",
 				"Output Storage pathname doesn't exist (check the configuration file): "+storage);
 	}
+	
+	// Return the OutputStorage
 	return storage ;
  }
 
@@ -705,7 +731,7 @@ const std::string Utils::getDefaultLog ( ){
         if (Utils::isDirectory(storage)){
                 filepath << Utils::normalizePath(storage) << "/";
         } else {
-		filepath << DEFAULT_ERRSTORAGE << "/";
+		filepath << DEFAULT_ERROR_STORAGE << "/";
         }
         //application name
 	appl_name = wmcOpts->getApplicationName();
@@ -980,7 +1006,7 @@ std::string Utils::checkConf(){
 	//checking old configuration file glite_wms.conf for compatibility purpose if glite_wmsclient.conf was not found
 		cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
 	}
-	wmcConf=new glite::wms::common::configuration::WMCConfiguration(wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName));
+	wmcConf = wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName);
 	return voName;
 }
 void Utils::checkPrefix( ){

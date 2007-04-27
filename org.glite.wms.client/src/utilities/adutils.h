@@ -15,10 +15,13 @@
 #include <string>
 #include "options_utils.h"
 #include "logman.h"
+#include "glite/jdl/Ad.h"
+
 
 /*
  * adutils.h
  */
+ 
 namespace classad{
 	class ClassAd;
 }
@@ -26,7 +29,6 @@ namespace glite {
 namespace jdl { class Ad; class JobAd; class ExpDagAd;class CollectionAd; }
 namespace wmsutils { namespace jobid { class JobId; } }
 namespace wms{
-namespace common {namespace configuration{class WMCConfiguration ;}}
 namespace client {
 namespace utilities {
 
@@ -39,35 +41,52 @@ enum voSrc {
 	JDL_FILE	//  only vo
 };
 
+const std::string JDL_WMPROXY_ENDPOINT					= "WmProxyEndPoints";
+const std::string JDL_WMPROXY_SERVICE_DISCOVERY_TYPE			= "WMProxyServiceDiscoveryType";
+const std::string JDL_ERROR_STORAGE					= "ErrorStorage";
+const std::string JDL_OUTPUT_STORAGE					= "OutputStorage";
+const std::string JDL_LB_ENDPOINT          				= "LBEndPoints";
 
-#define SOAP_GLOBAL_TIMEOUT          			"globalTimeout"
-#define SOAP_GET_VERSION_TIMEOUT     			"getVersionTimeout"
-#define SOAP_JOB_LIST_MATCH_TIMEOUT			"jobListMatchTimeout"
-#define SOAP_JOB_SUBMIT_TIMEOUT				"jobSubmitTimeout"
-#define SOAP_JOB_REGISTER_TIMEOUT			"jobRegisterTimeout"
-#define SOAP_JOB_START_TIMEOUT				"jobStartTimeout"
-#define SOAP_JOB_CANCEL_TIMEOUT				"jobCancelTimeout"
-#define SOAP_JOB_PURGE_TIMEOUT				"jobPurgeTimeout"
-#define SOAP_GET_OUTPUT_FILE_LIST_TIMEOUT		"getOutputFileListTimeout"
-#define SOAP_GET_SANDBOX_DEST_URI_TIMEOUT		"getSandboxDestURITimeout"
-#define SOAP_GET_SANDBOX_BULK_DEST_URI_TIMEOUT		"getSandboxBulkDestURITimeout"
-#define SOAP_GET_MAX_INPUT_SANBOX_SIZE_TIMEOUT  	"getMaxInputSandboxTimeout"
-#define SOAP_GET_FREE_QUOTA_TIMEOUT			"getFreeQuotaTimeout"
-#define SOAP_GET_STRING_PARAMETRI_JOB_TEMPLATE_TIMEOUT	"getStringParametricJobTemplateTimeout"
-#define SOAP_GET_TRANSFER_PROTOCOLS_TIMEOUT		"getTransferProtocolsTimeout"
-#define SOAP_GET_TOTAL_QUOTA_TIMEOUT			"getTotalQuotaTimeout"
-#define SOAP_GET_JDL_TIMEOUT				"getJDLTimeout"
-#define SOAP_GET_PROXY_REQ_TIMEOUT			"getProxyReqTimeout"
-#define SOAP_PUT_PROXY_TIMEOUT				"putProxyTimeout"
-#define SOAP_GET_DELEGATED_PROXY_INFO_TIMEOUT		"getDelegatedProxyInfoTimeout"
-#define SOAP_GET_JOB_PROXY_INFO_TIMEOUT			"getJobProxyInfoTimeout"
-#define SOAP_ENABLE_FILE_PERUSAL_TIMEOUT		"enableFilePerusalTimeout"
-#define SOAP_GET_PERUSAL_FILES_TIMEOUT			"getPerusalFilesTimeout"
-#define SOAP_GET_JOB_TEMPLATE_TIMEOUT			"getJobTemplateTimeout"
-#define SOAP_GET_DAG_TEMPLATE_TIMEOUT			"getDAGTemplateTimeout"
-#define SOAP_GET_COLLECTION_TEMPLATE_TIMEOUT		"getCollectionTemplateTimeout"
-#define SOAP_GET_INT_PARAMETRIC_JOB_TEMPLATE_TIMEOUT	"getIntParametricJobTemplateTimeout"
+const std::string JDL_DEFAULT_ATTRIBUTES				= "JdlDefaultAttributes"; 
+const std::string JDL_SOAP_TIMEOUTS					= "SoapTimeouts";
+const std::string JDL_DEFAULT_PROXY_VALIDITY				= "DefaultProxyValidity";
+const std::string JDL_ENABLE_SERVICE_DISCOVERY				= "EnableServiceDiscovery";
+const std::string JDL_SYSTEM_CALL_TIMEOUT				= "SystemCallTimeout";
 	
+const std::string SOAP_GLOBAL_TIMEOUT          				= "globalTimeout";
+const std::string SOAP_GET_VERSION_TIMEOUT     				= "getVersionTimeout";
+const std::string SOAP_JOB_LIST_MATCH_TIMEOUT				= "jobListMatchTimeout";
+const std::string SOAP_JOB_SUBMIT_TIMEOUT				= "jobSubmitTimeout";
+const std::string SOAP_JOB_REGISTER_TIMEOUT				= "jobRegisterTimeout";
+const std::string SOAP_JOB_START_TIMEOUT				= "jobStartTimeout";
+const std::string SOAP_JOB_CANCEL_TIMEOUT				= "jobCancelTimeout";
+const std::string SOAP_JOB_PURGE_TIMEOUT				= "jobPurgeTimeout";
+const std::string SOAP_GET_OUTPUT_FILE_LIST_TIMEOUT			= "getOutputFileListTimeout";
+const std::string SOAP_GET_SANDBOX_DEST_URI_TIMEOUT			= "getSandboxDestURITimeout";
+const std::string SOAP_GET_SANDBOX_BULK_DEST_URI_TIMEOUT		= "getSandboxBulkDestURITimeout";
+const std::string SOAP_GET_MAX_INPUT_SANBOX_SIZE_TIMEOUT  		= "getMaxInputSandboxTimeout";
+const std::string SOAP_GET_FREE_QUOTA_TIMEOUT				= "getFreeQuotaTimeout";
+const std::string SOAP_GET_STRING_PARAMETRIC_JOB_TEMPLATE_TIMEOUT	= "getStringParametricJobTemplateTimeout";
+const std::string SOAP_GET_TRANSFER_PROTOCOLS_TIMEOUT			= "getTransferProtocolsTimeout";
+const std::string SOAP_GET_TOTAL_QUOTA_TIMEOUT				= "getTotalQuotaTimeout";
+const std::string SOAP_GET_JDL_TIMEOUT					= "getJDLTimeout";
+const std::string SOAP_GET_PROXY_REQ_TIMEOUT				= "getProxyReqTimeout";
+const std::string SOAP_PUT_PROXY_TIMEOUT				= "putProxyTimeout";
+const std::string SOAP_GET_DELEGATED_PROXY_INFO_TIMEOUT			= "getDelegatedProxyInfoTimeout";
+const std::string SOAP_GET_JOB_PROXY_INFO_TIMEOUT			= "getJobProxyInfoTimeout";
+const std::string SOAP_ENABLE_FILE_PERUSAL_TIMEOUT			= "enableFilePerusalTimeout";
+const std::string SOAP_GET_PERUSAL_FILES_TIMEOUT			= "getPerusalFilesTimeout";
+const std::string SOAP_GET_JOB_TEMPLATE_TIMEOUT				= "getJobTemplateTimeout";
+const std::string SOAP_GET_DAG_TEMPLATE_TIMEOUT				= "getDAGTemplateTimeout";
+const std::string SOAP_GET_COLLECTION_TEMPLATE_TIMEOUT			= "getCollectionTemplateTimeout";
+const std::string SOAP_GET_INT_PARAMETRIC_JOB_TEMPLATE_TIMEOUT		= "getIntParametricJobTemplateTimeout";
+		
+// Default values
+const std::string DEFAULT_LBCLIENT_SERVICE_TYPE		= "org.glite.lb.server";
+const std::string DEFAULT_WMPROXY_SERVICE_TYPE 		= "org.glite.wms.WMProxy";
+const std::string DEFAULT_ERROR_STORAGE			= "/var/tmp";
+const std::string DEFAULT_OUTPUT_STORAGE		= "/tmp";
+		
 class AdUtils{
 	public:
 	
@@ -85,20 +104,20 @@ class AdUtils{
 		*@param pathDefault poitning to the default configuration file
 		*@return the merged Ad
 		*/
-		classad::ClassAd* loadConfiguration(const std::string& pathUser,
+		glite::jdl::Ad* loadConfiguration(const std::string& pathUser,
 			const std::string& pathDefault,const std::string& pathGeneral,
 			const std::string& voName);
 		static void setDefaultValuesAd(glite::jdl::Ad* jdl,
-			glite::wms::common::configuration::WMCConfiguration* conf,
+			glite::jdl::Ad* conf,
 			const std::string& pathOpt="");
 		static void setDefaultValues(glite::jdl::JobAd* jdl,
-			glite::wms::common::configuration::WMCConfiguration* conf);
+			    		     glite::jdl::Ad* conf);
 		static void setDefaultValues(glite::jdl::ExpDagAd* jdl,
-			glite::wms::common::configuration::WMCConfiguration* conf);
+					     glite::jdl::Ad* conf);
 		static void setDefaultValues(glite::jdl::CollectionAd* jdl,
-			glite::wms::common::configuration::WMCConfiguration* conf);
+			                     glite::jdl::Ad*);
 		static int getSoapTimeout(const std::string& timeoutName, 
-			glite::wms::common::configuration::WMCConfiguration* p_conf);
+					  glite::jdl::Ad*);
 		/** look for, check, parse and retrieve VO name and value */
 		void parseVo(voSrc src, std::string& voPath, std::string& voName);
 		/** Return the list of all unknown values*/

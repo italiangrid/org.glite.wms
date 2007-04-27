@@ -1,5 +1,4 @@
 // JDL
-#include "glite/jdl/Ad.h"
 #include "glite/jdl/JobAd.h"
 #include "glite/jdl/ExpDagAd.h"
 #include "glite/jdl/JDLAttributes.h"
@@ -8,23 +7,21 @@
 #include "glite/jdl/JdlAttributeList.h"
 #include "glite/jdl/RequestAdExceptions.h"
 #include "glite/jdl/collectionad.h"
-#include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // HEADER
 #include "adutils.h"
 #include "excman.h"
 #include "utils.h"
 using namespace std ;
-using namespace glite::jdl ;
+using namespace glite::jdl;
 
 namespace glite {
 namespace wms{
 namespace client {
 namespace utilities {
+
 const string DEFAULT_UI_CLIENTCONFILE	=	"glite_wmsclient.conf";  //Used in utils as well
 const string DEFAULT_UI_CONFILE		=	"glite_wms.conf";  // kept for compatibility purpose with older versions
 const string JDL_WMS_CLIENT		=	"WmsClient";
-const string JDL_WMPROXY_ENDPOINT	=	"WmProxyEndPoints";
-const string JDL_LB_ENDPOINT		=	"LBEndPoints";
 /******************************
 *Default constructor
 ******************************/
@@ -155,7 +152,7 @@ bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 /******************************
 *  General Static Methods
 *******************************/
-classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
+glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 	const std::string& pathDefault, const std::string& pathGeneral,
 	const std::string& voName){
 	glite::jdl::Ad adUser, adDefault, adGeneral;
@@ -191,7 +188,7 @@ classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
 	}else if (vbLevel==WMSLOG_DEBUG){
 		errMsg(WMS_DEBUG, "Loaded Configuration values:",adGeneral.toLines(),true);
 	}
-	return adGeneral.ad();
+	return new Ad(adGeneral);
 }
 std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	std::vector< std::string > attributes = jdl->attributes();
@@ -203,7 +200,7 @@ std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 		}
 	}
 	return attributes;
-}
+} 
 
 // TBD: Utilise template class for similar methods
 // STATIC METHOD: set missing STRING value
@@ -282,14 +279,14 @@ void setMissingBool(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& 
 * JDL is still an AD (no type switched)
 *******************/
 void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
-	glite::wms::common::configuration::WMCConfiguration* conf,
+	glite::jdl::Ad* conf,
 	const std::string& pathOpt){
 		
 	if (!conf){return;}
 	try{
-		if (conf->jdl_default_attributes()){
+		if (conf->hasAttribute(JDL_DEFAULT_ATTRIBUTES)){
 			/* JDL ATTRIBUTE CUSTOM (NEW) APPROACH: */
-			Ad confAd(*(conf->jdl_default_attributes()));
+			Ad confAd(conf->getAd(JDL_DEFAULT_ATTRIBUTES));
 			// Default String Attrs: HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
 			setMissingString(jdl,JDL::MYPROXY,confAd);
 			setMissingString(jdl,JDL::HLR_LOCATION,confAd);
@@ -334,35 +331,6 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 				setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
 				setMissingInt(jdl,JDL::SHALLOWRETRYCOUNT,confAd);
 			}
-		}else{
-			/* ALL ATTRIBUTES MIXED CONF FILE (OLD) APPROACH: */
-			// Strings attributes:
-			// HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
-			setMissing(jdl,JDL::MYPROXY,conf->my_proxy_server());
-			setMissing(jdl,JDL::HLR_LOCATION,conf->hlrlocation());
-			setMissing(jdl,JDL::VIRTUAL_ORGANISATION,conf->virtual_organisation(),true);
-			setMissing(jdl,JDL::JOB_PROVENANCE,conf->job_provenance());
-			setMissing(jdl,JDL::LB_ADDRESS,conf->lbaddress());
-			// Boolean Attributes:
-			// ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
-			setMissing(jdl,JDL::ALLOW_ZIPPED_ISB,conf->allow_zipped_isb());
-			setMissing(jdl,JDL::PU_FILE_ENABLE,conf->perusal_file_enable());
-			// INT attributes special [SHALLOW]RETRYCOUNT
-			if(jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_COLLECTION) ||
-			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG)){
-				// COLLECTIONS AND DAGS case:
-				// (append special Resubmission private attributes)
-				if((!jdl->hasAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT))){
-					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT,conf->retry_count());
-				}
-				if((!jdl->hasAttribute(JDLPrivate::DEFAULT_NODE_SHALLOWRETRYCOUNT))){
-					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_SHALLOWRETRYCOUNT,conf->shallow_retry_count());
-				}
-			}else{
-				// NORMAL JOBS: normal approach
-				setMissing(jdl, JDL::RETRYCOUNT, conf->retry_count());
-				setMissing(jdl, JDL::SHALLOWRETRYCOUNT, conf->shallow_retry_count());
-			}
 		}
 	}catch(RequestAdException &exc){
 		// Some classAd exception occurred
@@ -389,11 +357,11 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 * JDL is a JobAd
 *******************/
 void AdUtils::setDefaultValues(glite::jdl::JobAd* jdl,
-	glite::wms::common::configuration::WMCConfiguration* conf){
+	glite::jdl::Ad* conf){
 	if (!conf){return;}
-	if (conf->jdl_default_attributes()){
+	if (conf->hasAttribute(JDL_DEFAULT_ATTRIBUTES)){
 		/* JDL ATTRIBUTE CUSTOM (NEW) APPROACH: */
-		Ad confAd(*(conf->jdl_default_attributes()));
+		Ad confAd(conf->getAd(JDL_DEFAULT_ATTRIBUTES));
 		// RANK
 		if(confAd.hasAttribute(JDL::RANK)){
 			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
@@ -402,23 +370,17 @@ void AdUtils::setDefaultValues(glite::jdl::JobAd* jdl,
 		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
 			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
 		}
-	}else{
-		/* ALL ATTRIBUTES MIXED CONF FILE (OLD) APPROACH: */
-		// RANK
-		if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
-		// REQUIREMENTS
-		if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
 	}
 }
 /******************
 * JDL is a Dag
 *******************/
 void AdUtils::setDefaultValues(glite::jdl::ExpDagAd* jdl,
-	glite::wms::common::configuration::WMCConfiguration* conf){
+	glite::jdl::Ad* conf){
 	if (!conf){return;}
-	if (conf->jdl_default_attributes()){
+	if (conf->hasAttribute(JDL_DEFAULT_ATTRIBUTES)){
 		/* JDL ATTRIBUTE CUSTOM (NEW) APPROACH: */
-		Ad confAd(*(conf->jdl_default_attributes()));
+		Ad confAd(conf->getAd(JDL_DEFAULT_ATTRIBUTES));
 		// RANK
 		if(confAd.hasAttribute(JDL::RANK)){
 			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
@@ -427,23 +389,17 @@ void AdUtils::setDefaultValues(glite::jdl::ExpDagAd* jdl,
 		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
 			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
 		}
-	}else{
-		/* ALL ATTRIBUTES MIXED CONF FILE (OLD) APPROACH: */
-		// RANK
-		if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank()); }
-		// REQUIREMENTS
-		if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements()); }
 	}
 }
 /******************
 * JDL is a CollectionAd
 *******************/
 void AdUtils::setDefaultValues(glite::jdl::CollectionAd* jdl,
-	glite::wms::common::configuration::WMCConfiguration* conf){
+	glite::jdl::Ad* conf){
 	if (!conf){return;}
-	if (conf->jdl_default_attributes()){
+	if (conf->hasAttribute(JDL_DEFAULT_ATTRIBUTES)){
 		/* JDL ATTRIBUTE CUSTOM (NEW) APPROACH: */
-		Ad confAd(*(conf->jdl_default_attributes()));
+		Ad confAd(conf->getAd(JDL_DEFAULT_ATTRIBUTES));
 		// RANK
 		if(confAd.hasAttribute(JDL::RANK)){
 			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
@@ -452,19 +408,14 @@ void AdUtils::setDefaultValues(glite::jdl::CollectionAd* jdl,
 		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
 			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
 		}
-	}else{
-		/* ALL ATTRIBUTES MIXED CONF FILE (OLD) APPROACH: */
-		// RANK
-		if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
-		// REQUIREMENTS
-		if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
 	}
 }
 
 /******************
 * SOAP Timeout
 *******************/
-int  AdUtils::getSoapTimeout(const std::string& timeoutName, glite::wms::common::configuration::WMCConfiguration* p_conf)
+int  AdUtils::getSoapTimeout(const std::string& timeoutName, 
+			     glite::jdl::Ad* p_conf)
 {
 	// Initialise the SOAP Timeout (0 == no timeout)
 	int soap_timeout = 0;
@@ -477,13 +428,13 @@ int  AdUtils::getSoapTimeout(const std::string& timeoutName, glite::wms::common:
 	}
 
 	// Check if the SOAP Class AD has been read
-	if (p_conf->soap_timeouts()) {
+	if (p_conf->hasAttribute(JDL_SOAP_TIMEOUTS)) {
 
 		// Initialise the searched Timeout 
 		std::string searchedTimeout = "";
 
 		/* Retrieve the SOAP Timeouts Class AD */
-		Ad soapAd(*(p_conf->soap_timeouts()));
+		Ad soapAd(p_conf->getAd(JDL_SOAP_TIMEOUTS));
 		
 		// Check if exists a global SOAP timeout
 		if(soapAd.hasAttribute(SOAP_GLOBAL_TIMEOUT)) {
