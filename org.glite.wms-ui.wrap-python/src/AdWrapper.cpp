@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "AdWrapper.h"
 #include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/partitioner/Partitioner.h"
 #include "glite/jdl/DAGAd.h"
 #define ORG_GLITE_WMSUI_WRAPY_TRY_ERROR try{ error_code = false ;
 #define ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR \
@@ -65,8 +64,8 @@ bool AdWrapper::toDagAd (){
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
 }
-bool  AdWrapper::toDagAd( const std::vector <std::string>&  jobids){
-	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+bool  AdWrapper::toDagAd( const std::vector <std::string>&  jobids){ //DEPRECATED
+	/*ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	if (jad==NULL){
 		error_code= true;
 		error = "Fatal Error: JobAd instance empty. Unable to create Dag";
@@ -76,7 +75,9 @@ bool  AdWrapper::toDagAd( const std::vector <std::string>&  jobids){
 	 glite::wms::partitioner::Partitioner part ( jad->ad(),jobids);
 	cAd=new DAGAd( part.createDag()->ad() );
 	return false ;
-	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
+	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR*/
+	error_code = true;
+	error = "Method toDagAd - deprecated" ;
 	return true ;
 }
 bool AdWrapper::toJobAd (){

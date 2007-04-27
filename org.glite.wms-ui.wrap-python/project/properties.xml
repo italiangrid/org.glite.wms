@@ -21,6 +21,9 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.15  2007/04/27 16:19:40  lpetronz
+	Code Restructuring: removed checkpointing and partitioner dependency
+
 	Revision 1.14  2007/04/06 10:15:14  amarasch
 	Merged From 3.1 (configuration files)
 
@@ -102,7 +105,7 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 
-	<property name="m4files.list" value="glite_wms_ui_optional.m4 globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 swig.m4 python.m4 glite_wmsutils.m4 glite_jdl.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wms_partitioner.m4 glite_service_discovery.m4 glite_wms_ns.m4 "/>
+	<property name="m4files.list" value="glite_wms_ui_optional.m4 globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 swig.m4 python.m4 glite_wmsutils.m4 glite_jdl.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4  glite_service_discovery.m4 glite_wms_ns.m4 "/>
 
 
 </project>
