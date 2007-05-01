@@ -41,15 +41,16 @@ namespace util {
     class iceLBLogger;
     
     class iceCommandLeaseUpdater : public iceAbsCommand {
-        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-        log4cpp::Category *m_log_dev;
-        glite::wms::ice::util::iceLBLogger* m_lb_logger;
-        time_t m_delta;
-        glite::wms::ice::util::jobCache* m_cache;
-        
+      
+      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+      log4cpp::Category *m_log_dev;
+      glite::wms::ice::util::iceLBLogger* m_lb_logger;
+      time_t m_delta;
+      glite::wms::ice::util::jobCache* m_cache;
+      
       //void update_lease_for_job( const CreamJob& j ) throw();
       void update_lease_for_multiple_jobs( const std::vector<std::string>& jobids, const std::string& userproxy, const std::string& endpoint ) throw();
-      void check_lease_expired( const CreamJob& ) throw();
+      bool check_lease_expired( const CreamJob& ) throw();
       void handle_jobs(const std::pair< std::pair<std::string, std::string>, std::list< CreamJob > >&) throw();
 
     public:

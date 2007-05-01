@@ -38,6 +38,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <boost/format.hpp>
 #include "boost/functional.hpp"
@@ -65,12 +66,21 @@ void iceCommandJobKill::execute() throw()
   boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
   map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
 
-  // build up the map <dn,ce>-><jobs>
-  for ( list< CreamJob >::const_iterator jit = ice_util::jobCache::getInstance()->begin(); 
-	jit != ice_util::jobCache::getInstance()->end(); 
+  list<CreamJob> toCheck;
+  copy(ice_util::jobCache::getInstance()->begin(),
+       ice_util::jobCache::getInstance()->end(),
+       back_inserter( toCheck ));
+
+  // Remove from toCheck list the jobs that have NOT the proxy expiring (and that have a non empty CreamJobID)
+  this->checkExpiring( toCheck );
+
+  // build up the map <dn,ce>-><jobs> from the toCheck list
+  for ( list< CreamJob >::const_iterator jit = toCheck.begin(); 
+	jit != toCheck.end(); 
 	++jit ) 
     {
       if( jit->getCreamJobID().empty() ) continue;
+
       if( jit->is_killed_by_ice() ) {
         CREAM_SAFE_LOG( m_log_dev->debugStream() 
                         << "iceCommandJobKill::execute() - Job "
@@ -85,10 +95,9 @@ void iceCommandJobKill::execute() throw()
 
     }
 
-  // Removes from jobMap the elements whose user proxy is NOT going to expire
-  this->checkExpiring( jobMap );
-
-  // execute killJob DN-CEMon by DN-CEMon (then, on multiple jobs)
+  
+  // execute killJob DN-CEMon by DN-CEMon (then, on multiple jobs) on all elements
+  // of jobMap (that contains all jobs with expired proxy)
   for_each( jobMap.begin(), 
 	    jobMap.end(), 
 	    boost::bind1st( boost::mem_fn( &iceCommandJobKill::killJob ), this ));
@@ -101,13 +110,13 @@ void iceCommandJobKill::execute() throw()
 //______________________________________________________________________________
 void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
 {
-    // this is SAFE. In fact the jobCache is locked no submission can occurs (it could implie
-    // a new proxy for the current DN) 
-    string proxy;
-    {
-      boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-      proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
-    } 
+
+  // proxy = getBetterProxy();
+  string proxy;
+  {
+    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+    proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
+  }
 
     list< CreamJob >::const_iterator it = aList.second.begin();
     list< CreamJob >::const_iterator list_end = aList.second.end();
@@ -115,12 +124,11 @@ void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJo
     while ( it != list_end ) {
       jobs_to_cancel.clear();
       //it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
-      it = ice_util::transform_n_elements( 
-					  it, 
-					  list_end, 
-					  ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
-					  back_inserter( jobs_to_cancel ), 
-					  mem_fun_ref( &CreamJob::getCreamJobID ) );
+      it = ice_util::transform_n_elements( it, 
+					   list_end, 
+					   ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
+					   back_inserter( jobs_to_cancel ), 
+					   mem_fun_ref( &CreamJob::getCreamJobID ) );
       
       this->cancel_jobs(proxy, aList.first.second, jobs_to_cancel);
       
@@ -166,28 +174,28 @@ bool iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 //______________________________________________________________________________
 void iceCommandJobKill::updateCacheAndLog( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
 {
-  string proxy;
-  {
-    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-    proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
-  }
+//   string proxy;
+//   {
+//     boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+//     proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
+//   }
 
-  time_t residual_proxy_time = 0;
+//   time_t residual_proxy_time = 0;
   
-  try {
-    residual_proxy_time = cream_api::certUtil::getProxyTimeLeft( proxy );
-  } catch(exception& ex) {
-    CREAM_SAFE_LOG (m_log_dev->errorStream() 
-		    << "iceCommandJobKill::updateCacheAndLog() - certUtil::getProxyTimeLeft"
-		    << " raised an exception: "
-		    << ex.what()
-		    << "."
-		    << log4cpp::CategoryStream::ENDLINE);
-  }
+//   try {
+//     residual_proxy_time = cream_api::certUtil::getProxyTimeLeft( proxy );
+//   } catch(exception& ex) {
+//     CREAM_SAFE_LOG (m_log_dev->errorStream() 
+// 		    << "iceCommandJobKill::updateCacheAndLog() - certUtil::getProxyTimeLeft"
+// 		    << " raised an exception: "
+// 		    << ex.what()
+// 		    << "."
+// 		    << log4cpp::CategoryStream::ENDLINE);
+//   }
   
   for(list<CreamJob>::const_iterator jit=aList.second.begin(); jit!=aList.second.end(); ++jit) {
     CreamJob theJob( *jit );
-    theJob = m_lb_logger->logEvent( new cream_cancel_request_event( theJob, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
+    theJob = m_lb_logger->logEvent( new cream_cancel_request_event( theJob, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time is less than the threshold=%1%" ) % m_threshold_time ) ) );
     theJob.set_killed_by_ice();
     theJob.set_failure_reason( "The job has been killed because its proxy was expiring" );
     ice_util::jobCache::getInstance()->put( theJob ); 
@@ -265,25 +273,27 @@ void iceCommandJobKill::updateCacheAndLog( const pair< pair<string, string>, lis
     
 // }
 
-void iceCommandJobKill::checkExpiring( map< pair<string, string>, list<CreamJob>, ltstring >& all ) throw()
+//______________________________________________________________________________
+void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
 {
 
-  time_t timeleft = 0;
   string proxy ="";
-  set<pair<string, string> > stillgood;
+  list<CreamJob> stillgood, target;
   
-  for(map< pair<string, string>, list<CreamJob> >::const_iterator it=all.begin();
-      it != all.end();
-      ++it)
+  time_t timeleft = 0;
+  
+  for(list<CreamJob>::const_iterator cit = all.begin();
+      cit != all.end();
+      ++cit)
     {
-      {
-	boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-	proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( it->first.first );
-      }
-      
       // Check the proxy validity
+
+      if( cit->getCreamJobID().empty() ) continue;
+
       try {
-	timeleft = cream_api::certUtil::getProxyTimeLeft( proxy );
+	
+	timeleft = cream_api::certUtil::getProxyTimeLeft( /*proxy*/ cit->getUserProxyCertificate() );
+	
       } catch(exception& ex) {
 	CREAM_SAFE_LOG( m_log_dev->errorStream()
 			<< "iceCommandJobKill::checkExpiring() - ERROR: "
@@ -297,19 +307,24 @@ void iceCommandJobKill::checkExpiring( map< pair<string, string>, list<CreamJob>
       
       if( timeleft < m_threshold_time && timeleft > 5 ) {
 	CREAM_SAFE_LOG( m_log_dev->debugStream()
-			<< "iceCommandJobKill::checkExpiring() - Proxy of user ["
-			<< it->first.first // the user DN 
-			<< "] is expiring. Going to cancel his jobs"
+			<< "iceCommandJobKill::checkExpiring() - Proxy ["
+			<< cit->getUserProxyCertificate() << "] of user ["
+			<< cit->getUserDN() // the user DN 
+			<< "] is expiring. Will cancel related jobs"
 			<< log4cpp::CategoryStream::ENDLINE);    
 	
 	continue;
       } else {
-	stillgood.insert( it->first );
+	stillgood.push_back( *cit );
       }
     }
-  
-  for(set<pair<string, string> >::iterator it=stillgood.begin(); it != stillgood.end(); ++it)
+
+  // Remove from all the jobs that are NOT going to proxy-expire
+  for(list<CreamJob>::const_iterator it = stillgood.begin();
+      it != stillgood.end();
+      ++it) 
     {
-      all.erase( *it );
+      all.remove( *it );
     }
+
 }

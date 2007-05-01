@@ -43,6 +43,7 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <boost/lexical_cast.hpp>
+#include <boost/functional.hpp>
 
 #include <set>
 #include <algorithm>
@@ -112,9 +113,10 @@ iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* 
 }
 
 
-list< iceUtils::CreamJob > iceUtils::iceCommandStatusPoller::get_jobs_to_poll( void ) 
+//____________________________________________________________________________
+/*list< iceUtils::CreamJob >*/void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJob >& result ) throw()
 {
-    list<iceUtils::CreamJob> result;
+  //list<iceUtils::CreamJob> result;
     boost::recursive_mutex::scoped_lock M( iceUtils::jobCache::mutex );
     
     for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
@@ -142,7 +144,7 @@ list< iceUtils::CreamJob > iceUtils::iceCommandStatusPoller::get_jobs_to_poll( v
             result.push_back( *jit );
         }
     }
-    return result;
+    //return result;
 }
 
 
@@ -319,7 +321,7 @@ list< iceUtils::CreamJob > iceUtils::iceCommandStatusPoller::get_jobs_to_poll( v
 
 
 //____________________________________________________________________________
-list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< string >& cream_job_ids ) 
+list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< string >& cream_job_ids ) throw()
 {
   list< soap_proxy::JobInfo > result;
 
@@ -451,6 +453,24 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
                      << "]. Exception is [" 
                      << ex.what() << "]"
                      << log4cpp::CategoryStream::ENDLINE);
+  } catch(exception& ex) {
+      
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+                     << "iceCommandStatusPoller::check_multiple_jobs() - "
+                     << "Cannot query status job for DN=["
+                     << user_dn
+                     << "]. Exception is [" 
+                     << ex.what() << "]"
+                     << log4cpp::CategoryStream::ENDLINE);
+  } catch(...) {
+    
+    CREAM_SAFE_LOG(m_log_dev->errorStream()
+                     << "iceCommandStatusPoller::check_multiple_jobs() - "
+                     << "Cannot query status job for DN=["
+                     << user_dn
+                     << "]. Unknown exception catched"
+                     << log4cpp::CategoryStream::ENDLINE);
+
   }
 
   for(vector< soap_proxy::JobInfo >::const_iterator sit=the_job_status.begin();
@@ -465,11 +485,16 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
 //----------------------------------------------------------------------------
 void iceUtils::iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfo >& info_list ) throw()
 {
-    for ( list< soap_proxy::JobInfo >::const_iterator it = info_list.begin(); it != info_list.end(); ++it ) {
 
-        update_single_job( *it );
+  for_each( info_list.begin(), 
+	    info_list.end(), 
+	    boost::bind1st( boost::mem_fn( &iceUtils::iceCommandStatusPoller::update_single_job ), this ));
 
-    }
+//     for ( list< soap_proxy::JobInfo >::const_iterator it = info_list.begin(); it != info_list.end(); ++it ) {
+
+//         update_single_job( *it );
+
+//     }
 }
 
 //____________________________________________________________________________
@@ -580,26 +605,41 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
 }
 
 //____________________________________________________________________________
+void iceUtils::iceCommandStatusPoller::remove_unknown_jobs_from_cache(const vector<string>& all_jobs, const vector< soap_proxy::JobInfo >& jobs_found ) throw()
+{
+    if ( all_jobs.size() == jobs_found.size() )
+        return; // for all jobs in jobVec there's a corresponding JobInfo object in to_check
+
+    // Ok, now lets try to be smart
+
+    // Step 1. Build a vector of job ids which are in the to_check vector
+    set< string > jobs_found_ids;
+    for ( vector< soap_proxy::JobInfo >::const_iterator it=jobs_found.begin(); it != jobs_found.end(); ++it ) {
+        jobs_found_ids.insert( it->getCreamJobID() );
+    }
+
+    set< string > all_job_ids;
+    copy( all_jobs.begin(), all_jobs.end(), inserter( all_job_ids, all_job_ids.begin() ) );
+    // copy( all_jobs.begin(), all_jobs.end(), insert_iterator( all_job_ids ) );
+
+    // Step 2: do the difference on the sorted vectors
+    // set< string > missing_job_ids;
+    set_difference( all_job_ids.begin(), all_job_ids.end(),
+                    jobs_found_ids.begin(), jobs_found_ids.end(),
+                    job_cache_remover() );
+}
+
+//____________________________________________________________________________
 void iceUtils::iceCommandStatusPoller::execute( ) throw()
 {
-    /**
-     * OLD CODE TO POLL JOB BY JOB
-     */
-    //list< CreamJob > j_list( get_jobs_to_poll() );
-    //list< soap_proxy::JobInfo > j_status( check_jobs( j_list ) );
-    
 
-    list< CreamJob > j_list( get_jobs_to_poll() );
+  list< CreamJob > j_list;
+  this->get_jobs_to_poll( j_list ); // this method locks the cache
 
     if ( j_list.empty() ) 
         return; // give up if no job to check
 
     
-    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                   << "iceCommandStatusPoller::execute() - "
-                   << "********** Number of jobs to check ["
-                   << j_list.size() << "]"
-                   << log4cpp::CategoryStream::ENDLINE);
     
     // Step 1. Build the mapping between ( UserDN, CreamUDL ) -> list<CreamJobId>
     map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
@@ -625,37 +665,16 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
         while ( it != list_end ) {
             vector< string > jobs_to_poll;
             //it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
-            it = iceUtils::transform_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ), mem_fun_ref( &iceUtils::CreamJob::getCreamJobID ) );
+            it = iceUtils::transform_n_elements( it, 
+						 list_end, 
+						 m_max_chunk_size, 
+						 back_inserter( jobs_to_poll ), 
+						 mem_fun_ref( &iceUtils::CreamJob::getCreamJobID ) );
 
-            list< soap_proxy::JobInfo > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) );
+            list< soap_proxy::JobInfo > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
 
-            updateJobCache( j_status );      
+            updateJobCache( j_status );// modifies the cache, locks it job by job
         }        
     }
 }
 
-
-//____________________________________________________________________________
-void iceUtils::iceCommandStatusPoller::remove_unknown_jobs_from_cache(const vector<string>& all_jobs, const vector< soap_proxy::JobInfo >& jobs_found ) throw()
-{
-    if ( all_jobs.size() == jobs_found.size() )
-        return; // for all jobs in jobVec there's a corresponding JobInfo object in to_check
-
-    // Ok, now lets try to be smart
-
-    // Step 1. Build a vector of job ids which are in the to_check vector
-    set< string > jobs_found_ids;
-    for ( vector< soap_proxy::JobInfo >::const_iterator it=jobs_found.begin(); it != jobs_found.end(); ++it ) {
-        jobs_found_ids.insert( it->getCreamJobID() );
-    }
-
-    set< string > all_job_ids;
-    copy( all_jobs.begin(), all_jobs.end(), inserter( all_job_ids, all_job_ids.begin() ) );
-    // copy( all_jobs.begin(), all_jobs.end(), insert_iterator( all_job_ids ) );
-
-    // Step 2: do the difference on the sorted vectors
-    // set< string > missing_job_ids;
-    set_difference( all_job_ids.begin(), all_job_ids.end(),
-                    jobs_found_ids.begin(), jobs_found_ids.end(),
-                    job_cache_remover() );
-}

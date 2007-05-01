@@ -67,67 +67,40 @@ iceCommandLeaseUpdater::iceCommandLeaseUpdater( ) throw() :
 //____________________________________________________________________________
 void iceCommandLeaseUpdater::execute( ) throw()
 {
-    typedef list<CreamJob> cj_list_t;
-    map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
-    cj_list_t jobs_to_check;
+  typedef list<CreamJob> cj_list_t;
+  map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
+  cj_list_t jobs_to_check;
+  
+  { 
+    // acquire lock on the job cache
+    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    
+    list<CreamJob> check_list;
+    copy(m_cache->begin(), m_cache->end(), back_inserter(check_list));
+    
+    
+    // Now the cache is purged from the lease-expired jobs, and we can 
+    // populate the map ( userDN, CEMonURL) -> array[JobID]
+    // with ALL remaining jobs (not yet expired). 
+    // We want to renew the lease of ALL these jobs
+    // (even those which are not expiring)
+    for(list<CreamJob>::iterator jit = check_list.begin(); jit != check_list.end(); ++jit) {
+      
+      // Let's skip lease expired job
+      // (this method also remove from the cache e log to LB
+      if( this->check_lease_expired( *jit ) ) continue; 
 
-    { 
-    	// acquire lock on the job cache
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      if( !jit->getCreamJobID().empty() )
+	jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
+      
+    }
 
-	// First of all let's removes from cache the lease-expired jobs
-	for_each(m_cache->begin(), m_cache->end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::check_lease_expired ), this )); // removes from cache the lease-expired jobs
-
-
-	// Populates the mapping ( userDN, CEMonURL) -> array[JobID]
-	// with ALL job. We want to renew the lease of ALL non lease-expired jobs
-	// (even those which are not expiring)
-        for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
-
-	  if( !jit->getCreamJobID().empty() )
-	    jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
-	  
-        }
-
-	for_each(jobMap.begin(), jobMap.end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::handle_jobs ), this ));
-
-    }// releases lock on job cache
-
-
-//     for ( cj_list_t::iterator it = jobs_to_check.begin(); it != jobs_to_check.end(); ++it) {
-
-//         CREAM_SAFE_LOG(m_log_dev->infoStream() 
-//                        << "iceCommandLeaseUpdater::execute() - "
-//                        << "Checking LEASE for job "
-//                        << describe_job( *it )
-//                        << " isActive=" << it->is_active()
-//                        << " - remaining=" << (it->getEndLease()-time(0))
-//                        << " - threshold=" << m_threshold
-//                        << log4cpp::CategoryStream::ENDLINE);        
-
-//         if ( it->getEndLease() && it->getEndLease() <= time(0) ) {
-//             // Remove expired job from cache
-//             CREAM_SAFE_LOG(m_log_dev->warnStream()
-//                            << "iceCommandLeaseUpdater::execute() - "
-//                            << "Removing from cache lease-expired job "
-//                            << describe_job( *it )
-//                            << log4cpp::CategoryStream::ENDLINE);
-//             CreamJob tmp_job( *it );
-
-//             tmp_job.set_failure_reason( "Lease expired" );
-//             m_lb_logger->logEvent( new job_done_failed_event( tmp_job ) );
-//             glite::wms::ice::Ice::instance()->resubmit_job( tmp_job, "Lease expired" );
-//             boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-//             jobCache::iterator tmp( m_cache->lookupByGridJobID( tmp_job.getGridJobID() ) );
-// 	    m_cache->erase( tmp );
-//         } else {
-//             if( !it->getCreamJobID().empty() &&
-//                 it->is_active() && 
-//                 ( it->getEndLease() - time(0) <= m_threshold ) ) {
-//                 update_lease_for_job( *it );
-//             }
-//         }
-//     } // end for
+    // Now jobMap contains all the job that are not lease-expired and that have a non empty creamJobID
+    // also the cache has been purged by lease-expired job (and LB "informed" about them)
+    for_each(jobMap.begin(), jobMap.end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::handle_jobs ), this ));
+    
+  }// releases lock on job cache
+  
 }
 
 //____________________________________________________________________________
@@ -389,7 +362,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 
 
 //____________________________________________________________________________
-void iceCommandLeaseUpdater::check_lease_expired( const CreamJob& job ) throw()
+bool iceCommandLeaseUpdater::check_lease_expired( const CreamJob& job ) throw()
 {
   if ( job.getEndLease() && job.getEndLease() <= time(0) ) {
 
@@ -410,5 +383,8 @@ void iceCommandLeaseUpdater::check_lease_expired( const CreamJob& job ) throw()
 
     jobCache::iterator tmp( m_cache->lookupByGridJobID( tmp_job.getGridJobID() ) );
     m_cache->erase( tmp );
+    return true;
   }
+
+  return false;
 }

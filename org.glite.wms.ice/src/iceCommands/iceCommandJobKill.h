@@ -64,7 +64,7 @@ namespace util {
 	bool cancel_jobs(const std::string& proxy, const std::string& endpoint, 
 					    const std::vector<std::string>& jobIdList) throw();
 	void updateCacheAndLog( const std::pair< std::pair<std::string, std::string>, std::list< glite::wms::ice::util::CreamJob > >& aList ) throw();
-	void checkExpiring( std::map< std::pair<std::string, std::string>, std::list<glite::wms::ice::util::CreamJob>,  glite::wms::ice::util::ltstring >& all ) throw();
+	void checkExpiring( std::list<glite::wms::ice::util::CreamJob>& ) throw();
 
     public:
         iceCommandJobKill( /*const glite::wms::ice::util::CreamJob&*/ ) throw();

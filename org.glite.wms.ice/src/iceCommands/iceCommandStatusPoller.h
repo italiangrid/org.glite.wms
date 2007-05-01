@@ -71,7 +71,7 @@ namespace glite {
            *
            * @return the list of Cream Job IDs for jobs to poll.
            */ 
-	  std::list< glite::wms::ice::util::CreamJob >  get_jobs_to_poll( void );
+	  void get_jobs_to_poll( std::list< glite::wms::ice::util::CreamJob >& ) throw();
 
           /**
            * Breaks the list of jobs into sublists of size at most max_size
@@ -111,7 +111,7 @@ namespace glite {
           /**
            *
            */
-	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::string& user_dn, const std::string& cream_url, const std::vector< std::string >& cream_job_ids );
+	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::string& user_dn, const std::string& cream_url, const std::vector< std::string >& cream_job_ids ) throw();
 
           /**
            * This method removes jobs which have been reported as not found by

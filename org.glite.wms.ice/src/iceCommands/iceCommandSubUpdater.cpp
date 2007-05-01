@@ -38,6 +38,70 @@ namespace cream_api = glite::ce::cream_client_api;
 namespace ice_util  = glite::wms::ice::util;
 
 //______________________________________________________________________________
+namespace {
+
+  class singleSubUpdater {
+    ice_util::subscriptionManager *m_subManager;
+    string m_dn;
+
+  public:
+    singleSubUpdater( ice_util::subscriptionManager *subManager, string dn ) : m_subManager( subManager ), m_dn( dn ) { }
+
+    void operator()( string endpoint ) {
+
+      ice_util::iceSubscription sub;
+      if(!m_subManager->getSubscriptionByDNCEMon(m_dn, endpoint, sub)) {
+	// this should almost never happen because before to update
+	// the caller also invokes the subManager->checkSubscription()
+	CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->errorStream() 
+		       << "iceCommandSubUpdater::execute() - "
+		       << "Not found any subscription for DN ["
+		       << m_dn << "] and CEMon ["
+		       << endpoint << "]. Skipping..."
+		       << log4cpp::CategoryStream::ENDLINE);
+	return;
+      }
+      
+      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->infoStream() 
+		     << "iceCommandSubUpdater::execute() - "
+		     << "Checking Subscription validity for DN ["
+		     << m_dn << "] to CEMon ["
+		     << endpoint << "]"
+		     << log4cpp::CategoryStream::ENDLINE);
+      
+      time_t timeleft = sub.getExpirationTime() - time(NULL);
+
+      if(timeleft < ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->subscription_update_threshold_time()) {
+	string betterProxy;
+	{
+	  boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+	  betterProxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( m_dn );
+	}
+	
+	if(betterProxy == "") {
+	  CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->errorStream() 
+			 << "iceCommandSubUpdater::execute() - "
+			 << "Cannot get better proxy file for DN ["
+			 << m_dn << "]. Skipping..."
+			 << log4cpp::CategoryStream::ENDLINE);
+	  return;
+	}
+	
+	CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->infoStream() 
+		       << "iceCommandSubUpdater::execute() - "
+		       << "Updating subscription ["<<sub.getSubscriptionID() 
+		       << "] to CEMon [" << endpoint <<"] for user DN ["
+		       << m_dn << "] using proxy ["
+		       << betterProxy << "]."
+		       << log4cpp::CategoryStream::ENDLINE);
+	
+	m_subManager->renewSubscription( betterProxy , endpoint );
+      }
+    }
+  }; // end class
+} // end anonymous namespace
+
+//______________________________________________________________________________
 ice_util::iceCommandSubUpdater::iceCommandSubUpdater( ) throw() : 
   m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
   m_conf( ice_util::iceConfManager::getInstance() )		     
@@ -72,56 +136,16 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 
     subManager->checkSubscription( *it );
     
-    for(set<string>::const_iterator cit = it->second.begin();
-	cit != it->second.end();
-	++cit)
-      {
-	iceSubscription sub;
-	if(!subManager->getSubscriptionByDNCEMon(it->first, *cit, sub)) {
-	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			 << "iceCommandSubUpdater::execute() - "
-			 << "Not found any subscription for DN ["
-			 << it->first << "] and CEMon ["
-			 << *cit << "]. Skipping..."
-			 << log4cpp::CategoryStream::ENDLINE);
-	  continue;
-	}
+    singleSubUpdater updater( subManager, it->first );
+
+    for_each(it->second.begin(), it->second.end(), updater);
+
+//     for(set<string>::const_iterator cit = it->second.begin();
+// 	cit != it->second.end();
+// 	++cit)
+//       {
 	
-	CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		       << "iceCommandSubUpdater::execute() - "
-		       << "Checking Subscription validity for DN ["
-		       << it->first << "] to CEMon ["
-		       << *cit << "]"
-		       << log4cpp::CategoryStream::ENDLINE);
-	
-	time_t timeleft = sub.getExpirationTime() - time(NULL);
-	if(timeleft < m_conf->getConfiguration()->ice()->subscription_update_threshold_time()) {
-	  string betterProxy;
-	  {
-	    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-	    betterProxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN(it->first);
-	  }
-
-	  if(betterProxy == "") {
-	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			   << "iceCommandSubUpdater::execute() - "
-			   << "Cannot get better proxy file for DN ["
-			   << it->first << "]. Skipping..."
-			   << log4cpp::CategoryStream::ENDLINE);
-	    return;
-	  }
-
-	  CREAM_SAFE_LOG(m_log_dev->infoStream() 
-			 << "iceCommandSubUpdater::execute() - "
-			 << "Updating subscription ["<<sub.getSubscriptionID() 
-			 << "] to CEMon [" << *cit <<"] for user DN ["
-			 << it->first << "] using proxy ["
-			 << betterProxy << "]."
-			 << log4cpp::CategoryStream::ENDLINE);
-
-	  subManager->renewSubscription( betterProxy , *cit );
-	}
-      }
+//       }
 
   }
 }

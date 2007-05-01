@@ -345,10 +345,6 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     m_theJob.setCreamJobID(url_jid[1]);
     m_theJob.setStatus(cream_api::job_statuses::PENDING);
 
-    //cerr << "\n********* RESETTING LEASE TO NEW VALUE=[" << newLease << "] time(0)=[" << time(0)<< "]" << endl << endl;
-
-    //m_theJob.setEndLease( time(0) + newLease/*m_configuration->ice()->lease_delta_time()*/ );
-
     m_theJob.setEndLease( time(0) + newLease );
     
     m_theJob.setDelegationId( delegID );
@@ -477,8 +473,14 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
     // necessary
     classad::ExprList* isbList;
     if ( jdl->EvaluateAttrList( "InputSandbox", isbList ) ) {
+
+      /**
+       * this pointer is used below as argument of ClassAd::Insert. The classad doc
+       * says that that ptr MUST NOT be deallocated by the caller: 
+       * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
+       */
         classad::ExprList* newIsbList = new classad::ExprList();
-        	
+
 	CREAM_SAFE_LOG(m_log_dev->infoStream()
             << "iceCommandSubmit::updateIsbList() "
             << "Starting InputSandbox manipulation..."
@@ -516,7 +518,12 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
             newV.SetStringValue( newPath );
             // Builds the new string
             newIsbList->push_back( classad::Literal::MakeLiteral( newV ) );
-        }
+        } 
+	/**
+	 * The pointer newIsbList pointer is used as argument of ClassAd::Insert. The classad doc
+	 * says that that ptr MUST NOT be deallocated by the caller: 
+	 * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
+	 */
         jdl->Insert( "InputSandbox", newIsbList );
     }
 }
@@ -553,6 +560,11 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         // are absolute URIs
 
         classad::ExprList* osbDUList;
+	/**
+	 * this pointer is used below as argument of ClassAd::Insert. The classad doc
+	 * says that that ptr MUST NOT be deallocated by the caller: 
+	 * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
+	 */
         classad::ExprList* newOsbDUList = new classad::ExprList();
 	
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
@@ -597,6 +609,12 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
                 // Builds the new string
                 newOsbDUList->push_back( classad::Literal::MakeLiteral( newV ) );
             }
+
+	    /**
+	     * The pointer newOsbDUList pointer is used as argument of ClassAd::Insert. The classad doc
+	     * says that that ptr MUST NOT be deallocated by the caller: 
+	     * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
+	     */
             jdl->Insert( "OutputSandboxDestURI", newOsbDUList );
         }
     } else {       
@@ -605,7 +623,6 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
             jdl->InsertAttr( "OutputSandboxBaseDestURI",  default_osbdURI );
         }
     }
-    
 }
 
 //-----------------------------------------------------------------------------
@@ -665,135 +682,6 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
                    );
 
 }
-
-//______________________________________________________________________________
-// void  iceCommandSubmit::doSubscription( const string& ce )
-// {
-//   string cemon_url;
-//   iceUtil::subscriptionManager* subManager( iceUtil::subscriptionManager::getInstance() );
-//   
-//   /**
-//     The entire method must be mutex-protected, because even getCEMonURL modify the
-//     internal member of cemonUrlCache class.
-//     If these calls block, this should happen only the first time, because after
-//     a succesfull query to CREAM cemonUrlCache should update its internal data
-//     structures
-//    */
-//   boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
-//   
-//   cemon_url = subManager->getCEMonURL( ce );// this also update internal mapping if needed
-//            
-//   CREAM_SAFE_LOG(
-//   		 m_log_dev->infoStream() 
-//                   << "iceCommandSubmit::doSubscription() - "
-//                   << "For current CREAM, subscriptionManager returned CEMon URL ["
-//                   << cemon_url << "]"
-//                   << log4cpp::CategoryStream::ENDLINE
-//                 );
-//             
-//   // try to determine if we're subscribed to 'cemon_url' by
-//   // asking the cemonUrlCache
-//   
-//   bool foundSubscription = subManager->hasCEMon( cemon_url );
-//   
-//   if ( foundSubscription ) {
-//       // if this a ghost subscription
-//       // the subscriptionUpdater will fix it soon
-//       CREAM_SAFE_LOG(m_log_dev->infoStream()
-//                      << "iceCommandSubmit::doSubscription() - "
-//                      << "Already subsdcribed to CEMon ["
-//                      << cemon_url << "] (found in cemonUrlCache)"
-//                      << log4cpp::CategoryStream::ENDLINE);
-//       return;
-//   }	   
-//   
-//   
-//   
-//   
-//   // try to determine with a direct SOAP query to CEMon
-//   bool subscribed;
-//   try {
-//     vector<Subscription> fake;
-//     subscribed = iceUtil::subscriptionManager::getInstance()->subscribedTo( cemon_url, fake );
-//   } catch(exception& ex) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                      << "iceCommandSubmit::doSubscription() - "
-//                      << "Couldn't determine if we're subscribed to ["
-//                      << cemon_url << "]. Another job could trigger a successful subscription."
-//                      << log4cpp::CategoryStream::ENDLINE);
-//     return;
-//   }
-//   if( subscribed ) {
-//       if( m_configuration->ice()->listener_enable_authz() ) {
-//           string DN;
-//           if( cemon_cache->getCEMonDN( cemon_url, DN ) ) {
-//               
-//               cemon_cache->insertDN( DN );
-//               cemon_cache->insertCEMon( cemon_url );
-//               
-//           } else {
-//               CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                              << "iceCommandSubmit::doSubscription() - "
-//                              << "CEMon [" << cemon_url 
-//                              << "] reported that we're subscribed to it, "
-//                              << "but couldn't get its DN. "
-//                              << "Will not authorize its job status "
-//                              << "notifications."
-//                              << log4cpp::CategoryStream::ENDLINE);
-//           }
-//       } else {
-//           cemon_cache->insertCEMon( cemon_url );
-//       }
-//       CREAM_SAFE_LOG(m_log_dev->infoStream()
-//                      << "iceCommandSubmit::doSubscription() - "
-//                      << "Already subscribed to CEMon ["
-//                      << cemon_url << "] (asked to CEMon itself)"
-//                      << log4cpp::CategoryStream::ENDLINE
-//                      );
-//   } else {
-//       // MUST subscribe
-//       string DN;
-//       bool can_subscribe = true;
-//       if ( m_configuration->ice()->listener_enable_authz() ) {
-//           if( !cemon_cache->getCEMonDN( cemon_url, DN ) ) {
-//               // Cannot subscribe to a CEMon without it's DN
-//               can_subscribe = false;
-//               CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                              << "iceCommandSubmit::doSubscription() - "
-//                              << "Notification authorization is enabled but couldn't "
-//                              << "get CEMon's DN. Will not subscribe to it."
-//                              << log4cpp::CategoryStream::ENDLINE
-//                              );
-//           } else {
-//               CREAM_SAFE_LOG(m_log_dev->infoStream()
-//                              << "iceCommandSubmit::doSubscription() - "
-//                              << "Inserting this DN ["
-//                              << DN << "] into cemonUrlCache"
-//                              << log4cpp::CategoryStream::ENDLINE
-//                              );
-//               cemon_cache->insertDN( DN );	      
-//           }
-//       } // if(m_confMgr->getListenerEnableAuthZ() )
-//       
-//       if(can_subscribe) {
-//           if( iceUtil::subscriptionManager::getInstance()->subscribe( cemon_url ) ) {
-//               cemon_cache->insertCEMon( cemon_url );
-//               
-//           } else {
-//               CREAM_SAFE_LOG(
-//                              m_log_dev->errorStream()
-//                              << "iceCommandSubmit::doSubscription() - "
-//                              << "Couldn't subscribe to [" 
-//                              << cemon_url << "]. Will not"
-//                              << " receive job status notification from it. "
-//                              << "Hopefully the subscriptionUpdater will retry."
-//                              << log4cpp::CategoryStream::ENDLINE
-//                              );
-//           }
-//       } // if(can_subscribe)
-//   } // else -> if(subscribedTo...)
-//   
-// } // end function
 
 //______________________________________________________________________________
 void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
@@ -915,6 +803,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 	  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
 	  dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
     }
+
     CREAM_SAFE_LOG(m_log_dev->infoStream()
 		   << "iceCommandSubmit::doSubscription() - "
 		   << "User DN [" << userDN << "] is already subscribed to CEMon ["
@@ -944,19 +833,9 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       iceUtil::iceSubscription sub;
       if( iceUtil::subscriptionProxy::getInstance()->subscribe( userProxy, cemon_url, sub ) ) {
 	
-	//sub.setCEMonDN( DN );
-	
-	//cout << "iceCommandSubmit::doSubscription - sub.getUserProxyFile() = " << sub.getUserProxyFile() <<endl;
-	
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
 	boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
 	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-
-// 	cout << "iceCommandSubmit::doSubscription - Subscription OK for proxy [" 
-// 	     << userProxy << "] to [" << cemon_url << "] sub.ID = ["
-// 	     << sub.getSubscriptionID() << "] sub.expTime = ["
-// 	     << sub.getExpirationTime() << "]. UNLOCKING!!"
-// 	     << endl;
 
       } else {
 	CREAM_SAFE_LOG(
@@ -972,4 +851,4 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     } // if(can_subscribe)
   } // else -> if(subscribedTo...)
   
-} // end function, also unlocks cemonUrlCache's mutex
+} // end function, also unlocks subscriptionManager's mutex
