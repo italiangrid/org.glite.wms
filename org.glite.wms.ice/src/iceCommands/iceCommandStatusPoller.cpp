@@ -57,8 +57,15 @@ namespace jobstat    = glite::ce::cream_client_api::job_statuses;
 namespace iceUtils = glite::wms::ice::util;
 using namespace std;
 
+
 namespace { // begin anonymous namespace
 
+  bool insert_condition(const iceUtils::CreamJob& J) {
+    if( J.getCreamJobID().empty() ) return false;
+    
+    return true;
+  }
+  
     /**
      * This class represents an iterator; the operator=(), instead of
      * inserting something into the container, removes an element from the
@@ -147,179 +154,6 @@ iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* 
     //return result;
 }
 
-
-// list< list< iceUtils::CreamJob > > iceUtils::iceCommandStatusPoller::create_chunks( const list< iceUtils::CreamJob >& jobs, unsigned int max_size )
-// {
-//     list< list< CreamJob > > result;
-//     list< CreamJob >::const_iterator it;
-//     list< CreamJob > current_chunk;
-//     list< CreamJob >::size_type chunk_size = 0;
-
-//     for ( it=jobs.begin(); it!=jobs.end(); ++it ) {
-//         // NOTE: According to STL documentation, current_chunk.size()
-//         // should not be assumed to take constant time; it may take
-//         // O(N) time, with N=list size. To make things constant, we
-//         // explicitly handle a chunk_size variable, so that the size
-//         // check can be done in constant time.
-//         if ( chunk_size >= max_size ) { 
-//             result.push_back( current_chunk );
-//             current_chunk.clear();
-//             chunk_size = 0;
-//         }
-//         current_chunk.push_back( *it );
-//         ++chunk_size;
-//     }
-//     // Push back any remaining chunk
-//     if ( !current_chunk.empty() ) {
-//         result.push_back( current_chunk );
-//     }
-//     return result;
-// }
-
-//____________________________________________________________________________
-// int iceCommandStatusPoller::get_jobs_to_poll_max_num( list<CreamJob>& result, const int max_num ) 
-// {
-//   result.clear();
-//   boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-  
-//   int counter = 0;
-
-//   for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
-    
-//     if( jit->getCreamJobID().empty() ) {
-//       // This job doesn't have yet the CREAM Job ID. Skipping...
-//       continue;
-//     }
-    
-//     time_t t_now( time(NULL) );
-//     time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
-//     time_t oldness = t_now - t_last_seen;
-    
-//     if ( m_poll_all_jobs ||
-// 	 ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ) {
-//       CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 		     << "iceCommandStatusPoller::get_jobs_to_poll_max_num() - "
-// 		     << jit->describe()
-// 		     << " t_now=" << t_now
-// 		     << " t_last_seen=" << t_last_seen
-// 		     << " oldness=" << oldness 
-// 		     << " threshold=" << m_threshold
-// 		     << log4cpp::CategoryStream::ENDLINE);
-      
-//       result.push_back( *jit );
-//       if( (++counter) >= max_num )
-// 	break;
-//     }
-//   }
-
-//   return result.size();
-  
-// }
-
-//____________________________________________________________________________
-//  list< soap_proxy::JobInfo > iceCommandStatusPoller::check_jobs( const list< CreamJob > & job_list ) 
-// {
-//     list< soap_proxy::JobInfo > result;
-
-//     for ( list< CreamJob >::const_iterator jit = job_list.begin(); jit != job_list.end(); ++jit ) {
-
-//         vector< string > job_to_query;
-//         vector< soap_proxy::JobInfo > the_job_status;
-
-//         job_to_query.push_back( jit->getCreamJobID() );
-
-//         CREAM_SAFE_LOG(m_log_dev->debugStream() 
-//                        << "iceCommandStatusPoller::check_jobs() - "
-//                        << "Polling job "
-//                        << jit->describe()
-//                        << log4cpp::CategoryStream::ENDLINE);
-	
-//         try {
-//             m_theProxy->Authenticate( jit->getUserProxyCertificate() );
-//             CreamProxy_Info( jit->getCreamURL(), job_to_query, vector<string>(), the_job_status, -1, -1).execute( m_theProxy.get(), 3 );
-
-//         } catch( cream_api::cream_exceptions::JobUnknownException& ex) {
-//             CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                            << "iceCommandStatusPoller::check_jobs() - "
-//                            << "CREAM responded JobUnknown for JobId=["
-//                            << jit->getCreamJobID()
-//                            << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
-//                            << log4cpp::CategoryStream::ENDLINE);
-            
-//             boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-//             jobCache::iterator thisJobToRemove = m_cache->lookupByCreamJobID( jit->getCreamJobID() );
-//             m_cache->erase( thisJobToRemove );
-            
-//             continue;
-	  
-//         } catch(soap_proxy::auth_ex& ex) {
-
-//             CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                            << "iceCommandStatusPoller::check_jobs() - "
-//                            << "Cannot query status job for JobId=["
-//                            << jit->describe()
-//                            << "]. Exception is [" << ex.what() << "]"
-//                            << log4cpp::CategoryStream::ENDLINE);
-//             continue;
-            
-//         } catch(soap_proxy::soap_ex& ex) {
-
-//             CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                            << "iceCommandStatusPoller::check_jobs() - "
-//                            << "Cannot query status job for JobId=["
-//                            << jit->describe()
-//                            << "]. Exception is [" 
-//                            << ex.what() << "]"
-//                            << log4cpp::CategoryStream::ENDLINE);
-//             continue;	  
-
-//         } catch(cream_api::cream_exceptions::BaseException& ex) {
-
-//             CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                            << "iceCommandStatusPoller::check_jobs() - "
-//                            << "Cannot query status job for JobId=["
-//                            << jit->describe()
-//                            << "]. Exception is [" 
-//                            << ex.what() << "]"
-//                            << log4cpp::CategoryStream::ENDLINE);
-//             continue;
-
-//         } catch(cream_api::cream_exceptions::InternalException& ex) {
-            
-//             CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                            << "iceCommandStatusPoller::check_jobs() - "
-//                            << "Cannot query status job for JobId=["
-//                            << jit->describe()
-//                            << "]. Exception is [" 
-//                            << ex.what() << "]"
-//                            << log4cpp::CategoryStream::ENDLINE);
-//             continue;
-
-//             // this ex can be raised if the remote service is not
-//             // reachable and scanJobs is called again
-//             // immediately. Untill the service is down this could
-//             // overload the cpu and the logfile. So let's wait for a
-//             // while before returning...
-	  
-//         } catch(cream_api::cream_exceptions::DelegationException& ex) {
-            
-//             CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                            << "iceCommandStatusPoller::check_jobs() - "
-//                            << "Cannot query status job for JobId=["
-//                            << jit->describe()
-//                            << "]. Exception is [" 
-//                            << ex.what() << "]"
-//                            << log4cpp::CategoryStream::ENDLINE);
-//             continue;
-//         }
-
-//         result.push_back( the_job_status.front() );
-
-//     }
-//     return result;
-// }
-
-
 //____________________________________________________________________________
 list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< string >& cream_job_ids ) throw()
 {
@@ -329,7 +163,8 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
 
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
                  << "iceCommandStatusPoller::check_multiple_jobs() - "
-                 << "Will poll jobs of the user ["
+                 << "Will poll " << cream_job_ids.size() 
+		 << " job(s) of the user ["
                  << user_dn << "] to CREAM ["
                  << cream_url << "]"
                  << log4cpp::CategoryStream::ENDLINE);
@@ -338,7 +173,7 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
   for(vector< string >::const_iterator thisJob = cream_job_ids.begin(); thisJob != cream_job_ids.end(); ++thisJob) {
       CREAM_SAFE_LOG(m_log_dev->infoStream() 
                      << "iceCommandStatusPoller::check_multiple_jobs() - "
-                     << "Will poll job with CREAM job id=["
+                     << "Will poll job with CREAM job id = ["
                      << *thisJob << "]"
                      << log4cpp::CategoryStream::ENDLINE);
       // cream_job_ids.push_back( *thisJob );
@@ -473,10 +308,7 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
 
   }
 
-  for(vector< soap_proxy::JobInfo >::const_iterator sit=the_job_status.begin();
-      sit != the_job_status.end();
-      ++sit)
-      result.push_back( *sit );
+  copy(the_job_status.begin(), the_job_status.end(), back_inserter(result) );
 
   return result;
 
@@ -490,11 +322,6 @@ void iceUtils::iceCommandStatusPoller::updateJobCache( const list< soap_proxy::J
 	    info_list.end(), 
 	    boost::bind1st( boost::mem_fn( &iceUtils::iceCommandStatusPoller::update_single_job ), this ));
 
-//     for ( list< soap_proxy::JobInfo >::const_iterator it = info_list.begin(); it != info_list.end(); ++it ) {
-
-//         update_single_job( *it );
-
-//     }
 }
 
 //____________________________________________________________________________
@@ -614,9 +441,14 @@ void iceUtils::iceCommandStatusPoller::remove_unknown_jobs_from_cache(const vect
 
     // Step 1. Build a vector of job ids which are in the to_check vector
     set< string > jobs_found_ids;
-    for ( vector< soap_proxy::JobInfo >::const_iterator it=jobs_found.begin(); it != jobs_found.end(); ++it ) {
-        jobs_found_ids.insert( it->getCreamJobID() );
-    }
+//     for ( vector< soap_proxy::JobInfo >::const_iterator it=jobs_found.begin(); it != jobs_found.end(); ++it ) {
+//         jobs_found_ids.insert( it->getCreamJobID() );
+//     }
+
+    transform( jobs_found.begin(), 
+	       jobs_found.end(), 
+	       inserter( jobs_found_ids, jobs_found_ids.begin() ), 
+	       mem_fun_ref(&soap_proxy::JobInfo::getCreamJobID));
 
     set< string > all_job_ids;
     copy( all_jobs.begin(), all_jobs.end(), inserter( all_job_ids, all_job_ids.begin() ) );
@@ -644,11 +476,16 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
     // Step 1. Build the mapping between ( UserDN, CreamUDL ) -> list<CreamJobId>
     map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
     
-    for ( list< CreamJob >::const_iterator jit = j_list.begin(); jit != j_list.end(); ++jit ) {
-      if( !jit->getCreamJobID().empty() )
-        jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
-    }
+//     for ( list< CreamJob >::const_iterator jit = j_list.begin(); jit != j_list.end(); ++jit ) {
+//       if( !jit->getCreamJobID().empty() )
+//         jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
+//     }
     
+    jobMap_appender appender( jobMap, &insert_condition );
+    for_each( j_list.begin(),
+ 	      j_list.end(),
+ 	      appender);
+
     // Step 2. Iterates over the map which has just been constructed.
     for(map< pair<string, string>, list<CreamJob> >::const_iterator jit = jobMap.begin(); jit != jobMap.end(); ++jit) {
         
@@ -664,7 +501,7 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
         list< iceUtils::CreamJob >::const_iterator list_end = (jit->second).end();
         while ( it != list_end ) {
             vector< string > jobs_to_poll;
-            //it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
+
             it = iceUtils::transform_n_elements( it, 
 						 list_end, 
 						 m_max_chunk_size, 

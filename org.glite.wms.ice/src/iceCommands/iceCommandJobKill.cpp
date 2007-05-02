@@ -50,6 +50,24 @@ namespace ice_util  = glite::wms::ice::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
+namespace {
+  bool insert_condition(const CreamJob& J) {
+    if( J.getCreamJobID().empty() ) return false;
+    
+    if( J.is_killed_by_ice() ) {
+      CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->debugStream() 
+		      << "iceCommandJobKill::insert_condition() - Job "
+		      << J.describe()
+		      << " is reported as already been killed by ICE. "
+		      << "Skipping..."
+		      << log4cpp::CategoryStream::ENDLINE);     
+      return false; 
+    }
+    
+    return true;
+  }
+}
+
 //______________________________________________________________________________
 iceCommandJobKill::iceCommandJobKill( /*const ice_util::CreamJob& theJob*/ ) throw() : 
   m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
@@ -74,27 +92,11 @@ void iceCommandJobKill::execute() throw()
   // Remove from toCheck list the jobs that have NOT the proxy expiring (and that have a non empty CreamJobID)
   this->checkExpiring( toCheck );
 
-  // build up the map <dn,ce>-><jobs> from the toCheck list
-  for ( list< CreamJob >::const_iterator jit = toCheck.begin(); 
-	jit != toCheck.end(); 
-	++jit ) 
-    {
-      if( jit->getCreamJobID().empty() ) continue;
-
-      if( jit->is_killed_by_ice() ) {
-        CREAM_SAFE_LOG( m_log_dev->debugStream() 
-                        << "iceCommandJobKill::execute() - Job "
-                        << jit->describe()
-                        << " is reported as already been killed by ICE. "
-                        << "Skipping..."
-                        << log4cpp::CategoryStream::ENDLINE);     
-        continue; 
-      }
-
-      jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
-
-    }
-
+  
+  jobMap_appender appender( jobMap, &insert_condition );
+  for_each( toCheck.begin(),
+	    toCheck.end(),
+	    appender);
   
   // execute killJob DN-CEMon by DN-CEMon (then, on multiple jobs) on all elements
   // of jobMap (that contains all jobs with expired proxy)
@@ -122,8 +124,8 @@ void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJo
     list< CreamJob >::const_iterator list_end = aList.second.end();
     vector< string > jobs_to_cancel;
     while ( it != list_end ) {
+      
       jobs_to_cancel.clear();
-      //it = copy_n_elements( it, list_end, m_max_chunk_size, back_inserter( jobs_to_poll ) );
       it = ice_util::transform_n_elements( it, 
 					   list_end, 
 					   ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
@@ -292,39 +294,59 @@ void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
 
       try {
 	
-	timeleft = cream_api::certUtil::getProxyTimeLeft( /*proxy*/ cit->getUserProxyCertificate() );
+	timeleft = cream_api::certUtil::getProxyTimeLeft( cit->getUserProxyCertificate() );
 	
       } catch(exception& ex) {
 	CREAM_SAFE_LOG( m_log_dev->errorStream()
 			<< "iceCommandJobKill::checkExpiring() - ERROR: "
 			<< ex.what()
-			<< log4cpp::CategoryStream::ENDLINE);    
+			<< log4cpp::CategoryStream::ENDLINE);
+
+	// we cannot retrieve the expiration time, so we do not want to cancel the job
+	// i.e. the job is still good
+	stillgood.push_back( *cit );
+	continue;
       } catch(...) {
 	CREAM_SAFE_LOG( m_log_dev->errorStream()
 			<< "iceCommandJobKill::checkExpiring() - ERROR: Unknown exception catched"
-			<< log4cpp::CategoryStream::ENDLINE);    
+			<< log4cpp::CategoryStream::ENDLINE);
+ 
+	// we cannot retrieve the expiration time, so we do not want to cancel the job
+	// i.e. the job is still good
+	stillgood.push_back( *cit );
+	continue;
       }
       
       if( timeleft < m_threshold_time && timeleft > 5 ) {
 	CREAM_SAFE_LOG( m_log_dev->debugStream()
 			<< "iceCommandJobKill::checkExpiring() - Proxy ["
 			<< cit->getUserProxyCertificate() << "] of user ["
-			<< cit->getUserDN() // the user DN 
+			<< cit->getUserDN() // the user DN
 			<< "] is expiring. Will cancel related jobs"
-			<< log4cpp::CategoryStream::ENDLINE);    
-	
+			<< log4cpp::CategoryStream::ENDLINE);
+
 	continue;
       } else {
+	// the original job's proxy is not going to expire.
+	// i.e. the job is not to be cancelled (still good)
 	stillgood.push_back( *cit );
+
       }
     }
 
   // Remove from all the jobs that are NOT going to proxy-expire
-  for(list<CreamJob>::const_iterator it = stillgood.begin();
-      it != stillgood.end();
-      ++it) 
-    {
-      all.remove( *it );
-    }
+  for_each( 
+	   stillgood.begin(), 
+	   stillgood.end(), 
+	   boost::bind1st( boost::mem_fn( &list<CreamJob>::remove ), &all )
+	   );
+  
+//   for(list<CreamJob>::const_iterator it = stillgood.begin();
+//       it != stillgood.end();
+//       ++it) 
+//     {
+//       all.remove( *it );
+//     };
+
 
 }

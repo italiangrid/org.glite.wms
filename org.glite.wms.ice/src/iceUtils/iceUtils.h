@@ -32,6 +32,8 @@
 
 #include "creamJob.h"
 
+#include <algorithm>
+
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -159,6 +161,21 @@ namespace util {
       }
       return first;
     }
+
+  class jobMap_appender {
+
+    std::map< std::pair<std::string, std::string>, std::list< CreamJob >, ltstring>& m_jobMap;
+    bool (*m_predicate)(const CreamJob&);
+
+  public:
+    jobMap_appender( std::map< std::pair<std::string, std::string>, std::list< CreamJob >, ltstring>& jobMap, bool (*pred)(const CreamJob&)) : m_jobMap( jobMap ), m_predicate( pred ) {}
+    
+    void operator()( const CreamJob& j ) {
+      if( m_predicate( j ) )
+	m_jobMap[std::make_pair( j.getUserDN(), j.getCreamURL())].push_back( j );
+    }
+    
+  };
 
 } // namespace util
 } // namespace ice

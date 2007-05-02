@@ -237,7 +237,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         cream_job_id = first_notification.get_cream_job_id();
     } catch( ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
-                        << "eventStatusListener::handleEvent() - "
+                        << "iceCommandUpdateStatus::execute() - "
                         << "Cannot parse the first notification "
                         << *(m_ev.Message.begin())
                         << " due to error: "
@@ -257,7 +257,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
     if ( jc_it == m_cache->end() ) {
         if(!getenv("NO_LISTENER_MESS"))
 	    CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "eventStatusListener::handleEvent() - "
+                           << "iceCommandUpdateStatus::execute() - "
                            << "creamjobid ["
                            << cream_job_id
                            << "] was not found in the cache. "
@@ -286,7 +286,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         if ( count <= jc_it->get_num_logged_status_changes() ) {
             if (!getenv("NO_LISTENER_MESS")) {
                 CREAM_SAFE_LOG(m_log_dev->debugStream()
-                               << "eventStatusListener::handleEvent() - "
+                               << "iceCommandUpdateStatus::execute() - "
                                << "Skipping current notification because contains old states"
                                << log4cpp::CategoryStream::ENDLINE);
             }
@@ -300,7 +300,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         } catch( ClassadSyntax_ex ex ) {
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->errorStream()
-                               << "eventStatusListenre::handleEvent() - "
+                               << "iceCommandUpdateStatus::execute() - "
                                << "received a notification "
                                << *msg_it << " which could not be understood; error is: "
                                << ex.what() << ". "
@@ -313,7 +313,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         if( notif_ptr->get_status() == api::job_statuses::PURGED ) {
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->infoStream()
-                               << "eventStatusListener::handle_event() - "
+                               << "iceCommandUpdateStatus::execute() - "
                                << jc_it->describe()
                                << " is reported as PURGED. Removing from cache"
                                << log4cpp::CategoryStream::ENDLINE); 
@@ -323,7 +323,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         
         if (!getenv("NO_LISTENER_MESS"))
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
-                           << "eventStatusListener::handleEvent() - "
+                           << "iceCommandUpdateStatus::execute() - "
                            << "Checking job [" << notif_ptr->get_cream_job_id()
                            << "] with status [" 
                            << api::job_statuses::job_status_str[ notif_ptr->get_status() ] << "]"

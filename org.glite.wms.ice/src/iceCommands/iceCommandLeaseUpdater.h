@@ -50,8 +50,9 @@ namespace util {
       
       //void update_lease_for_job( const CreamJob& j ) throw();
       void update_lease_for_multiple_jobs( const std::vector<std::string>& jobids, const std::string& userproxy, const std::string& endpoint ) throw();
-      bool check_lease_expired( const CreamJob& ) throw();
+      //bool check_lease_expired( const CreamJob& ) throw();
       void handle_jobs(const std::pair< std::pair<std::string, std::string>, std::list< CreamJob > >&) throw();
+      // bool insert_condition( const CreamJob& J );
 
     public:
         iceCommandLeaseUpdater( ) throw();
