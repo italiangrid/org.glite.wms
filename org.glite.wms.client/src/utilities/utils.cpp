@@ -631,7 +631,7 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 				return foundServices;
 			}
 		}
-		char **names = new (char*)[1];
+		char **names = new char*[1];
 		names[0] = new char[vo.length() +1];
 		strcpy(names[0], vo.c_str());
 		SDVOList vosTmp = {1, names};
