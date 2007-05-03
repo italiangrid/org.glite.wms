@@ -81,14 +81,17 @@ bool /*iceCommandLeaseUpdater::*/check_lease_expired( const CreamJob& job ) thro
 
   return false;
 }
+
+//____________________________________________________________________________
 namespace {
-  //____________________________________________________________________________
+
   bool insert_condition( const CreamJob& J )
   {
     if( J.getCreamJobID().empty() || check_lease_expired( J ) )
       return false;
     return true;
   }
+
 }
 
 //____________________________________________________________________________
@@ -145,7 +148,9 @@ void iceCommandLeaseUpdater::execute( ) throw()
 
     // Now jobMap contains all the job that are not lease-expired and that have a non empty creamJobID
     // also the cache has been purged by lease-expired job (and LB "informed" about them)
-    for_each(jobMap.begin(), jobMap.end(), boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::handle_jobs ), this ));
+    for_each(jobMap.begin(), 
+	     jobMap.end(), 
+	     boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::handle_jobs ), this ));
     
   }// releases lock on job cache
   
@@ -329,26 +334,37 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	// acquired the jobCache's mutex
         //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
-        jobCache::iterator tmp = m_cache->lookupByCreamJobID( *(job_ids.begin()) ); // vector job_ids caintained only one job otherwise this kind of exception wasn't catched
+        jobCache::iterator tmp = m_cache->lookupByCreamJobID( *(job_ids.begin()) ); // vector job_ids caintained only one job otherwise this kind of exception wasn't thrown
         m_cache->erase( tmp );
         return;
       
-    } catch(cream_exceptions::BaseException& ex) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-                       << "Error updating lease for userproxy ["
-                       << userproxy << "]"
-                       << ": "<< ex.what()
-                       << log4cpp::CategoryStream::ENDLINE);
-        return;      
-    } catch ( soap_proxy::soap_ex& ex ) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-                       << "Error updating lease for userproxy ["
-                       << userproxy << "]: " << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE);
-        return;
+    } catch( cream_exceptions::GenericException& ex) {
+
+      // This fault should be returned if some of the jobs was not lease-updated
+      // in this case ICE will ignore and will consider that all jobs have been lease-updated
+      // this string match is ugly and very raw!! but there is not another way to do that
+      if( ex.getFaultCause() != "Invalid job ID list" ) {
+	CREAM_SAFE_LOG(m_log_dev->errorStream()
+		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+		       << "Error updating lease for userproxy ["
+		       << userproxy
+		       << "]: " << ex.what()
+		       << log4cpp::CategoryStream::ENDLINE);
+	return;
+      } else {
+
+	CREAM_SAFE_LOG(m_log_dev->warnStream()
+		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+		       << "Error updating lease for userproxy ["
+		       << userproxy
+		       << "] for some jobs: " << ex.what()
+		       << log4cpp::CategoryStream::ENDLINE);
+	// now proceed updating the lease of all jobs in the jobCache
+	// assuming that the lease-update has been successful for all jobs! 
+      }
+  
     } catch(exception& ex) {
+
       CREAM_SAFE_LOG(m_log_dev->errorStream()
 		     << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		     << "Error updating lease for userproxy ["
@@ -356,13 +372,16 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 		     << "]: " << ex.what()
 		     << log4cpp::CategoryStream::ENDLINE);
       return;
+
     } catch(...) {
+
       CREAM_SAFE_LOG(m_log_dev->errorStream()
 		     << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		     << "Error updating lease for userproxy ["
 		     << userproxy << "]: Unkonwn exception catched"
 		     << log4cpp::CategoryStream::ENDLINE);
       return;
+
     }
 
     // now have to compare the vector jobs with the returned map newLease to 

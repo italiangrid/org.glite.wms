@@ -84,22 +84,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
   
   dnprxUpdater updater( this, m_log_dev );
   for_each(cache->begin(), cache->end(), updater);
-  
 
-//   for(iceUtil::jobCache::iterator jit = cache->begin(); jit != cache->end(); ++jit) {
-    
-//     if( this->getBetterProxyByDN( jit->getUserDN() ) == jit->getUserProxyCertificate() )
-//       continue;
-
-//     CREAM_SAFE_LOG(m_log_dev->infoStream() 
-// 		   << "DNProxyManager::CTOR() - "
-// 		   << "Found DN ["
-// 		   << jit->getUserDN() << "] -> Proxy ["
-// 		   << jit->getUserProxyCertificate() << "]"
-// 		   << log4cpp::CategoryStream::ENDLINE);
-    
-//     this->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate());
-//   }
 }
 
 //________________________________________________________________________
@@ -128,8 +113,6 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 						    const string& prx 
 						    ) throw()
 { 
-
-  //string dn = glite::ce::cream_client_api::certUtil::getDN( prx );
 
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
     CREAM_SAFE_LOG(m_log_dev->warnStream() 
