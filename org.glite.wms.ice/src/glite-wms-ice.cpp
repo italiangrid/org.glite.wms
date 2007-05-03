@@ -318,11 +318,20 @@ int main(int argc, char*argv[])
      ****************************************************************************/
     while(true) {
 
-        if ( threadPool->get_command_count() > 100 ) {
+        //
+        // BEWARE!! the get_command_count() method locks the
+        // threadPool object. Hence, it is *extremely* dangerous to
+        // call the get_command_count() method inside a CREAM_SAFE_LOG()
+        // block, because it would result in a hold-and-wait potential
+        // race condition.
+        //
+        int command_count = threadPool->get_command_count();
+
+        if ( command_count > 100 ) {
             CREAM_SAFE_LOG(log_dev->infoStream()
                            << "glite-wms-ice::main() - "
                            << "There are currently too many requests ("
-                           << threadPool->get_command_count()
+                           << command_count
                            << ") in the internal command queue. "
                            << "Will check again in 30 seconds."
                            << log4cpp::CategoryStream::ENDLINE
