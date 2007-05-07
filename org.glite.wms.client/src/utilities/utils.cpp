@@ -360,11 +360,12 @@ bool Utils::askForFileOverwriting(const std::string &path){
 	return ow;
 }
 
-std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, const enum WmcMenu &type){
+std::vector<std::string> Utils::askMenu(std::vector<std::string> &items, const enum WmcMenu &type){
 	std::vector<std::string> chosen;
 	ostringstream out ;
         ostringstream question ;
 	string line = "";
+	string comment = "";
         char x[1024];
 	int len = 0;
         int size = items.size();
@@ -412,8 +413,41 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 	}
 	// MENU ============
 	out <<"------------------------------------------------------------------\n";
-	for (int i = 0; i < size; i++){
-		out << (i+1) << " : " << items[i] << "\n";
+	//counters
+	int i, it = 0;
+	//checks how many comments will be erased from the vector items
+	int erased = 0;
+	while ( i < ( size - erased ) ) {
+		if ( items[i].find("#*") == 0 ) {
+			// Saving and formatting the comment to be printed on next jobId line
+			comment = items[i] ;
+			int len = comment.size() ;
+			int iter = 0;
+			vector<string>::iterator temp = items.begin()+i ;
+			items.erase(temp) ;
+			erased++ ;
+			// Erases # and * chars from the special comment
+			while ( iter < len-2) {
+				if ( (comment.compare(iter,1,"#") == 0) || (comment.compare(iter,1,"*") == 0)) {
+					comment.erase(iter, 2);
+					iter++;
+				}
+			iter++ ;
+			}
+			//decrease loop counter since it has been erased an element from the vector
+			i-- ;
+		} else {
+			if ( !comment.empty() ) {
+			// Appends the comment to the jobId
+			out << (it+1) << " : " << items[i] << " (" << comment << ")" << "\n";
+			comment = "";
+			} else {
+			// No comment to be appended
+			out << (it+1) << " : " << items[i] << "\n";
+			}
+		it++ ;
+		}
+		i++ ;
 	}
 	if (multiple) { out << "a : all\n" ; }
 	out << "q : quit\n";
@@ -471,7 +505,6 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 						} else {ask = true ; continue;}
 					} catch(boost::bad_lexical_cast &exc) { ask = true; }
 				} else {
-
 					// checks for a multiple-job choice
 					if (chosen.empty()){
 						// some of the jobs ......
@@ -1043,6 +1076,9 @@ JobId checks Methods
 ***********************************/
 
 string Utils::checkJobId(std::string jobid){
+	if ( jobid.find("#*") == 0 )	{
+		return jobid;
+	}
 	JobId jid (jobid);
         return jobid;
 }
@@ -1816,9 +1852,14 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 		boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
 		boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
 		for ( ; token != end; ++token) {
-                        string it = *token;
-                        it = Utils::cleanString( (char*) it.c_str()) ;
-			if (   (it.find("#")==0)||it.find("//")==0) {
+			string comment = "";
+			string it = *token;
+			it = Utils::cleanString( (char*) it.c_str()) ;
+			if ( it.find("#*")==0 ) {
+				// It's a special comment, insert line
+				comment = it ;
+				items.push_back(comment);
+			} else if (   (it.find("#")==0)||it.find("//")==0) {
 				// It's a comment, skip line
 			} else if (Utils::hasElement(items, it) == false) {
 				// Append line

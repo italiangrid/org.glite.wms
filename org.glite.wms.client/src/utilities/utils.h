@@ -98,7 +98,7 @@ public:
 	* @param type of menu
 	* @return the list of chosen items
 	*/
-        std::vector<std::string> askMenu(const std::vector<std::string> &items, const enum WmcMenu &type);
+        std::vector<std::string> askMenu(std::vector<std::string> &items, const enum WmcMenu &type);
 	/**
 	* Extrapolate the list of possible LB address associated with the specified NS address index (or all when no index specified)
 	* @param lbGroup a map of all the LB available. Each vector contains the LBs for a certain NS
