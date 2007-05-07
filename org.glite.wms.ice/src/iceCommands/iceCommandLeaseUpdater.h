@@ -47,6 +47,7 @@ namespace util {
       glite::wms::ice::util::iceLBLogger* m_lb_logger;
       time_t m_delta;
       glite::wms::ice::util::jobCache* m_cache;
+      bool m_only_update;
       
       //void update_lease_for_job( const CreamJob& j ) throw();
       void update_lease_for_multiple_jobs( const std::vector<std::string>& jobids, const std::string& userproxy, const std::string& endpoint ) throw();
@@ -55,7 +56,7 @@ namespace util {
       // bool insert_condition( const CreamJob& J );
 
     public:
-        iceCommandLeaseUpdater( ) throw();
+        iceCommandLeaseUpdater( bool only_update = false ) throw();
         
         ~iceCommandLeaseUpdater( ) throw() { }
         
