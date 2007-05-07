@@ -55,52 +55,90 @@ using namespace std;
 
 
 //____________________________________________________________________________
-bool /*iceCommandLeaseUpdater::*/check_lease_expired( const CreamJob& job ) throw()
-{
-  if ( job.getEndLease() && job.getEndLease() <= time(0) ) {
+// bool check_lease_expired( const CreamJob& job ) throw()
+// {
+//   if ( job.getEndLease() && job.getEndLease() <= time(0) ) {
 
-    CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->warnStream()
-		   << "iceCommandLeaseUpdater::check_lease_expired() - "
-		   << "Removing from cache lease-expired job "
-		   << job.describe()
-		   << log4cpp::CategoryStream::ENDLINE);
+//     CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->warnStream()
+// 		   << "iceCommandLeaseUpdater::check_lease_expired() - "
+// 		   << "Removing from cache lease-expired job "
+// 		   << job.describe()
+// 		   << log4cpp::CategoryStream::ENDLINE);
     
-    CreamJob tmp_job( job );
+//     CreamJob tmp_job( job );
     
-    tmp_job.set_failure_reason( "Lease expired" );
-    iceLBLogger::instance()->logEvent( new job_done_failed_event( tmp_job ) );
-    glite::wms::ice::Ice::instance()->resubmit_job( tmp_job, "Lease expired" );
+//     tmp_job.set_failure_reason( "Lease expired" );
+//     iceLBLogger::instance()->logEvent( new job_done_failed_event( tmp_job ) );
+//     glite::wms::ice::Ice::instance()->resubmit_job( tmp_job, "Lease expired" );
 
-    // note: locking on jobcache is not needed because this method is called (and must be) from a block (in the execute method)
-    // that has already locked the cache.
+//     // note: locking on jobcache is not needed because this method is called (and must be) from a block (in the execute method)
+//     // that has already locked the cache.
 
-    jobCache::iterator tmp( jobCache::getInstance()->lookupByGridJobID( tmp_job.getGridJobID() ) );
-    jobCache::getInstance()->erase( tmp );
-    return true;
-  }
+//     jobCache::iterator tmp( jobCache::getInstance()->lookupByGridJobID( tmp_job.getGridJobID() ) );
+//     jobCache::getInstance()->erase( tmp );
+//     return true;
+//   }
 
-  return false;
-}
+//   return false;
+// }
 
 //____________________________________________________________________________
 namespace {
 
+  //____________________________________________________________________________
+  bool onlyupdate( const CreamJob& J ) { return true; }
+
+  //____________________________________________________________________________
+  bool check_lease_expired( const CreamJob& job ) throw()
+  {
+    if( !job.is_active() || job.can_be_purged() ) return false;
+
+    if ( job.getEndLease() && job.getEndLease() <= time(0) ) {
+      
+      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->warnStream()
+		     << "iceCommandLeaseUpdater::check_lease_expired() - "
+		     << "Removing from cache lease-expired job "
+		     << job.describe()
+		     << log4cpp::CategoryStream::ENDLINE);
+      
+      CreamJob tmp_job( job );
+      
+      tmp_job.set_failure_reason( "Lease expired" );
+      iceLBLogger::instance()->logEvent( new job_done_failed_event( tmp_job ) );
+      glite::wms::ice::Ice::instance()->resubmit_job( tmp_job, "Lease expired" );
+      
+      // note: locking on jobcache is not needed because this method is called (and must be) from a block (in the execute method)
+      // that has already locked the cache.
+      
+      jobCache::iterator tmp( jobCache::getInstance()->lookupByGridJobID( tmp_job.getGridJobID() ) );
+      jobCache::getInstance()->erase( tmp );
+      return true;
+    }
+    
+    return false;
+  }
+  
+  //____________________________________________________________________________
   bool insert_condition( const CreamJob& J )
   {
-    if( J.getCreamJobID().empty() || check_lease_expired( J ) )
+    bool false_condition = J.getCreamJobID().empty() || check_lease_expired( J ) || (!J.is_active()) || J.can_be_purged();
+    
+    if( false_condition )
       return false;
-    return true;
+    else
+      return true;
   }
 
 }
 
 //____________________________________________________________________________
-iceCommandLeaseUpdater::iceCommandLeaseUpdater( ) throw() : 
+iceCommandLeaseUpdater::iceCommandLeaseUpdater( bool only_update ) throw() : 
   m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
   m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
   m_lb_logger( iceLBLogger::instance() ),
   m_delta( iceConfManager::getInstance()->getConfiguration()->ice()->lease_delta_time() ),
-  m_cache( jobCache::getInstance() )
+  m_cache( jobCache::getInstance() ),
+  m_only_update( only_update )
 {
 
 }
@@ -108,9 +146,9 @@ iceCommandLeaseUpdater::iceCommandLeaseUpdater( ) throw() :
 //____________________________________________________________________________
 void iceCommandLeaseUpdater::execute( ) throw()
 {
-  typedef list<CreamJob> cj_list_t;
+  //typedef list<CreamJob> cj_list_t;
   map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
-  cj_list_t jobs_to_check;
+  //cj_list_t jobs_to_check;
   
   { 
     // acquire lock on the job cache
@@ -125,26 +163,28 @@ void iceCommandLeaseUpdater::execute( ) throw()
     // with ALL remaining jobs (not yet expired). 
     // We want to renew the lease of ALL these jobs
     // (even those which are not expiring)
-//     for(list<CreamJob>::iterator jit = check_list.begin(); jit != check_list.end(); ++jit) {
-      
-//       // Let's skip lease expired job
-//       // (this method also remove from the cache e log to LB
-//       if( this->check_lease_expired( *jit ) ) continue; 
-
-//       if( !jit->getCreamJobID().empty() )
-// 	jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
-      
-//     }
-
     /**
-     * an appender() applied to a CreamJob J, appends J to the pair<J.getUserDN, J.getCEMonURL> (creating the key
-     * pair<J.getUserDN, J.getCEMonURL> if it doensn't already exist.
+     * an appender() applied to a CreamJob J, appends J to the array whose key is a 
+     * pair<J.getUserDN, J.getCEMonURL> (creating the key pair<J.getUserDN, J.getCEMonURL> if it doensn't already exist.
      */
-    jobMap_appender appender( jobMap, &insert_condition );
-    for_each( check_list.begin(),
- 	      check_list.end(),
- 	      appender);
+    jobMap_appender *appender;
     
+    /**
+     * Be Careful: the cache removal of lease-expired job is performed by check_lease_expired procedure
+     * that is called ONLY by the insert_condition function.
+     * Then: using onlyupdate as "insert condition" for the appender means 
+     * perform just a lease update of ALL jobs without any removal.
+     */
+    if( m_only_update )
+      appender = new jobMap_appender( jobMap, &onlyupdate );
+    else
+      appender = new jobMap_appender( jobMap, &insert_condition );
+  
+    for_each( check_list.begin(),
+	      check_list.end(),
+	      *appender);
+
+    delete appender;
 
     // Now jobMap contains all the job that are not lease-expired and that have a non empty creamJobID
     // also the cache has been purged by lease-expired job (and LB "informed" about them)
@@ -271,6 +311,17 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
 		 << jobs.first.second << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
   
+  for(list<CreamJob>::const_iterator it=jobs.second.begin();
+      it != jobs.second.end();
+      ++it)
+    {
+      CREAM_SAFE_LOG(m_log_dev->infoStream()
+		     << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+		     << "Will update job ["
+		     << it->describe() << "]"
+		     << log4cpp::CategoryStream::ENDLINE);
+    }
+
   list< CreamJob >::const_iterator it = jobs.second.begin();
   list< CreamJob >::const_iterator list_end = jobs.second.end();
   vector< string > jobs_to_update;
@@ -299,6 +350,7 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
 void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string>& job_ids, const string& userproxy, const string& endpoint ) throw()
 {
   map< string, time_t > newLease;
+
 
     try {
 
@@ -334,23 +386,54 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	// acquired the jobCache's mutex
         //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
-        jobCache::iterator tmp = m_cache->lookupByCreamJobID( *(job_ids.begin()) ); // vector job_ids caintained only one job otherwise this kind of exception wasn't thrown
-        m_cache->erase( tmp );
-        return;
+	if(!m_only_update) {
+	  
+	  jobCache::iterator tmp = m_cache->lookupByCreamJobID( *(job_ids.begin()) ); // vector job_ids caintained only one job otherwise this kind of exception wasn't thrown
+	  m_cache->erase( tmp );
+	}
+
+	return;
       
     } catch( cream_exceptions::GenericException& ex) {
+
+      /**
+       *  TEMPORARY PATCH, untill CREAM will not raise any fault in this situation
+       */ 
 
       // This fault should be returned if some of the jobs was not lease-updated
       // in this case ICE will ignore and will consider that all jobs have been lease-updated
       // this string match is ugly and very raw!! but there is not another way to do that
       if( ex.getFaultCause() != "Invalid job ID list" ) {
+
+	time_t newExpiration = time(NULL) + m_delta;
+
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
 		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		       << "Error updating lease for userproxy ["
 		       << userproxy
 		       << "]: " << ex.what()
 		       << log4cpp::CategoryStream::ENDLINE);
+	
+	CREAM_SAFE_LOG(m_log_dev->errorStream()
+		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+		       << "Because of the 'Invalid job ID list' ICE will make all lease for user ["
+		       << userproxy
+		       << "] to expire to [" << time_t_to_string( newExpiration ) << "]"
+		       << log4cpp::CategoryStream::ENDLINE);
+
+	// MUST UPDATE THE JOBCACHE WITH THE NEW LEASE FOR ALL JOBS
+	for(vector<string>::const_iterator jobid=job_ids.begin();
+	    jobid != job_ids.end();
+	    ++jobid) {
+	  jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
+	  if(tmpJob != m_cache->end() ) {
+	    tmpJob->setEndLease( newExpiration );
+	    m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
+	  }
+	}
+
 	return;
+
       } else {
 
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
@@ -392,8 +475,18 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	jobid != job_ids.end();
 	++jobid)
       {
-	CreamJob j( *(m_cache->lookupByCreamJobID( *jobid )) );
-
+	//CreamJob j( *(m_cache->lookupByCreamJobID( *jobid )) );
+	jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
+	if( tmpJob == m_cache->end() )
+	  {
+	    CREAM_SAFE_LOG(m_log_dev->errorStream()
+			   << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+			   << "CreamJobID ["
+			   << tmpJob->getCreamJobID() << "] is not present in the cache!!! Skipping."
+			   << log4cpp::CategoryStream::ENDLINE);
+	    continue;
+	  }
+	
 	if( newLease.find(*jobid) == newLease.end()) {
 	  // CREAM didn't return any lease information for the job
 	  // *jobid!! So there was an error updating the lease for this job
@@ -401,7 +494,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
 			 << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 			 << "unable to update lease for job "
-			 << j.describe()
+			 << tmpJob->describe()
 			 << log4cpp::CategoryStream::ENDLINE);
 	  continue;
 	}
@@ -409,19 +502,17 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
         CREAM_SAFE_LOG(m_log_dev->infoStream()
 		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		       << "updating lease for job "
-		       << j.describe()
-		       << "; old lease ends " << time_t_to_string( j.getEndLease() )
-		       << " new lease ends " << time_t_to_string( newLease[ j.getCreamJobID() ] )
+		       << tmpJob->describe()
+		       << "; old lease ends " << time_t_to_string( tmpJob->getEndLease() )
+		       << " new lease ends " << time_t_to_string( newLease[ tmpJob->getCreamJobID() ] )
 		       << log4cpp::CategoryStream::ENDLINE);
         
 	
 	
 	// re-read the current job from the cache in order
 	// to get modifications (if any) made by other threads
-	jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
-	if(tmpJob != m_cache->end() ) {
-	  tmpJob->setEndLease( newLease[ *jobid ] );
-	  m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
-	}
+	//jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
+	tmpJob->setEndLease( newLease[ *jobid ] );
+	m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
       }
 }
