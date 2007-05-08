@@ -38,7 +38,6 @@ namespace requestad = jdl;
 namespace wms {
 
 namespace configuration = common::configuration;
-namespace logger        = common::logger;
 
 namespace rls {
 

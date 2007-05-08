@@ -7,9 +7,6 @@
 
 #include "glite/wms/common/logger/logger_utils.h"
 
-//#include "glite/wms/common/logger/edglog.h"
-//#include "glite/wms/common/logger/manipulators.h"
-
 
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/utilities/LineParser.h"
@@ -26,7 +23,6 @@
 #include <string>
 #include <fstream>
 
-namespace logger = glite::wms::common::logger;
 
 using namespace std;
 using namespace glite::wms::common::utilities;
@@ -36,15 +32,11 @@ using namespace glite::wms::common::configuration;
 using namespace glite::wms::rls;
 
 
-//#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
-//#define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 LineOption  options[] = {
     { 'c', 1, "conf_file", "\t use conf_file as configuration file. glite_wms.conf is the default" },
     { 'j', 1, "jdl_file", "\t use jdl_file as input file." },
     { 'n', 1, "number", "\t number of retry" },
-    { 'v', no_argument, "verbose",     "\t be verbose" },
-    { 'l', no_argument, "verbose",     "\t be verbose on log file" }
 };
 
 void
@@ -81,12 +73,6 @@ int main(int argc, char* argv[])
      Configuration conf(conf_file.c_str(), ModuleType::network_server);
 
      NSConfiguration const* const ns_config(conf.ns());
-
-     if( options.is_present('v') && !options.is_present('l'))   logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
-                                                                                        
-     if( options.is_present('l') ) logger::threadsafe::edglog.open(ns_config->log_file(), glite::wms::common::logger::debug);
-     else 
-        logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
 
      if( ! options.is_present('j') )
      {
