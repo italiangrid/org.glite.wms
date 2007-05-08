@@ -5,8 +5,10 @@
 
 #include "glite/wms/common/configuration/exceptions.h"
 
-#include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/manipulators.h"
+#include "glite/wms/common/logger/logger_utils.h"
+
+//#include "glite/wms/common/logger/edglog.h"
+//#include "glite/wms/common/logger/manipulators.h"
 
 
 #include "glite/wms/common/configuration/CommonConfiguration.h"
@@ -34,8 +36,8 @@ using namespace glite::wms::common::configuration;
 using namespace glite::wms::rls;
 
 
-#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
-#define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
+//#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
+//#define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 LineOption  options[] = {
     { 'c', 1, "conf_file", "\t use conf_file as configuration file. glite_wms.conf is the default" },
@@ -88,7 +90,7 @@ int main(int argc, char* argv[])
 
      if( ! options.is_present('j') )
      {
-        edglog(error) << "an input file with the jdl must be passed"<< endl;
+        Error( "an input file with the jdl must be passed");
         return -1;
      }
      else
@@ -97,21 +99,15 @@ int main(int argc, char* argv[])
      int count = 1;
      if( options.is_present('n') )  count = options['n'].getIntegerValue();
 
-//     logger::threadsafe::edglog.open(
-//           //ns_config->log_file(),
-//           std::clog, 
-//           static_cast<logger::level_t>(ns_config->log_level()) );
-                                                                                                                        
-     edglog_fn("Main: catalog access test");
-     edglog(debug) << "BEGIN" << endl;
-     edglog(debug) << "---------------------------------------------------" << std::endl;
+     Debug( "BEGIN" );
+     Debug("---------------------------------------------------");
 
      ifstream fin(req_file.c_str());    
      if( fin ) 
      { 
         classad::ClassAdParser parser;
     	classad::ClassAd *reqAd = parser.ParseClassAd(fin);
-        edglog(debug) << *reqAd << std::endl;
+        //Debug(*reqAd);
 
         for (int i=0; i < count; i++) {
            boost::shared_ptr<filemapping> fm(
@@ -124,10 +120,10 @@ int main(int argc, char* argv[])
            );
         }
      }
-     else edglog(warning) << "cannot open jdl file" << endl;
+     else Warning("cannot open jdl file" );
 
-     edglog(debug) << "---------------------------------------------------" << std::endl;
-     edglog(debug) << "END"<< endl;
+     Debug( "---------------------------------------------------" );
+     Debug( "END");
   
   }
   catch ( LineParsingError &er ) {
