@@ -140,8 +140,8 @@ namespace ice {
         Ice( ) throw(glite::wms::ice::iceInit_ex&);
 
         // Some utility functions
-        void deregister_proxy_renewal( const util::CreamJob& job );
-        void purge_wms_storage( const util::CreamJob& job );
+        void deregister_proxy_renewal( const util::CreamJob& job ) throw();
+        void purge_wms_storage( const util::CreamJob& job ) throw();
 
 	// This should be used to poll all jobs in the cache
 	void init_cache( void );
@@ -178,7 +178,7 @@ namespace ice {
          *
          * @param reason the reason why this job is being resubmitted
          */
-        void resubmit_job( util::CreamJob& the_job, const std::string& reason );
+        void resubmit_job( util::CreamJob& the_job, const std::string& reason ) throw();
         
         /**
          * Purge a cancelled/terminated job. This method takes care
@@ -194,7 +194,7 @@ namespace ice {
          * the purge(and subsequent removal) was succesful. jit if
          * not.
          */
-        util::jobCache::iterator purge_job( util::jobCache::iterator j, const std::string& reason );
+        util::jobCache::iterator purge_job( util::jobCache::iterator j, const std::string& reason ) throw();
         
         /**
          * Resubmits or purge a given job.
@@ -208,7 +208,7 @@ namespace ice {
          * the job is purged or resubmitted (and hence removed from
          * the job cache).
          */
-        util::jobCache::iterator resubmit_or_purge_job( util::jobCache::iterator it );
+        util::jobCache::iterator resubmit_or_purge_job( util::jobCache::iterator it ) throw();
         
         /**
          * returns the singleton instance of this class.

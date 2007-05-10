@@ -462,7 +462,7 @@ bool Ice::is_job_killer_started( void ) const
 }
 
 //____________________________________________________________________________
-void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
+void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) throw()
 {
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
@@ -486,7 +486,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
 
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
-                       << "Ice::doOnJobFailure() - Putting ["
+                       << "Ice::resubmit_job() - Putting ["
                        << resub_request << "] to WM's Input file"
                        << log4cpp::CategoryStream::ENDLINE
                        );
@@ -495,6 +495,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
         the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_ok_event( the_job, m_wms_input_queue->get_name() ) );
     } catch(std::exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->errorStream() 
+			<< "Ice::resubmit_job() - "
                         << ex.what() 
                         << log4cpp::CategoryStream::ENDLINE );
 
@@ -504,6 +505,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason )
 
 //----------------------------------------------------------------------------
 ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, const string& reason )
+throw() 
 {
     if ( jit == m_cache->end() )
         return jit;
@@ -581,7 +583,7 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
 
 
 //____________________________________________________________________________
-void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job )
+void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
 {
     if ( !::getenv( "ICE_DISABLE_DEREGISTER") ) {
         // must deregister proxy renewal
@@ -632,7 +634,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job )
 
 
 //____________________________________________________________________________
-void Ice::purge_wms_storage( const ice_util::CreamJob& job )
+void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 {
     if ( !::getenv( "ICE_DISABLE_PURGER" ) ) {
         try {
@@ -670,6 +672,7 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job )
 
 //____________________________________________________________________________
 ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::iterator it )
+throw() 
 {
     if ( it != m_cache->end() ) {
 
