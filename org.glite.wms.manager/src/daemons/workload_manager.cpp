@@ -30,8 +30,6 @@ typedef glite::wms::manager::server::JobDirReader input_reader_type;
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-#include "glite/wms/common/logger/logstream_ts.h"
-#include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/ism/ism.h"
@@ -157,6 +155,7 @@ try {
 
   if (vm.count("daemon")) {
 
+#ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
     // init logger and adjust the err stream to use the same stream
 
     std::string log_file = config.wm()->log_file();
@@ -185,24 +184,26 @@ try {
       return EXIT_FAILURE;
     }
 
+#endif
+
     std::ofstream pid_file(opt_pid_file.c_str());
     if (!pid_file) {
-      get_err_stream()
-        << "the pid file " << opt_pid_file << " is not writable\n";
+      Error("the pid file " << opt_pid_file << " is not writable");
       return EXIT_FAILURE;
     }
     if (daemon(0, 0)) {
-      get_err_stream() << "cannot become daemon (errno = "<< errno << ")\n";
+      Error("cannot become daemon (errno = "<< errno <<")");
       return EXIT_FAILURE;
     }
     pid_file << ::getpid();
 
   } else { // not daemon
-
+#ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
     logger::threadsafe::edglog.open(
       get_err_stream(),
       static_cast<logger::level_t>(config.wm()->log_level())
     );
+#endif
 
   }
 
@@ -255,16 +256,16 @@ try {
   Info("running...");
 
 } catch (boost::program_options::unknown_option& e) {
-  get_err_stream() << e.what() << '\n';
+  Error(e.what());
   return EXIT_FAILURE;
 } catch (server::CannotLoadDynamicLibrary& e) {
-  get_err_stream() << "cannot load dynamic library " << e.filename()
-                   << ": " << e.error() << '\n';
+  Error("cannot load dynamic library " << e.filename()
+        << ": " << e.error());
   return EXIT_FAILURE;
 } catch (std::exception& e) {
-  get_err_stream() << "std::exception " << e.what() << "\n";
+  Error("std::exception " << e.what());
   return EXIT_FAILURE;
 } catch (...) {
-  get_err_stream() << "unknown exception\n";
+  Error("unknown exception");
   return EXIT_FAILURE;
 }

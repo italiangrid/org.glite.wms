@@ -43,8 +43,6 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-#include "glite/wms/common/logger/logstream_ts.h"
-#include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/PrivateAdManipulation.h"
@@ -609,6 +607,7 @@ try {
 #warning yes it is, probably we need to intercept the termination signal from condor_dagman; in that case abort the node
   // signal_handling();
 
+#ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
   configuration::Configuration config(
     "glite_wms.conf",
     configuration::ModuleType::workload_manager
@@ -618,6 +617,7 @@ try {
   if (!init_logger(c_log_file, config)) {
     return EXIT_FAILURE;
   }
+#endif
 
   Info("glite-wms-planner starting with pid " << getpid());
 
