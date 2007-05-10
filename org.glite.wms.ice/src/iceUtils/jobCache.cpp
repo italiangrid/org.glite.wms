@@ -162,27 +162,41 @@ jobCache::jobCacheTable::end( void ) const
 }
 
 //______________________________________________________________________________
-jobCache* jobCache::getInstance() throw(ClassadSyntax_ex&) 
+jobCache* jobCache::getInstance() throw()
 {
-    if(!s_instance)
-        s_instance = new jobCache( ); // can throw jnlFile_ex or
-                                      // ClassadSyntax_ex
+    if ( !s_instance )
+        s_instance = new jobCache( );
     return s_instance;
 }
 
 //______________________________________________________________________________
 jobCache::jobCache( void )
-  throw(ClassadSyntax_ex&) 
     : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
       m_jobs( )
 { 
     jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db );
-    if(!dbm->isValid()) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbm->getInvalidCause() << log4cpp::CategoryStream::ENDLINE );
+
+    if ( !dbm->isValid() ) {
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+                        << "jobCache::jobCache() - "
+                        << "Failed to initialize the jobDbManager object. "
+                        << "Reason is: " 
+                        << dbm->getInvalidCause() 
+                        << log4cpp::CategoryStream::ENDLINE );
         abort();
     }
     m_dbMgr.reset( dbm );
-    load(); 
+    try {
+        load(); 
+    } catch( ClassadSyntax_ex& ex ) {
+        CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                        << "jobCache::jobCache() - "
+                        << "Failed to load the jobCache from the database. "
+                        << "Reason is: " << ex.what()
+                        << ". Giving up"
+                        << log4cpp::CategoryStream::ENDLINE );
+        abort();
+    }
 }
 
 //______________________________________________________________________________
@@ -201,7 +215,11 @@ void jobCache::load( void ) throw(ClassadSyntax_ex&)
     } catch(JobDbException& dbex) {
         // this error is severe: an access to the
         // underlying database failed 
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+                        << "jobCache::load() - "
+                        << "Failed to get all records from the database. "
+                        << "Reason is: " << dbex.what() << ". Giving up."
+                        << log4cpp::CategoryStream::ENDLINE );
         abort();
     }
     for(vector<string>::const_iterator it=records.begin();

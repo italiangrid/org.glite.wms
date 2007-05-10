@@ -24,10 +24,7 @@
 #include "iceCommandUpdateStatus.h"
 
 // ICE stuff
-//#include "subscriptionManager.h"
-//#include "iceConfManager.h"
 #include "jobCache.h"
-//#include "cemonUrlCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
@@ -35,33 +32,18 @@
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 // other GLITE stuff
 #include "classad_distribution.h"
 #include "ClassadSyntax_ex.h"
-//#include "glite/wms/common/configuration/Configuration.h"
-//#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 // boost includes
-//#include "boost/functional.hpp"
-//#include "boost/mem_fn.hpp"
 #include "boost/format.hpp"
-//#include "boost/lexical_cast.hpp"
 #include "boost/algorithm/string.hpp"
 
 // System includes
-//#include <string>
 #include <iostream>
 #include <sstream>
-//#include <algorithm>
-//#include <set>
-
-//#include <sys/select.h>
-//#include <ctime>
-//#include <sys/types.h>
-//#include <unistd.h>
-//#include <cerrno>
 
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
@@ -211,23 +193,25 @@ void iceCommandUpdateStatus::execute( ) throw( )
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
 
     if( m_ev.Message.empty() ) {
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << "iceCommandUpdateStatus::execute() - "
-                        << "processing notification"
-                        << log4cpp::CategoryStream::ENDLINE);
-        return;
-    } else {
+
         CREAM_SAFE_LOG( m_log_dev->infoStream()
                         << "iceCommandUpdateStatus::execute() - "
                         << "got empty notification, skipping"
                         << log4cpp::CategoryStream::ENDLINE);
+
+        return;
     }
+
+    CREAM_SAFE_LOG( m_log_dev->infoStream()
+                    << "iceCommandUpdateStatus::execute() - "
+                    << "processing notification"
+                    << log4cpp::CategoryStream::ENDLINE);
 
     iceLBLogger *m_lb_logger( iceLBLogger::instance() );
     jobCache *m_cache( jobCache::getInstance() );
     glite::wms::ice::Ice* m_ice_manager( glite::wms::ice::Ice::instance() );
 
-    std::string cream_job_id;
+    string cream_job_id;
 
     // First, we need to get the jobID for which this notification 
     // refers. In order to do so, we need to parse at least the first

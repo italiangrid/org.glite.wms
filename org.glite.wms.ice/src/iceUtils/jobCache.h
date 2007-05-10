@@ -186,8 +186,7 @@ namespace glite {
 	  boost::scoped_ptr< glite::wms::ice::util::jobDbManager > m_dbMgr;
 	  
 	protected:
-	  jobCache( )
-	    throw(ClassadSyntax_ex&);
+	  jobCache( );
 
 	public:
 
@@ -207,7 +206,7 @@ namespace glite {
            *
            * @return the singleton instance of this class
            */ 
-	  static jobCache* getInstance() throw(ClassadSyntax_ex&);
+	  static jobCache* getInstance() throw();
 
 	  // Call this once and before invokation of getInstance()
 	  static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
