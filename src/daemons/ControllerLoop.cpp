@@ -309,6 +309,7 @@ try {
 
     if( loop ) {
       try {
+      usleep(1000);
 	this->cl_client->extract_next_request();
 
 	this->cl_stream << logger::setlevel( logger::debug ) << "Got new request..." << endl;
