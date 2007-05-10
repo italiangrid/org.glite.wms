@@ -104,7 +104,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
                                << jobIt->getUserProxyCertificate() << "]"
                                << log4cpp::CategoryStream::ENDLINE);	
                 
-            } catch( cream_api::soap_proxy::soap_ex& ex ) {
+            } catch( exception& ex ) {
                 // FIXME: what to do? for now let's continue with an error message
                 CREAM_SAFE_LOG( m_log_dev->errorStream() 
                                 << "iceCommandProxyRenewal::execute() - "
@@ -113,6 +113,8 @@ void iceCommandProxyRenewal::execute( void ) throw()
                                 << " failed: ["
                                 << ex.what() << "]"
                                 << log4cpp::CategoryStream::ENDLINE);
+
+		// Let's ignore; probably another proxy renewal will be done
             }            
         } else {
             CREAM_SAFE_LOG(m_log_dev->infoStream() 
