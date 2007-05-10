@@ -248,6 +248,8 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 //______________________________________________________________________________
 bool CreamJob::is_active( void ) const
 {
+    if( this->is_killed_by_ice() ) return false;
+
     return ( ( m_status == api::job_statuses::REGISTERED ) ||
              ( m_status == api::job_statuses::PENDING ) ||
              ( m_status == api::job_statuses::IDLE ) ||

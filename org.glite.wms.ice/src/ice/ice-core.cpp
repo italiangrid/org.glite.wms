@@ -22,6 +22,7 @@
  */
 
 #include "ice-core.h"
+#include "iceCommandLeaseUpdater.cpp"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
@@ -196,8 +197,10 @@ Ice::~Ice( )
 
 void Ice::init_cache( void )
 {
-	util::iceCommandStatusPoller p( this, true );
-	p.execute( );	
+  util::iceCommandLeaseUpdater l( true );
+  l.execute();
+  util::iceCommandStatusPoller p( this, true );
+  p.execute( );	
 }
 
 //____________________________________________________________________________
