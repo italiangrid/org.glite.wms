@@ -190,6 +190,8 @@ iceCommandUpdateStatus::iceCommandUpdateStatus( const monitortypes__Event& ev ) 
 //____________________________________________________________________________
 void iceCommandUpdateStatus::execute( ) throw( )
 {    
+    try { // FIXME: temporary fix
+
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
 
     if( m_ev.Message.empty() ) {
@@ -325,5 +327,23 @@ void iceCommandUpdateStatus::execute( ) throw( )
         }
         jc_it = m_cache->put( tmp_job );
         m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
+    }
+
+    //
+    // FIXME: Temporary fix
+    // 
+    } catch( std::exception& ex ) {
+        CREAM_SAFE_LOG(m_log_dev->errorStream() 
+                       << "iceCommandUpdateStatus::execute() - "
+                       << "Got exception: "
+                       << ex.what()
+                       << ". Going on and hoping for the best"
+                       << log4cpp::CategoryStream::ENDLINE);        
+    } catch( ... ) {
+        CREAM_SAFE_LOG(m_log_dev->errorStream() 
+                       << "iceCommandUpdateStatus::execute() - "
+                       << "Got unknown exception. "
+                       << "Going on and hoping for the best"
+                       << log4cpp::CategoryStream::ENDLINE);        
     }
 }
