@@ -183,8 +183,10 @@ try {
       get_err_stream() << "cannot open the log file " << log_file << '\n';
       return EXIT_FAILURE;
     }
-
+#else
+    logger::wms_log::get_instance()->init(logger::wms_log::SYSLOG);
 #endif
+
 
     std::ofstream pid_file(opt_pid_file.c_str());
     if (!pid_file) {
@@ -203,6 +205,8 @@ try {
       get_err_stream(),
       static_cast<logger::level_t>(config.wm()->log_level())
     );
+#else
+    logger::wms_log::get_instance()->init(logger::wms_log::STDERR);
 #endif
 
   }

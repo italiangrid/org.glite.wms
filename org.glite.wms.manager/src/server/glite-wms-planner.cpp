@@ -617,6 +617,8 @@ try {
   if (!init_logger(c_log_file, config)) {
     return EXIT_FAILURE;
   }
+#else
+  logger::wms_log::get_instance()->init(logger::wms_log::SYSLOG);
 #endif
 
   Info("glite-wms-planner starting with pid " << getpid());
