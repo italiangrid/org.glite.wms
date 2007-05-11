@@ -50,7 +50,7 @@ iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::Cre
   [ Force = false; 
     LogFile = "/var/glite/logmonitor/CondorG.log/CondorG.1140166320.log"; 
     ProxyFile = "/var/glite/SandboxDir/tC/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2ftCDrNTu0b0uPbeUEDlpTjg/user.proxy";
-    SequenceCode = "UI=000002:NS=0000000007:WM=000002:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000"; 
+    SequenceCode = "UI=000002:NS=0000000007:WM=000002:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000:LBS=000000"; 
     JobId = "https://cert-rb-03.cnaf.infn.it:9000/tCDrNTu0b0uPbeUEDlpTjg" 
   ]; 
   Command = "Cancel"; 
