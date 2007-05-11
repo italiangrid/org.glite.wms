@@ -190,9 +190,9 @@ iceCommandUpdateStatus::iceCommandUpdateStatus( const monitortypes__Event& ev ) 
 //____________________________________________________________________________
 void iceCommandUpdateStatus::execute( ) throw( )
 {    
-    try { // FIXME: temporary fix
-
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
+    
+    try { // FIXME: temporary fix
 
     if( m_ev.Message.empty() ) {
 
