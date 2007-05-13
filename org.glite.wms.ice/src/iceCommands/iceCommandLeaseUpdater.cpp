@@ -194,7 +194,7 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
     
     for( list<CreamJob>::const_iterator it=jobs.second.begin(); it != jobs.second.end(); ++it ) {
         CREAM_SAFE_LOG(m_log_dev->debugStream()
-                       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+                       << "iceCommandLeaseUpdater::handle_jobs() - "
                        << "Will update job "
                        << it->describe()
                        << log4cpp::CategoryStream::ENDLINE);
