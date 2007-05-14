@@ -607,18 +607,22 @@ try {
 #warning yes it is, probably we need to intercept the termination signal from condor_dagman; in that case abort the node
   // signal_handling();
 
-#ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
   configuration::Configuration config(
     "glite_wms.conf",
     configuration::ModuleType::workload_manager
   );
-
+#ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
   char const* const c_log_file = (log_file.empty()) ? 0 : log_file.c_str();
   if (!init_logger(c_log_file, config)) {
     return EXIT_FAILURE;
   }
 #else
-  logger::wms_log::get_instance()->init(logger::wms_log::SYSLOG);
+  boost::details::pool::singleton_default<
+    logger::wms_log
+  >::instance().init(
+                 logger::wms_log::SYSLOG, 
+                 (logger::wms_log::level)config.wm()->log_level()
+  );
 #endif
 
   Info("glite-wms-planner starting with pid " << getpid());

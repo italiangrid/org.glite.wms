@@ -147,14 +147,11 @@ try {
     configuration::ModuleType::workload_manager
   );
 
-//to be uncommented
-/*
   std::string dguser(config.common()->dguser());
   if (!set_user(dguser)) {
     get_err_stream() << "cannot set the user id to " << dguser << '\n';
     return EXIT_FAILURE;
   }
-*/
 
   if (vm.count("daemon")) {
 
