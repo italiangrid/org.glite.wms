@@ -147,11 +147,14 @@ try {
     configuration::ModuleType::workload_manager
   );
 
+//to be uncommented
+/*
   std::string dguser(config.common()->dguser());
   if (!set_user(dguser)) {
     get_err_stream() << "cannot set the user id to " << dguser << '\n';
     return EXIT_FAILURE;
   }
+*/
 
   if (vm.count("daemon")) {
 
@@ -184,7 +187,13 @@ try {
       return EXIT_FAILURE;
     }
 #else
-    logger::wms_log::get_instance()->init(logger::wms_log::SYSLOG);
+    boost::details::pool::singleton_default<
+      logger::wms_log
+    >::instance().init(
+                     logger::wms_log::SYSLOG, 
+                     (logger::wms_log::level)config.wm()->log_level()
+    );
+
 #endif
 
 
@@ -206,7 +215,13 @@ try {
       static_cast<logger::level_t>(config.wm()->log_level())
     );
 #else
-    logger::wms_log::get_instance()->init(logger::wms_log::STDERR);
+    boost::details::pool::singleton_default<
+      logger::wms_log
+    >::instance().init(
+                    logger::wms_log::STDERR, 
+                    (logger::wms_log::level) config.wm()->log_level()
+    );
+
 #endif
 
   }
