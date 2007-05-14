@@ -274,7 +274,7 @@ try {
       while ( ( count > 0 ) && ( result ) ) { // fix for bug #23401
       	result = CondorG::instance()->set_command( CondorG::submit, parameters )->execute( info );
 				count--;
-        sleep( 2 * count );
+        if ( result ) sleep( 2 * count );
       }	
 
       if( result || !boost::regex_match(info, pieces, expr) ) {
