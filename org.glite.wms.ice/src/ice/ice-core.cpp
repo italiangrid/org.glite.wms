@@ -161,7 +161,7 @@ Ice* Ice::instance( void )
                            );
             exit(1);
         }
-        s_instance->init_cache();    
+        s_instance->init();    
     }
     return s_instance;
 }
@@ -195,12 +195,23 @@ Ice::~Ice( )
 
 }
 
-void Ice::init_cache( void )
-{
-  util::iceCommandLeaseUpdater l( true );
-  l.execute();
-  util::iceCommandStatusPoller p( this, true );
-  p.execute( );	
+void Ice::init( void )
+{    
+    // Handle resubmitted/purged jobs
+    for ( jobCache::iterator it=m_cache->begin(); it != m_cache->end() ; ) {
+        jobCache::iterator old_it( it );
+        it = resubmit_or_purge_job( it );
+        // If resubmit_or_purge_job fails, for whatever reason, the
+        // iterator if NOT incremented to the next element.
+        if ( old_it == it ) {
+            ++it;
+        }
+    }
+    
+    util::iceCommandLeaseUpdater l( true );
+    l.execute();
+    util::iceCommandStatusPoller p( this, true );
+    p.execute( );	
 }
 
 //____________________________________________________________________________
@@ -532,13 +543,10 @@ throw()
             // vector because we must authenticate different
             // jobs with different user certificates.
 
-
             creamClient->Authenticate( jit->getUserProxyCertificate() );
-
 
             vector< string > oneJobToPurge;
             oneJobToPurge.push_back( jit->getCreamJobID() );
-
 
 	    glite::wms::ice::util::CreamProxy_Purge( jit->getCreamURL(), oneJobToPurge ).execute( creamClient.get(), 3 );
 

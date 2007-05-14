@@ -143,8 +143,13 @@ namespace ice {
         void deregister_proxy_renewal( const util::CreamJob& job ) throw();
         void purge_wms_storage( const util::CreamJob& job ) throw();
 
-	// This should be used to poll all jobs in the cache
-	void init_cache( void );
+	//
+        // This method is called when ICE starts execution. It should
+        // contain general initialization procedures for handling
+        // situations when ICE terminated abruptly and should come
+        // back as cleanly as possible.
+        //
+	void init( void );
         
     public:
         
