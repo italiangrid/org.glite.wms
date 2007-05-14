@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.13  2007/05/14 10:15:25  rlops
+#       increased version
+#
 #       Revision 1.22.2.12  2007/05/10 14:39:48  rlops
 #       increased version
 #
@@ -132,7 +135,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS jobsubmission], [3.1.8])
+AC_INIT([GLite WMS jobsubmission], [3.1.9])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/constants.h])
