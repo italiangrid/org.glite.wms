@@ -110,10 +110,11 @@ int main(int argc, char* argv[])
      Configuration conf(conf_file.c_str(), ModuleType::network_server);
      NSConfiguration const* const ns_config(conf.ns());
 
+     time_2_wait = options.is_present('w') ? options['w'].getIntegerValue() : 20;
+
 #ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
      if( options.is_present('v') && !options.is_present('l'))   logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
                      
-     time_2_wait = options.is_present('w') ? options['w'].getIntegerValue() : 20;
      if( options.is_present('l') ) logger::threadsafe::edglog.open(ns_config->log_file(), glite::wms::common::logger::debug);
      else {
         if( options.is_present('q') ) {
