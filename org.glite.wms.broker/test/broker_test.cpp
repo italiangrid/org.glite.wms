@@ -107,11 +107,8 @@ int main(int argc, char* argv[])
   try {
      options.parse( argc, argv );
      conf_file.assign( options.is_present('c') ? options['c'].getStringValue() : "glite_wms.conf" );
-
      Configuration conf(conf_file.c_str(), ModuleType::network_server);
-
      NSConfiguration const* const ns_config(conf.ns());
-     WMConfiguration const* const wm_config(conf.wm());
 
 #ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
      if( options.is_present('v') && !options.is_present('l'))   logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
@@ -136,14 +133,14 @@ int main(int argc, char* argv[])
         logger::wms_log
      >::instance().init(
         logger::wms_log::SYSLOG,
-        (logger::wms_log::level)wm_config->log_level()
+        (logger::wms_log::level)ns_config->log_level()
      );
 #endif
      
      
      if( ! options.is_present('j') )
      {
-        edglog(error) << "an input file with the jdl must be passed"<< endl;
+        Error( "an input file with the jdl must be passed");
         return -1;
      }
      else
@@ -168,6 +165,7 @@ int main(int argc, char* argv[])
        show_slice_content
       );
     }
+
 
 
      Debug("-Reading-JDL-------------------------------------------------");
@@ -273,7 +271,7 @@ int main(int argc, char* argv[])
      
      } catch (jdl::CannotSetAttribute const& e) {
      
-       Error>("jdl::CannotSetAttribute: "
+       Error("jdl::CannotSetAttribute: "
                  << e.what());
 
      }
@@ -282,11 +280,11 @@ int main(int argc, char* argv[])
      Debug("END");
   }
   catch ( LineParsingError &er ) {
-    Error( er );
+    Error( er.what() );
     exit( er.return_code() );
   }
   catch( CannotConfigure &er ) {
-    Error( er );
+    Error( er.what() );
   }
   catch ( glite::wms::manager::server::CannotLoadDynamicLibrary &ex ) {
     Error("CannotLoadDynamicLibrary");
