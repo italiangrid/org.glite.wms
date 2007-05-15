@@ -112,8 +112,8 @@ int main(int argc, char* argv[])
 */
          void* libHandle = dlopen ("libglite_wms_broker_helper.so", RTLD_NOW);
          if (!libHandle) {
-            Warning("cannot load wms_broker_helper lib ");
-            Warning("dlerror returns: " << dlerror());
+            std::cerr <<"cannot load wms_broker_helper lib "<<std::endl;
+            std::cerr <<"dlerror returns: " << dlerror()<<std::endl;
             return -1;
          }
 
