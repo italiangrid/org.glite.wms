@@ -18,8 +18,8 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
-#include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/manipulators.h"
+
+#include "glite/wms/common/logger/logger_utils.h"
 
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/utilities/LineParser.h"
@@ -113,6 +113,7 @@ int main(int argc, char* argv[])
      NSConfiguration const* const ns_config(conf.ns());
      WMConfiguration const* const wm_config(conf.wm());
 
+#ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
      if( options.is_present('v') && !options.is_present('l'))   logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug);
                      
      time_2_wait = options.is_present('w') ? options['w'].getIntegerValue() : 20;
@@ -130,6 +131,15 @@ int main(int argc, char* argv[])
           );
         }
      }
+#else
+     boost::details::pool::singleton_default<
+        logger::wms_log
+     >::instance().init(
+        logger::wms_log::SYSLOG,
+        (logger::wms_log::level)wm_config->log_level()
+     );
+#endif
+     
      
      if( ! options.is_present('j') )
      {
@@ -140,7 +150,7 @@ int main(int argc, char* argv[])
         req_file.assign(options['j'].getStringValue());
 
      if (!glite::wms::manager::server::signal_handling()) {
-       edglog(error) <<"cannot initialize signal handling"<< std::endl;
+       Error("cannot initialize signal handling");
        return -1;
      }
 
@@ -160,11 +170,11 @@ int main(int argc, char* argv[])
     }
 
 
-     edglog(debug) << "-Reading-JDL-------------------------------------------------" << std::endl;
+     Debug("-Reading-JDL-------------------------------------------------");
 
      ifstream fin(req_file.c_str());    
      if( !fin ) { 
-        edglog(warning) << "cannot open jdl file" << endl;
+        Warning("cannot open jdl file");
         return 0;
      }
 
@@ -184,14 +194,14 @@ int main(int argc, char* argv[])
         glite::wms::broker::ResourceBroker rb;
         if (input_data_exists) {
           rb.changeStrategy( maximize_files() );
-          edglog(debug) << "-Using-RBMaximizeFiles-implementation------------------------" << std::endl;
+          Debug("-Using-RBMaximizeFiles-implementation------------------------");
         }
         // If fuzzy_rank is true in the request ad we have
         // to use the stochastic selector...
         bool use_fuzzy_rank = false;
         if (jdl::get_fuzzy_rank(*(reqAd.get()), use_fuzzy_rank) && use_fuzzy_rank) {
           rb.changeSelector(stochastic_selector());
-          edglog(debug) << "-Using-sthochastic-rank-selections---------------------------" << std::endl;
+          Debug("-Using-sthochastic-rank-selections---------------------------");
          
         }
 
@@ -204,90 +214,92 @@ int main(int argc, char* argv[])
           boost::shared_ptr<storagemapping> storagemapping;
           boost::tie(suitable_CEs,filemapping,storagemapping) = rb.findSuitableCEs(reqAd.get());
         
-          edglog(debug) << " ----- SUITABLE CEs -------" << std::endl;
+          Debug(" ----- SUITABLE CEs -------");
 
           matchtable::iterator ces_it = suitable_CEs->begin();
           matchtable::iterator const ces_end = suitable_CEs->end();
 
           while( ces_it != ces_end ) {
-             edglog(debug) << ces_it->get<broker::Id>() << 
-             std::string(
-               options.is_present('r') ?
-               ", "+boost::lexical_cast<string>(ces_it->get<broker::Rank>()) 
-               : ""
-             ) << std::endl;
+             Debug(
+                ces_it->get<broker::Id>() << 
+                std::string(
+                  options.is_present('r') ?
+                  ", "+boost::lexical_cast<string>(ces_it->get<broker::Rank>()) 
+                  : ""
+                )
+             );
              ++ces_it;
           }
 
           matchtable::const_iterator best_ce_it;
           if ( suitable_CEs->empty() ) {
-            std::cerr << "no suitable ce found" << std::endl;      
+            Error("no suitable ce found");      
           }
           else {
-            edglog(debug) << ".....trying selectBestCE" << std::endl;
+            Debug(".....trying selectBestCE");
             best_ce_it = rb.selectBestCE(*suitable_CEs);
           }
 
-          edglog(debug) << " ----- BEST CE -------" << std::endl;
-          edglog(debug) << boost::tuples::get<broker::Id>(*best_ce_it) << std::endl;
+          Debug(" ----- BEST CE -------");
+          Debug(boost::tuples::get<broker::Id>(*best_ce_it));
           
           if (options.is_present('B')) {
-            edglog(debug) << " ----- BROKEINFO AD -------" << std::endl;
+            Debug(" ----- BROKEINFO AD -------");
             boost::scoped_ptr<classad::ClassAd> biAd(
               glite::wms::broker::make_brokerinfo_ad(
                filemapping,storagemapping,
                *boost::tuples::get<broker::Ad>(*best_ce_it)
               )
             );
-            edglog(debug) << *biAd.get() << std::endl;
+            Debug(*biAd.get());
           }
        } while(n--);
-       edglog(debug) << matches << " matchmaking iterations performed in " << t0.elapsed() << " seconds." << std::endl;
+       Debug(matches << " matchmaking iterations performed in " << t0.elapsed() << " seconds.");
      }
      catch (InformationServiceError const& e) {
      
-       std::cerr << "matchmaking::InformationServiceError: "
-                 <<e.what() << std::endl;
+       Error("matchmaking::InformationServiceError: "
+                 <<e.what());
      
      } catch (RankingError const& e) {
      
-       std::cerr << "matchmaking::RankingError: "
-                 << e.what() << std::endl;
+       Error("matchmaking::RankingError: "
+                 << e.what());
      
      } catch (jdl::CannotGetAttribute const& e) {
      
-       std::cerr << "jdl::CannotGetAttribute: "
-                 << e.what() << std::endl; 
+       Error("jdl::CannotGetAttribute: "
+                 << e.what());
      
      } catch (jdl::CannotSetAttribute const& e) {
      
-       std::cerr << "jdl::CannotSetAttribute: "
-                 << e.what() << std::endl;
+       Error>("jdl::CannotSetAttribute: "
+                 << e.what());
 
      }
 
-     edglog(debug) << "---------------------------------------------------" << std::endl;
-     edglog(debug) << "END"<< endl;
+     Debug("---------------------------------------------------");
+     Debug("END");
   }
   catch ( LineParsingError &er ) {
-    cerr << er << endl;
+    Error( er );
     exit( er.return_code() );
   }
   catch( CannotConfigure &er ) {
-    cerr << er << endl;
+    Error( er );
   }
   catch ( glite::wms::manager::server::CannotLoadDynamicLibrary &ex ) {
-    cerr << "CannotLoadDynamicLibrary" << endl;
-    cerr << ex.error() << endl;
+    Error("CannotLoadDynamicLibrary");
+    Error(ex.error());
     exit( -1 );
   }
   catch( glite::wms::manager::server::CannotLookupSymbol &ex ) {
-    cerr << "CannotLookupSymbol" << endl;
-    cerr << ex.error() << endl;
+    Error("CannotLookupSymbol");
+    Error(ex.error());
     exit( -1 );
   }
   catch( ... ) {
-    cout << "Uncaught exception..." << endl;
+    Error("Uncaught exception...");
   }	 
   return 0;
 

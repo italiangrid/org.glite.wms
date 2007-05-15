@@ -22,8 +22,6 @@
 #include "glite/wms/common/utilities/LineParser.h"
 #include "glite/wms/common/utilities/LineParserExceptions.h"
 
-#include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
@@ -38,6 +36,11 @@
 #include <string>
 #include <fstream>
 #include <vector>
+
+#include "dynamic_library.h"
+#include "ism_utils.h"
+#include "signal_handling.h"
+
 
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
@@ -112,8 +115,8 @@ int main(int argc, char* argv[])
 */
          void* libHandle = dlopen ("libglite_wms_broker_helper.so", RTLD_NOW);
          if (!libHandle) {
-            std::cerr <<"cannot load wms_broker_helper lib "<<std::endl;
-            std::cerr <<"dlerror returns: " << dlerror()<<std::endl;
+            Warning("cannot load wms_broker_helper lib ");
+            Warning("dlerror returns: " << dlerror());
             return -1;
          }
 
@@ -132,19 +135,30 @@ int main(int argc, char* argv[])
      Configuration conf(conf_file.c_str(), ModuleType::network_server);
      NSConfiguration const* const ns_config(conf.ns());
      WMConfiguration const* const wm_config(conf.wm());
+
+#ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
      if( options.is_present('v') && !options.is_present('l'))
        logger::threadsafe::edglog.open(std::clog, glite::wms::common::logger::debug); 
 
      if( options.is_present('l') ) logger::threadsafe::edglog.open(ns_config->log_file(),glite::wms::common::logger::debug);
+#else
+     boost::details::pool::singleton_default<
+        logger::wms_log
+     >::instance().init(
+        logger::wms_log::SYSLOG,
+        (logger::wms_log::level)wm_config->log_level()
+     );
+#endif
+
      if( ! options.is_present('j') )
      {
-        edglog(error) << "an input file with the jdl must be passed"<< endl;
+        Error( "an input file with the jdl must be passed");
         return -1;
      }
      else
         req_file.assign(options['j'].getStringValue());
 
-////////
+/*
     SlicePtr ce_slice_ptr( new Slice );
     SlicePtr se_slice_ptr( new Slice );
 
@@ -180,18 +194,19 @@ int main(int argc, char* argv[])
        show_slice_content
       );
     }
+*/
 
     //glite::wms::manager::server::signal_handling();
-/*
+
     glite::wms::manager::server::signal_handling();
 
     glite::wms::manager::main::ISM_Manager ism_manager;     
 
-    sleep(30);
-*/
+    sleep(15);
+
     ifstream fin(req_file.c_str());
     if( !fin ) {
-       edglog(warning) << "cannot open jdl file" << endl;
+       Warning("cannot open jdl file");
        return 0;
     }
 
@@ -217,7 +232,7 @@ int main(int argc, char* argv[])
              for ( ; list_it < list_end; list_it++ ){
                 string ce_id;
                 (static_cast<classad::ClassAd*>(*list_it))->EvaluateAttrString("ce_id", ce_id);
-                edglog(debug) << ce_id << endl;
+                Debug( ce_id );
              }
           }
        }
@@ -230,7 +245,7 @@ int main(int argc, char* argv[])
           //result.reset(glite::wms::broker::helper::Helper().resolve(reqAd.get()));
           result.reset(glite::wms::helper::Helper("BrokerHelper").resolve(reqAd.get()));
 
-          edglog(debug)<< *result << endl;
+          Debug(*result);
 
 
        }
@@ -238,16 +253,16 @@ int main(int argc, char* argv[])
 
     } 
     catch (glite::wms::helper::HelperError const& e) {
-       edglog(error) << "HelperError exception caught: "<<
-                     e.what()<< endl;
+       Error("HelperError exception caught: "<<
+                     e.what());
     }
 
   }
   catch ( LineParsingError &er ) {
-     edglog(error)<< "LineParsingError exception caght" << endl;
+     Error("LineParsingError exception caght");
   }
   catch( CannotConfigure &er ) {
-    edglog(error) << "CannotConfigure exception caght" << endl;
+     Error("CannotConfigure exception caght");
   }
 
   return 0;
