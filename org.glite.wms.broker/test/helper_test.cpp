@@ -115,8 +115,8 @@ int main(int argc, char* argv[])
 */
          void* libHandle = dlopen ("libglite_wms_broker_helper.so", RTLD_NOW);
          if (!libHandle) {
-            Warning("cannot load wms_broker_helper lib ");
-            Warning("dlerror returns: " << dlerror());
+            std::cerr<<"cannot load wms_broker_helper lib "<<std::endl;
+            std::cerr<<"dlerror returns: " << dlerror()<<std::endl;
             return -1;
          }
 
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
      conf_file.assign( options.is_present('c') ? options['c'].getStringValue() : "glite_wms.conf" );
      Configuration conf(conf_file.c_str(), ModuleType::network_server);
      NSConfiguration const* const ns_config(conf.ns());
-     WMConfiguration const* const wm_config(conf.wm());
+
 
 #ifndef GLITE_WMS_HAVE_SYSLOG_LOGGING
      if( options.is_present('v') && !options.is_present('l'))
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
         logger::wms_log
      >::instance().init(
         logger::wms_log::SYSLOG,
-        (logger::wms_log::level)wm_config->log_level()
+        (logger::wms_log::level)ns_config->log_level()
      );
 #endif
 
@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
      else
         req_file.assign(options['j'].getStringValue());
 
-/*
+
     SlicePtr ce_slice_ptr( new Slice );
     SlicePtr se_slice_ptr( new Slice );
 
@@ -194,15 +194,14 @@ int main(int argc, char* argv[])
        show_slice_content
       );
     }
-*/
 
-    //glite::wms::manager::server::signal_handling();
-
+/*
     glite::wms::manager::server::signal_handling();
 
     glite::wms::manager::main::ISM_Manager ism_manager;     
 
     sleep(15);
+*/
 
     ifstream fin(req_file.c_str());
     if( !fin ) {
