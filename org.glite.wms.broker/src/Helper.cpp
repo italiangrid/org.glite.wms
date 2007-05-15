@@ -59,7 +59,10 @@ namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::jdl;
 namespace utils         = glite::wmsutils::classads;
+
+#ifndef GLITE_WMS_DONT_HAVE_GPBOX
 namespace helper	      = glite::wms::broker::gpbox;
+#endif
 
 namespace glite {
 namespace wms {
