@@ -527,7 +527,13 @@ throw()
 
     boost::scoped_ptr< soap_proxy::CreamProxy > creamClient( ice_util::CreamProxyFactory::makeCreamProxy(false) );
 
-
+    // Gets the proxy to use for authentication
+    string proxy;
+    {
+        boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+        proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() );
+    }
+    
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); // this can be called by eventStatusListener::handleEvent that already acquired this mutex; this is not a problem 'cause the mutexes are recursive
 
@@ -536,14 +542,14 @@ throw()
         if ( m_configuration->ice()->purge_jobs() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
                            << "ice-core::purge_job() - "
-                           << "Calling JobPurge for JobId ["
-                           << cid << "]"
+                           << "Calling JobPurge for job "
+                           << jit->describe()
                            << log4cpp::CategoryStream::ENDLINE);
             // We cannot accumulate more jobs to purge in a
             // vector because we must authenticate different
             // jobs with different user certificates.
 
-            creamClient->Authenticate( jit->getUserProxyCertificate() );
+            creamClient->Authenticate( proxy );
 
             vector< string > oneJobToPurge;
             oneJobToPurge.push_back( jit->getCreamJobID() );
@@ -554,8 +560,9 @@ throw()
             CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << "ice-core::purge_job() - "
                            << "There'are jobs to purge, but PURGE IS DISABLED. "
-                           << "Will not purge JobId ["
-                           << cid << "] (but will be removed from ICE cache)"
+                           << "Will not purge job "
+                           << jit->describe()
+                           << " (but will be removed from ICE cache)"
                            << log4cpp::CategoryStream::ENDLINE);
         }
         
@@ -574,18 +581,30 @@ throw()
     } catch(soap_proxy::auth_ex& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << "ice-core::purge_job() - "
-                       << "Cannot purge job: " << ex.what()
+                       << "Cannot purge job " 
+                       << jit->describe()
+                       << ". Reason is: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
-    } catch(cream_api::cream_exceptions::BaseException& s) {
-        CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR, s.what()));
-    } catch(cream_api::cream_exceptions::InternalException& severe) {
-        CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR, severe.what()));
+    } catch(cream_api::cream_exceptions::BaseException& ex) {
+        CREAM_SAFE_LOG(m_log_dev->errorStream()
+                       << "ice-core::purge_job() - "
+                       << "Cannot purge job " 
+                       << jit->describe()
+                       << ". Reason is BaseException: " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE);
+    } catch(cream_api::cream_exceptions::InternalException& ex) {
+        CREAM_SAFE_LOG(m_log_dev->errorStream()
+                       << "ice-core::purge_job() - "
+                       << "Cannot purge job " 
+                       << jit->describe()
+                       << ". Reason is InternalException: " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE);
     } catch(ice_util::elementNotFound_ex& ex) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
                        << "ice-core::purge_job() - "
-                       << "Cannot remove [" << jit->getCreamJobID()
-                       << "] from job cache: " << ex.what()
+                       << "Cannot purge job " << jit->describe()
+                       << ". Reason is elementNotFound_ex: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
     }
