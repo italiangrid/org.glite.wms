@@ -39,6 +39,7 @@ options2short = { \
 "get": ["get","",""] ,\
 "help": ["help","",""] ,\
 "info-output" : ["output","o","filename"],\
+"info-delegationid": ["delegationid","d","idstring"] ,\
 "jobout-dir": ["dir","","directorypath"] ,\
 "jobout-input": ["input","i","filepath"] ,\
 "jdl":["jdl","","jobid"], \
@@ -84,5 +85,5 @@ commands2options={
 "glite-wms-job-output":["jobout-input", "jobout-dir", "proto", "list-only"], \
 "glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename",\
    "all", "perusal-dir", "proto", "perusal-output", "nodisplay"],\
-"glite-wms-job-info":["info-input","delegationid","proxy","jdl","jdl-original","endpoint","info-output"],\
+"glite-wms-job-info":["info-input","info-delegationid","proxy","jdl","jdl-original","endpoint","info-output"],\
 }

@@ -44,6 +44,10 @@ located under the /var/tmp directory or in the log file specified with --logfile
 if this option is specified, the proxy that will be delegated is identified by <id_string>. This proxy can be therefore used for operations like job registration, job submission and job list matching until its expiration specifying the <id_string>. It must be used in place of --autm-delegation option.
 <<<delegationid>>>
 
+<<<info-delegationid>>>
+if this option is specified, the user proxy associated to the id delegated previously will be displayed.
+<<<info-delegationid>>>
+
 <<<deleg-output>>>
 if this option is specified, the following information is saved in the file specified by filepath: date and time the delegation operation was performed; WMProxy service URL;  id_string associated to the delegated proxy. filepath can be either a simple name or an absolute path (on the submitting machine). In the former case the file is created in the current working directory.
 <<<deleg-output>>>
