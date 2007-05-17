@@ -106,7 +106,7 @@ const unsigned int DEFAULT_WMP_PORT	=	7772;
 
 
 const string Utils::JOBID_FILE_HEADER = "###Submitted Job Ids###";
-const string Utils::JOBID_FAILED_HEADER = "#* Following Job Registered but Submission failed (try use --start option) *#";
+const string Utils::JOBID_FAILED_HEADER = "#*Following Job Registered but Submission failed (try use --start option)";
 
 const string PROTOCOL_SEPARATOR= "://";
 
@@ -436,16 +436,15 @@ std::vector<std::string> Utils::askMenu(std::vector<std::string> &items, const e
 			}
 			//decrease loop counter since it has been erased an element from the vector
 			i-- ;
-		} else {
-			if ( !comment.empty() ) {
+		}
+		if ( !comment.empty() ) {
 			// Appends the comment to the jobId
-			out << (it+1) << " : " << items[i] << " (" << comment << ")" << "\n";
+			out << "\t" << comment << "\n";
 			comment = "";
-			} else {
+		} else {
 			// No comment to be appended
 			out << (it+1) << " : " << items[i] << "\n";
-			}
-		it++ ;
+			it++ ;
 		}
 		i++ ;
 	}
