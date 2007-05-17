@@ -18,12 +18,24 @@
  */
 
 #include "DNProxyManager.h"
+#include "iceConfManager.h"
+#include "iceUtils.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <iostream>
+#include <fstream>
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+extern int errno;
 
 namespace iceUtil = glite::wms::ice::util;
 
@@ -110,27 +122,32 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 
 //________________________________________________________________________
 void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn, 
-						    const string& prx 
+						    const string& prx
 						    ) throw()
 { 
+  string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() 
+    + "/" + iceUtil::canonizeString( dn ) + ".proxy";
+
 
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
     CREAM_SAFE_LOG(m_log_dev->warnStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - "
 		   << "DN ["
 		   << dn << "] not found. Inserting the proxy ["
-		   << prx << "]"
+		   << prx << "]. Copied into ["
+		   << localProxy << "]"
 		   << log4cpp::CategoryStream::ENDLINE);
-    m_DNProxyMap[ dn ] = prx;
+
+    this->copyProxy( prx, localProxy );
+    m_DNProxyMap[ dn ] = make_pair(prx, localProxy);
+
     return;
   }
-
-  if (prx == m_DNProxyMap[ dn ] ) return;
 
   time_t newT, oldT;
 
   try {
-    newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft(prx);
+    newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft( prx );
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - "
@@ -138,21 +155,28 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << prx << "]: "
 		   << ex.what()
 		   << log4cpp::CategoryStream::ENDLINE);
-    //    cout << "subscriptionManager::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
+
     return;
   }
   
+  
+
   try {
-    oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ] );
+    // check time validity of the ICE's local proxy
+    oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ].second ); 
+
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - "
 		   << "Cannot retrieve time left for old proxy ["
-		   << m_DNProxyMap[ dn ] << "]. Setting user proxy to the new one ["
-		   << prx << "]: "
+		   << m_DNProxyMap[ dn ].first << "]. Setting user proxy to the new one ["
+		   << prx << "] copied to ["
+		   << localProxy <<"]: "
 		   << ex.what()
 		   << log4cpp::CategoryStream::ENDLINE);
-    m_DNProxyMap[ dn ] = prx;
+
+    this->copyProxy( prx, localProxy );
+    m_DNProxyMap[ dn ] = make_pair( prx, localProxy);
     return;
   }
 
@@ -162,15 +186,79 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << "DNProxyManager::setUserProxyIfLonger - "
 		   << "Setting user proxy to [ "
 		   << prx
+		   << "] copied to " << localProxy 
 		   << "] because the old one is less long-lived."
 		   << log4cpp::CategoryStream::ENDLINE);
-    m_DNProxyMap[ dn ] = prx;
+
+    this->copyProxy( prx, localProxy );
+    m_DNProxyMap[ dn ] = make_pair( prx, localProxy );
+
   } else {
-    //cout<< "subscriptionManager::setUserProxyIfLonger - Leaving current proxy ["<< m_DNProxyMap[ dn ] 
-    //	<<"] beacuse will expire later" <<endl;
+
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		   << "Leaving current proxy ["
-		   << m_DNProxyMap[ dn ] <<"] beacuse it will expire later"
+		   << "DNProxyManager::setUserProxyIfLonger - Leaving current proxy ["
+		   << m_DNProxyMap[ dn ].second <<"] beacuse it will expire later"
 		   << log4cpp::CategoryStream::ENDLINE);
+
   }
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::copyProxy( const string& source, const string& target ) throw()
+{
+  string tmpTargetFilename = target;
+  tmpTargetFilename = tmpTargetFilename + string(".tmp") ;
+  ifstream input( source.c_str() );
+  ofstream output( tmpTargetFilename.c_str() );
+
+  if(!input) {
+    CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+		   << "DNProxyManager::copyProxy - Cannot open"
+		   << " proxy file ["
+		   << source << "] for input. ABORTING!!"
+		   << log4cpp::CategoryStream::ENDLINE);
+    abort();
+  }
+
+  if(!output) {
+    CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+		   << "DNProxyManager::copyProxy - Cannot open"
+		   << " proxy file ["
+		   << tmpTargetFilename << "] for output. ABORTING!!"
+		   << log4cpp::CategoryStream::ENDLINE);
+    abort();
+  }
+  char c;
+  while( input.get(c) ) 
+    {
+      if(!input.good()||
+	 input.fail() || 
+	 input.bad())
+	{
+	  CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+			 << "DNProxyManager::copyProxy - Error copying ["
+			 << source << "] to ["
+			 << tmpTargetFilename << "]. ABORTING!!"
+			 << log4cpp::CategoryStream::ENDLINE);
+	  abort();
+	}
+      //input.tie(&output);
+      output.put(c);
+    }
+  
+  int err = ::rename(tmpTargetFilename.c_str(), target.c_str());
+  if(err != 0 )
+    {
+      string errmex = strerror(errno);
+      CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+		     << "DNProxyManager::copyProxy - Error moving ["
+		     << tmpTargetFilename << "] to ["
+		     << target << "]: " << errmex << ". ABORTING!!"
+		     << log4cpp::CategoryStream::ENDLINE);
+      abort();
+    }
+
+  ::unlink(tmpTargetFilename.c_str());
+
+  ::chmod( target.c_str(), 00600 );
 }

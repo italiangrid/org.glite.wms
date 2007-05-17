@@ -26,6 +26,8 @@
 #include <netdb.h>
 #include <cerrno>
 #include <vector>
+#include <ctype.h>
+#include <cstdio>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -180,6 +182,39 @@ string getIPFromHostname( const string& hostname )
 {
   // Will be implemented later; for now it is not urgent
   return "";  
+}
+
+namespace {
+  
+  class canonizerObject {
+    string target;
+
+  public:
+    canonizerObject() : target("") {}
+
+    ~canonizerObject() throw() {}
+
+    void operator()( const char c ) throw() {
+      if(isalnum((int)c)) {
+	target.append( 1, c );
+      } else {
+	char tmp[16];
+	sprintf( tmp, "%%%X", c );
+	target.append( tmp );
+      }
+    } // end operator()
+    
+    string getString( void ) const { return target; }
+  };
+
+};
+
+//______________________________________________________________________________
+string canonizeString( const string& aString ) throw()
+{
+  canonizerObject c;
+  c = for_each(aString.begin(), aString.end(), c);
+  return c.getString();
 }
 
 } // namespace util
@@ -504,5 +539,3 @@ int resolveHostName(struct sockaddr &InetAddr,
 //
    return i;
 }
-
-

@@ -25,6 +25,7 @@
 #include "jobCache.h"
 #include "CreamProxyFactory.h"
 #include "iceUtils.h"
+#include "DNProxyManager.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -82,6 +83,8 @@ void iceCommandProxyRenewal::execute( void ) throw()
                            << ". Renewing proxy."
                            << log4cpp::CategoryStream::ENDLINE);
             
+	    glite::wms::ice::util::DNProxyManager::getInstance()->setUserProxyIfLonger( jobIt->getUserProxyCertificate() );
+
             try {
                 m_theProxy->Authenticate( jobIt->getUserProxyCertificate() );
                 

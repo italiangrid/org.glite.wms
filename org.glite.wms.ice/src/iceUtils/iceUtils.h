@@ -100,6 +100,9 @@ namespace util {
     std::string getNotificationClientDN( const std::string& );
 
     std::string getCompleteHostname( const std::string& );
+
+    std::string canonizeString( const std::string& ) throw();
+
     /**
       * Breaks the list of jobs into sublists of size at most max_size
       *
@@ -161,6 +164,8 @@ namespace util {
       }
       return first;
     }
+
+ 
 
   class jobMap_appender {
 

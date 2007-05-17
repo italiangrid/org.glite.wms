@@ -185,7 +185,7 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
 {
     CREAM_SAFE_LOG(m_log_dev->infoStream()
                    << "iceCommandLeaseUpdater::handle_jobs() - "
-                   << "Updating lease for all " 
+                   << "Will update lease for all " 
                    << jobs.second.size() 
                    << " job(s) of the user ["
                    << jobs.first.first << "] to CREAM ["
@@ -195,7 +195,7 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
     for( list<CreamJob>::const_iterator it=jobs.second.begin(); it != jobs.second.end(); ++it ) {
         CREAM_SAFE_LOG(m_log_dev->debugStream()
                        << "iceCommandLeaseUpdater::handle_jobs() - "
-                       << "Will update job "
+                       << "Will update lease job "
                        << it->describe()
                        << log4cpp::CategoryStream::ENDLINE);
     }
@@ -293,7 +293,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
             
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-                           << "Because of the 'Invalid job ID list' ICE will make all lease for user ["
+                           << "Because of the 'Invalid job ID list' ICE will update all lease for user ["
                            << userproxy
                            << "] to expire to [" << time_t_to_string( newExpiration ) << "]"
                            << log4cpp::CategoryStream::ENDLINE);
@@ -378,7 +378,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
         
         CREAM_SAFE_LOG(m_log_dev->infoStream()
 		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-		       << "updating lease for job "
+		       << "Updating jobCache's lease for job "
 		       << tmpJob->describe()
 		       << "; old lease ends " << time_t_to_string( tmpJob->getEndLease() )
 		       << " new lease ends " << time_t_to_string( newLease[ tmpJob->getCreamJobID() ] )
