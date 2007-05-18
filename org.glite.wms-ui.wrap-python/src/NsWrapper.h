@@ -86,7 +86,7 @@ public:
 	* @param err the string description passed by reference. Python will consider it as a returning parameter
 	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
 	*/
-	int get_error (std::string&  err) ;
+	std::vector<std::string> get_error () ;
 	/** Create a job unique identificator in the form <lb host>:<lb port>/<unique string>
 	* @param host the LB host name
 	* @param port the LB port name

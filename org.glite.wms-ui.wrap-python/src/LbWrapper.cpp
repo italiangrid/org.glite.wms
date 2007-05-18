@@ -143,44 +143,66 @@ int Eve::size(int event_number){
    return attrList.size() ;
 }
 
+std::vector<std::string> Eve::getEventsNames(){
 
-
-std::vector<std::string> Eve::getEventNames(){
-	//  TODO  once static method is provided by LB, remove first lines
 	std::vector<std::string> result ;
-	// get the first available EVENTS
-	if (events.size()>0){
-	   	list<glite::lb::Event>::iterator itLbEvent = events.begin();
-		int lb_attr;
-		for (lb_attr =0;(Event::Attr) lb_attr < Event::ATTR_MAX;lb_attr++){
-			result.push_back(itLbEvent->getAttrName( (Event::Attr)lb_attr ));
-		}
+
+	// Fill the returned array with the Events Names
+	for (int lb_attr = 0; (Event::Attr)lb_attr < Event::ATTR_MAX; lb_attr++){
+		// Insert a single Event Name
+		result.push_back(Event::getAttrName((Event::Attr)lb_attr));
 	}
+	
+	// Return the vector of Event Names
 	return result;
 }
 
+std::vector<std::string> Eve::getEventsCodes(){
 
+	std::vector<std::string> result ;
+
+	// Fill the returned array with the Events Codes
+	for (int lb_code = 0; (Event::Type)lb_code < Event::TYPE_MAX; lb_code++){
+		// Insert a single Event Code
+		result.push_back(Event::getEventName((Event::Type)lb_code));
+	}
+	
+	// Return the vector of Events Codes
+	return result;
+}
 
 void Eve::log_error ( const std::string& err) {    error_code = true ; error = err ;};
-int Eve::get_error (std::string& err) {
-   if (error_code ){
-         err = error ;
-         error = "" ;
-         return 1 ;
-   }
-   err = "" ;
-   return 0 ;
-};
+
+std::vector<std::string> Eve::get_error ()  {
+
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
+}
+
 void Status::log_error ( const std::string& err) { error_code = true ; error = err ;};
-int Status::get_error (std::string& err)  {
-   if (error!= "" ){
-         err = error ;
-         error = "" ;
-         return 1 ;
-   }
-   err = "" ;
-   return 0 ;
-};
+
+std::vector<std::string> Status::get_error ()  {
+
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
+}
+
 int Status::getStatus (const string& jobid , int level) {
 	error_code = false ;
 	glite::lb::JobStatus status ;
@@ -313,23 +335,30 @@ int Eve::getEvents (const  std::string& jobid) {
 
 
 
-string Eve::getEventName(string& result, int event_number){
+std::vector<std::string> Eve::getEventName(int event_number){
 	error_code = false ;
 	// Position to the desired event number
 	list<glite::lb::Event>::iterator it = events.begin();
 	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
-	result = it->name() ;
-	return "Event" ;
+
+	std::vector<std::string> result ;
+	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  	result.push_back("Event");
+  	result.push_back(it->name());
+  	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+
+	  return result;
 }
 
 
-std::string Eve::getVal (int field , string& result , int event_number) {
+std::vector<std::string> Eve::getVal (int field, int event_number) {
 	error_code = false ;
 	// Position to the desired event number
 	list<glite::lb::Event>::iterator it = events.begin();
 	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
 	glite::lb::Event event_retrieved = *it ;
 	string attrName = "" ;
+	string result = "";
 /*
 	int EVENT = 56 ;
 	if ( field == EVENT) {
@@ -432,13 +461,22 @@ try{
 } catch ( exception &exc){
     // log_error("Fatal Error\n" + string (exc.what() )  );
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-	return attrName ;
+
+	  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  	std::vector<std::string> vectorResult ;
+	vectorResult.push_back(attrName);
+	vectorResult.push_back(result);
+	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+
+  	return vectorResult;
 };
 
 
-string Status::getVal (int field , string& result, int status_number ) {
+std::vector<std::string> Status::getVal (int field , int status_number ) {
 	// Retrieve the status to be investigated
 	error_code = false ;
+	string result ="";
+	
 	list<glite::lb::JobStatus>::iterator it = states.begin();
 	// vector<glite::lb::JobStatus>::iterator it = states.begin();
 	for ( int j = 0 ; j< status_number ; j++,it++ )  {   if (  it==states.end()  ) break ; }
@@ -447,12 +485,23 @@ string Status::getVal (int field , string& result, int status_number ) {
 	char tmp [1024] ;//TBD could be not enough for JobStatus list
  	if (field == STATUS ){
 		result = status_retrieved.name() ;
-		return "Status" ;
+		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+	  	std::vector<std::string> vectorResult ;
+		vectorResult.push_back("Status");
+		vectorResult.push_back(result);
+		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+		return vectorResult;		
 	}
 	else  if (field == STATUS_CODE ){
 		sprintf (tmp , "%d" , status_retrieved.status ) ;
 		result = string(tmp) ;
-		return "Status Code" ;
+		result = status_retrieved.name() ;
+		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+	  	std::vector<std::string> vectorResult ;
+		vectorResult.push_back("Status Code");
+		vectorResult.push_back(result);
+		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+		return vectorResult;		
 	}
 	std::vector<pair<JobStatus::Attr, JobStatus::AttrType> > attrList = status_retrieved.getAttrs(); //TBD NEEDED???
 	JobStatus::Attr fieldAttr = (JobStatus::Attr) field ;
@@ -545,26 +594,43 @@ try{
 } catch ( exception &exc){
     // log_error("Fatal Error\n" + string (exc.what() ) );
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-  return attrName;
-  } ;
+  
+	  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  	std::vector<std::string> vectorResult ;
+	vectorResult.push_back(attrName);
+	vectorResult.push_back(result);
+	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
 
-std::vector<std::string> Status::getStatusNames(){
-	//  TODO  once static method is provided by LB, remove first lines
+  	return vectorResult;
+} ;
+
+std::vector<std::string> Status::getStatesNames(){
+
 	std::vector<std::string> result ;
-	// get the first available Status
-	if (states.size()>0){
-		list<glite::lb::JobStatus>::iterator itLbStatus = states.begin();
-		int lb_attr;
-		for (lb_attr =0;(JobStatus::Attr) lb_attr < JobStatus::ATTR_MAX;lb_attr++){
-			result.push_back(itLbStatus->getAttrName( (JobStatus::Attr)lb_attr ));
-		}
+	
+	// Fill the returned array with the States Names
+	for (int lb_attr = 0; (JobStatus::Attr)lb_attr < JobStatus::ATTR_MAX; lb_attr++){
+		// Insert a single State Name
+		result.push_back(JobStatus::getAttrName((JobStatus::Attr)lb_attr));
 	}
+	
+	// Return the vector of States Names
 	return result;
 }
 
+std::vector<std::string> Status::getStatesCodes(){
 
+	std::vector<std::string> result ;
 
-
+	// Fill the returned array with the States Codes
+	for (int lb_code = 0; (JobStatus::Code)lb_code < JobStatus::CODE_MAX; lb_code++){
+		// Insert a single State Code
+		result.push_back(JobStatus::getStateName((JobStatus::Code)lb_code));
+	}
+	
+	// Return the vector of States Codes
+	return result;
+}
 
 void push_status( JobStatus status_retrieved , std::vector<std::string>& result , int hierarchy ){
 	int VECT_OFFSET = result.size() ;

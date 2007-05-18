@@ -33,11 +33,17 @@ AdWrapper::AdWrapper( int level ){
 AdWrapper::~AdWrapper() {
 	if (jad!= NULL) delete jad ;
 }
-int AdWrapper::get_error (string& err){
-	err= error ;
-	error ="";
-	if (error_code) return 1;
-	return 0;
+std::vector<std::string>  AdWrapper::get_error (){
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
 }
 bool AdWrapper::fromFile(const string  &jdl_file ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
@@ -408,12 +414,15 @@ vector<string> DagWrapper::getMap (){
 * Error Managing
 **************/
 void  DagWrapper::log_error ( const std::string& err) { error_code = true ; error = err ; };
-int  DagWrapper::get_error (std::string& err) {
-	if (error_code ){
-		err = error ;   error = "" ;
-		error_code= false ;
-		return 1 ;
-	}
-	err = "" ;
-	return 0 ;
+std::vector<std::string>  DagWrapper::get_error () {
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
 }

@@ -33,21 +33,11 @@ namespace std {
 
 %inline %{
 using namespace std;
-class  UCredential {
-	public:
-		~UCredential();
-		UCredential ( const string& proxy_file) ;
-		string  getDefaultVoName ();
-		string  getDefaultFQAN ();
-		vector <string> getVoNames ();
-		vector <string> getGroups (const  string& voName ) ;
-		vector <string > getDefaultGroups () ;
-		bool containsVo (const string& voName )  ;
-		string get_error () ;
-		std::string  getIssuer() ;
-		int getExpiration() ;
-};
+
+#include "UcWrapper.h"
+
 %}
 
+%include "UcWrapper.h"
 
 

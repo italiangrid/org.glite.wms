@@ -104,7 +104,7 @@ class LOG {
 	* @param err the string description passed by reference. Python will consider it as a returning parameter
 	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
 	*/
-	int get_error (std::string& err) ;
+	std::vector<std::string>  get_error () ;
 	/**
 	* Register a dag to the LB server through a synchronous call. perform Sub jobs jdl submission string registering as well
 	* @param jdls the sub-jobs string representation

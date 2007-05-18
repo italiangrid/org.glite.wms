@@ -33,14 +33,9 @@ namespace std {
 %inline %{
 using namespace std;
 typedef std::string String;
- class  ServiceDiscovery {
-	public:
-		~ServiceDiscovery();
-		ServiceDiscovery ();
-		vector<String> lookForServices (const string &voName,const string &sdType);
-		std::string get_error ();
-};
+
+#include "SdWrapper.h"
+
 %}
 
-
-
+%include "SdWrapper.h"

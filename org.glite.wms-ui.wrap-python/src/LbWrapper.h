@@ -61,12 +61,13 @@ class Status {
 	* @return a couple of strings [ <attribute name > , <attribute value> ]
 	*
 	*/
-	std::string getVal (int field, std::string& attrValue, int status_number = 0);
+	std::vector<std::string> getVal (int field, int status_number = 0);
 	/**Set an attribute value (of string type)
 	* @param err the string description passed by reference. Python will consider it as a returning parameter
 	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
 	*/
-	int get_error (std::string& err) ;
+	
+	std::vector<std::string> get_error () ;
 
 	/**
 	* retrieve a Job Status from the downloaded ones
@@ -76,10 +77,14 @@ class Status {
 	std::vector< std::string  > loadStatus( int status_number= 0) ;
 
 	/**
-	* Retrieve the Names of all available Status
-	* TODO  once static method is provided by LB put this method static
+	* Retrieve the Names of all available States
 	*/
-	std::vector<std::string> getStatusNames() ;
+	std::vector<std::string> getStatesNames() ;
+
+	/**
+	* Retrieve the Codes of all available States
+	*/
+	std::vector<std::string> getStatesCodes() ;
 
 	/**
 	* Perform a query to the Lb Server allowing the user to specify several parameters
@@ -142,14 +147,17 @@ class Eve{
 	* @param attrValue parameter passed by reference , returned by python
 	* @return a couple of strings [ <attribute name > , <attribute value> ]
 	*/
-	std::string getVal (int field , std::string& attrValue , int event_number);
-
+	std::vector<std::string> getVal (int field , int event_number);
 
 	/**
-	* Retrieve the Names of all available Event
-	* TODO  once static method is provided by LB put this method static
+	* Retrieve the Names of all available Events
 	*/
-	std::vector<std::string> getEventNames() ;
+	std::vector<std::string> getEventsNames() ;
+
+	/**
+	* Retrieve the Codes of all available Events
+	*/
+	std::vector<std::string> getEventsCodes() ;
 
 	/**
 	* Perform a query to the Lb Server allowing the user to specify several parameters
@@ -170,8 +178,10 @@ class Eve{
 		const std::vector<std::string>& tagNames, const std::vector<std::string>& tagValues,
 		const std::vector<int>& excludes, const std::vector<int>& includes,
 		std::string issuer,int from, int to ,int ad);
-	int get_error (std::string& err) ;
-	std::string getEventName(std::string& result, int event_number);
+
+	std::vector<std::string> get_error () ;
+
+	std::vector<std::string> Eve::getEventName(int event_number);
   private:
 	std::list<glite::lb::Event> events ;
 	std::string error;

@@ -155,14 +155,18 @@ void NS::log_error (const std::string& err ){
 	this->error = err ;
 }
 /** Error retrieval*/
-int NS::get_error (std::string&  err) {
-	if (error_code){
-		err = error ;
-		error = ""  ;
-		return 1 ;
-	}
-	err = "" ;
-	return 0 ;
+std::vector<std::string> NS::get_error () {
+
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
 }
 
 /******************************************************************

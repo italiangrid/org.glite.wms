@@ -37,15 +37,18 @@ void LOG::log_error (const std::string& err ){
     error = err ;
     if (error_code==0)   error_code = 1 ;
 } ;
-int LOG::get_error (std::string&  err) {
-  if (error_code ){
-      err = error ;
-      error = "" ;
-      return error_code ;
-   }
-   err = "" ;
-   error_code= 0 ;
-   return 0 ;
+std::vector<std::string>  LOG::get_error () {
+
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
 };
 
 
