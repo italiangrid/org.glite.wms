@@ -396,6 +396,7 @@ try{
 		case Event::EXIT_CODE:
 		case Event::PRIORITY:
 		case Event::NSUBJOBS:
+		case Event::SHADOW_EXIT_STATUS:
 			sprintf (tmp , "%d" , event_retrieved.getValInt(fieldAttr) ) ;
 			result = string (tmp) ;
 			break;
@@ -438,6 +439,7 @@ try{
 		case Event::DEST_INSTANCE:
 		case Event::JOBSTAT:
 		case Event::OWNER:
+		case Event::WN_SEQ:
 			result = event_retrieved.getValString(fieldAttr) ;
 			break;
 		case Event::TIMESTAMP:
@@ -455,7 +457,7 @@ try{
 		}
 		break;
 		default      : 	// something is wrong
-		log_error("Something is wrong for " +attrName ) ;
+		//log_error("Something is wrong for " +attrName ) ;
 		break;
 	} // end switch
 } catch ( exception &exc){
@@ -702,7 +704,7 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 			}
 			break;
 			default : /* something is wrong */
-				cerr << "\n\nFATAL ERROR!!! Something has gone bad for "
+				cerr << "\n\nFATAL ERROR!!! 	 has gone bad for "
 					<< status_retrieved.getAttrName(attrList[i].first) << flush;
 			break;
 		}// end switch
