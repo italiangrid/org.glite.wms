@@ -267,7 +267,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		setEndPoint(lbApi.getStatus(true,true).getEndpoint());
 		// checks if --endpoint option has been specified with a different endpoint url
 		string endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
-		if (endpoint.compare(getEndPoint( )) !=0 ) {
+		if ( !endpoint.empty() && endpoint.compare(getEndPoint( )) !=0 ) {
 			logInfo->print(WMS_WARNING, "--endpoint " + endpoint + " : option ignored");
 		}
 	} else {
