@@ -2058,7 +2058,7 @@ std::string Dup::getInfo( string stream ) {
 int Utils::doExecv(const string &command, vector<string> &params, string &errormsg, const int &delay) {
 	GLITE_STACK_TRY("doExecv()");
 	status = 0;
-	pid_t pid ;
+	pid_t child_pid ;
 
 	handled_sign = false;
 	signal ( SIGCHLD, childSignalHandler)  ;
@@ -2093,7 +2093,7 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 	}
 	argvs[i] = NULL;
 
-	switch (fork()) {
+	switch ( child_pid = fork()) {
 		case -1:
 			// Unable to fork
 			errormsg = "Unable to fork process";
@@ -2102,7 +2102,6 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 			break;
 		case 0:
 			// child: execute the required command, on success does not return
-			pid = getpid ();
 			if (execv (command.c_str(), argvs)) {
 				//execv failed
 				//duplicates the std.out and std.err of the command into two files
@@ -2132,7 +2131,7 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 			if (handled_sign == false) {
 				logInfo -> print (WMS_WARNING, "Method doExecv: ", "Timeout reached, command execution will be terminated now", true, true) ;
 				//kills the child
-				kill( pid, SIGKILL ) ;
+				kill( child_pid, SIGKILL ) ;
 				return TIMEOUT_FAILURE ;
 			}
 			if (WIFEXITED(status)) {
