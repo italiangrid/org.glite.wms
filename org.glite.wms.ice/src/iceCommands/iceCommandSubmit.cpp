@@ -334,7 +334,9 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
-                   << "iceCommandSubmit::execute() - Returned CREAM-JOBID ["
+                   << "iceCommandSubmit::execute() - "
+		   << "For GridJobID [" << m_theJob.getGridJobID() << "]" 
+		   << " CREAM Returned CREAM-JOBID ["
                    << url_jid[1] <<"]"
                    << log4cpp::CategoryStream::ENDLINE
                    );
