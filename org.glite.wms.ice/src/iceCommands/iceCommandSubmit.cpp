@@ -253,7 +253,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     } catch( iceUtil::ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
-                       << "Cannot convert jdl=" << m_jdl
+                       << "iceCommandSubmit::execute() - Cannot convert jdl=" << m_jdl
                        << " due to classad exception:" << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
@@ -266,7 +266,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting") );
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream() 
-                   << "JDL " << modified_jdl << " to [" 
+                   << "iceCommandSubmit::execute() - JDL " << modified_jdl << " to [" 
                    << m_theJob.getCreamURL() <<"]["
                    << m_theJob.getCreamDelegURL() << "]"
                    << log4cpp::CategoryStream::ENDLINE
@@ -307,8 +307,17 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                    );
     try {	    
         // api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
+      CREAM_SAFE_LOG(
+                       m_log_dev->debugStream()
+                       << "iceCommandSubmit::execute() - "
+                       << "Going to REGISTER Job ["
+                       << m_theJob.getGridJobID() 
+                       << "]..."
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
         iceUtil::CreamProxy_Register pr( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID,
-					 modified_jdl,m_theJob.getUserProxyCertificate(), url_jid, newLease/*m_configuration->ice()->lease_delta_time()*/, true );
+					 modified_jdl, m_theJob.getGridJobID(),
+					 m_theJob.getUserProxyCertificate(), url_jid, newLease/*m_configuration->ice()->lease_delta_time()*/, false );
 	pr.execute(m_theProxy.get(), 3 );
 
 	newLease = pr.retrieveNewLeaseTime();
@@ -317,9 +326,9 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
                        << "iceCommandSubmit::execute() - "
-                       << "Cannot register jobID="
+                       << "Cannot register GridJobID ["
                        << m_theJob.getGridJobID() 
-                       << " Exception:" << ex.what()
+                       << "] Exception:" << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
         m_theJob.set_failure_reason( ex.what() );
@@ -341,6 +350,39 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                    << log4cpp::CategoryStream::ENDLINE
                    );
     
+    try {
+      CREAM_SAFE_LOG(
+		     m_log_dev->debugStream()
+		     << "iceCommandSubmit::execute() - "
+		     << "Going to START CreamJobID ["
+		     << url_jid[1] <<"] related to GridJobID ["
+		     << m_theJob.getGridJobID() 
+		     << "]..."
+		     << log4cpp::CategoryStream::ENDLINE
+		     );
+      
+      iceUtil::CreamProxy_Start pr( m_theJob.getCreamURL(), url_jid[1]);
+      pr.execute(m_theProxy.get(), 7 );
+    } catch( exception& ex ) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->errorStream()
+                       << "iceCommandSubmit::execute() - "
+                       << "Cannot start CreamJobID ["
+		       << url_jid[1] << "] GridJobID ["
+                       << m_theJob.getGridJobID() << "]"
+                       << " Exception:" << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        m_theJob.set_failure_reason( ex.what() );
+        m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
+        // The next event is used to show the failure reason in the status info
+        // JC+LM log transfer-fail / aborted in case of condor transfers fail
+        m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() ) );
+        m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
+        m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
+        throw( iceCommandFatal_ex( ex.what() ) );
+    }
+
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
     

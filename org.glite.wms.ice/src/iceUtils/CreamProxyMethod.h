@@ -58,7 +58,7 @@ namespace util {
          * @param ntries the maximum number of times the CREAM method
          * will be executed. 
          */
-        void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* p, int ntries ); // may throw anything
+        virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* p, int ntries ); // may throw anything
     protected:
         CreamProxyMethod( ) { };
         /**
@@ -84,6 +84,7 @@ namespace util {
                              const std::string& deleg_service,
                              std::string& DelegID,
                              const std::string& JDL,
+			     const std::string& GID,
                              const std::string& certfile,
                              std::vector< std::string >& result,
                              const int lease_time,
@@ -113,6 +114,7 @@ namespace util {
         std::vector< std::string >& m_result;
         int m_lease_time;
         const bool m_autostart;
+	const std::string m_GridJobID;
     };
 
     /**
@@ -221,6 +223,31 @@ namespace util {
         const std::vector<std::string> m_jid;
     };
 
+
+    /**
+     * Wrapper class around the Start method of CreamProxy
+     */ 
+    class CreamProxy_Start : public CreamProxyMethod {
+    public:
+        CreamProxy_Start( const std::string& service,
+                          const std::string& jobid );
+        virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* p, int ntries ); // This method behaves differently for Start
+    protected:        
+        void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
+            throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,                  glite::ce::cream_client_api::cream_exceptions::JobUnknownException&,
+                  glite::ce::cream_client_api::cream_exceptions::InvalidArgumentException&,
+                  glite::ce::cream_client_api::cream_exceptions::JobStatusInvalidException&,
+                  glite::ce::cream_client_api::cream_exceptions::GenericException&,
+                  glite::ce::cream_client_api::cream_exceptions::AuthenticationException&,
+                  glite::ce::cream_client_api::cream_exceptions::AuthorizationException&,
+                  glite::ce::cream_client_api::cream_exceptions::InternalException&,
+                  glite::ce::cream_client_api::cream_exceptions::ConnectionTimeoutException&,
+                  glite::ce::cream_client_api::cream_exceptions::JobSubmissionDisabledException&,
+                  glite::ce::cream_client_api::soap_proxy::auth_ex&);
+        
+        const std::string m_service;
+        const std::string m_jid;
+    };
 
 
 } // namespace util

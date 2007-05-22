@@ -75,6 +75,7 @@ CreamProxy_Register::CreamProxy_Register( const string& service,
                                           const string& deleg_service,
                                           string& DelegID,
                                           const string& JDL,
+					  const string& GID,
                                           const string& certfile,
                                           vector<string>& result,
                                           const int lease_time,
@@ -86,7 +87,8 @@ CreamProxy_Register::CreamProxy_Register( const string& service,
     m_certfile( certfile ),
     m_result( result ),
     m_lease_time( lease_time ),
-    m_autostart( autostart )
+    m_autostart( autostart ),
+    m_GridJobID( GID )
 {
 
 }
@@ -104,8 +106,95 @@ void CreamProxy_Register::method_call( soap_proxy::CreamProxy* p )
           cream_ex::InternalException&,
           soap_proxy::auth_ex& )
 {
+  try {
     p->Register( m_service.c_str(), m_deleg_service.c_str(), m_DelegID, m_JDL, m_certfile, m_result, m_lease_time, m_autostart );
+  } catch(cream_ex::ConnectionTimeoutException& ex) {
+    string what = ex.what() + string(" handling GridJobID [") + m_GridJobID + "]";
+    
+    throw cream_ex::ConnectionTimeoutException(what);
+  }
 }
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// Start
+//
+//////////////////////////////////////////////////////////////////////////////
+
+CreamProxy_Start::CreamProxy_Start( const string& service,
+                                        const string& jobid ) :
+    m_service( service ),
+    m_jid( jobid )
+{
+
+}
+
+void CreamProxy_Start::method_call( soap_proxy::CreamProxy* p )  
+    throw(cream_ex::BaseException&,
+          cream_ex::JobUnknownException&,
+          cream_ex::InvalidArgumentException&,
+          cream_ex::JobStatusInvalidException&,
+          cream_ex::GenericException&,
+          cream_ex::AuthenticationException&,
+          cream_ex::AuthorizationException&,
+          cream_ex::InternalException&,
+          cream_ex::ConnectionTimeoutException&,
+          cream_ex::JobSubmissionDisabledException&,
+          soap_proxy::auth_ex&)
+{
+    p->Start( m_service.c_str(), m_jid );
+}
+
+void CreamProxy_Start::execute( soap_proxy::CreamProxy* p, int ntries ) 
+{
+    log4cpp::Category* m_log_dev( api_util::creamApiLogger::instance()->getLogger() );
+    bool do_retry = true;
+    int retry_count = 1;
+    int sleep_time = 1; // start with 1 second
+
+    for ( retry_count = 1; do_retry; ++retry_count ) {
+        try {
+            this->method_call( p );            
+            do_retry = false; // if everything goes well, do not retry
+        } catch( cream_ex::ConnectionTimeoutException& ex ) {
+            if ( retry_count < ntries ) {
+                CREAM_SAFE_LOG( m_log_dev->warnStream()
+                                << "CreamProxy_Start::execute - Connection timed out to CREAM: \""
+                                << ex.what()
+                                << "\" for CREAM job id=\""
+                                << m_jid << "\" on try " 
+                                << retry_count << "/" << ntries
+                                << ". Trying again in " << sleep_time << " sec..."
+                                << log4cpp::CategoryStream::ENDLINE );
+                do_retry = true; // superfluous
+                sleep( sleep_time );
+                sleep_time += 2; // increment by 2 seconds for each retry
+            } else {
+                CREAM_SAFE_LOG( m_log_dev->errorStream()
+                                << "CreamProxy_Start::execute - Connection timed out to CREAM: \""
+                                << ex.what()
+                                << "\" for CREAM job id=\""
+                                << m_jid << "\" on try " 
+                                << retry_count << "/" << ntries
+                                << ". Giving up."
+                                << log4cpp::CategoryStream::ENDLINE );
+                throw; // rethrow
+            }            
+        } catch( cream_ex::JobStatusInvalidException& ex ) {
+            CREAM_SAFE_LOG( m_log_dev->warnStream()
+                            << "CreamProxy_Start::execute - JobStatusInvalidException to CREAM: \""
+                            << ex.what()
+                            << "\" for CREAM job id=\"" 
+                            << m_jid << "\" on try " 
+                            << retry_count << "/" << ntries
+                            << ". Assuming the job started."
+                            << log4cpp::CategoryStream::ENDLINE );
+            do_retry = false;
+        }
+    }
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -131,7 +220,7 @@ void CreamProxy_Cancel::method_call( soap_proxy::CreamProxy* p )
           cream_ex::InternalException&,
           soap_proxy::auth_ex&)
 {
-    p->Cancel( m_service.c_str(), m_jobids );
+  p->Cancel( m_service.c_str(), m_jobids );
 }
     
 //////////////////////////////////////////////////////////////////////////////
