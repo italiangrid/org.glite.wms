@@ -43,6 +43,39 @@ AdUtils::~AdUtils( ){ }
 /******************************
 *  AdUtils class methods:
 *******************************/
+void AdUtils::printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf) {
+
+  Log *logInfo = new Log(vbLevel);
+
+  std::vector<std::string> deprecatedAttributes;
+
+  // Set all the deprecated attributes outside JDL Default Attributes
+  //deprecatedAttributes.push_back(JDL::VIRTUAL_ORGANISATION);
+  deprecatedAttributes.push_back(JDL::RETRYCOUNT);
+  deprecatedAttributes.push_back(JDL::SHALLOWRETRYCOUNT);
+  deprecatedAttributes.push_back(JDL::RANK);
+  deprecatedAttributes.push_back(JDL::REQUIREMENTS);
+  deprecatedAttributes.push_back(JDL::HLR_LOCATION);
+  deprecatedAttributes.push_back(JDL::MYPROXY);
+  deprecatedAttributes.push_back(JDL::JOB_PROVENANCE);
+  deprecatedAttributes.push_back(JDL::LB_ADDRESS);
+  deprecatedAttributes.push_back(JDL::ALLOW_ZIPPED_ISB);
+  deprecatedAttributes.push_back(JDL::PU_FILE_ENABLE);
+
+  // Show all the warnings for each deprecated attributes
+  for(unsigned int counter = 0; counter < deprecatedAttributes.size(); counter++) 
+  {
+
+    // Check if the current deprecated attributes is present
+    if(p_conf->hasAttribute(deprecatedAttributes[counter])) 
+    {
+      logInfo->print(WMS_DEBUG, deprecatedAttributes[counter], "attribute no more supported outside JDL Default Attributes ClassAD.", true, true);
+    }
+
+  }
+
+}
+
 string AdUtils::generateVoPath(string& voName){
 	//new approach
 	string conf = string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CLIENTCONFILE;
@@ -332,6 +365,7 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 				setMissingInt(jdl,JDL::SHALLOWRETRYCOUNT,confAd);
 			}
 		}
+	
 	}catch(RequestAdException &exc){
 		// Some classAd exception occurred
 		throw WmsClientException(__FILE__,__LINE__,
@@ -353,6 +387,9 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 			"Error while merging configuration file", exc.what());
 	}
 }
+
+
+
 /******************
 * JDL is a JobAd
 *******************/

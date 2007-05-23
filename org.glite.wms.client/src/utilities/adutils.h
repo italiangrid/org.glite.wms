@@ -98,6 +98,9 @@ class AdUtils{
 		*Default destructor
 		*/
 		~AdUtils( );
+		
+		void printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf);
+		
 		/**
 		* parse the specified files and override the default Ad with the user custom entries
 		*@param pathUser poitning to the user configuration file
