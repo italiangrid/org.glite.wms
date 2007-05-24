@@ -24,6 +24,7 @@
 #include "iceConfManager.h"
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "iceConfManager.h"
 
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace cream_ex = glite::ce::cream_client_api::cream_exceptions;
@@ -36,8 +37,13 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
     log4cpp::Category* m_log_dev( api_util::creamApiLogger::instance()->getLogger() );
     bool do_retry = true;
     int retry_count = 1;
+    int conn_timeout = iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout();; // Timeout to set for each try
+    int conn_timeout_delta = conn_timeout / 2; // Timeout increase for each try
+    int delay = 1; // How much to sleep after each try
+
     for ( retry_count = 1; do_retry; ++retry_count ) {
         try {
+            p->setConnectionTimeout( conn_timeout );
             this->method_call( p );            
             do_retry = false; // if everything goes well, do not retry
         } catch( cream_ex::ConnectionTimeoutException& ex ) {
@@ -49,7 +55,9 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
                                 << ". Trying again in 1 sec..."
                                 << log4cpp::CategoryStream::ENDLINE );
                 do_retry = true; // superfluous
-                sleep( 1 );
+                sleep( delay );
+                delay += 2; // double delay for each try
+                conn_timeout += conn_timeout_delta;
             } else {
                 CREAM_SAFE_LOG( m_log_dev->errorStream()
                                 << "CreamProxyMethod::execute - Connection timed out to CREAM: \""
@@ -143,8 +151,21 @@ void CreamProxy_Start::method_call( soap_proxy::CreamProxy* p )
           cream_ex::JobSubmissionDisabledException&,
           soap_proxy::auth_ex&)
 {
-    p->Start( m_service.c_str(), m_jid );
+    try {
+        p->Start( m_service.c_str(), m_jid );
+    } catch ( cream_ex::JobStatusInvalidException& ex ) {
+        CREAM_SAFE_LOG( m_log_dev->warnStream()
+                        << "CreamProxy_Start::method_call - JobStatusInvalidException to CREAM: \""
+                        << ex.what()
+                        << "\" for CREAM job id=\"" 
+                        << m_jid << "\". Assuming the job started."
+                        << log4cpp::CategoryStream::ENDLINE );
+    } catch( ... ) {
+        throw; // Rethrow everything else
+    }
 }
+
+#ifdef DO_NOT_COMPILE
 
 void CreamProxy_Start::execute( soap_proxy::CreamProxy* p, int ntries ) 
 {
@@ -195,6 +216,7 @@ void CreamProxy_Start::execute( soap_proxy::CreamProxy* p, int ntries )
     }
 }
 
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //

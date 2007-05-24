@@ -231,7 +231,6 @@ namespace util {
     public:
         CreamProxy_Start( const std::string& service,
                           const std::string& jobid );
-        virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* p, int ntries ); // This method behaves differently for Start
     protected:        
         void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
             throw(glite::ce::cream_client_api::cream_exceptions::BaseException&,                  glite::ce::cream_client_api::cream_exceptions::JobUnknownException&,
