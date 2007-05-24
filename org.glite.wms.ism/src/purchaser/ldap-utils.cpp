@@ -199,7 +199,7 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             ldif_SE.asClassAd(multi_attrs_begin, multi_attrs_end)
           );
           string const gluese_unique_id(
-            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
           );
           gluese_info_map_type::iterator it;
           bool gluese_info_map_insert;
@@ -230,7 +230,7 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             ldif.asClassAd(multi_attrs_begin, multi_attrs_end)
           );
           string const gluese_unique_id(
-            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].rfind("=")+1)
+            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
           );
           gluese_info_map_type::iterator it(
             gluese_info_map.find(gluese_unique_id)
@@ -347,7 +347,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 	
 	if (is_gluecluster_info_dn(ldap_dn_tokens)) {
 	  string glue_cluster_unique_id(
-	    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+	    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
           );
           ldif2classad::LDIFObject ldif_CL(*ldap_it);
           string glue_site_unique_id(get_site_name(ldif_CL));
@@ -375,7 +375,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             ldif_CE.asClassAd(multi_attrs_begin, multi_attrs_end)
           );
 	  string gluece_unique_id(
-	    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+	    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
 	  );
 	  string glue_cluster_unique_id(get_cluster_name(ldif_CE));
 	  
@@ -400,10 +400,10 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             ldif_SC.asClassAd(multi_attrs_begin, multi_attrs_end)
           );
           string gluesubcluster_unique_id(
-            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
           );
           string glue_cluster_unique_id(
-            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].rfind("=")+1)
+            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
           );
           gluesubcluster_info_map_type::iterator it;
           bool gluesubcluster_info_map_insert;
@@ -422,7 +422,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             ldif_BN.asClassAd(multi_attrs_begin, multi_attrs_end)
           );
           string glueceuniqueid(
-	    ldap_dn_tokens[1].substr(ldap_dn_tokens[1].rfind("=")+1)
+	    ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
           );
           gluece_info_map[glueceuniqueid].second.push_back(bnAd);
 	}
@@ -432,11 +432,12 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             ldif_VO.asClassAd(multi_attrs_begin, multi_attrs_end)
           );
           string gluevoviewlocalid(
-            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
           );
           string glueceuniqueid(
-            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].rfind("=")+1)
+            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
           );
+
           gluece_voview_info_map[glueceuniqueid].push_back(
             std::make_pair(gluevoviewlocalid,voAd)
           );
@@ -471,7 +472,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
         vector<gluece_info_map_type::iterator>::const_iterator const ce_e(
           boost::tuples::get<1>(cl_it->second).end()
         );
-        
+
         for( ; ce_it != ce_e; ++ce_it) {
 
           (*ce_it)->second.first->Update(*sc_ad.get());
@@ -551,6 +552,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             vector<pair_string_classad_shared_ptr>::const_iterator const
               vo_view_e(vo_views->second.end());
 
+
             for ( ; vo_view_it!=vo_view_e; ++vo_view_it) {
               
               set<string> view_access_control_base_rules; 
@@ -584,7 +586,12 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
               viewAd->Update(*vo_view_it->second);
               gluece_info_container.insert(
                 std::make_pair(
-                  (*ce_it)->first + "/" + vo_view_it->first,
+                  (*ce_it)->first + 
+                  "/" + 
+                  boost::algorithm::trim_left_copy_if(
+                    vo_view_it->first,
+                    boost::algorithm::is_any_of("/")
+                  ),
                   viewAd
                 )
               );
