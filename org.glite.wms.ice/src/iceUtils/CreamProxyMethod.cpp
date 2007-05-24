@@ -22,6 +22,8 @@
  */
 
 #include "iceConfManager.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "iceConfManager.h"
@@ -151,10 +153,12 @@ void CreamProxy_Start::method_call( soap_proxy::CreamProxy* p )
           cream_ex::JobSubmissionDisabledException&,
           soap_proxy::auth_ex&)
 {
+    log4cpp::Category* log_dev( api_util::creamApiLogger::instance()->getLogger() );
+
     try {
         p->Start( m_service.c_str(), m_jid );
     } catch ( cream_ex::JobStatusInvalidException& ex ) {
-        CREAM_SAFE_LOG( m_log_dev->warnStream()
+        CREAM_SAFE_LOG( log_dev->warnStream()
                         << "CreamProxy_Start::method_call - JobStatusInvalidException to CREAM: \""
                         << ex.what()
                         << "\" for CREAM job id=\"" 
