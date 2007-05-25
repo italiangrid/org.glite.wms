@@ -250,8 +250,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                             << "iceCommandSubmit::execute() - "
                             << "Submit request for job "
                             << m_theJob.describe()
-                            << "\" is related to a job already in ICE cache. "
-                            << "Removing the request from the filelist and going ahead."
+                            << " is related to a job already in ICE cache. "
+                            << "Removing the request and going ahead."
                             << log4cpp::CategoryStream::ENDLINE
                             );   
             return;
