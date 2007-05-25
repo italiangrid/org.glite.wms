@@ -24,6 +24,9 @@
 #include <map>
 #include <boost/thread/recursive_mutex.hpp>
 
+#include "jobCache.h"
+#include "SourceProxyNotFoundException.h"
+
 namespace log4cpp {
   class Category;
 };
@@ -42,7 +45,8 @@ namespace glite {
 	   * while the second one is the ICE's local copy.
 	   * Let's keep as much information as possible...!!
 	   */
-	  std::map<std::string, std::pair<std::string, std::string> >   m_DNProxyMap;
+	  //std::map<std::string, std::pair<std::string, std::string> >   m_DNProxyMap;
+	  std::map<std::string, std::string> m_DNProxyMap;
 	  log4cpp::Category *m_log_dev;
 
 	protected:
@@ -57,12 +61,13 @@ namespace glite {
 	  void                   setUserProxyIfLonger( const std::string& dn, const std::string& proxy) throw();
 
 	  std::string            getBetterProxyByDN( const std::string& dn ) const throw() {
-	    std::map<std::string, std::pair<std::string, std::string> >::const_iterator it = m_DNProxyMap.find( dn );
+	    std::map<std::string, std::string >::const_iterator it = m_DNProxyMap.find( dn );
 	    if( it == m_DNProxyMap.end()) return "";
-	    return it->second.second; // return the local copy of the proxy, because the sandbox's one could be removed
+	    return it->second; // return the local copy of the proxy, because the sandbox's one could be removed
 	  }
 
-	  void copyProxy( const std::string& source, const std::string& target ) throw();
+	  void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
+	  jobCache::iterator searchBetterProxyForUser( const std::string& ) throw();
 
 	  static boost::recursive_mutex  mutex;
 
