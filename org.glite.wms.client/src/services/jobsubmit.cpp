@@ -364,7 +364,10 @@ void JobSubmit::submission ( ){
 					"submission",  DEFAULT_ERR_CODE ,
 					"The job has been successfully registered (the JobId is: " + this->getJobId( ) + "),"+
 					" but an error occurred while transferring files:",
-					string (exc.what()));
+					 string (exc.what())+"\n"+
+					"To complete the operation start the job by issuing a submission with the option:\n"+
+					" --start " + this->getJobId( ) + "\n"
+					 );
 			}
 		} else{
 			logInfo->print(WMS_DEBUG, "No local files to be transferred") ;
