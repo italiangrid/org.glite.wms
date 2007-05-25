@@ -1867,7 +1867,7 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 			string comment = "";
 			string it = *token;
 			it = Utils::cleanString( (char*) it.c_str()) ;
-			if ( it.find("#*")==0 ) {
+			if ( it.find("#*")==0 &&!this->wmcOpts->getBoolAttribute(Options::NOINT) ) {
 				// It's a special comment, insert line
 				comment = it ;
 				items.push_back(comment);
@@ -2251,6 +2251,7 @@ string Utils::resolveAddress( string relpath ) {
 		}
 		it++;
 	}
+	//TO-DO, inserire controllo su address!
 	struct sockaddr_in ip;
 	inet_aton( address.c_str(), &ip.sin_addr ) ;
 	if( (result = gethostbyaddr( (char*)&ip.sin_addr, sizeof(ip.sin_addr), AF_INET)) == NULL ){
