@@ -235,6 +235,32 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     vector<string> url_jid;
     Request_source_purger purger_f( m_request );
     wms_utils::scope_guard remove_request_guard( purger_f );
+
+    // We start by checking whether the job already exists in ICE
+    // cache.  This may happen if ICE already tried to submit the job,
+    // but crashed before removing the request from the filelist. If
+    // we find the job already in ICE cache, we simply give up
+    // (logging an information message), and the purge_f object will
+    // take care of actual removal.
+    {
+        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+        iceUtil::jobCache::const_iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
+        if ( cache->end() != it ) {
+            CREAM_SAFE_LOG( m_log_dev->warnStream()
+                            << "iceCommandSubmit::execute() - "
+                            << "Submit request for job "
+                            << m_theJob.describe()
+                            << "\" is related to a job already in ICE cache. "
+                            << "Removing the request from the filelist and going ahead."
+                            << log4cpp::CategoryStream::ENDLINE
+                            );   
+            return;
+        }
+    } // unlocks the cache
+        
+
+    // This must be left AFTER the above code. The remove_job_guard
+    // object will REMOVE the job from the cache when being destroied.
     remove_job_from_cache remove_f( m_theJob.getGridJobID() );
     wms_utils::scope_guard remove_job_guard( remove_f );
     
