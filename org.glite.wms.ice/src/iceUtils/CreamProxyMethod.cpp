@@ -54,11 +54,11 @@ void CreamProxyMethod::execute( soap_proxy::CreamProxy* p, int ntries )
                                 << "CreamProxyMethod::execute - Connection timed out to CREAM: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
-                                << ". Trying again in 1 sec..."
+                                << ". Trying again in " << delay << " sec..."
                                 << log4cpp::CategoryStream::ENDLINE );
                 do_retry = true; // superfluous
                 sleep( delay );
-                delay += 2; // double delay for each try
+                delay += 2; // increments delay for each try
                 conn_timeout += conn_timeout_delta;
             } else {
                 CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -169,58 +169,6 @@ void CreamProxy_Start::method_call( soap_proxy::CreamProxy* p )
     }
 }
 
-#ifdef DO_NOT_COMPILE
-
-void CreamProxy_Start::execute( soap_proxy::CreamProxy* p, int ntries ) 
-{
-    log4cpp::Category* m_log_dev( api_util::creamApiLogger::instance()->getLogger() );
-    bool do_retry = true;
-    int retry_count = 1;
-    int sleep_time = 1; // start with 1 second
-
-    for ( retry_count = 1; do_retry; ++retry_count ) {
-        try {
-            this->method_call( p );            
-            do_retry = false; // if everything goes well, do not retry
-        } catch( cream_ex::ConnectionTimeoutException& ex ) {
-            if ( retry_count < ntries ) {
-                CREAM_SAFE_LOG( m_log_dev->warnStream()
-                                << "CreamProxy_Start::execute - Connection timed out to CREAM: \""
-                                << ex.what()
-                                << "\" for CREAM job id=\""
-                                << m_jid << "\" on try " 
-                                << retry_count << "/" << ntries
-                                << ". Trying again in " << sleep_time << " sec..."
-                                << log4cpp::CategoryStream::ENDLINE );
-                do_retry = true; // superfluous
-                sleep( sleep_time );
-                sleep_time += 2; // increment by 2 seconds for each retry
-            } else {
-                CREAM_SAFE_LOG( m_log_dev->errorStream()
-                                << "CreamProxy_Start::execute - Connection timed out to CREAM: \""
-                                << ex.what()
-                                << "\" for CREAM job id=\""
-                                << m_jid << "\" on try " 
-                                << retry_count << "/" << ntries
-                                << ". Giving up."
-                                << log4cpp::CategoryStream::ENDLINE );
-                throw; // rethrow
-            }            
-        } catch( cream_ex::JobStatusInvalidException& ex ) {
-            CREAM_SAFE_LOG( m_log_dev->warnStream()
-                            << "CreamProxy_Start::execute - JobStatusInvalidException to CREAM: \""
-                            << ex.what()
-                            << "\" for CREAM job id=\"" 
-                            << m_jid << "\" on try " 
-                            << retry_count << "/" << ntries
-                            << ". Assuming the job started."
-                            << log4cpp::CategoryStream::ENDLINE );
-            do_retry = false;
-        }
-    }
-}
-
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //
