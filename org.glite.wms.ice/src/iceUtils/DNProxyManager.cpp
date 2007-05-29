@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <openssl/sha.h> // for using SHA1
 
 #include <boost/filesystem/operations.hpp>
 
@@ -48,6 +49,34 @@ boost::recursive_mutex iceUtil::DNProxyManager::mutex;
 
 //______________________________________________________________________________
 namespace {
+
+    //
+    // Utility function: Computes a SHA1 hash of the input string. The
+    // resulting hash is made of 40 printable characters, each
+    // character in the range [0-9A-F].
+    //
+    // @input name an input string; 
+    //
+    // @return a string of 40 printable characters, each in the range [0-9A-F]
+    //
+    string compressed_string( const string& name ) {
+        string result;
+        unsigned char buf[ SHA_DIGEST_LENGTH ]; // output buffer
+        const unsigned char idx[ 17 ] = "0123456789ABCDEF"; // must be 17 chars, as the trailing \0 counts
+        SHA1( (const unsigned char*)name.c_str(), name.length(), buf ); // stores SHA1 hash in buf
+        for ( int i=0; i<SHA_DIGEST_LENGTH; ++i ) {
+            unsigned char to_append;
+            // left nibble;
+            to_append = idx[ ( buf[i] & 0xf0 ) >> 4 ];
+            result.push_back( to_append );
+            // right nibble
+            to_append = idx[ buf[i] & 0x0f ];
+            result.push_back( to_append );
+        }
+        return result;
+    }
+
+
 
   class dnprxUpdater {
     iceUtil::DNProxyManager* m_mgr;
@@ -118,7 +147,8 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
     {
       if( it->empty() ) continue;
 
-      localProxy = prefix + iceUtil::canonizeString( *it ) + ".proxy";
+      // localProxy = prefix + iceUtil::canonizeString( *it ) + ".proxy";
+      localProxy = prefix + compressed_string( *it ) + ".proxy";
       boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
       if( !boost::filesystem::exists( thisPath ) )
 	{
@@ -188,8 +218,8 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 						    const string& prx
 						    ) throw()
 { 
-  string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() 
-    + "/" + iceUtil::canonizeString( dn ) + ".proxy";
+    // string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + iceUtil::canonizeString( dn ) + ".proxy";
+    string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
 
 
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
