@@ -25,6 +25,7 @@
 #include "CreamProxyMethod.h"
 #include "Request_source_purger.h"
 #include "Request.h"
+#include "DNProxyManager.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -182,8 +183,20 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
+    /**
+     * Getting betterproxy for current job. Note that this betterproxy should be there
+     * becase this procedure already checked that this job is in the cache and then
+     * it has been already submitted (that implies that its proxy has been put in the 
+     * DNProxyManager's cache of betterproxies).
+     */
+    string betterproxy;
+    {
+      boost::recursive_mutex::scoped_lock M( util::DNProxyManager::mutex );
+      betterproxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( theJob.getUserDN() );
+    }
+
     try {
-	m_theProxy->Authenticate( theJob.getUserProxyCertificate() );
+        m_theProxy->Authenticate( betterproxy /* theJob.getUserProxyCertificate() */ );
         theJob.set_failure_reason( "Aborted by user" );
         util::jobCache::getInstance()->put( theJob );
         util::CreamProxy_Cancel( theJob.getCreamURL(), url_jid ).execute( m_theProxy.get(), 3 );
