@@ -29,6 +29,8 @@
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
 #include "ice-core.h"
+#include "DNProxyManager.h"
+#include "subscriptionManager.h"
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -181,8 +183,9 @@ void StatusNotification::apply_to_job( CreamJob& j ) const
 }
 
 
-iceCommandUpdateStatus::iceCommandUpdateStatus( const monitortypes__Event& ev ) :
-    m_ev( ev )
+iceCommandUpdateStatus::iceCommandUpdateStatus( const monitortypes__Event& ev, const string& cemonDN ) :
+  m_ev( ev ),
+  m_cemondn( cemonDN )
 {
 
 }
@@ -252,6 +255,33 @@ void iceCommandUpdateStatus::execute( ) throw( )
         return;
     }
 
+    
+    {
+      string cemonurl, proxy, creamurl, cemondn;
+
+      {
+	boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
+	proxy = DNProxyManager::getInstance()->getBetterProxyByDN(jc_it->getUserDN());
+      }
+
+      creamurl = jc_it->getCreamURL();
+
+      {
+	boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
+	subscriptionManager::getInstance()->getCEMonURL( proxy, creamurl, cemonurl);
+	subscriptionManager::getInstance()->getCEMonDN( proxy, cemonurl, cemondn);
+      }
+      
+      if( cemondn != m_cemondn ) {
+	CREAM_SAFE_LOG(m_log_dev->warnStream()
+		       << "iceCommandUpdateStatus::execute() - "
+		       << "the CEMon that sent this notification "
+		       << "apparently didn't receive the submission of current job ["
+		       << jc_it->describe()
+		       << "]. Ignoring the whole notification..."
+		       << log4cpp::CategoryStream::ENDLINE);
+      }
+    }
 
     // Now, for each status change notification, check if it has to be logged
     // vector<StatusNotification>::const_iterator it;

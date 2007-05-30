@@ -244,7 +244,7 @@ void eventStatusListener::acceptJobStatus(void)
     std::vector< monitortypes__Event >::const_iterator it;
     const vector< monitortypes__Event >& events( getEvents() );
     for ( it = events.begin(); it != events.end(); ++it ) {
-        iceAbsCommand* cmd = new iceCommandUpdateStatus( *it );
+      iceAbsCommand* cmd = new iceCommandUpdateStatus( *it, this->getClientDN() );
         threadPool->add_request( cmd ); // ownership of the cmd pointer is passed to the threadPool object
     }
 

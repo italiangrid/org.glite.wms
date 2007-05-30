@@ -33,9 +33,11 @@ namespace util {
 
     class iceCommandUpdateStatus : public iceAbsCommand {
     protected:
-        monitortypes__Event m_ev;        
+        monitortypes__Event m_ev;
+	std::string m_cemondn;
+
     public:
-        iceCommandUpdateStatus( const monitortypes__Event& ev );
+        iceCommandUpdateStatus( const monitortypes__Event& ev, const std::string& cemondn );
         virtual ~iceCommandUpdateStatus( ) { };
         virtual void execute( ) throw( );
         std::string get_grid_job_id( void ) const { return std::string(); };
