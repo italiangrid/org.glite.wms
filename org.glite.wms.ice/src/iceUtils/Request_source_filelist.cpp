@@ -25,11 +25,13 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <vector>
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 namespace wmsutils_ns=glite::wms::common::utilities;
 namespace fs = boost::filesystem;
 using namespace glite::wms::ice::util;
 using namespace std;
+namespace api_util  = glite::ce::cream_client_api::util;
 
 typedef wmsutils_ns::FLExtractor<std::string>::iterator FLEit;
 
@@ -54,11 +56,11 @@ Request_source_filelist::Request_source_filelist( const std::string& fl_name, bo
     try {
         m_filelist.open( m_name );
     } catch( ... ) {
-//         CREAM_SAFE_LOG( m_log_dev->fatalStream()
-//                         << "Ice::CTOR() - Catched unknown exception"
-//                         << log4cpp::CategoryStream::ENDLINE
-//                         );
-        exit( 1 ); // FIXME
+         CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->fatalStream()
+                         << "Request_source_filelist::CTOR() - Catched unknown exception"
+                         << log4cpp::CategoryStream::ENDLINE
+                         );
+	 abort(); // FIXME
     }
 }
  
@@ -75,12 +77,12 @@ list<Request*> Request_source_filelist::get_requests( void )
         requests = m_filelist_extractor.get_all_available();
     }
     catch( exception& ex ) {
-//         CREAM_SAFE_LOG(
-//                        m_log_dev->fatalStream() 
-//                        << "Ice::getNextRequest() - " << ex.what()
-//                        << log4cpp::CategoryStream::ENDLINE
-//                        );
-        exit(1); // FIXME
+        CREAM_SAFE_LOG(
+                       api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                       << "Request_source_filelist::DTOR() - " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        abort(); // FIXME
     }
     for ( unsigned j=0; j < requests.size(); j++ ) {
         result.push_back( new Request_filelist( requests[j] ) );

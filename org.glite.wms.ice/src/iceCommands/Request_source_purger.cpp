@@ -47,13 +47,14 @@ void Request_source_purger::operator()( void )
     try { 
         Ice::instance()->removeRequest( m_req );
     } catch(std::exception& ex) {
-        if(!getenv("NO_FL_MESS")) CREAM_SAFE_LOG(
-                       				log_dev->fatalStream() 
-                       				<< "filelist_request_purger - "
-                       				<< "Error removing request from FL: "
-                       				<< ex.what()
-                       				<< log4cpp::CategoryStream::ENDLINE
-                      				 );
-        exit(1);
+        if(!getenv("NO_FL_MESS")) 
+	  CREAM_SAFE_LOG(
+			 log_dev->fatalStream() 
+			 << "filelist_request_purger::operator() - "
+			 << "Error removing request from FL: "
+			 << ex.what()
+			 << log4cpp::CategoryStream::ENDLINE
+			 );
+        abort();
     }
 }

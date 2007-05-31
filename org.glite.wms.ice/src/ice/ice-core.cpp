@@ -151,7 +151,7 @@ Ice* Ice::instance( void )
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            exit(1);
+            abort();
         } catch(...) {
             CREAM_SAFE_LOG(
                            m_log_dev->fatalStream() 
@@ -159,7 +159,7 @@ Ice* Ice::instance( void )
                            << "Catched unknown exception"
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            exit(1);
+            abort();
         }
         s_instance->init();    
     }
@@ -287,7 +287,7 @@ void Ice::startListener( void )
                            << "with authentication as requested. Stop."
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            exit(1);
+            abort();
         }
 
         CREAM_SAFE_LOG(
@@ -348,7 +348,7 @@ void Ice::startListener( void )
                            << "Ice::startListener() - Too many bind retries (5000 secs). Giving up..."
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            exit(1);
+            abort();
 	}  
         sleep(5);
     }
@@ -577,7 +577,7 @@ throw()
                        << "Fatal error: CreamJob creation failed "
                        << "copying from a valid one!!!"
                        << log4cpp::CategoryStream::ENDLINE);
-        exit(1);
+        abort();
     } catch(soap_proxy::auth_ex& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << "ice-core::purge_job() - "

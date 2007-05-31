@@ -126,7 +126,7 @@ iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::Cre
                        << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
-        exit( 1 );
+	abort();
     }
     
     /*
