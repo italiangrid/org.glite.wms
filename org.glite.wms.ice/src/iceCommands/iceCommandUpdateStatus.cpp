@@ -275,7 +275,8 @@ void iceCommandUpdateStatus::execute( ) throw( )
       if( cemondn != m_cemondn ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
 		       << "iceCommandUpdateStatus::execute() - "
-		       << "the CEMon that sent this notification "
+		       << "the CEMon ["
+		       << cemondn << "] that sent this notification "
 		       << "apparently didn't receive the submission of current job ["
 		       << jc_it->describe()
 		       << "]. Ignoring the whole notification..."
