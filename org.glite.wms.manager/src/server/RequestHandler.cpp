@@ -190,7 +190,8 @@ void process_submit(RequestPtr req, WMReal& wm)
         fs::path const token_file(get_reallyrunning_token(req));
 
         if (req->marked_resubmitted()) {
-          if (fs::exists(token_file)) {
+          bool exists = !unlink(token_file.string().c_str()); 
+          if (exists) {
             check_shallow_count(req, shallow_count);
             log_resubmission_shallow(
               req->lb_context(),
