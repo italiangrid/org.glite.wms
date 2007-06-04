@@ -270,7 +270,7 @@ void Ice::startListener( void )
      * authentication.
      */
     { 
-        boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+      //boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
         util::subscriptionManager::getInstance();
     }
     
@@ -529,10 +529,10 @@ throw()
 
     // Gets the proxy to use for authentication
     string proxy;
-    {
-        boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+    //{
+    //    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
         proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() );
-    }
+	//}
     
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); // this can be called by eventStatusListener::handleEvent that already acquired this mutex; this is not a problem 'cause the mutexes are recursive

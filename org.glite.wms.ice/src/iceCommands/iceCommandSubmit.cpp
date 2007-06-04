@@ -243,7 +243,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     // (logging an information message), and the purge_f object will
     // take care of actual removal.
     {
-        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+      boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
         iceUtil::jobCache::const_iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
         if ( cache->end() != it ) {
             CREAM_SAFE_LOG( m_log_dev->warnStream()
@@ -443,10 +443,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     
     // now the job is in cache and has been registered
     // we can save its proxy into the DN-Proxy Manager's cache
-    {
-      boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-      iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( m_theJob.getUserDN(), m_theJob.getUserProxyCertificate() );
-    }
+    //    {
+    // boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( m_theJob.getUserDN(), m_theJob.getUserProxyCertificate() );
+    //}
 
     /*
      * here must check if we're subscribed to the CEMon service
@@ -462,9 +462,11 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 
     remove_job_guard.dismiss(); // dismiss guard, job will NOT be removed from cache
     
-    boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-    m_theJob.setLastSeen( time(0) );
-    cache->put( m_theJob );
+    {
+      boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+      m_theJob.setLastSeen( time(0) );
+      cache->put( m_theJob );
+    }
 } // execute
 
 
@@ -764,18 +766,10 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   string userProxy = aJob.getUserProxyCertificate();
   string ce        = aJob.getCreamURL();
 
-  /**
-     The entire method must be mutex-protected, because 
-     cemonUrlCache::getCEMonURL modifies the internal member of cemonUrlCache object.
-     If these calls block for a while, this should happen only the first time, because after
-     a succesfull query to CREAM, cemonUrlCache should update its internal data
-     structures and cache the required information to make subsequent calls faster and without connection
-     to CEMon/CREAM.
-  */
-  boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
-  
-  
-  subMgr->getCEMonURL( userProxy, ce, cemon_url ); // also updated the internal subMgr's cache cream->cemon
+  {
+    //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
+    subMgr->getCEMonURL( userProxy, ce, cemon_url ); // also updated the internal subMgr's cache cream->cemon
+  }
   
   CREAM_SAFE_LOG(
   		 m_log_dev->infoStream() 
@@ -793,7 +787,11 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 //        << cemon_url << " )"
 //        << endl;
 
-  bool foundSubscription = subMgr->hasSubscription( userProxy, cemon_url );
+  bool foundSubscription;
+  {
+    //    boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
+    foundSubscription = subMgr->hasSubscription( userProxy, cemon_url );
+  }
   
   if ( foundSubscription )
     {
@@ -811,10 +809,10 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // This is because it is better to be sure that the subscription Updater
       // will use always the most long-lived proxy to renew subscriptions.
       //subMgr->setUserProxyIfLonger( userDN, userProxy );
-      {
-	boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-      }
+      //      {
+      //boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+      dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+      //}
 
       return;
     }	   
@@ -852,13 +850,14 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // an important information to cache in oder to authorize
       // notifications coming from this CEMon.
       string DN;
+      //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
       if( subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
 	    
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
-	{
-	  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-	  dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-	}
+	//{
+	//boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+	//}
 	
       } else {
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
@@ -871,13 +870,19 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 		       << log4cpp::CategoryStream::ENDLINE);
 	return; 
       }
-    } else {
-      
-	  subMgr->insertSubscription( userProxy, cemon_url, sub );
-	  {
-	    boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-	    dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-	  }
+    } // unlock the subscriptionManager::mutex
+    else {
+
+      {
+	//boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
+	subMgr->insertSubscription( userProxy, cemon_url, sub );
+      }
+
+      //      {
+      //boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+      dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+      //}
+
     }
 
     CREAM_SAFE_LOG(m_log_dev->infoStream()
@@ -893,6 +898,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     string DN;
     if ( m_configuration->ice()->listener_enable_authz() ) {
       //string DN;
+      //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
       if( !subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
 	// Cannot subscribe to a CEMon without it's DN
 	can_subscribe = false;
@@ -903,17 +909,20 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 		       << log4cpp::CategoryStream::ENDLINE
 		       );
       } 
-    } 
+    } // unlock subscriptionManager::mutex
     
     if(can_subscribe) {
       iceUtil::iceSubscription sub;
       if( iceUtil::subscriptionProxy::getInstance()->subscribe( userProxy, cemon_url, sub ) ) {
-	
-	subMgr->insertSubscription( userProxy, cemon_url, sub );
 	{
-	  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-	  dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+	  //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
+	  subMgr->insertSubscription( userProxy, cemon_url, sub );
 	}
+
+	//	{
+	//boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+	//}
 
       } else {
 	CREAM_SAFE_LOG(

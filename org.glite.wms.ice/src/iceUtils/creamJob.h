@@ -69,6 +69,8 @@ namespace glite {
           std::string m_worker_node; //! The worker node on which the job is being executed
           bool m_is_killed_by_ice;
 
+	protected:
+	  
 	public:
 
           //! Default constructor
@@ -76,6 +78,8 @@ namespace glite {
 
           //! Costructor from classad
           CreamJob( const std::string& ad ) throw (ClassadSyntax_ex& );
+
+	  //CreamJob( const CreamJob& ) throw();
 
 	  //! Sets the status of the CreamJob object
 	  void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_status = st; }

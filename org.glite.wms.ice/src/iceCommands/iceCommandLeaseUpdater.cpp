@@ -75,10 +75,38 @@ namespace {
             
             CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->warnStream()
                            << "iceCommandLeaseUpdater::check_lease_expired() - "
-                           << "Removing from cache lease-expired job "
+                           << "Cancelling and removing from cache the lease-expired job "
                            << job.describe()
                            << log4cpp::CategoryStream::ENDLINE);
             
+	    /**
+	     * MUST CANCEL the lease-expired JOB
+	     * TODO:...
+	     */
+
+	    {//-------------------------------------------------------------------
+	      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy( CreamProxyFactory::makeCreamProxy( false ) );
+	      string proxy;
+	      //{
+	      //boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
+	      proxy = DNProxyManager::getInstance()->getBetterProxyByDN( job.getUserDN() ) ;
+	      //}
+
+	      try {
+    
+		m_theProxy->Authenticate( proxy );
+		vector<string> jobVec;
+		jobVec.push_back( job.getCreamJobID() );
+		CreamProxy_Cancel( job.getCreamURL(), vector<string>() ).execute( m_theProxy.get(), 3 );
+		
+	      } catch(...) {
+		
+		// Let's ignore this cancellation error
+
+	      }
+	      
+	    } //-------------------------------------------------------------------
+	    
             CreamJob tmp_job( job );
             
             tmp_job.set_failure_reason( "Lease expired" );
@@ -104,12 +132,6 @@ namespace {
                  J.is_active() &&
                  !J.can_be_purged() );
 
-//         bool false_condition = J.getCreamJobID().empty() || check_lease_expired( J ) || (!J.is_active()) || J.can_be_purged();
-        
-//         if( false_condition )
-//             return false;
-//         else
-//             return true;
     }
     
 }
@@ -205,10 +227,10 @@ void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list<
     vector< string > jobs_to_update;
     
     string proxy;
-    {
-        boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
-        proxy = DNProxyManager::getInstance()->getBetterProxyByDN( jobs.first.first ) ;
-    }
+    //{
+    //    boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
+    proxy = DNProxyManager::getInstance()->getBetterProxyByDN( jobs.first.first ) ;
+    //}
     
     while ( it != list_end ) {
         jobs_to_update.clear();
@@ -301,7 +323,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
             // MUST UPDATE THE JOBCACHE WITH THE NEW LEASE FOR ALL JOBS
             for ( vector<string>::const_iterator jobid=job_ids.begin(); jobid != job_ids.end(); ++jobid) {
 
-                boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	      //boost::recursive_mutex::scoped_lock M( jobCache::mutex ); NOT NEEDED, already acquired above
                 jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
                 if ( tmpJob != m_cache->end() ) {
                     tmpJob->setEndLease( newExpiration );

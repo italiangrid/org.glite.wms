@@ -115,10 +115,10 @@ void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJo
 
   // proxy = getBetterProxy();
   string proxy;
-  {
-    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-    proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
-  }
+  //  {
+  //boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+  proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
+  //}
 
     list< CreamJob >::const_iterator it = aList.second.begin();
     list< CreamJob >::const_iterator list_end = aList.second.end();

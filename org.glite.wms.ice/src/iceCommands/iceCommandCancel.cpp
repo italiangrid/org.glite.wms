@@ -190,10 +190,10 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
      * DNProxyManager's cache of betterproxies).
      */
     string betterproxy;
-    {
-      boost::recursive_mutex::scoped_lock M( util::DNProxyManager::mutex );
-      betterproxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( theJob.getUserDN() );
-    }
+    //{
+    //boost::recursive_mutex::scoped_lock M( util::DNProxyManager::mutex );
+    betterproxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( theJob.getUserDN() );
+    //}
 
     try {
         m_theProxy->Authenticate( betterproxy /* theJob.getUserProxyCertificate() */ );

@@ -73,10 +73,10 @@ namespace {
 
       if(timeleft < ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->subscription_update_threshold_time()) {
 	string betterProxy;
-	{
-	  boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
+	//{
+	//  boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
 	  betterProxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( m_dn );
-	}
+	  //}
 	
 	if(betterProxy == "") {
 	  CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->errorStream() 
@@ -114,9 +114,12 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
   map<string, set<string> > UserCEMons;
   ice_util::subscriptionManager *subManager = ice_util::subscriptionManager::getInstance();
   
-  boost::recursive_mutex::scoped_lock M( ice_util::subscriptionManager::mutex );
-  
+  //{
+  //boost::recursive_mutex::scoped_lock M( ice_util::subscriptionManager::mutex ); 
+  // no mutex needed, because the followin method already acquire the cache's mutex
+  // then 2 different threads cannot execute this method contemporary
   subManager->getUserCEMonMapping( UserCEMons, true );// this is a map userproxy -> set_of_cemons
+  //}
   
 
 
@@ -134,18 +137,15 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 
     //subManager->purgeOldSubscription( it );
 
-    subManager->checkSubscription( *it );
-    
-    singleSubUpdater updater( subManager, it->first );
-
-    for_each(it->second.begin(), it->second.end(), updater);
-
-//     for(set<string>::const_iterator cit = it->second.begin();
-// 	cit != it->second.end();
-// 	++cit)
-//       {
-	
-//       }
+    {
+      //boost::recursive_mutex::scoped_lock M( ice_util::subscriptionManager::mutex ); 
+      subManager->checkSubscription( *it );// acquire a mutex internally
+      
+      
+      singleSubUpdater updater( subManager, it->first );
+      
+      for_each(it->second.begin(), it->second.end(), updater);
+    } // unlock subscriptionManager::mutex
 
   }
 }

@@ -66,6 +66,38 @@ CreamJob::CreamJob( const std::string& ad ) throw ( ClassadSyntax_ex& )
 }
 
 //______________________________________________________________________________
+/*CreamJob::CreamJob( const CreamJob& aJob ) throw()
+{
+  m_cream_jobid = aJob.m_cream_jobid;
+  m_grid_jobid = aJob.m_grid_jobid;
+  m_jdl = aJob.m_jdl;
+  m_ceid = aJob.m_ceid;
+  m_endpoint = aJob.m_endpoint;
+  m_cream_address = aJob.m_cream_address;
+  m_cream_deleg_address = aJob.m_cream_deleg_address;
+  m_user_proxyfile = aJob.m_user_proxyfile;
+  m_user_dn = aJob.m_user_dn;
+  m_sequence_code = aJob.m_sequence_code;
+  m_delegation_id   = aJob.   m_delegation_id;
+  m_wn_sequence_code  = aJob.m_wn_sequence_code;
+  m_status = aJob.m_status;
+  m_num_logged_status_changes  = aJob.m_num_logged_status_changes;
+  m_last_seen = aJob.m_last_seen;
+  m_end_lease  = aJob.m_end_lease;
+  m_proxyCertTimestamp  = aJob.m_proxyCertTimestamp;
+  m_statusPollRetryCount  = aJob.m_statusPollRetryCount;
+  m_exit_code = aJob.m_exit_code;
+  m_failure_reason = aJob.m_failure_reason;
+  m_worker_node = aJob.m_worker_node;
+  m_is_killed_by_ice = aJob.m_is_killed_by_ice;
+
+  CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->debugStream()
+		 << "CreamJob::COPYCTOR() - ALVISE-DEBUG CALLED FOR JOB ["
+		 << aJob.describe() << "]"
+		 << log4cpp::CategoryStream::ENDLINE);
+}*/
+
+//______________________________________________________________________________
 string CreamJob::serialize( void ) const
 {
     string res;

@@ -59,31 +59,12 @@ namespace glite {
 	  
 	  std::set<std::string>                   		  m_cemonURL;
 	  
-/* 	  struct ltstring { */
-/* 	    bool operator()( const std::pair<std::string, std::string>& s1,  */
-/* 			     const std::pair<std::string, std::string>& s2) const */
-/* 	    { */
-
-/* 	      if ( s1.first.compare(s2.first) < 0 ) return true; */
-/* 	      else { */
-/* 		if(s2.first.compare(s1.first) < 0 ) return false; */
-/* 		else { */
-/* 		  if( s1.second.compare(s2.second) < 0 ) return true; */
-/* 		  else return false; */
-/* 		} */
-/* 	      } */
-
-/* 	    } */
-/* 	  }; */
-
 	  std::map< std::pair<std::string, std::string> , iceSubscription, glite::wms::ice::util::ltstring >  m_Subs;
 	  
 	  std::set<std::string>                   		  m_DN;
 	  std::map<std::string, std::string>      		  m_mappingCreamCemon;
 	  std::map<std::string, std::string>      		  m_mappingCemonDN;
 	  
-	  //std::map<std::string, std::string>                      m_DNProxyMap;
-
 	  iceConfManager                         		 *m_conf;  
 	  subscriptionProxy                     		 *m_subProxy;
 	  static subscriptionManager                   		 *s_instance;
@@ -96,41 +77,38 @@ namespace glite {
 	  
 	  bool							  m_authz;
 	  bool							  m_authn;
-	  //std::set<std::string>					  
 	  
 	  void init( void ) throw();
 	  
 	 protected:
 	  subscriptionManager() throw();
 	  ~subscriptionManager() throw() {}
-	  
+	  static boost::recursive_mutex  mutex;
+
 	 public:
 	 
-	  //typedef std::set<iceSubscription>::iterator iterator;
-	  //typedef std::set<iceSubscription>::const_iterator const_iterator;
-	  
 	  typedef std::map< std::pair<std::string, std::string> , iceSubscription>::iterator iterator;
 	  typedef std::map< std::pair<std::string, std::string> , iceSubscription>::const_iterator const_iterator;
 	  
-	  subscriptionManager::iterator begin()
-	  {
-	    return m_Subs.begin();
-	  }
+/* 	  subscriptionManager::iterator begin() */
+/* 	  { */
+/* 	    return m_Subs.begin(); */
+/* 	  } */
 	  
-	  subscriptionManager::iterator end()
-	  {
-	    return m_Subs.end();
-	  }
+/* 	  subscriptionManager::iterator end() */
+/* 	  { */
+/* 	    return m_Subs.end(); */
+/* 	  } */
 	  
-	  subscriptionManager::const_iterator begin() const
-	  {
-	    return m_Subs.begin();
-	  }
+/* 	  subscriptionManager::const_iterator begin() const */
+/* 	  { */
+/* 	    return m_Subs.begin(); */
+/* 	  } */
 	  
-	  subscriptionManager::const_iterator end() const
-	  {
-	    return m_Subs.end();
-	  }
+/* 	  subscriptionManager::const_iterator end() const */
+/* 	  { */
+/* 	    return m_Subs.end(); */
+/* 	  } */
 	  
 	  static subscriptionManager* getInstance() throw();
 	  
@@ -149,8 +127,8 @@ namespace glite {
 	  }
 
  	  void insertSubscription( const std::string& userProxy,
-					      const std::string& cemonURL,
-					      const iceSubscription& S ) throw();
+				   const std::string& cemonURL,
+				   const iceSubscription& S ) throw();
 	  
 	  void getCEMons( std::vector<std::string>& ) throw();
           void getCEMons( std::set<std::string>& ) throw();
@@ -194,7 +172,7 @@ namespace glite {
 	    return true;
 	  }
 
-	  static boost::recursive_mutex  mutex;
+	  
 
  	};
 	

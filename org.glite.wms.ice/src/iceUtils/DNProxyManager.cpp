@@ -78,14 +78,14 @@ namespace {
 
 
 
-  class dnprxUpdater {
-    iceUtil::DNProxyManager* m_mgr;
-    log4cpp::Category *m_log_dev;
+//   class dnprxUpdater {
+//     iceUtil::DNProxyManager* m_mgr;
+//     log4cpp::Category *m_log_dev;
 
-  public:
-    dnprxUpdater( iceUtil::DNProxyManager* mgr, log4cpp::Category *log_dev ) : m_mgr( mgr ), m_log_dev( log_dev ) {}
+//   public:
+//     dnprxUpdater( iceUtil::DNProxyManager* mgr, log4cpp::Category *log_dev ) : m_mgr( mgr ), m_log_dev( log_dev ) {}
     
-    void operator()( iceUtil::CreamJob& aJob ) {
+//     void operator()( iceUtil::CreamJob& aJob ) {
       
       
       
@@ -100,15 +100,15 @@ namespace {
 // 		     << log4cpp::CategoryStream::ENDLINE);
       
 //       m_mgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate());
-    }
-  };
+//     }
+//   };
 }
 
 //______________________________________________________________________________
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 {
 
-  boost::recursive_mutex::scoped_lock M( mutex );
+  //boost::recursive_mutex::scoped_lock M( mutex );
 
   if( !s_instance ) 
     s_instance = new DNProxyManager();
@@ -126,6 +126,11 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 		 << "Populating DN -> Proxy cache by scannig the jobCache..."
 		 << log4cpp::CategoryStream::ENDLINE);
   
+  /**
+   * This lock acquisition should be safe because it is done at the ICE
+   * initialization, when no other thread acquire the cache's mutex
+   *
+   */
   boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 
   /**
@@ -195,7 +200,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 //________________________________________________________________________
 void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 { 
-
+  boost::recursive_mutex::scoped_lock M( mutex );
   string dn;
   try {
     dn = glite::ce::cream_client_api::certUtil::getDNFQAN( prx );
@@ -218,6 +223,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 						    const string& prx
 						    ) throw()
 { 
+  boost::recursive_mutex::scoped_lock M( mutex );
     // string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + iceUtil::canonizeString( dn ) + ".proxy";
     string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
 
@@ -327,6 +333,8 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 void iceUtil::DNProxyManager::copyProxy( const string& source, const string& target ) 
   throw(SourceProxyNotFoundException&)
 {
+  
+
   string tmpTargetFilename = target;
   tmpTargetFilename = tmpTargetFilename + string(".tmp") ;
 

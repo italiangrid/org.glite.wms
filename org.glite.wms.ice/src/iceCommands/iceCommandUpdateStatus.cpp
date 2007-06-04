@@ -238,9 +238,10 @@ void iceCommandUpdateStatus::execute( ) throw( )
 
     // Now that we (hopefully) have the jobid, we lock the cache
     // and find the job
+    
     boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );    
     jobCache::iterator jc_it( m_cache->lookupByCreamJobID( cream_job_id ) );
-    
+
     // No job found in cache. This is fine, we may be receiving "old"
     // notifications, for jobs which have been already purged.
     if ( jc_it == m_cache->end() ) {
@@ -259,15 +260,15 @@ void iceCommandUpdateStatus::execute( ) throw( )
     {
       string cemonurl, proxy, creamurl, cemondn;
 
-      {
-	boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
-	proxy = DNProxyManager::getInstance()->getBetterProxyByDN(jc_it->getUserDN());
-      }
+      //{
+      //	boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
+      proxy = DNProxyManager::getInstance()->getBetterProxyByDN(jc_it->getUserDN());
+      //}
 
       creamurl = jc_it->getCreamURL();
 
       {
-	boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
+	//boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
 	subscriptionManager::getInstance()->getCEMonURL( proxy, creamurl, cemonurl);
 	subscriptionManager::getInstance()->getCEMonDN( proxy, cemonurl, cemondn);
       }
@@ -281,6 +282,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 		       << jc_it->describe()
 		       << "]. Ignoring the whole notification..."
 		       << log4cpp::CategoryStream::ENDLINE);
+	return;
       }
     }
 
@@ -297,6 +299,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         // purge it...
         if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
             jc_it->setLastSeen( time(0) );
+	    
             jc_it = m_cache->put( *jc_it );
         }
         

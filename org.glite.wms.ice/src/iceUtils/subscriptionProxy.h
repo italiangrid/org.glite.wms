@@ -70,7 +70,7 @@ namespace util {
    protected:
     subscriptionProxy() throw();
     virtual ~subscriptionProxy() throw();// {}
-
+    static boost::recursive_mutex mutex;
 
    public:
 
@@ -105,7 +105,7 @@ namespace util {
 		  
     //std::string getLastSubscriptionID() const { return m_lastSubscriptionID; }
 
-    static boost::recursive_mutex mutex;
+    //static boost::recursive_mutex mutex;
     
   };
 

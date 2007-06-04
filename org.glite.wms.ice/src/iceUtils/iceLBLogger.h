@@ -24,7 +24,7 @@
 #ifndef ICELBLOGGER_H
 #define ICELBLOGGER_H
 
-#include "boost/thread/recursive_mutex.hpp"
+//#include "boost/thread/recursive_mutex.hpp"
 #include "creamJob.h"
 
 // Forward declaration

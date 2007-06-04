@@ -121,11 +121,9 @@ iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* 
 
 
 //____________________________________________________________________________
-/*list< iceUtils::CreamJob >*/void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJob >& result ) throw()
+void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJob >& result ) throw()
 {
-  //list<iceUtils::CreamJob> result;
-    boost::recursive_mutex::scoped_lock M( iceUtils::jobCache::mutex );
-    
+
     for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
 
         if( jit->getCreamJobID().empty() ) {
@@ -182,10 +180,10 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
   the_job_status.clear();
 
   string proxy;
-  {
-    boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
+  //{
+  //  boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
     proxy = DNProxyManager::getInstance()->getBetterProxyByDN( user_dn );
-  }
+    //}
   
   if ( proxy.empty() ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
@@ -220,8 +218,10 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
       CreamProxy_Info( cream_url, cream_job_ids, vector<string>(), the_job_status, -1, -1).execute( m_theProxy.get(), 3 );
       
       // Runs over the returned status, and the missing jobs are removed from jobCache
-      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-      remove_unknown_jobs_from_cache( cream_job_ids, the_job_status );
+      {
+	boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	remove_unknown_jobs_from_cache( cream_job_ids, the_job_status );
+      }
       
   } catch( cream_api::cream_exceptions::JobUnknownException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()
@@ -230,9 +230,10 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
                      << user_dn
                      << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
                      << log4cpp::CategoryStream::ENDLINE);
-      
-      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-      remove_unknown_jobs_from_cache(cream_job_ids, the_job_status );
+      {
+	boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	remove_unknown_jobs_from_cache(cream_job_ids, the_job_status );
+      }
       
   } catch(soap_proxy::auth_ex& ex) {
       
@@ -466,7 +467,12 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
 {
 
   list< CreamJob > j_list;
-  this->get_jobs_to_poll( j_list ); // this method locks the cache
+  {
+    // moved mutex here (from the get_jobs_to_poll's body) because of more
+    // code readability
+    boost::recursive_mutex::scoped_lock M( iceUtils::jobCache::mutex );
+    this->get_jobs_to_poll( j_list ); // this method locks the cache
+  }
 
     if ( j_list.empty() ) 
         return; // give up if no job to check
@@ -491,11 +497,6 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
         
         const string user_dn( jit->first.first );
         const string cream_url( jit->first.second );
-        // list< list< CreamJob > > chunks( create_chunks( jit->second, m_max_chunk_size ) );
-        
-        // Step 2a. Interates over each chunk
-        // for ( list< list< CreamJob > >::iterator chunk_it = chunks.begin();
-        // chunk_it != chunks.end(); ++chunk_it ) {
 
         list< iceUtils::CreamJob >::const_iterator it = (jit->second).begin();
         list< iceUtils::CreamJob >::const_iterator list_end = (jit->second).end();

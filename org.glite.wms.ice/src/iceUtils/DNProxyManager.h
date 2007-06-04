@@ -53,7 +53,8 @@ namespace glite {
 
 	  DNProxyManager() throw();
 	  ~DNProxyManager() throw() {}
-	  
+	  static boost::recursive_mutex  mutex;
+
 	public:
 
 	  static DNProxyManager* getInstance() throw();
@@ -61,15 +62,19 @@ namespace glite {
 	  void                   setUserProxyIfLonger( const std::string& dn, const std::string& proxy) throw();
 
 	  std::string            getBetterProxyByDN( const std::string& dn ) const throw() {
+
+	    boost::recursive_mutex::scoped_lock M( mutex );
 	    std::map<std::string, std::string >::const_iterator it = m_DNProxyMap.find( dn );
 	    if( it == m_DNProxyMap.end()) return "";
 	    return it->second; // return the local copy of the proxy, because the sandbox's one could be removed
+
 	  }
 
+	private:
 	  void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
 	  jobCache::iterator searchBetterProxyForUser( const std::string& ) throw();
 
-	  static boost::recursive_mutex  mutex;
+	  
 
 	};
 

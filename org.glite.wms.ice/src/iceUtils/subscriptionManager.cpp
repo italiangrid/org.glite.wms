@@ -52,6 +52,7 @@ bool   iceUtil::subscriptionManager::s_recoverable_db = false;
 //______________________________________________________________________________
 iceUtil::subscriptionManager* iceUtil::subscriptionManager::getInstance() throw()
 {
+  boost::recursive_mutex::scoped_lock M( mutex );
   if( !s_instance ) 
     s_instance = new subscriptionManager();
   return s_instance;
@@ -120,7 +121,7 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
 					       const string& creamURL, 
 					       string& cemonURL) throw()
 {
-  
+  boost::recursive_mutex::scoped_lock M( mutex );
   // Try to get the CEMon's address from the memory
   map<string, string>::const_iterator cit = m_mappingCreamCemon.find( creamURL );
   if( cit != m_mappingCreamCemon.end() )
@@ -178,6 +179,8 @@ bool iceUtil::subscriptionManager::getCEMonDN(
 					      string& DN 
 					      ) throw()
 {
+  boost::recursive_mutex::scoped_lock M( mutex );
+
   // try to get DN from the memory
   map<string, string>::const_iterator it = m_mappingCemonDN.find(cemonURL);
   if( it != m_mappingCemonDN.end() ) {
@@ -260,6 +263,8 @@ void iceUtil::subscriptionManager::init( void ) throw()
 void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<string> >& it ) 
  throw()
 {
+  boost::recursive_mutex::scoped_lock M( mutex );
+
   // it.first is the user DN
   // it.second is the set of cemons to check for subscriptions
 
@@ -271,10 +276,10 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
     bool subscribed;
 
     string proxy;
-    {
-      boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-      proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it.first );
-    }
+    //{
+    //  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+    proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it.first );
+    //}
 
     try { 
 
@@ -466,7 +471,7 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
    * and updates the internal mapping DN->BetterProxy;
    * where a proxy is better than another one if it is more long-lived.
    */
-
+  
   boost::recursive_mutex::scoped_lock M( jobCache::mutex );
   string cemon;
   set<string> goodCEMons, toCheck;
@@ -485,11 +490,11 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
 
 
     tmpTarget[ jit->getUserDN() ].insert( cemon );
-    {
-      boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-      iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
-    }
-
+    // {
+    //  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
+    //}
+    
     if( m_authz && m_authn ) {
 
       if( this->getCEMonDN( jit->getUserProxyCertificate(), cemon, tmpDN ) ) {
@@ -537,7 +542,7 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
 						       const std::string& cemonURL,
 						       const iceSubscription& S ) throw()
 {
-  
+  boost::recursive_mutex::scoped_lock M( mutex );
   string dn;
   try {
     dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
@@ -559,10 +564,10 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
 bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy, 
 						    const std::string& cemon ) const throw()
 {
-  
+  boost::recursive_mutex::scoped_lock subM( mutex );
   string dn;
   try {
-    dn= glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
+    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::hasSubscription() - "
