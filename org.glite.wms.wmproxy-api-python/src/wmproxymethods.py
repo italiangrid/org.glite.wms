@@ -369,6 +369,7 @@ class Wmproxy:
 			jlm = self.remote.jobListMatch(jdl, delegationId)[0]
 			for i in range (len(jlm)):
 				result.append(parseStructType(jlm[i]))
+			return result
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
