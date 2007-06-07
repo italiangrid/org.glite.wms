@@ -156,11 +156,17 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 		Utils::ending(0);
 	}
 	
+	// Initialise the proxy validity
+	int proxyValidity = 0;
+	
 	// Check if exists the attribute JDL_DEFAULT_PROXY_VALIDITY
 	if(wmcUtils->getConf()->hasAttribute(JDL_DEFAULT_PROXY_VALIDITY)) {
 		// Default Proxy Validity from the configuration file
-		postOptionchecks(wmcUtils->getConf()->getInt(JDL_DEFAULT_PROXY_VALIDITY));
+		proxyValidity = wmcUtils->getConf()->getInt(JDL_DEFAULT_PROXY_VALIDITY);
 	}
+
+ 	// Set the proxy validity
+ 	postOptionchecks(proxyValidity);
 
 }
 /**
