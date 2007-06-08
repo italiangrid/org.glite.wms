@@ -234,6 +234,8 @@ namespace glite {
            */
           std::string describe( void ) const;
 
+	  size_t size( void ) const;
+
 	};
       }
     }

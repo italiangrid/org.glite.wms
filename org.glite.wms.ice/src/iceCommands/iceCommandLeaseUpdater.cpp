@@ -273,19 +273,22 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
     } catch(cream_exceptions::JobUnknownException& ex) {
         
         // this happens if the vector job_ids contains only one job
-        
+        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      jobCache::iterator tmp( m_cache->lookupByCreamJobID( *(job_ids.begin())) );
+
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
                        << "CREAM doesn't know the current job "
-                       << *(job_ids.begin())
+                       //<< *(job_ids.begin())
+		       << tmp->describe()
                        <<". Removing from cache."
                        << log4cpp::CategoryStream::ENDLINE);
                 
 	if(!m_only_update) {
         
-            boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	  //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
             
-            jobCache::iterator tmp = m_cache->lookupByCreamJobID( *(job_ids.begin()) ); // vector job_ids caintained only one job otherwise this kind of exception wasn't thrown
+	  //jobCache::iterator tmp = m_cache->lookupByCreamJobID( *(job_ids.begin()) ); // vector job_ids caintained only one job otherwise this kind of exception wasn't thrown
             m_cache->erase( tmp );
 	}
         

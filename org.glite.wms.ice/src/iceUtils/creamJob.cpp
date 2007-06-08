@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cerrno>
+#include <iostream>
 
 extern int errno;
 
@@ -343,4 +344,28 @@ void CreamJob::setSequenceCode( const std::string& seq )
     //                     << "old jdl=[" << old_jdl << "] new jdl=["
     //                     << m_jdl << "]"
     //                     << log4cpp::CategoryStream::ENDLINE);
+}
+
+size_t CreamJob::size( void ) const 
+{
+  size_t size = 0;
+  size  = sizeof(glite::ce::cream_client_api::job_statuses::job_status);
+  size += sizeof(m_num_logged_status_changes);
+  size += sizeof(m_last_seen);
+  size += sizeof(m_end_lease);
+  size += sizeof(m_proxyCertTimestamp);
+  size += sizeof(m_statusPollRetryCount);
+  size += sizeof(m_exit_code);
+  size += sizeof(m_is_killed_by_ice);
+
+  size += m_failure_reason.capacity() + m_worker_node.capacity() + m_wn_sequence_code.capacity();
+  size += m_delegation_id.capacity() + m_sequence_code.capacity() + m_user_dn.capacity();
+  size += m_user_proxyfile.capacity() + m_cream_deleg_address.capacity() + m_cream_address.capacity();
+  size += m_endpoint.capacity() + m_ceid.capacity() + m_jdl.capacity() + m_grid_jobid.capacity();
+  size += m_cream_jobid.capacity();
+
+  size += 14*sizeof(string);
+  
+  //cout << "creamJob size="<<size<<endl;
+  return size;
 }
