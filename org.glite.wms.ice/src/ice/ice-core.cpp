@@ -207,9 +207,11 @@ void Ice::init( void )
             ++it;
         }
     }
-    
-    util::iceCommandLeaseUpdater l( true );
-    l.execute();
+
+   if(m_configuration->ice()->start_lease_updater() ) {
+     util::iceCommandLeaseUpdater l( true );
+     l.execute();
+   }
     util::iceCommandStatusPoller p( this, true );
     p.execute( );	
 }
