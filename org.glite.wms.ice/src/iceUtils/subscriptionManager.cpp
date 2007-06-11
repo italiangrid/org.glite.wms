@@ -339,7 +339,7 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
     
     m_Subs[ make_pair( it.first, *sit)].setSubscriptionID( sub.getSubscriptionID() );
     m_Subs[ make_pair( it.first, *sit)].setExpirationTime( sub.getExpirationTime() );
-    
+    m_Subs_inverse[ sub.getSubscriptionID() ] = make_pair( it.first, *sit);
   }
 }
 
@@ -428,7 +428,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 	
 	m_Subs[ make_pair( dn, cemon) ].setSubscriptionID( newID );
 	m_Subs[ make_pair( dn, cemon) ].setExpirationTime( time(NULL) + m_conf->getConfiguration()->ice()->subscription_duration());
-	
+	m_Subs_inverse[ newID ] = make_pair( dn, cemon);
 	
       } else {
       // subscription renewal failed. Try make a new one
@@ -443,6 +443,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 	
 	m_Subs[ make_pair( dn, cemon) ].setExpirationTime( localsub.getExpirationTime() );
 	m_Subs[ make_pair( dn, cemon) ].setSubscriptionID( localsub.getSubscriptionID() );
+	m_Subs_inverse[ localsub.getSubscriptionID() ] = make_pair( dn, cemon);
 	//m_Subs[ make_pair( dn, cemon) ].setUserProxyIfLonger( localsub.getUserProxy() );
 
 	// We made a new subscription because the update
@@ -557,7 +558,7 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
   }
 
   m_Subs[ make_pair( dn, cemonURL) ] = S;
-  
+  m_Subs_inverse[ S.getSubscriptionID() ] = make_pair( dn, cemonURL);
 }
 
 //________________________________________________________________________
@@ -587,3 +588,30 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
   }
 }
 
+//________________________________________________________________________
+pair<string, string> 
+iceUtil::subscriptionManager::getUserCEMonBySubID( const string& subID ) const
+{
+  boost::recursive_mutex::scoped_lock subM( mutex );
+  map< string, pair<string, string> >::const_iterator it;
+  it = m_Subs_inverse.find( subID );
+  
+  if( it == m_Subs_inverse.end() ) return make_pair("", "");
+  return it->second;
+	    
+}
+
+//________________________________________________________________________
+bool 
+iceUtil::subscriptionManager::getSubscriptionByDNCEMon( const string& dn, const string& cemon, 
+			  iceUtil::iceSubscription& target) const
+{
+  boost::recursive_mutex::scoped_lock subM( mutex );
+  map< pair<string, string> , iceSubscription, ltstring >::const_iterator it = m_Subs.find( make_pair(dn, cemon) );
+  
+  if( it == m_Subs.end() ) return false;
+  
+  target = it->second;
+  
+  return true;
+}

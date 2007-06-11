@@ -42,6 +42,24 @@ namespace log4cpp {
     class Category;
 };
 
+/* namespace { */
+
+/*   struct ltIceSub { */
+/*     bool operator()( const glite::wms::ice::util::iceSubscription& s1,  */
+/* 		     const glite::wms::ice::util::iceSubscription& s2) const */
+/*       { */
+	
+/* 	if ( s1.getSubscriptionID().compare(s2.getSubscriptionID()) < 0 )  */
+/* 	  return true; */
+/* 	else */
+/* 	  return false; */
+
+/*       } */
+/*     }; */
+
+/* } */
+
+
 namespace glite {
   namespace wms {
     namespace ice {
@@ -59,7 +77,8 @@ namespace glite {
 	  
 	  std::set<std::string>                   		  m_cemonURL;
 	  
-	  std::map< std::pair<std::string, std::string> , iceSubscription, glite::wms::ice::util::ltstring >  m_Subs;
+	  std::map< std::pair<std::string, std::string> , iceSubscription, glite::wms::ice::util::ltstring > m_Subs;
+	  std::map< std::string, std::pair<std::string, std::string> > m_Subs_inverse;
 	  
 	  std::set<std::string>                   		  m_DN;
 	  std::map<std::string, std::string>      		  m_mappingCreamCemon;
@@ -90,26 +109,6 @@ namespace glite {
 	  typedef std::map< std::pair<std::string, std::string> , iceSubscription>::iterator iterator;
 	  typedef std::map< std::pair<std::string, std::string> , iceSubscription>::const_iterator const_iterator;
 	  
-/* 	  subscriptionManager::iterator begin() */
-/* 	  { */
-/* 	    return m_Subs.begin(); */
-/* 	  } */
-	  
-/* 	  subscriptionManager::iterator end() */
-/* 	  { */
-/* 	    return m_Subs.end(); */
-/* 	  } */
-	  
-/* 	  subscriptionManager::const_iterator begin() const */
-/* 	  { */
-/* 	    return m_Subs.begin(); */
-/* 	  } */
-	  
-/* 	  subscriptionManager::const_iterator end() const */
-/* 	  { */
-/* 	    return m_Subs.end(); */
-/* 	  } */
-	  
 	  static subscriptionManager* getInstance() throw();
 	  
 	  void getCEMonURL(const std::string& proxy, const std::string& creamURL, std::string& cemonURL) throw();
@@ -135,8 +134,6 @@ namespace glite {
 	  
 	  bool hasSubscription( const std::string& userProxy, const std::string& cemon ) const throw();
 	  
-	  //void removeSubscription( const std::string& userProxy, const std::string& cemon) throw();
-	  
 	  void getUserCEMonMapping( std::map< std::string, std::set<std::string> >& target, 
 				    const bool only_active_jobs = false ) throw();
 	  
@@ -149,31 +146,20 @@ namespace glite {
 	  
 	  int numOfSubscriptionKeys( void ) const { return m_Subs.size(); }
 
-	  //void setUserProxyIfLonger( const std::string& proxy);
-	  //void setUserProxyIfLonger( const std::string& dn, const std::string& proxy);
-
-// 	  std::string getBetterProxyByDN( const std::string& dn ) const throw() {
-// 	    std::map<std::string, std::string>::const_iterator it = m_DNProxyMap.find( dn );
-// 	    if( it == m_DNProxyMap.end()) return "";
-// 	    return it->second;
-// 	  }
-
-	  bool getSubscriptionByDNCEMon( const std::string& dn, const std::string& cemon, iceSubscription& target) {
+	  bool getSubscriptionByDNCEMon( const std::string& dn, const std::string& cemon, iceSubscription& target) const;
+/* 	  { */
 	    
-	    std::map< std::pair<std::string, std::string> , iceSubscription, ltstring >::const_iterator it = m_Subs.find( make_pair(dn, cemon) );
+/* 	    std::map< std::pair<std::string, std::string> , iceSubscription, ltstring >::const_iterator it = m_Subs.find( make_pair(dn, cemon) ); */
 	    
-	    if( it == m_Subs.end() ) return false;
+/* 	    if( it == m_Subs.end() ) return false; */
 	    
-	    /* target.setSubscriptionID( it->second.getSubscriptionID() ); */
-/* 	    target.setExpirationTime( it->second.getExpirationTime() ); */
+/* 	    target = it->second; */
 
-	    target = it->second;
+/* 	    return true; */
+/* 	  } */
 
-	    return true;
-	  }
-
+	  pair<std::string, std::string> getUserCEMonBySubID( const std::string& subID ) const;
 	  
-
  	};
 	
       }
