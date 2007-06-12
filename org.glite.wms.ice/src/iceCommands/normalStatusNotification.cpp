@@ -63,7 +63,7 @@ using namespace std;
 class StatusChange {
 public:
     /**
-     * Builds a StatusNotification object from a classad.
+     * Builds a StatusChange object from a classad.
      *
      * @param ad the string representing a classad to build
      * this object from.
@@ -180,9 +180,10 @@ void StatusChange::apply_to_job( CreamJob& j ) const
 //////////////////////////////////////////////////////////////////////////////
 //
 // normalStatusNotification class
-normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev ) :
+normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev, const string& cemondn ) :
     absStatusNotification( ),
-    m_ev( ev )
+    m_ev( ev ),
+    m_cemondn( cemondn )
 {
 
 }
@@ -216,7 +217,7 @@ void normalStatusNotification::apply( void ) // can throw anything
     // refers. In order to do so, we need to parse at least the first
     // notification in the event.
     try {
-        StatusNotification first_notification( *(m_ev.Message.begin()) );
+        StatusChange first_notification( *(m_ev.Message.begin()) );
         cream_job_id = first_notification.get_cream_job_id();
     } catch( ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -307,9 +308,9 @@ void normalStatusNotification::apply( void ) // can throw anything
             continue; // skip to the next job
         }
 
-        boost::scoped_ptr< StatusNotification > notif_ptr;
+        boost::scoped_ptr< StatusChange > notif_ptr;
         try {
-            StatusNotification* n = new StatusNotification( *msg_it );
+            StatusChange* n = new StatusChange( *msg_it );
             notif_ptr.reset( n );
         } catch( ClassadSyntax_ex ex ) {
             if (!getenv("NO_LISTENER_MESS"))

@@ -24,19 +24,24 @@
 #include "absStatusNotification.h"
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
+#include <string>
+
 namespace glite {
 namespace wms {
 namespace ice {
+namespace util {
     
     class normalStatusNotification : public absStatusNotification {
     public:
-        normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev );
+        normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev, const std::string& cemondn );
         virtual ~normalStatusNotification( ) { };
-        void apply( void ) // can throw anything
+        void apply( void ); // can throw anything
     protected:
         monitortypes__Event m_ev;
+        std::string m_cemondn;
     };
 
+} // namespace util
 } // namespace ice
 } // namespace wms
 } // namespace glite

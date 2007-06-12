@@ -24,6 +24,7 @@
 namespace glite {
 namespace wms {
 namespace ice {
+namespace util {
     
     class absStatusNotification {
     public:
@@ -41,6 +42,7 @@ namespace ice {
     };
     
 
+} // namespace util
 } // namespace ice
 } // namespace wms
 } // namespace glite

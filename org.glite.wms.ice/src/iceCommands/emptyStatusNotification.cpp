@@ -23,11 +23,13 @@
 
 #include "emptyStatusNotification.h"
 
-using namespace glite::wms::ice;
-  
-emptyStatusNotification::emptyStatusNotification( const monitortypes__Event& ev ) :
+using namespace glite::wms::ice::util;
+using namespace std;
+
+emptyStatusNotification::emptyStatusNotification( const monitortypes__Event& ev, const std::string& cemondn ) :
     absStatusNotification( ),
-    m_ev( ev )
+    m_ev( ev ),
+    m_cemondn( cemondn )  
 {
 
 }
