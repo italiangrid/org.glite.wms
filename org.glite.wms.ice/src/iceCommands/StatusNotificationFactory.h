@@ -15,16 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * ICE empty CEMonitor notification class
+ * ICE Status Notification factory
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef ICE_EMPTY_STATUS_NOTIFICATION_FACTORY_H
-#define ICE_EMPTY_STATUS_NOTIFICATION_FACTORY_H
+#ifndef ICE_STATUS_NOTIFICATION_FACTORY_H
+#define ICE_STATUS_NOTIFICATION_FACTORY_H
 
-#include "absStatusNotification.h"
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 #include <string>
 
@@ -32,23 +31,26 @@ namespace glite {
 namespace wms {
 namespace ice {
 namespace util {
-    
-    class emptyStatusNotification : public absStatusNotification {
-    public:
-        emptyStatusNotification( const monitortypes__Event& ev, const std::string& cemondn );
-        virtual ~emptyStatusNotification( ) { };
 
+    class absStatusNotification;
+
+    class StatusNotificationFactory {
+    public:
+        virtual ~StatusNotificationFactory( ) { };
         /**
-         * Applies the empty status change notification to all jobs
-         * associated with the subscription which was received.
-         */ 
-        void apply( void ); // can throw anything
+         * Returns a new statusNotification object. Returns null if
+         * the monitortype_event does not contain any recognized
+         * notification.
+         *
+         * The caller owns the returned pointer, and is responsible
+         * for freeing the associated memory.
+         */
+        static absStatusNotification* makeStatusNotification( const monitortypes__Event& ev, const std::string& cemondn );
     protected:
-        monitortypes__Event m_ev;
-        std::string m_cemondn;
+        StatusNotificationFactory( ) { };
     };
 
-} // namespace util    
+} // namespace util
 } // namespace ice
 } // namespace wms
 } // namespace glite

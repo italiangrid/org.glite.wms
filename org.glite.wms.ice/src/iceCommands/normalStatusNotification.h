@@ -21,6 +21,9 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
+#ifndef ICE_NORMAL_STATUS_NOTIFICATION_H
+#define ICE_NORMAL_STATUS_NOTIFICATION_H
+
 #include "absStatusNotification.h"
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
@@ -46,3 +49,4 @@ namespace util {
 } // namespace wms
 } // namespace glite
 
+#endif

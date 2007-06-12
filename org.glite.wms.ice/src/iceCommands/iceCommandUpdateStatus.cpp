@@ -22,7 +22,8 @@
  */
 
 #include "iceCommandUpdateStatus.h"
-#include "normalStatusNotification.h"
+#include "absStatusNotification.h"
+#include "StatusNotificationFactory.h"
 
 // ICE stuff
 #include "jobCache.h"
@@ -55,15 +56,14 @@ void iceCommandUpdateStatus::execute( ) throw( )
 {    
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     
-    try { // FIXME: temporary fix
+    try {
 
         boost::scoped_ptr< absStatusNotification > notif;
-        notif.reset( new normalStatusNotification( m_ev, m_cemondn ) );
+        absStatusNotification* n = StatusNotificationFactory::makeStatusNotification( m_ev, m_cemondn );
+        if ( !n ) return;
+        notif.reset( n );
         notif->apply( );
 
-    //
-    // FIXME: Temporary fix
-    // 
     } catch( std::exception& ex ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() 
                        << "iceCommandUpdateStatus::execute() - "

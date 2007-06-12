@@ -21,6 +21,9 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
+#ifndef ICE_ABS_STATUS_NOTIFICATION_H
+#define ICE_ABS_STATUS_NOTIFICATION_H
+
 namespace glite {
 namespace wms {
 namespace ice {
@@ -47,3 +50,4 @@ namespace util {
 } // namespace wms
 } // namespace glite
 
+#endif
