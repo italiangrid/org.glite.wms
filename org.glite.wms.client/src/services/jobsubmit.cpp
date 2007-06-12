@@ -859,8 +859,8 @@ void JobSubmit::checkAd(bool &toBretrieved){
 	jobType = WMS_JOB;
 	const string JDL_WARNING_TITLE= "Following Warning(s) found while parsing JDL:";
 	glite::jdl::Ad *wmcConf = wmcUtils->getConf();
-	// COLLECTION (--collection)
 	if (!m_collectOpt.empty()) {
+		// Collection created with --collection option
 		jobType = WMS_COLLECTION ;
 		try {
 			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
@@ -880,38 +880,13 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				ex.what()  );
 		}
 		logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted; JDL files in:",
-			Utils::getAbsolutePath( m_collectOpt));
+					Utils::getAbsolutePath( m_collectOpt));
 		collectAd = AdConverter::createCollectionFromPath (m_collectOpt, wmcUtils->getVirtualOrganisation());
-		collectAd->setLocalAccess(true);
 		// Simple Ad manipulation
 		AdUtils::setDefaultValuesAd(collectAd,wmcConf, m_defJdlOpt);
-		// Collect Ad manipulation
-		AdUtils::setDefaultValues(collectAd,wmcConf);
-		if (!m_nodesresOpt.empty()) {
-			collectAd->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
-		}
-		// JDL string
-		collectAd = collectAd->check();
 		if (collectAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE, collectAd->getWarnings() );}
-		if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-			zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-			if (zipAllowed) { message ="allowed by user in the JDL";}
-			else { message = "disabled by user in the JDL"; }
-			logInfo->print (WMS_DEBUG, "File archiving and file compression",
-				message);
-		} else {
-			// Default value if the JDL attribute is not present
-			zipAllowed = false;
-			logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
-			"adding the attribute to the JDL with the default value (FALSE)");
-			collectAd->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
-		}
-		// Checks if there are local ISB file(s) to be transferred to
-		toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
-		// JDL submission string
-		m_jdlString = collectAd->toString();
 	} else if (!m_dagOpt.empty()) {
-		/*** NEW APPROACH SUPPORTED ***/
+		// Dag created with --dag option
 		jobType = WMS_DAG ;
 		try {
 			fs::path cp ( Utils::normalizePath(m_dagOpt), fs::native);
@@ -931,41 +906,9 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				ex.what()  );
 		}
 		logInfo->print (WMS_DEBUG, "A DAG is being submitted; JDL files in:", Utils::getAbsolutePath(m_dagOpt));
-
 		adObj =  AdConverter::createDagAdFromPath(m_dagOpt, wmcUtils->getVirtualOrganisation());
 		// Simple Ad manipulation
 		AdUtils::setDefaultValuesAd(adObj,wmcConf, m_defJdlOpt);
-
-		// Checking the ALLOW_ZIPPED_ISB attribute
-		if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-				zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-				if (zipAllowed) { message ="allowed by user in the JDL";}
-				else { message = "disabled by user in the JDL"; }
-				logInfo->print (WMS_DEBUG, "File archiving and file compression",
-					message);
-		} else {
-				// Default value if the JDL attribute is not present
-				zipAllowed = false;
-				logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
-				"adding the attribute to the JDL with the default value (FALSE)");
-				adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
-		}
-
-		// Last refinements
-		logInfo->print (WMS_DEBUG, "A DAG job is being submitted");
-		if (!m_nodesresOpt.empty()) {
-			adObj->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
-		}
-		dagAd = new ExpDagAd (adObj);
-		dagAd->setLocalAccess(true);
-		AdUtils::setDefaultValues(dagAd,wmcConf);
-		// expands the DAG loading all JDL files
-		dagAd->getSubmissionStrings();
-		if (dagAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
-		// Checks if there are local ISB file(s) to be transferred to
-		toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
-		// JDL submission string
-		m_jdlString = dagAd->toString();
 	} else {
 		// ClassAd: can be anything (reading Type)
 		adObj = new Ad();
@@ -988,17 +931,13 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		AdUtils::setDefaultValuesAd(adObj,wmcConf, m_defJdlOpt);
 		// Checking the ALLOW_ZIPPED_ISB attribute
 		if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-				zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-				if (zipAllowed) { message ="allowed by user in the JDL";}
-				else { message = "disabled by user in the JDL"; }
-				logInfo->print (WMS_DEBUG, "File archiving and file compression",
-					message);
+			zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 		} else {
-				// Default value if the JDL attribute is not present
-				zipAllowed = false;
-				logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
-				"adding the attribute to the JDL with the default value (FALSE)");
-				adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+			// Default value if the JDL attribute is not present
+			zipAllowed = false;
+			logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
+					"adding the attribute to the JDL with the default value (FALSE)");
+			adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
 		}
 		// COLLECTION ========================================
 		if ( adObj->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
@@ -1006,6 +945,37 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			jobType = WMS_COLLECTION ;
 			try{
 				collectAd = new CollectionAd(*(adObj->ad()));
+			}catch (Exception &ex){
+				cout << " FALLITA LA COLLECTION AD" << endl ;
+				throw WmsClientException(__FILE__,__LINE__,
+					"checkAd",  DEFAULT_ERR_CODE,
+					"Invalid JDL collection",
+					ex.what()   );
+			}
+		if (collectAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE,collectAd->getWarnings() );}
+		}  else
+		// DAG  ========================================
+		if ( adObj->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
+				logInfo->print (WMS_DEBUG, "A DAG job is being submitted");
+				jobType = WMS_DAG ;
+		} else {
+			// JOB  =========================================
+			jobType = WMS_JOB ;
+			jobAdSP.fromClassAd (  *(adObj->ad()) ) ;
+			// PARAMETRIC ====================================
+			if (jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
+				// check JobAd without restoring attributes  
+				jobType = WMS_PARAMETRIC;
+				jobAdSP.check(false);
+			}else{
+				jobAdSP.check();
+			}
+		}
+	}
+	switch ( jobType ) {
+
+		case WMS_COLLECTION:
+				// Common operations for collections
 				collectAd->setLocalAccess(true);
 				// Collect Ad manipulation
 				AdUtils::setDefaultValues(collectAd,wmcConf);
@@ -1014,22 +984,25 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				}
 				// JDL string
 				collectAd = collectAd->check();
+				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				} else {
+					// Default value if the JDL attribute is not present
+					zipAllowed = false;
+					logInfo->print (WMS_DEBUG, "The user JDL does not contain the " +
+							JDL::ALLOW_ZIPPED_ISB + " attribute: ",
+							"adding the attribute to the JDL with the default value (FALSE)");
+					collectAd->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+				}
 				// Checks if there are local ISB file(s) to be transferred to
 				toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 				// JDL submission string
 				m_jdlString = collectAd->toString();
 				if (collectAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE,collectAd->getWarnings() );}
-			}catch (Exception &ex){
-				throw WmsClientException(__FILE__,__LINE__,
-					"checkAd",  DEFAULT_ERR_CODE,
-					"Invalid JDL collection",
-					ex.what()   );
-			}
-		}  else
-		// DAG  ========================================
-		if ( adObj->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
-				logInfo->print (WMS_DEBUG, "A DAG job is being submitted");
-				jobType = WMS_DAG ;
+				break;
+
+		case WMS_DAG:
+				// Common operations for DAGs
 				if (!m_nodesresOpt.empty()) {
 					adObj->setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
 				}
@@ -1038,84 +1011,86 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				AdUtils::setDefaultValues(dagAd,wmcConf);
 				// expands the DAG loading all JDL files
 				dagAd->getSubmissionStrings();
+				if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+						zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				} else {
+					// Default value if the JDL attribute is not present
+					zipAllowed = false;
+					logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
+							"adding the attribute to the JDL with the default value (FALSE)");
+					adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+				}
 				// Checks if there are local ISB file(s) to be transferred to
 				toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 				// JDL submission string
 				m_jdlString = dagAd->toString();
 				if (dagAd->hasWarnings()){ printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
-		} else {
-		// JOB  =========================================
-			jobType = WMS_JOB ;
+				break;
 
-			// jobAd = new JobAd(*(adObj->ad()));
-
-			jobAdSP.fromClassAd (  *(adObj->ad()) ) ;
-
-			AdUtils::setDefaultValues(&jobAdSP,wmcConf);
-			
-			// Check for DEPRECATED JDL Job Types: Partitionable & Checkpointable
-			if (jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE) || 
-       			    jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)){
-				throw WmsClientException(__FILE__,__LINE__,
-					"checkAd",  DEFAULT_ERR_CODE,
-					"Deprecated Job Types",
-					"Partitionable and Checkpointable Job Types have been deprecated.");
-			}
-
-			// resource <ce_id> ----> SubmitTo JDL attribute
-			if (!m_resourceOpt.empty()) {
-				jobAdSP.setAttribute(JDL::SUBMIT_TO, m_resourceOpt);
-			}
-			if (jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
-				// check JobAd without restoring attributes  (WHY?)
-				jobType = WMS_PARAMETRIC;
-				jobAdSP.check(false);
-			}else{
-				jobAdSP.check();
-			}
-			if (jobAdSP.hasWarnings()){ printWarnings(JDL_WARNING_TITLE, jobAdSP.getWarnings() ); }
-			// INTERACTIVE =================================
-			if (  jobAdSP.hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
-				// Interactive Job management
-				logInfo->print (WMS_DEBUG, "An interactive job is being submitted.");
-				jobShadow = new Shadow();
-				jobShadow->setPrefix(wmcUtils->getPrefix()+"/bin");
-				// Insert jdl attributes port/pipe/host inside shadow(if present)
-				if (jobAdSP.hasAttribute(JDL::SHPORT)){
-					jobShadow->setPort(jobAdSP.getInt ( JDL::SHPORT ));
+		case WMS_JOB:
+				// Common operations for normal Jobs
+				AdUtils::setDefaultValues(&jobAdSP,wmcConf);
+				// Check for DEPRECATED JDL Job Types: Partitionable & Checkpointable
+				if (jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE) ||
+				    jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)){
+					throw WmsClientException(__FILE__,__LINE__,
+						"checkAd",  DEFAULT_ERR_CODE,
+						"Deprecated Job Types",
+						"Partitionable and Checkpointable Job Types have been deprecated.");
 				}
-				if (jobAdSP.hasAttribute(JDL::SHPIPEPATH)){
-					jobShadow->setPipe(jobAdSP.getString(JDL::SHPIPEPATH));
-				}else{
-					jobAdSP.setAttribute(JDL::SHPIPEPATH,jobShadow->getPipe());
+				// resource <ce_id> ----> SubmitTo JDL attribute
+				if (!m_resourceOpt.empty()) {
+					jobAdSP.setAttribute(JDL::SUBMIT_TO, m_resourceOpt);
 				}
-				if (jobAdSP.hasAttribute(JDL::SHHOST)){
-					jobShadow->setHost(jobAdSP.getString(JDL::SHHOST));
-				}else{
-					jobAdSP.setAttribute(JDL::SHHOST,jobShadow->getHost());
+				// INTERACTIVE =================================
+				if (  jobAdSP.hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
+					// Interactive Job management
+					logInfo->print (WMS_DEBUG, "An interactive job is being submitted.");
+					jobShadow = new Shadow();
+					jobShadow->setPrefix(wmcUtils->getPrefix()+"/bin");
+					// Insert jdl attributes port/pipe/host inside shadow(if present)
+					if (jobAdSP.hasAttribute(JDL::SHPORT)){
+						jobShadow->setPort(jobAdSP.getInt ( JDL::SHPORT ));
+					}
+					if (jobAdSP.hasAttribute(JDL::SHPIPEPATH)){
+						jobShadow->setPipe(jobAdSP.getString(JDL::SHPIPEPATH));
+					}else{
+						jobAdSP.setAttribute(JDL::SHPIPEPATH,jobShadow->getPipe());
+					}
+					if (jobAdSP.hasAttribute(JDL::SHHOST)){
+						jobShadow->setHost(jobAdSP.getString(JDL::SHHOST));
+					}else{
+						jobAdSP.setAttribute(JDL::SHHOST,jobShadow->getHost());
+					}
+					// Launch console
+					if (jobShadow->isLocalConsole()){
+						logInfo->print(WMS_DEBUG,"Running console shadow");
+						jobShadow->setGoodbyeMessage(true);
+						jobShadow->console();
+						logInfo->print(WMS_DEBUG,"Console properly started");
+						// Insert listening port number (if necessary replace old value)
+						if (jobAdSP.hasAttribute(JDL::SHPORT)){jobAdSP.delAttribute(JDL::SHPORT);}
+						jobAdSP.setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
+					}
+				if (jobAdSP.hasWarnings()){ printWarnings(JDL_WARNING_TITLE, jobAdSP.getWarnings() ); }
 				}
-				// Launch console
-				if (jobShadow->isLocalConsole()){
-					logInfo->print(WMS_DEBUG,"Running console shadow");
-					jobShadow->setGoodbyeMessage(true);
-					jobShadow->console();
-					logInfo->print(WMS_DEBUG,"Console properly started");
-					// Insert listening port number (if necessary replace old value)
-					if (jobAdSP.hasAttribute(JDL::SHPORT)){jobAdSP.delAttribute(JDL::SHPORT);}
-					jobAdSP.setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
-				}
-			}
-			// MPICH ==================================================
-			if (  jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
+				// MPICH ==================================================
+				if (  jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
 				// MpiCh Job:
-				if (!m_lrmsOpt.empty()){
-					// Override previous value (if present)
-					if (jobAdSP.hasAttribute(JDL::LRMS_TYPE)){jobAdSP.delAttribute(JDL::LRMS_TYPE);}
-					jobAdSP.setAttribute(JDL::LRMS_TYPE, m_lrmsOpt);
-				}
-			}
-			// PARAMETRIC  ===============================================
-			if (jobType == WMS_PARAMETRIC) {
+					if (!m_lrmsOpt.empty()){
+						// Override previous value (if present)
+						if (jobAdSP.hasAttribute(JDL::LRMS_TYPE)){jobAdSP.delAttribute(JDL::LRMS_TYPE);}
+							jobAdSP.setAttribute(JDL::LRMS_TYPE, m_lrmsOpt);
+						}
+					}
+				// Checks if there are local ISB file(s) to be transferred to
+				toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
+				// JDL submission string
+				m_jdlString = jobAdSP.toSubmissionString();
+				break;
+
+		case WMS_PARAMETRIC:
+				// Common operations for Parametric
 				logInfo->print (WMS_DEBUG, "A parametric job is being submitted");
 				if (!m_nodesresOpt.empty()) {
 					jobAdSP.setAttribute(JDL::SUBMIT_TO, m_nodesresOpt);
@@ -1136,19 +1111,18 @@ void JobSubmit::checkAd(bool &toBretrieved){
 					// (it is only slight check, the conversion is done on server side)
 					dagAd = AdConverter::bulk2dag(&jobAdSP,1);
 				}
-			}
-			// Checks if there are local ISB file(s) to be transferred to
-			toBretrieved = (this->checkInputSandbox ( )>0)?true:false;
-			// Submission string
-			if (jobType==WMS_PARAMETRIC){
-				// JobAd already Checked
+				// Checks if there are local ISB file(s) to be transferred to
+				toBretrieved = (this->checkInputSandbox ( )>0)?true:false;
+				// Submission string
 				m_jdlString = jobAdSP.toString();
-			}else if  (jobType==WMS_JOB){
-				// JobAd not yet Checked
-				m_jdlString = jobAdSP.toSubmissionString();
+				break;
+
+		default:
+				break ;
 			}
-		}
-	}
+	if (zipAllowed) { message ="allowed by user in the JDL";}
+		else { message = "disabled by user in the JDL"; }
+	logInfo->print (WMS_DEBUG, "File archiving and file compression", message);
 	// --resource : incompatible argument
 	if( (!m_resourceOpt.empty()) && (jobType != WMS_JOB)){
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1191,7 +1165,7 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
 			//Suibmitting....
 			logInfo->service(WMP_SUBMIT_SERVICE);
-			
+
 			// Set the SOAP timeout
 			setSoapTimeout(SOAP_JOB_SUBMIT_TIMEOUT);
 			
