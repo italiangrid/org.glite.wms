@@ -15,13 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * ICE command for updating job status
+ * ICE normal status notification handler
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
-
-#include "iceCommandUpdateStatus.h"
+#include "normalStatusNotification.h"
 
 // ICE stuff
 #include "jobCache.h"
@@ -35,9 +34,8 @@
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
-// other GLITE stuff
+// other gLite stuff
 #include "classad_distribution.h"
-#include "ClassadSyntax_ex.h"
 
 // boost includes
 #include "boost/format.hpp"
@@ -45,11 +43,15 @@
 
 // System includes
 #include <iostream>
-#include <sstream>
+#include <string>
 
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
 using namespace std;
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// Helper class StatusChange
 
 /**
  * This class represents status change notifications as sent by
@@ -58,7 +60,7 @@ using namespace std;
  * whose status changed, the new status, and the timestamp when
  * the change occurred.
  */
-class StatusNotification : public absStatusNotification {
+class StatusChange {
 public:
     /**
      * Builds a StatusNotification object from a classad.
@@ -66,8 +68,8 @@ public:
      * @param ad the string representing a classad to build
      * this object from.
      */
-    StatusNotification( const string& ad ) throw( ClassadSyntax_ex& );
-    virtual ~StatusNotification( ) { };
+    StatusChange( const string& ad ) throw( ClassadSyntax_ex& );
+    virtual ~StatusChange( ) { };
 
     /**
      * Returns the CREAM job ID for this notification
@@ -96,14 +98,11 @@ public:
      * this notification (and possibly their exit codes) are changed
      * according to this notification.
      */
-    void apply( void );
+    void apply_to_job( CreamJob& j ) const;
 
     const string& get_failure_reason( void ) const { return m_failure_reason; };
 
 protected:
-
-    void apply_to_single_job( CreamJob& j ) const;
-
 
     string m_cream_job_id;
     api::job_statuses::job_status m_job_status;
@@ -114,9 +113,7 @@ protected:
     string m_worker_node;
 };
 
-
-StatusNotification::StatusNotification( const string& ad_string ) throw( ClassadSyntax_ex& ) :
-    absStatusNotification( ad_string ),
+StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& ) :
     m_has_exit_code( false ),
     m_has_failure_reason( false ),
     m_exit_code( 0 ) // default
@@ -127,17 +124,17 @@ StatusNotification::StatusNotification( const string& ad_string ) throw( Classad
 	
 
     if (!ad)
-        throw ClassadSyntax_ex( boost::str( boost::format("StatusNotification() got an error while parsing notification classad: %1%" ) % ad_string ) );
+        throw ClassadSyntax_ex( boost::str( boost::format("StatusChange() got an error while parsing notification classad: %1%" ) % ad_string ) );
         
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
 	
     if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
-        throw ClassadSyntax_ex( boost::str( boost::format( "StatusNotification(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+        throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( m_cream_job_id, boost::is_any_of("\"" ) );
 
     string job_status_str;
     if ( !classad_safe_ptr->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
-        throw ClassadSyntax_ex( boost::str( boost::format( "StatusNotification(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+        throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
     m_job_status = api::job_statuses::getStatusNum( job_status_str );
 
@@ -158,19 +155,16 @@ StatusNotification::StatusNotification( const string& ad_string ) throw( Classad
     string pp_classad;
     classad::ClassAdUnParser unparser;
     unparser.Unparse( pp_classad, classad_safe_ptr.get() );
-    if(!getenv("NO_LISTENER_MESS"))
+    if (!getenv("NO_LISTENER_MESS")) {
         CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
-                       << "StatusNotification::CTOR() - Parsed status change notification "
+                       << "StatusChange::CTOR() - "
+                       << "Parsed status change notification "
                        << pp_classad
                        << log4cpp::CategoryStream::ENDLINE);
-
+    }
 };
 
-void StatusNotification::apply( void ) {
-
-}
-
-void StatusNotification::apply_to_single_job( CreamJob& j ) const
+void StatusChange::apply_to_job( CreamJob& j ) const
 {
     j.setStatus( get_status() );
     j.set_worker_node( m_worker_node );
@@ -183,25 +177,24 @@ void StatusNotification::apply_to_single_job( CreamJob& j ) const
 }
 
 
-
-iceCommandUpdateStatus::iceCommandUpdateStatus( const monitortypes__Event& ev, const string& cemonDN ) :
-  m_ev( ev ),
-  m_cemondn( cemonDN )
+//////////////////////////////////////////////////////////////////////////////
+//
+// normalStatusNotification class
+normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev ) :
+    absStatusNotification( ),
+    m_ev( ev )
 {
 
 }
 
-//____________________________________________________________________________
-void iceCommandUpdateStatus::execute( ) throw( )
+void normalStatusNotification::apply( void ) // can throw anything
 {    
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     
-    try { // FIXME: temporary fix
-
     if( m_ev.Message.empty() ) {
 
         CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << "iceCommandUpdateStatus::execute() - "
+                        << "normalStatusNotification::execute() - "
                         << "got empty notification, skipping"
                         << log4cpp::CategoryStream::ENDLINE);
 
@@ -209,7 +202,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
     }
 
     CREAM_SAFE_LOG( m_log_dev->infoStream()
-                    << "iceCommandUpdateStatus::execute() - "
+                    << "normalStatusNotification::execute() - "
                     << "processing notification"
                     << log4cpp::CategoryStream::ENDLINE);
 
@@ -227,7 +220,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         cream_job_id = first_notification.get_cream_job_id();
     } catch( ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
-                        << "iceCommandUpdateStatus::execute() - "
+                        << "normalStatusNotification::execute() - "
                         << "Cannot parse the first notification "
                         << *(m_ev.Message.begin())
                         << " due to error: "
@@ -248,7 +241,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
     if ( jc_it == m_cache->end() ) {
         if(!getenv("NO_LISTENER_MESS"))
 	    CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "iceCommandUpdateStatus::execute() - "
+                           << "normalStatusNotification::execute() - "
                            << "creamjobid ["
                            << cream_job_id
                            << "] was not found in the cache. "
@@ -276,7 +269,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
       
       if( cemondn != m_cemondn ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
-		       << "iceCommandUpdateStatus::execute() - "
+		       << "normalStatusNotification::execute() - "
 		       << "the CEMon ["
 		       << cemondn << "] that sent this notification "
 		       << "apparently didn't receive the submission of current job ["
@@ -307,7 +300,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         if ( count <= jc_it->get_num_logged_status_changes() ) {
             if (!getenv("NO_LISTENER_MESS")) {
                 CREAM_SAFE_LOG(m_log_dev->debugStream()
-                               << "iceCommandUpdateStatus::execute() - "
+                               << "normalStatusNotification::execute() - "
                                << "Skipping current notification because contains old states"
                                << log4cpp::CategoryStream::ENDLINE);
             }
@@ -321,7 +314,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         } catch( ClassadSyntax_ex ex ) {
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->errorStream()
-                               << "iceCommandUpdateStatus::execute() - "
+                               << "normalStatusNotification::execute() - "
                                << "received a notification "
                                << *msg_it << " which could not be understood; error is: "
                                << ex.what() << ". "
@@ -334,7 +327,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         if( notif_ptr->get_status() == api::job_statuses::PURGED ) {
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->infoStream()
-                               << "iceCommandUpdateStatus::execute() - "
+                               << "normalStatusNotification::execute() - "
                                << jc_it->describe()
                                << " is reported as PURGED. Removing from cache"
                                << log4cpp::CategoryStream::ENDLINE); 
@@ -344,7 +337,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         
         if (!getenv("NO_LISTENER_MESS"))
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
-                           << "iceCommandUpdateStatus::execute() - "
+                           << "normalStatusNotification::execute() - "
                            << "Checking job [" << notif_ptr->get_cream_job_id()
                            << "] with status [" 
                            << api::job_statuses::job_status_str[ notif_ptr->get_status() ] << "]"
@@ -364,21 +357,4 @@ void iceCommandUpdateStatus::execute( ) throw( )
         m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
     }
 
-    //
-    // FIXME: Temporary fix
-    // 
-    } catch( std::exception& ex ) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream() 
-                       << "iceCommandUpdateStatus::execute() - "
-                       << "Got exception: "
-                       << ex.what()
-                       << ". Going on and hoping for the best"
-                       << log4cpp::CategoryStream::ENDLINE);        
-    } catch( ... ) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream() 
-                       << "iceCommandUpdateStatus::execute() - "
-                       << "Got unknown exception. "
-                       << "Going on and hoping for the best"
-                       << log4cpp::CategoryStream::ENDLINE);        
-    }
 }

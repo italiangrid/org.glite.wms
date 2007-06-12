@@ -18,7 +18,9 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandStatusPoller.cpp \
 	iceCommandSubUpdater.cpp \
 	iceCommandUpdateStatus.cpp \
-	Request_source_purger.cpp
+	Request_source_purger.cpp \
+	normalStatusNotification.cpp \
+	emptyStatusNotification.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
