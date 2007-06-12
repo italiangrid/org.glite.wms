@@ -946,7 +946,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			try{
 				collectAd = new CollectionAd(*(adObj->ad()));
 			}catch (Exception &ex){
-				cout << " FALLITA LA COLLECTION AD" << endl ;
 				throw WmsClientException(__FILE__,__LINE__,
 					"checkAd",  DEFAULT_ERR_CODE,
 					"Invalid JDL collection",
