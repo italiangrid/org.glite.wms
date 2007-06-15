@@ -99,6 +99,14 @@ sort_by_size() # 1 - file names vector, 2 - directory
   unset tmp_sort_file
 }
 
+is_integer() { # 1 - value to be checked
+  if [ -z "${1//[0-9]/}" ] && [ -n "$1" ] ; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 retry_copy() # 1 - command, 2 - source, 3 - dest
 {
   count=0
@@ -420,10 +428,12 @@ else
   __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
 fi
 
-if [ -z "${GLITE_LOCAL_MAX_OSB_SIZE}" ]; then
-  __max_osb_size=-1 # unlimited
-else
-  __max_osb_size=${GLITE_LOCAL_MAX_OSB_SIZE}
+max_osb_size=${__max_outputsandbox_size}
+is_integer ${GLITE_LOCAL_MAX_OSB_SIZE}
+if [ $? -eq 0 ]; then
+  if [ ${GLITE_LOCAL_MAX_OSB_SIZE} -lt $max_osb_size ]; then
+    max_osb_size=${GLITE_LOCAL_MAX_OSB_SIZE}
+  fi
 fi
 
 # first of all, the VO hook
@@ -808,13 +818,13 @@ if [ ${__wmp_support} -eq 0 ]; then
   do
     if [ -r "${f}" ]; then
       ff=${f##*/}
-      if [ ${__max_osb_size} -ge 0 ]; then
+      if [ ${max_osb_size} -ge 0 ]; then
         # TODO
         #if hostname=wms
           file_size=`stat -t $f | awk '{print $2}'`
           let "file_size_acc += $file_size"
         #fi
-        if [ $file_size_acc -le ${__max_osb_size} ]; then
+        if [ $file_size_acc -le ${max_osb_size} ]; then
           retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
         else
           jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
@@ -822,7 +832,7 @@ if [ ${__wmp_support} -eq 0 ]; then
           # below as an array index), + 1 again because of the 
           # difference between $total and $current (i.e. 20-19=2 more files)
           remaining_files=`expr $total_files \- $current_file + 2`
-          remaining_space=`expr $__max_osb_size \- $file_size_acc`
+          remaining_space=`expr $max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`||0
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
@@ -857,13 +867,13 @@ else # WMP support
       else
         d="${__output_sandbox_base_dest_uri}/${file}"
       fi
-      if [ ${__max_osb_size} -ge 0 ]; then
+      if [ ${max_osb_size} -ge 0 ]; then
         # TODO
         #if hostname=wms
           file_size=`stat -t $f | awk '{print $2}'`
           file_size_acc=`expr $file_size_acc + $file_size`
         #fi
-        if [ $file_size_acc -le ${__max_osb_size} ]; then
+        if [ $file_size_acc -le ${max_osb_size} ]; then
           if [ "${f:0:9}" == "gsiftp://" ]; then
             retry_copy "globus-url-copy" "file://$s" "$d"
           elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
@@ -874,7 +884,7 @@ else # WMP support
         else
           jw_echo "OSB quota exceeded for $s, truncating needed"
           remaining_files=`expr $total_files \- $current_file + 2`
-          remaining_space=`expr $__max_osb_size \- $file_size_acc`
+          remaining_space=`expr $max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`||0
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${f}, not sending"

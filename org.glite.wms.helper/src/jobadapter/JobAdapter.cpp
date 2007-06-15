@@ -238,7 +238,7 @@ try {
   vector<std::string> outputsandboxdesturi;
   if (!outputsandbox.empty()) {
     utils::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
-    if ( !outputsandboxdesturi.empty() ) {
+    if (!outputsandboxdesturi.empty()) {
       b_osb_dest_uri = true;
     }
   }
@@ -506,7 +506,7 @@ try {
     // Then remove leading dirname.
     userproxy_basename.assign(userproxy_basename.substr(userproxy_basename.rfind('/')+1));
 
-    if (! is_condor_resource) {
+    if (!is_condor_resource) {
       condor_submit_environment.assign("X509_USER_PROXY=");
       condor_submit_environment.append(userproxy_basename);
     }
@@ -822,6 +822,7 @@ try {
 	
   jdl::set_globus_rsl(*result, globusrsl);
   
+  jw->max_osb_size((int64_t)config.wm()->max_output_sandbox_size());
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
   jw->standard_error(stderror);

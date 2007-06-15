@@ -93,6 +93,7 @@ struct JobWrapper::pimpl {
 
   std::string               m_broker_hostname;
   std::string               m_ce_application_dir;
+  int64_t                   m_max_osb_size;
 };
 
 const std::string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
@@ -343,6 +344,12 @@ JobWrapper::perusal_listfileuri(const std::string& listfileuri)
   m_pimpl->m_perusal_listfileuri = listfileuri;
 }
 
+void
+JobWrapper::max_osb_size(int64_t const& m)
+{
+  m_pimpl->m_max_osb_size = m;
+}
+
 namespace {
 
 template<typename T>
@@ -502,7 +509,8 @@ JobWrapper::dump_vars(std::ostream& os) const
       (m_pimpl->m_output_sandbox_base_dest_uri == 0 ? "" 
       : m_pimpl->m_output_sandbox_base_dest_uri->as_string())
     ) &&
-    dump(os, "__job_type", m_pimpl->m_job_type);
+    dump(os, "__job_type", m_pimpl->m_job_type) &&
+    dump(os, "__max_outputsandbox_size", m_pimpl->m_max_osb_size);
 }
 
 bool 
@@ -541,11 +549,12 @@ JobWrapper::print(std::ostream& os) const
   const configuration::WMConfiguration* const wm_config
     = configuration::Configuration::instance()->wm();
 
-  if( !fill_out_script( 
-                       wm_config->job_wrapper_template_dir() 
-                       + 
-                       "/template.sh", os
-                      )
+  if(
+    !fill_out_script( 
+      wm_config->job_wrapper_template_dir() 
+      + 
+      "/template.sh", os
+    )
   ) {
     throw JobWrapperException("Cannot create jobwrapper script");
   }
