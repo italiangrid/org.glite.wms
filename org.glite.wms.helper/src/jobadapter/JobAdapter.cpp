@@ -815,6 +815,7 @@ try {
 	
   jdl::set_globus_rsl(*result, globusrsl);
   
+  jw->max_osb_size((int64_t)config.wm()->max_output_sandbox_size());
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
   jw->standard_error(stderror);

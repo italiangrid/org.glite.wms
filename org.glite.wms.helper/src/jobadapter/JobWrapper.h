@@ -254,6 +254,10 @@ public:
   void epilogue(std::string const&);
   void epilogue_arguments(std::string const&);
 
+  void broker_hostname(std::string const&);
+  void ce_application_dir(std::string const&);
+
+  void max_osb_size(const int64_t &);
 private:
 
   static const std::string s_brokerinfo_default;

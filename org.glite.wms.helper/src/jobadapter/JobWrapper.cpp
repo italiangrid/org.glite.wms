@@ -90,6 +90,10 @@ struct JobWrapper::pimpl {
 
   int                       m_job_type;
   bool                      m_osb_wildcards_support;
+
+  std::string               m_broker_hostname;
+  std::string               m_ce_application_dir;
+  int64_t                   m_max_osb_size;
 };
 
 const std::string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
@@ -297,6 +301,18 @@ void JobWrapper::set_osb_wildcards_support(bool value)
 }
 
 void
+JobWrapper::broker_hostname(std::string const& _)
+{
+  m_pimpl->m_broker_hostname = _;
+}
+
+void
+JobWrapper::ce_application_dir(std::string const& _)
+{
+  m_pimpl->m_ce_application_dir = _;
+}
+
+void
 JobWrapper::enable_shallow_resubmission(std::string const& token)
 {
   m_pimpl->m_shallow_resubmission_token = token;
@@ -306,6 +322,12 @@ void
 JobWrapper::perusal_support(void)
 {
   m_pimpl->m_perusal_support = true;
+}
+
+void
+JobWrapper::max_osb_size(int64_t const& m)
+{
+  m_pimpl->m_max_osb_size = m;
 }
 
 void
@@ -477,11 +499,14 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_lfn", logical_file_names) &&
     dump(os, "__output_se", storage_elements) &&
     dump(os, "__osb_wildcards_support", m_pimpl->m_osb_wildcards_support) &&
+    dump(os, "__ce_application_dir", m_pimpl->m_ce_application_dir) &&
+    dump(os, "__broker_hostname", m_pimpl->m_broker_hostname) &&
     dump(os, "__output_sandbox_base_dest_uri", 
       (m_pimpl->m_output_sandbox_base_dest_uri == 0 ? "" 
       : m_pimpl->m_output_sandbox_base_dest_uri->as_string())
     ) &&
-    dump(os, "__job_type", m_pimpl->m_job_type);
+    dump(os, "__job_type", m_pimpl->m_job_type) &&
+    dump(os, "__max_outputsandbox_size", m_pimpl->m_max_osb_size);
 }
 
 bool 
