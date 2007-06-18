@@ -85,6 +85,15 @@ fatal_error() # 1 - reason
   doExit 1
 }
 
+is_integer() # 1 - value to be checked
+{
+  if [ -z "${1//[0-9]/}" ] && [ -n "$1" ] ; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 {
   tail "$1" --bytes=$2>$3 2>/dev/null
@@ -416,10 +425,12 @@ if [ -d "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   hooks_directory=${GLITE_LOCAL_CUSTOMIZATION_DIR}
 fi
 
-if [ -z "${GLITE_LOCAL_MAX_OSB_SIZE}" ]; then
-  max_osb_size=-1 # unlimited
-else
-  max_osb_size=${GLITE_LOCAL_MAX_OSB_SIZE}
+max_osb_size=${__max_outputsandbox_size}
+is_integer ${GLITE_LOCAL_MAX_OSB_SIZE}
+if [ $? -eq 0 ]; then
+  if [ ${GLITE_LOCAL_MAX_OSB_SIZE} -lt $max_osb_size ]; then
+    max_osb_size=${GLITE_LOCAL_MAX_OSB_SIZE}
+  fi
 fi
 
 for env in ${__environment[@]}
