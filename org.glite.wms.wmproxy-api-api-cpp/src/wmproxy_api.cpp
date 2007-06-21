@@ -136,8 +136,13 @@ BaseException* createWmpException(struct soap *soap){
 			} else{
 				b_ex->Description = NULL;
 			}
-			if (faultcode){
-				b_ex->ErrorCode = new string(faultcode);
+			if (faultcode) {
+				if ( string(faultcode).compare("SOAP-ENV:Client") == 0){
+					b_ex->Description = new string("WMProxy unreachable") ;
+					b_ex->ErrorCode = new string("WMProxy Server may be down (or wrong server name)");
+				} else {
+					b_ex->ErrorCode = new string(faultcode);
+				}
 			}else {
 				b_ex->ErrorCode = NULL;
 			}
