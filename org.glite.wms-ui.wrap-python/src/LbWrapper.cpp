@@ -4,6 +4,7 @@
 // #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 // #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 #include <stdio.h>
+#include <sstream>
 #include <iostream>
 #include <vector>
 /**  LB Class implementation:  */
@@ -91,6 +92,9 @@ void createQuery (
 	}
 }
 
+/******************************************************************************/
+/* Status CLASS                                                                  */
+/******************************************************************************/
 
 Status::Status () {
    /*
@@ -103,17 +107,6 @@ Status::Status () {
 } ;
 
 Status::~Status () { };
-
-Eve::Eve () {
-   /*
-   edg_wlc_SSLInitialization();
-   if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
-      log_error ("Unable to Initialise SSL context") ;
-   else if (edg_wlc_SSLLockingInit() != 0)
-      log_error ("Unable to Initialise SSL context" ) ;
-   */
-} ;
-Eve::~Eve() {} ;
 
 /** Status::size(int status_number)*/
 int Status::size(int status_number){
@@ -131,61 +124,6 @@ int Status::size(int status_number){
 
 
 int Status::size(){  return states.size() ; }
-int Eve::size(){ return events.size()     ; }
-
-
-int Eve::size(int event_number){
-   error_code = false ;
-   list<glite::lb::Event>::iterator it = events.begin();
-   for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
-   glite::lb::Event event_retrieved = *it ;
-   std::vector<pair<Event::Attr,Event::AttrType> > attrList = event_retrieved.getAttrs();
-   return attrList.size() ;
-}
-
-std::vector<std::string> Eve::getEventsNames(){
-
-	std::vector<std::string> result ;
-
-	// Fill the returned array with the Events Names
-	for (int lb_attr = 0; (Event::Attr)lb_attr < Event::ATTR_MAX; lb_attr++){
-		// Insert a single Event Name
-		result.push_back(Event::getAttrName((Event::Attr)lb_attr));
-	}
-	
-	// Return the vector of Event Names
-	return result;
-}
-
-std::vector<std::string> Eve::getEventsCodes(){
-
-	std::vector<std::string> result ;
-
-	// Fill the returned array with the Events Codes
-	for (int lb_code = 0; (Event::Type)lb_code < Event::TYPE_MAX; lb_code++){
-		// Insert a single Event Code
-		result.push_back(Event::getEventName((Event::Type)lb_code));
-	}
-	
-	// Return the vector of Events Codes
-	return result;
-}
-
-void Eve::log_error ( const std::string& err) {    error_code = true ; error = err ;};
-
-std::vector<std::string> Eve::get_error ()  {
-
-  std::vector<std::string> result ;
-  
-  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-  result.push_back(error);
-  result.push_back(error);
-  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-  
-  error = "" ;
-
-  return result;
-}
 
 void Status::log_error ( const std::string& err) { error_code = true ; error = err ;};
 
@@ -310,169 +248,6 @@ log_error ("DEPRECATED: THIS METHOD HAS BEEN OVERRIDEN BY queryStates") ;
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
 return states.size();
 } ;
-
-
-// Retrieve The Events for the specified JobId
-int Eve::getEvents (const  std::string& jobid) {
-	error_code = false ;
-	vector<Event> events_vector;
-	events.resize( 0 ) ;
-	try{
-		lbJob = glite::wmsutils::jobid::JobId ( jobid );
-		lbJob.log(  events_vector   );
-		for (unsigned int i = 0 ; i< events_vector.size() ; i++){
-			events.push_back (   events_vector[i]    ) ;
-		}
-	}catch (Exception &exc){
-		if (exc.getCode()  ==E2BIG )  log_error ("Unable to retrieve all events from: " +jobid ) ;
-		log_error ("Unable to retrieve the Job Events for: " +jobid+"\n" + string (exc.what() ) ) ;
-	}catch (std::exception &exc){
-		log_error ("Unable to retrieve the Job Events for: " +jobid+"\n" + string (exc.what() ) ) ;
-	} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-	return events.size() ;
-} ;
-
-
-
-
-std::vector<std::string> Eve::getEventName(int event_number){
-	error_code = false ;
-	// Position to the desired event number
-	list<glite::lb::Event>::iterator it = events.begin();
-	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
-
-	std::vector<std::string> result ;
-	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-  	result.push_back("Event");
-  	result.push_back(it->name());
-  	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-
-	  return result;
-}
-
-
-std::vector<std::string> Eve::getVal (int field, int event_number) {
-	error_code = false ;
-	// Position to the desired event number
-	list<glite::lb::Event>::iterator it = events.begin();
-	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
-	glite::lb::Event event_retrieved = *it ;
-	string attrName = "" ;
-	string result = "";
-/*
-	int EVENT = 56 ;
-	if ( field == EVENT) {
-		result = event_retrieved.name() ;
-		return "Event" ;
-	}
-*/
-
-	Event::Attr fieldAttr = (Event::Attr) field ;
-	if (fieldAttr < Event::ATTR_MAX) {
-		attrName = event_retrieved.getAttrName(fieldAttr);
-	}
-	// TODO remove this hardcoded dimension
-	char tmp [1024] ;
-try{
-	switch ( fieldAttr ){
-		/** Integer Values*/
-		case Event::LEVEL:
-		result = string (  edg_wll_LevelToString ( (edg_wll_Level) event_retrieved.getValInt(fieldAttr) ) ) ;
-			break;
-		case Event::STATUS_CODE:
-			switch (event_retrieved.type){
-				case Event::CANCEL:
-					result = string
-					(edg_wll_CancelStatus_codeToString (
-					(edg_wll_CancelStatus_code)event_retrieved.getValInt(fieldAttr) ) ) ;
-				break;
-				default:
-					result = string
-					(edg_wll_DoneStatus_codeToString (
-					(edg_wll_DoneStatus_code)event_retrieved.getValInt(fieldAttr) ) ) ;
-				break;
-			}
-			break;
-		case Event::EXIT_CODE:
-		case Event::PRIORITY:
-		case Event::NSUBJOBS:
-		case Event::SHADOW_EXIT_STATUS:
-			sprintf (tmp , "%d" , event_retrieved.getValInt(fieldAttr) ) ;
-			result = string (tmp) ;
-			break;
-		case Event::SOURCE:
-		case Event::DESTINATION:
-		case Event::FROM:
-		case Event::SVC_PORT:
-		case Event::DEST_PORT:
-			result = string (  edg_wll_SourceToString ( (edg_wll_Source )event_retrieved.getValInt(fieldAttr) ) ) ;
-			break;
-		case Event::VALUE:
-		case Event::SRC_ROLE:
-		case Event::HOST:
-		case Event::SEQCODE:
-		case Event::USER:
-		case Event::SRC_INSTANCE:
-		case Event::RESULT:
-		case Event::NAME:
-		case Event::REASON:
-		case Event::DESCR:
-		case Event::SVC_HOST:
-		case Event::SVC_NAME:
-		case Event::FROM_INSTANCE:
-		case Event::FROM_HOST:
-		case Event::LOCAL_JOBID:
-		case Event::QUEUE:
-		case Event::NODE:
-		case Event::JDL:
-		case Event::SEED:
-		case Event::NS:
-		case Event::JOB:
-		case Event::RETVAL:
-		case Event::CLASSAD:
-		case Event::TAG:
-		case Event::HELPER_PARAMS:
-		case Event::HELPER_NAME:
-		case Event::DEST_ID:
-		case Event::DEST_HOST:
-		case Event::DEST_JOBID:
-		case Event::DEST_INSTANCE:
-		case Event::JOBSTAT:
-		case Event::OWNER:
-		case Event::WN_SEQ:
-			result = event_retrieved.getValString(fieldAttr) ;
-			break;
-		case Event::TIMESTAMP:
-		case Event::ARRIVED:
-		{
-				timeval t = event_retrieved.getValTime(fieldAttr);
-				sprintf (tmp , "%d",  (int )t.tv_sec ) ;
-				result = string (tmp) ;
-		}
-		break;
-		case Event::JOBID:
-		case Event::PARENT:{
-			if(   ((glite::wmsutils::jobid::JobId)event_retrieved.getValJobId(fieldAttr)).isSet()   )
-			result =  event_retrieved.getValJobId(fieldAttr).toString() ;
-		}
-		break;
-		default      : 	// something is wrong
-		//log_error("Something is wrong for " +attrName ) ;
-		break;
-	} // end switch
-} catch ( exception &exc){
-    // log_error("Fatal Error\n" + string (exc.what() )  );
-} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-
-	  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-  	std::vector<std::string> vectorResult ;
-	vectorResult.push_back(attrName);
-	vectorResult.push_back(result);
-	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-
-  	return vectorResult;
-};
-
 
 std::vector<std::string> Status::getVal (int field , int status_number ) {
 	// Retrieve the status to be investigated
@@ -726,63 +501,344 @@ std::vector< std::string  > Status::loadStatus( int status_number )  {
 	return result ;
 }
 
+/******************************************************************************/
+/* Eve CLASS                                                                  */
+/******************************************************************************/
 
+/*
+* Event Wrapper class Constructor
+*@param jobid the id of the job whose info are to be retrieved
+*/
+Eve::Eve (const std::string& jobid) {
 
- int Eve::queryEvents (
- 	// Lb Server address
-	const std::string& host , int port ,
-	// Jobids parameters:
-	const std::vector<std::string>& jobids,
-	// User Tags parameters:
-	const std::vector<std::string>& tagNames,   	// NEEDED?
-	const std::vector<std::string>& tagValues,  	// NEEDED?
-	// Include-Exclude States parameters:
-	const std::vector<int>& excludes,
-	const std::vector<int>& includes,
-	// Issuer value (if -all selected):
-	std::string issuer,				 // NEEDED?
-	// --from and --to options:
-	int from , int to ,				 // NEEDED?
-	// Verbosity Level
-	int ad )					 // NEEDED?
-{
-	vector<Event> events_v;
-	// FILL JOBIDS QUERY:
-	vector<QueryRecord> tmpCond;
+	// Initialise
+	error_code = false ;
+
+	// Set the private Job Id
+	this->jobid = jobid;
+	
+	// Retrieve all the Events associated to the current Job ID
 	try{
-		for (unsigned int i = 0; i<jobids.size(); i++){
-			QueryRecord qr(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
-			tmpCond.push_back(qr);
+		// Set the Job ID
+		glite::lb::Job lbbJob = glite::wmsutils::jobid::JobId(this->jobid);
+		
+		// Retrieve the Events
+		lbbJob.log(events);
+		
+	}catch (Exception &exc){
+		
+		// Check for specific error E2BIG
+		if (exc.getCode() == E2BIG) {
+			// Log the error
+			log_error ("Unable to retrieve all events from: " +jobid ) ;
 		}
+		
+		// Log the error
+		log_error ("Unable to retrieve the Job Events for: " +jobid+"\n" + string (exc.what() ) ) ;
+		
+	}catch (std::exception &exc){
+	
+		// Log the error
+		log_error ("Unable to retrieve the Job Events for: " +jobid+"\n" + string (exc.what() ) ) ;
+		
+	} catch (...){  
+	
+		// Log the error
+		error_code= true; 
+		error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; 
+	}
+
+}
+
+/*
+* Event Wrapper class Constructor
+*@param jobid the id of the job whose info are to be retrieved
+*/
+Eve::Eve (const std::vector<std::string>& jobids,
+  	  const std::string& lbHost, 
+	  int lbPort,
+	  const std::vector<std::string>& tagNames,
+	  const std::vector<std::string>& tagValues,
+	  const std::vector<int>& excludes,
+	  const std::vector<int>& includes,
+	  const std::string& issuer,
+	  int from,
+	  int to) 
+{
+
+	try{
+	
+		// Create the vector of Query Records for the Job ID's
+		vector<QueryRecord> queryRecordCond;
+	
+		// Fill the vector of Query Records for the Job ID's
+		for (unsigned int i = 0; i<jobids.size(); i++){
+			// Create a Query Record 
+			QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
+			
+			// Add the Query Record to the vector
+			queryRecordCond.push_back(queryRecord);
+		}
+
+		// Create a vector of conditions		
 		vector<vector<QueryRecord> > jobCond;
-		jobCond.push_back(tmpCond);
+
+		// Add the Query Records of Job ID's to the Job Conditions
+		jobCond.push_back(queryRecordCond);
+
 		// FILL Other parameters QUERY:
 		error_code = false ;
-		// returned vector
-		ServerConnection server ;
-		server.setQueryServer(host, port);
+
+		// Create the vector of Query conditions
 		vector <vector<QueryRecord> > eveCond ;
+
+		// Create the conditions
 		createQuery (eveCond, tagNames, tagValues, excludes, includes, issuer, from, to,
 			// LAST boolean parameter specify it is an Event query
 			true);
+			
+		// Create and set a server
+		ServerConnection server ;
+		server.setQueryServer(lbHost, lbPort);
+
 		// the Server will fill the result vector anyway, even when exception is raised
-		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ){server.setParam(EDG_WLL_PARAM_QUERY_RESULTS, 3);}
-		// reset queries:
-		events.resize(0);
+		if (!getenv ( "GLITE_WMS_QUERY_RESULTS")) {
+			server.setParam(EDG_WLL_PARAM_QUERY_RESULTS, 3);
+		}
+		
 		// Perform the actual LB query:
-		server.queryEvents (jobCond, eveCond, events_v);
-		// server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states_v ) ;
+		server.queryEvents (jobCond, eveCond, events);
+		
 	}catch (Exception &exc){
 			if (exc.getCode()  ==E2BIG ){
-				log_error ("Unable to retrieve all event information from: " + host + ": " +string (exc.what() ) ) ;
+				log_error ("Unable to retrieve all event information from: " + lbHost + ": " +string (exc.what() ) ) ;
 			} else{
-				log_error ("Unable to retrieve any event information from: " + host + ": " +string (exc.what() ) ) ;
+				log_error ("Unable to retrieve any event information from: " + lbHost + ": " +string (exc.what() ) ) ;
 			}
 	}catch (exception &exc){
-			log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
+			log_error ("Unable to retrieve any status information from: " + lbHost + ": " +string (exc.what() ) ) ;
 	} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-	for ( unsigned int i = 0 ; i< events_v.size() ; i++ ){ events.push_back(events_v[i]); }
-	return events.size() ;
+
 }
 
+/**
+* Static method to retrieve the Names of all available Events
+*/
+std::vector<std::string> Eve::getEventsNames(){
 
+	std::vector<std::string> result ;
+
+	// Fill the returned array with the Events Names
+	for (int lb_attr = 0; (Event::Attr)lb_attr < Event::ATTR_MAX; lb_attr++){
+		// Insert a single Event Name
+		result.push_back(Event::getAttrName((Event::Attr)lb_attr));
+	}
+	
+	// Return the vector of Event Names
+	return result;
+}
+
+/**
+* Static method to retrieve the Codes of all available Events
+*/
+std::vector<std::string> Eve::getEventsCodes(){
+
+	std::vector<std::string> result ;
+
+	// Fill the returned array with the Events Codes
+	for (int lb_code = 0; (Event::Type)lb_code < Event::TYPE_MAX; lb_code++){
+		// Insert a single Event Code
+		result.push_back(Event::getEventName((Event::Type)lb_code));
+	}
+	
+	// Return the vector of Events Codes
+	return result;
+}
+
+/**
+* Retrieve the name for a specific event
+*/
+std::string Eve::getEventName(int eventNumber) {
+	// Return the event name
+	return events[eventNumber].name();
+}
+
+/**
+* Retrieve the event attributes for a specific event
+*/
+std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
+
+	// Check if the event_number is valid
+	if(eventNumber < 0 || eventNumber >= events.size()) {
+		// TODO THROW Exception
+	}
+	
+	// Initialise the result vector of Event Attributes strings
+	std::vector< std::string > eventAttributes;
+	eventAttributes.resize(Event::ATTR_MAX);
+
+	// Retrieve the Event and Event Attributes
+	Event eventRequested = events[eventNumber];
+	std::vector<pair<Event::Attr, Event::AttrType> > attrList = eventRequested.getAttrs();
+
+	// Fill the result vector with all the attributes found
+	for (unsigned int attrCounter = 0; attrCounter < attrList.size(); attrCounter++ ) {
+	
+		// Conversion stream
+		std::stringstream convStr;
+
+		// Set the Event Attribute
+		Event::Attr attribute = attrList[attrCounter].first;
+
+		// Set the Event Attribute Type
+		Event::AttrType attributeType = attrList[attrCounter].second;
+
+		// Check for special cases
+		if(Event::LEVEL == attribute) {
+			// Set the Level string
+			eventAttributes[attribute] = string (  edg_wll_LevelToString((edg_wll_Level)eventRequested.getValInt(attribute)));
+		}
+		else if (Event::STATUS_CODE == attribute) {
+		
+			// Build the string according to the type of the event
+			if(Event::CANCEL == eventRequested.type) {
+				eventAttributes[attribute] = string
+					(edg_wll_CancelStatus_codeToString (
+					(edg_wll_CancelStatus_code)eventRequested.getValInt(attribute) ) ) ;
+			
+			}
+			else {
+				eventAttributes[attribute] = string
+					(edg_wll_DoneStatus_codeToString (
+					(edg_wll_DoneStatus_code)eventRequested.getValInt(attribute) ) ) ;
+			}	
+		}
+		else if(Event::JOBTYPE == attribute ||
+			Event::RESULT == attribute) {
+			// Set the attribute
+			eventAttributes[attribute] = eventRequested.getValString(attribute);
+		}
+		else
+		{
+			// Read the attributes according to its type
+			switch (attributeType) {
+				
+				case Event::LOGSRC_T :
+				case Event::PORT_T :{
+
+					// Convert the INT value to string and set the attribute
+					eventAttributes[attribute] =  string(edg_wll_SourceToString((edg_wll_Source)eventRequested.getValInt(attribute)));
+				}
+				break;
+			
+				case Event::INT_T :
+				{
+
+					// Convert the INT value to string
+					convStr << eventRequested.getValInt(attribute);
+
+					// Set the attribute
+					eventAttributes[attribute] = convStr.str();
+				}
+				break;
+			
+				case Event::FLOAT_T :{
+
+					// Convert the FLOAT value to string
+					convStr << eventRequested.getValFloat(attribute);
+
+					// Set the attribute
+					eventAttributes[attribute] = convStr.str();
+				}
+				break;
+			
+				case Event::DOUBLE_T :{
+
+					// Convert the DOUBLE value to string
+					convStr << eventRequested.getValDouble(attribute);
+
+					// Set the attribute
+					eventAttributes[attribute] = convStr.str();
+				}
+				break;
+			
+				case Event::NOTIFID_T :{
+
+					// TODO Check Right Type management
+					// Convert the INT value to string
+					convStr << eventRequested.getValInt(attribute);
+
+					// Set the attribute
+					eventAttributes[attribute] = convStr.str();
+				}
+				break;
+			
+				case Event::STRING_T  :{
+
+					// Set the attribute
+					eventAttributes[attribute] = eventRequested.getValString(attribute);
+				}
+				break;
+			
+				case Event::JOBID_T :{
+
+					if(((glite::wmsutils::jobid::JobId)eventRequested.getValJobId(attribute)).isSet()) {
+						eventAttributes[attribute] = eventRequested.getValJobId(attribute).toString();
+					}
+				}
+				break;
+			
+				case Event::TIMEVAL_T :{
+		
+					// TODO remove this hardcoded dimension
+					char tmp [1024] ;
+				
+					memset(tmp, 0, sizeof(tmp));
+				
+					/* Convert the TIMEVAL value to string */
+					timeval t = eventRequested.getValTime(attribute);
+					sprintf (tmp , "%d", (int)  t.tv_sec) ;
+					
+					// Set the attribute
+					eventAttributes[attribute] = string(tmp) ;
+				}
+				break;
+				
+				default : /* something is wrong */ {
+					cerr << "\n\nFATAL ERROR!!! 	 has gone bad for "
+						<< eventRequested.getAttrName(attribute) << flush;
+				}					
+				break;
+	
+			} // end switch
+
+		} // end if
+
+	} // end for	
+
+	// Return 
+	return eventAttributes;
+}
+
+/**
+* Retrieve the events number for the current Job ID
+*/
+int Eve::getEventsNumber() {
+	return events.size();
+}
+
+void Eve::log_error ( const std::string& err) {    error_code = true ; error = err ;};
+
+std::vector<std::string> Eve::get_error ()  {
+
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
+}

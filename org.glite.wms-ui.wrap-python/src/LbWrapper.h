@@ -120,50 +120,19 @@ class Status {
 */
 class Eve{
   public:
-	/**
-	* Event Wrapper class Constructor
-	*/
-	Eve () ;
-	/**
-	* Event Wrapper class Destructor
-	*/
-	~Eve();
-	/**
-	* Return the number of events retrieved
-	*/
-	int size () ;
-	/**
-	* This method is DEPRECATED
-	*/
-	int size (int status_number) ;
-	/**
-	* retrieve the events for the specified jobid
-	*@param jobid the id of the job whose info are to be retrieved
-	*/
-	int getEvents ( const std::string& jobid) ;
-	/** Retrieve the attribute value for the specified event
-	* @param field the index of the field as in Job.py Event class
-	* @param event_number the event where to retrieve the value from
-	* @param attrValue parameter passed by reference , returned by python
-	* @return a couple of strings [ <attribute name > , <attribute value> ]
-	*/
-	std::vector<std::string> getVal (int field , int event_number);
+  	/*
+        * Event Wrapper class Constructor
+	*@param jobid: the id of the job whose info are to be retrieved
+        */
+        Eve (const std::string& jobid);
 
-	/**
-	* Retrieve the Names of all available Events
-	*/
-	std::vector<std::string> getEventsNames() ;
-
-	/**
-	* Retrieve the Codes of all available Events
-	*/
-	std::vector<std::string> getEventsCodes() ;
-
-	/**
-	* Perform a query to the Lb Server allowing the user to specify several parameters
+     	/*
+	* Event Wrapper class Constructor that performs a query to the Lb Server 
+	* allowing the user to specify several parameters
+	*
+	*@param jobids The list of jobids on which to perform the QUERY
 	*@param host the LB server host name
 	*@param port the LB server listening port
-	*@param jobids The list of jobids on which to perform the QUERY
 	*@param tagNames a vector containing all the user tag names to be searched
 	*@param tagValues a vector containing all the user tag values for the tagNames names. the size of tagNames must be the same as tagValues
 	*@param excludes an integer representing all the states that do not have to be retrieved (used togheter with includes returns empty set)
@@ -173,17 +142,47 @@ class Eve{
 	*@param to retrieves only job submitted before specified time ( in seconds after epoch)
 	*@param ad if different from 0, retrieves Ad Status information as well
 	*/
-	int queryEvents (const std::string& host, int port,
-		const std::vector<std::string>& jobids,
-		const std::vector<std::string>& tagNames, const std::vector<std::string>& tagValues,
-		const std::vector<int>& excludes, const std::vector<int>& includes,
-		std::string issuer,int from, int to ,int ad);
+	Eve (const std::vector<std::string>& jobids,
+	     const std::string& lbHost, 
+	     int lbPort,
+	     const std::vector<std::string>& tagNames,
+	     const std::vector<std::string>& tagValues,
+	     const std::vector<int>& excludes,
+	     const std::vector<int>& includes,
+	     const std::string& issuer,
+	     int from,
+	     int to);
 
+	/**
+	* Static method to retrieve the Names of all available Events
+	*/
+	static std::vector<std::string> getEventsNames() ;
+
+	/**
+	* Static method to retrieve the Codes of all available Events
+	*/
+	static std::vector<std::string> getEventsCodes() ;
+	
+	/**
+	* Retrieve the name for a specific event
+	*/
+	std::string Eve::getEventName( int eventNumber );
+
+	/**
+	* Retrieve the event attributes for a specific event
+	*/
+	std::vector< std::string > Eve::getEventAttributes( int eventNumber );
+
+	/**
+	* Retrieve the events number for the current Job ID
+	*/
+	int getEventsNumber() ;
+	
 	std::vector<std::string> get_error () ;
-
-	std::vector<std::string> Eve::getEventName(int event_number);
+	
   private:
-	std::list<glite::lb::Event> events ;
+	std::string jobid;
+  	std::vector<glite::lb::Event> events;
 	std::string error;
 	bool error_code ;
 	void log_error ( const std::string& err) ;
