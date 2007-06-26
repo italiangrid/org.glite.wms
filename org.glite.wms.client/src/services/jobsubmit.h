@@ -186,9 +186,8 @@ class JobSubmit : public Job {
 		* to be transferred to the server, only the jobRegistration is performed.
 		* After the file transfer, the jobStarter method will be called.
 		* @param submit perform submission (true) or registration (false)
-		* @return a string contained the identifier with which the job has been registered
                 */
-		std::string jobRegOrSub(const bool &submit);
+		void jobRegOrSub(const bool &submit);
 
 		/*
 		* Performs job starting

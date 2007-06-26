@@ -205,7 +205,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 		info << wmcOpts->getAttributeUsage(Options::NODESRES) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
-		info << wmcOpts->getAttributeUsage(Options::CHKPT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::COLLECTION) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::DAG) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::DEFJDL) << "\n";
@@ -1145,9 +1144,9 @@ void JobSubmit::checkAd(bool &toBretrieved){
 *Performs:
 *	- Job registration when --register-only is selected
 *	-  Job submission otherwise
-* 	TBD: returning string is not used anymore
 */
-std::string JobSubmit::jobRegOrSub(const bool &submit) {
+void JobSubmit::jobRegOrSub(const bool &submit) {
+
 	string method  = "";
 	// checks if jdlstring is not null
 	if (m_jdlString.empty()){
@@ -1193,8 +1192,6 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			"job"+method, ECONNABORTED,
 			"Operation failed", err.str());
 	}
-	// TBD not used anymore (make it void)
-	return this->getJobId();
 }
 
 /**
@@ -1209,7 +1206,7 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 		// START
 		logInfo->print(WMS_DEBUG, "Starting the job: " , jobid);
 		logInfo->service(WMP_START_SERVICE);
-			
+
 		// Set the SOAP timeout
 		setSoapTimeout(SOAP_JOB_START_TIMEOUT);
 			
