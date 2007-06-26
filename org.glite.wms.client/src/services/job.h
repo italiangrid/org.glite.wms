@@ -230,10 +230,6 @@ class Job{
 		* path location of the directory containing the trusted Certification Authorities
 		*/
 		virtual void setCertsPath ( );
-		 /**
-        	* Gets the version message
-        	*/
-    		virtual void printClientVersion( );
 		/**
 		* Contacts the endpoint to retrieve the version
 		*/

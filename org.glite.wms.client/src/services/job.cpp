@@ -374,7 +374,6 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 		setVersionNumbers( v );
 		logInfo->result(WMP_VERSION_SERVICE, " Version successfully retrieved : "+ v );
 	} catch (api::BaseException &exc){
-		// TBD delete cfg???
 		throw WmsClientException(__FILE__,__LINE__,
 			"retrieveWmpVersion", ECONNABORTED,
 			"Operation failed",
@@ -503,13 +502,6 @@ void Job::printServerVersion( ) {
 		urls = wmcUtils->getWmps ( );
         }
 	lookForWmpEndpoints (true);
-}
-/**
-* Prints the UI version
-* TBD this method may be removed
-*/
-void Job::printClientVersion( ){
-	cout << "\n" << Options::getVersionMessage( ) << "\n";
 }
 /**
 * Performs credential delegation
