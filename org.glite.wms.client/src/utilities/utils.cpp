@@ -18,6 +18,7 @@
 #include "boost/filesystem/path.hpp" // prefix & files procedures
 #include "boost/filesystem/exception.hpp" //managing boost errors
 #include <boost/lexical_cast.hpp> // string->int conversion
+#include "boost/regex.hpp"
 // GLITE
 #include "glite/wmsutils/jobid/JobId.h" // JobId
 // JobId
@@ -2225,6 +2226,8 @@ void doExit() {
 * with the hostname instead of the address
 */
 string Utils::resolveAddress( string relpath ) {
+	// Setting the regular expression for an IP address
+	boost::regex regExp ( "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$" ) ;
 	int it = 0;
 	string pathtemp = "";
 	string address = "";
@@ -2251,14 +2254,20 @@ string Utils::resolveAddress( string relpath ) {
 		}
 		it++;
 	}
-	//TO-DO, inserire controllo su address!
-	struct sockaddr_in ip;
-	inet_aton( address.c_str(), &ip.sin_addr ) ;
-	if( (result = gethostbyaddr( (char*)&ip.sin_addr, sizeof(ip.sin_addr), AF_INET)) == NULL ){
-		throw WmsClientException(__FILE__,__LINE__,"resolveAddress",DEFAULT_ERR_CODE,
-				"Wrong Value","Unable to resolve address: "+address);
+	// Checking if the string extracted is an IP or an hostname
+	if ( regex_match ( address, regExp ) ) {
+		// IP Address
+		struct sockaddr_in ip;
+		inet_aton( address.c_str(), &ip.sin_addr ) ;
+		if( (result = gethostbyaddr( (char*)&ip.sin_addr, sizeof(ip.sin_addr), AF_INET)) == NULL ){
+			throw WmsClientException(__FILE__,__LINE__,"resolveAddress",DEFAULT_ERR_CODE,
+					"Wrong Value","Unable to resolve address: "+address);
+		}
+		hostname = result->h_name;
+	} else {
+		// Hostname
+		hostname = address ;
 	}
-	hostname = result->h_name;
 	string path = "https://"+hostname+":"+pathtemp ;
 	return path ;
 }
