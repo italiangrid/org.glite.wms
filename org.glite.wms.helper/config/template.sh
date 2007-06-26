@@ -90,7 +90,10 @@ sort_by_size() # 1 - file names vector, 2 - directory
   eval tmpvar="$1[@]"
   eval elements="\${$tmpvar}"
   for fname in "${elements}"; do
-    fsize=`stat -t $2/$fname 2>/dev/null | awk '{print $2}'`||0
+    fsize=`stat -t $2/$fname 2>/dev/null | awk '{print $2}'`
+    if [ -z "$fsize" ]; then
+      fsize=0
+    fi
     echo "$fsize $fname" >> "$tmp_sort_file"
   done
   unset $1
@@ -822,6 +825,9 @@ if [ ${__wmp_support} -eq 0 ]; then
         # TODO
         #if hostname=wms
           file_size=`stat -t $f | awk '{print $2}'`
+          if [ -z "$file_size" ]; then
+            file_size=0
+          fi
           let "file_size_acc += $file_size"
         #fi
         if [ $file_size_acc -le ${max_osb_size} ]; then
@@ -833,7 +839,7 @@ if [ ${__wmp_support} -eq 0 ]; then
           # difference between $total and $current (i.e. 20-19=2 more files)
           remaining_files=`expr $total_files \- $current_file + 2`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
-          trunc_len=`expr $remaining_space / $remaining_files`||0
+          trunc_len=`expr $remaining_space / $remaining_files || echo 0`
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
           else
@@ -870,7 +876,10 @@ else # WMP support
       if [ ${max_osb_size} -ge 0 ]; then
         # TODO
         #if hostname=wms
-          file_size=`stat -t $f | awk '{print $2}'`
+          file_size=`stat -t $s | awk '{print $2}'`
+          if [ -z "$file_size" ]; then
+            file_size=0
+          fi
           file_size_acc=`expr $file_size_acc + $file_size`
         #fi
         if [ $file_size_acc -le ${max_osb_size} ]; then
@@ -885,7 +894,7 @@ else # WMP support
           jw_echo "OSB quota exceeded for $s, truncating needed"
           remaining_files=`expr $total_files \- $current_file + 2`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
-          trunc_len=`expr $remaining_space / $remaining_files`||0
+          trunc_len=`expr $remaining_space / $remaining_files || echo 0`
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
           else
