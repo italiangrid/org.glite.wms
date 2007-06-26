@@ -2128,7 +2128,6 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 				logInfo -> print(WMS_WARNING, "Method doExecv: Error message: \n", outFileString+"\n"+errFileString, true, true) ;
 				//deletes the files created
 				delete( dupoe ) ;
-				//doExit();
 				}
 			// the child does not return
 			break;
@@ -2181,46 +2180,6 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 	return SUCCESS;
 	GLITE_STACK_CATCH();
 }
-/**
-* A forked child process may remain appended:
-* a simple call to glite_wms_wmproxy_exit make
-* sure the process successfully ends
-TO_DO no need still
-void doExit() {
-	GLITE_STACK_TRY("doExit()");
-	logInfo->print (WMS_DEBUG, "Method: ", "doExit",true,true);
-	// Calling exit script to "terminate" forked WMProxy process
-	// returning the exit value to the parent
-	string location = "";
-	if (char * glitelocation = getenv(GLITE_WMS_LOCATION)) {
-		location = string(glitelocation);
-	} else if (char * glitelocation = getenv(GLITE_LOCATION)) {
-		location = string(glitelocation);
-	} else {
-		location = FILE_SEP + "opt" + FILE_SEP + "glite";
-	}
-	string command = location + string(FILE_SEP + "sbin" + FILE_SEP
-		+ "glite_wms_wmproxy_exit");
-	logInfo->print (WMS_DEBUG, "Method doExit: ", "Executing command: "+command,true,true);
-	string param = boost::lexical_cast<string>(errno);
-	char **argvs;
-	argvs = (char **) calloc(3, sizeof(char *));
-	argvs[0] = (char *) malloc(command.length() + 1);
-	strcpy(argvs[0], command.c_str());
-	argvs[1] = (char *) malloc(param.length() + 1);
-	strcpy(argvs[1], param.c_str());
-	argvs[2] = (char *) 0;
-	if (execv(command.c_str(), argvs)) {
-	logInfo->print (WMS_WARNING, "Method doExecv: ", "Unable to execute WMProxy exit script" ,true,true);
-	logInfo->print (WMS_WARNING, "Method doExecv: ", strerror(errno) ,true,true);
-	}
-	for (unsigned int j = 0; j <= 3; j++) {
-		free(argvs[j]);
-	}
-	free(argvs);
-	GLITE_STACK_CATCH();
-}
-*/
 /**
 * Gets an URL in input, extracts the IP address, and returns the same URL
 * with the hostname instead of the address
