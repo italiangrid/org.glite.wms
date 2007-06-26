@@ -58,6 +58,7 @@ absStatusNotification* StatusNotificationFactory::makeStatusNotification( const 
                     << log4cpp::CategoryStream::ENDLINE);
 
     string first_event( *(ev.Message.begin()) );
+    string printable_first_event( boost::erase_all_copy( first_event, "\n" ) );
 
     classad::ClassAdParser parser;
     classad::ClassAd *ad = parser.ParseClassAd( first_event );
@@ -66,7 +67,7 @@ absStatusNotification* StatusNotificationFactory::makeStatusNotification( const 
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << "StatusNotificationFactory::makeStatusNotification() - "
                        << "Cannot parse notification classad "
-                       << first_event
+                       << printable_first_event
                        << log4cpp::CategoryStream::ENDLINE);
         return 0;
     }
@@ -74,10 +75,24 @@ absStatusNotification* StatusNotificationFactory::makeStatusNotification( const 
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
 	
     bool keep_alive = false;
-    if ( !classad_safe_ptr->EvaluateAttrBool( "KEEP_ALIVE", keep_alive ) &&
-         keep_alive ) {
-        return new emptyStatusNotification( ev, cemondn );
+    string subs_id;
+    if ( classad_safe_ptr->EvaluateAttrBool( "KEEP_ALIVE", keep_alive ) &&
+         keep_alive &&
+         classad_safe_ptr->EvaluateAttrString( "SUBSCRIPTION_ID", subs_id ) ) {
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
+                        << "StatusNotificationFactory::makeStatusNotification() - "
+                        << "Trying to make a new empty status notification for "
+                        << printable_first_event
+                        << log4cpp::CategoryStream::ENDLINE);
+        
+        return new emptyStatusNotification( subs_id, cemondn );
     } else {
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
+                        << "StatusNotificationFactory::makeStatusNotification() - "
+                        << "Trying to make a new normal status notification for "
+                        << printable_first_event
+                        << log4cpp::CategoryStream::ENDLINE);
+
         return new normalStatusNotification( ev, cemondn );
     }
 

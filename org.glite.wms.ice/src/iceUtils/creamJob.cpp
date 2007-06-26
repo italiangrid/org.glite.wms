@@ -18,11 +18,13 @@
  */
 #include "creamJob.h"
 #include "iceConfManager.h"
+#include "DNProxyManager.h"
+
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
-
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+
 #include "classad_distribution.h"
 
 #include <boost/algorithm/string.hpp>
@@ -51,9 +53,9 @@ CreamJob::CreamJob( ) :
     m_status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
     m_last_seen( time(0) ),
+    m_last_empty_notification( time(0) ),
     m_end_lease( 0 ), 
     m_statusPollRetryCount( 0 ),
-    //    m_user_dn(""),
     m_exit_code( 0 ),
     m_is_killed_by_ice( false )
 {
@@ -154,6 +156,7 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
     string tstamp; // last status change
     string elease; // end lease
     string lseen; // last seen
+    string lemptynotif; // last empty notification
     string lastmtime_proxy; // proxyCertTimestamp
 
     ad = parser.ParseClassAd( buf );
@@ -176,15 +179,17 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
          ! classad_safe_ptr->EvaluateAttrString( "failure_reason", m_failure_reason ) ||
          ! classad_safe_ptr->EvaluateAttrString( "worker_node", m_worker_node ) ||
          ! classad_safe_ptr->EvaluateAttrBool( "is_killed_by_ice", m_is_killed_by_ice ) ||
-	 ! classad_safe_ptr->EvaluateAttrString( "user_dn", m_user_dn)) {
+	 ! classad_safe_ptr->EvaluateAttrString( "user_dn", m_user_dn) ||
+         ! classad_safe_ptr->EvaluateAttrString( "last_empty_notification", lemptynotif )) {
 
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node, is_killed_by_ice, user_dn" );
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node, is_killed_by_ice, user_dn, last_empty_notifications" );
 
     }
     m_status = (api::job_statuses::job_status)st_number;
     boost::trim_if( tstamp, boost::is_any_of("\"" ) );
     boost::trim_if( elease, boost::is_any_of("\"" ) );
     boost::trim_if( lseen, boost::is_any_of("\"" ) );
+    boost::trim_if( lemptynotif, boost::is_any_of("\"" ) );
     boost::trim_if( lastmtime_proxy, boost::is_any_of("\"" ) );
     boost::trim_if( m_delegation_id, boost::is_any_of("\"") );
     boost::trim_if( m_wn_sequence_code, boost::is_any_of("\"") );
@@ -193,11 +198,12 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
     boost::trim_if( m_user_dn, boost::is_any_of("\"") );
 
     try {
+        m_last_empty_notification = boost::lexical_cast< time_t >( lemptynotif );
         m_end_lease = boost::lexical_cast< time_t >( elease );
         m_last_seen = boost::lexical_cast< time_t >( lseen );
 	m_proxyCertTimestamp = boost::lexical_cast< time_t >( lastmtime_proxy );
     } catch( boost::bad_lexical_cast& ) {
-        throw ClassadSyntax_ex( "CreamJob::unserialize() is unable to cast [" + tstamp + "] or [" +elease+"] or [" +lseen + "] or [" +lastmtime_proxy + "] to time_t" );
+        throw ClassadSyntax_ex( "CreamJob::unserialize() is unable to cast [" + tstamp + "] or [" +elease+"] or [" +lseen + "] or [" +lastmtime_proxy + "] or ["+lemptynotif +"] to time_t" );
     }
     boost::trim_if(m_cream_jobid, boost::is_any_of("\""));
 
@@ -357,7 +363,8 @@ size_t CreamJob::size( void ) const
   size += sizeof(m_statusPollRetryCount);
   size += sizeof(m_exit_code);
   size += sizeof(m_is_killed_by_ice);
-
+  size =+ sizeof(m_last_empty_notification);
+  
   size += m_failure_reason.capacity() + m_worker_node.capacity() + m_wn_sequence_code.capacity();
   size += m_delegation_id.capacity() + m_sequence_code.capacity() + m_user_dn.capacity();
   size += m_user_proxyfile.capacity() + m_cream_deleg_address.capacity() + m_cream_address.capacity();
@@ -368,4 +375,9 @@ size_t CreamJob::size( void ) const
   
   //cout << "creamJob size="<<size<<endl;
   return size;
+}
+
+string CreamJob::getBetterProxy( void ) const
+{
+    return DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn );
 }

@@ -133,17 +133,21 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
         
         time_t t_now( time(NULL) );
         time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
+        time_t t_last_empty_notification( jit->get_last_empty_notification() );
         time_t oldness = t_now - t_last_seen;
+        time_t empty_oldness = t_now - t_last_empty_notification;
 
         if ( m_poll_all_jobs ||
-	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ) {
+	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ||
+             ( ( t_last_empty_notification > 0 ) && empty_oldness > 10*60 ) ) { // empty_oldness must be greater than 10 minutes
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
                            << "iceCommandStatusPoller::get_jobs_to_poll() - "
                            << jit->describe()
                            << " t_now=" << t_now
-                           << " t_last_seen=" << t_last_seen
+                           << " t_last_seen=" << time_t_to_string(t_last_seen)
                            << " oldness=" << oldness 
                            << " threshold=" << m_threshold
+                           << " t_last_empty_notification=" << time_t_to_string( t_last_empty_notification )
                            << log4cpp::CategoryStream::ENDLINE);
 
             result.push_back( *jit );

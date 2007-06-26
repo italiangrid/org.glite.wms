@@ -68,6 +68,7 @@ namespace glite {
           std::string m_failure_reason; //! The job failure reason (if the job is done_failed or aborted)
           std::string m_worker_node; //! The worker node on which the job is being executed
           bool m_is_killed_by_ice;
+          time_t m_last_empty_notification; //! The timestamp of the last received empty notification
 
 	protected:
 	  
@@ -138,6 +139,8 @@ namespace glite {
           std::string getCreamDelegURL( void ) const { return m_cream_deleg_address; }
 	  //! Gets the path and file name of the user proxy certificate
           std::string getUserProxyCertificate( void ) const { return m_user_proxyfile; }
+          //! Gets the path and file name of the "better proxy" for the DN of the user owning this job
+          std::string getBetterProxy( void ) const;
 	  //! Gets the number of job status changes which have been already logged to L&B
 	  int get_num_logged_status_changes( void ) const { return m_num_logged_status_changes; }
           //! Sets the number of job status changes whcih have been already logged to L&B
@@ -182,6 +185,8 @@ namespace glite {
            */
           void set_killed_by_ice( void ) { m_is_killed_by_ice = true; }
 
+          time_t get_last_empty_notification( void ) const { return m_last_empty_notification; };
+          void set_last_empty_notification( time_t t ) { m_last_empty_notification = t; };
 
           /**
            * Checke whether a job can be purged (by issuing a "purge"

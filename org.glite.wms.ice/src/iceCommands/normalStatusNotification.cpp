@@ -28,7 +28,6 @@
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
 #include "ice-core.h"
-#include "DNProxyManager.h"
 #include "subscriptionManager.h"
 
 // CREAM stuff
@@ -252,23 +251,15 @@ void normalStatusNotification::apply( void ) // can throw anything
     }
 
     
-    {
-      string cemonurl, proxy, creamurl, cemondn;
-
-      //{
-      //	boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
-      proxy = DNProxyManager::getInstance()->getBetterProxyByDN(jc_it->getUserDN());
-      //}
-
-      creamurl = jc_it->getCreamURL();
-
-      {
-	//boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
-	subscriptionManager::getInstance()->getCEMonURL( proxy, creamurl, cemonurl);
-	subscriptionManager::getInstance()->getCEMonDN( proxy, cemonurl, cemondn);
-      }
-      
-      if( cemondn != m_cemondn ) {
+    string cemonurl, proxy, creamurl, cemondn;
+    proxy = jc_it->getBetterProxy();
+    
+    creamurl = jc_it->getCreamURL();
+    
+    subscriptionManager::getInstance()->getCEMonURL( proxy, creamurl, cemonurl);
+    subscriptionManager::getInstance()->getCEMonDN( proxy, cemonurl, cemondn);
+    
+    if( cemondn != m_cemondn ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
 		       << "normalStatusNotification::execute() - "
 		       << "the CEMon ["
@@ -278,15 +269,16 @@ void normalStatusNotification::apply( void ) // can throw anything
 		       << "]. Ignoring the whole notification..."
 		       << log4cpp::CategoryStream::ENDLINE);
 	return;
-      }
     }
 
+    //
     // Now, for each status change notification, check if it has to be logged
     // vector<StatusNotification>::const_iterator it;
     int count;
     vector<string>::const_iterator msg_it;
     for ( msg_it = m_ev.Message.begin(), count = 1;
-          msg_it != m_ev.Message.end(); ++msg_it, ++count ) {
+          msg_it != m_ev.Message.end(); 
+          ++msg_it, ++count ) {
 
         // setLastSeen must be called ONLY if the job IS NOT in a
         // TERMINAL state (that means that more states are coming...),
@@ -355,7 +347,8 @@ void normalStatusNotification::apply( void ) // can throw anything
             tmp_job = m_lb_logger->logEvent( ev );
         }
         jc_it = m_cache->put( tmp_job );
-        m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
+        jobCache::iterator jc_it_new = m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
+        if ( jc_it_new != jc_it )
+            return; // FIXME: Remove this temporary patch
     }
-
 }

@@ -147,17 +147,10 @@ namespace glite {
 	  int numOfSubscriptionKeys( void ) const { return m_Subs.size(); }
 
 	  bool getSubscriptionByDNCEMon( const std::string& dn, const std::string& cemon, iceSubscription& target) const;
-/* 	  { */
-	    
-/* 	    std::map< std::pair<std::string, std::string> , iceSubscription, ltstring >::const_iterator it = m_Subs.find( make_pair(dn, cemon) ); */
-	    
-/* 	    if( it == m_Subs.end() ) return false; */
-	    
-/* 	    target = it->second; */
 
-/* 	    return true; */
-/* 	  } */
-
+          /**
+           * @return a pair (userDN, CE) for a given subscription id
+           */
 	  pair<std::string, std::string> getUserCEMonBySubID( const std::string& subID ) const;
 	  
  	};

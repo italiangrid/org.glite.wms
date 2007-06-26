@@ -25,7 +25,6 @@
 #define ICE_EMPTY_STATUS_NOTIFICATION_FACTORY_H
 
 #include "absStatusNotification.h"
-#include "glite/ce/monitor-client-api-c/CEConsumer.h"
 #include <string>
 
 namespace glite {
@@ -35,7 +34,7 @@ namespace util {
     
     class emptyStatusNotification : public absStatusNotification {
     public:
-        emptyStatusNotification( const monitortypes__Event& ev, const std::string& cemondn );
+        emptyStatusNotification( const std::string& subscription_id, const std::string& cemondn );
         virtual ~emptyStatusNotification( ) { };
 
         /**
@@ -44,7 +43,7 @@ namespace util {
          */ 
         void apply( void ); // can throw anything
     protected:
-        monitortypes__Event m_ev;
+        std::string m_subscription_id;
         std::string m_cemondn;
     };
 
