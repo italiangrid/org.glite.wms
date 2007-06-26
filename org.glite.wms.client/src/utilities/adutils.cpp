@@ -235,7 +235,6 @@ std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	return attributes;
 } 
 
-// TBD: Utilise template class for similar methods
 // STATIC METHOD: set missing STRING value
 void setMissing(glite::jdl::Ad* jdl,const string& attrName, const string& attrValue, bool force=false){
 	if (attrValue!=""){
