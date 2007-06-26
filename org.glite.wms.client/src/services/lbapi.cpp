@@ -246,7 +246,6 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 		} // END PERUSAL_SET/UNSET CHECK
 		break;
 		case OP_ATTACH:
-		case OP_CHKPT:
 		default:
 			throw WmsClientException(__FILE__,__LINE__,
 			"checkCodes", DEFAULT_ERR_CODE,

@@ -99,7 +99,6 @@ const unsigned int Options::MAX_VERBOSITY = 3;
 *	LONG OPTION STRINGS
 */
 const char* Options::LONG_ALL 			= "all";
-const char* Options::LONG_CHKPT		= "chkpt";
 const char* Options::LONG_COLLECTION	= "collection";
 const char* Options::LONG_DAG			= "dag";
 const char* Options::LONG_DEBUG		= "debug";
@@ -387,8 +386,6 @@ const struct option Options::perusalLongOpts[]  = {
 const string Options::USG_ALL = "--" + string(LONG_ALL) ;
 
 const string Options::USG_AUTODG = "--" + string(LONG_AUTODG) + ", -" + SHORT_AUTODG ;
-
-const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t<file_path>" ;
 
 const string Options::USG_COLLECTION = "--" + string(LONG_COLLECTION)	 + "\t<dir_path>" ;
 
@@ -1407,10 +1404,6 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_LOGFILE ;
 			break ;
 		}
-		case(CHKPT) : {
-			msg = USG_CHKPT ;
-			break ;
-		}
                 case(AUTODG) : {
 			msg = USG_AUTODG ;
 			break ;
@@ -2177,14 +2170,6 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			} else {
 				dupl = LONG_ENDPOINT;
 			}
-			break ;
-		};
-		case ( Options::CHKPT ) : {
-		
-			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
-						DEFAULT_ERR_CODE,
-						"Input Option Error",
-						string("Options: ")  + optarg + string(" DEPRECATED."));
 			break ;
 		};
                 case ( Options::COLLECTION ) : {

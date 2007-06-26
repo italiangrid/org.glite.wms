@@ -40,7 +40,6 @@ class Status{
 			OP_CANCEL,
 			OP_OUTPUT,
 			OP_ATTACH,
-			OP_CHKPT,
 			OP_PERUSAL_SET,
 			OP_PERUSAL_UNSET,
 			OP_PERUSAL_GET

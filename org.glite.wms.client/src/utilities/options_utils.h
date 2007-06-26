@@ -43,7 +43,6 @@ class Options
                 	NONE_ATTR = 1000 ,
 			ALL ,
                         AUTODG ,
-			CHKPT ,
                         COLLECTION,
 			CONFIG ,
 			DAG,
@@ -389,7 +388,6 @@ class Options
 		*	(no short options defined for this set)
 		*/
 		static const char* LONG_ALL ;
-		static const char* LONG_CHKPT	;
                 static const char* LONG_COLLECTION;
 		static const char* LONG_DAG ;
 		static const char* LONG_DEBUG ;
@@ -472,7 +470,6 @@ class Options
 		*/
 		static const std::string USG_ALL ;
                 static const std::string USG_AUTODG ;
-		static const std::string USG_CHKPT	;
                 static const std::string USG_COLLECTION	;
 		static const std::string USG_CONFIG	;
 		static const std::string USG_DAG ;
