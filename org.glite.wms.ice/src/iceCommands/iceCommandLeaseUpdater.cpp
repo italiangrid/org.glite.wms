@@ -372,47 +372,81 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
     // now have to compare the vector jobs with the returned map newLease to 
     // check if some job's lease has not been updated.
     
-    
-    for ( vector<string>::const_iterator jobid=job_ids.begin(); jobid != job_ids.end(); ++jobid ) {
-        
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-
+   
+    // temporary patch before to have a "new" Lease interface in CREAM:
+    // Let's update with the only one element in the newLease vector
+    // all jobs in the vector job_ids
+    for ( vector<string>::const_iterator jobid=job_ids.begin(); 
+	  jobid != job_ids.end(); 
+	  ++jobid ) 
+      {
+	boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	
 	jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
 	if ( tmpJob == m_cache->end() ) {
-	    CREAM_SAFE_LOG(m_log_dev->errorStream()
-			   << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-			   << "Job with CreamJobID ["
-			   << *jobid << "] is not present in the cache!!! "
-                           << "Skipping."
-			   << log4cpp::CategoryStream::ENDLINE);
-	    continue;
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+			 << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+			 << "Job with CreamJobID ["
+			 << *jobid << "] is not present in the cache!!! "
+			 << "Skipping."
+			 << log4cpp::CategoryStream::ENDLINE);
+	  continue;
         }
-	
-	if ( newLease.find(*jobid) == newLease.end()) {
-            
-            // CREAM didn't return any lease information for the job
-            // *jobid!! So there was an error updating the lease for this job
-            
-            CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-                           << "unable to update lease for job "
-                           << tmpJob->describe()
-                           << log4cpp::CategoryStream::ENDLINE);
-            continue;
-	}
-        
-        CREAM_SAFE_LOG(m_log_dev->infoStream()
+
+	CREAM_SAFE_LOG(m_log_dev->infoStream()
 		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		       << "Updating jobCache's lease for job "
 		       << tmpJob->describe()
 		       << "; old lease ends " << time_t_to_string( tmpJob->getEndLease() )
-		       << " new lease ends " << time_t_to_string( newLease[ tmpJob->getCreamJobID() ] )
-		       << log4cpp::CategoryStream::ENDLINE);        	
+		       << " new lease ends " << time_t_to_string( newLease.begin()->second )
+		       << log4cpp::CategoryStream::ENDLINE);
 	
-	// re-read the current job from the cache in order
-	// to get modifications (if any) made by other threads
-	//jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
-	tmpJob->setEndLease( newLease[ *jobid ] );
-	m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
-    }
+	tmpJob->setEndLease( newLease.begin()->second );
+	m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.    
+      }
+    
+ 
+//     for ( vector<string>::const_iterator jobid=job_ids.begin(); jobid != job_ids.end(); ++jobid ) {
+        
+//         boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+
+// 	jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
+// 	if ( tmpJob == m_cache->end() ) {
+// 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
+// 			   << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+// 			   << "Job with CreamJobID ["
+// 			   << *jobid << "] is not present in the cache!!! "
+//                            << "Skipping."
+// 			   << log4cpp::CategoryStream::ENDLINE);
+// 	    continue;
+//         }
+	
+// 	if ( newLease.find(*jobid) == newLease.end()) {
+            
+//             // CREAM didn't return any lease information for the job
+//             // *jobid!! So there was an error updating the lease for this job
+            
+//             CREAM_SAFE_LOG(m_log_dev->errorStream()
+//                            << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+//                            << "unable to update lease for job "
+//                            << tmpJob->describe()
+//                            << log4cpp::CategoryStream::ENDLINE);
+//             continue;
+// 	}
+        
+//         CREAM_SAFE_LOG(m_log_dev->infoStream()
+// 		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+// 		       << "Updating jobCache's lease for job "
+// 		       << tmpJob->describe()
+// 		       << "; old lease ends " << time_t_to_string( tmpJob->getEndLease() )
+// 		       << " new lease ends " << time_t_to_string( newLease[ tmpJob->getCreamJobID() ] )
+// 		       << log4cpp::CategoryStream::ENDLINE);        	
+	
+// 	// re-read the current job from the cache in order
+// 	// to get modifications (if any) made by other threads
+// 	//jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
+// 	tmpJob->setEndLease( newLease[ *jobid ] );
+// 	m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
+//     }
+
 }
