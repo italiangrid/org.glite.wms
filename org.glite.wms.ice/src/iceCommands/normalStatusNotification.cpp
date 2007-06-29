@@ -179,30 +179,61 @@ void StatusChange::apply_to_job( CreamJob& j ) const
 //////////////////////////////////////////////////////////////////////////////
 //
 // normalStatusNotification class
-normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev, const string& cemondn ) :
+normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev, const string& cemondn ) : // FIXME can throw anything!!
     absStatusNotification( ),
     m_ev( ev ),
     m_cemondn( cemondn )
 {
+    log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
+    static const char *method_name = "normalStatusNotification::normalStatusNotification() - ";
+    
+    if( m_ev.Message.empty() ) {        
+        CREAM_SAFE_LOG( m_log_dev->infoStream()
+                        << method_name
+                        << "got empty notification, skipping"
+                        << log4cpp::CategoryStream::ENDLINE);
+        throw runtime_error( "got empty notification" );
+    }
+    
+    CREAM_SAFE_LOG( m_log_dev->infoStream()
+                    << method_name
+                    << "processing normal status change notification"
+                    << log4cpp::CategoryStream::ENDLINE);
+    
+    iceLBLogger *m_lb_logger( iceLBLogger::instance() );
+    jobCache *m_cache( jobCache::getInstance() );
+    glite::wms::ice::Ice* m_ice_manager( glite::wms::ice::Ice::instance() );
+    
+    string cream_job_id;
+    
+    // First, we need to get the jobID for which this notification 
+    // refers. In order to do so, we need to parse at least the first
+    // notification in the event.
+    try {
+        StatusChange first_notification( *(m_ev.Message.begin()) );
+        m_cream_job_id = first_notification.get_cream_job_id();
+    } catch( ClassadSyntax_ex& ex ) {
+        CREAM_SAFE_LOG( m_log_dev->errorStream()
+                        << method_name
+                        << "Cannot parse the first notification "
+                        << *(m_ev.Message.begin())
+                        << " due to error: "
+                        << ex.what() << ". "
+                        << "Skipping the whole monitor event and hoping for the best..." 
+                        << log4cpp::CategoryStream::ENDLINE);
+        throw; // FIXME!!!
+    }
 
 }
 
 void normalStatusNotification::apply( void ) // can throw anything
 {    
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
-    
-    if( m_ev.Message.empty() ) {
+    static const char* method_name = "normalStatusNotification::execute() - ";
 
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << "normalStatusNotification::execute() - "
-                        << "got empty notification, skipping"
-                        << log4cpp::CategoryStream::ENDLINE);
-
-        return;
-    }
-
+    // the costructor ensures that the notification is non-empty
     CREAM_SAFE_LOG( m_log_dev->infoStream()
-                    << "normalStatusNotification::execute() - "
+                    << method_name
                     << "processing notification"
                     << log4cpp::CategoryStream::ENDLINE);
 
@@ -220,7 +251,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         cream_job_id = first_notification.get_cream_job_id();
     } catch( ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
-                        << "normalStatusNotification::execute() - "
+                        << method_name
                         << "Cannot parse the first notification "
                         << *(m_ev.Message.begin())
                         << " due to error: "
@@ -241,7 +272,7 @@ void normalStatusNotification::apply( void ) // can throw anything
     if ( jc_it == m_cache->end() ) {
         if(!getenv("NO_LISTENER_MESS"))
 	    CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "normalStatusNotification::execute() - "
+                           << method_name
                            << "creamjobid ["
                            << cream_job_id
                            << "] was not found in the cache. "
@@ -250,23 +281,14 @@ void normalStatusNotification::apply( void ) // can throw anything
         return;
     }
 
-    
-    string cemonurl, proxy, creamurl, cemondn;
-    proxy = jc_it->getBetterProxy();
-    
-    creamurl = jc_it->getCreamURL();
-    
-    subscriptionManager::getInstance()->getCEMonURL( proxy, creamurl, cemonurl);
-    subscriptionManager::getInstance()->getCEMonDN( proxy, cemonurl, cemondn);
-    
-    if( cemondn != m_cemondn ) {
+    if( m_cemondn.compare( jc_it->get_cemon_dn() ) ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
-		       << "normalStatusNotification::execute() - "
+		       << method_name
 		       << "the CEMon ["
-		       << cemondn << "] that sent this notification "
-		       << "apparently didn't receive the submission of current job ["
+		       << m_cemondn << "] that sent this notification "
+		       << "apparently didn't receive the submission of current job "
 		       << jc_it->describe()
-		       << "]. Ignoring the whole notification..."
+		       << ". Ignoring the whole notification..."
 		       << log4cpp::CategoryStream::ENDLINE);
 	return;
     }
@@ -293,7 +315,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         if ( count <= jc_it->get_num_logged_status_changes() ) {
             if (!getenv("NO_LISTENER_MESS")) {
                 CREAM_SAFE_LOG(m_log_dev->debugStream()
-                               << "normalStatusNotification::execute() - "
+                               << method_name
                                << "Skipping current notification because contains old states"
                                << log4cpp::CategoryStream::ENDLINE);
             }
@@ -307,7 +329,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         } catch( ClassadSyntax_ex ex ) {
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->errorStream()
-                               << "normalStatusNotification::execute() - "
+                               << method_name
                                << "received a notification "
                                << *msg_it << " which could not be understood; error is: "
                                << ex.what() << ". "
@@ -320,7 +342,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         if( notif_ptr->get_status() == api::job_statuses::PURGED ) {
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->infoStream()
-                               << "normalStatusNotification::execute() - "
+                               << method_name
                                << jc_it->describe()
                                << " is reported as PURGED. Removing from cache"
                                << log4cpp::CategoryStream::ENDLINE); 
@@ -330,7 +352,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         
         if (!getenv("NO_LISTENER_MESS"))
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
-                           << "normalStatusNotification::execute() - "
+                           << method_name
                            << "Checking job [" << notif_ptr->get_cream_job_id()
                            << "] with status [" 
                            << api::job_statuses::job_status_str[ notif_ptr->get_status() ] << "]"

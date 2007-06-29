@@ -19,6 +19,7 @@
 #include "creamJob.h"
 #include "iceConfManager.h"
 #include "DNProxyManager.h"
+#include "subscriptionManager.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -53,11 +54,11 @@ CreamJob::CreamJob( ) :
     m_status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
     m_last_seen( time(0) ),
-    m_last_empty_notification( time(0) ),
     m_end_lease( 0 ), 
     m_statusPollRetryCount( 0 ),
     m_exit_code( 0 ),
-    m_is_killed_by_ice( false )
+    m_is_killed_by_ice( false ),
+    m_last_empty_notification( time(0) )
 {
 
 }
@@ -136,6 +137,7 @@ string CreamJob::serialize( void ) const
         ad.InsertAttr( "last_seen", boost::lexical_cast< string >(m_last_seen) );
         ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(m_end_lease) );
 	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( m_proxyCertTimestamp ) );
+        ad.InsertAttr( "last_empty_notification", boost::lexical_cast< string >(m_last_empty_notification ) );
     } catch( boost::bad_lexical_cast& ) {
         // Should never happen... FIXME
     }
@@ -182,7 +184,7 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
 	 ! classad_safe_ptr->EvaluateAttrString( "user_dn", m_user_dn) ||
          ! classad_safe_ptr->EvaluateAttrString( "last_empty_notification", lemptynotif )) {
 
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node, is_killed_by_ice, user_dn, last_empty_notifications" );
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node, is_killed_by_ice, user_dn, last_empty_notification" );
 
     }
     m_status = (api::job_statuses::job_status)st_number;
@@ -380,4 +382,33 @@ size_t CreamJob::size( void ) const
 string CreamJob::getBetterProxy( void ) const
 {
     return DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn );
+}
+
+string CreamJob::getCEMonURL( void ) const 
+{
+    string cemon_url;
+    subscriptionManager* submgr( subscriptionManager::getInstance() );
+    submgr->getCEMonURL( getBetterProxy(), m_cream_address, cemon_url );
+    return cemon_url;
+}
+
+string CreamJob::getSubscriptionID( void ) const
+{
+    subscriptionManager* submgr( subscriptionManager::getInstance() );
+    iceSubscription subscription;
+    string cemon_url( getCEMonURL() );
+    // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
+    submgr->getSubscriptionByDNCEMon( m_user_dn, cemon_url, subscription );
+    return subscription.getSubscriptionID();
+}
+
+// Returns the DN for the CEMon which send snotifications for this job
+string CreamJob::get_cemon_dn( void ) const
+{
+    subscriptionManager* submgr( subscriptionManager::getInstance() );
+    string cemondn;
+    string cemon_url( getCEMonURL() );
+    // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
+    submgr->getCEMonDN( m_user_dn, cemon_url, cemondn );
+    return cemondn;
 }

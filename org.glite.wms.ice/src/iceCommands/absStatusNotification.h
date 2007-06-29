@@ -24,13 +24,18 @@
 #ifndef ICE_ABS_STATUS_NOTIFICATION_H
 #define ICE_ABS_STATUS_NOTIFICATION_H
 
+#include <string>
+
 namespace glite {
 namespace wms {
 namespace ice {
 namespace util {
-    
+
     class absStatusNotification {
+    protected:
+        absStatusNotification( ) { }; // may throw an exception!
     public:
+
         /**
          * This method applies all the changes required by this status
          * notification.  This is an abstract method, as each
@@ -40,8 +45,7 @@ namespace util {
         virtual void apply( ) = 0;
         
         virtual ~absStatusNotification( ) { };
-    protected:
-        absStatusNotification( ) { };
+
     };
     
 

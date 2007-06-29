@@ -239,6 +239,34 @@ namespace glite {
            */
           std::string describe( void ) const;
 
+
+          /**
+           * Gets the subscription ID whioch is used to receive status
+           * change notifications related to this job.
+           *
+           * @return the CEMon Subscription ID 
+           */
+          std::string getSubscriptionID( void ) const;
+
+          /**
+           * Gets the CEMonitor URL for the CEMon which sends
+           * notifications about status changes for this job.
+           *
+           * @return the CEMon URL for the CEMon which sends
+           * notifications for this job
+           */
+          std::string getCEMonURL( void ) const;
+
+
+          /**
+           * Returns the CEMon DN for the CEMon which is sending 
+           * status change notifications for this job.
+           *
+           * @return the CEMon DN for the CEMon which sends
+           * notifications for this job.
+           */
+          std::string get_cemon_dn( void ) const;
+
 	  size_t size( void ) const;
 
 	};

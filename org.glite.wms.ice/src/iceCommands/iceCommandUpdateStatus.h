@@ -23,6 +23,7 @@
 #ifndef GLITE_WMS_ICE_ICECOMMANDUPDATESTATUS_H
 #define GLITE_WMS_ICE_ICECOMMANDUPDATESTATUS_H
 
+#include <vector>
 #include "iceAbsCommand.h"
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
@@ -33,11 +34,11 @@ namespace util {
 
     class iceCommandUpdateStatus : public iceAbsCommand {
     protected:
-        monitortypes__Event m_ev;
+        std::vector<monitortypes__Event> m_ev;
 	std::string m_cemondn;
 
     public:
-        iceCommandUpdateStatus( const monitortypes__Event& ev, const std::string& cemondn );
+        iceCommandUpdateStatus( const std::vector<monitortypes__Event>& ev, const std::string& cemondn );
         virtual ~iceCommandUpdateStatus( ) { };
         virtual void execute( ) throw( );
         std::string get_grid_job_id( void ) const { return std::string(); };

@@ -32,55 +32,52 @@ namespace log4cpp {
 };
 
 namespace glite {
-  namespace wms {
-    namespace ice {
-      namespace util {
+namespace wms {
+namespace ice {
+namespace util {
 
-	class DNProxyManager {
-
-	  static DNProxyManager               *s_instance;
-	  /**
-	   * The m_DNProxyMap[ dn ] is a pair of proxy.
-	   * the first one is the sandbox's one, as passed by the WM for job registration,
-	   * while the second one is the ICE's local copy.
-	   * Let's keep as much information as possible...!!
-	   */
-	  //std::map<std::string, std::pair<std::string, std::string> >   m_DNProxyMap;
-	  std::map<std::string, std::string> m_DNProxyMap;
-	  log4cpp::Category *m_log_dev;
-
-	protected:
-
-	  DNProxyManager() throw();
-	  ~DNProxyManager() throw() {}
-	  static boost::recursive_mutex  mutex;
-
-	public:
-
-	  static DNProxyManager* getInstance() throw();
-	  void                   setUserProxyIfLonger( const std::string& proxy) throw();
-	  void                   setUserProxyIfLonger( const std::string& dn, const std::string& proxy) throw();
-
-	  std::string            getBetterProxyByDN( const std::string& dn ) const throw() {
-
+    class DNProxyManager {
+        
+        static DNProxyManager               *s_instance;
+        /**
+         * The m_DNProxyMap[ dn ] is a pair of proxy.
+         * the first one is the sandbox's one, as passed by the WM for job registration,
+         * while the second one is the ICE's local copy.
+         * Let's keep as much information as possible...!!
+         */
+        std::map<std::string, std::string> m_DNProxyMap;
+        log4cpp::Category *m_log_dev;
+        
+    protected:
+        
+        DNProxyManager() throw();
+        ~DNProxyManager() throw() {}
+        static boost::recursive_mutex  mutex;
+        
+    public:
+        
+        static DNProxyManager* getInstance() throw();
+        void setUserProxyIfLonger( const std::string& proxy) throw();
+        void setUserProxyIfLonger( const std::string& dn, const std::string& proxy) throw();
+        
+        std::string getBetterProxyByDN( const std::string& dn ) const throw() {
+            
 	    boost::recursive_mutex::scoped_lock M( mutex );
 	    std::map<std::string, std::string >::const_iterator it = m_DNProxyMap.find( dn );
 	    if( it == m_DNProxyMap.end()) return "";
 	    return it->second; // return the local copy of the proxy, because the sandbox's one could be removed
-
-	  }
-
-	private:
-	  void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
-	  jobCache::iterator searchBetterProxyForUser( const std::string& ) throw();
-
-	  
-
-	};
-
-      }
-    }
-  }
+            
+        }
+        
+    private:
+        void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
+        jobCache::iterator searchBetterProxyForUser( const std::string& ) throw();
+        
+    };
+    
+}
+}
+}
 }
 
 #endif

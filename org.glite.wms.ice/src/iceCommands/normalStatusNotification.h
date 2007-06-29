@@ -35,13 +35,15 @@ namespace ice {
 namespace util {
     
     class normalStatusNotification : public absStatusNotification {
-    public:
-        normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev, const std::string& cemondn );
-        virtual ~normalStatusNotification( ) { };
-        void apply( void ); // can throw anything
     protected:
         monitortypes__Event m_ev;
         std::string m_cemondn;
+        std::string m_cream_job_id;
+    public:
+        normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev, const std::string& cemondn ); // FIXME:: can throw anything
+        virtual ~normalStatusNotification( ) { };
+        std::string get_cream_job_id( void ) const { return m_cream_job_id; };
+        void apply( void ); // FIXME:: can throw anything
     };
 
 } // namespace util

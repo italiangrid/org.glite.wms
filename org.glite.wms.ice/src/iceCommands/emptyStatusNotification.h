@@ -34,17 +34,27 @@ namespace util {
     
     class emptyStatusNotification : public absStatusNotification {
     public:
-        emptyStatusNotification( const std::string& subscription_id, const std::string& cemondn );
+        /**
+         * Builds a new emptyStatusNotification object. These objects
+         * will apply all actions requested by an empty CEMon status
+         * notification to a given job. Currently this means setting
+         * the timestamp of the last received empty status
+         * notification to the current time.
+         *
+         * @param cream_job_id the CREAM job id for the job whose
+         * timestamp should be updated.
+         */
+        emptyStatusNotification( const std::string& cream_job_id );
+
         virtual ~emptyStatusNotification( ) { };
 
         /**
-         * Applies the empty status change notification to all jobs
-         * associated with the subscription which was received.
+         * Applies the empty status change notification to the job
+         * specified in the constructor
          */ 
         void apply( void ); // can throw anything
     protected:
-        std::string m_subscription_id;
-        std::string m_cemondn;
+        std::string m_cream_job_id;
     };
 
 } // namespace util    

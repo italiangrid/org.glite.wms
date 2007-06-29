@@ -137,6 +137,20 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
         time_t oldness = t_now - t_last_seen;
         time_t empty_oldness = t_now - t_last_empty_notification;
 
+        //
+        // Q: When does a job get polled?
+        //
+        // A: A job gets polled if one of the following situations are true:
+        //
+        // 1. ICE starts. When ICE starts, it polls all the jobs it thinks
+        // have not been purged yet.
+        //
+        // 2. ICE received the last non-empty status change
+        // notification more than m_threshold seconds ago.
+        //
+        // 3. ICE received the last empty status change notification
+        // more than 10*60 seconds ago (that is, 10 minutes).
+        //
         if ( m_poll_all_jobs ||
 	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ||
              ( ( t_last_empty_notification > 0 ) && empty_oldness > 10*60 ) ) { // empty_oldness must be greater than 10 minutes
@@ -153,7 +167,6 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
             result.push_back( *jit );
         }
     }
-    //return result;
 }
 
 //____________________________________________________________________________
@@ -178,16 +191,11 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
                      << "Will poll job with CREAM job id = ["
                      << *thisJob << "]"
                      << log4cpp::CategoryStream::ENDLINE);
-      // cream_job_ids.push_back( *thisJob );
   }
 
   the_job_status.clear();
 
-  string proxy;
-  //{
-  //  boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
-    proxy = DNProxyManager::getInstance()->getBetterProxyByDN( user_dn );
-    //}
+  string proxy( DNProxyManager::getInstance()->getBetterProxyByDN( user_dn ) );
   
   if ( proxy.empty() ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
@@ -223,8 +231,8 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
       
       // Runs over the returned status, and the missing jobs are removed from jobCache
       {
-	boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-	remove_unknown_jobs_from_cache( cream_job_ids, the_job_status );
+          boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+          remove_unknown_jobs_from_cache( cream_job_ids, the_job_status );
       }
       
   } catch( cream_api::cream_exceptions::JobUnknownException& ex) {
@@ -235,8 +243,8 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
                      << "]. Exception is [" << ex.what() << "]. Removing it from the cache"
                      << log4cpp::CategoryStream::ENDLINE);
       {
-	boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-	remove_unknown_jobs_from_cache(cream_job_ids, the_job_status );
+          boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+          remove_unknown_jobs_from_cache(cream_job_ids, the_job_status );
       }
       
   } catch(soap_proxy::auth_ex& ex) {

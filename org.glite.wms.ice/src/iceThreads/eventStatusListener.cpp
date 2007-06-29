@@ -241,12 +241,9 @@ void eventStatusListener::acceptJobStatus(void)
     
     iceThreadPool* threadPool( m_ice_manager->get_ice_commands_pool() );
 
-    std::vector< monitortypes__Event >::const_iterator it;
-    const vector< monitortypes__Event >& events( getEvents() );
-    for ( it = events.begin(); it != events.end(); ++it ) {
-      iceAbsCommand* cmd = new iceCommandUpdateStatus( *it, this->getClientDN() );
-        threadPool->add_request( cmd ); // ownership of the cmd pointer is passed to the threadPool object
-    }
+    const vector< monitortypes__Event >& events( getEvents() );    
+    iceAbsCommand* cmd = new iceCommandUpdateStatus( events, getClientDN() );
+    threadPool->add_request( cmd ); // ownership of the cmd pointer is passed to the threadPool object
 
   } // stop TIMING notification handling
 }
