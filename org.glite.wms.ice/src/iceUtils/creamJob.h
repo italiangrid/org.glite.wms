@@ -25,6 +25,9 @@
 #include <string>
 #include <ctime>
 
+/* #include <boost/archive/text_oarchive.hpp> */
+/* #include <boost/archive/text_iarchive.hpp> */
+
 namespace glite {
   namespace wms {
     namespace ice {
@@ -71,7 +74,13 @@ namespace glite {
           time_t m_last_empty_notification; //! The timestamp of the last received empty notification
 
 	protected:
-	  
+	  /**
+           * Initializes a job object from a classad
+           *
+           * @param buf the string representation of the classad jolding a job 
+           */
+          void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
+
 	public:
 
           //! Default constructor
@@ -221,12 +230,7 @@ namespace glite {
            */
           std::string serialize( void ) const;
 
-          /**
-           * Initializes a job object from a classad
-           *
-           * @param buf the string representation of the classad jolding a job 
-           */
-          void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
+
 
           /**
            * This function outputs a string containing the CREAM and
@@ -268,6 +272,37 @@ namespace glite {
           std::string get_cemon_dn( void ) const;
 
 	  size_t size( void ) const;
+
+	  //template<class Archive> void serialize(Archive & ar, const unsigned int version) throw();
+
+	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw()
+	  {
+	    
+	    ar & m_cream_jobid;
+	    ar & m_grid_jobid;
+	    ar & m_jdl;
+	    ar & m_ceid;
+	    ar & m_endpoint;
+	    ar & m_cream_address;
+	    ar & m_cream_deleg_address;
+	    ar & m_user_proxyfile;
+	    ar & m_user_dn;
+	    ar & m_sequence_code;
+	    ar & m_delegation_id;     
+	    ar & m_wn_sequence_code;
+	    ar & m_status;
+	    ar & m_num_logged_status_changes;
+	    ar & m_last_seen;
+	    ar & m_end_lease;
+	    ar & m_proxyCertTimestamp;
+	    ar & m_statusPollRetryCount;
+	    ar & m_exit_code;
+	    ar & m_failure_reason;
+	    ar & m_worker_node;
+	    ar & m_is_killed_by_ice;
+	    ar & m_last_empty_notification;
+	    
+	  }
 
 	};
       }

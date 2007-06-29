@@ -52,6 +52,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		$(BDB_LIBS) \
 		-lboost_date_time \
+		-lboost_serialization \
 		-lvomsapi_gcc32pthr
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
@@ -67,6 +68,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		-lboost_date_time \
+		-lboost_serialization \
 		$(BDB_LIBS)
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
@@ -100,6 +102,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		$(BDB_LIBS) \
 		-lboost_date_time \
+		-lboost_serialization \
 		-lvomsapi_gcc32pthr
 
 dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
@@ -127,6 +130,7 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
+		-lboost_serialization \
 		-lglite_ce_monitor_consumer \
 		$(BDB_LIBS) \
 		-lvomsapi_gcc32pthr

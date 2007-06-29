@@ -24,6 +24,8 @@
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "boost/algorithm/string.hpp"
 #include "boost/format.hpp"
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 //#include "classad_distribution.h" // classad's stuff
 //#include "source.h" // classad's stuff
@@ -39,6 +41,7 @@
 #include <utility> // for make_pair
 #include <ctime>
 #include <cstdlib>
+#include <sstream>
 
 extern int errno;
 
@@ -208,27 +211,52 @@ jobCache::~jobCache( )
 //______________________________________________________________________________
 void jobCache::load( void ) throw(ClassadSyntax_ex&)
 {
-    // retrieve all records from DB
-    vector<string> records;
-    try { 
-        m_dbMgr->getAllRecords( records );
-    } catch(JobDbException& dbex) {
-        // this error is severe: an access to the
-        // underlying database failed 
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-                        << "jobCache::load() - "
-                        << "Failed to get all records from the database. "
-                        << "Reason is: " << dbex.what() << ". Giving up."
-                        << log4cpp::CategoryStream::ENDLINE );
-        abort();
+//     // retrieve all records from DB
+//     vector<string> records;
+//     try { 
+//         m_dbMgr->getAllRecords( records );
+//     } catch(JobDbException& dbex) {
+//         // this error is severe: an access to the
+//         // underlying database failed 
+//         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+//                         << "jobCache::load() - "
+//                         << "Failed to get all records from the database. "
+//                         << "Reason is: " << dbex.what() << ". Giving up."
+//                         << log4cpp::CategoryStream::ENDLINE );
+//         abort();
+//     }
+//     for(vector<string>::const_iterator it=records.begin();
+//         it != records.end();
+//         ++it)
+//         {
+//             CreamJob cj( *it ); // can raise a ClassAdSyntax_ex
+//             m_jobs.putJob( cj ); // update in-memory data structure
+//         }
+  
+  /**
+   * new implementation using the boost serializer
+   *
+   */
+  vector<string> records;
+  try {
+    m_dbMgr->getAllRecords( records );
+  } catch(JobDbException& dbex) {
+    CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+		    << "jobCache::load() - "
+		    << "Failed to get all records from the database. "
+		    << "Reason is: " << dbex.what() << ". Giving up."
+		    << log4cpp::CategoryStream::ENDLINE );
+    abort();
+  }
+  for(vector<string>::const_iterator it=records.begin();it != records.end();++it)
+    {
+      CreamJob cj;
+      istringstream tmpOs( *it );
+      //tmpOs << *it;
+      boost::archive::text_iarchive ia(tmpOs);
+      ia >> cj;
+      m_jobs.putJob( cj ); // update in-memory data structure
     }
-    for(vector<string>::const_iterator it=records.begin();
-        it != records.end();
-        ++it)
-        {
-            CreamJob cj( *it ); // can raise a ClassAdSyntax_ex
-            m_jobs.putJob( cj ); // update in-memory data structure
-        }
 }
 
 //______________________________________________________________________________
@@ -236,7 +264,11 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
 {   
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
-        m_dbMgr->put(cj.serialize(), cj.getCreamJobID(), cj.getGridJobID() );
+      //m_dbMgr->put(cj.serialize(), cj.getCreamJobID(), cj.getGridJobID() );
+      ostringstream ofs;
+      boost::archive::text_oarchive oa(ofs);
+      oa << cj;
+      m_dbMgr->put( ofs.str(), cj.getCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
         abort();

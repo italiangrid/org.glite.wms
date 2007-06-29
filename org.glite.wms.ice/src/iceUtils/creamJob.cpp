@@ -40,6 +40,7 @@
 #include <cerrno>
 #include <iostream>
 
+
 extern int errno;
 
 namespace api = glite::ce::cream_client_api;
@@ -66,7 +67,7 @@ CreamJob::CreamJob( ) :
 //______________________________________________________________________________
 CreamJob::CreamJob( const std::string& ad ) throw ( ClassadSyntax_ex& ) 
 {
-    unserialize( ad );
+  unserialize( ad );
 }
 
 //______________________________________________________________________________
