@@ -14,15 +14,42 @@
 #       Common configure.ac file for the GLite WMS Common module
 #
 #       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
+<<<<<<< configure.ac
 #       Version info: $Id$
 #       Release: $Name$
+=======
+#       Version info: $Id$
+#       Release: $Name$
+>>>>>>> 1.21.2.5
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.23  2007/07/03 14:27:50  eronchie
+#       Merge against glite-wms-utils-tls_branch_3_1_0
+#
+<<<<<<< configure.ac
 #       Revision 1.22  2006/06/26 21:19:10  eronchie
 #       Increased version
 #       Fix bug 17601
 #
+=======
+#       Revision 1.21.2.5  2006/09/22 07:22:52  eronchie
+#       Incresed version
+#
+#       Revision 1.21.2.4  2006/07/27 09:35:25  eronchie
+#       Decreased version
+#
+#       Revision 1.21.2.3  2006/06/26 21:01:19  eronchie
+#       Fix bug 17601
+#       Increased version
+#
+#       Revision 1.21.2.2  2006/06/22 07:29:03  eronchie
+#       Fix for bug #17642
+#
+#       Revision 1.21.2.1  2006/04/19 14:38:09  eronchie
+#       Increased version
+#
+>>>>>>> 1.21.2.5
 #       Revision 1.21  2006/03/20 15:31:38  eronchie
 #       Increased version
 #
@@ -74,7 +101,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
+<<<<<<< configure.ac
 AC_INIT([GLite WMS Utils Tls], [3.1.1])
+=======
+AC_INIT([GLite WMS Utils Tls], [3.1.3])
+>>>>>>> 1.21.2.5
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ssl_helpers/ssl_inits.h])
@@ -83,7 +114,11 @@ AC_CONFIG_SRCDIR([src/ssl_helpers/ssl_inits.h])
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
 See LICENCE file for details
 ])
+<<<<<<< configure.ac
 AC_REVISION([$Revision$])
+=======
+AC_REVISION([$Revision$])
+>>>>>>> 1.21.2.5
 
 #Environment.
 WORKDIR=`pwd`

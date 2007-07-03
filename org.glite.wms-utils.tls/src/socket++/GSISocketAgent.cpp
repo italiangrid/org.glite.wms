@@ -76,7 +76,7 @@ bool GSISocketAgent::Send(int i)
   int_buffer[2] = (unsigned char) ((i >>  8) & 0xff);
   int_buffer[3] = (unsigned char) ((i      ) & 0xff);
 
-  if(return_status = !(gss_context == GSS_C_NO_CREDENTIAL)) {
+  if(return_status = !(gss_context == GSS_C_NO_CONTEXT)) {
 
     gss_buffer_desc  input_token;
     gss_buffer_desc  output_token;
@@ -122,7 +122,7 @@ bool GSISocketAgent::Send(const std::string& s)
 {
   bool return_status = true;
 
-  if(return_status = !(gss_context == GSS_C_NO_CREDENTIAL)) {
+  if(return_status = !(gss_context == GSS_C_NO_CONTEXT)) {
 	
     gss_buffer_desc  input_token;
     gss_buffer_desc  output_token;
@@ -175,7 +175,7 @@ bool GSISocketAgent::Receive(int& i)
 
   input_token.value = NULL;
   std::pair<int,int> arg(sck, m_recv_timeout);
-  if(return_status = !(gss_context == GSS_C_NO_CREDENTIAL ||
+  if(return_status = !(gss_context == GSS_C_NO_CONTEXT ||
 		       get_token(&arg, &input_token.value, &input_token.length) != 0)) {
 
     maj_stat = gss_unwrap (&min_stat,
@@ -223,7 +223,7 @@ bool GSISocketAgent::Receive(std::string& s)
   gss_buffer_desc input_token;
   gss_buffer_desc output_token;
   std::pair<int,int> arg(sck, m_recv_timeout);
-  if(return_status = !(gss_context == GSS_C_NO_CREDENTIAL ||
+  if(return_status = !(gss_context == GSS_C_NO_CONTEXT ||
 		       get_token(&arg, &input_token.value, &input_token.length) != 0)) {
 	  
     maj_stat = gss_unwrap (&min_stat,
