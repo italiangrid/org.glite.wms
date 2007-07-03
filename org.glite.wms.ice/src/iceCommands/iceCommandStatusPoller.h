@@ -60,6 +60,7 @@ namespace glite {
 	  jobCache* m_cache;
 	  time_t m_threshold;
           const unsigned int m_max_chunk_size; ///< maximum number of jobs which will be used in a cumulative request to CREAM
+          time_t m_empty_threshold; ///< Threshold for empty notifications
 	  bool m_poll_all_jobs;
 	  
 	  //void purgeJobs( const std::vector< std::string >& );

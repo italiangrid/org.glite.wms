@@ -47,14 +47,14 @@
 
 #include <set>
 #include <algorithm>
+#include <cstdlib>
 
-#define STATUS_POLL_RETRY_COUNT 4
+//#define STATUS_POLL_RETRY_COUNT 4
 
 namespace cream_api  = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace jobstat    = glite::ce::cream_client_api::job_statuses;
-
-namespace iceUtils = glite::wms::ice::util;
+namespace iceUtils   = glite::wms::ice::util;
 using namespace std;
 
 
@@ -114,9 +114,17 @@ iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* 
   m_cache( jobCache::getInstance() ),
   m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
   m_max_chunk_size( iceUtils::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() ), 
+  m_empty_threshold( 10*60 ), // 10 minutes
   m_poll_all_jobs( poll_all_jobs )
 {
-
+    char* ice_empty_threshold_string = ::getenv( "ICE_EMPTY_THRESHOLD" );;
+    if ( ice_empty_threshold_string ) {
+        try {
+            m_empty_threshold =  boost::lexical_cast< time_t >( ice_empty_threshold_string );
+        } catch( boost::bad_lexical_cast & ) {
+            m_empty_threshold = 10*60;
+        }
+    }
 }
 
 
@@ -133,7 +141,7 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
         
         time_t t_now( time(NULL) );
         time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
-        time_t t_last_empty_notification( jit->get_last_empty_notification() );
+        time_t t_last_empty_notification( jit->get_last_empty_notification() ); // The time ICE received the last empty notification for this job
         time_t oldness = t_now - t_last_seen;
         time_t empty_oldness = t_now - t_last_empty_notification;
 
@@ -153,15 +161,18 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
         //
         if ( m_poll_all_jobs ||
 	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ||
-             ( ( t_last_empty_notification > 0 ) && empty_oldness > 10*60 ) ) { // empty_oldness must be greater than 10 minutes
+             ( ( t_last_empty_notification > 0 ) && empty_oldness > m_empty_threshold ) ) { // empty_oldness must be greater than 10 minutes
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
                            << "iceCommandStatusPoller::get_jobs_to_poll() - "
+                           << "Adding job "
                            << jit->describe()
-                           << " t_now=" << t_now
-                           << " t_last_seen=" << time_t_to_string(t_last_seen)
-                           << " oldness=" << oldness 
+                           << " t_now=" << time_t_to_string( t_now )
+                           << " t_last_nonempty_notification=" << time_t_to_string(t_last_seen)
+                           << " oldness (t_last_nonempty_notification - t_now)=" << oldness 
                            << " threshold=" << m_threshold
                            << " t_last_empty_notification=" << time_t_to_string( t_last_empty_notification )
+                           << " empty_oldness (t_last_empty_notification - t_now)=" << empty_oldness
+                           << " empty_threshold=" << m_empty_threshold
                            << log4cpp::CategoryStream::ENDLINE);
 
             result.push_back( *jit );
