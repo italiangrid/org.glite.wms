@@ -1,8 +1,4 @@
 #include "LbWrapper.h"
-/* Open SSL include files */
-//#include <globus_common.h>
-// #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
-// #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 #include <stdio.h>
 #include <sstream>
 #include <iostream>
@@ -13,20 +9,10 @@
 #include "glite/lb/producer.h"
 #include "glite/lb/Job.h"
 
-
-
-
-#define ORG_GLITE_WMSUI_WRAPY_TRY_ERROR try{ error_code = false ;
-#define ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR \
-} catch (Exception &exc){  error_code= true; error = exc.what(); \
-} catch (exception &exc){  error_code= true; error = exc.what(); \
-} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-
 using namespace std ;
 using namespace glite::lb ;
 using namespace glite::wmsutils::exception ;
 
-glite::lb::Job lbJob;
 const int VECT_DIM = JobStatus::ATTR_MAX + 3;
 const int STATUS = VECT_DIM  - 3 ;
 const int STATUS_CODE = VECT_DIM - 2  ;
@@ -96,318 +82,7 @@ void createQuery (
 /* Status CLASS                                                                  */
 /******************************************************************************/
 
-Status::Status () {
-   /*
-   edg_wlc_SSLInitialization();
-   if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
-      log_error ("Unable to Initialise SSL context") ;
-   else if (edg_wlc_SSLLockingInit() != 0)
-      log_error ("Unable to Initialise SSL context" ) ;
-   */
-} ;
 
-Status::~Status () { };
-
-/** Status::size(int status_number)*/
-int Status::size(int status_number){
-   error_code = false ;
-   list<glite::lb::JobStatus>::iterator it = states.begin();
-   // vector<glite::lb::JobStatus>::iterator it = states.begin();
-   for ( int j = 0 ; j< status_number ; j++)  {
-      if (  it==states.end()  ) break ;
-      it++ ;
-   }
-   glite::lb::JobStatus status_retrieved = *it;
-   std::vector<pair<JobStatus::Attr, JobStatus::AttrType> > attrList = status_retrieved.getAttrs();
-   return attrList.size() ;
-}
-
-
-int Status::size(){  return states.size() ; }
-
-void Status::log_error ( const std::string& err) { error_code = true ; error = err ;};
-
-std::vector<std::string> Status::get_error ()  {
-
-  std::vector<std::string> result ;
-  
-  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-  result.push_back(error);
-  result.push_back(error);
-  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-  
-  error = "" ;
-
-  return result;
-}
-
-int Status::getStatus (const string& jobid , int level) {
-	error_code = false ;
-	glite::lb::JobStatus status ;
-	try{
-		lbJob = glite::wmsutils::jobid::JobId( jobid  ) ;
-		if (level!= 0 ) level =  glite::lb::Job::STAT_CLASSADS ;
-		status = lbJob.status( level  | glite::lb::Job::STAT_CHILDSTAT  ) ;
-		states.push_back( status );
-		return status.getAttrs().size() ;
-	}catch (exception &exc){  log_error ("Unable to retrieve the status for: " + jobid +"\n" + string (exc.what() ) ) ;
-	} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-	return 0 ;
-} ;
-
- int Status::queryStates (
- 	// Lb Server address
-	const std::string& host , int port ,
-	// User Tags parameters:
-	const std::vector<std::string>& tagNames,
-	const std::vector<std::string>& tagValues,
-	// Include-Exclude States parameters:
-	const std::vector<int>& excludes,
-	const std::vector<int>& includes,
-	// Issuer value (if -all selected):
-	std::string issuer,
-	// --from and --to options:
-	int from , int to ,
-	// Verbosity Level
-	int ad )
-{
-	vector<JobStatus> states_v ;
-	try{
-		error_code = false ;
-		// returned vector
-		ServerConnection server ;
-		server.setQueryServer( host , port );
-		// Retrieve query attributes
-		std::vector<std::vector<std::pair<QueryRecord::Attr,std::string> > > ia = server.getIndexedAttrs();
-		// indexed is used to check whether the user has performed a valid query (i.e. a query on the indexed attributes)
-		bool indexed = false ;
-		string queryErrMsg = "" ;
-		for (unsigned int i = 0 ; i< ia.size() ;  i++ ){
-			if (indexed) break ;
-			for (unsigned int j = 0 ;  j < ia[i].size() ; j++ ) {
-				if (indexed) break ;
-				switch (   ia[i][j].first ){
-					case QueryRecord::OWNER:
-						if ( issuer!="") indexed = true ;
-						queryErrMsg += "\n'--all' option" ;
-						break;
-					case QueryRecord::TIME:
-						if(     ( from!=0 )  || ( to!=0 )   ) indexed = true ;
-						queryErrMsg += "\n'--from'/'--to' option" ;
-						break;
-					case QueryRecord::USERTAG:
-						for ( unsigned int k = 0 ; k<  tagNames.size()  ; k++ )
-							if (   tagNames[k] == ia[i][j].second  )  indexed = true ;
-						queryErrMsg += "\n'--user-tag " + ia[i][j].second +"=<tag value>' condition"   ;
-					default:
-						break;
-				}
-			}
-		}
-		if ( !indexed){
-			// query is useless, no indexed value found
-			if ( queryErrMsg =="" )
-				queryErrMsg = " No indexed key found for the server: " +host ;
-			else
-				queryErrMsg =  " Try to use the following option(s):"   + queryErrMsg ;
-			log_error ("No indexed attribute queried." + queryErrMsg ) ;
-			return states_v.size() ;
-		}
-		int FLAG  = 0 ;
-		if (ad!=0) FLAG =   EDG_WLL_STAT_CLASSADS  ;
-		vector <vector<QueryRecord> >cond ;
-		createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
-		// the Server will fill the result vector anyway, even when exception is raised
-		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ) server.setParam (EDG_WLL_PARAM_QUERY_RESULTS , 3 ) ;
-		server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states_v ) ;
-	}catch (Exception &exc){
-			if (exc.getCode()  ==E2BIG )  log_error ("Unable to retrieve all status information from: " + host + ": " +string (exc.what() ) ) ;
-			else  log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
-	}catch (exception &exc){
-			log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
-	} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-	for ( unsigned int i = 0 ; i< states_v.size() ; i++ )
-		states.push_back( states_v[i]  ) ;
-	return states_v.size() ;
-}
-
-
-// Retrieve all the states of the user
-//// DEPRECATED: THIS METHOD HAS BEEN OVERRIDEN BY queryStates
-int Status::getStates ( const string& host , int port , int level ){
-error_code = false ;
-vector <JobStatus> states_vector ;
-try{
-ServerConnection server ;
-server.setQueryServer( host , port);
-server.userJobStates(states_vector) ;
-// Iterate over the vector to fill the "states" list:
-for (unsigned int i = 0 ; i< states_vector.size() ;i++){ states.push_back(  states_vector[i] ) ; }
-log_error ("DEPRECATED: THIS METHOD HAS BEEN OVERRIDEN BY queryStates") ;
-}catch (exception &exc){ log_error ("Unable to retrieve the user's Job States "+string (exc.what() )  ) ;
-} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-return states.size();
-} ;
-
-std::vector<std::string> Status::getVal (int field , int status_number ) {
-	// Retrieve the status to be investigated
-	error_code = false ;
-	string result ="";
-	
-	list<glite::lb::JobStatus>::iterator it = states.begin();
-	// vector<glite::lb::JobStatus>::iterator it = states.begin();
-	for ( int j = 0 ; j< status_number ; j++,it++ )  {   if (  it==states.end()  ) break ; }
-	glite::lb::JobStatus status_retrieved = *it;  //TBD use pointers!!!
-	// Special FIELD Retrieval:
-	char tmp [1024] ;//TBD could be not enough for JobStatus list
- 	if (field == STATUS ){
-		result = status_retrieved.name() ;
-		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-	  	std::vector<std::string> vectorResult ;
-		vectorResult.push_back("Status");
-		vectorResult.push_back(result);
-		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-		return vectorResult;		
-	}
-	else  if (field == STATUS_CODE ){
-		sprintf (tmp , "%d" , status_retrieved.status ) ;
-		result = string(tmp) ;
-		result = status_retrieved.name() ;
-		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-	  	std::vector<std::string> vectorResult ;
-		vectorResult.push_back("Status Code");
-		vectorResult.push_back(result);
-		// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-		return vectorResult;		
-	}
-	std::vector<pair<JobStatus::Attr, JobStatus::AttrType> > attrList = status_retrieved.getAttrs(); //TBD NEEDED???
-	JobStatus::Attr fieldAttr = (JobStatus::Attr) field ;
-	string attrName ;
-	if (fieldAttr < JobStatus::ATTR_MAX)
-	    attrName = status_retrieved.getAttrName(fieldAttr) ;
-try{
-	switch (fieldAttr){
-		case JobStatus::JOBTYPE:
-		case JobStatus::DONE_CODE:
-		case JobStatus::CPU_TIME:
-		case JobStatus::EXIT_CODE:
-		case JobStatus::CHILDREN_NUM:
-			sprintf (tmp , "%d" , status_retrieved.getValInt(fieldAttr) ) ;
-			result = string (tmp) ;
-			break;
-		case JobStatus::SUBJOB_FAILED:
-		case JobStatus::EXPECT_UPDATE:
-		case JobStatus::RESUBMITTED:
-		case JobStatus::CANCELLING:
-			sprintf (tmp , "%d" , status_retrieved.getValBool(fieldAttr) );
-			result = string (tmp) ;
-			break;
-		case JobStatus::MATCHED_JDL:
-		case JobStatus::CANCEL_REASON:
-		case JobStatus::CONDOR_ID:;
-		case JobStatus::GLOBUS_ID:;
-		case JobStatus::LOCAL_ID:
-		case JobStatus::LOCATION:
-		case JobStatus::RSL:
-		case JobStatus::ACL:
-		case JobStatus::CONDOR_JDL:
-		case JobStatus::CE_NODE:
-		case JobStatus::EXPECT_FROM:
-		case JobStatus::NETWORK_SERVER:
-		case JobStatus::REASON:
-		case JobStatus::SEED:
-		case JobStatus::JDL:
-		case JobStatus::DESTINATION:
-		case JobStatus::OWNER:
-			result = status_retrieved.getValString(fieldAttr) ;
-			break;
-		case JobStatus::STATE_ENTER_TIME:
-		case JobStatus::LAST_UPDATE_TIME:{
-			timeval t = status_retrieved.getValTime(fieldAttr);
-			sprintf (tmp , "%d", (int)  t.tv_sec) ;
-			result = string (tmp) ;
-			}
-			break;
-		case JobStatus::PARENT_JOB:
-		case JobStatus::JOB_ID:
-			if(((glite::wmsutils::jobid::JobId)status_retrieved.getValJobId(fieldAttr)).isSet()){
-				result = status_retrieved.getValJobId(fieldAttr).toString()  ;
-			}
-			break;
-		case JobStatus::CHILDREN_HIST:
-		case JobStatus::STATE_ENTER_TIMES:{
-			std::vector<int> v = status_retrieved.getValIntList(fieldAttr);
-			for(unsigned int j=0; j < v.size(); j++){
-				sprintf (tmp , "%s%s%s%d%s", tmp , edg_wll_StatToString((edg_wll_JobStatCode) j ), "=" , v[j] , " ") ;
-			}
-			result = string (tmp) ;
-			}
-			break;
-		case JobStatus::USER_TAGS:{
-			std::vector<std::pair<std::string,std::string> >  v = status_retrieved.getValTagList( fieldAttr  ) ;
-			for (unsigned int i = 0 ; i < v.size() ; i++ ){
-				result +=v[i].first + "=" + v[i].second +";" ;
-			}
-		}
-		break ;
-		// case JobStatus::USER_VALUES: DEPRECATED
-		case JobStatus::CHILDREN:{
-			std::vector<std::string> v = status_retrieved.getValStringList(fieldAttr);
-			for(unsigned int j=0; j < v.size(); j++)
-				result += v[j] ;
-			}
-			break;
-		case JobStatus::CHILDREN_STATES:{
-			std::vector<JobStatus> v = status_retrieved.getValJobStatusList(fieldAttr);
-			for(unsigned int i=0; i < v.size(); i++) ; //TBD  //TBD
-			}
-			break;
-		default:
-			cerr << "\n\n\nWarning!!!!! Something has gone bad!\nField Attribute="
-			<< fieldAttr<<  "contact the developer!! LbWrapper line "<<__LINE__ << endl ;
-			log_error("Something is wrong" ) ;
-			//break;
-	}
-} catch ( exception &exc){
-    // log_error("Fatal Error\n" + string (exc.what() ) );
-} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
-  
-	  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-  	std::vector<std::string> vectorResult ;
-	vectorResult.push_back(attrName);
-	vectorResult.push_back(result);
-	// BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
-
-  	return vectorResult;
-} ;
-
-std::vector<std::string> Status::getStatesNames(){
-
-	std::vector<std::string> result ;
-	
-	// Fill the returned array with the States Names
-	for (int lb_attr = 0; (JobStatus::Attr)lb_attr < JobStatus::ATTR_MAX; lb_attr++){
-		// Insert a single State Name
-		result.push_back(JobStatus::getAttrName((JobStatus::Attr)lb_attr));
-	}
-	
-	// Return the vector of States Names
-	return result;
-}
-
-std::vector<std::string> Status::getStatesCodes(){
-
-	std::vector<std::string> result ;
-
-	// Fill the returned array with the States Codes
-	for (int lb_code = 0; (JobStatus::Code)lb_code < JobStatus::CODE_MAX; lb_code++){
-		// Insert a single State Code
-		result.push_back(JobStatus::getStateName((JobStatus::Code)lb_code));
-	}
-	
-	// Return the vector of States Codes
-	return result;
-}
 
 void push_status( JobStatus status_retrieved , std::vector<std::string>& result , int hierarchy ){
 	int VECT_OFFSET = result.size() ;
@@ -490,17 +165,210 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 		push_status( v[i] , result , hierarchy+1 );
 	}	
 }
-std::vector< std::string  > Status::loadStatus( int status_number )  {
-	// Retrieve the selected status
-	list<JobStatus>::iterator it = states.begin();
-	// vector<JobStatus>::iterator it = states.begin();
-	for ( int j = 0 ; j< status_number ; j++,it++ )  {   if (  it==states.end()  ) break ; }
-	// found related status. Now iterating over the tree
-	std::vector< std::string  > result ;
-	push_status (*it , result , 0 ) ;
-	return result ;
+
+/*
+* Statuts Wrapper class Constructor
+*@param jobid the id of the job whose info are to be retrieved
+*@param level a number in the interval {0,1,2,3} specifying the verbosity of the LB info to be downloaded
+*/
+Status::Status (const std::string& jobid, int level = 0) {
+
+	// Initialise
+	error_code = false ;
+
+	// Set the private Job Id
+	this->jobid = jobid;
+	
+	// Retrieve all the Statuses associated to the current Job ID
+	try{
+		// Set the Job ID
+		glite::lb::Job lbJob = glite::wmsutils::jobid::JobId(this->jobid);
+		
+		// Check if the level is set in order to retrieve Class ADs
+		if(0 != level) {
+			// Set the Class Ads level
+			level = glite::lb::Job::STAT_CLASSADS ;
+		}
+		
+		// Retrieve the status for the Job ID
+		glite::lb::JobStatus status = lbJob.status(level | glite::lb::Job::STAT_CHILDSTAT) ;
+		
+		// Insert the status retrieved
+		states.push_back(status);
+		
+	}catch (std::exception &exc){
+		
+		// Log the error
+		log_error ("Unable to retrieve the status for: " + jobid +"\n" + string (exc.what() ) ) ;
+		
+	} catch (...){  
+	
+		// Log the error
+		error_code= true; 
+		error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; 
+	}
+
 }
 
+ Status::Status (
+	const std::vector<std::string>& jobids,
+ 	// Lb Server address
+	const std::string& host , int port ,
+	// User Tags parameters:
+	const std::vector<std::string>& tagNames,
+	const std::vector<std::string>& tagValues,
+	// Include-Exclude States parameters:
+	const std::vector<int>& excludes,
+	const std::vector<int>& includes,
+	// Issuer value (if -all selected):
+	std::string issuer,
+	// --from and --to options:
+	int from , int to ,
+	// Verbosity Level
+	int ad )
+{
+	try{
+		error_code = false ;
+		// returned vector
+		ServerConnection server ;
+		server.setQueryServer( host , port );
+		// Retrieve query attributes
+		std::vector<std::vector<std::pair<QueryRecord::Attr,std::string> > > ia = server.getIndexedAttrs();
+		// indexed is used to check whether the user has performed a valid query (i.e. a query on the indexed attributes)
+		bool indexed = false ;
+		string queryErrMsg = "" ;
+		for (unsigned int i = 0 ; i< ia.size() ;  i++ ){
+			if (indexed) break ;
+			for (unsigned int j = 0 ;  j < ia[i].size() ; j++ ) {
+				if (indexed) break ;
+				switch (   ia[i][j].first ){
+					case QueryRecord::OWNER:
+						if ( issuer!="") indexed = true ;
+						queryErrMsg += "\n'--all' option" ;
+						break;
+					case QueryRecord::TIME:
+						if(     ( from!=0 )  || ( to!=0 )   ) indexed = true ;
+						queryErrMsg += "\n'--from'/'--to' option" ;
+						break;
+					case QueryRecord::USERTAG:
+						for ( unsigned int k = 0 ; k<  tagNames.size()  ; k++ )
+							if (   tagNames[k] == ia[i][j].second  )  indexed = true ;
+						queryErrMsg += "\n'--user-tag " + ia[i][j].second +"=<tag value>' condition"   ;
+					default:
+						break;
+				}
+			}
+		}
+		if ( !indexed){
+			// query is useless, no indexed value found
+			if ( queryErrMsg =="" )
+				queryErrMsg = " No indexed key found for the server: " +host ;
+			else
+				queryErrMsg =  " Try to use the following option(s):"   + queryErrMsg ;
+			log_error ("No indexed attribute queried." + queryErrMsg ) ;
+		}
+		int FLAG  = 0 ;
+		if (ad!=0) FLAG =   EDG_WLL_STAT_CLASSADS  ;
+		vector <vector<QueryRecord> >cond ;
+		createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
+		// the Server will fill the result vector anyway, even when exception is raised
+		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ) server.setParam (EDG_WLL_PARAM_QUERY_RESULTS , 3 ) ;
+		server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states) ;
+	}catch (Exception &exc){
+			if (exc.getCode()  ==E2BIG )  log_error ("Unable to retrieve all status information from: " + host + ": " +string (exc.what() ) ) ;
+			else  log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
+	}catch (exception &exc){
+			log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
+	} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
+}
+
+std::vector<std::string> Status::getStatesNames() {
+
+	std::vector<std::string> result ;
+	
+	// Fill the returned array with the States Names
+	for (int lb_attr = 0; (JobStatus::Attr)lb_attr < JobStatus::ATTR_MAX; lb_attr++){
+		// Insert a single State Name
+		result.push_back(JobStatus::getAttrName((JobStatus::Attr)lb_attr));
+	}
+	
+	// Return the vector of States Names
+	return result;
+}
+
+std::vector<std::string> Status::getStatesCodes(){
+
+	std::vector<std::string> result ;
+
+	// Fill the returned array with the States Codes
+	for (int lb_code = 0; (JobStatus::Code)lb_code < JobStatus::CODE_MAX; lb_code++){
+		// Insert a single State Code
+		result.push_back(JobStatus::getStateName((JobStatus::Code)lb_code));
+	}
+	
+	// Return the vector of States Codes
+	return result;
+}
+
+/**
+* Retrieve the name for a specific status
+*/
+std::string Status::getStatusName(int statusNumber) {
+	// Return the status name
+	return states[statusNumber].name();
+}
+
+/**
+* Retrieve the event attributes for a specific event
+*/
+std::vector< std::string > Status::getStatusAttributes(int statusNumber) {
+
+	// Check if the event_number is valid
+	if(statusNumber < 0 || statusNumber >= states.size()) {
+		// TODO THROW Exception
+	}
+	
+	// Initialise the output
+	std::vector< std::string > statusAttributes;
+
+	// Retrieve the status	
+	JobStatus statusRequested = states[statusNumber];
+	
+	// Fill the vector
+	push_status(statusRequested, statusAttributes, 0);
+	
+	// Return
+	return statusAttributes;
+}
+	
+
+
+/**
+* Retrieve the status number for the current Job ID
+*/
+int Status::getStatusNumber() {
+	// Return the number of status
+	return states.size() ;	
+}
+
+void Status::log_error ( const std::string& err) { 
+	error_code = true ; 
+	error = err ;
+};
+
+std::vector<std::string> Status::get_error ()  {
+
+  std::vector<std::string> result ;
+  
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  result.push_back(error);
+  result.push_back(error);
+  // BUG 25250: PATCH TO AVOID COMPATIBILITY PROBLEMS WITH PYTHN CLI 
+  
+  error = "" ;
+
+  return result;
+}
 /******************************************************************************/
 /* Eve CLASS                                                                  */
 /******************************************************************************/
@@ -520,10 +388,10 @@ Eve::Eve (const std::string& jobid) {
 	// Retrieve all the Events associated to the current Job ID
 	try{
 		// Set the Job ID
-		glite::lb::Job lbbJob = glite::wmsutils::jobid::JobId(this->jobid);
+		glite::lb::Job lbJob = glite::wmsutils::jobid::JobId(this->jobid);
 		
 		// Retrieve the Events
-		lbbJob.log(events);
+		lbJob.log(events);
 		
 	}catch (Exception &exc){
 		
@@ -824,10 +692,14 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 * Retrieve the events number for the current Job ID
 */
 int Eve::getEventsNumber() {
+	// Return the number of events
 	return events.size();
 }
 
-void Eve::log_error ( const std::string& err) {    error_code = true ; error = err ;};
+void Eve::log_error ( const std::string& err) {    
+	error_code = true ; 
+	error = err ;
+};
 
 std::vector<std::string> Eve::get_error ()  {
 

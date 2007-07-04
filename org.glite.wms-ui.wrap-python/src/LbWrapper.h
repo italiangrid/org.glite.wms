@@ -9,8 +9,6 @@
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/Event.h"
 #include "glite/lb/Job.h"
-#include <list>
-
 
 /**
  * Provide a wrapper for the glite::lb::JobStatus class
@@ -25,67 +23,14 @@
 
 class Status {
   public:
-	/**
-	* Status instance constructor
-	*/
-	Status () ;
-	/**
-	* Status instance destructor
-	*/
-	~Status () ;
-	/**
-	* retrieve the number of states downloaded so far for the current instance
-	*/
-	int size () ;
-	/**
-	* This method is DEPRECATED
-	*/
-	int size (int status_number) ;
-	/**
-	* retrieve the status for the specified jobid
-	*@param jobid the id of the job whose info are to be retrieved
+  	
+	/*
+        * Status Wrapper class Constructor
+	*@param jobid: the id of the job whose info are to be retrieved
 	*@param level a number in the interval {0,1,2,3} specifying the verbosity of the LB info to be downloaded
-	*/
-	int getStatus (const std::string& jobid, int level = 0) ;
-	/**
-	* retrieve the states of all the user Job
-	*@param host the LB server host name
-	*@param port the LB server listening port
-	*@param level a number in the interval {0,1,2,3} specifying the verbosity of the LB info to be downloaded
-	*/
-	int getStates (const std::string& host , int port , int level = 0) ;
-	/** Retrieve the attribute value for the specified JobStatus
-	* @param field the index of the field as in Job.py JobStatus class
-	* @param status_number the status number to be taken into account
-	* @param attrValue parameter passed by reference , returned by python
-	* @return a couple of strings [ <attribute name > , <attribute value> ]
-	*
-	*/
-	std::vector<std::string> getVal (int field, int status_number = 0);
-	/**Set an attribute value (of string type)
-	* @param err the string description passed by reference. Python will consider it as a returning parameter
-	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
-	*/
+        */
+        Status (const std::string& jobid, int level);
 	
-	std::vector<std::string> get_error () ;
-
-	/**
-	* retrieve a Job Status from the downloaded ones
-	*@param status_number : the status to be retrieved
-	*@return a vector of strings representing all the Status intance values as specified in Job.py, JobStatus class
-	*/
-	std::vector< std::string  > loadStatus( int status_number= 0) ;
-
-	/**
-	* Retrieve the Names of all available States
-	*/
-	std::vector<std::string> getStatesNames() ;
-
-	/**
-	* Retrieve the Codes of all available States
-	*/
-	std::vector<std::string> getStatesCodes() ;
-
 	/**
 	* Perform a query to the Lb Server allowing the user to specify several parameters
 	*@param host the LB server host name
@@ -99,12 +44,53 @@ class Status {
 	*@param to retrieves only job submitted before specified time ( in seconds after epoch)
 	*@param ad if different from 0, retrieves Ad Status information as well
 	*/
-	int queryStates (const std::string& host , int port ,
-	const std::vector<std::string>& tagNames,const std::vector<std::string>& tagValues,
-	const std::vector<int>& excludes,const std::vector<int>& includes,
-	std::string issuer,int from , int to ,int ad );
+	Status (const std::vector<std::string>& jobids, 
+		const std::string& host , 
+		int port ,
+		const std::vector<std::string>& tagNames,
+		const std::vector<std::string>& tagValues,
+		const std::vector<int>& excludes,
+		const std::vector<int>& includes,
+		std::string issuer,
+		int from , 
+		int to ,
+		int ad );
+
+	/**
+	* Retrieve the Names of all available States
+	*/
+	static std::vector<std::string> getStatesNames() ;
+
+	/**
+	* Retrieve the Codes of all available States
+	*/
+	static std::vector<std::string> getStatesCodes() ;
+	
+	/**
+	* Retrieve the name for a specific status
+	*/
+	std::string getStatusName(int statusNumber);
+
+	/**
+	* Retrieve the event attributes for a specific event
+	*/
+	std::vector< std::string > getStatusAttributes(int statusNumber);
+	
+	/**
+	* Retrieve the status number for the current Job ID
+	*/
+	int getStatusNumber() ;
+
+	/**Set an attribute value (of string type)
+	* @param err the string description passed by reference. Python will consider it as a returning parameter
+	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
+	*/
+	
+	std::vector<std::string> get_error () ;
+		
   private:
-	std::list<glite::lb::JobStatus> states ;
+	std::string jobid;
+	std::vector<glite::lb::JobStatus> states ;
 	std::string error ;
 	bool error_code ;
 	void log_error ( const std::string& err) ;
@@ -166,12 +152,12 @@ class Eve{
 	/**
 	* Retrieve the name for a specific event
 	*/
-	std::string Eve::getEventName( int eventNumber );
+	std::string getEventName(int eventNumber);
 
 	/**
 	* Retrieve the event attributes for a specific event
 	*/
-	std::vector< std::string > Eve::getEventAttributes( int eventNumber );
+	std::vector< std::string > getEventAttributes(int eventNumber);
 
 	/**
 	* Retrieve the events number for the current Job ID
