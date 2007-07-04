@@ -18,7 +18,7 @@ wletcwmdir = $(sysconfdir)/vo_template
 wletcwm_DATA = glite_wmsui.conf
 
 install-data-hook:
-	/bin/cp $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsui.conf $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsui.conf.template
+	/bin/mv $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsui.conf $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsui.conf.template
 
 EXTRA_DIST = \
         glite_wmsui.conf \
