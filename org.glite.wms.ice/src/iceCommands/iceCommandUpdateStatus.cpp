@@ -208,7 +208,6 @@ void iceCommandUpdateStatus::execute( ) throw( )
                                 << method_name 
                                 << " - Making empty status notification command for job "
                                 << job_it->describe()
-                                << " for which a non-empty notification was received"
                                 << log4cpp::CategoryStream::ENDLINE);
                 
                 commands.push_front( new emptyStatusNotification( job_it->getCreamJobID() ) );
