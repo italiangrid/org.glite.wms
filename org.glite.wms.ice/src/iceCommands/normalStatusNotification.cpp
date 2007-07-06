@@ -190,7 +190,7 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
     if( m_ev.Message.empty() ) {        
         CREAM_SAFE_LOG( m_log_dev->infoStream()
                         << method_name
-                        << "got empty notification, skipping"
+                        << "got a CEMon notification with no messages. Skipping"
                         << log4cpp::CategoryStream::ENDLINE);
         throw runtime_error( "got empty notification" );
     }
@@ -308,6 +308,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         // purge it...
         if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
             jc_it->setLastSeen( time(0) );
+            jc_it->set_last_empty_notification( time(0) );
 	    
             jc_it = m_cache->put( *jc_it );
         }

@@ -67,7 +67,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 {   
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     jobCache *cache( jobCache::getInstance() );
-    static const char* method_name = "iceCommandUpdateStatus::execute()";
+    static const char* method_name = "iceCommandUpdateStatus::execute() - ";
 
     // We define two "sets" of operations which must be performed by 
     // the status change notifications.
@@ -104,15 +104,15 @@ void iceCommandUpdateStatus::execute( ) throw( )
 
         if( it->Message.empty() ) {        
             CREAM_SAFE_LOG( m_log_dev->warnStream()
-                            << method_name << " - "
-                            << "got empty notification, skipping"
+                            << method_name 
+                            << "got a CEMon notification with no messages. Skipping."
                             << log4cpp::CategoryStream::ENDLINE);        
             continue; // Skip to the next notification
         }
 
         CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << method_name << " - "
-                        << "processing non-empty notification, with "
+                        << method_name
+                        << "processing notification, with "
                         << it->Message.size() << " events"
                         << log4cpp::CategoryStream::ENDLINE);
         
@@ -124,7 +124,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
         
         if ( !ad ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << method_name << " - "
+                           << method_name
                            << "Cannot parse notification classad "
                            << printable_first_event
                            << log4cpp::CategoryStream::ENDLINE);
@@ -141,30 +141,35 @@ void iceCommandUpdateStatus::execute( ) throw( )
         if ( classad_safe_ptr->EvaluateAttrBool( "KEEP_ALIVE", keep_alive ) &&
              keep_alive &&
              classad_safe_ptr->EvaluateAttrString( "SUBSCRIPTION_ID", subs_id ) ) {
+
             CREAM_SAFE_LOG( m_log_dev->debugStream()
-                            << method_name << " - "
-                            << "Trying to make an empty status notification command for "
-                            << printable_first_event
+                            << method_name
+                            << "Adding subscription id "
+                            << subs_id
+                            << " to the set of subscriptions whose jobs "
+                            << "will be updated"
                             << log4cpp::CategoryStream::ENDLINE);
+
             // Push the subs_id into the set, which will be considered
             // after all the notifications have been examined.
             subscription_set.insert( subs_id );
             
         } else {
-            CREAM_SAFE_LOG( m_log_dev->debugStream()
-                            << method_name << " - "
-                            << "Trying to make a new normal status notification command for "
-                            << printable_first_event
-                            << log4cpp::CategoryStream::ENDLINE);
-
             // Push back a normalStatusNotification, which will update
             // the status of the job referenced in the monitor event
             normalStatusNotification* notif = 0;
             try {
                 notif = new normalStatusNotification( *it, m_cemondn );
             } catch( ... ) {
-                continue; // FIXME
+                CREAM_SAFE_LOG( m_log_dev->errorStream()
+                                << method_name
+                                << "Unable to make normal status notification for notification "
+                                << printable_first_event
+                                << " Skipping to the next notification"
+                                << log4cpp::CategoryStream::ENDLINE);
+                continue;
             }
+
             commands.push_front( notif );
 
             // Gets the job which is mentioned in the notification
@@ -183,14 +188,23 @@ void iceCommandUpdateStatus::execute( ) throw( )
                 // that subs_id, in the exact same way as empty status
                 // notifications do.
                 CREAM_SAFE_LOG( m_log_dev->debugStream()
-                                << method_name << " - "
-                                << "Adding subscription id "
+                                << method_name
+                                << "Normal status notification for job "
+                                << job_it->describe()
+                                << " requires adding subscription id "
                                 << subs_id
                                 << " to the set of subscriptions whose jobs "
                                 << "will be updated"
                                 << log4cpp::CategoryStream::ENDLINE);
 
                 subscription_set.insert( subs_id );
+            } else {
+                CREAM_SAFE_LOG( m_log_dev->warnStream()
+                                << method_name
+                                << "Job with CREAM job id ["
+                                << notif->get_cream_job_id()
+                                << "] was not found in the cache. Cannot update the set of subscriptions the jobs belongs to"
+                                << log4cpp::CategoryStream::ENDLINE);
             }
         }
     }
@@ -206,10 +220,10 @@ void iceCommandUpdateStatus::execute( ) throw( )
             if ( subscription_set.end() !=  subscription_set.find( job_it->getSubscriptionID() ) ) {
                 CREAM_SAFE_LOG( m_log_dev->debugStream()
                                 << method_name 
-                                << " - Making empty status notification command for job "
+                                << "Making empty status notification command for job "
                                 << job_it->describe()
                                 << log4cpp::CategoryStream::ENDLINE);
-                
+
                 commands.push_front( new emptyStatusNotification( job_it->getCreamJobID() ) );
             }            
         }
