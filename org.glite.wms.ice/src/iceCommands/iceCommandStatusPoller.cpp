@@ -403,6 +403,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
         //
 
         jit->setLastSeen( time(0) );
+        jit->set_last_empty_notification( time(0) );
 
         jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
         // before doing anything, check if the job is "purged". If so,
