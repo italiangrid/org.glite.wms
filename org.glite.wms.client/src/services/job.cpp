@@ -318,7 +318,6 @@ void Job::setDelegationId ( ){
 				"Input Option Error", err.str());
 	}  else if (!id.empty()) {
 		// delegation-id string by user option
-		logInfo->print  (WMS_DEBUG, "Delegation ID:", id);
 		m_dgOpt = id;
 		autodgOpt = false;
 	} else if (autodg){
