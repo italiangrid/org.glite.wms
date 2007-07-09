@@ -82,8 +82,6 @@ void createQuery (
 /* Status CLASS                                                                  */
 /******************************************************************************/
 
-
-
 void push_status( JobStatus status_retrieved , std::vector<std::string>& result , int hierarchy ){
 	int VECT_OFFSET = result.size() ;
 	result.resize( VECT_DIM + VECT_OFFSET ) ;
@@ -210,7 +208,7 @@ Status::Status (const std::string& jobid, int level = 0) {
 
 }
 
- Status::Status (
+Status::Status (
 	const std::vector<std::string>& jobids,
  	// Lb Server address
 	const std::string& host , int port ,
@@ -229,9 +227,11 @@ Status::Status (const std::string& jobid, int level = 0) {
 {
 	try{
 		error_code = false ;
-		// returned vector
+
+		// Create and set a server
 		ServerConnection server ;
 		server.setQueryServer( host , port );
+
 		// Retrieve query attributes
 		std::vector<std::vector<std::pair<QueryRecord::Attr,std::string> > > ia = server.getIndexedAttrs();
 		// indexed is used to check whether the user has performed a valid query (i.e. a query on the indexed attributes)
@@ -269,11 +269,39 @@ Status::Status (const std::string& jobid, int level = 0) {
 		}
 		int FLAG  = 0 ;
 		if (ad!=0) FLAG =   EDG_WLL_STAT_CLASSADS  ;
+		
+		// Create a vector of conditions		
 		vector <vector<QueryRecord> >cond ;
-		createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
+		
+		if(jobids.size() > 0) {
+		
+			// Create the vector of Query Records for the Job ID's
+			vector<QueryRecord> queryRecordCond;
+	
+			// Fill the vector of Query Records for the Job ID's
+			for (unsigned int i = 0; i<jobids.size(); i++){
+				// Create a Query Record 
+				QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
+			
+				// Add the Query Record to the vector
+				queryRecordCond.push_back(queryRecord);
+			}
+
+			// Add the Query Records of Job ID's to the Job Conditions
+			cond.push_back(queryRecordCond);
+		}
+		
+		// Create the conditions
+		//createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
+		
 		// the Server will fill the result vector anyway, even when exception is raised
-		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ) server.setParam (EDG_WLL_PARAM_QUERY_RESULTS , 3 ) ;
+		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ) {
+			server.setParam (EDG_WLL_PARAM_QUERY_RESULTS , 3 ) ;
+		}
+		
+		// Perform the actual LB query:
 		server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states) ;
+		
 	}catch (Exception &exc){
 			if (exc.getCode()  ==E2BIG )  log_error ("Unable to retrieve all status information from: " + host + ": " +string (exc.what() ) ) ;
 			else  log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
@@ -323,14 +351,18 @@ std::string Status::getStatusName(int statusNumber) {
 */
 std::vector< std::string > Status::getStatusAttributes(int statusNumber) {
 
-	// Check if the event_number is valid
-	if(statusNumber < 0 || statusNumber >= states.size()) {
-		// TODO THROW Exception
-	}
-	
 	// Initialise the output
 	std::vector< std::string > statusAttributes;
 
+	// Check if the event_number is valid
+	if(statusNumber < 0 || statusNumber >= states.size()) {
+		// Log the error
+		log_error ("Status number out of bounds") ;
+		
+		// Return the empty array
+		return statusAttributes;
+	}
+	
 	// Retrieve the status	
 	JobStatus statusRequested = states[statusNumber];
 	
@@ -369,6 +401,7 @@ std::vector<std::string> Status::get_error ()  {
 
   return result;
 }
+
 /******************************************************************************/
 /* Eve CLASS                                                                  */
 /******************************************************************************/
@@ -536,13 +569,18 @@ std::string Eve::getEventName(int eventNumber) {
 */
 std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 
-	// Check if the event_number is valid
-	if(eventNumber < 0 || eventNumber >= events.size()) {
-		// TODO THROW Exception
-	}
-	
 	// Initialise the result vector of Event Attributes strings
 	std::vector< std::string > eventAttributes;
+
+	// Check if the event_number is valid
+	if(eventNumber < 0 || eventNumber >= events.size()) {
+		// Log the error
+		log_error ("Event number out of bounds") ;
+		
+		// Return the empty array
+		return eventAttributes;
+	}
+	
 	eventAttributes.resize(Event::ATTR_MAX);
 
 	// Retrieve the Event and Event Attributes
@@ -599,6 +637,7 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 				}
 				break;
 			
+				case Event::NOTIFID_T:
 				case Event::INT_T :
 				{
 
@@ -630,17 +669,6 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 				}
 				break;
 			
-				case Event::NOTIFID_T :{
-
-					// TODO Check Right Type management
-					// Convert the INT value to string
-					convStr << eventRequested.getValInt(attribute);
-
-					// Set the attribute
-					eventAttributes[attribute] = convStr.str();
-				}
-				break;
-			
 				case Event::STRING_T  :{
 
 					// Set the attribute
@@ -658,7 +686,6 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 			
 				case Event::TIMEVAL_T :{
 		
-					// TODO remove this hardcoded dimension
 					char tmp [1024] ;
 				
 					memset(tmp, 0, sizeof(tmp));
