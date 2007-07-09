@@ -47,9 +47,12 @@ void AdUtils::printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf) {
 
   Log *logInfo = new Log(vbLevel);
 
+  string deprecatedWarning = "";
+  string attributeSeparator = "";
+
   std::vector<std::string> deprecatedAttributes;
 
-  // Set all the deprecated attributes outside JDL Default Attributes
+  // Set all the deprecated attributes outside JDL Default Attributes section
   //deprecatedAttributes.push_back(JDL::VIRTUAL_ORGANISATION);
   deprecatedAttributes.push_back(JDL::RETRYCOUNT);
   deprecatedAttributes.push_back(JDL::SHALLOWRETRYCOUNT);
@@ -66,12 +69,21 @@ void AdUtils::printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf) {
   for(unsigned int counter = 0; counter < deprecatedAttributes.size(); counter++) 
   {
 
-    // Check if the current deprecated attributes is present
+    // Check if the current deprecated attributes is present outside JDL Default Attributes section
     if(p_conf->hasAttribute(deprecatedAttributes[counter])) 
     {
-      logInfo->print(WMS_DEBUG, deprecatedAttributes[counter], "attribute no more supported outside JDL Default Attributes ClassAD.", true, true);
+      // Add the current attribute to the list of deprecated attributes
+      deprecatedWarning += attributeSeparator + deprecatedAttributes[counter];
+      
+      // Set Comma as attribute separator
+      attributeSeparator = ", ";
     }
 
+  }
+  
+  // Show a warning message if deprecated attributes have been found
+  if(!deprecatedWarning.empty()) {
+      logInfo->print(WMS_DEBUG, deprecatedWarning, "attribute(s) no more supported outside JDL Default Attributes section \"JdlDefaultAttributes\" of the configuration file.", true, true);
   }
 
 }
