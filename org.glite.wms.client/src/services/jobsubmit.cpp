@@ -960,9 +960,10 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			// JOB  =========================================
 			jobType = WMS_JOB ;
 			jobAdSP.fromClassAd (  *(adObj->ad()) ) ;
+			AdUtils::setDefaultValues(&jobAdSP,wmcConf);
 			// PARAMETRIC ====================================
 			if (jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
-				// check JobAd without restoring attributes  
+				// check JobAd without restoring attributes
 				jobType = WMS_PARAMETRIC;
 				jobAdSP.check(false);
 			}else{
@@ -1027,7 +1028,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 
 		case WMS_JOB:
 				// Common operations for normal Jobs
-				AdUtils::setDefaultValues(&jobAdSP,wmcConf);
 				// Check for DEPRECATED JDL Job Types: Partitionable & Checkpointable
 				if (jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE) ||
 				    jobAdSP.hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)){
