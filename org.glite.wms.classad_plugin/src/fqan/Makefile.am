@@ -12,9 +12,6 @@ libglite_wms_fqan_classad_plugin_la_SOURCES = \
 	fqan_classad_plugin.cpp \
         testMemberEx.cpp 
 
-libglite_wms_fqan_classad_plugin_la_CPPFLAGS = \
-	-fPIC -shared
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \

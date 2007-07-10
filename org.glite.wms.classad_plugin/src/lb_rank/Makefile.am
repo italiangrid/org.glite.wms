@@ -12,9 +12,6 @@ libglite_wms_lb_rank_classad_plugin_la_SOURCES = \
 	lb_rank_classad_plugin.cpp \
 	successFraction.cpp 
 
-libglite_wms_lb_rank_classad_plugin_la_CPPFLAGS = \
-	-fPIC -shared
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
