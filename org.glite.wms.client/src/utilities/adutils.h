@@ -99,8 +99,6 @@ class AdUtils{
 		*/
 		~AdUtils( );
 		
-		void printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf);
-		
 		/**
 		* parse the specified files and override the default Ad with the user custom entries
 		*@param pathUser poitning to the user configuration file
@@ -146,6 +144,10 @@ class AdUtils{
 		* @param return SUCCESS (false) or ERROR (true)
 		*/
 		bool checkConfigurationAd(glite::jdl::Ad& ad, const std::string& path);
+
+		void checkDeprecatedAttributes(glite::jdl::Ad& ad, const std::string &path);
+
+
 		std::string generateVoPath(std::string& voName);
 		/*
 		*Handles the input options
