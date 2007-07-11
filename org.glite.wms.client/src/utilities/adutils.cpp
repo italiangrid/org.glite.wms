@@ -221,13 +221,23 @@ glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 	// Merge all configuration file found
 	adGeneral.merge(adDefault);
 	adGeneral.merge(adUser);
-	// VO overriding
-	if(voName!=""){
-		if (adGeneral.hasAttribute(JDL::VIRTUAL_ORGANISATION)){
-			adGeneral.delAttribute(JDL::VIRTUAL_ORGANISATION);
+
+	//Checks for the VO in the JdlDefaultAttributes section
+	if (adGeneral.lookUp(JDL_DEFAULT_ATTRIBUTES)) {
+		classad::ClassAd *defaultClassAd = static_cast<classad::ClassAd*>(adGeneral.delAttribute(JDL_DEFAULT_ATTRIBUTES));
+		Ad *defaultAttrAd = new Ad(*defaultClassAd);
+		delete (defaultClassAd );
+		// VO overriding
+		if(voName!=""){
+			if (defaultAttrAd->hasAttribute(JDL::VIRTUAL_ORGANISATION)){
+				defaultAttrAd->delAttribute(JDL::VIRTUAL_ORGANISATION);
+			}
+			defaultAttrAd->setAttribute(JDL::VIRTUAL_ORGANISATION,voName);
 		}
-		adGeneral.setAttribute(JDL::VIRTUAL_ORGANISATION,voName);
+		adGeneral.setAttribute(JDL_DEFAULT_ATTRIBUTES, defaultAttrAd);
+		delete ( defaultAttrAd );
 	}
+
 	if (!adGeneral.isSet()){
 		if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_WARNING, "Unable to load any configuration file properly","",true);}
 	}else if (vbLevel==WMSLOG_DEBUG){
