@@ -1041,17 +1041,6 @@ std::string Utils::checkConf(){
 	}
 	wmcConf = wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName);
 	
-	// ***************************
-	// To Be removed in the future
-	// ***************************
-	if (vbLevel==WMSLOG_DEBUG){
-	 	// Print the Warning only in case of --debug 
-		wmcAd->printDeprecatedAttributesWarning(wmcConf);
-	 }
-	// ***************************
-	// To Be removed in the future
-	// ***************************
-	
 	return voName;
 }
 
