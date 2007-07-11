@@ -86,6 +86,23 @@ const std::string DEFAULT_LBCLIENT_SERVICE_TYPE		= "org.glite.lb.server";
 const std::string DEFAULT_WMPROXY_SERVICE_TYPE 		= "org.glite.wms.WMProxy";
 const std::string DEFAULT_ERROR_STORAGE			= "/var/tmp";
 const std::string DEFAULT_OUTPUT_STORAGE		= "/tmp";
+	
+#define C_CONFIG_ATTRIBUTES 13
+
+const std::string configuAttributes[C_CONFIG_ATTRIBUTES] = {
+				"DefaultProxyValidity",
+			        "DefaultStatusLevel",
+				"DefaultLoggingLevel",
+				"ErrorStorage",
+				"OutputStorage",
+				"ListenerStorage",
+				"LBServiceDiscoveryType",
+				"WMProxyServiceDiscoveryType",
+				"EnableServiceDiscovery",
+				"WmProxyEndPoints",
+				"JdlDefaultAttributes",
+				"SoapTimeouts",
+				"SystemCallTimeout"};
 		
 class AdUtils{
 	public:
@@ -138,6 +155,14 @@ class AdUtils{
 		static std::string JobId2Node (const std::map< std::string, std::string > &map,
 			glite::wmsutils::jobid::JobId jobid);
 	private:
+		/**
+		* fill the classad attributes, if missing, from another classad.
+		* The only attributes copied are the configuration ones
+		* @param source the Ad instance which will be used for the filling
+		* @param destination the destination Ad instance that will be filled
+		*/
+		void fillConfigAttributes(glite::jdl::Ad& source, glite::jdl::Ad& destination);
+		
 		/*
 		* method used by loadConfiguration: check whether
 		* configuration file is plain classad or WmsClient=[...]
@@ -146,7 +171,6 @@ class AdUtils{
 		bool checkConfigurationAd(glite::jdl::Ad& ad, const std::string& path);
 
 		void checkDeprecatedAttributes(glite::jdl::Ad& ad, const std::string &path);
-
 
 		std::string generateVoPath(std::string& voName);
 		/*

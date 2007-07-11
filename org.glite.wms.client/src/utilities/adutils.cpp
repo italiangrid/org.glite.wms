@@ -43,6 +43,34 @@ AdUtils::~AdUtils( ){ }
 /******************************
 *  AdUtils class methods:
 *******************************/
+
+/**
+* fill the classad attributes, if missing, from another classad.
+* The only attributes copied are the configuration ones
+* @param source the Ad instance which will be used for the filling
+* @param destination the destination Ad instance that will be filled
+*/
+void AdUtils::fillConfigAttributes(glite::jdl::Ad& source, glite::jdl::Ad &destination) {
+
+	// Scan all the config attributes inside the AD and if missing
+	// find them insede the source AD
+	for(int counter = 0; counter < C_CONFIG_ATTRIBUTES; counter++) {
+
+		// Retrieve the attribute name to be checked
+		string attrName = configuAttributes[counter];
+
+		// Check if the attribute is missing in the destination AD
+		if(!destination.hasAttribute(attrName)) {
+		
+			// Check if the attribute is present in the source AD	
+			if(source.hasAttribute(attrName)) {
+				// Add the Attribute
+				destination.setAttributeExpr(attrName, source.delAttribute(attrName));
+			}
+		}
+	}
+}
+
 void AdUtils::checkDeprecatedAttributes(glite::jdl::Ad &ad,
 					const std::string &path)
 {
@@ -207,27 +235,38 @@ glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 	const std::string& voName){
 	glite::jdl::Ad adUser, adDefault, adGeneral, configAd;
 
-	// Load ad from file (if necessary)
-	if (pathGeneral!=""){
-		if (!checkConfigurationAd(adGeneral,pathGeneral)){
-			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded generic configuration file:\n",pathGeneral,true);}
-		}
-	}
-	if (pathDefault!=""){
-		if(!checkConfigurationAd(adDefault,pathDefault)){
-			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Vo specific configuration file:\n",pathDefault,true);}
-		}
-	}
+	// Load the User configuration file if it has been set
 	if (pathUser!=""){
+	
 		if (!checkConfigurationAd(adUser,pathUser)){
 			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded user configuration file:\n",pathUser,true);}
 		}
+
+		// Fill the configuration AD from the User AD
+		fillConfigAttributes(adUser, configAd);
 	}
 
-	// Create the configuration AD 
-	configAd.fillConfigAttributes(adUser);
-	configAd.fillConfigAttributes(adDefault);
-	configAd.fillConfigAttributes(adGeneral);
+	// Load the configuration file specified by the VO if it has been set
+	if (pathDefault!=""){
+	
+		if(!checkConfigurationAd(adDefault,pathDefault)){
+			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Vo specific configuration file:\n",pathDefault,true);}
+		}
+
+		// Fill the configuration AD from the AD specified by the VO 
+		fillConfigAttributes(adDefault, configAd);
+	}
+
+	// Load the generic configuration file if it has been set
+	if (pathGeneral!=""){
+	
+		if (!checkConfigurationAd(adGeneral,pathGeneral)){
+			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded generic configuration file:\n",pathGeneral,true);}
+		}
+		
+		// Fill the configuration AD from the generic AD
+		fillConfigAttributes(adGeneral, configAd);
+	}
 
 	//Checks for the VO in the JdlDefaultAttributes section
 	if (configAd.lookUp(JDL_DEFAULT_ATTRIBUTES)) {
