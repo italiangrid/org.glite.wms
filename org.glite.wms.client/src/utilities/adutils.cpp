@@ -43,8 +43,9 @@ AdUtils::~AdUtils( ){ }
 /******************************
 *  AdUtils class methods:
 *******************************/
-void AdUtils::printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf) {
-
+void AdUtils::checkDeprecatedAttributes(glite::jdl::Ad &ad,
+					const std::string &path)
+{
   Log *logInfo = new Log(vbLevel);
 
   string deprecatedWarning = "";
@@ -53,7 +54,7 @@ void AdUtils::printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf) {
   std::vector<std::string> deprecatedAttributes;
 
   // Set all the deprecated attributes outside JDL Default Attributes section
-  //deprecatedAttributes.push_back(JDL::VIRTUAL_ORGANISATION);
+  deprecatedAttributes.push_back(JDL::VIRTUAL_ORGANISATION);
   deprecatedAttributes.push_back(JDL::RETRYCOUNT);
   deprecatedAttributes.push_back(JDL::SHALLOWRETRYCOUNT);
   deprecatedAttributes.push_back(JDL::RANK);
@@ -70,7 +71,7 @@ void AdUtils::printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf) {
   {
 
     // Check if the current deprecated attributes is present outside JDL Default Attributes section
-    if(p_conf->hasAttribute(deprecatedAttributes[counter])) 
+    if(ad.hasAttribute(deprecatedAttributes[counter])) 
     {
       // Add the current attribute to the list of deprecated attributes
       deprecatedWarning += attributeSeparator + deprecatedAttributes[counter];
@@ -83,7 +84,7 @@ void AdUtils::printDeprecatedAttributesWarning(glite::jdl::Ad* p_conf) {
   
   // Show a warning message if deprecated attributes have been found
   if(!deprecatedWarning.empty()) {
-      logInfo->print(WMS_DEBUG, deprecatedWarning, "attribute(s) no more supported outside JDL Default Attributes section \"JdlDefaultAttributes\" of the configuration file.", true, true);
+      logInfo->print(WMS_DEBUG, deprecatedWarning, "attribute(s) no more supported outside JDL Default Attributes section \"JdlDefaultAttributes\" of the configuration file " + path, true, true);
   }
 
 }
@@ -192,6 +193,10 @@ bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 			}
 		}
 	}
+	
+	// Check for deprecated attributes
+	checkDeprecatedAttributes(ad, path);
+	
 	return false;
 }
 /******************************
@@ -200,7 +205,8 @@ bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 	const std::string& pathDefault, const std::string& pathGeneral,
 	const std::string& voName){
-	glite::jdl::Ad adUser, adDefault, adGeneral;
+	glite::jdl::Ad adUser, adDefault, adGeneral, configAd;
+
 	// Load ad from file (if necessary)
 	if (pathGeneral!=""){
 		if (!checkConfigurationAd(adGeneral,pathGeneral)){
@@ -218,13 +224,14 @@ glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 		}
 	}
 
-	// Merge all configuration file found
-	adGeneral.merge(adDefault);
-	adGeneral.merge(adUser);
+	// Create the configuration AD 
+	configAd.fillConfigAttributes(adUser);
+	configAd.fillConfigAttributes(adDefault);
+	configAd.fillConfigAttributes(adGeneral);
 
 	//Checks for the VO in the JdlDefaultAttributes section
-	if (adGeneral.lookUp(JDL_DEFAULT_ATTRIBUTES)) {
-		classad::ClassAd *defaultClassAd = static_cast<classad::ClassAd*>(adGeneral.delAttribute(JDL_DEFAULT_ATTRIBUTES));
+	if (configAd.lookUp(JDL_DEFAULT_ATTRIBUTES)) {
+		classad::ClassAd *defaultClassAd = static_cast<classad::ClassAd*>(configAd.delAttribute(JDL_DEFAULT_ATTRIBUTES));
 		Ad *defaultAttrAd = new Ad(*defaultClassAd);
 		delete (defaultClassAd );
 		// VO overriding
@@ -234,16 +241,16 @@ glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 			}
 			defaultAttrAd->setAttribute(JDL::VIRTUAL_ORGANISATION,voName);
 		}
-		adGeneral.setAttribute(JDL_DEFAULT_ATTRIBUTES, defaultAttrAd);
+		configAd.setAttribute(JDL_DEFAULT_ATTRIBUTES, defaultAttrAd);
 		delete ( defaultAttrAd );
 	}
 
-	if (!adGeneral.isSet()){
+	if (!configAd.isSet()){
 		if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_WARNING, "Unable to load any configuration file properly","",true);}
 	}else if (vbLevel==WMSLOG_DEBUG){
-		errMsg(WMS_DEBUG, "Loaded Configuration values:",adGeneral.toLines(),true);
+		errMsg(WMS_DEBUG, "Loaded Configuration values:",configAd.toLines(),true);
 	}
-	return new Ad(adGeneral);
+	return new Ad(configAd);
 }
 std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	std::vector< std::string > attributes = jdl->attributes();
