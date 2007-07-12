@@ -221,7 +221,7 @@ bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 			}
 		}
 	}
-	
+
 	// Check for deprecated attributes
 	checkDeprecatedAttributes(ad, path);
 	
@@ -276,7 +276,9 @@ glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 		// VO overriding
 		if(voName!=""){
 			if (defaultAttrAd->hasAttribute(JDL::VIRTUAL_ORGANISATION)){
+				string mismatchVo = defaultAttrAd->getString(JDL::VIRTUAL_ORGANISATION);
 				defaultAttrAd->delAttribute(JDL::VIRTUAL_ORGANISATION);
+				errMsg(WMS_WARNING,"VirtualOrganisation Value Mismatch: \n","Configuration VirtualOrganisation value("+mismatchVo+") will be overriden by Proxy certificate value ("+voName+")",true);
 			}
 			defaultAttrAd->setAttribute(JDL::VIRTUAL_ORGANISATION,voName);
 		}
