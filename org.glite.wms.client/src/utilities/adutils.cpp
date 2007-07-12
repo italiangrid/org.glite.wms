@@ -112,7 +112,7 @@ void AdUtils::checkDeprecatedAttributes(glite::jdl::Ad &ad,
   
   // Show a warning message if deprecated attributes have been found
   if(!deprecatedWarning.empty()) {
-      logInfo->print(WMS_DEBUG, deprecatedWarning, "attribute(s) no more supported outside JDL Default Attributes section \"JdlDefaultAttributes\" of the configuration file " + path, true, true);
+      logInfo->print(WMS_DEBUG, "Configuration file: " + path + " -", deprecatedWarning + " attribute(s) no more supported outside JDL Default Attributes section \"JdlDefaultAttributes\"", true, true);
   }
 
 }
