@@ -65,7 +65,7 @@ public:
   * @param method - The Name of the method which has thrown the Exception
   * @param code - The Code of the Error raised
   * @param field - The Empty filed requested for */
-    EmptyIdException::EmptyIdException(const std::string& file,
+	EmptyIdException(const std::string& file,
 				       int line,
 				       const std::string& method,
 				       int code ,
