@@ -177,7 +177,9 @@ namespace glite {
                */
               jobCacheTable::const_iterator end( void ) const;
 
-          };
+          }; // class jobCacheTable
+
+	  
 
           jobCacheTable m_jobs; ///< The in-core data structure holding the set of jobs
 
@@ -185,10 +187,20 @@ namespace glite {
 	  
 	  boost::scoped_ptr< glite::wms::ice::util::jobDbManager > m_dbMgr;
 	  
+	  //glite::wms::ice::util::jobDbManager* getDbManager( void ) const {return m_dbMgr.get();}
+
 	protected:
 	  jobCache( );
 
 	public:
+	  
+/* 	  class Iterator { */
+/* 	  public: */
+/* 	    Iterator& operator++() { */
+/* 	      (*jobCache::getInstance()->getDbManager())++; */
+/* 	      return *this; */
+/* 	    } */
+/* 	  }; */
 
           typedef jobCacheTable::iterator iterator; ///< Iterator to the jobCache CREAM jobs. If it is of type jobCache::iterator, then *it is of type creamJob;
           typedef jobCacheTable::const_iterator const_iterator; ///< Const iterator to the jobCache elements. If it is of type jobCache::iterator, then *it is of type creamJob;

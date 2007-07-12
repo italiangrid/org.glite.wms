@@ -23,6 +23,7 @@
 
 #include "jobDbManager.h"
 #include "dbCursorWrapper.h"
+#include "creamJob.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
@@ -32,6 +33,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cerrno>
+#include <iostream>
+
+//#include <c++/3.2.3/bits/stl_function.h>
 
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
@@ -40,8 +44,32 @@ extern int errno;
 #define MAX_ICE_OP_BEFORE_PURGE 10000
 #define MAX_ICE_OP_BEFORE_CHECKPOINT 50
 
+int make_index_userdn( Db* index_db, const Dbt* primary_key, const Dbt* primary_data, Dbt* secondary_key) throw()
+{
+  string key = iceUtil::CreamJob::extract_first_index_key( (const char*)primary_data->get_data() );
+
+  secondary_key->set_data( (void*) key.c_str() );
+  secondary_key->set_size( key.length() + 1 );
+  
+  return 0;
+}
+
+int make_index_gridjid( Db* index_db, const Dbt* primary_key, const Dbt* primary_data, Dbt* secondary_key) throw()
+{
+  string key = iceUtil::CreamJob::extract_second_index_key( (const char*)primary_data->get_data() );
+
+  secondary_key->set_data((void*) key.c_str());
+  secondary_key->set_size( key.length() + 1 );
+  
+  return 0;
+}
+
+
 //____________________________________________________________________
-iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, const bool autopurge, const bool read_only)
+iceUtil::jobDbManager::jobDbManager( const string& envHome, 
+				     const bool recover, 
+				     const bool autopurge, 
+				     const bool read_only)
   : m_env(0),
     m_envHome( envHome ), // The directory pointed by
     			  // envHome MUST exist
@@ -50,6 +78,8 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
     m_cream_open( false ),
     m_cid_open( false ),
     m_gid_open( false ),
+    /*    m_firstindex_open(false),
+	  m_secondindex_open(false), */ //to activate when the ICE's cache will be removed
     m_env_open( false ),
     m_op_counter(0),
     m_op_counter_chkpnt(0),
@@ -122,7 +152,12 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
         m_creamJobDb = new Db(&m_env, 0);
         m_cidDb      = new Db(&m_env, 0);
         m_gidDb      = new Db(&m_env, 0);
-        
+	/*        m_firstindex      = new Db(&m_env, 0);
+		  m_secondindex     = new Db(&m_env, 0);*/ //to activate when the ICE's cache will be removed
+	
+
+	/*m_firstindex->set_flags(DB_DUPSORT);
+	  m_secondindex->set_flags(DB_DUPSORT); */ //to activate when the ICE's cache will be removed
         /**
          * "Essentially, DB performs data transfer based on the 
          * database page size. That is, it moves data to and from
@@ -144,16 +179,25 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
             m_creamJobDb->open(NULL, "cream_job_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT, 0);
             m_cidDb->open(NULL, "cream_jobid_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT, 0);
             m_gidDb->open(NULL, "grid_jobid_table.db", NULL, DB_BTREE, DB_CREATE | DB_AUTO_COMMIT, 0);
+	    /* m_firstindex->open(NULL, "index_userdn.db", NULL, DB_BTREE, DB_CREATE, 0);
+	       m_secondindex->open(NULL, "index_gid.db", NULL, DB_BTREE, DB_CREATE, 0); */ //to activate when the ICE's cache will be removed
         } else {
             m_creamJobDb->open(NULL, "cream_job_table.db", NULL, DB_BTREE, DB_RDONLY, 0);
             m_cidDb->open(NULL, "cream_jobid_table.db", NULL, DB_BTREE, DB_RDONLY, 0);
             m_gidDb->open(NULL, "grid_jobid_table.db", NULL, DB_BTREE, DB_RDONLY, 0);
+	    /*m_firstindex->open(NULL, "index_userdn.db", NULL, DB_BTREE, DB_RDONLY, 0);
+	      m_secondindex->open(NULL, "index_gid.db", NULL, DB_BTREE, DB_RDONLY, 0);*/ //to activate when the ICE's cache will be removed
         }
         
         m_cream_open = true;  
         m_cid_open = true;
         m_gid_open = true;
+	/*m_firstindex_open = true;
+	  m_secondindex_open = true; */ //to activate when the ICE's cache will be removed
         
+	/* m_creamJobDb->associate(NULL, m_firstindex, make_index_userdn , 0);
+	   m_creamJobDb->associate(NULL, m_secondindex, make_index_gridjid , 0); */ //to activate when the ICE's cache will be removed
+
     } catch(DbException& dbex) {
         m_invalid_cause = dbex.what();
         return;
@@ -175,6 +219,7 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome, const bool recover, 
                             << m_envHome << "]" 
                             << log4cpp::CategoryStream::ENDLINE
                             );
+
 }
 
 //____________________________________________________________________
@@ -185,10 +230,12 @@ iceUtil::jobDbManager::~jobDbManager() throw()
     
     // Db MUST be close BEFORE closing the DbEnv
     try {
-        if(m_creamJobDb && m_cream_open) m_creamJobDb->close(0);
-        if(m_cidDb && m_cid_open) m_cidDb->close(0);
-        if(m_gidDb && m_gid_open) m_gidDb->close(0);
-        if(m_env_open) m_env.close(0);
+      /* if(m_firstindex && m_firstindex_open) m_firstindex->close(0);
+	 if(m_secondindex && m_secondindex_open) m_secondindex->close(0); */ //to activate when the ICE's cache will be removed
+      if(m_creamJobDb && m_cream_open) m_creamJobDb->close(0);
+      if(m_cidDb && m_cid_open) m_cidDb->close(0);
+      if(m_gidDb && m_gid_open) m_gidDb->close(0);
+      if(m_env_open) m_env.close(0);
     } catch(DbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()                      
                         << "jobDbManager::~jobDbManager() -"
@@ -198,7 +245,9 @@ iceUtil::jobDbManager::~jobDbManager() throw()
                         << log4cpp::CategoryStream::ENDLINE
                         );
     }
-    
+
+    /* delete(m_firstindex);
+       delete(m_secondindex); */ //to activate when the ICE's cache will be removed
     delete(m_creamJobDb);
     delete(m_cidDb);
     delete(m_gidDb);    
@@ -354,41 +403,41 @@ string iceUtil::jobDbManager::getByGid( const string& gid )
 }
 
 //____________________________________________________________________
-void iceUtil::jobDbManager::getAllRecords( vector<string>& destVec )
-  throw(iceUtil::JobDbException&)
-{
-  Dbt key, data;
-  int ret;
+// void iceUtil::jobDbManager::getAllRecords( vector<string>& destVec )
+//   throw(iceUtil::JobDbException&)
+// {
+//   Dbt key, data;
+//   int ret;
   
-  try {
+//   try {
   
-    // FIXME: Going to READ from database.
-    // For now the client (jobCache) put a lock
-    // but the transaction mechanism should make the 
-    // modifications visible to this READ only if the 
-    // transaction itself is commited.
-    // In future we could put a BDB-lock but probably it's
-    // NOT needed thanks to the isolation provided by the
-    // transaction
+//     // FIXME: Going to READ from database.
+//     // For now the client (jobCache) put a lock
+//     // but the transaction mechanism should make the 
+//     // modifications visible to this READ only if the 
+//     // transaction itself is commited.
+//     // In future we could put a BDB-lock but probably it's
+//     // NOT needed thanks to the isolation provided by the
+//     // transaction
     
-    iceUtil::cursorWrapper C( m_creamJobDb );
-    //m_creamJobDb->cursor(NULL, &cursor, 0);
-    while( (ret = C.get(&key, &data)) == 0 ) {
-      destVec.push_back( (char*)data.get_data());
-    }
+//     iceUtil::cursorWrapper C( m_creamJobDb );
+//     //m_creamJobDb->cursor(NULL, &cursor, 0);
+//     while( (ret = C.get(&key, &data)) == 0 ) {
+//       destVec.push_back( (char*)data.get_data());
+//     }
     
-  } catch(DbException& dbex) {
-    //if(cursor) cursor->close();
-    throw JobDbException( dbex.what() );
-  } catch(exception& ex) {
-    //if(cursor) cursor->close();
-    throw JobDbException( ex.what() );
-  } catch(...) {
-    //if(cursor) cursor->close();
-    throw JobDbException( "jobDbManager::getAllRecords() - Unknown exception catched" );
-  }
-  //cursor->close();
-}
+//   } catch(DbException& dbex) {
+//     //if(cursor) cursor->close();
+//     throw JobDbException( dbex.what() );
+//   } catch(exception& ex) {
+//     //if(cursor) cursor->close();
+//     throw JobDbException( ex.what() );
+//   } catch(...) {
+//     //if(cursor) cursor->close();
+//     throw JobDbException( "jobDbManager::getAllRecords() - Unknown exception catched" );
+//   }
+//   //cursor->close();
+// }
 
 //____________________________________________________________________
 void iceUtil::jobDbManager::delByCid( const string& cid )
@@ -548,9 +597,92 @@ void checkPointing( void )
    * Checkpointing reduce recover time, but also increase cache flush
    * frequency.
    */
+}
 
-  //if(m_op_counter > MAX_OP_BEFORE_CHECKPOINT)
-  //{
+//____________________________________________________________________
+void* iceUtil::jobDbManager::getNextData( void ) 
+  const throw(iceUtil::JobDbException&)
+{
+  Dbt key, data;
+  
+  try {
+    if( mainCursor->get( &key, &data, DB_NEXT) != 0 ) return NULL;
     
-  //}
+    char* bufData = (char*)malloc( data.get_size()+1 );
+    memset((void*)bufData, 0, data.get_size()+1);
+    memcpy((void*)bufData, data.get_data(), data.get_size());
+    
+    return bufData;
+
+  } catch(DbException& e) {
+
+    throw iceUtil::JobDbException( e.what() );
+
+  } catch(exception& e) {
+
+    throw iceUtil::JobDbException( e.what() );
+ 
+  } catch(...) {
+
+    throw JobDbException( "jobDbManager::getNextData() - Unknown exception catched" );
+
+  }
+
+}
+
+//____________________________________________________________________
+void iceUtil::jobDbManager::initCursor( void ) throw(iceUtil::JobDbException&)
+{
+  try {
+    m_creamJobDb->cursor(NULL, &mainCursor, 0);
+  } catch(DbException& e) {
+
+    throw iceUtil::JobDbException( e.what() );
+
+  } catch(exception& e) {
+
+    throw iceUtil::JobDbException( e.what() );
+ 
+  } catch(...) {
+
+    throw JobDbException( "jobDbManager::initCursor() - Unknown exception catched" );
+
+  }
+}
+
+//____________________________________________________________________
+void iceUtil::jobDbManager::endCursor( void ) throw(iceUtil::JobDbException&)
+{
+  try {
+    if(mainCursor)
+      mainCursor->close( );
+  } catch(DbException& e) {
+
+    throw iceUtil::JobDbException( e.what() );
+
+  } catch(exception& e) {
+
+    throw iceUtil::JobDbException( e.what() );
+ 
+  } catch(...) {
+
+    throw JobDbException( "jobDbManager::endCursor() - Unknown exception catched" );
+
+  }
+}
+
+//______________________________________________________________________________
+iceUtil::jobDbManager::Iterator iceUtil::jobDbManager::begin() throw()
+{
+
+  return  iceUtil::jobDbManager::Iterator( iceUtil::jobDbManager::Iterator::IteratorBegin(m_creamJobDb) );
+
+}
+
+//______________________________________________________________________________
+iceUtil::jobDbManager::Iterator iceUtil::jobDbManager::end() throw()
+{
+  
+  return iceUtil::jobDbManager::Iterator( iceUtil::jobDbManager::Iterator::IteratorEnd() );
+
 }

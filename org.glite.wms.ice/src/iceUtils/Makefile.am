@@ -21,6 +21,7 @@ libglite_wms_iceUtils_la_SOURCES = \
 				DNProxyManager.cpp \
 				iceUtils.cpp \
 				jobDbManager.cpp \
+				dbIterator.cpp \
 				CEDbManager.cpp \
 				CreamProxyFactory.cpp \
 				CreamProxyMethod.cpp \

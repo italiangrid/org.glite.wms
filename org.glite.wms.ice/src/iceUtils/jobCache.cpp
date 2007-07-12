@@ -26,10 +26,7 @@
 #include "boost/format.hpp"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
-
-//#include "classad_distribution.h" // classad's stuff
-//#include "source.h" // classad's stuff
-//#include "sink.h"   // classad's stuff
+//#include <boost/archive/text_iarchive.hpp>
 
 // System INCLUDES
 #include <iostream>
@@ -177,7 +174,7 @@ jobCache::jobCache( void )
     : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
       m_jobs( )
 { 
-    jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db );
+  jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db );
 
     if ( !dbm->isValid() ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
@@ -211,27 +208,6 @@ jobCache::~jobCache( )
 //______________________________________________________________________________
 void jobCache::load( void ) throw(ClassadSyntax_ex&)
 {
-//     // retrieve all records from DB
-//     vector<string> records;
-//     try { 
-//         m_dbMgr->getAllRecords( records );
-//     } catch(JobDbException& dbex) {
-//         // this error is severe: an access to the
-//         // underlying database failed 
-//         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-//                         << "jobCache::load() - "
-//                         << "Failed to get all records from the database. "
-//                         << "Reason is: " << dbex.what() << ". Giving up."
-//                         << log4cpp::CategoryStream::ENDLINE );
-//         abort();
-//     }
-//     for(vector<string>::const_iterator it=records.begin();
-//         it != records.end();
-//         ++it)
-//         {
-//             CreamJob cj( *it ); // can raise a ClassAdSyntax_ex
-//             m_jobs.putJob( cj ); // update in-memory data structure
-//         }
   
   /**
    * new implementation using the boost serializer
@@ -239,7 +215,38 @@ void jobCache::load( void ) throw(ClassadSyntax_ex&)
    */
   vector<string> records;
   try {
-    m_dbMgr->getAllRecords( records );
+    //m_dbMgr->getAllRecords( records );
+
+    m_dbMgr->initCursor();
+
+    char *data;
+    while( (data = (char*)m_dbMgr->getNextData()) != NULL ) {
+      
+      CreamJob cj;
+      istringstream tmpOs;//( string(data) );
+      tmpOs.str( data );
+      boost::archive::text_iarchive ia(tmpOs);
+      ia >> cj;
+/*      CREAM_SAFE_LOG( m_log_dev->debugStream()
+		      << "jobCache::load() - "
+		      << "Fetched from Db string [" << data << "]"
+		      << log4cpp::CategoryStream::ENDLINE );
+
+      CREAM_SAFE_LOG( m_log_dev->debugStream()
+		      << "jobCache::load() - "
+		      << "Inserting job "
+		      << cj.describe() << " - STATUS=["
+		      << cj.getStatus() << "] - USER=["
+		      << cj.getUserDN() << "]"
+		      << log4cpp::CategoryStream::ENDLINE );
+*/
+      m_jobs.putJob( cj ); // update in-memory data structure
+      free(data);
+
+    }
+
+    m_dbMgr->endCursor();
+
   } catch(JobDbException& dbex) {
     CREAM_SAFE_LOG( m_log_dev->fatalStream() 
 		    << "jobCache::load() - "
@@ -248,15 +255,15 @@ void jobCache::load( void ) throw(ClassadSyntax_ex&)
 		    << log4cpp::CategoryStream::ENDLINE );
     abort();
   }
-  for(vector<string>::const_iterator it=records.begin();it != records.end();++it)
-    {
-      CreamJob cj;
-      istringstream tmpOs( *it );
-      //tmpOs << *it;
-      boost::archive::text_iarchive ia(tmpOs);
-      ia >> cj;
-      m_jobs.putJob( cj ); // update in-memory data structure
-    }
+//   for(vector<string>::const_iterator it=records.begin();it != records.end();++it)
+//     {
+//       CreamJob cj;
+//       istringstream tmpOs( *it );
+//       //tmpOs << *it;
+//       boost::archive::text_iarchive ia(tmpOs);
+//       ia >> cj;
+//       m_jobs.putJob( cj ); // update in-memory data structure
+//     }
 }
 
 //______________________________________________________________________________

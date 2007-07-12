@@ -22,8 +22,10 @@
 
 #include "ClassadSyntax_ex.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+#include "glite/ce/cream-client-api-c/certUtil.h"
 #include <string>
 #include <ctime>
+#include <set>
 
 /* #include <boost/archive/text_oarchive.hpp> */
 /* #include <boost/archive/text_iarchive.hpp> */
@@ -274,6 +276,25 @@ namespace glite {
 	  size_t size( void ) const;
 
 	  //template<class Archive> void serialize(Archive & ar, const unsigned int version) throw();
+
+	  //std::set<std::string> extract_keys( const std::string& );// const { return std::set<std::string>(); };
+
+	  static std::string extract_first_index_key( const std::string& jdl ) { 
+	    
+ 	    CreamJob J( jdl );
+
+	    J.setUserDN( glite::ce::cream_client_api::certUtil::getDNFQAN(J.getUserProxyCertificate()) );
+	    return J.getUserDN();
+
+	  };
+
+	  static std::string extract_second_index_key( const std::string& jdl ) { 
+	    
+ 	    CreamJob J( jdl );
+	    return J.getGridJobID();
+
+	  };
+
 
 	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw()
 	  {

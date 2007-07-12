@@ -406,10 +406,11 @@ string CreamJob::getSubscriptionID( void ) const
 // Returns the DN for the CEMon which send snotifications for this job
 string CreamJob::get_cemon_dn( void ) const
 {
-    subscriptionManager* submgr( subscriptionManager::getInstance() );
-    string cemondn;
-    string cemon_url( getCEMonURL() );
-    // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
-    submgr->getCEMonDN( m_user_dn, cemon_url, cemondn );
-    return cemondn;
+  subscriptionManager* submgr( subscriptionManager::getInstance() );
+  string cemondn;
+  string cemon_url( getCEMonURL() );
+  // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
+  submgr->getCEMonDN( m_user_dn, cemon_url, cemondn );
+  return cemondn;
 }
+
