@@ -52,6 +52,7 @@ const std::string JDL_SOAP_TIMEOUTS					= "SoapTimeouts";
 const std::string JDL_DEFAULT_PROXY_VALIDITY				= "DefaultProxyValidity";
 const std::string JDL_ENABLE_SERVICE_DISCOVERY				= "EnableServiceDiscovery";
 const std::string JDL_SYSTEM_CALL_TIMEOUT				= "SystemCallTimeout";
+const std::string DELEGATION_ID							= "DelegationId";
 	
 const std::string SOAP_GLOBAL_TIMEOUT          				= "globalTimeout";
 const std::string SOAP_GET_VERSION_TIMEOUT     				= "getVersionTimeout";
@@ -87,7 +88,7 @@ const std::string DEFAULT_WMPROXY_SERVICE_TYPE 		= "org.glite.wms.WMProxy";
 const std::string DEFAULT_ERROR_STORAGE			= "/var/tmp";
 const std::string DEFAULT_OUTPUT_STORAGE		= "/tmp";
 	
-#define C_CONFIG_ATTRIBUTES 13
+#define C_CONFIG_ATTRIBUTES 14
 
 const std::string configuAttributes[C_CONFIG_ATTRIBUTES] = {
 				"DefaultProxyValidity",
@@ -102,7 +103,8 @@ const std::string configuAttributes[C_CONFIG_ATTRIBUTES] = {
 				"WmProxyEndPoints",
 				"JdlDefaultAttributes",
 				"SoapTimeouts",
-				"SystemCallTimeout"};
+				"SystemCallTimeout",
+				"DelegationId"};
 		
 class AdUtils{
 	public:

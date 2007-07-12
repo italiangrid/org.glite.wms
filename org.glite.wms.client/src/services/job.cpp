@@ -307,6 +307,7 @@ std::string Job::getLogFileMsg ( ) {
 void Job::setDelegationId ( ){
 	// Reads the user options
 	string id = wmcOpts->getStringAttribute(Options::DELEGATION);
+	string confid = wmcUtils->getConf()->getString(DELEGATION_ID);
 	bool autodg = wmcOpts->getBoolAttribute(Options::AUTODG);
 	if (!id.empty() && autodg){
 		ostringstream err;
@@ -333,6 +334,10 @@ void Job::setDelegationId ( ){
 		m_dgOpt = id;
 		logInfo->print  (WMS_DEBUG, "Delegation ID automatically generated");
 		autodgOpt = true;
+	} else if ( !confid.empty()) {
+		// delegation-id string by configuration file
+		m_dgOpt = confid ;
+		autodgOpt = false;
 	} else {
 		ostringstream err ;
 		err << "a mandatory attribute is missing:\n" ;

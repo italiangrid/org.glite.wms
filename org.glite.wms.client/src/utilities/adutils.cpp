@@ -62,7 +62,7 @@ void AdUtils::fillConfigAttributes(glite::jdl::Ad& source, glite::jdl::Ad &desti
 		// Check if the attribute is missing in the destination AD
 		if(!destination.hasAttribute(attrName)) {
 		
-			// Check if the attribute is present in the source AD	
+			// Check if the attribute is present in the source AD
 			if(source.hasAttribute(attrName)) {
 				// Add the Attribute
 				destination.setAttributeExpr(attrName, source.delAttribute(attrName));
@@ -278,7 +278,9 @@ glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 			if (defaultAttrAd->hasAttribute(JDL::VIRTUAL_ORGANISATION)){
 				string mismatchVo = defaultAttrAd->getString(JDL::VIRTUAL_ORGANISATION);
 				defaultAttrAd->delAttribute(JDL::VIRTUAL_ORGANISATION);
-				errMsg(WMS_WARNING,"VirtualOrganisation Value Mismatch: \n","Configuration VirtualOrganisation value("+mismatchVo+") will be overriden by Proxy certificate value ("+voName+")",true);
+				if ( voName.compare(mismatchVo) != 0 ) {
+					errMsg(WMS_WARNING,"VirtualOrganisation Value Mismatch: \n","Configuration VirtualOrganisation value("+mismatchVo+") will be overriden by Proxy certificate value ("+voName+")",true);
+				}
 			}
 			defaultAttrAd->setAttribute(JDL::VIRTUAL_ORGANISATION,voName);
 		}
