@@ -5,8 +5,8 @@
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
  
-#ifndef GLITE_WMS_BROKER_MAX_SELECTOR_H_
-#define GLITE_WMS_BROKER_MAX_SELECTOR_H_
+#ifndef GLITE_WMS_BROKER_MAX_SELECTOR_H
+#define GLITE_WMS_BROKER_MAX_SELECTOR_H
 
 #include "matchmaking.h"
 
@@ -14,11 +14,8 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-matchtable::iterator
-max_selector(matchtable& matches);
+matchtable::iterator max_selector(matchtable& matches);
 
-}; // namespace broker
-}; // namespace wms
-}; // namespace glite
+}}}
 
 #endif

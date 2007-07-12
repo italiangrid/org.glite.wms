@@ -8,25 +8,19 @@
 #ifndef GLITE_WMS_BROKER_MAXIMIZE_FILES_H
 #define GLITE_WMS_BROKER_MAXIMIZE_FILES_H
 
-#include <ResourceBroker.h>
+#include "storage_utils.h"
 
 namespace glite {
 namespace wms {
 namespace broker {
 
+boost::tuple<
+  boost::shared_ptr<matchtable>,
+  boost::shared_ptr<filemapping>,
+  boost::shared_ptr<storagemapping>
+>
+maximize_files(const classad::ClassAd* requestAd);
 
-struct maximize_files
-{
-  boost::tuple<
-    boost::shared_ptr<matchtable>,
-    boost::shared_ptr<filemapping>,
-    boost::shared_ptr<storagemapping>
-  >
-  operator()(const classad::ClassAd* requestAd);
-};
-
-} // namespace broker
-} // namespace wms
-} // namespace glite
+}}}
 
 #endif

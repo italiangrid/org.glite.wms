@@ -11,6 +11,7 @@
 #include <numeric>
 #include <iterator>
 #include <vector>
+#include <cmath>
 
 #include <boost/random/variate_generator.hpp>
 #include <boost/random/linear_congruential.hpp>

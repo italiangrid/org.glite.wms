@@ -18,8 +18,6 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-namespace {
-
 struct ResourceBroker::impl : boost::noncopyable
 {
   ResourceBroker::strategy _strategy;
@@ -47,8 +45,6 @@ struct ResourceBroker::impl : boost::noncopyable
     return _strategy(requestAd);
   }
 };
-
-} // anonymous namespace
 
 ResourceBroker::ResourceBroker() :
   m_impl( new ResourceBroker::impl(simple, max_selector) )

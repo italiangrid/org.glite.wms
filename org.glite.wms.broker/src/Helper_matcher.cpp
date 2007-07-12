@@ -132,11 +132,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     rb.changeStrategy( maximize_files() );
   }
 
-  if (input_data_exists  || data_requirements_exists)
-  {
-    rb.changeStrategy( maximize_files() );
-  }
-
   boost::tuple<
     boost::shared_ptr<matchtable>,
     boost::shared_ptr<filemapping>,

@@ -36,10 +36,8 @@ boost::tuple<
   boost::shared_ptr<filemapping>,
   boost::shared_ptr<storagemapping>
 >
-maximize_files::operator()(
-  const classad::ClassAd* requestAd
-) {
-
+maximize_files(const classad::ClassAd* requestAd)
+{
   boost::shared_ptr<matchtable> suitableCEs;
   boost::shared_ptr<filemapping> fm;
   boost::shared_ptr<storagemapping> sm;
