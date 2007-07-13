@@ -60,8 +60,7 @@ void DelegateProxy::delegation ( ){
 	ostringstream out ;
 	string proxy = "" ;
 	string endpoint = "";
-	string delegationId=getDelegationId();
-	logInfo->print  (WMS_DEBUG, "Delegation ID:", delegationId);
+	string delegationId = getDelegationId();
 	// Endpoint
 	endpoint = delegateProxy( );
 	// output message
