@@ -72,6 +72,8 @@ namespace util {
      virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      
      std::string get_grid_job_id( void ) const { return m_theJob.getGridJobID(); };
+
+     boost::recursive_mutex localMutexForSubscriptions;
      
  protected:
      
