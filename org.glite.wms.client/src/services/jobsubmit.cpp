@@ -1937,7 +1937,9 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 	switch (step){
 		case STEP_CHECK_US_QUOTA:
 			// logInfo->print(WMS_DEBUG, "JobSubmit Performing", "STEP_CHECK_US_QUOTA");
-			try{checkUserServerQuota(); debugStuff(wmcUtils->getRandom(200)); }
+			try{
+                            checkUserServerQuota(); 
+                            }
 			catch (WmsClientException &exc) {
 				logInfo->print(WMS_WARNING, string(exc.what()), "");
 				submitRecoverStep(step);
@@ -1945,7 +1947,9 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 			break;
 		case STEP_REGISTER:
 			// logInfo->print(WMS_DEBUG, "JobSubmit: Performing", "STEP_REGISTER");
-			try{jobRegOrSub(startJob && !toBretrieved); debugStuff(wmcUtils->getRandom(200)); }
+			try{
+                            jobRegOrSub(startJob && !toBretrieved);
+                            }
 			catch (WmsClientException &exc) {
 				logInfo->print(WMS_WARNING, string(exc.what()), "");
 				submitRecoverStep(step);

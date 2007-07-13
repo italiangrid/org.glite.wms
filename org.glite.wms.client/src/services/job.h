@@ -61,10 +61,6 @@ struct wmpVersionType {
 };
 
 
-// Debugging mode method
-void debugStuff(int n);
-
-
 class Job{
 	public :
 		/**
