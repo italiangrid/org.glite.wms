@@ -28,6 +28,7 @@
 #include "subscriptionManager.h"
 #include "subscriptionProxy.h"
 #include "DNProxyManager.h"
+#include "Delegation_manager.h"
 #include "iceConfManager.h"
 #include "iceSubscription.h"
 #include "jobCache.h"
@@ -321,7 +322,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                    << m_theJob.getCreamDelegURL() << "]"
                    << log4cpp::CategoryStream::ENDLINE
                    );
-    
+
+    //
+    // Authenticate    
+    //
     try {
         // api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
         m_theProxy->Authenticate(m_theJob.getUserProxyCertificate());
@@ -342,7 +346,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
-    string delegID; // empty delegation id, as we do autodelegation
+    string delegID; // empty delegation id
 
     int newLease = m_configuration->ice()->lease_delta_time();
 
@@ -355,6 +359,15 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                    << m_theJob.getSequenceCode()
                    << log4cpp::CategoryStream::ENDLINE                   
                    );
+
+    // 
+    // Delegates the proxy
+    //
+    delegID = iceUtil::Delegation_manager::instance()->delegate( m_theProxy.get(), m_theJob );
+
+    //
+    // Registers the job (with autostart)
+    //
     try {	    
         // api_util::scoped_timer register_timer( "iceCommandSubmit::Register" );
       CREAM_SAFE_LOG(

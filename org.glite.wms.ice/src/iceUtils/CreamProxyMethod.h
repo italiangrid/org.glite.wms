@@ -248,6 +248,26 @@ namespace util {
         const std::string m_jid;
     };
 
+    /**
+     * Wrapper class around the Delegate method of CreamProxy
+     */ 
+    class CreamProxy_Delegate : public CreamProxyMethod {
+    public:
+        CreamProxy_Delegate( const std::string& delegation_id,
+                             const std::string& delegation_service,
+                             const std::string& certfile );
+    protected:        
+        void method_call( glite::ce::cream_client_api::soap_proxy::CreamProxy* p ) 
+            throw(glite::ce::cream_client_api::cream_exceptions::DelegationException&,
+                  glite::ce::cream_client_api::cream_exceptions::InternalException&,
+                  glite::ce::cream_client_api::cream_exceptions::ConnectionTimeoutException&,
+                  glite::ce::cream_client_api::soap_proxy::auth_ex&);
+        
+        const std::string m_delegation_id;
+        const std::string m_delegation_service;
+        const std::string m_certfile;
+    };
+
 
 } // namespace util
 } // namespace ice

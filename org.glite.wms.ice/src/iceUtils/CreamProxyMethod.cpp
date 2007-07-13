@@ -291,3 +291,28 @@ void CreamProxy_Purge::method_call( soap_proxy::CreamProxy* p )
     p->Purge( m_service.c_str(), m_jid );
 }
 
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// Delegate
+//
+//////////////////////////////////////////////////////////////////////////////
+CreamProxy_Delegate::CreamProxy_Delegate( const string& delegation_id,
+                                          const string& delegation_service,
+                                          const string& certfile ) :
+    m_delegation_id( delegation_id ),
+    m_delegation_service( delegation_service ),
+    m_certfile( certfile )
+{
+
+}
+
+void CreamProxy_Delegate::method_call( soap_proxy::CreamProxy* p ) 
+    throw(cream_ex::DelegationException&,
+          cream_ex::InternalException&,
+          cream_ex::ConnectionTimeoutException&,
+          soap_proxy::auth_ex&)
+{    
+    p->Delegate( m_delegation_id, m_delegation_service, m_certfile );
+}
+
