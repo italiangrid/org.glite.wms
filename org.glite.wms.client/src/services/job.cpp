@@ -47,21 +47,6 @@ namespace client {
 namespace services {
 
 
-// This Method is used for debug mode
-void debugStuff(int n){
-	/*
-	cout<< "RANDOMICALLY EXCEPTION?"<< n << endl ;
-	if (n%4==0){
-		cout <<"YESSSSS!!!"<< endl ;
-		throw WmsClientException(__FILE__,__LINE__,
-			"debugStuff",DEFAULT_ERR_CODE,
-			"Arrived randomically", "This is my error message");
-	}
-	cout <<"nope, continuing"<< endl ;
-	*/
-}
-
-
 /* Static method contains
 * Determine whether an object is already
 * contained in the passed vector.
@@ -225,7 +210,7 @@ void Job::setSoapTimeout(glite::wms::wmproxyapi::ConfigContext* p_configContext,
 const std::string Job::getEndPoint (){
 	if (m_endPoint.empty()){
 		// Initialize endPoint (pointer) variable
-		retrieveEndPointURL();
+		retrieveEndPointURL(false);
 	}
 	return m_endPoint;
 }
@@ -320,6 +305,7 @@ void Job::setDelegationId ( ){
 	}  else if (!id.empty()) {
 		// delegation-id string by user option
 		m_dgOpt = id;
+		logInfo->print  (WMS_DEBUG, "Delegation ID:", id);
 		autodgOpt = false;
 	} else if (autodg){
 		// automatic generation of the delegationId string ONLY FOR WMPROXY 3.0 - 3.1
@@ -337,6 +323,7 @@ void Job::setDelegationId ( ){
 	} else if ( !confid.empty()) {
 		// delegation-id string by configuration file
 		m_dgOpt = confid ;
+		logInfo->print  (WMS_DEBUG, "Delegation Identifier read from Configuration file:", confid);
 		autodgOpt = false;
 	} else {
 		ostringstream err ;
@@ -376,7 +363,6 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 		
 		string v = api::getVersion(sp_cfg.get());
 		setVersionNumbers( v );
-		logInfo->result(WMP_VERSION_SERVICE, " Version successfully retrieved : "+ v );
 	} catch (api::BaseException &exc){
 		throw WmsClientException(__FILE__,__LINE__,
 			"retrieveWmpVersion", ECONNABORTED,
@@ -554,7 +540,7 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 const std::string Job::delegateProxy( ) {
 	// TBD internal approach may change (endPoint may be used)
 	string endpoint = "";
-	retrieveEndPointURL(true);
+	retrieveEndPointURL( false );
 	endpoint = getEndPoint( );
 	jobPerformStep(STEP_DELEGATE_PROXY);
 	return endpoint;
@@ -566,17 +552,21 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 			// This Step Does not need the TRY/CATCH block: it is implemented internally
 			lookForWmpEndpoints();
 			m_cfgCxt.reset(new api::ConfigContext(getProxyPath(),m_endPoint, getCertsPath()));
-			
+
 			break;
 		case STEP_DELEGATE_PROXY:
-			try{delegateUserProxy(m_endPoint); debugStuff(wmcUtils->getRandom(200));  }
+			try{
+				delegateUserProxy(m_endPoint);
+				}
 			catch (WmsClientException &exc) {
 				logInfo->print(WMS_WARNING, string(exc.what()), "");
 				jobRecoverStep(step);
 			}
 			break;
 		case STEP_CHECK_FILE_TP:
-			try{checkFileTransferProtocol();  debugStuff(wmcUtils->getRandom(200)); }
+			try{
+				checkFileTransferProtocol();
+				 }
 			catch (WmsClientException &exc) {
 				logInfo->print(WMS_WARNING, string(exc.what()),"");
 				jobRecoverStep(step);
@@ -630,7 +620,7 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 	// Reads the credential delegation options:
 	if (delegation) {
 		setDelegationId( );
-	} else {
+	} else if (m_dgOpt.empty()) {
 		m_dgOpt = wmcOpts->getStringAttribute (Options::DELEGATION) ;
 		autodgOpt = false;
 	}
