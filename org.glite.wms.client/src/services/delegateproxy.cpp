@@ -38,6 +38,7 @@ namespace client {
 namespace services {
 
 const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"};
+bool allOpt = false ;
 
 /*
 *	Default constructor
@@ -52,6 +53,8 @@ DelegateProxy::~DelegateProxy( ){ };
 */
 void DelegateProxy::readOptions (int argc,char **argv){
         Job::readOptions  (argc, argv, Options::JOBDELEGATION);
+	allOpt = wmcOpts ->getBoolAttribute( Options::ALL ) ;
+
 };
 /*
 * Performs the main operations
@@ -59,15 +62,30 @@ void DelegateProxy::readOptions (int argc,char **argv){
 void DelegateProxy::delegation ( ){
 	ostringstream out ;
 	string proxy = "" ;
-	string endpoint = "";
+	string endpoint ;
+	vector<string> endpoints ;
 	string delegationId = getDelegationId();
-	// Endpoint
-	endpoint = delegateProxy( );
+	// if option --all is specifed, delegates on all the Endpoints
+	if ( allOpt ) {
+		endpoints = wmcUtils->getWmps();
+		for ( int i = 0; i < (int)endpoints.size() ; i++ ) {
+			delegateProxyEndpoint(endpoints[i] ) ;
+		}
+	} else {
+		// Endpoint
+		endpoint = delegateProxy( );
+	}
 	// output message
         // OUTPUT MESSAGE ============================================
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
-	out << "Your proxy has been successfully delegated to the WMProxy:\n" ;
-	out << getEndPoint( ) << "\n\n";
+	out << "Your proxy has been successfully delegated to the WMProxy(s):\n" ;
+	if ( allOpt ) {
+		for ( int i = 0; i < (int)endpoints.size() ; i++ ) {
+			out << endpoints[i] << "\n";
+		}
+	} else {
+		out << endpoint << "\n";
+	}
 	if (delegationId==""){out << "delegation identifier was automatically generated"<<"\n";}
 	else{ out << "with the delegation identifier: " << getDelegationId( )      <<"\n";}
 	out << infoToFile( ) ;

@@ -333,6 +333,7 @@ const struct option Options::delegationLongOpts[] = {
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
 	{	Options::LONG_OUTPUT,            required_argument,		0,	Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
+	{	Options::LONG_ALL,			no_argument,			0,		Options::ALL	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
 };
@@ -676,6 +677,7 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
         cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
+	cerr << "\t" << USG_ALL << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "Please report any bug at:\n" ;
