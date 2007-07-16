@@ -521,8 +521,7 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 			logInfo->result(WMP_NS4_PUTPROXY_SERVICE,
 				string("The proxy has been successfully delegated with automatic identifier") );
 		}else{
-			logInfo->result(WMP_NS4_PUTPROXY_SERVICE,
-				string("The proxy has been successfully delegated with the identifier: " + id));
+      			 logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  m_dgOpt);
 		}
 	} catch (api::BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -530,7 +529,6 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 			"Operation failed",
 			"Unable to delegate the credential to the endpoint: " + endpoint + "\n" + errMsg(exc) );
        }
-       logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  m_dgOpt);
 }
 /*
 * Retrieves the endpoint URL and performs
@@ -545,6 +543,15 @@ const std::string Job::delegateProxy( ) {
 	jobPerformStep(STEP_DELEGATE_PROXY);
 	return endpoint;
 }
+/*
+* Performs the user credential delegation on a given endpoint
+* This method is used only by delegateproxy.cpp
+*/
+ void Job::delegateProxyEndpoint(const std::string &endpoint ) {
+ 	m_endPoint = endpoint ;
+	jobPerformStep(STEP_DELEGATE_PROXY);
+}
+
 /** Perform a certain operation and, if any problem arises, try and recover all the previous steps */
 void  Job::jobPerformStep(jobRecoveryStep step){
 	switch (step){

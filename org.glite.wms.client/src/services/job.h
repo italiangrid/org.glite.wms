@@ -113,6 +113,11 @@ class Job{
 		*/
 		virtual const std::string delegateProxy( );
 		/**
+                * Performs credential delegation to a given endpoint	
+                * @param endpoint where perform the delegation
+		*/
+		void delegateProxyEndpoint(const std::string &endpoint ) ;
+		/**
 		* Sets the endpoint URL where the operation will be performed. The URL is established checking
 		* the following objects in this order:
 		*	> the --enpoint user option;
