@@ -11,6 +11,7 @@
 
 #include <exception>
 #include <boost/shared_ptr.hpp>
+#include <string>
 
 namespace glite {
 namespace wms {
@@ -74,6 +75,15 @@ struct RankingError : MatchMakingError
 	}
 };
 
+class CannotCreateJobWrapper: public std::exception
+{
+  std::string m_path;
+public:
+  CannotCreateJobWrapper(std::string const& path);
+  ~CannotCreateJobWrapper() throw();
+  std::string path() const;
+  char const* what() const throw();
+};
 
 }}}
 

@@ -99,4 +99,25 @@ ISNoResultError::ISNoResultError(const std::string& h, int p, const std::string&
 {
 };
 
+CannotCreateJobWrapper::CannotCreateJobWrapper(std::string const& p)
+  : m_path(p)
+{
+}
+
+CannotCreateJobWrapper::~CannotCreateJobWrapper() throw()
+{
+}
+
+std::string
+CannotCreateJobWrapper::path() const
+{
+  return m_path;
+}
+
+char const*
+CannotCreateJobWrapper::what() const throw()
+{
+  return "CannotCreateJobWrrapper";
+}
+
 }}}

@@ -1,19 +1,16 @@
-/*
- * File: maxRankSelector.cpp
- * Author: Monforte Salvatore <Salvatore.Monforte@ct.infn.it>
- * Copyright (c) 2001 EU DataGrid.
- * For license conditions see http://www.eu-datagrid.org/license.html
- */
+// File: max_selector.cpp
+// Author: Francesco Giacomini
+// Author: Salvatore Monforte
 
 // $Id$
+
+#include "glite/wms/broker/match.h"
 
 #include <boost/random/linear_congruential.hpp>
 #include <boost/random/uniform_smallint.hpp>
 #include <boost/random/variate_generator.hpp>
 
-#include "max_selector.h"
-
-using namespace std;
+#include "match_utils.h"
 
 namespace glite {
 namespace wms {
@@ -23,27 +20,26 @@ namespace {
 
 boost::minstd_rand f_rnd(std::time(0));
 
-matchtable::iterator max_partition(matchtable& matches)
+MatchTable::iterator max_partition(MatchTable& matches)
 {
-  matchtable::const_iterator const max(
+  MatchTable::const_iterator const max(
     std::max_element(
-      matches.begin(), matches.end(),
-      rank_less_than_comparator()
+      matches.begin(), matches.end(), rank_less_than_comparator()
     )
   );
   return std::partition(
     matches.begin(),
     matches.end(),
-    rank_equal_to(max->get<Rank>())
+    rank_equal_to(max->rank)
   );
 }
 
 }
 
-matchtable::iterator
-max_selector(matchtable& matches)
+MatchTable::iterator
+MaxRankSelector::operator()(MatchTable& matches) const
 {
-  matchtable::iterator const max_partition_end(
+  MatchTable::iterator const max_partition_end(
     max_partition(matches)
   );
   size_t const n = std::distance(matches.begin(), max_partition_end);
@@ -55,9 +51,9 @@ max_selector(matchtable& matches)
     boost::uniform_smallint<size_t>
   > unirand(f_rnd, distrib);
 
-  matchtable::iterator result = matches.begin();
+  MatchTable::iterator result = matches.begin();
   std::advance(result, unirand());
   return result;
 }
 
-}}} // glite::wms::broker
+}}}

@@ -15,14 +15,11 @@
 
 #include <classad_distribution.h>
 
-#include "broker_helper.h"
+#include "glite/wms/broker/resolver.h"
+#include "glite/wms/broker/match.h"
 #include "Helper_exceptions.h"
-#include "simple_strategy.h"
-#include "maximize_files_strategy.h"
-#include "stochastic_selector.h"
-#include "max_selector.h"
 #include "exceptions.h"
-#include "storage_utils.h"
+#include "brokerinfo.h"
 
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
@@ -56,7 +53,7 @@ namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
-namespace requestad     = glite::jdl;
+namespace jdl           = glite::jdl;
 namespace utils         = glite::wmsutils::classads;
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
@@ -90,20 +87,20 @@ f_resolve_simple(
     name.assign(pieces[3].first, pieces[3].second);
 
     result.reset(new classad::ClassAd(*ad));
-    requestad::set_globus_resource_contact_string(*result, gcrs);
-    requestad::set_queue_name(*result, name);
+    jdl::set_globus_resource_contact_string(*result, gcrs);
+    jdl::set_queue_name(*result, name);
     try {
-      std::string junk = requestad::get_lrms_type(*result);
+      std::string junk = jdl::get_lrms_type(*result);
     } catch ( glite::jdl::CannotGetAttribute const& e) {
-      requestad::set_lrms_type(*result, type);
+      jdl::set_lrms_type(*result, type);
     }
    
-    requestad::set_ce_id(*result, ce_id);
+    jdl::set_ce_id(*result, ce_id);
 
-    // TODO catch requestad::CannotSetAttribute
+    // TODO catch jdl::CannotSetAttribute
   } else {
     throw glite::wms::helper::InvalidAttributeValue(
-      requestad::JDL::SUBMIT_TO,
+      jdl::JDL::SUBMIT_TO,
       ce_id,
       "match (.+/[^\\-]+-([^\\-]+))-(.+)",
       helper_id
@@ -178,31 +175,15 @@ try {
   boost::shared_ptr<classad::ClassAd> result;
   classad::ClassAd& input_ad = *ad;
 
-  std::string vo(requestad::get_virtual_organisation(input_ad));
-
-  bool input_data_exists = false;
-  bool data_requirements_exists = false;
-
-  std::vector<std::string> input_data;
-  requestad::get_input_data(input_ad, input_data, input_data_exists);
-  requestad::get_data_requirements(input_ad, data_requirements_exists);
-  
-  boost::tuple<
-    boost::shared_ptr<matchtable>,
-    boost::shared_ptr<filemapping>,
-    boost::shared_ptr<storagemapping>
-  > brokering_result;
-
-  if (input_data_exists || data_requirements_exists) {
-    brokering_result = maximize_files(&input_ad);
-  } else {
-    brokering_result = simple(&input_ad);
+  std::vector<std::string> previous_matches;
+  {
+    bool exists = false;
+    jdl::get_edg_previous_matches(input_ad, previous_matches, exists);
   }
+  DataInfo data_info;
+  MatchTable matches(match(input_ad, previous_matches, data_info));
 
-  boost::shared_ptr<matchtable>& suitable_CEs(
-    boost::tuples::get<0>(brokering_result)
-  );
-  if (suitable_CEs->empty()) {
+  if (matches.empty()) {
     throw NoCompatibleCEs();
   }
 
@@ -211,7 +192,7 @@ try {
   assert(config);
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
-  std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
+  std::string dg_jobid_str(jdl::get_edg_jobid(input_ad));
   jobid::JobId dg_jobid(dg_jobid_str);
 
   std::string PBOX_host_name(config->wm()->pbox_host_name());
@@ -221,39 +202,40 @@ try {
       *config,
       dg_jobid,
       PBOX_host_name,
-      *suitable_CEs
+      matches
     ))
       Info("Error during gpbox interaction");
   }
 
-  if (suitable_CEs->empty()) {
+  if (matches.empty()) {
     Info("Empty CE list after gpbox screening");
     throw NoCompatibleCEs();
   }
 #endif
 
-  matchtable::const_iterator ce_it;
+  MatchTable::const_iterator ce_it;
 
   // If fuzzy_rank is true in the request ad we have
   // to use the stochastic selector...
   bool use_fuzzy_rank = false;
-  if (requestad::get_fuzzy_rank(input_ad, use_fuzzy_rank) && use_fuzzy_rank) 
+  if (jdl::get_fuzzy_rank(input_ad, use_fuzzy_rank) && use_fuzzy_rank) 
   {
     double factor = 1;
     try {
-      factor = requestad::get_fuzzy_factor(input_ad);
+      factor = jdl::get_fuzzy_factor(input_ad);
     } 
     catch(...)
     {
     }
-    ce_it = stochastic_selector(factor)(*suitable_CEs);
+    ce_it = FuzzySelector(factor)(matches);
   } else {
-    ce_it = max_selector(*suitable_CEs);
+    ce_it = MaxRankSelector()(matches);
   }
 
-  classad::ClassAd const& ceAd = *boost::tuples::get<Ad>(*ce_it);
+  classad::ClassAd const& ce_ad = *ce_it->ce_ad;
+  // TODO: is the following ce_id the same as ce_it->ce_id?
   std::string const ce_id(
-    utils::evaluate_attribute(ceAd,"GlueCEUniqueID")
+    utils::evaluate_attribute(ce_ad,"GlueCEUniqueID")
   );
 
   // Add the .Brokerinfo files to the InputSandbox
@@ -261,14 +243,14 @@ try {
   bool wmpinput_sandbox_base_uri_exists = false;
   
   fs::path brokerinfo_path(
-    requestad::get_input_sandbox_path(input_ad) + "/.BrokerInfo",
+    jdl::get_input_sandbox_path(input_ad) + "/.BrokerInfo",
     fs::native
   );
 
   std::vector<std::string> ISB;
    
-  requestad::get_input_sandbox(input_ad, ISB, input_sandbox_exists);
-  std::string WMPInputSandboxBaseURI(requestad::get_wmpinput_sandbox_base_uri(
+  jdl::get_input_sandbox(input_ad, ISB, input_sandbox_exists);
+  std::string WMPInputSandboxBaseURI(jdl::get_wmpinput_sandbox_base_uri(
                                              input_ad, 
                                              wmpinput_sandbox_base_uri_exists)
                                     );
@@ -287,11 +269,7 @@ try {
   }
 
   boost::scoped_ptr<classad::ClassAd> biAd(
-    make_brokerinfo_ad(
-      boost::tuples::get<1>(brokering_result),
-      boost::tuples::get<2>(brokering_result),
-      ceAd
-    )
+    make_brokerinfo_ad(data_info.fm, data_info.sm, ce_ad)
   );
   classad::ExprTree const* DACexpr = input_ad.Lookup("DataAccessProtocol");
   if (DACexpr) {
@@ -305,22 +283,20 @@ try {
 
   result.reset(new classad::ClassAd(input_ad));
 
-  requestad::set_input_sandbox(*result, ISB);
+  jdl::set_input_sandbox(*result, ISB);
 
-  requestad::set_ce_id(*result, ce_id);
-  matchinfo const& ce_info = *ce_it;
-  classad::ClassAd const* ce_ad = boost::tuples::get<Ad>(ce_info).get();
+  jdl::set_ce_id(*result, ce_id);
 
   try {
     std::string flatten_result = flatten_requirements(
-                                   *config, 
-                                   &input_ad, 
-                                    ce_ad
-                                 );
+      *config, 
+      &input_ad, 
+      &ce_ad
+    );
     // Set attribute only if it's not empty, so as not to upset 
     // condor_submit.
     if (!flatten_result.empty()) {
-      requestad::set_remote_remote_ce_requirements(
+      jdl::set_remote_remote_ce_requirements(
         *result,
          flatten_result
       );
@@ -332,21 +308,21 @@ try {
 
   try {
 
-    requestad::set_globus_resource_contact_string(
+    jdl::set_globus_resource_contact_string(
       *result,
-      utils::evaluate_attribute(*ce_ad, "GlobusResourceContactString")
+      utils::evaluate_attribute(ce_ad, "GlobusResourceContactString")
     );
-    requestad::set_queue_name(
+    jdl::set_queue_name(
       *result,
-      utils::evaluate_attribute(*ce_ad, "QueueName")
+      utils::evaluate_attribute(ce_ad, "QueueName")
     );
-    requestad::set_lrms_type(
+    jdl::set_lrms_type(
       *result,
-      utils::evaluate_attribute(*ce_ad, "LRMSType")
+      utils::evaluate_attribute(ce_ad, "LRMSType")
     );
-    requestad::set_ce_id(
+    jdl::set_ce_id(
       *result,
-      utils::evaluate_attribute(*ce_ad, "CEid")
+      utils::evaluate_attribute(ce_ad, "CEid")
     );
 
   } catch (utils::InvalidValue const& e) {
@@ -374,18 +350,18 @@ try {
   
   throw NoAvailableCEs(e.what());
   
-} catch (requestad::CannotGetAttribute const& e) {
+} catch (jdl::CannotGetAttribute const& e) {
 
   throw glite::wms::helper::CannotGetAttribute(e, helper_id);
 
-} catch (requestad::CannotSetAttribute const& e) {
+} catch (jdl::CannotSetAttribute const& e) {
 
   throw glite::wms::helper::CannotSetAttribute(e, helper_id);
 
 } catch( jobid::JobIdException& jide ) {
 
   Error( jide.what() );
-  throw glite::wms::helper::InvalidAttributeValue(requestad::JDL::JOBID,
+  throw glite::wms::helper::InvalidAttributeValue(jdl::JDL::JOBID,
                                       "unknown",
                                       "valid jobid",
                                       helper_id);
@@ -403,7 +379,7 @@ boost::shared_ptr<classad::ClassAd>
 broker_helper_resolve(boost::shared_ptr<classad::ClassAd> ad)
 {
   bool submit_to_exists = false;
-  std::string ce_id = requestad::get_submit_to(*ad, submit_to_exists);
+  std::string ce_id = jdl::get_submit_to(*ad, submit_to_exists);
 
   boost::shared_ptr<classad::ClassAd> result(
     submit_to_exists

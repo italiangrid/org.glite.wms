@@ -1,6 +1,11 @@
 // File: storage_utils.cpp
-// Author: Salvatore Monforte, INFN
+// Author: Salvatore Monforte
+// Author: Francesco Giacomini
+
 // $Id$
+
+#include "storage_utils.h"
+
 #include <numeric>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -11,9 +16,9 @@
 #include "glite/wms/common/logger/logger_utils.h"
 #include "brokerinfo.h"
 #include "glite/wms/ism/ism.h"
-#include "storage_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
-using namespace std;
+namespace classad_utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -23,8 +28,8 @@ namespace broker {
 namespace {
 
 bool evaluate(
-  classad::ClassAd const& ad, 
-  std::string const& name, 
+  classad::ClassAd const& ad,
+  std::string const& name,
   vector<classad::ExprTree*>& v
 ) {
   bool result = false;
@@ -38,17 +43,17 @@ bool evaluate(
   return result;
 }
 
-string
-resolve_storage_name(string const& sfn)
+std::string
+resolve_storage_name(std::string const& sfn)
 {
   static boost::regex e("^\\s*([^:]*):[\\s/]*([^\\s:/]+)(:[0-9]+)?/.*");
   boost::smatch p;
-  string name;
+  std::string name;
 
   if(boost::regex_match(sfn, p, e)) {
     name.assign(p[2].first, p[2].second);
   }
-  else if (int p=sfn.find("://",0) != string::npos) {
+  else if (int p=sfn.find("://",0) != std::string::npos) {
       name.assign(sfn.substr(p+3));
   }
   return name;
@@ -64,60 +69,100 @@ make_storage_info(classad::ClassAd const&ad)
   return std::make_pair(protocol, port);
 }
 
+void
+insert_protocols(StorageInfo::Protocols& protos, classad::ClassAd const& se_ad)
+{
+  std::vector<classad::ExprTree*> ads;
+  if (evaluate(se_ad, "GlueSEAccessProtocol", ads)) {
+
+    std::vector<classad::ExprTree*>::const_iterator expr_it(ads.begin());
+    std::vector<classad::ExprTree*>::const_iterator const expr_e(ads.end());
+
+    for (; expr_it != expr_e; ++expr_it) {
+      if (classad_utils::is_classad(*expr_it)) {
+        classad::ClassAd const& ad(
+          *static_cast<classad::ClassAd*>(*expr_it)
+        );
+        protos.push_back(make_storage_info(ad));
+      }
+    }
+  }
+}
+
 std::pair<std::string, std::string>
-make_ce_bind_info(classad::ClassAd const&ad)
+make_ce_bind_info(classad::ClassAd const& ad)
 {
   std::string id;
   std::string mount;
   ad.EvaluateAttrString("GlueCESEBindCEUniqueID", id);
   ad.EvaluateAttrString("GlueCESEBindCEAccesspoint", mount);
-  return std::make_pair(
-    id, mount
-  );
+  return std::make_pair(id, mount);
 }
 
-struct matches_any_protocol_in
+void
+insert_ce_mount_points(
+  StorageInfo::CE_Mounts mounts,
+  classad::ClassAd const& se_ad
+)
 {
-  matches_any_protocol_in(vector<pair<string,int> >const& protocols) :
-    m_protocols(protocols) {}
+  vector<classad::ExprTree*> ads;
+  if (evaluate(se_ad, "CloseComputingElements", ads)) {
 
-  bool operator()(string const& p) {
-    vector<pair<string,int> >::const_iterator it(
+    vector<classad::ExprTree*>::const_iterator expr_it(ads.begin());
+    vector<classad::ExprTree*>::const_iterator const expr_e(ads.end());
+
+    for (; expr_it != expr_e; ++expr_it) {
+      if (classad_utils::is_classad(*expr_it)) {
+        classad::ClassAd const& ad(
+          *static_cast<classad::ClassAd*>(*expr_it)
+        );
+        mounts.push_back(make_ce_bind_info(ad));
+      }
+    }
+  }
+}
+
+class matches_any_protocol_in
+{
+  std::vector<std::pair<std::string,int> > const& m_protocols;
+
+public:
+  matches_any_protocol_in(
+    std::vector<std::pair<std::string,int> > const& protocols
+  )
+    : m_protocols(protocols)
+  {
+  }
+
+  bool operator()(std::string const& p) const
+  {
+    std::vector<std::pair<std::string,int> >::const_iterator it(
       m_protocols.begin()
     );
-    vector<pair<string,int> >::const_iterator const e(
+    std::vector<std::pair<std::string,int> >::const_iterator const e(
       m_protocols.end()
     );
-    for( ; it!=e; ++it ) {
-      if(it->first == p) return true;
+    for ( ; it != e; ++it ) {
+      if (it->first == p) {
+        return true;
+      }
     }
     return false;
   }
-  vector<pair<string,int> > const& m_protocols;
 };
 
-bool is_mount_defined(pair<string,string>const& p)
+bool is_mount_defined(std::pair<std::string, std::string> const& p)
 {
     return !p.second.empty();
 }
 
-struct extract_mapped_file_names : binary_function<
-  std::set<string>*,
-  broker::storagemapping::const_iterator,
-  std::set<string>*
->
+struct extract_mapped_file_names
 {
-  std::set<string>*
-  operator()(
-    std::set<string>* f,
-    broker::storagemapping::const_iterator si
-  )
+  std::set<std::string>*
+  operator()(std::set<std::string>* f, StorageMapping::const_iterator si) const
   {
-    vector<filemapping::const_iterator> const& info(
-      boost::tuples::get<tag::filemapping_link>(si->second)
-    );
-    vector<filemapping::const_iterator>::const_iterator it(info.begin());
-    vector<filemapping::const_iterator>::const_iterator const e(info.end());
+    StorageInfo::Links::const_iterator it(si->second.links.begin());
+    StorageInfo::Links::const_iterator const e(si->second.links.end());
     for( ; it != e ; ++it ) {
        f->insert((*it)->first);
     }
@@ -126,140 +171,94 @@ struct extract_mapped_file_names : binary_function<
 };
 
 } // anonymous namespace
- 
-boost::shared_ptr<storagemapping>
-resolve_storagemapping_info(
-  boost::shared_ptr<filemapping> fm
-)
-{
-  boost::shared_ptr<storagemapping> sm(new storagemapping);
 
-  filemapping::const_iterator fi = fm->begin(); 
-  filemapping::const_iterator fe = fm->end();
+StorageMapping
+resolve_storagemapping_info(FileMapping const& fm)
+{
+  StorageMapping result;
+
+  FileMapping::const_iterator file_it = fm.begin();
+  FileMapping::const_iterator const file_end = fm.end();
 
   ism::Ism const& the_ism = *ism::get_ism();
- for( ; fi != fe; ++fi ) {
-    vector<string> const& sfns(
-      fi->second
-    );
-    vector<string>::const_iterator sfni = sfns.begin();
-    vector<string>::const_iterator const sfne = sfns.end();
+  for ( ; file_it != file_end; ++file_it) {
+    std::vector<std::string> const& sfns(file_it->second);
+    std::vector<std::string>::const_iterator sfni = sfns.begin();
+    std::vector<std::string>::const_iterator const sfne = sfns.end();
 
     for( ; sfni != sfne; ++sfni ) {
-       string name = resolve_storage_name(*sfni);
-       if(name.empty()) continue;
+       std::string const name = resolve_storage_name(*sfni);
+       if (name.empty()) {
+         continue;
+       }
 
-       ism::Ism::MutexSliceContainer::const_iterator
-       slice_it(the_ism.storage.begin());
-       ism::Ism::MutexSliceContainer::const_iterator const
-       last_slice(the_ism.storage.end());
-       
+       ism::Ism::MutexSliceContainer::const_iterator slice_it(
+         the_ism.storage.begin()
+       );
+       ism::Ism::MutexSliceContainer::const_iterator const last_slice(
+         the_ism.storage.end()
+       );
+
        for( ; slice_it != last_slice; ++slice_it ) {
 
          ism::OrderedSliceIndex& ordered_index(
            (*slice_it)->slice->get<ism::SliceIndex::Ordered>()
          );
- 
+
          ism::Mutex::scoped_lock l((*slice_it)->mutex);
-         ism::OrderedSliceIndex::iterator const slice_end(ordered_index.end());
          ism::OrderedSliceIndex::iterator it = ordered_index.find(name);
 
-         if ( it!=slice_end ) {
+         if (it != ordered_index.end()) {
+
            boost::shared_ptr<classad::ClassAd> se_ad(
              boost::tuples::get<ism::Ad>(*it)
            );
-           storagemapping::iterator i;
-           bool ib;
 
-           boost::tie(i,ib) = sm->insert(
-             std::make_pair(
-               name,   
-               boost::tuples::make_tuple(
-                 vector<pair<string, int > >(),
-                 vector<filemapping::const_iterator>(),
-                 vector<pair<string, string > >()
-               )
-             )
-           );
-           boost::tuples::get<tag::filemapping_link>(i->second).push_back(fi);
-           {
-             vector<classad::ExprTree*> ads;
-             if (evaluate(*se_ad, "GlueSEAccessProtocol", ads)) {
+           StorageInfo& info = result[name];
+           info.links.push_back(file_it);
+           insert_protocols(info.protocols, *se_ad);
+           insert_ce_mount_points(info.ce_mounts, *se_ad);
 
-               vector<classad::ExprTree*>::const_iterator 
-               expr_it(ads.begin());
-               vector<classad::ExprTree*>::const_iterator const 
-               expr_e(ads.end());
-
-               for (; expr_it != expr_e; ++expr_it) {
-                 classad::ClassAd const& ad(
-                   *static_cast<classad::ClassAd*>(*expr_it)
-                 );
-                 boost::tuples::get<tag::storage_info>(i->second).push_back(
-                   make_storage_info(ad)
-                 );
-               }
-             }
-           }  
-           {
-             vector<classad::ExprTree*> ads;
-             if (evaluate(*se_ad, "CloseComputingElements", ads)) {
-
-               vector<classad::ExprTree*>::const_iterator 
-               expr_it(ads.begin());
-               vector<classad::ExprTree*>::const_iterator const 
-               expr_e(ads.end());
-
-               for (; expr_it != expr_e; ++expr_it) {
-                 classad::ClassAd const& ad(
-                   *static_cast<classad::ClassAd*>(*expr_it)
-                 );
-                 boost::tuples::get<tag::ce_bind_info>(i->second).push_back(
-                   make_ce_bind_info(ad)
-                 );
-               }
-             }
-           }  
          break; // there is no need to continue the search in
                 // the remaining slices
          }
        }
     }
   }
-  return sm;
+  return result;
 }
 
-vector<storagemapping::const_iterator>
+std::vector<StorageMapping::const_iterator>
 select_compatible_storage(
-  storagemapping const& sm,
-  vector<string>const& dap
+  StorageMapping const& sm,
+  std::vector<std::string>const& dap
 )
 {
-  vector<storagemapping::const_iterator> result;
-  storagemapping::const_iterator storage_it(sm.begin());
-  storagemapping::const_iterator const storage_end(sm.end());
+  std::vector<StorageMapping::const_iterator> result;
+  StorageMapping::const_iterator storage_it(sm.begin());
+  StorageMapping::const_iterator const storage_end(sm.end());
 
   for( ; storage_it != storage_end; ++storage_it ) {
 
-    vector<pair<string,int> > const& supported_protocols(
-      boost::tuples::get<tag::storage_info>(storage_it->second)
+    StorageInfo::Protocols const& supported_protocols(
+      storage_it->second.protocols
     );
-    vector<string>::const_iterator it = find_if(
-      dap.begin(), dap.end(),
+    std::vector<std::string>::const_iterator it = find_if(
+      dap.begin(),
+      dap.end(),
       matches_any_protocol_in(supported_protocols)
     );
-    if (it!=dap.end()) {
-      vector<pair<string,string> > const& close_ce_binds(
-        boost::tuples::get<tag::ce_bind_info>(storage_it->second)
+    if (it != dap.end()) {
+      StorageInfo::CE_Mounts const& close_ce_binds(
+        storage_it->second.ce_mounts
       );
-      if(*it=="file" &&
-         find_if(
-           close_ce_binds.begin(),
-           close_ce_binds.end(),
-           is_mount_defined
-         ) == close_ce_binds.end()) {
-
-          continue;
+      if (*it == "file"
+          && find_if(
+            close_ce_binds.begin(),
+            close_ce_binds.end(),
+            is_mount_defined
+          ) == close_ce_binds.end()) {
+        continue;
       }
       result.push_back(storage_it);
     }
@@ -269,10 +268,11 @@ select_compatible_storage(
 
 size_t
 count_unique_logical_files(
-  vector<storagemapping::const_iterator>::const_iterator first,
-  vector<storagemapping::const_iterator>::const_iterator last)
+  std::vector<StorageMapping::const_iterator>::const_iterator first,
+  std::vector<StorageMapping::const_iterator>::const_iterator last
+)
 {
-  std::set<string> unique_logical_file_names;
+  std::set<std::string> unique_logical_file_names;
   std::accumulate(
     first,
     last,
@@ -285,47 +285,38 @@ count_unique_logical_files(
 std::set<std::string>*
 extract_computing_elements_id::operator()(
   std::set<std::string>* s,
-  storagemapping::const_iterator si
-)
+  StorageMapping::const_iterator si
+) const
 {
-  std::vector<std::pair<std::string,std::string> > const& info(
-    boost::tuples::get<tag::ce_bind_info>(si->second)
-  );
-  std::vector<std::pair<std::string,std::string> >::const_iterator it(info.begin());
-  std::vector<std::pair<std::string,std::string> >::const_iterator const e(info.end());
-  for( ; it != e ; ++it ) {
-     
-     s->insert(it->first);
+  StorageInfo::CE_Mounts const& mounts = si->second.ce_mounts;
+  StorageInfo::CE_Mounts::const_iterator it(mounts.begin());
+  StorageInfo::CE_Mounts::const_iterator const e(mounts.end());
+  for ( ; it != e ; ++it) {
+    s->insert(it->first);
   }
   return s;
 }
 
-is_storage_close_to::is_storage_close_to(std::string const& id) 
-  : m_ceid(id) 
+bool
+is_storage_close_to::operator()(StorageMapping::const_iterator const& v) const
 {
+  StorageInfo::CE_Mounts const& mounts = v->second.ce_mounts;
+  StorageInfo::CE_Mounts::const_iterator it(mounts.begin());
+  StorageInfo::CE_Mounts::const_iterator const e(mounts.end());
+  for ( ; it != e ; ++it) {
+    if (boost::starts_with(m_ceid, it->first)) {
+      return true;
+    }
+  }
+  return false;
 }
 
-bool is_storage_close_to::operator()(storagemapping::const_iterator const& v)
+FileMapping resolve_filemapping_info(classad::ClassAd const& ad)
 {
- std::vector<std::pair<std::string,std::string> > const& i(
-      boost::tuples::get<tag::ce_bind_info>(v->second)
- );
- std::vector<std::pair<std::string,std::string> >::const_iterator it(i.begin());
- std::vector<std::pair<std::string,std::string> >::const_iterator const e(i.end());
- for( ; it != e ; ++it) {
-   if(boost::starts_with(m_ceid, it->first)) return true;
- }
- return false;
+  boost::shared_ptr<glite::wms::rls::filemapping> fm(
+    glite::wms::rls::resolve_filemapping_info(ad)
+  );
+  return *fm;
 }
 
-boost::shared_ptr<filemapping>
-resolve_filemapping_info(
-  const classad::ClassAd& requestAd
-)
-{
-  return glite::wms::rls::resolve_filemapping_info(requestAd);
-}
-
-} // namespace broker
-} // namespace wms
-} // namespace glite
+}}}

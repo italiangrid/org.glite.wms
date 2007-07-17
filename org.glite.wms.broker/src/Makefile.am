@@ -14,17 +14,21 @@ lib_LTLIBRARIES = \
         libglite_wms_broker.la
 
 libglite_wms_broker_la_SOURCES = \
-        simple_strategy.cpp \
-        maximize_files_strategy.cpp \
-        max_selector.cpp \
-        stochastic_selector.cpp \
-        matchmaking.cpp \
+	fuzzy_selector.cpp \
+	max_selector.cpp \
+	match_utils.cpp \
+        match.cpp \
         exceptions.cpp \
         storage_utils.cpp \
-        brokerinfo.cpp \
         broker_helper.cpp \
+	JobAdapter.cpp \
+	JobWrapper.cpp \
+	url.cpp \
+	url.h \
+	resolver.cpp \
         Helper_exceptions.cpp
 
+#         brokerinfo.cpp \
 #         pep_attribute.cpp \
 #         pep_exceptions.cpp \
 #         pep_request.cpp \
@@ -45,13 +49,16 @@ libglite_wms_broker_la_LIBADD = \
 #        $(XERCESC_LIBS) \
 #
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GLITE_WMS_OPTIONAL_GPBOX_CFLAGS) \
-	$(GLITE_WMS_COMMON_SYSLOG_CFLAGS)
+	$(GLITE_WMS_COMMON_SYSLOG_CFLAGS) \
+	-DGLITE_WMS_DONT_HAVE_GPBOX
 
 #  $(XERCESC_CFLAGS) \
 #

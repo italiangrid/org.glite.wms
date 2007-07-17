@@ -8,13 +8,13 @@
 #ifndef GLITE_WMS_BROKER_MAX_SELECTOR_H
 #define GLITE_WMS_BROKER_MAX_SELECTOR_H
 
-#include "matchmaking.h"
+#include "glite/wms/broker/match.h"
 
 namespace glite {
 namespace wms {
 namespace broker {
 
-matchtable::iterator max_selector(matchtable& matches);
+MatchTable::const_iterator max_selector(MatchTable const& matches);
 
 }}}
 
