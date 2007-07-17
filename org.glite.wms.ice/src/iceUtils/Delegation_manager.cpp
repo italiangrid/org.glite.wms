@@ -93,7 +93,7 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
     SHA_CTX ctx;
     int fd; // file descriptor
     unsigned long nread = 0; // number of bytes read
-    string result; // delegation ID to return as a result
+    string delegation_id; // delegation ID to return as a result
 
     // Utility variables
     const string certfile( job.getUserProxyCertificate() );
@@ -118,7 +118,7 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
                         << log4cpp::CategoryStream::ENDLINE );        
         // Returns empty string, so that the register will do
         // auto-delegation
-        return result;
+        return delegation_id;
     }
 
     SHA1_Init( &ctx );
@@ -132,10 +132,12 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
     str_sha1_digest = bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
 
     // Lookup the (sha1_digest,cream_url) into the set
-    typedef t_delegation_set::nth_index<0>::type delegation_by_key;
-    delegation_by_key::iterator it = m_delegation_set.get<0>().find( boost::make_tuple(str_sha1_digest,cream_url));
+    typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
+    t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
 
-    if ( m_delegation_set.get<0>().end() == it ) {
+    t_delegation_by_key::iterator it = delegation_by_key_view.find( boost::make_tuple(str_sha1_digest,cream_url));
+
+    if ( delegation_by_key_view.end() == it ) {
         // Delegation id not found. Performs a new delegation   
         time_t expiration_time;
 
@@ -156,8 +158,8 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
             expiration_time = time(0) + cream_api::certUtil::getProxyTimeLeft( certfile );
 
             // The delegation ID is the GRID job id
-            result = job.getGridJobID();
-            CreamProxy_Delegate( result, cream_deleg_url, certfile ).execute( theProxy, 3 );
+            delegation_id = job.getGridJobID();
+            CreamProxy_Delegate( delegation_id, cream_deleg_url, certfile ).execute( theProxy, 3 );
         } catch( ... ) {
             // Delegation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -170,18 +172,18 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
                             << cream_api::certUtil::getDN( certfile )
                             << log4cpp::CategoryStream::ENDLINE );
             // Returns an empty string
-            return result;
+            return delegation_id;
         }     
         // Inserts the new delegation ID into the delegation set
-        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, result ) );
+        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
     } else {
         // Delegation id FOUND. Returns it
-        result = it->m_delegation_id;
+        delegation_id = it->m_delegation_id;
 
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
                         << "Using existing delegation id "
-                        << result
+                        << delegation_id
                         << " for CREAM URL "
                         << cream_url
                         << " Delegation URL "
@@ -190,7 +192,7 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
                         << cream_api::certUtil::getDN( certfile )
                         << log4cpp::CategoryStream::ENDLINE );
     }
-    return result;
+    return delegation_id;
 }
 
 
