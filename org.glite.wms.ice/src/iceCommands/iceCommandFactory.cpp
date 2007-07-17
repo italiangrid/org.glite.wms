@@ -53,9 +53,9 @@ iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request ) throw(util
     boost::trim_if(commandStr, boost::is_any_of("\""));
 
     if ( boost::algorithm::iequals( commandStr, "submit" ) ) {
-        result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(true), request );
+        result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(false), request );
     } else if ( boost::algorithm::iequals( commandStr, "cancel" ) ) {
-        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(true), request );
+        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(false), request );
     } else {
         throw util::JobRequest_ex( "Unknown command " + commandStr + " in request classad" );
     }

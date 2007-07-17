@@ -26,6 +26,7 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "iceUtils.h"
 
 namespace cream_api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
@@ -157,8 +158,8 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
             // Gets the proxy expiration time
             expiration_time = time(0) + cream_api::certUtil::getProxyTimeLeft( certfile );
 
-            // The delegation ID is the GRID job id
-            delegation_id = job.getGridJobID();
+            // The delegation ID is the "canonized" GRID job id
+            delegation_id = canonizeString( job.getGridJobID() );
             CreamProxy_Delegate( delegation_id, cream_deleg_url, certfile ).execute( theProxy, 3 );
         } catch( ... ) {
             // Delegation failed

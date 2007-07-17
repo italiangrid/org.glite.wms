@@ -465,7 +465,7 @@ int ns_enqueued_ok_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ice_resubmission_event::ice_resubmission_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format("ICE Resubmission Event, reason=[%1%]") % reason ) ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("ICE Resubmission Event, reason=[%1%]") % reason ) ),
     m_reason( reason )
 {
 
