@@ -21,7 +21,6 @@
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/wms/ism/ism.h"
-#include "exceptions.h"
 
 namespace jdl = glite::jdl;
 
@@ -35,7 +34,14 @@ namespace broker {
 
 namespace {
 
-bool
+enum MatchAndRankResult
+{
+  NO_MATCH,
+  MATCH_NO_RANK,
+  MATCH_AND_RANK
+};
+
+MatchAndRankResult
 match_and_rank(
   classad::ClassAd* lhs, 
   classad::ClassAd* rhs,
@@ -43,9 +49,6 @@ match_and_rank(
 )
 {
   classad::MatchClassAd match_ad(lhs, rhs);
-
-  bool match_result = false;
-  match_ad.EvaluateAttrBool("symmetricMatch", match_result);
   utils::scope_guard remove_left_ad(
     boost::bind(&classad::MatchClassAd::RemoveLeftAd, boost::ref(match_ad))
   );
@@ -53,14 +56,21 @@ match_and_rank(
     boost::bind(&classad::MatchClassAd::RemoveRightAd, boost::ref(match_ad))
   );
 
-  if (match_result)
-  try {
-    rank_result =
-      classad_utils::evaluate_attribute(match_ad, "rightRankValue");
-  } catch (classad_utils::InvalidValue&) {
-    throw classad_utils::UndefinedRank();
+  MatchAndRankResult result = NO_MATCH;
+  bool match_result = false;
+  match_ad.EvaluateAttrBool("symmetricMatch", match_result);
+
+  if (match_result) {
+    try {
+      rank_result =
+        classad_utils::evaluate_attribute(match_ad, "rightRankValue");
+      result = MATCH_AND_RANK;
+    } catch (classad_utils::InvalidValue&) {
+      result = MATCH_NO_RANK;
+    }
   }
-  return match_result;
+
+  return result;
 }
 
 class match_slice_content
@@ -75,8 +85,6 @@ public:
   MatchTable*
   operator()(MatchTable* matches, ism::MutexSlicePtr mt_slice) const
   {
-    bool has_jobid = false;
-    std::string const job_id(jdl::get_edg_jobid(*jdl_ptr, has_jobid));
     boost::timer t;
     ism::Mutex::scoped_lock l(mt_slice->mutex);
     double t_lock = t.elapsed();
@@ -84,7 +92,8 @@ public:
     ism::Slice::const_iterator it = mt_slice->slice->begin();
     ism::Slice::const_iterator const e = mt_slice->slice->end();
 
-    size_t const n = std::distance(it, e);
+    size_t const slice_size = mt_slice->slice->size();
+    int rank_failures = 0;
 
     for( ; it != e; ++it) {
 
@@ -97,28 +106,36 @@ public:
 
       std::string const& ism_id(boost::tuples::get<ism::Id>(*it));
 
-      try {
-        double rank;
-        if (match_and_rank(&ce_ad, jdl_ptr, rank)) {
-          matches->push_back(
-            MatchInfo(ism_id, rank, ce_ad_ptr)
-          );
-        }
-      } catch (classad_utils::UndefinedRank&) {
-        Error("Unexpected result while ranking " << ism_id);
+      double rank;
+      switch (match_and_rank(&ce_ad, jdl_ptr, rank)) {
+      case NO_MATCH:
+        break;
+      case MATCH_NO_RANK:
+        ++rank_failures;
+        break;
+      case MATCH_AND_RANK:
+        matches->push_back(
+          MatchInfo(ism_id, rank, ce_ad_ptr)
+        );
+        break;
       }
     }
+
     l.unlock();
 
+    bool has_jobid = false;
+    std::string const job_id(jdl::get_edg_jobid(*jdl_ptr, has_jobid));
     if (has_jobid) {
       Info(
-        "MM for job: " << job_id << " (" << matches->size() << '/' << n <<
-        " [" << t_lock << ", " << t.elapsed() << "] )"
+        "MM for job: " << job_id
+        << " (" << matches->size() << '/' << slice_size << '/' << rank_failures
+        << " [" << t_lock << ", " << t.elapsed() << "] )"
       );
     } else {
       Info(
-        "MM for listmatch (" << matches->size() << '/' << n <<
-        " [" << t_lock << ", " << t.elapsed() << "] )"
+        "MM for listmatch ("
+        << matches->size() << '/' << slice_size << '/' << rank_failures
+        << " [" << t_lock << ", " << t.elapsed() << "] )"
       );
     }
 
@@ -146,10 +163,18 @@ public:
     ism::Slice::const_iterator it = mt_slice->slice->begin();
     ism::Slice::const_iterator const e = mt_slice->slice->end();
 
+    size_t const slice_size = mt_slice->slice->size();
+    int rank_failures = 0;
+
     for( ; it != e; ++it) {
 
-      if (ism::is_entry_void(*it)) continue;
-      if (!pred(*it)) continue;
+      if (ism::is_entry_void(*it)) {
+        continue;
+      }
+
+      if (!pred(*it)) {
+        continue;
+      }
 
       boost::shared_ptr<classad::ClassAd> ce_ad_ptr =
         boost::tuples::get<ism::Ad>(*it);
@@ -158,18 +183,21 @@ public:
 
       std::string const& ism_id(boost::tuples::get<ism::Id>(*it));
 
-      try {
-        double rank;
-        if (match_and_rank(&ce_ad, jdl_ptr, rank)) {
-          Info(ism_id << ": ok!");
-          matches->push_back(
-            MatchInfo( ism_id, rank, ce_ad_ptr )
-          );
-        }
-      } catch (classad_utils::UndefinedRank&) {
-        Error("Unexpected result while ranking " << ism_id);
+      double rank;
+      switch (match_and_rank(&ce_ad, jdl_ptr, rank)) {
+      case NO_MATCH:
+        break;
+      case MATCH_NO_RANK:
+        ++rank_failures;
+        break;
+      case MATCH_AND_RANK:
+        matches->push_back(
+          MatchInfo(ism_id, rank, ce_ad_ptr)
+        );
+        break;
       }
     }
+
     return matches;
   }
 };
@@ -212,12 +240,12 @@ match(
   );
   
   if (!skipping_ces.empty()) {
-    MatchTable::iterator _(      
+    MatchTable::iterator it(      
     std::remove_if(
         matches.begin(), matches.end(), in(skipping_ces)
       )
     );
-    matches.erase(_, matches.end());
+    matches.erase(it, matches.end());
   }
   return matches;
 }
