@@ -73,7 +73,7 @@ namespace util {
      
      std::string get_grid_job_id( void ) const { return m_theJob.getGridJobID(); };
 
-     boost::recursive_mutex localMutexForSubscriptions;
+     static boost::recursive_mutex s_localMutexForSubscriptions;
      
  protected:
      

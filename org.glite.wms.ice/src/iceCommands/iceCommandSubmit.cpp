@@ -70,6 +70,8 @@ namespace wms_utils = glite::wms::common::utilities;
 namespace iceUtil = glite::wms::ice::util;
 using namespace glite::wms::ice;
 
+boost::recursive_mutex iceCommandSubmit::s_localMutexForSubscriptions;
+
 namespace { // Anonymous namespace
     
     // 
@@ -779,7 +781,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
 void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 {
   //boost::recursive_mutex localMutex; // FIXME: this is a temporary trick that avoid to acquire a subscriptionManager's mutex that could produce dead-lock. 
-  boost::recursive_mutex::scoped_lock cemonM( localMutexForSubscriptions );
+  boost::recursive_mutex::scoped_lock cemonM( s_localMutexForSubscriptions );
   
 
   string cemon_url;
