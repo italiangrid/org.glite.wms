@@ -292,7 +292,10 @@ std::string Job::getLogFileMsg ( ) {
 void Job::setDelegationId ( ){
 	// Reads the user options
 	string id = wmcOpts->getStringAttribute(Options::DELEGATION);
-	string confid = wmcUtils->getConf()->getString(DELEGATION_ID);
+	string confid = "";
+	if (wmcUtils->getConf()->hasAttribute(DELEGATION_ID)) {
+			confid = wmcUtils->getConf()->getString(DELEGATION_ID);
+	}
 	bool autodg = wmcOpts->getBoolAttribute(Options::AUTODG);
 	if (!id.empty() && autodg){
 		ostringstream err;
@@ -327,11 +330,12 @@ void Job::setDelegationId ( ){
 		autodgOpt = false;
 	} else {
 		ostringstream err ;
-		err << "a mandatory attribute is missing:\n" ;
+		err << "No delegationId found, please use one of the following methods: \n" ;
 		err << wmcOpts->getAttributeUsage(Options::DELEGATION) ;
 		err << "\nto use a proxy previously delegated or\n";
 		err << wmcOpts->getAttributeUsage(Options::AUTODG) ;
-		err << "\nto perform automatic delegation";
+		err << "\nto perform automatic delegation or\n";
+		err << "delegationId attribute in the configuration file";
 		throw WmsClientException(__FILE__,__LINE__,
 				"getDelegationId", DEFAULT_ERR_CODE ,
 				"Missing Information", err.str());
