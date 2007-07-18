@@ -376,7 +376,7 @@ int job_done_failed_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_start_event::ns_enqueued_start_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "NS Enqueued Start Event, qname=[%1%]" ) % qname ) ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "NS Enqueued Start Event, qname=[%1%]" ) % qname ) ),
     m_qname( qname )
 {
 
@@ -406,7 +406,7 @@ int ns_enqueued_start_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_fail_event::ns_enqueued_fail_event( const CreamJob& j, const std::string& qname, const std::string& reason ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format("NS Enqueued Fail Event, queue=[%1%], reason=[%2%]") % qname % reason ) ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("NS Enqueued Fail Event, queue=[%1%], reason=[%2%]") % qname % reason ) ),
     m_qname( qname ),
     m_reason( reason )
 {
@@ -436,7 +436,7 @@ int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_ok_event::ns_enqueued_ok_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, boost::str( boost::format( "NS Enqueued OK Event, qname=[%1%]" ) % qname ) ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format( "NS Enqueued OK Event, qname=[%1%]" ) % qname ) ),
     m_qname( qname )
 {
 
