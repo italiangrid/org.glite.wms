@@ -609,6 +609,22 @@ throw()
                        << ". Reason is elementNotFound_ex: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
+    } catch( std::exception& ex ) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->errorStream()
+                       << "ice-core::purge_job() - "
+                       << "Cannot purge job " << jit->describe()
+                       << ". Reason is an exception: " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+    } catch( ... ) {
+        CREAM_SAFE_LOG(
+                       m_log_dev->errorStream()
+                       << "ice-core::purge_job() - "
+                       << "Cannot purge job " << jit->describe()
+                       << ". Reason is an unknown exception"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
     }
     return jit;
 }
