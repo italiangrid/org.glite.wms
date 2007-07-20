@@ -1,12 +1,11 @@
-#!/bin/sh 
+#!/bin/sh
 
-trap 'fatal_error "Job has been terminated by the batch system"' TERM
-trap 'fatal_error "Job has been signalled by the batch system"' XCPU
-trap 'fatal_error "Job has been signalled by the batch system"' INT
-trap 'fatal_error "Job has been signalled by the batch system"' QUIT
-# bg processes are supposed to inherit the whole mask and in particular the following:
-trap '' TTIN
-trap '' TTOU
+trap 'warning "Job has been signalled (SIGUSR1) by the batch system to hurry up"' USR1
+trap 'warning "Job has been signalled (SIGUSR2) by the batch system to hurry up"' USR2
+trap 'fatal_error "Job has been terminated (got SIGXCPU) "OSB""' XCPU
+trap 'fatal_error "Job has been terminated (got SIGQUIT) "OSB""' QUIT
+trap 'fatal_error "Job has been terminated (got SIGINT) "OSB""' INT
+trap 'fatal_error "Job has been terminated (got SIGTERM) "OSB""' TERM
 
 proxy_checker()
 {
@@ -19,7 +18,6 @@ proxy_checker()
     fi
   done
 
-  kill -9 -$user_job
   fatal_error "Job killed because of user proxy expiration"
 }
 
@@ -36,19 +34,30 @@ log_event() # 1 - event
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="$1"\
-    --node=$host\
-  || echo $GLITE_WMS_SEQUENCE_CODE`
+    --node="$host"\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
-log_done() # 1 - exit code, 2 - status code, 3 - reason
+log_done_ok() # 1 - exit code
 {
   export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="Done"\
-    --reason="$3"\
-    --status_code="$2"\
+    --status_code=OK\
+    --exit_code="$1"\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
+}
+
+log_done_failed() # 1 - exit code
+{
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+    --jobid="$GLITE_WMS_JOBID"\
+    --source=LRMS\
+    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --event="Done"\
+   --status_code=FAILED\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
@@ -61,7 +70,7 @@ log_event_reason() # 1 - event, 2 - reason
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="$1"\
     --reason="$2"\
-    --node=$host\
+    --node="$host"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
@@ -78,20 +87,21 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
-fatal_error() # 1 - reason
+warning()
 {
   jw_echo "$1"
-  log_done "0" "FAILED" "$1"
-  doExit 1
+  log_done_failed "$1"
+  kill -SIGUSR1 -$user_job_pid # TODO
 }
 
-is_integer() # 1 - value to be checked
+fatal_error() # 1 - reason, 2 - transfer OSB
 {
-  if [ -z "${1//[0-9]/}" ] && [ -n "$1" ] ; then
-    return 0
-  else
-    return 1
+  jw_echo "$1"
+  log_done_failed "$1"
+  if [ $2 -eq "OSB" ]; then
+    OSB_transfer
   fi
+  doExit 1
 }
 
 truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
@@ -103,7 +113,7 @@ truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 sort_by_size() # 1 - file names vector, 2 - directory
 {
   tmp_sort_file=`mktemp -q tmp.XXXXXXXXXX`
-  if [ -z "$tmp_sort_file" ]; then
+  if [ ! -f "$tmp_sort_file" ]; then
     jw_echo "Cannot generate temporary file"
     unset tmp_sort_file
     return $?
@@ -111,13 +121,24 @@ sort_by_size() # 1 - file names vector, 2 - directory
   eval tmpvar="$1[@]"
   eval elements="\${$tmpvar}"
   for fname in "${elements}"; do
-    fsize=`stat -t $2/$fname 2>/dev/null | awk '{print $2}'`||0
+    fsize=`stat -t $2/$fname 2>/dev/null | awk '{print $2}'`
+    if [ -z "$fsize" ]; then
+      fsize=0
+    fi
     echo "$fsize $fname" >> "$tmp_sort_file"
   done
-  unset $1
+  unset "$1"
   eval "$1=(`sort -n $tmp_sort_file|awk '{print $2}'`)"
   rm -f "$tmp_sort_file"
-  unset tmp_sort_file
+  unset "$tmp_sort_file"
+}
+
+is_integer() { # 1 - value to be checked
+  if [ -z "${1//[0-9]/}" ] && [ -n "$1" ] ; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 retry_copy() # 1 - command, 2 - source, 3 - dest
@@ -125,7 +146,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
   count=0
   succeded=1
   sleep_time=0
-  while [ ${count} -le ${copy_retry_count} -a ${succeded} -ne 0 ];
+  while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
     time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
     if [ $time_left -lt $sleep_time ]; then
@@ -133,18 +154,18 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     fi
     sleep $sleep_time
     if [ $sleep_time -eq 0 ]; then
-      sleep_time=${copy_retry_first_wait}
+      sleep_time=${__copy_retry_first_wait}
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
     std_err=`mktemp -q std_err.XXXXXXXXXX`
-    if [ -z "$std_err" ]; then
+    if [ ! -f "$std_err" ]; then
       std_err="/dev/null"
     fi
     $1 "$2" "$3" 2>"$std_err"
     succeded=$?
     if [ $succeded != 0 ]; then
-      log_event_reason "Notice" "`head -c 65535 "$std_err"`"
+      log_event_reason "Notice" "`head -c 1024 "$std_err"`"
     fi
     rm -f "$std_err"
     count=`expr $count + 1`
@@ -155,19 +176,18 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
 doExit() # 1 - status
 {
   jw_status=$1
+
   jw_echo "jw exit status = ${jw_status}"
 
-  if [ "${__maradona:0:9}" == "gsiftp://" ]; then
-    retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradona}"
-  elif [ "${__maradona:0:8}" == "https://" -o "${__maradona:0:7}" == "http://" ]; then
-    retry_copy "htcp" "file://${workdir}/${maradona}" "${__maradona}"
-  else
-    false
-  fi
+  retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   globus_copy_status=$?
 
-  cd ..
-  rm -rf "${newdir}"
+  rm -rf "../${newdir}"
+
+  # last in case the user_job has the same process group of this shell
+  if [ -n "$user_job_pid" ]; then
+    kill -9 $proxy_watchdog -$user_job_pid 2>/dev/null
+  fi
 
   if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
@@ -176,125 +196,146 @@ doExit() # 1 - status
   fi
 }
 
-doDSUploadTmp() # 1 - filename.tmp
+doDSUploadTmp()
 {
-  echo "#" >> "$1"
-  echo "# Autogenerated by JobWrapper!" >> "$1"
-  echo "#" >> "$1"
-  echo "# The file contains the results of the upload and registration" >> "$1"
-  echo "# process in the following format:" >> "$1"
-  echo "# <outputfile> <lfn|guid|Error>" >> "$1"
-  echo >> "$1"
+  filename="${__dsupload}"
+  echo "#" >> "$filename.tmp"
+  echo "# Autogenerated by JobWrapper!" >> "$filename.tmp"
+  echo "#" >> "$filename.tmp"
+  echo "# The file contains the results of the upload and registration" >> "$filename.tmp"
+  echo "# process in the following format:" >> "$filename.tmp"
+  echo "# <outputfile> <lfn|guid|Error>" >> "$filename.tmp"
+  echo "" >> "$filename.tmp"
 }
 
-doDSUpload() # 1 - filename
+doDSUpload()
 {
-  mv -fv "$1.tmp" "$1"
+  filename="${__dsupload}"
+  mv -fv "$filename.tmp" "$filename"
 }
 
-doCheckReplicaFile() # 1 - source file, 2 - filename.tmp
+doCheckReplicaFile()
 {
+  sourcefile=$1
+  filename="${__dsupload}"
   exit_status=0
-  if [ ! -f "${workdir}/$1" ]; then
-    echo "$1    Error: File $1 has not been found on the WN $host" >> "$2"
+  if [ ! -f "${workdir}/$sourcefile" ]; then
+    echo "$sourcefile    Error: File $sourcefile has not been found on the WN $host" >> "$filename.tmp"
     exit_status=1
   fi
-  echo >> "$2"
-  return ${exit_status}
+  echo >> "$filename.tmp"
+  return $exit_status
 }
 
-doReplicaFile() # 1 - source file, 2 - filename.tmp
+doReplicaFile()
 {
+  sourcefile=$1
+  filename="${__dsupload}"
   exit_status=0
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" 2>&1`
+
+  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
-    echo "$1    $local" >> "$2"
+    echo "$sourcefile    $local" >> "$filename.tmp"
   else
-    echo "$1    Error: $local" >> "$2"
+    echo "$sourcefile    Error: $local" >> "$filename.tmp"
     exit_status=1
   fi
-
-  echo >> "$2"
-  return ${exit_status}
+  
+  echo >> "$filename.tmp"
+  return $exit_status
 }
 
-doReplicaFilewithLFN() # 1 - source file, 2 - lfn, 3 - filename.tmp
+doReplicaFilewithLFN()
 {
+  sourcefile="$1"
+  lfn="$2"
+  filename="${__dsupload}"
   exit_status=0
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" -l "$2" 2>&1`
+  
+  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
-    echo "$1    $2" >> "$3"
+    echo "$sourcefile    $lfn" >> "$filename.tmp"
   else
-    localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" 2>&1`
+    localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
-      echo "$1 $localnew" >> "$3"
+      echo "$sourcefile $localnew" >> "$filename.tmp"
     else
-      echo "$1 Error: $local; $localnew" >> "$3"
+      echo "$sourcefile Error: $local; $localnew" >> "$filename.tmp"
+      exit_status=1
+    fi
+  fi
+  
+  echo >> "$filename.tmp"
+  return $exit_status
+}
+
+doReplicaFilewithSE()
+{
+  sourcefile="$1"
+  se="$2"
+  filename="${__dsupload}"
+  exit_status=0
+
+  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
+  result=$?
+  if [ $result -eq 0 ]; then
+    echo "$sourcefile   $local" >> "$filename.tmp"
+  else
+    localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+    result=$?
+    if [ $result -eq 0 ]; then
+      echo "$sourcefile $localnew" >> "$filename.tmp"
+    else
+      echo "$sourcefile Error: $local; $localnew" >> "$filename.tmp"
       exit_status=1
     fi
   fi
 
-  echo >> "$3"
-  return ${exit_status}
+  echo >> "$filename.tmp"
+  return $exit_status
 }
 
-doReplicaFilewithSE() # 1 - source file, 2 - se, 3 - filename.tmp
+doReplicaFilewithLFNAndSE()
 {
+
+  sourcefile="$1"
+  lfn="$2"
+  se="$3"
+  filename="${__dsupload}"
   exit_status=0
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" -d "$2" 2>&1`
+
+  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" -d "$se" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
-    echo "$1   $local" >> "$3"
+    echo "$sourcefile    $lfn" >> "$filename.tmp"
   else
-    localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" 2>&1`
+    localse=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
-      echo "$1 $localnew" >> "$3"
+      echo "$sourcefile    $localse" >> "$filename.tmp"
     else
-      echo "$1 Error: $local; $localnew" >> "$3"
-      exit_status=1
-    fi
-  fi
-
-  echo >> "$3"
-  return ${exit_status}
-}
-
-doReplicaFilewithLFNAndSE() # 1 - source file, 2 - lfn, 3 - se, 4 - filename.tmp
-{
-  exit_status=0
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" -l "$2" -d "$3" 2>&1`
-  result=$?
-  if [ $result -eq 0 ]; then
-    echo "$1    $2" >> "$4"
-  else
-    localse=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" -d "$3" 2>&1`
-    result=$?
-    if [ $result -eq 0 ]; then
-      echo "$1    $localse" >> "$4"
-    else
-      locallfn=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" -l "$2" 2>&1`
+      locallfn=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
       result=$?
-      if [ $result -eq 0 ]; then
-        echo "$1    $locallfn" >> "$4"
+      if [ $result -eq 0 ]; then 
+        echo "$sourcefile    $locallfn" >> "$filename.tmp"
       else
-        localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$1" 2>&1`
+        localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
         result=$?
         if [ $result -eq 0 ]; then
-          echo "$1    $localnew" >> "$4"
+          echo "$sourcefile    $localnew" >> "$filename.tmp"
         else
-          echo "$1    Error: $local; $localse; $locallfn; $localnew" >> "$4"
+          echo "$sourcefile    Error: $local; $localse; $locallfn; $localnew" >> "$filename.tmp"
           exit_status=1
-        fi
+        fi    
       fi
     fi
   fi
-
-  echo >> "$4"
-  return ${exit_status}
+    
+  echo >> "$filename.tmp"
+  return $exit_status
 }
 
 function send_partial_file
@@ -318,12 +359,12 @@ function send_partial_file
     # Go to sleep, but be ready to wake up when the user job finishes
     sleep $POLL_INTERVAL & SLEEP_PID=$!
     trap 'LAST_CYCLE="y"; kill -ALRM $SLEEP_PID >/dev/null 2>&1' USR2
-    wait $SLEEP_PID &>/dev/null
+    wait $SLEEP_PID >/dev/null 2>&1
     # Retrieve the list of files to be monitored
     if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
-      globus-url-copy ${TRIGGERFILE} file://${LISTFILE}
+      globus-url-copy "${TRIGGERFILE}" "file://${LISTFILE}"
     elif [ "${TRIGGERFILE:0:8}" == "https://" -o "${TRIGGERFILE:0:7}" == "http://" ]; then
-      htcp ${TRIGGERFILE} file://${LISTFILE}
+      htcp "${TRIGGERFILE}" "file://${LISTFILE}"
     else
       false
     fi
@@ -332,7 +373,7 @@ function send_partial_file
     if [ "$?" -ne "0" ] ; then
       continue
     fi
-    for SRCFILE in `cat $LISTFILE` ; do
+    for SRCFILE in `cat "$LISTFILE"` ; do
       # SRCFILE must contain the full path
       if [ "$SRCFILE" == "`basename $SRCFILE`" ] ; then
         SRCFILE=`pwd`/$SRCFILE
@@ -373,6 +414,143 @@ function send_partial_file
   rm -f "$LISTFILE" # some cleanup
 }
 
+OSB_transfer()
+{
+  # uncomment this one below if the order in the osb originally 
+  # specified is not of some relevance to the user
+  #sort_by_size __output_file ${workdir}
+
+  file_size_acc=0
+  current_file=0
+  if [ ${__wmp_support} -eq 0 ]; then
+    total_files=${#__output_file[@]}
+    for f in "${__output_file[@]}"
+    do
+      if [ -r "${f}" ]; then
+        ff=${f##*/}
+        if [ ${max_osb_size} -ge 0 ]; then
+          # TODO
+          #if hostname=wms
+            file_size=`stat -t $f | awk '{print $2}'`
+            if [ -z "$file_size" ]; then
+              file_size=0
+            fi
+            let "file_size_acc += $file_size"
+          #fi
+          if [ $file_size_acc -le ${max_osb_size} ]; then
+            retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
+          else
+            jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
+            remaining_files=`expr $total_files \- $current_file`
+            remaining_space=`expr $max_osb_size \- $file_size_acc`
+            trunc_len=`expr $remaining_space / $remaining_files || echo 0`
+            if [ $trunc_len -lt 0 ]; then
+              $trunc_len=0
+            fi
+            truncate "${workdir}/${f}" $trunc_len "${workdir}/${f}.tail"
+            if [ $? != 0 ]; then
+              jw_echo "Could not truncate output sandbox file ${f}"
+              touch "${workdir}/${f}.tail"
+            else
+              jw_echo "Truncated last $trunc_len bytes for file ${f}"
+            fi
+            retry_copy "globus-url-copy" "file://${workdir}/${f}.tail" "${__output_base_url}${ff}.tail"
+          fi
+        else
+          retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
+        fi
+        if [ $? != 0 ]; then
+          fatal_error "Cannot upload ${f} into ${__output_base_url}" "Done"
+        fi
+      else
+        jw_echo "Cannot read or missing file ${f}"
+      fi # if [ -r "${f}" ]; then
+      let "++current_file"
+    done
+  else # WMP support
+    total_files=${#__wmp_output_dest_file[@]}
+    for f in "${__wmp_output_dest_file[@]}"
+    do
+      if [ -r "${__wmp_output_file[$current_file]}" ]; then
+        file=`basename $f`
+        s="${workdir}/${__wmp_output_file[$current_file]}"
+        if [ ${__osb_wildcards_support} -eq 0 ]; then
+          d="${f}"
+        else
+          d="${__output_sandbox_base_dest_uri}/${file}"
+        fi
+        if [ ${max_osb_size} -ge 0 ]; then
+          # TODO
+          #if hostname=wms
+            file_size=`stat -t $s | awk '{print $2}'`
+            if [ -z "$file_size" ]; then
+              file_size=0
+            fi
+            file_size_acc=`expr $file_size_acc + $file_size`
+          #fi
+          if [ $file_size_acc -le ${max_osb_size} ]; then
+            if [ "${f:0:9}" == "gsiftp://" ]; then
+              retry_copy "globus-url-copy" "file://$s" "$d"
+            elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
+              retry_copy "htcp" "file://$s" "$d"
+            else
+              false
+            fi
+          else
+            jw_echo "OSB quota exceeded for $s, truncating needed"
+            remaining_files=`expr $total_files \- $current_file`
+            remaining_space=`expr $max_osb_size \- $file_size_acc`
+            trunc_len=`expr $remaining_space / $remaining_files || echo 0`
+            if [ $trunc_len -lt 0 ]; then
+              $trunc_len=0
+            fi
+            truncate "$s" $trunc_len "$s.tail"
+            if [ $? != 0 ]; then
+              jw_echo "Could not truncate output sandbox file ${f}"
+              touch "$s.tail"
+            else
+              jw_echo "Truncated last $trunc_len bytes for file ${f}"
+            fi
+            if [ "${f:0:9}" == "gsiftp://" ]; then
+              retry_copy "globus-url-copy" "file://$s.tail" "$d.tail"
+            elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
+              retry_copy "htcp" "file://$s.tail" "$d.tail"
+            else
+              false
+            fi
+          fi
+        else # unlimited osb
+          if [ "${f:0:9}" == "gsiftp://" ]; then
+            retry_copy "globus-url-copy" "file://$s" "$d"
+          elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
+            retry_copy "htcp" "file://$s" "$d"
+          else
+            false
+          fi
+        fi
+        if [ $? != 0 ]; then
+          fatal_error "Cannot upload ${file} into ${f}" "Done"
+        fi
+      else
+        jw_echo "Cannot read or missing file ${__wmp_output_file[$current_file]}"
+      fi
+      let "++current_file"
+    done
+  fi # WMP support
+}
+
+#
+# beginning
+#
+
+# the bash builtin kill command is sometimes buggy with process groups
+enable -n kill
+
+# explicitly addresses some interop issue
+if [ -r "${OSG_GRID}/setup.sh" ]; then
+  source "${OSG_GRID}/setup.sh" &>/dev/null
+fi
+
 if [ -n "${__gatekeeper_hostname}" ]; then
   export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
 fi
@@ -397,7 +575,7 @@ if [ ! -x "$lb_logevent" ]; then
   lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
 fi
 
-host=`hostname -f`
+host="`hostname -f`"
 
 log_event "Running"
 
@@ -410,19 +588,15 @@ if [ "X${__output_base_url##*/}" != "X" ]; then
 fi
 
 if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
-  copy_retry_count=6
+  __copy_retry_count=6
 else
-  copy_retry_count=${GLITE_LOCAL_COPY_RETRY_COUNT}
+  __copy_retry_count=${GLITE_LOCAL_COPY_RETRY_COUNT}
 fi
 
 if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
-  copy_retry_first_wait=300
+  __copy_retry_first_wait=300
 else
-  copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
-fi
-
-if [ -d "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
-  hooks_directory=${GLITE_LOCAL_CUSTOMIZATION_DIR}
+  __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
 fi
 
 max_osb_size=${__max_outputsandbox_size}
@@ -433,12 +607,7 @@ if [ $? -eq 0 ]; then
   fi
 fi
 
-for env in ${__environment[@]}
-do
-  eval export $env
-done
-
-vo_hook="lcg-jobwrapper-hook.sh" # common-agreed (vo_hook.sh would be better)
+vo_hook="lcg-jobwrapper-hook.sh" # common-agreed now hard-coded
 if [ -n "${__ce_application_dir}" ]; then
   if [ -d "${__ce_application_dir}" ]; then
     if [ -r "${__ce_application_dir}/${vo_hook}" ]; then
@@ -446,7 +615,7 @@ if [ -n "${__ce_application_dir}" ]; then
     elif [ -r "${__ce_application_dir}/${__vo}/${vo_hook}" ]; then
       . "${__ce_application_dir}/${__vo}/${vo_hook}"
     else
-      jw_echo "${vo_hook} not readable"
+      jw_echo "${vo_hook} not readable or not present"
     fi
   else
     jw_echo "${__ce_application_dir} not found or not a directory"
@@ -454,21 +623,21 @@ if [ -n "${__ce_application_dir}" ]; then
 fi
 unset vo_hook
 
-#customization point #1
-if [ -n "${hooks_directory}" ]; then
-  if [ -f "${hooks_directory}/cp_1.sh" ]; then
-    . "${hooks_directory}/cp_1.sh"
+# customization point #1
+if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
+    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
   fi
 fi
 
 if [ ${__create_subdir} -eq 1 ]; then
   if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
-    #normal or interactive
+    # normal or interactive
     newdir="${__jobid_to_filename}"
     mkdir ${newdir}
     cd ${newdir}
   elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
-    #MPI (LSF or PBS)
+    # MPI (LSF or PBS)
     newdir="${__jobid_to_filename}"
     mkdir -p .mpi/${newdir}
     if [ $? != 0 ]; then
@@ -478,11 +647,12 @@ if [ ${__create_subdir} -eq 1 ]; then
   fi
 fi
 
-tmpfile=`mktemp -q ./tmp.XXXXXXXXXX`
-if [ -z "$tmpfile" ]; then
+# the test -w on work dir is unsuitable on AFS machines
+tmpfile=`mktemp -q tmp.XXXXXXXXXX`
+if [ ! -f "$tmpfile" ]; then
   fatal_error "Working directory not writable"
 else
-  rm "${tmpfile}"
+  rm "$tmpfile"
 fi
 unset tmpfile
 
@@ -498,14 +668,20 @@ touch "${maradona}"
 if [ -z "${GLOBUS_LOCATION}" ]; then
   fatal_error "GLOBUS_LOCATION undefined"
 elif [ -r "${GLOBUS_LOCATION}/etc/globus-user-env.sh" ]; then
-  . ${GLOBUS_LOCATION}/etc/globus-user-env.sh
+  . "${GLOBUS_LOCATION}/etc/globus-user-env.sh"
 else
   fatal_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
 fi
 
+for env in ${__environment[@]}
+do
+  eval export $env
+done
+
 umask 022
 
-if [ ${__wmp_support} -eq 0 ]; then
+# input sandbox upload
+if [ $__wmp_support -eq 0 ]; then
   for f in ${__input_file[@]}
   do
     retry_copy "globus-url-copy" "${__input_base_url}${f}" "file://${workdir}/${f}"
@@ -514,8 +690,7 @@ if [ ${__wmp_support} -eq 0 ]; then
     fi
   done
 else
-  #WMP support
-  index=0
+  # WMP support
   for f in ${__wmp_input_base_file[@]}
   do
     if [ -z "${__wmp_input_base_dest_file}" ]; then
@@ -529,25 +704,24 @@ else
       retry_copy "htcp" "${f}" "file://${workdir}/${file}"
     else
       false
-    fi
+    fi 
     if [ $? != 0 ]; then
-      fatal_error "Cannot download ${workdir}/${file} from ${f}"
+      fatal_error "Cannot download ${file} from ${f}"
     fi
-    let "++index"
   done
 fi
 
 if [ -f "${__job}" ]; then
-  chmod +x "${__job}" &>/dev/null
+  chmod +x "${__job}" 2>/dev/null
 else
   fatal_error "${__job} not found or unreadable"
 fi
 
-#user script (before taking the token, shallow-sensitive)
+# user script (before taking the token, shallow-sensitive)
 if [ -n "${__prologue}" ]; then
   if [ -f "${__prologue}" ]; then
-    chmod +x "${__prologue}" &>/dev/null
-    ${__prologue} "${__prologue_arguments}" &>/dev/null
+    chmod +x "${__prologue}" 2>/dev/null
+    ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
     prologue_status=$?
     if [ ${prologue_status} -ne 0 ]; then
       fatal_error "prologue failed with error ${prologue_status}"
@@ -557,9 +731,8 @@ if [ -n "${__prologue}" ]; then
   fi
 fi
 
-if [ ${__job_type} -eq 3 ]; then #interactive jobs
-  #extracts 'scheme://host' from the full URL
-  base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`}
+if [ ${__job_type} -eq 3 ]; then # interactive jobs
+  base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`} #TODO %[xdigit][xdigit] handling
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
     retry_copy "globus-url-copy" "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
     chmod +x ${workdir}/${f}
@@ -572,6 +745,7 @@ if [ ${__perusal_support} -eq 1 ]; then
 fi
 
 if [ -n "${__shallow_resubmission_token}" ]; then
+
   # Look for an executable gridftp_rm command
   for gridftp_rm_command in $GLITE_LOCATION/bin/glite-gridftp-rm \
                             `which glite-gridftp-rm 2>/dev/null` \
@@ -590,7 +764,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
     is_uberftp=`expr match "${gridftp_rm_command}" '.*uberftp'`
     if [ $is_uberftp -eq 0 ]; then
       $gridftp_rm_command ${__shallow_resubmission_token} &>/dev/null
-    else #uberftp
+    else # uberftp
       tkn=${__shallow_resubmission_token} # will reduce lines length
       scheme=${tkn:0:`expr match "${tkn}" '[[:alpha:]][[:alnum:]+.-]*://'`}
       remaining=${tkn:${#scheme}:${#tkn}-${#scheme}}
@@ -598,7 +772,8 @@ if [ -n "${__shallow_resubmission_token}" ]; then
       token_fullpath=${remaining:${#hostname}:${#remaining}-${#hostname}}
       $gridftp_rm_command $hostname -a gsi "quote dele ${token_fullpath}" &>/dev/null
     fi
-    if [ $? -eq 0 ]; then
+    result=$?
+    if [ $result -eq 0 ]; then
       log_event "ReallyRunning"
       jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
     else
@@ -607,39 +782,39 @@ if [ -n "${__shallow_resubmission_token}" ]; then
   fi
 fi
 
-if [ ${__job_type} -eq 1 ]; then
-  HOSTFILE=host$$
-  touch ${HOSTFILE}
-  for host in ${LSB_HOSTS}
-    do echo $host >> ${HOSTFILE}
+if [ ${__job_type} -eq 1 ]; then # MPI LSF
+  hostfile="host$$"
+  # touch $hostfile
+  for mpi_host in "${LSB_HOSTS}"
+    do echo "$mpi_host" >> $hostfile
   done
 elif [ ${__job_type} -eq 2 ]; then
-  HOSTFILE=${PBS_NODEFILE}
+  hostfile="${PBS_NODEFILE}"
 fi
-if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then #MPI LSF, PBS
-  for i in `cat $HOSTFILE`; do
+if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
+  for i in `cat "$hostfile"`; do
     ssh ${i} mkdir -p `pwd`
     /usr/bin/scp -rp ./* "${i}:`pwd`"
     ssh ${i} chmod 755 `pwd`/${__job}
   done
 fi
 
-if [ ${__job_type} -eq 0 ]; then #normal
+if [ ${__job_type} -eq 0 ]; then # normal
   cmd_line="${__job} ${__arguments} $*"
-elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then #MPI LSF, PBS
+elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
   cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job} ${__arguments} $*"
-elif [ ${__job_type} -eq 3 ]; then #interactive
+elif [ ${__job_type} -eq 3 ]; then # interactive
   cmd_line="./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
 fi
 
-if [ ${__job_type} -ne 3 ]; then #all but interactive
+if [ ${__job_type} -ne 3 ]; then # all but interactive
   if [ -n "${__standard_input}" ]; then
-    cmd_line="$cmd_line < ${__standard_input}"
+    cmd_line="$cmd_line <${__standard_input}"
   fi
   if [ -n "${__standard_output}" ]; then
-    cmd_line="$cmd_line > ${__standard_output}"
+    cmd_line="$cmd_line >${__standard_output}"
   else
-    cmd_line="$cmd_line > /dev/null "
+    cmd_line="$cmd_line >/dev/null "
   fi
   if [ -n "${__standard_error}" ]; then
     if [ -n "${__standard_output}" ]; then
@@ -654,8 +829,8 @@ if [ ${__job_type} -ne 3 ]; then #all but interactive
   fi
 fi
 
-if [ 1 -eq 1 ]; then # dump variable to set?
-  time_cmd=/usr/bin/time
+if [ 1 -eq 1 ]; then # dump variable to be set?
+  time_cmd=`which time 2>/dev/null`
   if [ -x "$time_cmd" ]; then
     time_cmd="$time_cmd -p"
     tmp_time_file=`mktemp -q tmp.XXXXXXXXXX`
@@ -668,29 +843,34 @@ if [ 1 -eq 1 ]; then # dump variable to set?
   fi
 fi
 
-if [ -n "EDG_WL_NOSETPGRP" ]; then
-else
-fi
+(
 
-if [ -f "$tmp_time_file" ]; then
-  $time_cmd "$cmd_line" &>"$tmp_time_file" &
-else
-  "$cmd_line" &
-fi
+# TODO
+  if [ -z "$EDG_WL_NOSETPGRP" ]; then
+    trap '' TTIN # ignore
+    trap '' TTOU # ignore
+  fi
+  if [ -f "$tmp_time_file" ]; then
+    "$time_cmd" "${__job}" ${__arguments} >$"{__standard_output}" 2>"${__standard_error}" &
+  else
+    "${__job}" ${__arguments} >$"{__standard_output}" 2>"${__standard_error}" &
+  fi
+  user_job_pid=$!
 
-user_job=$!
-exec 2> /dev/null
+  proxy_checker &
+  proxy_watchdog=$!
 
-#proxy_checker &
-watchdog=$!
+  wait $user_job_pid
+  user_job_status=$?
 
-wait $user_job
+  kill -9 $proxy_watchdog #-$user_job_pid 2>/dev/null
+
+  exit $user_job_status
+)
 status=$?
-#the bash kill command doesn't appear to work fine on process groups
-enable -n kill
-kill -9 $watchdog $user_job -$user_job
+jw_echo "job exit status = ${status}"
 
-# report the time usage
+# reports the time usage
 if [ -f "$tmp_time_file" -a -n "$time_cmd" ]; then
   log_resource_usage "real" "`grep real $tmp_time_file | cut -d' ' -f 2`" "s"
   log_resource_usage "user" "`grep user $tmp_time_file | cut -d' ' -f 2`" "s"
@@ -698,56 +878,54 @@ if [ -f "$tmp_time_file" -a -n "$time_cmd" ]; then
   rm -f "$tmp_time_file"
 fi 
 
-#customization point #2
-if [ -n "${hooks_directory}" ]; then
-  if [ -f "${hooks_directory}/cp_2.sh" ]; then
-    . "${hooks_directory}/cp_2.sh"
+# customization point #2
+if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
+    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
   fi
 fi
 
 if [ ${__perusal_support} -eq 1 ]; then
   kill -USR2 $send_pid
-  wait $send_pid
+  wait $send_pid 
 fi
 
 if [ ${__output_data} -eq 1 ]; then
   return_value=0
   if [ $status -eq 0 ]; then
-    local=`doDSUploadTmp "${__dsupload}.tmp"`
+    local=`doDSUploadTmp`
     status=$?
     return_value=$status
     local_cnt=0
     for outputfile in ${__output_file[@]}
     do
-      local=`doCheckReplicaFile ${__output_file} "${__dsupload}.tmp"`
+      local=`doCheckReplicaFile ${__output_file}`
       status=$?
       if [ $status -ne 0 ]; then
         return_value=1
       else
         if [ -z "${__output_lfn}" -a -z "${__output_se}"] ; then
-         local=`doReplicaFile ${outputfile} "${__dsupload}.tmp"`
+         local=`doReplicaFile $outputfile`
         elif [ -n "${__output_lfn}" -a -z "${__output_se}"] ; then
-         local=`doReplicaFilewithLFN ${outputfile} ${__output_lfn[$local_cnt]} "${__dsupload}.tmp"`
+         local=`doReplicaFilewithLFN $outputfile ${__output_lfn[$local_cnt]}`
         elif [ -z "${__output_lfn}" -a -n "${__output_se}"] ; then
-          local=`doReplicaFilewithSE ${outputfile} ${__output_se[$local_cnt]} "${__dsupload}.tmp"`
+          local=`doReplicaFilewithSE $outputfile ${__output_se[$local_cnt]}`
         else
-         local=`doReplicaFilewithLFNAndSE ${outputfile} ${__output_lfn[$local_cnt]} ${__output_se[$local_cnt]} "${__dsupload}.tmp"`
+         local=`doReplicaFilewithLFNAndSE $outputfile ${__output_lfn[$local_cnt]} ${__output_se[$local_cnt]}`
         fi
         status=$?
       fi
       let "++local_cnt"
     done
-    local=`doDSUpload ${__dsupload}`
+    local=`doDSUpload`
     status=$?
   fi
 fi
 
-jw_echo "job exit status = ${status}"
-
 if [ -n "${__epilogue}" ]; then
   if [ -f "${__epilogue}" ]; then
-    chmod +x "${__epilogue}" &>/dev/null
-    ${__epilogue} "${__epilogue_arguments}" &>/dev/null
+    chmod +x "${__epilogue}" 2>/dev/null
+    ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
     epilogue_status=$?
     if [ ${epilogue_status} -ne 0 ]; then
       fatal_error "epilogue failed with error ${epilogue_status}"
@@ -757,122 +935,8 @@ if [ -n "${__epilogue}" ]; then
   fi
 fi
 
-# uncomment this one below if the order in the osb file list originally
-# specified is not of some relevance to the user
-#sort_by_size __output_file ${workdir}
-
-file_size_acc=0
-current_file=0
-if [ ${__wmp_support} -eq 0 ]; then
-  total_files=${#__output_file[@]}
-  for f in "${__output_file[@]}"
-  do
-    if [ -r "${f}" ]; then
-      ff=${f##*/}
-      if [ ${max_osb_size} -ge 0 ]; then
-        #todo
-        #if hostname=wms
-          file_size=`stat -t $f | awk '{print $2}'`
-          let "file_size_acc += $file_size"
-        #fi
-        if [ $file_size_acc -le ${max_osb_size} ]; then
-          retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
-        else
-          jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
-          # $current_file is zero-based (being used even
-          # below as an array index), + 1 again because of the
-          # difference between $total and $current (i.e. 20-19=2 more files)
-          remaining_files=`expr $total_files \- $current_file + 2`
-          remaining_space=`expr ${max_osb_size} \- ${file_size_acc}`
-          trunc_len=`expr $remaining_space / $remaining_files`||0
-          if [ $trunc_len -lt 10 ]; then #non trivial truncation
-            jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
-          else
-            truncate "${workdir}/${f}" $trunc_len "${workdir}/${f}.tail"
-            if [ $? != 0 ]; then
-              jw_echo "Could not truncate output sandbox file ${f}, not sending"
-            else
-              jw_echo "Truncated last $trunc_len bytes for file ${f}"
-              retry_copy "globus-url-copy" "file://${workdir}/${f}.tail" "${__output_base_url}${ff}.tail"
-            fi
-          fi
-        fi
-      else
-        retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
-      fi
-      if [ $? != 0 ]; then
-        fatal_error "Cannot upload ${f} into ${__output_base_url}" "Done"
-      fi
-    fi #if [ -r "${f}" ]; then
-    let "++current_file"
-  done
-else #WMP support
-  total_files=${#__wmp_output_dest_file[@]}
-  for f in "${__wmp_output_dest_file[@]}"
-  do
-    if [ -r "${__wmp_output_file[$current_file]}" ]; then
-      file=`basename $f`
-      s="${workdir}/${__wmp_output_file[$current_file]}"
-      if [ ${__osb_wildcards_support} -eq 0 ]; then
-        d="${f}"
-      else
-        d="${__output_sandbox_base_dest_uri}/${file}"
-      fi
-      if [ ${max_osb_size} -ge 0 ]; then
-        #todo
-        #if hostname=wms
-          file_size=`stat -t $f | awk '{print $2}'`
-          file_size_acc=`expr $file_size_acc + $file_size`
-        #fi
-        if [ $file_size_acc -le ${max_osb_size} ]; then
-          if [ "${f:0:9}" == "gsiftp://" ]; then
-            retry_copy "globus-url-copy" "file://$s" "$d"
-          elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-            retry_copy "htcp" "file://$s" "$d"
-          else
-            false
-          fi
-        else
-          jw_echo "OSB quota exceeded for $s, truncating needed"
-          remaining_files=`expr $total_files \- $current_file + 2`
-          remaining_space=`expr $max_osb_size \- $file_size_acc`
-          trunc_len=`expr $remaining_space / $remaining_files`||0
-          if [ $trunc_len -lt 10 ]; then #non trivial truncation
-            jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
-          else
-            truncate "$s" $trunc_len "$s.tail"
-            if [ $? != 0 ]; then
-              jw_echo "Could not truncate output sandbox file ${f}, not sending"
-            else
-              jw_echo "Truncated last $trunc_len bytes for file ${f}"
-              if [ "${f:0:9}" == "gsiftp://" ]; then
-                retry_copy "globus-url-copy" "file://$s.tail" "$d.tail"
-              elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-                retry_copy "htcp" "file://$s.tail" "$d.tail"
-              else
-                false
-              fi
-            fi
-          fi
-        fi
-      else #unlimited osb
-        if [ "${f:0:9}" == "gsiftp://" ]; then
-          retry_copy "globus-url-copy" "file://$s" "$d"
-        elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-          retry_copy "htcp" "file://$s" "$d"
-        else
-          false
-        fi
-      fi
-      if [ $? != 0 ]; then
-        fatal_error "Cannot upload ${file} into ${f}" "Done"
-      fi
-    fi
-    let "++current_file"
-  done
-fi #WMP support
-
-log_done "Done" "OK" "Successfully completed"
+OSB_transfer
+log_done_ok "${status}"
 
 if [ -n "${LSB_JOBID}" ]; then
   cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
@@ -888,10 +952,10 @@ if [ -n "${PBS_JOBID}" ]; then
   fi
 fi
 
-#customization point #3
-if [ -n "${hooks_directory}" ]; then
-  if [ -f "${hooks_directory}/cp_3.sh" ]; then
-    . "${hooks_directory}/cp_3.sh"
+# customization point #3
+if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
+    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
   fi
 fi
 
