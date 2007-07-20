@@ -36,19 +36,6 @@ struct MatchInfo
 
 typedef std::vector<MatchInfo> MatchTable;
 
-MatchTable
-match(
-  classad::ClassAd& jdl, 
-  std::vector<std::string> const& skipping_ces
-);
-
-MatchTable
-match(
-  classad::ClassAd& jdl,
-  std::vector<std::string> const& skipping_ces,
-  std::set<std::string> const& candidate_ces
-);
-
 typedef std::map<std::string, std::vector<std::string> > FileMapping;
 
 struct StorageInfo
@@ -70,11 +57,27 @@ struct DataInfo
   StorageMapping sm;
 };
 
-MatchTable
+void
 match(
-  classad::ClassAd& jdl,
-  std::vector<std::string> const& skipping_ces,
-  DataInfo& data_info
+  classad::ClassAd& ad,
+  MatchTable& matches,
+  std::vector<std::string> const& skipping_ces = std::vector<std::string>()
+);
+
+void
+match(
+  classad::ClassAd& ad,
+  MatchTable& matches,
+  std::set<std::string> const& candidate_ces,
+  std::vector<std::string> const& skipping_ces = std::vector<std::string>()
+);
+
+void
+match(
+  classad::ClassAd& ad,
+  MatchTable& matches,
+  DataInfo& data_info,
+  std::vector<std::string> const& skipping_ces = std::vector<std::string>()
 );
 
 struct MaxRankSelector

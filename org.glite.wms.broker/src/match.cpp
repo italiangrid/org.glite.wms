@@ -43,7 +43,7 @@ enum MatchAndRankResult
 
 MatchAndRankResult
 match_and_rank(
-  classad::ClassAd* lhs, 
+  classad::ClassAd* lhs,
   classad::ClassAd* rhs,
   double& rank_result
 )
@@ -79,7 +79,7 @@ class match_slice_content
 
 public:
   match_slice_content(classad::ClassAd& j)
-  : jdl_ptr(&j) 
+  : jdl_ptr(&j)
   {
   }
   MatchTable*
@@ -88,7 +88,7 @@ public:
     boost::timer t;
     ism::Mutex::scoped_lock l(mt_slice->mutex);
     double t_lock = t.elapsed();
-    
+
     ism::Slice::const_iterator it = mt_slice->slice->begin();
     ism::Slice::const_iterator const e = mt_slice->slice->end();
 
@@ -150,7 +150,7 @@ class match_slice_content_if
 
 public:
   match_slice_content_if(
-    classad::ClassAd& j, 
+    classad::ClassAd& j,
     boost::function< bool(ism::SliceEntry const&)> p
   )
   : jdl_ptr(&j), pred(p)
@@ -163,7 +163,6 @@ public:
     ism::Slice::const_iterator it = mt_slice->slice->begin();
     ism::Slice::const_iterator const e = mt_slice->slice->end();
 
-    size_t const slice_size = mt_slice->slice->size();
     int rank_failures = 0;
 
     for( ; it != e; ++it) {
@@ -202,13 +201,13 @@ public:
   }
 };
 
-struct in 
+struct in
 {
   std::vector<std::string>::const_iterator m_begin;
   std::vector<std::string>::const_iterator const m_end;
 
   in(std::vector<std::string> const& pm)
-   : m_begin(pm.begin()), m_end(pm.end()) 
+   : m_begin(pm.begin()), m_end(pm.end())
   {
   }
   bool operator()(MatchInfo const& i)
@@ -222,118 +221,110 @@ struct in
 
 } // anonymous namespace
 
-MatchTable
+void
 match(
-  classad::ClassAd& jdl,
+  classad::ClassAd& ad,
+  MatchTable& matches,
   std::vector<std::string> const& skipping_ces
 )
 {
   ism::Ism const& the_ism = *ism::get_ism();
 
-  MatchTable matches;
-
   std::accumulate(
     the_ism.computing.begin(),
     the_ism.computing.end(),
     &matches,
-    match_slice_content(jdl)
+    match_slice_content(ad)
   );
-  
+
   if (!skipping_ces.empty()) {
-    MatchTable::iterator it(      
-    std::remove_if(
-        matches.begin(), matches.end(), in(skipping_ces)
-      )
+    matches.erase(
+      std::remove_if(matches.begin(), matches.end(), in(skipping_ces)),
+      matches.end()
     );
-    matches.erase(it, matches.end());
   }
-  return matches;
 }
 
-MatchTable
+void
 match(
-  classad::ClassAd& jdl,
-  std::vector<std::string> const& skipping_ces,
-  std::set<std::string> const& ce_ids
+  classad::ClassAd& ad,
+  MatchTable& matches,
+  std::set<std::string> const& candidate_ces,
+  std::vector<std::string> const& skipping_ces
 )
 {
-  std::set<std::string>::const_iterator ce_ids_it = ce_ids.begin();
-  std::set<std::string>::const_iterator const ce_ids_end(
-    ce_ids.end()
+  std::set<std::string>::const_iterator ce_it = candidate_ces.begin();
+  std::set<std::string>::const_iterator const ce_end(
+    candidate_ces.end()
   );
 
   ism::Ism const& the_ism = *ism::get_ism();
-  MatchTable matches;
 
   // TODO: change the loop using a new predicate for
   // the match_slice_content_if which look in the ordered container
-  for( ; ce_ids_it != ce_ids_end ; ++ce_ids_it ) {
-  
+  for( ; ce_it != ce_end ; ++ce_it ) {
+
     accumulate(
       the_ism.computing.begin(),
       the_ism.computing.end(),
       &matches,
-      match_slice_content_if(jdl, ism::KeyStartsWith(*ce_ids_it))
+      match_slice_content_if(ad, ism::KeyStartsWith(*ce_it))
     );
+
   }
-  
+
   if (!skipping_ces.empty()) {
-    MatchTable::iterator _(
-    std::remove_if(
-        matches.begin(), matches.end(), in(skipping_ces)
-      )
+    matches.erase(
+      std::remove_if(matches.begin(), matches.end(), in(skipping_ces)),
+      matches.end()
     );
-    matches.erase(_, matches.end());
   }
-  return matches;
 }
 
-MatchTable
+void
 match(
-  classad::ClassAd& jdl,
-  std::vector<std::string> const& skipping_ces,
-  DataInfo& data_info
-
-) 
+  classad::ClassAd& ad,
+  MatchTable& matches,
+  DataInfo& data_info,
+  std::vector<std::string> const& skipping_ces
+)
 {
   // Collects SFNs and involved SEs.
-  data_info.fm = resolve_filemapping_info(jdl);
+  data_info.fm = resolve_filemapping_info(ad);
   data_info.sm = resolve_storagemapping_info(data_info.fm);
 
   // Selects only comptatible storage
   std::vector<std::string> dap;
-  jdl::get_data_access_protocol(jdl, dap);
+  jdl::get_data_access_protocol(ad, dap);
   std::vector<StorageMapping::const_iterator> compatible_storage(
     select_compatible_storage(data_info.sm,dap)
   );
 
-  // std::set required in order to remove duplicates 
+  // std::set required in order to remove duplicates
   std::set<std::string> close_computing_elements_id;
-  // selects id of those computing elements bound to 
-  // compatible storage 
+  // selects id of those computing elements bound to
+  // compatible storage
   std::accumulate(
-    compatible_storage.begin(), 
+    compatible_storage.begin(),
     compatible_storage.end(),
     &close_computing_elements_id,
     extract_computing_elements_id()
   );
 
   // Filter computing elements on requirements
-  MatchTable matches(
-    match(jdl, skipping_ces, close_computing_elements_id)
-  );
+  match(ad, matches, close_computing_elements_id, skipping_ces);
 
   MatchTable::iterator ce_it = matches.begin();
   MatchTable::iterator const ce_end = matches.end();
-  
+
   std::map<
-    size_t, 
-    std::vector<MatchTable::const_iterator> 
+    size_t,
+    std::vector<MatchTable::const_iterator>
   > unique_logical_files_per_ce;
 
   size_t max_files = 0;
   for( ; ce_it != ce_end; ) {
- 
+
     std::string const& id = ce_it->ce_id;
     std::vector<StorageMapping::const_iterator>::iterator
     storage_part_end(
@@ -348,51 +339,44 @@ match(
     );
 
     Debug(
-      id << " has #" << 
-      storage_part_end - compatible_storage.begin() << 
+      id << " has #" <<
+      storage_part_end - compatible_storage.begin() <<
       " close compatible storage element(s) providing #" << n <<
       " accessible file(s)"
     );
-    
+
     if ( n > max_files ) max_files = n;
-      
-    std::map< 
+
+    std::map<
       size_t, std::vector<MatchTable::const_iterator>
     >::iterator it;
-    
+
     bool inserted = false;
     boost::tie(it,inserted) = unique_logical_files_per_ce.insert(
       std::make_pair(n,std::vector<MatchTable::const_iterator>())
     );
-    
+
     it->second.push_back(ce_it);
     ++ce_it;
   }
-  // If full list match result is not requested we should return
-  // only ces accessing the max number of logical files
-  bool FullListMatchResult = false;
-  if ( !jdl.EvaluateAttrBool("FullListMatchResult", FullListMatchResult) ||
-    !FullListMatchResult 
-  ) {
-    std::vector<MatchTable::const_iterator> const& max_logical_files_ces(
-      unique_logical_files_per_ce[max_files]
-    );
-    
-    MatchTable::iterator it = matches.begin();
-    MatchTable::iterator const e = matches.end();
-    for( ; it != e ; ) {
-      if( std::find(
-        max_logical_files_ces.begin(),
-        max_logical_files_ces.end(),
-      it) == max_logical_files_ces.end()) {
-        matches.erase(it++);
-      }
-      else {
-        ++it;
-      }
+  // return only CEs accessing the max number of logical files
+  std::vector<MatchTable::const_iterator> const& max_logical_files_ces(
+    unique_logical_files_per_ce[max_files]
+  );
+
+  MatchTable::iterator it = matches.begin();
+  MatchTable::iterator const e = matches.end();
+  while (it != e) {
+    if (std::find(
+          max_logical_files_ces.begin(),
+          max_logical_files_ces.end(),
+          it
+        ) == max_logical_files_ces.end()) {
+      matches.erase(it++);
+    } else {
+      ++it;
     }
   }
-  return matches;
 }
 
 }}}
