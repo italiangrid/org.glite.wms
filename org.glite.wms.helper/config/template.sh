@@ -90,7 +90,7 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 warning()
 {
   jw_echo "$1"
-  log_done_failed "$1"
+  # log_something "$1"
   kill -SIGUSR1 -$user_job_pid # TODO
 }
 
@@ -799,36 +799,6 @@ if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
   done
 fi
 
-if [ ${__job_type} -eq 0 ]; then # normal
-  cmd_line="${__job} ${__arguments} $*"
-elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
-  cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job} ${__arguments} $*"
-elif [ ${__job_type} -eq 3 ]; then # interactive
-  cmd_line="./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
-fi
-
-if [ ${__job_type} -ne 3 ]; then # all but interactive
-  if [ -n "${__standard_input}" ]; then
-    cmd_line="$cmd_line <${__standard_input}"
-  fi
-  if [ -n "${__standard_output}" ]; then
-    cmd_line="$cmd_line >${__standard_output}"
-  else
-    cmd_line="$cmd_line >/dev/null "
-  fi
-  if [ -n "${__standard_error}" ]; then
-    if [ -n "${__standard_output}" ]; then
-      if [ "${__standard_error}" = "${__standard_output}" ]; then
-        cmd_line="$cmd_line 2>&1"
-      else
-        cmd_line="$cmd_line 2>${__standard_error}"
-      fi
-    fi
-  else
-    cmd_line="$cmd_line 2>/dev/null"
-  fi
-fi
-
 if [ 1 -eq 1 ]; then # dump variable to be set?
   time_cmd=`which time 2>/dev/null`
   if [ -x "$time_cmd" ]; then
@@ -843,18 +813,40 @@ if [ 1 -eq 1 ]; then # dump variable to be set?
   fi
 fi
 
-(
+if [ ${__job_type} -eq 0 ]; then # normal
+  cmd_line="${__job}"
+elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
+  cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job}"
+fi
 
-# TODO
+if [ -f "$tmp_time_file" ]; then
+  cmd_line="$time_cmd $cmd_line"
+fi
+
+if [ ${__job_type} -ne 3 ]; then # all but interactive
+  if [ -n "${__standard_input}" ]; then
+    std_input=" <${__standard_input} "
+  fi
+  if [ -n "${__standard_output}" ]; then
+    std_output=" >${__standard_output} "
+  else
+    std_output=" >/dev/null "
+  fi
+  if [ -n "${__standard_error}" ]; then
+    std_error=" 2>${__standard_error} "
+  else
+    std_error=" 2>/dev/null "
+  fi
+else # interactive
+  ./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${arguments}'
+fi
+
+(
   if [ -z "$EDG_WL_NOSETPGRP" ]; then
     trap '' TTIN # ignore
     trap '' TTOU # ignore
   fi
-  if [ -f "$tmp_time_file" ]; then
-    "$time_cmd" "${__job}" ${__arguments} >$"{__standard_output}" 2>"${__standard_error}" &
-  else
-    "${__job}" ${__arguments} >$"{__standard_output}" 2>"${__standard_error}" &
-  fi
+  "${cmd_line}" ${__arguments} "${std_input}" "${std_output}" "${std_error}" &
   user_job_pid=$!
 
   proxy_checker &
