@@ -13,59 +13,52 @@ namespace broker {
 
 namespace {
 
-classad::ClassAd*
-make_input_file_names_section(broker::filemapping const& fm)
+void
+insert_input_file_names_section(
+  classad::ClassAd& result,
+  DataInfo const& data_info
+)
 {
-  //  [
   //    InputFNs = {
   //    [ name = FN1; SFNs = {SFN1,1, SFN1,2, ..., SFN1,m1} ],
   //    [ name = FN2; SFNs = {SFN2,1, SFN2,2, ..., SFN2,m2} ],
   //    ...
   //    [ name = FNn; SFNs = {SFNn,1, SFNn,2, ..., SFNn,mn} ]
   //    };
-  //  ]
-  classad::ClassAd ad;
-  vector<classad::ExprTree*>  InputFN_exprs;
 
-  filemapping::const_iterator fi = fm.begin();
-  filemapping::const_iterator fe = fm.end();
+  std::vector<classad::ExprTree*>  ifne;
 
-  for( ; fi != fe; ++fi ) {
+  FileMapping::const_iterator fi = data_info.fm.begin();
+  FileMapping::const_iterator const fend = data_info.fm.end();
+
+  for( ; fi != fend; ++fi ) {
     
-    classad::ClassAd fn_ad;
+    classad::ClassAd* fad(new classad::ClassAd);
+    fad->InsertAttr("name", fi->first);
 
-    string lfn(fi->first);
-    fn_ad.InsertAttr("name", lfn);
+    std::vector<std::string> const& sfns(fi->second);
+    std::vector<std::string>::const_iterator sfni = sfns.begin();
+    std::vector<std::string>::const_iterator const sfnend = sfns.end();
+    std::vector<classad::ExprTree*> sfne;
 
-    vector<string> const& sfns(fi->second);
-    vector<string>::const_iterator sfni = sfns.begin();
-    vector<string>::const_iterator const sfne = sfns.end();
-    vector<classad::ExprTree*> SFN_exprs;
-    for( ; sfni != sfne; ++sfni ) {
+    for( ; sfni != sfnend; ++sfni ) {
     
       classad::Value v;
       v.SetStringValue(*sfni);
-      SFN_exprs.push_back(classad::Literal::MakeLiteral(v));
+      sfne.push_back(classad::Literal::MakeLiteral(v));
     }
-    fn_ad.Insert(
-      "SFNs", 
-      classad::ExprList::MakeExprList(SFN_exprs)
-    );
-    InputFN_exprs.push_back( fn_ad.Copy() );
+    fad->Insert("SFNs", classad::ExprList::MakeExprList(sfne));
+    ifne.push_back(fad);
   }
-  ad.Insert(
-    "InputFNs", 
-    classad::ExprList::MakeExprList(InputFN_exprs)
-  );
-  return (
-    static_cast<classad::ClassAd*>(ad.Copy())
-  );
+  result.Insert("InputFNs", classad::ExprList::MakeExprList(ifne));
 }
 
-classad::ClassAd*
-make_storage_elements_section(broker::storagemapping const& sm)
+void
+insert_storage_elements_section(  
+  classad::ClassAd& result,
+  DataInfo const& data_info
+)
 {
-// [
 //   StorageElements = {
 //     [ name = SE1; protocols = { [ name = proto1,1; port = port1,1 ],
 //                                 [ name = proto1,2; port = port1,2 ],
@@ -79,50 +72,47 @@ make_storage_elements_section(broker::storagemapping const& sm)
 //                                 [ name = protoq,pq; port = portq,pq ] }
 //     ]
 //   };
-// ]
-  classad::ClassAd ad;
-  std::vector<classad::ExprTree*>  StorageElement_exprs;
-  broker::storagemapping::const_iterator sm_it(sm.begin());
-  broker::storagemapping::const_iterator const sm_e(sm.end());
-  for( ; sm_it != sm_e ; ++sm_it ) {
+
+  std::vector<classad::ExprTree*>  see;
+  StorageMapping::const_iterator sm_it(data_info.sm.begin());
+  StorageMapping::const_iterator const sm_end(data_info.sm.end());
   
-    classad::ClassAd s2p_ad;
-    string name;
-    vector<pair<string, int> > const& info = boost::tuples::get<0>(sm_it->second);
-    s2p_ad.InsertAttr("name", sm_it->first);
-    vector<classad::ExprTree*> protocol_exprs;
+  for( ; sm_it != sm_end ; ++sm_it ) {
+  
+    classad::ClassAd* sad(new classad::ClassAd);
 
-    vector<pair<string, int> >::const_iterator info_it(info.begin());
-    vector<pair<string, int> >::const_iterator const info_e(info.end());
-    for( ; info_it != info_e ; ++info_it ) {
-      string protocol_name;
-      int protocol_port;
-      boost::tie(protocol_name, protocol_port) = *info_it;
-      classad::ClassAd protocol_ad;
-      protocol_ad.InsertAttr("name", protocol_name);
-      protocol_ad.InsertAttr("port", protocol_port);
-      protocol_exprs.push_back(protocol_ad.Copy());
+    StorageInfo::Protocols const& protocols = sm_it->second.protocols;
+    sad->InsertAttr("name", sm_it->first);
+    std::vector<classad::ExprTree*> pe;
+
+    StorageInfo::Protocols::const_iterator p_it(protocols.begin());
+    StorageInfo::Protocols::const_iterator const p_end(protocols.end());
+
+    for( ; p_it != p_end ; ++p_it ) {
+
+      std::string name;
+      int port;
+      boost::tie(name, port) = *p_it;
+      classad::ClassAd* pad = new classad::ClassAd;
+      pad->InsertAttr("name", name);
+      pad->InsertAttr("port", port);
+      pe.push_back(pad);
     }
-    s2p_ad.Insert("protocols", classad::ExprList::MakeExprList(protocol_exprs));
-    StorageElement_exprs.push_back(s2p_ad.Copy());
+    sad->Insert("protocols", classad::ExprList::MakeExprList(pe));
+    see.push_back(sad);
   }
-  ad.Insert(
+  result.Insert(
     "StorageElements",
-    classad::ExprList::MakeExprList(StorageElement_exprs)
+    classad::ExprList::MakeExprList(see)
   );
-  return (
-    static_cast<classad::ClassAd*>(ad.Copy())
-  );
-
 }
 
 void
 insert_computing_element_section(
-  classad::Classad& result,
+  classad::ClassAd& result,
   classad::ClassAd const& ce_ad
 )
 {
-  // [
   //   name = ResourceId;
   //   CloseStorageElements = {
   //     [ name = CloseSE1; mount = mountpoint1 ],
@@ -130,7 +120,6 @@ insert_computing_element_section(
   //     ...
   //     [ name = CloseSEn; mount = mountpointn ]
   //   };
-  // ];
   classad::ExprTree* cse = ce_ad.Lookup("CloseStorageElements");
   classad::ExprTree* cei = ce_ad.Lookup("GlueCEUniqueID");
   if (cse && cei) {    
@@ -143,29 +132,16 @@ insert_computing_element_section(
 
 classad::ClassAd*
 create_brokerinfo(
-  classad::ClassAd const& ce_ad
+  classad::ClassAd const& ce_ad,
   DataInfo const& data_info
 )
-//     boost::shared_ptr<filemapping> fm,
-//     boost::shared_ptr<storagemapping> sm,
 {
-  std::auto_ptr<classad::ClassAd> result;
+  classad::ClassAd* result(new classad::ClassAd);
 
-  insert_computing_element_section(result, ce_ad));
-
-  if(fm) {
-    section.reset(make_input_file_names_section(*fm));
-    if(section) biAd.Update(*section);
-  }
-
-  if(sm) {
-    section.reset(make_storage_elements_section(*sm));
-    if(section) biAd.Update(*section);
-  }
-  
-  return (
-    static_cast<classad::ClassAd*>(biAd.Copy())
-  );
+  insert_computing_element_section(*result, ce_ad);
+  insert_storage_elements_section(*result, data_info);
+  insert_input_file_names_section(*result, data_info);
+  return result;
 }
 
 } // namespace broker
