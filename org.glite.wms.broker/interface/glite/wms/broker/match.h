@@ -80,6 +80,9 @@ match(
   std::vector<std::string> const& skipping_ces = std::vector<std::string>()
 );
 
+classad::ClassAd*
+create_brokerinfo(classad::ClassAd const& ce_ad, DataInfo const& data_info);
+
 struct MaxRankSelector
 {
   MatchTable::iterator operator()(MatchTable&) const;

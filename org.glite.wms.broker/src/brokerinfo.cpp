@@ -4,10 +4,8 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "brokerinfo.h"
+#include "glite/wms/broker/match.h"
 #include "storage_utils.h"
-
-using namespace std;
 
 namespace glite {
 namespace wms {
@@ -118,8 +116,11 @@ make_storage_elements_section(broker::storagemapping const& sm)
 
 }
 
-classad::ClassAd*
-make_computing_element_section(classad::ClassAd const& ad)
+void
+insert_computing_element_section(
+  classad::Classad& result,
+  classad::ClassAd const& ce_ad
+)
 {
   // [
   //   name = ResourceId;
@@ -130,34 +131,28 @@ make_computing_element_section(classad::ClassAd const& ad)
   //     [ name = CloseSEn; mount = mountpointn ]
   //   };
   // ];
-  classad::ExprTree* cse = ad.Lookup("CloseStorageElements");
-  classad::ExprTree* cei = ad.Lookup("GlueCEUniqueID");
-  if(cse && cei) {
-    
-    classad::ClassAd* ces(new classad::ClassAd);
-    
-    ces->Insert("CloseStorageElements", cse->Copy());
-    ces->Insert("name", cei->Copy());
-    return ces;
+  classad::ExprTree* cse = ce_ad.Lookup("CloseStorageElements");
+  classad::ExprTree* cei = ce_ad.Lookup("GlueCEUniqueID");
+  if (cse && cei) {    
+    result.Insert("CloseStorageElements", cse->Copy());
+    result.Insert("name", cei->Copy());
   }
-  return 0; 
 }
 
 } // anonymous namespace
 
 classad::ClassAd*
-make_brokerinfo_ad(
-    boost::shared_ptr<filemapping> fm,
-    boost::shared_ptr<storagemapping> sm,
-    classad::ClassAd const& ad
+create_brokerinfo(
+  classad::ClassAd const& ce_ad
+  DataInfo const& data_info
 )
+//     boost::shared_ptr<filemapping> fm,
+//     boost::shared_ptr<storagemapping> sm,
 {
-  classad::ClassAd biAd;
-  boost::shared_ptr<classad::ClassAd> section;
-  
-  section.reset(make_computing_element_section(ad));
-  if(section) biAd.Update(*section);
-  
+  std::auto_ptr<classad::ClassAd> result;
+
+  insert_computing_element_section(result, ce_ad));
+
   if(fm) {
     section.reset(make_input_file_names_section(*fm));
     if(section) biAd.Update(*section);
