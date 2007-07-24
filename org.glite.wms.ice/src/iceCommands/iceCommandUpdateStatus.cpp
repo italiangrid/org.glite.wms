@@ -138,7 +138,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                         << log4cpp::CategoryStream::ENDLINE);
         
         string first_event( *(it->Message.begin()) );
-        string printable_first_event( boost::erase_all_copy( first_event, "\n" ) );
+        string printable_first_event( boost::replace_all_copy( first_event, "\n", " " ) );
 
         classad::ClassAdParser parser;
         classad::ClassAd *ad = parser.ParseClassAd( first_event );
