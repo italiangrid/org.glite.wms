@@ -15,11 +15,11 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS client], [3.1.0])
+AC_INIT([GLite WMS UI Commands], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/commands/wmp-job-submit.cpp])
-AC_CONFIG_SRCDIR([config/glite_wmsclient.conf])
+AC_CONFIG_SRCDIR([src/lbclient/Job.py])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -50,8 +50,12 @@ AC_CHECK_HEADERS([unistd.h])
 AC_C_CONST
 AC_C_INLINE
 AC_HEADER_TIME
+AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 AC_STRUCT_TM
+AC_CHECK_MEMBERS([struct stat.st_rdev])
+AC_TYPE_UID_T
+AC_CHECK_TYPES([ptrdiff_t])
 
 # Checks for library functions.
 AC_HEADER_STDC
@@ -182,18 +186,15 @@ AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/utilities/Makefile])
 AC_CONFIG_FILES([src/services/Makefile])
 AC_CONFIG_FILES([src/lbclient/Makefile])
 AC_CONFIG_FILES([src/commands/Makefile])
+AC_CONFIG_FILES([config/Makefile])
+AC_CONFIG_FILES([config/glite_wmsui_cmd_err.conf])
 AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([wms-client.dox])
-AC_CONFIG_FILES([config/glite-wmsclient.csh])
-AC_CONFIG_FILES([config/glite-wmsclient.sh])
-AC_CONFIG_FILES([config/glite-wmsclient-vars.csh])
-AC_CONFIG_FILES([config/glite-wmsclient-vars.sh])
 
 
 AC_OUTPUT
