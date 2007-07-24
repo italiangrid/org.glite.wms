@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20  2007/07/24 09:22:12  acava
+#       bug #28178: NS dependencies still inside CLI-Python and Wrap-Python
+#
 #       Revision 1.19  2007/04/27 16:19:40  lpetronz
 #       Code Restructuring: removed checkpointing and partitioner dependency
 #
@@ -233,8 +236,6 @@ AC_MSG_RESULT(["GLITE_DGAS_COMMON found $have_glite_dgas_common"])
 
 AC_VOMS([], have_voms=yes, have_voms=no)
 AC_MSG_RESULT(["VOMS found $have_voms"])
-
-AC_GLITE_WMS_UI_OPTIONAL
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
