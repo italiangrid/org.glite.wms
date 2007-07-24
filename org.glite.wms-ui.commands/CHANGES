@@ -1,3 +1,17 @@
+====== wms UI commands version HEAD ======
+* Tue Jul 24 2007 Luca Petronzio <egee@elsagdatamat.com>
+- Migration from org.glite.wms.client to org.glite.wms-ui.commands component
+- Delegation Id read from configuration file
+- Option --all added for glite-wms-job-delegate-proxy
+- Usage of glite_wmsui.conf as unique configuration file
+- Removed dependencies from CURL
+- Usage of htcp command for https transfers
+- Added system call timeout
+- Code restructuring: checkAd modified in jobsubmit.cpp
+- Introduced fork usage to handle globus-url-copy and htcp commands
+- Resolved dependencies from: org.glite.wms.common, org.glite.wms.partitioner, org.glite.wms.checkpointing
+- Added special comment in output file in case of job registered but not started
+- Added check for special comments in input files
 ====== wms client version 3.1.10 (gLite 3.1) ======
 * Thu Apr 5 2007 Andrea Cavallini <egee@datamat.it>
 - bug #25041 fix: WMProxy client may hang
