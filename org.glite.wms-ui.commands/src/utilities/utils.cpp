@@ -89,8 +89,7 @@ const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
 
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
-const char*  GLITE_CLIENTCONF_FILENAME 		= "glite_wmsclient.conf";
-const char*  GLITE_CONF_FILENAME 			= "glite_wms.conf";
+const char*  GLITE_CLIENTCONF_FILENAME 		= "glite_wmsui.conf";
 const string DEFAULT_LB_PROTOCOL			=	"https";
 const string PROTOCOL					=	"://";
 const string TIME_SEPARATOR				=	":";
@@ -1029,16 +1028,7 @@ std::string Utils::checkConf(){
 	checkPrefix( );
 	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CLIENTCONF_FILENAME ;
 	string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CLIENTCONF_FILENAME ;
-	if ( !(isFile(cfDefault)))
-	{
-	//checking old configuration file glite_wms.conf for compatibility purpose if glite_wmsclient.conf was not found
-		cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
-	}
-	if (!(isFile(cfGeneral)))
-	{
-	//checking old configuration file glite_wms.conf for compatibility purpose if glite_wmsclient.conf was not found
-		cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
-	}
+
 	wmcConf = wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName);
 	
 	return voName;

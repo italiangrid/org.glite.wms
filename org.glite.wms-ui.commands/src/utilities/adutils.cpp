@@ -19,8 +19,7 @@ namespace wms{
 namespace client {
 namespace utilities {
 
-const string DEFAULT_UI_CLIENTCONFILE	=	"glite_wmsclient.conf";  //Used in utils as well
-const string DEFAULT_UI_CONFILE		=	"glite_wms.conf";  // kept for compatibility purpose with older versions
+const string DEFAULT_UI_CLIENTCONFILE	=	"glite_wmsui.conf";  //Used in utils as well
 const string JDL_WMS_CLIENT		=	"WmsClient";
 /******************************
 *Default constructor
@@ -122,9 +121,6 @@ string AdUtils::generateVoPath(string& voName){
 	string conf = string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CLIENTCONFILE;
 	if (Utils::isFile(conf))
 		return conf;
-	else
-	//checking for old configuration file
-		return string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CONFILE;
 }
 void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 	switch (src){
