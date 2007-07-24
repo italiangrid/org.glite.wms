@@ -1,0 +1,284 @@
+#! /usr/bin/env python
+"""
+***************************************************************************
+    filename  : glite-job-logging-info
+    author    : Alessandro Maraschini
+    email     : egee@datamat.it
+    copyright : (C) 2004 by DATAMAT
+***************************************************************************
+//
+// $Id$
+//
+"""
+# Initial Check: try to find UI configuration file path
+import sys
+import os.path
+import os
+FILESEP="/"
+try:
+     path=os.environ['GLITE_WMS_LOCATION']
+except:
+   try:
+      path=os.environ['GLITE_LOCATION']
+   except:
+      print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
+      sys.exit(1)
+libPath=path + FILESEP + "lib"
+sys.path.append(libPath)
+libPath=path + FILESEP + "lib" + FILESEP + "python"
+sys.path.append(libPath)
+
+import UIutils
+import UIchecks
+import time
+#common methods
+from glite_wmsui_LbWrapper import Eve
+from glite_wmsui_AdWrapper import AdWrapper
+import Job
+from UIutils import errMsg
+from UIutils import dbgMsg
+from UIutils import exit
+
+def checkExclude(includes, excludes):
+	if includes and excludes:
+		errMsg('Error','UI_ARG_EXCLUSIVE', "--event" , "--exclude")
+		return [1,0,0]
+	OPT= "--event"
+	#index of lud in the actual list
+	for ludes in [includes , excludes]:
+		i = 0
+		for lud in ludes:
+			try:
+				ludes[i]= int(lud)
+				if ludes[i] >= Job.EVENT_CODE_MAX:
+					errMsg ( "Error" , "UI_ARG_OUT_OF_LIMIT" , OPT )
+					return [1,0,0]
+			except ValueError:
+				try:
+					#Is not an integer, could be a string repr
+					ludes[i] =Job.events_codes.index(lud.capitalize())
+				except ValueError:
+					errMsg('Error', "UI_ARG_MISMATCH" , OPT)
+					return [1,0,0]
+			i+=1
+		OPT= "--exclude"
+	return 0 , includes ,excludes
+
+sep ="**********************************************************************\n"
+
+######################
+#####MAIN FUNCTION####
+########## I PART: Inizialing variables and Starting checks########################
+
+sys_exit = 0
+prgname="glite-job-logging-info"
+UIutils.err_log_clean(prgname)
+UIchecks.check_prefix()
+MSG_EVENT   = "event="
+MSG_EXCLUDE = "=exclude="
+simple_usage = UIutils.createErrMsg(prgname,"job Id(s)",["help","version","@","=input$",\
+"=verbosity=","from=","to=","user-tag=","=config$", MSG_EVENT, MSG_EXCLUDE,"=output$","noint", "debug", "logfile$"])
+argv=sys.argv
+UIchecks.check_noint(sys.argv)
+
+#=================================
+#   Option check
+#=================================
+
+err, options,values,extra = UIchecks.checkOpt( argv[1:]  , "i:c:v:o:e:" ,["help","version", \
+"input=","verbosity=","config=", "user-tag=","from=","to=","event=", "exclude=", "output=","noint","debug", "logfile="] )
+if    ("--help" in options):
+   print "\n" + prgname +" full help"
+   UIutils.printFullHelp(simple_usage, UIchecks.info.noint)
+   exit(0)
+elif    ("--version" in options):
+   print "Job Submission User Interface version " + UIutils.info.version
+   exit(0)
+elif err:
+   UIutils.print_help(simple_usage)
+   exit(1)
+"""
+-input/jobId sintax:
+"""
+ext= (len(extra) >0)
+res= ext + (("-i" in options) or ("--input" in options))
+if res == 0:
+   #no input/jobid specified
+   UIutils.print_help(simple_usage)
+   exit(1)
+elif res>1:
+   #   input/job/all speficied more then once
+   errMsg('Error','UI_TOO_MANY_ARGS')
+   UIutils.print_help(simple_usage)
+   exit(1)
+
+
+
+issuer =""
+ad     =0
+
+"""
+   Option check:
+"""
+try:
+	inFile  = UIutils.findVal(["--input"  , "-i" ], options, values)
+	outFile = UIutils.findVal(["--output" , "-o" ], options, values)
+	gname = UIutils.findVal(["--config" , "-c" ], options, values)
+	level    = UIutils.findVal(["--verbosity"  , "-v" ], options, values)
+	logpath = UIutils.findVal(["--logfile"], options, values)
+	includes = UIutils.findVal(["--event"  ,"-n"], options, values, 1)
+	excludes = UIutils.findVal(["--exclude","-e"], options, values, 1)
+	fromT=  UIutils.findVal(  ["--from"], options, values)
+	toT=  UIutils.findVal(  ["--to"], options, values)
+	userTags = UIutils.findVal(["--user-tag"], options, values, 1)
+except SyntaxError,rep:
+	errMsg('Error','UI_REPEATED_OPT',rep[0])
+	UIutils.print_help(simple_usage)
+	exit(1)
+
+UIchecks.checkConf ( gname , logpath)
+
+err, includes, excludes = checkExclude (includes , excludes)
+if err:
+     UIutils.print_help(simple_usage)
+     exit(1)
+
+if level:
+   try:
+     level = int(level)
+   except:
+     errMsg('Error','UI_ARG_MISMATCH', level)
+     UIutils.print_help(simple_usage)
+     exit(1)
+   if (level >3) or (level <0):
+     errMsg('Error','UI_ARG_OUT_OF_LIMIT', level)
+     UIutils.print_help(simple_usage)
+     exit(1)
+else:
+   try:
+     level = UIutils.info.confAd.getIntValue ("DefaultLogInfoLevel")
+     if level:
+       level = int( level[0] )
+     else:
+       level = 1
+   except:
+       level=1
+
+#=================================
+#  TIME
+#=================================
+try:
+	fromT , toT = UIchecks.checkFromTo (fromT , toT)
+except:
+	UIutils.print_help(simple_usage)
+	UIutils.exit(1)
+#=================================
+#  USER TAGS
+#=================================
+uTags ={}
+if userTags:
+	try:
+		for tag in userTags:
+			attr , value = tag.split("=")
+			if uTags.has_key(attr):
+				errMsg('Error','UI_REPEATED_OPT',"--user-tag ("+attr +")" )
+				UIutils.print_help(simple_usage)
+				exit(1)
+			uTags[attr]=value
+	except ValueError:
+		errMsg('Error','UI_ARG_MISMATCH', "--user-tag")
+		UIutils.print_help(simple_usage)
+		exit(1)
+
+#=================================
+#   jobID check
+#=================================
+jobs= []
+if extra:
+	jobs = Job.getJobIdfromList(extra)
+	if len (jobs) != len(extra):
+		sys_exit= -1
+elif inFile :
+	sys_exit , jobs, strjobs =Job.getJobIdfromFile(inFile)
+	if sys_exit and jobs and (not UIutils.info.noint):
+		answ=UIutils.questionYN("Do you wish to continue?")
+		if not answ:
+			print "bye"
+			exit(1)
+	if jobs and (not UIutils.info.noint):
+		jobs = Job.selectJobId( jobs, strjobs )
+else:
+	UIutils.print_help(simple_usage)
+	exit(1)
+
+if sys_exit and (not jobs):
+   errMsg('Error','UI_WRONG_JOBID_ALL')
+   exit(1)
+if sys_exit:
+  if not UIutils.info.noint:
+       answ=UIutils.questionYN("Do you wish to continue?")
+       if not answ:
+         print "bye"
+         exit(1)
+# check -output option
+if (outFile):
+   err,outFile,TBremoved=UIchecks.check_outFile(outFile)
+   if not outFile:
+      exit(err)
+
+# Check if an output file has been specified and if it already exists
+if outFile and TBremoved:
+	# The file has to be removed
+	os.remove(outFile)
+
+#Check proxy
+if UIchecks.check_proxy():
+   exit(1)
+
+#Define the error/warning message:
+em="Error"
+if len (jobs)>1:
+   em="Warning"
+
+####################RETRIEVE INFORMATION from LB
+
+# Initialise the output message
+message = ""
+
+# Check if LB Query has been requested
+LBapproach = includes or excludes or userTags or issuer or fromT or toT
+
+# Check for LB Query or normal management
+if LBapproach:
+	
+	# Initialise the dictionary
+	queriedEvents = {}
+
+	# Perform the LB Query
+	queriedEvents = Job.queryEvents(jobs, includes, excludes, uTags, issuer, fromT, toT, level)
+
+	message += Job.printQueriedEvents(jobs, queriedEvents)
+
+	if not queriedEvents: #Not able to open any of the LB's
+	   if em=="Warning":
+	       errMsg('Error','LB_API_OPEN_ALL')
+	   exit(1)
+
+else:
+	# Retrieve 
+	for jobid in jobs:
+	
+		eventArray = Job.getEvents(jobid, level)
+
+		message += Job.printEvents(jobid, eventArray)
+
+message += "\n" + sep
+UIutils.print_message(outFile, message)
+
+if outFile:
+	message='===============  glite-job-logging-info Success =================\n'
+	message=message + " Logging Information has been found and stored in the file:\n"
+	message=message + " "+ outFile +"\n"
+	message=message +'===================================================================\n'
+	UIutils.print_message(UIutils.info.logFile , message)
+exit(sys_exit)

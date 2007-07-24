@@ -1,0 +1,354 @@
+#! /usr/bin/env python
+"""
+***************************************************************************
+    filename  : glite-job-status
+    author    : Alessandro Maraschini
+    email     : egee@datamat.it
+    copyright : (C) 2004 by DATAMAT
+***************************************************************************
+//
+// $Id$
+//
+"""
+# Initial Check: try to find UI configuration file path
+import sys
+import os.path
+import os
+FILESEP="/"
+try:
+     path=os.environ['GLITE_WMS_LOCATION']
+except:
+   try:
+      path=os.environ['GLITE_LOCATION']
+   except:
+      print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
+      sys.exit(1)
+libPath=path + FILESEP + "lib"
+sys.path.append(libPath)
+libPath=path + FILESEP + "lib" + FILESEP + "python"
+sys.path.append(libPath)
+
+import UIutils
+import UIchecks
+import time
+#common methods
+from glite_wmsui_LbWrapper import Status
+import Job
+from UIutils import errMsg
+from UIutils import dbgMsg
+from UIutils import exit
+
+
+
+def checkExclude(includes, excludes):
+	if includes and excludes:
+		errMsg('Error','UI_ARG_EXCLUSIVE', "--status" , "--exclude")
+		return [1,0,0]
+	OPT= "--status"
+	#index of lud in the actual list
+	for ludes in [includes , excludes]:
+		i = 0
+		for lud in ludes:
+			try:
+				ludes[i]= int(lud)
+				if ludes[i] >=Job.STATE_CODE_MAX:
+					errMsg ( "Error" , "UI_ARG_OUT_OF_LIMIT" , OPT )
+					return [1,0,0]
+			except ValueError:
+				try:
+					#Is not an integer, could be a string repr
+					ludes[i] =Job.states_codes.index(lud.capitalize())
+				except ValueError:
+					errMsg('Error', "UI_ARG_MISMATCH" , OPT)
+					return [1,0,0]
+			i+=1
+		OPT= "--exclude"
+	return 0 , includes ,excludes
+
+
+
+
+
+
+
+
+
+############################################
+# I PART: INIZIALIZING VARIABLES AND CHECKS
+############################################
+#initialize some usefull variable
+sys_exit =0
+prgname="glite-job-status"
+UIutils.err_log_clean(prgname)
+UIchecks.check_prefix()
+MSG_STATUS="=status="
+MSG_EXCLUDE="=exclude="
+error_message= UIutils.createErrMsg( prgname , "job Id(s)",["help","version","@","all", "=input$","verbosity=","from=","to=",\
+"=config$" ,"user-tag=", MSG_STATUS , MSG_EXCLUDE, "config-vo$", "vo=","=output$","noint","nonodes" , "debug", "logfile$"])
+argv=sys.argv
+UIchecks.check_noint(sys.argv)
+
+#=================================
+#   Option check
+#=================================
+if (len(argv) < 2):
+   UIutils.print_help(error_message)
+   exit(1)
+
+err, options,values,extra = UIchecks.checkOpt(argv[1:] , "i:c:o:v:s:e:" ,["help","version","all", "input=","verbosity=", \
+ "from=","to=","config=" ,"user-tag=", "status=","exclude=","config-vo=","vo=","output=","noint","nonodes" , "debug" , "logfile="] )
+
+if    ("--help" in options):
+   print "\n" + prgname +" full help"
+   UIutils.printFullHelp(error_message, UIchecks.info.noint)
+   exit(0)
+elif    ("--version" in options):
+   print "Job Submission User Interface version " + UIutils.info.version
+   exit(0)
+elif err:
+   UIutils.print_help(error_message)
+   exit(1)
+#Checking option syntax
+"""
+ -input/jobId sintax:
+"""
+ext= (len(extra) >0)
+
+res=(   "--all" in options  or  "--from" in options  or  "--to" in options or "--user-tag" in options  \
+ or "-s" in options   or "-e" in options \
+ or "--status" in options   or "--exclude" in options )\
+ + ext + ( ("-i" in options) or ("--input" in options) )
+
+if res == 0:
+   #no input/job/all specified
+   UIutils.print_help(error_message)
+   exit(1)
+elif ext and ("--all" in options or "-i" in options or "--input" in options):
+   #   input/job speficied more then once
+   errMsg('Error','UI_TOO_MANY_ARGS')
+   UIutils.print_help(error_message)
+   exit(1)
+# Vo information check:
+for arg in ["--vo", "--config-vo"]:
+  vo =  (arg in options) + ext + ( ("-i" in options) or ("--input" in options))
+  if vo>1:
+     errMsg('Error', "UI_OPT_NOT_ALLOWED" ,  arg  , "when one or more jobid(s) specified")
+     #   input/job/all speficied more then once
+     UIutils.print_help(error_message)
+     exit(1)
+#Valued Option check:
+noNodes = ("--nonodes"   in options)
+try:
+  inFile    = UIutils.findVal( ["--input"  , "-i" ], options, values)
+  outFile   = UIutils.findVal(["--output" , "-o" ], options, values)
+  gname    = UIutils.findVal(["--config" , "-c" ], options, values)
+  gnamevo = UIutils.findVal(["--config-vo" ], options, values)
+  virtualOrg = UIutils.findVal(["--vo" ], options, values)
+  logpath = UIutils.findVal(  ["--logfile"], options, values)
+  level = UIutils.findVal(["--verbosity", "-v"], options, values)
+  fromT=  UIutils.findVal(  ["--from"], options, values)
+  toT=  UIutils.findVal(  ["--to"], options, values)
+  userTags = UIutils.findVal(["--user-tag"], options, values, 1)
+  includes = UIutils.findVal(["--status", "-s"], options, values, 1)
+  excludes = UIutils.findVal(["--exclude","-e"], options, values, 1)
+except SyntaxError,rep:
+  errMsg('Error','UI_REPEATED_OPT',rep[0])
+  UIutils.print_help(error_message)
+  exit(1)
+# UI Configuration file Check
+UIchecks.checkConf ( gname , logpath)
+
+err ,includes , excludes = checkExclude (includes , excludes)
+if err:
+     UIutils.print_help(error_message)
+     exit(1)
+
+if level:
+   try:
+     level = int(level)
+   except:
+     errMsg('Error','UI_ARG_MISMATCH', level)
+     UIutils.print_help(error_message)
+     exit(1)
+   if (level >3):
+     errMsg('Error','UI_ARG_OUT_OF_LIMIT', level)
+     UIutils.print_help(error_message)
+     exit(1)
+else:
+   level = UIutils.info.confAd.getIntValue ("DefaultStatusLevel")
+   if level:
+     try:
+       level = int( level[0] )
+     except:
+       level=1
+   else:
+     level = 1
+
+try:
+	fromT , toT = UIchecks.checkFromTo (fromT , toT)
+except:
+	UIutils.print_help(error_message)
+	UIutils.exit(1)
+
+#=================================
+#  USER TAGS
+#=================================
+uTags ={}
+if userTags:
+	try:
+		for tag in userTags:
+			attr , value = tag.split("=")
+			if uTags.has_key(attr):
+				errMsg('Error','UI_REPEATED_OPT',"--user-tag ("+attr +")" )
+				UIutils.print_help(error_message)
+				exit(1)
+			uTags[attr]=value
+	except ValueError:
+		errMsg('Error','UI_ARG_MISMATCH', "--user-tag")
+		UIutils.print_help(error_message)
+		exit(1)
+
+#=================================
+#   jobID check
+#=================================
+jobs= []
+voName=""
+if extra:
+	jobs = Job.getJobIdfromList ( extra)
+	if len (jobs) != len(extra):
+		sys_exit= -1
+elif inFile :
+	sys_exit , jobs, strjobs =Job.getJobIdfromFile(inFile)
+	if sys_exit and jobs and (not UIutils.info.noint):
+		answ=UIutils.questionYN("Do you wish to continue?")
+		if not answ:
+			print "bye"
+			exit(1)
+	if jobs and (not UIutils.info.noint):
+		jobs = Job.selectJobId( jobs, strjobs)
+
+if not jobs:
+	if sys_exit:
+		# Unable to parse /find specified JobId
+		errMsg('Error','UI_WRONG_JOBID_ALL')
+		exit(1)
+	else:
+		# Query option selected: Vo needed
+		voName=UIchecks.checkConfVo( gnamevo , virtualOrg )
+
+#Define the error/warning message:
+em="Error"
+
+# check -output option
+TBremoved = 0
+if (outFile):
+   err,outFile,TBremoved=UIchecks.check_outFile(outFile)
+   if err or (not outFile):
+      exit(err)
+      
+# Check if an output file has been specified and if it already exists
+if outFile and TBremoved:
+	# The file has to be removed
+	os.remove(outFile)
+	      
+#Check proxy
+if UIchecks.check_proxy():
+   exit(1)
+
+atLeastOneSuccess = 0
+st = 0
+
+#=================================
+#   --all check
+#=================================
+if "--all" in options:
+	issuer = UIutils.info.issuer
+else:
+	issuer = ""
+
+# Initialise the output message
+message = ""
+
+# Check if LB Query has been requested
+LBapproach = includes or excludes or userTags or issuer or fromT or toT
+
+# Retrieve the results according to the parameters
+if LBapproach:
+
+	# Query all the status
+	statesArray = Job.queryStates(jobs, includes, excludes, uTags, issuer, fromT, toT, level)
+
+	if statesArray:
+		# If this flag is set to 1 then the query might haven't found any results (but nevertheless no exception raised)
+		atLeastOneSuccess = 1
+		
+		# print Server information
+		for jobStatus in statesArray.values():
+		
+			UIutils.print_message(outFile, jobStatus.printStatus(noNodes))
+			st+=1
+
+else:
+
+	# Set the error level to warning in case of more than one job
+	if len (jobs)>1:
+		em="Warning"
+
+	# Get the status for all the Job IDàs
+	for jobid in jobs:
+		
+		dbgMsg ("Job::getStatus" , jobid.jobid, level)
+		
+		apiMsg = ""
+		
+		try:
+			# Get the status of the current Job
+			jobStatus = Job.getStatus(jobid, level)
+	
+			# Check if a status has been found
+			if jobStatus:
+				# Print the Status
+				UIutils.print_message(outFile, jobStatus.printStatus(noNodes))
+				
+				atLeastOneSuccess = 1
+				st+=1	
+		except Exception, apiMsg:
+			# Print the error message on log file
+			UIutils.print_message(UIutils.info.logFile ,  "\n")
+			
+			# Show on screen the error
+			errMsg ( em , "API_NATIVE_ERROR" , "Job:getStatus"  , apiMsg.args[0] )
+			
+			# Set the exit code
+			sys_exit= -1
+
+if level==0 and atLeastOneSuccess :
+	UIutils.print_message(outFile, "*************************************************************\n")
+
+#Final error Check
+if not st:
+	#No information got
+	if jobs:
+		# JOBID SPECIFICATED
+		if len(jobs) !=1:
+			#not only 1 JobId: Warning Message only printed so far. print the last message
+			errMsg('Error','LB_API_OPEN_ALL')
+	elif  atLeastOneSuccess:
+		#  query on LB server performed but no job found
+		errMsg("Error","UI_NO_JOB_FOUND")
+	else:
+		# All LB Queries went wrong (only warning so far)
+		errMsg('Error','LB_API_OPEN_ALL')
+	exit(1)
+else:
+	if outFile:
+		message='====================  glite-job-status success =======================\n'
+		message=message + " Bookkeeping information has been found and stored in the file:\n"
+		message=message+ " "+ outFile
+		message=message+'\n====================================================================\n'
+		UIutils.print_message(UIutils.info.logFile,message)
+	exit(sys_exit)
+
+
+
+

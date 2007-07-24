@@ -1,0 +1,290 @@
+#! /usr/bin/env python
+"""
+***************************************************************************
+    filename  : glite-job-attach
+    author    : Alessandro Maraschini
+    email     : egee@datamat.it
+    copyright : (C) 2004 by DATAMAT
+***************************************************************************
+//
+// $Id$
+//
+"""
+# Initial Check: try to find UI configuration file path
+import sys
+import os.path
+import os
+FILESEP="/"
+try:
+     path=os.environ['GLITE_WMS_LOCATION']
+except:
+   try:
+      path=os.environ['GLITE_LOCATION']
+   except:
+      print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
+      sys.exit(1)
+libPath=path + FILESEP + "lib"
+sys.path.append(libPath)
+libPath=path + FILESEP + "lib" + FILESEP + "python"
+sys.path.append(libPath)
+
+import UIutils
+import UIchecks
+import socket
+import time
+#common methods
+import Job
+import Listener
+from glite_wmsui_LogWrapper import LOG
+from glite_wmsui_LbWrapper import Status
+from glite_wmsui_AdWrapper import AdWrapper
+from UIutils import errMsg
+from UIutils import dbgMsg
+from UIchecks import checkError
+from UIutils import exit
+try:
+        from Tkinter import Tk
+        nogui=0
+except:
+        errMsg ("Warning" , "UI_CAN_NOT_EXECUTE" , "Python Tkinter", "Unable to load library")
+        nogui=1
+
+
+"""
+ MAIN FUNCTION
+"""
+sys_exit = 0
+prgname="glite-job-attach"
+UIutils.err_log_clean(prgname)
+UIchecks.check_prefix()
+error_message = UIutils.createErrMsg ( prgname, "job Id",["help","version","@","=port=",'nogui', 'nolisten' , "=config$" , "=output$", "=input$","noint","debug", "logfile$"])
+argv=sys.argv
+UIchecks.check_noint(sys.argv)
+
+
+#=================================
+#   Options check
+#=================================
+if len(argv) <2 :
+  UIutils.print_help(error_message)
+  exit(1)
+err, options,values,extra = UIchecks.checkOpt(  argv[1:] ,"c:i:p:o:" ,["help","version", "port=", 'nogui', 'nolisten',"config=" ,"output=", "input=","noint","debug", "logfile="] )
+if    ("--help" in options):
+   print "\n" + prgname +" full help"
+   UIutils.printFullHelp(error_message, UIchecks.info.noint) 
+   exit(0)
+elif    ("--version" in options):
+   print "Job Submission User Interface version " , UIutils.info.version
+   exit(0)
+elif err:
+   UIutils.print_help(error_message)
+   exit(1)
+
+#Valued Option check:
+nogui    = ("--nogui"   in options)or nogui
+nolisten    = ("--nolisten"   in options)
+if nolisten and nogui:
+   errMsg('Error','UI_ARG_EXCLUSIVE', "--nogui" , "--nolisten")
+try:
+  outFile = UIutils.findVal(["--output" , "-o" ], options, values)
+  inFile = UIutils.findVal(["--input" , "-i" ], options, values)
+  logpath = UIutils.findVal(["--logfile"], options, values)
+  portLog = UIutils.findVal(["--port", "-p"], options, values)
+  gname    = UIutils.findVal(["--config" , "-c" ], options, values)
+  if portLog:
+     try:
+        portLog=int(portLog)
+     except:
+          errMsg('Error','UI_ARG_MISMATCH', "--port")
+          UIutils.print_help(error_message)
+          sys.exit(1)
+     if portLog<1024:
+          errMsg('Error','UI_ARG_OUT_OF_LIMIT', portLog)
+          UIutils.print_help(error_message)
+          sys.exit(1)
+except SyntaxError,rep:
+  errMsg('Error','UI_REPEATED_OPT',rep[0])
+  UIutils.print_help(error_message)
+  exit(1)
+
+UIchecks.checkConf ( gname , logpath)
+if UIchecks.check_proxy():
+   exit(1)
+
+"""
+#   jobID check
+"""
+jobs=[]
+if len(extra)==1:
+   job = Job.JobId ( extra[0] )
+   if not job.set:
+      errMsg( 'Warning','UI_WRONG_JOBID_FORMAT',extra[0])
+      exit(1)
+   else:
+      jobs.append( job)
+elif inFile:
+  sys_exit , jobs, strjobs =Job.getJobIdfromFile(inFile)
+  if sys_exit and jobs and (not UIutils.info.noint):
+    answ=UIutils.questionYN("Do you wish to continue?")
+    if not answ: #No answered
+      print "bye"
+      exit(1)
+  if jobs:
+     if (not UIutils.info.noint):
+       job = Job.selectJobId( jobs , strjobs, 0)[0]
+     else:
+       job= jobs[0]
+else:
+   UIutils.print_help(error_message)
+   exit(1)
+
+em="Error"
+"""
+if len (jobs)>1:
+   em="Warning"
+"""
+# Needed to retrieve Job current Status and NS address
+status = Status()
+#Needed to perfrm log listener
+log = LOG ()
+stat= -1 ;
+jobStatus = Job.JobStatus()
+#for job in jobs:
+if job:
+   """
+   Retrieve JobStatus and initialise Logger address with NS host
+   """
+   stat= stat+1
+   dbgMsg ("Status::getStatus" , job.jobid)
+   status.getStatus (job.jobid , 1)
+   err , apiMsg = status.get_error ()
+   if err:
+      errMsg ( em , "API_NATIVE_ERROR" , "Status:getStatus"  , apiMsg )
+      exit(1)
+      #sys_exit= -1
+   else:
+      #Check if the job is interactive
+      ad = status.getVal (  jobStatus.states.index(  "Jdl"  ) , stat )[1]
+      jobad = AdWrapper ()
+      if (  jobad.fromString (ad)  ):
+         errMsg(em,'UI_JDL_WRONG_SYNTAX' , "Some Errors occurred while parsing original JDL: " +jobad.get_error()[1] ) ;
+         exit(1)
+      jobType =  jobad.getStringValue("JobType")
+      if not "interactive" in jobType:
+          errMsg(em,"UI_JDL_NOT_LISTENER" , job.jobid )
+          exit(1)
+      #Retrieve the status code
+      STATUS_CODE = jobStatus.states.index("Status Code")
+      status_code = status.getVal ( STATUS_CODE , stat )[1]
+      try:
+        status_code = int ( status_code )
+      except ValueError:
+        errMsg(em,'UI_JDL_WRONG_SYNTAX' , "Unable to retrieve job Status Code.Wrong type caught" )
+        exit(1)
+      if status_code == jobStatus.DONE:
+         DONE_CODE =  jobStatus.states.index("Done Code")
+         done_code  = status.getVal (   jobStatus.states.index("Done Code")  , stat )[1]
+         try:
+              done_code  = int ( done_code )
+         except ValueError:
+              errMsg(em,'UI_JDL_WRONG_SYNTAX' , "Unable to retrieve job done_code.Wrong type caught" )
+         # done_code == 2  means the the job is Done (Failed).
+         # Since Re-submission is allowed, attachment is possible
+         if done_code != 2:
+            errMsg(em,'JOB_ATTACH_NOT_ALLOWED', job.jobid ,  status.getVal (jobStatus.states.index("Status") , stat)[1] )
+      elif status_code not in [  jobStatus.SUBMITTED, jobStatus.WAITING,  jobStatus.READY, jobStatus.SCHEDULED, jobStatus.RUNNING ]:
+        errMsg(em,'JOB_ATTACH_NOT_ALLOWED', job.jobid ,  status.getVal (jobStatus.states.index("Status") , stat)[1] )
+        exit(1)
+      else:
+        nsStr =  status.getVal( jobStatus.states.index("Network Server" ), stat  )
+        if not nsStr:
+          errMsg("Error",'UI_JDL_WRONG_SYNTAX' , "Unable to retrieve Network Server value from LB." )
+          exit(1)
+        nsStr = nsStr [1]
+        try:
+		nsHost, nsPort = nsStr.split (":")
+		nsPort = int (nsPort)
+        except:
+		# Could be WMPROXY instance:
+		try:
+			trash,nsHost=nsStr.split("://")
+			nsHost,nsPort=nsHost.split(":",1)
+			nsPort,trash=nsPort.split("/",1)
+			int(nsPort)
+			# CONVERTING wmproxy into NS
+			nsPort = 7772
+			nsHost=UIutils.resolveHostIp(nsHost)
+		except:
+			# Neither NS or WMP
+			errMsg("Error",'UI_JDL_WRONG_SYNTAX' , nsStr+": not a valid Network Server" )
+			exit(1)
+        """
+        Perform the grid_console shadow and log the listener host and port
+        """
+        shadow = Job.Shadow()
+        shadow.set ( job )
+        shadow.checkRootPath()
+        dbgMsg ("LOG::init" , nsHost )
+        log.init(  nsHost  )
+        checkError ("LOG::init" , log , 1)
+        shadow.console(portLog)
+        dbgMsg ("LOG::log_listener" , job.jobid , shadow.getHost() , shadow.getPort()  )
+        log.log_listener (  job.jobid , shadow.getHost() , shadow.getPort() )
+        checkError ( "LOG::log_listener" , log , 1)
+        if not (nogui or nolisten):
+           try:
+              listener = Listener.ListenerFrame ( Tk() , shadow)
+           except TclError:
+              errMsg ("Warning" , "NS_SUBMIT_FAIL" , "Unable to Display the Listener")
+              listener = Listener.Listener ( shadow)
+        elif nolisten:
+             print "No Listen Option specified. Do nothing"
+        else:
+           listener = Listener.Listener ( shadow )
+        """
+        Write the interactive session result
+        """
+        ju = 35
+        message =        "**********************************************************************\n"
+        message=message+ " JOB ATTACHED:\n"
+        if nolisten:
+           message=message+ " The Interactive Streams have been successfully generated"
+        else:
+           message=message+ " The Interactive Session Listener has been successfully launched"
+        message=message+ "\n with the following parameters:\n       ---"
+        message=message+ "\n Host: ".ljust(ju) + shadow.getHost()
+        message=message+ "\n Port: ".ljust(ju) + repr (shadow.getPort() )
+        #message=message+ "\n Pid:  ".ljust(ju) +  repr (shadow.getPid() )
+        if UIutils.info.debug or nolisten:
+            message=message+ "\n Shadow process Id:".ljust(ju) +  repr (shadow.getPid() )
+            message=message+ "\n Input Stream  location:  ".ljust(ju) +  shadow.getPipeIn()
+            message=message+ "\n Output Stream  location:  ".ljust(ju) +  shadow.getPipeOut()
+            if nolisten:
+               message=message+ "\n       ---\n *** Warning ***\n Make sure you will kill the Shadow process \n and remove the input/output streams when interaction finishes\n"
+        message=message+ "\n**********************************************************************\n"
+        UIutils.print_message(outFile,message)
+        if outFile:
+          message=          '========================  glite-job-attach Success ===========================\n'
+          message=message + " Job Interactive Session Listener Information has been stored in the file:\n"
+          message=message + " "+ outFile +"\n"
+          message=message + '============================================================================\n'
+          UIutils.print_message(outFile,message)
+        """
+        Fork the process and execute the listener graphical implementation
+        For is not needed when nogui is specified
+        """
+        if not nogui:
+          try:
+             pid = os.fork()
+             if pid > 0:
+                 #print "exit first parent"
+                 exit(0)
+          except OSError, e:
+             print "Fatal Error: Unable to fork the process. Listener console unavailable"
+             sys.exit(1)
+        if not nolisten:
+             listener.run()
+        if not nogui:
+          sys.exit (0)
+        else:
+          exit(0)
