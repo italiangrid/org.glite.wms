@@ -15,7 +15,7 @@
 #
 
 
-noinst_LTLIBRARIES = libglite_wms_client_utilities.la
+noinst_LTLIBRARIES = libglite_wmsui_commands_utilities.la
 
 noinst_HEADERS = \
 	adutils.h \
@@ -25,7 +25,7 @@ noinst_HEADERS = \
 	utils.h
 
 
-libglite_wms_client_utilities_la_SOURCES = \
+libglite_wmsui_commands_utilities_la_SOURCES = \
 	adutils.cpp \
 	excman.cpp \
 	logman.cpp \
@@ -33,7 +33,7 @@ libglite_wms_client_utilities_la_SOURCES = \
 	utils.cpp
 
 
-#libglite_wms_client_utilities_la_LIBADD =
+#libglite_wmsui_commands_utilities_la_LIBADD =
 
 AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \

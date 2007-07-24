@@ -7,13 +7,13 @@
 ## *********************************************************************
 
 noinst_LTLIBRARIES = \
-	libglite_wms_client_delegateproxy.la \
-	libglite_wms_client_jobinfo.la \
-	libglite_wms_client_jobsubmit.la \
-	libglite_wms_client_joboutput.la \
-	libglite_wms_client_jobcancel.la \
-	libglite_wms_client_joblistmatch.la	\
-	libglite_wms_client_jobperusal.la
+	libglite_wmsui_commands_delegateproxy.la \
+	libglite_wmsui_commands_jobinfo.la \
+	libglite_wmsui_commands_jobsubmit.la \
+	libglite_wmsui_commands_joboutput.la \
+	libglite_wmsui_commands_jobcancel.la \
+	libglite_wmsui_commands_joblistmatch.la	\
+	libglite_wmsui_commands_jobperusal.la
 	
 noinst_HEADERS     = \
 	delegateproxy.h \
@@ -27,41 +27,41 @@ noinst_HEADERS     = \
 	listener.h
 
 
-libglite_wms_client_delegateproxy_la_SOURCES = \
+libglite_wmsui_commands_delegateproxy_la_SOURCES = \
 	delegateproxy.cpp \
 	job.cpp
 
-libglite_wms_client_jobinfo_la_SOURCES = \
+libglite_wmsui_commands_jobinfo_la_SOURCES = \
 	jobinfo.cpp \
 	lbapi.cpp \
 	job.cpp
 
-#libglite_wms_client_jobattach_la_SOURCES = \
+#libglite_wmsui_commands_jobattach_la_SOURCES = \
 #	jobattach.cpp \
 #	lbapi.cpp \
 #	job.cpp
 
-libglite_wms_client_jobsubmit_la_SOURCES = \
+libglite_wmsui_commands_jobsubmit_la_SOURCES = \
 	jobsubmit.cpp \
 	lbapi.cpp \
 	job.cpp \
 	listener.cpp
 
-libglite_wms_client_joboutput_la_SOURCES = \
+libglite_wmsui_commands_joboutput_la_SOURCES = \
 	joboutput.cpp \
 	lbapi.cpp \
 	job.cpp
 
-libglite_wms_client_jobcancel_la_SOURCES = \
+libglite_wmsui_commands_jobcancel_la_SOURCES = \
 	jobcancel.cpp \
 	lbapi.cpp \
 	job.cpp
 
-libglite_wms_client_joblistmatch_la_SOURCES = \
+libglite_wmsui_commands_joblistmatch_la_SOURCES = \
 	joblistmatch.cpp \
 	job.cpp
 
-libglite_wms_client_jobperusal_la_SOURCES = \
+libglite_wmsui_commands_jobperusal_la_SOURCES = \
 	jobperusal.cpp \
 	lbapi.cpp \
 	job.cpp

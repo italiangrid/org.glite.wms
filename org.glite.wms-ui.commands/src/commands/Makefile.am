@@ -18,15 +18,15 @@
 
 #WMPROXY_API_CPP = $(top_builddir)/src/libglite_wms_wmproxy_api_cpp.la
 
-WMPROXY_ATTACH = $(top_builddir)/src/services/libglite_wms_client_jobattach.la
-WMPROXY_PERUSAL= $(top_builddir)/src/services/libglite_wms_client_jobperusal.la
-WMPROXY_CANCEL = $(top_builddir)/src/services/libglite_wms_client_jobcancel.la
-WMPROXY_DELEGATE = $(top_builddir)/src/services/libglite_wms_client_delegateproxy.la
-WMPROXY_PROXYINFO = $(top_builddir)/src/services/libglite_wms_client_jobinfo.la
-WMPROXY_LISTMATCH = $(top_builddir)/src/services/libglite_wms_client_joblistmatch.la
-WMPROXY_OUTPUT = $(top_builddir)/src/services/libglite_wms_client_joboutput.la
-WMPROXY_SUBMIT = $(top_builddir)/src/services/libglite_wms_client_jobsubmit.la
-WMPROXY_UTILS = $(top_builddir)/src/utilities/libglite_wms_client_utilities.la
+WMPROXY_ATTACH = $(top_builddir)/src/services/libglite_wmsui_commands_jobattach.la
+WMPROXY_PERUSAL= $(top_builddir)/src/services/libglite_wmsui_commands_jobperusal.la
+WMPROXY_CANCEL = $(top_builddir)/src/services/libglite_wmsui_commands_jobcancel.la
+WMPROXY_DELEGATE = $(top_builddir)/src/services/libglite_wmsui_commands_delegateproxy.la
+WMPROXY_PROXYINFO = $(top_builddir)/src/services/libglite_wmsui_commands_jobinfo.la
+WMPROXY_LISTMATCH = $(top_builddir)/src/services/libglite_wmsui_commands_joblistmatch.la
+WMPROXY_OUTPUT = $(top_builddir)/src/services/libglite_wmsui_commands_joboutput.la
+WMPROXY_SUBMIT = $(top_builddir)/src/services/libglite_wmsui_commands_jobsubmit.la
+WMPROXY_UTILS = $(top_builddir)/src/utilities/libglite_wmsui_commands_utilities.la
 #WSSE_LIBS=-lwsse -lssl -lcrypto
 
 
