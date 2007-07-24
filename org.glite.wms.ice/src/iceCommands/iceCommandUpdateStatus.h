@@ -27,6 +27,11 @@
 #include "iceAbsCommand.h"
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
+// Forward declaration
+namespace log4cpp {
+    class Category;
+};
+
 namespace glite {
 namespace wms {
 namespace ice {
@@ -34,6 +39,7 @@ namespace util {
 
     class iceCommandUpdateStatus : public iceAbsCommand {
     protected:
+        log4cpp::Category* m_log_dev;
         std::vector<monitortypes__Event> m_ev;
 	std::string m_cemondn;
 

@@ -41,7 +41,8 @@
 #include "classad_distribution.h"
 
 // boost includes
-#include "boost/scoped_ptr.hpp"
+#include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 
 // System includes
 #include <iostream>
@@ -56,16 +57,36 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event>& ev, const string& cemondn ) :
+    m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_ev( ev ),
     m_cemondn( cemondn )
 {
+    static const char* method_name = "iceCommandUpdateStatus::iceCommandUpdateStatus() - ";
+    if ( m_log_dev->isInfoEnabled() ) {
+        // Dumps the content of the notification
+        vector< monitortypes__Event >::const_iterator it;
+        for ( it = m_ev.begin(); m_ev.end() != it; ++it ) {
+            CREAM_SAFE_LOG(m_log_dev->infoStream()
+                           << method_name 
+                           << "Message dump follows"
+                           << log4cpp::CategoryStream::ENDLINE);
 
+            vector< string >::const_iterator msg_it;
+            for ( msg_it = it->Message.begin(); 
+                  msg_it != it->Message.end(); msg_it++ ) {
+                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                               << method_name 
+                               << "Got notification: "
+                               << boost::replace_all_copy( *msg_it, "\n", " " )
+                               << log4cpp::CategoryStream::ENDLINE);
+            }
+        }
+    }
 }
 
 //____________________________________________________________________________
 void iceCommandUpdateStatus::execute( ) throw( )
 {   
-    log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     jobCache *cache( jobCache::getInstance() );
     static const char* method_name = "iceCommandUpdateStatus::execute() - ";
 
