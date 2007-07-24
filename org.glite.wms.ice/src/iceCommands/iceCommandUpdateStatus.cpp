@@ -31,7 +31,6 @@
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
 #include "ice-core.h"
-#include "DNProxyManager.h"
 #include "subscriptionManager.h"
 
 // CREAM stuff
@@ -48,7 +47,6 @@
 #include <iostream>
 
 // STL stuff
-#include <utility> // for std::pair
 #include <set>
 #include <list>
 

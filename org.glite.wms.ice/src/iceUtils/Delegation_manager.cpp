@@ -71,6 +71,7 @@ namespace {
 Delegation_manager::Delegation_manager( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_operation_count( 0 ),
+    m_max_size( 1000 ), // FIXME: Hardcoded default
     m_operation_count_max( 20 ) // FIXME: hardcoded default
 {
 
@@ -135,6 +136,8 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
     // Lookup the (sha1_digest,cream_url) into the set
     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
     t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
+    typedef t_delegation_set::nth_index<2>::type t_delegation_by_seq;
+    t_delegation_by_seq& delegation_by_seq( m_delegation_set.get<2>() );
 
     t_delegation_by_key::iterator it = delegation_by_key_view.find( boost::make_tuple(str_sha1_digest,cream_url));
 
@@ -142,9 +145,15 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
         // Delegation id not found. Performs a new delegation   
         time_t expiration_time;
 
+        // The delegation ID is the "canonized" GRID job id
+        delegation_id = canonizeString( job.getGridJobID() );
+
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
-                        << "Creating new delegation for CREAM URL "
+                        << "Creating new delegation "
+                        << "with delegation id "
+                        << delegation_id
+                        << " CREAM URL "
                         << cream_url
                         << " Delegation URL "
                         << cream_deleg_url
@@ -158,28 +167,60 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
             // Gets the proxy expiration time
             expiration_time = time(0) + cream_api::certUtil::getProxyTimeLeft( certfile );
 
-            // The delegation ID is the "canonized" GRID job id
-            delegation_id = canonizeString( job.getGridJobID() );
             CreamProxy_Delegate( delegation_id, cream_deleg_url, certfile ).execute( theProxy, 3 );
         } catch( ... ) {
             // Delegation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
                             << method_name
-                            << "FAILED creation of new delegation for CREAM URL "
+                            << "Creating FAILED for new delegation "
+                            << "with delegation id "
+                            << delegation_id
+                            << " CREAM URL "
                             << cream_url
                             << " Delegation URL "
                             << cream_deleg_url
                             << " user DN "
                             << cream_api::certUtil::getDN( certfile )
+                            << " proxy hash "
+                            << str_sha1_digest
                             << log4cpp::CategoryStream::ENDLINE );
             // Returns an empty string
             return delegation_id;
         }     
         // Inserts the new delegation ID into the delegation set
-        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
+        // m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
+
+        // Inserts into the front of the list; this is guaranteed to
+        // be a new element, as it has not been found in this "if"
+        // branch
+        delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
+        if ( m_delegation_set.size() > m_max_size ) {
+            if ( m_log_dev->isDebugEnabled() ) {
+
+                // drops least recently used element
+                const table_entry last_elem( delegation_by_seq.back() );
+                
+                CREAM_SAFE_LOG( m_log_dev->debugStream()
+                                << method_name
+                                << "Dropping entry for delegation id "
+                                << last_elem.m_delegation_id
+                                << " CREAM URL "
+                                << last_elem.m_cream_url
+                                << " proxy hash "
+                                << last_elem.m_sha1_digest
+                                << log4cpp::CategoryStream::ENDLINE );
+            }
+            delegation_by_seq.pop_back();
+        }
     } else {
         // Delegation id FOUND. Returns it
         delegation_id = it->m_delegation_id;
+
+        // Project the iterator to the sequencedd index
+        t_delegation_by_seq::iterator it_seq( m_delegation_set.project<2>( it ) );
+
+        // Relocates the newly-found element to the front of the list
+        delegation_by_seq.relocate( delegation_by_seq.begin(), it_seq );
 
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
@@ -209,11 +250,12 @@ void Delegation_manager::purge_old_delegations( void )
     deleg_time_view.erase( deleg_time_view.begin(), it_end );
     size_t size_after = deleg_time_view.size();
 
-    CREAM_SAFE_LOG( m_log_dev->debugStream()
-                    << method_name
-                    << "Purged "
-                    << size_before - size_after
-                    << " elements from the delegation cache"
-                    << log4cpp::CategoryStream::ENDLINE );
-
+    if ( size_before != size_after ) {
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
+                        << method_name
+                        << "Purged "
+                        << size_before - size_after
+                        << " elements from the delegation cache"
+                        << log4cpp::CategoryStream::ENDLINE );
+    }
 }

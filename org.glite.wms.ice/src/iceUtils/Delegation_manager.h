@@ -33,6 +33,7 @@
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/ordered_index.hpp"
 #include "boost/multi_index/member.hpp"
+#include "boost/multi_index/sequenced_index.hpp"
 #include "boost/multi_index/composite_key.hpp"
 #include "boost/thread/recursive_mutex.hpp"
 
@@ -62,6 +63,7 @@ namespace util {
 
         log4cpp::Category* m_log_dev;
         unsigned int m_operation_count;
+        const size_t m_max_size; ///< Maximum size of the delegation cache
         const unsigned int m_operation_count_max;
 
         /**
@@ -99,7 +101,8 @@ namespace util {
             >,
             boost::multi_index::ordered_non_unique<
               boost::multi_index::member<table_entry,time_t,&table_entry::m_expiration_time>
-            > 
+            >,
+            boost::multi_index::sequenced<>
           >
         > t_delegation_set;
         

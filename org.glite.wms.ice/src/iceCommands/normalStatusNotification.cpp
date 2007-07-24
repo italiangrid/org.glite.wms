@@ -200,10 +200,6 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
                     << "processing normal status change notification"
                     << log4cpp::CategoryStream::ENDLINE);
     
-    iceLBLogger *m_lb_logger( iceLBLogger::instance() );
-    jobCache *m_cache( jobCache::getInstance() );
-    glite::wms::ice::Ice* m_ice_manager( glite::wms::ice::Ice::instance() );
-    
     string cream_job_id;
     
     // First, we need to get the jobID for which this notification 
