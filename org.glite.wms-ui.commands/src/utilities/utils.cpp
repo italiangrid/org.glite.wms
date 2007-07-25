@@ -414,11 +414,12 @@ std::vector<std::string> Utils::askMenu(std::vector<std::string> &items, const e
 	// MENU ============
 	out <<"------------------------------------------------------------------\n";
 	//counters
-	int i, it = 0;
+	int i = 0;
+	int it = 0;
 	//checks how many comments will be erased from the vector items
 	int erased = 0;
 	while ( i < ( size - erased ) ) {
-		if ( items[i].find("#*") == 0 ) {
+		if ( items[i].find("#*", 0) == 0 ) {
 			// Saving and formatting the comment to be printed on next jobId line
 			comment = items[i] ;
 			int len = comment.size() ;
