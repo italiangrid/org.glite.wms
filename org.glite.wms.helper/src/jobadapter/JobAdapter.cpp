@@ -361,12 +361,20 @@ try {
   static boost::regex expression_blahce(":[0-9]+/blah-");
   boost::smatch       result_blahce;
   bool is_blahp_resource = false;
+  static boost::regex expression_voblahce(":[0-9]+/voblah-");
+  boost::smatch       result_voblahce;
+  bool is_voblahp_resource = false;
   bool is_condor_resource = false;
 
   if (boost::regex_search(globusresourcecontactstring,
 			  result_blahce,
                           expression_blahce)) {
     is_blahp_resource = true;
+  } else if (boost::regex_search(globusresourcecontactstring,
+			  result_voblahce,
+                          expression_voblahce)) {
+    is_blahp_resource = true;
+    is_voblahp_resource = true;
   } else {
     static boost::regex expression_condorce(":[0-9]+/condor-");
     boost::smatch       result_condorce;
@@ -456,29 +464,36 @@ try {
                                           helper_id);
     }
 
-    std::string hostcertificatesubjectvo(local_hostname);
-    hostcertificatesubjectvo.append("/");
-    hostcertificatesubjectvo.append(certificatesubject);
-    hostcertificatesubjectvo.append("/");
-    hostcertificatesubjectvo.append(vo);
-    hostcertificatesubjectvo.append(voms_fqan);
-    MD5((unsigned char *)hostcertificatesubjectvo.c_str(),
-        hostcertificatesubjectvo.length(),
-        md5_cert_hash);
-    md5_hex_hash.setf(std::ios_base::hex, std::ios_base::basefield);
-    md5_hex_hash.width(2);
-    md5_hex_hash.fill('0');
+    std::string remote_schedd;
 
-    for (int i = 0; i < MD5_DIGEST_LENGTH; ++i) {
+    if (! is_voblahp_resource) {
+      std::string hostcertificatesubjectvo(local_hostname);
+      hostcertificatesubjectvo.append("/");
+      hostcertificatesubjectvo.append(certificatesubject);
+      hostcertificatesubjectvo.append("/");
+      hostcertificatesubjectvo.append(vo);
+      hostcertificatesubjectvo.append(voms_fqan);
+      MD5((unsigned char *)hostcertificatesubjectvo.c_str(),
+          hostcertificatesubjectvo.length(),
+          md5_cert_hash);
+      md5_hex_hash.setf(std::ios_base::hex, std::ios_base::basefield);
       md5_hex_hash.width(2);
-      md5_hex_hash << (unsigned int)md5_cert_hash[i];
+      md5_hex_hash.fill('0');
+  
+      for (int i = 0; i < MD5_DIGEST_LENGTH; ++i) {
+        md5_hex_hash.width(2);
+        md5_hex_hash << (unsigned int)md5_cert_hash[i];
+      }
+  
+      std::string hashedcertificatesubject(md5_hex_hash.str());
+  
+      jdl::set_daemon_unique_name(*result, hashedcertificatesubject);
+  
+      remote_schedd = hashedcertificatesubject;
+    } else { 
+      remote_schedd = vo;
     }
 
-    std::string hashedcertificatesubject(md5_hex_hash.str());
-
-    jdl::set_daemon_unique_name(*result, hashedcertificatesubject);
-
-    std::string remote_schedd(hashedcertificatesubject);
     remote_schedd.append("@");
     remote_schedd.append(gatekeeper_hostname);
     jdl::set_remote_schedd(*result, "$$(Name)");
@@ -494,6 +509,7 @@ try {
     jdl::set_should_transfer_files(*result, "YES");
     jdl::set_when_to_transfer_output(*result, "ON_EXIT");
     jdl::set_transfer_input_files(*result, userproxy);
+    jdl::set_transfer_output(*result, ""); // Make sure we don't get extra files
 
     // Compute proxy file basename: remove trailing whitespace and slashes.
     std::string userproxy_basename(userproxy);
