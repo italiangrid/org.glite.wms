@@ -118,10 +118,9 @@ void AdUtils::checkDeprecatedAttributes(glite::jdl::Ad &ad,
 
 string AdUtils::generateVoPath(string& voName){
 	//new approach
-	string conf = string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CLIENTCONFILE;
-	if (Utils::isFile(conf))
-		return conf;
+	return string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CLIENTCONFILE;
 }
+
 void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 	switch (src){
 		case CERT_EXTENSION:
