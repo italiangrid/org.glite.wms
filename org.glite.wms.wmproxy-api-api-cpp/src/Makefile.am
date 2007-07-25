@@ -46,7 +46,6 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(GSOAP_LOCATION) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
-	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)  \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \

@@ -53,15 +53,11 @@ AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
 have_boost=no
-have_classads=no
 have_globus=no
 have_gridsite=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_MSG_RESULT(["BOOST found $have_boost"])
-
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
 
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
@@ -77,10 +73,6 @@ if test "$have_boost" = "no"; then
   AC_MSG_RESULT(["Please verify BOOST package"])
 fi
 
-if test "$have_classads" = "no"; then
-  AC_MSG_RESULT(["Please verify CLASSADS package"])
-fi
-
 if test "$have_gridsite" = "no"; then
   AC_MSG_RESULT(["Please verify GRIDSITE package"])
 fi
@@ -90,10 +82,6 @@ if test "$have_globus" = "no"; then
 fi
 
 if test "$have_boost" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_classads" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 
