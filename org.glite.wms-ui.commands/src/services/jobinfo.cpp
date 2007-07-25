@@ -91,14 +91,17 @@ void JobInfo::readOptions (int argc,char **argv) {
 		(jdlOpt && !m_dgOpt.empty()) ||
 		(origOpt && proxyOpt) ||
 		(origOpt && !m_dgOpt.empty()) ||
-		(proxyOpt && !m_dgOpt.empty()) ||
-		(!m_inOpt.empty() && !m_dgOpt.empty()) ) {
+		(proxyOpt && !m_dgOpt.empty()) ) {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::JDL) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::JDLORIG) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::PROXY) + "\n";
 		err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
-  		} else if ( jdlOpt == true || proxyOpt == true || origOpt == true) {
+		} else if ( !m_inOpt.empty() && !m_dgOpt.empty())  {
+			err << "The following options cannot be specified together:\n" ;
+			err << wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
+			err << wmcOpts->getAttributeUsage(Options::INPUT) + "\n";
+			} else if ( jdlOpt == true || proxyOpt == true || origOpt == true) {
 				if (!m_inOpt.empty()) {
 				// no Jobid with --input
 				jobId = wmcOpts->getJobId();
