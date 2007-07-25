@@ -744,7 +744,7 @@ throw()
              cream_api::job_statuses::ABORTED == tmp_job.getStatus() ) {
             // WARNING: the next line removes the job from the job cache!
 
-            purge_job( it, "Job purged by ICE" );
+            it = purge_job( it, "Job purged by ICE" );
 
         }
         if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ) {
