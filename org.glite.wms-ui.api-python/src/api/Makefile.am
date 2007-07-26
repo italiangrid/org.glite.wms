@@ -7,42 +7,42 @@
 ## *********************************************************************
 
 EXTRA_DIST = \
-	wmsui-api.pyc \
-	wmsui-listener.pyc \
-	wmsui-checks.pyc \
-        wmsui-utils.pyc \
-        wmsui-api.py \
-	wmsui-listener.py \
-	wmsui-checks.py \
-	wmsui-utils.py
+	wmsui_api.pyc \
+	wmsui_listener.pyc \
+	wmsui_checks.pyc \
+        wmsui_utils.pyc \
+        wmsui_api.py \
+	wmsui_listener.py \
+	wmsui_checks.py \
+	wmsui_utils.py
 
 clilibdir = $(libdir)/python
 clilib_SCRIPTS = \
-	wmsui-api.py \
-	wmsui-listener.py \
-        wmsui-checks.py \
-        wmsui-utils.py \
-        wmsui-api.pyc \
-        wmsui-listener.pyc \
-        wmsui-checks.pyc \
-        wmsui-utils.pyc
+	wmsui_api.py \
+	wmsui_listener.py \
+        wmsui_checks.py \
+        wmsui_utils.py \
+        wmsui_api.pyc \
+        wmsui_listener.pyc \
+        wmsui_checks.pyc \
+        wmsui_utils.pyc
 
-wmsui-api.pyc:
-	/bin/touch wmsui-api.pyc
+wmsui_api.pyc:
+	/bin/touch wmsui_api.pyc
 
-wmsui-listener.pyc:
-	/bin/touch wmsui-listener.pyc
+wmsui_listener.pyc:
+	/bin/touch wmsui_listener.pyc
 
-wmsui-checks.pyc:
-	/bin/touch wmsui-checks.pyc
+wmsui_checks.pyc:
+	/bin/touch wmsui_checks.pyc
 
-wmsui-utils.pyc:
-	/bin/touch wmsui-utils.pyc
+wmsui_utils.pyc:
+	/bin/touch wmsui_utils.pyc
 
 CLEANFILES = \
-	wmsui-api.pyc \
-	wmsui-listener.pyc \
-        wmsui-checks.pyc \
-        wmsui-utils.pyc
+	wmsui_api.pyc \
+	wmsui_listener.pyc \
+        wmsui_checks.pyc \
+        wmsui_utils.pyc
 
 MAINTAINERCLEANFILES = Makefile.in
