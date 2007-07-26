@@ -17,7 +17,12 @@ namespace broker {
 void match(classad::ClassAd& ad, MatchTable& matches);
 void match(classad::ClassAd& ad, MatchTable& matches, DataInfo& data_info);
 classad::ClassAd*
-create_brokerinfo(classad::ClassAd const& ce_ad, DataInfo const& data_info);
+create_brokerinfo(
+  classad::ClassAd const& jdl_ad, 
+  classad::ClassAd const& ce_ad, 
+  DataInfo const& data_info
+);
+
 }
 
 namespace manager {
@@ -40,6 +45,7 @@ format_match_result(
 );
 std::string
 format_match_result(
+  classad::ClassAd& ad,
   broker::MatchTable const& matches,
   broker::DataInfo const& data_info,
   int number_of_results
@@ -79,7 +85,7 @@ match(
 
   std::string result;
   if (include_brokerinfo) {
-    result = format_match_result(matches, data_info, number_of_results);
+    result = format_match_result(ad, matches, data_info, number_of_results);
   } else {
     result = format_match_result(matches, number_of_results);
   }
@@ -142,6 +148,7 @@ rank_greater_than(
 
 std::string
 format_match_result(
+  classad::ClassAd& ad,
   broker::MatchTable const& matches,
   int number_of_results
 )
@@ -183,6 +190,7 @@ format_match_result(
 
 std::string
 format_match_result(
+  classad::ClassAd& ad,
   broker::MatchTable const& matches,
   broker::DataInfo const& data_info,
   int number_of_results
@@ -208,7 +216,7 @@ format_match_result(
     host->InsertAttr("ce_id", ce_id);
     host->InsertAttr("rank", it->rank);
     std::auto_ptr<classad::ClassAd> brokerinfo(
-      create_brokerinfo(*it->ce_ad, data_info)
+      create_brokerinfo(ad, *it->ce_ad, data_info)
     );
     host->Insert("brokerinfo", brokerinfo.get());
     brokerinfo.release();

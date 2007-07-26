@@ -71,12 +71,8 @@ void process_submit_impl(classad::ClassAd& ad)
   classad::ClassAd const& ce_ad = *best_match_it->ce_ad;
 
   boost::scoped_ptr<classad::ClassAd> brokerinfo(
-    create_brokerinfo(ce_ad, data_info)
+    create_brokerinfo(ad, ce_ad, data_info)
   );
-  classad::ExprTree const* dac_e = ad.Lookup("DataAccessProtocol");
-  if (dac_e) {
-    brokerinfo->Insert("DataAccessProtocol", dac_e->Copy());
-  }
 
   // TODO: can the get function throw?
   std::string const brokerinfo_file(
