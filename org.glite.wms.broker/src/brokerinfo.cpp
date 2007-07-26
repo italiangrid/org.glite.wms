@@ -120,8 +120,8 @@ insert_computing_element_section(
   //     ...
   //     [ name = CloseSEn; mount = mountpointn ]
   //   };
-  classad::ExprTree* cse = ce_ad.Lookup("CloseStorageElements");
-  classad::ExprTree* cei = ce_ad.Lookup("GlueCEUniqueID");
+  classad::ExprTree const* cse = ce_ad.Lookup("CloseStorageElements");
+  classad::ExprTree const* cei = ce_ad.Lookup("GlueCEUniqueID");
   if (cse && cei) {    
     result.Insert("CloseStorageElements", cse->Copy());
     result.Insert("name", cei->Copy());
@@ -132,6 +132,7 @@ insert_computing_element_section(
 
 classad::ClassAd*
 create_brokerinfo(
+  classad::ClassAd const& jdl_ad,
   classad::ClassAd const& ce_ad,
   DataInfo const& data_info
 )
@@ -141,6 +142,12 @@ create_brokerinfo(
   insert_computing_element_section(*result, ce_ad);
   insert_storage_elements_section(*result, data_info);
   insert_input_file_names_section(*result, data_info);
+
+  classad::ExprTree const* dac = jdl_ad.Lookup("DataAccessProtocol");
+  if (dac) {
+    result->Insert("DataAccessProtocol", dac->Copy());
+  }
+
   return result;
 }
 

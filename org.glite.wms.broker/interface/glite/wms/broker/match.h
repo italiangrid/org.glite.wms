@@ -81,7 +81,11 @@ match(
 );
 
 classad::ClassAd*
-create_brokerinfo(classad::ClassAd const& ce_ad, DataInfo const& data_info);
+create_brokerinfo(
+  classad::ClassAd const& jdl_ad, 
+  classad::ClassAd const& ce_ad, 
+  DataInfo const& data_info
+);
 
 struct MaxRankSelector
 {
