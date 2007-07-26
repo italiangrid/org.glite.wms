@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2007/07/26 11:41:01  acava
+#       Fixed missing library
+#
 #       Revision 1.1  2007/07/26 10:16:41  acava
 #       Added
 #
@@ -112,6 +115,9 @@ AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+
+AC_VOMS([], have_voms=yes, have_voms=no)
+AC_MSG_RESULT(["VOMS found $have_voms"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
