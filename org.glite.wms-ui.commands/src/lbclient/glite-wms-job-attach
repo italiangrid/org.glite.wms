@@ -28,20 +28,20 @@ sys.path.append(libPath)
 libPath=path + FILESEP + "lib" + FILESEP + "python"
 sys.path.append(libPath)
 
-import UIutils
-import UIchecks
+import wmsui_utils
+import wmsui_checks
 import socket
 import time
 #common methods
 import Job
-import Listener
+import wmsui_listener
 from glite_wmsui_LogWrapper import LOG
 from glite_wmsui_LbWrapper import Status
 from glite_wmsui_AdWrapper import AdWrapper
-from UIutils import errMsg
-from UIutils import dbgMsg
-from UIchecks import checkError
-from UIutils import exit
+from wmsui_utils import errMsg
+from wmsui_utils import dbgMsg
+from wmsui_checks import checkError
+from wmsui_utils import exit
 try:
         from Tkinter import Tk
         nogui=0
@@ -55,29 +55,29 @@ except:
 """
 sys_exit = 0
 prgname="glite-job-attach"
-UIutils.err_log_clean(prgname)
-UIchecks.check_prefix()
-error_message = UIutils.createErrMsg ( prgname, "job Id",["help","version","@","=port=",'nogui', 'nolisten' , "=config$" , "=output$", "=input$","noint","debug", "logfile$"])
+wmsui_utils.err_log_clean(prgname)
+wmsui_checks.check_prefix()
+error_message = wmsui_utils.createErrMsg ( prgname, "job Id",["help","version","@","=port=",'nogui', 'nolisten' , "=config$" , "=output$", "=input$","noint","debug", "logfile$"])
 argv=sys.argv
-UIchecks.check_noint(sys.argv)
+wmsui_checks.check_noint(sys.argv)
 
 
 #=================================
 #   Options check
 #=================================
 if len(argv) <2 :
-  UIutils.print_help(error_message)
+  wmsui_utils.print_help(error_message)
   exit(1)
-err, options,values,extra = UIchecks.checkOpt(  argv[1:] ,"c:i:p:o:" ,["help","version", "port=", 'nogui', 'nolisten',"config=" ,"output=", "input=","noint","debug", "logfile="] )
+err, options,values,extra = wmsui_checks.checkOpt(  argv[1:] ,"c:i:p:o:" ,["help","version", "port=", 'nogui', 'nolisten',"config=" ,"output=", "input=","noint","debug", "logfile="] )
 if    ("--help" in options):
    print "\n" + prgname +" full help"
-   UIutils.printFullHelp(error_message, UIchecks.info.noint) 
+   wmsui_utils.printFullHelp(error_message, wmsui_checks.info.noint) 
    exit(0)
 elif    ("--version" in options):
-   print "Job Submission User Interface version " , UIutils.info.version
+   print "Job Submission User Interface version " , wmsui_utils.info.version
    exit(0)
 elif err:
-   UIutils.print_help(error_message)
+   wmsui_utils.print_help(error_message)
    exit(1)
 
 #Valued Option check:
@@ -86,29 +86,29 @@ nolisten    = ("--nolisten"   in options)
 if nolisten and nogui:
    errMsg('Error','UI_ARG_EXCLUSIVE', "--nogui" , "--nolisten")
 try:
-  outFile = UIutils.findVal(["--output" , "-o" ], options, values)
-  inFile = UIutils.findVal(["--input" , "-i" ], options, values)
-  logpath = UIutils.findVal(["--logfile"], options, values)
-  portLog = UIutils.findVal(["--port", "-p"], options, values)
-  gname    = UIutils.findVal(["--config" , "-c" ], options, values)
+  outFile = wmsui_utils.findVal(["--output" , "-o" ], options, values)
+  inFile = wmsui_utils.findVal(["--input" , "-i" ], options, values)
+  logpath = wmsui_utils.findVal(["--logfile"], options, values)
+  portLog = wmsui_utils.findVal(["--port", "-p"], options, values)
+  gname    = wmsui_utils.findVal(["--config" , "-c" ], options, values)
   if portLog:
      try:
         portLog=int(portLog)
      except:
           errMsg('Error','UI_ARG_MISMATCH', "--port")
-          UIutils.print_help(error_message)
+          wmsui_utils.print_help(error_message)
           sys.exit(1)
      if portLog<1024:
           errMsg('Error','UI_ARG_OUT_OF_LIMIT', portLog)
-          UIutils.print_help(error_message)
+          wmsui_utils.print_help(error_message)
           sys.exit(1)
 except SyntaxError,rep:
   errMsg('Error','UI_REPEATED_OPT',rep[0])
-  UIutils.print_help(error_message)
+  wmsui_utils.print_help(error_message)
   exit(1)
 
-UIchecks.checkConf ( gname , logpath)
-if UIchecks.check_proxy():
+wmsui_checks.checkConf ( gname , logpath)
+if wmsui_checks.check_proxy():
    exit(1)
 
 """
@@ -116,26 +116,26 @@ if UIchecks.check_proxy():
 """
 jobs=[]
 if len(extra)==1:
-   job = Job.JobId ( extra[0] )
+   job = wmsui_api.JobId ( extra[0] )
    if not job.set:
       errMsg( 'Warning','UI_WRONG_JOBID_FORMAT',extra[0])
       exit(1)
    else:
       jobs.append( job)
 elif inFile:
-  sys_exit , jobs, strjobs =Job.getJobIdfromFile(inFile)
-  if sys_exit and jobs and (not UIutils.info.noint):
-    answ=UIutils.questionYN("Do you wish to continue?")
+  sys_exit , jobs, strjobs =wmsui_api.getJobIdfromFile(inFile)
+  if sys_exit and jobs and (not wmsui_utils.info.noint):
+    answ=wmsui_utils.questionYN("Do you wish to continue?")
     if not answ: #No answered
       print "bye"
       exit(1)
   if jobs:
-     if (not UIutils.info.noint):
-       job = Job.selectJobId( jobs , strjobs, 0)[0]
+     if (not wmsui_utils.info.noint):
+       job = wmsui_api.selectJobId( jobs , strjobs, 0)[0]
      else:
        job= jobs[0]
 else:
-   UIutils.print_help(error_message)
+   wmsui_utils.print_help(error_message)
    exit(1)
 
 em="Error"
@@ -148,7 +148,7 @@ status = Status()
 #Needed to perfrm log listener
 log = LOG ()
 stat= -1 ;
-jobStatus = Job.JobStatus()
+jobStatus = wmsui_api.JobStatus()
 #for job in jobs:
 if job:
    """
@@ -213,7 +213,7 @@ if job:
 			int(nsPort)
 			# CONVERTING wmproxy into NS
 			nsPort = 7772
-			nsHost=UIutils.resolveHostIp(nsHost)
+			nsHost=wmsui_utils.resolveHostIp(nsHost)
 		except:
 			# Neither NS or WMP
 			errMsg("Error",'UI_JDL_WRONG_SYNTAX' , nsStr+": not a valid Network Server" )
@@ -221,7 +221,7 @@ if job:
         """
         Perform the grid_console shadow and log the listener host and port
         """
-        shadow = Job.Shadow()
+        shadow = wmsui_api.Shadow()
         shadow.set ( job )
         shadow.checkRootPath()
         dbgMsg ("LOG::init" , nsHost )
@@ -233,14 +233,14 @@ if job:
         checkError ( "LOG::log_listener" , log , 1)
         if not (nogui or nolisten):
            try:
-              listener = Listener.ListenerFrame ( Tk() , shadow)
+              listener = wmsui_listener.ListenerFrame ( Tk() , shadow)
            except TclError:
               errMsg ("Warning" , "NS_SUBMIT_FAIL" , "Unable to Display the Listener")
-              listener = Listener.Listener ( shadow)
+              listener = wmsui_listener.Listener ( shadow)
         elif nolisten:
              print "No Listen Option specified. Do nothing"
         else:
-           listener = Listener.Listener ( shadow )
+           listener = wmsui_listener.Listener ( shadow )
         """
         Write the interactive session result
         """
@@ -255,20 +255,20 @@ if job:
         message=message+ "\n Host: ".ljust(ju) + shadow.getHost()
         message=message+ "\n Port: ".ljust(ju) + repr (shadow.getPort() )
         #message=message+ "\n Pid:  ".ljust(ju) +  repr (shadow.getPid() )
-        if UIutils.info.debug or nolisten:
+        if wmsui_utils.info.debug or nolisten:
             message=message+ "\n Shadow process Id:".ljust(ju) +  repr (shadow.getPid() )
             message=message+ "\n Input Stream  location:  ".ljust(ju) +  shadow.getPipeIn()
             message=message+ "\n Output Stream  location:  ".ljust(ju) +  shadow.getPipeOut()
             if nolisten:
                message=message+ "\n       ---\n *** Warning ***\n Make sure you will kill the Shadow process \n and remove the input/output streams when interaction finishes\n"
         message=message+ "\n**********************************************************************\n"
-        UIutils.print_message(outFile,message)
+        wmsui_utils.print_message(outFile,message)
         if outFile:
           message=          '========================  glite-job-attach Success ===========================\n'
           message=message + " Job Interactive Session Listener Information has been stored in the file:\n"
           message=message + " "+ outFile +"\n"
           message=message + '============================================================================\n'
-          UIutils.print_message(outFile,message)
+          wmsui_utils.print_message(outFile,message)
         """
         Fork the process and execute the listener graphical implementation
         For is not needed when nogui is specified

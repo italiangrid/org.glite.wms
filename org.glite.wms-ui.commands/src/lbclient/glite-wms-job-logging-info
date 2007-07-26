@@ -28,16 +28,16 @@ sys.path.append(libPath)
 libPath=path + FILESEP + "lib" + FILESEP + "python"
 sys.path.append(libPath)
 
-import UIutils
-import UIchecks
+import wmsui_utils
+import wmsui_checks
 import time
 #common methods
 from glite_wmsui_LbWrapper import Eve
 from glite_wmsui_AdWrapper import AdWrapper
-import Job
-from UIutils import errMsg
-from UIutils import dbgMsg
-from UIutils import exit
+import wmsui_api
+from wmsui_utils import errMsg
+from wmsui_utils import dbgMsg
+from wmsui_utils import exit
 
 def checkExclude(includes, excludes):
 	if includes and excludes:
@@ -50,13 +50,13 @@ def checkExclude(includes, excludes):
 		for lud in ludes:
 			try:
 				ludes[i]= int(lud)
-				if ludes[i] >= Job.EVENT_CODE_MAX:
+				if ludes[i] >= wmsui_api.EVENT_CODE_MAX:
 					errMsg ( "Error" , "UI_ARG_OUT_OF_LIMIT" , OPT )
 					return [1,0,0]
 			except ValueError:
 				try:
 					#Is not an integer, could be a string repr
-					ludes[i] =Job.events_codes.index(lud.capitalize())
+					ludes[i] =wmsui_api.events_codes.index(lud.capitalize())
 				except ValueError:
 					errMsg('Error', "UI_ARG_MISMATCH" , OPT)
 					return [1,0,0]
@@ -72,30 +72,30 @@ sep ="**********************************************************************\n"
 
 sys_exit = 0
 prgname="glite-job-logging-info"
-UIutils.err_log_clean(prgname)
-UIchecks.check_prefix()
+wmsui_utils.err_log_clean(prgname)
+wmsui_checks.check_prefix()
 MSG_EVENT   = "event="
 MSG_EXCLUDE = "=exclude="
-simple_usage = UIutils.createErrMsg(prgname,"job Id(s)",["help","version","@","=input$",\
+simple_usage = wmsui_utils.createErrMsg(prgname,"job Id(s)",["help","version","@","=input$",\
 "=verbosity=","from=","to=","user-tag=","=config$", MSG_EVENT, MSG_EXCLUDE,"=output$","noint", "debug", "logfile$"])
 argv=sys.argv
-UIchecks.check_noint(sys.argv)
+wmsui_checks.check_noint(sys.argv)
 
 #=================================
 #   Option check
 #=================================
 
-err, options,values,extra = UIchecks.checkOpt( argv[1:]  , "i:c:v:o:e:" ,["help","version", \
+err, options,values,extra = wmsui_checks.checkOpt( argv[1:]  , "i:c:v:o:e:" ,["help","version", \
 "input=","verbosity=","config=", "user-tag=","from=","to=","event=", "exclude=", "output=","noint","debug", "logfile="] )
 if    ("--help" in options):
    print "\n" + prgname +" full help"
-   UIutils.printFullHelp(simple_usage, UIchecks.info.noint)
+   wmsui_utils.printFullHelp(simple_usage, wmsui_checks.info.noint)
    exit(0)
 elif    ("--version" in options):
-   print "Job Submission User Interface version " + UIutils.info.version
+   print "Job Submission User Interface version " + wmsui_utils.info.version
    exit(0)
 elif err:
-   UIutils.print_help(simple_usage)
+   wmsui_utils.print_help(simple_usage)
    exit(1)
 """
 -input/jobId sintax:
@@ -104,12 +104,12 @@ ext= (len(extra) >0)
 res= ext + (("-i" in options) or ("--input" in options))
 if res == 0:
    #no input/jobid specified
-   UIutils.print_help(simple_usage)
+   wmsui_utils.print_help(simple_usage)
    exit(1)
 elif res>1:
    #   input/job/all speficied more then once
    errMsg('Error','UI_TOO_MANY_ARGS')
-   UIutils.print_help(simple_usage)
+   wmsui_utils.print_help(simple_usage)
    exit(1)
 
 
@@ -121,26 +121,26 @@ ad     =0
    Option check:
 """
 try:
-	inFile  = UIutils.findVal(["--input"  , "-i" ], options, values)
-	outFile = UIutils.findVal(["--output" , "-o" ], options, values)
-	gname = UIutils.findVal(["--config" , "-c" ], options, values)
-	level    = UIutils.findVal(["--verbosity"  , "-v" ], options, values)
-	logpath = UIutils.findVal(["--logfile"], options, values)
-	includes = UIutils.findVal(["--event"  ,"-n"], options, values, 1)
-	excludes = UIutils.findVal(["--exclude","-e"], options, values, 1)
-	fromT=  UIutils.findVal(  ["--from"], options, values)
-	toT=  UIutils.findVal(  ["--to"], options, values)
-	userTags = UIutils.findVal(["--user-tag"], options, values, 1)
+	inFile  = wmsui_utils.findVal(["--input"  , "-i" ], options, values)
+	outFile = wmsui_utils.findVal(["--output" , "-o" ], options, values)
+	gname = wmsui_utils.findVal(["--config" , "-c" ], options, values)
+	level    = wmsui_utils.findVal(["--verbosity"  , "-v" ], options, values)
+	logpath = wmsui_utils.findVal(["--logfile"], options, values)
+	includes = wmsui_utils.findVal(["--event"  ,"-n"], options, values, 1)
+	excludes = wmsui_utils.findVal(["--exclude","-e"], options, values, 1)
+	fromT=  wmsui_utils.findVal(  ["--from"], options, values)
+	toT=  wmsui_utils.findVal(  ["--to"], options, values)
+	userTags = wmsui_utils.findVal(["--user-tag"], options, values, 1)
 except SyntaxError,rep:
 	errMsg('Error','UI_REPEATED_OPT',rep[0])
-	UIutils.print_help(simple_usage)
+	wmsui_utils.print_help(simple_usage)
 	exit(1)
 
-UIchecks.checkConf ( gname , logpath)
+wmsui_checks.checkConf ( gname , logpath)
 
 err, includes, excludes = checkExclude (includes , excludes)
 if err:
-     UIutils.print_help(simple_usage)
+     wmsui_utils.print_help(simple_usage)
      exit(1)
 
 if level:
@@ -148,15 +148,15 @@ if level:
      level = int(level)
    except:
      errMsg('Error','UI_ARG_MISMATCH', level)
-     UIutils.print_help(simple_usage)
+     wmsui_utils.print_help(simple_usage)
      exit(1)
    if (level >3) or (level <0):
      errMsg('Error','UI_ARG_OUT_OF_LIMIT', level)
-     UIutils.print_help(simple_usage)
+     wmsui_utils.print_help(simple_usage)
      exit(1)
 else:
    try:
-     level = UIutils.info.confAd.getIntValue ("DefaultLogInfoLevel")
+     level = wmsui_utils.info.confAd.getIntValue ("DefaultLogInfoLevel")
      if level:
        level = int( level[0] )
      else:
@@ -168,10 +168,10 @@ else:
 #  TIME
 #=================================
 try:
-	fromT , toT = UIchecks.checkFromTo (fromT , toT)
+	fromT , toT = wmsui_checks.checkFromTo (fromT , toT)
 except:
-	UIutils.print_help(simple_usage)
-	UIutils.exit(1)
+	wmsui_utils.print_help(simple_usage)
+	wmsui_utils.exit(1)
 #=================================
 #  USER TAGS
 #=================================
@@ -182,12 +182,12 @@ if userTags:
 			attr , value = tag.split("=")
 			if uTags.has_key(attr):
 				errMsg('Error','UI_REPEATED_OPT',"--user-tag ("+attr +")" )
-				UIutils.print_help(simple_usage)
+				wmsui_utils.print_help(simple_usage)
 				exit(1)
 			uTags[attr]=value
 	except ValueError:
 		errMsg('Error','UI_ARG_MISMATCH', "--user-tag")
-		UIutils.print_help(simple_usage)
+		wmsui_utils.print_help(simple_usage)
 		exit(1)
 
 #=================================
@@ -195,34 +195,34 @@ if userTags:
 #=================================
 jobs= []
 if extra:
-	jobs = Job.getJobIdfromList(extra)
+	jobs = wmsui_api.getJobIdfromList(extra)
 	if len (jobs) != len(extra):
 		sys_exit= -1
 elif inFile :
-	sys_exit , jobs, strjobs =Job.getJobIdfromFile(inFile)
-	if sys_exit and jobs and (not UIutils.info.noint):
-		answ=UIutils.questionYN("Do you wish to continue?")
+	sys_exit , jobs, strjobs =wmsui_api.getJobIdfromFile(inFile)
+	if sys_exit and jobs and (not wmsui_utils.info.noint):
+		answ=wmsui_utils.questionYN("Do you wish to continue?")
 		if not answ:
 			print "bye"
 			exit(1)
-	if jobs and (not UIutils.info.noint):
-		jobs = Job.selectJobId( jobs, strjobs )
+	if jobs and (not wmsui_utils.info.noint):
+		jobs = wmsui_api.selectJobId( jobs, strjobs )
 else:
-	UIutils.print_help(simple_usage)
+	wmsui_utils.print_help(simple_usage)
 	exit(1)
 
 if sys_exit and (not jobs):
    errMsg('Error','UI_WRONG_JOBID_ALL')
    exit(1)
 if sys_exit:
-  if not UIutils.info.noint:
-       answ=UIutils.questionYN("Do you wish to continue?")
+  if not wmsui_utils.info.noint:
+       answ=wmsui_utils.questionYN("Do you wish to continue?")
        if not answ:
          print "bye"
          exit(1)
 # check -output option
 if (outFile):
-   err,outFile,TBremoved=UIchecks.check_outFile(outFile)
+   err,outFile,TBremoved=wmsui_checks.check_outFile(outFile)
    if not outFile:
       exit(err)
 
@@ -232,7 +232,7 @@ if outFile and TBremoved:
 	os.remove(outFile)
 
 #Check proxy
-if UIchecks.check_proxy():
+if wmsui_checks.check_proxy():
    exit(1)
 
 #Define the error/warning message:
@@ -255,9 +255,9 @@ if LBapproach:
 	queriedEvents = {}
 
 	# Perform the LB Query
-	queriedEvents = Job.queryEvents(jobs, includes, excludes, uTags, issuer, fromT, toT, level)
+	queriedEvents = wmsui_api.queryEvents(jobs, includes, excludes, uTags, issuer, fromT, toT, level)
 
-	message += Job.printQueriedEvents(jobs, queriedEvents)
+	message += wmsui_api.printQueriedEvents(jobs, queriedEvents)
 
 	if not queriedEvents: #Not able to open any of the LB's
 	   if em=="Warning":
@@ -268,17 +268,17 @@ else:
 	# Retrieve 
 	for jobid in jobs:
 	
-		eventArray = Job.getEvents(jobid, level)
+		eventArray = wmsui_api.getEvents(jobid, level)
 
-		message += Job.printEvents(jobid, eventArray)
+		message += wmsui_api.printEvents(jobid, eventArray)
 
 message += "\n" + sep
-UIutils.print_message(outFile, message)
+wmsui_utils.print_message(outFile, message)
 
 if outFile:
 	message='===============  glite-job-logging-info Success =================\n'
 	message=message + " Logging Information has been found and stored in the file:\n"
 	message=message + " "+ outFile +"\n"
 	message=message +'===================================================================\n'
-	UIutils.print_message(UIutils.info.logFile , message)
+	wmsui_utils.print_message(wmsui_utils.info.logFile , message)
 exit(sys_exit)
