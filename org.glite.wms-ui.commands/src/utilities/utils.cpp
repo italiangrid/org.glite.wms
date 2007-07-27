@@ -375,42 +375,6 @@ std::vector<std::string> Utils::askMenu(std::vector<std::string> &items, const e
 	if (size < 2 ){
 		return items;
 	}
-	// type of question
-	switch (type){
-		case (Utils::MENU_JOBID) :{
-			question << "Choose one or more jobId(s) in the list - [1-" << size
-			<< "]all (use , as separator or - for a range):";
-			multiple = true;
-			break;
-		};
-		case (Utils::MENU_SINGLEJOBID) :{
-			question << "Choose one jobId in the list :";
-			break;
-		};
-		case (Utils::MENU_CE) :{
-			question << "Choose one or more resource(s) in the list - [1-" << size
-			<< "]all (use , as separator- for a range):";
-			multiple = true ;
-			break;
-		};
-		case (Utils::MENU_SINGLECE) :{
-			question << "Choose one resource in the list :";
-			break;
-		};
-		case (Utils::MENU_FILE) :{
-			question << "Choose one or more file(s) in the list - [1-" << size
-			<< "]all (use , as separator- for a range):";
-			multiple = true ;
-			break;
-		};
-		case (Utils::MENU_SINGLEFILE) :{
-			question << "Choose one file in the list :";
-			break;
-		};
-		default :{
-			break;
-		};
-	}
 	// MENU ============
 	out <<"------------------------------------------------------------------\n";
 	//counters
@@ -448,6 +412,43 @@ std::vector<std::string> Utils::askMenu(std::vector<std::string> &items, const e
 			it++ ;
 		}
 		i++ ;
+	}
+	int realSize = size - erased ;
+	// type of question
+	switch (type){
+		case (Utils::MENU_JOBID) :{
+			question << "Choose one or more jobId(s) in the list - [1-" << realSize
+			<< "]all (use , as separator or - for a range):";
+			multiple = true;
+			break;
+		};
+		case (Utils::MENU_SINGLEJOBID) :{
+			question << "Choose one jobId in the list :";
+			break;
+		};
+		case (Utils::MENU_CE) :{
+			question << "Choose one or more resource(s) in the list - [1-" << realSize
+			<< "]all (use , as separator- for a range):";
+			multiple = true ;
+			break;
+		};
+		case (Utils::MENU_SINGLECE) :{
+			question << "Choose one resource in the list :";
+			break;
+		};
+		case (Utils::MENU_FILE) :{
+			question << "Choose one or more file(s) in the list - [1-" << realSize
+			<< "]all (use , as separator- for a range):";
+			multiple = true ;
+			break;
+		};
+		case (Utils::MENU_SINGLEFILE) :{
+			question << "Choose one file in the list :";
+			break;
+		};
+		default :{
+			break;
+		};
 	}
 	if (multiple) { out << "a : all\n" ; }
 	out << "q : quit\n";
