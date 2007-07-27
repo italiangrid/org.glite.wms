@@ -5,7 +5,7 @@
 	xmlns:glitejsdlns="http://schemas.ggf.org/jsdl/2005/11/jsdl"
 	xmlns:glitedelegns="http://www.gridsite.org/namespaces/delegation-1"
 	xmlns:glitedelegns2="http://www.gridsite.org/namespaces/delegation-2"
-	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
 	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
 	targetNamespace="http://glite.org/wms/wmproxy" name="WMProxy">
@@ -23,8 +23,9 @@
 			
 	<!-- ==== Types definition ==== -->
 	<wsdl:types>
-		<schema targetNamespace="http://glite.org/wms/wmproxy" xmlns="http://www.w3.org/2001/XMLSchema"
-								xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" elementFormDefault="qualified">
+		<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://glite.org/wms/wmproxy">
+		<!--schema targetNamespace="http://glite.org/wms/wmproxy" xmlns="http://www.w3.org/2001/XMLSchema"
+								xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" elementFormDefault="qualified"-->
 			<!-- ==== List of supported requests types ==== -->
 			<xsd:simpleType name="ObjectType">
 				<xsd:restriction base="xsd:string">
@@ -675,7 +676,7 @@
 			<wsdl:documentation>
 					This operation returns a destination URI associated to the job, identified by the jobId provided as input, where the job input sandbox files can be uploaded by the client on the WMS node.
 					The location is created in the storage managed by the WM and the corresponding URI is returned to the operation caller if no problems has been arised during creation.
-					Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE. 
+					Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE.
 					Note that the WM service only provides a the URI of a location where the job input sandbox files can be stored but does not perform any file transfer.
 					File upload is indeed responsibility of the client (through the GridFTP service available on the WMS node). 
 					The user can also specify in the JDL the complete URI of files that are stored on a GridFTP server (e.g. managed by her organisation);
@@ -722,7 +723,7 @@
 					The vector contains an element (structure above) for the compound job id provided (at first position) and one further element for any sub nodes. It contains only one element if the job id provided as imnput is the identifier of a simple job.
 					
 					The location is created in the storage managed by the WMS and the corresponding URI is returned to the operation caller if no problems has been arised during creation.
-					Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE. 
+					Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE.
 					Note that the WMS service only provides a the URI of a location where the job input sandbox files can be stored but does not perform any file transfer.
 					File upload is indeed responsibility of the client (through the GridFTP/HTTPS server available on the WMS node).
 					The user can also specify in the JDL the complete URI of files that are stored on a GridFTP/HTTPS server (e.g. managed by her organisation);
