@@ -11,7 +11,7 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#       Authors: Luca Petronzio <luca.petronzio@elsagdatamat.com>
 #
 
 AC_PREREQ(2.57)
@@ -67,8 +67,6 @@ have_boost=no
 have_classads=no
 have_globus=no
 have_gridsite=no
-have_expat=no
-have_gridsite=no
 have_libtar=no
 have_zlib=no
 
@@ -77,10 +75,6 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
-
-
-AC_EXPAT([], have_expat=yes, have_expat=no)
-AC_MSG_RESULT(["EXPAT found $have_expat"])
 
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
@@ -108,10 +102,6 @@ if test "$have_classads" = "no"; then
   AC_MSG_RESULT(["Please verify CLASSADS package"])
 fi
 
-if test "$have_expat" = "no"; then
-  AC_MSG_RESULT(["Please verify EXPAT package"])
-fi
-
 if test "$have_gridsite" = "no"; then
   AC_MSG_RESULT(["Please verify GRIDSITE package"])
 fi
@@ -136,10 +126,6 @@ if test "$have_classads" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 
-if test "$have_expat" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
 if test "$have_gridsite" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
@@ -155,7 +141,6 @@ fi
 have_glite_wmsutils=no
 have_glite_jdl=no
 have_glite_lb=no
-have_glite_wms_chkpt=no
 have_glite_wms_wmproxy=no
 have_glite_security=no
 
@@ -172,9 +157,6 @@ AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
-
-AC_GLITE_WMS_CHKPT([], have_glite_wms_chkpt=yes, have_glite_wms_chkpt=no)
-AC_MSG_RESULT(["GLITE_WMS_CHKPT found $have_glite_wms_chkpt"])
 
 AC_GLITE_WMS_WMPROXY([], have_glite_wms_wmproxy=yes, have_glite_wms_wmproxy=no)
 AC_MSG_RESULT(["GLITE_WMS_WMPROXY found $have_glite_wms_wmproxy"])

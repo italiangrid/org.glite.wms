@@ -11,12 +11,10 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#       Authors: Luca Petronzio <luca.petronzio@elsagdatamat.com>
 #
-# WARNING: work in progress
 
 
-#WMPROXY_API_CPP = $(top_builddir)/src/libglite_wms_wmproxy_api_cpp.la
 
 WMPROXY_ATTACH = $(top_builddir)/src/services/libglite_wmsui_commands_jobattach.la
 WMPROXY_PERUSAL= $(top_builddir)/src/services/libglite_wmsui_commands_jobperusal.la
@@ -27,10 +25,8 @@ WMPROXY_LISTMATCH = $(top_builddir)/src/services/libglite_wmsui_commands_joblist
 WMPROXY_OUTPUT = $(top_builddir)/src/services/libglite_wmsui_commands_joboutput.la
 WMPROXY_SUBMIT = $(top_builddir)/src/services/libglite_wmsui_commands_jobsubmit.la
 WMPROXY_UTILS = $(top_builddir)/src/utilities/libglite_wmsui_commands_utilities.la
-#WSSE_LIBS=-lwsse -lssl -lcrypto
 
 
-#wmpex_bindir = $(prefix)/examples
 bin_PROGRAMS = \
 	glite-wms-job-cancel \
 	glite-wms-job-delegate-proxy \
@@ -133,7 +129,6 @@ glite_wms_job_submit_LDADD = \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
-	$(EXPAT_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
@@ -165,7 +160,6 @@ glite_wms_job_cancel_LDADD = \
 	$(GLOBUS_GSS_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
-	$(EXPAT_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) \
@@ -194,7 +188,6 @@ glite_wms_job_output_LDADD = \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
-	$(EXPAT_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
@@ -223,7 +216,6 @@ glite_wms_job_perusal_LDADD = \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
-	$(EXPAT_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
@@ -233,7 +225,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(EXPAT_CFLAGS) \
 	$(GRIDSITE_CFLAGS) \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
