@@ -285,27 +285,9 @@ Status::Status (
 		
 		// Create a vector of conditions		
 		vector <vector<QueryRecord> >cond ;
-		
-		if(jobids.size() > 0) {
-		
-			// Create the vector of Query Records for the Job ID's
-			vector<QueryRecord> queryRecordCond;
-	
-			// Fill the vector of Query Records for the Job ID's
-			for (unsigned int i = 0; i<jobids.size(); i++){
-				// Create a Query Record 
-				QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
 			
-				// Add the Query Record to the vector
-				queryRecordCond.push_back(queryRecord);
-			}
-
-			// Add the Query Records of Job ID's to the Job Conditions
-			cond.push_back(queryRecordCond);
-		}
-		
 		// Create the conditions
-		//createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
+		createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
 		
 		// the Server will fill the result vector anyway, even when exception is raised
 		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ) {
