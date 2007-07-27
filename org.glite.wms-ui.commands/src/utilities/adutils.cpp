@@ -181,13 +181,6 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 	if (voName==""){
 		voName=ad.getString(JDL::VIRTUAL_ORGANISATION);
 
-	}else if ( (glite_wms_client_toLower(voName))
-		!=glite_wms_client_toLower(ad.getString(JDL::VIRTUAL_ORGANISATION)) ){
-		// VO Mismatch problem
-		if (vbLevel==WMSLOG_DEBUG){
-			errMsg(WMS_WARNING,"VirtualOrganisation value will be overriden by ",voName,true);
-		}
-
 	}
 }
 bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
