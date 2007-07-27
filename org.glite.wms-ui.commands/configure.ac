@@ -18,8 +18,6 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS UI Commands], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/commands/wmp-job-submit.cpp])
-AC_CONFIG_SRCDIR([src/lbclient/Job.py])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
