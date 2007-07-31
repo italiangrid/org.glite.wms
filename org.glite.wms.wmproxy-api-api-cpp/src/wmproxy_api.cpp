@@ -96,7 +96,9 @@ BaseException* createWmpException(struct soap *soap){
 						case SOAP_TYPE_ns1__GenericFaultType:
 							b_ex=new GenericException;
 							break;
-						case SOAP_TYPE_delegationns__DelegationExceptionType:
+						// delegation-1
+						// case SOAP_TYPE_delegationns__DelegationExceptionType:
+						case SOAP_TYPE__delegationns__DelegationException:
 							soap_print_fault(soap, stderr);
 							exit(-1);
 						default:
@@ -175,7 +177,9 @@ BaseException* grstCreateWmpException(struct soap *soap){
 	SOAP_ENV__Fault  *fault = NULL;
 	SOAP_ENV__Detail *detail = NULL;
 
-	delegationns__DelegationExceptionType *ex2 = NULL;
+	// delegation-1
+	// delegationns__DelegationExceptionType *ex2 = NULL;
+	_delegationns__DelegationException *ex2 = NULL;
 	BaseException *b_ex =NULL;
 	char *faultstring =  NULL;
 	char *faultcode = NULL;
@@ -191,14 +195,17 @@ BaseException* grstCreateWmpException(struct soap *soap){
 		if (fault){
         		detail = soap->fault->detail ;
 			if (detail) {
-				 if (detail->__type == SOAP_TYPE_delegationns__DelegationExceptionType) {
-					ex2 = (delegationns__DelegationExceptionType*)detail->fault;
+				// delegation-1
+				// if (detail->__type == SOAP_TYPE_delegationns__DelegationExceptionType) {
+					// ex2 = (delegationns__DelegationExceptionType*)detail->fault;
+				if (detail->__type == SOAP_TYPE__delegationns__DelegationException) {
+					ex2 = (_delegationns__DelegationException*)detail->fault;
 				} else { ex2 = NULL; }
 				// if type is delegationns__DelegationExceptionType
 				if (ex2) {
 					b_ex = new GrstDelegationException ;
-					if (ex2->message) {
-						message = *(ex2->message) ;
+					if (ex2->msg) {
+						message = *(ex2->msg) ;
 					} else if (faultstring) {
 						message = string(faultstring);
 					} else {
@@ -575,7 +582,7 @@ JobIdApi jobRegisterJSDL (const string &jsdl, const string &delegationId, Config
 	} else soapErrorMng(wmp) ;
 	return jobid;
 }
-
+*/
 /*****************************************************************
 jobSubmit
 ******************************************************************/
@@ -929,7 +936,7 @@ ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 	} else grstSoapErrorMng(grst) ;
 	return request;
 }
-
+*/
 /*****************************************************************
 getDelegationVersion
 ******************************************************************/
@@ -945,6 +952,7 @@ std::string getDelegationVersion(ConfigContext *cfs){
 	} else grstSoapErrorMng(grst) ;
 	return request;
 }
+*/
 /*****************************************************************
 getDelegationInterfaceVersion
 ******************************************************************/
@@ -994,6 +1002,7 @@ std::string renewProxyReq (const std::string &delegationId, ConfigContext *cfs){
 	}  else grstSoapErrorMng(grst) ;
 	return id;
 }
+*/
 /*****************************************************************
 putProxy
 *****************************************************************/
