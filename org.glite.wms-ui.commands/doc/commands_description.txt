@@ -294,6 +294,40 @@ When --endpoint (-e) is not specified, the search of an available WMProxy servic
 ###glite-wms-job-info###
 
 
+###glite-wms-job-status###
+<<<SYNOPSIS>>>
+[options] <jobId>
+<<<SYNOPSIS>>>
+<<<DESCRIPTION>>>
+This command prints the status of a job previously submitted using glite-job-submit.
+The job status request is sent to the LB that provides the requested information.
+This can be done during the whole job life.
+glite-job-status can monitor one or more jobs: the jobs to be checked are identified by one or more job identifiers (jobIds returned by glite-job-submit) provided as arguments to the command and separated by a blank space.
+<<<DESCRIPTION>>>
+###glite-wms-job-status###
+
+
+###glite-wms-job-logging-info###
+<<<SYNOPSIS>>>
+[options] <jobId>
+<<<SYNOPSIS>>>
+<<<DESCRIPTION>>>
+This command queries the LB persistent DB for logging information about jobs previously submitted using glite-job-submit.
+The job logging information are stored permanently by the LB service and can be retrieved also after the job has terminated its life-cycle, differently from the bookkeeping information that are in some way "consumed" by the user during the job existence.
+<<<DESCRIPTION>>>
+###glite-wms-job-logging-info###
+
+
+###glite-wms-job-attach###
+<<<SYNOPSIS>>>
+[options] <jobId>
+<<<SYNOPSIS>>>
+<<<DESCRIPTION>>>
+This commands starts a listener process on the UI machine (grid_console_shadow) that allows attaching to the standard streams of a previously submitted interactive job and displays them on a dedicated window. As the command opens a X window, the user should make sure the DISPLAY environment variable is correctly set and if she/he is connected to the UI node from remote machine (e.g. with ssh) enable secure X11 tunneling
+<<<DESCRIPTION>>>
+###glite-wms-job-attach###
+
+
 ###COMMON###
 
 <<<AUTHORS>>>
@@ -301,22 +335,81 @@ Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
 <<<AUTHORS>>>
 
 <<<FILES>>>
-voName/glite_wms.conf: The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc); different configuration files
-can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
+One of the following paths must exist, seeked with the specified order (only for LB related commands):
+ - $GLITE_WMS_LOCATION/etc/
+ - $GLITE_LOCATION/etc/
+ - /opt/glite/etc/
+ - /usr/local/etc/
+ - /etc/
+
+and contain the following UI configuration files:
+glite_wmsui_cmd_var.conf, glite_wmsui_cmd_err.conf, glite_wmsui_cmd_help.conf
+
+- glite_wmsui_cmd_var.conf will contain custom configuration default values
+A different configuration file may be specified either by using the --config option or by setting the GLITE_WMSUI_CONFIG_VAR environment variable
+here follows a possible example:
+[
+ RetryCount = 3 ;
+ ErrorStorage= "/tmp" ;
+ OutputStorage="/tmp";
+ ListenerStorage = "/tmp" ;
+ LoggingTimeout = 30 ;
+ LoggingSyncTimeout = 30 ;
+ NSLoggerLevel = 0;
+ DefaultStatusLevel = 1 ;
+ DefaultLogInfoLevel = 1;
+]
+
+- glite_wmsui_cmd_err.conf will contain UI exception mapping between error codes and error messages (no relocation possible)
+
+- glite_wmsui_cmd_help.conf will contain UI long-help information (no relocation possible)
+
+
+glite_wmsui.conf:
+
+The user configuration file. The standard path location is  (seeked with the specified order):
+- $HOME/<user>/.glite/<voName>
+- $GLITE_WMS_LOCATION/etc/<voName>
+- $GLITE_LOCATION/etc/<voName>
+- $GLITE_LOCATION/etc
+
+here follows a possible example:
+[
+      JdlDefaultAttributes = [
+          virtualorganisation="infngrid";
+          requirements = other.GlueCEStateStatus == "Production";
+          retryCount = 3;
+          rank = -other.GlueCEStateEstimatedResponseTime;
+      ];
+      DelegationId = "luca";
+      ErrorStorage="${GLITE_LOCATION_LOG}";
+      OutputStorage="/tmp";
+      ListenerStorage="${GLITE_LOCATION_TMP}";
+      WMProxyEndPoints = {"https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"};
+      LBAddress = "ghemon.cnaf.infn.it:9000";
+      MyProxyServer="kuiken.nikhef.nl";
+      LBServiceDiscoveryType ="org.glite.lb.server";
+      WMProxyServiceDiscoveryType="org.glite.wms.wmproxy";
+]
+
+Different configuration files can be specified by either using the --config option or setting the GLITE_WMSUI_CONFIG_VAR environment variable
 
 /tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
 
 JDL: file The file (containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); multiple jdl files can be used with the --collection option
+
+Besides those files, a valid proxy must be found inside the following path:
+/tmp/x509up_u<uid> ( use the X509_USER_PROXY environment variable to override the default location JDL file)
 <<<FILES>>>
 
 <<<ENVIRONMENT>>>
-GLITE_WMS_CLIENT_CONFIG:  This variable may be set to specify the path location of the configuration file
+GLITE_WMSUI_CONFIG_VAR:  This variable may be set to specify the path location of the custom default attribute configuration
 
 GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
 
 GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
 
-GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL
+GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL (only for Wms related commands)
 
 GLOBUS_LOCATION: This variable must be set when the Globus installation is not located in the default path /opt/globus
 
@@ -329,13 +422,7 @@ X509_USER_PROXY: This variable may be set to override the default location of th
 GLITE_SD_PLUGIN: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, normally bdii, rgma (or both, separated by comma)
 
 LCG_GFAL_INFOSYS: If Service Discovery querying is needed, this variable cbe used in order to set a specific Server where to perform the queries: for instance LCG_GFAL_INFOSYS='gridit-bdii-01.cnaf.infn.it:2170'
-
-
 <<<ENVIRONMENT>>>
 
 
-
 ###COMMON###
-
-
-

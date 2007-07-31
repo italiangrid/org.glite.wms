@@ -26,6 +26,20 @@ glite-wms-job-info
 .HP
 \fB--noint\fR
 .HP
+\fB--version\fR
+.HP
+\fB--help\fR
+.HP
+\fB--config\fR, \fB-c\fR
+<configfile>
+.HP
+\fB--debug\fR
+.HP
+\fB--logfile\fR
+<filepath>
+.HP
+\fB--noint\fR
+.HP
 \fB--input\fR, \fB-i\fR
 <filepath>
 .HP
@@ -90,7 +104,6 @@ if the command is launched with this option, the configuration file pointed by c
 this option allows the user to specify the Virtual Organisation she/he is currently working for.
 If the user proxy contains VOMS extensions then the VO specified through this option is overridden by the
 default VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).
-This option is meaningless when used together with "--config-vo" option.
 .PP
 .HP
 \fB--debug\fR
@@ -116,6 +129,49 @@ When this option is specified, a command log file (whose pathname is filepath) i
 if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)
 .PP
 .HP
+\fB--version\fR
+
+.IP
+displays UI version.
+.PP
+.HP
+\fB--help\fR
+
+.IP
+displays command usage
+.PP
+.HP
+\fB--config\fR, \fB-c\fR
+<configfile>
+
+.IP
+if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used together with "--vo" option
+.PP
+.HP
+\fB--debug\fR
+
+.IP
+When this option is specified, debugging information is displayed on the standard output and written into the log file, whose location is eventually printed on screen.
+The default UI logfile location is:
+glite-wms-job-<command_name>_<uid>_<pid>_<time>.log  located under the /var/tmp directory
+please notice that this path can be overriden with the '--logfile' option
+.PP
+.HP
+\fB--logfile\fR
+<filepath>
+
+.IP
+when this option is specified, all information is written into the specified file pointed by filepath.
+This option will override the default location of the logfile:
+glite-wms-job-<command_name>_<uid>_<pid>_<time>.log  located under the /var/tmp directory
+.PP
+.HP
+\fB--noint\fR
+
+.IP
+if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)
+.PP
+.HP
 \fB--input\fR, \fB-i\fR
 <filepath>
 
@@ -127,7 +183,7 @@ Allow the user to select the desired job among the ones contained in the file lo
 <idstring>
 
 .IP
-if this option is specified, the proxy that will be delegated is identified by <id_string>. This proxy can be therefore used for operations like job registration, job submission and job list matching until its expiration specifying the <id_string>. It must be used in place of --autm-delegation option.
+if this option is specified, the user proxy associated to the id delegated previously will be displayed.
 .PP
 .HP
 \fB--proxy\fR, \fB-p\fR
@@ -193,21 +249,80 @@ When --endpoint (-e) is not specified, the search of an available WMProxy servic
 
 .SH FILES
 
-voName/glite_wms.conf: The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc); different configuration files
-can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
+One of the following paths must exist, seeked with the specified order (only for LB related commands):
+- $GLITE_WMS_LOCATION/etc/
+- $GLITE_LOCATION/etc/
+- /opt/glite/etc/
+- /usr/local/etc/
+- /etc/
+
+and contain the following UI configuration files:
+glite_wmsui_cmd_var.conf, glite_wmsui_cmd_err.conf, glite_wmsui_cmd_help.conf
+
+- glite_wmsui_cmd_var.conf will contain custom configuration default values
+A different configuration file may be specified either by using the --config option or by setting the GLITE_WMSUI_CONFIG_VAR environment variable
+here follows a possible example:
+[
+RetryCount = 3 ;
+ErrorStorage= "/tmp" ;
+OutputStorage="/tmp";
+ListenerStorage = "/tmp" ;
+LoggingTimeout = 30 ;
+LoggingSyncTimeout = 30 ;
+NSLoggerLevel = 0;
+DefaultStatusLevel = 1 ;
+DefaultLogInfoLevel = 1;
+]
+
+- glite_wmsui_cmd_err.conf will contain UI exception mapping between error codes and error messages (no relocation possible)
+
+- glite_wmsui_cmd_help.conf will contain UI long-help information (no relocation possible)
+
+
+glite_wmsui.conf:
+
+The user configuration file. The standard path location is  (seeked with the specified order):
+- $HOME/<user>/.glite/<voName>
+- $GLITE_WMS_LOCATION/etc/<voName>
+- $GLITE_LOCATION/etc/<voName>
+- $GLITE_LOCATION/etc
+
+here follows a possible example:
+[
+JdlDefaultAttributes = [
+virtualorganisation="infngrid";
+requirements = other.GlueCEStateStatus == "Production";
+retryCount = 3;
+rank = -other.GlueCEStateEstimatedResponseTime;
+];
+DelegationId = "luca";
+ErrorStorage="${GLITE_LOCATION_LOG}";
+OutputStorage="/tmp";
+ListenerStorage="${GLITE_LOCATION_TMP}";
+WMProxyEndPoints = {"https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"};
+LBAddress = "ghemon.cnaf.infn.it:9000";
+MyProxyServer="kuiken.nikhef.nl";
+LBServiceDiscoveryType ="org.glite.lb.server";
+WMProxyServiceDiscoveryType="org.glite.wms.wmproxy";
+]
+
+Different configuration files can be specified by either using the --config option or setting the GLITE_WMSUI_CONFIG_VAR environment variable
 
 /tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
 
 JDL: file The file (containing the description of the job in the JDL language located in the path specified by jdl_file (the last argument of this command); multiple jdl files can be used with the --collection option
+
+Besides those files, a valid proxy must be found inside the following path:
+/tmp/x509up_u<uid> ( use the X509_USER_PROXY environment variable to override the default location JDL file)
 .SH ENVIRONMENT
 
-GLITE_WMS_CLIENT_CONFIG:  This variable may be set to specify the path location of the configuration file
+GLITE_WMSUI_CONFIG_VAR:  This variable may be set to specify the path location of the custom default attribute configuration
 
 GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
 
 GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
 
-GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL
+GLITE_WMS_WMPROXY_ENDPOINT: This variable may be set to specify the endpoint URL (only for Wms related commands)
 
 GLOBUS_LOCATION: This variable must be set when the Globus installation is not located in the default path /opt/globus
 
@@ -220,8 +335,6 @@ X509_USER_PROXY: This variable may be set to override the default location of th
 GLITE_SD_PLUGIN: If Service Discovery querying is needed, this variable can be used in order to set a specific (or more) plugin, normally bdii, rgma (or both, separated by comma)
 
 LCG_GFAL_INFOSYS: If Service Discovery querying is needed, this variable cbe used in order to set a specific Server where to perform the queries: for instance LCG_GFAL_INFOSYS='gridit-bdii-01.cnaf.infn.it:2170'
-
-
 .SH AUTHORS
 
 Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)

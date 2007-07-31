@@ -15,7 +15,7 @@ GENERATE_PLT=False #Plain Text PAGES
 MAN_OUTPUT=""
 TXT_OUTPUT="../../org.egee.jra1.deliverables/users-guide/WMPROXY/"
 WKI_OUTPUT=""
-PLT_OUTPUT=""
+PLT_OUTPUT="../config/" + "glite_wmsui_cmd_help.conf"
 # OPTIONS and COMMANDS description files:
 options2descriptionFile  = "options_description.txt"
 commands2descriptionFile = "commands_description.txt"
@@ -72,9 +72,41 @@ options2short = { \
 "valid": ["valid","v","hh:mm"] ,\
 "version": ["version","",""] ,\
 "vo": ["vo","","voname"] ,\
+"all_python": ["all","",""] ,\
+"input_python": ["input","i","filepath"] ,\
+"output_python": ["output","o","filepath"] ,\
+"config_python":["config","c","configfile"] ,\
+"debug_python": ["debug","",""] ,\
+"help_python": ["help","",""] ,\
+"dir_python": ["dir","","directorypath"] ,\
+"logfile_python": ["logfile","","filepath"] ,\
+"lrms_python": ["lrms","","lrmstype"] ,\
+"output_python": ["output","o","filepath"] ,\
+"nodes-resource_python": ["nodes-resource","","ceid"] ,\
+"noint_python": ["noint","",""] ,\
+"nogui_python": ["nogui","",""] ,\
+"nolisten_python": ["nolisten","",""] ,\
+"nomsg_python": ["nomsg","",""] ,\
+"nonodes_python": ["nonodes","",""] ,\
+"rank_python": ["rank","",""] ,\
+"resource_python": ["resource","r", "ceid"] ,\
+"from_python": ["from","","[MM:DD:]hh:mm[:[CC]YY]"] ,\
+"to_python": ["to","","[MM:DD:]hh:mm[:[CC]YY]"] ,\
+"user-tag_python": ["user-tag","","<tag name>=<tag value>"] ,\
+"status_python": ["status","s","<status code>"] ,\
+"event_python": ["event","","<event code>"] ,\
+"excludeS_python": ["exclude","e","<status code>"] ,\
+"excludeL_python": ["exclude","e","<event code>"] ,\
+"submit-to_python": ["to","","[MM:DD:]hh:mm[:[CC]YY]"] ,\
+"valid_python": ["valid","v","hh:mm"] ,\
+"version_python": ["version","",""] ,\
+"verbosity_python": ["verbosity","v","level"] ,\
+"vo_python": ["vo","","voname"] ,\
+"cs_python": ["cs","","chkptStep"] ,\
+"port_python": ["port","p","<port number>"] ,\
 }
 
-common_options=[ "version", "help", "config", "vo", "debug", "logfile", "noint"]
+common_options=[ "version", "help", "config", "vo", "debug", "logfile", "noint","version_python", "help_python", "config_python", "debug_python", "logfile_python", "noint_python"]
 
 commands2options={
 "glite-wms-job-delegate-proxy":["delegationid", "autm-delegation", "endpoint", "deleg-output"], \
@@ -86,4 +118,9 @@ commands2options={
 "glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename",\
    "all", "perusal-dir", "proto", "perusal-output", "nodisplay"],\
 "glite-wms-job-info":["info-input","info-delegationid","proxy","jdl","jdl-original","endpoint","info-output"],\
+"glite-wms-job-attach":["input_python","nolisten_python", "nogui_python","port_python"], \
+"glite-wms-job-logging-info":["input_python","output_python","verbosity_python","from_python","to_python",\
+"user-tag_python","event_python", "excludeL_python"], \
+"glite-wms-job-status":["input_python","output_python","all_python","verbosity_python","from_python","to_python",\
+"user-tag_python","status_python","excludeS_python","nonodes_python"], \
 }

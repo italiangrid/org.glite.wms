@@ -4,14 +4,22 @@ EXTRA_DIST = glite-wms-job-cancel.1 \
 	glite-wms-job-list-match.1 \
 	glite-wms-job-delegate-proxy.1 \
 	glite-wms-job-submit.1 \
-	glite-wms-job-perusal.1
+	glite-wms-job-perusal.1 \
+	glite-wms-job-info.1 \
+        glite-wms-job-logging-info.1 \
+        glite-wms-job-status.1 \
+	glite-wms-job-attach.1
 
 wmsclimandir = $(datadir)/man/man1
-wmscliman_DATA =  glite-wms-job-cancel.1 \
+wmscliman_DATA = glite-wms-job-cancel.1 \
 	glite-wms-job-output.1 \
 	glite-wms-job-list-match.1 \
 	glite-wms-job-delegate-proxy.1 \
 	glite-wms-job-submit.1 \
-	glite-wms-job-perusal.1
+	glite-wms-job-perusal.1 \
+	glite-wms-job-info.1 \
+	glite-wms-job-logging-info.1 \
+	glite-wms-job-status.1 \
+	glite-wms-job-attach.1
 
 MAINTAINERCLEANFILES = Makefile.in
