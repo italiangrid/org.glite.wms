@@ -3,8 +3,7 @@
 	xmlns:glitens="http://glite.org/wms/wmproxy"
 	xmlns:glitenstypes="http://glite.org/wms/wmproxy"
 	xmlns:glitejsdlns="http://schemas.ggf.org/jsdl/2005/11/jsdl"
-	xmlns:glitedelegns="http://www.gridsite.org/namespaces/delegation-1"
-	xmlns:glitedelegns2="http://www.gridsite.org/namespaces/delegation-2"
+	xmlns:glitedelegns="http://www.gridsite.org/namespaces/delegation-2"
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
 	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
@@ -17,9 +16,9 @@
 	<!--wsdl:import
 		namespace="http://www.gridsite.org/namespaces/delegation-1"
 		location="www.gridsite.org-delegation-1.1.0.wsdl"/-->
-	<wsdl:import
+	<!--wsdl:import
 		namespace="http://www.gridsite.org/namespaces/delegation-1"
-		location="www.gridsite.org-delegation-1.0.0.wsdl"/>
+		location="www.gridsite.org-delegation-1.0.0.wsdl"/-->
 			
 	<!-- ==== Types definition ==== -->
 	<wsdl:types>
@@ -1369,9 +1368,6 @@
 			<wsdl:fault name="ServerOverloadedFault">
 				<soap:fault name="ServerOverloadedFault" use="literal"/>
 			</wsdl:fault>
-			<wsdl:fault name="JobUnknownFault">
-				<soap:fault name="JobUnknownFault" use="literal"/>
-			</wsdl:fault>
 		</wsdl:operation>
 		<wsdl:operation name="jobStart">
 			<wsdl:input>
@@ -2006,20 +2002,18 @@
 			<wsdl:documentation>
 				Workload Manager Proxy delegation service
 				This is the service that allows delegation funcionalities
-		</wsdl:documentation>
+			</wsdl:documentation>
 			<!-- ghemon.cnaf.infn.it -->
 			<soap:address location="https://131.154.100.122:7443/glite_wms_wmproxy_server"/>
 		</wsdl:port>
 
 
 		<!-- ==== Delegation service (client version 3.2 or greater) ==== -->
-		<wsdl:port name="WMProxyDelegation2_PortType" binding="glitedelegns2:DelegationSoapBinding2">
+		<!--wsdl:port name="WMProxyDelegation2_PortType" binding="glitedelegns2:DelegationSoapBinding2">
 			<wsdl:documentation>
 				Workload Manager Proxy delegation service
 				This is the service that allows delegation funcionalities
-		</wsdl:documentation>
-			<!-- ghemon.cnaf.infn.it -->
-			<soap:address location="https://131.154.100.122:7443/glite_wms_wmproxy_server"/>
-		</wsdl:port>
+			</wsdl:documentation>
+		</wsdl:port-->
 	</wsdl:service>
 </wsdl:definitions>

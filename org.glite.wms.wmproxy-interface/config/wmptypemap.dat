@@ -81,8 +81,7 @@ s	= "http://www.soapinterop.org/xsd"
 # CUSTOMIZATION
 # Assigning jsdlns namespace instead of ns<progressive number>
 
-delegationns = "http://www.gridsite.org/namespaces/delegation-1"
-delegationns2 = "http://www.gridsite.org/namespaces/delegation-2"
+delegationns = "http://www.gridsite.org/namespaces/delegation-2"
 jsdlns = "http://schemas.ggf.org/jsdl/2005/11/jsdl"
 jsdlposixns = "http://schemas.ggf.org/jsdl/2005/11/jsdl-posix"
 besns="http://schemas.ggf.org/bes/2006/08/bes-factory"
