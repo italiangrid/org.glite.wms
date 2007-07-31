@@ -87,7 +87,7 @@ const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July",
 const char* GLITE_LOCATION = "GLITE_LOCATION";
 const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
 
-const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
+const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG_VAR";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
 const char*  GLITE_CLIENTCONF_FILENAME 		= "glite_wmsui.conf";
 const string DEFAULT_LB_PROTOCOL			=	"https";
