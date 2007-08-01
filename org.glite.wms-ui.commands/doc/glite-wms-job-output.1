@@ -215,7 +215,7 @@ and contain the following UI configuration files:
 glite_wmsui_cmd_var.conf, glite_wmsui_cmd_err.conf, glite_wmsui_cmd_help.conf
 
 - glite_wmsui_cmd_var.conf will contain custom configuration default values
-A different configuration file may be specified either by using the --config option or by setting the GLITE_WMSUI_CONFIG_VAR environment variable
+A different configuration file may be specified either by using the --config option or by setting the GLITE_WMSUI_COMMANDS_CONFIG environment variable
 here follows a possible example:
 [
 RetryCount = 3 ;
@@ -236,11 +236,11 @@ DefaultLogInfoLevel = 1;
 
 glite_wmsui.conf:
 
-The user configuration file. The standard path location is  (seeked with the specified order):
-- $HOME/<user>/.glite/<voName>
+The user interface configuration file. The standard path location is  (seeked with the specified order):
 - $GLITE_WMS_LOCATION/etc/<voName>
 - $GLITE_LOCATION/etc/<voName>
-- $GLITE_LOCATION/etc
+- /opt/glite/etc/<voName>
+- /usr/local/etc/<voName>
 
 here follows a possible example:
 [
@@ -261,7 +261,7 @@ LBServiceDiscoveryType ="org.glite.lb.server";
 WMProxyServiceDiscoveryType="org.glite.wms.wmproxy";
 ]
 
-Different configuration files can be specified by either using the --config option or setting the GLITE_WMSUI_CONFIG_VAR environment variable
+Different configuration files can be specified by either using the --config option or setting the GLITE_WMSUI_COMMANDS_CONFIG environment variable or creating a user configuration file glite_wmsui.conf in the path $HOME/<user>/.glite/<voName>
 
 /tmp/x509up_u<uid>: A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
 
@@ -271,7 +271,7 @@ Besides those files, a valid proxy must be found inside the following path:
 /tmp/x509up_u<uid> ( use the X509_USER_PROXY environment variable to override the default location JDL file)
 .SH ENVIRONMENT
 
-GLITE_WMSUI_CONFIG_VAR:  This variable may be set to specify the path location of the custom default attribute configuration
+GLITE_WMSUI_COMMANDS_CONFIG:  This variable may be set to specify the path location of the custom default attribute configuration
 
 GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
 
