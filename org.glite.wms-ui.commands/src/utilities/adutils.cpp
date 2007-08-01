@@ -218,9 +218,7 @@ bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 /******************************
 *  General Static Methods
 *******************************/
-glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
-	const std::string& pathDefault, const std::string& pathGeneral,
-	const std::string& voName){
+glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser, const std::string& pathDefault, const std::string& voName){
 	glite::jdl::Ad adUser, adDefault, adGeneral, configAd;
 
 	// Load the User configuration file if it has been set
@@ -243,17 +241,6 @@ glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser ,
 
 		// Fill the configuration AD from the AD specified by the VO 
 		fillConfigAttributes(adDefault, configAd);
-	}
-
-	// Load the generic configuration file if it has been set
-	if (pathGeneral!=""){
-	
-		if (!checkConfigurationAd(adGeneral,pathGeneral)){
-			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded generic configuration file:\n",pathGeneral,true);}
-		}
-		
-		// Fill the configuration AD from the generic AD
-		fillConfigAttributes(adGeneral, configAd);
 	}
 
 	//Checks for the VO in the JdlDefaultAttributes section

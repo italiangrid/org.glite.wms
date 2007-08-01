@@ -125,7 +125,7 @@ class AdUtils{
 		*@return the merged Ad
 		*/
 		glite::jdl::Ad* loadConfiguration(const std::string& pathUser,
-			const std::string& pathDefault,const std::string& pathGeneral,
+			const std::string& pathDefault,
 			const std::string& voName);
 		static void setDefaultValuesAd(glite::jdl::Ad* jdl,
 			glite::jdl::Ad* conf,

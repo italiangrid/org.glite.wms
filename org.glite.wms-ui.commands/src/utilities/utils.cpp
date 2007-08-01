@@ -87,7 +87,7 @@ const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July",
 const char* GLITE_LOCATION = "GLITE_LOCATION";
 const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
 
-const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG_VAR";
+const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_COMMANDS_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
 const char*  GLITE_CLIENTCONF_FILENAME 		= "glite_wmsui.conf";
 const string DEFAULT_LB_PROTOCOL			=	"https";
@@ -1029,9 +1029,8 @@ std::string Utils::checkConf(){
 	// check the Installation path
 	checkPrefix( );
 	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CLIENTCONF_FILENAME ;
-	string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CLIENTCONF_FILENAME ;
 
-	wmcConf = wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName);
+	wmcConf = wmcAd->loadConfiguration(voPath, cfDefault, voName);
 	
 	return voName;
 }
