@@ -299,6 +299,15 @@ class Wmproxy:
 		"""
 		return "http://www.gridsite.org/namespaces/delegation-1"
 
+	def getGrst2Ns(self):
+		"""
+		GridSite Delegation 2 namespace string representation  (static method)
+		PutProxy and getProxyReq services requires gridsite specific namespace
+		WARNING: for backward compatibility with WMPROXY server (version <= 1.x.x)
+		deprecated PutProxy and getProxyReq sevices are still provided with
+		wmproxy default namespace
+		"""
+		return "http://www.gridsite.org/namespaces/delegation-2"
 
 	def close(self):
 		"""
@@ -849,6 +858,49 @@ class Wmproxy:
 		try:
 			self.soapInit()
 			return self.remote.getVersion()
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+	def getInterfaceVersion(self)
+		"""
+		Method: getInterfaceVersion
+		OUT = version (string)
+
+		This method can be used to query the version of the
+		supported service
+		"""
+		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
+			self.soapInit()
+			self.setNamespace(oldNs)
+			return self.remote.getInterfaceVersion()
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+
+
+	def getServiceMetadata(self, string key):
+		"""
+		Method (not yet supported):  getJobTemplateFalse
+		IN =  key (string)
+		OUT = infos (string)
+
+		This operation can be used to query implementation specific meta information about the service
+		"""
+		raise ApiException("getServiceMetadata","not yet supported")
+		try:
+			self.soapInit()
+			return self.remote.getJobTemplate(jobType, executable, arguments, requirements, rank)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
