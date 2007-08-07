@@ -293,6 +293,12 @@ class Options
 		static const int WMPROXY_GETPROTOCOLS_VERSION ;
 		static const int WMPROXY_GETPROTOCOLS_MINOR_VERSION ;
 		static const int WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION ;
+		/**
+		* WMProxy version since delegation 2 is available
+		*/
+		static const int Options::WMPROXY_DELEGATION_VERSION ;
+		static const int Options::WMPROXY_DELEGATION_MINOR_VERSION ;
+		static const int Options::WMPROXY_DELEGATION_SUBMINOR_VERSION ;
                 /**
 		*	Constants for the verbosity level
 		*/
