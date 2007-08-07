@@ -865,7 +865,7 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getInterfaceVersion(self)
+	def getInterfaceVersion(self, ns = "")
 		"""
 		Method: getInterfaceVersion
 		OUT = version (string)
@@ -889,7 +889,7 @@ class Wmproxy:
 
 
 
-	def getServiceMetadata(self, string key):
+	def getServiceMetadata(self, string key, ns = ""):
 		"""
 		Method (not yet supported):  getServiceMetadata
 		IN =  key (string)
@@ -899,7 +899,11 @@ class Wmproxy:
 		"""
 		raise ApiException("getServiceMetadata","not yet supported")
 		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
 			self.soapInit()
+			self.setNamespace(oldNs)
 			return self.remote.getServiceMetadata(key)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
