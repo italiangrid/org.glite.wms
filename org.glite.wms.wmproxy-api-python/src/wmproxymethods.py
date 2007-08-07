@@ -891,7 +891,7 @@ class Wmproxy:
 
 	def getServiceMetadata(self, string key):
 		"""
-		Method (not yet supported):  getJobTemplateFalse
+		Method (not yet supported):  getServiceMetadata
 		IN =  key (string)
 		OUT = infos (string)
 
@@ -900,7 +900,7 @@ class Wmproxy:
 		raise ApiException("getServiceMetadata","not yet supported")
 		try:
 			self.soapInit()
-			return self.remote.getJobTemplate(jobType, executable, arguments, requirements, rank)
+			return self.remote.getServiceMetadata(key)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
