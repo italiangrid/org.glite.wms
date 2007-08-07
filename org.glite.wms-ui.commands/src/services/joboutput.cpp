@@ -298,7 +298,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		if (GENERATE_NODE_NAME){
 			msgNodes = "Dag JobId: " + jobid.toString() ;
 			std::map< std::string, std::string > map;
-			if (checkWMProxyRelease()){
+			if (checkWMProxyRelease( "getprotocols" )){
 				// Calling wmproxy Server method
 				try {
 					logInfo->service(WMP_JDL_SERVICE, jobid.toString());
@@ -438,7 +438,7 @@ bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const s
 			bool availableproto = false ;
 			for (unsigned int i = 0; i < size; i++){
 				//wmproxy server < 3.1
-				if ( !checkWMProxyRelease()) {
+				if ( !checkWMProxyRelease( "getprotocols" )) {
                                                 if( m_fileProto.compare(Utils::getProtocol (files[i].first)) == 0) {
 							availableproto = true;
 						}
@@ -658,7 +658,7 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 				"htcp executable");
 		}
 		source = paths[0].first ;
-		if (checkWMProxyRelease()) {
+		if (checkWMProxyRelease( "getprotocols" )) {
 			source = wmcUtils->resolveAddress( source ) ;
 		}
 		destination = paths[0].second ;

@@ -313,14 +313,14 @@ void Job::setDelegationId ( ){
 	} else if (autodg){
 		// automatic generation of the delegationId string ONLY FOR WMPROXY 3.0 - 3.1
 		id = Utils::getUniqueString();
-		if (id.empty()){
+		/*if (id.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
 				"getDelegationId",DEFAULT_ERR_CODE,
 				"Unexpected Severe Error",
 				"Unknown problem occurred during the auto-generation of the delegationId string");
 		}
 		logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", id);
-		m_dgOpt = id;
+		m_dgOpt = id;*/
 		logInfo->print  (WMS_DEBUG, "Delegation ID automatically generated");
 		m_dgOpt = "";
 		autodgOpt = true;
@@ -408,7 +408,7 @@ void Job::setVersionNumbers(const string& version) {
 	} else {
 		wmpVersion.major = 1;
 		wmpVersion.minor = 0;
-		logInfo->print(WMS_WARNING, "malformed version neumbers",
+		logInfo->print(WMS_WARNING, "malformed version numbers",
 			"setting the version to 1.0.0",false);
 	}
 }
@@ -417,31 +417,62 @@ void Job::setVersionNumbers(const string& version) {
 * available on the WMProxy server
 * (according to the version)
 */
-bool Job::checkWMProxyRelease( ){
+bool Job::checkWMProxyRelease( std::string operation ){
 	bool check = false;
-	// Version = MAJOR.MINOR.SUBMINOR
-	// CHECK if    major > WMPROXY_GETPROTOCOLS_VERSION
-	if ( wmpVersion.major > Options::WMPROXY_GETPROTOCOLS_VERSION ) {
-		check =true;
-	} else
-	// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
-	//			minor > WMPROXY_GETPROTOCOLS_MINOR_VERSION
-	if ( wmpVersion.major == Options::WMPROXY_GETPROTOCOLS_VERSION ) {
-		if (wmpVersion.minor > Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION) {
-			check = true;
+	if (operation == "getprotocols" )  {
+		// Version = MAJOR.MINOR.SUBMINOR
+		// CHECK if    major > WMPROXY_GETPROTOCOLS_VERSION
+		if ( wmpVersion.major > Options::WMPROXY_GETPROTOCOLS_VERSION ) {
+			check =true;
 		} else
 		// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
-		//			minor = WMPROXY_GETPROTOCOLS_MINOR_VERSION
-		//			subminor >= WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION
-		if (wmpVersion.minor == Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION &&
-		wmpVersion.subminor >= Options::WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION){
-			check = true;
-		} else {
+		//			minor > WMPROXY_GETPROTOCOLS_MINOR_VERSION
+		if ( wmpVersion.major == Options::WMPROXY_GETPROTOCOLS_VERSION ) {
+			if (wmpVersion.minor > Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION) {
+				check = true;
+			} else
+			// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
+			//			minor = WMPROXY_GETPROTOCOLS_MINOR_VERSION
+			//			subminor >= WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION
+			if (wmpVersion.minor == Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION &&
+			wmpVersion.subminor >= Options::WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION){
+				check = true;
+			} else {
+				check = false;
+			}
+		}else {
+			check = false;
+		}
+	} else
+	// Check for delegation 2 supporting servers
+	if (operation == "delegation2" )  {
+		// Version = MAJOR.MINOR.SUBMINOR
+		// CHECK if    major > WMPROXY_DELEGATION_VERSION
+		if ( wmpVersion.major > Options::WMPROXY_DELEGATION_VERSION ) {
+			check =true;
+		} else
+		// CHECK if    	major = WMPROXY_DELEGATION_VERSION &&
+		//			minor > WMPROXY_DELEGATION_MINOR_VERSION
+		if ( wmpVersion.major == Options::WMPROXY_DELEGATION_VERSION ) {
+			if (wmpVersion.minor > Options::WMPROXY_DELEGATION_MINOR_VERSION) {
+				check = true;
+			} else
+			// CHECK if    	major = WMPROXY_DELEGATION_VERSION &&
+			//			minor = WMPROXY_DELEGATION_MINOR_VERSION
+			//			subminor >= WMPROXY_DELEGATION_SUBMINOR_VERSION
+			if (wmpVersion.minor == Options::WMPROXY_DELEGATION_MINOR_VERSION &&
+			wmpVersion.subminor >= Options::WMPROXY_DELEGATION_SUBMINOR_VERSION){
+				check = true;
+			} else {
+				check = false;
+			}
+		}else {
 			check = false;
 		}
 	} else {
-		check = false;
+			check = false;
 	}
+
 	return check;
 }
 /**
@@ -567,6 +598,11 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 
 			break;
 		case STEP_DELEGATE_PROXY:
+			if ( !checkWMProxyRelease ( "delegation2" ) )  {
+				throw WmsClientException(__FILE__,__LINE__,
+					"delegation",DEFAULT_ERR_CODE,
+					"Delegation service: ", "The WMProxy Server " + this->getEndPoint( )+ " does not support delegation 2");
+			}
 			try{
 				delegateUserProxy(m_endPoint);
 				}
@@ -778,7 +814,7 @@ void Job::checkFileTransferProtocol(  ) {
 	ostringstream info;
 	ostringstream msg;
 	int size = 0;
-	if (checkWMProxyRelease( )) {
+	if (checkWMProxyRelease( "getprotocols" )) {
 		// ==== > getTransferProtocol service available
 		logInfo->service(WMP_GETPROTOCOLS_SERVICE);
 		// List of WMProxy available protocols

@@ -167,7 +167,7 @@ class Job{
 		* available on the WMProxy server
 		* (according to the WMProxy version)
 		*/
-		virtual bool checkWMProxyRelease ( );
+		virtual bool checkWMProxyRelease ( std::string operation );
 		/**
 		deprecated
 		*/
