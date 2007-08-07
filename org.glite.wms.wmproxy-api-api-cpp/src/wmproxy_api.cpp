@@ -910,7 +910,7 @@ std::string grstGetProxyReq(const std::string &delegationId, ConfigContext *cfs)
 	} else grstSoapErrorMng(deleg) ;
 	return proxy;
 }
-/*
+
 ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 	DelegationSoapBinding grst;
 	ProxyReqStruct request;
@@ -936,27 +936,10 @@ ProxyReqStruct getNewProxyReq(ConfigContext *cfs){
 	} else grstSoapErrorMng(grst) ;
 	return request;
 }
-*/
-/*****************************************************************
-getDelegationVersion
-******************************************************************/
-/*
-std::string getDelegationVersion(ConfigContext *cfs){
-	DelegationSoapBinding grst;
-	string request;
-	struct delegationns__getVersionResponse response;
-	grstSoapAuthentication(grst, cfs);
-	if (grst.delegationns__getVersion(response) == SOAP_OK) {
-		request = response.getVersionReturn;
-		soapDestroy(grst.soap) ;
-	} else grstSoapErrorMng(grst) ;
-	return request;
-}
-*/
+
 /*****************************************************************
 getDelegationInterfaceVersion
 ******************************************************************/
-/*
 std::string getDelegationInterfaceVersion(ConfigContext *cfs){
 	DelegationSoapBinding grst;
 	string request;
@@ -969,6 +952,19 @@ std::string getDelegationInterfaceVersion(ConfigContext *cfs){
 	return request;
 }
 
+std::string getServiceMetadata( std::string key, ConfigContext *cfs ) {
+	DelegationSoapBinding grst;
+	string request;
+	struct delegationns__getServiceMetadataResponse response;
+	grstSoapAuthentication(grst, cfs);
+	if (grst.delegationns__getServiceMetadata(key, response) == SOAP_OK) {
+		request = response._getServiceMetadataReturn;
+		soapDestroy(grst.soap) ;
+	} else throw *createWmpException (new GenericException ,
+                        	"getServiceMetadata:" ,
+                                "not yet supported" ) ;
+	return request;
+}
 
 int getProxyTerminationTime (const std::string &delegationId, ConfigContext *cfs){
 	DelegationSoapBinding grst;
@@ -1002,7 +998,7 @@ std::string renewProxyReq (const std::string &delegationId, ConfigContext *cfs){
 	}  else grstSoapErrorMng(grst) ;
 	return id;
 }
-*/
+
 /*****************************************************************
 putProxy
 *****************************************************************/
