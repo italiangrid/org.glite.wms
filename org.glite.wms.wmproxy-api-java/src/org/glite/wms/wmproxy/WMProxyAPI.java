@@ -265,7 +265,16 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
 		}
 	}
-
+	/**
+	*  Gets a proxy identified by the delegationId string.
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 3.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	*  @param delegationID the id to identify the delegation
+	*  @return a NewProxyReq representing the proxy
+	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
+	*/
 	public org.gridsite.www.namespaces.delegation_2.NewProxyReq getNewProxyReq ( )
 		throws org.glite.wms.wmproxy.CredentialException,
 			org.glite.wms.wmproxy.ServiceException,
@@ -283,7 +292,140 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
 		}
 	}
-
+	/**
+	*  Queries implementation specific meta information about the service
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 3.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	*  @param the key of the queried service metadata
+	*  @return a string representing the information
+	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
+	*/
+	public java.lang.String getServiceMetadata ( java.lang.String key )
+		throws org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
+		try {
+			return this.grstStub.getServiceMetadata( key ) ;
+		} catch (org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+	/**
+	*  Queries the version of the supported interface.
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 3.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	*  @return a string representing the version number of the interface
+	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
+	*/
+	public java.lang.String getInterfaceVersion ( )
+		throws org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
+		try {
+			return this.grstStub.getInterfaceVersion( ) ;
+		} catch (org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+	/**
+	*  Returns the expiration date and time of the credential, associated with the given delegationId.
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 3.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	*  @param delegationID the id to identify the delegation
+	*  @return a calendar with the date and time when the delegated credentials will expire
+	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
+	*/
+	public java.util.Calendar getTerminationTime ( java.lang.String delegationId )
+		throws org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
+		try {
+			return this.grstStub.getTerminationTime( delegationId ) ;
+		} catch (org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+	/**
+	*  Destroys the delegated credentials associated with the given delegationId.
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 3.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	*  @param delegationID the id to identify the delegation
+	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
+	*/
+	public void destroy ( java.lang.String delegationId )
+		throws org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
+		try {
+			this.grstStub.destroy( delegationId ) ;
+		} catch (org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+	/**
+	*  Restarts the delegation procedure by asking for a certificate signing request from the server for an already
+	* existing delegationId.
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 3.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	*  @param delegationID the id to identify the delegation
+	*  @return a string with the new proxy request, which is to replace the existing one
+	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
+	*/
+	public java.lang.String renewProxyReq ( java.lang.String delegationId )
+		throws org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException,
+			org.glite.wms.wmproxy.ServerOverloadedFaultException  {
+		try {
+			return this.grstStub.renewProxyReq( delegationId ) ;
+		} catch (org.gridsite.www.namespaces.delegation_2.DelegationException exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
 	/**
 	* This method allows delegating user credential to the WMProxy server:
 	* it creates a proxy from the input certificate (got by a previous call to the createProxyfromCertReq server).
