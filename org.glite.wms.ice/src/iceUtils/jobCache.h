@@ -27,16 +27,17 @@
 #include "elementNotFound_ex.h"
 #include "creamJob.h"
 #include "jobDbManager.h"
+#include "JobDbException.h"
 
 // GLite stuff
-#include "ClassadSyntax_ex.h"
+//#include "ClassadSyntax_ex.h"
 
 // STL stuff
 #include <string>
-#include <vector>
+//#include <vector>
 #include <list>
 #include <map>
-#include <fstream>
+//#include <fstream>
 #include <ostream>
 
 // Boost stuff
@@ -60,8 +61,6 @@ namespace glite {
 	private:
             static jobCache *s_instance; ///< The singleton instance of the jobCache class
 	    static bool s_recoverable_db;
-	    // static bool s_auto_purge_log;
- 	    // static bool s_read_only;
 
 	    static std::string s_persist_dir; ///< The name of the directory used to save persistency information
  
@@ -182,26 +181,23 @@ namespace glite {
 	  
 
           jobCacheTable m_jobs; ///< The in-core data structure holding the set of jobs
-
-	  void load( void ) throw(ClassadSyntax_ex&);
 	  
 	  boost::scoped_ptr< glite::wms::ice::util::jobDbManager > m_dbMgr;
-	  
-	  //glite::wms::ice::util::jobDbManager* getDbManager( void ) const {return m_dbMgr.get();}
 
+          /**
+           * Loads the database. 
+           *
+           * @throw JobDbException if the database does not exists or
+           * is corrupted.
+           */
+	  void load( void ) throw( JobDbException& );
+
+	  
 	protected:
 	  jobCache( );
 
 	public:
 	  
-/* 	  class Iterator { */
-/* 	  public: */
-/* 	    Iterator& operator++() { */
-/* 	      (*jobCache::getInstance()->getDbManager())++; */
-/* 	      return *this; */
-/* 	    } */
-/* 	  }; */
-
           typedef jobCacheTable::iterator iterator; ///< Iterator to the jobCache CREAM jobs. If it is of type jobCache::iterator, then *it is of type creamJob;
           typedef jobCacheTable::const_iterator const_iterator; ///< Const iterator to the jobCache elements. If it is of type jobCache::iterator, then *it is of type creamJob;
 
@@ -222,13 +218,12 @@ namespace glite {
 
 	  // Call this once and before invokation of getInstance()
 	  static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
-	  // static void setAutoPurgeLog( const bool autopurge ) { s_auto_purge_log = autopurge; }
-	  // static void setReadOnly( const bool rdonly ) { s_read_only = rdonly; }
 
           /**
-           * Changes the directory containing the persistency information. This method,
-           * if used at all, must be called _before_ the first invokation of
-           * the getInstance() method.
+           * Changes the directory containing the persistency
+           * information. This method, if used at all, must be called
+           * _before_ the first invokation of the getInstance()
+           * method.
            *
            * @param dir the directory containing the database of persistency
            */

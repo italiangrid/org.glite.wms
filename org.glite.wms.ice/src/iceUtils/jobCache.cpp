@@ -188,12 +188,12 @@ jobCache::jobCache( void )
     m_dbMgr.reset( dbm );
     try {
         load(); 
-    } catch( ClassadSyntax_ex& ex ) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                        << "jobCache::jobCache() - "
-                        << "Failed to load the jobCache from the database. "
-                        << "Reason is: " << ex.what()
-                        << ". Giving up"
+    } catch( JobDbException& ex ) {
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+                        << "jobCache::load() - "
+                        << "Failed to get all records from the database. "
+                        << "Reason is JobDbException: " 
+                        << ex.what() << ". Giving up."
                         << log4cpp::CategoryStream::ENDLINE );
         abort();
     }
@@ -206,64 +206,44 @@ jobCache::~jobCache( )
 }
 
 //______________________________________________________________________________
-void jobCache::load( void ) throw(ClassadSyntax_ex&)
+void jobCache::load( void ) throw( JobDbException& )
 {
-  
-  /**
-   * new implementation using the boost serializer
-   *
-   */
-  vector<string> records;
-  try {
-    //m_dbMgr->getAllRecords( records );
-
-    m_dbMgr->initCursor();
-
-    char *data;
-    while( (data = (char*)m_dbMgr->getNextData()) != NULL ) {
-      
-      CreamJob cj;
-      istringstream tmpOs;//( string(data) );
-      tmpOs.str( data );
-      boost::archive::text_iarchive ia(tmpOs);
-      ia >> cj;
-/*      CREAM_SAFE_LOG( m_log_dev->debugStream()
-		      << "jobCache::load() - "
-		      << "Fetched from Db string [" << data << "]"
-		      << log4cpp::CategoryStream::ENDLINE );
-
-      CREAM_SAFE_LOG( m_log_dev->debugStream()
-		      << "jobCache::load() - "
-		      << "Inserting job "
-		      << cj.describe() << " - STATUS=["
-		      << cj.getStatus() << "] - USER=["
-		      << cj.getUserDN() << "]"
-		      << log4cpp::CategoryStream::ENDLINE );
-*/
-      m_jobs.putJob( cj ); // update in-memory data structure
-      free(data);
-
+    try {
+        vector<string> records;
+        
+        m_dbMgr->initCursor();
+        
+        char *data;
+        while( (data = (char*)m_dbMgr->getNextData()) != NULL ) {
+            
+            CreamJob cj;
+            istringstream tmpOs;
+            tmpOs.str( data );
+            boost::archive::text_iarchive ia(tmpOs);
+            ia >> cj;
+            /*      CREAM_SAFE_LOG( m_log_dev->debugStream()
+                    << "jobCache::load() - "
+                    << "Fetched from Db string [" << data << "]"
+                    << log4cpp::CategoryStream::ENDLINE );
+                    
+                    CREAM_SAFE_LOG( m_log_dev->debugStream()
+                    << "jobCache::load() - "
+                    << "Inserting job "
+                    << cj.describe() << " - STATUS=["
+                    << cj.getStatus() << "] - USER=["
+                    << cj.getUserDN() << "]"
+                    << log4cpp::CategoryStream::ENDLINE );
+            */
+            m_jobs.putJob( cj ); // update in-memory data structure
+            free(data);
+            
+        }        
+        m_dbMgr->endCursor();
+    } catch( ClassadSyntax_ex& ex ) {
+        throw JobDbException( string( "ClassadSyntax Exception raised: " ) + ex.what() );
+    } catch(...) {
+        throw JobDbException( "Generic Exception caught while loading ICE database" );
     }
-
-    m_dbMgr->endCursor();
-
-  } catch(JobDbException& dbex) {
-    CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-		    << "jobCache::load() - "
-		    << "Failed to get all records from the database. "
-		    << "Reason is: " << dbex.what() << ". Giving up."
-		    << log4cpp::CategoryStream::ENDLINE );
-    abort();
-  }
-//   for(vector<string>::const_iterator it=records.begin();it != records.end();++it)
-//     {
-//       CreamJob cj;
-//       istringstream tmpOs( *it );
-//       //tmpOs << *it;
-//       boost::archive::text_iarchive ia(tmpOs);
-//       ia >> cj;
-//       m_jobs.putJob( cj ); // update in-memory data structure
-//     }
 }
 
 //______________________________________________________________________________
