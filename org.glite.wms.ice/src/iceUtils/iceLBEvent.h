@@ -257,6 +257,24 @@ namespace glite {
                 };
 
 
+                class job_suspended_event : public iceLBEvent {
+                public:
+                    job_suspended_event( const CreamJob& j );
+                    int execute( iceLBContext* ctx );
+                protected:
+                    std::string m_reason;
+                };
+
+                
+                class job_resumed_event : public iceLBEvent {
+                public:
+                    job_resumed_event( const CreamJob& j );
+                    int execute( iceLBContext* ctx );
+                protected:
+                    std::string m_reason;
+                };
+
+
 
             } // namespace util
         } // namespace ice

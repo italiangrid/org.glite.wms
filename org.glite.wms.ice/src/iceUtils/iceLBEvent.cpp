@@ -514,3 +514,52 @@ int wms_dequeued_event::execute( iceLBContext* ctx )
 #endif
 }
 
+//////////////////////////////////////////////////////////////////////////////
+//
+// job suspended event
+//
+//////////////////////////////////////////////////////////////////////////////
+job_suspended_event::job_suspended_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Job Suspended Event" ),
+    m_reason( "Job suspended by the batch system" )
+{
+
+}
+
+int job_suspended_event::execute( iceLBContext* ctx )
+{
+#ifdef GLITE_WMS_HAVE_LBPROXY
+    return edg_wll_LogSuspendProxy( *(ctx->el_context), 
+                                    m_reason.c_str()
+                                    );
+#else
+    return edg_wll_LogSuspend( *(ctx->el_context), 
+                               m_reason.c_str()
+                               );
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// job resumed event
+//
+//////////////////////////////////////////////////////////////////////////////
+job_resumed_event::job_resumed_event( const CreamJob& j ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Job Resumed Event" ),
+    m_reason( "Job resumed by the batch system" )
+{
+
+}
+
+int job_resumed_event::execute( iceLBContext* ctx )
+{
+#ifdef GLITE_WMS_HAVE_LBPROXY
+    return edg_wll_LogResumeProxy( *(ctx->el_context), 
+                                   m_reason.c_str()
+                                   );
+#else
+    return edg_wll_LogResume( *(ctx->el_context), 
+                              m_reason.c_str()
+                              );
+#endif
+}
