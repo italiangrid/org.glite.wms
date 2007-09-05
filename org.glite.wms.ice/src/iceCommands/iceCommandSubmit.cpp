@@ -247,7 +247,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     // take care of actual removal.
     {
       boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-        iceUtil::jobCache::const_iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
+        //iceUtil::jobCache::const_iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
+	iceUtil::jobCache::iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
         if ( cache->end() != it ) {
             CREAM_SAFE_LOG( m_log_dev->warnStream()
                             << "iceCommandSubmit::execute() - "

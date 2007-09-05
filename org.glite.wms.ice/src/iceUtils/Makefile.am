@@ -10,6 +10,7 @@ lib_LTLIBRARIES = libglite_wms_iceUtils.la
 
 libglite_wms_iceUtils_la_SOURCES = \
 				jobCache.cpp \
+				jobCacheIterator.cpp \
 				creamJob.cpp \
 				iceConfManager.cpp \
 				iceLBLogger.cpp \
@@ -21,7 +22,6 @@ libglite_wms_iceUtils_la_SOURCES = \
 				DNProxyManager.cpp \
 				iceUtils.cpp \
 				jobDbManager.cpp \
-				dbIterator.cpp \
 				CEDbManager.cpp \
 				CreamProxyFactory.cpp \
 				CreamProxyMethod.cpp \

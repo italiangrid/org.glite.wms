@@ -158,7 +158,12 @@ void iceCommandLeaseUpdater::execute( ) throw()
         boost::recursive_mutex::scoped_lock M( jobCache::mutex );
         
         list<CreamJob> check_list;
-        copy(m_cache->begin(), m_cache->end(), back_inserter(check_list));
+        //copy(m_cache->begin(), m_cache->end(), back_inserter(check_list));
+	jobCache::iterator it( m_cache->begin() );
+	while( it != m_cache->end() ) {
+	  check_list.push_back( *it );
+	  ++it;
+	}
         
         
         // Now the cache is purged from the lease-expired jobs, and we can 

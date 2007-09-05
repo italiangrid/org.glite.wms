@@ -49,7 +49,7 @@ int main(int argc, char*argv[]) {
   iceUtil::jobCache::setPersistDirectory( jcachedir );
   iceUtil::jobCache::setRecoverableDb( false );
   // iceUtil::jobCache::setAutoPurgeLog( false );
-  // iceUtil::jobCache::setReadOnly( true );
+  iceUtil::jobCache::setReadOnly( true );
   
   iceUtil::jobCache* _jCache = iceUtil::jobCache::getInstance();
 
@@ -60,11 +60,11 @@ int main(int argc, char*argv[]) {
        << "Cream Job ID / Grid Job ID / Status" 
        << endl 
        << endl;
-  iceUtil::jobCache::iterator it;
+  iceUtil::jobCache::iterator it( _jCache->begin() );
   size_t totsize = 0;
   int count = 0;
   map<string, int> statusMap;
-  for ( it=_jCache->begin(); it != _jCache->end(); it++ ) {
+  for ( it=_jCache->begin(); it != _jCache->end(); ++it ) {
     iceUtil::CreamJob aJob( *it );
     cout << aJob.getCreamJobID() << "   "
 	 << aJob.getGridJobID() << "   "

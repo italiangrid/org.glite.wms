@@ -165,7 +165,8 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			 << " one in the job cache for the current DN..."
 			 << log4cpp::CategoryStream::ENDLINE);
 
-	  iceUtil::jobCache::const_iterator better = this->searchBetterProxyForUser( *it );
+	  //iceUtil::jobCache::const_iterator better = this->searchBetterProxyForUser( *it );
+	  iceUtil::jobCache::iterator better = this->searchBetterProxyForUser( *it );
 
 	  if( better == cache->end() )
 	    {

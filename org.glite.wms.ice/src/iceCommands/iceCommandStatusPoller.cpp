@@ -178,6 +178,10 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
             result.push_back( *jit );
         }
     }
+    for(list<iceUtils::CreamJob>::const_iterator cit = result.begin(); cit != result.end(); ++cit)
+      CREAM_SAFE_LOG(m_log_dev->debugStream() 
+      			<< "iceCommandStatusPoller::get_jobs_to_poll() - Inserted CreamJobID ["
+			<< cit->getCreamJobID() << "]" << log4cpp::CategoryStream::ENDLINE);
 }
 
 //____________________________________________________________________________
@@ -358,7 +362,8 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
     info_obj.getStatusList( status_changes );
     string cid( info_obj.getCreamJobID() ); // Cream job id
 
-    jobCache::const_iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
+    //jobCache::const_iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
+    jobCache::iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
     if ( m_cache->end() != job_pos ) {
         CREAM_SAFE_LOG( m_log_dev->infoStream()
                         << "iceCommandStatusPoller::update_single_job() - "
@@ -387,7 +392,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
         // time.
         //
         jobCache::iterator jit( m_cache->lookupByCreamJobID( cid ) );    
-        
+	
         if ( m_cache->end() == jit ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << "iceCommandStatusPoller::update_single_job() -  cream_jobid ["
@@ -498,13 +503,13 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
     this->get_jobs_to_poll( j_list ); // this method locks the cache
   }
 
-    if ( j_list.empty() ) 
-        return; // give up if no job to check
+  if ( j_list.empty() ) 
+    return; // give up if no job to check
 
     
     
-    // Step 1. Build the mapping between ( UserDN, CreamUDL ) -> list<CreamJobId>
-    map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
+  // Step 1. Build the mapping between ( UserDN, CreamURL ) -> list<CreamJobId>
+  map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
     
 //     for ( list< CreamJob >::const_iterator jit = j_list.begin(); jit != j_list.end(); ++jit ) {
 //       if( !jit->getCreamJobID().empty() )
@@ -521,6 +526,8 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
         
         const string user_dn( jit->first.first );
         const string cream_url( jit->first.second );
+
+ 	
 
         list< iceUtils::CreamJob >::const_iterator it = (jit->second).begin();
         list< iceUtils::CreamJob >::const_iterator list_end = (jit->second).end();

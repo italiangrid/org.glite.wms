@@ -360,7 +360,7 @@ void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_a
 
 //____________________________________________________________________
 string iceUtil::jobDbManager::getByCid( const string& cid ) 
-  throw(iceUtil::JobDbException&)
+  throw(iceUtil::JobDbException&, iceUtil::JobDbNotFoundException&)
 {
     // FIXME: Going to READ from database.
     // For now the client (jobCache) put a lock
@@ -368,11 +368,14 @@ string iceUtil::jobDbManager::getByCid( const string& cid )
     // modifications visible to this READ only if the 
     // transaction itself is commited.
     // In future we could put a BDB-lock
-
+  int ret;
+  
   try {
     Dbt data, key( (void*)cid.c_str(), cid.length()+1);
-    m_creamJobDb->get( NULL, &key, &data, 0);
-    return string( (char*)data.get_data() );
+    ret = m_creamJobDb->get( NULL, &key, &data, 0);
+    
+    if( ret != DB_NOTFOUND )     
+      return string( (char*)data.get_data() );
   } catch(DbException& dbex) {
     throw iceUtil::JobDbException( dbex.what() );
   } catch(exception& ex) {
@@ -380,11 +383,13 @@ string iceUtil::jobDbManager::getByCid( const string& cid )
   } catch(...) {
     throw JobDbException( "jobDbManager::getByCid() - Unknown exception catched" );
   }
+  
+  throw JobDbNotFoundException();
 }
 
 //____________________________________________________________________
 string iceUtil::jobDbManager::getByGid( const string& gid ) 
-  throw(iceUtil::JobDbException&)
+  throw(iceUtil::JobDbException&, iceUtil::JobDbNotFoundException&)
 {
     // FIXME: Going to READ from database.
     // For now the client (jobCache) put a lock
@@ -392,14 +397,31 @@ string iceUtil::jobDbManager::getByGid( const string& gid )
     // modifications visible to this READ only if the 
     // transaction itself is commited.
     // In future we could put a BDB-lock
-  
-  Dbt key( (void*)gid.c_str(), gid.length()+1 );
-  Dbt cid, jdata;
-  m_gidDb->get( NULL, &key, &cid, 0);
-  // now cid contains the CreamJobID
     
-  m_creamJobDb->get(NULL, &cid, &jdata, 0); // can raise a JobDbException
-  return string( (char*)jdata.get_data() );
+  int ret;
+    
+  try {
+    Dbt key( (void*)gid.c_str(), gid.length()+1 );
+    Dbt cid, jdata;
+    
+    ret = m_gidDb->get( NULL, &key, &cid, 0);
+    
+    // now cid contains the CreamJobID
+    if(ret != DB_NOTFOUND)
+      ret = m_creamJobDb->get(NULL, &cid, &jdata, 0);
+    
+    if( ret != DB_NOTFOUND)
+      return string( (char*)jdata.get_data() );
+      
+  } catch(DbException& dbex) {
+    throw iceUtil::JobDbException( dbex.what() );
+  } catch(exception& ex) {
+    throw JobDbException( ex.what() );
+  } catch(...) {
+    throw JobDbException( "jobDbManager::getByCid() - Unknown exception catched" );
+  }
+  
+  throw JobDbNotFoundException();
 }
 
 //____________________________________________________________________
@@ -669,20 +691,4 @@ void iceUtil::jobDbManager::endCursor( void ) throw(iceUtil::JobDbException&)
     throw JobDbException( "jobDbManager::endCursor() - Unknown exception catched" );
 
   }
-}
-
-//______________________________________________________________________________
-iceUtil::jobDbManager::Iterator iceUtil::jobDbManager::begin() throw()
-{
-
-  return  iceUtil::jobDbManager::Iterator( iceUtil::jobDbManager::Iterator::IteratorBegin(m_creamJobDb) );
-
-}
-
-//______________________________________________________________________________
-iceUtil::jobDbManager::Iterator iceUtil::jobDbManager::end() throw()
-{
-  
-  return iceUtil::jobDbManager::Iterator( iceUtil::jobDbManager::Iterator::IteratorEnd() );
-
 }

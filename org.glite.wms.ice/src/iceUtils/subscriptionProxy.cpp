@@ -57,7 +57,21 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
     
 
     
-    m_myurl = iceUtil::getURL();
+    try {
+      m_myurl = iceUtil::getURL();
+    } catch(runtime_error& ex) {
+      CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                   << "subscriptionProxy::CTOR - "
+		   << ex.what()
+                   << log4cpp::CategoryStream::ENDLINE);
+      abort();
+    } catch(exception& ex) {
+      CREAM_SAFE_LOG(m_log_dev->infoStream() 
+                   << "subscriptionProxy::CTOR - "
+		   << ex.what()
+                   << log4cpp::CategoryStream::ENDLINE);
+      abort();
+    }
     m_D = new DialectW("CLASSAD");
 }
 

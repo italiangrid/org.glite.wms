@@ -193,7 +193,8 @@ void iceCommandUpdateStatus::execute( ) throw( )
 
             // Gets the job which is mentioned in the notification
             boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
-            jobCache::const_iterator job_it( cache->lookupByCreamJobID( notif->get_cream_job_id() ) );
+            //jobCache::const_iterator job_it( cache->lookupByCreamJobID( notif->get_cream_job_id() ) );
+            jobCache::iterator job_it( cache->lookupByCreamJobID( notif->get_cream_job_id() ) );
             
             if ( cache->end() != job_it ) {
 

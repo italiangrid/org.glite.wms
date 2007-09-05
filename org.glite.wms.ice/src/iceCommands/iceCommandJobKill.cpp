@@ -85,9 +85,15 @@ void iceCommandJobKill::execute() throw()
   map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
 
   list<CreamJob> toCheck;
-  copy(ice_util::jobCache::getInstance()->begin(),
-       ice_util::jobCache::getInstance()->end(),
-       back_inserter( toCheck ));
+//   copy(ice_util::jobCache::getInstance()->begin(),
+//        ice_util::jobCache::getInstance()->end(),
+//        back_inserter( toCheck ));
+
+  jobCache::iterator it( ice_util::jobCache::getInstance()->begin() );
+  while( it != ice_util::jobCache::getInstance()->end() ) {
+    toCheck.push_back( *it );
+    ++it;
+  }
 
   // Remove from toCheck list the jobs that have NOT the proxy expiring (and that have a non empty CreamJobID)
   this->checkExpiring( toCheck );

@@ -50,8 +50,8 @@ using namespace std;
 //____________________________________________________________________________
 ice_util::leaseUpdater::leaseUpdater( ) :
     iceThread( "ICE Lease Updater" ),
-    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
-    m_delay( iceConfManager::getInstance()->getConfiguration()->ice()->lease_update_frequency() )
+    m_delay(iceConfManager::getInstance()->getConfiguration()->ice()->lease_update_frequency()),
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
    
 }

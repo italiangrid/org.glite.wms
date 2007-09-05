@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include "JobDbException.h"
+#include "JobDbNotFoundException.h"
 
 namespace log4cpp {
     class Category;
@@ -18,8 +19,6 @@ namespace ice {
 namespace util {
 
   class jobDbManager {
-
-    
 
     friend class jobCache;
     friend class Iterator;
@@ -51,8 +50,6 @@ namespace util {
      
     Dbc* mainCursor;
 
-    //Dbc* iteratorCursor;
-
     Dbt It_key, It_data;
 
   protected:
@@ -62,51 +59,10 @@ namespace util {
 
   public:
 
-    class Iterator {
-      
-      Dbc* m_cursor;
-      
-      Dbt m_key, m_data;
-      
-/*       bool m_end; */
-/*       bool m_begin(); */
-      
-      //Iterator& operator=(const Iterator& it) throw() {};
-
-      void inc( void ) throw();
-      void dec( void ) throw();
-      
-    public:
-      
-      class IteratorBegin {
-	friend class Iterator;
-	Db *m_db;
-      public:
-	IteratorBegin( Db* db) : m_db(db) {}
-      };
-      class IteratorEnd {};
-      
-      //Iterator( Dbc* c ) throw();// : m_cursor( c ) { }
-      Iterator( ) : m_cursor( 0 ) { }
-      Iterator( const IteratorBegin& ) throw();
-      Iterator( const IteratorEnd& ) throw() : m_cursor(NULL) {}
-      Iterator( const Iterator& ) throw();// : m_cursor( c ) { }
-      ~Iterator() throw();
-      
-      bool operator==(const Iterator& it) const throw();
-      bool operator!=(const Iterator& it) const throw();
-      Iterator& operator=(const Iterator& it) throw();
-      std::string operator*() const throw();
-      
-      Iterator& operator++() throw();
-      Iterator& operator++(int) throw();
-      Iterator& operator--() throw();
-      Iterator& operator--(int) throw();
-      
-      void end() throw();
-    };
-
-    jobDbManager(const std::string& env_home, const bool recover = false, const bool autopurgelog = false, const bool read_only = false); // the directory pointed by env_home
+    jobDbManager(const std::string& env_home, 
+    		 const bool recover = false, 
+		 const bool autopurgelog = false, 
+		 const bool read_only = false); // the directory pointed by env_home
     					       // MUST exist
 					       // If the object creation fails
 					       // this->isValid() returns false
@@ -139,9 +95,9 @@ namespace util {
     
     void delByGid( const std::string& gid ) throw(JobDbException&);
     
-    std::string getByCid( const std::string& cid) throw(JobDbException&);
+    std::string getByCid( const std::string& cid) throw(JobDbException&, JobDbNotFoundException&);
     
-    std::string getByGid( const std::string& gid ) throw(JobDbException&);
+    std::string getByGid( const std::string& gid ) throw(JobDbException&, JobDbNotFoundException&);
     
     //void getAllRecords( std::vector<std::string>& target ) throw(JobDbException&);
     
@@ -152,12 +108,6 @@ namespace util {
     void checkPointing( void );
    
     void dbLogPurge( void ); 
-
-    //Dbc* cBegin( void ) throw(JobDbException&);
-    //Dbc* cEnd( void ) throw(JobDbException&);
-    
-    Iterator begin( void ) throw();
-    Iterator end( void ) throw();
 
   };
 

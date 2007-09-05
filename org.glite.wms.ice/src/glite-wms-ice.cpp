@@ -224,7 +224,7 @@ int main(int argc, char*argv[])
     string hostcert = conf->ice()->ice_host_cert();
 
     logger_instance->setLogFile(logfile.c_str());
-    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070712-15:00]"<<log4cpp::CategoryStream::ENDLINE);
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070903-15:00]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
 
     
@@ -267,6 +267,7 @@ int main(int argc, char*argv[])
 
     iceUtil::jobCache::setPersistDirectory( jcachedir );
     iceUtil::jobCache::setRecoverableDb( true );
+    iceUtil::jobCache::setReadOnly( false );
 
     try {
         iceUtil::jobCache::getInstance();
