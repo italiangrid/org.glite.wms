@@ -178,10 +178,6 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
             result.push_back( *jit );
         }
     }
-    for(list<iceUtils::CreamJob>::const_iterator cit = result.begin(); cit != result.end(); ++cit)
-      CREAM_SAFE_LOG(m_log_dev->debugStream() 
-      			<< "iceCommandStatusPoller::get_jobs_to_poll() - Inserted CreamJobID ["
-			<< cit->getCreamJobID() << "]" << log4cpp::CategoryStream::ENDLINE);
 }
 
 //____________________________________________________________________________
