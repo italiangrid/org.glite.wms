@@ -64,6 +64,7 @@ JobOutput::JobOutput () : Job() {
 	dirCfg = "/tmp";
 	// init of the boolean attributes
 	listOnlyOpt = false;
+	nosubdir = false;
 	//nopgOpt = false;
 	// list of files
 	childrenFileList = "";
@@ -82,12 +83,15 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 	unsigned int njobs = 0;
 	ostringstream err ;
  	Job::readOptions  (argc, argv, Options::JOBOUTPUT);
+
 	//--nopurg
 	nopgOpt = wmcOpts->getBoolAttribute(Options::NOPURG);
         // --input
         // input file
         m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
-	
+	//--nosubdir
+	nosubdir = wmcOpts->getBoolAttribute(Options::NOSUBDIR);
+
 	// JobId's
         if (!m_inOpt.empty()){
 		// From input file
@@ -164,19 +168,30 @@ void JobOutput::getOutput ( ){
 		// JobId
 		lbApi.setJobId(*it);
 		try{
+			string dirName = "" ;
 			Status status=lbApi.getStatus(true,true);
 			// Initialize ENDPOINT (start a new (thread of) job (s)
 			setEndPoint (status.getEndpoint());
 			// Properly set destination Directory
 			if (!m_dirOpt.empty()){
-				if ( size == 1 ){
-					retrieveOutput (result,status,Utils::getAbsolutePath(m_dirOpt), true);
+				// if --nosubdir do not create subdir in the specified directory with the option --dir
+				if ( nosubdir ){
+					logInfo->print(WMS_WARNING,"option --nosubdir specified: " , "output files with same name will be overridden");
+					dirName = Utils::getAbsolutePath(m_dirOpt) ;
 				} else {
-					retrieveOutput (result,status,Utils::getAbsolutePath(m_dirOpt)+logName+"_"+Utils::getUnique(*it), true);
+					dirName = Utils::getAbsolutePath(m_dirOpt)+logName+"_"+Utils::getUnique(*it) ;
 				}
 			}else{
-				retrieveOutput (result,status,dirCfg+logName+"_"+Utils::getUnique(*it), true);
+				// if --nosubdir do not create subdir in the default directory
+				if ( nosubdir ){
+					logInfo->print(WMS_WARNING,"option --nosubdir specified: " , "output files with same name will be overridden");
+					dirName = dirCfg ;
+				} else {
+					dirName = dirCfg+logName+"_"+Utils::getUnique(*it) ;
+				}
 			}
+			// calling the retrieveOutput with the dir name just processed
+			retrieveOutput (result,status,dirName, true);
 			// if the output has been successfully retrieved for at least one job
 			code = SUCCESS;
 		} catch (WmsClientException &exc){

@@ -93,6 +93,7 @@ class JobOutput  : public Job {
                 bool listOnlyOpt ;
 		bool nopgOpt ;
 		bool firstCall ;
+		bool nosubdir ;
                 /**
                 * JobId's
                 */

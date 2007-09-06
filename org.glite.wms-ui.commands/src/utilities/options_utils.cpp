@@ -119,6 +119,7 @@ const char* Options::LONG_LRMS		= "lrms";
 const char* Options::LONG_LOGFILE		= "logfile";
 const char* Options::LONG_NODESRES 	= "nodes-resource";
 const char* Options::LONG_NODISPLAY 	= "nodisplay";
+const char* Options::LONG_NOSUBDIR 		= "nosubdir";
 const char* Options::LONG_NOGUI		= "nogui";
 const char* Options::LONG_NOINT		= "noint";
 const char* Options::LONG_NOLISTEN	= "nolisten";
@@ -303,6 +304,7 @@ const struct option Options::outputLongOpts[] = {
 	{	Options::LONG_CONFIG,    	required_argument,		0,	Options::SHORT_CONFIG},
         {	Options::LONG_VO,           	required_argument,		0,	Options::VO},
 	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
+	{	Options::LONG_NOSUBDIR,		no_argument,			0,	Options::NOSUBDIR	},
 	{ 	Options::LONG_DEBUG,      	no_argument,			0,	Options::DBG},
 	{	Options::LONG_LOGFILE,    	required_argument,		0,	Options::LOGFILE},
 	{	Options::LONG_NOPURG,    	no_argument,			0,	Options::SHORT_NOPURG},
@@ -437,6 +439,8 @@ const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t<file_path>
 const string Options::USG_NODESRES = "--" + string(LONG_NODESRES)+ " <ce_id>" ;
 
 const string Options::USG_NODISPLAY = "--" + string(LONG_NODISPLAY);
+
+const string Options::USG_NOSUBDIR = "--" + string(LONG_NOSUBDIR);
 
 const string Options::USG_NOGUI = "--" + string(LONG_NOGUI);
 
@@ -655,6 +659,7 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
         cerr << "\t" << USG_LISTONLY << "\n";
+	cerr << "\t" << USG_NOSUBDIR << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_NOPURG << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -821,6 +826,7 @@ Options::Options (const WMPCommands &command){
 	jdlorig = false ;
         listonly = false;
 	nodisplay = false ;
+	nosubdir = false ;
 	nogui  = false ;
 	noint  = false ;
 	nolisten = false  ;
@@ -1264,6 +1270,10 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 			value = nodisplay ;
 			break ;
 		}
+		case(NOSUBDIR) : {
+			value = nosubdir ;
+			break ;
+		}
 		case(NOMSG) : {
 			value = nomsg ;
 			break ;
@@ -1534,6 +1544,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		}
 		case(NODISPLAY) : {
 			msg = USG_NODISPLAY ;
+			break ;
+		}
+		case(NOSUBDIR) : {
+			msg = USG_NOSUBDIR ;
 			break ;
 		}
 		case(FILENAME) : {
@@ -2420,6 +2434,15 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
     			} else {
 				nodisplay = true;
   				inCmd += px + LONG_NODISPLAY + ";" + ws ;
+                      }
+                        break ;
+		};
+		case ( Options::NOSUBDIR ) : {
+                	if (nosubdir){
+				dupl = LONG_NOSUBDIR;
+    			} else {
+				nosubdir = true;
+  				inCmd += px + LONG_NOSUBDIR + ";" + ws ;
                       }
                         break ;
 		};

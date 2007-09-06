@@ -64,6 +64,7 @@ class Options
 			LOGFILE ,
 			NODESRES,
 			NODISPLAY,
+			NOSUBDIR,
 			NOGUI ,
 			NOINT ,
 			NOLISTEN ,
@@ -407,6 +408,7 @@ class Options
 		static const char* LONG_LOGFILE;
 		static const char* LONG_NODESRES;
 		static const char* LONG_NODISPLAY;
+		static const char* LONG_NOSUBDIR;
 		static const char* LONG_NOGUI	;
 		static const char* LONG_NOINT ;
 		static const char* LONG_NOLISTEN ;
@@ -497,6 +499,7 @@ class Options
 		static const std::string USG_LOGFILE;
 		static const std::string USG_NODESRES	;
 		static const std::string USG_NODISPLAY	;
+		static const std::string USG_NOSUBDIR	;
 		static const std::string USG_NOGUI	;
 		static const std::string USG_NOINT ;
 		static const std::string USG_NOLISTEN ;
@@ -566,6 +569,7 @@ class Options
 		bool jdlorig ;
                 bool listonly ;
 		bool nodisplay ;
+		bool nosubdir ;
 		bool nogui ;
 		bool noint ;
 		bool nolisten ;
