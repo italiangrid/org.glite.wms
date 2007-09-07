@@ -25,11 +25,12 @@
 #define GLITE_WMS_ICE_ICECOMMANDPROXYRENEWAL_H
 
 #include "iceAbsCommand.h"
-
+#include "creamJob.h"
 #include "boost/scoped_ptr.hpp"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include<string>
+#include<list>
 
 namespace log4cpp {
   class Category;
@@ -61,6 +62,8 @@ namespace util {
         
         iceCommandProxyRenewal( const iceCommandProxyRenewal& );
         
+	bool iceCommandProxyRenewal::renewProxy( const std::list<CreamJob>& jobs) throw();
+	
     public:
         iceCommandProxyRenewal( );
         virtual ~iceCommandProxyRenewal( ) {}

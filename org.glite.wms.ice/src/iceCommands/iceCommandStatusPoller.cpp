@@ -506,11 +506,7 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
     
   // Step 1. Build the mapping between ( UserDN, CreamURL ) -> list<CreamJobId>
   map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
-    
-//     for ( list< CreamJob >::const_iterator jit = j_list.begin(); jit != j_list.end(); ++jit ) {
-//       if( !jit->getCreamJobID().empty() )
-//         jobMap[ make_pair( jit->getUserDN(), jit->getCreamURL()) ].push_back( *jit );
-//     }
+ 
     
     jobMap_appender appender( jobMap, &insert_condition );
     for_each( j_list.begin(),
