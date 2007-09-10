@@ -19,12 +19,15 @@ lcg_test_startup $@
 
 # ... I. Create and register a GRID file
 
-echo ""; myecho "lcg-cr $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI"; echo ""
-GUID=`lcg-cr $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI`
+echo ""; myecho "lcg-cr $VERBOSE $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI"; echo ""
+lcg-cr $VERBOSE $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI > $MYTMPDIR/guid.$$
+GUID=""
+GUID=`cat $MYTMPDIR/guid.$$ | grep -E "^ *guid:|^ *lfn:|^ *srm:|^ *sfn:"` > $MYTMPDIR/guid.$$
+cat $MYTMPDIR/guid.$$
+rm -f $MYTMPDIR/guid.$$
 
-if [ $? -eq 0 ]; then
-  echo "$GUID"
-  echo ""
+
+if [ $GUID ]; then
   myecho "GRID file $GUID has been successfully created"
 else
   echo "$GUID"
@@ -36,8 +39,8 @@ fi
 
 LOCAL_FILE_BACK=${LOCAL_FILE}_from_se
 
-echo ""; myecho "lcg-cp -v $VO_OPTIONS $GUID file:$LOCAL_FILE_BACK"; echo ""
-lcg-cp -v $VO_OPTIONS $GUID file:$LOCAL_FILE_BACK
+echo ""; myecho "lcg-cp $VERBOSE $VO_OPTIONS $GUID file:$LOCAL_FILE_BACK"; echo ""
+lcg-cp $VERBOSE $VO_OPTIONS $GUID file:$LOCAL_FILE_BACK
 
 if [ $? -ne 0 ]; then
   myecho "lcg-cp failed"

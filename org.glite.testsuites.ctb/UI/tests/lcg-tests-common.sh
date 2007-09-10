@@ -5,13 +5,14 @@
 # The startup procedure defined here is common for all the UI-data-lcg- tests and defines
 # the accepted command line parameters.
 #
-# UI-data-lcg-<name>.sh [--vo <VO>] [-d <SE>]
+# UI-data-lcg-<name>.sh [--vo <VO>] [-d <SE>] [-v]
 #
 #  --vo <VO> : VO to be fed to lcg- commands. If not given, and LCG_GFAL_VO not defined
 #       an attempt is made to determine VO name using voms-proxy-info
 #
 #  -d <SE> : Storage Element host name. This option is mandatory inless VO_<VO>_DEFAULT_SE is defined
 #
+# -v : verbose (passes the -v flag to the lcg- commands)
 # Example usage:
 # UI-data-lcg-cr-lr-lg-gt-del.sh --vo dteam -d lxb0724.cern.ch
 #
@@ -42,8 +43,8 @@ function cleanup_remote() {
 
   if [ -n "$GUID" ] ; then
 
-    echo ""; myecho "lcg-del $VO_OPTIONS -s $SE_HOST $GUID"; echo ""
-    lcg-del $VO_OPTIONS -s $SE_HOST $GUID
+    echo ""; myecho "lcg-del $VERBOSE $VO_OPTIONS -s $SE_HOST $GUID"; echo ""
+    lcg-del $VERBOSE $VO_OPTIONS -s $SE_HOST $GUID
 
     if [ $? -ne 0 ]; then
       myecho "lcg-del failed"
@@ -79,12 +80,14 @@ function lcg_test_startup() {
   VO_OPTIONS=""
   SE_HOST=""
   GUID=""
+  VERBOSE=""
+  MYTMPDIR="/tmp"
   
   # ... Parse options
   #     Quotation is disabled to allow constructions like "--vo $2" to work correctly
   #     But beware you can not pass a vo name containing spaces or other special characters because of that
 
-  OPTS=`getopt --unquoted --longoptions "vo:" --options "d:" -- "$@"` || myexit 1
+  OPTS=`getopt --unquoted --longoptions "vo:" --options "vd:" -- "$@"` || myexit 1
 
   set -- $OPTS
   
@@ -103,6 +106,11 @@ function lcg_test_startup() {
 	  shift
 	  shift
 	  ;;
+      -v) myecho "verbose flag set in command line: $2"
+          VERBOSE="-v"
+          shift
+          shift
+          ;;
        *) break;;
     esac
   done
@@ -141,8 +149,10 @@ function lcg_test_startup() {
   myecho "[for information]: LFC_HOST=$LFC_HOST"
 
   # ... create temporary test file
-
-  LOCAL_FILE=/tmp/testfile_`id -u`_$$
+  if ! [ -d $MYTMPDIR ]; then
+   mkdir -p $MYTMPDIR || myexit 1
+  fi
+  LOCAL_FILE=$MYTMPDIR/testfile_`id -u`_$$
   LOCAL_FILE_URI=file:$LOCAL_FILE
 
   echo "ui lcg test file created `date`" > $LOCAL_FILE || myexit 1

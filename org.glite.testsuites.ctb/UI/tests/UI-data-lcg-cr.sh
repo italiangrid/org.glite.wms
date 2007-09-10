@@ -13,19 +13,22 @@ echo ""
 echo "    === lcg-cr, -del test ===    "
 echo ""
 
-# ... define VO_OPTIONS, SE_HOST, LOCAL_FILE_URI
+# ... define VO_OPTIONS, SE_HOST, LOCAL_FILE_URI, VERBOSE
 
 lcg_test_startup $@
 
 # ... I. Create and register a GRID file
 
-echo ""; myecho "lcg-cr $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI"; echo ""
-GUID=`lcg-cr $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI`
+echo ""; myecho "lcg-cr $VERBOSE $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI"; echo ""
+lcg-cr $VERBOSE $VO_OPTIONS -d $SE_HOST $LOCAL_FILE_URI > $MYTMPDIR/guid.$$
+GUID=""
+GUID=`cat $MYTMPDIR/guid.$$ | grep -E "^ *guid:|^ *lfn:|^ *srm:|^ *sfn:"` > $MYTMPDIR/guid.$$
+cat $MYTMPDIR/guid.$$
+rm -f $MYTMPDIR/guid.$$
 
-if [ $? -eq 0 ]; then
-  echo "$GUID"
+if [ $GUID ]; then
   echo ""
-  myecho "GRID file has been successfully created"
+  myecho "GRID file has been successfully created with GUID $GUID"
 else
   echo "$GUID"
   myecho "lcg-cr failed"
