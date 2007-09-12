@@ -107,7 +107,7 @@ class JobIdStruct:
 		if self.path:
 			result+="ISB remote path: " + self.path +"\n"
 		result+="JobId: " + self.jobid
-		for child in self.children():
+		for child in self.children:
 			result += "\n\t" + child.toString()
 		return result
 	def getJobId(self):
