@@ -7,6 +7,12 @@ trap 'fatal_error "Job has been terminated (got SIGQUIT) "OSB""' QUIT
 trap 'fatal_error "Job has been terminated (got SIGINT) "OSB""' INT
 trap 'fatal_error "Job has been terminated (got SIGTERM) "OSB""' TERM
 
+do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
+{
+  $1 "$2" "$3" 2>"$4"
+  echo $? > "$5"
+}
+
 proxy_checker()
 {
   while [ 1 -eq 1 ]; do
@@ -158,16 +164,37 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    std_err=`mktemp -q std_err.XXXXXXXXXX`
-    if [ ! -f "$std_err" ]; then
-      std_err="/dev/null"
+    transfer_stderr=`mktemp -q std_err.XXXXXXXXXX`
+    if [ ! -f "$transfer_stderr" ]; then
+      transfer_stderr="/dev/null"
     fi
-    $1 "$2" "$3" 2>"$std_err"
-    succeded=$?
-    if [ $succeded != 0 ]; then
-      log_event_reason "Notice" "`head -c 1024 "$std_err"`"
+    transfer_exitcode=`mktemp -q tr_exit_code.XXXXXXXXXX`
+    if [ ! -f "$transfer_exitcode" ]; then
+      transfer_exitcode="/dev/null"
     fi
-    rm -f "$std_err"
+    do_transfer $1 "$2" "$3" "$transfer_stderr" "$transfer_exitcode"&
+    transfer_watchdog=$!
+    transfer_timeout=3600
+    while [ $transfer_timeout -gt 0 ];
+    do
+      if [ -z `ps -p $transfer_watchdog -o pid=` ]; then
+        break;
+      fi 
+      sleep 1
+      let "copier_timeout--"
+    done
+    if [ $copier_timeout -le 0 ]; then
+      kill -9 $copier_watchdog
+      log_event_reason "Notice" "Hanging transfer"
+      return 1
+    else
+      succeded=`cat $copier_exitcode 2>/dev/null`
+      if [ -z $succeded -o "$succeded" -ne "0" ]; then
+        log_event_reason "Notice" "Cannot retrieve return value for transfer"
+        return 1
+      fi
+    fi
+    rm -f "$transfer_stderr" "$transfer_exitcode"
     count=`expr $count + 1`
   done
   return ${succeded}
