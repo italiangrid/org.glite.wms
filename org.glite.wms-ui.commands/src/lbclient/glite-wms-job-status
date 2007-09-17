@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 ***************************************************************************
-    filename  : glite-job-status
+    filename  : glite-wms-job-status
     author    : Alessandro Maraschini
     email     : egee@datamat.it
     copyright : (C) 2004 by DATAMAT
@@ -78,7 +78,7 @@ def checkExclude(includes, excludes):
 ############################################
 #initialize some usefull variable
 sys_exit =0
-prgname="glite-job-status"
+prgname="glite-wms-job-status"
 wmsui_utils.err_log_clean(prgname)
 wmsui_checks.check_prefix()
 MSG_STATUS="=status="
@@ -142,7 +142,6 @@ try:
   inFile    = wmsui_utils.findVal( ["--input"  , "-i" ], options, values)
   outFile   = wmsui_utils.findVal(["--output" , "-o" ], options, values)
   gname    = wmsui_utils.findVal(["--config" , "-c" ], options, values)
-  gnamevo = wmsui_utils.findVal(["--config-vo" ], options, values)
   virtualOrg = wmsui_utils.findVal(["--vo" ], options, values)
   logpath = wmsui_utils.findVal(  ["--logfile"], options, values)
   level = wmsui_utils.findVal(["--verbosity", "-v"], options, values)
@@ -156,7 +155,7 @@ except SyntaxError,rep:
   wmsui_utils.print_help(error_message)
   exit(1)
 # UI Configuration file Check
-wmsui_checks.checkConf ( gname , logpath)
+wmsui_checks.checkConf (gname, virtualOrg, logpath)
 
 err ,includes , excludes = checkExclude (includes , excludes)
 if err:
@@ -232,9 +231,6 @@ if not jobs:
 		# Unable to parse /find specified JobId
 		errMsg('Error','UI_WRONG_JOBID_ALL')
 		exit(1)
-	else:
-		# Query option selected: Vo needed
-		voName=wmsui_checks.checkConfVo( gnamevo , virtualOrg )
 
 #Define the error/warning message:
 em="Error"

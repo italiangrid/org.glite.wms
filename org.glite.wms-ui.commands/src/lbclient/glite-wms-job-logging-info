@@ -71,7 +71,7 @@ sep ="**********************************************************************\n"
 ########## I PART: Inizialing variables and Starting checks########################
 
 sys_exit = 0
-prgname="glite-job-logging-info"
+prgname="glite-wms-job-logging-info"
 wmsui_utils.err_log_clean(prgname)
 wmsui_checks.check_prefix()
 MSG_EVENT   = "event="
@@ -136,7 +136,7 @@ except SyntaxError,rep:
 	wmsui_utils.print_help(simple_usage)
 	exit(1)
 
-wmsui_checks.checkConf ( gname , logpath)
+wmsui_checks.checkConf (gname, "", logpath)
 
 err, includes, excludes = checkExclude (includes , excludes)
 if err:

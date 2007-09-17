@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 ***************************************************************************
-    filename  : glite-job-attach
+    filename  : glite-wms-job-attach
     author    : Alessandro Maraschini
     email     : egee@datamat.it
     copyright : (C) 2004 by DATAMAT
@@ -54,7 +54,7 @@ except:
  MAIN FUNCTION
 """
 sys_exit = 0
-prgname="glite-job-attach"
+prgname="glite-wms-job-attach"
 wmsui_utils.err_log_clean(prgname)
 wmsui_checks.check_prefix()
 error_message = wmsui_utils.createErrMsg ( prgname, "job Id",["help","version","@","=port=",'nogui', 'nolisten' , "=config$" , "=output$", "=input$","noint","debug", "logfile$"])
@@ -107,7 +107,7 @@ except SyntaxError,rep:
   wmsui_utils.print_help(error_message)
   exit(1)
 
-wmsui_checks.checkConf ( gname , logpath)
+wmsui_checks.checkConf (gname, "", logpath)
 if wmsui_checks.check_proxy():
    exit(1)
 
