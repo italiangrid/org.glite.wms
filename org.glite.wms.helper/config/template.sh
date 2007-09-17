@@ -95,9 +95,12 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 
 warning()
 {
+  term_delay=10
   jw_echo "$1"
-  # log_something "$1"
+  log_event_reason "Notice" "SIGUSR1 sent to the job as warning, terminating in $term_delay seconds"
   kill -SIGUSR1 -$user_job_pid # TODO
+  sleep 10
+  fatal_error "Job termination $term_delay seconds after having it warned"
 }
 
 fatal_error() # 1 - reason, 2 - transfer OSB
@@ -181,17 +184,22 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
         break;
       fi 
       sleep 1
-      let "copier_timeout--"
+      let "transfer_timeout--"
     done
-    if [ $copier_timeout -le 0 ]; then
-      kill -9 $copier_watchdog
+    if [ $transfer_timeout -le 0 ]; then
+      kill -9 $transfer_watchdog
       log_event_reason "Notice" "Hanging transfer"
       return 1
     else
-      succeded=`cat $copier_exitcode 2>/dev/null`
-      if [ -z $succeded -o "$succeded" -ne "0" ]; then
+      succeded=`cat $transfer_exitcode 2>/dev/null`
+      if [ -z $succeded ]; then
         log_event_reason "Notice" "Cannot retrieve return value for transfer"
-        return 1
+        return 1 # will cause a fatal_error
+      else
+        if [ "$succeded" -ne "0" ]; then
+          log_event_reason "Notice" "Error during transfer"
+          return $succeded # will cause a fatal_error
+        fi
       fi
     fi
     rm -f "$transfer_stderr" "$transfer_exitcode"
@@ -211,10 +219,7 @@ doExit() # 1 - status
 
   rm -rf "../${newdir}"
 
-  # last in case the user_job has the same process group of this shell
-  if [ -n "$user_job_pid" ]; then
-    kill -9 $proxy_watchdog -$user_job_pid 2>/dev/null
-  fi
+  kill -9 $proxy_watchdog -$user_job_pid 2>/dev/null
 
   if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
