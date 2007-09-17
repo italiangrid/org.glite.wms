@@ -231,7 +231,6 @@ def check_prefix():
      for file in fileList:
           if not os.path.isfile(confPrefix+sep+file):
              found = 0
-	     print "Not found"
              break
      if found ==1:
         break
@@ -401,7 +400,7 @@ Definite VO Configuration file name found: check for file properties:
 - Semantic cohexistence between file name/path and VO file attribute ( if present )
 - Semantic cohexistence between file properties and (if specified) JDL VO attribute
 """
-def parseVo(voSrc, configFile, voName, eMsg):
+def parseVo(voSrc, configFile, voName, eMsg, override):
 
 	# Check the source of the VO Name
 	if (voSrc == VO_SOURCE_CERT_EXTENSION or voSrc == VO_SOURCE_VO_OPT) and not configFile :
@@ -573,11 +572,8 @@ def checkConf(conf, virtualOrg, logPath):
   
      print "checkConf\nEmpty value: Unable to find any both VirtualOrganisation and any configuration file"
      sys.exit(1)
-
-  # Eventually Parse fields
-  #TODO Check the return
   
-  err, defaultVo, info.confAdVo = parseVo(src, configFile, voName, "Error")
+  err, defaultVo, info.confAdVo = parseVo(src, configFile, voName, "Error", override)
 
   # Print Info
   #if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "VirtualOrganisation value :", voName,true);}
@@ -613,7 +609,7 @@ def checkConf(conf, virtualOrg, logPath):
 		  vomsrc = "proxy certificate extension"
 		  
 	  # PARSE EVENTUALLY VO FILE:
-	  err , voName , info.confAdVo = parseVo(src, configFile, voName, "Error")
+	  err , voName , info.confAdVo = parseVo(src, configFile, voName, "Error", override)
 	
 	  if err:
 		  wmsui_utils.exit(1)
