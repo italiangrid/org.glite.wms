@@ -7,6 +7,7 @@
 #include "AdWrapper.h"
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/jdl/DAGAd.h"
+#include "glite/jdl/JDLAttributes.h"
 #define ORG_GLITE_WMSUI_WRAPY_TRY_ERROR try{ error_code = false ;
 #define ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR \
 } catch (Exception &exc){  error_code= true; error = exc.what(); \
@@ -19,6 +20,9 @@ using namespace glite::wmsutils::exception ;
 using namespace glite::jdl ;
 using namespace std ;
 glite::jdl::DAGAd  *cAd = NULL ;
+
+const std::string JDL_DEFAULT_ATTRIBUTES = "JdlDefaultAttributes"; 
+
 // Constructor
 AdWrapper::AdWrapper( int level ){
 	if (level==0)  {
@@ -45,6 +49,7 @@ std::vector<std::string>  AdWrapper::get_error (){
 
   return result;
 }
+
 bool AdWrapper::fromFile(const string  &jdl_file ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	jad->clear();
@@ -130,6 +135,13 @@ bool  AdWrapper::removeAttribute (const string& attr_name){
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
 }
+classad::ExprTree*  AdWrapper::delAttribute (const string& attr_name){
+	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+	return jad->delAttribute(attr_name ) ;
+	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
+	return NULL;
+}
+
 bool  AdWrapper::addAttributeStr (const string& attr_name, const string& attr_value) {
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	jad->addAttribute(attr_name , attr_value) ;
@@ -172,6 +184,13 @@ bool AdWrapper::setAttributeExpr (const std::string& attr_name , const std::stri
 	else if (attr_name == "defaultReq" )
 		(    (glite::jdl::JobAd*)  jad)->setDefaultReq (attr_value ) ;
 	else jad->setAttributeExpr (attr_name , attr_value ) ;
+	return false ;
+	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
+	return true;
+}
+bool AdWrapper::setAttributeExpr (const std::string& attr_name , classad::ExprTree* attr_value){
+	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+	jad->setAttributeExpr (attr_name , attr_value ) ;
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true;
@@ -236,6 +255,34 @@ string AdWrapper::getAd( const string& name  ) {
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return "" ;
 }
+
+void AdWrapper::overrideVo( const std::string& voName ) {
+
+	//Checks for the VO in the JdlDefaultAttributes section
+	if(!voName.empty() && jad->lookUp(JDL_DEFAULT_ATTRIBUTES)) 
+	{
+		classad::ClassAd *defaultClassAd = static_cast<classad::ClassAd*>(jad->delAttribute(JDL_DEFAULT_ATTRIBUTES));
+		Ad *defaultAttrAd = new Ad(*defaultClassAd);
+		delete (defaultClassAd );
+	
+		// VO overriding
+		if (defaultAttrAd->hasAttribute(JDL::VIRTUAL_ORGANISATION))
+		{
+			string mismatchVo = defaultAttrAd->getString(JDL::VIRTUAL_ORGANISATION);
+			defaultAttrAd->delAttribute(JDL::VIRTUAL_ORGANISATION);
+			if ( voName.compare(mismatchVo) != 0 ) {
+				error_code = true;
+				error = "VirtualOrganisation Value Mismatch: \nConfiguration VirtualOrganisation value("+mismatchVo+") will be overriden by Proxy certificate value ("+voName+")";
+			}
+		}
+		
+		defaultAttrAd->setAttribute(JDL::VIRTUAL_ORGANISATION,voName);
+		jad->setAttribute(JDL_DEFAULT_ATTRIBUTES, defaultAttrAd);
+		delete ( defaultAttrAd );
+	}
+}
+
+
 /*************************************************************************************************************
 							DAG WRAPPER IMPLEMENTATION
 *************************************************************************************************************/

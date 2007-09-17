@@ -23,6 +23,7 @@
 */
 class AdWrapper {
    public:
+   
 	/**Ad wrapper constructor
 	* @param ad if set to 0 the wrapper is generated for a simple classad instance, otherwise for a JobAd instance
 	*/
@@ -70,6 +71,11 @@ class AdWrapper {
 	*@param attr_name the name of the attribute to be removed
 	*/
 	bool removeAttribute ( const std::string& attr_name ) ;
+	/**Permanetly remove an attribute from the Ad instance
+	*@param attr_name the name of the attribute to be removed
+	*@return the value of the attribute removed
+	*/
+	classad::ExprTree* delAttribute ( const std::string& attr_name ) ;
 	/**Set an attribute value (of string type)
 	*@param attr_name the name of the attribute to be set
 	*@param attr_value the string value to be set
@@ -100,6 +106,7 @@ class AdWrapper {
 	*@param attr_value the expression value to be set
 	*/
 	bool  setAttributeExpr (const std::string& attr_name, const std::string& attr_value) ;
+	bool  setAttributeExpr (const std::string& attr_name , classad::ExprTree* attr_value);
 	/**Check Wheter the instance has the specified attribute set
 	*@param attr_name the name of the attribute to be set
 	*/
@@ -149,6 +156,11 @@ class AdWrapper {
 	* @return the Ad value into its string representation
 	*/
 	std::string getAd( const std::string& name  ) ;
+	/**Override the VO Name inside the JDL Default Attributes
+	* @param voName the name of the VO 
+	*/
+	void overrideVo( const std::string& voName ) ;
+
     private:
 	glite::jdl::Ad* jad ;
 	std::string error ;
@@ -165,6 +177,7 @@ class AdWrapper {
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
 class DagWrapper {
+
    public:
 	/**DagAd wrapper constructor
 	* @param ad if set to 0 the wrapper is generated for a simple classad instance, otherwise for a JobAd instance
@@ -227,6 +240,7 @@ class DagWrapper {
 	*/
 	std::vector<std::string> getMap ();
 	std::vector<std::string> get_error () ;
+
    private:
 	glite::jdl::ExpDagAd* dagad ;
 	std::string error;

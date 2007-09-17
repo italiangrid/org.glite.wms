@@ -15,16 +15,185 @@
 import wmsui_utils
 from wmsui_utils import info
 from wmsui_utils import errMsg
-import os #check conf
-import shutil #copyfile
+import os
+import shutil
 import sys
-import time #printHeader
+import time
 from glite_wmsui_AdWrapper import AdWrapper
 from glite_wmsui_UcWrapper import UCredential
 
+# List of Deprecated attributes outside JDL Default Attributes
+VIRTUAL_ORGANISATION = "VirtualOrganisation"
+RETRYCOUNT = "RetryCount"
+SHALLOWRETRYCOUNT = "ShallowRetryCount"
+RANK = "rank"
+REQUIREMENTS = "requirements"
+HLR_LOCATION = "HLRLocation"
+MYPROXY = "MyProxyServer"
+JOB_PROVENANCE = "JobProvenance"
+LB_ADDRESS = "LBAddress"
+ALLOW_ZIPPED_ISB = "AllowZippedISB"
+PU_FILE_ENABLE = "PerusalFileEnable"
+
+deprecatedAttributes = [VIRTUAL_ORGANISATION, RETRYCOUNT, SHALLOWRETRYCOUNT, RANK, REQUIREMENTS, HLR_LOCATION, MYPROXY, JOB_PROVENANCE, LB_ADDRESS, ALLOW_ZIPPED_ISB,PU_FILE_ENABLE]
+
+# List of attributes to be used to fill the final configuration AD
+JDL_DEFAULT_PROXY_VALIDITY = "DefaultProxyValidity"
+JDL_DEFAULT_STATUS_LEVEL = "DefaultStatusLevel"
+JDL_DEFAULT_LOGGING_LEVEL = "DefaultLoggingLevel"
+JDL_ERROR_STORAGE = "ErrorStorage"
+JDL_OUTPUT_STORAGE = "OutputStorage"
+JDL_LISTENER_STORAGE = "ListenerStorage"
+JDL_LB_SERVICE_DISCOVERY_TYPE = "LBServiceDiscoveryType"
+JDL_WMPROXY_SERVICE_DISCOVERY_TYPE = "WMProxyServiceDiscoveryType"
+JDL_ENABLE_SERVICE_DISCOVERY = "EnableServiceDiscovery"
+JDL_WMPROXY_ENDPOINT = "WmProxyEndPoints"
+JDL_DEFAULT_ATTRIBUTES = "JdlDefaultAttributes"
+JDL_SOAP_TIMEOUTS = "SoapTimeouts"
+JDL_SYSTEM_CALL_TIMEOUT = "SystemCallTimeout"
+DELEGATION_ID = "DelegationId"
+
+DEFAULT_UI_CLIENTCONFILE = "glite_wmsui.conf"
+DEFAULT_UI_CONFILE       = "glite_wms.conf" # kept for compatibility purpose with older versions
+
+configAttributes = [JDL_DEFAULT_PROXY_VALIDITY, JDL_DEFAULT_STATUS_LEVEL, JDL_DEFAULT_LOGGING_LEVEL, JDL_ERROR_STORAGE, JDL_OUTPUT_STORAGE, JDL_LISTENER_STORAGE, JDL_LB_SERVICE_DISCOVERY_TYPE, JDL_WMPROXY_SERVICE_DISCOVERY_TYPE, JDL_ENABLE_SERVICE_DISCOVERY, JDL_WMPROXY_ENDPOINT, JDL_DEFAULT_ATTRIBUTES, JDL_SOAP_TIMEOUTS, JDL_SYSTEM_CALL_TIMEOUT, DELEGATION_ID]
+
+VO_SOURCE_NONE = "NONE"
+VO_SOURCE_CONFIG_VAR = "CONFIG_VAR"
+VO_SOURCE_CONFIG_OPT  = "CONFIG_OPT"
+VO_SOURCE_VO_OPT = "VO_OPT"
+VO_SOURCE_CERT_EXTENSION = "CERT_EXTENSION"
 
 # String for no default VO
 UnspecifiedVO = "unspecified"
+
+sep = "/"
+
+def generateVoPath(voName):
+  
+  # Read the HOME environment variable
+  try:
+    # Set the User Home directory
+    envHome = os.environ['HOME']
+  except:
+    # Set a empty value due to missing environment variable    
+    envHome = ""
+    
+  # Set the GLITE_WMS_COMMANDS_CONFIG environment variable content as configuration file
+  configFile = envHome + sep + "/.glite/" + sep + voName.lower() + "/" + DEFAULT_UI_CLIENTCONFILE
+
+  if not os.path.isfile(configFile):
+    # Old approach
+    configFile = envHome + sep + "/.glite/" + sep + voName.lower() + "/" + DEFAULT_UI_CONFILE
+  
+  # Return the Config File
+  return configFile
+
+def checkDeprecatedAttributes(ad, path):
+
+  deprecatedWarning = ""
+  attributeSeparator = ""
+  
+  # Show all the warnings for each deprecated attributes
+  for deprecatedAttribute in deprecatedAttributes:
+  
+    # Check if the current deprecated attributes is present outside JDL Default Attributes section
+    if(ad.hasKey(deprecatedAttribute)):
+      # Add the current attribute to the list of deprecated attributes
+      deprecatedWarning += attributeSeparator + deprecatedAttribute;
+      
+      # Set Comma as attribute separator
+      attributeSeparator = ", "
+  
+  # Show a warning message if deprecated attributes have been found and if it's in debug mode
+  if(deprecatedWarning and wmsui_utils.info.debug):
+
+    # Build the debug message
+    deprecatedMsg = "Configuration file: " + path + " - " + deprecatedWarning + " attribute(s) no more supported outside JDL Default Attributes section \"JdlDefaultAttributes\""
+
+    #Print message
+    wmsui_utils.print_message(wmsui_utils.info.logFile, deprecatedMsg)
+
+"""
+fill the classad attributes, if missing, from another classad.
+The only attributes copied are the configuration ones
+"""
+def mergeConfigAttributes(sourceAd, destinationAd):
+
+	# Scan all the config attributes inside the AD and if missing
+	# find them insede the source AD
+	for configAttribute in configAttributes:
+
+		# Check if the attribute is missing in the destination AD
+		if(not destinationAd.hasKey(configAttribute)):
+		
+			# Check if the attribute is present in the source AD
+			if(sourceAd.hasKey(configAttribute)):
+				
+				# Add the Attribute
+				destinationAd.setAttributeExpr(configAttribute, sourceAd.delAttribute(configAttribute))
+
+def loadConfiguration(pathUser, pathDefault, voName):
+
+  #Initialise configuration AD	
+  info.confAdVo = AdWrapper(1)
+
+  if pathUser:
+
+     # conf file has to be changed from default one
+     if not os.path.isfile(pathUser):
+        print "Fatal Error: config file not found:\n" + os.path.abspath(pathUser)
+        sys.exit (1)
+     else:
+     	# Create an AD Wrapper for the configuration file
+        ad = AdWrapper(1)
+
+        if ad.fromFile(pathUser):
+           print "Fatal Error: Unable to parse config file:\n " + os.path.abspath(pathUser)
+           sys.exit (1)
+
+	# Dump warning message on deprecated attributes
+	checkDeprecatedAttributes(ad, pathUser)
+
+	# Set the Configuration AD	 
+	mergeConfigAttributes(ad, info.confAdVo)  
+	
+	# Set the Configuration file name
+        info.confFile = os.path.abspath(pathUser)
+
+  if pathDefault:
+
+     # conf file has to be changed from default one
+     if not os.path.isfile(pathDefault):
+        print "Fatal Error: config file not found:\n"+os.path.abspath(pathDefault)
+        sys.exit (1)
+     else:
+     	# Create an AD Wrapper for the configuration file
+        ad = AdWrapper(1)
+        if ad.fromFile(pathDefault):
+           print "Fatal Error: Unable to parse config file:\n " + os.path.abspath(pathDefault)
+           sys.exit (1)
+
+	# Dump warning message on deprecated attributes
+	checkDeprecatedAttributes(ad, pathDefault)
+
+	# Set the Configuration AD	 
+	mergeConfigAttributes(ad, info.confAdVo)  
+	
+  # Override the VO if a valid one has been found
+  if(voName):
+    # Override in any case the voName
+    info.confAdVo.overrideVo(voName);
+
+    err, apiMsg = info.confAdVo.get_error()
+    if err:
+	    print err
+
+  # Print the configuration file loaded if it'ìs in debug mode
+  if info.debug:
+    # Print the configuration file loaded
+    print "####\nConfiguration file loaded:", info.confFile, info.confAdVo.toLines()
+
 
 """
 This Method finds where the UI tools have been installed
@@ -42,6 +211,7 @@ def check_prefix():
   pathList = ['$GLITE_WMS_LOCATION' , '$GLITE_LOCATION' , '/opt/glite','/usr/local' , '']
   etcPath = "etc"
   for path in pathList:
+
      prefix = path
      if path:
        if path[0] == "$":
@@ -49,16 +219,19 @@ def check_prefix():
            try:
               prefix = os.environ[ path[1:] ]
               env= path
+
            except:
               pass
      if not prefix:
         pass
      confPrefix = prefix + sep + etcPath
+
      #Look for UI configuration files:
      found = 1
      for file in fileList:
           if not os.path.isfile(confPrefix+sep+file):
              found = 0
+	     print "Not found"
              break
      if found ==1:
         break
@@ -221,208 +394,39 @@ def checkOpt(arg , short , long):
    return sysExit, options, value, extra
 
 """
-configuration file prioritiy:
-0).	(high priority)	DefaultVoName (from proxy certificate)
-1) 	--config or --vo option (exclusive)
-2) 	environment variable
-3) 	VirtualOrganisation attribute specified in JDL (if submit or list match)
-4) 	default value (from UI config file)
-eventually returns the value of the found VO
-"""
-def checkConfVo(conf , virtualOrg, *jobad):
-	"""
-	Override flag, 0 do not override, 1 override
-	"""
-	override = 0
-	#STATIC Variables
-	sep = "/"
-	voDefaultName = "glite_wmsui.conf"
-	voErrMsg ="Error"
-	"""
-	- Name of Vo
-	- Directory
-	- full path of VO file
-	"""
-	voName =""
-	confDir=""
-	final = ""
-	"""
-	Default VirtualOrganisation from existing Certificate (if present)
-	"""
-	defaultVo = ""
-	defaultAd =""
-	vomsrc=""
-	"""
-	Initialisations and Checks
-	"""
-	if conf and virtualOrg:
-			# those options   cannot match togheter
-			errMsg('Warning', "UI_ARG_EXCLUSIVE" , "--config-vo", "--vo")
-			wmsui_utils.exit(1)
-	#JobAd init
-	if jobad:
-		jobad=jobad[0]
-	#This value is stored in ExpDagAd class
-	if wmsui_utils.info.TYPE==0:
-		#Normal Job
-		VIRTUAL_ORGANISATION = "VirtualOrganisation"
-	else:
-		#Dag
-		VIRTUAL_ORGANISATION = 1
-	if jobad:
-		jobadHasKey = jobad.hasKey("VirtualOrganisation")
-	else:
-		jobadHasKey=0
-	#   ENV var init
-	try:
-			env = os.environ['GLITE_WMSUI_CONFIG_VO']
-	except:
-			env = ""
-
-	# PROXY Certificate File
-	try:
-			proxy_file_name = os.environ['X509_USER_PROXY']
-	except:
-			proxy_file_name = '/tmp/x509up_u'+ repr(os.getuid())
-	if os.path.isfile(proxy_file_name):
-		#Try to look for the default Vo inside the user proxy
-		printERRORS=1
-		err, defaultVo=checkVomsExtension(proxy_file_name, printERRORS)
-	"""
-	Options Parsing
-	"""
-	# --vo option specified
-	if virtualOrg:
-		confDir = wmsui_utils.info.prefix + sep + "etc" + sep +virtualOrg.lower()
-		final = confDir +  sep + voDefaultName
-		vomsrc = "--vo option"
-		voName=virtualOrg
-	#   --configVo option specified
-	elif conf:
-			vomsrc = "--config-vo option"
-			err , voName , ad = parseVo (voName , confDir , conf , override, "Warning")
-			if not err:
-				final = conf
-	# ENV variable used to specify VO file
-	elif env:
-			vomsrc = "GLITE_WMSUI_CONFIG_VO env variable"
-			err , voName , ad = parseVo (voName , confDir , env , override, "Warning")
-			if not err:
-				final = env
-	#   VirtualOrganisation attribute specified in JDL file
-	elif jobad and jobadHasKey:
-		if wmsui_utils.info.TYPE==0:
-			#Normal Job
-			voName = jobad.getStringValue(VIRTUAL_ORGANISATION )[0]
-		else:
-			#Dag
-			voName = jobad.getStringValue(VIRTUAL_ORGANISATION)
-		confDir = wmsui_utils.info.prefix + sep + "etc" + sep +voName.lower()
-		final = confDir +  sep + voDefaultName
-		vomsrc="JDL"
-
-	# DefaultVo attribute specified in configuration file (last option)
-	elif info.confAd.hasKey("DefaultVo"):
-		try:
-			VoFromConf = info.confAd.getStringValue("DefaultVo")[0]
-			if (not defaultVo) or (VoFromConf != UnspecifiedVO):
-				voName = VoFromConf
-				confDir = wmsui_utils.info.prefix + sep + "etc" + sep + voName.lower()
-				final = confDir +  sep + voDefaultName
-				vomsrc = "UI conf file"
-		except:
-			err, erMsg = info.confAd.get_error()
-			if err:
-				errMsg('Warning','UI_JDL_ADD_ERROR', erMsg)
-	"""
-	Default VO Parsing
-	"""
-	if defaultVo:
-		# Set Vo file's properties if not yet done
-		if not final:
-			voName=defaultVo
-			confDir= wmsui_utils.info.prefix + sep + "etc" + sep +defaultVo.lower()
-			final=confDir +sep + voDefaultName
-			vomsrc = "proxy certificate extension"
-	elif voName==UnspecifiedVO:
-		# Only a not allowed vo has been found
-		errMsg( "Error"  , "UI_NO_VOMS" , "Unable to determine a valid user's VO" )
-		wmsui_utils.exit(1)
-	"""
-	Final Check
-	"""
-	if final :
-		# Override message prompt to user only if:
-		# Vo has been specified somehow (vomsrc)
-		# defaultVo has been found (defaultVo)
-		# VO name exists but is different from DefaultVo (voName!=defaultVo)
-		if  (vomsrc ) and (defaultVo )and (voName) and ( voName.lower()!=defaultVo.lower() ):
-			errMsg('Warning', "UI_VOMS_OVERRIDE" , voName, vomsrc , defaultVo )
-			if wmsui_utils.info.noint:
-					wmsui_utils.exit(0)
-			elif vomsrc == "UI conf file":
-				# no need to ask question
-				pass
-			else:
-				question = "Do you want to continue?"
-				answ = wmsui_utils.questionYN(question)
-				if not answ: #NO answered
-					print "bye"
-					wmsui_utils.exit(0)
-			if (vomsrc == "--config-vo option") or (vomsrc == "GLITE_WMSUI_CONFIG_VO env variable") :
-				override = 1
-			else:
-				# Change name to default ONE
-				confDir= wmsui_utils.info.prefix + sep + "etc" + sep +defaultVo.lower()
-				final=confDir +sep + voDefaultName
-		if defaultVo:
-			voName=defaultVo
-			vomsrc = "proxy certificate extension"
-		# PARSE EVENTUALLY VO FILE:
-		err , voName , info.confAdVo = parseVo (voName , confDir , final , override, "Error")
-		if err:
-			wmsui_utils.exit(1)
-	else:
-		errMsg( "Error"  , "UI_NO_VOMS" , "Unable to determine a valid user's VO" )
-		wmsui_utils.exit(1)
-
-	# Successfully Update needed Info
-	msg = "Selected Virtual Organisation name (from "+ vomsrc+ "): "+ voName
-	if wmsui_utils.info.debug:
-		msg ="#### "+ time.ctime() + " Debug Message ####\n" + msg +"\nVOMS configuration file successfully loaded:\n" \
-		+ final + info.confAdVo.toLines() +  "\n#### End Debug ####\n"
-	#Print VOMS message
-	wmsui_utils.print_message( wmsui_utils.info.logFile,   msg )
-	# Cohexistence between properties and VO
-	if jobad:
-		if jobad.hasKey("VirtualOrganisation"):
-			jobad.removeAttribute (VIRTUAL_ORGANISATION)
-		jobad.setAttributeStr (VIRTUAL_ORGANISATION , voName)
-	return voName
-
-"""
-This Method is used by checkConfVo
-it parses the file and prompt for info
+This Method parses the file and prompt for info
 Definite VO Configuration file name found: check for file properties:
 - Existence
 - Ad parsing
 - Semantic cohexistence between file name/path and VO file attribute ( if present )
 - Semantic cohexistence between file properties and (if specified) JDL VO attribute
 """
-def parseVo( voName , confDir , final , override, eMsg ):
+def parseVo(voSrc, configFile, voName, eMsg):
+
+	# Check the source of the VO Name
+	if (voSrc == VO_SOURCE_CERT_EXTENSION or voSrc == VO_SOURCE_VO_OPT) and not configFile :
+		# Only vo is provided, generate file name:
+		configFile = generateVoPath(voName)	
+
+	# Retrieve the configuration directory
+	confDir = os.path.dirname(configFile)
+
 	# Look for configuration Vo file
 	if confDir:
-		if not os.path.isdir( confDir ):
-			errMsg(eMsg,'UI_NO_VO_CONF_INFO', voName )
+		if not os.path.isdir(confDir):
+			errMsg(eMsg,'UI_NO_VO_CONF_INFO', voName)
 			return [1,0,0]
-	if not os.path.isfile( final ):
-			errMsg(eMsg,'UI_FILE_NOT_FOUND', final )
+			
+	if not os.path.isfile(configFile):
+			errMsg(eMsg,'UI_FILE_NOT_FOUND', configFile)
 			return [1,0,0]
+	
 	# Parsing Ad VO file
 	ad = AdWrapper(1)
-	if ad.fromFile ( final):
-		errMsg(eMsg , "UI_JDL_ADD_ERROR", "Unable to parse Vo conf file (not a valid classad):\n " +final )
+	if ad.fromFile(configFile):
+		errMsg(eMsg , "UI_JDL_ADD_ERROR", "Unable to parse Vo conf file (not a valid classad):\n " + configFile )
 		return [1,0,0]
+		
 	#The VirtualOrganisation Attribute must match with the specified voName
 	val = ad.getStringValue ( "VirtualOrganisation")
 	if val:
@@ -432,7 +436,7 @@ def parseVo( voName , confDir , final , override, eMsg ):
 				if override == 1:
 					val = voName
 				else:
-					errMsg(eMsg,'UI_JDL_VO_MATCH', voName , val ,final )
+					errMsg(eMsg,'UI_JDL_VO_MATCH', voName , val ,configFile)
 					return [1,0,0]
 		# SUCCESS
 		return [0, val , ad ]
@@ -441,7 +445,6 @@ def parseVo( voName , confDir , final , override, eMsg ):
 		return [1,0,0]
 
 """
-                 checkConf
  This Method check the existence of the Group file
  if not found then tries to find the default cfg file
  it returns a list as follows:
@@ -449,53 +452,216 @@ def parseVo( voName , confDir , final , override, eMsg ):
  [0, <configure file>] on success
 
  Config file looking for priority:
-  1)	--config <file>       option
-  2)	'GLITE_WMSUI_CONFIG_VAR'    environment variable
-  3)	default configuration file (   <prefix>/etc/glite_wmsui_cmd_var.conf   )
+  1)	--config <file> option
+  2)	'GLITE_WMS_COMMANDS_CONFIG' environment variable
+  3)	default configuration file (/home/<user>/.glite/<vo_name>)
 
 """
-def checkConf( conf , logPath ):
-  #This point to the final conf file
-  sys_exit= 0
-  final = ""
-  #   ENV var:
-  try:
-    env = os.environ['GLITE_WMSUI_CONFIG_VAR']
-  except:
-    env = ""
-  #   --config found
-  if conf:
-     final = conf
-  #   Env found
-  elif env:
-    final = env
-  # Do Nothing, keeps with default one (already set???) TBD CHECK
-  else:
-    pass
-  if final:
-     # conf file has to be changed from default one
-     if not os.path.isfile( final ):
-        print "Fatal Error: config file not found:\n"+os.path.abspath(final)
-        sys.exit (1)
-     else:
-        ad = AdWrapper(1)
-        if ad.fromFile ( final):
-           print "Fatal Error: Unable to parse config file:\n " + os.path.abspath(final)
-           sys.exit (1)
-        info.confAd  = ad
-        info.confFile = os.path.abspath( final )
-        if info.debug:
-           print "####\nConfiguration file loaded:" , final ,ad.toLines()
+def checkConf(conf, virtualOrg, logPath):
 
+  override = 0
+
+  voName = UnspecifiedVO
+
+  vomsrc=""
+  src = VO_SOURCE_NONE;
+
+  configFile = ""
+
+  sys_exit = 0
+
+  # Trace 
+  if(conf and virtualOrg):
+  
+	wmsui_utils.errMsg("The following options cannot be specified together:\n" + \
+		 conf + "\n" + \
+		 virtualOrg + "\n\n", wmsui_utils.info.logFile)
+        wmsui_utils.exit(1)
+  
+  # Read the GLITE_WMS_COMMANDS_CONFIG environment variable
+  try:
+    # Set the WMS Commands Config file
+    envCommandsConfig = os.environ['GLITE_WMS_COMMANDS_CONFIG']
+  except:
+    # Set a empty value due to missing environment variable    
+    envCommandsConfig = ""
+
+  # Read the X509_USER_PROXY environment variable
+  try:
+    # Set the User Proxy filename from the environment variable
+    proxy_file_name = os.environ['X509_USER_PROXY']
+  except:
+    # Set the default User Proxy filename 
+    proxy_file_name = '/tmp/x509up_u'+ repr(os.getuid())
+
+  # Read the Proxy file if it exists		  
+  if os.path.isfile(proxy_file_name):
+
+    #Try to look for the default Vo inside the user proxy
+    printERRORS=1
+    err, voName = checkVomsExtension(proxy_file_name, printERRORS)
+    
+    # Check for errors
+    if err:
+	wmsui_utils.errMsg(err, wmsui_utils.info.logFile)
+        wmsui_utils.exit(1)
+
+    if voName:
+      # Set the source of the voName
+      src = VO_SOURCE_CERT_EXTENSION
+
+  """
+  Options Parsing
+  """
+  if(virtualOrg and src != VO_SOURCE_NONE):
+  
+    # VO name forcing ignored
+    wmsui_utils.errMsg ("Warning", "--vo option ignored", wmsui_utils.info.logFile )
+    
+  elif(virtualOrg):
+  
+    # SCR is definitely NONE
+    voName = virtualOrg
+    
+    vomsrc = "--vo option"
+    src = VO_SOURCE_VO_OPT
+
+    # Print a debug message    
+    if wmsui_utils.info.debug:
+      debugMsg = "#### "+ time.ctime() + " Debug Message ####\n" + \
+	         "VO Read from --vo option\n\n#### End Debug ####\n"
+   
+      #Print message
+      wmsui_utils.print_message(wmsui_utils.info.logFile, debugMsg)
+    
+    # Set the config file
+    configFile = wmsui_utils.info.prefix + sep + "etc" + sep + virtualOrg.lower() + sep + DEFAULT_UI_CLIENTCONFILE
+    
+  elif(conf):
+  
+    if (src == VO_SOURCE_NONE and wmsui_utils.info.debug):
+      debugMsg = "#### "+ time.ctime() + " Debug Message ####\n" + \
+	         "VO Read from --config option\n\n#### End Debug ####\n"
+   
+      #Print message
+      wmsui_utils.print_message(wmsui_utils.info.logFile, msg)
+    
+    # Set the config file
+    configFile = conf
+
+	
+    src = VO_SOURCE_CONFIG_OPT
+    vomsrc = "--config option"
+  
+    
+  elif envCommandsConfig:
+
+    if (src == VO_SOURCE_NONE and wmsui_utils.info.debug):
+      debugMsg = "#### "+ time.ctime() + " Debug Message ####\n" + \
+	         "VO Read from ENV option\n\n#### End Debug ####\n"
+   
+      #Print message
+      wmsui_utils.print_message(wmsui_utils.info.logFile, msg)
+
+    src = VO_SOURCE_CONFIG_VAR;
+    vomsrc = "GLITE_WMSUI_CONFIG_VO env variable"
+   
+    # Set the GLITE_WMS_COMMANDS_CONFIG environment variable content as configuration file
+    configFile = envCommandsConfig
+
+  elif(src == VO_SOURCE_NONE):	
+  
+     print "checkConf\nEmpty value: Unable to find any both VirtualOrganisation and any configuration file"
+     sys.exit(1)
+
+  # Eventually Parse fields
+  #TODO Check the return
+  
+  err, defaultVo, info.confAdVo = parseVo(src, configFile, voName, "Error")
+
+  # Print Info
+  #if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "VirtualOrganisation value :", voName,true);}
+  #  logInfo->print(WMS_DEBUG, "VirtualOrganisation value :", voName,true,true);
+
+  """
+  Default VO Parsing
+  """
+  if defaultVo:
+	
+	  # Set Vo file's properties if not yet done
+	  if not configFile:
+	
+		  voName = defaultVo
+		  configFile = wmsui_utils.info.prefix + sep + "etc" + sep +defaultVo.lower() + sep + DEFAULT_UI_CLIENTCONFILE
+		  vomsrc = "proxy certificate extension"
+		  
+  elif voName == UnspecifiedVO:
+	
+	  # Only a not allowed vo has been found
+	  wmsui_utils.errMsg( "Error"  , "UI_NO_VOMS" , "Unable to determine a valid user's VO", logFile )
+	  wmsui_utils.exit(1)
+	  
+	  
+  """
+  Final Check
+  """
+  if configFile:
+			  
+	  if defaultVo:
+	  
+		  voName=defaultVo
+		  vomsrc = "proxy certificate extension"
+		  
+	  # PARSE EVENTUALLY VO FILE:
+	  err , voName , info.confAdVo = parseVo(src, configFile, voName, "Error")
+	
+	  if err:
+		  wmsui_utils.exit(1)
+		  
+  else:
+	  wmsui_utils.errMsg( "Error"  , "UI_NO_VOMS" , "Unable to determine a valid user's VO" )
+	  wmsui_utils.exit(1)
+	
+  # Build the default config file it a VO name has been found
+  if(voName):	  
+	  
+    # Build the default config file 
+    cfDefault = wmsui_utils.info.prefix + sep + "etc" + sep + voName.lower() + sep + DEFAULT_UI_CLIENTCONFILE
+
+    # Check if the file exists
+    if not os.path.isfile (cfDefault):
+      # Remove the path
+      cfDefault = ""
+
+  # Load the configuration
+  loadConfiguration(configFile, cfDefault, voName)
+
+  # Successfully Update needed Info
+  msg = "Selected Virtual Organisation name (from "+ vomsrc + "): "+ voName
+  
+  if wmsui_utils.info.debug:
+	  msg = "#### "+ time.ctime() + " Debug Message ####\n" + msg +"\nVOMS configuration file successfully loaded:\n" \
+	  + configFile + info.confAdVo.toLines() +  "\n#### End Debug ####\n"
+
+  #Print VOMS message
+  wmsui_utils.print_message(wmsui_utils.info.logFile, msg)
+
+  # Check if the log path has been set
   if logPath:
-     logFile = os.path.abspath (logPath)
-     if os.path.isfile ( logFile):
-         try:
-           os.remove(logFile)
-         except:
-           errMsg ( "Warning" , "UI_RM_FILE", logFile )
+  
+    # Create the log filename
+    logFile = os.path.abspath (logPath)
+
+    # Remove the log file if it exists	
+    if os.path.isfile ( logFile):
+      try:
+        # Remove the log file
+        os.remove(logFile)
+      except:
+        errMsg ( "Warning" , "UI_RM_FILE", logFile )
   else :
-        logFile = wmsui_utils.create_err_log ( info.prgname )
+    # Create a new log file
+    logFile = wmsui_utils.create_err_log ( info.prgname )
 
   # Rename the old logFile with the new value (if needed)
   if info.logFile:
@@ -510,8 +676,6 @@ def checkConf( conf , logPath ):
      except:
        errMsg("Warning",'UI_RM_FILE' , info.logFile   )
      info.logFile = logFile
-
-
 
 
 """
@@ -614,9 +778,10 @@ def checkVomsExtension  (proxyfile, printERRORS):
 	"""
 	uc = UCredential(proxyfile)
 	vomses = uc.getVoNames()
+
 	if wmsui_utils.info.debug and printERRORS:
 		# No voms in certificate: print error
-		printableError=uc.get_error()
+		printableError = uc.get_error()
 		if printableError:
 			errMsg( 'Warning' , "UI_NO_VOMS",printableError)
 	if vomses:
