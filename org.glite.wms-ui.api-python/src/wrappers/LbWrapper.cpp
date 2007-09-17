@@ -251,8 +251,10 @@ Status::Status (
 		bool indexed = false ;
 		string queryErrMsg = "" ;
 		for (unsigned int i = 0 ; i< ia.size() ;  i++ ){
+
 			if (indexed) break ;
 			for (unsigned int j = 0 ;  j < ia[i].size() ; j++ ) {
+
 				if (indexed) break ;
 				switch (   ia[i][j].first ){
 					case QueryRecord::OWNER:
@@ -286,6 +288,25 @@ Status::Status (
 		// Create a vector of conditions		
 		vector <vector<QueryRecord> >cond ;
 			
+		// Add the conditions of the Job ID's if any
+		if(jobids.size() > 0) {
+		
+			// Create the vector of Query Records for the Job ID's
+			vector<QueryRecord> jobIdCond;
+	
+			// Fill the vector of Query Records for the Job ID's
+			for (unsigned int i = 0; i<jobids.size(); i++){
+				// Create a Query Record 
+				QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
+			
+				// Add the Query Record to the vector
+				jobIdCond.push_back(queryRecord);
+			}
+	
+			// Add the conditions of the Job ID's
+			cond.push_back(jobIdCond);
+		}
+	
 		// Create the conditions
 		createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
 		
@@ -550,8 +571,27 @@ std::vector<std::string> Eve::getEventsCodes(){
 
 	// Fill the returned array with the Events Codes
 	for (int lb_code = 0; (Event::Type)lb_code < Event::TYPE_MAX; lb_code++){
-		// Insert a single Event Code
-		result.push_back(Event::getEventName((Event::Type)lb_code));
+
+		try
+		{
+			// Retrieve the Event Code
+			string eventCode = Event::getEventName((Event::Type)lb_code);
+		
+			// Insert a single Event Code
+			result.push_back(eventCode);
+		}
+		catch(Exception &exc)
+		{
+			// N.B. Do nothing. This patch has been done in order to
+  			// avoid segmentation fault on getEventName due to jump
+			// on the enum int codes implemented by LB Client
+		}
+		catch(...)
+		{
+			// Set the 'unknown' error
+			//error_code= true; 
+			//error = "Fatal Error: Unpredictalbe exception thrown by LB Client on Event::getEventName()"; 
+		}
 	}
 	
 	// Return the vector of Events Codes
@@ -606,23 +646,9 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 			// Set the Level string
 			eventAttributes[attribute] = string (  edg_wll_LevelToString((edg_wll_Level)eventRequested.getValInt(attribute)));
 		}
-		else if (Event::STATUS_CODE == attribute) {
-		
-			// Build the string according to the type of the event
-			if(Event::CANCEL == eventRequested.type) {
-				eventAttributes[attribute] = string
-					(edg_wll_CancelStatus_codeToString (
-					(edg_wll_CancelStatus_code)eventRequested.getValInt(attribute) ) ) ;
-			
-			}
-			else {
-				eventAttributes[attribute] = string
-					(edg_wll_DoneStatus_codeToString (
-					(edg_wll_DoneStatus_code)eventRequested.getValInt(attribute) ) ) ;
-			}	
-		}
-		else if(Event::JOBTYPE == attribute ||
-			Event::RESULT == attribute) {
+		else if (Event::STATUS_CODE == attribute ||  
+		         Event::JOBTYPE == attribute ||
+			 Event::RESULT == attribute) {
 			// Set the attribute
 			eventAttributes[attribute] = eventRequested.getValString(attribute);
 		}
