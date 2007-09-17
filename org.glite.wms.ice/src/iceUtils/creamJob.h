@@ -74,7 +74,8 @@ namespace glite {
           std::string m_worker_node; //! The worker node on which the job is being executed
           bool m_is_killed_by_ice;
           time_t m_last_empty_notification; //! The timestamp of the last received empty notification
-
+	  bool m_proxy_renew;
+	  
 	protected:
 	  /**
            * Initializes a job object from a classad
@@ -225,12 +226,14 @@ namespace glite {
 	    return ( j1.getGridJobID() == j2.getGridJobID() );
 	  }
 
+	  bool is_proxy_renewable() const { return m_proxy_renew; }
+
           /**
            * Converts this job into a classad
            *
            * @return the string representation of the classad for this job
            */
-          std::string serialize( void ) const;
+          //std::string serialize( void ) const;
 
 
 
@@ -323,6 +326,7 @@ namespace glite {
 	    ar & m_worker_node;
 	    ar & m_is_killed_by_ice;
 	    ar & m_last_empty_notification;
+	    ar & m_proxy_renew;
 	    
 	  }
 

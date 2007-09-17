@@ -59,7 +59,8 @@ CreamJob::CreamJob( ) :
     m_statusPollRetryCount( 0 ),
     m_exit_code( 0 ),
     m_is_killed_by_ice( false ),
-    m_last_empty_notification( time(0) )
+    m_last_empty_notification( time(0) ),
+    m_proxy_renew( false )
 {
 
 }
@@ -103,50 +104,50 @@ CreamJob::CreamJob( const std::string& ad ) throw ( ClassadSyntax_ex& )
 }*/
 
 //______________________________________________________________________________
-string CreamJob::serialize( void ) const
-{
-    string res;
-
-    classad::ClassAd ad;
-    ad.InsertAttr( "cream_jobid", m_cream_jobid );
-    ad.InsertAttr( "status", m_status );
-    ad.InsertAttr( "exit_code", m_exit_code );
-    ad.InsertAttr( "failure_reason", m_failure_reason );
-    ad.InsertAttr( "delegation_id", m_delegation_id );
-    ad.InsertAttr( "wn_sequence_code", m_wn_sequence_code );
-    ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
-    ad.InsertAttr( "worker_node", m_worker_node );
-    ad.InsertAttr( "is_killed_by_ice", m_is_killed_by_ice );
-    ad.InsertAttr( "user_dn", m_user_dn);
-
-    classad::ClassAdParser parser;
-    classad::ClassAd* jdlAd = parser.ParseClassAd( m_jdl );
-    if(!jdlAd) {
-      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
-		       << "CreamJob::serialize() - ClassAdParser::ParseClassAd() returned a NULL pointer. STOP!"
-		       << log4cpp::CategoryStream::ENDLINE);
-      abort();
-    }
-    
-    //boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
-    
-    // Updates sequence code
-    jdlAd->InsertAttr( "LB_sequence_code", m_sequence_code );
-    ad.Insert( "jdl", jdlAd );
-
-    try {    
-        ad.InsertAttr( "last_seen", boost::lexical_cast< string >(m_last_seen) );
-        ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(m_end_lease) );
-	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( m_proxyCertTimestamp ) );
-        ad.InsertAttr( "last_empty_notification", boost::lexical_cast< string >(m_last_empty_notification ) );
-    } catch( boost::bad_lexical_cast& ) {
-        // Should never happen... FIXME
-    }
-
-    classad::ClassAdUnParser unparser;
-    unparser.Unparse( res, &ad );
-    return res;
-}
+// string CreamJob::serialize( void ) const
+// {
+//     string res;
+// 
+//     classad::ClassAd ad;
+//     ad.InsertAttr( "cream_jobid", m_cream_jobid );
+//     ad.InsertAttr( "status", m_status );
+//     ad.InsertAttr( "exit_code", m_exit_code );
+//     ad.InsertAttr( "failure_reason", m_failure_reason );
+//     ad.InsertAttr( "delegation_id", m_delegation_id );
+//     ad.InsertAttr( "wn_sequence_code", m_wn_sequence_code );
+//     ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
+//     ad.InsertAttr( "worker_node", m_worker_node );
+//     ad.InsertAttr( "is_killed_by_ice", m_is_killed_by_ice );
+//     ad.InsertAttr( "user_dn", m_user_dn);
+// 
+//     classad::ClassAdParser parser;
+//     classad::ClassAd* jdlAd = parser.ParseClassAd( m_jdl );
+//     if(!jdlAd) {
+//       CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+// 		       << "CreamJob::serialize() - ClassAdParser::ParseClassAd() returned a NULL pointer. STOP!"
+// 		       << log4cpp::CategoryStream::ENDLINE);
+//       abort();
+//     }
+//     
+//     //boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
+//     
+//     // Updates sequence code
+//     jdlAd->InsertAttr( "LB_sequence_code", m_sequence_code );
+//     ad.Insert( "jdl", jdlAd );
+// 
+//     try {    
+//         ad.InsertAttr( "last_seen", boost::lexical_cast< string >(m_last_seen) );
+//         ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(m_end_lease) );
+// 	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( m_proxyCertTimestamp ) );
+//         ad.InsertAttr( "last_empty_notification", boost::lexical_cast< string >(m_last_empty_notification ) );
+//     } catch( boost::bad_lexical_cast& ) {
+//         // Should never happen... FIXME
+//     }
+// 
+//     classad::ClassAdUnParser unparser;
+//     unparser.Unparse( res, &ad );
+//     return res;
+// }
 
 //______________________________________________________________________________
 void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
@@ -242,6 +243,14 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     if ( !classad_safe_ptr->EvaluateAttrString( "X509UserProxy", m_user_proxyfile ) ) {
         throw ClassadSyntax_ex("CreamJob::setJdl: X509UserProxy attribute not found, or is not a string");
     }
+    
+    string tmp;
+    if ( classad_safe_ptr->EvaluateAttrString( "MYPROXYSERVER", tmp ) ) {
+      m_proxy_renew = true;
+    } else {
+      m_proxy_renew = false;
+    }
+    
     boost::trim_if(m_user_proxyfile, boost::is_any_of("\""));
     
     struct stat stat_buf;
@@ -367,6 +376,7 @@ size_t CreamJob::size( void ) const
   size += sizeof(m_exit_code);
   size += sizeof(m_is_killed_by_ice);
   size =+ sizeof(m_last_empty_notification);
+  size += sizeof(m_proxy_renew);
   
   size += m_failure_reason.capacity() + m_worker_node.capacity() + m_wn_sequence_code.capacity();
   size += m_delegation_id.capacity() + m_sequence_code.capacity() + m_user_dn.capacity();
