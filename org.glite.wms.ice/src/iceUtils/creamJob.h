@@ -282,7 +282,8 @@ namespace glite {
 	  static std::string extract_first_index_key( const std::string& jdl ) { 
 	    
  	    CreamJob J( jdl );
-
+	    
+	    // FIXME: the following call can raise an soap_proxy::auth_ex exception
 	    J.setUserDN( glite::ce::cream_client_api::certUtil::getDNFQAN(J.getUserProxyCertificate()) );
 	    return J.getUserDN();
 

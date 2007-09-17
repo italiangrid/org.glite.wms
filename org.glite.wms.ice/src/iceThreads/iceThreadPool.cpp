@@ -77,7 +77,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                                     << "Worker Thread " 
                                     << m_state->m_name << "/" << m_threadNum 
                                     << " raised the following lock_error "
-                                    << "xception while waiting on the "
+                                    << "exception while waiting on the "
                                     << "command queue: " << err.what()
                                     << ". Giving up."
                                     << log4cpp::CategoryStream::ENDLINE

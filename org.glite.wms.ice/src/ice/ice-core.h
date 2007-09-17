@@ -156,6 +156,8 @@ namespace ice {
         virtual ~Ice();
         
         void getNextRequests(std::list< util::Request* >&);
+	util::Request* getNextRequest( void );
+	
         void removeRequest( util::Request* r );
 
         // Starter methods

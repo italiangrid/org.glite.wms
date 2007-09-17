@@ -41,6 +41,7 @@ namespace util {
          *
          */
         std::list<Request*> get_requests( );
+	Request* get_single_request( );
 
         /**
          *

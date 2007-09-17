@@ -296,7 +296,7 @@ int main(int argc, char*argv[])
      * list.
      ****************************************************************************/
     list< iceUtil::Request* > requests;
-
+    iceUtil::Request* request(NULL);
     /*****************************************************************************
      * Starts status poller and/or listener if specified in the config file
      ****************************************************************************/
@@ -317,8 +317,10 @@ int main(int argc, char*argv[])
      * Main loop that fetch requests from input filelist, submit/cancel the jobs,
      * removes requests from input filelist.
      ****************************************************************************/
+     
+    int request_counter = 0; 
+     
     while(true) {
-
         //
         // BEWARE!! the get_command_count() method locks the
         // threadPool object. Hence, it is *extremely* dangerous to
@@ -327,7 +329,6 @@ int main(int argc, char*argv[])
         // race condition.
         //
         int command_count = threadPool->get_command_count();
-
         if ( command_count > 100 ) {
             CREAM_SAFE_LOG(log_dev->infoStream()
                            << "glite-wms-ice::main() - "
@@ -340,41 +341,44 @@ int main(int argc, char*argv[])
             sleep( 30 );
             continue;
         }
+        request = iceManager->getNextRequest( );
+        if(!request) {
+	  sleep(2);
+	  continue;
+	}
 
-        requests.clear();
-        iceManager->getNextRequests(requests);
-    
-        if( requests.size() )
-            CREAM_SAFE_LOG(
-                           log_dev->infoStream()
-                           << "*** Found " << requests.size() << " new request(s)"
-                           << log4cpp::CategoryStream::ENDLINE
-                           );
 
-        for( list< iceUtil::Request* >::iterator it = requests.begin();
-             it != requests.end(); ++it ) {
+	CREAM_SAFE_LOG(
+                            log_dev->infoStream()
+                            << "*** Found a new request..."
+                            << log4cpp::CategoryStream::ENDLINE
+                            );
+
+
             CREAM_SAFE_LOG(
                            log_dev->infoStream()
                            << "*** Unparsing request <"
-                           << (*it)->to_string()
+                           << request->to_string()//(*it)->to_string()
                            << ">"
                            << log4cpp::CategoryStream::ENDLINE
                            );
             glite::wms::ice::iceAbsCommand* cmd;
             try {
-                cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
+                cmd = glite::wms::ice::iceCommandFactory::mkCommand( /* *it */ request );
             } catch( std::exception& ex ) {
                 CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
                 CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
-                iceManager->removeRequest( *it );
+                iceManager->removeRequest( /* *it */ request );
                 continue;
             }
-
-            // Submit to the thread pool
             threadPool->add_request( cmd );
 
-        }
-        sleep(1);
+
+	request_counter++;
+	if(request_counter >= 100) {
+	  request_counter = 0;
+	  sleep(5);
+	}
     }
     return 0;
 }

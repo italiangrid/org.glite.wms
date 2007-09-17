@@ -209,7 +209,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
      CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		    << "DNProxyManager::setUserProxyIfLonger - "
 		    << "Cannot retrieve the Subject for the proxy ["
-		    << prx << "]. ICE will continue to use the old proxy."
+		    << prx << "]. ICE will continue to use the old proxy.Error is: "
 		    << ex.what()
 		   << log4cpp::CategoryStream::ENDLINE);
      return;

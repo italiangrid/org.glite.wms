@@ -442,6 +442,12 @@ void Ice::getNextRequests( std::list< util::Request* >& ops)
 }
 
 //____________________________________________________________________________
+Request* Ice::getNextRequest( ) 
+{
+   return m_ice_input_queue->get_single_request( );
+}
+
+//____________________________________________________________________________
 void Ice::removeRequest( util::Request* req )
 {
     m_ice_input_queue->remove_request( req );

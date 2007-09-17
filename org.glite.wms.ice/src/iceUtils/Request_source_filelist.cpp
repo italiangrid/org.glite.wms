@@ -26,6 +26,8 @@
 #include <boost/filesystem/convenience.hpp>
 #include <vector>
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include <utility>
+#include <string>
 
 namespace wmsutils_ns=glite::wms::common::utilities;
 namespace fs = boost::filesystem;
@@ -88,6 +90,30 @@ list<Request*> Request_source_filelist::get_requests( void )
         result.push_back( new Request_filelist( requests[j] ) );
     }
     return result;
+}
+  
+Request* Request_source_filelist::get_single_request( void )
+{
+  std::pair< FLEit , bool  > request;
+//     //list< Request* > result;
+    try { 
+        request = m_filelist_extractor.try_get_one();
+    }
+    catch( exception& ex ) {
+        CREAM_SAFE_LOG(
+                       api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                       << "Request_source_filelist::get_single_request() - " << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
+        abort(); // FIXME
+    }
+//     for ( unsigned j=0; j < requests.size(); j++ ) {
+//         result.push_back( new Request_filelist( requests[j] ) );
+//     }
+//     return result;
+
+  if( !request.second ) return NULL;
+  return new Request_filelist( request.first );
 }
 
 void Request_source_filelist::remove_request( Request* req )
