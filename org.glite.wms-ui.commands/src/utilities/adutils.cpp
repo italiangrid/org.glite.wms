@@ -219,7 +219,7 @@ bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 *  General Static Methods
 *******************************/
 glite::jdl::Ad* AdUtils::loadConfiguration(const std::string& pathUser, const std::string& pathDefault, const std::string& voName){
-	glite::jdl::Ad adUser, adDefault, adGeneral, configAd;
+	glite::jdl::Ad adUser, adDefault, configAd;
 
 	// Load the User configuration file if it has been set
 	if (pathUser!=""){
