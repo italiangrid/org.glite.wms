@@ -865,7 +865,7 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getInterfaceVersion(self, ns = "")
+	def getInterfaceVersion(self, ns = ""):
 		"""
 		Method: getInterfaceVersion
 		OUT = version (string)
@@ -889,7 +889,7 @@ class Wmproxy:
 
 
 
-	def getServiceMetadata(self, string key, ns = ""):
+	def getServiceMetadata(self, key, ns = ""):
 		"""
 		Method (not yet supported):  getServiceMetadata
 		IN =  key (string)
