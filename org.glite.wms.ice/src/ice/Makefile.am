@@ -21,7 +21,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(GSOAP_CFLAGS) \
 		$(BOOST_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
-		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
 		-pipe 
