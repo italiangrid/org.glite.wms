@@ -11,13 +11,16 @@ gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
-url = tigerman
+neo      =  "https://neo.datamat.it:7443/glite_wms_wmproxy_server"
+prod     =  "https://prod-wms-01.pd.infn.it:7443/glite_wms_wmproxy_server"
+
+url = ghemon
 
 
 ns ="http://glite.org/wms/wmproxy"
 
 delegationId=""
-delegationId = "luca"
+delegationId = "rask"
 
 protocol="gsiftp"
 protocol="all"
@@ -36,7 +39,7 @@ rank ="-other.GlueCEStateEstimatedResponseTime"
 Config.allSuites={ \
 # SUBMIT SUITES
 "submitSuite":["testdagSubmit","testcollectionSubmit","testcollectionSubmitOne",\
-"testjobSubmit","testjobListMatch","testcycleJob", "testJobRegister","testJobRegisterJSDL"],\
+"testjobSubmit","testjobListMatch","testcycleJob", "testJobRegister","testJobRegisterJSDL", "testjobStart"],\
 # PERUSAL SUITES
 "PerusalSuite":["testgetPerusalFiles","testenableFilePerusal"],\
 # TEMPLATES SUITES
@@ -123,13 +126,16 @@ class Jdl:
 		self.jdl=jdl
 		return jdl
 	def getJdl(self, defaultJdl=""):
+		result=""
 		if self.jdl:
-			return self.jdl
+			result = self.jdl
 		elif defaultJdl:
-			return defaultJdl
+			result = defaultJdl
 		else:
 			tile ("WARNING: using DEFAULT JDL",self.DEFAULT_JDL )
-			return self.DEFAULT_JDL
+			result = self.DEFAULT_JDL
+		title ("performing operation wigh folloving jdl:" , result)
+		return result
 
 	def getJsdl(self, defaultJsdl=""):
 		if self.jsdl:
@@ -160,12 +166,12 @@ dagjdl2="[ nodes = [ nodeB = [ description = [ requirements = RegExp(\"lxde01*\"
 
 
 
-collectionjdl = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMarask\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[1] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMaraskino\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[2] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/grid_dev/wmproxy/ls.jdl\",\"file:///home/grid_dev/wmproxy/parametric.jdl\",\"file:///home/grid_dev/wmproxy/ENV\" } ]"
+collectionjdl = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMarask\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[1] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMaraskino\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[2] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/maraska/wmproxy/ls.jdl\",\"file:///home/maraska/wmproxy/parametric.jdl\",\"file:///home/maraska/wmproxy/ENV\" } ]"
 
 
 collectionjdl = "[ requirements = other.GlueCEInfoTotalCPUs>0; RetryCount = 3; nodes = { [ NodeName = \"nodeMarask\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; ],[NodeName = \"nodeMaraskino\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; ],[arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"]"
 
-collectionjdlUNO = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/grid_dev/wmproxy/ls.jdl\",\"file:///home/grid_dev/wmproxy/parametric.jdl\",\"file:///home/grid_dev/wmproxy/ENV\" } ]"
+collectionjdlUNO = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/maraska/wmproxy/ls.jdl\",\"file:///home/maraska/wmproxy/parametric.jdl\",\"file:///home/maraska/wmproxy/ENV\" } ]"
 
 
 """
@@ -221,12 +227,11 @@ class WmpTest(unittest.TestCase):
 		title ("transferProtocols are:", protocols)
 
 	def testgetOutputFileList(self):
-		jobFL = self.wmproxy.getOutputFileList(jobid.getJobId(),protocol)
-		dagFL = self.wmproxy.getOutputFileList(dagad.getJobId(),protocol)
-		title("getOutputFiles WITH protocol are (both of them might be empty):","JOB", jobFL, "DAG",dagFL)
-		jobFL = self.wmproxy.getOutputFileList(jobid.getJobId())
-		dagFL = self.wmproxy.getOutputFileList(dagad.getJobId())
-		title("getOutputFiles WITHOUT protocol are (both of them might be empty):","JOB", jobFL, "DAG",dagFL)
+		for protocol in ["https"]:
+			jobFL = self.wmproxy.getOutputFileList(jobid.getJobId(),protocol)
+			title("getOutputFiles with '"+protocol +"' are (both of them might be empty):",jobFL)
+		#jobFL = self.wmproxy.getOutputFileList(jobid.getJobId())
+		#title("getOutputFiles WITHOUT protocol are (both of them might be empty):", jobFL)
 
 	"""
 	SUBMISSION
@@ -250,26 +255,31 @@ class WmpTest(unittest.TestCase):
 		assert  jobidInstance , "Empty JobId!!"
 		jobid.setJobId(jobidInstance.getJobId())
 
+	def testjobStart(self):
+		jobidInstance =self.wmproxy.jobStart(jobid.getJobId())
+		assert  jobidInstance , "Empty JobId!!"
+		jobid.setJobId(jobidInstance.getJobId())
+
 	def testjobListMatch(self):
 		matchingCEs=self.wmproxy.jobListMatch(jdl.getJdl(jobjdl), delegationId)
 		assert  matchingCEs , "Empty JobId!!"
 
 	def testJobRegisterJSDL(self):
-		for jdl in [jdl.getJdl(jobjdl)]:
-			jobidInstance = self.wmproxy.jobRegister(jdl,delegationId)
+		for jd in [jdl.getJdl(jobjdl)]:
+			jobidInstance = self.wmproxy.jobRegister(jd,delegationId)
 			jobid.setJobId(jobidInstance.getJobId())
 			title("testJobRegister: Registered", jobid.getJobId())
 
 	def testJobRegister(self):
-		for jdl in [jdl.getJdl(jobjdl)]:
-			jobidInstance = self.wmproxy.jobRegister(jdl,delegationId)
+		for jd in [jdl.getJdl(jobjdl)]:
+			jobidInstance = self.wmproxy.jobRegister(jd,delegationId)
 			jobid.setJobId(jobidInstance.getJobId())
 			title("testJobRegister: Registered", jobid.getJobId())
 
 	def testcycleJob(self):
-		for jdl in [jdl.getJdl(jobjdl)]:
+		for jd in [jdl.getJdl(jobjdl)]:
 			title("Cycle Job: Registering..")
-			jobidInstance = self.wmproxy.jobRegister(jdl,delegationId)
+			jobidInstance = self.wmproxy.jobRegister(jd,delegationId)
 			jobid.setJobId(jobidInstance.getJobId())
 			title("Cycle Job: jobid is:" , jobid.getJobId())
 			title("Cycle Job:  getSandboxDestURI...",self.wmproxy.getSandboxDestURI(jobid.getJobId()))
