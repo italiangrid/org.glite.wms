@@ -2,12 +2,17 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdio>
+
+#include <boost/lexical_cast.hpp>
+
 #include <classad_distribution.h>
 
 #include "glite/wms/ism/ism.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/logger/logger_utils.h"
 
 namespace configuration = glite::wms::common::configuration;
 
@@ -156,11 +161,14 @@ void call_dump_ism_entries::operator()()
   _(ce, std::iostream::ios_base::trunc);
   _(se, std::iostream::ios_base::app);
 }
+
 void call_dump_ism_entries::_(size_t the_ism_index, std::iostream::ios_base::openmode open_mode)
 {
-  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));
-  std::ofstream             outf(get_ism_dump().c_str(), open_mode);
+  std::string const dump(get_ism_dump());
+  std::string const tmp_dump(dump + ".tmp");
+  std::ofstream outf(tmp_dump.c_str(), open_mode);
 
+  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));
   for (ism_type::iterator pos=get_ism(the_ism_index).begin();
        pos!= get_ism(the_ism_index).end(); ++pos) {
     if (boost::tuples::get<2>(pos->second)) {
@@ -176,8 +184,15 @@ void call_dump_ism_entries::_(size_t the_ism_index, std::iostream::ios_base::ope
       outf << ad_ism_dump;
     }
   }
+  l.unlock();
+  outf.close();
+
+  int res = std::rename(tmp_dump.c_str(), dump.c_str());
+  if (res) {
+    Warning("Cannot rename ISM dump file (error "
+      + boost::lexical_cast<std::string>(res) + ')'
+    );
+  }
 }
 
-}
-}
-}
+}}}
