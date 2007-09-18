@@ -84,9 +84,10 @@ wmsui_checks.check_prefix()
 MSG_STATUS="=status="
 MSG_EXCLUDE="=exclude="
 error_message= wmsui_utils.createErrMsg( prgname , "job Id(s)",["help","version","@","all", "=input$","verbosity=","from=","to=",\
-"=config$" ,"user-tag=", MSG_STATUS , MSG_EXCLUDE, "config-vo$", "vo=","=output$","noint","nonodes" , "debug", "logfile$"])
+"=config$" ,"user-tag=", MSG_STATUS , MSG_EXCLUDE, "vo=","=output$","noint","nonodes" , "debug", "logfile$"])
 argv=sys.argv
 wmsui_checks.check_noint(sys.argv)
+
 
 #=================================
 #   Option check
@@ -96,7 +97,7 @@ if (len(argv) < 2):
    exit(1)
 
 err, options,values,extra = wmsui_checks.checkOpt(argv[1:] , "i:c:o:v:s:e:" ,["help","version","all", "input=","verbosity=", \
- "from=","to=","config=" ,"user-tag=", "status=","exclude=","config-vo=","vo=","output=","noint","nonodes" , "debug" , "logfile="] )
+ "from=","to=","config=" ,"user-tag=", "status=","exclude=","vo=","output=","noint","nonodes" , "debug" , "logfile="] )
 
 if    ("--help" in options):
    print "\n" + prgname +" full help"
@@ -114,7 +115,7 @@ elif err:
 """
 ext= (len(extra) >0)
 
-res=(   "--all" in options  or  "--from" in options  or  "--to" in options or "--user-tag" in options  \
+res=(   "--vo" in options  or "--all" in options  or  "--from" in options  or  "--to" in options or "--user-tag" in options  \
  or "-s" in options   or "-e" in options \
  or "--status" in options   or "--exclude" in options )\
  + ext + ( ("-i" in options) or ("--input" in options) )
@@ -128,14 +129,6 @@ elif ext and ("--all" in options or "-i" in options or "--input" in options):
    errMsg('Error','UI_TOO_MANY_ARGS')
    wmsui_utils.print_help(error_message)
    exit(1)
-# Vo information check:
-for arg in ["--vo", "--config-vo"]:
-  vo =  (arg in options) + ext + ( ("-i" in options) or ("--input" in options))
-  if vo>1:
-     errMsg('Error', "UI_OPT_NOT_ALLOWED" ,  arg  , "when one or more jobid(s) specified")
-     #   input/job/all speficied more then once
-     wmsui_utils.print_help(error_message)
-     exit(1)
 #Valued Option check:
 noNodes = ("--nonodes"   in options)
 try:
@@ -154,6 +147,7 @@ except SyntaxError,rep:
   errMsg('Error','UI_REPEATED_OPT',rep[0])
   wmsui_utils.print_help(error_message)
   exit(1)
+  
 # UI Configuration file Check
 wmsui_checks.checkConf (gname, virtualOrg, logpath)
 
