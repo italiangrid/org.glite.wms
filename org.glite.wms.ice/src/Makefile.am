@@ -14,9 +14,9 @@
 
 SUBDIRS = iceCommands ice iceThreads iceUtils
 
-bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache testFL
+bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache
 
-testFL_SOURCES = testFL.cpp
+###testFL_SOURCES = testFL.cpp
 
 putFL_SOURCES = putFL.cpp
 
@@ -56,16 +56,6 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32pthr
-
-testFL_LDADD =  -L$(GLITE_LOCATION)/lib \
-		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
-		$(BOOST_FS_LIBS) \
-		$(BOOST_THREAD_LIBS) \
-		$(BOOST_REGEX_LIBS) \
-		$(BOOST_PO_LIBS) \
-		$(GLITE_WMSUTILS_CLASSADS_LIBS) $(CLASSAD_LIBS)
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(BOOST_FS_LIBS) \
