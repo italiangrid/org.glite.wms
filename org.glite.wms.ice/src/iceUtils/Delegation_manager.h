@@ -154,13 +154,21 @@ namespace util {
          * proxy cert path. All these information MUST be already
          * present in the job object.
          *
+         * @param force if true, then a new delegation request is done
+         * regardless whether an existing delegationID for that job
+         * exists in the delegation cache). If an old delegationID is
+         * already associated to the proxy/cream url pair and
+         * force==true, then the old delegationID is returned, and a
+         * new delegation operation to CREAM is attempted, with the
+         * same delegationID.
+         *
          * @return The delegation ID to use for job submission. This
          * method returns an empty string if some error occurs. The
          * empty delegation string can be used anyway to request
          * auto-delegation of the proxy with the Register CREAM
          * method.
          */
-        std::string delegate( glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, const CreamJob& job );
+        std::string delegate( glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, const CreamJob& job, bool force = false );
 
     };
 

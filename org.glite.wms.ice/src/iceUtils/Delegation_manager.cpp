@@ -85,7 +85,7 @@ Delegation_manager* Delegation_manager::instance( )
     return s_instance;
 }
 
-string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, const CreamJob& job )
+string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, const CreamJob& job, bool force )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -141,8 +141,13 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
 
     t_delegation_by_key::iterator it = delegation_by_key_view.find( boost::make_tuple(str_sha1_digest,cream_url));
 
+    if ( force && delegation_by_key_view.end() == it ) {
+        delegation_by_key_view.erase( it );
+        it = delegation_by_key_view.end();
+    }
+
     if ( delegation_by_key_view.end() == it ) {
-        // Delegation id not found. Performs a new delegation   
+        // Delegation id not found (or force). Performs a new delegation   
         time_t expiration_time;
 
         // The delegation ID is the "canonized" GRID job id
@@ -188,7 +193,7 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
             return delegation_id;
         }     
         // Inserts the new delegation ID into the delegation set
-        // m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
+        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
 
         // Inserts into the front of the list; this is guaranteed to
         // be a new element, as it has not been found in this "if"
