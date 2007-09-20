@@ -158,16 +158,26 @@ std::string get_ism_dump(void)
 
 void call_dump_ism_entries::operator()()
 {
-  _(ce, std::iostream::ios_base::trunc);
-  _(se, std::iostream::ios_base::app);
-}
-
-void call_dump_ism_entries::_(size_t the_ism_index, std::iostream::ios_base::openmode open_mode)
-{
   std::string const dump(get_ism_dump());
   std::string const tmp_dump(dump + ".tmp");
-  std::ofstream outf(tmp_dump.c_str(), open_mode);
 
+  _(ce, std::iostream::ios_base::trunc, tmp_dump);
+  _(se, std::iostream::ios_base::app, tmp_dump);
+
+  int res = std::rename(tmp_dump.c_str(), dump.c_str());
+  if (res) {
+    Warning("Cannot rename ISM dump file (error "
+      + boost::lexical_cast<std::string>(res) + ')'
+    );
+  }
+}
+
+void call_dump_ism_entries::_(
+  size_t the_ism_index,
+  std::iostream::ios_base::openmode open_mode,
+  std::string const& filename)
+{
+  std::ofstream outf(filename.c_str(), open_mode);
   ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));
   for (ism_type::iterator pos=get_ism(the_ism_index).begin();
        pos!= get_ism(the_ism_index).end(); ++pos) {
@@ -183,15 +193,6 @@ void call_dump_ism_entries::_(size_t the_ism_index, std::iostream::ios_base::ope
         boost::tuples::get<ad_ptr_entry>(pos->second).get()->Copy());
       outf << ad_ism_dump;
     }
-  }
-  l.unlock();
-  outf.close();
-
-  int res = std::rename(tmp_dump.c_str(), dump.c_str());
-  if (res) {
-    Warning("Cannot rename ISM dump file (error "
-      + boost::lexical_cast<std::string>(res) + ')'
-    );
   }
 }
 
