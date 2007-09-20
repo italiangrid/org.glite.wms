@@ -2,6 +2,12 @@
 
 trap 'fatal_error "Job has been terminated by the batch system"' TERM
 
+do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
+{
+  $1 "$2" "$3" 2>"$4"
+  echo $? > "$5"
+}
+
 jw_echo() # 1 - msg
 {
   echo "$1"
@@ -127,16 +133,37 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    std_err=`mktemp -q std_err.XXXXXXXXXX`
-    if [ ! -f "$std_err" ]; then
-      std_err="/dev/null"
+    transfer_stderr=`mktemp -q std_err.XXXXXXXXXX`
+    if [ ! -f "$transfer_stderr" ]; then
+      transfer_stderr="/dev/null"
     fi
-    $1 "$2" "$3" 2>"$std_err"
-    succeded=$?
-    if [ $succeded != 0 ]; then
-      log_event_reason "Notice" "`head -c 65535 "$std_err"`"
+    transfer_exitcode=`mktemp -q tr_exit_code.XXXXXXXXXX`
+    if [ ! -f "$transfer_exitcode" ]; then
+      transfer_exitcode="/dev/null"
     fi
-    rm -f "$std_err"
+    do_transfer $1 "$2" "$3" "$transfer_stderr" "$transfer_exitcode"&
+    transfer_watchdog_pid=$!
+    transfer_timeout=3600
+    while [ $transfer_timeout -gt 0 ];
+    do
+      if [ -z `ps -p $transfer_watchdog_pid -o pid=` ]; then
+        break;
+      fi
+      sleep 1
+      let "transfer_timeout--"
+    done
+    if [ $transfer_timeout -le 0 ]; then
+      kill -9 $transfer_watchdog_pid
+      log_event_reason "Notice" "Hanging transfer"
+      succeded=1
+    else
+      succeded=`cat $transfer_exitcode 2>/dev/null`
+      if [ -z $succeded ]; then
+        log_event_reason "Notice" "Cannot retrieve return value for transfer"
+        succeded=1
+      fi
+    fi
+    rm -f "$transfer_stderr" "$transfer_exitcode"
     count=`expr $count + 1`
   done
   return ${succeded}
@@ -506,13 +533,6 @@ else
   fatal_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
 fi
 
-for env in ${__environment[@]}
-do
-  eval export $env
-done
-
-umask 022
-
 if [ $__wmp_support -eq 0 ]; then
   for f in ${__input_file[@]}
   do
@@ -549,19 +569,26 @@ else
   fatal_error "${__job} not found or unreadable"
 fi
 
-# user script (before taking the token, shallow-sensitive)
-if [ -n "${__prologue}" ]; then
-  if [ -f "${__prologue}" ]; then
-    chmod +x "${__prologue}" 2>/dev/null
-    ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
-    prologue_status=$?
-    if [ ${prologue_status} -ne 0 ]; then
-      fatal_error "prologue failed with error ${prologue_status}"
+(
+  for env in ${__environment[@]}
+  do
+    eval export $env
+  done
+
+  # user script (before taking the token, shallow-sensitive)
+  if [ -n "${__prologue}" ]; then
+    if [ -f "${__prologue}" ]; then
+      chmod +x "${__prologue}" 2>/dev/null
+      ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
+      prologue_status=$?
+      if [ ${prologue_status} -ne 0 ]; then
+        fatal_error "prologue failed with error ${prologue_status}"
+      fi
+    else
+      fatal_error "prologue ${__prologue} not found"
     fi
-  else
-    fatal_error "prologue ${__prologue} not found"
   fi
-fi
+)
 
 if [ ${__job_type} -eq 3 ]; then # interactive jobs
   base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`} #TODO %[xdigit][xdigit] handling
@@ -676,6 +703,11 @@ if [ 1 -eq 1 ]; then # dump variable to set?
 fi
 
 (
+  for env in ${__environment[@]}
+  do
+    eval export $env
+  done
+
   if [ -f "$tmp_time_file" ]; then
     $time_cmd perl -e '
       unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
@@ -796,18 +828,25 @@ fi
 
 jw_echo "job exit status = ${status}"
 
-if [ -n "${__epilogue}" ]; then
-  if [ -f "${__epilogue}" ]; then
-    chmod +x "${__epilogue}" 2>/dev/null
-    ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
-    epilogue_status=$?
-    if [ ${epilogue_status} -ne 0 ]; then
-      fatal_error "epilogue failed with error ${epilogue_status}"
+(
+  for env in ${__environment[@]}
+  do
+    eval export $env
+  done
+
+  if [ -n "${__epilogue}" ]; then
+    if [ -f "${__epilogue}" ]; then
+      chmod +x "${__epilogue}" 2>/dev/null
+      ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
+      epilogue_status=$?
+      if [ ${epilogue_status} -ne 0 ]; then
+        fatal_error "epilogue failed with error ${epilogue_status}"
+      fi
+    else
+      fatal_error "epilogue ${__epilogue} not found"
     fi
-  else
-    fatal_error "epilogue ${__epilogue} not found"
   fi
-fi
+)
 
 # uncomment this one below if the order in the osb originally 
 # specified is not of some relevance to the user
