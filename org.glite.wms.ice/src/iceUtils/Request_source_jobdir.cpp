@@ -58,14 +58,14 @@ Request_source_jobdir::~Request_source_jobdir( )
     delete m_jobdir; // FIXME: use a scoped_ptr instead?
 }
 
-list<Request*> Request_source_jobdir::get_requests( void )
+list<Request*> Request_source_jobdir::get_requests( size_t max_size  )
 {
     list< Request* > result;
     
     utilities::JobDir::iterator b, e;
     boost::tie(b, e) = m_jobdir->new_entries();
     
-    for ( ; b != e; ++b) {
+    for ( ; b != e && result.size() < max_size; ++b) {
         
         fs::path const& new_file = *b;
         fs::path const old_file = m_jobdir->set_old(new_file);
@@ -78,20 +78,7 @@ list<Request*> Request_source_jobdir::get_requests( void )
 
 Request* Request_source_jobdir::get_single_request( void )
 {
-    Request* result;
-    
-    utilities::JobDir::iterator b, e;
-    boost::tie(b, e) = m_jobdir->new_entries();
-    
-    for ( ; b != e; ++b) {
-        
-        fs::path const& new_file = *b;
-        fs::path const old_file = m_jobdir->set_old(new_file);
-    
-        result = new Request_jobdir( old_file ) ;
-    }
-    
-    return result;
+    return 0;
 }
 
 void Request_source_jobdir::remove_request( Request* req )

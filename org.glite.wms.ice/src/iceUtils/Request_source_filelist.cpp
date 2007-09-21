@@ -71,8 +71,9 @@ Request_source_filelist::~Request_source_filelist( )
 
 }
    
-list<Request*> Request_source_filelist::get_requests( void )
+list<Request*> Request_source_filelist::get_requests( size_t max_size )
 {
+#ifdef FOOBAR
     vector< FLEit > requests;
     list< Request* > result;
     try { 
@@ -90,10 +91,38 @@ list<Request*> Request_source_filelist::get_requests( void )
         result.push_back( new Request_filelist( requests[j] ) );
     }
     return result;
+#else
+
+    std::pair< FLEit , bool  > request;
+    list< Request* > result;
+
+    while( result.size() < max_size ) {
+
+        try { 
+            request = m_filelist_extractor.try_get_one();
+        }
+        catch( exception& ex ) {
+            CREAM_SAFE_LOG(
+                           api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                           << "Request_source_filelist::get_single_request() - Failed to get request due to exception: " << ex.what()
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+            abort(); // FIXME
+        }
+
+        if ( !request.second ) 
+            break; // exit the loop when no more requests are available
+        else {
+            result.push_back( new Request_filelist( request.first ) );
+        }
+    }
+    return result;
+#endif
 }
   
 Request* Request_source_filelist::get_single_request( void )
 {
+#ifdef FOOBAR
   std::pair< FLEit , bool  > request;
 //     //list< Request* > result;
     try { 
@@ -114,6 +143,9 @@ Request* Request_source_filelist::get_single_request( void )
 
   if( !request.second ) return NULL;
   return new Request_filelist( request.first );
+#else
+  return 0;
+#endif
 }
 
 void Request_source_filelist::remove_request( Request* req )

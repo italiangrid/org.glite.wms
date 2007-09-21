@@ -40,13 +40,18 @@ namespace util {
         virtual ~Request_source( ) { };
 
         /**
-         * Get a list of (new) requests from this source.  The caller
-         * OWNS the list of returned pointers to Request objects, so
-         * he is responsible for freeing the memory.
+         * Get a list of at most max_size (new) requests from this
+         * source.  The caller OWNS the list of returned pointers to
+         * Request objects, so he is responsible for freeing the
+         * memory.
+         *
+         * @param max_size The maximum number of requests to
+         * return. If max=0, then returns a list with ALL requests
+         * currently in this request source.
          *
          * @return the list of new requests.
          */
-        virtual std::list<Request*> get_requests( ) = 0;
+        virtual std::list<Request*> get_requests( size_t max_size=0 ) = 0;
 	virtual Request* get_single_request( ) = 0;
 
         /**

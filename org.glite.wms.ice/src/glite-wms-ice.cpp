@@ -98,6 +98,7 @@ int main(int argc, char*argv[])
 {
     string opt_pid_file;
     string opt_conf_file;
+    static const char* method_name = "glite-wms-ice::main() - ";
     
     po::options_description desc("Usage");
     desc.add_options()
@@ -236,6 +237,7 @@ int main(int argc, char*argv[])
 
     CREAM_SAFE_LOG(
                    log_dev->infoStream()
+                   << method_name
                    << "Host certificate is [" << hostcert << "]" 
                    << log4cpp::CategoryStream::ENDLINE
                    );
@@ -245,6 +247,7 @@ int main(int argc, char*argv[])
         glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG(log_dev->errorStream()
+                       << method_name
                        << "Unable to extract user DN from Proxy File "
                        << hostcert 
                        << ". Won't set SOAP header"
@@ -259,6 +262,7 @@ int main(int argc, char*argv[])
 
     CREAM_SAFE_LOG(
                    log_dev->infoStream() 
+                   << method_name
                    << "Initializing jobCache with persistency directory ["
                    << jcachedir
                    << "]..."
@@ -296,7 +300,7 @@ int main(int argc, char*argv[])
      * list.
      ****************************************************************************/
     list< iceUtil::Request* > requests;
-    iceUtil::Request* request(NULL);
+
     /*****************************************************************************
      * Starts status poller and/or listener if specified in the config file
      ****************************************************************************/
@@ -318,8 +322,6 @@ int main(int argc, char*argv[])
      * removes requests from input filelist.
      ****************************************************************************/
      
-    int request_counter = 0; 
-     
     while(true) {
         //
         // BEWARE!! the get_command_count() method locks the
@@ -331,7 +333,7 @@ int main(int argc, char*argv[])
         int command_count = threadPool->get_command_count();
         if ( command_count > 100 ) {
             CREAM_SAFE_LOG(log_dev->infoStream()
-                           << "glite-wms-ice::main() - "
+                           << method_name
                            << "There are currently too many requests ("
                            << command_count
                            << ") in the internal command queue. "
@@ -341,44 +343,44 @@ int main(int argc, char*argv[])
             sleep( 30 );
             continue;
         }
-        request = iceManager->getNextRequest( );
-        if(!request) {
-	  sleep(2);
-	  continue;
-	}
 
+        requests.clear();
+        iceManager->getNextRequests( requests );
 
-	CREAM_SAFE_LOG(
-                            log_dev->infoStream()
-                            << "*** Found a new request..."
-                            << log4cpp::CategoryStream::ENDLINE
-                            );
-
-
+        if( !requests.empty() )
             CREAM_SAFE_LOG(
                            log_dev->infoStream()
+                           << method_name 
+                           << "*** Found " << requests.size() << " new request(s)"
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
+        
+        for( list< iceUtil::Request* >::iterator it = requests.begin();
+             it != requests.end(); ++it ) {
+            CREAM_SAFE_LOG(
+                           log_dev->infoStream()
+                           << method_name
                            << "*** Unparsing request <"
-                           << request->to_string()//(*it)->to_string()
+                           << (*it)->to_string()
                            << ">"
                            << log4cpp::CategoryStream::ENDLINE
                            );
             glite::wms::ice::iceAbsCommand* cmd;
             try {
-                cmd = glite::wms::ice::iceCommandFactory::mkCommand( /* *it */ request );
+                cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
             } catch( std::exception& ex ) {
-                CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
-                CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
-                iceManager->removeRequest( /* *it */ request );
+                CREAM_SAFE_LOG( log_dev->errorStream()
+                                << method_name
+                                << "Got exception \"" << ex.what()
+                                << "\". Removing BAD request..." 
+                                << log4cpp::CategoryStream::ENDLINE
+                                );
+                iceManager->removeRequest( *it );
                 continue;
             }
             threadPool->add_request( cmd );
-
-
-	request_counter++;
-	if(request_counter >= 100) {
-	  request_counter = 0;
-	  sleep(5);
-	}
+        }
+        sleep(1);
     }
     return 0;
 }

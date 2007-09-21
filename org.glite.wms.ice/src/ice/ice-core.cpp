@@ -438,14 +438,14 @@ void Ice::startJobKiller( void )
 //____________________________________________________________________________
 void Ice::getNextRequests( std::list< util::Request* >& ops) 
 {
-    ops = m_ice_input_queue->get_requests( );
+    ops = m_ice_input_queue->get_requests( 5 );
 }
 
 //____________________________________________________________________________
-Request* Ice::getNextRequest( ) 
-{
-   return m_ice_input_queue->get_single_request( );
-}
+// Request* Ice::getNextRequest( ) 
+// {
+//    return m_ice_input_queue->get_single_request( );
+// }
 
 //____________________________________________________________________________
 void Ice::removeRequest( util::Request* req )
