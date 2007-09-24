@@ -140,7 +140,6 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 		printServerVersion();
 		Utils::ending(0);
 	}
-	
 	// Initialise the proxy validity
 	int proxyValidity = 0;
 	
@@ -365,7 +364,15 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 		
 		// Set the SOAP time out
 		setSoapTimeout(sp_cfg.get(), SOAP_GET_VERSION_TIMEOUT);
-		
+
+		// Checks if user has disabled the CA verification
+		if (this->wmcUtils->getConf()->hasAttribute(CA_VERIFICATION)) {
+			bool verify = wmcUtils->getConf()->getBool(CA_VERIFICATION);
+			if (!verify) {
+				api::setServerAuthentication( sp_cfg.get(), verify );
+				logInfo->print(WMS_DEBUG, "CA Verification has been disabled by user" );
+			}
+		}
 		string v = api::getVersion(sp_cfg.get());
 		setVersionNumbers( v );
 	} catch (api::BaseException &exc){
@@ -534,6 +541,7 @@ void Job::printServerVersion( ) {
 */
 void Job::delegateUserProxy(const std::string &endpoint) {
 	string id = getDelegationId( );
+
 	try{
 		boost::scoped_ptr<api::ConfigContext> sp_cfg(new api::ConfigContext (getProxyPath(), endpoint, getCertsPath()));
 		// Proxy Request
@@ -543,7 +551,7 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 
 		// Set the SOAP time out
 		setSoapTimeout(sp_cfg.get(), SOAP_GET_PROXY_REQ_TIMEOUT);
-		
+
 		const string proxyReq = api::grstGetProxyReq(id, sp_cfg.get()) ;
 		logInfo->result(WMP_NS4_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
 		// PutProxy

@@ -47,13 +47,14 @@ const std::string JDL_ERROR_STORAGE					= "ErrorStorage";
 const std::string JDL_OUTPUT_STORAGE					= "OutputStorage";
 const std::string JDL_LB_ENDPOINT          				= "LBEndPoints";
 
-const std::string JDL_DEFAULT_ATTRIBUTES				= "JdlDefaultAttributes"; 
+const std::string JDL_DEFAULT_ATTRIBUTES				= "JdlDefaultAttributes";
 const std::string JDL_SOAP_TIMEOUTS					= "SoapTimeouts";
 const std::string JDL_DEFAULT_PROXY_VALIDITY				= "DefaultProxyValidity";
 const std::string JDL_ENABLE_SERVICE_DISCOVERY				= "EnableServiceDiscovery";
 const std::string JDL_SYSTEM_CALL_TIMEOUT				= "SystemCallTimeout";
 const std::string DELEGATION_ID							= "DelegationId";
-	
+const std::string CA_VERIFICATION							= "CAVerification";
+
 const std::string SOAP_GLOBAL_TIMEOUT          				= "globalTimeout";
 const std::string SOAP_GET_VERSION_TIMEOUT     				= "getVersionTimeout";
 const std::string SOAP_JOB_LIST_MATCH_TIMEOUT				= "jobListMatchTimeout";
@@ -88,7 +89,7 @@ const std::string DEFAULT_WMPROXY_SERVICE_TYPE 		= "org.glite.wms.WMProxy";
 const std::string DEFAULT_ERROR_STORAGE			= "/var/tmp";
 const std::string DEFAULT_OUTPUT_STORAGE		= "/tmp";
 	
-#define C_CONFIG_ATTRIBUTES 14
+#define C_CONFIG_ATTRIBUTES 15
 
 const std::string configuAttributes[C_CONFIG_ATTRIBUTES] = {
 				"DefaultProxyValidity",
@@ -104,7 +105,8 @@ const std::string configuAttributes[C_CONFIG_ATTRIBUTES] = {
 				"JdlDefaultAttributes",
 				"SoapTimeouts",
 				"SystemCallTimeout",
-				"DelegationId"};
+				"DelegationId",
+				"CAVerification"};
 		
 class AdUtils{
 	public:
