@@ -20,11 +20,11 @@ namespace wms {
 namespace classad_plugin {
 namespace fqan {
 		
-extern bool fqanMember           (const char *, const ArgumentList&, EvalState&, Value&);
+extern bool testMemberEx           (const char *, const ArgumentList&, EvalState&, Value&);
 
 static ClassAdFunctionMapping functions[] = 
   {
-    { "fqanMember",	        (void*) fqanMember,	        0  },	
+    { "fqanMember",	        (void*)testMemberEx,	        0  },	
     { "", NULL, 0 }
 };
 
