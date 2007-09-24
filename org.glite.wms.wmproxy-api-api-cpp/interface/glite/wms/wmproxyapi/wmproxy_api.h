@@ -217,7 +217,14 @@ struct ConfigContext{
 	std::string trusted_cert_dir;
 	/** SOAP Timeout */
 	int soap_timeout;
+	/** server authentication flag */
+	bool server_authentication ;
 };
+
+/**
+* Checks if CA verification has been disabled by user
+*/
+void setServerAuthentication ( ConfigContext *cfs, bool auth );
 
 /**@name WMProxy Submission services*/
 

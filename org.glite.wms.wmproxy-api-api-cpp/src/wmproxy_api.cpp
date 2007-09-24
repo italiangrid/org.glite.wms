@@ -28,6 +28,12 @@ void setSoapTimeout(struct soap *soap, int timeout){
 	}
 }
 
+/******************************************************************
+Server authentication setting
+******************************************************************/
+void setServerAuthentication ( ConfigContext *cfs, bool auth ) {
+	cfs->server_authentication = auth;
+}
 
 
 /*****************************************************************
@@ -140,8 +146,12 @@ BaseException* createWmpException(struct soap *soap){
 			}
 			if (faultcode) {
 				if ( string(faultcode).compare("SOAP-ENV:Client") == 0){
-					b_ex->Description = new string("WMProxy unreachable") ;
-					b_ex->ErrorCode = new string("WMProxy Server may be down (or wrong server name)");
+					if ( *b_ex->Description ==  "Connection refused" )  {
+						b_ex->Description = new string("WMProxy unreachable") ;
+						b_ex->ErrorCode = new string("WMProxy Server may be down (or wrong server name)");
+					} else {
+						b_ex -> Description = new string ("CA certificate verification failed");
+					}
 				} else if ( string(faultcode).compare("SOAP-ENV:VersionMismatch") == 0){
 					b_ex->Description = new string("WMProxy unrecoverable error, please contact server administrator") ;
 					b_ex->ErrorCode = new string("Fatal error");
@@ -279,11 +289,18 @@ void setSoapConfiguration(WMProxy &wmp,ConfigContext *cfs){
 	setSoapTimeout(wmp.soap, cfs->soap_timeout);
  	const char *proxy = getProxyFile(cfs) ;
 	const char *trusted = getTrustedCert(cfs) ;
+	unsigned short flag ;
+	//setting the authentication flag for the ssl client context
+	if ( cfs->server_authentication ) {
+		flag = SOAP_SSL_DEFAULT ;
+	} else {
+		flag = SOAP_SSL_NO_AUTHENTICATION ;
+	}
 	if ( proxy ){
 		if (trusted){
 			// Perform ssl authentication with server
 			if (soap_ssl_client_context(wmp.soap,
-				SOAP_SSL_NO_AUTHENTICATION,
+				flag,
 				proxy,// keyfile: required only when client must authenticate to server
 				"", // password to read the key file
 				NULL, // optional cacert file to store trusted certificates (needed to verify server)
@@ -532,6 +549,7 @@ ConfigContext::ConfigContext(std::string p , std::string s, std::string t){
 		}
         }
         trusted_cert_dir = string (path);
+	server_authentication = true ;
 }
 
 ConfigContext::~ConfigContext() throw(){};
