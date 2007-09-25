@@ -241,10 +241,19 @@ void eventStatusListener::acceptJobStatus(void)
     
     iceThreadPool* threadPool( m_ice_manager->get_ice_commands_pool() );
 
-    const vector< monitortypes__Event >& events( getEvents() );    
-    iceAbsCommand* cmd = new iceCommandUpdateStatus( events, getClientDN() );
-    threadPool->add_request( cmd ); // ownership of the cmd pointer is passed to the threadPool object
+    if( threadPool->get_command_count()  > m_conf->max_ice_threads() ) {
+      CREAM_SAFE_LOG(m_log_dev->debugStream()
+    		     << "eventStatusListener::acceptJobStatus() - Currently threadPool contains "
+		     << threadPool->get_command_count()
+		     << " requests still to be processed. Dropping notification..."
+		     << log4cpp::CategoryStream::ENDLINE);
+    } else {
 
+      const vector< monitortypes__Event >& events( getEvents() );    
+      iceAbsCommand* cmd = new iceCommandUpdateStatus( events, getClientDN() );
+      //delete cmd;
+      threadPool->add_request( cmd ); // ownership of the cmd pointer is passed to the threadPool object
+    }
   } // stop TIMING notification handling
 }
 
