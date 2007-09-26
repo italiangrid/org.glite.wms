@@ -366,8 +366,8 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 		setSoapTimeout(sp_cfg.get(), SOAP_GET_VERSION_TIMEOUT);
 
 		// Checks if user has disabled the CA verification
-		if (this->wmcUtils->getConf()->hasAttribute(CA_VERIFICATION)) {
-			bool verify = wmcUtils->getConf()->getBool(CA_VERIFICATION);
+		if (this->wmcUtils->getConf()->hasAttribute(AUTHSERVER)) {
+			bool verify = wmcUtils->getConf()->getBool(AUTHSERVER);
 			if (!verify) {
 				api::setServerAuthentication( sp_cfg.get(), verify );
 				logInfo->print(WMS_DEBUG, "CA Verification has been disabled by user" );

@@ -53,7 +53,7 @@ const std::string JDL_DEFAULT_PROXY_VALIDITY				= "DefaultProxyValidity";
 const std::string JDL_ENABLE_SERVICE_DISCOVERY				= "EnableServiceDiscovery";
 const std::string JDL_SYSTEM_CALL_TIMEOUT				= "SystemCallTimeout";
 const std::string DELEGATION_ID							= "DelegationId";
-const std::string CA_VERIFICATION							= "CAVerification";
+const std::string AUTHSERVER							= "AuthenticateServer";
 
 const std::string SOAP_GLOBAL_TIMEOUT          				= "globalTimeout";
 const std::string SOAP_GET_VERSION_TIMEOUT     				= "getVersionTimeout";
@@ -106,7 +106,7 @@ const std::string configuAttributes[C_CONFIG_ATTRIBUTES] = {
 				"SoapTimeouts",
 				"SystemCallTimeout",
 				"DelegationId",
-				"CAVerification"};
+				"AuthenticateServer"};
 		
 class AdUtils{
 	public:
