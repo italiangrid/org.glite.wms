@@ -124,11 +124,6 @@ if res == 0:
    #no input/job/all specified
    wmsui_utils.print_help(error_message)
    exit(1)
-elif ext and ("--all" in options or "-i" in options or "--input" in options):
-   #   input/job speficied more then once
-   errMsg('Error','UI_TOO_MANY_ARGS')
-   wmsui_utils.print_help(error_message)
-   exit(1)
 #Valued Option check:
 noNodes = ("--nonodes"   in options)
 try:
@@ -272,11 +267,14 @@ if LBapproach:
 		# If this flag is set to 1 then the query might haven't found any results (but nevertheless no exception raised)
 		atLeastOneSuccess = 1
 		
-		# print Server information
-		for jobStatus in statesArray.values():
-		
-			wmsui_utils.print_message(outFile, jobStatus.printStatus(noNodes))
-			st+=1
+		for job in jobs:
+			
+			if job.jobid in statesArray:
+				wmsui_utils.print_message(outFile, statesArray[job.jobid].printStatus(noNodes))
+				st+=1
+			else:	
+				wmsui_utils.print_message(wmsui_utils.info.logFile, "Warning: no matching information for job id: " + job.jobid)
+			
 
 else:
 
