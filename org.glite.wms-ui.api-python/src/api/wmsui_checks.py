@@ -600,15 +600,15 @@ def checkConf(conf, virtualOrg, logPath):
   # Load the configuration
   loadConfiguration(configFile, cfDefault, voName)
   
-  # Successfully Update needed Info
-  msg = "Selected Virtual Organisation name (from "+ vomsrc + "): " + voName
-  
   if wmsui_utils.info.debug:
+	  # Successfully Update needed Info
+	  msg = "Selected Virtual Organisation name (from "+ vomsrc + "): " + voName
+
 	  msg = "#### "+ time.ctime() + " Debug Message ####\n" + msg +"\nVOMS configuration file successfully loaded:\n" \
 	  + configFile + info.confAdVo.toLines() +  "\n#### End Debug ####\n"
 
-  #Print VOMS message
-  wmsui_utils.print_message(wmsui_utils.info.logFile, msg)
+	  #Print VOMS message
+	  wmsui_utils.print_message(wmsui_utils.info.logFile, msg)
 
   # Check if the log path has been set
   if logPath:
