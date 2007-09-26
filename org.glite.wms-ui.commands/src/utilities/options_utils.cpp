@@ -41,20 +41,6 @@ const std::string WMP_CLT_RELEASE_VERSION = "1";
 const std::string WMP_CLT_POINT_VERSION = ".";
 
 /**
-* WMProxy version since the getTransferProtocols is available
-* (see the getVersion service)
-*	version >= 2.2.0
-*/
-const int Options::WMPROXY_GETPROTOCOLS_VERSION  = 2;
-const int Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION  = 2;
-const int Options::WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION = 0;
-/**
-* WMProxy version since delegation 2 is available
-*/
-const int Options::WMPROXY_DELEGATION_VERSION  = 3;
-const int Options::WMPROXY_DELEGATION_MINOR_VERSION  = 0;
-const int Options::WMPROXY_DELEGATION_SUBMINOR_VERSION = 0;
-/**
  * Help Info messages
 */
 const std::string Options::HELP_COPYRIGHT = "Copyright (C) 2005 by DATAMAT SpA";

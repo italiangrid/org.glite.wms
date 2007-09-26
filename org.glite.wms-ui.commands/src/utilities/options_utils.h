@@ -286,20 +286,6 @@ class Options
 		*	"Report-bug" message
 		*/
 		static const std::string BUG_MSG ;
-		/**
-		* WMProxy version since the getTransferProtocols is available
-		* (see the getVersion service)
-		*	version >= 2.2.0
-		*/
-		static const int WMPROXY_GETPROTOCOLS_VERSION ;
-		static const int WMPROXY_GETPROTOCOLS_MINOR_VERSION ;
-		static const int WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION ;
-		/**
-		* WMProxy version since delegation 2 is available
-		*/
-		static const int Options::WMPROXY_DELEGATION_VERSION ;
-		static const int Options::WMPROXY_DELEGATION_MINOR_VERSION ;
-		static const int Options::WMPROXY_DELEGATION_SUBMINOR_VERSION ;
                 /**
 		*	Constants for the verbosity level
 		*/
