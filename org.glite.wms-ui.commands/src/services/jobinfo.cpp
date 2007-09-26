@@ -419,7 +419,7 @@ void JobInfo::retrieveInfo ( ){
 		Status status = lbApi.getStatus(true,true);
 		setEndPoint(status.getEndpoint(), false);
 		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobId);
-		if ( (!checkWMProxyRelease( "getprotocols" ))  && ( jdlOpt || origOpt  || proxyOpt ) ) {
+		if ( (!checkWMProxyRelease(2, 2, 0 ))  && ( jdlOpt || origOpt  || proxyOpt ) ) {
 			err << "Requested information not supported by: " << getEndPoint ( ) << "\n";
 			throw WmsClientException(__FILE__,__LINE__,
 			"retrieveInfo", ECONNABORTED,

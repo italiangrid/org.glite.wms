@@ -163,15 +163,9 @@ class Job{
 		*/
 		virtual const char* getCertsPath ( );
 		/**
-		* Checks if the getTransferProtocols (and getJDL) service (s) are
-		* available on the WMProxy server
-		* (according to the WMProxy version)
+		* Checks the version of the WMProxy server
 		*/
-		virtual bool checkWMProxyRelease ( std::string operation );
-		/**
-		deprecated
-		*/
-		virtual bool checkVersionForTransferProtocols ( );
+		virtual bool checkWMProxyRelease ( int major, int minor, int subminor );
 		/**
 		* Checks if the WMProxy server supports the File Transfer Protocol
 		* specified with the --proto option.

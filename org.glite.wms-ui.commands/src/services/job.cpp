@@ -420,89 +420,26 @@ void Job::setVersionNumbers(const string& version) {
 	}
 }
 /**
-* Checks if the getProtocolsTransfer service is
-* available on the WMProxy server
-* (according to the version)
+* Checks the version of the WMProxy server
 */
-bool Job::checkWMProxyRelease( std::string operation ){
+bool Job::checkWMProxyRelease( int major, int minor, int subminor) {
 	bool check = false;
-	if (operation == "getprotocols" )  {
-		// Version = MAJOR.MINOR.SUBMINOR
-		// CHECK if    major > WMPROXY_GETPROTOCOLS_VERSION
-		if ( wmpVersion.major > Options::WMPROXY_GETPROTOCOLS_VERSION ) {
-			check =true;
-		} else
-		// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
-		//			minor > WMPROXY_GETPROTOCOLS_MINOR_VERSION
-		if ( wmpVersion.major == Options::WMPROXY_GETPROTOCOLS_VERSION ) {
-			if (wmpVersion.minor > Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION) {
-				check = true;
-			} else
-			// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
-			//			minor = WMPROXY_GETPROTOCOLS_MINOR_VERSION
-			//			subminor >= WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION
-			if (wmpVersion.minor == Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION &&
-			wmpVersion.subminor >= Options::WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION){
-				check = true;
-			} else {
-				check = false;
-			}
-		}else {
-			check = false;
-		}
+	// Version = subminor
+	// CHECK if    wmpVersion.major > major
+	if ( wmpVersion.major > major ) {
+		check = true;
 	} else
-	// Check for delegation 2 supporting servers
-	if (operation == "delegation2" )  {
-		// Version = MAJOR.MINOR.SUBMINOR
-		// CHECK if    major > WMPROXY_DELEGATION_VERSION
-		if ( wmpVersion.major > Options::WMPROXY_DELEGATION_VERSION ) {
-			check =true;
-		} else
-		// CHECK if    	major = WMPROXY_DELEGATION_VERSION &&
-		//			minor > WMPROXY_DELEGATION_MINOR_VERSION
-		if ( wmpVersion.major == Options::WMPROXY_DELEGATION_VERSION ) {
-			if (wmpVersion.minor > Options::WMPROXY_DELEGATION_MINOR_VERSION) {
-				check = true;
-			} else
-			// CHECK if    	major = WMPROXY_DELEGATION_VERSION &&
-			//			minor = WMPROXY_DELEGATION_MINOR_VERSION
-			//			subminor >= WMPROXY_DELEGATION_SUBMINOR_VERSION
-			if (wmpVersion.minor == Options::WMPROXY_DELEGATION_MINOR_VERSION &&
-			wmpVersion.subminor >= Options::WMPROXY_DELEGATION_SUBMINOR_VERSION){
-				check = true;
-			} else {
-				check = false;
-			}
-		}else {
-			check = false;
-		}
-	} else {
-			check = false;
-	}
-
-	return check;
-}
-/**
-deprecated
-*/
-bool Job::checkVersionForTransferProtocols( ){
-	bool check = false;
-	// Version = MAJOR.MINOR.SUBMINOR
-	// CHECK if    major > WMPROXY_GETPROTOCOLS_VERSION
-	if ( wmpVersion.major > Options::WMPROXY_GETPROTOCOLS_VERSION ) {
-		check =true;
-	} else
-	// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
-	//			minor > WMPROXY_GETPROTOCOLS_MINOR_VERSION
-	if ( wmpVersion.major == Options::WMPROXY_GETPROTOCOLS_VERSION ) {
-		if (wmpVersion.minor > Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION) {
+	// CHECK if    	wmpVersion.major = major &&
+	//			wmpVersion.minor > minor
+	if ( wmpVersion.major == major ) {
+		if (wmpVersion.minor > minor) {
 			check = true;
 		} else
-		// CHECK if    	major = WMPROXY_GETPROTOCOLS_VERSION &&
-		//			minor = WMPROXY_GETPROTOCOLS_MINOR_VERSION
-		//			subminor >= WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION
-		if (wmpVersion.minor == Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION &&
-		wmpVersion.subminor >= Options::WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION){
+		// CHECK if    	wmpVersion.major = major &&
+		//			wmpVersion.minor = minor
+		//			wmpVersion.subminor >= subminor
+		if (wmpVersion.minor == minor &&
+		wmpVersion.subminor >= subminor ){
 			check = true;
 		} else {
 			check = false;
@@ -606,7 +543,8 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 
 			break;
 		case STEP_DELEGATE_PROXY:
-			if ( !checkWMProxyRelease ( "delegation2" ) )  {
+			// Checks if WMProxy supports delegation-2
+			if ( !checkWMProxyRelease ( 3, 0, 0 ) )  {
 				throw WmsClientException(__FILE__,__LINE__,
 					"delegation",DEFAULT_ERR_CODE,
 					"Delegation service: ", "The WMProxy Server " + this->getEndPoint( )+ " does not support delegation 2");
@@ -822,7 +760,7 @@ void Job::checkFileTransferProtocol(  ) {
 	ostringstream info;
 	ostringstream msg;
 	int size = 0;
-	if (checkWMProxyRelease( "getprotocols" )) {
+	if (checkWMProxyRelease( 2, 2, 0)) {
 		// ==== > getTransferProtocol service available
 		logInfo->service(WMP_GETPROTOCOLS_SERVICE);
 		// List of WMProxy available protocols
