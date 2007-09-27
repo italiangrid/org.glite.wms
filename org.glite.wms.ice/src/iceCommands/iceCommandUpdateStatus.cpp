@@ -161,13 +161,13 @@ void iceCommandUpdateStatus::execute( ) throw( )
              keep_alive &&
              classad_safe_ptr->EvaluateAttrString( "SUBSCRIPTION_ID", subs_id ) ) {
 
-            CREAM_SAFE_LOG( m_log_dev->debugStream()
-                            << method_name
-                            << "Adding subscription id "
-                            << subs_id
-                            << " to the set of subscriptions whose jobs "
-                            << "will be updated"
-                            << log4cpp::CategoryStream::ENDLINE);
+//             CREAM_SAFE_LOG( m_log_dev->debugStream()
+//                             << method_name
+//                             << "Adding subscription id "
+//                             << subs_id
+//                             << " to the set of subscriptions whose jobs "
+//                             << "will be updated"
+//                             << log4cpp::CategoryStream::ENDLINE);
 
             // Push the subs_id into the set, which will be considered
             // after all the notifications have been examined.
