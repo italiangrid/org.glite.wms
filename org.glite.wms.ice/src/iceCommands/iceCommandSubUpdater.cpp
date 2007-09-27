@@ -41,16 +41,16 @@ namespace ice_util  = glite::wms::ice::util;
 namespace {
 
   class singleSubUpdater {
-    ice_util::subscriptionManager *m_subManager;
+    //ice_util::subscriptionManager *m_subManager;
     string m_dn;
 
   public:
-    singleSubUpdater( ice_util::subscriptionManager *subManager, string dn ) : m_subManager( subManager ), m_dn( dn ) { }
+    singleSubUpdater( string dn ) : m_dn( dn ) { }
 
     void operator()( string endpoint ) {
 
       ice_util::iceSubscription sub;
-      if(!m_subManager->getSubscriptionByDNCEMon(m_dn, endpoint, sub)) {
+      if(!ice_util::subscriptionManager::getInstance()->getSubscriptionByDNCEMon(m_dn, endpoint, sub)) {
 	// this should almost never happen because before to update
 	// the caller also invokes the subManager->checkSubscription()
 	CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->errorStream() 
@@ -95,7 +95,7 @@ namespace {
 		       << betterProxy << "]."
 		       << log4cpp::CategoryStream::ENDLINE);
 	
-	m_subManager->renewSubscription( betterProxy , endpoint );
+	ice_util::subscriptionManager::getInstance()->renewSubscription( betterProxy , endpoint );
       }
     }
   }; // end class
@@ -118,10 +118,9 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
   //boost::recursive_mutex::scoped_lock M( ice_util::subscriptionManager::mutex ); 
   // no mutex needed, because the followin method already acquire the cache's mutex
   // then 2 different threads cannot execute this method contemporary
-  subManager->getUserCEMonMapping( UserCEMons, true );// this is a map userproxy -> set_of_cemons
+  subManager->getUserCEMonMapping( UserCEMons, true );// this is a map userproxy -> set_of_cemons retrieved from the jobCache
   //}
   
-
 
   // first of all let's check all subs
 
@@ -142,7 +141,7 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
       subManager->checkSubscription( *it );// acquire a mutex internally
       
       
-      singleSubUpdater updater( subManager, it->first );
+      singleSubUpdater updater( it->first );
       
       for_each(it->second.begin(), it->second.end(), updater);
     } // unlock subscriptionManager::mutex
