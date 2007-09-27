@@ -48,18 +48,41 @@ Request_source_filelist::Request_source_filelist( const std::string& fl_name, bo
             !fs::exists(fl_p.branch_path()) ) {
             try {
                 fs::create_directories( fl_p.branch_path() );
-            } catch( ... ) {
-                cerr << "Filelist creation failed!" << endl;
+            } catch(exception& ex) {
+	    
+	      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+	      		     << "Request_source_filelist::CTOR - Error creating path ["
+			     << fl_name << "]: " << ex.what()
+			     << log4cpp::CategoryStream::ENDLINE);
+	      abort();
+	      
+	    }catch( ... ) {
+                //cerr << "Filelist creation failed!" << endl;
+		CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+	      		     << "Request_source_filelist::CTOR - Error creating path ["
+			     << fl_name << "]: Catched unknown exception"
+			     << log4cpp::CategoryStream::ENDLINE);
                 abort(); // FIXME
+		
             }
         }
     }
 
     try {
+    
         m_filelist.open( m_name );
+	
+    } catch(exception& ex) {
+    
+      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+	      		     << "Request_source_filelist::CTOR - Error opening filelist ["
+			     << m_name << "]: " << ex.what()
+			     << log4cpp::CategoryStream::ENDLINE);
+      abort();
+	      
     } catch( ... ) {
          CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->fatalStream()
-                         << "Request_source_filelist::CTOR() - Catched unknown exception"
+                         << "Request_source_filelist::CTOR() - Error opening filelist: Catched unknown exception"
                          << log4cpp::CategoryStream::ENDLINE
                          );
 	 abort(); // FIXME
@@ -82,7 +105,7 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
     catch( exception& ex ) {
         CREAM_SAFE_LOG(
                        api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
-                       << "Request_source_filelist::DTOR() - " << ex.what()
+                       << "Request_source_filelist::get_requests() - " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
         abort(); // FIXME
@@ -104,7 +127,7 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
         catch( exception& ex ) {
             CREAM_SAFE_LOG(
                            api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
-                           << "Request_source_filelist::get_single_request() - Failed to get request due to exception: " << ex.what()
+                           << "Request_source_filelist::get_requests() - Failed to get request due to exception: " << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
             abort(); // FIXME
@@ -120,33 +143,33 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
 #endif
 }
   
-Request* Request_source_filelist::get_single_request( void )
-{
-#ifdef FOOBAR
-  std::pair< FLEit , bool  > request;
-//     //list< Request* > result;
-    try { 
-        request = m_filelist_extractor.try_get_one();
-    }
-    catch( exception& ex ) {
-        CREAM_SAFE_LOG(
-                       api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
-                       << "Request_source_filelist::get_single_request() - " << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        abort(); // FIXME
-    }
-//     for ( unsigned j=0; j < requests.size(); j++ ) {
-//         result.push_back( new Request_filelist( requests[j] ) );
+// Request* Request_source_filelist::get_single_request( void )
+// {
+// #ifdef FOOBAR
+//   std::pair< FLEit , bool  > request;
+// //     //list< Request* > result;
+//     try { 
+//         request = m_filelist_extractor.try_get_one();
 //     }
-//     return result;
-
-  if( !request.second ) return NULL;
-  return new Request_filelist( request.first );
-#else
-  return 0;
-#endif
-}
+//     catch( exception& ex ) {
+//         CREAM_SAFE_LOG(
+//                        api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+//                        << "Request_source_filelist::get_single_request() - " << ex.what()
+//                        << log4cpp::CategoryStream::ENDLINE
+//                        );
+//         abort(); // FIXME
+//     }
+// //     for ( unsigned j=0; j < requests.size(); j++ ) {
+// //         result.push_back( new Request_filelist( requests[j] ) );
+// //     }
+// //     return result;
+// 
+//   if( !request.second ) return NULL;
+//   return new Request_filelist( request.first );
+// #else
+//   return 0;
+// #endif
+// }
 
 void Request_source_filelist::remove_request( Request* req )
 {

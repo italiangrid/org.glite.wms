@@ -50,7 +50,7 @@ namespace util {
          *
          */
         std::list<Request*> get_requests( size_t max_size );
-	Request* get_single_request( );
+	//Request* get_single_request( );
 
         /**
          *

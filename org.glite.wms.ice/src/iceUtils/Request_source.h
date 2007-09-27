@@ -52,7 +52,7 @@ namespace util {
          * @return the list of new requests.
          */
         virtual std::list<Request*> get_requests( size_t max_size=0 ) = 0;
-	virtual Request* get_single_request( ) = 0;
+//	virtual Request* get_single_request( ) = 0;
 
         /**
          * Removes a request from this source. The callre retains
