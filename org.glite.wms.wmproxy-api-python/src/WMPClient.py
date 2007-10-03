@@ -24,8 +24,15 @@ from SOAPpy.Types       import faultType, simplify
 
 from SOAPpy.Client	 import SOAPAddress, HTTPTransport, SOAPProxy
 
+from WMPConnection import WMPConnection
+import httplib
+
 key=None
 cert=None
+
+class WMPHTTPS(httplib.HTTPS):
+
+    _connection_class = WMPConnection
 
 #
 # WMPClient
@@ -37,12 +44,16 @@ def SOAPUserAgent():
 # Changed from SOAPpy Client
 # New call method takes two more argument key_file and cert_file
 class WMPHTTPTransport(HTTPTransport):
+
+    auth = True
+
+    def setAuth(self, authenticate):
+        self.auth = authenticate
+
     def call(self, addr, data, namespace, soapaction = None, key_file = None, cert_file = None, encoding = None,
         http_proxy = None, config = Config):
-        import httplib
         if not isinstance(addr, SOAPAddress):
             addr = SOAPAddress(addr, config)
-
         # Build a request
         if http_proxy:
             real_addr = http_proxy
@@ -54,11 +65,13 @@ class WMPHTTPTransport(HTTPTransport):
         if addr.proto == 'httpg':
             from pyGlobus.io import GSIHTTP
             r = GSIHTTP(real_addr, tcpAttr = config.tcpAttr)
-        elif addr.proto == 'https':
-		# Call changed from SOAPpy Client
-		# Added two argument key_file and cert_file
-		r = httplib.HTTPS(real_addr, key_file = key_file, cert_file = cert_file)
-	else:
+        elif addr.proto == 'https' and self.auth == True:
+            # HTTPS class extended: certificates verification added
+            r = WMPHTTPS(real_addr,  key_file = key_file, cert_file = cert_file)
+        elif addr.proto == 'https' and self.auth == False:
+            # certificates verification will not be performed
+            r = httplib.HTTPS(real_addr,  key_file = key_file, cert_file = cert_file)
+        else:
             r = httplib.HTTP(real_addr)
 
         r.putrequest("POST", real_path)
@@ -190,7 +203,7 @@ class WMPSOAPProxy(SOAPProxy):
                  header = None, methodattrs = None, transport = WMPHTTPTransport,
                  encoding = 'UTF-8', throw_faults = 1, unwrap_results = None,
                  http_proxy=None, config = Config, noroot = 0,
-                 simplify_objects=None):
+                 simplify_objects=None, auth = True):
 
         # Test the encoding, raising an exception if it's not known
         if encoding != None:
@@ -214,6 +227,7 @@ class WMPSOAPProxy(SOAPProxy):
         self.header         = header
         self.methodattrs    = methodattrs
         self.transport      = transport()
+        self.transport.setAuth(auth)
         self.encoding       = encoding
         self.throw_faults   = throw_faults
         self.http_proxy     = http_proxy
@@ -268,7 +282,7 @@ class WMPSOAPProxy(SOAPProxy):
         try:
             r, self.namespace = self.transport.call(self.proxy, m, ns, sa, key_file = self.key_file, cert_file = self.cert_file,
                                                     encoding = self.encoding,
-                                                 http_proxy = self.http_proxy,
+                                                    http_proxy = self.http_proxy,
                                                     config = self.config)
 
         except Exception, ex:
