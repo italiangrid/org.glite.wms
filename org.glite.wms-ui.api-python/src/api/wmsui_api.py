@@ -53,7 +53,7 @@ states_codes = [statusCode.replace("_"," ").capitalize() for statusCode in Statu
 STATE_CODE_MAX = len(states_codes)
 
 # Separator between jdl attributes:
-sep ="**********************************************************************\n"
+sep ="==========================================================================\n"
 colsep = "\n      "
 DSTime = " " + time.strftime("%Z")
 evesep = "\n".ljust(14)  +  "***\n"
@@ -220,7 +220,7 @@ def printEvents(jobid, eventArray):
 
 	message=""
 
-	message += "\n" + sep
+	message += "\n"
 	message += "LOGGING INFORMATION:\n\n"
 	message += "Printing info for the Job : " + jobid.jobid
 	message += "\n \n"
@@ -1198,12 +1198,13 @@ class JobStatus:
 		indent = "    "*hierarchy
 		stStr = ""
 		adStr= ""
-		sep = "*************************************************************\n" + indent
+		sepStart = "======================= glite-wms-job-status Success =====================\n"
+		sep = "==========================================================================\n" + indent
 		jobid =info[ states_names.index("Jobid")]
 		if not indent:
 			# Indentation is NOT present: main Job
 			self.jobid =jobid
-			Title= "\n" + indent+""+sep +  "BOOKKEEPING INFORMATION:\n"
+			Title= "\n" + indent+"" + sepStart +  "BOOKKEEPING INFORMATION:\n"
 			# initialize jdl: this operation is not always present
 			self.jdl=info [ states_names.index("Jdl") ]
 		elif hierarchy > self.hierarchy:
