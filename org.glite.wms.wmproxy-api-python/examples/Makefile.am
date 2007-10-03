@@ -17,12 +17,12 @@
 WMPROXY_UTILS = $(top_builddir)/examples/libmake_proxy_cert.la
 
 bin_PROGRAMS = \
-	glite-proxy-cert
+	glite-wms-proxy-sign
 
-glite_proxy_cert_SOURCES = \
+glite_wms_proxy_sign_SOURCES = \
 	make_proxy_cert.c
-glite_proxy_cert_LDFLAGS = --cflags -Xlinker --export-dynamic
-glite_proxy_cert_LDADD = \
+glite_wms_proxy_sign_LDFLAGS = --cflags -Xlinker --export-dynamic
+glite_wms_proxy_sign_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) 
 
 AM_CFLAGS = -I$(top_srcdir)/examples \
