@@ -64,7 +64,8 @@ def checkExclude(includes, excludes):
 		OPT= "--exclude"
 	return 0 , includes ,excludes
 
-sep ="**********************************************************************\n"
+sepStart ="===================== glite-job-logging-info Success =====================\n"
+sepEnd = "==========================================================================\n"
 
 ######################
 #####MAIN FUNCTION####
@@ -272,13 +273,13 @@ else:
 
 		message += wmsui_api.printEvents(jobid, eventArray)
 
-message += "\n" + sep
+message = sepStart + message + sepEnd
 wmsui_utils.print_message(outFile, message)
 
 if outFile:
-	message='===============  glite-job-logging-info Success =================\n'
+	message='===================== glite-job-logging-info Success =====================\n'
 	message=message + " Logging Information has been found and stored in the file:\n"
 	message=message + " "+ outFile +"\n"
-	message=message +'===================================================================\n'
+	message=message +'==========================================================================\n'
 	wmsui_utils.print_message(wmsui_utils.info.logFile , message)
 exit(sys_exit)

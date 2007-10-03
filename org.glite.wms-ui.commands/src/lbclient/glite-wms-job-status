@@ -282,7 +282,7 @@ else:
 	if len (jobs)>1:
 		em="Warning"
 
-	# Get the status for all the Job IDàs
+	# Get the status for all the Job IDï¿½
 	for jobid in jobs:
 		
 		dbgMsg ("Job::getStatus" , jobid.jobid, level)
@@ -306,12 +306,12 @@ else:
 			
 			# Show on screen the error
 			errMsg ( em , "API_NATIVE_ERROR" , "Job:getStatus"  , apiMsg.args[0] )
-			
+
 			# Set the exit code
 			sys_exit= -1
 
 if level==0 and atLeastOneSuccess :
-	wmsui_utils.print_message(outFile, "*************************************************************\n")
+	wmsui_utils.print_message(outFile,"==========================================================================\n")
 
 #Final error Check
 if not st:
@@ -330,10 +330,10 @@ if not st:
 	exit(1)
 else:
 	if outFile:
-		message='====================  glite-job-status success =======================\n'
+		message='======================== glite-job-status success ========================\n'
 		message=message + " Bookkeeping information has been found and stored in the file:\n"
 		message=message+ " "+ outFile
-		message=message+'\n====================================================================\n'
+		message=message+'\n==========================================================================\n'
 		wmsui_utils.print_message(wmsui_utils.info.logFile,message)
 	exit(sys_exit)
 
