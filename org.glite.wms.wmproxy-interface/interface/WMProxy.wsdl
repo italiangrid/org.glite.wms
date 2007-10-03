@@ -1339,6 +1339,9 @@
 			<wsdl:fault name="InvalidArgumentFault">
 				<soap:fault name="InvalidArgumentFault" use="literal"/>
 			</wsdl:fault>
+			<wsdl:fault name="JobUnknownFault">
+                               <soap:fault name="JobUnknownFault" use="literal"/>
+                        </wsdl:fault>
 			<wsdl:fault name="GenericFault">
 				<soap:fault name="GenericFault" use="literal"/>
 			</wsdl:fault>
