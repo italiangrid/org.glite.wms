@@ -39,7 +39,7 @@
 
 
 const char* PROXY_REQUEST="PROXY_REQUEST";
-const char* output_file = "proxyresult.log" ;
+const char* output_file = "proxyresult" ;
 const char* env = "-e";
 const char* proxyinp = "-p";
 const char* output = "-o";
@@ -76,7 +76,7 @@ int checkOption (const char* option) {
   return 1;
   }
   else
-    {
+  {
       printf("Wrong input option, please use:\n");
       printf("-e <environment variable>\n");
       printf("-p <proxy string>\n");
@@ -205,16 +205,10 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
   X509_REQ *req;
   X509_NAME *name, *CAsubject, *newsubject;
   X509_NAME_ENTRY *ent;
-  //X509V3_CTX ctx;
-  //X509_EXTENSION *subjAltName;
-  //STACK_OF (X509_EXTENSION) * req_exts;
   FILE *fp;
   FILE *proxyresult;
   BIO *reqmem , *certmem;
   time_t notAfter;
-
-  printf(reqtxt);
-  fflush(stdout);
 
   /* read in the request */
   reqmem = BIO_new(BIO_s_mem());
@@ -238,14 +232,6 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
       return GRST_RET_FAILED;
     }
 
-  /*
-   if (X509_REQ_verify(req, pkey) != 1)
-    {
-      mpcerror(debugfp,
-            "MakeProxyCert(): error verifying signature on certificate\n");
-      return GRST_RET_FAILED;
-    }
-  */
   /* read in the signing certificate */
   if (!(fp = fopen(cert, "r")))
     {
@@ -412,8 +398,6 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
          }
 
        ptrlen = BIO_get_mem_data(certmem, &ptr);
-       printf(certchain);
-       fflush(stdout);
        certchain = realloc(certchain, strlen(certchain) + ptrlen + 1);
 
        strncat(certchain, ptr, ptrlen);
@@ -423,7 +407,7 @@ int makeProxyCert(char **proxychain, FILE *debugfp,
 
   *proxychain = certchain;
 
-   //prints the proxy processed in a file "proxyresult.log"
+   //prints the proxy processed in a file "proxyresult"
    proxyresult = fopen(output_file, "w+");
    fprintf(proxyresult, *proxychain);
    fclose(proxyresult);
@@ -476,11 +460,15 @@ int main(int argc, char *argv[])
 	{
 	if (checkOption (argv[optind]) == 1) {
           if ( envOpt == true) {
+	   // Reads the proxy request from ENV
     	   PROXY_REQUEST = (char*)argv[optind+1] ;
+           request = getenv (PROXY_REQUEST);
     	  } else if ( proxyOpt == true) {
-    	   proxy = (char*)argv[optind+1] ;
+	   // Reads the proxy request from input as a string
+    	   request = (char*)argv[optind+1] ;
    	   } else if ( outputOpt == true ) {
-     	  output_file = (char*)argv[optind+1] ;
+	   // Sets the output file 
+     	   output_file = (char*)argv[optind+1] ;
    	   } else
 	   {
            printf( "Wrong input option, please use:\n");
@@ -502,8 +490,6 @@ int main(int argc, char *argv[])
     return GRST_RET_FAILED;
    }
 
-  request = getenv (PROXY_REQUEST);
-
   if ( request == NULL )
      {
        printf( "Error while reading proxy request from input: NULL\n");
@@ -511,7 +497,6 @@ int main(int argc, char *argv[])
        fflush(stdout);
        return GRST_RET_FAILED;
      }
-
 
   if (proxy == NULL)
      {
