@@ -63,7 +63,7 @@ void eventStatusListener::createObject( void )
     }
     
 
-    CREAM_SAFE_LOG(m_log_dev->info( "eventStatusListener::CTOR() - Listener created!" ));
+    CREAM_SAFE_LOG(m_log_dev->info( "eventStatusListener::createObject() - Listener created!" ));
     
 }
 
