@@ -225,7 +225,7 @@ int main(int argc, char*argv[])
     string hostcert = conf->ice()->ice_host_cert();
 
     logger_instance->setLogFile(logfile.c_str());
-    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20070903-15:00]"<<log4cpp::CategoryStream::ENDLINE);
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20071004-09:20]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
 
     
@@ -331,7 +331,7 @@ int main(int argc, char*argv[])
         // race condition.
         //
         int command_count = threadPool->get_command_count();
-        if ( command_count > 100 ) {
+        if ( command_count > conf->ice()->max_ice_threads() ) {
             CREAM_SAFE_LOG(log_dev->infoStream()
                            << method_name
                            << "There are currently too many requests ("
