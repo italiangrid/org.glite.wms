@@ -159,6 +159,8 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
         // 3. ICE received the last empty status change notification
         // more than 10*60 seconds ago (that is, 10 minutes).
         //
+	// empty notification are effective to reduce the polling frequency if the m_threshold is much greater than 10x60 seconds
+	
         if ( m_poll_all_jobs ||
 	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ||
              ( ( t_last_empty_notification > 0 ) && empty_oldness > m_empty_threshold ) ) { // empty_oldness must be greater than 10 minutes
