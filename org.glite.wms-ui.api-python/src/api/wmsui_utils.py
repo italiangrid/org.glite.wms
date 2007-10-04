@@ -35,10 +35,6 @@ def ctc(signo, frame):
 	print_message(info.logFile , msg , stderror=1 )
 	exit(1)
 
-"""
-Static Variables:
-"""
-FILESEP = "/"
 
 """
 ****************************************************
@@ -104,16 +100,16 @@ def create_err_log(output):
       errPath = solvePath( info.confAd.getStringValue ("ErrorStorage")[0] )
       #print "ErrorStorage read from file:" , errPath
    except:
-      errPath = FILESEP + "tmp"
+      errPath = os.sep + "tmp"
       #print "Unable to read from file, storing default:" , errPath
    uid=os.getuid()
    pid=os.getpid()
    tm = int(time.time())
-   err_log_file=errPath + '/' + info.prgname  + '_' + repr(uid) + '_' + repr(pid) + '_' + repr(tm)  +'.log'
+   err_log_file=errPath + os.sep + info.prgname  + '_' + repr(uid) + '_' + repr(pid) + '_' + repr(tm)  +'.log'
    return err_log_file
 
 def solvePath( dir  ):
-	if dir.find("~"+FILESEP) == 0:
+	if dir.find("~" + os.sep) == 0:
 		dir= os.environ["HOME"] + dir[1:]
 	return os.path.expandvars(dir)
 
@@ -274,7 +270,7 @@ def errMsg(errType,strDef,*arg):
  #Read Error file
  path = info.prefix
  if path:
-   errFile = path + '/etc/glite_wmsui_cmd_err.conf'
+   errFile = path + os.sep + "etc" + os.sep + "glite_wmsui_cmd_err.conf"
  else:
    print "Fatal Error: Unable to find userinterface configuration error file"
    exit (1)
@@ -502,7 +498,7 @@ def printFullHelp(msg, noPager):
      #Read Help File
      noPager=1
      path =info.prefix
-     helpFile = path + FILESEP + "etc" + FILESEP+ "glite_wmsui_cmd_help.conf"
+     helpFile = path + os.sep + "etc" + os.sep + "glite_wmsui_cmd_help.conf"
      try:
          f = open(helpFile,'r')
          helpLines=f.readlines()

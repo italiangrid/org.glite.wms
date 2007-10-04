@@ -67,8 +67,6 @@ VO_SOURCE_CERT_EXTENSION = "CERT_EXTENSION"
 # String for no default VO
 UnspecifiedVO = "unspecified"
 
-sep = "/"
-
 def generateVoPath(voName):
   
   # Read the HOME environment variable
@@ -80,11 +78,11 @@ def generateVoPath(voName):
     envHome = ""
     
   # Set the GLITE_WMS_COMMANDS_CONFIG environment variable content as configuration file
-  configFile = envHome + sep + "/.glite/" + sep + voName.lower() + "/" + DEFAULT_UI_CLIENTCONFILE
+  configFile = envHome + os.sep + ".glite" + os.sep + voName.lower() + os.sep + DEFAULT_UI_CLIENTCONFILE
 
   if not os.path.isfile(configFile):
     # Old approach
-    configFile = envHome + sep + "/.glite/" + sep + voName.lower() + "/" + DEFAULT_UI_CONFILE
+    configFile = envHome + os.sep + ".glite" + os.sep + voName.lower() + os.sep + DEFAULT_UI_CONFILE
   
   # Return the Config File
   return configFile
@@ -199,7 +197,6 @@ def loadConfiguration(pathUser, pathDefault, voName):
 This Method finds where the UI tools have been installed
 """
 def check_prefix():
-  sep="/"
   prefix = ""
   confPrefix=""
   found = 0
@@ -224,12 +221,12 @@ def check_prefix():
               pass
      if not prefix:
         pass
-     confPrefix = prefix + sep + etcPath
+     confPrefix = prefix + os.sep + etcPath
 
      #Look for UI configuration files:
      found = 1
      for file in fileList:
-          if not os.path.isfile(confPrefix+sep+file):
+          if not os.path.isfile(confPrefix + os.sep + file):
              found = 0
              break
      if found ==1:
@@ -249,7 +246,7 @@ def check_prefix():
   """
   try:
   #if not version:
-     f=open( confPrefix + sep +"glite_wmsui_cmd_err.conf"  ,'r' )
+     f=open( confPrefix + os.sep +"glite_wmsui_cmd_err.conf"  ,'r' )
      line=f.readline().strip()
      while line:
        line=line.strip()
@@ -265,10 +262,10 @@ def check_prefix():
      if wmsui_utils.info.version =="":
         raise AttributeError
   except:
-     print "Fatal Error: Unable find Version attribute in Ui  configuration file: \n" + confPrefix + sep +"glite_wmsui_cmd_err.conf"
+     print "Fatal Error: Unable find Version attribute in Ui  configuration file: \n" + confPrefix + os.sep +"glite_wmsui_cmd_err.conf"
      sys.exit(1)
   ad = AdWrapper(1)
-  info.confFile = confPrefix + sep +fileList[0]
+  info.confFile = confPrefix + os.sep +fileList[0]
   if not os.path.isfile (info.confFile ):
       errMsg = "Fatal Error: Unable to find UI  default configuration file:\n " + info.confFile
       print errMsg
@@ -495,7 +492,7 @@ def checkConf(conf, virtualOrg, logPath):
     proxy_file_name = os.environ['X509_USER_PROXY']
   except:
     # Set the default User Proxy filename 
-    proxy_file_name = '/tmp/x509up_u'+ repr(os.getuid())
+    proxy_file_name = os.sep + "tmp" + os.sep + "x509up_u'+ repr(os.getuid())
 
   # Read the Proxy file if it exists		  
   if os.path.isfile(proxy_file_name):
@@ -539,7 +536,7 @@ def checkConf(conf, virtualOrg, logPath):
       wmsui_utils.print_message(wmsui_utils.info.logFile, debugMsg)
     
     # Set the config file
-    configFile = wmsui_utils.info.prefix + sep + "etc" + sep + virtualOrg.lower() + sep + DEFAULT_UI_CLIENTCONFILE
+    configFile = wmsui_utils.info.prefix + os.sep + "etc" + os.sep + virtualOrg.lower() + os.sep + DEFAULT_UI_CLIENTCONFILE
     
   elif(conf):
   
@@ -590,7 +587,7 @@ def checkConf(conf, virtualOrg, logPath):
   if(voName):	  
 	  
     # Build the default config file 
-    cfDefault = wmsui_utils.info.prefix + sep + "etc" + sep + voName.lower() + sep + DEFAULT_UI_CLIENTCONFILE
+    cfDefault = wmsui_utils.info.prefix + os.sep + "etc" + os.sep + voName.lower() + os.sep + DEFAULT_UI_CLIENTCONFILE
 
     # Check if the file exists
     if not os.path.isfile (cfDefault):
@@ -649,7 +646,7 @@ check The specified output file target
 def check_outFile(out_file,*submit):
   TBremoved=0
   out_file=os.path.abspath(out_file)
-  sind=out_file.rfind('/')
+  sind=out_file.rfind(os.sep)
   if not os.path.isdir(out_file[:sind]): #the path doesn't exist
           wmsui_utils.errMsg("Error","UI_DIR_NOT_FOUND",out_file[:sind])
           wmsui_utils.exit(1)
@@ -689,7 +686,6 @@ def check_proxy(*valid) :
 		valid=valid[0]
 		hours, minutes  = valid.split(":")
 		secondsLeft = int(hours)*60*60 + int(minutes)*60
-	file_path_sep = '/'
 	uid = os.getuid()
 	pid = os.getpid()
 	proxy_file_name = ''
@@ -700,7 +696,7 @@ def check_proxy(*valid) :
 	try:
 		proxy_file_name = os.environ['X509_USER_PROXY']
 	except:
-		proxy_file_name = '/tmp/x509up_u'+repr(uid)
+		proxy_file_name = os.sep + "tmp" + os.sep+ "x509up_u" + repr(uid)
 	#Check if Proxy certificate already exists
 	#voms =  info.confAdVo.getStringValue("VirtualOrganisation")[0]
 	if os.path.isfile(proxy_file_name):

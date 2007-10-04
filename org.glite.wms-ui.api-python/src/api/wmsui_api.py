@@ -853,14 +853,14 @@ class Shadow:
   """
   def  checkRootPath(self):
 	# Pipe Stream required
-	rootDir  = wmsui_utils.FILESEP + "tmp"
+	rootDir  = os.sep + "tmp"
 	rd = wmsui_utils.solvePath(wmsui_utils.info.confAd.getStringValue ("ListenerStorage")[0] )
 	if rd:
 		rootDir = rd
 	if  not os.path.isdir( rootDir ):
 		errMsg('Error','UI_DIR_NOT_FOUND', rootDir)
 		exit(1)
-	self.pipeRoot =  rootDir +wmsui_utils.FILESEP + "listener-" + self.jobid.unique
+	self.pipeRoot =  rootDir + os.sep + "listener-" + self.jobid.unique
 	foundPrevious =0
 	for fi in [ self.pipeRoot ,  self.getPipeErr() ,   self.getPipeOut() ,  self.getPipeIn() ]:
 		if  os.path.exists( fi ):
@@ -878,7 +878,7 @@ class Shadow:
   Launch the glite--wms-grid-console-shadow and retrieve host &port information
   """
   def console( self, port=0):
-	shPath = wmsui_utils.info.prefix + wmsui_utils.FILESEP +"bin/"
+	shPath = wmsui_utils.info.prefix + os.sep +"bin" + os.sep
 	command =shPath + "glite-wms-grid-console-shadow"
 	if  not os.path.isfile( command):
 		errMsg('Error','UI_FILE_NOT_FOUND', command)
