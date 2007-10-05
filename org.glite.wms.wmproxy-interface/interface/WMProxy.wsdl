@@ -5,10 +5,10 @@
 	xmlns:glitejsdlns="http://schemas.ggf.org/jsdl/2005/11/jsdl"
 	xmlns:glitedelegns="http://www.gridsite.org/namespaces/delegation-2"
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
 	targetNamespace="http://glite.org/wms/wmproxy" name="WMProxy">
-	
+
 	<!-- ==== Import wsdl file for delegation services (client version 1.5 or greater) ==== -->
 	<wsdl:import
 		namespace="http://www.gridsite.org/namespaces/delegation-2"
@@ -19,7 +19,7 @@
 	<!--wsdl:import
 		namespace="http://www.gridsite.org/namespaces/delegation-1"
 		location="www.gridsite.org-delegation-1.0.0.wsdl"/-->
-			
+
 	<!-- ==== Types definition ==== -->
 	<wsdl:types>
 		<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://glite.org/wms/wmproxy">
@@ -85,6 +85,22 @@
 				</xsd:sequence>
 			</xsd:complexType>
 			<!-- ==== Definition of the structure containing job identifiers for complex job types ==== -->
+
+
+
+			<xsd:complexType name="JobStatusStructType">
+			<!-- ==== TODO Definition To be completed ==== -->
+				<xsd:sequence>
+					<xsd:element name="jobid" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="status" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="childrenJob" type="glitenstypes:JobStatusStructType" minOccurs="0" maxOccurs="unbounded" nillable="true"/>
+				</xsd:sequence>
+			</xsd:complexType>
+
+
+
+
+
 			<xsd:complexType name="JobIdStructType">
 				<xsd:sequence>
 					<xsd:element name="id" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
@@ -192,8 +208,8 @@
 			<xsd:element name="ServerOverloadedFault" type="glitenstypes:ServerOverloadedFaultType"/>
 		</schema>
 	</wsdl:types>
-	
-	<!-- ==== Messages definition ==== -->
+
+	<!-- ==== Messages: Requests Responses definition ==== -->
 	<wsdl:message name="getProxyReqRequest">
 		<wsdl:part name="delegationID" type="xsd:string"/>
 	</wsdl:message>
@@ -318,33 +334,15 @@
 	<wsdl:message name="getCollectionTemplateResponse">
 		<wsdl:part name="jdl" type="xsd:string"/>
 	</wsdl:message>
-	<wsdl:message name="AuthenticationFault">
-		<wsdl:part name="fault" element="glitenstypes:AuthenticationFault"/>
+
+	<wsdl:message name="getJobStatusRequest">
+		<wsdl:part name="jobId" type="xsd:string"/>
 	</wsdl:message>
-	<wsdl:message name="AuthorizationFault">
-		<wsdl:part name="fault" element="glitenstypes:AuthorizationFault"/>
+
+	<wsdl:message name="getJobStatusResponse">
+		<wsdl:part name="JobStatusStruct" type="glitenstypes:JobStatusStructType"/>
 	</wsdl:message>
-	<wsdl:message name="InvalidArgumentFault">
-		<wsdl:part name="fault" element="glitenstypes:InvalidArgumentFault"/>
-	</wsdl:message>
-	<wsdl:message name="GenericFault">
-		<wsdl:part name="GenericFault" element="glitenstypes:GenericFault"/>
-	</wsdl:message>
-	<wsdl:message name="GetQuotaManagementFault">
-		<wsdl:part name="fault" element="glitenstypes:GetQuotaManagementFault"/>
-	</wsdl:message>
-	<wsdl:message name="NoSuitableResourcesFault">
-		<wsdl:part name="fault" element="glitenstypes:NoSuitableResourcesFault"/>
-	</wsdl:message>
-	<wsdl:message name="JobUnknownFault">
-		<wsdl:part name="fault" element="glitenstypes:JobUnknownFault"/>
-	</wsdl:message>
-	<wsdl:message name="OperationNotAllowedFault">
-		<wsdl:part name="fault" element="glitenstypes:OperationNotAllowedFault"/>
-	</wsdl:message>
-	<wsdl:message name="ServerOverloadedFault">
-		<wsdl:part name="fault" element="glitenstypes:ServerOverloadedFault"/>
-	</wsdl:message>
+
 	<wsdl:message name="getIntParametricJobTemplateRequest">
 		<wsdl:part name="attributes" type="glitenstypes:StringList"/>
 		<wsdl:part name="param" type="xsd:int"/>
@@ -415,7 +413,36 @@
 	<wsdl:message name="getTransferProtocolsResponse">
 		<wsdl:part name="items" type="glitenstypes:StringList"/>
 	</wsdl:message>
-    
+
+	<!-- ==== Messages: Fault definition ==== -->
+	<wsdl:message name="AuthenticationFault">
+		<wsdl:part name="fault" element="glitenstypes:AuthenticationFault"/>
+	</wsdl:message>
+	<wsdl:message name="AuthorizationFault">
+		<wsdl:part name="fault" element="glitenstypes:AuthorizationFault"/>
+	</wsdl:message>
+	<wsdl:message name="InvalidArgumentFault">
+		<wsdl:part name="fault" element="glitenstypes:InvalidArgumentFault"/>
+	</wsdl:message>
+	<wsdl:message name="GenericFault">
+		<wsdl:part name="GenericFault" element="glitenstypes:GenericFault"/>
+	</wsdl:message>
+	<wsdl:message name="GetQuotaManagementFault">
+		<wsdl:part name="fault" element="glitenstypes:GetQuotaManagementFault"/>
+	</wsdl:message>
+	<wsdl:message name="NoSuitableResourcesFault">
+		<wsdl:part name="fault" element="glitenstypes:NoSuitableResourcesFault"/>
+	</wsdl:message>
+	<wsdl:message name="JobUnknownFault">
+		<wsdl:part name="fault" element="glitenstypes:JobUnknownFault"/>
+	</wsdl:message>
+	<wsdl:message name="OperationNotAllowedFault">
+		<wsdl:part name="fault" element="glitenstypes:OperationNotAllowedFault"/>
+	</wsdl:message>
+	<wsdl:message name="ServerOverloadedFault">
+		<wsdl:part name="fault" element="glitenstypes:ServerOverloadedFault"/>
+	</wsdl:message>
+
 	<!-- ==== Port type definition ==== -->
 	<wsdl:portType name="WMProxy_PortType">
 		<wsdl:operation name="getProxyReq" parameterOrder="delegationID">
@@ -453,10 +480,10 @@
 			<wsdl:documentation>
 				<!-- ==== Delegation operation mantained for backward compatibility
 							client version less than 1.5 ==== -->
-							
+
      			This operation finishes the delegation procedure by sending the signed
      			proxy certificate to the server.
-    
+
 				Input: string containing the delegationID (i.e. the id used to identify the
 					delegation process and the resulting delegated credentials
 					in the server).
@@ -1244,11 +1271,11 @@
 		<wsdl:operation name="getTransferProtocols">
 			<wsdl:documentation>
 					This operation returns the server available transfer protocols.
-					
+
 					Input: no input.
-					
+
 					Output: a vector of string containing the protocols.
-					
+
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
 					AuthorizationFault: 			client is not authorized to perform this operation.
@@ -1261,8 +1288,32 @@
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
+
+
+		<wsdl:operation name="getJobStatus">
+			<wsdl:documentation>
+					This operation returns the current status for the desired JobId
+
+					Input: desired JobId
+
+					Output: a structure containing status information for requested JobId
+
+					Faults:
+					AuthenticationFault: 		a generic authentication problem occured.
+					AuthorizationFault: 			client is not authorized to perform this operation.
+					GenericFault: 					another problem occured.
+			</wsdl:documentation>
+			<wsdl:input name="getJobStatusRequest" message="glitens:getJobStatusRequest"/>
+			<wsdl:output name="getJobStatusResponse" message="glitens:getJobStatusResponse"/>
+			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
+			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
+		</wsdl:operation>
+
+
+
 	</wsdl:portType>
-	
 	<!-- ==== Binding definition ==== -->
 	<wsdl:binding name="WMProxy" type="glitens:WMProxy_PortType">
 		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -1987,6 +2038,33 @@
 				<soap:fault name="ServerOverloadedFault" use="literal"/>
 			</wsdl:fault>
 		</wsdl:operation>
+
+
+		<wsdl:operation name="getJobStatus">
+			<wsdl:input>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:output>
+			<wsdl:fault name="AuthenticationFault">
+				<soap:fault name="AuthenticationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="AuthorizationFault">
+				<soap:fault name="AuthorizationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="GenericFault">
+				<soap:fault name="GenericFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="ServerOverloadedFault">
+				<soap:fault name="ServerOverloadedFault" use="literal"/>
+			</wsdl:fault>
+		</wsdl:operation>
+
+
+
+
+
     </wsdl:binding>
 	
 	<!-- ==== Service definition ==== -->
