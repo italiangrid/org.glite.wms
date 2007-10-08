@@ -492,7 +492,7 @@ def checkConf(conf, virtualOrg, logPath):
     proxy_file_name = os.environ['X509_USER_PROXY']
   except:
     # Set the default User Proxy filename 
-    proxy_file_name = os.sep + "tmp" + os.sep + "x509up_u'+ repr(os.getuid())
+    proxy_file_name = os.sep + "tmp" + os.sep + "x509up_u"+ repr(os.getuid())
 
   # Read the Proxy file if it exists		  
   if os.path.isfile(proxy_file_name):
