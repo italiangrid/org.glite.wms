@@ -94,7 +94,7 @@ bool iceCommandProxyRenewal::renewProxy( const list<CreamJob>& jobs) throw()
 void iceCommandProxyRenewal::execute( void ) throw()
 {
 
-    return;    
+    //return;    
     
     map< pair<string, string>, list<CreamJob>, ltstring > jobMap;
     map< string, time_t > timeMap;
@@ -102,8 +102,11 @@ void iceCommandProxyRenewal::execute( void ) throw()
     {
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );
       for(jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
-        if ( ! jobIt->is_active() ) 
+        if( !jobIt->is_active() ) 
           continue; // skip terminated jobs
+	if( !jobIt->is_proxy_renewable() )
+	  continue;
+	  
 	  struct stat buf;
 //         
           if( ::stat( jobIt->getUserProxyCertificate().c_str(), &buf) == 1 ) {
@@ -112,6 +115,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
                             << "Cannot stat proxy file ["
                             << jobIt->getUserProxyCertificate() << "] for job "
                             << jobIt->describe()
+			    << ". Skipping it..."
                             << log4cpp::CategoryStream::ENDLINE);
              continue; // skip to next job
              // FIXME: what to do?
@@ -138,17 +142,17 @@ void iceCommandProxyRenewal::execute( void ) throw()
       }
     } // unlock the jobCache
     
-    map< pair<string, string>, list<CreamJob>, ltstring >::iterator it  = jobMap.begin();
+    map< pair<string, string>, list<CreamJob>, ltstring >::iterator jobMap_it  = jobMap.begin();
     map< pair<string, string>, list<CreamJob>, ltstring >::const_iterator end = jobMap.end();
     
-    while( it != end ) {
+    while( jobMap_it != end ) {
     
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );
       
-      if( this->renewProxy( it->second ) )
+      if( this->renewProxy( jobMap_it->second ) )
       {
-        list<CreamJob>::iterator aJob = it->second.begin();
-	list<CreamJob>::const_iterator end_list = it->second.end();
+        list<CreamJob>::iterator aJob = jobMap_it->second.begin();
+	list<CreamJob>::const_iterator end_list = jobMap_it->second.end();
 	
         for(;
 	    aJob != end_list;
@@ -160,7 +164,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
 	    }
       }
       
-      it++;  
+      jobMap_it++;  
          
     }
     
