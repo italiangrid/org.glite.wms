@@ -94,7 +94,7 @@ bool iceCommandProxyRenewal::renewProxy( const list<CreamJob>& jobs) throw()
 void iceCommandProxyRenewal::execute( void ) throw()
 {
 
-    //return;    
+    return;    
     
     map< pair<string, string>, list<CreamJob>, ltstring > jobMap;
     map< string, time_t > timeMap;
