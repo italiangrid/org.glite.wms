@@ -41,6 +41,7 @@
 
 // Global variables for configuration
 extern std::string dispatcher_type_global;
+extern std::string filelist_global;
 
 // Listmatch classad attributes
 const char * LISTMATCH_REASON = "reason";
@@ -191,14 +192,14 @@ WMP2WM::submit(const string &jdl, const string &jdlpath)
 		} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
 			f_forward(*m_jobdir, command_str);
 			wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-	    		true, true, "", regjdl.c_str());
+	    		true, true, filelist_global.c_str () , regjdl.c_str());
 		}
-		
+
     	edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
     	edglog(debug)<<"Submit EnQueued OK"<<endl;
   	} catch (exception &e) {
     	// LogEnQueued FAIL if exception occurs
-    	
+
 		if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
 	    	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
 	    		e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
