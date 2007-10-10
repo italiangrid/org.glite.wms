@@ -1963,6 +1963,7 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 	}
 }
 void JobSubmit::submitRecoverStep(submitRecoveryStep step){
+	m_endPoint = "";
 	retrieveEndPointURL( );
 	jobPerformStep(STEP_CHECK_FILE_TP);
 	// PERFORM STEP_CHECK_US_QUOTA
