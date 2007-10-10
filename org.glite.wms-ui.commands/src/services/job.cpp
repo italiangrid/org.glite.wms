@@ -358,7 +358,7 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 	try {
 		boost::scoped_ptr<api::ConfigContext> sp_cfg(new api::ConfigContext (getProxyPath(), endpoint, getCertsPath()));
 		logInfo->print (WMS_INFO, "Connecting to the service", endpoint);
-		
+
 		// Version string number
 		logInfo->service(WMP_VERSION_SERVICE);
 		
@@ -540,7 +540,6 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 			// This Step Does not need the TRY/CATCH block: it is implemented internally
 			lookForWmpEndpoints();
 			m_cfgCxt.reset(new api::ConfigContext(getProxyPath(),m_endPoint, getCertsPath()));
-
 			break;
 		case STEP_DELEGATE_PROXY:
 			// Checks if WMProxy supports delegation-2
@@ -585,16 +584,15 @@ void Job::jobRecoverStep(jobRecoveryStep step){
 	if (step==STEP_GET_ENDPOINT){return;}
 
 	// STEP_DELEGATE_PROXY
-	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_DELEGATE_PROXY");
 	jobPerformStep(STEP_DELEGATE_PROXY);
 	if (step==STEP_DELEGATE_PROXY){return;}
 
 	// PERFORM STEP_CHECK_FILE_TP
-	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_CHECK_FILE_TP");
 	jobPerformStep(STEP_CHECK_FILE_TP);
 	if (step==STEP_CHECK_FILE_TP){return;}
 
 	if (step==STEP_JOB_ALL){return;}
+
 	// no return reached: Unknown STEP
 	throw WmsClientException(__FILE__,__LINE__,
 		"jobRecoverStep", ECONNABORTED,
@@ -604,7 +602,7 @@ void Job::jobRecoverStep(jobRecoveryStep step){
 /**
 * Sets the endpoint URL where the operation will be performed. The URL is established checking
 * the following objects in this order:
-*	> the --enpoint user option;
+*	> the --endpoint user option;
 *	> the GLITE_WMS_WMPROXY_ENDPOINT environment variable
 *	> the list of URLs specified in the configuration file (In this last case the choice is randomically performed)
 * needed to initialise cfgCxt instance
@@ -768,7 +766,7 @@ void Job::checkFileTransferProtocol(  ) {
 
 			// Set the SOAP time out
 			setSoapTimeout(m_cfgCxt.get(), SOAP_GET_TRANSFER_PROTOCOLS_TIMEOUT);
-		
+
 			protocols = api::getTransferProtocols(m_cfgCxt.get());
 			size = protocols.size();
 			msg << "Available protocols: ";
