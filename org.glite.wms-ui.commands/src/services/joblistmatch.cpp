@@ -78,14 +78,15 @@ void JobListMatch::listMatching ( ){
         const string ws = " ";
         int spaces = 0 ;
         string ce = "";
-        vector <pair<string , long> > list ;
 	ostringstream out ;
 	ostringstream os;
         // Reads and checks the JDL
         checkAd( );
         // list matching ....
-        list = jobMatching( );
-	if (list.empty()){
+	listmatchPerformStep(STEP_LISTMATCH);
+
+        //list = jobMatching( );
+	if (m_listResult_v.empty()){
 		// if no resource has been found
 		out << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " failure") ) << "\n";
 		out << "No Computing Element matching your job requirements has been found!";
@@ -102,8 +103,8 @@ void JobListMatch::listMatching ( ){
 			out << "*Rank*\n";
 		}
 		out << "\n";
-		vector <pair<string , long> > ::iterator it = list.begin( );
-		vector <pair<string , long> > ::iterator const end = list.end( );
+		vector <pair<string , long> > ::iterator it = m_listResult_v.begin( );
+		vector <pair<string , long> > ::iterator const end = m_listResult_v.end( );
 		for (  ; it != end;  it++ ){
 			ce = it->first ;
 			out << " - " << it->first ;
@@ -191,8 +192,7 @@ void JobListMatch::checkAd ( ){
 /*
 * Retrieves the list of matching resources
 */
-std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
-	vector <pair<string , long> > list ;
+void JobListMatch::jobMatching( ) {
 	// checks if jdlstring is not null
         if (m_jdlString.empty()){
                 throw WmsClientException(__FILE__,__LINE__,
@@ -208,7 +208,7 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
 		// Set the SOAP timeout
 		setSoapTimeout(SOAP_JOB_LIST_MATCH_TIMEOUT);
 			
-    		list = jobListMatch(m_jdlString, getDelegationId( ), getContext());
+    		m_listResult_v = jobListMatch(m_jdlString, getDelegationId( ), getContext());
 		logInfo->result(WMP_LISTMATCH_SERVICE, "The MatchMaking operations have been successfully performed");
       } catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -216,8 +216,39 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
 		"Operation failed",
 		"Unable to perform the operation: "  + errMsg(exc));
   	}
-       return list ;
 }
+
+/** Perform a certain operation and, if any problem arises, try and recover all the previous steps */
+void JobListMatch::listmatchPerformStep(listmatchRecoveryStep step){
+	switch (step){
+		case STEP_LISTMATCH:
+			try{
+                            jobMatching();
+                            }
+			catch (WmsClientException &exc) {
+				logInfo->print(WMS_WARNING, string(exc.what()), "");
+				listmatchRecoverStep(step);
+			}
+			break;
+		default:
+			throw WmsClientException(__FILE__,__LINE__,
+				"submitPerformStep", ECONNABORTED,
+				"Fatal Recovery",
+				"Unable to recover from specified step");
+	}
+}
+void JobListMatch::listmatchRecoverStep(listmatchRecoveryStep step){
+	retrieveEndPointURL( );
+	// PERFORM STEP_LISTMATCH
+	listmatchPerformStep(STEP_LISTMATCH);
+	if (step==STEP_LISTMATCH){return;}
+	// no return reached: Unknown STEP
+	throw WmsClientException(__FILE__,__LINE__,
+		"listmatchRecoverStep", ECONNABORTED,
+		"Fatal Recovery",
+		"Unable to recover from specified step");
+}
+
 
 }}}} // ending namespaces
 
