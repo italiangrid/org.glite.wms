@@ -1249,7 +1249,7 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 	bool ch = false; // TRUE=child node
         // The destinationURI's vector is empty: the WMProxy service will be called
         if (dsURIs.empty( )){
-		// check the WMP version in order to establish the avaiability of the getTransferProtocols service
+		// check the WMP version in order to establish the availability of the getTransferProtocols service
 		protoInfo = checkWMProxyRelease(2, 2, 0 );
 		if (protoInfo){
 			// jobPath is needed for the creation of the Zip files (The path used to archive the files)
@@ -1963,14 +1963,12 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 	}
 }
 void JobSubmit::submitRecoverStep(submitRecoveryStep step){
-	// Perform previous (Job) recovery
-	jobRecoverStep(STEP_JOB_ALL);
+	retrieveEndPointURL( );
+	jobPerformStep(STEP_CHECK_FILE_TP);
 	// PERFORM STEP_CHECK_US_QUOTA
-	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_CHECK_US_QUOTA");
 	submitPerformStep(STEP_CHECK_US_QUOTA);
 	if (step==STEP_CHECK_US_QUOTA){return;}
 	// PERFORM STEP_REGISTER
-	// logInfo->print(WMS_DEBUG, "Recovering operation:", "STEP_REGISTER");
 	submitPerformStep(STEP_REGISTER);
 	if (step==STEP_REGISTER){return;}
 	// no return reached: Unknown STEP
