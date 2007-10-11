@@ -530,6 +530,7 @@ const std::string Job::delegateProxy( ) {
 */
  void Job::delegateProxyEndpoint(const std::string &endpoint ) {
  	m_endPoint = endpoint ;
+	retrieveWmpVersion(m_endPoint);
 	jobPerformStep(STEP_DELEGATE_PROXY);
 }
 
