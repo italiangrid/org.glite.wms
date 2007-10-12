@@ -92,7 +92,7 @@ std::string get_ism_dump(void);
 
 class call_dump_ism_entries
 {
-  void _(size_t, std::ios_base::openmode);
+  void _(size_t, std::ios_base::openmode, std::string const&);
 public:
   void operator()();
 };
