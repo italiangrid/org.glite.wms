@@ -11,6 +11,8 @@ import urllib
 from types import *
 import re
 import base64
+import httplib
+
 
 # SOAPpy modules
 from SOAPpy.Client import *
@@ -24,15 +26,10 @@ from SOAPpy.Types       import faultType, simplify
 
 from SOAPpy.Client	 import SOAPAddress, HTTPTransport, SOAPProxy
 
-from WMPConnection import WMPConnection
-import httplib
 
 key=None
 cert=None
 
-class WMPHTTPS(httplib.HTTPS):
-
-    _connection_class = WMPConnection
 
 #
 # WMPClient
@@ -67,6 +64,7 @@ class WMPHTTPTransport(HTTPTransport):
             r = GSIHTTP(real_addr, tcpAttr = config.tcpAttr)
         elif addr.proto == 'https' and self.auth == True:
             # HTTPS class extended: certificates verification added
+            from WMPConnection import WMPHTTPS
             r = WMPHTTPS(real_addr,  key_file = key_file, cert_file = cert_file)
         elif addr.proto == 'https' and self.auth == False:
             # certificates verification will not be performed

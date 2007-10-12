@@ -6,7 +6,12 @@ import os
 import glob
 import sys
 
-from OpenSSL import SSL
+try:
+    from OpenSSL import SSL
+    from OpenSSL import crypto
+except:
+    print "Error: Unable to find pyOpenSSL module"
+    sys.exit(1)
 
 g_sHostName = "unknown"
 g_cCtx = 0
@@ -20,23 +25,29 @@ def verifyCB( conn, cert, errnum, depth, ok):
         else:
             return ok
     return ok
-    
+
 def initializeClientSSL( ):
     # Initialize context
     ctx = SSL.Context( SSL.SSLv23_METHOD )
     ctx.set_verify(SSL.VERIFY_PEER|SSL.VERIFY_FAIL_IF_NO_PEER_CERT, verifyCB) # Demand a certificate
 
+
+    # Loads the user proxy
     try:
-                   sProxyLocation = os.environ['X509_USER_PROXY']
+                 sProxyLocation = os.environ['X509_USER_PROXY']
     except:
-                   sProxyLocation = '/tmp/x509up_u'+ repr(os.getuid())
+                 sProxyLocation = '/tmp/x509up_u'+ repr(os.getuid())
 
     ctx.use_certificate_chain_file( sProxyLocation )
     ctx.use_privatekey_file(  sProxyLocation )
-    CApaths = glob.glob( '/etc/grid-security/certificates/*.0')
+
     # Looks for certificates inside /etc/grid-security/certificates
+    CApaths = glob.glob( '/etc/grid-security/certificates/*.?')
+
     for path in CApaths:
-        ctx.load_verify_locations(path)
+             ctx.load_verify_locations(path)
+
+
     ctx.set_session_id( "HTTPSConnection%s" % str( time.time() ) )
     return ctx
 
@@ -87,3 +98,10 @@ class WMPConnection( httplib.HTTPConnection ):
             self.sock.do_handshake()
         except SSL.Error, v:
             raise "\n".join( [ stError[2] for stError in v.args[0] ] )
+
+
+class WMPHTTPS(httplib.HTTPS):
+
+    _connection_class = WMPConnection
+
+ 
