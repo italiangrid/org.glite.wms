@@ -14,13 +14,13 @@ trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
 neo      =  "https://neo.datamat.it:7443/glite_wms_wmproxy_server"
 prod     =  "https://prod-wms-01.pd.infn.it:7443/glite_wms_wmproxy_server"
 
-url = ghemon
+url = tigerman
 
 
 ns ="http://glite.org/wms/wmproxy"
 
 delegationId=""
-delegationId = "rask"
+delegationId = "luca"
 
 protocol="gsiftp"
 protocol="all"
@@ -48,7 +48,7 @@ Config.allSuites={ \
 # GETURI SUITES
 "getURISuite":["testgetSandboxDestURI","testgetSandboxBulkDestURI","testgetTransferProtocols","testgetOutputFileList"],\
 # PROXY SUITES
-"proxySuite":["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst","testMakeProxyCert",\
+"proxySuite":["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst","testSignProxyCert",\
 "testDelegatedProxyInfo","testGetJDL"],\
 # PROXY GRIDSITE SUITES
 "gridSiteSuite":["testgetProxyReqGrst","testMakeProxyCert","testputProxyGrst","testgetTerminationTimeGrst",\
@@ -72,21 +72,22 @@ sys.path.append(PYTHONPATH)
 PYTHONPATH="/opt/glite/externals/lib/python2.2"
 sys.path.append(PYTHONPATH)
 try:
-	import SOAPpy
+      import SOAPpy
 except:
-	print "Unable to find SOAPpy module!"
-	sys.exit(1)
+      print "Unable to find SOAPpy module!"
+      sys.exit(1)
 
 try:
-	# The preferred path is ../src
-	sys.path.append("../src")
-	from wmproxymethods import Wmproxy
-	from wmproxymethods import Config
-	from wmproxymethods import getDefaultProxy
+      # The preferred path is ../src
+      sys.path.append("../src")
+      from wmproxymethods import Wmproxy
+      from wmproxymethods import WMPConfig
+      from wmproxymethods import getDefaultProxy
 except:
-	print "Unable to find wmproxymethods module!"
-	print "Please add the location of wmproxymethods.py to PYTHONPATH ENV variable"
-	sys.exit(1)
+      print "Unable to find wmproxymethods module!"
+      print "Please add the location of wmproxymethods.py to PYTHONPATH ENV variable"
+      sys.exit(1)
+
 
 import socket
 
@@ -187,7 +188,11 @@ class WmpTest(unittest.TestCase):
 	SetUp methods:
 	"""
 	def setUp(self):
-		self.wmproxy = Wmproxy(url, ns)
+		self.wmpconfig = WMPConfig(url)
+		self.wmpconfig.setNs(ns)
+		flag = True
+		self.wmpconfig.setAuth(flag)
+		self.wmproxy = Wmproxy(self.wmpconfig)
 
 	def tearDown(self):
 		self.wmproxy = ""
@@ -357,25 +362,24 @@ class WmpTest(unittest.TestCase):
 		gpr = self.wmproxy.getProxyReq(delegationId)
 		title("getProxyReq (wmp namespace)", gpr)
 		assert gpr
-		gpr = self.wmproxy.getProxyReq(delegationId, self.wmproxy.getGrstNs())
+                gpr = self.wmproxy.getProxyReq(delegationId, self.wmpconfig.getGrstNs())
 		title("getProxyReq (grst namespace)", gpr)
 		assert gpr
-	def testMakeProxyCert(self):
+	def testSignProxyCert(self):
 		import time
 		import os
 		result = ""
+		cert = ""
 		proxycert = self.wmproxy.getProxyReq(delegationId)
+		print proxycert
 		assert proxycert
-		os.environ["PROXY_REQUEST"]=proxycert
-		print "Launching....",	"../examples/proxy-cert", getDefaultProxy()
-		os.system("../examples/proxy-cert" + " " + "-e PROXY_REQUEST " + getDefaultProxy())
-		proxyres = open("proxyresult.log")
-		lines = proxyres.readlines()
-		for line in lines:
-			result += line
-		os.environ["PROXY_RESULT"]=result
+		os.environ["PROXY_REQ"]=proxycert
+		print "Executing signProxyReq...."
+		#result = self.wmproxy.signProxyReqStr(proxycert)
+		result = self.wmproxy.signProxyReqEnv("PROXY_REQ")
+		print result
 		print "Executing putProxy...."
-		self.wmproxy.putProxy(delegationId,os.environ["PROXY_RESULT"] )
+		self.wmproxy.putProxy(delegationId,result )
 		print "Executing job submission...."
 		self.wmproxy.jobSubmit(jdl.DEFAULT_JDL, delegationId)
 	def testputProxy(self):
