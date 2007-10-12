@@ -169,7 +169,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
   return ${succeded}
 }
 
-doExit() # 1 - status
+doExit() # 1 - status, # 2 - mode
 {
   jw_status=$1
 
@@ -178,8 +178,7 @@ doExit() # 1 - status
   retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   globus_copy_status=$?
 
-  cd ..
-  rm -rf "${newdir}"
+  rm -rf "..\${newdir}"
 
   if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
@@ -876,7 +875,7 @@ if [ ${__wmp_support} -eq 0 ]; then
           # $current_file is zero-based (being used even
           # below as an array index), + 1 again because of the 
           # difference between $total and $current (i.e. 20-19=2 more files)
-          remaining_files=`expr $total_files \- $current_file + 2`
+          remaining_files=`expr $total_files \- $current_file`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files || echo 0`
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
@@ -930,18 +929,18 @@ else # WMP support
             false
           fi
         else
-          jw_echo "OSB quota exceeded for $s, truncating needed"
-          remaining_files=`expr $total_files \- $current_file + 2`
-          remaining_space=`expr $max_osb_size \- $file_size_acc`
+          jw_echo "OSB quota exceeded for ${file}, truncating needed"
+          remaining_files=`expr $total_files \- $current_file`
+          remaining_space=`expr $max_osb_size \- $file_size_acc + $file_size`
           trunc_len=`expr $remaining_space / $remaining_files || echo 0`
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
-            jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
+            jw_echo "Not enough room for a significant truncation on file ${file}, not sending"
           else
             truncate "$s" $trunc_len "$s.tail"
             if [ $? != 0 ]; then
-              jw_echo "Could not truncate output sandbox file ${f}, not sending"
+              jw_echo "Could not truncate output sandbox file ${file}, not sending"
             else
-              jw_echo "Truncated last $trunc_len bytes for file ${f}"
+              jw_echo "Truncated last $trunc_len bytes for file ${file}"
               if [ "${f:0:9}" == "gsiftp://" ]; then
                 retry_copy "globus-url-copy" "file://$s.tail" "$d.tail"
               elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
