@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.2
+  #! /usr/bin/env python2.2
 """
 ***************************************************************************
     filename  : wmsui_checks.py
@@ -642,7 +642,9 @@ def checkConf(conf, virtualOrg, logPath):
        errMsg("Warning",'UI_RM_FILE' , info.logFile   )
      info.logFile = logFile
 
-
+  # Return the Virtual Organisation name
+  return voName
+  
 """
 def check_outFile(out_file,*submit)
 check The specified output file target

@@ -289,7 +289,7 @@ def getStatus(jobid, level):
 	# Return all the Events of the Job ID		
 	return status;		
 
-def queryStates(jobids, includes, excludes, userTags, issuer, fromT, toT, level):
+def queryStates(jobids, voName, includes, excludes, userTags, issuer, fromT, toT, level):
 	"""
 	queryStates: perform a query on the States logged on the LB Servers.
 	Returns a dictionary with the JOB ID as a key and the value associted is Status of the specific JOB ID
