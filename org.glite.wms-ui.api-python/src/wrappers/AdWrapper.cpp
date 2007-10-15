@@ -256,6 +256,34 @@ string AdWrapper::getAd( const string& name  ) {
 	return "" ;
 }
 
+string AdWrapper::getVirtualOrganisation() {
+	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+
+	// Initialise the return value
+	string virtualOrganisation = "";
+
+	// Check if it's present the JDL Default Attributes AD	
+	if (jad->hasAttribute(JDL_DEFAULT_ATTRIBUTES)) {
+
+ 		/* Retrieve the JDL Default Attributes AD */
+		Ad confAd(jad->getAd(JDL_DEFAULT_ATTRIBUTES));
+		
+		// Check if it's present the VirtualOrganisation attribute
+		if(confAd.hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
+			// Retrieve the Virtual Organisation 
+			virtualOrganisation = confAd.getString(JDL::VIRTUAL_ORGANISATION);
+		}
+	}	
+	
+	// Return the Virtual Organisation 
+	return virtualOrganisation ;
+	
+	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
+	
+	// Return empty Virtual Organisation 
+	return "" ;
+}
+
 void AdWrapper::overrideVo( const std::string& voName ) {
 
 	//Checks for the VO in the JdlDefaultAttributes section

@@ -156,6 +156,10 @@ class AdWrapper {
 	* @return the Ad value into its string representation
 	*/
 	std::string getAd( const std::string& name  ) ;
+	/**Retrieve the VO Name inside the JDL Default Attributes
+	* @param voName the name of the VO 
+	*/
+	std::string getVirtualOrganisation();
 	/**Override the VO Name inside the JDL Default Attributes
 	* @param voName the name of the VO 
 	*/

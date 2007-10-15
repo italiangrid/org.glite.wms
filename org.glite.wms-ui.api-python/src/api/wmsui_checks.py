@@ -416,31 +416,35 @@ def parseVo(voSrc, configFile, voName, eMsg, override):
 
 		else: 
 			errMsg(eMsg,'UI_FILE_NOT_FOUND', configFile)
-			return [1, 0, 0]
+			return [1, "", 0]
 	
 	# Parsing Ad VO file
 	ad = AdWrapper(1)
 	if ad.fromFile(configFile):
 		errMsg(eMsg , "UI_JDL_ADD_ERROR", "Unable to parse Vo conf file (not a valid classad):\n " + configFile )
-		return [1, 0, 0]
+		return [1, "", 0] 
+
 		
 	#The VirtualOrganisation Attribute must match with the specified voName
-	val = ad.getStringValue("VirtualOrganisation")
-	
-	if val:
-		val = val[0]
+	virtualOrganisation = ad.getVirtualOrganisation();
+		
+	# Check if the Virtual Organisation is present inside the AD
+	if virtualOrganisation:
+
+		# Check if the VO name has been set
 		if voName:
-			if val.lower()!=voName.lower():
+			#The VirtualOrganisation Attribute must match with the specified voName
+			if virtualOrganisation.lower()!=voName.lower():
 				if override == 1:
-					val = voName
+					virtualOrganisation = voName
 				else:
 					errMsg(eMsg,'UI_JDL_VO_MATCH', voName , val ,configFile)
-					return [1,0,0]
+					return [1, "", 0]
 		# SUCCESS
-		return [0, val , ad ]
+		return [0, virtualOrganisation , ad ]
 	else:
-		errMsg(eMsg,'UI_JDL_ADD_ERROR', ad.get_error()[1] )
-		return [1,0,0]
+		errMsg(eMsg,'UI_JDL_ADD_ERROR', "Missing VirtualOrganisation attribute inside JDL Default Attributes section \"JdlDefaultAttributes\" of configuration file " + configFile )
+		return [1, "", 0]
 
 """
  This Method check the existence of the Group file
@@ -578,7 +582,7 @@ def checkConf(conf, virtualOrg, logPath):
   if err == 0 and not info.confAdVo:
   	configFile = ""
   
-  if wmsui_utils.info.debug:
+  if wmsui_utils.info.debug and voName:
     # Print Info
     msg =  "VirtualOrganisation value :" + voName
     wmsui_utils.print_message(wmsui_utils.info.logFile, msg)
