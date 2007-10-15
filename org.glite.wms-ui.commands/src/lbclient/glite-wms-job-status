@@ -144,7 +144,7 @@ except SyntaxError,rep:
   exit(1)
   
 # UI Configuration file Check
-wmsui_checks.checkConf (gname, virtualOrg, logpath)
+voName = wmsui_checks.checkConf (gname, virtualOrg, logpath)
 
 err ,includes , excludes = checkExclude (includes , excludes)
 if err:
@@ -200,7 +200,7 @@ if userTags:
 #   jobID check
 #=================================
 jobs= []
-voName=""
+
 if extra:
 	jobs = wmsui_api.getJobIdfromList ( extra)
 	if len (jobs) != len(extra):
@@ -261,7 +261,7 @@ LBapproach = includes or excludes or userTags or issuer or fromT or toT
 if LBapproach:
 
 	# Query all the status
-	statesArray = wmsui_api.queryStates(jobs, includes, excludes, uTags, issuer, fromT, toT, level)
+	statesArray = wmsui_api.queryStates(jobs, voName, includes, excludes, uTags, issuer, fromT, toT, level)
 
 	if statesArray:
 		# If this flag is set to 1 then the query might haven't found any results (but nevertheless no exception raised)
