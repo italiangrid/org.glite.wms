@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2007/10/16 12:02:43  acava
+#       Restored Service Discovery dependency
+#
 #       Revision 1.2  2007/07/26 11:41:01  acava
 #       Fixed missing library
 #
@@ -106,6 +109,8 @@ have_glite_jdl=no
 have_lb=no
 
 AC_GLITE
+
+AC_GLITE_SERVICE_DISCOVERY
 
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
