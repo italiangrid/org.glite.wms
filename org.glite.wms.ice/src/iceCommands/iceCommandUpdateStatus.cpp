@@ -64,7 +64,7 @@ iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event
         // Dumps the content of the notification
         vector< monitortypes__Event >::const_iterator it;
         for ( it = m_ev.begin(); m_ev.end() != it; ++it ) {
-            CREAM_SAFE_LOG(m_log_dev->infoStream()
+            CREAM_SAFE_LOG(m_log_dev->debugStream()
                            << method_name 
                            << "Message dump follows"
                            << log4cpp::CategoryStream::ENDLINE);
@@ -72,7 +72,7 @@ iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event
             vector< string >::const_iterator msg_it;
             for ( msg_it = it->Message.begin(); 
                   msg_it != it->Message.end(); msg_it++ ) {
-                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                CREAM_SAFE_LOG(m_log_dev->debugStream()
                                << method_name 
                                << "Got notification: "
                                << boost::replace_all_copy( *msg_it, "\n", " " )
@@ -129,7 +129,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
             continue; // Skip to the next notification
         }
 
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
                         << "processing notification, with "
                         << it->Message.size() << " events"

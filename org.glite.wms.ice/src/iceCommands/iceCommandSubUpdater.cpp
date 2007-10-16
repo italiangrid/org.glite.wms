@@ -62,7 +62,7 @@ namespace {
 	return;
       }
       
-      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->infoStream() 
+      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->debugStream() 
 		     << "iceCommandSubUpdater::execute() - "
 		     << "Checking Subscription validity for DN ["
 		     << m_dn << "] to CEMon ["

@@ -38,7 +38,7 @@ void Request_source_purger::operator()( void )
     log4cpp::Category* log_dev = api_util::creamApiLogger::instance()->getLogger();
     if(!getenv("NO_FL_MESS"))
 	CREAM_SAFE_LOG(
-                   log_dev->infoStream()
+                   log_dev->debugStream()
                    << "filelist_request_purger - "
                    << "removing request "
                    << m_req->to_string()

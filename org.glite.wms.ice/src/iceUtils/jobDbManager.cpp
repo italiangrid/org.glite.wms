@@ -35,8 +35,6 @@
 #include <cerrno>
 #include <iostream>
 
-//#include <c++/3.2.3/bits/stl_function.h>
-
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
 extern int errno;
@@ -213,7 +211,7 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome,
     
     this->dbLogPurge();
     
-    CREAM_SAFE_LOG( m_log_dev->infoStream() 
+    CREAM_SAFE_LOG( m_log_dev->debugStream() 
                             << "jobDbManager::CTOR() - "
                             << "Created database for jobs caching in [" 
                             << m_envHome << "]" 
@@ -561,7 +559,7 @@ void iceUtil::jobDbManager::dbLogPurge( void )
         if(list == NULL) {m_op_counter = 0; return;}
         
         for (file = list; *file != NULL; ++file) {
-            CREAM_SAFE_LOG( m_log_dev->infoStream() 
+            CREAM_SAFE_LOG( m_log_dev->debugStream() 
                             << "jobDbManager::dbLogPurge() - "
                             << "Removing unused DB logfile [" 
                             << *file << "]" 

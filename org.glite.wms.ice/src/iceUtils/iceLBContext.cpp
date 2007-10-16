@@ -189,7 +189,7 @@ void iceUtil::iceLBContext::testCode( int &code, bool retry )
 			 << log4cpp::CategoryStream::ENDLINE);
 
             if( this->m_el_hostProxy ) {
-	      CREAM_SAFE_LOG(m_log_dev->infoStream()
+	      CREAM_SAFE_LOG(m_log_dev->debugStream()
 			     << "iceLBContext::testCode() - The log with the host certificate has just been done. Giving up." 
 			     << log4cpp::CategoryStream::ENDLINE);
                 
@@ -198,7 +198,7 @@ void iceUtil::iceLBContext::testCode( int &code, bool retry )
             else {
 	      host_proxy = conf->ice_host_cert();
 
-                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                CREAM_SAFE_LOG(m_log_dev->debugStream()
 			       << "Retrying using host proxy certificate [" 
 			       << host_proxy << "]" 
 			       << log4cpp::CategoryStream::ENDLINE);
@@ -213,7 +213,7 @@ void iceUtil::iceLBContext::testCode( int &code, bool retry )
                     ret = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, NULL );
                 }
                 else {
-		  CREAM_SAFE_LOG(m_log_dev->infoStream()
+		  CREAM_SAFE_LOG(m_log_dev->debugStream()
 				 << "iceLBContext::testCode() - Host proxy file found = [" << host_proxy << "]."
 				 << log4cpp::CategoryStream::ENDLINE);
 

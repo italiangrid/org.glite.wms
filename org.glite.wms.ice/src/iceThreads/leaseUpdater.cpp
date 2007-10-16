@@ -18,33 +18,16 @@
  */
 
 #include "leaseUpdater.h"
-//#include "jobCache.h"
 #include "iceConfManager.h"
 #include "iceCommandLeaseUpdater.h"
-//#include "iceUtils.h"
-//#include "CreamProxyFactory.h"
-//#include "CreamProxyMethod.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/CEUrl.h"
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
-//#include "glite/ce/cream-client-api-c/soap_ex.h"
-//#include "glite/ce/cream-client-api-c/BaseException.h"
-//#include "glite/ce/cream-client-api-c/InternalException.h"
-//#include "glite/ce/cream-client-api-c/DelegationException.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <boost/thread/thread.hpp>
-//#include <boost/functional.hpp>
-//#include <vector>
-//#include <string>
-//#include <list>
 
 namespace ice_util = glite::wms::ice::util;
-//using namespace glite::ce::cream_client_api;
-//using namespace glite::ce::cream_client_api::job_statuses;
-//using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
 //____________________________________________________________________________

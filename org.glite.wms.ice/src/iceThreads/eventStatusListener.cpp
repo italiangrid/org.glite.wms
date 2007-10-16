@@ -141,7 +141,7 @@ void eventStatusListener::acceptJobStatus(void)
     return;
   }
   else if (ret) { /* will do actualy the this->accept() call */ 
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
+    CREAM_SAFE_LOG(m_log_dev->debugStream()
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "Listening socket received something to read: ready to accept a SOAP connection"
 		   << log4cpp::CategoryStream::ENDLINE);
@@ -150,7 +150,7 @@ void eventStatusListener::acceptJobStatus(void)
     /* FD_ISSET(0, &rfds) will be true. */
   else {
     //printf("No data within five seconds.\n");
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
+    CREAM_SAFE_LOG(m_log_dev->debugStream()
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "No connection within " << ACCEPT_TIMEOUT << " seconds. Listening again."
 		   << log4cpp::CategoryStream::ENDLINE);

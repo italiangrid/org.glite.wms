@@ -210,7 +210,7 @@ iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::Cre
     } catch( iceUtil::ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
-                       << "Cannot instantiate a job from jdl=" << m_jdl
+                       << "iceCommandSubmit::CTOR() - Cannot instantiate a job from jdl=" << m_jdl
                        << " due to classad excaption: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
@@ -355,7 +355,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     int newLease = m_configuration->ice()->lease_delta_time();
 
     CREAM_SAFE_LOG(
-                   m_log_dev->infoStream()
+                   m_log_dev->debugStream()
                    << "iceCommandSubmit::execute() - "
                    << "Sequence code for job "
                    << m_theJob.describe()
@@ -594,11 +594,11 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
        */
         classad::ExprList* newIsbList = new classad::ExprList();
 
-	CREAM_SAFE_LOG(m_log_dev->infoStream()
-            << "iceCommandSubmit::updateIsbList() "
+	/*CREAM_SAFE_LOG(m_log_dev->debugStream()
+            << "iceCommandSubmit::updateIsbList() - "
             << "Starting InputSandbox manipulation..."
             << log4cpp::CategoryStream::ENDLINE);
-	
+	*/
         string newPath;
         for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
             
@@ -622,7 +622,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
                 }                
             }
 	    CREAM_SAFE_LOG(m_log_dev->debugStream()
-                << "iceCommandSubmit::updateIsbList() "
+                << "iceCommandSubmit::updateIsbList() - "
                 << s << " became " << newPath
                 << log4cpp::CategoryStream::ENDLINE);
 
@@ -656,7 +656,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         default_osbdURI.append( osbPath );
     } else {
         CREAM_SAFE_LOG(m_log_dev->warnStream()
-            << "iceCommandSubmit::updateOsbList() found no "
+            << "iceCommandSubmit::updateOsbList() - found no "
             << "\"OutputSandboxPath\" attribute in the JDL. "
             << "Hope this is correct..."
             << log4cpp::CategoryStream::ENDLINE);        
@@ -681,12 +681,12 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         classad::ExprList* newOsbDUList = new classad::ExprList();
 	
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
-
+/*
             CREAM_SAFE_LOG(m_log_dev->infoStream()
-                << "iceCommandSubmit::updateOsbList() "
+                << "iceCommandSubmit::updateOsbList() - "
                 << "Starting OutputSandboxDestURI manipulation..."
                 << log4cpp::CategoryStream::ENDLINE);        
-          
+  */        
             string newPath;
             for ( classad::ExprList::iterator it=osbDUList->begin(); 
                   it != osbDUList->end(); it++ ) {
@@ -712,7 +712,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
                 }
 
 		CREAM_SAFE_LOG(m_log_dev->debugStream()
-                    << "After input sandbox manipulation, "
+                    << "iceCommandSubmit::updateOsbList() - After input sandbox manipulation, "
                     << s << " became " << newPath
                     << log4cpp::CategoryStream::ENDLINE);        
 
@@ -752,7 +752,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
     boost::smatch what;
 
     CREAM_SAFE_LOG(
-                   m_log_dev->infoStream()
+                   m_log_dev->debugStream()
                    << "iceCommandSubmit::pathName::CTOR() - Trying to unparse " << p
                    << log4cpp::CategoryStream::ENDLINE
                    );
@@ -817,7 +817,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   }
   
   CREAM_SAFE_LOG(
-  		 m_log_dev->infoStream() 
+  		 m_log_dev->debugStream() 
 		 << "iceCommandSubmit::doSubscription() - "
 		 << "For current CREAM, subscriptionManager returned CEMon URL ["
 		 << cemon_url << "]"
@@ -843,7 +843,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // if this was a ghost subscription (i.e. it does exist in the cemonUrlCache's cache
       // but not actually in the CEMon
       // the subscriptionUpdater will fix it soon
-      CREAM_SAFE_LOG(m_log_dev->infoStream()
+      CREAM_SAFE_LOG(m_log_dev->debugStream()
                      << "iceCommandSubmit::doSubscription() - "
                      << "User [" << userDN << "] is already subsdcribed to CEMon ["
                      << cemon_url << "] (found in subscriptionManager's cache)"
@@ -930,7 +930,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 
     }
 
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
+    CREAM_SAFE_LOG(m_log_dev->debugStream()
 		   << "iceCommandSubmit::doSubscription() - "
 		   << "User DN [" << userDN << "] is already subscribed to CEMon ["
 		   << cemon_url << "] (asked to CEMon itself)"

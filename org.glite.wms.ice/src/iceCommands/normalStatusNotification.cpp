@@ -155,7 +155,7 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
     classad::ClassAdUnParser unparser;
     unparser.Unparse( pp_classad, classad_safe_ptr.get() );
     if (!getenv("NO_LISTENER_MESS")) {
-        CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->infoStream()
+        CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->debugStream()
                        << "StatusChange::CTOR() - "
                        << "Parsed status change notification "
                        << pp_classad
@@ -188,14 +188,14 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
     static const char *method_name = "normalStatusNotification::normalStatusNotification() - ";
     
     if( m_ev.Message.empty() ) {        
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
                         << "got a CEMon notification with no messages. Skipping"
                         << log4cpp::CategoryStream::ENDLINE);
         throw runtime_error( "got empty notification" );
     }
     
-    CREAM_SAFE_LOG( m_log_dev->infoStream()
+    CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << method_name
                     << "processing normal status change notification"
                     << log4cpp::CategoryStream::ENDLINE);
@@ -228,7 +228,7 @@ void normalStatusNotification::apply( void ) // can throw anything
     static const char* method_name = "normalStatusNotification::execute() - ";
 
     // the costructor ensures that the notification is non-empty
-    CREAM_SAFE_LOG( m_log_dev->infoStream()
+    CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << method_name
                     << "processing notification"
                     << log4cpp::CategoryStream::ENDLINE);
@@ -338,7 +338,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         // If the status is "PURGED", remove the job from cache        
         if( notif_ptr->get_status() == api::job_statuses::PURGED ) {
             if (!getenv("NO_LISTENER_MESS"))
-                CREAM_SAFE_LOG(m_log_dev->infoStream()
+                CREAM_SAFE_LOG(m_log_dev->warnStream()
                                << method_name
                                << jc_it->describe()
                                << " is reported as PURGED. Removing from cache"

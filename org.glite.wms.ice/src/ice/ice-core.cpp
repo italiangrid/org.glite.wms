@@ -117,16 +117,16 @@ void Ice::IceThreadHelper::stop( void )
 {
     if( m_thread && m_ptr_thread->isRunning() ) {
         CREAM_SAFE_LOG( 
-                       m_log_dev->infoStream()
-                       << "Waiting for thread " << m_name 
+                       m_log_dev->debugStream()
+                       << "Ice::IceThreadHelper::stop() - Waiting for thread " << m_name 
                        << " termination..."
                        << log4cpp::CategoryStream::ENDLINE
                        );
         m_ptr_thread->stop();
         m_thread->join();
         CREAM_SAFE_LOG(
-                       m_log_dev->infoStream()
-                       << "Thread " << m_name << " finished"
+                       m_log_dev->debugStream()
+                       << "Ice::IceThreadHelper::stop() - Thread " << m_name << " finished"
                        << log4cpp::CategoryStream::ENDLINE
                        );
     }
@@ -147,7 +147,7 @@ Ice* Ice::instance( void )
         } catch(iceInit_ex& ex) {
             CREAM_SAFE_LOG(
                            m_log_dev->fatalStream() 
-                           << "glite::wms::ice::Ice::instance() - " 
+                           << "Ice::instance() - " 
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
@@ -155,7 +155,7 @@ Ice* Ice::instance( void )
         } catch(...) {
             CREAM_SAFE_LOG(
                            m_log_dev->fatalStream() 
-                           << "glite::wms::ice::Ice::instance() - " 
+                           << "Ice::instance() - " 
                            << "Catched unknown exception"
                            << log4cpp::CategoryStream::ENDLINE
                            );
@@ -183,10 +183,10 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_requests_pool( new util::iceThreadPool("ICE Requests Pool", m_configuration->ice()->max_ice_threads() ) ),
     m_ice_commands_pool( new util::iceThreadPool( "ICE Internal Commands Pool", 5 ) ) // FIXME: remove hardcoded default
 {
-    CREAM_SAFE_LOG( m_log_dev->infoStream()
+  /*  CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << "Ice::CTOR() - Done"
                     << log4cpp::CategoryStream::ENDLINE
-                    );
+                    );*/
 }
 
 //____________________________________________________________________________
@@ -221,7 +221,7 @@ void Ice::startListener( void )
 {
     if ( ! m_configuration->ice()->start_listener() ) {
         CREAM_SAFE_LOG(
-                       m_log_dev->infoStream()
+                       m_log_dev->debugStream()
                        << "Ice::startListener() - "
                        << "Listener not enabled, not started."
                        << log4cpp::CategoryStream::ENDLINE
@@ -236,7 +236,7 @@ void Ice::startListener( void )
     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG( 
                        m_log_dev->errorStream()
-                       << "Unable to extract user DN from ["
+                       << "Ice::startListener() - Unable to extract user DN from ["
 		       <<  m_configuration->ice()->ice_host_cert() << "]"
                        << ". Won't start Listener"
                        << log4cpp::CategoryStream::ENDLINE
@@ -247,15 +247,15 @@ void Ice::startListener( void )
     if( hostdn.empty() ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
-                       << "Host certificate has an empty subject. "
+                       << "Ice::startListener() - Host certificate has an empty subject. "
                        << "Won't start Listener"
                        << log4cpp::CategoryStream::ENDLINE
                        );
         return;
     } else {
         CREAM_SAFE_LOG(
-                       m_log_dev->infoStream() 
-                       << "Host DN is [" << hostdn << "]"
+                       m_log_dev->debugStream() 
+                       << "Ice::startListener() - Host DN is [" << hostdn << "]"
                        << log4cpp::CategoryStream::ENDLINE
                        );
     }
@@ -293,7 +293,7 @@ void Ice::startListener( void )
         }
 
         CREAM_SAFE_LOG(
-               m_log_dev->infoStream()
+               m_log_dev->debugStream()
                << "Ice::startListener() - "
                << "Creating a CEMon listener object: port=["
                << m_configuration->ice()->listener_port() << "]"
@@ -309,7 +309,7 @@ void Ice::startListener( void )
                                                  m_configuration->ice()->ice_host_key() );
     } else {
         CREAM_SAFE_LOG(
-                       m_log_dev->infoStream()
+                       m_log_dev->debugStream()
                        << "Ice::startListener() - "
                        << "Creating a CEMon listener object: port=["
                        << m_configuration->ice()->listener_port() <<"]"
@@ -323,7 +323,7 @@ void Ice::startListener( void )
         
         CREAM_SAFE_LOG(        
                        m_log_dev->errorStream()
-                       << "CEMon listener creation went wrong. Won't start it."
+                       << "Ice::startListener() - CEMon listener creation went wrong. Won't start it."
                        << log4cpp::CategoryStream::ENDLINE
                        );
         
@@ -368,7 +368,7 @@ void Ice::startListener( void )
 void Ice::startPoller( void )
 {
     if ( ! m_configuration->ice()->start_poller() ) {
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
+        CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "Ice::startPoller() - "
                         << "Poller disabled in configuration file. "
                         << "Not started"
@@ -391,7 +391,7 @@ void Ice::startPoller( void )
 void Ice::startLeaseUpdater( void ) 
 {
     if ( !m_configuration->ice()->start_lease_updater() ) {
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
+        CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "Ice::startLeaseUpdater() - "
                         << "Lease Updater disabled in configuration file. "
                         << "Not started"
@@ -407,7 +407,7 @@ void Ice::startLeaseUpdater( void )
 void Ice::startProxyRenewer( void ) 
 {
     if ( !m_configuration->ice()->start_proxy_renewer() ) {
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
+        CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "Ice::startProxyRenewer() - "
                         << "Proxy Renewer disabled in configuration file. "
                         << "Not started"
@@ -423,7 +423,7 @@ void Ice::startProxyRenewer( void )
 void Ice::startJobKiller( void )
 {
     if ( !m_configuration->ice()->start_job_killer() ) {
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
+        CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "Ice::startJobKiller() - "
                         << "Job Killer disabled in configuration file. "
                         << "Not started"
@@ -549,7 +549,7 @@ throw()
         
         if ( m_configuration->ice()->purge_jobs() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "ice-core::purge_job() - "
+                           << "Ice::purge_job() - "
                            << "Calling JobPurge for job "
                            << jit->describe()
                            << log4cpp::CategoryStream::ENDLINE);
@@ -566,7 +566,7 @@ throw()
 
         } else {
             CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "ice-core::purge_job() - "
+                           << "Ice::purge_job() - "
                            << "There'are jobs to purge, but PURGE IS DISABLED. "
                            << "Will not purge job "
                            << jit->describe()
@@ -581,28 +581,28 @@ throw()
          * the CreamJob is created from another valid one
          */
         CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-                       << "ice-core::purge_job() - "
+                       << "Ice::purge_job() - "
                        << "Fatal error: CreamJob creation failed "
                        << "copying from a valid one!!!"
                        << log4cpp::CategoryStream::ENDLINE);
         abort();
     } catch(soap_proxy::auth_ex& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "ice-core::purge_job() - "
+                       << "Ice::purge_job() - "
                        << "Cannot purge job " 
                        << jit->describe()
                        << ". Reason is: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
     } catch(cream_api::cream_exceptions::BaseException& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "ice-core::purge_job() - "
+                       << "Ice::purge_job() - "
                        << "Cannot purge job " 
                        << jit->describe()
                        << ". Reason is BaseException: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
     } catch(cream_api::cream_exceptions::InternalException& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "ice-core::purge_job() - "
+                       << "Ice::purge_job() - "
                        << "Cannot purge job " 
                        << jit->describe()
                        << ". Reason is InternalException: " << ex.what()
@@ -610,7 +610,7 @@ throw()
     } catch(ice_util::elementNotFound_ex& ex) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
-                       << "ice-core::purge_job() - "
+                       << "Ice::purge_job() - "
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is elementNotFound_ex: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
@@ -618,7 +618,7 @@ throw()
     } catch( std::exception& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
-                       << "ice-core::purge_job() - "
+                       << "Ice::purge_job() - "
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is an exception: " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
@@ -626,7 +626,7 @@ throw()
     } catch( ... ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
-                       << "ice-core::purge_job() - "
+                       << "Ice::purge_job() - "
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is an unknown exception"
                        << log4cpp::CategoryStream::ENDLINE
@@ -645,7 +645,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
         
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()
-                       << "ice-core::deregister_proxy_renewal() - "
+                       << "Ice::deregister_proxy_renewal() - "
                        << "Unregistering Proxy for job "
                        << job.describe()
                        << log4cpp::CategoryStream::ENDLINE
@@ -656,7 +656,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
         if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
-                           << "ice-core::deregister_proxy_renewal() - "
+                           << "Ice::deregister_proxy_renewal() - "
                            << "ICE cannot unregister the proxy " 
                            << "for job " << job.describe()
                            << ". Reason: \"" << edg_wlpr_GetErrorText(err) 
@@ -667,7 +667,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
             if ( err == EDG_WLPR_PROXY_NOT_REGISTERED ) {
                 CREAM_SAFE_LOG(
                                m_log_dev->warnStream()
-                               << "ice-core::deregister_proxy_renewal() - "
+                               << "Ice::deregister_proxy_renewal() - "
                                << "Job proxy not registered for job "
                                << job.describe() 
                                << ". Going ahead." 
@@ -678,7 +678,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
     } else {
         CREAM_SAFE_LOG(
                        m_log_dev->warnStream()
-                       << "ice-core::deregister_proxy_renewal() - "
+                       << "Ice::deregister_proxy_renewal() - "
                        << "Proxy unregistration disable. To reenable, " 
                        << "unset the environment variable ICE_DISABLE_DEREGISTER"
                        << log4cpp::CategoryStream::ENDLINE
@@ -694,7 +694,7 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
         try {
             CREAM_SAFE_LOG(
                            m_log_dev->infoStream()
-                           << "ice-core::purge_storage_for_job() - "
+                           << "Ice::purge_storage_for_job() - "
                            << "Purging storage for job "
                            << job.describe()
                            << log4cpp::CategoryStream::ENDLINE
@@ -705,7 +705,7 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
         } catch( std::exception& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
-                           << "ice-core::purge_storage_for_job() - "
+                           << "Ice::purge_storage_for_job() - "
                            << "Cannot purge storage for job "
                            << job.describe()
                            << ". Reason is: " << ex.what()
@@ -716,7 +716,7 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
     } else {
         CREAM_SAFE_LOG(
                        m_log_dev->warnStream()
-                       << "ice-core::purge_storage_for_job() - "
+                       << "Ice::purge_storage_for_job() - "
                        << "WMS job purger disabled in ICE. To reenable "
                        << "unset the environment variable ICE_DISABLE_PURGER"
                        << log4cpp::CategoryStream::ENDLINE

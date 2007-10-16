@@ -324,7 +324,7 @@ void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
       }
       
       if( timeleft < m_threshold_time && timeleft > 5 ) {
-	CREAM_SAFE_LOG( m_log_dev->debugStream()
+	CREAM_SAFE_LOG( m_log_dev->warnStream()
 			<< "iceCommandJobKill::checkExpiring() - Proxy ["
 			<< cit->getUserProxyCertificate() << "] of user ["
 			<< cit->getUserDN() // the user DN

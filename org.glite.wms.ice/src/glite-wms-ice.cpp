@@ -358,7 +358,7 @@ int main(int argc, char*argv[])
         for( list< iceUtil::Request* >::iterator it = requests.begin();
              it != requests.end(); ++it ) {
             CREAM_SAFE_LOG(
-                           log_dev->infoStream()
+                           log_dev->debugStream()
                            << method_name
                            << "*** Unparsing request <"
                            << (*it)->to_string()

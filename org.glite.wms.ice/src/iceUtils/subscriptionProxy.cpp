@@ -50,7 +50,7 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
     m_valid(true),
     m_myurl()
 {
-    CREAM_SAFE_LOG(m_log_dev->infoStream() 
+    CREAM_SAFE_LOG(m_log_dev->debugStream() 
                    << "subscriptionProxy::CTOR - Authenticating..."
                    << log4cpp::CategoryStream::ENDLINE);
 
@@ -60,13 +60,13 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
     try {
       m_myurl = iceUtil::getURL();
     } catch(runtime_error& ex) {
-      CREAM_SAFE_LOG(m_log_dev->infoStream() 
+      CREAM_SAFE_LOG(m_log_dev->errorStream() 
                    << "subscriptionProxy::CTOR - "
 		   << ex.what()
                    << log4cpp::CategoryStream::ENDLINE);
       abort();
     } catch(exception& ex) {
-      CREAM_SAFE_LOG(m_log_dev->infoStream() 
+      CREAM_SAFE_LOG(m_log_dev->errorStream() 
                    << "subscriptionProxy::CTOR - "
 		   << ex.what()
                    << log4cpp::CategoryStream::ENDLINE);

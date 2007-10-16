@@ -398,7 +398,7 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	  continue;
         }
 
-	CREAM_SAFE_LOG(m_log_dev->infoStream()
+	CREAM_SAFE_LOG(m_log_dev->debugStream()
 		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
 		       << "Updating jobCache's lease for job "
 		       << tmpJob->describe()

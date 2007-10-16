@@ -31,6 +31,8 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+
 namespace utilities=glite::wms::common::utilities;
 namespace fs=boost::filesystem;
 using namespace glite::wms::ice::util;
@@ -48,8 +50,10 @@ Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name, bool
     try {
         m_jobdir = new utilities::JobDir( jdir_name );
     } catch( std::exception& ex ) {
-        cerr << "Jobdir creation failed!" << endl;
-        abort(); // FIXME
+         CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->errorStream()
+	 		 << "Request_source_jobdir::CTOR - Jobdir creation failed!" 
+			 << log4cpp::CategoryStream::ENDLINE);
+        abort();
     }
 }
  

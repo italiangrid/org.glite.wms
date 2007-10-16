@@ -167,7 +167,7 @@ iceThreadPool::iceThreadPool( const std::string& name, int s ) :
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
     int n_threads = m_state->m_num_running;
-    CREAM_SAFE_LOG( m_log_dev->infoStream()
+    CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << "iceThreadPool::iceThreadPool("
                     << m_state->m_name << ") - "
                     << "Creating " << m_state->m_num_running 

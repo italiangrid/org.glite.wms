@@ -135,11 +135,9 @@ void makePath(const string& filename) throw(exception&)
 	currentPath += (*it) + "/";
 	while(currentPath.find("//", 0) != string::npos)
 	  boost::replace_first( currentPath, "//", "/");
-	//cout << "currentPath=["<<currentPath<<"]"<<endl;
 	boost::filesystem::path tmpPath( currentPath, boost::filesystem::native );
 	if( !boost::filesystem::exists( tmpPath ) )
 	  {
-	    //cout << "Creating ["<<currentPath << "]"<<endl;
 	    boost::filesystem::create_directory( tmpPath );
 	  }
       }

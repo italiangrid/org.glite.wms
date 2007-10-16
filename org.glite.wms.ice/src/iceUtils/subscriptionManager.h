@@ -24,7 +24,7 @@
 #include <set>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "CEDbManager.h"
+//#include "CEDbManager.h"
 #include "iceSubscription.h"
 #include "iceUtils.h"
 
@@ -73,7 +73,7 @@ namespace util {
     
     class subscriptionManager {
         
-        boost::scoped_ptr< glite::wms::ice::util::CEDbManager > m_dbMgr;
+        //boost::scoped_ptr< glite::wms::ice::util::CEDbManager > m_dbMgr;
         
         std::set<std::string>                   		  m_cemonURL;
         

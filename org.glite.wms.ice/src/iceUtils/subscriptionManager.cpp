@@ -315,7 +315,7 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
       
     } else {
     
-      CREAM_SAFE_LOG(m_log_dev->errorStream()
+      CREAM_SAFE_LOG(m_log_dev->warnStream()
       		     << "subscriptionManager::checkSubscription() - "
 		     << "Subscription to [" << *sit << "] for proxy ["
 		     << it.first << "] DISAPPEARED! Recreating it..."
@@ -358,7 +358,7 @@ void iceUtil::subscriptionManager::purgeOldSubscription( map<string, set<string>
       map< pair<string, string> , iceSubscription, ltstring >::const_iterator subit = m_Subs.find( make_pair(it->first, *sit) );
       if( subit == m_Subs.end() ) return;
       
-      CREAM_SAFE_LOG(m_log_dev->infoStream()  
+      CREAM_SAFE_LOG(m_log_dev->debugStream()  
 		     << "subscriptionManager::purgeOldSubscription() - Subscription for DN ["
 		     << it->first << "] to CEMon [" << *sit << "]: expir time=["
 		     << subit->second.getExpirationTime() << "] time(null)+OLDNESS=["
@@ -366,7 +366,7 @@ void iceUtil::subscriptionManager::purgeOldSubscription( map<string, set<string>
 		     << log4cpp::CategoryStream::ENDLINE);
 
       if( subit->second.getExpirationTime() > (time(NULL)+MAX_SUBSCRIPTION_OLDNESS)) {
-	CREAM_SAFE_LOG(m_log_dev->infoStream()  
+	CREAM_SAFE_LOG(m_log_dev->debugStream()  
 		       << "subscriptionManager::purgeOldSubscription() - Subscription for DN ["
 		       << it->first << "] to CEMon [" << *sit << "] is older than "
 		       << MAX_SUBSCRIPTION_OLDNESS << " seconds. Removing it from ICE's memory."
@@ -409,7 +409,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
     string id = m_Subs[ make_pair( dn, cemon ) ].getSubscriptionID();
 
     if( id == "" ) {
-      CREAM_SAFE_LOG(m_log_dev->infoStream()  
+      CREAM_SAFE_LOG(m_log_dev->errorStream()  
 		     << "subscriptionManager::renewSubscription() - "
 		     << "SubscriptionID is EMPTY! Cannot renew a subscription without id"
 		     << log4cpp::CategoryStream::ENDLINE);
@@ -422,7 +422,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 				       newID )
        ) 
       {
-	CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::renewSubscription() - "
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << "subscriptionManager::renewSubscription() - "
 		       << "New subscription ID after renewal is ["
 		       << newID << "]" << log4cpp::CategoryStream::ENDLINE);
 	

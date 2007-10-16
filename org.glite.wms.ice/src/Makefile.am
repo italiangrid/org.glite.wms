@@ -16,8 +16,6 @@ SUBDIRS = iceCommands ice iceThreads iceUtils
 
 bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache
 
-###testFL_SOURCES = testFL.cpp
-
 putFL_SOURCES = putFL.cpp
 
 putFL_cancel_SOURCES = putFL_cancel.cpp

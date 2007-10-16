@@ -199,7 +199,7 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
 
   // vector< string > cream_job_ids;
   for(vector< string >::const_iterator thisJob = cream_job_ids.begin(); thisJob != cream_job_ids.end(); ++thisJob) {
-      CREAM_SAFE_LOG(m_log_dev->infoStream() 
+      CREAM_SAFE_LOG(m_log_dev->debugStream() 
                      << "iceCommandStatusPoller::check_multiple_jobs() - "
                      << "Will poll job with CREAM job id = ["
                      << *thisJob << "]"
@@ -222,7 +222,7 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
       return result;
   }
   
-  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+  CREAM_SAFE_LOG(m_log_dev->infoStream() 
                  << "iceCommandStatusPoller::check_multiple_jobs() - "
                  << "Authenticating with proxy ["
                  << proxy
@@ -233,7 +233,7 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
       
       m_theProxy->Authenticate( proxy );
       
-      CREAM_SAFE_LOG(m_log_dev->debugStream()
+      CREAM_SAFE_LOG(m_log_dev->infoStream()
                      << "iceCommandStatusPoller::check_multiple_jobs() - "
                      << "Connecting to ["
                      << cream_url
@@ -363,7 +363,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
     //jobCache::const_iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
     jobCache::iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
     if ( m_cache->end() != job_pos ) {
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << "iceCommandStatusPoller::update_single_job() - "
                         << " Managing Job "
                         << job_pos->describe()
@@ -412,7 +412,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
         // before doing anything, check if the job is "purged". If so,
         // remove from the cache and forget about it.
         if ( stNum == jobstat::PURGED ) {
-            CREAM_SAFE_LOG(m_log_dev->infoStream()
+            CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << "iceCommandStatusPoller::update_single_job() - "
                            << "Job "
                            << jit->describe()
@@ -426,7 +426,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
 
         if ( jit->get_num_logged_status_changes() < count ) {
             
-            CREAM_SAFE_LOG(m_log_dev->infoStream()
+            CREAM_SAFE_LOG(m_log_dev->debugStream()
                            << "iceCommandStatusPoller::update_single_job() - "
                            << "Updating jobcache for "
                            << jit->describe()

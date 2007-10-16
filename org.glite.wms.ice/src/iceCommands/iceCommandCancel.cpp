@@ -104,7 +104,7 @@ iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::Cre
     if ( !argumentsAD->EvaluateAttrString( "sequencecode", m_sequence_code ) ) {
         // FIXME: This should be an error to throw. For now, we try anyway...
         CREAM_SAFE_LOG( m_log_dev->warnStream()
-                        << "Cancel request does not have a "
+                        << "iceCommandCancel::execute() - Cancel request does not have a "
                         << "\"sequencecode\" attribute. "
                         << "Fine for now, should not happen in the future"
                         << log4cpp::CategoryStream::ENDLINE
@@ -120,7 +120,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 {
     CREAM_SAFE_LOG( 
                    m_log_dev->infoStream()
-                   << "This request is a Cancel..."
+                   << "iceCommandCancel::execute() - This request is a Cancel..."
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
@@ -134,7 +134,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     if ( it == util::jobCache::getInstance()->end() ) {
         CREAM_SAFE_LOG( 
                        m_log_dev->errorStream()
-                       << "Cancel operation cannot locate jobid=["
+                       << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
                        << m_gridJobId 
                        << "] in the jobCache. Giving up"
                        << log4cpp::CategoryStream::ENDLINE
@@ -168,7 +168,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     url_jid[0] = theJob.getCreamJobID();
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
-                   << "Removing job gridJobId [" 
+                   << "iceCommandCancel::execute() - Removing job gridJobId [" 
                    << m_gridJobId
                    << "], creamJobId [" 
                    << url_jid[0] 
@@ -178,7 +178,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()
-                   << "Sending cancellation request to ["
+                   << "iceCommandCancel::execute() - Sending cancellation request to ["
                    << theJob.getCreamURL() << "]"
                    << log4cpp::CategoryStream::ENDLINE
                    );
