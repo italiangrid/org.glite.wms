@@ -106,6 +106,7 @@ class JobOutput  : public Job {
 		* Info on the  files of parent nodes
 		*/
 		std::string parentFileList ;
+		std::string fileList ;
 		/**
 		* Boolean Flag: TRUE if the job has out-file to be retrieved
 		*/

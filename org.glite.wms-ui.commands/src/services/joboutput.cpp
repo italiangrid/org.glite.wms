@@ -69,6 +69,7 @@ JobOutput::JobOutput () : Job() {
 	// list of files
 	childrenFileList = "";
 	parentFileList = "";
+	fileList = "";
 	hasFiles = false ;
 	successRt = false;
 	m_warnsList = "";
@@ -112,8 +113,8 @@ void JobOutput::readOptions ( int argc,char **argv)  {
          }
         // --dir , OutputStorage or DEFAULT_OUTPUT value
         m_dirOpt = wmcOpts->getStringAttribute(Options::DIR);
-	
-	  // --listonly
+
+	// --listonly
         listOnlyOpt = wmcOpts->getBoolAttribute( Options::LISTONLY ) ;
 	if (listOnlyOpt && !m_dirOpt.empty()) {
 		ostringstream info ;
@@ -209,9 +210,9 @@ void JobOutput::getOutput ( ){
 		out << "\n" << wmcUtils->getStripe(80, "=" , "") << "\n\n";
 		out << "\t\t\tJOB GET OUTPUT OUTCOME\n\n";
 		if (listOnlyOpt && hasFiles){
-			out << parentFileList  << childrenFileList ;
+			out << parentFileList  << childrenFileList << fileList;
 			// Prints the results into the log file
-			logInfo->print(WMS_INFO,  string(parentFileList+childrenFileList), "", false );
+			logInfo->print(WMS_INFO,  string(parentFileList+childrenFileList+fileList), "", false );
 		} else {
 			out << result ;
 			// Prints the results into the log file
@@ -361,7 +362,6 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 			}
 		}
 	}
-	//bool parent = status.hasParent ( ) ;
 	/* Purge logic: Job can be purged when:
 	* 1) enpoint has been specified (parent has specified)
 	* 2) --nopurge is not active
@@ -527,7 +527,7 @@ void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, 
 	if (child){
 		childrenFileList += out.str();
 	} else{
-		
+		fileList += out.str();
 	}
 }
 /*
