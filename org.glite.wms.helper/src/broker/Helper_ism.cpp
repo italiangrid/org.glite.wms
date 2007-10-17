@@ -366,10 +366,6 @@ try {
       *result,
       utils::evaluate_attribute(*ce_ad, "CEid")
     );
-    requestad::set_ce_application_dir(
-      *result,
-      utils::evaluate_attribute(*ce_ad, "GlueCEInfoApplicationDir")
-    );
 
   } catch (utils::InvalidValue const& e) {
 
@@ -378,6 +374,13 @@ try {
     throw helper::HelperError("BrokerHelper");
 
   }
+
+  bool check;
+  requestad::set_ce_application_dir(
+    *result,
+    utils::evaluate_attribute(*ce_ad, "GlueCEInfoApplicationDir"),
+    check
+  );
 
   return result;
 
