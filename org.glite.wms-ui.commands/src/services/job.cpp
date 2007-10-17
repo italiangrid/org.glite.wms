@@ -181,6 +181,13 @@ glite::wms::wmproxyapi::ConfigContext* Job::getContext( ){
 	if (NULL == m_cfgCxt.get()){
 		m_cfgCxt.reset(new api::ConfigContext(getProxyPath(), getEndPoint(), getCertsPath()));
 	}
+	// Checks authentication settings
+	if (this->wmcUtils->getConf()->hasAttribute(AUTHSERVER)) {
+		bool verify = wmcUtils->getConf()->getBool(AUTHSERVER);
+		if (!verify) {
+			api::setServerAuthentication( m_cfgCxt.get(), verify );
+		}
+	}
 	return m_cfgCxt.get();
 }
 /**
