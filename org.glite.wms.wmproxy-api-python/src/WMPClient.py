@@ -44,8 +44,13 @@ class WMPHTTPTransport(HTTPTransport):
 
     auth = True
 
+    certExt = ""
+
     def setAuth(self, authenticate):
         self.auth = authenticate
+
+    def setExtension(self, extension):
+        self.certExt = extension
 
     def call(self, addr, data, namespace, soapaction = None, key_file = None, cert_file = None, encoding = None,
         http_proxy = None, config = Config):
@@ -65,7 +70,7 @@ class WMPHTTPTransport(HTTPTransport):
         elif addr.proto == 'https' and self.auth == True:
             # HTTPS class extended: certificates verification added
             from WMPConnection import WMPHTTPS
-            r = WMPHTTPS(real_addr,  key_file = key_file, cert_file = cert_file)
+            r = WMPHTTPS(real_addr,  key_file = key_file, cert_file = cert_file, cert_ext = self.certExt)
         elif addr.proto == 'https' and self.auth == False:
             # certificates verification will not be performed
             r = httplib.HTTPS(real_addr,  key_file = key_file, cert_file = cert_file)
@@ -201,7 +206,7 @@ class WMPSOAPProxy(SOAPProxy):
                  header = None, methodattrs = None, transport = WMPHTTPTransport,
                  encoding = 'UTF-8', throw_faults = 1, unwrap_results = None,
                  http_proxy=None, config = Config, noroot = 0,
-                 simplify_objects=None, auth = True):
+                 simplify_objects=None, auth = True, certificatesExt = ""):
 
         # Test the encoding, raising an exception if it's not known
         if encoding != None:
@@ -226,6 +231,7 @@ class WMPSOAPProxy(SOAPProxy):
         self.methodattrs    = methodattrs
         self.transport      = transport()
         self.transport.setAuth(auth)
+	self.transport.setExtension(certificatesExt)
         self.encoding       = encoding
         self.throw_faults   = throw_faults
         self.http_proxy     = http_proxy

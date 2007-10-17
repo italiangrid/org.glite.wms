@@ -18,6 +18,7 @@ class WMPConfig:
 	proxy = None
 	ns = None
 	auth = True
+	ext = ""
 
 	def __init__(self,url):
 		self.url = url
@@ -27,6 +28,12 @@ class WMPConfig:
 
 	def getAuth(self):
 		return self.auth
+
+	def setExt(self, extension):
+		self.ext = extension
+
+	def getExt(self):
+		return self.ext
 
 	def setNs(self,ns):
 		self.ns = ns
@@ -360,8 +367,9 @@ class Wmproxy:
 		Establish connection with remote server
 		"""
 		if self.init==0:
-
-			self.remote = WMPSOAPProxy(self.config.getUrl(),namespace=self.config.getNs(), key_file=self.config.getProxy(), cert_file=self.config.getProxy(), auth = self.config.getAuth())
+			self.remote = WMPSOAPProxy(self.config.getUrl(),namespace=self.config.getNs(),
+					key_file=self.config.getProxy(), cert_file=self.config.getProxy(), auth = self.config.getAuth(),
+					certificatesExt = self.config.getExt())
 			self.init=1
 
 	def setUrl(self,url):
