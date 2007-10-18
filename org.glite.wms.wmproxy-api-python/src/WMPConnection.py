@@ -26,7 +26,7 @@ def verifyCB( conn, cert, errnum, depth, ok):
             return ok
     return ok
 
-def initializeClientSSL( ext = "" ):
+def initializeClientSSL( cert = "" ):
     # Initialize context
     ctx = SSL.Context( SSL.SSLv23_METHOD )
     ctx.set_verify(SSL.VERIFY_PEER|SSL.VERIFY_FAIL_IF_NO_PEER_CERT, verifyCB) # Demand a certificate
@@ -49,22 +49,24 @@ def initializeClientSSL( ext = "" ):
         try:
             CAdir = os.environ['X509_CERT_DIR']
         except:
-            CAdir = '/etc/grid-security/certificates/'
+            CAdir = os.sep + os.path.join('etc', 'grid-security', 'certificates')
 
     # Looks for certificates inside the certificates directory
-    if ext == "":
-        path = os.path.join( CAdir ,'*.?')
+    if cert == "":
+        path = os.path.join( CAdir ,'*')
         # Default certificates ends with one digit
-        CApaths = glob.glob( path)
+        CApaths = glob.glob( path )
     else:
-        path = os.path.join( CAdir ,'*.'+ ext )
+        path = os.path.join( CAdir , cert )
         # User extension for certificate file
         CApaths = glob.glob( path )
 
-
+    cert_store = ctx.get_cert_store()
     for path in CApaths:
-             ctx.load_verify_locations(path)
-
+            try:
+                 cert_store.add_cert(crypto.load_certificate(crypto.FILETYPE_PEM, open(path).read()))
+            except:
+                 pass
 
     ctx.set_session_id( "HTTPSConnection%s" % str( time.time() ) )
     return ctx
@@ -93,7 +95,7 @@ class FakeSocket:
 class WMPConnection( httplib.HTTPConnection):
     iMaximumRecursionLevel = 10
 
-    def __init__( self, host, cert_file, key_file, bAllowCertificates = False, port = None, ext = "" ):
+    def __init__( self, host, cert_file, key_file, bAllowCertificates = False, port = None, cert = "" ):
         global g_cCtx, g_sHostName
         httplib.HTTPConnection.__init__( self, host, port )
         if host.find(':') == -1:
@@ -101,7 +103,7 @@ class WMPConnection( httplib.HTTPConnection):
         else:
             g_sHostName = socket.getfqdn( host[ : host.find(':') ] )
         if not g_cCtx:
-            g_cCtx = initializeClientSSL(ext )
+            g_cCtx = initializeClientSSL(cert )
 
     def close( self ):
         self.sock.close()
@@ -123,16 +125,16 @@ class WMPHTTPS(httplib.HTTPS):
    _connection_class = WMPConnection
 
    def __init__(self, host='', port=None, key_file=None, cert_file=None,
-                     strict=None, cert_ext = ""):
+                     strict=None, user_cert = ""):
 
             self.key_file = key_file
             self.cert_file = cert_file
-            self.cert_ext = cert_ext
+            self.user_cert = user_cert
 
             if port == 0:
                 port = None
             self._setup(self._connection_class(host, port, key_file,
-                                               cert_file, strict, cert_ext))
+                                               cert_file, strict, user_cert))
 
 
 
