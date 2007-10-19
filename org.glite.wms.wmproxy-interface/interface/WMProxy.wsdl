@@ -207,6 +207,19 @@
 			<xsd:element name="OperationNotAllowedFault" type="glitenstypes:OperationNotAllowedFaultType"/>
 			<xsd:element name="ServerOverloadedFault" type="glitenstypes:ServerOverloadedFaultType"/>
 		</schema>
+		
+		<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://schemas.ggf.org/jsdl/2005/11/jsdl">
+			<xsd:include schemaLocation="jsdl.xsd-18.xsd"/>
+		</schema>
+
+		<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://schemas.ggf.org/jsdl/2005/11/jsdl-posix">
+			<xsd:include schemaLocation="jsdl-posix.xsd-6.xsd"/>
+		</schema>
+
+		<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://schemas.ggf.org/jsdl/2005/11/jsdl-posix">
+			<xsd:import namespace="http://schemas.ggf.org/jsdl/2005/11/jsdl-posix" schemaLocation="jsdl-posix.xsd-6.xsd"/>
+	        </schema>
+
 	</wsdl:types>
 
 	<!-- ==== Messages: Requests Responses definition ==== -->
@@ -239,6 +252,13 @@
 		<wsdl:part name="delegationId" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="jobRegisterResponse">
+		<wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
+	</wsdl:message>
+	<wsdl:message name="jobRegisterJSDLRequest">
+		<wsdl:part name="jsdl" type="glitejsdlns:JobDefinition_Type"/>
+		<wsdl:part name="delegationId" type="xsd:string"/>
+	</wsdl:message>
+	<wsdl:message name="jobRegisterJSDLResponse">
 		<wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
 	</wsdl:message>
 	<wsdl:message name="jobStartRequest">
@@ -580,6 +600,37 @@
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
 
+		<wsdl:operation name="jobRegisterJSDL" parameterOrder="jsdl delegationId">
+			<wsdl:documentation>
+					This operation registers a job for submission. The JDL description of the job provided by the client is first validated by the service and then registered to the LB.
+					The unique identifier assigned to the job is returned to the client. Note that this operation only registers the job and assign it with an identifier.
+					The actual submission of the job has to be triggered by a call to the jobStart operation after all preparation activities, such as the Input sandbox files upload, have been completed.
+					The service supports registration of simple jobs, parametric jobs, partitionable jobs, DAGs and collections of jobs;
+					the description is always provided through a single JDL description (see "GLite JDL Attributes" document for details). 
+					When a clients requests for registration of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs (all those requests represent in fact a set of jobs),
+					the operations returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
+					 
+					Input: string containing the job jdl representation.
+					Input: string containing the Id of the delegated proxy associated to the job.
+
+					Output: string containing the unique jobId assigned to the job.
+		
+					Faults:
+					AuthenticationFault: 		a generic authentication problem occured.
+					AuthorizationFault: 		client is not authorized to perform this operation.
+					InvalidArgumentFault: 	the provided job JDL expression is not valid.
+					GenericFault: 			another problem occured. 
+					
+			</wsdl:documentation>
+			<wsdl:input name="jobRegisterJSDLRequest" message="glitens:jobRegisterJSDLRequest"/>
+			<wsdl:output name="jobRegisterJSDLResponse" message="glitens:jobRegisterJSDLResponse"/>
+			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="InvalidArgumentFault" message="glitens:InvalidArgumentFault"/>
+			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
+			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
+		</wsdl:operation>
+		
 		<wsdl:operation name="jobStart" parameterOrder="jobId">
 			<wsdl:documentation>
 					This operation triggers the submission a previously registered job. It starts the actual processing of the registered job within the Workload Manager.
@@ -1401,6 +1452,29 @@
 			</wsdl:fault>
 		</wsdl:operation>
 		<wsdl:operation name="jobRegister">
+			<wsdl:input>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:output>
+			<wsdl:fault name="AuthenticationFault">
+				<soap:fault name="AuthenticationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="AuthorizationFault">
+				<soap:fault name="AuthorizationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="InvalidArgumentFault">
+				<soap:fault name="InvalidArgumentFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="GenericFault">
+				<soap:fault name="GenericFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="ServerOverloadedFault">
+				<soap:fault name="ServerOverloadedFault" use="literal"/>
+			</wsdl:fault>
+		</wsdl:operation>
+		<wsdl:operation name="jobRegisterJSDL">
 			<wsdl:input>
 				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
 			</wsdl:input>
