@@ -15,7 +15,7 @@ class WMPConfig:
 	"""
 	DEBUGMODE=0
 
-	proxy = None
+	proxy = ""
 	ns = None
 	auth = True
 	cert = ""
@@ -43,12 +43,19 @@ class WMPConfig:
 			self.ns = self.getDefaultNs()
 		return self.ns
 
-	def setProxy(self,proxy):
-		self.proxy = proxy
+	def setProxyPath(self, proxyPath):
+		proxyStream = open(proxyPath)
+		lines = proxyStream.readlines()
+		for line in lines:
+			self.proxy += line
+
+
+	def setProxyStream(self,proxyStream):
+		self.proxy = proxyStream
 
 	def getProxy(self):
 		if not self.proxy:
-			self.proxy = self.getDefaultProxy()
+			self.setProxyPath(self.getDefaultProxy())
 		return self.proxy
 
 	def setUrl(self,url):
