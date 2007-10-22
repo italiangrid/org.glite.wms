@@ -196,6 +196,12 @@ struct ProxyReqStruct {
     std::string	delegationId;
 };
 
+
+struct JobStatusStructType {
+    std::string                          jobid;
+    std::string                          status;
+    std::vector<JobStatusStructType*> childrenJob;
+};
 /**
 * Used to configure non-default properties such as:
 * <UL>

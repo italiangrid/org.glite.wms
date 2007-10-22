@@ -467,7 +467,8 @@ ns1__GraphStructType* node2soap(NodeStruct *c_node){
 }
 
 /*****************************************************************
-proxyInfoSoap2cpp
+
+
 Tranform the soap ProxyInfoStructType into the correspondent cpp structure
 ******************************************************************/
 ProxyInfoStructType* proxyInfoSoap2cpp (ns1__ProxyInfoStructType* info) {
@@ -508,6 +509,28 @@ ProxyInfoStructType* proxyInfoSoap2cpp (ns1__ProxyInfoStructType* info) {
 	}
 	return result ;
 }
+/*****************************************************************
+
+
+Tranform the soap JobStatusStructType into the correspondent cpp structure
+******************************************************************/
+JobStatusStructType* jobStatusSoap2cpp (ns1__JobStatusStructType* status) {
+	JobStatusStructType* result = NULL ;
+	if ( status ){
+		result = new JobStatusStructType;
+		result->jobid = status->jobid;
+		result->status = status->status;
+		if ((status->childrenJob).size() != 0) {
+			vector<ns1__JobStatusStructType*>::iterator it = (status->childrenJob).begin();
+			const vector<ns1__JobStatusStructType*>::iterator end = (status->childrenJob).end();
+			for ( ; it != end; it++){
+				(result->childrenJob).push_back(jobStatusSoap2cpp(*it)) ;
+			}
+		}
+	}
+	return result ;
+}
+
 /*****************************************************************
 ConfigContext Constructor/Destructor
 ******************************************************************/
@@ -569,6 +592,20 @@ string getVersion(ConfigContext *cfs){
 		soapDestroy(wmp.soap);
 	} else soapErrorMng(wmp) ;
 	return version ;
+}
+/*****************************************************************
+getJobStatus
+******************************************************************/
+JobStatusStructType* getJobStatus(const std::string &jobid, ConfigContext *cfs){
+	JobStatusStructType* result = NULL;
+	WMProxy wmp;
+	setSoapConfiguration (wmp, cfs);
+	ns1__getJobStatusResponse response;
+	if (wmp.ns1__getJobStatus(jobid, response) == SOAP_OK) {
+		result = jobStatusSoap2cpp( response.JobStatusStruct );
+		soapDestroy(wmp.soap);
+	} else soapErrorMng(wmp) ;
+	return result ;
 }
 /*****************************************************************
 jobRegister
