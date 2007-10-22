@@ -771,11 +771,10 @@ void Job::checkFileTransferProtocol(  ) {
 		logInfo->service(WMP_GETPROTOCOLS_SERVICE);
 		// List of WMProxy available protocols
 		try {
-
 			// Set the SOAP time out
 			setSoapTimeout(m_cfgCxt.get(), SOAP_GET_TRANSFER_PROTOCOLS_TIMEOUT);
 
-			protocols = api::getTransferProtocols(m_cfgCxt.get());
+			protocols = api::getTransferProtocols(getContext());
 			size = protocols.size();
 			msg << "Available protocols: ";
 			for (int i = 0; i < size; i++){
