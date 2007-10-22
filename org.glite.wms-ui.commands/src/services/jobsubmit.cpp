@@ -1650,22 +1650,15 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 	string globusUrlCopy="globus-url-copy";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
 		"using globus-url-copy to transfer the local InputSandBox file(s) to the submission endpoint");
-	if (getenv("GLOBUS_LOCATION")){
+	if (getenv("GLOBUS_LOCATION") && Utils::isFile(string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy)) {
 		globusUrlCopy=string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy;
-	}else if (Utils::isDirectory ("/opt/globus/bin")){
+	}else if (Utils::isFile ("/opt/globus/bin/"+globusUrlCopy)){
 		globusUrlCopy="/opt/globus/bin/"+globusUrlCopy;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"gsiFtpGetFiles", ECONNABORTED,
-			"File  Error",
-			"Unable to find globus-url-copy path");
-	}
-	// look for file
-	if (!Utils::isFile (globusUrlCopy)){
-		throw WmsClientException(__FILE__,__LINE__,
-			"gsiFtpGetFiles", ECONNABORTED,
 			"File Error",
-			"Unable to find:\n" +globusUrlCopy);
+			"Unable to find globus-url-copy executable\n");
 	}
 	while (paths.empty()==false) {
 		// source
@@ -1748,24 +1741,17 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 	string htcp="htcp";
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
 		"using htcp to transfer the local InputSandBox file(s) to the submission endpoint");
-      	if (Utils::isDirectory ("/usr/bin")){
+      	if (Utils::isFile("/usr/bin/"+htcp)){
 		htcp="/usr/bin/"+htcp;
-	} else if (getenv("GLITE_LOCATION")){
+	} else if (getenv("GLITE_LOCATION") && Utils::isFile(string(getenv("GLITE_LOCATION"))+"/bin/"+htcp)) {
 		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
-	}else if (Utils::isDirectory ("/opt/glite/bin")){
+	}else if (Utils::isFile ("/opt/glite/bin/"+htcp)){
 		htcp="/opt/glite/bin/"+htcp;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
-			"httpsGetFiles", ECONNABORTED,
-			"File  Error",
-			"Unable to find htcp path");
-	}
-	// look for file
-	if (!Utils::isFile (htcp)){
-		throw WmsClientException(__FILE__,__LINE__,
-			"httpsGetFiles", ECONNABORTED,
+			"htcpGetFiles", ECONNABORTED,
 			"File Error",
-			"Unable to find:\n" + htcp);
+			"Unable to find htcp executable\n");
 	}
 	while (paths.empty()==false) {
 		// source

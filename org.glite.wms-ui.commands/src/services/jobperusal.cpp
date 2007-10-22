@@ -486,30 +486,26 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 	ostringstream err ;
 	string source = "";
 	string destination = "";
-	string cmd = "";
 	char* reason = NULL ;
-	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
-		"using globus-url-copy to retrieve the file(s)");
+	string globusUrlCopy = "globus-url-copy";
+	if (getenv("GLOBUS_LOCATION") && Utils::isFile(string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy)) {
+		globusUrlCopy=string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy;
+	}else if (Utils::isFile ("/opt/globus/bin/"+globusUrlCopy)){
+		globusUrlCopy="/opt/globus/bin/"+globusUrlCopy;
+	}else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"gsiFtpGetFiles", ECONNABORTED,
+			"File Error",
+			"Unable to find globus-url-copy executable\n");
+	}
 	 while ( uris.empty() == false ){
-		cmd= "globus-url-copy";
-		if (getenv("GLOBUS_LOCATION")){
-			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
-		} else if (Utils::isDirectory ("/opt/globus/bin")){
-			cmd="/opt/globus/bin/"+cmd;
-		} else {
-			throw WmsClientException(__FILE__,__LINE__,
-				"gsiFtpGetFiles", ECONNABORTED,
-				"Unable to find",
-				"globus-url-copy executable");
-		}
-		// command
 		source = uris[0];
 		destination = m_dirOpt + "/" + Utils::getFileName (source) ;
 		if (wmcUtils->askForFileOverwriting(destination)){
 			params.resize(0);
 			params.push_back(source);
 			params.push_back("file://"+destination);
-			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
+			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+globusUrlCopy+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 			string errormsg = "";
 	
 			// Set the default value;
@@ -522,7 +518,7 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 			}
 			
 			// launches the command
-			if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
+			if (int code = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
 				if (code > 0) {
 					// EXIT CODE > 0
 					err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
@@ -566,48 +562,30 @@ void JobPerusal::htcpGetFiles (std::vector <std::string> &uris, std::vector<std:
 	vector<string> params ;
 	string source = "";
 	string destination = "";
-	string cmd= "";
 	string htcp = "htcp";
 	char* reason = NULL ;
 	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
 		"using htcp to retrieve the file(s)");
-	if (Utils::isDirectory ("/usr/bin")){
+	if (Utils::isFile("/usr/bin/"+htcp)){
 		htcp="/usr/bin/"+htcp;
-	} else if (getenv("GLITE_LOCATION")){
+	} else if (getenv("GLITE_LOCATION") && Utils::isFile(string(getenv("GLITE_LOCATION"))+"/bin/"+htcp)) {
 		htcp=string(getenv("GLITE_LOCATION"))+"/bin/"+htcp;
-	}else if (Utils::isDirectory ("/opt/glite/bin")){
+	}else if (Utils::isFile ("/opt/glite/bin/"+htcp)){
 		htcp="/opt/glite/bin/"+htcp;
 	}else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"htcpGetFiles", ECONNABORTED,
-			"Unable to find",
-			"htcp executable");
+			"File Error",
+			"Unable to find htcp executable\n");
 	}
 	 while ( uris.empty() == false ){
-		// command
-		cmd= "htcp";
-		logInfo->print(WMS_DEBUG, "FileTransfer (https):",
-			"using " + cmd +" to retrieve the file(s)");
-		if (Utils::isDirectory ("/usr/bin")){
-			cmd="/usr/bin/"+cmd;
-		} else if (getenv("GLITE_LOCATION")){
-			cmd=string(getenv("GLITE_LOCATION"))+"/bin/"+cmd;
-		}else if (Utils::isDirectory ("/opt/glite/bin")){
-			cmd="/opt/glite/bin/"+cmd;
-		}else {
-			throw WmsClientException(__FILE__,__LINE__,
-				"htcpGetFiles", ECONNABORTED,
-				"Unable to find",
-				"htcp executable");
-		}
-		//command
 		source = uris[0];
 		destination = m_dirOpt + "/" + Utils::getFileName (source) ;
 		if (wmcUtils->askForFileOverwriting(destination)){
 			params.resize(0);
 			params.push_back(source);
 			params.push_back("file://"+destination);
-			logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+cmd+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
+			logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+htcp+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 			string errormsg = "";
 	
 			// Set the default value;
@@ -620,7 +598,7 @@ void JobPerusal::htcpGetFiles (std::vector <std::string> &uris, std::vector<std:
 			}
 			
 			// launches the command
-			if (int code = wmcUtils->doExecv(cmd, params, errormsg, timeout)) {
+			if (int code = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
 				if (code > 0) {
 					// EXIT CODE > 0
 					err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
