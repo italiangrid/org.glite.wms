@@ -375,12 +375,19 @@ try {
 
   }
 
-  bool check;
-  requestad::set_ce_application_dir(
-    *result,
-    utils::evaluate_attribute(*ce_ad, "GlueCEInfoApplicationDir"),
-    check
-  );
+  std::string attr;
+  bool checkAttr =
+    ce_ad->EvaluateAttrString("GlueCEInfoApplicationDir", attr);
+
+  if( checkAttr ){
+    bool check;
+    requestad::set_ce_application_dir(
+      *result,
+      attr,
+      check
+    );
+  }
+
 
   return result;
 
