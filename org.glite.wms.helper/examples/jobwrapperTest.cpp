@@ -74,9 +74,6 @@ main(int argc, char* argv[])
   // set EDG_WL_SEQUENCE_CODE to the default value
   //jw->sequence_code("UI=1:NS=1:WM=3:BH=3:JSS=2:LM=1:LRMS=1:APP=0");
  
-  // run job.sh in a subdirectory
-  jw->create_subdir();
-  
   try {
     URL url_("http://results_collector.cnaf.infn.it/gravitational_waves/mcecchi");
     jw->set_output_sandbox_base_dest_uri(url_);

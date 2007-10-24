@@ -57,7 +57,6 @@ struct JobWrapper::pimpl {
   std::vector<std::string>  m_output_files;
 
   std::string               m_brokerinfo;
-  bool                      m_create_subdir;
   std::string               m_jobid;
   std::string               m_jobid_to_filename;
   std::string               m_gatekeeper_hostname;
@@ -106,7 +105,6 @@ JobWrapper::JobWrapper(const std::string& job)
   m_pimpl->m_perusal_support = false;
   m_pimpl->m_osb_wildcards_support = false;
   m_pimpl->m_job = job;
-  m_pimpl->m_create_subdir = false;
 }
 
 JobWrapper::~JobWrapper()
@@ -175,12 +173,6 @@ void
 JobWrapper::set_output_sandbox_base_dest_uri(URL const& osb_base_dest_uri)
 {
   m_pimpl->m_output_sandbox_base_dest_uri.reset(new URL(osb_base_dest_uri));
-}
-
-void
-JobWrapper::create_subdir(void)
-{
-  m_pimpl->m_create_subdir = true;
 }
 
 void
@@ -453,7 +445,6 @@ JobWrapper::dump_vars(std::ostream& os) const
   }
 
   return dump(os, "__brokerinfo", m_pimpl->m_brokerinfo) &&
-    dump(os, "__create_subdir", m_pimpl->m_create_subdir) &&
     dump(os, "__jobid", m_pimpl->m_jobid) &&
     dump(os, "__job", m_pimpl->m_job) &&
     dump(os, "__standard_input", m_pimpl->m_standard_input) &&

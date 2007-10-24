@@ -108,12 +108,6 @@ public:
   void brokerinfo(const std::string& file = s_brokerinfo_default);
 
   /**
-   * Declare that the job should run in a subdirectory.
-   * \ingroup jobadapter
-   */
-  void create_subdir(void);
-
-  /**
   * Set the value of the EDG_WL_JOBID environment variable.
   * If the function is not called the variable is not set.
   * @param jobid

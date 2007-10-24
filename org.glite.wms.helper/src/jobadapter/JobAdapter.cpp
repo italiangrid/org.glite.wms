@@ -838,7 +838,6 @@ try {
   jw->standard_output(stdoutput);
   jw->standard_error(stderror);
   jw->brokerinfo();
-  jw->create_subdir();
   jw->arguments(arguments);
   jw->prologue(prologue);
   jw->prologue_arguments(prologue_arguments);
