@@ -1,5 +1,5 @@
 testName:  AMGA_test_ping
-testAbbr:  test_ping
+testAbbr:  basic
 testTitle: Check whether the specified AMGA machine is on the network
-testHelp:  grid.ucy.ac.cy/egee/
+testHelp:  asteriosk@gmail.com
 EOT

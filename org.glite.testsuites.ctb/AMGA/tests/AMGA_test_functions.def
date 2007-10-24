@@ -1,5 +1,5 @@
-testName:  test_amga_functions
-testAbbr:  Asterios Katsifodimos
-testTitle: Test for the basic AMGA functions
-testHelp:  grid.ucy.ac.cy/egee/
+testName:  AMGA_test_functions
+testAbbr:  functional
+testTitle: Test for several AMGA functions
+testHelp:  asteriosk@gmail.com
 EOT
