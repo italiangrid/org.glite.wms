@@ -663,10 +663,21 @@ try {
   if (executable[0] != '/') {
     executable.insert(0, "./", 2);
   }    
-	
+
   // lowercase all jobtype characters
   std::string ljobtype(jobtype);
-  transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
+  transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower);
+
+  int cpu_number = 0;
+  bool cpu_number_exists = false;
+  cpu_number = jdl::get_cpu_number(*m_ad, cpu_number_exists);
+  if (!cpu_number_exists) {
+    cpu_number = jdl::get_node_number(*m_ad, cpu_number_exists);
+  }
+  if (cpu_number) {
+    std::string cpu_num(boost::lexical_cast<std::string>(cpu_number));
+    globusrsl += "(count=" + cpu_num + ")(hostCount=" + cpu_num + ')';
+  }
 
   if (ljobtype == "mpich") {
     // lowercase all lrmstype characters
@@ -679,27 +690,10 @@ try {
                                           helper_id);
     }
     
-    // Mandatory
-    // node number is mandatory for the mpich job
-    int nodenumber;
-    try {
-      nodenumber = jdl::get_cpu_number(*m_ad);
-    } catch (jdl::CannotGetAttribute& a) {
-      nodenumber = jdl::get_node_number(*m_ad);
-    }
-
     if (is_blahp_resource || is_condor_resource) {
-      jdl::set_remote_remote_nodenumber(*result, nodenumber);
+      jdl::set_remote_remote_nodenumber(*result, cpu_number);
     }
 
-    std::string nn(boost::lexical_cast<std::string>(nodenumber));
-    
-    globusrsl.append("(count=");
-    globusrsl.append(nn);
-    globusrsl.append(")(hostCount=");
-    globusrsl.append(nn);
-    globusrsl.append(")");
-   
     std::string exec;
     std::string::size_type pos = executable.find("./");
     if (pos == std::string::npos) {
@@ -711,14 +705,11 @@ try {
     jw.reset(new JobWrapper(exec));
     if (llrmstype == "lsf") {
       jw->set_job_type(MPI_LSF);
-    }
-    else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
+    } else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
       jw->set_job_type(MPI_PBS);
     } else {
       // not possible;
     }
-    jw->nodes(nodenumber);
-
   } else if (ljobtype == "interactive") {
     if (find_if(env.begin(), env.end(), 
           Beginning("BYPASS_SHADOW_PORT=")) == env.end()
@@ -759,6 +750,10 @@ try {
     jw->set_job_type(NORMAL);
   }
  
+  if (cpu_number) {
+    jw->nodes(cpu_number);
+  }
+
   // GlueCEInfoApplicationDir
   std::string application_dir = jdl::get_ce_application_dir(*m_ad, is_in_jdl);
   if (is_in_jdl) {
