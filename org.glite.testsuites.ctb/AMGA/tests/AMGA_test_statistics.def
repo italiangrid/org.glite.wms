@@ -1,0 +1,5 @@
+testName:  AMGA_statistics
+testAbbr:  statistics
+testTitle: Check whether the specified AMGA service is up and running
+testHelp:  grid.ucy.ac.cy/egee/
+EOT
