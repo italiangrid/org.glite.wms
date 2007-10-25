@@ -201,13 +201,29 @@ public:
   }
 };
 
-struct in
+struct already_matched
 {
-  std::vector<std::string>::const_iterator m_begin;
-  std::vector<std::string>::const_iterator const m_end;
 
-  in(std::vector<std::string> const& pm)
-   : m_begin(pm.begin()), m_end(pm.end())
+  struct in{
+    std::string str;
+    in(const std::string& s)
+      : str(s)
+    {}
+    bool operator()( const previous_match& pm_ce)
+    {
+      return pm_ce.id == str;
+    }
+  };
+
+  time_t m_time;
+  std::vector<previous_match>::const_iterator m_begin;
+  std::vector<previous_match>::const_iterator const m_end;
+
+  already_matched(
+    std::vector<previous_match> const& pm,
+    time_t t
+  )
+   : m_begin(pm.begin()), m_end(pm.end()), m_time(t)
   {
   }
   bool operator()(MatchInfo const& i)
@@ -215,7 +231,12 @@ struct in
     std::string const s(
       classad_utils::evaluate_attribute(*(i.ce_ad), "GlueCEUniqueID")
     );
-    return std::find(m_begin, m_end, s) != m_end;
+    std::vector<previous_match>::const_iterator it;
+    bool result =
+      ( ( it = std::find_if(m_begin, m_end, in(s)) ) != m_end )
+      &&
+      ( (std::time(0) - it->timestamp) < m_time);
+    return result;
   }
 };
 
@@ -225,7 +246,7 @@ void
 match(
   classad::ClassAd& ad,
   MatchTable& matches,
-  std::vector<std::string> const& skipping_ces
+  std::vector<previous_match> const& skipping_ces
 )
 {
   ism::Ism const& the_ism = *ism::get_ism();
@@ -239,7 +260,11 @@ match(
 
   if (!skipping_ces.empty()) {
     matches.erase(
-      std::remove_if(matches.begin(), matches.end(), in(skipping_ces)),
+      std::remove_if(
+        matches.begin(), 
+        matches.end(), 
+        already_matched(skipping_ces, 120)
+      ),
       matches.end()
     );
   }
@@ -250,7 +275,7 @@ match(
   classad::ClassAd& ad,
   MatchTable& matches,
   std::set<std::string> const& candidate_ces,
-  std::vector<std::string> const& skipping_ces
+  std::vector<previous_match> const& skipping_ces
 )
 {
   std::set<std::string>::const_iterator ce_it = candidate_ces.begin();
@@ -275,7 +300,11 @@ match(
 
   if (!skipping_ces.empty()) {
     matches.erase(
-      std::remove_if(matches.begin(), matches.end(), in(skipping_ces)),
+      std::remove_if(
+        matches.begin(), 
+        matches.end(), 
+        already_matched(skipping_ces, 120)
+      ),
       matches.end()
     );
   }
@@ -286,7 +315,7 @@ match(
   classad::ClassAd& ad,
   MatchTable& matches,
   DataInfo& data_info,
-  std::vector<std::string> const& skipping_ces
+  std::vector<previous_match> const& skipping_ces
 )
 {
   // Collects SFNs and involved SEs.
