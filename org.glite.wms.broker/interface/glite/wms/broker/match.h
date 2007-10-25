@@ -57,11 +57,21 @@ struct DataInfo
   StorageMapping sm;
 };
 
+struct previous_match
+{
+  std::string id;
+  time_t timestamp;
+  previous_match( std::string ce_id, time_t t )
+    : id(ce_id), timestamp(t)
+  {}
+};
+
 void
 match(
   classad::ClassAd& ad,
   MatchTable& matches,
-  std::vector<std::string> const& skipping_ces = std::vector<std::string>()
+  std::vector<previous_match>  const& skipping_ces =
+    std::vector<previous_match>()
 );
 
 void
@@ -69,7 +79,8 @@ match(
   classad::ClassAd& ad,
   MatchTable& matches,
   std::set<std::string> const& candidate_ces,
-  std::vector<std::string> const& skipping_ces = std::vector<std::string>()
+  std::vector<previous_match>  const& skipping_ces =
+    std::vector<previous_match>()
 );
 
 void
@@ -77,7 +88,8 @@ match(
   classad::ClassAd& ad,
   MatchTable& matches,
   DataInfo& data_info,
-  std::vector<std::string> const& skipping_ces = std::vector<std::string>()
+  std::vector<previous_match>  const& skipping_ces =
+    std::vector<previous_match>()
 );
 
 classad::ClassAd*

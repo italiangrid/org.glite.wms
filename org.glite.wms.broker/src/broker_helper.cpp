@@ -175,13 +175,42 @@ try {
   boost::shared_ptr<classad::ClassAd> result;
   classad::ClassAd& input_ad = *ad;
 
-  std::vector<std::string> previous_matches;
+  std::vector< previous_match > previous_matches;
   {
     bool exists = false;
-    jdl::get_edg_previous_matches(input_ad, previous_matches, exists);
+    classad::ExprTree* pm_expr_tree =
+      jdl::get_previous_matches(input_ad, exists);
+    if( exists ) {
+      classad::ExprList* pm_expr_list =
+         static_cast<classad::ExprList*>(pm_expr_tree);
+      classad::ExprList::iterator it = pm_expr_list->begin();
+      classad::ExprList::const_iterator e = pm_expr_list->end();
+      for( ; it != e; it++){
+         std::string ce_id;
+         int pm_time;
+         bool check_ce =
+           static_cast<classad::ClassAd*>(*it)->
+             EvaluateAttrString("ce_id", ce_id);
+         bool check_pm_time =
+           static_cast<classad::ClassAd*>(*it)->
+             EvaluateAttrInt("previous_match_time", pm_time);
+         if( check_ce && check_pm_time )
+            previous_matches.push_back(
+              //std::make_pair<std::string, int>(ce_id, pm_time)
+              previous_match( ce_id, pm_time )
+            );
+      }
+
+    }
+
   }
   DataInfo data_info;
-  MatchTable matches(match(input_ad, previous_matches, data_info));
+  MatchTable matches;
+
+  if( input_ad.Lookup("InputData") )
+    match(input_ad, matches, data_info, previous_matches);
+  else
+    match(input_ad, matches, previous_matches);
 
   if (matches.empty()) {
     throw NoCompatibleCEs();
@@ -269,7 +298,7 @@ try {
   }
 
   boost::scoped_ptr<classad::ClassAd> biAd(
-    make_brokerinfo_ad(data_info.fm, data_info.sm, ce_ad)
+    create_brokerinfo(input_ad, ce_ad, data_info)
   );
   classad::ExprTree const* DACexpr = input_ad.Lookup("DataAccessProtocol");
   if (DACexpr) {
