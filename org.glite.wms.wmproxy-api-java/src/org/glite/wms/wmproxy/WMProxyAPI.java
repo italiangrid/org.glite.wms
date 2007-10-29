@@ -630,7 +630,43 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
 		}
 	}
-
+	/**
+	* Returns the information related to the status of the job identified by its JobId.
+	* This operation needs that a valid proxy (identified by an id string -delegationId string-) has been previously delegated to the 	* endpoint.
+	* @param jobId the identifier of the job
+	* @return a struct with the information on the status of the job
+	* @throws AuthenticationFaultException a generic authentication problem occurred.
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @throws ServerOverloadedFaultException the server is too much busy to attend the requested operation
+	*/
+	public JobStatusStructType getJobStatus(java.lang.String jobId)
+			throws org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServerOverloadedFaultException {
+		try {
+			return this.serviceStub.getJobStatus(jobId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.ServerOverloadedFaultType exc) {
+			// ServerOverloadedFaultException
+			throw new org.glite.wms.wmproxy.ServerOverloadedFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
 	/**
 	* Registers a job for submission.The unique identifier assigned to the job is returned to the client.
 	* This operation only registers the job and assigns it with an identifier.
@@ -1696,8 +1732,6 @@ public class WMProxyAPI{
 			// generator object
 			GrDProxyGenerator generator = new GrDProxyGenerator ( );
 			// user proxy file
-			/*File file = new File ( this.proxyFile);
-			if ( file.isFile ( ) != true ) */
 			String proxyStream = System.getProperty("gridProxyStream");
                         if (proxyStream == null) {
 				throw new org.glite.wms.wmproxy.CredentialException  ( "proxy file not found at: "+ this.proxyFile );
