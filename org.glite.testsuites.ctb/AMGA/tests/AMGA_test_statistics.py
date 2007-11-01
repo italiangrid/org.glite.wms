@@ -15,7 +15,7 @@ samNewLine()
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
-    s.connect((AMGA_HOST,8822))    
+    s.connect((AMGA_HOST,8822))
     samPrintINFO("Connected")
     samNewLine()
     samNewLine()
