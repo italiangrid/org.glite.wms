@@ -3,9 +3,9 @@ import math
 import sys
 import os
 sys.path.append('../')
-from config import samPrintERROR,samNewLine,samPrintINFO,ExitCodes,samPrintOK,samPrintPASSED
+from config import Config
 
-error_code = ExitCodes()
+SAME = Config()
 
 try:
     USER_PROXY_CERTIFICATE = os.environ['X509_USER_PROXY']
@@ -94,7 +94,7 @@ def delete_entries():
     #    could_not_delete += 1 
     
     if could_not_delete != 11:
-        samPrintERROR("Could not \"clean\" the /test/ folder")                                        
+        SAME.samPrintERROR("Could not \"clean\" the /test/ folder")                                        
 
 try:
     
@@ -270,16 +270,16 @@ try:
     
     print "</pre>"
     
-    samPrintOK("All functions executed properly")
-    samNewLine()
-    samPrintPASSED("AMGA functional tests passed")
-    sys.exit(error_code.SAME_OK)
+    SAME.samPrintOK("All functions executed properly")
+    SAME.samNewLine()
+    SAME.samPrintPASSED("AMGA functional tests passed")
+    sys.exit(SAME.SAME_OK)
     
     
 except Exception, ex:
     print "</pre>"
-    samPrintERROR(AMGA_HOST + ': encountered errors.\n')
+    SAME.samPrintERROR(AMGA_HOST + ': encountered errors.\n')
     print "<pre> ", ex, "</pre>" 
-    sys.exit(error_code.SAME_ERROR)
+    sys.exit(SAME.SAME_ERROR)
                         
                         

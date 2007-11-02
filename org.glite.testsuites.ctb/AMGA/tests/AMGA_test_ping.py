@@ -3,13 +3,13 @@ import sys
 import commands
 import re
 sys.path.append('../')
-from config import samPrintERROR,samNewLine,samPrintINFO,ExitCodes,samPrintOK,samPrintFAILED
+from config import Config
 
-error_code = ExitCodes()
+SAME = Config()
 
 AMGA_HOST = sys.argv[1];
 
-samPrintINFO('Testing ping to ' + AMGA_HOST)  
+SAME.samPrintINFO('Testing ping to ' + AMGA_HOST)  
 
 command = 'ping -c 5 ' + AMGA_HOST
 
@@ -22,11 +22,11 @@ if host_found :
     print '<pre>'
     print output
     print '</pre>'
-    samPrintOK("Host responded...")
-    samNewLine()
-    sys.exit(error_code.SAME_OK)
+    SAME.samPrintOK("Host responded...")
+    SAME.samNewLine()
+    sys.exit(SAME.SAME_OK)
 else :
-    samPrintERROR(AMGA_HOST + " is not accessible.")
-    samPrintFAILED("AMGA Ping test ")
+    SAME.samPrintERROR(AMGA_HOST + " is not accessible.")
+    SAME.samPrintFAILED("AMGA Ping test ")
     print "</pre>\n"
-    sys.exit(error_code.SAME_ERROR)
+    sys.exit(SAME.SAME_ERROR)

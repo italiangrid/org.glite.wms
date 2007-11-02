@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 
-class ExitCodes:
+class Config:
     
     SAME_OK          = 10 
     SAME_ERROR       = 50
@@ -21,27 +21,27 @@ class ExitCodes:
             self.SAME_CRITICAL    = os.environ['SAME_CRITICAL']
             self.SAME_MAINTENANCE = os.environ['SAME_MAINTENANCE']
         except:
-            print samPrintWARNING("Cannot find SAME_* env variables")
-            samNewLine()
+            print self.samPrintWARNING("Cannot find SAME_* env variables")
+            self.samNewLine()
             
        
-def samPrintERROR(text) :
-    print '<font color="red"> ERROR: </font>', text, '\n' 
-    
-def samPrintOK(text) :
-    print '<font color="green"> - OK </font>', text , '\n'
-    
-def samPrintPASSED(text) :
-    print '<font color="green"> - PASSED </font>' , text , '\n'
-   
-def samPrintFAILED(text) :
-    print '<font color="red"> - FAILED </font>' , text , '\n'
-    
-def samPrintWARNING(text) :
-    print '<font color="brown"> WARNING: </font>' , text , '\n'
-   
-def samPrintINFO(text) :
-    print '<font color="blue"> INFO: </font>' , text , '\n'
-    
-def samNewLine() :
-    print '<br>'
+    def samPrintERROR(self,text) :
+        print '<font color="red"> ERROR: </font>', text, '\n' 
+        
+    def samPrintOK(self,text) :
+        print '<font color="green"> - OK </font>', text , '\n'
+        
+    def samPrintPASSED(self,text) :
+        print '<font color="green"> - PASSED </font>' , text , '\n'
+       
+    def samPrintFAILED(self,text) :
+        print '<font color="red"> - FAILED </font>' , text , '\n'
+        
+    def samPrintWARNING(self,text) :
+        print '<font color="brown"> WARNING: </font>' , text , '\n'
+       
+    def samPrintINFO(self,text) :
+        print '<font color="blue"> INFO: </font>' , text , '\n'
+        
+    def samNewLine(self,) :
+        print '<br>'

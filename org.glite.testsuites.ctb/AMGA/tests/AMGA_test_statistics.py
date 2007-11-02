@@ -2,23 +2,23 @@
 import socket
 import sys
 sys.path.append('../')
-from config import samPrintERROR,samNewLine,samPrintINFO,ExitCodes,samPrintOK,samPrintPASSED
+from config import Config
 
-error_code = ExitCodes()
+SAME = Config()
 
 AMGA_HOST = sys.argv[1]
 
-samPrintINFO('Trying to connect to: ' + AMGA_HOST + ' ...')
-samNewLine()
+SAME.samPrintINFO('Trying to connect to: ' + AMGA_HOST + ' ...')
+SAME.samNewLine()
 
 # Open TCP socket to AMGA server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
     s.connect((AMGA_HOST,8822))
-    samPrintINFO("Connected")
-    samNewLine()
-    samNewLine()
+    SAME.samPrintINFO("Connected")
+    SAME.samNewLine()
+    SAME.samNewLine()
     # Request statistics
     s.send('statistics\n\n')
 
@@ -34,11 +34,11 @@ try:
     print "<pre>"
     print result
     print "</pre>\n"
-    samPrintOK("Got the Server Statistics")
-    samNewLine()
-    samPrintPASSED("AMGA statistics test")
-    sys.exit(error_code.SAME_OK)
+    SAME.samPrintOK("Got the Server Statistics")
+    SAME.samNewLine()
+    SAME.samPrintPASSED("AMGA statistics test")
+    sys.exit(SAME.SAME_OK)
 
 except Exception, e:
-    samPrintERROR(e)
-    sys.exit(error_code.SAME_ERROR)
+    SAME.samPrintERROR(e)
+    sys.exit(SAME.SAME_ERROR)
