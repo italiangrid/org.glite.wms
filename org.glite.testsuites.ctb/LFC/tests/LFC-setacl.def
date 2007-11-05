@@ -1,0 +1,4 @@
+testName: LFC-setacl
+testAbbr: LFCsacl
+testTitle: set LFC directory/file access control lists (lfc_setacl)
+EOT

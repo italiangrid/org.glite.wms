@@ -1,0 +1,4 @@
+testName: LFC-undelete
+testAbbr: LFCund
+testTitle: recover a logically deleted LFC file entry in the name server (lfc_undelete)
+EOT

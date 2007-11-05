@@ -1,0 +1,4 @@
+testName: LFC-setcomment
+testAbbr: LFCscmt
+testTitle: add/replace   a  comment  associated  with  a  LFC file/directory in the name server (lfc_setcomment) 
+EOT

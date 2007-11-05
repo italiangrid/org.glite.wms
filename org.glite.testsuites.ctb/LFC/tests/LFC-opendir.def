@@ -1,0 +1,4 @@
+testName: LFC-opendir
+testAbbr: LFCopd
+testTitle: open a LFC directory, in the name server (lfc_opendir)
+EOT
