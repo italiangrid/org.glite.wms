@@ -408,16 +408,25 @@ void Job::setVersionNumbers(const string& version) {
 			p = v.find(".");
 			if (p != string::npos){
 				wmpVersion.minor = atoi (v.substr(0,p).c_str() );
+			// Release version number
+			} if (p < version.size( )) {
+				v = v.substr((p+1),(version.size()-p));
+				p = v.find(".");
+				if (p == string::npos){
+					wmpVersion.subminor = atoi (v.substr(0,p).c_str() );
+				} else {
+					logInfo->print(WMS_WARNING, "error on extracting release version number",
+						"setting the number to 0",false);
+					wmpVersion.subminor = 0;
+				}
 			} else {
-				logInfo->print(WMS_WARNING, "error on extracting minor version number",
-					"setting the number to 0",false);
-				wmpVersion.minor = 0;
+				wmpVersion.subminor = 0;
 			}
 		} else {
 			wmpVersion.minor = 0;
 		}
 		// Display parsed Version
-		info << "WMProxy: major version[" << wmpVersion.major << "] - minor version[" << wmpVersion.minor << "]";
+		info << "WMProxy: major version[" << wmpVersion.major << "] - minor version[" << wmpVersion.minor << "] - release version[" << wmpVersion.subminor << "]";
 		logInfo->print(WMS_DEBUG, info.str(), "",false );
 	} else {
 		wmpVersion.major = 1;
