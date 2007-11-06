@@ -1,6 +1,8 @@
 #!/bin/sh
 
 trap 'fatal_error "Job has been terminated by the batch system"' TERM
+trap 'fatal_error "Job has been terminated by the batch system"' XCPU
+trap 'fatal_error "Job has been terminated by the batch system"' INT
 
 do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
 {
