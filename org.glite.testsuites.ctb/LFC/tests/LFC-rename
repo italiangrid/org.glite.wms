@@ -1,5 +1,6 @@
 #!/usr/bin/env  python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov 
+# rename a LFC file or directory in the name server (lfc_rename)  
 
 import os, lfc, sys, commands
 from testClass import _test, _ntest
@@ -70,7 +71,7 @@ class lfc_rename_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test:  rename a LFC file or directory in the name server (lfc_rename)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

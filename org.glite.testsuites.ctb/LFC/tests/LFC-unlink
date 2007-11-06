@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
+# remove a LFC file entry in the name server (lfc_unlink)
+#
 ####
 #
 #	NOTE: Removes also the file which is not writeable.
@@ -279,7 +281,7 @@ class lfc_unlink_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test: remove a LFC file entry in the name server (lfc_unlink)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

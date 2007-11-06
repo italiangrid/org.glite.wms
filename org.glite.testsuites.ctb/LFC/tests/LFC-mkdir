@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov 
-
-#***********old name: lfc_mkdir_test.py
+# create a new LFC directory in the name server (lfc_mkdir)
 #Do not use explicity values: dteam, etc...
+
 import os,sys,lfc
 from testClass import _test 
 global lfc_vo
@@ -72,7 +72,7 @@ class lfc_mkdir_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test: create a new LFC directory in the name server (lfc_mkdir)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

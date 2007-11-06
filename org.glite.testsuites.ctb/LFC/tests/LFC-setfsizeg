@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
-
+# set filesize for a regular file having the given GUID set also last modification time to the current time (lfc_setfsizeg)
+ 
 import os, lfc, sys, commands
 from testClass import _test
 
@@ -95,7 +96,7 @@ class lfc_setfsizeg_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test - set filesize for a regular file having the given GUID set also last modification time to the current time (lfc_setfsizeg)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

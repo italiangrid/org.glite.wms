@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
+# get  the  replica entries associated with a list of GUIDs (lfc_getreplicas) 
 
 import os, lfc, sys, commands, errno
 from testClass import _test, _ntest
@@ -214,7 +215,7 @@ class lfc_statr_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test: get  the  replica entries associated with a list of GUIDs (lfc_getreplicas)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

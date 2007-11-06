@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
+# get information about a LFC file or directory in the name server (lfc_statgx) 
 
 import os, lfc, sys, commands
 from testClass import _test
@@ -108,7 +109,7 @@ class lfc_statx_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test: get information about a LFC file or directory in the name server (lfc_statgx) "
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

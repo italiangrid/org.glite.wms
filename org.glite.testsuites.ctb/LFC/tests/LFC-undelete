@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
+# recover a logically deleted LFC file entry in the name server (lfc_undelete)
+#
 ####
 #
 #	NOTE: Removes also the file which is not writeable.
@@ -224,7 +226,7 @@ class lfc_undelete_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test: recover a logically deleted LFC file entry in the name server (lfc_undelete)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

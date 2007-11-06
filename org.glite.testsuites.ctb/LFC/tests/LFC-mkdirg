@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
+# create  a  new LFC directory in the name server with the specified GUID (lfc_mkdirg) 
 
 import os,lfc, sys, commands
 from testClass import _test 
@@ -85,7 +86,7 @@ class lfc_mkdirg_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test"
+print "Start test:  create  a  new LFC directory in the name server with the specified GUID (lfc_mkdirg)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']
