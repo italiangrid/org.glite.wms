@@ -83,7 +83,7 @@ fatal_error() # 1 - reason
 
 truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 {
-  tail "$1" --bytes=$2>$3 2>/dev/null
+  tail "$1" --bytes=$2>$3
   return $?
 }
 
@@ -352,7 +352,7 @@ function send_partial_file
     # Go to sleep, but be ready to wake up when the user job finishes
     sleep $POLL_INTERVAL & SLEEP_PID=$!
     trap 'LAST_CYCLE="y"; kill -ALRM $SLEEP_PID >/dev/null 2>&1' USR2
-    wait $SLEEP_PID >/dev/null 2>&1
+    wait $SLEEP_PID
     # Retrieve the list of files to be monitored
     if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
       globus-url-copy "${TRIGGERFILE}" "file://${LISTFILE}"
@@ -408,7 +408,7 @@ function send_partial_file
 }
 
 if [ -r "${OSG_GRID}/setup.sh" ]; then
-  source "${OSG_GRID}/setup.sh" &>/dev/null
+  source "${OSG_GRID}/setup.sh"
 fi
 
 if [ -n "${__gatekeeper_hostname}" ]; then
@@ -555,7 +555,7 @@ else
 fi
 
 if [ -f "${__job}" ]; then
-  chmod +x "${__job}" 2>/dev/null
+  chmod +x "${__job}"
 else
   fatal_error "${__job} not found or unreadable"
 fi
@@ -569,8 +569,8 @@ fi
   # user script (before taking the token, shallow-sensitive)
   if [ -n "${__prologue}" ]; then
     if [ -f "${__prologue}" ]; then
-      chmod +x "${__prologue}" 2>/dev/null
-      ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
+      chmod +x "${__prologue}"
+      ${__prologue} "${__prologue_arguments}"
       prologue_status=$?
       if [ ${prologue_status} -ne 0 ]; then
         fatal_error "prologue failed with error ${prologue_status}"
@@ -613,14 +613,14 @@ if [ -n "${__shallow_resubmission_token}" ]; then
   else
     is_uberftp=`expr match "${gridftp_rm_command}" '.*uberftp'`
     if [ $is_uberftp -eq 0 ]; then
-      $gridftp_rm_command ${__shallow_resubmission_token} &>/dev/null
+      $gridftp_rm_command ${__shallow_resubmission_token}
     else # uberftp
       tkn=${__shallow_resubmission_token} # will reduce lines length
       scheme=${tkn:0:`expr match "${tkn}" '[[:alpha:]][[:alnum:]+.-]*://'`}
       remaining=${tkn:${#scheme}:${#tkn}-${#scheme}}
       hostname=${remaining:0:`expr match "$remaining" '[[:alnum:]_.~!$&()-]*'`}
       token_fullpath=${remaining:${#hostname}:${#remaining}-${#hostname}}
-      $gridftp_rm_command $hostname -a gsi "quote dele ${token_fullpath}" &>/dev/null
+      $gridftp_rm_command $hostname -a gsi "quote dele ${token_fullpath}"
     fi
     result=$?
     if [ $result -eq 0 ]; then
@@ -827,8 +827,8 @@ jw_echo "job exit status = ${status}"
 
   if [ -n "${__epilogue}" ]; then
     if [ -f "${__epilogue}" ]; then
-      chmod +x "${__epilogue}" 2>/dev/null
-      ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
+      chmod +x "${__epilogue}"
+      ${__epilogue} "${__epilogue_arguments}"
       epilogue_status=$?
       if [ ${epilogue_status} -ne 0 ]; then
         fatal_error "epilogue failed with error ${epilogue_status}"
