@@ -150,7 +150,7 @@ class lfc_statg_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test: create a new LFC file with the specified GUID or reset it in the name server (lfc_creat"
+print "Start test: create a new LFC file with the specified GUID or reset it in the name server (lfc_creatg)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']
