@@ -73,9 +73,8 @@ class test_nonexisting_file(_test):
     def compare(self, testVal, retVal):
         ((ret, retFileid), retRetVal) = retVal
         ((test, testFileid), testRetVal) = testVal
-        retval = True
         if (retRetVal == testRetVal):
-            retval = retval & ( test.nlink == ret.nlink )
+            retval = True
         else:
             retval = False
         return retval

@@ -277,7 +277,7 @@ class lfc_statr_test:
 
 #************* Interface for SAM and Python tests ***************
 print "<pre>"
-print "Start test: get the replica entries associated with a LFC file in the name server (lfc_getreplica"
+print "Start test: get the replica entries associated with a LFC file in the name server (lfc_getreplica)"
 print "1. Prepare environment"
 
 vo_name=os.environ['SAME_VO']

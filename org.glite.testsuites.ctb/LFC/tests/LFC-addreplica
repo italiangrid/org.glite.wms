@@ -197,14 +197,11 @@ class lfc_addreplica_test:
     def run(self):
         retVal = True
         for testclass in self.tests:
-            print "Debug1: %s" % retVal
             testInstance = testclass()
             testInstance.prepare()
-            print "Debug2: %s" % retVal
             ret1 = testInstance.compare(testInstance.test(), (testInstance.ret(), testInstance.getRetVal()))
             testInstance.clean()
             retVal = retVal & ret1
-            print "Debug3: %s" % retVal
             if ret1:
                 print "%-60s[OK]" % testInstance.info()
             else:
@@ -236,7 +233,7 @@ same_err  = int(os.environ['SAME_ERROR'])
 print "2. Start test run()"
 
 testHome = "python_lfc_test"
-ret = lfc_addreplica_test().run
+ret = lfc_addreplica_test().run()
 
 print "3. Ret test code: %s" % ret
 print "Exit"

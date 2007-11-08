@@ -25,7 +25,7 @@ else
         echo "check-LFC: $test , nodename: $nodeName, VO: $SAME_VO"
         same-run-test -v $SAME_VO -t $test -n $nodeName -e $envName -d $SAME_SENSOR_HOME/tests $nodeName > $test.result
         ret=$?
-        echo "Retcode=$ret"
+        #echo "Retcode=$ret"
         if [ $ret == $SAME_OK ]; then
            echo "Test is OK"
         else
