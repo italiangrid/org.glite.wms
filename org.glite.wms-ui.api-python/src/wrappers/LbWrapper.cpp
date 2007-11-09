@@ -250,37 +250,62 @@ Status::Status (
 		// indexed is used to check whether the user has performed a valid query (i.e. a query on the indexed attributes)
 		bool indexed = false ;
 		string queryErrMsg = "" ;
-		for (unsigned int i = 0 ; i< ia.size() ;  i++ ){
+		
+		// Initialise loop variable		
+		unsigned int l_iIndexRowCounter = 0 ;
+		unsigned int l_iIndexColCounter = 0 ;
+		
+		while(l_iIndexRowCounter < ia.size() && !indexed) {
 
-			if (indexed) break ;
-			for (unsigned int j = 0 ;  j < ia[i].size() ; j++ ) {
+			// Scan all the columns
+			while(l_iIndexColCounter < ia[l_iIndexRowCounter].size() && !indexed) {
+			
+				// Retrieve the attribute
+				std::pair<QueryRecord::Attr,std::string> l_IndexedAttribute = ia[l_iIndexRowCounter][l_iIndexColCounter];
 
-				if (indexed) break ;
-				switch (   ia[i][j].first ){
+				switch (l_IndexedAttribute.first){
+				
 					case QueryRecord::OWNER:
-						if ( issuer!="") indexed = true ;
+						if (issuer!="") indexed = true ;
 						queryErrMsg += "\n'--all' option" ;
 						break;
+						
 					case QueryRecord::TIME:
-						if(     ( from!=0 )  || ( to!=0 )   ) indexed = true ;
+						if(from!=0 || to!=0) indexed = true ;
 						queryErrMsg += "\n'--from'/'--to' option" ;
 						break;
+						
+					case QueryRecord::STATUS:
+						if(excludes.size()!=0 || includes.size()!=0) indexed = true ;
+						queryErrMsg += "\n'--exclude'/'--status' option" ;
+						break;
+						
 					case QueryRecord::USERTAG:
 						for ( unsigned int k = 0 ; k<  tagNames.size()  ; k++ )
-							if (   tagNames[k] == ia[i][j].second  )  indexed = true ;
-						queryErrMsg += "\n'--user-tag " + ia[i][j].second +"=<tag value>' condition"   ;
+							if (   tagNames[k] == l_IndexedAttribute.second  )  indexed = true ;
+						queryErrMsg += "\n'--user-tag " + l_IndexedAttribute.second +"=<tag value>' condition";
+						
 					default:
 						break;
 				}
+
+				// Increase the column counter
+				l_iIndexColCounter++;
 			}
+		
+			// Increase the row counter
+			l_iIndexRowCounter++;
 		}
+		
 		if ( !indexed){
 			// query is useless, no indexed value found
 			if ( queryErrMsg =="" )
-				queryErrMsg = " No indexed key found for the server: " +host ;
+				queryErrMsg = "LB server configuration settings do not allow user to perform queries " \
+				              "using --all/--from/--to/--status/--exclude/--user-tag options. " \
+					      "Please contact server administrator for more details";
 			else
 				queryErrMsg =  " Try to use the following option(s):"   + queryErrMsg ;
-			log_error ("No indexed attribute queried." + queryErrMsg ) ;
+			log_error ("No indexed attribute queried. " + queryErrMsg ) ;
 		}
 		int FLAG  = 0 ;
 		if (ad!=0) FLAG =   EDG_WLL_STAT_CLASSADS  ;
