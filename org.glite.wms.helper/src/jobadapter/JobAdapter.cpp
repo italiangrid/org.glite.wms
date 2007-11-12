@@ -668,14 +668,14 @@ try {
   std::string ljobtype(jobtype);
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower);
 
-  int cpu_number = 0;
-  bool cpu_number_exists = false;
-  cpu_number = jdl::get_cpu_number(*m_ad, cpu_number_exists);
-  if (!cpu_number_exists) {
-    cpu_number = jdl::get_node_number(*m_ad, cpu_number_exists);
+  int cpu_node_number = 0;
+  bool cpu_node_number_exist = false;
+  cpu_node_number = jdl::get_cpu_number(*m_ad, cpu_node_number_exist);
+  if (!cpu_node_number_exist) {
+    cpu_node_number = jdl::get_node_number(*m_ad, cpu_node_number_exist);
   }
-  if (cpu_number) {
-    std::string cpu_num(boost::lexical_cast<std::string>(cpu_number));
+  if (cpu_node_number_exist && cpu_node_number) {
+    std::string cpu_num(boost::lexical_cast<std::string>(cpu_node_number));
     globusrsl += "(count=" + cpu_num + ")(hostCount=" + cpu_num + ')';
   }
 
@@ -691,7 +691,7 @@ try {
     }
     
     if (is_blahp_resource || is_condor_resource) {
-      jdl::set_remote_remote_nodenumber(*result, cpu_number);
+      jdl::set_remote_remote_nodenumber(*result, cpu_node_number);
     }
 
     std::string exec;
@@ -750,8 +750,8 @@ try {
     jw->set_job_type(NORMAL);
   }
  
-  if (cpu_number) {
-    jw->nodes(cpu_number);
+  if (cpu_node_number) {
+    jw->nodes(cpu_node_number);
   }
 
   // GlueCEInfoApplicationDir
