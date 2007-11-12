@@ -23,7 +23,7 @@
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
-#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wms/common/logger/logging.h"
 
 #include "glite/jdl/ManipulationExceptions.h"
 #include "glite/jdl/JobAdManipulation.h"
@@ -154,18 +154,18 @@ void get_catalog_url(
          }
       }
       else {
-         Debug("No endpoints found");
+         GLITE_LOG_ACCESS_ERROR << "No endpoints found";
       }
 
       SD_freeServiceList(sl);
 
    } else { 
       if (ex.status == SDStatus_SUCCESS) { 
-         Warning("No "<<service_name<<" service found"); 
+         GLITE_LOG_ACCESS_ERROR <<"No "<<service_name<<" service found"; 
       }
       else {
-         Error("No "<<service_name<<" service found");
-         Error( ex.reason );
+         GLITE_LOG_ACCESS_ERROR <<"No "<<service_name<<" service found";
+         GLITE_LOG_ACCESS_ERROR << ex.reason;
          SD_freeException(&ex);
       }
    }
@@ -295,7 +295,7 @@ operator()(
       );
    }
    else 
-      Warning("Unknown Data Catalog Type");
+      GLITE_LOG_ACCESS_ERROR <<"Unknown Data Catalog Type";
 
    return c;
 
@@ -342,16 +342,16 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
 
          dliLibHandle = dlopen (dliLib.c_str(), RTLD_NOW);
          if (!dliLibHandle) {
-            Warning("cannot load DLI helper lib " << dliLib );
-            Warning("dlerror returns: " << dlerror());
+            GLITE_LOG_ACCESS_ERROR<<"cannot load DLI helper lib " << dliLib
+               <<". dlerror returns: " << dlerror();
             break;
          }
          else {
             createDli = (DLI::create_DLI_t*)dlsym(dliLibHandle,"create_DLI");
             destroyDli = (DLI::destroy_DLI_t*)dlsym(dliLibHandle,"destroy_DLI");
             if (!createDli || !destroyDli) {
-               Warning("cannot load DLI helper symbols");
-               Warning("dlerror returns: " << dlerror());
+               GLITE_LOG_ACCESS_ERROR << "cannot load DLI helper symbols"
+                <<". dlerror returns: " << dlerror();
                dlclose(dliLibHandle);
                break;
             }
@@ -377,10 +377,11 @@ resolve( const lfns_2B_resolved& lfns, const string& proxy){
                       );
 
             try{
+               GLITE_LOG_ACCESS_INFO << "Resolving " << *lfns_it << "...";
                the_dli->listReplica(*lfns_it, sfns);
             }
             catch(const ReplicaServiceException&  ex){
-               Error(ex.what());
+               GLITE_LOG_ACCESS_ERROR <<ex.what();
                destroyDli(the_dli);
                continue;
             }
@@ -411,7 +412,7 @@ resolve_filemapping_info(
    bool voInJdl;
    string vo = requestad::get_virtual_organisation(requestAd, voInJdl);
    if ( !voInJdl ) {
-      Warning("No VO defined in the JDL");
+      GLITE_LOG_ACCESS_ERROR<<"VO not defined in JDL";
       boost::shared_ptr<filemapping> fm(
          new filemapping()
       );
