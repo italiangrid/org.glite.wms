@@ -6,8 +6,6 @@
 ## *
 ## *********************************************************************
 
-MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
-
 lib_LTLIBRARIES = libglite_wms_manager_server.la 
 
 libexec_SCRIPTS = glite-wms-dag-post.sh
@@ -86,46 +84,30 @@ glite_wms_planner_real_LDADD   = \
 	$(GLITE_LB_THR_CLIENTPP_LIBS) \
 	$(GLITE_LB_THR_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-	$(EXPAT_LIBS) \
-	$(ARES_LIBS) \
-	$(CLASSAD_DL_LIBS) \
-	$(top_srcdir)/../stage/lib/libglite_wms_classad_plugin_loader.la \
-	$(GLOBUS_LDAP_THR_LIBS) \
-	$(GLOBUS_COMMON_THR_LIBS) \
-	$(GLOBUS_SSL_THR_LIBS) \
-	$(GLOBUS_GSS_THR_LIBS) \
+	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS)
 
- glite_wms_input_generator_SOURCES = \
- 	input_generator.cpp
- glite_wms_input_generator_LDADD = \
-  $(GLITE_WMS_COMMON_CONF_LIBS) \
-  $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-  $(GLITE_WMS_COMMON_LOGGER_LIBS) \
-  $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
- 	$(GLITE_WMSUTILS_JOBID_LIBS) \
-  $(GLITE_WMSUTILS_CJOBID_LIBS) \
- 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-  $(GLITE_JDL_LIBS) \
- 	$(GLITE_LB_THR_CLIENT_LIBS) \
-  $(GLITE_LB_THR_COMMON_LIBS) \
-  $(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-  $(ARES_LIBS) \
- 	$(CLASSAD_LIBS) \
- 	$(GLOBUS_GSS_THR_LIBS) \
-  $(BOOST_LIBS)
+glite_wms_input_generator_SOURCES = \
+	input_generator.cpp
+glite_wms_input_generator_LDADD = \
+	$(GLITE_WMS_COMMON_CONF_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+	$(GLITE_JDL_LIBS) \
+	$(GLITE_LB_THR_CLIENT_LIBS) \
+	$(GLITE_LB_THR_COMMON_LIBS) \
+	$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+	$(CLASSAD_LIBS) \
+	$(BOOST_LIBS)
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \
-        -I$(top_srcdir)/../org.glite.wms.jobsubmission/src/controller \
-	-I$(top_srcdir)/src \
-	-I$(top_srcdir)/src/common \
         $(CLASSAD_CFLAGS) \
-        $(LOG4CXX_CFLAGS) \
-        $(BOOST_CFLAGS) \
-	$(GLITE_WMS_COMMON_SYSLOG_CFLAGS) \
-	-DGLITE_WMS_HAVE_LBPROXY #\
-	#-DGLITE_WMS_HAVE_BULK_MM
+        $(BOOST_CFLAGS)
 
 EXTRA_DIST = glite-wms-dag-post.sh.in
 

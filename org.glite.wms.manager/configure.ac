@@ -11,87 +11,8 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Common configure.ac file for the GLite WMS Common module
-#
-#       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
-#       Version info: $Id$
-#       Release: $Name$
-#
-#       Revision history:
-#       $Log$
-#       Revision 1.22  2007/04/19 12:46:07  rlops
-#       bug #25574
-#
-#       Revision 1.21  2006/07/26 09:07:53  giaco
-#       - no more common subdir
-#       - no more planner script (it's all in the executable)
-#
-#       Revision 1.20  2006/03/20 22:35:06  eronchie
-#       Increased version
-#
-#       Revision 1.19  2006/03/17 17:02:11  eronchie
-#       Updated
-#
-#       Revision 1.18  2006/03/17 10:48:20  eronchie
-#       Added sensors for wms
-#
-#       Revision 1.17  2006/03/14 15:51:36  eronchie
-#       Applied Purer macro
-#
-#       Revision 1.16  2005/10/15 12:04:48  eronchie
-#       Increased version
-#
-#       Revision 1.15  2005/10/14 17:14:50  emartel
-#       added service discovery
-#
-#       Revision 1.14  2005/10/04 11:39:44  eronchie
-#       Applied changes due to rgma api
-#
-#       Revision 1.13  2004/12/09 17:33:28  giaco
-#       set version number to 1.0.0
-#
-#       Revision 1.12  2004/12/04 21:20:23  dimeglio
-#       Increased version number
-#
-#       Revision 1.11  2004/11/01 10:41:51  dimeglio
-#       Incremented version number
-#
-#       Revision 1.10  2004/10/22 12:24:34  eronchie
-#       Added optimize support
-#
-#       Revision 1.9  2004/10/14 14:15:22  eronchie
-#       Updated
-#
-#       Revision 1.8  2004/10/13 22:02:23  eronchie
-#       Added ism dependency
-#
-#       Revision 1.7  2004/10/01 13:52:12  pandreet
-#       Build files for unit tests
-#
-#       Revision 1.6  2004/09/22 01:04:44  dimeglio
-#       Fixed missing parenthesis in AC_INIT
-#
-#       Revision 1.5  2004/09/21 19:25:54  glbuild
-#       modified module.version
-#
-#       Revision 1.4  2004/08/27 13:34:32  eronchie
-#       Added handling of config dir
-#       Added start up script file
-#
-#       Revision 1.3  2004/08/09 07:45:06  eronchie
-#       Updated
-#       WARNING: work in progress
-#
-#       Revision 1.2  2004/08/09 06:35:48  eronchie
-#       Added check macros
-#
-#       Revision 1.1.1.1  2004/08/08 17:03:21  eronchie
-#       Start adding manager component
-#
-#
-#
-#
-                                                                                                                                                             
+# $Id$
+
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
@@ -116,8 +37,6 @@ AC_PROG_CPP
 AC_PROG_CXX
 AC_PROG_CXXCPP
 AM_PROG_CC_C_O
-AC_PROG_YACC
-AM_PROG_LEX
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
@@ -150,27 +69,21 @@ AC_OPTIMIZE
 have_boost=no
 have_classads=no
 have_globus=no
-have_expat=no
 have_cppunit=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
                                                                                
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
-AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
-
-AM_PATH_LOG4CXX
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
 have_glite_jdl=no
-have_glite_wms_helper=no
 have_glite_wms_jss=no
 have_glite_lb=no
 have_glite_security=no
@@ -185,9 +98,6 @@ AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
-
-AC_GLITE_WMS_HELPER([], have_glite_wms_helper=yes, have_glite_wms_helper=no)
-AC_MSG_RESULT(["GLITE_WMS_HELPER found $have_glite_wms_helper"])
 
 AC_GLITE_WMS_JSS([], have_glite_wms_jss=yes, have_glite_wms_jss=no)
 AC_MSG_RESULT(["GLITE_WMS_JSS found $have_glite_wms_jss"])
