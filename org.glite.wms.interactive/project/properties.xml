@@ -21,10 +21,13 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.7  2007/11/13 12:21:09  mezzadri
+	lb libraries are now linked dinamically and also c-ares and expat are linked dinamically
+
 	Revision 1.6  2006/03/20 22:19:48  eronchie
 	Increased version
 	Added optimize
-
+	
 	Revision 1.5  2005/10/03 13:10:21  eronchie
 	Added glite_security.m4
 	
@@ -78,6 +81,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 ares.m4 expat.m4 cppunit.m4 glite.m4 glite_lb.m4 glite_security.m4 glite_wmsutils.m4 glite_wms_tp_bypass.m4 optimize.m4"/>
+	<property name="m4files.list" value="globus.m4 cppunit.m4 glite.m4 glite_lb.m4 glite_security.m4 glite_wmsutils.m4 glite_wms_tp_bypass.m4 optimize.m4"/>
 
 </project>

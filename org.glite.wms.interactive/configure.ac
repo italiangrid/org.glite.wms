@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2007/11/13 12:21:09  mezzadri
+#       lb libraries are now linked dinamically and also c-ares and expat are linked dinamically
+#
 #       Revision 1.9  2006/06/27 12:06:46  rlops
 #       increased version
 #
@@ -104,18 +107,12 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 
 have_globus=no
 have_cppunit=no
-have_ares=no
-have_expat=no
 
-AC_ARES([], have_ares=yes, have_ares=no)
-AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
 
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
-AC_MSG_RESULT(["ARES found $have_ares"])
-AC_MSG_RESULT(["EXPAT found $have_expat"])
 
 have_tp_bypass=no
 have_glite_wmsutils=no
