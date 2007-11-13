@@ -23,8 +23,6 @@ glite_wms_pipe_input_LDADD = \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLOBUS_COMMON_NOTHR_LIBS) \
-        $(GLOBUS_GSS_NOTHR_LIBS) \
         -lnsl -ldl -lstdc++
 
 glite_wms_pipe_output_SOURCES = glite_wms_pipe_output.c
@@ -36,8 +34,6 @@ glite_wms_pipe_output_LDADD = \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLOBUS_COMMON_NOTHR_LIBS) \
-        $(GLOBUS_GSS_NOTHR_LIBS) \
 	-lnsl -ldl -lstdc++
 
 glite_wms_job_agent_SOURCES = glite_wms_job_agent.c 
@@ -49,13 +45,10 @@ glite_wms_job_agent_LDADD = \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLOBUS_COMMON_NOTHR_LIBS) \
-        $(GLOBUS_GSS_NOTHR_LIBS) \
         -lnsl -ldl -lstdc++
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(GLITE_CFLAGS) \
-	$(GLOBUS_NOTHR_CFLAGS) 
+	$(GLITE_CFLAGS)
 
 EXTRA_DIST = LICENSE README.in	
 
