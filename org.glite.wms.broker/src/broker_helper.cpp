@@ -177,12 +177,12 @@ try {
 
   std::vector< previous_match > previous_matches;
   {
-    bool exists = false;
-    classad::ExprTree* pm_expr_tree =
-      jdl::get_previous_matches(input_ad, exists);
+    classad::ExprList* pm_expr_list;
+    bool exists = input_ad.EvaluateAttrList(
+                     "edg_previous_matches_ex",
+                     pm_expr_list
+                  );
     if( exists ) {
-      classad::ExprList* pm_expr_list =
-         static_cast<classad::ExprList*>(pm_expr_tree);
       classad::ExprList::iterator it = pm_expr_list->begin();
       classad::ExprList::const_iterator e = pm_expr_list->end();
       for( ; it != e; it++){
@@ -193,10 +193,9 @@ try {
              EvaluateAttrString("ce_id", ce_id);
          bool check_pm_time =
            static_cast<classad::ClassAd*>(*it)->
-             EvaluateAttrInt("previous_match_time", pm_time);
+             EvaluateAttrInt("timestamp", pm_time);
          if( check_ce && check_pm_time )
             previous_matches.push_back(
-              //std::make_pair<std::string, int>(ce_id, pm_time)
               previous_match( ce_id, pm_time )
             );
       }
