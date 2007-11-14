@@ -560,26 +560,26 @@ else
   fatal_error "${__job} not found or unreadable"
 fi
 
-(
-  for env in ${__environment[@]}
-  do
-    eval export $env
-  done
-
-  # user script (before taking the token, shallow-sensitive)
-  if [ -n "${__prologue}" ]; then
-    if [ -f "${__prologue}" ]; then
+# user script (before taking the token, shallow-sensitive)
+if [ -n "${__prologue}" ]; then
+  if [ -f "${__prologue}" ]; then
+    (
+      for env in ${__environment[@]}
+      do
+        eval export $env
+      done
       chmod +x "${__prologue}"
       ${__prologue} "${__prologue_arguments}"
-      prologue_status=$?
-      if [ ${prologue_status} -ne 0 ]; then
-        fatal_error "prologue failed with error ${prologue_status}"
-      fi
-    else
-      fatal_error "prologue ${__prologue} not found"
+      exit $?
+    )
+    prologue_status=$?
+    if [ $prologue_status -ne 0 ]; then
+      fatal_error "prologue failed with error ${prologue_status}"
     fi
+  else
+    fatal_error "prologue ${__prologue} not found or not a regular file"
   fi
-)
+fi
 
 if [ ${__job_type} -eq 3 ]; then # interactive jobs
   base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`} #TODO %[xdigit][xdigit] handling
@@ -819,25 +819,25 @@ fi
 
 jw_echo "job exit status = ${status}"
 
-(
-  for env in ${__environment[@]}
-  do
-    eval export $env
-  done
-
-  if [ -n "${__epilogue}" ]; then
-    if [ -f "${__epilogue}" ]; then
+if [ -n "${__epilogue}" ]; then
+  if [ -f "${__epilogue}" ]; then
+    (
+      for env in ${__environment[@]}
+      do
+        eval export $env
+      done
       chmod +x "${__epilogue}"
       ${__epilogue} "${__epilogue_arguments}"
-      epilogue_status=$?
-      if [ ${epilogue_status} -ne 0 ]; then
-        fatal_error "epilogue failed with error ${epilogue_status}"
-      fi
-    else
-      fatal_error "epilogue ${__epilogue} not found"
+      exit $?
+    )
+    epilogue_status=$?
+    if [ $epilogue_status -ne 0 ]; then
+      fatal_error "epilogue failed with error ${epilogue_status}"
     fi
+  else
+    fatal_error "epilogue ${__epilogue} not found or not a regular file"
   fi
-)
+fi
 
 # uncomment this one below if the order in the osb originally 
 # specified is not of some relevance to the user
