@@ -1,4 +1,12 @@
 Start SAM LFC test:
-1. set UI
+1. set any glite UI
 2. voms-proxy-init --voms dteam
-3. same/client/bin/same-exec LFC nodename=lxb1941.cern.ch,ctb-conf-lfc.cern.ch
+3.     same/client-ctb/bin/same-exec LFC
+   or  same/client-ctb/bin/same-exec LFC nodename=lxb1941.cern.ch,ctb-conf-lfc.cern.ch
+
+Tests use SAM global variables:
+SAME_VO
+SAME_OK
+SAME_ERROR
+
+and set LFC_HOST from input parameter nodename
