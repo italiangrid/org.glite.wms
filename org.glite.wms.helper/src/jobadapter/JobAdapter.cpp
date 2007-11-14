@@ -63,7 +63,15 @@ namespace utils = glite::wmsutils::classads;
 namespace jdl = glite::jdl;
 
 namespace {
-std::string const helper_id("JobAdapterHelper");
+
+  std::string const helper_id("JobAdapterHelper");
+
+  boost::regex blah_ce(":[0-9]+/blah-");
+  boost::regex voblah_ce(":[0-9]+/voblah-");
+  boost::regex condor_ce(":[0-9]+/condor-");
+  boost::regex nordugrid_ce(":[0-9]+/nordugrid-");
+  
+  boost::smatch ce_type_smatch;
 }
 
 namespace glite {
@@ -122,12 +130,12 @@ try {
 
   // Figure out the local host name (this should really come from
   // some common entity).
-  char   hostname[1024];
+  char hostname[1024];
   std::string local_hostname;
   
   if (gethostname(hostname, sizeof(hostname)) >= 0) {
     hostent resolved_host;
-    hostent *resolver_result=NULL;
+    hostent *resolver_result = NULL;
     int resolver_work_buffer_size = 2048;
     char* resolver_work_buffer = new char[resolver_work_buffer_size];
     int resolve_errno = ERANGE;
@@ -358,37 +366,50 @@ try {
   /* FIXME: the submit file can be adjusted accordingly.      */
   /* FIXME: Eventually, CondorG should be able to handle this */
 
-  static boost::regex expression_blahce(":[0-9]+/blah-");
-  boost::smatch       result_blahce;
   bool is_blahp_resource = false;
-  static boost::regex expression_voblahce(":[0-9]+/voblah-");
-  boost::smatch       result_voblahce;
   bool is_voblahp_resource = false;
   bool is_condor_resource = false;
+  bool is_nordugrid_resource = false;
 
-  if (boost::regex_search(globusresourcecontactstring,
-			  result_blahce,
-                          expression_blahce)) {
+  if (
+    boost::regex_search(
+      globusresourcecontactstring,
+      ce_type_smatch,
+      blah_ce
+    )
+  ) {
     is_blahp_resource = true;
-  } else if (boost::regex_search(globusresourcecontactstring,
-			  result_voblahce,
-                          expression_voblahce)) {
+  } else if (
+    boost::regex_search(
+      globusresourcecontactstring,
+      ce_type_smatch,
+      voblah_ce
+    )
+  ) {
     is_blahp_resource = true;
     is_voblahp_resource = true;
-  } else {
-    static boost::regex expression_condorce(":[0-9]+/condor-");
-    boost::smatch       result_condorce;
-
-    if (boost::regex_search(globusresourcecontactstring,
-			    result_condorce,
-                            expression_condorce)) {
-      is_condor_resource = true;
-    }
+  } else if (
+    boost::regex_search(
+      globusresourcecontactstring,
+      ce_type_smatch,
+      condor_ce
+    )
+  ) {
+    is_condor_resource = true;
+  } else if (
+    boost::regex_search(
+      globusresourcecontactstring,
+      ce_type_smatch,
+      nordugrid_ce
+    )
+  ) {
+    is_nordugrid_resource = true;
+    is_condor_resource = true;
   }
 
   std::string condor_submit_environment;
 
-  /* Mandatory */
+  // Mandatory
   jdl::set_universe(*result, "grid"); 
 
   if (!is_blahp_resource && !is_condor_resource) {
@@ -396,7 +417,11 @@ try {
     jdl::set_copy_to_spool(*result, false);
     jdl::set_transfer_executable(*result, true);
   } else {
-    jdl::set_grid_type(*result, "condor");
+    if (is_nordugrid_resource) {
+      jdl::set_grid_type(*result, "nordugrid");
+    } else {
+      jdl::set_grid_type(*result, "condor");
+    }
     // These three attributes are needed for collecting accounting logs.
     jdl::set_remote_remote_user_subject_name(*result, certificatesubject);
     jdl::set_remote_remote_edg_jobid(*result, job_id);
@@ -413,10 +438,15 @@ try {
     if (!vo.empty()) {
       jdl::set_remote_remote_virtual_organisation(*result, vo);
     }
-    if (is_condor_resource && lrmstype == "condor") {
+    if ((is_condor_resource && lrmstype == "condor") || is_nordugrid_resource)
+    {
       // condor resource, as per Nate Mueller's May 4, 2005 recipe
       jdl::set_remote_job_universe(*result, 9);
-      jdl::set_remote_job_grid_type(*result, "condor");
+      if (is_nordugrid_resource) {
+        jdl::set_remote_job_grid_type(*result, "nordugrid");
+      } else {
+        jdl::set_remote_job_grid_type(*result, "condor");
+      }
       jdl::set_remote_requirements(*result, "true");
       jdl::set_remote_remote_schedd(*result, gatekeeper_hostname);
       jdl::set_remote_remote_pool(*result, queuename);
@@ -466,16 +496,18 @@ try {
 
     std::string remote_schedd;
 
-    if (! is_voblahp_resource) {
+    if (!is_voblahp_resource) {
       std::string hostcertificatesubjectvo(local_hostname);
       hostcertificatesubjectvo.append("/");
       hostcertificatesubjectvo.append(certificatesubject);
       hostcertificatesubjectvo.append("/");
       hostcertificatesubjectvo.append(vo);
       hostcertificatesubjectvo.append(voms_fqan);
-      MD5((unsigned char *)hostcertificatesubjectvo.c_str(),
-          hostcertificatesubjectvo.length(),
-          md5_cert_hash);
+      MD5(
+        (unsigned char *)hostcertificatesubjectvo.c_str(),
+        hostcertificatesubjectvo.length(),
+        md5_cert_hash
+      );
       md5_hex_hash.setf(std::ios_base::hex, std::ios_base::basefield);
       md5_hex_hash.width(2);
       md5_hex_hash.fill('0');
@@ -513,10 +545,10 @@ try {
 
     // Compute proxy file basename: remove trailing whitespace and slashes.
     std::string userproxy_basename(userproxy);
-    char c = userproxy_basename[userproxy_basename.length()-1];
+    char c = userproxy_basename[userproxy_basename.length() - 1];
     while (c == '/' || c == ' ' || c == '\n' || c == '\r' || c == '\t') {
-      userproxy_basename.erase(userproxy_basename.length()-1);
-      c = userproxy_basename[userproxy_basename.length()-1];
+      userproxy_basename.erase(userproxy_basename.length() - 1);
+      c = userproxy_basename[userproxy_basename.length() - 1];
     }
 
     // Then remove leading dirname.
@@ -529,7 +561,9 @@ try {
 
     // Handle remotely-managed environment additions.
     // (GRAM cannot do this).
-    if (!condor_submit_environment.empty()) condor_submit_environment.append(";");
+    if (!condor_submit_environment.empty()) {
+      condor_submit_environment.append(";");
+    }
 
     condor_submit_environment.append("$$(GLITE_ENV:)");
 
@@ -553,8 +587,8 @@ try {
     std::string gatekeeper_fork(globusresourcecontactstring.substr(0, pos));
     gatekeeper_fork.append("/jobmanager-fork");
 
-    jdl::set_site_name(*result,gatekeeper_hostname);
-    jdl::set_site_gatekeeper(*result,gatekeeper_fork);
+    jdl::set_site_name(*result, gatekeeper_hostname);
+    jdl::set_site_gatekeeper(*result, gatekeeper_fork);
   } /* End of blah || condor case */
 
   jdl::set_globus_scheduler(*result, globusresourcecontactstring);
@@ -620,7 +654,7 @@ try {
     if (is_blahp_resource || is_condor_resource) {
       condor_submit_environment.append(";EDG_WL_HLR_LOCATION=");
       condor_submit_environment.append(hlrvalue);
-      jdl::set_remote_env(*result,condor_submit_environment);
+      jdl::set_remote_env(*result, condor_submit_environment);
     }
     replace(hlrvalue, "\"", "\\\"");
     std::string hlrlocation("(EDG_WL_HLR_LOCATION '" + hlrvalue + "')");
@@ -832,7 +866,7 @@ try {
   }
 	
   jdl::set_globus_rsl(*result, globusrsl);
-  
+
   jw->max_osb_size((int64_t)config.wm()->max_output_sandbox_size());
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
@@ -847,7 +881,7 @@ try {
   jw->job_id_to_filename(jobid_to_file);
   jw->broker_hostname(local_hostname);
   jw->environment(env);
-  jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
+  jw->gatekeeper_hostname(gatekeeper_hostname);
   jw->globus_resource_contact_string(globusresourcecontactstring);
   jw->set_osb_wildcards_support(false);
   if (!b_osb_dest_uri) {
@@ -992,6 +1026,15 @@ try {
     jdl::set_initial_dir(*result, output_file_path);
   }
 
+  if (is_nordugrid_resource) {
+    jdl::set_grid_resource(*result, "nordugrid " + gatekeeper_hostname);
+    jdl::set_nordugrid_rsl(
+      *result,
+      "(executable=" + jw_path_string + ")"
+      + globusrsl
+    );
+  }
+  
   // New parameter Mandatory
   // Output file path is mandatory
   std::string output(output_file_path);
