@@ -66,12 +66,11 @@ namespace {
 
   std::string const helper_id("JobAdapterHelper");
 
-  boost::regex blah_ce(":[0-9]+/blah-");
-  boost::regex voblah_ce(":[0-9]+/voblah-");
-  boost::regex condor_ce(":[0-9]+/condor-");
-  boost::regex nordugrid_ce(":[0-9]+/nordugrid-");
-  
-  boost::smatch ce_type_smatch;
+  boost::regex const blah_ce(":[0-9]+/blah-");
+  boost::regex const voblah_ce(":[0-9]+/voblah-");
+  boost::regex const condor_ce(":[0-9]+/condor-");
+  boost::regex const nordugrid_ce(":[0-9]+/nordugrid-");
+
 }
 
 namespace glite {
@@ -370,6 +369,8 @@ try {
   bool is_voblahp_resource = false;
   bool is_condor_resource = false;
   bool is_nordugrid_resource = false;
+
+  boost::smatch ce_type_smatch;
 
   if (
     boost::regex_search(
