@@ -282,7 +282,7 @@ else:
 	if len (jobs)>1:
 		em="Warning"
 
-	# Get the status for all the Job ID�
+	# Get the status for all the Job ID
 	for jobid in jobs:
 		
 		dbgMsg ("Job::getStatus" , jobid.jobid, level)
