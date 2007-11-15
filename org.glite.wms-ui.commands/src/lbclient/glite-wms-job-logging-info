@@ -269,17 +269,20 @@ else:
 	# Retrieve 
 	for jobid in jobs:
 	
-		eventArray = wmsui_api.getEvents(jobid, level)
+		try:
+			eventArray = wmsui_api.getEvents(jobid, level)
+			message += wmsui_api.printEvents(jobid, eventArray)
+		except Exception, error:
+			errMsg('Error', 'UI_GENERIC_ERROR_ON_JOB_ID', jobid.jobid, error.args[0])
 
-		message += wmsui_api.printEvents(jobid, eventArray)
+if message:
+	message = sepStart + message + sepEnd
+	wmsui_utils.print_message(outFile, message)
 
-message = sepStart + message + sepEnd
-wmsui_utils.print_message(outFile, message)
-
-if outFile:
-	message='===================== glite-job-logging-info Success =====================\n'
-	message=message + " Logging Information has been found and stored in the file:\n"
-	message=message + " "+ outFile +"\n"
-	message=message +'==========================================================================\n'
-	wmsui_utils.print_message(wmsui_utils.info.logFile , message)
+	if outFile:
+		message='===================== glite-job-logging-info Success =====================\n'
+		message=message + " Logging Information has been found and stored in the file:\n"
+		message=message + " "+ outFile +"\n"
+		message=message +'==========================================================================\n'
+		wmsui_utils.print_message(wmsui_utils.info.logFile , message)
 exit(sys_exit)
