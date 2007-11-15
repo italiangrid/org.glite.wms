@@ -68,6 +68,8 @@ UI_NO_JOB_FOUND = Unable to find any job matching the query
 UI_NO_JOBID_CANCEL = Unable to cancel any job from the following NS:\
 %
 UI_CANCEL_FAIL= Unable to cancel any job
+UI_GENERIC_ERROR_ON_JOB_ID=Error retrieving information on JobID "%". \
+Error description: %
 
 #Commands Arguments
 UI_OPT_NOT_ALLOWED = Option "%" not allowed (%)
