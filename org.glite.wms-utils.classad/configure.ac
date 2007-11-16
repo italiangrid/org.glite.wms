@@ -70,10 +70,7 @@ AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
-have_classads=no
-
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
+AC_LIBCLASSAD([], , [AC_MSG_ERROR([could not find libclassad])])
 
 AC_GLITE
 
