@@ -26,7 +26,7 @@ namespace utils = glite::wmsutils::classads;
 namespace glite {
 namespace wms {
 namespace classad_plugin {
-namespace gangmatch {
+namespace fqan {
 
 namespace {
 bool fqancomparator(std::string const& fqan, std::string const& acl)
@@ -149,7 +149,7 @@ testMemberEx(
   return eval_successful;
 }
 
-} // gangmatch      namespace closure
+} // fqan      namespace closure
 } // classad_plugin namespace closure
 } // wms            namespace closure
 } // glite          namespace closure
