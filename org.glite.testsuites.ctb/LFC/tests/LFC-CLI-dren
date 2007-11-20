@@ -25,6 +25,7 @@ function clear (){
 }
 
 source $SAME_SENSOR_HOME/tests/config_file
+
 echo $SAME_OK
 echo $SAME_VO
 
@@ -33,7 +34,7 @@ rm -rf $lfc_stderr
 
 date
 echo "<br>"
-echo "Test LFC CLI rename diectory. lfc-rename <olddirname> <newdirname"
+echo "Test LFC CLI rename diectory. lfc-rename <olddirname> <newdirname>"
 echo "<br>"
 echo "VO=$vo_name"
 echo "<br>"
@@ -83,10 +84,30 @@ if [ $? == 1 ]; then
    exit $SAME_ERROR
 fi
 
-clear $newDname
+#clear $newDname
 echo "OK"
 
-echo "2. SCENARIO: Rename nonexisting directory: $main_dir"
+echo "2. Rename by using LFC_HOME"
+
+export LFC_HOME=$main_dir
+#lfc-ls $main_dir
+newdir="newdirname"
+lfc-rename $newDn $newdir
+lfc-ls $main_dir > $lfc_tmp
+#cat $lfc_tmp 
+grep $newdir $lfc_tmp  > /dev/null
+
+if [ $? == 1 ]; then 
+   echo "Non correct lfc-rename result"
+   echo "Test is failed"
+   clear $main_dir
+   exit $SAME_ERROR
+fi
+clear $main_dir
+echo "OK"
+
+
+echo "3. SCENARIO: Rename nonexisting directory: $rdon"
 echo "<br>"
 
 lfc-rename $rdon $newDname   2> $lfc_stderr
@@ -100,8 +121,10 @@ if [ $? == 1 ]; then
    clear $main_dir
    exit $SAME_ERROR
 fi
-
 echo "OK"
+
+
+
 
 echo
 echo "Cleaning tasks"
