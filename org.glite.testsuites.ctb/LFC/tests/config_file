@@ -1,0 +1,12 @@
+#!/bin/bash
+export vo_name=$SAME_VO
+#export SHORT=0 		# Check all access (pointed in var MODE)
+export SHORT=1		# Check short access: 000, 777
+#export MODE=8		# Check all var acesses: 000 - 777, 512 variants . Running very long time (1 hour)
+export MODE=4		# Check acesss: 000 - 222 (--- -wx-wx-wx )
+export DMAX=5		# check deletion subdirectories (DMAX chaines)
+
+#--------- temporary files ---------------
+export lfc_tmp=$SAME_SENSOR_WORK/nodes/$nodeName/lfc_tmp
+export lfc_stderr=$SAME_SENSOR_WORK/nodes/$nodeName/lfc_stderr
+export tempo=$SAME_SENSOR_WORK/nodes/$nodeName/lfc_tempo

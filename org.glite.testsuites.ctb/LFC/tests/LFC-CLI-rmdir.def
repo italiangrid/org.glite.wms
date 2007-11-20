@@ -1,0 +1,4 @@
+testName: LFC-CLI-rmdir
+testAbbr: rmdir
+testTitle: delete LFC directory in the name server (lfc-rm -r <dir>) 
+EOT
