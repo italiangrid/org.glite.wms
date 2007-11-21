@@ -47,7 +47,7 @@ function checkMode () {
     clear $cdir
 }
 source $SAME_SENSOR_HOME/tests/config_file
-main_dir="/grid/$vo_name/$LFC_HOST/test-mkdir"
+main_dir="$LFCDIR/test-mkdir"
 
 rm -rf $lfc_tmp
 rm -rf $lfc_stderr

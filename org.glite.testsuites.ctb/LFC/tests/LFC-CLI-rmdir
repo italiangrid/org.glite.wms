@@ -40,7 +40,7 @@ echo "<br>"
 echo "<br>"
 
 
-main_dir="/grid/$vo_name/$LFC_HOST/rmdir"
+main_dir="$LFCDIR/rmdir"
 
 echo "Scenario: Direcrory exists"
 echo "1. Create main directory: $main_dir"

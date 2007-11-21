@@ -46,7 +46,7 @@ function checkMode () {
 }
                                                                                                     
 source $SAME_SENSOR_HOME/tests/config_file
-main_dir="/grid/$vo_name/$LFC_HOST/test-chdir"
+main_dir="$LFCDIR/test-chdir"
 
 rm -rf $lfc_tmp
 rm -rf $lfc_stderr
@@ -56,6 +56,7 @@ echo "<br>"
 echo "Test LFC CLI chmod for directory"
 echo "<br>"
 echo "VO=$vo_name"
+echo "LFCDIR=$LFCDIR"
 echo "<br>"
 echo "<br>"
 

@@ -52,18 +52,19 @@ function checkMode () {
 }
                                                                                                     
 source $SAME_SENSOR_HOME/tests/config_file
-FILE=$SAME_SENSOR_HOME/tests/config_file
-main_dir="/grid/$vo_name/$LFC_HOST/test-chfile"
+main_dir="$LFCDIR/test-chfile"
 
 rm -rf $lfc_tmp
 rm -rf $lfc_stderr
 
 date
 echo "<br>"
-echo "Test LFC CLI chmod for directory"
+echo "Test LFC CLI chmod for files"
 echo "<br>"
 echo "VO=$vo_name"
 echo "SE=$SE"
+echo "File=$FILE"
+echo "LCG_GFAL_INFOSYS=$LCG_GFAL_INFOSYS" 
 echo "<br>"
 echo "<br>"
 
@@ -78,10 +79,9 @@ lfc-ls -l $main_dir
 clear $main_dir
 echo "OK"
 
-
 echo
 echo "1. Change access mode for nonexist directory/file"
-#lfc-chmod 777 $main_dir
+
 lfc-chmod 777 $main_dir 2> $lfc_tmp
 grep "No such file or directory" $lfc_tmp > /dev/null
 if [ $? == 1 ]; then 
@@ -99,7 +99,7 @@ echo "SHORT=$SHORT, MODE=$MODE"
 
 echo "Create main directory: $main_dir"
 lfc-mkdir -p $main_dir
-#SE="lxb1921.cern.ch"    #"lcg13.sinp.msu.ru"
+
 LFN="$main_dir/test_file"
 echo "SE=$SE, LFN=$LFN"
 
@@ -154,7 +154,6 @@ echo "Check $main_dir:"
 lfc-ls $main_dir
 echo "Delete GUID and lfn"
 delGuid
-#lcg-del -a $fguid
 echo "Again check $main_dir:"
 lfc-ls $main_dir
 
@@ -164,7 +163,6 @@ clear $main_dir
 echo "Check $main_dir:"
 lfc-ls $main_dir
 
-#lfc-chmod 777 $cdir
 clear $main_dir
 rm -rf $lfc_tmp
 rm -rf $lfc_stderr
