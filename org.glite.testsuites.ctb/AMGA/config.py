@@ -43,5 +43,5 @@ class Config:
     def samPrintINFO(self,text) :
         print '<font color="blue"> INFO: </font>' , text , '\n'
         
-    def samNewLine(self,) :
+    def samNewLine(self) :
         print '<br>'

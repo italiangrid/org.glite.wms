@@ -2,6 +2,7 @@
 import sys
 import commands
 import re
+import os
 sys.path.append('../')
 from config import Config
 

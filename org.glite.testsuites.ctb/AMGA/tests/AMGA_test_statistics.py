@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import socket
 import sys
+import os
 sys.path.append('../')
 from config import Config
 

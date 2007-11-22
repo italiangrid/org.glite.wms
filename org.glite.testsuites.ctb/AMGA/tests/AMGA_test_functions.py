@@ -8,22 +8,22 @@ from config import Config
 SAME = Config()
 
 try:
-    USER_PROXY_CERTIFICATE = os.environ['X509_USER_PROXY']
+        USER_PROXY_CERTIFICATE = os.environ['X509_USER_PROXY']
 except:
-    print "Cannot find a proper certificate, is X509_USER_PROXY variable set?"
-    sys.exit(SAME.SAME_ERROR)
+        print "Cannot find a proper certificate, is X509_USER_PROXY variable set?"
+        os._exit(SAME.SAME_ERROR)
     
 AMGA_HOST = sys.argv[1]
 
 print "Testing several AMGA functions "
 try:
-    sys.path.append("../lib/amga.client.api.python")
-    import mdstandalone
-    import mdclient
-    import mdparser
-    import mdinterface
+        sys.path.append("../lib/amga.client.api.python")
+        import mdstandalone
+        import mdclient
+        import mdparser
+        import mdinterface
 except ImportError, e:
-    print "No mdclient in ", sys.path
+        print "No mdclient in ", sys.path
 
 client = mdclient.MDClient(AMGA_HOST, 8822, 'test_user')
 client.requireSSL(USER_PROXY_CERTIFICATE, USER_PROXY_CERTIFICATE)
@@ -91,7 +91,7 @@ def delete_entries():
                                            
 
 try:
-        
+  
     print "<pre>"
     print "Deleting old entries..."
     delete_entries()
@@ -268,11 +268,11 @@ try:
     SAME.samPrintOK("All functions executed properly")
     SAME.samNewLine()
     SAME.samPrintPASSED("AMGA functional tests passed")
-    sys.exit(SAME.SAME_OK)
+    os._exit(SAME.SAME_OK)
     
     
 except Exception, ex:
     print "</pre>"
     SAME.samPrintERROR(AMGA_HOST + ': encountered errors.\n')
     print "<pre> ", ex, "</pre>" 
-    sys.exit(SAME.SAME_ERROR)
+    os._exit(SAME.SAME_ERROR)
