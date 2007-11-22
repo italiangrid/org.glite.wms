@@ -120,7 +120,7 @@ if [ $? == 1 ]; then
 fi
 echo "OK"
 
-
+SHORT=0
 if [ $SHORT == 1 ]; then
     echo "Short mode 000, 777"
     checkMode 0 0 0 $LFN

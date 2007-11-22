@@ -25,3 +25,10 @@ LFC-addreplicax
 LFC-getreplicas
 LFC-addreplica
 LFC-getreplica
+LFC-CLI-dchmod
+LFC-CLI-mkdir
+LFC-CLI-rmdir
+LFC-CLI-dren
+LFC-CLI-fren
+LFC-CLI-fchmod
+LFC-CLI-rmfile

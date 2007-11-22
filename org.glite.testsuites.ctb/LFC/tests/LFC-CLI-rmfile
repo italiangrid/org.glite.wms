@@ -1,7 +1,7 @@
 #!/bin/bash
 # Date: 09/11/2007                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
-# Description of the test: Delete  LFC subdirectories for VO                                #
+# Description of the test: Delete  LFC file for VO                                          #
 #                                                                                           #
 # Input Parameters:                                                                         #
 #       - VO name                                                                           #
@@ -18,7 +18,13 @@
 echo "<pre>"
 export LFC_HOST=$1
 echo  $LFC_HOST
+GUID=""
 
+function delGuid () {
+    echo "Delete $GUID"
+    lcg-del -a $GUID
+}
+        
 function clear (){
    lfc-rm -r -f $1
 
@@ -33,87 +39,103 @@ rm -rf $lfc_stderr
 
 date
 echo "<br>"
-echo "Test LFC CLI remove diectory. lfc-rm -r <dirname>"
+echo "Test LFC CLI remove file lfc-rm <LFN>"
 echo "<br>"
 echo "VO=$vo_name"
+echo "FILE=$FILE"
+echo "SE=$SE"
+echo "LCG_GFAL_INFOSYS=$LCG_GFAL_INFOSYS"
+
 echo "<br>"
 echo "<br>"
 
 
 main_dir="$LFCDIR/rmfile"
 
-echo "Scenario: Direcrory exists"
-echo "1. Create main directory: $main_dir"
 echo "<br>"
-lfc-mkdir -p $main_dir
-
-rdon="$main_dir/rdonly"
-echo "2. Remove 'read only' directory"
-lfc-mkdir -m 400 $rdon
-lfc-rm -f -r $rdon 2> $lfc_stderr
-grep "Permission denied" $lfc_stderr > /dev/null
-
-if [ $? == 1 ]; then 
-   echo "Non correct lfc-rm result"
-   echo "Test is failed"
-   lfc-chmod 777 $rdon
-   clear $main_dir
-   exit $SAME_ERROR
-fi
-lfc-chmod 777 $rdon
-clear $rdon
+echo "Strong check if directory nonexists"
+echo "List of nonexist directory"
+lfc-ls -l $main_dir
+clear $main_dir
 echo "OK"
 
 echo
-echo "3.  Create $DMAX subdirectories"
-echo "<br>"
-counter=0
-dir=$main_dir
-pdir=$main_dir
+echo "2. Remove ordinary file"
 
-while [ $counter -lt $DMAX ]; do
-  subdir="subdir-$counter"
-  dir=$dir/$subdir
-  echo "new dir:$dir"
-  lfc-mkdir $dir
-  lfc-ls $pdir > $lfc_tmp
-  grep $subdir $lfc_tmp > /dev/null
-  
-  if [ $? == 1 ]; then 
+echo "2.1. Create main directory: $main_dir"
+lfc-mkdir -p $main_dir
+fname="test_file"
+LFN="$main_dir/$fname"
+echo "SE=$SE, LFN=$LFN, file=$FILE"
+
+echo "2.2. Create guid and lfn:$LFN"
+
+fguid=`lcg-cr -l $LFN -d $SE --vo $vo_name file:$FILE`
+GUID=$fguid
+echo $fguid
+echo $fguid > $lfc_tmp
+
+grep "guid:" $lfc_tmp > /dev/null
+if [ $? == 1 ]; then
+    echo "Noncorrect create GUID, exit"
+    cat $lfc_tmp
     echo "Test is failed"
     clear $main_dir
     exit $SAME_ERROR
-  fi
-  
-  pdir=$dir
-  let counter=counter+1
-done
+fi
+echo "OK"
+                    
+echo "2.3. Remove 'read only' file"
+echo "2.3.1. Change access filr mode to 400"
+lfc-chmod 400 $LFN
+lfc-rm -f $LFN 2> $lfc_stderr
+cat $lfc_stderr
+grep "File exists" $lfc_stderr > /dev/null    # Because GUID exists!!!
 
-echo "4. Remove all subdirectories, use -R option"
-lfc-rm -R  -f $main_dir  
-echo "5. Check deletion result"
-
-lfc-ls $main_dir 2> $lfc_stderr
-grep "No such file or directory" $lfc_stderr > /dev/null
- 
 if [ $? == 1 ]; then 
+   echo "Non correct lfc-rm result"
+    cat $lfc_stderr
+   echo "Test is failed"
+   lfc-chmod 777 $LFN
+   delGuid
+   clear $main_dir
+   exit $SAME_ERROR
+fi                    
+echo "Restore file protection to 777"
+lfc-chmod 777 $LFN
+
+                    
+echo "Remove created LFN and guid"
+echo "File list before:"
+lfc-ls $main_dir
+echo "Remove LFN without removing GUID"
+
+lfc-rm $LFN 2> $lfc_stderr
+cat $lfc_stderr
+
+grep "File exists"  $lfc_stderr  > /dev/null
+if [ $? == 1 ]; then
+    echo "Non correct lfc-rename result"
     echo "Test is failed"
+    delGuid
     clear $main_dir
     exit $SAME_ERROR
-fi 
+fi
 echo "OK"
 
-echo "2. SCENARIO: Delete nonexisting directory: $main_dir"
+
+echo "2. SCENARIO: Delete nonexisting file: $main_dir/nofile"
 echo "<br>"
 
-lfc-rm -r -f $main_dir  2> $lfc_stderr
+lfc-rm  $main_dir/nofile  2> $lfc_stderr
 cat $lfc_stderr
 grep "No such file or directory" $lfc_stderr > /dev/null
 
-if [ $? == 0 ]; then 
+if [ $? == 1 ]; then 
    echo "Noncorrect diagnose, exit"
    cat $lfc_stderr
    echo "Test is failed"
+   delGuid
    clear $main_dir
    exit $SAME_ERROR
 fi
@@ -123,6 +145,7 @@ echo "OK"
 echo
 echo "Cleaning tasks"
 echo "<br>"
+delGuid
 clear $main_dir
 rm -rf $lfc_tmp
 rm -rf $lfc_stderr

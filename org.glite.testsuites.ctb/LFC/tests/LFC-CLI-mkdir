@@ -181,9 +181,12 @@ echo "2.2.  Test check up 512 (000-777) variants of access mode for new subdirec
 echo "SHORT=$SHORT, MODE=$MODE"
 
 if [ $SHORT == 1 ]; then
-    echo "Short mode: 000, 777"
+    echo "Short mode: 000, 222, 333. 666, 777"
     cdir=$main_dir/short
     checkMode 0 0 0 $cdir
+    checkMode 2 2 2 $cdir
+    checkMode 3 3 3 $cdir
+    checkMode 6 6 6 $cdir
     checkMode 7 7 7 $cdir
 else
     echo "Long mode: all mode 000-nnn, n<$MODE"

@@ -29,8 +29,9 @@ else
         if [ $ret == $SAME_OK ]; then
            retcode="OK"
            #echo "Test is OK"
-        #else
-        #   echo "Test is failed"
+        else
+           echo "Test is failed"
+           cat $test.result
         fi
         echo "$count	check-LFC: $test,	nodename: $nodeName,	VO: $SAME_VO"	==$retcode
         #echo "<<<<<<<<<<<<<<<<<<<<<"

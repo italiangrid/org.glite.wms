@@ -102,6 +102,9 @@ lfc-mkdir $cdir
 if [ $SHORT == 1 ]; then
     echo "Short mode: 000, 777"
     checkMode 0 0 0 $cdir
+    checkMode 2 2 2 $cdir
+    checkMode 3 3 3 $cdir
+    checkMode 6 6 6 $cdir
     checkMode 7 7 7 $cdir
 else
     echo "Long mode: all mode 000-nnn, n<$MODE"
