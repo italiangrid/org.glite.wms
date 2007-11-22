@@ -91,13 +91,13 @@ def delete_entries():
                                            
 
 try:
-    
+        
     print "<pre>"
     print "Deleting old entries..."
     delete_entries()
     print"OK"
 
-    print "Creating directory /pytest ..."
+    print "Creating directory /test/pytest ..."
     client.createDir("/test/pytest")
     print "OK"
 
@@ -143,7 +143,7 @@ try:
     print "OK"
 
 
-    print "Creating directory /pytest/testdir ..."
+    print "Creating directory /test/pytest/testdir ..."
     client.createDir("/test/pytest/testdir")    
     print "OK"
     
@@ -155,7 +155,7 @@ try:
         print "->",file, type[0]
     print "OK"
     
-    print "Creating directory /pylock ..."
+    print "Creating directory /test/pylock ..."
     client.createDir("/test/pylock")    
     print "OK"
     
@@ -200,7 +200,7 @@ try:
     client.setAttr('/test/pytest/t?', ['events'], [42])
     print "OK"
 
-    print "Removing directory /pylock/testdir ..."
+    print "Removing directory /test/pylock/testdir ..."
     client.removeDir("/test/pytest/testdir")
     print "OK"
 
@@ -211,11 +211,11 @@ try:
         print "->",file, values 
     print "OK"
     
-    print "Removing entries: rm /pytest/*"
+    print "Removing entries: rm /test/pytest/*"
     client.rm("/test/pytest/*")
     print "OK"
 
-    print "Removing entries: rm /pylock/*"
+    print "Removing entries: rm /test/pylock/*"
     client.rm("/test/pylock/*")
     print "OK"
     
@@ -255,11 +255,11 @@ try:
     client.sequenceRemove("/test/pytest/seq")    
     print "OK"
 
-    print "Removing directory /pytest..."
+    print "Removing directory /test/pytest..."
     client.removeDir("/test/pytest")
     print "OK"
 
-    print "Removing directory /pylock..."
+    print "Removing directory /test/pylock..."
     client.removeDir("/test/pylock")
     print "OK"
     
@@ -276,5 +276,3 @@ except Exception, ex:
     SAME.samPrintERROR(AMGA_HOST + ': encountered errors.\n')
     print "<pre> ", ex, "</pre>" 
     sys.exit(SAME.SAME_ERROR)
-                        
-                        
