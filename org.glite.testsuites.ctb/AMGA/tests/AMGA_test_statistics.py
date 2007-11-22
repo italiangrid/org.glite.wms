@@ -29,7 +29,7 @@ try:
         result = result + r
         if not r:
             break
-
+        
     print "Server response:"
     print "<pre>"
     print result
@@ -37,9 +37,8 @@ try:
     SAME.samPrintOK("Got the Server Statistics")
     SAME.samNewLine()
     SAME.samPrintPASSED("AMGA statistics test")
-    sys.exit(SAME.SAME_OK)
-    
+    os._exit(SAME.SAME_OK)
 
 except Exception, e:
     SAME.samPrintERROR(e)
-    sys.exit(SAME.SAME_ERROR)
+    os._exit(SAME.SAME_ERROR)

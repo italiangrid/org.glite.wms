@@ -24,9 +24,9 @@ if host_found :
     print '</pre>'
     SAME.samPrintOK("Host responded...")
     SAME.samNewLine()
-    sys.exit(SAME.SAME_OK)
+    os._exit(SAME.SAME_OK)
 else :
     SAME.samPrintERROR(AMGA_HOST + " is not accessible.")
     SAME.samPrintFAILED("AMGA Ping test ")
     print "</pre>\n"
-    sys.exit(SAME.SAME_ERROR)
+    os._exit(SAME.SAME_ERROR)
