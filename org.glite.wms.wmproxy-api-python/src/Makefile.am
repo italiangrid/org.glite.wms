@@ -10,8 +10,10 @@
 wmppyapilibdir = $(libdir)/python
 wmppyapilib_SCRIPTS=WMPClient.py \
 	wmproxymethods.py \
+	WMPConnection.py \
 	WMPClient.pyc \
-	wmproxymethods.pyc
+	wmproxymethods.pyc \
+	WMPConnection.pyc
 
 WMPClient.pyc:
 	/bin/touch WMPClient.pyc
@@ -19,8 +21,12 @@ WMPClient.pyc:
 wmproxymethods.pyc:
 	/bin/touch wmproxymethods.pyc
 
+WMPConnection.pyc:
+	/bin/touch WMPConnection.pyc
+
 CLEANFILES = WMPClient.pyc \
-	wmproxymethods.pyc
+	wmproxymethods.pyc \
+	WMPConnection.pyc
 
 MAINTAINERCLEANFILES = Makefile.in
 
