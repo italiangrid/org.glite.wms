@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from gadfly.bindings import integer
 import os
 
 class Config:
@@ -13,13 +14,13 @@ class Config:
     
     def __init__(self):
         try:
-            self.SAME_OK          = os.environ['SAME_OK'] 
-            self.SAME_ERROR       = os.environ['SAME_ERROR']
-            self.SAME_INFO        = os.environ['SAME_INFO']
-            self.SAME_NOTICE      = os.environ['SAME_NOTICE']
-            self.SAME_WARNING     = os.environ['SAME_WARNING']
-            self.SAME_CRITICAL    = os.environ['SAME_CRITICAL']
-            self.SAME_MAINTENANCE = os.environ['SAME_MAINTENANCE']
+            self.SAME_OK          = int(os.environ['SAME_OK']) 
+            self.SAME_ERROR       = int(os.environ['SAME_ERROR'])
+            self.SAME_INFO        = int(os.environ['SAME_INFO'])
+            self.SAME_NOTICE      = int(os.environ['SAME_NOTICE'])
+            self.SAME_WARNING     = int(os.environ['SAME_WARNING'])
+            self.SAME_CRITICAL    = int(os.environ['SAME_CRITICAL'])
+            self.SAME_MAINTENANCE = int(os.environ['SAME_MAINTENANCE'])
         except:
             print self.samPrintWARNING("Cannot find SAME_* env variables")
             self.samNewLine()

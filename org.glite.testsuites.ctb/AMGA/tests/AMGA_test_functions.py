@@ -10,8 +10,9 @@ SAME = Config()
 try:
     USER_PROXY_CERTIFICATE = os.environ['X509_USER_PROXY']
 except:
-    USER_PROXY_CERTIFICATE="/home/asterios/x509up_u30025"
-
+    print "Cannot find a proper certificate, is X509_USER_PROXY variable set?"
+    sys.exit(SAME.SAME_ERROR)
+    
 AMGA_HOST = sys.argv[1]
 
 print "Testing several AMGA functions "
@@ -33,7 +34,7 @@ def delete_entries():
     could_not_delete = 0
     
     try:
-        client.removeDir("/test/pytest/testdir") 
+        client.removeDir("/test/pytest/testdir")  
     except:
         could_not_delete += 1 
     
@@ -87,20 +88,14 @@ def delete_entries():
         client.removeDir("/test/pylock")
     except:
         could_not_delete += 1 
-    
-    #try:
-    #    client.removeDir("/test/")
-    #except:
-    #    could_not_delete += 1 
-    
-    if could_not_delete != 11:
-        SAME.samPrintERROR("Could not \"clean\" the /test/ folder")                                        
+                                           
 
 try:
     
     print "<pre>"
-    
+    print "Deleting old entries..."
     delete_entries()
+    print"OK"
 
     print "Creating directory /pytest ..."
     client.createDir("/test/pytest")

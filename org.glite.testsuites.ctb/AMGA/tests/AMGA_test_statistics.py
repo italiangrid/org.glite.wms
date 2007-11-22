@@ -38,6 +38,7 @@ try:
     SAME.samNewLine()
     SAME.samPrintPASSED("AMGA statistics test")
     sys.exit(SAME.SAME_OK)
+    
 
 except Exception, e:
     SAME.samPrintERROR(e)

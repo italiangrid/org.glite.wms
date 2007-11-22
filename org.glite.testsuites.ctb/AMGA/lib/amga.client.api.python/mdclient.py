@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id$sh
 #
 import socket
 import mdinterface
@@ -10,7 +10,7 @@ DEBUG = False
 
 try:
     import tlslite
-    USE_TLSLITE = True
+    USE_TLSLITE = False
     from tlslite.api import *
     if DEBUG: print "Using tlslite"
 except ImportError, e:
