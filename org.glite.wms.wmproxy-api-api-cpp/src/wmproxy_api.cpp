@@ -287,7 +287,7 @@ void setSoapConfiguration(WMProxy &wmp,ConfigContext *cfs){
 	soap_init(wmp.soap);
 	// initialise timeout settings
 	setSoapTimeout(wmp.soap, cfs->soap_timeout);
- 	const char *proxy = getProxyFile(cfs) ;
+	const char *proxy = getProxyFile(cfs) ;
 	const char *trusted = getTrustedCert(cfs) ;
 	unsigned short flag ;
 	//setting the authentication flag for the ssl client context
@@ -326,19 +326,28 @@ Updates configuration properties
 ******************************************************************/
 void grstSoapAuthentication(DelegationSoapBinding &grst,ConfigContext *cfs){
 	grst.endpoint = (cfs->endpoint).c_str();
-	const char *proxy = getProxyFile(cfs) ;
-	const char *trusted = getTrustedCert(cfs) ;
 	// initialise timeout settings
 	setSoapTimeout(grst.soap, cfs->soap_timeout);
+	const char *proxy = getProxyFile(cfs) ;
+	const char *trusted = getTrustedCert(cfs) ;
+	unsigned short flag ;
+	//setting the authentication flag for the ssl client context
+	if ( cfs->server_authentication ) {
+		flag = SOAP_SSL_DEFAULT ;
+	} else {
+		flag = SOAP_SSL_NO_AUTHENTICATION ;
+	}
 	if ( proxy ){
 		if (trusted){
+			// Perform ssl authentication with server
 			if (soap_ssl_client_context(grst.soap,
-				SOAP_SSL_NO_AUTHENTICATION,
-				proxy, /* keyfile: required only when client must authenticate to server */
-				"", /* password to read the key file */
-				NULL, /* optional cacert file to store trusted certificates (needed to verify server) */
-				trusted, /* optional capath to direcoty with trusted certificates */
-				NULL /* if randfile!=NULL: use a file with random data to seed randomness */
+				flag,
+				proxy,// keyfile: required only when client must authenticate to server
+				"", // password to read the key file
+				NULL, // optional cacert file to store trusted certificates (needed to verify server)
+				trusted,
+				// if randfile!=NULL: use a file with random data to seed randomness
+				NULL
 			))grstSoapErrorMng(grst);
 		} else {
 			throw *createWmpException (new ProxyFileException ,
