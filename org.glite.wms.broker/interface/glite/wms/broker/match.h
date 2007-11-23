@@ -64,6 +64,15 @@ struct previous_match
   previous_match( std::string ce_id, time_t t )
     : id(ce_id), timestamp(t)
   {}
+
+  struct less_than
+  {
+    bool operator()(previous_match const & a, previous_match const &  b) const
+    {
+      return a.id < b.id;
+    }
+  };
+
 };
 
 void
