@@ -1,19 +1,28 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
-# get information about a LFC file or directory in the name server (lfc_statr) 
+# get information about a LFC file or directory in the name server (lfc_statr)
+
 
 import os, lfc, sys, commands
-from testClass import _test
+from testClass import _test, _ntest
 
-global testHome, lfc_vo 
+global testHome,lfc_vo
 
 class test_existing_replica(_test):
     def info(self):
 	return "Test existing replica: "
     def prepare(self):
-        self.sfn="sfn://test-se.cern.ch" + lfc_vo + "/hary/lfc_statr_test"
-        self.guid=commands.getoutput('uuidgen').split('/n')[0]
         self.name=lfc_vo + "/lfc_statr_test"
+        self.sfn="sfn://test-se.cern.ch/" + lfc_vo + "/hary/lfc_statr_test"
+
+        statg = lfc.lfc_filestatg()
+        if not lfc.lfc_statg(self.name,"",statg):
+            ret, list = lfc.lfc_getreplicas([statg.guid], "")
+            for i in xrange(0,len(list)):
+                lfc.lfc_delreplica(statg.guid, None, list[i].sfn)
+            lfc.lfc_unlink(self.name)
+
+        self.guid=commands.getoutput('uuidgen').split('/n')[0]
         lfc.lfc_creatg(self.name, self.guid, 0664)
         lfc.lfc_addreplica(self.guid, None, os.getenv("LFC_HOST"), self.sfn, '-', 'D', "", "")
     def clean(self):
@@ -45,26 +54,18 @@ class test_existing_replica(_test):
         (test, testRetVal) = testVal
         retval = True
         if (retRetVal == testRetVal):
-            retval = retval & ( test.nlink == ret.nlink )
-	    retval = retval & ( test.filesize == ret.filesize )
-            retval = retval & ( test.fileclass == ret.fileclass )
-            retval = retval & ( test.status == ret.status )
             retval = retval & ( test.guid == ret.guid )
-	    retval = retval & ( test.csumtype == ret.csumtype )
-#	    retval = retval & ( test.csumvalue == ret.csumvalue )
         else:
             retval = False
         return retval
 
 
-class test_nonexisting_replica(_test):
-    def __init__(self):
-        self.retVal = -1
+class test_nonexisting_replica(_ntest):
     def info(self):
 	return "Test nonexisting replica: "
     def test(self):
         statg=lfc.lfc_filestatg()
-        ret=lfc.lfc_statr("sfn://test-se.cern.ch" + lfc_vo + "/hary/lfc_statr_test1", statg)
+        ret=lfc.lfc_statr("sfn://test-se.cern.ch/" + lfc_vo + "/hary/lfc_statr_test1", statg)
         return (statg,ret)
     def ret(self):
         retval=lfc.lfc_filestatg()
@@ -87,9 +88,8 @@ class test_nonexisting_replica(_test):
     def compare(self, testVal, retVal):
         (ret, retRetVal) = retVal
         (test, testRetVal) = testVal
-        retval = True
         if (retRetVal == testRetVal):
-            retval = retval & ( test.nlink == ret.nlink )
+            retval = True
         else:
             retval = False
         return retval
@@ -114,6 +114,11 @@ class lfc_statr_test:
                 print "%-60s[FAILED]" % testInstance.info()
         return retVal
 
+
+#os.environ['LFC_HOME'] = 'lxb1941.cern.ch:/grid/dteam'
+#os.environ['LFC_HOST'] = 'lxb1941.cern.ch'
+#testHome = "python_lfc_test"
+#lfc_statr_test().run()
 
 #os.environ['LFC_HOME'] = 'lxb1941.cern.ch:/grid/dteam'
 #os.environ['LFC_HOST'] = 'lxb1941.cern.ch'
@@ -150,4 +155,3 @@ if ( ret == True ):
 else:
     print "Test is failure"
     sys.exit(same_err)
-                        

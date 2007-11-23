@@ -2,7 +2,7 @@
 # The test has been developped by Robert Harakaly and changed for SAM by Victor Galaktionov
 # set last access time for a regular file to the current time (lfc_setatime) 
  
-import os, lfc, sys, commands
+import os, lfc, sys, commands, time
 from testClass import _test, _ntest
 
 global testHome,lfc_vo 
@@ -16,6 +16,7 @@ class test_setatime_ok(_test):
         ret = lfc.lfc_creatg(self.name,guid,0664)
         self.start=lfc.lfc_filestat()
         lfc.lfc_stat(self.name, self.start)
+        time.sleep(1)
         
     def clean(self):
         lfc.lfc_unlink(self.name)
