@@ -17,10 +17,12 @@
 #include "storage_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wmsutils/classads/classad_utils.h"
-#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wms/common/logger/logging.h"
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/wms/ism/ism.h"
+
+#include <boost/algorithm/string/predicate.hpp>
 
 namespace jdl = glite::jdl;
 
@@ -97,14 +99,11 @@ public:
 
     for( ; it != e; ++it) {
 
-      if (ism::is_entry_void(*it)) continue;
-
-      boost::shared_ptr<classad::ClassAd> ce_ad_ptr =
-        boost::tuples::get<ism::Ad>(*it);
+      boost::shared_ptr<classad::ClassAd> ce_ad_ptr = it->ad;
 
       classad::ClassAd& ce_ad(*ce_ad_ptr);
 
-      std::string const& ism_id(boost::tuples::get<ism::Id>(*it));
+      std::string const& ism_id(it->id);
 
       double rank;
       switch (match_and_rank(&ce_ad, jdl_ptr, rank)) {
@@ -126,17 +125,17 @@ public:
     bool has_jobid = false;
     std::string const job_id(jdl::get_edg_jobid(*jdl_ptr, has_jobid));
     if (has_jobid) {
-      Info(
+      GLITE_LOG_ACCESS_INFO<<
         "MM for job: " << job_id
         << " (" << matches->size() << '/' << slice_size << '/' << rank_failures
         << " [" << t_lock << ", " << t.elapsed() << "] )"
-      );
+      ;
     } else {
-      Info(
+      GLITE_LOG_ACCESS_INFO<<
         "MM for listmatch ("
         << matches->size() << '/' << slice_size << '/' << rank_failures
         << " [" << t_lock << ", " << t.elapsed() << "] )"
-      );
+      ;
     }
 
     return matches;
@@ -167,20 +166,15 @@ public:
 
     for( ; it != e; ++it) {
 
-      if (ism::is_entry_void(*it)) {
-        continue;
-      }
-
       if (!pred(*it)) {
         continue;
       }
 
-      boost::shared_ptr<classad::ClassAd> ce_ad_ptr =
-        boost::tuples::get<ism::Ad>(*it);
+      boost::shared_ptr<classad::ClassAd> ce_ad_ptr = it->ad;
 
       classad::ClassAd ce_ad(*ce_ad_ptr);
 
-      std::string const& ism_id(boost::tuples::get<ism::Id>(*it));
+      std::string const& ism_id(it->id);
 
       double rank;
       switch (match_and_rank(&ce_ad, jdl_ptr, rank)) {
@@ -201,44 +195,54 @@ public:
   }
 };
 
-struct already_matched
-{
+struct pm_equal_to_match{
 
-  struct in{
-    std::string str;
-    in(const std::string& s)
-      : str(s)
-    {}
-    bool operator()( const previous_match& pm_ce)
-    {
-      return pm_ce.id == str;
-    }
-  };
+  const previous_match & m_pm;
+  pm_equal_to_match(const previous_match & pm): m_pm(pm){}
 
-  time_t m_time;
-  std::vector<previous_match>::const_iterator m_begin;
-  std::vector<previous_match>::const_iterator const m_end;
-
-  already_matched(
-    std::vector<previous_match> const& pm,
-    time_t t
-  )
-   : m_begin(pm.begin()), m_end(pm.end()), m_time(t)
-  {
+  bool operator()( MatchInfo const & ce ){
+    return boost::starts_with(ce.ce_id, m_pm.id);
   }
-  bool operator()(MatchInfo const& i)
-  {
-    std::string const s(
-      classad_utils::evaluate_attribute(*(i.ce_ad), "GlueCEUniqueID")
-    );
-    std::vector<previous_match>::const_iterator it;
-    bool result =
-      ( ( it = std::find_if(m_begin, m_end, in(s)) ) != m_end )
-      &&
-      ( (std::time(0) - it->timestamp) < m_time);
-    return result;
-  }
+
 };
+
+
+void remove_previous_matches(
+  MatchTable& matches,
+  std::vector<previous_match> const& skipping_ces
+){
+
+  if ( skipping_ces.empty() ) return;
+
+  std::set<previous_match, previous_match::less_than> previous_matches;
+  std::copy(
+    skipping_ces.begin(),
+    skipping_ces.end(),
+    std::inserter(previous_matches, previous_matches.begin())
+  );
+
+  boost::shared_ptr<MatchTable> save_suitableCEs( new MatchTable(matches) );
+
+  std::set<previous_match, previous_match::less_than>::iterator pm_it =
+    previous_matches.begin();
+  std::set<previous_match, previous_match::less_than>::const_iterator pm_end =
+    previous_matches.end();
+
+  while( pm_it != pm_end ){
+
+    MatchTable::iterator ce_end = matches.end();
+    MatchTable::iterator ce_it = 
+      remove_if(matches.begin(), ce_end, pm_equal_to_match(*pm_it));
+
+    if( ce_it != ce_end ) matches.erase(ce_it, ce_end);
+    ++pm_it;
+
+  }
+
+  if( matches.empty() && save_suitableCEs )
+    matches.swap(*save_suitableCEs);
+
+}
 
 } // anonymous namespace
 
@@ -258,16 +262,8 @@ match(
     match_slice_content(ad)
   );
 
-  if (!skipping_ces.empty()) {
-    matches.erase(
-      std::remove_if(
-        matches.begin(), 
-        matches.end(), 
-        already_matched(skipping_ces, 120)
-      ),
-      matches.end()
-    );
-  }
+  remove_previous_matches(matches, skipping_ces); 
+
 }
 
 void
@@ -298,16 +294,8 @@ match(
 
   }
 
-  if (!skipping_ces.empty()) {
-    matches.erase(
-      std::remove_if(
-        matches.begin(), 
-        matches.end(), 
-        already_matched(skipping_ces, 120)
-      ),
-      matches.end()
-    );
-  }
+  remove_previous_matches(matches, skipping_ces);
+
 }
 
 void
@@ -367,12 +355,12 @@ match(
       compatible_storage.begin(), storage_part_end
     );
 
-    Debug(
+    GLITE_LOG_ACCESS_DEBUG<<
       id << " has #" <<
       storage_part_end - compatible_storage.begin() <<
       " close compatible storage element(s) providing #" << n <<
       " accessible file(s)"
-    );
+    ;
 
     if ( n > max_files ) max_files = n;
 
