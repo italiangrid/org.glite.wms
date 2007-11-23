@@ -13,7 +13,7 @@
 
 #include <classad_distribution.h>
 
-#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wms/common/logger/logging.h"
 #include "brokerinfo.h"
 #include "glite/wms/ism/ism.h"
 #include "glite/wmsutils/classads/classad_utils.h"
@@ -22,7 +22,6 @@ namespace classad_utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
-namespace logger        = common::logger;
 namespace broker {
 
 namespace {
@@ -101,7 +100,7 @@ make_ce_bind_info(classad::ClassAd const& ad)
 
 void
 insert_ce_mount_points(
-  StorageInfo::CE_Mounts mounts,
+  StorageInfo::CE_Mounts& mounts,
   classad::ClassAd const& se_ad
 )
 {
@@ -202,7 +201,7 @@ resolve_storagemapping_info(FileMapping const& fm)
        for( ; slice_it != last_slice; ++slice_it ) {
 
          ism::OrderedSliceIndex& ordered_index(
-           (*slice_it)->slice->get<ism::SliceIndex::Ordered>()
+           (*slice_it)->slice->get<ism::OrderedIndex>()
          );
 
          ism::Mutex::scoped_lock l((*slice_it)->mutex);
@@ -210,9 +209,7 @@ resolve_storagemapping_info(FileMapping const& fm)
 
          if (it != ordered_index.end()) {
 
-           boost::shared_ptr<classad::ClassAd> se_ad(
-             boost::tuples::get<ism::Ad>(*it)
-           );
+           boost::shared_ptr<classad::ClassAd> se_ad( it->ad );
 
            StorageInfo& info = result[name];
            info.links.push_back(file_it);

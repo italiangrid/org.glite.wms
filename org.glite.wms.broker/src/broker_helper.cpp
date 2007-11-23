@@ -29,12 +29,12 @@
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
 
-#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wms/common/logger/logging.h"
 
 #include "glite/wmsutils/classads/classad_utils.h"
 
-#include "glite/wms/helper/HelperFactory.h"
-#include "glite/wms/helper/exceptions.h"
+//#include "glite/wms/helper/HelperFactory.h"
+//#include "glite/wms/helper/exceptions.h"
 
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/JobAdManipulation.h"
@@ -51,7 +51,6 @@
 
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
-namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace jdl           = glite::jdl;
 namespace utils         = glite::wmsutils::classads;
@@ -206,7 +205,7 @@ try {
   DataInfo data_info;
   MatchTable matches;
 
-  if( input_ad.Lookup("InputData") )
+  if( input_ad.Lookup("InputData") || input_ad.Lookup("DataRequirements") )
     match(input_ad, matches, data_info, previous_matches);
   else
     match(input_ad, matches, previous_matches);
@@ -232,11 +231,11 @@ try {
       PBOX_host_name,
       matches
     ))
-      Info("Error during gpbox interaction");
+      GLITE_LOG_ACCESS_UTILS<<"Error during gpbox interaction";
   }
 
   if (matches.empty()) {
-    Info("Empty CE list after gpbox screening");
+    GLITE_LOG_ACCESS_UTILS<<"Empty CE list after gpbox screening";
     throw NoCompatibleCEs();
   }
 #endif
@@ -355,7 +354,7 @@ try {
 
   } catch (utils::InvalidValue const& e) {
 
-    Error(e.what() << " for CE id " << ce_id);
+    GLITE_LOG_ACCESS_ERROR<<e.what() << " for CE id " << ce_id;
 
     throw glite::wms::helper::HelperError("BrokerHelper");
 
@@ -388,7 +387,7 @@ try {
 
 } catch( jobid::JobIdException& jide ) {
 
-  Error( jide.what() );
+  GLITE_LOG_ACCESS_ERROR<< jide.what(); 
   throw glite::wms::helper::InvalidAttributeValue(jdl::JDL::JOBID,
                                       "unknown",
                                       "valid jobid",
@@ -396,7 +395,7 @@ try {
 
 } catch( fs::filesystem_error& fse ) {
 
-    Error( fse.what() );
+    GLITE_LOG_ACCESS_ERROR<< fse.what();
     throw glite::wms::helper::FileSystemError(helper_id, fse);
 
 }
