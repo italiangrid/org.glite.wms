@@ -197,10 +197,10 @@ public:
 
 struct pm_equal_to_match{
 
-  const previous_match & m_pm;
-  pm_equal_to_match(const previous_match & pm): m_pm(pm){}
+  previous_match const& m_pm;
+  pm_equal_to_match(previous_match const& pm): m_pm(pm){}
 
-  bool operator()( MatchInfo const & ce ){
+  bool operator()(MatchInfo const& ce){
     return boost::starts_with(ce.ce_id, m_pm.id);
   }
 
@@ -212,9 +212,14 @@ void remove_previous_matches(
   std::vector<previous_match> const& skipping_ces
 ){
 
+  typedef std::set<
+    previous_match,
+    previous_match::less_than
+  > previous_matches_t;
+
   if ( skipping_ces.empty() ) return;
 
-  std::set<previous_match, previous_match::less_than> previous_matches;
+  previous_matches_t previous_matches;
   std::copy(
     skipping_ces.begin(),
     skipping_ces.end(),
@@ -223,19 +228,19 @@ void remove_previous_matches(
 
   boost::shared_ptr<MatchTable> save_suitableCEs( new MatchTable(matches) );
 
-  std::set<previous_match, previous_match::less_than>::iterator pm_it =
-    previous_matches.begin();
-  std::set<previous_match, previous_match::less_than>::const_iterator pm_end =
-    previous_matches.end();
+  previous_matches_t::const_iterator pm_it = previous_matches.begin();
+  previous_matches_t::const_iterator const pm_end = previous_matches.end();
 
-  while( pm_it != pm_end ){
+  for( ; pm_it != pm_end ; ++pm_it ){
 
-    MatchTable::iterator ce_end = matches.end();
-    MatchTable::iterator ce_it = 
-      remove_if(matches.begin(), ce_end, pm_equal_to_match(*pm_it));
-
-    if( ce_it != ce_end ) matches.erase(ce_it, ce_end);
-    ++pm_it;
+    matches.erase(
+      std::remove_if(
+        matches.begin(),
+        matches.end(),
+        pm_equal_to_match(*pm_it) 
+      ),
+      matches.end()
+    );
 
   }
 
