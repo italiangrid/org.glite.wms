@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # test has been developed by Robert Harakaly and changed for SAM by Victor Galaktionov
-# get  the  replica entries associated with a list of GUIDs (lfc_getreplicas) 
+# get  the  replica entries associated with a list of GUIDs (lfc_getreplicas)
+
 
 import os, lfc, sys, commands, errno
 from testClass import _test, _ntest
 
-global testHome, lfc_vo
+global testHome, lfc_vo 
 
 class test_OK(_test):
     def info(self):
         return "Test OK: "
     def prepare(self):
-        self.sfn1="sfn://test-se.cern.ch" + lfc_vo + "/hary/lfc_getreplica_test"
-        self.sfn2="sfn://test-se.in2p3.fr" + lfc_vo + "/hary/lfc_getreplica_test"
+        self.sfn1="sfn://test-se.cern.ch"   + lfc_vo + "/hary/lfc_getreplica_test"
+        self.sfn2="sfn://test-se.in2p3.fr"  + lfc_vo + "/hary/lfc_getreplica_test"
         self.guid1=commands.getoutput('uuidgen').split('/n')[0]
         self.name1= lfc_vo + "/lfc_getreplica_test1"
         self.guid2=commands.getoutput('uuidgen').split('/n')[0]
@@ -55,16 +56,16 @@ class test_OK_se(_test):
     def info(self):
         return "Test SE filter: "
     def prepare(self):
-        self.sfn11="sfn://test-se.cern.ch"  + lfc_vo + "/hary/lfc_getreplica_test"
-	self.sfn12="sfn://test-se.in2p3.fr" + lfc_vo + "/hary/lfc_getreplica_test"
-        self.sfn13="sfn://test-se.cern.ch"  + lfc_vo + "/lfc_getreplica_test"
-        self.sfn21="sfn://test-se.cern.ch"  + lfc_vo + "/hary/lfc_getreplica_test1"
-        self.sfn22="sfn://test-se.in2p3.fr" + lfc_vo + "/hary/lfc_getreplica_test1"
+        self.sfn11="sfn://test-se.cern.ch"   + lfc_vo + "/hary/lfc_getreplica_test"
+	self.sfn12="sfn://test-se.in2p3.fr"  + lfc_vo + "/hary/lfc_getreplica_test"
+        self.sfn13="sfn://test-se.cern.ch"   + lfc_vo + "/lfc_getreplica_test"
+        self.sfn21="sfn://test-se.cern.ch"   + lfc_vo + "/hary/lfc_getreplica_test1"
+        self.sfn22="sfn://test-se.in2p3.fr"  + lfc_vo + "/hary/lfc_getreplica_test1"
 
         self.guid1=commands.getoutput('uuidgen').split('/n')[0]
-        self.name1= lfc_vo + "/lfc_getreplica_test1"
+        self.name1= lfc_vo +"/lfc_getreplica_test1"
         self.guid2=commands.getoutput('uuidgen').split('/n')[0]
-        self.name2= lfc_vo + "/lfc_getreplica_test2"
+        self.name2= lfc_vo +"/lfc_getreplica_test2"
 
         lfc.lfc_creatg(self.name1, self.guid1, 0664)
         lfc.lfc_creatg(self.name2, self.guid2, 0664)
@@ -108,9 +109,9 @@ class test_OK_se(_test):
             retval = False
         return retval
 
-class test_EINVAL1(_ntest):
+class test_EINVAL1(_test):
     def info(self):
-        return "Test guid length exeeds CA_MAXGUIDLEN (EINVAL) (bug): "
+        return "Test guid length exeeds CA_MAXGUIDLEN (EINVAL): "
     def test(self):
         guid = ""
         for i in range (0,lfc.CA_MAXGUIDLEN+1):
@@ -122,10 +123,10 @@ class test_EINVAL1(_ntest):
     def compare(self, testVal, retVal):
         ((ret, reterr), retRetVal) = retVal
         (test, testerr, testRetVal) = testVal
-        #print reterr, testerr
+        #print test[0].errcode
         #print retRetVal, testRetVal
  
-        if ((retRetVal == testRetVal) & (reterr == testerr)):
+        if ((retRetVal == testRetVal) & (reterr == test[0].errcode)):
             retval = True
         else:
             retval = False
@@ -139,7 +140,7 @@ class test_EINVAL2(_ntest):
         self.sfn2="sfn://test-se.in2p3.fr" + lfc_vo + "/hary/lfc_getreplica_test"
         self.sfn3="sfn://test-se.cern.ch"  + lfc_vo + "/lfc_getreplica_test"
         self.guid=commands.getoutput('uuidgen').split('/n')[0]
-        self.name= lfc_vo + "lfc_getreplica_test"
+        self.name= lfc_vo +"/lfc_getreplica_test"
         lfc.lfc_creatg(self.name, self.guid, 0664)
         lfc.lfc_addreplica(self.guid, None, "test-se.cern.ch", self.sfn1, '-', 'D', "", "")
         lfc.lfc_addreplica(self.guid, None, "test-se.in2p3.fr", self.sfn2, '-', 'D', "", "")
@@ -166,9 +167,9 @@ class test_EINVAL2(_ntest):
             retval = False
         return retval
 
-class test_ENOENT(_ntest):
+class test_ENOENT(_test):
     def info(self):
-        return "Test existing replica nonexisting file (ENOENT) (bug): "
+        return "Test existing replica nonexisting file (ENOENT): "
     def prepare(self):
         self.guid = commands.getoutput('uuidgen').split('/n')[0]
     def test(self):
@@ -181,7 +182,7 @@ class test_ENOENT(_ntest):
         (test, testerr, testRetVal) = testVal
         #print reterr, testerr
         #print retRetVal, testRetVal
-        if ((retRetVal == testRetVal) & (reterr == testerr)):
+        if ((retRetVal == testRetVal) & (reterr == test[0].errcode)):
             retval = True
         else:
             retval = False
@@ -207,6 +208,11 @@ class lfc_statr_test:
                 print "%-60s[FAILED]" % testInstance.info()
         return retVal
 
+
+#os.environ['LFC_HOME'] = 'lxb1941.cern.ch:/grid/dteam'
+#os.environ['LFC_HOST'] = 'lxb1941.cern.ch'
+#testHome = "python_lfc_test"
+#lfc_statr_test().run()
 
 #os.environ['LFC_HOME'] = 'lxb1941.cern.ch:/grid/dteam'
 #os.environ['LFC_HOST'] = 'lxb1941.cern.ch'
@@ -243,4 +249,4 @@ if ( ret == True ):
 else:
     print "Test is failure"
     sys.exit(same_err)
-                        
+                
