@@ -17,6 +17,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "options_utils.h"
+#include "versions.h"
 
 using namespace std;
 using namespace glite::wms::wmproxyapi;
@@ -35,9 +36,9 @@ std::string glite_wms_client_toLower ( const std::string &src){
 }
 
 // constants for WMProxy  client software version
-const std::string WMP_CLT_MAJOR_VERSION = "1";
-const std::string WMP_CLT_MINOR_VERSION = "3";
-const std::string WMP_CLT_RELEASE_VERSION = "1";
+const unsigned int WMP_CLT_MAJOR_VERSION = WMP_CLT_FIRST_VERSION;
+const unsigned int WMP_CLT_MINOR_VERSION = WMP_CLT_SECOND_VERSION;
+const unsigned int WMP_CLT_RELEASE_VERSION = WMP_CLT_THIRD_VERSION;
 const std::string WMP_CLT_POINT_VERSION = ".";
 
 /**
@@ -46,9 +47,9 @@ const std::string WMP_CLT_POINT_VERSION = ".";
 const std::string Options::HELP_COPYRIGHT = "Copyright (C) 2005 by DATAMAT SpA";
 const std::string Options::HELP_EMAIL = "egee@datamat.it";
 const std::string Options::HELP_UI = "WMS User Interface" ;
-const std::string Options::HELP_VERSION = "version  " + WMP_CLT_MAJOR_VERSION
-        + WMP_CLT_POINT_VERSION + WMP_CLT_MINOR_VERSION
-        + WMP_CLT_POINT_VERSION + WMP_CLT_RELEASE_VERSION; ;
+const std::string Options::HELP_VERSION = "version  "+  boost::lexical_cast<string>(WMP_CLT_MAJOR_VERSION)
+        + WMP_CLT_POINT_VERSION +  boost::lexical_cast<string>(WMP_CLT_MINOR_VERSION)
+        + WMP_CLT_POINT_VERSION +  boost::lexical_cast<string>(WMP_CLT_RELEASE_VERSION);
 
 const std::string Options::BUG_MSG = "(please report to " + HELP_EMAIL +")";
 /*
