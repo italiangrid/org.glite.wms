@@ -2,11 +2,17 @@ Start SAM LFC test:
 1. set any glite UI
 2. voms-proxy-init --voms dteam
 3.     same/client-ctb/bin/same-exec LFC
-   or  same/client-ctb/bin/same-exec LFC nodename=lxb1941.cern.ch,ctb-conf-lfc.cern.ch
+   or  same/client-ctb/bin/same-exec LFC nodename=lxb1941.cern.ch,lxb1401.cern.ch
 
-Tests use SAM global variables:
+4. For some LFC CLI tests has been used values:
+    SE=lxb1921.cern.ch
+    LCG_GFAL_INFOSYS=lxb2033.cern.ch:2170
+
+5. Tests use SAM global variables:
 SAME_VO
 SAME_OK
 SAME_ERROR
+SAME_SENSOR_HOME
+SAME_SENSOR_WORK
 
 and set LFC_HOST from input parameter nodename
