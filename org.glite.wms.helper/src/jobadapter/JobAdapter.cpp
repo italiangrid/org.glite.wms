@@ -785,7 +785,7 @@ try {
     jw->set_job_type(NORMAL);
   }
  
-  if (cpu_node_number) {
+  if (cpu_node_number_exist && cpu_node_number) {
     jw->nodes(cpu_node_number);
   }
 
