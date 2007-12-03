@@ -139,7 +139,7 @@ echo "using VO                              : $VO"
 
 #echo "Interrogating the GRIS on $SRM_HOST ..."
 
-LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2135 -b "mds-vo-name=local, o=grid" '(& (objectclass=GlueService) (GlueServiceVersion=2.2*))' GlueServiceEndpoint`
+LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2170 -b "mds-vo-name=resource, o=grid" '(& (objectclass=GlueService) (GlueServiceVersion=2.2*))' GlueServiceEndpoint`
 
 if [ $? -ne 0 ] || [ -z "$LDAP_RESULT" ]; then
 
@@ -161,7 +161,7 @@ echo "SRM 2.2 endpoint published by SRM host: $ENDPOINT"
 
 echo "SRM host to be tested                 : $SRM_HOST"
 
-LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2135 -b "mds-vo-name=local, o=grid" "(& (objectclass=GlueSAAccessControlBase) (GlueSAAccessControlBaseRule=$VO))" GlueSAPath`
+LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2170 -b "mds-vo-name=resource, o=grid" "(& (objectclass=GlueSAAccessControlBase) (GlueSAAccessControlBaseRule=$VO))" GlueSAPath`
 
 if [ $? -ne 0 ] || [ -z "$LDAP_RESULT" ]; then
 
