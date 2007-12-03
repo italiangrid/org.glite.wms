@@ -542,7 +542,9 @@ try {
     jdl::set_should_transfer_files(*result, "YES");
     jdl::set_when_to_transfer_output(*result, "ON_EXIT");
     jdl::set_transfer_input_files(*result, userproxy);
-    jdl::set_transfer_output(*result, ""); // Make sure we don't get extra files
+    // The following directive is only needed for the 'launch-less gLite CE'
+    // (Condor-C + glexec on the CE). This is currently unused in this branch.
+    //jdl::set_transfer_output(*result, ""); // Make sure we don't get extra files
 
     // Compute proxy file basename: remove trailing whitespace and slashes.
     std::string userproxy_basename(userproxy);
