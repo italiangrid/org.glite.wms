@@ -107,14 +107,12 @@ std::string _vo;
     
       ism::Mutex::scoped_lock l((*first)->mutex);
       ism::OrderedSliceIndex& ordered_index(
-        (*first)->slice->get<ism::SliceIndex::Ordered>()
+        (*first)->slice->get<ism::OrderedIndex>()
       );
       ism::OrderedSliceIndex::iterator const slice_end(ordered_index.end());
       ism::OrderedSliceIndex::iterator se_it = ordered_index.find(name);
       if ( se_it != slice_end ) {    
-        boost::shared_ptr<classad::ClassAd> se_ad(
-          boost::tuples::get<ism::Ad>(*se_it)
-        );
+        boost::shared_ptr<classad::ClassAd> se_ad( se_it->ad );
         classad::ClassAd sesa_ad;
         for(int i=0; se_attributes[i]; ++i) {
           classad::ExprTree* expr = se_ad->Lookup(se_attributes[i]);
