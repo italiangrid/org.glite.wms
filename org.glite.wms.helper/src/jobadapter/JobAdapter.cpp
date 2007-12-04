@@ -1033,8 +1033,7 @@ try {
     jdl::set_grid_resource(*result, "nordugrid " + gatekeeper_hostname);
     jdl::set_nordugrid_rsl(
       *result,
-      "(executable=" + jw_path_string + ")"
-      + globusrsl
+      globusrsl
     );
   }
   
