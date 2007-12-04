@@ -2,7 +2,7 @@ REPOSITORY_LOC=../..
 
 # Generic Path
 GENERIC_INC=-I./
-GENERIC_LIB=-L./ -L/usr/lib
+GENERIC_LIB=-L./ -L/usr/lib -L /opt/glite/externals/lib
 COMMON_LIB=-lglite-wmp-job-utilities -lglite_jdl_api_cpp -lgridsite -lssl -lcrypto -lxml2
 
 # Stage
@@ -44,7 +44,7 @@ all:	utilities \
 utilities: glite-wmp-job-utilities.cpp
 	g++ -shared -O2  -DDEBUG -DWANT_NAMESPACES -DWITH_OPENSSL -o libglite-wmp-job-utilities.so glite-wmp-job-utilities.cpp \
 	$(STAGE_INC) $(GENERIC_INC) $(BOOST_INC) \
-	$(STAGE_LIB) $(BOOST_LIB) $(WMPROXYAPICPP_LIB)
+	$(GENERIC_LIB) $(STAGE_LIB) $(BOOST_LIB) $(WMPROXYAPICPP_LIB)
                
 cancel:	glite-wmp-job-cancel.cpp
 	g++ -g -Wall -O2 -DDEBUG -DWANT_NAMESPACES -o glite-wmp-job-cancel glite-wmp-job-cancel.cpp \
