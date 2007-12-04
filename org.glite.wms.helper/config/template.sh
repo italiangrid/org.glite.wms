@@ -491,14 +491,13 @@ if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   fi
 fi
 
-if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then # normal or interactive
+#if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then # normal or interactive
   newdir="${__jobid_to_filename}"
   mkdir ${newdir}
   cd ${newdir}
 #elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI (LSF or PBS)
-fi
+#fi
 
-# savannah 14866: the test -w on work dir is unsuitable on AFS machines
 tmpfile=`mktemp -q tmp.XXXXXXXXXX`
 if [ ! -f "$tmpfile" ]; then
   fatal_error "Working directory not writable"
