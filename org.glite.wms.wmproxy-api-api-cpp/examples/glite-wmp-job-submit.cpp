@@ -16,14 +16,14 @@
 // wmproxy api utilities
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 // AD
-#include "glite/wms/jdl/Ad.h"
-#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/jdl/Ad.h"
+#include "glite/jdl/ExpDagAd.h"
 // JDL
-#include "glite/wms/jdl/jdl_attributes.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/extractfiles.h"
-#include "glite/wms/jdl/adconverter.h"
-#include "glite/wms/jdl/collectionad.h"
+#include "glite/jdl/jdl_attributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/extractfiles.h"
+#include "glite/jdl/adconverter.h"
+#include "glite/jdl/collectionad.h"
 // CURL
 #include "curl/curl.h"
 // file-stat
@@ -39,7 +39,7 @@ namespace wmpapi = glite::wms::wmproxyapi;
 namespace exutils = glite::wms::wmproxyapi::examples::utilities;
 namespace apiutils = glite::wms::wmproxyapiutils;
 namespace exc = glite::wmsutils::exception;
-namespace requestad = glite::wms::jdl;
+namespace requestad = glite::jdl;
 namespace fs = boost::filesystem;
 
 // long option strings
@@ -759,7 +759,8 @@ int main (int argc,char **argv)
                                 job_type = COLLECTION;
                                 // check the collection path specified by the arguments
                                 try {
-                                        fs::path cp ( exutils::normalize_path(*collection_path), fs::system_specific);
+                                        // fs::path cp (exutils::normalize_path(*collection_path), fs::system_specific); boost 1.29.1
+		                        fs::path cp (exutils::normalize_path(*collection_path), fs::native);
                                         if ( fs::is_directory( cp ) ) {
                                                 *collection_path = exutils::addWildCards2Path(*collection_path, "*");
                                         }

@@ -8,10 +8,12 @@
 */
 
 #include "wmp_job_examples.h"
+#include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 
 using namespace std;
 using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapi::examples::utilities;
+using namespace glite::wms::wmproxyapiutils;
 
 static const char* LONGOPT_SERVICE = "endpoint" ;
 static const char* LONGOPT_DELEGATION = "delegation";
@@ -205,7 +207,8 @@ int main (int argc,char **argv)
 
 	try {
 		// init context
-		cfs = new ConfigContext("", *service, GLITE_TRUSTED_CERTS);
+		string trustedCerts= getTrustedCert();
+		cfs = new ConfigContext("", *service, trustedCerts);
 
 		// gets a proxy
 		proxy = getProxyReq(*del_id, cfs) ;

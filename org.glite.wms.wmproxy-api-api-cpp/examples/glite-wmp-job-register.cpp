@@ -11,20 +11,20 @@
 
 #include "wmp_job_examples.h"
 //AD
-#include "glite/wms/jdl/ExpDagAd.h"
-#include "glite/wms/jdl/JobAd.h"
-#include "glite/wms/jdl/RequestAdExceptions.h"
+#include "glite/jdl/ExpDagAd.h"
+#include "glite/jdl/JobAd.h"
+#include "glite/jdl/RequestAdExceptions.h"
 // JDL
-#include "glite/wms/jdl/adconverter.h"
-#include "glite/wms/jdl/jdl_attributes.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/extractfiles.h"
-#include "glite/wms/jdl/adconverter.h"
+#include "glite/jdl/adconverter.h"
+#include "glite/jdl/jdl_attributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/extractfiles.h"
+#include "glite/jdl/adconverter.h"
 // wmproxy api utilities
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 
 using namespace std;
-namespace requestad = glite::wms::jdl;
+namespace requestad = glite::jdl;
 namespace exc = glite::wmsutils::exception;
 namespace wmpapi = glite::wms::wmproxyapi;
 namespace apiutils = glite::wms::wmproxyapiutils;
