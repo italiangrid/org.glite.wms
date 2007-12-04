@@ -633,20 +633,17 @@ JobIdApi jobRegister (const string &jdl, const string &delegationId, ConfigConte
 /*****************************************************************
 jobRegisterJSDL
 ******************************************************************/
-/*
-JobIdApi jobRegisterJSDL (const string &jsdl, const string &delegationId, ConfigContext *cfs){
+JobIdApi jobRegisterJSDL (jsdlns__JobDefinition_USCOREType *JSDL, const string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	JobIdApi jobid ;
-	jsdlns__JobDefinition_USCOREType * _jsdl;
 	setSoapConfiguration (wmp, cfs);
 	ns1__jobRegisterJSDLResponse response;
-	if (wmp.ns1__jobRegisterJSDL(_jsdl, delegationId, response) == SOAP_OK) {
+	if (wmp.ns1__jobRegisterJSDL(JSDL, delegationId, response) == SOAP_OK) {
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
 		soapDestroy(wmp.soap);
 	} else soapErrorMng(wmp) ;
 	return jobid;
 }
-*/
 /*****************************************************************
 jobSubmit
 ******************************************************************/

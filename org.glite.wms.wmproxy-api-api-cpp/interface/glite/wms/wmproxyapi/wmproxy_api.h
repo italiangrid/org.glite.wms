@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "soapWMProxyProxy.h"
+
 /**
 * \file wmproxy_api.h
 * \brief wsdl wmproxy service wrapper
@@ -285,7 +287,7 @@ JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, C
 * @see #getProxyReq, #putProxy (proxy delegation)
 * @see thrown exceptions: AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
-JobIdApi jobRegisterJSDL (const std::string &jsdl, const std::string &delegationId, ConfigContext *cfs=NULL);
+JobIdApi jobRegisterJSDL (jsdlns__JobDefinition_USCOREType *JSDL, const std::string &delegationId, ConfigContext *cfs=NULL);
 
 
 
