@@ -863,12 +863,11 @@ if [ ${__wmp_support} -eq 0 ]; then
           retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
         else
           jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
-          # $current_file is zero-based (being used even
-          # below as an array index), + 1 again because of the 
-          # difference between $total and $current (i.e. 20-19=2 more files)
+          file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files || echo 0`
+          file_size_acc=`expr $file_size_acc + $trunc_len`
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
           else
@@ -921,9 +920,11 @@ else # WMP support
           fi
         else
           jw_echo "OSB quota exceeded for ${file}, truncating needed"
+          file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
-          remaining_space=`expr $max_osb_size \- $file_size_acc + $file_size`
+          remaining_space=`expr $max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files || echo 0`
+          file_size_acc=`expr $file_size_acc + $trunc_len`
           if [ $trunc_len -lt 10 ]; then # non trivial truncation
             jw_echo "Not enough room for a significant truncation on file ${file}, not sending"
           else
