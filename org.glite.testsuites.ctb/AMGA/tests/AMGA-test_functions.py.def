@@ -1,0 +1,5 @@
+testName:  AMGA-test_functions.py
+testAbbr:  functional
+testTitle: Test for several AMGA functions
+testHelp:  "Asterios Katsifodimos" <asteriosk@cs.ucy.ac.cy>
+EOT
