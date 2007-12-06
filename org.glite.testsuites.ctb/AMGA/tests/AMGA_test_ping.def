@@ -1,5 +1,0 @@
-testName:  AMGA_test_ping
-testAbbr:  basic ping
-testTitle: Check whether the specified AMGA machine is on the network
-testHelp:  "Asterios Katsifodimos" <asteriosk@cs.ucy.ac.cy>
-EOT
