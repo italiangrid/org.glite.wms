@@ -28,7 +28,7 @@ namespace ce {
 namespace cream_client_api {
 namespace soap_proxy {
 
-    class CreamProxy;
+    class AbsCreamProxy;
   
 }
 }
@@ -40,7 +40,7 @@ namespace wms {
 namespace ice {
 namespace util {
                 
-    class CreamProxyFactory {
+    class ICECreamProxyFactory {
         
         static std::string hostdn;
         static boost::recursive_mutex mutex;
@@ -60,8 +60,38 @@ namespace util {
          * @return a new CreamProxy object. The caller is responsible
          * for freeing the returned pointer.
          */
-        static glite::ce::cream_client_api::soap_proxy::CreamProxy* 
-            makeCreamProxy( const bool auto_del );
+        static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyRegister( const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayRequest* param1,
+			  glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* param2
+			  );
+
+	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyStart( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
+			       glite::ce::cream_client_api::soap_proxy::ResultWrapper* param2
+			       );
+
+	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyStatus( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
+				glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* param2
+			       );
+
+	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyLease( const std::pair<std::string, time_t>& param1, 
+			       std::pair<std::string, time_t>* param2
+			       );
+
+	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyCancel( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
+			       glite::ce::cream_client_api::soap_proxy::ResultWrapper* param2
+			       );
+
+	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyPurge( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
+			       glite::ce::cream_client_api::soap_proxy::ResultWrapper* param2
+			       );
+
+	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyDelegate( const std::string& param1, std::string* param2 );
         
     };
     

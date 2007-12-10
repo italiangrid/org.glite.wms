@@ -17,9 +17,9 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "CreamProxyFactory.h"
+#include "ICECreamProxyFactory.h"
 #include "iceConfManager.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -30,10 +30,10 @@ namespace cream_api=glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-string CreamProxyFactory::hostdn = string();
-boost::recursive_mutex CreamProxyFactory::mutex;
+string ICECreamProxyFactory::hostdn = string();
+boost::recursive_mutex ICECreamProxyFactory::mutex;
 
-void CreamProxyFactory::setHostDN( const string& hdn )
+void ICECreamProxyFactory::setHostDN( const string& hdn )
 {
     hostdn = hdn;
     boost::trim_if(hostdn, boost::is_any_of("/"));
@@ -41,22 +41,23 @@ void CreamProxyFactory::setHostDN( const string& hdn )
     boost::replace_all( hostdn, "=", "_" );
 }
 
-cream_api::soap_proxy::CreamProxy* CreamProxyFactory::makeCreamProxy( const bool autom_deleg )
+cream_api::soap_proxy::AbsCreamProxy* ICECreamProxyFactory::makeCreamProxy( const bool autom_deleg )
 {
 
-    boost::recursive_mutex::scoped_lock M( CreamProxyFactory::mutex );
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
 
-    cream_api::soap_proxy::CreamProxy *aProxy;
-    try { 
-        aProxy = new cream_api::soap_proxy::CreamProxy( autom_deleg, iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout() );
-    } catch( cream_api::soap_proxy::soap_ex& ex) {
+    cream_api::soap_proxy::AbsCreamProxy *aProxy;
+//     try { 
+//         aProxy = new cream_api::soap_proxy::CreamProxy( autom_deleg, iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout() );
+//     } catch( cream_api::soap_proxy::soap_ex& ex) {
     
-        CREAM_SAFE_LOG(
-                       cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream() << "CreamProxyFactory::makeCreamProxy() - Error creating a CreamProxy object: " 
-                       << ex.what() << log4cpp::CategoryStream::ENDLINE;
-                       );
-        abort();
-    }  
+//         CREAM_SAFE_LOG(
+//                        cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+// 		       << "ICECreamProxyFactory::makeCreamProxy() - Error creating a CreamProxy object: " 
+//                        << ex.what() << log4cpp::CategoryStream::ENDLINE;
+//                        );
+//         abort();
+//     }  
     if( !hostdn.empty() )
         aProxy->setSOAPHeaderID( hostdn );    
     return aProxy;
