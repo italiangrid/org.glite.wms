@@ -367,13 +367,12 @@ string iceUtil::jobDbManager::getByCid( const string& cid )
     // transaction itself is commited.
     // In future we could put a BDB-lock
   int ret;
-  
+  Dbt data;
   try {
-    Dbt data, key( (void*)cid.c_str(), cid.length()+1);
+  
+    Dbt key( (void*)cid.c_str(), cid.length()+1);
     ret = m_creamJobDb->get( NULL, &key, &data, 0);
     
-    if( ret != DB_NOTFOUND )     
-      return string( (char*)data.get_data() );
   } catch(DbException& dbex) {
     throw iceUtil::JobDbException( dbex.what() );
   } catch(exception& ex) {
@@ -382,7 +381,12 @@ string iceUtil::jobDbManager::getByCid( const string& cid )
     throw JobDbException( "jobDbManager::getByCid() - Unknown exception catched" );
   }
   
-  throw JobDbNotFoundException();
+  //throw JobDbNotFoundException();
+  
+  if( ret == DB_NOTFOUND )
+    throw JobDbNotFoundException(string("Not Found CreamJobID [") + cid + "]");
+  
+  return string( (char*)data.get_data() );
 }
 
 //____________________________________________________________________
@@ -397,20 +401,27 @@ string iceUtil::jobDbManager::getByGid( const string& gid )
     // In future we could put a BDB-lock
     
   int ret;
+  Dbt jdata;
     
   try {
     Dbt key( (void*)gid.c_str(), gid.length()+1 );
-    Dbt cid, jdata;
+    Dbt cid;//, jdata;
     
     ret = m_gidDb->get( NULL, &key, &cid, 0);
     
     // now cid contains the CreamJobID
-    if(ret != DB_NOTFOUND)
-      ret = m_creamJobDb->get(NULL, &cid, &jdata, 0);
-    
-    if( ret != DB_NOTFOUND)
-      return string( (char*)jdata.get_data() );
+    if(ret == DB_NOTFOUND) {
+      throw JobDbNotFoundException(string("Not Found GridJobID [") + gid + "]");
+    }
       
+    ret = m_creamJobDb->get(NULL, &cid, &jdata, 0);
+    
+    if( ret == DB_NOTFOUND) {
+      throw JobDbNotFoundException(string("Not Found CreamJobID [") + (const char*)cid.get_data() + "] related to GridJobID [" + gid + "]");
+    }
+        
+    
+    
   } catch(DbException& dbex) {
     throw iceUtil::JobDbException( dbex.what() );
   } catch(exception& ex) {
@@ -419,7 +430,9 @@ string iceUtil::jobDbManager::getByGid( const string& gid )
     throw JobDbException( "jobDbManager::getByCid() - Unknown exception catched" );
   }
   
-  throw JobDbNotFoundException();
+  //throw JobDbNotFoundException();
+  
+  return string( (char*)jdata.get_data() );
 }
 
 //____________________________________________________________________

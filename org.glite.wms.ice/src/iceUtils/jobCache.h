@@ -186,7 +186,7 @@ namespace glite {
 
 	  std::set<std::string> m_GridJobIDSet;
 
-	  void load( void ) throw(ClassadSyntax_ex&);
+	  void load( void ) throw();
 	  
 	  boost::scoped_ptr< glite::wms::ice::util::jobDbManager > m_dbMgr;
 	  

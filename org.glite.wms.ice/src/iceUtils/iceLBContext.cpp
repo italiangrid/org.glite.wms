@@ -137,7 +137,8 @@ iceUtil::iceLBContext::iceLBContext( void ) :
 
 iceUtil::iceLBContext::~iceLBContext( void )
 {
-
+  edg_wll_FreeContext( *el_context );
+  delete el_context;
 }
 
 string iceUtil::iceLBContext::getLoggingError( const char *preamble )

@@ -188,17 +188,19 @@ jobCache::jobCache( void )
         abort();
     }
     m_dbMgr.reset( dbm );
-    try {
-        load(); 
-    } catch( ClassadSyntax_ex& ex ) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                        << "jobCache::jobCache() - "
-                        << "Failed to load the jobCache from the database. "
-                        << "Reason is: " << ex.what()
-                        << ". Giving up"
-                        << log4cpp::CategoryStream::ENDLINE );
-        abort();
-    }
+    //try {
+    
+    load();
+	 
+    //} catch( ClassadSyntax_ex& ex ) {
+    //    CREAM_SAFE_LOG( m_log_dev->fatalStream()
+    //                    << "jobCache::jobCache() - "
+    //                    << "Failed to load the jobCache from the database. "
+    //                    << "Reason is: " << ex.what()
+    //                    << ". Giving up"
+    //                    << log4cpp::CategoryStream::ENDLINE );
+    //    abort();
+    //}
     
     jobCacheIterator::s_cache = this;
 }
@@ -210,7 +212,7 @@ jobCache::~jobCache( )
 }
 
 //______________________________________________________________________________
-void jobCache::load( void ) throw(ClassadSyntax_ex&)
+void jobCache::load( void ) throw()
 {
   
   /**
@@ -232,11 +234,25 @@ void jobCache::load( void ) throw(ClassadSyntax_ex&)
       CreamJob cj;
       istringstream tmpOs;//( string(data) );
       tmpOs.str( data );
-      boost::archive::text_iarchive ia(tmpOs);
-      ia >> cj;
+      try {
+        boost::archive::text_iarchive ia(tmpOs);
+	ia >> cj;
 
-//      m_jobs.putJob( cj ); // update in-memory data structure
-      m_GridJobIDSet.insert( cj.getGridJobID() );
+        m_GridJobIDSet.insert( cj.getGridJobID() );
+	
+      } catch(exception& ex ) {
+        CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                        << "jobCache::load() - boost::archive::text_iarchive raised an exception: "
+                        << ex.what()
+                        << log4cpp::CategoryStream::ENDLINE );
+        abort();
+      } catch(...) {
+        CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                        << "jobCache::load() - Unknown exception catched"
+                        << log4cpp::CategoryStream::ENDLINE );
+        abort();
+      }
+      
 //      free(data);
     }
 
@@ -297,7 +313,12 @@ jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
     
       return jobCacheIterator( m_GridJobIDSet.find( cj.getGridJobID() ) );
     } catch(JobDbNotFoundException& ex) {
+      CREAM_SAFE_LOG( m_log_dev->errorStream() 
+                      << "jobCache::lookupByCreamJobID() - " 
+		      << ex.what() 
+		      << log4cpp::CategoryStream::ENDLINE );
       return this->end();
+      
     } catch(exception& ex) {
       CREAM_SAFE_LOG( m_log_dev->fatalStream() << ex.what() << log4cpp::CategoryStream::ENDLINE );
       abort();
