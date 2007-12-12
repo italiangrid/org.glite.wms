@@ -92,6 +92,12 @@ namespace util {
 
 	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyDelegate( const std::string& param1, std::string* param2 );
+
+        static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyDelegateRenew( const std::string& param1, std::string* param2 );
+
+        static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
+	  makeCreamProxyGetCEMonURL( const std::string& param1, std::string* param2 );
         
     };
     

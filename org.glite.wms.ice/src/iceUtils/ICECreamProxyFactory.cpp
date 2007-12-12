@@ -27,38 +27,116 @@
 #include <boost/algorithm/string.hpp>
 
 namespace cream_api=glite::ce::cream_client_api;
+
+using namespace glite::ce::cream_client_api::soap_proxy;
+
 using namespace glite::wms::ice::util;
 using namespace std;
 
 string ICECreamProxyFactory::hostdn = string();
 boost::recursive_mutex ICECreamProxyFactory::mutex;
 
-void ICECreamProxyFactory::setHostDN( const string& hdn )
-{
-    hostdn = hdn;
-    boost::trim_if(hostdn, boost::is_any_of("/"));
-    boost::replace_all( hostdn, "/", "_" );
-    boost::replace_all( hostdn, "=", "_" );
-}
+// void ICECreamProxyFactory::setHostDN( const string& hdn )
+// {
+//     hostdn = hdn;
+//     boost::trim_if(hostdn, boost::is_any_of("/"));
+//     boost::replace_all( hostdn, "/", "_" );
+//     boost::replace_all( hostdn, "=", "_" );
+// }
 
-cream_api::soap_proxy::AbsCreamProxy* ICECreamProxyFactory::makeCreamProxy( const bool autom_deleg )
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyRegister(const AbsCreamProxy::RegisterArrayRequest* param1,
+					     AbsCreamProxy::RegisterArrayResult* param2 )
 {
 
     boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
 
-    cream_api::soap_proxy::AbsCreamProxy *aProxy;
-//     try { 
-//         aProxy = new cream_api::soap_proxy::CreamProxy( autom_deleg, iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout() );
-//     } catch( cream_api::soap_proxy::soap_ex& ex) {
-    
-//         CREAM_SAFE_LOG(
-//                        cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
-// 		       << "ICECreamProxyFactory::makeCreamProxy() - Error creating a CreamProxy object: " 
-//                        << ex.what() << log4cpp::CategoryStream::ENDLINE;
-//                        );
-//         abort();
-//     }  
-    if( !hostdn.empty() )
-        aProxy->setSOAPHeaderID( hostdn );    
-    return aProxy;
+    return CreamProxyFactory::make_CreamProxyRegister( param1, param2 );
 }
+
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyStart(JobFilterWrapper* param1,
+					  ResultWrapper* param2,
+					  )
+{
+
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+    return CreamProxyFactory::make_CreamProxyStart( param1, param2 );
+}
+
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyStatus(JobFilterWrapper* param1,
+					   StatusArrayResult* param2
+					   )
+{
+
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+    return CreamProxyFactory::make_CreamProxyStatus( param1, param2 );
+}
+
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyLease(const std::pair<std::string, time_t>& param1, 
+					  std::pair<std::string, time_t>* param2
+					  )
+{
+
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+    return CreamProxyFactory::make_CreamProxyLease( param1, param2 );
+}
+
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyCancel(JobFilterWrapper* param1,
+					   ResultWrapper* param2
+					   )
+{
+
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+    return CreamProxyFactory::make_CreamProxyCancel( param1, param2 );
+}
+
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyPurge(JobFilterWrapper* param1,
+					  ResultWrapper* param2
+					  )
+{
+
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+    return CreamProxyFactory::make_CreamProxyPurge( param1, param2 );
+}
+
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyDelegate(JobFilterWrapper* param1,
+					  ResultWrapper* param2
+					  )
+{
+
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+    return CreamProxyFactory::make_CreamProxyDelegate( const std::string& param1, std::string* param2 );
+}
+
+
+//______________________________________________________________________________
+AbsCreamProxy* 
+ICECreamProxyFactory::makeCreamProxyDelegateRenew(JobFilterWrapper* param1,
+					  ResultWrapper* param2
+					  )
+{
+
+    boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+    return CreamProxyFactory::make_CreamProxyDelegateRenew( const std::string& param1, std::string* param2 );
+}
+

@@ -17,7 +17,7 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 #include "glite/ce/monitor-client-api-c/CEInfo.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
@@ -26,7 +26,7 @@
 #include "jobCache.h"
 #include "iceConfManager.h"
 #include "subscriptionProxy.h"
-#include "CreamProxyFactory.h"
+#include "ICECreamProxyFactory.h"
 #include "DNProxyManager.h"
 #include <iostream>
 #include <boost/scoped_ptr.hpp>
@@ -142,10 +142,12 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
     // gSOAP runtime env that cannot be shared between threads and subscriptionManager
     // is a singleton and could be shared between threads
 
-    boost::scoped_ptr< api::CreamProxy > creamProxy( iceUtil::CreamProxyFactory::makeCreamProxy( false ) );
-    creamProxy->Authenticate( proxy );
-    creamProxy->GetCEMonURL( creamURL.c_str(), _cemonURL );
+    boost::scoped_ptr< api::AbsCreamProxy > creamProxy( iceUtil::ICECreamProxyFactory::makeCreamProxyGetCEMonURL( _cemonURL, iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout() ) );
     
+    creamProxy->setCredentials( proxy );
+    creamProxy->execute( creamURL );
+    creamProxy->garbage_collect();
+
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::getCEMonURL() - "
 		   << "Couldn't retrieve CEMon URL for CREAM URL ["
