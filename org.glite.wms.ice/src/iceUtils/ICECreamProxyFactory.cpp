@@ -124,9 +124,8 @@ ICECreamProxyFactory::makeCreamProxyDelegate(JobFilterWrapper* param1,
 
     boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
 
-    return CreamProxyFactory::make_CreamProxyDelegate( const std::string& param1, std::string* param2 );
+    return CreamProxyFactory::make_CreamProxyDelegate( param1, param2 );
 }
-
 
 //______________________________________________________________________________
 AbsCreamProxy* 
@@ -137,6 +136,14 @@ ICECreamProxyFactory::makeCreamProxyDelegateRenew(JobFilterWrapper* param1,
 
     boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
 
-    return CreamProxyFactory::make_CreamProxyDelegateRenew( const std::string& param1, std::string* param2 );
+    return CreamProxyFactory::make_CreamProxyDelegateRenew( param1, param2 );
 }
 
+//______________________________________________________________________________
+AbsCreamProxy*
+ICECreamProxyFactory::makeCreamProxyServiceInfo( ServiceInfoWrapper* param1 )
+{
+  boost::recursive_mutex::scoped_lock M( ICECreamProxyFactory::mutex );
+
+  return CreamProxyFactory::make_CreamProxyGetServiceInfo( param1 );
+}

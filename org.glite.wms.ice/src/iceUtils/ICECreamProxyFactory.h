@@ -29,6 +29,7 @@ namespace cream_client_api {
 namespace soap_proxy {
 
     class AbsCreamProxy;
+    ServiceInfoWrapper;
   
 }
 }
@@ -62,42 +63,42 @@ namespace util {
          */
         static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyRegister( const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayRequest* param1,
-			  glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* param2
-			  );
-
+				  glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* param2
+				  );
+	
 	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyStart( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
 			       glite::ce::cream_client_api::soap_proxy::ResultWrapper* param2
 			       );
-
+	
 	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyStatus( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
 				glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* param2
-			       );
-
+				);
+	
 	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyLease( const std::pair<std::string, time_t>& param1, 
 			       std::pair<std::string, time_t>* param2
 			       );
-
+	
 	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyCancel( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
-			       glite::ce::cream_client_api::soap_proxy::ResultWrapper* param2
-			       );
-
+				glite::ce::cream_client_api::soap_proxy::ResultWrapper* param2
+				);
+	
 	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyPurge( const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* param1,
 			       glite::ce::cream_client_api::soap_proxy::ResultWrapper* param2
 			       );
-
+	
 	static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyDelegate( const std::string& param1, std::string* param2 );
-
+	
         static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
 	  makeCreamProxyDelegateRenew( const std::string& param1, std::string* param2 );
-
+	
         static glite::ce::cream_client_api::soap_proxy::AbsCreamProxy* 
-	  makeCreamProxyGetCEMonURL( const std::string& param1, std::string* param2 );
+	  makeCreamProxyServiceInfo( ServiceInfoWrapper* param1 );
         
     };
     
