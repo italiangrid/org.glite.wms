@@ -34,6 +34,8 @@
 
 #include "iceSubscription.h"
 
+namespace cemon_api = glite::ce::monitor_client_api::soap_proxy;
+
 namespace log4cpp { class Category; }
 
 namespace glite {
@@ -63,7 +65,7 @@ namespace util {
     char               m_aT[256];
     time_t             m_tp;
 
-    DialectW          *m_D;
+    cemon_api::DialectW          *m_D;
 
     //CESubscription     m_ceS;
 
@@ -101,7 +103,7 @@ namespace util {
 //    void        list(const std::string& url, std::vector<Subscription>&)
 //                  throw(std::exception&);
 		  
-    void	list(const std::string& userProxy, const std::string& cemonUrl, std::vector<Subscription>&) throw(std::exception&);
+    void	list(const std::string& userProxy, const std::string& cemonUrl, std::vector<cemon_api::Subscription>&) throw(std::exception&);
 		  
     //std::string getLastSubscriptionID() const { return m_lastSubscriptionID; }
 

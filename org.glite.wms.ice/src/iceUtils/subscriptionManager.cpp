@@ -17,32 +17,64 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
-#include "glite/ce/monitor-client-api-c/CEInfo.h"
+/**
+ *
+ * Cream Client API Headers
+ *
+ */
+#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/monitor-client-api-c/CEInfo.h"
 
+/**
+ *
+ * ICE Headers
+ *
+ */
 #include "subscriptionManager.h"
-#include "jobCache.h"
-#include "iceConfManager.h"
 #include "subscriptionProxy.h"
-#include "ICECreamProxyFactory.h"
+#include "iceConfManager.h"
 #include "DNProxyManager.h"
-#include <iostream>
+#include "jobCache.h"
+
+
+//#include "ICECreamProxyFactory.h"
+
+/**
+ *
+ * BOOST Headers
+ *
+ */
 #include <boost/scoped_ptr.hpp>
+#include <boost/functional.hpp>
+
+/**
+ *
+ * WMS Configuration Headers
+ *
+ */
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
+/**
+ *
+ * System C++ Headers
+ *
+ */
 #include <algorithm>
-#include "boost/functional.hpp"
+#include <iostream>
+
 
 #define MAX_SUBSCRIPTION_OLDNESS 60
 
 using namespace std;
-namespace iceUtil = glite::wms::ice::util;
-namespace api_util = glite::ce::cream_client_api::util;
-namespace api = glite::ce::cream_client_api::soap_proxy;
+
+namespace iceUtil   = glite::wms::ice::util;
+namespace api_util  = glite::ce::cream_client_api::util;
+namespace api       = glite::ce::cream_client_api::soap_proxy;
+namespace cemon_api = glite::ce::monitor_client_api::soap_proxy;
 
 iceUtil::subscriptionManager* iceUtil::subscriptionManager::s_instance = NULL;
 boost::recursive_mutex iceUtil::subscriptionManager::mutex;
@@ -122,8 +154,10 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
 					       string& cemonURL) throw()
 {
   boost::recursive_mutex::scoped_lock M( mutex );
+
   // Try to get the CEMon's address from the memory
   map<string, string>::const_iterator cit = m_mappingCreamCemon.find( creamURL );
+
   if( cit != m_mappingCreamCemon.end() )
     {
       cemonURL = cit->second;
@@ -133,6 +167,8 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
   
   // try to get the CEMon's address directly from the server
   string _cemonURL;
+  api::ServiceInfoWrapper info;
+
   try {
     // this method is not called frequently because subscriptionManager
     // keeps in memory information about CEUrl after the first 
@@ -142,11 +178,14 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
     // gSOAP runtime env that cannot be shared between threads and subscriptionManager
     // is a singleton and could be shared between threads
 
-    boost::scoped_ptr< api::AbsCreamProxy > creamProxy( iceUtil::ICECreamProxyFactory::makeCreamProxyGetCEMonURL( _cemonURL, iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout() ) );
+    int timeout = m_conf->getConfiguration()->ice()->soap_timeout();
+
+    boost::scoped_ptr< api::AbsCreamProxy > creamProxy( api::CreamProxyFactory::make_CreamProxyServiceInfo( &info, timeout ) );
     
-    creamProxy->setCredentials( proxy );
+    creamProxy->setCredential( proxy );
     creamProxy->execute( creamURL );
-    creamProxy->garbage_collect();
+
+    _cemonURL = info.getCEMonURL();
 
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::getCEMonURL() - "
@@ -154,7 +193,9 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
 		   << creamURL << "]: "
 		   << ex.what()<< ". Composing it from configuration file."
 		   << log4cpp::CategoryStream::ENDLINE);
+
     _cemonURL = creamURL;
+
     boost::replace_first(_cemonURL,
                          m_conf->getConfiguration()->ice()->cream_url_postfix(),
                          m_conf->getConfiguration()->ice()->cemon_url_postfix()
@@ -194,11 +235,11 @@ bool iceUtil::subscriptionManager::getCEMonDN(
   //  CEInfo ceInfo( m_conf->getConfiguration()->ice()->ice_host_cert(), "/");
   //ceInfo.setServiceURL( cemonURL );
 
-  boost::scoped_ptr< CEInfo > ceInfo;
+  boost::scoped_ptr< cemon_api::CEInfo > ceInfo;
 
   try {
 
-    ceInfo.reset(new CEInfo( m_conf->getConfiguration()->ice()->ice_host_cert(), "/") ); // this can raise an exception caused by failed authentication
+    ceInfo.reset(new cemon_api::CEInfo( m_conf->getConfiguration()->ice()->ice_host_cert(), "/") ); // this can raise an exception caused by failed authentication
     ceInfo->setServiceURL( cemonURL );
     ceInfo->authenticate( proxy.c_str(), "/");
     ceInfo->getInfo();
@@ -256,7 +297,7 @@ void iceUtil::subscriptionManager::init( void ) throw()
 	   UsersCEMons.end(), 
 	   boost::bind1st( boost::mem_fn( &subscriptionManager::checkSubscription ), this ) );
 
-} // unlock jobCache
+}
 
 //______________________________________________________________________________
 /**
@@ -606,7 +647,7 @@ iceUtil::subscriptionManager::getUserCEMonBySubID( const string& subID ) const
 //________________________________________________________________________
 bool 
 iceUtil::subscriptionManager::getSubscriptionByDNCEMon( const string& dn, const string& cemon, 
-			  iceUtil::iceSubscription& target) const
+							iceUtil::iceSubscription& target) const
 {
   boost::recursive_mutex::scoped_lock subM( mutex );
   map< pair<string, string> , iceSubscription, ltstring >::const_iterator it = m_Subs.find( make_pair(dn, cemon) );

@@ -39,6 +39,7 @@ extern int h_errno;
 
 using namespace std;
 namespace iceUtil = glite::wms::ice::util;
+namespace cemon_api = glite::ce::monitor_client_api::soap_proxy;
 
 iceUtil::subscriptionProxy* iceUtil::subscriptionProxy::s_instance = 0;
 boost::recursive_mutex iceUtil::subscriptionProxy::mutex;
@@ -72,7 +73,7 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
                    << log4cpp::CategoryStream::ENDLINE);
       abort();
     }
-    m_D = new DialectW("CLASSAD");
+    m_D = new cemon_api::DialectW("CLASSAD");
 }
 
 //______________________________________________________________________________
@@ -92,7 +93,7 @@ iceUtil::subscriptionProxy* iceUtil::subscriptionProxy::getInstance() throw()
 //______________________________________________________________________________
 void iceUtil::subscriptionProxy::list(const string& userProxy, 
 				      const string& url,
-				      vector<Subscription>& vec)
+				      vector<cemon_api::Subscription>& vec)
   throw (exception&)
 {
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
@@ -101,7 +102,7 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
 		 << userProxy << "]"
 		 << log4cpp::CategoryStream::ENDLINE);
   
-  CESubscriptionMgr ceSMgr;
+  cemon_api::CESubscriptionMgr ceSMgr;
   
   try {
     ceSMgr.authenticate(userProxy.c_str(), "/");
@@ -125,7 +126,7 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
     return;
   }
   
-  for(vector<Subscription>::const_iterator it = vec.begin();
+  for(vector<cemon_api::Subscription>::const_iterator it = vec.begin();
       it != vec.end();
       it++) 
     {
@@ -149,18 +150,18 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
 					   const string& endpoint,
 					   iceSubscription& sub) throw()
 {
-  CESubscription ceS;
+  cemon_api::CESubscription ceS;
   ceS.setServiceURL(endpoint);
 
-  Topic T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() );
+  cemon_api::Topic T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() );
   T.addDialect( m_D ); // this doesn't copy but put the argument into an array
-  Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
-  ActionW A1("SendNotification", "", true);
-  ActionW A2("DoNotSendNotification", "", false);
+  cemon_api::Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
+  cemon_api::ActionW A1("SendNotification", "", true);
+  cemon_api::ActionW A2("DoNotSendNotification", "", false);
   P.addAction( &A1 );
   P.addAction( &A2 );
   
-  QueryW Q;
+  cemon_api::QueryW Q;
   
   string iceid;
   try {
@@ -237,12 +238,12 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
 					             string& newID
 						    ) throw()
 {
-  Topic T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() );
-  ActionW A1("SendNotification", "", true);
-  ActionW A2("DoNotSendNotification", "", false);
-  QueryW Q;
+  cemon_api::Topic T( iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic() );
+  cemon_api::ActionW A1("SendNotification", "", true);
+  cemon_api::ActionW A2("DoNotSendNotification", "", false);
+  cemon_api::QueryW Q;
 
-  Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
+  cemon_api::Policy P( iceConfManager::getInstance()->getConfiguration()->ice()->notification_frequency() );
   
   T.addDialect( m_D );
   string iceid;
@@ -277,7 +278,7 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
   
   try {
     
-    CESubscriptionMgr ceSMgr;
+    cemon_api::CESubscriptionMgr ceSMgr;
     ceSMgr.authenticate(proxy.c_str(), "/");
     newID = ceSMgr.update(endpoint, ID, m_myurl, T, P, time(NULL)+m_conf->getConfiguration()->ice()->subscription_duration());
     
@@ -298,7 +299,7 @@ bool iceUtil::subscriptionProxy::subscribedTo( const string& proxy,
 					       )
   throw(exception&)
 {
-  vector<Subscription> vec;
+  vector<cemon_api::Subscription> vec;
   try {
 
     this->list(proxy, url, vec);
@@ -311,7 +312,7 @@ bool iceUtil::subscriptionProxy::subscribedTo( const string& proxy,
     throw(ex);
   }
   
-  for(vector<Subscription>::const_iterator it = vec.begin(); it != vec.end(); ++it) 
+  for(vector<cemon_api::Subscription>::const_iterator it = vec.begin(); it != vec.end(); ++it) 
     {
       
       if( it->getConsumerURL() == m_myurl ) {
