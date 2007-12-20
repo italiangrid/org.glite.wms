@@ -22,7 +22,7 @@ libglite_wms_iceCommands_la_SOURCES = \
 	normalStatusNotification.cpp \
 	emptyStatusNotification.cpp 
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \
 		-I$(top_srcdir)/src/iceCommands \

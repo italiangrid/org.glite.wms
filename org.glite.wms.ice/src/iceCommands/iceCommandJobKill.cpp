@@ -149,7 +149,14 @@ bool iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 {
   try {
     
-    m_theProxy->Authenticate( proxy );
+    //m_theProxy->Authenticate( proxy );
+
+    cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+    if( !V.IsValid( ) ) {
+      throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+    }	
+
+
     CreamProxy_Cancel( endpoint, jobIdList ).execute( m_theProxy.get(), 3 );
     
   } catch(std::exception& ex) {

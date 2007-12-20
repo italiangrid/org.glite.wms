@@ -28,7 +28,10 @@
 #include "DNProxyManager.h"
 
 #include "glite/ce/cream-client-api-c/CEUrl.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
+#include "glite/ce/cream-client-api-c/JobIdWrapper.h"
+#include "glite/ce/cream-client-api-c/ResultWrapper.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 
 #include "boost/algorithm/string.hpp"
@@ -38,7 +41,7 @@ namespace wms_utils = glite::wms::common::utilities;
 using namespace std;
 using namespace glite::wms::ice;
 
-iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, util::Request* request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
+iceCommandCancel::iceCommandCancel( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, */util::Request* request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( ),
     m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
     m_lb_logger( util::iceLBLogger::instance() ),
@@ -113,7 +116,7 @@ iceCommandCancel::iceCommandCancel( glite::ce::cream_client_api::soap_proxy::Cre
         boost::trim_if(m_sequence_code, boost::is_any_of("\""));        
     }
     
-    m_theProxy.reset( _theProxy );
+    //m_theProxy.reset( _theProxy );
 }
 
 void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
@@ -164,8 +167,8 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     // Log cancel request event
     theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ) );    
 
-    vector<string> url_jid(1);   
-    url_jid[0] = theJob.getCreamJobID();
+    //vector<string> url_jid(1);   
+    //url_jid[0] = theJob.getCreamJobID();
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << "iceCommandCancel::execute() - Removing job gridJobId [" 
@@ -196,11 +199,29 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     //}
 
     try {
-        m_theProxy->Authenticate( betterproxy /* theJob.getUserProxyCertificate() */ );
+      //m_theProxy->Authenticate( betterproxy /* theJob.getUserProxyCertificate() */ );
+
+      cream_api::soap_proxy::VOMSWrapper V( betterproxy );
+      if( !V.IsValid( ) ) {
+        throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+      }
+
         theJob.set_failure_reason( "Aborted by user" );
         util::jobCache::getInstance()->put( theJob );
-        util::CreamProxy_Cancel( theJob.getCreamURL(), url_jid ).execute( m_theProxy.get(), 3 );
+
+	// FIXME: prepare the JobFilterWrapper from the url_jid
+	vector<cream_api::soap_proxy::JobIdWrapper> vec;
+	vec.push_back( cream_api::soap_proxy::JobIdWrapper(theJob.getCreamJobID(), 
+							   theJob.getCreamURL(), 
+							   std::vector<cream_api::soap_proxy::JobPropertyWrapper>())
+		       );
+	cream_api::soap_proxy::JobFilterWrapper req( vec, vector<string>, -1, -1, "", "");
+	cream_api::soap_proxy::ResultWrapper res;
+
+        util::CreamProxy_Cancel( theJob.getCreamURL(), betterproxy, &req, &res ).execute( 3 );
+
 	// theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
+
     } catch(cream_api::soap_proxy::auth_ex& ex) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("auth_ex: ") + ex.what() ) );
         throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );

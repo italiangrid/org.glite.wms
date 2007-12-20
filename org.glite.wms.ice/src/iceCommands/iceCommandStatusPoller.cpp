@@ -231,7 +231,13 @@ list< soap_proxy::JobInfo > iceUtils::iceCommandStatusPoller::check_multiple_job
 
   try {
       
-      m_theProxy->Authenticate( proxy );
+    //      m_theProxy->Authenticate( proxy );
+
+
+    cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+    if( !V.IsValid( ) ) {
+      throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+    }
       
       CREAM_SAFE_LOG(m_log_dev->infoStream()
                      << "iceCommandStatusPoller::check_multiple_jobs() - "

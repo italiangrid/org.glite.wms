@@ -44,7 +44,7 @@
 #include "iceUtils.h"
 
 // Other glite includes
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/wms/common/utilities/scope_guard.h"
@@ -105,7 +105,7 @@ namespace { // Anonymous namespace
 }; // end anonymous namespace
 
 //____________________________________________________________________________
-iceCommandSubmit::iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy, iceUtil::Request* request )
+iceCommandSubmit::iceCommandSubmit( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy,*/ iceUtil::Request* request )
   throw( iceUtil::ClassadSyntax_ex&, iceUtil::JobRequest_ex& ) :
     iceAbsCommand( ),
     m_theIce( Ice::instance() ),
@@ -332,7 +332,13 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     //
     try {
         // api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
-        m_theProxy->Authenticate(m_theJob.getUserProxyCertificate());
+        //m_theProxy->Authenticate(m_theJob.getUserProxyCertificate());
+
+      cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+      if( !V.IsValid( ) ) {
+	throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+      }
+
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()

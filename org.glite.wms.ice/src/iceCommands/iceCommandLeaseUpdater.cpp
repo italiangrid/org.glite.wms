@@ -94,7 +94,13 @@ namespace {
 
 	      try {
     
-		m_theProxy->Authenticate( proxy );
+		//		m_theProxy->Authenticate( proxy );
+
+		cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+		if( !V.IsValid( ) ) {
+		  throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+		}
+
 		vector<string> jobVec;
 		jobVec.push_back( job.getCreamJobID() );
 		CreamProxy_Cancel( job.getCreamURL(), vector<string>() ).execute( m_theProxy.get(), 3 );

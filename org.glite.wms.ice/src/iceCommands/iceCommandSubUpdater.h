@@ -25,6 +25,8 @@
 
 #include <boost/scoped_ptr.hpp>
 
+namespace cemon_api = glite::ce::monitor_client_api::soap_proxy;
+
 namespace glite {
   namespace wms {
     namespace ice {
@@ -66,7 +68,7 @@ namespace util {
    iceConfManager *m_conf;
 
    void retrieveCEURLs( std::set<std::string>& );
-   void renewSubscriptions( std::vector<Subscription>& vec );
+   void renewSubscriptions( std::vector<cemon_api::Subscription>& vec );
 
   public:
    iceCommandSubUpdater( ) throw( );

@@ -29,17 +29,17 @@
 
 #include <boost/scoped_ptr.hpp>
 
-namespace glite {
-    namespace ce {
-        namespace cream_client_api {
-            namespace soap_proxy {
+/* namespace glite { */
+/*     namespace ce { */
+/*         namespace cream_client_api { */
+/*             namespace soap_proxy { */
                 
-                class CreamProxy;
+/*                 class CreamProxy; */
                 
-            }
-        }
-    }
-};
+/*             } */
+/*         } */
+/*     } */
+/* }; */
 
 namespace log4cpp {
     class Category;
@@ -54,7 +54,7 @@ namespace util {
     
     class iceCommandJobKill : public iceAbsCommand {
         
-      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+      //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
         //glite::wms::ice::util::CreamJob m_theJob;
         log4cpp::Category *m_log_dev;
         time_t m_threshold_time;

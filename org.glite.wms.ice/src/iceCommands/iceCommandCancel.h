@@ -26,7 +26,7 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <boost/scoped_ptr.hpp>
 
 namespace glite {
@@ -40,10 +40,11 @@ namespace ice {
 
     class iceCommandCancel : public iceAbsCommand {
         
-        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+//        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
         
     public:
-        iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy*, util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+        //iceCommandCancel( glite::ce::cream_client_api::soap_proxy::CreamProxy*, util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+	iceCommandCancel( util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
         
         virtual ~iceCommandCancel() { }
         

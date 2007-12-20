@@ -26,7 +26,7 @@
 #include "creamJob.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
@@ -62,10 +62,11 @@ namespace util {
      void  doSubscription( const glite::wms::ice::util::CreamJob& );
      
      Ice *m_theIce;
-     boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+     //     boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
      
  public:
-     iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy*, util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+     //iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy*, util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+     iceCommandSubmit( util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
      
      virtual ~iceCommandSubmit() { }
      

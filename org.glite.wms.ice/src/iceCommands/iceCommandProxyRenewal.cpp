@@ -57,7 +57,12 @@ bool iceCommandProxyRenewal::renewProxy( const list<CreamJob>& jobs) throw()
   string delegation_ID   = jobs.begin()->getDelegationId();
   
             try {
-              m_theProxy->Authenticate( proxy );
+              //m_theProxy->Authenticate( proxy );
+
+	      cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+	      if( !V.IsValid( ) ) {
+		throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+	      }
                  
               vector< string > theJob;
 
