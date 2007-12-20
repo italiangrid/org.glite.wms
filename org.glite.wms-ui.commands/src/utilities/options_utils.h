@@ -86,7 +86,7 @@ class Options
 			USERTAG,
 			VALID,
 			VERBOSE ,
-			VERSION,
+			UIVERSION,
                         VO,
 			INPUTFILE
 		} ;

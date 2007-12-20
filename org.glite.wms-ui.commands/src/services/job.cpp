@@ -133,7 +133,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 	setProxyPath ( );
 	setCertsPath ( );
 	// --version (ends the execution)
-	if (wmcOpts->getBoolAttribute(Options::VERSION)){
+	if (wmcOpts->getBoolAttribute(Options::UIVERSION)){
 		// prints out the message with the client version
 		cout << "\n" << Options::getVersionMessage( ) << "\n";
 		// retrieves the server version and print it out

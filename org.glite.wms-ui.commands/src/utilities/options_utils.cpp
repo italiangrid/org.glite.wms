@@ -201,7 +201,7 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_NOMSG,		no_argument,			0,		Options::NOMSG	},
 	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
 };
@@ -209,7 +209,7 @@ const struct option Options::submitLongOpts[] = {
 *	Long options for job-status
 */
 const struct option Options::statusLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{	Options::LONG_ALL,			no_argument,			0,		Options::ALL	},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
@@ -232,7 +232,7 @@ const struct option Options::statusLongOpts[] = {
 *	Long options for  job-logging-info
 */
 const struct option Options::loginfoLongOpts[] = {
-	{	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_VERSION,			no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_VERBOSE,         required_argument,		0,		Options::SHORT_V},
 	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
@@ -247,7 +247,7 @@ const struct option Options::loginfoLongOpts[] = {
 *	Long options for job-cancel
 */
 const struct option Options::cancelLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_INPUT,          	required_argument,		0,		Options::SHORT_INPUT},
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
@@ -262,7 +262,7 @@ const struct option Options::cancelLongOpts[] = {
 *	Long options for job-list-match
 */
 const struct option Options::lsmatchLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
         {	Options::LONG_AUTODG,           no_argument,			0,		Options::SHORT_AUTODG},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
@@ -281,7 +281,7 @@ const struct option Options::lsmatchLongOpts[] = {
 *	Long options for job-output
 */
 const struct option Options::outputLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,	Options::VERSION	},
+	{	Options::LONG_VERSION,		no_argument,			0,	Options::UIVERSION	},
 	{	Options::LONG_HELP,		no_argument,			0,	Options::HELP	},
 	{ 	Options::LONG_OUTPUT,       	required_argument,		0,	Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
@@ -302,7 +302,7 @@ const struct option Options::outputLongOpts[] = {
 *	Long options for  job-attach
 */
 const struct option Options::attachLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{	Options::LONG_PORT,              	required_argument,		0,		Options::SHORT_P},
 	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
@@ -318,7 +318,7 @@ const struct option Options::attachLongOpts[] = {
 *	Long options for proxy-delegation
 */
 const struct option Options::delegationLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
 	{	Options::LONG_AUTODG,           no_argument,			0,		Options::SHORT_AUTODG},
@@ -336,7 +336,7 @@ const struct option Options::delegationLongOpts[] = {
 *	Long options for proxy-info
 */
 const struct option Options::jobInfoLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
 	{	Options::LONG_PROXY,			no_argument,		0,		Options::SHORT_P},
@@ -357,7 +357,7 @@ const struct option Options::jobInfoLongOpts[] = {
 */
 const struct option Options::perusalLongOpts[]  = {
 	{	Options::LONG_ALL			,no_argument,			0,	Options::ALL	},
-	{	Options::LONG_VERSION,		no_argument,			0,	Options::VERSION	},
+	{	Options::LONG_VERSION,		no_argument,			0,	Options::UIVERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,	Options::HELP	},
 	{	Options::LONG_GET,			no_argument,			0,	Options::GET},
 	{ 	Options::LONG_SET, 	        	no_argument,			0,	Options::SET},
@@ -1249,7 +1249,7 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 			value = listonly  ;
 			break ;
 		}
-		case(VERSION) : {
+		case(UIVERSION) : {
 			value = version ;
 			break ;
 		}
@@ -1477,7 +1477,7 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_HELP  ;
 			break ;
 		}
-		case(VERSION) : {
+		case(UIVERSION) : {
 			msg = USG_VERSION ;
 			break ;
 		}
@@ -2406,7 +2406,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                       }
                         break ;
 		};
-                case ( Options::VERSION ) : {
+                case ( Options::UIVERSION ) : {
                 	if (version){
 				dupl = LONG_VERSION;
     			} else {
