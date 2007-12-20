@@ -443,11 +443,7 @@ try {
     {
       // condor resource, as per Nate Mueller's May 4, 2005 recipe
       jdl::set_remote_job_universe(*result, 9);
-      if (is_nordugrid_resource) {
-        jdl::set_remote_job_grid_type(*result, "nordugrid");
-      } else {
-        jdl::set_remote_job_grid_type(*result, "condor");
-      }
+      jdl::set_remote_job_grid_type(*result, "condor");
       jdl::set_remote_requirements(*result, "true");
       jdl::set_remote_remote_schedd(*result, gatekeeper_hostname);
       jdl::set_remote_remote_pool(*result, queuename);
