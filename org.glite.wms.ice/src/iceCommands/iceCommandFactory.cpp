@@ -24,7 +24,7 @@
 #include "classad_distribution.h"
 #include "boost/algorithm/string.hpp"
 #include "boost/scoped_ptr.hpp"
-#include "CreamProxyFactory.h"
+//x#include "CreamProxyFactory.h"
 #include "ice-core.h"
 #include "Request.h"
 
@@ -34,7 +34,8 @@ namespace glite {
 namespace wms {
 namespace ice {
 
-iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
+iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request ) 
+  throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
 {
     iceAbsCommand* result = 0;
     classad::ClassAdParser parser;
@@ -53,9 +54,12 @@ iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request ) throw(util
     boost::trim_if(commandStr, boost::is_any_of("\""));
 
     if ( boost::algorithm::iequals( commandStr, "submit" ) ) {
-        result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(false), request );
+      //result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(false), request );
+      result = new iceCommandSubmit( request );
     } else if ( boost::algorithm::iequals( commandStr, "cancel" ) ) {
-        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(false), request );
+      //        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(false), request );
+      result = new iceCommandCancel( request );
+	
     } else {
         throw util::JobRequest_ex( "Unknown command " + commandStr + " in request classad" );
     }

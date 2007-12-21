@@ -168,7 +168,7 @@ namespace util {
          * auto-delegation of the proxy with the Register CREAM
          * method.
          */
-        std::string delegate( glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, const CreamJob& job, bool force = false );
+        std::string delegate( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, */const CreamJob& job, bool force = false );
 
     };
 

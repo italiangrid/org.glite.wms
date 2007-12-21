@@ -32,12 +32,13 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "iceLBEventFactory.h"
-#include "CreamProxyFactory.h"
+//#include "CreamProxyFactory.h"
 #include "CreamProxyMethod.h"
 #include "iceUtils.h"
 #include "subscriptionManager.h"
 #include "DNProxyManager.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -107,7 +108,7 @@ namespace { // begin anonymous namespace
 
 //____________________________________________________________________________
 iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bool poll_all_jobs ) :
-  m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
+  //m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
   m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
   m_lb_logger( iceLBLogger::instance() ),
   m_iceManager( theIce ),

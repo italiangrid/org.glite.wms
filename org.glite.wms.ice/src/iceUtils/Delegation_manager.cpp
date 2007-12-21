@@ -24,11 +24,12 @@
 #include "Delegation_manager.h"
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "iceUtils.h"
 
-namespace cream_api = glite::ce::cream_client_api;
+//namespace cream_api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;
@@ -85,7 +86,7 @@ Delegation_manager* Delegation_manager::instance( )
     return s_instance;
 }
 
-string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, const CreamJob& job, bool force )
+string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy,*/ const CreamJob& job, bool force )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -121,6 +122,18 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
         // Returns empty string, so that the register will do
         // auto-delegation
         return delegation_id;
+    }
+
+    cream_api::VOMSWrapper V( certfile );
+    if( !V.IsValid() ) {
+      CREAM_SAFE_LOG( m_log_dev->errorStream()
+		      << method_name
+		      << "Cannot validate proxy file ["
+		      << certfile 
+		      << "]. Error is: "
+		      << V.getErrorMessage( )
+		      << log4cpp::CategoryStream::ENDLINE );        
+      return delegation_id;
     }
 
     SHA1_Init( &ctx );
@@ -163,14 +176,14 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
                         << " Delegation URL "
                         << cream_deleg_url
                         << " user DN "
-                        << cream_api::certUtil::getDN( certfile )
+                        << V.getDN( )
                         << " proxy hash "
                         << str_sha1_digest
                         << log4cpp::CategoryStream::ENDLINE );
         
         try {
             // Gets the proxy expiration time
-            expiration_time = time(0) + cream_api::certUtil::getProxyTimeLeft( certfile );
+	  expiration_time = V.getProxyTimeEnd( ); //V.getProxyTimeLeft( certfile );
 
             //CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( theProxy, 3 );
 	    CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
@@ -187,7 +200,7 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
                             << " Delegation URL "
                             << cream_deleg_url
                             << " user DN "
-                            << cream_api::certUtil::getDN( certfile )
+                            << V.getDN( )
                             << " proxy hash "
                             << str_sha1_digest
                             << log4cpp::CategoryStream::ENDLINE );
@@ -238,7 +251,7 @@ string Delegation_manager::delegate( glite::ce::cream_client_api::soap_proxy::Cr
                         << " Delegation URL "
                         << cream_deleg_url
                         << " user DN "
-                        << cream_api::certUtil::getDN( certfile )
+                        << V.getDN( )
                         << log4cpp::CategoryStream::ENDLINE );
     }
     return delegation_id;

@@ -28,8 +28,8 @@
 
 #include "iceAbsCommand.h"
 #include "creamJob.h"
-#include "glite/ce/cream-client-api-c/JobInfo.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/JobInfo.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -53,7 +53,7 @@ namespace glite {
 	class jobCache;
 
 	class iceCommandStatusPoller : public iceAbsCommand {
-	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+	  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
           log4cpp::Category *m_log_dev;
           glite::wms::ice::util::iceLBLogger* m_lb_logger;
           Ice* m_iceManager;

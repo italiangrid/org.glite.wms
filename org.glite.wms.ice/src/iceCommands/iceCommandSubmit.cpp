@@ -40,13 +40,22 @@
 #include "CreamProxyMethod.h"
 #include "Request.h"
 #include "Request_source_purger.h"
-
 #include "iceUtils.h"
 
-// Other glite includes
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
+/**
+ *
+ * Cream Client API Headers
+ *
+ */
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
+#include "glite/ce/cream-client-api-c/JobIdWrapper.h"
+#include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
+#include "glite/ce/cream-client-api-c/ResultWrapper.h"
+#include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
+#include "glite/ce/cream-client-api-c/JobDescriptionWrapper.h"
+
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -61,9 +70,8 @@
 #include <cstring> // for memset
 
 using namespace std;
-
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
-namespace cream_api = glite::ce::cream_client_api;
+namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
 namespace wms_utils = glite::wms::common::utilities;
 namespace iceUtil = glite::wms::ice::util;
@@ -104,6 +112,8 @@ namespace { // Anonymous namespace
     
 }; // end anonymous namespace
 
+//
+//
 //____________________________________________________________________________
 iceCommandSubmit::iceCommandSubmit( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy,*/ iceUtil::Request* request )
   throw( iceUtil::ClassadSyntax_ex&, iceUtil::JobRequest_ex& ) :
@@ -206,7 +216,7 @@ iceCommandSubmit::iceCommandSubmit( /*glite::ce::cream_client_api::soap_proxy::C
 
     try {
         m_theJob.setJdl( m_jdl );
-        m_theJob.setStatus( cream_api::job_statuses::UNKNOWN );
+        m_theJob.setStatus( glite::ce::cream_client_api::job_statuses::UNKNOWN );
     } catch( iceUtil::ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
@@ -217,9 +227,11 @@ iceCommandSubmit::iceCommandSubmit( /*glite::ce::cream_client_api::soap_proxy::C
         throw( iceUtil::ClassadSyntax_ex( ex.what() ) );
     }
     
-    m_theProxy.reset( _theProxy );
+    //m_theProxy.reset( _theProxy );
 }
 
+//
+//
 //____________________________________________________________________________
 void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
@@ -236,7 +248,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     
     iceUtil::jobCache* cache( iceUtil::jobCache::getInstance() );
     
-    vector<string> url_jid;
+    //vector<string> url_jid;
     Request_source_purger purger_f( m_request );
     wms_utils::scope_guard remove_request_guard( purger_f );
 
@@ -265,28 +277,54 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         
 
     /**
+     *
+     * Retrieve all usefull cert info
+     *
+     */
+    cream_api::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+    if( !V.IsValid( ) ) {
+      //      throw cream_api::auth_ex( V.getErrorMessage() );
+      CREAM_SAFE_LOG(
+		     m_log_dev->errorStream()
+		     << "iceCommandSubmit::execute() - "
+		     << "Unable to submit gridJobID=" 
+		     << m_theJob.getGridJobID()
+		     << " due to authentication error:" << V.getErrorMessage()
+		     << log4cpp::CategoryStream::ENDLINE
+		     );
+      m_theJob.set_failure_reason( V.getErrorMessage() );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, V.getErrorMessage() ) );
+      m_theJob.set_failure_reason( boost::str( boost::format( "Submission to CREAM failed due to exception: %1%" ) % V.getErrorMessage() ) );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) ); // Ref: Ale, 25 jan 2007
+      m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of authentication exception %1%" ) % V.getErrorMessage() ) );
+      throw( iceCommandFatal_ex( V.getErrorMessage() ) );
+    }
+
+    /**
      * In order to make the userDN an index in the BDb's secondary database
      * it must be available already at the first put.
      * So the following block of code must remain here.
      */
-    try {
-      m_theJob.setUserDN( glite::ce::cream_client_api::certUtil::getDNFQAN(m_theJob.getUserProxyCertificate()) );
-    } catch(exception& ex) {
-      CREAM_SAFE_LOG(
-                   m_log_dev->errorStream()
-                   << "iceCommandSubmit::execute() - Cannot set the user DN for current job: "
-		   << ex.what() << ""
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
-      m_theJob.set_failure_reason( ex.what() );
-      m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
-      // The next event is used to show the failure reason in the status info
-      // JC+LM log transfer-fail / aborted in case of condor transfers fail
-      m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() ) );
-      m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
-      m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
-      throw( iceCommandFatal_ex( ex.what() ) );
-    }
+//     try {
+//       m_theJob.setUserDN( glite::ce::cream_client_api::certUtil::getDNFQAN(m_theJob.getUserProxyCertificate()) );
+//     } catch(exception& ex) {
+//       CREAM_SAFE_LOG(
+//                    m_log_dev->errorStream()
+//                    << "iceCommandSubmit::execute() - Cannot set the user DN for current job: "
+// 		   << ex.what() << ""
+//                    << log4cpp::CategoryStream::ENDLINE
+//                    );
+//       m_theJob.set_failure_reason( ex.what() );
+//       m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
+//       // The next event is used to show the failure reason in the status info
+//       // JC+LM log transfer-fail / aborted in case of condor transfers fail
+//       m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() ) );
+//       m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
+//       m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
+//       throw( iceCommandFatal_ex( ex.what() ) );
+//     }
+
+    m_theJob.setUserDN( V.getDNFQAN() );
 
     // This must be left AFTER the above code. The remove_job_guard
     // object will REMOVE the job from the cache when being destroied.
@@ -330,31 +368,31 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     //
     // Authenticate    
     //
-    try {
-        // api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
-        //m_theProxy->Authenticate(m_theJob.getUserProxyCertificate());
+//     try {
+//         // api_util::scoped_timer autenticate_timer( "iceCommandSubmit::Authenticate" );
+//         //m_theProxy->Authenticate(m_theJob.getUserProxyCertificate());
 
-      cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
-      if( !V.IsValid( ) ) {
-	throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
-      }
+//       cream_api::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+//       if( !V.IsValid( ) ) {
+// 	throw cream_api::auth_ex( V.getErrorMessage() );
+//       }
 
-    } catch ( cream_api::soap_proxy::auth_ex& ex ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream()
-                       << "iceCommandSubmit::execute() - "
-                       << "Unable to submit gridJobID=" 
-                       << m_theJob.getGridJobID()
-                       << " due to authentication error:" << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        m_theJob.set_failure_reason( ex.what() );
-        m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what() ) );
-        m_theJob.set_failure_reason( boost::str( boost::format( "Submission to CREAM failed due to exception: %1%" ) % ex.what() ) );
-        m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) ); // Ref: Ale, 25 jan 2007
-        m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
-        throw( iceCommandFatal_ex( ex.what() ) );
-    }
+//     } catch ( cream_api::auth_ex& ex ) {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->errorStream()
+//                        << "iceCommandSubmit::execute() - "
+//                        << "Unable to submit gridJobID=" 
+//                        << m_theJob.getGridJobID()
+//                        << " due to authentication error:" << ex.what()
+//                        << log4cpp::CategoryStream::ENDLINE
+//                        );
+//         m_theJob.set_failure_reason( ex.what() );
+//         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what() ) );
+//         m_theJob.set_failure_reason( boost::str( boost::format( "Submission to CREAM failed due to exception: %1%" ) % ex.what() ) );
+//         m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) ); // Ref: Ale, 25 jan 2007
+//         m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of SOAP exception %1%" ) % ex.what() ) );
+//         throw( iceCommandFatal_ex( ex.what() ) );
+//     }
     
     string delegID; // empty delegation id
 
@@ -372,12 +410,14 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 
     bool force_delegation = false;
 
+    cream_api::AbsCreamProxy::RegisterArrayResult res;
+
     while( 1 ) {
         
         // 
         // Delegates the proxy
         //
-        delegID = iceUtil::Delegation_manager::instance()->delegate( m_theProxy.get(), m_theJob, force_delegation );
+       delegID = iceUtil::Delegation_manager::instance()->delegate( /*m_theProxy.get(),*/ m_theJob, force_delegation );
         
         //
         // Registers the job (with autostart)
@@ -392,13 +432,35 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                            << "]..."
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            iceUtil::CreamProxy_Register 
-                pr( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID,
-                    modified_jdl, m_theJob.getGridJobID(),
-                    m_theJob.getUserProxyCertificate(), url_jid, newLease, false );
+//             iceUtil::CreamProxy_Register 
+//                 pr( m_theJob.getCreamURL(), m_theJob.getCreamDelegURL(), delegID,
+//                     modified_jdl, m_theJob.getGridJobID(),
+//                     m_theJob.getUserProxyCertificate(), url_jid, newLease, false );
+
+	    cream_api::AbsCreamProxy::RegisterArrayRequest req;
+	    
+	    // FIXME: must check what to set the 3rd and 4th arguments (delegationProxy, leaseID)
+	    // FIXME: TODO -> LeaseManager
+	    // last asrgument is irrelevant now, because we register jobs one by one
+	    cream_api::JobDescriptionWrapper jd(m_theJob.getJDL(), 
+				     delegID, 
+				     ""/* delegPRoxy */, 
+				     ""/* leaseID */, 
+				     false, /* NO autostart */
+				     "foo");
+
+	    req.push_back( &jd );
+	    iceUtil::CreamProxy_Register( m_theJob.getCreamURL(),
+					  m_theJob.getUserProxyCertificate(),
+					  (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
+					  &res).execute( 3 );
             
-            pr.execute(m_theProxy.get(), 3 );
-            newLease = pr.retrieveNewLeaseTime();	
+            //pr.execute(m_theProxy.get(), 3 );
+
+	    // FIXME: put code for lease time negotiation
+
+            //newLease = pr.retrieveNewLeaseTime();
+
             break; // exit the while(1) loop
 
         } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
@@ -429,36 +491,78 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
             m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
             throw( iceCommandFatal_ex( ex.what() ) );
         }
-    } // end while
+    } // end while(1)
     
+    bool ok = res.begin()->second.get<0>();
+    
+    if( !ok )
+      {
+	string err = res.begin()->second.get<2>();
+	CREAM_SAFE_LOG(
+		       m_log_dev->errorStream()
+		       << method_name
+		       << "Cannot register GridJobID ["
+		       << m_theJob.getGridJobID() 
+		       << "] Error:" << err
+		       << log4cpp::CategoryStream::ENDLINE
+		       );
+	m_theJob.set_failure_reason( err );
+	m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, err  ) );
+	// The next event is used to show the failure reason in the status info
+	// JC+LM log transfer-fail / aborted in case of condor transfers fail
+	m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to service fault: %1%" ) % err ) );
+	m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
+	m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of CREAM fault %1%" ) % err ) ); // Try to resubmit
+	throw( iceCommandFatal_ex( err ) );
+      }
+    
+    string jobId      = res.begin()->second.get<1>().getCreamJobID();
+    string __creamURL = res.begin()->second.get<1>().getCreamURL();
+
+    // FIXME: should we check that __creamURL == m_theJob.getCreamURL() ?!?
+    // If it is not it's VERY severe server error, and I think it is not our businness
+
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << method_name
 		   << "For GridJobID [" << m_theJob.getGridJobID() << "]" 
 		   << " CREAM Returned CREAM-JOBID ["
-                   << url_jid[1] <<"]"
+                   << jobId <<"]"
                    << log4cpp::CategoryStream::ENDLINE
                    );
-    
+
+    cream_api::ResultWrapper startRes;
+
     try {
       CREAM_SAFE_LOG(
 		     m_log_dev->debugStream()
 		     << method_name
 		     << "Going to START CreamJobID ["
-		     << url_jid[1] <<"] related to GridJobID ["
+		     << jobId <<"] related to GridJobID ["
 		     << m_theJob.getGridJobID() 
 		     << "]..."
 		     << log4cpp::CategoryStream::ENDLINE
 		     );
       
-      iceUtil::CreamProxy_Start pr( m_theJob.getCreamURL(), url_jid[1]);
-      pr.execute(m_theProxy.get(), 7 );
+      // FIXME: must create the request JobFilterWrapper for the Start operation
+      vector<cream_api::JobIdWrapper> toStart;
+      toStart.push_back( cream_api::JobIdWrapper( (const string&)jobId, (const string&)__creamURL, vector<cream_api::JobPropertyWrapper>()));
+
+      cream_api::JobFilterWrapper jw(toStart, vector<string>(), -1, -1, "", "");
+
+      //      iceUtil::CreamProxy_Start pr( m_theJob.getCreamURL(), url_jid[1]);
+      iceUtil::CreamProxy_Start( __creamURL, 
+				 m_theJob.getUserProxyCertificate(), 
+				 (const cream_api::JobFilterWrapper *)&jw, 
+				 &startRes ).execute( 7 );
+
+	//      pr.execute(m_theProxy.get(), 7 );
     } catch( exception& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream()
                        << method_name
                        << "Cannot start CreamJobID ["
-		       << url_jid[1] << "] GridJobID ["
+		       << jobId << "] GridJobID ["
                        << m_theJob.getGridJobID() << "]"
                        << " Exception:" << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
@@ -473,12 +577,53 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         throw( iceCommandFatal_ex( ex.what() ) );
     }
 
+    // FIXME: Very orrible. 
+    // Must look for a better and more elegant way for doing the following
+    // the following code accumulate all the results in tmp list
+    list<pair<cream_api::JobIdWrapper, string> > tmp;
+    startRes.getNotExistingJobs( tmp );
+    if(tmp.empty())
+      startRes.getNotMatchingStatusJobs( tmp );
+    if(tmp.empty())
+      startRes.getNotMatchingDateJobs( tmp );
+    if(tmp.empty())
+      startRes.getNotMatchingProxyDelegationIdJobs( tmp );
+    if(tmp.empty())
+      startRes.getNotMatchingLeaseIdJobs( tmp );
+    
+    // It is sufficient look for "empty-ness" because
+    // we've started only one job
+    if(!tmp.empty()) {
+      pair<cream_api::JobIdWrapper, string> wrong = *( tmp.begin() ); // we trust there's only one element because we've started ONLY ONE job
+      string errMex = wrong.second;
+      
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "iceCommandSubmit::execute() - "
+		     << "Cannot start job " 
+		     << m_theJob.describe()
+		     << ". Reason is: " << errMex
+		     << log4cpp::CategoryStream::ENDLINE);
+
+      m_theJob.set_failure_reason( errMex );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, errMex  ) );
+      // The next event is used to show the failure reason in the status info
+      // JC+LM log transfer-fail / aborted in case of condor transfers fail
+      m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to service fault: %1%" ) % errMex ) );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
+      m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % errMex ) ); // Try to resubmit
+      throw( iceCommandFatal_ex( errMex ) );
+    }
+
+    
+
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
     
-    m_theJob.setCreamJobID(url_jid[1]);
-    m_theJob.setStatus(cream_api::job_statuses::PENDING);
+    m_theJob.setCreamJobID( jobId );
+    m_theJob.setStatus(glite::ce::cream_client_api::job_statuses::PENDING);
 
+
+    // FIXME: Must handle lease negotiation
     m_theJob.setEndLease( time(0) + newLease );
     
     m_theJob.setDelegationId( delegID );
@@ -833,16 +978,9 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   // Try to determine if the current user userDN is subscribed to 'cemon_url' by
   // asking the cemonUrlCache
   
-//   cout << "iceCommandSubmit::doSubscription - Calling subMgr->hasSubscription("
-//        << userProxy << ", " 
-//        << cemon_url << " )"
-//        << endl;
-
   bool foundSubscription;
-  {
-    //    boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
-    foundSubscription = subMgr->hasSubscription( userProxy, cemon_url );
-  }
+
+  foundSubscription = subMgr->hasSubscription( userProxy, cemon_url );
   
   if ( foundSubscription )
     {
@@ -861,9 +999,8 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // will use always the most long-lived proxy to renew subscriptions.
       //subMgr->setUserProxyIfLonger( userDN, userProxy );
       //      {
-      //boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
+
       dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-      //}
 
       return;
     }	   
@@ -905,10 +1042,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       if( subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
 	    
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
-	//{
-	//boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
 	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-	//}
 	
       } else {
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
@@ -924,15 +1058,9 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     } // unlock the subscriptionManager::mutex
     else {
 
-      {
-	//boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
-	subMgr->insertSubscription( userProxy, cemon_url, sub );
-      }
+      subMgr->insertSubscription( userProxy, cemon_url, sub );
 
-      //      {
-      //boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
       dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-      //}
 
     }
 
@@ -948,8 +1076,6 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     bool can_subscribe = true;
     string DN;
     if ( m_configuration->ice()->listener_enable_authz() ) {
-      //string DN;
-      //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
       if( !subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
 	// Cannot subscribe to a CEMon without it's DN
 	can_subscribe = false;
@@ -966,14 +1092,10 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       iceUtil::iceSubscription sub;
       if( iceUtil::subscriptionProxy::getInstance()->subscribe( userProxy, cemon_url, sub ) ) {
 	{
-	  //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
 	  subMgr->insertSubscription( userProxy, cemon_url, sub );
 	}
 
-	//	{
-	//boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
 	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-	//}
 
       } else {
 	CREAM_SAFE_LOG(
