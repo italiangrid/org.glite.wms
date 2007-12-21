@@ -22,15 +22,15 @@ libglite_wms_iceUtils_la_SOURCES = \
 				DNProxyManager.cpp \
 				iceUtils.cpp \
 				jobDbManager.cpp \
-				ICECreamProxyFactory.cpp \
-				CreamProxyMethod.cpp \
 				Request_jobdir.cpp \
+				CreamProxyMethod.cpp \
 				Request_source_filelist.cpp \
 				Request_source_jobdir.cpp \
 				Request_source_factory.cpp \
 				Delegation_manager.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
+		-I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \
 		-I$(top_srcdir)/src/iceCommands \
