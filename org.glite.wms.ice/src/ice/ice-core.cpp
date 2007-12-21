@@ -22,7 +22,7 @@
  */
 
 #include "ice-core.h"
-#include "iceCommandLeaseUpdater.cpp"
+#include "iceCommandLeaseUpdater.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
@@ -37,17 +37,22 @@
 #include "jobKiller.h"
 #include "iceLBEvent.h"
 #include "iceLBLogger.h"
-#include "CreamProxyFactory.h"
 #include "CreamProxyMethod.h"
 #include "iceCommandStatusPoller.h"
 #include "Request_source_factory.h"
 #include "Request_source.h"
 #include "Request.h"
+#include "DNProxyManager.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+#include "glite/ce/cream-client-api-c/ResultWrapper.h"
+#include "glite/ce/cream-client-api-c/JobIdWrapper.h"
+#include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include "glite/wms/purger/purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
@@ -118,7 +123,8 @@ void Ice::IceThreadHelper::stop( void )
     if( m_thread && m_ptr_thread->isRunning() ) {
         CREAM_SAFE_LOG( 
                        m_log_dev->debugStream()
-                       << "Ice::IceThreadHelper::stop() - Waiting for thread " << m_name 
+                       << "Ice::IceThreadHelper::stop() - Waiting for thread " 
+		       << m_name 
                        << " termination..."
                        << log4cpp::CategoryStream::ENDLINE
                        );
@@ -126,7 +132,8 @@ void Ice::IceThreadHelper::stop( void )
         m_thread->join();
         CREAM_SAFE_LOG(
                        m_log_dev->debugStream()
-                       << "Ice::IceThreadHelper::stop() - Thread " << m_name << " finished"
+                       << "Ice::IceThreadHelper::stop() - Thread " 
+		       << m_name << " finished"
                        << log4cpp::CategoryStream::ENDLINE
                        );
     }
@@ -198,8 +205,8 @@ Ice::~Ice( )
 void Ice::init( void )
 {    
     // Handle resubmitted/purged jobs
-    for ( jobCache::iterator it=m_cache->begin(); it != m_cache->end() ; ) {
-        jobCache::iterator old_it( it );
+    for ( util::jobCache::iterator it=m_cache->begin(); it != m_cache->end() ; ) {
+        util::jobCache::iterator old_it( it );
         it = resubmit_or_purge_job( it );
         // If resubmit_or_purge_job fails, for whatever reason, the
         // iterator if NOT incremented to the next element.
@@ -208,10 +215,11 @@ void Ice::init( void )
         }
     }
 
-   if(m_configuration->ice()->start_lease_updater() ) {
-     util::iceCommandLeaseUpdater l( true );
-     l.execute();
-   }
+    // FIXME: uncomment the following 4 lines to activate Lease
+//    if(m_configuration->ice()->start_lease_updater() ) {
+//      util::iceCommandLeaseUpdater l( true );
+//      l.execute();
+//    }
     util::iceCommandStatusPoller p( this, true );
     p.execute( );	
 }
@@ -406,33 +414,37 @@ void Ice::startLeaseUpdater( void )
 //-----------------------------------------------------------------------------
 void Ice::startProxyRenewer( void ) 
 {
-    if ( !m_configuration->ice()->start_proxy_renewer() ) {
-        CREAM_SAFE_LOG( m_log_dev->warnStream()
-                        << "Ice::startProxyRenewer() - "
-                        << "Proxy Renewer disabled in configuration file. "
-                        << "Not started"
-                        << log4cpp::CategoryStream::ENDLINE
-                        );
-        return;
-    }
-    util::proxyRenewal* proxy_renewer = new util::proxyRenewal( );
-    m_proxy_renewer_thread.start( proxy_renewer );
+  // FIXME: uncomment this method to activate the proxy renewal
+
+//     if ( !m_configuration->ice()->start_proxy_renewer() ) {
+//         CREAM_SAFE_LOG( m_log_dev->warnStream()
+//                         << "Ice::startProxyRenewer() - "
+//                         << "Proxy Renewer disabled in configuration file. "
+//                         << "Not started"
+//                         << log4cpp::CategoryStream::ENDLINE
+//                         );
+//         return;
+//     }
+//     util::proxyRenewal* proxy_renewer = new util::proxyRenewal( );
+//     m_proxy_renewer_thread.start( proxy_renewer );
 }
 
 //-----------------------------------------------------------------------------
 void Ice::startJobKiller( void )
 {
-    if ( !m_configuration->ice()->start_job_killer() ) {
-        CREAM_SAFE_LOG( m_log_dev->warnStream()
-                        << "Ice::startJobKiller() - "
-                        << "Job Killer disabled in configuration file. "
-                        << "Not started"
-                        << log4cpp::CategoryStream::ENDLINE
-                        );
-        return;
-    }
-    util::jobKiller* jobkiller = new util::jobKiller( );
-    m_job_killer_thread.start( jobkiller );
+  // FIXME: uncomment this method to activate the jobKiller
+
+//     if ( !m_configuration->ice()->start_job_killer() ) {
+//         CREAM_SAFE_LOG( m_log_dev->warnStream()
+//                         << "Ice::startJobKiller() - "
+//                         << "Job Killer disabled in configuration file. "
+//                         << "Not started"
+//                         << log4cpp::CategoryStream::ENDLINE
+//                         );
+//         return;
+//     }
+//     util::jobKiller* jobkiller = new util::jobKiller( );
+//     m_job_killer_thread.start( jobkiller );
 }
 
 //____________________________________________________________________________
@@ -530,18 +542,41 @@ ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, c
 throw() 
 {
     if ( jit == m_cache->end() )
-        return jit;
+      return jit;
 
+    vector<cream_api::soap_proxy::JobIdWrapper> target;
+    cream_api::soap_proxy::ResultWrapper result;
 
-    boost::scoped_ptr< soap_proxy::CreamProxy > creamClient( ice_util::CreamProxyFactory::makeCreamProxy(false) );
+    target.push_back(cream_api::soap_proxy::JobIdWrapper (jit->getCreamJobID(), 
+				   jit->getCreamURL(), 
+				   std::vector<cream_api::soap_proxy::JobPropertyWrapper>()
+				   ));
+    
+    cream_api::soap_proxy::JobFilterWrapper filter(target, vector<string>(), -1, -1, "", "");
+    
+    //boost::scoped_ptr< soap_proxy::AbsCreamProxy > creamClient( soap_proxy::CreamProxyFactory::make_CreamProxy_Purge( &filter, &result, ) );
 
     // Gets the proxy to use for authentication
     string proxy;
     //{
     //    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-        proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() );
+    proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() );
 	//}
     
+    cream_api::soap_proxy::VOMSWrapper V( jit->getUserProxyCertificate() );
+    if( !V.IsValid( ) ) {
+      //      throw cream_api::auth_ex( V.getErrorMessage() );
+      CREAM_SAFE_LOG(
+                     m_log_dev->errorStream()
+                     << "Ice::::purge_job() - "
+                     << "Unable to purge gridJobID=" 
+                     << jit->getGridJobID()
+                     << " due to authentication error: " << V.getErrorMessage()
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
+      return jit;
+    }
+
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); // this can be called by eventStatusListener::handleEvent that already acquired this mutex; this is not a problem 'cause the mutexes are recursive
 
@@ -557,12 +592,15 @@ throw()
             // vector because we must authenticate different
             // jobs with different user certificates.
 
-            creamClient->Authenticate( proxy );
+            //creamClient->Authenticate( proxy );
 
-            vector< string > oneJobToPurge;
-            oneJobToPurge.push_back( jit->getCreamJobID() );
+//             vector< string > oneJobToPurge;
+//             oneJobToPurge.push_back( jit->getCreamJobID() );
 
-	    glite::wms::ice::util::CreamProxy_Purge( jit->getCreamURL(), oneJobToPurge ).execute( creamClient.get(), 3 );
+	    glite::wms::ice::util::CreamProxy_Purge( jit->getCreamURL(), 
+						     jit->getUserProxyCertificate(), 
+						     &filter, 
+						     &result ).execute( 3 );
 
         } else {
             CREAM_SAFE_LOG(m_log_dev->warnStream()
@@ -573,8 +611,39 @@ throw()
                            << " (but will be removed from ICE cache)"
                            << log4cpp::CategoryStream::ENDLINE);
         }
-        
+	
+	// FIXME: Very orrible. 
+	// Must look for a better and more elegant way for doing the following
+	// the following code accumulate all the results in tmp list
+	list<pair<cream_api::soap_proxy::JobIdWrapper, string> > tmp;
+	result.getNotExistingJobs( tmp );
+	if( tmp.empty() )
+	  result.getNotMatchingStatusJobs( tmp );
+	if( tmp.empty() )
+	  result.getNotMatchingDateJobs( tmp );
+	if( tmp.empty() )
+	  result.getNotMatchingProxyDelegationIdJobs( tmp );
+	if( tmp.empty() )
+	  result.getNotMatchingLeaseIdJobs( tmp );
+	
+	// It is sufficient look for "empty-ness" because
+	// we've started only one job
+	if( !tmp.empty() ) {
+	  pair<cream_api::soap_proxy::JobIdWrapper, string> wrong = *( tmp.begin() ); // we trust there's only one element because we've purged ONLY ONE job
+	  string errMex = wrong.second;
+	  
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+			 << "iceCommandSubmit::execute() - "
+			 << "Cannot purge job " 
+			 << jit->describe()
+			 << ". Reason is: " << errMex
+			 << log4cpp::CategoryStream::ENDLINE);
+	  
+	  return jit;
+	}
+
         jit = m_cache->erase( jit );
+
     } catch (ice_util::ClassadSyntax_ex& ex) {
         /**
          * this exception should not be raised because
@@ -586,7 +655,7 @@ throw()
                        << "copying from a valid one!!!"
                        << log4cpp::CategoryStream::ENDLINE);
         abort();
-    } catch(soap_proxy::auth_ex& ex) {
+    } catch(cream_api::soap_proxy::auth_ex& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << "Ice::purge_job() - "
                        << "Cannot purge job " 

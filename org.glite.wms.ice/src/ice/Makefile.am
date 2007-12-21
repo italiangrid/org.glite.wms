@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libglite_wms_ice.la
 
 libglite_wms_ice_la_SOURCES = ice-core.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/iceThreads \
 		-I$(top_srcdir)/src/iceCommands \
