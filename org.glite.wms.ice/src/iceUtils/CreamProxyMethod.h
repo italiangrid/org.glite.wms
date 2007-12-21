@@ -30,8 +30,8 @@
 
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 
-namespace cream_ex = glite::ce::cream_client_api::cream_exceptions;
-namespace cream_api= glite::ce::cream_client_api::soap_proxy;
+namespace _cream_ex = glite::ce::cream_client_api::cream_exceptions;
+namespace _cream_api= glite::ce::cream_client_api::soap_proxy;
 
 namespace glite {
   namespace ce {
@@ -76,7 +76,7 @@ namespace util {
          * @param ntries the maximum number of times the CREAM method
          * will be executed. 
          */
-        virtual void execute( int ntries ); // may throw anything
+	void execute( int ntries ); // may throw anything
 
     protected:
         CreamProxyMethod( ) { };
@@ -88,19 +88,19 @@ namespace util {
          * not completed yet, this method should raise an appropriate
          * fault.
          */
-        virtual void method_call( int timeout ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&) = 0;
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&) = 0;
     };
 
 
@@ -119,19 +119,19 @@ namespace util {
 	//	int retrieveNewLeaseTime( void ) { return m_lease_time; }
 
     protected:
-        virtual void method_call(int timeout  ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call(int timeout  ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
 
 
         const std::string& m_service_uri;        
@@ -141,7 +141,9 @@ namespace util {
     };
 
     /**
+     *
      * This class is a wrapper around the Cancel method of CreamProxy
+     *
      */
     class CreamProxy_Cancel : public CreamProxyMethod {
     public:
@@ -150,25 +152,24 @@ namespace util {
                            const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
                            glite::ce::cream_client_api::soap_proxy::ResultWrapper* res );
     protected:
-        virtual void method_call( int timeout )throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call( int timeout )throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
 
         const std::string& m_service;
         const std::string& m_certfile;
         const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
 	glite::ce::cream_client_api::soap_proxy::ResultWrapper* m_res;
-        //const std::vector< std::string> m_jobids;
     };
 
 
@@ -182,19 +183,19 @@ namespace util {
                           const std::pair<std::string, time_t>& lease_IN,
                           std::pair<std::string, time_t>* lease_OUT );
     protected:
-        virtual void method_call( int timeout ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
 
         const std::string& m_service;
 	const std::string& m_certfile;
@@ -212,19 +213,19 @@ namespace util {
 			 const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
 			 glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* res );
     protected:        
-        virtual void method_call( int timeout ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
 
         const std::string& m_service;
 	const std::string& m_certfile;
@@ -243,19 +244,19 @@ namespace util {
                           const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
 			  glite::ce::cream_client_api::soap_proxy::ResultWrapper* res );
     protected:        
-        virtual void method_call(int timeout  ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call(int timeout  ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
         
         const std::string& m_service;
 	const std::string& m_certfile;
@@ -274,19 +275,19 @@ namespace util {
                           const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req,
                           glite::ce::cream_client_api::soap_proxy::ResultWrapper* res );
     protected:        
-        virtual void method_call( int timeout ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
         
         const std::string m_service;
         const std::string m_certfile;
@@ -303,19 +304,19 @@ namespace util {
 			   const std::string& certfile,
 			   const std::string& delegation_id);
     protected:        
-        virtual void method_call( int timeout ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
 
         const std::string m_service;
         const std::string m_certfile;
@@ -332,19 +333,19 @@ namespace util {
 			     const std::string& certfile,
 			     const std::string& delegation_id);
     protected:        
-        virtual void method_call( int timeout ) throw(cream_ex::BaseException&,
-						      cream_ex::InvalidArgumentException&,
-						      cream_ex::GridProxyDelegationException&,
-						      cream_ex::JobSubmissionDisabledException&,
-						      cream_ex::JobStatusInvalidException&,
-						      cream_ex::JobUnknownException&,
-						      cream_ex::GenericException&,
-						      cream_ex::AuthenticationException&,
-						      cream_ex::AuthorizationException&,
-						      cream_ex::DelegationException&,
-						      cream_ex::InternalException&,
-						      cream_ex::ConnectionTimeoutException&,
-						      cream_api::auth_ex&);
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
 
         const std::string m_service;
         const std::string m_certfile;
