@@ -22,7 +22,7 @@
  */
 
 #include "ice-core.h"
-#include "iceCommandLeaseUpdater.h"
+//#include "iceCommandLeaseUpdater.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
@@ -32,9 +32,9 @@
 #include "eventStatusListener.h"
 #include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
-#include "leaseUpdater.h"
-#include "proxyRenewal.h"
-#include "jobKiller.h"
+//#include "leaseUpdater.h"
+//#include "proxyRenewal.h"
+//#include "jobKiller.h"
 #include "iceLBEvent.h"
 #include "iceLBLogger.h"
 #include "CreamProxyMethod.h"
@@ -52,7 +52,7 @@
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
-#include "glite/ce/cream-client-api-c/certUtil.h"
+//#include "glite/ce/cream-client-api-c/certUtil.h"
 
 #include "glite/wms/purger/purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
@@ -76,7 +76,6 @@ using namespace glite::wms::ice;
 namespace ice_util = glite::wms::ice::util;
 namespace cream_api = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
-namespace cert_util = glite::ce::cream_client_api::certUtil;
 
 Ice* Ice::s_instance = 0;
 
@@ -239,18 +238,33 @@ void Ice::startListener( void )
 
     string hostdn;
 
-    try {
-       hostdn = cert_util::getDN( m_configuration->ice()->ice_host_cert() );
-    } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-        CREAM_SAFE_LOG( 
-                       m_log_dev->errorStream()
-                       << "Ice::startListener() - Unable to extract user DN from ["
-		       <<  m_configuration->ice()->ice_host_cert() << "]"
-                       << ". Won't start Listener"
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        return;
-    }
+//     try {
+//        hostdn = cert_util::getDN( m_configuration->ice()->ice_host_cert() );
+//     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+//         CREAM_SAFE_LOG( 
+//                        m_log_dev->errorStream()
+//                        << "Ice::startListener() - Unable to extract user DN from ["
+// 		       <<  m_configuration->ice()->ice_host_cert() << "]"
+//                        << ". Won't start Listener"
+//                        << log4cpp::CategoryStream::ENDLINE
+//                        );
+//         return;
+//     }
+
+    soap_proxy::VOMSWrapper V( m_configuration->ice()->ice_host_cert() );
+    if( !V.IsValid( ) ) {
+      //throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+      CREAM_SAFE_LOG( 
+		     m_log_dev->errorStream()
+		     << "Ice::startListener() - Unable to extract user DN from ["
+		     <<  m_configuration->ice()->ice_host_cert() << "]"
+		     << ". Won't start Listener: " << V.getErrorMessage()
+		     << log4cpp::CategoryStream::ENDLINE
+		     );
+      return;
+    } 
+
+
 
     if( hostdn.empty() ) {
         CREAM_SAFE_LOG(
@@ -398,7 +412,7 @@ void Ice::startPoller( void )
 //----------------------------------------------------------------------------
 void Ice::startLeaseUpdater( void ) 
 {
-    if ( !m_configuration->ice()->start_lease_updater() ) {
+/*    if ( !m_configuration->ice()->start_lease_updater() ) {
         CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "Ice::startLeaseUpdater() - "
                         << "Lease Updater disabled in configuration file. "
@@ -408,7 +422,7 @@ void Ice::startLeaseUpdater( void )
         return;
     }
     util::leaseUpdater* lease_updater = new util::leaseUpdater( );
-    m_lease_updater_thread.start( lease_updater );
+    m_lease_updater_thread.start( lease_updater );*/
 }
 
 //-----------------------------------------------------------------------------

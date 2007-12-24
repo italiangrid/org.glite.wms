@@ -41,7 +41,7 @@
 #include "iceUtils.h"
 #include "iceThreadPool.h"
 #include "DNProxyManager.h"
-#include "CreamProxyFactory.h"
+//#include "CreamProxyFactory.h"
 #include "Request.h"
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
@@ -242,17 +242,17 @@ int main(int argc, char*argv[])
                    << log4cpp::CategoryStream::ENDLINE
                    );
 
-    try {
-        string hostdn( certUtil::getDN(hostcert) );
-        glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
-    } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-        CREAM_SAFE_LOG(log_dev->errorStream()
-                       << method_name
-                       << "Unable to extract user DN from Proxy File "
-                       << hostcert 
-                       << ". Won't set SOAP header"
-                       << log4cpp::CategoryStream::ENDLINE);
-    }
+//     try {
+//         string hostdn( certUtil::getDN(hostcert) );
+//         glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
+//     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+//         CREAM_SAFE_LOG(log_dev->errorStream()
+//                        << method_name
+//                        << "Unable to extract user DN from Proxy File "
+//                        << hostcert 
+//                        << ". Won't set SOAP header"
+//                        << log4cpp::CategoryStream::ENDLINE);
+//     }
   
 
     /*****************************************************************************

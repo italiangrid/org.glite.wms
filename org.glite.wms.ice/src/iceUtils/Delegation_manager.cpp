@@ -29,7 +29,7 @@
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "iceUtils.h"
 
-//namespace cream_api = glite::ce::cream_client_api;
+namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;

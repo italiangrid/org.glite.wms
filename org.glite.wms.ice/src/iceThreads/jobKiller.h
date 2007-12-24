@@ -22,41 +22,41 @@
 
 #include "iceConfManager.h"
 #include "iceThread.h"
-#include "creamJob.h"
-#include <boost/scoped_ptr.hpp>
+//#include "creamJob.h"
+//#include <boost/scoped_ptr.hpp>
 
-namespace log4cpp {
-  class Category;
-};
+/* namespace log4cpp { */
+/*   class Category; */
+/* }; */
 
-namespace glite {
-  namespace ce {
-    namespace cream_client_api {
-      namespace soap_proxy {
+/* namespace glite { */
+/*   namespace ce { */
+/*     namespace cream_client_api { */
+/*       namespace soap_proxy { */
 	
-	class CreamProxy;
+/* 	class CreamProxy; */
 
-      }
-    }
-  }
-}
+/*       } */
+/*     } */
+/*   } */
+/* } */
 
 namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
 
-          class iceLBLogger;
+	//class iceLBLogger;
 
       class jobKiller : public iceThread {
 	  bool m_valid;
-	  log4cpp::Category *m_log_dev;
-	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+	  //log4cpp::Category *m_log_dev;
+	  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
 	  time_t m_threshold_time;
 	  time_t m_delay;
-          iceLBLogger* m_lb_logger;
+          //iceLBLogger* m_lb_logger;
 
-	  void killJob( glite::wms::ice::util::CreamJob&, time_t residual_proxy_time ); 
+	  //void killJob( glite::wms::ice::util::CreamJob&, time_t residual_proxy_time ); 
 
 	public:
 	  jobKiller();

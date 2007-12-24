@@ -135,7 +135,7 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BDB_LIBS) \
 		-lvomsapi_gcc32dbgpthr
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen  \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/iceThreads \
 		-I$(top_srcdir)/src/iceCommands \

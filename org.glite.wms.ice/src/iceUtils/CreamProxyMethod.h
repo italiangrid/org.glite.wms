@@ -206,31 +206,62 @@ namespace util {
     /**
      * Wrapper class around the Info method of CreamProxy
      */ 
-    class CreamProxy_Status : public CreamProxyMethod {
-     public:
-      CreamProxy_Status( const std::string& service, 
-			 const std::string& certfile, 
-			 const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
-			 glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* res );
-    protected:        
-        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
-						      _cream_ex::InvalidArgumentException&,
-						      _cream_ex::GridProxyDelegationException&,
-						      _cream_ex::JobSubmissionDisabledException&,
-						      _cream_ex::JobStatusInvalidException&,
-						      _cream_ex::JobUnknownException&,
-						      _cream_ex::GenericException&,
-						      _cream_ex::AuthenticationException&,
-						      _cream_ex::AuthorizationException&,
-						      _cream_ex::DelegationException&,
-						      _cream_ex::InternalException&,
-						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+//     class CreamProxy_Status : public CreamProxyMethod {
+//      public:
+//       CreamProxy_Status( const std::string& service, 
+// 			 const std::string& certfile, 
+// 			 const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
+// 			 glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* res );
+//     protected:        
+//         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+// 						      _cream_ex::InvalidArgumentException&,
+// 						      _cream_ex::GridProxyDelegationException&,
+// 						      _cream_ex::JobSubmissionDisabledException&,
+// 						      _cream_ex::JobStatusInvalidException&,
+// 						      _cream_ex::JobUnknownException&,
+// 						      _cream_ex::GenericException&,
+// 						      _cream_ex::AuthenticationException&,
+// 						      _cream_ex::AuthorizationException&,
+// 						      _cream_ex::DelegationException&,
+// 						      _cream_ex::InternalException&,
+// 						      _cream_ex::ConnectionTimeoutException&,
+// 						      _cream_api::auth_ex&);
 
-        const std::string& m_service;
-	const std::string& m_certfile;
-	const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
-	glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* m_res;
+//         const std::string& m_service;
+// 	const std::string& m_certfile;
+// 	const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
+// 	glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* m_res;
+//     };
+
+
+    /**
+     * Wrapper class around the Info method of CreamProxy
+     */ 
+    class CreamProxy_Info : public CreamProxyMethod {
+     public:
+      CreamProxy_Info( const std::string& service, 
+		       const std::string& certfile, 
+		       const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
+		       glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::InfoArrayResult* res );
+    protected:        
+      virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						    _cream_ex::InvalidArgumentException&,
+						    _cream_ex::GridProxyDelegationException&,
+						    _cream_ex::JobSubmissionDisabledException&,
+						    _cream_ex::JobStatusInvalidException&,
+						    _cream_ex::JobUnknownException&,
+						    _cream_ex::GenericException&,
+						    _cream_ex::AuthenticationException&,
+						    _cream_ex::AuthorizationException&,
+						    _cream_ex::DelegationException&,
+						    _cream_ex::InternalException&,
+						    _cream_ex::ConnectionTimeoutException&,
+						    _cream_api::auth_ex&);
+
+      const std::string& m_service;
+      const std::string& m_certfile;
+      const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
+      glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::InfoArrayResult* m_res;
     };
 
 

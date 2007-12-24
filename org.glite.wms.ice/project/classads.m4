@@ -1,3 +1,56 @@
+AC_DEFUN([GLITE_CHECK_CLASSADS],
+[AC_ARG_WITH(
+    [classads_prefix],
+    [AS_HELP_STRING(
+        [--with-classads-prefix=PFX],
+        [prefix where libclassad is installed  @<:@default=/opt/classads@:>@]
+    )],
+    [],
+    [with_classads_prefix=/opt/classads]
+)
+AC_MSG_CHECKING([for libclassad])
+ac_classads_prefix=$with_classads_prefix
+if test -d "$ac_classads_prefix"; then
+    CLASSAD_CPPFLAGS="-I$ac_classads_prefix/include -DWANT_NAMESPACES"
+    if test x$host_cpu = xx86_64 -o x$host_cpu = xia64; then
+        CLASSAD_LDFLAGS="-L$ac_classads_prefix/lib64"
+    else
+        CLASSAD_LDFLAGS="-L$ac_classads_prefix/lib"
+    fi
+    CLASSAD_LIBS="-lclassad"
+else
+    AC_MSG_ERROR([$with_classads_prefix: no such directory])
+fi
+
+AC_LANG_PUSH([C++])
+ac_save_cppflags=$CPPFLAGS
+ac_save_ldflags=$LDFLAGS
+ac_save_libs=$LIBS
+CPPFLAGS="$CLASSAD_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$CLASSAD_LDFLAGS $LDFLAGS"
+LIBS="$CLASSAD_LIBS $LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+    [@%:@include <classad_distribution.h>],
+    [std::string const s("[key=\"value\"]");
+     classad::ClassAd ad;
+     classad::ClassAdParser parser;
+     parser.ParseClassAd("[key=\"value\"]", ad);]
+)],
+[AC_MSG_RESULT([$ac_classads_prefix])],
+[AC_MSG_ERROR([no])]
+)
+
+CPPFLAGS=$ac_save_cppflags
+LDFLAGS=$ac_save_ldflags
+LIBS=$ac_save_libs
+AC_LANG_POP([C++])
+
+AC_SUBST(CLASSAD_CPPFLAGS)
+AC_SUBST(CLASSAD_LDFLAGS)
+AC_SUBST(CLASSAD_LIBS)
+])
+
+
 dnl Usage:
 dnl AC_CLASSAD(MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl - CLASSAD_CFLAGS (compiler flags)
@@ -6,26 +59,33 @@ dnl - CLASSAD_DL_LIBS
 dnl - CLASSAD_INSTALL_PATH
 dnl - CLASSAD_PATH
 
-AC_DEFUN(AC_CLASSADS,
+AC_DEFUN([AC_CLASSADS],
 [
     AC_ARG_WITH(classads_prefix, 
 	[  --with-classads-prefix=PFX    prefix where the Classad is installed.],
 	[], 
 	with_classads_prefix="/opt/classads")
 
+    if test $host_cpu = x86_64 -o "$host_cpu" = ia64 ; then
+        ac_classads_lib_dir="lib64"
+    else
+        ac_classads_lib_dir="lib"
+    fi
+    AC_MSG_RESULT([using lib path: $ac_classads_lib_dir])
+  
     AC_MSG_CHECKING([for CLASSAD installation])
 
     CLASSAD_CFLAGS=""
     CLASSAD_LIBS="-lclassad"
     CLASSAD_DL_LIBS="-lclassad_dl"
     if test -n "$with_classads_prefix" -a "$with_classads_prefix" != "/usr" ; then
-            AC_MSG_RESULT([prefix: $with_classads_prefix])
+        AC_MSG_RESULT([prefix: $with_classads_prefix])
 
-            ac_classads_prefix=$with_classads_prefix
+        ac_classads_prefix=$with_classads_prefix
 
-            CLASSAD_CFLAGS="-I$with_classads_prefix/include"
-            CLASSAD_LIBS="-L$with_classads_prefix/lib $CLASSAD_LIBS"
-	    CLASSAD_DL_LIBS="-L$with_classads_prefix/lib $CLASSAD_DL_LIBS"
+        CLASSAD_CFLAGS="-I$with_classads_prefix/include"
+        CLASSAD_LIBS="-L$with_classads_prefix/$ac_classads_lib_dir $CLASSAD_LIBS"
+        CLASSAD_DL_LIBS="-L$with_classads_prefix/$ac_classads_lib_dir $CLASSAD_DL_LIBS"
     fi
 
     AC_LANG_SAVE
@@ -62,7 +122,7 @@ AC_DEFUN(AC_CLASSADS,
 	    ***  Condor ClassADs library is installed])
         CLASSAD_CFLAGS=""
         CLASSAD_LIBS=""
-	CLASSAD_DL_LIBS=""
+        CLASSAD_DL_LIBS=""
 	CLASSAD_PATH=""
 	ifelse([$3], , :, [$3])
     fi

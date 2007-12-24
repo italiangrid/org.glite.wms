@@ -28,7 +28,7 @@
 
 #include "iceAbsCommand.h"
 #include "creamJob.h"
-//#include "glite/ce/cream-client-api-c/JobInfo.h"
+#include "glite/ce/cream-client-api-c/JobInfoWrapper.h"
 //#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include <boost/scoped_ptr.hpp>
@@ -74,17 +74,7 @@ namespace glite {
            */ 
 	  void get_jobs_to_poll( std::list< glite::wms::ice::util::CreamJob >& ) throw();
 
-          /**
-           * Breaks the list of jobs into sublists of size at most max_size
-           *
-           * @param jobs the list of jobs
-           *
-           * @param max_size the max size of the returned sublists
-           *
-           * @return the list of chunks
-           */
-          //std::list< std::list< glite::wms::ice::util::CreamJob > > create_chunks( const std::list< glite::wms::ice::util::CreamJob >& jobs, unsigned int max_size );
-
+          
 	  /**
            * Updates the status informations for all jobs in the list
            * l.
@@ -92,7 +82,7 @@ namespace glite {
            * @param l the list of job status informations (this list is
            * typically the resout of the scanJobs() method call).
            */
-          void updateJobCache( const std::list< glite::ce::cream_client_api::soap_proxy::JobInfo >& ) throw();
+          void updateJobCache( const std::list< glite::ce::cream_client_api::soap_proxy::JobInfoWrapper >& ) throw();
 
 	  /**
            * Updates the cache with the job status changes (for a single job)
@@ -100,7 +90,7 @@ namespace glite {
            *
            * @param s the StatusInfo object from which job informations are updated
            */
-          void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfo& ) throw();
+          void update_single_job( const glite::ce::cream_client_api::soap_proxy::JobInfoWrapper& ) throw();
 
 	  //void remove_unknown_jobs_from_cache(std::vector< const glite::ce::cream_client_api::soap_proxy::JobInfo >&) throw();
 
@@ -112,7 +102,10 @@ namespace glite {
           /**
            *
            */
-	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfo > check_multiple_jobs( const std::string& user_dn, const std::string& cream_url, const std::vector< std::string >& cream_job_ids ) throw();
+	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfoWrapper > 
+	    check_multiple_jobs( const std::string& user_dn, 
+				 const std::string& cream_url, 
+				 const std::vector< std::string >& cream_job_ids ) throw();
 
           /**
            * This method removes jobs which have been reported as not found by
@@ -129,7 +122,9 @@ namespace glite {
            * contains *at most* one element for each CREAM job ID
            * in the all_jobs vector.
            */
-	  void remove_unknown_jobs_from_cache(const std::vector<std::string>& all_jobs, const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& jobs_found ) throw();
+	  void 
+	    remove_unknown_jobs_from_cache(const std::vector<std::string>& all_jobs, 
+					   const std::list< glite::ce::cream_client_api::soap_proxy::JobInfoWrapper >& jobs_found ) throw();
 
 	public:
 	  //static boost::recursive_mutex mutexJobStatusPoll;

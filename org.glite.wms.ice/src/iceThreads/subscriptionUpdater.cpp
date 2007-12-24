@@ -17,11 +17,8 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-//#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "subscriptionUpdater.h"
 #include "iceCommandSubUpdater.h"
-//#include "jobCache.h"
-//#include "cemonUrlCache.h"
 #include "iceUtils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -50,5 +47,5 @@ void iceUtil::subscriptionUpdater::body( void )
     cmd.execute();
 
     sleep( m_iteration_delay );
-  } // while( !stopped )
-}   // end function
+  }
+}

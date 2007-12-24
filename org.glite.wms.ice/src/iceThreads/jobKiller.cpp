@@ -19,17 +19,15 @@
 
 // ICE stuff
 #include "jobKiller.h"
-#include "jobCache.h"
-#include "iceLBLogger.h"
-#include "iceLBEvent.h"
-#include "CreamProxyFactory.h"
-#include "CreamProxyMethod.h"
+//#include "jobCache.h"
+//#include "iceLBLogger.h"
+//#include "iceLBEvent.h"
+//#include "CreamProxyMethod.h"
 #include "iceCommandJobKill.h"
 
 // GLITE stuff
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
-#include "glite/ce/cream-client-api-c/certUtil.h"
+//#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+//#include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
@@ -45,10 +43,9 @@ using namespace glite::wms::ice::util;
 jobKiller::jobKiller() : 
     iceThread( "Job Killer" ),
     m_valid( true ),
-    m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
-    m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
-    m_threshold_time( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time()),
-    m_lb_logger( iceLBLogger::instance() )    
+    //m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
+    m_threshold_time( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time())
+    //m_lb_logger( iceLBLogger::instance() )    
 {
     if( m_threshold_time < 60 ) m_threshold_time = 60;
     m_delay = m_threshold_time/2;

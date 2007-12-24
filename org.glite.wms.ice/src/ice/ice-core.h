@@ -25,12 +25,6 @@
 #define GLITE_WMS_ICE_ICE_CORE_H
 
 #include "iceInit_ex.h"
-#include "eventStatusListener.h"
-#include "subscriptionUpdater.h"
-#include "eventStatusPoller.h"
-#include "leaseUpdater.h"
-#include "proxyRenewal.h"
-#include "jobKiller.h"
 #include "creamJob.h"
 #include "iceThread.h"
 #include "iceThreadPool.h"

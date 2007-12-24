@@ -8,9 +8,16 @@
 
 lib_LTLIBRARIES = libglite_wms_iceThreads.la
 
-libglite_wms_iceThreads_la_SOURCES = eventStatusListener.cpp iceThread.cpp jobKiller.cpp proxyRenewal.cpp eventStatusPoller.cpp iceThreadPool.cpp leaseUpdater.cpp subscriptionUpdater.cpp
+libglite_wms_iceThreads_la_SOURCES = eventStatusListener.cpp \
+					iceThread.cpp \
+					eventStatusPoller.cpp \
+					iceThreadPool.cpp \
+					subscriptionUpdater.cpp
+###					jobKiller.cpp \
+###					proxyRenewal.cpp \
+###					leaseUpdater.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \
 		-I$(top_srcdir)/src/iceCommands \

@@ -28,9 +28,9 @@
 #include "iceConfManager.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
-#include "CreamProxyFactory.h"
+//#include "CreamProxyFactory.h"
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 

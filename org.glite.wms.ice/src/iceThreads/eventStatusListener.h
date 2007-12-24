@@ -23,6 +23,8 @@
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 #include "iceThread.h"
 
+namespace cemon_api = glite::ce::monitor_client_api::soap_proxy;
+
 // Forward declaration for the logger
 namespace log4cpp {
     class Category;
@@ -55,7 +57,7 @@ namespace glite {
 	   Its main purpose is to receive notifications from CEMon about all job status chages; the CEMon sending notifications runs on the same host of the CREAM service. In order to receive notifications, the listener must be subscribed to that CEMon service.
 
 	*/
-	class eventStatusListener : public CEConsumer, public iceThread {
+	class eventStatusListener : public cemon_api::CEConsumer, public iceThread {
 	  std::string                                            m_myname;
 	  const glite::wms::common::configuration::ICEConfiguration*  m_conf;
           log4cpp::Category                                     *m_log_dev;
