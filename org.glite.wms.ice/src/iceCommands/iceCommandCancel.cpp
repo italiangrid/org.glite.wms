@@ -239,6 +239,8 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 
 	// theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
 
+	// FIXME: must handle possible faults contained in the res structure.
+
     } catch(cream_api::auth_ex& ex) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("auth_ex: ") + ex.what() ) );
         throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
