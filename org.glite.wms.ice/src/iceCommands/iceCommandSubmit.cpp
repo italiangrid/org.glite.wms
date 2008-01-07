@@ -115,7 +115,7 @@ namespace { // Anonymous namespace
 //
 //
 //____________________________________________________________________________
-iceCommandSubmit::iceCommandSubmit( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* _theProxy,*/ iceUtil::Request* request )
+iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
   throw( iceUtil::ClassadSyntax_ex&, iceUtil::JobRequest_ex& ) :
     iceAbsCommand( ),
     m_theIce( Ice::instance() ),
@@ -417,7 +417,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         // 
         // Delegates the proxy
         //
-       delegID = iceUtil::Delegation_manager::instance()->delegate( /*m_theProxy.get(),*/ m_theJob, force_delegation );
+       delegID = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );
         
         //
         // Registers the job (with autostart)

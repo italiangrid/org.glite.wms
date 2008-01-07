@@ -626,19 +626,15 @@ throw()
                            << log4cpp::CategoryStream::ENDLINE);
         }
 	
-	// FIXME: Very orrible. 
-	// Must look for a better and more elegant way for doing the following
 	// the following code accumulate all the results in tmp list
+	// If an error occurred tmp should contain 1 (and only 1) element
+	// (because we sent purge for only 1 job)
 	list<pair<cream_api::soap_proxy::JobIdWrapper, string> > tmp;
 	result.getNotExistingJobs( tmp );
-	if( tmp.empty() )
-	  result.getNotMatchingStatusJobs( tmp );
-	if( tmp.empty() )
-	  result.getNotMatchingDateJobs( tmp );
-	if( tmp.empty() )
-	  result.getNotMatchingProxyDelegationIdJobs( tmp );
-	if( tmp.empty() )
-	  result.getNotMatchingLeaseIdJobs( tmp );
+	result.getNotMatchingStatusJobs( tmp );
+	result.getNotMatchingDateJobs( tmp );
+	result.getNotMatchingProxyDelegationIdJobs( tmp );
+	result.getNotMatchingLeaseIdJobs( tmp );
 	
 	// It is sufficient look for "empty-ness" because
 	// we've started only one job
