@@ -52,7 +52,7 @@
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
-//#include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/cream-client-api-c/certUtil.h"
 
 #include "glite/wms/purger/purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
@@ -251,18 +251,33 @@ void Ice::startListener( void )
 //         return;
 //     }
 
-    soap_proxy::VOMSWrapper V( m_configuration->ice()->ice_host_cert() );
-    if( !V.IsValid( ) ) {
-      //throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+//     soap_proxy::VOMSWrapper V( m_configuration->ice()->ice_host_cert() );
+//     if( !V.IsValid( ) ) {
+//       //throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+//       CREAM_SAFE_LOG( 
+// 		     m_log_dev->errorStream()
+// 		     << "Ice::startListener() - Unable to extract user DN from ["
+// 		     <<  m_configuration->ice()->ice_host_cert() << "]"
+// 		     << ". Won't start Listener: " << V.getErrorMessage()
+// 		     << log4cpp::CategoryStream::ENDLINE
+// 		     );
+//       return;
+//     } 
+
+    try {
+
+      cream_api::certUtil::getCertSubj( m_configuration->ice()->ice_host_cert() );
+
+    } catch( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
       CREAM_SAFE_LOG( 
 		     m_log_dev->errorStream()
 		     << "Ice::startListener() - Unable to extract user DN from ["
 		     <<  m_configuration->ice()->ice_host_cert() << "]"
-		     << ". Won't start Listener: " << V.getErrorMessage()
+		     << ". Won't start Listener"
 		     << log4cpp::CategoryStream::ENDLINE
 		     );
       return;
-    } 
+    }
 
 
 
