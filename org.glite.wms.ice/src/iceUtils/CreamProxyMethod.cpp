@@ -354,34 +354,34 @@ void CreamProxy_Delegate::method_call( int timeout )
 // ProxyRenew
 //
 //////////////////////////////////////////////////////////////////////////////
-// CreamProxy_Delegate::CreamProxy_ProxyRenew( const std::string& service,
-// 					    const std::string& certfile,
-// 					    const std::string& delegation_id ) :
-//   m_service( service ),
-//   m_certfile( certfile ),
-//   m_delegation_id( delegation_id )
-// {
+CreamProxy_ProxyRenew::CreamProxy_ProxyRenew( const std::string& service,
+					    const std::string& certfile,
+					    const std::string& delegation_id ) :
+  m_service( service ),
+  m_certfile( certfile ),
+  m_delegation_id( delegation_id )
+{
 
-// }
+}
 
-// void CreamProxy_Delegate::method_call( int timeout ) 
-//   throw(cream_ex::BaseException&,
-// 	cream_ex::InvalidArgumentException&,
-// 	cream_ex::GridProxyDelegationException&,
-// 	cream_ex::JobSubmissionDisabledException&,
-// 	cream_ex::JobStatusInvalidException&,
-// 	cream_ex::JobUnknownException&,
-// 	cream_ex::GenericException&,
-// 	cream_ex::AuthenticationException&,
-// 	cream_ex::AuthorizationException&,
-// 	cream_ex::DelegationException&,
-// 	cream_ex::InternalException&,
-// 	cream_ex::ConnectionTimeoutException&,
-// 	cream_api::auth_ex&)
-// {    
-//     //p->Delegate( m_delegation_id, m_delegation_service, m_certfile );
-//   boost::scoped_ptr< soap_proxy::AbsCreamProxy > p( soap_proxy::CreamProxyFactory::make_CreamProxy( m_req, m_res, timeout ) );   
-//   p->setCredential( m_certfile );
-//   p->execute( m_service );
-// }
+void CreamProxy_ProxyRenew::method_call( int timeout ) 
+  throw(cream_ex::BaseException&,
+	cream_ex::InvalidArgumentException&,
+	cream_ex::GridProxyDelegationException&,
+	cream_ex::JobSubmissionDisabledException&,
+	cream_ex::JobStatusInvalidException&,
+	cream_ex::JobUnknownException&,
+	cream_ex::GenericException&,
+	cream_ex::AuthenticationException&,
+	cream_ex::AuthorizationException&,
+	cream_ex::DelegationException&,
+	cream_ex::InternalException&,
+	cream_ex::ConnectionTimeoutException&,
+	soap_proxy::auth_ex&)
+{    
+    //p->Delegate( m_delegation_id, m_delegation_service, m_certfile );
+  boost::scoped_ptr< soap_proxy::AbsCreamProxy > p( soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( m_delegation_id, timeout ) );   
+  p->setCredential( m_certfile );
+  p->execute( m_service );
+}
 

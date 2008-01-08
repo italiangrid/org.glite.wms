@@ -36,45 +36,46 @@ namespace log4cpp {
   class Category;
 };
 
-namespace glite {
-    namespace ce {
-        namespace cream_client_api {
-            namespace soap_proxy {
+/* namespace glite { */
+/*     namespace ce { */
+/*         namespace cream_client_api { */
+/*             namespace soap_proxy { */
                 
-                class CreamProxy;
+/*                 class CreamProxy; */
                 
-            }
-        }
-    }
-};
+/*             } */
+/*         } */
+/*     } */
+/* }; */
 
 namespace glite {
-namespace wms {
-namespace ice {
-namespace util {
-    
-    class jobCache;
-    
-    class iceCommandProxyRenewal : public iceAbsCommand {
-        log4cpp::Category* m_log_dev;
-        boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-        jobCache* m_cache;
-        
-        iceCommandProxyRenewal( const iceCommandProxyRenewal& );
-        
-	bool iceCommandProxyRenewal::renewProxy( const std::list<CreamJob>& jobs) throw();
+  namespace wms {
+    namespace ice {
+      namespace util {
 	
-    public:
-        iceCommandProxyRenewal( );
-        virtual ~iceCommandProxyRenewal( ) {}
-        void execute( void ) throw();
-        
-        std::string get_grid_job_id() const { return ""; }
-    };
-
-} // namespace util
-} // namespace ice
-} // namespace wms
+	class jobCache;
+	
+	class iceCommandProxyRenewal : public iceAbsCommand {
+	  log4cpp::Category* m_log_dev;
+	  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
+	  jobCache* m_cache;
+	  
+	  iceCommandProxyRenewal( const iceCommandProxyRenewal& );
+	  
+	  //bool iceCommandProxyRenewal::renewProxy( const std::list<CreamJob>& jobs) throw();
+	  bool iceCommandProxyRenewal::renewProxy( const std::pair<std::string, std::string>&, const std::string&) throw();
+	  
+	public:
+	  iceCommandProxyRenewal( );
+	  virtual ~iceCommandProxyRenewal( ) {}
+	  void execute( void ) throw();
+	  
+	  std::string get_grid_job_id() const { return ""; }
+	};
+	
+      } // namespace util
+    } // namespace ice
+  } // namespace wms
 } // namespace glite
 
 #endif
