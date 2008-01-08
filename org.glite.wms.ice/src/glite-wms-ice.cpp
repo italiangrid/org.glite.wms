@@ -23,7 +23,7 @@
 #include <unistd.h>             // getpid()
 #include <pwd.h>                // getpwnam()
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
