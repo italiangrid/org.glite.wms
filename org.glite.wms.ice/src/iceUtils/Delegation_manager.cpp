@@ -90,7 +90,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
-    static char* method_name = "Delegation_manager::get_delegation_id() - ";
+    static char* method_name = "Delegation_manager::delegate() - ";
     unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
     char buffer[ 1024 ]; // buffer for file data
     SHA_CTX ctx;
@@ -154,7 +154,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
 
     t_delegation_by_key::iterator it = delegation_by_key_view.find( boost::make_tuple(str_sha1_digest,cream_url));
 
-    if ( force && delegation_by_key_view.end() == it ) {
+    if ( force && delegation_by_key_view.end() != it ) {
         delegation_by_key_view.erase( it );
         it = delegation_by_key_view.end();
     }

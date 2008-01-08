@@ -25,8 +25,6 @@
 
 #include "creamJob.h"
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
-
 #include <iostream>
 #include <string>
 #include <functional>
