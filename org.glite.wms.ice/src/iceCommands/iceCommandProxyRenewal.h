@@ -27,7 +27,6 @@
 #include "iceAbsCommand.h"
 #include "creamJob.h"
 #include "boost/scoped_ptr.hpp"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include<string>
 #include<list>
