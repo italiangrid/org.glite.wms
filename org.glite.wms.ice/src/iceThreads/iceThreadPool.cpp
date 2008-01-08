@@ -109,28 +109,28 @@ void iceThreadPool::iceThreadPoolWorker::body( )
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
                            m_log_dev->errorStream()
-                           << "Command execution got FATAL exception: "
+                           << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got FATAL exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
         } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
-                           << "Command execution got TRANSIENT exception: "
+                           << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got TRANSIENT exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
         } catch( exception& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
-                           << "Command execution got exception: "
+                           << "ceThreadPool::iceThreadPoolWorker::body() - Command execution got exception: "
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
         } catch( ... ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
-                           << "Command execution got unknown exception"
+                           << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got unknown exception"
                            << log4cpp::CategoryStream::ENDLINE
                            );
         }
