@@ -23,7 +23,8 @@
 
 #include "iceCommandProxyRenewal.h"
 #include "jobCache.h"
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "CreamProxyMethod.h"
 #include "iceUtils.h"
 #include "DNProxyManager.h"
 
@@ -56,22 +57,26 @@ bool iceCommandProxyRenewal::renewProxy( const pair<string, string>& deleg,
 
   try {
 
-    cream_api::soap_proxy::AbsCreamProxy* creamClient = 
-      cream_api::soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( delegation_ID, 30 );
-    if(!creamClient)
-      {
-        CREAM_SAFE_LOG( m_log_dev->errorStream()
-			<< "iceCommandProxyRenewal::renewProxy() - "
-			<< "CreamProxy creation FAILED!! Stop!"
-			<< log4cpp::CategoryStream::ENDLINE);
-        return false;
-      }
+    CreamProxy_ProxyRenew( cream_deleg_url,
+			   proxy,
+			   delegation_ID).execute( 3 );
+
+//     cream_api::soap_proxy::AbsCreamProxy* creamClient = 
+//       cream_api::soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( delegation_ID, 30 );
+//     if(!creamClient)
+//       {
+//         CREAM_SAFE_LOG( m_log_dev->errorStream()
+// 			<< "iceCommandProxyRenewal::renewProxy() - "
+// 			<< "CreamProxy creation FAILED!! Stop!"
+// 			<< log4cpp::CategoryStream::ENDLINE);
+//         return false;
+//       }
     
-    boost::scoped_ptr< cream_api::soap_proxy::AbsCreamProxy > tmpClient;
-    tmpClient.reset( creamClient );
+//     boost::scoped_ptr< cream_api::soap_proxy::AbsCreamProxy > tmpClient;
+//     tmpClient.reset( creamClient );
     
-    creamClient->setCredential( proxy );
-    creamClient->execute( cream_deleg_url );
+//     creamClient->setCredential( proxy );
+//     creamClient->execute( cream_deleg_url );
 
 
   } catch( exception& ex ) {
@@ -215,6 +220,13 @@ void iceCommandProxyRenewal::execute( void ) throw()
     if( this->renewProxy( jobMap_it->first, jobMap_it->second.begin()->getUserProxyCertificate() ))
       {
 	// update the cache for all jobs that have this delegationID
+	list<CreamJob>::iterator jobit     = jobMap_it->second.begin();
+	list<CreamJob>::iterator jobit_end = jobMap_it->second.end();
+	while( jobit != jobit_end ) {
+	  jobit->setProxyCertMTime( timeMap[jobit->getCreamJobID()] );
+	  m_cache->put( *jobit );
+	  ++jobit;
+	}
       }
     ++jobMap_it;
   }

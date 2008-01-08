@@ -17,11 +17,23 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "proxyRenewal.h"
-#include "iceUtils.h"
-#include "iceCommandProxyRenewal.h"
+/**
+ *
+ * ICE Headers
+ *
+ */
 #include "ice-core.h"
+#include "iceUtils.h"
+#include "proxyRenewal.h"
+#include "iceConfManager.h"
+#include "iceCommandProxyRenewal.h"
 
+
+/**
+ *
+ * CE and WMS Headers
+ *
+ */
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -32,12 +44,16 @@
 // std includes
 #include <vector>
 
+/**
+ *
+ * System OS Headers
+ *
+ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 using namespace glite::wms::ice::util;
-//using namespace glite::ce::cream_client_api;
 using namespace std;
 
 //______________________________________________________________________________

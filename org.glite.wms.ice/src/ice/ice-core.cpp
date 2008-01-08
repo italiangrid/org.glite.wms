@@ -33,7 +33,7 @@
 #include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
 //#include "leaseUpdater.h"
-//#include "proxyRenewal.h"
+#include "proxyRenewal.h"
 //#include "jobKiller.h"
 #include "iceLBEvent.h"
 #include "iceLBLogger.h"
@@ -428,19 +428,17 @@ void Ice::startLeaseUpdater( void )
 //-----------------------------------------------------------------------------
 void Ice::startProxyRenewer( void ) 
 {
-  // FIXME: uncomment this method to activate the proxy renewal
-
-//     if ( !m_configuration->ice()->start_proxy_renewer() ) {
-//         CREAM_SAFE_LOG( m_log_dev->warnStream()
-//                         << "Ice::startProxyRenewer() - "
-//                         << "Proxy Renewer disabled in configuration file. "
-//                         << "Not started"
-//                         << log4cpp::CategoryStream::ENDLINE
-//                         );
-//         return;
-//     }
-//     util::proxyRenewal* proxy_renewer = new util::proxyRenewal( );
-//     m_proxy_renewer_thread.start( proxy_renewer );
+  if ( !m_configuration->ice()->start_proxy_renewer() ) {
+    CREAM_SAFE_LOG( m_log_dev->warnStream()
+		    << "Ice::startProxyRenewer() - "
+		    << "Proxy Renewer disabled in configuration file. "
+		    << "Not started"
+		    << log4cpp::CategoryStream::ENDLINE
+		    );
+    return;
+  }
+  util::proxyRenewal* proxy_renewer = new util::proxyRenewal( );
+  m_proxy_renewer_thread.start( proxy_renewer );
 }
 
 //-----------------------------------------------------------------------------

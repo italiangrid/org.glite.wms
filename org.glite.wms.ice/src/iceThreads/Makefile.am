@@ -12,7 +12,8 @@ libglite_wms_iceThreads_la_SOURCES = eventStatusListener.cpp \
 					iceThread.cpp \
 					eventStatusPoller.cpp \
 					iceThreadPool.cpp \
-					subscriptionUpdater.cpp
+					subscriptionUpdater.cpp \
+					proxyRenewal.cpp
 ###					jobKiller.cpp \
 ###					proxyRenewal.cpp \
 ###					leaseUpdater.cpp
