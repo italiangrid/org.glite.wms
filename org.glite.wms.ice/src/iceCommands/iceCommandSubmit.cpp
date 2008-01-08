@@ -342,6 +342,13 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         // modified by the L&B calls, and we have to pass to CREAM the
         // "last" sequence code as the job wrapper will need to log
         // the "really running" event.
+
+//         CREAM_SAFE_LOG(
+//                    m_log_dev->debugStream() 
+//                    << "iceCommandSubmit::execute() - Modifying JDL... " 
+//                    << log4cpp::CategoryStream::ENDLINE
+//                    );
+
         modified_jdl = creamJdlHelper( m_theJob.getJDL() );
     } catch( iceUtil::ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG(
@@ -356,10 +363,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
-    CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting") );
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream() 
-                   << "iceCommandSubmit::execute() - JDL " << modified_jdl << " to [" 
+                   << "iceCommandSubmit::execute() - Submitting JDL " 
+		   << modified_jdl << " to [" 
                    << m_theJob.getCreamURL() <<"]["
                    << m_theJob.getCreamDelegURL() << "]"
                    << log4cpp::CategoryStream::ENDLINE
@@ -442,12 +449,12 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 	    // FIXME: must check what to set the 3rd and 4th arguments (delegationProxy, leaseID)
 	    // FIXME: TODO -> LeaseManager
 	    // last asrgument is irrelevant now, because we register jobs one by one
-	    cream_api::JobDescriptionWrapper jd(m_theJob.getJDL(), 
-				     delegID, 
-				     ""/* delegPRoxy */, 
-				     ""/* leaseID */, 
-				     false, /* NO autostart */
-				     "foo");
+	    cream_api::JobDescriptionWrapper jd(modified_jdl, 
+						delegID, 
+						""/* delegPRoxy */, 
+						""/* leaseID */, 
+						false, /* NO autostart */
+						"foo");
 
 	    req.push_back( &jd );
 	    iceUtil::CreamProxy_Register( m_theJob.getCreamURL(),
@@ -687,6 +694,9 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
 
     // Update jdl to insert two new attributes needed by cream:
     // QueueName and BatchSystem.
+
+    //cout << "\n*** bsname=["<<bsname<<"] - qname=["<<qname<<"]\n"<<endl;
+
     classad_safe_ptr->InsertAttr( "QueueName", qname );
     classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
 
@@ -696,6 +706,9 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
     string newjdl;
     classad::ClassAdUnParser unparser;
     unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
+
+    //cout << "\n*** NEW JDL=["<<newjdl<<"]"<<endl;
+
     return newjdl;
 }
 
