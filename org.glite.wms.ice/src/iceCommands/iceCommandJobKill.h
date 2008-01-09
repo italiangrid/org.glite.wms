@@ -61,8 +61,8 @@ namespace util {
         glite::wms::ice::util::iceLBLogger* m_lb_logger;
         //void killJob( const time_t ) throw();
         void killJob( const std::pair< std::pair<std::string, std::string>, std::list< glite::wms::ice::util::CreamJob > >& ) throw();
-	bool cancel_jobs(const std::string& proxy, const std::string& endpoint, 
-					    const std::vector<std::string>& jobIdList) throw();
+	void cancel_jobs(const std::string& proxy, const std::string& endpoint, 
+		         const std::vector<std::string>& jobIdList) throw();
 	void updateCacheAndLog( const std::pair< std::pair<std::string, std::string>, std::list< glite::wms::ice::util::CreamJob > >& aList ) throw();
 	void checkExpiring( std::list<glite::wms::ice::util::CreamJob>& ) throw();
 

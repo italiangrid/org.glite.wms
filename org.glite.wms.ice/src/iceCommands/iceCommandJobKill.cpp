@@ -21,27 +21,50 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
+/**
+ *
+ * ICE Headers
+ *
+ */
 #include "iceCommandJobKill.h"
-#include "CreamProxyFactory.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
-#include "glite/ce/cream-client-api-c/certUtil.h"
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "CreamProxyMethod.h"
+#include "DNProxyManager.h"
 #include "iceConfManager.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "jobCache.h"
 #include "iceUtils.h"
-#include "DNProxyManager.h"
-#include "CreamProxyMethod.h"
+
+
+/**
+ *
+ * CE and WMS Headers
+ *
+ */
+#include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
+#include "glite/ce/cream-client-api-c/ResultWrapper.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
+/**
+ *
+ * STL C++ Headers
+ *
+ */
 #include <string>
 #include <vector>
 #include <algorithm>
 
+/**
+ *
+ * Boost Headers
+ *
+ */
 #include <boost/format.hpp>
-#include "boost/functional.hpp"
+#include <boost/functional.hpp>
 
 namespace api_util  = glite::ce::cream_client_api::util;
 namespace cream_api = glite::ce::cream_client_api;
@@ -50,6 +73,7 @@ namespace ice_util  = glite::wms::ice::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
+//______________________________________________________________________________
 namespace {
   bool insert_condition(const CreamJob& J) {
     if( J.getCreamJobID().empty() ) return false;
@@ -69,8 +93,7 @@ namespace {
 }
 
 //______________________________________________________________________________
-iceCommandJobKill::iceCommandJobKill( /*const ice_util::CreamJob& theJob*/ ) throw() : 
-  m_theProxy( CreamProxyFactory::makeCreamProxy( false ) ),
+iceCommandJobKill::iceCommandJobKill( ) throw() : 
   m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
   m_threshold_time( ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() ),
   m_lb_logger( ice_util::iceLBLogger::instance() )
@@ -126,39 +149,105 @@ void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJo
   proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
   //}
 
-    list< CreamJob >::const_iterator it = aList.second.begin();
-    list< CreamJob >::const_iterator list_end = aList.second.end();
-    vector< string > jobs_to_cancel;
-    while ( it != list_end ) {
-      
-      jobs_to_cancel.clear();
-      it = ice_util::transform_n_elements( it, 
-					   list_end, 
-					   ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
-					   back_inserter( jobs_to_cancel ), 
-					   mem_fun_ref( &CreamJob::getCreamJobID ) );
-      
-      this->cancel_jobs(proxy, aList.first.second, jobs_to_cancel);
-      
-    } 
+  list< CreamJob >::const_iterator it = aList.second.begin();
+  list< CreamJob >::const_iterator list_end = aList.second.end();
+  vector< string > jobs_to_cancel;
+  while ( it != list_end ) {
+    
+    jobs_to_cancel.clear();
+    it = ice_util::transform_n_elements( it, 
+					 list_end, 
+					 ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
+					 back_inserter( jobs_to_cancel ), 
+					 mem_fun_ref( &CreamJob::getCreamJobID ) );
+    
+    this->cancel_jobs(proxy, aList.first.second, jobs_to_cancel);
+    
+  } 
 }
 
 //______________________________________________________________________________
-bool iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint, 
+void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint, 
 				    const vector<string>& jobIdList) throw()
 {
   try {
     
     //m_theProxy->Authenticate( proxy );
 
-    cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
+    cream_api::soap_proxy::VOMSWrapper V( proxy );
     if( !V.IsValid( ) ) {
-      throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+      CREAM_SAFE_LOG(    
+		       m_log_dev->errorStream()
+		       << "iceCommandJobKill::cancel_jobs() - proxy ["
+		       << proxy << "] is EXPIRED! Skipping..."
+		       << log4cpp::CategoryStream::ENDLINE
+		       );
+      return;
     }	
 
 
-    CreamProxy_Cancel( endpoint, jobIdList ).execute( m_theProxy.get(), 3 );
+    //CreamProxy_Cancel( endpoint, jobIdList ).execute( m_theProxy.get(), 3 );
+
+    vector<cream_api::soap_proxy::JobIdWrapper> toCancel;
+
+    for(vector<string>::const_iterator it=jobIdList.begin();
+	it!=jobIdList.end();
+	++it)
+      {
+	toCancel.push_back( cream_api::soap_proxy::JobIdWrapper( *it, 
+						     endpoint, 
+						     std::vector<cream_api::soap_proxy::JobPropertyWrapper>())
+			    );
+      }
+
+    cream_api::soap_proxy::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
+    cream_api::soap_proxy::ResultWrapper res;
+
+    CreamProxy_Cancel( endpoint, proxy, &req, &res ).execute( 3 );
+
+    list< pair<cream_api::soap_proxy::JobIdWrapper, string> > tmp;
+    res.getOkJobs( tmp );
+    if( tmp.size() == jobIdList.size() ) { 
+      // in the OkJobs array there are all job we requested to cancel.
+      // Then we suppose everything went ok.
+      return;
+    }
+
+    tmp.clear();
+
+    res.getNotExistingJobs( tmp );
+    res.getNotMatchingStatusJobs( tmp );
+    res.getNotMatchingDateJobs( tmp );
+    res.getNotMatchingProxyDelegationIdJobs( tmp );
+    res.getNotMatchingLeaseIdJobs( tmp );
+
+    if( tmp.begin() == tmp.end() )
+      {
+	// Should not be empty. Something went wrong in the server
+	CREAM_SAFE_LOG(    
+		       m_log_dev->errorStream()
+		       << "iceCommandJobKill::cancel_jobs() - Some job to cancel "
+		       << " is not in the OK list neither in the "
+		       << " failed list. Something went wrong in the server or in the "
+		       << "SOAP communication."
+		       << log4cpp::CategoryStream::ENDLINE
+		       );
+	return;
+      }
     
+    list< pair<cream_api::soap_proxy::JobIdWrapper, string> >::const_iterator it  = tmp.begin();
+    list< pair<cream_api::soap_proxy::JobIdWrapper, string> >::const_iterator end = tmp.end();
+    while( it != end ) {
+      CREAM_SAFE_LOG(    
+		     m_log_dev->errorStream()
+		     << "iceCommandJobKill::cancel_jobs() - "
+		     << "Cancellation of job ["
+		     << it->first.getCreamJobID() << "] for error: "
+		     << it->second
+		     << log4cpp::CategoryStream::ENDLINE
+		     );
+    }
+
   } catch(std::exception& ex) {
     //m_theJob = m_lb_logger->logEvent( new cream_cancel_refuse_event( m_theJob, ex.what() ) );
     
@@ -173,7 +262,8 @@ bool iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 		    << "]: "
 		    << ex.what()
 		    << log4cpp::CategoryStream::ENDLINE);
-    return false;
+    return;
+
   } catch(...) {
     CREAM_SAFE_LOG (m_log_dev->errorStream() 
 		    << "iceCommandJobKill::cancel_jobs() - Error"
@@ -181,9 +271,9 @@ bool iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 		    << proxy 
 		    << "]. Unknown exception catched."
 		    << log4cpp::CategoryStream::ENDLINE);
-    return false;
+    return;
+
   } 
-  return true;
 }
 
 //______________________________________________________________________________
