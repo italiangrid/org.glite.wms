@@ -133,49 +133,76 @@ namespace glite {
 
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return m_grid_jobid; }
+
           //! Gets the job exit code
           int get_exit_code( void ) const { return m_exit_code; }
+
           //! Gets the job failure reason
           std::string get_failure_reason( void ) const { return m_failure_reason; }
+
 	  //! Gets the unique cream job identifier
           std::string getCreamJobID( void ) const { return m_cream_jobid; }
+	  
+	  //! Gets the COMPLETE unique cream job identifier
+          std::string getCompleteCreamJobID( void ) const;// { return m_cream_jobid; }
+
 	  //! Gets the entire JDL of the job
           std::string getJDL( void ) const { return m_jdl; }
+
 	  //! Gets the CE identifier for the job (containing the endpoint)
           std::string getCEID( void ) const { return m_ceid; }
+
 	  //! Gets the endpoint of the cream service the job is submitted to
           std::string getEndpoint( void ) const { return m_endpoint; }
+
 	  //! Gets the cream service URL this job is submitted to
           std::string getCreamURL( void ) const { return m_cream_address; }
+
 	  //! Gets the cream delegation service URL used to delegate the user proxy certificate of this job
           std::string getCreamDelegURL( void ) const { return m_cream_deleg_address; }
+
 	  //! Gets the path and file name of the user proxy certificate
           std::string getUserProxyCertificate( void ) const { return m_user_proxyfile; }
+
           //! Gets the path and file name of the "better proxy" for the DN of the user owning this job
           std::string getBetterProxy( void ) const;
+
 	  //! Gets the number of job status changes which have been already logged to L&B
 	  int get_num_logged_status_changes( void ) const { return m_num_logged_status_changes; }
+
           //! Sets the number of job status changes whcih have been already logged to L&B
           void set_num_logged_status_changes( int l ) { m_num_logged_status_changes = l; }
+
           //! Gets the time when the lease ends
           time_t getEndLease( void ) const { return m_end_lease; }
+
           //! Gets the worker node on which the job is being execute (empty string if no worker node has been set)
           std::string get_worker_node( void ) const { return m_worker_node; }
+
           //! Sets the worker node on which the job is being executed
           void set_worker_node( const std::string& w_node ) { m_worker_node = w_node; }
+
           //! Gets the time we last got information about this job
           time_t getLastSeen( void ) const { return m_last_seen; }
+
           //! Gets the WN sequence code
           std::string get_wn_sequence_code( void ) const { return m_wn_sequence_code; }
+
           //! Gets the sequence code
           std::string getSequenceCode( void ) const { return m_sequence_code; }
+
           //! Gets the delegation id
           std::string getDelegationId( void ) const { return m_delegation_id; }
+
 	  //! Gets the last modification time of the user proxy cert file
 	  time_t getProxyCertLastMTime( void ) const { return m_proxyCertTimestamp; }
+
 	  int    getStatusPollRetryCount( void ) const { return m_statusPollRetryCount; }
+
 	  void   incStatusPollRetryCount( void ) { m_statusPollRetryCount++; }
+
 	  void   resetStatusPollRetryCount( void ) { m_statusPollRetryCount=0; }
+
 	  std::string getUserDN( void ) const { return m_user_dn; }
 
           //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, running, reslly_running or held

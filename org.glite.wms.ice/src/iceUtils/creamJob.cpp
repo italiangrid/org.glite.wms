@@ -309,6 +309,7 @@ bool CreamJob::is_active( void ) const
              ( m_status == api::job_statuses::HELD ) );
 }
 
+//______________________________________________________________________________
 bool CreamJob::can_be_purged( void ) const
 {
     return ( ( m_status == api::job_statuses::DONE_OK ) ||
@@ -317,24 +318,26 @@ bool CreamJob::can_be_purged( void ) const
              ( m_status == api::job_statuses::ABORTED ) );
 }
 
-
+//______________________________________________________________________________
 bool CreamJob::can_be_resubmitted( void ) const
 { 
     return ( ( m_status == api::job_statuses::DONE_FAILED ) ||
              ( m_status == api::job_statuses::ABORTED ) );
 }
 
+//______________________________________________________________________________
 string CreamJob::describe( void ) const
 {
     string result;
     result.append( "gridJobID=\"" );
     result.append( getGridJobID() );
     result.append( "\" CREAMJobID=\"" );
-    result.append( getCreamJobID() );
+    result.append( getCompleteCreamJobID() );
     result.append( "\"" );
     return result;
 }
 
+//______________________________________________________________________________
 void CreamJob::setSequenceCode( const std::string& seq )
 {
     m_sequence_code = seq;
@@ -364,6 +367,7 @@ void CreamJob::setSequenceCode( const std::string& seq )
     //                     << log4cpp::CategoryStream::ENDLINE);
 }
 
+//______________________________________________________________________________
 size_t CreamJob::size( void ) const 
 {
   size_t size = 0;
@@ -390,11 +394,13 @@ size_t CreamJob::size( void ) const
   return size;
 }
 
+//______________________________________________________________________________
 string CreamJob::getBetterProxy( void ) const
 {
     return DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn );
 }
 
+//______________________________________________________________________________
 string CreamJob::getCEMonURL( void ) const 
 {
     string cemon_url;
@@ -403,6 +409,7 @@ string CreamJob::getCEMonURL( void ) const
     return cemon_url;
 }
 
+//______________________________________________________________________________
 string CreamJob::getSubscriptionID( void ) const
 {
     subscriptionManager* submgr( subscriptionManager::getInstance() );
@@ -424,3 +431,9 @@ string CreamJob::get_cemon_dn( void ) const
   return cemondn;
 }
 
+//______________________________________________________________________________
+string CreamJob::getCompleteCreamJobID( void ) const {
+  string cjid = this->getCreamURL();
+  cjid        += "/" + this->getCreamJobID();
+  return cjid;
+}
