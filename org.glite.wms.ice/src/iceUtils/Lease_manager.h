@@ -26,6 +26,7 @@
 #include <iostream>
 #include <string>
 #include <functional>
+#include <ctime>
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/ordered_index.hpp"
 #include "boost/multi_index/member.hpp"
@@ -59,6 +60,9 @@ namespace util {
         unsigned int m_operation_count;
         const size_t m_max_size; ///< Maximum size of the delegation cache
         const unsigned int m_operation_count_max;
+        std::string m_host_dn; // the host DN
+        std::string m_cert_file;
+        int m_lease_delta_time;
 
         /**
          * Entry of the delegation table
@@ -80,23 +84,36 @@ namespace util {
         /**
          * Multi index container 
          */
+        struct idx_user_dn_cream_url{}; // used for tagging the index according to the ( m_user_dn, m_cream_url ) pair
+        struct idx_lease_id{}; // used for tagging the index according to the m_lese_id string
+        struct idx_expiration_time{}; // used for tagging the index according to the m_expiration_time
+        struct idx_sequence{}; // used for tagging the index as a sequence of items
+
         typedef boost::multi_index_container<
             table_entry,
             boost::multi_index::indexed_by<
               boost::multi_index::ordered_unique<
-            // The index here is the (sha1_digest, cream_url) pair
+                boost::multi_index::tag< idx_user_dn_cream_url >,
+            // The index here is the (user_dn, cream_url) pair
                 boost::multi_index::composite_key<
                 table_entry,
-            // The first composite element is the sha1_digest
+            // The first composite element is the user_dn
                 boost::multi_index::member<table_entry,std::string,&table_entry::m_user_dn>,
             // The second composite element is the cream_url
                 boost::multi_index::member<table_entry,std::string,&table_entry::m_cream_url>
               > 
             >,
             boost::multi_index::ordered_non_unique<
+              boost::multi_index::tag< idx_expiration_time >,
               boost::multi_index::member<table_entry,time_t,&table_entry::m_expiration_time>
             >,
-            boost::multi_index::sequenced<>
+            boost::multi_index::sequenced<
+              boost::multi_index::tag< idx_sequence >
+            >,
+            boost::multi_index::ordered_unique<
+              boost::multi_index::tag< idx_lease_id >,
+              boost::multi_index::member<table_entry,std::string,&table_entry::m_lease_id>
+            >
           >
         > t_lease_set;
         
@@ -117,7 +134,7 @@ namespace util {
         static Lease_manager* instance( );
 
         /**
-         * Returns a lease ID to be used for a given job.
+         * Returns a (possibly fresh) lease ID to be used for a given job.
          *
          * This method must be called before submitting a job to the
          * CREAM service.
@@ -157,6 +174,18 @@ namespace util {
          */
         std::string get_lease( const CreamJob& job, bool force = false );
 
+        /**
+         * Renew an existing lease.
+         *
+         * @param lease_id the lease_id to renew. This lease must
+         * exist and be valid both in the lease manager and in the
+         * CREAM service.
+         *
+         * @return the nex expiration time for the lease. If the lease
+         * does not exist, or if the lease cannot be renewed, this
+         * method returns 0.
+         */
+        time_t renew_lease( const std::string& lease_id );
     };
 
 } // namespace util
