@@ -94,6 +94,14 @@ start()
         echo "ok (already running)"
     else
         rm -f ${pid_file}
+        # FIXME: This is a temporary fix for setting up the correct
+        # LD_LIBRARY_PATH value 
+        if [ -z "$LD_LIBRARY_PATH" ]; then
+            LD_LIBRARY_PATH=/opt/log4cpp/lib/
+        else
+            LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/log4cpp/lib/
+        fi
+        export LD_LIBRARY_PATH
         su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} >> ${err_logfile} 2>&1"
         # there is a race condition due to some delay between becoming
         # a daemon (hence returning control to this script) and
