@@ -188,11 +188,31 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
             //CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( theProxy, 3 );
 	    CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
 
-        } catch( ... ) {
+        } catch( exception& ex ) {
             // Delegation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
                             << method_name
-                            << "Creating FAILED for new delegation "
+                            << "FAILED Creation of a new delegation "
+                            << "with delegation id "
+                            << delegation_id
+                            << " CREAM URL "
+                            << cream_url
+                            << " Delegation URL "
+                            << cream_deleg_url
+                            << " user DN "
+                            << V.getDN( )
+                            << " proxy hash "
+                            << str_sha1_digest
+			    << " - ERROR is: ["
+			    << ex.what() << "]"
+                            << log4cpp::CategoryStream::ENDLINE );
+            // Returns an empty string
+            return delegation_id;
+        }  catch( ... ) {
+            // Delegation failed
+            CREAM_SAFE_LOG( m_log_dev->errorStream()
+                            << method_name
+                            << "FAILED Creation of a new delegation "
                             << "with delegation id "
                             << delegation_id
                             << " CREAM URL "
