@@ -51,7 +51,7 @@ Lease_manager::Lease_manager( ) :
     m_cert_file( "unknown/cert/file" ),
     m_lease_delta_time( 60*60 )
 {
-    glite::wms::common::configuration::Configuration* conf;
+    glite::wms::common::configuration::Configuration* conf = 0;
     static char* method_name = "Lease_manager::Lease_manager() - ";
 
     try {
@@ -62,6 +62,7 @@ Lease_manager::Lease_manager( ) :
                         << "Error while accessing ICE configuration file "
                         << "Giving up, but this may cause troubles."
                         << log4cpp::CategoryStream::ENDLINE );
+        return;
     }
     
     // lease id not found (or force). Creates a new lease ID
@@ -88,11 +89,11 @@ Lease_manager* Lease_manager::instance( )
     return s_instance;
 }
 
-string Lease_manager::get_lease( const CreamJob& job, bool force )
+string Lease_manager::make_lease( const CreamJob& job, bool force )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
-    static char* method_name = "Lease_manager::get_lease() - ";
+    static char* method_name = "Lease_manager::make_lease() - ";
     string lease_id; // lease ID to return as a result
 
     // Utility variables
@@ -106,7 +107,7 @@ string Lease_manager::get_lease( const CreamJob& job, bool force )
         m_operation_count = 0;
     }
 
-    // Lookup the (sha1_digest,cream_url) into the set
+    // Lookup the (user_DN,cream_url) pair into the set
     typedef t_lease_set::nth_index<0>::type t_lease_by_key;
     t_lease_by_key& lease_by_key_view( m_lease_set.get<0>() );
     typedef t_lease_set::nth_index<2>::type t_lease_by_seq;
@@ -125,9 +126,9 @@ string Lease_manager::get_lease( const CreamJob& job, bool force )
 
         lease_id = 
             canonizeString( m_host_dn ).
-            append("__").
+            append("--").
             append(canonizeString( user_DN )).
-            append("__").
+            append("--").
             append(canonizeString( cream_url ));
 
         CREAM_SAFE_LOG( m_log_dev->debugStream()
@@ -183,17 +184,17 @@ string Lease_manager::get_lease( const CreamJob& job, bool force )
                         << log4cpp::CategoryStream::ENDLINE );        
 
         // Inserts the lease ID into the lease set
-        m_lease_set.insert( table_entry( user_DN, cream_url, expiration_time, lease_id ) );
+        m_lease_set.insert( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
 
         // Inserts into the front of the list; this is guaranteed to
         // be a new element, as it has not been found in this "if"
         // branch
-        lease_by_seq.push_front( table_entry( user_DN, cream_url, expiration_time, lease_id ) );
+        lease_by_seq.push_front( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
         if ( m_lease_set.size() > m_max_size ) {
             if ( m_log_dev->isDebugEnabled() ) {
 
                 // drops least recently used element
-                const table_entry last_elem( lease_by_seq.back() );
+                const Lease_t last_elem( lease_by_seq.back() );
                 
                 CREAM_SAFE_LOG( m_log_dev->debugStream()
                                 << method_name
@@ -242,7 +243,7 @@ time_t Lease_manager::renew_lease( const string& lease_id )
     if ( lease_by_id_view.end() == it ) 
         return 0; // lease id not found
     
-    struct table_entry entry = *it; // this is the (old) entry
+    struct Lease_t entry = *it; // this is the (old) entry
     time_t expiration_time = time(0) + m_lease_delta_time;
 
     pair< string, time_t > 
