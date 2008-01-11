@@ -266,7 +266,7 @@ void Ice::startListener( void )
 
     try {
 
-      cream_api::certUtil::getCertSubj( m_configuration->ice()->ice_host_cert() );
+      cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
 
     } catch( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
       CREAM_SAFE_LOG( 
@@ -310,7 +310,7 @@ void Ice::startListener( void )
      */
     { 
       //boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-        util::subscriptionManager::getInstance();
+      util::subscriptionManager::getInstance();
     }
     
     util::eventStatusListener* listener;
@@ -321,7 +321,7 @@ void Ice::startListener( void )
             CREAM_SAFE_LOG(
                            m_log_dev->fatalStream()
                            << "Ice::startListener() - "
-                           << "ice_host_cert and/or ice_host_key are not undefined. "
+                           << "ice_host_cert and/or ice_host_key are not defined. "
                            << "Cannot start Listener "
                            << "with authentication as requested. Stop."
                            << log4cpp::CategoryStream::ENDLINE
