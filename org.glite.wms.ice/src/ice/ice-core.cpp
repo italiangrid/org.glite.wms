@@ -266,7 +266,7 @@ void Ice::startListener( void )
 
     try {
 
-      cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
+      hostdn = cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
 
     } catch( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
       CREAM_SAFE_LOG( 
