@@ -114,7 +114,8 @@ namespace util {
         CreamProxy_Register( const std::string& service_uri,
                              const std::string& certfile,
                              const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayRequest* req, 
-                             glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* res );
+                             glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* res,
+			     const std::string& iceid);
 
 	//	int retrieveNewLeaseTime( void ) { return m_lease_time; }
 
@@ -138,6 +139,7 @@ namespace util {
         const std::string& m_certfile;
         const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayRequest* m_req;
         glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* m_res;
+        const std::string m_iceid;
     };
 
     /**

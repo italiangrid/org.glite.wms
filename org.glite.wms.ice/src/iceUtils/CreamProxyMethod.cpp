@@ -89,12 +89,13 @@ void CreamProxyMethod::execute( int ntries )
 CreamProxy_Register::CreamProxy_Register( const string& service_uri,
                                           const string& certfile,
                                           const soap_proxy::AbsCreamProxy::RegisterArrayRequest* req,
-                                          soap_proxy::AbsCreamProxy::RegisterArrayResult* res ) 
+                                          soap_proxy::AbsCreamProxy::RegisterArrayResult* res,
+					  const string& iceid ) 
   : m_service_uri( service_uri ),
     m_certfile( certfile ),
     m_req( req ),
-    m_res( res )
-  
+    m_res( res ),
+    m_iceid( iceid )  
 {
   
 }
@@ -116,6 +117,7 @@ void CreamProxy_Register::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyRegister( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile );
+  theProxy->setSoapHeader( m_iceid );
   theProxy->execute( m_service_uri );
   
 }

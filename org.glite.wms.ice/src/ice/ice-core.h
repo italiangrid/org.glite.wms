@@ -84,6 +84,7 @@ namespace ice {
              * object). False otherwise.
              */
             bool is_started( void ) const;
+
         protected:
             
             /**
@@ -130,7 +131,9 @@ namespace ice {
 
 
         static glite::wms::ice::Ice* s_instance; ///< Singleton instance of this class
-        
+       
+	std::string m_hostdn;
+ 
         Ice( ) throw(glite::wms::ice::iceInit_ex&);
 
         // Some utility functions
@@ -148,7 +151,9 @@ namespace ice {
     public:
         
         virtual ~Ice();
-        
+       
+	std::string getHostDN( void ) const { return m_hostdn; }
+ 
         void getNextRequests(std::list< util::Request* >&);
 	// util::Request* getNextRequest( void );
 	

@@ -193,6 +193,22 @@ Ice::Ice( ) throw(iceInit_ex&) :
                     << "Ice::CTOR() - Done"
                     << log4cpp::CategoryStream::ENDLINE
                     );*/
+
+    try {
+
+      m_hostdn = cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
+
+    } catch( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+      CREAM_SAFE_LOG(
+                     m_log_dev->errorStream()
+                     << "Ice::CTOR() - Unable to extract user DN from ["
+                     <<  m_configuration->ice()->ice_host_cert() << "]"
+                     << ". Cannot perform JobRegister and cannot start Listeneri. Stop!"
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
+      exit(1);
+    }
+
 }
 
 //____________________________________________________________________________
@@ -236,8 +252,6 @@ void Ice::startListener( void )
         return;
     }
 
-    string hostdn;
-
 //     try {
 //        hostdn = cert_util::getDN( m_configuration->ice()->ice_host_cert() );
 //     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
@@ -264,6 +278,7 @@ void Ice::startListener( void )
 //       return;
 //     } 
 
+/*
     try {
 
       hostdn = cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
@@ -278,10 +293,10 @@ void Ice::startListener( void )
 		     );
       return;
     }
+*/
 
 
-
-    if( hostdn.empty() ) {
+    if( m_hostdn.empty() ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
                        << "Ice::startListener() - Host certificate has an empty subject. "
@@ -292,7 +307,7 @@ void Ice::startListener( void )
     } else {
         CREAM_SAFE_LOG(
                        m_log_dev->debugStream() 
-                       << "Ice::startListener() - Host DN is [" << hostdn << "]"
+                       << "Ice::startListener() - Host DN is [" << m_hostdn << "]"
                        << log4cpp::CategoryStream::ENDLINE
                        );
     }

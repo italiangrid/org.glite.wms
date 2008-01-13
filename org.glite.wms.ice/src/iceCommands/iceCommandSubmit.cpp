@@ -457,10 +457,17 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 						"foo");
 
 	    req.push_back( &jd );
+
+            string iceid = m_theIce->getHostDN();
+	    boost::trim_if(iceid, boost::is_any_of("/"));
+	    boost::replace_all( iceid, "/", "_" );
+	    boost::replace_all( iceid, "=", "_" );
+
 	    iceUtil::CreamProxy_Register( m_theJob.getCreamURL(),
 					  m_theJob.getUserProxyCertificate(),
 					  (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
-					  &res).execute( 3 );
+					  &res,
+					  iceid).execute( 3 );
             
             //pr.execute(m_theProxy.get(), 3 );
 

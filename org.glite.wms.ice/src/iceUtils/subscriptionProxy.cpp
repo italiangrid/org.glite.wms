@@ -28,6 +28,7 @@
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include "iceUtils.h"
+#include "ice-core.h"
 #include <cstring> // for memset
 #include <netdb.h>
 #include <sstream>
@@ -163,8 +164,9 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
   
   cemon_api::QueryW Q;
   
-  string iceid;
-  try {
+  string iceid = glite::wms::ice::Ice::instance()->getHostDN();
+
+/*  try {
     iceid=  glite::ce::cream_client_api::certUtil::getCertSubj( m_conf->getConfiguration()->ice()->ice_host_cert() );
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
@@ -178,6 +180,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
 		   << log4cpp::CategoryStream::ENDLINE);
     return false;
   }
+  */
 
   boost::trim_if(iceid, boost::is_any_of("/"));
   boost::replace_all( iceid, "/", "_" );
