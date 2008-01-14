@@ -41,6 +41,9 @@ namespace log4cpp { class Category; }
 namespace glite {
 namespace wms {
 namespace ice {
+
+  class Ice;
+
 namespace util {
 
   class iceConfManager;
@@ -66,6 +69,8 @@ namespace util {
     time_t             m_tp;
 
     cemon_api::DialectW          *m_D;
+
+    glite::wms::ice::Ice* m_theIce;
 
     //CESubscription     m_ceS;
 

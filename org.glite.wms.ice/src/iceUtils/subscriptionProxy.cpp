@@ -75,6 +75,8 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
       abort();
     }
     m_D = new cemon_api::DialectW("CLASSAD");
+
+    m_theIce = glite::wms::ice::Ice::instance();
 }
 
 //______________________________________________________________________________
@@ -164,7 +166,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
   
   cemon_api::QueryW Q;
   
-  string iceid = glite::wms::ice::Ice::instance()->getHostDN();
+  string iceid = m_theIce->getHostDN();//glite::wms::ice::Ice::instance()->getHostDN();
 
 /*  try {
     iceid=  glite::ce::cream_client_api::certUtil::getCertSubj( m_conf->getConfiguration()->ice()->ice_host_cert() );

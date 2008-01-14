@@ -35,6 +35,9 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
+		../src/iceThreads/libglite_wms_iceThreads.la \
+		../src/iceCommands/libglite_wms_iceCommands.la \
+		../src/ice/libglite_wms_ice.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -118,6 +121,9 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/iceUtils/libglite_wms_iceUtils.la \
+		../src/iceThreads/libglite_wms_iceThreads.la \
+		../src/iceCommands/libglite_wms_iceCommands.la \
+		../src/ice/libglite_wms_ice.la \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
