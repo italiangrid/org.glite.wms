@@ -16,30 +16,54 @@
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
+
+/**
+ *
+ * ICE Headers
+ *
+ */
 #include "creamJob.h"
 #include "iceConfManager.h"
 #include "DNProxyManager.h"
 #include "subscriptionManager.h"
 
-#include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/ICEConfiguration.h"
+/**
+ *
+ * WMS and CE Headers
+ *
+ */
 #include "glite/ce/cream-client-api-c/CEUrl.h"
+#include "glite/wms/common/configuration/Configuration.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
+/**
+ *
+ * ClassAd Headers
+ *
+ */
 #include "classad_distribution.h"
 
+/**
+ *
+ * Boost Headers
+ *
+ */
+#include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
 
-/* includes needed by stat function */
+/**
+ *
+ * OS Header
+ *
+ */
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <iostream>
 #include <unistd.h>
 #include <cerrno>
-#include <iostream>
-
 
 extern int errno;
 
@@ -432,8 +456,18 @@ string CreamJob::get_cemon_dn( void ) const
 }
 
 //______________________________________________________________________________
-string CreamJob::getCompleteCreamJobID( void ) const {
-  string cjid = this->getCreamURL();
-  cjid        += "/" + this->getCreamJobID();
-  return cjid;
+string CreamJob::getCompleteCreamJobID( void ) const 
+{
+  string creamURL = this->getCreamURL();
+
+  string::size_type loc = creamURL.find(iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix());
+  
+  if( loc != string::npos)
+    {
+      creamURL = creamURL.substr(0,loc);
+    }
+
+  creamURL += "/" + this->getCreamJobID();
+
+  return creamURL;
 }
