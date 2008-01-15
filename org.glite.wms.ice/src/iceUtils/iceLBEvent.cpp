@@ -237,6 +237,11 @@ job_running_event::job_running_event( const CreamJob& j ) :
 
 int job_running_event::execute( iceLBContext* ctx )
 {
+    std::string worker_node( m_job.get_worker_node() );
+    if ( worker_node.empty() ) {
+        worker_node = "N/A"; // LB requires a nonempty worker_node to
+                             // log the Running event.
+    }
 #ifdef GLITE_WMS_HAVE_LBPROXY
     return edg_wll_LogRunningProxy( *(ctx->el_context), m_job.get_worker_node().c_str() );
 #else
