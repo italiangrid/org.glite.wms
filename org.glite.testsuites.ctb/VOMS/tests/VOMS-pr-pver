@@ -24,6 +24,9 @@ echo "<pre>"
 export voms_host=$1
 source $SAME_SENSOR_HOME/tests/pr_config_file
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 OPTION="proxyver"
 rm -rf $voms_tmp
 
@@ -33,9 +36,9 @@ echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 
 echo "Create new user and proxy"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "List users:"
-voms-admin --vo=$vo_name -h $voms_host list-users
+voms-admin --vo=$vo_name --host $voms_host list-users
 
 echo "Extract by openssl from usercert.pem"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
@@ -50,7 +53,7 @@ if [ $? = 0 ]; then
    echo "OK"
 else 
    echo "Test is failed, exit code=1 "
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
@@ -64,7 +67,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
@@ -78,7 +81,7 @@ grep "$pat" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "Test proxyver=2 - OK"
@@ -94,7 +97,7 @@ if [ $? = 0 ]; then
    echo "OK"
 else 
    echo "Test is failed, exit code=1"
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
@@ -108,7 +111,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
@@ -122,7 +125,7 @@ grep "$pat" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "Test proxyver=3 - OK"
@@ -130,7 +133,7 @@ echo "Test proxyver=3 - OK"
 echo
 echo "3.1. voms-proxy-init, proxyver=4"
 
-voms-admin --vo=$vo_name -h $voms_host list-users
+voms-admin --vo=$vo_name --host $voms_host list-users
 voms-proxy-destroy
 voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -$OPTION 4 -pwstdin < $PWS
 
@@ -138,7 +141,7 @@ if [ $? = 0 ]; then
    echo "OK"
 else 
    echo "Test is failed, exit code=1"
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
@@ -152,7 +155,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
@@ -166,13 +169,13 @@ grep "$pat" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
 
 echo "Test is OK"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 echo "</pre>"
 exit $SAME_OK
 

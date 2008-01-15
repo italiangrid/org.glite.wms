@@ -26,36 +26,36 @@ Roles=( "Role1" "Role2" "Role3" "Role4" "Role5" )
 function crGroups {
 for group in ${Groups[*]}
 do
-    groupi="$vo_name/$group"
+    groupi="/$vo_name/$group"
     #echo "Create group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host create-group "$groupi"
+    voms-admin --vo=$vo_name --host $voms_host create-group "$groupi"
 done
 }
 function delGroups {
 for group in ${Groups[*]}
 do
-    groupi="$vo_name/$group"
+    groupi="/$vo_name/$group"
     #echo "Delete group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host delete-group $groupi
+    voms-admin --vo=$vo_name --host $voms_host delete-group $groupi
 done
 }
 function crRoles {
 for rolei in ${Roles[*]}
 do
     #echo "Create Role=$rolei"
-    voms-admin --vo=$vo_name -h $voms_host create-role $rolei
+    voms-admin --vo=$vo_name --host $voms_host create-role $rolei
 done
 }
 function delRoles {
 for rolei in ${Roles[*]}
 do
     #echo "Delete Role=$rolei"
-    voms-admin --vo=$vo_name -h $voms_host delete-role $rolei
+    voms-admin --vo=$vo_name --host $voms_host delete-role $rolei
 done
 }
 function clearTask {
     echo "Delete user, groups, roles"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     delGroups
     delRoles
 }
@@ -75,26 +75,30 @@ echo "key: $USERKEY"
 echo "PWS: $PWS"
 NG=${#Groups[*]}
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "1. Create new user"
-#voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+#voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 #voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 echo "List users:"
-voms-admin --vo=$vo_name -h $voms_host list-users
+voms-admin --vo=$vo_name --host $voms_host list-users
 
 echo "1.1. Create $NG groups"
 
 crGroups
 echo "List groups"
-voms-admin --vo=$vo_name -h $voms_host list-groups
+voms-admin --vo=$vo_name --host $voms_host list-groups
 
 echo "1.2. Create $NG Roles"
 
 crRoles
-echo "List Roles"
-voms-admin --vo=$vo_name -h $voms_host list-roles 
 
+echo "List Roles"
+voms-admin --vo=$vo_name --host $voms_host list-roles 
 
 echo "1.3. Add user to groups as group member"
 
@@ -102,19 +106,18 @@ for group in ${Groups[*]}
 do
     groupi="/$vo_name/$group"
     echo "Add member to group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host add-member $groupi $USER
+    voms-admin --vo=$vo_name --host $voms_host add-member $groupi "$USER_SUBJECT" "$USER_ISSUER"
 done
 
-
 echo "1.3.1. List user groups:"
-voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER
+voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER" 
 
 echo "1.3.2. Check members for each group - list members"
 for group in ${Groups[*]}
 do
     groupi="/$vo_name/$group"
     echo "Members in  group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host list-members $groupi
+    voms-admin --vo=$vo_name --host $voms_host list-members $groupi
 done
 
 
@@ -126,28 +129,36 @@ do
     role=${Roles[co]}
     groupi="/$vo_name/$group"
     echo "Assign role=$role in  group $groupi to user"
-    voms-admin --vo=$vo_name -h $voms_host assign-role $groupi $role $USER
+    voms-admin --vo=$vo_name --host $voms_host assign-role $groupi $role "$USER_SUBJECT" "$USER_ISSUER"
     let co=co+1
 done
 
 
 echo "1.4.1. List user roles:"
-voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER
+voms-admin --vo=$vo_name --host $voms_host list-user-roles "$USER_SUBJECT" "$USER_ISSUER"
 
+echo "AAAAAAAA" > /home/shoo/a
 
 echo "2. Destroy, Create and check proxy"
 voms-proxy-destroy
 echo "Create proxy"
+
+echo "BBBBBBBB" >> /home/shoo/a
+
 voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+
 #echo "2.1. Check exit code"
 if [ $? = 0 ]; then
    echo "Exit code  is OK"
 else
     echo "Test is failed"
+    echo "DDDDDDDDDD">> /home/shoo/a
     clearTask        
     exit $SAME_ERROR
 fi
-               
+
+echo "CCCCCCCCC" >> /home/shoo/a
+
 echo "2.2.Extract by openssl from usercert.pem"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 echo "DN=$user_subject"
@@ -167,6 +178,8 @@ fi
 echo "Check result -fqan"
 
 voms-proxy-info -fqan > $voms_tmp
+
+voms-proxy-info -fqan > /home/shoo/stdout 2> /home/shoo/stderr
 
 grep "$vo_name/Role=NULL/Capability=NULL" $voms_tmp
 if [ $? == 1 ]; then

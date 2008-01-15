@@ -26,9 +26,9 @@ Subgroups=( "sgroup_11" "sgroup_12" "sgroup_13" "sgroup_14" "sgroup_15" )
 function crGroups {
 for group in ${Groups[*]}
 do
-    groupi="$vo_name/$group"
+    groupi="/$vo_name/$group"
     #echo "Create group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host create-group "$groupi"
+    voms-admin --vo=$vo_name --host $voms_host create-group "$groupi"
 done
 }
 
@@ -38,7 +38,7 @@ for group in ${Subgroups[*]}
 do 
     groupi="$work/$group"
     #echo "Create group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host create-group "$groupi"
+    voms-admin --vo=$vo_name --host $voms_host create-group "$groupi"
     work="$groupi"    
 done
 }
@@ -62,7 +62,7 @@ function delSubgroups {
     do
 	groupi=${groupArray[$count]}
 	echo "Delete sub-group: $groupi"
-	voms-admin --vo=$vo_name -h $voms_host delete-group "$groupi"
+	voms-admin --vo=$vo_name --host $voms_host delete-group "$groupi"
 	let count=count-1
     done
 }                                                   
@@ -72,12 +72,12 @@ for group in ${Groups[*]}
 do
     groupi="/$vo_name/$group"
     echo "Delete group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host delete-group $groupi
+    voms-admin --vo=$vo_name --host $voms_host delete-group $groupi
 done
 }
 
 function clearTask {
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     delSubgroups
     delGroups
 }
@@ -99,26 +99,29 @@ echo "key: $USERKEY"
 echo "PWS: $PWS"
 NG=${#Groups[*]}
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "1. Create new user"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 
 echo "Extract by openssl from usercert.pem"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 echo "DN=$user_subject"
 
 echo "List users:"
-voms-admin --vo=$vo_name -h $voms_host list-users
+voms-admin --vo=$vo_name --host $voms_host list-users
 
 echo "1.1. Create $NG groups"
 
 crGroups
 
 echo "List groups"
-voms-admin --vo=$vo_name -h $voms_host list-groups
+voms-admin --vo=$vo_name --host $voms_host list-groups
 
 echo "1.2. Create subgroups, list all groups"
 crSubgroups
-voms-admin --vo=$vo_name -h $voms_host list-groups
+voms-admin --vo=$vo_name --host $voms_host list-groups
 
 echo "1.3. Add user to groups as group member"
 
@@ -126,7 +129,7 @@ for group in ${Groups[*]}
 do
     groupi="/$vo_name/$group"
     echo "Add member to group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host add-member $groupi $USER
+    voms-admin --vo=$vo_name --host $voms_host add-member $groupi "$USER_SUBJECT" "$USER_ISSUER"
 done
 
 echo "1.4. Add user to subgroups as group member"
@@ -136,12 +139,12 @@ for group in ${Subgroups[*]}
 do 
     groupi="$work/$group"
     echo "Add member to sub-group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host add-member "$groupi" $USER
+    voms-admin --vo=$vo_name --host $voms_host add-member "$groupi" "$USER_SUBJECT" "$USER_ISSUER"
     work="$groupi"    
 done
 
 echo "1.5. List user groups:"
-voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER
+voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER"
 
 echo "2. Check proxy info"
 echo "Destroy and Create proxy"
@@ -181,6 +184,9 @@ echo "Check -fqan"
 voms-proxy-info -fqan > $voms_tmp
 cat $voms_tmp
 
+voms-proxy-destroy
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+
 echo "Check 1 order (expected 1 line: $patt1):"
 #grep -n "$patt1" $voms_tmp
 
@@ -198,7 +204,6 @@ echo "Check 2 order (expected 2 line: $patt2):"
 #grep -n "$patt2" $voms_tmp
 num=`grep -n "$patt2" $voms_tmp | cut -d":" -f1`
 echo "Nline=$num"
-
 
 if [ $num != 2 ]; then
    echo "Test has failed"

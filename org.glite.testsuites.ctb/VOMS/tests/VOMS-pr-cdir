@@ -44,15 +44,18 @@ echo "Copy CA files into new direcxtory"
 cp $CA_0  $cert_dir
 cp $CA_policy $cert_dir
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "1. Create new user and proxy"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION $cert_dir -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"
 else 
    echo "Test is failed"
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    rm -rf $voms_tmp
     rm -rf $cert_dir/*
    rmdir $cert_dir
@@ -72,14 +75,14 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     rm -rf $voms_tmp
     rm -rf $cert_dir/*
     rmdir  $cert_dir
     exit $SAME_ERROR
 fi
 echo "Test is OK"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 rm -rf $voms_tmp
 rm -rf $cert_dir/*
 rmdir $cert_dir

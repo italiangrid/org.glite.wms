@@ -24,11 +24,14 @@ echo "<pre>"
 export voms_host=$1
 source $SAME_SENSOR_HOME/tests/pr_config_file
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 function clearTask {
 echo "Create normal proxy, for delete user"
 voms-proxy-init -voms $vo_name -vomses $VOMSES  -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 echo "Delete user"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 }
 
 OPTION="noregen"
@@ -40,7 +43,7 @@ echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 
 echo "1. Create new user"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 
 
 echo "1.1. voms-proxy-destroy"

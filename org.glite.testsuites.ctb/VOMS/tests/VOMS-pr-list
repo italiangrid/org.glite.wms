@@ -29,15 +29,18 @@ group="test-group"
 groupi="/$vo_name/$group"
 role="User-group-role"
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 function clearTask {
     echo "Delete user, group"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     echo "Delete role=$role"
-    voms-admin --vo=$vo_name -h $voms_host delete-role $role
+    voms-admin --vo=$vo_name --host $voms_host delete-role $role
         
     groupi="/$vo_name/$group"
     echo "Delete group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host delete-group $groupi
+    voms-admin --vo=$vo_name --host $voms_host delete-group $groupi
 }
 
 echo
@@ -45,24 +48,24 @@ date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 echo "1. Create new user"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 
 echo "1.2. Create group"
 
 echo "Create group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host create-group "$groupi"
+    voms-admin --vo=$vo_name --host $voms_host create-group "$groupi"
     
     echo "1.3. Add user to group as group member"
     
     echo "Add member to group: $groupi"
-    voms-admin --vo=$vo_name -h $voms_host add-member $groupi $USER
+    voms-admin --vo=$vo_name --host $voms_host add-member $groupi "$USER_SUBJECT" "$USER_ISSUER"
         
     echo "1.3.1. List user groups:"
-    voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER
+    voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER"
     echo "Create role $role"
-    voms-admin --vo=$vo_name -h $voms_host create-role $role
+    voms-admin --vo=$vo_name --host $voms_host create-role $role
     echo "Assign user role in group"
-    voms-admin --vo=$vo_name -h $voms_host assign-role $groupi $role $USER
+    voms-admin --vo=$vo_name --host $voms_host assign-role $groupi $role "$USER_SUBJECT" "$USER_ISSUER"
     
 echo "Create proxy"
 voms-proxy-init -voms $vo_name  -$OPTION -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS 1> $voms_tmp

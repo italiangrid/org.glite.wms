@@ -24,6 +24,8 @@ echo "<pre>"
 source $SAME_SENSOR_HOME/tests/pr_config_file
 echo "VO=$v0_name"
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
 
 export voms_host=$1
 
@@ -38,14 +40,14 @@ echo "1. Create new user and proxy"
 echo "User=$USER"
 
 H1="11:00:00"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 voms-proxy-init -voms $vo_name  -$OPTION $H1 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"
 else 
    echo "Test is failed, exit code=1"
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
@@ -65,7 +67,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
@@ -83,7 +85,7 @@ else
     echo "OK 2"
     else 
         echo "Test has failed"
-        voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+        voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
         exit $SAME_ERROR
     fi
 fi
@@ -91,7 +93,7 @@ fi
 
 
         echo "Test is OK"
-        voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+        voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 echo "</pre>"
 exit $SAME_OK
 

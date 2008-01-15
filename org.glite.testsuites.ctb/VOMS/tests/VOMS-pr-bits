@@ -26,12 +26,15 @@ source $SAME_SENSOR_HOME/tests/pr_config_file
 OPTION="bits"
 rm -rf $voms_tmp
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo
 date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 echo "1. Create new user and proxy"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 
 echo "Extract by openssl from usercert.pem"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
@@ -41,7 +44,7 @@ echo "1.1. Check 512 bits"
 voms-proxy-init -voms $vo_name  -$OPTION 512 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
     echo "Test is failed, exit code=1"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "Execute voms-proxy-info"
@@ -52,7 +55,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test is failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
@@ -61,7 +64,7 @@ grep "strength  : 512 bits" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "OK"
@@ -72,7 +75,7 @@ voms-proxy-init -voms $vo_name  -$OPTION 1024 -vomses $VOMSES -cert $USERCERT -k
 
 if [ $? = 1 ]; then
     echo "Test is failed, exit code=1"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "Execute voms-proxy-info"
@@ -83,7 +86,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "2.2. Check strength"
@@ -91,7 +94,7 @@ grep "strength  : 1024 bits" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "OK"
@@ -100,7 +103,7 @@ echo "3. Check 2048  bits"
 voms-proxy-init -voms $vo_name  -$OPTION 2048 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
     echo "Test is failed, exit code=1"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "Execute voms-proxy-info"
@@ -111,7 +114,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
@@ -120,7 +123,7 @@ grep "strength  : 2048 bits" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "OK"
@@ -129,7 +132,7 @@ echo "4. Check 4096 bits"
 voms-proxy-init -voms $vo_name  -$OPTION 4096 -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 if [ $? = 1 ]; then
    echo "Test is failed, exit code=1 "
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "Execute voms-proxy-info"
@@ -140,7 +143,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "4.2. Check strength"
@@ -148,12 +151,12 @@ grep "strength  : 4096 bits" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
 echo "Test is OK"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 
 echo "</pre>"
 exit $SAME_OK

@@ -27,6 +27,9 @@ source $SAME_SENSOR_HOME/tests/pr_config_file
 OPTION="conf"
 rm -rf $voms_tmp
 
+USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo
 date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
@@ -34,7 +37,7 @@ echo "conf file $VOMS_CNF :"
 cat $VOMS_CNF
 
 echo "1. Create new user and proxy"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "1.1. voms-proxy-init"
 voms-proxy-destroy
 voms-proxy-init -vomses $VOMSES -cert $USERCERT -key $USERKEY -conf $VOMS_CNF -pwstdin < $PWS
@@ -44,7 +47,7 @@ if [ $? = 0 ]; then
    echo "OK"
 else 
    echo "Test is failed, exit code=1"
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
@@ -65,7 +68,7 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 
@@ -74,7 +77,7 @@ grep "strength  : 512 bits" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
 echo "OK"
@@ -91,7 +94,7 @@ if [ ${H2} \< ${H1} ]; then
    echo "OK"
 else
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
                
@@ -102,12 +105,12 @@ voms-proxy-info -all > $voms_tmp
 grep "$VO" $voms_tmp
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi               
                
 
 echo "Test is OK"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 echo "</pre>"
 exit $SAME_OK
