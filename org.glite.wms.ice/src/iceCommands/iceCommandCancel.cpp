@@ -193,7 +193,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
                    << "iceCommandCancel::execute() - Removing job gridJobId [" 
                    << m_gridJobId
                    << "], creamJobId [" 
-                   << theJob.getCreamJobID() 
+                   << theJob.getCompleteCreamJobID() 
                    << "]"
                    << log4cpp::CategoryStream::ENDLINE
                    );
