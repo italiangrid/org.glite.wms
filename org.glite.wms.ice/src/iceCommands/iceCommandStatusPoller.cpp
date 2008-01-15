@@ -500,14 +500,16 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
             return;
         }
         
+        // Creates a temporary job
+        CreamJob tmp_job( *jit );
+        
         // Update the worker node
-        jit->set_worker_node( info_obj.getWorkerNode() );
+        tmp_job.set_worker_node( info_obj.getWorkerNode() );
         //
         // END block NOT to be moved outside the 'for' loop
         //
-
-        jit->setLastSeen( time(0) );
-        jit->set_last_empty_notification( time(0) );
+        tmp_job.setLastSeen( time(0) );
+        tmp_job.set_last_empty_notification( time(0) );
 
         jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
         // before doing anything, check if the job is "purged". If so,
@@ -516,7 +518,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
             CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << method_name
                            << "Job "
-                           << jit->describe()
+                           << tmp_job.describe()
                            << " is reported as PURGED. Removing from cache"
                            << log4cpp::CategoryStream::ENDLINE); 
             m_cache->erase( jit );
@@ -525,7 +527,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
 
         string exitCode( it->getExitCode() );
 
-        if ( jit->get_num_logged_status_changes() < count ) {
+        if ( tmp_job.get_num_logged_status_changes() < count ) {
             
             CREAM_SAFE_LOG(m_log_dev->debugStream()
                            << method_name
@@ -535,9 +537,6 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
                            << " exit_code = [" << exitCode << "]"
                            << " failure_reason = [" << it->getFailureReason() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
-
-            // Creates a temporary job
-            CreamJob tmp_job( *jit );
 
             tmp_job.setStatus( stNum );
             try {
