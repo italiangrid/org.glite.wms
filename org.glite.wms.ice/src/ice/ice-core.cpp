@@ -622,7 +622,7 @@ throw()
     try {
         boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); // this can be called by eventStatusListener::handleEvent that already acquired this mutex; this is not a problem 'cause the mutexes are recursive
 
-        string cid = jit->getCreamJobID();
+        //string cid = jit->getCreamJobID();
         
         if ( m_configuration->ice()->purge_jobs() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream()
