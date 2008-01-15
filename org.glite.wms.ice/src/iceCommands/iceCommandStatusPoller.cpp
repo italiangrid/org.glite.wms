@@ -450,24 +450,17 @@ void iceUtils::iceCommandStatusPoller::updateJobCache( const list< soap_proxy::J
 //____________________________________________________________________________
 void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper& info_obj ) throw()
 {
-    // Locks the cache
+    static const char* method_name = "iceCommandStatusPoller::update_single_job() - ";
+    // Lock the cache
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-
-    //vector< soap_proxy::Status > status_changes;
     vector< soap_proxy::JobStatusWrapper > status_changes;
-
-    //info_obj.getStatusList( status_changes );
-
     info_obj.getStatus( status_changes );
-
     string cid( info_obj.getCreamJobID() ); // Cream job id
-
-    //jobCache::const_iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
 
     jobCache::iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
     if ( m_cache->end() != job_pos ) {
         CREAM_SAFE_LOG( m_log_dev->debugStream()
-                        << "iceCommandStatusPoller::update_single_job() - "
+                        << method_name
                         << " Managing Job "
                         << job_pos->describe()
                         << " for which I already processed "
@@ -475,6 +468,10 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
                         << " status changes, and JobStatus contains "
                         << status_changes.size()
                         << " status changes"
+                        << log4cpp::CategoryStream::ENDLINE);
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
+                        << method_name << "Job " << job_pos->describe()
+                        << " has worker_node=" << info_obj.getWorkerNode()
                         << log4cpp::CategoryStream::ENDLINE);
     }
 
@@ -496,7 +493,8 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
 	
         if ( m_cache->end() == jit ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << "iceCommandStatusPoller::update_single_job() -  cream_jobid ["
+                           << method_name 
+                           << "cream_jobid ["
                            << cid << "] disappeared!"
                            << log4cpp::CategoryStream::ENDLINE);
             return;
@@ -516,7 +514,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
         // remove from the cache and forget about it.
         if ( stNum == jobstat::PURGED ) {
             CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "iceCommandStatusPoller::update_single_job() - "
+                           << method_name
                            << "Job "
                            << jit->describe()
                            << " is reported as PURGED. Removing from cache"
@@ -530,7 +528,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
         if ( jit->get_num_logged_status_changes() < count ) {
             
             CREAM_SAFE_LOG(m_log_dev->debugStream()
-                           << "iceCommandStatusPoller::update_single_job() - "
+                           << method_name
                            << "Updating jobcache for "
                            << jit->describe()
                            << " status = [" << it->getStatusName() << "]"
