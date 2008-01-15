@@ -263,16 +263,16 @@ const std::string getDefaultVoVoms(const char *pxfile){
 	voms v;
 	// get Default voms
 	if (!vo_data->DefaultData(v)){
-		// Free the memory allocated	
+		// Free the memory allocated
 		delete(vo_data);
 
 		// Unable to load default VO value: return empty string
 		return "";
 	}
 
-	// Free the memory allocated	
+	// Free the memory allocated
 	delete(vo_data);
-	
+
 	return string (v.voname);
 }
 
@@ -548,6 +548,53 @@ void Utils::resolveHost(const std::string& hostname, std::string& resolved_name)
 	}
 	resolved_name=result->h_name;
 }
+
+string Utils::resolveHostname( string relpath ) {
+    int it = 0;
+    string pathtemp = "";
+    string realhost = "";
+    struct hostent *result = NULL;
+    if (relpath ==""){
+            throw WmsClientException(__FILE__,__LINE__,"resolveHostname",
+                    DEFAULT_ERR_CODE,
+                    "Wrong Value", "Unable to parse empty hostname");
+    }
+    boost::char_separator<char> separator(":/");
+    boost::tokenizer<boost::char_separator<char> >tok(relpath, separator);
+    boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+    boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+    for( ; token != end; token++) {
+            if ( it == 1 ) {
+                    realhost = *token ;
+            }
+            if (it > 1 && it < 3) {
+                    pathtemp += *token + "/"  ;
+            }
+            if (it == 3) {
+                    pathtemp += *token  ;
+            }
+            it++;
+    }
+
+    if( (result = gethostbyname( realhost.c_str() )) == NULL ) {
+    	throw WmsClientException(__FILE__,__LINE__,"resolveHostname",DEFAULT_ERR_CODE,
+                                    "Wrong Value","Unable to resolve the hostname: "+ realhost);
+    }
+
+    string hostname = result->h_name;
+    string addr = inet_ntoa(*(struct in_addr *)result->h_addr);
+    string path = "";
+    if (!addr.empty()) {
+        path = resolveAddress("https://"+addr+":"+pathtemp);
+    } else if (!hostname.empty()) {
+        path = "https://"+hostname+":"+pathtemp ;
+    } else {
+        throw WmsClientException(__FILE__,__LINE__,"resolveHostname",DEFAULT_ERR_CODE,
+                                "Wrong Value","Unable to find a valid hostname nor its IPv4 address");
+    }
+    return path ;
+}
+
 std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string> >& lbGroup, int nsNum){
 	std::vector<std::string> lbs ;
 	unsigned int lbGroupSize=lbGroup.size();
@@ -591,22 +638,30 @@ const int Utils::getRandom (const unsigned int &max ){
  	 }
         return r;
 }
+
 std::vector<std::string> Utils::getWmps(){
 	std::vector<std::string> wmps ;
 	char *ep = NULL;
 	string eps = "";
 	// URL by the command line options
 	eps = wmcOpts->getStringAttribute(Options::ENDPOINT);
-	if (!eps.empty()){ wmps.push_back(eps);}
-	else {
+	if (!eps.empty()){
+		wmps.push_back(resolveHostname(eps));
+	} else {
 		// URL by the environment
 		ep = getenv(  GLITE_WMS_WMPROXY_ENDPOINT);
-		if (ep){ wmps.push_back(ep);}
-		else if (wmcConf){
+		if (ep){
+			wmps.push_back(resolveHostname(string(ep)));
+		} else if (wmcConf){
 			// Check if exists the attribute WmProxyEndPoints
 			if(wmcConf->hasAttribute(JDL_WMPROXY_ENDPOINT)) {
 				// Retrieve and set the attribute WmProxyEndPoints
 				wmps = wmcConf->getStringValue(JDL_WMPROXY_ENDPOINT);
+				int i;
+				int size = wmps.size();
+				for (i=0;i<size;i++) {
+					wmps[i]=resolveHostname(wmps[i]);
+				}
 			}
 		}
 	}
@@ -623,7 +678,7 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 	char **names  = NULL;
 
 	string serviceType="";
-	
+
 	switch (st){
 		case WMP_SD_TYPE:
 			if (wmcConf){
@@ -712,7 +767,7 @@ std::vector<std::string> Utils::lookForServiceType(SdServiceType st, const strin
 const std::string Utils::getErrorStorage( ){
 	// Initialise the ErrorStorage
 	string storage = DEFAULT_ERROR_STORAGE;
-	
+
 	// Check if exists the configuration
         if (wmcConf){
 		// Check if exists the attribute ErrorStorage
@@ -721,7 +776,7 @@ const std::string Utils::getErrorStorage( ){
 			storage = wmcConf->getString(JDL_ERROR_STORAGE);
 		}
 	}
-	
+
 	// Return the ErrorStorage
 	return storage;
  }
@@ -740,14 +795,14 @@ std::string Utils::getOutputStorage( ){
 			storage = wmcConf->getString(JDL_OUTPUT_STORAGE);
 		}
 	}
-	
+
 	// Check if the storage is a directory
 	if(!this->isDirectory(storage)){
 		throw WmsClientException(__FILE__,__LINE__,"getOutputStorage",DEFAULT_ERR_CODE,
 				"Configuration Error",
 				"Output Storage pathname doesn't exist (check the configuration file): "+storage);
 	}
-	
+
 	// Return the OutputStorage
 	return storage ;
  }
@@ -791,11 +846,11 @@ std::string Utils::getLogFileName (void){
 	if (logInfo){
         	// if logInfo object has been already set
         	log = logInfo->getPathName();
-        } 
+        }
 	else if (!wmcOpts->getStringAttribute(Options::LOGFILE).empty()){
 	       	// by --log option
-        	log = wmcOpts->getStringAttribute(Options::LOGFILE);	
-	} 
+        	log = wmcOpts->getStringAttribute(Options::LOGFILE);
+	}
 	else  if (wmcOpts->getBoolAttribute(Options::DBG)){
 		log = string(this->getDefaultLog( ));
 	}
@@ -815,7 +870,7 @@ std::string Utils::generateLogFile ( ){
         	// by --log option
         	log = wmcOpts->getStringAttribute(Options::LOGFILE);
 
-	} 
+	}
 	else  if (wmcOpts->getBoolAttribute(Options::DBG)){
 		log = string(this->getDefaultLog( ));
 	}
@@ -1031,7 +1086,7 @@ std::string Utils::checkConf(){
 	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CLIENTCONF_FILENAME ;
 
 	wmcConf = wmcAd->loadConfiguration(voPath, cfDefault, voName);
-	
+
 	return voName;
 }
 
@@ -2185,10 +2240,10 @@ string Utils::resolveAddress( string relpath ) {
 		if ( it == 1 ) {
 			address = *token ;
 		}
-		if (it > 1 && it < 7) {
+		if (it > 1 && it < 3) {
 			pathtemp += *token + "/"  ;
 		}
-		if (it == 7) {
+		if (it == 3) {
 			pathtemp += *token  ;
 		}
 		it++;

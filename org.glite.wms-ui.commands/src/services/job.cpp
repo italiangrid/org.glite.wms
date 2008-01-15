@@ -142,7 +142,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 	}
 	// Initialise the proxy validity
 	int proxyValidity = 0;
-	
+
 	// Check if exists the attribute JDL_DEFAULT_PROXY_VALIDITY
 	if(wmcUtils->getConf()->hasAttribute(JDL_DEFAULT_PROXY_VALIDITY)) {
 		// Default Proxy Validity from the configuration file
@@ -368,7 +368,7 @@ void Job::retrieveWmpVersion (const std::string &endpoint) {
 
 		// Version string number
 		logInfo->service(WMP_VERSION_SERVICE);
-		
+
 		// Set the SOAP time out
 		setSoapTimeout(sp_cfg.get(), SOAP_GET_VERSION_TIMEOUT);
 
@@ -477,11 +477,11 @@ void Job::printServerVersion( ) {
         if (!endPoint.empty()) {
 		// --endpoint option used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from --" +  wmcOpts->getAttributeUsage(Options::ENDPOINT) +" option:", endPoint);
-		urls.push_back (endPoint);
+	        urls.push_back(wmcUtils->resolveHostname(endPoint));
         } else if (ep){
 		// GLITE_WMS_WMPROXY_ENDPOINT ENV variable used
-		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", endPoint );
-		urls.push_back (string (ep));
+		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", string(ep) );
+	        urls.push_back(wmcUtils->resolveHostname(string(ep)));
 	} else {
 		// just retrieve URLS from configuration file
 		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
@@ -512,7 +512,7 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 
 		// Set the SOAP time out
 		setSoapTimeout(sp_cfg.get(), SOAP_PUT_PROXY_TIMEOUT);
-		
+
 		api::grstPutProxy(id, proxyReq, sp_cfg.get());
 		if (id==""){
 			logInfo->result(WMP_NS4_PUTPROXY_SERVICE,
@@ -635,16 +635,15 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 	}
 	// needed variables
 	string endPoint = wmcOpts->getStringAttribute (Options::ENDPOINT);
-
 	char* ep = getenv("GLITE_WMS_WMPROXY_ENDPOINT");
 	if (!endPoint.empty()){
 		// --endpoint option used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from user option:", endPoint);
-		urls.push_back(endPoint);
+		urls.push_back(wmcUtils->resolveHostname(endPoint));
         } else  if (ep){
 		// GLITE_WMS_WMPROXY_ENDPOINT Variable used
-		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", endPoint );
-		urls.push_back(string (ep));
+		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", string(ep) );
+		urls.push_back(wmcUtils->resolveHostname(string(ep)));
 	} else {
 		// list of endpoints from the configuration file
 		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
@@ -697,15 +696,15 @@ void Job::lookForWmpEndpoints(const bool &all){
 void Job::checkWmpSDList (const bool &all){
 	if (!sdContacted){
 		sdContacted =true;  // no further query will be made in the future
-		
+
 		bool enable_service_discovery = false;
-		
+
 		// Check if the EnableServiceDiscovery attribute has been defined
 		if(this->wmcUtils->getConf()->hasAttribute(JDL_ENABLE_SERVICE_DISCOVERY)) {
 			// Retrieve and Set the EnableServicerDiscovery attribute
 			enable_service_discovery = this->wmcUtils->getConf()->getBool(JDL_ENABLE_SERVICE_DISCOVERY);
 		}
-		
+
 		if (enable_service_discovery){
 			// SD is enabled: Query Service Discovery:
 			logInfo->print(WMS_DEBUG, "Service Discovery enabled by user configuration settings");

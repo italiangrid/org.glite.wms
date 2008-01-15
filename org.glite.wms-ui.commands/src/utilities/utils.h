@@ -180,6 +180,12 @@ public:
 	*/
 	void resolveHost(const std::string& hostname, std::string& resolved);
 	/**
+        * Resolves an hostname, given into the sring describing the service
+        * @param relpath to be filled with the service endpoint
+        * @return the service with the hostname resolved to its CNAME
+        */
+	std::string resolveHostname(std::string relpath);
+	/**
 	* Check the format of a jobid string
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
 	* @param jobid jobid string to be checked
@@ -417,7 +423,7 @@ public:
 	* Returns the Default VO retrieved by the user proxy
 	* @return the Default VO string
 	*/
-	static std::string getDefaultVo() ;	
+	static std::string getDefaultVo() ;
         /**
         * Forks the process and executes command line
         * @command the command to execute
@@ -530,7 +536,7 @@ private:
 	std::string prefix;
 	// Virutal Organisation value
 	std::string virtualOrganisation;
-	
+
 
 }; // end class definition
 
