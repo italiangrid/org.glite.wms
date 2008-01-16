@@ -230,7 +230,7 @@ int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_running_event::job_running_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("Job running event, worker_node=[%1%]" ) % j.get_worker_node() ) )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, boost::str( boost::format("Job Running Event, worker_node=[%1%]" ) % j.get_worker_node() ) )
 {
 
 }
