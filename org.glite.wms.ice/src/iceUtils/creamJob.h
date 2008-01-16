@@ -66,7 +66,7 @@ namespace glite {
 	  glite::ce::cream_client_api::job_statuses::job_status m_status;
           int m_num_logged_status_changes; //! Number of status changes which have been logged to L&B
           time_t m_last_seen; //! The time of the last received notification for the job. For newly created jobs, this value is set to zero.
-          time_t m_end_lease; //! The time the lease for this job ends
+          std::string m_lease_id; //! The lease ID associated with this job
 	  time_t m_proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
 	  int    m_statusPollRetryCount; //! number of time we tried to get the status of the job
           int    m_exit_code; //! the job exit code
@@ -82,17 +82,12 @@ namespace glite {
            *
            * @param buf the string representation of the classad jolding a job 
            */
-          void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
+          // void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
 
 	public:
 
           //! Default constructor
           CreamJob( );
-
-          //! Costructor from classad
-          CreamJob( const std::string& ad ) throw (ClassadSyntax_ex& );
-
-	  //CreamJob( const CreamJob& ) throw();
 
 	  //! Sets the status of the CreamJob object
 	  void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_status = st; }
@@ -104,8 +99,6 @@ namespace glite {
           void setSequenceCode( const std::string& seq ); // { m_sequence_code = seq; }
           //! Sets the delegation id
           void setDelegationId( const std::string& delid ) { m_delegation_id = delid; }
-          //! Sets the new lease end time
-          void setEndLease( const time_t& l ) { m_end_lease = l; }
           //! Sets the time we got info about this job from CREAM
           void setLastSeen( const time_t& l ) { m_last_seen = l; }
 	  //! Sets the user proxy cert file last modification time
@@ -173,8 +166,11 @@ namespace glite {
           //! Sets the number of job status changes whcih have been already logged to L&B
           void set_num_logged_status_changes( int l ) { m_num_logged_status_changes = l; }
 
-          //! Gets the time when the lease ends
-          time_t getEndLease( void ) const { return m_end_lease; }
+          //! Return the lease ID associated with this job
+          std::string get_lease_id( void ) const { return m_lease_id; };
+
+          //! Set the lease ID associated with this job
+          void set_lease_id( const std::string& lease_id ) { m_lease_id = lease_id; };
 
           //! Gets the worker node on which the job is being execute (empty string if no worker node has been set)
           std::string get_worker_node( void ) const { return m_worker_node; }
@@ -255,14 +251,6 @@ namespace glite {
 
 	  bool is_proxy_renewable() const { return m_proxy_renew; }
 
-          /**
-           * Converts this job into a classad
-           *
-           * @return the string representation of the classad for this job
-           */
-          //std::string serialize( void ) const;
-
-
 
           /**
            * This function outputs a string containing the CREAM and
@@ -303,30 +291,6 @@ namespace glite {
            */
           std::string get_cemon_dn( void ) const;
 
-	  size_t size( void ) const;
-
-	  //template<class Archive> void serialize(Archive & ar, const unsigned int version) throw();
-
-	  //std::set<std::string> extract_keys( const std::string& );// const { return std::set<std::string>(); };
-
-	  static std::string extract_first_index_key( const std::string& jdl ) { 
-	    
- 	    CreamJob J( jdl );
-	    
-	    // FIXME: the following call can raise an soap_proxy::auth_ex exception
-	    J.setUserDN( glite::ce::cream_client_api::certUtil::getDNFQAN(J.getUserProxyCertificate()) );
-	    return J.getUserDN();
-
-	  };
-
-	  static std::string extract_second_index_key( const std::string& jdl ) { 
-	    
- 	    CreamJob J( jdl );
-	    return J.getGridJobID();
-
-	  };
-
-
 	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw()
 	  {
 	    
@@ -345,7 +309,7 @@ namespace glite {
 	    ar & m_status;
 	    ar & m_num_logged_status_changes;
 	    ar & m_last_seen;
-	    ar & m_end_lease;
+	    ar & m_lease_id;
 	    ar & m_proxyCertTimestamp;
 	    ar & m_statusPollRetryCount;
 	    ar & m_exit_code;

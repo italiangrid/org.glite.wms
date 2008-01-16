@@ -79,7 +79,6 @@ CreamJob::CreamJob( ) :
     m_status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
     m_last_seen( time(0) ),
-    m_end_lease( 0 ), 
     m_statusPollRetryCount( 0 ),
     m_exit_code( 0 ),
     m_is_killed_by_ice( false ),
@@ -87,159 +86,6 @@ CreamJob::CreamJob( ) :
     m_proxy_renew( false )
 {
 
-}
-
-//______________________________________________________________________________
-CreamJob::CreamJob( const std::string& ad ) throw ( ClassadSyntax_ex& ) 
-{
-  unserialize( ad );
-}
-
-//______________________________________________________________________________
-/*CreamJob::CreamJob( const CreamJob& aJob ) throw()
-{
-  m_cream_jobid = aJob.m_cream_jobid;
-  m_grid_jobid = aJob.m_grid_jobid;
-  m_jdl = aJob.m_jdl;
-  m_ceid = aJob.m_ceid;
-  m_endpoint = aJob.m_endpoint;
-  m_cream_address = aJob.m_cream_address;
-  m_cream_deleg_address = aJob.m_cream_deleg_address;
-  m_user_proxyfile = aJob.m_user_proxyfile;
-  m_user_dn = aJob.m_user_dn;
-  m_sequence_code = aJob.m_sequence_code;
-  m_delegation_id   = aJob.   m_delegation_id;
-  m_wn_sequence_code  = aJob.m_wn_sequence_code;
-  m_status = aJob.m_status;
-  m_num_logged_status_changes  = aJob.m_num_logged_status_changes;
-  m_last_seen = aJob.m_last_seen;
-  m_end_lease  = aJob.m_end_lease;
-  m_proxyCertTimestamp  = aJob.m_proxyCertTimestamp;
-  m_statusPollRetryCount  = aJob.m_statusPollRetryCount;
-  m_exit_code = aJob.m_exit_code;
-  m_failure_reason = aJob.m_failure_reason;
-  m_worker_node = aJob.m_worker_node;
-  m_is_killed_by_ice = aJob.m_is_killed_by_ice;
-
-  CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->debugStream()
-		 << "CreamJob::COPYCTOR() - ALVISE-DEBUG CALLED FOR JOB ["
-		 << aJob.describe() << "]"
-		 << log4cpp::CategoryStream::ENDLINE);
-}*/
-
-//______________________________________________________________________________
-// string CreamJob::serialize( void ) const
-// {
-//     string res;
-// 
-//     classad::ClassAd ad;
-//     ad.InsertAttr( "cream_jobid", m_cream_jobid );
-//     ad.InsertAttr( "status", m_status );
-//     ad.InsertAttr( "exit_code", m_exit_code );
-//     ad.InsertAttr( "failure_reason", m_failure_reason );
-//     ad.InsertAttr( "delegation_id", m_delegation_id );
-//     ad.InsertAttr( "wn_sequence_code", m_wn_sequence_code );
-//     ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
-//     ad.InsertAttr( "worker_node", m_worker_node );
-//     ad.InsertAttr( "is_killed_by_ice", m_is_killed_by_ice );
-//     ad.InsertAttr( "user_dn", m_user_dn);
-// 
-//     classad::ClassAdParser parser;
-//     classad::ClassAd* jdlAd = parser.ParseClassAd( m_jdl );
-//     if(!jdlAd) {
-//       CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
-// 		       << "CreamJob::serialize() - ClassAdParser::ParseClassAd() returned a NULL pointer. STOP!"
-// 		       << log4cpp::CategoryStream::ENDLINE);
-//       abort();
-//     }
-//     
-//     //boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
-//     
-//     // Updates sequence code
-//     jdlAd->InsertAttr( "LB_sequence_code", m_sequence_code );
-//     ad.Insert( "jdl", jdlAd );
-// 
-//     try {    
-//         ad.InsertAttr( "last_seen", boost::lexical_cast< string >(m_last_seen) );
-//         ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(m_end_lease) );
-// 	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( m_proxyCertTimestamp ) );
-//         ad.InsertAttr( "last_empty_notification", boost::lexical_cast< string >(m_last_empty_notification ) );
-//     } catch( boost::bad_lexical_cast& ) {
-//         // Should never happen... FIXME
-//     }
-// 
-//     classad::ClassAdUnParser unparser;
-//     unparser.Unparse( res, &ad );
-//     return res;
-// }
-
-//______________________________________________________________________________
-void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
-{
-    classad::ClassAdParser parser;
-
-    classad::ClassAd *ad;
-    classad::ClassAd *jdlAd; // no need to free it
-    int st_number;
-    string tstamp; // last status change
-    string elease; // end lease
-    string lseen; // last seen
-    string lemptynotif; // last empty notification
-    string lastmtime_proxy; // proxyCertTimestamp
-
-    ad = parser.ParseClassAd( buf );
-
-    if(!ad)
-        throw ClassadSyntax_ex(string("ClassAd parser returned a NULL pointer parsing entire classad ")+buf);
-  
-    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
-  
-    if ( ! classad_safe_ptr->EvaluateAttrString( "cream_jobid", m_cream_jobid ) ||
-         ! classad_safe_ptr->EvaluateAttrNumber( "status", st_number ) ||
-         ! classad_safe_ptr->EvaluateAttrNumber( "exit_code", m_exit_code ) || 
-         ! classad_safe_ptr->EvaluateAttrClassAd( "jdl", jdlAd ) ||
-         ! classad_safe_ptr->EvaluateAttrNumber( "num_logged_status_changes", m_num_logged_status_changes ) ||
-         ! classad_safe_ptr->EvaluateAttrString( "last_seen", lseen ) ||
-         ! classad_safe_ptr->EvaluateAttrString( "end_lease", elease ) ||
-	 ! classad_safe_ptr->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
-         ! classad_safe_ptr->EvaluateAttrString( "delegation_id", m_delegation_id ) ||
-         ! classad_safe_ptr->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ||
-         ! classad_safe_ptr->EvaluateAttrString( "failure_reason", m_failure_reason ) ||
-         ! classad_safe_ptr->EvaluateAttrString( "worker_node", m_worker_node ) ||
-         ! classad_safe_ptr->EvaluateAttrBool( "is_killed_by_ice", m_is_killed_by_ice ) ||
-	 ! classad_safe_ptr->EvaluateAttrString( "user_dn", m_user_dn) ||
-         ! classad_safe_ptr->EvaluateAttrString( "last_empty_notification", lemptynotif )) {
-
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code, failure_reason, worker_node, is_killed_by_ice, user_dn, last_empty_notification" );
-
-    }
-    m_status = (api::job_statuses::job_status)st_number;
-    boost::trim_if( tstamp, boost::is_any_of("\"" ) );
-    boost::trim_if( elease, boost::is_any_of("\"" ) );
-    boost::trim_if( lseen, boost::is_any_of("\"" ) );
-    boost::trim_if( lemptynotif, boost::is_any_of("\"" ) );
-    boost::trim_if( lastmtime_proxy, boost::is_any_of("\"" ) );
-    boost::trim_if( m_delegation_id, boost::is_any_of("\"") );
-    boost::trim_if( m_wn_sequence_code, boost::is_any_of("\"") );
-    boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
-    boost::trim_if( m_worker_node, boost::is_any_of("\"") );
-    boost::trim_if( m_user_dn, boost::is_any_of("\"") );
-
-    try {
-        m_last_empty_notification = boost::lexical_cast< time_t >( lemptynotif );
-        m_end_lease = boost::lexical_cast< time_t >( elease );
-        m_last_seen = boost::lexical_cast< time_t >( lseen );
-	m_proxyCertTimestamp = boost::lexical_cast< time_t >( lastmtime_proxy );
-    } catch( boost::bad_lexical_cast& ) {
-        throw ClassadSyntax_ex( "CreamJob::unserialize() is unable to cast [" + tstamp + "] or [" +elease+"] or [" +lseen + "] or [" +lastmtime_proxy + "] or ["+lemptynotif +"] to time_t" );
-    }
-    boost::trim_if(m_cream_jobid, boost::is_any_of("\""));
-
-    classad::ClassAdUnParser unparser;
-    string jdl_string;
-    unparser.Unparse( jdl_string, jdlAd ); // FIXME: Unparsing & Parsing is not good...
-
-    setJdl( jdl_string );
 }
 
 //______________________________________________________________________________
@@ -389,33 +235,6 @@ void CreamJob::setSequenceCode( const std::string& seq )
     //                     << "old jdl=[" << old_jdl << "] new jdl=["
     //                     << m_jdl << "]"
     //                     << log4cpp::CategoryStream::ENDLINE);
-}
-
-//______________________________________________________________________________
-size_t CreamJob::size( void ) const 
-{
-  size_t size = 0;
-  size  = sizeof(glite::ce::cream_client_api::job_statuses::job_status);
-  size += sizeof(m_num_logged_status_changes);
-  size += sizeof(m_last_seen);
-  size += sizeof(m_end_lease);
-  size += sizeof(m_proxyCertTimestamp);
-  size += sizeof(m_statusPollRetryCount);
-  size += sizeof(m_exit_code);
-  size += sizeof(m_is_killed_by_ice);
-  size =+ sizeof(m_last_empty_notification);
-  size += sizeof(m_proxy_renew);
-  
-  size += m_failure_reason.capacity() + m_worker_node.capacity() + m_wn_sequence_code.capacity();
-  size += m_delegation_id.capacity() + m_sequence_code.capacity() + m_user_dn.capacity();
-  size += m_user_proxyfile.capacity() + m_cream_deleg_address.capacity() + m_cream_address.capacity();
-  size += m_endpoint.capacity() + m_ceid.capacity() + m_jdl.capacity() + m_grid_jobid.capacity();
-  size += m_cream_jobid.capacity();
-
-  size += 14*sizeof(string);
-  
-  //cout << "creamJob size="<<size<<endl;
-  return size;
 }
 
 //______________________________________________________________________________

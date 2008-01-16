@@ -43,8 +43,11 @@
 #include "glite/ce/cream-client-api-c/JobUnknownException.h"
 
 #include <algorithm>
+#include <set>
 #include "boost/functional.hpp"
 #include "boost/scoped_ptr.hpp"
+#include "boost/tuple/tuple.hpp"
+#include "boost/tuple/tuple_comparison.hpp"
 
 namespace api_util  = glite::ce::cream_client_api::util;
 namespace cream_api = glite::ce::cream_client_api;
@@ -56,7 +59,32 @@ using namespace std;
 
 //____________________________________________________________________________
 namespace {
-    
+
+    /**
+     * This class represents the tuple (user_dn, cream_url, lease_id)
+     */    
+    struct lease_tuple {
+        std::string user_dn;
+        std::string cream_url;
+        std::string lease_id;
+
+        lease_tuple( const std::string& dn, const std::string& uri, const std::string& id ) :
+            user_dn( dn ),
+            cream_url( url ),
+            lease_id( id ) { };
+    };
+
+    /**
+     * This class is used to compare two lease_tuple
+     */
+    struct lease_tuple_cmp {
+        bool operator()( const struct lease_tuple& t1, const struct lease_tuple& t2 ) {
+            return ( ( t1.user_dn < t2.user_dn ) &&
+                     ( t1.cream_url < t2.cream_url ) &&
+                     ( t1.lease_id < t2.lease_id ) );
+        }
+    };
+
     //________________________________________________________________________
     bool onlyupdate( const CreamJob& J ) 
     { 
@@ -66,8 +94,6 @@ namespace {
     //________________________________________________________________________
     bool check_lease_expired( const CreamJob& job ) throw()
     {
-        //        if ( !job.is_active() || job.can_be_purged() ) return false;
-        
         if ( job.is_active() &&
              !job.can_be_purged() && 
              job.getEndLease() && 
@@ -86,16 +112,9 @@ namespace {
 
 	    {//-------------------------------------------------------------------
 	      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy( CreamProxyFactory::makeCreamProxy( false ) );
-	      string proxy;
-	      //{
-	      //boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
-	      proxy = DNProxyManager::getInstance()->getBetterProxyByDN( job.getUserDN() ) ;
-	      //}
+	      string proxy = DNProxyManager::getInstance()->getBetterProxyByDN( job.getUserDN() ) ;
 
 	      try {
-    
-		//		m_theProxy->Authenticate( proxy );
-
 		cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
 		if( !V.IsValid( ) ) {
 		  throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
@@ -157,115 +176,60 @@ iceCommandLeaseUpdater::iceCommandLeaseUpdater( bool only_update ) throw() :
 //____________________________________________________________________________
 void iceCommandLeaseUpdater::execute( ) throw()
 {
-    map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
+    /**
+     * Be Careful: the cache removal of lease-expired job is performed
+     * by check_lease_expired procedure that is called ONLY by the
+     * insert_condition function.  Then: using onlyupdate as "insert
+     * condition" for the appender means perform just a lease update
+     * of ALL jobs without any removal.
+     */
+    if( m_only_update )
+        appender.reset( new jobMap_appender( jobMap, &onlyupdate ) );
+    else
+        appender.reset( new jobMap_appender( jobMap, &insert_condition ) );
     
-    { 
-        // acquire lock on the job cache
+    // [ userDN, CreamURL, lease_id ]
+    set< lease_tuple, lease_tuple_cmp > lease_set;
+    { // acquire lock on the job cache
         boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-        
-        list<CreamJob> check_list;
-        //copy(m_cache->begin(), m_cache->end(), back_inserter(check_list));
-	jobCache::iterator it( m_cache->begin() );
-	while( it != m_cache->end() ) {
-	  check_list.push_back( *it );
-	  ++it;
-	}
-        
-        
-        // Now the cache is purged from the lease-expired jobs, and we can 
-        // populate the map ( userDN, CEMonURL) -> array[JobID]
-        // with ALL remaining jobs (not yet expired). 
-        // We want to renew the lease of ALL these jobs
-        // (even those which are not expiring)
-        
-        /**
-         * an appender() applied to a CreamJob J, appends J to the
-         * array whose key is a pair<J.getUserDN, J.getCEMonURL>
-         * (creating the key pair<J.getUserDN, J.getCEMonURL> if it
-         * does not already exist).
-         */
-        boost::scoped_ptr< jobMap_appender > appender;
-        
-        /**
-         * Be Careful: the cache removal of lease-expired job is
-         * performed by check_lease_expired procedure that is called
-         * ONLY by the insert_condition function.  Then: using
-         * onlyupdate as "insert condition" for the appender means
-         * perform just a lease update of ALL jobs without any
-         * removal.
-         */
-        if( m_only_update )
-            appender.reset( new jobMap_appender( jobMap, &onlyupdate ) );
-        else
-            appender.reset( new jobMap_appender( jobMap, &insert_condition ) );
-        
-        for_each( check_list.begin(),
-                  check_list.end(),
-                  *appender);
-
+        for ( jobCache::const_iterator it = m_cache->begin();
+              it != m_cache->end(); ++it ) {
+            if ( only_update )
+                lease_set.push_back( lease_tuple( it->getUserDN(),
+                                                  it->getEndpoint(),
+                                                  it->getLeasID() );
+        for_each( m_cache->begin(), m_cache->end(), *appender );
+        }
     } // releases lock on job cache  
     
     // Now jobMap contains all the job that are not lease-expired and
     // that have a non empty creamJobID also the cache has been purged
     // by lease-expired job (and LB "informed" about them)
+
     for_each(jobMap.begin(), 
              jobMap.end(), 
              boost::bind1st( boost::mem_fn( &iceCommandLeaseUpdater::handle_jobs ), this ));    
 }
 
 //____________________________________________________________________________
-void iceCommandLeaseUpdater::handle_jobs(const pair< pair<string, string>, list< CreamJob > >& jobs) throw()
+void iceCommandLeaseUpdater::update_lease( const std::string user_dn, const std::string& cream_url, const std::string& lease_id )
 {
-    CREAM_SAFE_LOG(m_log_dev->infoStream()
-                   << "iceCommandLeaseUpdater::handle_jobs() - "
-                   << "Will update lease for all " 
-                   << jobs.second.size() 
-                   << " job(s) of the user ["
-                   << jobs.first.first << "] to CREAM ["
-                   << jobs.first.second << "]"
-                   << log4cpp::CategoryStream::ENDLINE);
-    
-    for( list<CreamJob>::const_iterator it=jobs.second.begin(); it != jobs.second.end(); ++it ) {
-        CREAM_SAFE_LOG(m_log_dev->debugStream()
-                       << "iceCommandLeaseUpdater::handle_jobs() - "
-                       << "Will update lease job "
-                       << it->describe()
-                       << log4cpp::CategoryStream::ENDLINE);
-    }
-    
-    list< CreamJob >::const_iterator it = jobs.second.begin();
-    list< CreamJob >::const_iterator list_end = jobs.second.end();
-    vector< string > jobs_to_update;
-    
-    string proxy;
-    //{
-    //    boost::recursive_mutex::scoped_lock M( DNProxyManager::mutex );
-    proxy = DNProxyManager::getInstance()->getBetterProxyByDN( jobs.first.first ) ;
-    //}
-    
-    while ( it != list_end ) {
-        jobs_to_update.clear();
-        
-        // prepare job_to_update as a chunk of all jobs
-        it = transform_n_elements( it, 
-                                   list_end, 
-                                   iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
-                                   back_inserter( jobs_to_update ), mem_fun_ref( &CreamJob::getCreamJobID ) );
-        
-        update_lease_for_multiple_jobs( jobs_to_update, proxy, jobs.first.second );
-        
-    }      
-}
+    static const char* method_name = "iceCommandLeaseUpdater::handle_jobs() - ";
 
-//____________________________________________________________________________
-void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string>& job_ids, const string& userproxy, const string& endpoint ) throw()
-{
-    map< string, time_t > newLease;
-    
+    CREAM_SAFE_LOG(m_log_dev->infoStream()
+                   << method_name
+                   << "Will update lease for all jobs for user [" 
+                   << user_dn << "] on CREAM ["
+                   << cream_url << "] with lease ID ["
+                   << lease_id << "]"
+                   << log4cpp::CategoryStream::ENDLINE);
+            
+    string userproxy( DNProxyManager::getInstance()->getBetterProxyByDN( jobs.first.first ) );
+        
     try {
         
         CREAM_SAFE_LOG(m_log_dev->infoStream()
-                       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
+                       << method_name
                        << "Authenticating with user proxy ["
                        << userproxy << "]"
                        << log4cpp::CategoryStream::ENDLINE);
@@ -415,49 +379,5 @@ void iceCommandLeaseUpdater::update_lease_for_multiple_jobs( const vector<string
 	tmpJob->setEndLease( newLease.begin()->second );
 	m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.    
       }
-    
- 
-//     for ( vector<string>::const_iterator jobid=job_ids.begin(); jobid != job_ids.end(); ++jobid ) {
-        
-//         boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-
-// 	jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
-// 	if ( tmpJob == m_cache->end() ) {
-// 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
-// 			   << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-// 			   << "Job with CreamJobID ["
-// 			   << *jobid << "] is not present in the cache!!! "
-//                            << "Skipping."
-// 			   << log4cpp::CategoryStream::ENDLINE);
-// 	    continue;
-//         }
-	
-// 	if ( newLease.find(*jobid) == newLease.end()) {
-            
-//             // CREAM didn't return any lease information for the job
-//             // *jobid!! So there was an error updating the lease for this job
-            
-//             CREAM_SAFE_LOG(m_log_dev->errorStream()
-//                            << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-//                            << "unable to update lease for job "
-//                            << tmpJob->describe()
-//                            << log4cpp::CategoryStream::ENDLINE);
-//             continue;
-// 	}
-        
-//         CREAM_SAFE_LOG(m_log_dev->infoStream()
-// 		       << "iceCommandLeaseUpdater::update_lease_for_multiple_jobs() - "
-// 		       << "Updating jobCache's lease for job "
-// 		       << tmpJob->describe()
-// 		       << "; old lease ends " << time_t_to_string( tmpJob->getEndLease() )
-// 		       << " new lease ends " << time_t_to_string( newLease[ tmpJob->getCreamJobID() ] )
-// 		       << log4cpp::CategoryStream::ENDLINE);        	
-	
-// 	// re-read the current job from the cache in order
-// 	// to get modifications (if any) made by other threads
-// 	//jobCache::iterator tmpJob = m_cache->lookupByCreamJobID( *jobid );
-// 	tmpJob->setEndLease( newLease[ *jobid ] );
-// 	m_cache->put( *tmpJob ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
-//     }
 
 }

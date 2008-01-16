@@ -45,7 +45,6 @@ boost::recursive_mutex Lease_manager::m_mutex;
 Lease_manager::Lease_manager( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_operation_count( 0 ),
-    m_max_size( 1000 ), // FIXME: Hardcoded default
     m_operation_count_max( 20 ), // FIXME: hardcoded default
     m_host_dn( "UNKNOWN_ICE_DN" ),
     m_cert_file( "unknown/cert/file" ),
@@ -190,31 +189,9 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
         // be a new element, as it has not been found in this "if"
         // branch
         lease_by_seq.push_front( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
-        if ( m_lease_set.size() > m_max_size ) {
-            if ( m_log_dev->isDebugEnabled() ) {
-
-                // drops least recently used element
-                const Lease_t last_elem( lease_by_seq.back() );
-                
-                CREAM_SAFE_LOG( m_log_dev->debugStream()
-                                << method_name
-                                << "Dropping entry for lease ID "
-                                << last_elem.m_lease_id
-                                << " CREAM URL "
-                                << last_elem.m_cream_url
-                                << log4cpp::CategoryStream::ENDLINE );
-            }
-            lease_by_seq.pop_back();
-        }
     } else {
         // Delegation id FOUND. Returns it
         lease_id = it->m_lease_id;
-
-        // Project the iterator to the sequencedd index
-        t_lease_by_seq::iterator it_seq( m_lease_set.project<2>( it ) );
-
-        // Relocates the newly-found element to the front of the list
-        lease_by_seq.relocate( lease_by_seq.begin(), it_seq );
 
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
@@ -256,8 +233,7 @@ time_t Lease_manager::renew_lease( const string& lease_id )
         // Lease operation failed
         CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << method_name
-                        << "Lease operation FAILED for "
-                        << "lease ID "
+                        << "Lease operation FAILED for lease ID "
                         << lease_id
                         << " CREAM URL "
                         << entry.m_cream_url

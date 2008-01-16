@@ -58,7 +58,6 @@ namespace util {
 
         log4cpp::Category* m_log_dev;
         unsigned int m_operation_count;
-        const size_t m_max_size; ///< Maximum size of the delegation cache
         const unsigned int m_operation_count_max;
         std::string m_host_dn; // the host DN
         std::string m_cert_file;

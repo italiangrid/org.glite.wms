@@ -61,7 +61,6 @@ int main(int argc, char*argv[]) {
        << endl 
        << endl;
   iceUtil::jobCache::iterator it( _jCache->begin() );
-  size_t totsize = 0;
   int count = 0;
   map<string, int> statusMap;
   for ( it=_jCache->begin(); it != _jCache->end(); ++it ) {
@@ -69,14 +68,12 @@ int main(int argc, char*argv[]) {
     cout << aJob.getCreamJobID() << "   "
 	 << aJob.getGridJobID() << "   "
 	 << creamApi::job_statuses::job_status_str[ aJob.getStatus() ] 
-	 << " ~" << aJob.size() << " Bytes"
 	 << endl;
-    totsize += aJob.size();
     count++;
     statusMap[string(creamApi::job_statuses::job_status_str[ aJob.getStatus()] )]++;
   }
   
-  cout << endl<< "Total number of job(s)=" << count << " - total bytes used in memory for jobCache: "<<totsize<<" bytes"<<endl;
+  cout << endl<< "Total number of job(s)=" << count << endl;
   for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
     cout << "Status ["<< it->first << "] has "<< it->second<<" job(s)"<<endl;
   }

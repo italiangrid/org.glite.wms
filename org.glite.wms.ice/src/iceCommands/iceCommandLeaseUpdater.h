@@ -49,13 +49,19 @@ namespace util {
       glite::wms::ice::util::jobCache* m_cache;
       bool m_only_update;
       
-      //void update_lease_for_job( const CreamJob& j ) throw();
-      void update_lease_for_multiple_jobs( const std::vector<std::string>& jobids, const std::string& userproxy, const std::string& endpoint ) throw();
-      //bool check_lease_expired( const CreamJob& ) throw();
-      void handle_jobs(const std::pair< std::pair<std::string, std::string>, std::list< CreamJob > >&) throw();
-      // bool insert_condition( const CreamJob& J );
+      /**
+       * Updates the lease for all jobs on cream_url with lease ID
+       * lease_id, and which have been submitted by the user
+       * identified by user_dn.  This method takes care of updating
+       * the lease cache, if the lease update operation is succesful.
+       */
+      void update_lease( const std::string& user_dn, const std::string& cream_url, const std::string& lease_id );
 
     public:
+      /**
+       * Se only_update==true, si aggiornano i lease SENZA rimuovere i
+       * job per cui il lease e' scaduto.
+       */
         iceCommandLeaseUpdater( bool only_update = false ) throw();
         
         ~iceCommandLeaseUpdater( ) throw() { }

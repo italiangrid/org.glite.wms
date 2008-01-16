@@ -42,26 +42,6 @@ extern int errno;
 #define MAX_ICE_OP_BEFORE_PURGE 10000
 #define MAX_ICE_OP_BEFORE_CHECKPOINT 50
 
-int make_index_userdn( Db* index_db, const Dbt* primary_key, const Dbt* primary_data, Dbt* secondary_key) throw()
-{
-  string key = iceUtil::CreamJob::extract_first_index_key( (const char*)primary_data->get_data() );
-
-  secondary_key->set_data( (void*) key.c_str() );
-  secondary_key->set_size( key.length() + 1 );
-  
-  return 0;
-}
-
-int make_index_gridjid( Db* index_db, const Dbt* primary_key, const Dbt* primary_data, Dbt* secondary_key) throw()
-{
-  string key = iceUtil::CreamJob::extract_second_index_key( (const char*)primary_data->get_data() );
-
-  secondary_key->set_data((void*) key.c_str());
-  secondary_key->set_size( key.length() + 1 );
-  
-  return 0;
-}
-
 
 //____________________________________________________________________
 iceUtil::jobDbManager::jobDbManager( const string& envHome, 
