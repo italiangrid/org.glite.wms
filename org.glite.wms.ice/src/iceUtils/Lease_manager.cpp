@@ -58,7 +58,8 @@ Lease_manager::Lease_manager( ) :
     } catch( ConfigurationManager_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << method_name
-                        << "Error while accessing ICE configuration file "
+                        << "Error while accessing ICE configuration file. "
+                        << "Error is: \"" << ex.what() << "\". "
                         << "Giving up, but this may cause troubles."
                         << log4cpp::CategoryStream::ENDLINE );
         return;
@@ -73,7 +74,8 @@ Lease_manager::Lease_manager( ) :
     } catch( const glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << method_name
-                        << "Could not get DN for the local host." 
+                        << "Could not get DN for the local host. " 
+                        << "Error is \"" << ex.what() << "\". "
                         << "Using hardcoded default of \"UNKNOWN_ICE_DN\""
                         << log4cpp::CategoryStream::ENDLINE );
         m_host_dn = "UNKNOWN_ICE_DN";
@@ -149,7 +151,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
 
         try {
 	    CreamProxy_Lease( cream_url, m_cert_file, lease_in, &lease_out ).execute( 3 );
-        } catch( ... ) {
+        } catch( const exception& ex ) {
             // Lease operation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
                             << method_name
@@ -162,6 +164,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
                             << user_DN
                             << " expiration date "
                             << time_t_to_string( expiration_time )
+                            << ". Error is \"" << ex.what() << "\"."
                             << log4cpp::CategoryStream::ENDLINE );
             // Returns an empty string
             return string();
