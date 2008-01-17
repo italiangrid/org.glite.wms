@@ -36,10 +36,8 @@ namespace glite {
 	class jobCacheIterator {
 	
 	  friend class jobCache;
-//	  jobCacheIterator() : m_it( ) {}
 	  
-	  //std::istringstream m_is;
-	  //CreamJob      m_aJob;
+	  bool m_valid_it;
 	  
 	 protected:
 	  std::set<std::string>::iterator  m_it;
@@ -48,16 +46,13 @@ namespace glite {
 	  
 	 public:
 	 
+	  jobCacheIterator( const std::set<std::string>::iterator anIt) throw() : m_valid_it( false ), m_it( anIt ) { }
+	  jobCacheIterator( const jobCacheIterator& anIt ) throw() : m_valid_it( false ), m_it(anIt.m_it), m_theJob(anIt.m_theJob) { }
 	  
-	  jobCacheIterator( const std::set<std::string>::iterator anIt) throw() : m_it( anIt ) { }
-	  jobCacheIterator( const jobCacheIterator& anIt ) throw() : m_it(anIt.m_it), m_theJob(anIt.m_theJob) { }
+	  jobCacheIterator&  operator++() throw()          { m_it++; m_valid_it=false; return *this; }
+	  jobCacheIterator&  operator--() throw()          { m_it--; m_valid_it=false; return *this; }
 	  
-	  jobCacheIterator&  operator++() throw()          { m_it++; return *this; }
-	  //jobCacheIterator&  operator++(const int) throw() { m_it++; return *this; }
-	  jobCacheIterator&  operator--() throw()          { m_it--; return *this; }
-	  //jobCacheIterator&  operator--(const int) throw() { m_it--; return *this; }
-	  
-	  CreamJob           operator*() throw();
+	  CreamJob&          operator*() throw();
 	  CreamJob*          operator->() throw();
 	  bool               operator==( const jobCacheIterator& ) const throw();
 	  bool               operator==( const std::set<std::string>::iterator ) const throw();

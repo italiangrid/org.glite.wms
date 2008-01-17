@@ -63,6 +63,7 @@ jobCacheIterator::operator=( const set<string>::iterator anIt )
   throw()
 {
   m_it = anIt;
+  m_valid_it = false;
   return *this;  
 }
 
@@ -72,6 +73,7 @@ jobCacheIterator::operator=( const jobCacheIterator& anIt )
   throw()
 {
   m_it = anIt.m_it;
+  m_valid_it = false;
   return *this;
 }
 
@@ -79,16 +81,11 @@ jobCacheIterator::operator=( const jobCacheIterator& anIt )
 CreamJob*
 jobCacheIterator::operator->() throw()
 {
-//   if( m_it == s_cache->end().m_it )
-//   {
-//     cout << "jobCacheIterator::operator->() - m_it e' END!!" << endl;
-//     abort();
-//   }
-  //string serjob( s_cache->getDbManager()->getByGid( *m_it );
-  //  CreamJob cj;
-  //istringstream tmpOs;
+
   if(*this == s_cache->end() )
     abort();
+
+  if( m_valid_it ) return &m_theJob;
   
   m_theJob = CreamJob();
   
@@ -97,6 +94,7 @@ jobCacheIterator::operator->() throw()
     is.str( s_cache->getDbManager()->getByGid( *m_it ) );
     boost::archive::text_iarchive ia(is);
     ia >> m_theJob;
+    m_valid_it = true;
   } catch(JobDbException& ex) {
     ;
   }
@@ -104,7 +102,7 @@ jobCacheIterator::operator->() throw()
 }
 
 //____________________________________________________________________
-CreamJob
+CreamJob&
 jobCacheIterator::operator*() throw()
 {
   //string serjob( s_cache->getDbManager()->getByGid( *m_it ) );
@@ -113,18 +111,23 @@ jobCacheIterator::operator*() throw()
   
   if(*this == s_cache->end() )
     abort();
-    
-  CreamJob aJob;
-  
+
+  if( m_valid_it ) return m_theJob;
+
+  //CreamJob aJob;
+
+  m_theJob = CreamJob();
+
   try {
     istringstream is;
     //cout << "**** DEBUG jobCacheIterator::operator*() - Looking for GID [" << *m_it << "]" << endl;
     is.str( s_cache->getDbManager()->getByGid( *m_it ) );
     boost::archive::text_iarchive ia(is);
-    ia >> aJob;
+    ia >> m_theJob;
+    m_valid_it = true;
   } catch(JobDbException& ex) {
     ;
   }
   
-  return aJob;
+  return m_theJob;
 }
