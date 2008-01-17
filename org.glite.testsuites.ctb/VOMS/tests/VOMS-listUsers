@@ -32,30 +32,37 @@ echo "<br>"
 echo "CA=$CA"
 echo "<br>"
 
-user1="DN_USER1"
-user2="DN_USER2"
-user3="DN_USER3"
-user4="DN_USER4"
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
 
-echo "SCENARIO: Create 4 users: $user1, $user2, $user3, $user4"
+USER2_SUBJECT=$(openssl x509 -in $USER2 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER2_ISSUER=$(openssl x509 -in $USER2 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER3_SUBJECT=$(openssl x509 -in $USER3 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER3_ISSUER=$(openssl x509 -in $USER3 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER4_SUBJECT=$(openssl x509 -in $USER4 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER4_ISSUER=$(openssl x509 -in $USER4 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+echo "SCENARIO: Create 4 users"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user1" "$CA" "CN-User1" "user1@cern.ch"
-voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user2" "$CA" "CN-User2" "user2@cern.ch"
-voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user3" "$CA" "CN-User3" "user3@cern.ch"
-voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$user4" "$CA" "CN-User4" "user4@cern.ch"
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER2
+voms-admin --vo=$vo_name --host $voms_host create-user $USER3
+voms-admin --vo=$vo_name --host $voms_host create-user $USER4
 
 echo "SCENARIO: List users"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-users > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-users > $voms_tmp
 echo "Check DN"
 echo "<br>"
 grep "$user1" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user2" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user3" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user4" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    echo "Error creating user $user1"
    echo "<br>"
    cat $voms_tmp
@@ -67,10 +74,10 @@ fi
 grep "$user2" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user2" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user3" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user4" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    echo "Error creating user $user2"
    echo "<br>"
    cat $voms_tmp
@@ -82,10 +89,10 @@ fi
 grep "$user3" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user2" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user3" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user4" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    echo "Error creating user $user3"
    echo "<br>"
    cat $voms_tmp
@@ -97,10 +104,10 @@ fi
 grep "$user4" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user2" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user3" "$CA"
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user4" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    echo "Error creating user $user4"
    echo "<br>"
    cat $voms_tmp
@@ -111,10 +118,10 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user1" "$CA"
-voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user2" "$CA"
-voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user3" "$CA"
-voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$user4" "$CA"
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

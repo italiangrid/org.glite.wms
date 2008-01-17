@@ -31,12 +31,15 @@ echo "<br>"
 echo "Attribute=$ATTRIBUTE"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: Attribute doesn't exist"
 echo "<br>"
 echo "Delete attribute"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr   > /dev/null
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchAttributeException: Attribute" $voms_stderr   > /dev/null
 
 if [ $? == 1 ]; then
    echo "Incorrect error message:"
@@ -50,9 +53,9 @@ fi
 
 echo "SCENARIO: Attribute already exists in the VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-attribute "$ATTRIBUTE" "$ATTDESC"
-voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
-voms-admin --vo=$vo_name -h $voms_host list-attributes > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
+voms-admin --vo=$vo_name --host $voms_host list-attribute-classes > $voms_tmp
 grep "$ATTRIBUTE" $voms_tmp > /dev/null
 
 if [ $? == 0 ]; then

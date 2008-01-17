@@ -42,18 +42,21 @@ echo "CN=$user_CN"
 echo "CA=$user_CA"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: User doesn't exist"
 echo "<br>"
 echo "Create new user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
-voms-admin --vo=$vo_name -h $voms_host list-users > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host list-users > $voms_tmp
 echo "Check DN" 
 echo "<br>"
 grep "$user_subject" $voms_tmp > $tempo
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Error creating the user: wrong DN"
    echo "<br>"
    cat $tempo
@@ -68,7 +71,7 @@ echo "<br>"
 grep "$user_CN" $tempo  > /dev/null
 
 if [ $? == 1 ]; then 
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Error creating the user: wrong CN"
    echo "<br>"
    cat $tempo
@@ -83,7 +86,7 @@ echo "<br>"
 grep "$user_CA" $tempo  > /dev/null
 
 if [ $? == 1 ]; then 
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Error creating the user: wrong CA"
    echo "<br>"
    cat $tempo
@@ -96,11 +99,11 @@ fi
 echo "SCENARIO: User already exists in the VO"
 echo "<br>"
 rm -rf $voms_stderr
-voms-admin --vo=$vo_name -h $voms_host create-user $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host create-user $USER > $voms_stderr
+grep "org.glite.security.voms.admin.database.UserAlreadyExistsException: User " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Incorrect error message:"
    echo "<br>"
    cat $voms_stderr
@@ -111,7 +114,7 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

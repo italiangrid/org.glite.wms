@@ -25,7 +25,6 @@ source $SAME_SENSOR_HOME/tests/config_file
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
-
 date
 echo "<br>"
 echo "Test VOMS-listUserGroups:"
@@ -34,12 +33,15 @@ echo "Group=$GROUP"
 echo "User=$USER_subject"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: VO empty"
 echo "<br>"
 echo "List non existing groups of non existing user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: No user" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -52,10 +54,10 @@ fi
 
 echo "SCENARIO: Create user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "List non existing groups of user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
 mainGroup=`cat $voms_tmp`
 echo "Main group: $mainGroup" 
 
@@ -65,18 +67,18 @@ fi
 
 echo "SCENARIO: Create new group"
 echo "<br>"
-voms-admin --vo=$vo_name  -h $voms_host create-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name  --host $voms_host create-group "/"$vo_name"/"$GROUP
 echo "Add user as member of group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name  -h $voms_host add-member "/"$vo_name"/"$GROUP $USER
+voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP  "$USER_SUBJECT" "$USER_ISSUER"
 echo "List existing group $GROUP of user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-user-groups $USER > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-user-groups  "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
 grep "$GROUP" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Error when listing user groups:"
     echo "<br>"
     cat $voms_tmp
@@ -87,7 +89,7 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name  -h $voms_host delete-user $USER
-voms-admin --vo=$vo_name  -h $voms_host delete-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name  --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name  --host $voms_host delete-group "/"$vo_name"/"$GROUP
 echo "Test OK"
 exit $SAME_OK

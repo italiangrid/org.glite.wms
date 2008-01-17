@@ -31,17 +31,20 @@ echo "<br>"
 echo "Role=$ROLE"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: Role doesn't exist"
 echo "<br>"
 echo "Create new Role"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
-voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host create-role $ROLE
+voms-admin --vo=$vo_name --host $voms_host list-roles > $voms_tmp
 echo "Check role"
 grep "$ROLE" $voms_tmp   > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
     echo "Error creating the role"
     echo "<br>"
     cat $voms_tmp
@@ -53,11 +56,11 @@ fi
 
 echo "SCENARIO 2: Role already exists in the VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-role $ROLE 2> $voms_stderr
-grep "org.glite.security.voms.service.AlreadyExist" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host create-role $ROLE > $voms_stderr
+grep "org.glite.security.voms.admin.database.AlreadyExistsException: Role " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+   voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
    echo "Incorrect error message:"
    echo "<br>"
    cat $voms_stderr
@@ -69,7 +72,7 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

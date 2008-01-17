@@ -31,17 +31,20 @@ echo "<br>"
 echo "Role=$GROUP"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: Group doesn't exist"
 echo "<br>"
 echo "Create new group"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name/$GROUP"
-voms-admin --vo=$vo_name -h $voms_host list-groups > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host create-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host list-groups > $voms_tmp
 echo "Check group"
 grep "$GROUP" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name"/"$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name"/"$GROUP"
     echo "Error creating the group"
     echo "<br>"
     cat $voms_tmp
@@ -53,11 +56,11 @@ fi
 
 echo "SCENARIO 2: Group already exists in the VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name/$GROUP" 2> $voms_stderr
-grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host create-group "/$vo_name/$GROUP" > $voms_stderr
+grep "org.glite.security.voms.admin.database.AlreadyExistsException: Group" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name"/"$GROUP"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name"/"$GROUP"
    echo "Incorrect error message:"
    echo "<br>"
    cat $voms_stderr
@@ -70,7 +73,7 @@ fi
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name"/"$GROUP"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name"/"$GROUP"
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 

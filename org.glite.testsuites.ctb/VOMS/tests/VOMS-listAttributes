@@ -36,10 +36,9 @@ att3="ATTRIBUTE_3"
 att4="ATTRIBUTE_4"
 
 echo "SCENARIO: empty VO"
-voms-admin --vo=$vo_name -h $voms_host list-attributes 2> $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host list-attribute-classes > $voms_stderr
 
-grep "No attributes are returned" $voms_stderr > /dev/null
-if [ $? == 1 ]; then
+if [ -n "$(head -2 $voms_stderr)" ]; then
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -52,23 +51,23 @@ echo "OK"
 echo "SCENARIO: Create 4 attributes : $att1, $att2, $att3, $att4"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host create-attribute  $att1 "$desc1"
-voms-admin --vo=$vo_name -h $voms_host create-attribute  $att2 "$desc2"
-voms-admin --vo=$vo_name -h $voms_host create-attribute  $att3 "$desc3"
-voms-admin --vo=$vo_name -h $voms_host create-attribute  $att4 "$desc4"
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att1 "$desc1" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att2 "$desc2" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att3 "$desc3" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class  $att4 "$desc4" 0
 
 echo "SCENARIO: List created new attributes"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-attributes > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-attribute-classes > $voms_tmp
 echo "Check attributes"
 echo "<br>"
 grep "$att1" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-attribute $att1
-   voms-admin --vo=$vo_name -h $voms_host delete-attribute $att2
-   voms-admin --vo=$vo_name -h $voms_host delete-attribute $att3
-   voms-admin --vo=$vo_name -h $voms_host delete-attribute $att4
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
    echo "Error creating attribute $att1"
    echo "<br>"
    cat $voms_tmp
@@ -80,10 +79,10 @@ fi
 grep "$att2" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att1
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att2
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att3
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att4
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
     echo "Error creating attribute $att2"
    echo "<br>"
    cat $voms_tmp
@@ -95,10 +94,10 @@ fi
 grep "$att3" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att1
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att2
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att3
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att4
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
     echo "Error creating attribute $att3"
     
    echo "<br>"
@@ -111,10 +110,10 @@ fi
 grep "$att4" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att1
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att2
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att3
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att4
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
     echo "Error creating attribute $att2"
 
    echo "<br>"
@@ -127,10 +126,10 @@ echo "OK"
 
 echo "Cleaning tasks"
 echo "<br>"
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att1
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att2
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att3
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $att4
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att1
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att2
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att3
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $att4
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

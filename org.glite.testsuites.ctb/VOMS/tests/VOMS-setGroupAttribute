@@ -38,11 +38,14 @@ echo "<br>"
 echo "Group=$GROUP"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: VO empty"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host  set-group-attribute  2> $voms_stderr
-grep "No group name given" $voms_stderr 2> /dev/null
+voms-admin --vo=$vo_name --host $voms_host  set-group-attribute  > $voms_stderr
+grep "Missing group argument!" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -52,10 +55,9 @@ if [ $? == 1 ]; then
     echo "<br>"
     exit $SAME_ERROR
 fi
-echo "OK"
 
-voms-admin --vo=$vo_name -h $voms_host  set-group-attribute "/$vo_name/$GROUP"  2> $voms_stderr
-grep "No attribute name specified!" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host  set-group-attribute "/$vo_name/$GROUP"  > $voms_stderr
+grep "Missing string argument!" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -65,10 +67,9 @@ if [ $? == 1 ]; then
     echo "<br>"
     exit $SAME_ERROR
 fi
-echo "OK"
 
-voms-admin --vo=$vo_name -h $voms_host  set-group-attribute "/$vo_name/$GROUP" "$ATTRIBUTE" 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host  set-group-attribute "/$vo_name/$GROUP" "$ATTRIBUTE" > $voms_stderr
+grep "Missing string argument!" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -81,20 +82,21 @@ fi
 
 echo "SCENARIO: Create group"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host create-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class $ATTRIBUTE "$ATTDESC" 0
 
 echo "OK, assign attribte  $ATTRIBUTE, value=$ATTVALUE and description=$ATTDESC to new group $GROUP"
 echo "<br>"
 echo "1. set-group-attribute"
-voms-admin --vo=$vo_name -h $voms_host  set-group-attribute "/$vo_name/$GROUP" "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
+voms-admin --vo=$vo_name --host $voms_host  set-group-attribute "/$vo_name/$GROUP" "$ATTRIBUTE" "$ATTVALUE" 
 echo "2. OK, list-group-attribute"
-voms-admin --vo=$vo_name -h $voms_host  list-group-attributes "/$vo_name/$GROUP" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host  list-group-attributes "/$vo_name/$GROUP" > $voms_tmp
 
 grep "$ATTRIBUTE" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
     echo "Error when assigning attribute to group:"
     echo "<br>"
     cat $voms_tmp
@@ -105,10 +107,9 @@ fi
 
 grep "$ATTVALUE" $voms_tmp > /dev/null
 
-
 if [ $? == 1 ]; then
-    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
     echo "Error when assigning attribute to group:"
     echo "<br>"
     cat $voms_tmp
@@ -116,25 +117,12 @@ if [ $? == 1 ]; then
     echo
     exit $SAME_ERROR
 fi
-
-grep "$ATTDESC" $voms_tmp > /dev/null
-
-if [ $? == 1 ]; then
-    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
-    echo "Error when assigning attribute to group:"
-    echo "<br>"
-    cat $voms_tmp
-    echo "Test has failed"
-    echo
-    exit $SAME_ERROR
-fi
-echo "OK"
 
 echo "Cleaning tasks"
 echo "<br>"
-    #voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"        
+
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"        
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
 	
 rm -rf $voms_tmp
 rm -rf $voms_stderr

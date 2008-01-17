@@ -33,31 +33,37 @@ echo "Attribute value=$ATTVALUE"
 echo "Attribute description=$ATTDESC"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: Attribute doesn't exist"
 echo "<br>"
 echo "Create new Attribute"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-attribute "$ATTRIBUTE" 2> $voms_stderr 
-grep "No description for attribute" $voms_stderr > /dev/null
 
-if [ $? == 1 ]; then
-    echo "Incorrect error message:"
-    echo "<br>"
-    cat $voms_stderr
-    echo "<br>"
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
-fi
-voms-admin --vo=$vo_name -h $voms_host create-attribute "$ATTRIBUTE" "$ATTDESC"
+# TO DO:  Add checks for missing description or unique. Add unique tests.
 
+#voms-admin --vo=$vo_name --host $voms_host create-attribute "$ATTRIBUTE" 2> $voms_stderr 
+#grep "No description for attribute" $voms_stderr > /dev/null
 
-voms-admin --vo=$vo_name -h $voms_host list-attributes > $voms_tmp
+#if [ $? == 1 ]; then
+#    echo "Incorrect error message:"
+#    echo "<br>"
+#    cat $voms_stderr
+#    echo "<br>"
+#    echo "Test has failed"
+#    echo "<br>"
+#    exit $SAME_ERROR
+#fi
+
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
+
+voms-admin --vo=$vo_name --host $voms_host list-attribute-classes > $voms_tmp
 echo "Check created attribute"
 grep "$ATTRIBUTE" $voms_tmp   > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
     echo "Error creating the attribute"
     echo "<br>"
     cat $voms_tmp
@@ -70,7 +76,7 @@ fi
 grep "$ATTDESC" $voms_tmp   > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
     echo "Error creating the description of attribute"
     echo "<br>"
     cat $voms_tmp
@@ -83,11 +89,11 @@ echo "OK"
 echo "<br>"
 echo "SCENARIO 2: Attribute already exists in the VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-attribute $ATTRIBUTE $ATTDESC 2> $voms_stderr
-grep "org.glite.security.voms.service.AlreadyExist" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0 > $voms_stderr
+grep "org.glite.security.voms.admin.database.AlreadyExistsException: Attribute" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+   voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
    echo "Incorrect error message:"
    echo "<br>"
    cat $voms_stderr
@@ -99,7 +105,7 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-attribute $ATTRIBUTE
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

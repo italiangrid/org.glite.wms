@@ -33,32 +33,38 @@ echo "<br>"
 echo "User=$USER"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: VO empty"
 echo "<br>"
 echo "Remove non existing Attribute of non existing user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  delete-user-attribute $USER "$ATTRIBUTE" 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: user " $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
+#voms-admin --vo=$vo_name --host $voms_host  delete-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" > $voms_stderr
 
-if [ $? == 1 ]; then
-    echo "Incorrect error message:"   
-    echo "<br>"
-    cat $voms_stderr
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
-fi
+#grep "org.glite.security.voms.service.NotInDatabase: Not in database: user " $voms_stderr > /dev/null
+
+#if [ $? == 1 ]; then
+#    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
+#    echo "Incorrect error message:"   
+#    echo "<br>"
+#    cat $voms_stderr
+#    echo "Test has failed"
+#    echo "<br>"
+#    exit $SAME_ERROR
+#fi
 
 echo "SCENARIO: Create user"
 echo "<br>Create user"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "delete-user-attribute"
-voms-admin --vo=$vo_name -h $voms_host delete-user-attribute $USER "$ATTRIBUTE" 2> $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host delete-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" > $voms_stderr
 
-
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: Attribute" $voms_stderr > /dev/null
+grep "org.glite.security.voms.admin.database.NoSuchAttributeException: Attribute" $voms_stderr > /dev/null
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -69,15 +75,16 @@ fi
 
 echo "Assign attribute to user"	
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host set-user-attribute  $USER "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
-
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
+voms-admin --vo=$vo_name --host $voms_host set-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" "$ATTVALUE"
 
 echo "Check user attribute"
-voms-admin --vo=$vo_name -h $voms_host list-user-attributes $USER > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-user-attributes "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
 
 grep "$ATTRIBUTE" $voms_tmp > /dev/null
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
     echo "Incorrect list message:"
     echo "<br>"
     cat $voms_tmp
@@ -88,17 +95,16 @@ fi
 
 echo "<br>Delete user attribute"
 
-voms-admin --vo=$vo_name -h $voms_host  delete-user-attribute $USER "$ATTRIBUTE"
+voms-admin --vo=$vo_name --host $voms_host  delete-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE"
 
 echo "<br>Check deleted user attribute"
 echo "list-user-attributes"
 
-voms-admin --vo=$vo_name -h $voms_host list-user-attributes  $USER 2> $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host list-user-attributes "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 
-grep "No attributes are returned" $voms_stderr > /dev/null
-
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+if [ -n "$(head -2 $voms_stderr)" ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -110,7 +116,8 @@ fi
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 

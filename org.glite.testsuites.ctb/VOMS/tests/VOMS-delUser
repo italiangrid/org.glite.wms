@@ -39,12 +39,15 @@ user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 echo "DN=$user_subject"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: User doesn't exist"
 echo "<br>"
 echo "Remove non existing user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr  > /dev/null
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr  > /dev/null
 
 if [ $? == 1 ]; then
    echo "Incorrect error message:"
@@ -57,11 +60,11 @@ fi
 
 echo "SCENARIO: User already exists in the VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "Remove existing user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-voms-admin --vo=$vo_name -h $voms_host list-users > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host list-users > $voms_tmp
 grep "$user_subject" $voms_tmp  > /dev/null
 
 if [ $? == 0 ]; then

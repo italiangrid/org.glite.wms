@@ -38,12 +38,15 @@ echo "<br>"
 echo "User=$USER_subject"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: VO empty"
 echo "<br>"
 echo "Remove non existing role of non existing user in non existing group"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: role " $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"   
@@ -56,14 +59,14 @@ fi
 
 echo "SCENARIO: Create new role"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
+voms-admin --vo=$vo_name --host $voms_host create-role $ROLE
 echo "Dismiss role $ROLE in group $GROUP (group doesn't exist)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -74,15 +77,15 @@ fi
 
 echo "SCENARIO: Create new group"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
 echo "Dismiss role $ROLE in group $GROUP (user doesn't exist)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: user" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -93,16 +96,16 @@ fi
 
 echo "SCENARIO: Create user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-user $USER
+voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "Dismiss role $ROLE in group $GROUP (user doesn't have the role)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER 2> $voms_stderr
-grep "does not have role" $voms_stderr  > /dev/null
+voms-admin --vo=$vo_name --host $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchMappingException: User " $voms_stderr  > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -113,14 +116,15 @@ fi
 
 echo "SCENARIO: Assign role to user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  assign-role "/"$vo_name"/"$GROUP $ROLE $USER
-voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host assign-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host list-user-roles "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
 grep "$ROLE" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Error when assigning role to user:"
     echo "<br>"
     cat $voms_tmp
@@ -131,14 +135,15 @@ fi
 
 echo "Dismiss role $ROLE in group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host  dismiss-role "/"$vo_name"/"$GROUP $ROLE $USER
-voms-admin --vo=$vo_name -h $voms_host  list-user-roles $USER 2> $voms_stderr 
+voms-admin --vo=$vo_name --host $voms_host dismiss-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host list-user-roles "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr 
 grep "$ROLE" $voms_stderr > /dev/null
 
 if [ $? == 0 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Error when removing role from user:"
     echo "<br>"
     cat $voms_stderr
@@ -150,9 +155,9 @@ fi
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host delete-user $USER
-voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 

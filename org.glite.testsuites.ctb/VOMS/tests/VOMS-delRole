@@ -31,12 +31,15 @@ echo "<br>"
 echo "Role=$ROLE"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: Role doesn't exist"
 echo "<br>"
 echo "Delete Role"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr   > /dev/null
+voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchRoleException: Role " $voms_stderr   > /dev/null
 
 if [ $? == 1 ]; then
    echo "Incorrect error message:"
@@ -50,9 +53,9 @@ fi
 
 echo "SCENARIO: Role already exists in the VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
-voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-voms-admin --vo=$vo_name -h $voms_host list-roles > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host create-role $ROLE
+voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
+voms-admin --vo=$vo_name --host $voms_host list-roles > $voms_tmp
 grep "$ROLE" $voms_tmp > /dev/null
 
 if [ $? == 0 ]; then

@@ -31,12 +31,15 @@ echo "<br>"
 echo "Role=$GROUP"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "SCENARIO: Group doesn't exist"
 echo "<br>"
 echo "Delete Group"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP" 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase:" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchGroupException: Group " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
    echo "Incorrect error message:"
@@ -50,9 +53,9 @@ fi
 
 echo "SCENARIO: Group already exists in the VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name/$GROUP"
-voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
-voms-admin --vo=$vo_name -h $voms_host list-groups > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host create-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host list-groups > $voms_tmp
 grep "$GROUP" $voms_tmp > /dev/null
 
 if [ $? == 0 ]; then

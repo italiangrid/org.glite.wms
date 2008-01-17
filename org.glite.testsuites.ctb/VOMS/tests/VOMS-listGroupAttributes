@@ -38,9 +38,9 @@ echo "SCENARIO: VO empty"
 echo "<br>"
 echo "1. List non existing attributes without groupname"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-group-attributes 2> $voms_stderr
-grep "No group name given" $voms_stderr > /dev/null
-    
+voms-admin --vo=$vo_name --host $voms_host list-group-attributes > $voms_stderr
+grep "Missing group argument!" $voms_stderr > /dev/null
+
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
     echo "<br>"
@@ -52,8 +52,8 @@ fi
 echo "OK"
 
 echo "2. List non existing attributes of nonexisting group"
-voms-admin --vo=$vo_name -h $voms_host list-group-attributes "/$vo_name/$GROUP" 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host list-group-attributes "/$vo_name/$GROUP" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchGroupException: Group " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -68,15 +68,14 @@ echo "OK"
 
 echo "3. SCENARIO: Create group"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host create-group "/$vo_name/$GROUP"
 
 echo "4. List attributes (group doesn't have attributes)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-group-attributes "/$vo_name/$GROUP" 2> $voms_stderr
-grep "No attributes are returned" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host list-group-attributes "/$vo_name/$GROUP" > $voms_stderr
 
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+if [ -n "$(head -2 $voms_stderr)" ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -88,20 +87,21 @@ fi
 echo "OK"
 echo "5. SCENARIO: Set new group 3 attributes"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host set-group-attribute "/$vo_name/$GROUP" "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
-voms-admin --vo=$vo_name -h $voms_host set-group-attribute "/$vo_name/$GROUP" "ATTRIBUTE1" "ATTVALUE1" "ATTDESC1"
-voms-admin --vo=$vo_name -h $voms_host set-group-attribute "/$vo_name/$GROUP" "ATTRIBUTE2" "ATTVALUE2" "ATTDESC2"
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "ATTRIBUTE1" "ATTDESC1" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "ATTRIBUTE2" "ATTDESC2" 0
 
-
+voms-admin --vo=$vo_name --host $voms_host set-group-attribute "/$vo_name/$GROUP" "$ATTRIBUTE" "$ATTVALUE" 
+voms-admin --vo=$vo_name --host $voms_host set-group-attribute "/$vo_name/$GROUP" "ATTRIBUTE1" "ATTVALUE1" 
+voms-admin --vo=$vo_name --host $voms_host set-group-attribute "/$vo_name/$GROUP" "ATTRIBUTE2" "ATTVALUE2" 
 
 echo "6. List group attributes and check 3 assigned attributes"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-group-attributes "/$vo_name/$GROUP" > $voms_tmp
-
+voms-admin --vo=$vo_name --host $voms_host list-group-attributes "/$vo_name/$GROUP" > $voms_tmp
 grep "$ATTRIBUTE" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
     echo "Error when listing group attributes:"
     echo "<br>"
     cat $voms_tmp
@@ -113,7 +113,7 @@ fi
 grep "ATTRIBUTE1" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
     echo "Error when listing group attributes:"
     echo "<br>"
     cat $voms_tmp
@@ -126,7 +126,7 @@ fi
 grep "ATTRIBUTE2" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
     echo "Error when listing group attributes:"
     echo "<br>"
     cat $voms_tmp
@@ -137,7 +137,10 @@ fi
 
 echo "OK"
 echo "Cleaning tasks"
-voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE" 
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE1" 
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE2" 
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

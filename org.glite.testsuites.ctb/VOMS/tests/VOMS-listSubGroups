@@ -22,7 +22,6 @@ echo "<pre>"
 export voms_host=$1
 source $SAME_SENSOR_HOME/tests/config_file
 
-
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
@@ -32,7 +31,6 @@ echo "Test VOMS-listSubgroups:"
 echo "VO=$vo_name"
 echo "<br>"
 
-
 group1="GROUP1"
 group2="GROUP2"
 group3="GROUP3"
@@ -41,24 +39,24 @@ group4="GROUP4"
 echo "SCENARIO: Create 4 groups: $group1, $group2, $group3, $group4"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1"
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1/$group2"
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1/$group2/$group3"
-voms-admin --vo=$vo_name -h $voms_host create-group  "/$vo_name/$group1/$group2/$group3/$group4"
+voms-admin --vo=$vo_name --host $voms_host create-group  "/$vo_name/$group1"
+voms-admin --vo=$vo_name --host $voms_host create-group  "/$vo_name/$group1/$group2"
+voms-admin --vo=$vo_name --host $voms_host create-group  "/$vo_name/$group1/$group2/$group3"
+voms-admin --vo=$vo_name --host $voms_host create-group  "/$vo_name/$group1/$group2/$group3/$group4"
 
 echo "SCENARIO: List groups"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-sub-groups "/$vo_name" > $voms_tmp
 echo "Check 4 groups, "
 echo "<br>"
 
 grep "$group1" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1"
    echo "Error creating group $group1"
    echo "<br>"
    cat $voms_tmp
@@ -67,14 +65,14 @@ if [ $? == 1 ]; then
    exit $SAME_ERROR
 fi
 
-voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-sub-groups "/$vo_name/$group1" > $voms_tmp
 grep "$group2" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1"
    echo "Error creating group $group2"
    echo "<br>"
    cat $voms_tmp
@@ -83,14 +81,14 @@ if [ $? == 1 ]; then
    exit $SAME_ERROR
 fi
 
-voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1/$group2" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-sub-groups "/$vo_name/$group1/$group2" > $voms_tmp
 grep "$group3" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1"
    echo "Error creating group $group3"
    echo "<br>"
    cat $voms_tmp
@@ -99,14 +97,14 @@ if [ $? == 1 ]; then
    exit $SAME_ERROR
 fi
 
-voms-admin --vo=$vo_name -h $voms_host list-sub-groups "/$vo_name/$group1/$group2/$group3" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-sub-groups "/$vo_name/$group1/$group2/$group3" > $voms_tmp
 grep "$group4" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
-   voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3/$group4"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2"
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1"
    echo "Error creating group $group4"
    echo "<br>"
    cat $voms_tmp
@@ -116,10 +114,10 @@ if [ $? == 1 ]; then
 fi
 
 echo "Cleaning tasks"
-voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3/$group4"
-voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2/$group3"
-voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1/$group2"
-voms-admin --vo=$vo_name -h $voms_host delete-group "$vo_name/$group1"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3/$group4"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2/$group3"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1/$group2"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$group1"
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 echo "Test OK"

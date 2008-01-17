@@ -37,13 +37,16 @@ echo "<br>"
 echo "Role=$ROLE"
 echo "<br>"
 
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
 echo "1. SCENARIO: VO empty"
 echo "<br>"
 
 echo "1.1.  List non existing role attributes without parameters"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-role-attributes 2> $voms_stderr
-grep "No group name given" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host list-role-attributes > $voms_stderr
+grep "Missing group argument!" $voms_stderr > /dev/null
     
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -56,8 +59,8 @@ fi
 echo "OK"
 
 echo "1.2. List non existing role attributes"
-voms-admin --vo=$vo_name -h $voms_host list-role-attributes "/$vo_name/$GROUP" 2> $voms_stderr
-grep "No role name given" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host list-role-attributes "/$vo_name/$GROUP" > $voms_stderr
+grep "Missing role argument!" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -71,8 +74,8 @@ fi
 echo "OK"
 
 echo "1.3. List non existing role attributes of nonexisting group"
-voms-admin --vo=$vo_name -h $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchRoleException: Role " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -87,21 +90,20 @@ echo "OK"
 
 echo "2. SCENARIO: Create group"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host create-group "/$vo_name/$GROUP"
 
 echo "OK"
 echo "<br>"
 echo "2.1. create new Role"
-voms-admin --vo=$vo_name -h $voms_host create-role "Role=$ROLE"
+voms-admin --vo=$vo_name --host $voms_host create-role "Role=$ROLE"
 
 echo "2.2. List role attributes (role doesn't have attributes)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" 2> $voms_stderr
-grep "No attributes are returned" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --host $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" > $voms_stderr
 
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
-    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+if [ -n "$(head -2 $voms_stderr)" ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-role "Role=$ROLE"
     echo "Incorrect error message:"
     echo "<br>"
     cat $voms_stderr
@@ -111,19 +113,25 @@ if [ $? == 1 ]; then
 fi
 
 echo "2.3. Set 3 attributes for role"
-voms-admin --vo=$vo_name -h $voms_host  set-role-attribute "/$vo_name/$GROUP" "Role=$ROLE" "$ATTRIBUTE" "$ATTVALUE" "$ATTDESC"
-voms-admin --vo=$vo_name -h $voms_host  set-role-attribute "/$vo_name/$GROUP" "Role=$ROLE" "ATTRIBUTE1" "ATTVALU1" "ATTDESC_1"
-voms-admin --vo=$vo_name -h $voms_host  set-role-attribute "/$vo_name/$GROUP" "Role=$ROLE" "ATTRIBUTE2" "ATTVALU2" "ATTDESC_2"
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "ATTRIBUTE1" "ATTDESC1" 0
+voms-admin --vo=$vo_name --host $voms_host create-attribute-class "ATTRIBUTE2" "ATTDESC2" 0
+voms-admin --vo=$vo_name --host $voms_host set-role-attribute "/$vo_name/$GROUP" "Role=$ROLE" "$ATTRIBUTE" "$ATTVALUE"
+voms-admin --vo=$vo_name --host $voms_host set-role-attribute "/$vo_name/$GROUP" "Role=$ROLE" "ATTRIBUTE1" "ATTVALU1"
+voms-admin --vo=$vo_name --host $voms_host set-role-attribute "/$vo_name/$GROUP" "Role=$ROLE" "ATTRIBUTE2" "ATTVALU2"
 
 echo "3. List role attributes"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" > $voms_tmp
 
 grep "$ATTRIBUTE" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
-    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE1"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE2"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-role "Role=$ROLE"
     echo "Error when listing role attributes:"
     echo "<br>"
     cat $voms_tmp
@@ -135,8 +143,11 @@ fi
 grep "ATTRIBUTE1" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
-    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE1"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE2"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-role "Role=$ROLE"
     echo "Error when listing role attributes:"
     echo "<br>"
     cat $voms_tmp
@@ -149,8 +160,11 @@ fi
 grep "ATTRIBUTE2" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
-    voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE1"
+    voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE2"
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-role "Role=$ROLE"
     echo "Error when listing role attributes:"
     echo "<br>"
     cat $voms_tmp
@@ -161,8 +175,11 @@ fi
 
 echo "OK"
 echo "Cleaning tasks"
-voms-admin --vo=$vo_name -h $voms_host delete-group "/$vo_name/$GROUP"
-voms-admin --vo=$vo_name -h $voms_host delete-role "Role=$ROLE"
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "$ATTRIBUTE"
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE1"
+voms-admin --vo=$vo_name --host $voms_host delete-attribute-class "ATTRIBUTE2"
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host delete-role "Role=$ROLE"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr
