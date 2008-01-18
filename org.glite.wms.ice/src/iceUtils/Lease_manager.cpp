@@ -213,6 +213,8 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
 
 time_t Lease_manager::renew_lease( const string& lease_id )
 {
+    boost::recursive_mutex::scoped_lock L( m_mutex );
+
     static char* method_name = "Lease_manager::renew_lease() - ";
 
     typedef t_lease_set::index<idx_lease_id>::type t_lease_by_id;
@@ -281,4 +283,26 @@ void Lease_manager::purge_old_lease_ids( void )
                         << " elements from the lease cache"
                         << log4cpp::CategoryStream::ENDLINE );
     }
+}
+
+Lease_manager::const_iterator Lease_manager::begin() const
+{
+    return m_lease_set.get< idx_sequence >().begin();
+}
+
+Lease_manager::const_iterator Lease_manager::end() const 
+{
+    return m_lease_set.get< idx_sequence >().end();
+}
+
+Lease_manager::const_iterator Lease_manager::find( const string& lease_id ) const
+{
+    //static char* method_name = "Lease_manager::find() - ";
+
+    typedef t_lease_set::index<idx_lease_id>::type t_lease_by_id;
+    const t_lease_by_id& lease_by_id_view( m_lease_set.get<idx_lease_id>() );
+
+    t_lease_by_id::const_iterator it = lease_by_id_view.find( lease_id );
+
+    return m_lease_set.project< idx_sequence >( it );
 }

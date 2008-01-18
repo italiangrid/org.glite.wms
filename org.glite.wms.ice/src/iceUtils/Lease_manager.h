@@ -44,33 +44,16 @@ namespace ice {
 namespace util {
 
     class Lease_manager {
-    protected:
-        Lease_manager( );
+    public:
 
         /**
-         * Iterates over the lease ID set. Removes all lease IDs which
-         * are associated to already expired leases.
-         */
-        void purge_old_lease_ids( void );
-
-        static Lease_manager* s_instance;
-        static boost::recursive_mutex m_mutex;
-
-        log4cpp::Category* m_log_dev;
-        unsigned int m_operation_count;
-        const unsigned int m_operation_count_max;
-        std::string m_host_dn; // the host DN
-        std::string m_cert_file;
-        int m_lease_delta_time;
-
-        /**
-         * Entry of the lease cache
+         * This datatype represents an Entry of the lease cache.
          */
         struct Lease_t {
-            std::string m_user_dn;
-            std::string m_cream_url;
-            time_t m_expiration_time;
-            std::string m_lease_id;
+            std::string m_user_dn; //< DN of the user owning this lease
+            std::string m_cream_url; //< Endpoint of the CREAM service where the lease has been defined
+            time_t m_expiration_time; //< (Absolute) time of the lease expiration
+            std::string m_lease_id; //< ID of the lease
 
             Lease_t( const std::string& user_dn, const std::string& cream_url, time_t expiration_time, const std::string& lease_id ) :
                 m_user_dn( user_dn ),
@@ -115,6 +98,30 @@ namespace util {
             >
           >
         > t_lease_set;
+
+        /**
+         * (Sequence const) iterator to the lease cache
+         */ 
+        typedef t_lease_set::index< idx_sequence >::type::iterator const_iterator;
+
+    protected:
+        Lease_manager( );
+
+        /**
+         * Iterates over the lease ID set. Removes all lease IDs which
+         * are associated to already expired leases.
+         */
+        void purge_old_lease_ids( void );
+
+        static Lease_manager* s_instance;
+        static boost::recursive_mutex m_mutex;
+
+        log4cpp::Category* m_log_dev;
+        unsigned int m_operation_count;
+        const unsigned int m_operation_count_max;
+        std::string m_host_dn; // the host DN
+        std::string m_cert_file;
+        int m_lease_delta_time;
         
         t_lease_set m_lease_set;
 
@@ -158,6 +165,8 @@ namespace util {
          * so that multiple access to the (shared) lease ID cache do
          * not interfere each other.
          *
+         * NOTE: This method is thread-safe
+         *
          * @param job the Job for which a lease ID should be
          * requested.  The method uses the following attributes of the
          * job parameter: user DN, cream URL. All these information
@@ -174,7 +183,9 @@ namespace util {
         std::string make_lease( const CreamJob& job, bool force = false );
 
         /**
-         * Renew an existing lease.
+         * Renew an existing lease.          
+         *
+         * NOTE: This method is thread-safe
          *
          * @param lease_id the lease_id to renew. This lease must
          * exist and be valid both in the lease manager and in the
@@ -185,6 +196,21 @@ namespace util {
          * method returns 0.
          */
         time_t renew_lease( const std::string& lease_id );
+
+        /**
+         * These methods give access to the lease cache through
+         * const iterators
+         */
+        const_iterator begin() const;
+        const_iterator end() const;
+
+        /**
+         * Find the lease with the given lease_id; returns end() if no
+         * lease with the requested name has been found.
+         *
+         * NOTE: This method is _NOT_ thread-safe
+         */
+        const_iterator find( const std::string& lease_id ) const;
     };
 
 } // namespace util
