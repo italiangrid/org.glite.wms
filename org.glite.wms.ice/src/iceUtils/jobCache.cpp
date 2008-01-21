@@ -17,55 +17,34 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-/**
- *
- * ICE Headers
- *
- */
+// PROJECT INCLUDES
 #include "jobCache.h"
 #include "iceConfManager.h"
-
-/**
- *
- * Cream Client API C++ Headers
- *
- */
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
-
-
-/**
- *
- * Boost Headers
- *
- */
-#include <boost/format.hpp>
-#include <boost/algorithm/string.hpp>
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+//#include <boost/archive/text_iarchive.hpp>
 
-/**
- *
- * System and STL Headers
- *
- */
-#include <exception>
+// System INCLUDES
 #include <iostream>
-#include <cstdlib>
 #include <sstream>
-#include <sstream>
-#include <sstream>
-#include <utility> // for make_pair
+#include <exception>
 #include <cstdio> // for ::rename(...)
 #include <string>
+#include <sstream>
+#include <utility> // for make_pair
 #include <ctime>
+#include <cstdlib>
+#include <sstream>
 
 extern int errno;
 
 using namespace std;
 
 using namespace glite::wms::ice::util;
-
 namespace apiutil = glite::ce::cream_client_api::util;
 
 jobCache* jobCache::s_instance = 0;
@@ -295,23 +274,17 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
       //m_dbMgr->put(cj.serialize(), cj.getCreamJobID(), cj.getGridJobID() );
-
       ostringstream ofs;
       boost::archive::text_oarchive oa(ofs);
       oa << cj;
-      m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
-
+      m_dbMgr->put( ofs.str(), cj.getCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
-
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
         abort();
-
     }
     //return m_jobs.putJob( cj );
     //m_GridJobIDSet.insert( cj.getGridJobID() );
-
     return jobCacheIterator( (m_GridJobIDSet.insert( cj.getGridJobID() )).first );
-
 }
 
 //______________________________________________________________________________
@@ -326,13 +299,12 @@ void jobCache::print(ostream& os) {
 }
 
 //______________________________________________________________________________
-jobCache::iterator 
-jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
+jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
   throw()
 {
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     try {
-      string serializedJob( m_dbMgr->getByCid( completeCreamJID ) );
+      string serializedJob( m_dbMgr->getByCid( creamJID ) );
       CreamJob cj;
       istringstream tmpOs;//( string(data) );
       tmpOs.str( serializedJob );
@@ -378,7 +350,7 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
     // job found, log operation and remove
 
     try{
-      m_dbMgr->delByCid( it->getCompleteCreamJobID() );
+      m_dbMgr->delByCid( it->getCreamJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
         abort();

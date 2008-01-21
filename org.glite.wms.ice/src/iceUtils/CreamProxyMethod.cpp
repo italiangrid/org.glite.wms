@@ -239,6 +239,44 @@ void CreamProxy_Lease::method_call( int timeout )
   theProxy->setCredential( m_certfile );
   theProxy->execute( m_service );
 }
+    
+//////////////////////////////////////////////////////////////////////////////
+//
+// Lease
+//
+//////////////////////////////////////////////////////////////////////////////
+CreamProxy_LeaseInfo::CreamProxy_LeaseInfo( const std::string& service,
+					    const std::string& certfile,
+					    const std::string& lease_IN,
+					    std::pair<std::string, time_t>* lease_OUT ) :
+  m_service( service ),
+  m_certfile( certfile ),
+  m_lease_IN( lease_IN ),
+  m_lease_OUT( lease_OUT )
+{
+  
+}
+
+void CreamProxy_LeaseInfo::method_call( int timeout ) 
+  throw(cream_ex::BaseException&,
+	cream_ex::InvalidArgumentException&,
+	cream_ex::GridProxyDelegationException&,
+	cream_ex::JobSubmissionDisabledException&,
+	cream_ex::JobStatusInvalidException&,
+	cream_ex::JobUnknownException&,
+	cream_ex::GenericException&,
+	cream_ex::AuthenticationException&,
+	cream_ex::AuthorizationException&,
+	cream_ex::DelegationException&,
+	cream_ex::InternalException&,
+	cream_ex::ConnectionTimeoutException&,
+	soap_proxy::auth_ex&)   
+            
+{
+  boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyLeaseInfo( m_lease_IN, m_lease_OUT, timeout ));
+  theProxy->setCredential( m_certfile );
+  theProxy->execute( m_service );
+}
 
 //////////////////////////////////////////////////////////////////////////////
 //

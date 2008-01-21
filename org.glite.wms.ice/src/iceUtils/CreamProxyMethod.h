@@ -205,6 +205,37 @@ namespace util {
 	std::pair< std::string, time_t>* m_lease_OUT;
     };
 
+
+    /** 
+     * Wrapper class around the Lease method of CreamProxy
+     */
+    class CreamProxy_LeaseInfo : public CreamProxyMethod {
+    public:
+      CreamProxy_LeaseInfo( const std::string& service,
+			    const std::string& certfile,
+			    const std::string& lease_IN,
+			    std::pair<std::string, time_t>* lease_OUT );
+    protected:
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GridProxyDelegationException&,
+						      _cream_ex::JobSubmissionDisabledException&,
+						      _cream_ex::JobStatusInvalidException&,
+						      _cream_ex::JobUnknownException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthenticationException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::DelegationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
+
+        const std::string& m_service;
+	const std::string& m_certfile;
+        const std::string& m_lease_IN;
+	std::pair< std::string, time_t>* m_lease_OUT;
+    };
+
     /**
      * Wrapper class around the Info method of CreamProxy
      */ 

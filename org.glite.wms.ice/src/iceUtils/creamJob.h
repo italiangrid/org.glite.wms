@@ -20,9 +20,28 @@
 #ifndef GLITE_WMS_ICE_UTIL_CREAMJOB_H
 #define GLITE_WMS_ICE_UTIL_CREAMJOB_H
 
+/**
+ *
+ * ICE Headers
+ *
+ */
 #include "ClassadSyntax_ex.h"
+
+/**
+ *
+ * Cream Client API C++ Headers
+ *
+ */
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
+
+/**
+ *
+ * System and STL C++ Headers
+ *
+ */
+#include <exception>
 #include <string>
 #include <ctime>
 #include <set>
@@ -293,32 +312,37 @@ namespace glite {
 
 	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw()
 	  {
-	    
-	    ar & m_cream_jobid;
-	    ar & m_grid_jobid;
-	    ar & m_jdl;
-	    ar & m_ceid;
-	    ar & m_endpoint;
-	    ar & m_cream_address;
-	    ar & m_cream_deleg_address;
-	    ar & m_user_proxyfile;
-	    ar & m_user_dn;
-	    ar & m_sequence_code;
-	    ar & m_delegation_id;     
-	    ar & m_wn_sequence_code;
-	    ar & m_status;
-	    ar & m_num_logged_status_changes;
-	    ar & m_last_seen;
-	    ar & m_lease_id;
-	    ar & m_proxyCertTimestamp;
-	    ar & m_statusPollRetryCount;
-	    ar & m_exit_code;
-	    ar & m_failure_reason;
-	    ar & m_worker_node;
-	    ar & m_is_killed_by_ice;
-	    ar & m_last_empty_notification;
-	    ar & m_proxy_renew;
-	    
+	    try {
+	      ar & m_cream_jobid;
+	      ar & m_grid_jobid;
+	      ar & m_jdl;
+	      ar & m_ceid;
+	      ar & m_endpoint;
+	      ar & m_cream_address;
+	      ar & m_cream_deleg_address;
+	      ar & m_user_proxyfile;
+	      ar & m_user_dn;
+	      ar & m_sequence_code;
+	      ar & m_delegation_id;     
+	      ar & m_wn_sequence_code;
+	      ar & m_status;
+	      ar & m_num_logged_status_changes;
+	      ar & m_last_seen;
+	      ar & m_lease_id;
+	      ar & m_proxyCertTimestamp;
+	      ar & m_statusPollRetryCount;
+	      ar & m_exit_code;
+	      ar & m_failure_reason;
+	      ar & m_worker_node;
+	      ar & m_is_killed_by_ice;
+	      ar & m_last_empty_notification;
+	      ar & m_proxy_renew;
+	    } catch(std::exception& ex) {
+	      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->errorStream()
+		       << "creamJob::serialize() - [De]Serialization error: ["
+		       << ex.what() << "]"
+		       << log4cpp::CategoryStream::ENDLINE);
+	    }
 	  }
 
 	};
