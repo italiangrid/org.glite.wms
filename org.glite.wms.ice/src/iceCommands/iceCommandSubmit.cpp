@@ -302,10 +302,12 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
         m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
         throw( iceCommandFatal_ex( ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
+
     }
     
     remove_job_guard.dismiss(); // dismiss guard, job will NOT be removed from cache
 }
+
 
 void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
@@ -386,7 +388,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         }
         
         // lease creation OK
-        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+        CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "Using lease ID " << lease_id << " for job "
                         << m_theJob.describe()
                         << log4cpp::CategoryStream::ENDLINE );        
