@@ -26,7 +26,6 @@
 #include "creamJob.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
@@ -57,19 +56,18 @@ namespace util {
  class iceCommandSubmit : public iceAbsCommand {
      
  private:
-     //void  doSubscription( const std::string& );
-     //void  doSubscription( const std::string&, const std::string& );
      void  doSubscription( const glite::wms::ice::util::CreamJob& );
      
      Ice *m_theIce;
-     //     boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
      
  public:
-     //iceCommandSubmit( glite::ce::cream_client_api::soap_proxy::CreamProxy*, util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
      iceCommandSubmit( util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
      
      virtual ~iceCommandSubmit() { }
      
+     /**
+      * This method is invoked to execute this command.
+      */
      virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      
      std::string get_grid_job_id( void ) const { return m_theJob.getGridJobID(); };
@@ -77,6 +75,15 @@ namespace util {
      static boost::recursive_mutex s_localMutexForSubscriptions;
      
  protected:
+
+     /**
+      * This method is called only by the execute() method. This
+      * method does the real work of submitting the job. If something
+      * fails, this method raises an exception. The caller ( execute()
+      * ) must take care of the post-failure operations, that is
+      * logging the appropriate events to LB and try to resubmit.
+      */
+     void try_to_submit( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      
      // Inner class definition, used to manipulate paths
      class pathName {
