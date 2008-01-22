@@ -24,8 +24,6 @@
 #include "creamJob.h"
 #include "jobCache.h"
 #include "iceUtils.h"
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
-#include <boost/scoped_ptr.hpp>
 
 #include <ctime>
 
@@ -39,24 +37,29 @@ namespace ice {
 namespace util {
 	
     class iceLBLogger;
-    
+    class Lease_manager;
+
     class iceCommandLeaseUpdater : public iceAbsCommand {
       
-      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-      log4cpp::Category *m_log_dev;
-      glite::wms::ice::util::iceLBLogger* m_lb_logger;
-      time_t m_delta;
-      glite::wms::ice::util::jobCache* m_cache;
-      bool m_only_update;
-      
-      /**
-       * Updates the lease for all jobs on cream_url with lease ID
-       * lease_id, and which have been submitted by the user
-       * identified by user_dn.  This method takes care of updating
-       * the lease cache, if the lease update operation is succesful.
-       */
-      void update_lease( const std::string& user_dn, const std::string& cream_url, const std::string& lease_id );
+        log4cpp::Category *m_log_dev;
+        glite::wms::ice::util::iceLBLogger* m_lb_logger;
+        time_t m_delta;
+        glite::wms::ice::util::jobCache* m_cache;
+        bool m_only_update;
+        Lease_manager* m_lease_manager;
 
+        /**
+         * Returns true iff the CreamJob job can be removed from the
+         * job cache because its lease expired.
+         */
+        bool job_can_be_removed( const CreamJob& job ) const throw();
+
+        /**
+         * This method returns true iff the lease associated to CreamJob 
+         * job must be renewed.
+         */ 
+        bool lease_can_be_renewed( const CreamJob& job ) const throw();
+      
     public:
       /**
        * Se only_update==true, si aggiornano i lease SENZA rimuovere i

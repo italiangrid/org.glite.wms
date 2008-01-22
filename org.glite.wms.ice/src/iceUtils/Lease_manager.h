@@ -213,6 +213,9 @@ namespace util {
          * Find the lease with the given lease_id; returns end() if no
          * lease with the requested name has been found.
          *
+         * @param lease_id The lease id to look for. If lease_id is
+         * the empty string, this function returns the value end()
+         *
          * NOTE: This method is _NOT_ thread-safe
          */
         const_iterator find( const std::string& lease_id ) const;

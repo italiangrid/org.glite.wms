@@ -29,33 +29,31 @@ namespace log4cpp {
 };
 
 namespace glite {
-  namespace wms {
-    namespace ice {
-      namespace util {
-          
-          /**
-           *
-           */
-          class leaseUpdater : public iceThread {
-
-          protected:
-              
-              time_t m_delay; //! Delay between two updates, in seconds.
-
-              log4cpp::Category *m_log_dev;
-
-              virtual void body( void );
-
-          public:
-
-              leaseUpdater( );
-              virtual ~leaseUpdater( );
-
-          };
-
-      }
-    }
-  }
-}
+namespace wms {
+namespace ice {
+namespace util {
+    
+    /**
+     *
+     */
+    class leaseUpdater : public iceThread {
+        
+    protected:
+        
+        time_t m_delay; //! Delay between two updates, in seconds.        
+        log4cpp::Category *m_log_dev;        
+        virtual void body( void );
+        
+    public:
+        
+        leaseUpdater( );
+        virtual ~leaseUpdater( );
+        
+    };
+    
+} // namespace util
+} // namespace ice
+} // namespace wms
+} // namespace glite
 
 #endif

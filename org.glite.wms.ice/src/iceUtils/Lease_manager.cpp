@@ -285,6 +285,9 @@ Lease_manager::const_iterator Lease_manager::end() const
 
 Lease_manager::const_iterator Lease_manager::find( const string& lease_id ) const
 {
+    if ( lease_id.empty() ) 
+        return end();
+
     //static char* method_name = "Lease_manager::find() - ";
 
     typedef t_lease_set::index<idx_lease_id>::type t_lease_by_id;
