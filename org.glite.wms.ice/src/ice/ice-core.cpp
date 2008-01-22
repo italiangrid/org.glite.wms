@@ -22,7 +22,7 @@
  */
 
 #include "ice-core.h"
-//#include "iceCommandLeaseUpdater.h"
+#include "iceCommandLeaseUpdater.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "subscriptionManager.h"
@@ -32,7 +32,7 @@
 #include "eventStatusListener.h"
 #include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
-//#include "leaseUpdater.h"
+#include "leaseUpdater.h"
 #include "proxyRenewal.h"
 //#include "jobKiller.h"
 #include "iceLBEvent.h"
@@ -230,11 +230,10 @@ void Ice::init( void )
         }
     }
 
-    // FIXME: uncomment the following 4 lines to activate Lease
-//    if(m_configuration->ice()->start_lease_updater() ) {
-//      util::iceCommandLeaseUpdater l( true );
-//      l.execute();
-//    }
+    if(m_configuration->ice()->start_lease_updater() ) {
+        util::iceCommandLeaseUpdater l( true );
+        l.execute();
+    }
     util::iceCommandStatusPoller p( this, true );
     p.execute( );	
 }
@@ -431,8 +430,8 @@ void Ice::startPoller( void )
     
     util::eventStatusPoller* poller;
     
-    // I removed the try/catch because in the new schema using the iceCommandStatusPoller
-    // there is not anymore that exception
+    // I removed the try/catch because in the new schema using the
+    // iceCommandStatusPoller there is not anymore that exception
     
     poller = new util::eventStatusPoller( this, m_configuration->ice()->poller_delay() );
     m_poller_thread.start( poller );
@@ -442,7 +441,7 @@ void Ice::startPoller( void )
 //----------------------------------------------------------------------------
 void Ice::startLeaseUpdater( void ) 
 {
-/*    if ( !m_configuration->ice()->start_lease_updater() ) {
+    if ( !m_configuration->ice()->start_lease_updater() ) {
         CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "Ice::startLeaseUpdater() - "
                         << "Lease Updater disabled in configuration file. "
@@ -452,7 +451,7 @@ void Ice::startLeaseUpdater( void )
         return;
     }
     util::leaseUpdater* lease_updater = new util::leaseUpdater( );
-    m_lease_updater_thread.start( lease_updater );*/
+    m_lease_updater_thread.start( lease_updater );
 }
 
 //-----------------------------------------------------------------------------

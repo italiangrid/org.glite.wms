@@ -25,8 +25,6 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
-//#include <boost/thread/thread.hpp>
-
 using namespace glite::wms::ice::util;
 using namespace std;
 

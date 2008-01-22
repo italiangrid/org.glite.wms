@@ -30,7 +30,6 @@
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
 #include "glite/ce/cream-client-api-c/JobIdWrapper.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
@@ -42,11 +41,7 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
-//#include "glite/ce/cream-client-api-c/soap_ex.h"
-//#include "glite/ce/cream-client-api-c/BaseException.h"
-//#include "glite/ce/cream-client-api-c/JobUnknownException.h"
 
-//#include <algorithm>
 #include <set>
 #include <vector>
 #include "boost/functional.hpp"
@@ -87,76 +82,7 @@ bool iceCommandLeaseUpdater::job_can_be_removed( const CreamJob& job ) const thr
 
     return false;
 }
-        
-// #ifdef 0
-//         if ( job.is_active() &&
-//              !job.can_be_purged() && 
-//              job.getEndLease() && 
-//              job.getEndLease() <= time(0) ) {
             
-//             CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->warnStream()
-//                            << "iceCommandLeaseUpdater::check_lease_expired() - "
-//                            << "Cancelling and removing from cache the lease-expired job "
-//                            << job.describe()
-//                            << log4cpp::CategoryStream::ENDLINE);
-            
-// 	    /**
-// 	     * MUST CANCEL the lease-expired JOB
-// 	     * TODO:...
-// 	     */
-
-// 	    {//-------------------------------------------------------------------
-// 	      boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy( CreamProxyFactory::makeCreamProxy( false ) );
-// 	      string proxy = DNProxyManager::getInstance()->getBetterProxyByDN( job.getUserDN() ) ;
-
-// 	      try {
-// 		cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
-// 		if( !V.IsValid( ) ) {
-// 		  throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
-// 		}
-
-// 		vector<string> jobVec;
-// 		jobVec.push_back( job.getCreamJobID() );
-// 		CreamProxy_Cancel( job.getCreamURL(), vector<string>() ).execute( m_theProxy.get(), 3 );
-		
-// 	      } catch(...) {
-		
-// 		// Let's ignore this cancellation error
-
-// 	      }
-	      
-// 	    } //-------------------------------------------------------------------
-	    
-//             CreamJob tmp_job( job );
-            
-//             tmp_job.set_failure_reason( "Lease expired" );
-//             iceLBLogger::instance()->logEvent( new job_done_failed_event( tmp_job ) );
-//             glite::wms::ice::Ice::instance()->resubmit_job( tmp_job, "Lease expired" );
-            
-//             // note: locking on jobcache is not needed because this method is called (and must be) from a block (in the execute method)
-//             // that has already locked the cache.
-            
-//             jobCache::iterator tmp( jobCache::getInstance()->lookupByGridJobID( tmp_job.getGridJobID() ) );
-//             jobCache::getInstance()->erase( tmp );
-//             return true;
-//         } else {
-//             return false;
-//         }
-// #endif
-
-    
-//     /**
-//      * Return true iff the lease of job J can be updated.
-//      */
-//     bool insert_condition( const CreamJob& J )
-//     {
-//         return ( !J.getCreamJobID().empty() &&
-//                  !check_lease_expired( J ) &&
-//                  J.is_active() &&
-//                  !J.can_be_purged() );
-
-//     }
-    
 bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const throw() 
 {
     //
@@ -178,7 +104,7 @@ bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const t
     Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
     
     if ( it != m_lease_manager->end() && it->m_expiration_time > time(0)
-         && time(0) - it->m_expiration_time < m_delta ) 
+         && it->m_expiration_time - time(0) < m_frequency*2 ) 
 
         return true; 
 
@@ -189,7 +115,7 @@ bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const t
 iceCommandLeaseUpdater::iceCommandLeaseUpdater( bool only_update ) throw() : 
     m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
-    m_delta( iceConfManager::getInstance()->getConfiguration()->ice()->lease_delta_time() ),
+    m_frequency( iceConfManager::getInstance()->getConfiguration()->ice()->lease_update_frequency() ),
     m_cache( jobCache::getInstance() ),
     m_only_update( only_update ),
     m_lease_manager( Lease_manager::instance() )
@@ -201,14 +127,6 @@ iceCommandLeaseUpdater::iceCommandLeaseUpdater( bool only_update ) throw() :
 void iceCommandLeaseUpdater::execute( ) throw()
 {
     static const char* method_name = "iceCommandLeaseUpdater::execute() - ";
-
-    /**
-     * Be Careful: the cache removal of lease-expired job is performed
-     * by check_lease_expired procedure that is called ONLY by the
-     * insert_condition function.  Then: using onlyupdate as "insert
-     * condition" for the appender means perform just a lease update
-     * of ALL jobs without any removal.
-     */
 
     set< string > lease_to_renew; //< Set of lease IDs to renew
     list< string > jobs_to_remove; //< List of Grid job IDs which have the lease expired, and thus must be removed from the job cache
@@ -225,7 +143,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
                 jobs_to_remove.push_back( it->getGridJobID() );
             }
         }
-    } // releases lock on job cache  
+    } // releases lock on the job cache  
 
     //
     // Renew leases which are going to expire

@@ -73,8 +73,7 @@ public:
     /**
      * Returns the CREAM job ID for this notification
      */
-    const string& get_cream_job_id( void ) const { return m_cream_job_id; };
-
+    const string& get_cream_job_id( void ) const { return m_cream_job_id; }; // FIXME: Take into account the CREAM URL also!!!
     /**
      * Returns the status for this notification
      */
@@ -104,6 +103,7 @@ public:
 protected:
 
     string m_cream_job_id;
+    string m_cream_url;
     api::job_statuses::job_status m_job_status;
     bool m_has_exit_code;
     bool m_has_failure_reason;
@@ -119,8 +119,7 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
 {
 
     classad::ClassAdParser parser;
-    classad::ClassAd *ad = parser.ParseClassAd( ad_string );
-	
+    classad::ClassAd *ad = parser.ParseClassAd( ad_string );	
 
     if (!ad)
         throw ClassadSyntax_ex( boost::str( boost::format("StatusChange() got an error while parsing notification classad: %1%" ) % ad_string ) );
@@ -130,6 +129,10 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
     if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
         throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( m_cream_job_id, boost::is_any_of("\"" ) );
+    
+    if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_URL", m_cream_url ) )
+        throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_URL attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+    boost::trim_if( m_cream_url, boost::is_any_of("\"" ) );
 
     string job_status_str;
     if ( !classad_safe_ptr->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
