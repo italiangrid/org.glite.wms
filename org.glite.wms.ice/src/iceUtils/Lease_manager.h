@@ -109,7 +109,10 @@ namespace util {
 
         /**
          * Iterates over the lease ID set. Removes all lease IDs which
-         * are associated to already expired leases.
+         * are associated to already expired leases. 
+         *
+         * This method is _NOT_ thread-safe; it is then supposed to be
+         * called from another method which is.
          */
         void purge_old_lease_ids( void );
 
@@ -120,7 +123,6 @@ namespace util {
         unsigned int m_operation_count;
         const unsigned int m_operation_count_max;
         std::string m_host_dn; // the host DN
-        std::string m_cert_file;
         int m_lease_delta_time;
         
         t_lease_set m_lease_set;
@@ -189,11 +191,14 @@ namespace util {
          *
          * @param lease_id the lease_id to renew. This lease must
          * exist and be valid both in the lease manager and in the
-         * CREAM service.
+         * CREAM service. If the lease renewal operation is succesful,
+         * this method updates the appropriate entry into the lease
+         * cache.
          *
          * @return the nex expiration time for the lease. If the lease
          * does not exist, or if the lease cannot be renewed, this
-         * method returns 0.
+         * method returns 0. In this case, the lease entry in the lease
+         * cache is NOT modified.
          */
         time_t renew_lease( const std::string& lease_id );
 
