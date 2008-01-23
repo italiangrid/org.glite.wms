@@ -34,7 +34,7 @@
 #include "eventStatusPoller.h"
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
-//#include "jobKiller.h"
+#include "jobKiller.h"
 #include "iceLBEvent.h"
 #include "iceLBLogger.h"
 #include "CreamProxyMethod.h"
@@ -475,17 +475,17 @@ void Ice::startJobKiller( void )
 {
   // FIXME: uncomment this method to activate the jobKiller
 
-//     if ( !m_configuration->ice()->start_job_killer() ) {
-//         CREAM_SAFE_LOG( m_log_dev->warnStream()
-//                         << "Ice::startJobKiller() - "
-//                         << "Job Killer disabled in configuration file. "
-//                         << "Not started"
-//                         << log4cpp::CategoryStream::ENDLINE
-//                         );
-//         return;
-//     }
-//     util::jobKiller* jobkiller = new util::jobKiller( );
-//     m_job_killer_thread.start( jobkiller );
+     if ( !m_configuration->ice()->start_job_killer() ) {
+         CREAM_SAFE_LOG( m_log_dev->warnStream()
+                         << "Ice::startJobKiller() - "
+                         << "Job Killer disabled in configuration file. "
+                         << "Not started"
+                         << log4cpp::CategoryStream::ENDLINE
+                         );
+         return;
+     }
+     util::jobKiller* jobkiller = new util::jobKiller( );
+     m_job_killer_thread.start( jobkiller );
 }
 
 //____________________________________________________________________________
