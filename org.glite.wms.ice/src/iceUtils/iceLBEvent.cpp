@@ -96,7 +96,7 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
                                        ctx->el_s_unavailable,
                                        m_job.getJDL().c_str(),  
                                        ctx->el_s_unavailable,
-                                       m_job.getCreamJobID().c_str() );    
+                                       m_job.getCompleteCreamJobID().c_str() );    
 #else
     return edg_wll_LogTransferOK( *(ctx->el_context), 
                                   EDG_WLL_SOURCE_LRMS, 
@@ -104,7 +104,7 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
                                   ctx->el_s_unavailable,
                                   m_job.getJDL().c_str(),  
                                   ctx->el_s_unavailable,
-                                  m_job.getCreamJobID().c_str() );    
+                                  m_job.getCompleteCreamJobID().c_str() );    
 #endif
 }
 
@@ -392,13 +392,13 @@ int ns_enqueued_start_event::execute( iceLBContext* ctx )
 #ifdef GLITE_WMS_HAVE_LBPROXY
     return edg_wll_LogEnQueuedSTARTProxy( *(ctx->el_context), 
                                           m_qname.c_str(),
-                                          m_job.getCreamJobID().c_str(),
+                                          m_job.getCompleteCreamJobID().c_str(),
                                           ctx->el_s_unavailable
                                           );
 #else
     return edg_wll_LogEnQueuedSTART( *(ctx->el_context), 
                                      m_qname.c_str(),
-                                     m_job.getCreamJobID().c_str(),
+                                     m_job.getCompleteCreamJobID().c_str(),
                                      ctx->el_s_unavailable
                                      );
 #endif
@@ -423,13 +423,13 @@ int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 #ifdef GLITE_WMS_HAVE_LBPROXY
     return edg_wll_LogEnQueuedFAILProxy( *(ctx->el_context), 
                                          m_qname.c_str(),
-                                         m_job.getCreamJobID().c_str(),
+                                         m_job.getCompleteCreamJobID().c_str(),
                                          m_reason.c_str()
                                          );
 #else
     return edg_wll_LogEnQueuedFAIL( *(ctx->el_context), 
                                     m_qname.c_str(),
-                                    m_job.getCreamJobID().c_str(),
+                                    m_job.getCompleteCreamJobID().c_str(),
                                     m_reason.c_str()
                                     );
 #endif
@@ -452,13 +452,13 @@ int ns_enqueued_ok_event::execute( iceLBContext* ctx )
 #ifdef GLITE_WMS_HAVE_LBPROXY
     return edg_wll_LogEnQueuedOKProxy( *(ctx->el_context), 
                                        m_qname.c_str(),
-                                       m_job.getCreamJobID().c_str(),
+                                       m_job.getCompleteCreamJobID().c_str(),
                                        ctx->el_s_unavailable
                                        );
 #else
     return edg_wll_LogEnQueuedOK( *(ctx->el_context), 
                                   m_qname.c_str(),
-                                  m_job.getCreamJobID().c_str(),
+                                  m_job.getCompleteCreamJobID().c_str(),
                                   ctx->el_s_unavailable
                                   );
 #endif

@@ -60,18 +60,6 @@ namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
-
-  //________________________________________________________________________
-//     string describe_job( const CreamJob& job )
-//     {
-//         string result;
-//         result.append( "gridJobID=\"" );
-//         result.append( job.getGridJobID() );
-//         result.append( "\" CREAMJobID=\"" );
-//         result.append( job.getCreamJobID() );
-//         result.append( "\"" );
-//         return result;
-//     }
   
 //________________________________________________________________________
 string getHostName( void ) throw ( runtime_error& )
