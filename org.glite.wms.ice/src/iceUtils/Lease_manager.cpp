@@ -24,6 +24,7 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "DNProxyManager.h"
+#include "jobCache.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
@@ -33,6 +34,7 @@
 
 #include <ctime>
 #include <utility> // defines std::pair<>
+#include <set>
 
 namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
@@ -54,7 +56,9 @@ Lease_manager::Lease_manager( ) :
     static char* method_name = "Lease_manager::Lease_manager() - ";
 
     try {
-        conf = iceConfManager::getInstance()->getConfiguration();
+        conf = iceConfManager::getInstance()->getConfiguration(); // can raise ConfigurationManager_ex
+        m_lease_delta_time = conf->ice()->lease_delta_time();
+        m_host_dn = cert_util::getDN( conf->ice()->ice_host_cert() ); // can raise auth_ex 
     } catch( ConfigurationManager_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << method_name
@@ -62,23 +66,23 @@ Lease_manager::Lease_manager( ) :
                         << "Error is: \"" << ex.what() << "\". "
                         << "Giving up, but this may cause troubles."
                         << log4cpp::CategoryStream::ENDLINE );
-        return;
-    }
-    
-    // lease id not found (or force). Creates a new lease ID
-    m_lease_delta_time = conf->ice()->lease_delta_time();
-    
-    try {
-        m_host_dn = cert_util::getDN( conf->ice()->ice_host_cert() );
     } catch( const glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-        CREAM_SAFE_LOG( m_log_dev->errorStream()
-                        << method_name
+        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
                         << "Could not get DN for the local host. " 
                         << "Error is \"" << ex.what() << "\". "
                         << "Using hardcoded default of \"UNKNOWN_ICE_DN\""
                         << log4cpp::CategoryStream::ENDLINE );
         m_host_dn = "UNKNOWN_ICE_DN";
     }    
+    
+    try {
+        init();
+    } catch( ... ) {
+        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+                        << "Error during initialization. "
+                        << "This error will be ignored."
+                        << log4cpp::CategoryStream::ENDLINE );
+    }
 }
 
 Lease_manager* Lease_manager::instance( ) 
@@ -87,6 +91,77 @@ Lease_manager* Lease_manager::instance( )
     if ( 0 == s_instance ) 
         s_instance = new Lease_manager( );
     return s_instance;
+}
+
+void Lease_manager::init( void )
+{
+    static const char* method_name = "Lease_manager::init() - ";
+    set<string> failed_lease_ids; // Set of lease IDs which do not
+                                  // exist (CREAM reported an error
+                                  // checking for them). This set is
+                                  // used to avoid asking the same
+                                  // non-existant lease ID over and
+                                  // over for each job it is contained
+                                  // into.
+
+    // Scan the job cache 
+    jobCache* the_cache( jobCache::getInstance() );
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+
+    for ( jobCache::iterator it = the_cache->begin(); the_cache->end() != it; ++it ) {
+
+        string lease_id( it->get_lease_id() );
+        // If a lease id: 1) is empty, OR 2) has already been inserted
+        // into the lease cache, OR 3) has already been inserted into
+        // the set of non existend lease IDs, then we skip this entry
+        if ( lease_id.empty() || end() != find( lease_id ) || failed_lease_ids.end() != failed_lease_ids.find( lease_id ) )
+            continue; 
+
+        // Utility variables
+        const string cert_file( it->getUserProxyCertificate() );
+        const string cream_url( it->getCreamURL() );
+        const string user_DN( it->getUserDN() );
+
+        CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                        << "Checking lease with lease ID \""
+                        << lease_id << "\" CREAM URL " << cream_url
+                        << " user DN " << user_DN << " user cert file "
+                        << cert_file << log4cpp::CategoryStream::ENDLINE );
+        
+        pair< string, time_t > result;
+        try {
+            CreamProxy_LeaseInfo( cream_url, cert_file, lease_id, &result ).execute( 3 );        
+        } catch( const exception& ex ) {
+            CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                            << "Got exception \"" << ex.what() << "\" while "
+                            << "checking lease with lease ID \""
+                            << lease_id << "\" CREAM URL " << cream_url
+                            << " user DN " << user_DN << " user cert file "
+                            << cert_file << ". Will ignore this lease ID."
+                            << log4cpp::CategoryStream::ENDLINE );
+            failed_lease_ids.insert( lease_id );
+            continue;
+        } catch( ... ) {
+            CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                            << "Got unknown exception while "
+                            << "checking lease with lease ID \""
+                            << lease_id << "\" CREAM URL " << cream_url
+                            << " user DN " << user_DN << " user cert file "
+                            << cert_file << ". Will ignore this lease ID."
+                            << log4cpp::CategoryStream::ENDLINE );
+            failed_lease_ids.insert( lease_id );
+            continue;
+        }
+        time_t expiration_time = result.second;
+        CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                        << "Lease ID \"" << lease_id 
+                        << " has expiration time "
+                        << time_t_to_string( expiration_time )
+                        << log4cpp::CategoryStream::ENDLINE );
+        
+        // Insert the lease ID into the lease set
+        m_lease_set.insert( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );        
+    }
 }
 
 string Lease_manager::make_lease( const CreamJob& job, bool force )
@@ -159,7 +234,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
             return string();
         }     
         // lease operation succesful. Prints the output
-        lease_id = lease_out.first;
+        lease_id = lease_out.first; // FIXME: is that correct???
         expiration_time = lease_out.second;
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "Lease operation SUCCESFUL. Returned "
@@ -175,7 +250,10 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
         // Inserts into the front of the list; this is guaranteed to
         // be a new element, as it has not been found in this "if"
         // branch
-        lease_by_seq.push_front( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
+        //
+        // FIXME: not needed at all?
+        //
+        // lease_by_seq.push_front( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
     } else {
         // Delegation id FOUND. Returns it
         lease_id = it->m_lease_id;

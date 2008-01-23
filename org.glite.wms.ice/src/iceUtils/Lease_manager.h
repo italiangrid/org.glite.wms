@@ -108,6 +108,16 @@ namespace util {
         Lease_manager( );
 
         /**
+         * This method is used to initialize the lease manager, by
+         * loading all existing (non expired) lease IDs. To do so,
+         * this method builds a list of all lease IDs by scanning the
+         * job cache. After that, it asks all relevant CREAM servers
+         * for the lease information, and fills the lease cache with
+         * the non expired leases only.
+         */
+        void init( void );
+
+        /**
          * Iterates over the lease ID set. Removes all lease IDs which
          * are associated to already expired leases. 
          *
@@ -167,7 +177,11 @@ namespace util {
          * so that multiple access to the (shared) lease ID cache do
          * not interfere each other.
          *
-         * NOTE: This method is thread-safe
+         * NOTE: This method guarantees that lease IDs are *always*
+         * unique; this means that the same user requesting leases to
+         * different cream services will be given different lease IDs.
+         * This means that all lease IDs in the lease manager uniquely
+         * identify a tuple (lease_id, cream_url, user_dn)
          *
          * @param job the Job for which a lease ID should be
          * requested.  The method uses the following attributes of the
