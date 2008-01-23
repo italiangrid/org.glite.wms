@@ -29,7 +29,6 @@
 #include "iceAbsCommand.h"
 #include "creamJob.h"
 #include "glite/ce/cream-client-api-c/JobInfoWrapper.h"
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -51,6 +50,7 @@ namespace glite {
         
         class iceLBLogger;
 	class jobCache;
+	class iceConfManager;
 
 	class iceCommandStatusPoller : public iceAbsCommand {
 	  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
@@ -62,6 +62,7 @@ namespace glite {
           const unsigned int m_max_chunk_size; ///< maximum number of jobs which will be used in a cumulative request to CREAM
           time_t m_empty_threshold; ///< Threshold for empty notifications
 	  bool m_poll_all_jobs;
+	  glite::wms::ice::util::iceConfManager* m_conf;
 	  
 	  //void purgeJobs( const std::vector< std::string >& );
 

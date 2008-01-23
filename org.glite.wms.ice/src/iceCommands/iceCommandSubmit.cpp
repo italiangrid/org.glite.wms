@@ -468,13 +468,19 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     string jobId      = res.begin()->second.get<1>().getCreamJobID();
     string __creamURL = res.begin()->second.get<1>().getCreamURL();
     
+    string completeid = __creamURL;
+
+    boost::replace_all( completeid, m_configuration->ice()->cream_url_postfix(), "" );
+
+    completeid += "/" + jobId;
+
     // FIXME: should we check that __creamURL ==
     // m_theJob.getCreamURL() ?!?  If it is not it's VERY severe
     // server error, and I think it is not our businness
 
     CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                     << "For GridJobID [" << m_theJob.getGridJobID() << "]" 
-                    << " CREAM Returned CREAM-JOBID [" << jobId <<"]"
+                    << " CREAM Returned CREAM-JOBID [" << completeid <<"]"
                     << log4cpp::CategoryStream::ENDLINE );
 
     cream_api::ResultWrapper startRes;
@@ -482,7 +488,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     try {
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "Going to START CreamJobID ["
-                        << jobId <<"] related to GridJobID ["
+                        << completeid <<"] related to GridJobID ["
                         << m_theJob.getGridJobID() << "]..."
                         << log4cpp::CategoryStream::ENDLINE );
         

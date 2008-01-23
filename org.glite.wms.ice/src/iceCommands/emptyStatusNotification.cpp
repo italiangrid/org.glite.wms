@@ -56,7 +56,7 @@ void emptyStatusNotification::apply( void )
 
     boost::recursive_mutex::scoped_lock L( jobCache::mutex );
     jobCache* cache( jobCache::getInstance() );
-    jobCache::iterator job_it( cache->lookupByCreamJobID( m_cream_job_id ) );
+    jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( m_cream_job_id ) );
 
     if ( cache->end() == job_it ) {
         CREAM_SAFE_LOG( m_log_dev->debugStream()

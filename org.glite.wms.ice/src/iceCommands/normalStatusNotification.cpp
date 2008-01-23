@@ -29,9 +29,12 @@
 #include "iceUtils.h"
 #include "ice-core.h"
 #include "subscriptionManager.h"
+#include "iceConfManager.h"
 
-// CREAM stuff
+// CREAM and WMS stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 // other gLite stuff
 #include "classad_distribution.h"
@@ -73,7 +76,20 @@ public:
     /**
      * Returns the CREAM job ID for this notification
      */
-    const string& get_cream_job_id( void ) const { return m_cream_job_id; }; // FIXME: Take into account the CREAM URL also!!!
+    string get_cream_job_id( void ) const { 
+
+      string completeURL = m_cream_url;
+      boost::replace_all( completeURL, 
+			  iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
+
+      completeURL += "/" + m_cream_job_id;
+
+      //      return m_cream_job_id; 
+      
+      return completeURL;
+      
+    }; // FIXME: Take into account the CREAM URL also!!!
+
     /**
      * Returns the status for this notification
      */
@@ -209,8 +225,10 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
     // refers. In order to do so, we need to parse at least the first
     // notification in the event.
     try {
+
         StatusChange first_notification( *(m_ev.Message.begin()) );
-        m_cream_job_id = first_notification.get_cream_job_id();
+        m_complete_cream_jobid = first_notification.get_cream_job_id();
+
     } catch( ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << method_name
@@ -246,8 +264,10 @@ void normalStatusNotification::apply( void ) // can throw anything
     // refers. In order to do so, we need to parse at least the first
     // notification in the event.
     try {
+
         StatusChange first_notification( *(m_ev.Message.begin()) );
         cream_job_id = first_notification.get_cream_job_id();
+
     } catch( ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << method_name
@@ -264,7 +284,7 @@ void normalStatusNotification::apply( void ) // can throw anything
     // and find the job
     
     boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );    
-    jobCache::iterator jc_it( m_cache->lookupByCreamJobID( cream_job_id ) );
+    jobCache::iterator jc_it( m_cache->lookupByCompleteCreamJobID( cream_job_id ) );
 
     // No job found in cache. This is fine, we may be receiving "old"
     // notifications, for jobs which have been already purged.

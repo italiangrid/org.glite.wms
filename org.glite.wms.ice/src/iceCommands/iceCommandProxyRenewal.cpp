@@ -21,15 +21,29 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
+/**
+ *
+ * ICE Headers
+ *
+ */
 #include "iceCommandProxyRenewal.h"
-#include "jobCache.h"
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "CreamProxyMethod.h"
-#include "iceUtils.h"
 #include "DNProxyManager.h"
+#include "jobCache.h"
+#include "iceUtils.h"
 
+/**
+ *
+ * Cream Client API C++ Headers
+ *
+ */
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
+/**
+ *
+ * OS Headers
+ *
+ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -204,7 +218,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
 	
 	glite::wms::ice::util::DNProxyManager::getInstance()->setUserProxyIfLonger( jobIt->getUserProxyCertificate() );
 	jobMap[ make_pair(jobIt->getDelegationId(), jobIt->getCreamDelegURL()) ].push_back( *jobIt );
-	timeMap[ jobIt->getCreamJobID() ] = buf.st_mtime;
+	timeMap[ jobIt->getCompleteCreamJobID() ] = buf.st_mtime;
       }
     }
   } // unlock the jobCache
@@ -223,7 +237,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
 	list<CreamJob>::iterator jobit     = jobMap_it->second.begin();
 	list<CreamJob>::iterator jobit_end = jobMap_it->second.end();
 	while( jobit != jobit_end ) {
-	  jobit->setProxyCertMTime( timeMap[jobit->getCreamJobID()] );
+	  jobit->setProxyCertMTime( timeMap[jobit->getCompleteCreamJobID()] );
 	  m_cache->put( *jobit );
 	  ++jobit;
 	}

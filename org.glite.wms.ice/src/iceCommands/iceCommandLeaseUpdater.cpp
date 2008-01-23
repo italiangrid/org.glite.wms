@@ -98,7 +98,7 @@ bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const t
     // 3. Jobs which can be purged (similar to case 2.) FIXME: is this
     // really necessary?
     //
-    if ( job.getCreamJobID().empty() || !job.is_active() || job.can_be_purged() )
+    if ( job.getCompleteCreamJobID().empty() || !job.is_active() || job.can_be_purged() )
         return false;
     
     Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );

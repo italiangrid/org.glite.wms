@@ -269,7 +269,7 @@ namespace glite {
            * @return an iterator to the creamJob object with the given
            * id. end() if no job has been found.
            */
-	  iterator lookupByCreamJobID(const std::string& id) throw();
+	  iterator lookupByCompleteCreamJobID(const std::string& id) throw();
 
           /**
            * Looks up a job by its grid Job ID

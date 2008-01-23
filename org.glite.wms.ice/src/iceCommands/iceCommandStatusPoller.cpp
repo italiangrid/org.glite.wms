@@ -27,20 +27,20 @@
  *
  */
 #include "iceCommandStatusPoller.h"
-#include "jobCache.h"
-#include "iceLBLogger.h"
-#include "iceLBEvent.h"
+#include "subscriptionManager.h"
 #include "iceLBEventFactory.h"
-#include "iceConfManager.h"
-#include "ice-core.h"
-#include "jobCache.h"
-#include "iceLBLogger.h"
-#include "iceLBEvent.h"
 #include "iceLBEventFactory.h"
 #include "CreamProxyMethod.h"
-#include "iceUtils.h"
-#include "subscriptionManager.h"
+#include "iceConfManager.h"
 #include "DNProxyManager.h"
+#include "iceLBLogger.h"
+#include "iceLBLogger.h"
+#include "iceLBEvent.h"
+#include "iceLBEvent.h"
+#include "jobCache.h"
+#include "ice-core.h"
+#include "jobCache.h"
+#include "iceUtils.h"
 
 /**
  *
@@ -85,7 +85,7 @@ using namespace std;
  namespace { // begin anonymous namespace
 
   bool insert_condition(const iceUtils::CreamJob& J) {
-    if( J.getCreamJobID().empty() ) return false;
+    if( J.getCompleteCreamJobID().empty() ) return false;
     
     return true;
   }
@@ -138,7 +138,8 @@ iceUtils::iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* 
   m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
   m_max_chunk_size( iceUtils::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() ), 
   m_empty_threshold( 10*60 ), // 10 minutes
-  m_poll_all_jobs( poll_all_jobs )
+  m_poll_all_jobs( poll_all_jobs ),
+  m_conf( iceUtils::iceConfManager::getInstance() )
 {
   char* ice_empty_threshold_string = ::getenv( "ICE_EMPTY_THRESHOLD" );;
   if ( ice_empty_threshold_string ) {
@@ -157,7 +158,7 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
 
     for(jobCache::iterator jit = m_cache->begin(); jit != m_cache->end(); ++jit) {
 
-        if( jit->getCreamJobID().empty() ) {
+        if( jit->getCompleteCreamJobID().empty() ) {
             // This job doesn't have yet the CREAM Job ID. Skipping...
             continue;
         }
@@ -302,6 +303,14 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
 	    soap_proxy::JobInfoWrapper, 
 	    string> thisInfo = infoIt->second;
 
+	  string completeCreamJobID = cream_url;
+	  boost::replace_all( completeCreamJobID, 
+			      m_conf->getConfiguration()->ice()->cream_url_postfix(), 
+			      "" );
+
+	  completeCreamJobID += "/" + infoIt->first;
+	  
+
 	  if( thisInfo.get<0>() == soap_proxy::JobInfoWrapper::OK ) {
 
 	    the_job_status.push_back( thisInfo.get<1>() );
@@ -311,7 +320,7 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
 			   << "iceCommandStatusPoller::check_multiple_jobs() - "
 			   << "CREAM didn't return information for the job ["
-			   << infoIt->first << "] for DN ["
+			   << completeCreamJobID << "] for DN ["
 			   << user_dn
 			   << "]. Error is [" << thisInfo.get<2>() 
 			   << "]. Removing this job from the cache"
@@ -319,7 +328,7 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
 	    {
 	      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 	      //remove_unknown_jobs_from_cache(cream_job_ids, the_job_status );
-	      jobCache::iterator it = m_cache->lookupByCreamJobID( infoIt->first );
+	      jobCache::iterator it = m_cache->lookupByCompleteCreamJobID( completeCreamJobID/*infoIt->first*/ );
 	      m_cache->erase( it );
 	    }
 
@@ -455,9 +464,18 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
     vector< soap_proxy::JobStatusWrapper > status_changes;
     info_obj.getStatus( status_changes );
-    string cid( info_obj.getCreamJobID() ); // Cream job id
 
-    jobCache::iterator job_pos( m_cache->lookupByCreamJobID( cid ) );
+    // FIXME: must get cream_url from the JobInfoWrapper structure
+
+    string completeJobID = info_obj.getCreamURL();
+    boost::replace_all( completeJobID, 
+			m_conf->getConfiguration()->ice()->cream_url_postfix(), "" );
+
+    completeJobID += "/" + info_obj.getCreamJobID();
+    
+    //string cid( info_obj.getCompleteCreamJobID() ); // Cream job id
+
+    jobCache::iterator job_pos( m_cache->lookupByCompleteCreamJobID( completeJobID ) );
     if ( m_cache->end() != job_pos ) {
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
@@ -469,6 +487,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
                         << status_changes.size()
                         << " status changes"
                         << log4cpp::CategoryStream::ENDLINE);
+
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name << "Job " << job_pos->describe()
                         << " has worker_node=" << info_obj.getWorkerNode()
@@ -489,13 +508,13 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
         // no longer be valid. Hence, the necessity to check each
         // time.
         //
-        jobCache::iterator jit( m_cache->lookupByCreamJobID( cid ) );    
+        jobCache::iterator jit( m_cache->lookupByCompleteCreamJobID( completeJobID ) );    
 	
         if ( m_cache->end() == jit ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream()
                            << method_name 
                            << "cream_jobid ["
-                           << cid << "] disappeared!"
+                           << completeJobID << "] disappeared!"
                            << log4cpp::CategoryStream::ENDLINE);
             return;
         }
@@ -632,7 +651,7 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
 						 list_end, 
 						 m_max_chunk_size, 
 						 back_inserter( jobs_to_poll ), 
-						 mem_fun_ref( &iceUtils::CreamJob::getCreamJobID ) );
+						 mem_fun_ref( &iceUtils::CreamJob::getCompleteCreamJobID ) );
 
             list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
 

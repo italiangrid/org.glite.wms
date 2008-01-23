@@ -76,7 +76,7 @@ using namespace std;
 //______________________________________________________________________________
 namespace {
   bool insert_condition(const CreamJob& J) {
-    if( J.getCreamJobID().empty() ) return false;
+    if( J.getCompleteCreamJobID().empty() ) return false;
     
     if( J.is_killed_by_ice() ) {
       CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->debugStream() 
@@ -159,7 +159,7 @@ void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJo
 					 list_end, 
 					 ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
 					 back_inserter( jobs_to_cancel ), 
-					 mem_fun_ref( &CreamJob::getCreamJobID ) );
+					 mem_fun_ref( &CreamJob::getCompleteCreamJobID ) );
     
     this->cancel_jobs(proxy, aList.first.second, jobs_to_cancel);
     
@@ -238,11 +238,18 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
     list< pair<cream_api::soap_proxy::JobIdWrapper, string> >::const_iterator it  = tmp.begin();
     list< pair<cream_api::soap_proxy::JobIdWrapper, string> >::const_iterator end = tmp.end();
     while( it != end ) {
+      
+      string completeJobId = it->first.getCreamURL();// = it->first.getCreamJobID();
+      boost::replace_all( completeJobId, 
+			  iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
+
+      completeJobId += "/" + it->first.getCreamJobID();
+
       CREAM_SAFE_LOG(    
 		     m_log_dev->errorStream()
 		     << "iceCommandJobKill::cancel_jobs() - "
 		     << "Cancellation of job ["
-		     << it->first.getCreamJobID() << "] for error: "
+		     << completeJobId << "] for error: "
 		     << it->second
 		     << log4cpp::CategoryStream::ENDLINE
 		     );
@@ -393,7 +400,7 @@ void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
     {
       // Check the proxy validity
 
-      if( cit->getCreamJobID().empty() ) continue;
+      if( cit->getCompleteCreamJobID().empty() ) continue;
 
       try {
 	

@@ -21,11 +21,14 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
+/**
+ *
+ * ICE Headers
+ *
+ */
 #include "iceCommandUpdateStatus.h"
-#include "normalStatusNotification.h"
 #include "emptyStatusNotification.h"
-
-// ICE stuff
+#include "normalStatusNotification.h"
 #include "jobCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
@@ -194,7 +197,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
             // Gets the job which is mentioned in the notification
             boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
             //jobCache::const_iterator job_it( cache->lookupByCreamJobID( notif->get_cream_job_id() ) );
-            jobCache::iterator job_it( cache->lookupByCreamJobID( notif->get_cream_job_id() ) );
+            jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( notif->get_complete_cream_job_id() ) );
             
             if ( cache->end() != job_it ) {
 
@@ -222,7 +225,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                 CREAM_SAFE_LOG( m_log_dev->warnStream()
                                 << method_name
                                 << "Job with CREAM job id ["
-                                << notif->get_cream_job_id()
+                                << notif->get_complete_cream_job_id()
                                 << "] was not found in the cache. Cannot update the set of subscriptions the jobs belongs to"
                                 << log4cpp::CategoryStream::ENDLINE);
             }
@@ -244,7 +247,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                                 << job_it->describe()
                                 << log4cpp::CategoryStream::ENDLINE);
 
-                commands.push_front( new emptyStatusNotification( job_it->getCreamJobID() ) );
+                commands.push_front( new emptyStatusNotification( job_it->getCompleteCreamJobID() ) );
             }            
         }
     } // end block

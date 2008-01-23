@@ -277,9 +277,12 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
       ostringstream ofs;
       boost::archive::text_oarchive oa(ofs);
       oa << cj;
-      m_dbMgr->put( ofs.str(), cj.getCreamJobID(), cj.getGridJobID() );
+      //m_dbMgr->put( ofs.str(), cj.getCreamJobID(), cj.getGridJobID() );
+      m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+			<< dbex.what() 
+			<< log4cpp::CategoryStream::ENDLINE );
         abort();
     }
     //return m_jobs.putJob( cj );
@@ -299,12 +302,14 @@ void jobCache::print(ostream& os) {
 }
 
 //______________________________________________________________________________
-jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
+//jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
+jobCache::iterator 
+jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
   throw()
 {
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     try {
-      string serializedJob( m_dbMgr->getByCid( creamJID ) );
+      string serializedJob( m_dbMgr->getByCid( completeCreamJID ) );
       CreamJob cj;
       istringstream tmpOs;//( string(data) );
       tmpOs.str( serializedJob );
@@ -314,13 +319,14 @@ jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
       return jobCacheIterator( m_GridJobIDSet.find( cj.getGridJobID() ) );
     } catch(JobDbNotFoundException& ex) {
       CREAM_SAFE_LOG( m_log_dev->errorStream() 
-                      << "jobCache::lookupByCreamJobID() - " 
+                      << "jobCache::lookupByCompleteCreamJobID() - " 
 		      << ex.what() 
 		      << log4cpp::CategoryStream::ENDLINE );
       return this->end();
       
     } catch(exception& ex) {
-      CREAM_SAFE_LOG( m_log_dev->fatalStream() << ex.what() << log4cpp::CategoryStream::ENDLINE );
+      CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+		      << ex.what() << log4cpp::CategoryStream::ENDLINE );
       abort();
     }
 }
@@ -350,9 +356,11 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
     // job found, log operation and remove
 
     try{
-      m_dbMgr->delByCid( it->getCreamJobID() );
+      m_dbMgr->delByCid( it->getCompleteCreamJobID() );
     } catch(JobDbException& dbex) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() << dbex.what() << log4cpp::CategoryStream::ENDLINE );
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+			<< dbex.what() 
+			<< log4cpp::CategoryStream::ENDLINE );
         abort();
     }
 

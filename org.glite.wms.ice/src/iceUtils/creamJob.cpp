@@ -53,10 +53,11 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 /**
  *
- * OS Header
+ * OS and STL C++ Header
  *
  */
 #include <sys/types.h>
@@ -277,14 +278,18 @@ string CreamJob::get_cemon_dn( void ) const
 //______________________________________________________________________________
 string CreamJob::getCompleteCreamJobID( void ) const 
 {
+  if( this->getCreamURL().empty() ) return "";
+
   string creamURL = this->getCreamURL();
 
-  string::size_type loc = creamURL.find(iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix());
+//   string::size_type loc = creamURL.find(iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix());
   
-  if( loc != string::npos)
-    {
-      creamURL = creamURL.substr(0,loc);
-    }
+//   if( loc != string::npos)
+//     {
+//       creamURL = creamURL.substr(0,loc);
+//     }
+
+  boost::replace_all( creamURL, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
 
   creamURL += "/" + this->getCreamJobID();
 
