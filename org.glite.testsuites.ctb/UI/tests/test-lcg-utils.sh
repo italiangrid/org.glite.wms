@@ -45,7 +45,7 @@ function prepare(){
     name="$uni_pid$uni_time"
     
     export LFN="lfn:/grid/${VO}/$name"
-    export ALIAS="${LFN}-1"
+    export ALIAS="${LFN}-alias"
     export LOCAL_FILE=/etc/redhat-release
     export TEMP_FILE=/tmp/${name}
 }
@@ -68,7 +68,7 @@ function run_command() {
     command=$1
     message=$2
     echo -n "${message} ... "
-    output=$(${command} 2>&1)
+    output=$(eval "${command}" 2>&1)
     if [ $? -gt 0 ]; then
 	echo "Failed"
 	echo "${command}" >&2
@@ -103,7 +103,15 @@ GUID=${OUTPUT}
 export GUID
 
 command="lcg-cp -v --vo ${VO} ${GUID} file:${TEMP_FILE}"
-message="Running download file command"
+message="Running download file command using GUID"
+run_command "${command}" "${message}"
+
+command="diff -q ${TEMP_FILE} ${LOCAL_FILE}"
+message="Comparing the content with the original file"
+run_command "${command}" "${message}"
+
+command="lcg-cp -v --vo ${VO} ${LFN} file:${TEMP_FILE}"
+message="Running download file command using LFN"
 run_command "${command}" "${message}"
 
 command="diff -q ${TEMP_FILE} ${LOCAL_FILE}"
@@ -124,7 +132,7 @@ command="test  ${GUID} = ${OUTPUT} "
 message="Checking that the GUIDs match"
 run_command "${command}" "${message}"
 
-command="lcg-ls -b ${SURL}"
+command="lcg-ls ${SURL}"
 message="Running ls command"
 run_command "${command}" "${message}"
 
@@ -132,11 +140,11 @@ command="lcg-aa  -v --vo ${VO} ${GUID} ${ALIAS}"
 message="Running create alias command"
 run_command "${command}" "${message}"
 
-command="lcg-la  -v --vo ${VO} ${GUID}"
+command="lcg-la  -v --vo ${VO} ${GUID} | grep alias"
 message="Running list alias command"
 run_command "${command}" "${message}"
 
-command="echo ${OUTPUT} | grep '-' "
+command="echo ${OUTPUT} | grep alias "
 message="Checking that the alias exists"
 run_command "${command}" "${message}"
 
@@ -144,7 +152,7 @@ command="lcg-ra  -v --vo ${VO} ${GUID} ${ALIAS}"
 message="Running remove alias command"
 run_command "${command}" "${message}"
 
-command="echo ${OUTPUT} | grep -v '-' "
+command="echo ${OUTPUT} | grep -v alias "
 message="Checking that the alias has been removed"
 run_command "${command}" "${message}"
 
@@ -152,7 +160,7 @@ command="lcg-rep -v --vo ${VO} ${LFN} -d ${DEST}"
 message="Running replicate command"
 run_command "${command}" "${message}"
 
-command="lcg-lr -v --vo ${VO} ${LFN} | grep ${DEST} "
+command="lcg-lr --vo ${VO} ${LFN}"' | grep '"${DEST}"
 message="Checking that the replica exists"
 run_command "${command}" "${message}"
 
@@ -160,7 +168,7 @@ command="lcg-uf --vo dteam ${GUID} ${SURL}"
 message="Running unregister file command"
 run_command "${command}" "${message}"
 
-command="lcg-rf --vo dteam ${SURL} ${GUID}"
+command="lcg-rf --vo dteam -g ${GUID} ${SURL}"
 message="Running register file command"
 run_command "${command}" "${message}"
 
