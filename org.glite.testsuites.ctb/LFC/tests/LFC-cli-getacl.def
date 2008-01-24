@@ -1,0 +1,3 @@
+testName: LFC-cli-getacl
+testAbbr: lfcgetacl
+testTitle: Reading the ecl information of a file

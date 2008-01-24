@@ -1,0 +1,22 @@
+#!/bin/bash
+. $SAME_HOME/sensors/functions.sh
+nodeName=$1
+rm -f $SAME_WORK/LFC/no_vodir.$nodeName
+echo "<pre>"
+export LFC_HOST=$nodeName
+mydir="lfcmkdir$$"
+echo "Deleting a comment on file: /grid/$SAME_VO/$mydir"
+cmd1=`lfc-mkdir /grid/$SAME_VO/$mydir`
+clear=`lfc-setcomment /grid/$SAME_VO/$mydir "Sam test comment!"`
+clear=`lfc-delcomment /grid/$SAME_VO/$mydir`
+RETVAL=$?
+cmd1=`lfc-rm -r /grid/$SAME_VO/$mydir`
+echo "$clear"
+echo "</pre>"
+if [ $RETVAL -eq 0 ] ; then
+    echo "Test is "; samPrintOK;
+    exit $SAME_OK
+else
+    echo "Test failed!"; samPrintFAILED;
+    exit $SAME_ERROR
+fi

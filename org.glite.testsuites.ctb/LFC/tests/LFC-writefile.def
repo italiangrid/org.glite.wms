@@ -1,0 +1,4 @@
+testName: LFC-writefile
+testAbbr: lfcwf
+testTitle: Check we can create a file in the LFC for this VO
+testHelp: http://grid.cyfronet.pl/sam-doc/LFC/LFC-writefile.html

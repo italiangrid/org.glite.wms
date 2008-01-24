@@ -1,0 +1,18 @@
+#!/bin/bash
+. $SAME_HOME/sensors/functions.sh
+nodeName=$1
+rm -f $SAME_WORK/LFC/no_vodir.$nodeName
+
+echo "<pre>"
+export LFC_HOST=$nodeName
+scp -2 $SAME_HOME/sensors/LFC/tests/LFC-rpms.sh root@$nodeName:
+ssh -2 root@$LFC_HOST "chmod +x /root/LFC-rpms.sh ; /root/LFC-rpms.sh"
+RETVAL=$?
+echo "</pre>"
+if [ $RETVAL -eq 0 ] ; then
+    echo "Test is "; samPrintOK;
+    exit $SAME_OK
+else
+    echo "Test failed!"; samPrintFAILED;
+    exit $SAME_ERROR
+fi

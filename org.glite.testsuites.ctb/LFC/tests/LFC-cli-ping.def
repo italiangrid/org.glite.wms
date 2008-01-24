@@ -1,0 +1,3 @@
+testName: LFC-cli-ping
+testAbbr: lfcping
+testTitle: Check we can do a lfc-ping on the LFC server 

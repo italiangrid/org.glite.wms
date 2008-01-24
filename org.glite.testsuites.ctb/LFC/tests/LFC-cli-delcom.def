@@ -1,0 +1,3 @@
+testName: LFC-cli-delcom
+testAbbr: lfcdelcom
+testTitle: Check we can do a lfc-delcomment on a file 
