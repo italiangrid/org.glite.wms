@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <classad_distribution.h>
 #include <iostream>
+#include <cassert>
 
 namespace glite {
 namespace wmsutils {
@@ -148,7 +149,8 @@ T EvaluateExpr(classad::ClassAd& ad, const std::string& what)
 {
   classad::Value v;
   T t;
-  assert(ad.EvaluateExpr(what, v) && getValue(v,t));
+  bool const b = ad.EvaluateExpr(what, v) && getValue(v,t);
+  assert(b && "invalid return type for EvaluateExpr");
   return t;
 }
   
@@ -337,7 +339,7 @@ std::vector<std::string>* insertAttributeInVector(std::vector<std::string>* v, c
     break;
 
   default:
-    assert( false );
+    assert(false && "Invalid ExprTree::GetKind()");
   }
   exprTrace->pop_front();
   return v;
