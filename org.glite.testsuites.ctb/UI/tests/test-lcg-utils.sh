@@ -124,6 +124,10 @@ run_command "${command}" "${message}"
 
 SURL=$(echo ${OUTPUT})
 
+command="lcg-cp -n 1 -v ${SURL} file:///dev/null"
+message="Running copy with streams"
+run_command "${command}" "${message}"
+
 command="lcg-lg -v --vo ${VO} ${SURL}"
 message="Running list GUID by SURL command"
 run_command "${command}" "${message}"
