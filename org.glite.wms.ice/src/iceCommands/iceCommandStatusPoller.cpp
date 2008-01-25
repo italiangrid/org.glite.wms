@@ -207,7 +207,7 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
 }
 
 //____________________________________________________________________________
-list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< string >& cream_job_ids ) throw()
+list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< CreamJob >& cream_job_ids ) throw()
 {
   
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
@@ -218,11 +218,11 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
                  << cream_url << "]"
                  << log4cpp::CategoryStream::ENDLINE);
 
-  for(vector< string >::const_iterator thisJob = cream_job_ids.begin(); thisJob != cream_job_ids.end(); ++thisJob) {
+  for(vector< CreamJob >::const_iterator thisJob = cream_job_ids.begin(); thisJob != cream_job_ids.end(); ++thisJob) {
       CREAM_SAFE_LOG(m_log_dev->debugStream() 
                      << "iceCommandStatusPoller::check_multiple_jobs() - "
                      << "Will poll job with CREAM job id = ["
-                     << *thisJob << "]"
+                     << thisJob->getCompleteCreamJobID() << "]"
                      << log4cpp::CategoryStream::ENDLINE);
   }
 
@@ -270,12 +270,12 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
       soap_proxy::AbsCreamProxy::InfoArrayResult res;
 
       {
-	vector<string>::const_iterator jobit;
+	vector<CreamJob>::const_iterator jobit;
 	vector< soap_proxy::JobIdWrapper > jobVec;
 	
 	for(jobit = cream_job_ids.begin(); jobit != cream_job_ids.end(); ++jobit) 
 	  {
-	    soap_proxy::JobIdWrapper J( *jobit, 
+	    soap_proxy::JobIdWrapper J( jobit->getCreamJobID(), 
 					cream_url, // we trust cream_url is the same for all jobs!!!
 					vector<soap_proxy::JobPropertyWrapper>());
 	    jobVec.push_back( J );
@@ -303,12 +303,12 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
 	    soap_proxy::JobInfoWrapper, 
 	    string> thisInfo = infoIt->second;
 
-	  string completeCreamJobID = cream_url;
-	  boost::replace_all( completeCreamJobID, 
-			      m_conf->getConfiguration()->ice()->cream_url_postfix(), 
-			      "" );
+// 	  string completeCreamJobID = cream_url;
+// 	  boost::replace_all( completeCreamJobID, 
+// 			      m_conf->getConfiguration()->ice()->cream_url_postfix(), 
+// 			      "" );
 
-	  completeCreamJobID += "/" + infoIt->first;
+// 	  completeCreamJobID += "/" + infoIt->first;
 	  
 
 	  if( thisInfo.get<0>() == soap_proxy::JobInfoWrapper::OK ) {
@@ -320,7 +320,7 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
 			   << "iceCommandStatusPoller::check_multiple_jobs() - "
 			   << "CREAM didn't return information for the job ["
-			   << completeCreamJobID << "] for DN ["
+			   << infoIt->first << "] for DN ["
 			   << user_dn
 			   << "]. Error is [" << thisInfo.get<2>() 
 			   << "]. Removing this job from the cache"
@@ -328,7 +328,7 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
 	    {
 	      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 	      //remove_unknown_jobs_from_cache(cream_job_ids, the_job_status );
-	      jobCache::iterator it = m_cache->lookupByCompleteCreamJobID( completeCreamJobID/*infoIt->first*/ );
+	      jobCache::iterator it = m_cache->lookupByCompleteCreamJobID( infoIt->first );
 	      m_cache->erase( it );
 	    }
 
@@ -645,17 +645,20 @@ void iceUtils::iceCommandStatusPoller::execute( ) throw()
         list< iceUtils::CreamJob >::const_iterator it = (jit->second).begin();
         list< iceUtils::CreamJob >::const_iterator list_end = (jit->second).end();
         while ( it != list_end ) {
-            vector< string > jobs_to_poll;
+	  //vector< string > jobs_to_poll;
+	  vector<CreamJob> jobs_to_poll;
+	  
+	  //it = iceUtils::transform_n_elements( it, 
+	  it = iceUtils::copy_n_elements( it, 
+					       list_end, 
+					       m_max_chunk_size, 
+					       back_inserter( jobs_to_poll )
+					  /*, mem_fun_ref( &iceUtils::CreamJob::getPairIdCreamURL() ) */
+					  );
+	  
+	  list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
 
-            it = iceUtils::transform_n_elements( it, 
-						 list_end, 
-						 m_max_chunk_size, 
-						 back_inserter( jobs_to_poll ), 
-						 mem_fun_ref( &iceUtils::CreamJob::getCompleteCreamJobID ) );
-
-            list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
-
-            updateJobCache( j_status );// modifies the cache, locks it job by job
+	  updateJobCache( j_status );// modifies the cache, locks it job by job
         }        
     }
 }

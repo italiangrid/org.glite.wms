@@ -148,7 +148,8 @@ namespace util {
     template <class InputIterator, class Size, class OutputIterator> 
     InputIterator copy_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest) {
       for ( ; n > 0 && first != end; --n ) {
-	*dest = first->getCreamJobID();
+	//*dest = first->getCreamJobID();
+	*dest = *first;
 	++first;
 	++dest;
       }
