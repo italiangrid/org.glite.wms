@@ -12,6 +12,7 @@
 #define GLITE_WMS_X_BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
 #endif
+#include <boost/shared_ptr.hpp>
 
 namespace classad {
 class ClassAd;
@@ -28,7 +29,10 @@ class Request: boost::noncopyable
   Impl* m_impl;
 
 public:
-  Request(classad::ClassAd const* ad);
+  Request(
+    classad::ClassAd const* ad,
+    boost::shared_ptr<std::string> jw_template
+  );
   ~Request();
   void resolve();
   bool is_resolved() const;

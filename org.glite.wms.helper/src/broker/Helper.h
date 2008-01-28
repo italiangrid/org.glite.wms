@@ -9,6 +9,7 @@
 #define GLITE_WMS_HELPER_BROKER_HELPER_H
 
 #include "glite/wms/helper/HelperImpl.h"
+#include <boost/shared_ptr.hpp>
 
 namespace glite {
 namespace wms {
@@ -21,7 +22,10 @@ public:
 
   std::string id() const;
   std::string output_file_suffix() const;
-  classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
+  classad::ClassAd* resolve(
+    classad::ClassAd const* input_ad,
+    boost::shared_ptr<std::string> jw_template
+  ) const;
 };
 
 }}}} // glite::wms::helper::broker

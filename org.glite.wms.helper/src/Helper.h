@@ -16,6 +16,7 @@
 #define GLITE_WMS_X_BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
 #endif
+#include <boost/shared_ptr.hpp>
 
 namespace classad {
 class ClassAd;
@@ -37,8 +38,14 @@ public:
 
   std::string id() const;
 
-  std::string resolve(std::string const& input_file) const;
-  classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
+  std::string resolve(
+    std::string const& input_file,
+    boost::shared_ptr<std::string> jw_template
+  ) const;
+  classad::ClassAd* resolve(
+    classad::ClassAd const* input_ad,
+    boost::shared_ptr<std::string> jw_template
+  ) const;
 };
  
 }}} // glite::wms::helper

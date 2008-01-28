@@ -15,6 +15,7 @@
 #define GLITE_WMS_X_BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
 #endif
+#include <boost/shared_ptr.hpp>
 
 namespace classad {
 class ClassAd;
@@ -34,7 +35,10 @@ public:
   /**
    * Constructor.
    */
-  JobAdapter(const classad::ClassAd* ad);
+  JobAdapter(
+    const classad::ClassAd* ad,
+    boost::shared_ptr<std::string> jw_template
+  );
   /**
    * Destructor.
    */
@@ -48,6 +52,7 @@ public:
   
 private: 
   const classad::ClassAd* m_ad;
+  boost::shared_ptr<std::string> m_jw_template;
 };
 
 } // namespace jobadapter
