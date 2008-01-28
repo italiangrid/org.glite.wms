@@ -81,10 +81,9 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     if ( ! m_lb_enabled ) {
         CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "iceLBLogger::logEvent() - LB disabled for log event \""
-                        << ev->describe()
-                        << "\" for gridJobId=["
-                        << ev->getJob().getGridJobID() 
-                        << "]"
+                        << ev->describe() << "\" for gridJobId=["
+                        << ev->getJob().getGridJobID() << "] CreamJobID=[" 
+                        << ev->getJob().getCompleteCreamJobID() << "]"
                         << log4cpp::CategoryStream::ENDLINE);
         return ev->getJob();
     }
@@ -102,7 +101,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        << ev->describe()
                        << " GridJobID=[" 
                        << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
+                       << " CreamJobID=[" << ev->getJob().getCompleteCreamJobID() << "]"
                        << ". Caught exception " << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
         return ev->getJob();
@@ -117,7 +116,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        << ev->describe( )
                        << " GridJobID=[" 
                        << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getCreamJobID() << "]"
+                       << " CreamJobID=[" << ev->getJob().getCompleteCreamJobID() << "]"
                        // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
                        // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
                        
