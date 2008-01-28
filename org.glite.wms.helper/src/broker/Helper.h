@@ -22,10 +22,7 @@ public:
 
   std::string id() const;
   std::string output_file_suffix() const;
-  classad::ClassAd* resolve(
-    classad::ClassAd const* input_ad,
-    boost::shared_ptr<std::string> jw_template
-  ) const;
+  classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
 };
 
 }}}} // glite::wms::helper::broker

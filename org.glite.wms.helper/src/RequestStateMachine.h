@@ -12,11 +12,7 @@
 #include <set>
 #include <string>
 
-#ifndef GLITE_WMS_X_BOOST_UTILITY_HPP
-#define GLITE_WMS_X_BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
-#endif
-#include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
 namespace classad {
@@ -51,14 +47,10 @@ private:
   transition_table_type m_transition_table;
   final_states_type m_final_states;
   state_type m_current_state;
-  boost::shared_ptr<std::string> m_jw_template;
 
 public:
   // throws ADNotValid if state_machine_ad does not represent a valid state machine
-  RequestStateMachine(
-    classad::ClassAd const* state_machine_ad,
-    boost::shared_ptr<std::string> jw_template
-  );
+  RequestStateMachine(classad::ClassAd const* state_machine_ad);
   ~RequestStateMachine();
 
   void start(classad::ClassAd const* ad);

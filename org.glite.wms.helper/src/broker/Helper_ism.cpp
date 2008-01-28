@@ -444,9 +444,7 @@ Helper::output_file_suffix() const
 }
 
 classad::ClassAd*
-Helper::resolve(
-  classad::ClassAd const* input_ad,
-  boost::shared_ptr<std::string> jw_template) const
+Helper::resolve(classad::ClassAd const* input_ad) const
 {
   bool submit_to_exists = false;
   std::string ce_id = requestad::get_submit_to(*input_ad, submit_to_exists);
