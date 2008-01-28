@@ -397,11 +397,11 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG)){
 				// COLLECTIONS and DAGS case:
 				// (append special Resubmission private attributes)
-				if(confAd.hasAttribute(JDL::RETRYCOUNT)){
+				if(confAd.hasAttribute(JDL::RETRYCOUNT) && (!jdl->hasAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT))){
 					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT,
 						confAd.getInt(JDL::RETRYCOUNT));
 				}
-				if(confAd.hasAttribute(JDL::SHALLOWRETRYCOUNT)){
+				if(confAd.hasAttribute(JDL::SHALLOWRETRYCOUNT) && (!jdl->hasAttribute(JDLPrivate::DEFAULT_NODE_SHALLOWRETRYCOUNT))){
 					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_SHALLOWRETRYCOUNT,
 						confAd.getInt(JDL::SHALLOWRETRYCOUNT));
 				}
