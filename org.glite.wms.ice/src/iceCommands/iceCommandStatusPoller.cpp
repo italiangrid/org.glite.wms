@@ -571,10 +571,10 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
             if ( ev ) {
                 tmp_job = m_lb_logger->logEvent( ev );
             }
-            jit = m_cache->put( tmp_job );
-            
-            m_iceManager->resubmit_or_purge_job( jit );
         }
+        jit = m_cache->put( tmp_job );
+        
+        m_iceManager->resubmit_or_purge_job( jit );
     }
 }
 
