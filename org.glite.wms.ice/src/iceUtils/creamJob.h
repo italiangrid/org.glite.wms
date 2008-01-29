@@ -82,7 +82,8 @@ namespace glite {
           std::string m_sequence_code;
           std::string m_delegation_id;     
           std::string m_wn_sequence_code; //! The sequence code for the job sent to the worker node      
-	  glite::ce::cream_client_api::job_statuses::job_status m_status;
+          glite::ce::cream_client_api::job_statuses::job_status m_prev_status; //! previous status of the job
+	  glite::ce::cream_client_api::job_statuses::job_status m_status; //! Current status of the job
           int m_num_logged_status_changes; //! Number of status changes which have been logged to L&B
           time_t m_last_seen; //! The time of the last received notification for the job. For newly created jobs, this value is set to zero.
           std::string m_lease_id; //! The lease ID associated with this job
@@ -109,7 +110,7 @@ namespace glite {
           CreamJob( );
 
 	  //! Sets the status of the CreamJob object
-	  void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_status = st; }
+	  void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_prev_status = m_status; m_status = st; }
 	  //! Sets the cream unique identifier for this job
           void setCreamJobID( const std::string& cid ) { m_cream_jobid = cid; }
           //! Sets the jdl for this job
@@ -263,6 +264,8 @@ namespace glite {
 	  //! Gets the status of the job
           glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { return m_status; }
 
+          glite::ce::cream_client_api::job_statuses::job_status get_prev_status(void) const { return m_prev_status; }
+
 	  //! Return true if j1 and j2 have the same grid job identifier
           friend bool operator==( const CreamJob& j1, const CreamJob& j2 ) {
 	    return ( j1.getGridJobID() == j2.getGridJobID() );
@@ -325,6 +328,7 @@ namespace glite {
 	      ar & m_sequence_code;
 	      ar & m_delegation_id;     
 	      ar & m_wn_sequence_code;
+              ar & m_prev_status;
 	      ar & m_status;
 	      ar & m_num_logged_status_changes;
 	      ar & m_last_seen;

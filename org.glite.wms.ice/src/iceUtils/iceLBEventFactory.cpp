@@ -33,7 +33,10 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
         // nothing to log
         return 0;
     case jobstat::RUNNING:
-        return new job_running_event( theJob ); // FIXME
+        if ( theJob.get_prev_status() == jobstat::HELD )
+            return new job_resumed_event( theJob );
+        else
+            return new job_running_event( theJob ); 
     case jobstat::REALLY_RUNNING:
         return new job_really_running_event( theJob );
     case jobstat::CANCELLED:

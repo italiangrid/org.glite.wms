@@ -77,6 +77,7 @@ using namespace glite::wms::ice::util;
 
 //______________________________________________________________________________
 CreamJob::CreamJob( ) :
+    m_prev_status( api::job_statuses::UNKNOWN ),
     m_status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
     m_last_seen( time(0) ),
