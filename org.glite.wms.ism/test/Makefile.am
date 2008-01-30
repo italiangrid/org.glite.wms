@@ -24,9 +24,9 @@ glite_wms_ism_cemon_asynch_purchaserTest_SOURCES = \
         ism-cemon-asynch-purchaserTest.cpp
 
 glite_wms_ism_file_purchaserTest_LDADD = \
-        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_file_purchaser.la \
-        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_ii_purchaser.la \
-        $(top_srcdir)/build/src/libglite_wms_ism.la \
+        $(top_srcdir)/src/purchaser/libglite_wms_ism_file_purchaser.la \
+        $(top_srcdir)/src/purchaser/libglite_wms_ism_ii_purchaser.la \
+        $(top_srcdir)/src/libglite_wms_ism.la \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
@@ -44,8 +44,8 @@ glite_wms_ism_file_purchaserTest_LDADD = \
         $(BOOST_LIBS)
 
 glite_wms_ism_ii_purchaserTest_LDADD = \
-        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_ii_purchaser.la \
-        $(top_srcdir)/build/src/libglite_wms_ism.la \
+        $(top_srcdir)/src/purchaser/libglite_wms_ism_ii_purchaser.la \
+        $(top_srcdir)/src/libglite_wms_ism.la \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
@@ -57,7 +57,7 @@ glite_wms_ism_ii_purchaserTest_LDADD = \
         $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
         $(GLITE_WMS_COMMON_UTIL_LIBS) \
-        $(GLOBUS_LDAP_THR_LIBS) \
+        -lldap -llber \
         $(GLOBUS_SSL_THR_LIBS) \
         $(CLASSAD_LIBS) \
         $(BOOST_LIBS)
@@ -73,8 +73,6 @@ glite_wms_ism_rgma_purchaserTest_LDADD = \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-        $(GLITE_WMS_COMMON_UT_II_LIBS) \
-        $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
         $(GLITE_WMS_COMMON_UTIL_LIBS) \
         $(GLOBUS_LDAP_THR_LIBS) \

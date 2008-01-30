@@ -5,60 +5,62 @@
 
 // $Id$
 
-#ifndef GLITE_WMS_ISM_PURCHASER_LDAP_UTILS_H
-#define GLITE_WMS_ISM_PURCHASER_LDAP_UTILS_H
+#ifndef GLITE_WMS_II_PURCHASER_LDAP_UTILS_H
+#define GLITE_WMS_II_PURCHASER_LDAP_UTILS_H
 
 #include <string>
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-#include "ldap-dn-utils.h"
 #include "glite/wms/ism/purchaser/common.h"
 
 namespace glite {
 namespace wms {
-
-namespace common {
-namespace ldif2classad {
-class LDIFObject;
-class LDAPConnection;
-}
-}
-
-namespace ldif2classad = common::ldif2classad;
-
 namespace ism {
 namespace purchaser {
 
-std::string get_cluster_name(ldif2classad::LDIFObject& ldif_CE);
-std::string get_site_name(ldif2classad::LDIFObject& ldif_CE);
+class LDAPException: public std::exception
+{
+  std::string m_error;
+public:
+  LDAPException(std::string const& error)
+    : m_error(error)
+  {
+  }
+  ~LDAPException() throw()
+  {
+  }
+  virtual char const* what() const throw()
+  {
+    return m_error.c_str();
+  }
+};
 
 void
 fetch_bdii_ce_info(
-  boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
-  gluece_info_container_type& gluece_info_container
+  std::string const& hostname,
+  size_t port,
+  std::string const& basedn,
+  time_t timeout,
+  PurchaserInfoContainer&
 );
 
 void
 fetch_bdii_se_info(
-  boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
-  gluese_info_container_type& gluese_info_container
+  std::string const& hostname,
+  size_t port,
+  std::string const& basedn,
+  time_t timeout,
+  PurchaserInfoContainer&
 );
 
 void 
 fetch_bdii_info(
   std::string const& hostname,
-  int port,
-  std::string const& dn,
-  int timeout,
-  gluece_info_container_type& gluece_info_container,
-  gluese_info_container_type& gluese_info_container
+  size_t port,
+  std::string const& basedn,
+  time_t timeout,
+  PurchaserInfoContainer&,
+  PurchaserInfoContainer&
 );
 
-
-} // namespace purchaser
-} // namespace ism
-} // namespace wms
-} // namespace glite
+}}}}
 
 #endif

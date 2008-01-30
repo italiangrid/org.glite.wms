@@ -18,9 +18,6 @@ using namespace std;
 
 namespace glite {
 namespace wms {
-
-namespace ldif2classad	= common::ldif2classad;
-
 namespace ism {
 namespace purchaser {
 
@@ -163,7 +160,9 @@ void ism_ii_purchaser::do_purchase()
 
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
-
+    }
+    catch (LDAPException& e) {
+      Error("Failed to purchase info from " << m_hostname << ":" << m_port << " (" << e.what() << ")");
     } catch (...) {
       // TODO: Check which exception may arrive here... and remove catch all
       Warning("Failed to purchase info from " << m_hostname << ":" << m_port);

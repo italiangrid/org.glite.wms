@@ -27,6 +27,13 @@ namespace wms {
 namespace ism {
 namespace purchaser {
 
+typedef boost::shared_ptr<classad::ClassAd> ClassAdPtr;
+
+typedef std::map<
+  std::string,
+  ClassAdPtr
+> PurchaserInfoContainer;
+
 typedef boost::shared_ptr<classad::ClassAd>        gluece_info_type;
 typedef std::map<std::string, gluece_info_type>    gluece_info_container_type;
 typedef gluece_info_container_type::const_iterator gluece_info_const_iterator;
