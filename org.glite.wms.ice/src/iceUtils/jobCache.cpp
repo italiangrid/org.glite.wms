@@ -354,7 +354,12 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
     jobCache::iterator result = it;
     ++result; // advance iterator
     // job found, log operation and remove
-
+    
+    CREAM_SAFE_LOG( m_log_dev->debugStream() 
+                      << "jobCache::erase() - Removing CreamJobID ["
+		      << it->getCompleteCreamJobID() << "] from BerkeleyDB..."
+		      << log4cpp::CategoryStream::ENDLINE );
+    
     try{
       m_dbMgr->delByCid( it->getCompleteCreamJobID() );
     } catch(JobDbException& dbex) {

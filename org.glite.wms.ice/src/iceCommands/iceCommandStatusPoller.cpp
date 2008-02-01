@@ -207,7 +207,11 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
 }
 
 //____________________________________________________________________________
-list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, const string& cream_url, const vector< CreamJob >& cream_job_ids ) throw()
+list< soap_proxy::JobInfoWrapper > 
+iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, 
+						       const string& cream_url, 
+						       const vector< CreamJob >& cream_job_ids ) 
+  throw()
 {
   
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
@@ -218,7 +222,9 @@ list< soap_proxy::JobInfoWrapper > iceUtils::iceCommandStatusPoller::check_multi
                  << cream_url << "]"
                  << log4cpp::CategoryStream::ENDLINE);
 
-  for(vector< CreamJob >::const_iterator thisJob = cream_job_ids.begin(); thisJob != cream_job_ids.end(); ++thisJob) {
+  for(vector< CreamJob >::const_iterator thisJob = cream_job_ids.begin(); 
+      thisJob != cream_job_ids.end(); 
+      ++thisJob) {
       CREAM_SAFE_LOG(m_log_dev->debugStream() 
                      << "iceCommandStatusPoller::check_multiple_jobs() - "
                      << "Will poll job with CREAM job id = ["
@@ -474,6 +480,13 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
     completeJobID += "/" + info_obj.getCreamJobID();
     
     //string cid( info_obj.getCompleteCreamJobID() ); // Cream job id
+
+    CREAM_SAFE_LOG( m_log_dev->debugStream()
+                        << method_name
+                        << " Updating status for CREAM Job ID ["
+			<< info_obj.getCreamJobID() << "] CREAM URL ["
+			<< info_obj.getCreamURL() << "]"
+                        << log4cpp::CategoryStream::ENDLINE);
 
     jobCache::iterator job_pos( m_cache->lookupByCompleteCreamJobID( completeJobID ) );
     if ( m_cache->end() != job_pos ) {

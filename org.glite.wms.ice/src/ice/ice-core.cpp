@@ -670,7 +670,7 @@ throw()
 	  string errMex = wrong.second;
 	  
 	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "iceCommandSubmit::execute() - "
+			 << "Ice::purge_job() - "
 			 << "Cannot purge job " 
 			 << jit->describe()
 			 << ". Reason is: " << errMex
@@ -678,7 +678,12 @@ throw()
 	  
 	  return jit;
 	}
-
+	CREAM_SAFE_LOG(m_log_dev->debugStream()
+			 << "Ice::purge_job() - "
+			 << "Removing purged job " 
+			 << jit->describe()
+			 << " from cache"
+			 << log4cpp::CategoryStream::ENDLINE);
         jit = m_cache->erase( jit );
 
     } catch (ice_util::ClassadSyntax_ex& ex) {

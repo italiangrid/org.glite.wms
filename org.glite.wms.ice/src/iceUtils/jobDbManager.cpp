@@ -23,6 +23,7 @@
 
 #include "jobDbManager.h"
 #include "dbCursorWrapper.h"
+
 #include "creamJob.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <boost/filesystem/operations.hpp>
@@ -459,6 +460,13 @@ void iceUtil::jobDbManager::delByCid( const string& cid )
   Dbt key( (void*)cid.c_str(), cid.length()+1 );
   Dbt gidData;
   DbTxn* txn_handler;
+  
+  CREAM_SAFE_LOG( m_log_dev->debugStream()                      
+                        << "jobDbManager::delByCid() -"
+                        << "Removing entry ["
+			<< cid << "] from database."
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
   
   try {
     txn_handler = NULL;
