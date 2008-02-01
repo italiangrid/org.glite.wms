@@ -19,28 +19,35 @@
 
 #include "jobCacheIterator.h"
 #include "jobCache.h"
-
-//#include<sstream>
-
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <boost/archive/text_iarchive.hpp>
 
+namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
 jobCache* jobCacheIterator::s_cache( 0 );
+
+jobCacheIterator::jobCacheIterator() throw() :
+    m_valid_it( false ),
+    m_log_dev( api_util::creamApiLogger::instance()->getLogger() )
+{
+
+}
+
+jobCacheIterator::jobCacheIterator( const std::set< std::string >::iterator& anIt ) throw() :
+    m_valid_it( false ), 
+    m_it(anIt),
+    m_log_dev( api_util::creamApiLogger::instance()->getLogger() )
+{ 
+
+}
 
 //____________________________________________________________________
 bool jobCacheIterator::operator==( const jobCacheIterator& anIt ) 
   const throw()
 {
   return ( m_it == anIt.m_it );
-}
-
-//____________________________________________________________________
-bool jobCacheIterator::operator==( const set<string>::iterator anIt ) 
-  const throw()
-{
-  return ( m_it == anIt );
 }
 
 //____________________________________________________________________
@@ -51,83 +58,85 @@ bool jobCacheIterator::operator!=( const jobCacheIterator& anIt )
 }
 
 //____________________________________________________________________
-bool jobCacheIterator::operator!=( const set<string>::iterator anIt ) 
-  const throw()
-{
-  return !( m_it == anIt );
-}
-
-//____________________________________________________________________
-jobCacheIterator&
-jobCacheIterator::operator=( const set<string>::iterator anIt ) 
-  throw()
-{
-  m_it = anIt;
-  m_valid_it = false;
-  return *this;  
-}
-
-//____________________________________________________________________
 jobCacheIterator&
 jobCacheIterator::operator=( const jobCacheIterator& anIt ) 
   throw()
 {
-  m_it = anIt.m_it;
-  m_valid_it = false;
-  return *this;
+    if ( this != &anIt ) {
+        m_it = anIt.m_it;
+        m_valid_it = false;
+    }
+    return *this;
 }
 
 //___________________________________________________________________
 CreamJob*
 jobCacheIterator::operator->() throw()
 {
+   static const char* method_name = "jobCacheIterator::operator->() - ";
 
-  if(*this == s_cache->end() )
-    abort();
-
-  if( m_valid_it ) return &m_theJob;
-  
-  m_theJob = CreamJob();
-  
-  try {
-    istringstream is;
-    is.str( s_cache->getDbManager()->getByGid( *m_it ) );
-    boost::archive::text_iarchive ia(is);
-    ia >> m_theJob;
-    m_valid_it = true;
-  } catch(JobDbException& ex) {
-    ;
-  }
-  return &m_theJob;
+    if( *this == s_cache->end() ) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
+                       << "Trying to dereference end() iterator. Aborting."
+                       << log4cpp::CategoryStream::ENDLINE );        
+        abort();
+    }
+    
+    refresh();
+    
+    return &m_theJob;
 }
 
 //____________________________________________________________________
-CreamJob&
+CreamJob
 jobCacheIterator::operator*() throw()
 {
-  //string serjob( s_cache->getDbManager()->getByGid( *m_it ) );
-  //CreamJob cj;
-  //istringstream tmpOs;
-  
-  if(*this == s_cache->end() )
-    abort();
+    static const char* method_name = "jobCacheIterator::operator*() - ";
 
-  if( m_valid_it ) return m_theJob;
+    if(*this == s_cache->end() ) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
+                       << "Trying to dereference end() iterator. Aborting."
+                       << log4cpp::CategoryStream::ENDLINE );
+        abort();
+    }
 
-  //CreamJob aJob;
+    refresh();
 
-  m_theJob = CreamJob();
+    return m_theJob;
+}
 
-  try {
-    istringstream is;
-    //cout << "**** DEBUG jobCacheIterator::operator*() - Looking for GID [" << *m_it << "]" << endl;
-    is.str( s_cache->getDbManager()->getByGid( *m_it ) );
-    boost::archive::text_iarchive ia(is);
-    ia >> m_theJob;
-    m_valid_it = true;
-  } catch(JobDbException& ex) {
-    ;
-  }
-  
-  return m_theJob;
+void jobCacheIterator::refresh( ) throw()
+{
+    static const char* method_name = "jobCacheIterator::refresh() - ";
+
+    if ( m_valid_it )
+        return;
+
+    m_theJob = CreamJob();
+    
+    try {
+        istringstream is;
+        is.str( s_cache->getDbManager()->getByGid( *m_it ) );
+        boost::archive::text_iarchive ia(is);
+        ia >> m_theJob;
+        m_valid_it = true;
+    } catch( JobDbException& ex ) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
+                       << "Got JobDbException while loading job from cache. "
+                       << "Reason is \"" << ex.what() << "\". Aborting."
+                       << log4cpp::CategoryStream::ENDLINE );
+        abort();
+    } catch( std::exception& ex ) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
+                       << "Got std::exception while loading job from cache. "
+                       << "Reason is \"" << ex.what() << "\". Aborting."
+                       << log4cpp::CategoryStream::ENDLINE );
+        abort();            
+    } catch( ... ) {
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
+                       << "Got unknown exception while loading job from cache. "
+                       << "Aborting."
+                       << log4cpp::CategoryStream::ENDLINE );
+        abort();            
+    }
 }

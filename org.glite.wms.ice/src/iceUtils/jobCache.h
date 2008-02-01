@@ -83,131 +83,17 @@ namespace glite {
 
 	  log4cpp::Category* m_log_dev;
 
-//           class jobCacheTable {
-//           protected:
-//               // Some useful typedefs, for internal use only...
-//               typedef std::list< CreamJob > t_jobsType;
-//               typedef std::map< std::string, t_jobsType::iterator > t_cidMapType;
-//               typedef std::map< std::string, t_jobsType::iterator > t_gidMapType;
-// 
-//               t_jobsType m_jobs; ///< Jobs in the jobCacheTable are stored in a list
-//               std::map< std::string, t_jobsType::iterator > m_cidMap; ///< This hash table associates Cream jobIDs with job positions in the list _jobs
-//               std::map< std::string, t_jobsType::iterator > m_gidMap; ///< This hash table associates Grid jobIDs with job positions in the list _jobs
-// 
-// 
-//           public:
-// 
-//               // Typedefs
-//               typedef t_jobsType::iterator iterator; ///< The standard (modifying) iterator used for containers
-//               typedef t_jobsType::const_iterator const_iterator; ///< The standard (non-modifying) iterator used for containers
-// 
-//               jobCacheTable();
-//               virtual ~jobCacheTable() { };             
-//               
-//               /**
-//                * Inserts a job into the in-memory hash table. If the job
-//                * is already in the table, the old job is overwritten by the new
-//                * one. This method <em>does not</em> log anything on the journal
-//                *
-//                * @param c The job to insert
-//                * @return an iterator of the inserted job
-//                */
-//               jobCacheTable::iterator putJob( const CreamJob& c );
-//               
-//               /**
-//                * Removes a job from the in-memory hash table. If the job
-//                * is not in the table, this method does nothing. This method
-//                * <em>does not</em> log anything on the journal.
-//                *
-//                * @param pos the iterator pointint to the job to be
-//                * removed. If pos == end(), this method does nothing
-//                */
-//               void delJob( const jobCacheTable::iterator& pos );
-//               
-//               /**
-//                * Looks up for a job with a given Grid ID
-//                * (gid). Returns an iterator pointing to the requested
-//                * job in the _jobs data structure.
-//                *
-//                * @param gid the Grid JobID to look for 
-//                *
-//                * @return an iterator to the requested job in the _jobs
-//                * list; returns an iterator pointing to the end of list
-//                * (_jobs.end()) if the job was not found
-//                */
-//               jobCacheTable::iterator findJobByGID( const std::string& gid );
-//                             
-//               /**
-//                * Looks up for a job with a given Cream ID (cid). Returns
-//                * an iterator pointint to the requested job in the
-//                * _jobs data structure.
-//                *
-//                * @param cid the Cream JobID to look for 
-//                *
-//                * @return an iterator to the requested job in the _jobs
-//                * list; returns an iterator pointing to the end of list
-//                * (_jobs.end()) if the job was not found
-//                */
-//               jobCacheTable::iterator findJobByCID( const std::string& cid );
-// 
-//               /**
-//                * Returns an iterator to the first job in the jobCacheTable
-//                *
-//                * @return an iterator to the first job
-//                */
-//               jobCacheTable::iterator begin( void );
-// 
-//               /**
-//                * Returns an iterator to the end of the jobCacheTable
-//                *
-//                * @return an iterator to the end of the jobCacheTable
-//                */
-//               jobCacheTable::iterator end( void );
-// 
-//               /**
-//                * Returns a const_iterator to the first job in the jobCacheTable
-//                *
-//                * @return a const_iterator to the first job
-//                */
-//               jobCacheTable::const_iterator begin( void ) const;
-// 
-//               /**
-//                * Returns a const_iterator to the end of the jobCacheTable
-//                *
-//                * @return a const_iterator to the end of the jobCacheTable
-//                */
-//               jobCacheTable::const_iterator end( void ) const;
-// 
-//           }; // class jobCacheTable
-
-	  
-
-//          jobCacheTable m_jobs; ///< The in-core data structure holding the set of jobs
-
 	  std::set<std::string> m_GridJobIDSet;
 
 	  void load( void ) throw();
 	  
 	  boost::scoped_ptr< glite::wms::ice::util::jobDbManager > m_dbMgr;
 	  
-	  //glite::wms::ice::util::jobDbManager* getDbManager( void ) const {return m_dbMgr.get();}
-
 	protected:
 	  jobCache( );
 
 	public:
 	  
-/* 	  class Iterator { */
-/* 	  public: */
-/* 	    Iterator& operator++() { */
-/* 	      (*jobCache::getInstance()->getDbManager())++; */
-/* 	      return *this; */
-/* 	    } */
-/* 	  }; */
-
-//          typedef jobCacheTable::iterator iterator; ///< Iterator to the jobCache CREAM jobs. If it is of type jobCache::iterator, then *it is of type creamJob;
-//          typedef jobCacheTable::const_iterator const_iterator; ///< Const iterator to the jobCache elements. If it is of type jobCache::iterator, then *it is of type creamJob;
-
 	  typedef jobCacheIterator iterator;
 
           static boost::recursive_mutex mutex; ///< Lock exported to users of the jobCache. This is used to handle client-side mutual exclusion to the jobCache.
@@ -227,13 +113,13 @@ namespace glite {
 
 	  // Call this once and before invokation of getInstance()
 	  static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
-	  // static void setAutoPurgeLog( const bool autopurge ) { s_auto_purge_log = autopurge; }
 	  static void setReadOnly( const bool rdonly ) { s_read_only = rdonly; }
 
           /**
-           * Changes the directory containing the persistency information. This method,
-           * if used at all, must be called _before_ the first invokation of
-           * the getInstance() method.
+           * Changes the directory containing the persistency
+           * information. This method, if used at all, must be called
+           * _before_ the first invokation of the getInstance()
+           * method.
            *
            * @param dir the directory containing the database of persistency
            */
@@ -301,43 +187,19 @@ namespace glite {
            *
            * @return an iterator to the first job
            */
-          iterator begin( void );//  {
-//               return m_jobs.begin();
-//           };
+          iterator begin( void );
           
           /**
            * Returns an iterator to the end of the jobCache
            *
            * @return an iterator to the end of the jobCache
            */
-          iterator end( void ); // {
-//               return m_jobs.end();
-//           };
+          iterator end( void );
           
-          /**
-           * Returns a const_iterator to the first job in the jobCache
-           *
-           * @return a const_iterator to the first job 
-           */
-//           const_iterator begin( void ) const {
-//               return m_jobs.begin();
-//           };
-          
-          /**
-           * Returns a const_iterator to the end of the jobCache
-           *
-           * @return a const_iterator to the end of the jobCache
-           */
-//           const_iterator end( void ) const {
-//               return m_jobs.end();
-//           };
-
 	  jobDbManager* getDbManager( void ) const throw() {
 	    return m_dbMgr.get();
 	  }
 
-        protected:	  
-	  void print(std::ostream&);
 	};
       }
     }

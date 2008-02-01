@@ -26,7 +26,6 @@
 #include "boost/format.hpp"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
-//#include <boost/archive/text_iarchive.hpp>
 
 // System INCLUDES
 #include <iostream>
@@ -53,116 +52,7 @@ bool   jobCache::s_recoverable_db = false;
 bool   jobCache::s_read_only = false;
 boost::recursive_mutex jobCache::mutex;
 
-// 
-// Inner class definitions
-//
-
-//______________________________________________________________________________
-// jobCache::jobCacheTable::jobCacheTable( ) :
-//     m_jobs( ),
-//     m_cidMap( ),
-//     m_gidMap( )
-// {
-// 
-// }
-// 
-// //______________________________________________________________________________
-// jobCache::jobCacheTable::iterator jobCache::jobCacheTable::putJob( const CreamJob& c )
-// {
-//     // Note: the GridJobID of a job MUST always be defined; the creamJobId
-//     // could be initially empty, so we need to check this.
-// 
-//     t_gidMapType::iterator it = m_gidMap.find( c.getGridJobID() );
-//     jobCacheTable::iterator pos;
-//     if ( it == m_gidMap.end() ) {
-//         // Inserts a new job
-//         m_jobs.push_back( c );
-//         pos = --m_jobs.end();
-//     } else {
-//         pos = it->second;
-//         // overwrites existing job
-//         *pos = c;
-//     }
-//     m_gidMap.insert( make_pair( c.getGridJobID(), pos ) );
-//     if ( !c.getCreamJobID().empty() ) {
-//         m_cidMap.insert( make_pair( c.getCreamJobID(), pos ) );
-//     }
-//     return pos;
-// }
-// 
-// //______________________________________________________________________________
-// void jobCache::jobCacheTable::delJob( const jobCacheTable::iterator& pos )
-// {
-//     if ( pos == end() )
-//         return;
-// 
-//     // Removes from the gidMap
-//     m_gidMap.erase( pos->getGridJobID() );
-// 
-//     // Removes from the cidMap
-//     if ( !pos->getCreamJobID().empty() ) {
-//         m_cidMap.erase( pos->getCreamJobID() );
-//     }
-// 
-//     // Finally, removes from the joblist
-//     m_jobs.erase( pos );
-// }
-// 
-// //______________________________________________________________________________
-// jobCache::jobCacheTable::iterator 
-// jobCache::jobCacheTable::findJobByGID( const std::string& gid )
-// {
-//     t_gidMapType::iterator it = m_gidMap.find( gid );
-// 
-//     if ( it != m_gidMap.end() ) {
-//         return it->second;
-//     } else {
-//         return m_jobs.end();
-//     }
-// }
-// 
-// //______________________________________________________________________________
-// jobCache::jobCacheTable::iterator 
-// jobCache::jobCacheTable::findJobByCID( const std::string& cid )
-// {
-//     t_cidMapType::iterator it = m_cidMap.find( cid );
-// 
-//     if ( it != m_cidMap.end() ) {
-//         return it->second;
-//     } else {
-//         return m_jobs.end();
-//     }
-// }
-// 
-// //______________________________________________________________________________
-// jobCache::jobCacheTable::iterator 
-// jobCache::jobCacheTable::begin( void )
-// {
-//     return m_jobs.begin( );
-// }
-// 
-// //______________________________________________________________________________
-// jobCache::jobCacheTable::iterator 
-// jobCache::jobCacheTable::end( void )
-// {
-//     return m_jobs.end( );
-// }
-// 
-// //______________________________________________________________________________
-// jobCache::jobCacheTable::const_iterator 
-// jobCache::jobCacheTable::begin( void ) const
-// {
-//     return m_jobs.begin( );
-// }
-// 
-// //______________________________________________________________________________
-// jobCache::jobCacheTable::const_iterator 
-// jobCache::jobCacheTable::end( void ) const
-// {
-//     return m_jobs.end( );
-// }
-
-//______________________________________________________________________________
+//____________________________________________________________________________
 jobCache* jobCache::getInstance() throw()
 {
     if ( !s_instance )
@@ -170,11 +60,10 @@ jobCache* jobCache::getInstance() throw()
     return s_instance;
 }
 
-//______________________________________________________________________________
-jobCache::jobCache( void )
-    : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-      m_GridJobIDSet( )
-      //m_jobs( )
+//____________________________________________________________________________
+jobCache::jobCache( void ) :
+    m_log_dev(apiutil::creamApiLogger::instance()->getLogger()),
+    m_GridJobIDSet( )
 { 
   jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db, false, s_read_only );
 
@@ -188,20 +77,9 @@ jobCache::jobCache( void )
         abort();
     }
     m_dbMgr.reset( dbm );
-    //try {
     
     load();
 	 
-    //} catch( ClassadSyntax_ex& ex ) {
-    //    CREAM_SAFE_LOG( m_log_dev->fatalStream()
-    //                    << "jobCache::jobCache() - "
-    //                    << "Failed to load the jobCache from the database. "
-    //                    << "Reason is: " << ex.what()
-    //                    << ". Giving up"
-    //                    << log4cpp::CategoryStream::ENDLINE );
-    //    abort();
-    //}
-    
     jobCacheIterator::s_cache = this;
 }
 
@@ -221,8 +99,6 @@ void jobCache::load( void ) throw()
    */
   vector<string> records;
   try {
-    //m_dbMgr->getAllRecords( records );
-
     m_dbMgr->initCursor();
 
     char *data;
@@ -252,8 +128,6 @@ void jobCache::load( void ) throw()
                         << log4cpp::CategoryStream::ENDLINE );
         abort();
       }
-      
-//      free(data);
     }
 
     m_dbMgr->endCursor();
@@ -273,11 +147,9 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
 {   
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
-      //m_dbMgr->put(cj.serialize(), cj.getCreamJobID(), cj.getGridJobID() );
       ostringstream ofs;
       boost::archive::text_oarchive oa(ofs);
       oa << cj;
-      //m_dbMgr->put( ofs.str(), cj.getCreamJobID(), cj.getGridJobID() );
       m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
@@ -285,24 +157,11 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
 			<< log4cpp::CategoryStream::ENDLINE );
         abort();
     }
-    //return m_jobs.putJob( cj );
-    //m_GridJobIDSet.insert( cj.getGridJobID() );
     return jobCacheIterator( (m_GridJobIDSet.insert( cj.getGridJobID() )).first );
 }
 
-//______________________________________________________________________________
-void jobCache::print(ostream& os) {
-//     jobCacheTable::const_iterator it;
-//     for ( it=m_jobs.begin(); it!=m_jobs.end(); it++ ) {
-//         os << "GID=" << it->getGridJobID() 
-//            << " CID=" << it->getCreamJobID() 
-//            << " STATUS=" << it->getStatus()
-//            << endl;
-//     }
-}
 
 //______________________________________________________________________________
-//jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
 jobCache::iterator 
 jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
   throw()
@@ -345,9 +204,6 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 jobCache::iterator jobCache::erase( jobCache::iterator it )
 {
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
-//     if ( it == m_jobs.end() ) {
-//         return it;
-//     }
 
     if( it == this->end() ) return it;
 
@@ -369,7 +225,6 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
         abort();
     }
 
-    //m_jobs.delJob( it );    
     m_GridJobIDSet.erase( it.m_it );
     return result;
 }
