@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2  2008/02/04 07:12:34  giaco
+#       - remove deps from expat and libtar
+#
 #       Revision 1.20.2.1  2006/04/03 16:17:04  gianelle
 #       emoved JP dependencies (GLITE_WMS_OPTIONAL_JP_LIBS)
 #
@@ -143,7 +146,6 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(EXPAT_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) $(GLITE_WMS_PURGER_LIBS) \
         $(RENEWAL_NOTHR_LIBS)	
 
