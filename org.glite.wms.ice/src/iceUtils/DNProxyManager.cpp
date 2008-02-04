@@ -22,7 +22,8 @@
 #include "iceUtils.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "jobCache.h"
-#include "glite/ce/cream-client-api-c/certUtil.h"
+//#include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <iostream>
@@ -38,7 +39,7 @@
 
 #include <boost/filesystem/operations.hpp>
 
-extern int errno;
+//extern int errno;
 
 namespace iceUtil = glite::wms::ice::util;
 namespace cream_api = glite::ce::cream_client_api;
@@ -75,40 +76,13 @@ namespace {
         }
         return result;
     }
-
-
-
-//   class dnprxUpdater {
-//     iceUtil::DNProxyManager* m_mgr;
-//     log4cpp::Category *m_log_dev;
-
-//   public:
-//     dnprxUpdater( iceUtil::DNProxyManager* mgr, log4cpp::Category *log_dev ) : m_mgr( mgr ), m_log_dev( log_dev ) {}
-    
-//     void operator()( iceUtil::CreamJob& aJob ) {
-      
-      
-      
-//       if( m_mgr->getBetterProxyByDN( aJob.getUserDN() ) == aJob.getUserProxyCertificate() )
-// 	return;
-      
-//       CREAM_SAFE_LOG(m_log_dev->infoStream() 
-// 		     << "dnprxUpdater::operator()() - "
-// 		     << "Found DN ["
-// 		     << aJob.getUserDN() << "] -> Proxy ["
-// 		     << aJob.getUserProxyCertificate() << "]"
-// 		     << log4cpp::CategoryStream::ENDLINE);
-      
-//       m_mgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate());
-//     }
-//   };
 }
 
 //______________________________________________________________________________
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 {
 
-  //boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( mutex );
 
   if( !s_instance ) 
     s_instance = new DNProxyManager();
@@ -167,7 +141,9 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			 << "DNProxyManager::CTOR() - "
 			 << "Proxy file ["
 			 << localProxy << "] not found for DN ["
-			 << *it << "] in ICE's persistency dir. Trying to find the most long-lived"
+			 << *it 
+			 << "] in ICE's persistency dir. "
+			 << "Trying to find the most long-lived"
 			 << " one in the job cache for the current DN..."
 			 << log4cpp::CategoryStream::ENDLINE);
 
@@ -224,21 +200,25 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
-  string dn;
-  try {
-    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( prx );
-  } catch(exception& ex) {
-     CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		    << "DNProxyManager::setUserProxyIfLonger - "
-		    << "Cannot retrieve the Subject for the proxy ["
-		    << prx << "]. ICE will continue to use the old proxy.Error is: "
-		    << ex.what()
+  //string dn;
+  //  try {
+  //dn = glite::ce::cream_client_api::certUtil::getDNFQAN( prx );
+  
+  cream_api::soap_proxy::VOMSWrapper V( prx );
+  if( !V.IsValid( ) ) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "Cannot retrieve the Subject for the proxy ["
+		   << prx << "]. ICE will continue to use the old proxy.Error is: "
+		   << V.getErrorMessage()
 		   << log4cpp::CategoryStream::ENDLINE);
-     return;
+    return;
   }
-
-  this->setUserProxyIfLonger( dn, prx );
-
+  
+  //string dn = V.getDNFQAN();
+  
+  this->setUserProxyIfLonger( V.getDNFQAN(), prx );
+  
 }
 
 //________________________________________________________________________

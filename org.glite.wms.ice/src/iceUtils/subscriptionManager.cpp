@@ -24,7 +24,8 @@
  */
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/certUtil.h"
+//#include "glite/ce/cream-client-api-c/certUtil.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/monitor-client-api-c/CEInfo.h"
 
 /**
@@ -435,22 +436,32 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
     string newID;
     iceUtil::iceSubscription localsub("", 0);
     
-    string dn = "";
+    //string dn = "";
     
-    try {
-      dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
-    } catch(exception& ex) {
+    //    try {
+      //dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
+    api::VOMSWrapper V( userProxy );
+    if( !V.IsValid( ) ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()  
-		     << "subscriptionManager::renewSubscription() - "
-		     << "Cannot extract the Subject from certificate ["
-		     << userProxy << "]: "
-		     << ex.what()
-		     << log4cpp::CategoryStream::ENDLINE);
+ 		     << "subscriptionManager::renewSubscription() - "
+ 		     << "Cannot extract the Subject from certificate ["
+ 		     << userProxy << "]: "
+ 		     << V.getErrorMessage()
+ 		     << log4cpp::CategoryStream::ENDLINE);
       return;
     }
+//     } catch(exception& ex) {
+//       CREAM_SAFE_LOG(m_log_dev->errorStream()  
+// 		     << "subscriptionManager::renewSubscription() - "
+// 		     << "Cannot extract the Subject from certificate ["
+// 		     << userProxy << "]: "
+// 		     << ex.what()
+// 		     << log4cpp::CategoryStream::ENDLINE);
+//       return;
+//     }
     
-    string id = m_Subs[ make_pair( dn, cemon ) ].getSubscriptionID();
-
+    string id = m_Subs[ make_pair( V.getDNFQAN(), cemon ) ].getSubscriptionID();
+    
     if( id == "" ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()  
 		     << "subscriptionManager::renewSubscription() - "
@@ -469,9 +480,9 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 		       << "New subscription ID after renewal is ["
 		       << newID << "]" << log4cpp::CategoryStream::ENDLINE);
 	
-	m_Subs[ make_pair( dn, cemon) ].setSubscriptionID( newID );
-	m_Subs[ make_pair( dn, cemon) ].setExpirationTime( time(NULL) + m_conf->getConfiguration()->ice()->subscription_duration());
-	m_Subs_inverse[ newID ] = make_pair( dn, cemon);
+	m_Subs[ make_pair( V.getDNFQAN(), cemon) ].setSubscriptionID( newID );
+	m_Subs[ make_pair( V.getDNFQAN(), cemon) ].setExpirationTime( time(NULL) + m_conf->getConfiguration()->ice()->subscription_duration());
+	m_Subs_inverse[ newID ] = make_pair( V.getDNFQAN(), cemon);
 	
       } else {
       // subscription renewal failed. Try make a new one
@@ -484,9 +495,9 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 	// let's proceed without notification. The poller will work for us ;)
       } else {
 	
-	m_Subs[ make_pair( dn, cemon) ].setExpirationTime( localsub.getExpirationTime() );
-	m_Subs[ make_pair( dn, cemon) ].setSubscriptionID( localsub.getSubscriptionID() );
-	m_Subs_inverse[ localsub.getSubscriptionID() ] = make_pair( dn, cemon);
+	m_Subs[ make_pair( V.getDNFQAN(), cemon) ].setExpirationTime( localsub.getExpirationTime() );
+	m_Subs[ make_pair( V.getDNFQAN(), cemon) ].setSubscriptionID( localsub.getSubscriptionID() );
+	m_Subs_inverse[ localsub.getSubscriptionID() ] = make_pair( V.getDNFQAN(), cemon);
 	//m_Subs[ make_pair( dn, cemon) ].setUserProxyIfLonger( localsub.getUserProxy() );
 
 	// We made a new subscription because the update
@@ -587,21 +598,36 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
 						       const iceSubscription& S ) throw()
 {
   boost::recursive_mutex::scoped_lock M( mutex );
-  string dn;
-  try {
-    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
-  } catch(exception& ex) {
+  //  string dn;
+  //  try {
+    //    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
+
+
+  api::VOMSWrapper V( userProxy );
+  if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::insertSubscription() - "
 		   << "Cannot retrieve DN for user proxy ["
 		   << userProxy << "]: "
-		   << ex.what() << ". ICE will not keep in memory this subscription!"
+		   << V.getErrorMessage() 
+		   << ". ICE will not keep in memory this subscription!"
 		   << log4cpp::CategoryStream::ENDLINE);
     return;
   }
 
-  m_Subs[ make_pair( dn, cemonURL) ] = S;
-  m_Subs_inverse[ S.getSubscriptionID() ] = make_pair( dn, cemonURL);
+
+//   } catch(exception& ex) {
+//     CREAM_SAFE_LOG(m_log_dev->errorStream()
+// 		   << "subscriptionManager::insertSubscription() - "
+// 		   << "Cannot retrieve DN for user proxy ["
+// 		   << userProxy << "]: "
+// 		   << ex.what() << ". ICE will not keep in memory this subscription!"
+// 		   << log4cpp::CategoryStream::ENDLINE);
+//     return;
+//   }
+
+  m_Subs[ make_pair( V.getDNFQAN(), cemonURL) ] = S;
+  m_Subs_inverse[ S.getSubscriptionID() ] = make_pair( V.getDNFQAN(), cemonURL);
 }
 
 //________________________________________________________________________
@@ -609,20 +635,31 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
 						    const std::string& cemon ) const throw()
 {
   boost::recursive_mutex::scoped_lock subM( mutex );
-  string dn;
-  try {
-    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
-  } catch(exception& ex) {
+  //  string dn;
+  //  try {
+    //    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
+  
+  api::VOMSWrapper V( userProxy );
+  if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::hasSubscription() - "
 		   << "Cannot retrieve DN for user proxy ["
 		   << userProxy << "]: "
-		   << ex.what() << ". Cannot check if subscription does exist. This error will trigger another subscription!"
+		   << V.getErrorMessage() << ". Cannot check if subscription does exist. This error will trigger another subscription!"
 		   << log4cpp::CategoryStream::ENDLINE);
     return false;
   }
+//   } catch(exception& ex) {
+//     CREAM_SAFE_LOG(m_log_dev->errorStream()
+// 		   << "subscriptionManager::hasSubscription() - "
+// 		   << "Cannot retrieve DN for user proxy ["
+// 		   << userProxy << "]: "
+// 		   << ex.what() << ". Cannot check if subscription does exist. This error will trigger another subscription!"
+// 		   << log4cpp::CategoryStream::ENDLINE);
+//     return false;
+//   }
 
-  std::map< std::pair<std::string, std::string>, iceSubscription>::const_iterator it = m_Subs.find( make_pair( dn, cemon));
+  std::map< std::pair<std::string, std::string>, iceSubscription>::const_iterator it = m_Subs.find( make_pair( V.getDNFQAN(), cemon));
   if( it != m_Subs.end() ) {
  
     return true;
