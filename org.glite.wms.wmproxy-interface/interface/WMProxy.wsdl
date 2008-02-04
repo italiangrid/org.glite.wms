@@ -273,6 +273,13 @@
 	<wsdl:message name="jobSubmitResponse">
 		<wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
 	</wsdl:message>
+	<wsdl:message name="jobSubmitJSDLRequest">
+		<wsdl:part name="jsdl" type="glitejsdlns:JobDefinition_Type"/>
+		<wsdl:part name="delegationId" type="xsd:string"/>
+	</wsdl:message>
+	<wsdl:message name="jobSubmitJSDLResponse">
+		<wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
+	</wsdl:message>
 	<wsdl:message name="jobCancelRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
 	</wsdl:message>
@@ -328,6 +335,13 @@
 	<wsdl:message name="jobListMatchResponse">
 		<wsdl:part name="CEIdAndRankList" type="glitenstypes:StringAndLongList"/>
 	</wsdl:message>
+	<wsdl:message name="jobListMatchJSDLRequest">
+		<wsdl:part name="jsdl" type="glitejsdlns:JobDefinition_Type"/>
+		<wsdl:part name="delegationId" type="xsd:string"/>
+	</wsdl:message>
+	<wsdl:message name="jobListMatchJSDLResponse">
+		<wsdl:part name="CEIdAndRankList" type="glitenstypes:StringAndLongList"/>
+	</wsdl:message>
 	<wsdl:message name="getJobTemplateRequest">
 		<wsdl:part name="jobType" type="glitenstypes:JobTypeList"/>
 		<wsdl:part name="executable" type="xsd:string"/>
@@ -354,15 +368,12 @@
 	<wsdl:message name="getCollectionTemplateResponse">
 		<wsdl:part name="jdl" type="xsd:string"/>
 	</wsdl:message>
-
 	<wsdl:message name="getJobStatusRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
 	</wsdl:message>
-
 	<wsdl:message name="getJobStatusResponse">
 		<wsdl:part name="JobStatusStruct" type="glitenstypes:JobStatusStructType"/>
 	</wsdl:message>
-
 	<wsdl:message name="getIntParametricJobTemplateRequest">
 		<wsdl:part name="attributes" type="glitenstypes:StringList"/>
 		<wsdl:part name="param" type="xsd:int"/>
@@ -610,7 +621,7 @@
 					When a clients requests for registration of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs (all those requests represent in fact a set of jobs),
 					the operations returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
 					 
-					Input: string containing the job jdl representation.
+					Input: string containing the job jsdl representation.
 					Input: string containing the Id of the delegated proxy associated to the job.
 
 					Output: string containing the unique jobId assigned to the job.
@@ -666,6 +677,7 @@
 			<wsdl:fault name="OperationNotAllowedFault" message="glitens:OperationNotAllowedFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
+		
 		<wsdl:operation name="jobSubmit" parameterOrder="jdl delegationId">
 			<wsdl:documentation>
 					This operation submits a job. The JDL description of the job provided by the client is validated by the service, registered to the LB and finally passed to the Workload Manager.
@@ -697,6 +709,39 @@
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
+
+		<wsdl:operation name="jobSubmitJSDL" parameterOrder="jsdl delegationId">
+			<wsdl:documentation>
+					This operation submits a job. The JSDL description of the job provided by the client is validated by the service, registered to the LB and finally passed to the Workload Manager.
+					The unique identifier assigned to the job is returned to the client.
+					This operation assumes that all the work preparatory to the job (e.g. input sandbox upload, registration of input data to the Data Management service etc.) has been completed by the client.
+					Usage of this operation (instead of jobRegister + jobStart) is indeed recommended when the job identifier is not needed prior to its submission
+					(e.g. jobs without input sandbox or with a sandbox entirely available on a GridFTP server managed by the client).
+					The service supports submission of simple jobs, parametric jobs, partitionable jobs, DAGs and collections of jobs; the description is always provided through a single JDL description (see "GLite JDL Attributes" document for details).
+					When a clients requests for submission of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs (all those requests represent in fact a set of jobs),
+					the operations returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
+					
+					Input: string containing the job jdl representation.
+					Input: string containing the Id of the delegated proxy associated to the job.
+					
+					Output: no output.
+					
+					Faults:
+					AuthenticationFault: 		a generic authentication problem occured.
+					AuthorizationFault: 		client is not authorized to perform this operation.
+					InvalidArgumentFault: 	the provided job JDL expression is not valid.
+					GenericFault: 			another problem occured. 
+					
+			</wsdl:documentation>
+			<wsdl:input name="jobSubmitJSDLRequest" message="glitens:jobSubmitJSDLRequest"/>
+			<wsdl:output name="jobSubmitJSDLResponse" message="glitens:jobSubmitJSDLResponse"/>
+			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="InvalidArgumentFault" message="glitens:InvalidArgumentFault"/>
+			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
+			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
+		</wsdl:operation>
+		
 		<wsdl:operation name="jobCancel" parameterOrder="jobId">
 			<wsdl:documentation>
 					This operation cancels a previously submitted job identified by its JobId.
@@ -979,6 +1024,34 @@
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
 		</wsdl:operation>
+		<wsdl:operation name="jobListMatchJSDL" parameterOrder="jsdl delegationId">
+			<wsdl:documentation>
+					This operation returns the list of CE Ids satisfying the job Requirements specified in the JDL, ordered according to the decreasing Rank.
+					The fault NoSuitableResourcesFault is returned if ther are no resources matching job constraints.
+					
+					Input: string representing the job description (JDL).
+					Input: string representing the delegation ID.
+					
+					Output: list of strings representing matching CEId.
+					
+					Faults:
+					AuthenticationFault: 		a generic authentication problem occured.
+					AuthorizationFault: 			client is not authorized to perform this operation.
+					InvalidArgumentFault: 	the provided job JDL expression is not valid.
+					GenericFault: 					another problem occured. 
+					NoSuitableResourcesFault: no resources matching job requirements have been found.
+					
+          		  </wsdl:documentation>
+			<wsdl:input name="jobListMatchJSDLRequest" message="glitens:jobListMatchJSDLRequest"/>
+			<wsdl:output name="jobListMatchJSDLResponse" message="glitens:jobListMatchJSDLResponse"/>
+			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="InvalidArgumentFault" message="glitens:InvalidArgumentFault"/>
+			<wsdl:fault name="NoSuitableResourcesFault" message="glitens:NoSuitableResourcesFault"/>
+			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
+			<wsdl:fault name="ServerOverloadedFault" message="glitens:ServerOverloadedFault"/>
+		</wsdl:operation>
+
 		<wsdl:operation name="getJobTemplate" parameterOrder="jobType executable arguments requirements rank">
 			<wsdl:documentation>
 					This operation returns a JDL template for the requested job type.					
@@ -1549,6 +1622,29 @@
 				<soap:fault name="ServerOverloadedFault" use="literal"/>
 			</wsdl:fault>
 		</wsdl:operation>
+		<wsdl:operation name="jobSubmitJSDL">
+			<wsdl:input>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:output>
+			<wsdl:fault name="AuthenticationFault">
+				<soap:fault name="AuthenticationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="AuthorizationFault">
+				<soap:fault name="AuthorizationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="InvalidArgumentFault">
+				<soap:fault name="InvalidArgumentFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="GenericFault">
+				<soap:fault name="GenericFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="ServerOverloadedFault">
+				<soap:fault name="ServerOverloadedFault" use="literal"/>
+			</wsdl:fault>
+		</wsdl:operation>
 		<wsdl:operation name="jobCancel">
 			<wsdl:input>
 				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
@@ -1761,6 +1857,32 @@
 			</wsdl:fault>
 		</wsdl:operation>
 		<wsdl:operation name="jobListMatch">
+			<wsdl:input>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:output>
+			<wsdl:fault name="AuthenticationFault">
+				<soap:fault name="AuthenticationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="AuthorizationFault">
+				<soap:fault name="AuthorizationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="InvalidArgumentFault">
+				<soap:fault name="InvalidArgumentFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="NoSuitableResourcesFault">
+				<soap:fault name="NoSuitableResourcesFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="GenericFault">
+				<soap:fault name="GenericFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="ServerOverloadedFault">
+				<soap:fault name="ServerOverloadedFault" use="literal"/>
+			</wsdl:fault>
+		</wsdl:operation>
+		<wsdl:operation name="jobListMatchJSDL">
 			<wsdl:input>
 				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
 			</wsdl:input>
