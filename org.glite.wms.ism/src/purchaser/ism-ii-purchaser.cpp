@@ -10,6 +10,7 @@
 #include <boost/thread/condition.hpp>
 #include <classad_distribution.h>
 #include "ldap-utils.h"
+#include "ldap-utils-asynch.h"
 #include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -135,16 +136,28 @@ void ism_ii_purchaser::do_purchase()
      gluese_info_container_type gluese_info_container;
      vector<gluese_info_iterator> gluese_info_container_updated_entries;
 
-     boost::timer t0;
-     fetch_bdii_info(
-       m_hostname,
-       m_port,
-       m_dn,
-       m_timeout,
-       gluece_info_container,
-       gluese_info_container
-     );
-     Debug("BDII fetching completed in " << t0.elapsed() << " seconds");
+     time_t const t0 = std::time(0);
+     if (std::getenv("GLITE_WMS_II_LDAP_SEARCH_ASYNC")) {
+       async::fetch_bdii_info(
+         m_hostname,
+         m_port,
+         m_dn,
+         m_timeout,
+         gluece_info_container,
+         gluese_info_container
+       );
+     }
+     else {
+       fetch_bdii_info(
+         m_hostname,
+         m_port,
+         m_dn,
+         m_timeout,
+         gluece_info_container,
+         gluese_info_container
+       );
+     }
+     Debug("BDII fetching completed in " << std::time(0)-t0 << " seconds");
 
      apply_skip_predicate(
        gluece_info_container,
