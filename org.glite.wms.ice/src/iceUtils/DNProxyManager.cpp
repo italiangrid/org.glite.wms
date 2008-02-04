@@ -123,6 +123,8 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
   
   //iceUtil::jobCache::iterator job_with_better_proxy_from_sandboxDir;
   
+  
+
   for(set<string>::const_iterator it = dnSet.begin();
       it != dnSet.end();
       ++it)
@@ -176,12 +178,6 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 	  m_DNProxyMap[*it] = localProxy;
 	    
 	} else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
-
-//	m_DNProxyMap[*it] =localProxy;
-
-//      }
-//    } else { // the local proxy could be there but older than that one owned by the job in the sandbox dir
-    
           if( job_with_better_proxy_from_sandboxDir == cache->end() )
 	    {
 	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
@@ -429,6 +425,8 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
   	m_log_dev->debugStream() 
 		<< "DNProxyManager::searchBetterProxyForUser() - Skipping DN ["
 		<< jit->getUserDN() << "]" << log4cpp::CategoryStream::ENDLINE );
+	++jit;
+	continue;
       }
     
       string jobCert = jit->getUserProxyCertificate();
@@ -450,20 +448,33 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
 
 
       // check if the current job's proxy is the long-lived
-      time_t timeleft;
-      try {
+      //time_t timeleft;
+      //      try {
       
-	timeleft = cream_api::certUtil::getProxyTimeLeft( jobCert );
-	
-      } catch(exception& ex) {
+      //timeleft = cream_api::certUtil::getProxyTimeLeft( jobCert );
+      cream_api::soap_proxy::VOMSWrapper V( jobCert );
+      if( !V.IsValid( ) ) {
 	CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		       << "DNProxyManager::searchBetterProxyForUser - "
-		       << "Cannot extract proxy time left from proxy file "
-		       << "[" << jobCert << "]: "<< ex.what() << ". Skipping"
+		       << "DNProxyManager::searchBetterProxyForUser() - "
+		       << "Cannot extract proxy time left from proxy file ["
+		       << jobCert << "]: "
+		       << V.getErrorMessage() << ". Skipping"
 		       << log4cpp::CategoryStream::ENDLINE);
 	++jit;
 	continue;
       }
+	
+//       } catch(exception& ex) {
+// 	CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		       << "DNProxyManager::searchBetterProxyForUser - "
+// 		       << "Cannot extract proxy time left from proxy file "
+// 		       << "[" << jobCert << "]: "<< ex.what() << ". Skipping"
+// 		       << log4cpp::CategoryStream::ENDLINE);
+// 	++jit;
+// 	continue;
+//       }
+
+      time_t timeleft = V.getProxyTimeEnd() - time(NULL);
 
       if (timeleft > besttime)
 	{
