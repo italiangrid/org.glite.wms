@@ -217,6 +217,29 @@ Ice::~Ice( )
 
 }
 
+//____________________________________________________________________________
+void Ice::stopAllThreads( void ) 
+{
+  // FIXME: must check at runtine that the join is invoked
+  if(m_poller_thread.is_started())
+    m_poller_thread.stop();
+
+  if(m_listener_thread.is_started())
+  m_listener_thread.stop();
+
+  if(m_updater_thread.is_started())
+    m_updater_thread.stop();
+
+  if(m_lease_updater_thread.is_started())
+    m_lease_updater_thread.stop();
+
+  if(m_job_killer_thread.is_started())
+    m_job_killer_thread.stop();
+
+  if(m_proxy_renewer_thread.is_started())
+    m_proxy_renewer_thread.stop();
+}
+
 void Ice::init( void )
 {    
     // Handle resubmitted/purged jobs

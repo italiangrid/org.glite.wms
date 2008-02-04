@@ -22,6 +22,8 @@
 #include <sys/types.h>          // getpid(), getpwnam()
 #include <unistd.h>             // getpid()
 #include <pwd.h>                // getpwnam()
+#include <cstdio>               // popen()
+#include <cstdlib>              // atoi()
 
 //#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -60,6 +62,8 @@ using namespace glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
+
+long long check_my_mem( const pid_t pid ) throw();
 
 void sigpipe_handle(int x) { 
   //std::cerr << "glite-wms-ice::sigpipe_handle - PIPE handled; argument x=[" << x << "]" << std::endl;
@@ -322,6 +326,8 @@ int main(int argc, char*argv[])
      * removes requests from input filelist.
      ****************************************************************************/
      
+    pid_t myPid = ::getpid();
+
     while(true) {
         //
         // BEWARE!! the get_command_count() method locks the
@@ -381,6 +387,38 @@ int main(int argc, char*argv[])
             threadPool->add_request( cmd );
         }
         sleep(1);
+
+	//	if(check_my_mem(myPid) > max_ice_mem) {
+	  
+// 	  iceManager->stopAllThreads(); // this return only when all threads have finished
+// 	  iceUtil::jobCache::getInstance()->closeDatabase();
+// 	  return 2; // exit to shell with specific error code
+
+//	  cout << "glite-wms-ice::main - Max memory reached! EXIT!" << endl;
+	  
+//	}
+
     }
     return 0;
+}
+
+//______________________________________________________________________________
+long long check_my_mem( const pid_t pid ) throw()
+{
+  char cmd[128];
+  char used_rss_mem[64];
+  memset((void*) cmd, 0, 64);
+  
+  sprintf( cmd, "/bin/ps --cols 200 -orss -p %d |/bin/grep -v RSS", pid);
+
+
+  FILE * in = popen( cmd, "r");
+  if(!in) return (long long)0;
+  
+  while (fgets(used_rss_mem, 64, in) != NULL)
+    printf("glite-wms-ice::main() - Used RSS Memory: %s", used_rss_mem);
+  
+  pclose(in);
+
+  return (long long)atoi(used_rss_mem);
 }

@@ -85,6 +85,12 @@ namespace ice {
              */
             bool is_started( void ) const;
 
+	    /**
+             * Stops this thread. This method has no effect if the
+             * start() method was not called first, or if the
+             * start() method raised an exception.
+             */
+	    void stop( void );
         protected:
             
             /**
@@ -92,7 +98,7 @@ namespace ice {
              * start() method was not called first, or if the
              * start() method raised an exception.
              */
-            void stop( void );
+            //void stop( void );
             
             const std::string m_name; //! The name of this thread (can be any string)
             boost::thread* m_thread; //! The dynamically created thread object. 
@@ -166,6 +172,8 @@ namespace ice {
         void startProxyRenewer( void );
         void startJobKiller( void );
         
+	void stopAllThreads( void );
+
         // Query methods
         bool is_listener_started( void ) const;
         bool is_poller_started( void ) const;

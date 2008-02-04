@@ -205,7 +205,8 @@ iceUtil::jobDbManager::jobDbManager( const string& envHome,
 iceUtil::jobDbManager::~jobDbManager() throw()
 {
     // FIXME: only one thread at time can call ->close()
-    // so these operations should be 'mutex-ed'
+    // so these operations should be 'mutex-ed'... BUT: at the moment
+    // only on instance of jobCache (that is a singleton) is using it
     
     // Db MUST be close BEFORE closing the DbEnv
     try {

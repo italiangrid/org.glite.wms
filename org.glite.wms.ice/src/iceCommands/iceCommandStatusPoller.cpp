@@ -325,11 +325,13 @@ iceUtils::iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
 
 	    CREAM_SAFE_LOG(m_log_dev->errorStream()
 			   << "iceCommandStatusPoller::check_multiple_jobs() - "
-			   << "CREAM didn't return information for the job ["
-			   << infoIt->first << "] for DN ["
+			   << "CREAM didn't return information for the Job=["
+			   << infoIt->first << "] - DN=["
 			   << user_dn
-			   << "]. Error is [" << thisInfo.get<2>() 
-			   << "]. Removing this job from the cache"
+			   << "] - ProxyFile=["
+			   << proxy
+			   << "]. Error is: " << thisInfo.get<2>() 
+			   << ". Removing this job from the cache"
 			   << log4cpp::CategoryStream::ENDLINE);
 	    {
 	      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
