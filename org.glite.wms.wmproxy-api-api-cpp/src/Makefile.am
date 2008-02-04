@@ -21,14 +21,14 @@
 wm.h :
 	@#Create the files
 	@echo "wsdl2h parsing .wsdl"
-	$(GSOAP_LOCATION)/wsdl2h -o wm.h \
+	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
 	$(GLITE_LOCATION)/interface/WMProxy.wsdl
 
 soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
-	$(GSOAP_LOCATION)/soapcpp2  -I$(GSOAP_LOCATION):$(GSOAP_LOCATION)/import wm.h
+	$(GSOAP_LOCATION)/bin/soapcpp2  -I$(GSOAP_LOCATION)/include:$(GSOAP_LOCATION)/import wm.h
 
 
 
@@ -44,7 +44,7 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	-I$(GSOAP_LOCATION) \
+	-I$(GSOAP_LOCATION)/include \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(BOOST_CFLAGS)  \
 	-I$(top_srcdir)/interface \
