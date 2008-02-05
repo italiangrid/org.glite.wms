@@ -189,6 +189,20 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 	it!=jobIdList.end();
 	++it)
       {
+	
+	string thisJob = endpoint;
+	boost::replace_all( thisJob, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
+	thisJob += *it;
+
+	CREAM_SAFE_LOG(
+		       m_log_dev->errorStream()
+		       << "iceCommandJobKill::cancel_jobs() - Will cancel JobID ["
+		       << thisJob 
+		       << "] because its original proxy"
+		       << " is going to expire..."
+		       << log4cpp::CategoryStream::ENDLINE
+		       );
+
 	toCancel.push_back( cream_api::soap_proxy::JobIdWrapper( *it, 
 						     endpoint, 
 						     std::vector<cream_api::soap_proxy::JobPropertyWrapper>())
@@ -197,6 +211,8 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 
     cream_api::soap_proxy::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
     cream_api::soap_proxy::ResultWrapper res;
+
+    
 
     CreamProxy_Cancel( endpoint, proxy, &req, &res ).execute( 3 );
 
@@ -244,7 +260,7 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 		     m_log_dev->errorStream()
 		     << "iceCommandJobKill::cancel_jobs() - "
 		     << "Cancellation of job ["
-		     << completeJobId << "] for error: "
+		     << completeJobId << "] failed for error: "
 		     << it->second
 		     << log4cpp::CategoryStream::ENDLINE
 		     );
