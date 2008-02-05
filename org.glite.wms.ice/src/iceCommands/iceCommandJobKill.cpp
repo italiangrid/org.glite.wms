@@ -108,9 +108,6 @@ void iceCommandJobKill::execute() throw()
   map< pair<string, string>, list< CreamJob >, ltstring> jobMap;
 
   list<CreamJob> toCheck;
-//   copy(ice_util::jobCache::getInstance()->begin(),
-//        ice_util::jobCache::getInstance()->end(),
-//        back_inserter( toCheck ));
 
   jobCache::iterator it( ice_util::jobCache::getInstance()->begin() );
   while( it != ice_util::jobCache::getInstance()->end() ) {
@@ -172,8 +169,6 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 {
   try {
     
-    //m_theProxy->Authenticate( proxy );
-
     cream_api::soap_proxy::VOMSWrapper V( proxy );
     if( !V.IsValid( ) ) {
       CREAM_SAFE_LOG(    
@@ -253,6 +248,7 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 		     << it->second
 		     << log4cpp::CategoryStream::ENDLINE
 		     );
+      ++it;
     }
 
   } catch(std::exception& ex) {
