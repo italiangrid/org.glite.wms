@@ -229,7 +229,7 @@ int main(int argc, char*argv[])
     string hostcert = conf->ice()->ice_host_cert();
 
     logger_instance->setLogFile(logfile.c_str());
-    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20080111-12:05]"<<log4cpp::CategoryStream::ENDLINE);
+    CREAM_SAFE_LOG(log_dev->debugStream() << "ICE VersionID is [20080206-12:05]"<<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
 
     
