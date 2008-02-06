@@ -75,24 +75,6 @@ bool iceCommandProxyRenewal::renewProxy( const pair<string, string>& deleg,
 			   proxy,
 			   delegation_ID).execute( 3 );
 
-//     cream_api::soap_proxy::AbsCreamProxy* creamClient = 
-//       cream_api::soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( delegation_ID, 30 );
-//     if(!creamClient)
-//       {
-//         CREAM_SAFE_LOG( m_log_dev->errorStream()
-// 			<< "iceCommandProxyRenewal::renewProxy() - "
-// 			<< "CreamProxy creation FAILED!! Stop!"
-// 			<< log4cpp::CategoryStream::ENDLINE);
-//         return false;
-//       }
-    
-//     boost::scoped_ptr< cream_api::soap_proxy::AbsCreamProxy > tmpClient;
-//     tmpClient.reset( creamClient );
-    
-//     creamClient->setCredential( proxy );
-//     creamClient->execute( cream_deleg_url );
-
-
   } catch( exception& ex ) {
     // FIXME: what to do? for now let's continue with an error message
     CREAM_SAFE_LOG( m_log_dev->errorStream() 
@@ -163,11 +145,25 @@ void iceCommandProxyRenewal::execute( void ) throw()
   
   // now must loop over the keys of jobMap
   // and renew each proxy.
-  map< pair<string, string>, list<CreamJob>, ltstring >::iterator jobMap_it  = jobMap.begin();
+  map< pair<string, string>, list<CreamJob>, ltstring >::iterator jobMap_it = jobMap.begin();
   map< pair<string, string>, list<CreamJob>, ltstring >::const_iterator end = jobMap.end();
 
   while( jobMap_it != end ) {
+
+    // jobMap::iterator.first is the couple (delegationID,CREAM_Deleg_URL)
+    // jobMap::iterator.second is the list of job
+
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+
+    CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		   << "iceCommandProxyRenewal::execute() - "
+		   << "Renewing proxy for delegation ID ["
+		   << jobMap_it->first.first << "] to CREAMDelegation service ["
+		   << jobMap_it->first.second << "] using proxy certificate file ["
+		   << jobMap_it->second.begin()->getUserProxyCertificate()
+		   << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
+
     if( this->renewProxy( jobMap_it->first, jobMap_it->second.begin()->getUserProxyCertificate() ))
       {
 	// update the cache for all jobs that have this delegationID
