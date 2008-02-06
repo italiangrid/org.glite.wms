@@ -138,13 +138,8 @@ void iceCommandJobKill::execute() throw()
 //______________________________________________________________________________
 void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
 {
-
-  // proxy = getBetterProxy();
   string proxy;
-  //  {
-  //boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
   proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
-  //}
 
   list< CreamJob >::const_iterator it = aList.second.begin();
   list< CreamJob >::const_iterator list_end = aList.second.end();
@@ -179,9 +174,6 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 		       );
       return;
     }	
-
-
-    //CreamProxy_Cancel( endpoint, jobIdList ).execute( m_theProxy.get(), 3 );
 
     vector<cream_api::soap_proxy::JobIdWrapper> toCancel;
 
@@ -298,25 +290,6 @@ void iceCommandJobKill::cancel_jobs(const string& proxy, const string& endpoint,
 //______________________________________________________________________________
 void iceCommandJobKill::updateCacheAndLog( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
 {
-//   string proxy;
-//   {
-//     boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-//     proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
-//   }
-
-//   time_t residual_proxy_time = 0;
-  
-//   try {
-//     residual_proxy_time = cream_api::certUtil::getProxyTimeLeft( proxy );
-//   } catch(exception& ex) {
-//     CREAM_SAFE_LOG (m_log_dev->errorStream() 
-// 		    << "iceCommandJobKill::updateCacheAndLog() - certUtil::getProxyTimeLeft"
-// 		    << " raised an exception: "
-// 		    << ex.what()
-// 		    << "."
-// 		    << log4cpp::CategoryStream::ENDLINE);
-//   }
-  
   for(list<CreamJob>::const_iterator jit=aList.second.begin(); jit!=aList.second.end(); ++jit) {
     CreamJob theJob( *jit );
     theJob = m_lb_logger->logEvent( new cream_cancel_request_event( theJob, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time is less than the threshold=%1%" ) % m_threshold_time ) ) );
@@ -325,77 +298,6 @@ void iceCommandJobKill::updateCacheAndLog( const pair< pair<string, string>, lis
     ice_util::jobCache::getInstance()->put( theJob ); 
   }
 }
-
-//______________________________________________________________________________
-// void iceCommandJobKill::execute( ) throw()
-// {
-//     boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
-//     time_t residual_proxy_time = cream_api::certUtil::getProxyTimeLeft( m_theJob.getUserProxyCertificate() );
-
-//     if( m_theJob.is_killed_by_ice() ) {
-//         CREAM_SAFE_LOG( m_log_dev->debugStream() 
-//                         << "iceCommandJobKill::execute() - Job "
-//                         << m_theJob.describe()
-//                         << " is reported as already been killed by ICE. "
-//                         << "Skipping..."
-//                         << log4cpp::CategoryStream::ENDLINE);     
-//         return; // nothing to do
-//     }
-
-//     CREAM_SAFE_LOG( m_log_dev->debugStream() 
-//                     << "iceCommandJobKill::execute() - Job "
-//                     << m_theJob.describe()
-//                     << " is being cancelled "
-//                     << log4cpp::CategoryStream::ENDLINE);     
-
-//     try {
-//         m_theProxy->Authenticate( m_theJob.getUserProxyCertificate() );
-//         vector<string> url_jid(1);   
-//         url_jid[0] = m_theJob.getCreamJobID();
-        
-//         m_theJob = m_lb_logger->logEvent( new cream_cancel_request_event( m_theJob, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time=%1%, which is less than the threshold=%2%" ) % residual_proxy_time % m_threshold_time ) ) );
-        
-//         m_theJob.set_killed_by_ice();
-//         m_theJob.set_failure_reason( "The job has been killed because its proxy was expiring" );
-                
-//         CreamProxy_Cancel( m_theJob.getCreamURL(), url_jid ).execute( m_theProxy.get(), 3 );
-        
-//         // The corresponding "cancel done event" will be notified by the
-//         // poller/listener, so it is not logged here
-        
-//         // The poller takes care of purging jobs
-        
-//         CREAM_SAFE_LOG(m_log_dev->infoStream() 
-//                        << "iceCommandJobKill::execute() - "
-//                        << " Cancellation SUCCESFUL for job "
-//                        << m_theJob.describe()
-//                        << log4cpp::CategoryStream::ENDLINE);
-        
-//     } catch(std::exception& ex) {
-//         m_theJob = m_lb_logger->logEvent( new cream_cancel_refuse_event( m_theJob, ex.what() ) );
-//         // The job will not be removed from the job cache. We keep
-//         // trying to cancel it until the residual proxy time is less
-//         // than a minimum threshold. After that, the statusPoller will
-//         // eventually take care of removing it from the cache.
-//         CREAM_SAFE_LOG (m_log_dev->errorStream() 
-//                         << "iceCommandJobKill::execute() - Error"
-//                         << " killing job " 
-//                         << m_theJob.describe() << ": "
-//                         << ex.what()
-//                         << log4cpp::CategoryStream::ENDLINE);
-//     } catch(...) {
-//         CREAM_SAFE_LOG (m_log_dev->errorStream() 
-//                         << "iceCommandJobKill::execute() - Error"
-//                         << " killing job "
-//                         << m_theJob.describe()
-//                         << ". Unknown exception catched."
-//                         << log4cpp::CategoryStream::ENDLINE);
-//     }
-    
-//     // The cache is already locked
-//     jobCache::getInstance()->put( m_theJob ); 
-    
-// }
 
 //______________________________________________________________________________
 void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
@@ -462,13 +364,4 @@ void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
 	   stillgood.end(), 
 	   boost::bind1st( boost::mem_fn( &list<CreamJob>::remove ), &all )
 	   );
-  
-//   for(list<CreamJob>::const_iterator it = stillgood.begin();
-//       it != stillgood.end();
-//       ++it) 
-//     {
-//       all.remove( *it );
-//     };
-
-
 }

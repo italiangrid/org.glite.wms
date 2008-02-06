@@ -111,72 +111,9 @@ bool iceCommandProxyRenewal::renewProxy( const pair<string, string>& deleg,
 }
 
 //______________________________________________________________________________
-// bool iceCommandProxyRenewal::renewProxy( const list<CreamJob>& jobs) throw()
-// {
-//   // job with the same delegation ID also have the same proxy
-//   string proxy           = jobs.begin()->getUserProxyCertificate();
-//   string cream_url       = jobs.begin()->getCreamURL();
-//   string cream_deleg_url = jobs.begin()->getCreamDelegURL();
-//   string delegation_ID   = jobs.begin()->getDelegationId();
-  
-//   try {
-//     //m_theProxy->Authenticate( proxy );
-    
-//     cream_api::soap_proxy::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
-//     if( !V.IsValid( ) ) {
-
-//       CREAM_SAFE_LOG( m_log_dev->errorStream() 
-// 		      << "iceCommandProxyRenewal::execute() - "
-// 		      << "Proxy renew for delegation ID ["
-// 		      << delegation_ID
-// 		      << "] failed: "
-// 		      << V.getErrorMessage()
-// 		      << log4cpp::CategoryStream::ENDLINE);
-      
-//       return false; 
-
-//       //      throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
-//     }
-    
-//     vector< string > theJob;
-    
-//     transform( jobs.begin(), jobs.end(), 
-// 	       inserter(theJob, theJob.begin()), 
-// 	       mem_fun_ref(&CreamJob::getCreamJobID));
-    
-// //     m_theProxy->renewProxy( delegation_ID,
-// // 			    cream_url,
-// // 			    cream_deleg_url,
-// // 			    proxy,
-// // 			    theJob );
-    
-    
-//     //FIXME: must use new APIs
-
-    
-//   } catch( exception& ex ) {
-//     // FIXME: what to do? for now let's continue with an error message
-//     CREAM_SAFE_LOG( m_log_dev->errorStream() 
-// 		    << "iceCommandProxyRenewal::execute() - "
-// 		    << "Proxy renew for delegation ID ["
-// 		    << delegation_ID
-// 		    << "] failed: "
-// 		    << ex.what() 
-// 		    << log4cpp::CategoryStream::ENDLINE);
-    
-//     return false;
-//     // Let's ignore; probably another proxy renewal will be done
-//   } 
-  
-//   return true;
-// }
-
-//______________________________________________________________________________
 void iceCommandProxyRenewal::execute( void ) throw()
 {
 
-  return;    
-  
   map< pair<string, string>, list<CreamJob>, ltstring > jobMap;
   map< string, time_t > timeMap;
   
@@ -244,32 +181,4 @@ void iceCommandProxyRenewal::execute( void ) throw()
       }
     ++jobMap_it;
   }
-  
-
-//   map< pair<string, string>, list<CreamJob>, ltstring >::iterator jobMap_it  = jobMap.begin();
-//   map< pair<string, string>, list<CreamJob>, ltstring >::const_iterator end = jobMap.end();
-  
-//   while( jobMap_it != end ) {
-    
-//     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    
-//     if( this->renewProxy( jobMap_it->second ) )
-//       {
-//         list<CreamJob>::iterator aJob = jobMap_it->second.begin();
-// 	list<CreamJob>::const_iterator end_list = jobMap_it->second.end();
-	
-//         for(;
-// 	    aJob != end_list;
-// 	    ++aJob) 
-// 	  {
-// 	    // FIXME: TODO
-// 	    aJob->setProxyCertMTime( timeMap[aJob->getCreamJobID()] );
-// 	    m_cache->put( *aJob );
-// 	  }
-//       }
-    
-//     jobMap_it++;  
-    
-//   }
-  
 }

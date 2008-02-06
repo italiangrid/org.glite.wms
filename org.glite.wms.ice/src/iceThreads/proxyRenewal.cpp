@@ -73,8 +73,6 @@ void proxyRenewal::body( void )
                        << "proxyRenewal::body() - new iteration"
                        << log4cpp::CategoryStream::ENDLINE);
         
-        // glite::wms::ice::Ice::instance()->get_ice_commands_pool()->add_request( new iceCommandProxyRenewal() );
-
 	iceCommandProxyRenewal().execute();
         sleep( m_delay );
     }
