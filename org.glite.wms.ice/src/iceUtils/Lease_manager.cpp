@@ -190,7 +190,10 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
 
     t_lease_by_key::iterator it = lease_by_key_view.find( boost::make_tuple(user_DN, cream_url));
 
-    if ( force && lease_by_key_view.end() != it ) {
+    if ( lease_by_key_view.end() != it &&
+         ( force || it->m_expiration_time < time(0) ) ) {
+        // Remove the lease if it is expired, or if the user requested
+        // the creation of a new lease
         lease_by_key_view.erase( it );
         it = lease_by_key_view.end();
     }

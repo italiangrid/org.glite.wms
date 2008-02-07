@@ -32,13 +32,13 @@ iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
         // nothing to log
         return 0;
     case jobstat::IDLE:
-        if ( theJob.get_prev_status() == jobstat::RUNNING )
-            return new job_suspended_event( theJob );
-        else
-            return 0; // nothing to log
+        // if ( theJob.get_prev_status() == jobstat::RUNNING )
+        // return new job_suspended_event( theJob );
+        // else
+        return 0; // nothing to log
     case jobstat::RUNNING:
-        if ( theJob.get_prev_status() == jobstat::IDLE ||
-             theJob.get_prev_status() == jobstat::HELD )
+        // if ( theJob.get_prev_status() == jobstat::IDLE ||
+        if ( theJob.get_prev_status() == jobstat::HELD )
             return new job_resumed_event( theJob );
         else
             return new job_running_event( theJob ); 

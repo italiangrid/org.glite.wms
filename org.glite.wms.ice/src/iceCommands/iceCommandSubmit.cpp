@@ -362,39 +362,50 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
     string delegID, lease_id; // empty delegation id
     bool force_delegation = false;
+    bool force_lease = false;
 
     cream_api::AbsCreamProxy::RegisterArrayResult res;
 
-    if ( is_lease_enabled ) {
-
-        CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
-                        << "Lease is enabled, trying to get lease "
-                        << "for job " << m_theJob.describe()
-                        << log4cpp::CategoryStream::ENDLINE );        
-
-        //
-        // Get a (possibly existing) lease ID
-        //
-        lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob );
-        if ( lease_id.empty() ) {
-            // something was wrong with the lease creation step. 
-            CREAM_SAFE_LOG( m_log_dev->errorStream()
-                            << method_name
-                            << "Failed to get lease_id for job "
-                            << m_theJob.describe()
-                            << log4cpp::CategoryStream::ENDLINE
-                            );        
-            throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to get lease_id for job %1%" ) % m_theJob.getGridJobID() ) ) );
-        }
-        
-        // lease creation OK
-        CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                        << "Using lease ID " << lease_id << " for job "
-                        << m_theJob.describe()
-                        << log4cpp::CategoryStream::ENDLINE );        
-    }
-
     while( 1 ) {
+
+        //
+        // Manage lease creation
+        //
+        if ( is_lease_enabled ) {
+            
+            if ( force_lease ) {
+                CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+                                << "Lease is enabled, enforcing creation of a new lease "
+                                << "for job " << m_theJob.describe()
+                                << log4cpp::CategoryStream::ENDLINE );        
+            } else {
+                CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+                                << "Lease is enabled, trying to get lease "
+                                << "for job " << m_theJob.describe()
+                                << log4cpp::CategoryStream::ENDLINE );        
+            }
+
+            //
+            // Get a (possibly existing) lease ID
+            //
+            lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob, force_lease );
+            if ( lease_id.empty() ) {
+                // something was wrong with the lease creation step. 
+                CREAM_SAFE_LOG( m_log_dev->errorStream()
+                                << method_name
+                                << "Failed to get lease_id for job "
+                                << m_theJob.describe()
+                                << log4cpp::CategoryStream::ENDLINE
+                                );        
+                throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to get lease_id for job %1%" ) % m_theJob.getGridJobID() ) ) );
+            }
+            
+            // lease creation OK
+            CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                            << "Using lease ID " << lease_id << " for job "
+                            << m_theJob.describe()
+                            << log4cpp::CategoryStream::ENDLINE );        
+        }
         
         // 
         // Delegates the proxy
@@ -404,65 +415,80 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         //
         // Registers the job (with autostart)
         //
-        try { // outer try block
-            
-            try { // inner try block, intercepts delegation errors
+        try {
                 
-                CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                                << "Going to REGISTER Job "
-                                << m_theJob.describe() << "..."
+            CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                            << "Going to REGISTER Job "
+                            << m_theJob.describe() << "..."
+                            << log4cpp::CategoryStream::ENDLINE );
+            
+            cream_api::AbsCreamProxy::RegisterArrayRequest req;
+            
+            // FIXME: must check what to set the 3rd and 4th arguments
+            // (delegationProxy, leaseID) last asrgument is irrelevant
+            // now, because we register jobs one by one
+            cream_api::JobDescriptionWrapper jd(modified_jdl, 
+                                                delegID, 
+                                                ""/* delegPRoxy */, 
+                                                lease_id /* leaseID */, 
+                                                false, /* NO autostart */
+                                                "foo");
+            
+            req.push_back( &jd );
+            
+            string iceid = m_theIce->getHostDN();
+            boost::trim_if(iceid, boost::is_any_of("/"));
+            boost::replace_all( iceid, "/", "_" );
+            boost::replace_all( iceid, "=", "_" );
+            
+            iceUtil::CreamProxy_Register( m_theJob.getCreamURL(),
+                                          m_theJob.getUserProxyCertificate(),
+                                          (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
+                                          &res,
+                                          iceid).execute( 3 );
+            
+        } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
+            if ( !force_delegation ) {
+                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                                << "Cannot register GridJobID ["
+                                << m_theJob.getGridJobID() 
+                                << "] due to Delegation Exception: " 
+                                << ex.what() << ". Will retry once..."
                                 << log4cpp::CategoryStream::ENDLINE );
-                
-                cream_api::AbsCreamProxy::RegisterArrayRequest req;
-                
-                // FIXME: must check what to set the 3rd and 4th
-                // arguments (delegationProxy, leaseID) last asrgument
-                // is irrelevant now, because we register jobs one by
-                // one
-                cream_api::JobDescriptionWrapper jd(modified_jdl, 
-                                                    delegID, 
-                                                    ""/* delegPRoxy */, 
-                                                    lease_id /* leaseID */, 
-                                                    false, /* NO autostart */
-                                                    "foo");
-                
-                req.push_back( &jd );
-                
-                string iceid = m_theIce->getHostDN();
-                boost::trim_if(iceid, boost::is_any_of("/"));
-                boost::replace_all( iceid, "/", "_" );
-                boost::replace_all( iceid, "=", "_" );
-                
-                iceUtil::CreamProxy_Register( m_theJob.getCreamURL(),
-                                              m_theJob.getUserProxyCertificate(),
-                                              (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
-                                              &res,
-                                              iceid).execute( 3 );
-                
-                break; // exit the while(1) loop               
-            } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
-                if ( !force_delegation ) {
-                    CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                                    << "Cannot register GridJobID ["
-                                    << m_theJob.getGridJobID() 
-                                    << "] due to Delegation Exception:" 
-                                    << ex.what() << ". Will retry once..."
-                                    << log4cpp::CategoryStream::ENDLINE );
-                    force_delegation = true;
-                } else {
-                    throw ex; // Rethrow
-                }
-            } // end inner try block
-            
-            bool ok = res.begin()->second.get<0>();           
-            if ( !ok ) {
-                string err = res.begin()->second.get<2>();
-                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised exception %1%") % err ) )  );
+                force_delegation = true;
+            } else {
+                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised DelegationException %1%") % ex.what() ) ) ); // Rethrow
             }
-            
-        } catch( exception& ex ) {
-            throw(  iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised exception %1%")  % ex.what() ) ) );
-        } // end outer try block
+        } catch ( glite::ce::cream_client_api::cream_exceptions::GenericException& ex ) {
+            if ( is_lease_enabled && !force_lease ) {
+                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                                << "Cannot register GridJobID ["
+                                << m_theJob.getGridJobID() 
+                                << "] due to Generic Fault: " 
+                                << ex.what() << ". Will retry once by enforcing creation of a new lease ID..."
+                                << log4cpp::CategoryStream::ENDLINE );
+                force_lease = true;
+            } else {
+                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % ex.what() ) ) ); // Rethrow
+            }                        
+        } catch ( exception& ex ) {
+            CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                            << "Cannot register GridJobID ["
+                            << m_theJob.getGridJobID() 
+                            << "] due to std::exception: " 
+                            << ex.what() << "."
+                            << log4cpp::CategoryStream::ENDLINE );
+            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
+        }
+
+        bool ok = res.begin()->second.get<0>();           
+        if ( !ok ) {
+            string err = res.begin()->second.get<2>();
+            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised exception %1%") % err ) )  );
+        } else {
+            break; // everything fine, exit the while() loop
+        }
+        
     } // end while(1)
     
     string jobId      = res.begin()->second.get<1>().getCreamJobID();
