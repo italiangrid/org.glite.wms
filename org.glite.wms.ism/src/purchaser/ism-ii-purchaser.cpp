@@ -52,6 +52,8 @@ ism_ii_purchaser::ism_ii_purchaser(
   int port,
   std::string const& distinguished_name,
   int timeout,
+  std::string const& ldap_ce_filter_ext,
+  bool ldap_search_async,
   exec_mode_t mode,
   size_t interval,
   exit_predicate_type exit_predicate,
@@ -60,7 +62,9 @@ ism_ii_purchaser::ism_ii_purchaser(
   m_hostname(hostname),
   m_port(port),
   m_dn(distinguished_name),
-  m_timeout(timeout)
+  m_timeout(timeout),
+  m_ldap_ce_filter_ext(ldap_ce_filter_ext),
+  m_ldap_search_async(ldap_search_async)
 {
 }
 
@@ -116,6 +120,7 @@ void populate_ism(
           current_time,
           (*it)->second,
           ism_ii_purchaser_entry_update()
+          
         )
       );
     }
@@ -137,12 +142,13 @@ void ism_ii_purchaser::do_purchase()
      vector<gluese_info_iterator> gluese_info_container_updated_entries;
 
      time_t const t0 = std::time(0);
-     if (std::getenv("GLITE_WMS_II_LDAP_SEARCH_ASYNC")) {
+     if (m_ldap_search_async) {
        async::fetch_bdii_info(
          m_hostname,
          m_port,
          m_dn,
          m_timeout,
+         m_ldap_ce_filter_ext,
          gluece_info_container,
          gluese_info_container
        );
@@ -153,6 +159,7 @@ void ism_ii_purchaser::do_purchase()
          m_port,
          m_dn,
          m_timeout,
+         m_ldap_ce_filter_ext,
          gluece_info_container,
          gluese_info_container
        );
@@ -170,9 +177,12 @@ void ism_ii_purchaser::do_purchase()
        gluese_info_container_updated_entries,
        m_skip_predicate
      );
-
+     
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
+
+     Info("Total VO_Views entries in ISM : " << gluece_info_container_updated_entries.size());
+     Info("Total SE entries in ISM : " << gluese_info_container_updated_entries.size());
     }
     catch (LDAPException& e) {
       Error("Failed to purchase info from " << m_hostname << ":" << m_port << " (" << e.what() << ")");
@@ -197,13 +207,16 @@ extern "C" ism_ii_purchaser* create_ii_purchaser(std::string const& hostname,
     int port,
     std::string const& distinguished_name,
     int timeout,
+    std::string const& ldap_ce_filter_ext,
+    bool ldap_search_async,
     exec_mode_t mode,
     size_t interval,
     exit_predicate_type exit_predicate,
     skip_predicate_type skip_predicate) 
 {
     return new ism_ii_purchaser(
-      hostname, port, distinguished_name, timeout, 
+      hostname, port, distinguished_name, timeout,
+      ldap_ce_filter_ext, ldap_search_async,
       mode, interval, exit_predicate, skip_predicate
     );
 }

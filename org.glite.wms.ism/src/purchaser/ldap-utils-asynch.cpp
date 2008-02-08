@@ -509,18 +509,19 @@ fetch_bdii_se_info(
 void 
 fetch_bdii_ce_info(
   std::string const& host, size_t port, std::string const& dn, 
-  time_t timeout, ism::purchaser::PurchaserInfoContainer& ce_info_container) 
+  time_t timeout, std::string const& ldap_ce_filter_ext,
+  ism::purchaser::PurchaserInfoContainer& ce_info_container) 
 {
   char* const filter_ext = std::getenv("GLITE_WMS_II_CE_FILTER_EXT");
   std::string filter(
     "(|(objectclass=gluecesebind)(objectclass=gluecluster)(objectclass=gluesubcluster)"
   );
 
-  if (filter_ext) { 
+  if (!ldap_ce_filter_ext.empty()) { 
     filter += "(&(|"; 
   };
   filter += "(objectclass=gluevoview)(objectclass=gluece)";
-  if (filter_ext) { 
+  if (!ldap_ce_filter_ext.empty()) { 
     filter.append(")").append(filter_ext).append(")"); 
   }
   filter += ")";
@@ -790,10 +791,11 @@ void fetch_bdii_info(
   size_t port,
   std::string const& dn,
   time_t timeout,
+  std::string const& ldap_ce_filter_ext,
   ism::purchaser::PurchaserInfoContainer& ce_info_container,
   ism::purchaser::PurchaserInfoContainer& se_info_container)
 {
-  fetch_bdii_ce_info(hostname, port, dn, timeout, ce_info_container);
+  fetch_bdii_ce_info(hostname, port, dn, timeout, ldap_ce_filter_ext, ce_info_container);
   fetch_bdii_se_info(hostname, port, dn, timeout, se_info_container);
 }
 }

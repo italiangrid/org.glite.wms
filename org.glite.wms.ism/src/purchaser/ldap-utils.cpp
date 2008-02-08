@@ -315,19 +315,19 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
      
 void 
 fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
+  std::string const& ldap_ce_filter_ext,
   gluece_info_container_type& gluece_info_container) 
 {
-   char* const filter_ext = std::getenv("GLITE_WMS_II_CE_FILTER_EXT");
   std::string filter(
     "(|(objectclass=gluecesebind)(objectclass=gluecluster)(objectclass=gluesubcluster)"
   );
 
-  if (filter_ext) {
+  if (!ldap_ce_filter_ext.empty()) {
     filter += "(&(|";
   };
   filter += "(objectclass=gluevoview)(objectclass=gluece)";
-  if (filter_ext) {
-    filter.append(")").append(filter_ext).append(")");
+  if (!ldap_ce_filter_ext.empty()) {
+    filter.append(")").append(ldap_ce_filter_ext).append(")");
   }
   filter += ")";
 
@@ -649,13 +649,14 @@ void fetch_bdii_info(const std::string& hostname,
 			int port,
 			const std::string& dn,
 			int timeout,
+                        const std::string& ldap_ce_filter_ext,
 			gluece_info_container_type& gluece_info_container,
                         gluese_info_container_type& gluese_info_container)
 {
   boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection(
     new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
   );
-  fetch_bdii_ce_info(IIconnection, gluece_info_container);
+  fetch_bdii_ce_info(IIconnection, ldap_ce_filter_ext, gluece_info_container);
   fetch_bdii_se_info(IIconnection, gluese_info_container);
 }
 
