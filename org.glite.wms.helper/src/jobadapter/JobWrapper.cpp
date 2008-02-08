@@ -110,6 +110,7 @@ JobWrapper::JobWrapper(
   m_pimpl->m_perusal_support = false;
   m_pimpl->m_osb_wildcards_support = false;
   m_pimpl->m_job = job;
+  m_pimpl->m_jw_template = jw_template;
 }
 
 JobWrapper::~JobWrapper()
@@ -510,31 +511,18 @@ JobWrapper::dump_vars(std::ostream& os) const
 }
 
 bool 
-JobWrapper::fill_out_script(const std::string& template_file, std::ostream& output_stream) const
+JobWrapper::fill_out_script(
+  std::string const& jw_template,
+  std::ostream& output_stream
+) const
 {
-  std::ifstream fs(template_file.c_str());
-  if ( !fs ) {
-   output_stream << "echo \"Cannot open input file " << template_file << "\"\n";
-   return false;
-  }
-
-  std::string input_line;
-  getline(fs, input_line);
-  if (input_line.substr(0, 2) != "#!") {
-    return false;
-  }
-  output_stream << input_line << '\n';
-  getline(fs, input_line);
-  if ( !input_line.empty() ) {
-    return false;
-  }
-  output_stream << '\n';
+  output_stream << "#!/bin/sh\n\n";
 
   if ( !dump_vars(output_stream) )
     return false;
 
   output_stream << '\n';
-  output_stream << fs.rdbuf();
+  output_stream << jw_template;
 
   return true;
 }
@@ -545,13 +533,7 @@ JobWrapper::print(std::ostream& os) const
   const configuration::WMConfiguration* const wm_config
     = configuration::Configuration::instance()->wm();
 
-  if(
-    !fill_out_script( 
-      wm_config->job_wrapper_template_dir() 
-      + 
-      "/template.sh", os
-    )
-  ) {
+  if (!fill_out_script(*m_pimpl->m_jw_template, os)) {
     throw JobWrapperException("Cannot create jobwrapper script");
   }
 

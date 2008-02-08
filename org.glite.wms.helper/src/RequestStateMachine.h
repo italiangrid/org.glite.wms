@@ -54,7 +54,10 @@ public:
   ~RequestStateMachine();
 
   void start(classad::ClassAd const* ad);
-  classad::ClassAd* next_step(classad::ClassAd const* ad);
+  classad::ClassAd* next_step(
+    classad::ClassAd const* ad,
+    boost::shared_ptr<std::string> jw_template
+  );
   operator void*() const;
   int operator!() const;
 

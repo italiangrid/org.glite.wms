@@ -176,7 +176,10 @@ RequestStateMachine::start(classad::ClassAd const* ad)
 }
 
 classad::ClassAd*
-RequestStateMachine::next_step(classad::ClassAd const* ad)
+RequestStateMachine::next_step(
+  classad::ClassAd const* ad,
+  boost::shared_ptr<std::string> jw_template
+)
 {
   assert(ad != 0);
 
@@ -191,7 +194,7 @@ RequestStateMachine::next_step(classad::ClassAd const* ad)
   state_type next_state;
   boost::tie(helper, next_state) = it->second;
 
-  result = Helper(helper).resolve(ad);
+  result = Helper(helper).resolve(ad, jw_template);
   m_current_state = next_state;
 
   assert(result != 0);
