@@ -52,8 +52,6 @@ ism_ii_purchaser::ism_ii_purchaser(
   int port,
   std::string const& distinguished_name,
   int timeout,
-  std::string const& ldap_ce_filter_ext,
-  bool ldap_search_async,
   exec_mode_t mode,
   size_t interval,
   exit_predicate_type exit_predicate,
@@ -62,9 +60,7 @@ ism_ii_purchaser::ism_ii_purchaser(
   m_hostname(hostname),
   m_port(port),
   m_dn(distinguished_name),
-  m_timeout(timeout),
-  m_ldap_ce_filter_ext(ldap_ce_filter_ext),
-  m_ldap_search_async(ldap_search_async)
+  m_timeout(timeout)
 {
 }
 
@@ -106,9 +102,17 @@ void populate_ism(
   vector<gluece_info_iterator>::const_iterator const e(
     gluece_info_container_updated_entries.end()
   );
+
   time_t const current_time = std::time(0);
+
+  int dark_side;
+  if(ism::active_side()) {
+    dark_side = 0;
+  } else {
+    dark_side = 1;
+  }
   for ( ; it != e; ++it ) {
-    ism_type::iterator ism_it = get_ism(the_ism_index).find((*it)->first);
+    ism_type::iterator ism_it = get_ism(the_ism_index, dark_side).find((*it)->first);
     if (ism_it != get_ism(the_ism_index).end()) {
       ism_type::mapped_type& data = ism_it->second;
       boost::tuples::get<0>(data) = current_time;
@@ -119,8 +123,8 @@ void populate_ism(
           (*it)->first,
           current_time,
           (*it)->second,
-          ism_ii_purchaser_entry_update()
-          
+          ism_ii_purchaser_entry_update(),
+          300
         )
       );
     }
@@ -142,13 +146,12 @@ void ism_ii_purchaser::do_purchase()
      vector<gluese_info_iterator> gluese_info_container_updated_entries;
 
      time_t const t0 = std::time(0);
-     if (m_ldap_search_async) {
+     if (std::getenv("GLITE_WMS_II_LDAP_SEARCH_ASYNC")) {
        async::fetch_bdii_info(
          m_hostname,
          m_port,
          m_dn,
          m_timeout,
-         m_ldap_ce_filter_ext,
          gluece_info_container,
          gluese_info_container
        );
@@ -159,7 +162,6 @@ void ism_ii_purchaser::do_purchase()
          m_port,
          m_dn,
          m_timeout,
-         m_ldap_ce_filter_ext,
          gluece_info_container,
          gluese_info_container
        );
@@ -177,12 +179,14 @@ void ism_ii_purchaser::do_purchase()
        gluese_info_container_updated_entries,
        m_skip_predicate
      );
-     
+
+     // do not populate until the existing ism has got threads still matching against it
+     while (matching_threads((ism::active_side() + 1) % 2) > 0) {
+      ::sleep(1);
+     }
+
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
-
-     Info("Total VO_Views entries in ISM : " << gluece_info_container_updated_entries.size());
-     Info("Total SE entries in ISM : " << gluese_info_container_updated_entries.size());
     }
     catch (LDAPException& e) {
       Error("Failed to purchase info from " << m_hostname << ":" << m_port << " (" << e.what() << ")");
@@ -207,16 +211,13 @@ extern "C" ism_ii_purchaser* create_ii_purchaser(std::string const& hostname,
     int port,
     std::string const& distinguished_name,
     int timeout,
-    std::string const& ldap_ce_filter_ext,
-    bool ldap_search_async,
     exec_mode_t mode,
     size_t interval,
     exit_predicate_type exit_predicate,
     skip_predicate_type skip_predicate) 
 {
     return new ism_ii_purchaser(
-      hostname, port, distinguished_name, timeout,
-      ldap_ce_filter_ext, ldap_search_async,
+      hostname, port, distinguished_name, timeout, 
       mode, interval, exit_predicate, skip_predicate
     );
 }

@@ -16,9 +16,30 @@
 
 namespace configuration = glite::wms::common::configuration;
 
+namespace {
+  int s_active_side[2];
+  int s_matching_threads[2];
+}
+
 namespace glite {
 namespace wms {
 namespace ism {
+
+void switch_active_side()
+{
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
+  s_active_side[ism::ce] = (s_active_side[ism::ce] + 1) % 2;
+  if (s_matching_threads[s_active_side[ism::ce]] != 0) {
+    assert(true);
+  }
+}
+
+int active_side()
+{
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
+  ++s_matching_threads[s_active_side[ism::ce]];
+  return s_active_side[ism::ce];
+}
 
 ism_type::value_type make_ism_entry(
   std::string const& id, // resource identifier
@@ -36,14 +57,21 @@ ism_type::value_type make_ism_entry(
 
 namespace {
 
-ism_type* the_ism[2];
+ism_type* the_ism1[2];
+ism_type* the_ism2[2];
 ism_mutex_type* the_ism_mutex[2];
 
 }
 
-void set_ism(ism_type* ism, ism_mutex_type* ism_mutex, size_t the_ism_index)
+void set_ism(
+  ism_type* ism1,
+  ism_type* ism2,
+  ism_mutex_type* ism_mutex,
+  size_t the_ism_index
+)
 {
-  the_ism[the_ism_index] = ism + the_ism_index;
+  the_ism1[the_ism_index] = ism1 + the_ism_index;
+  the_ism2[the_ism_index] = ism2 + the_ism_index;
   the_ism_mutex[the_ism_index] = ism_mutex + the_ism_index;
 }
 
@@ -52,9 +80,40 @@ ism_mutex_type& get_ism_mutex(size_t the_ism_index)
   return *the_ism_mutex[the_ism_index];
 }
 
+ism_mutex_type& get_ism_mutex(size_t the_ism_index)
+{
+  return *the_ism_mutex[the_ism_index];
+}
+
+ism_type& get_ism(size_t the_ism_index, int face)
+{
+  if (face) {
+    return *the_ism1[the_ism_index];
+  } else {
+    return *the_ism2[the_ism_index];
+  }
+}
+
 ism_type& get_ism(size_t the_ism_index)
 {
-  return *the_ism[the_ism_index];
+  if (s_active_side) {
+    return *the_ism2[the_ism_index];
+  } else {
+    return *the_ism1[the_ism_index];
+  }
+}
+
+int matching_threads(int side)
+{
+  return s_matching_threads[side];
+}
+
+void matched_thread(int side)
+{
+  --s_matching_threads[side];
+  if (side != s_active_side[ism::ce] && s_matching_threads[side] == 0) {
+    get_ism(ism::ce, side).clear(); // updater thread not needed anymore
+  }
 }
 
 std::ostream&
