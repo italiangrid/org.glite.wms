@@ -41,7 +41,7 @@ public:
   std::string resolve(std::string const& input_file) const;
   classad::ClassAd* resolve(
     classad::ClassAd const* input_ad,
-      boost::shared_ptr<std::string> jw_template = boost::shared_ptr<std::string>()
+      boost::shared_ptr<std::string> jwt = boost::shared_ptr<std::string>()
   ) const;
 };
  

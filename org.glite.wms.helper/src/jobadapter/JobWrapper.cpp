@@ -511,19 +511,14 @@ JobWrapper::dump_vars(std::ostream& os) const
 }
 
 bool 
-JobWrapper::fill_out_script(
-  std::string const& jw_template,
-  std::ostream& output_stream
-) const
+JobWrapper::fill_out_script(std::ostream& output_stream) const
 {
   output_stream << "#!/bin/sh\n\n";
 
   if ( !dump_vars(output_stream) )
     return false;
 
-  output_stream << '\n';
-  output_stream << jw_template;
-
+  output_stream << '\n' << *m_pimpl->m_jw_template;
   return true;
 }
 
@@ -533,7 +528,7 @@ JobWrapper::print(std::ostream& os) const
   const configuration::WMConfiguration* const wm_config
     = configuration::Configuration::instance()->wm();
 
-  if (!fill_out_script(*m_pimpl->m_jw_template, os)) {
+  if (!fill_out_script(os)) {
     throw JobWrapperException("Cannot create jobwrapper script");
   }
 

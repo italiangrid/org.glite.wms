@@ -38,7 +38,7 @@ public:
   virtual std::string output_file_suffix() const = 0;
   virtual classad::ClassAd* resolve(
     const classad::ClassAd* input_ad,
-    boost::shared_ptr<std::string> jw_template = boost::shared_ptr<std::string>()
+    boost::shared_ptr<std::string> jwt = boost::shared_ptr<std::string>()
   ) const = 0;
 };
 

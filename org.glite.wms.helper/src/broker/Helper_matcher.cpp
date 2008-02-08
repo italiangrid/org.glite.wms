@@ -312,7 +312,10 @@ Helper::output_file_suffix() const
 }
 
 classad::ClassAd*
-Helper::resolve(classad::ClassAd const* input_ad) const
+Helper::resolve(
+  classad::ClassAd const* input_ad,
+  boost::shared_ptr<std::string> jwt
+) const
 {
   std::auto_ptr<classad::ClassAd> result = f_resolve_do_match(*input_ad);
 

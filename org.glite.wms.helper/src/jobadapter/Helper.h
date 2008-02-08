@@ -19,12 +19,11 @@ namespace jobadapter {
 class Helper: public helper::HelperImpl
 {
 public:
-
   std::string id() const;
   std::string output_file_suffix() const;
   classad::ClassAd* resolve(
     classad::ClassAd const* input_ad,
-    boost::shared_ptr<std::string> m_jw_template
+    boost::shared_ptr<std::string> jw_template
   ) const;
 };
 
