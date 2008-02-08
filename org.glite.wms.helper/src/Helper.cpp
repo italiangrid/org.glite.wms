@@ -45,9 +45,12 @@ Helper::resolve(std::string const& input_file) const
 };
 
 classad::ClassAd*
-Helper::resolve(classad::ClassAd const* input_ad) const
+Helper::resolve(
+  classad::ClassAd const* input_ad,
+  boost::shared_ptr<std::string> jw_template
+) const
 {
-  return m_impl->resolve(input_ad);
+  return m_impl->resolve(input_ad, jw_template);
 }
 
 }}} // glite::wms::helper

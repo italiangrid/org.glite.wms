@@ -66,7 +66,7 @@ namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::jdl;
-namespace utils		= glite::wmsutils::classads;
+namespace utils         = glite::wmsutils::classads;
 namespace matchmaking   = glite::wms::matchmaking;
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)

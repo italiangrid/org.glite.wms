@@ -53,7 +53,10 @@ public:
    *  \param job
    *  \ingroup jobadapter
    */
-  JobWrapper(const std::string& job);
+  JobWrapper(
+    const std::string& job,
+    boost::shared_ptr<std::string> jw_template  
+  );
   ~JobWrapper();
 
   struct pimpl;

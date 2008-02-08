@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 #include "classad_distribution.h"
@@ -26,6 +27,7 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/exceptions.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/logger/edglog.h"
 
@@ -95,11 +97,26 @@ main(int argc, char* argv[])
     Configuration confi(jaconf, "WorkloadManager");
 
     const JCConfiguration *jwconfig = Configuration::instance()->jc();
+    const WMConfiguration *wmconfig = Configuration::instance()->wm();
 
-    string jw_file_path(jwconfig->submit_file_dir());
+    std::string template_file(
+      wmconfig->job_wrapper_template_dir()
+     +
+      "/template.sh"
+    );
+    std::ifstream ifs(template_file.c_str());
+    if (!ifs) {
+      std::cout << "echo \"Cannot open input file " << template_file << "\"\n";
+      return -1;
+    }
+    std::ostringstream oss;
+    oss << ifs.rdbuf();
+    boost::shared_ptr<std::string> jw_template_ptr(
+      new std::string(oss.str())
+    );
 
     // we define a JobAdapter
-    JobAdapter ja(ad); 
+    JobAdapter ja(ad, jw_template_ptr);
 
     const ClassAd*      ad_modified = ja.resolve();
 

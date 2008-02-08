@@ -9,6 +9,7 @@
 #define GLITE_WMS_HELPER_MATCHER_HELPER_H
 
 #include "glite/wms/helper/HelperImpl.h"
+#include <boost/shared_ptr.hpp>
 
 namespace glite {
 namespace wms {

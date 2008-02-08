@@ -60,9 +60,12 @@ Helper::output_file_suffix() const
 }
 
 classad::ClassAd*
-Helper::resolve(classad::ClassAd const* input_ad) const
+Helper::resolve(
+  classad::ClassAd const* input_ad,
+  boost::shared_ptr<std::string> m_jw_template
+) const
 {
-  return JobAdapter(input_ad).resolve();
+  return JobAdapter(input_ad, m_jw_template).resolve();
 }
 
 } // namespace jobadapter

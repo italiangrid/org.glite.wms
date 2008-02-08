@@ -10,6 +10,9 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+
+#include <boost/shared_ptr.hpp>
 
 #include "jobadapter/JobWrapper.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -41,8 +44,23 @@ main(int argc, char* argv[])
   JobWrapper *jw;
   
   try {
+    std::string template_file(
+      config.wm()->job_wrapper_template_dir()
+     +
+      "/template.sh"
+    );
+    std::ifstream ifs(template_file.c_str());
+    if (!ifs) {
+      std::cout << "echo \"Cannot open input file " << template_file << "\"\n";
+      return -1;
+    }
+    std::ostringstream oss;
+    oss << ifs.rdbuf();
+    boost::shared_ptr<std::string> jw_template_ptr(
+      new std::string(oss.str())
+    );
     // initialize a job wrapper with job.sh as executable	  
-    jw = new JobWrapper("job.sh");
+    jw = new JobWrapper("job.sh", jw_template_ptr);
 
     // set the input sandbox
     jw->input_sandbox(URL("gsiftp://joda.cnaf.infn.it:9000/home/joda/wp1/JobWrapper"), in_files);
@@ -51,10 +69,10 @@ main(int argc, char* argv[])
     jw->output_sandbox(URL("gsiftp://joda.cnaf.infn.it:8000/tmp/gridtest"), output_files);
   } catch (InvalidURL& ex) {
     cerr << ex.what();
-    return -1;
+    return -2;
   } catch (...) {
     cerr << "Caught uknown exception" << endl;
-    return -2;
+    return -3;
   }
 
   // set the stdin, stdout and stderr for job.sh

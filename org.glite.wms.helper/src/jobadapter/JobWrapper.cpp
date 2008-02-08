@@ -93,11 +93,16 @@ struct JobWrapper::pimpl {
   std::string               m_broker_hostname;
   std::string               m_ce_application_dir;
   int64_t                   m_max_osb_size;
+
+  boost::shared_ptr<std::string> m_jw_template;
 };
 
 const std::string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
 
-JobWrapper::JobWrapper(const std::string& job)
+JobWrapper::JobWrapper(
+  const std::string& job,
+  boost::shared_ptr<std::string> jw_template
+)
  : m_pimpl(new pimpl)
 {  
   m_pimpl->m_nodes = 0;

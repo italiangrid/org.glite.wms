@@ -8,6 +8,7 @@
 #ifndef GLITE_WMS_HELPER_JOBADAPTER_HELPER_H
 #define GLITE_WMS_HELPER_JOBADAPTER_HELPER_H
 
+#include <boost/shared_ptr.hpp>
 #include "glite/wms/helper/HelperImpl.h"
 
 namespace glite {
@@ -21,7 +22,10 @@ public:
 
   std::string id() const;
   std::string output_file_suffix() const;
-  classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
+  classad::ClassAd* resolve(
+    classad::ClassAd const* input_ad,
+    boost::shared_ptr<std::string> m_jw_template
+  ) const;
 };
 
 } // namespace jobadapter

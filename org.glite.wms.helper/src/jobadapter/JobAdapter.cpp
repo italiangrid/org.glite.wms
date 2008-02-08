@@ -114,8 +114,11 @@ replace(std::string& where, const std::string& what, const std::string& with)
   }
 }
 
-JobAdapter::JobAdapter(const classad::ClassAd* ad)
- : m_ad(ad)
+JobAdapter::JobAdapter(
+  const classad::ClassAd* ad,
+  boost::shared_ptr<std::string> jw_template
+) 
+ : m_ad(ad), m_jw_template(jw_template)
 {
 }
 
@@ -735,7 +738,7 @@ try {
       exec.append(executable.substr(pos+2));
     }
  
-    jw.reset(new JobWrapper(exec));
+    jw.reset(new JobWrapper(exec, m_jw_template));
     if (llrmstype == "lsf") {
       jw->set_job_type(MPI_LSF);
     } else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
@@ -773,13 +776,13 @@ try {
 
     std::string::size_type pos = executable.find("./");
     if (pos == std::string::npos) {
-      jw.reset(new JobWrapper(executable));
+      jw.reset(new JobWrapper(executable, m_jw_template));
     } else {
-      jw.reset(new JobWrapper(executable.substr(pos+2)));
+      jw.reset(new JobWrapper(executable.substr(pos+2), m_jw_template));
     }
     jw->set_job_type(INTERACTIVE);
   } else {
-    jw.reset(new JobWrapper(executable));
+    jw.reset(new JobWrapper(executable, m_jw_template));
     jw->set_job_type(NORMAL);
   }
  
