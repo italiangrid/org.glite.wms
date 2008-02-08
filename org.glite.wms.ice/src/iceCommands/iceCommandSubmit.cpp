@@ -362,11 +362,11 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
     string delegID, lease_id; // empty delegation id
     bool force_delegation = false;
-    bool force_lease = false;
+    bool force_lease = false;  
+    bool retry = true;  
+    cream_api::AbsCreamProxy::RegisterArrayResult res;        
 
-    cream_api::AbsCreamProxy::RegisterArrayResult res;
-
-    while( 1 ) {
+    while( retry ) {
 
         //
         // Manage lease creation
@@ -481,14 +481,53 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
         }
 
-        bool ok = res.begin()->second.get<0>();           
-        if ( !ok ) {
-            string err = res.begin()->second.get<2>();
-            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised exception %1%") % err ) )  );
-        } else {
-            break; // everything fine, exit the while() loop
+        // FIXME: This should be updated as soon as the C++ CREAM APIs
+        // have been modified to check the correct return values
+        typedef enum { OK, DELEG_ERROR, LEASE_ERROR } error_code_t;
+        error_code_t ok = ( res.begin()->second.get<0>() ? OK : DELEG_ERROR );
+        string err = res.begin()->second.get<2>();
+            
+        switch( ok ) {
+        case OK: // nothing to do
+            retry = false;
+            break;
+        case DELEG_ERROR: // nothing to do
+            if ( !force_delegation ) {
+                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                                << "Cannot register GridJobID ["
+                                << m_theJob.getGridJobID() 
+                                << "] due to Delegation Error: " 
+                                << err << ". Will retry once..."
+                                << log4cpp::CategoryStream::ENDLINE );
+                force_delegation = true;
+            } else {
+                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised DelegationException %1%") % err ) ) );
+            }            
+            break;
+        case LEASE_ERROR: // nothing to do
+            if ( is_lease_enabled && !force_lease ) {
+                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                                << "Cannot register GridJobID ["
+                                << m_theJob.getGridJobID() 
+                                << "] due to Lease Error: " 
+                                << err << ". Will retry once by enforcing creation of a new lease ID..."
+                                << log4cpp::CategoryStream::ENDLINE );
+                force_lease = true;
+            } else {
+                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % err ) ) );
+            }     
+            break;                               
+        default:
+            // FIXME: should never happen!!!
+            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+                            << "Error while registering GridJobID ["
+                            << m_theJob.getGridJobID() 
+                            << "] due to unexpected error with Error: " 
+                            << err
+                            << log4cpp::CategoryStream::ENDLINE );
+            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned unknown error code %1%") % err ) ) ); 
         }
-        
+
     } // end while(1)
     
     string jobId      = res.begin()->second.get<1>().getCreamJobID();

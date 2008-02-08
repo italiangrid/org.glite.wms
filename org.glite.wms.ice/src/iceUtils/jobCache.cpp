@@ -78,9 +78,7 @@ jobCache::jobCache( void ) :
     }
     m_dbMgr.reset( dbm );
     
-    load();
-	 
-    jobCacheIterator::s_cache = this;
+    load();	
 }
 
 //______________________________________________________________________________
@@ -157,7 +155,7 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
 			<< log4cpp::CategoryStream::ENDLINE );
         abort();
     }
-    return jobCacheIterator( (m_GridJobIDSet.insert( cj.getGridJobID() )).first );
+    return make_iterator( (m_GridJobIDSet.insert( cj.getGridJobID() )).first );
 }
 
 
@@ -174,8 +172,8 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
       tmpOs.str( serializedJob );
       boost::archive::text_iarchive ia(tmpOs);
       ia >> cj;
-    
-      return jobCacheIterator( m_GridJobIDSet.find( cj.getGridJobID() ) );
+      set<string>::const_iterator it = m_GridJobIDSet.find( cj.getGridJobID() );
+      return make_iterator(m_GridJobIDSet.find( cj.getGridJobID() ));
     } catch(JobDbNotFoundException& ex) {
       CREAM_SAFE_LOG( m_log_dev->errorStream() 
                       << "jobCache::lookupByCompleteCreamJobID() - " 
@@ -197,7 +195,7 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     //return m_jobs.findJobByGID( gridJID );
     
-    return jobCacheIterator( m_GridJobIDSet.find( gridJID ) );
+    return make_iterator( m_GridJobIDSet.find( gridJID ) );
 }
 
 //______________________________________________________________________________
@@ -205,40 +203,64 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
 {
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
 
-    if( it == this->end() ) return it;
+    if( it == end() ) 
+        return it;
 
-    jobCache::iterator result = it;
-    ++result; // advance iterator
-    // job found, log operation and remove
+    string gid = it.get_grid_job_id();
+    string next_gid = get_next_grid_job_id( gid );
+
+    jobCache::iterator result( next_gid );
     
     CREAM_SAFE_LOG( m_log_dev->debugStream() 
-                      << "jobCache::erase() - Removing CreamJobID ["
-		      << it->getCompleteCreamJobID() << "] from BerkeleyDB..."
-		      << log4cpp::CategoryStream::ENDLINE );
-    
+                      << "jobCache::erase() - Removing GridJobID ["
+		      << gid << "] from BerkeleyDB..."
+		      << log4cpp::CategoryStream::ENDLINE );    
     try{
-      m_dbMgr->delByCid( it->getCompleteCreamJobID() );
+      m_dbMgr->delByGid( gid );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
 			<< dbex.what() 
 			<< log4cpp::CategoryStream::ENDLINE );
         abort();
     }
-
-    m_GridJobIDSet.erase( it.m_it );
+    
+    m_GridJobIDSet.erase( gid );
     return result;
 }
 
 //______________________________________________________________________________
 jobCache::iterator jobCache::begin() 
 {
-  return jobCacheIterator( m_GridJobIDSet.begin() );
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
+    return make_iterator( m_GridJobIDSet.begin() );
 }
 
 
 //______________________________________________________________________________
 jobCache::iterator jobCache::end() 
 {
-  return jobCacheIterator( m_GridJobIDSet.end() );
+    return jobCacheIterator( );
 }
 
+string jobCache::get_next_grid_job_id( const string& gid ) const throw()
+{
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
+
+    if ( gid.empty() )
+        return gid;
+
+    set<string>::const_iterator it = m_GridJobIDSet.find( gid );
+    if ( it == m_GridJobIDSet.end() || (++it) == m_GridJobIDSet.end() )
+        return string();
+    else 
+        return *it;
+}
+
+jobCacheIterator jobCache::make_iterator( const set< string >::const_iterator& it ) const throw()
+{
+    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
+    if ( it == m_GridJobIDSet.end() )
+        return jobCacheIterator();
+    else
+        return jobCacheIterator( *it );
+}

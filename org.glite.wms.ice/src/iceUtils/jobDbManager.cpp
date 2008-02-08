@@ -395,7 +395,7 @@ string iceUtil::jobDbManager::getByGid( const string& gid )
     if(ret == DB_NOTFOUND) {
       throw JobDbNotFoundException(string("Not Found GridJobID [") + gid + "]");
     }
-      
+
     ret = m_creamJobDb->get(NULL, &cid, &jdata, 0);
     
     if( ret == DB_NOTFOUND) {

@@ -20,7 +20,7 @@
 #ifndef GLITE_WMS_ICE_UTIL_JOBCACHEITERATOR_H
 #define GLITE_WMS_ICE_UTIL_JOBCACHEITERATOR_H
 
-#include<set>
+//#include<set>
 #include<string>
 #include<sstream>
 
@@ -35,14 +35,10 @@ namespace wms {
 namespace ice {
 namespace util {
 	
-    class jobCache;
-    
     class jobCacheIterator {
     protected:
-        friend class jobCache;	  
         bool m_valid_it;
-        std::set<std::string>::iterator  m_it;
-        static jobCache *s_cache;
+        std::string m_grid_job_id;
         CreamJob m_theJob;
         log4cpp::Category* m_log_dev;
 
@@ -55,24 +51,24 @@ namespace util {
          * database fails, this method aborts.
          */
         void refresh() throw();
-        
+
     public:
         jobCacheIterator() throw();
-        jobCacheIterator( const std::set<std::string>::iterator& anIt) throw(); // : m_valid_it( false ), m_it( anIt ) { }
-        // jobCacheIterator( const jobCacheIterator& anIt ) throw()// : m_valid_it( false ), m_it(anIt.m_it), m_theJob(anIt.m_theJob) { }
+        jobCacheIterator( const std::string& anIt) throw();
         
-        jobCacheIterator&  operator++() throw()          { m_it++; m_valid_it=false; return *this; }
-        jobCacheIterator&  operator--() throw()          { m_it--; m_valid_it=false; return *this; }
-        
+        jobCacheIterator&  operator++() throw();        
         CreamJob           operator*() throw();
         CreamJob*          operator->() throw();
         bool               operator==( const jobCacheIterator& ) const throw();
-        //bool               operator==( const std::set<std::string>::iterator ) const throw();
         bool               operator!=( const jobCacheIterator& ) const throw();
-        //bool               operator!=( const std::set<std::string>::iterator ) const throw();
-        jobCacheIterator&  operator=( const jobCacheIterator& ) throw();
-        //jobCacheIterator&  operator=( const std::set<std::string>::iterator ) throw();
-        
+        jobCacheIterator&  operator=( const jobCacheIterator& ) throw();   
+
+        /**
+         * Returns the grid job id this iterator points to.  If this
+         * iterator does not point to a valid element (e.g., it points
+         * to end() ), the empty string is returned.
+         */        
+        std::string get_grid_job_id( ) const { return m_grid_job_id; };
     };
     
 } // util

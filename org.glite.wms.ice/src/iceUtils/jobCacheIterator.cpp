@@ -26,18 +26,17 @@ namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-jobCache* jobCacheIterator::s_cache( 0 );
-
 jobCacheIterator::jobCacheIterator() throw() :
     m_valid_it( false ),
+    m_grid_job_id(),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger() )
 {
 
 }
 
-jobCacheIterator::jobCacheIterator( const std::set< std::string >::iterator& anIt ) throw() :
+jobCacheIterator::jobCacheIterator( const std::string& an_id ) throw() :
     m_valid_it( false ), 
-    m_it(anIt),
+    m_grid_job_id( an_id ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger() )
 { 
 
@@ -47,14 +46,14 @@ jobCacheIterator::jobCacheIterator( const std::set< std::string >::iterator& anI
 bool jobCacheIterator::operator==( const jobCacheIterator& anIt ) 
   const throw()
 {
-  return ( m_it == anIt.m_it );
+    return ( m_grid_job_id == anIt.m_grid_job_id );
 }
 
 //____________________________________________________________________
 bool jobCacheIterator::operator!=( const jobCacheIterator& anIt ) 
   const throw()
 {
-  return !( m_it == anIt.m_it );
+  return !( m_grid_job_id == anIt.m_grid_job_id );
 }
 
 //____________________________________________________________________
@@ -63,7 +62,7 @@ jobCacheIterator::operator=( const jobCacheIterator& anIt )
   throw()
 {
     if ( this != &anIt ) {
-        m_it = anIt.m_it;
+        m_grid_job_id = anIt.m_grid_job_id;
         m_valid_it = false;
     }
     return *this;
@@ -75,7 +74,7 @@ jobCacheIterator::operator->() throw()
 {
    static const char* method_name = "jobCacheIterator::operator->() - ";
 
-    if( *this == s_cache->end() ) {
+    if( m_grid_job_id.empty() ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Trying to dereference end() iterator. Aborting."
                        << log4cpp::CategoryStream::ENDLINE );        
@@ -93,7 +92,7 @@ jobCacheIterator::operator*() throw()
 {
     static const char* method_name = "jobCacheIterator::operator*() - ";
 
-    if(*this == s_cache->end() ) {
+    if( m_grid_job_id.empty() ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Trying to dereference end() iterator. Aborting."
                        << log4cpp::CategoryStream::ENDLINE );
@@ -113,10 +112,11 @@ void jobCacheIterator::refresh( ) throw()
         return;
 
     m_theJob = CreamJob();
+    jobCache* cache( jobCache::getInstance() );
     
     try {
         istringstream is;
-        is.str( s_cache->getDbManager()->getByGid( *m_it ) );
+        is.str( cache->getDbManager()->getByGid( m_grid_job_id ) );
         boost::archive::text_iarchive ia(is);
         ia >> m_theJob;
         m_valid_it = true;
@@ -139,4 +139,12 @@ void jobCacheIterator::refresh( ) throw()
                        << log4cpp::CategoryStream::ENDLINE );
         abort();            
     }
+}
+
+jobCacheIterator& jobCacheIterator::operator++() throw()          
+{ 
+    jobCache* cache( jobCache::getInstance() );
+    m_valid_it = false;
+    m_grid_job_id = cache->get_next_grid_job_id( m_grid_job_id );
+    return *this;
 }
