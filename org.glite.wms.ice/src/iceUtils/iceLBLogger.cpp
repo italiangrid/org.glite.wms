@@ -78,15 +78,15 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
 
     // If logging is disable, simply return
-    if ( ! m_lb_enabled ) {
-        CREAM_SAFE_LOG( m_log_dev->warnStream()
-                        << "iceLBLogger::logEvent() - LB disabled for log event \""
-                        << ev->describe() << "\" for gridJobId=["
-                        << ev->getJob().getGridJobID() << "] CreamJobID=[" 
-                        << ev->getJob().getCompleteCreamJobID() << "]"
-                        << log4cpp::CategoryStream::ENDLINE);
-        return ev->getJob();
-    }
+//     if ( ! m_lb_enabled ) {
+//         CREAM_SAFE_LOG( m_log_dev->warnStream()
+//                         << "iceLBLogger::logEvent() - LB disabled for log event \""
+//                         << ev->describe() << "\" for gridJobId=["
+//                         << ev->getJob().getGridJobID() << "] CreamJobID=[" 
+//                         << ev->getJob().getCompleteCreamJobID() << "]"
+//                         << log4cpp::CategoryStream::ENDLINE);
+//         return ev->getJob();
+//     }
 
     // Allocates a new (temporary) LB context
     boost::scoped_ptr< iceLBContext > m_ctx( new iceLBContext() );
@@ -121,10 +121,10 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
                        
                        << log4cpp::CategoryStream::ENDLINE);
-        
-        res = ev->execute( m_ctx.get() );
-        
-        m_ctx->testCode( res );
+        if(m_lb_enabled) {
+	  res = ev->execute( m_ctx.get() );
+	  m_ctx->testCode( res );
+	}
         
     } while( res != 0 );        
     
