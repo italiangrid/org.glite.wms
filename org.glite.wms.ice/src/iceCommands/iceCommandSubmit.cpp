@@ -483,15 +483,15 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 
         // FIXME: This should be updated as soon as the C++ CREAM APIs
         // have been modified to check the correct return values
-        typedef enum { OK, DELEG_ERROR, LEASE_ERROR } error_code_t;
-        error_code_t ok = ( res.begin()->second.get<0>() ? OK : DELEG_ERROR );
+        cream_api::JobIdWrapper::RESULT result = res.begin()->second.get<0>();
         string err = res.begin()->second.get<2>();
             
-        switch( ok ) {
-        case OK: // nothing to do
+        switch( result ) {
+        case cream_api::JobIdWrapper::OK: // nothing to do
             retry = false;
             break;
-        case DELEG_ERROR: // nothing to do
+        case cream_api::JobIdWrapper::DELEGATIONIDMISMATCH:
+        case cream_api::JobIdWrapper::DELEGATIONPROXYERROR:
             if ( !force_delegation ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
                                 << "Cannot register GridJobID ["
@@ -501,10 +501,10 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << log4cpp::CategoryStream::ENDLINE );
                 force_delegation = true;
             } else {
-                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised DelegationException %1%") % err ) ) );
+                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned delegation error \"%1%\"") % err ) ) );
             }            
             break;
-        case LEASE_ERROR: // nothing to do
+        case cream_api::JobIdWrapper::LEASEIDMISMATCH:
             if ( is_lease_enabled && !force_lease ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
                                 << "Cannot register GridJobID ["
@@ -514,18 +514,17 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << log4cpp::CategoryStream::ENDLINE );
                 force_lease = true;
             } else {
-                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % err ) ) );
+                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned lease id mismatch \"%1%\"") % err ) ) );
             }     
             break;                               
         default:
-            // FIXME: should never happen!!!
             CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
                             << "Error while registering GridJobID ["
                             << m_theJob.getGridJobID() 
-                            << "] due to unexpected error with Error: " 
+                            << "] due to Error: " 
                             << err
                             << log4cpp::CategoryStream::ENDLINE );
-            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned unknown error code %1%") % err ) ) ); 
+            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned error \"%1%\"") % err ) ) ); 
         }
 
     } // end while(1)

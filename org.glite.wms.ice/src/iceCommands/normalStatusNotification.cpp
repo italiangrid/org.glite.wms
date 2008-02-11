@@ -115,6 +115,7 @@ public:
     void apply_to_job( CreamJob& j ) const;
 
     const string& get_failure_reason( void ) const { return m_failure_reason; };
+    const string& get_description( void ) const { return m_description; };
 
 protected:
 
@@ -123,14 +124,17 @@ protected:
     api::job_statuses::job_status m_job_status;
     bool m_has_exit_code;
     bool m_has_failure_reason;
+    bool m_has_description;
     int m_exit_code;
     string m_failure_reason;
     string m_worker_node;
+    string m_description;
 };
 
 StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& ) :
     m_has_exit_code( false ),
     m_has_failure_reason( false ),
+    m_has_description( false ),
     m_exit_code( 0 ) // default
 {
 
@@ -165,6 +169,11 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
         boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
     }
 
+    if ( classad_safe_ptr->EvaluateAttrString( "DESCRIPTION", m_description ) ) {
+        m_has_description = true;
+        boost::trim_if( m_description, boost::is_any_of("\"") );
+    }
+
     if ( classad_safe_ptr->EvaluateAttrString( "WORKER_NODE", m_worker_node ) ) {
         boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
     }
@@ -186,11 +195,20 @@ void StatusChange::apply_to_job( CreamJob& j ) const
 {
     j.setStatus( get_status() );
     j.set_worker_node( m_worker_node );
-    if ( m_has_failure_reason ) {
-        j.set_failure_reason( m_failure_reason );
-    }
     if ( m_has_exit_code ) {
         j.set_exit_code( m_exit_code );
+    }    
+    // 
+    // Discussion with Gi, 2008/02/11: The failure reason field should
+    // be taken only for jobs in aborted/done_failed state.  If the
+    // job is in cancelled state, the cancel reason is located into
+    // the description field. The same is done in the
+    // iceCommandStatusPoller
+    //
+    if ( get_status() == api::job_statuses::CANCELLED ) {
+        j.set_failure_reason( m_description );
+    } else {
+        j.set_failure_reason( m_failure_reason );
     }
 }
 

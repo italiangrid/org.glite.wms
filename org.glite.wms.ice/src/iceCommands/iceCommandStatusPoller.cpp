@@ -90,43 +90,6 @@ using namespace std;
     return true;
   }
   
-//     /**
-//      * This class represents an iterator; the operator=(), instead of
-//      * inserting something into the container, removes an element from the
-//      * job cache.
-//      */
-//     class job_cache_remover {
-//     protected:
-//       iceUtils::jobCache* m_cache;
-//     public:
-//         typedef output_iterator_tag iterator_category;
-//         typedef void value_type;
-//         typedef void difference_type;
-//         typedef void pointer;
-//         typedef void pointer;
-//         typedef void reference;
-        
-//       job_cache_remover( ) : m_cache( iceUtils::jobCache::getInstance() ) { };
-//         /**
-//          * Removes an element from the jobCache. The cache is locked before
-//          * attempting to remove the element.
-//          *
-//          * @param job_id the Cream JobID to remove; if this Cream JobID is
-//          * not found in the cache, nothing is done.
-//          *
-//          * @return this iterator object.
-//          */
-//         job_cache_remover& operator=( const string& job_id ) {
-// 	    boost::recursive_mutex::scoped_lock M( iceUtils::jobCache::mutex );        
-// 	    iceUtils::jobCache::iterator it = m_cache->lookupByCreamJobID( job_id );
-//             m_cache->erase( it );
-//             return *this;
-//         };
-//         job_cache_remover& operator*() { return *this; }
-//         job_cache_remover& operator++() { return *this; }
-//         job_cache_remover& operator++(int) { return *this; }
-//     };    
-
  }; // end anonymous namespace
 
 //____________________________________________________________________________
@@ -199,6 +162,7 @@ void iceUtils::iceCommandStatusPoller::get_jobs_to_poll( list< iceUtils::CreamJo
                            << " t_last_empty_notification=" << time_t_to_string( t_last_empty_notification )
                            << " empty_oldness (t_last_empty_notification - t_now)=" << empty_oldness
                            << " empty_threshold=" << m_empty_threshold
+                           << " force_polling=" << m_poll_all_jobs
                            << log4cpp::CategoryStream::ENDLINE);
 
             result.push_back( *jit );
@@ -570,6 +534,7 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
                            << " status = [" << it->getStatusName() << "]"
                            << " exit_code = [" << exitCode << "]"
                            << " failure_reason = [" << it->getFailureReason() << "]"
+                           << " description = [" << it->getDescription() << "]"
                            << log4cpp::CategoryStream::ENDLINE);
 
             tmp_job.setStatus( stNum );
@@ -578,7 +543,14 @@ void iceUtils::iceCommandStatusPoller::update_single_job( const soap_proxy::JobI
             } catch( boost::bad_lexical_cast & ) {
                 tmp_job.set_exit_code( 0 );
             }
-            tmp_job.set_failure_reason( it->getFailureReason() );
+            //
+            // See comment in normalStatusNotification.cpp
+            //
+            if ( stNum == jobstat::CANCELLED ) {
+                tmp_job.set_failure_reason( it->getDescription() );
+            } else {
+                tmp_job.set_failure_reason( it->getFailureReason() );
+            }
             tmp_job.set_num_logged_status_changes( count );
 
             // Log to L&B
