@@ -90,67 +90,80 @@ jobCache::~jobCache( )
 //______________________________________________________________________________
 void jobCache::load( void ) throw()
 {
+    static const char* method_name = "jobCache::load() - ";
   
-  /**
-   * new implementation using the boost serializer
-   *
-   */
-  vector<string> records;
-  try {
-    m_dbMgr->initCursor();
+    /**
+     * new implementation using the boost serializer
+     *
+     */
+    vector<string> records;
+    try {
+        m_dbMgr->initCursor();
 
-    char *data;
-    while( (data = (char*)m_dbMgr->getNextData()) != NULL ) 
-    {
-      boost::scoped_ptr< char > toFree;
-      toFree.reset( data );
-      
-      CreamJob cj;
-      istringstream tmpOs;//( string(data) );
-      tmpOs.str( data );
-      try {
-        boost::archive::text_iarchive ia(tmpOs);
-	ia >> cj;
-
-        m_GridJobIDSet.insert( cj.getGridJobID() );
-	
-      } catch(exception& ex ) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                        << "jobCache::load() - boost::archive::text_iarchive raised an exception: "
-                        << ex.what()
+        char *data;
+        while( (data = (char*)m_dbMgr->getNextData()) != NULL ) {
+            boost::scoped_ptr< char > toFree;
+            toFree.reset( data );
+            
+            CreamJob cj;
+            istringstream tmpOs;//( string(data) );
+            tmpOs.str( data );
+            try {
+                boost::archive::text_iarchive ia(tmpOs);
+                ia >> cj;
+                
+                CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                                << "Loading job "
+                                << cj.describe()
+                                << log4cpp::CategoryStream::ENDLINE );
+                
+                m_GridJobIDSet.insert( cj.getGridJobID() );
+                
+            } catch(exception& ex ) {
+                CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                                << method_name
+                                << "boost::archive::text_iarchive raised an exception: "
+                                << ex.what()
+                                << log4cpp::CategoryStream::ENDLINE );
+                abort();
+            } catch(...) {
+                CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                                << method_name
+                                << "Unknown exception catched"
+                                << log4cpp::CategoryStream::ENDLINE );
+                abort();
+            }
+        }
+        
+        m_dbMgr->endCursor();
+        
+    } catch(JobDbException& dbex) {
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+                        << method_name
+                        << "Failed to get a record from the database. "
+                        << "Reason is: " << dbex.what() << ". Giving up."
                         << log4cpp::CategoryStream::ENDLINE );
         abort();
-      } catch(...) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                        << "jobCache::load() - Unknown exception catched"
-                        << log4cpp::CategoryStream::ENDLINE );
-        abort();
-      }
     }
-
-    m_dbMgr->endCursor();
-
-  } catch(JobDbException& dbex) {
-    CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-		    << "jobCache::load() - "
-		    << "Failed to get a record from the database. "
-		    << "Reason is: " << dbex.what() << ". Giving up."
-		    << log4cpp::CategoryStream::ENDLINE );
-    abort();
-  }
 }
 
 //______________________________________________________________________________
 jobCache::iterator jobCache::put(const CreamJob& cj)
 {   
+    static const char* method_name = "jobCache::put() - ";
+
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
       ostringstream ofs;
       boost::archive::text_oarchive oa(ofs);
       oa << cj;
+      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                      << "Putting "
+                      << cj.describe()
+                      << log4cpp::CategoryStream::ENDLINE );
       m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
 			<< dbex.what() 
 			<< log4cpp::CategoryStream::ENDLINE );
         abort();
@@ -201,6 +214,8 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 //______________________________________________________________________________
 jobCache::iterator jobCache::erase( jobCache::iterator it )
 {
+    static const char* method_name = "jobCache::erase() - ";
+
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
 
     if( it == end() ) 
@@ -210,21 +225,33 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
     string next_gid = get_next_grid_job_id( gid );
 
     jobCache::iterator result( next_gid );
-    
-    CREAM_SAFE_LOG( m_log_dev->debugStream() 
-                      << "jobCache::erase() - Removing GridJobID ["
-		      << gid << "] from BerkeleyDB..."
-		      << log4cpp::CategoryStream::ENDLINE );    
-    try{
+
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                    << "Removing " << it->describe()
+                    << log4cpp::CategoryStream::ENDLINE );        
+    try {
       m_dbMgr->delByGid( gid );
     } catch(JobDbException& dbex) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
 			<< dbex.what() 
 			<< log4cpp::CategoryStream::ENDLINE );
         abort();
     }
     
     m_GridJobIDSet.erase( gid );
+    // Sanity check
+
+    // BEGIN block which can be safely removed (is here for debugging purposes only)
+    bool found = false;
+    try {
+        m_dbMgr->getByGid( gid );
+        found = true;
+    } catch( const JobDbNotFoundException& ex ) {
+        found = false;
+    }
+    assert( !found );
+    // END block which can be safely removed
+
     return result;
 }
 

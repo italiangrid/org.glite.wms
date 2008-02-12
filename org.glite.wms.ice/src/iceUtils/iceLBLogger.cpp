@@ -66,27 +66,18 @@ iceLBLogger::~iceLBLogger( void )
 
 CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 {
+    static const char* method_name = "iceLBLogger::logEvent() - ";
+
     // Aborts if trying to log the NULL event
     if ( ! ev ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream()
-                       << "iceLBLogger::logEvent() - Trying to log NULL event"
+                       << method_name
                        << log4cpp::CategoryStream::ENDLINE);
         abort();        
     }
 
     // Destroys the parameter "ev" when exiting this function
     boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
-
-    // If logging is disable, simply return
-//     if ( ! m_lb_enabled ) {
-//         CREAM_SAFE_LOG( m_log_dev->warnStream()
-//                         << "iceLBLogger::logEvent() - LB disabled for log event \""
-//                         << ev->describe() << "\" for gridJobId=["
-//                         << ev->getJob().getGridJobID() << "] CreamJobID=[" 
-//                         << ev->getJob().getCompleteCreamJobID() << "]"
-//                         << log4cpp::CategoryStream::ENDLINE);
-//         return ev->getJob();
-//     }
 
     // Allocates a new (temporary) LB context
     boost::scoped_ptr< iceLBContext > m_ctx( new iceLBContext() );
@@ -97,7 +88,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
     } catch( iceLBException& ex ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "iceLBLogger::logEvent() - Error logging " 
+                       << method_name
                        << ev->describe()
                        << " GridJobID=[" 
                        << ev->getJob().getGridJobID() << "]"
@@ -112,7 +103,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     int res = 0;
     do {
         CREAM_SAFE_LOG(m_log_dev->infoStream() 
-                       << "iceLBLogger::logEvent() - Logging " 
+                       << method_name
                        << ev->describe( )
                        << " GridJobID=[" 
                        << ev->getJob().getGridJobID() << "]"
@@ -121,7 +112,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
                        
                        << log4cpp::CategoryStream::ENDLINE);
-        if(m_lb_enabled) {
+        if ( m_lb_enabled ) {
 	  res = ev->execute( m_ctx.get() );
 	  m_ctx->testCode( res );
 	}
@@ -130,7 +121,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     
     new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
-                   << "iceLBLogger::logEvent() - ...Got return code " 
+                   << method_name
                    << res 
                    // << " Seq code AFTER from job=[" << ev->getJob().getSequenceCode() << "]"
                    // << " Seq code AFTER from ctx=[" << new_seq_code << "]"

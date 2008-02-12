@@ -251,9 +251,11 @@ void iceUtil::jobDbManager::put(const string& creamjob, const string& cid, const
         // transaction
         
         m_env.txn_begin(NULL, &txn_handler, 0);
-        m_creamJobDb->put( txn_handler, &cidData, &data, 0);
-        m_cidDb->put( txn_handler, &cidData, &gidData, 0);
-        m_gidDb->put( txn_handler, &gidData, &cidData, 0);
+        m_creamJobDb->put( txn_handler, &gidData, &data, 0);
+        if ( !cid.empty() ) {
+            m_cidDb->put( txn_handler, &cidData, &gidData, 0);
+            m_gidDb->put( txn_handler, &gidData, &cidData, 0);
+        }
         txn_handler->commit(0);
     } catch(DbException& dbex) {
         if(txn_handler) txn_handler->abort();
@@ -303,9 +305,11 @@ void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_a
                 Dbt cidKey( (void*)(cit->first).c_str(), (cit->first).length()+1);
                 Dbt gidKey( (void*)(cit->second.first).c_str(), (cit->second.first).length()+1);
                 Dbt data( (void*)(cit->second.second).c_str(), (cit->second.second).length()+1);
-                m_creamJobDb->put( txn_handler, &cidKey, &data, 0);
-                m_cidDb->put( txn_handler, &cidKey, &gidKey, 0);
-                m_gidDb->put( txn_handler, &gidKey, &cidKey, 0);
+                m_creamJobDb->put( txn_handler, &gidKey, &data, 0);
+                if ( !(cit->first).empty() ) {
+                    m_cidDb->put( txn_handler, &cidKey, &gidKey, 0);
+                    m_gidDb->put( txn_handler, &gidKey, &cidKey, 0);
+                }
                 m_op_counter++;
                 m_op_counter_chkpnt++;
                 
@@ -339,7 +343,7 @@ void iceUtil::jobDbManager::mput(const map<string, pair<string, string> >& key_a
 }
 
 //____________________________________________________________________
-string iceUtil::jobDbManager::getByCid( const string& cid ) 
+string iceUtil::jobDbManager::getByGid( const string& gid ) 
   throw(iceUtil::JobDbException&, iceUtil::JobDbNotFoundException&)
 {
     // FIXME: Going to READ from database.
@@ -352,7 +356,7 @@ string iceUtil::jobDbManager::getByCid( const string& cid )
   Dbt data;
   try {
   
-    Dbt key( (void*)cid.c_str(), cid.length()+1);
+    Dbt key( (void*)gid.c_str(), gid.length()+1);
     ret = m_creamJobDb->get( NULL, &key, &data, 0);
     
   } catch(DbException& dbex) {
@@ -360,21 +364,23 @@ string iceUtil::jobDbManager::getByCid( const string& cid )
   } catch(exception& ex) {
     throw JobDbException( ex.what() );
   } catch(...) {
-    throw JobDbException( "jobDbManager::getByCid() - Unknown exception catched" );
+    throw JobDbException( "jobDbManager::getByGid() - Unknown exception catched" );
   }
   
   //throw JobDbNotFoundException();
   
   if( ret == DB_NOTFOUND )
-    throw JobDbNotFoundException(string("Not Found CreamJobID [") + cid + "]");
+    throw JobDbNotFoundException(string("Not Found GridJobID [") + gid + "]");
   
   return string( (char*)data.get_data() );
 }
 
 //____________________________________________________________________
-string iceUtil::jobDbManager::getByGid( const string& gid ) 
-  throw(iceUtil::JobDbException&, iceUtil::JobDbNotFoundException&)
+string iceUtil::jobDbManager::getByCid( const string& cid ) 
+    throw(iceUtil::JobDbException&, iceUtil::JobDbNotFoundException&)
 {
+    static const char* method_name = "jobDbManager::getByCid() - ";
+
     // FIXME: Going to READ from database.
     // For now the client (jobCache) put a lock
     // but the transaction mechanism should make the 
@@ -382,146 +388,63 @@ string iceUtil::jobDbManager::getByGid( const string& gid )
     // transaction itself is commited.
     // In future we could put a BDB-lock
     
-  int ret;
-  Dbt jdata;
+    assert( !cid.empty() );
     
-  try {
-    Dbt key( (void*)gid.c_str(), gid.length()+1 );
-    Dbt cid;//, jdata;
+    int ret;
+    Dbt jdata;
     
-    ret = m_gidDb->get( NULL, &key, &cid, 0);
-    
-    // now cid contains the CreamJobID
-    if(ret == DB_NOTFOUND) {
-      throw JobDbNotFoundException(string("Not Found GridJobID [") + gid + "]");
-    }
-
-    ret = m_creamJobDb->get(NULL, &cid, &jdata, 0);
-    
-    if( ret == DB_NOTFOUND) {
-      throw JobDbNotFoundException(string("Not Found CreamJobID [") + (const char*)cid.get_data() + "] related to GridJobID [" + gid + "]");
-    }
+    try {
+        Dbt key( (void*)cid.c_str(), cid.length()+1 );
+        Dbt gid;//, jdata;
         
-    
-    
-  } catch(DbException& dbex) {
-    throw iceUtil::JobDbException( dbex.what() );
-  } catch(exception& ex) {
-    throw JobDbException( ex.what() );
-  } catch(...) {
-    throw JobDbException( "jobDbManager::getByCid() - Unknown exception catched" );
-  }
-  
-  //throw JobDbNotFoundException();
-  
-  return string( (char*)jdata.get_data() );
-}
-
-//____________________________________________________________________
-// void iceUtil::jobDbManager::getAllRecords( vector<string>& destVec )
-//   throw(iceUtil::JobDbException&)
-// {
-//   Dbt key, data;
-//   int ret;
-  
-//   try {
-  
-//     // FIXME: Going to READ from database.
-//     // For now the client (jobCache) put a lock
-//     // but the transaction mechanism should make the 
-//     // modifications visible to this READ only if the 
-//     // transaction itself is commited.
-//     // In future we could put a BDB-lock but probably it's
-//     // NOT needed thanks to the isolation provided by the
-//     // transaction
-    
-//     iceUtil::cursorWrapper C( m_creamJobDb );
-//     //m_creamJobDb->cursor(NULL, &cursor, 0);
-//     while( (ret = C.get(&key, &data)) == 0 ) {
-//       destVec.push_back( (char*)data.get_data());
-//     }
-    
-//   } catch(DbException& dbex) {
-//     //if(cursor) cursor->close();
-//     throw JobDbException( dbex.what() );
-//   } catch(exception& ex) {
-//     //if(cursor) cursor->close();
-//     throw JobDbException( ex.what() );
-//   } catch(...) {
-//     //if(cursor) cursor->close();
-//     throw JobDbException( "jobDbManager::getAllRecords() - Unknown exception catched" );
-//   }
-//   //cursor->close();
-// }
-
-//____________________________________________________________________
-void iceUtil::jobDbManager::delByCid( const string& cid )
-  throw(iceUtil::JobDbException&)
-{
-  Dbt key( (void*)cid.c_str(), cid.length()+1 );
-  Dbt gidData;
-  DbTxn* txn_handler;
-  
-  CREAM_SAFE_LOG( m_log_dev->debugStream()                      
-                        << "jobDbManager::delByCid() -"
-                        << "Removing entry ["
-			<< cid << "] from database."
-                        << log4cpp::CategoryStream::ENDLINE
-                        );
-  
-  try {
-    txn_handler = NULL;
-    m_env.txn_begin(NULL, &txn_handler, 0);
-    m_creamJobDb->del( txn_handler, &key, 0);
-    m_cidDb->get( txn_handler, &key, &gidData, 0);
-    m_gidDb->del( txn_handler, &gidData, 0);
-    m_cidDb->del( txn_handler, &key, 0);
-    txn_handler->commit(0);
-  } catch(DbException& dbex) {
-    if(txn_handler) txn_handler->abort();
-    throw iceUtil::JobDbException( dbex.what() );
-  } catch(exception& ex) {
-    if(txn_handler) txn_handler->abort();
-    throw iceUtil::JobDbException( ex.what() );
-  } catch(...) {
-    if(txn_handler) txn_handler->abort();
-    throw iceUtil::JobDbException( "jobDbManager::delByCid() - Unknown exception catched" );
-  }
-  m_op_counter++;
-  m_op_counter_chkpnt++;
-  
-  if(m_op_counter_chkpnt > MAX_ICE_OP_BEFORE_CHECKPOINT)
-  {
-    try{m_env.txn_checkpoint(0,0,0);}
-    catch(DbException& dbex) {
-      throw iceUtil::JobDbException( dbex.what() );
+        ret = m_cidDb->get( NULL, &key, &gid, 0);
+        
+        // now cid contains the CreamJobID
+        if(ret == DB_NOTFOUND) {
+            throw JobDbNotFoundException(string("Not Found CreamJobID [") + cid + "]");
+        }
+        
+        ret = m_creamJobDb->get(NULL, &gid, &jdata, 0);
+        
+        if( ret == DB_NOTFOUND) {
+            throw JobDbNotFoundException(string("Not Found GridJobID [") + (const char*)gid.get_data() + "] related to CreamJobID [" + cid + "]");
+        }
+    } catch(DbException& dbex) {
+        throw iceUtil::JobDbException( dbex.what() );
+    } catch(exception& ex) {
+        throw JobDbException( ex.what() );
+    } catch(...) {
+        throw JobDbException( "jobDbManager::getByGid() - Unknown exception catched" );
     }
-    m_op_counter_chkpnt = 0;
-  }
-  if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
-    this->dbLogPurge();
-    m_op_counter = 0;
-  }
-
+    
+    //throw JobDbNotFoundException();
+    
+    return string( (char*)jdata.get_data() );
 }
 
 //____________________________________________________________________
 void iceUtil::jobDbManager::delByGid( const string& gid )
-    throw(iceUtil::JobDbException&)
+  throw(iceUtil::JobDbException&)
 {
+    static const char* method_name = "jobDbManager::delByCid() - ";
+
     Dbt key( (void*)gid.c_str(), gid.length()+1 );
     Dbt cidData;
     DbTxn* txn_handler;
     
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                    << "Removing entry ["
+                    << gid << "] from database."
+                    << log4cpp::CategoryStream::ENDLINE
+                    );
+    
     try {
         txn_handler = NULL;
         m_env.txn_begin(NULL, &txn_handler, 0);
-        
+        m_creamJobDb->del( txn_handler, &key, 0);
         m_gidDb->get( txn_handler, &key, &cidData, 0);
-        m_creamJobDb->del( txn_handler, &cidData, 0);
         m_cidDb->del( txn_handler, &cidData, 0);
         m_gidDb->del( txn_handler, &key, 0);
-        
         txn_handler->commit(0);
     } catch(DbException& dbex) {
         if(txn_handler) txn_handler->abort();
@@ -537,6 +460,52 @@ void iceUtil::jobDbManager::delByGid( const string& gid )
     m_op_counter_chkpnt++;
     
     if(m_op_counter_chkpnt > MAX_ICE_OP_BEFORE_CHECKPOINT) {
+        try{m_env.txn_checkpoint(0,0,0);}
+        catch(DbException& dbex) {
+            throw iceUtil::JobDbException( dbex.what() );
+        }
+        m_op_counter_chkpnt = 0;
+    }
+    if ( m_op_counter>MAX_ICE_OP_BEFORE_PURGE ) {
+        this->dbLogPurge();
+        m_op_counter = 0;
+    }    
+}
+
+//____________________________________________________________________
+void iceUtil::jobDbManager::delByCid( const string& cid )
+    throw(iceUtil::JobDbException&)
+{
+    assert( !cid.empty() );
+    
+    Dbt key( (void*)cid.c_str(), cid.length()+1 );
+    Dbt gidData;
+    DbTxn* txn_handler;
+    
+    try {
+        txn_handler = NULL;
+        m_env.txn_begin(NULL, &txn_handler, 0);
+        
+        m_cidDb->get( txn_handler, &key, &gidData, 0);
+        m_creamJobDb->del( txn_handler, &gidData, 0);
+        m_cidDb->del( txn_handler, &key, 0);
+        m_gidDb->del( txn_handler, &gidData, 0);
+        
+        txn_handler->commit(0);
+    } catch(DbException& dbex) {
+        if(txn_handler) txn_handler->abort();
+        throw iceUtil::JobDbException( dbex.what() );
+    } catch(exception& ex) {
+        if(txn_handler) txn_handler->abort();
+        throw iceUtil::JobDbException( ex.what() );
+    } catch(...) {
+        if(txn_handler) txn_handler->abort();
+        throw iceUtil::JobDbException( "jobDbManager::delByCid() - Unknown exception catched" );
+    }
+    m_op_counter++;
+    m_op_counter_chkpnt++;
+    
+    if(m_op_counter_chkpnt > MAX_ICE_OP_BEFORE_CHECKPOINT) {
         try {
             m_env.txn_checkpoint(0,0,0);
         } catch(DbException& dbex) {
@@ -544,7 +513,7 @@ void iceUtil::jobDbManager::delByGid( const string& gid )
         }
         m_op_counter_chkpnt = 0;
     }
-    if(m_op_counter>MAX_ICE_OP_BEFORE_PURGE) {
+    if ( m_op_counter>MAX_ICE_OP_BEFORE_PURGE ) {
         this->dbLogPurge();
         m_op_counter = 0;
     }
