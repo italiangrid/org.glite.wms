@@ -316,30 +316,41 @@ void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
 
       if( cit->getCompleteCreamJobID().empty() ) continue;
 
-      try {
+      //      try {
 	
-	timeleft = cream_api::certUtil::getProxyTimeLeft( cit->getUserProxyCertificate() );
+	//timeleft = cream_api::certUtil::getProxyTimeLeft( cit->getUserProxyCertificate() );
+	cream_api::soap_proxy::VOMSWrapper V( cit->getUserProxyCertificate() );
+	if( !V.IsValid( ) ) {
+	  CREAM_SAFE_LOG( m_log_dev->errorStream()
+			  << "iceCommandJobKill::checkExpiring() - ERROR: "
+			  << V.getErrorMessage()
+			  << log4cpp::CategoryStream::ENDLINE);
+	  stillgood.push_back( *cit );
+	  continue;
+	}
 	
-      } catch(exception& ex) {
-	CREAM_SAFE_LOG( m_log_dev->errorStream()
-			<< "iceCommandJobKill::checkExpiring() - ERROR: "
-			<< ex.what()
-			<< log4cpp::CategoryStream::ENDLINE);
+	timeleft = V.getProxyTimeEnd() - time(NULL);
 
-	// we cannot retrieve the expiration time, so we do not want to cancel the job
-	// i.e. the job is still good
-	stillgood.push_back( *cit );
-	continue;
-      } catch(...) {
-	CREAM_SAFE_LOG( m_log_dev->errorStream()
-			<< "iceCommandJobKill::checkExpiring() - ERROR: Unknown exception catched"
-			<< log4cpp::CategoryStream::ENDLINE);
+//       } catch(exception& ex) {
+// 	CREAM_SAFE_LOG( m_log_dev->errorStream()
+// 			<< "iceCommandJobKill::checkExpiring() - ERROR: "
+// 			<< ex.what()
+// 			<< log4cpp::CategoryStream::ENDLINE);
+
+// 	// we cannot retrieve the expiration time, so we do not want to cancel the job
+// 	// i.e. the job is still good
+// 	stillgood.push_back( *cit );
+// 	continue;
+//       } catch(...) {
+// 	CREAM_SAFE_LOG( m_log_dev->errorStream()
+// 			<< "iceCommandJobKill::checkExpiring() - ERROR: Unknown exception catched"
+// 			<< log4cpp::CategoryStream::ENDLINE);
  
-	// we cannot retrieve the expiration time, so we do not want to cancel the job
-	// i.e. the job is still good
-	stillgood.push_back( *cit );
-	continue;
-      }
+// 	// we cannot retrieve the expiration time, so we do not want to cancel the job
+// 	// i.e. the job is still good
+// 	stillgood.push_back( *cit );
+// 	continue;
+//       }
       
       if( timeleft < m_threshold_time && timeleft > 5 ) {
 	CREAM_SAFE_LOG( m_log_dev->warnStream()
