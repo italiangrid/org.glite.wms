@@ -112,10 +112,10 @@ void jobCache::load( void ) throw()
                 boost::archive::text_iarchive ia(tmpOs);
                 ia >> cj;
                 
-                CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                                << "Loading job "
-                                << cj.describe()
-                                << log4cpp::CategoryStream::ENDLINE );
+//                 CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+//                                 << "Loading job "
+//                                 << cj.describe()
+//                                 << log4cpp::CategoryStream::ENDLINE );
                 
                 m_GridJobIDSet.insert( cj.getGridJobID() );
                 
@@ -157,10 +157,10 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
       ostringstream ofs;
       boost::archive::text_oarchive oa(ofs);
       oa << cj;
-      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                      << "Putting "
-                      << cj.describe()
-                      << log4cpp::CategoryStream::ENDLINE );
+//       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+//                       << "Putting "
+//                       << cj.describe()
+//                       << log4cpp::CategoryStream::ENDLINE );
       m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
