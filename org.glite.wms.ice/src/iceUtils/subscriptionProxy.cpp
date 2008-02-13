@@ -138,11 +138,11 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
       memset( (void*) m_aT, 0, 256 );
       strftime(m_aT, 256, "%a %d %b %Y %T", &m_Time);
       CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionProxy::list() - "
-		     << "*** Found subscription: ["
+		     << "*** Found subscription: Id=["
 		     << it->getSubscriptionID()
-		     << "] [" << it->getConsumerURL() << "]"
-		     << " [" << it->getTopicName()<<"]"
-		     << " [" << m_aT << "] ["
+		     << "] ConsumerURL=[" << it->getConsumerURL() << "]"
+		     << " Topic=[" << it->getTopicName()<<"]"
+		     << " ExpirationTime=[" << m_aT << "] Rate=["
                      << it->getRate() << "]"
 		     << log4cpp::CategoryStream::ENDLINE);
     }
