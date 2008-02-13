@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.15  2008/02/13 13:28:42  amarasch
+#       towards wms_3_1_96_2
+#
 #       Revision 1.22.2.14  2008/02/04 07:12:34  giaco
 #       - remove deps from expat and libtar
 #
@@ -138,7 +141,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS jobsubmission], [3.1.9])
+AC_INIT([GLite WMS jobsubmission], [3.1.10])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/constants.h])
