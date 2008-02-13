@@ -179,25 +179,20 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
 {
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     try {
-      string serializedJob( m_dbMgr->getByCid( completeCreamJID ) );
-      CreamJob cj;
-      istringstream tmpOs;//( string(data) );
-      tmpOs.str( serializedJob );
-      boost::archive::text_iarchive ia(tmpOs);
-      ia >> cj;
-      set<string>::const_iterator it = m_GridJobIDSet.find( cj.getGridJobID() );
-      return make_iterator(m_GridJobIDSet.find( cj.getGridJobID() ));
+        string serializedJob( m_dbMgr->getByCid( completeCreamJID ) );
+        CreamJob cj;
+        istringstream tmpOs;//( string(data) );
+        tmpOs.str( serializedJob );
+        boost::archive::text_iarchive ia(tmpOs);
+        ia >> cj;
+        set<string>::const_iterator it = m_GridJobIDSet.find( cj.getGridJobID() );
+        return make_iterator(m_GridJobIDSet.find( cj.getGridJobID() ));
     } catch(JobDbNotFoundException& ex) {
-      CREAM_SAFE_LOG( m_log_dev->errorStream() 
-                      << "jobCache::lookupByCompleteCreamJobID() - " 
-		      << ex.what() 
-		      << log4cpp::CategoryStream::ENDLINE );
-      return this->end();
-      
+        return this->end();        
     } catch(exception& ex) {
-      CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-		      << ex.what() << log4cpp::CategoryStream::ENDLINE );
-      abort();
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+                        << ex.what() << log4cpp::CategoryStream::ENDLINE );
+        abort();
     }
 }
 
@@ -239,18 +234,6 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
     }
     
     m_GridJobIDSet.erase( gid );
-    // Sanity check
-
-    // BEGIN block which can be safely removed (is here for debugging purposes only)
-    bool found = false;
-    try {
-        m_dbMgr->getByGid( gid );
-        found = true;
-    } catch( const JobDbNotFoundException& ex ) {
-        found = false;
-    }
-    assert( !found );
-    // END block which can be safely removed
 
     return result;
 }
