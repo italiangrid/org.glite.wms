@@ -58,28 +58,31 @@ using namespace std;
 //________________________________________________________________________
 bool iceCommandLeaseUpdater::job_can_be_removed( const CreamJob& job ) const throw()
 {
+    if ( !job.get_lease_id().empty() ) {
+        Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
+
+        //
+        // A job which refers to a non-existing lease ID can be removed
+        //
+        if ( it == m_lease_manager->end() )
+            return true;
+        
+        //
+        // A job which refers to an existing lease ID, and such that
+        // the lease ID refers to an expired lease, can be removed
+        // from the cache.
+        //
+        if ( it != m_lease_manager->end() && it->m_expiration_time < time(0) )
+            return true;
+    }
+
     // 
     // A job which is active, can be purged or has no lease cannot be
     // removed from the cache by the lease updater thread.
     //
-    if ( job.is_active() || job.can_be_purged() || job.get_lease_id().empty() )
-        return false; // this job cannot be removed here
+    // if ( job.is_active() || job.can_be_purged() || job.get_lease_id().empty() )
+    // return false; // this job cannot be removed here
     
-    Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
-
-    //
-    // A job which refers to a non-existing lease ID can be removed
-    //
-    if ( it == m_lease_manager->end() )
-         return true;
-    
-    //
-    // A job which refers to an existing lease ID, and such that the lease ID
-    // refers to an expired lease, can be removed from the cache.
-    //
-    if ( it != m_lease_manager->end() && it->m_expiration_time < time(0) )
-        return true;
-
     return false;
 }
             
