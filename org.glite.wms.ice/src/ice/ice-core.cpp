@@ -872,8 +872,9 @@ throw()
             deregister_proxy_renewal( tmp_job );
 
         }
-        if ( cream_api::job_statuses::DONE_FAILED == tmp_job.getStatus() ||
-             cream_api::job_statuses::ABORTED == tmp_job.getStatus() ) {
+        if ( ( cream_api::job_statuses::DONE_FAILED == tmp_job.getStatus() ||
+               cream_api::job_statuses::ABORTED == tmp_job.getStatus() ) &&
+             !tmp_job.is_killed_by_ice() ) {
 
             resubmit_job( tmp_job, "Job resubmitted by ICE" );
 
