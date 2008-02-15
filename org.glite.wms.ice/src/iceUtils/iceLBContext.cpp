@@ -48,17 +48,17 @@ namespace fs = boost::filesystem;
 //#include <netdb.h>
 
 using namespace std;
-namespace iceUtil = glite::wms::ice::util;
+using namespace glite::wms::ice::util;
 namespace configuration = glite::wms::common::configuration;
 
 // static member definitions
-unsigned int iceUtil::iceLBContext::s_el_s_retries = 3;
-unsigned int iceUtil::iceLBContext::s_el_s_sleep = 60;
-const char *iceUtil::iceLBContext::el_s_notLogged = "Event not logged, context unset.";
-const char *iceUtil::iceLBContext::el_s_unavailable = "unavailable";
-const char *iceUtil::iceLBContext::el_s_OK = "OK";
-const char *iceUtil::iceLBContext::el_s_failed = "Failed";
-const char *iceUtil::iceLBContext::el_s_succesfully = "Job Terminated Successfully";
+unsigned int iceLBContext::s_el_s_retries = 3;
+unsigned int iceLBContext::s_el_s_sleep = 60;
+const char *iceLBContext::el_s_notLogged = "Event not logged, context unset.";
+const char *iceLBContext::el_s_unavailable = "unavailable";
+const char *iceLBContext::el_s_OK = "OK";
+const char *iceLBContext::el_s_failed = "Failed";
+const char *iceLBContext::el_s_succesfully = "Job Terminated Successfully";
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
 
@@ -95,15 +95,15 @@ namespace {
 // iceLogger Exception
 //
 //////////////////////////////////////////////////////////////////////////////
-iceUtil::iceLBException::iceLBException( const char *reason ) : m_le_reason( reason ? reason : "" )
+iceLBException::iceLBException( const char *reason ) : m_le_reason( reason ? reason : "" )
 {}
 
-iceUtil::iceLBException::iceLBException( const string &reason ) : m_le_reason( reason )
+iceLBException::iceLBException( const string &reason ) : m_le_reason( reason )
 {}
 
-iceUtil::iceLBException::~iceLBException( void ) throw() {}
+iceLBException::~iceLBException( void ) throw() {}
 
-const char *iceUtil::iceLBException::what( void ) const throw()
+const char *iceLBException::what( void ) const throw()
 {
   return this->m_le_reason.c_str();
 }
@@ -113,7 +113,7 @@ const char *iceUtil::iceLBException::what( void ) const throw()
 // iceLBContext
 //
 //////////////////////////////////////////////////////////////////////////////
-iceUtil::iceLBContext::iceLBContext( void ) :
+iceLBContext::iceLBContext( void ) :
     el_context( new edg_wll_Context ), 
     el_s_localhost_name( ),
     m_el_hostProxy( false ),
@@ -124,7 +124,7 @@ iceUtil::iceLBContext::iceLBContext( void ) :
     edg_wll_InitContext( el_context );
 
     try {
-        el_s_localhost_name = iceUtil::getHostName();
+        el_s_localhost_name = getHostName();
     } catch( runtime_error& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() 
                        << "iceLBContext::CTOR() - getHostName() returned an ERROR: "
@@ -135,13 +135,13 @@ iceUtil::iceLBContext::iceLBContext( void ) :
 }
 
 
-iceUtil::iceLBContext::~iceLBContext( void )
+iceLBContext::~iceLBContext( void )
 {
   edg_wll_FreeContext( *el_context );
   delete el_context;
 }
 
-string iceUtil::iceLBContext::getLoggingError( const char *preamble )
+string iceLBContext::getLoggingError( const char *preamble )
 {
   string       cause( preamble ? preamble : "" );
 
@@ -158,7 +158,7 @@ string iceUtil::iceLBContext::getLoggingError( const char *preamble )
   return cause;
 }
 
-void iceUtil::iceLBContext::testCode( int &code, bool retry )
+void iceLBContext::testCode( int &code, bool retry )
 {
     if ( code != 0 ) {
         string err( getLoggingError( 0 ) );
@@ -263,7 +263,7 @@ void iceUtil::iceLBContext::testCode( int &code, bool retry )
 
 }
 
-void iceUtil::iceLBContext::registerJob( const util::CreamJob& theJob )
+void iceLBContext::registerJob( const util::CreamJob& theJob )
 {
     int res;
     edg_wlc_JobId   id;
@@ -291,8 +291,10 @@ void iceUtil::iceLBContext::registerJob( const util::CreamJob& theJob )
 }
 
 
-void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLBException& )
+void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLBException& )
 {
+    static const char* method_name = "iceLBContext::setLoggingJob - ";
+
     edg_wlc_JobId   id;
     int res = 0;
 
@@ -301,8 +303,7 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
     char *lbserver;
     unsigned int lbport;
     edg_wlc_JobIdGetServerParts( id, &lbserver, &lbport );
-    CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		   << "iceLBContext::setLoggingJob() - "
+    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
 		   << "Setting log job to jobid=[" << theJob.getGridJobID() << "] "
 		   << "LB server=[" << lbserver << ":" << lbport << "] "
 		   << "(port is not used, actually...)"
@@ -313,7 +314,7 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
 
     if ( !theJob.getSequenceCode().empty() ) {
 #ifdef GLITE_WMS_HAVE_LBPROXY
-        string const user_dn( get_proxy_subject( theJob.getUserProxyCertificate() ) );
+        string const user_dn( get_proxy_subject( theJob.getBetterProxy() ) );
 
         res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.getSequenceCode().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
 #else
@@ -330,8 +331,7 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
     edg_wlc_JobIdFree( id );
 
     if( res != 0 ) {
-      CREAM_SAFE_LOG(m_log_dev->errorStream()
-		     << "iceLBContext::setLoggingJob() - "
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		     << "Unable to set logging job to jobid=["
 		     << theJob.getGridJobID()
 		     << "]. LB error is "
@@ -341,16 +341,15 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
     }
 
     // Set user proxy for L&B stuff
-    fs::path    pf( theJob.getUserProxyCertificate(), fs::native);
+    fs::path    pf( theJob.getBetterProxy(), fs::native);
     pf.normalize();
 
     if( fs::exists(pf) ) {
         res = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, 
-                                theJob.getUserProxyCertificate().c_str() );
+                                theJob.getBetterProxy().c_str() );
 
         if( res ) {
-	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "iceLBContext::setLoggingJob() - "
+            CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 			 << "Unable to set logging job to jobid=["
 			 << theJob.getGridJobID()
 			 << "]. "
@@ -359,12 +358,11 @@ void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll
             throw iceLBException( this->getLoggingError("Cannot set proxyfile path inside context:") );
         }
     } else {
-      CREAM_SAFE_LOG(m_log_dev->errorStream()
-		     << "iceLBContext::setLoggingJob() - "
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		     << "Unable to set logging job to jobid=["
 		     << theJob.getGridJobID()
 		     << "]. Proxy file "
-		     << theJob.getUserProxyCertificate()
+		     << theJob.getBetterProxy()
 		     << " does not exist. "
 		     << "Trying to use the host proxy cert, and hoping for the best..."
 		     << log4cpp::CategoryStream::ENDLINE);
