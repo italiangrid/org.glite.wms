@@ -2,97 +2,111 @@
 import math
 import sys
 import os
+import signal
+import threading
+
 sys.path.append(os.environ.get('SAME_SENSOR_HOME','..'))
 
 from config import Config
 
-SAME = Config()
-
 try:
-        USER_PROXY_CERTIFICATE = os.environ['X509_USER_PROXY']
+    USER_PROXY_CERTIFICATE = os.environ['X509_USER_PROXY']
 except:
-        print "Cannot find a proper certificate, is X509_USER_PROXY variable set?"
-	sys.stdout.flush()
-	sys.stderr.flush()
-        sys.exit(SAME.SAME_ERROR)
-    
-AMGA_HOST = sys.argv[1]
+    print "Cannot find a proper certificate, is X509_USER_PROXY variable set?"
+    sys.stdout.flush()
+    sys.stderr.flush()
+    sys.exit(SAME.SAME_ERROR)
 
-print "Testing several AMGA functions "
 try:
-	MDPATHTOP = os.environ.get('SAME_SENSOR_HOME','..')
-	sys.path.append(MDPATHTOP+"/lib/amga.client.api.python") 
-        import mdstandalone
-        import mdclient
-        import mdparser
-        import mdinterface
+    MDPATHTOP = os.environ.get('SAME_SENSOR_HOME','..')
+    sys.path.append(MDPATHTOP+"/lib/amga.client.api.python")
+    import mdstandalone
+    import mdclient
+    import mdparser
+    import mdinterface
 except ImportError, e:
-        print "No mdclient in ", sys.path
+     print "No mdclient in ", sys.path
 
-client = mdclient.MDClient(AMGA_HOST, 8822, 'test_user')
-client.requireSSL(USER_PROXY_CERTIFICATE, USER_PROXY_CERTIFICATE)
+def timeout():
+    print "</pre>"
+    SAME.samPrintERROR(AMGA_HOST + ': encountered errors.\n')
+    print "<pre> ", "AMGA test timed out after 2 minutes of waiting", "</pre>" 
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(SAME.SAME_ERROR)
 
 
 def delete_entries():
     
     could_not_delete = 0
-    
     try:
         client.removeDir("/test/pytest/testdir")  
     except:
         could_not_delete += 1 
-    
     try:
         client.rm("/test/pytest/*")
     except:
         could_not_delete += 1 
-        
     try:
         client.rm("/test/pylock/*")
     except:
         could_not_delete += 1 
-    
     try:
         client.cd("/test/pytest")
         client.removeAttr(".", "events")
     except:
         could_not_delete += 1 
-        
     try:
         client.removeAttr("/test/pytest", "sinus")
     except:
         could_not_delete += 1 
-         
     try:
         client.removeAttr("/test/pytest", "eventGen")
     except:
         could_not_delete += 1 
-        
     try:
         client.removeAttr("/test/pytest", "l1")  
     except:
         could_not_delete += 1 
-        
     try:
         client.removeAttr("/test/pylock", "id")
     except:
-        could_not_delete += 1 
-        
+        could_not_delete += 1     
     try:
         client.sequenceRemove("/test/pytest/seq")    
     except:
         could_not_delete += 1 
-        
     try:
         client.removeDir("/test/pytest")
     except:
         could_not_delete += 1 
-        
     try:
         client.removeDir("/test/pylock")
     except:
         could_not_delete += 1 
-                                           
+
+
+#
+#Real tests begin here
+#
+SAME = Config()
+
+
+#Start a timer that will timeout if the tests are not finished
+#after 2 minutes
+#Used because sometimes AMGA does not close the connection to the client
+#if errors exist on the server side(such as connectivity with the database backend)
+t = threading.Timer(120.0, timeout)
+t.start()
+
+
+AMGA_HOST = sys.argv[1]
+
+print "Testing several AMGA functions "
+
+client = mdclient.MDClient(AMGA_HOST, 8822, 'test_user')
+client.requireSSL(USER_PROXY_CERTIFICATE, USER_PROXY_CERTIFICATE)
+
 
 try:
   

@@ -2,8 +2,19 @@
 import socket
 import sys
 import os
+import threading
 sys.path.append(os.environ.get('SAME_SENSOR_HOME','..'))
 from config import Config
+
+
+def timeout():
+    print "</pre>"
+    SAME.samPrintERROR(AMGA_HOST + ': encountered errors.\n')
+    print "<pre> ", "AMGA test timed out after 2 minutes of waiting", "</pre>" 
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(SAME.SAME_ERROR)
+
 
 SAME = Config()
 
@@ -11,6 +22,14 @@ AMGA_HOST = sys.argv[1]
 
 SAME.samPrintINFO('Trying to connect to: ' + AMGA_HOST + ' ...')
 SAME.samNewLine()
+
+
+
+
+t = threading.Timer(120.0, timeout)
+t.start()
+
+
 
 # Open TCP socket to AMGA server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
