@@ -185,7 +185,7 @@ namespace {
 	target.append( 1, c );
       } else {
 	char tmp[16];
-	sprintf( tmp, "%%%X", c );
+	sprintf( tmp, "%X", c );
 	target.append( tmp );
       }
     } // end operator()
