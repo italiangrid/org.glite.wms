@@ -91,6 +91,7 @@ export LFC_HOST=${LFC}
 
 echo "Testing gfal for VO ${VO} ... "
 
+
 command="gcc -I${GLITE_LOCATION}/../lcg/include -L${GLITE_LOCATION}/../lcg/lib -L${GLITE_LOCATION}/../globus/lib -o gfal-test gfal-test.c -lgfal -lglobus_gass_copy_gcc32dbg"
 message="Compiling GFAL test script"
 run_command "${command}" "${message}"
@@ -137,9 +138,14 @@ command="gfal_testchmod ${LFN} 666"
 message="Running GFAL chmod test"
 run_command "${command}" "${message}"
 
-command="gfal_testdir ${LFN}"
-message="Running GFAL dir test"
-run_command "${command}" "${message}"
+echo "Running GFAL testdir test ... "
+gfal_testdir lfn:/grid/${VO} > /dev/null;
+if [ $? -gt 0 ]; then
+ echo "Failed"
+ export RETVAL=1
+else
+ echo "OK"
+fi
 
 command="gfal_teststat ${LFN}"
 message="Running GFAL stat test"
