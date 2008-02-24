@@ -154,10 +154,10 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 
 	  if( job_with_better_proxy_from_sandboxDir == cache->end() )
 	    {
-	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
+/*	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
 			     << "DNProxyManager::CTOR() - Not found any proxy for DN ["
 			     << *it << "]. Skipping"
-			     << log4cpp::CategoryStream::ENDLINE);
+			     << log4cpp::CategoryStream::ENDLINE);*/
 	      continue;
 	    }
 	    
