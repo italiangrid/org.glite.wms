@@ -43,6 +43,7 @@
 #include "Request_source.h"
 #include "Request.h"
 #include "DNProxyManager.h"
+#include "iceUtils.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -207,6 +208,18 @@ Ice::Ice( ) throw(iceInit_ex&) :
                      << log4cpp::CategoryStream::ENDLINE
                      );
       exit(1);
+    }
+
+    try {
+      m_myname = ice_util::getHostName();
+    } catch( runtime_error& ex ) {
+      CREAM_SAFE_LOG(
+		     m_log_dev->fatalStream() 
+		     << "Ice::CTOR() - Couldn't determine hostname: ["
+		     << ex.what() << "]"
+		     << log4cpp::CategoryStream::ENDLINE
+		     );
+      abort();
     }
 
 }

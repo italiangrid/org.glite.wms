@@ -120,22 +120,22 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
     m_lb_logger( iceUtil::iceLBLogger::instance() ),
     m_request( request )
 {
-    try {
-        m_myname = iceUtil::getHostName();
+  //    try {
+        m_myname = m_theIce->getHostName();
 	if( m_configuration->ice()->listener_enable_authn() ) {
             m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
 	} else {
             m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
 	}
-    } catch( runtime_error& ex ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->fatalStream() 
-                       << "iceCommandSubmit::CTOR() - "
-                       << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-	abort();
-    }
+//     } catch( runtime_error& ex ) {
+//         CREAM_SAFE_LOG(
+//                        m_log_dev->fatalStream() 
+//                        << "iceCommandSubmit::CTOR() - "
+//                        << ex.what()
+//                        << log4cpp::CategoryStream::ENDLINE
+//                        );
+// 	abort();
+//     }
     
     /*
 
@@ -700,7 +700,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
         boost::trim_if( isbURI, boost::is_any_of("\"") );
         boost::trim_right_if( isbURI, boost::is_any_of("/") );
         // remove the attribute
-        jdl->Delete( "InputSandboxBaseURI" );
+	jdl->Delete( "InputSandboxBaseURI" );
     } else {
         isbURI = default_isbURI;
     }
@@ -791,6 +791,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         // Remove the OutputSandboxBaseDestURI from the classad
         // OutputSandboxDestURI and OutputSandboxBaseDestURI cannot
         // be given at the same time.
+      if( 0 != jdl->Lookup( "OutputSandboxBaseDestURI") )
         jdl->Delete( "OutputSandboxBaseDestURI" );
 
         // Check if all the entries in the OutputSandboxDestURI

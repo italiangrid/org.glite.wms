@@ -140,6 +140,8 @@ namespace ice {
        
 	std::string m_hostdn;
  
+	std::string m_myname;
+
         Ice( ) throw(glite::wms::ice::iceInit_ex&);
 
         // Some utility functions
@@ -242,6 +244,8 @@ namespace ice {
          */
         glite::wms::ice::util::iceThreadPool* get_ice_commands_pool( void ) { return m_ice_commands_pool; };
         
+	std::string getHostName( void ) const throw() { return m_myname; }
+
     }; // class ice
     
 } // namespace ice
