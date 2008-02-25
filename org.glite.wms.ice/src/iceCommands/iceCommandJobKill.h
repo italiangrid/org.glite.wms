@@ -26,20 +26,7 @@
 #include "iceAbsCommand.h"
 #include "creamJob.h"
 #include "iceUtils.h"
-
-#include <boost/scoped_ptr.hpp>
-
-/* namespace glite { */
-/*     namespace ce { */
-/*         namespace cream_client_api { */
-/*             namespace soap_proxy { */
-                
-/*                 class CreamProxy; */
-                
-/*             } */
-/*         } */
-/*     } */
-/* }; */
+#include <list>
 
 namespace log4cpp {
     class Category;
@@ -47,36 +34,38 @@ namespace log4cpp {
 
 namespace glite {
 namespace wms {
-namespace ice {
-            
+namespace ice {            
 namespace util {                
+
     class iceLBLogger;
-    
+    class jobCache;
+
     class iceCommandJobKill : public iceAbsCommand {
-        
-      //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-        //glite::wms::ice::util::CreamJob m_theJob;
+    protected:
         log4cpp::Category *m_log_dev;
         time_t m_threshold_time;
         glite::wms::ice::util::iceLBLogger* m_lb_logger;
-        //void killJob( const time_t ) throw();
-        void killJob( const std::pair< std::pair<std::string, std::string>, std::list< glite::wms::ice::util::CreamJob > >& ) throw();
-	void cancel_jobs(const std::string& proxy, const std::string& endpoint, 
-		         const std::vector<std::string>& jobIdList) throw();
-	void updateCacheAndLog( const std::pair< std::pair<std::string, std::string>, std::list< glite::wms::ice::util::CreamJob > >& aList ) throw();
-	void checkExpiring( std::list<glite::wms::ice::util::CreamJob>& ) throw();
+        jobCache* m_cache;
+        
+        void killJob( const std::pair< std::pair<std::string, std::string>, 
+                      std::list< glite::wms::ice::util::CreamJob > >& ) 
+            throw();
+
+	void cancel_jobs(const std::string& better_proxy, 
+                         const std::string& endpoint, 
+		         const std::list< glite::wms::ice::util::CreamJob >& jobIdList) 
+            throw();
 
     public:
-        iceCommandJobKill( /*const glite::wms::ice::util::CreamJob&*/ ) throw();
+        iceCommandJobKill( void ) throw();
         
         virtual void execute( ) throw( );
         
-        virtual ~iceCommandJobKill() 
-        {  }
+        virtual ~iceCommandJobKill() {  }
         
         std::string get_grid_job_id( void ) const 
         { 
-	  return "";//m_theJob.getGridJobID(); 
+	  return "";
         }
     };
 

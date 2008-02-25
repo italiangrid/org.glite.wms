@@ -287,50 +287,6 @@ void Ice::startListener( void )
         return;
     }
 
-//     try {
-//        hostdn = cert_util::getDN( m_configuration->ice()->ice_host_cert() );
-//     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-//         CREAM_SAFE_LOG( 
-//                        m_log_dev->errorStream()
-//                        << "Ice::startListener() - Unable to extract user DN from ["
-// 		       <<  m_configuration->ice()->ice_host_cert() << "]"
-//                        << ". Won't start Listener"
-//                        << log4cpp::CategoryStream::ENDLINE
-//                        );
-//         return;
-//     }
-
-//     soap_proxy::VOMSWrapper V( m_configuration->ice()->ice_host_cert() );
-//     if( !V.IsValid( ) ) {
-//       //throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
-//       CREAM_SAFE_LOG( 
-// 		     m_log_dev->errorStream()
-// 		     << "Ice::startListener() - Unable to extract user DN from ["
-// 		     <<  m_configuration->ice()->ice_host_cert() << "]"
-// 		     << ". Won't start Listener: " << V.getErrorMessage()
-// 		     << log4cpp::CategoryStream::ENDLINE
-// 		     );
-//       return;
-//     } 
-
-/*
-    try {
-
-      hostdn = cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
-
-    } catch( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-      CREAM_SAFE_LOG( 
-		     m_log_dev->errorStream()
-		     << "Ice::startListener() - Unable to extract user DN from ["
-		     <<  m_configuration->ice()->ice_host_cert() << "]"
-		     << ". Won't start Listener"
-		     << log4cpp::CategoryStream::ENDLINE
-		     );
-      return;
-    }
-*/
-
-
     if( m_hostdn.empty() ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
@@ -509,19 +465,24 @@ void Ice::startProxyRenewer( void )
 //-----------------------------------------------------------------------------
 void Ice::startJobKiller( void )
 {
-  // FIXME: uncomment this method to activate the jobKiller
-
-     if ( !m_configuration->ice()->start_job_killer() ) {
-         CREAM_SAFE_LOG( m_log_dev->warnStream()
-                         << "Ice::startJobKiller() - "
-                         << "Job Killer disabled in configuration file. "
-                         << "Not started"
-                         << log4cpp::CategoryStream::ENDLINE
-                         );
-         return;
-     }
-     util::jobKiller* jobkiller = new util::jobKiller( );
-     m_job_killer_thread.start( jobkiller );
+    // FIXME: uncomment this method to activate the jobKiller    
+    if ( !m_configuration->ice()->start_job_killer() ) {
+        CREAM_SAFE_LOG( m_log_dev->warnStream()
+                        << "Ice::startJobKiller() - "
+                        << "Job Killer disabled in configuration file. "
+                        << "Not started"
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
+        return;
+    }
+    CREAM_SAFE_LOG( m_log_dev->warnStream()
+                    << "Ice::startJobKiller() - "
+                    << "Job Killer enabled in configuration file "
+                    << "but not compiled in ICE. Rebuild ICE to enable it."
+                    << log4cpp::CategoryStream::ENDLINE
+                    );
+    // util::jobKiller* jobkiller = new util::jobKiller( );
+    // m_job_killer_thread.start( jobkiller );
 }
 
 //____________________________________________________________________________
@@ -529,12 +490,6 @@ void Ice::getNextRequests( std::list< util::Request* >& ops)
 {
     ops = m_ice_input_queue->get_requests( 5 );
 }
-
-//____________________________________________________________________________
-// Request* Ice::getNextRequest( ) 
-// {
-//    return m_ice_input_queue->get_single_request( );
-// }
 
 //____________________________________________________________________________
 void Ice::removeRequest( util::Request* req )

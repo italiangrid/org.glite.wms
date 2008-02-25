@@ -120,8 +120,8 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     } while( res != 0 );        
     
     new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
-    CREAM_SAFE_LOG(m_log_dev->debugStream() 
-                   << method_name
+    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
+                   << "LB call returned "
                    << res 
                    // << " Seq code AFTER from job=[" << ev->getJob().getSequenceCode() << "]"
                    // << " Seq code AFTER from ctx=[" << new_seq_code << "]"

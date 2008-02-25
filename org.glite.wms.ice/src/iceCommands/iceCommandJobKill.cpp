@@ -52,263 +52,271 @@
 
 namespace api_util  = glite::ce::cream_client_api::util;
 namespace cream_api = glite::ce::cream_client_api;
-namespace ice_util  = glite::wms::ice::util;
 
 using namespace glite::wms::ice::util;
 using namespace std;
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 namespace {
     
-    bool insert_condition(const CreamJob& J) {
-        if( J.getCompleteCreamJobID().empty() ) return false;
+    bool job_can_be_killed(const CreamJob& J) {
+
+        static const char* method_name = "iceCommandJobKill::job_can_be_killed() - ";
+        log4cpp::Category* log_dev = api_util::creamApiLogger::instance()->getLogger();
+        int threshold( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
+
+        if( J.getCompleteCreamJobID().empty() ) 
+            return false;
         
         if( J.is_killed_by_ice() ) {
-            CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->debugStream() 
-                            << "iceCommandJobKill::insert_condition() - Job "
+            CREAM_SAFE_LOG( log_dev->debugStream() << method_name
                             << J.describe()
                             << " is reported as already been killed by ICE. "
                             << "Skipping..."
                             << log4cpp::CategoryStream::ENDLINE);     
             return false; 
         }
-        
-        return true;
+
+	cream_api::soap_proxy::VOMSWrapper V( J.getUserProxyCertificate() );
+ 	if ( !V.IsValid( ) ) {
+            CREAM_SAFE_LOG( log_dev->errorStream() << method_name
+                            << "The user proxy " << J.getUserProxyCertificate()
+                            << " for job " << J.describe()
+                            << " is not valid. Reason is \""
+                            << V.getErrorMessage() << "\". "
+                            << "This job will be killed."
+                            << log4cpp::CategoryStream::ENDLINE);
+            return true;
+ 	}
+
+        if ( V.getProxyTimeEnd() < time(0) + threshold ) {
+            CREAM_SAFE_LOG( log_dev->warnStream() << method_name
+                            << "Proxy [" << J.getUserProxyCertificate()
+                            << "] of user [" << J.getUserDN()
+                            << "] is expiring. Will kill job " << J.describe()
+                            << log4cpp::CategoryStream::ENDLINE);            
+            return true;
+        }
+
+        return false;
     }
+
+    /**
+     * This class is used to log a CANCEL_REQUEST event. It is defined
+     * so that it can be used inside a for_each() costruct.  NOTE:
+     * this class also sets the "is_killed_by_ice" flag for job j to
+     * true.
+     */
+    class cancel_request_logger {
+    protected:
+        const string m_reason;
+    public:
+        cancel_request_logger( const string& reason ) : m_reason ( reason ) {};
+
+        void operator()( const CreamJob& j ) throw() 
+        {
+            iceLBLogger* logger( iceLBLogger::instance() );
+            jobCache* cache( jobCache::getInstance() );
+            boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+            jobCache::iterator it=cache->lookupByGridJobID( j.getGridJobID() );
+            if ( it != cache->end() ) {
+                CreamJob tmp( *it );
+                tmp = logger->logEvent( new cream_cancel_request_event( tmp, m_reason ) );
+                tmp.set_killed_by_ice();
+                tmp.set_failure_reason( m_reason );
+                cache->put( tmp );                
+            }
+        }
+    };
+
+    /**
+     * This class is used to log a CANCEL_REFUSE event. It is defined
+     * so that it can be used inside a for_each() costruct.
+     */
+    class cancel_refuse_logger {
+    protected:
+        const string m_reason;
+    public:
+        cancel_refuse_logger( const string& reason ) : m_reason ( reason ) {};
+
+        void operator()( const CreamJob& j ) throw() 
+        {
+            iceLBLogger* logger( iceLBLogger::instance() );
+            jobCache* cache( jobCache::getInstance() );
+            boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+            jobCache::iterator it=cache->lookupByGridJobID( j.getGridJobID() );
+            if ( it != cache->end() ) {
+                CreamJob tmp( *it );
+                logger->logEvent( new cream_cancel_refuse_event( tmp, m_reason ) );
+            }
+        }
+
+        void operator()( const pair<cream_api::soap_proxy::JobIdWrapper, string>& info ) 
+            throw() 
+        {
+            string cream_job_id = info.first.getCreamURL();
+            boost::replace_all( cream_job_id, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );        
+            cream_job_id += "/" + info.first.getCreamJobID();
+            string reason( info.second );
+            iceLBLogger* logger( iceLBLogger::instance() );
+            jobCache* cache( jobCache::getInstance() );
+            boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+            jobCache::iterator job_it = cache->lookupByCompleteCreamJobID( cream_job_id );
+            if ( job_it != cache->end() ) {            
+                CreamJob tmp( *job_it );
+                logger->logEvent( new cream_cancel_refuse_event( tmp, reason ) );
+            }
+        }
+    };
+
+
+    /**
+     * This class is used to log an ABORTED event. It is defined so
+     * that it can be used inside a for_each() costruct. This class
+     * also removes the job from the job cache, after setting the
+     * "is_killed_by_ice" flag to trye.
+     */
+    class aborted_logger {
+    protected:
+        const string m_reason;
+    public:
+        aborted_logger( const string& reason ) : m_reason ( reason ) {};
+
+        void operator()( const CreamJob& j ) throw() 
+        {
+            iceLBLogger* logger( iceLBLogger::instance() );
+            jobCache* cache( jobCache::getInstance() );
+            boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+            jobCache::iterator it=cache->lookupByGridJobID( j.getGridJobID() );
+            if ( it != cache->end() ) {
+                CreamJob tmp(*it);
+                tmp.set_killed_by_ice();
+                tmp.set_failure_reason( m_reason );
+                logger->logEvent( new job_aborted_event( tmp ) );
+                cache->erase( it );
+            }
+        }
+    };
+
 
 }; // end anonymous namespace
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 iceCommandJobKill::iceCommandJobKill( ) throw() : 
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
-    m_threshold_time( ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() ),
-    m_lb_logger( ice_util::iceLBLogger::instance() )
+    m_threshold_time( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() ),
+    m_lb_logger( iceLBLogger::instance() ),
+    m_cache( jobCache::getInstance() )
 {
 
 }
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 void iceCommandJobKill::execute() throw()
 {
-    boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
+    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
     map< pair<string, string>, list< CreamJob >, ltstring> jobMap;    
-    list<CreamJob> toCheck;    
-    jobCache* cache( jobCache::getInstance() );
 
-    for ( jobCache::iterator it( jobCache::getInstance()->begin() );
-          it != ice_util::jobCache::getInstance()->end(); ++it ) {
-        
-        toCheck.push_back( *it );
-        
+    jobMap_appender appender( jobMap, &job_can_be_killed );
+    { 
+        boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+        for_each( m_cache->begin(), m_cache->end(), appender);
     }
-
-    // Remove from toCheck list the jobs that have NOT the proxy
-    // expiring (and that have a non empty CreamJobID)
-    checkExpiring( toCheck );
-    
-    jobMap_appender appender( jobMap, &insert_condition );
-    for_each( toCheck.begin(),
-              toCheck.end(),
-              appender);
     
     // execute killJob DN-CEMon by DN-CEMon (then, on multiple jobs)
     // on all elements of jobMap (that contains all jobs with expired
     // proxy)
-    for_each( jobMap.begin(), 
-              jobMap.end(), 
+    for_each( jobMap.begin(), jobMap.end(), 
               boost::bind1st( boost::mem_fn( &iceCommandJobKill::killJob ), this ));
     
-    for_each( jobMap.begin(), 
-              jobMap.end(), 
-              boost::bind1st( boost::mem_fn( &iceCommandJobKill::updateCacheAndLog ), this ));
 }
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
 {
-    string proxy;
-    proxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first );
-    
-    list< CreamJob >::const_iterator it = aList.second.begin();
-    list< CreamJob >::const_iterator list_end = aList.second.end();
-    vector< string > jobs_to_cancel;
-    while ( it != list_end ) {        
-        jobs_to_cancel.clear();
-        it = ice_util::transform_n_elements( it, 
-                                             list_end, 
-                                             ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size(), 
-                                             back_inserter( jobs_to_cancel ), 
-                                             mem_fun_ref( &CreamJob::getCompleteCreamJobID ) );
-        
-        cancel_jobs(proxy, aList.first.second, jobs_to_cancel);        
-    } 
+    static const char* method_name = "iceCommandJobKill::killJob() - ";
+    string better_proxy( DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first ) );
+    int query_size( iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() );
+
+    cream_api::soap_proxy::VOMSWrapper V( better_proxy );
+    if( V.IsValid( ) ) {
+        // The proxy is valid. Go on and send a cancel request to all
+        // the jobs
+        list< CreamJob >::const_iterator it = aList.second.begin();
+        list< CreamJob >::const_iterator list_end = aList.second.end();
+        while ( it != list_end ) {        
+            list< CreamJob > jobs_to_cancel;
+            it = copy_n_elements( it, list_end, query_size, 
+                                  back_inserter( jobs_to_cancel ) );
+            
+            cancel_jobs(better_proxy, aList.first.second, jobs_to_cancel); 
+        } 
+    } else {
+        // The proxy is not valid. We mark this bunch of jobs as
+        // aborted, and remove it from the job cache.
+        list< CreamJob >::const_iterator list_begin = aList.second.begin();
+        list< CreamJob >::const_iterator list_end = aList.second.end();
+        for_each( list_begin, list_end, aborted_logger( "The job has been killed because its proxy was expiring" ) );
+    }    
 }
 
-//______________________________________________________________________________
-void iceCommandJobKill::cancel_jobs(const string& proxy, 
+//____________________________________________________________________________
+void iceCommandJobKill::cancel_jobs(const string& better_proxy, 
                                     const string& endpoint, 
-				    const vector<string>& jobIdList) throw()
+				    const list<CreamJob>& jobs) throw()
 {
     static const char* method_name = "iceCommandJobKill::cancel_jobs() - ";
 
-    try {
-        
-        cream_api::soap_proxy::VOMSWrapper V( proxy );
-        if( !V.IsValid( ) ) {
-            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                            << "proxy [" << proxy << "] is EXPIRED! Skipping."
-                            << log4cpp::CategoryStream::ENDLINE
-                            );
-            return;
-        }	
+    //
+    // Logs "cancel requests"
+    //
+    for_each( jobs.begin(), jobs.end(), cancel_request_logger( "Cancel requested by ICE as proxy is going to expire" ) );
 
-        vector<cream_api::soap_proxy::JobIdWrapper> toCancel;
-        
-        for(vector<string>::const_iterator it=jobIdList.begin();
-            it!=jobIdList.end(); ++it) {
-            
+    //
+    // Actualy do the cancel operations
+    //
+    cream_api::soap_proxy::ResultWrapper res;
+    try {        
+        vector<cream_api::soap_proxy::JobIdWrapper> toCancel;        
+        for( list<CreamJob>::const_iterator it=jobs.begin(); it != jobs.end(); ++it ) {            
             string thisJob = endpoint;
             boost::replace_all( thisJob, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
-            thisJob += *it;
+            thisJob += it->getCreamJobID();
             
-            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+            CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                             << "Will cancel JobID [" << thisJob 
                             << "] because its original proxy"
                             << " is going to expire..."
                             << log4cpp::CategoryStream::ENDLINE
                             );
             
-            toCancel.push_back( cream_api::soap_proxy::JobIdWrapper( *it, 
-                                                                     endpoint, 
-                                                                     std::vector<cream_api::soap_proxy::JobPropertyWrapper>())
-                                );
+            toCancel.push_back( cream_api::soap_proxy::JobIdWrapper( it->getCompleteCreamJobID(), endpoint, vector<cream_api::soap_proxy::JobPropertyWrapper>()) );
         }
         
         cream_api::soap_proxy::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
-        cream_api::soap_proxy::ResultWrapper res;
         
-        CreamProxy_Cancel( endpoint, proxy, &req, &res ).execute( 3 );
-        
-        list< pair<cream_api::soap_proxy::JobIdWrapper, string> > tmp;
-        res.getOkJobs( tmp );
-        if( tmp.size() == jobIdList.size() ) { 
-            // in the OkJobs array there are all job we requested to
-            // cancel.  Then we suppose everything went ok.
-            return;
-        }
-        
-        tmp.clear();
-        
-        res.getNotExistingJobs( tmp );
-        res.getNotMatchingStatusJobs( tmp );
-        res.getNotMatchingDateJobs( tmp );
-        res.getNotMatchingProxyDelegationIdJobs( tmp );
-        res.getNotMatchingLeaseIdJobs( tmp );
-        
-        if( tmp.begin() == tmp.end() ) {
-            // Should not be empty. Something went wrong in the server
-            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                            << "Some job to cancel is not in the OK list "
-                            << "neither in the failed list. Something went "
-                            << "wrong in the server or in the "
-                            << "SOAP communication."
-                            << log4cpp::CategoryStream::ENDLINE
-                            );
-            return;
-        }
-        
-        list< pair<cream_api::soap_proxy::JobIdWrapper, string> >::const_iterator it  = tmp.begin();
-        list< pair<cream_api::soap_proxy::JobIdWrapper, string> >::const_iterator end = tmp.end();
-        while( it != end ) {
-            
-            string completeJobId = it->first.getCreamURL();// = it->first.getCreamJobID();
-            boost::replace_all( completeJobId, 
-                                iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
-            
-            completeJobId += "/" + it->first.getCreamJobID();
-            
-            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                            << "Cancellation of job [" << completeJobId 
-                            << "] failed for error: " << it->second
-                            << log4cpp::CategoryStream::ENDLINE
-                            );
-            ++it;
-        }
-        
-    } catch(std::exception& ex) {
-        // The job will not be removed from the job cache. We keep
-        // trying to cancel it until the residual proxy time is less
-        // than a minimum threshold. After that, the statusPoller will
-        // eventually take care of removing it from the cache.
-        CREAM_SAFE_LOG (m_log_dev->errorStream() << method_name
-                        << "Error killing job for the proxy ["
-                        << proxy << "]: " << ex.what()
-                        << log4cpp::CategoryStream::ENDLINE);
+        CreamProxy_Cancel( endpoint, better_proxy, &req, &res ).execute( 3 );
+    } catch(exception& ex) {
+        // We do not remove the job from the cache, as the
+        // statuspoller (or the event listener) will eventually get
+        // rid of it.
+        for_each( jobs.begin(), jobs.end(), cancel_refuse_logger( ex.what() ) );
         return;
     } catch(...) {
-        CREAM_SAFE_LOG (m_log_dev->errorStream() << method_name
-                        << "Error killing job for the proxy ["
-                        << proxy << "]. Unknown exception catched."
-                        << log4cpp::CategoryStream::ENDLINE);
+        // idem
+        for_each( jobs.begin(), jobs.end(), cancel_refuse_logger( "Unknown exception caught by ICE during CANCEL operation" ) );
         return;        
-    } 
-}
+    }         
+    // 
+    // Log to LB the failure reasons
+    //
+    list< pair<cream_api::soap_proxy::JobIdWrapper, string> > tmp;
 
-//______________________________________________________________________________
-void iceCommandJobKill::updateCacheAndLog( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
-{
-    for(list<CreamJob>::const_iterator jit=aList.second.begin(); jit!=aList.second.end(); ++jit) {
-        CreamJob theJob( *jit );
-        theJob = m_lb_logger->logEvent( new cream_cancel_request_event( theJob, boost::str( boost::format( "Killed by ice's jobKiller, as residual proxy time is less than the threshold=%1%" ) % m_threshold_time ) ) );
-        theJob.set_killed_by_ice();
-        theJob.set_failure_reason( "The job has been killed because its proxy was expiring" );
-        ice_util::jobCache::getInstance()->put( theJob ); 
-    }
-}
+    res.getNotExistingJobs( tmp );
+    res.getNotMatchingStatusJobs( tmp );
+    res.getNotMatchingDateJobs( tmp );
+    res.getNotMatchingProxyDelegationIdJobs( tmp );
+    res.getNotMatchingLeaseIdJobs( tmp );
 
-//______________________________________________________________________________
-void iceCommandJobKill::checkExpiring( list<CreamJob>& all ) throw()
-{
-    static const char* method_name = "iceCommandJobKill::checkExpiring() - ";
-    string proxy;
-    list<CreamJob> stillgood, target;    
-    time_t timeleft = 0;
-    
-    for( list<CreamJob>::const_iterator cit = all.begin();
-         cit != all.end(); ++cit ) {
-        // Check the proxy validity
-        
-        if( cit->getCompleteCreamJobID().empty() ) 
-            continue;
-        
-	cream_api::soap_proxy::VOMSWrapper V( cit->getUserProxyCertificate() );
-	if( !V.IsValid( ) ) {
-            CREAM_SAFE_LOG( m_log_dev->errorStream()<< method_name
-                            << V.getErrorMessage()
-                            << log4cpp::CategoryStream::ENDLINE);
-            stillgood.push_back( *cit );
-            continue;
-	}
-	
-	timeleft = V.getProxyTimeEnd() - time(NULL);
-        
-        if( timeleft < m_threshold_time && timeleft > 5 ) {
-            CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                            << "Proxy [" << cit->getUserProxyCertificate() 
-                            << "] of user [" << cit->getUserDN()
-                            << "] is expiring. Will cancel related jobs"
-                            << log4cpp::CategoryStream::ENDLINE);            
-            continue;
-        } else {
-            // the original job's proxy is not going to expire.
-            // i.e. the job is not to be cancelled (still good)
-            stillgood.push_back( *cit );
-            
-        }
-    }
-    
-    // Remove from all the jobs that are NOT going to proxy-expire
-    for_each( stillgood.begin(), 
-              stillgood.end(), 
-              boost::bind1st( boost::mem_fn( &list<CreamJob>::remove ), &all ) );
+    for_each( tmp.begin(), tmp.end(), cancel_refuse_logger( "none" ) );
 }
