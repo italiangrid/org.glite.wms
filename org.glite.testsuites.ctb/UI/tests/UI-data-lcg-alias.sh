@@ -36,15 +36,25 @@ echo ""
 myecho "GRID file has been created"
 
 GUID=`awk -F ' ' '/guid:/ {print $NF}' <<<"$OUTPUT"`
-LFN=`awk -F ' ' '/lfn:/ {print $NF}' <<<"$OUTPUT"`
 
 myecho "GUID: $GUID"
-myecho "LFN : $LFN"
 
 # ... II. List alias
 
 echo ""; myecho "lcg-la $VERBOSE $VO_OPTIONS $GUID"; echo ""
-lcg-la $VERBOSE $VO_OPTIONS $GUID || myexit 1
+OUTPUT=`lcg-la $VERBOSE $VO_OPTIONS $GUID 2>&1`
+
+if [ $? -ne 0 ]; then
+  echo "$OUTPUT"
+  myecho "lcg-la failed"
+  myexit 1
+fi
+
+echo "$OUTPUT"
+echo ""
+
+LFN=`awk -F ' ' '/lfn:/ {print $NF}' <<<"$OUTPUT"`
+myecho "LFN : $LFN"
 
 # ... III. Create an alias
 
