@@ -75,6 +75,9 @@ using namespace glite::wms::ice;
 
 boost::recursive_mutex iceCommandSubmit::s_localMutexForSubscriptions;
 
+//
+//
+//____________________________________________________________________________
 namespace { // Anonymous namespace
     
     // 
@@ -120,108 +123,104 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
     m_lb_logger( iceUtil::iceLBLogger::instance() ),
     m_request( request )
 {
-  //    try {
-        m_myname = m_theIce->getHostName();
-	if( m_configuration->ice()->listener_enable_authn() ) {
-            m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
-	} else {
-            m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
-	}
-//     } catch( runtime_error& ex ) {
-//         CREAM_SAFE_LOG(
-//                        m_log_dev->fatalStream() 
-//                        << "iceCommandSubmit::CTOR() - "
-//                        << ex.what()
-//                        << log4cpp::CategoryStream::ENDLINE
-//                        );
-// 	abort();
-//     }
+  m_myname = m_theIce->getHostName();
+  if( m_configuration->ice()->listener_enable_authn() ) {
+    m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
+  } else {
+    m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
+  }
+
+// [
+//   stream_error = false;
+//   edg_jobid = "https://cert-rb-03.cnaf.infn.it:9000/YeyOVNkR84l6QMHl_PY6mQ";
+//   GlobusScheduler = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs";
+//   ce_id = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs-cert";
+//   Transfer_Executable = true;
+//   Output = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardOutput";
+//   Copy_to_Spool = false;
+//   Executable = "/var/glite/jobcontrol/submit/Ye/JobWrapper.https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ.sh";
+//   X509UserProxy = "/var/glite/SandboxDir/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/user.proxy"; 
+//   Error_ = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardError";
+//   LB_sequence_code = "UI=000002:NS=0000000003:WM=000004:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000:LBS=000000"; 
+//   Notification = "never"; 
+//   stream_output = false; 
+//   GlobusRSL = "(queue=cert)(jobtype=single)"; 
+//   Type = "job"; 
+//   Universe = "grid"; 
+//   UserSubjectName = "/C=IT/O=INFN/OU=Personal Certificate/L=CNAF/CN=Marco Cecchi"; 
+//   Log = "/var/glite/logmonitor/CondorG.log/CondorG.log"; 
+//   grid_type = "globus" 
+// ]
+
+
+  string commandStr;
+  string protocolStr;
+  
+  {// mutex protected region  
     
-    /*
-
-[
-  stream_error = false;
-  edg_jobid = "https://cert-rb-03.cnaf.infn.it:9000/YeyOVNkR84l6QMHl_PY6mQ";
-  GlobusScheduler = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs";
-  ce_id = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs-cert";
-  Transfer_Executable = true;
-  Output = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardOutput";
-  Copy_to_Spool = false;
-  Executable = "/var/glite/jobcontrol/submit/Ye/JobWrapper.https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ.sh";
-  X509UserProxy = "/var/glite/SandboxDir/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/user.proxy"; 
-  Error_ = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardError";
-  LB_sequence_code = "UI=000002:NS=0000000003:WM=000004:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000:LBS=000000"; 
-  Notification = "never"; 
-  stream_output = false; 
-  GlobusRSL = "(queue=cert)(jobtype=single)"; 
-  Type = "job"; 
-  Universe = "grid"; 
-  UserSubjectName = "/C=IT/O=INFN/OU=Personal Certificate/L=CNAF/CN=Marco Cecchi"; 
-  Log = "/var/glite/logmonitor/CondorG.log/CondorG.log"; 
-  grid_type = "globus" 
-]
-
-*/
-            
-                
+    boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+    
     classad::ClassAdParser parser;
     classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
-
+    
     if (!rootAD) {
-        throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
+      throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
     }
     
+    
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
-
-    string commandStr;
+    
+    //string commandStr;
     // Parse the "command" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-        throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
+      throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
     }
     boost::trim_if( commandStr, boost::is_any_of("\"") );
-
+    
     if ( !boost::algorithm::iequals( commandStr, "submit" ) ) {
-        throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit:: wrong command parsed: %1%" ) % commandStr ) );
+      throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit:: wrong command parsed: %1%" ) % commandStr ) );
     }
-
-    string protocolStr;
+    
+    //string protocolStr;
     // Parse the "version" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
-        throw iceUtil::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
+      throw iceUtil::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
     if ( protocolStr.compare("1.0.0") ) {
-        throw iceUtil::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
+      throw iceUtil::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
     }
-
+    
     classad::ClassAd *argumentsAD = 0; // no need to free this
     // Parse the "arguments" attribute
     if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
-        throw iceUtil::JobRequest_ex("attribute 'arguments' not found or is not a classad");
+      throw iceUtil::JobRequest_ex("attribute 'arguments' not found or is not a classad");
     }
-
+    
     classad::ClassAd *adAD = 0; // no need to free this
-    // Look for "ad" attribute inside "arguments"
+    // Look for "JobAd" attribute inside "arguments"
     if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
-        throw iceUtil::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
+      throw iceUtil::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
     }
-
+    
     // initializes the m_jdl attribute
     classad::ClassAdUnParser unparser;
     unparser.Unparse( m_jdl, argumentsAD->Lookup( "jobad" ) );
 
-    try {
-        m_theJob.setJdl( m_jdl );
-        m_theJob.setStatus( glite::ce::cream_client_api::job_statuses::UNKNOWN );
-    } catch( iceUtil::ClassadSyntax_ex& ex ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream() 
-                       << "iceCommandSubmit::CTOR() - Cannot instantiate a job from jdl=" << m_jdl
-                       << " due to classad excaption: " << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
-                       );
-        throw( iceUtil::ClassadSyntax_ex( ex.what() ) );
-    }
+  } // end mutex protected regions
+  
+  try {
+    m_theJob.setJdl( m_jdl );
+    m_theJob.setStatus( glite::ce::cream_client_api::job_statuses::UNKNOWN );
+  } catch( iceUtil::ClassadSyntax_ex& ex ) {
+    CREAM_SAFE_LOG(
+		   m_log_dev->errorStream() 
+		   << "iceCommandSubmit::CTOR() - Cannot instantiate a job from jdl=" << m_jdl
+		   << " due to classad excaption: " << ex.what()
+		   << log4cpp::CategoryStream::ENDLINE
+		   );
+    throw( iceUtil::ClassadSyntax_ex( ex.what() ) );
+  }
 }
 
 //
@@ -634,44 +633,42 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 //____________________________________________________________________________
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::ClassadSyntax_ex& )
 {
-    classad::ClassAdParser parser;
-    classad::ClassAd *root = parser.ParseClassAd( oldJdl );
-
-    if ( !root ) {
-        throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "ClassAd parser returned a NULL pointer parsing request=[%1%]") % oldJdl ) );
-    }
-    
-    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
-    
-    string ceid;
-    if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", ceid ) ) {
-        throw iceUtil::ClassadSyntax_ex( "ce_id attribute not found" );
-    }
-    boost::trim_if( ceid, boost::is_any_of("\"") );
-
-    vector<string> ceid_pieces;
-    ceurl_util::parseCEID( ceid, ceid_pieces );
-    string bsname = ceid_pieces[2];
-    string qname = ceid_pieces[3];
-
-    // Update jdl to insert two new attributes needed by cream:
-    // QueueName and BatchSystem.
-
-    //cout << "\n*** bsname=["<<bsname<<"] - qname=["<<qname<<"]\n"<<endl;
-
-    classad_safe_ptr->InsertAttr( "QueueName", qname );
-    classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
-
-    updateIsbList( classad_safe_ptr.get() );
-    updateOsbList( classad_safe_ptr.get() );
-
-    string newjdl;
-    classad::ClassAdUnParser unparser;
-    unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
-
-    //cout << "\n*** NEW JDL=["<<newjdl<<"]"<<endl;
-
-    return newjdl;
+  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+  
+  classad::ClassAdParser parser;
+  classad::ClassAd *root = parser.ParseClassAd( oldJdl );
+  
+  if ( !root ) {
+    throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "ClassAd parser returned a NULL pointer parsing request=[%1%]") % oldJdl ) );
+  }
+  
+  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
+  
+  string ceid;
+  if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", ceid ) ) {
+    throw iceUtil::ClassadSyntax_ex( "ce_id attribute not found" );
+  }
+  boost::trim_if( ceid, boost::is_any_of("\"") );
+  
+  vector<string> ceid_pieces;
+  ceurl_util::parseCEID( ceid, ceid_pieces );
+  string bsname = ceid_pieces[2];
+  string qname = ceid_pieces[3];
+  
+  // Update jdl to insert two new attributes needed by cream:
+  // QueueName and BatchSystem.
+  
+  classad_safe_ptr->InsertAttr( "QueueName", qname );
+  classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
+  
+  updateIsbList( classad_safe_ptr.get() );
+  updateOsbList( classad_safe_ptr.get() );
+  
+  string newjdl;
+  classad::ClassAdUnParser unparser;
+  unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
+  
+  return newjdl;
 }
 
 //______________________________________________________________________________
@@ -932,10 +929,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   string userProxy = aJob.getUserProxyCertificate();
   string ce        = aJob.getCreamURL();
 
-  {
-    //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
-    subMgr->getCEMonURL( userProxy, ce, cemon_url ); // also updated the internal subMgr's cache cream->cemon
-  }
+  subMgr->getCEMonURL( userProxy, ce, cemon_url ); // also updated the internal subMgr's cache cream->cemon
   
   CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                   << "For current CREAM, subscriptionManager returned CEMon URL ["
@@ -1005,7 +999,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // an important information to cache in oder to authorize
       // notifications coming from this CEMon.
       string DN;
-      //boost::recursive_mutex::scoped_lock cemonM( iceUtil::subscriptionManager::mutex );
+
       if( subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
 	    
 	subMgr->insertSubscription( userProxy, cemon_url, sub );
@@ -1021,7 +1015,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 		       << log4cpp::CategoryStream::ENDLINE);
 	return; 
       }
-    } // unlock the subscriptionManager::mutex
+    } 
     else {
 
       subMgr->insertSubscription( userProxy, cemon_url, sub );
@@ -1050,7 +1044,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 		       << log4cpp::CategoryStream::ENDLINE
 		       );
       } 
-    } // unlock subscriptionManager::mutex
+    }
     
     if(can_subscribe) {
       iceUtil::iceSubscription sub;
@@ -1073,4 +1067,4 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     } // if(can_subscribe)
   } // else -> if(subscribedTo...)
   
-} // end function, also unlocks subscriptionManager's mutex
+} // end function, also unlocks the iceCommandSubmit's s_localMutexForSubscription mutex

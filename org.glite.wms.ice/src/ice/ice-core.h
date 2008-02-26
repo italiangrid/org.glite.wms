@@ -63,6 +63,10 @@ namespace ice {
     
     class Ice {
         
+    public:
+
+      static boost::recursive_mutex ClassAd_Mutex;
+
         class IceThreadHelper { 
         public:
             IceThreadHelper( const std::string& name );

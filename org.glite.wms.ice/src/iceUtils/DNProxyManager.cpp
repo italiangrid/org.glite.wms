@@ -319,12 +319,12 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
     m_DNProxyMap[ dn ] = localProxy;
 
   } else {
-
+/*
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - Leaving current proxy ["
 		   << m_DNProxyMap[ dn ] <<"] beacuse it will expire later"
 		   << log4cpp::CategoryStream::ENDLINE);
-
+*/
   }
 }
 

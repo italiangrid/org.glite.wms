@@ -121,14 +121,15 @@ void iceCommandUpdateStatus::execute( ) throw( )
     // so that each pair will appear only once in the set.
     //
 
-    vector< monitortypes__Event >::const_iterator it;
-    for ( it = m_ev.begin(); m_ev.end() != it; ++it ) {
-
+      
+      vector< monitortypes__Event >::const_iterator it;
+      for ( it = m_ev.begin(); m_ev.end() != it; ++it ) {
+	
         if( it->Message.empty() ) {        
-            CREAM_SAFE_LOG( m_log_dev->warnStream()
-                            << method_name 
-                            << "got a CEMon notification with no messages. Skipping."
-                            << log4cpp::CategoryStream::ENDLINE);        
+	  CREAM_SAFE_LOG( m_log_dev->warnStream()
+			  << method_name 
+			  << "got a CEMon notification with no messages. Skipping."
+			  << log4cpp::CategoryStream::ENDLINE);        
             continue; // Skip to the next notification
         }
 
@@ -141,28 +142,36 @@ void iceCommandUpdateStatus::execute( ) throw( )
         string first_event( *(it->Message.begin()) );
         string printable_first_event( boost::replace_all_copy( first_event, "\n", " " ) );
 
-        classad::ClassAdParser parser;
-        classad::ClassAd *ad = parser.ParseClassAd( first_event );
+	bool has_keep_alive;
+	bool has_subid;
+	bool keep_alive;
+	string subs_id;
+	{ // mutex protected region
+	  classad::ClassAdParser parser;
+	  classad::ClassAd *ad = parser.ParseClassAd( first_event );
+	  
+	  if ( !ad ) {
+	    CREAM_SAFE_LOG(m_log_dev->errorStream()
+			   << method_name
+			   << "Cannot parse notification classad "
+			   << printable_first_event
+			   << log4cpp::CategoryStream::ENDLINE);
+	    continue; // Skip to the next notification
+	  }
+	  
+	  // Classad gets destroyed when exiting the scope        
+	  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
+	  
+	  keep_alive = false;
+	   //string subs_id;
         
-        if ( !ad ) {
-            CREAM_SAFE_LOG(m_log_dev->errorStream()
-                           << method_name
-                           << "Cannot parse notification classad "
-                           << printable_first_event
-                           << log4cpp::CategoryStream::ENDLINE);
-            continue; // Skip to the next notification
-        }
 
-        // Classad gets destroyed when exiting the scope        
-        boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
-	
-        bool keep_alive = false;
-        string subs_id;
-        
-        // Check whether the current notification is an empty notification
-        if ( classad_safe_ptr->EvaluateAttrBool( "KEEP_ALIVE", keep_alive ) &&
-             keep_alive &&
-             classad_safe_ptr->EvaluateAttrString( "SUBSCRIPTION_ID", subs_id ) ) {
+	  // Check whether the current notification is an empty notification
+	  has_keep_alive = classad_safe_ptr->EvaluateAttrBool( "KEEP_ALIVE", keep_alive );
+	  has_subid      = classad_safe_ptr->EvaluateAttrString( "SUBSCRIPTION_ID", subs_id );
+	} // end of mutex protected region
+
+        if ( has_keep_alive && keep_alive && has_subid ) {
             // Push the subs_id into the set, which will be considered
             // after all the notifications have been examined.
             subscription_set.insert( subs_id );

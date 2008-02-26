@@ -24,7 +24,6 @@
 #include "classad_distribution.h"
 #include "boost/algorithm/string.hpp"
 #include "boost/scoped_ptr.hpp"
-//x#include "CreamProxyFactory.h"
 #include "ice-core.h"
 #include "Request.h"
 
@@ -38,30 +37,35 @@ iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request )
   throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
 {
     iceAbsCommand* result = 0;
-    classad::ClassAdParser parser;
-    classad::ClassAd *rootAd = parser.ParseClassAd( request->to_string() );
-
-    if ( !rootAd ) {
+    
+    { // mutex protected region
+      boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+      
+      classad::ClassAdParser parser;
+      classad::ClassAd *rootAd = parser.ParseClassAd( request->to_string() );
+      
+      if ( !rootAd ) {
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
-    }
-
-    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAd );
-
-    string commandStr;
-    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
+      }
+      
+      boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAd );
+      
+      string commandStr;
+      if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
         throw util::JobRequest_ex("attribute 'command' not found or is not a string");
-    }
-    boost::trim_if(commandStr, boost::is_any_of("\""));
-
-    if ( boost::algorithm::iequals( commandStr, "submit" ) ) {
-      //result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(false), request );
-      result = new iceCommandSubmit( request );
-    } else if ( boost::algorithm::iequals( commandStr, "cancel" ) ) {
-      //        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(false), request );
-      result = new iceCommandCancel( request );
+      }
+      boost::trim_if(commandStr, boost::is_any_of("\""));
+      
+      if ( boost::algorithm::iequals( commandStr, "submit" ) ) {
+	//result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(false), request );
+	result = new iceCommandSubmit( request );
+      } else if ( boost::algorithm::iequals( commandStr, "cancel" ) ) {
+	//        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(false), request );
+	result = new iceCommandCancel( request );
 	
-    } else {
+      } else {
         throw util::JobRequest_ex( "Unknown command " + commandStr + " in request classad" );
+      }
     }
     return result;
 }

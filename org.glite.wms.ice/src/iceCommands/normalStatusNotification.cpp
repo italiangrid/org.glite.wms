@@ -30,6 +30,7 @@
 #include "ice-core.h"
 #include "subscriptionManager.h"
 #include "iceConfManager.h"
+#include "ice-core.h"
 
 // CREAM and WMS stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -138,57 +139,61 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
     m_exit_code( 0 ) // default
 {
 
+  { // mutex protected region
+    boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::Ice::ClassAd_Mutex );
+    
     classad::ClassAdParser parser;
     classad::ClassAd *ad = parser.ParseClassAd( ad_string );	
-
+    
     if (!ad)
-        throw ClassadSyntax_ex( boost::str( boost::format("StatusChange() got an error while parsing notification classad: %1%" ) % ad_string ) );
-        
+      throw ClassadSyntax_ex( boost::str( boost::format("StatusChange() got an error while parsing notification classad: %1%" ) % ad_string ) );
+    
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
-	
+    
     if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
-        throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( m_cream_job_id, boost::is_any_of("\"" ) );
     
     if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_URL", m_cream_url ) )
-        throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_URL attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_URL attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( m_cream_url, boost::is_any_of("\"" ) );
-
+    
     string job_status_str;
     if ( !classad_safe_ptr->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
-        throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
     m_job_status = api::job_statuses::getStatusNum( job_status_str );
-
+    
     if ( classad_safe_ptr->EvaluateAttrInt( "EXIT_CODE", m_exit_code ) ) {
-        m_has_exit_code = true;
+      m_has_exit_code = true;
     }
-
+    
     if ( classad_safe_ptr->EvaluateAttrString( "FAILURE_REASON", m_failure_reason ) ) {
-        m_has_failure_reason = true;
-        boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
+      m_has_failure_reason = true;
+      boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
     }
-
+    
     if ( classad_safe_ptr->EvaluateAttrString( "DESCRIPTION", m_description ) ) {
-        m_has_description = true;
-        boost::trim_if( m_description, boost::is_any_of("\"") );
+      m_has_description = true;
+      boost::trim_if( m_description, boost::is_any_of("\"") );
     }
-
+    
     if ( classad_safe_ptr->EvaluateAttrString( "WORKER_NODE", m_worker_node ) ) {
-        boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
+      boost::trim_if( m_failure_reason, boost::is_any_of("\"") );
     }
-
+  
     // "Pretty print" the classad
     string pp_classad;
     classad::ClassAdUnParser unparser;
     unparser.Unparse( pp_classad, classad_safe_ptr.get() );
     if (!getenv("NO_LISTENER_MESS")) {
-        CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->debugStream()
-                       << "StatusChange::CTOR() - "
-                       << "Parsed status change notification "
-                       << pp_classad
-                       << log4cpp::CategoryStream::ENDLINE);
+      CREAM_SAFE_LOG(api::util::creamApiLogger::instance()->getLogger()->debugStream()
+		     << "StatusChange::CTOR() - "
+		     << "Parsed status change notification "
+		     << pp_classad
+		     << log4cpp::CategoryStream::ENDLINE);
     }
+  } // end of mutex protected region
 };
 
 void StatusChange::apply_to_job( CreamJob& j ) const

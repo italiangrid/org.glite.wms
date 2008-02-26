@@ -79,6 +79,7 @@ namespace cream_api = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 
 Ice* Ice::s_instance = 0;
+boost::recursive_mutex Ice::ClassAd_Mutex;
 
 //
 // Begin Inner class definitions
@@ -537,6 +538,8 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
         
         the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_wms_input_queue->get_name() ) );
         
+	boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+
         classad::ClassAd command;
         classad::ClassAd arguments;
         

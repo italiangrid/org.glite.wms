@@ -26,6 +26,7 @@
 #include "iceConfManager.h"
 #include "DNProxyManager.h"
 #include "subscriptionManager.h"
+#include "ice-core.h"
 
 /**
  *
@@ -93,6 +94,8 @@ CreamJob::CreamJob( ) :
 //______________________________________________________________________________
 void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 {
+
+    boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::Ice::ClassAd_Mutex );
     classad::ClassAdParser parser;
     classad::ClassAd *jdlAd = parser.ParseClassAd( j );
     // int res = 0;
@@ -156,11 +159,6 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
         throw ClassadSyntax_ex(ex.what());
     }
     m_endpoint = pieces[0] + ":" + pieces[1];
-
-    /**
-     * No need to lock the mutex because getInstance already does that
-     */
-    //iceConfManager* conf = iceConfManager::getInstance();
 
     m_cream_address = iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
 	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();

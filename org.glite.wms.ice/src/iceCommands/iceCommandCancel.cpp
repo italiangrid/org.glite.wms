@@ -62,75 +62,81 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
   m_request( request )
 {
 
-    /*
+    
 
-[ Arguments = 
-  [ Force = false; 
-    LogFile = "/var/glite/logmonitor/CondorG.log/CondorG.1140166320.log"; 
-    ProxyFile = "/var/glite/SandboxDir/tC/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2ftCDrNTu0b0uPbeUEDlpTjg/user.proxy";
-    SequenceCode = "UI=000002:NS=0000000007:WM=000002:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000:LBS=000000"; 
-    JobId = "https://cert-rb-03.cnaf.infn.it:9000/tCDrNTu0b0uPbeUEDlpTjg" 
-  ]; 
-  Command = "Cancel"; 
-  Source = 2; 
-  Protocol = "1.0.0" 
-]
+// [ Arguments = 
+//   [ Force = false; 
+//     LogFile = "/var/glite/logmonitor/CondorG.log/CondorG.1140166320.log"; 
+//     ProxyFile = "/var/glite/SandboxDir/tC/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2ftCDrNTu0b0uPbeUEDlpTjg/user.proxy";
+//     SequenceCode = "UI=000002:NS=0000000007:WM=000002:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000:LBS=000000"; 
+//     JobId = "https://cert-rb-03.cnaf.infn.it:9000/tCDrNTu0b0uPbeUEDlpTjg" 
+//   ]; 
+//   Command = "Cancel"; 
+//   Source = 2; 
+//   Protocol = "1.0.0" 
+// ]
 
-*/
+  
+  string commandStr;
+  string protocolStr;
+
+  {//  mutex protected region
+    boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+    
     classad::ClassAdParser parser;
     classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
-
+    
     if (!rootAD)
-        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
-
+      throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
+    
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
-
-    string commandStr;
+    
+    // string commandStr;
     // Parse the "command" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-        throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
+      throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
     }
     boost::trim_if(commandStr, boost::is_any_of("\""));
-
+    
     if ( !boost::algorithm::iequals( commandStr, "cancel" ) ) {
-        throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandCancel" );
+      throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandCancel" );
     }
-
-    string protocolStr;
+    
+    //string protocolStr;
     // Parse the "version" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "protocol", protocolStr ) ) {
-        throw util::JobRequest_ex("attribute \"protocol\" not found or is not a string");
+      throw util::JobRequest_ex("attribute \"protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
     if ( protocolStr.compare("1.0.0") ) {
-        throw util::JobRequest_ex("Wrong \"Protocol\" for jobCancel: expected 1.0.0, got " + protocolStr );
+      throw util::JobRequest_ex("Wrong \"Protocol\" for jobCancel: expected 1.0.0, got " + protocolStr );
     }
-
+    
     classad::ClassAd *argumentsAD = 0; // no need to free this
     // Parse the "arguments" attribute
     if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
-        throw util::JobRequest_ex("attribute \"arguments\" not found or is not a classad");
-    }
-
-    // Look for "id" attribute inside "Arguments"
-    if ( !argumentsAD->EvaluateAttrString( "jobid", m_gridJobId ) ) {
-        throw util::JobRequest_ex( "attribute \"jobid\" inside \"arguments\" not found, or is not a string" );
-    }
-
-    // Look for "lb_sequence_code" attribute inside "Arguments"
-    if ( !argumentsAD->EvaluateAttrString( "sequencecode", m_sequence_code ) ) {
-        // FIXME: This should be an error to throw. For now, we try anyway...
-        CREAM_SAFE_LOG( m_log_dev->warnStream()
-                        << "iceCommandCancel::execute() - Cancel request does not have a "
-                        << "\"sequencecode\" attribute. "
-                        << "Fine for now, should not happen in the future"
-                        << log4cpp::CategoryStream::ENDLINE
-                        );
-    } else {
-        boost::trim_if(m_sequence_code, boost::is_any_of("\""));        
+      throw util::JobRequest_ex("attribute \"arguments\" not found or is not a classad");
     }
     
-    //m_theProxy.reset( _theProxy );
+    // Look for "id" attribute inside "Arguments"
+    if ( !argumentsAD->EvaluateAttrString( "jobid", m_gridJobId ) ) {
+      throw util::JobRequest_ex( "attribute \"jobid\" inside \"arguments\" not found, or is not a string" );
+    }
+    
+    // Look for "lb_sequence_code" attribute inside "Arguments"
+    if ( !argumentsAD->EvaluateAttrString( "sequencecode", m_sequence_code ) ) {
+      // FIXME: This should be an error to throw. For now, we try anyway...
+      CREAM_SAFE_LOG( m_log_dev->warnStream()
+		      << "iceCommandCancel::execute() - Cancel request does not have a "
+		      << "\"sequencecode\" attribute. "
+		      << "Fine for now, should not happen in the future"
+		      << log4cpp::CategoryStream::ENDLINE
+		      );
+    } else {
+      boost::trim_if(m_sequence_code, boost::is_any_of("\""));        
+    }
+  }// end mutex protected region
+ 
 }
 
 //
