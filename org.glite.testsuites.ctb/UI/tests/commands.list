@@ -1,5 +1,6 @@
 ##################################################################
 # Commands mentioned in gLite User Guide v1.1
+# gLite version: 3.1
 # 
 # The list was first created by Felix
 # Later revision by Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
@@ -103,15 +104,9 @@ glite-wms-job-delegate-proxy
 glite-wms-job-perusal
 glite-wms-job-get-chkpt # [NEW] 
 
-glite-job-submit
 glite-job-attach
 glite-job-status
 glite-job-logging-info
-glite-job-output	
-glite-job-cancel	
-glite-job-list-match
-glite-brokerinfo
-# glite-sd-query # [duplicate entry] 
 
 edg-job-submit
 edg-job-status
@@ -119,7 +114,6 @@ edg-job-get-logging-info
 edg-job-get-output
 edg-job-cancel
 edg-job-list-match
-edg-brokerinfo    
 edg-gridftp-exists
 edg-gridftp-ls
 edg-gridftp-mkdir
