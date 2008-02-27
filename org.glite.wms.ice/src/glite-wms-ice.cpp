@@ -61,8 +61,8 @@ namespace iceUtil = glite::wms::ice::util;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-//#define MAX_ICE_MEM 2147483648
-#define MAX_ICE_MEM 61457280
+#define MAX_ICE_MEM 2147483648
+//#define MAX_ICE_MEM 61457280
 
 long long check_my_mem( const pid_t pid ) throw();
 
@@ -400,13 +400,16 @@ int main(int argc, char*argv[])
 	  mem_threshold_counter = 0;
 	  if(check_my_mem(myPid) > MAX_ICE_MEM) {
 	    
+	    // let's lock the cache so no other thread try to do cache operations
+	    boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
 	    // Now all thread are stopped so closing the Berkeley database is safe
 	    // but to do that is sufficient to delete the jobCache single instance
 	    // in fact its DTOR will call the jobDbManager's DTOR that 
 	    // cleanly closes the database on disk
 	    iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
-	    delete cache;
+	    delete cache; // this trigger the destruction of jobDbManager and then the safe closing of databases
 	    
 	    CREAM_SAFE_LOG( log_dev->fatalStream()
 			    << method_name
