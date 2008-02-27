@@ -25,7 +25,6 @@
 #include <cstdio>               // popen()
 #include <cstdlib>              // atoi()
 
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
@@ -43,7 +42,6 @@
 #include "iceUtils.h"
 #include "iceThreadPool.h"
 #include "DNProxyManager.h"
-//#include "CreamProxyFactory.h"
 #include "Request.h"
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
@@ -62,6 +60,9 @@ using namespace glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
+
+//#define MAX_ICE_MEM 2147483648
+#define MAX_ICE_MEM 61457280
 
 long long check_my_mem( const pid_t pid ) throw();
 
@@ -327,6 +328,7 @@ int main(int argc, char*argv[])
      ****************************************************************************/
      
     pid_t myPid = ::getpid();
+    int mem_threshold_counter = 0;
 
     while(true) {
         //
@@ -388,16 +390,33 @@ int main(int argc, char*argv[])
         }
         sleep(1);
 
-	//	if(check_my_mem(myPid) > max_ice_mem) {
-	  
-// 	  iceManager->stopAllThreads(); // this return only when all threads have finished
-// 	  iceUtil::jobCache::getInstance()->closeDatabase();
-// 	  return 2; // exit to shell with specific error code
-
-//	  cout << "glite-wms-ice::main - Max memory reached! EXIT!" << endl;
-	  
-//	}
-
+	/**
+	 *
+	 * Every 2 minutes ICE checks its mem usage
+	 *
+	 */
+	mem_threshold_counter++;
+	if(mem_threshold_counter >= 120) {
+	  mem_threshold_counter = 0;
+	  if(check_my_mem(myPid) > MAX_ICE_MEM) {
+	    
+	    iceManager->stopAllThreads(); // this return only when all threads have finished
+	    // Now all thread are stopped so closing the Berkeley database is safe
+	    // but to do that is sufficient to delete the jobCache single instance
+	    // in fact its DTOR will call the jobDbManager's DTOR that 
+	    // cleanly closes the database on disk
+	    iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
+	    delete cache;
+	    
+	    CREAM_SAFE_LOG( log_dev->fatalStream()
+			    << method_name
+			    << "glite-wms-ice::main - Max memory reached! EXIT!"
+			    << log4cpp::CategoryStream::ENDLINE
+			    );
+	    return 2; // exit to shell with specific error code
+	  }
+	}
+	
     }
     return 0;
 }
@@ -420,5 +439,5 @@ long long check_my_mem( const pid_t pid ) throw()
   
   pclose(in);
 
-  return (long long)atoi(used_rss_mem);
+  return ((long long)1024)*atoll(used_rss_mem);
 }

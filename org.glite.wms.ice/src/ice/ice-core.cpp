@@ -234,7 +234,7 @@ Ice::~Ice( )
 //____________________________________________________________________________
 void Ice::stopAllThreads( void ) 
 {
-  // FIXME: must check at runtine that the join is invoked
+  // FIXME: must check at runtime that the join is invoked
   if(m_poller_thread.is_started())
     m_poller_thread.stop();
 
@@ -254,6 +254,7 @@ void Ice::stopAllThreads( void )
     m_proxy_renewer_thread.stop();
 }
 
+//____________________________________________________________________________
 void Ice::init( void )
 {    
     // Handle resubmitted/purged jobs
