@@ -401,9 +401,11 @@ int main(int argc, char*argv[])
 	  if(check_my_mem(myPid) > MAX_ICE_MEM) {
 	    
 	    // let's lock the cache so no other thread try to do cache operations
+	    iceManager->stopAllThreads(); // this return only when all threads have finished
+
+	    // let's lock the cache so no other thread try to do cache operations
 	    boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 
-	    iceManager->stopAllThreads(); // this return only when all threads have finished
 	    // Now all thread are stopped so closing the Berkeley database is safe
 	    // but to do that is sufficient to delete the jobCache single instance
 	    // in fact its DTOR will call the jobDbManager's DTOR that 
