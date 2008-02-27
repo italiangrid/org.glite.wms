@@ -53,7 +53,20 @@ void jobKiller::body()
     static const char* method_name = "jobKiller::body() - ";
     
     while ( !isStopped() ) {
+
+      if(m_delay<=10) 
         sleep( m_delay );
+      else {
+	
+        for(int i=0; i<=m_delay; i++) {
+          if( isStopped() ) return;
+          sleep(1);
+        }
+	
+      }
+      
+      
+      //sleep( m_delay );
         CREAM_SAFE_LOG( log_dev->infoStream() << method_name
                         << "New iteration"
                         << log4cpp::CategoryStream::ENDLINE );

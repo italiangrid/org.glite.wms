@@ -63,7 +63,16 @@ void eventStatusPoller::body( void )
          * (18/11/2005) the documentation says it will be replaced by
          * a more robust mechanism in the future.
          */
+      if(m_delay<=10) 
         sleep( m_delay );
+      else {
+
+	for(int i=0; i<=m_delay; i++) {
+	  if( isStopped() ) return;
+	  sleep(1);
+	}
+
+      }
 
         // Thread wakes up
 

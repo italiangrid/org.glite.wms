@@ -74,7 +74,19 @@ void proxyRenewal::body( void )
                        << log4cpp::CategoryStream::ENDLINE);
         
 	iceCommandProxyRenewal().execute();
-        sleep( m_delay );
+
+	if(m_delay<=10) 
+	  sleep( m_delay );
+	else {
+	  
+	  for(int i=0; i<=m_delay; i++) {
+	    if( isStopped() ) return;
+	    sleep(1);
+	  }
+	  
+	}
+	
+        //sleep( m_delay );
     }
 }
 

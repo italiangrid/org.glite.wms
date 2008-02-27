@@ -45,7 +45,18 @@ void iceUtil::subscriptionUpdater::body( void )
   
     iceCommandSubUpdater cmd;
     cmd.execute();
+    
+    if(m_iteration_delay<=10) 
+      sleep( m_iteration_delay );
+    else {
+      
+      for(int i=0; i<=m_iteration_delay; i++) {
+	if( isStopped() ) return;
+	sleep(1);
+      }
+      
+    }
 
-    sleep( m_iteration_delay );
+    //sleep( m_iteration_delay );
   }
 }
