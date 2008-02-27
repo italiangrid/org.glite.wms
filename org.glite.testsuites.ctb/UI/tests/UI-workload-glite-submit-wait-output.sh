@@ -144,6 +144,15 @@ if [ -n "$delegate_proxy" ]; then
 
 fi
 
+type -p ${job_submit}
+
+if [ $? -ne 0 ] && [ $WMSTYPE == "gLite" ]; then
+  echo ""
+  echo "-> ${job_submit} command not found"
+  echo "-> this is normal if you are running gLite 3.1 (but not older!)" 
+  exit_success
+fi
+
 myecho "submitting a job with ${job_submit}"
 echo ""
 
