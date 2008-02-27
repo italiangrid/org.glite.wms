@@ -120,6 +120,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     } while( res != 0 );        
     
     new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+/*
     CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                    << "LB call returned "
                    << res 
@@ -127,7 +128,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                    // << " Seq code AFTER from ctx=[" << new_seq_code << "]"
                    
                    << log4cpp::CategoryStream::ENDLINE);
-
+*/
     { // Now, locks the cache
         jobCache* m_cache( jobCache::getInstance() );
         boost::recursive_mutex::scoped_lock( m_cache->mutex );
