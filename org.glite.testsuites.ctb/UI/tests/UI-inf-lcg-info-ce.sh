@@ -40,7 +40,7 @@ lcg-info $VO_OPTIONS --list-ce --attr "Tag" || exit_failure
 echo " # lcg-info test # listing selected CE attributes"
 echo ""
 
-lcg-info $VO_OPTIONS --list-ce --attr "OS,OSVersion,OSRelease,Processor,TotalCPUs,FreeCPUs,RunningJobs,CEVOs" || exit_failure
+lcg-info $VO_OPTIONS --list-ce --attr "OS,OSVersion,OSRelease,Processor,TotalCPUs,FreeCPUs,CEVOs" || exit_failure
 
 if [ -z "$VO_OPTIONS" ]; then
   echo " # lcg-info test # You can supply VO with --vo to reduce the output"
