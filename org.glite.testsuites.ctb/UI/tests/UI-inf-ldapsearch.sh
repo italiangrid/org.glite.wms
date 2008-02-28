@@ -27,7 +27,8 @@ echo ""
 echo "    === ldapsearch test ===    "
 echo ""
 
-DEFAULT_GIIS=lxb2018.cern.ch:2135
+DEFAULT_GIIS=lcg-bdii.cern.ch:2170
+SIZE_LIMIT=3
 
 if [ "$1" == "-H" ] && [ -n "$2" ]; then
   GIIS=ldap://$2
@@ -39,34 +40,35 @@ else
 fi
 
 echo " ldapsearch test: will query GIIS $GIIS"
+echo " ldapsearch test: will display first $SIZE_LIMIT results only"
 
 # ... ask lcg-info for a selection of "interesting" CE attributes
 
-myecho "listing selected attributes of GlueCETop objects"
+myecho "I. listing selected attributes of GlueCETop objects"
 
-ldapsearch -x -H $GIIS -b "mds-vo-name=local, o=grid" 'objectclass=GlueCETop' \
-           GlueVOViewLocalID GlueCEStateRunningJobs GlueCEStateWaitingJobs GlueCEInfoDefaultSE || exit_failure
+ldapsearch -x -z $SIZE_LIMIT -H $GIIS  -b "mds-vo-name=local, o=grid" 'objectclass=GlueCETop' \
+           GlueVOViewLocalID GlueCEStateRunningJobs GlueCEStateWaitingJobs GlueCEInfoDefaultSE || [ $? -eq 4 ] || exit_failure
 
-myecho "listing selected attributes of GlueCESEBindGroup objects"
+myecho "II. listing selected attributes of GlueCESEBindGroup objects"
 
-ldapsearch -x -H $GIIS -b "mds-vo-name=local, o=grid" 'objectclass=GlueCESEBindGroup' \
-           GlueCESEBindGroupCEUniqueID GlueCESEBindGroupSEUniqueID || exit_failure
+ldapsearch -x -H $GIIS -z $SIZE_LIMIT -b "mds-vo-name=local, o=grid" 'objectclass=GlueCESEBindGroup' \
+           GlueCESEBindGroupCEUniqueID GlueCESEBindGroupSEUniqueID || [ $? -eq 4 ] || exit_failure
 
-myecho "listing selected attributes of GlueCESEBind objects"
+myecho "III. listing selected attributes of GlueCESEBind objects"
 
-ldapsearch -x -H $GIIS -b "mds-vo-name=local, o=grid" 'objectclass=GlueCESEBind' \
-           GlueCESEBindSEUniqueID GlueCESEBindCEAccesspoint GlueCESEBindCEUniqueID GlueCESEBindMountInfo || exit_failure
+ldapsearch -x -H $GIIS -z $SIZE_LIMIT -b "mds-vo-name=local, o=grid" 'objectclass=GlueCESEBind' \
+           GlueCESEBindSEUniqueID GlueCESEBindCEAccesspoint GlueCESEBindCEUniqueID GlueCESEBindMountInfo || [ $? -eq 4 ] || exit_failure
 
-myecho "listing selected attributes of GlueClusterTop objects"
+myecho "IV. listing selected attributes of GlueClusterTop objects"
 
-ldapsearch -x -H $GIIS -b "mds-vo-name=local, o=grid" 'objectclass=GlueClusterTop' \
+ldapsearch -x -H $GIIS -z $SIZE_LIMIT -b "mds-vo-name=local, o=grid" 'objectclass=GlueClusterTop' \
            GlueClusterService GlueHostOperatingSystemName GlueHostOperatingSystemRelease GlueHostOperatingSystemVersion \
-	   GlueHostProcessorModel GlueHostProcessorClockSpeed GlueHostProcessorVendor || exit_failure
+	   GlueHostProcessorModel GlueHostProcessorClockSpeed GlueHostProcessorVendor || [ $? -eq 4 ] || exit_failure
 
-myecho "listing selected attributes of GlueSite objects"
+myecho "V. listing selected attributes of GlueSite objects"
 
-ldapsearch -x -H $GIIS -b "mds-vo-name=local, o=grid" \
-           'objectclass=GlueSite' GlueSiteLocation GlueSiteWeb GlueSiteSysAdminContact || exit_failure
+ldapsearch -x -H $GIIS -z $SIZE_LIMIT -b "mds-vo-name=local, o=grid" \
+           'objectclass=GlueSite' GlueSiteLocation GlueSiteWeb GlueSiteSysAdminContact || [ $? -eq 4 ] || exit_failure
 
 echo ""
 echo "    === test PASSED === "
