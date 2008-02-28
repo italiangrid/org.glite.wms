@@ -72,6 +72,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     if ( ! ev ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream()
                        << method_name
+		       << "Cannot log a NULL event"
                        << log4cpp::CategoryStream::ENDLINE);
         abort();        
     }
