@@ -247,12 +247,12 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 	// theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
  	
 	list< pair<cream_api::JobIdWrapper, string> > tmp;
-	res.getOkJobs( tmp );
-	if(!tmp.empty()) { // the unique job we cancelled is 
-			   // in the OkJobs array. Then it has been
-			   // cancelled.
-	  return;
-	}
+// 	res.getOkJobs( tmp );
+// 	if(!tmp.empty()) { // the unique job we cancelled is 
+// 			   // in the OkJobs array. Then it has been
+// 			   // cancelled.
+// 	  return;
+// 	}
 	res.getNotExistingJobs( tmp );
 	res.getNotMatchingStatusJobs( tmp );
 	res.getNotMatchingDateJobs( tmp );
@@ -262,37 +262,40 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 	// We tried to cancel only one job.
 	// Then if the operation went wrong
 	// tmp contains only one element, the first one!
-	if( tmp.begin() == tmp.end() )
-	{
+	if( !tmp.empty() )
+	  {
 	  // Should not be empty. Something went wrong in the server
-	  string errMex = "iceCommandCancel::execute() - The job to cancel [";
-	  errMex += theJob.describe() + "] is not in the OK list neither in the ";
-	  errMex += " failed list. Something went wrong in the server or in the ";
-	  errMex += "SOAP communication.";
-	   CREAM_SAFE_LOG(    
-                   	   m_log_dev->errorStream()
-                   	   << errMex
+// 	  string errMex = "iceCommandCancel::execute() - The job to cancel [";
+// 	  errMex += theJob.describe() + "] is not in the OK list neither in the ";
+// 	  errMex += " failed list. Something went wrong in the server or in the ";
+// 	  errMex += "SOAP communication.";
+// 	   CREAM_SAFE_LOG(    
+//                    	   m_log_dev->errorStream()
+//                    	   << errMex
+// 			   << log4cpp::CategoryStream::ENDLINE
+// 	                  );
+// 	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
+// 	  throw iceCommandFatal_ex( errMex );
+// 	}
+	    // let's get only the first element of the array
+	    // because we Cancel one job by one
+	    // it is safe to dereference the .begin() because 
+	    // the list is not empty
+	    pair<cream_api::JobIdWrapper, string> errorJob = *(tmp.begin());
+	    
+	    string errMex = "iceCommandCancel::execute() - Cancellation of the [";
+	    errMex += theJob.describe() + "] went wrong: [";
+	    errMex += errorJob.second + "]";
+	    
+	    CREAM_SAFE_LOG(    
+			   m_log_dev->errorStream()
+			   << errMex
 			   << log4cpp::CategoryStream::ENDLINE
-	                  );
-	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
-	  throw iceCommandFatal_ex( errMex );
-	}
-	
-	pair<cream_api::JobIdWrapper, string> errorJob = *(tmp.begin());
-	
-	string errMex = "iceCommandCancel::execute() - Cancellation of the [";
-	errMex += theJob.describe() + "] went wrong: ";
-	errMex += errorJob.second + "]";
-	
-	CREAM_SAFE_LOG(    
-                   m_log_dev->errorStream()
-                   << errMex
-                   << log4cpp::CategoryStream::ENDLINE
-                   );
-		   
-	m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
-	throw iceCommandFatal_ex( errMex );
-	
+			   );
+	    
+	    m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
+	    throw iceCommandFatal_ex( errMex );
+	  }
     } catch(cream_api::auth_ex& ex) {
         m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Authentication Exception: ") + ex.what() ) );
         throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
