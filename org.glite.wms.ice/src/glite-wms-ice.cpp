@@ -61,10 +61,18 @@ namespace iceUtil = glite::wms::ice::util;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-#define MAX_ICE_MEM 2147483648
-//#define MAX_ICE_MEM 61457280
+//#define MAX_ICE_MEM 2147483648
+#define MAX_ICE_MEM 30457280
 
 long long check_my_mem( const pid_t pid ) throw();
+
+void sigusr1_handle(int x) { 
+  exit(2);
+}
+
+void sigusr2_handle(int x) { 
+  exit(3);
+}
 
 void sigpipe_handle(int x) { 
   //std::cerr << "glite-wms-ice::sigpipe_handle - PIPE handled; argument x=[" << x << "]" << std::endl;
@@ -236,6 +244,9 @@ int main(int argc, char*argv[])
     
     signal(SIGPIPE, sigpipe_handle);
 
+    signal(SIGUSR1, sigusr1_handle);
+    signal(SIGUSR2, sigusr2_handle);
+
     /*****************************************************************************
      * Gets the distinguished name from the host proxy certificate
      ****************************************************************************/
@@ -354,6 +365,10 @@ int main(int argc, char*argv[])
 
         requests.clear();
         iceManager->getNextRequests( requests );
+// 	for(list< iceUtil::Request* >::const_iterator it=requests.begin();
+// 	    it!= requests.end();
+// 	    ++it)
+// 	  delete(*it);
 
         if( !requests.empty() )
             CREAM_SAFE_LOG(
@@ -387,6 +402,8 @@ int main(int argc, char*argv[])
                 continue;
             }
             threadPool->add_request( cmd );
+	    //delete cmd;
+	    //return 2;
         }
         sleep(1);
 
@@ -396,7 +413,7 @@ int main(int argc, char*argv[])
 	 *
 	 */
 	mem_threshold_counter++;
-	if(mem_threshold_counter >= 120) {
+	if(mem_threshold_counter >= 120) { // every 120 seconds check the memory
 	  mem_threshold_counter = 0;
 	  if(check_my_mem(myPid) > MAX_ICE_MEM) {
 	    
@@ -440,7 +457,11 @@ long long check_my_mem( const pid_t pid ) throw()
   if(!in) return (long long)0;
   
   while (fgets(used_rss_mem, 64, in) != NULL)
-    printf("glite-wms-ice::main() - Used RSS Memory: %s", used_rss_mem);
+    CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->debugStream()
+		    << "glite-wms-ice::main() - Used RSS Memory: "
+		    << used_rss_mem << log4cpp::CategoryStream::ENDLINE
+		    );
+  //printf("glite-wms-ice::main() - Used RSS Memory: %s", used_rss_mem);
   
   pclose(in);
 

@@ -32,6 +32,8 @@
 
 //#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/soap_runtime_ex.h"
+
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <boost/thread/thread.hpp>
@@ -120,7 +122,18 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE
                            );
-        } catch( exception& ex ) {
+        } catch( glite::ce::cream_client_api::soap_proxy::soap_runtime_ex& ex ) {
+
+	  CREAM_SAFE_LOG(
+			 m_log_dev->fatalStream()
+			 << "ceThreadPool::iceThreadPoolWorker::body()  - "
+			 << "A VERY SEVERE error occurred: "
+			 << ex.what() << ". Shutting down !!"
+			 << log4cpp::CategoryStream::ENDLINE
+			 );
+	  exit(2);
+
+	} catch( exception& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
                            << "ceThreadPool::iceThreadPoolWorker::body() - Command execution got exception: "

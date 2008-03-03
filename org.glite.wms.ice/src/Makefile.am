@@ -14,13 +14,15 @@
 
 SUBDIRS = iceCommands ice iceThreads iceUtils
 
-bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache
+bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache glite-wms-ice-safe
 
 putFL_SOURCES = putFL.cpp
 
 putFL_cancel_SOURCES = putFL_cancel.cpp
 
 glite_wms_ice_SOURCES = glite-wms-ice.cpp
+
+glite_wms_ice_safe_SOURCES = glite-wms-ice-safe.cpp
 
 dumpICECache_SOURCES = dumpICECache.cpp
 
@@ -73,6 +75,8 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(BDB_LIBS)
+
+###glite_wms_ice_safe_LDADD = -
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
