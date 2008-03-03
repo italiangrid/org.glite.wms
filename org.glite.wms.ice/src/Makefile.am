@@ -76,7 +76,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		-lboost_serialization \
 		$(BDB_LIBS)
 
-###glite_wms_ice_safe_LDADD = -
+glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS)
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \

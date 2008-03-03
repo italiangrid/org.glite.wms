@@ -62,7 +62,7 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 //#define MAX_ICE_MEM 2147483648
-#define MAX_ICE_MEM 30457280
+#define MAX_ICE_MEM 550000
 
 long long check_my_mem( const pid_t pid ) throw();
 
