@@ -120,6 +120,9 @@ start()
 stop()
 {
     echo -n "stopping ICE... "
+
+    killall glite-wms-ice
+
     if running; then
         pid=`cat ${pid_file} 2> /dev/null`
         kill ${pid}
