@@ -32,7 +32,7 @@ export GLITE_WMS_CONFIG_DIR
 
 this_script_name=$0
 
-program_name=glite-wms-ice
+program_name=glite-wms-ice-safe
 binpath=${GLITE_LOCATION}/bin/${program_name}
 pid_file=${GLITE_WMS_TMP}/${program_name}.pid
 
