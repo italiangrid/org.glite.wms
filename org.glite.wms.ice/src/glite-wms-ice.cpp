@@ -62,7 +62,7 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 //#define MAX_ICE_MEM 2147483648
-#define MAX_ICE_MEM 550000
+#define MAX_ICE_MEM 550000LL
 
 long long check_my_mem( const pid_t pid ) throw();
 
@@ -341,6 +341,16 @@ int main(int argc, char*argv[])
     pid_t myPid = ::getpid();
     int mem_threshold_counter = 0;
 
+    char* mem=::getenv("MAX_ICE_MEM");
+
+    long long max_ice_mem;
+    
+    if(mem) {
+      max_ice_mem = atoll(mem);
+    } else {
+      max_ice_mem = MAX_ICE_MEM;
+    }
+
     while(true) {
         //
         // BEWARE!! the get_command_count() method locks the
@@ -415,7 +425,7 @@ int main(int argc, char*argv[])
 	mem_threshold_counter++;
 	if(mem_threshold_counter >= 120) { // every 120 seconds check the memory
 	  mem_threshold_counter = 0;
-	  if(check_my_mem(myPid) > MAX_ICE_MEM) {
+	  if(check_my_mem(myPid) > max_ice_mem) {
 	    
 	    // let's lock the cache so no other thread try to do cache operations
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
