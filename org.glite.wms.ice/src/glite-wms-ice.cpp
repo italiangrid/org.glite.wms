@@ -351,6 +351,14 @@ int main(int argc, char*argv[])
       max_ice_mem = MAX_ICE_MEM;
     }
 
+
+    CREAM_SAFE_LOG(log_dev->debugStream()
+		   << method_name
+		   << "Max ICE memory threshold set to "
+		   << max_ice_mem << " kB"
+		   << log4cpp::CategoryStream::ENDLINE
+		   );
+
     while(true) {
         //
         // BEWARE!! the get_command_count() method locks the
@@ -425,7 +433,8 @@ int main(int argc, char*argv[])
 	mem_threshold_counter++;
 	if(mem_threshold_counter >= 120) { // every 120 seconds check the memory
 	  mem_threshold_counter = 0;
-	  if(check_my_mem(myPid) > max_ice_mem) {
+	  long long mem_now = check_my_mem(myPid);
+	  if(mem_now > max_ice_mem) {
 	    
 	    // let's lock the cache so no other thread try to do cache operations
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
@@ -442,7 +451,8 @@ int main(int argc, char*argv[])
 	    
 	    CREAM_SAFE_LOG( log_dev->fatalStream()
 			    << method_name
-			    << "glite-wms-ice::main - Max memory reached! EXIT!"
+			    << "glite-wms-ice::main - Max memory reached ["
+			    << mem_now << " kB] ! EXIT!"
 			    << log4cpp::CategoryStream::ENDLINE
 			    );
 	    return 2; // exit to shell with specific error code
@@ -475,5 +485,5 @@ long long check_my_mem( const pid_t pid ) throw()
   
   pclose(in);
 
-  return ((long long)1024)*atoll(used_rss_mem);
+  return atoll(used_rss_mem);
 }

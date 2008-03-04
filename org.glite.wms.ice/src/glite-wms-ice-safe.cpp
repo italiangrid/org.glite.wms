@@ -99,9 +99,17 @@ int main( int argc, char *argv[]) {
     char buf[1024];
     memset((void*)buf, 0, 1024);
     
-    sprintf(buf, "%s --conf %s", 
-	    "/opt/glite/bin/glite-wms-ice",
-	    opt_conf_file.c_str());
+    char* mem = ::getenv( "MAX_ICE_MEM" );
+    if(mem)
+      sprintf(buf, "MAX_ICE_MEM=\"%s\" %s --conf %s", 
+	      mem,
+	      "/opt/glite/bin/glite-wms-ice",
+	      opt_conf_file.c_str());
+    else
+      sprintf(buf, "%s --conf %s", 
+	      "/opt/glite/bin/glite-wms-ice",
+	      opt_conf_file.c_str());
+      
 
     while(true) {
     //  cout << "Starting real ICE..." << endl;
