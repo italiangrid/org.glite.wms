@@ -24,11 +24,19 @@ void iceThread::operator()()
 {
     m_running = true;
     CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->debugStream()
-		   << "Thread " << getName() << " starting..."
+		   << "iceThread::operator() - Thread " << getName() << " starting..."
 		   << log4cpp::CategoryStream::ENDLINE);
     body( );
     CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->debugStream()
-		   << "Thread " << getName() << " finished"
+		   << "iceThread::operator() - Thread " << getName() << " finished"
 		   << log4cpp::CategoryStream::ENDLINE);
     m_running = false;
+}
+
+void iceThread::stop() 
+{
+  m_stopped = true;
+  CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->debugStream()
+		 << "iceThread::stop() - Thread [" << getName() << "] Called STOP."
+		 << log4cpp::CategoryStream::ENDLINE);
 }

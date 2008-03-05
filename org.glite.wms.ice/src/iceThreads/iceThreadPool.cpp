@@ -129,7 +129,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 
 	  CREAM_SAFE_LOG(
 			 m_log_dev->fatalStream()
-			 << "ceThreadPool::iceThreadPoolWorker::body()  - "
+			 << "iceThreadPool::iceThreadPoolWorker::body()  - "
 			 << "A VERY SEVERE error occurred: "
 			 << ex.what() << ". Shutting down !!"
 			 << log4cpp::CategoryStream::ENDLINE
@@ -230,9 +230,18 @@ void iceThreadPool::stopAllThreads( void ) throw()
 
   for(list<iceThread*>::iterator thisThread = m_thread_list.begin();
       thisThread != m_thread_list.end();
-      ++thisThread) { (*thisThread)->stop(); }
+      ++thisThread) 
+    { 
+      CREAM_SAFE_LOG( m_log_dev->debugStream()
+		      << "iceThreadPool::stopAllThreads() - "
+		      << "Calling ::stop() on thread ["
+		      << (*thisThread)->getName() << "]"
+		      << log4cpp::CategoryStream::ENDLINE
+		      );
+      (*thisThread)->stop(); 
+    }
   
-  CREAM_SAFE_LOG( m_log_dev->fatalStream()
+  CREAM_SAFE_LOG( m_log_dev->debugStream()
 		  << "iceThreadPool::stopAllThreads() - "
 		  << "Waiting for all pool-thread termination ..."
 		  << log4cpp::CategoryStream::ENDLINE
