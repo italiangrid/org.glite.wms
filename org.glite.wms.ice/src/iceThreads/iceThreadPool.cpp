@@ -160,7 +160,8 @@ void iceThreadPool::iceThreadPoolWorker::body( )
     }
     CREAM_SAFE_LOG(
 		   m_log_dev->debugStream()
-		   << "iceThreadPool::iceThreadPoolWorker::body() - I'm ENDING ..."
+		   << "iceThreadPool::iceThreadPoolWorker::body() - Thread ["
+		   << getName() << "] ENDING ..."
 		   << log4cpp::CategoryStream::ENDLINE
 		   );
 }

@@ -369,35 +369,35 @@ int main(int argc, char*argv[])
         //
         int command_count = threadPool->get_command_count();
         if ( command_count > conf->ice()->max_ice_threads() ) {
-            CREAM_SAFE_LOG(log_dev->infoStream()
+            CREAM_SAFE_LOG(log_dev->debugStream()
                            << method_name
                            << "There are currently too many requests ("
                            << command_count
                            << ") in the internal command queue. "
-                           << "Will check again in 30 seconds."
+                           << "Will check again in 2 seconds."
                            << log4cpp::CategoryStream::ENDLINE
                            );
-            sleep( 30 );
-            continue;
-        }
-
-        requests.clear();
-        iceManager->getNextRequests( requests );
-// 	for(list< iceUtil::Request* >::const_iterator it=requests.begin();
-// 	    it!= requests.end();
-// 	    ++it)
-// 	  delete(*it);
-
-        if( !requests.empty() )
+            //sleep( 30 );
+            //continue;
+        } else {
+	  
+	  requests.clear();
+	  iceManager->getNextRequests( requests );
+	  // 	for(list< iceUtil::Request* >::const_iterator it=requests.begin();
+	  // 	    it!= requests.end();
+	  // 	    ++it)
+	  // 	  delete(*it);
+	  
+	  if( !requests.empty() )
             CREAM_SAFE_LOG(
                            log_dev->infoStream()
                            << method_name 
                            << "*** Found " << requests.size() << " new request(s)"
                            << log4cpp::CategoryStream::ENDLINE
                            );
-        
-        for( list< iceUtil::Request* >::iterator it = requests.begin();
-             it != requests.end(); ++it ) {
+	  
+	  for( list< iceUtil::Request* >::iterator it = requests.begin();
+	       it != requests.end(); ++it ) {
             CREAM_SAFE_LOG(
                            log_dev->debugStream()
                            << method_name
@@ -409,41 +409,37 @@ int main(int argc, char*argv[])
             glite::wms::ice::iceAbsCommand* cmd;
             try {
 	      cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
-	    	    
+	      threadPool->add_request( cmd );
             } catch( std::exception& ex ) {
-                CREAM_SAFE_LOG( log_dev->errorStream()
-                                << method_name
-                                << "Got exception \"" << ex.what()
-                                << "\". Removing BAD request..." 
-                                << log4cpp::CategoryStream::ENDLINE
-                                );
-                iceManager->removeRequest( *it );
-                continue;
+	      CREAM_SAFE_LOG( log_dev->errorStream()
+			      << method_name
+			      << "Got exception \"" << ex.what()
+			      << "\". Removing BAD request..." 
+			      << log4cpp::CategoryStream::ENDLINE
+			      );
+	      iceManager->removeRequest( *it );
+	      //continue;
             }
-            threadPool->add_request( cmd );
-// 	    try {
-// 	      cmd->execute();
-// 	    } catch(exception& ex) {
-// 	      CREAM_SAFE_LOG( log_dev->errorStream()
-//                                 << method_name
-//                                 << "Got exception \"" << ex.what()
-//                                 << "\"." 
-//                                 << log4cpp::CategoryStream::ENDLINE
-//                                 );
-// 	    }
-	    
-	    //delete cmd;
-	    //return 2;
-        }
-        sleep(1);
+	  }
+	}
 
+	sleep(2);
+	
 	/**
 	 *
 	 * Every 2 minutes ICE checks its mem usage
 	 *
 	 */
 	mem_threshold_counter++;
-	if(mem_threshold_counter >= 120) { // every 120 seconds check the memory
+	
+// 	CREAM_SAFE_LOG( log_dev->debugStream()
+// 			<< method_name
+// 			<< "glite-wms-ice::main - mem_threshold_counter=["
+// 			<< mem_threshold_counter << "]"
+// 			<< log4cpp::CategoryStream::ENDLINE
+// 			);
+
+	if(mem_threshold_counter >= 60) { // every 120 seconds check the memory
 	  mem_threshold_counter = 0;
 	  long long mem_now = check_my_mem(myPid);
 	  if(mem_now > max_ice_mem) {
@@ -453,7 +449,7 @@ int main(int argc, char*argv[])
 	    threadPool->stopAllThreads();
 
 	    // let's lock the cache so no other thread try to do cache operations
-	    boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+	    //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 
 	    // Now all thread are stopped so closing the Berkeley database is safe
 	    // but to do that is sufficient to delete the jobCache single instance
