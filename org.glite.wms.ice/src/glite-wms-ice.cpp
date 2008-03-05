@@ -408,7 +408,8 @@ int main(int argc, char*argv[])
                            );
             glite::wms::ice::iceAbsCommand* cmd;
             try {
-                cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
+	      cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
+	    	    
             } catch( std::exception& ex ) {
                 CREAM_SAFE_LOG( log_dev->errorStream()
                                 << method_name
@@ -420,6 +421,17 @@ int main(int argc, char*argv[])
                 continue;
             }
             threadPool->add_request( cmd );
+// 	    try {
+// 	      cmd->execute();
+// 	    } catch(exception& ex) {
+// 	      CREAM_SAFE_LOG( log_dev->errorStream()
+//                                 << method_name
+//                                 << "Got exception \"" << ex.what()
+//                                 << "\"." 
+//                                 << log4cpp::CategoryStream::ENDLINE
+//                                 );
+// 	    }
+	    
 	    //delete cmd;
 	    //return 2;
         }
@@ -438,6 +450,7 @@ int main(int argc, char*argv[])
 	    
 	    // let's lock the cache so no other thread try to do cache operations
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
+	    threadPool->stopAllThreads();
 
 	    // let's lock the cache so no other thread try to do cache operations
 	    boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
