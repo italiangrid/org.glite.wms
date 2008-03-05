@@ -67,8 +67,7 @@ iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
     while( !isStopped() ) {
-       boost::xtime Xtime;
-       boost::xtime_get( &Xtime, 2 );
+
 
         boost::scoped_ptr< iceAbsCommand > cmd;
         {
@@ -79,6 +78,9 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                     --m_state->m_num_running;
 		    
 		    while(m_state->m_requests_queue.empty()) {
+		      boost::xtime Xtime;
+		      boost::xtime_get( &Xtime, 1 );
+		      Xtime.sec += 5;
 		      m_state->m_no_requests_available.timed_wait( L, Xtime );
 		    }
 
