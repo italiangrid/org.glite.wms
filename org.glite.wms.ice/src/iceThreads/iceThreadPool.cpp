@@ -67,6 +67,9 @@ iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
     while( !isStopped() ) {
+       boost::xtime Xtime;
+       boost::xtime_get( &Xtime, 2 );
+
         boost::scoped_ptr< iceAbsCommand > cmd;
         {
             boost::recursive_mutex::scoped_lock L( m_state->m_mutex );
@@ -74,7 +77,11 @@ void iceThreadPool::iceThreadPoolWorker::body( )
             while ( m_state->m_requests_queue.end() == get_first_request() ) {
                 try {
                     --m_state->m_num_running;
-                    m_state->m_no_requests_available.wait( L );
+		    
+		    while(m_state->m_requests_queue.empty()) {
+		      m_state->m_no_requests_available.timed_wait( L, Xtime );
+		    }
+
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
                     CREAM_SAFE_LOG( m_log_dev->fatalStream()
