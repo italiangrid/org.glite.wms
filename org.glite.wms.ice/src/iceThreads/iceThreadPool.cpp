@@ -44,6 +44,7 @@ namespace conf_ns=glite::wms::ice::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
+//______________________________________________________________________________
 /**
  * Definition of the inner worker thread class
  */
@@ -56,11 +57,13 @@ iceThreadPool::iceThreadPoolWorker::iceThreadPoolWorker( iceThreadPoolState* st,
 
 }
 
+//______________________________________________________________________________
 iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 {
 
 }
 
+//______________________________________________________________________________
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
     while( !isStopped() ) {
@@ -155,8 +158,14 @@ void iceThreadPool::iceThreadPoolWorker::body( )
         m_state->m_no_requests_available.notify_all();
 
     }
+    CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "iceThreadPool::iceThreadPoolWorker::body() - I'm ENDING ..."
+		   << log4cpp::CategoryStream::ENDLINE
+		   );
 }
 
+//______________________________________________________________________________
 list< glite::wms::ice::iceAbsCommand* >::iterator iceThreadPool::iceThreadPoolWorker::get_first_request( void )
 {
     list< glite::wms::ice::iceAbsCommand* >::iterator it = m_state->m_requests_queue.begin();
@@ -169,6 +178,7 @@ list< glite::wms::ice::iceAbsCommand* >::iterator iceThreadPool::iceThreadPoolWo
 }
 
 
+//______________________________________________________________________________
 /**
  *
  * Implementation of the iceThreadPool class
@@ -188,10 +198,10 @@ iceThreadPool::iceThreadPool( const std::string& name, int s ) :
                     << log4cpp::CategoryStream::ENDLINE
                     );            
     for ( int i=0; i<n_threads; i++ ) {
-        boost::shared_ptr< util::iceThread > m_ptr_thread( new iceThreadPoolWorker( m_state.get(), i ) );
+        boost::shared_ptr< util::iceThread > ptr_thread( new iceThreadPoolWorker( m_state.get(), i ) );
         boost::thread* thr;
         try {
-            thr = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread ) );
+            thr = new boost::thread(boost::bind(&util::iceThread::operator(), ptr_thread ) );
         } catch( boost::thread_resource_error& ex ) {
             CREAM_SAFE_LOG( m_log_dev->fatalStream()
                             << "iceThreadPool::iceThreadPool("
@@ -202,14 +212,43 @@ iceThreadPool::iceThreadPool( const std::string& name, int s ) :
             abort();
         }
         m_all_threads.add_thread( thr );
+
+	m_thread_list.push_back( ptr_thread.get() );
+
     }
 }
 
+//______________________________________________________________________________
 iceThreadPool::~iceThreadPool( )
 {
 
 }
 
+//______________________________________________________________________________
+void iceThreadPool::stopAllThreads( void ) throw()
+{
+
+  for(list<iceThread*>::iterator thisThread = m_thread_list.begin();
+      thisThread != m_thread_list.end();
+      ++thisThread) { (*thisThread)->stop(); }
+  
+  CREAM_SAFE_LOG( m_log_dev->fatalStream()
+		  << "iceThreadPool::stopAllThreads() - "
+		  << "Waiting for all pool-thread termination ..."
+		  << log4cpp::CategoryStream::ENDLINE
+		  );  
+
+  m_all_threads.join_all();
+  
+  CREAM_SAFE_LOG( m_log_dev->fatalStream()
+		  << "iceThreadPool::stopAllThreads() - "
+		  << "All pool-threads TERMINATED !"
+		  << log4cpp::CategoryStream::ENDLINE
+		  );  
+
+}
+
+//______________________________________________________________________________
 void iceThreadPool::add_request( glite::wms::ice::iceAbsCommand* req )
 {
     boost::recursive_mutex::scoped_lock L( m_state->m_mutex );
@@ -217,6 +256,7 @@ void iceThreadPool::add_request( glite::wms::ice::iceAbsCommand* req )
     m_state->m_no_requests_available.notify_all(); // wake up one worker thread
 }
 
+//______________________________________________________________________________
 int iceThreadPool::get_command_count( void ) const
 {
     boost::recursive_mutex::scoped_lock L( m_state->m_mutex );

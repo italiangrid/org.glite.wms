@@ -77,8 +77,12 @@ namespace util {
          */        
         int get_command_count( void ) const;
 
+	void stopAllThreads( void ) throw();
+  
     protected:       
-        
+
+        std::list<iceThread*> m_thread_list;
+
         /**
          * The class of worker threads
          */
