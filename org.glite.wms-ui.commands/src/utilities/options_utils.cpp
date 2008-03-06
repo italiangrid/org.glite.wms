@@ -101,6 +101,7 @@ const char* Options::LONG_FROM		= "from";
 const char* Options::LONG_GET			= "get";
 const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_INPUTFILE		= "input-file";
+const char* Options::LONG_JSDL		= "jsdl";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
 const char* Options::LONG_LOGFILE		= "logfile";
@@ -185,6 +186,7 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_TRANSFER,	no_argument,			0,		Options::TRANSFER},
 	{	Options::LONG_START,		required_argument,		0,		Options::START},
  	{	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
+ 	{	Options::LONG_JSDL,    	required_argument,		0,		Options::JSDL},
         {	Options::LONG_DAG,    		required_argument,		0,		Options::DAG},
         {	Options::LONG_DEFJDL,    		required_argument,		0,		Options::DEFJDL},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
@@ -413,6 +415,8 @@ const string Options::USG_JDL = "--" + string(LONG_JDL) ;
 
 const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG)+ ", -" + SHORT_JDLORIG ;
 
+const string Options::USG_JSDL = "--" + string(LONG_JSDL)	 + "\t<file_path>" ;
+
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
 const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE) + "\t<file_path>";
@@ -510,6 +514,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_LOGFILE << "\n";
 	cerr << "\t" << USG_DEFJDL << "\n";
         cerr << "\t" << USG_DAG << " (**)\n";
+        cerr << "\t" << USG_JSDL << " (**)\n";
         cerr << "\t" << USG_COLLECTION << " (**)\n\n";
         cerr << "\t" << "(*) To be used only with " << USG_REGISTERONLY  << "\n";
         cerr << "\t" << "(**) Using this option you MUSTN'T specified any JDL file\n\n";
@@ -792,6 +797,7 @@ Options::Options (const WMPCommands &command){
 	m_exclude = "";
 	m_from = "";
 	m_input = "";
+	m_jsdl = "";
 	m_lrms = "";
 	m_logfile = "";
 	m_nodesres = "";
@@ -1108,6 +1114,10 @@ string Options::getStringAttribute (const OptsAttributes &attribute){
 			value = m_collection;
 			break ;
 		}
+        	case(JSDL) : {
+			value = m_jsdl;
+			break ;
+		}
 		case(DIR) : {
 			value = m_dir;
 			break ;
@@ -1391,6 +1401,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		}
 		case(COLLECTION) : {
 			msg = USG_COLLECTION ;
+			break ;
+		}
+		case(JSDL) : {
+			msg = USG_JSDL ;
 			break ;
 		}
 		case(DAG) : {
@@ -1738,7 +1752,7 @@ void Options::readOptions(const int &argc, const char **argv){
 		// ========================================
 		if (  cmdType == JOBSUBMIT   ||
 			cmdType == JOBMATCH  ){
-			if (m_collection.empty() && m_start.empty() && m_dag.empty()){
+			if (m_collection.empty() && m_jsdl.empty() && m_start.empty() && m_dag.empty()){
 				 if (optind < (argc-1) ){
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
@@ -1777,6 +1791,14 @@ void Options::readOptions(const int &argc, const char **argv){
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						err.str() );
+				} else if (optind < argc && !m_jsdl.empty()) {
+					ostringstream err ;
+					err << "Unknown or incompatible option used with --" << LONG_JSDL<< ":\n";
+					err << string(argv[optind]) ;
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Option",
+						err.str() );
 				} else if (optind < argc && !m_dag.empty()) {
 					ostringstream err ;
 					err << "Unknown or incompatible option used with --" << LONG_DAG<< ":\n";
@@ -1794,11 +1816,14 @@ void Options::readOptions(const int &argc, const char **argv){
 						"Wrong Option",
 						err.str() );
 				}
-				// --dag & --collection are incomptaible
-				if (!m_dag.empty() && !m_collection.empty()) {
+				// --dag & --collection & --jsdl are incomptaible
+				if ((!m_dag.empty() && !m_collection.empty()) ||
+				    (!m_dag.empty() && !m_jsdl.empty()) ||
+				    (!m_collection.empty() && !m_jsdl.empty())) {
 					ostringstream err ;
 					err << "The following options cannot be specified together:\n" ;
 					err << getAttributeUsage(Options::DAG) << "\n";
+					err << getAttributeUsage(Options::JSDL) << "\n";
 					err << getAttributeUsage(Options::COLLECTION) << "\n";
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
@@ -2187,6 +2212,15 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                                 inCmd += px + LONG_COLLECTION + ws + m_collection  + ";" + ws ;
 			} else {
 				dupl = LONG_COLLECTION;
+			}
+			break ;
+		};
+                case ( Options::JSDL ) : {
+			if (m_jsdl.empty()){
+				m_jsdl = checkArg(LONG_JSDL, optarg, Options::JSDL);
+                                inCmd += px + LONG_JSDL + ws + m_jsdl  + ";" + ws ;
+			} else {
+				dupl = LONG_JSDL;
 			}
 			break ;
 		};

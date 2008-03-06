@@ -59,6 +59,7 @@ class Options
 			INPUT ,
 			JDL,
 			JDLORIG,
+			JSDL,
    			LISTONLY,
 			LRMS ,
 			LOGFILE ,
@@ -389,6 +390,7 @@ class Options
 		static const char* LONG_FROM ;
 		static const char* LONG_GET ;
 		static const char* LONG_HELP ;
+		static const char* LONG_JSDL ;
 		static const char* LONG_LISTONLY;
 		static const char* LONG_LRMS	;
 		static const char* LONG_LOGFILE;
@@ -480,6 +482,7 @@ class Options
 		static const std::string USG_INPUT ;
 		static const std::string USG_JDL ;
 		static const std::string USG_JDLORIG ;
+		static const std::string USG_JSDL ;
                 static const std::string USG_LISTONLY;
 		static const std::string USG_LRMS	;
 		static const std::string USG_LOGFILE;
@@ -532,6 +535,7 @@ class Options
 		std::string m_fileprotocol ;
 		std::string m_from ;
 		std::string m_input ;
+		std::string m_jsdl ;
 		std::string m_lrms ;
 		std::string m_logfile ;
 		std::string m_output ;

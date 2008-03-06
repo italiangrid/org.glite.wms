@@ -271,6 +271,10 @@ class JobSubmit : public Job {
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
 		*/
 		void JobSubmit::checkAd(bool &filestoBtransferred);
+		/**
+		* Checks the user JSDL
+		*/
+		void JobSubmit::checkJSDL();
 		/** Failover approach: if a service call fails the client may recover
 		from the reached point contacting another wmproxy endpoint */
 		enum submitRecoveryStep {
@@ -288,6 +292,7 @@ class JobSubmit : public Job {
 		*	String input arguments
 		*/
 		std::string m_collectOpt;
+		std::string m_jsdlOpt;
 		std::string m_dagOpt ;
 		std::string m_defJdlOpt ;
 		std::string m_lrmsOpt ;

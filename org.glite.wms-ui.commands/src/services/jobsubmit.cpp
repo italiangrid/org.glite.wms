@@ -80,6 +80,7 @@ const int TRANSFER_OK = 0;
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
 	m_collectOpt = "";
+	m_jsdlOpt = "";
 	m_dagOpt = "";
 	m_defJdlOpt = "";
 	m_lrmsOpt = "";
@@ -176,6 +177,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 	// --collect
 	m_collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
 		
+	// --jsdl
+	m_jsdlOpt = wmcOpts->getStringAttribute(Options::JSDL);
+		
 	// --dag
 	m_dagOpt = wmcOpts->getStringAttribute(Options::DAG);
 	
@@ -194,6 +198,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		(registerOnly || !m_inOpt.empty() || !m_resourceOpt.empty() || !m_nodesresOpt.empty() || !m_toOpt.empty() ||
 			!m_validOpt.empty() ||
 			!m_collectOpt.empty() ||
+			!m_jsdlOpt.empty() ||
 			!m_dagOpt.empty() || !m_defJdlOpt.empty() ||
 			!wmcOpts->getStringAttribute(Options::DELEGATION).empty() ||
 			wmcOpts->getBoolAttribute(Options::AUTODG) ) ){
@@ -206,6 +211,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::COLLECTION) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::JSDL) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::DAG) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::DEFJDL) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
@@ -336,7 +342,17 @@ void JobSubmit::submission ( ){
 	if (!m_startOpt.empty()){
 		jobStarter(m_startOpt);
 	} else {
-		this->checkAd(toBretrieved);
+		
+		// Check if a JSDL file has to be managed
+		if(m_jsdlOpt.empty()) {
+			// Normal management
+			this->checkAd(toBretrieved);
+		}
+		else {
+			// JSDL management
+			this->checkJSDL();
+		}
+	
 		// Perform Submission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
 		// and initialize internal JobId:
@@ -851,6 +867,26 @@ int JobSubmit::checkInputSandbox ( ) {
 }
 
 /**
+*  Checks the user JSDL
+*/
+void JobSubmit::checkJSDL(){
+	
+	string message = "";
+	const string JSDL_WARNING_TITLE= "Following Warning(s) found while parsing JDL:";
+
+	// Normalize the JSDL file path
+	fs::path cp(Utils::normalizePath(m_jsdlOpt), fs::native);
+	
+	// Check if is a file and if it exists
+	if (!fs::exists(cp) ) {
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkJSDL",  DEFAULT_ERR_CODE,
+			"Invalid JSDL Path",
+			"--jsdl: no valid JSDL file path  (" + m_jsdlOpt + ")"  );
+	}
+}
+
+/**
 *  Checks the user JDL
 */
 void JobSubmit::checkAd(bool &toBretrieved){
@@ -1149,7 +1185,7 @@ void JobSubmit::jobRegOrSub(const bool &submit) {
 
 	string method  = "";
 	// checks if jdlstring is not null
-	if (m_jdlString.empty()){
+	if (m_jdlString.empty() && m_jsdlOpt.empty()){
 		throw WmsClientException(__FILE__,__LINE__,
 			"jobRegOrSub",  DEFAULT_ERR_CODE ,
 			"Null Pointer Error",
@@ -1157,31 +1193,74 @@ void JobSubmit::jobRegOrSub(const bool &submit) {
 	}
 	try{
 		if (submit){
-			// jobSubmit
-			method = "submit";
-			logInfo->print(WMS_DEBUG, "Submitting JDL", m_jdlString);
-			logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
-			//Suibmitting....
-			logInfo->service(WMP_SUBMIT_SERVICE);
+			if(m_jsdlOpt.empty())  {
+				// jobSubmit
+				method = "submit";
+				logInfo->print(WMS_DEBUG, "Submitting JDL", m_jdlString);
+				logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
+				
+				//Submitting....
+				logInfo->service(WMP_SUBMIT_SERVICE);
 
-			// Set the SOAP timeout
-			setSoapTimeout(SOAP_JOB_SUBMIT_TIMEOUT);
+				// Set the SOAP timeout
+				setSoapTimeout(SOAP_JOB_SUBMIT_TIMEOUT);
+				
+				jobIds = api::jobSubmit(m_jdlString, m_dgOpt, getContext( ));
+				logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
+			}
+			else {
+				// jobSubmitJSDL
+				method = "submit (JSDL)";
+				logInfo->print(WMS_DEBUG, "Submitting JSDL", m_jsdlOpt);
+				logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
+
+				//Submitting....
+				logInfo->service(WMP_SUBMIT_JSDL_SERVICE);
+
+				// Set the SOAP timeout
+				setSoapTimeout(SOAP_JOB_SUBMIT_TIMEOUT);
+				
+				// Open the JSDL file stream
+				ifstream jsdlFile(m_jsdlOpt.c_str());
+				
+				jobIds = api::jobSubmitJSDL(jsdlFile, m_dgOpt, getContext( ));
+				logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
+			}
+		} 
+		else {
+			if(m_jsdlOpt.empty())  {
+				// jobRegister
+				method = "register";
+				logInfo->print(WMS_DEBUG, "Registering JDL", m_jdlString);
+				logInfo->print(WMS_DEBUG, "Registering the job to the service", getEndPoint());
+
+				// registering ...
+				logInfo->service(WMP_REGISTER_SERVICE);
 			
-			jobIds = api::jobSubmit(m_jdlString, m_dgOpt, getContext( ));
-			logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
-		} else {
-			// jobRegister
-			method = "register";
-			logInfo->print(WMS_DEBUG, "Registering JDL", m_jdlString);
-			logInfo->print(WMS_DEBUG, "Registering the job to the service", getEndPoint());
-			// registering ...
-			logInfo->service(WMP_REGISTER_SERVICE);
+				// Set the SOAP timeout
+				setSoapTimeout(SOAP_JOB_REGISTER_TIMEOUT);
 			
-			// Set the SOAP timeout
-			setSoapTimeout(SOAP_JOB_REGISTER_TIMEOUT);
+				jobIds = api::jobRegister(m_jdlString , m_dgOpt, getContext( ));
+				logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
+			}
+			else {
+				// jobRegisterJSDL
+				method = "register (JSDL)";
+				logInfo->print(WMS_DEBUG, "Registering JSDL", m_jsdlOpt);
+				logInfo->print(WMS_DEBUG, "Registering the job to the service", getEndPoint());
+
+				// registering ...
+				logInfo->service(WMP_REGISTER_JSDL_SERVICE);
 			
-			jobIds = api::jobRegister(m_jdlString , m_dgOpt, getContext( ));
-			logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
+				// Set the SOAP timeout
+				setSoapTimeout(SOAP_JOB_REGISTER_TIMEOUT);
+
+				// Open the JSDL file stream
+				ifstream jsdlFile(m_jsdlOpt.c_str());
+				
+				jobIds = api::jobRegisterJSDL(jsdlFile, m_dgOpt, getContext( ));
+				logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
+			}				
 		}
 	} catch (api::BaseException &exc) {
 		ostringstream err ;
