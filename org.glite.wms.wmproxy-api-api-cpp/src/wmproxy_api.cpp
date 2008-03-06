@@ -20,6 +20,88 @@ namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
+// GSoap dom parser object
+soap_dom_element document = NULL;
+
+/******************************************************************
+initialiseDomParser
+******************************************************************/
+void initialiseDomParser() {
+
+  // Create and set the DOM with a new SOAP environment
+  document = soap_dom_element(soap_new());
+  soap_set_imode(document.soap, SOAP_DOM_NODE | SOAP_XML_GRAPH);
+}
+
+/******************************************************************
+destroyDomParser
+******************************************************************/
+void destroyDomParser() {
+
+  // Check if the document has been already cleand
+  if(NULL != document.soap) {
+    // Free the memory allocated
+    soap_destroy(document.soap);
+    soap_end(document.soap);
+    soap_done(document.soap);
+    free(document.soap);
+  }
+
+}
+
+/******************************************************************
+readJsdlFile
+******************************************************************/
+void readJsdlFile(std::ifstream &jsdlFile, jsdlns__JobDefinition_USCOREType *readJSDL) {
+  
+  try
+  {
+
+    // Read the JSDL file
+    jsdlFile >> document;
+
+    // Search the JSDL root node 
+    soap_dom_element::iterator rootNode = document.find(SOAP_TYPE_jsdlns__JobDefinition_USCOREType);
+
+    // Check if the JSDL root node has been found and it's valid
+    if(rootNode != document.end())
+    {
+      // Check if the root node is valid
+      if((*rootNode).type)
+      {
+        // Retrieve the JSDL parsed file	
+	readJSDL = (jsdlns__JobDefinition_USCOREType *)(*rootNode).node;
+	
+	// TBC
+	// Copy the pointer to avoid null pointer the SOAP structure is destroied
+      }
+      else
+      {
+	throw *createWmpException (new GenericException ,
+	  "readJsdlFile" ,
+	  "Invalid JSDL file: unable to read root data information" ) ;
+      }
+    }
+    else
+    {
+      throw *createWmpException (new GenericException ,
+	"readJsdlFile" ,
+	"Invalid JSDL file or missing root node" ) ;
+    }
+    
+  }
+  catch (std::exception &ex) 
+  {
+      throw *createWmpException (new GenericException ,
+	"readJsdlFile" ,
+	"Error reading JSDL file");
+  }
+
+}
+
+/******************************************************************
+Server authentication setting
+******************************************************************/
 void setSoapTimeout(struct soap *soap, int timeout){
 
 	if (soap){
@@ -250,6 +332,10 @@ void soapErrorMng (const WMProxy &wmp){
 	char **fault = NULL ;
 	char **details = NULL ;
         string msg = "";
+
+	// Destroy the GSOAP Dom Parser
+	destroyDomParser();
+	
         // retrieve information on the exception
         BaseException *b_ex =createWmpException (wmp.soap);
 
@@ -633,15 +719,29 @@ JobIdApi jobRegister (const string &jdl, const string &delegationId, ConfigConte
 /*****************************************************************
 jobRegisterJSDL
 ******************************************************************/
-JobIdApi jobRegisterJSDL (jsdlns__JobDefinition_USCOREType *JSDL, const string &delegationId, ConfigContext *cfs){
+JobIdApi jobRegisterJSDL (ifstream &jsdlFile, const string &delegationId, ConfigContext *cfs){
+
+	jsdlns__JobDefinition_USCOREType *jsdl = NULL;
+	
+	// Initialise the GSOAP Dom Parser 
+	initialiseDomParser();
+
+	// Read the JSDL file
+	readJsdlFile(jsdlFile, jsdl);
+	
 	WMProxy wmp;
 	JobIdApi jobid ;
 	setSoapConfiguration (wmp, cfs);
 	ns1__jobRegisterJSDLResponse response;
-	if (wmp.ns1__jobRegisterJSDL(JSDL, delegationId, response) == SOAP_OK) {
+	
+	if (wmp.ns1__jobRegisterJSDL(jsdl, delegationId, response) == SOAP_OK) {
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
 		soapDestroy(wmp.soap);
 	} else soapErrorMng(wmp) ;
+
+	// Destroy the GSOAP Dom Parser
+	destroyDomParser();
+	
 	return jobid;
 }
 /*****************************************************************
@@ -656,6 +756,34 @@ JobIdApi jobSubmit(const string &jdl, const string &delegationId, ConfigContext 
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
+	return jobid ;
+}
+/*****************************************************************
+jobSubmitJSDL
+******************************************************************/
+JobIdApi jobSubmitJSDL(ifstream &jsdlFile, const string &delegationId, ConfigContext *cfs){
+
+	jsdlns__JobDefinition_USCOREType *jsdl = NULL;
+	
+	// Initialise the GSOAP Dom Parser 
+	initialiseDomParser();
+
+	// Read the JSDL file
+	readJsdlFile(jsdlFile, jsdl);
+
+	WMProxy wmp;
+	JobIdApi jobid ;
+	setSoapConfiguration (wmp, cfs);
+	ns1__jobSubmitJSDLResponse response;
+
+	if (wmp.ns1__jobSubmitJSDL(jsdl, delegationId, response) == SOAP_OK) {
+		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
+		soapDestroy(wmp.soap) ;
+	} else soapErrorMng(wmp) ;
+	
+	// Destroy the GSOAP Dom Parser
+	destroyDomParser();
+	
 	return jobid ;
 }
 /*****************************************************************
@@ -823,6 +951,33 @@ std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jd
 	return vect ;
 }
 
+/*****************************************************************
+jobListMatchJSDL
+******************************************************************/
+std::vector <std::pair<std::string , long> > jobListMatch (ifstream &jsdlFile, const std::string &delegationId,ConfigContext *cfs){
+
+	jsdlns__JobDefinition_USCOREType *jsdl = NULL;
+
+	// Initialise the GSOAP Dom Parser 
+	initialiseDomParser();
+
+	// Read the JSDL file
+	readJsdlFile(jsdlFile, jsdl);
+
+	WMProxy wmp;
+	vector <pair<string , long> > vect ;
+	setSoapConfiguration (wmp, cfs);
+	ns1__jobListMatchJSDLResponse response;
+	if (wmp.ns1__jobListMatchJSDL(jsdl, delegationId, response) == SOAP_OK) {
+		 vect = fileSoap2cpp (response._CEIdAndRankList);
+		 soapDestroy(wmp.soap) ;
+	} else soapErrorMng(wmp) ;
+
+	// Destroy the GSOAP Dom Parser
+	destroyDomParser();
+	
+	return vect ;
+}
 /*****************************************************************
 enableFilePerusal
 ******************************************************************/

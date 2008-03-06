@@ -1,9 +1,9 @@
 #ifndef  GLITE_WMS_WMPROXYAPICPP_H
 #define GLITE_WMS_WMPROXYAPICPP_H
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "soapWMProxyProxy.h"
 
 /**
 * \file wmproxy_api.h
@@ -275,7 +275,7 @@ JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, C
 * The description is always provided through a single JDL description.
 * When a clients requests for registration of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs (all those requests represent in fact a set of jobs);
 *  the operation returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
-* @param jsdl The JSDL instance that represents the job
+* @param jsdl The JSDL file stream that represents the job
 * @param delegationId The id string used to identify a previously delegated proxy
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
 * @return The structure associated to the registered job, with its jobid(s)
@@ -287,7 +287,7 @@ JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, C
 * @see #getProxyReq, #putProxy (proxy delegation)
 * @see thrown exceptions: AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
-JobIdApi jobRegisterJSDL (jsdlns__JobDefinition_USCOREType *JSDL, const std::string &delegationId, ConfigContext *cfs=NULL);
+JobIdApi jobRegisterJSDL (std::ifstream &jsdlFile, const std::string &delegationId, ConfigContext *cfs=NULL);
 
 
 
@@ -317,6 +317,36 @@ JobIdApi jobRegisterJSDL (jsdlns__JobDefinition_USCOREType *JSDL, const std::str
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
 */
 JobIdApi jobSubmit(const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
+
+
+/**
+*  Submits a job: performs registration and triggers the submission
+* The JDL description of the job provided by the client is validated by the service,
+* registered to the LB and finally passed to the Workload Manager.
+* The unique identifier assigned to the job is returned to the client.
+* Usage of this operation (instead of jobRegister + jobStart) is indeed recommended when the job identifier is not needed prior to its submission
+* (e.g. jobs without input sandbox or with a sandbox entirely available on a GridFTP server managed by the client or her organisation).
+* The service supports submission of simple jobs, parametric jobs, partitionable jobs, DAGs and collections of jobs;
+* the description is always provided through a single JDL description.
+* When a clients requests for submission of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs
+* (all those requests represent in fact a set of jobs), the operations returns a structure containing the main identifier of the complex object
+*  and the identifiers of all related sub jobs.
+* This operation needs that a valid proxy (identified by an id string -delegationId string-) has been previously delegated to the endpoint.
+* @param jsdl The JSDL file stream that represents the job
+* @param delegationId The id string used to identify a previously delegated proxy
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
+* @return The structure associated to the submitted job, with its jobid(s)
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws InvalidArgumentException If the given JDL expression is not valid
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
+* @see #getProxyReq, #putProxy (proxy delegation)
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException. GenericException, BaseException
+*/
+JobIdApi jobSubmitJSDL(std::ifstream &jsdlFile, const std::string &delegationId, ConfigContext *cfs=NULL);
+
+
 /**
 *  Triggers the submission of a previously registered job. It starts the actual processing of the registered job within the Workload Manager.
 * It is assumed that when this operation is called, all the work preparatory to the job
@@ -397,6 +427,24 @@ void jobPurge(const std::string &jobid, ConfigContext *cfs=NULL);
 * @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
+
+
+/**
+* Returns the list of CE Ids satisfying the job Requirements specified in the JDL, ordered according to the decreasing Rank.
+* The fault NoSuitableResourcesFault is returned if there are no resources matching job constraints.
+* @param jsdl The JSDL file stream that represents the job
+* @param delegationId The id string used to identify a previously delegated proxy
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return A vector containing, for each recource found, its full name and its rank
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws InvalidArgumentException If the given JDL is not valid
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
+* @see #getProxyReq, #putProxy (proxy delegation)
+* @see thrown exceptions:  AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
+*/
+std::vector <std::pair<std::string , long> > jobListMatchJSDL (std::ifstream &jsdlFile, const std::string &delegationId, ConfigContext *cfs=NULL);
 
 
 /**@name WMProxy Info retrieval services*/
