@@ -40,7 +40,8 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 	soapClient.cpp \
 	wmproxy_api.cpp \
 	wmproxy_api_utilities.cpp \
-	stdsoap2.cpp
+	stdsoap2.cpp \
+	dom.cpp
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
@@ -50,8 +51,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	-DWITH_OPENSSL \
-	-UHAVE_CONFIG_H \
-	-DDEBUG
+	-UHAVE_CONFIG_H
+	
 	
 
 
