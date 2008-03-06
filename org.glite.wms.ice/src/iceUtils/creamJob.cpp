@@ -210,31 +210,34 @@ string CreamJob::describe( void ) const
 //______________________________________________________________________________
 void CreamJob::setSequenceCode( const std::string& seq )
 {
-    m_sequence_code = seq;
-    string old_jdl( m_jdl );
-
-    // Update the jdl
-    classad::ClassAdParser parser;
-    classad::ClassAd* jdl_ad = parser.ParseClassAd( m_jdl );
-    
-    if (!jdl_ad) {
-        CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
-		       << "CreamJob::setSequenceCode() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
-                       << m_jdl << "]. STOP!"
-		       << log4cpp::CategoryStream::ENDLINE);
-        abort();
-    }
-    jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
-
-    classad::ClassAdUnParser unparser;
-    m_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
-    unparser.Unparse( m_jdl, jdl_ad );
-
-    // CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->infoStream()
-    //                     << "CreamJob::setSequenceCode() - "
-    //                     << "old jdl=[" << old_jdl << "] new jdl=["
-    //                     << m_jdl << "]"
-    //                     << log4cpp::CategoryStream::ENDLINE);
+  /**
+   * mutex-protected region: REM that ClassAd is not
+   * thread-safe
+   */
+  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+  
+  m_sequence_code = seq;
+  string old_jdl( m_jdl );
+  
+  // Update the jdl
+  classad::ClassAdParser parser;
+  classad::ClassAd* jdl_ad = parser.ParseClassAd( m_jdl );
+  
+  if (!jdl_ad) {
+    CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
+		   << "CreamJob::setSequenceCode() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
+		   << m_jdl << "]. STOP!"
+		   << log4cpp::CategoryStream::ENDLINE);
+    abort();
+  }
+  
+  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdl_ad );
+  
+  jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
+  
+  classad::ClassAdUnParser unparser;
+  m_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
+  unparser.Unparse( m_jdl, jdl_ad );
 }
 
 //______________________________________________________________________________
