@@ -77,21 +77,23 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                 try {
                     --m_state->m_num_running;
 		    
-		    while(m_state->m_requests_queue.empty()) {
-		      boost::xtime Xtime;
-		      boost::xtime_get( &Xtime, 1 );
-		      Xtime.sec += 5;
-		      m_state->m_no_requests_available.timed_wait( L, Xtime );
-		      if( isStopped() ) {
-			CREAM_SAFE_LOG(
-				       m_log_dev->debugStream()
-				       << "iceThreadPool::iceThreadPoolWorker::body() - Thread ["
-				       << getName() << "] ENDING ..."
-				       << log4cpp::CategoryStream::ENDLINE
-				       );
-			return;
-		      }
-		    }
+// 		    while(m_state->m_requests_queue.empty()) {
+// 		      boost::xtime Xtime;
+// 		      boost::xtime_get( &Xtime, 1 );
+// 		      Xtime.sec += 5;
+// 		      m_state->m_no_requests_available.timed_wait( L, Xtime );
+// 		      if( isStopped() ) {
+// 			CREAM_SAFE_LOG(
+// 				       m_log_dev->debugStream()
+// 				       << "iceThreadPool::iceThreadPoolWorker::body() - Thread ["
+// 				       << getName() << "] ENDING ..."
+// 				       << log4cpp::CategoryStream::ENDLINE
+// 				       );
+// 			return;
+// 		      }
+// 		    }
+
+		    m_state->m_no_requests_available.wait( L );
 
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
