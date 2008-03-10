@@ -449,7 +449,7 @@ int main(int argc, char*argv[])
 	    
 	    // let's lock the cache so no other thread try to do cache operations
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
-	    threadPool->stopAllThreads();
+	    //threadPool->stopAllThreads();
 
 	    // let's lock the cache so no other thread try to do cache operations
 	    //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
