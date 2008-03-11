@@ -1,11 +1,24 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpstructconverter.h
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmpstructconverter.h"
@@ -43,12 +56,6 @@ convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
 				break;
 			case ns1__JobType__MPI:
 				type_vector->push_back(WMS_MPI);
-				break;
-			case ns1__JobType__PARTITIONABLE:
-				type_vector->push_back(WMS_PARTITIONABLE);
-				break;
-			case ns1__JobType__CHECKPOINTABLE:
-				type_vector->push_back(WMS_CHECKPOINTABLE);
 				break;
 			default:
 				break;
@@ -272,7 +279,7 @@ vector<NodeStruct*>
 convertGraphStructTypeToNodeStructVector(vector<GraphStructType*> *graph_struct)
 {
 	GLITE_STACK_TRY("convertGraphStructTypeToNodeStructVector()");
-	
+
 	vector<NodeStruct*> return_node_struct;
 	NodeStruct *element = NULL;
 	for (unsigned int i = 0; i < graph_struct->size(); i++) {
@@ -317,7 +324,7 @@ int
 convertJobTypeListToInt(JobTypeList job_type_list)
 {
 	GLITE_STACK_TRY("convertJobTypeListToInt()");
-	
+
 	int type = AdConverter::ADCONV_JOBTYPE_NORMAL;
 	for (unsigned int i = 0; i < job_type_list.jobType->size(); i++) {
 		switch ((*job_type_list.jobType)[i]) {
@@ -330,17 +337,43 @@ convertJobTypeListToInt(JobTypeList job_type_list)
 			case WMS_MPI:
 				type |= AdConverter::ADCONV_JOBTYPE_MPICH;
 				break;
-			case WMS_PARTITIONABLE:
-				type |= AdConverter::ADCONV_JOBTYPE_PARTITIONABLE;
-				break;
-			case WMS_CHECKPOINTABLE:
-				type |= AdConverter::ADCONV_JOBTYPE_CHECKPOINTABLE;
-				break;
 			default:
 				break;
 		}
 	}
 	return type;
-	
+
 	GLITE_STACK_CATCH();
 }
+
+ns1__JobStatusStructType * convertToGSOAPJobStatusStructType ( JobStatusStructType *source)
+{
+	GLITE_STACK_TRY("convertToGSOAPJobStatusStructType()");
+	/* convert JobStatusStructType into ns1__JobStatusStructType
+	// as read from wm.h:
+	SOURCE:
+	struct JobStatusStructType {
+		std::string jobid ;
+		std::string status;
+		std::vector <JobStatusStructType* > childrenJob;
+	};
+	RESULT:
+	class ns1__JobStatusStructType{
+		std::string                          jobid                          1;	///< Required element.
+		std::string                          status                         1;	///< Required element.
+		std::vector<ns1__JobStatusStructType*> childrenJob                    0;	///< Nullable pointer.
+	};
+	*/
+	ns1__JobStatusStructType* result = new ns1__JobStatusStructType;
+	result->jobid  = source->jobid;
+	result->status = source->status;
+	// fill in iterating on children  (if present)
+	unsigned int size_i=source->childrenJob.size();
+	for (unsigned int i =0; i<size_i;i++){
+		result->childrenJob.push_back(convertToGSOAPJobStatusStructType(source->childrenJob[i]));
+	}
+	return result;
+	GLITE_STACK_CATCH();
+
+}
+

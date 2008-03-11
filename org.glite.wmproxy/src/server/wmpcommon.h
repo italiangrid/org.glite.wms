@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 // File: wmpcommon.h
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include <string>
@@ -44,9 +44,15 @@ enum type {
 
 // Common methods used in both operations and coreoperations
 void setGlobalSandboxDir();
-void logRemoteHostInfo();
-void checkConfiguration();
+/**
+* Log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+*/
+void initWMProxyOperation (const std::string &operation);
 void callLoadScriptFile(const std::string &operation);
-int getType(std::string jdl, glite::jdl::Ad * ad = NULL);
-void checkJobDirectoryExistence(glite::wmsutils::jobid::JobId jid,
-	int level = 0);
+void checkConfiguration();
+int  getType(std::string jdl, glite::jdl::Ad * ad = NULL);
+void checkJobDirectoryExistence(glite::wmsutils::jobid::JobId jid,int level = 0);
+/**
+* Perform Authorization/Authentication process
+**/
+void checkSecurity(glite::wmsutils::jobid::JobId *jid=NULL, const std::string *delegation_id=NULL, bool gaclAuthorizing=false);

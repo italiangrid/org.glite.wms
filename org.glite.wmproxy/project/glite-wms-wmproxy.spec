@@ -7,7 +7,7 @@ Vendor:EU EGEE project
 Group:System/Application
 Prefix:/opt/glite
 BuildArch:i386
-Requires: mod_ssl gridsite_module glite-wms-partitioner glite-jdl-api-cpp glite-wms-common glite-wms-checkpointing glite-wms-purger glite-wms-configuration
+Requires: mod_ssl gridsite_module glite-jdl-api-cpp glite-wms-common glite-wms-purger glite-wms-configuration glite-security-lcmaps-plugins-basic
 BuildRoot:%{_builddir}/%{name}-%{version}
 Source:%{name}-%{version}_bin.tar.gz
 
@@ -63,11 +63,13 @@ gLite WMS WMProxy Service executables and libraries
 %attr(-, root, root) %{prefix}/bin/glite-wms-wmproxy-gridmapfile2gacl
 %attr(-, root, root) %{prefix}/bin/glite-wms-wmproxy-purge-proxycache
 %attr(-, root, root) %{prefix}/etc/lcmaps/lcmaps.db.template
+%attr(-, root, root) %{prefix}/etc/wmproxy_logrotate.conf.template
 %attr(-, root, root) %{prefix}/etc/glite_wms_wmproxy_httpd.conf.template
 %attr(-, root, root) %{prefix}/etc/glite_wms_wmproxy.gacl.template
 %attr(-, root, root) %{prefix}/etc/init.d/glite-wms-wmproxy
 %attr(-, root, root) %{prefix}/share/doc/glite-wms-wmproxy-%{version}/LICENSE
 %attr(-, root, root) %{prefix}/share/doc/glite-wms-wmproxy-%{version}/CHANGES
+%attr(0755, root, root) %{prefix}/sbin/glite_wms_wmproxy_exit
 
 %changelog
 

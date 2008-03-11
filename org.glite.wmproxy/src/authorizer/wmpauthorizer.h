@@ -1,11 +1,24 @@
 /*
-		Copyright (c) Members of the EGEE Collaboration. 2004.
-		See http://public.eu-egee.org/partners/ for details on the copyright holders.
-		For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpauthorizer.h
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #ifndef GLITE_WMS_WMPROXY_WMPAUTHORIZER_H
@@ -23,10 +36,6 @@ namespace authorizer {
  * WMPAuthorizer class provides a set of utility methods for performing
  * Grid Users authorization and mapping to local users. It also relies on 
  * the functions provided by the security lcmaps component.
- *
- * @version 1.0
- * @date 2005
- * @author Giuseppe Avellino <giuseppe.avellino@datamat.it>
 */
 
 enum FQANFields {
@@ -168,7 +177,7 @@ private:
 	std::string username;
 	uid_t userid;
 	uid_t usergroup;
-	char * lcmaps_logfile;
+	std::string lcmaps_logfile;
 	bool mapdone;
 	std::string certfqan;
 
@@ -190,13 +199,6 @@ private:
     void mapUser(const std::string &certfqan = "");
     
   #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
-    /*
-	 * Checks if the value of the attribute field is null
-	 * (field="attribute=value"; checks if field="attribute=NULL")
-	 * @param field attribute ("attribute=value")
-	 */
-	static bool isNull(std::string field);
-
 };
 
 } // namespace authorizer

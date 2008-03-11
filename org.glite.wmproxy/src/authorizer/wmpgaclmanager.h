@@ -1,3 +1,21 @@
+/*
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+*/
+
 #ifndef GLITE_WMS_WMPROXY_WMPGACLMANAGER_H
 #define GLITE_WMS_WMPROXY_WMPGACLMANAGER_H
 
@@ -82,12 +100,12 @@ class GaclManager {
 	* 	@param file path location of the gacl file
 	*	@param type credential type
 	*	@param rawvalue credential raw (user-dn, fqan, etc...)
-	*	@param errors description of errors occurred during the removal operations
-	*	@return 0 if the removal operation is successfully performed, -1 in case of any errors occured
+	*       @param errors description of errors occurred during the removal
+	*       @return 0 if the removal operation is successfully performed, -1 in case of any errors occured
 	*/
-	int removeEntry (const WMPgaclCredType &type,
-					const std::string &rawvalue,
-					std::string &errors) ;
+        int removeEntry (const WMPgaclCredType &type,
+                                        const std::string &rawvalue,
+                                        std::string &errors) ;
 	/**
 	*	Removes from the gacl file a set of entry
 	*	@param vect vector of credential (credential type , rawvalue )
@@ -170,7 +188,7 @@ class GaclManager {
 	*	@return a vector with the item strings
 	*	@throw GaclException in case of any error
 	*/
-	const std::vector<std::string> GaclManager::getItems(const WMPgaclCredType &type);
+	const std::vector<std::string> getItems(const WMPgaclCredType &type);
 	/**
 	* Returns the string describing the type of credential specified in the input parameter
 	* @return the string with the description, empty string if the input credential is not valid
@@ -195,17 +213,19 @@ class GaclManager {
 	* @return the string containing the pathname
 	*/
 	std::string getFilepath ( );
+
 	/**
 	* 	Checks if the gacl file exists
 	*	@return true if the file exists
 	*/
 	bool gaclExists ();
-	/**
-	* 	Static method that checks if the gacl file exists
-	*	@param the gacl filepath
-	*	@return true if the file exists
+	  /**
+	*       Static method that checks if the gacl file exists
+	*       @param the gacl filepath
+	*       @return true if the file exists
 	*/
 	static bool gaclExists (const std::string &file);
+
 	/**
 	* Free the memory used by an existing ACL, and the memory used by any entries and credentials it may contain.
 	*/

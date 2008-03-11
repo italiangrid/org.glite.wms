@@ -1,24 +1,24 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0 
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
 //
 // File: wmpauthorizer.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include <iostream>
@@ -39,7 +39,6 @@ limitations under the License.
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
 
-#include "glite/jdl/RequestAdExceptions.h"
 
 //Logger
 #include "glite/wms/common/logger/edglog.h"
@@ -76,26 +75,20 @@ namespace wmproxy {
 namespace authorizer {
 
 using namespace std;
-using namespace glite::wms::wmproxy::utilities;
-
 namespace wmputilities = glite::wms::wmproxy::utilities;
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 using namespace glite::wmsutils::exception;
 namespace logger       = glite::wms::common::logger;
 
-
 // Job Directories
 const char* WMPAuthorizer::INPUT_SB_DIRECTORY = "input";
 const char* WMPAuthorizer::OUTPUT_SB_DIRECTORY = "output";
 const char* WMPAuthorizer::PEEK_DIRECTORY = "peek";
-
 const char* WMPAuthorizer::DOCUMENT_ROOT = "DOCUMENT_ROOT";
 const string WMPAuthorizer::VOMS_GACL_FILE = "glite_wms_wmproxy.gacl";
 const char* WMPAuthorizer::VOMS_GACL_VAR = "GRST_CRED_2";
-
 const string LCMAPS_LOG_FILE = "lcmaps.log";
-
 const int PROXY_TIME_MISALIGNMENT_TOLERANCE = 5;
 
 #endif
@@ -106,45 +99,33 @@ const std::string FQAN_FIELD_SEPARATOR = "";
 const std::string FQAN_NULL = "null";
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
+WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile_c)
 {
 	edglog_fn("WMPAuthorizer::WMPAuthorizer");
-	
 	this->mapdone = false;
 	this->certfqan = "";
-	if (lcmaps_logfile) {
-		this->lcmaps_logfile = lcmaps_logfile;
-		edglog(debug) << "LCMAPS log file: " << string(lcmaps_logfile) << endl;
+	if (lcmaps_logfile_c) {
+		this->lcmaps_logfile = string(lcmaps_logfile_c);
 	} else {
-		this->lcmaps_logfile = (char*) malloc(1024);
-        char * location = getenv("GLITE_LOCATION_LOG");
-        string slocation = "";
-        if (!location) {
-			char * location = getenv("GLITE_WMS_LOCATION_VAR");
-			if (!location) {
-				location = getenv("GLITE_LOCATION_VAR");
-			}
-			if (location && wmputilities::fileExists(string(location) + "/log/")) {
-				slocation = string(location) + "/log/" + LCMAPS_LOG_FILE;
-				sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
-			} else {
-				slocation = "/tmp/" + LCMAPS_LOG_FILE;
-				sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
-			}
-        } else {
-        	slocation = string(location) + "/" + LCMAPS_LOG_FILE;
-        	sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
-        }
-		edglog(debug) << "LCMAPS log file: " << slocation << endl;
+		char * location = getenv("GLITE_LOCATION_LOG");
+		if (!location) {
+				char * location = getenv("GLITE_WMS_LOCATION_VAR");
+				if (!location) {
+					location = getenv("GLITE_LOCATION_VAR");
+				}
+				if (location && wmputilities::fileExists(string(location) + "/log/")) {
+					this->lcmaps_logfile = string(location) + "/log/" + LCMAPS_LOG_FILE;
+				} else {
+					this->lcmaps_logfile = "/tmp/" + LCMAPS_LOG_FILE;
+				}
+		} else {
+			this->lcmaps_logfile = string(location) + "/" + LCMAPS_LOG_FILE;
+		}
 	}
+	edglog(debug) << "LCMAPS log file: " << this->lcmaps_logfile << endl;
 }
 
-WMPAuthorizer::~WMPAuthorizer() throw()
-{
-	if (this->lcmaps_logfile ) {
-		free(this->lcmaps_logfile);
-	}
-}
+WMPAuthorizer::~WMPAuthorizer() throw(){}
 	
 string
 WMPAuthorizer::getUserName()
@@ -179,44 +160,38 @@ WMPAuthorizer::getUserGroup()
 	GLITE_STACK_CATCH();
 }
 
-void 
+void
 WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 {
 	GLITE_STACK_TRY("authorize()");
 	edglog_fn("WMPAuthorizer::authorize");
-	
+
 	if (jobid != "") {
 		// Checking job owner
-		string userproxypath = getJobDelegatedProxyPath(jobid);
-		
-		//TBD change it to do check depending on the server operation requested:
-		//i.e. jobCancel check for write, getOutputFileList check for list/read
-		string userdn = string(getUserDN());
-		string gaclfile = getJobDirectoryPath(jobid) + "/"
+		string userproxypath = wmputilities::getJobDelegatedProxyPath(jobid);
+		// TODO change it to do check depending on the server operation requested:
+		// i.e. jobCancel check for write, getOutputFileList check for list/read
+		string userdn = string(wmputilities::getUserDN());
+		string gaclfile = wmputilities::getJobDirectoryPath(jobid) + "/"
 			+ GaclManager::WMPGACL_DEFAULT_FILE;
 		edglog(debug)<<"Job gacl file: "<<gaclfile<<endl;
 		try {
 			authorizer::GaclManager gaclmanager(gaclfile);
 			if (!gaclmanager.checkAllowPermission(GaclManager::WMPGACL_PERSON_TYPE,
 					userdn, GaclManager::WMPGACL_WRITE)) {
-				edglog(info)<<"User not authorized to perform this operation"
-					<<endl;
-				throw AuthorizationException(__FILE__, __LINE__,
-			    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-			    	"User not authorized to perform this operation");
+				throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+					"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
+					"User not authorized to perform this operation");
 			}
 		} catch (Exception &ex) {
-			if (ex.getCode() == WMS_GACL_ITEM_NOT_FOUND) {
-				edglog(info)<<"Operation permitted only to job owner or "
-					"authorized user"<<endl;
-				throw AuthorizationException(__FILE__, __LINE__,
-			    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-			    	"Operation permitted only to job owner or authorized user");
+			if (ex.getCode() == wmputilities::WMS_GACL_ITEM_NOT_FOUND) {
+				throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+					"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
+					"Operation permitted only to job owner or authorized user");
 			}
 			throw ex;
 		}
 	}
-	
 	// VOMS Authorizing
 	string envFQAN = wmputilities::getEnvFQAN();
 	edglog(debug)<<"Delegated Proxy FQAN: "<<certfqan<<endl;
@@ -224,26 +199,15 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	if (certfqan != "") {
 		this->certfqan = certfqan;
 		if (!compareFQAN(certfqan, envFQAN)) {
-			edglog(info)<<"Client proxy FQAN does not match delegated proxy FQAN"
-				<<endl;
-			throw AuthorizationException(__FILE__, __LINE__,
-		    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	"Client proxy FQAN (" + envFQAN + ") does not match delegated "
-		    	"proxy FQAN (" + certfqan + ")");
+			throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+		    		"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
+		    		"Client proxy FQAN (" + envFQAN +
+				") does not match delegated proxy FQAN ("
+				+ certfqan + ")");
 		}
-		// Gacl Authorizing
- 		checkGaclUserAuthZ();
-		
-	} else { // Not a VOMS Proxy
-		/*if (!compareDN(dn, wmputilities::getEnvDN())) {
-			throw AuthorizationException(__FILE__, __LINE__,
-		    	"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	"VOMS FQAN Authorization: user not authorized");
-		}*/
-		// Gacl Authorizing
- 		checkGaclUserAuthZ();
-	}
-	
+	} 
+	// Gacl Authorizing
+	checkGaclUserAuthZ();
 	GLITE_STACK_CATCH();
 }
 
@@ -252,93 +216,81 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 {
 	GLITE_STACK_TRY("mapUser()");
 	edglog_fn("WMPAuthorizer::mapUser");
-	
 	this->mapdone = false;
-	
- 	int retval;
- 	struct passwd * user_info = NULL;
+	int retval;
+	struct passwd * user_info = NULL;
 	char * user_dn = wmputilities::getUserDN();
-	
+
 	edglog(debug)<<"certfqan: "<<certfqan<<endl;
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
-	//setenv("LCMAPS_POLICY_NAME", "standard", 1);
 
 	// Initialising structure
-	if (this->lcmaps_logfile != "") {
-		setenv("LCMAPS_LOG_FILE", this->lcmaps_logfile, 0);
+	if (!this->lcmaps_logfile.empty()) {
+		setenv("LCMAPS_LOG_FILE", this->lcmaps_logfile.c_str(), 0);
 	}
 	lcmaps_account_info_t plcmaps_account;
-  	retval = lcmaps_account_info_init(&plcmaps_account);
-  	if (retval) {
-    	edglog(error)<<"LCMAPS info initialization failure"<<endl;
-    	throw AuthorizationException(__FILE__, __LINE__,
-    		"lcmaps_account_info_init()", wmputilities::WMS_USERMAP_ERROR,
-    		"LCMAPS info initialization failure");
-  	}
-  	
-  	// Send user mapping request to LCMAPS 
-  	int mapcounter = 0; // single mapping result
-  	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
-  	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
+	retval = lcmaps_account_info_init(&plcmaps_account);
+	if (retval) {
+		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+		"lcmaps_account_info_init()", wmputilities::WMS_USERMAP_ERROR,
+		"LCMAPS info initialization failure");
+	}
+	// Send user mapping request to LCMAPS
+	int mapcounter = 0; // single mapping result
+	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
+	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
 	fqan_list[0] = const_cast<char*>(certfqan.c_str());
-  	edglog(debug)<<"Inserted fqan: "<<string(fqan_list[0])<<endl;
-  	
-  	retval = lcmaps_return_account_without_gsi((char *)
-  		wmputilities::convertDNEMailAddress(user_dn).c_str(),
-  		fqan_list, fqan_num, mapcounter, &plcmaps_account);
-  	if (retval) {
-    	retval = lcmaps_return_account_without_gsi(user_dn, 
-    		fqan_list, fqan_num, mapcounter, &plcmaps_account);
-        if (retval) {
-    		edglog(info)<<"LCMAPS failed authorization: User "<<user_dn 
-    			<<" is not authorized"<<endl;
-    		throw AuthorizationException(__FILE__, __LINE__,
-        		"lcmaps_return_poolindex_without_gsi()",
-        		wmputilities::WMS_AUTHORIZATION_ERROR,
-        		("LCMAPS failed to map user credential"));
-  		}
-    }
+	edglog(debug)<<"Inserted fqan: "<<string(fqan_list[0])<<endl;
 
-  	// Getting username from uid
-  	this->userid = plcmaps_account.uid;
+	retval = lcmaps_return_account_without_gsi((char *)
+		wmputilities::convertDNEMailAddress(user_dn).c_str(),
+		fqan_list, fqan_num, mapcounter, &plcmaps_account);
+
+	if (retval) {
+		retval = lcmaps_return_account_without_gsi(user_dn,
+			fqan_list, fqan_num, mapcounter, &plcmaps_account);
+		if (retval) {
+			edglog(error)<<"LCMAPS failed authorization: User "<<user_dn <<" is not authorized"<<endl;
+			throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+				"lcmaps_return_poolindex_without_gsi()",
+				wmputilities::WMS_AUTHORIZATION_ERROR,
+				"LCMAPS failed to map user credential");
+		}
+	}
+
+	// Getting username from uid
+	this->userid = plcmaps_account.uid;
 	user_info = getpwuid(this->userid);
-  	if (user_info == NULL) {
-    	edglog(info)<<"LCMAPS could not find the username related to uid: "
-    		<<this->userid<<endl; 
-    	throw AuthorizationException(__FILE__, __LINE__,
-        	"getpwuidn()",
-        	wmputilities::WMS_USERMAP_ERROR,
-        	"LCMAPS could not find the username related to uid");
-  	}
-  	
-  	// Checking for mapped user group. The group of the assigned local user
-  	// MUST be different from the group of user running server
-  	if (user_info->pw_gid == getgid()) {
-  		edglog(info)<<"Mapping not allowed, mapped local user group equal "
-  			"to group of user running server"<<endl; 
-    	throw AuthorizationException(__FILE__, __LINE__,
-        	"mapUser()", wmputilities::WMS_USERMAP_ERROR,
-        	"Mapping not allowed, mapped local user group equal to group"
-        	" of user running server\n(please contact server administrator)");
-  	}
-  	
-  	// Setting value for username private member
-  	this->username = string(user_info->pw_name);
-  
-  	// Setting value for usergroup private member
-  	this->usergroup = user_info->pw_gid;
-  	
-  	// Cleaning structure
-  	retval = lcmaps_account_info_clean(&plcmaps_account);
-  	if (retval) {
-    	edglog(error)<<"LCMAPS info clean failure"<<endl;
-    	throw AuthorizationException(__FILE__, __LINE__,
-        	"lcmaps_account_info_clean()", wmputilities::WMS_USERMAP_ERROR,
-        	"LCMAPS info clean failure");
-  	}
-
-  	this->mapdone = true;
-  	GLITE_STACK_CATCH();
+	if (user_info == NULL) {
+		edglog(error)<<"LCMAPS: Unkwonwn uid "
+			<< this->userid << endl;
+		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+			"getpwuidn()",wmputilities::WMS_USERMAP_ERROR,
+			"LCMAPS could not find the username related to uid");
+	}
+	// Checking for mapped user group. The group of the assigned local user
+	// MUST be different from the group of user running server
+	if (user_info->pw_gid == getgid()) {
+		edglog(error)<<"Mapping not allowed, mapped local user group equal "
+			"to group of user running server"<<endl;
+		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+			"mapUser()", wmputilities::WMS_USERMAP_ERROR,
+			"Mapping not allowed, mapped local user group equal to group"
+			" of user running server\n(please contact server administrator)");
+	}
+	// Setting value for username private member
+	this->username = string(user_info->pw_name);
+	// Setting value for usergroup private member
+	this->usergroup = user_info->pw_gid;
+	// Cleaning structure
+	retval = lcmaps_account_info_clean(&plcmaps_account);
+	if (retval) {
+		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+			"lcmaps_account_info_clean()", wmputilities::WMS_USERMAP_ERROR,
+			"LCMAPS info clean failure");
+	}
+	this->mapdone = true;
+	GLITE_STACK_CATCH();
 }
 
 void
@@ -346,17 +298,16 @@ WMPAuthorizer::checkGaclUserAuthZ()
 {
 	GLITE_STACK_TRY("checkGaclUserAuthZ()");
 	edglog_fn("WMPAuthorizer::checkGaclUserAuthZ");
-	
+
 	char *grst_cred = NULL;
 	string fqan = "";
 	string errmsg = "";
 	bool exec = true;
 	bool execDN = true;
 	int pos = 0;
-	edglog(debug)<<"Checking for VOMS credential..."<<endl;
 	grst_cred = getenv ( VOMS_GACL_VAR );
 	if ( grst_cred ){
-		edglog(info)<<"Checking VOMS proxy..."<<endl;
+		edglog(debug)<<"Checking VOMS proxy..."<<endl;
 		fqan = fqan.assign(grst_cred);
 		pos = fqan.find("/") ;
 		if (fqan.find("VOMS") == 0 && pos > 0) {
@@ -367,9 +318,9 @@ WMPAuthorizer::checkGaclUserAuthZ()
 			<<" environment variable not set"<<endl;
 		fqan = "";
 	}
-	edglog(info)<<"fqan="<<fqan<<endl;
-	string dn = string(wmputilities::getUserDN());
-	edglog(info)<<"dn="<<dn<<endl;
+	edglog(debug)<<"fqan="<<fqan<<endl;
+	string dn = string(wmputilities::getUserDN()) ;
+	string dnConverted= wmputilities::convertDNEMailAddress(dn) ;
 	// Gacl-Mgr
 	try {
 		string gaclfile;
@@ -388,41 +339,53 @@ WMPAuthorizer::checkGaclUserAuthZ()
 		// checks exec permssion
 		if (fqan != "") {
 			// FQAN authorization
-			exec = gacl.checkAllowPermission(GaclManager::WMPGACL_VOMS_TYPE,
+			exec = gacl.checkAllowPermission(
+				GaclManager::WMPGACL_VOMS_TYPE,
 				fqan, GaclManager::WMPGACL_EXEC);
-			if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dn))  {
-				execDN = gacl.checkAllowPermission(GaclManager::WMPGACL_PERSON_TYPE,
-                                    dn,     GaclManager::WMPGACL_EXEC);
-			 } else execDN = true ;
+			// checking DN
+			if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dn)){
+				execDN = gacl.checkAllowPermission(
+						GaclManager::WMPGACL_PERSON_TYPE,
+						dn,GaclManager::WMPGACL_EXEC);
+			}else if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dnConverted)){
+				execDN = gacl.checkAllowPermission(
+						GaclManager::WMPGACL_PERSON_TYPE,
+						dnConverted,GaclManager::WMPGACL_EXEC);
+			}else{
+				execDN = true ;
+			}
 		} else {
 			exec = true;
-			// DN authorization
-			execDN = gacl.checkAllowPermission(GaclManager::WMPGACL_PERSON_TYPE,
-				dn,	GaclManager::WMPGACL_EXEC );
+			// DN authorization  (FQAN is EMPTY)
+			execDN =
+				gacl.checkAllowPermission(
+					GaclManager::WMPGACL_PERSON_TYPE,dn,
+					GaclManager::WMPGACL_EXEC )
+				||
+				gacl.checkAllowPermission(
+					GaclManager::WMPGACL_PERSON_TYPE,dnConverted,
+					GaclManager::WMPGACL_EXEC );
 		}
 		exec = exec && execDN;
-	} catch (GaclException &exc){
+	} catch (wmputilities::GaclException &exc){
 		//LCAS CHECK if (!checkLCASUserAuthZ(dn)) {
-			errmsg = "User not authorized:\n";
-			errmsg += exc.what();
-			edglog(critical)<<errmsg<<endl;
-			throw GaclException(__FILE__, __LINE__,
-				"checkGaclUserAuthZ()",
-				wmputilities::WMS_GACL_FILE,
-				errmsg);
+		errmsg = "User not authorized:\n";
+		errmsg += exc.what();
+		throw wmputilities::GaclException(__FILE__, __LINE__,
+			"checkGaclUserAuthZ()",
+			wmputilities::WMS_GACL_FILE,
+			errmsg);
 		//LCAS CHECK }
 	}
 	// checks exec permission
 	if (!exec) {
 		//LCAS CHECK if (!checkLCASUserAuthZ(dn)) {
-			edglog(info)<<"Authorization error: user not authorized"<<endl;
-			throw AuthorizationException(__FILE__, __LINE__,
-				"checkGaclUserAuthZ()",
-				wmputilities::WMS_AUTHORIZATION_ERROR, "Authorization error: "
-				"user not authorized");
+		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+			"checkGaclUserAuthZ()",
+			wmputilities::WMS_AUTHORIZATION_ERROR,
+			"Authorization error: user not authorized");
 		//LCAS CHECK }
 	}
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -455,20 +418,18 @@ WMPAuthorizer::setJobGacl(vector<string> &jobids)
 			gacl.allowPermission(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
 					user_dn, permission);
 			gacl.saveGacl();
-		} catch (GaclException &exc) {
+		} catch (wmputilities::GaclException &exc) {
 			errmsg = "internal server error: unable to set the gacl user properties";
 			errmsg += "\n(please contact server administrator)\n";
 			errmsg += "please report the following message:\n" ;
 			errmsg += exc.what();
-			edglog(critical)<<errmsg<<endl;
-			throw GaclException(__FILE__, __LINE__, "setJobGacl()",
+			throw wmputilities::GaclException(__FILE__, __LINE__, "setJobGacl()",
 				wmputilities::WMS_GACL_FILE, errmsg);
 		}
 		ifstream infile(filename.c_str());
 		if (!infile.good()) {
-			edglog(severe)<<filename<<": !filename.good()"<<endl;
-			throw FileSystemException(__FILE__, __LINE__,
-				"setJobGacl()", WMS_IS_FAILURE, "Unable to open gacl "
+			throw wmputilities::FileSystemException(__FILE__, __LINE__,
+				"setJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
 				"input file\n(please contact server administrator)");
 		}
 		string gacltext = "";
@@ -487,9 +448,8 @@ WMPAuthorizer::setJobGacl(vector<string> &jobids)
 				+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE;
 			outfile.open(filename.c_str(), ios::out);
 			if (!outfile.good()) {
-				edglog(severe)<<outfile<<": !outfile.good()"<<endl;
-				throw FileSystemException(__FILE__, __LINE__,
-					"setJobGacl()", WMS_IS_FAILURE, "Unable to open gacl "
+				throw wmputilities::FileSystemException(__FILE__, __LINE__,
+					"setJobGacl()", wmputilities::WMS_IS_FAILURE, "Unable to open gacl "
 					"output file\n(please contact server administrator)");
 			}
 			outfile<<gacltext;
@@ -528,13 +488,12 @@ WMPAuthorizer::setJobGacl(const string &jobid)
 		gacl.allowPermission( authorizer::GaclManager::WMPGACL_PERSON_TYPE,
 				user_dn, permission);
 		gacl.saveGacl( );
-	} catch (GaclException &exc) {
+	} catch (wmputilities::GaclException &exc) {
 		errmsg = "internal server error: unable to set the gacl user properties  ";
 		errmsg += " (please contact server administrator)\n";
 		errmsg += "please report the following message:\n" ;
 		errmsg += exc.what ( );
-		edglog(critical)<<errmsg<<endl;
-		throw GaclException(__FILE__, __LINE__, "setJobGacl()",
+		throw wmputilities::GaclException(__FILE__, __LINE__, "setJobGacl()",
 			wmputilities::WMS_GACL_FILE, errmsg);
 	}
 		
@@ -556,7 +515,7 @@ WMPAuthorizer::checkJobDrain()
 		// gacl file: path location
 		drain_file = drain_file.assign(doc_root).append("/")
 			.append(authorizer::GaclManager::WMPGACL_DEFAULT_DRAIN_FILE);
-		edglog(debug) <<"checkJobDrain> drain_file = "<<drain_file<<endl;
+		edglog(debug) <<"checking drain_file: "<<drain_file<<endl;
 		// the drain is ony checked if the gacl file exists (if it doesn't no exception is thrown)
 		if (utilities::fileExists(drain_file)){
 			authorizer::GaclManager gacl(drain_file) ;
@@ -568,10 +527,9 @@ WMPAuthorizer::checkJobDrain()
 			}
 		}
 	} else {
-		string msg = "Internal server error: information on the document root "
-			"location is not available (please contact server administrator)";
-		edglog(critical)<<msg<<endl;
-		throw GaclException (__FILE__, __LINE__, "checkJobDrain()" ,
+		string msg =
+		"Internal server error: information on the document root location is not available (please contact server administrator)";
+		throw wmputilities::GaclException (__FILE__, __LINE__, "checkJobDrain()" ,
 			wmputilities::WMS_GACL_ERROR, msg);
 	}
 	return (!exec);
@@ -580,35 +538,13 @@ WMPAuthorizer::checkJobDrain()
 }
 #endif //GLITE_WMS_WMPROXY_TOOLS
 
-bool
-WMPAuthorizer::isNull(string field)
-{
-	#ifndef GLITE_WMS_WMPROXY_TOOLS
-	GLITE_STACK_TRY("isNull");
-	#endif
-
-	bool is_null = false ;
-	int p1 = field.size() - 5 ;
-	int p2 = field.find ("=NULL");
-
-	if ( p1 > 0 &&  p1==p2 ){
-		is_null= true;
-	}
-	//edglog(debug)<<"is_null="<<is_null<<endl;
-	return is_null;
-
-	#ifndef GLITE_WMS_WMPROXY_TOOLS
-	GLITE_STACK_CATCH();
-	#endif
-}
-
 /**
  *      /VO [ /group [ /subgroup (s) ]  ]  [ /Role = Role_Value ] [ /Capability = Capability_Value]
  */
 std::vector<std::pair<std::string,std::string> >
 WMPAuthorizer::parseFQAN(const std::string &fqan)
 {
-	#ifndef GLITE_WMS_WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
         GLITE_STACK_TRY("parseFQAN");
         #endif
 
@@ -629,18 +565,18 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
         nt = tokens.size();
         if (nt > 0) {
                 // Checks the VO field
-                split(tokens[0], label, value);
+                wmputilities::split(tokens[0], label, value);
                 if ((label.size() > 0 || value.size() >0) &&
                          ((label.compare(FQAN_FIELDS[FQAN_ROLE])==0) ||
                          (label.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0)) ){
-				#ifndef GLITE_WMS_WMPROXY_TOOLS
-                                throw AuthorizationException(__FILE__, __LINE__,
-                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                                throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  wmputilities::WMS_PROXY_ERROR,
                        		 "malformed fqan (VO field is missing): " +  fqan);
 				#else
 				cerr << "Error: malformed fqan (VO field is missing) ;\nfqan:" << fqan << "\n";
 				exit(-1);
-				#endif
+#endif
 
                 } else {
                         vect.push_back(make_pair(FQAN_FIELDS[FQAN_VO], tokens[0]));
@@ -648,7 +584,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                 }
                 // Checks group and subgroups fields (if present)
                 while (tokens.empty()==false) {
-                        split(tokens[0], label, value);
+                        wmputilities::split(tokens[0], label, value);
                         if (label.size()==0) {
                                 vect.push_back(make_pair(FQAN_FIELDS[FQAN_GROUP], tokens[0]));
                                 tokens.erase(tokens.begin());
@@ -659,18 +595,18 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                 // Checks Role & Capability
                 if (tokens.empty() == false) {
                         // either Role or Capability is expected
-                        split(tokens[0], label, value);
+                        wmputilities::split(tokens[0], label, value);
                         // Checks whether the fqan contains the  ROLE field
                         if (label.compare(FQAN_FIELDS[FQAN_ROLE])==0) {
                                 if (value.size()==0) {
-					#ifndef GLITE_WMS_WMPROXY_TOOLS
-					throw AuthorizationException(__FILE__, __LINE__,
-                                        	 "parseFQAN(string)",  WMS_PROXY_ERROR,
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+					throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                                        	 "parseFQAN(string)",  wmputilities::WMS_PROXY_ERROR,
                                         	 "malformed FQAN field /" + tokens[0] );
 					#else
 					cerr << "Error - malformed FQAN field : /" + tokens[0] << "\n";
 					exit(-1);
-					#endif
+#endif
                                 }
                                 // Role is present (and the value is not "null")
                                 if (value.compare(FQAN_NULL) != 0){
@@ -679,7 +615,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                                 tokens.erase(tokens.begin());
                                 if (tokens.empty()==false) {
                                         // This token has to contain only the Capability field
-                                        split(tokens[0], label, value);
+                                        wmputilities::split(tokens[0], label, value);
                                 } else {
                                         label = "";
                                         value = "";
@@ -693,26 +629,26 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                                 for (int i = 0; i < nt; i++) {
                                         err << "/" << tokens[i] << "\n";
                                 }
-				#ifndef GLITE_WMS_WMPROXY_TOOLS
-                                throw AuthorizationException(__FILE__, __LINE__,
-                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                                throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  wmputilities::WMS_PROXY_ERROR,
                                         err.str() );
 				#else
 				cerr << "Error - malformed FQAN:" + err.str() << "\n";
 				exit(-1);
-				#endif
+#endif
                         }
 
                         if (label.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0) {
                                 if (value.size()==0) {
-					#ifndef GLITE_WMS_WMPROXY_TOOLS
-                               		 throw AuthorizationException(__FILE__, __LINE__,
-                                         	"parseFQAN(string)",  WMS_PROXY_ERROR,
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                               		 throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                                         	"parseFQAN(string)",  wmputilities::WMS_PROXY_ERROR,
                                         	"malformed FQAN field (/" + tokens[0] );
 					#else
 					cerr << "Error - malformed FQAN field: /" + tokens[0];
 					exit(-1);
-					#endif
+#endif
                                 }
                                 // Capability is present (and the value is not "null")
                                 if (value.compare(FQAN_NULL) != 0){
@@ -722,30 +658,30 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
 
                         } else {
                                 if (label.size()>0 || value.size()>0) {
-					#ifndef GLITE_WMS_WMPROXY_TOOLS
-                                        throw AuthorizationException(__FILE__, __LINE__,
-                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                                        throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  wmputilities::WMS_PROXY_ERROR,
                                         "malformed FQAN field; invalid Capability field: /" + tokens[0] );
 					#else
 					cerr << "Error - malformed FQAN field; invalid Capability field: /" + tokens[0];
 					exit(-1);
-					#endif
+#endif
                                 }
                         }
                 }
         } else {
-		#ifndef GLITE_WMS_WMPROXY_TOOLS
-                throw AuthorizationException(__FILE__, __LINE__,
-                        "parseFQAN(string)",  WMS_PROXY_ERROR,
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                        "parseFQAN(string)",  wmputilities::WMS_PROXY_ERROR,
                                 "invalid fqan: " + fqan  );
 		#else
 		cerr << "Error - invalid fqan: " << fqan <<"\n";
 		exit(-1);
-		#endif
+#endif
 
         }
         return vect;
-	#ifndef GLITE_WMS_WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
         GLITE_STACK_CATCH();
         #endif
 
@@ -755,88 +691,87 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
 bool
 WMPAuthorizer::compareDN(char * dn1, char * dn2)
 {
-	#ifndef GLITE_WMS_WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("compareDN");
-	#endif
+#endif
 
 	int ret;
 	char * aa = NULL;
-   	char * bb = NULL;
-   	char * p = NULL;
+	char * bb = NULL;
+	char * p = NULL;
 
-   	aa = strdup(dn1);
-   	while ((p = strstr(aa, "/emailAddress=")) != NULL) {
-   		memmove(&p[6], &p[13], strlen(&p[13]) + 1);
-      	p[1] = 'E';
-    }
+	aa = strdup(dn1);
+	while ((p = strstr(aa, "/emailAddress=")) != NULL) {
+		memmove(&p[6], &p[13], strlen(&p[13]) + 1);
+		p[1] = 'E';
+	}
 
-   	bb = strdup(dn2);
-   	while ((p = strstr(bb, "/emailAddress=")) != NULL) {
-    	memmove(&p[6], &p[13], strlen(&p[13]) + 1);
-        p[1] = 'E';
-    }
+	bb = strdup(dn2);
+	while ((p = strstr(bb, "/emailAddress=")) != NULL) {
+		memmove(&p[6], &p[13], strlen(&p[13]) + 1);
+		p[1] = 'E';
+	}
 
 	ret = strcmp(aa, bb);
 
-   	free(aa);
-   	free(bb);
+	free(aa);
+	free(bb);
 
-   	return ret;
-   	#ifndef GLITE_WMS_WMPROXY_TOOLS
-   	GLITE_STACK_CATCH();
-	#endif
+	return ret;
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+	GLITE_STACK_CATCH();
+#endif
 
 }
 
 bool
 WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 {
-	#ifndef GLITE_WMS_WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("compareFQAN");
 	edglog_fn("WMPAuthorizer::compareFQAN");
-	#endif
-    
-    // Checking for empty FQAN
+#endif
+
+	// Checking for empty FQAN
 	if ((ref == "") && (in == "")) {
 		return true;
 	}
 	if ((ref == "") || (in == "")) {
 		return false;
 	}
-    
-    bool match = true;
 
-    vector<pair<string,string> > vect_ref, vect_in;
+	bool match = true;
+
+	vector<pair<string,string> > vect_ref, vect_in;
 	string lab_ref = "";
 	string lab_in = "";
 	string val_ref = "";
 	string val_in = "";
 
-    // the vectors contain pairs like this <label,value> (label may be an empty string)
-    vect_ref = parseFQAN(ref );
+	// the vectors contain pairs like this <label,value> (label may be an empty string)
+	vect_ref = parseFQAN(ref );
 	if ( vect_ref.empty()){
-		#ifndef GLITE_WMS_WMPROXY_TOOLS
-                throw AuthorizationException(__FILE__, __LINE__,
-                        "compareFQAN(string, string)", WMS_AUTHORIZATION_ERROR,
-                        "no valid fields in the FQAN string: [" + ref + "] (please contact the server administrator");
-		#else
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+			"compareFQAN(string, string)", wmputilities::WMS_AUTHORIZATION_ERROR,
+			"no valid fields in the FQAN string: [" + ref + "] (please contact the server administrator");
+#else
 		cerr << "Error - no valid fields in the FQAN string: [" << ref << "]";
 		exit(-1);
-		#endif
+#endif
 
 	}
-    // vin=<input-vect>
-    vect_in = parseFQAN(in);
-
+	// vin=<input-vect>
+	vect_in = parseFQAN(in);
 	if (vect_in.empty()) {
-		#ifndef GLITE_WMS_WMPROXY_TOOLS
-                throw AuthorizationException(__FILE__, __LINE__,
-                        "compareFQAN(string, string)", WMS_AUTHORIZATION_ERROR,
-                        "no valid fields in the user FQAN string: [" + in+ "]");
-		#else
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+			"compareFQAN(string, string)", wmputilities::WMS_AUTHORIZATION_ERROR,
+			"no valid fields in the user FQAN string: [" + in+ "]");
+#else
 		cerr << "Error - no valid fields in the user FQAN string: [" << in<< "]";
 		exit(-1);
-		#endif
+#endif
 	}
 	// Compare VO's==================
 	val_ref = vect_ref[0].second;
@@ -950,9 +885,9 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 		}
 	}
         return match ;
-	#ifndef GLITE_WMS_WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
    	GLITE_STACK_CATCH();
-	#endif
+#endif
 }
 
 
@@ -975,7 +910,7 @@ WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
 				BIO_free(in);
         		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
         			"doesn't exist or has bad permissions"<<endl;
-        		throw AuthorizationException(__FILE__, __LINE__,
+        		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
@@ -985,14 +920,14 @@ WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
 		} else {
 			BIO_free(in);
 			edglog(error)<<"Unable to get the proxy time left"<<endl;
-			throw ProxyOperationException(__FILE__, __LINE__,
+			throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 				"BIO_read_filename", wmputilities::WMS_PROXY_ERROR,
 				"Unable to get the proxy time left");
 		}
 		BIO_free(in);
 	} else {
 		edglog(error)<<"Unable to get the proxy time left (BIO SSL error)"<<endl;
-		throw ProxyOperationException(__FILE__, __LINE__,
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"BIO_new", wmputilities::WMS_PROXY_ERROR,
 			"Unable to get the proxy time left (BIO SSL error)");
 
@@ -1021,16 +956,16 @@ WMPAuthorizer::getNotBefore(const string &pxfile)
 				BIO_free(in);
         		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
         			"doesn't exist or has bad permissions"<<endl;
-        		throw AuthorizationException(__FILE__, __LINE__,
+        		throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHORIZATION_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
-      		}
+		}
 			sec = VOMSAuthZ::ASN1_UTCTIME_get(X509_get_notBefore(x));
 			free(x);
 		} else {
 			BIO_free(in);
 			edglog(error)<<"Unable to get Not Before date from Proxy"<<endl;
-			throw ProxyOperationException(__FILE__, __LINE__,
+			throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 				"getNotBefore()", wmputilities::WMS_PROXY_ERROR,
 				"Unable to get Not Before date from Proxy");
 		}
@@ -1038,7 +973,7 @@ WMPAuthorizer::getNotBefore(const string &pxfile)
 	} else {
 		edglog(error)<<"Unable to get Not Before date from Proxy (BIO SSL error)"
 			<<endl;
-		throw ProxyOperationException(__FILE__, __LINE__,
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"getNotBefore()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to get Not Before date from Proxy (BIO SSL error)");
 	}
@@ -1056,39 +991,29 @@ WMPAuthorizer::checkProxy(const string &proxy)
 	edglog(debug)<<"Proxy path: "<<proxy<<endl;
 	
 	time_t now = time(NULL);
-	edglog(debug)<<"Time now: "<<
-		boost::lexical_cast<std::string>(now)<<endl;
 	time_t proxytime = getNotBefore(proxy);
-	edglog(debug)<<"Proxy Not Before: "<<
-		boost::lexical_cast<std::string>(proxytime)<<endl;
-	
 	double timediff = proxytime - now;
-	edglog(debug)<<"Time difference (proxy - now): "<<
-		boost::lexical_cast<std::string>(timediff)<<endl;
+	edglog(debug)<<"Delegated Proxy Time difference (proxy - now): "<< boost::lexical_cast<std::string>(timediff)<<endl;
 	if (timediff > PROXY_TIME_MISALIGNMENT_TOLERANCE) {
-		edglog(info)<<"Proxy validity starting time in the future"<<endl;
-		throw ProxyOperationException(__FILE__, __LINE__,
+		edglog(error)<<"Proxy validity starting time in the future ("<< timediff << " secs)"  <<endl;
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"checkProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Proxy validity starting time in the future"
 			"\nPlease check client date/time");
 	} else {
 		if (timediff > 0) {
-			edglog(debug)<<"Proxy validity starting time in the future: "
-				<<timediff<<" sec."<<endl;
-			edglog(debug)<<"Tolerating..."<<endl;
+			edglog(debug)<<"Tolerable Proxy validity starting time in the future ("
+				<<timediff<<" secs)"<<endl;
 		}
 	}
-	
 	long timeleft = getProxyTimeLeft(proxy);
-	edglog(debug)<<"Time Left: "<<timeleft<<endl;
-
+	edglog(debug)<<"Proxy Time Left (should be positive number): "<<timeleft<<endl;
 	if (timeleft <= 1) {
-		edglog(info)<<"The delegated Proxy has expired"<<endl;
-		throw ProxyOperationException(__FILE__, __LINE__,
+		edglog(error)<<"The delegated Proxy has expired!"<<endl;
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
 			"checkProxy()", wmputilities::WMS_PROXY_EXPIRED,
 			"The delegated Proxy has expired");
 	}
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -1098,12 +1023,12 @@ WMPAuthorizer::checkProxyExistence(const string &userproxypath, const string &jo
 	GLITE_STACK_TRY("checkProxyExistence()");
 	edglog_fn("WMPAuthorizer::checkProxyExistence");
 	
-	string userproxypathbak = getJobDelegatedProxyPathBak(jobid);
+	string userproxypathbak = wmputilities::getJobDelegatedProxyPathBak(jobid);
 	if (!wmputilities::fileExists(userproxypath)) {
 		if (!wmputilities::fileExists(userproxypathbak)) {
 			edglog(error)<<"Unable to find a Proxy file in the job directory for job:\n"
 				<<jobid<<endl;
-			throw JobOperationException(__FILE__, __LINE__,
+			throw wmputilities::JobOperationException(__FILE__, __LINE__,
 				"checkProxyExistence()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 				"Unable to find a Proxy file in the job directory");
 		} else {

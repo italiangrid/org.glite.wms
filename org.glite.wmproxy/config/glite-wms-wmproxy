@@ -38,12 +38,17 @@ case "$1" in
   status)
         if netstat -lten | grep "^tcp .*:$port .*LISTEN" >/dev/null 2>&1 ;then
          echo WMProxy $httpd listening on port $port
-         echo $httpd \(pid `/sbin/pidof $httpdpath`\) is running .... 
-         echo WMProxy Server running instances:
-         echo `ps -fC glite_wms_wmproxy_server` 
-	 RETVAL=$?
+         httpd_pids=`/sbin/pidof $httpdpath`
+         RETVAL=$?
+         if [ ${RETVAL} -eq 0 ]; then
+          echo $httpd \(pid $httpd_pids\) is running ....
+          echo "==="
+          echo WMProxy Server running instances:
+          echo "`ps -fC glite_wms_wmproxy_server`"
+         fi
         else
          echo WMProxy $httpd NOT listening on port $port
+         echo "==="
          echo Checking for other $httpd running instances .....
          if /sbin/pidof $httpd >/dev/null 2>&1 ; then
           echo $httpd \(pid `/sbin/pidof $httpd`\) is running ....

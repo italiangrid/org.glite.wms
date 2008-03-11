@@ -1,11 +1,24 @@
 /*
- 	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpconfiguration.h
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #ifndef GLITE_WMS_WMPROXY_WMPCONFIGURATION_H
@@ -25,7 +38,7 @@
  *
  * @version 1.0
  * @date 2005
- * @author Giuseppe Avellino <giuseppe.avellino@datamat.it>
+ * @author Giuseppe Avellino <egee@datamat.it>
 */
 class WMProxyConfiguration {
 	
@@ -179,18 +192,40 @@ class WMProxyConfiguration {
 		classad::ExprTree * getSDJRequirements();
 		
 		/**
-		 * Returns the value of the configuration attribute OperationLoadScripts
-		 * @return the attribute value
-		 */
-		classad::ClassAd * getOperationLoadScripts();
-		
-		/**
 		 * Returns the value of the attribute operation inside classad
 		 * configuration attribute OperationLoadScripts
 		 * @return the attribute value
 		 */
 		std::string getOperationLoadScriptPath(const std::string &operation);
 		
+		/**
+		 * Returns the value of the configuration attribute MaxServedRequests
+		 * @return the attribute value
+		 */
+		long getMaxServedRequests();
+
+		/**
+		 * Returns the value of the configuration attribute listMatchTimeout
+		 * @return the attribute value
+		 */
+		long getListMatchTimeout();
+
+		/**
+                 * Returns the value of the configuration attribute MaxPerusalFiles
+                 * @return the attribute value
+                 */
+                long getMaxPerusalFiles();
+                /**
+                 * Returns the value of the configuration attribute MaxInputSandboxFiles
+                 * @return the attribute value
+                 */
+                long getMaxInputSandboxFiles();
+                /**
+                 * Returns the value of the configuration attribute MaxOutputSandboxFiles
+                 * @return the attribute value
+                 */
+                long getMaxOutputSandboxFiles();
+
 		/**
 		 * Workload Manager Proxy configuration instance
 		 */
@@ -210,7 +245,11 @@ class WMProxyConfiguration {
 	    std::string sandboxstagingpath;
 	    
 	    int minperusaltimeinterval;
-	    
+	    long listmatchtimeout;
+	    long maxperusalfiles;
+	    long maxinputsandboxfiles;
+	    long maxoutputsandboxfiles;
+	    long maxservedrequests;
 	    bool lbproxyavailable;
 	    std::string weightscachepath;
 	    long weightscachevalidity;

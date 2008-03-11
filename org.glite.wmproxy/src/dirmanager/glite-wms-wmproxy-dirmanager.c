@@ -1,13 +1,22 @@
 /*
-	File:glite-wms-wmproxy-dirmanager.c
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
-
-
-#define DEFAULT_ADJUST_DIRECTORY_GROUP "edguser"
+#define DEFAULT_ADJUST_DIRECTORY_GROUP "glite"
 #define DEFAULT_ADJUST_DIRECTORY_MODE  0770
 
 #ifdef ALLOW_COMMAND_LINE_OVERRIDE
@@ -33,6 +42,7 @@
 
 #include <fcntl.h> // O_RDONLY
 #include <sys/param.h> // MAXPATHLEN
+
 
 
 #define ADJUST_DIRECTORY_ERR_NO_ERROR       0
@@ -100,7 +110,7 @@ int
 gzUncompress(char *source, char *dest)
 {
 	FILE *out = NULL;
-	char *zmsg = NULL;
+	// char *zmsg = NULL;
     gzFile in;
 	int len = 0;
 	int err = 0;
@@ -126,7 +136,7 @@ gzUncompress(char *source, char *dest)
 	for (;;) {
 		len = gzread(in, buf, sizeof(buf));
 		if (len < 0)  {
-			zmsg = gzerror(in, &err);
+			const char * zmsg = gzerror(in, &err);
 			if (*zmsg != '\0') {
 				fprintf(stderr, "Error while uncompressing zip file: %s\n(%s)\n",
 					source, zmsg);
@@ -188,7 +198,6 @@ chmod_tar_extract_all(TAR *t, char *prefix)
 	char *filename = NULL;
 	char buf[MAXPATHLEN];
 	int i;
-
 	mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
 	while ((i = th_read(t)) == 0) {
 		filename = th_get_pathname(t);
@@ -207,14 +216,14 @@ chmod_tar_extract_all(TAR *t, char *prefix)
 				fprintf(stderr, "Already existing file in ISB file: %s\n", buf);
 				return UNTAR_ERR_ARCHIVE_FILE_EXISTS;
 			}
-			fprintf(stderr, "Extracting file: %s\n", buf);
+			//fprintf(stderr, "Extracting file: %s\n", buf);
 			if (tar_extract_file(t, buf)) {
 				fprintf(stderr, "Unable to uncompress ISB file: %s\n", buf);
 				return UNTAR_ERR_EXTRACTING_FILE;
 			}
 	
 			int outcome = chmod(buf, mode);
-			fprintf(stderr, "chmod result: %d\n", outcome);
+			//fprintf(stderr, "chmod result: %d\n", outcome);
 			if (outcome) {
 				return UNTAR_ERR_EXTRACTING_FILE;
 			}
@@ -233,8 +242,8 @@ chmod_tar_extract_all(TAR *t, char *prefix)
 int
 uncompressFile(char *file, char *prefix)
 {
-	fprintf(stderr, "Uncompressing file: %s\n", file);
-	fprintf(stderr, "Starting path: %s\n", prefix);
+	//fprintf(stderr, "Uncompressing file: %s\n", file);
+	//fprintf(stderr, "Starting path: %s\n", prefix);
 	
 	char buf[MAXPATHLEN];
 	char * infile = NULL;
@@ -254,11 +263,11 @@ uncompressFile(char *file, char *prefix)
 		infile = buf;
 		strcat(infile, ".gz");
 	}
-	fprintf(stderr, "Input file: %s\n", infile);
-	fprintf(stderr, "Output file: %s\n", outfile);
+	//fprintf(stderr, "Input file: %s\n", infile);
+	//fprintf(stderr, "Output file: %s\n", outfile);
 
 	int result = gzUncompress(infile, outfile);
-	fprintf(stderr, "unzip result: %d\n", result);
+	//fprintf(stderr, "unzip result: %d\n", result);
 	if (result != Z_OK)  {
 		return UNTAR_ERR_EXTRACTING_FILE;
 	}
@@ -266,7 +275,7 @@ uncompressFile(char *file, char *prefix)
 	TAR * tarfile = NULL;
 	tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
 	outcome = chmod_tar_extract_all(tarfile, prefix);
-	fprintf(stderr, "Outcome: %d\n", outcome);
+	//fprintf(stderr, "Outcome: %d\n", outcome);
 	tar_close(tarfile);
 
 	remove(outfile);
@@ -295,18 +304,16 @@ check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
 			return ADJUST_DIRECTORY_ERR_MKDIR;
 		} else {
 			if (chown(dir,create_uid,new_group) < 0) {
-				fprintf(stderr,"Cannot change owner of %s to %d: %s\n", dir,
-					create_uid, strerror(errno));
-				fprintf(stderr,"Trying to remove %d\n", dir);
+				fprintf(stderr,"Cannot change owner of %s to %d: %s\n", dir, create_uid, strerror(errno));
+				fprintf(stderr,"Trying to remove %s\n", dir);
 			if (rmdir(dir) < 0) {
 				fprintf(stderr, "Cannot remove %s: %s\n", dir, strerror(errno));
 			}
 			return ADJUST_DIRECTORY_ERR_CHOWN;
 			}
 		}
-		
-		fprintf(stderr, "Created directory: %s (uid: %d gid: %d)\n",
-  			dir, create_uid, new_group);
+		//fprintf(stderr, "Created directory: %s (uid: %d gid: %d)\n",
+  			//dir, create_uid, new_group);
 		ret = stat(dir, &stat_result);
 	}
 	if (ret < 0){
@@ -337,12 +344,12 @@ check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
 }
 
 int main(int argc, char *argv[]) {
-	char *starting_path;
+	char *starting_path =NULL;
 	int opt_verbose = FALSE;
 	int opt_create  = FALSE;
 	int untar = FALSE;
-	uid_t create_uid;
-	char *new_group_s = DEFAULT_ADJUST_DIRECTORY_GROUP;
+	uid_t create_uid =0;
+	char *new_group_s = getenv("GLITE_USER")?getenv("GLITE_USER"):DEFAULT_ADJUST_DIRECTORY_GROUP;
 	gid_t new_group;
 	mode_t new_mode   = DEFAULT_ADJUST_DIRECTORY_MODE;
 	int summary_status;
@@ -431,20 +438,20 @@ int main(int argc, char *argv[]) {
 	if (untar) {
 		// -x option is specified -> extracting ISB files...
 		for (i = optind; i < argc; i++) {
-			fprintf(stderr,"Group before set: %d\n", getgid());
-			fprintf(stderr,"User before set: %d\n", getuid());
-			fprintf(stderr,"Group to set: %d\n", new_group);
-			fprintf(stderr,"User to set: %d\n", create_uid);
+			//fprintf(stderr,"Group before set: %d\n", getgid());
+			//fprintf(stderr,"User before set: %d\n", getuid());
+			//fprintf(stderr,"Group to set: %d\n", new_group);
+			//fprintf(stderr,"User to set: %d\n", create_uid);
 			if (setgid(new_group) || setuid(create_uid)) {
-				fprintf("Unable to set user/group: %s\n", strerror(errno));
+				fprintf(stderr, "Unable to set user/group: %s\n", strerror(errno));
 				//summary_status = UNTAR_ERR_SETUID_SETGID;
 				exit(UNTAR_ERR_SETUID_SETGID);
 			} else {
-				fprintf(stderr,"Group after set: %d\n", getgid());
-				fprintf(stderr,"User after set: %d\n", getuid());
+				//fprintf(stderr,"Group after set: %d\n", getgid());
+				//fprintf(stderr,"User after set: %d\n", getuid());
 				//summary_status |= uncompressFile(argv[i], starting_path);
 				if (summary_status = uncompressFile(argv[i], starting_path)) {
-					exit(summary_status);	
+					exit(summary_status);
 				}
 			}
 		}

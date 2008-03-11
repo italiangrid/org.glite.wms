@@ -1,11 +1,24 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpoperations.h
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #ifndef GLITE_WMS_WMPROXY_WMPOPERATIONS_H
@@ -65,26 +78,27 @@ void getIntParametricJobTemplate(getIntParametricJobTemplateResponse
 void getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 	&getStringParametricJobTemplate_response, StringList *attributes,
 	StringList *param, const std::string &requirements, const std::string &rank);
+// DELEGATION OPERATION INTERFACE
+
+void
+getDelegationVersion(getVersionResponse &getVersion_response);
+
+void
+getDelegationIntefaceVersion(getVersionResponse&getVersion_response);
 
 void getProxyReq(getProxyReqResponse &getProxyReq_response,
 	const std::string &delegation_id);
 
-void renewProxyReq(renewProxyReqResponse &renewProxyReq_response,
-	const std::string &delegation_id);
-
-void getNewProxyReq(std::pair<std::string, std::string> &retpair);
-
-void getDelegationVersion(getVersionResponse &getVersion_response);
-
-void getDelegationIntefaceVersion(getVersionResponse &getVersion_response);
-
 void putProxy(putProxyResponse &putProxyReq_response,
 	const std::string &delegation_id, const std::string &proxy);
 
+void renewProxyReq(std::string &renewProxyReq_response,const std::string &delegation_id);
+
+void getNewProxyReq(std::pair<std::string, std::string> &retpair);
+
 void destroyProxy(const std::string &delegation_id);
 
-void getProxyTerminationTime(getProxyTerminationTimeResponse 
-	&getProxyTerminationTime_response, const std::string &delegation_id);
+void getProxyTerminationTime(time_t &getProxyTerminationTime_response, const std::string &delegation_id);
 
 void getACLItems(getACLItemsResponse &getACLItems_response,
 	const std::string &job_id);
@@ -107,6 +121,10 @@ void getPerusalFiles(getPerusalFilesResponse
 	
 void getTransferProtocols(getTransferProtocolsResponse
 	&getTransferProtocols_response);
+
+void getJobStatusOp(getJobStatusResponse &getJobStatus_response,
+	const std::string &job_id);
+
 
 #endif // GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 

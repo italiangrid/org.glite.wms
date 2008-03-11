@@ -11,14 +11,10 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#       Authors: Giuseppe Avellino <egee@datamat.it>
 #
 
-WMS_COMMON_QUOTA = $(top_srcdir)/../org.glite.wms.common/build/src/utilities/libglite_wms_quota.la
-
-
-lib_LTLIBRARIES = \
-	libglite_wms_wmproxy_utilities.la
+lib_LTLIBRARIES = libglite_wms_wmproxy_utilities.la
 
 noinst_HEADERS = \
 	logging.h \
@@ -30,11 +26,10 @@ libglite_wms_wmproxy_utilities_la_SOURCES = \
 	wmpexceptions.cpp \
 	wmputils.cpp
 
-libglite_wms_wmproxy_utilities_la_LIBADD = \
-	$(WMS_COMMON_QUOTA)
+#libglite_wms_wmproxy_utilities_la_LIBADD = \
+#        $(GLITE_WMS_COMMON_QUOTA_LIBS)
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/../org.glite.wms.common/src/utilities \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(LIBTAR_CFLAGS) \

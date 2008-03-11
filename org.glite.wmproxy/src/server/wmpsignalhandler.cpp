@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 // File: wmpsignalhandler.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmpsignalhandler.h"
@@ -34,6 +34,10 @@ limitations under the License.
 #include "glite/wms/common/logger/manipulators.h"
 
 
+// Global variable for signal handling
+extern volatile sig_atomic_t handled_signal_recv;
+
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -47,58 +51,35 @@ void handler(int code);
 void
 initsignalhandler()
 {
-    // Ignoring PIPE signals, mod_fastcgi already does it
-    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
-    	edglog(debug)<<"Unable to catch signal SIGPIPE"<<endl;
-    } else {
-    	edglog(debug)<<"Signal SIGPIPE -> SIG_IGN"<<endl;
-    }
-
-    // not needed mod_fastcgi sends SIGUSR1 when signal has been received?
-    if (signal(SIGTERM, handler) == SIG_ERR) {
-    	edglog(debug)<<"Unable to catch signal SIGTERM"<<endl;
-    } else {
-    	edglog(debug)<<"Signal SIGTERM -> handler"<<endl;
-    }
-
-    // Apache request for a "graceful" process shutdown (e.g. restart)
-    if (signal(SIGUSR1, handler) == SIG_ERR) {
-    	edglog(debug)<<"Unable to catch signal SIGUSR1"<<endl;
-    } else {
-    	edglog(debug)<<"Signal SIGUSR1 -> handler"<<endl;
-    }
-    
-    if (signal(SIGHUP, handler) == SIG_ERR) {
-    	edglog(debug)<<"Unable to catch signal SIGHUP"<<endl;
-    } else {
-    	edglog(debug)<<"Signal SIGHUP -> handler"<<endl;
-    }
-    
-    if (signal(SIGINT, handler) == SIG_ERR) {
-    	edglog(debug)<<"Unable to catch signal SIGINT"<<endl;
-    } else {
-    	edglog(debug)<<"Signal SIGINT -> handler"<<endl;
-    }
-    
-    if (signal(SIGQUIT, handler) == SIG_ERR) {
-    	edglog(debug)<<"Unable to catch signal SIGQUIT"<<endl;
-    } else {
-    	edglog(debug)<<"Signal SIGQUIT -> handler"<<endl;
-    }
+	// Ignoring PIPE signals, mod_fastcgi already does it
+	signal(SIGPIPE, SIG_IGN);
+	// not needed mod_fastcgi sends SIGUSR1 when signal has been received?
+	signal(SIGTERM, handler);
+	// Apache request for a "graceful" process shutdown (e.g. restart)
+	signal(SIGUSR1, handler);
+	signal(SIGHUP, handler);
+	signal(SIGINT, handler);
+	signal(SIGQUIT, handler);
 }
 
-//extern "C" {
+void
+resetsignalhandler()
+{
+	// Ignoring PIPE signals, mod_fastcgi already does it
+	signal(SIGPIPE, SIG_IGN);
+	// not needed mod_fastcgi sends SIGUSR1 when signal has been received?
+	signal(SIGTERM, SIG_DFL);
+	// Apache request for a "graceful" process shutdown (e.g. restart)
+	signal(SIGUSR1, SIG_DFL);
+	signal(SIGHUP, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+	signal(SIGQUIT, SIG_DFL);
+}
+
 
 void handler(int code) {
-	initsignalhandler();
-	edglog(debug)<<"Handling sinal: "<<code<<endl;
-	OS_ShutdownPending();            
-	//FCGI_Finish();
-	exit(0);
+	handled_signal_recv = code;
 }
-
-//} // extern "C"
-
 
 } // namespace server
 } // namespace wmproxy

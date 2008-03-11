@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 // File: wmproxy.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include <string>
@@ -28,8 +28,11 @@ limitations under the License.
 #include "fcgio.h"
 #include "fcgi_config.h"
 
+#include <signal.h>  // sig_atomic
+
 // gSOAP
 #include "WMProxy.nsmap"
+#include "wmproxyserve.h"
 #include "soapWMProxyObject.h"
 
 // Boost singleton
@@ -51,7 +54,7 @@ limitations under the License.
 
 #include "wmpconfiguration.h"
 #include "wmpgsoapfaultmanipulator.h"
-#include "wmpsignalhandler.h"
+
 
 #include "utilities/wmputils.h" // waitForSeconds()
 #include "eventlogger/wmplbselector.h"	// lbselectioninfo struct
@@ -63,13 +66,16 @@ limitations under the License.
 // Global variable for configuration
 WMProxyConfiguration conf;
 
+// Global variable for server instance served request count
+long servedrequestcount_global;
+
 // Global variables for configuration attributes (ENV dependant)
 std::string sandboxdir_global;
 std::string dispatcher_type_global;
 std::string filelist_global;
 glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 bool globusDNS_global;
-
+volatile sig_atomic_t handled_signal_recv ;
 
 namespace logger        = glite::wms::common::logger;
 namespace wmsexception  = glite::wmsutils::exception;
@@ -101,13 +107,10 @@ int
 main(int argc, char* argv[])
 {
 	try {
-		// Debug only
-		//wmputilities::waitForSeconds(10);
-
 		extern WMProxyConfiguration conf;
 		conf = boost::details::pool::singleton_default<WMProxyConfiguration>
 			::instance();
-		
+
 		fstream edglog_stream;
 		conf.init(opt_conf_file,
 			configuration::ModuleType::workload_manager_proxy);
@@ -137,9 +140,6 @@ main(int argc, char* argv[])
 			conf.wmp_config->log_rotation_max_file_number());
 		edglog(debug)<<"Log file: "<<conf.wmp_config->log_rotation_base_file()
 			<<endl;
-		
-		// Initializing signal handler for 'graceful' stop/restart
-		glite::wms::wmproxy::server::initsignalhandler();
 
 		extern string sandboxdir_global;
 		sandboxdir_global = "";
@@ -163,7 +163,9 @@ main(int argc, char* argv[])
 
 		// check Globus Version to determine whether to convert DNS
 		extern bool globusDNS_global;
-		globusDNS_global = wmputilities::checkGlobusVersion();
+		//globusDNS_global = wmputilities::checkGlobusVersion();
+		extern long servedrequestcount_global;
+		servedrequestcount_global = 0;
 
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;
@@ -173,7 +175,7 @@ main(int argc, char* argv[])
 			<<endl;
 		
 		for (;;) {
-			WMProxy proxy;
+			WMProxyServe proxy;
 			proxy.serve();
 		}
 		edglog(info)<<"Exiting the FastCGI loop..."<<endl;

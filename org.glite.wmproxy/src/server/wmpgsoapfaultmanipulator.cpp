@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 // File: wmpgsoapfaultmanipulator.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 // Boost
@@ -85,7 +85,6 @@ getServiceFaultType(int code)
 			
 		case wmputilities::WMS_JDL_PARSING: // InvalidArgumentFault
 		case wmputilities::WMS_INVALID_ARGUMENT:
-		case wmputilities::WMS_INVALID_JDL_ATTRIBUTE:
 			return SOAP_TYPE_ns1__InvalidArgumentFaultType;
 			break;
 		
@@ -102,13 +101,12 @@ getServiceFaultType(int code)
 		case wmputilities::WMS_NOT_ENOUGH_SPACE: // ?
 			return SOAP_TYPE_ns1__GetQuotaManagementFaultType;
 			break;
-
+			
 		case wmputilities::WMS_SERVER_OVERLOADED:
 			return SOAP_TYPE_ns1__ServerOverloadedFaultType;
 			break;
-			
-		default: // WMS_IS_FAILURE, WMS_LOGGING_ERROR, WMS_FILE_SYSTEM_ERROR
-			// WMS_ENVIRONMENT_ERROR, WMS_CONFIGURATION_ERROR
+
+		default:
 			return SOAP_TYPE_ns1__GenericFaultType;
 			break;
 
@@ -194,7 +192,7 @@ setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time
 			<<"----------------------------------------"
 				"------------------------------------------"
 			<<endl;
-
+	
 	if (code == SOAP_TYPE__delegationns__DelegationException) {
 		// Generating a fault
 		_delegationns__DelegationException *sp = new _delegationns__DelegationException;

@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 // File: wmplbselector.h
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #ifndef GLITE_WMS_WMPROXY_UTILITIES_WMPLBSELECTOR_H

@@ -15,7 +15,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS wmproxy], [3.1.0])
+AC_INIT([GLite WMS wmproxy], [3.2.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/server/wmproxy.cpp])
@@ -167,14 +167,11 @@ have_glite_jdl=no
 have_glite_lb=no
 have_glite_jp=no
 have_glite_security=no                                                                                
-have_glite_wms_chkpt=no
-have_glite_wms_part=no
 have_glite_wms_purger=no
 
 AC_GLITE
 AC_GLITE_SERVICE_DISCOVERY
 AC_GSOAP
-
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
@@ -193,12 +190,6 @@ AC_MSG_RESULT(["GLITE_JP found $have_glite_jp"])
 
 AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
-
-AC_GLITE_WMS_CHKPT([], have_glite_wms_chkpt=yes, have_glite_wms_chkpt=no)
-AC_MSG_RESULT(["GLITE_WMS_CHKPT found $have_glite_wms_chkpt"])
-
-AC_GLITE_WMS_PARTITIONER([], have_glite_wms_part=yes, have_glite_wms_part=no)
-AC_MSG_RESULT(["GLITE_WMS_PARTITIONER found $have_glite_wms_part"])
 
 AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
 AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])

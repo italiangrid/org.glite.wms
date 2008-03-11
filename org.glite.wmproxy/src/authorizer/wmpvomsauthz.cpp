@@ -1,11 +1,24 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpvomsauthz.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmpvomsauthz.h"
@@ -119,30 +132,7 @@ VOMSAuthZ::getDefaultFQAN()
 	}
 	// Proxy certificate is not a VOMS Proxy certificate
 	return "";
-	
-	GLITE_STACK_CATCH();
-}
 
-string
-VOMSAuthZ::getDefaultVO()
-{
-	GLITE_STACK_TRY("getDefaultVO()");
-	
-	if (this->data) {
-		int error = 0;
-		struct voms * defaultvoms = VOMS_DefaultData(this->data, &error);
-		if (defaultvoms) {
-			return string(defaultvoms->voname);
-		} else {
-			throw AuthorizationException(__FILE__, __LINE__,
-		    	"VOMSAuthZ::getDefaultVO", wmputilities::WMS_AUTHORIZATION_ERROR,
-		    	errormessage(error));
-		}
-		//free(defaultvoms);
-	}
-	// Proxy certificate is not a VOMS Proxy certificate
-	return "";
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -150,7 +140,6 @@ VOProxyInfoStructType *
 VOMSAuthZ::getDefaultVOProxyInfo()
 {
 	GLITE_STACK_TRY("getDefaultVOProxyInfo()");
-	
 	VOProxyInfoStructType * voproxyinfo = new VOProxyInfoStructType();
 	if (this->data) {
 		int error = 0;
@@ -178,7 +167,7 @@ VOMSAuthZ::getDefaultVOProxyInfo()
 		    	"VOMSAuthZ::getDefaultVOProxyInfo", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    	errormessage(error));
 		}
-		//free(defaultvoms);
+		//free(defaultvoms);  TODO why commented?
 	}
 	// Proxy certificate is not a VOMS Proxy certificate
 	return voproxyinfo;
@@ -191,74 +180,59 @@ ProxyInfoStructType *
 VOMSAuthZ::getProxyInfo()
 {
 	GLITE_STACK_TRY("getProxyInfo()");
-	
 	ProxyInfoStructType *proxyinfo = new ProxyInfoStructType();
-	
-	char * subject = X509_NAME_oneline(X509_get_subject_name(this->cert),
-		NULL, 0);
-	
+	char * subject = X509_NAME_oneline(X509_get_subject_name(this->cert),NULL, 0);
+
 	// Getting type
 	if (subject) {
-        string subjectstring = string(subject);
-        if (subjectstring.find(STANDARD_PROXY) != string::npos) {
-			proxyinfo->type = "proxy";
-        } else if (subjectstring.find(LIMITED_PROXY) != string::npos) {
- 			proxyinfo->type = "limited proxy";
-        } else {
- 			proxyinfo->type = "uknown";
-        }
-    } else {
-    	proxyinfo->type = "uknown";
-    	proxyinfo->subject = "";
-    	proxyinfo->issuer = "";
-    	proxyinfo->identity = "";
-    	proxyinfo->strength = "";
-    	proxyinfo->startTime = "";
-    	proxyinfo->endTime = "";
-    	
-    	vector<VOProxyInfoStructType*> voproxyinfovector;
-    	proxyinfo->vosInfo = voproxyinfovector;
+		string subjectstring = string(subject);
+		if (subjectstring.find(STANDARD_PROXY) != string::npos) {
+				proxyinfo->type = "proxy";
+		} else if (subjectstring.find(LIMITED_PROXY) != string::npos) {
+				proxyinfo->type = "limited proxy";
+		} else {
+				proxyinfo->type = "uknown";
+		}
+	} else {
+		proxyinfo->type = "uknown";
+		proxyinfo->subject = "";
+		proxyinfo->issuer = "";
+		proxyinfo->identity = "";
+		proxyinfo->strength = "";
+		proxyinfo->startTime = "";
+		proxyinfo->endTime = "";
+		vector<VOProxyInfoStructType*> voproxyinfovector;
+		proxyinfo->vosInfo = voproxyinfovector;
 	}
 	
 	// Getting subject
-    proxyinfo->subject = string(subject);
-    OPENSSL_free(subject);
-    
-   	// Getting issuer
-    proxyinfo->issuer = string(X509_NAME_oneline(X509_get_issuer_name(
-    	this->cert), NULL, 0));
-    	
-    // Getting identity
-    proxyinfo->identity = string(X509_NAME_oneline(X509_get_issuer_name(
-    	this->cert), NULL, 0));
-    	
-    // Getting strength
-    int bits = -1;
-    EVP_PKEY * key = X509_extract_key(this->cert);
-    bits = 8 * EVP_PKEY_size(key);
-    if (key) {
-    	EVP_PKEY_free(key);
-    }
-    proxyinfo->strength = boost::lexical_cast<string>(bits);
-    
-    // Getting start time
-	proxyinfo->startTime = boost::lexical_cast<std::string>(
-    	ASN1_UTCTIME_get(X509_get_notBefore(this->cert)));
-    
-    // Getting end time
-    proxyinfo->endTime = boost::lexical_cast<std::string>(
-    	ASN1_UTCTIME_get(X509_get_notAfter(this->cert)));
-    
-	// Getting voms info if any
-	vector<VOProxyInfoStructType*> voproxyinfovector;
-	if (this->data) {
-		//VOProxyInfoStructType * voproxyinfo = getDefaultVOProxyInfo();
-		voproxyinfovector.push_back(getDefaultVOProxyInfo());
+	proxyinfo->subject = string(subject);
+	OPENSSL_free(subject);
+
+	// Getting issuer
+	proxyinfo->issuer   = string(X509_NAME_oneline(X509_get_issuer_name(this->cert), NULL, 0));
+	// Getting identity (is the same as issuser)
+	proxyinfo->identity = proxyinfo->issuer;
+	// Getting strength
+	int bits = -1;
+	EVP_PKEY * key = X509_extract_key(this->cert);
+	bits = 8 * EVP_PKEY_size(key);
+	if (key) {
+		EVP_PKEY_free(key);
 	}
-	proxyinfo->vosInfo = voproxyinfovector;
+	proxyinfo->strength = boost::lexical_cast<string>(bits);
+
+	// Getting start time
+	proxyinfo->startTime = boost::lexical_cast<std::string>(ASN1_UTCTIME_get(X509_get_notBefore(this->cert)));
+	// Getting end time
+	proxyinfo->endTime = boost::lexical_cast<std::string>(ASN1_UTCTIME_get(X509_get_notAfter(this->cert)));
 	
+	// Getting voms info if any
+	if (this->data) {proxyinfo->vosInfo.push_back(getDefaultVOProxyInfo());}
+	else{ edglog(warning)<<"The Proxy does not contain VOMS extension" << endl;  }
+
+
 	return proxyinfo;
-	
 	GLITE_STACK_CATCH();
 }
 	
@@ -312,7 +286,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
       		}
       		chain = load_chain(proxypath);
 
-  			// Verifing all flags except for VERIFY_DATE
+  		// Verifing all flags except for VERIFY_DATE
       		// Time left verification is done by a different method after server
       		// operation call
       		//VOMS_SetVerificationType(VERIFY_NOTARGET | VERIFY_SIGN | VERIFY_ORDER

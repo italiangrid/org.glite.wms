@@ -1,11 +1,24 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpconfiguration.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmpconfiguration.h"
@@ -171,12 +184,12 @@ WMProxyConfiguration::loadConfiguration()
 	// return 0
 	this->lbproxyavailable = wmp_config->lbproxy();
 	
-	// \/Service Discovery attributes
+	// [Service Discovery attributes
 	this->servicediscoveryenabled = wmp_config->enable_service_discovery();
 	this->lbservicediscoverytype = wmp_config->lbservice_discovery_type();
 	this->servicediscoveryinfovalidity
 		= wmp_config->service_discovery_info_validity();
-	// /\
+	// ]
 	
 	this->weightscachepath = wmp_config->weights_cache_path();
 	this->weightscachevalidity = wmp_config->weights_cache_validity();
@@ -247,6 +260,16 @@ WMProxyConfiguration::loadConfiguration()
 	this->sdjrequirements = wmp_config->sdjrequirements();
 	
 	this->operationloadscripts = wmp_config->operation_load_scripts();
+	
+	this->maxservedrequests = wmp_config->max_served_requests();
+
+	this->listmatchtimeout = wmp_config->list_match_timeout();
+
+	this->maxperusalfiles = wmp_config->max_perusal_files();
+
+        this->maxinputsandboxfiles = wmp_config->max_input_sandbox_files();
+
+        this->maxoutputsandboxfiles = wmp_config->max_output_sandbox_files();
 	
 	GLITE_STACK_CATCH();
 }
@@ -380,12 +403,6 @@ WMProxyConfiguration::getSDJRequirements()
 	return this->sdjrequirements;
 }
 
-classad::ClassAd *
-WMProxyConfiguration::getOperationLoadScripts()
-{
-	return this->operationloadscripts;
-}
-
 string
 WMProxyConfiguration::getOperationLoadScriptPath(const string &operation)
 {
@@ -400,3 +417,30 @@ WMProxyConfiguration::getOperationLoadScriptPath(const string &operation)
 	}
 	return returnvalue;
 }
+
+long
+WMProxyConfiguration::getMaxServedRequests() {
+	return this->maxservedrequests;
+}
+
+long
+WMProxyConfiguration::getListMatchTimeout() {
+	return this->listmatchtimeout;
+}
+
+long
+WMProxyConfiguration::getMaxPerusalFiles() {
+        return this->maxperusalfiles;
+}
+
+long
+WMProxyConfiguration::getMaxInputSandboxFiles() {
+        return this->maxinputsandboxfiles;
+}
+
+long
+WMProxyConfiguration::getMaxOutputSandboxFiles() {
+        return this->maxoutputsandboxfiles;
+}
+
+

@@ -1,18 +1,45 @@
 /*
- * File: MatchingPipe_nb.cpp
- * Author: MarcoP <marco.pappalardo@ct.infn.it>
- * Copyright (c) 2005 EGEE
- */
- 
-// $Id
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+*/
 
 #include "MatchingPipe_nb.h"
 #include <boost/lexical_cast.hpp>
 #include <exception>
+#include <sys/time.h>
+
+#include "utilities/logging.h"
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/manipulators.h"
+
+#include "utilities/wmpexception_codes.h"
+#include "utilities/wmpexceptions.h"
+
+#include "server/wmpconfiguration.h"
+
+extern WMProxyConfiguration conf;
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace commands {
+
+
+
+namespace wmputilities  = glite::wms::wmproxy::utilities;
 
 /**
  * A Non-blocking PipeWrapper for listmatch results retrieval.
@@ -55,23 +82,46 @@ namespace commands {
    */
   std::string MatchingPipe_nb::read() {
 
+    struct timeval limitTime ;
+
+    // timeout value read from configuration
+    int timeout = conf.getListMatchTimeout() ;
     std::string buffer; // the string each loop appends to
     bool done = false;
 
+    // request time
+    gettimeofday( &limitTime, 0 ) ;
+    // total timeout
+    limitTime.tv_sec += timeout ;
+
     while (!done) {
- 
+
+      struct timeval timeoutVal ;
+      struct timeval currentTime ;
+
       // wait for input to be available
       fd_set read_fds;
       FD_ZERO(&read_fds);
       FD_SET(pipefd, &read_fds);
-      while (select(pipefd + 1, &read_fds, 0, 0, 0) < 0) {
+
+      // current time
+      gettimeofday( &currentTime, 0 );
+      // relative timeout updated
+      timersub ( &limitTime, &currentTime, &timeoutVal ) ;
+
+      int result ;
+      while ( (result = select(pipefd + 1, &read_fds, 0, 0, &timeoutVal)) < 0) {
 	if (errno == EINTR) {
 	  continue;
 	} else {
-	  throw std::string( "select failed with errno " +
+		  throw std::string( "select failed with errno " +
 			     boost::lexical_cast<std::string>(errno));
 	}
       }
+      if ( result == 0 ) {
+		edglog(critical) << "Method read(): " << "Timeout reached, command execution will be terminated now" << std::endl ;
+		throw wmputilities::JobTimedoutException (__FILE__, __LINE__, "jobListMatch()", wmputilities::WMS_OPERATION_TIMEDOUT,  "Timeout reached, command execution will be terminated now");
+	}
       // read available input
       char buf[5120];
       int nread;

@@ -1,12 +1,25 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
+
 //
 // File: wmp2wm.cpp
 // Author: Marco Pappalardo
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmp2wm.h"
@@ -42,7 +55,6 @@
 // Global variables for configuration
 extern std::string dispatcher_type_global;
 extern std::string filelist_global;
-
 // Listmatch classad attributes
 const char * LISTMATCH_REASON = "reason";
 const char * LISTMATCH_MATCH_RESULT = "match_result";
@@ -67,14 +79,13 @@ using namespace glite::jdl;
 
 namespace {
 
-void
+void 
 f_forward(wmsutilities::FileList<string>& filelist,
 	wmsutilities::FileListMutex& mutex, string const& ad)
 {
 	GLITE_STACK_TRY("f_forward()");
 	edglog_fn("wmp2wm::f_forward");
-	
-	edglog(debug)<<"Request Queue forwarding"<<endl;
+
 	edglog(debug)<<"Request Queue: "<<filelist.filename()<<endl;
 	wmsutilities::FileListLock lock(mutex);
 	try {
@@ -88,7 +99,7 @@ f_forward(wmsutilities::FileList<string>& filelist,
 	GLITE_STACK_CATCH();
 }
 
-void
+void 
 f_forward(wmsutilities::JobDir jd, string const& ad)
 {
 	GLITE_STACK_TRY("f_forward()");
@@ -141,11 +152,8 @@ WMP2WM::init(const string &filename, eventlogger::WMPEventLogger *wmpeventlogger
 {
 	GLITE_STACK_TRY("init()");
 	edglog_fn("wmp2wm::init");
-	
-  	edglog(debug)<<"Initializing wmp2wm..."<<endl;
-  	
-  	this->wmpeventlogger = wmpeventlogger;
 
+	this->wmpeventlogger = wmpeventlogger;
 	if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
 	  	edglog(debug)<<"Request Queue: "<<filename<<endl;
 	  	m_filelist.reset(new wmsutilities::FileList<string>(filename));
@@ -159,61 +167,51 @@ WMP2WM::init(const string &filename, eventlogger::WMPEventLogger *wmpeventlogger
 		// Dispatcher type not known
 		edglog(fatal)<<"FATAL ERROR: dispatcher type not known"<<endl;
 	}
-
-  	edglog(debug)<<"wmp2wm initialization done"<<endl;
-  	
-  	GLITE_STACK_CATCH();
+	edglog(debug)<<"wmp2wm initialization done"<<endl;
+	GLITE_STACK_CATCH();
 }
 
 void
 WMP2WM::submit(const string &jdl, const string &jdlpath)
 {
 	GLITE_STACK_TRY("submit()");
-  	edglog_fn("wmp2wm::submit");
-  	
-  	edglog(debug)<<"Forwarding Submit Request..."<<endl;
-  	
-  	classad::ClassAd * jdlAd(utils::parse_classad(jdl)); 
-  	classad::ClassAd convertedAd =
+	edglog_fn("wmp2wm::submit");
+
+	edglog(debug)<<"Forwarding Submit Request..."<<endl;
+
+	classad::ClassAd * jdlAd(utils::parse_classad(jdl));
+	classad::ClassAd convertedAd =
 		wmsutilities::submit_command_create(*jdlAd);
 	string convertedString = utils::unparse_classad(convertedAd);
-    string command_str(convertedString);
-    
+	string command_str(convertedString);
 	edglog(debug)<<"Converted string (written in filelist): "
 		<<toFormattedString(convertedAd)<<endl;
-  	
 	string regjdl = (jdlpath != "") ? jdlpath : jdl;
- 	try {
- 		
+	try {
 		if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
-	    	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
-	    	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-	    		true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
+		f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
+		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
+			true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
 		} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
 			f_forward(*m_jobdir, command_str);
 			wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-	    		true, true, filelist_global.c_str () , regjdl.c_str());
+			true, true, filelist_global.c_str(), regjdl.c_str());
 		}
-
-    	edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
-    	edglog(debug)<<"Submit EnQueued OK"<<endl;
-  	} catch (exception &e) {
-    	// LogEnQueued FAIL if exception occurs
-
+	edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
+	edglog(debug)<<"Submit EnQueued OK"<<endl;
+	} catch (exception &e) {
+	// LogEnQueued FAIL if exception occurs
 		if (dispatcher_type_global == DISPATCHER_TYPE_FILELIST) {
-	    	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-	    		e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
+		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
+			e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
 		} else if (dispatcher_type_global == DISPATCHER_TYPE_JOBDIR) {
 			wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-	    		e.what(), true, true, "", regjdl.c_str());
+			e.what(), true, true, "", regjdl.c_str());
 		}
-
-    	edglog(critical)<<"Submit EnQueued FAIL"<<endl;
-  	}
-  	
-  	edglog(debug)<<"Submit Forwarded"<<endl;
-  	
-  	GLITE_STACK_CATCH();
+	edglog(critical)<<"Submit EnQueued FAIL"<<endl;
+	}
+	edglog(debug)<<"Submit Forwarded"<<endl;
+	GLITE_STACK_CATCH();
 }
 
 void
@@ -337,28 +335,28 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 	edglog(debug)<<"Match result: "<<resultlist<<endl;
 	/* Listmatch returned classad, eg:
 	[
-        match_result = 
+        match_result =
            {
               "lxb2022.cern.ch:2119/blah-lsf-jra1_high,3",
               "lxb2022.cern.ch:2119/blah-lsf-jra1_low,3",
               "lxb2077.cern.ch:2119/blah-pbs-infinite,3",
               "lxb2077.cern.ch:2119/blah-pbs-long,3",
               "lxb2077.cern.ch:2119/blah-pbs-short,3"
-           }; 
+           };
         reason = "ok"
     ]*/
-    
+
 	string errormsg = "";
 	string reason = "";
-	jdl::Ad *ad = NULL;
+	jdl::Ad ad;
 	if ((resultlist != "")) {
-		ad = new jdl::Ad(resultlist);
-		if (!ad->hasAttribute(LISTMATCH_REASON)) {
+		ad.fromString(resultlist);
+		if (!ad.hasAttribute(LISTMATCH_REASON)) {
 			errormsg = "Error during matchmaking: no error reason";
-		} else if (((reason = ad->getString(LISTMATCH_REASON)) != LISTMATCH_REASON_OK)
+		} else if (((reason = ad.getString(LISTMATCH_REASON)) != LISTMATCH_REASON_OK)
 				&& (reason != LISTMATCH_REASON_NO_MATCH)) {
 			errormsg = "Error during matchmaking: " + reason;
-		} else if (!ad->hasAttribute(LISTMATCH_MATCH_RESULT)) {
+		} else if (!ad.hasAttribute(LISTMATCH_MATCH_RESULT)) {
 			errormsg = "Error during matchmaking: no match result attribute";
 		}
 	} else {
@@ -370,14 +368,13 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 			"wmp2wm::match()", wmputilities::WMS_FILE_SYSTEM_ERROR,
 			errormsg + "\n(please contact server administrator)");
 	}
-	
+
 	// TBC If reason ok can I assume attribute LISTMATCH_MATCH_RESULT
 	// is present?? (even if empty)
-    vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
-    StringAndLongType *item = NULL;
-	vector<std::string> items = ad->getStringValue(LISTMATCH_MATCH_RESULT);	
-	delete ad;
-	
+	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+	StringAndLongType *item = NULL;
+	vector<std::string> items = ad.getStringValue(LISTMATCH_MATCH_RESULT);
+
 	string couple;
 	string ce_id;
 	long int rank;

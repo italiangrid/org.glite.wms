@@ -11,7 +11,7 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#       Authors: Giuseppe Avellino <egee@datamat.it>
 #
 # WARNING: work in progress
 
@@ -24,20 +24,21 @@ $(top_builddir)/src/commands/libglite_wms_wmproxy_pipe.la
 wm.h :
 	@#Create the files
 	@echo "wsdl2h parsing .wsdl"
-	$(GSOAP_LOCATION)/wsdl2h -o wm.h \
+	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
 	$(GLITE_LOCATION)/interface/WMProxy.wsdl
 
 soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
-	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION):$(GSOAP_LOCATION)/import $(top_srcdir)/build/src/server/wm.h 
+	$(GSOAP_LOCATION)/bin/soapcpp2 -I$(GSOAP_LOCATION)/include wm.h 
 
 glite_wms_wmproxy_server_SOURCES = \
 	wm.h \
 	soapC.cpp \
 	soapServer.cpp \
 	wmproxy.cpp \
+	wmproxyserve.cpp \
 	wmpcommon.cpp \
 	wmpoperations.cpp \
 	wmpcoreoperations.cpp \
@@ -56,6 +57,7 @@ bin_PROGRAMS = glite_wms_wmproxy_server
 noinst_HEADERS = \
 	wmp2wm.h \
 	wmpcommon.h \
+	wmproxyserve.h \
 	wmpconfiguration.h \
 	wmpdelegation.h \
 	wmpgsoapfaultmanipulator.h \
@@ -78,12 +80,11 @@ glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 	$(GLITE_JDL_LIBS) \
-	$(GLITE_WMS_CHKPT_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLITE_WMS_PARTITIONER_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
+        $(GLITE_WMS_COMMON_QUOTA_LIBS) \
 	$(WMPROXY_UTILITIES) \
 	$(WMPROXY_EVENTLOGGER) \
 	$(WMPROXY_AUTHZ) \
@@ -96,15 +97,12 @@ glite_wms_wmproxy_server_LDADD = \
 	$(SEC_LCMAPS_RETURN_WITHOUT_GSI_LIBS) \
 	$(VOMS_NOTHR_LIBS) \
 	$(FCGI_CPP_LIBS) \
-	$(LIBTAR_LIBS) \
-	$(ZLIB_LIBS) \
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)
-
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src/server \
-	-I$(GSOAP_LOCATION) \
+	-I$(GSOAP_LOCATION)/include \
 	$(GLOBUS_NOTHR_CFLAGS) \
 	$(GLITE_CFLAGS) \
 	$(EXPAT_CFLAGS) \
@@ -112,11 +110,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(GRIDSITE_GLOBUS_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(FCGI_CFLAGS) \
-	$(LIBTAR_CFLAGS) \
-	$(ZLIB_CFLAGS) \
 	-DHAVE_STRINGSTREAM \
 	-DWANT_NAMESPACES \
-	-DWITH_FASTCGI \
-        -DGLITE_WMS_USE_FILELIST
+	-DWITH_FASTCGI
 
 MAINTAINERCLEANFILES = Makefile.in

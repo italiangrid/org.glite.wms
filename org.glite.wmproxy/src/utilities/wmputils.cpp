@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) Members of the EGEE Collaboration. 2004. 
 See http://www.eu-egee.org/partners/ for details on the copyright
@@ -18,7 +19,7 @@ limitations under the License.
 
 //
 // File: wmputils.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmputils.h"
@@ -53,7 +54,6 @@ limitations under the License.
 #include "glite/wms/common/logger/manipulators.h"
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-#include "quota.h"
 #include "glite/wms/purger/purger.h"
 #include "glite/wms/common/utilities/quota.h"
 
@@ -84,20 +84,22 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
-// Define File Separator
+// Define File Separator 
 #ifdef WIN
-	// Windows File Separator
+	// Windows File Separator 
 	const string FILE_SEP = "\\";
-#else
-	// Linux File Separator
-   	const string FILE_SEP ="/";
+#else 
+	// Linux File Separator 
+   	const string FILE_SEP ="/"; 
 #endif
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
+// duplicated info (wmsutils&wmscommon)
 const int SUCCESS = 0;
 const int FAILURE = 1;
-const int CHILD_FAILURE = -1;
+const int FORK_FAILURE = -1;
+const int COREDUMP_FAILURE = -2;
 
 // gLite environment variables
 const char* GLITE_LOCATION = "GLITE_LOCATION";
@@ -125,7 +127,6 @@ const string GET_OUTPUT_LOCK_FILE_NAME = ".getOutputLockFile.lock";
 
 const string ALL_PROTOCOLS = "all";
 const string DEFAULT_PROTOCOL = "default";
-
 
 vector<string>
 computeOutputSBDestURIBase(vector<string> outputsb, const string &baseuri)
@@ -182,123 +183,80 @@ computeOutputSBDestURI(vector<string> osbdesturi, const string &dest_uri)
 	GLITE_STACK_CATCH();
 }
 
+// why using returning pointers?
+// because it will have to fill a returning gSoap message
 vector<string> *
-getJobDirectoryURIsVector(vector<pair<string, int> > protocols,
+getJobDirectoryURIsVector(vector<pair<string, int> > allProtocols,
 	const string &defaultprotocol, int defaultport, int httpsport,
 	const string &jid, const string &protocol, const string &extradir)
 {
 	GLITE_STACK_TRY("getJobDirectoryURIsVector()");
-	edglog_fn("wmpoperations::getJobDirectoryURIsVector");
-
-	edglog(debug)<<"Computing job directory URIs for job: "<<jid<<endl;
+	edglog_fn("wmputils::getJobDirectoryURIsVector");
 	edglog(debug)<<"Requested protocol: "<<protocol<<endl;
-
 	// Protocol + host:port + path
+	// extra might be empty/input/output/peek
 	string extra = (extradir != "") ? (FILE_SEP + extradir) : "";
+	// httppath is like: /SandboxDir/Tu/https_3a_2f_2fghemon.cnaf.infn.it_3a9000_2fTuhKg/output
 	string httppath = FILE_SEP + to_filename(jobid::JobId(jid), 0) + extra;
 	string path = getenv(DOCUMENT_ROOT) + httppath;
-	string serverhost = getServerHost();
-	
+	string serverhost = getServerHost(); //e.g. "ghemon.cnaf.infn.it"
 	vector<string> *returnvector = new vector<string>();
-	
-	vector<pair<string, int> > returnprotocols;
+	vector<pair<string, int> > returnprotocols;  // Empty vectory
 	if (protocol == ALL_PROTOCOLS) {
-		returnprotocols = protocols;
+		// filling with all protocols (gsiftp & https)
+		returnprotocols = allProtocols;
 	} else if (protocol == DEFAULT_PROTOCOL) {
+		// filling with default protocol (gsiftp)
 		pair<string, int> itempair(defaultprotocol, defaultport);
 		returnprotocols.push_back(itempair);
-	} else {
-		if (protocol != "https") {
-			// if (check if the protocol is supported)
-			// if protocol in protocols!
-			int port = -1;
-			for (unsigned int i = 0; i < protocols.size(); i++) {
-				if (protocols[i].first == protocol) {
-					port = protocols[i].second;
-					break;
-				}	
+	} else if (protocol != "https") {
+		// Custom protocol: try & find it inside allProtocols available
+		int port = -1;
+		for (unsigned int i = 0; i < allProtocols.size(); i++) {
+			if (allProtocols[i].first == protocol) {
+				port = allProtocols[i].second;
+				break;
 			}
-			if (port == -1) {
-				throw JobOperationException(__FILE__, __LINE__,
-					"getJobDirectoryURIsVector()", WMS_INVALID_ARGUMENT,
-					"requested protocol not available");
-			}
-			pair<string, int> itempair(protocol, port);
-			returnprotocols.push_back(itempair);
 		}
+		if (port == -1) {
+			// Unable to properly initialize protocol/port
+			throw JobOperationException(__FILE__, __LINE__,
+				"getJobDirectoryURIsVector()", WMS_INVALID_ARGUMENT,
+				"requested protocol not available");
+		}
+		pair<string, int> itempair(protocol, port);
+		returnprotocols.push_back(itempair);
+	} else {
+		// Protocol IS definitely HTTPS
+		// doing Nothing!?
 	}
-	
 	string item;
-	unsigned int size = returnprotocols.size();
-	for (unsigned int i = 0; i < size; i++) {
-		item = returnprotocols[i].first
-			+ "://" + serverhost
-			+ ((returnprotocols[i].second == 0) 
-				? "" 
-				: (":" + boost::lexical_cast<string>
-					(returnprotocols[i].second)))
-			+ path;
-		edglog(debug)<<"Job directory URI: "<<item<<endl;
+	// cycle returnprotocols (which is not the return/result)
+	// returnprotocols has the format:  <protocol NAME >,<protocol PORT >
+	for (unsigned int i = 0; i < returnprotocols.size(); i++) {
+		item = returnprotocols[i].first + "://" + serverhost;
+		// Append Port (if needed)
+		if  (returnprotocols[i].second != 0){
+			item += ":" + boost::lexical_cast<string>(returnprotocols[i].second);
+
+		}
+			item += path;
+		edglog(debug)<<"Job "<< returnprotocols[i].first << " URI: "<<item<<endl;
 		returnvector->push_back(item);
 	}
-	
 	// Adding https protocol
 	if ((protocol == ALL_PROTOCOLS) || (protocol == "https")) {
-		if (httpsport) {
-			item = "https://" + string(getenv("SERVER_ADDR")) + ":"
-				+ boost::lexical_cast<string>(httpsport) + httppath;
-		} else {
-			item = "https://" + string(getenv("HTTP_HOST")) + httppath;
+		// New approach: always return HOST NAME (never IP)
+		item = "https://" + serverhost;
+		if (httpsport) { item += ":" + boost::lexical_cast<string>(httpsport);}
+		else{
+			// no https port in config file: append Server Port
+ 			item += ":" + string(getenv ("SERVER_PORT"));
 		}
-		edglog(debug)<<"Job directory URI: "<<item<<endl;
+		item+= httppath;
+		edglog(debug)<<"Job https URI: "<<item<<endl;
 		returnvector->push_back(item);
 	}
-	
-	return returnvector;
-	GLITE_STACK_CATCH();
-}
-
-vector<string> *
-getDestURIsVector(vector<pair<string, int> > protocols, int httpsport,
-	const string &jid, bool addhttps)
-{
-	GLITE_STACK_TRY("getDestURIsVector()");
-	edglog_fn("wmpoperations::getDestURIsVector");
-	
-	edglog(debug)<<"Computing destination URIs for job: "<<jid<<endl;
-	
-	// Protocol + host:port + path
-	string httppath = FILE_SEP + to_filename(jobid::JobId(jid), 0) + "/input";
-	string path = getenv(DOCUMENT_ROOT) + httppath;
-	string serverhost = getServerHost();
-	
-	vector<string> *returnvector = new vector<string>(0);
-	string port;
-	string item;
-	
-	for (unsigned int i = 0; i < protocols.size(); i++) {
-		port = boost::lexical_cast<string>(protocols[i].second);
-		item = protocols[i].first
-			+ "://" + serverhost
-			+ ((protocols[i].second == 0) ? "" : (":" + port))
-			//+ ((protocols[i].first != "https") ? path : httppath);
-			+ path;
-		edglog(debug)<<"PROTOCOL: "<<protocols[i].first<<endl;
-		edglog(debug)<<"Destination URI: "<<item<<endl;
-		returnvector->push_back(item);
-	}
-	// Adding https protocol
-	if (addhttps) {
-		if (httpsport != 0) {
-			item = "https://" + string(getenv("SERVER_ADDR")) + ":"
-				+ boost::lexical_cast<string>(httpsport) + httppath;
-		} else {
-			item = "https://" + string(getenv("HTTP_HOST")) + httppath;
-		}
-	}
-	edglog(debug)<<"Destination URI: "<<item<<endl;
-	returnvector->push_back(item);
-
 	return returnvector;
 	GLITE_STACK_CATCH();
 }
@@ -342,7 +300,6 @@ getEnvFQAN()
 {
 	GLITE_STACK_TRY("getEnvFQAN()");
 	string fqan = "";
-	//string cred2 = getenv("GRST_CRED_2") ? string(getenv("GRST_CRED_2")) : "";
 	string cred2 = "";
 	if (getenv("GRST_CRED_2")) {
 		cred2 = string(getenv("GRST_CRED_2"));
@@ -395,8 +352,9 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 	GLITE_STACK_CATCH();
 }
 
+
 bool checkGlobusVersion(){
-	edglog_fn("wmpoperations::checkGlobusVersion");
+	edglog_fn("wmputils::checkGlobusVersion");
 	const char *GLOBUS_LOCATION = "GLOBUS_LOCATION";
 	const string DEF_GLOBUS_LOCATION= FILE_SEP+"opt"+FILE_SEP+"globus";
 	string globusVersionFile="globus-version";
@@ -408,27 +366,24 @@ bool checkGlobusVersion(){
 		globusVersionFile= string(globusENV)  + FILE_SEP + "bin" + FILE_SEP + globusVersionFile ;
 	}else{
 		// ENV not found, set it up
-		edglog(error)<<GLOBUS_LOCATION<<" variable not found, set it manually" << endl ;
+		edglog(warning)<<GLOBUS_LOCATION<<" variable not found, setting it to " << DEF_GLOBUS_LOCATION << endl ;
 		setenv(GLOBUS_LOCATION, DEF_GLOBUS_LOCATION.c_str(),1);
 		globusVersionFile= DEF_GLOBUS_LOCATION+ FILE_SEP + "bin" + FILE_SEP + globusVersionFile ;
 
 	}
 	// If file does not exists -> old version of globus assumed
 	if (!fileExists(globusVersionFile)){
-		edglog(error)<<"globus-version binary not found" << endl ;
-		edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
+		edglog(warning)<<"globus-version binary not found" << endl ;
+		edglog(warning)<<"Assuming globus version is less than 3.0.2" << endl ;
 		return false;
 	}
 
 	// prepare Std output/error files
 	string outfile = "/tmp/wmp_glversion_call.out."+ boost::lexical_cast<std::string>(getpid());
-	//edglog(debug)<<"Globus Version output file: "<<outfile<<endl;
 	int fdO = open(outfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
 	dup2(fdO, 1);
 	close(fdO);
-
 	string errorfile = "/tmp/wmp_glversion_call.err."+ boost::lexical_cast<std::string>(getpid());
-	//edglog(debug)<<"Globus Version error file: "<<errorfile<<endl;
 	int fdE = open(errorfile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
 	dup2(fdE, 2);
 	close(fdE);
@@ -444,20 +399,22 @@ bool checkGlobusVersion(){
 	string errormsg = "";
 	edglog(debug)<<"Executing Globus version script file: "<<globusVersionFile<<endl;
 	int outcome=doExecv(globusVersionFile, params, errormsg);
-
 	switch (outcome){
-		case 0:
+		case SUCCESS:
 			// No error, break and continue
 			break;
-		case -1:
-			edglog(error)<<"Error while executing Globus version script file:\n" <<errormsg<<endl;
-			edglog(error)<<"Error code: "<<outcome<<endl;
-			edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
+		case FORK_FAILURE:
+		case COREDUMP_FAILURE:
+			// either Unable to fork process or coredump
+			edglog(error)<< "either Unable to fork process or coredump"  << endl;
+			edglog(debug)<< "Assuming Globus version is less than 3.0.2" << endl;
 			return false;
+			break;
 		default:
+			// any possible error
 			edglog(error)<<"Unable to execute Globus version script file:\n"<<errormsg<<endl;
 			edglog(error)<<"Error code: "<<outcome<<endl;
-			edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
+			edglog(debug)<<"Assuming Globus version is less than 3.0.2" << endl ;
 			return false;
 	}
 	// IF this point is reached, no error found
@@ -475,8 +432,8 @@ bool checkGlobusVersion(){
 			tokens.push_back(string(*it));
 	}
 	if (tokens.size() !=3){
-		edglog(error)<<"Unable to parse Globus version"<< globusVersionString <<endl;
-		edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
+		edglog(warning)<<"Unable to parse returned Globus version"<< globusVersionString <<endl;
+		edglog(warning)<<"Assuming Globus version is less than 3.0.2" << endl ;
 		return false;
 	}
 
@@ -505,17 +462,20 @@ bool checkGlobusVersion(){
 			return false;
 		}
 	}catch(boost::bad_lexical_cast &exc) {
-		edglog(error)<<"Unable to cast Globus version "<< globusVersionString <<endl;
-		edglog(error)<<"Assuming Globus version is less than 3.0.2" << endl ;
+		edglog(warning)<<"Unable to cast Globus version "<< globusVersionString <<endl;
+		edglog(debug)<<"Assuming Globus version is less than 3.0.2" << endl ;
 		return false;
 	}
 	// This point should never be reached
-	edglog(fatal)<<"(Unreachable point reached!) Assuming Globus version is less than 3.0.2" << endl ;
+	edglog(fatal) << "Unreachable point reached!" << endl ;
+	edglog(debug) << "Assuming Globus version is less than 3.0.2" << endl ;
 	return false;
 }
 
 
-/* // TBR
+
+
+/*
  * ----- WARNING!! ----------------------------------------------------------
  * This method is a patch to grant correct behaviour for components using old
  * version of OpenSSL library.
@@ -530,31 +490,33 @@ bool checkGlobusVersion(){
 string
 convertDNEMailAddress(const string & dn)
 {
-	GLITE_STACK_TRY("getEnvFQAN()");
+	GLITE_STACK_TRY("convertDNEMailAddress()");
 	edglog_fn("wmputils::convertDNEMailAddress");
+/* PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
 	if (globusDNS_global){
 		//NO conversion needed, return the original
-		edglog(debug)<<"No Conversion needed, use original DN: "<<dn<<endl;
 		return dn;
 	}
-	edglog(debug)<<"Original DN: "<<dn<<endl;
+*/
+	// edglog(debug)<<"Original DN: "<<dn<<endl;
 	string newdn = dn;
-    string toreplace = "emailAddress";
+	string toreplace = "emailAddress";
 	unsigned int pos = dn.rfind(toreplace, dn.size());
 	if (pos != string::npos) {
 		newdn.replace(pos, toreplace.size(), "Email");
 	}
-    toreplace = "UID";
+	toreplace = "UID";
 	pos = newdn.rfind(toreplace, newdn.size());
 	if (pos != string::npos) {
 		newdn.replace(pos, toreplace.size(), "USERID");
 	}
-	edglog(debug)<<"Converted DN: "<<newdn<<endl;
+	// edglog(debug)<<"Converted DN: "<<newdn<<endl;
 	return newdn;
-	
 	GLITE_STACK_CATCH();
 }
 
+
+// TODO Use boost filesystem
 int
 fileExists(const string &path)
 {
@@ -677,7 +639,7 @@ getJobDelegatedProxyPath(jobid::JobId jid, int level)
 {	
 	GLITE_STACK_TRY("getJobDelegatedProxyPath(JobId jid)");
 	//TBD Check path
-	return string(getenv(DOCUMENT_ROOT) 
+	return string(getenv(DOCUMENT_ROOT)
 		+ FILE_SEP + to_filename(jid, level)
 		+ FILE_SEP + USER_PROXY_NAME);
 	GLITE_STACK_CATCH();
@@ -688,7 +650,7 @@ getJobDelegatedProxyPathBak(jobid::JobId jid, int level)
 {	
 	GLITE_STACK_TRY("getJobDelegatedProxyPath(JobId jid)");
 	//TBD Check path
-	return string(getenv(DOCUMENT_ROOT) 
+	return string(getenv(DOCUMENT_ROOT)
 		+ FILE_SEP + to_filename(jid, level)
 		+ FILE_SEP + USER_PROXY_NAME_BAK);
 	GLITE_STACK_CATCH();
@@ -700,7 +662,7 @@ getJobJDLOriginalPath(jobid::JobId jid, bool isrelative, int level)
 	GLITE_STACK_TRY("getJobJDLOriginalPath(JobId jid)");
 	//TBD Check path
 	if (!isrelative) {
-		return string(getenv(DOCUMENT_ROOT) 
+		return string(getenv(DOCUMENT_ROOT)
 			+ FILE_SEP + to_filename(jid, level)
 			+ FILE_SEP + JDL_ORIGINAL_FILE_NAME);
 	} else {
@@ -716,7 +678,7 @@ getJobJDLToStartPath(jobid::JobId jid, bool isrelative, int level)
 	GLITE_STACK_TRY("getJobJDLToStartPath(JobId jid)");
 	//TBD Check path
 	if (!isrelative) {
-		return string(getenv(DOCUMENT_ROOT) 
+		return string(getenv(DOCUMENT_ROOT)
 			+ FILE_SEP + to_filename(jid, level)
 			+ FILE_SEP + JDL_TO_START_FILE_NAME);
 	} else {
@@ -732,7 +694,7 @@ getJobJDLStartedPath(jobid::JobId jid, bool isrelative, int level)
 	GLITE_STACK_TRY("getJobJDLStartedPath()");
 	//TBD Check path
 	if (!isrelative) {
-		return string(getenv(DOCUMENT_ROOT) 
+		return string(getenv(DOCUMENT_ROOT)
 			+ FILE_SEP + to_filename(jid, level)
 			+ FILE_SEP + JDL_STARTED_FILE_NAME);
 	} else {
@@ -760,7 +722,7 @@ string
 getEndpoint() {
 	GLITE_STACK_TRY("getEndpoint()");
 	return ((string(getenv("HTTPS")) == "on") ? "https://" : "http://")
-		+ string(getenv("SERVER_ADDR")) + ":"
+		+ getServerHost() + ":"
 		+ string(getenv("SERVER_PORT"))
 		+ string(getenv("SCRIPT_NAME"));
 	GLITE_STACK_CATCH();
@@ -770,49 +732,57 @@ string
 getServerHost() {
 	GLITE_STACK_TRY("getServerHost()");
 	edglog_fn("wmputils::getServerHost");
-	
-    struct hostent *server = NULL;
-    char * servername = getenv("SERVER_NAME");
-    if (servername) {
-	    edglog(debug)<<"SERVER_NAME: "<<string(servername)<<endl;
+	struct hostent *server = NULL;
+	char * servername = getenv("SERVER_NAME");
+	if (servername) {
+		edglog(debug)<<"SERVER_NAME: "<<string(servername)<<endl;
 		if ((server = gethostbyname(servername)) == NULL) {
 			edglog(critical)<<"Unable to get server address"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
 				"getServerHost()", WMS_PROXY_ERROR,
 				"Unable to get server address");
 		}
-    } else {
-    	edglog(critical)<<"Environment variable SERVER_NAME null\n(please "
-    		"contact server administrator)";
-    	throw FileSystemException(__FILE__, __LINE__,
-			"getServerHost()", WMS_PROXY_ERROR,
-			"Environment variable SERVER_NAME null\n(please contact server "
-				"administrator)");
-    }
-    return string(server->h_name);
-    
+	} else {
+		throw FileSystemException(__FILE__, __LINE__,
+				"getServerHost()", WMS_PROXY_ERROR,
+				"Environment variable SERVER_NAME null\n(please contact server administrator)");
+	}
+	return string(server->h_name);
 	GLITE_STACK_CATCH();
 }
 
 bool
-doPurge(string dg_jobid)
+doPurge(string dg_jobid, bool force)
 {
 	GLITE_STACK_TRY("doPurge()");
 	edglog_fn("wmputils::doPurge");
-	
 	if (dg_jobid.length()) {
-  		edglog(debug)<<"JobId object for purging created: "
-  			<<dg_jobid<<endl;
-  		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
-  			boost::filesystem::native);
-  		return purger::purgeStorageEx(path, edg_wll_LogClearUSER);
-    } else {
-   		edglog(critical)
+		edglog(debug)<<"JobId object for purging created: "
+			<<dg_jobid<<endl;
+		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
+			boost::filesystem::native);
+		// DTMT issue 56 fix: (DAG node PURGE)
+		if (force){
+			// Forcing purge (needed for dag nodes)
+			return purger::purgeStorageEx(  path, 0 , false, true, edg_wll_LogClearUSER);
+		}else{
+			return purger::purgeStorageEx(  path, edg_wll_LogClearUSER);
+		}
+
+		/* TODO NEW PURGER APPROACH
+		if (force) {
+			return purger::Purger().force_dag_node_removal()(path);
+		}else{
+			return purger::Purger()(path);
+		}
+		*/
+		
+	} else {
+		edglog(critical)
 			<<"Error in Purging: Invalid Job Id. Purge not done."<<endl;
-      return false; 
-    }
-    
-    GLITE_STACK_CATCH();
+		return false;
+	}
+	GLITE_STACK_CATCH();
 }
 
 bool
@@ -861,12 +831,14 @@ getUserDN()
 		*p = '\0';      
 	}
 	if ((user_dn == NULL) || (user_dn[0] == '\0')) {
-		edglog(debug)<<"Unable to get a valid user DN"<<endl;
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
 	}
-	edglog(debug)<<"User DN: "<<user_dn<<endl;
-	return user_dn;
+	// PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
+	char* user_dn_final=strdup(   convertDNEMailAddress(user_dn).c_str()  );
+	free (user_dn);
+	edglog(debug)<<"User DN: "<<user_dn_final<<endl;
+	return user_dn_final;
 	GLITE_STACK_CATCH();
 }
 
@@ -909,15 +881,12 @@ int
 generateRandomNumber(int lowerlimit, int upperlimit)
 {
 	GLITE_STACK_TRY("generateRandomNumber()");
-    edglog_fn("wmputils::generateRandomNumber");
-    
-    edglog(debug)<<"Generating random between "<<lowerlimit<<" - "
-    	<<upperlimit<<endl;
-    	
-    // Setting seeed
+	edglog_fn("wmputils::generateRandomNumber");
+
+	edglog(debug)<<"Generating random between "<<lowerlimit<<" and " <<upperlimit<<endl;
+	// Setting seeed
 	srand((unsigned) time(0));
 	return lowerlimit + static_cast<int>(rand()%(upperlimit - lowerlimit + 1));
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -925,41 +894,39 @@ void
 fileCopy(const string& source, const string& target)
 {
 	GLITE_STACK_TRY("fileCopy()");
- 	edglog_fn("wmputils::fileCopy");
-  	edglog(debug)<<"Copying file...\n\tSource: "
-  		<<source<<"\n\tTarget: "<<target<<endl;
-  
-  	ifstream in(source.c_str());
-  	if (!in.good()) {
-  		edglog(severe)<<"Copy failed, !in.good(). \n\tSource: "
-  			<<source<<" Target: "<<target<<endl;
-    	throw FileSystemException(__FILE__, __LINE__,
+	edglog_fn("wmputils::fileCopy");
+	edglog(debug)<<"Copying file...\n\tSource: "
+		<<source<<"\n\tTarget: "<<target<<endl;
+
+	ifstream in(source.c_str());
+	if (!in.good()) {
+		edglog(severe)<<"Copy failed, !in.good(). \n\tSource: "
+			<<source<<" Target: "<<target<<endl;
+		throw FileSystemException(__FILE__, __LINE__,
 			"fileCopy(const string& source, const string& target)",
 			WMS_IS_FAILURE, "Unable to copy file");
 	 }
 	 ofstream out(target.c_str());
 	 if (!out.good()) {
-  		edglog(severe)<<"Copy failed, !out.good(). \n\tSource: "
-  			<<source<<"\n\tTarget: "<<target<<endl;
-    	throw FileSystemException(__FILE__, __LINE__,
+		edglog(severe)<<"Copy failed, !out.good(). \n\tSource: "
+			<<source<<"\n\tTarget: "<<target<<endl;
+		throw FileSystemException(__FILE__, __LINE__,
 			"fileCopy(const string& source, const string& target)",
 			WMS_IS_FAILURE, "Unable to copy file");
-  	}
-  	out<<in.rdbuf(); // read original file into target
-  
-  	struct stat from_stat;
-  	if (stat(source.c_str(), &from_stat) ||
-	    	chown(target.c_str(), from_stat.st_uid, from_stat.st_gid) ||
+	}
+	out<<in.rdbuf(); // read original file into target
+
+	struct stat from_stat;
+	if (stat(source.c_str(), &from_stat) ||
+		chown(target.c_str(), from_stat.st_uid, from_stat.st_gid) ||
 	        chmod(target.c_str(), from_stat.st_mode)) {
 		edglog(severe)<<"Copy failed, chown/chmod. \n\tSource: "
 			<<source<<"\n\tTarget: "<<target<<endl;
-
 	    throw FileSystemException(__FILE__, __LINE__,
 			"fileCopy(const string& source, const string& target)",
 			WMS_IS_FAILURE, "Unable to copy file");
-  	}
-  	edglog(debug)<<"Copy done."<<endl;
-  	GLITE_STACK_CATCH();
+	}
+	GLITE_STACK_CATCH();
 }
 
 string
@@ -981,17 +948,17 @@ computeFileSize(const string & path)
 	GLITE_STACK_TRY("computeFileSize()");
 	int fd = -1;
 	long size = 0;
-   	fd = open(path.c_str(), O_RDONLY);
-    if (fd != -1) {
-    	struct stat buf;
-       	if (!fstat(fd, &buf)) {
-        	size = buf.st_size;
-       	}
-       	close(fd);
+	fd = open(path.c_str(), O_RDONLY);
+	if (fd != -1) {
+		struct stat buf;
+		if (!fstat(fd, &buf)) {
+			size = buf.st_size;
+		}
+		close(fd);
 	}
 	// If file not found it returns 0
-    return size;
-    GLITE_STACK_CATCH();
+	return size;
+	GLITE_STACK_CATCH();
 }
 
 string
@@ -999,37 +966,88 @@ searchForDirmanager()
 {
 	GLITE_STACK_TRY("searchForDirmanager()");
 	
-	// Try to find managedirexecutable 
-   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
-   	if (!glite_path) {
-   		glite_path = getenv(GLITE_LOCATION);
-   	}
-   	string gliteDirmanExe = (glite_path == NULL)
-   		? ("/opt/glite")
-   		:(string(glite_path)); 
-   		
-   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
-   	
-   	return gliteDirmanExe;
-   	
-   	GLITE_STACK_CATCH();
+	// Try to find managedirexecutable
+	char * glite_path = getenv(GLITE_WMS_LOCATION);
+	if (!glite_path) {
+		glite_path = getenv(GLITE_LOCATION);
+	}
+	string gliteDirmanExe = (glite_path == NULL)
+		? ("/opt/glite")
+		:(string(glite_path));
+	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+	return gliteDirmanExe;
+	GLITE_STACK_CATCH();
 }
-	
+
+
+/**
+Release Memory for all allocated char**
+*/
+void releaseChars( char **allocated, int size){
+	for (unsigned int j = 0; j <= size; j++) {
+		free(allocated[j]);
+	}
+	free(allocated);
+}
+
+
+/**
+* A forked child process may remain appended:
+* a simple call to glite_wms_wmproxy_exit make
+* sure the process successfully ends
+*/
+void
+doExit()
+{
+	GLITE_STACK_TRY("doExit()");
+	edglog_fn("wmputils::doExit");
+
+	// Calling exit script to "terminate" forked WMProxy process
+	// returning the exit value to the parent
+	string location = "";
+	if (char * glitelocation = getenv(GLITE_WMS_LOCATION)) {
+		location = string(glitelocation);
+	} else if (char * glitelocation = getenv(GLITE_LOCATION)) {
+		location = string(glitelocation);
+	} else {
+		location = FILE_SEP + "opt" + FILE_SEP + "glite";
+	}
+	string command = location + string(FILE_SEP + "sbin" + FILE_SEP
+		+ "glite_wms_wmproxy_exit");
+
+	edglog(debug)<<"Executing command: "<<command<<endl;
+	string param = boost::lexical_cast<string>(errno);
+	char **argvs;
+	argvs = (char **) calloc(3, sizeof(char *));
+	argvs[0] = (char *) malloc(command.length() + 1);
+	strcpy(argvs[0], command.c_str());
+	argvs[1] = (char *) malloc(param.length() + 1);
+	strcpy(argvs[1], param.c_str());
+	argvs[2] = (char *) 0;
+	if (execv(command.c_str(), argvs)) {
+		edglog(severe)<<"Unable to execute WMProxy exit script"<<endl;
+		edglog(severe)<<strerror(errno)<<endl;
+	}
+	releaseChars (argvs,3);
+	GLITE_STACK_CATCH();
+}
+
+
+/**
+* Perform a system call (through a process forked)
+*/
 int
 doExecv(const string &command, vector<string> &params, string &errormsg)
 {
 	GLITE_STACK_TRY("doExecv()");
 	edglog_fn("wmputils::doExecv");
-	
+
 	char **argvs;
 	int size = params.size() + 2;
 	argvs = (char **) calloc(size, sizeof(char *));
-	
 	unsigned int i = 0;
-	
 	argvs[i] = (char *) malloc(command.length() + 1);
-	strcpy(argvs[i++], (command).c_str());
-	
+	strcpy(argvs[i++], command.c_str());
 	vector<string>::iterator iter = params.begin();
 	vector<string>::iterator const end = params.end();
 	for (; iter != end; ++iter) {
@@ -1038,63 +1056,69 @@ doExecv(const string &command, vector<string> &params, string &errormsg)
 	}
 	argvs[i] = (char *) 0;
 	
-	edglog(debug)<<"Forking process..." << endl;
+	edglog(debug)<<"Forking process..."<<endl;
 	switch (fork()) {
 		case -1:
 			// Unable to fork
 			errormsg = "Unable to fork process";
 			edglog(critical)<<errormsg<<endl;
-			return FAILURE;
+			return FORK_FAILURE;
 			break;
 		case 0:
-			// child
-	        if (execv(command.c_str(), argvs)) {
-        		// execv failed
-        		errormsg = strerror(errno);
-    			edglog(severe)<<errormsg<<endl;
-    			return errno;
-	        } else {
-	        	edglog(debug)<<"execv/command succesfully"<<endl;
-	        }
-	        break;
-        default:
-        	// parent
-	    	int status = 0;
-	    	wait(&status);
-	    	if (WIFEXITED(status)) {
-                edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
-                edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
-            }
-            if (WIFSIGNALED(status)) {
-                edglog(severe)<<"WIFSIGNALED(status)"<<endl;
-                edglog(severe)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
-            }
-            
+			// child: execute the required command
+			if (execv(command.c_str(), argvs)) {
+				// execv failed
+				errormsg = strerror(errno);
+				edglog(severe)<<"execv error, errno: "<<errno
+					<<" - Error message: "<<errormsg<<endl;
+					doExit();
+			} else {
+				edglog(debug)<<"execv/command succesfully"<<endl;
+			}
+			// the child does not return
+			break;
+		default:
+			// parent
+			int status = 0;
+			wait(&status);
+			if (WIFEXITED(status)) {
+				edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
+				edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
+			}
+			if (WIFSIGNALED(status)) {
+				edglog(severe)<<"WIFSIGNALED(status)"<<endl;
+				edglog(severe)<<"WTERMSIG(status): "<<WTERMSIG(status)<<endl;
+			}
 #ifdef WCOREDUMP
 			if (WCOREDUMP(status)) {
 				errormsg = "Child dumped core";
 				edglog(critical)<<"Child dumped core!!!"<<endl;
-				return CHILD_FAILURE;
+				releaseChars (argvs,i);
+				return COREDUMP_FAILURE;
 			}
 #endif // WCOREDUMP
-
-	    	if (status) {
-	    		errormsg = "Child failure";
-	    		edglog(severe)<<"Child failure, exit code: "<<status<<endl;
-	    		return CHILD_FAILURE;
-	    	}
+			if (status) {
+				if (WIFEXITED(status)) {
+					errormsg = strerror(WEXITSTATUS(status));
+				} else {
+					errormsg = "Child failure";
+				}
+				edglog(severe)<<"Child failure, exit code: "<<status<<endl;
+				releaseChars (argvs,i);
+				return WEXITSTATUS(status);
+			}
 	    	break;
 	}
-	for (unsigned int j = 0; j <= i; j++) {
-		free(argvs[j]);
-	}
-    free(argvs);
-    
-    return SUCCESS;
-    
-    GLITE_STACK_CATCH();
+	releaseChars (argvs,i);
+	return SUCCESS;
+	GLITE_STACK_CATCH();
 }
 
+/*
+* split the command to be executed when too long
+* (example: when directory naming is used)
+* and perform execv
+*/
 int
 doExecvSplit(const string &command, vector<string> &params, const vector<string> &dirs,
 	unsigned int startIndex, unsigned int endIndex)
@@ -1129,7 +1153,6 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 			case E2BIG:
 				edglog(debug)<<"Command line too long, splitting..."<<endl;
 				middle = startIndex + (endIndex - startIndex) / 2;
-				
 				pid_t pid;
     			switch (pid = fork()) {
 					case -1:
@@ -1183,8 +1206,9 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 				break;
 				
 			default:
-				edglog(severe)<<strerror(errno)<<endl;
-				return FAILURE;
+				edglog(severe)<<"execv error, errno: "<<errno
+    				<<" - Error message: "<<strerror(errno)<<endl;
+				doExit();
 				break;
 		}
 	} else {
@@ -1201,58 +1225,66 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 	GLITE_STACK_CATCH();
 }
 
+/*
+* Perform execv (through doExecvSplit)
+*/
 int
 doExecv(const string &command, vector<string> &params, const vector<string> &dirs,
 	unsigned int startIndex, unsigned int endIndex)
 {
 	GLITE_STACK_TRY("doExecv()");
-    edglog_fn("wmputils::doExecv");
+	edglog_fn("wmputils::doExecv");
 
-    edglog(debug)<<"Forking process..."<<endl;
-    pid_t pid;
-    switch (pid = fork()) {
-        case -1:
-            // Unable to fork
-            edglog(critical)<<"Unable to fork process"<<endl;
-            return FAILURE;
-            break;
-        case 0:
-            // child
-            if (doExecvSplit(command, params, dirs, startIndex, endIndex)) {
-				return FAILURE;
-            }
-        break;
-        default:
-            // parent
-            int status = SUCCESS;
-            edglog(debug)<<"Parent PID wait: "<<getpid()<<" waiting for: "<<pid<<endl;
-            waitpid(pid, &status, 0);
-            edglog(debug)<<"Parent PID after wait: "<<getpid()<<" waiting for: "<<pid<<endl;
-            if (WIFEXITED(status)) {
-                edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
-                edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
+	edglog(debug)<<"Forking process..."<<endl;
+	pid_t pid;
+	switch (pid = fork()) {
+		case -1:
+			// Unable to fork
+			edglog(critical)<<"Unable to fork process"<<endl;
+			return FORK_FAILURE;
+			break;
+		case 0:
+			// child
+			if (doExecvSplit(command, params, dirs, startIndex, endIndex)) {
+				edglog(severe)<<"execv error!"<<endl ;
+					doExit();
+			}
+			break;
+		default:
+			// parent
+			int status = SUCCESS;
+			edglog(debug)<<"Parent PID wait: "<<getpid()<<" waiting for: "<<pid<<endl;
+			waitpid(pid, &status, 0);
+			edglog(debug)<<"Parent PID after wait: "<<getpid()<<" waiting for: "<<pid<<endl;
+			if (WIFEXITED(status)) {
+				edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
+				edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
 			}
 			if (WIFSIGNALED(status)) {
 				edglog(severe)<<"WIFSIGNALED(status)"<<endl;
 				edglog(severe)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
 			}
-
 #ifdef WCOREDUMP
-            if (WCOREDUMP(status)) {
-                edglog(critical)<<"Child dumped core!!!"<<endl;
-            }
+			if (WCOREDUMP(status)) {
+				edglog(critical)<<"Child dumped core!!!"<<endl;
+				return COREDUMP_FAILURE;
+			}
 #endif // WCOREDUMP
-
-            if (status) {
-                edglog(severe)<<"Child failure, exit code: "<<status<<endl;
-                return FAILURE;
-            }
-            break;
-    }
-
-    return SUCCESS;
-
-    GLITE_STACK_CATCH();
+			if (status) {
+				string errormsg = "";
+				edglog(severe)<<"Child failure, exit code: "<<status<<endl;
+				if (WIFEXITED(status)) {
+					errormsg = strerror(WEXITSTATUS(status));
+				} else {
+					errormsg = "Child failure";
+				}
+				edglog(severe)<<"Child failure, exit code: "<<status<<endl;
+				return WEXITSTATUS(status);
+			}
+			break;
+	}
+	return SUCCESS;
+	GLITE_STACK_CATCH();
 }
 
 void
@@ -1308,7 +1340,7 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 	time_t starttime = time(NULL);
 	
 	unsigned int size = jobids.size();
-	edglog(info)<<"Job id vector size: "<<size<<endl;
+	edglog(debug)<<"Job id vector size: "<<size<<endl;
 	
 	if (size) {
 	   	string gliteDirmanExe = searchForDirmanager();
@@ -1372,65 +1404,64 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		// Populating directories to create vector
 		vector<string>::iterator iter = jobids.begin();
 		vector<string>::iterator const end = jobids.end();
+		
 		for (; iter != end; ++iter) {
-		   	path = to_filename(glite::wmsutils::jobid::JobId(*iter),
-		   		level, extended_path);
-		   	allpath = path;
-		   	pos = path.find(FILE_SEP, 0);
-		   	sandboxdir = path.substr(0, pos);
-		   	path.erase(0, pos);
-		   	reduceddir = path.substr(1, path.find(FILE_SEP, 1));
-		   	
-		   	// Reduced directories
-		   	reddirs.push_back(document_root + FILE_SEP + sandboxdir
-		   			+ FILE_SEP + reduceddir);
-		   	
-		   	// Job directories
-		   	path = document_root + FILE_SEP + allpath;
-		    jobdirs.push_back(path);
-		    path += FILE_SEP;
-		    
-		    switch (dirtype) {
+			path = to_filename(glite::wmsutils::jobid::JobId(*iter),
+				level, extended_path);
+			allpath = path;
+			pos = path.find(FILE_SEP, 0);
+			sandboxdir = path.substr(0, pos);
+			path.erase(0, pos);
+			reduceddir = path.substr(1, path.find(FILE_SEP, 1));
+
+			// Reduced directories
+			reddirs.push_back(document_root + FILE_SEP + sandboxdir
+				+ FILE_SEP + reduceddir);
+
+			// Job directories
+			path = document_root + FILE_SEP + allpath;
+			jobdirs.push_back(path);
+			path += FILE_SEP;
+			switch (dirtype) {
 				case DIRECTORY_ALL:
 					jobdirs.push_back(path + INPUT_SB_DIRECTORY);
-			    	jobdirs.push_back(path + OUTPUT_SB_DIRECTORY);
-			    	jobdirs.push_back(path + PEEK_DIRECTORY);
+				jobdirs.push_back(path + OUTPUT_SB_DIRECTORY);
+				jobdirs.push_back(path + PEEK_DIRECTORY);
 					break;
 				case DIRECTORY_INPUT:
 					jobdirs.push_back(path + INPUT_SB_DIRECTORY);
 					break;
 				case DIRECTORY_OUTPUT:
 					jobdirs.push_back(path + OUTPUT_SB_DIRECTORY);
-			    	jobdirs.push_back(path + PEEK_DIRECTORY);
+				jobdirs.push_back(path + PEEK_DIRECTORY);
 					break;
 				default:
 					break;
-				
 			}
 		}
-		
+
 		// Creating reduced directories
-	   	if (doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1)) {
-	   		edglog(fatal)<<"Unable to create job local directory (reduced)"<<endl;
-	   		throw FileSystemException(__FILE__, __LINE__,
+		if (doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1)) {
+			edglog(fatal)<<"Unable to create job local directory (reduced)"<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
 				"managedir()", WMS_FILE_SYSTEM_ERROR,
 				"Unable to create job local directory\n"
-				"(please contact server administrator)");	
-	   	}
-	   	
-	   	// Creating job directories
-	   	if (doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1)) {
-	   		edglog(fatal)<<"Unable to create job local directory (job)"<<endl;
-	   		throw FileSystemException(__FILE__, __LINE__,
+				"(please contact server administrator)");
+		}
+
+		// Creating job directories
+		if (doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1)) {
+			edglog(fatal)<<"Unable to create job local directory (job)"<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
 				"managedir()", WMS_FILE_SYSTEM_ERROR,
 				"Unable to create job local directory\n"
-				"(please contact server administrator)");	
-	   	}
+				"(please contact server administrator)");
+		}
 	}
 	time_t stoptime = time(NULL);
 	edglog(debug)<<"Directory creation elapsed time: "
 		<<(stoptime - starttime)<<endl;
-	
+
     GLITE_STACK_CATCH();
 }
 
@@ -1474,7 +1505,7 @@ operationLock(const string &lockfile, const string &opname)
 	struct flock flockstruct;
 	memset(&flockstruct, 0, sizeof(flockstruct));
 
-	// \/ Exclusive write lock
+	// [ Exclusive write lock
 	flockstruct.l_type = F_WRLCK;
 
 	// Blocking lock
@@ -1486,7 +1517,7 @@ operationLock(const string &lockfile, const string &opname)
 			"operationLock()", WMS_OPERATION_NOT_ALLOWED,
 			opname + " operation already in progress");
 	}
-	// /\
+	// ]
         
 	return fd;
 
@@ -1502,13 +1533,13 @@ operationUnlock(int fd)
 	struct flock flockstruct;
 	memset(&flockstruct, 0, sizeof(flockstruct));
 
-	// \/ Unlocking file
+	// [ Unlocking file
 	flockstruct.l_type = F_WRLCK;
 	if (fcntl(fd, F_SETLKW, &flockstruct) == -1) {
 		edglog(severe)<<"Unable to remove lock file, fd: "<<fd<<endl;
 	}
 	close(fd);
-	// /\
+	// ]
         
 	GLITE_STACK_CATCH();
 }
@@ -1532,7 +1563,7 @@ isOperationLocked(const string &lockfile)
 	struct flock flockstruct;
 	memset(&flockstruct, 0, sizeof(flockstruct));
 
-	// \/ Checking lock
+	// [ Checking lock
 	flockstruct.l_type = F_WRLCK;
 	flockstruct.l_start = 0;
 	flockstruct.l_whence = SEEK_SET;
@@ -1547,86 +1578,13 @@ isOperationLocked(const string &lockfile)
 	if (flockstruct.l_type != F_UNLCK) {
 		return true;
 	}
-	// /\
+	// ]
         
 	close(fd);
 	return false;
 
 	GLITE_STACK_CATCH();
 }
-
-/*
-int
-operationLock(const string &lockfile, const string &opname)
-{
-	GLITE_STACK_TRY("operationLock()");
-	edglog_fn("wmputils::operationLock");
-	
-	edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
-	int fd = open(lockfile.c_str(), O_CREAT | O_RDONLY, S_IRWXU);
-	if (fd == -1) {
-		edglog(debug)<<"Unable to open lock file: "<<lockfile<<endl;
-		throw FileSystemException( __FILE__, __LINE__,
-  			"operationLock()", WMS_FILE_SYSTEM_ERROR,
-   			"unable to open lock file");
-	}
-	if (flock(fd, LOCK_EX | LOCK_NB)) {
-		close(fd);
-		throw JobOperationException( __FILE__, __LINE__,
-  			"operationLock()", WMS_OPERATION_NOT_ALLOWED,
-   			opname + " operation already in progress");
-	}
-	
-	return fd;
-			
-	GLITE_STACK_CATCH();
-}
-
-void
-operationUnlock(int fd)
-{
-	GLITE_STACK_TRY("operationUnlock()");
-	edglog_fn("wmputils::operationUnlock");
-	
-	if (flock(fd, LOCK_UN)) {
-		edglog(severe)<<"Unable to remove lock file, fd: "<<fd<<endl;
-	}
-	close(fd);
-	GLITE_STACK_CATCH();
-}
-
-bool
-isOperationLocked(const string &lockfile)
-{
-	GLITE_STACK_TRY("isOperationLocked()");
-	edglog_fn("wmputils::isOperationLocked");
-	
-	edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
-	int fd = open(lockfile.c_str(), O_CREAT | O_RDONLY, S_IRWXU);
-	if (fd == -1) {
-		edglog(debug)<<"Unable to open lock file: "<<lockfile
-			<<" during lock check"<<endl;
-		// TBC
-		return false;
-	}
-	
-	if (flock(fd, LOCK_EX | LOCK_NB)) {
-		// Unable to lock file, already locked
-		//if (errno == EWOULDBLOCK) {
-			close(fd);
-			return true;
-		//}
-	}
-	if (flock(fd, LOCK_UN)) {
-		edglog(severe)<<"Unable to remove lock file during lock check, fd: "
-			<<fd<<endl;
-	}
-	close(fd);
-	return false;
-	
-	GLITE_STACK_CATCH();
-}
-*/
 
 void
 createSuidDirectory(const string &directory)
@@ -1685,7 +1643,7 @@ readTextFile(const string &file)
 		edglog(debug)<<file<<": !in.good()"<<endl;
 		throw FileSystemException(__FILE__, __LINE__,
 			"readTextFile()", WMS_IS_FAILURE, "Unable to read file: "
-			+ file + "\n(please contact server administrator)");
+			+ file + "\n(please contact server administrator)");	
 	}
 	string line;
 	string text = "";

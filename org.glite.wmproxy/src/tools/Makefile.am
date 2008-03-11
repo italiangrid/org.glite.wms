@@ -11,7 +11,7 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#       Authors: Giuseppe Avellino <egee@datamat.it>
 #
 
 noinst_HEADERS = converter.h  log.h proxy_cleaner.h

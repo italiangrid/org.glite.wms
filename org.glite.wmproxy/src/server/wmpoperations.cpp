@@ -3,8 +3,8 @@ Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
 holders.  
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
 You may obtain a copy of the License at 
 
     http://www.apache.org/licenses/LICENSE-2.0 
@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 // File: wmpoperations.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include <fstream>
@@ -47,7 +47,7 @@ limitations under the License.
 #include "eventlogger/wmpexpdagad.h"
 #include "eventlogger/wmpeventlogger.h"
 
-// Authorizer
+// Authorizer  //TODO may be removed?? all authorizing part can me moved in wmpcommon
 #include "authorizer/wmpauthorizer.h"
 #include "authorizer/wmpgaclmanager.h"
 #include "authorizer/wmpvomsauthz.h"
@@ -81,6 +81,7 @@ limitations under the License.
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
+#include "versions.h"
 
 //namespace glite {
 //namespace wms {
@@ -92,32 +93,15 @@ extern WMProxyConfiguration conf;
 
 // Global variables for configuration attributes (ENV dependant)
 extern std::string sandboxdir_global;
-const std::string WMP_POINT_VERSION = ".";
 
 // WMProxy software version
-const std::string WMP_MAJOR_VERSION = "2";
-const std::string WMP_MINOR_VERSION = "2";
-const std::string WMP_RELEASE_VERSION = "0";
-const std::string WMP_VERSION = WMP_MAJOR_VERSION
-	+ WMP_POINT_VERSION + WMP_MINOR_VERSION
-	+ WMP_POINT_VERSION + WMP_RELEASE_VERSION;
-
-// Delegation software version
-const std::string WMP_DELEG_MAJOR_VERSION = "2";
-const std::string WMP_DELEG_MINOR_VERSION = "0";
-const std::string WMP_DELEG_RELEASE_VERSION = "0";
-const std::string WMP_DELEG_VERSION = WMP_DELEG_MAJOR_VERSION
-	+ WMP_POINT_VERSION + WMP_DELEG_MINOR_VERSION
-	+ WMP_POINT_VERSION + WMP_DELEG_RELEASE_VERSION;
-
-
-// Delegation interface software version
-const std::string WMP_DELEG_INTERFACE_MAJOR_VERSION = "2";
-const std::string WMP_DELEG_INTERFACE_MINOR_VERSION = "0";
-const std::string WMP_DELEG_INTERFACE_RELEASE_VERSION = "0";
-const std::string WMP_DELEG_INTERFACE_VERSION = WMP_DELEG_INTERFACE_MAJOR_VERSION
-	+ WMP_POINT_VERSION + WMP_DELEG_INTERFACE_MINOR_VERSION
-	+ WMP_POINT_VERSION + WMP_DELEG_INTERFACE_RELEASE_VERSION;
+const unsigned int WMP_MAJOR_VERSION = WMP_FIRST_VERSION;
+const unsigned int WMP_MINOR_VERSION = WMP_SECOND_VERSION;
+const unsigned int WMP_RELEASE_VERSION = WMP_THIRD_VERSION;
+const std::string WMP_POINT_VERSION = ".";
+const std::string WMP_VERSION = boost::lexical_cast<std::string>(WMP_MAJOR_VERSION)
+	+ WMP_POINT_VERSION + boost::lexical_cast<std::string>(WMP_MINOR_VERSION)
+	+ WMP_POINT_VERSION + boost::lexical_cast<std::string>(WMP_RELEASE_VERSION);
 
 // DONE job output file
 const std::string MARADONA_FILE = "Maradona.output";
@@ -175,12 +159,10 @@ getVersion(getVersionResponse &getVersion_response)
 {
 	GLITE_STACK_TRY("getVersion()");
 	edglog_fn("wmpoperations::getVersion");
-	logRemoteHostInfo();
-	callLoadScriptFile("getVersion");
-
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getVersion");
 	getVersion_response.version = WMP_VERSION;
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
-
 	GLITE_STACK_CATCH();
 }
 
@@ -190,53 +172,28 @@ getJDL(const std::string &job_id, JdlType jdltype,
 {
 	GLITE_STACK_TRY("getJDL()");
 	edglog_fn("wmpoperations::getJDL");
-	logRemoteHostInfo();
-	callLoadScriptFile("getJDL");
-	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
-	
-	JobId *jid = new JobId(job_id);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} else {
-		auth->authorize("", job_id);
-	}
-	delete auth;
-	
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getJDL");
+	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
+
+	JobId jid(job_id);
+	// wmpcommon perform all security checks
+	checkSecurity(&jid);
+
 	getJDL_response.jdl = "";
 	switch (jdltype) {
 		case WMS_JDL_ORIGINAL:
 			getJDL_response.jdl = wmputilities::readTextFile(
-				wmputilities::getJobJDLOriginalPath(*jid));
+				wmputilities::getJobJDLOriginalPath(jid));
 			break;
 		case WMS_JDL_REGISTERED:
 			getJDL_response.jdl = wmputilities::readTextFile(
-				wmputilities::getJobJDLExistingStartPath(*jid));
+				wmputilities::getJobJDLExistingStartPath(jid));
 			break;
 		default:
 			break;
 	}
-	
-	delete jid;
-	
-	edglog(info)<<"JDL retrieved: "<<getJDL_response.jdl<<endl;
-	
+	edglog(debug)<<"JDL retrieved: "<<getJDL_response.jdl<<endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -246,20 +203,18 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 {
 	GLITE_STACK_TRY("getMaxInputSandboxSize()");
 	edglog_fn("wmpoperations::getMaxInputSandboxSize");
-	logRemoteHostInfo();
-	callLoadScriptFile("getMaxInputSandboxSize");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getMaxInputSandboxSize");
 
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
 	try {
 		getMaxInputSandboxSize_response.size =
 		// WARNING: Temporal cast TBD
 		// WARNING: double temporarely casted into long (soon long will be returned directly
+		// currently parameter is a double - casting needed
 		(long)conf.wmp_config->max_input_sandbox_size();
 	} catch (exception &ex) {
 		edglog(severe)<<"Unable to get max input sandbox size: "
@@ -278,38 +233,17 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 {
 	GLITE_STACK_TRY("getSandboxDestURI()");
 	edglog_fn("wmpoperations::getSandboxDestURI");
-	logRemoteHostInfo();
-	callLoadScriptFile("getSandboxDestURI");
-	edglog(info)<<"Operation requested for job: "<<jid<<endl;
-	
-	JobId *jobid = new JobId(jid);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jobid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getSandboxDestURI");
+	edglog(debug)<<"Operation requested for job: "<<jid<<endl;
 
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-	} else {
-		auth->authorize("", jid);
-	}
-	delete auth;
-	
+	JobId jobid(jid);
+	// wmpcommon perform all security checks
+	checkSecurity(&jobid);
+
 	getSandboxDestURI_response.path = new StringList;
 	getSandboxDestURI_response.path->Item = new vector<string>(0);
-	
+
 	vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
 		jid, protocol, "input");
@@ -325,49 +259,29 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 {
 	GLITE_STACK_TRY("getSandboxBulkDestURI()");
 	edglog_fn("wmpoperations::getSandboxBulkDestURI");
-	logRemoteHostInfo();
-	callLoadScriptFile("getSandboxBulkDestURI");
-	edglog(info)<<"Operation requested for job: "<<jid<<endl;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getSandboxBulkDestURI");
+	edglog(debug)<<"Operation requested for job: "<<jid<<endl;
 	
-	JobId *jobid = new JobId(jid);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jobid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-	} else {
-		auth->authorize("", jid);
-	}
-	delete auth;
-	
+	JobId jobid(jid);
+	// wmpcommon perform all security checks
+	checkSecurity(&jobid);
+
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-	
+
 	// Setting user proxy
-	wmplogger.setUserProxy(delegatedproxy);
-	
+	// TODO delegatedproxypath can be returned by checkSecurity
+	wmplogger.setUserProxy(  wmputilities::getJobDelegatedProxyPath(jobid) );
+
 	DestURIsStructType *destURIsStruct = new DestURIsStructType();
 	destURIsStruct->Item = new vector<DestURIStructType*>(0);
 	
-	// Getting job status to check if cancellation is possible
+	// Getting job status to get children number
 	JobStatus status = wmplogger.getStatus(true);
 	vector<string> jids = status.getValStringList(JobStatus::CHILDREN);
 	edglog(debug)<<"Children count: "<<status.getValInt(JobStatus::CHILDREN_NUM)<<endl;
@@ -396,24 +310,22 @@ getQuota(getQuotaResponse &getQuota_response)
 {
 	GLITE_STACK_TRY("getQuota()");
 	edglog_fn("wmpoperations::getQuota");
-	logRemoteHostInfo();
-	callLoadScriptFile("getQuota");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getQuota");
 	
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize(wmputilities::getEnvFQAN());
-	edglog(debug)<<"User Name: "<<auth->getUserName()<<endl;
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize(wmputilities::getEnvFQAN());
+	edglog(debug)<<"User Name: "<<auth.getUserName()<<endl;
+
 	pair<long, long> quotas;
-	if (!wmputilities::getUserQuota(quotas, auth->getUserName())) {
+	if (!wmputilities::getUserQuota(quotas, auth.getUserName())) {
 		edglog(severe)<<"Unable to get total quota"<<endl;
 		throw FileSystemException(__FILE__, __LINE__,
 			"getQuota()", wmputilities::WMS_IS_FAILURE,
 			"Unable to get total quota");
 	}
-	delete auth;
 	getQuota_response.softLimit = quotas.first;
 	getQuota_response.hardLimit = quotas.second;
 	
@@ -425,23 +337,21 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 {
 	GLITE_STACK_TRY("getFreeQuota()");
 	edglog_fn("wmpoperations::getFreeQuota");
-	logRemoteHostInfo();
-	callLoadScriptFile("getFreeQuota");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getFreeQuota");
 	
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize(wmputilities::getEnvFQAN());
-	edglog(debug)<<"User Name: "<<auth->getUserName()<<endl;
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize(wmputilities::getEnvFQAN());
+	edglog(debug)<<"User Name: "<<auth.getUserName()<<endl;
 	
 	pair<long, long> quotas;
-	if (!wmputilities::getUserFreeQuota(quotas, auth->getUserName())) {
+	if (!wmputilities::getUserFreeQuota(quotas, auth.getUserName())) {
 		edglog(severe)<<"Unable to get free quota"<<endl;
 		throw FileSystemException(__FILE__, __LINE__, "getFreeQuota()",
 			wmputilities::WMS_IS_FAILURE, "Unable to get free quota");
 	}
-	delete auth;
 	getFreeQuota_response.softLimit = quotas.first;
 	getFreeQuota_response.hardLimit = quotas.second;
 	
@@ -456,85 +366,59 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	// During jobPurge operation, a check to getOutputFileList lock file is done
 	// If a getOutputFileList is requested, jobPurge operation is aborted
 	int fd = -1;
-	
+
 	try {
 		edglog_fn("wmpoperations::getOutputFileList");
-		logRemoteHostInfo();
-		callLoadScriptFile("getOutputFileList");
-		edglog(info)<<"Operation requested for job: "<<jid<<endl;
-		
-		JobId *jobid = new JobId(jid);
-		
-		//** Authorizing user
-		edglog(info)<<"Authorizing user..."<<endl;
-		authorizer::WMPAuthorizer *auth = 
-			new authorizer::WMPAuthorizer();
-		
-		// Checking job existency (if the job directory doesn't exist:
-		// The job has not been registered from this Workload Manager Proxy
-		// or it has been purged)
-		checkJobDirectoryExistence(*jobid);
-	
-		// Getting delegated proxy inside job directory
-		string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
-		edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-		
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-		if (vomsproxy.hasVOMSExtension()) {
-			auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-		} else {
-			auth->authorize("", jid);
-		}
-		delete auth;
-		
+		// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+		initWMProxyOperation("getOutputFileList");
+		edglog(debug)<<"Operation requested for job: "<<jid<<endl;
+
+		JobId jobid(jid);
+		checkSecurity(&jobid);
+
 		int fd = wmputilities::operationLock(
-			wmputilities::getGetOutputFileListLockFilePath(*jobid),
+			wmputilities::getGetOutputFileListLockFilePath(jobid),
 			"getOutputFileList");
-			
-		string jobdirectory = wmputilities::getJobDirectoryPath(*jobid);
-	
+
+		string jobdirectory = wmputilities::getJobDirectoryPath(jobid);
+
 		// Checking for maradona file, created if and only if the job is in DONE state
-		edglog(debug)<<"Searching for file: "<<jobdirectory + FILE_SEPARATOR
+		edglog(debug)<<"Searching for MARADONA file: "<<jobdirectory + FILE_SEPARATOR
 			+ MARADONA_FILE<<endl;
+		// TODO use boost::fs
 		if (!wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
+			// MARADONA file NOT found
 			// Initializing logger
 			WMPEventLogger wmplogger(wmputilities::getEndpoint());
 			std::pair<std::string, int> lbaddress_port
 				= conf.getLBLocalLoggerAddressPort();
-			wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
+			wmplogger.init(lbaddress_port.first, lbaddress_port.second, &jobid,
 				conf.getDefaultProtocol(), conf.getDefaultPort());
 			wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-			
-			// Setting user proxy
-			wmplogger.setUserProxy(delegatedproxy);
-			
-			// Getting job status to check if is a job and is done success
+
+			// Setting user proxy  //TODO make it return by check security
+			wmplogger.setUserProxy( wmputilities::getJobDelegatedProxyPath(jobid));
+
+			// Getting job status to check if is a job and its status
 			JobStatus status = wmplogger.getStatus(false);
-		
 			if (status.getValInt(JobStatus::CHILDREN_NUM) != 0) {
-				string msg = "getOutputFileList operation not allowed for dag or "
-					"collection type";
-				edglog(error)<<msg<<": "<<jobid<<endl;
-				throw JobOperationException(__FILE__, __LINE__, "getOutputFileList()", 
+				string msg = "getOutputFileList operation not allowed for dag or collection type";
+				edglog(error)<<msg<<": "<<jobid.toString()<<endl;
+				throw JobOperationException(__FILE__, __LINE__, "getOutputFileList()",
 					wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 			}
-			
+			// getOutputFileList allowed when:
+			// STATUS is eithr Done (yet done_code!= FAILED) or Aborted
 			if (((status.status == JobStatus::DONE)
-					&& (status.getValInt(JobStatus::DONE_CODE)
-						== JobStatus::DONE_CODE_FAILED))
-					|| ((status.status != JobStatus::DONE)
-						&& (status.status != JobStatus::ABORTED))) {
+				&&(status.getValInt(JobStatus::DONE_CODE) == JobStatus::DONE_CODE_FAILED))
+				|| ((status.status != JobStatus::DONE) && (status.status != JobStatus::ABORTED))) {
 				edglog(error)<<
 					"Job current status doesn't allow getOutputFileList operation"<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
 					"getOutputFileList()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 					"Job current status doesn't allow getOutputFileList operation");
 			}
-		}
-		
-		delete jobid;
-		
+		}  // else ...... If MARADONA file is found, output files are definitely present on WMS
 		string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
 		vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 			conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
@@ -575,24 +459,19 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		}
 		list->file = file;
 		getOutputFileList_response.OutputFileAndSizeList = list;
-		
-		edglog(info)<<"Successfully retrieved files: "<<found.size()<<endl;
-		
+		edglog(debug)<<"Successfully retrieved files: "<<found.size()<<endl;
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		wmputilities::operationUnlock(fd);
-
- 	} catch (Exception &exc) {
+	} catch (Exception &exc) {
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		wmputilities::operationUnlock(fd);
-		
 		exc.push_back(__FILE__, __LINE__, "getOutputFileList()");
 		throw exc;
 	} catch (exception &ex) {
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		wmputilities::operationUnlock(fd);
-		
 		Exception exc(__FILE__, __LINE__, "getOutputFileList()", 0,
-			"Standard exception: " + std::string(ex.what())); 
+			"Standard exception: " + std::string(ex.what()));
 		throw exc;
 	}
 }
@@ -604,21 +483,19 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 {
 	GLITE_STACK_TRY("getJobTemplate()");
 	edglog_fn("wmpoperations::getJobTemplate");
-	logRemoteHostInfo();
-	callLoadScriptFile("getJobTemplate");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getJobTemplate");
 	
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
 	getJobTemplate_response.jdl =
 		(AdConverter::createJobTemplate(convertJobTypeListToInt(jobType),
 		executable, arguments, requirements, rank))->toString();
 		
-	edglog(info)<<"Job Template retrieved successfully"<<endl;
+	edglog(debug)<<"Job Template retrieved successfully"<<endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -629,21 +506,19 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
 {
 	GLITE_STACK_TRY("getDAGTemplate()");
 	edglog_fn("wmpoperations::getDAGTemplate");
-	logRemoteHostInfo();
-	callLoadScriptFile("getDAGTemplate");
-	
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getDAGTemplate");
+
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
 	getDAGTemplate_response.jdl = AdConverter::createDAGTemplate(
 		convertGraphStructTypeToNodeStruct(dependencies),
 		requirements, rank)->toString();
-		
-	edglog(info)<<"DAG Template retrieved successfully"<<endl;
+
+	edglog(debug)<<"DAG Template retrieved successfully"<<endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -654,21 +529,19 @@ getCollectionTemplate(getCollectionTemplateResponse
 {
 	GLITE_STACK_TRY("getCollectionTemplate()");
 	edglog_fn("wmpoperations::getCollectionTemplate");
-	logRemoteHostInfo();
-	callLoadScriptFile("getCollectionTemplate");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getCollectionTemplate");
 	
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
 
 	getCollectionTemplate_response.jdl =
 		AdConverter::createCollectionTemplate(jobNumber, requirements,
 			rank)->toString();
 			
-	edglog(info)<<"Collection Template retrieved successfully"<<endl;
+	edglog(debug)<<"Collection Template retrieved successfully"<<endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -680,21 +553,19 @@ getIntParametricJobTemplate(getIntParametricJobTemplateResponse
 {
 	GLITE_STACK_TRY("getIntParametricJobTemplate()");
 	edglog_fn("wmpoperations::getIntParametricJobTemplate");
-	logRemoteHostInfo();
-	callLoadScriptFile("getIntParametricJobTemplate");
-	
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getIntParametricJobTemplate");
+
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
 	
 	getIntParametricJobTemplate_response.jdl =
 		AdConverter::createIntParametricTemplate(*(attributes->Item), param,
 			parameterStart, parameterStep, requirements, rank)->toString();
 			
-	edglog(info)<<"Int Parametric Job Template retrieved successfully"<<endl;
+	edglog(debug)<<"Int Parametric Job Template retrieved successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -706,45 +577,46 @@ getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 {
 	GLITE_STACK_TRY("getStringParametricJobTemplate()");
 	edglog_fn("wmpoperations::getStringParametricJobTemplate");
-	logRemoteHostInfo();
-	callLoadScriptFile("getStringParametricJobTemplate");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getStringParametricJobTemplate");
 	
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
 	
 	getStringParametricJobTemplate_response.jdl =
 		AdConverter::createStringParametricTemplate(*(attributes->Item),
 		*(param->Item), requirements, rank)->toString();
 		
-	edglog(info)<<"String Parametric Job Template retrieved successfully"<<endl;
+	edglog(debug)<<"String Parametric Job Template retrieved successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
+
+// DELEGATION OPERATION DESCRIPTION
+
 void
 getDelegationVersion(getVersionResponse &getVersion_response)
 {
 	GLITE_STACK_TRY("getDelegationVersion()");
 	edglog_fn("wmpoperations::getDelegationVersion");
-	logRemoteHostInfo();
-	callLoadScriptFile("getDelegationVersion");
-	getVersion_response.version = WMP_DELEG_VERSION;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getDelegationVersion");
+	getVersion_response.version = WMPDelegation::getDelegationVersion();
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
 
 	GLITE_STACK_CATCH();
 }
+
 void
-getDelegationIntefaceVersion(getVersionResponse&getVersion_response)
+getDelegationIntefaceVersion(getVersionResponse &getVersion_response)
 {
 	GLITE_STACK_TRY("getDelegationInterfaceVersion()");
 	edglog_fn("wmpoperations::getDelegationInterfaceVersion");
-	logRemoteHostInfo();
-	callLoadScriptFile("getDelegationInterfaceVersion");
-
-	getVersion_response.version = WMP_DELEG_INTERFACE_VERSION;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getDelegationInterfaceVersion");
+	getVersion_response.version = WMPDelegation::getDelegationInterfaceVersion();
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
 
 	GLITE_STACK_CATCH();
@@ -756,79 +628,24 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 {
 	GLITE_STACK_TRY("getProxyReq()");
 	edglog_fn("wmpoperations::getProxyReq");
-	logRemoteHostInfo();
-	callLoadScriptFile("getProxyReq");
-
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getProxyReq");
+	
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth =
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-
-	/* NEW delegation: empty string accepted, check removed
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+	
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation id not valid"<<endl;
-		throw ProxyOperationException(__FILE__, __LINE__,
+  		throw ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
-	*/
-
+	
 	getProxyReq_response.request =
 		WMPDelegation::getProxyRequest(delegation_id);
-	edglog(info)<<"Proxy requested successfully"<<endl;
-
-	GLITE_STACK_CATCH();
-}
-
-
-
-void
-renewProxyReq(renewProxyReqResponse &renewProxyReq_response,
-	const string &delegation_id)
-{
-	GLITE_STACK_TRY("renewProxyReq()");
-	edglog_fn("wmpoperations::renewProxyReq");
-	logRemoteHostInfo();
-	callLoadScriptFile("renewProxyReq");
-
-	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth =
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-
-	renewProxyReq_response.request =
-		WMPDelegation::renewProxyRequest(delegation_id);
-	edglog(info)<<"Proxy renewed successfully"<<endl;
-
-	GLITE_STACK_CATCH();
-}
-
-
-void
-getNewProxyReq(pair<string, string> &retpair)
-{
-	GLITE_STACK_TRY("getNewProxyReq()");
-	edglog_fn("wmpoperations::getNewProxyReq");
-	logRemoteHostInfo();
-	callLoadScriptFile("getNewProxyReq");
-	
-	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	
-	retpair =
-		WMPDelegation::getNewProxyRequest();
-	edglog(debug)<<"____ retpair.1: "<<retpair.first<<endl;
-	edglog(debug)<<"____ retpair.2: "<<retpair.second<<endl;
-	
-	edglog(info)<<"Proxy requested successfully"<<endl;
+	edglog(debug)<<"Proxy requested successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -839,27 +656,59 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 {
 	GLITE_STACK_TRY("putProxy()");
 	edglog_fn("wmpoperations::putProxy");
-	logRemoteHostInfo();
-	callLoadScriptFile("putProxy");
-	
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("putProxy");
+
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	/* NEW delegation: empty string accepted, check removed
-	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation id not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
-			"putProxy()", wmputilities::WMS_INVALID_ARGUMENT,
-			"Provided delegation id not valid");
-	}
-	*/
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
 	WMPDelegation::putProxy(delegation_id, proxy);
-	edglog(info)<<"Proxy put successfully"<<endl;
+	edglog(debug)<<"Proxy put successfully"<<endl;
 	
+	GLITE_STACK_CATCH();
+}
+
+void
+renewProxyReq(string &renewProxyReq_response,
+	const string &delegation_id)
+{
+	GLITE_STACK_TRY("renewProxyReq()");
+	edglog_fn("wmpoperations::renewProxyReq");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("renewProxyReq");
+
+	// Authorizing user
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
+	renewProxyReq_response = WMPDelegation::renewProxyRequest(delegation_id);
+	edglog(debug)<<"Proxy renewed successfully"<<endl;
+
+	GLITE_STACK_CATCH();
+}
+
+void
+getNewProxyReq(pair<string, string> &retpair)
+{
+	GLITE_STACK_TRY("getNewProxyReq()");
+	edglog_fn("wmpoperations::getNewProxyReq");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getNewProxyReq");
+
+	// Authorizing user
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
+	retpair = WMPDelegation::getNewProxyRequest();
+
+	edglog(debug)<<"found delegationID: "<<retpair.first<<endl;
+	edglog(debug)<<"found proxyRequest "<<retpair.second<<endl;
+	edglog(debug)<<"Proxy requested successfully"<<endl;
+
 	GLITE_STACK_CATCH();
 }
 
@@ -868,57 +717,36 @@ destroyProxy(const string &delegation_id)
 {
 	GLITE_STACK_TRY("destroyProxy()");
 	edglog_fn("wmpoperations::destroyProxy");
-	logRemoteHostInfo();
-	callLoadScriptFile("destroyProxy");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("destroyProxy");
 	
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	/* NEW delegation: empty string accepted, check removed
-	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation id not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
-			"destroyProxy()", wmputilities::WMS_INVALID_ARGUMENT,
-			"Provided delegation id not valid");
-	}
-	*/
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
 	
 	WMPDelegation::destroyProxy(delegation_id);
-	edglog(info)<<"destroyProxy successfully"<<endl;
+	edglog(debug)<<"destroyProxy successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
 
+
 void
-getProxyTerminationTime(getProxyTerminationTimeResponse 
+getProxyTerminationTime(time_t
 	&getProxyTerminationTime_response, const string &delegation_id)
 {
 	GLITE_STACK_TRY("getProxyTerminationTime()");
 	edglog_fn("wmpoperations::getProxyTerminationTime");
-	logRemoteHostInfo();
-	callLoadScriptFile("getProxyTerminationTime");
-	
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getProxyTerminationTime");
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	/* NEW delegation: empty string accepted, check removed
-	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation id not valid"<<endl;
-		throw ProxyOperationException(__FILE__, __LINE__,
-			"getProxyTerminationTime()", wmputilities::WMS_INVALID_ARGUMENT,
-			"Provided delegation id not valid");
-	}
-	*/
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
 	getProxyTerminationTime_response = WMPDelegation::getTerminationTime(delegation_id);
-	edglog(info)<<"getProxyTerminationTime successfully"<<endl;
-	
+	edglog(debug)<<"getProxyTerminationTime successfully"<<endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -927,45 +755,23 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 {
 	GLITE_STACK_TRY("getACLItems()");
 	edglog_fn("wmpoperations::getACLItems");
-	logRemoteHostInfo();
-	callLoadScriptFile("getACLItems");
-	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getACLItems");
+	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 	
-	JobId *jid = new JobId(job_id);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} else {
-		auth->authorize("", job_id);
-	}
-	delete auth;
+	JobId jid (job_id);
+	// wmpcommon perform all security checks
+	checkSecurity(&jid);
+ 	string jobpath = wmputilities::getJobDirectoryPath(jid);
 
-	string jobpath = wmputilities::getJobDirectoryPath(*jid);
-	
 	edglog(debug)<<"GACL File: "<<jobpath + FILE_SEPARATOR
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
 	authorizer::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
 	getACLItems_response =
 		gaclmanager.getItems(authorizer::GaclManager::WMPGACL_PERSON_TYPE);
-		
-	edglog(info)<<"getACLItems successfully"<<endl;
+	
+	edglog(debug)<<"getACLItems successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -976,36 +782,14 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 {
 	GLITE_STACK_TRY("addACLItems()");
 	edglog_fn("wmpoperations::addACLItems");
-	logRemoteHostInfo();
-	callLoadScriptFile("addACLItems");
-	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("addACLItems");
+	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 	
-	JobId *jid = new JobId(job_id);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} else {
-		auth->authorize("", job_id);
-	}
-	delete auth;
-	
-	string jobpath = wmputilities::getJobDirectoryPath(*jid);
+	JobId jid(job_id);
+	// wmpcommon perform all security checks
+	checkSecurity(&jid);
+	string jobpath = wmputilities::getJobDirectoryPath(jid);
 
 	edglog(debug)<<"GACL File: "<<jobpath + FILE_SEPARATOR
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
@@ -1016,14 +800,14 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 	pair<authorizer::GaclManager::WMPgaclCredType, string> gaclpair;
 	for (unsigned int i = 0; i < dnlist->Item->size(); i++) {
 		gaclpair.first = authorizer::GaclManager::WMPGACL_PERSON_TYPE;
-		edglog(info)<<"Item to add: "<<(*(dnlist->Item))[i]<<endl;
+		edglog(debug)<<"Item to add: "<<(*(dnlist->Item))[i]<<endl;
 		gaclpair.second = (*(dnlist->Item))[i];
 		gaclvect.push_back(gaclpair);
 	}
 	gaclmanager.addEntries(gaclvect);
 	gaclmanager.saveGacl();
 	
-	edglog(info)<<"addACLItems successfully"<<endl;
+	edglog(debug)<<"addACLItems successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -1034,36 +818,15 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 {
 	GLITE_STACK_TRY("removeACLItem()");
 	edglog_fn("wmpoperations::removeACLItem");
-	logRemoteHostInfo();
-	callLoadScriptFile("removeACLItem");
-	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
-	
-	string errors = "";	
-	JobId *jid = new JobId(job_id);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} else {
-		auth->authorize("", job_id);
-	}
-	delete auth;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("removeACLItem");
+	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 
+	string errors = "";
+	JobId jid (job_id);
+
+	// wmpcommon perform all security checks
+	checkSecurity(&jid);
 	// TBD change test in: item == owner
 	if (item == wmputilities::getUserDN()) {
 		edglog(error)<<"Removal of the item representing user that has "
@@ -1073,7 +836,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 			"Removal of the item representing user that has registered the "
 			"job is not allowed");
 	}
-	string jobpath = wmputilities::getJobDirectoryPath(*jid);
+	string jobpath = wmputilities::getJobDirectoryPath(jid);
 	
 	edglog(debug)<<"GACL File: "<<jobpath + FILE_SEPARATOR
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
@@ -1083,15 +846,15 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 		item, errors);
 		
 	if (errors.size() > 0) {
-		edglog(error)<<"Removal of the gacl item failed: " << errors << "\n"; 
-		throw AuthorizationException(__FILE__, __LINE__, 
-		"removeACLItem()", wmputilities::WMS_AUTHORIZATION_ERROR, 
-		"Removal of the gacl item failed:\n" + errors); 
-	} 
+		edglog(error)<<"Removal of the gacl item failed: " << errors << "\n";
+		throw AuthorizationException(__FILE__, __LINE__,
+			"removeACLItem()", wmputilities::WMS_AUTHORIZATION_ERROR, 
+			"Removal of the gacl item failed:\n" + errors); 
+	}
 	gaclmanager.saveGacl();
-	
-	edglog(info)<<"removeACLItem successfully"<<endl;
-	
+
+	edglog(debug)<<"removeACLItem successfully"<<endl;
+
 	GLITE_STACK_CATCH();
 }
 
@@ -1102,14 +865,14 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 {
 	GLITE_STACK_TRY("getProxyInfo()");
 	edglog_fn("wmpoperations::getProxyInfo");
-	logRemoteHostInfo();
-	callLoadScriptFile("getProxyInfo");
-	
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getProxyInfo");
+
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
 	string proxy;
 	if (isjobid) {
 		edglog(info)<<"Job Id: "<<id<<endl;
@@ -1120,32 +883,28 @@ getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
 				"getProxyInfo()", wmputilities::WMS_INVALID_ARGUMENT,
 				"Provided Job Id not valid");
 		}
-		auth->authorize("", id);
+		auth.authorize("", id);
 		proxy = wmputilities::getJobDelegatedProxyPath(id);
 		authorizer::WMPAuthorizer::checkProxyExistence(proxy, id);
 		edglog(debug)<<"Job proxy: "<<proxy<<endl;
 	} else {
 		edglog(info)<<"Delegation Id: "<<id<<endl;
-		auth->authorize();
+		auth.authorize();
 		// Checking delegation id
-		/* NEW delegation: empty string accepted, check removed
 		if (id == "") {
 			edglog(error)<<"Provided Delegation Id not valid"<<endl;
 	  		throw JobOperationException(__FILE__, __LINE__,
 				"getProxyInfo()", wmputilities::WMS_INVALID_ARGUMENT,
 				"Provided Delegation Id not valid");
 		}
-		*/
 		proxy = WMPDelegation::getDelegatedProxyPath(id);
 		edglog(debug)<<"Delegated Proxy: "<<proxy<<endl;
 	}
-	delete auth;
-	
-	
+	// Common part: retreve vomsproxy and its info  //TODO TODO
 	authorizer::VOMSAuthZ vomsproxy = authorizer::VOMSAuthZ(proxy);
 	getProxyInfo_response.items = vomsproxy.getProxyInfo();
 	
-	edglog(info)<<"getProxyInfo successfully"<<endl;
+	edglog(debug)<<"getProxyInfo successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -1155,19 +914,21 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 {
 	GLITE_STACK_TRY("checkPerusalFlag()");
 	edglog_fn("wmpoperations::checkPerusalFlag");
-	
+	//TODO jid parameter is deleted inside this method - not safe!
+	// TODO jad/dag/ad: remove pointer use
+
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-	
+
 	// Setting user proxy
 	wmplogger.setUserProxy(delegatedproxy);
-	
+
 	string jdlpath;
 	jdlpath = wmputilities::getJobJDLExistingStartPath(*jid);
-	
+
 	edglog(debug)<<"jdlpath: "<<jdlpath<<endl;
 	string type;
 	JobAd * jad = NULL;
@@ -1181,11 +942,10 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 				"Unable to check perusal availability"
 				"\n(please contact server administrator)");
 		}
-		
-		// Job is a sub-node, getting JDL from parent JDL
-		JobId *parentjid = new JobId(parent);
-		jdlpath = wmputilities::getJobJDLExistingStartPath(*parentjid);
 
+		// Job is a sub-node, getting JDL from parent JDL
+		JobId parentjid(parent);
+		jdlpath = wmputilities::getJobJDLExistingStartPath(parentjid);
 		WMPExpDagAd *dag = new WMPExpDagAd(wmputilities::readTextFile(jdlpath));
 		jad = new NodeAd(dag->getNode(*jid));
 		delete jid;
@@ -1207,7 +967,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 		}
 		delete ad;
 	}
-	edglog(info) <<"Type: "<<type<<endl;
+	edglog(debug) <<"Type: "<<type<<endl;
 	if (type == JDL_TYPE_JOB) {
 		jad->setLocalAccess(false);
 		
@@ -1271,7 +1031,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 					// No document root added
 					serverpath = wmputilities::getPeekDirectoryPath(*jid, false);
 				} else {
-					serverpath = wmputilities::getPeekDirectoryPath(*jid);	
+					serverpath = wmputilities::getPeekDirectoryPath(*jid);
 				}
 				edglog(debug)<<"Server path: "<<serverpath<<endl;
 				if (uripath != serverpath) {
@@ -1291,7 +1051,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 		edglog(debug)<<"Perusal service not available for dag or collection "
 			"type"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
-	    	"checkPerusalFlag()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+	    	"checkPerusalFlag()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 	    	"Perusal service not available for dag or collection type");
 	}
 	
@@ -1300,61 +1060,49 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 
 void
 enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
-	const string &job_id, StringList * fileList)
+        const string &job_id, StringList * fileList)
 {
-	GLITE_STACK_TRY("enableFilePerusal()");
-	edglog_fn("wmpoperations::enableFilePerusal");
-	logRemoteHostInfo();
-	callLoadScriptFile("enableFilePerusal");
-	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
-	
-	JobId *jid = new JobId(job_id);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} else {
-		auth->authorize("", job_id);
-	}
-	delete auth;
+        GLITE_STACK_TRY("enableFilePerusal()");
+        edglog_fn("wmpoperations::enableFilePerusal");
+        // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+        initWMProxyOperation("enableFilePerusal");
+        edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 
-	checkPerusalFlag(jid, delegatedproxy, false);
-	
-	string filename = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR
-		+ PERUSAL_FILE_2_PEEK_NAME;
-	
-	unsigned int size = fileList->Item->size();
-	if (size != 0) {
-		fstream file2peek(filename.c_str(), ios::out);
-		for (unsigned int i = 0; i < size; i++) {
-	    	file2peek << (*(fileList->Item))[i] + "\n";
-		}
-	    file2peek.close();
-	} else {
-		// Removing file2peek file if needed
-		if (wmputilities::fileExists(filename)) {
-			remove(filename.c_str());
-		}
-	}
+        JobId jid (job_id);
+        // wmpcommon perform all security checks
+        checkSecurity(&jid);
+        // TODO delegation Id may be returned somehow when checking security...
+        string delegatedproxy= wmputilities::getJobDelegatedProxyPath(jid);
+	checkPerusalFlag( &jid, delegatedproxy, false);
 
-	edglog(info)<<"enableFilePerusal successfully"<<endl;
-	
-	GLITE_STACK_CATCH();
+        string filename = wmputilities::getPeekDirectoryPath(jid) + FILE_SEPARATOR
+                + PERUSAL_FILE_2_PEEK_NAME;
+
+        // getting maxPerusalFiles attribute from configuration file
+	unsigned int maxPerusalFiles = conf.getMaxPerusalFiles();
+        unsigned int size = fileList->Item->size();
+
+        if ( size <= maxPerusalFiles ) {
+                if (size != 0) {
+			fstream file2peek(filename.c_str(), ios::out);
+                        for (unsigned int i = 0; i < size; i++) {
+				file2peek << (*(fileList->Item))[i]+"\n";
+                        }
+                    	file2peek.close();
+                } else {
+                        // Removing file2peek file if needed
+                        if (wmputilities::fileExists(filename)) {
+                                remove(filename.c_str());
+                        }
+                }
+                edglog(debug)<<"enableFilePerusal successfully"<<endl;
+        } else {
+                throw JobOperationException(__FILE__, __LINE__, "wmpoperations::enableFilePerusal()",
+                                wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of perusal files is reached");
+
+        }
+
+        GLITE_STACK_CATCH();
 }
 
 void
@@ -1364,34 +1112,13 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 {
 	GLITE_STACK_TRY("getPerusalFiles()");
 	edglog_fn("wmpoperations::getPerusalFiles");
-	logRemoteHostInfo();
-	callLoadScriptFile("getPerusalFiles");
-	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getPerusalFiles");
+	edglog(debug)<<"Operation requested for job: "<<job_id<<endl;
 	
-	JobId *jid = new JobId(job_id);
-	
-	//** Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	
-	// Checking job existency (if the job directory doesn't exist:
-	// The job has not been registered from this Workload Manager Proxy
-	// or it has been purged)
-	checkJobDirectoryExistence(*jid);
-	
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} else {
-		auth->authorize("", job_id);
-	}
-	delete auth;
+	JobId jid(job_id);
+	// wmpcommon perform all security checks
+	checkSecurity(&jid);
 
 	if (fileName == "") {
 		throw JobOperationException(__FILE__, __LINE__,
@@ -1399,16 +1126,17 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	    	"Provided file name not valid");
 	}
 	
-	if (!wmputilities::fileExists(wmputilities::getJobJDLStartedPath(*jid))) {
+	if (!wmputilities::fileExists(wmputilities::getJobJDLStartedPath(jid))) {
 		edglog(error)<<"The job is not started"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 	    	"getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 	    	"the job is not started");
 	}
-	
-	checkPerusalFlag(jid, delegatedproxy, true);
+	// TODO delegation Id may be returned somehow when checking security...
+	string delegatedproxy= wmputilities::getJobDelegatedProxyPath(jid);
+	checkPerusalFlag(&jid, delegatedproxy, true);
 
-	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
+	string peekdir = wmputilities::getPeekDirectoryPath(jid) + FILE_SEPARATOR;
 	const boost::filesystem::path p(peekdir, boost::filesystem::native);
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
@@ -1521,7 +1249,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	
 	getPerusalFiles_response = returnvector;
 	
-	edglog(info)<<"getPerusalFiles successfully"<<endl;
+	edglog(debug)<<"getPerusalFiles successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -1531,19 +1259,18 @@ getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response
 {
 	GLITE_STACK_TRY("getTransferProtocols()");
 	edglog_fn("wmpoperations::getTransferProtocols");
-	logRemoteHostInfo();
-	callLoadScriptFile("getTransferProtocols");
-	
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getTransferProtocols");
+
 	// Authorizing user
-	edglog(info)<<"Authorizing user..."<<endl;
-	authorizer::WMPAuthorizer *auth = 
-		new authorizer::WMPAuthorizer();
-	auth->authorize();
-	delete auth;
-	
+	edglog(debug)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
+
 	getTransferProtocols_response.protocols = new StringList;
 	vector<string> *protocols = new vector<string>();
-	
+
 	vector<pair<string, int> > serverprotocols = conf.getProtocols();
 	unsigned int size = serverprotocols.size();
 	for (unsigned int i = 0; i < size; i++) {
@@ -1551,10 +1278,42 @@ getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response
 	}
 	protocols->push_back("https");
 	getTransferProtocols_response.protocols->Item = protocols;
-		
-	edglog(info)<<"Transfer protocols retrieved successfully"<<endl;
+
+	edglog(debug)<<"Transfer protocols retrieved successfully"<<endl;
 	GLITE_STACK_CATCH();
 }
+
+
+void
+getJobStatusOp(getJobStatusResponse &getJobStatus_response, const string &job_id)
+{
+	GLITE_STACK_TRY("getJobStatus()");
+	edglog_fn("wmpoperations::getJobStatus");
+	// log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+	initWMProxyOperation("getJobStatus");
+
+	// Authorizing user
+	edglog(debug)<<"Authorizing user..."<<endl;  // TODO CUSTOM authorization for JOB STATUS!!!
+	authorizer::WMPAuthorizer auth;
+	auth.authorize();
+
+	// TODO status flag could be parametrized
+	bool status_flag=true;
+	// PERFORM Job actual Status request
+	WMPEventLogger wmplogger(wmputilities::getEndpoint());
+	JobStatus status = wmplogger.getStatus(status_flag);
+	// fill in job Status structure:
+
+	getJobStatus_response.jobStatus = new JobStatusStructType;
+	getJobStatus_response.jobStatus->status = status.name();
+	getJobStatus_response.jobStatus->jobid  = job_id;
+	// TODO children?
+
+	edglog(debug)<<"JobStatus retrieved successfully"<<endl;
+	GLITE_STACK_CATCH();
+}
+
+
 
 //} // server
 //} // wmproxy

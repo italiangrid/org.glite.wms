@@ -1,5 +1,5 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
 holders.  
 
@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 // File: wmplbselector.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmplbselector.h"
@@ -34,8 +34,6 @@ limitations under the License.
 // TRY CATCH macros
 #include "utilities/wmpexceptions.h"
 
-#include "glite/jdl/RequestAdExceptions.h"
-
 // File Lock
 #include "utilities/wmputils.h"
 
@@ -44,6 +42,7 @@ limitations under the License.
 
 // Ad
 #include "glite/jdl/Ad.h"
+#include "glite/jdl/RequestAdExceptions.h"
 
 
 namespace glite {
@@ -86,7 +85,7 @@ WMPLBSelector::WMPLBSelector()
 	this->enableservicediscovery = false;
 	this->weightscachevaliditytime
 		= DEFAULT_WEIGHTS_CACHE_VALIDITY_TIME;
-	this->servicediscoveryinfovalidity 
+	this->servicediscoveryinfovalidity
 		= DEFAULT_SERVICE_DISCOVERY_INFO_VALIDITY_TIME;
 	
 	setWeightsFilePath();
@@ -136,23 +135,21 @@ WMPLBSelector::WMPLBSelector(vector<pair<string, int> > conflbservers,
 		this->servicediscoveryinfovalidity
 			= servicediscoveryinfovalidity;
 	}
-	
+
 	setWeightsFilePath();
 	
 	if (wmputilities::fileExists(this->weightsfile)) {
-		glite::jdl::Ad lbserveradold;
-		
+		glite::jdl::Ad lbserveradold;  //OLD
 		try {
 			lbserveradold.fromFile(this->weightsfile);
 		} catch (exception &exc) {
 			// Error in weights file parsing, regenerating empty file
-			edglog(debug)<<"Error in weights file parsing: "<<exc.what()<<endl;
+			edglog(debug)<<"Error in LB Server weights file parsing: "<<exc.what()<<endl;
 		}
-		
 		// Checking for file last update
 		double serviceWeightsLastUpdate = static_cast<double>(time(NULL));
 		if (lbserveradold.hasAttribute(SERVER_WEIGHTS_LAST_UPDATE)) {
-			serviceWeightsLastUpdate 
+			serviceWeightsLastUpdate
 				= lbserveradold.getDouble(SERVER_WEIGHTS_LAST_UPDATE);
 		}
 		glite::jdl::Ad lbserverad;
@@ -162,10 +159,9 @@ WMPLBSelector::WMPLBSelector(vector<pair<string, int> > conflbservers,
 		} else {
 			newLBServerAd(lbserverad);
 		}
-		
 		wmputilities::writeTextFile(this->weightsfile, lbserverad.toLines());
 	}
-};
+}
 
 // Destructor
 WMPLBSelector::~WMPLBSelector() throw()
@@ -179,21 +175,21 @@ WMPLBSelector::selectLBServer()
 {
 	GLITE_STACK_TRY("selectLBServer()");
 	edglog_fn("WMPLBSelector::selectLBServer");
-	
-	glite::jdl::Ad lbserverad;
+
+
 	bool fileexists = wmputilities::fileExists(this->weightsfile);
 	if (!fileexists) {
 		wmputilities::writeTextFile(this->weightsfile, DEFAULT_WEIGHTS_FILE);
 	}
-	
-	// \/ Locking file
+
+	// [ Locking file
 	edglog(debug)<<"Locking file: "<<this->weightsfile<<endl;
 	int fd = open(this->weightsfile.c_str(), O_CREAT | O_RDWR, S_IRWXU);
 	if (fd == -1) {
 		edglog(debug)<<"Unable to open lock file: "<<this->weightsfile<<endl;
 		throw wmputilities::FileSystemException( __FILE__, __LINE__,
-  			"selectLBServer()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-   			"unable to open lock file");
+			"selectLBServer()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+			"unable to open lock file");
 	}
 	
 	struct flock flockstruct;
@@ -202,15 +198,16 @@ WMPLBSelector::selectLBServer()
 	// Exclusive wright lock
 	flockstruct.l_type = F_WRLCK;
 	
-	// Blocking lock
+	// Blocking lock [
 	if (fcntl(fd, F_SETLKW, &flockstruct) == -1) {
 		edglog(debug)<<"Unable to lock file: "<<this->weightsfile<<endl;
 		edglog(debug)<<strerror(errno)<<endl;
 		close(fd);
 		fd = -1;
 	}
-	// /\
-	
+	// ]
+
+	glite::jdl::Ad lbserverad;
 	if (fd != -1) {
 		if (fileexists) {
 			try {
@@ -218,16 +215,13 @@ WMPLBSelector::selectLBServer()
 			} catch (exception &exc) {
 				// Error in weights file parsing, regenerating empty file
 				edglog(debug)<<"Error in weights file parsing: "<<exc.what()<<endl;
-				edglog(debug)<<"Regenerating file..."<<endl;
 				newLBServerAd(lbserverad);
-				wmputilities::writeTextFile(this->weightsfile,
-					lbserverad.toLines());
+				wmputilities::writeTextFile(this->weightsfile, lbserverad.toLines());
 			}
-			
 			// Checking for file last update
 			double serviceWeightsLastUpdate = 0;
 			if (lbserverad.hasAttribute(SERVER_WEIGHTS_LAST_UPDATE)) {
-				serviceWeightsLastUpdate 
+				serviceWeightsLastUpdate
 					= lbserverad.getDouble(SERVER_WEIGHTS_LAST_UPDATE);
 			}
 			if ((static_cast<double>(time(NULL)) - serviceWeightsLastUpdate)
@@ -241,10 +235,9 @@ WMPLBSelector::selectLBServer()
 					// Checking for Service Discovery update
 					double lastServiceDiscoveryUpdate = 0;
 					if (lbserverad.hasAttribute(SERVICE_DISCOVERY_LAST_UPDATE)) {
-						lastServiceDiscoveryUpdate 
+						lastServiceDiscoveryUpdate
 							= lbserverad.getDouble(SERVICE_DISCOVERY_LAST_UPDATE);
 					}
-					
 					if ((static_cast<double>(time(NULL))
 								- lastServiceDiscoveryUpdate)
 							> this->servicediscoveryinfovalidity) {
@@ -261,25 +254,25 @@ WMPLBSelector::selectLBServer()
 				lbserverad.toLines());
 		}
 		
-		// \/ Unlocking file
+		// [ Unlocking file
 		flockstruct.l_type = F_WRLCK;
 		fcntl(fd, F_SETLKW, &flockstruct);
 		close(fd);
-		// /\
+		// ]
 		
 	} else {
 		// Ignoring weights file
 		newLBServerAd(lbserverad);
 	}
 	
-	// \/ Removing non LB server attributes
+	// [ Removing non LB server attributes
 	if (lbserverad.hasAttribute(SERVICE_DISCOVERY_LAST_UPDATE)) {
 		lbserverad.delAttribute(SERVICE_DISCOVERY_LAST_UPDATE);
 	}
 	if (lbserverad.hasAttribute(SERVER_WEIGHTS_LAST_UPDATE)) {
 		lbserverad.delAttribute(SERVER_WEIGHTS_LAST_UPDATE);
 	}
-	// /\
+	// ]
 		
 	vector<string> attrvector = lbserverad.attributes();
 	unsigned int attrvectorsize = attrvector.size();
@@ -299,17 +292,13 @@ WMPLBSelector::selectLBServer()
 			} else if (currentweight > this->weightupperlimit) {
 				currentweight = this->weightupperlimit;
 			}
-			
 			edglog(debug)<<"Weight: "<<currentweight<<endl;
-			
 			weights.push_back(currentweight);
 			range += currentweight;
 		}
 		
 		// Generating random number between 1 and weights sum
 		int random = generateRandomNumber(1, range);
-		edglog(debug)<<"Generated random number: "<<random<<endl;
-		
 		for (unsigned int i = 0; i < attrvectorsize; i++) {
 			random -= weights[i];
 			if (random <= 0) {
@@ -320,28 +309,17 @@ WMPLBSelector::selectLBServer()
 	} else {
 		// size == 0
 		// Something bad happened. Vector should contain at least one item
-		edglog(critical)<<"Server vector contains no items"<<endl;
-		
-		// TODO do something??
+		edglog(warning)<<"LB Server vector contains no items!"<<endl;
 	}
-
-	
-	edglog(debug)<<"Selected Index: "<<index<<endl;
 	this->selectedlb = attrvector[index];
-	
 	pair<string, int> returnpair;
 	wmputilities::parseAddressPort(toLBServerName(this->selectedlb), returnpair);
-	
 	if (returnpair.first == "localhost") {
-    	returnpair.first = wmputilities::getServerHost();
-    	returnpair.second = 0;
-    }
-    
-	edglog(debug)<<"Selected LB: "<<returnpair.first<<":"<<returnpair.second
-		<<endl;
-	
+		returnpair.first = wmputilities::getServerHost();
+		returnpair.second = 0;
+	}
+	edglog(debug)<<"Selected LB: "<<returnpair.first<<":"<<returnpair.second<<endl;
 	return returnpair;
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -365,13 +343,12 @@ WMPLBSelector::updateLBServerAd(glite::jdl::Ad &lbserveradref,
 	
 	if (this->enableservicediscovery) {
 		// Request to Service Discovery
-		edglog(debug)<<"Calling Service Discovery..."<<endl;
+		edglog(debug)<<"Calling Service Discovery for other LB servers..."<<endl;
 		vector<string> sdresult = callServiceDiscovery();
-		
 		// Adding LB Servers from Service Discovery
 		unsigned int sdresultsize = sdresult.size();
-		edglog(debug)<<"Service Discovery returned "<<sdresultsize<<" LB server[s]"
-			<<endl;
+		edglog(debug)<<"Service Discovery returned "<<sdresultsize
+			<< " LB server[s]" << endl;
 		pair<string, int> addressport;
 		for (unsigned int i = 0; i < sdresultsize; i++) {
 			// Removing protocol and ending slash
@@ -387,14 +364,14 @@ WMPLBSelector::updateLBServerAd(glite::jdl::Ad &lbserveradref,
 	
 	// Getting weights from old classad
 	
-	// \/ Removing non LB server attributes
+	// [ Removing non LB server attributes
 	if (lbserveradref.hasAttribute(SERVICE_DISCOVERY_LAST_UPDATE)) {
 		lbserveradref.delAttribute(SERVICE_DISCOVERY_LAST_UPDATE);
 	}
 	if (lbserveradref.hasAttribute(SERVER_WEIGHTS_LAST_UPDATE)) {
 		lbserveradref.delAttribute(SERVER_WEIGHTS_LAST_UPDATE);
 	}
-	// /\
+	// ]
 	
 	vector<string> attrvector = lbserveradref.attributes();
 	unsigned int attrvectorsize = attrvector.size();
@@ -402,19 +379,19 @@ WMPLBSelector::updateLBServerAd(glite::jdl::Ad &lbserveradref,
 		if (lbserverad.hasAttribute(attrvector[i])) {
 			lbserverad.delAttribute(attrvector[i]);
 			edglog(debug)<<"Setting old weight for LB server Attribute: "
-				<<attrvector[i]<<endl;
+				<< attrvector[i]<<endl;
 			lbserverad.setAttribute(attrvector[i],
 				lbserveradref.getInt(attrvector[i]));
 		}
 	}
-	
+
 	lbserverad.setAttribute(SERVICE_DISCOVERY_LAST_UPDATE,
 		static_cast<double>(time(NULL)));
 	if (this->enableservicediscovery) {
 		lbserverad.setAttribute(SERVER_WEIGHTS_LAST_UPDATE,
 			static_cast<double>(time(NULL)));
 	}
-	
+
 	GLITE_STACK_CATCH();
 }
 
@@ -423,29 +400,29 @@ WMPLBSelector::newLBServerAd(glite::jdl::Ad &lbserverad)
 {
 	GLITE_STACK_TRY("newLBServerAd()");
 	edglog_fn("WMPLBSelector::newLBServerAd");
-	
+
 	// Getting LB Servers from configuration file
 	string currentitem;
 	unsigned int lbserverssize = this->conflbservers.size();
 	for (unsigned int i = 0; i < lbserverssize; i++) {
 		currentitem = toWeightsFileAttributeName(this->conflbservers[i]);
 		if (!lbserverad.hasAttribute(currentitem)) {
-			edglog(debug)<<"Adding conf LB server: "<<this->conflbservers[i]<<endl;
+			edglog(debug)<<"Adding LB conf server: "<<this->conflbservers[i]<<endl;
 			lbserverad.setAttribute(currentitem, this->weightupperlimit);
 		}
 	}
-	
+
 	if (this->enableservicediscovery) {
 		// Request to Service Discovery
 		edglog(debug)<<"Calling Service Discovery..."<<endl;
 		vector<string> sdresult = callServiceDiscovery();
-		
 		// Adding LB Servers from Service Discovery
 		unsigned int sdresultsize = sdresult.size();
-		edglog(debug)<<"Service Discovery returned "<<sdresultsize<<" LB server[s]"
-			<<endl;
+		edglog(debug)<<"Service Discovery returned "<<sdresultsize
+			<< " LB server[s]" << endl;
 		pair<string, int> addressport;
 		for (unsigned int i = 0; i < sdresultsize; i++) {
+			// Removing protocol and ending slash
 			wmputilities::parseAddressPort(sdresult[i], addressport);
 			currentitem = toWeightsFileAttributeName(addressport.first + ":" +
 				boost::lexical_cast<std::string>(addressport.second));
@@ -478,12 +455,10 @@ WMPLBSelector::updateSelectedIndexWeight(lbcallresult result)
 	edglog_fn("WMPLBSelector::updateSelectedIndexWeight");
 	
 	if (this->selectedlb != "") {
-		edglog(debug)<<"Updating weight..."<<endl;
 		glite::jdl::Ad lbserverad;
-		bool fileexists
-			= wmputilities::fileExists(this->weightsfile);
+		bool fileexists = wmputilities::fileExists(this->weightsfile);
 		
-		// \/ Locking file
+		// [ Locking file
 		edglog(debug)<<"Locking file: "<<this->weightsfile<<endl;
 		int fd = open(this->weightsfile.c_str(), O_CREAT | O_RDWR, S_IRWXU);
 		if (fd == -1) {
@@ -506,7 +481,7 @@ WMPLBSelector::updateSelectedIndexWeight(lbcallresult result)
 			close(fd);
 			fd = -1;
 		}
-		// /\
+		// ]
 		
 		if (fd != -1) {
 			if (fileexists) {
@@ -526,19 +501,18 @@ WMPLBSelector::updateSelectedIndexWeight(lbcallresult result)
 			wmputilities::writeTextFile(this->weightsfile,
 					lbserverad.toLines());
 			
-			// \/ Unlocking file
+			// [ Unlocking file
 			flockstruct.l_type = F_WRLCK;
 			fcntl(fd, F_SETLKW, &flockstruct);
 			close(fd);
-			// /\
+			// ]
 			
 		} else {
 			// Problems in locking file
-			edglog(debug)<<"Problems in locking weights file\nIgnoring file "
-				"update"<<endl;
+			edglog(debug)<<"Problems in locking weights file\nIgnoring file update"<<endl;
 		}
 	}
-	
+
 	GLITE_STACK_CATCH();
 }
 
@@ -546,15 +520,11 @@ void
 WMPLBSelector::updateWeight(glite::jdl::Ad &lbserverad, lbcallresult result)
 {
 	GLITE_STACK_TRY("updateWeight()");
-    edglog_fn("WMPLBSelector::updateWeight");
-    
+	edglog_fn("WMPLBSelector::updateWeight");
 	int weight = this->weightupperlimit;
 	if (lbserverad.hasAttribute(this->selectedlb)) {
 		weight = lbserverad.getInt(this->selectedlb);
 		lbserverad.delAttribute(this->selectedlb);
-		
-		edglog(debug)<<"Current weight: "<<weight<<endl;
-		
 		// Checking for weight in correct range
 		if (weight < WEIGHT_LOWER_LIMIT) {
 			weight = WEIGHT_LOWER_LIMIT;
@@ -576,16 +546,12 @@ WMPLBSelector::updateWeight(glite::jdl::Ad &lbserverad, lbcallresult result)
 			weight = WEIGHT_LOWER_LIMIT;
 		}
 	}
-	
-	edglog(debug)<<"Setting weight to: "<<weight<<endl;
 	lbserverad.setAttribute(this->selectedlb, weight);
-
 	if (lbserverad.hasAttribute(SERVER_WEIGHTS_LAST_UPDATE)) {
 		lbserverad.delAttribute(SERVER_WEIGHTS_LAST_UPDATE);
 	}
 	lbserverad.setAttribute(SERVER_WEIGHTS_LAST_UPDATE,
 		static_cast<double>(time(NULL)));
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -593,10 +559,9 @@ vector<string>
 WMPLBSelector::callServiceDiscovery()
 {
 	GLITE_STACK_TRY("callServiceDiscovery()");
-    edglog_fn("WMPLBSelector::callServiceDiscovery");
-    
-    vector<string> returnvector;
-    if (this->lbsdtype != "") {
+	edglog_fn("WMPLBSelector::callServiceDiscovery");
+	vector<string> returnvector;
+	if (this->lbsdtype != "") {
 		SDServiceList *serviceList = NULL;
 		SDException ex;
 		edglog(debug)<<"Querying Service Discovery..."<<endl;
@@ -612,29 +577,27 @@ WMPLBSelector::callServiceDiscovery()
 			}
 			SD_freeServiceList(serviceList);
 		} else {
-			// TBC Try it again n times??
+			// TODO Try it again n times??
 			if (ex.status == SDStatus_SUCCESS) {
 				edglog(error)<<"Service \""<<this->lbsdtype<<"\" not known"<<endl;
 			} else {
 				edglog(error)<<"Service Discovery failed: "<<ex.reason<<endl;
 			}
 		}
-    } else {
-    	edglog(error)<<"Service Discovery type is empty"<<endl;
-    }
-    
+	} else {
+		edglog(warning)<<"Service Discovery type is empty"<<endl;
+	}
 	return returnvector;
-	
 	GLITE_STACK_CATCH();
 }
 
-string 
+string
 WMPLBSelector::toLBServerName(const string &inputstring)
 {
 	GLITE_STACK_TRY("toLBServerName()");
 	edglog_fn("WMPLBSelector::toLBServerName");
-	
-	edglog(debug)<<"Input string: "<<inputstring<<endl;
+
+	edglog(debug)<<"Input LB Server Name: "<<inputstring<<endl;
 	string returnstring = "";
 	string::const_iterator iter = inputstring.begin();
 	string::const_iterator const end = inputstring.end();
@@ -649,10 +612,8 @@ WMPLBSelector::toLBServerName(const string &inputstring)
 	}
 	// Removing first char
 	returnstring = returnstring.substr(1, returnstring.size() - 1);
-	
-	edglog(debug)<<"Output string: "<<returnstring<<endl;
+	edglog(debug)<<"Converted LB server Name: "<<returnstring<<endl;
 	return returnstring;
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -661,8 +622,7 @@ WMPLBSelector::toWeightsFileAttributeName(const string &inputstring)
 {
 	GLITE_STACK_TRY("toWeightsFileAttributeName()");
 	edglog_fn("WMPLBSelector::toWeightsFileAttributeName");
-	
-	edglog(debug)<<"Input string: "<<inputstring<<endl;
+	edglog(debug)<<"Input Weight File string: "<<inputstring<<endl;
 	string returnstring = "";
 	string::const_iterator iter = inputstring.begin();
 	string::const_iterator const end = inputstring.end();
@@ -675,11 +635,10 @@ WMPLBSelector::toWeightsFileAttributeName(const string &inputstring)
 			returnstring += *iter;
 		}
 	}
-	
+
 	// Adding an initial char to avoid ClassAd parsing exception
 	returnstring = "A" + returnstring;
-	
-	edglog(debug)<<"Output string: "<<returnstring<<endl;
+	edglog(debug)<<"Output Weight File string: "<<returnstring<<endl;
 	return returnstring;
 	
 	GLITE_STACK_CATCH();
@@ -689,43 +648,35 @@ void
 WMPLBSelector::setWeightsFilePath()
 {
 	GLITE_STACK_TRY("setWeightsFilePath()");
-    edglog_fn("WMPLBSelector::setWeightsFilePath");
-    
-    if (this->weightscachepath != "") {
-    	this->weightsfile = this->weightscachepath
+	edglog_fn("WMPLBSelector::setWeightsFilePath");
+	if (this->weightscachepath != "") {
+		this->weightsfile = this->weightscachepath
     		+ LB_SERVERS_SELECTOR_WEIGHTS_FILE;
-    } else {
-	    char * weightsfilelocation = getenv(GLITE_LOCATION_VAR);
+	} else {
+		char * weightsfilelocation = getenv(GLITE_LOCATION_VAR);
 		if (weightsfilelocation) {
 			this->weightsfile = string(weightsfilelocation)
 				+ GLITE_LOCATION_VAR_WMPROXY_DIR
 				+ LB_SERVERS_SELECTOR_WEIGHTS_FILE;
-				
+
 			// Creating wmproxy directory if it doesn't exist
 			wmputilities::createSuidDirectory(string(weightsfilelocation)
 				+ GLITE_LOCATION_VAR_WMPROXY_DIR);
 		} else {
 			this->weightsfile = "/var/glite" + GLITE_LOCATION_VAR_WMPROXY_DIR
 				+ LB_SERVERS_SELECTOR_WEIGHTS_FILE;
-				
+
 			// Creating wmproxy directory if it doesn't exist
 			wmputilities::createSuidDirectory("/var/glite"
 				+ GLITE_LOCATION_VAR_WMPROXY_DIR);
 		}
-    }
-    
-    // Adding server name and port to filename
-    char * envvar = getenv(SERVER_NAME);
-    if (envvar) {
-    	this->weightsfile += "." + string(envvar);
-    	/*envvar = getenv(SERVER_PORT);
-    	if (envvar) {
-    		this->weightsfile += ":" + string(envvar);*/
-    	//}
-    }
-    
+	}
+	// Adding server name and port to filename
+	char * envvar = getenv(SERVER_NAME);
+	if (envvar) {
+		this->weightsfile += "." + string(envvar);
+	}
 	edglog(debug)<<"LB server weights file path: "<<this->weightsfile<<endl;
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -733,20 +684,12 @@ int
 WMPLBSelector::generateRandomNumber(int lowerlimit, int upperlimit)
 {
 	GLITE_STACK_TRY("generateRandomNumber()");
-    edglog_fn("WMPLBSelector::generateRandomNumber");
-
-    double lowerd = static_cast<double>(lowerlimit);
-    double upperd = static_cast<double>(upperlimit);
-    
-    edglog(debug)<<"Generating random between "<<lowerlimit<<" - "
-    	<<upperlimit<<endl;
-    	
-    // Setting seed
+	edglog_fn("WMPLBSelector::generateRandomNumber");
+	double lowerd = static_cast<double>(lowerlimit);
+	double upperd = static_cast<double>(upperlimit);
+	// Setting seed
 	srand((unsigned) time(0));
-	//return lowerlimit + static_cast<int>(rand()%(upperlimit - lowerlimit + 1));
-	// ... using high-order bits
 	return lowerlimit + static_cast<int>(upperd*rand()/(RAND_MAX + lowerd));
-	
 	GLITE_STACK_CATCH();
 }
 

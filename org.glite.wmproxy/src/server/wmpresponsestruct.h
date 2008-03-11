@@ -1,11 +1,24 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+    http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
 */
+
 //
 // File: wmpresponsestruct.h
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #ifndef GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
@@ -28,8 +41,6 @@ enum JobType {
 	WMS_NORMAL,
 	WMS_INTERACTIVE,
 	WMS_MPI,
-	WMS_PARTITIONABLE,
-	WMS_CHECKPOINTABLE,
 };
 
 enum JdlType {
@@ -80,6 +91,14 @@ struct JobIdStructType {
     std::string *name;
     std::string *path;
     std::vector<JobIdStructType*> *childrenJob;
+};
+
+
+// TODO fill all needed attributes
+struct JobStatusStructType {
+	std::string jobid ;
+	std::string status;
+	std::vector <JobStatusStructType*> childrenJob;
 };
 
 struct GraphStructType {
@@ -193,9 +212,9 @@ struct getProxyReqResponse {
   std::string request;
 };
 
-struct renewProxyReqResponse {
+/*struct renewProxyReqResponse {
   std::string request;
-};
+};*/
 
 struct putProxyResponse {
 };
@@ -225,10 +244,14 @@ struct enableFilePerusalResponse {
 
 typedef std::vector<std::string> getPerusalFilesResponse;
 
-typedef time_t getProxyTerminationTimeResponse;
+//typedef time_t getProxyTerminationTimeResponse;
 
 struct getTransferProtocolsResponse {
 	StringList *protocols;
+};
+
+struct getJobStatusResponse {
+	JobStatusStructType *jobStatus;
 };
 
 #endif // GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H

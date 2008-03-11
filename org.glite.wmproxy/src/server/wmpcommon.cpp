@@ -1,24 +1,24 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0 
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
 //
 // File: wmpcommon.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmpcommon.h"
@@ -48,22 +48,40 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
+// Authorizer
+#include "authorizer/wmpauthorizer.h"
+#include "authorizer/wmpgaclmanager.h"
+#include "authorizer/wmpvomsauthz.h"
+
+#include "wmpdelegation.h"
+
+
+
 // Global variables for configuration
 extern WMProxyConfiguration conf;
+
+// Global variable for server instance served request count
+extern long servedrequestcount_global;
 
 // Global variables for configuration attributes (ENV dependant)
 extern std::string sandboxdir_global;
 extern std::string dispatcher_type_global;
 
+// duplicated info (wmsutils&wmscommon)
+const int SUCCESS = 0;
+const int FAILURE = 1;
+const int FORK_FAILURE = -1;
+const int COREDUMP_FAILURE = -2;
+
 // Document root variable
 const char * DOC_ROOT = "DOCUMENT_ROOT";
 
 // Defining File Separator
-#ifdef WIN 
-   // Windows File Separator 
-   const std::string FILE_SEPARATOR = "\\"; 
-#else 
-   // Linux File Separator 
+#ifdef WIN
+   // Windows File Separator
+   const std::string FILE_SEPARATOR = "\\";
+#else
+   // Linux File Separator
    const std::string FILE_SEPARATOR = "/";
 #endif
 
@@ -72,10 +90,75 @@ using namespace std;
 using namespace glite::jdl; // Ad
 using namespace glite::wms::wmproxy::utilities; //Exception
 
-namespace logger         = glite::wms::common::logger;
-namespace wmputilities	 = glite::wms::wmproxy::utilities;
+namespace logger        = glite::wms::common::logger;
+namespace wmputilities	= glite::wms::wmproxy::utilities;
+namespace authorizer 	= glite::wms::wmproxy::authorizer;
+namespace jobid		= glite::wmsutils::jobid;
 
 
+
+
+/**
+* Perform Authorization/Authentication process
+**/
+void checkSecurity(jobid::JobId *jid, const std::string *delegation_id, bool gaclAuthorizing)
+{
+	GLITE_STACK_TRY("checkSecurity()");
+	edglog_fn("wmpcommon::checkSecurity");
+	edglog(info)<<"Performing Security cheks"<<endl;
+	authorizer::WMPAuthorizer auth;
+	string delegatedproxy;
+	if (jid && delegation_id){
+		// Unreachable point: both jobid and delegationid provided
+		throw AuthorizationException(__FILE__, __LINE__,
+			"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
+			"Unable to perform authorization with both Job and Delegation identificator");
+	} else if (jid){   // wmpoperation case:
+		checkJobDirectoryExistence(*jid);
+		// Getting delegated proxy inside job directory
+		string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
+		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid->toString());
+		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+		if (vomsproxy.hasVOMSExtension()) {
+			auth.authorize(vomsproxy.getDefaultFQAN(), jid->toString());
+		} else {
+			auth.authorize("", jid->toString());
+		}
+	}else if (delegation_id){   // wmpcoreoperation case:
+		delegatedproxy = glite::wms::wmproxy::server::WMPDelegation::getDelegatedProxyPath(*delegation_id);
+		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+		if (vomsproxy.hasVOMSExtension()) {
+			auth.authorize(vomsproxy.getDefaultFQAN());
+		} else {
+			auth.authorize();
+		}
+		authorizer::WMPAuthorizer::checkProxy(delegatedproxy); // TODO always call method?
+	} else {
+		// Unreachable point neither jobid nor delegationid provided
+		throw AuthorizationException(__FILE__, __LINE__,
+			"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
+			"Unable to perform authorization with no Job/Delegation identificator");
+	}
+	// GACL Authorizing (optional, only certain [important] operations require)
+	if (gaclAuthorizing){
+		edglog(debug)<<"Checking for drain..."<<endl;
+		if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+			edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
+				throw AuthorizationException(__FILE__, __LINE__,
+				"wmpcommon::checkSecurity()", wmputilities::WMS_AUTHORIZATION_ERROR,
+				"Unavailable service (the server is temporarily drained)");
+		} else {
+			edglog(debug)<<"No drain"<<endl;
+		}
+	}
+
+	GLITE_STACK_CATCH();
+}
+
+
+/**
+* Check the filelist/jobdir approach
+**/
 void
 checkConfiguration()
 {
@@ -89,13 +172,16 @@ checkConfiguration()
 				"for configuration attribute DispatcherType\n"
 				"Please try with \"filelist\" or \"jobdir\""<<endl;
 			throw ConfigurationException(__FILE__, __LINE__,
-    			"checkConfiguration()", wmputilities::WMS_CONFIGURATION_ERROR,
-    			"Configuration error: dispatcher type not known"
-    			"\n(please contact server administrator)");
+			"checkConfiguration()", wmputilities::WMS_CONFIGURATION_ERROR,
+			"Configuration error: dispatcher type not known"
+			"\n(please contact server administrator)");
 		}
 	}
 }
 
+/**
+* check Document Root & Staging path
+*/
 void
 setGlobalSandboxDir()
 {
@@ -151,79 +237,68 @@ setGlobalSandboxDir()
 	GLITE_STACK_CATCH();
 }
 
-void
-logRemoteHostInfo()
-{
-	GLITE_STACK_TRY("logRemoteHostInfo()");
-	edglog_fn("wmpcommon::logRemoteHostInfo");
-	
-	string msg = "Remote Host IP: ";
-	string msg2 = "Remote CLIENT S DN: ";
-	string msg3 = "Remote GRST CRED: ";
-	string msg4 = "Service GRST PROXY LIMIT: ";
-	edglog(info)
-		<<"-------------------------------- Incoming Request "
-			"--------------------------------"
-		<<endl;
-	
-	if (getenv("REMOTE_ADDR")) {
-		msg += string(getenv("REMOTE_ADDR"));
-		if (getenv("REMOTE_PORT")) {
-			msg += ":" + string(getenv("REMOTE_PORT"));
-		}
-	} else {
-		msg += "Not Available";
-	}
-	msg += " - Remote Host Name: ";
-	if (getenv("REMOTE_HOST")) {
-		msg += string(getenv("REMOTE_HOST"));
-	} else {
-		msg += "Not Available";
-	}
-	if (getenv("SSL_CLIENT_S_DN")) {
-		msg2 += string(getenv("SSL_CLIENT_S_DN"));
-	} else {
-		msg2 += "Not Available";
-	}
-	if (getenv("GRST_CRED_2")) {
-		msg3 += string(getenv("GRST_CRED_2"));
-	} else {
-		msg3 += "Not Available";
-	}
-	if (getenv("GRST_GSIPROXY_LIMIT")) {
-		msg4 += string(getenv("GRST_GSIPROXY_LIMIT"));
-	} else {
-		msg4 += "Not Available";
-	}
-	
-	edglog(info)<<msg<<endl;
-    edglog(info)<<msg2<<endl;
-	edglog(info)<<msg3<<endl;
-	edglog(info)<<msg4<<endl;
-	edglog(info)
-		<<"----------------------------------------"
-			"------------------------------------------"
-	<<endl;
 
+/**
+* used by initWMProxyOperation
+*/
+string displayENV(const string& title, char* envNAME){
+	string msg = title+": ";
+	if (getenv(envNAME)) { msg += string(getenv(envNAME));}
+	else {msg += "Not Available"; }
+	return msg;
+}
+
+
+/**
+* Dysplay information on Request
+* call checkConfiguration();
+* call setGlobalSandboxDir();
+* call callLoadScriptFile(operation)
+**/
+void
+initWMProxyOperation(const std::string &operation)
+{
+	GLITE_STACK_TRY("initWMProxyOperation()");
+	edglog_fn("wmpcommon::initWMProxyOperation");
+
+	edglog(info)<< "================== Incoming Request =================="<<endl;
+	edglog(info)<< "Called Operation: "<< operation <<endl;
+	// Logging Remote Host Info
+	edglog(info) << displayENV("Remote Host Address","REMOTE_ADDR");
+	if (getenv("REMOTE_PORT")) {edglog(debug) <<":" << string(getenv("REMOTE_PORT"))  << endl ;}
+	else {edglog(debug)<< endl;}
+	edglog(debug) << displayENV("Remote Host Name","REMOTE_HOST")<< endl;
+	edglog(debug) << displayENV("Remote CLIENT S DN","SSL_CLIENT_S_DN")<<endl;
+	edglog(debug) << displayENV("Remote GRST CRED","GRST_CRED_2")<<endl;
+	edglog(debug) << displayENV("Service GRST PROXY LIMIT","GRST_GSIPROXY_LIMIT")<<endl;
+	// Manage static WMProxy  instance serving request number
+	servedrequestcount_global++;
+	edglog(info)<<"WMProxy instance serving core request N.: " <<servedrequestcount_global<<endl;
+	// Checking Configuration
 	checkConfiguration();
+	// Chekcing global Sandbox Dir
 	setGlobalSandboxDir();
-		
+	// Checking system load for desired operation
+	callLoadScriptFile(operation);
 	GLITE_STACK_CATCH();
 }
 
 void
-checkJobDirectoryExistence(glite::wmsutils::jobid::JobId jid, int level)
+checkJobDirectoryExistence(jobid::JobId jid, int level)
 {
+	GLITE_STACK_TRY("checkJobDirectoryExistence()");
+	edglog_fn("wmpcommon::checkJobDirectoryExistence");
 	// TODO change it with boost::isDirectory (or similar)
 	if (!wmputilities::fileExists(wmputilities::getJobDirectoryPath(jid))) {
-		edglog(error)<<"The job has not been registered from this Workload "
-			"Manager Proxy server or it has been purged"<<endl;
+		edglog(error)<<"Job Directory Path: " << wmputilities::getJobDirectoryPath(jid) << "\ndoes not exist!"<< endl ;
+		edglog(error)<<"The job has not been registered from this Workload Manager Proxy server or it has been purged"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
-			"checkJobDirectoryExistence()", 
-			wmputilities::WMS_OPERATION_NOT_ALLOWED,
+			"checkJobDirectoryExistence()",
+			wmputilities::WMS_JOB_NOT_FOUND,
 			"The job has not been registered from this Workload Manager Proxy "
 			"server (" + wmputilities::getEndpoint() + ") or it has been purged");
 	}
+	GLITE_STACK_CATCH();
 }
 
 /**
@@ -235,17 +310,15 @@ getType(string jdl, Ad * ad)
 {
 	GLITE_STACK_TRY("getType()");
 	edglog_fn("wmpcommon::getType");
-	
-	edglog(debug)<<"Getting type"<<endl;
-	// Default type is normal
+
+	// Default type is JOB
 	int return_value = TYPE_JOB;
-	
 	Ad *in_ad = new Ad(jdl);
-	
 	if (in_ad->hasAttribute(JDL::TYPE)) {
-		string type = 
-			glite_wms_jdl_toLower((in_ad->getStringValue(JDL::TYPE))[0]);
-		edglog(info) <<"Type: "<<type<<endl;
+		string type =
+			glite_wms_jdl_toLower((in_ad->getString(JDL::TYPE)));
+
+		edglog(info) <<"JDL Type: "<<type<<endl;
 		if (type == JDL_TYPE_DAG) {
 			return_value = TYPE_DAG;
 		} else if (type == JDL_TYPE_JOB) {
@@ -253,6 +326,8 @@ getType(string jdl, Ad * ad)
 		} else if (type == JDL_TYPE_COLLECTION) {
 			return_value = TYPE_COLLECTION;
 		}
+	}else{
+		edglog(info) <<"JDL Type: Job (by default)"<<endl;
 	}
 	if (ad) {
 		*ad = *in_ad;
@@ -261,18 +336,6 @@ getType(string jdl, Ad * ad)
 	return return_value;
 
 	GLITE_STACK_CATCH();
-}
-
-void
-throwerror(const string &errorfile)
-{
-	string stderrormsg
-		= wmputilities::readTextFile(errorfile);
-	remove(errorfile.c_str());
-	throw ServerOverloadedException(__FILE__, __LINE__,
-		"callLoadScriptFile()", 
-		wmputilities::WMS_SERVER_OVERLOADED,
-		"System load is too high:\n" + stderrormsg);
 }
 
 void
@@ -293,6 +356,7 @@ callLoadScriptFile(const string &operation)
 		bool commandfound = false;
 		string::const_iterator iter = path.begin();
   		string::const_iterator const end = path.end();
+		edglog(debug)<<"Executing command: " ;
 		while (iter != end) {
 			// Removing spaces
 			while ((iter != end) && isspace((char)*iter)) {
@@ -302,7 +366,7 @@ callLoadScriptFile(const string &operation)
 				str += *iter;
 				iter++;
 			}
-			edglog(debug)<<"Found token: "<<str<<endl;
+			edglog(debug)<<" "<<str;
 			if (commandfound) {
 				params.push_back(str);
 			} else {
@@ -311,6 +375,7 @@ callLoadScriptFile(const string &operation)
 			}
 			str = "";
 		}
+		edglog(debug) << endl;
 		
 		params.push_back("2>");
 		string errorfile = "/tmp/wmpscriptcall.err."
@@ -332,11 +397,29 @@ callLoadScriptFile(const string &operation)
 			string errormsg = "";
 			edglog(debug)<<"Executing load script file: "<<command<<endl;
 			if (int outcome = wmputilities::doExecv(command, params, errormsg)) {
+				// EXIT CODE !=0
 				switch (outcome) {
-					case -1:
-						throwerror(errorfile);
+					case FORK_FAILURE:
+					case COREDUMP_FAILURE:
+						// either Unable to fork process or coredump
+	   					edglog(critical)<<"Load script call skipped"  << endl;
+	   					break;
+					case 1:{
+						// Exit Code is 1 => throw ServerOverLoaded exc
+						string stderrormsg= wmputilities::readTextFile(errorfile);
+						// If error message is consistent => append information
+						if (!stderrormsg.empty()){
+							stderrormsg=":\n" + stderrormsg;
+						}
+						remove(errorfile.c_str());
+						throw ServerOverloadedException(__FILE__, __LINE__,
+							"callLoadScriptFile()",
+							wmputilities::WMS_SERVER_OVERLOADED,
+							"System load is too high" + stderrormsg);
+						}
 	   					break;
 	   				default:
+						// Exit Code > 1 => Error executing script
 	   					edglog(error)<<"Unable to execute load script file:\n"
 	   						<<errormsg<<endl;
 	   					edglog(error)<<"Error code: "<<outcome<<endl;

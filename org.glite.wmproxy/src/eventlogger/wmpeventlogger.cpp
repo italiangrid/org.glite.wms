@@ -1,11 +1,24 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
-	See http://public.eu-egee.org/partners/ for details on the copyright holders.
-	For license conditions see the license file or http://www.eu-egee.org/license.html
+Copyright (c) Members of the EGEE Collaboration. 2004.
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
+
 //
 // File: wmpeventlogger.cpp
-// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+// Author: Giuseppe Avellino <egee@datamat.it>
 //
 
 #include "wmpeventlogger.h"
@@ -37,6 +50,7 @@
 
 #include "authorizer/wmpauthorizer.h"
 
+
 extern glite::wms::wmproxy::eventlogger::WMPLBSelector lbselector;
 
 // NAMESPACE
@@ -63,6 +77,10 @@ const char * GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
 // LB Proxy default availability status
 const bool DEFAULT_USER_PROXY = false;
 
+// BulkMM default availability status
+const bool DEFAULT_BULK_MM = false;
+
+
 // Environment variables for Proxy cert and key
 const char * GLITE_HOST_KEY = "GLITE_HOST_KEY";
 const char * GLITE_HOST_CERT = "GLITE_HOST_CERT";
@@ -72,6 +90,7 @@ const int LB_RENEWAL_PORT = 7512;
 		
 // Number of log retries before giving up
 const int LOG_RETRY_COUNT = 3;
+const int QUERY_RETRY_COUNT = 3;
 
 // Randomic value lower and upper limits for LB[Proxy] log retry on failure
 const int LB_LOG_RETRY_LOWER_LIMIT = 30;
@@ -85,11 +104,12 @@ WMPEventLogger::WMPEventLogger(const string &endpoint)
 	edglog_fn("WMPEventLogger::WMPEventLogger");
 	
 	this->id = NULL;
-	this->subjobs = NULL;
+	m_subjobs = NULL;
 	this->server = endpoint;
 	this->delegatedproxy = "";
-	this->lbProxy_b = DEFAULT_USER_PROXY;
-	
+	m_lbProxy_b = DEFAULT_USER_PROXY;
+	m_bulkMM_b = DEFAULT_BULK_MM;
+
 	if (edg_wll_InitContext(&ctx)
 		|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE, EDG_WLL_SOURCE_WM_PROXY))
 		|| (endpoint.c_str()
@@ -98,7 +118,6 @@ WMPEventLogger::WMPEventLogger(const string &endpoint)
 				: false)) {
 			string msg = error_message("LB initialization failed\n"
 				"edg_wll_InitContext, edg_wll_SetParam[String]");
-			edglog(critical)<<msg<<endl;
 			throw LBException(__FILE__, __LINE__, "WMPEventLogger()",
 				WMS_IS_FAILURE, msg);
 	}
@@ -115,14 +134,15 @@ WMPEventLogger::init(const string &lb_host, int lb_port,
 {
 	GLITE_STACK_TRY("init()");
 	edglog_fn("WMPEventlogger::init");
-	
+
 	this->id = id;
 	setLoggingJob(id->toString());
-	
+
 	this->lb_host = lb_host;
 	this->lb_port = lb_port;
-	this->desturiport = desturiport;
-	this->desturiprotocol = desturiprotocol;
+
+	m_desturiport = desturiport;
+	m_desturiprotocol = desturiprotocol;
 	
 	if (!getenv(GLITE_WMS_LOG_DESTINATION)) {
 		edglog(debug)<<"Setting LB log destination to: "<<lb_host<<endl;
@@ -130,24 +150,39 @@ WMPEventLogger::init(const string &lb_host, int lb_port,
 				lb_host.c_str())) {
 			string msg = error_message("Parameter setting "
 				"EDG_WLL_PARAM_DESTINATION failed\nedg_wll_SetParamString");
-			edglog(critical)<<msg<<endl;
 			throw LBException(__FILE__, __LINE__, "init", WMS_IS_FAILURE, msg);
 		}
 	} else {
 		edglog(debug)<<"GLITE_WMS_LOG_DESTINATION is set to: "
 			<<getenv(GLITE_WMS_LOG_DESTINATION)<<endl;
 	}
-	
 	GLITE_STACK_CATCH();
 }
 
+
+// BULKMM
+void WMPEventLogger::setBulkMM(bool value){
+        GLITE_STACK_TRY("WMPEventLogger::setBulkMM(value)");
+        edglog_fn("WMPEventLogger::setBulkMM");
+	if (value){edglog(debug)<<"Bulk MM Enabled" << endl;}
+	else {edglog(debug)<<"Bluk MM Disabled" << endl;}
+	m_bulkMM_b=value;
+        GLITE_STACK_CATCH();
+
+}
+bool WMPEventLogger::getBulkMM(){return m_bulkMM_b;}
+
+// LBProxy
 void
 WMPEventLogger::setLBProxy(bool value, char * userdn)
-{	
+{
 	GLITE_STACK_TRY("setLBProxy()");
 	edglog_fn("WMPEventlogger::setLBProxy");
-	
-	this->lbProxy_b = value;
+	if (userdn){
+		// DN case patch: if  userdn is present set the converted one
+		userdn=(char*)(wmputilities::convertDNEMailAddress(userdn).c_str());
+	}
+	m_lbProxy_b = value;
 	if (value) {
 		edglog(debug)<<"Setting LBProxy to 'true'"<<endl;
 		if (edg_wll_SetParam(ctx, EDG_WLL_PARAM_LBPROXY_USER, userdn)) {
@@ -161,14 +196,14 @@ WMPEventLogger::setLBProxy(bool value, char * userdn)
 				"EDG_WLL_PARAM_LBPROXY_USER failed\nedg_wll_SetParam")<<endl;
 		}
 	}
-	
+
 	GLITE_STACK_CATCH();
 }
 
 bool 
 WMPEventLogger::getLBProxy()
 {
-	return this->lbProxy_b;
+	return m_lbProxy_b;
 }
 
 char *
@@ -186,7 +221,6 @@ WMPEventLogger::setSequenceCode(const string &seqcode)
 	if (edg_wll_SetSequenceCode(ctx, seqcode.c_str(), EDG_WLL_SEQ_NORMAL)) {
 		string msg = error_message("Set sequence code failed\n"
 			"edg_wll_SetSequenceCode");
-		edglog(critical)<<msg<<endl;
 		throw LBException(__FILE__, __LINE__, "setSequenceCode",
 			WMS_IS_FAILURE, msg);
 	}
@@ -200,12 +234,17 @@ WMPEventLogger::incrementSequenceCode()
 	if (edg_wll_IncSequenceCode(ctx)) {
 		string msg = error_message("Increment sequence code failed\n"
 			"edg_wll_IncSequenceCode");
-		edglog(critical)<<msg<<endl;
 		throw LBException(__FILE__, __LINE__, "incrementSequenceCode",
 			WMS_IS_FAILURE, msg);	
 	}
 	GLITE_STACK_CATCH();
 }
+
+
+/*********************
+* LB  LOG/REGISTER METHODS
+**********************/
+
 
 char *
 WMPEventLogger::registerProxyRenewal(const string &proxy_path,
@@ -219,34 +258,44 @@ WMPEventLogger::registerProxyRenewal(const string &proxy_path,
 	
 	char *renewal_proxy_path = NULL;
 	int i = LOG_RETRY_COUNT;
-	for (; (i > 0) 
-				&& glite_renewal_RegisterProxy((char*)proxy_path.c_str(),
+	// calling glite_renewal_RegisterProxy (sleep)
+
+	int register_result=1;
+	for (; (i > 0) && register_result; i--) {
+			register_result = glite_renewal_RegisterProxy(
+				(char*)proxy_path.c_str(),
 		 		(char*)my_proxy_server.c_str(), LB_RENEWAL_PORT,
 				id->toString().c_str(), EDG_WLPR_FLAG_UNIQUE,
 				&renewal_proxy_path);
-			i--);
-	
- 	if (i > 0) {
+			if (register_result) {
+				edglog(severe)
+				<< error_message("Register job failed\nglite_renewal_RegisterProxy",register_result)
+				<< endl;
+				randomsleep();
+			}
+	}
+
+	if (i > 0) {
+		// SUCCESS: calling edg_wll_SetParam (no sleep, local service)
 		for (int j = 0;
 			j < LOG_RETRY_COUNT
-		    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
-		    	renewal_proxy_path);
-	    	j++);
+			&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
+			renewal_proxy_path);
+			j++);
 	} else {
+		// glite_renewal_RegisterProxy failed
 		for (int j = 0;
 			j < LOG_RETRY_COUNT
 		    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
 		    	proxy_path.c_str());
-	    	j++);
-	    string msg = "Proxy renewal registration failed\n"
-			"glite_renewal_RegisterProxy, edg_wll_SetParam[Proxy]";
-		edglog(critical)<<msg<<endl;
-	   	throw LBException(__FILE__, __LINE__, "registerProxyRenewal()",
-	   		WMS_LOGGING_ERROR, msg);
- 	}
- 	return renewal_proxy_path;
- 	
- 	GLITE_STACK_CATCH();
+		j++);
+		string msg = "Proxy renewal registration failed\n"
+		"glite_renewal_RegisterProxy, edg_wll_SetParam[Proxy]";
+		throw LBException(__FILE__, __LINE__, "registerProxyRenewal()",
+			WMS_LOGGING_ERROR, msg);
+	}
+	return renewal_proxy_path;
+	GLITE_STACK_CATCH();
 }
 
 void
@@ -255,12 +304,14 @@ WMPEventLogger::unregisterProxyRenewal()
 	GLITE_STACK_TRY("unregisterProxyRenewal()");
 	
 	int i = LOG_RETRY_COUNT;
-	for (; (i > 0) 
-				&& glite_renewal_UnregisterProxy(id->toString().c_str(), NULL);
-			i--);
+	for (; (i > 0)
+		&& glite_renewal_UnregisterProxy(id->toString().c_str(), NULL);
+		i--);
 	if (i == 0) {
-		edglog(error)<<error_message("Proxy renewal unregiser failed\n"
-			"glite_renewal_UnregisterProxy")<<endl;
+		// glite_renewal_UnregisterProxy FAILED
+		edglog(error)
+			<<error_message("Proxy renewal unregiser failed\nglite_renewal_UnregisterProxy")
+			<<endl;
 	}
 		
 	GLITE_STACK_CATCH();
@@ -275,22 +326,23 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	char str_addr[1024];
 	sprintf(str_addr, "%s", server.c_str());
 	edglog(debug)<<"Server address: "<<str_addr<<endl;
-	
+
 	char * seqcode = getSequence();
 	jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
 	
 	int register_result = 1;
 	int i = LOG_RETRY_COUNT;
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
+	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering job to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
 			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
 				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
 			if (register_result) {
-				edglog(severe)<<error_message("Register job failed\n"
-					"edg_wll_RegisterJobProxy", register_result)<<endl;	
-				randomsleep();				
+				edglog(severe)
+					<<error_message("Register job failed\nedg_wll_RegisterJobProxy",
+					register_result)<<endl;
+				randomsleep();
 			}
 		}
 	} else {
@@ -308,7 +360,6 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	}
 #endif  //GLITE_WMS_HAVE_LBPROXY
-
 	if (register_result) {
 		string msg = error_message("Register job failed to LB server: "
 			+ id->getServer()
@@ -320,14 +371,11 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 				"(please contact server administrator)";
 		} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
-
 			// Updating selected LB weight -> FAILURE
 			lbselector.updateSelectedIndexWeight(WMPLBSelector::FAILURE);
-			
 #ifdef GLITE_WMS_HAVE_LBPROXY
 		}
 #endif  //GLITE_WMS_HAVE_LBPROXY
-
 		throw LBException(__FILE__, __LINE__, "registerJob()",
 			WMS_LOGGING_ERROR, msg);
 	} else {
@@ -359,7 +407,6 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		// This is a fatal Exception and should never be raised
 		string msg = "Number of nodes do not correspond to number of "
 			"inserted jobids";
-		edglog(critical)<<msg<<endl;
 		throw JobOperationException(__FILE__, __LINE__, "registerSubJobs()",
 			WMS_IS_FAILURE, msg);
 	}
@@ -367,7 +414,9 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	// Define useful structures
 	char **jdls_char;
 	char **zero_char;
+
 	jdls_char = (char**) malloc(sizeof(char*) * (jdlssize + 1)); // same size for both arrays
+
 	zero_char = jdls_char;
 	jdls_char[jdlssize] = NULL;
 
@@ -387,14 +436,14 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	int register_result = 1;
 	int i = LOG_RETRY_COUNT;
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
+	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
 			register_result = edg_wll_RegisterSubjobsProxy(ctx, id->getId(),
 				jdls_char, str_nsAddr, jids_id);
 			if (register_result) {
 				edglog(severe)<<error_message("Register DAG subjobs failed\n"
-					"edg_wll_RegisterSubjobsProxy", register_result)<<endl;	
+					"edg_wll_RegisterSubjobsProxy", register_result)<<endl;
 				randomsleep();				
 			}
 		}
@@ -406,7 +455,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 				jdls_char, str_nsAddr, jids_id);
 			if (register_result) {
 				edglog(severe)<<error_message("Register DAG subjobs failed\n"
-					"edg_wll_RegisterSubjobs", register_result)<<endl;	
+					"edg_wll_RegisterSubjobs", register_result)<<endl;
 				randomsleep();				
 			}
 		}
@@ -415,21 +464,24 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 #endif  //GLITE_WMS_HAVE_LBPROXY
 
 	if (register_result) {
+		// Error while registering! release memory & raise exception
+		for (unsigned int i = 0; i < jdlssize; i++) {
+		free(jdls_char[i]);
+		}
+		free(jdls_char);
 		string msg = error_message("Register DAG subjobs failed\n"
 			"edg_wll_RegisterSubjobs[Proxy]", register_result);
 		throw LBException(__FILE__, __LINE__, "registerSubJobs()",
 			WMS_LOGGING_ERROR, msg);
 	}
-	
+	// Release allocated memory
 	for (unsigned int i = 0; i < jdlssize; i++) {
 		free(jdls_char[i]);
 	}
-    free(jdls_char);
-    
-    // Logging children user tags
+	free(jdls_char);
+	// Logging children user tags
 	logUserTags(ad->getSubAttributes(JDL::USERTAGS));
-    
-    GLITE_STACK_CATCH();
+	GLITE_STACK_CATCH();
 }
 
 vector<string>
@@ -437,21 +489,19 @@ WMPEventLogger::generateSubjobsIds(int res_num)
 {
 	GLITE_STACK_TRY("generateSubjobsIds()");
 	edglog_fn("WMPEventlogger::generateSubjobsIds");
-	
-	subjobs = NULL;
-	if (edg_wll_GenerateSubjobIds(ctx, id->getId(), res_num, "WMPROXY", &subjobs)) {
+
+	m_subjobs = NULL;
+	if (edg_wll_GenerateSubjobIds(ctx, id->getId(), res_num, "WMPROXY", &m_subjobs)) {
 		string msg = error_message("Job ID generation failed\n"
 			"edg_wll_GenerateSubjobIds");
-		edglog(critical)<<msg<<endl;
 		throw LBException(__FILE__, __LINE__, "generateSubjobsIds()",
 			WMS_LOGGING_ERROR, msg);
 	}
 	vector<string> jobids;
 	string id;
 	for (int i = 0; i < res_num; i++) {
-		id = string(edg_wlc_JobIdUnparse(subjobs[i]));
+		id = string(edg_wlc_JobIdUnparse(m_subjobs[i]));
 		jobids.push_back(id);
-		edglog(debug)<<"Generated subjob id: "<<id<<endl;
 	}
 	return jobids;
 	
@@ -471,43 +521,63 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(getSequence()));
     vector<string> jobids;
     
-    int dagsize = dag->size();   
+    int dagsize = dag->size();
     
 	// Setting LB log sync timeout
 	struct timeval timeout;
 	timeout.tv_sec = 120 + dagsize; // seconds
 	timeout.tv_usec = 0; // microseconds
-    edglog(debug)<<"Setting LB log sync timeout to "<<timeout.tv_sec
-    	<<" seconds"<<endl; 
-    if (edg_wll_SetParamTime(ctx, EDG_WLL_PARAM_LOG_SYNC_TIMEOUT, &timeout)) {   
-    	edglog(error)<<error_message("Unable to set LB log sync timeout\n"
-    		"edg_wll_SetParamTime")<<endl;
-   	}
+	edglog(debug)<<"Setting LB log sync timeout to "<<timeout.tv_sec
+		<<" seconds"<<endl;
+	if (edg_wll_SetParamTime(ctx, EDG_WLL_PARAM_LOG_SYNC_TIMEOUT, &timeout)) {
+		edglog(error)
+		<< error_message("Unable to set LB log sync timeout\nedg_wll_SetParamTime")
+		<< endl;
+	}
+
+	// Registering as a Dag
+	edg_wll_RegJobJobtype registration_type_i = EDG_WLL_REGJOB_DAG;
+	string registration_type_s = "DAG";
+	// check bulk MM condition:
+	// 1) enable bulkMM is true inside WM configuration file
+	// 2) dag has no dependencies
+	if ( m_bulkMM_b){
+		if (dag->getDependenciesNumber()==0 ){
+			// Registering as a Collection
+			registration_type_i = EDG_WLL_REGJOB_COLLECTION;
+			registration_type_s = "COLLECTION";
+			edglog(debug)<<"BulkMM activated, empty/no dependency found"<< endl;
+		}else {
+			edglog(debug)<<"BulkMM activated but dependency found"<< endl;
+		}
+	}else {
+		edglog(debug)<<"BulkMM deactivated but dependency found"<< endl ;
+	}
 
 	int register_result = 1;
 	int i = LOG_RETRY_COUNT;
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
-		edglog(debug)<<"Registering DAG to LB Proxy..."<<endl;
+	if (m_lbProxy_b) {
+		edglog(debug)<<"Registering "<< registration_type_s <<" to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
 			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
-				EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, dagsize,
-				"WMPROXY", &subjobs);
+				registration_type_i, path.c_str(), str_addr, dagsize,
+				"WMPROXY", &m_subjobs);
 			if (register_result) {
-				edglog(severe)<<error_message("Register DAG failed\n"
-					"edg_wll_RegisterJobProxy", register_result)<<endl;	
-				randomsleep();				
+				edglog(severe)<<error_message("Register " +registration_type_s + " failed\n"
+					"edg_wll_RegisterJobProxy", register_result)<<endl;
+				randomsleep();
 			}
 		}
 	} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
-		edglog(debug)<<"Registering DAG to LB..."<<endl;
+		edglog(debug)<<"Registering "<< registration_type_s <<"to LB..."<<endl;
 		for (; (i > 0) && register_result; i--) {
 			register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
-				EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, dagsize,
-				"WMPROXY", &subjobs);
+				registration_type_i, path.c_str(), str_addr, dagsize,
+				"WMPROXY", &m_subjobs);
 			if (register_result) {
-				edglog(severe)<<error_message("Register DAG failed\n"
+				edglog(severe)<<error_message("Register " + registration_type_s + " failed\n"
 					"edg_wll_RegisterJobSync", register_result)<<endl;	
 				randomsleep();				
 			}
@@ -515,12 +585,11 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	}
 #endif  //GLITE_WMS_HAVE_LBPROXY
-
 	if (register_result) {
-		string msg = error_message("Register DAG failed to LB server:"
+		string msg = error_message("Register "+ registration_type_s +"failed to LB server:"
 			+ id->getServer()
 			+ "\nedg_wll_RegisterJobProxy/Sync", register_result);
-			
+
 #ifdef GLITE_WMS_HAVE_LBPROXY
 		if (register_result == EAGAIN) {
 			msg += "\nLBProxy could be down.\n"
@@ -530,7 +599,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 
 			// Updating selected LB weight -> FAILURE
 			lbselector.updateSelectedIndexWeight(WMPLBSelector::FAILURE);
-			
+
 #ifdef GLITE_WMS_HAVE_LBPROXY
 		}
 #endif  //GLITE_WMS_HAVE_LBPROXY
@@ -544,9 +613,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	
 	// Logging parent user tags
 	if (dag->hasAttribute(JDL::USERTAGS)) {
-		classad::ClassAd * parentclassad
-			= dag->getAttributeAd(JDL::USERTAGS).ad();
-		logUserTags(parentclassad);
+		logUserTags(dag->getAttributeAd(JDL::USERTAGS).ad());
 	}
 	
 	// Logging children user tags
@@ -562,27 +629,23 @@ void
 WMPEventLogger::logUserTag(string name, const string &value)
 {
 	GLITE_STACK_TRY("logUserTag()");
-    edglog_fn("WMPEventlogger::logUserTag");
-	
-	Ad *classad = new Ad();
+	edglog_fn("WMPEventlogger::logUserTag");
+	boost::scoped_ptr<Ad> classad(new Ad());
 	classad->setAttribute(name, value);
 	logUserTags(classad->ad());
-	delete classad;
-	
 	GLITE_STACK_CATCH();
 }
 
 void
 WMPEventLogger::logUserTags(vector<pair<string, classad::ExprTree*> > userTags)
 {
-	GLITE_STACK_TRY("logUserTags()");
+	GLITE_STACK_TRY("logUserTags(vector<pair< string, ExprTree>>)");
 	edglog_fn("WMPEventlogger::logUserTags");
 	
 	unsigned int size = userTags.size();
 	for (unsigned int i = 0; i < size; i++) {
 		if (userTags[i].second->GetKind() != classad::ExprTree::CLASSAD_NODE) {
 			string msg = "Wrong UserTag value for " + userTags[i].first;
-			edglog(error)<<msg<<endl;
 			throw LBException(__FILE__, __LINE__, "logUserTags()",
 				WMS_LOGGING_ERROR, msg);
 		}
@@ -608,7 +671,7 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 	// Pointer to a function
 	int (*fp) (_edg_wll_Context*, const char*, const char*);
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
+	if (m_lbProxy_b) {
 		edglog(debug)<<"Setting job to log to LB Proxy..."<<endl;
 		fp = &edg_wll_LogUserTagProxy;
 	} else {
@@ -622,14 +685,13 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 	unsigned int size = vect.size();
 	for (unsigned int i = 0; i < size; i++) {
 		if (!userTags->EvaluateExpr(vect[i].second, val)) {
-			edglog(error)<<"Unable to Parse Expression"<<endl;
 			throw LBException(__FILE__, __LINE__, "logUserTags()",
 				WMS_LOGGING_ERROR, "Unable to Parse Expression");
 		}
  		if (val.IsStringValue(attrValue)) {
-            edglog(debug)<<"Logging user tag to LB[Proxy]: "<<vect[i].first<<endl;
-            int j = LOG_RETRY_COUNT;
-            int outcome = 1;
+			edglog(debug)<<"Logging user tag to LB[Proxy]: "<<vect[i].first<<endl;
+			int j = LOG_RETRY_COUNT;
+			int outcome = 1;
 			for (; (j > 0) && outcome; j--) {
 				outcome = fp(ctx, (vect[i].first).c_str(), attrValue.c_str());
 				if (outcome) {
@@ -644,9 +706,8 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 				throw LBException(__FILE__, __LINE__, "logUserTags()",
 					WMS_LOGGING_ERROR, msg);
 			}
- 		}
+		}
 	}
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -658,10 +719,10 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
 	
 	glite::wmsutils::jobid::JobId jobid(jid);
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
+	if (m_lbProxy_b) {
         edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
 		if (edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code,
-				getUserDN(), EDG_WLL_SEQ_NORMAL)) {
+			wmputilities::convertDNEMailAddress(wmputilities::getUserDN()).c_str(), EDG_WLL_SEQ_NORMAL)){
 			string msg = error_message("Set logging job failed\n"
 				"edg_wll_SetLoggingJobProxy");
 			edglog(critical)<<msg<<endl;
@@ -675,9 +736,8 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
 				EDG_WLL_SEQ_NORMAL)) {
 			string msg = error_message("Set logging job failed\n"
 				"edg_wll_SetLoggingJob");
-			edglog(critical)<<msg<<endl;
 			throw LBException(__FILE__, __LINE__, "setLoggingJob()",
-				WMS_LOGGING_ERROR, msg);	
+				WMS_LOGGING_ERROR, msg);
 		}
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	}
@@ -691,16 +751,14 @@ WMPEventLogger::logListener(const char* host, int port)
 {
 	GLITE_STACK_TRY("logListener()");
 	edglog_fn("WMPEventlogger::logListener");
-	
 	edglog(debug)<<"Logging Listener event..."<<endl;
-	
 	int outcome = 1;
 	int i = LOG_RETRY_COUNT;
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b){
+	if (m_lbProxy_b){
 		edglog(debug)<<"Logging to LB Proxy..."<<endl;
 		for (; (i > 0) && outcome; i--) {
-			outcome = edg_wll_LogListenerProxy(ctx, "InteractiveListener", 
+			outcome = edg_wll_LogListenerProxy(ctx, "InteractiveListener",
 				host, (uint16_t) port);
 			if (outcome) {
 				edglog(severe)<<error_message("Register log listener failed\n"
@@ -733,68 +791,19 @@ WMPEventLogger::logListener(const char* host, int port)
 	
 	GLITE_STACK_CATCH();
 }
-
-void
-WMPEventLogger::logCheckpointable(const char* current_step, const char* state)
-{
-	GLITE_STACK_TRY("logCheckpointable()");
-	edglog_fn("WMPEventlogger::logCheckpointable");
-	
-	edglog(debug)<<"Logging Checkpointable event..."<<endl;
-	
-	int outcome = 1;
-	int i = LOG_RETRY_COUNT;
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b){
-		edglog(debug)<<"Logging to LB Proxy..."<<endl;
-		for (; (i > 0) && outcome; i--) {
-			outcome = edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_CHKPT,
-				EDG_WLL_FORMAT_CHKPT, current_step, state);
-			if (outcome) {
-				edglog(severe)<<error_message("Register log checkpointable failed\n"
-					"edg_wll_LogEventProxy", outcome)<<endl;
-				randomsleep();				
-			}
-		}
-	} else {
-#endif  //GLITE_WMS_HAVE_LBPROXY
-		edglog(debug)<<"Logging to LB..."<<endl;
-		for (; (i > 0) && outcome; i--) {
-			outcome = edg_wll_LogEventSync(ctx, EDG_WLL_EVENT_CHKPT,
-				EDG_WLL_FORMAT_CHKPT, current_step, state);
-			if (outcome) {
-				edglog(severe)<<error_message("Register log checkpointable failed\n"
-					"edg_wll_LogEventSync", outcome)<<endl;
-				randomsleep();				
-			}
-		}
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	} // end switch LB normal
-#endif  //GLITE_WMS_HAVE_LBPROXY
-
-	if (outcome) {
-		string msg = error_message("Register log checkpointable failed\n"
-			"edg_wll_LogEventSync/Proxy", outcome);
-		throw LBException(__FILE__, __LINE__, "logListener()",
-			WMS_LOGGING_ERROR, msg);
-	}
-	
-	GLITE_STACK_CATCH();
-}
-
 int
 WMPEventLogger::logAbortEventSync(char* reason)
 {
 	GLITE_STACK_TRY("logAbortEventSync()");
-	
-    edglog_fn("WMPEventlogger::logAbortEventSync");
+
+	edglog_fn("WMPEventlogger::logAbortEventSync");
 	edglog(debug)<<"Logging Abort event (sync)"<<endl;
-	//TBC Checks possibility to do it with LBProxy
-	
+	//TODO Checks possibility to do it with LBProxy
+
 	int outcome = 1;
 	int i = LOG_RETRY_COUNT;
 #ifdef HAVE_LBPROXY
-	if (lbProxy_b) {
+	if (m_lbProxy_b) {
 		edglog(debug)<<"Logging to LB Proxy..."<<endl;
 		for (; (i > 0) && outcome; i--) {
 			outcome = edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_ABORT,
@@ -802,7 +811,7 @@ WMPEventLogger::logAbortEventSync(char* reason)
 			if (outcome) {
 				edglog(severe)<<error_message("Register log abort failed\n"
 					"edg_wll_LogEventProxy", outcome)<<endl;
-				randomsleep();				
+				randomsleep();
 			}
 		}
 	} else { // end switch LB PROXY
@@ -814,7 +823,7 @@ WMPEventLogger::logAbortEventSync(char* reason)
 			if (outcome) {
 				edglog(severe)<<error_message("Register log sync abort failed\n"
 					"edg_wll_LogEventSync", outcome)<<endl;
-				randomsleep();				
+				randomsleep();
 			}
 		}
 #ifdef HAVE_LBPROXY
@@ -822,8 +831,7 @@ WMPEventLogger::logAbortEventSync(char* reason)
 #endif  //HAVE_LBPROXY
 
 	if (outcome) {
-		string msg = error_message("Register log abort failed\n"
-			"edg_wll_LogEventSync/Proxy", outcome);
+		string msg = error_message("Register log abort failed\nedg_wll_LogEventSync/Proxy", outcome);
 		edglog(critical)<<msg<<endl;
 	}
 	
@@ -837,15 +845,15 @@ WMPEventLogger::logAcceptEventSync(const char * fromclient)
 {
 	GLITE_STACK_TRY("logAcceptEventSync()");
 	
-    edglog_fn("WMPEventlogger::logAcceptEventSync");
+	edglog_fn("WMPEventlogger::logAcceptEventSync");
 	edglog(debug)<<"Logging Accept event (sync)"<<endl;
 	
   	char * s_from = edg_wll_SourceToString(EDG_WLL_SOURCE_NETWORK_SERVER);
-  	
+	
 	int outcome = 1;
 	int i = LOG_RETRY_COUNT;
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
+	if (m_lbProxy_b) {
 		edglog(debug)<<"Logging to LB Proxy..."<<endl;
 		for (; (i > 0) && outcome; i--) {
 			outcome = edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_ACCEPTED,
@@ -889,11 +897,9 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 {
 	GLITE_STACK_TRY("logEvent()");
 	edglog_fn("WMPEventlogger::logEvent");
-	
 	if (!test) {
 		logEvent(event, reason, retry, file_queue, jdl);
 	}
-	
 	int res;
 	bool with_hp = false;
 	int lap = 0;
@@ -902,8 +908,6 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 		res = logEvent(event, reason, file_queue, jdl);
 		testAndLog(res, with_hp, lap);
 	} while (res != 0);
-	// return true    TBD.... this means failure??
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -920,20 +924,25 @@ WMPEventLogger::setUserProxy(const string &proxy)
 			authorizer::WMPAuthorizer::checkProxy(proxy);
 		} catch (Exception &ex) {
 			if (ex.getCode() != wmputilities::WMS_PROXY_EXPIRED) {
+				// Problem with proxy (not expired)
 				throw ex;
+			}else{
+				// Dlegated proxy expired - continue processing
+				// TODO most commands cannot be performed anymore:
+				// submit/cancel will fail anyway (to be tested)
+				// output/ perusal may continue (to be tested)
 			}
+
 		}
 		if (edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY, proxy.c_str())) {
 			string msg = error_message("Unable to set User Proxy for "
 				"LB context\nedg_wll_SetParam");
-			edglog(severe)<<msg<<endl;
 			throw LBException(__FILE__, __LINE__, "setUserProxy()",
 				WMS_LOGGING_ERROR, msg);
-		}	
+		}
 	} else {
 		// Setting host proxy
 		if (!getenv(GLITE_HOST_KEY) || !getenv(GLITE_HOST_CERT)) {
-			edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
 			throw AuthenticationException(__FILE__, __LINE__,
 				"setJobLoggingProxy()", WMS_AUTHORIZATION_ERROR,
 				"Unable to set User Proxy for LB context");
@@ -945,15 +954,33 @@ WMPEventLogger::setUserProxy(const string &proxy)
 						getenv(GLITE_HOST_CERT))) {
 				string msg = error_message("Unable to set User Proxy for "
 					"LB context\nedg_wll_SetParam");
-				edglog(severe)<<msg<<endl;
 				throw LBException(__FILE__, __LINE__, "setUserProxy()",
 					WMS_LOGGING_ERROR, msg);
 			}
 		}
 	}
-	
+
 	GLITE_STACK_CATCH();
 }
+
+edg_wlc_JobId  wmpJobIdParse(const char* jobid_str){
+	edg_wlc_JobId jobid;
+	// parse the jobID string
+	if (edg_wlc_JobIdParse(jobid_str, &jobid)) {
+	throw LBException(__FILE__, __LINE__,
+			"wmpJobIdParse()", WMS_OPERATION_NOT_ALLOWED,
+			"Error during edg_wlc_JobIdParse");
+	}
+	return jobid;
+}
+
+
+
+
+/*********************
+* LB  QUERY  METHODS
+* called by checkPerusalFlag
+**********************/
 
 regJobEvent
 WMPEventLogger::retrieveRegJobEvent(const string &jobid_str)
@@ -961,87 +988,57 @@ WMPEventLogger::retrieveRegJobEvent(const string &jobid_str)
 	GLITE_STACK_TRY("retrieveRegJobEvent()");
 	edglog_fn("WMPEventlogger::retrieveRegJobEvent");
 	
-	edg_wlc_JobId jobid;
-  	// parse the jobID string
-  	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
-    	edglog(severe)<<"Error during edg_wlc_JobIdParse"<<endl;
-    	throw LBException(__FILE__, __LINE__,
-			"retrieveRegJobEvent()", WMS_OPERATION_NOT_ALLOWED,
-			"Error during edg_wlc_JobIdParse");
-  	}
-	
+	// parse the jobID string
+	edg_wlc_JobId jobid = wmpJobIdParse (jobid_str.c_str());
+
 	regJobEvent event;
-  	event.instance = "";
-  	event.jdl = "";
-  	event.parent = "";
-  	
+	event.instance = "";
+	event.jdl = "";
+	event.parent = "";
+
 	edg_wll_Event * events = NULL;
-  	edg_wll_QueryRec jc[2];
-  	edg_wll_QueryRec ec[2];
-  	memset(jc, 0, sizeof jc);
-  	memset(ec, 0, sizeof ec);
-  
-  	// job condition: JOBID = jobid
-  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
-  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	jc[0].value.j = jobid;
-  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
-  
-  	// event condition: Event type = REGJOB
-  	ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
-  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	ec[0].value.i = EDG_WLL_EVENT_REGJOB;
-  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
-  	
-  	int error;
+	edg_wll_QueryRec jc[2];
+	edg_wll_QueryRec ec[2];
+	memset(jc, 0, sizeof jc);
+	memset(ec, 0, sizeof ec);
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
-		edglog(debug)<<"Quering LB Proxy..."<<endl;
-		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
-		if (error == ENOENT) { // no events found
-	   		edglog(debug)<<"No events found quering LB Proxy. Quering LB..."<<endl;
-			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-	  	}
-	} else { // end switch LB PROXY
-#endif  //GLITE_WMS_HAVE_LBPROXY
-		edglog(debug)<<"Quering LB..."<<endl;
-		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	} // end switch LB normal
-#endif  //GLITE_WMS_HAVE_LBPROXY
+	// job condition: JOBID = jobid
+	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+	jc[0].value.j = jobid;
+	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
 
-  	if (error) {
-   		string msg = error_message("Unable to retrieve regjob event\n"
-			"edg_wll_QueryEvents[Proxy]", error);
-    	throw LBException(__FILE__, __LINE__, "retrieveRegJobEvent()", 
-    		WMS_LOGGING_ERROR, msg);
+	// event condition: Event type = REGJOB
+	ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
+	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+	ec[0].value.i = EDG_WLL_EVENT_REGJOB;
+	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+
+	// Automatically performs query, check result, and retry if necessary
+	if ( testAndQuery(jc, ec, &events) ){
+		// throw Exception
+		throw LBException(__FILE__, __LINE__,"retrieveRegJobEvent()",
+			WMS_LOGGING_ERROR, "Unable to retrieve regjob event");
 	}
-	
-  	// Getting last event found
-    int i = 0;
-    while (events[i].type) {
-    	i++;
-    }
-    i--;
-  	
-  	if (events[i].regJob.src_instance) {
-  		event.instance = events[i].regJob.src_instance;
+	// Getting last event found (will be stored in events[i]
+	int i = 0;
+	while (events[i].type) {  i++; }
+	i--;
+	// Preparing returning result instance starting from found Registered event
+	if (events[i].regJob.src_instance) {
+		event.instance = events[i].regJob.src_instance;
 	}
-  	if (events[i].regJob.jdl) {
-  		event.jdl = events[i].regJob.jdl;
-  	}
-  	if (events[i].regJob.parent) {
-  		event.parent = string(edg_wlc_JobIdUnparse(events[i].regJob.parent));
-  	}
-  	
-  	for (int i = 0; events[i].type; i++) {
+	if (events[i].regJob.jdl) {
+		event.jdl = events[i].regJob.jdl;
+	}
+	if (events[i].regJob.parent) {
+		event.parent = string(edg_wlc_JobIdUnparse(events[i].regJob.parent));
+	}
+	for (int i = 0; events[i].type; i++) {
 		edg_wll_FreeEvent(&events[i]);
 	}
-	
-  	return event;
-  	
-  	GLITE_STACK_CATCH();
+	return event;
+	GLITE_STACK_CATCH();
 }
 
 string
@@ -1049,74 +1046,49 @@ WMPEventLogger::getLastEventSeqCode()
 {
 	GLITE_STACK_TRY("getLastEventSeqCode()");
 	edglog_fn("WMPEventlogger::getLastEventSeqCode");
-	
-	edg_wlc_JobId jobid;
-  	// parse the jobID string
-  	if (edg_wlc_JobIdParse((this->id->toString()).c_str(), &jobid)) {
-    	edglog(severe)<<"Error during edg_wlc_JobIdParse"<<endl;
-    	throw LBException(__FILE__, __LINE__,
-			"getLastEventSeqCode()", WMS_OPERATION_NOT_ALLOWED,
-			"Error during edg_wlc_JobIdParse");
-  	}
-	
+
+
+	// parse the jobID string
+	edg_wlc_JobId jobid = wmpJobIdParse (this->id->toString().c_str());
 	edg_wll_Event * events = NULL;
-  	edg_wll_QueryRec jc[2];
-  	edg_wll_QueryRec ec[2];
-  	memset(jc, 0, sizeof jc);
-  	memset(ec, 0, sizeof ec);
-  
-  	// job condition: JOBID = jobid
-  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
-  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	jc[0].value.j = jobid;
-  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
-  	
-  	// event condition: Event SOURCE = NetworkServer
-  	ec[0].attr = EDG_WLL_QUERY_ATTR_SOURCE;
-  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	ec[0].value.i = EDG_WLL_SOURCE_NETWORK_SERVER;
-  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
-  	
-  	int error;
+	edg_wll_QueryRec jc[2];
+	edg_wll_QueryRec ec[2];
+	memset(jc, 0, sizeof jc);
+	memset(ec, 0, sizeof ec);
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
-		edglog(debug)<<"Quering LB Proxy..."<<endl;
-		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
-		if (error == ENOENT) { // no events found
-	   		edglog(debug)<<"No events found quering LB Proxy. Quering LB..."<<endl;
-			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-	  	}
-	} else { // end switch LB PROXY
-#endif  //GLITE_WMS_HAVE_LBPROXY
-		edglog(debug)<<"Quering LB..."<<endl;
-		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	} // end switch LB normal
-#endif  //GLITE_WMS_HAVE_LBPROXY
+	// job condition: JOBID = jobid
+	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+	jc[0].value.j = jobid;
+	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
 
-  	if (error) {
-		string msg = error_message(string("Unable to get events for job: "
-			+ this->id->toString() + "\nedg_wll_QueryEvents[Proxy]"), error);
-    	throw LBException(__FILE__, __LINE__, "getLastEventSeqCode()",
-    		WMS_LOGGING_ERROR, msg);
+	// event condition: Event SOURCE = NetworkServer
+	ec[0].attr = EDG_WLL_QUERY_ATTR_SOURCE;
+	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+	ec[0].value.i = EDG_WLL_SOURCE_NETWORK_SERVER;
+	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+
+
+	// Automatically performs query, check result, and retry if necessary
+	if ( testAndQuery(jc, ec, &events) ){
+		// throw Exception
+		throw LBException(__FILE__, __LINE__, "getLastEventSeqCode()",
+			WMS_LOGGING_ERROR, "Unable to get events for job: "+ this->id->toString());
 	}
-	
+
 	int i = 0;
-	while (events[i].type) {
-		i++;
-	}
+	while (events[i].type) { i++; }
 	i--;
-	
+
 	string seqcode = events[i].any.seqcode;
-    
-    for (int i = 0; events[i].type; i++) {
+
+	for (int i = 0; events[i].type; i++) {
 		edg_wll_FreeEvent(&events[i]);
 	}
-	
-  	return seqcode;
-  
-  	GLITE_STACK_CATCH();
+
+	return seqcode;
+
+	GLITE_STACK_CATCH();
 }
 
 bool
@@ -1126,16 +1098,11 @@ WMPEventLogger::isAborted(string &reason)
 	edglog_fn("WMPEventlogger::isAborted");
 	
 	reason = "";
-	
-	edg_wlc_JobId jobid;
-  	// parse the jobID string
-  	if (edg_wlc_JobIdParse((this->id->toString()).c_str(), &jobid)) {
-    	edglog(severe)<<"Error during edg_wlc_JobIdParse"<<endl;
-    	throw LBException(__FILE__, __LINE__,
-			"isAborted()", WMS_OPERATION_NOT_ALLOWED,
-			"Error during edg_wlc_JobIdParse");
-  	}
-	
+
+
+	// parse the jobID string
+	edg_wlc_JobId jobid = wmpJobIdParse (this->id->toString().c_str());
+
 	edg_wll_Event * events = NULL;
   	edg_wll_QueryRec jc[2];
   	edg_wll_QueryRec ec[2];
@@ -1154,45 +1121,25 @@ WMPEventLogger::isAborted(string &reason)
   	ec[0].value.i = EDG_WLL_EVENT_ABORT;
   	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
 	
-	int error;
-
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
-		edglog(debug)<<"Quering LB Proxy..."<<endl;
-		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
-		if (error == ENOENT) { // no events found
-	   		edglog(debug)<<"No events found quering LB Proxy. Quering LB..."<<endl;
-			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-	  	}
-	} else { // end switch LB PROXY
-#endif  //GLITE_WMS_HAVE_LBPROXY
-		edglog(debug)<<"Quering LB..."<<endl;
-		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	} // end switch LB normal
-#endif  //GLITE_WMS_HAVE_LBPROXY
-
-  	if (error) {
-  		if (error == ENOENT) {
+	// Automatically performs query, check result, and retry if necessary
+	switch ( testAndQuery(jc, ec, &events) ){
+		case ENOENT:
   			// No cancel event found
 	   		return false;
-  		} else {
-  			string msg = error_message("Unable to query LB and LBProxy\n"
-				"edg_wll_QueryEvents[Proxy]", error);
-			edglog(debug)<<msg<<endl;			
-	    	throw LBException(__FILE__, __LINE__, "isAborted()", 
-	    		WMS_LOGGING_ERROR, msg);
-  		}
+		case 0:
+			// SUCCESS!!
+			break;
+		default:
+			// ALL other cases: Exeption
+			throw LBException(__FILE__, __LINE__, "isAborted()",
+				WMS_LOGGING_ERROR, "Unable to query LB and LBProxy");
 	}
-	
+	// fill reason (reference) parameter
 	reason = events[0].abort.reason;
-	
-  	for (int i = 0; events[i].type; i++) {
+	for (int i = 0; events[i].type; i++) {
 		edg_wll_FreeEvent(&events[i]);
 	}
-	
-  	return true;
-  	
+	return true;
 	GLITE_STACK_CATCH();
 }
 
@@ -1202,68 +1149,40 @@ WMPEventLogger::isStartAllowed()
 	GLITE_STACK_TRY("isStartAllowed()");
 	edglog_fn("WMPEventlogger::isStartAllowed");
 	
-	edg_wlc_JobId jobid;
-  	// parse the jobID string
-  	if (edg_wlc_JobIdParse((this->id->toString()).c_str(), &jobid)) {
-    	edglog(severe)<<"Error during edg_wlc_JobIdParse"<<endl;
-    	throw LBException(__FILE__, __LINE__,
-			"isStartAllowed()", WMS_OPERATION_NOT_ALLOWED,
-			"Error during edg_wlc_JobIdParse");
-  	}
+	// parse the jobID string
+	edg_wlc_JobId jobid = wmpJobIdParse (this->id->toString().c_str());
 	
 	edg_wll_Event * events = NULL;
-  	edg_wll_QueryRec jc[2];
-  	edg_wll_QueryRec ec[2];
-  	memset(jc, 0, sizeof jc);
-  	memset(ec, 0, sizeof ec);
-  
-  	// job condition: JOBID = jobid
-  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
-  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	jc[0].value.j = jobid;
-  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
-  	
-  	// event condition: Event SOURCE = NetworkServer
-  	ec[0].attr = EDG_WLL_QUERY_ATTR_SOURCE;
-  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	ec[0].value.i = EDG_WLL_SOURCE_NETWORK_SERVER;
-  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
-  	
-  	/*ec[0].attr = EDG_WLL_QUERY_ATTR_INSTANCE;
-  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	ec[0].value.c = strdup((char*)this->server.c_str());
-  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;*/
-  	
-  	regJobEvent event;
-  	event.instance = "";
-  	event.jdl = "";
-  	event.parent = "";
-  	
-  	int error;
+	edg_wll_QueryRec jc[2];
+	edg_wll_QueryRec ec[2];
+	memset(jc, 0, sizeof jc);
+	memset(ec, 0, sizeof ec);
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
-		edglog(debug)<<"Quering LB Proxy..."<<endl;
-		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
-		if (error == ENOENT) { // no events found
-			edglog(debug)<<"No events found quering LB Proxy. Quering LB..."<<endl;
-			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-	  	}
-	} else { // end switch LB PROXY
-#endif  //GLITE_WMS_HAVE_LBPROXY
-		edglog(debug)<<"Quering LB..."<<endl;
-		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-#ifdef GLITE_WMS_HAVE_LBPROXY
-	} // end switch LB normal
-#endif  //GLITE_WMS_HAVE_LBPROXY
+	// job condition: JOBID = jobid
+	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+	jc[0].value.j = jobid;
+	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
 
-  	if (error) {
-  		string msg = error_message(string("Unable to get events for job: "
-			+ this->id->toString() + "\nedg_wll_QueryEvents[Proxy]"), error);
-    	throw LBException(__FILE__, __LINE__, "isStartAllowed()",
-    		WMS_LOGGING_ERROR, msg);
+	// event condition: Event SOURCE = NetworkServer
+	ec[0].attr = EDG_WLL_QUERY_ATTR_SOURCE;
+	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+	ec[0].value.i = EDG_WLL_SOURCE_NETWORK_SERVER;
+	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+
+
+
+	regJobEvent event;
+	event.instance = "";
+	event.jdl = "";
+	event.parent = "";
+	// Automatically performs query, check result, and retry if necessary
+	if ( testAndQuery(jc, ec, &events) ){
+		// throw Exception
+		throw LBException(__FILE__, __LINE__, "isStartAllowed()",
+			WMS_LOGGING_ERROR,"Unable to get events for job: "+ this->id->toString());
 	}
-	
+
 	bool flag = false;
 	int i = 0;
 	while (events[i].type) {
@@ -1345,45 +1264,38 @@ WMPEventLogger::getStatus(bool childreninfo)
 {
 	GLITE_STACK_TRY("getStatus()");
 	edglog_fn("WMPEventlogger::getStatus");
-	
-	edg_wlc_JobId jobid;
-	string jobid_str = this->id->toString();
-  	// parse the jobID string
-  	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
-    	edglog(severe)<<"Error during edg_wlc_JobIdParse"<<endl;
-    	throw LBException(__FILE__, __LINE__,
-			"getStatus()", WMS_LOGGING_ERROR,
-			"Error during edg_wlc_JobIdParse");
-  	}
 
-  	edg_wll_JobStat * states = NULL;
-  	edg_wll_QueryRec jc[2];
-  	memset(jc, 0, sizeof jc);
-  
-  	// job condition: JOBID = jobid
-  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
-  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	jc[0].value.j = jobid;
-  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
-  
-  	int error;
-  	int flag = EDG_WLL_STAT_CLASSADS;
+	// parse the jobID string
+	edg_wlc_JobId jobid = wmpJobIdParse (this->id->toString().c_str());
+
+	edg_wll_JobStat * states = NULL;
+	edg_wll_QueryRec jc[2];
+	memset(jc, 0, sizeof jc);
+
+	// job condition: JOBID = jobid
+	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+	jc[0].value.j = jobid;
+	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+
+	int error;
+	int flag = EDG_WLL_STAT_CLASSADS;
 	if (childreninfo) {
 		flag = flag | EDG_WLL_STAT_CHILDREN;
 	}
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b) {
-		edglog(debug)<<"Quering LB Proxy..."<<endl;
+	if (m_lbProxy_b) {
+		edglog(debug)<<"Querying LB Proxy..."<<endl;
 		error = edg_wll_QueryJobsProxy(ctx, jc, flag, NULL, &states);
 		// OR operator not necessary, workaround for the LB bug #22442
 		if ((error == ENOENT) || (states[0].state == EDG_WLL_JOB_UNDEF)) { // no events found
-	   		edglog(debug)<<"No status found quering LB Proxy. Quering LB..."<<endl;
+	   		edglog(debug)<<"No status found querying LB Proxy. Querying LB..."<<endl;
 			error = edg_wll_QueryJobs(ctx, jc, flag, NULL, &states);
 	  	}
 	} else { // end switch LB PROXY
 #endif  //GLITE_WMS_HAVE_LBPROXY
-		edglog(debug)<<"Quering LB..."<<endl;
+		edglog(debug)<<"Querying LB..."<<endl;
 		error = edg_wll_QueryJobs(ctx, jc, flag, NULL, &states);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
@@ -1393,9 +1305,8 @@ WMPEventLogger::getStatus(bool childreninfo)
   	if (error || (states[0].state == EDG_WLL_JOB_UNDEF)) {
   		string msg = error_message("Unable to get job status\n"
 			"edg_wll_QueryJobs[Proxy]", error);
-		edglog(severe)<<msg<<endl;
-    	throw LBException(__FILE__, __LINE__, "getStatus()", WMS_LOGGING_ERROR,
-			msg);
+    		throw LBException(__FILE__, __LINE__, "getStatus()",
+			WMS_LOGGING_ERROR,msg);
 	}
 
 	// Searching last state
@@ -1415,7 +1326,6 @@ WMPEventLogger::getStatus(bool childreninfo)
 }
 
 
-
 //
 //
 // Private methods
@@ -1432,7 +1342,7 @@ WMPEventLogger::error_message(const string &message, int exitcode)
 	edg_wll_Error(ctx, &msg, &dsc);
 
 	string lb;
-	if (this->lbProxy_b) {
+	if (m_lbProxy_b) {
 		lb = "LBProxy is enabled\n";
 	} else {
 		if (getenv(GLITE_WMS_LOG_DESTINATION)) {
@@ -1454,11 +1364,11 @@ WMPEventLogger::error_message(const string &message, int exitcode)
 		error_message += "\nLB[Proxy] Error not available "
 			"(empty messages)";
 	}
-	
+
 	free(msg);
 	free(dsc);
 	return error_message;
-	
+
 	GLITE_STACK_CATCH();
 }
 
@@ -1467,7 +1377,7 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 {
 	GLITE_STACK_TRY("testAndLog()");
 	edglog_fn("WMPEventlogger::testAndLog");
-	
+
 	if (code) {
 		switch (code) {
 			case EINVAL:
@@ -1475,11 +1385,9 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 				code = 0; // Don't retry...
 				break;
 			case EDG_WLL_ERROR_GSS:
-				edglog(severe)<<"Severe error in SSL layer while communicating "
-					"with LB daemons"<<endl;
+				edglog(severe)<<"Severe error in SSL layer while communicating with LB daemons"<<endl;
 				if (with_hp) {
-					edglog(severe)<<"The log with the host certificate has "
-						"just been done. Giving up"<<endl;
+					edglog(severe)<<"The log with the host certificate has just been done. Giving up"<<endl;
 					code = 0; // Don't retry...
 				} else {
 					code = 0; // Don't retry.
@@ -1487,7 +1395,7 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 				break;
 			default:
 				if (++lap > LOG_RETRY_COUNT) {
-					string msg = "Unable to complete operation: LB call retried " 
+					string msg = "Unable to complete operation: LB call retried "
 						+ boost::lexical_cast<string>(lap - 1)
 						+ " times, always failed";
 					edglog(error)<<msg<<endl;
@@ -1500,30 +1408,112 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 				}
 				break;
 		}
-	} else { // The logging call worked fine, do nothing
-		edglog(debug)<<"LB call succeeded"<<endl;
 	}
 	return;
-	
 	GLITE_STACK_CATCH();
 }
 
-int 
-WMPEventLogger::logEvent(event_name event, const char* reason, 
+
+int
+WMPEventLogger::testAndQuery(edg_wll_QueryRec *jc, edg_wll_QueryRec *ec, edg_wll_Event **events)
+{
+	GLITE_STACK_TRY("testAndQuery()");
+	edglog_fn("WMPEventlogger::testAndQuery");
+	int result=1 ; // default is error
+	int lap = 1;
+	bool lbProxy_b = m_lbProxy_b;
+	while (lap<=QUERY_RETRY_COUNT){
+		// PERFORM the Query:
+		edglog(debug) << "LB query lap #"<< lap <<": ";
+		if (lbProxy_b) {
+#ifdef GLITE_WMS_HAVE_LBPROXY
+			result = edg_wll_QueryEventsProxy(ctx, jc, ec, events);
+			if (result == ENOENT) { // no events found
+				lbProxy_b= false; // Next cycle will no contact LBProxy
+				edglog(debug)<<"No events found querying LB Proxy: querying LB"<<endl;
+				result = edg_wll_QueryEvents(ctx, jc, ec, events);
+			}
+#endif  //GLITE_WMS_HAVE_LBPROXY
+		} else {
+			result = edg_wll_QueryEvents(ctx, jc, ec, events);
+		}
+		// Determine whether is worth retrying the query
+		switch (result){
+			case 0:
+				// SUCCESS!
+				return result;
+			case ENOENT:
+				edglog(debug)<<"No (previous) events found querying LB" << endl;
+				return result;  // Do not retry
+			case EINVAL:
+				edglog(critical)<<"Critical error in LB calls: EINVAL" << endl;
+				return result;  // Do not retry
+			case EDG_WLL_ERROR_SERVER_RESPONSE:
+			case EDG_WLL_ERROR_DB_CALL:
+			case EDG_WLL_ERROR_GSS:
+			case EDG_WLL_ERROR_DNS:
+			case EIO:
+			case ETIMEDOUT:
+				// May be temporarily error: break and Retry
+				edglog(warning)<<"Temporarily error while contacting LB" << endl;
+				edglog(warning)<<"edg_wll_QueryEvents Error Code: " << result;
+				break;
+			default:
+				if (    result > GLITE_WMS_LOGGING_ERROR_BASE  &&
+					result < EDG_WLL_ERROR_COMPARE_EVENTS){
+					// LB returned codes lead to definite error - do not retry
+					edglog(critical)<<"Critical WMS error code in LB call: "<< result << endl;
+					return result;  // Do not retry
+				}else{
+					// All other system error may depend on temporarily problem
+					// LB returned codes lead to definite error
+					edglog(critical)<<"Critical generic error code in LB call: "<< result << endl;
+					return result;
+				}
+				break;
+		} // switch Result
+		if (lap==QUERY_RETRY_COUNT) {
+			// ALL queries returned with ERROR
+			edglog(critical)<< "Unable to complete operation: LB query retried " <<
+			boost::lexical_cast<string>(lap) <<  " times, always failed";
+			return result;  // Do not retry
+		} else {
+			lap++;
+			randomsleep();
+		}
+	}    // end while (lap<=QUERY_RETRY_COUNT){ ....
+	return result;
+	GLITE_STACK_CATCH();
+}
+
+
+
+
+int
+WMPEventLogger::logEvent(event_name event, const char* reason,
 	const char* file_queue, const char* jdl)
 {
 	GLITE_STACK_TRY("logEvent()");
 	edglog_fn("WMPEventlogger::logEvent");
 	
 #ifdef GLITE_WMS_HAVE_LBPROXY
-	if (lbProxy_b){
+	if (m_lbProxy_b){
 		edglog(debug)<<"Logging to LB Proxy..."<<endl;
 		switch (event){
-			case LOG_ACCEPT:
+			case LOG_ACCEPT:{
+				// Log remote address
+				string remoteHost="Host not available";
+				if (getenv("REMOTE_ADDR")){
+					remoteHost = string(getenv("REMOTE_ADDR"));
+					if (getenv("REMOTE_PORT")) {
+						remoteHost+= ":" + string(getenv("REMOTE_PORT"));
+					}
+				}
 				edglog(debug)<<"Logging Accept event..."<<endl;
-				return edg_wll_LogAcceptedProxy(ctx, EDG_WLL_SOURCE_WM_PROXY,
-					server.c_str(), reason, ""); // resoan is "From Client"
+				return edg_wll_LogAcceptedProxy(ctx, EDG_WLL_SOURCE_USER_INTERFACE,
+					remoteHost.c_str(), reason, ""); // reason is "From Client"
 				break;
+			}
 			case LOG_ENQUEUE_START:
 				edglog(debug)<<"Logging Enqueue START event..."<<endl;
 				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "START", "");
@@ -1566,11 +1556,20 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 #endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Logging to LB..."<<endl;
 		switch (event){
-			case LOG_ACCEPT:
+			case LOG_ACCEPT:{
+				// Log remote address
+				string remoteHost="Host not available";
+				if (getenv("REMOTE_ADDR")){
+					remoteHost = string(getenv("REMOTE_ADDR"));
+					if (getenv("REMOTE_PORT")) {
+						remoteHost+= ":" + string(getenv("REMOTE_PORT"));
+					}
+				}
 				edglog(debug)<<"Logging Accept event..."<<endl;
-				return edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY,
-					server.c_str(), reason, ""); // resoan is "From Client"
+				return edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_USER_INTERFACE,
+					remoteHost.c_str(), reason, ""); // reason is "From Client"
 				break;
+			}
 			case LOG_REFUSE:
 				edglog(debug)<<"Logging Refuse event..."<<endl;
 				return edg_wll_LogRefused(ctx, EDG_WLL_SOURCE_WM_PROXY,
@@ -1616,7 +1615,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 }
 
 void 
-WMPEventLogger::logEvent(event_name event, const char* reason, bool retry, 
+WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 	const char* file_queue, const char* jdl)
 {
 	GLITE_STACK_TRY("logEvent()");
@@ -1630,8 +1629,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 		logged = logEvent(event, reason, file_queue, jdl);
 		edglog(debug)<<"logEvent exit code: "<<logged<<endl;
 		if (!logged && (i < 2) && retry) {
-			edglog(error)<<error_message("Error logging event\n"
-				"edg_wll_Log<Event>REQ", logged)<<endl;
+			edglog(error)<<error_message("Error logging event\nedg_wll_Log<Event>REQ", logged)<<endl;
 			randomsleep();
 		}
 	}
@@ -1640,8 +1638,6 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 		throw LBException(__FILE__, __LINE__, "logEvent()",
 			WMS_LOGGING_ERROR, msg);
 	}
-	edglog(debug)<<"Event succesfully logged"<<endl;
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -1650,21 +1646,21 @@ WMPEventLogger::randomsleep()
 {
 	GLITE_STACK_TRY("randomsleep()");
 	edglog_fn("WMPEventlogger::randomsleep");
-	
-	if (this->lbProxy_b) {
+
+	if (m_lbProxy_b) {
 		int randomvalue = generateRandomNumber(LB_PROXY_LOG_RETRY_LOWER_LIMIT,
 			LB_PROXY_LOG_RETRY_UPPER_LIMIT);
-		edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
+		edglog(debug)<<"Failed to contact LB. Sleeping for "<<randomvalue
 			<<" seconds before retry..."<<endl;
 		sleep(randomvalue);
 	} else {
 		int randomvalue = generateRandomNumber(LB_LOG_RETRY_LOWER_LIMIT,
 			LB_LOG_RETRY_UPPER_LIMIT);
-		edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
+		edglog(debug)<<"Failed to contact LB. Sleeping for "<<randomvalue
 			<<" seconds before retry..."<<endl;
 		sleep(randomvalue);
 	}
-	
+
 	GLITE_STACK_CATCH();
 }
 
