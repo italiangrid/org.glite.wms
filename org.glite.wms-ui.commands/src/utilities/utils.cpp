@@ -1332,22 +1332,14 @@ const long Utils::checkTime ( const std::string &st, int &days,  int &hours, int
         }
 	if (sec > 0){
 		 switch (opt){
-                 	case (Options::TIME_TO):
-                        case (Options::TIME_VALID):{
+                 	case (Options::TIME_VALID):
+				break;
+                        case (Options::TIME_TO):{
 				if (sec <= now){
 					throw WmsClientException(__FILE__,__LINE__,
 					"checkTime", DEFAULT_ERR_CODE,
 					"Invalid Time Value",
 					"the time value is out of limit ("+ st + ")");
-                                }
-                                break;
-                	}
-                        case (Options::TIME_FROM):{
-				if (sec > now){
-					throw WmsClientException(__FILE__,__LINE__,
-					"checkTime", DEFAULT_ERR_CODE,
-					"Invalid Time Value",
-					"time value should be earlier than the current time");
                                 }
                                 break;
                 	}
@@ -1374,6 +1366,7 @@ const long Utils::checkTime ( const std::string &st, int &days,  int &hours, int
 
 /****************************************************
 * Utility methods for strings
+
 ****************************************************/
 /*
 *	base64 encoder
