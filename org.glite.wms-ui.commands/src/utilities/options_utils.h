@@ -93,7 +93,6 @@ class Options
 		} ;
                 enum TimeOpts{
                 	TIME_NO_OPT,
-			TIME_FROM,
                         TIME_TO,
                         TIME_VALID
                 } ;
