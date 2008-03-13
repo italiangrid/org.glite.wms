@@ -239,7 +239,7 @@ int main(int argc, char*argv[])
 
     logger_instance->setLogFile(logfile.c_str());
     CREAM_SAFE_LOG(log_dev->debugStream() 
-		   << "ICE VersionID is [20080310-17:00 - temp disable suic patch - classad leak fix] ProcessID=["
+		   << "ICE VersionID is [20080312-21:25] ProcessID=["
 		   << ::getpid() << "]"
 		   <<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
@@ -449,10 +449,7 @@ int main(int argc, char*argv[])
 	    
 	    // let's lock the cache so no other thread try to do cache operations
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
-	    //threadPool->stopAllThreads();
-
-	    // let's lock the cache so no other thread try to do cache operations
-	    //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+	    threadPool->stopAllThreads();
 
 	    // Now all thread are stopped so closing the Berkeley database is safe
 	    // but to do that is sufficient to delete the jobCache single instance
