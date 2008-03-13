@@ -224,58 +224,36 @@ ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
 	GLITE_STACK_TRY("ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl, "
 		"string delegation_id, struct ns1__jobRegisterResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobRegisterJSDL");
-	edglog(info)<<"jobRegisterJSDL operation called"<<endl;
-	printJSDL(jsdl);
-
+	edglog(info) << "jobRegisterJSDL operation called" << endl;
+	
+	//printJSDL(jsdl);
+	
 	int return_value = SOAP_OK;
-
-	jobRegisterResponse jobRegister_response;
+	ns1__jobRegisterResponse jobRegister_response;
+	
+	// Perform the JSDL to JDL conversion via Stylesheet
+	// TBD
 	
 	string jdl = "[ \
-        requirements = other.GlueCEStateStatus == \"Production\"; \
-        rank =  -other.GlueCEStateEstimatedResponseTime; \
-        DefaultRank =  -other.GlueCEStateEstimatedResponseTime; \
-        AllowZippedISB = false; \
-        Type = \"job\"; \
-        JobType = \"normal\"; \
-        Executable = \"/usr/bin/ls\"; \
-        Arguments = \"File1.txt\"; \
-        StdOutput = \"std.out\"; \
-        StdError = \"std.err\"; \
-        InputSandbox = {\"file:///home/civvu/JDL/File1.txt\"}; \
-        OutputSandbox = {\"std.out\",\"std.err\"}; \
-        DEFAULTrank =  -other.GlueCEStateEstimatedResponseTimeDAG; \
-        VirtualOrganisation = \"infngrid\";]";
-
-	try {
-		jobRegister(jobRegister_response, jdl, delegation_id);
-		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
-		job_id_struct->id = jobRegister_response.jobIdStruct->id;
-		job_id_struct->name = jobRegister_response.jobIdStruct->name;
-		if (job_id_struct->path) {
-			job_id_struct->path = jobRegister_response.jobIdStruct->path;
-		} else {
-			job_id_struct->path = NULL;
-		}
-
-		if (jobRegister_response.jobIdStruct->childrenJob) {
-			job_id_struct->childrenJob =
-				*convertToGSOAPJobIdStructTypeVector(jobRegister_response
-				.jobIdStruct->childrenJob);
-		} else {
-			job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
-		}
-		response._jobIdStruct = job_id_struct;
-	} catch (Exception &exc) {
-		setSOAPFault(soap, exc.getCode(), "jobRegisterJSDL", time(NULL),
-			exc.getCode(), (string) exc.what(), exc.getStackTrace());
-		return_value = SOAP_FAULT;
-	} catch (exception &ex) {
-		setSOAPFault(soap, WMS_IS_FAILURE, "jobRegisterJSDL", time(NULL),
-			WMS_IS_FAILURE, (string) ex.what());
-		return_value = SOAP_FAULT;
-	}
-
+		requirements = true; \
+		AllowZippedISB = false; \
+		OutputSandboxBaseDestURI = \"gsiftp://pcpg01.cern.ch/data/SEDir/Indy/\";  \
+		JobType = \"normal\"; \
+		Executable = \"/bin/ls\"; \
+		StdOutput = \"std.out\"; \
+		OutputSandbox = { \"std.out\",\"std.err\" }; \
+		VirtualOrganisation = \"dteam\"; \
+		rank = 4; \
+		Type = \"job\"; \
+		StdError = \"std.err\"; \
+		DefaultRank =  -other.GlueCEStateEstimatedResponseTime ]";
+		
+	// Call the Job Register		
+	return_value = ns1__jobRegister(soap, jdl, delegation_id, jobRegister_response);
+	
+	// Set the JobRegisterJSDL response
+	response._jobIdStruct = jobRegister_response._jobIdStruct;
+	
 	edglog(info)<<"jobRegisterJSDL operation completed\n"<<endl;
 	
 	return return_value;
@@ -350,10 +328,37 @@ ns1__jobSubmitJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
 		"string delegation_id, struct ns1__jobSubmitJSDLResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobSubmitJSDL");
 	edglog(info)<<"jobSubmitJSDL operation called"<<endl;
-	printJSDL(jsdl);
-
+	
+	//printJSDL(jsdl);
+	
 	int return_value = SOAP_OK;
+	ns1__jobSubmitResponse jobSubmit_response;
+	
+	// Perform the JSDL to JDL conversion via Stylesheet
+	// TBD
+	
+	string jdl = "[ \
+		requirements = true; \
+		AllowZippedISB = false; \
+		OutputSandboxBaseDestURI = \"gsiftp://pcpg01.cern.ch/data/SEDir/Indy/\";  \
+		JobType = \"normal\"; \
+		Executable = \"/bin/ls\"; \
+		StdOutput = \"std.out\"; \
+		OutputSandbox = { \"std.out\",\"std.err\" }; \
+		VirtualOrganisation = \"dteam\"; \
+		rank = 4; \
+		Type = \"job\"; \
+		StdError = \"std.err\"; \
+		DefaultRank =  -other.GlueCEStateEstimatedResponseTime ]";
+		
+	// Call the Job Submit		
+	return_value = ns1__jobSubmit(soap, jdl, delegation_id, jobSubmit_response);
 
+	// Set the JobSubmitJSDL response
+	response._jobIdStruct = jobSubmit_response._jobIdStruct;
+		
+	edglog(info)<<"jobSubmitJSDL operation completed\n"<<endl;
+	
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -721,15 +726,39 @@ ns1__jobListMatchJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
 		"string delegation_id, struct ns1__jobListMatchJSDLResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobListMatchJSDL");
 	edglog(info)<<"ns1__jobListMatchJSDL operation called"<<endl;
-	printJSDL(jsdl);
+	
+	//printJSDL(jsdl);
 
 	int return_value = SOAP_OK;
-
+	ns1__jobListMatchResponse jobListMatch_response;
+	
+	// Perform the JSDL to JDL conversion via Stylesheet
+	// TBD
+	
+	string jdl = "[ \
+		requirements = true; \
+		AllowZippedISB = false; \
+		OutputSandboxBaseDestURI = \"gsiftp://pcpg01.cern.ch/data/SEDir/Indy/\";  \
+		JobType = \"normal\"; \
+		Executable = \"/bin/ls\"; \
+		StdOutput = \"std.out\"; \
+		OutputSandbox = { \"std.out\",\"std.err\" }; \
+		VirtualOrganisation = \"dteam\"; \
+		rank = 4; \
+		Type = \"job\"; \
+		StdError = \"std.err\"; \
+		DefaultRank =  -other.GlueCEStateEstimatedResponseTime ]";
+		
+	// Call the Job ListMatch		
+	return_value = ns1__jobListMatch(soap, jdl, delegation_id, jobListMatch_response);
+	
+	// Set the JobListMatchJSDL response
+	response._CEIdAndRankList = jobListMatch_response._CEIdAndRankList;
+	
 	edglog(info)<<"jobListMatchJSDL operation completed\n"<<endl;
 	
 	return return_value;
-	GLITE_STACK_CATCH();
-}
+	GLITE_STACK_CATCH();}
 
 int
 ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,

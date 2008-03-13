@@ -1,18 +1,18 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0 
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
@@ -25,7 +25,6 @@ limitations under the License.
 // Exceptions
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-
 
 //Utilities
 #include "utilities/wmputils.h"
@@ -130,11 +129,10 @@ GaclManager::GaclManager (const string &file, const bool &create) {
 * Destructor
 */
 GaclManager::~GaclManager( ) {
-	// TODO use Smart pointers
-	if (gaclCred) {delete(gaclCred);}
+	if (gaclCred) {delete (gaclCred);}
 	if (gaclUser) {delete(gaclUser);}
 	if (gaclEntry) {delete(gaclEntry);}
-	if (gaclAcl) {delete(gaclAcl);}
+	if (gaclAcl) {delete(gaclAcl );}
 };
 
 /**
@@ -180,6 +178,7 @@ void GaclManager::addEntry (const WMPgaclCredType &type, const string &rawvalue,
 		cerr << "Error : " << oss.str()<< endl;
 		exit(-1);
 #else
+		edglog(debug) << "Error : " << oss.str() << endl;
   		throw GaclException (__FILE__, __LINE__,  "GaclManager::addEntry" ,
 			WMS_GACL_ERROR,  oss.str() );
 #endif
@@ -189,9 +188,9 @@ void GaclManager::addEntry (const WMPgaclCredType &type, const string &rawvalue,
 	//sets permission
 	setAllowPermission(type, rawvalue, permission);
 };
- /**
-   * Check whther the gacl file contains the specified entry
-   */
+/**
+* Check whther the gacl file contains the specified entry
+*/
 bool GaclManager::hasEntry(const WMPgaclCredType &type, const string rawvalue){
 	if (loadCredential(type,rawvalue)== WMPGACL_SUCCESS){
 		return true ;
@@ -203,6 +202,7 @@ bool GaclManager::hasEntry(const WMPgaclCredType &type, const string rawvalue){
 };
 /*
 *	adds a set of credential entries to the gacl
+*	@param vect vector of credential (credential type , rawvalue )
 */
 void GaclManager::addEntries (const vector<pair<WMPgaclCredType, string> > &vect )
 {
@@ -215,7 +215,7 @@ void GaclManager::addEntries (const vector<pair<WMPgaclCredType, string> > &vect
 *	removes from the gacl file the entry of the specified credential
 */
 int GaclManager::removeEntry (const WMPgaclCredType &type,
-                        const string &rawvalue, string &errors )
+			const string &rawvalue, string &errors )
 {
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 	edglog_fn("GaclManager::removeEntry");
@@ -237,6 +237,7 @@ int GaclManager::removeEntry (const WMPgaclCredType &type,
 			cred = entry->firstcred ;
 			// scanning of the credentials in the selected entry
 			while ( cred != NULL ) {
+#ifndef GRST_VERSION
 				// credType=WMPGACL_XXXXX_TAG (any-user, person, ......)
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 				edglog(debug)<< "cred-type:" << cred->type<< endl;
@@ -275,6 +276,18 @@ int GaclManager::removeEntry (const WMPgaclCredType &type,
 						} // if (nv)
 					} // if (ANY_CRED)
 				}
+#else
+                                {
+                                  GRSTgaclCred *cred_tmp;
+                                  
+                                  cred_tmp = GRSTgaclCredNew((char*)credType.c_str());
+                                  GRSTgaclCredAddValue(cred_tmp, rawname, (char*)rawvalue.c_str());
+
+                                  if (GRSTgaclCredCmpAuri(cred, cred_tmp) == 0) found = true;
+
+                                  GRSTgaclCredFree(cred_tmp);
+                                }
+#endif
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 #endif
 				if ( !found ) {
@@ -301,7 +314,7 @@ int GaclManager::removeEntry (const WMPgaclCredType &type,
 						gaclAcl = NULL ;
 					}
 				}
-				GRSTgaclEntryFree(entry);
+				GRSTgaclEntryFree (entry);
 				break;
 			}
 		} //while(entry)
@@ -319,10 +332,13 @@ int GaclManager::removeEntry (const WMPgaclCredType &type,
 		oss <<"input " << rawCred.first << ": " << rawvalue << "\n";
 		errors += oss.str( ) ;
 		return GaclManager::WMPGACL_ERROR ;
-	} else {
+	} else{
 		return GaclManager::WMPGACL_SUCCESS ;
 	}
 };
+
+
+
 
 /*
  * Checks if permission is allowed
@@ -333,19 +349,20 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType &type,
 						const string &rawvalue,
 						const WMPgaclPerm &permission) {
 
-#ifndef GLITE_WMS_WMPROXY_TOOLS   //if-N-def
+#ifndef GLITE_WMS_WMPROXY_TOOLS  
 	edglog_fn("GaclManager::checkAllowPermission()");
 #endif
 
-	bool allow    =  false;
-	bool deny     =  false;
-	bool result   =  false;
+	bool allow = false;
+	bool deny = false;
+	bool result = false;
 	string errmsg = "";
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS  //if-N-def
 	edglog(debug)<<"Raw Value = "<< rawvalue << endl;
 	edglog(debug)<<"CredType/Permission = "<< type << "/"<< permission << endl ;
 #endif
+
 	// load Credential
 	if (  loadCredential(type, rawvalue) != WMPGACL_SUCCESS){
 		std::ostringstream oss;
@@ -357,7 +374,6 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType &type,
 		cerr << "Error: " << oss.str()<< endl;
 		exit(-1);
 #else
-		edglog(debug) << oss.str()<< endl;
   		throw GaclException (__FILE__, __LINE__,  "GaclManager::checkAllowPermission" ,
 			WMS_GACL_ERROR,  oss.str() );
 #endif
@@ -365,7 +381,7 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType &type,
 	// permission
 	allow = GaclManager::gaclAllowed & permission ;
 	deny = GaclManager::gaclDenied & permission ;
-#ifndef GLITE_WMS_WMPROXY_TOOLS //if-N-def
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 	edglog(debug)<<"Allow = "<< allow << " (deny ="<< deny << ")"<< endl ;
 #endif
 	if ( allow && deny ) {
@@ -374,17 +390,17 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType &type,
 		cerr << "Error: " << errmsg << endl;
 		exit(-1);
 #else
-		throw GaclException (__FILE__, __LINE__,  "GaclManager::checkAllowPermission" ,
+  		throw GaclException (__FILE__, __LINE__,  "GaclManager::checkAllowPermission" ,
 			WMS_GACL_ERROR, errmsg );
 #endif
-	 } else {
+	 } else  {
 	 	if ( !allow && !deny ) {
 			result = false;
-		} else {
+		 } else {
 			result = allow ;
-		}
-	}
-#ifndef GLITE_WMS_WMPROXY_TOOLS  //if-N-def
+		 }
+	 }
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 	if (result){ 	edglog(debug) << "Success"<< endl;}
 	else {		edglog(debug) << "Failure"<< endl;}
 #endif
@@ -424,7 +440,7 @@ void GaclManager::allowPermission(const WMPgaclCredType &type,
 		cerr << "Error : "<< oss.str()<< endl;
 		exit(-1);
 #else
-  		throw GaclException (__FILE__, __LINE__,  "GaclManager::allowPermission" ,
+		throw GaclException (__FILE__, __LINE__,  "GaclManager::allowPermission" ,
 			WMS_GACL_ERROR,  oss.str() );
 #endif
 	};
@@ -606,22 +622,22 @@ std::string GaclManager::getCredentialTypeString ( const WMPgaclCredType &type){
 	}
 	return 1;
 }
-/*
-* checks whether the gacl file exists
-* @param file the location of the gacl file
-*/
-    bool GaclManager::gaclExists (const std::string &file) { 
-#ifndef GLITE_WMS_WMPROXY_TOOLS
-           edglog_fn("GaclManager::gaclExists");
-           edglog(debug) << "checking file gacl existence" << endl;
-#endif
-           struct stat buffer; 
-           if (stat(file.c_str(), &buffer)) { 
-                   return 0; 
-           } 
-           return 1;
-   } 
 
+/*
+ * checks whether the gacl file exists
+ * @param file the location of the gacl file
+*/
+ bool GaclManager::gaclExists (const std::string &file) {
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+	edglog_fn("GaclManager::gaclExists");
+	edglog(debug) << "checking file gacl existence" << endl;
+#endif
+	struct stat buffer;
+	if (stat(file.c_str(), &buffer)) {
+		return 0;
+	}
+	return 1;
+}
 /*
 *	adds a set of credential entries to the gacl
 *	@param vect vector of credential (credential type , rawvalue )
@@ -632,17 +648,17 @@ void GaclManager::removeEntries (const vector<pair<WMPgaclCredType, string> > &v
 		removeEntry( (WMPgaclCredType)vect[i].first,
 				(string)vect[i].second, errors);
 	}
-	 if ( errors.size( )>0 ) {
+	if ( errors.size( )>0 ){
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-                   throw GaclException (__FILE__, __LINE__,
-                           "GaclManager::removeEntries" , 
-                           WMS_GACL_ERROR,  errors); 
+		throw GaclException (__FILE__, __LINE__,
+			"GaclManager::removeEntries" ,
+			WMS_GACL_ERROR,  errors);
 #else
-                           cerr << "Error: " << errors<< endl; 
-                           exit(-1); 
+			cerr << "Error: " << errors<< endl;
+			exit(-1);
 #endif
-    
-         }
+
+	}
 };
 /*
 *	============================
@@ -726,6 +742,7 @@ const vector<string> GaclManager::getItems(const WMPgaclCredType &type){
 			// scanning of the credentials in the selected entry
 			while ( cred != NULL ) {
 				// credType=WMPGACL_XXXXX_TAG (any-user, person, ......)
+#ifndef GRST_VERSION
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 				edglog(debug)<< "cred-type:" << cred->type<< endl;
 #endif
@@ -744,13 +761,49 @@ const vector<string> GaclManager::getItems(const WMPgaclCredType &type){
 						} // if (name)
 					} // if (nv)
 				} // if(strcmp)
+#else
+                                {
+                                  char *auri, *decoded;
+                                  
+                                  if ((auri = GRSTgaclCredGetAuri(cred)) != NULL)
+                                    {
+                                      if      ((strcmp((char*)credType.c_str(), "person") == 0) &&
+                                               (strncmp(auri, "dn:", 3) == 0))
+                                        {
+                                          decoded = GRSThttpUrlDecode(&auri[3]);
+                                          items.push_back(decoded);
+                                          free(decoded);
+                                        }
+                                      else if ((strcmp((char*)credType.c_str(), "voms") == 0) &&
+                                               (strncmp(auri, "fqan:", 5) == 0)) 
+                                        {
+                                          decoded = GRSThttpUrlDecode(&auri[5]);
+                                          items.push_back(decoded);
+                                          free(decoded);
+                                        }
+                                      else if ((strcmp((char*)credType.c_str(), "dn-list") == 0) &&
+                                               (strncmp(auri, "url:", 4) == 0))
+                                        {
+                                          decoded = GRSThttpUrlDecode(&auri[4]);
+                                          items.push_back(decoded);
+                                          free(decoded);
+                                        }
+                                      else if ((strcmp((char*)credType.c_str(), "hostname") == 0) &&
+                                               (strncmp(auri, "dns:", 4) == 0))
+                                        {
+                                          decoded = GRSThttpUrlDecode(&auri[4]);
+                                          items.push_back(decoded);
+                                          free(decoded);
+                                        }
+			            }
+                                }
+#endif				
 				cred = (GRSTgaclCred*) cred->next;
 			} // while(cred)
 			// next entry .
 			entry = (GRSTgaclEntry*) entry->next;
 		} //while(entry)
 	}
-
 	return items ;
 }
 /*
@@ -804,7 +857,7 @@ int GaclManager::loadCredential ( const WMPgaclCredType &type,
 					const string &rawvalue)
 {
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-	edglog_fn("GaclManager::loadCredential()");
+	edglog_fn("GaclManager::loadCredential");
 #endif
 	// sets attributes related to the type of creddential
 	setCredentialType (type,rawvalue);
@@ -833,6 +886,7 @@ int GaclManager::loadCredential ( ) {
 			// scanning of the credentials in the selected entry
 			while ( cred != NULL ) {
 				// credType=WMPGACL_XXXXX_TAG (any-user, person, ......)
+#ifndef GRST_VERSION
 				if ( strcmp( cred->type, (char*)credType.c_str()) == 0 ){
 					// comparison between input and gacl credentials:
 					// nv =  < nv->name, nv->value>
@@ -853,6 +907,18 @@ int GaclManager::loadCredential ( ) {
 						} // if (nv)
 					} // if (ANY_CRED)
 				}
+#else
+                                {
+                                  GRSTgaclCred *cred_tmp;
+                                  
+                                  cred_tmp = GRSTgaclCredNew((char*)credType.c_str());
+                                  GRSTgaclCredAddValue(cred_tmp, rawname, (char*)rawvalue);
+
+                                  if (GRSTgaclCredCmpAuri(cred, cred_tmp) == 0) found = true;
+
+                                  GRSTgaclCredFree(cred_tmp);
+                                }
+#endif
 				if ( !found ) {
 					cred = (GRSTgaclCred*) cred->next;
 				} else {
@@ -959,4 +1025,5 @@ void GaclManager::newCredential ( )
 } // namespace wmproxy
 } // namespace wms
 } // namespace glite
+
 
