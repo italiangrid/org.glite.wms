@@ -214,6 +214,11 @@ iceCommandJobKill::iceCommandJobKill( ) throw() :
 //____________________________________________________________________________
 void iceCommandJobKill::execute() throw()
 {
+    static const char* method_name = "iceCommandJobKill::execute() - ";
+
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                    << "Executing new iteration"
+                    << log4cpp::CategoryStream::ENDLINE);            
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
     map< pair<string, string>, list< CreamJob >, ltstring> jobMap;    
 
@@ -234,16 +239,16 @@ void iceCommandJobKill::execute() throw()
 //____________________________________________________________________________
 void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
 {
-    static const char* method_name = "iceCommandJobKill::killJob() - ";
+    // static const char* method_name = "iceCommandJobKill::killJob() - ";
     string better_proxy( DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first ) );
     int query_size( iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() );
 
     cream_api::soap_proxy::VOMSWrapper V( better_proxy );
+    list< CreamJob >::const_iterator it = aList.second.begin();
+    list< CreamJob >::const_iterator list_end = aList.second.end();
     if( V.IsValid( ) ) {
         // The proxy is valid. Go on and send a cancel request to all
         // the jobs
-        list< CreamJob >::const_iterator it = aList.second.begin();
-        list< CreamJob >::const_iterator list_end = aList.second.end();
         while ( it != list_end ) {        
             list< CreamJob > jobs_to_cancel;
             it = copy_n_elements( it, list_end, query_size, 
@@ -254,9 +259,7 @@ void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJo
     } else {
         // The proxy is not valid. We mark this bunch of jobs as
         // aborted, and remove it from the job cache.
-        list< CreamJob >::const_iterator list_begin = aList.second.begin();
-        list< CreamJob >::const_iterator list_end = aList.second.end();
-        for_each( list_begin, list_end, aborted_logger( "The job has been killed because its proxy was expiring" ) );
+        for_each( it, list_end, aborted_logger( "The job has been killed because its proxy was expiring" ) );
     }    
 }
 
@@ -313,10 +316,22 @@ void iceCommandJobKill::cancel_jobs(const string& better_proxy,
     list< pair<cream_api::soap_proxy::JobIdWrapper, string> > tmp;
 
     res.getNotExistingJobs( tmp );
-    res.getNotMatchingStatusJobs( tmp );
-    res.getNotMatchingDateJobs( tmp );
-    res.getNotMatchingProxyDelegationIdJobs( tmp );
-    res.getNotMatchingLeaseIdJobs( tmp );
+    for_each( tmp.begin(), tmp.end(), cancel_refuse_logger( "Job not existing" ) );
 
-    for_each( tmp.begin(), tmp.end(), cancel_refuse_logger( "none" ) );
+    tmp.clear();
+    res.getNotMatchingStatusJobs( tmp );
+    for_each( tmp.begin(), tmp.end(), cancel_refuse_logger( "Job status does not match" ) );
+
+    tmp.clear();
+    res.getNotMatchingDateJobs( tmp );
+    for_each( tmp.begin(), tmp.end(), cancel_refuse_logger( "Job date does not match" ) );
+
+    tmp.clear();
+    res.getNotMatchingProxyDelegationIdJobs( tmp );
+    for_each( tmp.begin(), tmp.end(), cancel_refuse_logger( "Job proxy delegation id does not match" ) );
+
+    tmp.clear();
+    res.getNotMatchingLeaseIdJobs( tmp );
+    for_each( tmp.begin(), tmp.end(), cancel_refuse_logger( "Job lease id does not match" ) );
+
 }

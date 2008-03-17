@@ -477,14 +477,8 @@ void Ice::startJobKiller( void )
                         );
         return;
     }
-    CREAM_SAFE_LOG( m_log_dev->warnStream()
-                    << "Ice::startJobKiller() - "
-                    << "Job Killer enabled in configuration file "
-                    << "but not compiled in ICE. Rebuild ICE to enable it."
-                    << log4cpp::CategoryStream::ENDLINE
-                    );
-    // util::jobKiller* jobkiller = new util::jobKiller( );
-    // m_job_killer_thread.start( jobkiller );
+    util::jobKiller* jobkiller = new util::jobKiller( );
+    m_job_killer_thread.start( jobkiller );
 }
 
 //____________________________________________________________________________
