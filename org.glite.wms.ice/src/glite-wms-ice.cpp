@@ -239,7 +239,7 @@ int main(int argc, char*argv[])
 
     logger_instance->setLogFile(logfile.c_str());
     CREAM_SAFE_LOG(log_dev->debugStream() 
-		   << "ICE VersionID is [20080312-21:25] ProcessID=["
+		   << "ICE VersionID is [20080317-15:20] ProcessID=["
 		   << ::getpid() << "]"
 		   <<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
@@ -344,15 +344,15 @@ int main(int argc, char*argv[])
     pid_t myPid = ::getpid();
     int mem_threshold_counter = 0;
 
-    char* mem=::getenv("MAX_ICE_MEM");
+    //    char* mem=::getenv("MAX_ICE_MEM");
 
-    long long max_ice_mem;
+    long long max_ice_mem = conf->ice()->max_ice_mem();
     
-    if(mem) {
-      max_ice_mem = atoll(mem);
-    } else {
-      max_ice_mem = MAX_ICE_MEM;
-    }
+//     if(mem) {
+//       max_ice_mem = atoll(mem);
+//     } else {
+//       max_ice_mem = MAX_ICE_MEM;
+//     }
 
 
     CREAM_SAFE_LOG(log_dev->debugStream()

@@ -85,14 +85,17 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bo
     m_poll_all_jobs( poll_all_jobs ),
     m_conf( iceConfManager::getInstance() )
 {
-    char* ice_empty_threshold_string = ::getenv( "ICE_EMPTY_THRESHOLD" );;
-    if ( ice_empty_threshold_string ) {
-        try {
-            m_empty_threshold =  boost::lexical_cast< time_t >( ice_empty_threshold_string );
-        } catch( boost::bad_lexical_cast & ) {
-            m_empty_threshold = 10*60;
-        }
-    }
+//     char* ice_empty_threshold_string = ::getenv( "ICE_EMPTY_THRESHOLD" );;
+//     if ( ice_empty_threshold_string ) {
+//         try {
+//             m_empty_threshold =  boost::lexical_cast< time_t >( ice_empty_threshold_string );
+//         } catch( boost::bad_lexical_cast & ) {
+//             m_empty_threshold = 10*60;
+//         }
+//     }
+
+  m_empty_threshold = m_conf->getConfiguration()->ice()->ice_empty_threshold();
+
 }
 
 
