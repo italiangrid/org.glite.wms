@@ -138,12 +138,16 @@ void iceCommandLeaseUpdater::execute( ) throw()
         boost::recursive_mutex::scoped_lock M( jobCache::mutex );
         for ( jobCache::iterator it = m_cache->begin();
               it != m_cache->end(); ++it ) {
-            
+
+            // WATNING: There exists an interval in which both
+            // lease_can_be_renewed( x ) and job_can_be_removed( x )
+            // both hold for the same iterator x.
             if ( lease_can_be_renewed( *it ) ) {                
                 lease_to_renew.insert( it->get_lease_id() );                
-            }                
-            if ( !m_only_update && job_can_be_removed( *it ) ) {
-                jobs_to_remove.push_back( it->getGridJobID() );
+            } else {
+                if ( !m_only_update && job_can_be_removed( *it ) ) {
+                    jobs_to_remove.push_back( it->getGridJobID() );
+                }
             }
         }
     } // releases lock on the job cache  
