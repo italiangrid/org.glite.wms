@@ -635,13 +635,15 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	edglog(debug)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer auth;
 	auth.authorize();
-	
+
+#ifndef GRST_VERSION
 	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation id not valid"<<endl;
+		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Provided delegation id not valid");
 	}
+#endif
 	
 	getProxyReq_response.request =
 		WMPDelegation::getProxyRequest(delegation_id);

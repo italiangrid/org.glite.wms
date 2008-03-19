@@ -158,10 +158,14 @@ WMPDelegation::renewProxyRequest(const std::string &original_delegation_id)
 	// Initialise delegation_id
 	string delegation_id = original_delegation_id;
 	if (original_delegation_id== "" ){
-/*  GRIDSITE MISSING FEATURE TODO
+#ifndef GRST_VERSION
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+        		"renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+                	"Empty delegation id not allowed with delegation 1");
+#else
 		delegation_id=string(GRSTx509MakeDelegationID());
 		edglog(debug)<<"Automatically generated Delegation ID";
-*/		
+#endif
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 
@@ -197,17 +201,26 @@ WMPDelegation::getNewProxyRequest()
 {
 	GLITE_STACK_TRY("getNewProxyRequest()");
 	edglog_fn("WMPDelegation::getNewProxyRequest");
-
-// char * delegation_id =  GRSTx509MakeDelegationID();  //  GRIDSITE MISSING FEATURE TODO
-	char * delegation_id = "pippo";
-	edglog(debug)<<"Generated Delegation ID: "<<delegation_id<<endl;
+	char * delegation_id ;
+#ifndef GRST_VERSION
+	throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+                "getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+                "Empty delegation id not allowed with delegation 1");
+#else
+	delegation_id =  GRSTx509MakeDelegationID();  
+        edglog(debug)<<"Generated Delegation ID: "<<delegation_id<<endl;
+#endif
 	char * user_dn = wmputilities::getUserDN();
 
 	// Check Proxy Path
 	if (!wmputilities::fileExists(WMPDelegation::getDelegatedProxyPath(delegation_id))){
 		edglog(debug)<<"Previous client delegated proxy not found: proceed with new Proxy Request"<<endl;
 	}else{
-		/*  GRIDSITE MISSING FEATURE TODO
+#ifndef GRST_VERSION
+		throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+                                "getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+                                "Check Termination Time not available with delegation 1");
+#else
 		// Check Termination time
 		edglog(debug)<<"Previous client delegated proxy found: check Time validity"<<endl;
 		time_t *start = (time_t*) malloc(sizeof(time_t));
@@ -242,7 +255,7 @@ WMPDelegation::getNewProxyRequest()
 				"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
 				"Unable to complete New Proxy request: Previous client delegated proxy still valid");
 		}
-*/
+#endif
 	}
 	// Make Actual Proxy Request
 	char * request = NULL;
@@ -280,10 +293,14 @@ WMPDelegation::destroyProxy(const string &original_delegation_id)
 	// Initialise delegation_id
 	string delegation_id = original_delegation_id;
 	if (original_delegation_id == "") {
-/*  GRIDSITE MISSING FEATURE TODO
-		delegation_id=string(GRSTx509MakeDelegationID());
-		edglog(debug)<<"Automatically generated Delegation ID";
-*/
+#ifndef GRST_VERSION
+                throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+                        "destroyProxy()", wmputilities::WMS_PROXY_ERROR,
+                        "Empty delegation id not allowed with delegation 1");
+#else
+                delegation_id=string(GRSTx509MakeDelegationID());
+                edglog(debug)<<"Automatically generated Delegation ID";
+#endif
 	}
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
@@ -296,7 +313,11 @@ WMPDelegation::destroyProxy(const string &original_delegation_id)
 			"destroyProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Client delegated proxy not found: destroy Proxy not allowed");
 	}
-/*  GRIDSITE MISSING FEATURE TODO
+#ifndef GRST_VERSION
+	throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+        	"destroyProxy()", wmputilities::WMS_PROXY_ERROR,
+                "Unable to perform destroy Proxy with delegation 1");
+#else
 	if (GRSTx509ProxyDestroy((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to perform destroy Proxy"<<endl;
@@ -305,7 +326,7 @@ WMPDelegation::destroyProxy(const string &original_delegation_id)
 			"destroyProxy()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to perform destroy Proxy");
 	}
-*/
+#endif
 	free(user_dn);
 	GLITE_STACK_CATCH();
 }
@@ -319,10 +340,14 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 	// Initialise delegation_id
 	string delegation_id = original_delegation_id;
 	if (original_delegation_id==""){
-/*  GRIDSITE MISSING FEATURE TODO
-		delegation_id=string(GRSTx509MakeDelegationID());
-		edglog(debug)<<"Automatically generated ";
-*/
+#ifndef GRST_VERSION
+                throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+                        "getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
+                        "Empty delegation id not allowed with delegation 1");
+#else
+                delegation_id=string(GRSTx509MakeDelegationID());
+                edglog(debug)<<"Automatically generated Delegation ID";
+#endif
 	}
 	edglog(debug)<<"delegation ID: "<<delegation_id<<endl;
 	// Check Proxy Path
@@ -339,7 +364,11 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 
   	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
-/*  GRIDSITE MISSING FEATURE TODO
+#ifndef GRST_VERSION
+	throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+        	"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
+                "Unable to perform get termination time with delegation 1");
+#else	
 	if (GRSTx509ProxyGetTimes((char*) getProxyDir().c_str(),
 			(char*) delegation_id.c_str(), user_dn, start, finish) != GRST_RET_OK) {
 		edglog(critical)<<"Unable to perform get termination time"<<endl;
@@ -350,7 +379,7 @@ WMPDelegation::getTerminationTime(const string &original_delegation_id) {
 			"getTerminationTime()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to perform get termination time");
 	}
-*/
+#endif
 	time_t time = *finish;
 	free(user_dn);
 	free(start);
