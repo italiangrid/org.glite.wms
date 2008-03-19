@@ -364,12 +364,15 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	
 	// Checking delegation id
 	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
+
+#ifndef GRST_VERSION	
 	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation ID not valid"<<endl;
+		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
 	}
+#endif
 	edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
 
 	// complicate checkSecurity: TODO
@@ -640,14 +643,6 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri,
 		}
 	}
 	
-	if (jad->hasAttribute(JDL::HLR_LOCATION)) {
-		if (jad->getString(JDL::HLR_LOCATION) == "") {
-			edglog(debug)<<JDL::HLR_LOCATION
-				+ " attribute value is empty string, removing..."<<endl;
-			jad->delAttribute(JDL::HLR_LOCATION);
-		}
-	}
-	
 	if (jad->hasAttribute(JDL::JOB_PROVENANCE)) {
 		if (jad->getString(JDL::JOB_PROVENANCE) == "") {
 			edglog(debug)<<JDL::JOB_PROVENANCE
@@ -853,14 +848,6 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
 			edglog(debug)<<JDL::MYPROXY
 				+ " attribute value is empty string, removing..."<<endl;
 			dag->removeAttribute(JDL::MYPROXY);
-		}
-	}
-	
-	if (dag->hasAttribute(JDL::HLR_LOCATION)) {
-		if (dag->getString(JDL::HLR_LOCATION) == "") {
-			edglog(debug)<<JDL::HLR_LOCATION
-				+ " attribute value is empty string, removing..."<<endl;
-			dag->removeAttribute(JDL::HLR_LOCATION);
 		}
 	}
 	
@@ -1857,13 +1844,16 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	
 	// Checking delegation id
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
+	
+#ifndef GRST_VERSION
 	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation ID not valid"<<endl;
+		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
 	}
-	
+#endif
+
 	edglog(debug)<<"JDL to Submit:\n"<<jdl<<endl;
 
 
