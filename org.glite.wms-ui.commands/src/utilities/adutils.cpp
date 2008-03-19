@@ -86,7 +86,6 @@ void AdUtils::checkDeprecatedAttributes(glite::jdl::Ad &ad,
   deprecatedAttributes.push_back(JDL::SHALLOWRETRYCOUNT);
   deprecatedAttributes.push_back(JDL::RANK);
   deprecatedAttributes.push_back(JDL::REQUIREMENTS);
-  deprecatedAttributes.push_back(JDL::HLR_LOCATION);
   deprecatedAttributes.push_back(JDL::MYPROXY);
   deprecatedAttributes.push_back(JDL::JOB_PROVENANCE);
   deprecatedAttributes.push_back(JDL::LB_ADDRESS);
@@ -366,9 +365,8 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 		if (conf->hasAttribute(JDL_DEFAULT_ATTRIBUTES)){
 			/* JDL ATTRIBUTE CUSTOM (NEW) APPROACH: */
 			Ad confAd(conf->getAd(JDL_DEFAULT_ATTRIBUTES));
-			// Default String Attrs: HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
+			// Default String Attrs: MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
 			setMissingString(jdl,JDL::MYPROXY,confAd);
-			setMissingString(jdl,JDL::HLR_LOCATION,confAd);
 			setMissingString(jdl,JDL::JOB_PROVENANCE,confAd);
 			setMissingString(jdl,JDL::LB_ADDRESS,confAd);
 			setMissingString(jdl,JDL::VIRTUAL_ORGANISATION,confAd,true);
