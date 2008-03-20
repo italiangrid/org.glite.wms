@@ -435,6 +435,29 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 	// Getting WMP Server User ID
 	uid_t userid = getuid();
 
+	// Logging Server User ID on syslog
+
+        openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
+
+        char time_string[20];
+        struct timeval tv;
+        struct tm* ptm;
+        gettimeofday(&tv, NULL);
+        ptm = localtime(&tv.tv_sec);
+        strftime(time_string, sizeof (time_string), "%Y-%m-%d.%X%H%M%S", ptm);
+
+        string userid_log = "ts="+std::string(time_string);
+        userid_log += " : ";
+        userid_log += "event=wms.wmproxyserver.setSubjobFileSystem()";
+        userid_log += " : ";
+        userid_log += "userid="+boost::lexical_cast<string>(userid);
+	userid_log += " ";
+	userid_log += "jobid="+jobid;
+
+
+        syslog(LOG_NOTICE || LOG_INFO || LOG_DEBUG, userid_log.c_str());
+        closelog();
+
 	string document_root = getenv(DOCUMENT_ROOT);
 
 	// Getting delegated proxy inside job directory
@@ -509,6 +532,28 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	
 	// Getting WMP Server User ID
 	uid_t userid = getuid();
+
+        // Logging Server User ID on syslog
+
+        openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
+
+	char time_string[20];
+        struct timeval tv;
+        struct tm* ptm;
+        gettimeofday(&tv, NULL);
+        ptm = localtime(&tv.tv_sec);
+        strftime(time_string, sizeof (time_string), "%Y-%m-%d.%X%H%M%S", ptm);
+
+        string userid_log = "ts="+std::string(time_string);
+        userid_log += " : ";
+        userid_log += "event=wms.wmproxyserver.setJobFileSystem()";
+        userid_log += " : ";
+        userid_log += "userid="+boost::lexical_cast<string>(userid);
+        userid_log += " ";
+	userid_log += "jobid="+jobid;
+
+        syslog(LOG_NOTICE || LOG_INFO || LOG_DEBUG, userid_log.c_str());
+        closelog();
 
 	string document_root = getenv(DOCUMENT_ROOT);
 	
@@ -1457,6 +1502,29 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			edglog(debug)<<"User Id: "<<jobdiruserid<<endl;
 			// Getting WMP Server User ID
 			uid_t userid = getuid();
+
+	        	// Logging Server User ID on syslog
+
+		        openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
+
+       			char time_string[20];
+        		struct timeval tv;
+        		struct tm* ptm;
+        		gettimeofday(&tv, NULL);
+        		ptm = localtime(&tv.tv_sec);
+        		strftime(time_string, sizeof (time_string), "%Y-%m-%d.%X%H%M%S", ptm);
+
+        		string userid_log = "ts="+std::string(time_string);
+        		userid_log += " : ";
+        		userid_log += "event=wms.wmproxyserver.submit()";
+        		userid_log += " : ";
+        		userid_log += "userid="+boost::lexical_cast<string>(userid);
+		        userid_log += " ";
+			userid_log += "jobid="+parentjobid.toString();
+
+        		syslog(LOG_NOTICE || LOG_INFO || LOG_DEBUG, userid_log.c_str());
+        		closelog();
+
 			string document_root = getenv(DOCUMENT_ROOT);
 			edglog(debug)<<"Creating sub job directories for job:\n"
 				<<parentjobid.toString()<<endl;
