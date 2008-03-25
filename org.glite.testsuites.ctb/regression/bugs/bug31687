@@ -1,0 +1,100 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Andreas Unterkircher, CERN
+#
+##############################################################################
+
+test_bug31687_pre () {
+echo
+}
+
+test_bug31687_post () {
+
+unset name
+rm -f ${LOCAL_FILE}
+rm -f ${LOCAL_FILE2}
+rm -f ${LOCAL_FILE3}
+unset LOCAL_FILE
+unset LOCAL_FILE2
+unset LOCAL_FILE3
+unset LFN
+}
+
+test_bug31687 () {
+
+unique_name
+
+LFN="lfn:/grid/${VO}"
+LOCAL_FILE=${TMPDIR-/tmp}/bug31687.$$
+LOCAL_FILE2=${TMPDIR-/tmp}/bug31687_2.$$
+LOCAL_FILE3=${TMPDIR-/tmp}/bug31687_3.$$
+
+rm -f ${LOCAL_FILE}
+
+echo "Testing gfal_testdir..."
+regtest_timeout gfal_testdir ${LFN} 2> ${LOCAL_FILE} 1> ${LOCAL_FILE}
+
+gfal_retval=$?
+if [ $gfal_retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+ return $REGTEST_TIMEOUT_ERROR
+fi
+
+if `grep -q 'Success' ${LOCAL_FILE}`
+then
+ if [ $gfal_retval -ne 0 ]; then
+  echo "gfal_testdir reports Success:"
+  echo "but its return value is $gfal_retval"
+  return ${REGTEST_FAIL}
+ fi
+fi
+
+lines=`cat ${LOCAL_FILE} | wc -l`
+if [ $lines -gt 0 ] && [ $gfal_retval -ne 0 ]; then
+ echo "gfal_testdir ${LFN} found the following directories but reports failure"
+ echo ${LOCAL_FILE}
+ return ${REGTEST_FAIL}
+fi
+
+echo $name > ${LOCAL_FILE2}
+
+echo "Testing gfal_testread..."
+ regtest_timeout gfal_testread file:${LOCAL_FILE2} 2> ${LOCAL_FILE3} 1> ${LOCAL_FILE3}
+
+gfal_retval=$?
+if [ $gfal_retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+ return $REGTEST_TIMEOUT_ERROR
+fi
+
+if `grep -q 'successful' ${LOCAL_FILE3}`
+then
+ if [ $gfal_retval -ne 0 ]; then
+  echo "gfal_testread reports success:"
+  cat ${LOCAL_FILE2}
+  echo "but its return value is $gfal_retval"
+  return ${REGTEST_FAIL}
+ fi
+else
+ echo "gfal_testread did not succeed"
+ cat ${LOCAL_FILE2}
+ return ${REGTEST_FAIL}
+fi
+
+return ${REGTEST_OK}
+}

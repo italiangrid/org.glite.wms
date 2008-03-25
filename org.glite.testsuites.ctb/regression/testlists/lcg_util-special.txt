@@ -1,0 +1,9 @@
+# bug 22233
+# Needs a SE that publishes GlueSALocalID with a different value then
+# GlueSAAccessControlBaseRule. Usually GlueSALocalID is equal to the VO name
+# For this test it must be different. On the SE you can change this in /opt/glite/etc/gip/ldif/static-file-SE.ldif
+22233
+# bug 22937
+# Needs a SE that publishes only GlueSAAccessControlBaseRule: VO:<voname> and
+# not more entries of GlueSAAccessControlBaseRule 
+22937
