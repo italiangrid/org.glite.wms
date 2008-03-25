@@ -132,6 +132,9 @@ protected:
     string m_description;
 };
 
+//
+//
+//______________________________________________________________________________
 StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& ) :
     m_has_exit_code( false ),
     m_has_failure_reason( false ),
@@ -196,6 +199,9 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
   } // end of mutex protected region
 };
 
+//
+//
+//______________________________________________________________________________
 void StatusChange::apply_to_job( CreamJob& j ) const
 {
     j.setStatus( get_status() );
@@ -266,6 +272,9 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
 
 }
 
+//
+//
+//______________________________________________________________________________
 void normalStatusNotification::apply( void ) // can throw anything
 {    
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );

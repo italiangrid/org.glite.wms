@@ -533,20 +533,24 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
         
         the_job = m_lb_logger->logEvent( new ice_util::ns_enqueued_start_event( the_job, m_wms_input_queue->get_name() ) );
         
-	boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+	string resub_request;
 
-        classad::ClassAd command;
-        classad::ClassAd arguments;
-        
-        command.InsertAttr( "version", string("1.0.0") );
-        command.InsertAttr( "command", string("jobresubmit") );
-        arguments.InsertAttr( "id", the_job.getGridJobID() );
-        arguments.InsertAttr( "lb_sequence_code", the_job.getSequenceCode() );
-        command.Insert( "arguments", arguments.Copy() );
-        
-        classad::ClassAdUnParser unparser;
-        string resub_request;
-        unparser.Unparse( resub_request, &command );        
+	{
+	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+	  
+	  classad::ClassAd command;
+	  classad::ClassAd arguments;
+	  
+	  command.InsertAttr( "version", string("1.0.0") );
+	  command.InsertAttr( "command", string("jobresubmit") );
+	  arguments.InsertAttr( "id", the_job.getGridJobID() );
+	  arguments.InsertAttr( "lb_sequence_code", the_job.getSequenceCode() );
+	  command.Insert( "arguments", arguments.Copy() );
+	  
+	  classad::ClassAdUnParser unparser;
+	  //string resub_request;
+	  unparser.Unparse( resub_request, &command );        
+	}
 
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()

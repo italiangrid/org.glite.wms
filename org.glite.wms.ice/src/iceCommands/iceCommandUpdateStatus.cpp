@@ -147,6 +147,9 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	bool keep_alive;
 	string subs_id;
 	{ // mutex protected region
+
+	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+
 	  classad::ClassAdParser parser;
 	  classad::ClassAd *ad = parser.ParseClassAd( first_event );
 	  
@@ -163,7 +166,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
 	  
 	  keep_alive = false;
-	   //string subs_id;
+	  //string subs_id;
         
 
 	  // Check whether the current notification is an empty notification

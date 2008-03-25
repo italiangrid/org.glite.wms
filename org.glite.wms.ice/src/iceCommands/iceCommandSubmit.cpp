@@ -307,7 +307,9 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     remove_job_guard.dismiss(); // dismiss guard, job will NOT be removed from cache
 }
 
-
+//
+//
+//______________________________________________________________________________
 void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     static const char* method_name = "iceCommandSubmit::try_to_submit() - ";
@@ -627,7 +629,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         m_theJob.setLastSeen( time(0) );
         iceUtil::jobCache::getInstance()->put( m_theJob );
     }
-} // execute
+} // try_to_submit
 
 
 //____________________________________________________________________________
@@ -669,7 +671,8 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
   unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
   
   return newjdl;
-}
+} // end of creamJdlHelper(...) and ClassAd's mutex releasing
+
 
 //______________________________________________________________________________
 void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
