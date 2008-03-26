@@ -1,3 +1,4 @@
+# These tests check for bugs concerning lcg_utils. They can be executed on nodes having lcg_utils installed (UI, WN).
 15960
 22165
 31687
