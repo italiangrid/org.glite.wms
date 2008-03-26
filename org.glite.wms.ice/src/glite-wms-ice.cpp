@@ -429,18 +429,17 @@ int main(int argc, char*argv[])
 	sleep(2);
 	
 	/**
+	 * Comment the followin single line to activate the suicidal
+	 * patch
+	 */
+	continue;
+	
+	/**
 	 *
 	 * Every 2 minutes ICE checks its mem usage
 	 *
 	 */
 	mem_threshold_counter++;
-	
-// 	CREAM_SAFE_LOG( log_dev->debugStream()
-// 			<< method_name
-// 			<< "glite-wms-ice::main - mem_threshold_counter=["
-// 			<< mem_threshold_counter << "]"
-// 			<< log4cpp::CategoryStream::ENDLINE
-// 			);
 
 	if(mem_threshold_counter >= 60) { // every 120 seconds check the memory
 	  mem_threshold_counter = 0;
