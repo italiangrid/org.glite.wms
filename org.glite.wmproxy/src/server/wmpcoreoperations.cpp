@@ -455,8 +455,8 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 	userid_log += "jobid="+jobid;
 
 
-        syslog(LOG_NOTICE || LOG_INFO || LOG_DEBUG, userid_log.c_str());
-        closelog();
+        syslog(LOG_NOTICE,"%s",userid_log.c_str());
+	closelog();
 
 	string document_root = getenv(DOCUMENT_ROOT);
 
@@ -552,7 +552,7 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
         userid_log += " ";
 	userid_log += "jobid="+jobid;
 
-        syslog(LOG_NOTICE || LOG_INFO || LOG_DEBUG, userid_log.c_str());
+        syslog(LOG_NOTICE,"%s",userid_log.c_str());
         closelog();
 
 	string document_root = getenv(DOCUMENT_ROOT);
@@ -1522,7 +1522,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		        userid_log += " ";
 			userid_log += "jobid="+parentjobid.toString();
 
-        		syslog(LOG_NOTICE || LOG_INFO || LOG_DEBUG, userid_log.c_str());
+        		syslog(LOG_NOTICE,"%s",userid_log.c_str());
         		closelog();
 
 			string document_root = getenv(DOCUMENT_ROOT);
