@@ -1,1 +1,4 @@
+# Tests that check the lcg-ManageVOTag command
+# You need a voms-proxy certificate that gives you tagging rights on some CE
 31848
+34245
