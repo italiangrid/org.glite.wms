@@ -587,7 +587,12 @@ def selectJobId (jobid_list , strjobs, multi = 1):
         question= '\nChoose one jobId in the list - [1-'+str(indU)+']:'
      jobChoose = []
      while keep:
-       ans=raw_input(question)
+       ans = ""
+       try:
+          ans=raw_input(question)
+       except KeyboardInterrupt:
+          print "\nKeyboard interrupt raised by user, now exiting...\nbye"
+          exit(1)
        ansSplit=ans.split(',')
        anslen = len(ansSplit)
        if (  ans.find(",")* ans.find("-") !=1 ) and not multi:
