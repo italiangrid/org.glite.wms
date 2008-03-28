@@ -20,7 +20,6 @@ import socket  #gethostbyname getLB/NS
 import random #  random number
 import math   #  random
 import time   #  random
-from signal import *
 from glite_wmsui_UcWrapper import UCredential
 
 
@@ -90,7 +89,6 @@ wmsui_utils Methods
 """
 #This static global instance stores all program information
 info = Info ()
-signal(SIGINT, ctc)
 
 """
 This method returns the name of the error log file
