@@ -38,6 +38,11 @@ import wmsui_api
 from wmsui_utils import errMsg
 from wmsui_utils import dbgMsg
 from wmsui_utils import exit
+from signal import *
+ 
+# Catch user interrupt ^C
+signal(SIGINT, UIutils.ctc)
+
 
 def checkExclude(includes, excludes):
 	if includes and excludes:

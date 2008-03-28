@@ -49,6 +49,11 @@ except:
         errMsg ("Warning" , "UI_CAN_NOT_EXECUTE" , "Python Tkinter", "Unable to load library")
         nogui=1
 
+from signal import *
+
+# Catch user interrupt ^C
+signal(SIGINT, UIutils.ctc)
+
 
 """
  MAIN FUNCTION
