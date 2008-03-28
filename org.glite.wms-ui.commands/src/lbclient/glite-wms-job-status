@@ -41,7 +41,7 @@ from wmsui_utils import exit
 from signal import *
 
 # Catch user interrupt ^C
-signal(SIGINT, UIutils.ctc)
+signal(SIGINT, wmsui_utils.ctc)
 
 
 def checkExclude(includes, excludes):
