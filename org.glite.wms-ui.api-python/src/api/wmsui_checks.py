@@ -186,7 +186,7 @@ def loadConfiguration(pathUser, pathDefault, voName):
     if err:
 	    print err
 
-  # Print the configuration file loaded if it'ìs in debug mode
+  # Print the configuration file loaded if it's in debug mode
   if info.debug:
     # Print the configuration file loaded
     print "####\nConfiguration file loaded:", info.confFile, info.confAdVo.toLines()
