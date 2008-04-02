@@ -1789,6 +1789,9 @@ public class WMProxyAPI{
 		if ( protocol.compareTo("https") == 0 ){
 			System.setProperty("axis.socketSecureFactory","org.glite.security.trustmanager.axis.AXISSocketFactory");
 		        System.setProperty("gridProxyStream", proxyFile);
+			// Bug #26989 fix, turning off crlUpdate threads for memory heap issues
+			System.setProperty("crlUpdateInterval", "0 seconds");
+
 		}
 		if (certsPath.length()>0){
 			System.setProperty(org.glite.security.trustmanager.ContextWrapper.CA_FILES, certsPath);
