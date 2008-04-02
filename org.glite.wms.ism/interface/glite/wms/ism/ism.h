@@ -45,16 +45,12 @@ typedef boost::shared_ptr<classad::ClassAd> ad_ptr;
 // update function
 typedef boost::function<bool(int&, ad_ptr)> update_function_type;
 
-// 1. update time
-// 2. expiry time
-// 3. resource descritpion
-// 4. update function
 typedef boost::tuple<
-  int,
-  int,
-  ad_ptr,
-  update_function_type,
-  boost::shared_ptr<boost::mutex::mutex>
+  int, // update time
+  int, // expiry "
+  ad_ptr, // resource description
+  update_function_type, // update function
+  boost::shared_ptr<boost::mutex::mutex> // one different mutex for each entry  
 > ism_entry_type;
 
 // 1. resource identifier
@@ -83,7 +79,7 @@ ism_type::value_type make_ism_entry(
   int update_time,	 // update time
   ad_ptr const& ad,	 // resource descritpion
   update_function_type const& uf = update_function_type(), // update function
-  int expiry_time
+  int expiry_time = 300
 );
 
 std::ostream& operator<<(std::ostream& os, ism_type::value_type const& value);

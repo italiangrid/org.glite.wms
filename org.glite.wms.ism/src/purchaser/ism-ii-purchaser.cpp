@@ -14,6 +14,9 @@
 #include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
 
 using namespace std;
 
@@ -94,6 +97,12 @@ void populate_ism(
   vector<gluece_info_iterator>& gluece_info_container_updated_entries,
   size_t the_ism_index)
 {      
+  static glite::wms::common::configuration::Configuration const& config(
+    *glite::wms::common::configuration::Configuration::instance()
+  ); 
+  static const time_t expiry_time( 
+    config.wm()->ism_ii_purchasing_rate() + config.ns()->ii_timeout()
+  );
   ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));	
      
   vector<gluece_info_iterator>::const_iterator it(
@@ -124,7 +133,7 @@ void populate_ism(
           current_time,
           (*it)->second,
           ism_ii_purchaser_entry_update(),
-          300
+          expiry_time
         )
       );
     }

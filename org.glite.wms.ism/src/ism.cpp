@@ -46,12 +46,13 @@ ism_type::value_type make_ism_entry(
   int update_time, // update time
   ad_ptr const& ad, // resource descritpion
   update_function_type const& uf, // update function
-  int expiry_time // expiry time with defualt 5*60
+  int expiry_time // expiry time with default 5*60
 )
 {
+  boost::shared_ptr<boost::mutex> mt(new boost::mutex);
   return std::make_pair(
     id,
-    boost::make_tuple(update_time, expiry_time, ad, uf)
+    boost::make_tuple(update_time, expiry_time, ad, uf, mt)
   );
 }
 
@@ -73,11 +74,6 @@ void set_ism(
   the_ism1[the_ism_index] = ism1 + the_ism_index;
   the_ism2[the_ism_index] = ism2 + the_ism_index;
   the_ism_mutex[the_ism_index] = ism_mutex + the_ism_index;
-}
-
-ism_mutex_type& get_ism_mutex(size_t the_ism_index)
-{
-  return *the_ism_mutex[the_ism_index];
 }
 
 ism_mutex_type& get_ism_mutex(size_t the_ism_index)
