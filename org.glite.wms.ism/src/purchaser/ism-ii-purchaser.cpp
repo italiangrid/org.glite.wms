@@ -107,7 +107,6 @@ void populate_ism(
   static const time_t expiry_time( 
     config.wm()->ism_ii_purchasing_rate() + config.ns()->ii_timeout()
   );
-  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));	
      
   vector<gluece_info_iterator>::const_iterator it(
     gluece_info_container_updated_entries.begin()
