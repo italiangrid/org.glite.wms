@@ -55,6 +55,8 @@ ism_ii_purchaser::ism_ii_purchaser(
   int port,
   std::string const& distinguished_name,
   int timeout,
+  std::string const& ldap_ce_filter_ext,
+  bool ldap_search_async,
   exec_mode_t mode,
   size_t interval,
   exit_predicate_type exit_predicate,
@@ -63,7 +65,9 @@ ism_ii_purchaser::ism_ii_purchaser(
   m_hostname(hostname),
   m_port(port),
   m_dn(distinguished_name),
-  m_timeout(timeout)
+  m_timeout(timeout),
+  m_ldap_ce_filter_ext(ldap_ce_filter_ext),
+  m_ldap_search_async(ldap_search_async)
 {
 }
 
@@ -220,6 +224,8 @@ extern "C" ism_ii_purchaser* create_ii_purchaser(std::string const& hostname,
     int port,
     std::string const& distinguished_name,
     int timeout,
+    std::string const& ldap_ce_filter_ext,
+    bool ldap_search_async,
     exec_mode_t mode,
     size_t interval,
     exit_predicate_type exit_predicate,
@@ -227,6 +233,7 @@ extern "C" ism_ii_purchaser* create_ii_purchaser(std::string const& hostname,
 {
     return new ism_ii_purchaser(
       hostname, port, distinguished_name, timeout, 
+      ldap_ce_filter_ext, ldap_search_async,
       mode, interval, exit_predicate, skip_predicate
     );
 }
