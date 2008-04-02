@@ -17,29 +17,29 @@
 
 function usage() {
 
-  echo ""
-  echo "Tests of lcg_util"
+  echo "LCG Data Management test -" $(basename $0)
   echo ""
   echo "Command-line parameters: "
   echo '$1                                 first SE hostname (mandatory unless VO_<VO>_DEFAULT_SE is defined)'
-  echo '$2                                 second SE hostname (for lcg-rep only)'
+  [[ ${COMMANDS_TO_TEST} == *lcg-rep* ]] && echo '$2                                 second SE hostname (for lcg-rep only)'
   echo ""
   echo "Command-line options: "
   echo "-v                                 verbose mode (-v will be passes to lcg- commands)"
-  echo "-t <timeout>                       in seconds"
-  echo "-n <nbstreams>                     number of streams (for lcg-cr,-cp,-rep)"
-  echo "--vo <vo>                          VO to be fed to lcg- commands. If not given, and LCG_GFAL_VO not defined an attempt is made to determine VO name using voms-proxy-info"
-  echo "--usefullsurl                      use full SURLs whenever possible"
-  echo "--nobdii                           use --nobdii whenever possible (implies --usefullsurl)"
-  echo "--defaultsetype <default_se_type>  [srmv1|srmv2|se|none]"
-  echo "--setype <se_type>                 [srmv1|srmv2|se|none] - for lcg-cr/rf/del/ls/gt"
-  echo "--srcsetype <source_se_type>       [srmv1|srmv2|se|none] - for lcg-cp, lcg-rep"
-  echo "--dstsetype <destination_se_type>  [srmv1|srmv2|se|none] - for lcg-cp, lcg-rep"
-  echo "--st <space_token>                 for lcg-cr, lcg-gt, lcg-getturls, lcg-sd"
-  echo "--sst <source_space_token>         for lcg-cp, lcg-rep"
-  echo "--dst <destination_space_token>    for lcg-cp, lcg-rep"
+  [[ "$SHORT_OPTIONS" == *t:*           ]] && echo "-t <timeout>                       in seconds"
+  [[ "$SHORT_OPTIONS" == *n:*           ]] && echo "-n <nbstreams>                     number of streams (for lcg-cr,-cp,-rep)"
+  [[ "$LONG_OPTIONS" == *vo:*           ]] && echo "--vo <vo>                          VO to be fed to lcg- commands"
+  [[ "$LONG_OPTIONS" == *usefullsurl*   ]] && echo "--usefullsurl                      use full SURLs whenever possible"
+  [[ "$LONG_OPTIONS" == *nobdii*        ]] && echo "--nobdii                           use --nobdii whenever possible (implies --usefullsurl)"
+  [[ "$LONG_OPTIONS" == *defaultsetype* ]] && echo "--defaultsetype <default_se_type>  [srmv1|srmv2|se]"
+  [[ "$LONG_OPTIONS" == *,setype*       ]] && echo "--setype <se_type>                 [srmv1|srmv2|se] - for lcg-cr/rf/del/ls/gt"
+  [[ "$LONG_OPTIONS" == *srcsetype*     ]] && echo "--srcsetype <source_se_type>       [srmv1|srmv2|se] - for lcg-cp, lcg-rep"
+  [[ "$LONG_OPTIONS" == *dstsetype*     ]] && echo "--dstsetype <destination_se_type>  [srmv1|srmv2|se] - for lcg-cp, lcg-rep"
+  [[ "$LONG_OPTIONS" == *,st*           ]] && echo "--st <space_token>                 for lcg-cr, lcg-gt, lcg-getturls, lcg-sd"
+  [[ "$LONG_OPTIONS" == *sst*           ]] && echo "--sst <source_space_token>         for lcg-cp, lcg-rep"
+  [[ "$LONG_OPTIONS" == *dst*           ]] && echo "--dst <destination_space_token>    for lcg-cp, lcg-rep"
   echo ""
-  echo "Certain tests may ignore certain options"
+  #echo "$COMMANDS_TO_TEST"
+  echo "This test makes use of" $(echo "${COMMANDS_TO_TEST}" | sort | uniq)
   echo ""
   exit $1
 }
@@ -74,6 +74,40 @@ function run_command() {
 
 function lcg_test_startup() {
 
+  # ... define a list of options accepted by this particular script based on which commands it will run
+
+  COMMANDS_TO_TEST=$(awk -F ' ' '/^ *run_command/ {print $2}' <$0)      # multiline string
+  CT=$COMMANDS_TO_TEST							# merged in single line (\n removed)
+
+  LONG_OPTIONS="help::,vo:"
+  SHORT_OPTIONS="v"
+
+  # setype-related options + timeout
+  # NB : single appearance of lcg-cr is ignored because it is always there
+  # NB2: extra options for lcg-del will only be only used if some other command in the scripts can use these options
+  if [[ $CT == *lcg-cr*lcg-cr* ]] || [[ $CT == *lcg-gt* ]] || [[ $CT == *lcg-getturls* ]] || [[ $CT == *lcg-rf* ]] || [[ $CT == *lcg-ls* ]]; then
+    LONG_OPTIONS="${LONG_OPTIONS},defaultsetype:,nobdii,usefullsurl,setype:"
+    SHORT_OPTIONS="${SHORT_OPTIONS}t:"
+  elif [[ $CT == *lcg-ls* ]] || [[ $CT == *lcg-cp* ]] || [[ $CT == *lcg-rep* ]]; then
+    LONG_OPTIONS="${LONG_OPTIONS},defaultsetype:,nobdii,usefullsurl"
+    SHORT_OPTIONS="${SHORT_OPTIONS}t:"
+  elif [[ $CT == *lcg-sd* ]]; then
+    SHORT_OPTIONS="${SHORT_OPTIONS}t:"
+  fi
+
+  # space token
+  if [[ $CT == *lcg-cr*lcg-cr* ]] || [[ $CT == *lcg-gt* ]] || [[ $CT == *lcg-getturls* ]] || [[ $CT == *lcg-sd* ]]; then
+    LONG_OPTIONS="${LONG_OPTIONS},st:"
+  fi
+
+  # src/dst space tokens + #streams
+  if [[ $CT == *lcg-cp* ]] || [[ $CT == *lcg-rep* ]]; then
+    LONG_OPTIONS="${LONG_OPTIONS},srcsetype:,dstsetype:,sst:,dst:"
+    SHORT_OPTIONS="${SHORT_OPTIONS}n:"
+  elif [[ $CT == *lcg-cr*lcg-cr* ]]; then
+    SHORT_OPTIONS="${SHORT_OPTIONS}n:"
+  fi
+  
   VO_OPTIONS=""
   SE_HOST=""
   GUID=""
@@ -94,7 +128,7 @@ function lcg_test_startup() {
   #     Quotation is disabled to allow constructions like "--vo $2" to work correctly
   #     But beware you can not pass a vo name containing spaces or other special characters because of that
 
-  OPTS=`getopt --unquoted --longoptions "help::,vo:,defaultsetype:,srcsetype:,dstsetype:,setype:,st:,sst:,dst:,nobdii,usefullsurl" --options "vt:n:" -- "$@"` || usage 1
+  OPTS=`getopt --unquoted --longoptions "${LONG_OPTIONS}" --options "${SHORT_OPTIONS}" -- "$@"` || usage 1
 
   set -- $OPTS
   
@@ -358,7 +392,7 @@ function define_setypes() {
     
   if [ -z "$OPT_SETYPE" ]; then
      OPT_NO_BDII_SE="$OPT_NO_BDII --setype ${APPARENT_SE_TYPE}"
-     myecho "setype not given for ${SE_HOST} - will use ${APPARENT_SE_TYPE}"
+     myecho "setype for ${SE_HOST} - will use ${APPARENT_SE_TYPE}"
   fi
   if [ -z "$OPT_SRCSETYPE" ]; then
      OPT_NO_BDII_LCG_CP="$OPT_NO_BDII --srcsetype ${APPARENT_SE_TYPE} --dstsetype ${APPARENT_SE_TYPE}"
@@ -376,7 +410,7 @@ function define_setypes() {
 
     if [ -z "$OPT_DSTSETYPE" ] && [ -n "$SE2" ]; then
        OPT_NO_BDII_LCG_REP="$OPT_NO_BDII_LCG_REP --dstsetype ${APPARENT_SE_TYPE}"
-       myecho "setype not given for $SE2 - will use ${APPARENT_SE_TYPE}"
+       myecho "setype for $SE2 - will use ${APPARENT_SE_TYPE}"
     fi
   fi
 }
