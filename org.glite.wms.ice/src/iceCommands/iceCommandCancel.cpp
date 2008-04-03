@@ -80,7 +80,7 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
   string commandStr;
   string protocolStr;
 
-  {//  mutex protected region
+  {//  ClassAd-mutex protected region
     boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
     
     classad::ClassAdParser parser;
@@ -91,7 +91,6 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
     
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
     
-    // string commandStr;
     // Parse the "command" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
       throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
@@ -102,7 +101,6 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
       throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandCancel" );
     }
     
-    //string protocolStr;
     // Parse the "version" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "protocol", protocolStr ) ) {
       throw util::JobRequest_ex("attribute \"protocol\" not found or is not a string");
@@ -135,7 +133,7 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
     } else {
       boost::trim_if(m_sequence_code, boost::is_any_of("\""));        
     }
-  }// end mutex protected region
+  }// end Classad-mutex protected region
  
 }
 

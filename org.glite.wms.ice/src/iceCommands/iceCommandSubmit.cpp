@@ -156,7 +156,7 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
   string commandStr;
   string protocolStr;
   
-  {// mutex protected region  
+  {// Classad-mutex protected region  
     
     boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
     
@@ -167,10 +167,8 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
       throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
     }
     
-    
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
     
-    //string commandStr;
     // Parse the "command" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
       throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
@@ -181,7 +179,6 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
       throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit:: wrong command parsed: %1%" ) % commandStr ) );
     }
     
-    //string protocolStr;
     // Parse the "version" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
       throw iceUtil::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
@@ -207,7 +204,7 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
     classad::ClassAdUnParser unparser;
     unparser.Unparse( m_jdl, argumentsAD->Lookup( "jobad" ) );
 
-  } // end mutex protected regions
+  } // end classad-mutex protected regions
   
   try {
     m_theJob.setJdl( m_jdl );
@@ -634,7 +631,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 
 //____________________________________________________________________________
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::ClassadSyntax_ex& )
-{
+{ // Classad-mutex protected region
+
   boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
   
   classad::ClassAdParser parser;
@@ -671,12 +669,12 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
   unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
   
   return newjdl;
-} // end of creamJdlHelper(...) and ClassAd's mutex releasing
+} // end of creamJdlHelper(...) and ClassAd-mutex releasing
 
 
 //______________________________________________________________________________
 void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
-{
+{ // synchronized block because the caller is Classad-mutex synchronized
     const static char* method_name = "iceCommandSubmit::updateIsbList() - ";
     string default_isbURI = "gsiftp://";
     default_isbURI.append( m_myname );

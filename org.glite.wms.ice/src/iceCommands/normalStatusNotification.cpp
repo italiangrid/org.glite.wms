@@ -142,7 +142,7 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
     m_exit_code( 0 ) // default
 {
 
-  { // mutex protected region
+  { // Classad-mutex protected region
     boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::Ice::ClassAd_Mutex );
     
     classad::ClassAdParser parser;
@@ -196,7 +196,7 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
 		     << pp_classad
 		     << log4cpp::CategoryStream::ENDLINE);
     }
-  } // end of mutex protected region
+  } // end of Classad-mutex protected region
 };
 
 //

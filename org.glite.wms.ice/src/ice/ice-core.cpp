@@ -234,7 +234,10 @@ Ice::~Ice( )
 //____________________________________________________________________________
 void Ice::stopAllThreads( void ) 
 {
-  // FIXME: must check at runtime that the join is invoked
+  /**
+   * The following call to stop() method of IteThreadHelper
+   * causes the call of iceThread::stop() and boost::thread::join()
+   */
   if(m_poller_thread.is_started())
     m_poller_thread.stop();
 
@@ -535,7 +538,10 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
         
 	string resub_request;
 
-	{
+
+	{ /**
+	   * ClassAd-mutex protected region
+	   */
 	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
 	  
 	  classad::ClassAd command;
@@ -548,9 +554,8 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 	  command.Insert( "arguments", arguments.Copy() );
 	  
 	  classad::ClassAdUnParser unparser;
-	  //string resub_request;
 	  unparser.Unparse( resub_request, &command );        
-	}
+	} // releasing classad mutex
 
         CREAM_SAFE_LOG(
                        m_log_dev->infoStream()

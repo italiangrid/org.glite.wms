@@ -28,9 +28,7 @@
 #include "iceConfManager.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
-//#include "CreamProxyFactory.h"
 
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/soap_runtime_ex.h"
 
@@ -102,6 +100,8 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 		     * the suicidal patch
 		     */
 		    m_state->m_no_requests_available.wait( L );
+
+		    if( isStopped() ) return;
 
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
@@ -195,7 +195,8 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 }
 
 //______________________________________________________________________________
-list< glite::wms::ice::iceAbsCommand* >::iterator iceThreadPool::iceThreadPoolWorker::get_first_request( void )
+list< glite::wms::ice::iceAbsCommand* >::iterator
+iceThreadPool::iceThreadPoolWorker::get_first_request( void )
 {
     list< glite::wms::ice::iceAbsCommand* >::iterator it = m_state->m_requests_queue.begin();
     while ( ( it != m_state->m_requests_queue.end() ) &&
@@ -268,8 +269,13 @@ void iceThreadPool::stopAllThreads( void ) throw()
 		      << log4cpp::CategoryStream::ENDLINE
 		      );
       (*thisThread)->stop(); 
+      
+//      m_state->m_no_requests_available.notify_all();
+      
     }
-  
+ 
+  m_state->m_no_requests_available.notify_all();
+ 
   CREAM_SAFE_LOG( m_log_dev->debugStream()
 		  << "iceThreadPool::stopAllThreads() - "
 		  << "Waiting for all pool-thread termination ..."

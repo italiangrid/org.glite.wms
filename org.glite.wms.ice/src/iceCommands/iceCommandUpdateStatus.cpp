@@ -146,7 +146,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	bool has_subid;
 	bool keep_alive;
 	string subs_id;
-	{ // mutex protected region
+	{ // Classad-mutex protected region
 
 	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
 
@@ -172,7 +172,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  // Check whether the current notification is an empty notification
 	  has_keep_alive = classad_safe_ptr->EvaluateAttrBool( "KEEP_ALIVE", keep_alive );
 	  has_subid      = classad_safe_ptr->EvaluateAttrString( "SUBSCRIPTION_ID", subs_id );
-	} // end of mutex protected region
+	} // end of Classad-mutex protected region
 
         if ( has_keep_alive && keep_alive && has_subid ) {
             // Push the subs_id into the set, which will be considered

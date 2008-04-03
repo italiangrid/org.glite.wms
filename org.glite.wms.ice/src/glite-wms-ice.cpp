@@ -239,7 +239,7 @@ int main(int argc, char*argv[])
 
     logger_instance->setLogFile(logfile.c_str());
     CREAM_SAFE_LOG(log_dev->debugStream() 
-		   << "ICE VersionID is [20080326-14:12] ProcessID=["
+		   << "ICE VersionID is [20080402-09:40] ProcessID=["
 		   << ::getpid() << "]"
 		   <<log4cpp::CategoryStream::ENDLINE);
     cout << "Logfile is [" << logfile << "]" << endl;
@@ -429,10 +429,10 @@ int main(int argc, char*argv[])
 	sleep(2);
 	
 	/**
-	 * Comment the followin single line to activate the suicidal
+	 * Comment the following single line to activate the suicidal
 	 * patch
 	 */
-	continue;
+	//continue;
 	
 	/**
 	 *

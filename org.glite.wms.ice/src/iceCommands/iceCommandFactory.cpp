@@ -38,7 +38,7 @@ iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request )
 {
     iceAbsCommand* result = 0;
     
-    { // mutex protected region
+    { // Classad-mutex protected region
       boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
       
       classad::ClassAdParser parser;
@@ -66,7 +66,7 @@ iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request )
       } else {
         throw util::JobRequest_ex( "Unknown command " + commandStr + " in request classad" );
       }
-    }
+    } // release of Classad-mutex
     return result;
 }
 

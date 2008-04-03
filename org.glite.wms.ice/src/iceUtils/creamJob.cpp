@@ -94,7 +94,9 @@ CreamJob::CreamJob( ) :
 //______________________________________________________________________________
 void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 {
-
+  /**
+   * Classad-mutex protected region
+   */
     boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::Ice::ClassAd_Mutex );
     classad::ClassAdParser parser;
     classad::ClassAd *jdlAd = parser.ParseClassAd( j );
@@ -164,6 +166,7 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
     m_cream_deleg_address = iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
 	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
+    // release of Classad-mutex
 }
 
 //______________________________________________________________________________
