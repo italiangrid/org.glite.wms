@@ -554,8 +554,8 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 			// Checks if WMProxy supports delegation-2
 			if ( !checkWMProxyRelease ( 3, 0, 0 ) )  {
 				logInfo->print(WMS_WARNING, "The WMProxy Server " + this->getEndPoint( )+ " does not support delegation 2");
-				getEndPoint();
-				jobRecoverStep(STEP_DELEGATE_PROXY);
+				jobRecoverStep(step);
+				break;
 			}
 			try{
 				delegateUserProxy(m_endPoint);
