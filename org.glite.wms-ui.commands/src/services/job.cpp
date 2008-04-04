@@ -553,9 +553,9 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 		case STEP_DELEGATE_PROXY:
 			// Checks if WMProxy supports delegation-2
 			if ( !checkWMProxyRelease ( 3, 0, 0 ) )  {
-				throw WmsClientException(__FILE__,__LINE__,
-					"delegation",DEFAULT_ERR_CODE,
-					"Delegation service: ", "The WMProxy Server " + this->getEndPoint( )+ " does not support delegation 2");
+				logInfo->print(WMS_WARNING, "The WMProxy Server " + this->getEndPoint( )+ " does not support delegation 2");
+				getEndPoint();
+				jobRecoverStep(STEP_DELEGATE_PROXY);
 			}
 			try{
 				delegateUserProxy(m_endPoint);
