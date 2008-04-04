@@ -171,7 +171,7 @@ else
 
   cat $TMP_SUBMIT_OUTPUT
   myecho "submit succeeded"
-  JOBID=$(cat $TMP_SUBMIT_OUTPUT | grep -v Connecting | grep -v endpoint | grep -o 'https:[[:alnum:].:_-/]*')
+  JOBID=$(cat $TMP_SUBMIT_OUTPUT | grep -v Connecting | grep -v endpoint | grep -o 'https:[[:alnum:].:_/-]*')
   myecho "JOBID: $JOBID"
   rm -f $TMP_SUBMIT_OUTPUT
 
