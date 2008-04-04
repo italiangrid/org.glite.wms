@@ -31,12 +31,12 @@ function usage() {
   [[ "$LONG_OPTIONS" == *usefullsurl*   ]] && echo "--usefullsurl                      use full SURLs whenever possible"
   [[ "$LONG_OPTIONS" == *nobdii*        ]] && echo "--nobdii                           use --nobdii whenever possible (implies --usefullsurl)"
   [[ "$LONG_OPTIONS" == *defaultsetype* ]] && echo "--defaultsetype <default_se_type>  [srmv1|srmv2|se]"
-  [[ "$LONG_OPTIONS" == *,setype*       ]] && echo "--setype <se_type>                 [srmv1|srmv2|se] - for lcg-cr/rf/del/ls/gt"
-  [[ "$LONG_OPTIONS" == *srcsetype*     ]] && echo "--srcsetype <source_se_type>       [srmv1|srmv2|se] - for lcg-cp, lcg-rep"
-  [[ "$LONG_OPTIONS" == *dstsetype*     ]] && echo "--dstsetype <destination_se_type>  [srmv1|srmv2|se] - for lcg-cp, lcg-rep"
-  [[ "$LONG_OPTIONS" == *,st*           ]] && echo "--st <space_token>                 for lcg-cr, lcg-gt, lcg-getturls, lcg-sd"
-  [[ "$LONG_OPTIONS" == *sst*           ]] && echo "--sst <source_space_token>         for lcg-cp, lcg-rep"
-  [[ "$LONG_OPTIONS" == *dst*           ]] && echo "--dst <destination_space_token>    for lcg-cp, lcg-rep"
+  [[ "$LONG_OPTIONS" == *,setype*       ]] && echo "--setype <se_type>                 [srmv1|srmv2|se] - for lcg-cr/rf/del/ls/gt/getturls and lcg-cp (both source and destination)"
+  [[ "$LONG_OPTIONS" == *srcsetype*     ]] && echo "--srcsetype <source_se_type>       [srmv1|srmv2|se] - for lcg-rep"
+  [[ "$LONG_OPTIONS" == *dstsetype*     ]] && echo "--dstsetype <destination_se_type>  [srmv1|srmv2|se] - for lcg-rep"
+  [[ "$LONG_OPTIONS" == *,st*           ]] && echo "--st <space_token>                 for lcg-cr/gt/getturls/sd and lcg-cp (both source and destination)"
+  [[ "$LONG_OPTIONS" == *sst*           ]] && echo "--sst <source_space_token>         for lcg-rep"
+  [[ "$LONG_OPTIONS" == *dst*           ]] && echo "--dst <destination_space_token>    for lcg-rep"
   echo ""
   #echo "$COMMANDS_TO_TEST"
   echo "This test makes use of" $(echo "${COMMANDS_TO_TEST}" | sort | uniq)
@@ -81,14 +81,16 @@ function lcg_test_startup() {
 
   LONG_OPTIONS="help::,vo:"
   SHORT_OPTIONS="v"
-
+  N_HOSTNAMES_NEEDED=1
+  
   # setype-related options + timeout
   # NB : single appearance of lcg-cr is ignored because it is always there
   # NB2: extra options for lcg-del will only be only used if some other command in the scripts can use these options
-  if [[ $CT == *lcg-cr*lcg-cr* ]] || [[ $CT == *lcg-gt* ]] || [[ $CT == *lcg-getturls* ]] || [[ $CT == *lcg-rf* ]] || [[ $CT == *lcg-ls* ]]; then
+  if [[ $CT == *lcg-cr*lcg-cr* ]] || [[ $CT == *lcg-gt* ]] || [[ $CT == *lcg-getturls* ]] || [[ $CT == *lcg-rf* ]] \
+                                  || [[ $CT == *lcg-ls* ]] || [[ $CT == *lcg-cp* ]] ; then
     LONG_OPTIONS="${LONG_OPTIONS},defaultsetype:,nobdii,usefullsurl,setype:"
     SHORT_OPTIONS="${SHORT_OPTIONS}t:"
-  elif [[ $CT == *lcg-ls* ]] || [[ $CT == *lcg-cp* ]] || [[ $CT == *lcg-rep* ]]; then
+  elif [[ $CT == *lcg-ls* ]] || [[ $CT == *lcg-rep* ]]; then
     LONG_OPTIONS="${LONG_OPTIONS},defaultsetype:,nobdii,usefullsurl"
     SHORT_OPTIONS="${SHORT_OPTIONS}t:"
   elif [[ $CT == *lcg-sd* ]]; then
@@ -96,15 +98,16 @@ function lcg_test_startup() {
   fi
 
   # space token
-  if [[ $CT == *lcg-cr*lcg-cr* ]] || [[ $CT == *lcg-gt* ]] || [[ $CT == *lcg-getturls* ]] || [[ $CT == *lcg-sd* ]]; then
+  if [[ $CT == *lcg-cr*lcg-cr* ]] || [[ $CT == *lcg-gt* ]] || [[ $CT == *lcg-getturls* ]] || [[ $CT == *lcg-sd* ]]  || [[ $CT == *lcg-cp* ]]; then
     LONG_OPTIONS="${LONG_OPTIONS},st:"
   fi
 
   # src/dst space tokens + #streams
-  if [[ $CT == *lcg-cp* ]] || [[ $CT == *lcg-rep* ]]; then
+  if [[ $CT == *lcg-rep* ]]; then
     LONG_OPTIONS="${LONG_OPTIONS},srcsetype:,dstsetype:,sst:,dst:"
     SHORT_OPTIONS="${SHORT_OPTIONS}n:"
-  elif [[ $CT == *lcg-cr*lcg-cr* ]]; then
+    N_HOSTNAMES_NEEDED=2
+  elif [[ $CT == *lcg-cr*lcg-cr* ]] || [[ $CT == *lcg-cp* ]]; then
     SHORT_OPTIONS="${SHORT_OPTIONS}n:"
   fi
   
@@ -116,6 +119,7 @@ function lcg_test_startup() {
   OPT_SRCSETYPE=""
   OPT_DSTSETYPE=""
   OPT_SETYPE=""
+  OPT_SETYPES_LCG_CP=""
   OPT_TOKEN=""
   OPT_DSTTOKEN=""
   OPT_SRCTOKEN=""
@@ -162,7 +166,7 @@ function lcg_test_startup() {
 	  USE_FULL_SURL="yes"
           shift
           ;;
-      --nobdii) myecho "--nobdii option will be passed to commands sensitive to se type"
+      --nobdii) myecho "--nobdii option will be passed to commands sensitive to it"
           myecho "Full SURLs will be used whenever possible"
           OPT_NO_BDII="--nobdii"
 	  USE_FULL_SURL="yes"
@@ -173,18 +177,19 @@ function lcg_test_startup() {
           shift
           shift
           ;;
-      --srcsetype) myecho "se type to use with lcg-cp, lcg-rep for source file: $2"
+      --srcsetype) myecho "se type to use with lcg-rep for source file: $2"
           OPT_SRCSETYPE="--srcsetype $2"
           shift
           shift
           ;;
-      --dstsetype) myecho "se type to use with lcg-cp, lcg-rep for destination file: $2"
+      --dstsetype) myecho "se type to use with lcg-rep for destination file: $2"
           OPT_DSTSETYPE="--dstsetype $2"
           shift
           shift
           ;;
-      --setype) myecho "se type to use with lcg-cr, lcg-del, lcg-gt, lcg-getturls, lcg-ls, lcg-rf: $2"
+      --setype) myecho "se type to use with lcg-cr/del/gt/getturls/ls/rf and lcg-cp (both source and destination): $2"
           OPT_SETYPE="--setype $2"
+	  OPT_SETYPES_LCG_CP="--srcsetype $2 --dstsetype $2"
           shift
           shift
           ;;
@@ -208,6 +213,10 @@ function lcg_test_startup() {
     esac
   done
 
+  if [ $# -ne $N_HOSTNAMES_NEEDED ]; then
+    myecho "!!! Wrong number of positional parameters !!!"
+    usage 1
+  fi
 
   # ... define SE host
 
@@ -262,7 +271,7 @@ function lcg_test_startup() {
 
   LCG_CR_OPTIONS_BASIC="$VERBOSE $VO_OPTIONS $OPT_TIMEOUT $OPT_DEFAULTSETYPE $OPT_SETYPE $OPT_TOKEN $OPT_NBSTREAMS $OPT_NO_BDII_SE"
   LCG_CR_OPTIONS_BDII="$VERBOSE $VO_OPTIONS $OPT_TIMEOUT $OPT_DEFAULTSETYPE $OPT_SETYPE $OPT_TOKEN $OPT_NBSTREAMS -d $SE_HOST"
-  LCG_CP_OPTIONS_BDII="$VERBOSE $VO_OPTIONS $OPT_TIMEOUT $OPT_DEFAULTSETYPE $OPT_SRCSETYPE $OPT_DSTSETYPE $OPT_SRCTOKEN $OPT_DSTTOKEN $OPT_NBSTREAMS"
+  LCG_CP_OPTIONS_BDII="$VERBOSE $VO_OPTIONS $OPT_TIMEOUT $OPT_DEFAULTSETYPE $OPT_SETYPES_LCG_CP $OPT_SRCTOKEN $OPT_DSTTOKEN $OPT_NBSTREAMS"
   LCG_REP_OPTIONS_BDII="$VERBOSE $VO_OPTIONS $OPT_TIMEOUT $OPT_DEFAULTSETYPE $OPT_SRCSETYPE $OPT_DSTSETYPE $OPT_SRCTOKEN $OPT_DSTTOKEN $OPT_NBSTREAMS"
   LCG_DEL_OPTIONS_BDII="$VERBOSE $VO_OPTIONS $OPT_TIMEOUT $OPT_DEFAULTSETYPE $OPT_SETYPE"
 
@@ -394,8 +403,12 @@ function define_setypes() {
      OPT_NO_BDII_SE="$OPT_NO_BDII --setype ${APPARENT_SE_TYPE}"
      myecho "setype for ${SE_HOST} - will use ${APPARENT_SE_TYPE}"
   fi
-  if [ -z "$OPT_SRCSETYPE" ]; then
+  if [ -z "$OPT_SETYPES_LCG_CP" ]; then
      OPT_NO_BDII_LCG_CP="$OPT_NO_BDII --srcsetype ${APPARENT_SE_TYPE} --dstsetype ${APPARENT_SE_TYPE}"
+     #myecho "setype not given for ${SE_HOST} - will use ${APPARENT_SE_TYPE}"
+  fi
+  
+  if [ -z "$OPT_SRCSETYPE" ]; then
      OPT_NO_BDII_LCG_REP="$OPT_NO_BDII --srcsetype ${APPARENT_SE_TYPE}"
      #myecho "setype not given for ${SE_HOST} - will use ${APPARENT_SE_TYPE}"
   fi
