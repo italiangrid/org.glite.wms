@@ -39,7 +39,10 @@
 //namespace iceUtil = glite::wms::ice::util;
 using namespace std;
 using namespace glite::wms::ice::util;
-extern int errno;
+//extern int errno;
+
+extern int *__errno_location(void);
+#define errno (*__errno_location())
 
 #define MAX_ICE_OP_BEFORE_PURGE 10000
 #define MAX_ICE_OP_BEFORE_CHECKPOINT 50

@@ -41,6 +41,9 @@
 
 //extern int errno;
 
+extern int *__errno_location(void);
+#define errno (*__errno_location())
+
 namespace iceUtil = glite::wms::ice::util;
 namespace cream_api = glite::ce::cream_client_api;
 using namespace std;

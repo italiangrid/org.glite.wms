@@ -67,7 +67,10 @@
 #include <unistd.h>
 #include <cerrno>
 
-extern int errno;
+//extern int errno;
+
+extern int *__errno_location(void);
+#define errno (*__errno_location())
 
 namespace api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
