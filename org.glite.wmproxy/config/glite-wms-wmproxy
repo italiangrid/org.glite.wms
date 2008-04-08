@@ -36,7 +36,7 @@ RETVAL=0
 # See how we were called.
 case "$1" in
   status)
-        if netstat -lten | grep "^tcp .*:$port .*LISTEN" >/dev/null 2>&1 ;then
+        if ( netstat -lten | grep "^tcp .*:$port .*LISTEN" ) >/dev/null 2>&1 ;then
          echo WMProxy $httpd listening on port $port
          httpd_pids=`/sbin/pidof $httpdpath`
          RETVAL=$?
@@ -50,7 +50,7 @@ case "$1" in
          echo WMProxy $httpd NOT listening on port $port
          echo "==="
          echo Checking for other $httpd running instances .....
-         if /sbin/pidof $httpd >/dev/null 2>&1 ; then
+         if ( /sbin/pidof $httpd ) >/dev/null 2>&1 ; then
           echo $httpd \(pid `/sbin/pidof $httpd`\) is running ....
          else 
           echo None found
