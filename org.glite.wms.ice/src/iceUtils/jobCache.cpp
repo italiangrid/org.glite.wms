@@ -39,8 +39,6 @@
 #include <cstdlib>
 #include <sstream>
 
-extern int errno;
-
 using namespace std;
 
 using namespace glite::wms::ice::util;

@@ -36,7 +36,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-extern int h_errno;
+//extern int h_errno;
 
 using namespace std;
 namespace iceUtil = glite::wms::ice::util;
