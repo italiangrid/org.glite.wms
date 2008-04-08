@@ -28,6 +28,7 @@
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 // other GLITE stuff
 #include "glite/wms/common/configuration/Configuration.h"
@@ -44,8 +45,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cerrno>
+//#include <errno.h>
 
-extern int errno;
+//extern int errno;
+extern int *__errno_location(void);
+#define errno (*__errno_location())
 
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
@@ -190,7 +194,7 @@ void eventStatusListener::acceptJobStatus(void)
 
   { // start TIMING notification handling
 
-    //    api::util::scoped_timer T("*** NOTIF HANDLING ***");
+    //api::util::scoped_timer T("*** eventStatusListener::acceptJobStatus - Notification Receiving Time ***");
 
     if( m_conf->listener_enable_authz() && m_conf->listener_enable_authn() ) {
       string dn = this->getClientDN();
