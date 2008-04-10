@@ -409,7 +409,12 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // Delegates the proxy
         //
         delegID = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );        
-        
+        if(delegID.empty()) {
+	  // Delegation went wrong
+	  // FIXME: must retry ? must handle it ?
+	  // for now let's simply throw an iceCommandFatal_ex
+	  throw( iceCommandFatal_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%" ) % m_theJob.getGridJobID() ) ) );
+	}
         //
         // Registers the job (with autostart)
         //

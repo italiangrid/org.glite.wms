@@ -121,7 +121,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                         << log4cpp::CategoryStream::ENDLINE );        
         // Returns empty string, so that the register will do
         // auto-delegation
-        return delegation_id;
+        return "";//delegation_id;
     }
 
     cream_api::VOMSWrapper V( certfile );
@@ -133,7 +133,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
 		      << "]. Error is: "
 		      << V.getErrorMessage( )
 		      << log4cpp::CategoryStream::ENDLINE );        
-      return delegation_id;
+      return "";//delegation_id;
     }
 
     SHA1_Init( &ctx );
@@ -207,7 +207,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
 			    << ex.what() << "]"
                             << log4cpp::CategoryStream::ENDLINE );
             // Returns an empty string
-            return delegation_id;
+            return "";//delegation_id;
         }  catch( ... ) {
             // Delegation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -225,7 +225,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                             << str_sha1_digest
                             << log4cpp::CategoryStream::ENDLINE );
             // Returns an empty string
-            return delegation_id;
+            return "";//delegation_id;
         }     
         // Inserts the new delegation ID into the delegation set
         m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
