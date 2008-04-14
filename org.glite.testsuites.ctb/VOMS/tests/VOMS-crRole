@@ -1,6 +1,7 @@
 #!/bin/bash
 # Date: 09/11/2006                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Revised: March 2008                                                                       #
 # Description of the test: Create Role for VO                                               #
 #                                                                                           #
 # Input Parameters:                                                                         #

@@ -1,12 +1,13 @@
 #!/bin/bash
 # Date: 09/11/2006                                                                          #
+# Revised: March 2008                                                                       #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
-# Description of the test: Delete Attribute for VO                                               #
+# Description of the test: Delete Attribute for VO                                          #
 #                                                                                           #
 # Input Parameters:                                                                         #
 #       - VO name                                                                           #                       #
 #       - VO host name                                                                      #
-#       - file config_file (Attribute)                                                           #
+#       - file config_file (Attribute)                                                      #
 # Requisites:                                                                               #
 #	- VOMS server                                                                       #
 #       - 1 configured VO                                                                   #

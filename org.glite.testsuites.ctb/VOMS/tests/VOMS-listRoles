@@ -1,5 +1,6 @@
 #!/bin/bash
 # Date: 09/11/2006                                                                          #
+# Revised: March 2008                                                                       #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
 # Description of the test: Test roles list command                                          #
 #                                                                                           #

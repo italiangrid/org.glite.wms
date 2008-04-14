@@ -1,5 +1,6 @@
 #!/bin/bash
 # Date: 09/11/2006                                                                          #
+# Revised: March 2008                                                                       #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
 # Description of the test: Test user list command                                           #
 #                                                                                           #
@@ -32,17 +33,31 @@ echo "<br>"
 echo "CA=$CA"
 echo "<br>"
 
+echo "User1: $user1"
+echo "User2: $user2"
+echo "User3: $user3"
+echo "User4: $user4"
+
 USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
 USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user1=$USER_SUBJECT
 
 USER2_SUBJECT=$(openssl x509 -in $USER2 -noout -subject | sed -e 's/^subject=[ ]*//')
 USER2_ISSUER=$(openssl x509 -in $USER2 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user2=$USER2_SUBJECT
 
 USER3_SUBJECT=$(openssl x509 -in $USER3 -noout -subject | sed -e 's/^subject=[ ]*//')
 USER3_ISSUER=$(openssl x509 -in $USER3 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user3=$USER3_SUBJECT
 
 USER4_SUBJECT=$(openssl x509 -in $USER4 -noout -subject | sed -e 's/^subject=[ ]*//')
 USER4_ISSUER=$(openssl x509 -in $USER4 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+user4=$USER4_SUBJECT
+
+echo "User1: $user1"
+echo "User2: $user2"
+echo "User3: $user3"
+echo "User4: $user4"
 
 echo "SCENARIO: Create 4 users"
 echo "<br>"

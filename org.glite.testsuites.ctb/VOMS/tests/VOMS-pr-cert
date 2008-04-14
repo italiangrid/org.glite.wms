@@ -1,5 +1,6 @@
 #!/bin/bash
 # Date: 21/03/2007                                                                          #
+# Revised: March 2008                                                                       #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
 # Description of the test: check option 'cert' for voms-proxy-init                          #
 #                                                                                           #
@@ -36,8 +37,12 @@ date
 echo "VOMS-PROXY-INIT: check option - $OPTION"
 
 echo  "1. Create new user and proxy"
+echo "1.1. Create user in vo=$vo_name, user=$USER"
 voms-admin --vo=$vo_name --host $voms_host create-user $USER
-voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+echo "1.2. voms-proxy-init, cert=$USERCERT,  key=$USERKEY, pws=$PWS"
+
+
+voms-proxy-init -voms $vo_name -vomses $VOMSES  -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 
 if [ $? = 0 ]; then
    echo "Test is OK"

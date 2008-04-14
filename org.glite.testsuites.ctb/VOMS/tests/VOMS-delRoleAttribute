@@ -1,5 +1,6 @@
 #!/bin/bash
 # Date: 15/02/2007                                                                          #
+# Revised: March 2008                                                                       #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
 # Description of the test: Remove role's Attribute                                          #
 #                                                                                           #
@@ -168,7 +169,7 @@ echo "2.7. Check deleted role attribute"
 echo "list-role-attributes"
 
 voms-admin --vo=$vo_name --host $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE" > $voms_stderr
-echo voms-admin --vo=$vo_name --host $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE"
+echo "Complex command:" voms-admin --vo=$vo_name --host $voms_host list-role-attributes "/$vo_name/$GROUP" "Role=$ROLE"
 
 if [ -n "$(head -2 $voms_stderr)" ]; then
     voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"

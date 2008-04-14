@@ -1,5 +1,6 @@
 #!/bin/bash
 # Date: 09/02/2007                                                                          #
+# Revised: March 2008                                                                       #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
 # Description of the test: Remove user's Attribute                                          #
 #                                                                                           #
@@ -75,7 +76,7 @@ fi
 
 echo "Assign attribute to user"	
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
+#####voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
 voms-admin --vo=$vo_name --host $voms_host set-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" "$ATTVALUE"
 
 echo "Check user attribute"

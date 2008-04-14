@@ -39,14 +39,14 @@ echo "SCENARIO: User doesn't exist"
 echo "<br>"
 echo "Create new user"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$DN" "$CA" "$CN" "$EMAIL"
-voms-admin --vo=$vo_name -h $voms_host list-users > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host create-user --nousercert "$DN" "$CA" "$CN" "$EMAIL"
+voms-admin --vo=$vo_name --host $voms_host list-users > $voms_tmp
 echo "Check DN"
 echo "<br>"
 grep "$user_subject" $voms_tmp > $tempo
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user --nousercert "$DN" "$CA"
    echo "Error creating the user: wrong DN"
    echo "<br>"
    cat $tempo
@@ -61,7 +61,7 @@ echo "<br>"
 grep "$user_CN" $tempo  > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user --nousercert "$DN" "$CA"
    echo "Error creating the user: wrong CN"
    echo "<br>"
    cat $tempo
@@ -76,7 +76,7 @@ echo "<br>"
 grep "$user_CA" $tempo  > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user --nousercert "$DN" "$CA"
    echo "Error creating the user: wrong CA"
    echo "<br>"
    cat $tempo
@@ -90,11 +90,11 @@ fi
 echo "SCENARIO: User already exists in the VO"
 echo "<br>"
 rm -rf $voms_stderr
-voms-admin --vo=$vo_name -h $voms_host create-user --nousercert "$DN" "$CA" "$CN" "$EMAIL" 2> $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host create-user --nousercert "$DN" "$CA" "$CN" "$EMAIL" 2> $voms_stderr
 grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+   voms-admin --vo=$vo_name --host $voms_host delete-user --nousercert "$DN" "$CA"
    echo "Incorrect error message:"
    echo "<br>"
    cat $voms_stderr
@@ -105,7 +105,7 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host delete-user --nousercert "$DN" "$CA"
+voms-admin --vo=$vo_name --host $voms_host delete-user --nousercert "$DN" "$CA"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

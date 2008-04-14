@@ -1,6 +1,7 @@
 #!/bin/bash
 # Date: 06/02/2007                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
+# Revised: March 2008                                                                       #
 # Description of the test: Create Attribute for VO                                               #
 #                                                                                           #
 # Input Parameters:                                                                         #
