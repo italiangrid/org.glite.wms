@@ -1,0 +1,11 @@
+Start SAM imitator myCheck-VOMS:
+
+Tests list:
+
+Tests for voms-admin command:		test-sequence.lst.voms-admin
+Tests for voms-proxy-init command:	test-sequence.lst.voms-core
+Both lists:				test-sequence.lst.full
+
+1.voms-proxy-init -cert ~/tglobus/test_user_2_cert.pem -key ~/tglobus/test_user_2_key.pem
+2. cd ~
+   same/client-ctb/sensors/VOMS/myCheck-VOMS

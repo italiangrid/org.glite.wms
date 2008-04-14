@@ -1,0 +1,58 @@
+#!/bin/bash
+SENSOR=VOMS
+export nodeName="lxb2026.cern.ch"
+
+#------------- Test cycle number parameter -----------------
+if [ -z "$1" ]; then
+    counter=1
+else
+    counter=$1
+fi
+
+echo "counter=$counter"
+
+export SAME_SENSOR_WORK="$HOME/same/client-ctb/sensors/$SENSOR/work"
+export SAME_SENSOR_HOME="$HOME/same/client-ctb/sensors/$SENSOR"
+export SAME_ERROR=50
+export SAME_OK=0
+
+short_result="$SAME_SENSOR_WORK/short_result"
+full_result="$SAME_SENSOR_WORK/full_result"
+
+rm -rf $short_result
+rm -rf $full_result
+
+echo "Test for $nodeName: started"
+
+cycle=1
+
+mkdir -p $SAME_SENSOR_WORK/nodes/$nodeName
+
+while [  $cycle -le $counter ]; do
+    echo "Cycle=$cycle"
+    rm -rf $short_result
+    count=1
+    for test in `cat $SAME_SENSOR_HOME/test-sequence.lst` ; do
+        echo
+	echo "$count TEST: $test"
+	testDef=$SAME_SENSOR_HOME/tests/$test.def
+        if [ -e $testDef ];   then
+	    $SAME_SENSOR_HOME/tests/$test  $nodeName   >> $full_result
+		
+	    if [ $? == 0 ]; then
+		echo -e "Test $test\t- OK" >> $short_result
+	    else
+		echo "Test $test has failed" >> $short_result
+	    fi
+	else 
+	    echo "Not exists definition file: $testDef"
+	fi
+	
+	#cat $full_result
+        let count=count+1 
+    done
+    echo "Short report:"
+    cat $short_result  
+    let cycle=cycle+1
+done
+echo "Full test report exists in $full_result"
