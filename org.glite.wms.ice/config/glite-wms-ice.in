@@ -102,7 +102,7 @@ start()
             LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/log4cpp/lib/
         fi
         export LD_LIBRARY_PATH
-        su - ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} >> ${err_logfile} 2>&1"
+        su ${su_dguser} -c "${binpath} --conf ${conf_file} --daemon ${pid_file} >> ${err_logfile} 2>&1"
         # there is a race condition due to some delay between becoming
         # a daemon (hence returning control to this script) and
         # writing the pid file; the following sleep should be enough
