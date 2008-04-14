@@ -17,8 +17,8 @@
 namespace configuration = glite::wms::common::configuration;
 
 namespace {
-  int s_active_side[2];
-  int s_matching_threads[2];
+  int s_active_side = 0;
+  int s_matching_threads[2] = {0, 0};
 }
 
 namespace glite {
@@ -28,8 +28,9 @@ namespace ism {
 void switch_active_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  s_active_side[ism::ce] = (s_active_side[ism::ce] + 1) % 2;
-  if (s_matching_threads[s_active_side[ism::ce]] != 0) {
+  s_active_side = (s_active_side + 1) % 2;
+  Info("switching active side to " + boost::lexical_cast<std::string>(s_active_side));
+  if (s_matching_threads[s_active_side] != 0) {
     assert(true);
   }
 }
@@ -37,8 +38,20 @@ void switch_active_side()
 int active_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  ++s_matching_threads[s_active_side[ism::ce]];
-  return s_active_side[ism::ce];
+  return s_active_side;
+}
+
+int dark_side()
+{
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
+  return (s_active_side + 1) % 2;
+}
+
+int match_on_active_side()
+{
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
+  ++s_matching_threads[s_active_side];
+  return s_active_side;
 }
 
 ism_type::value_type make_ism_entry(
@@ -92,7 +105,7 @@ ism_type& get_ism(size_t the_ism_index, int face)
 
 ism_type& get_ism(size_t the_ism_index)
 {
-  if (s_active_side) {
+  if (s_active_side == 1) {
     return *the_ism2[the_ism_index];
   } else {
     return *the_ism1[the_ism_index];
@@ -107,7 +120,7 @@ int matching_threads(int side)
 void matched_thread(int side)
 {
   --s_matching_threads[side];
-  if (side != s_active_side[ism::ce] && s_matching_threads[side] == 0) {
+  if (side != s_active_side && s_matching_threads[side] == 0) {
     get_ism(ism::ce, side).clear(); // updater thread not needed anymore
   }
 }
@@ -137,7 +150,6 @@ void call_update_ism_entries::_(size_t the_ism_index)
   ism_type::iterator const e=get_ism(the_ism_index).end();
 
   for ( ; pos!=e; ) {
-
     bool inc_done = false;
     // Check the state of the ClassAd information
     if (boost::tuples::get<ad_ptr_entry>(pos->second) != NULL) {
@@ -152,18 +164,16 @@ void call_update_ism_entries::_(size_t the_ism_index)
             // if the update function returns false we remove the entry
             // only if it has been previously marked as invalid i.e. the entry's 
             // update time is less than 0
-  	    if (boost::tuples::get<update_time_entry>(pos->second)<0) {
+  	        if (boost::tuples::get<update_time_entry>(pos->second) < 0) {
               get_ism(the_ism_index).erase(pos++);
               inc_done = true;
             } else {
               boost::tuples::get<update_time_entry>(pos->second) = -1;
             }
-	  }
-          else {
+          } else {
             boost::tuples::get<update_time_entry>(pos->second) = current_time;
           }
-        }
-        else {
+        } else {
           // If the function object wrapper is empty, remove the entry
           get_ism(the_ism_index).erase(pos++);
           inc_done = true;
@@ -174,7 +184,9 @@ void call_update_ism_entries::_(size_t the_ism_index)
       get_ism(the_ism_index).erase(pos++);
       inc_done = true;
     }
-    if (!inc_done) ++pos;
+    if (!inc_done) {
+      ++pos;
+    }
   }
 }
 
@@ -182,7 +194,7 @@ bool update_ism_entry::operator()(ism_entry_type entry)
 {
   return boost::tuples::get<update_function_entry>(entry)(
   	boost::tuples::get<expiry_time_entry>(entry), 
-	boost::tuples::get<ad_ptr_entry>(entry));
+	  boost::tuples::get<ad_ptr_entry>(entry));
 }
 
 // Returns whether the entry has expired, or not
@@ -196,10 +208,9 @@ bool is_expired_ism_entry(const ism_entry_type& entry)
 
 bool is_void_ism_entry(const ism_entry_type& entry)
 {
-  return (boost::tuples::get<expiry_time_entry>(entry)<=0);
+  return (boost::tuples::get<expiry_time_entry>(entry) <= 0);
 }
 
-//get IsmDump file
 std::string get_ism_dump(void)
 {
   configuration::Configuration const* const config = configuration::Configuration::instance();

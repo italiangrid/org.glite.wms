@@ -21,6 +21,9 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.10.2.2.2.1  2008/04/14 15:04:02  mcecchi
+	work in progress
+
 	Revision 1.10.2.2  2007/03/30 10:56:07  emartel
 	added glite_rgma.m4
 

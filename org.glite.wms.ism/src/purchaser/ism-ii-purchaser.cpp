@@ -107,7 +107,7 @@ void populate_ism(
   static const time_t expiry_time( 
     config.wm()->ism_ii_purchasing_rate() + config.ns()->ii_timeout()
   );
-     
+
   vector<gluece_info_iterator>::const_iterator it(
     gluece_info_container_updated_entries.begin()
   );
@@ -115,25 +115,20 @@ void populate_ism(
     gluece_info_container_updated_entries.end()
   );
 
-  time_t const current_time = std::time(0);
-
-  int dark_side;
-  if(ism::active_side()) {
-    dark_side = 0;
-  } else {
-    dark_side = 1;
-  }
+  int dark_side = ism::dark_side();
   for ( ; it != e; ++it ) {
-    ism_type::iterator ism_it = get_ism(the_ism_index, dark_side).find((*it)->first);
-    if (ism_it != get_ism(the_ism_index).end()) {
-      ism_type::mapped_type& data = ism_it->second;
-      boost::tuples::get<0>(data) = current_time;
+     ism_type::iterator ism_it
+      = get_ism(the_ism_index, dark_side).find((*it)->first);
+       if (ism_it != get_ism(the_ism_index).end()) {
+         ism_type::mapped_type& data = ism_it->second;
+      boost::tuples::get<0>(data) = std::time(0);
       boost::tuples::get<2>(data) = (*it)->second;
     } else {
-      get_ism(the_ism_index).insert( 
+      get_ism(the_ism_index, dark_side).erase((*it)->first);
+      get_ism(the_ism_index, dark_side).insert( 
         make_ism_entry(
           (*it)->first,
-          current_time,
+          std::time(0),
           (*it)->second,
           ism_ii_purchaser_entry_update(),
           expiry_time
@@ -193,12 +188,15 @@ void ism_ii_purchaser::do_purchase()
      );
 
      // do not populate until the existing ism has got threads still matching against it
-     while (matching_threads((ism::active_side() + 1) % 2) > 0) {
+     while (ism::matching_threads(ism::dark_side()) > 0) {
+      Warning("waiting for " + boost::lexical_cast<std::string>((ism::matching_threads((ism::active_side() + 1) % 2))));
       ::sleep(1);
      }
 
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
+
+     ism::switch_active_side();
     }
     catch (LDAPException& e) {
       Error("Failed to purchase info from " << m_hostname << ":" << m_port << " (" << e.what() << ")");
