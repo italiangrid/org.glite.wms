@@ -134,7 +134,8 @@ namespace util {
         const unsigned int m_operation_count_max;
         std::string m_host_dn; // the host DN
         int m_lease_delta_time;
-        
+        int m_lease_update_frequency;
+
         t_lease_set m_lease_set;
 
     public:
@@ -164,14 +165,19 @@ namespace util {
          * as the job being submitted.
          *
          * If a lease ID satisfying both conditions above is found,
-         * this method returns that lease ID. If there exist no
-         * lease ID satisfying the conditions, a new lease ID is created
-         * and returned to the caller.
+         * this method returns that lease ID. If there exist no lease
+         * ID satisfying the conditions, a new lease ID is created and
+         * returned to the caller. This method is guaranteed NOT to
+         * return a lease whose duration is less than
+         * lease_update_frequency (as specified in the configuration
+         * file). If a lease which is expiring in less than
+         * leasE_update_frequency does exist in the lease cache, thie
+         * method renews the lease before returning it to the caller.
          *
-         * This method periodically (every N invocations of this
-         * method) checks the lease ID cache to see whether there are
-         * lease IDs associated with expired leases. Such entries are
-         * purged from the cache.
+         * This method periodically (every N invocations) checks the
+         * lease ID cache to see whether there are lease IDs
+         * associated with expired leases. Such entries are purged
+         * from the cache.
          *
          * This method is thread-safe: internally, it acquires a mutex
          * so that multiple access to the (shared) lease ID cache do

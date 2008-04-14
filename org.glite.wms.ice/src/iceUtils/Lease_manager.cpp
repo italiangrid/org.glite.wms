@@ -51,6 +51,7 @@ Lease_manager::Lease_manager( ) :
     m_operation_count_max( 20 ), // FIXME: hardcoded default
     m_host_dn( "UNKNOWN_ICE_DN" ),
     m_lease_delta_time( 60*60 )
+    m_lease_update_frequency( 30*60 );
 {
     glite::wms::common::configuration::Configuration* conf = 0;
     static char* method_name = "Lease_manager::Lease_manager() - ";
@@ -58,6 +59,7 @@ Lease_manager::Lease_manager( ) :
     try {
         conf = iceConfManager::getInstance()->getConfiguration(); // can raise ConfigurationManager_ex
         m_lease_delta_time = conf->ice()->lease_delta_time();
+        m_lease_update_frequency = conf()->ice()->lease_update_frequency();
         m_host_dn = cert_util::getDN( conf->ice()->ice_host_cert() ); // can raise auth_ex 
     } catch( ConfigurationManager_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -258,14 +260,21 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
         //
         // lease_by_seq.push_front( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
     } else {
-        // Delegation id FOUND. Returns it
+        // Lease id FOUND. If it is expiring, renew before returning
+        // it to the caller.
         lease_id = it->m_lease_id;
+        time_t expiration_time = it->m_expiration_time;
+
+        if ( it->m_expiration_time < time(0) + m_lease_update_frequency ) {
+            // renew the lease
+            expiration_time = renew_lease( lease_id );
+        }
 
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "Using existing lease ID \"" << lease_id
                         << "\" for CREAM URL " << cream_url
                         << " user DN " << user_DN << " expiration time "
-                        << time_t_to_string( it->m_expiration_time )
+                        << time_t_to_string( expiration_time )
                         << log4cpp::CategoryStream::ENDLINE );
     }
     return lease_id;
