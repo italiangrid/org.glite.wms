@@ -50,8 +50,8 @@ Lease_manager::Lease_manager( ) :
     m_operation_count( 0 ),
     m_operation_count_max( 20 ), // FIXME: hardcoded default
     m_host_dn( "UNKNOWN_ICE_DN" ),
-    m_lease_delta_time( 60*60 )
-    m_lease_update_frequency( 30*60 );
+    m_lease_delta_time( 60*60 ),
+    m_lease_update_frequency( 30*60 )
 {
     glite::wms::common::configuration::Configuration* conf = 0;
     static char* method_name = "Lease_manager::Lease_manager() - ";
@@ -59,7 +59,7 @@ Lease_manager::Lease_manager( ) :
     try {
         conf = iceConfManager::getInstance()->getConfiguration(); // can raise ConfigurationManager_ex
         m_lease_delta_time = conf->ice()->lease_delta_time();
-        m_lease_update_frequency = conf()->ice()->lease_update_frequency();
+        m_lease_update_frequency = conf->ice()->lease_update_frequency();
         m_host_dn = cert_util::getDN( conf->ice()->ice_host_cert() ); // can raise auth_ex 
     } catch( ConfigurationManager_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
