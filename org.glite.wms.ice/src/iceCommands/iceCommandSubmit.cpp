@@ -62,8 +62,6 @@
 
 // C++ stuff
 #include <ctime>
-#include <cstring> // for memset
-//#include <stdexcept>
 
 using namespace std;
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
@@ -284,8 +282,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                        << " Fatal Exception is:" << ex.what()
                        << log4cpp::CategoryStream::ENDLINE
                        );
-        m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "ICE cannot submit jdl=%1% due to exception=%2%") % m_jdl % ex.what() ) ) );
-        m_theJob.set_failure_reason( boost::str( boost::format( "ICE cannot convert jdl=%1% due to exception=%2%") % m_jdl % ex.what() ) );
+        m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) ) );
+        m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) );
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ) );
         throw( iceCommandFatal_ex( ex.what() ) );
     } catch( const iceCommandTransient_ex& ex ) {
@@ -404,16 +402,14 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                             << m_theJob.describe()
                             << log4cpp::CategoryStream::ENDLINE );        
         }
-        
+
         // 
         // Delegates the proxy
         //
         delegID = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );        
         if(delegID.empty()) {
 	  // Delegation went wrong
-	  // FIXME: must retry ? must handle it ?
-	  // for now let's simply throw an iceCommandFatal_ex
-	  throw( iceCommandFatal_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%" ) % m_theJob.getGridJobID() ) ) );
+	  throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%" ) % m_theJob.getGridJobID() ) ) );
 	}
         //
         // Registers the job (with autostart)
