@@ -17,7 +17,7 @@
 namespace configuration = glite::wms::common::configuration;
 
 namespace {
-  int s_active_side = 0;
+  int s_active_side = -1;
   int s_matching_threads[2] = {0, 0};
 }
 
@@ -28,7 +28,11 @@ namespace ism {
 void switch_active_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  s_active_side = (s_active_side + 1) % 2;
+  if (s_active_side == -1) { // first time
+    s_active_side = 0;
+  } else {
+    s_active_side = (s_active_side + 1) % 2;
+  }
   Info("switching active side to " + boost::lexical_cast<std::string>(s_active_side));
   if (s_matching_threads[s_active_side] != 0) {
     assert(true);
@@ -38,13 +42,21 @@ void switch_active_side()
 int active_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  return s_active_side;
+  if (s_active_side == -1) { // first time
+    return 1;
+  } else {
+    return s_active_side;
+  }
 }
 
 int dark_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  return (s_active_side + 1) % 2;
+  if (s_active_side == -1) { // first time
+    return 0;
+  } else {
+    return (s_active_side + 1) % 2;
+  }
 }
 
 int match_on_active_side()
@@ -96,7 +108,7 @@ ism_mutex_type& get_ism_mutex(size_t the_ism_index)
 
 ism_type& get_ism(size_t the_ism_index, int face)
 {
-  if (face) {
+  if (face == 0) {
     return *the_ism1[the_ism_index];
   } else {
     return *the_ism2[the_ism_index];
@@ -105,10 +117,10 @@ ism_type& get_ism(size_t the_ism_index, int face)
 
 ism_type& get_ism(size_t the_ism_index)
 {
-  if (s_active_side == 1) {
-    return *the_ism2[the_ism_index];
-  } else {
+  if (s_active_side == 0) {
     return *the_ism1[the_ism_index];
+  } else {
+    return *the_ism2[the_ism_index];
   }
 }
 
@@ -121,7 +133,7 @@ void matched_thread(int side)
 {
   --s_matching_threads[side];
   if (side != s_active_side && s_matching_threads[side] == 0) {
-    get_ism(ism::ce, side).clear(); // updater thread not needed anymore
+    get_ism(ism::ce, side).clear();
   }
 }
 

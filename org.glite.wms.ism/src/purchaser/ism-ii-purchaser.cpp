@@ -6,6 +6,7 @@
 // $Id$
 
 #include <boost/progress.hpp>
+#include <boost/timer.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 #include <classad_distribution.h>
@@ -119,7 +120,7 @@ void populate_ism(
   for ( ; it != e; ++it ) {
      ism_type::iterator ism_it
       = get_ism(the_ism_index, dark_side).find((*it)->first);
-       if (ism_it != get_ism(the_ism_index).end()) {
+       if (ism_it != get_ism(the_ism_index, dark_side).end()) {
          ism_type::mapped_type& data = ism_it->second;
       boost::tuples::get<0>(data) = std::time(0);
       boost::tuples::get<2>(data) = (*it)->second;
@@ -189,18 +190,25 @@ void ism_ii_purchaser::do_purchase()
 
      // do not populate until the existing ism has got threads still matching against it
      while (ism::matching_threads(ism::dark_side()) > 0) {
-      Warning("waiting for " + boost::lexical_cast<std::string>((ism::matching_threads((ism::active_side() + 1) % 2))));
+      Warning(
+        "waiting for ISM side "
+        + boost::lexical_cast<std::string>((ism::matching_threads((ism::active_side() + 1) % 2)))
+        + " to have no more matching threads pointing to it"
+      );
       ::sleep(1);
      }
 
+      boost::timer t;
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
+      Info("Spent " << boost::lexical_cast<std::string>(t.elapsed()) << " populating the ISM");
 
      ism::switch_active_side();
-    }
-    catch (LDAPException& e) {
+    } catch (LDAPException& e) {
+
       Error("Failed to purchase info from " << m_hostname << ":" << m_port << " (" << e.what() << ")");
     } catch (...) {
+
       // TODO: Check which exception may arrive here... and remove catch all
       Warning("Failed to purchase info from " << m_hostname << ":" << m_port);
     }
@@ -212,7 +220,6 @@ void ism_ii_purchaser::do_purchase()
       boost::mutex::scoped_lock l(f_purchasing_cycle_run_mutex);
       f_purchasing_cycle_run_condition.timed_wait(l, xt);
     }
-
   } while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 }
 
