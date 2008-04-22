@@ -1,0 +1,17 @@
+How to use this test:
+
+ To test an MPI c program, just execute:
+
+    cd c ; edg-job-submit mpi-test.jdl
+    
+    This will launch the c mpi program and it will compile it
+    on the worker node itseld.
+
+ To test an MPI Fortran program, just execute:
+
+    cd fortran; edg-job-submit mpi-start-fortran.jdl
+
+    Note, that the MPI capable CE has to publis 'pbs' as LRMS instead of 'torque'.
+
+
+		-- Gergely Debreczeni
