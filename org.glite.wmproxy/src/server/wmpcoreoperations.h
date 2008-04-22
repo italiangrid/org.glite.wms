@@ -40,6 +40,10 @@ void jobListMatch(jobListMatchResponse &jobListMatch_response,
 void jobSubmit(struct ns1__jobSubmitResponse &response, 
 	jobSubmitResponse &jobSubmit_response, const std::string &jdl,
 	const std::string &delegation_id, struct soap *soap);
+
+void jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
+        jobSubmitResponse &jobSubmit_response, const std::string &jdl,
+        const std::string &delegation_id, struct soap *soap);
 	
 void jobRegister(jobRegisterResponse &jobRegister_response,
 	const std::string &jdl, const std::string &delegation_id);

@@ -43,6 +43,23 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
+#include "utilities/wmputils.h"
+
+// JSDL specific includes:
+#include <string.h>
+#include <libxml/xmlmemory.h>
+#include <libxml/debugXML.h>
+#include <libxml/HTMLtree.h>
+#include <libxml/xmlIO.h>
+#include <libxml/DOCBparser.h>
+#include <libxml/xinclude.h>
+#include <libxml/catalog.h>
+#include <libxslt/xslt.h>
+#include <libxslt/xsltInternals.h>
+#include <libxslt/transform.h>
+#include <libxslt/xsltutils.h>
+#include <stdarg.h>  // va_start
+// JSDL specific includes (END)
 
 // Exceptions
 #include "utilities/wmpexceptions.h"
@@ -66,11 +83,123 @@ const std::string DEFAULT_PROTOCOL = "default";
 // WM Web Service available operations
 // To get more infomation see WM service wsdl file
 
+
+/*************************
+deserialization of a JSDL methods..
+**************************/
+const string printFieldJSDL(const string& title, string * field){
+	if (!field){return "";}
+	edglog(debug)<<"_____ New field: "<< *field << endl ;
+	return title +"="+"\""+*field +"\""+";\n";
+}
+/*************************
+deserialization of a JSDL methods..
+**************************/
+const string printFieldsJSDL(const string& title, std::vector<std::string> fields){
+	string result="";
+	for (unsigned int i=0; i<fields.size(); i++ ){
+		edglog(debug)<<"_____ New field (vector): "<< fields[i] << endl ;
+		result += "\"" + fields[i]+ "\"";
+		// Append comma (when needed)
+		if (i < fields.size()-1){ result +=",";}
+	}
+	if (result !=""){ result = title + "={ " + result + "} ;\n";}
+	return result;
+}
+
+/*************************
+deserialization of a JSDL methods..
+**************************/
+void serializeJSDL(jsdlns__JobDefinition_USCOREType *jsdl, struct soap *soap){
+	if (soap){
+		soap->sendfd = open("/tmp/glite_sc06.xml", O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
+		soap_serialize_PointerTojsdlns__JobDefinition_USCOREType(soap, &jsdl);
+		soap_begin_send(soap);
+		soap_put_PointerTojsdlns__JobDefinition_USCOREType(soap, &jsdl, "ns:element-name", "ns:type-name");
+		soap_put_PointerTojsdlns__JobDefinition_USCOREType(soap, &jsdl, NULL, NULL);
+		soap_end_send(soap);
+	}
+}
+/*************************
+deserialization of a JSDL methods..
+**************************/
+string deserializationJSDL(const string &jsdlString){
+	// SYTLESHEET
+	xmlDocPtr jsdl, parsedRes;
+	std::string styleSheetFile ="/opt/glite/share/wsdl/jsdl2jdlhpcp.xslt";
+	string jsdlFile = "/tmp/jsdl_tmp" + boost::lexical_cast<std::string>(getpid());
+	wmputilities::writeTextFile(jsdlFile,jsdlString);
+
+	xsltStylesheetPtr styleSheet = xsltParseStylesheetFile((const xmlChar *)styleSheetFile.c_str());
+	jsdl = xmlParseFile(jsdlFile.c_str());
+	string result;
+
+	const char **params =NULL;
+	parsedRes=xsltApplyStylesheet(styleSheet, jsdl, params);
+	if (parsedRes){
+		// PARSED SUCCESS
+		xmlChar *doc_txt_ptr;
+		int doc_txt_len;
+		xsltSaveResultToString (&doc_txt_ptr, &doc_txt_len, parsedRes, styleSheet);
+		result = string((const char *)doc_txt_ptr);
+		return result;
+	}
+	edglog(debug)<<"_____ JSDL STYLESHEET ERROR!!!"<< endl;
+	return "";
+
+}
+
+/*************************
+deserialization of a JSDL methods..
+**************************/
+const string deserializationJSDL(jsdlns__JobDefinition_USCOREType *jsdl, struct soap *soap){
+	edglog_fn("wmpgsoapoperations::deserializationJSDL");
+	string jsdlString = jsdl->__any;
+	if (jsdlString.size()){ return deserializationJSDL( jsdl->__any);}
+
+	string result="";
+	// SYTLESHEET END
+	if (!jsdl->jsdlns__JobDescription){return result;}
+	edglog(debug)<<"_____ JSDL JobDescription: "<< jsdl->jsdlns__JobDescription<<endl;
+	if (jsdl->jsdlns__JobDescription->jsdlns__JobIdentification){
+		edglog(debug)<<"_____ JSDL JobDescription jsdlns__JobIdentification"<<
+			jsdl->jsdlns__JobDescription->jsdlns__JobIdentification	<<endl;
+		result+= printFieldJSDL("JobName",jsdl->jsdlns__JobDescription->jsdlns__JobIdentification->jsdlns__JobName);
+		result+= printFieldsJSDL("JobAnnotation",jsdl->jsdlns__JobDescription->jsdlns__JobIdentification->jsdlns__JobAnnotation);
+		result+= printFieldsJSDL("JobProject",jsdl->jsdlns__JobDescription->jsdlns__JobIdentification->jsdlns__JobProject);
+	}
+
+	if (jsdl->jsdlns__JobDescription->jsdlns__Application){
+		edglog(debug)<<"_____ JSDL JobDescription jsdlns__Application: "<<
+			jsdl->jsdlns__JobDescription->jsdlns__Application	<<endl;
+		result+= printFieldJSDL("ApplicationName", jsdl->jsdlns__JobDescription->jsdlns__Application->jsdlns__ApplicationName);
+		result+= printFieldJSDL("ApplicationVersion", jsdl->jsdlns__JobDescription->jsdlns__Application->jsdlns__ApplicationVersion);
+	}
+	edglog(debug)<<"_____ JSDL HPCProfile 01"<< endl ;
+	edglog(debug)<<"_____ JSDL HPCProfile hpcp"<< jsdl->jsdlns__JobDescription->jsdlns__Application->__any  << "##"<< endl ;
+
+	// adding FAKE attributes:
+	string
+	tmp="/bin/ls";
+	result+= printFieldJSDL("Executable", &tmp);
+	result+= "Requirements = true;\n";
+	result+= "Rank = 1;\n" ;
+
+
+	if (jsdl->jsdlns__JobDescription->jsdlns__Resources){
+		edglog(debug)<<"_____ JSDL JobDescription jsdlns__Resources: "<<
+			jsdl->jsdlns__JobDescription->jsdlns__Resources		<<endl;
+	}
+	return "[\n"+result +"\n]";
+}
+
+
+
 void printJSDL(jsdlns__JobDefinition_USCOREType *jsdl)
 {
-	jsdlns__JobDescription_USCOREType *JobDescription = jsdl->jsdlns__JobDescription;
-	jsdlns__JobIdentification_USCOREType *JobIdentification = JobDescription->jsdlns__JobIdentification;;
-	jsdlns__Application_USCOREType *Application = JobDescription->jsdlns__Application;
+        jsdlns__JobDescription_USCOREType *JobDescription = JobDescription = jsdl->jsdlns__JobDescription;
+        jsdlns__JobIdentification_USCOREType *JobIdentification = JobDescription->jsdlns__JobIdentification;
+        jsdlns__Application_USCOREType *Application = JobDescription->jsdlns__Application;
 
 	// Print out JOB IDENTIFICATION
 	edglog(info) << "JobIdentification JobName " << JobIdentification->jsdlns__JobName->c_str() << endl;
@@ -217,6 +346,10 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 	GLITE_STACK_CATCH();
 }
 
+
+/**
+* JOB REGISTER JSDL -> TOBEPORTED AS JOB SUBMIT JSDL
+*/
 int
 ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
 	string delegation_id, struct ns1__jobRegisterJSDLResponse &response)
@@ -291,8 +424,7 @@ ns1__jobStart(struct soap *soap, string job_id,
 }
 
 int
-ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id,
-	struct ns1__jobSubmitResponse &response)
+ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__jobSubmitResponse &response)
 {
 	GLITE_STACK_TRY("ns1__jobSubmit(struct soap *soap, string jdl, string "
 		"delegation_id, struct ns1__jobSubmitResponse &response)");
@@ -321,43 +453,36 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id,
 }
 
 int
-ns1__jobSubmitJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
-	string delegation_id, struct ns1__jobSubmitJSDLResponse &response)
+ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, jsdlns__JobDefinition_USCOREType *jsdl, struct ns1__jobSubmitJSDLResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobSubmitJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl, "
-		"string delegation_id, struct ns1__jobSubmitJSDLResponse &response)");
+	GLITE_STACK_TRY("ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, "
+		"jsdlns__JobDefinition_USCOREType *jsdl, struct ns1__jobSubmitJSDLResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobSubmitJSDL");
-	edglog(info)<<"jobSubmitJSDL operation called"<<endl;
+	edglog(debug)<<"jobSubmitJSDL operation called"<<endl;
 	
-	//printJSDL(jsdl);
-	
-	int return_value = SOAP_OK;
-	ns1__jobSubmitResponse jobSubmit_response;
-	
-	// Perform the JSDL to JDL conversion via Stylesheet
-	// TBD
-	
-	string jdl = "[ \
-		requirements = true; \
-		AllowZippedISB = false; \
-		OutputSandboxBaseDestURI = \"gsiftp://pcpg01.cern.ch/data/SEDir/Indy/\";  \
-		JobType = \"normal\"; \
-		Executable = \"/bin/ls\"; \
-		StdOutput = \"std.out\"; \
-		OutputSandbox = { \"std.out\",\"std.err\" }; \
-		VirtualOrganisation = \"dteam\"; \
-		rank = 4; \
-		Type = \"job\"; \
-		StdError = \"std.err\"; \
-		DefaultRank =  -other.GlueCEStateEstimatedResponseTime ]";
-		
-	// Call the Job Submit		
-	return_value = ns1__jobSubmit(soap, jdl, delegation_id, jobSubmit_response);
+	printJSDL(jsdl);
 
-	// Set the JobSubmitJSDL response
-	response._jobIdStruct = jobSubmit_response._jobIdStruct;
-		
-	edglog(info)<<"jobSubmitJSDL operation completed\n"<<endl;
+        initializingSignalHandler();
+	int return_value = SOAP_OK;
+	
+	// Conversion from JSDL to JDL
+	string jdl = deserializationJSDL (jsdl, soap);
+	
+	jobSubmitResponse jobSubmit_response;
+	
+	try {
+                jobSubmitJSDL( response, jobSubmit_response, jdl, delegation_id, soap);
+	} catch (Exception &exc) {
+                setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL),
+                        exc.getCode(), (string) exc.what(), exc.getStackTrace());
+                return_value = SOAP_FAULT;
+        } catch (exception &ex) {
+                setSOAPFault(soap, WMS_IS_FAILURE, "jobSubmit", time(NULL),
+                        WMS_IS_FAILURE, (string) ex.what());
+                return_value = SOAP_FAULT;
+        }
+	
+	edglog(debug)<<"jobSubmitJSDL operation completed\n"<<endl;
 	
 	return return_value;
 	GLITE_STACK_CATCH();
@@ -718,6 +843,9 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 	GLITE_STACK_CATCH();
 }
 
+/**
+* JOB LIST MATCH JSDL, TOBEPORTED AS JOB SUBMIT JSDL
+*/
 int
 ns1__jobListMatchJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
 	string delegation_id, struct ns1__jobListMatchJSDLResponse &response)

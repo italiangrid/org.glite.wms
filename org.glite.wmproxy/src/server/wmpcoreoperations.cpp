@@ -1900,6 +1900,41 @@ soap_serve_submit(struct soap *soap, struct ns1__jobSubmitResponse response)
 	return soap_closesock(soap);
 }
 
+SOAP_FMAC5 int SOAP_FMAC6
+soap_serve_submitJSDL(struct soap *soap, struct ns1__jobSubmitJSDLResponse response)
+{
+        //struct ns1__jobSubmitResponse response;
+        soap_serializeheader(soap);
+        soap_serialize_ns1__jobSubmitJSDLResponse(soap, &response);
+        if (soap_begin_count(soap)) {
+                return soap->error;
+        }
+        if (soap->mode & SOAP_IO_LENGTH)
+        {       if (soap_envelope_begin_out(soap)
+                 || soap_putheader(soap)
+                 || soap_body_begin_out(soap)
+                 || soap_put_ns1__jobSubmitJSDLResponse(soap, &response,
+                        "ns1:jobSubmitJSDLResponse", "")
+                 || soap_body_end_out(soap)
+                 || soap_envelope_end_out(soap)) {
+                         return soap->error;
+                 }
+        };
+        if (soap_end_count(soap)
+         || soap_response(soap, SOAP_OK)
+         || soap_envelope_begin_out(soap)
+         || soap_putheader(soap)
+         || soap_body_begin_out(soap)
+         || soap_put_ns1__jobSubmitJSDLResponse(soap, &response,
+                "ns1:jobSubmitJSDLResponse", "")
+         || soap_body_end_out(soap)
+         || soap_envelope_end_out(soap)
+         || soap_end_send(soap)) {
+                return soap->error;
+         }
+        return soap_closesock(soap);
+}
+
 void
 jobSubmit(struct ns1__jobSubmitResponse &response,
 	jobSubmitResponse &jobSubmit_response, const string &jdl,
@@ -1997,6 +2032,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	} else {
 		job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
 	}
+
 	response._jobIdStruct = job_id_struct;
 	
 	if (conf.getAsyncJobStart()) {
@@ -2017,6 +2053,126 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 
 	GLITE_STACK_CATCH();
 }
+
+void
+jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
+        jobSubmitResponse &jobSubmit_response, const string &jdl,
+        const string &delegation_id, struct soap *soap)
+{
+        GLITE_STACK_TRY("jobSubmit()");
+        edglog_fn("wmpcoreoperations::jobSubmit");
+        // log Remote host info, call load script file,checkConfiguration, setGlobalSandboxDir
+        initWMProxyOperation("jobSubmit");
+
+        // Checking delegation id
+        edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
+
+#ifndef GRST_VERSION
+        if (delegation_id == "") {
+                edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
+                throw ProxyOperationException(__FILE__, __LINE__,
+                        "jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
+                        "Delegation id not valid");
+        }
+#endif
+
+        edglog(debug)<<"JSDL to Submit:\n"<<jdl<<endl;
+
+
+        // complicate checkSecurity: TODO
+        // - delegatedproxy, delegatedproxyfqan, auth  needed/reused
+        //** Authorizing user
+        edglog(debug)<<"Authorizing user..."<<endl;
+        authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer();
+
+        // Getting delegated proxy inside job directory
+        string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
+        edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
+
+        authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+        string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
+        if (vomsproxy.hasVOMSExtension()) {
+                auth->authorize(delegatedproxyfqan);
+        } else {
+                auth->authorize();
+        }
+
+        // GACL Authorizing
+        edglog(debug)<<"Checking for drain..."<<endl;
+        if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+                edglog(error)<<"Unavailable service (the server is temporarily drained)"
+                        <<endl;
+                throw AuthorizationException(__FILE__, __LINE__,
+                "wmpcoreoperations::jobSubmit()", wmputilities::WMS_AUTHORIZATION_ERROR,
+                "Unavailable service (the server is temporarily drained)");
+        } else {
+                edglog(debug)<<"No drain"<<endl;
+        }
+
+        // Checking proxy validity
+        authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+        // Registering the job for submission
+        jobRegisterResponse jobRegister_response;
+        pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
+                delegation_id, delegatedproxy, delegatedproxyfqan, auth);
+
+
+        // Getting job identifier from register response
+        string jobid = reginfo.first;
+        edglog(debug)<<"Starting registered job: "<<jobid<<endl;
+
+        // Starting job submission
+        JobId *jid = new JobId(jobid);
+
+        WMPEventLogger wmplogger(wmputilities::getEndpoint());
+        std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+        wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+                conf.getDefaultProtocol(), conf.getDefaultPort());
+        wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+
+        // Getting delegated proxy inside job directory
+        string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
+        edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
+
+        // Setting user proxy
+        wmplogger.setUserProxy(proxy);
+
+        jobSubmit_response.jobIdStruct = jobRegister_response.jobIdStruct;
+
+        // Filling answer structure to return to user
+        ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
+        job_id_struct->id = jobSubmit_response.jobIdStruct->id;
+        job_id_struct->name = jobSubmit_response.jobIdStruct->name;
+        job_id_struct->path = new string(getJobInputSBRelativePath(job_id_struct->id));
+        if (jobSubmit_response.jobIdStruct->childrenJob) {
+                job_id_struct->childrenJob =
+                        *convertToGSOAPJobIdStructTypeVector(jobSubmit_response
+                        .jobIdStruct->childrenJob);
+        } else {
+                job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
+        }
+
+        response._jobIdStruct = job_id_struct;
+
+        if (conf.getAsyncJobStart()) {
+                // Creating SOAP answer
+                if (soap_serve_submitJSDL(soap, response)
+                                || (soap->fserveloop && soap->fserveloop(soap))) {
+                        // if ERROR throw exception??
+                        soap_send_fault(soap);
+                }
+        }
+
+        submit(reginfo.second, jid, auth, wmplogger, true);
+
+        if (auth) {
+                delete auth;
+        }
+        delete jid;
+
+        GLITE_STACK_CATCH();
+}
+
 
 void
 jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)

@@ -34,6 +34,9 @@ soapC.cpp : wm.h
 	@echo "gsoap compiling .h"
 	$(GSOAP_LOCATION)/bin/soapcpp2 -I$(GSOAP_LOCATION)/include wm.h 
 
+JSDL_LIBS= -lxslt
+JSDL_CFLAGS=-I/usr/include/libxml2
+
 glite_wms_wmproxy_server_SOURCES = \
 	wm.h \
 	soapC.cpp \
@@ -98,6 +101,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(SEC_LCMAPS_RETURN_WITHOUT_GSI_LIBS) \
 	$(VOMS_NOTHR_LIBS) \
 	$(FCGI_CPP_LIBS) \
+	$(JSDL_LIBS) \
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
@@ -111,8 +115,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(GRIDSITE_GLOBUS_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(FCGI_CFLAGS) \
+	$(JSDL_CFLAGS) \
 	-DHAVE_STRINGSTREAM \
 	-DWANT_NAMESPACES \
-	-DWITH_FASTCGI
+	-DWITH_FASTCGI 
 
 MAINTAINERCLEANFILES = Makefile.in
