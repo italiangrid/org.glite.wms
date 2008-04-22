@@ -87,8 +87,14 @@ function cleanup()
   [[ -f $TMPJDLFILE   ]] && rm -f $TMPJDLFILE
   [[ -f $TESTFILE     ]] && rm -f $TESTFILE
 
+  for OUTFILE in $(ls ${JOB_OUTPUT_DIR}/out.txt-* 2>/dev/null)
+  do
+    rm -f $OUTFILE
+  done
+
   [[ -f ${JOB_OUTPUT_DIR}/std.out ]] && rm -f ${JOB_OUTPUT_DIR}/std.out
   [[ -f ${JOB_OUTPUT_DIR}/std.err ]] && rm -f ${JOB_OUTPUT_DIR}/std.err
+  [[ -f ${JOB_OUTPUT_DIR}/out.txt ]] && rm -f ${JOB_OUTPUT_DIR}/out.txt
   [[ -d ${JOB_OUTPUT_DIR}         ]] && rmdir ${JOB_OUTPUT_DIR}
 
   [[ -d "$MYTMPDIR" ]] && rmdir $MYTMPDIR
