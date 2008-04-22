@@ -49,11 +49,37 @@ void destroyDomParser() {
 
 }
 
+void printJSDL(jsdlns__JobDefinition_USCOREType *jsdl)
+{
+        jsdlns__JobDescription_USCOREType *JobDescription;
+        jsdlns__JobIdentification_USCOREType *JobIdentification;
+        jsdlns__Application_USCOREType *Application;
+
+        if (jsdl != NULL){
+                JobDescription = jsdl->jsdlns__JobDescription;
+                JobIdentification = JobDescription->jsdlns__JobIdentification;;
+                Application = JobDescription->jsdlns__Application;
+        } else {
+                 cout << "JSDL is empty" << endl;
+        }
+        // Print out JOB IDENTIFICATION
+        cout << "JobIdentification JobName " << JobIdentification->jsdlns__JobName->c_str() << endl;
+
+        // Print out APPLICATION
+        cout << "Application ApplicationName " << Application->jsdlns__ApplicationName->c_str() << endl;
+        cout << "Application ApplicationVersion " << Application->jsdlns__ApplicationVersion->c_str() << endl;
+        cout << "Application ApplicationDescription " << Application->jsdlns__Description->c_str() << endl;
+}
+
+
+
 /******************************************************************
-readJsdlFile
+readJsdlFile TODO backport to void
 ******************************************************************/
-void readJsdlFile(std::ifstream &jsdlFile, jsdlns__JobDefinition_USCOREType *readJSDL) {
-  
+jsdlns__JobDefinition_USCOREType readJsdlFile(std::ifstream &jsdlFile) {
+
+  jsdlns__JobDefinition_USCOREType reader; 
+
   try
   {
 
@@ -69,11 +95,11 @@ void readJsdlFile(std::ifstream &jsdlFile, jsdlns__JobDefinition_USCOREType *rea
       // Check if the root node is valid
       if((*rootNode).type)
       {
+
         // Retrieve the JSDL parsed file	
-	readJSDL = (jsdlns__JobDefinition_USCOREType *)(*rootNode).node;
+	reader = *(jsdlns__JobDefinition_USCOREType*)(*rootNode).node;
 	
-	// TBC
-	// Copy the pointer to avoid null pointer the SOAP structure is destroied
+	return reader;
       }
       else
       {
@@ -97,6 +123,7 @@ void readJsdlFile(std::ifstream &jsdlFile, jsdlns__JobDefinition_USCOREType *rea
 	"Error reading JSDL file");
   }
 
+  return reader;
 }
 
 /******************************************************************
@@ -717,7 +744,7 @@ JobIdApi jobRegister (const string &jdl, const string &delegationId, ConfigConte
 	return jobid;
 }
 /*****************************************************************
-jobRegisterJSDL
+jobRegisterJSDL TO BE PORTED LIKE JOBSUBMITJSDL
 ******************************************************************/
 JobIdApi jobRegisterJSDL (ifstream &jsdlFile, const string &delegationId, ConfigContext *cfs){
 
@@ -727,7 +754,7 @@ JobIdApi jobRegisterJSDL (ifstream &jsdlFile, const string &delegationId, Config
 	initialiseDomParser();
 
 	// Read the JSDL file
-	readJsdlFile(jsdlFile, jsdl);
+	//jsdl = readJsdlFile(jsdlFile);
 	
 	WMProxy wmp;
 	JobIdApi jobid ;
@@ -752,6 +779,7 @@ JobIdApi jobSubmit(const string &jdl, const string &delegationId, ConfigContext 
 	JobIdApi jobid ;
 	setSoapConfiguration (wmp, cfs);
 	ns1__jobSubmitResponse response;
+
 	if (wmp.ns1__jobSubmit(jdl, delegationId, response) == SOAP_OK) {
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
 		soapDestroy(wmp.soap) ;
@@ -769,14 +797,20 @@ JobIdApi jobSubmitJSDL(ifstream &jsdlFile, const string &delegationId, ConfigCon
 	initialiseDomParser();
 
 	// Read the JSDL file
-	readJsdlFile(jsdlFile, jsdl);
+	jsdlns__JobDefinition_USCOREType reader = readJsdlFile(jsdlFile);
 
 	WMProxy wmp;
 	JobIdApi jobid ;
 	setSoapConfiguration (wmp, cfs);
 	ns1__jobSubmitJSDLResponse response;
 
-	if (wmp.ns1__jobSubmitJSDL(jsdl, delegationId, response) == SOAP_OK) {
+	// Setting the JSDL
+	jsdl = new jsdlns__JobDefinition_USCOREType( reader );
+
+	// Prints the JSDL on command line 
+	//printJSDL(jsdl);
+
+	if (wmp.ns1__jobSubmitJSDL( delegationId, jsdl, response) == SOAP_OK) {
 		jobid = *jobidSoap2cpp ( response._jobIdStruct  ) ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
@@ -952,7 +986,7 @@ std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jd
 }
 
 /*****************************************************************
-jobListMatchJSDL
+jobListMatchJSDL TODO PORTING TO JOBSUBMITJSDL approach
 ******************************************************************/
 std::vector <std::pair<std::string , long> > jobListMatch (ifstream &jsdlFile, const std::string &delegationId,ConfigContext *cfs){
 
@@ -962,7 +996,7 @@ std::vector <std::pair<std::string , long> > jobListMatch (ifstream &jsdlFile, c
 	initialiseDomParser();
 
 	// Read the JSDL file
-	readJsdlFile(jsdlFile, jsdl);
+	//readJsdlFile(jsdlFile, jsdl);
 
 	WMProxy wmp;
 	vector <pair<string , long> > vect ;
