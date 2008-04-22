@@ -274,11 +274,11 @@
 		<wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
 	</wsdl:message>
 	<wsdl:message name="jobSubmitJSDLRequest">
-		<wsdl:part name="jsdl" type="glitejsdlns:JobDefinition_Type"/>
 		<wsdl:part name="delegationId" type="xsd:string"/>
+		<wsdl:part name="jsdl" type="glitejsdlns:JobDefinition_Type"/>
 	</wsdl:message>
-	<wsdl:message name="jobSubmitJSDLResponse">
-		<wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
+        <wsdl:message name="jobSubmitJSDLResponse">
+                <wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
 	</wsdl:message>
 	<wsdl:message name="jobCancelRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
@@ -2234,8 +2234,6 @@
 				<soap:fault name="ServerOverloadedFault" use="literal"/>
 			</wsdl:fault>
 		</wsdl:operation>
-
-
 		<wsdl:operation name="getJobStatus">
 			<wsdl:input>
 				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
