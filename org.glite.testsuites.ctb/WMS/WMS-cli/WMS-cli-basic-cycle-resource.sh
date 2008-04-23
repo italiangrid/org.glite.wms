@@ -27,12 +27,8 @@ fi
 
 # ... define delegation parameters
 if [ "$1" == "-d" ]; then
-  DELEGATION_OPTIONS="-d $$"
-  myecho "delegating proxy ..."
-  run_command glite-wms-job-delegate-proxy $DELEGATION_OPTIONS
+  define_delegation
   shift
-else
-  DELEGATION_OPTIONS="-a"
 fi
 
 # ... find out valid CE IDs

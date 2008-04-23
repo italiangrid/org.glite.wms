@@ -9,17 +9,11 @@
 #
 ###############################################################################
 
-# ... startup
+# ... startup, force proxy delegation
 
 . $(dirname $0)/functions.sh
 
-prepare
-
-# ... delegate proxy
-
-DELEGATION_OPTIONS="--delegationid $$"
-myecho "delegating proxy ..."
-run_command glite-wms-job-delegate-proxy $DELEGATION_OPTIONS
+prepare -d
 
 # ... submit a job
 

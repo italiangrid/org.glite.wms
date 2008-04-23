@@ -33,15 +33,11 @@ fi
 # ... define delegation parameters
 
 if [ "$1" == "-d" ]; then
-  DELEGATION_OPTIONS="-d $$"
-  myecho "delegating proxy ..."
-  run_command glite-wms-job-delegate-proxy $DELEGATION_OPTIONS
+  define_delegation
   shift
-else
-  DELEGATION_OPTIONS="-a"
 fi
 
-define_delegation
+ENDPOINT=$1
 
 # ... list matched CEs
 
@@ -61,8 +57,8 @@ run_command glite-wms-job-list-match $DELEGATION_OPTIONS --noint --rank --config
 run_command cat $OUTPUTFILE
 rm -f $OUTPUTFILE
 
-if [ -n "$1" ]; then
-  run_command glite-wms-job-list-match $DELEGATION_OPTIONS --endpoint $1 $JDLFILE
+if [ -n "$ENDPOINT" ]; then
+  run_command glite-wms-job-list-match $DELEGATION_OPTIONS --endpoint $ENDPOINT $JDLFILE
 fi
 
 # ... terminate
