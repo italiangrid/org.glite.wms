@@ -185,17 +185,29 @@ function prepare()
   NUM_STATUS_RETRIEVALS=40
   SLEEP_TIME=15
 
+  # ... artificial delay before submitting a job using previousely delegated proxy
+  SLEEP_AFTER_DELEGATING=5
+
   # ... define delegation parameters
+  DELEGATION_OPTIONS="-a"
   if [ "$1" == "-d" ]; then
-    DELEGATION_OPTIONS="-d $$"
-    myecho "delegating proxy ..."
-    run_command glite-wms-job-delegate-proxy $DELEGATION_OPTIONS
-  else
-    DELEGATION_OPTIONS="-a"
+    define_delegation
   fi
 
   # ... set a trap for Ctrl^C
   trap exit_interrupt SIGINT
+}
+
+# ... delegate proxy and (re-)define DELEGATION_OPTIONS
+function define_delegation()
+{
+  DELEGATION_OPTIONS="-d $$"
+  myecho "delegating proxy ..."
+  run_command glite-wms-job-delegate-proxy $DELEGATION_OPTIONS
+  if [ -n "$SLEEP_AFTER_DELEGATING" ]; then
+     myecho "sleeping $SLEEP_AFTER_DELEGATING seconds ..."
+     sleep $SLEEP_AFTER_DELEGATING
+  fi
 }
 
 # ... take jobid from file given by $1 and cleanup the file
