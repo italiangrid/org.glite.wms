@@ -1,0 +1,8 @@
+Executable = "/bin/sh";
+Arguments = "sleeper.sh";
+StdOutput  = "std.out";
+StdError   = "std.err";
+InputSandbox = {"sleeper.sh"};
+OutputSandbox = {"std.out","std.err","out.txt"};
+PerusalFileEnable = true;
+PerusalTimeInterval = 5;
