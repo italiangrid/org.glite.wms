@@ -817,7 +817,7 @@ def checkFromTo ( fromT , toT):
 			formatString = "%m%d%H%M%Y"
 			try:
 				# value limits to be checked in DST
-				valueToCheck= (  time.timezone + int (time.mktime(  time.strptime( finalString  , formatString)  )   ) )
+				valueToCheck= ( int (time.mktime(  time.strptime( finalString  , formatString)  )   ) )
 				# Append the value to query in UTC
 				parsed.append( valueToCheck )
 			except ValueError:
