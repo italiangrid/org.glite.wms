@@ -11,9 +11,11 @@ echo ""
 source `dirname $0`/command-version.sh myproxy-init		  --version || exit $?
 source `dirname $0`/command-version.sh myproxy-info		  --version || exit $?
 source `dirname $0`/command-version.sh myproxy-destroy		  --version || exit $?
-source `dirname $0`/command-version.sh myproxy-server		  --version || exit $?
 source `dirname $0`/command-version.sh myproxy-get-delegation	  --version || exit $?
 source `dirname $0`/command-version.sh myproxy-change-pass-phrase --version || exit $?
+source `dirname $0`/command-version.sh myproxy-logon              --version || exit $?
+source `dirname $0`/command-version.sh myproxy-store              --version || exit $?
+source `dirname $0`/command-version.sh myproxy-retrieve           --version || exit $?
 
 echo " == all Ok == "
 exit 0
