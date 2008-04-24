@@ -26,14 +26,24 @@ function myecho()
   echo "#voms-proxy test# $1"
 }
 
+if [ "$1" == "-help" ] || [ "$1" == "--help" ]; then
+   echo "Usage:" $(basename $0) "[-voms <vo>]"
+   exit 0
+fi
+
 echo ""
 echo "    === voms-proxy test === "
+
+if [ "$1" == "-voms" ] || [ "$1" == "--voms" ]; then
+   VO_OPTIONS="-voms $2"
+   myecho "Will use VO: $2"
+fi
 
 TMPPROXY=/tmp/proxy_`id  -u`
 
 echo ""
 myecho "initializing new proxy, output to file $TMPPROXY ..."
-voms-proxy-init  -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY
+voms-proxy-init ${VO_OPTIONS} -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY
 if [ $? -ne 0 ]; then
   myecho "ERROR: could not create proxy"
   myexit 1
