@@ -1,3 +1,16 @@
+The script LFC-test.sh can be used to run the LFC tests without SAM. To get a list of option type
+
+./LFC-test.sh -h
+
+The following test lists are available:
+
+test-cli.lst		Tests for the LFC cli commands
+test-api-python.lst	Tests for the LFC Python API
+test-sequence.lst	Full test list
+
+The full test lists also includes the tests LFC-cli-bulk and LFC-cli-bulk2 which have a hardcoded SE. If you want to run these tests please change the SE hostname in these tests according to your needs.
+
+
 Start SAM LFC test:
 1. set any glite UI
 2. voms-proxy-init --voms dteam
