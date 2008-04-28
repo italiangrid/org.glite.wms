@@ -1,5 +1,5 @@
 #!/bin/bash
-. $SAME_HOME/sensors/functions.sh
+
 nodeName=$1
 rm -f $SAME_WORK/LFC/no_vodir.$nodeName
 echo "<pre>"
@@ -14,9 +14,9 @@ cmd1=`lfc-rm -r /grid/$SAME_VO/$mydir 2>/dev/null`
 echo "$clear"
 echo "</pre>"
 if [ $RETVAL -eq 0 ] ; then
-    echo "Test is "; samPrintOK;
+    echo "Test is "; echo "<font color="green"> - OK </font>";
     exit $SAME_OK
 else
-    echo "Test failed!"; samPrintFAILED;
+    echo "Test failed!"; echo "<font color="red"> - FAILED </font>";
     exit $SAME_ERROR
 fi

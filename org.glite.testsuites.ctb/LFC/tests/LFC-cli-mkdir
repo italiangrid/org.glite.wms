@@ -1,5 +1,4 @@
 #!/bin/bash
-. $SAME_HOME/sensors/functions.sh
 nodeName=$1
 rm -f $SAME_WORK/LFC/no_vodir.$nodeName
 echo "<pre>"
@@ -13,14 +12,14 @@ clear=`lfc-rm -r /grid/$SAME_VO/$mydir 2>&1`
 echo "$mkdir"
 echo "</pre>"
 if [ $RETVAL -eq 0 ] ; then
-    echo "Test is "; samPrintOK;
+    echo "Test is <font color="green"> - OK </font>"; 
     exit $SAME_OK
 elif ( echo "${mkdir}" | egrep -q ' No such file' > /dev/null ); then
     echo "summary: VO Not Supported : $SAME_VO"
     touch $SAME_WORK/LFC/no_vodir.$nodeName
-    echo "Test is "; samPrintINFO;
+    echo "Test is <font color="blue"> INFO: </font>:";
     exit $SAME_INFO
 else
-    echo "Test failed!"; samPrintFAILED;
+    echo "Test failed! <font color="red"> - FAILED </font>"; 
     exit $SAME_ERROR
 fi

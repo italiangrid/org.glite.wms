@@ -1,5 +1,5 @@
 #!/bin/bash
-. $SAME_HOME/sensors/functions.sh
+
 nodeName=$1
 export LFC_HOST=$nodeName
 rm -f $SAME_WORK/LFC/no_vodir.$nodeName
@@ -28,9 +28,9 @@ if [ $? -ne 0 ]; then RETVAL=1;fi
 echo "<br><br>"
 echo "</pre>"
 if [ $RETVAL -eq 0 ] ; then
-    echo "Test is "; samPrintOK;
+    echo "Test is "; echo "<font color="green"> - OK </font>";
     exit $SAME_OK
 else
-    echo "Test failed!"; samPrintFAILED;
+    echo "Test failed!"; echo "<font color="red"> - FAILED </font>";
     exit $SAME_ERROR
 fi
