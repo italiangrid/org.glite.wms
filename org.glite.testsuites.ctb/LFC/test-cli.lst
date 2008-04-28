@@ -1,0 +1,9 @@
+LFC-cli-mkdir
+LFC-cli-rmdir
+LFC-cli-ping
+LFC-cli-setcom
+LFC-cli-delcom
+LFC-cli-rename
+LFC-cli-ln
+LFC-cli-getacl
+LFC-cli-setacl
