@@ -1277,9 +1277,15 @@ const long Utils::getTime(const std::string &st,
 	ts.tm_isdst = ns->tm_isdst ;
 	switch (vt.size()){
 		case (2): {
-			// hh:mm
-			ts.tm_hour = atoi(vt[0].c_str());
-			ts.tm_min = atoi(vt[1].c_str());
+			if (nf) {
+				// option --valid, adding time
+				ts.tm_min = atoi(vt[1].c_str())+ns->tm_min;
+				ts.tm_hour = atoi(vt[0].c_str())+ns->tm_hour;
+			} else {
+				// option --to, replacing time 
+				ts.tm_min = atoi(vt[1].c_str());
+				ts.tm_hour = atoi(vt[0].c_str());
+			}
 			// current day of the year
 			ts.tm_year = ns->tm_year ;
 			ts.tm_mon = ns->tm_mon ;
@@ -1323,7 +1329,7 @@ const long Utils::checkTime ( const std::string &st, int &days,  int &hours, int
         switch (opt){
 		case (Options::TIME_VALID):{
 			sec = getTime(st, TIME_SEPARATOR, now, 2);
-                        break;
+			break;
                 }
                 default :{
                 	sec = getTime(st, TIME_SEPARATOR, now);
