@@ -454,8 +454,8 @@ int main(int argc, char*argv[])
 	    // but to do that is sufficient to delete the jobCache single instance
 	    // in fact its DTOR will call the jobDbManager's DTOR that 
 	    // cleanly closes the database on disk
-	    iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
-	    delete cache; // this trigger the destruction of jobDbManager and then the safe closing of databases
+// 	    iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
+// 	    delete cache; // this trigger the destruction of jobDbManager and then the safe closing of databases
 	    
 	    CREAM_SAFE_LOG( log_dev->fatalStream()
 			    << method_name
@@ -463,11 +463,17 @@ int main(int argc, char*argv[])
 			    << mem_now << " kB] ! EXIT!"
 			    << log4cpp::CategoryStream::ENDLINE
 			    );
+		
 	    return 2; // exit to shell with specific error code
 	  }
 	}
 	
     }
+    CREAM_SAFE_LOG( log_dev->fatalStream()
+			    << method_name
+			    << "glite-wms-ice::main - Returning '0' to the shell"
+			    << log4cpp::CategoryStream::ENDLINE
+			    );	
     return 0;
 }
 
