@@ -116,7 +116,12 @@ void jobCacheIterator::refresh( ) throw()
     
     try {
         istringstream is;
-        is.str( cache->getDbManager()->getByGid( m_grid_job_id ) );
+	string tmpGid = cache->getDbManager()->getByGid( m_grid_job_id );
+	if( tmpGid.empty() ) {
+	  m_valid_it = false;
+	  return;
+	}
+        is.str( /*cache->getDbManager()->getByGid( m_grid_job_id )*/ tmpGid );
         boost::archive::text_iarchive ia(is);
         ia >> m_theJob;
         m_valid_it = true;
