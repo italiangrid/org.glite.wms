@@ -33,7 +33,6 @@ public:
 	m_mode(mode), m_interval(interval), m_exit_predicate(exit_predicate), m_skip_predicate(skip_predicate) {}
 
   virtual ~ism_purchaser() {}
-  virtual void do_purchase() = 0;
   virtual void operator()() = 0;
 
   exec_mode_t exec_mode() const

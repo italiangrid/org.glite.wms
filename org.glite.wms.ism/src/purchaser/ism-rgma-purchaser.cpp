@@ -149,11 +149,6 @@ ism_rgma_purchaser::ism_rgma_purchaser(
 
 void ism_rgma_purchaser::operator()()
 {
-  ism_rgma_purchaser::do_purchase();
-}
-
-void ism_rgma_purchaser::do_purchase()
-{
    do {
 
       gluece_info_container_type gluece_info_container;

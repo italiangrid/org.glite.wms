@@ -72,11 +72,6 @@ ism_ii_purchaser::ism_ii_purchaser(
 {
 }
 
-void ism_ii_purchaser::operator()()
-{
-  do_purchase();
-}
-
 namespace {
 
 void apply_skip_predicate(
@@ -141,7 +136,7 @@ void populate_ism(
 
 }
 
-void ism_ii_purchaser::do_purchase()
+void ism_ii_purchaser::operator()()
 {
   do {
 

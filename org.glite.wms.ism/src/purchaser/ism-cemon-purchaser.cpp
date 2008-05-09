@@ -106,11 +106,6 @@ ism_cemon_purchaser::ism_cemon_purchaser(
 
 void ism_cemon_purchaser::operator()()
 {
-  do_purchase();
-}
-
-void ism_cemon_purchaser::do_purchase()
-{
   do {
     
     gluece_info_container_type gluece_info_container;

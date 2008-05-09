@@ -350,11 +350,6 @@ ism_ii_gris_purchaser::ism_ii_gris_purchaser(
 
 void ism_ii_gris_purchaser::operator()()
 {
-  do_purchase();
-}
-
-void ism_ii_gris_purchaser::do_purchase()
-{
   do {
     try {
       

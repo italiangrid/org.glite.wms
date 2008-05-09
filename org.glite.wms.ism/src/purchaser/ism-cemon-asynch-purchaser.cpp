@@ -43,11 +43,6 @@ ism_cemon_asynch_purchaser::ism_cemon_asynch_purchaser(
 {
 }
 
-void ism_cemon_asynch_purchaser::operator()()
-{
-  do_purchase();
-}
-
 int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<CEConsumer>consumer, gluece_info_container_type& gluece_info_container)
 {
   int result = 0;
@@ -84,7 +79,7 @@ int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<C
   return result;
 }
 
-void ism_cemon_asynch_purchaser::do_purchase()
+void ism_cemon_asynch_purchaser::operator()()
 {
   do {
     

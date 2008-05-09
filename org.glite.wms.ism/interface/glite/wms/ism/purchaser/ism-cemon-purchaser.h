@@ -21,7 +21,6 @@ namespace purchaser {
 class ism_cemon_purchaser : public ism_purchaser
 {
 public:
-                
   ism_cemon_purchaser(
     std::string const& certfile,
     std::string const& certpath,
@@ -34,9 +33,7 @@ public:
     skip_predicate_type skip_predicate = skip_predicate_type()
   );
 
-  void do_purchase();
   void operator()();
-
 private:
   std::string m_certfile;
   std::string m_certpath;              

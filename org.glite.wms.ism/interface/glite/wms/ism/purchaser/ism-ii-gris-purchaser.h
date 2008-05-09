@@ -32,7 +32,6 @@ public:
     skip_predicate_type skip_predicate = skip_predicate_type()	
   );
   
-  void do_purchase();
   void operator()();
 
 private:                
