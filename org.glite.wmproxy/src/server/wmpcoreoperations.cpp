@@ -437,18 +437,16 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 
 	// Logging Server User ID on syslog
 
-        openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
-
         char time_string[20];
         struct timeval tv;
         struct tm* ptm;
         gettimeofday(&tv, NULL);
         ptm = localtime(&tv.tv_sec);
-        strftime(time_string, sizeof (time_string), "%Y-%m-%d.%X%H%M%S", ptm);
+        strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
 
         string userid_log = "ts="+std::string(time_string);
         userid_log += " : ";
-        userid_log += "event=wms.wmproxyserver.setSubjobFileSystem()";
+        userid_log += "event=wms.wmpserver_setSubjobFileSystem()";
         userid_log += " : ";
         userid_log += "userid="+boost::lexical_cast<string>(userid);
 	userid_log += " ";
@@ -456,7 +454,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 
 
         syslog(LOG_NOTICE,"%s",userid_log.c_str());
-	closelog();
+
 
 	string document_root = getenv(DOCUMENT_ROOT);
 
@@ -535,25 +533,23 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 
         // Logging Server User ID on syslog
 
-        openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
-
 	char time_string[20];
         struct timeval tv;
         struct tm* ptm;
         gettimeofday(&tv, NULL);
         ptm = localtime(&tv.tv_sec);
-        strftime(time_string, sizeof (time_string), "%Y-%m-%d.%X%H%M%S", ptm);
+        strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
 
         string userid_log = "ts="+std::string(time_string);
         userid_log += " : ";
-        userid_log += "event=wms.wmproxyserver.setJobFileSystem()";
+        userid_log += "event=wms.wmpserver_setJobFileSystem()";
         userid_log += " : ";
         userid_log += "userid="+boost::lexical_cast<string>(userid);
         userid_log += " ";
 	userid_log += "jobid="+jobid;
 
         syslog(LOG_NOTICE,"%s",userid_log.c_str());
-        closelog();
+
 
 	string document_root = getenv(DOCUMENT_ROOT);
 	
@@ -1323,6 +1319,23 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			
 				if (inputsbSize > maxInputSandboxFiles) {
 					edglog(debug)<<"The maximum number of input sandbox files is reached"<<endl;
+                                	if (!wmplogger.logAbortEventSync("The maximum number of input sandbox files is reached")) {
+                                        	// If log fails no jobPurge is performed
+                                        	// jobPurge would find state different from ABORT and will fail
+                                        	if (!wmputilities::isOperationLocked(
+                                                	        wmputilities::getJobStartLockFilePath(*jid))) {
+                                                	// purge is done if jobStart is not in progress
+                                                	edglog(debug)<<"jobStart operation is not in progress"<<endl;
+                                                	edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
+                                                	jobPurgeResponse jobPurge_response;
+                                                	jobpurge(jobPurge_response, jid, false);
+                                        	} else {
+                                                	edglog(debug)<<"jobStart operation is in progress, "
+                                                	        "skipping jobPurge"<<endl;
+                                        	}
+                                	} else {
+                                        	edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
+                                	}
 					throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()", 
 					  wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of input sandbox files is reached");	
 	                        }
@@ -1365,8 +1378,26 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 							edglog(debug)<<"OutputSBDestURI: "<<*iter<<endl;
 							jad.addAttribute(JDL::OSB_DEST_URI, *iter);
 						} else if (maxOutputSandboxFiles > 0) {
-							edglog(debug)<<"The maximum number of output sandbox files is reached"<<endl;
-                                                        throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
+						    edglog(debug)<<"The maximum number of output sandbox files is reached"<<endl;
+                                                    if (!wmplogger.logAbortEventSync("The maximum number of output sandbox files is reached")) {
+                                                        // If log fails no jobPurge is performed
+                                                        // jobPurge would find state different from ABORT and will fail
+                                                        if (!wmputilities::isOperationLocked(
+                                                             wmputilities::getJobStartLockFilePath(*jid))) {
+                                                                // purge is done if jobStart is not in progress
+                                                                edglog(debug)<<"jobStart operation is not in progress"<<endl;
+                                                                edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
+                                                                jobPurgeResponse jobPurge_response;
+                                                                jobpurge(jobPurge_response, jid, false);
+                                                        } else {
+                                                                edglog(debug)<<"jobStart operation is in progress, "
+                                                                        "skipping jobPurge"<<endl;
+                                                        }
+                                                    } else {
+                                                        edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
+                                                    }
+
+							throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
                                                  		wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of output sandbox files is reached"); 
 						}
 					}
@@ -1505,25 +1536,23 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 
 	        	// Logging Server User ID on syslog
 
-		        openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);
-
        			char time_string[20];
         		struct timeval tv;
         		struct tm* ptm;
         		gettimeofday(&tv, NULL);
         		ptm = localtime(&tv.tv_sec);
-        		strftime(time_string, sizeof (time_string), "%Y-%m-%d.%X%H%M%S", ptm);
+        		strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
 
         		string userid_log = "ts="+std::string(time_string);
         		userid_log += " : ";
-        		userid_log += "event=wms.wmproxyserver.submit()";
+        		userid_log += "event=wms.wmpserver_submit()";
         		userid_log += " : ";
         		userid_log += "userid="+boost::lexical_cast<string>(userid);
 		        userid_log += " ";
 			userid_log += "jobid="+parentjobid.toString();
 
         		syslog(LOG_NOTICE,"%s",userid_log.c_str());
-        		closelog();
+
 
 			string document_root = getenv(DOCUMENT_ROOT);
 			edglog(debug)<<"Creating sub job directories for job:\n"
@@ -1589,7 +1618,24 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 
                                         if ( parentIsbSize > maxInputSandboxFiles) {
 						edglog(debug)<<"The maximum number of input sandbox files is reached"<<endl;
-                                                throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
+                                                if (!wmplogger.logAbortEventSync("The maximum number of input sandbox files is reached")) {
+                                                	// If log fails no jobPurge is performed
+                                                	// jobPurge would find state different from ABORT and will fail
+                                                	if (!wmputilities::isOperationLocked(
+                                                	                wmputilities::getJobStartLockFilePath(*jid))) {
+                                                	        // purge is done if jobStart is not in progress
+                                                	        edglog(debug)<<"jobStart operation is not in progress"<<endl;
+                                                	        edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
+                                                	        jobPurgeResponse jobPurge_response;
+                                                	        jobpurge(jobPurge_response, jid, false);
+                                                	} else {
+                                                	        edglog(debug)<<"jobStart operation is in progress, "
+                                                	                "skipping jobPurge"<<endl;
+                                                	}
+                                        	} else {
+                                                	edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
+                                        	}
+						throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
                                                       wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of input sandbox files is reached");
                                         }
                                 }
@@ -1644,6 +1690,23 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 								nodead.addAttribute(JDL::OSB_DEST_URI, *iter);
 		                			} else if (maxOutputSandboxFiles > 0) {
 								edglog(debug)<<"The maximum number of output sandbox files is reached"<<endl;
+								if (!wmplogger.logAbortEventSync("The maximum number of output sandbox files is reached")) {
+		                                                        // If log fails no jobPurge is performed
+		                                                        // jobPurge would find state different from ABORT and will fail
+		                                                        if (!wmputilities::isOperationLocked(
+		                                                             wmputilities::getJobStartLockFilePath(*jid))) {
+		                                                                // purge is done if jobStart is not in progress
+		                                                                edglog(debug)<<"jobStart operation is not in progress"<<endl;
+		                                                                edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
+		                                                                jobPurgeResponse jobPurge_response;
+		                                                                jobpurge(jobPurge_response, jid, false);
+		                                                        } else {
+      		                                                          edglog(debug)<<"jobStart operation is in progress, "
+		                                                                        "skipping jobPurge"<<endl;
+		                                                        }
+		                                                } else {
+		                                                        edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
+		                                                }
 								throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
 								 wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of output sandbox files is reached");
 							}
@@ -1722,8 +1785,26 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
         		                	int inputsbSize = inputsburi.size();
         	                		
 						if ( inputsbSize > maxInputSandboxFiles) {
-							edglog(debug)<<"The maximum number of input sandbox files is reached"<<endl;
-                        				throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
+						   edglog(debug)<<"The maximum number of input sandbox files is reached"<<endl;
+                        			   if (!wmplogger.logAbortEventSync("The maximum number of input sandbox files is reached")) {
+		                                        // If log fails no jobPurge is performed
+		                                        // jobPurge would find state different from ABORT and will fail
+		                                        if (!wmputilities::isOperationLocked(
+		                                                        wmputilities::getJobStartLockFilePath(*jid))) {
+		                                                // purge is done if jobStart is not in progress
+		                                                edglog(debug)<<"jobStart operation is not in progress"<<endl;
+		                                                edglog(debug)<<"Log has succeded, calling purge method..."<<endl;
+		                                                jobPurgeResponse jobPurge_response;
+		                                                jobpurge(jobPurge_response, jid, false);
+		                                        } else {
+		                                                edglog(debug)<<"jobStart operation is in progress, "
+		                                                        "skipping jobPurge"<<endl;
+		                                        }
+		                                    } else {
+		                                        edglog(debug)<<"Log has failed, purge method will not be called"<<endl;
+		                                    }
+
+							throw JobOperationException(__FILE__, __LINE__, "wmpcoreoperations::submit()",
                 	        		      	 wmputilities::WMS_OPERATION_NOT_ALLOWED, "The maximum number of input sandbox files is reached");
         	                		}
 	                		}	
