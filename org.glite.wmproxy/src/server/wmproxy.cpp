@@ -173,11 +173,15 @@ main(int argc, char* argv[])
 		edglog(info)
 			<<"----------------------------------------"
 			<<endl;
-		
+
+                openlog("glite_wms_wmproxy_server", LOG_PID || LOG_CONS, LOG_DAEMON);	
+	
 		for (;;) {
 			WMProxyServe proxy;
 			proxy.serve();
 		}
+		
+		closelog();
 		edglog(info)<<"Exiting the FastCGI loop..."<<endl;
 		
     } catch (configuration::CannotOpenFile &file) {
