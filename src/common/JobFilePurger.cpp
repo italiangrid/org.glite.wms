@@ -115,8 +115,7 @@ void JobFilePurger::do_purge( bool everything )
     elog::cedglog << logger::setlevel( logger::ugly ) << "Going to purge job storage..." << endl;
 
 #ifdef GLITE_WMS_HAVE_PURGER
-    purge = purger::purgeStorage( this->jfp_jobId );
-
+    purger::Purger().force_dag_node_removal()(this->jfp_jobId);
     elog::cedglog << logger::setlevel( logger::verylow ) << "Purging command returned " << (purge ? "ok" : "an error") << endl;
 #else
     elog::cedglog << logger::setlevel( logger::null ) << "Job purging support not compiled." << endl;
