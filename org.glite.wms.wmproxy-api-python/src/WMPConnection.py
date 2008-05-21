@@ -26,17 +26,23 @@ def verifyCB( conn, cert, errnum, depth, ok):
             return ok
     return ok
 
-def initializeClientSSL( cert = "" ):
+def initializeClientSSL( key_file = "", cert_file = "", cert = "" ):
     # Initialize context
     ctx = SSL.Context( SSL.SSLv23_METHOD )
     ctx.set_verify(SSL.VERIFY_PEER|SSL.VERIFY_FAIL_IF_NO_PEER_CERT, verifyCB) # Demand a certificate
 
 
     # Loads the user proxy
-    try:
+    if (key_file == "") and (cert_file == ""):
+    	try:
                  sProxyLocation = os.environ['X509_USER_PROXY']
-    except:
+    	except:
                  sProxyLocation = '/tmp/x509up_u'+ repr(os.getuid())
+    elif key_file != "":
+	sProxyLocation = key_file;
+    elif cert_file != "":
+        sProxyLocation = cert_file;
+
 
     ctx.use_certificate_chain_file( sProxyLocation )
     ctx.use_privatekey_file(  sProxyLocation )
@@ -103,7 +109,7 @@ class WMPConnection( httplib.HTTPConnection):
         else:
             g_sHostName = socket.getfqdn( host[ : host.find(':') ] )
         if not g_cCtx:
-            g_cCtx = initializeClientSSL(cert )
+            g_cCtx = initializeClientSSL(key_file, cert_file, cert )
 
     def close( self ):
         self.sock.close()
