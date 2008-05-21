@@ -1,0 +1,326 @@
+#!/usr/bin/python
+'''
+This test checks Job submission using Python WMProxy.
+Following Wmproxy Methods are included in the test:
+getVersion
+getGrstNs
+proxyRequest
+putProxy
+getDelegatedProxyInfo
+jobListMatch
+jobRegister
+getJobProxyInfo
+getACLItems
+getSandboxDestURI
+getSandboxBulkDestURI
+client.getFreeQuota
+client.getMaxInputSandboxSize
+jobStart
+jobSubmit
+jobCancel
+The WMSLB_HOST name is obligatory commandline argument.
+Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
+
+'''
+
+def Jdlprep():
+###################
+# JDL preparation #
+###################
+ VOString="voms-proxy-info -vo"
+ ifile,ofile=os.popen4(VOString )
+ sfile=ofile.read()
+ if sfile.find("Error -")>=1:
+    flog.write( "\n Error : \n" + sfile + '\n')
+    fmsg.write("\n   |  ERR   |  voms-proxy-info")
+    flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+    flog.close()
+    return 1
+ else:
+     VO=sfile.rstrip('\n')
+ flog.write( "\n =======VirtualOrganisation =" + VO + "=============\n")
+ pwd=os.getenv('PWD','ERROR')
+ nameFileJdl=pwd + "/example.jdl"
+# f=open(pwd + "/example.jdl", 'w')
+ f=open(nameFileJdl, 'w')
+ f.write('Executable      = "/bin/hostname";\n'
+ 'Arguments       = "";\n'
+ 'StdOutput       = "std.out";\n'
+ 'StdError        = "std.err";\n'
+ 'OutputSandbox   = {"std.out","std.err"};\n'
+ 'VirtualOrganisation = '+ '"' + VO + '"' + ';\n'
+ 'requirements    = true;\n'
+ 'rank            = 1;\n')
+ f.close()
+ return nameFileJdl
+def jobstart():
+ delegationId = "Testdelegation"
+ ERR=0
+ try:
+    protocolVersion=client.getVersion()
+    fmsg.write("\n   |   OK   |  getVersion")
+    flog.write( "\n========== OK  protocol version = " + protocolVersion + "===========\n")
+ except :
+       flog.write( "======= FAILED  Connection refused==========================\n")
+       flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+       fmsg.write("\n   |  ERR   |  getVersion")
+       flog.close()
+       return 1
+ flog.write( "\n\n======================  Delegation of user credential ================\n")
+ if ( protocolVersion >= "2.0.0" ) :
+    try:
+       namespace = client.getGrstNs()
+       fmsg.write("\n   |   OK   |  getGrstNs")
+       flog.write( "=== OK GridSite Delegation namespace string representation :" +  namespace +  "=== \n")
+    except :
+       flog.write( "======= ERROR the getGrst service dosn't available======= \n")
+       flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+       fmsg.write("\n   |  ERR   |  getGrstNs")
+       flog.close()
+       return 1
+ else:
+    try:
+      namespace = client.getDefaultNs()
+      fmsg.write("\n   |   OK   |  getDefaultNs")
+      flog.write( "===OK retrieve Wmproxy default namespace string representation" + namespace +  "===\n")
+    except :
+      fmsg.write("\n   |  ERR   |  getDefaultNs")
+      ERR=1
+ try :
+     proxyRequest = client.getProxyReq(delegationId )
+     fmsg.write("\n   |   OK   |  proxyRequest")
+     flog.write( "===============proxyRequest===============\n" +  proxyRequest + "\n")
+ except:
+     fmsg.write("\n   |  ERR   |  proxyRequest")
+     ERR=1
+ PROXYString="voms-proxy-info -path"
+ ifile,ofile=os.popen4(PROXYString )
+ sfile=ofile.read()
+ if sfile.find("Error -")>=1:
+                    flog.write( "\n Error : \n" + sfile + '\n')
+                    fmsg.write("\n   |  ERR   |  voms-proxy-info -path")
+                    flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+                    flog.close()
+                    return 1
+ else:
+      proxy1=sfile.rstrip('\n')
+      flog.write( "\n ======= Path of X509_USER_PROXY is " +  proxy1 + "=============\n")
+ os.putenv("DELEGATION_REQUEST",proxyRequest)
+ cmd = "glite-proxy-cert " + "-e DELEGATION_REQUEST"
+
+ flog.write( cmd )
+ ifile,ofile=os.popen4(cmd )
+ sfile=ofile.read()
+ f1=open("proxyresult.log","r")
+ proxy=f1.read()
+# flog.write( proxy )
+ try:
+      client.putProxy(delegationId, proxy)
+      fmsg.write("\n   |   OK   |  putProxy")
+      flog.write( "\n========== client.putProxy(delegationId,  proxyRequest) is OK =========")
+ except:
+      fmsg.write("\n   |  ERR   |  putProxy")
+      flog.write( "\n========== client.putProxy(delegationId, proxyRequest + proxy) is Error =========")
+      ERR=1
+ try :
+      client.getDelegatedProxyInfo(delegationId)
+      fmsg.write("\n   |   OK   |   getDelegatedProxyInfo")
+ except WMPException, err :
+      fmsg.write("\n   |  ERR   |   getDelegatedProxyInfo")
+      flog.write( "  putProxy Error: Unable to retrive VOMS Proxy information")
+      flog.write("\n==========   getDelegatedProxyInfo is Error =========")
+      flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+      flog.close()
+      return 1
+
+ nameFileJdl=Jdlprep()
+ f = open( nameFileJdl, "r")
+ jdl = f.read()
+# print jdl
+ try:
+      compatibleResourcesList = client.jobListMatch( jdl, delegationId)
+      listSize = len(compatibleResourcesList)
+      fmsg.write("\n   |   OK   |  jobListMatch")
+ except:
+      fmsg.write("\n   |  ERR   |  jobListMatch")
+      flog.write( "\n    jobListMatch   Error       ")
+      flog.write( "\n\n**************** test jobstart_submit is ERROR *******************\n")
+      flog.close()
+      return 1
+ flog.write(  "\n===count of CE Ids satisfying the job Requirements specified in the JDL===\n")
+ flog.write( "\n               listSize=" + str(listSize) )
+ if listSize <= 0 :
+     flog.write( "\n     jobListMatch Error: here are no compatible resources")
+     flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+     flog.close()
+     return 1
+ else:
+      try:
+        jobIds = client.jobRegister(jdl, delegationId )
+        flog.write( "\n================a preliminary server registration==========================\n")
+        jobIdstringform=jobIds.getJobId()
+        flog.write( "              jobIds.getJobId()=" + jobIdstringform)
+        fmsg.write("\n   |   OK   |  jobRegister")
+      except:
+        fmsg.write("\n   |  ERR   |  jobRegister")
+        flog.write(  "\n   jobRegister Error   ")
+        flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+        flog.close()
+        return 1    
+ try:
+         flog.write(  "\n======================the Job Proxy information====================\n")
+         Jobinfo = client.getJobProxyInfo(jobIdstringform)
+         fmsg.write("\n   |   OK   |  getJobProxyInfo")
+         for line in Jobinfo :
+                          flog.writelines(line)
+ except:
+         fmsg.write("\n   |  ERR   |  getJobProxyInfo")
+         flog.write(  "\n   getJobProxyInfo Error   ")
+         ERR = 1
+      
+ flog.write(  "\n================the Items contained in the job Access Control List========\n")
+ try:
+         ACL = client.getACLItems (jobIdstringform )
+         fmsg.write("\n   |   OK   |  getACLItems")
+         for line in ACL :
+                         flog.writelines(line + "\n")
+ except:
+         fmsg.write("\n   |  ERR   |  getACLItems")
+         flog.write(  "\n   getACLItems Error   ")
+         ERR = 1
+ try:
+        destURI = client.getSandboxDestURI(jobIdstringform )
+        flog.write( "\n====================a destination URI associated to the job===============\n" )
+        for line in destURI:
+                           flog.writelines(line + "\n")  
+        fmsg.write("\n   |   OK   |  getSandboxDestURI")
+ except:
+        fmsg.write("\n   |  ERR   |  getSandboxDestURI") 
+        flog.write(  "\n   getSandboxDestURI Error   ")
+        ERR = 1
+ try:
+        destUris= client.getSandboxBulkDestURI(jobIdstringform )
+        flog.write( "\n=========the list of destination URIs associated to a compound job========\n")
+        for line in destUris.keys() :
+                             flog.writelines(line + "\n")
+#                             print destUris[line]
+                             for l in destUris[line] :
+                                                     flog.writelines(l)
+        fmsg.write("\n   |   OK   |  getSandboxBulkDestURI")
+ except:
+        fmsg.write("\n   |  ERR   |  getSandboxBulkDestURI")
+        flog.write(  "\n   getSandboxBulkDestURI Error   ")
+        ERR = 1
+ try:
+        FreeQuota = client.getFreeQuota()
+
+        flog.write(  "\n==========Get Free Available quota (in bytes): \n " )
+        for line in FreeQuota.keys() :
+                                    flog.writelines(line + "=" +  FreeQuota[line] + "   ")
+#                                    print FreeQuota[line] 
+        fmsg.write("\n   |   OK   |  client.getFreeQuota" )
+ except:
+        fmsg.write("\n   |  ERR   |  client.getFreeQuota")
+        flog.write(  "\n getFreeQuota Error   ")
+        ERR = 1
+ try:
+        MaxInputSandboxSize =  client.getMaxInputSandboxSize()
+        flog.write(  "\n=========Get Max Input Sandbox size (in bytes):" + str(MaxInputSandboxSize) + "\n "  )
+        fmsg.write("\n   |   OK   |  client.getMaxInputSandboxSize")
+ except:
+        fmsg.write("\n   |  ERR   |  client.getMaxInputSandboxSize") 
+        flog.write(  "\n  getMaxInputSandboxSize  Error   ")
+        ERR = 1
+ try:
+        flog.write( "\n=============call the jobStart service to trigger the submission============\n")
+        client.jobStart( jobIdstringform )
+        flog.write( "\n OK: Job started with JobID = " + jobIdstringform + "\n")
+        fmsg.write("\n   |   OK   |  jobStart " + jobIdstringform)
+        try:
+           client.jobCancel( jobIdstringform )
+           flog.write( "\n OK: Job " + jobIdstringform + " was cancel\n")
+           fmsg.write("\n   |   OK   |  jobCancel " + jobIdstringform)
+        except:
+           flog.write( "\n Warning: Job " + jobIdstringform + " wasn't cancel\n")
+           fmsg.write("\n   |  ERR   |  jobCancel " + jobIdstringform)
+           ERR = 1  
+ except WMPException:
+        flog.write( "\n Error: Job " + jobIdstringform + " didn't start \n")
+        fmsg.write("\n   |  ERR   |  jobStart " + jobIdstringform)
+        ERR = 1
+ try:
+         flog.write( "\n===============jobSubmit=============================\n")
+         task = client.jobSubmit ( jdl, delegationId )
+         jobId = task.getJobId()
+         flog.write( "\n OK: Submitted job with JobID = " + jobId)
+         fmsg.write("\n   |   OK   |  jobSubmit " + jobId)
+         try:
+           client.jobCancel( jobId )
+           fmsg.write("\n   |   OK   |  jobCancel " + jobId)
+           flog.write( "\n OK: Job "+ jobId + " was cancel\n")
+         except:
+           flog.write( "\n Warning: Job " + jobId + " wasn't cancel\n")
+           fmsg.write("\n   |   ERR	   |  jobCancel " + jobId)
+           ERR=1 
+ except WMPException:
+         flog.write( "\n Error: Job  didn't Submit" + jobId)
+         fmsg.write("\n   |  ERR   |  jobSubmit " + jobId)
+         ERR = 1
+ if ( ERR > 0 ):
+           flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+           flog.close()
+           return 1
+ else:
+           flog.write( "\n\n**************** test jobstart_submit is OK *********************")
+ return 0
+if __name__=='__main__':
+    import sys
+    import os
+    import re
+    from datetime import *
+#    sys.path.append("/opt/fpconst/lib/python2.3/site-packages")
+#    fpconstpath = sys.argv[2]
+#    sys.path.append(fpconstpath)
+    import fpconst
+    from wmproxymethods import *
+    import SOAPpy  #Error Type
+    scname = sys.argv[0]
+    m = re.search('(?<=/)\w+',scname )
+    script_name =  m.group(0)
+#    script_name = sys.argv[0]
+    fmsg = open('std.log','w')
+    flog =open ('std.tmp','w')
+    fmsg.write("\n\n ################  script name is " + script_name + "  ###############\n")
+    datetime_now = datetime.now().isoformat(' ')
+    fmsg.write("     time is   " + datetime_now + "\n")
+    flog.write( "\n\n##################################################################################" )
+    flog.write( "\n==================== script name is " + script_name + " ==========================\n")
+    node = sys.argv[1]
+    flog.write( "====================WmProxy_host: " + node + "===========\n")
+#    url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
+    url=  "https://" + node + ":7443/glite_wms_wmproxy_server"
+    client = Wmproxy(url)    
+#    SAME_ERROR=os.getenv('SAME_ERROR','ERROR')
+#    SAME_OK=os.getenv('SAME_OK','ERROR')
+#    sys.exit(jobstart())
+    out = jobstart()
+    flog = open("std.tmp","r")
+    while flog:
+              line = flog.readline()
+              fmsg.write(line)
+              if not line:
+                         break
+    fmsg.close()
+    flog.close()
+    fmsg = open('std.log','r')
+    sfile= fmsg.read()
+    print sfile
+    os.remove("std.tmp")
+    os.remove("std.log")
+    if ( os.path.exists("proxyresult.log") == 1) :
+                   os.remove("proxyresult.log")
+    if ( os.path.exists("example.jdl") == 1) :
+                   os.remove("example.jdl")
+    fmsg.close()
+    sys.exit(out)
+
