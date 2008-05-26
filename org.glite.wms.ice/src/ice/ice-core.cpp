@@ -810,7 +810,7 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
                            );
         
             glite::wmsutils::jobid::JobId j_id( job.getGridJobID() );
-            wms::purger::purgeStorage( j_id );
+            wms::purger::Purger()(j_id);
         } catch( std::exception& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
