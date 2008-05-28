@@ -336,28 +336,40 @@ WMPAuthorizer::checkGaclUserAuthZ()
 			}
 		}
 		GaclManager gacl(gaclfile);
-		// checks exec permssion
+
+		// checks exec permission
 		if (fqan != "") {
-			// FQAN authorization
-			exec = gacl.checkAllowPermission(
-				GaclManager::WMPGACL_VOMS_TYPE,
-				fqan, GaclManager::WMPGACL_EXEC);
-			// checking DN
-			if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dn)){
-				execDN = gacl.checkAllowPermission(
-						GaclManager::WMPGACL_PERSON_TYPE,
-						dn,GaclManager::WMPGACL_EXEC);
-			}else if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dnConverted)){
-				execDN = gacl.checkAllowPermission(
-						GaclManager::WMPGACL_PERSON_TYPE,
-						dnConverted,GaclManager::WMPGACL_EXEC);
-			}else{
-				execDN = true ;
+                        if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_ANYUSER_TYPE)){
+				exec = gacl.checkAllowPermission(
+                                        authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
+                                        "",GaclManager::WMPGACL_EXEC);
+                        } else {
+				// FQAN authorization
+				exec = gacl.checkAllowPermission(
+					GaclManager::WMPGACL_VOMS_TYPE,
+					fqan, GaclManager::WMPGACL_EXEC);
+				// checking DN
+				if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dn)){
+					execDN = gacl.checkAllowPermission(
+							GaclManager::WMPGACL_PERSON_TYPE,
+							dn,GaclManager::WMPGACL_EXEC);
+				}else if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dnConverted)){
+					execDN = gacl.checkAllowPermission(
+							GaclManager::WMPGACL_PERSON_TYPE,
+							dnConverted,GaclManager::WMPGACL_EXEC);
+				}else{
+					execDN = true ;
+				}
 			}
 		} else {
 			exec = true;
 			// DN authorization  (FQAN is EMPTY)
-			execDN =
+                        if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_ANYUSER_TYPE)){
+                                execDN = gacl.checkAllowPermission(
+                                        authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
+                                        "",GaclManager::WMPGACL_EXEC);
+			} else {
+				execDN =
 				gacl.checkAllowPermission(
 					GaclManager::WMPGACL_PERSON_TYPE,dn,
 					GaclManager::WMPGACL_EXEC )
@@ -365,6 +377,7 @@ WMPAuthorizer::checkGaclUserAuthZ()
 				gacl.checkAllowPermission(
 					GaclManager::WMPGACL_PERSON_TYPE,dnConverted,
 					GaclManager::WMPGACL_EXEC );
+			}
 		}
 		exec = exec && execDN;
 	} catch (wmputilities::GaclException &exc){

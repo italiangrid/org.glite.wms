@@ -815,7 +815,7 @@ void GaclManager::setCredentialType(const WMPgaclCredType &type, const string &r
 	switch ( type ){
 		case WMPGACL_ANYUSER_TYPE : {
 				credType =GaclManager::WMPGACL_ANYUSER_CRED ;
-				rawCred = make_pair(GaclManager::WMPGACL_ANYUSER_TAG, "");
+				rawCred = make_pair(GaclManager::WMPGACL_ANYUSER_TAG, rawvalue);
 				break;
 		}
 		case WMPGACL_PERSON_TYPE: {
@@ -911,11 +911,18 @@ int GaclManager::loadCredential ( ) {
                                 {
                                   GRSTgaclCred *cred_tmp;
                                   
-                                  cred_tmp = GRSTgaclCredNew((char*)credType.c_str());
-                                  GRSTgaclCredAddValue(cred_tmp, rawname, (char*)rawvalue);
+				  // Creating a new grst gacl credential
+				  cred_tmp = GRSTgaclCredNew((char*)credType.c_str());
+				  
+				  // No need to add value if ANY-USER
+				  if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_ANYUSER_CRED) != 0 ) {
+					GRSTgaclCredAddValue(cred_tmp, rawname, rawvalue);
+				  }					
 
+				  // Comparing the two credentials
                                   if (GRSTgaclCredCmpAuri(cred, cred_tmp) == 0) found = true;
 
+				  // Releasing allocated credential memory
                                   GRSTgaclCredFree(cred_tmp);
                                 }
 #endif
