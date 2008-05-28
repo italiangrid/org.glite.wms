@@ -11,8 +11,11 @@
 
 import org.glite.wms.wmproxy.WMProxyAPI;
 import org.glite.wms.wmproxy.JobIdStructType;
-import org.glite.jdl.JobAd ;
-
+import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 /*
 	Test of  "jobSubmit" method in org.glite.wms.wmproxy.WMProxyAPI
 
@@ -66,9 +69,29 @@ public class WMProxyJobSubmitTest {
 		JobIdStructType result = null;
 		WMProxyAPI client = null;
 		// reads jdl
-		JobAd jad = new JobAd ( );
-		jad.fromFile ( jdlFile );
-		jdlString = jad.toString ( );
+		BufferedReader buffr;
+		FileInputStream fin;		
+		try
+		{
+			// Open an input stream
+			fin = new FileInputStream (jdlFile);
+			buffr = new BufferedReader(new InputStreamReader(fin));
+			
+			while (buffr.ready()) {
+			    // Read a line of text
+		     	    jdlString += buffr.readLine();	
+			
+			}
+			
+			// Close our input stream
+		    	fin.close();	
+			buffr.close();
+		} catch (FileNotFoundException e) {
+      			e.printStackTrace();
+    		} catch (IOException e) {
+      			e.printStackTrace();
+    		}
+
 		// Prints out the input parameters
 		System.out.println ("TEST : JobSubmitr");
 		System.out.println ("************************************************************************************************************************************");

@@ -21,20 +21,11 @@ AXIS_LOC=${line##*=}
 line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
 WMP_API_JAVA=${line##*=}
 
-## JDL_JAVA  ==============
-line=`more ../wmp-api-java-test.cfg | grep JDL_API_JAVA`
-JDL_API_JAVA=${line##*=}
-
-## CLASSAD  ==============
-line=`more ../wmp-api-java-test.cfg | grep CLASSAD_LOC`
-CLASSAD=${line##*=}
 
 for p in \
         ${top_src} \
         ${AXIS_LOC}/jaxrpc.jar \
-	${WMP_API_JAVA} \
-        ${JDL_API_JAVA} \
-	${CLASSAD}
+	${WMP_API_JAVA} 
 do
         if ! printenv "${classpath}" | grep -q "${p}"; then
                 if [ -n "${classpath}" ]; then

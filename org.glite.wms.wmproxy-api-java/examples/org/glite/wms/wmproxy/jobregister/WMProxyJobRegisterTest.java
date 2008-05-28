@@ -14,7 +14,11 @@ package org.glite.wms.wmproxy.jobregister;
 import org.glite.wms.wmproxy.WMProxyAPI;
 import org.glite.wms.wmproxy.BaseException;
 import org.glite.wms.wmproxy.JobIdStructType;
-import org.glite.jdl.JobAd ;
+import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /*
 	Test of  "jobRegister" method in org.glite.wms.wmproxy.WMProxyAPI
@@ -70,13 +74,29 @@ public class WMProxyJobRegisterTest {
 		JobIdStructType result = null;
 		WMProxyAPI client = null;
 		// reads jdl
-		JobAd jad = new JobAd ( );
-		try {
-			jad.fromFile ( jdlFile );
-		} catch (Exception exc) {
-			throw new BaseException(exc.getMessage());
-		}
-		jdlString = jad.toString ( );
+		BufferedReader buffr;
+                FileInputStream fin;
+                try
+                {
+                        // Open an input stream
+                        fin = new FileInputStream (jdlFile);
+                        buffr = new BufferedReader(new InputStreamReader(fin));
+
+                        while (buffr.ready()) {
+                            // Read a line of text
+                            jdlString += buffr.readLine();
+
+                        }
+
+                        // Close our input stream
+                        fin.close();
+                        buffr.close();
+                } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                } catch (IOException e) {
+                        e.printStackTrace();
+                }
+
 		// Prints out the input parameters
 		System.out.println ("TEST : JobRegister");
 		System.out.println ("************************************************************************************************************************************");

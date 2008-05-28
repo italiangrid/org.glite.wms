@@ -43,13 +43,6 @@ SECURITY_UTIL_JAVA=${line##*=}
 line=`more ../wmp-api-java-test.cfg | grep BOUNCYCASTLE`
 BOUNCYCASTLE=${line##*=}
 
-## JDL_JAVA  ==============
-line=`more ../wmp-api-java-test.cfg | grep JDL_API_JAVA`
-JDL_API_JAVA=${line##*=}
-
-## CLASSAD  ==============
-line=`more ../wmp-api-java-test.cfg | grep CLASSAD_LOC`
-CLASSAD=${line##*=}
 
 for p in \
         ${top_src} \
@@ -57,8 +50,6 @@ for p in \
         ${SECURITY_TRUSTMANAGER} \
         ${SECURITY_UTIL_JAVA} \
         ${BOUNCYCASTLE} \
-        ${CLASSAD} \
-        ${JDL_API_JAVA} \
         ${AXIS_LOC}/*.jar
 do
 	if ! printenv JSS_CLASSPATH | grep -q "${p}"; then
