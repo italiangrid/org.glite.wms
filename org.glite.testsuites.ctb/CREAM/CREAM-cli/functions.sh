@@ -193,6 +193,8 @@ function prepare()
   OUTPUTFILE=$MYTMPDIR/output.log
   TMPJOBIDFILE=$MYTMPDIR/job.id
 
+  ENDPOINT=`echo $CREAM | sed -e "s/8443.*/8443/"`
+
   # ... define delegation parameters
   DELEGATION_OPTIONS="-a"
   if [ "$1" == "-d" ]; then
@@ -209,7 +211,6 @@ function define_delegation()
 {
   DELEGATION_OPTIONS="-D DelegateId_$$"
   my_echo "delegating proxy ..."
-	ENDPOINT=`echo $CREAM | sed -e "s/8443.*/8443/"`
   run_command glite-ce-delegate-proxy -e $ENDPOINT DelegateId_$$
   if [ -n "$SLEEP_AFTER_DELEGATING" ]; then
      my_echo "sleeping $SLEEP_AFTER_DELEGATING seconds ..."
@@ -232,7 +233,7 @@ function extract_jobid()
 # Extract the job STATUS quering the CE with the given JobID: $1 and set JOBSTATUS
 function extract_status()
 {
-  JOBSTATUS=$(glite-ce-job-status -n -L 0 "$1" | grep "Status        = \[.*\]" | sed -e "s/.*\[//" | sed -e "s/\].*//")
+  JOBSTATUS=$(glite-ce-job-status -n -L 0 "$1" | awk -F'[\\\[\\\]]' '/Status/ {print $2}' - 2>/dev/null)
   debug "Job status is: $JOBSTATUS"
   if [ -z "$JOBSTATUS" ]; then
     exit_failure "ERROR: could not determine Job STATUS!"
