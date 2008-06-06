@@ -2,7 +2,7 @@
 
 ###############################################################################
 #
-# Common functions for the glite-wms CLI test suite
+# Common functions for the CREAM-CLI test suite
 #
 # The package is intended primarily to test the CREAM-CLI installed
 # on a UI and not the CREAM service itself or computing infrastructure.
@@ -13,18 +13,20 @@
 # The test suite requires example.jdl, test.conf and cream.conf to be present
 # in the same directory with the scripts
 #
-# Author: Alessio Gianelle <sa3-italia@mi.infn.it>
+# Author: SA3-IT <sa3-italia@mi.infn.it>
 # Version: $Id$
 #
 ###############################################################################
 
 # Special echo
+# Parameter: the message to print ($@)
 function my_echo()
 {
   echo " --> $@"
 }
 
 # Print debug messages 
+# Parameter: the debug message ($@)
 function debug()
 {
 	if [ $DEBUG == 1 ]; then
@@ -33,7 +35,8 @@ function debug()
 	return 0
 }
 
-# Print failure message, reason in $@
+# Print failure message
+# Parameter: the failure reason ($@)
 function failure()
 {
 	my_echo ""
@@ -44,7 +47,8 @@ function failure()
 	return 0
 }
 
-# ... "bad" exit, the failure reason is stored in the arguments: $@
+# Exit the program with failure
+# Parameter: the failure reason ($@)
 function exit_failure()
 {
   my_echo ""
@@ -58,7 +62,7 @@ function exit_failure()
   exit 1
 }
 
-# Print success message, reason in $@
+# Print success message
 function success()
 {
 	my_echo ""
@@ -68,7 +72,7 @@ function success()
   return 0
 }
 
-# ... "good" exit
+# Exit the program with success
 function exit_success()
 {
   my_echo ""
@@ -82,16 +86,16 @@ function exit_success()
   exit 0;
 }
 
-# ... exit on timeoout: try cancel job and exit
+# Exit on timeout: try to cancel and purge the job before exiting
+# Parameter: The jobid ($1)
 function exit_timeout()
 {
-  my_echo ' *** Timeout reached ***'
-  run_command glite-ce-job-cancel --noint $JOBID
-  run_command glite-ce-job-purger --noint $JOBID
-  exit_success
+  run_command glite-ce-job-cancel -n $1
+  run_command glite-ce-job-purger -n $1
+  exit_failure " *** Timeout reached *** "
 }
 
-# ... exit on Ctrl^C
+# Exit on Ctrl^C
 function exit_interrupt()
 {
   my_echo ' *** Interrupted by user ***'
@@ -124,10 +128,14 @@ function cleanup()
   [[ -d ${JOB_OUTPUT_DIR}         ]] && rmdir ${JOB_OUTPUT_DIR}
 
   [[ -d "$MYTMPDIR" ]] && rmdir $MYTMPDIR
+
+	return 0
 }
 
-# Run command given as arguments ($@) and put the output in $COM_OUTPUT
-# Return 0 if success, 1 otherwise.
+# Execute the given command 
+# Parameter: the command ($@) 
+# Set: COM_OUTPUT with the command output
+# Return: 0 if success, 1 otherwise
 function run_command()
 {
   my_echo ""
@@ -162,28 +170,31 @@ function usage()
 # ... prepare everything
 function prepare()
 {
-
+	# Sources global variables (test.conf is REQUIRED)
+	[[ -f test.conf ]] || exit_failure "Internal ERROR! Could not find the required 'test.conf' file!"
 	source test.conf
 
-  if [ "$1" == "--help" ]; then
-    usage
-    exit 0
-  fi
+#  if [ "$1" == "--help" ]; then
+#    usage
+#    exit 0
+#  fi
   
   my_echo "++++++++++++++++++++++++++++++++++++++++++++"
   my_echo "+ Test of CREAM-CE  command line interface +"
   my_echo "++++++++++++++++++++++++++++++++++++++++++++"
 
   START_TIME=$(date +%H:%M:%S)
-  my_echo "current time: $START_TIME"
+  my_echo "Test start at: $START_TIME"
 
-  [[ -f "$JDLFILE"       ]] || exit_failure "Internal ERROR! could not find example jdl file $JDLFILE"
-  [[ -f "${CONFIG_FILE}" ]] || exit_failure "Internal ERROR! could not find example config file ${CONFIG_FILE}"
+	# The JDLFILE and the CONFIG_FILE are required!
+  [[ -f "$JDLFILE"       ]] || exit_failure "Internal ERROR! Could not find example jdl file $JDLFILE"
+  [[ -f "${CONFIG_FILE}" ]] || exit_failure "Internal ERROR! Could not find example config file ${CONFIG_FILE}"
 
   # ... create temporary directory
   MYTMPDIR=/tmp/cream-cli-test-$(id -un)-$$
-  mkdir $MYTMPDIR || exit_failure
+  mkdir $MYTMPDIR || exit_failure "Internal ERROR! Could not create temporary directory $MYTMPDIR"
 
+	# CHECK if all of them are needed...
   # ... define common directory and file names
   JOB_OUTPUT_DIR=$MYTMPDIR/jobOutput
   LOGFILE=$MYTMPDIR/tmp.log
@@ -193,33 +204,17 @@ function prepare()
   OUTPUTFILE=$MYTMPDIR/output.log
   TMPJOBIDFILE=$MYTMPDIR/job.id
 
+	# Set the auxiliar variable "ENDPOINT"
   ENDPOINT=`echo $CREAM | sed -e "s/8443.*/8443/"`
 
-  # ... define delegation parameters
-  DELEGATION_OPTIONS="-a"
-  if [ "$1" == "-d" ]; then
-    define_delegation
-  fi
-
-  # ... set a trap for Ctrl^C
+  # Set a trap for Ctrl^C
   trap exit_interrupt SIGINT
 }
 
-# NO USED
-# ... delegate proxy and (re-)define DELEGATION_OPTIONS
-function define_delegation()
-{
-  DELEGATION_OPTIONS="-D DelegateId_$$"
-  my_echo "delegating proxy ..."
-  run_command glite-ce-delegate-proxy -e $ENDPOINT DelegateId_$$
-  if [ -n "$SLEEP_AFTER_DELEGATING" ]; then
-     my_echo "sleeping $SLEEP_AFTER_DELEGATING seconds ..."
-     sleep $SLEEP_AFTER_DELEGATING
-  fi
-}
-
-
-# Extract jobid from text lines given by $@ and set JOBID
+# Extract the jobid
+# Parameter: the output of a submit command ($@)
+# Set: JOBID with the jobid of the job
+# Return: 0 or exit with failure
 function extract_jobid()
 {
   JOBID=$(echo $@ | grep -m 1 https | sed -e "s/.*https/https/" )
@@ -230,7 +225,10 @@ function extract_jobid()
 	return 0
 }
 
-# Extract the job STATUS quering the CE with the given JobID: $1 and set JOBSTATUS
+# Extract the job status quering the CE
+# Parameter: the jobid of the job ($1)
+# Set: JOBSTATUS with the status of the job
+# Return: 0 or exit with failure
 function extract_status()
 {
   JOBSTATUS=$(glite-ce-job-status -n -L 0 "$1" | awk -F'[\\\[\\\]]' '/Status/ {print $2}' - 2>/dev/null)
@@ -240,8 +238,6 @@ function extract_status()
   fi
 	return 0
 }
-
-
 
 # Extract job status of the given JobID ($1), return true if job is finished, exit program if job is Aborted/Cancelled
 function is_finished()
@@ -277,10 +273,10 @@ function is_finished()
   return 1
 }
 
-# ... wait until job $JOBID is done or time is out
+# Wait until given job is done or the limit $NUM_STATUS_RETRIEVALS is reached
+# Parameter: the JOBID ($1)
 function wait_until_job_finishes()
 {
-
   i=1
 
   while ! is_finished "$1"
@@ -289,12 +285,15 @@ function wait_until_job_finishes()
     if [ $i -ge $NUM_STATUS_RETRIEVALS ]; then
       exit_timeout $JOBID
     fi
-  
+
+		my_echo ""  
     my_echo "sleeping for $SLEEP_TIME seconds (run $i/$NUM_STATUS_RETRIEVALS) ..."
     sleep $SLEEP_TIME
 
     ((i++))
 
   done
+	
+	return 0
 
 }
