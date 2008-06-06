@@ -1,0 +1,28 @@
+DPM tests
+
+This directory contins various tests for testing
+a DPM machine. They are not complete , however 
+in a working state and can be further developed.
+
+To run the test:
+
+./start <machine name> <vo>
+
+Example:
+
+./start lxb1921.cern.ch org.glite.voms-test
+
+
+Notes:
+
+1.)
+To run the test you need a valid credential, and the
+DPM/DPNS client libraries has to be installed on the
+usual location. You can use a UI for this purpose.
+
+2.)
+Don't forget to run the tests under 3 different scenario:
+
+    1.) with plain grid proxy
+    2.) with voms proxy
+    3.) with voms proxy with a role
