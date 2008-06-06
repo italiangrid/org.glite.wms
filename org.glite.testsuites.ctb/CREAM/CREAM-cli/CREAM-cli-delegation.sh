@@ -36,3 +36,23 @@ else
   success
 fi
 
+my_echo "TEST 2: delegate a proxy and append the output to the existing file ${LOGFILE}:";
+echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-delegate-proxy \
+--logfile ${LOGFILE} -e $ENDPOINT DelegateId_$$_1
+RESULT=`grep "#HEADER#" ${LOGFILE}`
+if [ -z "$RESULT" ]; then
+  exit_failure "File ${LOGFILE} has been overwrite"
+else
+  RESULT=`grep -P "NOTICE|ERROR|WARNING" /tmp/delegate.log`
+  if [ -z "$RESULT" ]; then
+    exit_failure "Cannot log on file ${LOGFILE}"  
+  else
+    success
+  fi
+fi
+
+
+exit_success
+
+
