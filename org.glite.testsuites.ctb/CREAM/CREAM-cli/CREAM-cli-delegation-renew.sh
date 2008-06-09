@@ -19,12 +19,13 @@ prepare $@
 
 my_echo "TEST 0: renew a proxy specifying CREAM URL and delegation ID:"
 
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-delegate-proxy -e $ENDPOINT DelegateId_$$_0
+PROXY_ID=`new_delegation_id`
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-delegate-proxy -e $ENDPOINT $PROXY_ID
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
 
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew -e $ENDPOINT DelegateId_$$_0
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew -e $ENDPOINT $PROXY_ID
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 else
@@ -32,7 +33,7 @@ else
 fi
 
 my_echo "TEST 1: try to renew a missing proxy:"
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew -e $ENDPOINT DelegateId_$$_1
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew -e $ENDPOINT `new_delegation_id`
 RESULT=`echo ${COM_OUTPUT} | grep "delegation ID was not delegated"`
 if [ -z "$RESULT" ]; then
   exit_failure ${COM_OUTPUT}
@@ -43,7 +44,7 @@ fi
 my_echo "TEST 2: renew a proxy and append the output to the existing file ${LOGFILE}:";
 echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew \
---logfile ${LOGFILE} -e $ENDPOINT DelegateId_$$_0
+--logfile ${LOGFILE} -e $ENDPOINT $PROXY_ID
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
   exit_failure "File ${LOGFILE} has been overwrite"
@@ -65,7 +66,7 @@ CREAMDELEGATION_URL_POSTFIX=\"ce-cream/services/gridsite-delegation\";
 ]
 " > ${MYTMPDIR}/delegate.conf
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew \
---debug --conf ${MYTMPDIR}/delegate.conf -e $ENDPOINT DelegateId_$$_0
+--debug --conf ${MYTMPDIR}/delegate.conf -e $ENDPOINT $PROXY_ID
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 else

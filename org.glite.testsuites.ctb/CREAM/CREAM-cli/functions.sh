@@ -217,7 +217,7 @@ function extract_jobid()
 # Return: 0 or exit with failure
 function extract_status()
 {
-  JOBSTATUS=$(glite-ce-job-status -n -L 0 "$1" | awk -F'[\\\[\\\]]' '/Status/ {print $2}' - 2>/dev/null)
+  JOBSTATUS=$(${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-status -n -L 0 "$1" | awk -F'[\\\[\\\]]' '/Status/ {print $2}' - 2>/dev/null)
   debug "Job status is: $JOBSTATUS"
   if [ -z "$JOBSTATUS" ]; then
     exit_failure "ERROR: could not determine Job STATUS!"
@@ -296,4 +296,8 @@ function wait_until_job_finishes()
 		return 1
 	fi
 
+}
+
+function new_delegation_id(){
+  echo DelegateId_`hostname`_`date +%s`
 }
