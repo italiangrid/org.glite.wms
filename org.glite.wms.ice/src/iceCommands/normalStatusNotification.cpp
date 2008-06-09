@@ -194,7 +194,7 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
 		     << "StatusChange::CTOR() - "
 		     << "Parsed status change notification "
 		     << pp_classad
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
     }
   } // end of Classad-mutex protected region
 };
@@ -239,14 +239,14 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
                         << "got a CEMon notification with no messages. Skipping"
-                        << log4cpp::CategoryStream::ENDLINE);
+                        );
         throw runtime_error( "got empty notification" );
     }
     
     CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << method_name
                     << "processing normal status change notification"
-                    << log4cpp::CategoryStream::ENDLINE);
+                    );
     
     string cream_job_id;
     
@@ -266,7 +266,7 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
                         << " due to error: "
                         << ex.what() << ". "
                         << "Skipping the whole monitor event and hoping for the best..." 
-                        << log4cpp::CategoryStream::ENDLINE);
+                        );
         throw; // FIXME!!!
     }
 
@@ -284,7 +284,7 @@ void normalStatusNotification::apply( void ) // can throw anything
     CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << method_name
                     << "processing notification"
-                    << log4cpp::CategoryStream::ENDLINE);
+                    );
 
     iceLBLogger *m_lb_logger( iceLBLogger::instance() );
     jobCache *m_cache( jobCache::getInstance() );
@@ -308,7 +308,7 @@ void normalStatusNotification::apply( void ) // can throw anything
                         << " due to error: "
                         << ex.what() << ". "
                         << "Skipping the whole monitor event and hoping for the best..." 
-                        << log4cpp::CategoryStream::ENDLINE);
+                        );
         return;
     }
 
@@ -328,7 +328,7 @@ void normalStatusNotification::apply( void ) // can throw anything
                            << cream_job_id
                            << "] was not found in the cache. "
                            << "Ignoring the whole notification..."
-                           << log4cpp::CategoryStream::ENDLINE);
+                           );
         return;
     }
 
@@ -340,7 +340,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 		       << "apparently didn't receive the submission of current job "
 		       << jc_it->describe()
 		       << ". Ignoring the whole notification..."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	return;
     }
 
@@ -369,7 +369,7 @@ void normalStatusNotification::apply( void ) // can throw anything
                 CREAM_SAFE_LOG(m_log_dev->debugStream()
                                << method_name
                                << "Skipping current notification because contains old states"
-                               << log4cpp::CategoryStream::ENDLINE);
+                               );
             }
             continue; // skip to the next job
         }
@@ -386,7 +386,7 @@ void normalStatusNotification::apply( void ) // can throw anything
                                << *msg_it << " which could not be understood; error is: "
                                << ex.what() << ". "
                                << "Skipping this notification and hoping for the best..."
-                               << log4cpp::CategoryStream::ENDLINE);
+                               );
             continue;
         }
 
@@ -397,7 +397,7 @@ void normalStatusNotification::apply( void ) // can throw anything
                                << method_name
                                << jc_it->describe()
                                << " is reported as PURGED. Removing from cache"
-                               << log4cpp::CategoryStream::ENDLINE); 
+                               ); 
             m_cache->erase( jc_it );
             return;
         }
@@ -411,7 +411,7 @@ void normalStatusNotification::apply( void ) // can throw anything
                            << " This is CEMON notification notification count=" << count
                            << " num already logged=" 
                            << jc_it->get_num_logged_status_changes()
-                           << log4cpp::CategoryStream::ENDLINE);
+                           );
         
         CreamJob tmp_job( *jc_it );
         notif_ptr->apply_to_job( tmp_job ); // apply status change to job

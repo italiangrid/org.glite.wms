@@ -101,7 +101,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
   CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		 << "DNProxyManager::CTOR() - "
 		 << "Populating DN -> Proxy cache by scannig the jobCache..."
-		 << log4cpp::CategoryStream::ENDLINE);
+		 );
   
   /**
    * This lock acquisition should be safe because it is done at the ICE
@@ -150,7 +150,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			 << "] in ICE's persistency dir. "
 			 << "Trying to find the most long-lived"
 			 << " one in the job cache for the current DN..."
-			 << log4cpp::CategoryStream::ENDLINE);
+			 );
 
 	  //iceUtil::jobCache::const_iterator better = this->searchBetterProxyForUser( *it );
 	  //iceUtil::jobCache::iterator better = this->searchBetterProxyForUser( *it );
@@ -160,7 +160,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 /*	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
 			     << "DNProxyManager::CTOR() - Not found any proxy for DN ["
 			     << *it << "]. Skipping"
-			     << log4cpp::CategoryStream::ENDLINE);*/
+			     );*/
 	      continue;
 	    }
 	    
@@ -174,7 +174,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			   << job_with_better_proxy_from_sandboxDir->getUserProxyCertificate() << "] to ["
 			   << localProxy << "] for DN ["
 			   << *it << "]. Skipping"
-			   << log4cpp::CategoryStream::ENDLINE);
+			   );
 	    continue;
 	  }
 	  
@@ -186,7 +186,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
 			     << "DNProxyManager::CTOR() - Not found any proxy for DN ["
 			     << *it << "] in the sandBoxDirs. Skipping"
-			     << log4cpp::CategoryStream::ENDLINE);
+			     );
 	      continue;
 	    }
           this->setUserProxyIfLonger(*it, job_with_better_proxy_from_sandboxDir->getUserProxyCertificate());
@@ -210,7 +210,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 		   << "Cannot retrieve the Subject for the proxy ["
 		   << prx << "]. ICE will continue to use the old proxy.Error is: "
 		   << V.getErrorMessage()
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return;
   }
   
@@ -237,7 +237,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << dn << "] not found. Inserting the proxy ["
 		   << prx << "]. Copied into ["
 		   << localProxy << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     try {
       this->copyProxy( prx, localProxy );
@@ -246,7 +246,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		     << "DNProxyManager::setUserProxyIfLonger - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       
       return;
       
@@ -266,7 +266,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << "Cannot retrieve time left for proxy ["
 		   << prx << "]: "
 		   << ex.what()
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     return;
   }
@@ -285,7 +285,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << prx << "] copied to ["
 		   << localProxy <<"]: "
 		   << ex.what()
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     try {
       this->copyProxy( prx, localProxy );
@@ -294,7 +294,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		     << "DNProxyManager::setUserProxyIfLonger - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       return;
     }
     m_DNProxyMap[ dn ] = localProxy;
@@ -308,7 +308,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << prx
 		   << "] copied to " << localProxy 
 		   << "] because the old one is less long-lived."
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     try {
       this->copyProxy( prx, localProxy );
@@ -317,7 +317,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		     << "DNProxyManager::setUserProxyIfLonger - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
     }
     m_DNProxyMap[ dn ] = localProxy;
 
@@ -326,7 +326,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		   << "DNProxyManager::setUserProxyIfLonger - Leaving current proxy ["
 		   << m_DNProxyMap[ dn ] <<"] beacuse it will expire later"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 */
   }
 }
@@ -356,7 +356,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 		   << "DNProxyManager::copyProxy - Cannot open"
 		   << " proxy file ["
 		   << source << "] for input. ABORTING!!"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     abort();
   }
 
@@ -365,7 +365,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 		   << "DNProxyManager::copyProxy - Cannot open"
 		   << " proxy file ["
 		   << tmpTargetFilename << "] for output. ABORTING!!"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     abort();
   }
   char c;
@@ -379,7 +379,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 			 << "DNProxyManager::copyProxy - Error copying ["
 			 << source << "] to ["
 			 << tmpTargetFilename << "]. ABORTING!!"
-			 << log4cpp::CategoryStream::ENDLINE);
+			 );
 	  abort();
 	}
       //input.tie(&output);
@@ -394,7 +394,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 		     << "DNProxyManager::copyProxy - Error moving ["
 		     << tmpTargetFilename << "] to ["
 		     << target << "]: " << errmex << ". ABORTING!!"
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       abort();
     }
 
@@ -416,7 +416,7 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
   CREAM_SAFE_LOG(
   	m_log_dev->debugStream() 
 		<< "DNProxyManager::searchBetterProxyForUser() - Searching better proxy for DN ["
-		<< dn << "]" << log4cpp::CategoryStream::ENDLINE
+		<< dn << "]" 
   );
 
   for(iceUtil::jobCache::iterator jit = iceUtil::jobCache::getInstance()->begin();
@@ -427,7 +427,7 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
         CREAM_SAFE_LOG(
   	m_log_dev->debugStream() 
 		<< "DNProxyManager::searchBetterProxyForUser() - Skipping DN ["
-		<< jit->getUserDN() << "]" << log4cpp::CategoryStream::ENDLINE );
+		<< jit->getUserDN() << "]"  );
 	++jit;
 	continue;
       }
@@ -444,7 +444,7 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
 			 << "Cannot find SandboxDir's proxy file ["
 			 << jobCert << "]. Removing job "
 			 << jit->describe() << " from cache."
-			 << log4cpp::CategoryStream::ENDLINE);
+			 );
 	  jit = iceUtil::jobCache::getInstance()->erase( jit );
 	  continue;
 	}
@@ -462,7 +462,7 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
 		       << "Cannot extract proxy time left from proxy file ["
 		       << jobCert << "]: "
 		       << V.getErrorMessage() << ". Skipping"
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	++jit;
 	continue;
       }
@@ -472,7 +472,7 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
 // 		       << "DNProxyManager::searchBetterProxyForUser - "
 // 		       << "Cannot extract proxy time left from proxy file "
 // 		       << "[" << jobCert << "]: "<< ex.what() << ". Skipping"
-// 		       << log4cpp::CategoryStream::ENDLINE);
+// 		       );
 // 	++jit;
 // 	continue;
 //       }

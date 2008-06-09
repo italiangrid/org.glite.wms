@@ -58,7 +58,7 @@ namespace {
 		       << "Not found any subscription for DN ["
 		       << m_dn << "] and CEMon ["
 		       << endpoint << "]. Skipping..."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	return;
       }
       
@@ -67,7 +67,7 @@ namespace {
 		     << "Checking Subscription validity for DN ["
 		     << m_dn << "] to CEMon ["
 		     << endpoint << "]"
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       
       time_t timeleft = sub.getExpirationTime() - time(NULL);
 
@@ -83,7 +83,7 @@ namespace {
 			 << "iceCommandSubUpdater::execute() - "
 			 << "Cannot get better proxy file for DN ["
 			 << m_dn << "]. Skipping..."
-			 << log4cpp::CategoryStream::ENDLINE);
+			 );
 	  return;
 	}
 	
@@ -93,7 +93,7 @@ namespace {
 		       << "] to CEMon [" << endpoint <<"] for user DN ["
 		       << m_dn << "] using proxy ["
 		       << betterProxy << "]."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	
 	ice_util::subscriptionManager::getInstance()->renewSubscription( betterProxy , endpoint );
       }
@@ -132,7 +132,7 @@ void ice_util::iceCommandSubUpdater::execute( ) throw()
 		   << "iceCommandSubUpdater::execute() - "
 		   << "Checking Subscriptions for owner of the DN ["
 		   << it->first<< "]."
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     //subManager->purgeOldSubscription( it );
 

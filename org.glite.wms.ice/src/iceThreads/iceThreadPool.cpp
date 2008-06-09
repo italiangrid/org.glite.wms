@@ -89,7 +89,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 // 				       m_log_dev->debugStream()
 // 				       << "iceThreadPool::iceThreadPoolWorker::body() - Thread ["
 // 				       << getName() << "] ENDING ..."
-// 				       << log4cpp::CategoryStream::ENDLINE
+// 				       
 // 				       );
 // 			return;
 // 		      }
@@ -113,7 +113,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                                     << "exception while waiting on the "
                                     << "command queue: " << err.what()
                                     << ". Giving up."
-                                    << log4cpp::CategoryStream::ENDLINE
+                                    
                                     );
                     abort();
                 }
@@ -126,7 +126,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                            << " started processing new request"
                            << " (Currently " << m_state->m_num_running
                            << " threads are running)" 
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
             // Remove one request from the queue
             list< iceAbsCommand* >::iterator req_it = get_first_request( );
@@ -144,14 +144,14 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                            m_log_dev->errorStream()
                            << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got FATAL exception: "
                            << ex.what()
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
         } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
                            << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got TRANSIENT exception: "
                            << ex.what()
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
         } catch( glite::ce::cream_client_api::soap_proxy::soap_runtime_ex& ex ) {
 
@@ -160,7 +160,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 			 << "iceThreadPool::iceThreadPoolWorker::body()  - "
 			 << "A VERY SEVERE error occurred: "
 			 << ex.what() << ". Shutting down !!"
-			 << log4cpp::CategoryStream::ENDLINE
+			 
 			 );
 	  exit(2);
 
@@ -169,13 +169,13 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                            m_log_dev->errorStream()
                            << "ceThreadPool::iceThreadPoolWorker::body() - Command execution got exception: "
                            << ex.what()
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
         } catch( ... ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
                            << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got unknown exception"
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
         }
 
@@ -190,7 +190,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 		   m_log_dev->debugStream()
 		   << "iceThreadPool::iceThreadPoolWorker::body() - Thread ["
 		   << getName() << "] ENDING ..."
-		   << log4cpp::CategoryStream::ENDLINE
+		   
 		   );
 }
 
@@ -225,7 +225,7 @@ iceThreadPool::iceThreadPool( const std::string& name, int s ) :
                     << m_state->m_name << ") - "
                     << "Creating " << m_state->m_num_running 
                     << " worker threads"
-                    << log4cpp::CategoryStream::ENDLINE
+                    
                     );            
     for ( int i=0; i<n_threads; i++ ) {
         boost::shared_ptr< util::iceThread > ptr_thread( new iceThreadPoolWorker( m_state.get(), i ) );
@@ -237,7 +237,7 @@ iceThreadPool::iceThreadPool( const std::string& name, int s ) :
                             << "iceThreadPool::iceThreadPool("
                             << m_state->m_name << ") -"
                             << "Unable to create worker thread. Giving up."
-                            << log4cpp::CategoryStream::ENDLINE
+                            
                             );            
             abort();
         }
@@ -266,7 +266,7 @@ void iceThreadPool::stopAllThreads( void ) throw()
 		      << "iceThreadPool::stopAllThreads() - "
 		      << "Calling ::stop() on thread ["
 		      << (*thisThread)->getName() << "]"
-		      << log4cpp::CategoryStream::ENDLINE
+		      
 		      );
       (*thisThread)->stop(); 
       
@@ -279,7 +279,7 @@ void iceThreadPool::stopAllThreads( void ) throw()
   CREAM_SAFE_LOG( m_log_dev->debugStream()
 		  << "iceThreadPool::stopAllThreads() - "
 		  << "Waiting for all pool-thread termination ..."
-		  << log4cpp::CategoryStream::ENDLINE
+		  
 		  );  
 
   m_all_threads.join_all();
@@ -287,7 +287,7 @@ void iceThreadPool::stopAllThreads( void ) throw()
   CREAM_SAFE_LOG( m_log_dev->fatalStream()
 		  << "iceThreadPool::stopAllThreads() - "
 		  << "All pool-threads TERMINATED !"
-		  << log4cpp::CategoryStream::ENDLINE
+		  
 		  );  
 
 }

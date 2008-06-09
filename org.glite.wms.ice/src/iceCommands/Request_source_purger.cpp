@@ -42,7 +42,7 @@ void Request_source_purger::operator()( void )
                    << "filelist_request_purger - "
                    << "removing request "
                    << m_req->to_string()
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
     try { 
         Ice::instance()->removeRequest( m_req );
@@ -53,7 +53,7 @@ void Request_source_purger::operator()( void )
 			 << "filelist_request_purger::operator() - "
 			 << "Error removing request from FL: "
 			 << ex.what()
-			 << log4cpp::CategoryStream::ENDLINE
+			 
 			 );
         abort();
     }

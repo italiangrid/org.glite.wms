@@ -67,13 +67,13 @@ Lease_manager::Lease_manager( ) :
                         << "Error while accessing ICE configuration file. "
                         << "Error is: \"" << ex.what() << "\". "
                         << "Giving up, but this may cause troubles."
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
     } catch( const glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
                         << "Could not get DN for the local host. " 
                         << "Error is \"" << ex.what() << "\". "
                         << "Using hardcoded default of \"UNKNOWN_ICE_DN\""
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         m_host_dn = "UNKNOWN_ICE_DN";
     }    
     
@@ -83,7 +83,7 @@ Lease_manager::Lease_manager( ) :
         CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
                         << "Error during initialization. "
                         << "This error will be ignored."
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
     }
 }
 
@@ -128,7 +128,7 @@ void Lease_manager::init( void )
                         << "Checking lease with lease ID \""
                         << lease_id << "\" CREAM URL " << cream_url
                         << " user DN " << user_DN << " user cert file "
-                        << cert_file << log4cpp::CategoryStream::ENDLINE );
+                        << cert_file  );
         
         pair< string, time_t > result;
         try {
@@ -140,7 +140,7 @@ void Lease_manager::init( void )
                             << lease_id << "\" CREAM URL " << cream_url
                             << " user DN " << user_DN << " user cert file "
                             << cert_file << ". Will ignore this lease ID."
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             failed_lease_ids.insert( lease_id );
             continue;
         } catch( ... ) {
@@ -150,7 +150,7 @@ void Lease_manager::init( void )
                             << lease_id << "\" CREAM URL " << cream_url
                             << " user DN " << user_DN << " user cert file "
                             << cert_file << ". Will ignore this lease ID."
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             failed_lease_ids.insert( lease_id );
             continue;
         }
@@ -159,7 +159,7 @@ void Lease_manager::init( void )
                         << "Lease ID \"" << lease_id 
                         << " has expiration time "
                         << time_t_to_string( expiration_time )
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         
         // Insert the lease ID into the lease set
         m_lease_set.insert( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );        
@@ -217,7 +217,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
                         << " user DN " << user_DN << " user cert file "
                         << cert_file << " expiration time "
                         << time_t_to_string( expiration_time )
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         
         pair< string, time_t > 
             lease_in = make_pair( lease_id, expiration_time ),
@@ -234,7 +234,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
                             << " expiration date "
                             << time_t_to_string( expiration_time )
                             << ". Error is \"" << ex.what() << "\"."
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             // Returns an empty string
             return string();
         }     
@@ -247,7 +247,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
                         << cream_url << " user DN " << user_DN 
                         << " new expiration time "
                         << time_t_to_string( expiration_time )
-                        << log4cpp::CategoryStream::ENDLINE );        
+                         );        
 
         // Inserts the lease ID into the lease set
         m_lease_set.insert( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
@@ -275,7 +275,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
                         << "\" for CREAM URL " << cream_url
                         << " user DN " << user_DN << " expiration time "
                         << time_t_to_string( expiration_time )
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
     }
     return lease_id;
 }
@@ -295,7 +295,7 @@ time_t Lease_manager::renew_lease( const string& lease_id )
         CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
                         << "Cannot renew lease with lease ID \"" << lease_id
                         << "\" because it can not be found in the lease cache"
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         return 0; // lease id not found
     }
 
@@ -306,7 +306,7 @@ time_t Lease_manager::renew_lease( const string& lease_id )
                         << "Cannot renew lease with lease ID \"" << lease_id
                         << "\" because I cannot retrieve a proxy cert file "
                         << "for user DN \"" << it->m_user_dn << "\""
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
 
     }
     
@@ -327,7 +327,7 @@ time_t Lease_manager::renew_lease( const string& lease_id )
                         << " CREAM URL " << entry.m_cream_url
                         << " desired expiration date "
                         << time_t_to_string( expiration_time )
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         // Returns an empty string
         return 0;
     }         
@@ -337,7 +337,7 @@ time_t Lease_manager::renew_lease( const string& lease_id )
                     << entry.m_user_dn << " CREAM URL "
                     << entry.m_cream_url << " new expiration time "
                     << time_t_to_string( lease_out.second )
-                    << log4cpp::CategoryStream::ENDLINE );
+                     );
     entry.m_expiration_time = lease_out.second;
     lease_by_id_view.replace( it, entry );
     return entry.m_expiration_time;
@@ -359,7 +359,7 @@ void Lease_manager::purge_old_lease_ids( void )
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "Purged " << size_before - size_after
                         << " elements from the lease cache"
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
     }
 }
 

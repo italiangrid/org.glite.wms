@@ -83,7 +83,7 @@ bool iceCommandProxyRenewal::renewProxy( const pair<string, string>& deleg,
 		    << delegation_ID
 		    << "] failed: "
 		    << ex.what() 
-		    << log4cpp::CategoryStream::ENDLINE);
+		    );
     
     return false;
     // Let's ignore; probably another proxy renewal will be done
@@ -116,7 +116,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
 		       << jobIt->getUserProxyCertificate() << "] for job "
 		       << jobIt->describe()
 		       << ". Skipping it..."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	continue; // skip to next job
 	// FIXME: what to do?
       }
@@ -133,7 +133,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
 		       << "recorded by ICE is "
 		       << time_t_to_string( jobIt->getProxyCertLastMTime() )
 		       << ". Renewing proxy."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	
 	glite::wms::ice::util::DNProxyManager::getInstance()->setUserProxyIfLonger( jobIt->getUserProxyCertificate() );
 	jobMap[ make_pair(jobIt->getDelegationId(), jobIt->getCreamDelegURL()) ].push_back( *jobIt );
@@ -162,7 +162,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
 		   << jobMap_it->first.second << "] using proxy certificate file ["
 		   << jobMap_it->second.begin()->getUserProxyCertificate()
 		   << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     if( this->renewProxy( jobMap_it->first, jobMap_it->second.begin()->getUserProxyCertificate() ))
       {

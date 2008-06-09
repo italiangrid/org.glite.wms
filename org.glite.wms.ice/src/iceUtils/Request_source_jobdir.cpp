@@ -52,7 +52,7 @@ Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name, bool
     } catch( std::exception& ex ) {
          CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->errorStream()
 	 		 << "Request_source_jobdir::CTOR - Jobdir creation failed!" 
-			 << log4cpp::CategoryStream::ENDLINE);
+			 );
         abort();
     }
 }

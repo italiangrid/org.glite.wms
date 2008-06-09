@@ -128,7 +128,7 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
 		      << "iceCommandCancel::execute() - Cancel request does not have a "
 		      << "\"sequencecode\" attribute. "
 		      << "Fine for now, should not happen in the future"
-		      << log4cpp::CategoryStream::ENDLINE
+		      
 		      );
     } else {
       boost::trim_if(m_sequence_code, boost::is_any_of("\""));        
@@ -145,7 +145,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     CREAM_SAFE_LOG( 
                    m_log_dev->infoStream()
                    << "iceCommandCancel::execute() - This request is a Cancel..."
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
 
     Request_source_purger r( m_request );
@@ -162,7 +162,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
                        << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
                        << m_gridJobId 
                        << "] in the jobCache. Giving up"
-                       << log4cpp::CategoryStream::ENDLINE
+                       
                        );
 
         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") 
@@ -200,14 +200,14 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
                    << "], creamJobId [" 
                    << theJob.getCompleteCreamJobID() 
                    << "]"
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
 
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()
                    << "iceCommandCancel::execute() - Sending cancellation request to ["
                    << theJob.getCreamURL() << "]"
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
 
     /**
@@ -270,7 +270,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 // 	   CREAM_SAFE_LOG(    
 //                    	   m_log_dev->errorStream()
 //                    	   << errMex
-// 			   << log4cpp::CategoryStream::ENDLINE
+// 			   
 // 	                  );
 // 	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
 // 	  throw iceCommandFatal_ex( errMex );
@@ -288,7 +288,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 	    CREAM_SAFE_LOG(    
 			   m_log_dev->errorStream()
 			   << errMex
-			   << log4cpp::CategoryStream::ENDLINE
+			   
 			   );
 	    
 	    m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );

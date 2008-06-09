@@ -49,7 +49,7 @@ void leaseUpdater::body( void )
     while ( !isStopped() ) {
         CREAM_SAFE_LOG(m_log_dev->infoStream()
                        << "leaseUpdater::body() - new iteration"
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
 	iceCommandLeaseUpdater().execute();
 
 	if(m_delay<=10) 

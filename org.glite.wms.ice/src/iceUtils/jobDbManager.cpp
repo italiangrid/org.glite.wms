@@ -74,7 +74,7 @@ jobDbManager::jobDbManager( const string& envHome,
                         << "job DB Path "
                         << m_envHome 
                         << " does not exist. Job DB initializatoin failed."
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );      
         
         m_invalid_cause = string("Path [")+m_envHome+"] doesn't exist and cannot be created";
@@ -185,7 +185,7 @@ jobDbManager::jobDbManager( const string& envHome,
                             << "jobDbManager::CTOR() - "
                             << "Created database for jobs caching in [" 
                             << m_envHome << "]" 
-                            << log4cpp::CategoryStream::ENDLINE
+                            
                             );
 
 }
@@ -209,7 +209,7 @@ jobDbManager::~jobDbManager() throw()
                         << "Error \"" << dbex.what() << "\" "
                         << "occurred closing database or environment. "
                         << "Database corruption is possibile!"
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
     }
     delete(m_creamJobDb);
@@ -421,7 +421,7 @@ void jobDbManager::delByGid( const string& gid )
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                     << "Removing entry ["
                     << gid << "] from database."
-                    << log4cpp::CategoryStream::ENDLINE
+                    
                     );
     
     try {
@@ -520,7 +520,7 @@ void jobDbManager::dbLogPurge( void )
                             << "jobDbManager::dbLogPurge() - "
                             << "Removing unused DB logfile [" 
                             << *file << "]" 
-                            << log4cpp::CategoryStream::ENDLINE
+                            
                             );
             
             if(-1==::unlink(*file)) {
@@ -530,7 +530,7 @@ void jobDbManager::dbLogPurge( void )
                                 << "Error removing DB logfile [" 
                                 << *file << "]: " 
                                 << strerror(saveerr)
-                                << log4cpp::CategoryStream::ENDLINE
+                                
                                 );
             }
         }
@@ -540,7 +540,7 @@ void jobDbManager::dbLogPurge( void )
                         << "jobDbManager::dbLogPurge() - "
                         << "DbException raised when trying to purge "
                         << "unsed DB log files: \"" << dbex.what() << "\""
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
         // free(files); // FIXME: uncomment this if you decide to continue to run
         abort();
@@ -549,7 +549,7 @@ void jobDbManager::dbLogPurge( void )
                         << "jobDbManager::dbLogPurge() - "
                         << "Exception raised when trying to purge "
                         << "unsed DB log files: \"" << ex.what() << "\""
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
         // free(files); // FIXME: uncomment this if you decide to continue to run
         abort();
@@ -558,7 +558,7 @@ void jobDbManager::dbLogPurge( void )
                         << "jobDbManager::dbLogPurge() - "
                         << "Unknown exception raised when trying to purge "
                         << "unsed DB log files"
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
         // free(files); // FIXME: uncomment this if you decide to continue to run
         abort();

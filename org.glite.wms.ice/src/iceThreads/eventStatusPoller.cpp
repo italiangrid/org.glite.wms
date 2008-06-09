@@ -80,7 +80,7 @@ void eventStatusPoller::body( void )
 
         CREAM_SAFE_LOG( m_log_dev->infoStream()
                         << "eventStatusPoller::body() - New iteration"
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
 
         //m_pool->add_request( new iceCommandStatusPoller( m_iceManager ) );
 	iceCommandStatusPoller( m_iceManager ).execute();

@@ -118,7 +118,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                         << method_name
                         << "Cannot open proxy file "
                         << certfile
-                        << log4cpp::CategoryStream::ENDLINE );        
+                         );        
         // Returns empty string, so that the register will do
         // auto-delegation
         return "";//delegation_id;
@@ -132,7 +132,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
 		      << certfile 
 		      << "]. Error is: "
 		      << V.getErrorMessage( )
-		      << log4cpp::CategoryStream::ENDLINE );        
+		       );        
       return "";//delegation_id;
     }
 
@@ -179,7 +179,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                         << V.getDN( )
                         << " proxy hash "
                         << str_sha1_digest
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         
         try {
             // Gets the proxy expiration time
@@ -205,7 +205,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                             << str_sha1_digest
 			    << " - ERROR is: ["
 			    << ex.what() << "]"
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             // Returns an empty string
             return "";//delegation_id;
         }  catch( ... ) {
@@ -223,7 +223,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                             << V.getDN( )
                             << " proxy hash "
                             << str_sha1_digest
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             // Returns an empty string
             return "";//delegation_id;
         }     
@@ -248,7 +248,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                                 << last_elem.m_cream_url
                                 << " proxy hash "
                                 << last_elem.m_sha1_digest
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
             }
             delegation_by_seq.pop_back();
         }
@@ -272,7 +272,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                         << cream_deleg_url
                         << " user DN "
                         << V.getDN( )
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
     }
     return delegation_id;
 }
@@ -296,6 +296,6 @@ void Delegation_manager::purge_old_delegations( void )
                         << "Purged "
                         << size_before - size_after
                         << " elements from the delegation cache"
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
     }
 }

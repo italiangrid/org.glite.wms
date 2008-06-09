@@ -73,7 +73,7 @@ namespace {
                             << J.describe()
                             << " is reported as already been killed by ICE. "
                             << "Skipping..."
-                            << log4cpp::CategoryStream::ENDLINE);     
+                            );     
             return false; 
         }
 
@@ -85,7 +85,7 @@ namespace {
                             << " is not valid. Reason is \""
                             << V.getErrorMessage() << "\". "
                             << "This job will be killed."
-                            << log4cpp::CategoryStream::ENDLINE);
+                            );
             return true;
  	}
 
@@ -94,7 +94,7 @@ namespace {
                             << "Proxy [" << J.getUserProxyCertificate()
                             << "] of user [" << J.getUserDN()
                             << "] is expiring. Will kill job " << J.describe()
-                            << log4cpp::CategoryStream::ENDLINE);            
+                            );            
             return true;
         }
 
@@ -218,7 +218,7 @@ void iceCommandJobKill::execute() throw()
 
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                     << "Executing new iteration"
-                    << log4cpp::CategoryStream::ENDLINE);            
+                    );            
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
     map< pair<string, string>, list< CreamJob >, ltstring> jobMap;    
 
@@ -290,7 +290,7 @@ void iceCommandJobKill::cancel_jobs(const string& better_proxy,
                             << "Will cancel JobID [" << thisJob 
                             << "] because its original proxy"
                             << " is going to expire..."
-                            << log4cpp::CategoryStream::ENDLINE
+                            
                             );
             
             toCancel.push_back( cream_api::soap_proxy::JobIdWrapper( it->getCompleteCreamJobID(), endpoint, vector<cream_api::soap_proxy::JobPropertyWrapper>()) );

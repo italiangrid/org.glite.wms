@@ -53,7 +53,7 @@ Request_source_filelist::Request_source_filelist( const std::string& fl_name, bo
 	      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
 	      		     << "Request_source_filelist::CTOR - Error creating path ["
 			     << fl_name << "]: " << ex.what()
-			     << log4cpp::CategoryStream::ENDLINE);
+			     );
 	      abort();
 	      
 	    }catch( ... ) {
@@ -61,7 +61,7 @@ Request_source_filelist::Request_source_filelist( const std::string& fl_name, bo
 		CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
 	      		     << "Request_source_filelist::CTOR - Error creating path ["
 			     << fl_name << "]: Catched unknown exception"
-			     << log4cpp::CategoryStream::ENDLINE);
+			     );
                 abort(); // FIXME
 		
             }
@@ -77,13 +77,13 @@ Request_source_filelist::Request_source_filelist( const std::string& fl_name, bo
       CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
 	      		     << "Request_source_filelist::CTOR - Error opening filelist ["
 			     << m_name << "]: " << ex.what()
-			     << log4cpp::CategoryStream::ENDLINE);
+			     );
       abort();
 	      
     } catch( ... ) {
          CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->fatalStream()
                          << "Request_source_filelist::CTOR() - Error opening filelist: Catched unknown exception"
-                         << log4cpp::CategoryStream::ENDLINE
+                         
                          );
 	 abort(); // FIXME
     }
@@ -106,7 +106,7 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
         CREAM_SAFE_LOG(
                        api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
                        << "Request_source_filelist::get_requests() - " << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
+                       
                        );
         abort(); // FIXME
     }
@@ -128,7 +128,7 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
             CREAM_SAFE_LOG(
                            api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
                            << "Request_source_filelist::get_requests() - Failed to get request due to exception: " << ex.what()
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
             abort(); // FIXME
         }
@@ -155,7 +155,7 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
 //         CREAM_SAFE_LOG(
 //                        api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
 //                        << "Request_source_filelist::get_single_request() - " << ex.what()
-//                        << log4cpp::CategoryStream::ENDLINE
+//                        
 //                        );
 //         abort(); // FIXME
 //     }

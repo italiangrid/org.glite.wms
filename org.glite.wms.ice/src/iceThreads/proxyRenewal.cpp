@@ -71,7 +71,7 @@ void proxyRenewal::body( void )
     while( !isStopped() ) {        
         CREAM_SAFE_LOG(m_log_dev->infoStream()
                        << "proxyRenewal::body() - new iteration"
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
         
 	iceCommandProxyRenewal().execute();
 
@@ -105,7 +105,7 @@ void proxyRenewal::body( void )
 //                            << "proxyRenewal::checkProxies() - Cannot stat proxy file ["
 //                            << jobIt->getUserProxyCertificate() << "] for job "
 //                            << jobIt->describe() << ". Cannot check if it needs to be renewed."
-//                            << log4cpp::CategoryStream::ENDLINE);
+//                            );
 //             return;
 //             // FIXME: what to do?
 //         }
@@ -122,7 +122,7 @@ void proxyRenewal::body( void )
 //                        << time_t_to_string( buf.st_mtime )
 //                        << ", the last proxy file modification time recorded by ICE is "
 //                        << time_t_to_string( jobIt->getProxyCertLastMTime() )
-//                        << log4cpp::CategoryStream::ENDLINE);
+//                        );
 
 //         if( buf.st_mtime > jobIt->getProxyCertLastMTime() ) {
             
@@ -143,7 +143,7 @@ void proxyRenewal::body( void )
 //                                 << "proxyRenewal::checkProxies() - Proxy renew failed for job "
 //                                 << jobIt->describe() << ". Reason is: ["
 //                                 << ex.what() << "]"
-//                                 << log4cpp::CategoryStream::ENDLINE);
+//                                 );
 //             }
             
 //             jobIt->setProxyCertMTime( buf.st_mtime );

@@ -212,7 +212,7 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
 		   m_log_dev->errorStream() 
 		   << "iceCommandSubmit::CTOR() - Cannot instantiate a job from jdl=" << m_jdl
 		   << " due to classad excaption: " << ex.what()
-		   << log4cpp::CategoryStream::ENDLINE
+		   
 		   );
     throw( iceUtil::ClassadSyntax_ex( ex.what() ) );
   }
@@ -231,7 +231,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                    m_log_dev->infoStream()
                    << method_name
                    << "This request is a Submission..."
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );   
     
     iceUtil::jobCache* cache( iceUtil::jobCache::getInstance() );
@@ -255,7 +255,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                             << m_theJob.describe()
                             << " is related to a job already in ICE cache. "
                             << "Removing the request and going ahead."
-                            << log4cpp::CategoryStream::ENDLINE
+                            
                             );   
             return;
         }
@@ -280,7 +280,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                        << method_name 
                        << "Error during submission of jdl=" << m_jdl
                        << " Fatal Exception is:" << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE
+                       
                        );
         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) ) );
         m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) );
@@ -342,7 +342,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 		   << modified_jdl << " to [" 
                    << m_theJob.getCreamURL() <<"]["
                    << m_theJob.getCreamDelegURL() << "]"
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
     
     CREAM_SAFE_LOG(
@@ -352,7 +352,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                    << m_theJob.describe()
                    << " is "
                    << m_theJob.getSequenceCode()
-                   << log4cpp::CategoryStream::ENDLINE                   
+                                      
                    );
 
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
@@ -373,12 +373,12 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                 CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                                 << "Lease is enabled, enforcing creation of a new lease "
                                 << "for job " << m_theJob.describe()
-                                << log4cpp::CategoryStream::ENDLINE );        
+                                 );        
             } else {
                 CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                                 << "Lease is enabled, trying to get lease "
                                 << "for job " << m_theJob.describe()
-                                << log4cpp::CategoryStream::ENDLINE );        
+                                 );        
             }
 
             //
@@ -391,7 +391,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << method_name
                                 << "Failed to get lease_id for job "
                                 << m_theJob.describe()
-                                << log4cpp::CategoryStream::ENDLINE
+                                
                                 );        
                 throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to get lease_id for job %1%" ) % m_theJob.getGridJobID() ) ) );
             }
@@ -400,7 +400,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                             << "Using lease ID " << lease_id << " for job "
                             << m_theJob.describe()
-                            << log4cpp::CategoryStream::ENDLINE );        
+                             );        
         }
 
         // 
@@ -419,7 +419,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                             << "Going to REGISTER Job "
                             << m_theJob.describe() << "..."
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             
             cream_api::AbsCreamProxy::RegisterArrayRequest req;
             
@@ -453,7 +453,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << m_theJob.getGridJobID() 
                                 << "] due to Delegation Exception: " 
                                 << ex.what() << ". Will retry once..."
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 force_delegation = true;
             } else {
                 throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised DelegationException %1%") % ex.what() ) ) ); // Rethrow
@@ -465,7 +465,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << m_theJob.getGridJobID() 
                                 << "] due to Generic Fault: " 
                                 << ex.what() << ". Will retry once by enforcing creation of a new lease ID..."
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 force_lease = true;
             } else {
                 throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % ex.what() ) ) ); // Rethrow
@@ -476,7 +476,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                             << m_theJob.getGridJobID() 
                             << "] due to std::exception: " 
                             << ex.what() << "."
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
         }
 
@@ -497,7 +497,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << m_theJob.getGridJobID() 
                                 << "] due to Delegation Error: " 
                                 << err << ". Will retry once..."
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 force_delegation = true;
             } else {
                 throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned delegation error \"%1%\"") % err ) ) );
@@ -510,7 +510,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << m_theJob.getGridJobID() 
                                 << "] due to Lease Error: " 
                                 << err << ". Will retry once by enforcing creation of a new lease ID..."
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 force_lease = true;
             } else {
                 throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned lease id mismatch \"%1%\"") % err ) ) );
@@ -522,7 +522,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                             << m_theJob.getGridJobID() 
                             << "] due to Error: " 
                             << err
-                            << log4cpp::CategoryStream::ENDLINE );
+                             );
             throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned error \"%1%\"") % err ) ) ); 
         }
 
@@ -544,7 +544,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                     << "For GridJobID [" << m_theJob.getGridJobID() << "]" 
                     << " CREAM Returned CREAM-JOBID [" << completeid <<"]"
-                    << log4cpp::CategoryStream::ENDLINE );
+                     );
 
     cream_api::ResultWrapper startRes;
     
@@ -553,7 +553,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                         << "Going to START CreamJobID ["
                         << completeid <<"] related to GridJobID ["
                         << m_theJob.getGridJobID() << "]..."
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         
       // FIXME: must create the request JobFilterWrapper for the Start operation
       vector<cream_api::JobIdWrapper> toStart;
@@ -592,7 +592,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		     << "Cannot start job " << m_theJob.describe()
 		     << ". Reason is: " << errMex
-		     << log4cpp::CategoryStream::ENDLINE );
+		      );
 
       throw iceCommandTransient_ex( boost::str( boost::format( "CREAM Start failed due to error %1%") % errMex ) );
     }
@@ -687,7 +687,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
         CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
                         << "\"InputSandboxPath\" attribute in the JDL. "
                         << "Hope this is correct..."
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );     
     }
 
@@ -721,7 +721,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
 	/*CREAM_SAFE_LOG(m_log_dev->debugStream()
             << "iceCommandSubmit::updateIsbList() - "
             << "Starting InputSandbox manipulation..."
-            << log4cpp::CategoryStream::ENDLINE);
+            );
 	*/
         string newPath;
         for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
@@ -747,7 +747,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
             }
 	    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
                            << s << " became " << newPath
-                           << log4cpp::CategoryStream::ENDLINE);
+                           );
 
             // Builds a new value
             classad::Value newV;
@@ -782,7 +782,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
             << "iceCommandSubmit::updateOsbList() - found no "
             << "\"OutputSandboxPath\" attribute in the JDL. "
             << "Hope this is correct..."
-            << log4cpp::CategoryStream::ENDLINE);        
+            );        
     }
 
     if ( 0 != jdl->Lookup( "OutputSandboxDestURI" ) ) {
@@ -833,7 +833,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 		CREAM_SAFE_LOG(m_log_dev->debugStream()
                     << "iceCommandSubmit::updateOsbList() - After input sandbox manipulation, "
                     << s << " became " << newPath
-                    << log4cpp::CategoryStream::ENDLINE);        
+                    );        
 
                 // Builds a new value
                 classad::Value newV;
@@ -873,7 +873,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream()
                    << "iceCommandSubmit::pathName::CTOR() - Trying to unparse " << p
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
 
     if ( boost::regex_match( p, what, uri_match ) ) {
@@ -910,7 +910,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
                    << "Unparsed as follows: filename=[" 
                    << m_fileName << "] pathname={"
                    << m_pathName << "]"
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
 
 }
@@ -936,7 +936,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                   << "For current CREAM, subscriptionManager returned CEMon URL ["
                   << cemon_url << "]"
-                  << log4cpp::CategoryStream::ENDLINE
+                  
                   );
   
   // Try to determine if the current user userDN is subscribed to 'cemon_url' by
@@ -954,7 +954,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
         CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
                        << "User [" << userDN << "] is already subsdcribed to CEMon ["
                        << cemon_url << "] (found in subscriptionManager's cache)"
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
         
       // If the current proxy expires later than that one in the subscriptionManager's
       // map, we must update it with the current one.
@@ -987,7 +987,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
                      << "Couldn't determine if user [" << userDN 
                      << "] is subscribed to [" << cemon_url 
                      << "]. Another job could trigger a successful subscription."
-                     << log4cpp::CategoryStream::ENDLINE);
+                     );
       return;
   }
   
@@ -1014,7 +1014,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 		       << "but couldn't get its DN. "
 		       << "Will not authorize its job status "
 		       << "notifications."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	return; 
       }
     } 
@@ -1029,7 +1029,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "User DN [" << userDN << "] is already subscribed to CEMon ["
 		   << cemon_url << "] (asked to CEMon itself)"
-		   << log4cpp::CategoryStream::ENDLINE
+		   
 		   );
   } else {
     // MUST subscribe
@@ -1043,7 +1043,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		       << "Notification authorization is enabled and couldn't "
 		       << "get CEMon's DN. Will not subscribe to it."
-		       << log4cpp::CategoryStream::ENDLINE
+		       
 		       );
       } 
     }
@@ -1063,7 +1063,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 		       << cemon_url << "] with userDN [" << userDN<< "]. Will not"
 		       << " receive job status notification from it for this user. "
 		       << "Hopefully the subscriptionUpdater will retry."
-		       << log4cpp::CategoryStream::ENDLINE
+		       
 		       );
       }
     } // if(can_subscribe)

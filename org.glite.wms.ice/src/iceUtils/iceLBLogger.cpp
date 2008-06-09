@@ -73,7 +73,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         CREAM_SAFE_LOG(m_log_dev->fatalStream()
                        << method_name
 		       << "Cannot log a NULL event"
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
         abort();        
     }
 
@@ -95,7 +95,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        << ev->getJob().getGridJobID() << "]"
                        << " CreamJobID=[" << ev->getJob().getCompleteCreamJobID() << "]"
                        << ". Caught exception " << ex.what()
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
         return ev->getJob();
     }
     
@@ -112,7 +112,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
                        // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
                        
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
         if ( m_lb_enabled ) {
 	  res = ev->execute( m_ctx.get() );
 	  m_ctx->testCode( res );
@@ -128,7 +128,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                    // << " Seq code AFTER from job=[" << ev->getJob().getSequenceCode() << "]"
                    // << " Seq code AFTER from ctx=[" << new_seq_code << "]"
                    
-                   << log4cpp::CategoryStream::ENDLINE);
+                   );
 */
     { // Now, locks the cache
         jobCache* m_cache( jobCache::getInstance() );

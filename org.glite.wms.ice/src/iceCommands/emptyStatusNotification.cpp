@@ -65,7 +65,7 @@ void emptyStatusNotification::apply( void )
                         << m_cream_job_id
                         << " in the job cache. The empty status notification "
                         << "for this job cannot be applied"
-                        << log4cpp::CategoryStream::ENDLINE);
+                        );
         return;
     }
 
@@ -77,6 +77,6 @@ void emptyStatusNotification::apply( void )
                     << job_it->describe()
                     << " set to " 
                     << time_t_to_string( job_it->get_last_empty_notification() )
-                    << log4cpp::CategoryStream::ENDLINE);
+                    );
     cache->put( *job_it );
 }

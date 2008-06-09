@@ -141,7 +141,7 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 		       << "creamJob::setJdl() - The user proxy file ["
 		       << m_user_proxyfile << "] is not stat-able:" << strerror(saverr) 
 		       <<". This could compromise the correct working of proxy renewal thread"
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
     } else {
 	m_proxyCertTimestamp = stat_buf.st_mtime;
     }
@@ -233,7 +233,7 @@ void CreamJob::setSequenceCode( const std::string& seq )
     CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
 		   << "CreamJob::setSequenceCode() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
 		   << m_jdl << "]. STOP!"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     abort();
   }
   

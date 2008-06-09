@@ -54,7 +54,7 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
 {
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
                    << "subscriptionProxy::CTOR - Authenticating..."
-                   << log4cpp::CategoryStream::ENDLINE);
+                   );
 
     
 
@@ -65,13 +65,13 @@ iceUtil::subscriptionProxy::subscriptionProxy() throw()
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
                    << "subscriptionProxy::CTOR - "
 		   << ex.what()
-                   << log4cpp::CategoryStream::ENDLINE);
+                   );
       abort();
     } catch(exception& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
                    << "subscriptionProxy::CTOR - "
 		   << ex.what()
-                   << log4cpp::CategoryStream::ENDLINE);
+                   );
       abort();
     }
     m_D = new cemon_api::DialectW("CLASSAD");
@@ -103,7 +103,7 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
   		 << "subscriptionProxy::list() - retrieving list of "
 		 << "subscriptions from [" << url << "] for proxy ["
 		 << userProxy << "]"
-		 << log4cpp::CategoryStream::ENDLINE);
+		 );
   
   cemon_api::CESubscriptionMgr ceSMgr;
   
@@ -115,7 +115,7 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
 		   << "subscriptionProxy::list() - retrieving list of "
 		   << "subscriptions from [" << url << "] for proxy ["
 		   << userProxy << "]: "  << ex.what() 
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     throw(ex);
 
@@ -124,7 +124,7 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
 		   << "subscriptionProxy::list() - retrieving list of "
 		   << "subscriptions from [" << url << "] for proxy ["
 		   << userProxy << "]: Unknown exception catched"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     return;
   }
@@ -144,7 +144,7 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
 		     << " Topic=[" << it->getTopicName()<<"]"
 		     << " ExpirationTime=[" << m_aT << "] Rate=["
                      << it->getRate() << "]"
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
     }
 }
 
@@ -174,12 +174,12 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "subscriptionProxy::subscribe() - Cannot determine the certificate's Subject to put in the iceid of the subscription: "
 		   << ex.what() << ". Won't subscribe"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return false;
   } catch(...) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "subscriptionProxy::subscribe() - Cannot determine the certificate's Subject to put in the iceid of the subscription: Unknown exception catched. Won't subscribe"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return false;
   }
   */
@@ -206,7 +206,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
 		 << proxy << "] with topic ["
 		 << iceConfManager::getInstance()->getConfiguration()->ice()->ice_topic()
 		 << "]"
-		 << log4cpp::CategoryStream::ENDLINE);
+		 );
 
   {
     ceS.setSubscribeParam( m_myurl.c_str(),
@@ -222,7 +222,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
     
     CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionProxy::subscribe() - Subscribed with ID ["
 		   << ceS.getSubscriptionID() << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 	
 
     sub.setSubscriptionID( ceS.getSubscriptionID() );
@@ -231,7 +231,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
     return true;
   } catch(exception& ex) {
     CREAM_SAFE_LOG( m_log_dev->errorStream() << "subscriptionProxy::subscribe() - Subscription Error: "
-		    << ex.what() << log4cpp::CategoryStream::ENDLINE);
+		    << ex.what() );
     return false;
   }
 }
@@ -258,12 +258,12 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "subscriptionProxy::updateSubscription() - Cannot determine the certificate's Subject to put in the iceid of the subscription: "
 		   << ex.what() << ". Won't update subscription"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return false;
   } catch(...) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "subscriptionProxy::updateSubscription() - Cannot determine the certificate's Subject to put in the iceid of the subscription: Unknown exception catched. Won't update subscription"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return false;
   }
 
@@ -290,7 +290,7 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
   } catch(exception& ex) {
     CREAM_SAFE_LOG( m_log_dev->errorStream() << "subscriptionProxy::updateSubscription()"
 		    << " - SubscriptionUpdate Error: "
-		    << ex.what() << log4cpp::CategoryStream::ENDLINE);
+		    << ex.what() );
     return false;
   } 
 
@@ -313,7 +313,7 @@ bool iceUtil::subscriptionProxy::subscribedTo( const string& proxy,
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "subscriptionProxy::subscribedTo() - "
 		   << "Error retrieving subscription list: "
-		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
+		   << ex.what() );
     throw(ex);
   }
   

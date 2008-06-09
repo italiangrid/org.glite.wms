@@ -65,7 +65,7 @@ iceUtil::CEDbManager::CEDbManager( const string& envHome, const bool recover, co
                         << "CE DB Path "
                         << m_envHome 
                         << " does not exist. CE DB initializatoin failed."
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );      
         
         m_invalid_cause = string("Path [")+m_envHome+"] doesn't exist and cannot be created";
@@ -173,7 +173,7 @@ iceUtil::CEDbManager::CEDbManager( const string& envHome, const bool recover, co
                             << "CEDbManager::CTOR() - "
                             << "Created database for CEMon URL/DN caching in [" 
                             << m_envHome << "]" 
-                            << log4cpp::CategoryStream::ENDLINE
+                            
                             );
 }
 
@@ -194,7 +194,7 @@ iceUtil::CEDbManager::~CEDbManager() throw()
                         << "Error \"" << dbex.what() << "\" "
                         << "occurred closing database or environment. "
                         << "Database corruption is possibile!"
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
     }
     
@@ -309,7 +309,7 @@ void iceUtil::CEDbManager::dbLogPurge( void )
                             << "CEDbManager::dbLogPurge() - "
                             << "Removing unused DB logfile [" 
                             << *file << "]" 
-                            << log4cpp::CategoryStream::ENDLINE
+                            
                             );
             
             if(-1==::unlink(*file)) {
@@ -319,7 +319,7 @@ void iceUtil::CEDbManager::dbLogPurge( void )
                                 << "Error removing DB logfile [" 
                                 << *file << "]: " 
                                 << strerror(saveerr)
-                                << log4cpp::CategoryStream::ENDLINE
+                                
                                 );
             }
         }
@@ -329,7 +329,7 @@ void iceUtil::CEDbManager::dbLogPurge( void )
                         << "CEDbManager::dbLogPurge() - "
                         << "DbException raised when trying to purge "
                         << "unsed DB log files: \"" << dbex.what() << "\""
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
         // free(files); // FIXME: uncomment this if you decide to continue to run
         abort();
@@ -338,7 +338,7 @@ void iceUtil::CEDbManager::dbLogPurge( void )
                         << "CEDbManager::dbLogPurge() - "
                         << "Exception raised when trying to purge "
                         << "unsed DB log files: \"" << ex.what() << "\""
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
         // free(files); // FIXME: uncomment this if you decide to continue to run
         abort();
@@ -347,7 +347,7 @@ void iceUtil::CEDbManager::dbLogPurge( void )
                         << "CEDbManager::dbLogPurge() - "
                         << "Unknown exception raised when trying to purge "
                         << "unsed DB log files"
-                        << log4cpp::CategoryStream::ENDLINE
+                        
                         );
         // free(files); // FIXME: uncomment this if you decide to continue to run
         abort();

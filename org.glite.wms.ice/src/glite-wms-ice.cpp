@@ -79,7 +79,7 @@ void sigpipe_handle(int x) {
   CREAM_SAFE_LOG(util::creamApiLogger::instance()->getLogger()->debugStream() 
 		 << "glite-wms-ice::sigpipe_handle: Captured SIGPIPE. x argument=["
 		 << x 
-		 << "]" << log4cpp::CategoryStream::ENDLINE);
+		 << "]" );
 }
 
 // change the uid and gid to those of user no-op if user corresponds
@@ -241,7 +241,7 @@ int main(int argc, char*argv[])
     CREAM_SAFE_LOG(log_dev->debugStream() 
 		   << "ICE VersionID is [20080408-10:30] ProcessID=["
 		   << ::getpid() << "]"
-		   <<log4cpp::CategoryStream::ENDLINE);
+		   );
     cout << "Logfile is [" << logfile << "]" << endl;
 
     
@@ -258,7 +258,7 @@ int main(int argc, char*argv[])
                    log_dev->infoStream()
                    << method_name
                    << "Host certificate is [" << hostcert << "]" 
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
 
 //     try {
@@ -270,7 +270,7 @@ int main(int argc, char*argv[])
 //                        << "Unable to extract user DN from Proxy File "
 //                        << hostcert 
 //                        << ". Won't set SOAP header"
-//                        << log4cpp::CategoryStream::ENDLINE);
+//                        );
 //     }
   
 
@@ -285,7 +285,7 @@ int main(int argc, char*argv[])
                    << "Initializing jobCache with persistency directory ["
                    << jcachedir
                    << "]..."
-                   << log4cpp::CategoryStream::ENDLINE
+                   
                    );
 
     iceUtil::jobCache::setPersistDirectory( jcachedir );
@@ -359,7 +359,7 @@ int main(int argc, char*argv[])
 		   << method_name
 		   << "Max ICE memory threshold set to "
 		   << max_ice_mem << " kB"
-		   << log4cpp::CategoryStream::ENDLINE
+		   
 		   );
 
     while(true) {
@@ -378,7 +378,7 @@ int main(int argc, char*argv[])
                            << command_count
                            << ") in the internal command queue. "
                            << "Will check again in 2 seconds."
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
             //sleep( 30 );
             //continue;
@@ -396,7 +396,7 @@ int main(int argc, char*argv[])
                            log_dev->infoStream()
                            << method_name 
                            << "*** Found " << requests.size() << " new request(s)"
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
 	  
 	  for( list< iceUtil::Request* >::iterator it = requests.begin();
@@ -407,7 +407,7 @@ int main(int argc, char*argv[])
                            << "*** Unparsing request <"
                            << (*it)->to_string()
                            << ">"
-                           << log4cpp::CategoryStream::ENDLINE
+                           
                            );
             glite::wms::ice::iceAbsCommand* cmd;
             try {
@@ -418,7 +418,7 @@ int main(int argc, char*argv[])
 			      << method_name
 			      << "Got exception \"" << ex.what()
 			      << "\". Removing BAD request..." 
-			      << log4cpp::CategoryStream::ENDLINE
+			      
 			      );
 	      iceManager->removeRequest( *it );
 	      //continue;
@@ -461,7 +461,7 @@ int main(int argc, char*argv[])
 			    << method_name
 			    << "glite-wms-ice::main - Max memory reached ["
 			    << mem_now << " kB] ! EXIT!"
-			    << log4cpp::CategoryStream::ENDLINE
+			    
 			    );
 		
 	    return 2; // exit to shell with specific error code
@@ -472,7 +472,7 @@ int main(int argc, char*argv[])
     CREAM_SAFE_LOG( log_dev->fatalStream()
 			    << method_name
 			    << "glite-wms-ice::main - Returning '0' to the shell"
-			    << log4cpp::CategoryStream::ENDLINE
+			    
 			    );	
     return 0;
 }
@@ -493,7 +493,7 @@ long long check_my_mem( const pid_t pid ) throw()
   while (fgets(used_rss_mem, 64, in) != NULL)
     CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->debugStream()
 		    << "glite-wms-ice::main() - Used RSS Memory: "
-		    << used_rss_mem << log4cpp::CategoryStream::ENDLINE
+		    << used_rss_mem 
 		    );
   //printf("glite-wms-ice::main() - Used RSS Memory: %s", used_rss_mem);
   

@@ -71,7 +71,7 @@ jobCache::jobCache( void ) :
                         << "Failed to initialize the jobDbManager object. "
                         << "Reason is: " 
                         << dbm->getInvalidCause() 
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         abort();
     }
     m_dbMgr.reset( dbm );
@@ -113,7 +113,7 @@ void jobCache::load( void ) throw()
 //                 CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 //                                 << "Loading job "
 //                                 << cj.describe()
-//                                 << log4cpp::CategoryStream::ENDLINE );
+//                                  );
                 
                 m_GridJobIDSet.insert( cj.getGridJobID() );
                 
@@ -122,13 +122,13 @@ void jobCache::load( void ) throw()
                                 << method_name
                                 << "boost::archive::text_iarchive raised an exception: "
                                 << ex.what()
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 abort();
             } catch(...) {
                 CREAM_SAFE_LOG( m_log_dev->fatalStream()
                                 << method_name
                                 << "Unknown exception catched"
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 abort();
             }
         }
@@ -140,7 +140,7 @@ void jobCache::load( void ) throw()
                         << method_name
                         << "Failed to get a record from the database. "
                         << "Reason is: " << dbex.what() << ". Giving up."
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         abort();
     }
 }
@@ -158,12 +158,12 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
 //       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 //                       << "Putting "
 //                       << cj.describe()
-//                       << log4cpp::CategoryStream::ENDLINE );
+//                        );
       m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
 			<< dbex.what() 
-			<< log4cpp::CategoryStream::ENDLINE );
+			 );
         abort();
     }
     return make_iterator( (m_GridJobIDSet.insert( cj.getGridJobID() )).first );
@@ -189,7 +189,7 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
         return this->end();        
     } catch(exception& ex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-                        << ex.what() << log4cpp::CategoryStream::ENDLINE );
+                        << ex.what()  );
         abort();
     }
 }
@@ -221,13 +221,13 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
 
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                     << "Removing " << it->describe()
-                    << log4cpp::CategoryStream::ENDLINE );        
+                     );        
     try {
       m_dbMgr->delByGid( gid );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
 			<< dbex.what() 
-			<< log4cpp::CategoryStream::ENDLINE );
+			 );
         abort();
     }
     

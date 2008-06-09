@@ -69,7 +69,7 @@ void jobKiller::body()
       //sleep( m_delay );
         CREAM_SAFE_LOG( log_dev->infoStream() << method_name
                         << "New iteration"
-                        << log4cpp::CategoryStream::ENDLINE );
+                         );
         iceCommandJobKill( ).execute();
     }
 }

@@ -105,7 +105,7 @@ void eventStatusListener::body( void )
             CREAM_SAFE_LOG(m_log_dev->infoStream() 
                            << "eventStatusListener::body() - "
                            << "Waiting for job status notification"
-                           << log4cpp::CategoryStream::ENDLINE);
+                           );
         acceptJobStatus();
         sleep(1);
     }
@@ -118,7 +118,7 @@ void eventStatusListener::acceptJobStatus(void)
     CREAM_SAFE_LOG(m_log_dev->infoStream()
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "eventStatusListener is ending."
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return;
   }
   /**
@@ -140,7 +140,7 @@ void eventStatusListener::acceptJobStatus(void)
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "select() error: "
 		   << strerror(errno)
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     //perror("select()");
     return;
   }
@@ -148,7 +148,7 @@ void eventStatusListener::acceptJobStatus(void)
     CREAM_SAFE_LOG(m_log_dev->debugStream()
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "Listening socket received something to read: ready to accept a SOAP connection"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
   }
     //printf("Data is available now.\n");
     /* FD_ISSET(0, &rfds) will be true. */
@@ -157,7 +157,7 @@ void eventStatusListener::acceptJobStatus(void)
     CREAM_SAFE_LOG(m_log_dev->debugStream()
 		   << "eventStatusListener::acceptJobStatus() - "
 		   << "No connection within " << ACCEPT_TIMEOUT << " seconds. Listening again."
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return;
   }
 
@@ -166,7 +166,7 @@ void eventStatusListener::acceptJobStatus(void)
 	CREAM_SAFE_LOG(m_log_dev->errorStream()
 		       << "eventStatusListener::acceptJobStatus()"
 		       << " - CEConsumer::Accept() returned false."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
       return;
     }
 
@@ -175,7 +175,7 @@ void eventStatusListener::acceptJobStatus(void)
 		     << "eventStatusListener::acceptJobStatus() - "
 		     << "Connection accepted from ["
 		     << this->getClientName() << "] (" << this->getClientIP() << ")"
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
 
   /**
    * acquires the event from the client
@@ -188,7 +188,7 @@ void eventStatusListener::acceptJobStatus(void)
 		   << this->getErrorCode() << "]"
 		   << " ErrorMessage=["
 		   << this->getErrorMessage() << "]"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return;
   }
 
@@ -204,7 +204,7 @@ void eventStatusListener::acceptJobStatus(void)
 		       << "Got DN ["
 		       << dn << "] for host ["
 		       << this->getClientName() << "]"
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
       
       if( !subscriptionManager::getInstance()->isAuthorized( dn ) ) {
 	if(!getenv("NO_LISTENER_MESS"))
@@ -212,7 +212,7 @@ void eventStatusListener::acceptJobStatus(void)
 			 << "eventStatusListener::acceptJobStatus() - "
 			 << "Remote notifying client DN has not been found is the"
 			 << " subscriptionManager. Cannot authorize this notification. Ignoring it..." 
-			 << log4cpp::CategoryStream::ENDLINE);
+			 );
 	return;
       }
     }
@@ -225,7 +225,7 @@ void eventStatusListener::acceptJobStatus(void)
       CREAM_SAFE_LOG(m_log_dev->warnStream() 
 		     << "eventStatusListener::acceptJobStatus() - "
 		     << "NULL Topic received. Ignoring this notification...." 
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       return;
     }
     
@@ -239,7 +239,7 @@ void eventStatusListener::acceptJobStatus(void)
 		     << this->getEventTopic()->Name
 		     << " that differs from the ICE's topic "
 		     << "official name. Ignoring this notification."
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       return;
     }
     
@@ -250,7 +250,7 @@ void eventStatusListener::acceptJobStatus(void)
     		     << "eventStatusListener::acceptJobStatus() - Currently threadPool contains "
 		     << threadPool->get_command_count()
 		     << " requests still to be processed. Dropping notification..."
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
     } else {
 
       const vector< monitortypes__Event >& events( getEvents() );    

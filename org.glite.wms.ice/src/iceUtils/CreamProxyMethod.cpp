@@ -60,7 +60,7 @@ void CreamProxyMethod::execute( int ntries )
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
                                 << ". Trying again in " << delay << " sec..."
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 do_retry = true; // superfluous
                 sleep( delay );
                 delay += 2; // increments delay for each try
@@ -71,7 +71,7 @@ void CreamProxyMethod::execute( int ntries )
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
                                 << ". Giving up."
-                                << log4cpp::CategoryStream::ENDLINE );
+                                 );
                 throw; // rethrow
             }            
         } catch( ... ) {

@@ -107,7 +107,7 @@ iceUtil::subscriptionManager::subscriptionManager() throw() :
     CREAM_SAFE_LOG(m_log_dev->fatalStream()
     		   << "subscriptionManager::CTOR() - Couldn't create "
 		   << "a subscriptionProxy object. STOP!"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 		   
     // this is severe, must exit
     abort();
@@ -125,7 +125,7 @@ iceUtil::subscriptionManager::subscriptionManager() throw() :
   
 //   CEDbManager* db = new CEDbManager(s_persist_dir, s_recoverable_db);
 //   if(!db->isValid()) {
-//     CREAM_SAFE_LOG( m_log_dev->fatalStream() << db->getInvalidCause() << log4cpp::CategoryStream::ENDLINE );
+//     CREAM_SAFE_LOG( m_log_dev->fatalStream() << db->getInvalidCause()  );
 //     abort();
 //   }
 //   m_dbMgr.reset( db );
@@ -193,7 +193,7 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
 		   << "Couldn't retrieve CEMon URL for CREAM URL ["
 		   << creamURL << "]: "
 		   << ex.what()<< ". Composing it from configuration file."
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 
     _cemonURL = creamURL;
 
@@ -208,7 +208,7 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
 		 << "subscriptionManager::getCEMonURL() - For CREAM URL ["
 		 << creamURL << "] got CEMon URL ["
 		 << _cemonURL <<"]"
-		 << log4cpp::CategoryStream::ENDLINE);
+		 );
   
   m_mappingCreamCemon[creamURL] = _cemonURL;
   m_cemonURL.insert( _cemonURL );
@@ -256,13 +256,13 @@ bool iceUtil::subscriptionManager::getCEMonDN(
 		   << "Couldn't get DN for CEMon ["
 		   << cemonURL << "]: "
 		   << ex.what()
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return false;
   } catch(...) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::getCEMonDN() - "
 		   << "Unknown exception catched"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return false;
   }
 }
@@ -334,7 +334,7 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
 		     << "subscriptionManager::checkSubscription() - Error checking subscription to ["
 		     << *sit << "] for DN [" << it.first << "]: "
 		     << ex.what() << ". Will not receive notifications from this CEMon for this user."
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       continue;
 
     } 
@@ -348,7 +348,7 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
 			   << "subscriptionManager::checkSubscription() - Subscription to [" << *sit << "] for proxy ["
 			   << proxy << "] is there but cannot get CEMon's DN. If it hasn't "
 			   <<"previously retrieved the notification will not be authorized."
-			   << log4cpp::CategoryStream::ENDLINE);
+			   );
 	  } else {
 	 
 	}
@@ -363,7 +363,7 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
       		     << "subscriptionManager::checkSubscription() - "
 		     << "Subscription to [" << *sit << "] for proxy ["
 		     << it.first << "] DISAPPEARED! Recreating it..."
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       
 
       bool subscribeSuccessful = m_subProxy->subscribe( proxy, *sit, sub );// also sets the sub's internal data members
@@ -375,7 +375,7 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
 		   << "subscriptionManager::checkSubscription() - "
 		   << "Owner of proxy ["<<it.first<<"] couldn't subscribe to CEMon ["
 		   << *sit << "]. Skipping..."
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
 	continue;
       }
     }
@@ -407,14 +407,14 @@ void iceUtil::subscriptionManager::purgeOldSubscription( map<string, set<string>
 		     << it->first << "] to CEMon [" << *sit << "]: expir time=["
 		     << subit->second.getExpirationTime() << "] time(null)+OLDNESS=["
 		     << (time(NULL)+MAX_SUBSCRIPTION_OLDNESS) << "]"
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
 
       if( subit->second.getExpirationTime() > (time(NULL)+MAX_SUBSCRIPTION_OLDNESS)) {
 	CREAM_SAFE_LOG(m_log_dev->debugStream()  
 		       << "subscriptionManager::purgeOldSubscription() - Subscription for DN ["
 		       << it->first << "] to CEMon [" << *sit << "] is older than "
 		       << MAX_SUBSCRIPTION_OLDNESS << " seconds. Removing it from ICE's memory."
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
       }
     }
 }
@@ -431,7 +431,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 		   << " secs since now - rate="
 		   << m_conf->getConfiguration()->ice()->notification_frequency()
 		   << " secs."
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     
     string newID;
     iceUtil::iceSubscription localsub("", 0);
@@ -447,7 +447,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
  		     << "Cannot extract the Subject from certificate ["
  		     << userProxy << "]: "
  		     << V.getErrorMessage()
- 		     << log4cpp::CategoryStream::ENDLINE);
+ 		     );
       return;
     }
 //     } catch(exception& ex) {
@@ -456,7 +456,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 // 		     << "Cannot extract the Subject from certificate ["
 // 		     << userProxy << "]: "
 // 		     << ex.what()
-// 		     << log4cpp::CategoryStream::ENDLINE);
+// 		     );
 //       return;
 //     }
     
@@ -466,7 +466,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
       CREAM_SAFE_LOG(m_log_dev->errorStream()  
 		     << "subscriptionManager::renewSubscription() - "
 		     << "SubscriptionID is EMPTY! Cannot renew a subscription without id"
-		     << log4cpp::CategoryStream::ENDLINE);
+		     );
       return;
     }
     
@@ -478,7 +478,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
       {
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << "subscriptionManager::renewSubscription() - "
 		       << "New subscription ID after renewal is ["
-		       << newID << "]" << log4cpp::CategoryStream::ENDLINE);
+		       << newID << "]" );
 	
 	m_Subs[ make_pair( V.getDNFQAN(), cemon) ].setSubscriptionID( newID );
 	m_Subs[ make_pair( V.getDNFQAN(), cemon) ].setExpirationTime( time(NULL) + m_conf->getConfiguration()->ice()->subscription_duration());
@@ -491,7 +491,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 		       << "subscriptionManager::renewSubscription() - "
 		       << "Failed while making new subscription. "
 		       << "Wont receive notifications... "
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	// let's proceed without notification. The poller will work for us ;)
       } else {
 	
@@ -511,7 +511,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 		   << "subscriptionManager::renewSubscription() - "
 		   << "Failed while renewing subscription: "
 		   << ex.what()
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
   }
 }
 
@@ -561,7 +561,7 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
 		       << "subscriptionManager::getUserCEMonMapping() - "
 		       << "Cannot retrieve DN for CEMon ["
 		       << cemon << "]. Will not subscribe to this CEMon!"
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
       }
 
     } else {
@@ -611,7 +611,7 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
 		   << userProxy << "]: "
 		   << V.getErrorMessage() 
 		   << ". ICE will not keep in memory this subscription!"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return;
   }
 
@@ -622,7 +622,7 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
 // 		   << "Cannot retrieve DN for user proxy ["
 // 		   << userProxy << "]: "
 // 		   << ex.what() << ". ICE will not keep in memory this subscription!"
-// 		   << log4cpp::CategoryStream::ENDLINE);
+// 		   );
 //     return;
 //   }
 
@@ -646,7 +646,7 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
 		   << "Cannot retrieve DN for user proxy ["
 		   << userProxy << "]: "
 		   << V.getErrorMessage() << ". Cannot check if subscription does exist. This error will trigger another subscription!"
-		   << log4cpp::CategoryStream::ENDLINE);
+		   );
     return false;
   }
 //   } catch(exception& ex) {
@@ -655,7 +655,7 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
 // 		   << "Cannot retrieve DN for user proxy ["
 // 		   << userProxy << "]: "
 // 		   << ex.what() << ". Cannot check if subscription does exist. This error will trigger another subscription!"
-// 		   << log4cpp::CategoryStream::ENDLINE);
+// 		   );
 //     return false;
 //   }
 

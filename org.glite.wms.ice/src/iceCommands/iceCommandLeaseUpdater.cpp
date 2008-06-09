@@ -160,7 +160,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
 
         CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                        << "Will renew lease ID " << *it
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
         
         // Get the Lease_t object from the lease manager cache
         time_t new_lease = m_lease_manager->renew_lease( *it );
@@ -168,7 +168,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
             CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                             << "Lease update for lease ID " << *it << " failed. " 
                             << "This lease will be removed after expiration."
-                            << log4cpp::CategoryStream::ENDLINE);
+                            );
             // Nothing to do. The next iteration will take care of
             // non existing leases, or expired leases
         }
@@ -192,7 +192,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
                        << "Removing job " << the_job.describe() 
                        << " with lease id " << the_job.get_lease_id() 
                        << " because the lease id does not exist or is expired"
-                       << log4cpp::CategoryStream::ENDLINE);
+                       );
     
         string proxy = DNProxyManager::getInstance()->getBetterProxyByDN( the_job.getUserDN() ) ;
         

@@ -70,7 +70,7 @@ iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event
             CREAM_SAFE_LOG(m_log_dev->debugStream()
                            << method_name 
                            << "Message dump follows"
-                           << log4cpp::CategoryStream::ENDLINE);
+                           );
 
             vector< string >::const_iterator msg_it;
             for ( msg_it = it->Message.begin(); 
@@ -79,7 +79,7 @@ iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event
                                << method_name 
                                << "Got notification: "
                                << boost::replace_all_copy( *msg_it, "\n", " " )
-                               << log4cpp::CategoryStream::ENDLINE);
+                               );
             }
         }
     }
@@ -129,7 +129,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  CREAM_SAFE_LOG( m_log_dev->warnStream()
 			  << method_name 
 			  << "got a CEMon notification with no messages. Skipping."
-			  << log4cpp::CategoryStream::ENDLINE);        
+			  );        
             continue; // Skip to the next notification
         }
 
@@ -137,7 +137,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                         << method_name
                         << "processing notification, with "
                         << it->Message.size() << " events"
-                        << log4cpp::CategoryStream::ENDLINE);
+                        );
         
         string first_event( *(it->Message.begin()) );
         string printable_first_event( boost::replace_all_copy( first_event, "\n", " " ) );
@@ -158,7 +158,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 			   << method_name
 			   << "Cannot parse notification classad "
 			   << printable_first_event
-			   << log4cpp::CategoryStream::ENDLINE);
+			   );
 	    continue; // Skip to the next notification
 	  }
 	  
@@ -191,7 +191,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                                 << "Unable to make normal status notification for notification "
                                 << printable_first_event
                                 << " Skipping to the next notification"
-                                << log4cpp::CategoryStream::ENDLINE);
+                                );
                 continue;
             }
 
@@ -221,7 +221,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                                 << subs_id
                                 << " to the set of subscriptions whose jobs "
                                 << "will be updated"
-                                << log4cpp::CategoryStream::ENDLINE);
+                                );
 
                 subscription_set.insert( subs_id );
             } else {
@@ -230,7 +230,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                                 << "Job with CREAM job id ["
                                 << notif->get_complete_cream_job_id()
                                 << "] was not found in the cache. Cannot update the set of subscriptions the jobs belongs to"
-                                << log4cpp::CategoryStream::ENDLINE);
+                                );
             }
         }
     }
@@ -248,7 +248,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
                                 << method_name 
                                 << "Making empty status notification command for job "
                                 << job_it->describe()
-                                << log4cpp::CategoryStream::ENDLINE);
+                                );
 
                 commands.push_front( new emptyStatusNotification( job_it->getCompleteCreamJobID() ) );
             }            

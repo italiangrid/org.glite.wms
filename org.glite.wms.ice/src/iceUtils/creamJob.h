@@ -345,7 +345,7 @@ namespace glite {
 	      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->errorStream()
 		       << "creamJob::serialize() - [De]Serialization error: ["
 		       << ex.what() << "]"
-		       << log4cpp::CategoryStream::ENDLINE);
+		       );
 	    }
 	  }
 

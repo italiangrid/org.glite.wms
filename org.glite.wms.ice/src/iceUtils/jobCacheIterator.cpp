@@ -77,7 +77,7 @@ jobCacheIterator::operator->() throw()
     if( m_grid_job_id.empty() ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Trying to dereference end() iterator. Aborting."
-                       << log4cpp::CategoryStream::ENDLINE );        
+                        );        
         abort();
     }
     
@@ -95,7 +95,7 @@ jobCacheIterator::operator*() throw()
     if( m_grid_job_id.empty() ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Trying to dereference end() iterator. Aborting."
-                       << log4cpp::CategoryStream::ENDLINE );
+                        );
         abort();
     }
 
@@ -129,19 +129,19 @@ void jobCacheIterator::refresh( ) throw()
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Got JobDbException while loading job from cache. "
                        << "Reason is \"" << ex.what() << "\". Aborting."
-                       << log4cpp::CategoryStream::ENDLINE );
+                        );
         abort();
     } catch( std::exception& ex ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Got std::exception while loading job from cache. "
                        << "Reason is \"" << ex.what() << "\". Aborting."
-                       << log4cpp::CategoryStream::ENDLINE );
+                        );
         abort();            
     } catch( ... ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Got unknown exception while loading job from cache. "
                        << "Aborting."
-                       << log4cpp::CategoryStream::ENDLINE );
+                        );
         abort();            
     }
 }

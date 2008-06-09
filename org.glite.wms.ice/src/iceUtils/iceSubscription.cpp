@@ -29,7 +29,7 @@ namespace iceUtil = glite::wms::ice::util;
 //       CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->errorStream()
 // 	<< "iceSubscription::setUserProxyIfLonger - Cannot retrieve time for ["
 // 	<< prx <<"]: "
-// 	<< ex.what() << log4cpp::CategoryStream::ENDLINE);
+// 	<< ex.what() );
 
 //     } catch(...) {
 //       cout << "iceSubscription::setUserProxyIfLonger - Cannot retrieve time for ["<<prx<<"]"<<endl;
