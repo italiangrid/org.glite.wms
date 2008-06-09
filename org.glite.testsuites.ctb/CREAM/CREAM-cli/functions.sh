@@ -110,23 +110,6 @@ function cleanup()
 {
   my_echo "cleaning up $MYTMPDIR ..."
 
-  [[ -f $OUTPUTFILE   ]] && rm -f $OUTPUTFILE
-  [[ -f $LOGFILE      ]] && rm -f $LOGFILE
-  [[ -f $CEIDFILE     ]] && rm -f $CEIDFILE
-  [[ -f $TMPJOBIDFILE ]] && rm -f $TMPJOBIDFILE
-  [[ -f $TMPJDLFILE   ]] && rm -f $TMPJDLFILE
-  [[ -f $TESTFILE     ]] && rm -f $TESTFILE
-
-  for OUTFILE in $(ls ${JOB_OUTPUT_DIR}/out.txt-* 2>/dev/null)
-  do
-    rm -f $OUTFILE
-  done
-
-  [[ -f ${JOB_OUTPUT_DIR}/std.out ]] && rm -f ${JOB_OUTPUT_DIR}/std.out
-  [[ -f ${JOB_OUTPUT_DIR}/std.err ]] && rm -f ${JOB_OUTPUT_DIR}/std.err
-  [[ -f ${JOB_OUTPUT_DIR}/out.txt ]] && rm -f ${JOB_OUTPUT_DIR}/out.txt
-  [[ -d ${JOB_OUTPUT_DIR}         ]] && rmdir ${JOB_OUTPUT_DIR}
-
   [[ -d "$MYTMPDIR" ]] && rm -rf $MYTMPDIR
 
 	return 0
@@ -149,7 +132,7 @@ function run_command()
     return 1
   fi
 
-	debug "Command run succesfully. Output is: ${COM_OUTPUT}"
+	debug "Command runs succesfully. Output is: ${COM_OUTPUT}"
   return 0 
 }
 
@@ -204,8 +187,10 @@ function prepare()
   OUTPUTFILE=$MYTMPDIR/output.log
   TMPJOBIDFILE=$MYTMPDIR/job.id
 
-	# Set the auxiliar variable "ENDPOINT"
-  ENDPOINT=`echo $CREAM | sed -e "s/8443.*/8443/"`
+	# Set the auxiliar variables "ENDPOINT" and "QUEUE"
+  ENDPOINT=`echo $CREAM | awk -F'/' '{print $1}'`
+	QUEUE=`echo $CREAM | awk -F'-' '{print $3}'`
+
 
   # Set a trap for Ctrl^C
   trap exit_interrupt SIGINT
@@ -239,7 +224,9 @@ function extract_status()
 	return 0
 }
 
-# Extract job status of the given JobID ($1), return true if job is finished, exit program if job is Aborted/Cancelled
+# Check the status of the job (quering the CE)
+# Parameter: the jobid of the job ($1)
+# Return: 0 if "DONE-OK"; 1 if job is finished badly (ABORTED|CANCELLED|DONE-FAILE); 2 otherwise
 function is_finished()
 {
 	extract_status "$1"
@@ -248,38 +235,43 @@ function is_finished()
 
   # ... exit if it is Aborted
   if [[ "$JOBSTATUS" == ABORTED ]]; then
-    my_echo "Job was Aborted !"
-    exit_success
+    debug "Job was Aborted !"
+    return 1
   fi
 
   # ... or Cancelled
   if [[ "$JOBSTATUS" == CANCELLED ]]; then
-    my_echo "The job has been (unexpectedly) cancelled !"
-    exit_success
+    debug "The job has been (unexpectedly) cancelled !"
+    return 1
   fi
 
   # ... or Failed
   if [[ "$JOBSTATUS" == DONE-FAILED ]]; then
-    my_echo "The job finished with failure !"
-    exit_success
+    debug "The job finished with failure !"
+    return 1
   fi
 
   # ... go to the next step if it is a success
   if [[ "$JOBSTATUS" == DONE-OK ]]; then
-    my_echo "Job finished !"
+    debug "Job finished OK!"
     return 0
   fi
 
-  return 1
+  return 2
 }
 
 # Wait until given job is done or the limit $NUM_STATUS_RETRIEVALS is reached
 # Parameter: the JOBID ($1)
+# Return: 0 if job finishes successfully; 1 otherwise
 function wait_until_job_finishes()
 {
   i=1
 
-  while ! is_finished "$1"
+	is_finished "$1"
+
+	ST=$?
+
+  while [ $ST -eq 2 ]
   do
 
     if [ $i -ge $NUM_STATUS_RETRIEVALS ]; then
@@ -291,9 +283,16 @@ function wait_until_job_finishes()
     sleep $SLEEP_TIME
 
     ((i++))
+	
+		is_finished "$1"
+		ST=$?
 
   done
 	
-	return 0
+	if [ $ST -eq 0 ] ; then
+		return 0
+	else
+		return 1
+	fi
 
 }
