@@ -104,13 +104,14 @@ function exit_interrupt()
   exit 1
 }
 
-# TO CHECK
-# ... cleanup temporary files
+# Remove tmp directory $MYTMPDIR if not $DEBUG
 function cleanup()
 {
   my_echo "cleaning up $MYTMPDIR ..."
 
-  [[ -d "$MYTMPDIR" ]] && rm -rf $MYTMPDIR
+	if [ $DEBUG -eq 0 ] ; then
+  	[[ -d "$MYTMPDIR" ]] && rm -rf $MYTMPDIR
+	fi
 
 	return 0
 }
