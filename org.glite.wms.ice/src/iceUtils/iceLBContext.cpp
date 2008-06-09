@@ -108,11 +108,15 @@ const char *iceLBException::what( void ) const throw()
   return this->m_le_reason.c_str();
 }
 
+string iceLBContext::s_localHostName( "" );
+
 //////////////////////////////////////////////////////////////////////////////
 // 
 // iceLBContext
 //
 //////////////////////////////////////////////////////////////////////////////
+
+//____________________________________________________________________________
 iceLBContext::iceLBContext( void ) :
     el_context( new edg_wll_Context ), 
     el_s_localhost_name( ),
@@ -124,16 +128,21 @@ iceLBContext::iceLBContext( void ) :
     edg_wll_InitContext( el_context );
 
     try {
-        el_s_localhost_name = getHostName();
+      if( s_localHostName.empty() ) {
+        el_s_localhost_name = getHostName();  
+        s_localHostName = el_s_localhost_name;
+      } else {
+        el_s_localhost_name = s_localHostName;
+      }
     } catch( runtime_error& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() 
                        << "iceLBContext::CTOR() - getHostName() returned an ERROR: "
                        << ex.what()
                        << log4cpp::CategoryStream::ENDLINE);
         el_s_localhost_name = "(unknown host name )"; 
+	s_localHostName = "";
     }
 }
-
 
 iceLBContext::~iceLBContext( void )
 {

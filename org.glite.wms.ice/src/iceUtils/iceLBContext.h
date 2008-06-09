@@ -85,6 +85,9 @@ namespace glite {
                     std::string el_s_localhost_name;
 
                 protected:
+		
+		    static std::string  s_localHostName;
+		
                     bool                m_el_hostProxy;
                     unsigned int        m_el_count;
                     log4cpp::Category  *m_log_dev;
