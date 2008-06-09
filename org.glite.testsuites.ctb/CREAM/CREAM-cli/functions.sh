@@ -127,7 +127,7 @@ function cleanup()
   [[ -f ${JOB_OUTPUT_DIR}/out.txt ]] && rm -f ${JOB_OUTPUT_DIR}/out.txt
   [[ -d ${JOB_OUTPUT_DIR}         ]] && rmdir ${JOB_OUTPUT_DIR}
 
-  [[ -d "$MYTMPDIR" ]] && rmdir $MYTMPDIR
+  [[ -d "$MYTMPDIR" ]] && rm -rf $MYTMPDIR
 
 	return 0
 }

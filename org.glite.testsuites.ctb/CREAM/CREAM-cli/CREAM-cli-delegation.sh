@@ -44,7 +44,7 @@ RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
   exit_failure "File ${LOGFILE} has been overwrite"
 else
-  RESULT=`grep -P "NOTICE|ERROR|WARNING" /tmp/delegate.log`
+  RESULT=`grep -P "NOTICE|ERROR|WARNING" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
     exit_failure "Cannot log on file ${LOGFILE}"  
   else
@@ -52,6 +52,26 @@ else
   fi
 fi
 
+my_echo "TEST 3: delegate a proxy specifying a client configuration file:";
+mkdir ${MYTMPDIR}/delegate_log_dir || exit_failure "Cannot create ${MYTMPDIR}/delegate_log_dir";
+printf "[
+DELEGATE_LOG_DIR=\"${MYTMPDIR}/delegate_log_dir\";
+CREAMDELEGATION_URL_PREFIX=\"https://\";
+CREAMDELEGATION_URL_POSTFIX=\"ce-cream/services/gridsite-delegation\";
+]
+" > ${MYTMPDIR}/delegate.conf
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-delegate-proxy \
+--debug --conf ${MYTMPDIR}/delegate.conf -e $ENDPOINT DelegateId_$$_2
+if [ $? -ne 0 ]; then
+  exit_failure ${COM_OUTPUT}
+else
+  RESULT=`ls ${MYTMPDIR}/delegate_log_dir/* | grep glite-ce-delegateproxy_CREAM | wc -l 2>/dev/null`
+  if [ $RESULT == "0" ]; then
+    success
+  else
+    exit_failure "Cannot find debug log file"
+  fi
+fi
 
 exit_success
 
