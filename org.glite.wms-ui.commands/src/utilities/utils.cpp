@@ -2220,7 +2220,7 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 */
 string Utils::resolveAddress( string relpath ) {
 	// Setting the regular expression for an IP address
-	boost::regex regExp ( "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$" ) ;
+	boost::regex regExp ( "^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}$" ) ;
 	int it = 0;
 	string pathtemp = "";
 	string address = "";
