@@ -17,15 +17,6 @@
 
 prepare $@
 
-printf "[
-JobType = \"Normal\";
-Executable = \"/bin/sleep\";
-Arguments = \"600\";
-StdOuput=\"out.txt\";
-StdError=\"err.txt\";
-]
-" > ${MYTMPDIR}/long_sleep.jdl
-
 my_echo "TEST 0: submit and then cancel a running job:"
 
 wait_until_job_runs

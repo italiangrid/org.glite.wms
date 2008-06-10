@@ -50,7 +50,7 @@ done
 ####
 
 my_echo ""
-my_echo "Test 1: check the --from option:"
+my_echo "TEST 1: check the --from option:"
 
 run_command "glite-ce-job-status -a -e $ENDPOINT --from \"`date +%Y-%m-%d` $START_TIME\" > $MYTMPDIR/tmp_output"
 if [ $? -ne 0 ]; then
@@ -71,7 +71,7 @@ fi
 ####
 
 my_echo ""
-my_echo "Test 2: check the --from and --to options:"
+my_echo "TEST 2: check the --from and --to options:"
 
 run_command "glite-ce-job-status -a -e $ENDPOINT --from \"`date +%Y-%m-%d` $START_TIME\" --to \"`date +%Y-%m-%d` $CHECK_TIME\"  > $MYTMPDIR/tmp_output"
 if [ $? -ne 0 ]; then
@@ -92,7 +92,7 @@ fi
 ####
 
 my_echo ""
-my_echo "Test 4: check the --status (REALLY-RUNNING) option:"
+my_echo "TEST 3: check the --status (REALLY-RUNNING) option:"
 
 run_command "glite-ce-job-status -a -e $ENDPOINT --from \"`date +%Y-%m-%d` $START_TIME\" --status \"REALLY-RUNNING\"  > $MYTMPDIR/tmp_output"
 if [ $? -ne 0 ]; then
@@ -117,7 +117,7 @@ fi
 ####
 
 my_echo ""
-my_echo "Test 5: check the --status (DONE-OK) option:"
+my_echo "TEST 4: check the --status (DONE-OK) option:"
 
 # Do a generic status of all the jobs
 run_command "glite-ce-job-status -i $MYTMPDIR/jobid  > $MYTMPDIR/tmp_output"
@@ -151,8 +151,9 @@ fi
 ####
 
 my_echo ""
-my_echo "Test 6: check the requirements of the --all option:"
+my_echo "TEST 5: check the requirements of the --all option:"
 
+# -a and -i are not compatible
 run_command glite-ce-job-status -a -i $MYTMPDIR/jobid
 if [ $? -ne 1 ]; then
   exit_failure ${COM_OUTPUT}
@@ -167,6 +168,7 @@ else
 	success
 fi
 
+# -a requires -e
 run_command glite-ce-job-status -a 
 if [ $? -ne 1 ]; then
   exit_failure ${COM_OUTPUT}
@@ -184,6 +186,7 @@ fi
 # extract a jobid
 JI=`tail -1 $MYTMPDIR/jobid`
 
+# -a and JOBID are not compatible
 run_command glite-ce-job-status -a $JI
 if [ $? -ne 1 ]; then
   exit_failure ${COM_OUTPUT}
@@ -197,6 +200,8 @@ if [ $? -ne 0 ]; then
 else
   success
 fi
+
+####
 
 
 

@@ -43,25 +43,16 @@ else
 	success
 fi
 
-#wait_until_job_finishes ${JOBID}
-
-
 ####
 
 my_echo ""
 
 my_echo "TEST 2: submit a job which surely failed. Check if at the end the job failed:"
 
+OLDCREAM=${CREAM}
+
 ## use a wrong queue
-FAILCREAM=`echo $CREAM |  sed -e "s/$QUEUE/queuenotexist/"`
-
-run_command glite-ce-job-submit -a -r $FAILCREAM $JDLFILE
-if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
-fi
-
-extract_jobid ${COM_OUTPUT}
-debug "The job '$JOBID' has been successfully submitted"
+CREAM=`echo ${OLDCREAM} |  sed -e "s/$QUEUE/queuenotexist/"`
 
 wait_until_job_finishes ${JOBID}
 
@@ -71,6 +62,9 @@ else
 	failure "Job finished with wrong status $JOBSTATUS"
   ((FAILED++)) # continue
 fi
+
+# reset the configured CREAM-CE
+CREAM=${OLDCREAM}
 
 ####
 
@@ -133,7 +127,7 @@ fi
 my_echo ""
 
 # Define how many jobs submit
-n=7
+n=3
 
 my_echo "TEST 5: check the status of a set of jobs ($n) saved in a file (-i):"
 
@@ -196,13 +190,34 @@ else
   fi
 fi
 
+####
+
+my_echo "TEST 7: get the status saving info in a logfile (-d --logfile):"
+
+echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
+
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-status -d --logfile ${LOGFILE} -i $MYTMPDIR/jobid
+RESULT=`grep "#HEADER#" ${LOGFILE}`
+if [ -z "$RESULT" ]; then
+  exit_failure "File ${LOGFILE} has been overwrite"
+else
+  RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`
+  if [ -z "$RESULT" ]; then
+    failure "Cannot log on file ${LOGFILE}"
+    ((FAILED++)) # continue
+  else
+    success
+  fi
+fi
+
+####
 
 
 
 #### FINISHED
 
 if [ $FAILED -gt 0 ] ; then
-  exit_failure "$FAILED test(s) failed on 6 differents tests"
+  exit_failure "$FAILED test(s) failed on 7 differents tests"
 else
   exit_success
 fi

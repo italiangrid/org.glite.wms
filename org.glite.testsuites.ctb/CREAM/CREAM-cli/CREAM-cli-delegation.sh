@@ -45,7 +45,7 @@ RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
   exit_failure "File ${LOGFILE} has been overwrite"
 else
-  RESULT=`grep -P "NOTICE|ERROR|WARNING" ${LOGFILE}`
+  RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
     exit_failure "Cannot log on file ${LOGFILE}"  
   else

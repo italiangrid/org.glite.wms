@@ -107,9 +107,9 @@ function exit_interrupt()
 # Remove tmp directory $MYTMPDIR if not $DEBUG
 function cleanup()
 {
-  my_echo "cleaning up $MYTMPDIR ..."
 
 	if [ $DEBUG -eq 0 ] ; then
+  	my_echo "cleaning up $MYTMPDIR ..."
   	[[ -d "$MYTMPDIR" ]] && rm -rf $MYTMPDIR
 	fi
 
@@ -227,7 +227,7 @@ function extract_status()
 
 # Check the status of the job (quering the CE)
 # Parameter: the jobid of the job ($1)
-# Return: 0 if "DONE-OK"; 1 if job is finished badly (ABORTED|CANCELLED|DONE-FAILE); 2 otherwise
+# Return: 0 if "DONE-OK"; 1 if job is finished badly (ABORTED|CANCELLED|DONE-FAILED); 2 otherwise
 function is_finished()
 {
 	extract_status "$1"
@@ -261,14 +261,31 @@ function is_finished()
   return 2
 }
 
-# Wait until given job is done or the limit $NUM_STATUS_RETRIEVALS is reached
-# Parameter: the JOBID ($1)
+# Wait until given job is finished or the limit $NUM_STATUS_RETRIEVALS is reached
+# Set: JOBID of the finished job
 # Return: 0 if job finishes successfully; 1 otherwise
 function wait_until_job_finishes()
 {
-  i=1
+# define a short jdl
+  printf "[
+JobType = \"Normal\";
+Executable = \"/bin/hostname\";
+StdOuput=\"out.txt\";
+StdError=\"err.txt\";
+]
+" > ${MYTMPDIR}/short.jdl
 
-	is_finished "$1"
+	i=1
+
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM ${MYTMPDIR}/short.jdl
+  if [ $? -ne 0 ]; then
+    exit_failure ${COM_OUTPUT}
+  fi
+
+  extract_jobid ${COM_OUTPUT}
+  debug "Submitted job: $JOBID"
+
+  is_finished "$JOBID"
 
 	ST=$?
 
@@ -285,15 +302,15 @@ function wait_until_job_finishes()
 
     ((i++))
 	
-		is_finished "$1"
+		is_finished "$JOBID"
 		ST=$?
 
   done
 	
 	if [ $ST -eq 0 ] ; then
-		return 0
+		return 0 # DONE_OK 
 	else
-		return 1
+		return 1 # ABORTED|CANCELLED|DONE-FAILED
 	fi
 
 }
@@ -303,21 +320,33 @@ function new_delegation_id(){
   echo DelegateId_`hostname`_`date +%s`
 }
 
+# Wait until given job is running
+# Set: JOBID of the running job
+function wait_until_job_runs()
+{
+# define a long jdl
+	printf "[
+JobType = \"Normal\";
+Executable = \"/bin/sleep\";
+Arguments = \"600\";
+StdOuput=\"out.txt\";
+StdError=\"err.txt\";
+]
+" > ${MYTMPDIR}/long_sleep.jdl
 
-function wait_until_job_runs(){
   run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM ${MYTMPDIR}/long_sleep.jdl
   if [ $? -ne 0 ]; then
     exit_failure ${COM_OUTPUT}
   fi
 
   extract_jobid ${COM_OUTPUT}
-  my_echo "Submitted job: $JOBID"
+  debug "Submitted job: $JOBID"
 
   ok=0
   while [ "$ok" == "0" ]; do
 
-    my_echo "Waiting for the running job (30s)"
-    sleep 30
+    my_echo "Waiting for the running job (10s)"
+    sleep 10
 
     extract_status $JOBID
 

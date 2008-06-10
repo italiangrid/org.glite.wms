@@ -123,24 +123,21 @@ fi
 
 my_echo "TEST 6: submit a job setting a logfile (-d --logfile):"
 
-run_command glite-ce-job-submit --delegationId $DELEGATION -d --logfile ${LOGFILE} -r $CREAM $JDLFILE
-if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
-fi
+echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 
-extract_jobid ${COM_OUTPUT}
-debug "Job ${JOBID} has been successfully submitted"
-
-if [ -e ${LOGFILE} ] ; then
-	my_echo ""
-	my_echo "Logfile contains:"
-	my_echo ""
-	my_echo "`cat ${LOGFILE}`"
-	success
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit --delegationId $DELEGATION -d --logfile ${LOGFILE} -r $CREAM $JDLFILE
+RESULT=`grep "#HEADER#" ${LOGFILE}`
+if [ -z "$RESULT" ]; then
+  exit_failure "File ${LOGFILE} has been overwrite"
 else
-	failure "Logfile doesn't exist!"
-	((FAILED++)) # continue
-fi	
+  RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`
+  if [ -z "$RESULT" ]; then
+    failure "Cannot log on file ${LOGFILE}"
+		((FAILED++)) # continue
+  else
+    success
+  fi
+fi
 
 ####
 
