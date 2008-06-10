@@ -10,7 +10,7 @@
 # commands fails, but not when the job itself finishes with a failure or gets
 # aborted from the queue. 
 #
-# The test suite requires example.jdl, test.conf and cream.conf to be present
+# The test suite requires example.jdl and test.conf to be present
 # in the same directory with the scripts
 #
 # Author: SA3-IT <sa3-italia@mi.infn.it>
@@ -138,61 +138,58 @@ function run_command()
   return 0 
 }
 
-# TO CHECK
-# ... print help message and exit
+# ... print usage message and exit
 function usage()
 {
   echo "Usage: "
   echo ""
-  echo $(basename $0) "[-d]"
+  echo $(basename $0) "[-d -h]"
   echo ""
-  echo " -d   use glite-ce-delegate-proxy (default behaviour is to use automatic delegation)"
+  echo " --debug (-d) Print debug messages"
+  echo " --help  (-h) Print this message"
   echo ""
   exit 0
 }
 
-# TO CHECK
-# ... prepare everything
+# Prepare the enviroment
+# Set: MYTMPDIR (to a working temporary directory)
+# Set: ENDPOINT (extract the ENDPOINT from the CREAM variable defined in test.conf)
+# Set: QUEUE (extract the QUEUE from the CREAM variable defined in test.conf)
+# Set: START_TIME (the time when the test start)
 function prepare()
 {
 	# Sources global variables (test.conf is REQUIRED)
 	[[ -f test.conf ]] || exit_failure "Internal ERROR! Could not find the required 'test.conf' file!"
 	source test.conf
 
-#  if [ "$1" == "--help" ]; then
-#    usage
-#    exit 0
-#  fi
+	# check if debug is required (it overwrites the tets.conf file)
+  if [ "$1" == "-d" ] || [ "$1" == "--debug" ]; then
+    DEBUG=1
+  fi
+
+	# print usage message in required
+  if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    usage
+    exit 0
+  fi
   
   my_echo "++++++++++++++++++++++++++++++++++++++++++++"
   my_echo "+ Test of CREAM-CE  command line interface +"
   my_echo "++++++++++++++++++++++++++++++++++++++++++++"
 
   START_TIME=$(date +%H:%M:%S)
-  my_echo "Test start at: $START_TIME"
+  my_echo "Test starts at: $START_TIME"
 
-	# The JDLFILE and the CONFIG_FILE are required!
-  [[ -f "$JDLFILE"       ]] || exit_failure "Internal ERROR! Could not find example jdl file $JDLFILE"
-  [[ -f "${CONFIG_FILE}" ]] || exit_failure "Internal ERROR! Could not find example config file ${CONFIG_FILE}"
+	# The JDLFILE is required!
+  [[ -f "$JDLFILE" ]] || exit_failure "Internal ERROR! Could not find example jdl file $JDLFILE"
 
   # ... create temporary directory
   MYTMPDIR=/tmp/cream-cli-test-$(id -un)-$$
   mkdir $MYTMPDIR || exit_failure "Internal ERROR! Could not create temporary directory $MYTMPDIR"
 
-	# CHECK if all of them are needed...
-  # ... define common directory and file names
-  JOB_OUTPUT_DIR=$MYTMPDIR/jobOutput
-  LOGFILE=$MYTMPDIR/tmp.log
-  CEIDFILE=$MYTMPDIR/ce.id
-  TESTFILE=$MYTMPDIR/test.file
-  TMPJDLFILE=$MYTMPDIR/test.jdl
-  OUTPUTFILE=$MYTMPDIR/output.log
-  TMPJOBIDFILE=$MYTMPDIR/job.id
-
-	# Set the auxiliar variables "ENDPOINT" and "QUEUE"
+	# Set some auxiliar variables 
   ENDPOINT=`echo $CREAM | awk -F'/' '{print $1}'`
 	QUEUE=`echo $CREAM | awk -F'-' '{print $3}'`
-
 
   # Set a trap for Ctrl^C
   trap exit_interrupt SIGINT
@@ -299,9 +296,11 @@ function wait_until_job_finishes()
 
 }
 
+# Returns a new delegation name
 function new_delegation_id(){
   echo DelegateId_`hostname`_`date +%s`
 }
+
 
 function wait_until_job_runs(){
   run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM ${MYTMPDIR}/long_sleep.jdl

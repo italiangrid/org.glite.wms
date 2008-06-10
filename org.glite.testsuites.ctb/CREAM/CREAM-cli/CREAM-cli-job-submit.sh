@@ -55,14 +55,14 @@ success
 my_echo "TEST 3: submit a job after the proxy delegation (-D):"
 
 # delegate a proxy 
-ENDPOINT=`echo $CREAM | sed -e "s/8443.*/8443/"`
-run_command glite-ce-delegate-proxy -e $ENDPOINT DelegateId_$$
+DELEGATION=`new_delegation_id`
+run_command glite-ce-delegate-proxy -e $ENDPOINT $DELEGATION
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
 
 # submit the job
-run_command glite-ce-job-submit -D DelegateId_$$ -r $CREAM $JDLFILE
+run_command glite-ce-job-submit -D $DELEGATION -r $CREAM $JDLFILE
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
@@ -76,7 +76,7 @@ success
 
 my_echo "TEST 4: submit a job storing the JobID in a file (--output):"
 
-run_command glite-ce-job-submit --autm-delegation --output $TMPJOBIDFILE -r $CREAM $JDLFILE
+run_command glite-ce-job-submit --autm-delegation --output $MYTMPDIR/jobid -r $CREAM $JDLFILE
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
@@ -85,7 +85,7 @@ extract_jobid ${COM_OUTPUT}
 debug "Job ${JOBID} has been successfully submitted."
 
 # extract the JobID from the output file
-JD=`grep https $TMPJOBIDFILE`
+JD=`grep https $MYTMPDIR/jobid`
 
 if [ $JOBID == $JD ] ; then
 	success
@@ -98,7 +98,7 @@ fi
 
 my_echo "TEST 5: submit a job storing the JobID in the already used file (--output):"
 
-run_command glite-ce-job-submit --autm-delegation --output $TMPJOBIDFILE -r $CREAM $JDLFILE
+run_command glite-ce-job-submit --autm-delegation --output $MYTMPDIR/jobid -r $CREAM $JDLFILE
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
@@ -107,10 +107,10 @@ extract_jobid ${COM_OUTPUT}
 debug "Job ${JOBID} has been successfully submitted."
 
 debug "The output file contains these lines:"
-debug "`cat $TMPJOBIDFILE`"
+debug "`cat $MYTMPDIR/jobid`"
 
 # extract the last JobID saved in the file (last line)
-JD=`tail -1 $TMPJOBIDFILE`
+JD=`tail -1 $MYTMPDIR/jobid`
 
 if [ $JOBID == $JD ] ; then
   success
@@ -123,7 +123,7 @@ fi
 
 my_echo "TEST 6: submit a job setting a logfile (-d --logfile):"
 
-run_command glite-ce-job-submit --delegationId DelegateId_$$ -d --logfile $LOGFILE -r $CREAM $JDLFILE
+run_command glite-ce-job-submit --delegationId $DELEGATION -d --logfile ${MYTMPDIR}/submit.log -r $CREAM $JDLFILE
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
@@ -131,11 +131,11 @@ fi
 extract_jobid ${COM_OUTPUT}
 debug "Job ${JOBID} has been successfully submitted"
 
-if [ -e ${LOGFILE} ] ; then
+if [ -e ${MYTMPDIR}/submit.log ] ; then
 	my_echo ""
 	my_echo "Logfile contains:"
 	my_echo ""
-	my_echo "`cat $LOGFILE`"
+	my_echo "`cat ${MYTMPDIR}/submit.log`"
 	success
 else
 	failure "Logfile doesn't exist!"
@@ -151,7 +151,7 @@ printf "[
 SUBMIT_LOG_DIR=\"${MYTMPDIR}/submit_log_dir\";
 ]
 " > ${MYTMPDIR}/submit.conf
-run_command glite-ce-job-submit --delegationId DelegateId_$$ -d --conf ${MYTMPDIR}/submit.conf -r $CREAM $JDLFILE
+run_command glite-ce-job-submit --delegationId $DELEGATION -d --conf ${MYTMPDIR}/submit.conf -r $CREAM $JDLFILE
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 else
