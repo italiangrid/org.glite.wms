@@ -27,29 +27,8 @@ StdError=\"err.txt\";
 " > ${MYTMPDIR}/long_sleep.jdl
 
 my_echo "TEST 0: submit and then cancel a running job:"
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM ${MYTMPDIR}/long_sleep.jdl
-if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
-fi
 
-extract_jobid ${COM_OUTPUT}
-my_echo "Submitted job: $JOBID"
-
-ok=0
-while [ "$ok" == "0" ]; do
-
-  my_echo "Waiting for the running job (30s)"
-  sleep 30
-
-  extract_status $JOBID
-
-  if [ "$JOBSTATUS" == "RUNNING" -o "$JOBSTATUS" == "REALLY-RUNNING" ]; then
-    ok=1
-  fi
-  if [ "$JOBSTATUS" == "DONE-FAILED" -o "$JOBSTATUS" == "ABORTED" ]; then
-    exit_failure "Cannot run the job (${JOBSTATUS})"
-  fi
-done
+wait_until_job_runs
 
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N $JOBID
 if [ $? -ne 0 ]; then
@@ -58,5 +37,15 @@ else
   success
 fi
 
-exit_success
+my_echo "TEST 1: submit and then cancel jobs with --all option:"
 
+wait_until_job_runs
+
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N --all -e $ENDPOINT
+if [ $? -ne 0 ]; then
+  exit_failure ${COM_OUTPUT}
+else
+  success
+fi
+
+exit_success
