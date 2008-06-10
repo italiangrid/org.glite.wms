@@ -13,36 +13,40 @@
 
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileListLock.h"
+#include "glite/wms/common/utilities/jobdir.h"
 
 #include "common/EventLogger.h"
 #include "JobControllerImpl.h"
+
+namespace utils = glite::wms::common::utilities;
 
 JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace controller {
 
 class JobControllerProxy: public JobControllerImpl {
-private:
-  typedef glite::wms::common::utilities::FileList<classad::ClassAd>    queue_type;
-  typedef glite::wms::common::utilities::FileListMutex                 mutex_type;
+  JobControllerProxy( const JobControllerProxy &rhs ); // Not implemented
+  JobControllerProxy &operator=( const JobControllerProxy &rhs ); // Not implemented
 
+  int                      jcp_source;
+
+  boost::shared_ptr<utils::FileListMutex>               jcp_mutex;
+  boost::shared_ptr<utils::FileList<classad::ClassAd> > jcp_queue;
+  boost::shared_ptr<utils::JobDir>                      jcp_jobdir;
+
+  jccommon::EventLogger    jcp_logger;
 public:
-  JobControllerProxy( queue_type &q, mutex_type &m, edg_wll_Context *cont );
-  ~JobControllerProxy( void );
+  JobControllerProxy(
+    boost::shared_ptr<utils::FileList<classad::ClassAd> >q,
+    boost::shared_ptr<utils::FileListMutex> m,
+    boost::shared_ptr<utils::JobDir> jcp_jd,
+    edg_wll_Context *cont
+  );
 
   virtual int submit( const classad::ClassAd *ad );
   virtual bool cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile );
   virtual bool cancel( int condorid, const char *logfile );
   virtual size_t queue_size( void );
-
-private:
-  JobControllerProxy( const JobControllerProxy &rhs ); // Not implemented
-  JobControllerProxy &operator=( const JobControllerProxy &rhs ); // Not implemented
-
-  int                      jcp_source;
-  mutex_type              &jcp_mutex;
-  queue_type              &jcp_queue;
-  jccommon::EventLogger    jcp_logger;
 };
 
 }; // namespace controller
