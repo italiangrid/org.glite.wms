@@ -123,7 +123,7 @@ fi
 
 my_echo "TEST 6: submit a job setting a logfile (-d --logfile):"
 
-run_command glite-ce-job-submit --delegationId $DELEGATION -d --logfile ${MYTMPDIR}/submit.log -r $CREAM $JDLFILE
+run_command glite-ce-job-submit --delegationId $DELEGATION -d --logfile ${LOGFILE} -r $CREAM $JDLFILE
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
@@ -131,11 +131,11 @@ fi
 extract_jobid ${COM_OUTPUT}
 debug "Job ${JOBID} has been successfully submitted"
 
-if [ -e ${MYTMPDIR}/submit.log ] ; then
+if [ -e ${LOGFILE} ] ; then
 	my_echo ""
 	my_echo "Logfile contains:"
 	my_echo ""
-	my_echo "`cat ${MYTMPDIR}/submit.log`"
+	my_echo "`cat ${LOGFILE}`"
 	success
 else
 	failure "Logfile doesn't exist!"

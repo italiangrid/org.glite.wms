@@ -156,6 +156,7 @@ function usage()
 # Set: ENDPOINT (extract the ENDPOINT from the CREAM variable defined in test.conf)
 # Set: QUEUE (extract the QUEUE from the CREAM variable defined in test.conf)
 # Set: START_TIME (the time when the test start)
+# Set: LOGFILE (pointing to a temporary log file)
 function prepare()
 {
 	# Sources global variables (test.conf is REQUIRED)
@@ -190,6 +191,7 @@ function prepare()
 	# Set some auxiliar variables 
   ENDPOINT=`echo $CREAM | awk -F'/' '{print $1}'`
 	QUEUE=`echo $CREAM | awk -F'-' '{print $3}'`
+	LOGFILE=$MYTMPDIR/file.log
 
   # Set a trap for Ctrl^C
   trap exit_interrupt SIGINT
