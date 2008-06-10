@@ -114,28 +114,21 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        
                        );
         if ( m_lb_enabled ) {
-	  res = ev->execute( m_ctx.get() );
-	  m_ctx->testCode( res );
+            res = ev->execute( m_ctx.get() );
+            m_ctx->testCode( res );
 	}
         
     } while( res != 0 );        
-    
-    new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
-/*
-    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-                   << "LB call returned "
-                   << res 
-                   // << " Seq code AFTER from job=[" << ev->getJob().getSequenceCode() << "]"
-                   // << " Seq code AFTER from ctx=[" << new_seq_code << "]"
-                   
-                   );
-*/
-    { // Now, locks the cache
-        jobCache* m_cache( jobCache::getInstance() );
-        boost::recursive_mutex::scoped_lock( m_cache->mutex );
-        CreamJob theJob( ev->getJob() );
-        theJob.setSequenceCode( new_seq_code );    
-        m_cache->put( theJob );
-        return theJob;
-    } // Unlocks the job cache
+
+    if ( edg_wll_GetSequenceCode( *(m_ctx->el_context) ) ) { // update the sequence code only if it is non null
+        new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+        { // Lock the job cache
+            jobCache* m_cache( jobCache::getInstance() );
+            boost::recursive_mutex::scoped_lock( m_cache->mutex );
+            CreamJob theJob( ev->getJob() );
+            theJob.setSequenceCode( new_seq_code );    
+            m_cache->put( theJob );
+            return theJob;
+        } // Unlock the job cache
+    }
 }
