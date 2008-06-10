@@ -2,7 +2,11 @@
 
 ###############################################################################
 #
-# A basic job submit test.
+# A basic job status test.
+#
+# This test retrieves the status of an existing job (command glite-ce-job-status) 
+# with different verbosity levels (--level option).
+# It also check the --input.
 #
 # Features: The test will fail when one of the tested commands fails,
 # but not when the job itself finishes with a failure or aborted status.
@@ -170,10 +174,35 @@ else
 	success
 fi
 
+####
+
+my_echo "TEST 6: check the --conf option:"
+
+mkdir ${MYTMPDIR}/status_log_dir || exit_failure "Cannot create ${MYTMPDIR}/status_log_dir";
+printf "[
+STATUS_LOG_DIR=\"${MYTMPDIR}/status_log_dir\";
+]
+" > ${MYTMPDIR}/status.conf
+run_command glite-ce-job-status --debug --conf ${MYTMPDIR}/status.conf -i $MYTMPDIR/jobid
+if [ $? -ne 0 ]; then
+  exit_failure ${COM_OUTPUT}
+else
+  RESULT=`ls ${MYTMPDIR}/status_log_dir/* | grep glite-ce-job-status_CREAM | wc -l 2>/dev/null`
+  if [ $RESULT == "0" ]; then
+    failure "Cannot find debug log file"
+	  ((FAILED++))
+  else
+    success
+  fi
+fi
+
+
+
+
 #### FINISHED
 
 if [ $FAILED -gt 0 ] ; then
-  exit_failure "$FAILED test(s) failed on 5 differents tests"
+  exit_failure "$FAILED test(s) failed on 6 differents tests"
 else
   exit_success
 fi

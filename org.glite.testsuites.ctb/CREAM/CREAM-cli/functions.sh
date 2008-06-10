@@ -122,6 +122,7 @@ function cleanup()
 # Return: 0 if success, 1 otherwise
 function run_command()
 {
+	unset COM_OUTPUT
   my_echo ""
   my_echo "[" $(date +%H:%M:%S) "] run: " $@
 
@@ -129,7 +130,7 @@ function run_command()
 
   if [ $? -ne 0 ]; then
 		my_echo "Command FAILED"
-    debug "Command output was: ${COM_OUTPUT}"
+    debug "Command output is: ${COM_OUTPUT}"
     return 1
   fi
 
@@ -236,7 +237,7 @@ function is_finished()
 
   # ... exit if it is Aborted
   if [[ "$JOBSTATUS" == ABORTED ]]; then
-    debug "Job was Aborted !"
+    debug "Job is Aborted !"
     return 1
   fi
 

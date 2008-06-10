@@ -146,31 +146,24 @@ fi
 
 my_echo "TEST 7: submit a job setting a configuration file (--conf):"
 
-SLD=`grep -i SUBMIT_LOG_DIR cream.conf | cut -d \" -f 2`
-if [ -z $SLD ] ; then
-  exit_failure "Please set SUBMIT_LOG_DIR in the configuration file"
-fi
-
-# count the number of files in the given directory
-ONF=`ls $SLD 2>/dev/null | wc -l`
-
-run_command glite-ce-job-submit --delegationId DelegateId_$$ -d --conf ${CONFIG_FILE} -r $CREAM $JDLFILE
+mkdir ${MYTMPDIR}/submit_log_dir || exit_failure "Cannot create ${MYTMPDIR}/submit_log_dir";
+printf "[
+SUBMIT_LOG_DIR=\"${MYTMPDIR}/submit_log_dir\";
+]
+" > ${MYTMPDIR}/submit.conf
+run_command glite-ce-job-submit --delegationId DelegateId_$$ -d --conf ${MYTMPDIR}/submit.conf -r $CREAM $JDLFILE
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
-fi
-
-extract_jobid ${COM_OUTPUT}
-debug "Job ${JOBID} has been successfully submitted"
-
-# recount the number of files in the given directory
-NNF=`ls $SLD 2>/dev/null | wc -l`
-
-if [ $NNF -gt $ONF ] ; then
-	success
 else
-	failure "Log file has not been written in the directory given in the configuration file"
-  ((FAILED++)) # continue
+  RESULT=`ls ${MYTMPDIR}/submit_log_dir/* | grep glite-ce-job-submit_CREAM | wc -l 2>/dev/null`
+  if [ $RESULT == "0" ]; then
+    failure "Cannot find debug log file"
+    ((FAILED++)) # continue
+  else
+    success
+  fi
 fi
+
 
 # ... terminate
 
