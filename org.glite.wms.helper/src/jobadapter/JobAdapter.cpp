@@ -114,10 +114,7 @@ replace(std::string& where, const std::string& what, const std::string& with)
   }
 }
 
-JobAdapter::JobAdapter(
-  const classad::ClassAd* ad,
-  boost::shared_ptr<std::string> jw_template
-) 
+JobAdapter::JobAdapter(const classad::ClassAd* ad, boost::shared_ptr<std::string> jw_template)
  : m_ad(ad), m_jw_template(jw_template)
 {
 }
@@ -421,11 +418,8 @@ try {
     jdl::set_copy_to_spool(*result, false);
     jdl::set_transfer_executable(*result, true);
   } else {
-    if (is_nordugrid_resource) {
-      jdl::set_grid_type(*result, "nordugrid");
-    } else {
-      jdl::set_grid_type(*result, "condor");
-    }
+    jdl::set_grid_type(*result, "condor");
+
     // These three attributes are needed for collecting accounting logs.
     jdl::set_remote_remote_user_subject_name(*result, certificatesubject);
     jdl::set_remote_remote_edg_jobid(*result, job_id);
@@ -1032,7 +1026,7 @@ try {
     jdl::set_grid_resource(*result, "nordugrid " + gatekeeper_hostname);
     jdl::set_nordugrid_rsl(
       *result,
-      globusrsl
+      "(runTimeEnvironment=\"ENV/GLITE\")" + globusrsl
     );
   }
   

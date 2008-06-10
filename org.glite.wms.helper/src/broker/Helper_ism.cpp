@@ -277,8 +277,9 @@ try {
   );
 
   // update the brokerinfo
-  BI->retrieveCloseSEsInfo(*ce_it->second.getAd()); // CE id
-  BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
+  // TODO
+  //BI->retrieveCloseSEsInfo(*ce_it->second.getAd()); // CE id
+  //BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
 
   // Add the .Brokerinfo files to the InputSandbox
   bool input_sandbox_exists = false;

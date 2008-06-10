@@ -525,9 +525,6 @@ JobWrapper::fill_out_script(std::ostream& output_stream) const
 std::ostream&
 JobWrapper::print(std::ostream& os) const
 {
-  const configuration::WMConfiguration* const wm_config
-    = configuration::Configuration::instance()->wm();
-
   if (!fill_out_script(os)) {
     throw JobWrapperException("Cannot create jobwrapper script");
   }
