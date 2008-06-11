@@ -24,7 +24,7 @@ my_echo ""
 my_echo "Submit some jobs to prepare the context of the tests"
 
 i=0
-n=9
+n=5
 
 while [ $i -lt $n ] ; do
   run_command "glite-ce-job-submit -a -o $MYTMPDIR/jobid -r $CREAM $JDLFILE"
@@ -77,13 +77,13 @@ fi
 
 my_echo "TEST 3: purge again a previous purged job"
 
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-purge -N $PURGJOB
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-purge -n -N $PURGJOB
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
 
 RESULT=`echo ${COM_OUTPUT} | grep -P "job not found"`
-if [ -z "$RESULT" ]; then
+if [ $? -ne 0 ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
@@ -126,7 +126,7 @@ my_echo ""
 my_echo "TEST 6: check the requirements of the --all option:"
 
 # -a and -i are not compatible
-run_command glite-ce-job-purge -a -i $MYTMPDIR/jobid
+run_command glite-ce-job-purge -n -a -i $MYTMPDIR/jobid
 if [ $? -ne 1 ]; then
   exit_failure ${COM_OUTPUT}
 fi
@@ -140,12 +140,12 @@ else
 fi
 
 # -a requires -e
-run_command glite-ce-job-purge -a
+run_command glite-ce-job-purge -n -a
 if [ $? -ne 1 ]; then
   exit_failure ${COM_OUTPUT}
 fi
 
-TMP=`echo ${COM_OUTPUT} | grep -P "Option --all requires the specification of the endpoint (option --endpoint) to contact"`
+TMP=`echo ${COM_OUTPUT} | grep "Option --all requires the specification of the endpoint (option --endpoint) to contact"`
 if [ $? -ne 0 ]; then
   failure " The ouput of the command is: ${COM_OUTPUT}"
   ((FAILED++)) # continue
@@ -157,13 +157,12 @@ fi
 JI=`tail -1 $MYTMPDIR/jobid`
 
 # -a and JOBID are not compatible
-run_command glite-ce-job-purge -a $JI
+run_command glite-ce-job-purge -n -a $JI
 if [ $? -ne 1 ]; then
   exit_failure ${COM_OUTPUT}
 fi
 
-TMP=`echo ${COM_OUTPUT} | grep -P "all and --input or --all and specification of JobID(s) as argument are exclusive"`
-
+TMP=`echo ${COM_OUTPUT} | grep "all and --input or --all and specification of JobID(s) as argument are exclusive"`
 if [ $? -ne 0 ]; then
   failure " The ouput of the command is: ${COM_OUTPUT}"
   ((FAILED++)) # continue
