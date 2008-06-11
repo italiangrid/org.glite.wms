@@ -61,13 +61,14 @@ echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 
 wait_until_job_runs
 
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel --logfile ${LOGFILE} -N $JOBID
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel \
+--logfile ${LOGFILE} -d -N $JOBID
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
   failure "File ${LOGFILE} has been overwrite"
   ((FAILED++)) # continue
 else
-  RESULT=`grep -P "INFO|ERROR|WARN|NOTICE" ${LOGFILE}`
+  RESULT=`grep -o -P "INFO|ERROR|WARN|NOTICE" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
     failure "Cannot log on file ${LOGFILE}"
     ((FAILED++)) # continue

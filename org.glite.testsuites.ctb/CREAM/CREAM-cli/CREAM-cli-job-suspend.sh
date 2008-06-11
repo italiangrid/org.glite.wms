@@ -28,7 +28,13 @@ if [ $? -ne 0 ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  success
+  extract_status $JOBID
+  if [ "$JOBSTATUS" == "HELD" ]; then
+    success
+  else
+    failure "The job is not suspended, status is $JOBSTATUS"
+    ((FAILED++)) # continue
+  fi
 fi
 
 
@@ -41,7 +47,13 @@ if [ $? -ne 0 ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  success
+  extract_status $JOBID
+  if [ "$JOBSTATUS" == "HELD" ]; then
+    success
+  else
+    failure "The job is not suspended, status is $JOBSTATUS"
+    ((FAILED++)) # continue
+  fi
 fi
 
 my_echo "TEST 2: try to suspend a terminated job:"
@@ -103,7 +115,7 @@ fi
 
 
 if [ $FAILED -gt 0 ] ; then
-  exit_failure "$FAILED test(s) failed on 3 differents tests"
+  exit_failure "$FAILED test(s) failed on 5 differents tests"
 else
   exit_success
 fi
