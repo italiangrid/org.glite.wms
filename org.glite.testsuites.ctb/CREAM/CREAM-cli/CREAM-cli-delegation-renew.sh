@@ -54,7 +54,7 @@ if [ -z "$RESULT" ]; then
   failure "File ${LOGFILE} has been overwrite"
   ((FAILED++)) # continue
 else
-  RESULT=`grep -P "NOTICE|ERROR|WARNING" ${LOGFILE}`
+  RESULT=`grep -o -P "NOTICE|ERROR|WARNING" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
     failure "Cannot log on file ${LOGFILE}"
     ((FAILED++)) # continue
