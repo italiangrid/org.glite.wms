@@ -2,10 +2,12 @@
 
 ###############################################################################
 #
-# A basic job-list test.
+# Test glite-ce-job-list command.
 #
-# Features: The test will fail when one of the tested commands fails,
-# but not when the job itself finishes with a failure or aborted status.
+# TEST 1: check if the command returns the right number of jobs
+# TEST 2: check if the --output option works
+# TEST 3: check if the --conf option works
+# TEST 4: save info into a logfile to check if --debug and --logfile options work
 #
 # Author: Alessio Gianelle <sa3-italia@mi.infn.it>
 # Version: $Id:
@@ -21,15 +23,24 @@ prepare $@
 FAILED=0
 
 my_echo ""
+
+TESTCOMMAND="${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-list"
+
+if [ ! -x ${TESTCOMMAND} ] ; then
+  exit_failure "Command ${TESTCOMMAND} not exists, test could not be performed!"
+fi
+
+####
+
 my_echo "Submit some jobs to prepare the context of the tests"
 
 i=0
 n=5
 
 while [ $i -lt $n ] ; do
-  run_command "glite-ce-job-submit -a -o $MYTMPDIR/jobid -r $CREAM $JDLFILE"
+  run_command "${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -o $MYTMPDIR/jobid -r $CREAM $JDLFILE"
   if [ $? -ne 0 ]; then
-    exit_failure ${COM_OUTPUT}
+    exit_failure "Command failed: ${COM_OUTPUT}"
   fi
   ((i++))
 done
@@ -38,24 +49,24 @@ my_echo ""
 
 ####
 
-my_echo "TEST 1: to a job list and check if it returns the right number of jobs"
+my_echo "TEST 1: check if the command returns the right number of jobs:"
 
-run_command "glite-ce-job-status -a -e $ENDPOINT > $MYTMPDIR/tmp_output"
+run_command "${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-status -a -e $ENDPOINT > $MYTMPDIR/status_output"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 fi
 
 # Check how many jobs are in the output of the status command
-sj=`cat $MYTMPDIR/tmp_output | grep JobID | wc -l`
+sj=`cat $MYTMPDIR/status_output | grep JobID | wc -l`
 debug "Command returns the status of $sj jobs"
 
-run_command "glite-ce-job-list $ENDPOINT > $MYTMPDIR/tmp_output2"
+run_command "${TESTCOMMAND} $ENDPOINT > $MYTMPDIR/joblist_output"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 fi
 
 # Check how many jobs are in the output of the job-list command
-lj=`cat $MYTMPDIR/tmp_output | grep http | wc -l`
+lj=`cat $MYTMPDIR/joblist_output | grep http | wc -l`
 debug "Command returns the status of $lj jobs"
 
 if [ $sj -ne $lj ] ; then
@@ -67,15 +78,15 @@ fi
 
 ####
 
-my_echo "TEST 2: check the --output option"
+my_echo "TEST 2: check if the --output option works:"
 
-run_command "glite-ce-job-list --nomsg --output  ${MYTMPDIR}/joblist_output $ENDPOINT "
+run_command "${TESTCOMMAND} --nomsg --output ${MYTMPDIR}/joblist_file_output $ENDPOINT "
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure " COmmand failed: ${COM_OUTPUT}"
 fi
 
 # Check how many jobs are in the output file of the job-list command
-fj=`cat $MYTMPDIR/joblist_output | grep http | wc -l`
+fj=`cat $MYTMPDIR/joblist_file_output | grep http | wc -l`
 debug "Command returns the status of $fj jobs"
 
 if [ $sj -ne $fj ] ; then
@@ -85,10 +96,9 @@ else
   success
 fi
 
-
 ####
 
-my_echo "TEST 3: check the --conf option:"
+my_echo "TEST 3: check if the --conf option works:"
 
 mkdir ${MYTMPDIR}/joblist_log_dir || exit_failure "Cannot create ${MYTMPDIR}/joblist_log_dir";
 printf "[
@@ -96,9 +106,9 @@ LIST_LOG_DIR=\"${MYTMPDIR}/joblist_log_dir\";
 ]
 " > ${MYTMPDIR}/joblist.conf
 
-run_command glite-ce-job-list --debug --conf ${MYTMPDIR}/joblist.conf $ENDPOINT
+run_command "${TESTCOMMAND} --debug --conf ${MYTMPDIR}/joblist.conf $ENDPOINT"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed ${COM_OUTPUT}"
 else
   RESULT=`ls ${MYTMPDIR}/joblist_log_dir/* | grep glite-ce-job-list_CREAM | wc -l 2>/dev/null`
   if [ $RESULT == "0" ]; then
@@ -111,14 +121,15 @@ fi
 
 ####
 
-my_echo "TEST 4: get the job list saving info in a logfile (-d --logfile):"
+my_echo "TEST 4: save info into a logfile to check if --debug and --logfile options work:"
 
 echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-list -d --logfile ${LOGFILE} $ENDPOINT
+run_command "${TESTCOMMAND} --debug --logfile ${LOGFILE} $ENDPOINT"
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
-  exit_failure "File ${LOGFILE} has been overwrite"
+  failure "File ${LOGFILE} has been overwrite"
+	((FAILED++)) # continue
 else
   RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
@@ -128,11 +139,6 @@ else
     success
   fi
 fi
-
-
-
-
-
 
 #### FINISHED
 

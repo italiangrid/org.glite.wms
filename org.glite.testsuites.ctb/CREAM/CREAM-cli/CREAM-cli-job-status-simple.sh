@@ -2,14 +2,15 @@
 
 ###############################################################################
 #
-# A basic job status test.
+# Test glite-ce-job-status command:
 #
-# This test retrieves the status of an existing job (command glite-ce-job-status) 
-# with different verbosity levels (--level option).
-# It also check the --input.
-#
-# Features: The test will fail when one of the tested commands fails,
-# but not when the job itself finishes with a failure or aborted status.
+# TEST 1: submit a job and then retrieve its status
+# TEST 2: submit a job which surely failed. Check if the final status is the ones expected
+# TEST 3: check the status of a job setting log level to 1 (option --level 1):
+# TEST 4: check the status of a job setting log level to 2 (option --level 2)
+# TEST 5: check if the option --input works
+# TEST 6: check if the --conf option works
+# TEST 7: save info into a logfile to check if --debug and --logfile options work
 #
 # Author: Alessio Gianelle <sa3-italia@mi.infn.it>
 # Version: $Id:
@@ -26,28 +27,34 @@ prepare $@
 
 my_echo ""
 
+TESTCOMMAND="${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-status"
+
+if [ ! -x ${TESTCOMMAND} ] ; then
+  exit_failure "Command ${TESTCOMMAND} not exists, test could not be performed!"
+fi
+
+####
+
 my_echo "TEST 1: submit a job and then retrieve its status:"
 
-run_command glite-ce-job-submit -a -r $CREAM $JDLFILE
+run_command "${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM $JDLFILE"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 fi
 
 extract_jobid ${COM_OUTPUT}
 debug "The job '$JOBID' has been successfully submitted"
 
-run_command glite-ce-job-status ${JOBID}
+run_command "${TESTCOMMAND} ${JOBID}"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 else
 	success
 fi
 
 ####
 
-my_echo ""
-
-my_echo "TEST 2: submit a job which surely failed. Check if at the end the job failed:"
+my_echo "TEST 2: submit a job which surely failed. Check if the final status is the ones expected:"
 
 OLDCREAM=${CREAM}
 
@@ -68,25 +75,22 @@ CREAM=${OLDCREAM}
 
 ####
 
-my_echo ""
+my_echo "TEST 3: check the status of a job setting log level to 1 (option --level 1):"
 
-my_echo "TEST 3: check the status of a job setting log level = 1 (-L 1):"
-
-run_command glite-ce-job-submit -a -r $CREAM $JDLFILE
+run_command "${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM $JDLFILE"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 fi
 
 extract_jobid ${COM_OUTPUT}
 debug "The job '$JOBID' has been successfully submitted"
 
-run_command "glite-ce-job-status -n -L 1 ${JOBID} > $MYTMPDIR/tmp_output"
+run_command "${TESTCOMMAND} --nomsg --level 1 ${JOBID} > $MYTMPDIR/tmp_output"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 fi
 
 TMP=`grep "Grid JobID" $MYTMPDIR/tmp_output`
-
 if [ $? -eq 0 ] ; then
 	success
 else
@@ -96,25 +100,22 @@ fi
 
 ####
 
-my_echo ""
+my_echo "TEST 4: check the status of a job setting log level to 2 (option --level 2):"
 
-my_echo "TEST 4: check the status of a job setting log level = 2 (-L 2):"
-
-run_command glite-ce-job-submit -a -r $CREAM $JDLFILE
+run_command "${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM $JDLFILE"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 fi
 
 extract_jobid ${COM_OUTPUT}
 debug "The job '$JOBID' has been successfully submitted"
 
-run_command "glite-ce-job-status -n -L 2 ${JOBID} > $MYTMPDIR/tmp_output"
+run_command "${TESTCOMMAND} --nomsg --level 2 ${JOBID} > $MYTMPDIR/tmp_output"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 fi
 
 TMP=`grep "Local User" $MYTMPDIR/tmp_output`
-
 if [ $? -eq 0 ] ; then
   success
 else
@@ -124,19 +125,17 @@ fi
 
 ####
 
-my_echo ""
-
 # Define how many jobs submit
 n=3
 
-my_echo "TEST 5: check the status of a set of jobs ($n) saved in a file (-i):"
+my_echo "TEST 5: check if the option --input works:"
 
 # Submit n jobs
 
 i=0
 
 while [ $i -lt $n ] ; do
-	run_command "glite-ce-job-submit -a -o $MYTMPDIR/jobid -r $CREAM $JDLFILE"
+	run_command "${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -o $MYTMPDIR/jobid -r $CREAM $JDLFILE"
 		if [ $? -ne 0 ]; then
   		exit_failure ${COM_OUTPUT}
 		fi
@@ -144,25 +143,22 @@ while [ $i -lt $n ] ; do
 done
 
 # Check if n jobs has been submitted
-
 nj=`cat $MYTMPDIR/jobid | grep https | wc -l`
 if [ $nj -ne $n ] ; then 
 	exit_failure "I found only $nj jobs into the file; something goes wrong!"
 fi
 
 # Query the CE
-
-run_command "glite-ce-job-status -n -i $MYTMPDIR/jobid  > $MYTMPDIR/tmp_output2"
+run_command "${TESTCOMMAND} --nomsg --input $MYTMPDIR/jobid  > $MYTMPDIR/tmp_output2"
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 fi
 
 # Check how many jobs the command returns
-
 rj=`cat $MYTMPDIR/tmp_output2 | grep JobID | wc -l`
 
 if [ $rj -ne $n ] ; then
-  failure "The command returns tha status of only $rj jobs (instead of $n)"
+  failure "The command returns the status of only $rj jobs (instead of $n)"
 	((FAILED++)) # continue
 else
 	success
@@ -170,14 +166,14 @@ fi
 
 ####
 
-my_echo "TEST 6: check the --conf option:"
+my_echo "TEST 6: check if the --conf option works:"
 
 mkdir ${MYTMPDIR}/status_log_dir || exit_failure "Cannot create ${MYTMPDIR}/status_log_dir";
 printf "[
 STATUS_LOG_DIR=\"${MYTMPDIR}/status_log_dir\";
 ]
 " > ${MYTMPDIR}/status.conf
-run_command glite-ce-job-status --debug --conf ${MYTMPDIR}/status.conf -i $MYTMPDIR/jobid
+run_command "${TESTCOMMAND} --debug --conf ${MYTMPDIR}/status.conf --input $MYTMPDIR/jobid"
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
 else
@@ -192,14 +188,15 @@ fi
 
 ####
 
-my_echo "TEST 7: get the status saving info in a logfile (-d --logfile):"
+my_echo "TEST 7: save info into a logfile to check if --debug and --logfile options work:"
 
 echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-status -d --logfile ${LOGFILE} -i $MYTMPDIR/jobid
+run_command "${TESTCOMMAND} --debug --logfile ${LOGFILE} --input $MYTMPDIR/jobid"
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
-  exit_failure "File ${LOGFILE} has been overwrite"
+  failure "File ${LOGFILE} has been overwrite"
+	((FAILED++)) # continue
 else
   RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
@@ -211,7 +208,6 @@ else
 fi
 
 ####
-
 
 
 #### FINISHED

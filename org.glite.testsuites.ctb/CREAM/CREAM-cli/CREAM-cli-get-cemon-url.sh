@@ -77,7 +77,8 @@ echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 run_command ${TESTCOMMAND} --debug --logfile ${LOGFILE} $ENDPOINT
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
-  exit_failure "File ${LOGFILE} has been overwrite"
+  failure "File ${LOGFILE} has been overwrite"
+	((FAILED++)) # continue
 else
   RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
