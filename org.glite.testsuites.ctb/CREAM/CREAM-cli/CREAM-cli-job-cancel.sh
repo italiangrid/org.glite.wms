@@ -39,4 +39,16 @@ else
   success
 fi
 
+my_echo "TEST 2: try to cancel a terminated job:"
+
+wait_until_job_finishes
+
+run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N $JOBID
+RESULT=`echo ${COM_OUTPUT} | grep "status not compatible with the JOB_CANCEL command"`
+if [ -z "$RESULT" ]; then
+  exit_failure ${COM_OUTPUT}
+else
+  success
+fi
+
 exit_success
