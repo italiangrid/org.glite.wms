@@ -17,26 +17,30 @@
 
 prepare $@
 
+FAILED=0
+
 my_echo "TEST 0: renew a proxy specifying CREAM URL and delegation ID:"
 
 PROXY_ID=`new_delegation_id`
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-delegate-proxy -e $ENDPOINT $PROXY_ID
 if [ $? -ne 0 ]; then
   exit_failure ${COM_OUTPUT}
-fi
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew -e $ENDPOINT $PROXY_ID
-if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
 else
-  success
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew -e $ENDPOINT $PROXY_ID
+  if [ $? -ne 0 ]; then
+    failure ${COM_OUTPUT}
+    ((FAILED++)) # continue
+  else
+    success
+  fi
 fi
 
 my_echo "TEST 1: try to renew a missing proxy:"
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew -e $ENDPOINT `new_delegation_id`
 RESULT=`echo ${COM_OUTPUT} | grep "delegation ID was not delegated"`
 if [ -z "$RESULT" ]; then
-  exit_failure ${COM_OUTPUT}
+  failure ${COM_OUTPUT}
+  ((FAILED++)) # continue
 else
   success
 fi
@@ -47,11 +51,13 @@ run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew \
 --logfile ${LOGFILE} -e $ENDPOINT $PROXY_ID
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
-  exit_failure "File ${LOGFILE} has been overwrite"
+  failure "File ${LOGFILE} has been overwrite"
+  ((FAILED++)) # continue
 else
   RESULT=`grep -P "NOTICE|ERROR|WARNING" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
-    exit_failure "Cannot log on file ${LOGFILE}"  
+    failure "Cannot log on file ${LOGFILE}"
+    ((FAILED++)) # continue
   else
     success
   fi
@@ -68,15 +74,20 @@ CREAMDELEGATION_URL_POSTFIX=\"ce-cream/services/gridsite-delegation\";
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-proxy-renew \
 --debug --conf ${MYTMPDIR}/delegate.conf -e $ENDPOINT $PROXY_ID
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  failure ${COM_OUTPUT}
+  ((FAILED++)) # continue
 else
   RESULT=`ls ${MYTMPDIR}/renew_log_dir/* | grep glite-ce-proxy-renew_CREAM | wc -l 2>/dev/null`
   if [ $RESULT == "0" ]; then
-    exit_failure "Cannot find debug log file"
+    failure "Cannot find debug log file"
+    ((FAILED++)) # continue
   else
     success
   fi
 fi
 
-
-exit_success
+if [ $FAILED -gt 0 ] ; then
+  exit_failure "$FAILED test(s) failed on 4 differents tests"
+else
+  exit_success
+fi

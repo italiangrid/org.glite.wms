@@ -30,15 +30,19 @@ else
   success
 fi
 
-my_echo "TEST 1: re-delegate the proxy specified in TEST 0:"
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-delegate-proxy -e $ENDPOINT $PROXY_ID
-RESULT=`echo ${COM_OUTPUT} | grep "Delegation ID '$PROXY_ID' already exists"`
-if [ -z "$RESULT" ]; then
-  failure ${COM_OUTPUT}
-  ((FAILED++)) # continue
+if [ $FAILED -gt 0 ] ; then
+  my_echo "Cannot perform TEST 1 as TEST 0 fails";
 else
-  success
+  my_echo "TEST 1: re-delegate the proxy specified in TEST 0:"
+
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-delegate-proxy -e $ENDPOINT $PROXY_ID
+  RESULT=`echo ${COM_OUTPUT} | grep "Delegation ID '$PROXY_ID' already exists"`
+  if [ -z "$RESULT" ]; then
+    failure ${COM_OUTPUT}
+    ((FAILED++)) # continue
+  else
+    success
+  fi
 fi
 
 my_echo "TEST 2: delegate a proxy and append the output to the existing file ${LOGFILE}:";

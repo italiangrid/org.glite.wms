@@ -17,13 +17,16 @@
 
 prepare $@
 
+FAILED=0
+
 my_echo "TEST 0: submit and then cancel a running job:"
 
 wait_until_job_runs
 
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N $JOBID
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  failure ${COM_OUTPUT}
+  ((FAILED++)) # continue
 else
   success
 fi
@@ -34,7 +37,8 @@ wait_until_job_runs
 
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N --all -e $ENDPOINT
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  failure ${COM_OUTPUT}
+  ((FAILED++)) # continue
 else
   success
 fi
@@ -46,9 +50,15 @@ wait_until_job_finishes
 run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N $JOBID
 RESULT=`echo ${COM_OUTPUT} | grep "status not compatible with the JOB_CANCEL command"`
 if [ -z "$RESULT" ]; then
-  exit_failure ${COM_OUTPUT}
+  failure ${COM_OUTPUT}
+  ((FAILED++)) # continue
 else
   success
 fi
 
-exit_success
+if [ $FAILED -gt 0 ] ; then
+  exit_failure "$FAILED test(s) failed on 3 differents tests"
+else
+  exit_success
+fi
+
