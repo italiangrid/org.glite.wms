@@ -83,7 +83,7 @@ rj=`cat $MYTMPDIR/tmp_output | grep JobID | wc -l`
 debug "Command returns the status of $rj jobs"
 
 if [ $rj -ne $n ] ; then
-  failure "The command returns tha status of only $rj jobs (instead of $n)"
+  failure "The command returns the status of only $rj jobs (instead of $n)"
   ((FAILED++)) # continue
 else
   success
