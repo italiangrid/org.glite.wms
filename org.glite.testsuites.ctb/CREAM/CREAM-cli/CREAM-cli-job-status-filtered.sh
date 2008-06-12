@@ -176,7 +176,7 @@ my_echo "TEST 6: check the requirements of the --all option (3 cases):"
 # -a and -i are not compatible
 run_command "${TESTCOMMAND} --nomsg  --all --input $MYTMPDIR/jobid"
 if [ $? -ne 1 ]; then
-  exit_failure "Command unexpectly successed: ${COM_OUTPUT}"
+  exit_failure "Command unexpected success: ${COM_OUTPUT}"
 fi
 
 # check the error message
@@ -191,7 +191,7 @@ fi
 # -a requires -e
 run_command "${TESTCOMMAND} --nomsg  --all"
 if [ $? -ne 1 ]; then
-  exit_failure "Command unexpectly successed: ${COM_OUTPUT}"
+  exit_failure "Command unexpected success: ${COM_OUTPUT}"
 fi
 
 # check the error message
@@ -210,7 +210,7 @@ JI=`tail -1 $MYTMPDIR/jobid`
 # -a and JOBID are not compatible
 run_command "${TESTCOMMAND} --nomsg  --all $JI"
 if [ $? -ne 1 ]; then
-  exit_failure "Command unexpectly successed: ${COM_OUTPUT}"
+  exit_failure "Command unexpected success: ${COM_OUTPUT}"
 fi
 
 # check the error message

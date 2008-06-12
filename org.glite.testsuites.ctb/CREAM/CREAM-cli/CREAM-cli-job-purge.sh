@@ -74,25 +74,22 @@ PURGEDJOB=$JOBID
 my_echo "TEST 2: try to purge a running job:"
 
 wait_until_job_runs
+
+# purge the job
+run_command "${TESTCOMMAND} --noint $JOBID"
 if [ $? -ne 0 ]; then
+  exit_failure "Command failed: ${COM_OUTPUT}"
+fi
+
+# check the error message
+RESULT=`echo ${COM_OUTPUT} | grep -P "the job has a status not compatible with the JOB_PURGE command"`
+if [ -z "$RESULT" ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  # purge the job
-  run_command "${TESTCOMMAND} --nomsg --noint $JOBID"
-  if [ $? -ne 0 ]; then
-    exit_failure "Cpmmand failed: ${COM_OUTPUT}"
-  fi
-
-  # check the error message
-  RESULT=`echo ${COM_OUTPUT} | grep -P "the job has a status not compatible with the JOB_PURGE command"`
-  if [ -z "$RESULT" ]; then
-    failure ${COM_OUTPUT}
-    ((FAILED++)) # continue
-  else
-    success
-  fi
+  success
 fi
+
 ####
 
 my_echo "TEST 3: try to purge again a previous purged job:"
@@ -158,7 +155,7 @@ my_echo "TEST 7: check the requirements of the --all option (3 cases):"
 # -a and -i are not compatible
 run_command "${TESTCOMMAND} --nomsg --noint --all --input $MYTMPDIR/jobid"
 if [ $? -ne 1 ]; then
-  exit_failure "Command unexpectly successed: ${COM_OUTPUT}"
+  exit_failure "Command unexpected success: ${COM_OUTPUT}"
 fi
 
 # check the error message
@@ -173,7 +170,7 @@ fi
 # -a requires -e
 run_command "${TESTCOMMAND} --nomsg --noint --all"
 if [ $? -ne 1 ]; then
-  exit_failure "Command unexpectly successed: ${COM_OUTPUT}"
+  exit_failure "Command unexpected success: ${COM_OUTPUT}"
 fi
 
 # check the error message
@@ -191,7 +188,7 @@ JI=`tail -1 $MYTMPDIR/jobid`
 # -a and JOBID are not compatible
 run_command "${TESTCOMMAND} --nomsg --noint --all $JI"
 if [ $? -ne 1 ]; then
-  exit_failure "Command unexpectly successed: ${COM_OUTPUT}"
+  exit_failure "Command unexpected success: ${COM_OUTPUT}"
 fi
 
 # check the error message
@@ -234,7 +231,7 @@ echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 run_command "${TESTCOMMAND} --noint --debug --logfile ${LOGFILE} -i $MYTMPDIR/jobid"
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
-  failure "File ${LOGFILE} has been overwrite"
+  failure "File ${LOGFILE} has been overwritten"
 	((FAILED++)) # continue
 else
   RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`

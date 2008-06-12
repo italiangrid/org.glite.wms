@@ -175,7 +175,7 @@ STATUS_LOG_DIR=\"${MYTMPDIR}/status_log_dir\";
 " > ${MYTMPDIR}/status.conf
 run_command "${TESTCOMMAND} --debug --conf ${MYTMPDIR}/status.conf --input $MYTMPDIR/jobid"
 if [ $? -ne 0 ]; then
-  exit_failure ${COM_OUTPUT}
+  exit_failure "Command failed: ${COM_OUTPUT}"
 else
   RESULT=`ls ${MYTMPDIR}/status_log_dir/* | grep glite-ce-job-status_CREAM | wc -l 2>/dev/null`
   if [ $RESULT == "0" ]; then
@@ -195,7 +195,7 @@ echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 run_command "${TESTCOMMAND} --debug --logfile ${LOGFILE} --input $MYTMPDIR/jobid"
 RESULT=`grep "#HEADER#" ${LOGFILE}`
 if [ -z "$RESULT" ]; then
-  failure "File ${LOGFILE} has been overwrite"
+  failure "File ${LOGFILE} has been overwritten"
 	((FAILED++)) # continue
 else
   RESULT=`grep -P "INFO|ERROR|WARN" ${LOGFILE}`
