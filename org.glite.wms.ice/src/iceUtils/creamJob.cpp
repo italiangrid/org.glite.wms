@@ -37,6 +37,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 
 /**
  *
@@ -197,6 +198,12 @@ bool CreamJob::can_be_purged( void ) const
 //______________________________________________________________________________
 bool CreamJob::can_be_resubmitted( void ) const
 { 
+    int threshold( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
+    api::soap_proxy::VOMSWrapper V( getUserProxyCertificate() );
+    if ( !V.IsValid() || 
+         ( V.getProxyTimeEnd() < time(0) + threshold ) ) {
+        return false;
+    }
     return ( ( m_status == api::job_statuses::DONE_FAILED ) ||
              ( m_status == api::job_statuses::ABORTED ) );
 }
