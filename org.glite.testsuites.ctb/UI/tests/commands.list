@@ -102,7 +102,7 @@ glite-wms-job-cancel
 glite-wms-job-list-match
 glite-wms-job-delegate-proxy
 glite-wms-job-perusal
-glite-wms-job-get-chkpt # [NEW] 
+#glite-wms-job-get-chkpt 
 
 glite-job-attach
 glite-job-status
