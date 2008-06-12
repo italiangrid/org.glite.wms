@@ -160,6 +160,11 @@ function usage()
 function prepare()
 {
 	# Sources global variables (test.conf is REQUIRED)
+	# defien defaults values
+	DEBUG=0
+	NUM_STATUS_RETRIEVALS=40
+	SLEEP_TIME=5
+	JDLFILE=$(dirname $0)/example.jdl
 	[[ -f test.conf ]] || exit_failure "Internal ERROR! Could not find the required 'test.conf' file!"
 	source test.conf
 
