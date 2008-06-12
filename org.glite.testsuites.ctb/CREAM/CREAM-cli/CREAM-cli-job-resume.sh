@@ -56,7 +56,7 @@ fi
 
 ####
 
-my_echo "TEST 0: submit, suspend and then resume a running job:"
+my_echo "TEST 1: submit, suspend and then resume a running job:"
 
 submit_and_suspend
 if [ $? -ne 0 ]; then
