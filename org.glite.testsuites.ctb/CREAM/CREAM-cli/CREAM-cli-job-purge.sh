@@ -74,22 +74,25 @@ PURGEDJOB=$JOBID
 my_echo "TEST 2: try to purge a running job:"
 
 wait_until_job_runs
-
-# purge the job
-run_command "${TESTCOMMAND} --nomsg --noint $JOBID"
 if [ $? -ne 0 ]; then
-  exit_failure "Cpmmand failed: ${COM_OUTPUT}"
-fi
-
-# check the error message
-RESULT=`echo ${COM_OUTPUT} | grep -P "the job has a status not compatible with the JOB_PURGE command"`
-if [ -z "$RESULT" ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  success
-fi
+  # purge the job
+  run_command "${TESTCOMMAND} --nomsg --noint $JOBID"
+  if [ $? -ne 0 ]; then
+    exit_failure "Cpmmand failed: ${COM_OUTPUT}"
+  fi
 
+  # check the error message
+  RESULT=`echo ${COM_OUTPUT} | grep -P "the job has a status not compatible with the JOB_PURGE command"`
+  if [ -z "$RESULT" ]; then
+    failure ${COM_OUTPUT}
+    ((FAILED++)) # continue
+  else
+    success
+  fi
+fi
 ####
 
 my_echo "TEST 3: try to purge again a previous purged job:"

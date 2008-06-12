@@ -22,25 +22,33 @@ FAILED=0
 my_echo "TEST 0: submit and then cancel a running job:"
 
 wait_until_job_runs
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N $JOBID
 if [ $? -ne 0 ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  success
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N $JOBID
+  if [ $? -ne 0 ]; then
+    failure ${COM_OUTPUT}
+    ((FAILED++)) # continue
+  else
+    success
+  fi
 fi
 
 my_echo "TEST 1: submit and then cancel jobs with --all option:"
 
 wait_until_job_runs
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N --all -e $ENDPOINT
 if [ $? -ne 0 ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  success
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel -N --all -e $ENDPOINT
+  if [ $? -ne 0 ]; then
+    failure ${COM_OUTPUT}
+    ((FAILED++)) # continue
+  else
+    success
+  fi
 fi
 
 my_echo "TEST 2: try to cancel a terminated job:"
@@ -60,20 +68,23 @@ my_echo "TEST 3: submit and cancel a job and append the output to the existing f
 echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 
 wait_until_job_runs
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel \
---logfile ${LOGFILE} -d -N $JOBID
-RESULT=`grep "#HEADER#" ${LOGFILE}`
-if [ -z "$RESULT" ]; then
-  failure "File ${LOGFILE} has been overwrite"
+if [ $? -ne 0 ]; then
+  failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  RESULT=`grep -o -P "INFO|ERROR|WARN|NOTICE" ${LOGFILE}`
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-cancel --logfile ${LOGFILE} -d -N $JOBID
+  RESULT=`grep "#HEADER#" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
-    failure "Cannot log on file ${LOGFILE}"
+    failure "File ${LOGFILE} has been overwrite"
     ((FAILED++)) # continue
   else
-    success
+    RESULT=`grep -o -P "INFO|ERROR|WARN|NOTICE" ${LOGFILE}`
+    if [ -z "$RESULT" ]; then
+      failure "Cannot log on file ${LOGFILE}"
+      ((FAILED++)) # continue
+    else
+      success
+    fi
   fi
 fi
 

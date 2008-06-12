@@ -22,37 +22,46 @@ FAILED=0
 my_echo "TEST 0: submit and then suspend a running job:"
 
 wait_until_job_runs
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-suspend -N $JOBID
 if [ $? -ne 0 ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  extract_status $JOBID
-  if [ "$JOBSTATUS" == "HELD" ]; then
-    success
-  else
-    failure "The job is not suspended, status is $JOBSTATUS"
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-suspend -N $JOBID
+  if [ $? -ne 0 ]; then
+    failure ${COM_OUTPUT}
     ((FAILED++)) # continue
+  else
+    sleep 10
+    extract_status $JOBID
+    if [ "$JOBSTATUS" == "HELD" ]; then
+      success
+    else
+      failure "The job is not suspended, status is $JOBSTATUS"
+      ((FAILED++)) # continue
+    fi
   fi
 fi
-
 
 my_echo "TEST 1: submit and then suspend jobs with --all option:"
 
 wait_until_job_runs
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-suspend -N --all -e $ENDPOINT
 if [ $? -ne 0 ]; then
   failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  extract_status $JOBID
-  if [ "$JOBSTATUS" == "HELD" ]; then
-    success
-  else
-    failure "The job is not suspended, status is $JOBSTATUS"
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-suspend -N --all -e $ENDPOINT
+  if [ $? -ne 0 ]; then
+    failure ${COM_OUTPUT}
     ((FAILED++)) # continue
+  else
+    sleep 10
+    extract_status $JOBID
+    if [ "$JOBSTATUS" == "HELD" ]; then
+      success
+    else
+      failure "The job is not suspended, status is $JOBSTATUS"
+      ((FAILED++)) # continue
+    fi
   fi
 fi
 
@@ -73,20 +82,23 @@ my_echo "TEST 3: submit and suspend a job and append the output to the existing 
 echo "#HEADER#" > ${LOGFILE} || exit_failure "Cannot open ${LOGFILE}";
 
 wait_until_job_runs
-
-run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-suspend \
---logfile ${LOGFILE} -d -N $JOBID
-RESULT=`grep "#HEADER#" ${LOGFILE}`
-if [ -z "$RESULT" ]; then
-  failure "File ${LOGFILE} has been overwrite"
+if [ $? -ne 0 ]; then
+  failure ${COM_OUTPUT}
   ((FAILED++)) # continue
 else
-  RESULT=`grep -o -P "INFO|ERROR|WARN|NOTICE" ${LOGFILE}`
+  run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-suspend --logfile ${LOGFILE} -d -N $JOBID
+  RESULT=`grep "#HEADER#" ${LOGFILE}`
   if [ -z "$RESULT" ]; then
-    failure "Cannot log on file ${LOGFILE}"
+    failure "File ${LOGFILE} has been overwrite"
     ((FAILED++)) # continue
   else
-    success
+    RESULT=`grep -o -P "INFO|ERROR|WARN|NOTICE" ${LOGFILE}`
+    if [ -z "$RESULT" ]; then
+      failure "Cannot log on file ${LOGFILE}"
+      ((FAILED++)) # continue
+    else
+      success
+    fi
   fi
 fi
 

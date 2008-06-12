@@ -325,7 +325,7 @@ function new_delegation_id(){
 function wait_until_job_runs()
 {
 # define a long jdl
-	printf "[
+  printf "[
 JobType = \"Normal\";
 Executable = \"/bin/sleep\";
 Arguments = \"600\";
@@ -336,7 +336,7 @@ StdError=\"err.txt\";
 
   run_command ${GLITE_LOCATION:-/opt/glite}/bin/glite-ce-job-submit -a -r $CREAM ${MYTMPDIR}/long_sleep.jdl
   if [ $? -ne 0 ]; then
-    exit_failure ${COM_OUTPUT}
+    return 1
   fi
 
   extract_jobid ${COM_OUTPUT}
@@ -354,7 +354,10 @@ StdError=\"err.txt\";
       ok=1
     fi
     if [ "$JOBSTATUS" == "DONE-FAILED" -o "$JOBSTATUS" == "ABORTED" ]; then
-      exit_failure "Cannot run the job (${JOBSTATUS})"
+      COM_OUTPUT="Cannot run the job (${JOBSTATUS})"
+      return 1
     fi
   done
+
+return 0
 }
