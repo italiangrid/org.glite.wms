@@ -1,6 +1,5 @@
 #! /bin/sh
 
-. update_version.sh
 mkdir -p src/autogen
 set -x
 aclocal -I project
