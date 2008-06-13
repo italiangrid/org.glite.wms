@@ -759,14 +759,12 @@ doPurge(string dg_jobid, bool force)
 	if (dg_jobid.length()) {
 		edglog(debug)<<"JobId object for purging created: "
 			<<dg_jobid<<endl;
-		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
-			boost::filesystem::native);
 		// DTMT issue 56 fix: (DAG node PURGE)
 		if (force){
 			// Forcing purge (needed for dag nodes)
-			return purger::purgeStorageEx(  path, 0 , false, true, edg_wll_LogClearUSER);
+			return purger::Purger().force_dag_node_removal()(jobid::JobId(dg_jobid));
 		}else{
-			return purger::purgeStorageEx(  path, edg_wll_LogClearUSER);
+			return purger::Purger()(jobid::JobId(dg_jobid));
 		}
 
 		/* TODO NEW PURGER APPROACH
@@ -984,7 +982,7 @@ searchForDirmanager()
 Release Memory for all allocated char**
 */
 void releaseChars( char **allocated, int size){
-	for (unsigned int j = 0; j <= size; j++) {
+	for (int j = 0; j <= size; j++) {
 		free(allocated[j]);
 	}
 	free(allocated);
