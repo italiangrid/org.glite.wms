@@ -373,12 +373,12 @@ VOMSAuthZ::convASN1Date(const std::string &date)
 {
     char     *str;
     time_t    offset;
-    time_t    newtime;
+    time_t    newtime = 0;
     char      buff1[32];
     char     *p;
     int       i;
     struct tm tm;
-    int       size;
+    int       size = 0;
     ASN1_TIME *ctm = ASN1_TIME_new();
     ctm->data   = (unsigned char *)(date.data());
     ctm->length = date.size();

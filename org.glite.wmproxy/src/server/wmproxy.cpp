@@ -162,7 +162,7 @@ main(int argc, char* argv[])
 			conf.getLBServiceDiscoveryType());
 
 		// check Globus Version to determine whether to convert DNS
-		extern bool globusDNS_global;
+		//extern bool globusDNS_global;
 		//globusDNS_global = wmputilities::checkGlobusVersion();
 		extern long servedrequestcount_global;
 		servedrequestcount_global = 0;

@@ -65,7 +65,6 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 			edglog(info)<<"----------------------------------------"<< std::endl;
 			exit(0);
 		}
-		// \/
 		// Checking for server instance served request count. If the maximum
 		// value is reached, the server instance is exited in order to avoid
 		// possible memory leaks.
@@ -88,7 +87,6 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 	    		exit(0);	
 	    	}
 		}
-		// /\
 		edglog(debug)<<"Resetting signals handler"<<std::endl;
 		glite::wms::wmproxy::server::resetsignalhandler();
 		if (FCGI_Accept() < 0)

@@ -450,7 +450,7 @@ int main(int argc, char *argv[]) {
 				//fprintf(stderr,"Group after set: %d\n", getgid());
 				//fprintf(stderr,"User after set: %d\n", getuid());
 				//summary_status |= uncompressFile(argv[i], starting_path);
-				if (summary_status = uncompressFile(argv[i], starting_path)) {
+				if ((summary_status = uncompressFile(argv[i], starting_path))) {
 					exit(summary_status);
 				}
 			}
@@ -460,8 +460,8 @@ int main(int argc, char *argv[]) {
 		for (i = optind; i < argc; i++) {
 			//summary_status |= check_dir(argv[i], opt_create, new_mode,
 			//	new_group, create_uid);
-			if (summary_status = check_dir(argv[i], opt_create, new_mode,
-					new_group, create_uid)) {
+			if ((summary_status = check_dir(argv[i], opt_create, new_mode,
+					new_group, create_uid))) {
 				exit(summary_status);
 			}
 		}
