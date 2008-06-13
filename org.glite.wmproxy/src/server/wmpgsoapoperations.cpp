@@ -154,8 +154,8 @@ deserialization of a JSDL methods..
 **************************/
 const string deserializationJSDL(jsdlns__JobDefinition_USCOREType *jsdl, struct soap *soap){
 	edglog_fn("wmpgsoapoperations::deserializationJSDL");
-	string jsdlString = jsdl->__any;
-	if (jsdlString.size()){ return deserializationJSDL( jsdl->__any);}
+	string jsdlString = jsdl->__any[0];
+	if (jsdlString.size()){ return deserializationJSDL( jsdl->__any[0]);}
 
 	string result="";
 	// SYTLESHEET END
@@ -176,7 +176,7 @@ const string deserializationJSDL(jsdlns__JobDefinition_USCOREType *jsdl, struct 
 		result+= printFieldJSDL("ApplicationVersion", jsdl->jsdlns__JobDescription->jsdlns__Application->jsdlns__ApplicationVersion);
 	}
 	edglog(debug)<<"_____ JSDL HPCProfile 01"<< endl ;
-	edglog(debug)<<"_____ JSDL HPCProfile hpcp"<< jsdl->jsdlns__JobDescription->jsdlns__Application->__any  << "##"<< endl ;
+	edglog(debug)<<"_____ JSDL HPCProfile hpcp"<< jsdl->jsdlns__JobDescription->jsdlns__Application->__any[0]  << "##"<< endl ;
 
 	// adding FAKE attributes:
 	string
