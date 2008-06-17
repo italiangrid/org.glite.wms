@@ -195,7 +195,7 @@ function prepare()
 
 	# Set some auxiliar variables 
   ENDPOINT=`echo $CREAM | awk -F'/' '{print $1}'`
-	QUEUE=`echo $CREAM | awk -F'-' '{print $3}'`
+	QUEUE=`echo $CREAM | awk -F'-' '{print $NF}'`
 	LOGFILE=$MYTMPDIR/file.log
 
   # Set a trap for Ctrl^C
