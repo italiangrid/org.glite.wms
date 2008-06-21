@@ -110,7 +110,25 @@ else
   
 fi
 
-echo "    === Part I: -userconf === "
+echo "    === Part I: -vomses === "
+
+echo ""
+myecho "trying  voms-proxy-init -voms testvoms -vomses $TMP_VOMS_FILE -out $TMPPROXY"
+voms-proxy-init -voms testvoms  -vomses $TMP_VOMS_FILE  -out $TMPPROXY || myexit $?
+
+echo ""
+myecho "trying voms-proxy-info -all -file $TMPPROXY ... "
+echo ""
+voms-proxy-info -all -file $TMPPROXY || myexit $?
+
+echo ""
+myecho "destroying proxy ..."
+voms-proxy-destroy -file $TMPPROXY || myexit $?
+
+echo "    --- Part I succeeded --- "
+
+echo ""
+echo "    === Part II: -userconf === "
 
 echo ""
 myecho "trying  voms-proxy-init -voms testvoms -userconf $TMP_VOMS_FILE -out $TMPPROXY"
@@ -125,9 +143,10 @@ echo ""
 myecho "destroying proxy ..."
 voms-proxy-destroy -file $TMPPROXY || myexit $?
 
-echo "    --- Part I succeeded --- "
+echo "    --- Part II succeeded --- "
+
 echo ""
-echo "    === Part II: -confile === "
+echo "    === Part III: -confile === "
 
 echo ""
 myecho "trying voms-proxy-init -debug -voms testvoms -confile $TMP_VOMS_FILE -out $TMPPROXY"
@@ -143,6 +162,6 @@ echo ""
 myecho "destroying proxy ..."
 voms-proxy-destroy -file $TMPPROXY || myexit $?
 
-echo "    --- Part II succeeded --- "
+echo "    --- Part III succeeded --- "
 
 myexit 0
