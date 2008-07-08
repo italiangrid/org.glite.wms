@@ -1,0 +1,24 @@
+To create a regression test please follow this simple rules:
+
+1) Create a description file: <bug number>.txt with this information:
+
+Bug: <put the bug number>
+Link: <link to savannah bug page>
+Summary: <short description of the bug>
+
+And then a list of actions that should be taken to test the bug.
+
+2) If need create a jdl file: <bug number>.jdl
+
+You can add also this attribute to jdl that could be useful for future checks:
+
+usertags = [ bug = "<put bug number>" ];
+
+3) If need create a bash script file: <bug_number>_exe.sh
+
+You can found also a directory with some example file of data to use as InputSandBox 
+and a directory with not silly executables.
+
+These tests are _NOT_ supposed to be run automatically so some manual intervention
+should be required also on the WMS machine.
+
