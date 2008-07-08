@@ -2,8 +2,8 @@
 Executable = "/bin/ls" ;
 Stdoutput = "ls.out" ;
 StdError =  "ls.err" ;
-OutputSandbox = { "ls.out", "ls.err", "data/pippo" } ;
-InputSandbox = { "data/pippo", "data/pluto", "data/topolino" };
+OutputSandbox = { "ls.out", "ls.err", "data/input2.txt" } ;
+InputSandbox = { "data/input1.txt", "data/input2.txt", "data/input3.txt" };
 usertags = [ bug = "30896" ];
 ]
 

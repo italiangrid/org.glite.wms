@@ -3,11 +3,10 @@ requirements = ( other.GlueCEStateStatus == "Production" ) && Member("MPICH",oth
 Type = "Job";
 NodeNumber = 4;
 Executable = "30308_exe.sh";
-//Arguments = "mpitest 4";
 Arguments = "cpi 4";
 StdOutput = "test.out";
 StdError = "test.err";
-InputSandbox = {"regression/30308_exe.sh", "exe/mpitest", "exe/cpi"};
+InputSandbox = {"30308_exe.sh", "exe/cpi"};
 OutputSandbox = {"test.err","test.out","executable.out"};
 usertags = [ bug = "30308" ];
 ]

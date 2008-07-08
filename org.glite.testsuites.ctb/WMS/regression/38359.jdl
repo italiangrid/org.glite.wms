@@ -1,10 +1,10 @@
 [
 Type = "Job";
-Executable = "27215_exe.sh";
+Executable = "38359_exe.sh";
 Arguments = "50";
 StdOutput = "test.out";
 StdError = "test.err";
-InputSandbox = {"regression/27215_exe.sh"};
+InputSandbox = {"38359_exe.sh"};
 OutputSandbox = {"test.err","test.out","out3", "out1", "out4", "out2"};
 usertags = [ bug = "38359" ];
 ]

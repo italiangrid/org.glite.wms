@@ -2,3 +2,4 @@ Bug: #31012
 Link: https://savannah.cern.ch/bugs/?31012
 Summary: WMS Client does not print properly WMProxy server version
 
+- Run bash script 31012.sh
