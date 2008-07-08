@@ -1,0 +1,10 @@
+[
+Executable = "/usr/bin/env" ;
+Stdoutput = "env.out" ;
+StdError =  "env.err" ;
+shallowretrycount = 2; 
+InputSandbox = { "data/input.txt" };
+OutputSandbox = { "env.out" ,"env.err", "input.txt" } ;
+Environment={"LD_LIBRARY_PATH=."};
+usertags = [ bug = "28642" ];
+]

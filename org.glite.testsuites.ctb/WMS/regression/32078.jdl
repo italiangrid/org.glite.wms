@@ -1,0 +1,9 @@
+[
+  #Requirements = RegExp(".manchester.ac.uk:2119.*",other.GlueCEUniqueID) && anyMatch(other.storage.CloseSEs,target.GlueSAPolicyMaxData==100);
+  Requirements = RegExp(".manchester.ac.uk:2119.*",other.GlueCEUniqueID) && anyMatch(other.storage.CloseSEs,target.GlueSEStatus == "unset");
+  Executable = "/bin/ls";
+  prologue = "/bin/false";
+  shallowretrycount = 2;  
+  usertags = [ bug = "32078" ];
+]
+

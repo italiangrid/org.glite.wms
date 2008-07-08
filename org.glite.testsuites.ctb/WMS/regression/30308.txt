@@ -1,0 +1,5 @@
+Bug: #30308
+Link: https://savannah.cern.ch/bugs/?30308
+Summary: created .mpi file in MPICH job wrapper causes jobs to fail
+
+The directory ".mpi" should not be listed in the test.out output file.

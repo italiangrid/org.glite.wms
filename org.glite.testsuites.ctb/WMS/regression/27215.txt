@@ -1,0 +1,14 @@
+Bug: #27215
+Link: https://savannah.cern.ch/bugs/?27215
+Summary: WM to set the maximum output sandbox size
+
+- Set the parameter MaxOutputSandboxSize in the WorkloadManager
+  section of the configuration file /opt/glite/etc/glite_wms.conf
+  on the WMS to 100 and restart the workload manager.
+
+- Submit the jdl: 27215 jdl
+
+- When Done retrieving the output files, this should be the result
+  of an ls -l of the output dir:
+
+

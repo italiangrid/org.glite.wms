@@ -1,0 +1,7 @@
+Bug: #34420
+Link: https://savannah.cern.ch/bugs/?34420
+Summary: WMS Client: glite-wms-job-submit option --valid does not accept any time value
+
+- Submit a job with the option --valid 01:00 (for example); then check with the command:
+  glite-wms-job-info --jdl <jobid> | grep ExpiryTime
+  that the ExpiryTime is set to an hour in the future from now.

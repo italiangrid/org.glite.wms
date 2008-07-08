@@ -1,0 +1,7 @@
+Bug: #28642
+Link: https://savannah.cern.ch/bugs/?28642
+Summary: User environment breaks WMS wrapper
+
+Get the output of the job; in the output directory you should find  
+the file input.txt, and the LD_LIBRARY_PATH should be set to "." into
+the file env.out.

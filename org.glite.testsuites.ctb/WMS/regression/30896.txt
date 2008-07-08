@@ -1,0 +1,16 @@
+Bug: #30896
+Link: https://savannah.cern.ch/bugs/?30896
+Summary: WMS must limit number of files per sandbox
+
+- Set maxInputSandboxFiles = 2; in the WorkloadManagerProxy section of
+  the configuration file on the WMS, and restart the wmproxy.
+
+- Check if the job is immediately set as Aborted and if the reason of the status is:
+  "The Operation is not allowed: The maximum number of input sandbox files is reached" 
+
+- Set maxOutputSandboxFiles = 2; in the WorkloadManagerProxy section of
+  the configuration file on the WMS and restart the wmproxy.
+
+- Check if the job is immediately set as Aborted and if the reason of the status is:
+  "The Operation is not allowed: The maximum number of output sandbox files is reached" 
+

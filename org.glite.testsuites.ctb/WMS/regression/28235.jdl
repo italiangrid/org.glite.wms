@@ -1,0 +1,8 @@
+[
+  requirements = other.GlueCEUniqueID == "ce103.cern.ch:2119/jobmanager-lcglsf-grid_dteam" ;
+  Executable = "/bin/ls";
+  prologue = "/bin/false";
+  shallowretrycount = 2;  
+  usertags = [ bug = "28235" ];
+]
+

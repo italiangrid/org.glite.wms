@@ -1,0 +1,17 @@
+Bug: #31669
+Link: https://savannah.cern.ch/bugs/?31669
+Summary: org.glite.jdl.api-cpp: defaultNode[Shallow]RetryCount attributes unexpected behavior
+
+- After submitting the jdl check with this command:
+  glite-wms-job-info --jdl <jobid> | grep Count
+  if the output is:
+
+        RetryCount = 17;
+        ShallowRetryCount = 13;
+        RetryCount = 17;
+        ShallowRetryCount = 13;
+        RetryCount = 17;
+        ShallowRetryCount = 13;
+  DefaultNodeRetryCount = 17;
+  DefaultNodeShallowRetryCount = 13;
+

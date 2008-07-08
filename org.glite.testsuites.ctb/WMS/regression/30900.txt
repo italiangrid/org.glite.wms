@@ -1,0 +1,19 @@
+Bug: #30900
+Link: https://savannah.cern.ch/bugs/?30900
+Summary: MinPerusalTimeInterval default is too low
+
+- Default value for MinPerusalTimeInterval should be check on the
+  configuration file of the WMS.
+
+- Set MaxPerusalFiles = 1; on the WorkloadManagerProxy of the configuration
+  file on the WMS and restart the wmproxy.
+
+- After the submission of the jdl give this command: 
+  glite-wms-job-perusal --set -f perusal.out -f perusal.err <jobid>
+  The answer should be:
+
+Error - WMProxy Server Error
+The Operation is not allowed: The maximum number of perusal files is reached
+
+Method: enableFilePerusal
+

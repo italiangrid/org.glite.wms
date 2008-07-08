@@ -1,0 +1,10 @@
+[
+Executable = "/bin/ls" ;
+Arguments = "/tmp" ;
+Stdoutput = "ls.out" ;
+StdError =  "ls.err" ;
+OutputSandbox = { "ls.out" } ;
+usertags = [ bug = "31278" ];
+ShortDeadlineJob=true;
+]
+
