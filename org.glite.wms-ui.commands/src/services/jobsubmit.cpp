@@ -330,6 +330,8 @@ void JobSubmit::readOptions (int argc,char **argv){
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
 	// path to the JDL file
 	m_jdlFile = wmcOpts->getPath2Jdl( );
+	nomsgOpt = wmcOpts->getBoolAttribute (Options::NOMSG);
+
 }
 
 /**
@@ -463,8 +465,13 @@ void JobSubmit::submission ( ){
 	}
 	out << getLogFileMsg ( ) << "\n";
 	// ==============================================================
-	// Displays the output message
-	cout << out.str() ;
+        if (!nomsgOpt) {
+                // Displays the output message
+                cout << out.str() ;
+        } else {
+                // Displays only the jobid
+                cout << this->getJobId( ) << "\n";
+        }
 	// Interactive Jobs management:
 	if (jobShadow!=NULL){
 		if (jobShadow->isLocalConsole()){
