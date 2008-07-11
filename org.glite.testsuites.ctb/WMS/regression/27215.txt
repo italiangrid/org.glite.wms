@@ -11,4 +11,8 @@ Summary: WM to set the maximum output sandbox size
 - When Done retrieving the output files, this should be the result
   of an ls -l of the output dir:
 
+-rw-rw-r--  1 ale ale 30 Jul  8 16:02 out1.tail
+-rw-rw-r--  1 ale ale 70 Jul  8 16:02 out2
+-rw-rw-r--  1 ale ale  0 Jul  8 16:02 test.err
+-rw-rw-r--  1 ale ale  0 Jul  8 16:02 test.out
 
