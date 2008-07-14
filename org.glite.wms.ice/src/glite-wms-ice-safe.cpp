@@ -117,7 +117,13 @@ int main( int argc, char *argv[]) {
       int ret = ::system( buf );
       int wret = WEXITSTATUS(ret);
     //  cout << "ret=["<< wret << "]" << endl;
-      if( 2 == wret) { sleep(2); continue; }
+      /** 
+       * Sleeping 5 minutes should ensure that the kernel has a sufficient time
+       * to close a previously used bind-port. This to prevent an not
+       * understood problem with soap_bind that causes a crash if the port is temporarily
+       * unavailable
+       */
+      if( 2 == wret) { sleep(300); continue; }
       exit(wret);
     }
   }
