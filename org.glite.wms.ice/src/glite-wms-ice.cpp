@@ -335,7 +335,7 @@ int main(int argc, char*argv[])
      *
      */
     iceUtil::iceThreadPool* threadPool( iceManager->get_requests_pool() );
-  
+    iceUtil::iceThreadPool* threadPool_ice_cmds( iceManager->get_ice_commands_pool() ); 
     /*****************************************************************************
      * Main loop that fetch requests from input filelist, submit/cancel the jobs,
      * removes requests from input filelist.
@@ -449,6 +449,7 @@ int main(int argc, char*argv[])
 	    // let's lock the cache so no other thread try to do cache operations
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
 	    threadPool->stopAllThreads();
+	    threadPool_ice_cmds->stopAllThreads();
 
 	    // Now all thread are stopped so closing the Berkeley database is safe
 	    // but to do that is sufficient to delete the jobCache single instance

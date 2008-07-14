@@ -187,14 +187,25 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( ice_util::iceLBLogger::instance() ),
     m_cache( ice_util::jobCache::getInstance() ),
-    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() ),
-    m_requests_pool( new util::iceThreadPool("ICE Requests Pool", m_configuration->ice()->max_ice_threads() ) ),
-    m_ice_commands_pool( new util::iceThreadPool( "ICE Internal Commands Pool", 5 ) ) // FIXME: remove hardcoded default
+    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() )
+//    m_requests_pool( new util::iceThreadPool("ICE Requests Pool", m_configuration->ice()->max_ice_threads() ) ),
+//    m_ice_commands_pool( new util::iceThreadPool( "ICE Internal Commands Pool",  (m_configuration->ice()->max_ice_threads()/2) ) ) // FIXME: remove hardcoded default
 {
   /*  CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << "Ice::CTOR() - Done"
                     
                     );*/
+
+   int thread_num_commands, thread_num = m_configuration->ice()->max_ice_threads();
+   if(thread_num<1) thread_num=1;
+   if(thread_num >= 2)
+     thread_num_commands = thread_num/2;
+   else
+     thread_num_commands = 1;
+
+   m_requests_pool = new util::iceThreadPool("ICE Requests Pool", thread_num );
+   m_ice_commands_pool = new util::iceThreadPool( "ICE Internal Commands Pool", thread_num_commands);
+   
 
     try {
 
