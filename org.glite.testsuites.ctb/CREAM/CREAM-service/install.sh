@@ -3,8 +3,8 @@
 PREFIX=$1
 STAGEDIR=$2
 
-mkdir -p $STAGEDIR/lib/python
-cp -R src/CREAMTestUtils $STAGEDIR/lib/python
+mkdir -p $STAGEDIR/lib/python/CREAMTestUtils
+cp src/CREAMTestUtils/*.py src/CREAMTestUtils/*.pyc $STAGEDIR/lib/python/CREAMTestUtils
 
 mkdir -p $STAGEDIR/bin
 cp src/cream-test-* $STAGEDIR/bin
@@ -14,8 +14,8 @@ for item in `ls src/cream-test-*`; do $item -h >$STAGEDIR/share/man/man1/`basena
 
 
 
-mkdir -p $PREFIX/lib/python
-cp -R src/CREAMTestUtils $PREFIX/lib/python
+mkdir -p $PREFIX/lib/python/CREAMTestUtils
+cp src/CREAMTestUtils/*.py src/CREAMTestUtils/*.pyc $PREFIX/lib/python/CREAMTestUtils
 
 mkdir -p $PREFIX/bin
 cp src/cream-test-* $PREFIX/bin
