@@ -194,6 +194,11 @@ class GaclManager {
 	* @return the string with the description, empty string if the input credential is not valid
 	*/
 	std::string getCredentialTypeString ( const WMPgaclCredType &type) ;
+    /**
+    * Checks which credential entry types are present in the gacl file
+    * @returns true if the credential type is present in the gacl file
+    */
+    bool checkCredentialEntries(const std::string &type) ;
 	/**
 	* 	Saves the gacl to the file
 	* 	@param file location where to save the file

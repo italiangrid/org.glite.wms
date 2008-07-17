@@ -370,29 +370,23 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType &type,
 		oss << " (" << gaclFile << ")\n";
 		oss << "(credential entry not found)\ncredential type: " << getCredentialTypeString(type)  << "\n";
 		oss <<"input " << rawCred.first << ": " << rawvalue << "\n";
-#ifdef GLITE_WMS_WMPROXY_TOOLS
-		cerr << "Error: " << oss.str()<< endl;
-		exit(-1);
-#else
-  		throw GaclException (__FILE__, __LINE__,  "GaclManager::checkAllowPermission" ,
-			WMS_GACL_ERROR,  oss.str() );
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+		edglog(debug) << oss.str()<< endl;
 #endif
+        	result = false;
 	}
 	// permission
 	allow = GaclManager::gaclAllowed & permission ;
 	deny = GaclManager::gaclDenied & permission ;
-#ifndef GLITE_WMS_WMPROXY_TOOLS
-	edglog(debug)<<"Allow = "<< allow << " (deny ="<< deny << ")"<< endl ;
-#endif
+
 	if ( allow && deny ) {
 		errmsg = "gacl syntax error: operation both allowed and denied (" + gaclFile +")" ;
-#ifdef GLITE_WMS_WMPROXY_TOOLS
-		cerr << "Error: " << errmsg << endl;
-		exit(-1);
-#else
+#ifndef GLITE_WMS_WMPROXY_TOOLS  //if-N-def
+	    edglog(debug) << errmsg << endl;
   		throw GaclException (__FILE__, __LINE__,  "GaclManager::checkAllowPermission" ,
 			WMS_GACL_ERROR, errmsg );
 #endif
+  		
 	 } else  {
 	 	if ( !allow && !deny ) {
 			result = false;
@@ -400,7 +394,7 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType &type,
 			result = allow ;
 		 }
 	 }
-#ifndef GLITE_WMS_WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS  //if-N-def
 	if (result){ 	edglog(debug) << "Success"<< endl;}
 	else {		edglog(debug) << "Failure"<< endl;}
 #endif
@@ -568,6 +562,52 @@ int GaclManager::saveGacl ( ){
 */
 std::string GaclManager::getFilepath ( ){
 	return gaclFile;
+};
+
+/*
+* Checks for the credential type entry in the gacl file
+*/
+bool GaclManager::checkCredentialEntries(const std::string &type){
+
+        GRSTgaclCred  *cred = NULL;
+        GRSTgaclEntry *entry = NULL;
+        bool found = false;
+
+        // gacl file not null
+        if (gaclAcl != NULL) {
+                // looking for entries
+                entry = gaclAcl-> firstentry ;
+                // scanning of the entries
+                while  (entry != NULL ) {
+                        cred = entry->firstcred ;
+                        // scanning of the credentials in the selected entry
+                        while ( cred != NULL ) {
+                                // checking each entry against the user credential type
+                                if ( strcmp( cred->type, (char*)type.c_str()) == 0 ){
+                                        found = true;
+                                }
+                                // the credential type did not match
+                                if ( !found ) {
+                                        cred = (GRSTgaclCred*) cred->next;
+                                } else {
+                                        break;
+                                }
+                        } // while(cred)
+
+                        // the credential type was not found in the entry
+                        if ( !found ) {
+                                entry = (GRSTgaclEntry*) entry->next;
+                        } else {
+                                break;
+                        }
+                } //while(entry)
+        } //if
+        else{
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                edglog(debug) << "ACL is null" << endl;
+#endif
+        }
+        return found;
 };
 
 /*

@@ -304,6 +304,10 @@ WMPAuthorizer::checkGaclUserAuthZ()
 	string errmsg = "";
 	bool exec = true;
 	bool execDN = true;
+    bool execAU = true;
+    bool exist = false;
+    bool existDN = false;
+    bool existAU = false;
 	int pos = 0;
 	grst_cred = getenv ( VOMS_GACL_VAR );
 	if ( grst_cred ){
@@ -337,49 +341,105 @@ WMPAuthorizer::checkGaclUserAuthZ()
 		}
 		GaclManager gacl(gaclfile);
 
-		// checks exec permission
-		if (fqan != "") {
-                        if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_ANYUSER_TYPE)){
-				exec = gacl.checkAllowPermission(
-                                        authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
-                                        "",GaclManager::WMPGACL_EXEC);
+        edglog(debug)<<"Checking gacl file entries..."<<endl;
+
+        // checking credential types present in gacl file
+        exist = gacl.checkCredentialEntries(authorizer::GaclManager::WMPGACL_VOMS_CRED);
+        existDN = gacl.checkCredentialEntries(authorizer::GaclManager::WMPGACL_PERSON_CRED);
+        existAU = gacl.checkCredentialEntries(authorizer::GaclManager::WMPGACL_ANYUSER_CRED);
+
+        if (exist) {
+                edglog(debug)<<"VOMS credential type present"<<endl;
+        }
+        if (existDN){
+                edglog(debug)<<"person credential type present"<<endl;
+        }
+        if (existAU){
+                edglog(debug)<<"any-user credential type present"<<endl;
+        }
+
+        // checks exec permission
+        if (fqan != "") {
+                // user proxy has FQAN
+                // ANY USER authorization
+                if (existAU) {
+                        execAU = gacl.checkAllowPermission(
+                                authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
+                                "",GaclManager::WMPGACL_EXEC);
+                }
+
+                // FQAN authorization
+                if (exist && gacl.hasEntry(authorizer::GaclManager::WMPGACL_VOMS_TYPE, fqan)){
+                        exec =  gacl.checkAllowPermission(
+                                GaclManager::WMPGACL_VOMS_TYPE,
+                                fqan, GaclManager::WMPGACL_EXEC);
+                        // overrides any-user authorization if VO auth is fine
+                        if (exec) {
+                                execAU = true;
+                        }
+                } else if (existAU || existDN) {
+                                exec = true;
                         } else {
-				// FQAN authorization
-				exec = gacl.checkAllowPermission(
-					GaclManager::WMPGACL_VOMS_TYPE,
-					fqan, GaclManager::WMPGACL_EXEC);
-				// checking DN
-				if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dn)){
-					execDN = gacl.checkAllowPermission(
-							GaclManager::WMPGACL_PERSON_TYPE,
-							dn,GaclManager::WMPGACL_EXEC);
-				}else if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dnConverted)){
-					execDN = gacl.checkAllowPermission(
-							GaclManager::WMPGACL_PERSON_TYPE,
-							dnConverted,GaclManager::WMPGACL_EXEC);
-				}else{
-					execDN = true ;
-				}
-			}
-		} else {
-			exec = true;
-			// DN authorization  (FQAN is EMPTY)
-                        if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_ANYUSER_TYPE)){
-                                execDN = gacl.checkAllowPermission(
-                                        authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
-                                        "",GaclManager::WMPGACL_EXEC);
-			} else {
-				execDN =
-				gacl.checkAllowPermission(
-					GaclManager::WMPGACL_PERSON_TYPE,dn,
-					GaclManager::WMPGACL_EXEC )
-				||
-				gacl.checkAllowPermission(
-					GaclManager::WMPGACL_PERSON_TYPE,dnConverted,
-					GaclManager::WMPGACL_EXEC );
-			}
-		}
-		exec = exec && execDN;
+                                exec = false;
+                }
+
+                // DN authorization
+                if (existDN && gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dn)){
+                        execDN = gacl.checkAllowPermission(
+                                        GaclManager::WMPGACL_PERSON_TYPE,
+                                        dn,GaclManager::WMPGACL_EXEC);
+                        // overrides VO and any-user authorization if DN is fine
+                        if (execDN) {
+                                exec = true;
+                                execAU = true;
+                        }
+                } else if (existDN && gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dnConverted)){
+                        execDN = gacl.checkAllowPermission(
+                                        GaclManager::WMPGACL_PERSON_TYPE,
+                                        dnConverted,GaclManager::WMPGACL_EXEC);
+                        // overrides VO and any-user authorization if DN is fine
+                        if (execDN) {
+                                exec = true;
+                                execAU = true;
+                        }
+                } else if (existAU || exist){
+                                execDN = true;
+                } else {
+                                execDN = false;
+                }
+
+        } else {
+                // user proxy does not have FQAN
+                // any-user authorization
+                if (existAU){
+                        execAU = gacl.checkAllowPermission(
+                                authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
+                                "",GaclManager::WMPGACL_EXEC);
+                }
+                // DN authorization
+                if (existDN){
+                        execDN = gacl.checkAllowPermission(
+                                        GaclManager::WMPGACL_PERSON_TYPE,dn,
+                                        GaclManager::WMPGACL_EXEC )
+                                 ||
+                                 gacl.checkAllowPermission(
+                                        GaclManager::WMPGACL_PERSON_TYPE,dnConverted,
+                                        GaclManager::WMPGACL_EXEC );
+                        // overrides any-user authorization if DN auth is fine
+                        if (execDN) {
+                                execAU = true;
+                        }
+                }
+
+                // gacl file has no valid entries for user proxy without fqan
+                if (!(existDN || existAU)){
+                        exec = false;
+                }
+        }
+
+        // Final exec authorization value
+        exec = exec && execDN && execAU;
+        
 	} catch (wmputilities::GaclException &exc){
 		//LCAS CHECK if (!checkLCASUserAuthZ(dn)) {
 		errmsg = "User not authorized:\n";
