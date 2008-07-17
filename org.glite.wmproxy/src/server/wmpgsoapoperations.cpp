@@ -154,8 +154,8 @@ deserialization of a JSDL methods..
 **************************/
 const string deserializationJSDL(jsdlns__JobDefinition_USCOREType *jsdl, struct soap *soap){
 	edglog_fn("wmpgsoapoperations::deserializationJSDL");
-	string jsdlString = jsdl->__any[0];
-	if (jsdlString.size()){ return deserializationJSDL( jsdl->__any[0]);}
+	string jsdlString = jsdl->__any;
+	if (jsdlString.size()){ return deserializationJSDL( jsdl->__any);}
 
 	string result="";
 	// SYTLESHEET END
