@@ -425,6 +425,12 @@ void JobInfo::retrieveInfo ( ){
 			"retrieveInfo", ECONNABORTED,
 			"WMProxy Server Error", err.str( ) );
 		}
+		if ( status.hasParent ( ) )  {
+			err << "The operation getJDL is not supported for DAG/Collection nodes, please check the jobid: \n"<<jobId<<"\n";
+			throw WmsClientException(__FILE__,__LINE__,
+			"retrieveInfo", ECONNABORTED,
+			"WMProxy Server Error", err.str( ) );
+		}
 		try {
 			if (proxyOpt) {
 				// log-info
