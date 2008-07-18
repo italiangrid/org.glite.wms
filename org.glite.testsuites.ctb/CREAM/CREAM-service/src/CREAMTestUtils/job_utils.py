@@ -46,6 +46,7 @@ def subscribeToCREAMJobs(subscribeCmd, cemonURL, parameters, \
                          proxyFile, logger=jobUtilsLogger):
     
     consumerURL = 'http://%s:%d' % (getHostname(), parameters.consumerPort)
+    #TODO CAcert dir is still hardcoded
     subscrCmd = "%s %s %s %s %s %s %s %d %d" % \
             (subscribeCmd, proxyFile, "/etc/grid-security/certificates", \
              cemonURL, consumerURL, \

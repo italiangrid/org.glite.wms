@@ -1,6 +1,6 @@
 from ZSI import ParsedSoap, SoapWriter, resolvers, TC, \
     FaultFromException, FaultFromZSIException
-#import types, os, sys, cStringIO as StringIO
+import os, sys
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
