@@ -4,16 +4,18 @@ import time
 import popen2
 import string
 import log4py
+import testsuite_utils
 
 class SubmitterThread(threading.Thread):
     
     logger = log4py.Logger().get_instance(classid="SubmitterThread")
     
-    def __init__(self, pool, cmd, tName):
+    def __init__(self, pool, scmd, dcmd, tName):
         threading.Thread.__init__(self)
         self.setName(tName)
         self.pool = pool
-        self.command = cmd
+        self.submitFStr = scmd
+        self.delegatFStr = dcmd
 
     def run(self):
         running = True
@@ -24,20 +26,37 @@ class SubmitterThread(threading.Thread):
                 try:
                     SubmitterThread.logger.debug("Thread submitting: " + self.getName())
                     tmpTS = time.time()
-                    submitProc = popen2.Popen4(self.command, True)
-                    tmpTs = time.time() - tmpTS
-                    for line in submitProc.fromchild:
-                        if line[0:8]=='https://':
-                            self.pool.notifySubmitResult(jobId=string.strip(line))
-                            notified = True
-                            break
-                        if 'ERROR' in line or 'FATAL' in line:
-                            self.pool.notifySubmitResult(failure=line[24:] + " execution time: " + str(tmpTs))
-                            notified = True
-                            break
+                    
+                    if self.delegatFStr<>None:
+                        delegCmd = self.delegatFStr % (os.getpid(), tmpTS)
+                        submCmd = self.submitFStr % (os.getpid(), tmpTS)
+                        
+                        SubmitterThread.logger.debug("Delegate cmd: " +delegCmd)
+                        delegProc = popen2.Popen4(delegCmd)
+                        for line in delegProc.fromchild:
+                            if 'ERROR' in line or 'FATAL' in line:
+                                self.pool.notifySubmitResult(failure=line[24:])
+                                notified = True
+                        delegProc.fromchild.close()
+                    else:
+                        delegCmd = self.delegatFStr
+                        submCmd = self.submitFStr
+                    
                     if not notified:
-                        self.pool.notifySubmitResult(failure='Missing jobId or failure reason')
-                    submitProc.fromchild.close()
+                        SubmitterThread.logger.debug("Submit  cmd: " + submCmd)
+                        submitProc = popen2.Popen4(submCmd)
+                        for line in submitProc.fromchild:
+                            if line[0:8]=='https://':
+                                self.pool.notifySubmitResult(jobId=string.strip(line), timestamp=tmpTS)
+                                notified = True
+                                break
+                            if 'ERROR' in line or 'FATAL' in line:
+                                self.pool.notifySubmitResult(failure=line[24:])
+                                notified = True
+                                break
+                        if not notified:
+                            self.pool.notifySubmitResult(failure='Missing jobId or failure reason')
+                        submitProc.fromchild.close()
                 except:
                     SubmitterThread.logger.error(str(sys.exc_info()[1]))
                     self.pool.notifySubmitResult(failure=str(sys.exc_info()[1]))
@@ -57,17 +76,20 @@ class JobSubmitterPool:
         self.left = 0
         self.processed = 0
         
-        cmd = cmdTable['submit']
         if parameters.delegationID=='':
-            cmd += ' -a'
+            dString = 'DELEGID%d.%f'
+            dcmd = '%s -e %s %s' % (cmdTable['delegate'], \
+                                              parameters.resourceURI[:string.find(parameters.resourceURI,'/')],
+                                              dString)
         else:
-            cmd += ' -D ' + parameters.delegationID
-        cmd += ' -r  ' + parameters.resourceURI
-        cmd += ' ' + parameters.jdl
-        JobSubmitterPool.logger.debug("Command line: " + cmd)
+            dString = parameters.delegationID
+            dcmd = None
+            
+        scmd = '%s -D %s -r %s %s' % (cmdTable['submit'], \
+                                      dString, parameters.resourceURI, parameters.jdl)
         
         for k in range(0,parameters.maxConcurrentSubmit):
-            subThr = SubmitterThread(self, cmd, "Submitter"  + str(k))
+            subThr = SubmitterThread(self, scmd, dcmd, "Submitter"  + str(k))
             subThr.start()
         
 
@@ -106,7 +128,7 @@ class JobSubmitterPool:
     def __call__(self, numberOfSubmit):
         self.submit(numberOfSubmit)
             
-    def notifySubmitResult(self, jobId='', failure=None):
+    def notifySubmitResult(self, jobId='', failure=None, timestamp=0):
         self.slaveCond.acquire()
         self.processed += 1
         self.slaveCond.release()
@@ -114,7 +136,7 @@ class JobSubmitterPool:
         self.masterCond.acquire()
         if jobId<>'':
             if self.jobTable<>None:
-                self.jobTable.put(jobId, time.time())
+                self.jobTable.put(jobId, timestamp)
             self.successes += 1
         if failure<>None:
             JobSubmitterPool.logger.error(failure)
@@ -167,10 +189,7 @@ class MokeObject:
 
         
 def main():
-    if os.environ.has_key("GLITE_LOCATION"):
-        gliteLocation = os.environ["GLITE_LOCATION"]
-    else:
-        gliteLocation = "/opt/glite"
+    cmdTable = testsuite_utils.getCECommandTable()
         
     if len(sys.argv)>4:
         delegationID = sys.argv[4]
@@ -178,7 +197,6 @@ def main():
         delegationID = ''
         
     mokeObj = MokeObject(sys.argv[1], sys.argv[2], delegationID)
-    cmdTable = { 'submit' : gliteLocation + '/bin/glite-ce-job-submit'}
     pool = JobSubmitterPool(mokeObj, cmdTable, mokeObj)
     pool.submit(int(sys.argv[3]))
     pool.shutdown()
