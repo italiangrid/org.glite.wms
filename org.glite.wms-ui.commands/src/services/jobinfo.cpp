@@ -417,6 +417,12 @@ void JobInfo::retrieveInfo ( ){
 		LbApi lbApi;
 		lbApi.setJobId(jobId);
 		Status status = lbApi.getStatus(true,true);
+		if ( status.getEndpoint() == "" ) {
+                        err << "Submitted Endpoint is not available, please check the status of the job:\n"<<jobId<<"\n";
+                        throw WmsClientException(__FILE__,__LINE__,
+                        "retrieveInfo", ECONNABORTED,
+                        "WMProxy Server Error", err.str( ) );		
+		} 
 		setEndPoint(status.getEndpoint(), false);
 		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobId);
 		if ( (!checkWMProxyRelease(2, 2, 0 ))  && ( jdlOpt || origOpt  || proxyOpt ) ) {
