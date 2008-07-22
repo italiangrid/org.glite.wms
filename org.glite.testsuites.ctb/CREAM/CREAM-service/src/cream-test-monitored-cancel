@@ -173,7 +173,9 @@ class JobPoller(threading.Thread):
         self.pool.shutdown()
         for key in self.tableOfResults:
             JobPoller.logger.info("Job with status %s: %d" % (key, self.tableOfResults[key]))
-
+        if self.tableOfResults['CANCELLED']<>self.parameters.numberOfJob:
+            return 1
+        return 0
 
 
 
@@ -228,7 +230,9 @@ def main():
     pollerThread = JobPoller(parameters, gliteCeCommand)
     pollerThread.start()
     pollerThread.join()
-    pollerThread.shutdown()
+    exitCode = pollerThread.shutdown()
+    
+    sys.exit(exitCode)
     
 if __name__ == "__main__":
     main()

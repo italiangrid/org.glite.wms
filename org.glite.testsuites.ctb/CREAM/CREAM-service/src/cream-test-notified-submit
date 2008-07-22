@@ -138,6 +138,9 @@ class JobMonitor(threading.Thread):
         self.pool.shutdown()
         for key in self.tableOfResults:
             JobMonitor.logger.info("Job with status %s: %d" % (key, self.tableOfResults[key]))
+        if self.tableOfResults['ABORTED']>0 or self.tableOfResults['CANCELLED']>0:
+            return 1
+        return 0
 
 def main():
     logger = log4py.Logger().get_instance(classid="main")
@@ -205,14 +208,17 @@ def main():
         
         monitorThread.start()
         monitorThread.join()
-        monitorThread.shutdown()
+        exitCode = monitorThread.shutdown()
         
         consumer.halt()
         
         #TODO remove subscription
+        
     except Exception, e:
         failure(e)
-    
+        exitCode = 1
+
+    sys.exit(exitCode)
         
 
 if __name__ == "__main__":
