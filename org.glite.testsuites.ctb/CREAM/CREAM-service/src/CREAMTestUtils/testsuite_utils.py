@@ -1,7 +1,8 @@
 
 
 import sys, os, os.path, tempfile
-import re
+import re, string
+import popen2
 
 
 def checkIsOk(value):
@@ -127,6 +128,7 @@ def getCECommandTable():
                        "cancel": gliteLocation + "/bin/glite-ce-job-cancel",
                        "purge": gliteLocation + "/bin/glite-ce-job-purge",
                        "subscribe": gliteLocation + "/bin/CEMonitorSubscriber",
+                       "unsubscribe": gliteLocation + "/bin/CEMonitorUnsubscriber",
                        "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy" };
 
     for k in gliteCeCommand.keys():
@@ -146,6 +148,22 @@ def getProxyFile():
     
     return proxyFile
 
+def getHostname():
+    proc = popen2.Popen4('/bin/hostname -f')
+    hostname =  string.strip(proc.fromchild.readline())
+    proc.fromchild.close()
+    return hostname
+
+def getCACertDir():
+    if os.environ.has_key("CACERT_DIR"):
+        caCertDir = os.environ["CACERT_DIR"];
+    else:
+        caCertDir = "/etc/grid-security/certificates"
+        
+    if not os.path.isdir(caCertDir):
+        raise Exception, "Cannot find CA certificate directory " + caCertDir
+    return caCertDir
+        
 class ManPage:
     
     def __init__(self):

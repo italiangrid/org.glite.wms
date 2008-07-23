@@ -210,9 +210,10 @@ def main():
         monitorThread.join()
         exitCode = monitorThread.shutdown()
         
-        consumer.halt()
+#        job_utils.unSubscribeToCREAMJobs(gliteCeCommand['unsubscribe'], cemonURL, \
+#                                         subscrId, parameters, proxyFile, logger)
         
-        #TODO remove subscription
+        consumer.halt()
         
     except Exception, e:
         failure(e)

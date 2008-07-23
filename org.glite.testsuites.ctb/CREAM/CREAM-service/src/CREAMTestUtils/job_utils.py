@@ -5,15 +5,11 @@ import tempfile
 import popen2
 import log4py
 
+from testsuite_utils import getHostname, getCACertDir
+
 jobUtilsLogger = log4py.Logger().get_instance(classid="job_utils")
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
 
-def getHostname():
-    proc = popen2.Popen4('/bin/hostname -f')
-    hostname =  string.strip(proc.fromchild.readline())
-    proc.fromchild.close()
-    return hostname
-        
 def eraseJobs(jobList, purgeCmd, logger=jobUtilsLogger):
     
     if len(jobList)>0:
@@ -46,9 +42,8 @@ def subscribeToCREAMJobs(subscribeCmd, cemonURL, parameters, \
                          proxyFile, logger=jobUtilsLogger):
     
     consumerURL = 'http://%s:%d' % (getHostname(), parameters.consumerPort)
-    #TODO CAcert dir is still hardcoded
     subscrCmd = "%s %s %s %s %s %s %s %d %d" % \
-            (subscribeCmd, proxyFile, "/etc/grid-security/certificates", \
+            (subscribeCmd, proxyFile, getCACertDir(), \
              cemonURL, consumerURL, \
              'CREAM_JOBS',  'CLASSAD', parameters.rate,  31536000)
     logger.debug("Subscription command: " + subscrCmd)
@@ -71,3 +66,11 @@ def subscribeToCREAMJobs(subscribeCmd, cemonURL, parameters, \
         raise Exception('Cannot subscribe to' + cemonURL)
     
     return subscriptionId
+
+def unSubscribeToCREAMJobs(unSubscribeCmd, cemonURL, subscrID, parameters, \
+                         proxyFile, logger=jobUtilsLogger):
+    unSubscrCmd = "%s %s %s %s %s" % \
+            (unSubscribeCmd, proxyFile, getCACertDir(), \
+             cemonURL, subscrID)
+    logger.debug("UnSubscription command: " + unSubscrCmd)
+    unSubscrProc = os.system(unSubscrCmd)
