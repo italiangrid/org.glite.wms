@@ -129,6 +129,7 @@ def getCECommandTable():
                        "purge": gliteLocation + "/bin/glite-ce-job-purge",
                        "subscribe": gliteLocation + "/bin/CEMonitorSubscriber",
                        "unsubscribe": gliteLocation + "/bin/CEMonitorUnsubscriber",
+                       "lease": gliteLocation + "/bin/glite-ce-job-lease",
                        "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy" };
 
     for k in gliteCeCommand.keys():

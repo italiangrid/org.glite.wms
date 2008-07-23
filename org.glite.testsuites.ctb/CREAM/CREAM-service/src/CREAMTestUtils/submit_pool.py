@@ -10,12 +10,13 @@ class SubmitterThread(threading.Thread):
     
     logger = log4py.Logger().get_instance(classid="SubmitterThread")
     
-    def __init__(self, pool, scmd, dcmd, tName):
+    def __init__(self, pool, scmd, dcmd, lcmd, tName):
         threading.Thread.__init__(self)
         self.setName(tName)
         self.pool = pool
         self.submitFStr = scmd
-        self.delegatFStr = dcmd
+        self.delegFStr = dcmd
+        self.leaseFStr = lcmd
 
     def run(self):
         running = True
@@ -27,9 +28,8 @@ class SubmitterThread(threading.Thread):
                     SubmitterThread.logger.debug("Thread submitting: " + self.getName())
                     tmpTS = time.time()
                     
-                    if self.delegatFStr<>None:
-                        delegCmd = self.delegatFStr % (os.getpid(), tmpTS)
-                        submCmd = self.submitFStr % (os.getpid(), tmpTS)
+                    if self.delegFStr<>None:
+                        delegCmd = self.delegFStr % (os.getpid(), tmpTS)
                         
                         SubmitterThread.logger.debug("Delegate cmd: " +delegCmd)
                         delegProc = popen2.Popen4(delegCmd)
@@ -38,11 +38,27 @@ class SubmitterThread(threading.Thread):
                                 self.pool.notifySubmitResult(failure=line[24:])
                                 notified = True
                         delegProc.fromchild.close()
-                    else:
-                        delegCmd = self.delegatFStr
-                        submCmd = self.submitFStr
-                    
+                        
+                    if not notified and self.leaseFStr<>None:
+                        leaseCmd = self.leaseFStr % (os.getpid(), tmpTS)
+                        
+                        SubmitterThread.logger.debug("Lease cmd: " +delegCmd)
+                        leaseProc = popen2.Popen4(leaseCmd)
+                        for line in leaseProc.fromchild:
+                            if 'ERROR' in line or 'FATAL' in line:
+                                self.pool.notifySubmitResult(failure=line[24:])
+                                notified = True
+                        leaseProc.fromchild.close()
+                        
                     if not notified:
+                        
+                        if self.delegFStr<>None and self.leaseFStr<>None:
+                            submCmd = self.submitFStr % (os.getpid(), tmpTS, os.getpid(), tmpTS)
+                        elif self.delegFStr<>None or self.leaseFStr<>None:
+                            submCmd = self.submitFStr % (os.getpid(), tmpTS)
+                        else:
+                            submCmd = self.submitFStr
+                                            
                         SubmitterThread.logger.debug("Submit  cmd: " + submCmd)
                         submitProc = popen2.Popen4(submCmd)
                         for line in submitProc.fromchild:
@@ -77,19 +93,38 @@ class JobSubmitterPool:
         self.processed = 0
         
         if parameters.delegationID=='':
-            dString = 'DELEGID%d.%f'
             dcmd = '%s -e %s %s' % (cmdTable['delegate'], \
                                               parameters.resourceURI[:string.find(parameters.resourceURI,'/')],
-                                              dString)
+                                              'DELEGID%d.%f')
+            delegOpt = '-D DELEGID%d.%f'
         else:
-            dString = parameters.delegationID
+            delegOpt = '-D ' + parameters.delegationID
             dcmd = None
             
-        scmd = '%s -D %s -r %s %s' % (cmdTable['submit'], \
-                                      dString, parameters.resourceURI, parameters.jdl)
+        if hasattr(parameters, 'leaseID'):
+            if parameters.leaseID=='':
+                
+                if hasattr(parameters, 'leaseTime'):
+                    lTime = parameters.leaseTime
+                else:
+                    lTime = 60
+                    
+                lcmd = '%s -e %s -T %d %s' % (cmdTable['lease'], \
+                                              parameters.resourceURI[:string.find(parameters.resourceURI,'/')],
+                                              lTime, 'LEASEID%d.%f')
+                leaseOpt = '-L LEASEID%d.%f'
+            else:
+                leaseOpt = '-L ' + parameters.leaseID
+                lcmd = None
+        else:
+            leaseOpt = ''
+            lcmd = None
+            
+        scmd = '%s %s %s -r %s %s' % (cmdTable['submit'], delegOpt, leaseOpt, \
+                                   parameters.resourceURI, parameters.jdl)
         
         for k in range(0,parameters.maxConcurrentSubmit):
-            subThr = SubmitterThread(self, scmd, dcmd, "Submitter"  + str(k))
+            subThr = SubmitterThread(self, scmd, dcmd, lcmd, "Submitter"  + str(k))
             subThr.start()
         
 
