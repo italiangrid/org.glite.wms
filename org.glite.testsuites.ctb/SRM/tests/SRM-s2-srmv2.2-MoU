@@ -6,7 +6,8 @@
 # The 25 MoU 'basic' tests included in the s2 package are run.
 #
 # This script needs the location of the basic SRM 2.2 tests to be defined in $S2_TESTS_LOCATION
-# It also needs the s2 binary to be foundable (in the $PATH).
+# (usually /opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic/).
+# It also needs the s2 binary to be foundable in the $PATH (usually /opt/s2/bin).
 # By default VO name from voms proxy is used. Another VO name can be specified using $VO.
 # The s2 output files useful for debugging are stored in $S2_LOGS_DIR, if defined, oterwise
 # a directory in /tmp with the name of the target host is created and log files will be stored
