@@ -1,0 +1,37 @@
+Bug: #32528
+Link: https://savannah.cern.ch/bugs/?32528
+Summary: The BDII information purchasing sometimes timeouts
+
+- Set a very low timeout for the BDII on the WMS conf file:
+  II_Timeout  =  3;
+
+- Now setting on the WMS conf file: 
+
+  IsmIILDAPSearchAsync = false;
+
+  You should see in the log file of the workload_manager (if yuo use a
+  populate BDII):
+
+    [Warning] fetch_bdii_ce_info(ldap-utils.cpp:640): Timed out
+    [Warning] fetch_bdii_se_info(ldap-utils.cpp:308): Timed out
+    [Debug] do_purchase(ism-ii-purchaser.cpp:176): BDII fetching completed in 4 seconds
+    [Info] do_purchase(ism-ii-purchaser.cpp:193): Total VO_Views entries in ISM : 0
+    [Info] do_purchase(ism-ii-purchaser.cpp:194): Total SE entries in ISM : 0
+
+
+- Setting:
+
+  IsmIILDAPSearchAsync = true:  
+  
+  you should obtain more (>0) VO_Views entries (e.g.):
+
+    [Debug] fetch_bdii_ce_info(ldap-utils-asynch.cpp:628): #1652 LDAP entries received in 5 seconds
+    [Debug] fetch_bdii_ce_info(ldap-utils-asynch.cpp:781): ClassAd reppresentation built in 0 seconds
+    [Debug] fetch_bdii_se_info(ldap-utils-asynch.cpp:444): #2381 LDAP entries received in 5 seconds
+    [Debug] fetch_bdii_se_info(ldap-utils-asynch.cpp:504): ClassAd reppresentation built in 0 seconds
+    [Debug] do_purchase(ism-ii-purchaser.cpp:176): BDII fetching completed in 10 seconds
+    [Info] do_purchase(ism-ii-purchaser.cpp:193): Total VO_Views entries in ISM : 53
+    [Info] do_purchase(ism-ii-purchaser.cpp:194): Total SE entries in ISM : 61
+
+
+  
