@@ -4,11 +4,7 @@ import os, os.path
 import sys
 import re, string
 import getopt
-import threading
-import time
-import popen2
-import tempfile
-from CREAMTestUtils import testsuite_utils, job_utils
+from CREAMTestUtils import testsuite_utils, job_utils, job_poller
 import log4py
 
 from CREAMTestUtils.submit_pool import JobSubmitterPool
@@ -52,124 +48,17 @@ def failure(reason):
     print reason
     sys.exit(1)
 
-class JobPoller(threading.Thread):
-
-    logger = log4py.Logger().get_instance(classid="JobPoller")
+class JobPoller(job_poller.JobPoller):
     
     def __init__(self, parameters, cmds):
-        threading.Thread.__init__(self)
-        self.table = {}
-        self.lock = threading.Lock()
-        self.parameters = parameters
-        self.cmdTable = cmds
+        job_poller.JobPoller.__init__(self, parameters, cmds)
         
-        self.jobRE = re.compile("JobID=\[([^\]]+)")
-        self.statusRE = re.compile('Status\s*=\s*\[([^\]]+)')
-        self.failureRE = re.compile('FailureReason\s*=\s*\[([^\]]+)')
-        
-        self.pool = JobSubmitterPool(parameters, cmds, self)
-        self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, \
-                               'ABORTED': 0, 'CANCELLED': 0}
-
-    def run(self):
-
-        minTS = time.time()
-
-        serviceHost = self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')]
-                
-        jobLeft = self.parameters.numberOfJob
-        jobProcessed = 0
-        
-        while jobProcessed<self.parameters.numberOfJob:
-            
-            ts = time.time()
-
-            finishedJobs = []
-
-            statusCmd = self.cmdTable['status'] + " -L 0 -s DONE-OK:DONE-FAILED:ABORTED:CANCELLED" \
-                        + " -f \"" + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)) \
-                        + "\" -e " + serviceHost + " --all"
-            JobPoller.logger.debug('Command line: ' + statusCmd)
-            statusProc = popen2.Popen4(statusCmd, True)
-            
-            self.lock.acquire()
-            try:
-                
-                currId = None
-                
-                for line in statusProc.fromchild:
-                    if 'ERROR' in line or 'FATAL' in line:
-                        JobPoller.logger.error(line[24:])
-                        continue
-                    
-                    tmpm = self.jobRE.search(line)
-                    if tmpm<>None:
-                        jobId = tmpm.group(1)
-                        if jobId in self.table:
-                            del(self.table[jobId])
-                            finishedJobs.append(jobId)
-                            jobProcessed += 1
-                            currId = jobId
-                        else:
-                            currId = None
-                        continue
-                    
-                    tmpm = self.statusRE.search(line)
-                    if tmpm<>None and currId<>None:
-                        jobStatus = tmpm.group(1)
-                        self.tableOfResults[jobStatus] += 1
-                        if jobStatus=='CANCELLED':
-                            JobPoller.logger.error('Detected strange behaviour: job %s has been cancelled' % currId)
-                        else:
-                            JobPoller.logger.info("Execution terminated for job: %s with status %s"  % (currId, jobStatus))
-                        continue
-                    
-                    tmpm = self.failureRE.search(line)
-                    if tmpm<>None and currId<>None:
-                        jobFailure = tmpm.group(1)
-                        JobPoller.logger.debug("Failure reason for job %s: %s" %(jobId, jobFailure)) 
-                        continue
-
-                statusProc.fromchild.close()
-
-                if len(finishedJobs)>0 and len(self.table):
-                    minTS = min(self.table.values()) - 1
-                    
-            finally:
-                self.lock.release()
-
-            job_utils.eraseJobs(finishedJobs, self.cmdTable['purge'], JobPoller.logger)
-
-            #TODO: imcremental pool feeding
-            jobToSend = min(jobLeft, self.parameters.maxRunningJobs - len(self.table))
-            self.pool.submit(jobToSend)
-            jobLeft = self.parameters.numberOfJob - self.pool.getSuccesses()
-            JobPoller.logger.debug("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
-            
-            timeToSleep = self.parameters.rate - int(time.time() - ts)
-            if timeToSleep>0:
-                time.sleep(timeToSleep)
-
-    def put(self, uri, timestamp):
-        self.lock.acquire()
-        JobPoller.logger.info("Submitted job: " + uri)
-        self.table[uri] = timestamp
-        self.lock.release()
-
-    def size(self):
-        self.lock.acquire()
-        result = len(self.table)
-        self.lock.release()
-        return result
-    
     def shutdown(self):
-        self.pool.shutdown()
-        for key in self.tableOfResults:
-            JobPoller.logger.info("Job with status %s: %d" % (key, self.tableOfResults[key]))
+        job_poller.JobPoller.shutdown(self)
         if self.tableOfResults['ABORTED']>0 or self.tableOfResults['CANCELLED']>0:
             return 1
         return 0
-
+    
 def main():
     
     logger = log4py.Logger().get_instance(classid="main")
