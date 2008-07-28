@@ -1,0 +1,28 @@
+Bug: #38816
+Link: https://savannah.cern.ch/bugs/?38816
+Summary: Suicidal patch bug
+
+- Premises:
+   o Current memory usage by CREAM is logged in ice log file 
+     (/var/log/glite/ice.log) is rows such as this one:
+
+2008-07-28 16:13:23,068 DEBUG - glite-wms-ice::main() - Used RSS Memory: 9780
+
+   o Memory threshold is defined in the ICE section of the WMS conf file 
+     (attribue max_ice_mem)
+
+   o When 'current memory' > ' Memory threshold' the suicidal patch is triggered
+
+- Try to trigger several times the suicidal patch, editing the WMS conf file and 
+  setting a low enough value for max_ice_mem
+
+- Restart ice: /opt/glite/etc/init.d/glite-wms-ice restart
+
+- When the suicidal patch is triggered, verify that ICE is properly shut down.
+  You will see something like that in the log file:
+
+2008-07-28 16:45:27,591 FATAL - glite-wms-ice::main() - glite-wms-ice::main - 
+Max memory reached [10532 kB] ! EXIT!
+
+- Then verify that after a while (5 min) ICE restarts
+
