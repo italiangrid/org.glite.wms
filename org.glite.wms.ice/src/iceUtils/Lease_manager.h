@@ -23,6 +23,7 @@
 
 #include "creamJob.h"
 
+#include <exception>
 #include <iostream>
 #include <string>
 #include <functional>
@@ -42,6 +43,16 @@ namespace glite {
 namespace wms {
 namespace ice {
 namespace util {
+
+    class lease_exception : public std::exception {
+    public:
+        lease_exception( const char* reason );
+        lease_exception( const std::string& reason );
+        virtual ~lease_exception() throw() { };
+        virtual const char* what( void ) const throw();
+    private:
+        std::string m_reason;
+    };
 
     class Lease_manager {
     public:
@@ -200,9 +211,9 @@ namespace util {
          * is discarded.
          *
          * @return The lease ID to use for job submission. This method
-         * returns an empty string if some error occurs. 
+         * throws a fault if some error occurs. 
          */
-        std::string make_lease( const CreamJob& job, bool force = false );
+        std::string make_lease( const CreamJob& job, bool force = false ) throw( lease_exception& );
 
         /**
          * Renew an existing lease.          
@@ -220,7 +231,7 @@ namespace util {
          * method returns 0. In this case, the lease entry in the lease
          * cache is NOT modified.
          */
-        time_t renew_lease( const std::string& lease_id );
+        time_t renew_lease( const std::string& lease_id ) throw( lease_exception& );
 
         /**
          * These methods give access to the lease cache through

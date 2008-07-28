@@ -163,15 +163,23 @@ void iceCommandLeaseUpdater::execute( ) throw()
                        );
         
         // Get the Lease_t object from the lease manager cache
-        time_t new_lease = m_lease_manager->renew_lease( *it );
-        if ( 0 == new_lease ) {
+        try {
+            time_t new_lease = m_lease_manager->renew_lease( *it );
+        } catch( const std::exception& ex ) {
             CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                             << "Lease update for lease ID " << *it << " failed. " 
-                            << "This lease will be removed after expiration."
+                            << "Exception is " << ex.what()
+                            << ". This lease will be removed after expiration."
                             );
             // Nothing to do. The next iteration will take care of
             // non existing leases, or expired leases
-        }
+        } catch( ... ) {
+            CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+                            << "Lease update for lease ID " << *it << " failed " 
+                            << "due to an unknown exception. "
+                            << "This lease will be removed after expiration."
+                            );
+        }        
     }
 
 

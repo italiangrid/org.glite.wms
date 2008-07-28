@@ -45,6 +45,26 @@ using namespace std;
 Lease_manager* Lease_manager::s_instance = 0;
 boost::recursive_mutex Lease_manager::m_mutex;
 
+//////////////////////////////////////////////////////////////////////////////
+
+lease_exception::lease_exception( const char* reason ) :
+    m_reason( reason ? reason : "" )
+{
+
+}
+
+lease_exception::lease_exception( const string& reason ) :
+    m_reason( reason )
+{
+
+}
+
+const char* lease_exception::what( void ) const throw()
+{
+    return m_reason.c_str();
+}
+
+//////////////////////////////////////////////////////////////////////////////
 Lease_manager::Lease_manager( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_operation_count( 0 ),
@@ -166,7 +186,7 @@ void Lease_manager::init( void )
     }
 }
 
-string Lease_manager::make_lease( const CreamJob& job, bool force )
+string Lease_manager::make_lease( const CreamJob& job, bool force ) throw( lease_exception& )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -187,8 +207,8 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
     // Lookup the (user_DN,cream_url) pair into the set
     typedef t_lease_set::nth_index<0>::type t_lease_by_key;
     t_lease_by_key& lease_by_key_view( m_lease_set.get<0>() );
-    typedef t_lease_set::nth_index<2>::type t_lease_by_seq;
-    t_lease_by_seq& lease_by_seq( m_lease_set.get<2>() );
+    // typedef t_lease_set::nth_index<2>::type t_lease_by_seq;
+    // t_lease_by_seq& lease_by_seq( m_lease_set.get<2>() );
 
     t_lease_by_key::iterator it = lease_by_key_view.find( boost::make_tuple(user_DN, cream_url));
 
@@ -227,16 +247,13 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
 	    CreamProxy_Lease( cream_url, cert_file, lease_in, &lease_out ).execute( 3 );
         } catch( const exception& ex ) {
             // Lease operation failed
+            string error_msg( boost::str( boost::format( "Lease operation FAILED for lease ID %1% CREAM URL %2% user DN %3% expiration date %4%. Error is %5%") % lease_id % cream_url % user_DN % time_t_to_string( expiration_time ) % ex.what() ) );
+
             CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                            << "Lease operation FAILED for "
-                            << "lease ID \"" << lease_id << "\" CREAM URL "
-                            << cream_url << " user DN " << user_DN
-                            << " expiration date "
-                            << time_t_to_string( expiration_time )
-                            << ". Error is \"" << ex.what() << "\"."
-                             );
+                            << error_msg 
+                            );
             // Returns an empty string
-            return string();
+            throw lease_exception( error_msg );
         }     
         // lease operation succesful. Prints the output
         lease_id = lease_out.first; // FIXME: is that correct???
@@ -280,7 +297,7 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
     return lease_id;
 }
 
-time_t Lease_manager::renew_lease( const string& lease_id )
+time_t Lease_manager::renew_lease( const string& lease_id ) throw( lease_exception& )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -292,22 +309,23 @@ time_t Lease_manager::renew_lease( const string& lease_id )
     t_lease_by_id::iterator it = lease_by_id_view.find( lease_id );
 
     if ( lease_by_id_view.end() == it ) {
+        string error_msg( boost::str( boost::format( "Cannot renew lease with lease ID %1% because it can not be found in the lease cache" ) % lease_id ) );
+
         CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                        << "Cannot renew lease with lease ID \"" << lease_id
-                        << "\" because it can not be found in the lease cache"
-                         );
-        return 0; // lease id not found
+                        << error_msg
+                        );
+        throw lease_exception( error_msg );
     }
 
     string cert_file = DNProxyManager::getInstance()->getBetterProxyByDN( it->m_user_dn );
 
     if ( cert_file.empty() ) {
-        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                        << "Cannot renew lease with lease ID \"" << lease_id
-                        << "\" because I cannot retrieve a proxy cert file "
-                        << "for user DN \"" << it->m_user_dn << "\""
-                         );
+        string error_msg( boost::str( boost::format( "Cannot renew lease with lease ID \"%1%\" because ICE cannot retrieve a proxy cert file for user DN \"%2%\"") % lease_id % it->m_user_dn ) );
 
+        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+                        << error_msg
+                        );
+        throw lease_exception( error_msg );
     }
     
     struct Lease_t entry = *it; // this is the (old) entry
@@ -319,17 +337,18 @@ time_t Lease_manager::renew_lease( const string& lease_id )
     
     try {
         CreamProxy_Lease( entry.m_cream_url, cert_file, lease_in, &lease_out ).execute( 3 );
-    } catch( ... ) {
+    } catch( const std::exception& ex ) {
         // Lease operation failed
+        string error_msg( boost::str( boost::format( "Lease renew operation FAILED for lease ID \"%1%\" user DN %2% CREAM URL %3% desired expiration date %4%. Exception is %5%") % lease_id % entry.m_user_dn % entry.m_cream_url % time_t_to_string( expiration_time ) % ex.what() ) );
         CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                        << "Lease renew operation FAILED for lease ID \""
-                        << lease_id << "\" user DN " << entry.m_user_dn
-                        << " CREAM URL " << entry.m_cream_url
-                        << " desired expiration date "
-                        << time_t_to_string( expiration_time )
-                         );
-        // Returns an empty string
-        return 0;
+                        << error_msg );
+        throw lease_exception( error_msg );                          
+    } catch( ... ) {
+        // Lease operation failed due to unknown exception
+        string error_msg( boost::str( boost::format( "Lease renew operation FAILED for lease ID \"%1%\" user DN %2% CREAM URL %3% desired expiration date %4%. Unknown exception caught") % lease_id % entry.m_user_dn % entry.m_cream_url % time_t_to_string( expiration_time ) ) );
+        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+                        << error_msg );
+        throw lease_exception( error_msg );                          
     }         
     CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                     << "Succesfully renewed lease for "
@@ -359,7 +378,7 @@ void Lease_manager::purge_old_lease_ids( void )
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                         << "Purged " << size_before - size_after
                         << " elements from the lease cache"
-                         );
+                        );
     }
 }
 

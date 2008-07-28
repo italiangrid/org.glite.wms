@@ -384,16 +384,20 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             //
             // Get a (possibly existing) lease ID
             //
-            lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob, force_lease );
-            if ( lease_id.empty() ) {
+            try{
+                lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob, force_lease );
+            } catch( const std::exception& ex ) {
                 // something was wrong with the lease creation step. 
+                string err_msg( boost::str( boost::format( "Failed to get lease_id for job %1%. Exception is %2%" ) % m_theJob.getGridJobID() % ex.what() ) );
+
                 CREAM_SAFE_LOG( m_log_dev->errorStream()
-                                << method_name
-                                << "Failed to get lease_id for job "
-                                << m_theJob.describe()
-                                
-                                );        
-                throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to get lease_id for job %1%" ) % m_theJob.getGridJobID() ) ) );
+                                << method_name << err_msg );
+                throw( iceCommandTransient_ex( err_msg ) );
+            } catch( ... ) {
+                string err_msg( boost::str( boost::format( "Failed to get lease_id for job %1% due to unknown exception" ) % m_theJob.getGridJobID() ) );
+                CREAM_SAFE_LOG( m_log_dev->errorStream()
+                                << method_name << err_msg );
+                throw( iceCommandTransient_ex( err_msg ) );
             }
             
             // lease creation OK
