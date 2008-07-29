@@ -1,0 +1,19 @@
+Bug: #37862
+Link: https://savannah.cern.ch/bugs/?37862
+Summary: Wrong default value for the GLITE_LOCATION variable in glite-wms-ice script 
+
+****************************************************************************
+
+[root@wms008 init.d]# grep GLITE_LOCATION glite-wms-ice
+GLITE_LOCATION=${GLITE_LOCATION:-/opt/glite}
+#. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
+#. ${GLITE_LOCATION}/libexec/glite-wms-services-certs.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
+GLITE_WMS_CONFIG_DIR=${GLITE_LOCATION}/etc/
+binpath=${GLITE_LOCATION}/bin/${program_name}
+    #. ${GLITE_LOCATION}/libexec/glite-wms-parse-configuration.sh ${conf_file}
+${parse_attribute}
+        binpath_child=${GLITE_LOCATION}/bin/glite-wms-ice
+
+
