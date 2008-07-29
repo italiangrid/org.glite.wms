@@ -1,0 +1,130 @@
+#!/usr/bin/python
+
+import os, os.path
+import sys
+import re, string
+import getopt
+from CREAMTestUtils import testsuite_utils, job_utils, job_poller
+import log4py
+
+from CREAMTestUtils.submit_pool import JobSubmitterPool
+
+def usage():
+    manPage = testsuite_utils.ManPage()
+    
+    manPage.shortDescr = 'submit a sequence of jobs and let the lease expires for each job'
+    manPage.synopsis = '[OPTION]'
+    manPage.description = '''Submit a sequence of simple jobs with a specified rate. \
+For each job either a lease is registered or a pre-registered lease is used; \
+the lease is not renewed so the job must be cancelled by the service. \
+The status of the job is retrieved using the GetStatus command'''
+
+    manPage.parameters.append(('-h', '--help' , '', 'print this message and exit'))
+    manPage.parameters.append(('-r', '--rate', 'SLEEP_TIME', '''\
+the sleep time in seconds between two consecutive submissions(Default 30s, Min 5s)'''))
+    manPage.parameters.append(('-n', '--numberOfJob', 'NUM', 'the number of jobs to submit (Default 1)'))
+    manPage.parameters.append(('-m', '--maxRunningJobs', 'NUM', '''\
+the max number of job which can be enqueued in the service (Default 100)'''))
+    manPage.parameters.append(('-D', '--delegationID', 'DELEGATIONID','''\
+disable the auto-delegation for each submission and reuse the specified delegation ID'''))
+    manPage.parameters.append(('-L', '--leaseID', 'LEASEID', '''\
+use the pre-registered lease id, if not specified a new lease id is created for each job'''))
+    manPage.parameters.append(('-W', '--leaseTime', 'SLEEP_TIME', '''\
+define the lease time for a lease, if it is not used a pre-registered lease id \
+(DEFAULT 20m)'''))
+    manPage.parameters.append(('-R', '--resourceURI', 'RESOURCEURI','''\
+define the URI of the resource under testing, the format is \
+<host>[:<port>]/cream-<lrms>-<queue>. \
+This option is mandatory and no default value is defined'''))
+    manPage.parameters.append(('-C', '--maxConcurrentSubmit', 'NUM', '''\
+define the number of concurrent submit, (DEFAULT is 1)'''))
+#    manPage.parameters.append(('-j', '--jdl', 'JDLFILE', '''\
+#define the path for the jdl file, if omitted a predefined jdl will \
+#be used with simple sleep as executable'''))
+    
+    manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
+    manPage.env.append(('X509_USER_PROXY', 'location of the user proxy'))
+    manPage.env.append(('MONITORED_LEASE_EXP_CONFIG_FILE','''\
+location of the configuration file for this test'''))
+    
+    manPage.display()
+    
+    sys.exit(0)
+
+
+def failure(reason):
+    print reason
+    sys.exit(1)
+
+class JobPoller(job_poller.JobPoller):
+    
+    def __init__(self, parameters, cmds):
+        job_poller.JobPoller.__init__(self, parameters, cmds)
+        
+    def shutdown(self):
+        job_poller.JobPoller.shutdown(self)
+        if self.tableOfResults['CANCELLED']<>self.parameters.numberOfJob:
+            return 1
+        return 0
+    
+def main():
+    
+    logger = log4py.Logger().get_instance(classid="main")
+    
+    parameters = testsuite_utils.Parameters()
+    parameters.register('rate', 'd', 30, testsuite_utils.checkRate)
+    parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
+    parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
+    parameters.register('delegationID', 's', optChar='D')
+    parameters.register('leaseID', 's', '', optChar='L')
+    parameters.register('leaseTime', 'd', 1200, optChar='W')
+    parameters.register('resourceURI', 's', optChar='R')
+    parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
+    parameters.register('jdl', 's')
+    parameters.register('help', 'b')
+
+    if os.environ.has_key("MONITORED_LEASE_EXP_CONFIG_FILE"):
+        confFileName = os.environ["MONITORED_LEASE_EXP_CONFIG_FILE"]
+        try:
+            parameters.parseConfigFile(confFileName)
+        except IOError, ioError:
+            failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
+        except Exception, exception:
+            failure("Cannot parse configuration file: " + confFileName + " " + str(exception))
+
+    try:
+        optlist, args = getopt.getopt(sys.argv[1:], parameters.getShortOptString(),
+                                      parameters.getLongOptList())
+        parameters.parseOptList(optlist)
+    except getopt.GetoptError:
+        print "Wrong arguments\n\nUsage:\n"
+        usage()
+    except Exception, exception:
+        failure("Cannot parse option list " + str(exception))
+        
+    if parameters.help:
+        usage()
+
+    if parameters.resourceURI=='':
+        print "Resource URI is not defined"
+        usage()
+        
+    if parameters.jdl=='':
+        parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*5, logger)
+        if parameters.jdl==None:
+            sys.exit(1)
+    
+    gliteCeCommand = testsuite_utils.getCECommandTable()
+
+    proxyFile = testsuite_utils.getProxyFile()
+        
+    pollerThread = JobPoller(parameters, gliteCeCommand)
+    pollerThread.start()
+    pollerThread.join()
+    exitCode = pollerThread.shutdown()
+    
+    sys.exit(exitCode)
+
+
+if __name__ == "__main__":
+    main()
