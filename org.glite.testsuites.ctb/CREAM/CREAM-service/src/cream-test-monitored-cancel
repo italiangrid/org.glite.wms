@@ -21,7 +21,7 @@ the sleep time in seconds between two consecutive submissions(Default 30s, Min 5
     manPage.parameters.append(('-n', '--numberOfJob', 'NUM', 'the number of jobs to submit (Default 1)'))
     manPage.parameters.append(('-m', '--maxRunningJobs', 'NUM', '''\
 the max number of job which can be enqueued in the service (Default 100)'''))
-    manPage.parameters.append(('-d', '--delegationID', 'DELEGATIONID','''\
+    manPage.parameters.append(('-D', '--delegationID', 'DELEGATIONID','''\
 disable the auto-delegation for each submission and reuse the specified delegation ID'''))
     manPage.parameters.append(('-R', '--resourceURI', 'RESOURCEURI','''\
 define the URI of the resource under testing, the format is \
@@ -83,7 +83,7 @@ def main():
     parameters.register('rate', 'd', 30, testsuite_utils.checkRate)
     parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
     parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
-    parameters.register('delegationID', 's')
+    parameters.register('delegationID', 's', optChar='D')
     parameters.register('resourceURI', 's', optChar='R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
     parameters.register('jdl', 's')
