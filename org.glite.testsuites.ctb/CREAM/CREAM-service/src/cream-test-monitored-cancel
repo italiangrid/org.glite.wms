@@ -53,12 +53,14 @@ class JobPoller(job_poller.JobPoller):
     def put(self, uri, timestamp):
         self.lock.acquire()
         JobPoller.logger.info("Submitted job: " + uri)
-        self.table[uri] = (timestamp, False)
+        self.table[uri] = job_utils.BooleanTimestamp(timestamp)
         self.lock.release()
 
     def manageRunningState(self, currId):
-        if not self.table[currId][1]:
-            self.table[currId] = (self.table[currId][0], True)
+        if self.table[currId].scheduled:
+            JobPoller.logger.debug("Cannot reschedule cancel for job %s" % currId)
+        else:
+            self.table[currId].scheduled = True
             JobPoller.logger.debug("Scheduling %s for cancel" % currId)
             self.runningJobs.append(currId)
     

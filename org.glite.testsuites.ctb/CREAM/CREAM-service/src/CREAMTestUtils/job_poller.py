@@ -4,7 +4,6 @@ import time
 import popen2
 import testsuite_utils, job_utils
 import log4py
-import types
 
 from submit_pool import JobSubmitterPool
 
@@ -104,11 +103,7 @@ class JobPoller(threading.Thread):
                 statusProc.fromchild.close()
 
                 if len(self.finishedJobs)>0 and len(self.table):
-                    candidate = min(self.table.values())
-                    if type(candidate) is types.TupleType:
-                        minTS  = candidate[0] -1
-                    else:
-                        minTS = candidate -1
+                    minTS = int(min(self.table.values())) -1
                     
             finally:
                 self.lock.release()

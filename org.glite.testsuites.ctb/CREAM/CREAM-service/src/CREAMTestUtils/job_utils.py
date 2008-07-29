@@ -74,3 +74,33 @@ def unSubscribeToCREAMJobs(unSubscribeCmd, cemonURL, subscrID, parameters, \
              cemonURL, subscrID)
     logger.debug("UnSubscription command: " + unSubscrCmd)
     unSubscrProc = os.system(unSubscrCmd)
+    
+    
+class BooleanTimestamp:
+    
+    def __init__(self, timestamp, scheduled=False):
+        self.timestamp = timestamp
+        self.scheduled = scheduled
+    
+    def __int__(self):
+        return self.timestamp
+    
+    def __lt__(self, nObj):
+        return self.timestamp < int(nObj)
+    
+    def __le__(self, nObj):
+        return self.timestamp <= int(nObj)
+    
+    def __eq__(self, nObj):
+        return self.timestamp == int(nObj)
+    
+    def __ne__(self, nObj):
+        return self.timestamp <> int(nObj)
+    
+    def __gt__(self, nObj):
+        return self.timestamp > int(nObj)
+    
+    def __ge__(self, nObj):
+        return self.timestamp >= int(nObj)
+
+
