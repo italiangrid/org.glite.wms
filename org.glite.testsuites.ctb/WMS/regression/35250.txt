@@ -1,0 +1,25 @@
+Bug: #35250
+Link: https://savannah.cern.ch/bugs/?35250
+Summary: DAG job doesn't work
+
+1) Test it for the filelist input method by setting the following two
+  parameters in the glite_wms.conf WMS configuration file, workload manager
+  section:
+             DispatcherType  =  "filelist";
+             Input  =  "${GLITE_LOCATION_VAR}/workload_manager/input.fl";
+
+  - re-start the WM and submit the jdl: 35250.jdl
+
+  - check if it is successful
+
+2) Test it for the jobdir input method by setting the following two 
+   parameters in the glite_wms.conf WMS configuration file, workload manager
+   section:
+              DispatcherType  =  "jobdir";
+              Input = "${GLITE_LOCATION_VAR}/workload_manager/jobdir";
+
+   - re-start the WM and submit the jdl: 35250.jdl
+                                                                                                                     
+   - check if it is successful
+
+
