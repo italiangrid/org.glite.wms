@@ -1,0 +1,18 @@
+[
+Type = "Job";
+JobType = "normal";
+InputSandbox = { "file:///home/emolinar/test.sh"};
+VirtualOrganisation = "dteam";
+Executable="/bin/echo";
+Arguments="Hello ";
+Requirements = ( other.GlueCEStateStatus == "Production" );
+Rank = 0;
+myproxy = myproxy.cnaf.infn.it;
+fuzzyrank = true;
+StdOutput="message.txt";
+StdError="err.log";
+OutputSandbox={"message.txt","err.log",".BrokerInfo"};
+RetryCount = 0;
+ShallowRetryCount = 3;
+]
+
