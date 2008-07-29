@@ -1,0 +1,22 @@
+[
+    type = "dag";
+    DefaultNodeShallowRetryCount = 3;
+        nodes = [
+      nodeA = [
+        node_type = "edg-jdl";
+        file ="myjob.jdl" ;
+      ];
+        nodeB = [
+                                node_type = "edg-jdl";
+        file ="myjob.jdl" ;
+       ];
+         nodeC = [
+         node_type = "edg-jdl";
+         file ="myjob.jdl" ;
+       ];
+                        dependencies = {
+        { nodeA, nodeB },
+                                { nodeA, nodeC }
+       }
+     ];
+  ]
