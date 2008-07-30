@@ -5,6 +5,7 @@ import tempfile
 import popen2
 import log4py
 
+from threading import Condition, Thread
 from testsuite_utils import getHostname, getCACertDir
 
 jobUtilsLogger = log4py.Logger().get_instance(classid="job_utils")
@@ -104,3 +105,49 @@ class BooleanTimestamp:
         return self.timestamp >= int(nObj)
 
 
+class LeaseRenewer(Thread):
+    
+    def __init__(self, parameters, cmds, container, logger=jobUtilsLogger):
+        Thread.__init__(self)
+        self.parameters = parameters
+        self.cmdTable = cmds
+        self.container = container
+        self.running = True
+        self.cond = Condition()
+        self.logger = logger
+        
+    def run(self):
+        
+        cmdPrefix = '%s -e %s -T %d %s ' % (self.cmdTable['lease'], \
+                        self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')], \
+                        self.parameters.leaseTime, '%s')
+        
+        self.cond.acquire()
+        while self.running:
+            self.cond.wait(self.parameters.leaseTime * 3 / 4)
+            if self.running:
+                if self.parameters.leaseID=='':
+                    tsList = self.container.valueSnapshot()
+                else:
+                    tsList = [ None ]
+                    
+                for item in tsList:
+                    if item==None:
+                        lcmd = cmdPrefix % self.parameters.leaseID
+                    else:
+                        lcmd = cmdPrefix % ( 'LEASEID%d.%f' % (os.getpid(), int(item)))
+                    logger.debug("Lease command: " + lcmd)
+                    
+                    leaseProc = popen2.Popen4(lcmd)
+                    for line in leaseProc.fromchild:
+                        if 'ERROR' in line or 'FATAL' in line:
+                            logger.error("Cannot renew lease " + parameters.leaseID)
+                    leaseProc.fromchild.close()
+                
+        self.cond.release()
+    
+    def halt(self):
+        self.cond.acquire()
+        self.running=False
+        self.cond.notify()
+        self.cond.release()
