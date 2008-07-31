@@ -50,7 +50,7 @@ chmod 755 $LOCAL_FILE
 
 test_bug34668_post () {
 export PYTHONPATH=$OLD_PYTHONPATH
-#rm -f $LOCAL_FILE
+rm -f $LOCAL_FILE
 unset LOCAL_FILE
 }
 
