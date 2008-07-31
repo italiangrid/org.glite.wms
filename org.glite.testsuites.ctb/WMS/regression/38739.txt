@@ -30,7 +30,6 @@ Summary: WMProxy Server: doesn't allow exec if there's only user DN in gacl
   replacing "/C=IT/O=INFN/OU=Personal Certificate/L=Padova/CN=Massimo Sgaravatto" 
   with your user DN
 
-- Restart wmproxy: /opt/glite/etc/init.d/glite-wms-wmproxy restart
 
 - Try to issue some commands (e.g. glite-wms-job-list-match, 
   glite-wms-job-submit, glite-wms-job-delegate-proxy, etc...) towards that WMS
