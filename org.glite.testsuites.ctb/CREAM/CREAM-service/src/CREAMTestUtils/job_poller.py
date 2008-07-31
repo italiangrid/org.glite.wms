@@ -103,7 +103,7 @@ class JobPoller(threading.Thread):
                 statusProc.fromchild.close()
 
                 if len(self.finishedJobs)>0 and len(self.table):
-                    minTS = int(min(self.table.values())) -1
+                    minTS = float(min(self.table.values())) -1
                     
             finally:
                 self.lock.release()

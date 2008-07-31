@@ -116,7 +116,7 @@ def main():
         usage()
         
     if parameters.jdl=='':
-        parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*5, logger)
+        parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*2, logger)
         if parameters.jdl==None:
             sys.exit(1)
     

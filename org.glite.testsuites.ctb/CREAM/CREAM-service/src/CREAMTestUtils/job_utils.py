@@ -83,26 +83,26 @@ class BooleanTimestamp:
         self.timestamp = timestamp
         self.scheduled = scheduled
     
-    def __int__(self):
+    def __float__(self):
         return self.timestamp
     
     def __lt__(self, nObj):
-        return self.timestamp < int(nObj)
+        return self.timestamp < float(nObj)
     
     def __le__(self, nObj):
-        return self.timestamp <= int(nObj)
+        return self.timestamp <= float(nObj)
     
     def __eq__(self, nObj):
-        return self.timestamp == int(nObj)
+        return self.timestamp == float(nObj)
     
     def __ne__(self, nObj):
-        return self.timestamp <> int(nObj)
+        return self.timestamp <> float(nObj)
     
     def __gt__(self, nObj):
-        return self.timestamp > int(nObj)
+        return self.timestamp > float(nObj)
     
     def __ge__(self, nObj):
-        return self.timestamp >= int(nObj)
+        return self.timestamp >= float(nObj)
 
 
 class LeaseRenewer(Thread):
@@ -135,13 +135,13 @@ class LeaseRenewer(Thread):
                     if item==None:
                         lcmd = cmdPrefix % self.parameters.leaseID
                     else:
-                        lcmd = cmdPrefix % ( 'LEASEID%d.%f' % (os.getpid(), int(item)))
-                    logger.debug("Lease command: " + lcmd)
+                        lcmd = cmdPrefix % ( 'LEASEID%d.%f' % (os.getpid(), float(item)))
+                    self.logger.debug("Lease command: " + lcmd)
                     
                     leaseProc = popen2.Popen4(lcmd)
                     for line in leaseProc.fromchild:
                         if 'ERROR' in line or 'FATAL' in line:
-                            logger.error("Cannot renew lease " + parameters.leaseID)
+                            self.logger.error("Cannot renew lease " + parameters.leaseID)
                     leaseProc.fromchild.close()
                 
         self.cond.release()

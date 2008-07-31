@@ -61,7 +61,7 @@ class JobMonitor(threading.Thread):
             self.notified = []
                     
             if len(self.finishedJobs)>0 and len(self.table):
-                minTS = int(min(self.table.values())) - 1
+                minTS = float(min(self.table.values())) - 1
                 
             self.lock.release()
             

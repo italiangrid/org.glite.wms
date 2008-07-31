@@ -42,7 +42,7 @@ class SubmitterThread(threading.Thread):
                     if not notified and self.leaseFStr<>None:
                         leaseCmd = self.leaseFStr % (os.getpid(), tmpTS)
                         
-                        SubmitterThread.logger.debug("Lease cmd: " +delegCmd)
+                        SubmitterThread.logger.debug("Lease cmd: " +leaseCmd)
                         leaseProc = popen2.Popen4(leaseCmd)
                         for line in leaseProc.fromchild:
                             if 'ERROR' in line or 'FATAL' in line:
