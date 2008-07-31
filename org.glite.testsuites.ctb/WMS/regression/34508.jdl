@@ -1,0 +1,24 @@
+[
+  nodes = {
+               [
+                 file = "/home/emolinar/collJdl.jdl";
+               ],
+               [
+                 file = "/home/emolinar/collJdl.jdl";
+               ],
+               [
+                 file = "/home/emolinar/collJdl.jdl";
+               ],
+               [
+                 file = "/home/emolinar/collJdl.jdl";
+               ],
+               [
+                 file = "/home/emolinar/collJdl.jdl";
+               ]
+                                                                                                                       
+          };
+          SignificantAttributes = { "requirements", "rank" };
+          Type = "Collection";
+          VirtualOrganisation = "dteam";
+]
+
