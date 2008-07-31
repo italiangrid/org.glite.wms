@@ -42,12 +42,23 @@ location of the configuration file for this test'''))
     
     sys.exit(0)
 
+
+class JobProcessed(job_utils.JobProcessed):
+    
+    def __init__(self, cmdTable):
+        job_utils.JobProcessed.__init__(self, cmdTable)
+        
+    def statusCheck(self, jobStatus):
+        return jobStatus=='CANCELLED'
+
+
 class JobPoller(job_poller.JobPoller):
     
     logger = log4py.Logger().get_instance(classid="JobPoller")
     
     def __init__(self, parameters, cmds):
         job_poller.JobPoller.__init__(self, parameters, cmds)
+        self.finishedJobs = JobProcessed(cmds)
         self.runningJobs = []
         
     def put(self, uri, timestamp):

@@ -151,3 +151,32 @@ class LeaseRenewer(Thread):
         self.running=False
         self.cond.notify()
         self.cond.release()
+
+
+
+class JobProcessed:
+    
+    def __init__(self, cmdTable):
+        self.jobTable = {}
+        self.purgeCmd = cmdTable['purge']
+        
+    def append(self, jobId, jobStatus=None):
+        if jobStatus==None:
+            self.jobTable[jobId] = True
+        else:
+            self.jobTable[jobId] = self.statusCheck(jobStatus)
+            
+    def statusCheck(self, jobStatus):
+        return True
+    
+    def dontPurge(self, jobId):
+        self.jobTable[jobId] = False
+    
+    def __len__(self):
+        return len(self.jobTable)
+    
+    def clear(self):
+        if len(self.jobTable)>0:
+            jobList = [ x for x in self.jobTable if self.jobTable[x] ]
+            eraseJobs(jobList, self.purgeCmd)
+            self.jobTable.clear()

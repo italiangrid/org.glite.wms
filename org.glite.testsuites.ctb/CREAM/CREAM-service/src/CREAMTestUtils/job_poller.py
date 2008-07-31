@@ -21,7 +21,7 @@ class JobPoller(threading.Thread):
         self.parameters = parameters
         self.cmdTable = cmds
         
-        self.finishedJobs = []
+        self.finishedJobs = None
         
         self.jobRE = re.compile("JobID=\[([^\]]+)")
         self.statusRE = re.compile('Status\s*=\s*\[([^\]]+)')
@@ -35,8 +35,9 @@ class JobPoller(threading.Thread):
         pass
     
     def processFinishedJobs(self):
-        job_utils.eraseJobs(self.finishedJobs, self.cmdTable['purge'], JobPoller.logger)
-        self.finishedJobs = []
+        self.finishedJobs.clear()
+#        job_utils.eraseJobs(self.finishedJobs, self.cmdTable['purge'], JobPoller.logger)
+#        self.finishedJobs = []
     
     def processRunningJobs(self):
         pass
@@ -53,8 +54,6 @@ class JobPoller(threading.Thread):
         while jobProcessed<self.parameters.numberOfJob:
             
             ts = time.time()
-
-            self.finishedJobs = []
 
             statusCmd = self.cmdTable['status'] \
                         + " -f \"" + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)) \
@@ -87,7 +86,7 @@ class JobPoller(threading.Thread):
                             self.manageRunningState(currId)
                         elif jobStatus in JobPoller.finalStates:
                             del(self.table[currId])
-                            self.finishedJobs.append(currId)
+                            self.finishedJobs.append(currId, jobStatus)
                             jobProcessed += 1
                             self.tableOfResults[jobStatus] += 1
                             JobPoller.logger.info("Execution terminated for job: %s with status %s"  
