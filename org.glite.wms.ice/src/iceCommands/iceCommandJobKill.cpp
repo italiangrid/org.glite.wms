@@ -64,6 +64,7 @@ namespace {
         static const char* method_name = "iceCommandJobKill::job_can_be_killed() - ";
         log4cpp::Category* log_dev = api_util::creamApiLogger::instance()->getLogger();
         int threshold( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
+        jobCache* cache( jobCache::getInstance() );
 
         if( J.getCompleteCreamJobID().empty() ) 
             return false;
@@ -86,6 +87,9 @@ namespace {
                             << V.getErrorMessage() << "\". "
                             << "This job will be killed."
                             );
+            CreamJob tmp( J ); // trick to discard const
+            tmp.set_failure_reason( "User proxy is not valid: " + V.getErrorMessage() );
+            cache->put( tmp );
             return true;
  	}
 
@@ -95,6 +99,9 @@ namespace {
                             << "] of user [" << J.getUserDN()
                             << "] is expiring. Will kill job " << J.describe()
                             );            
+            CreamJob tmp( J ); // trick to discard const
+            tmp.set_failure_reason( "User proxy is expiring");
+            cache->put( tmp );
             return true;
         }
 
@@ -108,10 +115,8 @@ namespace {
      * true.
      */
     class cancel_request_logger {
-    protected:
-        const string m_reason;
     public:
-        cancel_request_logger( const string& reason ) : m_reason ( reason ) {};
+        cancel_request_logger( void ) {};
 
         void operator()( const CreamJob& j ) throw() 
         {
@@ -121,9 +126,9 @@ namespace {
             jobCache::iterator it=cache->lookupByGridJobID( j.getGridJobID() );
             if ( it != cache->end() ) {
                 CreamJob tmp( *it );
-                tmp = logger->logEvent( new cream_cancel_request_event( tmp, m_reason ) );
+                tmp = logger->logEvent( new cream_cancel_request_event( tmp, tmp.get_failure_reason() ) );
                 tmp.set_killed_by_ice();
-                tmp.set_failure_reason( m_reason );
+                // tmp.set_failure_reason( m_reason );
                 cache->put( tmp );                
             }
         }
@@ -273,7 +278,7 @@ void iceCommandJobKill::cancel_jobs(const string& better_proxy,
     //
     // Logs "cancel requests"
     //
-    for_each( jobs.begin(), jobs.end(), cancel_request_logger( "Cancel requested by ICE as proxy is going to expire" ) );
+    for_each( jobs.begin(), jobs.end(), cancel_request_logger( ) );
 
     //
     // Actualy do the cancel operations
