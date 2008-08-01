@@ -30,18 +30,34 @@ LOCAL_FILE=${TMPDIR-/tmp}/bugtest34668_$$.py
 cat <<- FIN > $LOCAL_FILE 
 #!/usr/bin/env python2
 import threading
+import sys
+import Queue
+import traceback
 
 class bugtest (threading.Thread): 
 
- def _init_(self):
+ def __init__(self, queue):
+  self.__queue = queue
   threading.Thread.__init__(self)
 
  def run(self):
-  import UIutils
-  print "SUCCESS"
+  try:
+   import UIutils
+  except :
+   print "Error!"
+   #return 1
+   self.__queue.put(1)
+   raise
+  else:
+   print "SUCCESS"
+   #return 0
+   self.__queue.put(0)
 
-c = bugtest()
-c.start() 
+q = Queue.Queue(0)
+c = bugtest(q)
+c.start()
+c.join()
+sys.exit(q.get())
 FIN
 
 chmod 755 $LOCAL_FILE
