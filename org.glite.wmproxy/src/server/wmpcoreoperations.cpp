@@ -448,7 +448,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
         userid_log += " : ";
         userid_log += "event=wms.wmpserver_setSubjobFileSystem()";
         userid_log += " : ";
-        userid_log += "userid="+boost::lexical_cast<string>(userid);
+        userid_log += "userid="+boost::lexical_cast<string>(jobdiruserid);
 	userid_log += " ";
 	userid_log += "jobid="+jobid;
 
@@ -544,7 +544,7 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
         userid_log += " : ";
         userid_log += "event=wms.wmpserver_setJobFileSystem()";
         userid_log += " : ";
-        userid_log += "userid="+boost::lexical_cast<string>(userid);
+        userid_log += "userid="+boost::lexical_cast<string>(jobdiruserid);
         userid_log += " ";
 	userid_log += "jobid="+jobid;
 
@@ -1547,7 +1547,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
         		userid_log += " : ";
         		userid_log += "event=wms.wmpserver_submit()";
         		userid_log += " : ";
-        		userid_log += "userid="+boost::lexical_cast<string>(userid);
+        		userid_log += "userid="+boost::lexical_cast<string>(jobdiruserid);
 		        userid_log += " ";
 			userid_log += "jobid="+parentjobid.toString();
 
