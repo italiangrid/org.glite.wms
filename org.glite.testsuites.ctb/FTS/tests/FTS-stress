@@ -15,7 +15,7 @@
 showUsage ()
 {
  echo "                                                                                                     "
- echo "Usage: glite-fts-test-stress --site <site name> --pass <myproxy password> [--bdii <bdii hostname> --njob <number of jobs> --nfiles <number of files> ]  "
+ echo "Usage: FTS-stress --site <site name> --pass <myproxy password> [--bdii <bdii hostname> --njob <number of jobs> --nfiles <number of files> ]  "
  echo "Options:                                                                                             "
  echo "  obligatory:                                                                                        "
  echo "                                                                                                     "

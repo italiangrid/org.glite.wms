@@ -15,7 +15,7 @@
 showUsage ()
 {
  echo "									 		  "
- echo "Usage:  glite-fts-test-basic --fts <fts hostname> [ --bdii <bdii hostname> ]       "
+ echo "Usage:  FTS-basic --fts <fts hostname> [ --bdii <bdii hostname> ]       "
  echo "Options:                                                                           "
  echo "	 obligatory:    								  "
  echo "		  									  "
