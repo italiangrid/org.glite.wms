@@ -15,7 +15,7 @@
 showUsage ()
 {
  echo "                                                                                                     "
- echo "Usage: FTS-stress --site <site name> --pass <myproxy password> [--bdii <bdii hostname> --njob <number of jobs> --nfiles <number of files> ]  "
+ echo "Usage: FTS-stress --site <site name> --pass <myproxy password> [--bdii <bdii hostname> --fts <fts hostname>--njob <number of jobs> --nfiles <number of files> ]  "
  echo "Options:                                                                                             "
  echo "  obligatory:                                                                                        "
  echo "                                                                                                     "
@@ -28,7 +28,10 @@ showUsage ()
  echo "  optional:                                                                                          "
  echo "                                                                                                     "
  echo "          --bdii  <bdii hostname>                                                                    "
- echo "                   The name of the top level BDII. The default is lcg-bdii.cern.ch                   "
+ echo "                   The hostname of the top level BDII. The default is lcg-bdii.cern.ch                   "
+ echo "													    "
+ echo "          --fts  <fts hostname>                                                                    "
+ echo "                   The hostname of the FTS. The default is the one published in the BDII.                   "
  echo "													    "
  echo "          --njobs  <number of jobs>                                                                  "
  echo "                   The number of jobs to be submitted. The default is 10.                            "
@@ -73,6 +76,15 @@ do
                 shift 1
            else
                 BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOSTNAME=$2
                 shift 2
            fi
      ;;
@@ -297,7 +309,7 @@ export LCG_CATALOG_TYPE='lfc'
 	echo "Submitting the transfer"
 
 #        SubID=`glite-transfer-submit -p $MYPROXY_PASS -f $SUB_FILE_LOC 2>message`
-        SubID=`glite-transfer-submit -f $SUB_FILE_LOC 2>message`
+        SubID=`glite-transfer-submit -s $FTS_HOST -f $SUB_FILE_LOC 2>message`
 	
 	if [ -z "$SubID" ]; then
            echo ""
@@ -332,7 +344,7 @@ export LCG_CATALOG_TYPE='lfc'
 	
 	while true
 	do
-	 status=`glite-transfer-status $SubID 2>message`
+	 status=`glite-transfer-status -s $FTS_HOST $SubID 2>message`
 
  	 result=`cat message | wc -l`
 
@@ -366,7 +378,7 @@ export LCG_CATALOG_TYPE='lfc'
                 echo "Job failed!"
                 echo ""
                 FailedJobs=`echo $FailedJobs $SubID`
-                glite-transfer-status -l -v $SubID 
+                glite-transfer-status -s $FTS_HOST -l -v $SubID 
                 echo ""
                 return 
           fi
@@ -377,7 +389,7 @@ export LCG_CATALOG_TYPE='lfc'
                 echo "Job failed!"
                 echo ""
                 FailedJobs=`echo $FailedJobs $SubID`
-                glite-transfer-status -l -v $SubID
+                glite-transfer-status -s $FTS_HOST -l -v $SubID
                 echo ""
                 return
           fi
@@ -387,6 +399,14 @@ export LCG_CATALOG_TYPE='lfc'
 	 sleep 10
 	done
 }
+
+
+if [ -n "$FTS_HOSTNAME" ]; then
+   if [ $FTS_HOST != $FTS_HOSTNAME ]; then
+      echo ">>> NOTE: The FTS host found in the BDII ($FTS_HOST) does not correspond to the one provided"
+      FTS_HOST=$FTS_HOSTNAME
+   fi
+fi
 
 echo ""
 echo "Using FTS Server: $FTS_HOST"
@@ -405,7 +425,7 @@ echo ""
 export GLITE_SD_SITE=$SITE_NAME
 export LCG_CATALOG_TYPE='lfc'
 
-Channel_List=`glite-transfer-channel-list 2>/dev/null`
+Channel_List=`glite-transfer-channel-list -s $FTS_HOST 2>/dev/null`
 
 for Channel_Name in $Channel_List
 do
@@ -426,7 +446,7 @@ fi
   export GLITE_SD_SITE=$SITE_NAME
   export LCG_CATALOG_TYPE='lfc'
   
-  glite-transfer-channel-list $Channel_Name 1>/dev/null 2>message
+  glite-transfer-channel-list -s $FTS_HOST $Channel_Name 1>/dev/null 2>message
   
   result=`cat message|wc -l`
 
@@ -434,7 +454,7 @@ fi
      echo ""
      echo ">>> NOTE:  Channel information is needed! "
      echo ">>> NOTE:  `cat message`."
-     echo ">>> NOTE: `glite-transfer-channel-list -v | grep \"Service features:\" | sed -e 's/#//g'`"
+     echo ">>> NOTE: `glite-transfer-channel-list -s $FTS_HOST -v | grep \"Service features:\" | sed -e 's/#//g'`"
      echo ""
      exit 1
   fi
@@ -444,7 +464,7 @@ fi
    echo "INFO:"
 
 
-   isChannelActive=`glite-transfer-channel-list $Channel_Name | grep "State: Active" |wc -l`
+   isChannelActive=`glite-transfer-channel-list -s $FTS_HOST $Channel_Name | grep "State: Active" |wc -l`
 
    if [ $isChannelActive -eq 0 ];then
       echo "The channel: $Channel_Name is not Active! "
@@ -453,7 +473,7 @@ fi
       continue
    fi
 
-   Channel_Between=`glite-transfer-channel-list $Channel_Name 2>/dev/null | grep Between | sed -e 's/*/STAR/g' | sed -e 's/Between://g' | sed -e 's/and//g'`
+   Channel_Between=`glite-transfer-channel-list -s $FTS_HOST $Channel_Name 2>/dev/null | grep Between | sed -e 's/*/STAR/g' | sed -e 's/Between://g' | sed -e 's/and//g'`
    
    unset GLITE_SD_SITE
    unset LCG_CATALOG_TYPE
@@ -610,7 +630,7 @@ else
   for job in $FailedJobs
   do
     echo ""
-    glite-transfer-status -l -v $job
+    glite-transfer-status -s $FTS_HOST -l -v $job
     echo ""
   done
   echo ""

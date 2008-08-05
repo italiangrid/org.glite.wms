@@ -3,29 +3,31 @@
 #########################################################
 # Script for testing FTS services (BDII , List channels)#
 #########################################################
-# 							#	
-# Returned values:					#
-#							#
-#                 Exit  0: Test Passed			#
-#		  Exit  1: Test Failed			#
-#                 Exit  2: Wrong Input  		#
-#							#
+# 							                            #	
+# Returned values:					                    #
+#							                            #
+#                 Exit  0: Test Passed			        #
+#		          Exit  1: Test Failed			        #
+#                 Exit  2: Wrong Input  		        #
+#							                            #
 #########################################################
 
 showUsage ()
 {
  echo "                                                                                                       "
- echo "Usage:   FTS-services --site <site name> [--bdii <bdii hostname>] "
+ echo "Usage:   FTS-services --site <site name> [--bdii <bdii hostname> --fts <fts hostname>] "
  echo "Options:                                                                                               "
  echo "  obligatory:                                                                                          "
  echo "                                                                                                       "
  echo "          --site  <site name>                                                                          "
- echo "                   The name of the site hosting the FTS server as it stored in the GOC DB and information system.             "
+ echo "                   The hostname of the site hosting the FTS server as it stored in the GOC DB and information system.             "
  echo "                                                                                                       "
  echo "  optional:                                                                                            "
  echo "                                                                                                       "
  echo "          --bdii  <bdii hostname>                                                                      "
- echo "                   The name of the top level BDII. The default is lcg-bdii.cern.ch                     "
+ echo "                   The hostname of the top level BDII. The default is lcg-bdii.cern.ch                     "
+ echo "          --fts  <fts hostname>                                                                      "
+ echo "                   The hostname of the fts to test. The default is the one found in the top level BDII     "
  echo "													      "
 }
 
@@ -55,6 +57,15 @@ do
                 shift 2
            fi
      ;;
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOSTNAME=$2
+                shift 2
+           fi
+     ;;
+
 
 
           *)
@@ -137,6 +148,14 @@ fi
 export GLITE_SD_SITE=$SITE_NAME
 export LCG_CATALOG_TYPE='lfc'
 
+if [ -n "$FTS_HOSTNAME" ]; then
+   if [ $FTS_HOST != $FTS_HOSTNAME ]; then
+      echo ">>> NOTE: The FTS host found in the BDII ($FTS_HOST) does not correspond to the one provided"
+      FTS_HOST=$FTS_HOSTNAME
+   fi
+fi
+
+
 echo ""
 echo "Using FTS Server: $FTS_HOST"
 echo ""
@@ -150,7 +169,9 @@ echo ""
 # Checks if there is error message while listing channels
 ##########################################################
 
-glite-transfer-channel-list 1>/dev/null 2>message
+#glite-transfer-channel-list 1>/dev/null 2>message
+glite-transfer-channel-list -s $FTS_HOST 1>/dev/null 2>message
+
 
 result=`cat message | grep Fail | wc -l`
 
@@ -158,9 +179,9 @@ if [ $result -eq 0 ]; then
 	echo "Listing FTS channels"
 	echo ""
 
-	glite-transfer-channel-list -v
+	glite-transfer-channel-list -s $FTS_HOST -v
       
-        Channel_List=`glite-transfer-channel-list`
+        Channel_List=`glite-transfer-channel-list -s $FTS_HOST`
         
         echo ""
         echo "Listing FTS channels information"
@@ -169,11 +190,11 @@ if [ $result -eq 0 ]; then
         for Channel_Name in $Channel_List
         do
          echo ""
-         glite-transfer-channel-list $Channel_Name 2>message
+         glite-transfer-channel-list -s $FTS_HOST $Channel_Name 2>message
          result=`cat message|wc -l`
          if [ $result -gt 0 ]; then 
             echo ">>> NOTE:  `cat message`."
-            echo ">>> NOTE: `glite-transfer-channel-list -v | grep \"Service features:\" | sed -e 's/#//g'`"
+            echo ">>> NOTE: `glite-transfer-channel-list -s $FTS_HOST -v | grep \"Service features:\" | sed -e 's/#//g'`"
          break 
          fi
          echo ""
