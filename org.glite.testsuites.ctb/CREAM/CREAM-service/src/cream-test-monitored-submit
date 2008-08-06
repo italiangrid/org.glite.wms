@@ -117,8 +117,6 @@ def main():
     
     gliteCeCommand = testsuite_utils.getCECommandTable()
 
-    proxyFile = testsuite_utils.getProxyFile()
-        
     pollerThread = JobPoller(parameters, gliteCeCommand)
     pollerThread.start()
     pollerThread.join()

@@ -72,12 +72,6 @@ class JobPoller(job_poller.JobPoller):
         job_poller.JobPoller.__init__(self, parameters, cmds)
         self.finishedJobs = JobProcessed(cmds)
         
-    def valueSnapshot(self):
-        self.lock.acquire()
-        result = self.table.values()
-        self.lock.release()
-        return result
-        
     def shutdown(self):
         job_poller.JobPoller.shutdown(self)
         if self.tableOfResults['ABORTED']>0 or self.tableOfResults['CANCELLED']>0:

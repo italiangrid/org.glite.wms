@@ -130,24 +130,39 @@ def getCECommandTable():
                        "subscribe": gliteLocation + "/bin/CEMonitorSubscriber",
                        "unsubscribe": gliteLocation + "/bin/CEMonitorUnsubscriber",
                        "lease": gliteLocation + "/bin/glite-ce-job-lease",
-                       "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy" };
+                       "proxy-init": gliteLocation + "/bin/voms-proxy-init",
+                       "proxy-info": gliteLocation + "/bin/voms-proxy-info",
+                       "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy",
+                       "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew"};
 
     for k in gliteCeCommand.keys():
         if not os.access(gliteCeCommand[k], os.X_OK):
             raise Exception, "Cannot find executable " + gliteCeCommand[k]
         
     return gliteCeCommand
-        
-def getProxyFile():
-    if os.environ.has_key("X509_USER_PROXY"):
-        proxyFile = os.environ["X509_USER_PROXY"];
+
+def _getCredFile(envName, default):
+    if os.environ.has_key(envName):
+        credFile = os.environ[envName];
     else:
-        proxyFile = "/tmp/x509up_u" + str(os.getuid())
+        credFile = default
         
-    if not os.path.isfile(proxyFile):
-        raise Exception, "Cannot find proxy: " + proxyFile
+    if not os.path.isfile(credFile):
+        raise Exception, "Cannot find: " + credFile
     
-    return proxyFile
+    return credFile
+
+def getProxyFile():
+    return _getCredFile("X509_USER_PROXY", "/tmp/x509up_u" + str(os.getuid()))
+
+def getUserKeyAndCert():
+    if os.environ.has_key('HOME'):
+        homeDir = os.environ['HOME'];
+    else:
+        homeDir = "."
+    cert = _getCredFile("X509_USER_CERT", homeDir + "/.globus/usercert.pem")
+    key = _getCredFile("X509_USER_KEY", homeDir + "/.globus/userkey.pem")
+    return (cert, key)
 
 def getHostname():
     proc = popen2.Popen4('/bin/hostname -f')

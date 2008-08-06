@@ -101,6 +101,12 @@ class JobMonitor(threading.Thread):
         self.lock.release()
         return result
 
+    def valueSnapshot(self):
+        self.lock.acquire()
+        result = self.table.values()
+        self.lock.release()
+        return result
+            
     def shutdown(self):
         self.pool.shutdown()
         for key in self.tableOfResults:
