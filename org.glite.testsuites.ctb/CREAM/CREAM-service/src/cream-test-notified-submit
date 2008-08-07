@@ -39,7 +39,7 @@ define the port for the consumer service (DEFAULT is 9000)'''))
     
     manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
     manPage.env.append(('X509_USER_PROXY', 'location of the user proxy'))
-    manPage.env.append(('SIMPLE_NOTIFIED_SUBMIT_CONFIG_FILE','''\
+    manPage.env.append(('NOTIFIED_SUBMIT_CONFIG_FILE','''\
 location of the configuration file for this test'''))
     
     manPage.display()
@@ -76,8 +76,8 @@ def main():
     parameters.register('consumerPort', 'd', 9000, testsuite_utils.checkPort, 'p')
     parameters.register('help', 'b')
 
-    if os.environ.has_key("SIMPLE_NOTIFIED_SUBMIT_CONFIG_FILE"):
-        confFileName = os.environ["SIMPLE_NOTIFIED_SUBMIT_CONFIG_FILE"]
+    if os.environ.has_key("NOTIFIED_SUBMIT_CONFIG_FILE"):
+        confFileName = os.environ["NOTIFIED_SUBMIT_CONFIG_FILE"]
         try:
             parameters.parseConfigFile(confFileName)
         except IOError, ioError:

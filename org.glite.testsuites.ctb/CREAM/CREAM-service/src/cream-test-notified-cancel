@@ -152,8 +152,6 @@ def main():
 
     gliteCeCommand = testsuite_utils.getCECommandTable()
 
-    proxyFile = testsuite_utils.getProxyFile()
-    
     servicePrefix = 'https://' + parameters.resourceURI[:string.find(parameters.resourceURI,'/') + 1]
     cemonURL = servicePrefix + "ce-monitor/services/CEMonitor"
         
@@ -173,6 +171,7 @@ def main():
         monitorThread.join()
         exitCode = monitorThread.shutdown()
         
+        #TODO unsubscribe hangs up
 #        job_utils.unSubscribeToCREAMJobs(gliteCeCommand['unsubscribe'], cemonURL, \
 #                                         subscrId, parameters, proxyFile, logger)
        

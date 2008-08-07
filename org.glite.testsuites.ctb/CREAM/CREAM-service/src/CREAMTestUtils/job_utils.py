@@ -250,9 +250,9 @@ class JobProcessed:
         if jobStatus==None:
             self.jobTable[jobId] = True
         else:
-            self.jobTable[jobId] = self.statusCheck(jobStatus)
+            self.jobTable[jobId] = self.canPurge(jobStatus)
             
-    def statusCheck(self, jobStatus):
+    def canPurge(self, jobStatus):
         return True
     
     def dontPurge(self, jobId):

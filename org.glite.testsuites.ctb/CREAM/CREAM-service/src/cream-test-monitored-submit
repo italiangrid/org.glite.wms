@@ -36,7 +36,7 @@ be used with simple sleep as executable'''))
     
     manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
     manPage.env.append(('X509_USER_PROXY', 'location of the user proxy'))
-    manPage.env.append(('SIMPLE_MONITORED_SUBMIT_CONFIG_FILE','''\
+    manPage.env.append(('MONITORED_SUBMIT_CONFIG_FILE','''\
 location of the configuration file for this test'''))
     
     manPage.display()
@@ -55,7 +55,7 @@ class JobProcessed(job_utils.JobProcessed):
     def __init__(self, cmdTable):
         job_utils.JobProcessed.__init__(self, cmdTable)
         
-    def statusCheck(self, jobStatus):
+    def canPurge(self, jobStatus):
         return not jobStatus in JobProcessed.badStatusList
 
 class JobPoller(job_poller.JobPoller):
@@ -84,8 +84,8 @@ def main():
     parameters.register('jdl', 's')
     parameters.register('help', 'b')
 
-    if os.environ.has_key("SIMPLE_MONITORED_SUBMIT_CONFIG_FILE"):
-        confFileName = os.environ["SIMPLE_MONITORED_SUBMIT_CONFIG_FILE"]
+    if os.environ.has_key("MONITORED_SUBMIT_CONFIG_FILE"):
+        confFileName = os.environ["MONITORED_SUBMIT_CONFIG_FILE"]
         try:
             parameters.parseConfigFile(confFileName)
         except IOError, ioError:

@@ -48,7 +48,7 @@ class JobProcessed(job_utils.JobProcessed):
     def __init__(self, cmdTable):
         job_utils.JobProcessed.__init__(self, cmdTable)
         
-    def statusCheck(self, jobStatus):
+    def canPurge(self, jobStatus):
         return jobStatus=='CANCELLED'
 
 
@@ -133,8 +133,6 @@ def main():
     
     gliteCeCommand = testsuite_utils.getCECommandTable()
 
-    proxyFile = testsuite_utils.getProxyFile()
-        
     pollerThread = JobPoller(parameters, gliteCeCommand)
     pollerThread.start()
     pollerThread.join()

@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import os, os.path
 import sys
 import re, string
@@ -12,12 +10,11 @@ from CREAMTestUtils.submit_pool import JobSubmitterPool
 def usage():
     manPage = testsuite_utils.ManPage()
     
-    manPage.shortDescr = 'submit a sequence of jobs and enable the lease renew process'
-    manPage.synopsis = '[OPTION]'
-    manPage.description = '''Submit a sequence of simple jobs with a specified rate. \
-For each job either a lease is registered or a pre-registered lease is used; \
-the expiring lease is renewed so the job should not be cancelled by the service. \
-The status of the job is retrieved using the GetStatus command'''
+    manPage.shortDescr = 'submit a sequence of jobs using an expiring proxy'
+    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI --vo VONAME'
+    manPage.description = '''Submit a sequence of simple jobs with a specified rate \
+using one or more voms-proxies whose lifetime is shorter than the duration of the job.
+The job is a simple sleep.'''
 
     manPage.parameters.append(('-h', '--help' , '', 'print this message and exit'))
     manPage.parameters.append(('-r', '--rate', 'SLEEP_TIME', '''\
@@ -27,24 +24,21 @@ the sleep time in seconds between two consecutive submissions(Default 30s, Min 5
 the max number of job which can be enqueued in the service (Default 100)'''))
     manPage.parameters.append(('-D', '--delegationID', 'DELEGATIONID','''\
 disable the auto-delegation for each submission and reuse the specified delegation ID'''))
-    manPage.parameters.append(('-L', '--leaseID', 'LEASEID', '''\
-use the pre-registered lease id, if not specified a new lease id is created for each job'''))
-    manPage.parameters.append(('-W', '--leaseTime', 'SLEEP_TIME', '''\
-define the lease time for an auto-generated lease or for the pre-registered lease \
-(DEFAULT 20m)'''))
     manPage.parameters.append(('-R', '--resourceURI', 'RESOURCEURI','''\
 define the URI of the resource under testing, the format is \
 <host>[:<port>]/cream-<lrms>-<queue>. \
 This option is mandatory and no default value is defined'''))
     manPage.parameters.append(('-C', '--maxConcurrentSubmit', 'NUM', '''\
 define the number of concurrent submit, (DEFAULT is 1)'''))
-#    manPage.parameters.append(('-j', '--jdl', 'JDLFILE', '''\
-#define the path for the jdl file, if omitted a predefined jdl will \
-#be used with simple sleep as executable'''))
+    manPage.parameters.append(('', '--vo', 'VONAME', '''the name of the vo required for creating \
+the voms-proxy, this parameter is mandatory'''))
+    manPage.parameters.append(('', '--valid', '''the lifetime of the created voms-proxy, \
+the forma is HH:MM (Default 12:00)'''))
     
     manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
-    manPage.env.append(('X509_USER_PROXY', 'location of the user proxy'))
-    manPage.env.append(('MONITORED_LEASE_UP_CONFIG_FILE','''\
+    manPage.env.append(('X509_USER_CERT', 'location of the user certificate'))
+    manPage.env.append(('X509_USER_KEY', 'location of the user key'))
+    manPage.env.append(('MONITORED_PROXY_EXPIRED_CONFIG_FILE','''\
 location of the configuration file for this test'''))
     
     manPage.display()
@@ -52,19 +46,14 @@ location of the configuration file for this test'''))
     sys.exit(0)
 
 
-def failure(reason):
-    print reason
-    sys.exit(1)
 
 class JobProcessed(job_utils.JobProcessed):
-    
-    badStatusList = ['ABORTED', 'CANCELLED']
     
     def __init__(self, cmdTable):
         job_utils.JobProcessed.__init__(self, cmdTable)
         
     def canPurge(self, jobStatus):
-        return not jobStatus in JobProcessed.badStatusList
+        return jobStatus=='CANCELLED'
     
 class JobPoller(job_poller.JobPoller):
     
@@ -74,9 +63,10 @@ class JobPoller(job_poller.JobPoller):
         
     def shutdown(self):
         job_poller.JobPoller.shutdown(self)
-        if self.tableOfResults['ABORTED']>0 or self.tableOfResults['CANCELLED']>0:
+        if self.tableOfResults['CANCELLED']<>self.parameters.numberOfJob:
             return 1
         return 0
+    
     
 def main():
     
@@ -87,15 +77,15 @@ def main():
     parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
     parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
     parameters.register('delegationID', 's', optChar='D')
-    parameters.register('leaseID', 's', '', optChar='L')
-    parameters.register('leaseTime', 'd', 1200, optChar='W')
     parameters.register('resourceURI', 's', optChar='R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
     parameters.register('jdl', 's')
+    parameters.register('vo', 's', optChar='1')
+    parameters.register('valid', 's', '12:00', testsuite_utils.checkValid, '2')
     parameters.register('help', 'b')
 
-    if os.environ.has_key("MONITORED_LEASE_UP_CONFIG_FILE"):
-        confFileName = os.environ["MONITORED_LEASE_UP_CONFIG_FILE"]
+    if os.environ.has_key("MONITORED_PROXY_EXPIRED_CONFIG_FILE"):
+        confFileName = os.environ["MONITORED_PROXY_EXPIRED_CONFIG_FILE"]
         try:
             parameters.parseConfigFile(confFileName)
         except IOError, ioError:
@@ -119,25 +109,27 @@ def main():
     if parameters.resourceURI=='':
         print "Resource URI is not defined"
         usage()
+    if parameters.vo=='':
+        print "Vo name is not defined"
+        usage()
         
     if parameters.jdl=='':
-        parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*2, logger)
+        parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*5, logger)
         if parameters.jdl==None:
             sys.exit(1)
     
     gliteCeCommand = testsuite_utils.getCECommandTable()
 
     pollerThread = JobPoller(parameters, gliteCeCommand)
-    leaseRenewer = job_utils.LeaseRenewer(parameters, gliteCeCommand, \
+    proxyRenewer = job_utils.ProxyRenewer(parameters, gliteCeCommand, \
                                           pollerThread, logger)
     pollerThread.start()
-    leaseRenewer.start()
+    proxyRenewer.start()
     pollerThread.join()
-    leaseRenewer.halt()
+    proxyRenewer.halt()
     exitCode = pollerThread.shutdown()
     
     sys.exit(exitCode)
-
 
 if __name__ == "__main__":
     main()

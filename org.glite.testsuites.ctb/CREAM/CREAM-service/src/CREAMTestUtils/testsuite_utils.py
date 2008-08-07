@@ -20,6 +20,16 @@ def checkPort(value):
     if value<1025 or value>65535:
         raise Exception("Bad port number: " + repr(value))
     
+def checkValid(value):
+    tokens = string.split(value, ':')
+    if len(tokens)<>2:
+        raise Exception("Bad valid value: "  + value)
+    
+    h = int(tokens[0])
+    m = int(tokens[1])
+    if h<0 or h>23 or m<0 or m>59:
+        raise Exception("Bad valid value: " + value)
+    
 class Parameters:
     def __init__(self):
         self.pTable = {}
@@ -210,7 +220,10 @@ class ManPage:
             if len(self.parameters)>0:
                 print '.SH OPTIONS'
                 for item in self.parameters:
-                    print '.HP\n\\fB%s\\fR, \\fB%s\\fR\n%s\n\n.IP\n%s\n.PP' % item
+                    if item[0]=='':
+                        print '.HP\n%s\\fB%s\\fR\n%s\n\n.IP\n%s\n.PP' % item
+                    else:
+                        print '.HP\n\\fB%s\\fR, \\fB%s\\fR\n%s\n\n.IP\n%s\n.PP' % item
             if len(self.env)>0:
                 print '.SH ENVIRONMENT'
                 for item in self.env:
@@ -221,7 +234,10 @@ class ManPage:
             print "SYNOPSIS\n\t" + executable + ' ' + self.synopsis + "\n"
             print "DESCRIPTION\n\t" + self.description + "\n"
             for item in self.parameters:
-                print "\t%s %s %s\n\t\t%s\n" % item
+                if item[0]=='':
+                    print "\t%s%s %s\n\t\t%s\n" % item
+                else:
+                    print "\t%s %s %s\n\t\t%s\n" % item
             if len(self.env)>0:
                 print "ENVIRONMENT\n"
                 for item in self.env:
