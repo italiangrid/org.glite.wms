@@ -136,7 +136,6 @@ FTS_URL=`glite-sd-query -s $SITE_NAME -t org.glite.FileTransfer 2>/dev/null | gr
 FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
 FTS_HOST=`echo $FTS_URL | awk '{print $1}'`
 
-
 if [ -z "$FTS_HOST" ]; then
    echo ""
    echo ">>> NOTE: There is no information for FTS Server of the site: $SITE_NAME on  BDII: $BDII_HOST! <<< "
@@ -170,7 +169,7 @@ echo ""
 ##########################################################
 
 #glite-transfer-channel-list 1>/dev/null 2>message
-glite-transfer-channel-list -s $FTS_HOST 1>/dev/null 2>message
+glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement 1>/dev/null 2>message
 
 
 result=`cat message | grep Fail | wc -l`
@@ -179,9 +178,9 @@ if [ $result -eq 0 ]; then
 	echo "Listing FTS channels"
 	echo ""
 
-	glite-transfer-channel-list -s $FTS_HOST -v
+	glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -v
       
-        Channel_List=`glite-transfer-channel-list -s $FTS_HOST`
+        Channel_List=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement`
         
         echo ""
         echo "Listing FTS channels information"
@@ -190,11 +189,11 @@ if [ $result -eq 0 ]; then
         for Channel_Name in $Channel_List
         do
          echo ""
-         glite-transfer-channel-list -s $FTS_HOST $Channel_Name 2>message
+         glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name 2>message
          result=`cat message|wc -l`
          if [ $result -gt 0 ]; then 
             echo ">>> NOTE:  `cat message`."
-            echo ">>> NOTE: `glite-transfer-channel-list -s $FTS_HOST -v | grep \"Service features:\" | sed -e 's/#//g'`"
+            echo ">>> NOTE: `glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -v | grep \"Service features:\" | sed -e 's/#//g'`"
          break 
          fi
          echo ""
