@@ -309,7 +309,7 @@ export LCG_CATALOG_TYPE='lfc'
 	echo "Submitting the transfer"
 
 #        SubID=`glite-transfer-submit -p $MYPROXY_PASS -f $SUB_FILE_LOC 2>message`
-        SubID=`glite-transfer-submit -s $FTS_HOST -f $SUB_FILE_LOC 2>message`
+        SubID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC 2>message`
 	
 	if [ -z "$SubID" ]; then
            echo ""
@@ -344,7 +344,7 @@ export LCG_CATALOG_TYPE='lfc'
 	
 	while true
 	do
-	 status=`glite-transfer-status -s $FTS_HOST $SubID 2>message`
+	 status=`glite-transfer-status -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SubID 2>message`
 
  	 result=`cat message | wc -l`
 
@@ -378,7 +378,7 @@ export LCG_CATALOG_TYPE='lfc'
                 echo "Job failed!"
                 echo ""
                 FailedJobs=`echo $FailedJobs $SubID`
-                glite-transfer-status -s $FTS_HOST -l -v $SubID 
+                glite-transfer-status -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -l -v $SubID 
                 echo ""
                 return 
           fi
@@ -389,7 +389,7 @@ export LCG_CATALOG_TYPE='lfc'
                 echo "Job failed!"
                 echo ""
                 FailedJobs=`echo $FailedJobs $SubID`
-                glite-transfer-status -s $FTS_HOST -l -v $SubID
+                glite-transfer-status -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -l -v $SubID
                 echo ""
                 return
           fi
@@ -425,7 +425,7 @@ echo ""
 export GLITE_SD_SITE=$SITE_NAME
 export LCG_CATALOG_TYPE='lfc'
 
-Channel_List=`glite-transfer-channel-list -s $FTS_HOST 2>/dev/null`
+Channel_List=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement 2>/dev/null`
 
 for Channel_Name in $Channel_List
 do
@@ -446,7 +446,7 @@ fi
   export GLITE_SD_SITE=$SITE_NAME
   export LCG_CATALOG_TYPE='lfc'
   
-  glite-transfer-channel-list -s $FTS_HOST $Channel_Name 1>/dev/null 2>message
+  glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name 1>/dev/null 2>message
   
   result=`cat message|wc -l`
 
@@ -454,7 +454,7 @@ fi
      echo ""
      echo ">>> NOTE:  Channel information is needed! "
      echo ">>> NOTE:  `cat message`."
-     echo ">>> NOTE: `glite-transfer-channel-list -s $FTS_HOST -v | grep \"Service features:\" | sed -e 's/#//g'`"
+     echo ">>> NOTE: `glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -v | grep \"Service features:\" | sed -e 's/#//g'`"
      echo ""
      exit 1
   fi
@@ -464,7 +464,7 @@ fi
    echo "INFO:"
 
 
-   isChannelActive=`glite-transfer-channel-list -s $FTS_HOST $Channel_Name | grep "State: Active" |wc -l`
+   isChannelActive=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name | grep "State: Active" |wc -l`
 
    if [ $isChannelActive -eq 0 ];then
       echo "The channel: $Channel_Name is not Active! "
@@ -473,7 +473,7 @@ fi
       continue
    fi
 
-   Channel_Between=`glite-transfer-channel-list -s $FTS_HOST $Channel_Name 2>/dev/null | grep Between | sed -e 's/*/STAR/g' | sed -e 's/Between://g' | sed -e 's/and//g'`
+   Channel_Between=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name 2>/dev/null | grep Between | sed -e 's/*/STAR/g' | sed -e 's/Between://g' | sed -e 's/and//g'`
    
    unset GLITE_SD_SITE
    unset LCG_CATALOG_TYPE
@@ -630,7 +630,7 @@ else
   for job in $FailedJobs
   do
     echo ""
-    glite-transfer-status -s $FTS_HOST -l -v $job
+    glite-transfer-status -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -l -v $job
     echo ""
   done
   echo ""
