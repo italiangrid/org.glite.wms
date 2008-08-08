@@ -189,12 +189,11 @@ class LeaseRenewer(AbstractRenewer):
         self.doCycle(cmdPrefix, self.parameters.leaseTime, \
                      self.parameters.leaseID, 'LEASEID%d.%f')
     
-
-class ProxyRenewer(AbstractRenewer):
-
-    def __init__(self,parameters, cmds, container, logger=jobUtilsLogger):
-        AbstractRenewer.__init__(self, parameters, cmds, container, logger)
-
+class VOMSProxyManager(AbstractRenewer):
+    
+    def __init__(self,parameters, cmds, logger=jobUtilsLogger):
+        AbstractRenewer.__init__(self, parameters, cmds, None, logger)
+        
         if hasattr(parameters, 'vo') and parameters.vo<>'':
             self.cert, self.key = getUserKeyAndCert()
             #TODO manage key without passphrase
@@ -224,7 +223,30 @@ class ProxyRenewer(AbstractRenewer):
             return proxyProc.wait()
         else:
             return 0
-            
+        
+    def run(self):
+
+        if hasattr(self.parameters, 'valid') and self.parameters.valid<>'':
+            tokens = string.split(self.parameters.valid, ':')
+            elaps = int(tokens[0])*3600 + int(tokens[1])*60
+        else:
+            elaps = ProxyValidity(self.cmdTable, self.proxyFile)
+
+        self.cond.acquire()
+        try:
+            while self.running:
+                self.cond.wait(int(elaps) * 3 / 4)
+                if self.running:
+                    self.setup()
+        finally:
+            self.cond.release()
+    
+class ProxyRenewer(VOMSProxyManager):
+
+    def __init__(self,parameters, cmds, container, logger=jobUtilsLogger):
+        VOMSProxyManager.__init__(self, parameters, cmds, logger)
+        self.container = container
+        
     def run(self):
         
         cmdPrefix = '%s -e %s %s ' % (self.cmdTable['proxy-renew'], \
@@ -266,25 +288,3 @@ class JobProcessed:
             jobList = [ x for x in self.jobTable if self.jobTable[x] ]
             eraseJobs(jobList, self.purgeCmd)
             self.jobTable.clear()
-            
-
-
-class DummyClass:
-    def __init__(self):
-        self.vo = 'dteam'
-        self.valid = '00:10'
-        self.delegationID = 'orso'
-        self.resourceURI = 'cream-02.pd.infn.it:8443/cream-lsf-creamtest1'
-        
-    def __getitem__(self, key):
-        if key=='proxy-init':
-            return '/data/glite/precert/stage/bin/voms-proxy-init'
-        if key=='proxy-info':
-            return '/data/glite/precert/stage/bin/voms-proxy-info'
-        if key=='proxy-renew':
-            return '/data/glite/precert/stage/bin/glite-ce-proxy-renew'
-        
-if __name__ == "__main__":
-    dummyObj = DummyClass()
-    proxyRenewer = ProxyRenewer(dummyObj, dummyObj, None)
-    proxyRenewer.run()

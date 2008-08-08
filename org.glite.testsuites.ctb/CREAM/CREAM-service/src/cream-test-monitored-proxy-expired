@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import os, os.path
 import sys
 import re, string
@@ -22,8 +24,8 @@ the sleep time in seconds between two consecutive submissions(Default 30s, Min 5
     manPage.parameters.append(('-n', '--numberOfJob', 'NUM', 'the number of jobs to submit (Default 1)'))
     manPage.parameters.append(('-m', '--maxRunningJobs', 'NUM', '''\
 the max number of job which can be enqueued in the service (Default 100)'''))
-    manPage.parameters.append(('-D', '--delegationID', 'DELEGATIONID','''\
-disable the auto-delegation for each submission and reuse the specified delegation ID'''))
+#    manPage.parameters.append(('-D', '--delegationID', 'DELEGATIONID','''\
+#disable the auto-delegation for each submission and reuse the specified delegation ID'''))
     manPage.parameters.append(('-R', '--resourceURI', 'RESOURCEURI','''\
 define the URI of the resource under testing, the format is \
 <host>[:<port>]/cream-<lrms>-<queue>. \
@@ -32,8 +34,8 @@ This option is mandatory and no default value is defined'''))
 define the number of concurrent submit, (DEFAULT is 1)'''))
     manPage.parameters.append(('', '--vo', 'VONAME', '''the name of the vo required for creating \
 the voms-proxy, this parameter is mandatory'''))
-    manPage.parameters.append(('', '--valid', '''the lifetime of the created voms-proxy, \
-the forma is HH:MM (Default 12:00)'''))
+    manPage.parameters.append(('', '--valid', 'HH:MM', '''the lifetime of the created voms-proxy, \
+the forma is HH:MM (Default 00:10)'''))
     
     manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
     manPage.env.append(('X509_USER_CERT', 'location of the user certificate'))
@@ -45,6 +47,9 @@ location of the configuration file for this test'''))
     
     sys.exit(0)
 
+def failure(reason):
+    print reason
+    sys.exit(1)
 
 
 class JobProcessed(job_utils.JobProcessed):
@@ -53,7 +58,8 @@ class JobProcessed(job_utils.JobProcessed):
         job_utils.JobProcessed.__init__(self, cmdTable)
         
     def canPurge(self, jobStatus):
-        return jobStatus=='CANCELLED'
+        #TODO purge must depend on failure reason
+        return jobStatus=='DONE-FAILED'
     
 class JobPoller(job_poller.JobPoller):
     
@@ -63,7 +69,7 @@ class JobPoller(job_poller.JobPoller):
         
     def shutdown(self):
         job_poller.JobPoller.shutdown(self)
-        if self.tableOfResults['CANCELLED']<>self.parameters.numberOfJob:
+        if self.tableOfResults['DONE-FAILED']<>self.parameters.numberOfJob:
             return 1
         return 0
     
@@ -76,14 +82,14 @@ def main():
     parameters.register('rate', 'd', 30, testsuite_utils.checkRate)
     parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
     parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
-    parameters.register('delegationID', 's', optChar='D')
+    #parameters.register('delegationID', 's', optChar='D')
     parameters.register('resourceURI', 's', optChar='R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
-    parameters.register('jdl', 's')
+    #parameters.register('jdl', 's')
     parameters.register('vo', 's', optChar='1')
-    parameters.register('valid', 's', '12:00', testsuite_utils.checkValid, '2')
+    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '2')
     parameters.register('help', 'b')
-
+    
     if os.environ.has_key("MONITORED_PROXY_EXPIRED_CONFIG_FILE"):
         confFileName = os.environ["MONITORED_PROXY_EXPIRED_CONFIG_FILE"]
         try:
@@ -92,7 +98,7 @@ def main():
             failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
         except Exception, exception:
             failure("Cannot parse configuration file: " + confFileName + " " + str(exception))
-
+    
     try:
         optlist, args = getopt.getopt(sys.argv[1:], parameters.getShortOptString(),
                                       parameters.getLongOptList())
@@ -113,20 +119,25 @@ def main():
         print "Vo name is not defined"
         usage()
         
-    if parameters.jdl=='':
-        parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*5, logger)
-        if parameters.jdl==None:
-            sys.exit(1)
+    tokens = string.split(parameters.valid, ':')
+    elaps = int(tokens[0])*3600 + int(tokens[1])*60
+    setattr(parameters, 'jdl', testsuite_utils.createTempJDL(elaps*2, logger))
+    if parameters.jdl==None:
+        sys.exit(1)
+    setattr(parameters, 'delegationID', '')
     
     gliteCeCommand = testsuite_utils.getCECommandTable()
 
     pollerThread = JobPoller(parameters, gliteCeCommand)
-    proxyRenewer = job_utils.ProxyRenewer(parameters, gliteCeCommand, \
-                                          pollerThread, logger)
+    
+    vomsManager = job_utils.VOMSProxyManager(parameters, \
+                                              gliteCeCommand, logger)
+    vomsManager.setup()
+    
     pollerThread.start()
-    proxyRenewer.start()
+    vomsManager.start()
     pollerThread.join()
-    proxyRenewer.halt()
+    vomsManager.halt()
     exitCode = pollerThread.shutdown()
     
     sys.exit(exitCode)
