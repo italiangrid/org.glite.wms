@@ -14,20 +14,20 @@ class JobPoller(threading.Thread):
     runningStates = ['IDLE', 'RUNNING', 'REALLY-RUNNING']
     finalStates = ['DONE-OK', 'DONE-FAILED', 'ABORTED', 'CANCELLED']
     
-    def __init__(self, parameters, cmds):
+    def __init__(self, parameters):
         threading.Thread.__init__(self)
         self.table = {}
         self.lock = threading.Lock()
         self.parameters = parameters
-        self.cmdTable = cmds
         
         self.finishedJobs = None
+        self.jobProcessed = 0
         
         self.jobRE = re.compile("JobID=\[([^\]]+)")
         self.statusRE = re.compile('Status\s*=\s*\[([^\]]+)')
         self.failureRE = re.compile('FailureReason\s*=\s*\[([^\]]+)')
         
-        self.pool = JobSubmitterPool(parameters, cmds, self)
+        self.pool = JobSubmitterPool(parameters, self)
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, \
                                'ABORTED': 0, 'CANCELLED': 0}
 
@@ -36,12 +36,26 @@ class JobPoller(threading.Thread):
     
     def processFinishedJobs(self):
         self.finishedJobs.clear()
-#        job_utils.eraseJobs(self.finishedJobs, self.cmdTable['purge'], JobPoller.logger)
-#        self.finishedJobs = []
     
     def processRunningJobs(self):
         pass
     
+    def _handleStatusAndReason(self, currId, currStatus, currReason):
+        if currStatus in JobPoller.runningStates:
+            self.manageRunningState(currId)
+        elif currStatus in JobPoller.finalStates:
+            del(self.table[currId])
+            self.jobProcessed += 1
+            self.tableOfResults[currStatus] += 1
+            if currReason<>None:
+                self.finishedJobs.append(currId, currStatus, currReason)
+                JobPoller.logger.info("Execution terminated for job: %s (%s, %s)"  
+                                  % (currId, currStatus, currReason))
+            else:
+                self.finishedJobs.append(currId, currStatus)
+                JobPoller.logger.info("Execution terminated for job: %s (%s)"  
+                                  % (currId, currStatus))
+
     def run(self):
 
         minTS = time.time()
@@ -49,13 +63,13 @@ class JobPoller(threading.Thread):
         serviceHost = self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')]
                 
         jobLeft = self.parameters.numberOfJob
-        jobProcessed = 0
+        self.jobProcessed = 0
         
-        while jobProcessed<self.parameters.numberOfJob:
+        while self.jobProcessed<self.parameters.numberOfJob:
             
             ts = time.time()
 
-            statusCmd = self.cmdTable['status'] \
+            statusCmd = testsuite_utils.cmdTable['status'] \
                         + " -f \"" + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)) \
                         + "\" -e " + serviceHost + " --all"
             JobPoller.logger.debug('Command line: ' + statusCmd)
@@ -65,6 +79,8 @@ class JobPoller(threading.Thread):
             try:
                 
                 currId = None
+                currStatus = None
+                currReason = None
                 
                 for line in statusProc.fromchild:
                     if 'ERROR' in line or 'FATAL' in line:
@@ -73,6 +89,12 @@ class JobPoller(threading.Thread):
                     
                     tmpm = self.jobRE.search(line)
                     if tmpm<>None:
+                        #handle previous message
+                        if currId<>None and currStatus<>None:
+                            self._handleStatusAndReason(currId, currStatus, currReason)
+                            currStatus = None
+                            currReason = None
+                        
                         currId = tmpm.group(1)
                         if not currId in self.table:
                             currId = None
@@ -80,26 +102,18 @@ class JobPoller(threading.Thread):
                     
                     tmpm = self.statusRE.search(line)
                     if tmpm<>None and currId<>None:
-                        jobStatus = tmpm.group(1)
-                        
-                        if jobStatus in JobPoller.runningStates:
-                            self.manageRunningState(currId)
-                        elif jobStatus in JobPoller.finalStates:
-                            del(self.table[currId])
-                            self.finishedJobs.append(currId, jobStatus)
-                            jobProcessed += 1
-                            self.tableOfResults[jobStatus] += 1
-                            JobPoller.logger.info("Execution terminated for job: %s with status %s"  
-                                                  % (currId, jobStatus))
+                        currStatus = tmpm.group(1)                        
                         continue
                     
                     tmpm = self.failureRE.search(line)
                     if tmpm<>None and currId<>None:
-                        jobFailure = tmpm.group(1)
-                        JobPoller.logger.debug("Failure reason for job %s: %s" %(currId, jobFailure)) 
-                        continue
+                        currReason = tmpm.group(1)
 
                 statusProc.fromchild.close()
+                #handle last message
+                if currId<>None and currStatus<>None:
+                    self._handleStatusAndReason(currId, currStatus, currReason)
+
 
                 if len(self.finishedJobs)>0 and len(self.table):
                     minTS = float(min(self.table.values())) -1
@@ -114,7 +128,7 @@ class JobPoller(threading.Thread):
             jobToSend = min(jobLeft, self.parameters.maxRunningJobs - len(self.table))
             self.pool.submit(jobToSend)
             jobLeft = self.parameters.numberOfJob - self.pool.getSuccesses()
-            JobPoller.logger.debug("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
+            JobPoller.logger.debug("Job left: " + str(jobLeft) + " job processed: " + str(self.jobProcessed))
             
             timeToSleep = self.parameters.rate - int(time.time() - ts)
             if timeToSleep>0:

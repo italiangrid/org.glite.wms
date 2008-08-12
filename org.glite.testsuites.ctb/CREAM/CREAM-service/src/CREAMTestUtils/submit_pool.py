@@ -4,7 +4,7 @@ import time
 import popen2
 import string
 import log4py
-import testsuite_utils
+from testsuite_utils import cmdTable
 
 class SubmitterThread(threading.Thread):
     
@@ -81,7 +81,7 @@ class JobSubmitterPool:
     
     logger = log4py.Logger().get_instance(classid="JobSubmitterPool")
     
-    def __init__(self, parameters, cmdTable, jobTable=None):
+    def __init__(self, parameters, jobTable=None):
         self.jobTable = jobTable
         self.successes = 0
         self.failures = 0
@@ -224,15 +224,13 @@ class MokeObject:
 
         
 def main():
-    cmdTable = testsuite_utils.getCECommandTable()
-        
     if len(sys.argv)>4:
         delegationID = sys.argv[4]
     else:
         delegationID = ''
         
     mokeObj = MokeObject(sys.argv[1], sys.argv[2], delegationID)
-    pool = JobSubmitterPool(mokeObj, cmdTable, mokeObj)
+    pool = JobSubmitterPool(mokeObj, mokeObj)
     pool.submit(int(sys.argv[3]))
     pool.shutdown()
 

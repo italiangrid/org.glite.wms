@@ -45,10 +45,10 @@ location of the configuration file for this test'''))
 
 class JobProcessed(job_utils.JobProcessed):
     
-    def __init__(self, cmdTable):
-        job_utils.JobProcessed.__init__(self, cmdTable)
+    def __init__(self):
+        job_utils.JobProcessed.__init__(self)
         
-    def canPurge(self, jobStatus):
+    def canPurge(self, jobStatus, failureReason=''):
         return jobStatus=='CANCELLED'
 
 
@@ -56,9 +56,9 @@ class JobPoller(job_poller.JobPoller):
     
     logger = log4py.Logger().get_instance(classid="JobPoller")
     
-    def __init__(self, parameters, cmds):
-        job_poller.JobPoller.__init__(self, parameters, cmds)
-        self.finishedJobs = JobProcessed(cmds)
+    def __init__(self, parameters):
+        job_poller.JobPoller.__init__(self, parameters)
+        self.finishedJobs = JobProcessed()
         self.runningJobs = []
         
     def put(self, uri, timestamp):
@@ -76,7 +76,7 @@ class JobPoller(job_poller.JobPoller):
             self.runningJobs.append(currId)
     
     def processRunningJobs(self):
-        job_utils.eraseJobs(self.runningJobs, self.cmdTable['cancel'], JobPoller.logger)
+        job_utils.eraseJobs(self.runningJobs, testsuite_utils.cmdTable['cancel'], JobPoller.logger)
         self.runningJobs = []
     
     def shutdown(self):
@@ -131,9 +131,7 @@ def main():
         if parameters.jdl==None:
             sys.exit(1)
     
-    gliteCeCommand = testsuite_utils.getCECommandTable()
-
-    pollerThread = JobPoller(parameters, gliteCeCommand)
+    pollerThread = JobPoller(parameters)
     pollerThread.start()
     pollerThread.join()
     exitCode = pollerThread.shutdown()

@@ -53,8 +53,8 @@ def failure(reason):
 
 class JobMonitor(job_monitor.JobMonitor):
     
-    def __init__(self, parameters, cmds):
-        job_monitor.JobMonitor.__init__(self, parameters, cmds)
+    def __init__(self, parameters):
+        job_monitor.JobMonitor.__init__(self, parameters)
         
     def shutdown(self):
         job_monitor.JobMonitor.shutdown(self)
@@ -107,21 +107,18 @@ def main():
         if parameters.jdl==None:
             sys.exit(1)
 
-    gliteCeCommand = testsuite_utils.getCECommandTable()
-
     proxyFile = testsuite_utils.getProxyFile()
-    
+
     servicePrefix = 'https://' + parameters.resourceURI[:string.find(parameters.resourceURI,'/') + 1]
     cemonURL = servicePrefix + "ce-monitor/services/CEMonitor"
         
     try:
-        monitorThread = JobMonitor(parameters, gliteCeCommand)
+        monitorThread = JobMonitor(parameters)
         
         address = ('', parameters.consumerPort)
         consumer = CEMonitorConsumer.ConsumerServer(address, monitorThread, servicePrefix)
         
-        subscrId = job_utils.subscribeToCREAMJobs(gliteCeCommand['subscribe'], cemonURL, \
-                                                  parameters, proxyFile, logger)
+        subscrId = job_utils.subscribeToCREAMJobs(cemonURL, parameters, proxyFile, logger)
         
         consumerThread = threading.Thread(target=consumer)
         consumerThread.start()
@@ -130,8 +127,8 @@ def main():
         monitorThread.join()
         exitCode = monitorThread.shutdown()
         
-#        job_utils.unSubscribeToCREAMJobs(gliteCeCommand['unsubscribe'], cemonURL, \
-#                                         subscrId, parameters, proxyFile, logger)
+        #TODO unsubscribe hangs up
+#        job_utils.unSubscribeToCREAMJobs(cemonURL, subscrId, parameters, proxyFile, logger)
         
         consumer.halt()
         

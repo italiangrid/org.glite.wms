@@ -4,7 +4,6 @@ import sys, os, os.path, tempfile
 import re, string
 import popen2
 
-
 def checkIsOk(value):
     return True
 
@@ -127,29 +126,29 @@ def createTempJDL(sleepTime, logger=None):
             logger.error("Cannot create temp jdl file:" + str(sys.exc_info()[0]))
     return None
 
-def getCECommandTable():
-    if os.environ.has_key("GLITE_LOCATION"):
-        gliteLocation = os.environ["GLITE_LOCATION"]
-    else:
-        gliteLocation = "/opt/glite"
-        
-    gliteCeCommand = { "submit": gliteLocation + "/bin/glite-ce-job-submit",
-                       "status": gliteLocation + "/bin/glite-ce-job-status",
-                       "cancel": gliteLocation + "/bin/glite-ce-job-cancel",
-                       "purge": gliteLocation + "/bin/glite-ce-job-purge",
-                       "subscribe": gliteLocation + "/bin/CEMonitorSubscriber",
-                       "unsubscribe": gliteLocation + "/bin/CEMonitorUnsubscriber",
-                       "lease": gliteLocation + "/bin/glite-ce-job-lease",
-                       "proxy-init": gliteLocation + "/bin/voms-proxy-init",
-                       "proxy-info": gliteLocation + "/bin/voms-proxy-info",
-                       "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy",
-                       "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew"};
-
-    for k in gliteCeCommand.keys():
-        if not os.access(gliteCeCommand[k], os.X_OK):
-            raise Exception, "Cannot find executable " + gliteCeCommand[k]
-        
-    return gliteCeCommand
+#def getCECommandTable():
+#    if os.environ.has_key("GLITE_LOCATION"):
+#        gliteLocation = os.environ["GLITE_LOCATION"]
+#    else:
+#        gliteLocation = "/opt/glite"
+#        
+#    gliteCeCommand = { "submit": gliteLocation + "/bin/glite-ce-job-submit",
+#                       "status": gliteLocation + "/bin/glite-ce-job-status",
+#                       "cancel": gliteLocation + "/bin/glite-ce-job-cancel",
+#                       "purge": gliteLocation + "/bin/glite-ce-job-purge",
+#                       "subscribe": gliteLocation + "/bin/CEMonitorSubscriber",
+#                       "unsubscribe": gliteLocation + "/bin/CEMonitorUnsubscriber",
+#                       "lease": gliteLocation + "/bin/glite-ce-job-lease",
+#                       "proxy-init": gliteLocation + "/bin/voms-proxy-init",
+#                       "proxy-info": gliteLocation + "/bin/voms-proxy-info",
+#                       "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy",
+#                       "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew"};
+#
+#    for k in gliteCeCommand.keys():
+#        if not os.access(gliteCeCommand[k], os.X_OK):
+#            raise Exception, "Cannot find executable " + gliteCeCommand[k]
+#        
+#    return gliteCeCommand
 
 def _getCredFile(envName, default):
     if os.environ.has_key(envName):
@@ -245,3 +244,28 @@ class ManPage:
 
 
 
+if 'testsuite_utils' in __name__:
+    global cmdTable
+    if os.environ.has_key("GLITE_LOCATION"):
+        gliteLocation = os.environ["GLITE_LOCATION"]
+    else:
+        gliteLocation = "/opt/glite"
+        
+    cmdTable = { "submit": gliteLocation + "/bin/glite-ce-job-submit",
+                       "status": gliteLocation + "/bin/glite-ce-job-status",
+                       "cancel": gliteLocation + "/bin/glite-ce-job-cancel",
+                       "purge": gliteLocation + "/bin/glite-ce-job-purge",
+                       "subscribe": gliteLocation + "/bin/CEMonitorSubscriber",
+                       "unsubscribe": gliteLocation + "/bin/CEMonitorUnsubscriber",
+                       "lease": gliteLocation + "/bin/glite-ce-job-lease",
+                       "proxy-init": gliteLocation + "/bin/voms-proxy-init",
+                       "proxy-info": gliteLocation + "/bin/voms-proxy-info",
+                       "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy",
+                       "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew"};
+
+    for k in cmdTable.keys():
+        if not os.access(cmdTable[k], os.X_OK):
+            print "Cannot find executable " + cmdTable[k]
+            sys.exit(1)
+else:
+    print __name__

@@ -52,17 +52,17 @@ class JobProcessed(job_utils.JobProcessed):
     
     badStatusList = ['ABORTED', 'CANCELLED']
     
-    def __init__(self, cmdTable):
-        job_utils.JobProcessed.__init__(self, cmdTable)
+    def __init__(self):
+        job_utils.JobProcessed.__init__(self)
         
-    def canPurge(self, jobStatus):
+    def canPurge(self, jobStatus, failureReason=''):
         return not jobStatus in JobProcessed.badStatusList
 
 class JobPoller(job_poller.JobPoller):
     
-    def __init__(self, parameters, cmds):
-        job_poller.JobPoller.__init__(self, parameters, cmds)
-        self.finishedJobs = JobProcessed(cmds)
+    def __init__(self, parameters):
+        job_poller.JobPoller.__init__(self, parameters)
+        self.finishedJobs = JobProcessed()
         
     def shutdown(self):
         job_poller.JobPoller.shutdown(self)
@@ -115,9 +115,7 @@ def main():
         if parameters.jdl==None:
             sys.exit(1)
     
-    gliteCeCommand = testsuite_utils.getCECommandTable()
-
-    pollerThread = JobPoller(parameters, gliteCeCommand)
+    pollerThread = JobPoller(parameters)
     pollerThread.start()
     pollerThread.join()
     exitCode = pollerThread.shutdown()

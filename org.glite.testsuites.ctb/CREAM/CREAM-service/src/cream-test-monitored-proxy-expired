@@ -54,18 +54,17 @@ def failure(reason):
 
 class JobProcessed(job_utils.JobProcessed):
     
-    def __init__(self, cmdTable):
-        job_utils.JobProcessed.__init__(self, cmdTable)
+    def __init__(self):
+        job_utils.JobProcessed.__init__(self)
         
-    def canPurge(self, jobStatus):
-        #TODO purge must depend on failure reason
-        return jobStatus=='DONE-FAILED'
+    def canPurge(self, jobStatus, failureReason=''):
+        return jobStatus=='DONE-FAILED' and failureReason=='Proxy is expired'
     
 class JobPoller(job_poller.JobPoller):
     
-    def __init__(self, parameters, cmds):
-        job_poller.JobPoller.__init__(self, parameters, cmds)
-        self.finishedJobs = JobProcessed(cmds)
+    def __init__(self, parameters):
+        job_poller.JobPoller.__init__(self, parameters)
+        self.finishedJobs = JobProcessed()
         
     def shutdown(self):
         job_poller.JobPoller.shutdown(self)
@@ -126,12 +125,9 @@ def main():
         sys.exit(1)
     setattr(parameters, 'delegationID', '')
     
-    gliteCeCommand = testsuite_utils.getCECommandTable()
-
-    pollerThread = JobPoller(parameters, gliteCeCommand)
+    pollerThread = JobPoller(parameters)
     
-    vomsManager = job_utils.VOMSProxyManager(parameters, \
-                                              gliteCeCommand, logger)
+    vomsManager = job_utils.VOMSProxyManager(parameters, logger)
     vomsManager.setup()
     
     pollerThread.start()

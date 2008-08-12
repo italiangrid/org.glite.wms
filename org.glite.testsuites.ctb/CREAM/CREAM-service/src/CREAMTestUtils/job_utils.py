@@ -8,7 +8,7 @@ import getpass
 
 from threading import Condition, Thread
 from testsuite_utils import getHostname, getCACertDir, getUserKeyAndCert
-from testsuite_utils import getProxyFile
+from testsuite_utils import getProxyFile, cmdTable
 
 jobUtilsLogger = log4py.Logger().get_instance(classid="job_utils")
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
@@ -41,12 +41,11 @@ def eraseJobs(jobList, purgeCmd, logger=jobUtilsLogger):
             else:
                logger.error("Cannot purge jobs in " + tempFilename + ": " + str(sys.exc_info()[0]))
                
-def subscribeToCREAMJobs(subscribeCmd, cemonURL, parameters, \
-                         proxyFile, logger=jobUtilsLogger):
+def subscribeToCREAMJobs(cemonURL, parameters, proxyFile, logger=jobUtilsLogger):
     
     consumerURL = 'http://%s:%d' % (getHostname(), parameters.consumerPort)
     subscrCmd = "%s %s %s %s %s %s %s %d %d" % \
-            (subscribeCmd, proxyFile, getCACertDir(), \
+            (cmdTable['subscribe'], proxyFile, getCACertDir(), \
              cemonURL, consumerURL, \
              'CREAM_JOBS',  'CLASSAD', parameters.rate,  31536000)
     logger.debug("Subscription command: " + subscrCmd)
@@ -70,10 +69,10 @@ def subscribeToCREAMJobs(subscribeCmd, cemonURL, parameters, \
     
     return subscriptionId
 
-def unSubscribeToCREAMJobs(unSubscribeCmd, cemonURL, subscrID, parameters, \
+def unSubscribeToCREAMJobs(cemonURL, subscrID, parameters, \
                          proxyFile, logger=jobUtilsLogger):
     unSubscrCmd = "%s %s %s %s %s" % \
-            (unSubscribeCmd, proxyFile, getCACertDir(), \
+            (cmdTable['unsubscribe'], proxyFile, getCACertDir(), \
              cemonURL, subscrID)
     logger.debug("UnSubscription command: " + unSubscrCmd)
     unSubscrProc = os.system(unSubscrCmd)
@@ -110,13 +109,12 @@ class BooleanTimestamp:
 
 class ProxyValidity:
     
-    def __init__(self, cmds, proxyFile):
-        self.cmdTable = cmds
+    def __init__(self, proxyFile):
         self.proxyFile = proxyFile
         
     def __int__(self):
         infoCmd = "%s -timeleft -file %s" % \
-            (self.cmdTable['proxy-info'], self.proxyFile)
+            (cmdTable['proxy-info'], self.proxyFile)
         infoProc = popen2.Popen4(infoCmd)
         #TODO missing error handling
         for line in infoProc.fromchild:
@@ -127,10 +125,9 @@ class ProxyValidity:
 
 class AbstractRenewer(Thread):
 
-    def __init__(self, parameters, cmds, container, logger=jobUtilsLogger):
+    def __init__(self, parameters, container, logger=jobUtilsLogger):
         Thread.__init__(self)
         self.parameters = parameters
-        self.cmdTable = cmds
         self.container = container
         self.running = True
         self.cond = Condition()
@@ -177,12 +174,12 @@ class AbstractRenewer(Thread):
 
 class LeaseRenewer(AbstractRenewer):
     
-    def __init__(self, parameters, cmds, container, logger=jobUtilsLogger):
-        AbstractRenewer.__init__(self, parameters, cmds, container, logger)
+    def __init__(self, parameters, container, logger=jobUtilsLogger):
+        AbstractRenewer.__init__(self, parameters, container, logger)
         
     def run(self):
         
-        cmdPrefix = '%s -e %s -T %d %s ' % (self.cmdTable['lease'], \
+        cmdPrefix = '%s -e %s -T %d %s ' % (cmdTable['lease'], \
                         self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')], \
                         self.parameters.leaseTime, '%s')
         
@@ -191,8 +188,8 @@ class LeaseRenewer(AbstractRenewer):
     
 class VOMSProxyManager(AbstractRenewer):
     
-    def __init__(self,parameters, cmds, logger=jobUtilsLogger):
-        AbstractRenewer.__init__(self, parameters, cmds, None, logger)
+    def __init__(self,parameters, logger=jobUtilsLogger):
+        AbstractRenewer.__init__(self, parameters, None, logger)
         
         if hasattr(parameters, 'vo') and parameters.vo<>'':
             self.cert, self.key = getUserKeyAndCert()
@@ -208,7 +205,7 @@ class VOMSProxyManager(AbstractRenewer):
         
         if hasattr(self.parameters, 'vo') and self.parameters.vo<>'':
             proxyCmd = '%s -voms %s -valid %s -out %s -pwstdin' \
-                    % (self.cmdTable['proxy-init'], self.parameters.vo, \
+                    % (cmdTable['proxy-init'], self.parameters.vo, \
                        self.parameters.valid, self.proxyFile)
             
             self.logger.debug('Create proxy command: ' + proxyCmd)
@@ -230,7 +227,7 @@ class VOMSProxyManager(AbstractRenewer):
             tokens = string.split(self.parameters.valid, ':')
             elaps = int(tokens[0])*3600 + int(tokens[1])*60
         else:
-            elaps = ProxyValidity(self.cmdTable, self.proxyFile)
+            elaps = ProxyValidity(self.proxyFile)
 
         self.cond.acquire()
         try:
@@ -243,13 +240,13 @@ class VOMSProxyManager(AbstractRenewer):
     
 class ProxyRenewer(VOMSProxyManager):
 
-    def __init__(self,parameters, cmds, container, logger=jobUtilsLogger):
-        VOMSProxyManager.__init__(self, parameters, cmds, logger)
+    def __init__(self,parameters, container, logger=jobUtilsLogger):
+        VOMSProxyManager.__init__(self, parameters, logger)
         self.container = container
         
     def run(self):
         
-        cmdPrefix = '%s -e %s %s ' % (self.cmdTable['proxy-renew'], \
+        cmdPrefix = '%s -e %s %s ' % (cmdTable['proxy-renew'], \
                         self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')], \
                         '%s')
         
@@ -257,24 +254,23 @@ class ProxyRenewer(VOMSProxyManager):
             tokens = string.split(self.parameters.valid, ':')
             elaps = int(tokens[0])*3600 + int(tokens[1])*60
         else:
-            elaps = ProxyValidity(self.cmdTable, self.proxyFile)
+            elaps = ProxyValidity(self.proxyFile)
         
         self.doCycle(cmdPrefix, elaps, self.parameters.delegationID, 'DELEGID%d.%f')
 
 
 class JobProcessed:
     
-    def __init__(self, cmdTable):
+    def __init__(self):
         self.jobTable = {}
-        self.purgeCmd = cmdTable['purge']
         
-    def append(self, jobId, jobStatus=None):
+    def append(self, jobId, jobStatus=None, failureReason=''):
         if jobStatus==None:
             self.jobTable[jobId] = True
         else:
-            self.jobTable[jobId] = self.canPurge(jobStatus)
+            self.jobTable[jobId] = self.canPurge(jobStatus, failureReason)
             
-    def canPurge(self, jobStatus):
+    def canPurge(self, jobStatus, failureReason=''):
         return True
     
     def dontPurge(self, jobId):
@@ -286,5 +282,5 @@ class JobProcessed:
     def clear(self):
         if len(self.jobTable)>0:
             jobList = [ x for x in self.jobTable if self.jobTable[x] ]
-            eraseJobs(jobList, self.purgeCmd)
+            eraseJobs(jobList, cmdTable['purge'])
             self.jobTable.clear()

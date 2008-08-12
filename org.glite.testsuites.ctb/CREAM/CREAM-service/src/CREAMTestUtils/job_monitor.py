@@ -4,7 +4,7 @@ import time
 import popen2
 import log4py
 
-import job_utils
+import job_utils, testsuite_utils
 from submit_pool import JobSubmitterPool
 
 class JobMonitor(threading.Thread):
@@ -13,14 +13,13 @@ class JobMonitor(threading.Thread):
     runningStates = ['IDLE', 'RUNNING', 'REALLY-RUNNING']
     finalStates = ['DONE-OK', 'DONE-FAILED', 'ABORTED', 'CANCELLED']
     
-    def __init__(self, parameters, cmds):
+    def __init__(self, parameters):
         threading.Thread.__init__(self)
         self.table = {}
         self.notified = []
         self.lock = threading.Lock()
         self.parameters = parameters
-        self.cmdTable = cmds
-        self.pool = JobSubmitterPool(parameters, cmds, self)
+        self.pool = JobSubmitterPool(parameters, self)
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, 'ABORTED': 0, 'CANCELLED': 0}
         
         self.finishedJobs = []
@@ -67,7 +66,7 @@ class JobMonitor(threading.Thread):
             
             self.processNotifiedJobs()
                 
-            job_utils.eraseJobs(self.finishedJobs, self.cmdTable['purge'], JobMonitor.logger)
+            job_utils.eraseJobs(self.finishedJobs, testsuite_utils.cmdTable['purge'], JobMonitor.logger)
             self.finishedJobs = []
                 
             #TODO: imcremental pool feeding
