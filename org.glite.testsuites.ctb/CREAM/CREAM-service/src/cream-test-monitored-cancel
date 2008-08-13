@@ -42,6 +42,9 @@ location of the configuration file for this test'''))
     
     sys.exit(0)
 
+def failure(reason):
+    print reason
+    sys.exit(1)
 
 class JobProcessed(job_utils.JobProcessed):
     
