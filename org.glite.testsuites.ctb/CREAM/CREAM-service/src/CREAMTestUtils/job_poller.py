@@ -85,9 +85,8 @@ class JobPoller(threading.Thread):
                                 continue
                             
                             currStatus = tmpm.group(1)
-                            line = statusProc.fromchild.next()
-                            
                             try:
+                                line = statusProc.fromchild.next()
                                 tmpm = self.exitCodeRE.search(line)
                                 if tmpm<>None:
                                     line = statusProc.fromchild.next()
@@ -98,7 +97,6 @@ class JobPoller(threading.Thread):
                                     line = statusProc.fromchild.next()
                             finally:
                                 if currId in self.table:
-#                                    JobPoller.logger.info("%s (%s, %s)" % (currId, currStatus, currReason))
                                     if currStatus in JobPoller.runningStates:
                                         self.manageRunningState(currId)
                                     elif currStatus in JobPoller.finalStates:
@@ -109,6 +107,8 @@ class JobPoller(threading.Thread):
                                         JobPoller.logger.info(
                                               "Execution terminated for job: %s (%s, %s)"  
                                               % (currId, currStatus, currReason))
+                                    else:
+                                        JobPoller.logger.debug("Status %s for %s" % (currStatus, currId))
                                 currId = None
                                 currStatus = None
                                 currReason = ''
@@ -117,10 +117,11 @@ class JobPoller(threading.Thread):
                                 
                                 
                         else:
-#                            JobPoller.logger.debug("Spurious line" + line)
                             line = statusProc.fromchild.next()
                 
                 except StopIteration:
+                    if currId<>None:
+                        JobPoller.logger.debug("Unprocessed job: " + currId)
                     statusProc.fromchild.close()
                 
                 
