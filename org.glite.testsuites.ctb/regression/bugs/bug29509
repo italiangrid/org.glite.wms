@@ -27,6 +27,16 @@ export PYTHONPATH=/opt/glite/lib/:$PYTHONPATH
 
 LOCAL_FILE=${TMPDIR-/tmp}/bugtest29509_$$.py
 
+if [ -z $VO ]; then
+    echo "VO variable not defined"
+    return ${REGTEST_FAIL}
+fi
+
+if [ -z $WMPROXY_URL ]; then
+    echo "VO variable not defined"
+    return ${REGTEST_FAIL}
+fi
+
 cat <<- FIN > $LOCAL_FILE 
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
@@ -37,6 +47,7 @@ import SOAPpy  #Error Type
 
 #url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
 url="$WMPROXY_URL"
+#url="https://lxbra2303.cern.ch:7443/glite_wms_wmproxy_server"
 client = Wmproxy(url)
 
 print "Testing WMPROXY python bug#29509 at url: " +url
@@ -56,6 +67,7 @@ print "Testing WMPROXY python bug#29509 at url: " +url
 
 jdl="Executable	= \"/bin/hostname\"; Arguments	= \"\"; StdOutput = \"std.out\"; StdError = \"std.err\"; OutputSandbox = {\"std.out\"}; VirtualOrganisation = \"${VO}\"; requirements = true; rank = 1;"
 
+#jdl="Executable	= \"/bin/hostname\"; Arguments	= \"\"; StdOutput = \"std.out\"; StdError = \"std.err\"; OutputSandbox = {\"std.out\"}; VirtualOrganisation = \"dteam\" ; requirements = true; rank = 1;"
 print jdl
 
 ################
@@ -82,10 +94,14 @@ if sfile.find("Error -")>=0:
 else:	
    delegateOk=1
 
+print "Delegation done\n"
 
+print "Submitting the job\n"
 
 # Simple jobSubmission
 task = client.jobSubmit ( jdl, delegationId )
+
+print "Job submitted\n"
 
 #bug#29509
 try:

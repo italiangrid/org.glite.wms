@@ -54,7 +54,7 @@ print "Testing WMPROXY python bug#35357 at url: " +url
 #IN =  rank (string)
 #OUT = jdl (string)
 
-jdl="Executable	= \"/bin/hostname\"; Arguments	= \"\"; StdOutput = \"std.out\"; StdError = \"std.err\"; OutputSandbox = {\"std.out\"}; VirtualOrganisation = \"${VO}\";OutputSandbox = {\"std.out\"};  requirements = true; rank = 1;"
+jdl="Executable	= \"/bin/hostname\"; Arguments	= \"\"; StdOutput = \"std.out\"; StdError = \"std.err\"; OutputSandbox = {\"std.out\"}; VirtualOrganisation = \"${VO}\";OutputSandbox = {\"std.out\"};  Requirements = true; Rank = 1;"
 
 print jdl
 
@@ -146,7 +146,7 @@ if finished:
   print "Error: Bug#35357 present, it should contain 1 file"
   sys.exit(1)
  else:
-  print "everythig correct, it should contain 1 file"
+  print "Ok, it should contain 1 file"
   sys.exit(0)
 
 else:

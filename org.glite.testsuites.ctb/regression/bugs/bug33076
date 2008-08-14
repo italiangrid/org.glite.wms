@@ -30,6 +30,11 @@ test_bug33076_pre () {
   echo "VO not defined"
   return ${REGTEST_FAIL}
  fi
+#GP
+# if [ -z "${LFC_HOST}" ]; then
+#  echo "LFC_HOST not defined"
+#  return ${REGTEST_FAIL}
+# fi
  return ${REGTEST_OK}
 }
 

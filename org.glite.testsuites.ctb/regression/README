@@ -5,7 +5,7 @@ Author: Andreas Unterkircher
 Directory structure:
 -------------------
 . 
-contains the manin regTest.sh script
+contains the main regTest.sh script
 
 bugs/
 contains regressions tests for the bugs. Every regression test has to be in a file named bug<bugnr> where <bugnr> is the bug number in Savannah.
