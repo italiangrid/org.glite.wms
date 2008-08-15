@@ -1,0 +1,225 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Gianni Pucciani (gianni.pucciani@cern.ch)
+#
+##############################################################################
+
+#
+# Submit a job to the FTS server, to be reused to check future bugs
+#
+
+test_bug_fts_pre () {
+# Check for variables that are needed and which should be defined globally in 
+# the *sh that is sourced in regTest
+# Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK 
+
+if [ -z "$LFC_HOST" ]; then
+  echo "LFC_HOST not defined"
+  return ${REGTEST_FAIL}
+fi
+
+if [ -z "$FTS_HOST" ]; then
+  echo "FTS_HOST not defined"
+  return ${REGTEST_FAIL}
+fi
+
+if [ -z "$SE1_SRM_LOC" ]; then
+  echo "SE1_SRM_LOC not defined"
+  return ${REGTEST_FAIL}
+fi
+
+if [ -z "$SE2_SRM_LOC" ]; then
+  echo "SE2_SRM_LOC not defined"
+  return ${REGTEST_FAIL}
+fi
+
+if [ -z "$VO_NAME" ]; then
+  echo "VO_NAME not defined"
+  return ${REGTEST_FAIL}
+fi
+
+if [ -z "$BDII_HOST" ]; then
+  echo "VO_NAME not defined"
+  return ${REGTEST_FAIL}
+fi
+
+if [ -z $BDII_PORT ]; then
+  echo "BDII_PORT not defined"
+  return ${REGTEST_FAIL}
+fi
+
+if [ -z "$Timeout" ]; then
+   Timeout=100
+fi
+
+return ${REGTEST_OK}
+
+}
+
+test_bug_fts_post () {
+ echo
+# Cleanup after running. Unset all variables that were set.
+# Delete files created during the test run.
+}
+
+test_bug_fts () {
+# Main test 
+# Return values REGTEST_FAIL, REGTEST_TIMEOUT or REGTEST_OK
+
+export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
+
+#Create a temporary file of 1MB and store it in the first SRM location
+DATE=`date | awk '{print $6"_"$2"_"$3"_"$4}' | sed -e 's/://g'`
+SRC_FILE="/tmp/bug__fts_local_$DATE"
+DEST_FILE="bug_fts_dest_$DATE"
+DEST_FILE_2="${DEST_FILE}_2"
+
+echo "Creating a 1MB temporary test file for transfer"
+dd if=/dev/zero of=$SRC_FILE bs=10MB count=1 2>/dev/null
+
+echo "Copying the test file $SRC_FILE on: $SE1_SRM_LOC"
+#command="lcg-cr --vo $VO_NAME -d srm://$SE1_SRM_LOC/dpm/cern.ch/home/dteam/$DEST_FILE file:$SRC_FILE 2>message"
+#echo "$command"
+#GUID=`$command`
+lcg-cr --vo $VO_NAME -d srm://$SE1_SRM_LOC/dpm/cern.ch/home/dteam/$DEST_FILE file:$SRC_FILE 2>message
+result=`cat message | wc -l`
+
+if [ $result -gt 0 ]; then
+  echo ">>> NOTE: `cat message`"
+  echo ""
+  echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+  echo "$command"
+  NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+  return ${REGTEST_FAIL}
+fi
+
+echo "" 
+#echo "Removing the temporary test file: $TMP_FILE"
+
+#rm -rf $TMP_FILE
+    
+echo ""
+SUB_FILE_LOC="$HOME/fts-submission-file"
+rm -rf $SUB_FILE_LOC
+echo "Creating the submission file in $SUB_FILE_LOC"
+echo "srm://$SE1_SRM_LOC/dpm/cern.ch/home/dteam/$DEST_FILE srm://$SE2_SRM_LOC/dpm/cern.ch/home/dteam/$DEST_FILE_2" >> $SUB_FILE_LOC
+
+#Submit the job
+echo "Submitting the transfer"  
+echo `cat $SUB_FILE_LOC`
+
+SubID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+
+if [ -z "$SubID" ]; then
+  echo ""
+  echo "Job submition failed! <<<"
+  echo ""
+  return ${REGTEST_FAIL}
+fi
+
+echo ""
+echo "Job successfully submited"
+echo ""
+echo "Transfer ID: $SubID. " 
+
+echo "Checking status for job ID: $SubID"
+previous_status="None"
+t=0
+
+while test $t -lt $Timeout
+do
+  status=`glite-transfer-status -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SubID 2>message`
+  result=`cat message | wc -l`
+
+  if [ $result -gt 0 ]; then
+    echo "`cat message`"
+    echo ""
+    return ${REGTEST_FAIL} 
+  fi
+
+  if [ $status == $previous_status ]; then
+    echo "Waiting for status changes...." 
+  else
+    echo "Status is: $status"  
+    previous_status=$status
+  fi
+
+  if [ $status == "Finished" ]; then
+    echo "Job is successfully finished."
+    return 
+  fi
+
+  if [ $status == "Failed" ]; then
+    echo "Job is Failed."
+    return ${REGTEST_FAIL}
+  fi
+
+  echo "Waiting for status changes...."
+  sleep 10
+  t=`expr $t + 10`
+
+  if [ $t -eq $Timeout ]; then
+    echo ""
+    echo "Exceded timeout of $Timeout seconds"
+  fi
+  
+done
+
+#Check the transfer log file
+
+
+
+# Example usage of the regtest_timeout function which returns REGTEST_TIMEOUT_ERROR if the command did not complete after REGTEST_TIMEOUT seconds
+
+#regtest_timeout lcg-ls --version | grep -E 'GFAL-client-[0-9]+\.[0-9]+\.[0-9]+' 
+#retval=$?
+# if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+#  return $REGTEST_TIMEOUT_ERROR
+# elif [ $retval -ne $REGTEST_OK ]; then
+#  return ${REGTEST_FAIL}
+# fi
+
+# Example usage of the run_command_timeout function which returns REGTEST_TIMEOUT_ERROR if the command did not complete after REGTEST_TIMEOUT seconds
+
+#command="lcg-cr -d ${BUG22233_SE} --vo ${VO} file:${LOCAL_FILE}"
+#message="Running lcg-cr"
+#run_command_timeout "${command}" "${message}"
+
+#retval=$?
+#if [ $retval -eq $REGTEST_TIMEOUT_ERROR ]; then
+# return $REGTEST_TIMEOUT_ERROR
+#elif [ $retval -ne $REGTEST_OK ]; then
+# return ${REGTEST_FAIL}
+#fi
+# The output of command is available in the variable OUTPUT
+
+
+# Example usage of the run_command function
+
+#command="lcg-cr --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${DPM_SE}"
+#message="Running lcg-cr with DPM SE"
+#run_command "${command}" "${message}"
+
+#if [ $? -ne ${REGTEST_OK} ]; then
+# return ${REGTEST_FAIL}
+#fi
+# The output of command is available in the variable OUTPUT
+
+}
