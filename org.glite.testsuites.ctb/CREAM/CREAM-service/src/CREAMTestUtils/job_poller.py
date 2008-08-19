@@ -14,11 +14,12 @@ class JobPoller(threading.Thread):
     runningStates = ['IDLE', 'RUNNING', 'REALLY-RUNNING']
     finalStates = ['DONE-OK', 'DONE-FAILED', 'ABORTED', 'CANCELLED']
     
-    def __init__(self, parameters):
+    def __init__(self, parameters, pManager=None):
         threading.Thread.__init__(self)
         self.table = {}
         self.lock = threading.Lock()
         self.parameters = parameters
+        self.proxyMan = pManager
         
         self.finishedJobs = None
         
@@ -27,7 +28,7 @@ class JobPoller(threading.Thread):
         self.exitCodeRE = re.compile('ExitCode\s*=\s*\[([^\]]*)')
         self.failureRE = re.compile('FailureReason\s*=\s*\[([^\]]+)')
         
-        self.pool = JobSubmitterPool(parameters, self)
+        self.pool = JobSubmitterPool(parameters, self, pManager)
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, \
                                'ABORTED': 0, 'CANCELLED': 0}
 
@@ -35,6 +36,12 @@ class JobPoller(threading.Thread):
         pass
     
     def processFinishedJobs(self):
+        if hasattr(self.finishedJobs, 'getPurgeableJobs'):
+            jobList = self.finishedJobs.getPurgeableJobs()
+        else:
+            jobList = self.finishedJobs
+        if len(jobList)>0:
+            job_utils.eraseJobs(jobList)
         self.finishedJobs.clear()
     
     def processRunningJobs(self):
@@ -57,14 +64,18 @@ class JobPoller(threading.Thread):
                         + " -f \"" + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)) \
                         + "\" -e " + serviceHost + " --all"
             JobPoller.logger.debug('Command line: ' + statusCmd)
-            statusProc = popen2.Popen4(statusCmd, True)
             
+            if self.proxyMan<>None:
+                self.proxyMan.beginLock()
+            statusProc = popen2.Popen4(statusCmd, True)
+                            
+            currId = None
+            currStatus = None
+            currReason = ''
+
             self.lock.acquire()
+
             try:
-                
-                currId = None
-                currStatus = None
-                currReason = ''
                 
                 try:
                     line = statusProc.fromchild.next()
@@ -131,6 +142,8 @@ class JobPoller(threading.Thread):
                     
             finally:
                 self.lock.release()
+                if self.proxyMan<>None:
+                    self.proxyMan.endLock()
 
             self.processRunningJobs()
             self.processFinishedJobs()

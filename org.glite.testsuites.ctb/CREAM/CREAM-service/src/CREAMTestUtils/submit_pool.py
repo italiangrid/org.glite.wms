@@ -32,23 +32,37 @@ class SubmitterThread(threading.Thread):
                         delegCmd = self.delegFStr % (os.getpid(), tmpTS)
                         
                         SubmitterThread.logger.debug("Delegate cmd: " +delegCmd)
-                        delegProc = popen2.Popen4(delegCmd)
-                        for line in delegProc.fromchild:
-                            if 'ERROR' in line or 'FATAL' in line:
-                                self.pool.notifySubmitResult(failure=line[24:])
-                                notified = True
-                        delegProc.fromchild.close()
+                        try:
+                            if self.pool.proxyMan<>None:
+                                self.pool.proxyMan.beginLock()
+                                
+                            delegProc = popen2.Popen4(delegCmd)
+                            for line in delegProc.fromchild:
+                                if 'ERROR' in line or 'FATAL' in line:
+                                    self.pool.notifySubmitResult(failure=line[24:])
+                                    notified = True
+                            delegProc.fromchild.close()
+                        finally:
+                            if self.pool.proxyMan<>None:
+                                self.pool.proxyMan.endLock()
                         
                     if not notified and self.leaseFStr<>None:
                         leaseCmd = self.leaseFStr % (os.getpid(), tmpTS)
                         
                         SubmitterThread.logger.debug("Lease cmd: " +leaseCmd)
-                        leaseProc = popen2.Popen4(leaseCmd)
-                        for line in leaseProc.fromchild:
-                            if 'ERROR' in line or 'FATAL' in line:
-                                self.pool.notifySubmitResult(failure=line[24:])
-                                notified = True
-                        leaseProc.fromchild.close()
+                        try:
+                            if self.pool.proxyMan<>None:
+                                self.pool.proxyMan.beginLock()
+
+                            leaseProc = popen2.Popen4(leaseCmd)
+                            for line in leaseProc.fromchild:
+                                if 'ERROR' in line or 'FATAL' in line:
+                                    self.pool.notifySubmitResult(failure=line[24:])
+                                    notified = True
+                            leaseProc.fromchild.close()
+                        finally:
+                            if self.pool.proxyMan<>None:
+                                self.pool.proxyMan.endLock()
                         
                     if not notified:
                         
@@ -60,19 +74,28 @@ class SubmitterThread(threading.Thread):
                             submCmd = self.submitFStr
                                             
                         SubmitterThread.logger.debug("Submit  cmd: " + submCmd)
-                        submitProc = popen2.Popen4(submCmd)
-                        for line in submitProc.fromchild:
-                            if line[0:8]=='https://':
-                                self.pool.notifySubmitResult(jobId=string.strip(line), timestamp=tmpTS)
-                                notified = True
-                                break
-                            if 'ERROR' in line or 'FATAL' in line:
-                                self.pool.notifySubmitResult(failure=line[24:])
-                                notified = True
-                                break
-                        if not notified:
-                            self.pool.notifySubmitResult(failure='Missing jobId or failure reason')
-                        submitProc.fromchild.close()
+                        try:
+                            if self.pool.proxyMan<>None:
+                                self.pool.proxyMan.beginLock()
+
+                            submitProc = popen2.Popen4(submCmd)
+                            for line in submitProc.fromchild:
+                                if line[0:8]=='https://':
+                                    self.pool.notifySubmitResult(jobId=string.strip(line), timestamp=tmpTS)
+                                    notified = True
+                                    break
+                                if 'ERROR' in line or 'FATAL' in line:
+                                    self.pool.notifySubmitResult(failure=line[24:])
+                                    notified = True
+                                    break
+                            if not notified:
+                                self.pool.notifySubmitResult(failure='Missing jobId or failure reason')
+                            submitProc.fromchild.close()
+                            
+                        finally:
+                            if self.pool.proxyMan<>None:
+                                self.pool.proxyMan.endLock()
+
                 except:
                     SubmitterThread.logger.error(str(sys.exc_info()[1]))
                     self.pool.notifySubmitResult(failure=str(sys.exc_info()[1]))
@@ -81,7 +104,7 @@ class JobSubmitterPool:
     
     logger = log4py.Logger().get_instance(classid="JobSubmitterPool")
     
-    def __init__(self, parameters, jobTable=None):
+    def __init__(self, parameters, jobTable=None, pManager=None):
         self.jobTable = jobTable
         self.successes = 0
         self.failures = 0
@@ -91,6 +114,8 @@ class JobSubmitterPool:
         self.running = True
         self.left = 0
         self.processed = 0
+        
+        self.proxyMan = pManager
         
         if parameters.delegationID=='':
             dcmd = '%s -e %s %s' % (cmdTable['delegate'], \

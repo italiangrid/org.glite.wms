@@ -13,7 +13,7 @@ from testsuite_utils import getProxyFile, cmdTable
 jobUtilsLogger = log4py.Logger().get_instance(classid="job_utils")
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
 
-def eraseJobs(jobList, purgeCmd, logger=jobUtilsLogger):
+def eraseJobs(jobList, cmd='purge', logger=jobUtilsLogger):
     
     if len(jobList)>0:
         tempFD, tempFilename = tempfile.mkstemp(dir='/tmp')
@@ -24,14 +24,14 @@ def eraseJobs(jobList, purgeCmd, logger=jobUtilsLogger):
                 tFile.write(job + "\n")
             tFile.close()
       
-            purgeCmdLine = purgeCmd + " -N -i " + tempFilename
-            logger.debug("Command line: " + purgeCmdLine)
-            purgeProc = popen2.Popen4(purgeCmdLine)
+            eraseCmdLine = cmdTable[cmd] + " -N -i " + tempFilename
+            logger.debug("Command line: " + eraseCmdLine)
+            eraseProc = popen2.Popen4(eraseCmdLine)
 
-            for line in purgeProc.fromchild:
+            for line in eraseProc.fromchild:
                 if 'ERROR' in line or 'FATAL' in line:
                     logger.error(line[24:])
-            purgeProc.fromchild.close()
+            eraseProc.fromchild.close()
                     
             os.remove(tempFilename)
                 
@@ -75,7 +75,7 @@ def unSubscribeToCREAMJobs(cemonURL, subscrID, parameters, \
             (cmdTable['unsubscribe'], proxyFile, getCACertDir(), \
              cemonURL, subscrID)
     logger.debug("UnSubscription command: " + unSubscrCmd)
-    unSubscrProc = os.system(unSubscrCmd)
+    unSubscrProc = popen2.Popen4(unSubscrCmd)
     
     
 class BooleanTimestamp:
@@ -200,26 +200,54 @@ class VOMSProxyManager(AbstractRenewer):
             os.putenv('X509_USER_PROXY', self.proxyFile)
         else:
             self.proxyFile = getProxyFile()
+            
+        self.pCond = Condition()
+        self.pCheck = False
         
     def setup(self):
         
+        result = 0
         if hasattr(self.parameters, 'vo') and self.parameters.vo<>'':
             proxyCmd = '%s -voms %s -valid %s -out %s -pwstdin' \
                     % (cmdTable['proxy-init'], self.parameters.vo, \
                        self.parameters.valid, self.proxyFile)
             
+            result += 1
             self.logger.debug('Create proxy command: ' + proxyCmd)
-            proxyProc =popen2.Popen4(proxyCmd)
-            proxyProc.tochild.write(self.password)
-            proxyProc.tochild.close()
-            for line in proxyProc.fromchild:
-                if 'proxy is valid' in line:
-                    self.logger.debug(line)
-            proxyProc.fromchild.close()
             
-            return proxyProc.wait()
-        else:
-            return 0
+            try:
+                self.pCond.acquire()
+                self.pCheck = True
+                self.pCond.wait()
+                self.pCond.release()
+                
+                proxyProc =popen2.Popen4(proxyCmd)
+                proxyProc.tochild.write(self.password)
+                proxyProc.tochild.close()
+                for line in proxyProc.fromchild:
+                    if 'proxy is valid' in line:
+                        self.logger.debug(line)
+                proxyProc.fromchild.close()
+                
+                result = proxyProc.wait()
+            finally:
+                self.pCond.acquire()
+                self.pCheck = False
+                self.pCond.notifyAll()
+                self.pCond.release()
+
+        return result
+    
+    def beginLock(self):
+        self.pCond.acquire()
+        while self.pCheck:
+            self.pCond.wait()
+        self.pCond.release()
+        
+    def endLock(self):
+        self.pCond.acquire()
+        self.pCond.notifyAll()
+        self.pCond.release()                
         
     def run(self):
 
@@ -279,8 +307,9 @@ class JobProcessed:
     def __len__(self):
         return len(self.jobTable)
     
+    def getPurgeableJobs(self):
+        return [ x for x in self.jobTable if self.jobTable[x] ]
+    
     def clear(self):
-        if len(self.jobTable)>0:
-            jobList = [ x for x in self.jobTable if self.jobTable[x] ]
-            eraseJobs(jobList, cmdTable['purge'])
-            self.jobTable.clear()
+        self.jobTable.clear()
+            

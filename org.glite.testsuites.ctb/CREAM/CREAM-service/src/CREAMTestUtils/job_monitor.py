@@ -13,13 +13,13 @@ class JobMonitor(threading.Thread):
     runningStates = ['IDLE', 'RUNNING', 'REALLY-RUNNING']
     finalStates = ['DONE-OK', 'DONE-FAILED', 'ABORTED', 'CANCELLED']
     
-    def __init__(self, parameters):
+    def __init__(self, parameters, pManager=None):
         threading.Thread.__init__(self)
         self.table = {}
         self.notified = []
         self.lock = threading.Lock()
         self.parameters = parameters
-        self.pool = JobSubmitterPool(parameters, self)
+        self.pool = JobSubmitterPool(parameters, self, pManager)
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, 'ABORTED': 0, 'CANCELLED': 0}
         
         self.finishedJobs = []
@@ -66,7 +66,7 @@ class JobMonitor(threading.Thread):
             
             self.processNotifiedJobs()
                 
-            job_utils.eraseJobs(self.finishedJobs, testsuite_utils.cmdTable['purge'], JobMonitor.logger)
+            job_utils.eraseJobs(self.finishedJobs)
             self.finishedJobs = []
                 
             #TODO: imcremental pool feeding
