@@ -2,12 +2,14 @@
 #
 # Wrapper script that calls the perl script lcg_vobox_test.pl
 # that esecutes the following tests
-# 1 check that the proxy renewal service is running
-# 2 check the proxy registration
-# 3 check that the machine is properly registered in the myproxy server
-# 4 check that the machine is running its proxy
-# 5 check the duration of the delegation proxy
-# 6 check that the access to the software area is propery defined
+# - check that the proxy renewal service is running
+# - check the proxy registration
+# - check that the machine is properly registered in the myproxy server
+# - check that the machine is running its proxy
+# - check the duration of the delegation proxy
+# - check that the access to the software area is propery defined
+# - check the WMS status
+# - check the access to the local BDII sites and the SEs published there
 
 
 showUsage ()
@@ -61,6 +63,13 @@ done
 
 rm -rf err.txt
 rm -rf /tmp/$NODE/*.result
+
+
+if [ ! -e "lcg_vobox_test.pl" ]; then
+  echo "The perl script lcg_vobox_test.pl must be in the current directory"
+  echo "Test FAILED"
+  exit 1
+fi
 
 perl lcg_vobox_test.pl -node $NODE 2>err.txt 1>/dev/null
 
