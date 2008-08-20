@@ -83,6 +83,26 @@ The following outcome must be verified:
 5- The delegation procedure is working properly: 'timeleft' => 621330
 6- The access to the software area is guaranteed
 
+Bash wrapper script
+-------------------
+A bash wrapper script has been created to run and check the output 
+in an easier way.
+Example -positive outcome- :
+[sgmdtm01@vtb-generic-28 ~]$ ./lcg_vobox_test.sh --node vtb-generic-28
+Test PASSED
+
+Example -negative outcome- :
+[sgmdtm01@vtb-generic-28 ~]$ ./lcg_vobox_test.sh --node vtb-generic-28
+Test FAILED
+
+Couldn't find a valid proxy.
+
+DN not specified and unable to get DN from user proxy:
+  at /opt/lcg/bin/vobox-proxy line 52.
+
+The User Proxy Registration not working. Failed to execute vobox-proxy --vo dteam register --force
+Failed to check the timeleft for the user delegated proxy
+
 
 Questions/Bugs
 --------------
