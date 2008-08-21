@@ -264,7 +264,7 @@ void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJo
     } else {
         // The proxy is not valid. We mark this bunch of jobs as
         // aborted, and remove it from the job cache.
-        for_each( it, list_end, aborted_logger( "The job has been killed because its proxy was expiring" ) );
+        for_each( it, list_end, aborted_logger( "The job has been killed because its proxy is no longer valid" ) );
     }    
 }
 

@@ -46,6 +46,7 @@
 // WMS Headers
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/utilities/scope_guard.h"
 
 // BOOST Headers
 #include <boost/lexical_cast.hpp>
@@ -59,6 +60,7 @@
 namespace cream_api  = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace jobstat    = glite::ce::cream_client_api::job_statuses;
+namespace wms_utils  = glite::wms::common::utilities;
 using namespace glite::wms::ice::util;
 using namespace std;
 
@@ -71,6 +73,55 @@ namespace { // begin anonymous namespace
             return true;
     }
     
+    /**
+     * This class is used to remove a bunch of jobs from the job
+     * cache.  It should be invoked by a scope_guard object, and is
+     * used to remove a bunch of jobs if the polling fails due (i.e.)
+     * to an expired user proxy.
+     */
+    class remove_bunch_of_jobs {
+    protected:
+        vector< string > m_cream_job_ids;
+        string m_reason;
+        iceLBLogger* m_lb_logger;
+        jobCache* m_cache;
+        log4cpp::Category* m_log_dev;
+    public:
+        /**
+         * jobs must be a vector of COMPLETE cream job ids.
+         */
+        remove_bunch_of_jobs( const vector< string>& jobs ) :
+            m_cream_job_ids( jobs ),
+            m_reason( "Removed by ICE status poller" ),
+            m_lb_logger( iceLBLogger::instance() ),
+            m_cache( jobCache::getInstance() ),
+            m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() )
+        { };
+        void set_reason( const string& new_reason ) {
+            m_reason = new_reason;
+        };
+        void operator()( void ) {
+            static const char* method_name = "remove_bunch_of_jobs::operator() - ";
+            vector< string >::const_iterator it;
+            for ( it=m_cream_job_ids.begin(); it != m_cream_job_ids.end(); ++it ) {
+                boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+                jobCache::iterator j = m_cache->lookupByCompleteCreamJobID( *it );
+                if ( m_cache->end() == j )
+                    continue; // nothing to do
+
+                CreamJob job( *j );
+                CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+                               << "Removing job " << job.describe()
+                               << " from the cache. Reason is: "
+                               << m_reason);
+                job.set_failure_reason( m_reason );
+                m_lb_logger->logEvent( new job_aborted_event( job ) ); // ignore return value, the job will be removed from ICE cache anyway
+                m_cache->erase( j );
+            }
+        }
+    };
+
+
 }; // end anonymous namespace
 
 //____________________________________________________________________________
@@ -85,17 +136,7 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bo
     m_poll_all_jobs( poll_all_jobs ),
     m_conf( iceConfManager::getInstance() )
 {
-//     char* ice_empty_threshold_string = ::getenv( "ICE_EMPTY_THRESHOLD" );;
-//     if ( ice_empty_threshold_string ) {
-//         try {
-//             m_empty_threshold =  boost::lexical_cast< time_t >( ice_empty_threshold_string );
-//         } catch( boost::bad_lexical_cast & ) {
-//             m_empty_threshold = 10*60;
-//         }
-//     }
-
   m_empty_threshold = m_conf->getConfiguration()->ice()->ice_empty_threshold();
-
 }
 
 
@@ -172,24 +213,38 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                    << cream_url << "]"
                    );
 
+    vector< string > job_id_vector;
+
     for( vector< CreamJob >::const_iterator thisJob = cream_job_ids.begin(); 
          thisJob != cream_job_ids.end(); 
          ++thisJob) {
+        job_id_vector.push_back( thisJob->getCompleteCreamJobID() );
         CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
                        << "Will poll job with CREAM job id = ["
                        << thisJob->getCompleteCreamJobID() << "]"
                        );
-    }
-
+    }    
+    // Build the scope_guard object which will remove all jobs in the
+    // vector from the job cache, if necessary.
+    remove_bunch_of_jobs remove_f( job_id_vector );
+    // The following is needed because we want to pass to
+    // remove_job_guard a reference to function remove_f, instead of a
+    // copy of it.  Passing a reference here is needed because we can
+    // later modify the object remove_f by changing the failure
+    // reason, and we want the scope_guard to invoke the (modified)
+    // function object.
+    boost::function<void()> remove_f_ref = boost::ref( remove_f );
+    wms_utils::scope_guard remove_jobs_guard( remove_f_ref );
+    
     string proxy( DNProxyManager::getInstance()->getBetterProxyByDN( user_dn ) );
     
     if ( proxy.empty() ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
                        << "A Proxy file for DN [" << user_dn
-                       << "] is not yet available !!! Skipping..."
+                       << "] is not available"
                        );
         // Cannot process the list of jobs submitted by this user;
-        // skip over and hope for the best
+        // the scope_guard will remove the jobs.
         return list< soap_proxy::JobInfoWrapper >();
     }
     
@@ -202,11 +257,15 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
     try {
         
         soap_proxy::VOMSWrapper V( proxy );
-        if( !V.IsValid( ) ) 
+        if( !V.IsValid( ) ) {
+            remove_f.set_reason( V.getErrorMessage() );
             throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
+        }
         
-        if( V.getProxyTimeEnd() <= time(NULL) )
+        if( V.getProxyTimeEnd() <= time(NULL) ) {
+            remove_f.set_reason( string("Proxy [")+proxy+"] is expired!" );
             throw cream_api::soap_proxy::auth_ex( string("Proxy [")+proxy+"] is expired!" );
+        }
         
         CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                        << "Connecting to [" << cream_url << "]"
@@ -236,7 +295,11 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                              proxy,
                              &req,
                              &res).execute( 3 );
+            remove_jobs_guard.dismiss(); // dismiss the guard, we should be safe here...
+            
         } // free some array
+
+
 
         map<string, boost::tuple<soap_proxy::JobInfoWrapper::RESULT, soap_proxy::JobInfoWrapper, string> >::const_iterator infoIt;
         
@@ -274,46 +337,48 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                        << "Cannot query status job for DN=["
                        << user_dn << "]. Exception is [" << ex.what() << "]"
                        );
+        remove_f.set_reason( ex.what() );
         sleep(1);
 
     } catch(soap_proxy::soap_ex& ex) {
         
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                     << "Cannot query status job for DN=["
-                     << user_dn << "]. Exception is ["  << ex.what() << "]"
+                       << "Cannot query status job for DN=["
+                       << user_dn << "]. Exception is ["  << ex.what() << "]"
                        );
+        remove_f.set_reason( ex.what() );
         sleep(1);
 
     } catch(cream_api::cream_exceptions::InternalException& ex) {
       
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                     << "Cannot query status job for DN=["
-                     << user_dn << "]. Exception is [" << ex.what() << "]"
+                       << "Cannot query status job for DN=["
+                       << user_dn << "]. Exception is [" << ex.what() << "]"
                        );
-	
-      // this ex can be raised if the remote service is not
-      // reachable and scanJobs is called again
-      // immediately. Untill the service is down this could
-      // overload the cpu and the logfile. So let's wait for a
-      // while before returning...
-      sleep(1);
+        remove_f.set_reason( ex.what() );
+        // this ex can be raised if the remote service is not
+        // reachable and scanJobs is called again immediately. Until
+        // the service is down this could overload the cpu and the
+        // logfile. So let's wait for a while before returning...
+        sleep(1);
+        
+    } catch(exception& ex) {
+        
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+                       << "Cannot query status job for DN=["
+                       << user_dn << "]. Exception is [" << ex.what() << "]"
+                       );
+        remove_f.set_reason( ex.what() );
 
-  } catch(exception& ex) {
-      
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                     << "Cannot query status job for DN=["
-                     << user_dn << "]. Exception is [" << ex.what() << "]"
-                     );
-
-  } catch(...) {
-    
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                     << "Cannot query status job for DN=["
-                     << user_dn << "]. Unknown exception catched"
-                     );
-
-  }
-  return the_job_status;
+    } catch(...) {
+        
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+                       << "Cannot query status job for DN=["
+                       << user_dn << "]. Unknown exception catched"
+                       );
+        
+    }
+    return the_job_status;
 }
 
 //----------------------------------------------------------------------------
