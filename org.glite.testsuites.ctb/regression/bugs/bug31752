@@ -32,7 +32,7 @@ test_bug31752_pre () {
 
 test_bug31752_post () {
  echo
- unset LFC_HOST 
+ #unset LFC_HOST 
  unset GUID
  unset SURL
  rm -f ${LOCAL_FILE}
