@@ -582,10 +582,44 @@ bool GaclManager::checkCredentialEntries(const std::string &type){
                         cred = entry->firstcred ;
                         // scanning of the credentials in the selected entry
                         while ( cred != NULL ) {
+#ifndef GRST_VERSION
                                 // checking each entry against the user credential type
                                 if ( strcmp( cred->type, (char*)type.c_str()) == 0 ){
                                         found = true;
                                 }
+#else
+                                {
+                                  char *auri;
+                                  
+                                  if ((auri = GRSTgaclCredGetAuri(cred)) != NULL)
+                                    {
+                                      if      ((strcmp((char*)type.c_str(), "person") == 0) &&
+                                               (strncmp(auri, "dn:", 3) == 0))
+                                        {
+                                    	  found = true;
+                                        }
+                                      else if ((strcmp((char*)type.c_str(), "voms") == 0) &&
+                                               (strncmp(auri, "fqan:", 5) == 0)) 
+                                        {
+                                    	  found = true;
+                                        }
+                                      else if ((strcmp((char*)type.c_str(), "dn-list") == 0) &&
+                                               (strncmp(auri, "url:", 4) == 0))
+                                        {
+                                    	  found = true;
+                                        }
+                                      else if ((strcmp((char*)type.c_str(), "hostname") == 0) &&
+                                               (strncmp(auri, "dns:", 4) == 0))
+                                        {
+                                    	  found = true;
+                                        }
+                                      else if (strncmp(auri, "any-user", 3) == 0)
+                                        {
+                                    	  found = true;
+                                        }
+                                    }		
+                                }
+#endif
                                 // the credential type did not match
                                 if ( !found ) {
                                         cred = (GRSTgaclCred*) cred->next;
