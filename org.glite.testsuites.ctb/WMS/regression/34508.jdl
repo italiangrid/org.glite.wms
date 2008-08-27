@@ -1,19 +1,19 @@
 [
   nodes = {
                [
-                 file = "/home/emolinar/collJdl.jdl";
+                 file = "data/example.jdl";
                ],
                [
-                 file = "/home/emolinar/collJdl.jdl";
+                 file = "data/example.jdl";
                ],
                [
-                 file = "/home/emolinar/collJdl.jdl";
+                 file = "data/example.jdl";
                ],
                [
-                 file = "/home/emolinar/collJdl.jdl";
+                 file = "data/example.jdl";
                ],
                [
-                 file = "/home/emolinar/collJdl.jdl";
+                 file = "data/example.jdl";
                ]
                                                                                                                        
           };
