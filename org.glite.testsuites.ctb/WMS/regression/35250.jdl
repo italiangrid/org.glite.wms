@@ -4,19 +4,25 @@
         nodes = [
       nodeA = [
         node_type = "edg-jdl";
-        file ="myjob.jdl" ;
+        file ="data/example.jdl" ;
       ];
         nodeB = [
-                                node_type = "edg-jdl";
-        file ="myjob.jdl" ;
+        node_type = "edg-jdl";
+        file ="data/example.jdl" ;
        ];
          nodeC = [
          node_type = "edg-jdl";
-         file ="myjob.jdl" ;
+         description = [
+          Executable = "/bin/echo" ;
+          Arguments = "Arg1 Arg2 Arg3" ;
+          StdOutput = "echo.out" ;
+          StdError =  "echo.err" ;
+          OutputSandbox ={ "echo.out" ,"echo.err"} ;
+          ];
        ];
-                        dependencies = {
+       dependencies = {
         { nodeA, nodeB },
-                                { nodeA, nodeC }
+        { nodeA, nodeC }
        }
      ];
   ]
