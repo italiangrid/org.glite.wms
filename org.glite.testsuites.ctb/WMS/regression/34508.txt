@@ -1,13 +1,8 @@
 Bug: #34508
 Link: https://savannah.cern.ch/bugs/?34508
-Summary: Any collection submitted while the wms is down is not recovered upon
-WM startup 
+Summary: Any collection submitted while the WMS is down is not recovered upon WM startup
 
- - stop the WM by running the script: /opt/glite/etc/init.d/glite-wms-wm stop
-   on the WMS machine
-
- - submit a collection as for example the one in 34508.jdl
-
- - start the WM by running the script: /opt/glite/etc/init.d/glite-wms-wm start 
-   on the WMS machine  
-
+- Stop the WM on the WMS.
+- Submit a collection
+- Restart the WM
+- Check if the status of the collection changes to Running
