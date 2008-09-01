@@ -87,37 +87,34 @@ def main():
     parameters.register('delegationID', 's', optChar='D')
     parameters.register('leaseID', 's', '', optChar='L')
     parameters.register('leaseTime', 'd', 1200, optChar='W')
-    parameters.register('resourceURI', 's', optChar='R')
+    parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
     parameters.register('jdl', 's')
     parameters.register('help', 'b')
 
     if os.environ.has_key("MONITORED_LEASE_EXP_CONFIG_FILE"):
         confFileName = os.environ["MONITORED_LEASE_EXP_CONFIG_FILE"]
-        try:
-            parameters.parseConfigFile(confFileName)
-        except IOError, ioError:
-            failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
-        except Exception, exception:
-            failure("Cannot parse configuration file: " + confFileName + " " + str(exception))
+    else:
+        confFileName = None
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], parameters.getShortOptString(),
                                       parameters.getLongOptList())
-        parameters.parseOptList(optlist)
+        parameters.parseConfigFileAndOptList(optlist, confFileName)
+    except testsuite_utils.BadValueException, ex:
+        print ex
+        usage()
+    except IOError, ioError:
+        failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
     except getopt.GetoptError:
         print "Wrong arguments\n\nUsage:\n"
         usage()
     except Exception, exception:
-        failure("Cannot parse option list " + str(exception))
+        failure("Error parsing parameters " + str(exception))
         
     if parameters.help:
         usage()
 
-    if parameters.resourceURI=='':
-        print "Resource URI is not defined"
-        usage()
-        
     if parameters.jdl=='':
         parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*5, logger)
         if parameters.jdl==None:

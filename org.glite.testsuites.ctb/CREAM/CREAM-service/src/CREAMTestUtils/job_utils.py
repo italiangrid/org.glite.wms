@@ -13,7 +13,7 @@ from testsuite_utils import getProxyFile, cmdTable
 jobUtilsLogger = log4py.Logger().get_instance(classid="job_utils")
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
 
-def eraseJobs(jobList, cmd='purge', logger=jobUtilsLogger):
+def eraseJobs(jobList, cmd='purge',  proxyMan=None, logger=jobUtilsLogger):
     
     if len(jobList)>0:
         tempFD, tempFilename = tempfile.mkstemp(dir='/tmp')
@@ -26,12 +26,19 @@ def eraseJobs(jobList, cmd='purge', logger=jobUtilsLogger):
       
             eraseCmdLine = cmdTable[cmd] + " -N -i " + tempFilename
             logger.debug("Command line: " + eraseCmdLine)
-            eraseProc = popen2.Popen4(eraseCmdLine)
-
-            for line in eraseProc.fromchild:
-                if 'ERROR' in line or 'FATAL' in line:
-                    logger.error(line[24:])
-            eraseProc.fromchild.close()
+            
+            if proxyMan<>None:
+                proxyMan.beginLock()
+            try:
+                eraseProc = popen2.Popen4(eraseCmdLine)
+    
+                for line in eraseProc.fromchild:
+                    if 'ERROR' in line or 'FATAL' in line:
+                        logger.error(line[24:])
+                eraseProc.fromchild.close()
+            finally:
+                if proxyMan<>None:
+                    proxyMan.endLock()
                     
             os.remove(tempFilename)
                 
@@ -106,23 +113,6 @@ class BooleanTimestamp:
         return self.timestamp >= float(nObj)
 
 
-
-class ProxyValidity:
-    
-    def __init__(self, proxyFile):
-        self.proxyFile = proxyFile
-        
-    def __int__(self):
-        infoCmd = "%s -timeleft -file %s" % \
-            (cmdTable['proxy-info'], self.proxyFile)
-        infoProc = popen2.Popen4(infoCmd)
-        #TODO missing error handling
-        for line in infoProc.fromchild:
-            result = int(string.strip(line))
-        infoProc.fromchild.close()
-        
-        return result
-
 class AbstractRenewer(Thread):
 
     def __init__(self, parameters, container, logger=jobUtilsLogger):
@@ -133,18 +123,19 @@ class AbstractRenewer(Thread):
         self.cond = Condition()
         self.logger = logger
         
-    def setup(self):
+    def preRun(self):
         pass
-    
+        
     def doCycle(self, cmdPrefix, xTime, xID, fString):
         self.cond.acquire()
         try:
             while self.running:
                 self.cond.wait(int(xTime) * 3 / 4)
                 
-                self.setup()
-                
                 if self.running:
+                    
+                    self.preRun()
+                    
                     if xID=='':
                         tsList = self.container.valueSnapshot()
                     else:
@@ -157,11 +148,18 @@ class AbstractRenewer(Thread):
                             rcmd = cmdPrefix % (fString % (os.getpid(), float(item)))
                         self.logger.debug("Renew command: " + rcmd)
                         
+                        if hasattr(self.container, 'proxyMan') and self.container.proxyMan<>None:
+                            self.container.proxyMan.beginLock()
+                            
                         renewProc = popen2.Popen4(rcmd)
                         for line in renewProc.fromchild:
                             if 'ERROR' in line or 'FATAL' in line:
                                 self.logger.error("Cannot renew " + xID)
                         renewProc.fromchild.close()
+                        
+                        if hasattr(self.container, 'proxyMan') and self.container.proxyMan<>None:
+                            self.container.proxyMan.endLock()
+
         finally:
             self.cond.release()
                     
@@ -185,26 +183,57 @@ class LeaseRenewer(AbstractRenewer):
         
         self.doCycle(cmdPrefix, self.parameters.leaseTime, \
                      self.parameters.leaseID, 'LEASEID%d.%f')
-    
-class VOMSProxyManager(AbstractRenewer):
+
+class ProxyRenewer(AbstractRenewer):
+
+    def __init__(self,parameters, container, logger=jobUtilsLogger):
+        AbstractRenewer.__init__(self, parameters, container, logger)
+        
+    def preRun(self):
+        if hasattr(self.container, 'proxyMan') and self.container.proxyMan<>None:
+            self.container.proxyMan.renewProxy()
+        
+    def run(self):
+        
+        cmdPrefix = '%s -e %s %s ' % (cmdTable['proxy-renew'], \
+                        self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')], \
+                        '%s')
+        
+        self.doCycle(cmdPrefix, self.elaps, self.parameters.delegationID, 'DELEGID%d.%f')
+
+
+class VOMSProxyManager(Thread):
     
     def __init__(self,parameters, logger=jobUtilsLogger):
-        AbstractRenewer.__init__(self, parameters, None, logger)
+        Thread.__init__(self)
         
-        if hasattr(parameters, 'vo') and parameters.vo<>'':
-            self.cert, self.key = getUserKeyAndCert()
-            #TODO manage key without passphrase
-            self.password = getpass.getpass()
+        if not hasattr(parameters, 'vo') or parameters.vo=='':
+            raise Exception, "Missing vo parameter"
+
+        self.cert, self.key = getUserKeyAndCert()
+        #TODO manage key without passphrase
+        self.password = getpass.getpass()
+        
+        self.proxyFile = '/tmp/x509up_u%d_%d' % (os.getuid(), os.getpid())
             
-            self.proxyFile = '/tmp/x509up_u%d_%d' % (os.getuid(), os.getpid())
-            os.putenv('X509_USER_PROXY', self.proxyFile)
+        if hasattr(parameters, 'valid') and parameters.valid<>'':
+            tokens = string.split(parameters.valid, ':')
+            self.elaps = int(tokens[0])*3600 + int(tokens[1])*60
         else:
-            self.proxyFile = getProxyFile()
-            
+            self.elaps = 600
+
+        self.parameters = parameters
+        self.running = True
+        self.cond = Condition()
+        self.logger = logger
         self.pCond = Condition()
-        self.pCheck = False
+        self.wCheck = False
+        self.rCheck = 0
         
-    def setup(self):
+        self.renewProxy()
+        os.putenv('X509_USER_PROXY', self.proxyFile)
+        
+    def renewProxy(self):
         
         result = 0
         if hasattr(self.parameters, 'vo') and self.parameters.vo<>'':
@@ -217,8 +246,9 @@ class VOMSProxyManager(AbstractRenewer):
             
             try:
                 self.pCond.acquire()
-                self.pCheck = True
-                self.pCond.wait()
+                self.wCheck = True
+                if self.rCheck>0:
+                    self.pCond.wait()
                 self.pCond.release()
                 
                 proxyProc =popen2.Popen4(proxyCmd)
@@ -232,7 +262,7 @@ class VOMSProxyManager(AbstractRenewer):
                 result = proxyProc.wait()
             finally:
                 self.pCond.acquire()
-                self.pCheck = False
+                self.wCheck = False
                 self.pCond.notifyAll()
                 self.pCond.release()
 
@@ -240,53 +270,35 @@ class VOMSProxyManager(AbstractRenewer):
     
     def beginLock(self):
         self.pCond.acquire()
-        while self.pCheck:
+        self.rCheck += 1
+        while self.wCheck:
             self.pCond.wait()
         self.pCond.release()
         
     def endLock(self):
         self.pCond.acquire()
+        self.rCheck -= 1
         self.pCond.notifyAll()
         self.pCond.release()                
         
     def run(self):
 
-        if hasattr(self.parameters, 'valid') and self.parameters.valid<>'':
-            tokens = string.split(self.parameters.valid, ':')
-            elaps = int(tokens[0])*3600 + int(tokens[1])*60
-        else:
-            elaps = ProxyValidity(self.proxyFile)
-
         self.cond.acquire()
         try:
             while self.running:
-                self.cond.wait(int(elaps) * 3 / 4)
+                self.cond.wait(int(self.elaps) * 3 / 4)
                 if self.running:
-                    self.setup()
+                    self.renewProxy()
         finally:
             self.cond.release()
+
+    def halt(self):
+        self.cond.acquire()
+        self.running=False
+        self.cond.notify()
+        self.cond.release()
     
-class ProxyRenewer(VOMSProxyManager):
-
-    def __init__(self,parameters, container, logger=jobUtilsLogger):
-        VOMSProxyManager.__init__(self, parameters, logger)
-        self.container = container
-        
-    def run(self):
-        
-        cmdPrefix = '%s -e %s %s ' % (cmdTable['proxy-renew'], \
-                        self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')], \
-                        '%s')
-        
-        if hasattr(self.parameters, 'valid') and self.parameters.valid<>'':
-            tokens = string.split(self.parameters.valid, ':')
-            elaps = int(tokens[0])*3600 + int(tokens[1])*60
-        else:
-            elaps = ProxyValidity(self.proxyFile)
-        
-        self.doCycle(cmdPrefix, elaps, self.parameters.delegationID, 'DELEGID%d.%f')
-
-
+    
 class JobProcessed:
     
     def __init__(self):

@@ -82,7 +82,7 @@ def main():
     parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
     parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
     #parameters.register('delegationID', 's', optChar='D')
-    parameters.register('resourceURI', 's', optChar='R')
+    parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
     #parameters.register('jdl', 's')
     parameters.register('vo', 's', optChar='1')
@@ -91,29 +91,27 @@ def main():
     
     if os.environ.has_key("MONITORED_PROXY_EXPIRED_CONFIG_FILE"):
         confFileName = os.environ["MONITORED_PROXY_EXPIRED_CONFIG_FILE"]
-        try:
-            parameters.parseConfigFile(confFileName)
-        except IOError, ioError:
-            failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
-        except Exception, exception:
-            failure("Cannot parse configuration file: " + confFileName + " " + str(exception))
+    else:
+        confFileName = None
     
     try:
         optlist, args = getopt.getopt(sys.argv[1:], parameters.getShortOptString(),
                                       parameters.getLongOptList())
-        parameters.parseOptList(optlist)
+        parameters.parseConfigFileAndOptList(optlist, confFileName)
+    except testsuite_utils.BadValueException, ex:
+        print ex
+        usage()
+    except IOError, ioError:
+        failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
     except getopt.GetoptError:
         print "Wrong arguments\n\nUsage:\n"
         usage()
     except Exception, exception:
-        failure("Cannot parse option list " + str(exception))
-        
+        failure("Error parsing parameters " + str(exception))
+                
     if parameters.help:
         usage()
 
-    if parameters.resourceURI=='':
-        print "Resource URI is not defined"
-        usage()
     if parameters.vo=='':
         print "Vo name is not defined"
         usage()
@@ -128,7 +126,6 @@ def main():
     pollerThread = JobPoller(parameters)
     
     vomsManager = job_utils.VOMSProxyManager(parameters, logger)
-    vomsManager.setup()
     
     pollerThread.start()
     vomsManager.start()

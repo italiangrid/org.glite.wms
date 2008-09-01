@@ -43,24 +43,27 @@ class JobMonitor(threading.Thread):
             ts = time.time()
             
             self.lock.acquire()
-            
-            if (ts - self.lastNotifyTS) > self.parameters.rate*2:
-                JobMonitor.logger.warn("Missed last notify")
-                
-            self.manageNotifications()
-                
-            for (job, status) in self.notified:
-                if job in self.table:
-                    del(self.table[job])
-                    self.finishedJobs.append(job)
-                    jobProcessed += 1
-                    JobMonitor.logger.info("Terminated job %s with status %s" % (job, status))
-                    self.tableOfResults[status] += 1
-                        
-            self.notified = []
+            try:
+                if (ts - self.lastNotifyTS) > self.parameters.rate*2:
+                    JobMonitor.logger.warn("Missed last notify")
                     
-            if len(self.finishedJobs)>0 and len(self.table):
-                minTS = float(min(self.table.values())) - 1
+                self.manageNotifications()
+                    
+                for (job, status) in self.notified:
+                    if job in self.table:
+                        del(self.table[job])
+                        self.finishedJobs.append(job)
+                        jobProcessed += 1
+                        JobMonitor.logger.info("Terminated job %s with status %s" % (job, status))
+                        self.tableOfResults[status] += 1
+                            
+                self.notified = []
+                        
+                if len(self.finishedJobs)>0 and len(self.table):
+                    minTS = float(min(self.table.values())) - 1
+                
+            except:
+                JobMonitor.logger.error(sys.exc_info()[2])
                 
             self.lock.release()
             
@@ -80,6 +83,7 @@ class JobMonitor(threading.Thread):
                 time.sleep(timeToSleep)
                 
     def notify(self, jobHistory):
+        JobMonitor.logger.debug("Trying to lock")
         self.lock.acquire()
         self.lastNotifyTS = time.time()
         (jobId, status) = jobHistory[-1]

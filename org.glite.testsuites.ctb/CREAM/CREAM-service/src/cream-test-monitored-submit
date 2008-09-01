@@ -60,8 +60,8 @@ class JobProcessed(job_utils.JobProcessed):
 
 class JobPoller(job_poller.JobPoller):
     
-    def __init__(self, parameters):
-        job_poller.JobPoller.__init__(self, parameters)
+    def __init__(self, parameters, pManager=None):
+        job_poller.JobPoller.__init__(self, parameters, pManager)
         self.finishedJobs = JobProcessed()
         
     def shutdown(self):
@@ -79,45 +79,53 @@ def main():
     parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
     parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
     parameters.register('delegationID', 's', optChar='D')
-    parameters.register('resourceURI', 's', optChar='R')
+    parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
     parameters.register('jdl', 's')
+    parameters.register('vo', 's', optChar='1')
+    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '2')
     parameters.register('help', 'b')
 
     if os.environ.has_key("MONITORED_SUBMIT_CONFIG_FILE"):
         confFileName = os.environ["MONITORED_SUBMIT_CONFIG_FILE"]
-        try:
-            parameters.parseConfigFile(confFileName)
-        except IOError, ioError:
-            failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
-        except Exception, exception:
-            failure("Cannot parse configuration file: " + confFileName + " " + str(exception))
+    else:
+        confFileName = None
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], parameters.getShortOptString(),
                                       parameters.getLongOptList())
-        parameters.parseOptList(optlist)
+        parameters.parseConfigFileAndOptList(optlist, confFileName)
+        
+    except testsuite_utils.BadValueException, ex:
+        print ex
+        usage()
+    except IOError, ioError:
+        failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
     except getopt.GetoptError:
         print "Wrong arguments\n\nUsage:\n"
         usage()
     except Exception, exception:
-        failure("Cannot parse option list " + str(exception))
+        failure("Error parsing parameters " + str(exception))
         
     if parameters.help:
         usage()
 
-    if parameters.resourceURI=='':
-        print "Resource URI is not defined"
-        usage()
-        
     if parameters.jdl=='':
         parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*5, logger)
         if parameters.jdl==None:
             sys.exit(1)
-    
-    pollerThread = JobPoller(parameters)
-    pollerThread.start()
-    pollerThread.join()
+
+    if parameters.vo<>'':
+        vomsManager = job_utils.VOMSProxyManager(parameters, logger)
+        pollerThread = JobPoller(parameters, vomsManager)
+        pollerThread.start()
+        vomsManager.start()
+        pollerThread.join()
+        vomsManager.halt()
+    else:
+        pollerThread = JobPoller(parameters)
+        pollerThread.start()
+        pollerThread.join()
     exitCode = pollerThread.shutdown()
     
     sys.exit(exitCode)

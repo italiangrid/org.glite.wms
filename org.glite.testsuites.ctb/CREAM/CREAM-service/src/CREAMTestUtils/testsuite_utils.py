@@ -4,30 +4,40 @@ import sys, os, os.path, tempfile
 import re, string
 import popen2
 
+class BadValueException(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return repr(self.message)
+    
 def checkIsOk(value):
     return True
 
 def checkRate(value):
     if value<5:
-        raise Exception('Bad rate ' + repr(value))
+        raise BadValueException('Bad rate ' + repr(value))
 
 def atLeastOne(value):
     if value<1:
-        raise Exception('Bad number for job ' + repr(value))
+        raise BadValueException('Bad number for job ' + repr(value))
     
 def checkPort(value):
     if value<1025 or value>65535:
-        raise Exception("Bad port number: " + repr(value))
+        raise BadValueException("Bad port number: " + repr(value))
+    
+def checkResourceURI(value):
+    if value=='':
+        raise BadValueException("Missing resource")
     
 def checkValid(value):
     tokens = string.split(value, ':')
     if len(tokens)<>2:
-        raise Exception("Bad valid value: "  + value)
+        raise BadValueException("Bad valid value: "  + value)
     
     h = int(tokens[0])
     m = int(tokens[1])
     if h<0 or h>23 or m<0 or m>59:
-        raise Exception("Bad valid value: " + value)
+        raise BadValueException("Bad valid value: " + value)
     
 class Parameters:
     def __init__(self):
@@ -57,7 +67,7 @@ class Parameters:
         type, check, optChar = self.pTable[k]
         if type=='d':
             iValue = int(v)
-            check(iValue)
+#            check(iValue)
             setattr(self, k, iValue)
         elif type=='b':
             if v=='':
@@ -65,10 +75,16 @@ class Parameters:
             else:
                 setattr(self, k, v.lower()=='true')
         else:
-            check(v)
+#            check(v)
             setattr(self, k, v)        
+    
+    def testValues(self):
+        for param in self.pTable:
+            type, check, optChar = self.pTable[param]
+            if type<>'b':
+                check(getattr(self,param))
 
-    def parseOptList(self, optList):
+    def parseOptList(self, optList, checkParam=False):
         for k,v in optList:
             if k[0:2]=='--':
                 optName = k[2:]
@@ -78,8 +94,11 @@ class Parameters:
                     if optChar==k[1]:
                         optName = tmpo
             self.testAndSet(optName, v)
+            
+        if checkParam:
+            self.testValues()
 
-    def parseConfigFile(self, confFileName):
+    def parseConfigFile(self, confFileName, checkParam=False):
         propRegExp = re.compile("^\s*(\w+)\s*=\s*(\w+)")
         try:
             confFile = open(confFileName)
@@ -91,6 +110,14 @@ class Parameters:
         finally:
             if 'confFile' in dir() and not confFile.closed:
                 confFile.close()
+                
+        if checkParam:
+            self.testValues()
+            
+    def parseConfigFileAndOptList(self, optList, confFileName):
+        if confFileName<>None:
+            self.parseConfigFile(confFileName, False)
+        self.parseOptList(optList, True)
     
     def getLongOptList(self):
         result = []
@@ -125,30 +152,6 @@ def createTempJDL(sleepTime, logger=None):
         if logger<>None:
             logger.error("Cannot create temp jdl file:" + str(sys.exc_info()[0]))
     return None
-
-#def getCECommandTable():
-#    if os.environ.has_key("GLITE_LOCATION"):
-#        gliteLocation = os.environ["GLITE_LOCATION"]
-#    else:
-#        gliteLocation = "/opt/glite"
-#        
-#    gliteCeCommand = { "submit": gliteLocation + "/bin/glite-ce-job-submit",
-#                       "status": gliteLocation + "/bin/glite-ce-job-status",
-#                       "cancel": gliteLocation + "/bin/glite-ce-job-cancel",
-#                       "purge": gliteLocation + "/bin/glite-ce-job-purge",
-#                       "subscribe": gliteLocation + "/bin/CEMonitorSubscriber",
-#                       "unsubscribe": gliteLocation + "/bin/CEMonitorUnsubscriber",
-#                       "lease": gliteLocation + "/bin/glite-ce-job-lease",
-#                       "proxy-init": gliteLocation + "/bin/voms-proxy-init",
-#                       "proxy-info": gliteLocation + "/bin/voms-proxy-info",
-#                       "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy",
-#                       "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew"};
-#
-#    for k in gliteCeCommand.keys():
-#        if not os.access(gliteCeCommand[k], os.X_OK):
-#            raise Exception, "Cannot find executable " + gliteCeCommand[k]
-#        
-#    return gliteCeCommand
 
 def _getCredFile(envName, default):
     if os.environ.has_key(envName):
