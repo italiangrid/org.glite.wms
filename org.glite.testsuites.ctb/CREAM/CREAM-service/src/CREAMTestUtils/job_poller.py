@@ -123,10 +123,7 @@ class JobPoller(threading.Thread):
                                 currId = None
                                 currStatus = None
                                 currReason = ''
-                                
-                                
-                                
-                                
+
                         else:
                             line = statusProc.fromchild.next()
                 
@@ -135,12 +132,8 @@ class JobPoller(threading.Thread):
                         JobPoller.logger.debug("Unprocessed job: " + currId)
                     statusProc.fromchild.close()
                 
-                
-                
-                if len(self.finishedJobs)>0 and len(self.table):
-                    minTS = float(min(self.table.values())) -1
-                    
             finally:
+                jobToSend = min(jobLeft, self.parameters.maxRunningJobs - len(self.table))
                 self.lock.release()
                 if self.proxyMan<>None:
                     self.proxyMan.endLock()
@@ -148,10 +141,13 @@ class JobPoller(threading.Thread):
             self.processRunningJobs()
             self.processFinishedJobs()
 
-            #TODO: imcremental pool feeding
-            jobToSend = min(jobLeft, self.parameters.maxRunningJobs - len(self.table))
-            self.pool.submit(jobToSend)
-            jobLeft = self.parameters.numberOfJob - self.pool.getSuccesses()
+            if jobToSend>0:
+                #TODO: imcremental pool feeding
+                self.pool.submit(jobToSend)
+                snapshot = self.valueSnapshot()
+                if len(snapshot)>0:
+                    minTS = float(min(snapshot)) -1
+                jobLeft = self.parameters.numberOfJob - self.pool.getSuccesses()
             JobPoller.logger.debug("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
             
             timeToSleep = self.parameters.rate - int(time.time() - ts)

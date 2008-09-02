@@ -59,12 +59,10 @@ class JobMonitor(threading.Thread):
                             
                 self.notified = []
                         
-                if len(self.finishedJobs)>0 and len(self.table):
-                    minTS = float(min(self.table.values())) - 1
-                
             except:
                 JobMonitor.logger.error(sys.exc_info()[2])
-                
+
+            jobToSend = min(jobLeft, self.parameters.maxRunningJobs - len(self.table))                
             self.lock.release()
             
             self.processNotifiedJobs()
@@ -73,8 +71,10 @@ class JobMonitor(threading.Thread):
             self.finishedJobs = []
                 
             #TODO: imcremental pool feeding
-            jobToSend = min(jobLeft, self.parameters.maxRunningJobs - len(self.table))
             self.pool.submit(jobToSend)
+#            snapshot = self.valueSnapshot()
+#            if len(snapshot)>0:
+#                minTS = float(min(snapshot)) -1
             jobLeft = self.parameters.numberOfJob - self.pool.getSuccesses()
             JobMonitor.logger.debug("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
             
@@ -83,7 +83,6 @@ class JobMonitor(threading.Thread):
                 time.sleep(timeToSleep)
                 
     def notify(self, jobHistory):
-        JobMonitor.logger.debug("Trying to lock")
         self.lock.acquire()
         self.lastNotifyTS = time.time()
         (jobId, status) = jobHistory[-1]
