@@ -3,12 +3,13 @@
 import sys, os, os.path, tempfile
 import re, string
 import popen2
+import getopt
 
 class BadValueException(Exception):
     def __init__(self, message):
         self.message = message
     def __str__(self):
-        return repr(self.message)
+        return str(self.message)
     
 def checkIsOk(value):
     return True
@@ -27,7 +28,7 @@ def checkPort(value):
     
 def checkResourceURI(value):
     if value=='':
-        raise BadValueException("Missing resource")
+        raise BadValueException("Missing resource parameter")
     
 def checkValid(value):
     tokens = string.split(value, ':')
@@ -42,6 +43,7 @@ def checkValid(value):
 class Parameters:
     def __init__(self):
         self.pTable = {}
+        self.register('help', 'b')
 
     def register(self, name, type, default=None, check=None, optChar=None):
         
@@ -59,15 +61,12 @@ class Parameters:
         elif default==None and type=='b':
             default=False
 
-        #check(default)
-
         setattr(self, name, default)
 
     def testAndSet(self, k, v):
         type, check, optChar = self.pTable[k]
         if type=='d':
             iValue = int(v)
-#            check(iValue)
             setattr(self, k, iValue)
         elif type=='b':
             if v=='':
@@ -75,7 +74,6 @@ class Parameters:
             else:
                 setattr(self, k, v.lower()=='true')
         else:
-#            check(v)
             setattr(self, k, v)        
     
     def testValues(self):
@@ -84,7 +82,13 @@ class Parameters:
             if type<>'b':
                 check(getattr(self,param))
 
-    def parseOptList(self, optList, checkParam=False):
+    def parseOptList(self, argv, checkParam=False):
+        
+        try:
+            optList, args = getopt.getopt(argv, self.getShortOptString(), self.getLongOptList())
+        except getopt.GetoptError, err:
+            raise BadValueException("Wrong arguments: " + str(err))
+        
         for k,v in optList:
             if k[0:2]=='--':
                 optName = k[2:]
@@ -95,7 +99,7 @@ class Parameters:
                         optName = tmpo
             self.testAndSet(optName, v)
             
-        if checkParam:
+        if checkParam and not self.help:
             self.testValues()
 
     def parseConfigFile(self, confFileName, checkParam=False):
@@ -111,7 +115,7 @@ class Parameters:
             if 'confFile' in dir() and not confFile.closed:
                 confFile.close()
                 
-        if checkParam:
+        if checkParam and not self.help:
             self.testValues()
             
     def parseConfigFileAndOptList(self, optList, confFileName):

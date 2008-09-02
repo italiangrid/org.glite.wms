@@ -3,7 +3,6 @@
 import os, os.path
 import sys
 import re, string
-import getopt
 from CREAMTestUtils import testsuite_utils, job_utils, job_poller
 import log4py
 
@@ -13,7 +12,7 @@ def usage():
     manPage = testsuite_utils.ManPage()
     
     manPage.shortDescr = 'submit a sequence of jobs and enable the lease renew process'
-    manPage.synopsis = '[OPTION]'
+    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI'
     manPage.description = '''Submit a sequence of simple jobs with a specified rate. \
 For each job either a lease is registered or a pre-registered lease is used; \
 the expiring lease is renewed so the job should not be cancelled by the service. \
@@ -92,7 +91,6 @@ def main():
     parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
     parameters.register('jdl', 's')
-    parameters.register('help', 'b')
 
     if os.environ.has_key("MONITORED_LEASE_UP_CONFIG_FILE"):
         confFileName = os.environ["MONITORED_LEASE_UP_CONFIG_FILE"]
@@ -100,18 +98,14 @@ def main():
         confFileName = None
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], parameters.getShortOptString(),
-                                      parameters.getLongOptList())
-        parameters.parseConfigFileAndOptList(optlist, confFileName)
+
+        parameters.parseConfigFileAndOptList(sys.argv[1:], confFileName)
         
     except testsuite_utils.BadValueException, ex:
-        print ex
+        print "ERROR: %s\n\nUsage:" % ex
         usage()
     except IOError, ioError:
         failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
-    except getopt.GetoptError:
-        print "Wrong arguments\n\nUsage:\n"
-        usage()
     except Exception, exception:
         failure("Error parsing parameters " + str(exception))
         

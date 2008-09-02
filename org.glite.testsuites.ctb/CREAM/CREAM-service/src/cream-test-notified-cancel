@@ -3,7 +3,6 @@
 import os, os.path
 import sys
 import re, string
-import getopt
 import threading
 import time
 import log4py
@@ -15,7 +14,7 @@ def usage():
     manPage = testsuite_utils.ManPage()
     
     manPage.shortDescr = 'submit and cancel a sequence of jobs'
-    manPage.synopsis = '[OPTION]'
+    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI'
     manPage.description = '''Submit a sequence of simple jobs with a specified rate \
 and then try to cancel them any changes in the job status \
 are monitored via cemonitor notifications'''
@@ -117,7 +116,6 @@ def main():
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
     parameters.register('jdl', 's')
     parameters.register('consumerPort', 'd', 9000, testsuite_utils.checkPort, 'p')
-    parameters.register('help', 'b')
 
     if os.environ.has_key("NOTIFIED_CANCEL_CONFIG_FILE"):
         confFileName = os.environ["NOTIFIED_CANCEL_CONFIG_FILE"]
@@ -125,18 +123,14 @@ def main():
         confFileName =None
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], parameters.getShortOptString(),
-                                      parameters.getLongOptList())
-        parameters.parseConfigFileAndOptList(optlist, confFileName)
+
+        parameters.parseConfigFileAndOptList(sys.argv[1:], confFileName)
         
     except testsuite_utils.BadValueException, ex:
-        print ex
+        print "ERROR: %s\n\nUsage:" % ex
         usage()
     except IOError, ioError:
         failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
-    except getopt.GetoptError:
-        print "Wrong arguments\n\nUsage:\n"
-        usage()
     except Exception, exception:
         failure("Error parsing parameters " + str(exception))
         
