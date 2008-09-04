@@ -3,9 +3,22 @@
 require Carp;
 require Getopt::Long;
 
-$glitedir=`printenv GLITE_LOCATION`;
+@envir=`. /etc/profile.d/grid-env.sh; set`;
+foreach my $env(@envir){
+        my ($key,$value)=split('=',$env);
+	chomp $key;
+	chomp $value;
+	next if ($key eq "SHELLOPTS" );
+        $ENV{$key}=$value;
+}
+
+$glitedir=`/usr/bin/printenv GLITE_LOCATION|head -n 1`;
 chomp $glitedir;
 $glitedir='/opt/glite' unless($glitedir);
+
+$glitewmsdir=`printenv GLITE_WMS_LOCATION|head -n 1`;
+chomp $glitewmsdir;
+$glitewmsdir='/opt/glite' unless($glitewmsdir);
 
 $wmsconffile="${glitedir}/etc/glite_wms.conf";
 
@@ -30,15 +43,6 @@ $wmsconffile="${glitedir}/etc/glite_wms.conf";
 #valid keys for %load:
 #allocated:free:max
 %fds=();
-
-#Input size
-%inpsize=();
-
-#Input job number
-%inpjobs=();
-
-%inpsizewarning=();
-%inpjobswarning=();
 
 %operations=(    
                  'jobListMatch'  			=> 1,
@@ -84,6 +88,8 @@ $FDNum     = 500;
 $DiskUsage = 95;
 $FLSize    = 204800;
 $FLNum     = 500;
+$JDSize    = 0;
+$JDNum     = 500;
 $oper      = 'Default';
 $listoper  = 0;
 $show      = 0;
@@ -98,6 +104,8 @@ $return=Getopt::Long::GetOptions ("load1=f"       => \$Load1,
                     "diskusage=f"   => \$DiskUsage,
                     "flsize=f"      => \$FLSize,
                     "flnum=f"       => \$FLNum,
+                    "jdnum=f"       => \$JDNum,
+                    "jdsize=f"      => \$JDSize,
                     "oper=s"        => \$oper,
                     "show"          => \$show,
                     "list"          => \$listoper,
@@ -105,7 +113,7 @@ $return=Getopt::Long::GetOptions ("load1=f"       => \$Load1,
                    );
 	    
 exit(1) unless($return);
-            
+
 $oper='Default' if(!defined $operations{$oper});
           
 &print_help() if($help);
@@ -117,7 +125,7 @@ $oper='Default' if(!defined $operations{$oper});
 &get_mem_usage();
 &get_fd_usage();
 &get_disk_usage();
-&get_input_filelist();
+&get_input();
 
 &show_value() if($show);
 
@@ -127,37 +135,38 @@ $oper='Default' if(!defined $operations{$oper});
 
 sub read_conf{
 
-        my $CONF=shift;
-        my $wmp=0;
-        my $cldclose=0;
-	my $i=0;
-        open (CONF, "$CONF") || die "Could not open $CONF for reading: $!";
-        while (<CONF>){
-                $wmp=0 if(/^\s*\]\;/);
-                if (/^\s*(\S+)\s*=\s*(\S+)/){
-		        my $key=$1;
-			my $value=$2;
-                        $wmp=1 if($key eq 'WorkloadManagerProxy' && $value eq '[');
-                        next if($key eq 'SandboxStagingPath' && $wmp==0);
-			
-                        if($key eq 'Input'){
-                        	$key.=$i++;
-                                $value=~s/\"//g;
-                       		$conf{$key} = $value;
-                	}
-                }
-        
+	$wms_inputtype= `${glitewmsdir}/bin/glite-wms-get-configuration Workloadmanager.DispatcherType`;
+	chomp($wms_inputtype);
+	if(!$wms_inputtype){
+		$wms_inputtype='filelist';
+	}
+        $wms_input= `${glitewmsdir}/bin/glite-wms-get-configuration Workloadmanager.Input`;
+        chomp($wms_input);
+
+	$jc_inputtype= `${glitewmsdir}/bin/glite-wms-get-configuration JobController.InputType`;
+        chomp($jc_inputtype);
+        if(!$jc_inputtype){
+                $jc_inputtype='filelist';
         }
-        close (CONF);
-	$conf{'InputCount'}=$i;
+        $jc_input= `${glitewmsdir}/bin/glite-wms-get-configuration JobController.Input`;
+        chomp($jc_input);
+
+        $ice_inputtype= `${glitewmsdir}/bin/glite-wms-get-configuration ICE.InputType`;
+        chomp($ice_inputtype);
+        if(!$ice_inputtype){
+                $ice_inputtype='filelist';
+        }
+        $ice_input= `${glitewmsdir}/bin/glite-wms-get-configuration ICE.Input`;
+        chomp($ice_input);
+
 }
 
 sub get_loadaverage{
 
         my $load=`uptime`;
         chomp $load;
-        $load=~s/ |load average://g;
-	(my $d1,my $d2,my $d3,$load{'1min'},$load{'5min'},$load{'15min'})=split(/\,/,$load);
+        ($dummy,$load_values)=split(/load average:/,$load);
+	($load{'1min'},$load{'5min'},$load{'15min'})=split(/\,/,$load_values);
 }
 
 sub get_fd_usage{
@@ -190,22 +199,74 @@ sub get_disk_usage{
         } 
 }
 
-sub get_input_filelist{
-	
-        for (my $i=0;$i<$conf{'InputCount'};$i++){
-        	($isize,$dummy)=0;
-                my $Inp='Input'.$i;
-                $conf{$Inp}=~s/\;//;
-                if(-e $conf{$Inp}){ 
-                	my ($isize,$dummy)=split(/\s+/,`du -ks $conf{$Inp}`);
-                	$inpsize{$conf{$Inp}}=$isize;
-                        my $ijobs=`grep ' g\$' $conf{$Inp}|wc -l`;
-                        $ijobs=~s/\s//g;
-                        $inpjobs{$conf{$Inp}}=$ijobs;
+sub get_input{
+
+	$wms_fl_size = 0;
+	$wms_fl_jobs = 0;
+        $wms_jd_size = 0;
+	$wms_jd_jobs = 0;
+	$jc_fl_size  = 0;
+        $jc_fl_jobs  = 0;
+	$jc_jd_size  = 0;
+        $jc_jd_jobs  = 0;
+        $ice_fl_size = 0;
+        $ice_fl_jobs = 0;
+        $ice_jd_size = 0;
+        $ice_jd_jobs = 0;
+
+	if($wms_inputtype eq 'filelist'){
+		if(-e $wms_input){
+			($wms_fl_size,$dummy)=split(/\s+/,`du -ks $wms_input`);
+                        $wms_fl_jobs=`grep ' g\$' $wms_input|wc -l`;
+                        $wms_fl_jobs=~s/\s//g;
+		}
+	}elsif($wms_inputtype eq 'jobdir'){
+                if(-d $wms_input){
+			#if $JDSize is ==0 (that is the default) du -ks is not performed
+			if($JDSize != 0){
+				($wms_jd_size,$dummy)=split(/\s+/,`du -ks $wms_input`);
+			}
+			$wms_jd_jobs_old=`ls -1 ${wms_input}/old|wc -l`;
+			$wms_jd_jobs_new=`ls -1 ${wms_input}/new|wc -l`;
+			$wms_jd_jobs=$wms_jd_jobs_old+$wms_jd_jobs_new;
                 }
-               
+	}
+
+        if($jc_inputtype eq 'filelist'){
+                if(-e $jc_input){
+			($jc_fl_size,$dummy)=split(/\s+/,`du -ks $jc_input`);
+                        $jc_fl_jobs=`grep ' g\$' $jc_input|wc -l`;
+                        $jc_fl_jobs=~s/\s//g;
+                }
+        }elsif($jc_inputtype eq 'jobdir'){
+                if(-d $jc_input){
+                        #if $JDSize is ==0 (that is the default) du -ks is not performed
+                        if($JDSize != 0){
+				($jc_jd_size,$dummy)=split(/\s+/,`du -ks $jc_input`);
+			}
+                        $jc_jd_jobs_old=`ls -1 ${jc_input}/old|wc -l`;
+                        $jc_jd_jobs_new=`ls -1 ${jc_input}/new|wc -l`;
+                        $jc_jd_jobs=$jc_jd_jobs_old+$jc_jd_jobs_new;
+                }
         }
 
+        if($ice_inputtype eq 'filelist'){
+                if(-e $ice_input){
+			($ice_fl_size,$dummy)=split(/\s+/,`du -ks $ice_input`);
+                        $ice_fl_jobs=`grep ' g\$' $ice_input|wc -l`;
+                        $ice_fl_jobs=~s/\s//g;
+                }
+        }elsif($ice_inputtype eq 'jobdir'){
+                if(-d $ice_input){
+                        #if $JDSize is ==0 (that is the default) du -ks is not performed
+                        if($JDSize != 0){
+				($ice_jd_size,$dummy)=split(/\s+/,`du -ks $ice_input`);
+			}
+                        $ice_jd_jobs_old=`ls -1 ${ice_input}/old|wc -l`;
+                        $ice_jd_jobs_new=`ls -1 ${ice_input}/new|wc -l`;
+                        $ice_jd_jobs=$ice_jd_jobs_old+$ice_jd_jobs_new;
+                }
+        }
 
 }
 
@@ -289,18 +350,56 @@ sub test_threshold{
         
                 }
         }
-        for (my $i=0;$i<$conf{'InputCount'};$i++){
-		my $Inp='Input'.$i;
-		$conf{$Inp}=~s/\;//;
-                if($inpsize{$conf{$Inp}} > $FLSize){
-                	$inpsizewarning{$conf{$Inp}}  = $inpsize{$conf{$Inp}};
-                        $disablecount++;
-                }
-                if($inpjobs{$conf{$Inp}} > $FLNum){
-                	$inpjobswarning{$conf{$Inp}}  = $inpjobs{$conf{$Inp}};
-                        $disablecount++;
-                }
-	
+
+        if($wms_fl_size > $FLSize){
+             	$wms_fl_sizewarning = 1;
+                $disablecount++;
+        }
+        if($wms_fl_jobs > $FLNum){
+             	$wms_fl_jobswarning = 1;
+                $disablecount++;
+        }
+        if($wms_jd_size > $JDSize && $JDSize != 0){
+                $wms_jd_sizewarning = 1;
+                $disablecount++;
+        }
+        if($wms_jd_jobs > $JDNum){
+                $wms_jd_jobswarning = 1;
+                $disablecount++;
+        }
+
+        if($jc_fl_size > $FLSize){
+                $jc_fl_sizewarning = 1;
+                $disablecount++;
+        }
+        if($jc_fl_jobs > $FLNum){
+                $jc_fl_jobswarning = 1;
+                $disablecount++;
+        }
+        if($jc_jd_size > $JDSize && $JDSize != 0){
+                $jc_jd_sizewarning = 1;
+                $disablecount++;
+        }
+        if($jc_jd_jobs > $JDNum){
+                $jc_jd_jobswarning = 1;
+                $disablecount++;
+        }
+
+        if($ice_fl_size > $FLSize){
+                $ice_fl_sizewarning = 1;
+                $disablecount++;
+        }
+        if($ice_fl_jobs > $FLNum){
+                $ice_fl_jobswarning = 1;
+                $disablecount++;
+        }
+        if($ice_jd_size > $JDSize && $JDSize != 0){
+                $ice_jd_sizewarning = 1;
+                $disablecount++;
+        }
+        if($ice_jd_jobs > $JDNum){
+                $ice_jd_jobswarning = 1;
+                $disablecount++;
         }
 	
 	if($load1warning){
@@ -346,24 +445,86 @@ sub test_threshold{
         		print STDOUT "Threshold for Disk Usage: $DiskUsage\% => Detected value for Partition $k : $diskusage{$k}\%\n";
 		}
         }
+
+	if($wms_inputtype eq 'filelist'){
 	
-        for (my $i=0;$i<$conf{'InputCount'};$i++){
-		my $Inp='Input'.$i;
-		$conf{$Inp}=~s/\;//;
-                if(-e $conf{$Inp}){
-                	if(defined $inpsizewarning{$conf{$Inp}}){
-        			print STDERR "Threshold for Input FileList size: $FLSize => Detected value for Input FileList size $conf{$Inp} : $inpsize{$conf{$Inp}}\n";
-        		} else{
-        			print STDOUT "Threshold for Input FileList size: $FLSize => Detected value for Input FileList size $conf{$Inp} : $inpsize{$conf{$Inp}}\n";
+       		if($wms_fl_sizewarning){
+       			print STDERR "Threshold for WMS Input FileList size: $FLSize => Detected value for WMS Input FileList size $wms_input : $wms_fl_size\n";
+		}else{
+       			print STDOUT "Threshold for WMS Input FileList size: $FLSize => Detected value for WMS Input FileList size $wms_input : $wms_fl_size\n";
+ 		}
+ 		if($wms_fl_jobswarning){
+			print STDERR "Threshold for WMS Input FileList jobs: $FLNum => Detected value for WMS Input FileList jobs $wms_input : $wms_fl_jobs\n";
+       		} else{
+			print STDOUT "Threshold for WMS Input FileList jobs: $FLNum => Detected value for WMS Input FileList jobs $wms_input : $wms_fl_jobs\n";
+       		}
+	}elsif($wms_inputtype eq 'jobdir'){
+		if($JDSize !=0){
+                	if($wms_jd_sizewarning){
+                        	print STDERR "Threshold for WMS Input JobDir size: $JDSize => Detected value for WMS Input JobDir size $wms_input : $wms_jd_size\n";
+                	}else{
+                        	print STDOUT "Threshold for WMS Input JobDir size: $JDSize => Detected value for WMS Input JobDir size $wms_input : $wms_jd_size\n";
                 	}
-                	if(defined $inpjobswarning{$conf{$Inp}}){
-        			print STDERR "Threshold for Input FileList jobs: $FLNum => Detected value for Input FileList jobs $conf{$Inp} : $inpjobs{$conf{$Inp}}\n";
-        		} else{
-        			print STDOUT "Threshold for Input FileList jobs: $FLNum => Detected value for Input FileList jobs $conf{$Inp} : $inpjobs{$conf{$Inp}}\n";
+		}
+        	if($wms_jd_jobswarning){
+                	print STDERR "Threshold for WMS Input JobDir jobs: $JDNum => Detected value for WMS Input JobDir jobs $wms_input : $wms_jd_jobs\n";
+        	} else{
+                	print STDOUT "Threshold for WMS Input JobDir jobs: $JDNum => Detected value for WMS Input JobDir jobs $wms_input : $wms_jd_jobs\n";
+        	}
+	}
+
+        if($jc_inputtype eq 'filelist'){
+        
+        	if($jc_fl_sizewarning){
+                	print STDERR "Threshold for JC Input FileList size: $FLSize => Detected value for JC Input FileList size $jc_input : $jc_fl_size\n";
+        	}else{
+                	print STDOUT "Threshold for JC Input FileList size: $FLSize => Detected value for JC Input FileList size $jc_input : $jc_fl_size\n";
+        	}
+        	if($jc_fl_jobswarning){
+                	print STDERR "Threshold for JC Input FileList jobs: $FLNum => Detected value for JC Input FileList jobs $jc_input : $jc_fl_jobs\n";
+        	} else{
+                	print STDOUT "Threshold for JC Input FileList jobs: $FLNum => Detected value for JC Input FileList jobs $jc_input : $jc_fl_jobs\n";
+        	}
+        }elsif($jc_inputtype eq 'jobdir'){
+                if($JDSize !=0){
+                	if($jc_jd_sizewarning){
+                        	print STDERR "Threshold for JC Input JobDir size: $JDSize => Detected value for JC Input JobDir size $jc_input : $jc_jd_size\n";
+                	}else{
+                        	print STDOUT "Threshold for JC Input JobDir size: $JDSize => Detected value for JC Input JobDir size $jc_input : $jc_jd_size\n";
                 	}
-                }
+		}
+        	if($jc_jd_jobswarning){
+                	print STDERR "Threshold for JC Input JobDir jobs: $JDNum => Detected value for JC Input JobDir jobs $jc_input : $jc_jd_jobs\n";
+        	} else{
+                	print STDOUT "Threshold for JC Input JobDir jobs: $JDNum => Detected value for JC Input JobDir jobs $jc_input : $jc_jd_jobs\n";
+        	}
+	}
 	
-        }
+        if($ice_inputtype eq 'filelist'){
+        	if($ice_fl_sizewarning){
+               		print STDERR "Threshold for ICE Input FileList size: $FLSize => Detected value for ICE Input FileList size $ice_input : $ice_fl_size\n";
+        	}else{
+                	print STDOUT "Threshold for ICE Input FileList size: $FLSize => Detected value for ICE Input FileList size $ice_input : $ice_fl_size\n";
+       		}
+        	if($ice_fl_jobswarning){
+                	print STDERR "Threshold for ICE Input FileList jobs: $FLNum => Detected value for ICE Input FileList jobs $ice_input : $ice_fl_jobs\n";
+        	} else{
+                	print STDOUT "Threshold for ICE Input FileList jobs: $FLNum => Detected value for ICE Input FileList jobs $ice_input : $ice_fl_jobs\n";
+        	}
+        }elsif($ice_inputtype eq 'jobdir'){
+		if($JDSize !=0){
+                	if($ice_jd_sizewarning){
+                        	print STDERR "Threshold for ICE Input JobDir size: $JDSize => Detected value for ICE Input JobDir size $ice_input : $ice_jd_size\n";
+                	}else{
+                        	print STDOUT "Threshold for ICE Input JobDir size: $JDSize => Detected value for ICE Input JobDir size $ice_input : $ice_jd_size\n";
+                	}
+		}
+        	if($ice_jd_jobswarning){
+                	print STDERR "Threshold for ICE Input JobDir jobs: $JDNum => Detected value for ICE Input JobDir jobs $ice_input : $ice_jd_jobs\n";
+        	} else{
+                	print STDOUT "Threshold for ICE Input JobDir jobs: $JDNum => Detected value for ICE Input JobDir jobs $ice_input : $ice_jd_jobs\n";
+        	}
+	}
         
 	$disablecount >= $operations{$oper} ? exit(1) : exit(0); 
 	
@@ -379,13 +540,9 @@ sub GetPartition{
         $conf{'SandboxStagingPath'}=~s/\;//;
         push (@list,`df $conf{'SandboxStagingPath'}|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
 	
-	for (my $i=0;$i<$conf{'InputCount'};$i++){
-		my $Inp='Input'.$i;
-        	$conf{$Inp}=~s/\;//;
-                if(-e $conf{$Inp}){ 
-        		push (@list,`df $conf{$Inp}|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
-		}
-	}
+        push (@list,`df $wms_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df $jc_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df $ice_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
 	
         my %seen = ();
         foreach my $item (@list) {
@@ -440,7 +597,9 @@ sub print_help{
 	print "\t\t--fdnum\t\t threshold for used file descriptor\n";
 	print "\t\t--diskusage\t threshold for disk usage (\%)\n";
 	print "\t\t--flsize\t threshold for input filelist size (KB)\n";
-	print "\t\t--flnum\t threshold for number of unprocessed jobs\n";
+	print "\t\t--flnum\t threshold for number of unprocessed jobs (for filelist)\n";
+	print "\t\t--jdsize\t threshold for input jobdir size (KB)\n";
+	print "\t\t--jdnum\t threshold for number of unprocessed jobs (for jobdir)\n ";
 	print "\t\t--oper\t\t operation to monitor (can be listed with --list)\n";
 	print "\t\t--list\t\t list operation supported\n";
 	print "\t\t--show\t\t show all the current values\n";
