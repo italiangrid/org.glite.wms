@@ -21,21 +21,11 @@
 #
 ##############################################################################
 
-test_bug29509_pre () {
+test_bug35698_pre () {
 OLD_PYTHONPATH=$PYTHONPATH
 export PYTHONPATH=/opt/glite/lib/:$PYTHONPATH
 
-LOCAL_FILE=${TMPDIR-/tmp}/bugtest29509_$$.py
-
-if [ -z $VO ]; then
-    echo "VO variable not defined"
-    return ${REGTEST_FAIL}
-fi
-
-if [ -z $WMPROXY_URL ]; then
-    echo "VO variable not defined"
-    return ${REGTEST_FAIL}
-fi
+LOCAL_FILE=${TMPDIR-/tmp}/bugtest35698_$$.py
 
 cat <<- FIN > $LOCAL_FILE 
 #!/usr/bin/python
@@ -44,13 +34,13 @@ import sys
 
 from wmproxymethods import *
 import SOAPpy  #Error Type
+from popen2 import popen4,Popen4
 
 #url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
 url="$WMPROXY_URL"
-#url="https://lxbra2303.cern.ch:7443/glite_wms_wmproxy_server"
 client = Wmproxy(url)
 
-print "Testing WMPROXY python bug#29509 at url: " +url
+print "Testing WMPROXY python bug#35698 at url: " +url
 
 #Method to obtain information of the service itself
 
@@ -65,7 +55,7 @@ print "Testing WMPROXY python bug#29509 at url: " +url
 #IN =  rank (string)
 #OUT = jdl (string)
 
-jdl="Executable	= \"/bin/hostname\"; Arguments	= \"\"; StdOutput = \"std.out\"; StdError = \"std.err\"; OutputSandbox = {\"std.out\"}; VirtualOrganisation = \"${VO}\"; requirements = true; rank = 1;"
+jdl="Executable	= \"/bin/hostname\"; Arguments	= \"\"; StdOutput = \"std.out\"; StdError = \"std.err\"; OutputSandbox = {\"std.out\"}; VirtualOrganisation = \"${VO}\";OutputSandbox = {\"std.out\"};  Requirements = true; Rank = 1;"
 
 print jdl
 
@@ -93,39 +83,50 @@ if sfile.find("Error -")>=0:
 else:	
    delegateOk=1
 
-print "Delegation done\n"
-
-print "Submitting the job\n"
 
 # Simple jobSubmission
-task = client.jobSubmit ( jdl, delegationId )
+attempts=0
+finished=0
 
-print "Job submitted\n"
+while not finished and attempts < 3:
+ task = client.jobSubmit ( jdl, delegationId )
 
-#bug#29509
-try:
-   print "Printing job representation..."
-   print task.toString()
-except:
-   print "Error in method toString()"
-   sys.exit(1)
+ #Print info about job
+ jobId = task.getJobId()
+ print "Submitted job with JobID = " + jobId
 
-#Elsewhere, correct
-sys.exit(0)
+ #wait for job completion
+ #print "Sleeping 20 seconds for job completion..."
+ #os.system("sleep 20")
+
+#alferca
+ print "Getting status..."
+ myCommand = "glite-wms-job-logging-info --from `date  -d "now - 10 minutes"  +%H:%M` --to `date  -d "now - 10 minutes + 1 hour"  +%H:%M` " + jobId
+ print myCommand
+ kk=Popen4(myCommand)
+ ofile=kk.fromchild
+ sfile=ofile.read()
+ status=kk.wait()
+ return_output = os.WEXITSTATUS(status)
+ print sfile
+ print return_output
+
+
+ sys.exit(return_output)
 FIN
 
 chmod 755 $LOCAL_FILE
 
 }
 
-test_bug29509_post () {
+test_bug35698_post () {
 export PYTHONPATH=$OLD_PYTHONPATH
 #rm -f $LOCAL_FILE
 unset LOCAL_FILE
 }
 
 
-test_bug29509 () {
+test_bug35698 () {
 
 echo "A job will be submmited and get its string representation... "
 $LOCAL_FILE
