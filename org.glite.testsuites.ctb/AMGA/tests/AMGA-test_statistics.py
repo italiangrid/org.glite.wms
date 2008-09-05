@@ -56,12 +56,13 @@ try:
     print "</pre>\n"
     SAME.samPrintOK("Got the Server Statistics")
     SAME.samNewLine()
-    SAME.samPrintPASSED("AMGA statistics test")
+    SAME.samPrintPASSED("AMGA statistics test -TEST PASSED-")
     sys.stdout.flush()
     sys.stderr.flush()
     os._exit(SAME.SAME_OK)
 except Exception, e:
     SAME.samPrintERROR(e)
+    SAME.samPrintFAILED("AMGA statistic test -TEST FAILED-")
     sys.stdout.flush()
     sys.stderr.flush()
     os._exit(SAME.SAME_ERROR)

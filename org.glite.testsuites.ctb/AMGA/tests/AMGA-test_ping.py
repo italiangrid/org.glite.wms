@@ -24,14 +24,15 @@ if host_found :
     print '<pre>'
     print output
     print '</pre>'
-    SAME.samPrintOK("Host responded...")
+    SAME.samPrintOK("Host responded")
     SAME.samNewLine()
+    SAME.samPrintPASSED("AMGA ping test -TEST PASSED-")
     sys.stdout.flush()
     sys.stderr.flush()
     os._exit(SAME.SAME_OK)
 else :
     SAME.samPrintERROR(AMGA_HOST + " is not accessible.")
-    SAME.samPrintFAILED("AMGA Ping test ")
+    SAME.samPrintFAILED("AMGA ping test -TEST FAILED-")
     print "</pre>\n"
     sys.stdout.flush()
     sys.stderr.flush()

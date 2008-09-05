@@ -31,6 +31,7 @@ def timeout():
     print "</pre>"
     SAME.samPrintERROR(AMGA_HOST + ': encountered errors.\n')
     print "<pre> ", "AMGA test timed out after 2 minutes of waiting", "</pre>" 
+
     sys.stdout.flush()
     sys.stderr.flush()
     os._exit(SAME.SAME_ERROR)
@@ -285,7 +286,7 @@ try:
     
     SAME.samPrintOK("All functions executed properly")
     SAME.samNewLine()
-    SAME.samPrintPASSED("AMGA functional tests passed")
+    SAME.samPrintPASSED("AMGA functional tests -TEST PASSED-")
     sys.stdout.flush()
     sys.stderr.flush()
     os._exit(SAME.SAME_OK)
@@ -295,6 +296,7 @@ try:
 except Exception, ex:
     print "</pre>"
     SAME.samPrintERROR(AMGA_HOST + ': encountered errors.\n')
+    SAME.samPrintFAILED("AMGA functional test -TEST FAILED-")
     print "<pre> ", ex, "</pre>" 
     sys.stdout.flush()
     sys.stderr.flush()
