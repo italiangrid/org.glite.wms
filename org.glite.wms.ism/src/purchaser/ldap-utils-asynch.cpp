@@ -325,7 +325,9 @@ create_classad_from_ldap_entry(
 }
       
 } // anonymous namespace
+
 namespace async {
+
 void 
 fetch_bdii_se_info(
   std::string const& host, size_t port, std::string const& dn, 
@@ -389,8 +391,6 @@ fetch_bdii_se_info(
     if (result != LDAP_RES_SEARCH_ENTRY) continue; // timeout or not an entry actually
 
     LDAPMessage* lde = ldap_first_entry(ld.get(), ldresult);
-
-    if (!lde) break; // all done;
 
     for ( ; lde != 0; lde = ldap_next_entry(ld.get(), lde)) {
       ++n_entries;
@@ -508,25 +508,27 @@ fetch_bdii_se_info(
 
 void 
 fetch_bdii_ce_info(
-  std::string const& host, size_t port, std::string const& dn, 
-  time_t timeout, std::string const& ldap_ce_filter_ext,
+  std::string const& host,
+  size_t port,
+  std::string const& dn, 
+  time_t timeout,
+  std::string const& ldap_ce_filter_ext,
   ism::purchaser::PurchaserInfoContainer& ce_info_container) 
 {
-  char* const filter_ext = std::getenv("GLITE_WMS_II_CE_FILTER_EXT");
   std::string filter(
     "(|(objectclass=gluecesebind)(objectclass=gluecluster)(objectclass=gluesubcluster)"
   );
 
-  if (!ldap_ce_filter_ext.empty()) { 
-    filter += "(&(|"; 
+  if (!ldap_ce_filter_ext.empty()) {
+    filter += "(&(|";
   };
   filter += "(objectclass=gluevoview)(objectclass=gluece)";
-  if (!ldap_ce_filter_ext.empty()) { 
-    filter.append(")").append(filter_ext).append(")"); 
+  if (!ldap_ce_filter_ext.empty()) {
+    filter.append(")").append(ldap_ce_filter_ext).append(")");
   }
   filter += ")";
 
-  boost::shared_ptr<LDAP> ld( ldap_init(host.c_str(), port), ldap_unbind);
+  boost::shared_ptr<LDAP> ld(ldap_init(host.c_str(), port), ldap_unbind);
   int result = ldap_simple_bind_s(ld.get(),0,0);
   
   if (result != LDAP_SUCCESS ) {
@@ -584,8 +586,6 @@ fetch_bdii_ce_info(
     if (result != LDAP_RES_SEARCH_ENTRY) continue; // timeout or not a real entry
 
     LDAPMessage* lde = ldap_first_entry(ld.get(), ldresult);
-
-    if (!lde) break; // all done;
 
     for ( ; lde != 0; lde = ldap_next_entry(ld.get(), lde) ) {
 
@@ -791,12 +791,11 @@ void fetch_bdii_info(
   size_t port,
   std::string const& dn,
   time_t timeout,
-  std::string const& ldap_ce_filter_ext,
   ism::purchaser::PurchaserInfoContainer& ce_info_container,
   ism::purchaser::PurchaserInfoContainer& se_info_container)
 {
-  fetch_bdii_ce_info(hostname, port, dn, timeout, ldap_ce_filter_ext, ce_info_container);
+  fetch_bdii_ce_info(hostname, port, dn, timeout, ce_info_container);
   fetch_bdii_se_info(hostname, port, dn, timeout, se_info_container);
 }
-}
-}}}}
+
+} }}}}

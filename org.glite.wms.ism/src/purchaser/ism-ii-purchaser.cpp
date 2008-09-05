@@ -155,6 +155,7 @@ void ism_ii_purchaser::operator()()
          m_port,
          m_dn,
          m_timeout,
+         m_ldap_ce_filter_ext,
          gluece_info_container,
          gluese_info_container
        );
@@ -165,6 +166,7 @@ void ism_ii_purchaser::operator()()
          m_port,
          m_dn,
          m_timeout,
+         m_ldap_ce_filter_ext,
          gluece_info_container,
          gluese_info_container
        );

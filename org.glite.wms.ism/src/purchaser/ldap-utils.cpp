@@ -262,7 +262,7 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             boost::tuples::get<3>(it->second).push_back(ad);
           }
         }
-	ldap_it.next();
+	        ldap_it.next();
       } // while( ldap_it.current() )
 
       gluese_info_map_type::const_iterator se_it(
@@ -314,9 +314,10 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 }
      
 void 
-fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
+fetch_bdii_ce_info(
+  boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
   std::string const& ldap_ce_filter_ext,
-  gluece_info_container_type& gluece_info_container) 
+  gluece_info_container_type& gluece_info_container)
 {
   std::string filter(
     "(|(objectclass=gluecesebind)(objectclass=gluecluster)(objectclass=gluesubcluster)"
@@ -645,13 +646,14 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
   }
 }
 
-void fetch_bdii_info(const std::string& hostname,
-			int port,
-			const std::string& dn,
-			int timeout,
-                        const std::string& ldap_ce_filter_ext,
-			gluece_info_container_type& gluece_info_container,
-                        gluese_info_container_type& gluese_info_container)
+void fetch_bdii_info(
+      const std::string& hostname,
+      int port,
+      const std::string& dn,
+      int timeout,
+      const std::string& ldap_ce_filter_ext,
+      gluece_info_container_type& gluece_info_container,
+      gluese_info_container_type& gluese_info_container)
 {
   boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection(
     new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
@@ -660,7 +662,4 @@ void fetch_bdii_info(const std::string& hostname,
   fetch_bdii_se_info(IIconnection, gluese_info_container);
 }
 
-} // namespace purchaser
-} // namespace ism
-} // namespace wms
-} // namespace glite
+}}}} // purchaser::ism::wms::glite

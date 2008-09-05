@@ -58,7 +58,6 @@ fetch_bdii_info(
   size_t port,
   std::string const& basedn,
   time_t timeout,
-  std::string const& ldap_ce_filter_ext,
   PurchaserInfoContainer&,
   PurchaserInfoContainer&
 );
