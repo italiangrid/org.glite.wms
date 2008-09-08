@@ -2,6 +2,7 @@
 
 import sys, os, os.path, tempfile
 import re, string
+import time
 import popen2
 import getopt
 
@@ -30,6 +31,10 @@ def checkResourceURI(value):
     if value=='':
         raise BadValueException("Missing resource parameter")
     
+def checkVO(value):
+    if value=='' and getUserKeyAndCert()[0]<>None:
+        raise BadValueException("Parameter vo is mandatory using personal credentials")
+    
 def checkValid(value):
     tokens = string.split(value, ':')
     if len(tokens)<>2:
@@ -39,6 +44,10 @@ def checkValid(value):
     m = int(tokens[1])
     if h<0 or h>23 or m<0 or m>59:
         raise BadValueException("Bad valid value: " + value)
+    
+def checkRenewType(value):
+    if value<>'none' and value<>'single' and value<>'multiple':
+        raise BadValueException("Bad type: " + value)
     
 class Parameters:
     def __init__(self):
@@ -157,34 +166,29 @@ def createTempJDL(sleepTime, logger=None):
             logger.error("Cannot create temp jdl file:" + str(sys.exc_info()[0]))
     return None
 
-def _getCredFile(envName, default):
-    if os.environ.has_key(envName):
-        credFile = os.environ[envName];
+def getProxyFile():
+    if os.environ.has_key("X509_USER_PROXY"):
+        credFile = os.environ["X509_USER_PROXY"];
     else:
-        credFile = default
+        credFile = "/tmp/x509up_u" + str(os.getuid())
         
     if not os.path.isfile(credFile):
-        raise Exception, "Cannot find: " + credFile
+        raise Exception, "Cannot find proxy: " + credFile
     
     return credFile
 
-def getProxyFile():
-    return _getCredFile("X509_USER_PROXY", "/tmp/x509up_u" + str(os.getuid()))
-
 def getUserKeyAndCert():
-    if os.environ.has_key('HOME'):
-        homeDir = os.environ['HOME'];
-    else:
-        homeDir = "."
-    cert = _getCredFile("X509_USER_CERT", homeDir + "/.globus/usercert.pem")
-    key = _getCredFile("X509_USER_KEY", homeDir + "/.globus/userkey.pem")
+    if not os.environ.has_key("X509_USER_CERT") or \
+        not os.environ.has_key("X509_USER_KEY"):
+        return (None, None)
+    
+    cert = os.environ["X509_USER_CERT"]
+    if not os.path.isfile(cert):
+        raise Exception, "Cannot find: " + cert
+    key = os.environ["X509_USER_KEY"]
+    if not os.path.isfile(key):
+        raise Exception, "Cannot find: " + key
     return (cert, key)
-
-def getHostname():
-    proc = popen2.Popen4('/bin/hostname -f')
-    hostname =  string.strip(proc.fromchild.readline())
-    proc.fromchild.close()
-    return hostname
 
 def getCACertDir():
     if os.environ.has_key("CACERT_DIR"):
@@ -274,5 +278,14 @@ if 'testsuite_utils' in __name__:
         if not os.access(cmdTable[k], os.X_OK):
             print "Cannot find executable " + cmdTable[k]
             sys.exit(1)
+            
+    global hostname
+    proc = popen2.Popen4('/bin/hostname -f')
+    hostname =  string.strip(proc.fromchild.readline())
+    proc.fromchild.close()
+    
+    global applicationID
+    applicationID = "%d.%f" % (os.getpid(), time.time())
+
 else:
     print __name__

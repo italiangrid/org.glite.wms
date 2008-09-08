@@ -4,7 +4,7 @@ import time
 import popen2
 import string
 import log4py
-from testsuite_utils import cmdTable
+from testsuite_utils import cmdTable, applicationID
 
 class SubmitterThread(threading.Thread):
     
@@ -117,13 +117,13 @@ class JobSubmitterPool:
         
         self.proxyMan = pManager
         
-        if parameters.delegationID=='':
+        if parameters.delegationType=='multiple':
             dcmd = '%s -e %s %s' % (cmdTable['delegate'], \
                                               parameters.resourceURI[:string.find(parameters.resourceURI,'/')],
                                               'DELEGID%d.%f')
             delegOpt = '-D DELEGID%d.%f'
         else:
-            delegOpt = '-D ' + parameters.delegationID
+            delegOpt = '-D DELEGID' + applicationID
             dcmd = None
             
         if hasattr(parameters, 'leaseID'):

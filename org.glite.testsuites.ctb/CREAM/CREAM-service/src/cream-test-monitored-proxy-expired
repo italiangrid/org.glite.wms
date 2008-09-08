@@ -23,8 +23,6 @@ the sleep time in seconds between two consecutive submissions(Default 30s, Min 5
     manPage.parameters.append(('-n', '--numberOfJob', 'NUM', 'the number of jobs to submit (Default 1)'))
     manPage.parameters.append(('-m', '--maxRunningJobs', 'NUM', '''\
 the max number of job which can be enqueued in the service (Default 100)'''))
-#    manPage.parameters.append(('-D', '--delegationID', 'DELEGATIONID','''\
-#disable the auto-delegation for each submission and reuse the specified delegation ID'''))
     manPage.parameters.append(('-R', '--resourceURI', 'RESOURCEURI','''\
 define the URI of the resource under testing, the format is \
 <host>[:<port>]/cream-<lrms>-<queue>. \
@@ -116,7 +114,7 @@ def main():
     setattr(parameters, 'jdl', testsuite_utils.createTempJDL(elaps*2, logger))
     if parameters.jdl==None:
         sys.exit(1)
-    setattr(parameters, 'delegationID', '')
+    setattr(parameters, 'delegationType', 'multiple')
     
     pollerThread = JobPoller(parameters)
     
