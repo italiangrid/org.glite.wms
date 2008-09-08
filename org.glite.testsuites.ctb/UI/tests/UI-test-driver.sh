@@ -117,6 +117,7 @@ for testCategory in $*
 do
  if [ $testCategory = "UI-data-lcg" ]; then
   options="-d $sehost"
+  export LFC_HOST=$lfchost
   if [ $voname ]; then
    options="$options --vo $voname"
   fi
