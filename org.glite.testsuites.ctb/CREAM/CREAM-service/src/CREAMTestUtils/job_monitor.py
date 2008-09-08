@@ -22,8 +22,6 @@ class JobMonitor(threading.Thread):
         self.pool = JobSubmitterPool(parameters, self, pManager)
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, 'ABORTED': 0, 'CANCELLED': 0}
         
-        self.finishedJobs = []
-        
         self.lastNotifyTS = time.time()
         
     def manageNotifications(self):
@@ -31,6 +29,15 @@ class JobMonitor(threading.Thread):
     
     def processNotifiedJobs(self):
         pass
+
+    def processFinishedJobs(self):
+        if hasattr(self.finishedJobs, 'getPurgeableJobs'):
+            jobList = self.finishedJobs.getPurgeableJobs()
+        else:
+            jobList = self.finishedJobs
+        if len(jobList)>0:
+            job_utils.eraseJobs(jobList)
+        self.finishedJobs.clear()
 
     def run(self):
         minTS = time.time()
@@ -52,7 +59,7 @@ class JobMonitor(threading.Thread):
                 for (job, status) in self.notified:
                     if job in self.table:
                         del(self.table[job])
-                        self.finishedJobs.append(job)
+                        self.finishedJobs.append(job, status)
                         jobProcessed += 1
                         JobMonitor.logger.info("Terminated job %s with status %s" % (job, status))
                         self.tableOfResults[status] += 1
@@ -67,8 +74,7 @@ class JobMonitor(threading.Thread):
             
             self.processNotifiedJobs()
                 
-            job_utils.eraseJobs(self.finishedJobs)
-            self.finishedJobs = []
+            self.processFinishedJobs()
                 
             #TODO: imcremental pool feeding
             self.pool.submit(jobToSend)

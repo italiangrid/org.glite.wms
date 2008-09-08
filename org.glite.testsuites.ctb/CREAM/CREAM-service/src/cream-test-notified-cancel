@@ -53,11 +53,20 @@ location of the configuration file for this test'''))
 def failure(reason):
     print reason
     sys.exit(1)
+    
+class JobProcessed(job_utils.JobProcessed):
+    
+    def __init__(self):
+        job_utils.JobProcessed.__init__(self)
+        
+    def canPurge(self, jobStatus, failureReason=''):
+        return jobStatus=='CANCELLED'
 
 class JobMonitor(job_monitor.JobMonitor):
     
     def __init__(self, parameters, pManager=None):
         job_monitor.JobMonitor.__init__(self, parameters, pManager)
+        self.finishedJobs = JobProcessed()
         #two different buffers are required:
         #one buffer for the purger process
         self.toCancel = []
