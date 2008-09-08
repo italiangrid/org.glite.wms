@@ -1,30 +1,55 @@
 #!/usr/bin/env python
-import mdstandalone
-import mdinterface
-import mdclient
-import mdparser
+#import mdstandalone
+#import mdinterface
+#import mdclient
+#import mdparser
+import os
+import sys
 import time
 import math
 
+try:
+    MDPATHTOP = os.environ.get('SAME_SENSOR_HOME','..')
+    sys.path.append(MDPATHTOP+"/lib/amga.client.api.python")
+    import mdstandalone
+    import mdclient
+    import mdparser
+    import mdinterface
+except ImportError, e:
+     print "No mdclient in ", sys.path
+
+
+try:
+    USER_PROXY_CERTIFICATE = os.environ['X509_USER_PROXY']
+except:
+    print "Cannot find a proper certificate, is X509_USER_PROXY variable set?"
+    sys.stdout.flush()
+    sys.stderr.flush()
+    sys.exit(SAME.SAME_ERROR)
+
 #client=mdstandalone.MDStandalone('/tmp/')
-client = mdclient.MDClient('localhost', 8833, 'koblitz', 'grobi')
+#client = mdclient.MDClient('localhost', 8833, 'koblitz', 'grobi')
+AMGA_HOST = sys.argv[1]
+client = mdclient.MDClient(AMGA_HOST, 8822, 'test_user')
+client.requireSSL(USER_PROXY_CERTIFICATE, USER_PROXY_CERTIFICATE)
 #client.requireSSL()
 
 try:
-    print "Creating directory /pytest ..."
-    client.createDir("/pytest")    
+    print "Creating directory /test ..."
+    client.createDir("/test")    
+#    client.createDir("/pytest")    
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try:
     print "Adding entries in bulk..."
-    client.addEntries(["/pytest/a", "/pytest/b", "/pytest/c"])    
+    client.addEntries(["/test/a", "/test/b", "/test/c"])    
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try:
-    print "cd /pytest"
-    client.cd("/pytest")
+    print "cd /test"
+    client.cd("/test")
 except mdinterface.CommandException, ex:
     print "Error:", ex
         
@@ -37,19 +62,19 @@ except mdinterface.CommandException, ex:
 
 try:
     print "Adding attribute..."
-    client.addAttr("/pytest", "eventGen", "varchar(20)")    
+    client.addAttr("/test", "eventGen", "varchar(20)")    
 except mdinterface.CommandException, ex:
     print "Error:", ex
     
 try:
     print "Adding attribute..."
-    client.addAttr("/pytest", "sinn", "float")    
+    client.addAttr("/test", "sinn", "float")    
 except mdinterface.CommandException, ex:
     print "Error:", ex
     
 try:
     print "Adding attribute..."
-    client.addAttr("/pytest", "l1", "int")    
+    client.addAttr("/test", "l1", "int")    
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
@@ -64,7 +89,7 @@ except mdinterface.CommandException, ex:
 try:
     print "Adding entries..."
     for i in range(0,10):
-        client.addEntry("/pytest/t"+str(i),
+        client.addEntry("/test/t"+str(i),
                         ['events', 'eventGen', 'sinn', 'l1'],
                         [ i*100, 'LHCs Gen', math.sin(float(i)), i%2 ])
 #                        [ i*100, 'LHC\'s Gen', math.sin(float(i)), i%2 ])
@@ -74,7 +99,7 @@ except mdinterface.CommandException, ex:
 
 try:
     print "Getting all attributes..."
-    client.getattr('/pytest', ['eventGen', 'sinn', 'events'])
+    client.getattr('/test', ['eventGen', 'sinn', 'events'])
     while not client.eot(): 
 	file, values=client.getEntry()
   	print "->",file, values
@@ -84,8 +109,8 @@ except mdinterface.CommandException, ex:
 #exit()
 
 try:
-    print "Creating directory /pytest/testdir ..."
-    client.createDir("/pytest/testdir")    
+    print "Creating directory /test/testdir ..."
+    client.createDir("/test/testdir")    
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
@@ -138,7 +163,7 @@ client.cd("..");
 #mdstandalone.DEBUG = True
 try:
     print "Selecting attributes"
-    client.selectAttr(['pytest:eventGen', 'pytest:sinn', '/pytest:FILE'], 'pytest:FILE="my Gen"')
+    client.selectAttr(['test:eventGen', 'test:sinn', '/test:FILE'], 'test:FILE="my Gen"')
     while not client.eot():
         values=client.getSelectAttrEntry()
         print  "selcted ->", values
@@ -147,7 +172,7 @@ except mdinterface.CommandException, ex:
 
 mdparser.DEBUG = False
 mdstandalone.DEBUG = False                             
-client.cd("/pytest");
+client.cd("/test");
 
 
 try:
@@ -159,20 +184,20 @@ except mdinterface.CommandException, ex:
 
 try:
   print "Setting events to 42..."
-  client.setAttr('/pytest/t?', ['events'], [42])
+  client.setAttr('/test/t?', ['events'], [42])
 except mdinterface.CommandException, ex:
   print "Error:", ex
 
 try:
-    print "Removing directory /pylock/testdir ..."
-    client.removeDir("/pytest/testdir") 
+    print "Removing directory /test/testdir ..."
+    client.removeDir("/test/testdir") 
 except mdinterface.CommandException, ex:
     print "Error:", ex
             
 
 try:
     print "Getting all attributes..."
-    client.getattr('/pytest/*', ['eventGen', 'sinn', 'events'])
+    client.getattr('/test/*', ['eventGen', 'sinn', 'events'])
     while not client.eot(): 
         file, values=client.getEntry()
         print "->",file, values
@@ -180,8 +205,8 @@ except mdinterface.CommandException, ex:
     print "Error:", ex                                
 
 try: 
-    print "Removing entries: rm /pytest/*"
-    client.rm("/pytest/*")
+    print "Removing entries: rm /test/*"
+    client.rm("/test/*")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
@@ -200,19 +225,19 @@ except mdinterface.CommandException, ex:
 
 try: 
     print "Removing attribute: sinn ..."
-    client.removeAttr("/pytest", "sinn") 
+    client.removeAttr("/test", "sinn") 
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try: 
     print "Removing attribute..."
-    client.removeAttr("/pytest", "eventGen")
+    client.removeAttr("/test", "eventGen")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try: 
     print "Removing attribute: l1 ..."
-    client.removeAttr("/pytest", "l1")  
+    client.removeAttr("/test", "l1")  
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
@@ -224,33 +249,33 @@ except mdinterface.CommandException, ex:
 
 try:
     print "Creating sequence..."
-    client.sequenceCreate("seq", "/pytest")
+    client.sequenceCreate("seq", "/test")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try:
     print "Getting next from sequence..."
-    print client.sequenceNext("/pytest/seq")
+    print client.sequenceNext("/test/seq")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try:
     print "Getting next from sequence..."
-    print client.sequenceNext("/pytest/seq")
+    print client.sequenceNext("/test/seq")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try:
     print "Removing sequence..."
-    client.sequenceRemove("/pytest/seq")    
+    client.sequenceRemove("/test/seq")    
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
             
 
 try:
-    print "Removing directory /pytest..."
-    client.removeDir("/pytest")
+    print "Removing directory /test..."
+    client.removeDir("/test")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 

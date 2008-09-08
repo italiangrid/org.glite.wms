@@ -13,3 +13,6 @@ Contact asteriosk@cs.ucy.ac.cy in order to execute the command on the AMGA serve
 
 Notice that the two tests AMGA-test_ping.py and AMGA-test_statistic.py does not require this mapping.
 
+The python test scripts can be launched using the metascript in the org.glite.testsuites.ctb/AMGA directory named AMGA-certtest.sh.
+
+NOTE: The testClient.py script need to be fixed and added to the metascript.
