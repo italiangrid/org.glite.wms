@@ -132,7 +132,10 @@ for pair in ${pairs}; do
     dest=$(echo ${pair} | cut -d ":" -f2)
     export SOURCE=${source}
     export DEST=${dest}
+    echo
+    echo "#################################################"
     echo "Testing source=${SOURCE} and destination=${DEST}."
+    echo "#################################################"
 
     command="lcg-cr -v --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${SOURCE}"
     message="Running copy and register command"
@@ -165,7 +168,7 @@ for pair in ${pairs}; do
     message="Running list replica command"
     run_command "${command}" "${message}"
     
-    SURL=$(echo ${OUTPUT})
+    SURL=$(echo ${OUTPUT} | grep -i -E -o 'sfn.*|srm.*' )
     
     command="lcg-cp -n 1 -v ${SURL} file:///dev/null"
     message="Running copy with streams"
