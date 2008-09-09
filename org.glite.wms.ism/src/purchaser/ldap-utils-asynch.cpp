@@ -791,10 +791,11 @@ void fetch_bdii_info(
   size_t port,
   std::string const& dn,
   time_t timeout,
+  const std::string& ldap_ce_filter_ext,
   ism::purchaser::PurchaserInfoContainer& ce_info_container,
   ism::purchaser::PurchaserInfoContainer& se_info_container)
 {
-  fetch_bdii_ce_info(hostname, port, dn, timeout, ce_info_container);
+  fetch_bdii_ce_info(hostname, port, dn, timeout, ldap_ce_filter_ext, ce_info_container);
   fetch_bdii_se_info(hostname, port, dn, timeout, se_info_container);
 }
 

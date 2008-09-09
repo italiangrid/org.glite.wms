@@ -32,6 +32,7 @@ public:
     return m_error.c_str();
   }
 };
+
 namespace async {
 void
 fetch_bdii_ce_info(
@@ -58,10 +59,13 @@ fetch_bdii_info(
   size_t port,
   std::string const& basedn,
   time_t timeout,
+  const std::string& ldap_ce_filter_ext,
   PurchaserInfoContainer&,
   PurchaserInfoContainer&
 );
+
 }
+
 }}}}
 
 #endif

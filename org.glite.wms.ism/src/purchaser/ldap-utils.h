@@ -36,7 +36,6 @@ std::string get_site_name(ldif2classad::LDIFObject& ldif_CE);
 void
 fetch_bdii_ce_info(
   boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
-  std::string const& ldap_ce_filter_ext,
   gluece_info_container_type& gluece_info_container
 );
 
@@ -52,7 +51,7 @@ fetch_bdii_info(
   int port,
   std::string const& dn,
   int timeout,
-  std::string const& ldap_ce_filter_ext,
+  const std::string& ldap_ce_filter_ext,
   gluece_info_container_type& gluece_info_container,
   gluese_info_container_type& gluese_info_container
 );

@@ -161,10 +161,10 @@ void call_update_ism_entries::_(size_t the_ism_index)
   ism_type::iterator pos=get_ism(the_ism_index).begin();
   ism_type::iterator const e=get_ism(the_ism_index).end();
 
-  for ( ; pos!=e; ) {
+  for ( ; pos != e; ) {
     bool inc_done = false;
     // Check the state of the ClassAd information
-    if (boost::tuples::get<ad_ptr_entry>(pos->second) != NULL) {
+    if (boost::tuples::get<ad_ptr_entry>(pos->second) != 0) {
       // If the ClassAd information is not NULL, go on with the updating
       int diff = current_time - boost::tuples::get<update_time_entry>(pos->second);
       // Check if .. is greater than expiry time
@@ -256,19 +256,27 @@ void call_dump_ism_entries::_(
   std::string const& filename)
 {
   std::ofstream outf(filename.c_str(), open_mode);
-  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));
-  for (ism_type::iterator pos=get_ism(the_ism_index).begin();
-       pos!= get_ism(the_ism_index).end(); ++pos) {
+  for (
+    ism_type::iterator pos = get_ism(the_ism_index).begin();
+    pos!= get_ism(the_ism_index).end();
+    ++pos
+  ) {
+    boost::mutex::scoped_lock l(*boost::tuples::get<4>(pos->second));
     if (boost::tuples::get<2>(pos->second)) {
-      classad::ClassAd          ad_ism_dump;
-
+      classad::ClassAd ad_ism_dump;
       ad_ism_dump.InsertAttr("id", pos->first);
-      ad_ism_dump.InsertAttr("update_time",
-        boost::tuples::get<update_time_entry>(pos->second));
-      ad_ism_dump.InsertAttr("expiry_time",
-        boost::tuples::get<expiry_time_entry>(pos->second));
-      ad_ism_dump.Insert("info",
-        boost::tuples::get<ad_ptr_entry>(pos->second).get()->Copy());
+      ad_ism_dump.InsertAttr(
+        "update_time",
+        boost::tuples::get<update_time_entry>(pos->second)
+      );
+      ad_ism_dump.InsertAttr(
+        "expiry_time",
+        boost::tuples::get<expiry_time_entry>(pos->second)
+      );
+      ad_ism_dump.Insert(
+        "info",
+        boost::tuples::get<ad_ptr_entry>(pos->second).get()->Copy()
+      );
       outf << ad_ism_dump;
     }
   }
