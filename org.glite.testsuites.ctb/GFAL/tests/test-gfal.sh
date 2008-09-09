@@ -96,9 +96,9 @@ command="gcc -I${GLITE_LOCATION}/../lcg/include -L${GLITE_LOCATION}/../lcg/lib -
 message="Compiling GFAL test script"
 run_command "${command}" "${message}"
 
-command="gcc -I${GLITE_LOCATION}/../lcg/include -L${GLITE_LOCATION}/../lcg/lib -L${GLITE_LOCATION}/../globus/lib -o gfal-specific-test gfal-specific-test.c -lgfal -lglobus_gass_copy_gcc32dbg"
-message="Compiling GFAL specific tests script"
-run_command "${command}" "${message}"
+#command="gcc -I${GLITE_LOCATION}/../lcg/include -L${GLITE_LOCATION}/../lcg/lib -L${GLITE_LOCATION}/../globus/lib -o gfal-specific-test gfal-specific-test.c -lgfal -lglobus_gass_copy_gcc32dbg"
+#message="Compiling GFAL specific tests script"
+#run_command "${command}" "${message}"
 
 command="./gfal-specific-test srm://srm-dteam.cern.ch:8443/srm/managerv2?SFN=/castor/cern.ch/grid/dteam/S2-test-results/generated/2008-06-26/filedea0dee9-a2d7-4956-b2a9-cb72bf4e4492"
 message="Running GFAL specific test script"
