@@ -37,7 +37,6 @@ void switch_active_side()
   if (s_matching_threads[s_active_side] != 0) {
     assert(true);
   }
-  get_ism(ism::ce, (s_active_side + 1) % 2).clear();
 }
 
 int active_side()
@@ -136,6 +135,11 @@ void matched_thread(int side)
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
   --s_matching_threads[side];
+  if (!s_matching_threads[side] && side != s_active_side) {
+    Debug("No more threads matching against the dark side, clearing");
+    get_ism(ism::ce, (s_active_side + 1) % 2).clear();
+    get_ism(ism::se, (s_active_side + 1) % 2).clear();
+  }
 }
 
 std::ostream&
@@ -158,7 +162,6 @@ void call_update_ism_entries::operator()()
 
 void call_update_ism_entries::_(size_t the_ism_index)
 {
-  Debug("ISM dump start");
   time_t current_time = std::time(0);
 
   ism_type::iterator pos = get_ism(the_ism_index).begin();
@@ -195,7 +198,6 @@ void call_update_ism_entries::_(size_t the_ism_index)
       boost::tuples::get<update_time_entry>(pos->second) = -1;
     }
   }
-  Debug("ISM dump end");
 }
 
 bool update_ism_entry::operator()(ism_entry_type entry) 
@@ -232,6 +234,7 @@ std::string get_ism_dump(void)
 
 void call_dump_ism_entries::operator()()
 {
+  Debug("ISM dump start");
   std::string const dump(get_ism_dump());
   std::string const tmp_dump(dump + ".tmp");
 
@@ -244,6 +247,7 @@ void call_dump_ism_entries::operator()()
       + boost::lexical_cast<std::string>(res) + ')'
     );
   }
+  Debug("ISM dump end");
 }
 
 void call_dump_ism_entries::_(
