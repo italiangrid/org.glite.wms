@@ -111,8 +111,9 @@ void populate_ism(
     gluece_info_container_updated_entries.end()
   );
 
-  // no locking in needed here
+  // no locking is needed here
   int dark_side = ism::dark_side();
+  get_ism(the_ism_index, dark_side).clear(); // should be unnecessary
   for ( ; it != e; ++it ) {
     get_ism(the_ism_index, dark_side).insert( 
       make_ism_entry(
@@ -162,7 +163,7 @@ void ism_ii_purchaser::operator()()
          gluese_info_container
        );
      }
-     Debug("BDII fetching completed in " << std::time(0)-t0 << " seconds");
+     Debug("BDII fetching completed in " << std::time(0) - t0 << " seconds");
 
      apply_skip_predicate(
        gluece_info_container,
@@ -181,8 +182,10 @@ void ism_ii_purchaser::operator()()
 
       Warning(
         "waiting for ISM side "
-        + boost::lexical_cast<std::string>((ism::matching_threads((ism::active_side() + 1) % 2)))
-        + " to have no more matching threads pointing to it"
+        + boost::lexical_cast<std::string>(
+          (ism::matching_threads((ism::active_side() + 1) % 2))
+        )
+        + " to have no more matching threads against it"
       );
       ::sleep(1);
      }
@@ -193,7 +196,10 @@ void ism_ii_purchaser::operator()()
      ism::switch_active_side();
     } catch (LDAPException& e) {
 
-      Error("Failed to purchase info from " << m_hostname << ":" << m_port << " (" << e.what() << ")");
+      Error(
+        "Failed to purchase info from "
+        << m_hostname << ":" << m_port << " (" << e.what() << ")"
+      );
     } catch (...) {
 
       // TODO: Check which exception may arrive here... and remove catch all

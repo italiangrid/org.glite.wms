@@ -39,16 +39,6 @@ void switch_active_side()
   }
 }
 
-int active_side()
-{
-  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  if (s_active_side == -1) { // first time
-    return 1;
-  } else {
-    return s_active_side;
-  }
-}
-
 int dark_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
@@ -59,11 +49,25 @@ int dark_side()
   }
 }
 
+int active_side()
+{
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
+  if (s_active_side == -1) { // first time
+    return 1;
+  } else {
+    return s_active_side;
+  }
+}
+
 int match_on_active_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
   ++s_matching_threads[s_active_side];
-  return s_active_side;
+  if (s_active_side == -1) { // first time
+    return 1;
+  } else {
+    return s_active_side;
+  }
 }
 
 ism_type::value_type make_ism_entry(
@@ -136,9 +140,11 @@ void matched_thread(int side)
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
   --s_matching_threads[side];
   if (!s_matching_threads[side] && side != s_active_side) {
-    Debug("No more threads matching against the dark side, clearing");
-    get_ism(ism::ce, (s_active_side + 1) % 2).clear();
-    get_ism(ism::se, (s_active_side + 1) % 2).clear();
+    Debug(
+      "No more threads matching against the dark side of the ISM, clearing"
+    );
+    get_ism(ism::ce, side).clear();
+    get_ism(ism::se, side).clear();
   }
 }
 
@@ -163,12 +169,13 @@ void call_update_ism_entries::operator()()
 void call_update_ism_entries::_(size_t the_ism_index)
 {
   time_t current_time = std::time(0);
-
-  ism_type::iterator pos = get_ism(the_ism_index).begin();
   ism_type::iterator const e = get_ism(the_ism_index).end();
 
-  for ( ; pos != e; )
-  {
+  for (
+    ism_type::iterator pos = get_ism(the_ism_index).begin();
+    pos != e;
+    ++pos
+  ) {
     boost::mutex::scoped_lock l(*boost::tuples::get<4>(pos->second));
 
     // Check the state of the ClassAd information
@@ -197,6 +204,8 @@ void call_update_ism_entries::_(size_t the_ism_index)
       // If the ClassAd information is NULL, remove the entry by ism
       boost::tuples::get<update_time_entry>(pos->second) = -1;
     }
+
+    l.unlock();
   }
 }
 
@@ -279,6 +288,8 @@ void call_dump_ism_entries::_(
       );
       outf << ad_ism_dump;
     }
+
+    l.unlock();
   }
 }
 
