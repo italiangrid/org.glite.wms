@@ -45,6 +45,9 @@ limitations under the License.
 #include "glite/wms/common/logger/logger_utils.h"
 #include "utilities/logging.h"
 
+// Proxyrenewal
+#include "glite/security/proxyrenewal/renewal.h"
+
 
 extern "C" {
 	// LCMAPS C libraries headers
@@ -1109,7 +1112,21 @@ WMPAuthorizer::checkProxyExistence(const string &userproxypath, const string &jo
 			wmputilities::fileCopy(userproxypathbak, userproxypath);
 		}
 	} else {
-		wmputilities::fileCopy(userproxypath, userproxypathbak);
+               char* c_x509_proxy = 0;
+                 
+               // Checking if the proxy is still registered to proxyrenewal
+               int const err_code( glite_renewal_GetProxy(jobid.c_str(), &c_x509_proxy) );
+                 
+               if (err_code == 0) {
+                    free(c_x509_proxy);
+                  // If the proxy is still registered i can override the back up
+                  wmputilities::fileCopy(userproxypath, userproxypathbak);
+               } else {
+                  // If the proxy is not registered i ovverride the user.proxy with its back up
+                  unlink(userproxypath.c_str());
+                  wmputilities::fileCopy(userproxypathbak, userproxypath);
+               }
+
 	}
 	
 	GLITE_STACK_CATCH();
