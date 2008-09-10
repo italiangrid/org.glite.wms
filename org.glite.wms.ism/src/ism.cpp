@@ -33,10 +33,11 @@ void switch_active_side()
   } else {
     s_active_side = (s_active_side + 1) % 2;
   }
-  Info("switching active side to " + boost::lexical_cast<std::string>(s_active_side));
+  Info("switched active side to ISM " + boost::lexical_cast<std::string>(s_active_side));
   if (s_matching_threads[s_active_side] != 0) {
     assert(true);
   }
+  get_ism(ism::ce, (s_active_side + 1) % 2).clear();
 }
 
 int active_side()
@@ -117,6 +118,7 @@ ism_type& get_ism(size_t the_ism_index, int face)
 
 ism_type& get_ism(size_t the_ism_index)
 {
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
   if (s_active_side == 0) {
     return *the_ism1[the_ism_index];
   } else {
@@ -126,25 +128,24 @@ ism_type& get_ism(size_t the_ism_index)
 
 int matching_threads(int side)
 {
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
   return s_matching_threads[side];
 }
 
 void matched_thread(int side)
 {
+  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
   --s_matching_threads[side];
-  if (side != s_active_side && s_matching_threads[side] == 0) {
-    get_ism(ism::ce, side).clear();
-  }
 }
 
 std::ostream&
 operator<<(std::ostream& os, ism_type::value_type const& value)
 {
   return os << '[' << value.first << "]\n"
-            << boost::tuples::get<update_time_entry>(value.second) << '\n'
-	    << boost::tuples::get<expiry_time_entry>(value.second) << '\n'
-	    << *boost::tuples::get<ad_ptr_entry>(value.second) << '\n'
-	    << "[END]";
+    << boost::tuples::get<update_time_entry>(value.second) << '\n'
+    << boost::tuples::get<expiry_time_entry>(value.second) << '\n'
+    << *boost::tuples::get<ad_ptr_entry>(value.second) << '\n'
+    << "[END]";
 }
 
 void call_update_ism_entries::operator()()
@@ -155,49 +156,40 @@ void call_update_ism_entries::operator()()
 
 void call_update_ism_entries::_(size_t the_ism_index)
 {
-  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));
   time_t current_time = std::time(0);
 
-  ism_type::iterator pos=get_ism(the_ism_index).begin();
-  ism_type::iterator const e=get_ism(the_ism_index).end();
+  ism_type::iterator pos = get_ism(the_ism_index).begin();
+  ism_type::iterator const e = get_ism(the_ism_index).end();
 
-  for ( ; pos != e; ) {
-    bool inc_done = false;
+  for ( ; pos != e; )
+  {
+    boost::mutex::scoped_lock l(*boost::tuples::get<4>(pos->second));
+
     // Check the state of the ClassAd information
-    if (boost::tuples::get<ad_ptr_entry>(pos->second) != 0) {
+    if (boost::tuples::get<ad_ptr_entry>(pos->second)) {
       // If the ClassAd information is not NULL, go on with the updating
       int diff = current_time - boost::tuples::get<update_time_entry>(pos->second);
       // Check if .. is greater than expiry time
       if (diff > boost::tuples::get<expiry_time_entry>(pos->second)) {
         // Check if function object wrapper is not empty
         if (!boost::tuples::get<update_function_entry>(pos->second).empty()) {
-          bool is_updated = update_ism_entry()(pos->second);
-          if (!is_updated) {
+          if (!update_ism_entry()(pos->second)) {
             // if the update function returns false we remove the entry
             // only if it has been previously marked as invalid i.e. the entry's 
             // update time is less than 0
-  	        if (boost::tuples::get<update_time_entry>(pos->second) < 0) {
-              get_ism(the_ism_index).erase(pos++);
-              inc_done = true;
-            } else {
-              boost::tuples::get<update_time_entry>(pos->second) = -1;
-            }
+            boost::tuples::get<update_time_entry>(pos->second) = -1;
           } else {
+            // theentry has been updated by the updated function
             boost::tuples::get<update_time_entry>(pos->second) = current_time;
           }
         } else {
-          // If the function object wrapper is empty, remove the entry
-          get_ism(the_ism_index).erase(pos++);
-          inc_done = true;
+          // the function object wrapper is empty
+          boost::tuples::get<update_time_entry>(pos->second) = -1;
         }
       }
     } else {
       // If the ClassAd information is NULL, remove the entry by ism
-      get_ism(the_ism_index).erase(pos++);
-      inc_done = true;
-    }
-    if (!inc_done) {
-      ++pos;
+      boost::tuples::get<update_time_entry>(pos->second) = -1;
     }
   }
 }
