@@ -111,26 +111,18 @@ void populate_ism(
     gluece_info_container_updated_entries.end()
   );
 
+  // no locking in needed here
   int dark_side = ism::dark_side();
   for ( ; it != e; ++it ) {
-     ism_type::iterator ism_it
-      = get_ism(the_ism_index, dark_side).find((*it)->first);
-       if (ism_it != get_ism(the_ism_index, dark_side).end()) {
-         ism_type::mapped_type& data = ism_it->second;
-      boost::tuples::get<0>(data) = std::time(0);
-      boost::tuples::get<2>(data) = (*it)->second;
-    } else {
-      get_ism(the_ism_index, dark_side).erase((*it)->first);
-      get_ism(the_ism_index, dark_side).insert( 
-        make_ism_entry(
-          (*it)->first,
-          std::time(0),
-          (*it)->second,
-          ism_ii_purchaser_entry_update(),
-          expiry_time
-        )
-      );
-    }
+    get_ism(the_ism_index, dark_side).insert( 
+      make_ism_entry(
+        (*it)->first,
+        std::time(0),
+        (*it)->second,
+        ism_ii_purchaser_entry_update(),
+        expiry_time
+      )
+    );
   } 
 }
 
@@ -139,7 +131,6 @@ void populate_ism(
 void ism_ii_purchaser::operator()()
 {
   do {
-
     try {
 
      gluece_info_container_type gluece_info_container;
@@ -149,7 +140,7 @@ void ism_ii_purchaser::operator()()
      vector<gluese_info_iterator> gluese_info_container_updated_entries;
 
      time_t const t0 = std::time(0);
-     if (std::getenv("GLITE_WMS_II_LDAP_SEARCH_ASYNC")) {
+     if (m_ldap_search_async) {
        async::fetch_bdii_info(
          m_hostname,
          m_port,
@@ -185,8 +176,9 @@ void ism_ii_purchaser::operator()()
        m_skip_predicate
      );
 
-     // do not populate until the existing ism has got threads still matching against it
+     // do not populate until the existing ism has threads still matching against it
      while (ism::matching_threads(ism::dark_side()) > 0) {
+
       Warning(
         "waiting for ISM side "
         + boost::lexical_cast<std::string>((ism::matching_threads((ism::active_side() + 1) % 2)))
@@ -195,10 +187,8 @@ void ism_ii_purchaser::operator()()
       ::sleep(1);
      }
 
-      boost::timer t;
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
-      Info("Spent " << boost::lexical_cast<std::string>(t.elapsed()) << " populating the ISM");
 
      ism::switch_active_side();
     } catch (LDAPException& e) {

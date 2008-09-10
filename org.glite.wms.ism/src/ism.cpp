@@ -150,8 +150,10 @@ operator<<(std::ostream& os, ism_type::value_type const& value)
 
 void call_update_ism_entries::operator()()
 {
+  Debug("ISM updater start");
   _(ce);
   _(se);
+  Debug("ISM updater end");
 }
 
 void call_update_ism_entries::_(size_t the_ism_index)
@@ -228,6 +230,7 @@ std::string get_ism_dump(void)
 
 void call_dump_ism_entries::operator()()
 {
+  Debug("ISM dump start");
   std::string const dump(get_ism_dump());
   std::string const tmp_dump(dump + ".tmp");
 
@@ -240,6 +243,7 @@ void call_dump_ism_entries::operator()()
       + boost::lexical_cast<std::string>(res) + ')'
     );
   }
+  Debug("ISM dump end");
 }
 
 void call_dump_ism_entries::_(

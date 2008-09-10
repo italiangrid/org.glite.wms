@@ -56,6 +56,7 @@ typedef boost::tuple<
 // 1. resource identifier
 // 2. ism entry type
 typedef std::map<id_type, ism_entry_type> ism_type;
+//typedef std::multimap<double, ism_entry_type> ism_type;
 
 // type specification for the mutex in ism
 typedef boost::recursive_mutex ism_mutex_type;
