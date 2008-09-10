@@ -158,6 +158,7 @@ void call_update_ism_entries::operator()()
 
 void call_update_ism_entries::_(size_t the_ism_index)
 {
+  Debug("ISM dump start");
   time_t current_time = std::time(0);
 
   ism_type::iterator pos = get_ism(the_ism_index).begin();
@@ -194,6 +195,7 @@ void call_update_ism_entries::_(size_t the_ism_index)
       boost::tuples::get<update_time_entry>(pos->second) = -1;
     }
   }
+  Debug("ISM dump end");
 }
 
 bool update_ism_entry::operator()(ism_entry_type entry) 
@@ -230,7 +232,6 @@ std::string get_ism_dump(void)
 
 void call_dump_ism_entries::operator()()
 {
-  Debug("ISM dump start");
   std::string const dump(get_ism_dump());
   std::string const tmp_dump(dump + ".tmp");
 
@@ -243,7 +244,6 @@ void call_dump_ism_entries::operator()()
       + boost::lexical_cast<std::string>(res) + ')'
     );
   }
-  Debug("ISM dump end");
 }
 
 void call_dump_ism_entries::_(
