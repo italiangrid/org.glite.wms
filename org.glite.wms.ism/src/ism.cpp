@@ -34,8 +34,8 @@ void switch_active_side()
     s_active_side = (s_active_side + 1) % 2;
   }
 
-  Debug("switched active side to ISM " + boost::lexical_cast<std::string>(s_active_side));
-  if (s_matching_threads[s_active_side] != 0) {
+  Debug("switched active side to ISM " << s_active_side);
+  if (s_matching_threads[s_active_side]) {
     assert(true);
   }
 

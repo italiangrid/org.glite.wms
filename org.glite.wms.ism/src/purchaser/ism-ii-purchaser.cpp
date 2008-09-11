@@ -187,9 +187,13 @@ void ism_ii_purchaser::operator()()
         )
         + " to have no more matching threads against it"
       );
+
       ::sleep(1);
      }
 
+     // incoming requests asking for MM will be assigned the current active
+     // side so we can operate without locking here, now that older threads
+     // against the current dark side have all flushed
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);
 
