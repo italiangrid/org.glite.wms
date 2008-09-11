@@ -33,9 +33,19 @@ void switch_active_side()
   } else {
     s_active_side = (s_active_side + 1) % 2;
   }
+
   Info("switched active side to ISM " + boost::lexical_cast<std::string>(s_active_side));
   if (s_matching_threads[s_active_side] != 0) {
     assert(true);
+  }
+
+  int dark_side = (s_active_side + 1) % 2;
+  if (!s_matching_threads[dark_side]) {
+    Debug(
+      "No more threads matching against the dark side of the ISM, clearing"
+    );
+    get_ism(ism::ce, dark_side).clear();
+    get_ism(ism::se, dark_side).clear();
   }
 }
 
@@ -182,7 +192,7 @@ void call_update_ism_entries::_(size_t the_ism_index)
     if (boost::tuples::get<ad_ptr_entry>(pos->second)) {
       // If the ClassAd information is not NULL, go on with the updating
       int diff = current_time - boost::tuples::get<update_time_entry>(pos->second);
-      // Check if .. is greater than expiry time
+      // Check if it is expired
       if (diff > boost::tuples::get<expiry_time_entry>(pos->second)) {
         // Check if function object wrapper is not empty
         if (!boost::tuples::get<update_function_entry>(pos->second).empty()) {
@@ -190,14 +200,14 @@ void call_update_ism_entries::_(size_t the_ism_index)
             // if the update function returns false we remove the entry
             // only if it has been previously marked as invalid i.e. the entry's 
             // update time is less than 0
-            boost::tuples::get<update_time_entry>(pos->second) = -1;
+            boost::tuples::get<expiry_time_entry>(pos->second) = -1;
           } else {
-            // theentry has been updated by the updated function
+            // the entry has been updated by the updated function
             boost::tuples::get<update_time_entry>(pos->second) = current_time;
           }
         } else {
           // the function object wrapper is empty
-          boost::tuples::get<update_time_entry>(pos->second) = -1;
+          boost::tuples::get<expiry_time_entry>(pos->second) = -1;
         }
       }
     } else {
