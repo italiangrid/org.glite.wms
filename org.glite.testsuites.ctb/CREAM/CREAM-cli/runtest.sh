@@ -31,6 +31,8 @@ done
 
 if [ $FAILED -ne 0 ] ; then
 	my_echo " !!! $FAILED test(s) failed !!!"
+else
+	my_echo " <<< All tests PASSED >>>"
 fi
 
 cleanup
