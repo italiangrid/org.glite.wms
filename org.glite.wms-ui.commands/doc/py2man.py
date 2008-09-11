@@ -27,7 +27,7 @@ options2short = { \
 "cancel-input": ["input","i","filepath"] ,\
 "info-input": ["input","i","filepath"] ,\
 "cancel-output": ["output","o","filepath"] ,\
-"collection": ["collection","c","dirpath"] ,\
+"collection": ["collection","","dirpath"] ,\
 "config":["config","c","configfile"] ,\
 "dag": ["dag","","dirpath"] ,\
 "debug": ["debug","",""] ,\
