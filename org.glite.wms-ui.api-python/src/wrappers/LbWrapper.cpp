@@ -97,7 +97,7 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 	// Iterate over the attributes
 	std::vector<pair<JobStatus::Attr, JobStatus::AttrType> > attrList = status_retrieved.getAttrs();
 	for (unsigned i=0; i < attrList.size(); i++ ) {
-		switch (attrList[i].second) {
+		if (attrList[i].first < JobStatus::ATTR_MAX) switch (attrList[i].second) {
 			case JobStatus::INT_T :{
 				sprintf (tmp , "%d" , status_retrieved.getValInt(attrList[i].first) );
 				result[VECT_OFFSET + attrList[i].first ] =  string ( tmp) ;
