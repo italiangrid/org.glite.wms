@@ -121,9 +121,12 @@ export LOCAL_FILE=/etc/redhat-release
 export TEMP_FILE=/tmp/${name}
 export RETVAL=0
 
+failed=no
+
 #=============================================================================
 # Do test for each pair
 #=============================================================================
+
 echo "Testing lcg-utils for VO ${VO} ... "
 echo $pairs
 
@@ -228,9 +231,12 @@ for pair in ${pairs}; do
     
     REQID=$(echo ${OUTPUT} | awk '{print $2;}')
     
-    command="lcg-sd ${SURL} ${REQID} 0 0"
-    message="Running sd command"
-    run_command "${command}" "${message}"
+#The following call is meaningful only in case of SRM service
+    if [ "$SOURCE" != "$CLASSIC" ];then
+      command="lcg-sd ${SURL} ${REQID} 0 "
+      message="Running sd command"
+      run_command "${command}" "${message}"
+    fi 
     
     command="lcg-del -v -a --vo ${VO} ${LFN}"
     message="Running delete command"
@@ -247,9 +253,13 @@ done
 
 
 if [ ${RETVAL} -gt 0 ]; then
-    echo "Tests Failed "
+    echo "#################"
+    echo "# -TEST FAILED- #"
+    echo "#################"
 else
-    echo "Tests Passed "
+    echo "#################"
+    echo "# -TEST PASSED- #"
+    echo "#################"
 fi
 
 exit ${RETVAL}
