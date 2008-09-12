@@ -111,11 +111,11 @@ command="./gfal-test file:///tmp/${NAME}"
 message="Running GFAL test script"
 run_command "${command}" "${message}"
 
-command="gfal_testcreatdir lfn:/grid/dteam/tmp/${NAME}"
+command="gfal_testcreatdir lfn:/grid/${VO}/tmp/${NAME}"
 message="Running GFAL create dir test"
 run_command "${command}" "${message}"
 
-command="lcg-cr --vo dteam -d ${DEST} -l ${LFN} file://${LOCAL_FILE}"
+command="lcg-cr --vo ${VO} -d ${DEST} -l ${LFN} file://${LOCAL_FILE}"
 message="Copying file to Storage Element using lcg-cr"
 run_command "${command}" "${message}"
 
@@ -162,13 +162,13 @@ command="gfal_teststat ${LFN}"
 message="Running GFAL stat test"
 run_command "${command}" "${message}"
 
-#Unlinking a replica FAILS
+#Unlinking a replica FAILS when an LFN is given
 #command="gfal_testunlink ${LFN}"
 #message="Running GFAL unlink test"
 #run_command "${command}" "${message}"
 
-#Unlink a directory, fails because gfal_testunlink returns 1 even when successful
-command="gfal_testunlink lfn:/grid/dteam/tmp/${NAME}"
+#Unlink a replica providing a SURL
+command="gfal_testunlink ${SURL}"
 message="Running GFAL unlink test"
 run_command "${command}" "${message}"
 
