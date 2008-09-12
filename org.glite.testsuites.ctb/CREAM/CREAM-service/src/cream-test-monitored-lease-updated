@@ -27,8 +27,9 @@ the max number of job which can be enqueued in the service (Default 100)'''))
     manPage.parameters.append(('-D', '--delegationType', 'DELEGATIONTYPE','''\
 specify the delegation management type: single, one delegated proxy for all submissions,\
 or multiple, one delegated proxy per job (DEFAULT is single)'''))
-#    manPage.parameters.append(('-L', '--leaseID', 'LEASEID', '''\
-#use the pre-registered lease id, if not specified a new lease id is created for each job'''))
+    manPage.parameters.append(('-L', '--leaseType', 'LEASEType', '''\
+'specify the lease management type: single, one lease for all submissions,\
+or multiple, one lease per job (DEFAULT is single)'''))
     manPage.parameters.append(('-W', '--leaseTime', 'SLEEP_TIME', '''\
 define the lease time for an auto-generated lease or for the pre-registered lease \
 (DEFAULT 20m)'''))
@@ -38,9 +39,6 @@ define the URI of the resource under testing, the format is \
 This option is mandatory and no default value is defined'''))
     manPage.parameters.append(('-C', '--maxConcurrentSubmit', 'NUM', '''\
 define the number of concurrent submit, (DEFAULT is 1)'''))
-#    manPage.parameters.append(('-j', '--jdl', 'JDLFILE', '''\
-#define the path for the jdl file, if omitted a predefined jdl will \
-#be used with simple sleep as executable'''))
     
     manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
     manPage.env.append(('X509_USER_PROXY', 'location of the user proxy'))
@@ -87,11 +85,10 @@ def main():
     parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
     parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
     parameters.register('delegationType', 's', 'single', testsuite_utils.checkRenewType,'D')
-#    parameters.register('leaseID', 's', '', optChar='L')
+    parameters.register('leaseType', 's', 'single', testsuite_utils.checkRenewType, 'L')
     parameters.register('leaseTime', 'd', 1200, optChar='W')
     parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
-    parameters.register('jdl', 's')
 
     if os.environ.has_key("MONITORED_LEASE_UP_CONFIG_FILE"):
         confFileName = os.environ["MONITORED_LEASE_UP_CONFIG_FILE"]
@@ -113,10 +110,9 @@ def main():
     if parameters.help:
         usage()
 
-    if parameters.jdl=='':
-        parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*2, logger)
-        if parameters.jdl==None:
-            sys.exit(1)
+    parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*5, logger)
+    if parameters.jdl==None:
+        sys.exit(1)
 
     vomsManager = job_utils.VOMSProxyManager(parameters, logger)
     pollerThread = JobPoller(parameters, vomsManager)

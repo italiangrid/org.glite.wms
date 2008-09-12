@@ -83,6 +83,9 @@ def unSubscribeToCREAMJobs(cemonURL, subscrID, parameters, \
              cemonURL, subscrID)
     logger.debug("UnSubscription command: " + unSubscrCmd)
     unSubscrProc = popen2.Popen4(unSubscrCmd)
+    for line in unSubscrProc.fromchild:
+        logger.debug(line)
+    unSubscrProc.fromchild.close()
     
     
 class BooleanTimestamp:
@@ -169,11 +172,25 @@ class LeaseRenewer(AbstractRenewer):
     def __init__(self, parameters, container, logger=jobUtilsLogger):
         AbstractRenewer.__init__(self, container, logger)
 
-        self.cmdPrefix = '%s -e %s -T %d %s ' % (cmdTable['lease'], \
-                        parameters.resourceURI[:string.find(parameters.resourceURI,'/')], \
-                        parameters.leaseTime, '%s')
+        endPoint = parameters.resourceURI[:string.find(parameters.resourceURI,'/')] 
+        self.cmdPrefix = '%s -e %s -T %d %s ' % (cmdTable['lease'], endPoint, \
+                                                                        parameters.leaseTime, '%s')
         self.sleepTime = parameters.leaseTime
         self.fString = 'LEASEID%d.%f'
+        
+        if parameters.leaseType=='single':
+            cannotLease = False
+            leaseCmd = '%s -e %s  -T %d LEASEID%s' \
+                    % (cmdTable['lease'], endPoint, parameters.leaseTime, applicationID) 
+            self.logger.debug("Lease command: " + leaseCmd)
+            leaseProc = popen2.Popen4(leaseCmd)
+            for line in leaseProc.fromchild:
+                if 'ERROR' in line or 'FATAL' in line:
+                    cannotLease = True
+            leaseProc.fromchild.close()
+            
+            if cannotLease:
+                raise Exception, "Cannot register LEASEID" + applicationID
         
 class ProxyRenewer(AbstractRenewer):
 

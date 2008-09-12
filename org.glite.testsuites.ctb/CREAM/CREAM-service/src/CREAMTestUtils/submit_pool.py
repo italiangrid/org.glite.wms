@@ -126,24 +126,23 @@ class JobSubmitterPool:
             delegOpt = '-D DELEGID' + applicationID
             dcmd = None
             
-        if hasattr(parameters, 'leaseID'):
-            if parameters.leaseID=='':
-                
-                if hasattr(parameters, 'leaseTime'):
-                    lTime = parameters.leaseTime
-                else:
-                    lTime = 60
-                    
-                lcmd = '%s -e %s -T %d %s' % (cmdTable['lease'], \
-                                              parameters.resourceURI[:string.find(parameters.resourceURI,'/')],
-                                              lTime, 'LEASEID%d.%f')
-                leaseOpt = '-L LEASEID%d.%f'
-            else:
-                leaseOpt = '-L ' + parameters.leaseID
-                lcmd = None
-        else:
+        if not hasattr(parameters, 'leaseType') or parameters.leaseType=='none':
             leaseOpt = ''
             lcmd = None
+        elif parameters.leaseType=='multiple':
+                
+            if hasattr(parameters, 'leaseTime'):
+                lTime = parameters.leaseTime
+            else:
+                lTime = 60
+                
+            lcmd = '%s -e %s -T %d %s' % (cmdTable['lease'], \
+                                      parameters.resourceURI[:string.find(parameters.resourceURI,'/')], \
+                                      lTime, 'LEASEID%d.%f')
+            leaseOpt = '-L LEASEID%d.%f'
+        else:
+            lcmd = None
+            leaseOpt = '-L LEASEID' + applicationID
             
         scmd = '%s %s %s -r %s %s' % (cmdTable['submit'], delegOpt, leaseOpt, \
                                    parameters.resourceURI, parameters.jdl)
