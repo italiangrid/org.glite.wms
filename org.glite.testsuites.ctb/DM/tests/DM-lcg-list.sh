@@ -32,6 +32,7 @@ extract_lfn LFN "$OUTPUT"
 
 run_command lcg-lr $VERBOSE $VO_OPTIONS $GUID
 SURL=$OUTPUT
+echo "DEBUG surl=$SURL"
 
 run_command lcg-lr $VERBOSE $VO_OPTIONS $LFN
 

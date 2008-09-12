@@ -517,7 +517,9 @@ function myexit() {
   if [ $? -ne 0 ] || [ "$1" != "0" ]; then
 
     #echo " *** Make sure you have a valid [voms] proxy and correct SE is given *** "
-    echo " *** test NOT passed *** "
+#    echo " *** test NOT passed *** "
+# For running within the metascript
+    echo " *** -TEST FAILED- *** "
     if [ "$1" != "0" ]; then
       echo " *** failed command: $2 *** "
     fi

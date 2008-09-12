@@ -1,0 +1,16 @@
+#OPTIONS
+FIRSTSE="lxb7605.cern.ch"
+SECONDSE="lxbra1910.cern.ch"
+#VO="dteam"
+VO="org.glite.voms-test"
+CLASSICHOST="lxbra1910.cern.ch"
+DPMHOST="lxb7605.cern.ch"
+#DCACHEHOST="swords.desy.de"
+CASTORHOST="srm-dteam.cern.ch"
+
+#TEST TO RUN (yes/no)
+LCG_UTILS=yes
+GFAL=yes
+DM_CROSS_SE=yes
+
+

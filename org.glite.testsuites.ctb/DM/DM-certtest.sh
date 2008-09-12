@@ -216,7 +216,7 @@ if [ $failed = "yes" ]; then
   echo "The following tests failed:"
   for item in ${tests_failed[*]}
   do
-    if [ "$item" = "DM-lcg*.sh" ]; then
+    if echo $item | grep DM-lcg.*.sh; then
       echo "$item: results in tests/${item}_result.txt"
     elif [ "$item" = "test-gfal.sh" ]; then
       echo "$item: results in ../GFAL/tests/${item}_result.txt"
