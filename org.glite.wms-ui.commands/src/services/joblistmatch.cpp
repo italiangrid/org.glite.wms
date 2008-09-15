@@ -238,8 +238,9 @@ void JobListMatch::listmatchPerformStep(listmatchRecoveryStep step){
 	}
 }
 void JobListMatch::listmatchRecoverStep(listmatchRecoveryStep step){
-	m_endPoint = "";
-	retrieveEndPointURL( );
+	doneUrls.push_back(m_endPoint);
+	this->m_endPoint = "";
+	jobPerformStep(STEP_GET_ENDPOINT);
 	// PERFORM STEP_LISTMATCH
 	listmatchPerformStep(STEP_LISTMATCH);
 	if (step==STEP_LISTMATCH){return;}
