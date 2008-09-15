@@ -1,0 +1,150 @@
+#!/usr/bin/python
+
+import os, os.path
+import sys
+import re, string
+import threading
+import log4py
+
+from CREAMTestUtils import testsuite_utils, job_utils, CEMonitorConsumer, job_monitor
+
+def usage():
+    manPage = testsuite_utils.ManPage()
+    
+    manPage.shortDescr = 'submit a sequence of jobs and enable the lease renew process'
+    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI'
+    manPage.description = '''Submit a sequence of simple jobs with a specified rate. \
+For each job either a lease is registered or a pre-registered lease is used; \
+the expiring lease is renewed so the job should not be cancelled by the service. \
+The status of the job is notified by the CEMonitor'''
+
+    manPage.parameters.append(('-h', '--help' , '', 'print this message and exit'))
+    manPage.parameters.append(('-r', '--rate', 'SLEEP_TIME', '''\
+the sleep time in seconds between two consecutive notifications(Default 30s, Min 5s)'''))
+    manPage.parameters.append(('-n', '--numberOfJob', 'NUM', 'the number of jobs to submit (Default 1)'))
+    manPage.parameters.append(('-m', '--maxRunningJobs', 'NUM', '''\
+the max number of job which can be enqueued in the service (Default 100)'''))
+    manPage.parameters.append(('-D', '--delegationType', 'DELEGATIONTYPE','''\
+specify the delegation management type: single, one delegated proxy for all submissions,\
+or multiple, one delegated proxy per job (DEFAULT is single)'''))
+    manPage.parameters.append(('-R', '--resourceURI', 'RESOURCEURI','''\
+define the URI of the resource under testing, the format is \
+<host>[:<port>]/cream-<lrms>-<queue>. \
+This option is mandatory and no default value is defined'''))
+    manPage.parameters.append(('-C', '--maxConcurrentSubmit', 'NUM', '''\
+define the number of concurrent submit, (DEFAULT is 1)'''))
+    manPage.parameters.append(('-L', '--leaseType', 'LEASEType', '''\
+'specify the lease management type: single, one lease for all submissions,\
+or multiple, one lease per job (DEFAULT is single)'''))
+    manPage.parameters.append(('-W', '--leaseTime', 'SLEEP_TIME', '''\
+define the lease time for a lease, if it is not used a pre-registered lease id \
+(DEFAULT 20m)'''))
+    manPage.parameters.append(('-P', '--consumerPort', 'PORT', '''\
+define the port for the consumer service (DEFAULT is 9000)'''))
+    
+    manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
+    manPage.env.append(('X509_USER_PROXY', 'location of the user proxy'))
+    manPage.env.append(('NOTIFIED_LEASE_UP_CONFIG_FILE','''\
+location of the configuration file for this test'''))
+    
+    manPage.display()
+    
+    sys.exit(0)
+
+
+def failure(reason):
+    print reason
+    sys.exit(1)
+
+class JobProcessed(job_utils.JobProcessed):
+    
+    badStatusList = ['ABORTED', 'CANCELLED']
+    
+    def __init__(self):
+        job_utils.JobProcessed.__init__(self)
+        
+    def canPurge(self, jobStatus, failureReason=''):
+        return not jobStatus in JobProcessed.badStatusList
+
+class JobMonitor(job_monitor.JobMonitor):
+    
+    def __init__(self, parameters, pManager=None):
+        job_monitor.JobMonitor.__init__(self, parameters, pManager)
+        self.finishedJobs = JobProcessed()
+        
+    def shutdown(self):
+        job_monitor.JobMonitor.shutdown(self)
+        if self.tableOfResults['ABORTED']>0 or self.tableOfResults['CANCELLED']>0:
+            return 1
+        return 0
+
+def main():
+    logger = log4py.Logger().get_instance(classid="main")
+
+    parameters = testsuite_utils.Parameters()
+    parameters.register('rate', 'd', 30, testsuite_utils.checkRate)
+    parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
+    parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
+    parameters.register('delegationType', 's', 'single', testsuite_utils.checkRenewType,'D')
+    parameters.register('leaseType', 's', 'single', testsuite_utils.checkRenewType, 'L')
+    parameters.register('leaseTime', 'd', 1200, optChar='W')
+    parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R')
+    parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
+    parameters.register('consumerPort', 'd', 9000, testsuite_utils.checkPort, 'p')
+    
+    if os.environ.has_key("NOTIFIED_LEASE_UP_CONFIG_FILE"):
+        confFileName = os.environ["NOTIFIED_LEASE_UP_CONFIG_FILE"]
+    else:
+        confFileName = None
+
+    try:
+        
+        parameters.parseConfigFileAndOptList(sys.argv[1:], confFileName)
+
+    except testsuite_utils.BadValueException, ex:
+        print "ERROR: %s\n\nUsage:" % ex
+        usage()
+    except IOError, ioError:
+        failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
+    except Exception, exception:
+        failure("Error parsing parameters " + str(exception))
+        
+    if parameters.help:
+        usage()
+
+    parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*5, logger)
+    if parameters.jdl==None:
+        sys.exit(1)
+            
+    try:
+        vomsManager = job_utils.VOMSProxyManager(parameters, logger)
+        monitorThread = JobMonitor(parameters, vomsManager)
+        renewalManager = job_utils.ProxyRenewer(parameters, monitorThread, vomsManager, logger)
+        leaseManager = job_utils.LeaseRenewer(parameters, monitorThread, logger)
+        
+        address = ('', parameters.consumerPort)
+        consumer = CEMonitorConsumer.ConsumerServer(address, parameters, monitorThread)
+        
+        consumerThread = threading.Thread(target=consumer)
+        consumerThread.start()
+        
+        monitorThread.start()
+        leaseRenewer.start()
+        #renewalManager.start()
+        monitorThread.join()
+        renewalManager.halt()
+        leaseRenewer.halt()
+        
+        exitCode = monitorThread.shutdown()
+        
+        consumer.halt()
+        
+    except Exception, e:
+        failure(e)
+        exitCode = 1
+
+    sys.exit(exitCode)
+        
+
+if __name__ == "__main__":
+    main()
