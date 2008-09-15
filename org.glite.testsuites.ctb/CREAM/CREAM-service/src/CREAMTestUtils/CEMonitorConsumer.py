@@ -3,8 +3,9 @@ from ZSI import ParsedSoap, SoapWriter, resolvers, TC, \
 import os, sys
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-
-import re
+import log4py
+import testsuite_utils, job_utils
+import re, string
 
 NSTable = {'cemon_types': 'http://glite.org/ce/monitorapij/types', \
                     'cemon_faults': 'http://glite.org/ce/monitorapij/faults', \
@@ -12,6 +13,8 @@ NSTable = {'cemon_types': 'http://glite.org/ce/monitorapij/types', \
 
 jobIDRE = re.compile('CREAM_JOB_ID\s*=\s*\"(CREAM\d+)\";')
 jobStatusRE = re.compile('JOB_STATUS\s*=\s*\"([A-Z-]+)\";')
+
+logger = log4py.Logger().get_instance(classid="CEMonitorConsumer")
 
 class Notify:
     def __init__(self):
@@ -83,18 +86,27 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
         
 class ConsumerServer(ThreadingMixIn, HTTPServer):
     #See description in SocketServer.py about ThreadingMixIn
-    def __init__(self, address=('', 80), jobTable=None, servicePrefix=''):
+    def __init__(self, address, parameters, jobTable=None):
         HTTPServer.__init__(self, address, SOAPRequestHandler)
         self.jobTable = jobTable
+        self.parameters = parameters
         self.running = False
-        self.servicePrefix = servicePrefix
+        self.servicePrefix = 'https://' + parameters.resourceURI[:string.find(parameters.resourceURI,'/') + 1]
+        self.cemonURL = self.servicePrefix + "ce-monitor/services/CEMonitor"
+        
+        self.proxyFile = testsuite_utils.getProxyFile()
+        self.subscrId = job_utils.subscribeToCREAMJobs(self.cemonURL, \
+                                                       self.parameters, self.proxyFile, logger)
         
     def __call__(self):
         self.running = True
         while self.running:
             self.handle_request()
+        logger.debug("Consumer thread is over")
             
     def halt(self):
+#        job_utils.unSubscribeToCREAMJobs(self.cemonURL, self.subscrId, \
+#                                         self.parameters, self.proxyFile, logger)
         self.running = False
 
 class DummyTable:

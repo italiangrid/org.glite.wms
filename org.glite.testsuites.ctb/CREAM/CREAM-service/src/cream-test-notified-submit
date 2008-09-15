@@ -111,20 +111,13 @@ def main():
         if parameters.jdl==None:
             sys.exit(1)
 
-    proxyFile = testsuite_utils.getProxyFile()
-
-    servicePrefix = 'https://' + parameters.resourceURI[:string.find(parameters.resourceURI,'/') + 1]
-    cemonURL = servicePrefix + "ce-monitor/services/CEMonitor"
-        
     try:
         vomsManager = job_utils.VOMSProxyManager(parameters, logger)
         monitorThread = JobMonitor(parameters, vomsManager)
         renewalManager = job_utils.ProxyRenewer(parameters, monitorThread, vomsManager, logger)
         
         address = ('', parameters.consumerPort)
-        consumer = CEMonitorConsumer.ConsumerServer(address, monitorThread, servicePrefix)
-        
-        subscrId = job_utils.subscribeToCREAMJobs(cemonURL, parameters, proxyFile, logger)
+        consumer = CEMonitorConsumer.ConsumerServer(address, parameters, monitorThread)
         
         consumerThread = threading.Thread(target=consumer)
         consumerThread.start()
@@ -135,9 +128,6 @@ def main():
         renewalManager.halt()
         
         exitCode = monitorThread.shutdown()
-        
-        #TODO unsubscribe hangs up
-#        job_utils.unSubscribeToCREAMJobs(cemonURL, subscrId, parameters, proxyFile, logger)
         
         consumer.halt()
         
