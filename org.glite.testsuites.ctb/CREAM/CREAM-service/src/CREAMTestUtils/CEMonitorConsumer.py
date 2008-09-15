@@ -6,6 +6,7 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import log4py
 import testsuite_utils, job_utils
 import re, string
+import select
 
 NSTable = {'cemon_types': 'http://glite.org/ce/monitorapij/types', \
                     'cemon_faults': 'http://glite.org/ce/monitorapij/faults', \
@@ -100,24 +101,40 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
         
     def __call__(self):
         self.running = True
+        sList = [self]
+        dList = []
         while self.running:
-            self.handle_request()
+            list1, list2, list3 = select.select(sList, dList, dList, 5)
+            if len(list1)>0:
+                self.handle_request()
         logger.debug("Consumer thread is over")
             
     def halt(self):
-#        job_utils.unSubscribeToCREAMJobs(self.cemonURL, self.subscrId, \
-#                                         self.parameters, self.proxyFile, logger)
+        job_utils.unSubscribeToCREAMJobs(self.cemonURL, self.subscrId, \
+                                         self.parameters, self.proxyFile, logger)
         self.running = False
 
 class DummyTable:
+    
+    def __init__(self):
+        self.consumerPort = 9000
+        self.rate = 20
+        self.resourceURI = 'devel05.cnaf.infn.it:8443/cream-pbs-creamtest1'
+        
     def notify(self, jobHistory):
         print '---------------------------------------------'
         for item in jobHistory:
             print "JobID: %s status: %s" % item
 
 def main():
-    consumer = ConsumerServer(('',9000), DummyTable())
-    consumer()
+    import time
+    import threading
+    dummyObj = DummyTable()
+    consumer = ConsumerServer(('',9000), dummyObj, dummyObj)
+    consumerThread = threading.Thread(target=consumer)
+    consumerThread.start()
+    time.sleep(30)
+    consumer.halt()
 
 if __name__ == "__main__":
     main()
