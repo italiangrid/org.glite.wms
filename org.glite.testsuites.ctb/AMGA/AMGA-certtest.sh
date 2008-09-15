@@ -25,10 +25,7 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  AMGA-certtest.sh --host <hostname> "
- echo "Arguments: "
- echo "          --host   <hostname>              "
- echo "              Hostname of the AMGA server. "
+ echo "Usage:  AMGA-certtest.sh                   "
  echo "                                           "
 }
 
@@ -36,29 +33,29 @@ showUsage ()
 #######################
 #Parsing the arguments#
 #######################
-if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ]; then
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 0 ]; then
   showUsage
   exit 2
 fi
 
-until [ -z "$1" ]
-do
-  case "$1" in
-     --host)
-           if [ -z "$2" ]; then
-                shift 1
-       else
-                hostname=$2
-                shift 2
-           fi
-    ;;
-    *)
-        showUsage
-        exit 2
-    ;;
-  esac
-done
 
+###################################
+# Check for environment variables #
+###################################
+  
+if [ -e "AMGA-certconfig" ]; then
+  source ./AMGA-certconfig
+else
+  echo "The file ./AMGA-certconfig must be sourced in order to run the tests"
+  exit -1
+fi  
+
+if [ -z "$AMGA_HOST" ]; then
+  echo "You need to set AMGA_HOST in AMGA-certconfig in order to run this script"
+  exit -1
+else
+  hostname=$AMGA_HOST
+fi
 
 ########################
 # Launch all the tests #

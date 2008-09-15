@@ -124,23 +124,23 @@ except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try:
-    print "Creating directory /pylock ..."
-    client.createDir("/pylock")    
+    print "Creating directory /test/pylock ..."
+    client.createDir("/test/pylock")    
 except mdinterface.CommandException, ex:
     print "Error:", ex
             
 
 try:
    print "Adding attribute id..."
-   client.addAttr("/pylock", "id", "int")
+   client.addAttr("/test/pylock", "id", "int")
 except mdinterface.CommandException, ex:
    print "Error:", ex  
    
    
 try:
     print "Creating LOCK table..."
-    client.addEntry("/pylock/lock", ['id'], [4711])
-    client.addEntry("/pylock/lock2", ['id'], [ 100])
+    client.addEntry("/test/pylock/lock", ['id'], [4711])
+    client.addEntry("/test/pylock/lock2", ['id'], [ 100])
 except mdinterface.CommandException, ex:
     print "Error:", ex
   
@@ -212,8 +212,8 @@ except mdinterface.CommandException, ex:
 
 
 try: 
-    print "Removing entries: rm /pylock/*"
-    client.rm("/pylock/*")
+    print "Removing entries: rm /test/pylock/*"
+    client.rm("/test/pylock/*")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
@@ -243,7 +243,7 @@ except mdinterface.CommandException, ex:
 
 try:
     print "Removing attribute..."
-    client.removeAttr("/pylock", "id")
+    client.removeAttr("/test/pylock", "id")
 except mdinterface.CommandException, ex:
     print "Error:", ex
 
@@ -280,8 +280,8 @@ except mdinterface.CommandException, ex:
     print "Error:", ex
 
 try:
-    print "Removing directory /pylock..."
-    client.removeDir("/pylock")
+    print "Removing directory /test/pylock..."
+    client.removeDir("/test/pylock")
 except mdinterface.CommandException, ex:
     print "Error:", ex
                                                                
