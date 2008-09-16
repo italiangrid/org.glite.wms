@@ -12,7 +12,7 @@ def usage():
     manPage = testsuite_utils.ManPage()
     
     manPage.shortDescr = 'submit a sequence of jobs using an expiring proxy'
-    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI --vo VONAME'
+    manPage.synopsis = '[OPTION] -R | --resourceURI RESOURCEURI --vo VONAME'
     manPage.description = '''Submit a sequence of simple jobs with a specified rate \
 using one or more voms-proxies whose lifetime is shorter than the duration of the job.
 The job is a simple sleep.'''

@@ -12,7 +12,7 @@ def usage():
     manPage = testsuite_utils.ManPage()
     
     manPage.shortDescr = 'submit a sequence of jobs'
-    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI'
+    manPage.synopsis = '[OPTION] -R | --resourceURI RESOURCEURI'
     manPage.description = 'Submit a sequence of simple jobs with a specified rate'
 
     manPage.parameters.append(('-h', '--help' , '', 'print this message and exit'))

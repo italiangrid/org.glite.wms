@@ -12,7 +12,7 @@ def usage():
     manPage = testsuite_utils.ManPage()
     
     manPage.shortDescr = 'submit and cancel a sequence of jobs'
-    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI'
+    manPage.synopsis = '[OPTION] -R | --resourceURI RESOURCEURI'
     manPage.description = '''Submit a sequence of simple jobs and manage their \
 status via cemonitor notifications'''
 

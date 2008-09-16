@@ -12,7 +12,7 @@ def usage():
     manPage = testsuite_utils.ManPage()
     
     manPage.shortDescr = 'submit a sequence of jobs and enable the lease renew process'
-    manPage.synopsis = '[OPTION] -r | --resourceURI RESOURCEURI'
+    manPage.synopsis = '[OPTION] -R | --resourceURI RESOURCEURI'
     manPage.description = '''Submit a sequence of simple jobs with a specified rate. \
 For each job either a lease is registered or a pre-registered lease is used; \
 the expiring lease is renewed so the job should not be cancelled by the service. \
