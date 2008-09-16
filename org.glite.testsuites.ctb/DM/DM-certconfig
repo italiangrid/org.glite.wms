@@ -11,6 +11,6 @@ CASTORHOST="srm-dteam.cern.ch"
 #TEST TO RUN (yes/no)
 LCG_UTILS=yes
 GFAL=yes
-DM_CROSS_SE=yes
+DM_CROSS_SE=no
 
 
