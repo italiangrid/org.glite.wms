@@ -124,6 +124,10 @@ try:
     client.createDir("/test/pytest")
     print "OK"
 
+    print "Adding entries in bulk..."
+    client.addEntries(["/test/pytest/a", "/test/pytest/b", "/test/pytest/c"])
+    print "OK"
+
     print "cd /pytest"
     client.cd("/test/pytest")
     print "OK"
