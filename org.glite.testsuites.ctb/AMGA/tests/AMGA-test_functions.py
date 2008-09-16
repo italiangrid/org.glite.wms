@@ -85,6 +85,10 @@ def delete_entries():
         client.removeDir("/test/pylock")
     except:
         could_not_delete += 1 
+    try:
+        client.removeDir("/test")
+    except:
+        could_not_delete += 1
 
 
 #
