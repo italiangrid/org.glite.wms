@@ -69,9 +69,11 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
                 length = int(self.headers['content-length'])
                 ps = ParsedSoap(self.rfile.read(length))
         except ParseException, e:
+            logger.error(str(e))
             self.send_fault(FaultFromZSIException(e))
             return
         except Exception, e:
+            logger.error(str(e))
             self.send_fault(FaultFromException(e, 1, sys.exc_info()[2]))
             return
         
@@ -83,6 +85,7 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
             sw.close()
             self.send_xml(str(sw))
         except Exception, e:
+            logger.error(str(e))
             self.send_fault(FaultFromException(e, 0, sys.exc_info()[2]))
         
 class ConsumerServer(ThreadingMixIn, HTTPServer):

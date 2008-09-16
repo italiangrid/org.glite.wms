@@ -129,11 +129,11 @@ def main():
         consumerThread.start()
         
         monitorThread.start()
-        leaseRenewer.start()
+        leaseManager.start()
         #renewalManager.start()
         monitorThread.join()
         renewalManager.halt()
-        leaseRenewer.halt()
+        leaseManager.halt()
         
         exitCode = monitorThread.shutdown()
         
