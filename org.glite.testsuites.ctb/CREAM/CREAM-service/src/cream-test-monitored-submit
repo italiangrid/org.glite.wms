@@ -72,8 +72,6 @@ class JobPoller(job_poller.JobPoller):
     
 def main():
     
-    logger = log4py.Logger().get_instance(classid="main")
-    
     parameters = testsuite_utils.Parameters()
     parameters.register('rate', 'd', 30, testsuite_utils.checkRate)
     parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
@@ -104,16 +102,17 @@ def main():
         
     if parameters.help:
         usage()
+        
+    testsuite_utils.mainLogger.setup(parameters.logConf)
 
     if parameters.jdl=='':
-        parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*5, logger)
+        parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*5)
         if parameters.jdl==None:
             sys.exit(1)
 
-    vomsManager = job_utils.VOMSProxyManager(parameters, logger)
+    vomsManager = job_utils.VOMSProxyManager(parameters)
     pollerThread = JobPoller(parameters, vomsManager)
-    renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, \
-                                            vomsManager, logger)
+    renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
 
     pollerThread.start()
     #renewalManager.start()

@@ -4,7 +4,6 @@ import os, os.path
 import sys
 import re, string
 import threading
-import log4py
 
 from CREAMTestUtils import testsuite_utils, job_utils, CEMonitorConsumer, job_monitor
 
@@ -74,7 +73,6 @@ class JobMonitor(job_monitor.JobMonitor):
         return 0
 
 def main():
-    logger = log4py.Logger().get_instance(classid="main")
 
     parameters = testsuite_utils.Parameters()
     parameters.register('rate', 'd', 30, testsuite_utils.checkRate)
@@ -107,16 +105,18 @@ def main():
         
     if parameters.help:
         usage()
+        
+    testsuite_utils.mainLogger.setup(parameters.logConf)
 
-    parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*5, logger)
+    parameters.jdl = testsuite_utils.createTempJDL(parameters.leaseTime*5)
     if parameters.jdl==None:
         sys.exit(1)
             
     try:
-        vomsManager = job_utils.VOMSProxyManager(parameters, logger)
+        vomsManager = job_utils.VOMSProxyManager(parameters)
         monitorThread = JobMonitor(parameters, vomsManager)
-        renewalManager = job_utils.ProxyRenewer(parameters, monitorThread, vomsManager, logger)
-        leaseManager = job_utils.LeaseRenewer(parameters, monitorThread, logger)
+        renewalManager = job_utils.ProxyRenewer(parameters, monitorThread, vomsManager)
+        leaseManager = job_utils.LeaseRenewer(parameters, monitorThread)
         
         address = ('', parameters.consumerPort)
         consumer = CEMonitorConsumer.ConsumerServer(address, parameters, monitorThread)

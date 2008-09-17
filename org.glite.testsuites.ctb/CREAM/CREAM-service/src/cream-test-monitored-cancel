@@ -2,7 +2,6 @@
 
 import os,sys
 import re, string
-import log4py
 
 from CREAMTestUtils import testsuite_utils, job_utils, job_poller
 
@@ -121,16 +120,17 @@ def main():
         
     if parameters.help:
         usage()
+        
+    testsuite_utils.mainLogger.setup(parameters.logConf)
 
     if parameters.jdl=='':
-        parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*10, logger)
+        parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*10)
         if parameters.jdl==None:
             sys.exit(1)
     
-    vomsManager = job_utils.VOMSProxyManager(parameters, logger)
+    vomsManager = job_utils.VOMSProxyManager(parameters)
     pollerThread = JobPoller(parameters, vomsManager)
-    renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, \
-                                            vomsManager, logger)
+    renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
 
     pollerThread.start()
     #renewalManager.start()

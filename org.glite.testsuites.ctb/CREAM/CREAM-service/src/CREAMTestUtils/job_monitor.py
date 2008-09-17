@@ -2,13 +2,12 @@
 import threading
 import time
 import popen2
-import log4py
 
 import job_utils, testsuite_utils
 from submit_pool import JobSubmitterPool
 
 class JobMonitor(threading.Thread):
-    logger = log4py.Logger().get_instance(classid="JobMonitor")
+    logger = None
     
     runningStates = ['IDLE', 'RUNNING', 'REALLY-RUNNING']
     finalStates = ['DONE-OK', 'DONE-FAILED', 'ABORTED', 'CANCELLED']
@@ -23,6 +22,9 @@ class JobMonitor(threading.Thread):
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, 'ABORTED': 0, 'CANCELLED': 0}
         
         self.lastNotifyTS = time.time()
+        
+        if JobMonitor.logger==None:
+            JobMonitor.logger = testsuite_utils.mainLogger.get_instance(classid="JobMonitor")
         
     def manageNotifications(self):
         pass

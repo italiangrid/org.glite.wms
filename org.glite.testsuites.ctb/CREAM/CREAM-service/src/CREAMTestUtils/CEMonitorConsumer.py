@@ -3,7 +3,6 @@ from ZSI import ParsedSoap, SoapWriter, resolvers, TC, \
 import os, sys
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import log4py
 import testsuite_utils, job_utils
 import re, string
 import select
@@ -14,8 +13,6 @@ NSTable = {'cemon_types': 'http://glite.org/ce/monitorapij/types', \
 
 jobIDRE = re.compile('CREAM_JOB_ID\s*=\s*\"(CREAM\d+)\";')
 jobStatusRE = re.compile('JOB_STATUS\s*=\s*\"([A-Z-]+)\";')
-
-logger = log4py.Logger().get_instance(classid="CEMonitorConsumer")
 
 class Notify:
     def __init__(self):
@@ -41,13 +38,18 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
 
     def handleNotify(self, soap):
     
-        notification = soap.getElementsByTagNameNS(NSTable['cemon_types'], 'Notification')[0]
-        events = notification.getElementsByTagNameNS(NSTable['cemon_types'], 'Event')
+        nlist = soap.getElementsByTagNameNS(NSTable['cemon_types'], 'Notification')
+        if len(nlist)==0:
+            return
+
+        events = nlist[0].getElementsByTagNameNS(NSTable['cemon_types'], 'Event')
         for event in events:
             jobHistory = []
             
             messages = event.getElementsByTagNameNS(NSTable['cemon_types'], 'Message')
             for msg in messages:
+                if len(msg.childNodes)==0:
+                    continue
                 classad = msg.childNodes[0].nodeValue
                 r1 = jobIDRE.search(classad)
                 r2 = jobStatusRE.search(classad)
@@ -69,11 +71,11 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
                 length = int(self.headers['content-length'])
                 ps = ParsedSoap(self.rfile.read(length))
         except ParseException, e:
-            logger.error(str(e))
+            ConsumerServer.logger.error(str(e))
             self.send_fault(FaultFromZSIException(e))
             return
         except Exception, e:
-            logger.error(str(e))
+            ConsumerServer.logger.error(str(e))
             self.send_fault(FaultFromException(e, 1, sys.exc_info()[2]))
             return
         
@@ -85,11 +87,14 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
             sw.close()
             self.send_xml(str(sw))
         except Exception, e:
-            logger.error(str(e))
+            ConsumerServer.logger.error(str(e))
             self.send_fault(FaultFromException(e, 0, sys.exc_info()[2]))
         
 class ConsumerServer(ThreadingMixIn, HTTPServer):
     #See description in SocketServer.py about ThreadingMixIn
+    
+    logger = None
+    
     def __init__(self, address, parameters, jobTable=None):
         HTTPServer.__init__(self, address, SOAPRequestHandler)
         self.jobTable = jobTable
@@ -100,7 +105,10 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
         
         self.proxyFile = testsuite_utils.getProxyFile()
         self.subscrId = job_utils.subscribeToCREAMJobs(self.cemonURL, \
-                                                       self.parameters, self.proxyFile, logger)
+                                                       self.parameters, self.proxyFile)
+        
+        if ConsumerServer.logger==None:
+            ConsumerServer.logger = testsuite_utils.mainLogger.get_instance(classid='ConsumerServer')
         
     def __call__(self):
         self.running = True
@@ -110,11 +118,11 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
             list1, list2, list3 = select.select(sList, dList, dList, 5)
             if len(list1)>0:
                 self.handle_request()
-        logger.debug("Consumer thread is over")
+        ConsumerServer.logger.debug("Consumer thread is over")
             
     def halt(self):
         job_utils.unSubscribeToCREAMJobs(self.cemonURL, self.subscrId, \
-                                         self.parameters, self.proxyFile, logger)
+                                         self.parameters, self.proxyFile)
         self.running = False
 
 class DummyTable:

@@ -4,11 +4,11 @@ import time
 import popen2
 import string
 import log4py
-from testsuite_utils import cmdTable, applicationID
+from testsuite_utils import cmdTable, applicationID, mainLogger
 
 class SubmitterThread(threading.Thread):
     
-    logger = log4py.Logger().get_instance(classid="SubmitterThread")
+    logger = None
     
     def __init__(self, pool, scmd, dcmd, lcmd, tName):
         threading.Thread.__init__(self)
@@ -17,6 +17,9 @@ class SubmitterThread(threading.Thread):
         self.submitFStr = scmd
         self.delegFStr = dcmd
         self.leaseFStr = lcmd
+        
+        if SubmitterThread.logger==None:
+            SubmitterThread.logger = mainLogger.get_instance(classid="SubmitterThread")
 
     def run(self):
         running = True
@@ -102,7 +105,7 @@ class SubmitterThread(threading.Thread):
 
 class JobSubmitterPool:
     
-    logger = log4py.Logger().get_instance(classid="JobSubmitterPool")
+    logger = None
     
     def __init__(self, parameters, jobTable=None, pManager=None):
         self.jobTable = jobTable
@@ -114,6 +117,9 @@ class JobSubmitterPool:
         self.running = True
         self.left = 0
         self.processed = 0
+        
+        if JobSubmitterPool.logger==None:
+            JobSubmitterPool.logger = mainLogger.get_instance(classid="JobSubmitterPool")
         
         self.proxyMan = pManager
         

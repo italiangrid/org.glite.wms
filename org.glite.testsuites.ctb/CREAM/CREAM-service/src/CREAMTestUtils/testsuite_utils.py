@@ -5,6 +5,7 @@ import re, string
 import time
 import popen2
 import getopt
+import log4py
 
 class BadValueException(Exception):
     def __init__(self, message):
@@ -49,10 +50,15 @@ def checkRenewType(value):
     if value<>'none' and value<>'single' and value<>'multiple':
         raise BadValueException("Bad type: " + value)
     
+def checkFile(value):
+    if value<>'' and not os.path.isfile(value):
+        raise BadValueException, "Bad file: " + value
+    
 class Parameters:
     def __init__(self):
         self.pTable = {}
         self.register('help', 'b')
+        self.register('logConf', 's', check=checkFile)
 
     def register(self, name, type, default=None, check=None, optChar=None):
         
@@ -153,7 +159,7 @@ class Parameters:
         return result
 
 
-def createTempJDL(sleepTime, logger=None):
+def createTempJDL(sleepTime):
     tempFD, tempFilename = tempfile.mkstemp(dir='/tmp')
     try:
         tFile = open(tempFilename, 'w+b')
@@ -162,8 +168,8 @@ def createTempJDL(sleepTime, logger=None):
         tFile.close()
         return tempFilename
     except :
-        if logger<>None:
-            logger.error("Cannot create temp jdl file:" + str(sys.exc_info()[0]))
+        if mainLogger<>None:
+            mainLogger.error("Cannot create temp jdl file:" + str(sys.exc_info()[0]))
     return None
 
 def getProxyFile():
@@ -253,6 +259,35 @@ class ManPage:
                 for item in self.env:
                     print "\t%s\n\t\t%s\n" % item
 
+class Logger:
+    
+    def __init__(self):
+        self.factory = None
+        self.main = None
+    
+    def setup(self, confFile):
+
+        # This is just a patch for registering the configuration file
+        if confFile<>None and confFile<>'':
+            log4py.CONFIGURATION_FILES[1] = confFile
+        self.factory = log4py.Logger()
+        self.main = self.factory.get_instance(classid="main")
+        
+    def get_instance(self, classid="main"):
+        return self.factory.get_instance(classid=classid)
+        
+    def debug(self, message):
+        self.main.debug(message)
+        
+    def error(self, message):
+        self.main.error(message)
+        
+    def warn(self, message):
+        self.main.warn(message)
+
+    def info(self, message):
+        self.main.info(message)
+        
 
 
 if 'testsuite_utils' in __name__:
@@ -286,6 +321,9 @@ if 'testsuite_utils' in __name__:
     
     global applicationID
     applicationID = "%d.%f" % (os.getpid(), time.time())
+    
+    global mainLogger
+    mainLogger = Logger()
 
 else:
     print __name__
