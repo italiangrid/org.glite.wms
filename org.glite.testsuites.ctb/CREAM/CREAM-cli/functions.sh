@@ -22,7 +22,7 @@
 # Parameter: the message to print ($@)
 function my_echo()
 {
-  echo " --> $@"
+  echo -e " --> $@"
 }
 
 # Print debug messages 
@@ -134,7 +134,7 @@ function run_command()
     return 1
   fi
 
-	debug "Command runs succesfully. Output is: ${COM_OUTPUT}"
+	debug "Command runs succesfully. Output is: \n${COM_OUTPUT}"
   return 0 
 }
 
