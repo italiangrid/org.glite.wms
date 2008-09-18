@@ -42,6 +42,8 @@ function setup() {
   LFC_TEST_DIR=${LFC_TEST_DIR:-/grid/dteam/hydratest}
   MAN_PAGE_CHECK=${MAN_PAGE_CHECK:-1}
   TOMCAT_CFG_DIR=${TOMCAT_CFG_DIR:-/etc/tomcat5/Catalina/localhost/}
+  STRESS_TEST_PROCS=${STRESS_TEST_PROCS:-10}
+  STRESS_TEST_KEYS_PER_PROC=${STRESS_TEST_KEYS_PER_PROC:-100}
 
 
   export GLITE_SD_PLUGIN
@@ -49,6 +51,8 @@ function setup() {
   export LFC_TEST_DIR
   export MAN_PAGE_CHECK
   export TOMCAT_CFG_FIR
+  export STRESS_TEST_PROCS
+  export STRESS_TEST_KEYS_PER_PROC
 
   # Test for proxy certificate
   voms-proxy-info >/dev/null 2>&1 

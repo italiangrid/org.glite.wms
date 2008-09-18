@@ -15,6 +15,13 @@ The client tests need at least one valid proxy certificate. If another one is
 available, chmod-test.sh and acl-test.sh test that the permissions/ACL are
 enforced. 
 
+stress-test.sh is for stress testing the hydra performance. It starts 10
+processes which each register and unregister 100 keys (default). Amount of
+processes and keys can be changed. Using too many processes might not benchmark
+the server correctly, since the key generation is cpu intensive and may slow
+down the test machine. If you run all three hydra servers on one machine, it
+does three times more work than in a normal situation.
+
 The more advanced tests use the commands tested in simpler ones, so the
 recommended execution order on the client is:
 
@@ -23,6 +30,8 @@ keyregister-test.sh
 crypt-test.sh
 acl-test.sh
 chmod-test.sh
-putgetrm-test.sh !NOTE! Does not run at the moment, hydra-client broken
+putgetrm-test.sh
 
-functions.sh and config.sh are support files. 
+stress-test.sh
+
+functions.sh, config.sh and stress-exec.sh are support files. 

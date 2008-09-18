@@ -21,3 +21,7 @@
 
 # Tomcat config directory
 #TOMCAT_CFG_DIR=/etc/tomcat5/Catalina/localhost/
+
+#Stress test variables
+#STRESS_TEST_PROCS=10
+#STRESS_TEST_KEYS_PER_PROC=100
