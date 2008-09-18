@@ -55,12 +55,23 @@ def checkFile(value):
         raise BadValueException, "Bad file: " + value
     
 class Parameters:
-    def __init__(self):
+    def __init__(self, shortDescr, synopsis, description):
         self.pTable = {}
-        self.register('help', 'b')
-        self.register('logConf', 's', check=checkFile)
-
-    def register(self, name, type, default=None, check=None, optChar=None):
+        self._shortDescr = shortDescr
+        self._synopsis = synopsis
+        self._description = description
+        self._env = []
+        
+        self.register('help', 'b', descr='Print the man pages for this command')
+        self.register('logConf', 's', check=checkFile, descr='''\
+Set the location of the configuration file for log4py, \
+(DEFAULT as provided by log4py)''')
+        
+    def addEnvItem(self, item):
+        self._env.append(item)
+        
+    def register(self, name, type, default=None, check=None, optChar=None, \
+                 descr=''):
         
         if check==None:
             check = checkIsOk
@@ -68,7 +79,7 @@ class Parameters:
         if optChar==None:
             optChar = name[0]
             
-        self.pTable[name] = (type, check, optChar)
+        self.pTable[name] = (type, check, optChar, descr)
         if default==None and type=='s':
             default=''
         elif default==None and type=='d':
@@ -79,7 +90,7 @@ class Parameters:
         setattr(self, name, default)
 
     def testAndSet(self, k, v):
-        type, check, optChar = self.pTable[k]
+        type, check, optChar, descr = self.pTable[k]
         if type=='d':
             iValue = int(v)
             setattr(self, k, iValue)
@@ -93,7 +104,7 @@ class Parameters:
     
     def testValues(self):
         for param in self.pTable:
-            type, check, optChar = self.pTable[param]
+            type, check, optChar, descr = self.pTable[param]
             if type<>'b':
                 check(getattr(self,param))
 
@@ -109,7 +120,7 @@ class Parameters:
                 optName = k[2:]
             elif k[0]=='-':
                 for tmpo in self.pTable.keys():
-                    type, check, optChar = self.pTable[tmpo]
+                    type, check, optChar, descr = self.pTable[tmpo]
                     if optChar==k[1]:
                         optName = tmpo
             self.testAndSet(optName, v)
@@ -141,7 +152,7 @@ class Parameters:
     def getLongOptList(self):
         result = []
         for k in self.pTable.keys():
-            type, check, optChar = self.pTable[k]
+            type, check, optChar, descr = self.pTable[k]
             if type=='b':
                 result.append(k)
             else:
@@ -151,13 +162,81 @@ class Parameters:
     def getShortOptString(self):
         result = ''
         for k in self.pTable.keys():
-            type, check, optChar = self.pTable[k]
+            type, check, optChar, descr = self.pTable[k]
             if type=='b':
                 result += optChar
             else:
                 result += (optChar + ":")
         return result
 
+    def _convertParam(self, item):
+        type, check, optChar, descr = self.pTable[item]
+        if optChar=='':
+            f1 = ''
+        else:
+            f1 = '-' + optChar
+        f2 = '--' + item
+        if type=='b':
+            f3 = ''
+        elif type=='d':
+            f3 = 'NUMBER'
+        else:
+            f3 = 'STRING'
+        return (f1, f2, f3, descr)
+        
+    def display(self):
+        
+        if os.environ.has_key("HELP_FORMAT"):
+            format = os.environ["HELP_FORMAT"]
+        else:
+            format = None
+            
+        executable = os.path.basename(sys.argv[0])
+        
+        if format=='GROFF':
+            print ".TH " + executable + ' "1" ' + executable + ' "GLITE Testsuite"\n'
+            print ".SH NAME:"
+            print executable + ' \- ' + self._shortDescr + '\n'
+            print ".SH SYNOPSIS"
+            print '.B ' + executable
+            print self._synopsis + '\n'
+            print '.SH DESCRIPTION'
+            print self._description + '\n'
+            if len(self.pTable)>0:
+                print '.SH OPTIONS'
+                sortedKeys = self.pTable.keys()
+                sortedKeys.sort()
+                for item in sortedKeys:
+                    pTuple = self._convertParam(item)
+                    if pTuple[3]=='':
+                        continue
+                    if pTuple[0]=='':
+                        print '.HP\n%s\\fB%s\\fR\n%s\n\n.IP\n%s\n.PP' % pTuple
+                    else:
+                        print '.HP\n\\fB%s\\fR, \\fB%s\\fR\n%s\n\n.IP\n%s\n.PP' % pTuple
+            if len(self._env)>0:
+                print '.SH ENVIRONMENT'
+                for item in self._env:
+                    print '.TP\n.B %s\n%s\n.' % item
+
+        else:
+            print "NAME\n\t" + executable + " - " + self._shortDescr + "\n"
+            print "SYNOPSIS\n\t" + executable + ' ' + self._synopsis + "\n"
+            print "DESCRIPTION\n\t" + self._description + "\n"
+            sortedKeys = self.pTable.keys()
+            sortedKeys.sort()
+            for item in sortedKeys:
+                pTuple = self._convertParam(item)
+                if pTuple[3]=='':
+                        continue
+                if pTuple[0]=='':
+                    print "\t%s%s %s\n\t\t%s\n" % pTuple
+                else:
+                    print "\t%s %s %s\n\t\t%s\n" % pTuple
+            if len(self._env)>0:
+                print "ENVIRONMENT\n"
+                for item in self._env:
+                    print "\t%s\n\t\t%s\n" % item
 
 def createTempJDL(sleepTime):
     tempFD, tempFilename = tempfile.mkstemp(dir='/tmp')
@@ -206,59 +285,6 @@ def getCACertDir():
         raise Exception, "Cannot find CA certificate directory " + caCertDir
     return caCertDir
         
-class ManPage:
-    
-    def __init__(self):
-        self.shortDescr = None
-        self.description = None
-        self.synopsis = None
-        self.parameters = []
-        self.env = []
-        
-    def display(self):
-        
-        if os.environ.has_key("HELP_FORMAT"):
-            format = os.environ["HELP_FORMAT"]
-        else:
-            format = None
-            
-        executable = os.path.basename(sys.argv[0])
-        
-        if format=='GROFF':
-            print ".TH " + executable + ' "1" ' + executable + ' "GLITE Testsuite"\n'
-            print ".SH NAME:"
-            print executable + ' \- ' + self.shortDescr + '\n'
-            print ".SH SYNOPSIS"
-            print '.B ' + executable
-            print self.synopsis + '\n'
-            print '.SH DESCRIPTION'
-            print self.description + '\n'
-            if len(self.parameters)>0:
-                print '.SH OPTIONS'
-                for item in self.parameters:
-                    if item[0]=='':
-                        print '.HP\n%s\\fB%s\\fR\n%s\n\n.IP\n%s\n.PP' % item
-                    else:
-                        print '.HP\n\\fB%s\\fR, \\fB%s\\fR\n%s\n\n.IP\n%s\n.PP' % item
-            if len(self.env)>0:
-                print '.SH ENVIRONMENT'
-                for item in self.env:
-                    print '.TP\n.B %s\n%s\n.' % item
-
-        else:
-            print "NAME\n\t" + executable + " - " + self.shortDescr + "\n"
-            print "SYNOPSIS\n\t" + executable + ' ' + self.synopsis + "\n"
-            print "DESCRIPTION\n\t" + self.description + "\n"
-            for item in self.parameters:
-                if item[0]=='':
-                    print "\t%s%s %s\n\t\t%s\n" % item
-                else:
-                    print "\t%s %s %s\n\t\t%s\n" % item
-            if len(self.env)>0:
-                print "ENVIRONMENT\n"
-                for item in self.env:
-                    print "\t%s\n\t\t%s\n" % item
-
 class Logger:
     
     def __init__(self):

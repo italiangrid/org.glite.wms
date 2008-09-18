@@ -7,50 +7,6 @@ import threading
 
 from CREAMTestUtils import testsuite_utils, job_utils, CEMonitorConsumer, job_monitor
 
-def usage():
-    manPage = testsuite_utils.ManPage()
-    
-    manPage.shortDescr = 'submit a sequence of jobs and enable the lease renew process'
-    manPage.synopsis = '[OPTION] -R | --resourceURI RESOURCEURI'
-    manPage.description = '''Submit a sequence of simple jobs with a specified rate. \
-For each job either a lease is registered or a pre-registered lease is used; \
-the expiring lease is renewed so the job should not be cancelled by the service. \
-The status of the job is notified by the CEMonitor'''
-
-    manPage.parameters.append(('-h', '--help' , '', 'print this message and exit'))
-    manPage.parameters.append(('-r', '--rate', 'SLEEP_TIME', '''\
-the sleep time in seconds between two consecutive notifications(Default 30s, Min 5s)'''))
-    manPage.parameters.append(('-n', '--numberOfJob', 'NUM', 'the number of jobs to submit (Default 1)'))
-    manPage.parameters.append(('-m', '--maxRunningJobs', 'NUM', '''\
-the max number of job which can be enqueued in the service (Default 100)'''))
-    manPage.parameters.append(('-D', '--delegationType', 'DELEGATIONTYPE','''\
-specify the delegation management type: single, one delegated proxy for all submissions,\
-or multiple, one delegated proxy per job (DEFAULT is single)'''))
-    manPage.parameters.append(('-R', '--resourceURI', 'RESOURCEURI','''\
-define the URI of the resource under testing, the format is \
-<host>[:<port>]/cream-<lrms>-<queue>. \
-This option is mandatory and no default value is defined'''))
-    manPage.parameters.append(('-C', '--maxConcurrentSubmit', 'NUM', '''\
-define the number of concurrent submit, (DEFAULT is 1)'''))
-    manPage.parameters.append(('-L', '--leaseType', 'LEASEType', '''\
-'specify the lease management type: single, one lease for all submissions,\
-or multiple, one lease per job (DEFAULT is single)'''))
-    manPage.parameters.append(('-W', '--leaseTime', 'SLEEP_TIME', '''\
-define the lease time for a lease, if it is not used a pre-registered lease id \
-(DEFAULT 20m)'''))
-    manPage.parameters.append(('-P', '--consumerPort', 'PORT', '''\
-define the port for the consumer service (DEFAULT is 9000)'''))
-    
-    manPage.env.append(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
-    manPage.env.append(('X509_USER_PROXY', 'location of the user proxy'))
-    manPage.env.append(('NOTIFIED_LEASE_UP_CONFIG_FILE','''\
-location of the configuration file for this test'''))
-    
-    manPage.display()
-    
-    sys.exit(0)
-
-
 def failure(reason):
     print reason
     sys.exit(1)
@@ -79,17 +35,53 @@ class JobMonitor(job_monitor.JobMonitor):
 
 def main():
 
-    parameters = testsuite_utils.Parameters()
-    parameters.register('rate', 'd', 30, testsuite_utils.checkRate)
-    parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne)
-    parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne)
-    parameters.register('delegationType', 's', 'single', testsuite_utils.checkRenewType,'D')
-    parameters.register('leaseType', 's', 'single', testsuite_utils.checkRenewType, 'L')
-    parameters.register('leaseTime', 'd', 1200, optChar='W')
-    parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R')
-    parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C')
-    parameters.register('consumerPort', 'd', 9000, testsuite_utils.checkPort, 'p')
+    parameters = testsuite_utils.Parameters('submit a sequence of jobs and enable the lease renew process',\
+                                            '[OPTION] -R | --resourceURI RESOURCEURI',\
+                                            '''Submit a given number of jobs keeping track of their \
+status via CEMonitor notifications. \
+For each job either a lease is registered or a pre-registered lease is used; \
+the expiring lease is renewed so the job must not be cancelled by the service. \
+The status of the job is notified by the CEMonitor'. \
+The test keeps a given number of job running on the CE.
+''')
     
+    parameters.register('rate', 'd', 30, testsuite_utils.checkRate, descr='''\
+set the notification rate in seconds for the subscription on CEMonitor (DEFAULT is 30s)''')
+    
+    parameters.register('numberOfJob', 'd', 1, testsuite_utils.atLeastOne, descr='''\
+set the number of jobs to submit (DEFAULT 1)''')
+    
+    parameters.register('maxRunningJobs', 'd', 100, testsuite_utils.atLeastOne, descr='''\
+set the max number of job which can be enqueued in the service (DEFAULT 100)''')
+    
+    parameters.register('delegationType', 's', 'single', testsuite_utils.checkRenewType,'D',\
+                        descr='''specify the delegation management type: single, one delegated \
+proxy for all submissions, or multiple, one delegated proxy per job (DEFAULT is single)''')
+    
+    parameters.register('leaseType', 's', 'single', testsuite_utils.checkRenewType, 'L',\
+                        descr='''specify the lease management type: single, \
+one lease for all submissions, or multiple, one lease per job (DEFAULT is single)''')
+    
+    parameters.register('leaseTime', 'd', 1200, optChar='W', descr='''\
+define the lease time for a lease, if it is not used a pre-registered lease id \
+(DEFAULT 20m)''')
+    
+    parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, 'R',\
+                        descr='''define the URI of the resource under testing, the format is \
+<host>[:<port>]/cream-<lrms>-<queue>. \
+This option is mandatory and no default value is defined''')
+    
+    parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C',\
+                        descr='''define the number of concurrent submit, (DEFAULT is 1)''')
+    
+    parameters.register('consumerPort', 'd', 9000, testsuite_utils.checkPort, 'p', descr='''\
+define the port for the consumer service (DEFAULT is 9000)''')
+    
+    parameters.addEnvItem(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
+    parameters.addEnvItem(('X509_USER_PROXY', 'location of the user proxy'))
+    parameters.addEnvItem(('NOTIFIED_LEASE_UP_CONFIG_FILE','''\
+location of the configuration file for this test'''))
+
     if os.environ.has_key("NOTIFIED_LEASE_UP_CONFIG_FILE"):
         confFileName = os.environ["NOTIFIED_LEASE_UP_CONFIG_FILE"]
     else:
@@ -101,14 +93,16 @@ def main():
 
     except testsuite_utils.BadValueException, ex:
         print "ERROR: %s\n\nUsage:" % ex
-        usage()
+        parameters.display()
+        sys.exit(1)
     except IOError, ioError:
         failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
     except Exception, exception:
         failure("Error parsing parameters " + str(exception))
         
     if parameters.help:
-        usage()
+        parameters.display()
+        sys.exit(0)
         
     testsuite_utils.mainLogger.setup(parameters.logConf)
 

@@ -88,6 +88,8 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
             self.send_xml(str(sw))
         except Exception, e:
             ConsumerServer.logger.error(str(e))
+            for line in sys.exc_info()[2]:
+                print line
             self.send_fault(FaultFromException(e, 0, sys.exc_info()[2]))
         
 class ConsumerServer(ThreadingMixIn, HTTPServer):
