@@ -81,6 +81,7 @@ class SubmitterThread(threading.Thread):
                             if self.pool.proxyMan<>None:
                                 self.pool.proxyMan.beginLock()
 
+                            tmpErr = ''
                             submitProc = popen2.Popen4(submCmd)
                             for line in submitProc.fromchild:
                                 if line[0:8]=='https://':
@@ -91,8 +92,9 @@ class SubmitterThread(threading.Thread):
                                     self.pool.notifySubmitResult(failure=line[24:])
                                     notified = True
                                     break
+                                tmpErr = tmpErr + string.strip(line) + ";"
                             if not notified:
-                                self.pool.notifySubmitResult(failure='Missing jobId or failure reason')
+                                self.pool.notifySubmitResult(failure=tmpErr)
                             submitProc.fromchild.close()
                             
                         finally:

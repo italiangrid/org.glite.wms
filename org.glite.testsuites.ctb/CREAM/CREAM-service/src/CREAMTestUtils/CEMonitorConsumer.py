@@ -55,8 +55,11 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
                 r2 = jobStatusRE.search(classad)
                 if r1<>None and r2<> None:
                     jobHistory.append( (self.server.servicePrefix+r1.group(1), r2.group(1)) )
+                else:
+                    ConsumerServer.logger.debug('Irregular classad: ' + classad)
                     
-            self.server.jobTable.notify(jobHistory)
+            if len(jobHistory)>0:
+                self.server.jobTable.notify(jobHistory)
 
 
     def do_POST(self):
@@ -88,8 +91,8 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
             self.send_xml(str(sw))
         except Exception, e:
             ConsumerServer.logger.error(str(e))
-            for line in sys.exc_info()[2]:
-                print line
+            import traceback
+            traceback.print_tb(sys.exc_info()[2])
             self.send_fault(FaultFromException(e, 0, sys.exc_info()[2]))
         
 class ConsumerServer(ThreadingMixIn, HTTPServer):
