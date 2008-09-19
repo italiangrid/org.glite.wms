@@ -912,7 +912,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
                    m_log_dev->debugStream()
                    << "iceCommandSubmit::pathName::CTOR() - "
                    << "Unparsed as follows: filename=[" 
-                   << m_fileName << "] pathname={"
+                   << m_fileName << "] pathname=["
                    << m_pathName << "]"
                    
                    );

@@ -23,6 +23,7 @@
 
 
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include "CreamProxyMethod.h"
@@ -108,7 +109,6 @@ void CreamProxy_Register::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -118,6 +118,7 @@ void CreamProxy_Register::method_call( int timeout )
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyRegister( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile );
   theProxy->setSoapHeader( m_iceid );
+  api_util::scoped_timer T( "CreamProxy_Register::execute() - TIMER" );
   theProxy->execute( m_service_uri );
   
 }
@@ -149,7 +150,6 @@ void CreamProxy_Start::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -160,6 +160,7 @@ void CreamProxy_Start::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyStart( m_req, m_res, timeout ) );
   theProxy->setCredential( m_certfile );
+  api_util::scoped_timer T( "CreamProxy_Start::execute() - TIMER" );
   theProxy->execute( m_service );
 }
 
@@ -189,7 +190,6 @@ void CreamProxy_Cancel::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -199,6 +199,7 @@ void CreamProxy_Cancel::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyCancel( m_req, m_res, timeout ));
   theProxy->setCredential( m_certfile );
+  api_util::scoped_timer T( "CreamProxy_Cancel::execute() - TIMER" );
   theProxy->execute( m_service );
 }
     
@@ -227,7 +228,6 @@ void CreamProxy_Lease::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -237,6 +237,7 @@ void CreamProxy_Lease::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyLease( m_lease_IN, m_lease_OUT, timeout ));
   theProxy->setCredential( m_certfile );
+  api_util::scoped_timer T( "CreamProxy_Lease::execute() - TIMER" );
   theProxy->execute( m_service );
 }
     
@@ -265,7 +266,6 @@ void CreamProxy_LeaseInfo::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -275,6 +275,7 @@ void CreamProxy_LeaseInfo::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyLeaseInfo( m_lease_IN, m_lease_OUT, timeout ));
   theProxy->setCredential( m_certfile );
+  api_util::scoped_timer T( "CreamProxy_LeaseInfo::execute() - TIMER" );
   theProxy->execute( m_service );
 }
 
@@ -303,7 +304,6 @@ void CreamProxy_Info::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -312,6 +312,7 @@ void CreamProxy_Info::method_call( int timeout )
 {   
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyInfo( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile ); 
+  api_util::scoped_timer T( "CreamProxy_Info::execute() - TIMER" );
   theProxy->execute( m_service );
 }
 
@@ -340,7 +341,6 @@ void CreamProxy_Purge::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -349,6 +349,7 @@ void CreamProxy_Purge::method_call( int timeout )
 {    
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyPurge( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile );
+  api_util::scoped_timer T( "CreamProxy_Purge::execute() - TIMER" );
   theProxy->execute( m_service );
 }
 
@@ -376,7 +377,6 @@ void CreamProxy_Delegate::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -384,7 +384,8 @@ void CreamProxy_Delegate::method_call( int timeout )
 	soap_proxy::auth_ex&)
 { 
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyDelegate( m_delegation_id, timeout ) );   
-  theProxy->setCredential( m_certfile );   
+  theProxy->setCredential( m_certfile );
+  api_util::scoped_timer T( "CreamProxy_Delegate::execute() - TIMER" );  
   theProxy->execute( m_service );
 }
 
@@ -412,7 +413,6 @@ void CreamProxy_ProxyRenew::method_call( int timeout )
 	cream_ex::JobStatusInvalidException&,
 	cream_ex::JobUnknownException&,
 	cream_ex::GenericException&,
-	cream_ex::AuthenticationException&,
 	cream_ex::AuthorizationException&,
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
@@ -422,6 +422,7 @@ void CreamProxy_ProxyRenew::method_call( int timeout )
     //p->Delegate( m_delegation_id, m_delegation_service, m_certfile );
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > p( soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( m_delegation_id, timeout ) );   
   p->setCredential( m_certfile );
+  api_util::scoped_timer T( "CreamProxy_ProxyRenew::execute() - TIMER" );
   p->execute( m_service );
 }
 

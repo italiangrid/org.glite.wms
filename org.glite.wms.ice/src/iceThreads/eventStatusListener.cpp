@@ -245,7 +245,7 @@ void eventStatusListener::acceptJobStatus(void)
     
     iceThreadPool* threadPool( m_ice_manager->get_ice_commands_pool() );
 
-    if( threadPool->get_command_count()  > m_conf->max_ice_threads() ) {
+    if( threadPool->get_command_count()  > (10*m_conf->max_ice_threads()) ) {
       CREAM_SAFE_LOG(m_log_dev->debugStream()
     		     << "eventStatusListener::acceptJobStatus() - Currently threadPool contains "
 		     << threadPool->get_command_count()
