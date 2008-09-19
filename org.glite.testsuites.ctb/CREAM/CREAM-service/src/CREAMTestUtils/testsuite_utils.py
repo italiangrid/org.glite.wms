@@ -345,8 +345,10 @@ if 'testsuite_utils' in __name__:
     hostname =  string.strip(proc.fromchild.readline())
     proc.fromchild.close()
     
+    global applicationTS
+    applicationTS = time.time()
     global applicationID
-    applicationID = "%d.%f" % (os.getpid(), time.time())
+    applicationID = "%d.%f" % (os.getpid(), applicationTS)
     
     global mainLogger
     mainLogger = Logger()

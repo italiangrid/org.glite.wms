@@ -7,7 +7,8 @@ import getpass
 
 from threading import Condition, Thread
 from testsuite_utils import hostname, getCACertDir, getUserKeyAndCert
-from testsuite_utils import getProxyFile, cmdTable, applicationID, mainLogger
+from testsuite_utils import getProxyFile, cmdTable
+from testsuite_utils import applicationTS, applicationID, mainLogger
 
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
 
@@ -138,7 +139,10 @@ class AbstractRenewer(Thread):
                     
                     self.preRun()
                     
-                    tsList = self.container.valueSnapshot()
+                    if self.single:
+                        tsList = [applicationTS]
+                    else:
+                        tsList = self.container.valueSnapshot()
                         
                     for item in tsList:
                         rID = self.fString % (os.getpid(), float(item))
@@ -179,6 +183,9 @@ class LeaseRenewer(AbstractRenewer):
                                                                         parameters.leaseTime, '%s')
         self.sleepTime = parameters.leaseTime
         self.fString = 'LEASEID%d.%f'
+        if parameters.leaseType=='none':
+            raise Exception, 'Cannot start lease renewer: lease is not enabled'
+        self.single = ( parameters.leaseType=='single' )
         
         if LeaseRenewer.logger==None:
             LeaseRenewer.logger = mainLogger.get_instance(classid='LeaseRenewer')
@@ -210,6 +217,7 @@ class ProxyRenewer(AbstractRenewer):
         #the timesleep is calculated dynamically
         self.sleepTime = self.proxyMan
         self.fString = 'DELEGID%d.%f'
+        self.single = ( parameters.delegationType=='single' )
         
         if ProxyRenewer.logger == None:
             ProxyRenewer.logger = mainLogger.get_instance(classid='ProxyRenewer')
