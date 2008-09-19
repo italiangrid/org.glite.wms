@@ -14,21 +14,17 @@
 
 showUsage ()
 {
- echo "                                                                                                       "
  echo "Usage:   FTS-services --site <site name> [--bdii <bdii hostname> --fts <fts hostname>] "
  echo "Options:                                                                                               "
  echo "  obligatory:                                                                                          "
- echo "                                                                                                       "
  echo "          --site  <site name>                                                                          "
  echo "                   The hostname of the site hosting the FTS server as it stored in the GOC DB and information system.             "
  echo "                                                                                                       "
  echo "  optional:                                                                                            "
- echo "                                                                                                       "
  echo "          --bdii  <bdii hostname>                                                                      "
  echo "                   The hostname of the top level BDII. The default is lcg-bdii.cern.ch                     "
  echo "          --fts  <fts hostname>                                                                      "
  echo "                   The hostname of the fts to test. The default is the one found in the top level BDII     "
- echo "													      "
 }
 
 if [ -z "$1" ]; then
@@ -111,7 +107,7 @@ else
          if [ $ProxyExpired -gt 0 ]; then
             echo ">>> NOTE: Proxy credential expired!"
          fi
-         echo ""
+         echo "-TEST FAILED-"
          exit 1
 fi
 
@@ -139,7 +135,7 @@ FTS_HOST=`echo $FTS_URL | awk '{print $1}'`
 if [ -z "$FTS_HOST" ]; then
    echo ""
    echo ">>> NOTE: There is no information for FTS Server of the site: $SITE_NAME on  BDII: $BDII_HOST! <<< "
-   echo "" 
+   echo "-TEST FAILED-"
    exit 1
 fi 
 
@@ -207,7 +203,7 @@ else
 	echo ">>> NOTE: `cat message`"
 	echo ""
 	echo "FTS Test: Failed."
-	echo ""
+	echo "-TEST FAILED-"
         exit 1
 fi
 

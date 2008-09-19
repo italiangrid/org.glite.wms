@@ -14,18 +14,14 @@
 
 showUsage ()
 {
- echo "									 		  "
  echo "Usage:  FTS-basic --fts <fts hostname> [ --bdii <bdii hostname> ]       "
- echo "Options:                                                                           "
- echo "	 obligatory:    								  "
- echo "		  									  "
- echo "	         --fts   <fts  hostname>						  "
- echo "		         The name of the FTS server.					  "
+ echo "Options:    "
+ echo "	 obligatory:    								"
+ echo "	         --fts   <fts  hostname>				"
+ echo "		         The name of the FTS server.		"
  echo "	 optional:									  "
- echo "											  "	
- echo "	         --bdii  <bdii hostname>  						  "
+ echo "	         --bdii  <bdii hostname>  				"
  echo "		          The name of the top level BDII. The default is lcg-bdii.cern.ch "
- echo "											  "
 }
 
 if [ -z "$1" ]; then
@@ -101,7 +97,7 @@ function test_ping
     echo ""
     echo ">>> NOTE: The $FTS_HOST is not accessible! <<<"
     echo ""
-    echo "FTS Basic Test: Failed."
+    echo "FTS Basic -TEST FAILED-"
     echo ""
     exit 1
   fi
@@ -117,7 +113,7 @@ function test_ldap
      echo ""
      echo ">>> NOTE: LDAP Test: Failed. <<<"
      echo ""
-     echo "FTS Basic Test: Failed."
+     echo "FTS Basic -TEST FAILED-"
      echo ""
      exit 1	
   fi
@@ -134,7 +130,7 @@ function test_bdii
     echo ""
     echo ">>> NOTE: No entries found for FTS Server: $FTS_HOST on the top level BDII: $BDII_HOST! <<<"
     echo ""
-    echo "FTS Basic Test: Failed."
+    echo "FTS Basic -TEST FAILED-"
     echo ""
     exit 1
   fi
@@ -152,7 +148,7 @@ function test_tomcat
     echo ">>> NOTE: The Tomcat server on $FTS_HOST is not accessible! <<<"
     echo ">>> NOTE: Tomcat Test: Failed. <<<"
     echo ""
-    echo "FTS Basic Test: Failed."
+    echo "FTS Basic -TEST FAILED-"
     echo ""
     exit 1
   fi

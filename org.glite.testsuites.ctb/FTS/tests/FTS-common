@@ -1,0 +1,416 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Gianni Pucciani, CERN
+#
+##############################################################################
+
+#Functions definitions for FTS tests
+
+#
+# Store the FTS url in FTS_URL and fts host in FTS_HOST or return 1
+# SITE_NAME must be set
+#
+function get_fts_url_and_host()
+{
+
+
+  FTS_URL=`glite-sd-query -s $SITE_NAME -t org.glite.FileTransfer 2>/dev/null | grep Endpoint | sed -e 's/Endpoint://g'`
+  FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
+  FTS_HOST=`echo $FTS_URL | awk '{print $1}'`
+    
+  if [ -z "$FTS_HOST" ]; then
+    echo ""
+    echo ">>> NOTE: There is no information for FTS Server of the site: $SITE_NAME on  BDII: $BDII_HOST! <<< "
+    echo "" 
+    echo "-TEST FAILED-" 
+    return 1
+  fi
+
+  return 0
+}
+
+#
+# get SE1_SRM_LOC, SE2_SRM_LOC and MYPROXY_PASS and submit
+# a file transfer. FTS_HOST must be set. The job Id is stored
+# in SUBID
+#
+function file_transfer()
+{
+    if [ -z $1 ];then
+     echo "An SE source SRM location must be given to file_transfer()"
+     return 2
+    else
+     local SE1_SRM_LOC=$1
+    fi
+
+    if [ -z $2 ];then
+     echo "An SE destination SRM location must be given to file_transfer()"
+     return 2
+    else
+     local SE2_SRM_LOC=$2
+    fi
+
+    if [ -z $3 ];then
+     echo "A MyProxy password must be given to file_transfer()"
+     return 2
+    else
+     local MYPROXY_PASS=$3
+    fi
+
+
+#    SE1_SRM_LOC=$1
+#    SE2_SRM_LOC=$2
+#    MYPROXY_PASS=$3
+    SUB_FILE_LOC="$HOME/fts-submission-file"
+    RESULT_FILE="$HOME/fts-test-results"
+
+    DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+    TMP_FILE="/tmp/FTS_Test_$DATE"
+    TEST_FILE_NAME="FTS_Test_$DATE"
+
+    echo "Creating 10MB temporary test file for transfer" 
+
+    echo "" > $TMP_FILE
+
+    dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+
+    echo "Using the 10MB temporary test file: $TMP_FILE" 
+    echo "Copy the test file $TMP_FILE on: $SE1_SRM_LOC" 
+
+    GUID=`lcg-cr --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+
+
+    result=`cat message | wc -l`
+
+    if [ $result -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ""
+      echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+      echo ""
+      NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+      return
+    fi
+    echo "Removing the 10MB temporary test file: $TMP_FILE"
+    rm -rf $TMP_FILE
+
+    echo "Creating the submission file in $SUB_FILE_LOC"
+    i=0
+    echo "" > $SUB_FILE_LOC
+
+    echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
+
+    echo "Submitting the transfer"  
+
+    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC -p $MYPROXY_PASS`
+#    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+    if [ -z "$SUBID" ]; then
+       echo "Job submition failed!"
+       return 1
+    fi
+    echo "Job successfully submited"
+    echo "Transfer ID: $SUBID. " 
+
+}
+
+#
+# Get a Submission Id and check the status of the file transfer.
+# Return codes:
+#              - 0 trasfer finished
+#              - 1 error
+#              - 2 bad input arguments
+#              - 3 job failed
+#              - 4 job is holded
+#
+function get_status_result()
+{
+
+    if [ -z $1 ];then
+      echo "A submission Id must be provided to get_status_result()"
+      return 2
+    else
+      local SubId=$1
+    fi
+
+    export GLITE_SD_SITE=$SITE_NAME
+    export LCG_CATALOG_TYPE='lfc'
+
+#    echo "" 
+#    echo "Checking status for job ID: $SubId" 
+#    echo "" 
+
+    previous_status="None"
+
+    status=`glite-transfer-status -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SubId 2>message`
+
+    result=`cat message | wc -l`
+
+    if [ $result -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ""
+      return
+    fi
+
+
+#    echo "status is $status"
+    if test $status == "Finished"
+    then
+      echo "Job is successfully finished." 
+      return 0
+    
+    elif test $status == "Failed"
+    then
+      echo "Job is Failed!" 
+      return 3 
+
+    elif test $status == "Hold"
+    then
+      echo "Job is Hold!"
+      return 4
+
+    elif test $status == "Submitted"
+    then
+      echo "Job is Submitted!"
+      return 4
+
+    elif test $status == "Ready"
+    then
+      echo "Job is Ready!"
+      return 4
+
+    elif test $status == "Active"
+    then
+      echo "Job is Active!"
+      return 4
+    
+    else
+      echo "Job status unknown"
+      return 1
+    fi 
+
+}
+
+#
+# get SUBID and TIMEOUT and poll the status until it is done (0), failed (3)
+# or failed for timeout exceeded (4). 1 ir returned on error and 2 for bad
+# input parameters
+#
+function poll_status_with_timeout()
+{
+  if [ -z $1 ];then
+    echo "A submission Id must be provided to poll_status_with_timeout()"
+    return 2
+  else
+    local SUBID=$1
+  fi
+
+  if [ -z $2 ];then
+    echo "A timeout must be provided to poll_status_with_timeout()"
+    return 2
+  else
+    local Timeout=$2
+  fi
+
+  echo "Checking status for job ID: $SUBID" 
+
+  previous_status="None"
+  t=0
+  while test $t -lt $Timeout
+  do
+    get_status_result $SUBID
+    status=$?
+
+    if [ "$status" -eq 1 ]; then
+      echo "error retrieving the status with get_status_result()"
+      return 1
+    fi
+
+    if [ "$status" -eq 0 ]; then
+      echo "Job done"
+      return 0
+    fi
+     
+    if [ "$status" -eq 3 ]; then
+      echo "Job failed"
+      return 3
+    fi
+
+    if [ "$status" -eq 4 ]; then
+      echo "Waiting for status changes" 
+      sleep 10
+      t=`expr $t + 10`
+      echo "Time is $t timeout is $Timeout"  
+    fi
+
+    if [ "$t" -eq "$Timeout" ]; then
+      echo "Exceded timeout of $Timeout seconds"
+      return 4
+    else
+      continue
+    fi
+  done
+
+}
+
+#
+# Fill $Channel_List with channels retrieved from glite-transfer-channel-list
+# FTS_HOST must be set
+#
+function get_channels()
+{
+#  export GLITE_SD_SITE=$SITE_NAME
+#  export LCG_CATALOG_TYPE='lfc'
+
+  Channel_List=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement 2>message`
+  
+  result=`cat message|wc -l`
+  if [ $result -gt 0 ]; then
+     echo ""
+     echo ">>> NOTE:  `cat message`."
+     echo "-TEST FAILED-"
+     echo ""
+     return 1
+  fi
+  return 0
+}
+
+#
+# Get a Channel name and return 0 if active or 1 if not active
+#
+function is_channel_active()
+{
+#  export GLITE_SD_SITE=$SITE_NAME
+#  export LCG_CATALOG_TYPE='lfc'
+
+  if [ -z $1 ];then
+    echo "A channel name must be provided to is_channel_active()"
+    return 2
+  else
+    local Channel_Name=$1
+  fi
+
+  isChannelActive=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name | grep "State: Active" |wc -l`
+  if [ $isChannelActive -eq 0 ];then
+    echo "The channel: $Channel_Name is not Active! " 
+    return 1
+  fi
+  return 0
+}
+
+#
+# Store source site in $Source_Site and dest site in $Destin_Site
+#
+function get_source_dest_from_channel()
+{
+
+  if [ -z $1 ];then
+    echo "A channel name must be provided to get_source_dest_from_channel()"
+    return 2
+  else
+    local Channel_Name=$1
+  fi
+
+  Channel_Between=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name | grep Between | sed -e 's/*/star/g' | sed -e 's/Between://g' | sed -e 's/and//g'`
+
+
+#    unset GLITE_SD_SITE
+#    unset LCG_CATALOG_TYPE
+
+  Source_Site=`echo $Channel_Between |  awk '{print $1}' |  tr 'A-Z' 'a-z'`
+  Destin_Site=`echo $Channel_Between |  awk '{print $2}' |  tr 'A-Z' 'a-z'`
+
+  return 0
+}
+
+#
+# Get a site name and stre the first good SE in SE_HOST or return 1
+#
+function get_good_se_from_site()
+{
+  if [ -z $1 ];then
+    echo "A site name must be provided to get_good_se_from_site()"
+    return 2
+  else
+    local Site_Name=$1
+  fi
+
+  Site_SEs=`glite-sd-query -s $Site_Name -t SRM 2>/dev/null  | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | awk '{print $1}'`
+
+  goodSE=0
+  for Site_SE in $Site_SEs
+  do
+     lcg-ls srm://$Site_SE/ 2>message 1>/dev/null
+#     echo "lcg-ls srm://$Site_SE/ 2>message 1>/dev/null" 
+     result=`cat message | wc -l`
+
+     if [ $result -gt 0 ];then
+        continue
+     else
+        goodSE=1
+        SE_HOST=$Site_SE
+        break
+     fi
+  done
+  if [ $goodSE -eq 0 ]; then
+     echo "No good SRM found on site: $Site_Name"
+     return 1
+  else
+     echo "Found SE $SE_HOST at site $Site_Name"
+  fi
+  return 0
+}
+
+#
+# Get an SE hostname and return the SE srm url including vopath in SE_SRM_LOC
+# BDII_HOST and VO_NAME must be set
+#  
+function get_se_path()
+{
+
+  if [ -z $1 ];then
+    echo "An SE hostname must be provided to get_se_path()"
+    return 2
+  else
+    local SE_HOST=$1
+  fi
+
+
+  SE_VOPATH=`ldapsearch -x -h $BDII_HOST -p 2170 -b "mds-vo-name=local,o=grid" -LLL "(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))" GlueSAPath  | grep "GlueSAPath: " | sed -e 's/GlueSAPath: //'`
+
+  if [ -z $SE_VOPATH ];then 
+    echo "LDAP query failed"
+    return 1
+  fi
+  SE_SRM_LOC="srm://$SE_HOST$SE_VOPATH"
+  return 0
+}
+
+#
+# Store all the SRMs found in the top level BDII and store them in SRMs
+#
+function get_all_SEs()
+{
+
+      SRMs=`glite-sd-query -t SRM  2>/dev/null | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | awk '{print $1}'`
+      SRMs=`echo $SRMs | sed -e 's/\n//g'`
+}
+
+

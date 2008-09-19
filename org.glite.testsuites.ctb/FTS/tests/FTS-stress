@@ -16,17 +16,13 @@ showUsage ()
 {
  echo "                                                                                                     "
  echo "Usage: FTS-stress --site <site name> --pass <myproxy password> [--bdii <bdii hostname> --fts <fts hostname>--njob <number of jobs> --nfiles <number of files> ]  "
- echo "Options:                                                                                             "
+ echo "Options:             "
  echo "  obligatory:                                                                                        "
- echo "                                                                                                     "
  echo "          --site  <site name>                                                                        "
  echo "                   The name of the site as it stored in the GOC DB and information system.           "
- echo "                                                                                                     "
  echo "          --pass  <myproxy password>                                                                 "
  echo "                   MyProxy password.                                                                 "
- echo "                                                                                                     "
  echo "  optional:                                                                                          "
- echo "                                                                                                     "
  echo "          --bdii  <bdii hostname>                                                                    "
  echo "                   The hostname of the top level BDII. The default is lcg-bdii.cern.ch                   "
  echo "													    "
@@ -35,13 +31,10 @@ showUsage ()
  echo "													    "
  echo "          --njobs  <number of jobs>                                                                  "
  echo "                   The number of jobs to be submitted. The default is 10.                            "
- echo "                                                                                                     "
  echo "          --nfiles <number of files>                                                                 "
  echo "                   The number of files per job. The default is 10.                                   "
- echo "                                                                                                     "
  echo "          --vo <vo_name>                                                                             "
  echo "                   Name of VO to use. Default is dteam.                                              "
- echo "                                                                                                     "
 }
 
 if [ -z "$1" ]; then
@@ -201,7 +194,7 @@ else
          if [ $ProxyExpired -gt 0 ]; then
             echo ">>> NOTE: Proxy credential expired!"
          fi 
-         echo ""
+         echo "-TEST FAILED-"
          exit 1
 fi
 
@@ -231,6 +224,7 @@ FTS_HOST=`echo $FTS_URL | awk '{print $1}'`
 if [ -z "$FTS_HOST" ]; then
    echo ""
    echo ">>> NOTE: There is no information for FTS Server of the site: $SITE_NAME on  BDII: $BDII_HOST! <<< "
+   echo "-TEST FAILED-"
    echo "" 
    exit 1
 fi 
@@ -440,6 +434,7 @@ else
          echo ""
          echo ">>> NOTE: Proxy credential expired!"
          echo ""
+         echo "-TEST FAILED-"
          exit 1
 fi
 
@@ -456,6 +451,7 @@ fi
      echo ">>> NOTE:  `cat message`."
      echo ">>> NOTE: `glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -v | grep \"Service features:\" | sed -e 's/#//g'`"
      echo ""
+     echo "-TEST FAILED-"
      exit 1
   fi
 
@@ -635,7 +631,7 @@ else
   done
   echo ""
   echo "FTS Test: Failed."
-  echo ""
+  echo "-TEST FAILED-"
   exit 1
 fi
 
