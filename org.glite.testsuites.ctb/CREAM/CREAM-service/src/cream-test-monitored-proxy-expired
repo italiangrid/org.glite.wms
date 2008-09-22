@@ -65,9 +65,7 @@ the voms-proxy, this parameter is mandatory''')
     parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, 'K', descr='''\
 the lifetime of the created voms-proxy, the form is HH:MM (Default 00:10)''')
     
-    parameters.addEnvItem(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
-    parameters.addEnvItem(('X509_USER_CERT', 'location of the user certificate'))
-    parameters.addEnvItem(('X509_USER_KEY', 'location of the user key'))
+    parameters.setDefaultEnvs()
     parameters.addEnvItem(('MONITORED_PROXY_EXPIRED_CONFIG_FILE','''\
 location of the configuration file for this test'''))
 

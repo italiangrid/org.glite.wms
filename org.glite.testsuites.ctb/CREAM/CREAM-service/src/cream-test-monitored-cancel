@@ -85,8 +85,14 @@ This option is mandatory and no default value is defined''')
     parameters.register('jdl', 's', descr='''define the path for the jdl file, \
 if omitted a predefined jdl will be used with simple sleep as executable (5 times the rate)''')
     
-    parameters.addEnvItem(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
-    parameters.addEnvItem(('X509_USER_PROXY', 'location of the user proxy'))
+    parameters.register('vo', 's', '', testsuite_utils.checkVO, '', descr='''\
+set the VO name to be used for the test; this parameter is mandatory whenever \
+X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
+        
+    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
+set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
+    
+    parameters.setDefaultEnvs()
     parameters.addEnvItem(('MONITORED_CANCEL_CONFIG_FILE','''\
 location of the configuration file for this test'''))
 
@@ -124,7 +130,7 @@ location of the configuration file for this test'''))
     renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
 
     pollerThread.start()
-    #renewalManager.start()
+    renewalManager.start()
     pollerThread.join()
     renewalManager.halt()
 

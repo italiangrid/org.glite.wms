@@ -70,8 +70,9 @@ define the path for the jdl file, if omitted a predefined jdl will \
 be used with simple sleep as executable (5 times the rate)''')
     
     parameters.register('vo', 's', '', testsuite_utils.checkVO, '', descr='''\
-set the VO name to be used for the test; this parameter is mandatory only when \
+set the VO name to be used for the test; this parameter is mandatory whenever \
 X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
+    
     parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
 set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
     
