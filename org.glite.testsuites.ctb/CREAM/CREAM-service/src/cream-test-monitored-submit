@@ -13,13 +13,15 @@ def failure(reason):
     
 class JobProcessed(job_utils.JobProcessed):
     
-    badStatusList = ['ABORTED', 'CANCELLED']
-    
     def __init__(self):
         job_utils.JobProcessed.__init__(self)
         
     def canPurge(self, jobStatus, failureReason=''):
-        return not jobStatus in JobProcessed.badStatusList
+        if jobStatus=='ABORTED' or jobStatus=='CANCELLED':
+            return False
+        if jobStatus=='DONE-FAILED' and failureReason=='Proxy is expired':
+            return False
+        return True
 
 class JobPoller(job_poller.JobPoller):
     
@@ -67,11 +69,13 @@ This option is mandatory and no default value is defined''')
 define the path for the jdl file, if omitted a predefined jdl will \
 be used with simple sleep as executable (5 times the rate)''')
     
-    parameters.register('vo', 's', '', testsuite_utils.checkVO, 'V')
-    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, 'Y')
+    parameters.register('vo', 's', '', testsuite_utils.checkVO, '', descr='''\
+set the VO name to be used for the test; this parameter is mandatory only when \
+X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
+    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
+set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
     
-    parameters.addEnvItem(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
-    parameters.addEnvItem(('X509_USER_PROXY', 'location of the user proxy'))
+    parameters.setDefaultEnvs()
     parameters.addEnvItem(('MONITORED_SUBMIT_CONFIG_FILE','''\
 location of the configuration file for this test'''))
     
@@ -110,7 +114,7 @@ location of the configuration file for this test'''))
     renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
 
     pollerThread.start()
-    #renewalManager.start()
+    renewalManager.start()
     pollerThread.join()
     renewalManager.halt()
         

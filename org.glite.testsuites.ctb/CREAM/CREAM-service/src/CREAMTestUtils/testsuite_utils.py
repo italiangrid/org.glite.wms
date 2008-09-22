@@ -67,8 +67,17 @@ class Parameters:
 Set the location of the configuration file for log4py, \
 (DEFAULT as provided by log4py)''')
         
+        
     def addEnvItem(self, item):
         self._env.append(item)
+        
+    def setDefaultEnvs(self):
+        self.addEnvItem(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
+        self.addEnvItem(('X509_USER_PROXY', 'location of the user proxy'))
+        self.addEnvItem(('X509_USER_CERT', 'location of the user certificate, this variable has \
+priority upon the X509_USER_PROXY variable'))
+        self.addEnvItem(('X509_USER_KEY', 'location of the user private key'))
+        
         
     def register(self, name, type, default=None, check=None, optChar=None, \
                  descr=''):

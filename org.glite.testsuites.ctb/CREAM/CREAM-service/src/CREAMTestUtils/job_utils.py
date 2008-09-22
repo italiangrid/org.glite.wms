@@ -156,6 +156,8 @@ class AbstractRenewer(Thread):
                         for line in renewProc.fromchild:
                             if 'ERROR' in line or 'FATAL' in line:
                                 AbstractRenewer.logger.error("Cannot renew " + rID)
+                            else:
+                                AbstractRenewer.logger.debug(line)
                         renewProc.fromchild.close()
                         
                         if hasattr(self.container, 'proxyMan') and self.container.proxyMan<>None:
