@@ -96,26 +96,6 @@ Request_source_filelist::~Request_source_filelist( )
    
 list<Request*> Request_source_filelist::get_requests( size_t max_size )
 {
-#ifdef FOOBAR
-    vector< FLEit > requests;
-    list< Request* > result;
-    try { 
-        requests = m_filelist_extractor.get_all_available();
-    }
-    catch( exception& ex ) {
-        CREAM_SAFE_LOG(
-                       api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
-                       << "Request_source_filelist::get_requests() - " << ex.what()
-                       
-                       );
-        abort(); // FIXME
-    }
-    for ( unsigned j=0; j < requests.size(); j++ ) {
-        result.push_back( new Request_filelist( requests[j] ) );
-    }
-    return result;
-#else
-
     std::pair< FLEit , bool  > request;
     list< Request* > result;
 
@@ -140,37 +120,8 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
         }
     }
     return result;
-#endif
 }
   
-// Request* Request_source_filelist::get_single_request( void )
-// {
-// #ifdef FOOBAR
-//   std::pair< FLEit , bool  > request;
-// //     //list< Request* > result;
-//     try { 
-//         request = m_filelist_extractor.try_get_one();
-//     }
-//     catch( exception& ex ) {
-//         CREAM_SAFE_LOG(
-//                        api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
-//                        << "Request_source_filelist::get_single_request() - " << ex.what()
-//                        
-//                        );
-//         abort(); // FIXME
-//     }
-// //     for ( unsigned j=0; j < requests.size(); j++ ) {
-// //         result.push_back( new Request_filelist( requests[j] ) );
-// //     }
-// //     return result;
-// 
-//   if( !request.second ) return NULL;
-//   return new Request_filelist( request.first );
-// #else
-//   return 0;
-// #endif
-// }
-
 void Request_source_filelist::remove_request( Request* req )
 {
     Request_filelist* req_fl = dynamic_cast< Request_filelist* >( req );
@@ -184,5 +135,10 @@ void Request_source_filelist::put_request( const string& ad )
     wmsutils_ns::FileListMutex mx(m_filelist);
     wmsutils_ns::FileListLock  lock(mx);
     m_filelist.push_back( ad );
+}
+
+size_t Request_source_filelist::get_size( void )
+{
+    return m_filelist.size();
 }
 

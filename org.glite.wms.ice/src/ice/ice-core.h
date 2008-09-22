@@ -168,7 +168,14 @@ namespace ice {
  
         void getNextRequests(std::list< util::Request* >&);
 	// util::Request* getNextRequest( void );
-	
+
+        /**
+         * Returns the size (numer of requests) of the input queue;
+         * this means the input filelist/jobdir which holds requests
+         * from the WM to ICE.
+         */
+	size_t get_input_queue_size( void );
+
         void removeRequest( util::Request* r );
 
         // Starter methods

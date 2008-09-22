@@ -507,6 +507,12 @@ void Ice::removeRequest( util::Request* req )
     m_ice_input_queue->remove_request( req );
 }
 
+//----------------------------------------------------------------------------
+size_t Ice::get_input_queue_size( void )
+{
+    return m_ice_input_queue->get_size();
+}
+
 //____________________________________________________________________________
 bool Ice::is_listener_started( void ) const
 {

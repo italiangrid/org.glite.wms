@@ -52,6 +52,12 @@ namespace util {
          *
          */
         void put_request( const std::string& ad );
+
+        /**
+         *
+         */
+        std::size_t get_size( void );
+
     protected:
         glite::wms::common::utilities::JobDir* m_jobdir;
     };

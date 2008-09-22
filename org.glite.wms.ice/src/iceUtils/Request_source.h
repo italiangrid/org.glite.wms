@@ -52,7 +52,6 @@ namespace util {
          * @return the list of new requests.
          */
         virtual std::list<Request*> get_requests( size_t max_size=0 ) = 0;
-//	virtual Request* get_single_request( ) = 0;
 
         /**
          * Removes a request from this source. The callre retains
@@ -75,6 +74,11 @@ namespace util {
          * Gets the name of this request source
          */
         std::string get_name( void ) const { return m_name; };
+
+        /**
+         * Gets the number of requests in the request source
+         */
+        virtual size_t get_size( void ) = 0;
     protected:
         /**
          * Creates a new request source object.

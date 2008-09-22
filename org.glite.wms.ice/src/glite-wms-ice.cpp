@@ -363,6 +363,12 @@ int main(int argc, char*argv[])
 		   );
 
     while(true) {
+        // For debug, print the number of requests in the input filelist
+        size_t input_queue_size = iceManager->get_input_queue_size();
+        CREAM_SAFE_LOG( log_dev->debugStream() << method_name
+                        << "Input filelist/jobdir size "
+                        << input_queue_size );
+
         //
         // BEWARE!! the get_command_count() method locks the
         // threadPool object. Hence, it is *extremely* dangerous to

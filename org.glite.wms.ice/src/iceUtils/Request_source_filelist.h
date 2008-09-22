@@ -61,6 +61,12 @@ namespace util {
          *
          */
         void put_request( const std::string& ad );
+
+        /**
+         *
+         */
+        size_t get_size( void );
+
     protected:
         typedef glite::wms::common::utilities::FLExtractor<std::string>::iterator FLEit;
 

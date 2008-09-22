@@ -80,12 +80,6 @@ list<Request*> Request_source_jobdir::get_requests( size_t max_size  )
     return result;
 }
 
-/*Request* Request_source_jobdir::get_single_request( void )
-{
-    return 0;
-}
-*/
-
 void Request_source_jobdir::remove_request( Request* req )
 {
     Request_jobdir* req_jobdir = dynamic_cast< Request_jobdir* >( req );
@@ -99,3 +93,8 @@ void Request_source_jobdir::put_request( const string& ad )
     m_jobdir->deliver( ad );
 }
 
+size_t Request_source_jobdir::get_size( void )
+{
+    std::pair< utilities::JobDir::iterator, utilities::JobDir::iterator > entries = m_jobdir->new_entries();
+    return entries.second - entries.first;
+}
