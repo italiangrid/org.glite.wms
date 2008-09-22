@@ -13,13 +13,15 @@ def failure(reason):
 
 class JobProcessed(job_utils.JobProcessed):
     
-    badStatusList = ['ABORTED', 'CANCELLED']
-    
     def __init__(self):
         job_utils.JobProcessed.__init__(self)
         
     def canPurge(self, jobStatus, failureReason=''):
-        return not jobStatus in JobProcessed.badStatusList
+        if jobStatus=='ABORTED' or jobStatus=='CANCELLED':
+            return False
+        if jobStatus=='DONE-FAILED' and failureReason=='Proxy is expired':
+            return False
+        return True
 
 class JobMonitor(job_monitor.JobMonitor):
     
@@ -77,8 +79,14 @@ This option is mandatory and no default value is defined''')
     parameters.register('consumerPort', 'd', 9000, testsuite_utils.checkPort, 'p', descr='''\
 define the port for the consumer service (DEFAULT is 9000)''')
     
-    parameters.addEnvItem(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
-    parameters.addEnvItem(('X509_USER_PROXY', 'location of the user proxy'))
+    parameters.register('vo', 's', '', testsuite_utils.checkVO, '', descr='''\
+set the VO name to be used for the test; this parameter is mandatory whenever \
+X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
+    
+    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
+set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
+    
+    parameters.setDefaultEnvs()
     parameters.addEnvItem(('NOTIFIED_LEASE_UP_CONFIG_FILE','''\
 location of the configuration file for this test'''))
 
@@ -124,7 +132,7 @@ location of the configuration file for this test'''))
         
         monitorThread.start()
         leaseManager.start()
-        #renewalManager.start()
+        renewalManager.start()
         monitorThread.join()
         renewalManager.halt()
         leaseManager.halt()
