@@ -1,18 +1,18 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
 Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
@@ -28,7 +28,7 @@ limitations under the License.
 
 // gSOAP
 #include "soapH.h"
- #include <signal.h>  // sig_atomic
+#include <signal.h>  // sig_atomic
 
 // Server
 #include "wmpoperations.h"
@@ -51,7 +51,6 @@ limitations under the License.
 #include <libxml/debugXML.h>
 #include <libxml/HTMLtree.h>
 #include <libxml/xmlIO.h>
-#include <libxml/DOCBparser.h>
 #include <libxml/xinclude.h>
 #include <libxml/catalog.h>
 #include <libxslt/xslt.h>
@@ -80,55 +79,26 @@ using namespace glite::wmsutils::exception; // Exception
 const std::string ALL_PROTOCOLS = "all";
 const std::string DEFAULT_PROTOCOL = "default";
 
+
 // WM Web Service available operations
 // To get more infomation see WM service wsdl file
 
 
-/*************************
-deserialization of a JSDL methods..
-**************************/
-const string printFieldJSDL(const string& title, string * field){
-	if (!field){return "";}
-	edglog(debug)<<"_____ New field: "<< *field << endl ;
-	return title +"="+"\""+*field +"\""+";\n";
-}
-/*************************
-deserialization of a JSDL methods..
-**************************/
-const string printFieldsJSDL(const string& title, std::vector<std::string> fields){
-	string result="";
-	for (unsigned int i=0; i<fields.size(); i++ ){
-		edglog(debug)<<"_____ New field (vector): "<< fields[i] << endl ;
-		result += "\"" + fields[i]+ "\"";
-		// Append comma (when needed)
-		if (i < fields.size()-1){ result +=",";}
-	}
-	if (result !=""){ result = title + "={ " + result + "} ;\n";}
-	return result;
+void initializingSignalHandler(){
+	// Initializing signal handler for 'graceful' stop/restart
+	extern volatile sig_atomic_t handled_signal_recv;
+	handled_signal_recv = 0;
+	glite::wms::wmproxy::server::initsignalhandler();
 }
 
-/*************************
-deserialization of a JSDL methods..
-**************************/
-void serializeJSDL(jsdlns__JobDefinition_USCOREType *jsdl, struct soap *soap){
-	if (soap){
-		soap->sendfd = open("/tmp/glite_sc06.xml", O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
-		soap_serialize_PointerTojsdlns__JobDefinition_USCOREType(soap, &jsdl);
-		soap_begin_send(soap);
-		soap_put_PointerTojsdlns__JobDefinition_USCOREType(soap, &jsdl, "ns:element-name", "ns:type-name");
-		soap_put_PointerTojsdlns__JobDefinition_USCOREType(soap, &jsdl, NULL, NULL);
-		soap_end_send(soap);
-	}
-}
-/*************************
-deserialization of a JSDL methods..
-**************************/
 string deserializationJSDL(const string &jsdlString){
 	// SYTLESHEET
 	xmlDocPtr jsdl, parsedRes;
+	// TBD remove hardcoded location
 	std::string styleSheetFile ="/opt/glite/share/wsdl/jsdl2jdlhpcp.xslt";
 	string jsdlFile = "/tmp/jsdl_tmp" + boost::lexical_cast<std::string>(getpid());
 	wmputilities::writeTextFile(jsdlFile,jsdlString);
+
 
 	xsltStylesheetPtr styleSheet = xsltParseStylesheetFile((const xmlChar *)styleSheetFile.c_str());
 	jsdl = xmlParseFile(jsdlFile.c_str());
@@ -136,6 +106,7 @@ string deserializationJSDL(const string &jsdlString){
 
 	const char **params =NULL;
 	parsedRes=xsltApplyStylesheet(styleSheet, jsdl, params);
+
 	if (parsedRes){
 		// PARSED SUCCESS
 		xmlChar *doc_txt_ptr;
@@ -144,77 +115,36 @@ string deserializationJSDL(const string &jsdlString){
 		result = string((const char *)doc_txt_ptr);
 		return result;
 	}
-	edglog(debug)<<"_____ JSDL STYLESHEET ERROR!!!"<< endl;
+	edglog(debug)<<"JSDL stylesheet interpreter critical error"<< endl;
 	return "";
 
 }
 
-/*************************
-deserialization of a JSDL methods..
-**************************/
-const string deserializationJSDL(jsdlns__JobDefinition_USCOREType *jsdl, struct soap *soap){
+const string deserializationJSDL(jsdl__JobDefinition_USCOREType *jsdl){
 	edglog_fn("wmpgsoapoperations::deserializationJSDL");
-	string jsdlString = jsdl->__any;
-	if (jsdlString.size()){ return deserializationJSDL( jsdl->__any);}
+
+	string jsdlString = boost::lexical_cast<string>(jsdl->soap->buf);
+
+	size_t pos = jsdlString.find("<jsdl:JobDescription>");
+  	jsdlString = jsdlString.substr (pos);
+  	pos = jsdlString.find("</jsdl:JobDescription>");
+  	string jsdlExceed = jsdlString.substr (pos);
+  	size_t sizeJ = jsdlString.size();
+  	size_t sizeE = jsdlExceed.size();
+  	size_t sizeRes = sizeJ - sizeE;
+  	jsdlString.resize(sizeRes);
+
+  	//TBD investigate on jsdl:JobDefinition not present in soap message
+  	jsdlString = "<jsdl:JobDefinition xmlns:jsdl-posix='http://schemas.ggf.org/jsdl/2005/11/jsdl-posix' xmlns:jsdl='http://schemas.ggf.org/jsdl/2005/11/jsdl'xsi:type='jsdlns:JobDefinition_Type'>"+jsdlString+
+				 "</jsdl:JobDescription></jsdl:JobDefinition>";
+
+	if (jsdlString.size()){
+		return deserializationJSDL( jsdlString );
+	}
 
 	string result="";
 	// SYTLESHEET END
-	if (!jsdl->jsdlns__JobDescription){return result;}
-	edglog(debug)<<"_____ JSDL JobDescription: "<< jsdl->jsdlns__JobDescription<<endl;
-	if (jsdl->jsdlns__JobDescription->jsdlns__JobIdentification){
-		edglog(debug)<<"_____ JSDL JobDescription jsdlns__JobIdentification"<<
-			jsdl->jsdlns__JobDescription->jsdlns__JobIdentification	<<endl;
-		result+= printFieldJSDL("JobName",jsdl->jsdlns__JobDescription->jsdlns__JobIdentification->jsdlns__JobName);
-		result+= printFieldsJSDL("JobAnnotation",jsdl->jsdlns__JobDescription->jsdlns__JobIdentification->jsdlns__JobAnnotation);
-		result+= printFieldsJSDL("JobProject",jsdl->jsdlns__JobDescription->jsdlns__JobIdentification->jsdlns__JobProject);
-	}
-
-	if (jsdl->jsdlns__JobDescription->jsdlns__Application){
-		edglog(debug)<<"_____ JSDL JobDescription jsdlns__Application: "<<
-			jsdl->jsdlns__JobDescription->jsdlns__Application	<<endl;
-		result+= printFieldJSDL("ApplicationName", jsdl->jsdlns__JobDescription->jsdlns__Application->jsdlns__ApplicationName);
-		result+= printFieldJSDL("ApplicationVersion", jsdl->jsdlns__JobDescription->jsdlns__Application->jsdlns__ApplicationVersion);
-	}
-	edglog(debug)<<"_____ JSDL HPCProfile 01"<< endl ;
-	edglog(debug)<<"_____ JSDL HPCProfile hpcp"<< jsdl->jsdlns__JobDescription->jsdlns__Application->__any[0]  << "##"<< endl ;
-
-	// adding FAKE attributes:
-	string
-	tmp="/bin/ls";
-	result+= printFieldJSDL("Executable", &tmp);
-	result+= "Requirements = true;\n";
-	result+= "Rank = 1;\n" ;
-
-
-	if (jsdl->jsdlns__JobDescription->jsdlns__Resources){
-		edglog(debug)<<"_____ JSDL JobDescription jsdlns__Resources: "<<
-			jsdl->jsdlns__JobDescription->jsdlns__Resources		<<endl;
-	}
-	return "[\n"+result +"\n]";
-}
-
-
-
-void printJSDL(jsdlns__JobDefinition_USCOREType *jsdl)
-{
-        jsdlns__JobDescription_USCOREType *JobDescription = JobDescription = jsdl->jsdlns__JobDescription;
-        jsdlns__JobIdentification_USCOREType *JobIdentification = JobDescription->jsdlns__JobIdentification;
-        jsdlns__Application_USCOREType *Application = JobDescription->jsdlns__Application;
-
-	// Print out JOB IDENTIFICATION
-	edglog(info) << "JobIdentification JobName " << JobIdentification->jsdlns__JobName->c_str() << endl;
-	
-	// Print out APPLICATION
-	edglog(info) << "Application ApplicationName " << Application->jsdlns__ApplicationName->c_str() << endl;
-	edglog(info) << "Application ApplicationVersion " << Application->jsdlns__ApplicationVersion->c_str() << endl;
-	edglog(info) << "Application ApplicationDescription " << Application->jsdlns__Description->c_str() << endl;
-}
-
-void initializingSignalHandler(){
-	// Initializing signal handler for 'graceful' stop/restart
-	extern volatile sig_atomic_t handled_signal_recv;
-	handled_signal_recv = 0;
-	glite::wms::wmproxy::server::initsignalhandler();
+	return result;
 }
 
 int
@@ -240,7 +170,7 @@ ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
 			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getVersion operation completed\n"<<endl;
 
 	return return_value;
@@ -290,7 +220,7 @@ ns1__getJDL(struct soap *soap, string job_id, ns1__JdlType type,
 			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getJDL operation completed\n"<<endl;
 
 	return return_value;
@@ -348,47 +278,32 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 
 
 /**
-* JOB REGISTER JSDL -> TOBEPORTED AS JOB SUBMIT JSDL
+* JOB REGISTER JSDL -> PORTING AS JOB SUBMIT JSDL - STILL TBD
 */
 int
-ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
+ns1__jobRegisterJSDL(struct soap *soap, jsdl__JobDefinition_USCOREType *jsdl,
 	string delegation_id, struct ns1__jobRegisterJSDLResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobRegisterJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl, "
+	GLITE_STACK_TRY("ns1__jobRegisterJSDL(struct soap *soap, jsdl__JobDefinition_USCOREType *jsdl, "
 		"string delegation_id, struct ns1__jobRegisterResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobRegisterJSDL");
 	edglog(info) << "jobRegisterJSDL operation called" << endl;
-	
-	//printJSDL(jsdl);
-	
+
 	int return_value = SOAP_OK;
+
+	// Conversion from JSDL to JDL
+	string jdl = deserializationJSDL (jsdl);
+
 	ns1__jobRegisterResponse jobRegister_response;
-	
-	// Perform the JSDL to JDL conversion via Stylesheet
-	// TBD
-	
-	string jdl = "[ \
-		requirements = true; \
-		AllowZippedISB = false; \
-		OutputSandboxBaseDestURI = \"gsiftp://pcpg01.cern.ch/data/SEDir/Indy/\";  \
-		JobType = \"normal\"; \
-		Executable = \"/bin/ls\"; \
-		StdOutput = \"std.out\"; \
-		OutputSandbox = { \"std.out\",\"std.err\" }; \
-		VirtualOrganisation = \"dteam\"; \
-		rank = 4; \
-		Type = \"job\"; \
-		StdError = \"std.err\"; \
-		DefaultRank =  -other.GlueCEStateEstimatedResponseTime ]";
-		
-	// Call the Job Register		
+
+	// Call the Job Register
 	return_value = ns1__jobRegister(soap, jdl, delegation_id, jobRegister_response);
-	
+
 	// Set the JobRegisterJSDL response
 	response._jobIdStruct = jobRegister_response._jobIdStruct;
-	
+
 	edglog(info)<<"jobRegisterJSDL operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -432,7 +347,7 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__
 	edglog(debug)<<"jobSubmit operation called"<<endl;
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	jobSubmitResponse jobSubmit_response;
 	try {
 		jobSubmit(response, jobSubmit_response, jdl, delegation_id, soap);
@@ -445,7 +360,7 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__
  			WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	 
+
 	edglog(debug)<<"jobSubmit operation completed\n"<<endl;
 
 	return return_value;
@@ -453,23 +368,20 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__
 }
 
 int
-ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, jsdlns__JobDefinition_USCOREType *jsdl, struct ns1__jobSubmitJSDLResponse &response)
+ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, jsdl__JobDefinition_USCOREType *jsdl, struct ns1__jobSubmitJSDLResponse &response)
 {
 	GLITE_STACK_TRY("ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, "
-		"jsdlns__JobDefinition_USCOREType *jsdl, struct ns1__jobSubmitJSDLResponse &response)");
+		"jsdl__JobDefinition_USCOREType *jsdl, struct ns1__jobSubmitJSDLResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobSubmitJSDL");
 	edglog(debug)<<"jobSubmitJSDL operation called"<<endl;
-	
-	printJSDL(jsdl);
-
-        initializingSignalHandler();
+	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	// Conversion from JSDL to JDL
-	string jdl = deserializationJSDL (jsdl, soap);
-	
+	string jdl = deserializationJSDL (jsdl);
+
 	jobSubmitResponse jobSubmit_response;
-	
+
 	try {
                 jobSubmitJSDL( response, jobSubmit_response, jdl, delegation_id, soap);
 	} catch (Exception &exc) {
@@ -481,9 +393,9 @@ ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, jsdlns__JobDefinitio
                         WMS_IS_FAILURE, (string) ex.what());
                 return_value = SOAP_FAULT;
         }
-	
+
 	edglog(debug)<<"jobSubmitJSDL operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -513,7 +425,7 @@ ns1__jobCancel(struct soap *soap, string job_id,
 	}
 
 	edglog(debug)<<"jobCancel operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 
@@ -546,35 +458,35 @@ ns1__getMaxInputSandboxSize(struct soap *soap,
 	 }
 
 	edglog(debug)<<"getMaxInputSandboxSize operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
 
 int
 ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol,
-	struct ns1__getSandboxDestURIResponse &response 
+	struct ns1__getSandboxDestURIResponse &response
 	= *(new ns1__getSandboxDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxDestURI(struct soap *soap, string job_id, "
 		"struct ns1__getSandboxDestURIResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getSandboxDestURI");
 	edglog(debug)<<"getSandboxDestURI operation called"<<endl;
-	
+
 	// Setting default value for protocol. gSOAP set it as "" if not provided
 	if (protocol == "") {
-		protocol = ALL_PROTOCOLS;	
+		protocol = ALL_PROTOCOLS;
 	}
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	getSandboxDestURIResponse getSandboxDestURI_response;
-	
+
 	response._path = new ns1__StringList();
 	response._path->Item = *(new vector<string>(0));
 	try {
 		getSandboxDestURI(getSandboxDestURI_response, job_id, protocol);
-		for (unsigned int i = 0; 
+		for (unsigned int i = 0;
 				i < getSandboxDestURI_response.path->Item->size(); i++) {
 			response._path->Item.push_back(
 				(*(getSandboxDestURI_response.path->Item))[i]);
@@ -590,7 +502,7 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol,
 	}
 
 	edglog(debug)<<"getSandboxDestURI operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -609,28 +521,28 @@ ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol,
 
 	// Setting default value for protocol. gSOAP set it as "" if not provided
 	if (protocol == "") {
-		protocol = ALL_PROTOCOLS;	
+		protocol = ALL_PROTOCOLS;
 	}
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getSandboxBulkDestURIResponse getSandboxBulkDestURI_response;
-	
+
 	try {
 		getSandboxBulkDestURI(getSandboxBulkDestURI_response, job_id, protocol);
-			
-		vector<ns1__DestURIStructType*> *uris = 
+
+		vector<ns1__DestURIStructType*> *uris =
 			new vector<ns1__DestURIStructType*>(0);
-		for (unsigned int i = 0; i < 
-				getSandboxBulkDestURI_response.destURIsStruct->Item->size(); 
+		for (unsigned int i = 0; i <
+				getSandboxBulkDestURI_response.destURIsStruct->Item->size();
 				i++) {
 			ns1__DestURIStructType *destURIStruct = new ns1__DestURIStructType();
-			destURIStruct->id = 
+			destURIStruct->id =
 				(*getSandboxBulkDestURI_response.destURIsStruct->Item)[i]->id;
-			destURIStruct->Item = 
+			destURIStruct->Item =
 				*((*getSandboxBulkDestURI_response.destURIsStruct->Item)[i]->destURIs);
 			uris->push_back(destURIStruct);
-			
+
 		}
 		response._DestURIsStructType = new ns1__DestURIsStructType();
 		response._DestURIsStructType->Item = *uris;
@@ -645,7 +557,7 @@ ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol,
 	}
 
 	edglog(debug)<<"getSandboxBulkDestURI operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -677,7 +589,7 @@ ns1__getTotalQuota(struct soap *soap,
 	}
 
 	edglog(debug)<<"getTotalQuota operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -691,7 +603,7 @@ ns1__getFreeQuota(struct soap *soap, struct ns1__getFreeQuotaResponse &response)
 	edglog(debug)<<"getFreeQuota operation called"<<endl;
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	getFreeQuotaResponse getFreeQuota_response;
 	try {
 		getFreeQuota(getFreeQuota_response);
@@ -708,12 +620,12 @@ ns1__getFreeQuota(struct soap *soap, struct ns1__getFreeQuotaResponse &response)
 	}
 
 	edglog(debug)<<"getFreeQuota operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
 
-int 
+int
 ns1__jobPurge(struct soap *soap, string job_id,
 	struct ns1__jobPurgeResponse &response)
 {
@@ -723,7 +635,7 @@ ns1__jobPurge(struct soap *soap, string job_id,
 	edglog(debug)<<"jobPurge operation called"<<endl;
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	jobPurgeResponse jobPurge_response;
 	try {
 		jobPurge(jobPurge_response, job_id);
@@ -738,21 +650,21 @@ ns1__jobPurge(struct soap *soap, string job_id,
 	}
 
 	edglog(debug)<<"jobPurge operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH()
 }
 
-int 
+int
 ns1__getOutputFileList(struct soap *soap, string job_id, string protocol,
-	struct ns1__getOutputFileListResponse &response 
+	struct ns1__getOutputFileListResponse &response
 	= *(new ns1__getOutputFileListResponse()))
 {
 	GLITE_STACK_TRY("ns1__getOutputFileList(struct soap *soap, string *job_id, "
 		"struct ns1__getOutputFileListResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getOutputFileList");
 	edglog(debug)<<"getOutputFileList operation called"<<endl;
-	
+
 
 
 	// Setting default value for protocol. gSOAP set it as "" if not provided
@@ -763,26 +675,26 @@ ns1__getOutputFileList(struct soap *soap, string job_id, string protocol,
 	int return_value = SOAP_OK;
 
 	getOutputFileListResponse getOutputFileList_response;
-	
+
 	response._OutputFileAndSizeList = new ns1__StringAndLongList();
 	response._OutputFileAndSizeList->file = *(new vector<ns1__StringAndLongType*>(0));
 	ns1__StringAndLongType *item = NULL;
 
 	try {
 		getOutputFileList(getOutputFileList_response, job_id, protocol);
-		
+
 		if (getOutputFileList_response.OutputFileAndSizeList->file) {
 			for (unsigned int i = 0; i < getOutputFileList_response
 					.OutputFileAndSizeList->file->size(); i++) {
 				item = new ns1__StringAndLongType();
-				item->name = 
+				item->name =
 					(*getOutputFileList_response.OutputFileAndSizeList->file)[i]->name;
-				item->size = 
+				item->size =
 					(*getOutputFileList_response.OutputFileAndSizeList->file)[i]->size;
 				response._OutputFileAndSizeList->file.push_back(item);
 			}
 		}
-		
+
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getOutputFileList", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -794,7 +706,7 @@ ns1__getOutputFileList(struct soap *soap, string job_id, string protocol,
 	}
 
 	edglog(debug)<<"getOutputFileList operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -812,11 +724,11 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 	int return_value = SOAP_OK;
 
 	jobListMatchResponse jobListMatch_response;
-	
+
 	response._CEIdAndRankList = new ns1__StringAndLongList();
 	response._CEIdAndRankList->file = *(new vector<ns1__StringAndLongType*>);
 	ns1__StringAndLongType *item = NULL;
-	
+
 	try {
 		jobListMatch(jobListMatch_response, jdl, delegation_id);
 		for (unsigned int i = 0;
@@ -826,7 +738,7 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 			item->size = (*jobListMatch_response.CEIdAndRankList->file)[i]->size;
 			response._CEIdAndRankList->file.push_back(item);
 		}
-		
+
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobListMatch", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -838,55 +750,43 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 	}
 
 	edglog(debug)<<"jobListMatch operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
 
 /**
-* JOB LIST MATCH JSDL, TOBEPORTED AS JOB SUBMIT JSDL
+* JOB LIST MATCH JSDL, PORTING AS JOB SUBMIT JSDL STILL TBD
 */
 int
-ns1__jobListMatchJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl,
+ns1__jobListMatchJSDL(struct soap *soap, jsdl__JobDefinition_USCOREType *jsdl,
 	string delegation_id, struct ns1__jobListMatchJSDLResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobListMatchJSDL(struct soap *soap, jsdlns__JobDefinition_USCOREType *jsdl, "
+	GLITE_STACK_TRY("ns1__jobListMatchJSDL(struct soap *soap, jsdl__JobDefinition_USCOREType *jsdl, "
 		"string delegation_id, struct ns1__jobListMatchJSDLResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobListMatchJSDL");
 	edglog(info)<<"ns1__jobListMatchJSDL operation called"<<endl;
-	
+
 	//printJSDL(jsdl);
 
 	int return_value = SOAP_OK;
+
+	// Conversion from JSDL to JDL
+	string jdl = deserializationJSDL (jsdl);
+
 	ns1__jobListMatchResponse jobListMatch_response;
-	
-	// Perform the JSDL to JDL conversion via Stylesheet
-	// TBD
-	
-	string jdl = "[ \
-		requirements = true; \
-		AllowZippedISB = false; \
-		OutputSandboxBaseDestURI = \"gsiftp://pcpg01.cern.ch/data/SEDir/Indy/\";  \
-		JobType = \"normal\"; \
-		Executable = \"/bin/ls\"; \
-		StdOutput = \"std.out\"; \
-		OutputSandbox = { \"std.out\",\"std.err\" }; \
-		VirtualOrganisation = \"dteam\"; \
-		rank = 4; \
-		Type = \"job\"; \
-		StdError = \"std.err\"; \
-		DefaultRank =  -other.GlueCEStateEstimatedResponseTime ]";
-		
-	// Call the Job ListMatch		
+
+	// Call the Job ListMatch
 	return_value = ns1__jobListMatch(soap, jdl, delegation_id, jobListMatch_response);
-	
+
 	// Set the JobListMatchJSDL response
 	response._CEIdAndRankList = jobListMatch_response._CEIdAndRankList;
-	
+
 	edglog(info)<<"jobListMatchJSDL operation completed\n"<<endl;
-	
+
 	return return_value;
-	GLITE_STACK_CATCH();}
+	GLITE_STACK_CATCH();
+}
 
 int
 ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
@@ -899,10 +799,10 @@ ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
 		"&response)");
 	edglog_fn("wmpgsoapoperations::ns1__getJobTemplate");
 	edglog(debug)<<"getJobTemplate operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	if (!job_type_list) {
 		setSOAPFault(soap, WMS_INVALID_ARGUMENT, "getJobTemplate", time(NULL),
 	 		WMS_INVALID_ARGUMENT, "Invalid Argument");
@@ -910,7 +810,7 @@ ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
 	} else {
 		getJobTemplateResponse getJobTemplate_response;
 		try {
-			getJobTemplate(getJobTemplate_response, 
+			getJobTemplate(getJobTemplate_response,
 				*convertFromGSOAPJobTypeList(job_type_list), executable,
 				arguments, requirements, rank);
 			response._jdl = getJobTemplate_response.jdl;
@@ -924,7 +824,7 @@ ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
 			return_value = SOAP_FAULT;
 		}
 	}
-	
+
 	edglog(debug)<<"getJobTemplate operation completed\n"<<endl;
 
 	return return_value;
@@ -932,7 +832,7 @@ ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
 }
 
 int
-ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies, 
+ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies,
 	string requirements, string rank,
 	struct ns1__getDAGTemplateResponse &response)
 {
@@ -944,7 +844,7 @@ ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies,
 
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	if (!dependencies) {
 		setSOAPFault(soap, WMS_INVALID_ARGUMENT, "getDAGTemplate", time(NULL),
 	 		WMS_INVALID_ARGUMENT, "Invalid Argument");
@@ -966,7 +866,7 @@ ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies,
 			return_value = SOAP_FAULT;
 		}
 	}
-	
+
 	edglog(debug)<<"getDAGTemplate operation completed\n"<<endl;
 
 	return return_value;
@@ -1003,7 +903,7 @@ ns1__getCollectionTemplate(struct soap *soap, int job_number,
 	 }
 
 	edglog(debug)<<"getCollectionTemplate operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -1028,7 +928,7 @@ ns1__getIntParametricJobTemplate(struct soap *soap, ns1__StringList *attributes,
 			time(NULL), WMS_INVALID_ARGUMENT, "Invalid Argument");
 		return_value = SOAP_FAULT;
 	} else {
-		getIntParametricJobTemplateResponse 
+		getIntParametricJobTemplateResponse
 			getIntParametricJobTemplate_response;
 		try  {
 			getIntParametricJobTemplate(getIntParametricJobTemplate_response,
@@ -1048,14 +948,14 @@ ns1__getIntParametricJobTemplate(struct soap *soap, ns1__StringList *attributes,
 	}
 
 	edglog(debug)<<"getIntParametricJobTemplate operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
 
 int
 ns1__getStringParametricJobTemplate(struct soap *soap,
-	ns1__StringList *attributes, ns1__StringList *param, string requirements, 
+	ns1__StringList *attributes, ns1__StringList *param, string requirements,
 	string rank, struct ns1__getStringParametricJobTemplateResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getStringParametricJobTemplate(struct soap *soap, "
@@ -1073,7 +973,7 @@ ns1__getStringParametricJobTemplate(struct soap *soap,
 	 		WMS_INVALID_ARGUMENT, "Invalid Argument");
 		return_value = SOAP_FAULT;
 	} else {
-		getStringParametricJobTemplateResponse 
+		getStringParametricJobTemplateResponse
 			getStringParametricJobTemplate_response;
 		try  {
 			getStringParametricJobTemplate(getStringParametricJobTemplate_response,
@@ -1092,7 +992,7 @@ ns1__getStringParametricJobTemplate(struct soap *soap,
 	}
 
 	edglog(debug)<<"getStringParametricJobTemplate operation completed\n"<<endl;
-	
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -1105,7 +1005,7 @@ ns1__getProxyReq(struct soap *soap, string delegation_id,
 		"ns1__getProxyReqResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getProxyReq");
 	edglog(debug)<<"getProxyReq operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
@@ -1122,7 +1022,7 @@ ns1__getProxyReq(struct soap *soap, string delegation_id,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	 
+
 	edglog(debug)<<"getProxyReq operation completed\n"<<endl;
 
 	return return_value;
@@ -1286,7 +1186,7 @@ delegationns__renewProxyReq(struct soap *soap, string delegation_id,
 	 		"renewProxyReq", time(NULL), WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"renewProxyReq operation completed\n"<<endl;
 
 	return return_value;
@@ -1302,7 +1202,7 @@ delegationns__getTerminationTime(struct soap *soap, string delegation_id,
 		"&response)");
 	edglog_fn("wmpgsoapoperations::delegationns__getTerminationTime");
 	edglog(debug)<<"getTerminationTime operation called"<<endl;
-	
+
         initializingSignalHandler();
 	int return_value = SOAP_OK;
 
@@ -1320,7 +1220,7 @@ delegationns__getTerminationTime(struct soap *soap, string delegation_id,
 	 	"getTerminationTime", time(NULL), WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getTerminationTime operation completed\n"<<endl;
 
 	return return_value;
@@ -1335,7 +1235,7 @@ delegationns__destroy(struct soap *soap, string delegation_id,
 		"struct delegationns__destroyResponse &response)");
 	edglog_fn("wmpgsoapoperations::delegationns__destroy");
 	edglog(debug)<<"destroy operation called"<<endl;
-	
+
         initializingSignalHandler();
 	int return_value = SOAP_OK;
 
@@ -1351,7 +1251,7 @@ delegationns__destroy(struct soap *soap, string delegation_id,
 	 	"destroy", time(NULL), WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"destroy operation completed\n"<<endl;
 
 	return return_value;
@@ -1434,10 +1334,10 @@ ns1__getACLItems(struct soap *soap, string jobId,
 		"struct ns1__getACLItemsResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getACLItems");
 	edglog(debug)<<"getACLItems operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	getACLItemsResponse getACLItems_response;
 	try  {
 		getACLItems(getACLItems_response, jobId);
@@ -1452,7 +1352,7 @@ ns1__getACLItems(struct soap *soap, string jobId,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getACLItems operation completed\n"<<endl;
 
 	return return_value;
@@ -1468,7 +1368,7 @@ ns1__addACLItems(struct soap *soap, string jobId, ns1__StringList* items,
 		"ns1__addACLItemsResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__addACLItems");
 	edglog(debug)<<"addACLItems operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
@@ -1484,7 +1384,7 @@ ns1__addACLItems(struct soap *soap, string jobId, ns1__StringList* items,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"addACLItems operation completed\n"<<endl;
 
 	return return_value;
@@ -1499,7 +1399,7 @@ ns1__removeACLItem(struct soap *soap, string jobId, string item,
 		"string item, struct ns1__removeACLItemResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__removeACLItem");
 	edglog(debug)<<"removeACLItem operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
@@ -1515,7 +1415,7 @@ ns1__removeACLItem(struct soap *soap, string jobId, string item,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"removeACLItem operation completed\n"<<endl;
 
 	return return_value;
@@ -1530,10 +1430,10 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 		"delegation_id, struct ns1__getDelegatedProxyInfoResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getDelegatedProxyInfo");
 	edglog(debug)<<"getDelegatedProxyInfo operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	getProxyInfoResponse getProxyInfo_response;
 	try  {
 		getProxyInfo(getProxyInfo_response, delegation_id);
@@ -1548,7 +1448,7 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getDelegatedProxyInfo operation completed\n"<<endl;
 
 	return return_value;
@@ -1564,10 +1464,10 @@ ns1__getJobProxyInfo(struct soap *soap, string job_id,
 		" &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getJobProxyInfo");
 	edglog(debug)<<"getJobProxyInfo operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	getProxyInfoResponse getProxyInfo_response;
 	try  {
 		getProxyInfo(getProxyInfo_response, job_id, true);
@@ -1582,7 +1482,7 @@ ns1__getJobProxyInfo(struct soap *soap, string job_id,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getJobProxyInfo operation completed\n"<<endl;
 
 	return return_value;
@@ -1598,10 +1498,10 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 		"&response)");
 	edglog_fn("wmpgsoapoperations::ns1__enableFilePerusal");
 	edglog(debug)<<"enableFilePerusal operation called"<<endl;
-	
+
 	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	enableFilePerusalResponse enableFilePerusal_response;
 	try  {
 		enableFilePerusal(enableFilePerusal_response, jobId,
@@ -1615,7 +1515,7 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"enableFilePerusal operation completed\n"<<endl;
 
 	return return_value;
@@ -1633,14 +1533,14 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
 		"&response)");
 	edglog_fn("wmpgsoapoperations::ns1__getPerusalFiles");
 	edglog(debug)<<"getPerusalFiles operation called"<<endl;
-	
+
 	// Setting default value for protocol. gSOAP set it as "" if not provided
 	if (protocol == "") {
 		protocol = DEFAULT_PROTOCOL;
 	}
-	initializingSignalHandler();	
+	initializingSignalHandler();
 	int return_value = SOAP_OK;
-	
+
 	getPerusalFilesResponse getPerusalFiles_response;
 	try  {
 		getPerusalFiles(getPerusalFiles_response, jobId, file, allChunks,
@@ -1656,7 +1556,7 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getPerusalFiles operation completed\n"<<endl;
 
 	return return_value;
@@ -1664,7 +1564,7 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
 }
 
 int
-ns1__getTransferProtocols(struct soap *soap, 
+ns1__getTransferProtocols(struct soap *soap,
 	struct ns1__getTransferProtocolsResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getTransferProtocols(struct soap soap*, "
@@ -1695,7 +1595,7 @@ ns1__getTransferProtocols(struct soap *soap,
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
-	
+
 	edglog(debug)<<"getTransferProtocols operation completed\n"<<endl;
 
 	return return_value;
