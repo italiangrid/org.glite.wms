@@ -1258,7 +1258,7 @@ delegationns__destroy(struct soap *soap, string delegation_id,
 	GLITE_STACK_CATCH();
 }
 
-//          ##################  COMMON METHODS FOR DELEGATION ##############################
+//          ##################  COMMON METHODS FOR DELEGATION 1/2 ##############################
 int
 delegationns__getProxyReq(struct soap *soap, string delegation_id,
 	struct delegationns__getProxyReqResponse &response)
@@ -1323,6 +1323,74 @@ delegationns__putProxy(struct soap *soap, string delegation_id, string proxy,
 	return return_value;
 	GLITE_STACK_CATCH();
 }
+
+// DELEGATION 1 METHODS
+
+int
+delegation1__getProxyReq(struct soap *soap, string delegation_id,
+	struct delegation1__getProxyReqResponse &response)
+{
+	GLITE_STACK_TRY("delegation1__getProxyReq(struct soap *soap, string "
+		"delegation_id, delegation1__getProxyReqResponse &response)");
+	edglog_fn("wmpgsoapoperations::delegation1__getProxyReq");
+	edglog(debug)<<"delegation1 getProxyReq operation called"<<endl;
+
+	initializingSignalHandler();
+	int return_value = SOAP_OK;
+
+	getProxyReqResponse getProxyReq_response;
+	try  {
+		getProxyReq(getProxyReq_response, delegation_id);
+		response._getProxyReqReturn = getProxyReq_response.request;
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, SOAP_TYPE_delegation1__DelegationExceptionType,
+	 		"getProxyReq", time(NULL), exc.getCode(), (string) exc.what(),
+	 		exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, SOAP_TYPE_delegation1__DelegationExceptionType,
+	 	"getProxyReq", time(NULL), WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+
+	edglog(debug)<<"delegation1 getProxyReq operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+delegation1__putProxy(struct soap *soap, string delegation_id, string proxy,
+	struct delegation1__putProxyResponse &response)
+{
+	GLITE_STACK_TRY("delegation1__putProxy(struct soap *soap, string delegation_id, "
+		"string proxy, struct delegation1__putProxyResponse &response)");
+	edglog_fn("wmpgsoapoperations::delegation1__putProxy");
+	edglog(debug)<<"delegation1 putProxy operation called"<<endl;
+
+	initializingSignalHandler();
+	int return_value = SOAP_OK;
+
+	putProxyResponse putProxy_response;
+	try  {
+		putProxy(putProxy_response, delegation_id, proxy);
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, SOAP_TYPE_delegation1__DelegationExceptionType,
+	 	"putProxy", time(NULL), exc.getCode(), (string) exc.what(),
+	 	exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, SOAP_TYPE_delegation1__DelegationExceptionType,
+	 	"putProxy", time(NULL), WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+
+	edglog(debug)<<"delegation1 putProxy operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
 //          ##################  END DELEGATION ##############################
 
 
