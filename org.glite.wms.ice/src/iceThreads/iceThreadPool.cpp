@@ -64,8 +64,9 @@ iceThreadPool::iceThreadPoolWorker::~iceThreadPoolWorker( )
 //______________________________________________________________________________
 void iceThreadPool::iceThreadPoolWorker::body( )
 {
-    while( !isStopped() ) {
+    static const char* method_name = "iceThreadPoolWorker::body() - ";
 
+    while( !isStopped() ) {
 
         boost::scoped_ptr< iceAbsCommand > cmd;
         {
@@ -105,29 +106,17 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 
                     ++m_state->m_num_running;
                 } catch( boost::lock_error& err ) {
-                    CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                                    << "iceThreadPoolWorker::body() - "
+                    CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                                     << "Worker Thread " 
                                     << m_state->m_name << "/" << m_threadNum 
                                     << " raised the following lock_error "
                                     << "exception while waiting on the "
                                     << "command queue: " << err.what()
                                     << ". Giving up."
-                                    
                                     );
                     abort();
                 }
             } 
-            CREAM_SAFE_LOG(
-                           m_log_dev->debugStream()
-                           << "iceThreadPoolWorker::body() - "
-                           << "Worker Thread "
-                           << m_state->m_name << "/" << m_threadNum 
-                           << " started processing new request"
-                           << " (Currently " << m_state->m_num_running
-                           << " threads are running)" 
-                           
-                           );
             // Remove one request from the queue
             list< iceAbsCommand* >::iterator req_it = get_first_request( );
             assert( req_it != m_state->m_requests_queue.end() );
@@ -135,47 +124,53 @@ void iceThreadPool::iceThreadPoolWorker::body( )
             cmd.reset( cmd_ptr );
             m_state->m_requests_queue.erase( req_it );
             m_state->m_pending_jobs.insert( cmd->get_grid_job_id() );
+
+            CREAM_SAFE_LOG(
+                           m_log_dev->debugStream() << method_name
+                           << "Worker Thread "
+                           << m_state->m_name << "/" << m_threadNum 
+                           << " started processing new request"
+                           << " (Currently " << m_state->m_num_running
+                           << " threads are running, "
+                           << m_state->m_requests_queue.size()
+                           << " commands in the queue)"
+                           );
+
         } // releases lock
 
         try {
             cmd->execute( );
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
-                           m_log_dev->errorStream()
-                           << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got FATAL exception: "
+                           m_log_dev->errorStream() << method_name
+                           << "Command execution got FATAL exception: "
                            << ex.what()
-                           
                            );
         } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
             CREAM_SAFE_LOG(
-                           m_log_dev->errorStream()
-                           << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got TRANSIENT exception: "
+                           m_log_dev->errorStream() << method_name
+                           << "Command execution got TRANSIENT exception: "
                            << ex.what()
-                           
                            );
         } catch( glite::ce::cream_client_api::soap_proxy::soap_runtime_ex& ex ) {
 
 	  CREAM_SAFE_LOG(
-			 m_log_dev->fatalStream()
-			 << "iceThreadPool::iceThreadPoolWorker::body()  - "
+			 m_log_dev->fatalStream() << method_name
 			 << "A VERY SEVERE error occurred: "
 			 << ex.what() << ". Shutting down !!"
-			 
 			 );
 	  exit(2);
 
 	} catch( exception& ex ) {
             CREAM_SAFE_LOG(
-                           m_log_dev->errorStream()
-                           << "ceThreadPool::iceThreadPoolWorker::body() - Command execution got exception: "
+                           m_log_dev->errorStream() << method_name
+                           << "Command execution got exception: "
                            << ex.what()
-                           
                            );
         } catch( ... ) {
             CREAM_SAFE_LOG(
-                           m_log_dev->errorStream()
-                           << "iceThreadPool::iceThreadPoolWorker::body() - Command execution got unknown exception"
-                           
+                           m_log_dev->errorStream() << method_name
+                           << "Command execution got unknown exception"
                            );
         }
 
@@ -260,35 +255,28 @@ void iceThreadPool::stopAllThreads( void ) throw()
 
   for(list<iceThread*>::iterator thisThread = m_thread_list.begin();
       thisThread != m_thread_list.end();
-      ++thisThread) 
-    { 
+      ++thisThread) { 
       CREAM_SAFE_LOG( m_log_dev->debugStream()
 		      << "iceThreadPool::stopAllThreads() - "
 		      << "Calling ::stop() on thread ["
-		      << (*thisThread)->getName() << "]"
-		      
+		      << (*thisThread)->getName() << "]"		      
 		      );
       (*thisThread)->stop(); 
-      
-//      m_state->m_no_requests_available.notify_all();
-      
     }
  
   m_state->m_no_requests_available.notify_all();
  
   CREAM_SAFE_LOG( m_log_dev->debugStream()
 		  << "iceThreadPool::stopAllThreads() - "
-		  << "Waiting for all pool-thread termination ..."
-		  
-		  );  
-
+		  << "Waiting for all pool-thread termination ..."  
+                  );  
+  
   m_all_threads.join_all();
   
   CREAM_SAFE_LOG( m_log_dev->fatalStream()
 		  << "iceThreadPool::stopAllThreads() - "
 		  << "All pool-threads TERMINATED !"
-		  
-		  );  
+                  );
 
 }
 
