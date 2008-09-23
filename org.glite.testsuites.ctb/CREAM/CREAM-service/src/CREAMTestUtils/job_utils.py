@@ -281,7 +281,7 @@ class VOMSProxyManager(Thread):
         self.rCheck = 0
         
         self.renewProxy()
-        os.putenv('X509_USER_PROXY', self.proxyFile)
+        os.environ['X509_USER_PROXY'] = self.proxyFile
         
     def renewProxy(self):
         

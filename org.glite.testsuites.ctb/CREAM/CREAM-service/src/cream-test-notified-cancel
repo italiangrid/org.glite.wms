@@ -58,10 +58,10 @@ class JobMonitor(job_monitor.JobMonitor):
     def notify(self, jobHistory):
         self.lock.acquire()
         self.lastNotifyTS = time.time()
-        (jobId, status) = jobHistory[-1]
-        JobMonitor.logger.debug("Notify %s (%s)" % (jobId, status))
+        (jobId, status, fReason) = jobHistory[-1]
+        JobMonitor.logger.debug("Notify %s (%s, %s)" % (jobId, status, fReason))
         if status in JobMonitor.finalStates:
-            self.notified.append((jobId, status))
+            self.notified.append((jobId, status, fReason))
         if status in JobMonitor.runningStates:
             self.runningJobs.append((jobId, status))
         self.lock.release()

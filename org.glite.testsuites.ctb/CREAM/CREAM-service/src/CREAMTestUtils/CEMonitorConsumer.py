@@ -11,8 +11,9 @@ NSTable = {'cemon_types': 'http://glite.org/ce/monitorapij/types', \
                     'cemon_faults': 'http://glite.org/ce/monitorapij/faults', \
                     'cemon_consumer': 'http://glite.org/ce/monitorapij/ws'}
 
-jobIDRE = re.compile('CREAM_JOB_ID\s*=\s*\"(CREAM\d+)\";')
-jobStatusRE = re.compile('JOB_STATUS\s*=\s*\"([A-Z-]+)\";')
+jobIDRE = re.compile('CREAM_JOB_ID\s*=\s*\"(CREAM\d+)\"\s*;')
+jobStatusRE = re.compile('JOB_STATUS\s*=\s*\"([A-Z-]+)\"\s*;')
+jobFailureRE = re.compile('FAILURE_REASON\s*=\s*([^;]+);')
 
 class Notify:
     def __init__(self):
@@ -53,8 +54,15 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
                 classad = msg.childNodes[0].nodeValue
                 r1 = jobIDRE.search(classad)
                 r2 = jobStatusRE.search(classad)
+                r3 = jobFailureRE.search(classad)
+                if r3<>None:
+                    failureReason = r3.group(1)
+                else:
+                    failureReason = ''
+
                 if r1<>None and r2<> None:
-                    jobHistory.append( (self.server.servicePrefix+r1.group(1), r2.group(1)) )
+                    jobHistory.append( (self.server.servicePrefix+r1.group(1), \
+                                                    r2.group(1), failureReason) )
                 else:
                     ConsumerServer.logger.debug('Irregular classad: ' + classad)
                     
@@ -132,24 +140,25 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
 
 class DummyTable:
     
-    def __init__(self):
-        self.consumerPort = 9000
-        self.rate = 20
-        self.resourceURI = 'devel05.cnaf.infn.it:8443/cream-pbs-creamtest1'
+    def __init__(self, uri, port , rate):
+        self.consumerPort = port
+        self.rate = rate
+        self.resourceURI = uri
         
     def notify(self, jobHistory):
         print '---------------------------------------------'
         for item in jobHistory:
-            print "JobID: %s status: %s" % item
+            print "JobID: %s status: (%s, %s)" % item
 
 def main():
     import time
     import threading
-    dummyObj = DummyTable()
-    consumer = ConsumerServer(('',9000), dummyObj, dummyObj)
+    testsuite_utils.mainLogger.setup("log4py.conf")
+    dummyObj = DummyTable(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
+    consumer = ConsumerServer(('',int(sys.argv[2])), dummyObj, dummyObj)
     consumerThread = threading.Thread(target=consumer)
     consumerThread.start()
-    time.sleep(30)
+    time.sleep(int(sys.argv[3])*5)
     consumer.halt()
 
 if __name__ == "__main__":

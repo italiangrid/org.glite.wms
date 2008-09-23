@@ -19,7 +19,7 @@ class JobProcessed(job_utils.JobProcessed):
     def canPurge(self, jobStatus, failureReason=''):
         if jobStatus=='ABORTED' or jobStatus=='CANCELLED':
             return False
-        if jobStatus=='DONE-FAILED' and failureReason=='Proxy is expired':
+        if jobStatus=='DONE-FAILED' and 'Proxy is expired' in failureReason:
             return False
         return True
 

@@ -58,12 +58,13 @@ class JobMonitor(threading.Thread):
                     
                 self.manageNotifications()
                     
-                for (job, status) in self.notified:
+                for (job, status, fReason) in self.notified:
                     if job in self.table:
                         del(self.table[job])
-                        self.finishedJobs.append(job, status)
+                        self.finishedJobs.append(job, status, fReason)
                         jobProcessed += 1
-                        JobMonitor.logger.info("Terminated job %s with status %s" % (job, status))
+                        JobMonitor.logger.info("Terminated job %s with status (%s, %s)" \
+                                                        % (job, status, fReason))
                         self.tableOfResults[status] += 1
                             
                 self.notified = []
@@ -93,10 +94,10 @@ class JobMonitor(threading.Thread):
     def notify(self, jobHistory):
         self.lock.acquire()
         self.lastNotifyTS = time.time()
-        (jobId, status) = jobHistory[-1]
-        JobMonitor.logger.debug("Notify %s (%s)" % (jobId, status))
+        (jobId, status, fReason) = jobHistory[-1]
+        JobMonitor.logger.debug("Notify %s (%s, %s)" % (jobId, status, fReason))
         if status in JobMonitor.finalStates:
-            self.notified.append((jobId, status))
+            self.notified.append((jobId, status, fReason))
         self.lock.release()
     
     def put(self, uri, timestamp):
