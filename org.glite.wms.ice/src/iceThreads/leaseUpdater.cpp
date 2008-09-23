@@ -52,8 +52,10 @@ void leaseUpdater::body( void )
                        );
 	iceCommandLeaseUpdater().execute();
 
-	if(m_delay<=10) 
+	if(m_delay<=10) {
+	  if( isStopped() ) return;
 	  sleep( m_delay );
+	}
 	else {
 	  
 	  for(int i=0; i<=m_delay; i++) {

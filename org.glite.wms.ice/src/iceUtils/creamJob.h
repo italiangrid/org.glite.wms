@@ -342,10 +342,11 @@ namespace glite {
 	      ar & m_last_empty_notification;
 	      ar & m_proxy_renew;
 	    } catch(std::exception& ex) {
-	      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->errorStream()
+	      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
 		       << "creamJob::serialize() - [De]Serialization error: ["
 		       << ex.what() << "]"
 		       );
+	      exit(2);
 	    }
 	  }
 
