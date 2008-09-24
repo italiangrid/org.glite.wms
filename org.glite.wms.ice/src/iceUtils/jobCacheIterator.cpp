@@ -122,8 +122,10 @@ void jobCacheIterator::refresh( ) throw()
 	  return;
 	}
         is.str( /*cache->getDbManager()->getByGid( m_grid_job_id )*/ tmpGid );
-        boost::archive::text_iarchive ia(is);
-        ia >> m_theJob;
+	{
+          boost::archive::text_iarchive ia(is);
+          ia >> m_theJob;
+	}
         m_valid_it = true;
     } catch( JobDbException& ex ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name

@@ -107,9 +107,10 @@ void jobCache::load( void ) throw()
             istringstream tmpOs;//( string(data) );
             tmpOs.str( data );
             try {
-                boost::archive::text_iarchive ia(tmpOs);
-                ia >> cj;
-                
+		{
+                  boost::archive::text_iarchive ia(tmpOs);
+                  ia >> cj;
+                }
 //                 CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 //                                 << "Loading job "
 //                                 << cj.describe()
@@ -153,8 +154,10 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
       ostringstream ofs;
-      boost::archive::text_oarchive oa(ofs);
-      oa << cj;
+      {
+        boost::archive::text_oarchive oa(ofs);
+        oa << cj;
+      }
 //       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 //                       << "Putting "
 //                       << cj.describe()
@@ -181,8 +184,10 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
         CreamJob cj;
         istringstream tmpOs;//( string(data) );
         tmpOs.str( serializedJob );
-        boost::archive::text_iarchive ia(tmpOs);
-        ia >> cj;
+        {
+          boost::archive::text_iarchive ia(tmpOs);
+          ia >> cj;
+	}
         set<string>::const_iterator it = m_GridJobIDSet.find( cj.getGridJobID() );
         return make_iterator(m_GridJobIDSet.find( cj.getGridJobID() ));
     } catch(JobDbNotFoundException& ex) {

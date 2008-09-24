@@ -28,6 +28,7 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <utility>
 #include <string>
+//#include <glite/wms/common/utilities/filecontainer.h>
 
 namespace wmsutils_ns=glite::wms::common::utilities;
 namespace fs = boost::filesystem;
@@ -107,7 +108,8 @@ list<Request*> Request_source_filelist::get_requests( size_t max_size )
         catch( exception& ex ) {
             CREAM_SAFE_LOG(
                            api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
-                           << "Request_source_filelist::get_requests() - Failed to get request due to exception: " << ex.what()
+                           << "Request_source_filelist::get_requests() - "
+			   << "Failed to get request due to exception: " << ex.what()
                            
                            );
             abort(); // FIXME
@@ -139,6 +141,29 @@ void Request_source_filelist::put_request( const string& ad )
 
 size_t Request_source_filelist::get_size( void )
 {
+  try{
     return m_filelist.size();
+  } catch(wmsutils_ns::FileContainerError& ex) {
+
+    CREAM_SAFE_LOG(
+		   api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+		   << "Request_source_filelist::get_size() - Failed to get filelist size "
+		   << "due to FileContainerError exception: " << ex.what());
+		   
+  } catch(exception& ex) {
+        CREAM_SAFE_LOG(
+		   api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+		   << "Request_source_filelist::get_size() - Failed to get filelist size "
+		   << "due to an std::exception: " << ex.what());
+  } catch(...) {
+    
+    CREAM_SAFE_LOG(
+		   api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+		   << "Request_source_filelist::get_size() - Failed to get filelist size "
+		   << "due to an unknown exception");
+
+  }
+
+  return -1;
 }
 
