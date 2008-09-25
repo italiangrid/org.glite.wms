@@ -72,7 +72,7 @@ namespace util {
 
         const std::string m_fl_name;
         glite::wms::common::utilities::FileList<std::string> m_filelist;
-        glite::wms::common::utilities::FLExtractor<std::string> m_filelist_extractor;
+	glite::wms::common::utilities::FLExtractor<std::string> m_filelist_extractor;
     };
 
 } // namespace util

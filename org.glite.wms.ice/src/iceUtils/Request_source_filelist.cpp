@@ -142,6 +142,9 @@ void Request_source_filelist::put_request( const string& ad )
 size_t Request_source_filelist::get_size( void )
 {
   try{
+    
+    wmsutils_ns::FileListMutex mx(m_filelist);
+    wmsutils_ns::FileListLock  lock(mx);
     return m_filelist.size();
   } catch(wmsutils_ns::FileContainerError& ex) {
 
