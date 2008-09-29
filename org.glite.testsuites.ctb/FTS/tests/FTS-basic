@@ -59,14 +59,17 @@ do
 done
 
 if [ -z "$FTS_HOST" ]; then
-               echo ""
-               echo ">>> NOTE: FTS hostname is not specified. Option --fts <fts hostname> is obligatory! <<<"
-               showUsage
-               exit 2
+    echo ""
+    echo "FTS hostname is not specified. Option --fts <fts hostname> is obligatory!"
+    showUsage
+    exit 2
 fi
 
 if [ -z "$BDII_HOST" ]; then
-              BDII_HOST=lcg-bdii.cern.ch
+    echo ""
+    echo "BDII hostname is not specified. Option --bdii <bdii hostname> is obligatory!"
+    showUsage
+    exit 2
 fi
 
 ######################################################################

@@ -5,6 +5,6 @@ Before running FTS-submission be sure that:
 - you stored a long-term proxy into the MyProxy server.
 
 Store a long-term proxy using:
-myproxy-init -s lxbra2304.cern.ch -d 
+myproxy-init -s lxbra2304.cern.ch -d -n
 
 

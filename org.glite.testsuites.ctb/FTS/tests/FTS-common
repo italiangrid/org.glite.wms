@@ -69,12 +69,12 @@ function file_transfer()
      local SE2_SRM_LOC=$2
     fi
 
-    if [ -z $3 ];then
-     echo "A MyProxy password must be given to file_transfer()"
-     return 2
-    else
-     local MYPROXY_PASS=$3
-    fi
+#    if [ -z $3 ];then
+#     echo "A MyProxy password must be given to file_transfer()"
+#     return 2
+#    else
+#     local MYPROXY_PASS=$3
+#    fi
 
 
 #    SE1_SRM_LOC=$1
@@ -120,7 +120,8 @@ function file_transfer()
 
     echo "Submitting the transfer"  
 
-    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC -p $MYPROXY_PASS`
+    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+#    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC -p $MYPROXY_PASS`
 #    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
     if [ -z "$SUBID" ]; then
        echo "Job submition failed!"
@@ -202,7 +203,7 @@ function get_status_result()
       return 4
     
     else
-      echo "Job status unknown"
+      echo "Job status unknown: $status"
       return 1
     fi 
 
