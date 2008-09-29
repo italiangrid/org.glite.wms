@@ -211,7 +211,7 @@ echo "SAPATH_destination: $DEST_SAPATH"
 #4) Submitting a file transfer
 echo
 echo "Submitting a file transfer job..."
-file_transfer $SOURCE_SAPATH $DEST_SAPATH mypassword
+file_transfer $SOURCE_SAPATH $DEST_SAPATH
 
 if [ $? = 1 ];then
   echo "Failing submitting a job"
@@ -227,7 +227,11 @@ echo "Retrieving the job status..."
 poll_status_with_timeout $SUBID $TIMEOUT
 return=$?
 
-if [ "$return" -eq 1 ];then
+if [ "$return" = 1 ];then
+  echo "Failing retrieving the job status"
+  echo "-TEST FAILED-"
+  exit 1
+elif [ "$return" = 2 ];then
   echo "Failing retrieving the job status"
   echo "-TEST FAILED-"
   exit 1

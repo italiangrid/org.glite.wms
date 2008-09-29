@@ -98,7 +98,6 @@ function file_transfer()
 
     GUID=`lcg-cr --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
 
-
     result=`cat message | wc -l`
 
     if [ $result -gt 0 ]; then
@@ -107,7 +106,7 @@ function file_transfer()
       echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
       echo ""
       NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
-      return
+      return 1
     fi
     echo "Removing the 10MB temporary test file: $TMP_FILE"
     rm -rf $TMP_FILE

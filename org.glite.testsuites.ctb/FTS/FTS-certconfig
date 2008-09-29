@@ -8,7 +8,7 @@ LFC_HOST="lxb7607.cern.ch"
 #The name of the site as it stored in the GOC DB and information system.
 SITE="cert-tb-cern"
 #Name of VO to use
-VO="dteam"
+VO="org.glite.voms-test"
 #The channel to use for submitting file transfers
 CHANNEL="CERN-CERN"
 #Timeout for waiting the job to finish. Default is 100 sec.
