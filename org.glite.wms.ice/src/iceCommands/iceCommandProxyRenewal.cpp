@@ -55,6 +55,7 @@ using namespace glite::wms::ice::util;
 
 //______________________________________________________________________________
 iceCommandProxyRenewal::iceCommandProxyRenewal( ) :
+    iceAbsCommand( "iceCommandProxyRenewal" ),
   m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
   m_cache( jobCache::getInstance() )
 {

@@ -52,19 +52,12 @@ namespace glite {
                 /**
                  * Executes the command. 
                  *
-                 * @param _ice a pointer to an instance of the Ice
-                 * class; caller retains ownership of this pointer.
-                 *
-                 * @param theProxy pointer to an instance of an
-                 * already allocated CreamProxy data structure. Caller
-                 * retains ownership of this pointer.
-                 *
                  * @throw an iceCommandFatal_ex if the command is to
                  * be considered permanently failed;
                  * @throw an iceCommandTransient_ex if the command failed
                  * but could be tried again and succeed.
                  */
-                virtual void execute( /* Ice* _ice, glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy */ ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
+                virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
 
                 /**
                  * Returns the Grid jobID for the job this command
@@ -72,9 +65,14 @@ namespace glite {
                  */
                 virtual std::string get_grid_job_id( void ) const = 0;
           
+                /**
+                 * Return the name of this command
+                 */
+                virtual std::string name( void ) { return m_name; };
             protected:
 
-                iceAbsCommand( ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&) {};
+                iceAbsCommand( const std::string& name ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&) : m_name( name ) {};
+                std::string m_name; ///< Name of this command, default empty
 
             };
         }

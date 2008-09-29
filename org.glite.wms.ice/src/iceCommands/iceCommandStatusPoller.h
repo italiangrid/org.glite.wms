@@ -98,7 +98,7 @@ namespace glite {
 	  /**
            * Prevents copying
            */
-          iceCommandStatusPoller( const iceCommandStatusPoller& ) : m_max_chunk_size( 0 ) { } // keep the compiler happy
+          //iceCommandStatusPoller( const iceCommandStatusPoller& ) : m_max_chunk_size( 0 ) { } // keep the compiler happy
 
           /**
            *

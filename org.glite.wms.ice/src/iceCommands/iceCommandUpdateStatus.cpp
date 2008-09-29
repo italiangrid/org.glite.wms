@@ -58,6 +58,7 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event>& ev, const string& cemondn ) :
+    iceAbsCommand( "iceCommandUpdateStatus" ),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_ev( ev ),
     m_cemondn( cemondn )

@@ -208,6 +208,7 @@ namespace {
 
 //____________________________________________________________________________
 iceCommandJobKill::iceCommandJobKill( ) throw() : 
+    iceAbsCommand( "iceCommandJobKill" ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_threshold_time( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() ),
     m_lb_logger( iceLBLogger::instance() ),

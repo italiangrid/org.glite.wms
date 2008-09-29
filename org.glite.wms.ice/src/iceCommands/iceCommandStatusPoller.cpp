@@ -126,6 +126,7 @@ namespace { // begin anonymous namespace
 
 //____________________________________________________________________________
 iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bool poll_all_jobs ) :
+    iceAbsCommand( "iceCommandStatusPoller" ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
     m_iceManager( theIce ),

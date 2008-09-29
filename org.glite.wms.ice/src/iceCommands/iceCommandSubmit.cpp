@@ -53,6 +53,7 @@
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "Lease_manager.h"
 
 // Boost stuff
@@ -114,7 +115,7 @@ namespace { // Anonymous namespace
 //____________________________________________________________________________
 iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
   throw( iceUtil::ClassadSyntax_ex&, iceUtil::JobRequest_ex& ) :
-    iceAbsCommand( ),
+    iceAbsCommand( "iceCommandSubmit" ),
     m_theIce( Ice::instance() ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_configuration( iceUtil::iceConfManager::getInstance()->getConfiguration() ),
@@ -665,7 +666,11 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
   
   classad_safe_ptr->InsertAttr( "QueueName", qname );
   classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
-  
+
+  if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) ) {
+      classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", m_configuration->wm()->max_output_sandbox_size());
+  }
+
   updateIsbList( classad_safe_ptr.get() );
   updateOsbList( classad_safe_ptr.get() );
   

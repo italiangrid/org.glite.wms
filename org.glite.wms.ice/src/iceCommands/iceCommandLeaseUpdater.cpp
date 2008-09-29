@@ -116,6 +116,7 @@ bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const t
 
 //____________________________________________________________________________
 iceCommandLeaseUpdater::iceCommandLeaseUpdater( bool only_update ) throw() : 
+    iceAbsCommand( "iceCommandLeaseUpdater" ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
     m_frequency( iceConfManager::getInstance()->getConfiguration()->ice()->lease_update_frequency() ),

@@ -35,7 +35,7 @@ using namespace std;
 
 namespace api_util  = glite::ce::cream_client_api::util;
 namespace cream_api = glite::ce::cream_client_api;
-namespace ice_util  = glite::wms::ice::util;
+namespace ice_util = glite::wms::ice::util;
 
 //______________________________________________________________________________
 namespace {
@@ -49,7 +49,7 @@ namespace {
 
     void operator()( string endpoint ) {
 
-      ice_util::iceSubscription sub;
+        ice_util::iceSubscription sub;
       if(!ice_util::subscriptionManager::getInstance()->getSubscriptionByDNCEMon(m_dn, endpoint, sub)) {
 	// this should almost never happen because before to update
 	// the caller also invokes the subManager->checkSubscription()
@@ -103,6 +103,7 @@ namespace {
 
 //______________________________________________________________________________
 ice_util::iceCommandSubUpdater::iceCommandSubUpdater( ) throw() : 
+    ice_util::iceCommandSubUpdater::iceAbsCommand( "iceCommandSubUpdater" ),
   m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
   m_conf( ice_util::iceConfManager::getInstance() )		     
 {

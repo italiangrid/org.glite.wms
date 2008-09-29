@@ -29,6 +29,7 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/soap_runtime_ex.h"
 
@@ -41,6 +42,7 @@
 namespace conf_ns=glite::wms::ice::util;
 using namespace glite::wms::ice::util;
 using namespace std;
+namespace api_util = glite::ce::cream_client_api::util;
 
 //______________________________________________________________________________
 /**
@@ -139,6 +141,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
         } // releases lock
 
         try {
+            api_util::scoped_timer T( string("iceThreadPoolWorker::body() - TIMER ") + cmd->name() );
             cmd->execute( );
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
