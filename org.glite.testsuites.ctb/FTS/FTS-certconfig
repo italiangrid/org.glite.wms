@@ -1,0 +1,19 @@
+#Configuration variables for FTS testing scripts
+
+FTS_HOST="lxbra2310.cern.ch"
+#The name of the top level BDII
+BDII_HOST="lxbra2305.cern.ch"
+#The hostname of the LCG File Catalog
+LFC_HOST="lxb7607.cern.ch"
+#The name of the site as it stored in the GOC DB and information system.
+SITE="cert-tb-cern"
+#Name of VO to use
+VO="dteam"
+#The channel to use for submitting file transfers
+CHANNEL="CERN-CERN"
+#Timeout for waiting the job to finish. Default is 100 sec.
+TIMEOUT=100
+#The number of jobs to be submitted. Default is 10
+NJOBS=10
+#The number of files per job. Default is 10
+NFILES=10
