@@ -179,27 +179,32 @@ function get_status_result()
     
     elif test $status == "Failed"
     then
-      echo "Job is Failed!" 
+      echo "Job is Failed" 
       return 3 
 
     elif test $status == "Hold"
     then
-      echo "Job is Hold!"
+      echo "Job is Hold"
       return 4
 
     elif test $status == "Submitted"
     then
-      echo "Job is Submitted!"
+      echo "Job is Submitted"
       return 4
 
     elif test $status == "Ready"
     then
-      echo "Job is Ready!"
+      echo "Job is Ready"
+      return 4
+
+    elif test $status == "Done"
+    then
+      echo "Job is Done"
       return 4
 
     elif test $status == "Active"
     then
-      echo "Job is Active!"
+      echo "Job is Active"
       return 4
     
     else

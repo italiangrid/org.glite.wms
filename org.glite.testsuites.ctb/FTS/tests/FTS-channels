@@ -37,7 +37,7 @@
 showUsage()
 {
  echo "                                                                                                     "
- echo "Usage: FTS-channels --site <site name> --fts <fts hostname>  "
+ echo "Usage: FTS-channels --fts <fts hostname>  "
  echo "Options: "
  echo "          --fts  <fts hostname> "
  echo "                   The name of the FTS host."
@@ -45,6 +45,8 @@ showUsage()
 
 if [ $# -ne 2 ];then
   showUsage
+  echo
+  echo "-TEST FAILED-"
   exit 2
 fi
 

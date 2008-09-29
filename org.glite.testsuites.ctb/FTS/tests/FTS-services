@@ -29,6 +29,8 @@ showUsage ()
 
 if [ -z "$1" ]; then
   showUsage
+  echo
+  echo "-TEST FAILED-"
   exit 2
 fi
 
