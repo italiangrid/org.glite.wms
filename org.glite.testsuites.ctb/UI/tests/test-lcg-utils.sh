@@ -217,11 +217,13 @@ for pair in ${pairs}; do
     message="Checking that the replica exists"
     run_command "${command}" "${message}"
     
-    command="lcg-uf --vo dteam ${GUID} ${SURL}"
+#    command="lcg-uf --vo dteam ${GUID} ${SURL}"
+    command="lcg-uf --vo ${VO} ${GUID} ${SURL}"
     message="Running unregister file command"
     run_command "${command}" "${message}"
     
-    command="lcg-rf --vo dteam -g ${GUID} ${SURL}"
+#    command="lcg-rf --vo dteam -g ${GUID} ${SURL}"
+    command="lcg-rf --vo ${VO} -g ${GUID} ${SURL}"
     message="Running register file command"
     run_command "${command}" "${message}"
     
@@ -242,7 +244,8 @@ for pair in ${pairs}; do
     message="Running delete command"
     run_command "${command}" "${message}"
     
-    command="lcg-cr -v --vo dteam -l ${LFN} file:${LOCAL_FILE} -P /grid/dteam/${TEMP_FILE} -d ${DEST}"
+#    command="lcg-cr -v --vo dteam -l ${LFN} file:${LOCAL_FILE} -P /grid/dteam/${TEMP_FILE} -d ${DEST}"
+    command="lcg-cr -v --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -P /grid/${VO}/${TEMP_FILE} -d ${DEST}"
     message="Running copy and register with a specified path"
     run_command "${command}" "${message}"
     

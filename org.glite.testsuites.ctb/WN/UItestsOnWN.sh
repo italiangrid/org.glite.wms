@@ -25,7 +25,7 @@
 usage() {
  echo
  echo "This script creates a tarball WNtests.tgz and a jdl file WNtest.jdl. Submitting this jdl sends WNtests.tgz to some WN and executes the tests contained therein. The output of the job contains the test results. WNtests.tgz contains the following UI tests: UI--data-lcg-*, UI-data-lfc-*, UI-inf-lcg-*. To use this script you also have to check out the UI tests."
- echo "This script accepts the following options (with the same meaning ad for the UI-test-driver.sh script):  --sehost|-sehost <SE hostname> --lfchost|-lfchost <LFC hostname> --lfcdir|-lfcdir <LFC directory> --vo|-vo <VO name>"
+ echo "This script accepts the following options (with the same meaning as for the UI-test-driver.sh script):  --sehost|-sehost <SE hostname> --lfchost|-lfchost <LFC hostname> --lfcdir|-lfcdir <LFC directory> --vo|-vo <VO name>"
  echo "Have a look at WNtest.jdl and adapt it to your needs."
  echo
 }
