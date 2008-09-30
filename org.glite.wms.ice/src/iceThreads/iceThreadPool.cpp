@@ -141,7 +141,8 @@ void iceThreadPool::iceThreadPoolWorker::body( )
         } // releases lock
 
         try {
-            api_util::scoped_timer T( string("iceThreadPoolWorker::body() - TIMER ") + cmd->name() );
+            string label = boost::str( boost::format( "%1% TIMER %2% cmd=%3% threadid=%4%" ) % method_name % cmd->name() % m_state->m_name % m_threadNum );
+            api_util::scoped_timer T( label );
             cmd->execute( );
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
