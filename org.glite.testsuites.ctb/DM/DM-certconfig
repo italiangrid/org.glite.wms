@@ -9,8 +9,8 @@ DPMHOST="lxb7605.cern.ch"
 CASTORHOST="srm-dteam.cern.ch"
 
 #TEST TO RUN (yes/no)
-LCG_UTILS=no
+LCG_UTILS=yes
 GFAL=yes
-DM_CROSS_SE=no
+DM_CROSS_SE=yes
 
 
