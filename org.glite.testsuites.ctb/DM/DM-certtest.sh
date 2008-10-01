@@ -98,9 +98,9 @@ if [ "$LCG_UTILS" = "yes" ]; then
     if [ "$item" = "DM-lcg-alias.sh" -o "$item" = "DM-lcg-cp-gsiftp.sh" -o "$item" = "DM-lcg-cp.sh" \
        -o "$item" = "DM-lcg-cr-gsiftp.sh" -o "$item" = "DM-lcg-cr.sh" -o "$item" = "DM-lcg-list.sh" \
        -o "$item" = "DM-lcg-ls.sh" -o "$item" = "DM-lcg-rf.sh" ]; then
-      ./$item $FIRSTSE --vo $VO  >> ${item}_result.txt
+      ./$item $FIRSTSE --vo $VO  > ${item}_result.txt
     elif [ "$item" = "DM-lcg-rep.sh" ]; then
-      ./$item $FIRSTSE $SECONDSE --vo $VO  >> ${item}_result.txt
+      ./$item $FIRSTSE $SECONDSE --vo $VO  > ${item}_result.txt
     fi  
     grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
     if [ $? -eq 0 ]; then
@@ -127,32 +127,33 @@ fi
     exit -1
   fi
 
-if [ "$GFAL" = "yes" ]; then
-  if [ ! -d ../GFAL/tests ]; then
-    echo "GFAL test directory does not exists, check it out from CVS!"
-    exit -1
-  fi
-
-  pushd ../GFAL/tests >> /dev/null
-  tests_list=( test-gfal.sh )
-
-  echo "*Running GFAL test set*"
-  for item in ${tests_list[*]}
-  do
-    rm -rf ${item}_result.txt
-    echo "Executing $item"
-    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE >> ${item}_result.txt 2>&1   
-    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
-    if [ $? -eq 0 ]; then
-      echo "$item FAILED"
-      failed=yes
-      tests_failed=( "${tests_failed[@]}" "$item" )
-    else
-      echo "$item PASSED"
+  if [ "$GFAL" = "yes" ]; then
+    if [ ! -d ../GFAL/tests ]; then
+      echo "GFAL test directory does not exists, check it out from CVS!"
+      exit -1
     fi
-  done
-  popd >> /dev/null
-fi
+
+    pushd ../GFAL/tests >> /dev/null
+  
+    tests_list=( test-gfal.sh )
+
+    echo "*Running GFAL test set*"
+    for item in ${tests_list[*]}
+    do
+      rm -rf ${item}_result.txt
+      echo "Executing $item"
+      ./$item -v $VO -l $LFC_HOST -d $FIRSTSE > ${item}_result.txt 2>&1  
+      grep '\-TEST FAILED\-' ${item}_result.txt > /dev/null
+      if [ $? -eq 0 ]; then
+        echo "$item FAILED"
+        failed=yes
+        tests_failed=( "${tests_failed[@]}" "$item" )
+      else
+        echo "$item PASSED"
+      fi
+    done
+    popd >> /dev/null
+  fi
 
 #####################
 # DM CROSS SE tests #
@@ -201,7 +202,7 @@ if [ "$DM_CROSS_SE" = "yes" ];then
   do
     rm -rf ${item}_result.txt
     echo "Executing $item"
-    ./$item --vo $VO $seoptions >> ${item}_result.txt 2>&1
+    ./$item --vo $VO $seoptions > ${item}_result.txt 2>&1
     grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
     if [ $? -eq 0 ]; then
       echo "$item FAILED"
