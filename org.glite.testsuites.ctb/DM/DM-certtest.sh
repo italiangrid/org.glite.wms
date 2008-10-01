@@ -126,7 +126,13 @@ fi
     echo "GFAL tests need VO to be defined in DM-certconfig"
     exit -1
   fi
+
 if [ "$GFAL" = "yes" ]; then
+  if [ -d ../GFAL/tests ]; then
+    echo "GFAL test directory does not exists, check it out from CVS!"
+    exit -1
+  fi
+
   pushd ../GFAL/tests >> /dev/null
   tests_list=( test-gfal.sh )
 
@@ -152,6 +158,11 @@ fi
 # DM CROSS SE tests #
 #####################
 if [ "$DM_CROSS_SE" = "yes" ];then
+  if [ -d ../UI/tests ]; then
+    echo "UI test directory does not exists, check it out from CVS!"
+    exit -1
+  fi
+
   pushd ../UI/tests >> /dev/null
   tests_list=( test-lcg-utils.sh )
   seoptions=""
