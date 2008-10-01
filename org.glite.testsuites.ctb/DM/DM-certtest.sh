@@ -128,7 +128,7 @@ fi
   fi
 
 if [ "$GFAL" = "yes" ]; then
-  if [ -d ../GFAL/tests ]; then
+  if [ ! -d ../GFAL/tests ]; then
     echo "GFAL test directory does not exists, check it out from CVS!"
     exit -1
   fi
