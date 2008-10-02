@@ -28,6 +28,7 @@
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "iceUtils.h"
+#include <stdexcept>
 
 namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
@@ -86,7 +87,7 @@ Delegation_manager* Delegation_manager::instance( )
     return s_instance;
 }
 
-string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy,*/ const CreamJob& job, bool force )
+string Delegation_manager::delegate( const CreamJob& job, bool force ) throw( std::exception )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -114,14 +115,13 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
     fd = open( certfile.c_str(), O_RDONLY );
 
     if ( fd < 0 ) {
+        
         CREAM_SAFE_LOG( m_log_dev->errorStream()
                         << method_name
                         << "Cannot open proxy file "
                         << certfile
-                         );        
-        // Returns empty string, so that the register will do
-        // auto-delegation
-        return "";//delegation_id;
+                         );  
+        throw runtime_error( string( "Cannot open proxy file " + certfile ) );
     }
 
     cream_api::VOMSWrapper V( certfile );
@@ -133,7 +133,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
 		      << "]. Error is: "
 		      << V.getErrorMessage( )
 		       );        
-      return "";//delegation_id;
+      throw runtime_error( V.getErrorMessage() );
     }
 
     SHA1_Init( &ctx );
@@ -183,11 +183,8 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
         
         try {
             // Gets the proxy expiration time
-	  expiration_time = V.getProxyTimeEnd( ); //V.getProxyTimeLeft( certfile );
-
-            //CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( theProxy, 3 );
+            expiration_time = V.getProxyTimeEnd( );            
 	    CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
-
         } catch( exception& ex ) {
             // Delegation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -206,8 +203,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
 			    << " - ERROR is: ["
 			    << ex.what() << "]"
                              );
-            // Returns an empty string
-            return "";//delegation_id;
+            throw runtime_error(ex.what());
         }  catch( ... ) {
             // Delegation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -224,8 +220,7 @@ string Delegation_manager::delegate( /*glite::ce::cream_client_api::soap_proxy::
                             << " proxy hash "
                             << str_sha1_digest
                              );
-            // Returns an empty string
-            return "";//delegation_id;
+            throw runtime_error( "Delegation failed" );
         }     
         // Inserts the new delegation ID into the delegation set
         m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
@@ -296,6 +291,6 @@ void Delegation_manager::purge_old_delegations( void )
                         << "Purged "
                         << size_before - size_after
                         << " elements from the delegation cache"
-                         );
+                        );
     }
 }

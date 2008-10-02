@@ -28,24 +28,25 @@
 #include <vector>
 #include <map>
 
+#include "CEBlackList.h"
+
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 
 namespace _cream_ex = glite::ce::cream_client_api::cream_exceptions;
 namespace _cream_api= glite::ce::cream_client_api::soap_proxy;
 
 namespace glite {
-  namespace ce {
-    namespace cream_client_api {
-      namespace soap_proxy {
-	
-	//class RegisterArrayRequest;
-	//class RegisterArrayResult;
-	class JobFilterWrapper;
-	class StatusArrayResult;
-	class ResultWrapper;
-      }
-    }
-  }
+namespace ce {
+namespace cream_client_api {
+namespace soap_proxy {
+	    
+    class JobFilterWrapper;
+    class StatusArrayResult;
+    class ResultWrapper;
+
+}
+}
+}
 }
 
 namespace glite {
@@ -60,10 +61,6 @@ namespace util {
      * deal with transient communication failures.
      */
     class CreamProxyMethod {
-
-      
-      //theProxy;
-
     public:
         virtual ~CreamProxyMethod( ) { };
         /**
@@ -79,7 +76,11 @@ namespace util {
 	void execute( int ntries ); // may throw anything
 
     protected:
-        CreamProxyMethod( ) { };
+        CreamProxyMethod( const std::string& creamurl );
+
+        CEBlackList* m_blacklist;
+        const std::string m_service; ///> URL of the service
+
         /**
          * This method actually calls a CreamProxy method.
          *
@@ -116,8 +117,6 @@ namespace util {
                              glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* res,
 			     const std::string& iceid);
 
-	//	int retrieveNewLeaseTime( void ) { return m_lease_time; }
-
     protected:
         virtual void method_call(int timeout  ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -133,7 +132,6 @@ namespace util {
 						      _cream_api::auth_ex&);
 
 
-        const std::string& m_service_uri;        
         const std::string& m_certfile;
         const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayRequest* m_req;
         glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* m_res;
@@ -165,7 +163,6 @@ namespace util {
 						      _cream_ex::ConnectionTimeoutException&,
 						      _cream_api::auth_ex&);
 
-        const std::string& m_service;
         const std::string& m_certfile;
         const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
 	glite::ce::cream_client_api::soap_proxy::ResultWrapper* m_res;
@@ -195,7 +192,6 @@ namespace util {
 						      _cream_ex::ConnectionTimeoutException&,
 						      _cream_api::auth_ex&);
 
-        const std::string& m_service;
 	const std::string& m_certfile;
         const std::pair< std::string, time_t>& m_lease_IN;
 	std::pair< std::string, time_t>* m_lease_OUT;
@@ -225,41 +221,10 @@ namespace util {
 						      _cream_ex::ConnectionTimeoutException&,
 						      _cream_api::auth_ex&);
 
-        const std::string& m_service;
 	const std::string& m_certfile;
         const std::string& m_lease_IN;
 	std::pair< std::string, time_t>* m_lease_OUT;
     };
-
-    /**
-     * Wrapper class around the Info method of CreamProxy
-     */ 
-//     class CreamProxy_Status : public CreamProxyMethod {
-//      public:
-//       CreamProxy_Status( const std::string& service, 
-// 			 const std::string& certfile, 
-// 			 const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
-// 			 glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* res );
-//     protected:        
-//         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
-// 						      _cream_ex::InvalidArgumentException&,
-// 						      _cream_ex::GridProxyDelegationException&,
-// 						      _cream_ex::JobSubmissionDisabledException&,
-// 						      _cream_ex::JobStatusInvalidException&,
-// 						      _cream_ex::JobUnknownException&,
-// 						      _cream_ex::GenericException&,
-// 						      _cream_ex::AuthorizationException&,
-// 						      _cream_ex::DelegationException&,
-// 						      _cream_ex::InternalException&,
-// 						      _cream_ex::ConnectionTimeoutException&,
-// 						      _cream_api::auth_ex&);
-
-//         const std::string& m_service;
-// 	const std::string& m_certfile;
-// 	const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
-// 	glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::StatusArrayResult* m_res;
-//     };
-
 
     /**
      * Wrapper class around the Info method of CreamProxy
@@ -284,7 +249,6 @@ namespace util {
 						    _cream_ex::ConnectionTimeoutException&,
 						    _cream_api::auth_ex&);
 
-      const std::string& m_service;
       const std::string& m_certfile;
       const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
       glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::InfoArrayResult* m_res;
@@ -314,7 +278,6 @@ namespace util {
 						      _cream_ex::ConnectionTimeoutException&,
 						      _cream_api::auth_ex&);
         
-        const std::string& m_service;
 	const std::string& m_certfile;
 	const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
 	glite::ce::cream_client_api::soap_proxy::ResultWrapper* m_res;
@@ -344,7 +307,6 @@ namespace util {
 						      _cream_ex::ConnectionTimeoutException&,
 						      _cream_api::auth_ex&);
         
-        const std::string m_service;
         const std::string m_certfile;
         const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
         glite::ce::cream_client_api::soap_proxy::ResultWrapper* m_res;
@@ -372,7 +334,6 @@ namespace util {
 						      _cream_ex::ConnectionTimeoutException&,
 						      _cream_api::auth_ex&);
 
-        const std::string m_service;
         const std::string m_certfile;
         const std::string m_delegation_id;
     };
@@ -400,7 +361,6 @@ namespace util {
 						      _cream_ex::ConnectionTimeoutException&,
 						      _cream_api::auth_ex&);
 
-        const std::string m_service;
         const std::string m_certfile;
         const std::string m_delegation_id;
     };

@@ -160,13 +160,11 @@ namespace util {
          * new delegation operation to CREAM is attempted, with the
          * same delegationID.
          *
-         * @return The delegation ID to use for job submission. This
-         * method returns an empty string if some error occurs. The
-         * empty delegation string can be used anyway to request
-         * auto-delegation of the proxy with the Register CREAM
-         * method.
+         * @return The delegation ID to use for job submission.
+         *
+         * @throw exception if the delegation operation fails.
          */
-        std::string delegate( /*glite::ce::cream_client_api::soap_proxy::CreamProxy* theProxy, */const CreamJob& job, bool force = false );
+        std::string delegate( const CreamJob& job, bool force = false ) throw( std::exception );
 
     };
 

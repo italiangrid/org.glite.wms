@@ -34,12 +34,19 @@
 
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace cream_ex = glite::ce::cream_client_api::cream_exceptions;
-//namespace cream_api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
+
 using namespace glite::wms::ice::util;
 using namespace std;
 
-void CreamProxyMethod::execute( int ntries ) 
+CreamProxyMethod::CreamProxyMethod( const string& creamurl ) :
+    m_blacklist( CEBlackList::instance() ),
+    m_service( creamurl )
+{
+
+}
+
+void CreamProxyMethod::execute( int ntries ) // can throw anything
 {
     static const char* method_name = "CreamProxyMethod::execute() - ";
     log4cpp::Category* m_log_dev( api_util::creamApiLogger::instance()->getLogger() );
@@ -50,6 +57,12 @@ void CreamProxyMethod::execute( int ntries )
     int delay = 1; // How much to sleep after each try
 
     for ( retry_count = 1; do_retry; ++retry_count ) {
+
+        // First, check whether the service is blacklisted
+        if ( m_blacklist->is_blacklisted( m_service ) ) {
+            throw cream_ex::ConnectionTimeoutException( "The CE is blacklisted" ); // FIXME: throw different exception?
+        }
+
         try {
             this->method_call( conn_timeout );            
             do_retry = false; // if everything goes well, do not retry
@@ -71,8 +84,9 @@ void CreamProxyMethod::execute( int ntries )
                                 << method_name << "Connection timed out to CREAM: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
-                                << ". Giving up."
+                                << ". Blacklisting CE and giving up."
                                  );
+                m_blacklist->blacklist_ce( m_service );
                 throw; // rethrow
             }            
         } catch( ... ) {
@@ -92,7 +106,7 @@ CreamProxy_Register::CreamProxy_Register( const string& service_uri,
                                           const soap_proxy::AbsCreamProxy::RegisterArrayRequest* req,
                                           soap_proxy::AbsCreamProxy::RegisterArrayResult* res,
 					  const string& iceid ) 
-  : m_service_uri( service_uri ),
+  : CreamProxyMethod( service_uri ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res ),
@@ -119,8 +133,7 @@ void CreamProxy_Register::method_call( int timeout )
   theProxy->setCredential( m_certfile );
   theProxy->setSoapHeader( m_iceid );
   api_util::scoped_timer T( "CreamProxy_Register::execute() - TIMER" );
-  theProxy->execute( m_service_uri );
-  
+  theProxy->execute( m_service );  
 }
 
 
@@ -134,7 +147,7 @@ CreamProxy_Start::CreamProxy_Start( const string& service,
                                     const string& certfile,
                                     const soap_proxy::JobFilterWrapper* req,
                                     soap_proxy::ResultWrapper* res ):
-    m_service( service ),
+    CreamProxyMethod( service ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res )
@@ -174,10 +187,10 @@ CreamProxy_Cancel::CreamProxy_Cancel( const string& service,
 				      const string& certfile, 
 				      const soap_proxy::JobFilterWrapper* req,
 				      soap_proxy::ResultWrapper* res ) :
-  m_service( service ),
-  m_certfile( certfile ),
-  m_req( req ),
-  m_res( res )
+    CreamProxyMethod( service ),
+    m_certfile( certfile ),
+    m_req( req ),
+    m_res( res )
 {
   
 }
@@ -212,10 +225,10 @@ CreamProxy_Lease::CreamProxy_Lease( const std::string& service,
 				    const std::string& certfile,
 				    const std::pair<std::string, time_t>& lease_IN,
 				    std::pair<std::string, time_t>* lease_OUT ) :
-  m_service( service ),
-  m_certfile( certfile ),
-  m_lease_IN( lease_IN ),
-  m_lease_OUT( lease_OUT )
+    CreamProxyMethod( service ),
+    m_certfile( certfile ),
+    m_lease_IN( lease_IN ),
+    m_lease_OUT( lease_OUT )
 {
   
 }
@@ -250,10 +263,10 @@ CreamProxy_LeaseInfo::CreamProxy_LeaseInfo( const std::string& service,
 					    const std::string& certfile,
 					    const std::string& lease_IN,
 					    std::pair<std::string, time_t>* lease_OUT ) :
-  m_service( service ),
-  m_certfile( certfile ),
-  m_lease_IN( lease_IN ),
-  m_lease_OUT( lease_OUT )
+    CreamProxyMethod( service ),
+    m_certfile( certfile ),
+    m_lease_IN( lease_IN ),
+    m_lease_OUT( lease_OUT )
 {
   
 }
@@ -288,10 +301,10 @@ CreamProxy_Info::CreamProxy_Info( const std::string& service,
 				  const std::string& certfile, 
 				  const soap_proxy::JobFilterWrapper* req, 
 				  soap_proxy::AbsCreamProxy::InfoArrayResult* res) :
-  m_service( service ),
-  m_certfile( certfile ),
-  m_req( req ),
-  m_res( res )
+    CreamProxyMethod( service ),
+    m_certfile( certfile ),
+    m_req( req ),
+    m_res( res )
 {
   
 }
@@ -325,7 +338,7 @@ CreamProxy_Purge::CreamProxy_Purge( const std::string& service,
 			  const std::string& certfile,
                           const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
 			  glite::ce::cream_client_api::soap_proxy::ResultWrapper* res ) :
-    m_service( service ),
+    CreamProxyMethod( service ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res )
@@ -362,9 +375,9 @@ void CreamProxy_Purge::method_call( int timeout )
 CreamProxy_Delegate::CreamProxy_Delegate( const std::string& service,
 					  const std::string& certfile,
 					  const std::string& delegation_id ) :
-  m_service( service ),
-  m_certfile( certfile ),
-  m_delegation_id( delegation_id )
+    CreamProxyMethod( service ),
+    m_certfile( certfile ),
+    m_delegation_id( delegation_id )
 {
   
 }
@@ -398,9 +411,9 @@ void CreamProxy_Delegate::method_call( int timeout )
 CreamProxy_ProxyRenew::CreamProxy_ProxyRenew( const std::string& service,
 					    const std::string& certfile,
 					    const std::string& delegation_id ) :
-  m_service( service ),
-  m_certfile( certfile ),
-  m_delegation_id( delegation_id )
+    CreamProxyMethod( service ),
+    m_certfile( certfile ),
+    m_delegation_id( delegation_id )
 {
 
 }
@@ -419,7 +432,6 @@ void CreamProxy_ProxyRenew::method_call( int timeout )
 	cream_ex::ConnectionTimeoutException&,
 	soap_proxy::auth_ex&)
 {    
-    //p->Delegate( m_delegation_id, m_delegation_service, m_certfile );
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > p( soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( m_delegation_id, timeout ) );   
   p->setCredential( m_certfile );
   api_util::scoped_timer T( "CreamProxy_ProxyRenew::execute() - TIMER" );

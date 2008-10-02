@@ -70,6 +70,8 @@ namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
 namespace wms_utils = glite::wms::common::utilities;
 namespace iceUtil = glite::wms::ice::util;
+namespace configuration = glite::wms::common::configuration;
+
 using namespace glite::wms::ice;
 
 boost::recursive_mutex iceCommandSubmit::s_localMutexForSubscriptions;
@@ -411,10 +413,10 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // 
         // Delegates the proxy
         //
-        delegID = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );        
-        if(delegID.empty()) {
-	  // Delegation went wrong
-	  throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%" ) % m_theJob.getGridJobID() ) ) );
+        try {
+            delegID = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );        
+        } catch( const exception& ex ) {
+            throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
         //
         // Registers the job (with autostart)
@@ -640,6 +642,7 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
 { // Classad-mutex protected region
 
   boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+  const configuration::WMConfiguration* WM_conf = m_configuration->wm();
   
   classad::ClassAdParser parser;
   classad::ClassAd *root = parser.ParseClassAd( oldJdl );
@@ -667,13 +670,57 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
   classad_safe_ptr->InsertAttr( "QueueName", qname );
   classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
 
-  if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) ) {
-      classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", m_configuration->wm()->max_output_sandbox_size());
+  if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) && WM_conf ) {
+      classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", WM_conf->max_output_sandbox_size());
   }
 
   updateIsbList( classad_safe_ptr.get() );
   updateOsbList( classad_safe_ptr.get() );
-  
+
+#ifdef PIPPO  
+  // Set CERequirements
+  if ( WM_conf ) {
+      std::vector<std::string> reqs_to_forward(WM_conf->ce_forward_parameters());
+
+      // In order to forward the required attributes, these
+      // have to be *removed* from the CE ad that is used
+      // for flattening.
+      classad::ClassAd* local_ce_ad(new classad::ClassAd(*ce_ad));
+      classad::ClassAd* local_job_ad(new classad::ClassAd(*job_ad));
+
+      std::vector<std::string>::const_iterator cur_req;
+      std::vector<std::string>::const_iterator req_end = 
+          reqs_to_forward.end();
+      for (cur_req = reqs_to_forward.begin();
+           cur_req != req_end; cur_req++)
+          {
+              local_ce_ad->Remove(*cur_req);
+              // Don't care if it doesn't succeed. If the attribute is
+              // already missing, so much the better.
+          }
+      
+      // Now, flatten the Requirements expression of the Job Ad
+      // with whatever info is left from the CE ad.
+      // Recipe received from Nick Coleman, ncoleman@cs.wisc.edu
+      // on Tue, 8 Nov 2005
+      classad::MatchClassAd mad;
+      mad.ReplaceLeftAd( local_job_ad );
+      mad.ReplaceRightAd( local_ce_ad );
+      
+      classad::ExprTree *req = mad.GetLeftAd()->Lookup( "Requirements" );
+      classad::ExprTree *flattened_req = 0;
+      classad::Value fval;
+      if( ! ( mad.GetLeftAd()->Flatten( req, fval, flattened_req ) ) ) {
+          // Error while flattening. Result is undefined.
+          return result;
+      }
+      
+      // No remaining requirement. Result is undefined.
+      if (!flattened_req) return result;
+  }
+#endif
+  // Produce resulting JDL
+
   string newjdl;
   classad::ClassAdUnParser unparser;
   unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
