@@ -29,6 +29,13 @@ showUsage ()
  echo "                                           "
 }
 
+exitFailure ()
+{
+echo "------------------------------------------------"
+echo "END `date`"
+echo "-TEST FAILED-"
+exit -1
+}
 
 #######################
 #Parsing the arguments#
@@ -47,12 +54,12 @@ if [ -e "AMGA-certconfig" ]; then
   source ./AMGA-certconfig
 else
   echo "The file ./AMGA-certconfig must be sourced in order to run the tests"
-  exit -1
+  exit Failure
 fi  
 
 if [ -z "$AMGA_HOST" ]; then
-  echo "You need to set AMGA_HOST in AMGA-certconfig in order to run this script"
-  exit -1
+  echo "You need to set AMGA_HOST in AMGA-certconfig in order to run the tests"
+  exitFailure
 else
   hostname=$AMGA_HOST
 fi
@@ -64,22 +71,50 @@ fi
 echo "START `date` "
 echo "------------------------------------------------"
 
-testdir=./tests
-tests_list=(AMGA-test_ping.py AMGA-test_functions.py AMGA-test_statistics.py)
+####################################
+# Checking if there is valid proxy #
+####################################
 
-pushd $testdir >> /dev/null
-rm -rf result
+ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+
+ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+
+if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+  #nop
+  :
+else
+  echo "Valid proxy is needed for this test!"
+  if [ $ProxyExpired -gt 0 ]; then
+    echo "Proxy credential expired!"
+  fi
+  exitFailure
+fi
+
+########################
+# Launch all the tests #
+########################
 
 declare -a tests_failed
 failed=no
 
+testdir=./tests
+tests_list=(AMGA-test_ping.py AMGA-test_functions.py AMGA-test_statistics.py)
+
+pushd $testdir >> /dev/null
+
+touch testfile 2> /dev/null
+if [ $? -ne 0 ]; then
+  echo "AMGA test directory is not writable, if you are on AFS be sure to have a valid token"
+  exitFailure
+fi
+
 for item in ${tests_list[*]}
 do
-  rm -rf ${item}_result.txt
+  rm -rf ${item}_result.txt testfile
   echo "Executing $item"
-  python $item $hostname >> ${item}_result.txt
+  python $item $hostname > ${item}_result.txt
   grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
-  if [ $? -eq 0 ]; then
+  if [ "$?" = 0 ]; then
     echo "$item FAILED"
     failed=yes
     tests_failed=( "${tests_failed[@]}" "$item" )
