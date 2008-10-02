@@ -1,0 +1,9 @@
+#The hostname of the LCG File Catalog
+LFC_HOST="lxb7607.cern.ch"
+
+#SE hostname
+FIRSTSE="lxb7605.cern.ch"
+
+#VO name
+VO="org.glite.voms-test"
+

@@ -1,0 +1,7 @@
+The meta-script GAL-certtest can be used to launch the tests.
+Edit GFAL-certconfig to set some details about the tests that will be
+performed.
+
+The results of the tests are stored in a text file <test_script_name>_result.txt.
+
+Contact gianni.pucciani@cern.ch for comments/bugs/questons.
