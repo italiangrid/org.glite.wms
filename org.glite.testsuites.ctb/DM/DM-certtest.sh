@@ -37,6 +37,13 @@ echo "-TEST FAILED-"
 exit -1
 }
 
+#######################
+#Parsing the arguments#
+#######################
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 0 ]; then
+  showUsage
+  exit 2
+fi
 
 ###################################
 # Check for environment variables #
