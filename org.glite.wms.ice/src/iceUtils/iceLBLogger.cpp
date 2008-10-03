@@ -21,10 +21,12 @@
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
 #include "jobCache.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <boost/scoped_ptr.hpp>
 
+namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 
 iceLBLogger* iceLBLogger::s_instance = 0;
@@ -67,6 +69,7 @@ iceLBLogger::~iceLBLogger( void )
 CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 {
     static const char* method_name = "iceLBLogger::logEvent() - ";
+    api_util::scoped_timer T( "logEvent()" );
 
     // Aborts if trying to log the NULL event
     if ( ! ev ) {

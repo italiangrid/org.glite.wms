@@ -20,12 +20,7 @@
 #ifndef ICE_CE_BLACKLIST_H
 #define ICE_CE_BLACKLIST_H
 
-#include "creamJob.h"
-
-//#include <exception>
-//#include <iostream>
 #include <string>
-//#include <functional>
 #include <ctime>
 #include <map>
 #include "boost/thread/recursive_mutex.hpp"
@@ -41,20 +36,20 @@ namespace util {
 
     /**
      * A CEBlackList is a data structure which contains a set of
-     * "blacklisted" CEs. No interaction with blacklisted CEs should
-     * be attempted. A CE stays in the blacklist for a fixed maximum
-     * amount of time (at the moment this amount is given by the
-     * max_blacklist_time constant in this data structure, maybe in
-     * the future it will be configurable). After the blacklist time
-     * expires, a CE is removed from the blacklist and operations on
-     * it can be attempted again.
+     * "blacklisted" endpoints. No interaction with blacklisted
+     * endpoint should be attempted. An endpoint stays in the
+     * blacklist for a fixed maximum amount of time (at the moment
+     * this amount is given by the max_blacklist_time constant in this
+     * data structure, in the future it will be configurable). After
+     * the blacklist time expires, an endpoint is removed from the
+     * blacklist and operations on it can be attempted again.
      */
     class CEBlackList {
     protected:
         CEBlackList( );
 
         /**
-         * Iterate over the set of blacklisted CE, and removes
+         * Iterates over the set of blacklisted endpoints, and removes
          * all expired entries.
          *
          * @param force if true, then all expired elements are removed
@@ -62,27 +57,26 @@ namespace util {
          * removed if the number of operations is less than
          * m_operation_count.
          *
-         * This method is not thread-safe.
+         * This method is _NOT_ thread-safe.
          */
         void cleanup_blacklist( bool force = false );
         
-        static CEBlackList* s_instance;
-        static boost::recursive_mutex m_mutex;
+        static CEBlackList* s_instance; ///< Singleton instance of this blacklist
+        static boost::recursive_mutex m_mutex; ///< Mutex
 
         log4cpp::Category* m_log_dev;
         std::size_t m_operation_count; ///< number of operations on the blacklist
         const std::size_t m_operation_count_max; ///< max number of operations before the blacklist is purged from stale entries
         const std::size_t m_max_blacklist_time; ///< max time (in seconds) an entry is kept in the blacklist
 
-        std::map< std::string, std::time_t > m_blacklist; ///< mapx (CEID) -> expiration time
+        std::map< std::string, std::time_t > m_blacklist; ///< map (endpoint) -> expiration time
 
     public:
         ~CEBlackList( ) { };
 
         /**
          * Returns the singleton instance of this class. This method
-         * is thread-safe: a mutex is acquired before checking whether
-         * the instance already exists or must be created.
+         * is thread-safe.
          *
          * @return The singleton instance of this class. The caller
          * DOES NOT OWN the returned pointer, and must NOT be
@@ -92,21 +86,21 @@ namespace util {
 
         /**
          * Adds a new ce into the blacklist. The entry will expire
-         * at time() + max_blacklist_time. 
+         * at time() + max_blacklist_time. This method is thread-safe.
          *
-         * @param ceurl The URL of the CE to blacklist. If the given
-         * ceurl is already in the blacklist, this operation does nothing.
+         * @param endpoint The endpoint to blacklist. If the given
+         * endpoint is already in the blacklist, this operation does nothing.
          */
-        void blacklist_ce( const std::string& ceurl );
+        void blacklist_endpoint( const std::string& endpoint );
 
         /**
-         * Returns true iff a CE is blacklisted.
+         * Returns true iff a CE is blacklisted. This method is thread-safe.
          *
-         * @param ceid The id of the CE to look for.
+         * @param endpoint The endpoint to look for.
          *
-         * NOTE: This method is thread-safe
+         * @return true iff the endpoint is blacklisted.
          */
-        bool is_blacklisted( const std::string& ceid );
+        bool is_blacklisted( const std::string& endpoint );
     };
 
 } // namespace util

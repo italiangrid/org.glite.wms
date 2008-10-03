@@ -154,8 +154,6 @@ void iceCommandProxyRenewal::execute( void ) throw()
     // jobMap::iterator.first is the couple (delegationID,CREAM_Deleg_URL)
     // jobMap::iterator.second is the list of job
 
-    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		   << "iceCommandProxyRenewal::execute() - "
 		   << "Renewing proxy for delegation ID ["
@@ -165,17 +163,17 @@ void iceCommandProxyRenewal::execute( void ) throw()
 		   << "]"
 		   );
 
-    if( this->renewProxy( jobMap_it->first, jobMap_it->second.begin()->getUserProxyCertificate() ))
-      {
+    if( renewProxy( jobMap_it->first, jobMap_it->second.begin()->getUserProxyCertificate() ) ) {
+        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 	// update the cache for all jobs that have this delegationID
 	list<CreamJob>::iterator jobit     = jobMap_it->second.begin();
 	list<CreamJob>::iterator jobit_end = jobMap_it->second.end();
 	while( jobit != jobit_end ) {
-	  jobit->setProxyCertMTime( timeMap[jobit->getCompleteCreamJobID()] );
-	  m_cache->put( *jobit );
-	  ++jobit;
+            jobit->setProxyCertMTime( timeMap[jobit->getCompleteCreamJobID()] );
+            m_cache->put( *jobit );
+            ++jobit;
 	}
-      }
+    }
     ++jobMap_it;
   }
 }

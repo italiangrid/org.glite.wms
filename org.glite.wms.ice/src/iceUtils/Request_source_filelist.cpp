@@ -24,17 +24,16 @@
 #include "Request_filelist.h"
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/convenience.hpp>
-#include <vector>
+//#include <vector>
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <utility>
-#include <string>
-//#include <glite/wms/common/utilities/filecontainer.h>
 
-namespace wmsutils_ns=glite::wms::common::utilities;
+namespace wmsutils_ns = glite::wms::common::utilities;
 namespace fs = boost::filesystem;
+namespace api_util  = glite::ce::cream_client_api::util;
+
 using namespace glite::wms::ice::util;
 using namespace std;
-namespace api_util  = glite::ce::cream_client_api::util;
 
 typedef wmsutils_ns::FLExtractor<std::string>::iterator FLEit;
 
@@ -141,11 +140,11 @@ void Request_source_filelist::put_request( const string& ad )
 
 size_t Request_source_filelist::get_size( void )
 {
-  try{
-    
-    wmsutils_ns::FileListMutex mx(m_filelist);
-    wmsutils_ns::FileListLock  lock(mx);
-    return m_filelist.size();
+  try{    
+//     wmsutils_ns::FileListMutex mx(m_filelist);
+//     wmsutils_ns::FileListLock  lock(mx);
+//     return m_filelist.size();
+      return 0;
   } catch(wmsutils_ns::FileContainerError& ex) {
 
     CREAM_SAFE_LOG(

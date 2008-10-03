@@ -15,8 +15,6 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * 
- *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */

@@ -31,7 +31,6 @@ using namespace std;
 CEBlackList* CEBlackList::s_instance = 0;
 boost::recursive_mutex CEBlackList::m_mutex;
 
-//////////////////////////////////////////////////////////////////////////////
 CEBlackList::CEBlackList( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_operation_count( 0 ),
@@ -49,27 +48,26 @@ CEBlackList* CEBlackList::instance( )
     return s_instance;
 }
 
-void CEBlackList::blacklist_ce( const std::string& ce )
+void CEBlackList::blacklist_endpoint( const std::string& endpoint )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
     const time_t curtime = time(0);
-    static char* method_name = "CEBlackList::blacklist_ce() - ";
+    static char* method_name = "CEBlackList::blacklist_endpoint() - ";
 
     cleanup_blacklist( ); // "lazy" purging
 
-    if ( m_blacklist.end() == m_blacklist.find( ce ) ||
-         m_blacklist[ ce ] < curtime ) {
+    if ( m_blacklist.end() == m_blacklist.find( endpoint ) ||
+         m_blacklist[ endpoint ] < curtime ) {
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                        << "Blacklisting CE " << ce
+                        << "Blacklisting CE " << endpoint
                         << " until " << time_t_to_string( curtime + m_max_blacklist_time )
                         );
-        m_blacklist[ce] = curtime + m_max_blacklist_time;
-
+        m_blacklist[endpoint] = curtime + m_max_blacklist_time;
     }
 }
 
-bool CEBlackList::is_blacklisted( const std::string& ce )
+bool CEBlackList::is_blacklisted( const std::string& endpoint )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -78,14 +76,14 @@ bool CEBlackList::is_blacklisted( const std::string& ce )
 
     cleanup_blacklist( ); // "lazy" purging
 
-    if ( m_blacklist.end() == m_blacklist.find( ce ) ||
-         m_blacklist[ ce ] < curtime ) {
+    if ( m_blacklist.end() == m_blacklist.find( endpoint ) ||
+         m_blacklist[ endpoint ] < curtime ) {
         return false;
     } else {
         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                        << "CE " << ce
+                        << "CE " << endpoint
                         << " is blacklisted until " 
-                        << time_t_to_string( m_blacklist[ce]) );
+                        << time_t_to_string( m_blacklist[endpoint]) );
         return true;        
     }
 }

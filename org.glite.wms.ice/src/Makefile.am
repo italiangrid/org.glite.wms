@@ -159,6 +159,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		-UHAVE_CONFIG_H \
 		$(LOG4CPP_CFLAGS) \
 		$(GLOBUS_THR_CFLAGS) \
-		-pipe 
+		-pipe \
+		-DICE_VERSIONID=\""`date`"\"
 
 MAINTAINERCLEANFILES = Makefile.in

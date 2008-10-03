@@ -239,7 +239,7 @@ int main(int argc, char*argv[])
 
     logger_instance->setLogFile(logfile.c_str());
     CREAM_SAFE_LOG(log_dev->debugStream() 
-		   << "ICE VersionID is [20080923-11:00] ProcessID=["
+		   << "ICE VersionID is [" << ICE_VERSIONID << "] ProcessID=["
 		   << ::getpid() << "]"
 		   );
     cout << "Logfile is [" << logfile << "]" << endl;
