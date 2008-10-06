@@ -250,7 +250,7 @@ priority upon the X509_USER_PROXY variable'))
 def createTempJDL(sleepTime):
     tempFD, tempFilename = tempfile.mkstemp(dir='/tmp')
     try:
-        tFile = open(tempFilename, 'w+b')
+        tFile = os.fdopen(tempFD, 'w+b')
         tFile.write('[executable="/bin/sleep";\n')
         tFile.write('arguments="' + str(sleepTime) +'";]\n')
         tFile.close()

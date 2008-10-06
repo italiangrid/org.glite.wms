@@ -17,7 +17,7 @@ def eraseJobs(jobList, cmd='purge',  proxyMan=None):
     if len(jobList)>0:
         tempFD, tempFilename = tempfile.mkstemp(dir='/tmp')
         try:
-            tFile = open(tempFilename, 'w+b')
+            tFile = os.fdopen(tempFD, 'w+b')
             tFile.write("##CREAMJOBS##\n")
             for job in jobList:
                 tFile.write(job + "\n")
