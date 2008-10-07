@@ -134,6 +134,8 @@ if [ "$CLI" = "yes" ]; then
       echo "$item PASSED"
     fi
   done
+else
+  echo "*CLI tests skipped*"
 fi
 
 ##############
@@ -165,6 +167,8 @@ if [ "$API_PYTHON" = "yes" ]; then
       echo "$item PASSED"
     fi
   done
+else
+  echo "*API_PYTHON tests skipped*"
 fi
 
 ############
@@ -196,6 +200,8 @@ if [ "$SEQUENCE" = "yes" ]; then
       echo "$item PASSED"
     fi
   done
+else
+  echo "*SEQUENCE tests skipped*"
 fi
 
 

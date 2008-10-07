@@ -6,7 +6,7 @@ VO="dteam"
 SAME_VO="dteam"
 
 #Tests to be executed {yes|no}
-CLI="no"
-API_PYTHON="no"
+CLI="yes"
+API_PYTHON="yes"
 SEQUENCE="yes"
 
