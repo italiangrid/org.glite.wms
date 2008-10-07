@@ -1,0 +1,12 @@
+#The hostname of the LCG File Catalog
+LFC_HOST="lxb7607.cern.ch"
+
+#VO name
+VO="dteam"
+SAME_VO="dteam"
+
+#Tests to be executed {yes|no}
+CLI="no"
+API_PYTHON="no"
+SEQUENCE="yes"
+
