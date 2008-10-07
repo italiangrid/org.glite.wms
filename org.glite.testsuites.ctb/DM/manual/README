@@ -1,6 +1,6 @@
 The DM-certtest.sh script is a meta-script that can be used to launch all the Data Management related tests.
-Before calling the meta-script the configuration file DM-testconfig must be edited.
-In the DM-testconfig script you have to specify some options plus the set of tests to run.
+Before calling the meta-script the configuration file DM-certconfig must be edited.
+In the DM-certconfig script you have to specify some options plus the set of tests to run.
 At the moment dCache produces some errors, so it has been exluded from the tests.
 
 The DM-certtest.sh must be launched from the currect directory.
