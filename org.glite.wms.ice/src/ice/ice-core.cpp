@@ -597,6 +597,8 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, const string& reason )
 throw() 
 {
+    static const char* method_name = "Ice::::purge_job() - ";
+
     if ( jit == m_cache->end() )
       return jit;
 
@@ -610,37 +612,24 @@ throw()
     
     cream_api::soap_proxy::JobFilterWrapper filter(target, vector<string>(), -1, -1, "", "");
     
-    //boost::scoped_ptr< soap_proxy::AbsCreamProxy > creamClient( soap_proxy::CreamProxyFactory::make_CreamProxy_Purge( &filter, &result, ) );
-
     // Gets the proxy to use for authentication
-    string proxy;
-    //{
-    //    boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-    proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() );
-	//}
+    string better_proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() );
     
-    cream_api::soap_proxy::VOMSWrapper V( jit->getUserProxyCertificate() );
+    cream_api::soap_proxy::VOMSWrapper V( better_proxy );
     if( !V.IsValid( ) ) {
-      //      throw cream_api::auth_ex( V.getErrorMessage() );
-      CREAM_SAFE_LOG(
-                     m_log_dev->errorStream()
-                     << "Ice::::purge_job() - "
-                     << "Unable to purge gridJobID=" 
-                     << jit->getGridJobID()
-                     << " due to authentication error: " << V.getErrorMessage()
-                     
-                     );
-      return jit;
+        CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+                        << "Unable to purge job "
+                        << jit->describe()
+                        << " due to authentication error: " 
+                        << V.getErrorMessage()
+                        );
+        return jit;
     }
 
     try {
-      // boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); 
-
-        //string cid = jit->getCreamJobID();
         
         if ( m_configuration->ice()->purge_jobs() ) {
-            CREAM_SAFE_LOG(m_log_dev->infoStream()
-                           << "Ice::purge_job() - "
+            CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                            << "Calling JobPurge for job "
                            << jit->describe()
                            );
@@ -648,20 +637,14 @@ throw()
             // vector because we must authenticate different
             // jobs with different user certificates.
 
-            //creamClient->Authenticate( proxy );
-
-//             vector< string > oneJobToPurge;
-//             oneJobToPurge.push_back( jit->getCreamJobID() );
-
 	    glite::wms::ice::util::CreamProxy_Purge( jit->getCreamURL(), 
-						     jit->getUserProxyCertificate(), 
+						     better_proxy,
 						     &filter, 
 						     &result ).execute( 3 );
 
         } else {
-            CREAM_SAFE_LOG(m_log_dev->warnStream()
-                           << "Ice::purge_job() - "
-                           << "There'are jobs to purge, but PURGE IS DISABLED. "
+            CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+                           << "There are jobs to purge, but PURGE IS DISABLED. "
                            << "Will not purge job "
                            << jit->describe()
                            << " (but will be removed from ICE cache)"
@@ -684,8 +667,7 @@ throw()
 	  pair<cream_api::soap_proxy::JobIdWrapper, string> wrong = *( tmp.begin() ); // we trust there's only one element because we've purged ONLY ONE job
 	  string errMex = wrong.second;
 	  
-	  CREAM_SAFE_LOG(m_log_dev->errorStream()
-			 << "Ice::purge_job() - "
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 			 << "Cannot purge job " 
 			 << jit->describe()
 			 << ". Reason is: " << errMex
@@ -693,12 +675,11 @@ throw()
 	  
 	  return jit;
 	}
-	CREAM_SAFE_LOG(m_log_dev->debugStream()
-			 << "Ice::purge_job() - "
-			 << "Removing purged job " 
-			 << jit->describe()
-			 << " from cache"
-			 );
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+                       << "Removing purged job " 
+                       << jit->describe()
+                       << " from cache"
+                       );
 
 	boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); 
         jit = m_cache->erase( jit );
@@ -708,8 +689,7 @@ throw()
          * this exception should not be raised because
          * the CreamJob is created from another valid one
          */
-        CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-                       << "Ice::purge_job() - "
+        CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Fatal error: CreamJob creation failed "
                        << "copying from a valid one!!!"
                        );
