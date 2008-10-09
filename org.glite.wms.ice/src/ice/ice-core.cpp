@@ -286,8 +286,8 @@ void Ice::init( void )
         util::iceCommandLeaseUpdater l( true );
         l.execute();
     }
-    util::iceCommandStatusPoller p( this, true );
-    p.execute( );	
+    //util::iceCommandStatusPoller p( this, true );
+    //p.execute( );	
 }
 
 //____________________________________________________________________________
@@ -668,16 +668,14 @@ throw()
 	  string errMex = wrong.second;
 	  
 	  CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-			 << "Cannot purge job " 
-			 << jit->describe()
+			 << "Cannot purge job " << jit->describe()
 			 << ". Reason is: " << errMex
 			 );
 	  
 	  return jit;
 	}
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                       << "Removing purged job " 
-                       << jit->describe()
+                       << "Removing purged job " << jit->describe()
                        << " from cache"
                        );
 
@@ -695,45 +693,33 @@ throw()
                        );
         abort();
     } catch(cream_api::soap_proxy::auth_ex& ex) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "Ice::purge_job() - "
-                       << "Cannot purge job " 
-                       << jit->describe()
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+                       << "Cannot purge job " << jit->describe()
                        << ". Reason is: " << ex.what()
                        );
     } catch(cream_api::cream_exceptions::BaseException& ex) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "Ice::purge_job() - "
-                       << "Cannot purge job " 
-                       << jit->describe()
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+                       << "Cannot purge job " << jit->describe()
                        << ". Reason is BaseException: " << ex.what()
                        );
     } catch(cream_api::cream_exceptions::InternalException& ex) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream()
-                       << "Ice::purge_job() - "
-                       << "Cannot purge job " 
-                       << jit->describe()
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+                       << "Cannot purge job " << jit->describe()
                        << ". Reason is InternalException: " << ex.what()
                        );
     } catch(ice_util::elementNotFound_ex& ex) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream()
-                       << "Ice::purge_job() - "
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is elementNotFound_ex: " << ex.what()
                        );
     } catch( std::exception& ex ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream()
-                       << "Ice::purge_job() - "
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is an exception: " << ex.what()
                        
                        );
     } catch( ... ) {
-        CREAM_SAFE_LOG(
-                       m_log_dev->errorStream()
-                       << "Ice::purge_job() - "
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is an unknown exception"
                        );
