@@ -8,7 +8,7 @@
 #GLITE_SD_PLUGIN=bdii
 
 # The LFC host which will be used in these tests
-#GLITE_LFC_HOST=lxb7607.cern.ch
+#LFC_HOST=lxb7607.cern.ch
 
 # The LFC path where to store test files
 #LFC_TEST_DIR=/grid/dteam/hydratest

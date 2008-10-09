@@ -38,7 +38,7 @@ function setup() {
   fi 
 
   GLITE_SD_PLUGIN=${GLITE_SD_PLUGIN:-bdii}
-  GLITE_LFC_HOST=${GLITE_LFC_HOST:-lxb7607.cern.ch}
+  LFC_HOST=${LFC_HOST:-lxb7607.cern.ch}
   LFC_TEST_DIR=${LFC_TEST_DIR:-/grid/dteam/hydratest}
   MAN_PAGE_CHECK=${MAN_PAGE_CHECK:-1}
   TOMCAT_CFG_DIR=${TOMCAT_CFG_DIR:-/etc/tomcat5/Catalina/localhost/}
@@ -127,7 +127,7 @@ function unregister_key {
 
 function set_acl {
   # Set acl
-  glite-eds-setacl $@
+  glite-eds-setacl "$@"
 
   if [ $? -ne 0 ] ; then
     echo "Error setting acl"
