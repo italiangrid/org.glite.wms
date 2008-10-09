@@ -634,7 +634,7 @@ throw()
     }
 
     try {
-        boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); // this can be called by eventStatusListener::handleEvent that already acquired this mutex; this is not a problem 'cause the mutexes are recursive
+      // boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); 
 
         //string cid = jit->getCreamJobID();
         
@@ -699,6 +699,8 @@ throw()
 			 << jit->describe()
 			 << " from cache"
 			 );
+
+	boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); 
         jit = m_cache->erase( jit );
 
     } catch (ice_util::ClassadSyntax_ex& ex) {
@@ -739,7 +741,6 @@ throw()
                        << "Ice::purge_job() - "
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is elementNotFound_ex: " << ex.what()
-                       
                        );
     } catch( std::exception& ex ) {
         CREAM_SAFE_LOG(
@@ -755,7 +756,6 @@ throw()
                        << "Ice::purge_job() - "
                        << "Cannot purge job " << jit->describe()
                        << ". Reason is an unknown exception"
-                       
                        );
     }
     return jit;

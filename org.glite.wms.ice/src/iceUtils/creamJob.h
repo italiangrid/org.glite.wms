@@ -36,6 +36,8 @@
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
+#include "boost/thread/recursive_mutex.hpp"
+
 /**
  *
  * System and STL C++ Headers
@@ -45,6 +47,8 @@
 #include <string>
 #include <ctime>
 #include <set>
+
+namespace api_util = glite::ce::cream_client_api::util;
 
 /* #include <boost/archive/text_oarchive.hpp> */
 /* #include <boost/archive/text_iarchive.hpp> */
@@ -69,6 +73,8 @@ namespace glite {
 	  - last time of update that is the time of the last status update
 	*/
 	class CreamJob {
+	  
+	  static boost::recursive_mutex serialize_mutex;
 
 	  std::string m_cream_jobid;
           std::string m_grid_jobid;
@@ -315,38 +321,91 @@ namespace glite {
 
 	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw()
 	  {
+	    
+	    boost::recursive_mutex::scoped_lock L( serialize_mutex );
+
 	    try {
+
 	      ar & m_cream_jobid;
+
+
 	      ar & m_grid_jobid;
+	      
+
 	      ar & m_jdl;
+	     
+
 	      ar & m_ceid;
+	      
+
 	      ar & m_endpoint;
+	      
+
 	      ar & m_cream_address;
+	      
+
 	      ar & m_cream_deleg_address;
+	      
+
 	      ar & m_user_proxyfile;
+	      
+
 	      ar & m_user_dn;
+	      
+
 	      ar & m_sequence_code;
-	      ar & m_delegation_id;     
+	      
+
+	      ar & m_delegation_id;
+	      
+
 	      ar & m_wn_sequence_code;
+	      
+
               ar & m_prev_status;
+	      
+
 	      ar & m_status;
+	      
+
 	      ar & m_num_logged_status_changes;
+	      
+
 	      ar & m_last_seen;
+	      
+
 	      ar & m_lease_id;
+	      
+
 	      ar & m_proxyCertTimestamp;
+	      
+
 	      ar & m_statusPollRetryCount;
+	      
+
 	      ar & m_exit_code;
+	      
+
 	      ar & m_failure_reason;
+	      
+
 	      ar & m_worker_node;
+	      
+
 	      ar & m_is_killed_by_ice;
+	      
+
 	      ar & m_last_empty_notification;
+	      
+
 	      ar & m_proxy_renew;
+
 	    } catch(std::exception& ex) {
 	      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
 		       << "creamJob::serialize() - [De]Serialization error: ["
 		       << ex.what() << "]"
 		       );
-	      exit(2);
+	      abort();
 	    }
 	  }
 

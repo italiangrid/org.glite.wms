@@ -103,7 +103,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     }
     
     m_ctx->startLogging();
-    
+
     int res = 0;
     do {
         CREAM_SAFE_LOG(m_log_dev->infoStream() 
@@ -117,6 +117,9 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
                        
                        );
         if ( m_lb_enabled ) {
+
+	  //api_util::scoped_timer T( "logEvent::ev->execute()" );
+
             res = ev->execute( m_ctx.get() );
             m_ctx->testCode( res );
 	}
@@ -126,12 +129,21 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     if ( edg_wll_GetSequenceCode( *(m_ctx->el_context) ) ) { // update the sequence code only if it is non null
         new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
         { // Lock the job cache
+
+	  api_util::scoped_timer T( "logEvent::mutex_aquisition-EntireBlock" );//126
+
             jobCache* m_cache( jobCache::getInstance() );
             boost::recursive_mutex::scoped_lock( m_cache->mutex );
+
+	    //api_util::scoped_timer T2( "logEvent::CreamJob_Creation+setSeqCode+put_in_cache" );//10
             CreamJob theJob( ev->getJob() );
-            theJob.setSequenceCode( new_seq_code );    
+	    
+            theJob.setSequenceCode( new_seq_code );
+	    
+	    api_util::scoped_timer T3( "logEvent::put_in_cache" );//10
             m_cache->put( theJob );
             return theJob;
+
         } // Unlock the job cache
     }
 }

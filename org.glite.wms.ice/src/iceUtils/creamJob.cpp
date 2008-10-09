@@ -80,6 +80,8 @@ namespace fs = boost::filesystem;
 using namespace std;
 using namespace glite::wms::ice::util;
 
+boost::recursive_mutex CreamJob::serialize_mutex;
+
 //______________________________________________________________________________
 CreamJob::CreamJob( ) :
     m_prev_status( api::job_statuses::UNKNOWN ),

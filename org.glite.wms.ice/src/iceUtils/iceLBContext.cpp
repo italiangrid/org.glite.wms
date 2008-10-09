@@ -39,6 +39,7 @@ namespace fs = boost::filesystem;
 #include "glite/lb/producer.h"
 #include "iceLBContext.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -125,7 +126,12 @@ iceLBContext::iceLBContext( void ) :
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
     // m_cache( jobCache::getInstance() )
 {
+
+  {
+    api_util::scoped_timer T( "iceLBContext::iceLBContext::edg_wll_InitContext(...)" );
     edg_wll_InitContext( el_context );
+    
+  }
 
     try {
       if( s_localHostName.empty() ) {

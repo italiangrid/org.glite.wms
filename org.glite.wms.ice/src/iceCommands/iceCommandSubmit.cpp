@@ -49,6 +49,7 @@
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/JobDescriptionWrapper.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -104,6 +105,7 @@ namespace { // Anonymous namespace
          * longer in the job cache, nothing is done.
          */
         void operator()( void ) {
+	  api_util::scoped_timer tmp_timer( "remove_job_from_cache::operator()" );
             boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
             iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
             m_cache->erase( it );
@@ -158,7 +160,6 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
   string protocolStr;
   
   {// Classad-mutex protected region  
-    
     boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
     
     classad::ClassAdParser parser;
@@ -249,6 +250,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     // (logging an information message), and the purge_f object will
     // take care of actual removal.
     {
+      api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute() - First mutex: Check of GridJobID" );
         boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 	iceUtil::jobCache::iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
         if ( cache->end() != it ) {
@@ -258,8 +260,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                             << m_theJob.describe()
                             << " is related to a job already in ICE cache. "
                             << "Removing the request and going ahead."
-                            
-                            );   
+                            );
             return;
         }
     } // unlocks the cache
@@ -630,6 +631,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     }
            
     {
+      api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in cache" );
         boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
         m_theJob.setLastSeen( time(0) );
         iceUtil::jobCache::getInstance()->put( m_theJob );
