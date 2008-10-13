@@ -159,6 +159,33 @@ namespace ice {
         // back as cleanly as possible.
         //
 	void init( void );
+                
+        /**
+         * Resubmits a failed job. This method takes care of logging
+         * the relevant L&B events. The job is NOT removed from the
+         * job cache!
+         *
+         * @param the_job the job to resubmit.
+         *
+         * @param reason the reason why this job is being resubmitted
+         */
+        void resubmit_job( util::CreamJob& the_job, const std::string& reason ) throw();
+        
+        /**
+         * Purge a cancelled/terminated job. This method takes care
+         * of logging the relevant L&B events. The job will be
+         * removed from the jobCache.
+         *
+         * @param j an iterator to the job to purge. If j ==
+         * jobCache.end(), the not action is done.
+         *
+         * @param reason the reason why the job is being purged
+         *
+         * @return an iterator pointing to the next job in cache, if
+         * the purge(and subsequent removal) was succesful. jit if
+         * not.
+         */
+        util::jobCache::iterator purge_job( util::jobCache::iterator j, const std::string& reason ) throw();
         
     public:
         
@@ -195,34 +222,7 @@ namespace ice {
         bool is_job_killer_started( void ) const;
 
         // Misc job handling functions
-        
-        /**
-         * Resubmits a failed job. This method takes care of logging
-         * the relevant L&B events. The job is NOT removed from the
-         * job cache!
-         *
-         * @param the_job the job to resubmit.
-         *
-         * @param reason the reason why this job is being resubmitted
-         */
-        void resubmit_job( util::CreamJob& the_job, const std::string& reason ) throw();
-        
-        /**
-         * Purge a cancelled/terminated job. This method takes care
-         * of logging the relevant L&B events. The job will be
-         * removed from the jobCache.
-         *
-         * @param j an iterator to the job to purge. If j ==
-         * jobCache.end(), the not action is done.
-         *
-         * @param reason the reason why the job is being purged
-         *
-         * @return an iterator pointing to the next job in cache, if
-         * the purge(and subsequent removal) was succesful. jit if
-         * not.
-         */
-        util::jobCache::iterator purge_job( util::jobCache::iterator j, const std::string& reason ) throw();
-        
+
         /**
          * Resubmits or purge a given job.
          *

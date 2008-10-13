@@ -29,15 +29,15 @@ namespace util {
 
     DbEnv         m_env;
     Db           *m_creamJobDb;
-    Db           *m_cidDb;
-    Db           *m_gidDb;
+    //Db           *m_cidDb;
+    //Db           *m_gidDb;
     std::string   m_envHome;
     bool          m_valid;
     std::string   m_invalid_cause;
     DbTxn*        m_txn_handler;
     bool          m_cream_open;
-    bool          m_cid_open;
-    bool          m_gid_open;
+    //bool          m_cid_open;
+    //bool          m_gid_open;
     bool          m_env_open;
     int	 	  m_op_counter;
     int		  m_op_counter_chkpnt;
@@ -69,6 +69,7 @@ namespace util {
       
       DbLock * m_lock;
       static DbEnv* s_dbenv;
+      bool m_locked;
 
     protected:
       static void initDbEnv( DbEnv* env ) {
@@ -77,28 +78,30 @@ namespace util {
 
     public:
       
-      scoped_lock(const long caller, const Dbt *obj_to_lock, bool exclusive) 
+      scoped_lock(const long caller, const char* data/*Dbt *obj_to_lock */, int dataLen, bool exclusive) 
 	{
-	  
-	  api_util::scoped_timer T( "jobDbManager::scoped_lock::CTOR - TIMER for DB lock acquisition: " );
-	  DbLock lock;
+	  m_locked = false;
 
-	  if( s_dbenv && obj_to_lock ) {
+	  api_util::scoped_timer T( "jobDbManager::scoped_lock::CTOR - TIMER for DB lock acquisition: " );
+	  
+
+	  if( s_dbenv && data && dataLen ) {
+	    
+	    Dbt obj_to_lock( (void*)data, dataLen+1 );
 
 	    if(exclusive)
-	      s_dbenv->lock_get( caller, 0, obj_to_lock, DB_LOCK_WRITE, &lock);
+	      s_dbenv->lock_get( caller, 0, &obj_to_lock, DB_LOCK_WRITE, m_lock);
 	    else
-	      s_dbenv->lock_get( caller, 0, obj_to_lock, DB_LOCK_READ, &lock);
+	      s_dbenv->lock_get( caller, 0, &obj_to_lock, DB_LOCK_READ, m_lock);
 	    
+	    m_locked = true;//&lock;
 	  }
-
-	  m_lock = &lock;
 	  
 	}
       
       ~scoped_lock() 
 	{
-	  if( s_dbenv &&  m_lock )
+	  if( s_dbenv && m_locked )
 	    s_dbenv->lock_put( m_lock );
 	}
 
@@ -127,22 +130,25 @@ namespace util {
     // Also puts the string couple (gid, cid) in a database useful for reverse resolution
     // (i.e. resolving creamJobID from gridJobID)
     void put(const std::string& serializedCreamJob, 
-             const std::string& cid,
+             /*const std::string& cid,*/
 	     const std::string& gid) throw(JobDbException&);
 	 
     // Like put but for many objects to store with a single transaction (more performant)
     // The argument is an hash map with creamJobID as key and a string pair
     // (gridJobID, serializedCreamJob) as value    
-    void mput(const std::map<std::string, std::pair<std::string, std::string> >&) 
-      throw(JobDbException&);// {}     
+    //void mput(const std::map<std::string, std::pair<std::string, std::string> >&) 
+    //  throw(JobDbException&);// {}     
 	     
-    void delByCid( const std::string& cid ) throw(JobDbException&);
+    //void delByCid( const std::string& cid ) throw(JobDbException&);
+    void del( const std::string& cid ) throw(JobDbException&);
     
-    void delByGid( const std::string& gid ) throw(JobDbException&);
+    //void delByGid( const std::string& gid ) throw(JobDbException&);
     
-    std::string getByCid( const std::string& cid) throw(JobDbException&, JobDbNotFoundException&);
+    //std::string getByCid( const std::string& cid) throw(JobDbException&, JobDbNotFoundException&);
     
-    std::string getByGid( const std::string& gid ) throw(JobDbException&, JobDbNotFoundException&);
+    //std::string getByGid( const std::string& gid ) throw(JobDbException&, JobDbNotFoundException&);
+
+    std::string get( const std::string& gid ) throw(JobDbException&, JobDbNotFoundException&);
     
     //void getAllRecords( std::vector<std::string>& target ) throw(JobDbException&);
     

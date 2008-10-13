@@ -104,6 +104,7 @@ jobCacheIterator::operator*() throw()
     return m_theJob;
 }
 
+//____________________________________________________________________
 void jobCacheIterator::refresh( ) throw()
 {
     static const char* method_name = "jobCacheIterator::refresh() - ";
@@ -116,7 +117,7 @@ void jobCacheIterator::refresh( ) throw()
     
     try {
         istringstream is;
-	string tmpGid = cache->getDbManager()->getByGid( m_grid_job_id );
+	string tmpGid = cache->getDbManager()->get( m_grid_job_id );
 	if( tmpGid.empty() ) {
 	  m_valid_it = false;
 	  return;

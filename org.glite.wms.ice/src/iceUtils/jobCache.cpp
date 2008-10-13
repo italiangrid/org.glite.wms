@@ -61,7 +61,9 @@ jobCache* jobCache::getInstance() throw()
 //____________________________________________________________________________
 jobCache::jobCache( void ) :
     m_log_dev(apiutil::creamApiLogger::instance()->getLogger()),
-    m_GridJobIDSet( )
+    m_GridJobIDSet( ),
+    m_CidGidMap(),
+    m_GidCidMap()
 { 
   jobDbManager *dbm = new jobDbManager( s_persist_dir, s_recoverable_db, false, s_read_only );
 
@@ -117,7 +119,9 @@ void jobCache::load( void ) throw()
 //                                  );
                 
                 m_GridJobIDSet.insert( cj.getGridJobID() );
-                
+		m_CidGidMap[ cj.getCompleteCreamJobID() ] = cj.getGridJobID() ;
+		m_GidCidMap[ cj.getGridJobID() ]          = cj.getCompleteCreamJobID();
+
             } catch(exception& ex ) {
                 CREAM_SAFE_LOG( m_log_dev->fatalStream()
                                 << method_name
@@ -147,11 +151,11 @@ void jobCache::load( void ) throw()
 }
 
 //______________________________________________________________________________
-jobCache::iterator jobCache::put(const CreamJob& cj)
+jobCache::iterator jobCache::put( const CreamJob& cj )
 {   
     static const char* method_name = "jobCache::put() - ";
 
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
+    //boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
     try {
       ostringstream ofs;
       {
@@ -162,13 +166,17 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
 //                       << "Putting "
 //                       << cj.describe()
 //                        );
-      m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
+      m_dbMgr->put( ofs.str(), /*cj.getCompleteCreamJobID(),*/ cj.getGridJobID() );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
 			<< dbex.what() 
 			 );
         abort();
     }
+
+    m_CidGidMap[ cj.getCompleteCreamJobID() ] = cj.getGridJobID();
+    m_GidCidMap[ cj.getGridJobID() ]          = cj.getCompleteCreamJobID();
+
     return make_iterator( (m_GridJobIDSet.insert( cj.getGridJobID() )).first );
 }
 
@@ -178,9 +186,18 @@ jobCache::iterator
 jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
   throw()
 {
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
+  //boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     try {
-        string serializedJob( m_dbMgr->getByCid( completeCreamJID ) );
+
+      map<string, string>::iterator cidgidIT = m_CidGidMap.find( completeCreamJID );
+
+      if( cidgidIT == m_CidGidMap.end() ) {
+	return this->end();
+      }
+
+      //string tmp = m_dbMgr->get( cidgidIT->second );
+
+      string serializedJob( m_dbMgr->get( cidgidIT->second ) /*m_dbMgr->getByCid( completeCreamJID )*/ );
         CreamJob cj;
         istringstream tmpOs;//( string(data) );
         tmpOs.str( serializedJob );
@@ -203,7 +220,7 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
 jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
   throw()
 {
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
+  //boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
     //return m_jobs.findJobByGID( gridJID );
     
     return make_iterator( m_GridJobIDSet.find( gridJID ) );
@@ -214,7 +231,7 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
 {
     static const char* method_name = "jobCache::erase() - ";
 
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
+    //boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
 
     if( it == end() ) 
         return it;
@@ -228,7 +245,8 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
                     << "Removing " << it->describe()
                      );        
     try {
-      m_dbMgr->delByGid( gid );
+      //      m_dbMgr->delByGid( gid );
+      m_dbMgr->del( gid );
     } catch(JobDbException& dbex) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
 			<< dbex.what() 
@@ -236,7 +254,10 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
         abort();
     }
     
+    string cid = m_GidCidMap[ gid ];
     m_GridJobIDSet.erase( gid );
+    m_GidCidMap.erase( gid );
+    m_CidGidMap.erase( cid );
 
     return result;
 }
@@ -244,10 +265,9 @@ jobCache::iterator jobCache::erase( jobCache::iterator it )
 //______________________________________________________________________________
 jobCache::iterator jobCache::begin() 
 {
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
+  //boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
     return make_iterator( m_GridJobIDSet.begin() );
 }
-
 
 //______________________________________________________________________________
 jobCache::iterator jobCache::end() 
@@ -255,13 +275,14 @@ jobCache::iterator jobCache::end()
     return jobCacheIterator( );
 }
 
+//______________________________________________________________________________
 string jobCache::get_next_grid_job_id( const string& gid ) const throw()
 {
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
-
+    
     if ( gid.empty() )
         return gid;
-
+    
+    //boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
     set<string>::const_iterator it = m_GridJobIDSet.find( gid );
     if ( it == m_GridJobIDSet.end() || (++it) == m_GridJobIDSet.end() )
         return string();
@@ -269,11 +290,14 @@ string jobCache::get_next_grid_job_id( const string& gid ) const throw()
         return *it;
 }
 
+//______________________________________________________________________________
 jobCacheIterator jobCache::make_iterator( const set< string >::const_iterator& it ) const throw()
 {
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
+  //boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?    
     if ( it == m_GridJobIDSet.end() )
         return jobCacheIterator();
     else
         return jobCacheIterator( *it );
 }
+
+//______________________________________________________________________________
