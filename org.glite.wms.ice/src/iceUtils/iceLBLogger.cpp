@@ -145,5 +145,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
             return theJob;
 
         } // Unlock the job cache
+    } else {
+        return ev->getJob(); // Make the compiler happy
     }
 }
