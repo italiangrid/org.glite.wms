@@ -54,7 +54,11 @@ namespace util {
 
     public:
         jobCacheIterator() throw();
-        jobCacheIterator( const std::string& anIt) throw();
+
+        /**
+         * Initialize iterator with a GRID job id
+         */
+        jobCacheIterator( const std::string& an_id) throw();
         
         jobCacheIterator&  operator++() throw();        
         CreamJob           operator*() throw();

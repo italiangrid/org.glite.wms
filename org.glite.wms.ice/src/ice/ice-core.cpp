@@ -212,26 +212,22 @@ Ice::Ice( ) throw(iceInit_ex&) :
       m_hostdn = cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
 
     } catch( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-      CREAM_SAFE_LOG(
-                     m_log_dev->errorStream()
-                     << "Ice::CTOR() - Unable to extract user DN from ["
-                     <<  m_configuration->ice()->ice_host_cert() << "]"
-                     << ". Cannot perform JobRegister and cannot start Listeneri. Stop!"
-                     
-                     );
-      exit(1);
+        CREAM_SAFE_LOG( m_log_dev->fatalStream()
+                        << "Ice::CTOR() - Unable to extract user DN from ["
+                        <<  m_configuration->ice()->ice_host_cert() << "]"
+                        << ". Cannot perform JobRegister and cannot start Listeneri. Stop!"
+                        );
+        exit(1);
     }
 
     try {
       m_myname = ice_util::getHostName();
     } catch( runtime_error& ex ) {
-      CREAM_SAFE_LOG(
-		     m_log_dev->fatalStream() 
-		     << "Ice::CTOR() - Couldn't determine hostname: ["
-		     << ex.what() << "]"
-		     
-		     );
-      abort();
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+                        << "Ice::CTOR() - Couldn't determine hostname: ["
+                        << ex.what() << "]"		     
+                        );
+        exit(1);
     }
 
 }
