@@ -74,6 +74,8 @@ namespace util {
     class subscriptionManager {
         
         //boost::scoped_ptr< glite::wms::ice::util::CEDbManager > m_dbMgr;
+
+      friend class iceCommandSubUpdater;
         
         std::set<std::string>                   		  m_cemonURL;
         
@@ -103,7 +105,9 @@ namespace util {
         subscriptionManager() throw();
         ~subscriptionManager() throw() {}
         static boost::recursive_mutex  mutex;
-        
+        void getUserCEMonMapping( std::map< std::string, std::set<std::string> >& target,
+                                  const bool only_active_jobs = false ) throw();
+ 
     public:
         
         typedef std::map< std::pair<std::string, std::string> , iceSubscription>::iterator iterator;
@@ -134,8 +138,8 @@ namespace util {
         
         bool hasSubscription( const std::string& userProxy, const std::string& cemon ) const throw();
         
-        void getUserCEMonMapping( std::map< std::string, std::set<std::string> >& target, 
-                                  const bool only_active_jobs = false ) throw();
+//        void getUserCEMonMapping( std::map< std::string, std::set<std::string> >& target, 
+//                                  const bool only_active_jobs = false ) throw();
         
         void renewSubscription(const std::string& userProxy, const std::string& cemon) throw();
         void checkSubscription(const std::pair<std::string, std::set<std::string> >&) throw();
