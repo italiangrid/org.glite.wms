@@ -86,8 +86,6 @@ namespace util {
         log4cpp::Category* m_log_dev;
 
         std::set<std::string> m_GridJobIDSet;
-	std::map<std::string, std::string> m_CidGidMap;
-	std::map<std::string, std::string> m_GidCidMap;
 
         void load( void ) throw();
 	  
@@ -120,7 +118,8 @@ namespace util {
         typedef jobCacheIterator iterator;
 
         static boost::recursive_mutex mutex; ///< Lock exported to users of the jobCache. This is used to handle client-side mutual exclusion to the jobCache.
-	
+
+
         /**
          * Gets the singleton instance of this class. Prior to calling
          * this method, the user is responsible to set the path files
