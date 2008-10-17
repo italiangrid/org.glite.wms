@@ -92,8 +92,20 @@ export LFC_HOST=${LFC}
 
 echo "Testing gfal for VO ${VO} ... "
 
+#TODO check the architecture and us lib/lib64 and globus_gass_copy_gcc64dbg
+#Check platform
+arch=`uname -i`
+if [ "x$arch" = "xi386" ]; then
+  lcglibdir="${GLITE_LOCATION}/../lcg/lib"
+  globuslibdir="${GLITE_LOCATION}/../globus/lib"
+  globus_gass_lib=globus_gass_copy_gcc32dbg
+else
+  lcglibdir="${GLITE_LOCATION}/../lcg/lib64"
+  globuslibdir="${GLITE_LOCATION}/../globus/lib"
+  globus_gass_lib=globus_gass_copy_gcc64dbg
+fi
 
-command="gcc -I${GLITE_LOCATION}/../lcg/include -L${GLITE_LOCATION}/../lcg/lib -L${GLITE_LOCATION}/../globus/lib -o gfal-test gfal-test.c -lgfal -lglobus_gass_copy_gcc32dbg"
+command="gcc -I${GLITE_LOCATION}/../lcg/include -L$lcglibdir -L$globuslibdir -o gfal-test gfal-test.c -lgfal -l$globus_gass_lib"
 message="Compiling GFAL test script"
 run_command "${command}" "${message}"
 
