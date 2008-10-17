@@ -46,7 +46,7 @@ class test_existing_replica(_test):
         retval = True
         if (retRetVal == testRetVal):
             retval = retval & ( test.nlink == ret.nlink )
-	        retval = retval & ( test.filesize == ret.filesize )
+            retval = retval & ( test.filesize == ret.filesize )
             retval = retval & ( test.fileclass == ret.fileclass )
             retval = retval & ( test.status == ret.status )
             retval = retval & ( test.guid == ret.guid )
