@@ -100,8 +100,8 @@ function run_command() {
  command=$1
  message=$2
  echo -n "${message} ... "
- 
- output=$(eval "${command}" 2>&1)
+
+ output=$(eval "${command}" 1>&1)
 
  if [ $? -gt 0 ]; then
   echo "Failed"
