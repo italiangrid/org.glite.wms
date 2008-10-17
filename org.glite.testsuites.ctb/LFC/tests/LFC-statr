@@ -46,11 +46,11 @@ class test_existing_replica(_test):
         retval = True
         if (retRetVal == testRetVal):
             retval = retval & ( test.nlink == ret.nlink )
-	    retval = retval & ( test.filesize == ret.filesize )
+	        retval = retval & ( test.filesize == ret.filesize )
             retval = retval & ( test.fileclass == ret.fileclass )
             retval = retval & ( test.status == ret.status )
             retval = retval & ( test.guid == ret.guid )
-	    retval = retval & ( test.csumtype == ret.csumtype )
+#	    retval = retval & ( test.csumtype == ret.csumtype )
 #	    retval = retval & ( test.csumvalue == ret.csumvalue )
         else:
             retval = False
@@ -70,7 +70,7 @@ class test_nonexisting_replica(_test):
         retval=lfc.lfc_filestatg()
         retval.fileid=0L
         retval.filemode=0
-        retval.nlink=-1
+        retval.nlink=0
         retval.uid=0
         retval.gid=0
         retval.filesize=0L
