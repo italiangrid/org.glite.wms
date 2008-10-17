@@ -14,7 +14,7 @@ class test_ok(_test):
         self.path = lfc_vo          #"/grid/dteam"
     def test(self):
         ret = lfc.lfc_chdir(self.path)
-        path = "                     "
+        path = " " * 256    # create buffer with length of 256 characters
         lfc.lfc_getcwd(path,len(path))
         return (path.strip(),ret)
     def ret(self):
