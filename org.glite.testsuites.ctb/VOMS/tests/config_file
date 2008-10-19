@@ -12,6 +12,13 @@ export USER2="$PROJECT/test_user_2_cert.pem"
 export USER3="$PROJECT/test_user_3_cert.pem"
 export USER4="$PROJECT/test_user_4_cert.pem"
 
+# needed by some new ACL tests
+export PWS="$SAME_SENSOR_HOME/tests/pws"
+export USER1_KEY="$PROJECT/test_user_1_key.pem"
+export USER2_KEY="$PROJECT/test_user_2_key.pem"
+export USER3_KEY="$PROJECT/test_user_3_key.pem"
+export USER4_KEY="$PROJECT/test_user_4_key.pem"
+
 export CA="/C=CH/O=CERN/OU=GD/CN=The Certification CA"
 export CA_CERN="/C=CH/O=CERN/OU=GRID/CN=CERN CA"
 export GRIDMAP="$SAME_SENSOR_HOME/tests/gridmap-test-1928" # gridmap config for "test" & "lxb1928"
