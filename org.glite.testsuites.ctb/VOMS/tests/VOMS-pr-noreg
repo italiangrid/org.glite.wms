@@ -32,7 +32,7 @@ function clearTask {
 echo "Create normal proxy, for delete user"
 voms-proxy-init -voms $vo_name -vomses $VOMSES  -cert $USERCERT -key $USERKEY -pwstdin < $PWS
 echo "Delete user"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
 }
 
 OPTION="noregen"

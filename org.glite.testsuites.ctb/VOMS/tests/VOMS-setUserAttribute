@@ -45,8 +45,8 @@ USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
 echo "SCENARIO: VO empty"
 echo "<br>"
 
-voms-admin --vo=$vo_name --host $voms_host  set-user-attribute  > $voms_stderr
-grep "Please specify DN and CA for the user!" $voms_stderr > /dev/null
+voms-admin --vo=$vo_name --nousercert --host $voms_host  set-user-attribute "Fake user" "Fake CA" "FAKE_ATTR" "FAKE_VALUE" > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchUserException" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
     echo "Incorrect error message:"
@@ -58,7 +58,7 @@ if [ $? == 1 ]; then
 fi
 echo "OK"
 
-voms-admin --vo=$vo_name --host $voms_host  set-user-attribute "$USER_SUBJECT" "$USER_ISSUER"  > $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host --nousercert set-user-attribute "$USER_SUBJECT" "$USER_ISSUER"  > $voms_stderr
 grep "Missing string argument!" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
@@ -71,7 +71,7 @@ if [ $? == 1 ]; then
 fi
 echo "OK"
 
-voms-admin --vo=$vo_name --host $voms_host  set-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" > $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host --nousercert set-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" > $voms_stderr
 grep "Missing string argument!" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
@@ -90,15 +90,15 @@ echo "Assign attribte  $ATTRIBUTE, value=$ATTVALUE and description=$ATTDESC to n
 voms-admin --vo=$vo_name --host $voms_host create-attribute-class "$ATTRIBUTE" "$ATTDESC" 0
 echo "<br>"
 echo "set-user-attribute"
-voms-admin --vo=$vo_name --host $voms_host  set-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" "$ATTVALUE"
+voms-admin --vo=$vo_name --host $voms_host --nousercert set-user-attribute "$USER_SUBJECT" "$USER_ISSUER" "$ATTRIBUTE" "$ATTVALUE"
 echo "list-user-attribute"
-voms-admin --vo=$vo_name --host $voms_host  list-user-attributes "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host --nousercert list-user-attributes "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
 
 grep "$ATTRIBUTE" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
     voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
     echo "Error when assigning attribute to user:"
     echo "<br>"
     cat $voms_tmp
@@ -111,7 +111,7 @@ grep "$ATTVALUE" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
     voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
     echo "Error when assigning attribute to user:"
     echo "<br>"
     cat $voms_tmp
@@ -124,7 +124,7 @@ echo "Cleaning tasks"
 echo "<br>"
 
 voms-admin --vo=$vo_name --host $voms_host delete-attribute-class $ATTRIBUTE
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

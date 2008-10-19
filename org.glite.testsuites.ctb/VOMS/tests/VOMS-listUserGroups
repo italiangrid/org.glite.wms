@@ -41,7 +41,7 @@ echo "SCENARIO: VO empty"
 echo "<br>"
 echo "List non existing groups of non existing user"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host --nousercert list-user-groups "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 grep "org.glite.security.voms.admin.database.NoSuchUserException: No user" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
@@ -58,7 +58,7 @@ echo "<br>"
 voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "List non existing groups of user"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host --nousercert list-user-groups "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
 mainGroup=`cat $voms_tmp`
 echo "Main group: $mainGroup" 
 
@@ -71,14 +71,14 @@ echo "<br>"
 voms-admin --vo=$vo_name  --host $voms_host create-group "/"$vo_name"/"$GROUP
 echo "Add user as member of group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP  "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name  --host $voms_host --nousercert add-member "/"$vo_name"/"$GROUP  "$USER_SUBJECT" "$USER_ISSUER"
 echo "List existing group $GROUP of user"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host list-user-groups  "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
+voms-admin --vo=$vo_name --host $voms_host --nousercert list-user-groups  "$USER_SUBJECT" "$USER_ISSUER" > $voms_tmp
 grep "$GROUP" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
     voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Error when listing user groups:"
     echo "<br>"
@@ -90,7 +90,7 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name  --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name  --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name  --host $voms_host delete-group "/"$vo_name"/"$GROUP
 echo "Test OK"
 exit $SAME_OK

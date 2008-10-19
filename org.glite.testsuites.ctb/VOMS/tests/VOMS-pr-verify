@@ -43,7 +43,7 @@ if [ $? = 0 ]; then
    echo "OK"
 else 
    echo "Test is failed, exit code=1"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
@@ -60,11 +60,11 @@ grep "$user_subject" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
     exit $SAME_ERROR
 fi
         echo "Test is OK"
-        voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+        voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
 echo "</pre>"
 exit $SAME_OK
 

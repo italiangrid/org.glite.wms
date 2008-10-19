@@ -36,18 +36,26 @@ echo "<br>"
 echo "fake user=$USER"
 echo "<br>"
 
-op1="list"
-op2="create"
-op3="delete"
-allow="allow"
+USER1_SUBJECT=$(openssl x509 -in $USER1 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER1_ISSUER=$(openssl x509 -in $USER1 -noout -issuer | sed -e 's/^issuer=[ ]*//')
 
-echo "SCENARIO: empty VO"
+USER2_SUBJECT=$(openssl x509 -in $USER2 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER2_ISSUER=$(openssl x509 -in $USER2 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER3_SUBJECT=$(openssl x509 -in $USER3 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER3_ISSUER=$(openssl x509 -in $USER3 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER4_SUBJECT=$(openssl x509 -in $USER4 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER4_ISSUER=$(openssl x509 -in $USER4 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+echo "SCENARIO: list ACL for a non-existent group (empty VO)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host get-acl "/"$vo_name"/"$GROUP 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchGroupException" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Incorrect error message"
+    echo "Unexpected message while listing the ACL for a non-existent group"
     echo "<br>"
     cat $voms_stderr
     echo "<br>"
@@ -56,65 +64,65 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-echo "SCENARIO: Create group <$GROUP> and add 3 ACL entries"
+echo "SCENARIO: Create group <$GROUP> and add 3 ACL entries (for USER1, USER3, USER4 - see the configuration file)."
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name"/"$GROUP
-voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "/"$vo_name"/"$GROUP $allow $op1 $USER
-voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "/"$vo_name"/"$GROUP $allow $op2 $USER
-voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "/"$vo_name"/"$GROUP $allow $op3 $USER
-voms-admin --vo=$vo_name -h $voms_host get-acl "/"$vo_name"/"$GROUP > $voms_tmp
 
-user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-grep "$user_subject" $voms_tmp > $tempo
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name --host $voms_host add-ACL-entry "/"$vo_name"/"$GROUP $USER1 "CONTAINER_READ,CONTAINER_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host add-ACL-entry "/"$vo_name"/"$GROUP $USER3 "ATTRIBUTES_READ,ATTRIBUTES_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP "$USER4_SUBJECT" "$USER4_ISSUER" "ACL_READ,ACL_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert remove-ACL-entry "/"$vo_name"/"$GROUP "$USER4_SUBJECT" "$USER4_ISSUER" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP "$USER4_SUBJECT" "$USER4_ISSUER" "REQUESTS_READ,ACL_DEFAULT" FALSE
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP > $voms_tmp
+
+SET_PERM_LIST1=$(grep "^($USER1_SUBJECT,$USER1_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")
+SET_PERM_LIST2=$(grep "^($USER3_SUBJECT,$USER3_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")
+SET_PERM_LIST3=$(grep "^($USER4_SUBJECT,$USER4_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")
+
 echo "Check added ACL entries"
 echo "<br>"
-ops=`cat $tempo | cut -d"|" -f3`
-echo $ops > $tempo
 
-grep "$op1" $tempo > /dev/null
+if ! (echo $SET_PERM_LIST1 | grep CONTAINER_READ | grep -q CONTAINER_WRITE); then
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+   echo "Error listing the ACE for $USER1_SUBJECT; missing right"
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
 
- if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Error listing the ACL"
-    echo "<br>"
-    cat $tempo
-    echo "<br>"
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
- fi
+if ! (echo $SET_PERM_LIST2 | grep ATTRIBUTES_READ | grep -q ATTRIBUTES_WRITE); then
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+   echo "Error listing the ACE for $USER3_SUBJECT; missing right"
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
 
-grep "$op2" $tempo > /dev/null
+if ! (echo $SET_PERM_LIST3 | grep REQUESTS_READ | grep -q ACL_DEFAULT); then
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+   echo "Error listing the ACE for $USER4_SUBJECT; missing right"
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
 
- if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Error listing the ACL"
-    echo "<br>"
-    cat $tempo
-    echo "<br>"
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
- fi
-
-grep "$op3" $tempo > /dev/null
-
- if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Error listing the ACL"
-    echo "<br>"
-    cat $tempo
-    echo "<br>"
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
- fi
-
+if ((echo $SET_PERM_LIST3 | grep -q ACL_READ) || (echo $SET_PERM_LIST3 | grep -q ACL_WRITE)); then
+   voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+   echo "Error listing the ACE for $USER4_SUBJECT; unexpected right"
+   echo "<br>"
+   echo "Test has failed"
+   echo "<br>"
+   exit $SAME_ERROR
+fi
 
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
@@ -122,3 +130,4 @@ rm -rf $tempo
 echo "Test OK"
 echo "<pre>"
 exit $SAME_OK
+

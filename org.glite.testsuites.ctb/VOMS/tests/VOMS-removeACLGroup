@@ -36,13 +36,28 @@ echo "<br>"
 echo "fake user=$USER"
 echo "<br>"
 
-echo "SCENARIO: empty VO"
+USER1_SUBJECT=$(openssl x509 -in $USER1 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER1_ISSUER=$(openssl x509 -in $USER1 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER2_SUBJECT=$(openssl x509 -in $USER2 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER2_ISSUER=$(openssl x509 -in $USER2 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER3_SUBJECT=$(openssl x509 -in $USER3 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER3_ISSUER=$(openssl x509 -in $USER3 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+USER4_SUBJECT=$(openssl x509 -in $USER4 -noout -subject | sed -e 's/^subject=[ ]*//')
+USER4_ISSUER=$(openssl x509 -in $USER4 -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+echo "SCENARIO: Try to remove an ACL entry for a non-existent group (empty VO)"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host remove-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+
+echo voms-admin --vo=$vo_name --host $voms_host remove-ACL-entry "/"$vo_name"/"$GROUP $USER FALSE
+
+voms-admin --vo=$vo_name --host $voms_host remove-ACL-entry "/"$vo_name"/"$GROUP $USER FALSE > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchGroupException" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Incorrect error message"
+    echo "Unexpected behavior when trying to remove an ACL entry for a non-existent group."
     echo "<br>"
     cat $voms_stderr
     echo "<br>"
@@ -51,33 +66,26 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-echo "SCENARIO: Create group $GROUP and add ACL entry"
+echo "SCENARIO: Create a group hierarchy /$vo_name/$GROUP/$GROUP, ACL entries and test the removal without propagation"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name"/"$GROUP
-voms-admin --vo=$vo_name -h $voms_host remove-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: There is no entry in ACL for group" $voms_stderr > /dev/null
 
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Incorrect error message"
-    echo "<br>"
-    cat $voms_stderr
-    echo "<br>"
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
-fi
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP/$GROUP
 
-voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "/"$vo_name"/"$GROUP $ALLOW $OP $USER
-voms-admin --vo=$vo_name -h $voms_host remove-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP "$USER1_SUBJECT" "$USER1_ISSUER" "CONTAINER_READ,CONTAINER_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP/$GROUP "$USER1_SUBJECT" "$USER1_ISSUER" "ACL_READ,ACL_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER" "MEMBERSHIP_READ,MEMBERSHIP_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP/$GROUP "$USER3_SUBJECT" "$USER3_ISSUER" "MEMBERSHIP_READ,MEMBERSHIP_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert remove-ACL-entry "/"$vo_name"/"$GROUP "$USER1_SUBJECT" "$USER1_ISSUER" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert remove-ACL-entry "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER" FALSE
 
-user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-voms-admin --vo=$vo_name -h $voms_host get-acl "/"$vo_name"/"$GROUP > $voms_tmp
-grep "$user_subject" $voms_tmp > /dev/null
+echo "<BR>Checking ACL for /$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP > $voms_tmp
 
-if [ $? == 0 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Error removing the ACL"
+if grep -q "^($USER1_SUBJECT,$USER1_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo "Error removing an ACL entry for ($USER1_SUBJECT;/$vo_name/$GROUP)"
     echo "<br>"
     cat $voms_tmp
     echo "<br>"
@@ -86,10 +94,116 @@ if [ $? == 0 ]; then
     exit $SAME_ERROR
 fi
 
-echo "Cleaning tasks"
+if grep -q "^($USER3_SUBJECT,$USER3_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo "Error removing an ACL entry for ($USER3_SUBJECT;/$vo_name/$GROUP)"
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "<BR>Checking ACL for /$vo_name/$GROUP/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP/$GROUP > $voms_tmp
+
+if ! grep -q "^($USER1_SUBJECT,$USER1_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo "Propagation error. ACL entry for ($USER1_SUBJECT;/$vo_name/$GROUP/$GROUP) is missing but should not."
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+if ! grep -q "^($USER3_SUBJECT,$USER3_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo echo "Propagation error. ACL entry for ($USER3_SUBJECT;/$vo_name/$GROUP/$GROUP) is missing but should not."
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "SCENARIO: Test the removal of ACL entries with propagation enabled."
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+# Prepare the scenario (restore the ACL entries removed by the previous test for group /$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP "$USER1_SUBJECT" "$USER1_ISSUER" "CONTAINER_READ,CONTAINER_WRITE" FALSE
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-ACL-entry "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER" "MEMBERSHIP_READ,MEMBERSHIP_WRITE" FALSE
+
+# Do removal with propagation enabled
+voms-admin --vo=$vo_name --host $voms_host --nousercert remove-ACL-entry "/"$vo_name"/"$GROUP "$USER1_SUBJECT" "$USER1_ISSUER" TRUE
+voms-admin --vo=$vo_name --host $voms_host --nousercert remove-ACL-entry "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER" TRUE
+
+echo "<BR>Checking ACL for /$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP > $voms_tmp
+
+if grep -q "^($USER1_SUBJECT,$USER1_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo "Error removing an ACL entry for ($USER1_SUBJECT;/$vo_name/$GROUP) with propagation enabled"
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+if grep -q "^($USER3_SUBJECT,$USER3_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo "Error removing an ACL entry for ($USER3_SUBJECT;/$vo_name/$GROUP) with propagation enabled"
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "<BR>Checking ACL for /$vo_name/$GROUP/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP/$GROUP > $voms_tmp
+
+if grep -q "^($USER1_SUBJECT,$USER1_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo "Propagation error. ACL entry for ($USER1_SUBJECT;/$vo_name/$GROUP/$GROUP) exists but should not."
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+if grep -q "^($USER3_SUBJECT,$USER3_ISSUER): " $voms_tmp; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+    echo echo "Propagation error. ACL entry for ($USER3_SUBJECT;/$vo_name/$GROUP/$GROUP) exists but should not."
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "Cleaning tasks."
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP/$GROUP
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
@@ -97,3 +211,4 @@ rm -rf $tempo
 echo "Test OK"
 echo "</pre>"
 exit $SAME_OK
+

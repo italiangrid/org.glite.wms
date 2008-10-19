@@ -1,24 +1,26 @@
 #!/bin/bash
 # Date: 01/12/2006                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
-# Description of the test: Test ACL  create entry  command (add--acl-entry) for Role        #
+# Description of the test: Test ACL  create entry  command (add-ACL-entry) for role         #
 #                                                                                           #
 # Input Parameters:                                                                         #
-#       - VO name                                                                           #                                    
+#       - VO name                                                                           # 
 #       - VO host name                                                                      #
 #       - groupname                                                                         #
+#       - rolename                                                                          #
 #       - fake user certificate file path                                                   #
 # Requisites:                                                                               #
 #	- VOMS server                                                                       #
 #       - 1 configured VO which is empty                                                    #
 #                                                                                           #
-#                                                                                           #                                                               
+#                                                                                           #
 #############################################################################################
 #                                                                                           #
 #                                                                                           #
 #############################################################################################
-echo "<pre>"
+
 export voms_host=$1
+echo "<pre>"
 source $SAME_SENSOR_HOME/tests/config_file
 
 rm -rf $voms_tmp
@@ -27,24 +29,29 @@ rm -rf $tempo
 
 date
 echo "<br>"
-echo "Test VOMS-crACLRole:"
+echo "Test VOMS-crACLGroup:"
 echo "<br>"
 echo "VO=$vo_name"
 echo "<br>"
-echo "Role=$ROLE"
+echo "group=$GROUP"
+echo "<br>"
+echo "role=$ROLE"
 echo "<br>"
 echo "fake user=$USER"
 echo "<br>"
 
-oper=( all create delete add remove set-acl get-acl set-default-acl get-default-acl list )
+ACE_RIGHTS=( CONTAINER_READ MEMBERSHIP_READ ACL_READ REQUESTS_READ ATTRIBUTES_READ CONTAINER_WRITE MEMBERSHIP_WRITE ACL_WRITE REQUESTS_WRITE ATTRIBUTES_WRITE ACL_DEFAULT ALL )
 
-echo "SCENARIO: empty VO"
+USER_SUBJECT=$(openssl x509 -in $USER -noout -subject | sed -e 's/^subject=[ ]*//')
+USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
+
+echo "<br>SCENARIO: empty VO"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "Role=$ROLE" $ALLOW $OP $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: role" $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host add-ACL-entry "/$vo_name/Role=$ROLE" $USER ALL FALSE > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchRoleException" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Error creating the role"
+    echo "Setting ACE on non-existing role did not generate an error."
     echo "<br>"
     cat $voms_stderr
     echo "<br>"
@@ -53,65 +60,111 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-echo "SCENARIO: Create Role <$ROLE> and add 10 ACL entries"
+echo "SCENARIO: Create group <$GROUP>, role <$ROLE> and try to set each right"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host create-role $ROLE
-for ind in 0 1 2 3 4 5 6 7 8 9
+voms-admin --vo=$vo_name --host $voms_host create-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host create-role "$ROLE"
+
+for ind in 0 1 2 3 4 5 6 7 8 9 10 11
 do
- OP=${oper[ind]}
- echo "Create ACL entry $OP for user for Role $ROLE"
- voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "Role=$ROLE" $ALLOW $OP $USER
-done
-voms-admin --vo=$vo_name -h $voms_host get-acl "Role=$ROLE" > $voms_tmp
+ OP=${ACE_RIGHTS[ind]}
 
-user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-grep "$user_subject" $voms_tmp > $tempo
+ echo "<br>Create ACL entry with right $OP for user $USER_SUBJECT and context /$vo_name/$GROUP/Role=$ROLE"
+ voms-admin --vo=$vo_name --host $voms_host add-ACL-entry "/$vo_name/$GROUP/Role=$ROLE" $USER $OP FALSE
 
-echo "Check added ACL entries"
-echo "<br>"
-ops=`cat $tempo | cut -d"|" -f3`
-echo $ops > $tempo
-for ind in 0 1 2 3 4 5 6 7 8 9
-do
- OP=${oper[ind]}
- grep $OP $tempo > /dev/null
+ echo -n "<br>Check whether the right is properly set..."
+ voms-admin --vo=$vo_name --host $voms_host get-ACL "/$vo_name/$GROUP/Role=$ROLE" > $voms_tmp
 
- if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    echo "Error creating the ACL"
-    echo "<br>"
-    cat $tempo
-    echo "<br>"
-    echo "Test has failed"
+ SET_PERM_LIST=$(grep "^($USER_SUBJECT,$USER_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")
+ if [ "$SET_PERM_LIST" != "$OP" ]; then
+    voms-admin --vo=$vo_name --host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host delete-role "$ROLE"
+    echo "FAILED"
+    echo "<br>Error in creating an ACE with right $OP"
+    echo "<br>Test has failed"
     echo "<br>"
     exit $SAME_ERROR
  fi
- 
+ echo "OK"
 done
 
-echo "SCENARIO: Add existing ACL entry in role $ROLE"
+echo "<br>SCENARIO: Check ACE with multiple rights set"
 echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "Role=$ROLE" $ALLOW "list" $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.AlreadyExists:" $voms_stderr > /dev/null
+
+for ind in 1 2 3 4 5 6 7 8 9 10
+do
+ IFS=,
+ OP="${ACE_RIGHTS[*]:0:$ind}"
+
+ echo "<br>Create ACL entry with rights $OP for user $USER_SUBJECT and context /$vo_name/$GROUP/Role=$ROLE"
+ voms-admin --vo=$vo_name --host $voms_host add-ACL-entry "/$vo_name/$GROUP/Role=$ROLE" $USER "$OP" FALSE
+
+ echo -n "<br>Check whether the rights are properly set..."
+ voms-admin --vo=$vo_name --host $voms_host get-ACL "/$vo_name/$GROUP/Role=$ROLE" > $voms_tmp
+
+ SET_PERM_LIST="$(grep "^($USER_SUBJECT,$USER_ISSUER): " $voms_tmp | sed -e "s/^([^\)]*): //")"
+
+ for CURRENT_PERM in $SET_PERM_LIST; do
+    j=0
+    FOUND="no"
+
+    while [ $j -lt $ind ]; do
+       if [ "${ACE_RIGHTS[$j]}" = "$CURRENT_PERM" ]; then
+          FOUND="yes"
+          break
+       fi
+       j=$[$j+1]
+    done
+
+    if [ "$FOUND" = "no" ]; then
+       voms-admin --vo=$vo_name --host delete-group "/$vo_name/$GROUP"
+       voms-admin --vo=$vo_name --host $voms_host delete-role "$ROLE"
+       echo "FAILED"
+       echo "<br>Permission $CURRENT_PERM should not be set but it is."
+       echo "<br>Error in add-ACL-entry or get-ACL when using multiple permissions."
+       echo "<br>Test has failed."
+       echo "<br>"
+       exit $SAME_ERROR
+    fi
+
+  j=0
+  while [ $j -lt $ind ]; do
+
+     FOUND="no"
+     for CURRENT_PERM in $SET_PERM_LIST; do
+        if [ "${ACE_RIGHTS[$j]}" = "$CURRENT_PERM" ]; then
+           FOUND="yes"
+           break
+        fi
+     done
+
+     if [ "$FOUND" = "no" ]; then
+        voms-admin --vo=$vo_name --host delete-group "/$vo_name/$GROUP"
+        voms-admin --vo=$vo_name --host $voms_host delete-role "$ROLE"
+        echo "FAILED"
+        echo "<br>Permission ${ACE_RIGHTS[$j]} should be set but it is not."
+        echo "<br>Error in add-ACL-entry or get-ACL when using multiple permissions."
+        echo "<br>Test has failed."
+        echo "<br>"
+        exit $SAME_ERROR
+     fi
+  
+     j=$[$j+1]
+  done
+ done
+
+ echo "OK"
+done
+
+echo "<BR>SCENARIO: Try to create an ACL entry for an unknown operation"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host add-ACL-entry "/$vo_name/$GROUP/Role=$ROLE" $USER "lllist" FALSE 2> $voms_stderr
+grep "ValueError: lllist is not a supported VOMSPermission" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
-    echo "Incorrect error message"
-    echo "<br>"
-    cat $voms_stderr
-    echo "<br>"
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
-fi
-
-echo "SCENARIO: Try to create an ACL entry for an unknown operation"
-echo "<br>"
-voms-admin --vo=$vo_name -h $voms_host add-acl-entry  "Role=$ROLE" $ALLOW "lllist" $USER 2> $voms_stderr
-grep "Unknown operation:" $voms_stderr > /dev/null
-
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+    voms-admin --vo=$vo_name --host $voms_host delete-role "$ROLE"
     echo "Incorrect error message"
     echo "<br>"
     cat $voms_stderr
@@ -124,7 +177,9 @@ fi
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name -h $voms_host delete-role $ROLE
+voms-admin --vo=$vo_name --host $voms_host delete-group "/$vo_name/$GROUP"
+voms-admin --vo=$vo_name --host $voms_host delete-role "$ROLE"
+
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo

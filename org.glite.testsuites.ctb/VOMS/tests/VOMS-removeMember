@@ -44,7 +44,7 @@ echo "SCENARIO: VO empty"
 echo "<br>"
 echo "Remove non existing member from non existing group"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+voms-admin --vo=$vo_name --nousercert --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
@@ -61,7 +61,7 @@ echo "<br>"
 voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
 echo "Remove non existing member from group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+voms-admin --vo=$vo_name --nousercert --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
@@ -79,12 +79,12 @@ echo "<br>"
 voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "Add member to group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name  --nousercert --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name  --host $voms_host list-members "/"$vo_name"/"$GROUP > $voms_tmp
 grep "$user_subject" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Error when adding member to group:"
     echo "<br>"
@@ -96,12 +96,12 @@ fi
 
 echo "Remove member from group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name  --host $voms_host list-members "/"$vo_name"/"$GROUP > $voms_stderr
 grep "No members found in group" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Error when deleting member from group:"
     echo "<br>"
@@ -113,7 +113,7 @@ fi
 
 echo "Cleaning tasks"
 
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
 rm -rf $voms_tmp
 rm -rf $voms_stderr

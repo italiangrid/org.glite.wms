@@ -63,7 +63,7 @@ done
 }
 function clearTask {
     echo "Delete user"
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER" 
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER" 
     echo "Delete all groups"
     delGroups
     echo "Delete all roles"
@@ -89,7 +89,6 @@ USER_SUBJECT=$(openssl x509 -in $USERCERT -noout -subject | sed -e 's/^subject=[
 USER_ISSUER=$(openssl x509 -in $USERCERT -noout -issuer | sed -e 's/^issuer=[ ]*//')
 
 echo "1. Create new user and proxy"
-#voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER" 
 voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "Extract by openssl from usercert.pem"
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
@@ -119,13 +118,14 @@ for group in ${Groups[*]}
 do
     groupi="/$vo_name/$group"
     #echo "Add member to group: $groupi"
-    voms-admin --vo=$vo_name --host $voms_host add-member $groupi "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert add-member $groupi "$USER_SUBJECT" "$USER_ISSUER"
 done
 
-
+# TO CHECK[B
+#
 #echo "1.3.1. List user groups:"
 #voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER" 
-
+#
 #echo "1.3.2. Check members for each group - list members"
 #for group in ${Groups[*]}
 #do
@@ -133,24 +133,24 @@ done
 #    echo "Members in  group: $groupi"
 #    voms-admin --vo=$vo_name --host $voms_host list-members $groupi
 #done
-
+#
 
 echo "1.4. Assign Roles to users in group /$vo_name ($ROLEA, $ROLEB) and in 5 groups"
-    voms-admin --vo=$vo_name --host $voms_host assign-role /$vo_name "$ROLEA" "$USER_SUBJECT" "$USER_ISSUER"
-    voms-admin --vo=$vo_name --host $voms_host assign-role /$vo_name "$ROLEB" "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert assign-role /$vo_name "$ROLEA" "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert assign-role /$vo_name "$ROLEB" "$USER_SUBJECT" "$USER_ISSUER"
 
 co=0
 for group in ${Groups[*]}
 do
     role=${Roles[co]}
     groupi="/$vo_name/$group"
-    #echo "Assign role=$role in  group $groupi to user"
-    voms-admin --vo=$vo_name --host $voms_host assign-role $groupi $role "$USER_SUBJECT" "$USER_ISSUER"
+    echo "Assign role=$role in  group $groupi to user"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert assign-role $groupi $role "$USER_SUBJECT" "$USER_ISSUER"
     let co=co+1
 done
 
 echo "1.4.1. List user roles:"
-voms-admin --vo=$vo_name --host $voms_host  list-user-roles "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert list-user-roles "$USER_SUBJECT" "$USER_ISSUER"
 
 echo
 echo "2. Destroy and create proxy with 1 Role=$ROLEA"
@@ -232,7 +232,7 @@ fi
 echo "Test DN is OK"
 
 
-echo "4. Check result -fqan"
+echo "3.3. Check result -fqan"
 voms-proxy-info -fqan > $voms_tmp
 cat $voms_tmp
 
@@ -243,6 +243,82 @@ num=`grep -n "$patt1" $voms_tmp | cut -d":" -f1`
 echo "Nline=$num"
 
 if [ $num != 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_FAILED
+fi
+echo "OK"
+
+echo
+echo "4. Destroy and create proxy with 2 Roles: $ROLEA, $ROLEB and check the -voms inferred order"
+echo "Command:"
+echo "  voms-proxy-init -voms $vo_name:/$vo_name/Role=$ROLEB -voms $vo_name -voms $vo_name:/$vo_name/Role=$ROLEA"
+echo "                  -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS"
+
+voms-proxy-destroy
+voms-proxy-init -voms "$vo_name:/$vo_name/Role=$ROLEB" -voms $vo_name -voms "$vo_name:/$vo_name/Role=$ROLEA" -vomses $VOMSES  -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+
+echo "4.1. Check exit code and subject name"
+if [ $? == 1 ]; then
+        echo "Test has failed"
+        clearTask
+        exit $SAME_ERROR
+fi
+echo "Exit code - OK"
+
+
+voms-proxy-info -all > $voms_tmp
+cat $voms_tmp
+
+echo "4.2. Check user DN"
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_ERROR
+fi
+echo "Test DN is OK"
+
+
+echo "4.3. Check result -fqan"
+voms-proxy-info -fqan > $voms_tmp
+cat $voms_tmp
+
+patt1="/$vo_name/Role=$ROLEB/Capability=NULL"
+patt2="/$vo_name/Role=NULL/Capability=NULL"
+patt3="/$vo_name/Role=$ROLEA/Capability=NULL"
+
+echo "Check 1 order (expected 1 line: '$patt1'):"
+
+num=`grep -n "$patt1" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_FAILED
+fi
+echo "OK"
+
+echo "Check 2 order (expected 1 line: '$patt2'):"
+
+num=`grep -n "$patt2" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 2 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_FAILED
+fi
+echo "OK"
+
+echo "Check 3 order (expected 1 line: '$patt3'):"
+
+num=`grep -n "$patt3" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 3 ]; then
     echo "Test has failed"
     clearTask
     exit $SAME_FAILED

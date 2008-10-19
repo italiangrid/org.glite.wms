@@ -47,7 +47,7 @@ echo "SCENARIO: User doesn't exist"
 echo "<br>"
 echo "Remove non existing user"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 grep "org.glite.security.voms.admin.database.NoSuchUserException: User " $voms_stderr  > /dev/null
 
 if [ $? == 1 ]; then
@@ -64,7 +64,7 @@ echo "<br>"
 voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "Remove existing user"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name --host $voms_host list-users > $voms_tmp
 grep "$user_subject" $voms_tmp  > /dev/null
 

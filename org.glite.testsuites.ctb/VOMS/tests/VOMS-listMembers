@@ -90,10 +90,10 @@ voms-admin --vo=$vo_name --host $voms_host create-user $USER3
 voms-admin --vo=$vo_name --host $voms_host create-user $USER4
 echo "Add members to group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER2_SUBJECT" "$USER2_ISSUER"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER4_SUBJECT" "$USER4_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER2_SUBJECT" "$USER2_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER4_SUBJECT" "$USER4_ISSUER"
 echo "List members of group $GROUP"
 echo "<br>"
 voms-admin --vo=$vo_name  --host $voms_host list-members "/"$vo_name"/"$GROUP > $voms_tmp
@@ -101,10 +101,10 @@ voms-admin --vo=$vo_name  --host $voms_host list-members "/"$vo_name"/"$GROUP > 
 grep "$USER_SUBJECT" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
    echo "Error creating user $user1"
    echo "<br>"
@@ -117,10 +117,10 @@ fi
 grep "$USER2_SUBJECT" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
    echo "Error creating user $user2"
    echo "<br>"
@@ -133,10 +133,10 @@ fi
 grep "$USER3_SUBJECT" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
    echo "Error creating user $user3"
    echo "<br>"
@@ -149,10 +149,10 @@ fi
 grep "$USER4_SUBJECT" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
    echo "Error creating user $user4"
    echo "<br>"
@@ -166,17 +166,17 @@ fi
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER2_SUBJECT" "$USER2_ISSUER"
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER"
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER4_SUBJECT" "$USER4_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER2_SUBJECT" "$USER2_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER3_SUBJECT" "$USER3_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER4_SUBJECT" "$USER4_ISSUER"
 
 voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
 
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER2_SUBJECT" "$USER2_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER3_SUBJECT" "$USER3_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER4_SUBJECT" "$USER4_ISSUER"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

@@ -97,15 +97,15 @@ voms-admin --vo=$vo_name --host $voms_host create-user $USER
 user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
 echo "User subject=$user_subject"
 
-voms-admin --vo=$vo_name --host $voms_host add-member "/"$vo_name"/"$GROUP  "$USER_SUBJECT" "$USER_ISSUER"
-voms-admin --vo=$vo_name --host $voms_host assign-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host add-member "/"$vo_name"/"$GROUP  "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host assign-role "/"$vo_name"/"$GROUP $ROLE "$USER_SUBJECT" "$USER_ISSUER"
 echo "List users of role $ROLE in group $GROUP"
 echo "<br>"
 voms-admin --vo=$vo_name --host $voms_host list-users-with-role "/"$vo_name"/"$GROUP $ROLE > $voms_tmp
 grep "$user_subject" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
     echo "Error when listing users with role:"
@@ -119,7 +119,7 @@ fi
 echo "Cleaning tasks"
 echo "<br>"
 
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
 voms-admin --vo=$vo_name --host $voms_host delete-role $ROLE
 rm -rf $voms_tmp

@@ -78,7 +78,7 @@ done
 }
 
 function clearTask {
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
     delSubgroups
     delGroups
 }
@@ -130,7 +130,7 @@ for group in ${Groups[*]}
 do
     groupi="/$vo_name/$group"
     echo "Add member to group: $groupi"
-    voms-admin --vo=$vo_name --host $voms_host add-member $groupi "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert add-member $groupi "$USER_SUBJECT" "$USER_ISSUER"
 done
 
 echo "1.4. Add user to subgroups as group member"
@@ -140,12 +140,12 @@ for group in ${Subgroups[*]}
 do 
     groupi="$work/$group"
     echo "Add member to sub-group: $groupi"
-    voms-admin --vo=$vo_name --host $voms_host add-member "$groupi" "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert add-member "$groupi" "$USER_SUBJECT" "$USER_ISSUER"
     work="$groupi"    
 done
 
 echo "1.5. List user groups:"
-voms-admin --vo=$vo_name --host $voms_host list-user-groups "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert list-user-groups "$USER_SUBJECT" "$USER_ISSUER"
 
 echo "2. Check proxy info"
 echo "Destroy and Create proxy"
@@ -216,6 +216,74 @@ echo "OK"
 echo "Check 3 order (expected 3 line: $patt3):"
 #grep -n "$patt3" $voms_tmp
 
+num=`grep -n "$patt3" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 3 ]; then
+   echo "Test has failed"
+   clearTask
+   exit $SAME_FAILED
+fi
+
+echo "Create a new proxy for checking -voms inferred order:"
+echo voms-proxy-init -voms "$vo_name:/$vo_name/group1/sgroup_11" -voms $vo_name -voms "$vo_name:/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14" -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin
+voms-proxy-init -voms "$vo_name:/$vo_name/group1/sgroup_11" -voms $vo_name -voms "$vo_name:/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14" -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+
+if [ $? == 1 ]; then
+    echo "Test has failed, exit code=1"
+    clearTask
+    exit $SAME_ERROR
+fi
+echo "exit code - OK"
+
+echo "2.1. Execute voms-proxy-info -all"
+voms-proxy-info -all > $voms_tmp
+
+cat $voms_tmp
+
+echo "2.2. Check user DN"
+grep "$user_subject" $voms_tmp
+
+if [ $? == 1 ]; then
+    echo "Test has failed"
+    clearTask
+    exit $SAME_ERROR
+fi
+
+patt1="/$vo_name/group1/sgroup_11/Role=NULL/Capability=NULL"
+patt2="/$vo_name/group1/Role=NULL/Capability=NULL"
+patt3="/$vo_name/group1/sgroup_11/sgroup_12/sgroup_13/sgroup_14/Role=NULL/Capability=NULL"
+
+echo "Check -fqan"
+voms-proxy-info -fqan > $voms_tmp
+cat $voms_tmp
+
+voms-proxy-destroy
+voms-proxy-init -voms $vo_name -vomses $VOMSES -cert $USERCERT -key $USERKEY -pwstdin < $PWS
+
+echo "Check 1 order (expected 1 line: $patt1):"
+num=`grep -n "$patt1" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 1 ]; then
+   echo "Test has failed"
+   clearTask
+   exit $SAME_FAILED
+fi
+echo "OK"
+
+echo "Check 2 order (expected 2 line: $patt2):"
+num=`grep -n "$patt2" $voms_tmp | cut -d":" -f1`
+echo "Nline=$num"
+
+if [ $num != 2 ]; then
+   echo "Test has failed"
+   clearTask
+   exit $SAME_FAILED
+fi
+echo "OK"
+
+echo "Check 3 order (expected 3 line: $patt3):"
 num=`grep -n "$patt3" $voms_tmp | cut -d":" -f1`
 echo "Nline=$num"
 

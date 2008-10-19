@@ -61,7 +61,7 @@ echo "<br>"
 grep "$user_subject" $voms_tmp > $tempo
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Error creating the user: wrong DN"
    echo "<br>"
    cat $tempo
@@ -76,7 +76,7 @@ echo "<br>"
 grep "$user_CN" $tempo  > /dev/null
 
 if [ $? == 1 ]; then 
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Error creating the user: wrong CN"
    echo "<br>"
    cat $tempo
@@ -91,7 +91,7 @@ echo "<br>"
 grep "$user_CA" $tempo  > /dev/null
 
 if [ $? == 1 ]; then 
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Error creating the user: wrong CA"
    echo "<br>"
    cat $tempo
@@ -108,7 +108,7 @@ voms-admin --vo=$vo_name --host $voms_host create-user $USER > $voms_stderr
 grep "org.glite.security.voms.admin.database.UserAlreadyExistsException: User " $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
    echo "Incorrect error message:"
    echo "<br>"
    cat $voms_stderr
@@ -119,7 +119,7 @@ fi
 
 echo "Cleaning tasks"
 echo "<br>"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --nousercert --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
 
 rm -rf $voms_tmp
 rm -rf $voms_stderr

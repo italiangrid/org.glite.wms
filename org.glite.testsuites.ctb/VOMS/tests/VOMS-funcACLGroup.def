@@ -1,0 +1,4 @@
+testName: VOMS-funcACLGroup
+testAbbr: funcACLgr
+testTitle: voms-admin: Do a functional test for group ACLs
+EOT

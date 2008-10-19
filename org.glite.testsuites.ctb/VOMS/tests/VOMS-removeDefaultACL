@@ -1,7 +1,7 @@
 #!/bin/bash
 # Date: 01/12/2006                                                                          #
 # Author: Victor Galaktionov e-mail: victor.galaktionov@cern.ch                             #
-# Description of the test: Remove default ACL entry of group                                #
+# Description of the test: Remove Default ACL entry of a group                              #
 #                                                                                           #
 # Input Parameters:                                                                         #
 #       - VO name                                                                           #                                    
@@ -28,17 +28,60 @@ rm -rf $tempo
 date
 echo "<br>"
 echo "Test VOMS-removeDefaultACL:"
+echo "<br>"
 echo "VO=$vo_name"
+echo "<br>"
 echo "group=$GROUP"
+echo "<br>"
 echo "fake user=$USER"
+echo "<br>"
 
+# Discover the subject of the user running the tests using the proxy
+EXEC_USER_SUBJECT=$(voms-proxy-info -identity -dont-verify-ac)
+if [ $? == 1 ]; then
+    echo "Cannot discover the subject of the user running the test. voms-proxy-info returned an error.Skipping the test."
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test was skipped"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
 
-echo "SCENARIO: empty VO"
-voms-admin --vo=$vo_name -h $voms_host remove-default-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: group" $voms_stderr > /dev/null
+# Discover the issuer for this user (this user should be granted ALL rights for the top group)
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name > $voms_tmp
+if [ $? == 1 ]; then
+    echo "Cannot fetch ACL for top group. Skipping test."
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test was skipped"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+EXEC_USER_ISSUER=$(grep "$EXEC_USER_SUBJECT" $voms_tmp | head -1 | cut -f 2 -d ',' | cut -f 1 -d ')')
+if [ -z "$EXEC_USER_ISSUER" ]; then
+    echo "Cannot find the CA subject. Skipping the test."
+    echo "<br>"
+    cat $voms_stderr
+    echo "<br>"
+    echo "Test was skipped"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "Starting the test..."
+echo "Executed by: $EXEC_USER_SUBJECT, $EXEC_USER_ISSUER"
+
+echo "SCENARIO: Try to remove an ACL entry for a non-existent group (empty VO)"
+echo "<br>"
+
+voms-admin --vo=$vo_name --host $voms_host remove-default-ACL-entry "/"$vo_name"/"$GROUP $USER > $voms_stderr
+grep "org.glite.security.voms.admin.database.NoSuchGroupException" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    echo "Incorrect error message"
+    echo "Unexpected error when trying to remove a default ACL entry for a non-existent group."
     echo "<br>"
     cat $voms_stderr
     echo "<br>"
@@ -47,44 +90,100 @@ if [ $? == 1 ]; then
     exit $SAME_ERROR
 fi
 
-echo "SCENARIO: Create group <$GROUP> and add ACL entries"
-voms-admin --vo=$vo_name -h $voms_host create-group "/"$vo_name"/"$GROUP
-voms-admin --vo=$vo_name -h $voms_host remove-default-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER 2> $voms_stderr
-grep "org.glite.security.voms.service.NotInDatabase: Not in database: There is no entry in ACL for group" $voms_stderr > /dev/null
+echo "SCENARIO: Create a group /$vo_name/$GROUP, setup a default ACL and test removal effect."
+echo "<br>"
 
-if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Incorrect error message"
-    echo "<br>"
-    cat $voms_stderr
-    echo "<br>"
-    echo "Test has failed"
-    echo "<br>"
-    exit $SAME_ERROR
-fi
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
 
-voms-admin --vo=$vo_name -h $voms_host add-default-acl-entry  "/"$vo_name"/"$GROUP $ALLOW $OP $USER
-voms-admin --vo=$vo_name -h $voms_host remove-default-acl-entry "/"$vo_name"/"$GROUP  $ALLOW $OP $USER
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-default-ACL-entry "/"$vo_name"/"$GROUP "$EXEC_USER_SUBJECT" "$EXEC_USER_ISSUER" ALL
 
-user_subject=`openssl x509 -in $USER -noout -subject | cut -d" " -f2-5`
-voms-admin --vo=$vo_name -h $voms_host get-default-acl "/"$vo_name"/"$GROUP > $voms_tmp
-grep "$user_subject" $voms_tmp > /dev/null
+ACE_RIGHTS=( CONTAINER_READ MEMBERSHIP_READ ACL_READ REQUESTS_READ ATTRIBUTES_READ CONTAINER_WRITE MEMBERSHIP_WRITE ACL_WRITE REQUESTS_WRITE ATTRIBUTES_WRITE ACL_DEFAULT CONTAINER_READ)
 
- if [ $? == 0 ]; then
-    voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
-    echo "Error removing the ACL"
+COUNTER=0
+while [ $COUNTER -lt 11 ]; do
+   voms-admin --vo=$vo_name --host $voms_host --nousercert add-default-ACL-entry "/"$vo_name"/"$GROUP "/C=CH/O=CERN/OU=GD/CN=Fake user $COUNTER" "$EXEC_USER_ISSUER" ${ACE_RIGHTS[COUNTER]}
+   COUNTER=$[$COUNTER+1]
+done
+
+COUNTER=100
+while [ $COUNTER -lt 111 ]; do
+   voms-admin --vo=$vo_name --host $voms_host --nousercert add-default-ACL-entry "/"$vo_name"/"$GROUP "/C=CH/O=CERN/OU=GD/CN=Fake user $COUNTER" "$EXEC_USER_ISSUER" ${ACE_RIGHTS[COUNTER-100]}
+   COUNTER=$[$COUNTER+1]
+done
+
+echo "Create subgroup that should inherit all ACEs"
+voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP"/"del_test_group
+
+echo "<BR>Checking default ACL count for parent"
+voms-admin --vo=$vo_name --host $voms_host get-default-ACL "/"$vo_name"/"$GROUP > $voms_tmp
+if [ $(wc -l $voms_tmp | cut -f 1 -d " ") -ne 23 ]; then 
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP"/"del_test_group
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Missing default ACL entry for the parent"
     echo "<br>"
     cat $voms_tmp
     echo "<br>"
     echo "Test has failed"
     echo "<br>"
     exit $SAME_ERROR
- fi
+fi
 
-echo "Cleaning tasks"
+echo "<BR>Checking ACL count for del_test_group"
+voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP"/"del_test_group > $voms_tmp
+if [ $(wc -l $voms_tmp | cut -f 1 -d " ") -ne 23 ]; then
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP"/"del_test_group
+    voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+    echo "Missing ACL entry for the subgroup immediately after creation"
+    echo "<br>"
+    cat $voms_tmp
+    echo "<br>"
+    echo "Test has failed"
+    echo "<br>"
+    exit $SAME_ERROR
+fi
+
+echo "<BR>Start removing entries from the Default ACL of the parent"
+
+COUNTER=0
+while [ $COUNTER -lt 11 ]; do
+
+  voms-admin --vo=$vo_name --host $voms_host --nousercert remove-default-ACL-entry "/"$vo_name"/"$GROUP "/C=CH/O=CERN/OU=GD/CN=Fake user $COUNTER" "$EXEC_USER_ISSUER"
+  voms-admin --vo=$vo_name --host $voms_host get-default-ACL "/"$vo_name"/"$GROUP > $voms_tmp
+
+  if [ $(wc -l $voms_tmp | cut -f 1 -d " ") -ne $[23-$COUNTER-1] ]; then
+      voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP"/"del_test_group
+      voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+      echo "Missing default ACL entry for the parent"
+      echo "<br>"
+      cat $voms_tmp
+      echo "<br>"
+      echo "Test has failed"
+      echo "<br>"
+      exit $SAME_ERROR
+  fi
+
+  voms-admin --vo=$vo_name --host $voms_host get-ACL "/"$vo_name"/"$GROUP"/"del_test_group > $voms_tmp
+  if [ $(wc -l $voms_tmp | cut -f 1 -d " ") -ne 23 ]; then
+      voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP"/"del_test_group
+      voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+      echo "Missing ACL entry for the subgroup immediately after creation"
+      echo "<br>"
+      cat $voms_tmp
+      echo "<br>"
+      echo "Test has failed"
+      echo "<br>"
+      exit $SAME_ERROR
+  fi
+
+  COUNTER=$[$COUNTER+1]
+done
+
+echo "Cleaning tasks."
 echo "<br>"
- 
-voms-admin --vo=$vo_name -h $voms_host delete-group "/"$vo_name"/"$GROUP
+
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP"/"del_test_group
+voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
+
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 rm -rf $tempo
@@ -92,3 +191,4 @@ rm -rf $tempo
 echo "Test OK"
 echo "</pre>"
 exit $SAME_OK
+

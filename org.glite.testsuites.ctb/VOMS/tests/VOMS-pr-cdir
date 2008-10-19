@@ -60,7 +60,7 @@ if [ $? = 0 ]; then
   echo "Test is OK"
 else 
   echo "Test is failed"
-  voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+  voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
   rm -rf $voms_tmp
   rm -rf $cert_dir/*
   rmdir $cert_dir
@@ -83,7 +83,7 @@ grep "$USER_SUBJECT" $voms_tmp
 
 if [ $? == 1 ]; then
     echo "Test has failed"
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
     rm -rf $voms_tmp
     rm -rf $cert_dir/*
     rmdir  $cert_dir
@@ -98,7 +98,7 @@ if [ $? = 1 ]; then
   echo "Test is OK"
 else 
   echo "Test is failed"
-  voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+  voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
   rm -rf $voms_tmp
   rm -rf $cert_dir/*
   rmdir $cert_dir
@@ -108,7 +108,7 @@ fi
 
 echo "Test is OK"
 echo "Task cleanning"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
 rm -rf $voms_tmp
 rm -rf $cert_dir/*
 rmdir $cert_dir

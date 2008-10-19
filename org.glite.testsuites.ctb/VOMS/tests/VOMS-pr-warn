@@ -48,7 +48,7 @@ if [ $? = 0 ]; then
    echo "OK, Warning exists"
 else 
    echo "Test is failed"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
@@ -58,12 +58,12 @@ voms-proxy-init -voms $vo_name -vomses $VOMSES -$OPTION -valid 200:59   -cert $U
 
 if [ $? = 0 ]; then
    echo "Test is failed"
-   voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+   voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
    exit $SAME_ERROR
 fi
 
 echo "Test is OK"
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
 echo "</pre>"
 exit $SAME_OK
 

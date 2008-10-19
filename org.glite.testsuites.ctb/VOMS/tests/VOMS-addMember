@@ -41,7 +41,7 @@ USER_ISSUER=$(openssl x509 -in $USER -noout -issuer | sed -e 's/^issuer=[ ]*//')
 echo "SCENARIO: VO empty" echo "<br>" echo "Add non existing user in non
 existing group" echo "<br>"
 
-voms-admin --vo=$vo_name --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 
 grep "org.glite.security.voms.admin.database.NoSuchUserException: User" $voms_stderr > /dev/null
 
@@ -62,7 +62,7 @@ voms-admin --vo=$vo_name --host $voms_host create-group "/"$vo_name"/"$GROUP
 echo "Add non existing user in group $GROUP"
 echo "<br>"
 
-voms-admin --vo=$vo_name --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+voms-admin --vo=$vo_name --host $voms_host --nousercert add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 
 grep "org.glite.security.voms.admin.database.NoSuchUserException: User" $voms_stderr > /dev/null
 
@@ -81,12 +81,12 @@ echo "<br>"
 voms-admin --vo=$vo_name --host $voms_host create-user $USER
 echo "Add user in group $GROUP"
 echo "<br>"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name  --host $voms_host --nousercert add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name  --host $voms_host list-members "/"$vo_name"/"$GROUP > $voms_tmp
 grep "$user_subject" $voms_tmp > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
     voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     echo "Error when adding user to group:"
     echo "<br>"
@@ -98,11 +98,11 @@ fi
 
 echo "SCENARIO: User is already a member of the group"
 echo "<br>"
-voms-admin --vo=$vo_name  --host $voms_host add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
+voms-admin --vo=$vo_name  --host $voms_host --nousercert add-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER" > $voms_stderr
 grep "is already a member of group" $voms_stderr > /dev/null
 
 if [ $? == 1 ]; then
-    voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+    voms-admin --vo=$vo_name --host $voms_host --nousercert remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
     voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
     voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
     echo "Incorrect error message:"
@@ -114,9 +114,9 @@ if [ $? == 1 ]; then
 fi
 
 echo "Cleaning tasks"
-voms-admin --vo=$vo_name --host $voms_host remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert remove-member "/"$vo_name"/"$GROUP "$USER_SUBJECT" "$USER_ISSUER"
 voms-admin --vo=$vo_name --host $voms_host delete-group "/"$vo_name"/"$GROUP
-voms-admin --vo=$vo_name --host $voms_host delete-user "$USER_SUBJECT" "$USER_ISSUER"
+voms-admin --vo=$vo_name --host $voms_host --nousercert delete-user "$USER_SUBJECT" "$USER_ISSUER"
 rm -rf $voms_tmp
 rm -rf $voms_stderr
 
