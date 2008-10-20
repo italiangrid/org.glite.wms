@@ -63,7 +63,8 @@ if [ $? -ne ${REGTEST_OK} ]; then
  return ${REGTEST_FAIL}
 fi
 
-command="lcg-lr -v --vo ${VO} ${LFN}"
+#command="lcg-lr -v --vo ${VO} ${LFN}"
+command="lcg-lr  --vo ${VO} ${LFN}"
 message="Running lcg-lr"
 run_command "${command}" "${message}"
 
