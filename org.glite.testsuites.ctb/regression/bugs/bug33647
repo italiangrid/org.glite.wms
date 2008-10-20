@@ -26,10 +26,11 @@ test_bug33647_pre () {
   echo "DCACHE_SE not defined"
   return ${REGTEST_FAIL}
  fi
- if [ -z "${VO}" ]; then
-  echo "VO not defined"
-  return ${REGTEST_FAIL}
- fi
+# if [ -z "${VO}" ]; then
+#  echo "VO not defined"
+#  return ${REGTEST_FAIL}
+# fi
+ VO="dteam"
  return ${REGTEST_OK}
 }
 
@@ -55,7 +56,8 @@ LFN="lfn:/grid/${VO}/$name"
 
 dd count=4100000 if=/dev/urandom > $LOCAL_FILE
 
-command="lcg-cr --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${DCACHE_SE}"
+#DTEAM is used for dcache
+command="lcg-cr -v --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${DCACHE_SE}"
 message="Running lcg-cr with big file"
 run_command "${command}" "${message}"
 
