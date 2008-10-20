@@ -1,8 +1,8 @@
 VO=org.glite.voms-test
 #VO=dteam
-DPM_SE=lxb1921.cern.ch
+DPM_SE=lxb7605.cern.ch
 CLASSIC_SE=lxb1910.cern.ch
-DCACHE_SE=galway.desy.de
+DCACHE_SE=ennis.desy.de
 DEFAULT_SE=${DPM_SE}
 DEFAULT_LFC=lxb7607.cern.ch
 #LFC_HOST=lxb7607.cern.ch
