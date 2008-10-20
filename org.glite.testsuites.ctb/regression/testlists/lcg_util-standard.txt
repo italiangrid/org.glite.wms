@@ -10,7 +10,7 @@
 33076
 #Long VO needed by 33327
 33327
-# Needs a dCache SE
+# Needs a dCache SE, dteam and user cert
 33647
 33638
 34808
