@@ -241,7 +241,7 @@ same_err  = int(os.environ['SAME_ERROR'])
 
 print "2. Start test run()"
 testHome = "python_lfc_test"
-name = "/grid/dteam/python_delete_test/python_delete_test"
+name = lfc_vo + "/python_delete_test/python_delete_test"
 ret = lfc_unlink_test().run()
 
 print "3. Ret test code: %s" % ret
