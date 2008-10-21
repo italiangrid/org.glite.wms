@@ -14,7 +14,7 @@ class test_ok(_test):
         self.path = lfc_vo
         lfc.lfc_chdir(self.path)
     def test(self):
-        path = "                     "
+        path = " " * 256
         ret = lfc.lfc_getcwd(path,len(path))
         return ((ret.strip(),path.strip()),0)
     def ret(self):
@@ -56,7 +56,7 @@ class test_ENOENT(_ntest):
 
 class test_ERANGE(_ntest):
     def info(self):
-        return "lfc_getcwd insifficient buffer space (ERANGE)"
+        return "lfc_getcwd insufficient buffer space (ERANGE)"
     def prepare(self):
         self.name = lfc_vo + "/python_getcwd_test"
         ret = lfc.lfc_mkdir(self.name,0755)
