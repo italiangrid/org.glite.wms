@@ -11,7 +11,7 @@ NSTable = {'cemon_types': 'http://glite.org/ce/monitorapij/types', \
                     'cemon_faults': 'http://glite.org/ce/monitorapij/faults', \
                     'cemon_consumer': 'http://glite.org/ce/monitorapij/ws'}
 
-jobIDRE = re.compile('CREAM_JOB_ID\s*=\s*\"(CREAM\d+)\"\s*;')
+jobIDRE = re.compile('CREAM_JOB_ID\s*=\s*\"(CREAM[0-9E-]+)\"\s*;')
 jobStatusRE = re.compile('JOB_STATUS\s*=\s*\"([A-Z-]+)\"\s*;')
 jobFailureRE = re.compile('FAILURE_REASON\s*=\s*([^;]+);')
 
