@@ -47,9 +47,12 @@ def eraseJobs(jobList, cmd='purge',  proxyMan=None):
             else:
                mainLogger.error("Cannot purge jobs in " + tempFilename + ": " + str(sys.exc_info()[0]))
                
-def subscribeToCREAMJobs(cemonURL, parameters, proxyFile):
+def subscribeToCREAMJobs(cemonURL, parameters, proxyFile, useSSL=False):
     
-    consumerURL = 'http://%s:%d' % (hostname, parameters.consumerPort)
+    if useSSL:
+        consumerURL = 'https://%s:%d' % (hostname, parameters.consumerPort)
+    else:
+        consumerURL = 'http://%s:%d' % (hostname, parameters.consumerPort)
     subscrCmd = "%s %s %s %s %s %s %s %d %d" % \
             (cmdTable['subscribe'], proxyFile, getCACertDir(), \
              cemonURL, consumerURL, \
@@ -71,7 +74,7 @@ def subscribeToCREAMJobs(cemonURL, parameters, proxyFile):
 
     if subscriptionId==None:
         mainLogger.error(errBuffer)
-        raise Exception('Cannot subscribe to' + cemonURL)
+        raise Exception('Cannot subscribe to ' + cemonURL)
     
     return subscriptionId
 
@@ -263,7 +266,7 @@ class VOMSProxyManager(Thread):
         VOMSProxyManager.logger.debug("Enabled voms proxy management")
         self.usingProxy = False
         #TODO manage key without passphrase
-        self.password = getpass.getpass()
+        self.password = getpass.getpass('Password for user key: ')
         
         self.proxyFile = '/tmp/x509up_u%d_%d' % (os.getuid(), os.getpid())
             

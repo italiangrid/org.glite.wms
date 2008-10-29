@@ -1,11 +1,12 @@
 from ZSI import ParsedSoap, SoapWriter, resolvers, TC, \
     FaultFromException, FaultFromZSIException
-import os, sys
+import os, sys, glob
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from OpenSSL import SSL, tsafe, crypto
 import testsuite_utils, job_utils
 import re, string
-import select
+import select, socket
 
 NSTable = {'cemon_types': 'http://glite.org/ce/monitorapij/types', \
                     'cemon_faults': 'http://glite.org/ce/monitorapij/faults', \
@@ -102,14 +103,73 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
             import traceback
             traceback.print_tb(sys.exc_info()[2])
             self.send_fault(FaultFromException(e, 0, sys.exc_info()[2]))
-        
+            
+class ConnectionFixer(object):
+    """ wraps a socket connection so it implements makefile """
+    def __init__(self, conn):
+        self.__conn = conn
+    def makefile(self, mode, bufsize):
+       return socket._fileobject(self.__conn, mode, bufsize)
+    def __getattr__(self, attrib):
+        return getattr(self.__conn, attrib)
+    
+class TSafeConnection(tsafe.Connection):
+    def settimeout(self, *args):
+        self._lock.acquire()
+        try:
+            return self._ssl_conn.settimeout(*args)
+        finally:
+            self._lock.release()
+
+
 class ConsumerServer(ThreadingMixIn, HTTPServer):
     #See description in SocketServer.py about ThreadingMixIn
     
     logger = None
     
-    def __init__(self, address, parameters, jobTable=None):
+    def __init__(self, address, parameters, jobTable=None, proxyMan=None):
         HTTPServer.__init__(self, address, SOAPRequestHandler)
+        
+        if os.environ.has_key("X509_CONSUMER_CERT") and \
+            os.environ.has_key("X509_CONSUMER_KEY"):
+            self.consumerCert = os.environ["X509_CONSUMER_CERT"]
+            if not os.path.isfile(self.consumerCert):
+                raise Exception, "Cannot find: " + self.consumerCert
+            self.consumerKey = os.environ["X509_CONSUMER_KEY"]
+            if not os.path.isfile(self.consumerKey):
+                raise Exception, "Cannot find: " + self.consumerKey
+            import getpass
+            self.password = getpass.getpass('Password for consumer key: ')
+        elif proxyMan<>None:
+                self.consumerCert = proxyMan.cert
+                self.consumerKey = proxyMan.key
+                self.password = proxyMan.password
+        else:
+            self.consumerCert = None
+            self.consumerKey = None
+            self.password = None
+        
+        if self.consumerKey<>None:
+            self.ssl_context = SSL.Context(SSL.SSLv23_METHOD)
+            buffer = self.readPEMFile(self.consumerKey)
+            privateKey = crypto.load_privatekey(crypto.FILETYPE_PEM, buffer, self.password)
+            self.ssl_context.use_privatekey(privateKey)
+            self.ssl_context.use_certificate_file(self.consumerCert)
+            caStore = self.ssl_context.get_cert_store()
+            caList = glob.glob(testsuite_utils.getCACertDir() + "/*.0")
+            for item in caList:
+                buffer = self.readPEMFile(item)
+                caCert = crypto.load_certificate(crypto.FILETYPE_PEM, buffer)
+                caStore.add_cert(caCert)
+            
+            tmpsock = socket.socket(self.address_family,self.socket_type)
+            self.socket = TSafeConnection(self.ssl_context, tmpsock)
+            self.socket.settimeout(30)
+            self.server_bind()
+            self.server_activate()
+        else:
+            self.ssl_context = None
+        
         self.jobTable = jobTable
         self.parameters = parameters
         self.running = False
@@ -118,11 +178,27 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
         
         self.proxyFile = testsuite_utils.getProxyFile()
         self.subscrId = job_utils.subscribeToCREAMJobs(self.cemonURL, \
-                                                       self.parameters, self.proxyFile)
+                                                       self.parameters, self.proxyFile, self.ssl_context<>None)
         
         if ConsumerServer.logger==None:
             ConsumerServer.logger = testsuite_utils.mainLogger.get_instance(classid='ConsumerServer')
         
+    def readPEMFile(self, filename):
+        tmpf = file(filename)
+        buffer = ''
+        for line in tmpf:
+            buffer += line
+        tmpf.close()
+        return buffer
+    
+    def get_request(self):
+        if self.ssl_context:
+            (conn, info) = self.socket.accept()
+            conn = ConnectionFixer(conn)
+            return (conn, info)
+        
+        return self.socket.accept()
+
     def __call__(self):
         self.running = True
         sList = [self]
