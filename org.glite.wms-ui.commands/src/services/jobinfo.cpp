@@ -170,112 +170,6 @@ const std::string JobInfo::field (const std::string &label, const std::string &v
 	return str;
 };
 
-const long JobInfo::convDate(const std::string &data) {
-	char     *str;
-  	time_t    offset;
-  	time_t    newtime;
-  	char      buff1[32];
-  	char     *p;
-  	int       i;
-  	struct tm tm;
-  	int       size = 0;
-	
-	memset(&offset, 0, sizeof(time_t));
-  	memset(&newtime, 0, sizeof(time_t));
-	
-	ASN1_TIME *ctm = ASN1_TIME_new();
-	ctm->data   = (unsigned char *)(data.data());
-	ctm->length = data.size();
-	switch(ctm->length) {
-		case 10: {
-			ctm->type = V_ASN1_UTCTIME;
-			break;
-		}
-		case 15: {
-			ctm->type = V_ASN1_GENERALIZEDTIME;
-			break;
-		}
-		default: {
-			ASN1_TIME_free(ctm);
-			ctm = NULL;
-			break;
-		}
-	}
-	if (ctm) {
-		switch (ctm->type) {
-			case V_ASN1_UTCTIME: {
-				size=10;
-				break;
-			}
-			case V_ASN1_GENERALIZEDTIME: {
-				size=12;
-				break;
-			}
-		}
-  		p = buff1;
-		i = ctm->length;
-		str = (char *)ctm->data;
-		if ((i < 11) || (i > 17)) {
-			newtime = 0;
-		}
-		memcpy(p,str,size);
-		p += size;
-		str += size;
-
-		if ((*str == 'Z') || (*str == '-') || (*str == '+')) {
-			*(p++)='0'; *(p++)='0';
-		} else {
-			*(p++)= *(str++); *(p++)= *(str++);
-		}
-		*(p++)='Z';
-		*(p++)='\0';
-		if (*str == 'Z') {
-			offset=0;
-		} else {
-			if ((*str != '+') && (str[5] != '-')) {
-				newtime = 0;
-			}
-			offset=((str[1]-'0')*10+(str[2]-'0'))*60;
-			offset+=(str[3]-'0')*10+(str[4]-'0');
-			if (*str == '-') {
-				offset=-offset;
-			}
-		}
-  		tm.tm_isdst = 0;
-  		int index = 0;
-  		if (ctm->type == V_ASN1_UTCTIME) {
-    			tm.tm_year  = (buff1[index++]-'0')*10;
-    			tm.tm_year += (buff1[index++]-'0');
- 		 } else {
-			tm.tm_year  = (buff1[index++]-'0')*1000;
-			tm.tm_year += (buff1[index++]-'0')*100;
-			tm.tm_year += (buff1[index++]-'0')*10;
-			tm.tm_year += (buff1[index++]-'0');
-  		}
- 		 if (tm.tm_year < 70) {
- 			tm.tm_year+=100;
-  		}
-
- 		 if (tm.tm_year > 1900) {
-    			tm.tm_year -= 1900;
-  		}
-
-  		tm.tm_mon   = (buff1[index++]-'0')*10;
-  		tm.tm_mon  += (buff1[index++]-'0')-1;
-  		tm.tm_mday  = (buff1[index++]-'0')*10;
-  		tm.tm_mday += (buff1[index++]-'0');
-  		tm.tm_hour  = (buff1[index++]-'0')*10;
-  		tm.tm_hour += (buff1[index++]-'0');
-  		tm.tm_min   = (buff1[index++]-'0')*10;
-		tm.tm_min  += (buff1[index++]-'0');
-		tm.tm_sec   = (buff1[index++]-'0')*10;
-		tm.tm_sec  += (buff1[index++]-'0');
-  		newtime = (mktime(&tm) + offset*60*60 - timezone);
-	}
-
-  	return newtime;
-}
-
 const std::string JobInfo::getDateString(const long &date) {
 	ostringstream oss;
 	string ws = " ";
@@ -361,13 +255,13 @@ const std::string JobInfo::printProxyInfo (ProxyInfoStructType info){
 				out << field ("Attribute", string(*it2));
 			}
 			// startTime
-			date = convDate(vo->startTime);
+			date = boost::lexical_cast<long>(vo->startTime);
 			out << field ("StartTime",getDateString(date) );
 			// endTime
-			date = convDate(vo->endTime);
+                        date = boost::lexical_cast<long>(vo->endTime);
 			out << field ("Expiration", getDateString(date));
 			// time-left
-			timeleft = boost::lexical_cast<long> (info.endTime) - now ;
+                        timeleft = boost::lexical_cast<long> (vo->endTime) - now ;
 			out << field ("Timeleft", timeString(timeleft)) ;
 		}
 	}

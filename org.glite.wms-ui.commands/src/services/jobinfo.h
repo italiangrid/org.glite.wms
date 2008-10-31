@@ -54,7 +54,6 @@ class JobInfo : public Job {
 		void retrieveInfo ( ) ;
 	private:
 		const std::string JobInfo::adToLines (const std::string& jdl) ;
-		const long convDate(const std::string &data) ;
 		const std::string timeString(const long &time) ;
 		const std::string field (const std::string &label, const std::string &value);
 		const std::string getDateString(const long &data);
