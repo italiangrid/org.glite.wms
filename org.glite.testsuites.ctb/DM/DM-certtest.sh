@@ -25,7 +25,8 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  DM-certtest.sh "
+ echo "Usage:  DM-certtest.sh [-f <conf.file>]    "
+ echo "  <conf.file> Configuration file, default is DM-certconfig"
  echo "                                           "
 }
 
@@ -40,20 +41,29 @@ exit -1
 #######################
 #Parsing the arguments#
 #######################
-if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 0 ]; then
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 2 ]; then
   showUsage
   exit 2
 fi
 
+if [ "$1" = "-f" ]; then
+  conffile=$2
+fi
 ###################################
 # Check for environment variables #
 ###################################
 
-if [ -e "DM-certconfig" ]; then
-  source ./DM-certconfig
+if [ -e $conffile ]; then
+  echo "Using $conffile"
+  source $conffile
 else
-  echo "The file ./DM-certconfig must be sourced in order to run the tests"
-  exitFailure
+  if [ -e ./DM-certconfig ]; then
+    echo "Using ./DM-certconfig"
+    source ./DM-certconfig
+  else
+    echo "File ./DM-certconfig does not exist"
+    exitFailure
+  fi
 fi
 
 if [ -z "$LFC_HOST" ]; then
@@ -97,6 +107,26 @@ else
   exitFailure
 fi
 
+####################################
+# Create a directory for log files #
+####################################
+
+if [ -z "$LOGSLOCATION" ];then
+  cp=`pwd`
+  id=`date +%y%m%d%H%M%S`
+  loglocation=$cp/logs_$id
+  mkdir -p $loglocation
+else
+  loglocation=$LOGLOCATION/logs_$id
+  mkdir -p $loglocation
+fi
+
+if [ ! -d $loglocation ];then
+  echo   "Error while creating log directory $loglocation"
+  exitFailure
+else
+  echo "Log files will be stored in $loglocation"
+fi
 
 ########################
 # Launch all the tests #
@@ -141,13 +171,13 @@ if [ "$LCG_UTILS" = "yes" ]; then
     if [ "$item" = "DM-lcg-alias.sh" -o "$item" = "DM-lcg-cp-gsiftp.sh" -o "$item" = "DM-lcg-cp.sh" \
        -o "$item" = "DM-lcg-cr-gsiftp.sh" -o "$item" = "DM-lcg-cr.sh" -o "$item" = "DM-lcg-list.sh" \
        -o "$item" = "DM-lcg-ls.sh" -o "$item" = "DM-lcg-rf.sh" ]; then
-      ./$item $FIRSTSE --vo $VO  > ${item}_result.txt
+      ./$item $FIRSTSE --vo $VO  > $loglocation/${item}_result.txt
       res=$?
     elif [ "$item" = "DM-lcg-rep.sh" ]; then
-      ./$item $FIRSTSE $SECONDSE --vo $VO  > ${item}_result.txt
+      ./$item $FIRSTSE $SECONDSE --vo $VO  > $loglocation/${item}_result.txt
       res=$?
     fi  
-    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
       failed=yes
@@ -191,16 +221,17 @@ if [ "$GFAL" = "yes" ]; then
 
   for item in ${tests_list[*]}
   do
-    rm -rf ${item}_result.txt testfile
+    rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE > ${item}_result.txt 2>&1
+    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE > $loglocation/${item}_result.txt 2>&1
     res=$?
-    grep '\-TEST FAILED\-' ${item}_result.txt > /dev/null
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt > /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
       failed=yes
       tests_failed=( "${tests_failed[@]}" "$item" )
     else
+      echo "WARNING! lcg-gt lcg-sd have been skipped due to bug #43002"
       echo "$item PASSED"
     fi
   done
@@ -260,11 +291,11 @@ if [ "$DM_CROSS_SE" = "yes" ];then
 
   for item in ${tests_list[*]}
   do
-    rm -rf ${item}_result.txt testfile
+    rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    ./$item --vo $VO $seoptions > ${item}_result.txt 2>&1
+    ./$item --vo $VO $seoptions > $loglocation/${item}_result.txt 2>&1
     res=$?
-    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
       failed=yes
@@ -292,15 +323,17 @@ if [ $failed = "yes" ]; then
   for item in ${tests_failed[*]}
   do
     if echo $item | grep DM-lcg.*.sh; then
-      echo "$item: results in tests/${item}_result.txt"
+      echo "$item: results in $loglocation/${item}_result.txt"
     elif [ "$item" = "test-gfal.sh" ]; then
-      echo "$item: results in ../GFAL/tests/${item}_result.txt"
+      echo "$item: results in $loglocation/${item}_result.txt"
     elif [ "$item" = "test-lcg-utils.sh" ]; then
-      echo "$item: results in ../UI/tests/${item}_result.txt"
+      echo "$item: results in $loglocation/${item}_result.txt"
     fi
   done
+  exit 1
 else 
     echo "TEST_PASSED"
+  exit 0
 fi
 
 

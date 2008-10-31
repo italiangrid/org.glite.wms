@@ -5,17 +5,17 @@ LFC_HOST="lxb7607.cern.ch"
 
 #OPTIONS
 FIRSTSE="lxb7605.cern.ch"
-SECONDSE="sligo.desy.de"
-VO="dteam"
-#VO="org.glite.voms-test"
-#CLASSICHOST="lxbra1910.cern.ch"
+SECONDSE="galway.desy.de"
+#VO="dteam"
+VO="org.glite.voms-test"
+CLASSICHOST="lxbra1910.cern.ch"
 DPMHOST="lxb7605.cern.ch"
-DCACHEHOST="galway.desy.de"
+#DCACHEHOST="ennis.desy.de"
 #CASTORHOST="srm-dteam.cern.ch"
 
 #TEST TO RUN (yes/no)
-LCG_UTILS=no
-GFAL=no
+LCG_UTILS=yes
+GFAL=yes
 DM_CROSS_SE=yes
 
 
