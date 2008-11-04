@@ -21,8 +21,17 @@
 	
 	Revision history:
 	$Log$
-	Revision 1.10.2.2.2.1  2008/04/14 15:04:02  mcecchi
-	work in progress
+	Revision 1.10.2.2.2.1.2.1  2008/11/04 11:36:08  mcecchi
+	updating properties
+
+	Revision 1.10.2.5  2008/06/04 14:46:21  monforte
+	Disabled cemon purchasers
+
+	Revision 1.10.2.4  2008/05/27 09:38:05  monforte
+	Removed RGMA
+
+	Revision 1.10.2.3  2008/05/14 08:57:46  monforte
+	Removed RGMA purchaser
 
 	Revision 1.10.2.2  2007/03/30 10:56:07  emartel
 	added glite_rgma.m4
@@ -135,6 +144,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 cppunit.m4 globus.m4 gsoap.m4 glite_rgma.m4 xerces.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_jdl.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 glite_ce.m4 optimize.m4 log4cxx.m4 glite_security.m4"/>
+        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 cppunit.m4 globus.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_jdl.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 glite_ce.m4 optimize.m4 glite_security.m4"/>
         <property name="build.rpm.spec.requires" value="glite-essentials-cpp" />
 </project>
