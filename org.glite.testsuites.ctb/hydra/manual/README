@@ -6,7 +6,7 @@ functionality. hydra-server-test.sh is meant to be run on the server(s), the
 rest of the tests need to be run on the client. For the testing purposes these
 can be installed on the same machine. 
 
-All script configuration is done in congfig.sh, or by setting the appropriate
+All script configuration is done in config.sh, or by setting the appropriate
 environment variables. If nothing is specified, the defaults are used. The
 client tests need the glite-UI to be set up properly.
 
