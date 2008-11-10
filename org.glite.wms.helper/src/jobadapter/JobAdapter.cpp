@@ -565,12 +565,14 @@ try {
 
     jdl::set_remote_env(*result,condor_submit_environment);
 
-    // Cause the job to pop out of the Condor queue if no successful
-    // match with 'B' daemons could occur in 15 (default) minutes.
-    utilities::oedgstrstream periodic_hold_expression;
-    periodic_hold_expression << "JobStatus == 1 && Matched =!= TRUE && CurrentTime > QDate + ";
-    periodic_hold_expression << config.jc()->maximum_time_allowed_for_condor_match();
-    jdl::set_periodic_hold(*result,periodic_hold_expression.str());
+    if (!is_nordugrid_resource) {
+      // Cause the job to pop out of the Condor queue if no successful
+      // match with 'B' daemons could occur in 15 (default) minutes.
+      utilities::oedgstrstream periodic_hold_expression;
+      periodic_hold_expression << "JobStatus == 1 && Matched =!= TRUE && CurrentTime > QDate + ";
+      periodic_hold_expression << config.jc()->maximum_time_allowed_for_condor_match();
+      jdl::set_periodic_hold(*result,periodic_hold_expression.str());
+    }
 
     // Build the jobmanager-fork contact string.
     std::string::size_type pos = globusresourcecontactstring.find("/");
@@ -1026,10 +1028,11 @@ try {
     jdl::set_grid_resource(*result, "nordugrid " + gatekeeper_hostname);
     jdl::set_nordugrid_rsl(
       *result,
-      "(runTimeEnvironment=\"ENV/GLITE\")" + globusrsl
+      "(runTimeEnvironment>ENV/GLITE)" + globusrsl
+        + "(jobName=\"" + job_id + "\")"
     );
   }
-  
+
   // New parameter Mandatory
   // Output file path is mandatory
   std::string output(output_file_path);
