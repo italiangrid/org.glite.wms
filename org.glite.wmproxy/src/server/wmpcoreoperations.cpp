@@ -657,8 +657,11 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri,
 	if (jad->hasAttribute(JDL::CERT_SUBJ)) {
 		jad->delAttribute(JDL::CERT_SUBJ);
 	}
-	jad->setAttribute(JDL::CERT_SUBJ,
-		wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
+
+        char * temp_user_dn = wmputilities::convertDNEMailAddress(wmputilities::getUserDN());
+	string str_tmp_dn(temp_user_dn);
+        free(temp_user_dn);
+ 	jad->setAttribute(JDL::CERT_SUBJ, str_tmp_dn.c_str());
 	
 	edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
 	if (jad->hasAttribute(JDLPrivate::USERPROXY)) {
@@ -865,9 +868,12 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
 	if (dag->hasAttribute(JDL::CERT_SUBJ)) {
 		dag->removeAttribute(JDL::CERT_SUBJ);
 	}
-	dag->setReserved(JDL::CERT_SUBJ,
-		wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
-	
+
+	char * temp_user_dn = wmputilities::convertDNEMailAddress(wmputilities::getUserDN());
+	string str_tmp_dn(temp_user_dn);
+        free(temp_user_dn);
+	dag->setReserved(JDL::CERT_SUBJ, str_tmp_dn.c_str());
+
 	edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
 	if (dag->hasAttribute(JDLPrivate::USERPROXY)) {
 		dag->removeAttribute(JDLPrivate::USERPROXY);
@@ -2437,9 +2443,12 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 			ad->delAttribute(JDL::CERT_SUBJ);
 		}
 		edglog(debug)<<"Setting attribute JDL::CERT_SUBJ"<<endl;
-		ad->setAttribute(JDL::CERT_SUBJ, 
-			wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
-		
+
+		char * temp_user_dn = wmputilities::convertDNEMailAddress(wmputilities::getUserDN());
+		string str_tmp_dn(temp_user_dn);
+                free(temp_user_dn);
+		ad->setAttribute(JDL::CERT_SUBJ, str_tmp_dn.c_str());
+	
 		// \/
 		// Adding fake JDL::WMPISB_BASE_URI attribute to pass check (toSubmissionString)
 		if (ad->hasAttribute(JDL::WMPISB_BASE_URI)) {

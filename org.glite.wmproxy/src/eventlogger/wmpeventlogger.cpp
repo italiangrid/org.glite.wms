@@ -180,7 +180,9 @@ WMPEventLogger::setLBProxy(bool value, char * userdn)
 	edglog_fn("WMPEventlogger::setLBProxy");
 	if (userdn){
 		// DN case patch: if  userdn is present set the converted one
-		userdn=(char*)(wmputilities::convertDNEMailAddress(userdn).c_str());
+		char * temp_user_dn = wmputilities::convertDNEMailAddress(userdn);
+		userdn = strdup(temp_user_dn);
+		free(temp_user_dn);		
 	}
 	m_lbProxy_b = value;
 	if (value) {
@@ -720,9 +722,13 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
 	glite::wmsutils::jobid::JobId jobid(jid);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (m_lbProxy_b) {
-        edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
-		if (edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code,
-			wmputilities::convertDNEMailAddress(wmputilities::getUserDN()).c_str(), EDG_WLL_SEQ_NORMAL)){
+	        edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
+	
+         	char * temp_user_dn = wmputilities::convertDNEMailAddress(getUserDN());
+         	string str_tmp_dn(temp_user_dn);
+                free(temp_user_dn);
+
+		if (edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code, str_tmp_dn.c_str(), EDG_WLL_SEQ_NORMAL)){
 			string msg = error_message("Set logging job failed\n"
 				"edg_wll_SetLoggingJobProxy");
 			edglog(critical)<<msg<<endl;

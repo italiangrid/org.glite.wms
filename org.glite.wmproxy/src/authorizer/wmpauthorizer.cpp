@@ -244,10 +244,11 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
 	fqan_list[0] = const_cast<char*>(certfqan.c_str());
 	edglog(debug)<<"Inserted fqan: "<<string(fqan_list[0])<<endl;
+	char * temp_user_dn = wmputilities::convertDNEMailAddress(user_dn);
+	string str_tmp_dn(temp_user_dn);
+        free(temp_user_dn);
 
-	retval = lcmaps_return_account_without_gsi((char *)
-		wmputilities::convertDNEMailAddress(user_dn).c_str(),
-		fqan_list, fqan_num, mapcounter, &plcmaps_account);
+	retval = lcmaps_return_account_without_gsi((char*)str_tmp_dn.c_str(), fqan_list, fqan_num, mapcounter, &plcmaps_account);
 
 	if (retval) {
 		retval = lcmaps_return_account_without_gsi(user_dn,
@@ -326,8 +327,12 @@ WMPAuthorizer::checkGaclUserAuthZ()
 		fqan = "";
 	}
 	edglog(debug)<<"fqan="<<fqan<<endl;
+	
 	string dn = string(wmputilities::getUserDN()) ;
-	string dnConverted= wmputilities::convertDNEMailAddress(dn) ;
+	char * dnC = wmputilities::getUserDN();
+	string dnConverted= wmputilities::convertDNEMailAddress(dnC) ;
+	free(dnC);
+
 	// Gacl-Mgr
 	try {
 		string gaclfile;

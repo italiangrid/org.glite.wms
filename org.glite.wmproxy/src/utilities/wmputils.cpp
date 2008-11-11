@@ -473,8 +473,6 @@ bool checkGlobusVersion(){
 }
 
 
-
-
 /*
  * ----- WARNING!! ----------------------------------------------------------
  * This method is a patch to grant correct behaviour for components using old
@@ -487,31 +485,40 @@ bool checkGlobusVersion(){
  * N.B. To be removed when all components will use OpenSSL 0.9.7
  * --------------------------------------------------------------------------
  */
-string
-convertDNEMailAddress(const string & dn)
+char *
+convertDNEMailAddress(char * dn)
 {
-	GLITE_STACK_TRY("convertDNEMailAddress()");
+	GLITE_STACK_TRY("getEnvFQAN()");
 	edglog_fn("wmputils::convertDNEMailAddress");
+
 /* PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
+	
 	if (globusDNS_global){
 		//NO conversion needed, return the original
+		edglog(debug)<<"No Conversion needed, use original DN: "<<dn<<endl;
 		return dn;
 	}
 */
-	// edglog(debug)<<"Original DN: "<<dn<<endl;
-	string newdn = dn;
+
+	string newdn(dn);
 	string toreplace = "emailAddress";
-	unsigned int pos = dn.rfind(toreplace, dn.size());
+	unsigned int pos = newdn.rfind(toreplace, newdn.size());
 	if (pos != string::npos) {
 		newdn.replace(pos, toreplace.size(), "Email");
 	}
+
+/* FIX for BUG bug #39903, commented part to be removed
 	toreplace = "UID";
 	pos = newdn.rfind(toreplace, newdn.size());
 	if (pos != string::npos) {
 		newdn.replace(pos, toreplace.size(), "USERID");
 	}
-	// edglog(debug)<<"Converted DN: "<<newdn<<endl;
-	return newdn;
+*/
+	edglog(debug)<<"Converted DN: "<<newdn<<endl;
+	char * user_dn_final = strdup(newdn.c_str());
+
+	return user_dn_final;
+
 	GLITE_STACK_CATCH();
 }
 
@@ -833,7 +840,7 @@ getUserDN()
 			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
 	}
 	// PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
-	char* user_dn_final=strdup(   convertDNEMailAddress(user_dn).c_str()  );
+	char* user_dn_final=strdup(   convertDNEMailAddress(user_dn)  );
 	free (user_dn);
 	edglog(debug)<<"User DN: "<<user_dn_final<<endl;
 	return user_dn_final;
