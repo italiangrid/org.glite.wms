@@ -227,6 +227,25 @@ priority upon the X509_USER_PROXY variable'))
                 print '.SH ENVIRONMENT'
                 for item in self._env:
                     print '.TP\n.B %s\n%s\n.' % item
+                    
+        elif format=='TWIKI':
+            print "---++ " + executable + "\n"
+            print "   $ *NAME*: " + executable + " - " + self._shortDescr + "\n"
+            print "   $ *SYNOPSIS*: " + executable + ' ' + self._synopsis + "\n"
+            print "   $ *DESCRIPTION*: " + self._description + "\n"
+            print "*OPTIONS*"
+            sortedKeys = self.pTable.keys()
+            sortedKeys.sort()
+            for item in sortedKeys:
+                pTuple = self._convertParam(item)
+                if pTuple[3]=='':
+                        continue
+                tmps = string.strip('%s %s %s' % pTuple[:3])
+                print "   * *" + tmps + "* " + pTuple[3] + "\n"
+            if len(self._env)>0:
+                print "*ENVIRONMENT*\n"
+                for item in self._env:
+                    print "   * *%s* %s\n" % item
 
         else:
             print "NAME\n\t" + executable + " - " + self._shortDescr + "\n"
