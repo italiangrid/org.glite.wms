@@ -4,6 +4,7 @@ PREFIX=$1
 STAGEDIR=$2
 
 mkdir -p $STAGEDIR/share/man/man1
+chmod a+x src/cream-test-*
 for item in `ls src/cream-test-*`; do $item -h >$STAGEDIR/share/man/man1/`basename $item`.1; done
 
 mkdir -p $STAGEDIR/lib/python/CREAMTestUtils
