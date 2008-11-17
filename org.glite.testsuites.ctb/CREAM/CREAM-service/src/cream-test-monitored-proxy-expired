@@ -37,7 +37,7 @@ def main():
     
     parameters = testsuite_utils.Parameters('submit a sequence of jobs using an expiring proxy',\
                                             '[OPTION] -R | --resourceURI RESOURCEURI --vo VONAME',\
-                                            '''Submit a given number of jobs using a voms-proxy \ 
+                                            '''Submit a given number of jobs using a voms-proxy \
 whose lifetime is shorter than the duration of the job. The job is a simple sleep whose duration is \
 twice the duration of the related voms-proxy. The service must kill the job just before the \
 proxy expiration.''')
@@ -59,11 +59,12 @@ This option is mandatory and no default value is defined''')
     parameters.register('maxConcurrentSubmit', 'd', 1, testsuite_utils.atLeastOne, 'C',\
                         descr='''define the number of concurrent submit, (DEFAULT is 1)''')
     
-    parameters.register('vo', 's', optChar='V', descr='''the name of the vo required for creating \
-the voms-proxy, this parameter is mandatory''')
+    parameters.register('vo', 's', '', testsuite_utils.checkVO, '', descr='''\
+set the VO name to be used for the test; this parameter is mandatory whenever \
+X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
     
-    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, 'K', descr='''\
-the lifetime of the created voms-proxy, the form is HH:MM (Default 00:10)''')
+    parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
+set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
     
     parameters.setDefaultEnvs()
     parameters.addEnvItem(('MONITORED_PROXY_EXPIRED_CONFIG_FILE','''\
