@@ -136,7 +136,7 @@ void iceCommandProxyRenewal::execute( void ) throw()
 		       << ". Renewing proxy."
 		       );
 	
-	glite::wms::ice::util::DNProxyManager::getInstance()->setUserProxyIfLonger( jobIt->getUserProxyCertificate() );
+	glite::wms::ice::util::DNProxyManager::getInstance()->setUserProxyIfLonger( jobIt->getUserDN(), jobIt->getUserProxyCertificate() );
 	jobMap[ make_pair(jobIt->getDelegationId(), jobIt->getCreamDelegURL()) ].push_back( *jobIt );
 	timeMap[ jobIt->getCompleteCreamJobID() ] = buf.st_mtime;
       }

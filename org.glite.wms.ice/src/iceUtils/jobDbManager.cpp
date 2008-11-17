@@ -47,7 +47,7 @@ extern int *__errno_location(void);
 #define MAX_ICE_OP_BEFORE_PURGE 10000
 #define MAX_ICE_OP_BEFORE_CHECKPOINT 50
 
-DbEnv* jobDbManager::scoped_lock::s_dbenv = 0;
+//DbEnv* jobDbManager::scoped_lock::s_dbenv = 0;
 
 //____________________________________________________________________
 jobDbManager::jobDbManager( const string& envHome, 
@@ -189,7 +189,7 @@ jobDbManager::jobDbManager( const string& envHome,
                             
                             );
 
-    scoped_lock::initDbEnv( &m_env );
+    //scoped_lock::initDbEnv( &m_env );
 
 }
 

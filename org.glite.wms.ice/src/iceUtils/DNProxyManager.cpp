@@ -22,7 +22,6 @@
 #include "iceUtils.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "jobCache.h"
-//#include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -134,11 +133,10 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
     {
       if( it->empty() ) continue;
 
-      // localProxy = prefix + iceUtil::canonizeString( *it ) + ".proxy";
       localProxy = prefix + compressed_string( *it ) + ".proxy";
       boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
       
-      iceUtil::jobCache::iterator job_with_better_proxy_from_sandboxDir = this->searchBetterProxyForUser( *it );
+      pair<iceUtil::jobCache::iterator, time_t> job_with_better_proxy_from_sandboxDir = this->searchBetterProxyForUser( *it );
       
       if( !boost::filesystem::exists( thisPath ) )
 	{
@@ -152,36 +150,29 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			 << " one in the job cache for the current DN..."
 			 );
 
-	  //iceUtil::jobCache::const_iterator better = this->searchBetterProxyForUser( *it );
-	  //iceUtil::jobCache::iterator better = this->searchBetterProxyForUser( *it );
-
-	  if( job_with_better_proxy_from_sandboxDir == cache->end() )
+	  if( job_with_better_proxy_from_sandboxDir.first == cache->end() )
 	    {
-/*	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
-			     << "DNProxyManager::CTOR() - Not found any proxy for DN ["
-			     << *it << "]. Skipping"
-			     );*/
 	      continue;
 	    }
 	    
 	  try {
 	  
-	    this->copyProxy(job_with_better_proxy_from_sandboxDir->getUserProxyCertificate(), localProxy);
+	    this->copyProxy(job_with_better_proxy_from_sandboxDir.first->getUserProxyCertificate(), localProxy);
 	    
 	  } catch(SourceProxyNotFoundException& ex) {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			   << "DNProxyManager::CTOR() - Error copying proxy ["
-			   << job_with_better_proxy_from_sandboxDir->getUserProxyCertificate() << "] to ["
+			   << job_with_better_proxy_from_sandboxDir.first->getUserProxyCertificate() << "] to ["
 			   << localProxy << "] for DN ["
 			   << *it << "]. Skipping"
 			   );
 	    continue;
 	  }
 	  
-	  m_DNProxyMap[*it] = localProxy;
+	  m_DNProxyMap[*it] = make_pair( localProxy, job_with_better_proxy_from_sandboxDir.second ) ;
 	    
 	} else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
-          if( job_with_better_proxy_from_sandboxDir == cache->end() )
+          if( job_with_better_proxy_from_sandboxDir.first == cache->end() )
 	    {
 	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
 			     << "DNProxyManager::CTOR() - Not found any proxy for DN ["
@@ -189,7 +180,9 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			     );
 	      continue;
 	    }
-          this->setUserProxyIfLonger(*it, job_with_better_proxy_from_sandboxDir->getUserProxyCertificate());
+          this->setUserProxyIfLonger(*it, 
+				     job_with_better_proxy_from_sandboxDir.first->getUserProxyCertificate(), 
+				     job_with_better_proxy_from_sandboxDir.second);
       
         } // if( !boost::filesystem::exists( thisPath ) )
      } // for
@@ -206,7 +199,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
   cream_api::soap_proxy::VOMSWrapper V( prx );
   if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "DNProxyManager::setUserProxyIfLonger() - "
 		   << "Cannot retrieve the Subject for the proxy ["
 		   << prx << "]. ICE will continue to use the old proxy.Error is: "
 		   << V.getErrorMessage()
@@ -224,6 +217,29 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
 void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn, 
 						    const string& prx
 						    ) throw()
+{
+  time_t newT;
+  try {
+    newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft( prx );
+  } catch(exception& ex) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "Cannot retrieve time left for proxy ["
+		   << prx << "]: "
+		   << ex.what()
+		   );
+    
+    return;
+  }
+
+  this->setUserProxyIfLonger( dn, prx, newT );
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn, 
+						    const string& prx,
+						    const time_t exptime
+						    ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
     // string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + iceUtil::canonizeString( dn ) + ".proxy";
@@ -232,7 +248,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
     CREAM_SAFE_LOG(m_log_dev->warnStream() 
-		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "DNProxyManager::setUserProxyIfLonger() - "
 		   << "DN ["
 		   << dn << "] not found. Inserting the proxy ["
 		   << prx << "]. Copied into ["
@@ -243,7 +259,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
       this->copyProxy( prx, localProxy );
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "DNProxyManager::setUserProxyIfLonger - Error copying proxy ["
+		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
 		     );
@@ -251,59 +267,62 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
       return;
       
     }
-    m_DNProxyMap[ dn ] = localProxy;
+    m_DNProxyMap[ dn ] = make_pair(localProxy, exptime);
 
     return;
   }
 
   time_t newT, oldT;
 
-  try {
-    newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft( prx );
-  } catch(exception& ex) {
-    CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		   << "DNProxyManager::setUserProxyIfLonger - "
-		   << "Cannot retrieve time left for proxy ["
-		   << prx << "]: "
-		   << ex.what()
-		   );
+  newT = exptime;
+  oldT = m_DNProxyMap[ dn ].second;
 
-    return;
-  }
-  
-  
-
-  try {
-    // check time validity of the ICE's local proxy
-    oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ] ); 
-
-  } catch(exception& ex) {
-    CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		   << "DNProxyManager::setUserProxyIfLonger - "
-		   << "Cannot retrieve time left for old proxy ["
-		   << m_DNProxyMap[ dn ] << "]. Setting user proxy to the new one ["
-		   << prx << "] copied to ["
-		   << localProxy <<"]: "
-		   << ex.what()
-		   );
-
+  if( !oldT ) { // couldn't get the proxy time for some reason
     try {
       this->copyProxy( prx, localProxy );
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "DNProxyManager::setUserProxyIfLonger - Error copying proxy ["
+     		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
-		     );
+     		     );
       return;
     }
-    m_DNProxyMap[ dn ] = localProxy;
+    m_DNProxyMap[ dn ] = make_pair(localProxy, exptime);
     return;
   }
+  
+//   try {
+//     // check time validity of the ICE's local proxy
+//     //oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ].second ); 
+
+//   } catch(exception& ex) {
+//     CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		   << "DNProxyManager::setUserProxyIfLonger() - "
+// 		   << "Cannot retrieve time left for old proxy ["
+// 		   << m_DNProxyMap[ dn ] << "]. Setting user proxy to the new one ["
+// 		   << prx << "] copied to ["
+// 		   << localProxy <<"]: "
+// 		   << ex.what()
+// 		   );
+
+//     try {
+//       this->copyProxy( prx, localProxy );
+//     } catch(SourceProxyNotFoundException& ex) {
+//       CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
+// 		     << prx << "] to ["
+// 		     << localProxy << "]."
+// 		     );
+//       return;
+//     }
+//     m_DNProxyMap[ dn ] = localProxy;
+//     return;
+//   }
 
   if(newT > oldT) {
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		   << "DNProxyManager::setUserProxyIfLonger - "
+		   << "DNProxyManager::setUserProxyIfLonger() - "
 		   << "Setting user proxy to [ "
 		   << prx
 		   << "] copied to " << localProxy 
@@ -314,21 +333,14 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
       this->copyProxy( prx, localProxy );
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "DNProxyManager::setUserProxyIfLonger - Error copying proxy ["
+		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
 		     );
     }
-    m_DNProxyMap[ dn ] = localProxy;
+    m_DNProxyMap[ dn ] = make_pair(localProxy, newT);
 
-  } else {
-/*
-    CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		   << "DNProxyManager::setUserProxyIfLonger - Leaving current proxy ["
-		   << m_DNProxyMap[ dn ] <<"] beacuse it will expire later"
-		   );
-*/
-  }
+  } 
 }
 
 //________________________________________________________________________
@@ -353,7 +365,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 
   if(!input) {
     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		   << "DNProxyManager::copyProxy - Cannot open"
+		   << "DNProxyManager::copyProxy() - Cannot open"
 		   << " proxy file ["
 		   << source << "] for input. ABORTING!!"
 		   );
@@ -362,7 +374,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 
   if(!output) {
     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		   << "DNProxyManager::copyProxy - Cannot open"
+		   << "DNProxyManager::copyProxy() - Cannot open"
 		   << " proxy file ["
 		   << tmpTargetFilename << "] for output. ABORTING!!"
 		   );
@@ -391,7 +403,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
     {
       string errmex = strerror(errno);
       CREAM_SAFE_LOG(m_log_dev->fatalStream() 
-		     << "DNProxyManager::copyProxy - Error moving ["
+		     << "DNProxyManager::copyProxy() - Error moving ["
 		     << tmpTargetFilename << "] to ["
 		     << target << "]: " << errmex << ". ABORTING!!"
 		     );
@@ -405,7 +417,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 
 
 //________________________________________________________________________
-iceUtil::jobCache::iterator 
+pair<iceUtil::jobCache::iterator, time_t>
 iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn ) 
   throw() 
 {
@@ -440,7 +452,7 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
       if( !boost::filesystem::exists( thisPath ) )
 	{
 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			 << "DNProxyManager::searchBetterProxyForUser - "
+			 << "DNProxyManager::searchBetterProxyForUser() - "
 			 << "Cannot find SandboxDir's proxy file ["
 			 << jobCert << "]. Removing job "
 			 << jit->describe() << " from cache."
@@ -490,6 +502,6 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
       
     }
 
-  return bestProxy;
+  return make_pair(bestProxy, besttime);
 
 }

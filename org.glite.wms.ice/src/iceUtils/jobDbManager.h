@@ -9,13 +9,13 @@
 #include "JobDbException.h"
 #include "JobDbNotFoundException.h"
 
-#include "glite/ce/cream-client-api-c/scoped_timer.h"
+//#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 namespace log4cpp {
     class Category;
 };
 
-namespace api_util = glite::ce::cream_client_api::util;
+//namespace api_util = glite::ce::cream_client_api::util;
 
 namespace glite {
 namespace wms {
@@ -58,51 +58,6 @@ namespace util {
     void* getNextData( void ) const  throw(JobDbException&);
 
   public:
-
-    /**
-       Wrapper class to safely acquire/release a lock on the BerkeleyDB
-    */
-    class scoped_lock {
-
-      friend class jobDbManager;
-
-      
-      DbLock * m_lock;
-      static DbEnv* s_dbenv;
-
-    protected:
-      static void initDbEnv( DbEnv* env ) {
-	s_dbenv = env;
-      }
-
-    public:
-      
-      scoped_lock(const long caller, const Dbt *obj_to_lock, bool exclusive) 
-	{
-	  
-	  api_util::scoped_timer T( "jobDbManager::scoped_lock::CTOR - TIMER for DB lock acquisition: " );
-	  DbLock lock;
-
-	  if( s_dbenv && obj_to_lock ) {
-
-	    if(exclusive)
-	      s_dbenv->lock_get( caller, 0, obj_to_lock, DB_LOCK_WRITE, &lock);
-	    else
-	      s_dbenv->lock_get( caller, 0, obj_to_lock, DB_LOCK_READ, &lock);
-	    
-	  }
-
-	  m_lock = &lock;
-	  
-	}
-      
-      ~scoped_lock() 
-	{
-	  if( s_dbenv &&  m_lock )
-	    s_dbenv->lock_put( m_lock );
-	}
-
-    };
 
     jobDbManager(const std::string& env_home, 
     		 const bool recover = false, 

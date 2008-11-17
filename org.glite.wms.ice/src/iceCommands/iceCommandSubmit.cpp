@@ -49,7 +49,7 @@
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/JobDescriptionWrapper.h"
-#include "glite/ce/cream-client-api-c/scoped_timer.h"
+//#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -105,7 +105,7 @@ namespace { // Anonymous namespace
          * longer in the job cache, nothing is done.
          */
         void operator()( void ) {
-	  api_util::scoped_timer tmp_timer( "remove_job_from_cache::operator()" );
+//	  api_util::scoped_timer tmp_timer( "remove_job_from_cache::operator()" );
             boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
             iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
             m_cache->erase( it );
@@ -250,7 +250,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     // (logging an information message), and the purge_f object will
     // take care of actual removal.
     {
-      api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute() - First mutex: Check of GridJobID" );
+//      api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute() - First mutex: Check of GridJobID" );
         boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 	iceUtil::jobCache::iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
         if ( cache->end() != it ) {
@@ -323,7 +323,6 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         throw( iceCommandTransient_ex( "Authentication error " + V.getErrorMessage() ) );
     }
     m_theJob.setUserDN( V.getDNFQAN() );
-    
     m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_start_event( m_theJob ) );
     
@@ -619,7 +618,9 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     
     // now the job is in cache and has been registered we can save its
     // proxy into the DN-Proxy Manager's cache
-    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( m_theJob.getUserDN(), m_theJob.getUserProxyCertificate() );
+    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( m_theJob.getUserDN(), 
+								  m_theJob.getUserProxyCertificate(), 
+								  V.getProxyTimeEnd() );
 
     /*
      * here must check if we're subscribed to the CEMon service
@@ -631,7 +632,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     }
            
     {
-      api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in cache" );
+      //api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in cache" );
         boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
         m_theJob.setLastSeen( time(0) );
         iceUtil::jobCache::getInstance()->put( m_theJob );
@@ -976,20 +977,18 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
 //______________________________________________________________________________
 void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 {
-    static const char* method_name = "iceCommandSubmit::doSubscription() - ";
-  //boost::recursive_mutex localMutex; // FIXME: this is a temporary trick that avoid to acquire a subscriptionManager's mutex that could produce dead-lock. 
+  static const char* method_name = "iceCommandSubmit::doSubscription() - ";
   boost::recursive_mutex::scoped_lock cemonM( s_localMutexForSubscriptions );
   
-
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );
   iceUtil::DNProxyManager* dnprxMgr( iceUtil::DNProxyManager::getInstance() );
   
-  string userDN    = aJob.getUserDN();
-  string userProxy = aJob.getUserProxyCertificate();
-  string ce        = aJob.getCreamURL();
+  //string userDN    = aJob.getUserDN();
+  //string userProxy = aJob.getUserProxyCertificate();
+  // string ce        = aJob.getCreamURL();
 
-  subMgr->getCEMonURL( userProxy, ce, cemon_url ); // also updated the internal subMgr's cache cream->cemon
+  subMgr->getCEMonURL( aJob.getUserProxyCertificate(), aJob.getCreamURL(), cemon_url ); // also updated the internal subMgr's cache cream->cemon
   
   CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                   << "For current CREAM, subscriptionManager returned CEMon URL ["
@@ -1002,27 +1001,18 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   
   bool foundSubscription;
 
-  foundSubscription = subMgr->hasSubscription( userProxy, cemon_url );
+  foundSubscription = subMgr->hasSubscription( aJob.getUserProxyCertificate(), cemon_url );
   
   if ( foundSubscription )
     {
       // if this was a ghost subscription (i.e. it does exist in the cemonUrlCache's cache
       // but not actually in the CEMon
       // the subscriptionUpdater will fix it soon
-        CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                       << "User [" << userDN << "] is already subsdcribed to CEMon ["
-                       << cemon_url << "] (found in subscriptionManager's cache)"
-                       );
-        
-      // If the current proxy expires later than that one in the subscriptionManager's
-      // map, we must update it with the current one.
-      // This is because it is better to be sure that the subscription Updater
-      // will use always the most long-lived proxy to renew subscriptions.
-      //subMgr->setUserProxyIfLonger( userDN, userProxy );
-      //      {
-
-      dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
-
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		     << "User [" << aJob.getUserDN() << "] is already subsdcribed to CEMon ["
+		     << cemon_url << "] (found in subscriptionManager's cache)"
+		     );
+      
       return;
     }	   
   
@@ -1038,11 +1028,11 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   
   try {
     
-    subscribed = iceUtil::subscriptionProxy::getInstance()->subscribedTo( userProxy, cemon_url, sub );
+    subscribed = iceUtil::subscriptionProxy::getInstance()->subscribedTo( aJob.getUserProxyCertificate(), cemon_url, sub );
     
   } catch(exception& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                     << "Couldn't determine if user [" << userDN 
+                     << "Couldn't determine if user [" << aJob.getUserDN() 
                      << "] is subscribed to [" << cemon_url 
                      << "]. Another job could trigger a successful subscription."
                      );
@@ -1060,10 +1050,10 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // notifications coming from this CEMon.
       string DN;
 
-      if( subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
+      if( subMgr->getCEMonDN( aJob.getUserProxyCertificate(), cemon_url, DN ) ) {
 	    
-	subMgr->insertSubscription( userProxy, cemon_url, sub );
-	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+	subMgr->insertSubscription( aJob.getUserProxyCertificate(), cemon_url, sub );
+	//dnprxMgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate() );
 	
       } else {
           CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
@@ -1078,14 +1068,14 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     } 
     else {
 
-      subMgr->insertSubscription( userProxy, cemon_url, sub );
+      subMgr->insertSubscription( aJob.getUserProxyCertificate(), cemon_url, sub );
 
-      dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+      //dnprxMgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate() );
 
     }
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		   << "User DN [" << userDN << "] is already subscribed to CEMon ["
+		   << "User DN [" << aJob.getUserDN() << "] is already subscribed to CEMon ["
 		   << cemon_url << "] (asked to CEMon itself)"
 		   
 		   );
@@ -1095,7 +1085,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     bool can_subscribe = true;
     string DN;
     if ( m_configuration->ice()->listener_enable_authz() ) {
-      if( !subMgr->getCEMonDN( userProxy, cemon_url, DN ) ) {
+      if( !subMgr->getCEMonDN( aJob.getUserProxyCertificate(), cemon_url, DN ) ) {
 	// Cannot subscribe to a CEMon without it's DN
 	can_subscribe = false;
 	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
@@ -1108,17 +1098,17 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     
     if(can_subscribe) {
       iceUtil::iceSubscription sub;
-      if( iceUtil::subscriptionProxy::getInstance()->subscribe( userProxy, cemon_url, sub ) ) {
+      if( iceUtil::subscriptionProxy::getInstance()->subscribe( aJob.getUserProxyCertificate(), cemon_url, sub ) ) {
 	{
-	  subMgr->insertSubscription( userProxy, cemon_url, sub );
+	  subMgr->insertSubscription( aJob.getUserProxyCertificate(), cemon_url, sub );
 	}
 
-	dnprxMgr->setUserProxyIfLonger( userDN, userProxy );
+	//dnprxMgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate() );
 
       } else {
           CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 		       << "Couldn't subscribe to [" 
-		       << cemon_url << "] with userDN [" << userDN<< "]. Will not"
+		       << cemon_url << "] with userDN [" << aJob.getUserDN()<< "]. Will not"
 		       << " receive job status notification from it for this user. "
 		       << "Hopefully the subscriptionUpdater will retry."
 		       

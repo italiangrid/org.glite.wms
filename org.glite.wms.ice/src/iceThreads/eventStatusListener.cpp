@@ -28,7 +28,7 @@
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/scoped_timer.h"
+//#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 // other GLITE stuff
 #include "glite/wms/common/configuration/Configuration.h"
