@@ -78,6 +78,8 @@ namespace { // begin anonymous namespace
      * cache.  It should be invoked by a scope_guard object, and is
      * used to remove a bunch of jobs if the polling fails due (i.e.)
      * to an expired user proxy.
+     *
+     * TODO: Remove this class, as it is not being used right now.
      */
     class remove_bunch_of_jobs {
     protected:
@@ -225,17 +227,24 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                        << thisJob->getCompleteCreamJobID() << "]"
                        );
     }    
+
+    // Following a discussion on 2008-11-12, we decided not to remove
+    // jobs which cannot be polled. The reason being that errors may
+    // be transient (so that the jobs could be polled in future), and
+    // that the lease mechanism will take care of unreachable jobs
+    // anyway.
+
     // Build the scope_guard object which will remove all jobs in the
     // vector from the job cache, if necessary.
-    remove_bunch_of_jobs remove_f( job_id_vector );
+    // remove_bunch_of_jobs remove_f( job_id_vector );
     // The following is needed because we want to pass to
     // remove_job_guard a reference to function remove_f, instead of a
     // copy of it.  Passing a reference here is needed because we can
     // later modify the object remove_f by changing the failure
     // reason, and we want the scope_guard to invoke the (modified)
     // function object.
-    boost::function<void()> remove_f_ref = boost::ref( remove_f );
-    wms_utils::scope_guard remove_jobs_guard( remove_f_ref );
+    // boost::function<void()> remove_f_ref = boost::ref( remove_f );
+    // wms_utils::scope_guard remove_jobs_guard( remove_f_ref );
     
     string proxy( DNProxyManager::getInstance()->getBetterProxyByDN( user_dn ) );
     
@@ -259,12 +268,12 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
         
         soap_proxy::VOMSWrapper V( proxy );
         if( !V.IsValid( ) ) {
-            remove_f.set_reason( V.getErrorMessage() );
+            // remove_f.set_reason( V.getErrorMessage() );
             throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
         }
         
         if( V.getProxyTimeEnd() <= time(NULL) ) {
-            remove_f.set_reason( string("Proxy [")+proxy+"] is expired!" );
+            // remove_f.set_reason( string("Proxy [")+proxy+"] is expired!" );
             throw cream_api::soap_proxy::auth_ex( string("Proxy [")+proxy+"] is expired!" );
         }
         
@@ -296,7 +305,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                              proxy,
                              &req,
                              &res).execute( 3 );
-            remove_jobs_guard.dismiss(); // dismiss the guard, we should be safe here...
+            // remove_jobs_guard.dismiss(); // dismiss the guard, we should be safe here...
             
         } // free some array
 
@@ -331,14 +340,14 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
             }
             
         } // for
-        
+
     } catch(soap_proxy::auth_ex& ex) {
       
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
                        << "Cannot query status job for DN=["
                        << user_dn << "]. Exception is [" << ex.what() << "]"
                        );
-        remove_f.set_reason( ex.what() );
+        // remove_f.set_reason( ex.what() );
         sleep(1);
 
     } catch(soap_proxy::soap_ex& ex) {
@@ -347,7 +356,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                        << "Cannot query status job for DN=["
                        << user_dn << "]. Exception is ["  << ex.what() << "]"
                        );
-        remove_f.set_reason( ex.what() );
+        // remove_f.set_reason( ex.what() );
         sleep(1);
 
     } catch(cream_api::cream_exceptions::InternalException& ex) {
@@ -356,7 +365,8 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                        << "Cannot query status job for DN=["
                        << user_dn << "]. Exception is [" << ex.what() << "]"
                        );
-        remove_f.set_reason( ex.what() );
+        // remove_f.set_reason( ex.what() );
+        
         // this ex can be raised if the remote service is not
         // reachable and scanJobs is called again immediately. Until
         // the service is down this could overload the cpu and the
@@ -369,7 +379,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                        << "Cannot query status job for DN=["
                        << user_dn << "]. Exception is [" << ex.what() << "]"
                        );
-        remove_f.set_reason( ex.what() );
+        // remove_f.set_reason( ex.what() );
 
     } catch(...) {
         
