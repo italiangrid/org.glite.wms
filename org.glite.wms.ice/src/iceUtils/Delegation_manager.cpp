@@ -87,7 +87,7 @@ Delegation_manager* Delegation_manager::instance( )
     return s_instance;
 }
 
-string Delegation_manager::delegate( const CreamJob& job, bool force ) throw( std::exception )
+pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool force, bool USE_NEW ) throw( std::exception )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -144,7 +144,10 @@ string Delegation_manager::delegate( const CreamJob& job, bool force ) throw( st
 
     close( fd );
 
-    str_sha1_digest = bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+    if(USE_NEW)
+      str_sha1_digest = bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+    else
+      str_sha1_digest = V.getDNFQAN();
 
     // Lookup the (sha1_digest,cream_url) into the set
     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
@@ -159,9 +162,10 @@ string Delegation_manager::delegate( const CreamJob& job, bool force ) throw( st
         it = delegation_by_key_view.end();
     }
 
+    time_t expiration_time;
     if ( delegation_by_key_view.end() == it ) {
         // Delegation id not found (or force). Performs a new delegation   
-        time_t expiration_time;
+      //        time_t expiration_time;
 
         // The delegation ID is the "canonized" GRID job id
         delegation_id = canonizeString( job.getGridJobID() );
@@ -250,6 +254,7 @@ string Delegation_manager::delegate( const CreamJob& job, bool force ) throw( st
     } else {
         // Delegation id FOUND. Returns it
         delegation_id = it->m_delegation_id;
+	expiration_time = it->m_expiration_time;
 
         // Project the iterator to the sequencedd index
         t_delegation_by_seq::iterator it_seq( m_delegation_set.project<2>( it ) );
@@ -269,7 +274,7 @@ string Delegation_manager::delegate( const CreamJob& job, bool force ) throw( st
                         << V.getDN( )
                          );
     }
-    return delegation_id;
+    return make_pair(delegation_id, expiration_time);
 }
 
 

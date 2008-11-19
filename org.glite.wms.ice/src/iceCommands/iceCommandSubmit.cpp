@@ -359,7 +359,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                    );
 
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
-    string delegID, lease_id; // empty delegation id
+    pair<string, time_t> delegation;
+    string lease_id; // empty delegation id
     bool force_delegation = false;
     bool force_lease = false;  
     bool retry = true;  
@@ -414,7 +415,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // Delegates the proxy
         //
         try {
-            delegID = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );        
+	  pair<string, time_t> delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );        
         } catch( const exception& ex ) {
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
@@ -434,7 +435,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             // (delegationProxy, leaseID) last asrgument is irrelevant
             // now, because we register jobs one by one
             cream_api::JobDescriptionWrapper jd(modified_jdl, 
-                                                delegID, 
+                                                delegation.first, 
                                                 ""/* delegPRoxy */, 
                                                 lease_id /* leaseID */, 
                                                 false, /* NO autostart */
@@ -609,7 +610,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     
     m_theJob.setCreamJobID( jobId );
     m_theJob.setStatus(glite::ce::cream_client_api::job_statuses::PENDING);    
-    m_theJob.setDelegationId( delegID );
+    m_theJob.setDelegationId( delegation.first );
+    m_theJob.setDelegationExpirationTime( delegation.second);
     m_theJob.set_lease_id( lease_id ); // FIXME: redundant??
     m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );
@@ -982,7 +984,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );
-  iceUtil::DNProxyManager* dnprxMgr( iceUtil::DNProxyManager::getInstance() );
+  //  iceUtil::DNProxyManager* dnprxMgr( iceUtil::DNProxyManager::getInstance() );
   
   //string userDN    = aJob.getUserDN();
   //string userProxy = aJob.getUserProxyCertificate();

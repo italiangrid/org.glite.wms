@@ -26,6 +26,7 @@
 #include "creamJob.h"
 
 #include <iostream>
+#include <utility>
 #include <string>
 #include <functional>
 #include "boost/multi_index_container.hpp"
@@ -164,7 +165,27 @@ namespace util {
          *
          * @throw exception if the delegation operation fails.
          */
-        std::string delegate( const CreamJob& job, bool force = false ) throw( std::exception );
+	std::pair<std::string, time_t> delegate( const CreamJob& job, bool force = false, bool USE_NEW = false ) throw( std::exception );
+	
+	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, time_t> >& target)
+        {
+          boost::recursive_mutex::scoped_lock L( m_mutex );
+          typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
+          t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
+          //typedef t_delegation_set::nth_index<2>::type t_delegation_by_seq;
+          //t_delegation_by_seq& delegation_by_seq( m_delegation_set.get<2>() );
+          
+          t_delegation_by_key::iterator it = delegation_by_key_view.begin();
+	  
+          while( it != delegation_by_key_view.end() ) {
+	    /*          it->m_cream_url; */
+	    /*          it->m_delegation_id; */
+	    /*          it->m_expiration_time; */
+            target.push_back( boost::make_tuple(it->m_delegation_id, it->m_cream_url, it->m_expiration_time) )
+	      ;
+            ++it;
+          }
+	}
 
     };
 

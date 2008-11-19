@@ -86,7 +86,8 @@ namespace glite {
 	  std::string m_user_proxyfile;
 	  std::string m_user_dn;
           std::string m_sequence_code;
-          std::string m_delegation_id;     
+          std::string m_delegation_id; 
+	  time_t      m_delegation_exptime;
           std::string m_wn_sequence_code; //! The sequence code for the job sent to the worker node      
           glite::ce::cream_client_api::job_statuses::job_status m_prev_status; //! previous status of the job
 	  glite::ce::cream_client_api::job_statuses::job_status m_status; //! Current status of the job
@@ -136,6 +137,8 @@ namespace glite {
 	  //! Sets the user's distinguished name
 	  void setUserDN( const std::string& udn ) { m_user_dn = udn; };
 
+	  void setDelegationExpirationTime( const time_t T ) { m_delegation_exptime = T; }
+
           /**
            * Sets the job failure reason. NOTE: the failure reason can
            * be set ONLY ONCE. Attempts to set the failure reason
@@ -149,6 +152,8 @@ namespace glite {
 	      m_failure_reason = f; 
 	    }
           };
+
+	  time_t getDelegationExpirationTime( void ) const { return m_delegation_exptime; }
 
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return m_grid_jobid; }
@@ -309,7 +314,6 @@ namespace glite {
            */
           std::string getCEMonURL( void ) const;
 
-
           /**
            * Returns the CEMon DN for the CEMon which is sending 
            * status change notifications for this job.
@@ -357,8 +361,11 @@ namespace glite {
 	      
 
 	      ar & m_delegation_id;
-	      
 
+
+	      ar & m_delegation_exptime;
+
+	      
 	      ar & m_wn_sequence_code;
 	      
 
