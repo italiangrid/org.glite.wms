@@ -78,7 +78,9 @@ set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
     
     parameters.setDefaultEnvs()
     parameters.addEnvItem(('MONITORED_SUBMIT_CONFIG_FILE','''\
-location of the configuration file for this test'''))
+location of the configuration file for this test. The configuration file contains a list \
+of properties (the format is key=value); the set of keys correspond to the set \
+of the long options of this test'''))
     
 
     if os.environ.has_key("MONITORED_SUBMIT_CONFIG_FILE"):
