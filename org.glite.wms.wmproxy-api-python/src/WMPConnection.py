@@ -12,6 +12,7 @@ try:
 except ImportError, err: 
     raise Exception ("Error: Unable to find pyOpenSSL module")
 
+
 g_sHostName = "unknown"
 g_cCtx = 0
 
