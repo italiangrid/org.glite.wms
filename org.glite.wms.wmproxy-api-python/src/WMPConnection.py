@@ -9,9 +9,8 @@ import sys
 try:
     from OpenSSL import SSL
     from OpenSSL import crypto
-except:
-    print "Error: Unable to find pyOpenSSL module"
-    sys.exit(1)
+except ImportError, err: 
+    raise Exception ("Error: Unable to find pyOpenSSL module")
 
 g_sHostName = "unknown"
 g_cCtx = 0
@@ -123,7 +122,7 @@ class WMPConnection( httplib.HTTPConnection):
         try:
             self.sock.do_handshake()
         except SSL.Error, v:
-            raise "\n".join( [ stError[2] for stError in v.args[0] ] )
+            raise Exception("\n".join( [ stError[2] for stError in v.args[0] ] ))
 
 
 class WMPHTTPS(httplib.HTTPS):
