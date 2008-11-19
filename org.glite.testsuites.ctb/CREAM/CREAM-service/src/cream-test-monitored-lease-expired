@@ -57,8 +57,8 @@ specify the delegation management type: single, one delegated proxy for all subm
 or multiple, one delegated proxy per job (DEFAULT is single)''')
     
     parameters.register('leaseTime', 'd', 1200, optChar='W', descr='''\
-define the lease time for a lease, if it is not used a pre-registered lease id \
-(DEFAULT 20m)''')
+define the lease time in seconds for a lease, if it is not used a pre-registered lease id \
+(DEFAULT 1200s)''')
     
     parameters.register('resourceURI', 's', '', testsuite_utils.checkResourceURI, \
                         'R', descr='''define the URI of the resource under testing, the format is \
