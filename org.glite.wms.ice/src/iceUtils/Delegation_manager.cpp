@@ -145,9 +145,9 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool for
     close( fd );
 
     if(USE_NEW)
-      str_sha1_digest = bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
-    else
       str_sha1_digest = V.getDNFQAN();
+    else
+      str_sha1_digest = bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
 
     // Lookup the (sha1_digest,cream_url) into the set
     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
