@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+# test has been developed by Robert Harakaly and changed for Nagios by Victor Galaktionov 
+# get information about a LFC file or directory in the name server (lfc_stat) 
+ 
+import os,lfc,sys
+
+global lfc_vo
+
+class lfc_stat_test:
+    def __init__(self):
+	self.name = "lfc_stat_test"
+    def test(self):
+        stat=lfc.lfc_filestat()
+        statPtr=lfc.lfc_filestatPtr(stat)
+        ret=lfc.lfc_stat("/",statPtr)
+        return stat,ret
+
+    def ret(self):
+        retval=lfc.lfc_filestat()
+        retval.fileid=2L
+        retval.filemode=16877
+        retval.nlink=1
+        retval.uid=0
+        retval.gid=0
+        retval.filesize=0L
+        retval.atime=1184059742
+        retval.mtime=1171381061
+        retval.ctime=1171381061
+        retval.fileclass=0
+        retval.status='-'
+        return retval
+
+    def ntest(self):
+        stat=lfc.lfc_filestat()
+        statPtr=lfc.lfc_filestatPtr(stat)
+        ret=lfc.lfc_stat("/nonexisting",statPtr)
+        return stat,ret
+
+    def nret(self):
+        retval=lfc.lfc_filestat()
+        retval.fileid=0L
+        retval.filemode=0
+        retval.nlink=0
+        retval.uid=0
+        retval.gid=0
+        retval.filesize=0L
+        retval.atime=0
+        retval.mtime=0
+        retval.ctime=0
+        retval.fileclass=0
+        retval.status=' '
+        return retval
+
+    def compare(self, testVal, retVal):
+        (ret, retRetVal) = retVal
+        (test, testRetVal) = testVal
+        retval = True
+        if (retRetVal == testRetVal):
+            retval = retval & ( test.nlink == ret.nlink )
+        else:
+            retval = False
+        return retval
+
+    def run(self):
+        print "%s:                     " %self.name
+        ret1 = self.compare(self.test(), (self.ret(),0))
+        if ret1:
+            print "[OK]"
+        else:
+            print "[FAILED]"
+        ret2 = self.compare(self.ntest(), (self.nret(),-1))
+        if ret2:
+            print "[OK]"
+        else:
+            print "[FAILED]"
+        return ret1 & ret2
+
+
+#************* Interface for Nagios and Python tests ***************
+print "<pre>"
+print "Start test: get information about a LFC file or directory in the name server (lfc_stat) "
+print "1. Prepare environment"
+
+vo_name=os.environ['VO']
+lfc_host = sys.argv[1]
+lfc_home = lfc_host + ":/grid/" + vo_name
+
+os.environ['LFC_HOME'] = lfc_home
+os.environ['LFC_HOST'] = lfc_host
+
+same_ok   = int(os.environ['STATE_OK'])
+same_err  = int(os.environ['STATE_CRITICAL'])
+lfc_vo    = "/grid/" + vo_name
+
+print "2. Start test run()"
+ret = lfc_stat_test().run()
+
+
+print "3. Ret test code: %s" % ret
+print "Exit"
+print "</pre>"
+
+if ( ret == True ):
+    print "Test is OK"
+    sys.exit(same_ok)
+else:
+    print "Test is failure"
+    sys.exit(same_err)
+                        

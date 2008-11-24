@@ -1,0 +1,178 @@
+#!/usr/bin/env python
+# test has been developed by Robert Harakaly and changed for SAM ( and Nagios) by Victor Galaktionov
+# create a new LFC file with the specified GUID or reset it in the name server (lfc_creatg) 
+
+import os, lfc, sys, commands
+from testClass import _test, _ntest
+
+global testHome,lfc_vo 
+
+class test_new_ok(_test):
+    def info(self):
+	return "lfc_creatg OK "
+    def clean(self):
+        lfc.lfc_unlink(self.name)
+    def test(self):
+        self.guid = commands.getoutput('uuidgen').split('/n')[0]
+        self.name = lfc_vo + "/python_filecreatg_test"
+        ret = lfc.lfc_creatg(self.name,self.guid,0664)
+ 
+        statg=lfc.lfc_filestatg()
+        ret=lfc.lfc_statg("",self.guid, statg)
+        return (statg,ret)
+    def ret(self):
+        retval=lfc.lfc_filestatg()
+        retval.nlink=1
+        retval.filesize=0L
+        retval.atime=1184059742
+        retval.mtime=1171381061
+        retval.ctime=1171381061
+        retval.fileclass=0
+        retval.status='-'
+        retval.guid=self.guid
+        return retval
+    def compare(self, testVal, retVal):
+        (ret, retRetVal) = retVal
+        (test, testRetVal) = testVal
+        retval = True
+        if (retRetVal == testRetVal):
+            retval = retval & ( test.nlink == ret.nlink )
+	    retval = retval & ( test.filesize == ret.filesize )
+            retval = retval & ( test.fileclass == ret.fileclass )
+            retval = retval & ( test.status == ret.status )
+            retval = retval & ( test.guid == ret.guid )
+        else:
+            retval = False
+        return retval
+
+class test_existing_ok(_test):
+    def info(self):
+        return "lfc_creatg on existing file"
+    def clean(self):
+        lfc.lfc_unlink(self.name)
+    def prepare(self):
+        self.guid = commands.getoutput('uuidgen').split('/n')[0]
+        self.name =  lfc_vo + "/python_filecreatg_test"
+        ret = lfc.lfc_creatg(self.name,self.guid,0664)
+        lfc.lfc_setfsize(self.name,None,12345L)
+
+
+    def test(self):
+        ret = lfc.lfc_creatg(self.name,self.guid,0664)
+
+        statg=lfc.lfc_filestatg()
+        ret=lfc.lfc_statg("",self.guid, statg)
+        return (statg,ret)
+    def ret(self):
+        retval=lfc.lfc_filestatg()
+        retval.nlink=1
+        retval.filesize=0L
+        retval.atime=1184059742
+        retval.mtime=1171381061
+        retval.ctime=1171381061
+        retval.fileclass=0
+        retval.status='-'
+        retval.guid=self.guid
+        return retval
+    def compare(self, testVal, retVal):
+        (ret, retRetVal) = retVal
+        (test, testRetVal) = testVal
+        retval = True
+        if (retRetVal == testRetVal):
+            retval = retval & ( test.nlink == ret.nlink )
+            retval = retval & ( test.filesize == ret.filesize )
+            retval = retval & ( test.fileclass == ret.fileclass )
+            retval = retval & ( test.status == ret.status )
+            retval = retval & ( test.guid == ret.guid )
+        else:
+            retval = False
+        return retval
+
+
+class test_pd(_ntest):
+    def info(self):
+	return "lfc_creatg in permission denied"
+    def test(self):
+        self.guid = commands.getoutput('uuidgen').split('/n')[0]
+        self.name = "/python_filecreatg_test_pd"
+        ret = lfc.lfc_creatg(self.name,self.guid,0664)
+
+        statg=lfc.lfc_filestatg()
+        ret=lfc.lfc_statg("",self.guid, statg)
+        return (statg,ret)
+    def ret(self):
+        retval=lfc.lfc_filestatg()
+        retval.nlink=0
+        retval.filesize=0L
+        retval.atime=1184059742
+        retval.mtime=1171381061
+        retval.ctime=1171381061
+        retval.fileclass=0
+        retval.status=' '
+        return retval
+    def compare(self, testVal, retVal):
+        (ret, retRetVal) = retVal
+        (test, testRetVal) = testVal
+        retval = True
+        if (retRetVal == testRetVal):
+            retval = retval & ( test.nlink == ret.nlink )
+            retval = retval & ( test.filesize == ret.filesize )
+            retval = retval & ( test.fileclass == ret.fileclass )
+            #retval = retval & ( test.status == ret.status )
+        else:
+            retval = False
+        return retval
+
+class lfc_statg_test:
+    def __init__(self):
+	self.name = "lfc_creatg_test"
+        self.tests=[test_new_ok,test_existing_ok,test_pd]
+
+    def run(self):
+        retVal = True
+        for testclass in self.tests:
+            testInstance = testclass()
+            testInstance.prepare()
+            ret1 = testInstance.compare(testInstance.test(), (testInstance.ret(), testInstance.getRetVal()))
+            testInstance.clean()
+            retVal = retVal & ret1
+            if ret1:
+                print "%-60s[OK]" % testInstance.info()
+            else:
+                print "%-60s[FAILED]" % testInstance.info()
+        return retVal
+
+
+
+
+#************* Interface for Nagios and Python tests ***************
+print "<pre>"
+print "Start test: create a new LFC file with the specified GUID or reset it in the name server (lfc_creatg)"
+print "1. Prepare environment"
+
+vo_name=os.environ['VO']
+lfc_host = sys.argv[1]
+lfc_home = lfc_host + ":/grid/" + vo_name
+
+os.environ['LFC_HOME'] = lfc_home
+os.environ['LFC_HOST'] = lfc_host
+
+same_ok   = int(os.environ['STATE_OK'])
+same_err  = int(os.environ['STATE_CRITICAL'])
+lfc_vo    = "/grid/" + vo_name
+
+print "2. Start test run()"
+testHome = "python_lfc_test"
+ret = lfc_statg_test().run()
+
+print "3. Ret test code: %s" % ret
+print "Exit"
+print "</pre>"
+
+if ( ret == True ):
+    print "Test is OK"
+    sys.exit(same_ok)
+else:
+    print "Test is failure"
+    sys.exit(same_err)
+                        
