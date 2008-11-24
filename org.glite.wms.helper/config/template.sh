@@ -1,5 +1,9 @@
 #!/bin/sh
 
+
+# TODO: remove perl dependencies
+# improve signal handling
+
 trap 'fatal_error "Job has been terminated by the batch system (SIGTERM)"' TERM
 trap 'fatal_error "Job has been terminated by the batch system (SIGXCPU)"' XCPU
 trap 'fatal_error "Job has been terminated by the batch system (SIGINT)"' INT
@@ -798,11 +802,11 @@ if [ ${__output_data} -eq 1 ]; then
     status=$?
     return_value=$status
     local_cnt=0
-    for edg_rm_command in $GLITE_LOCATION/bin/glite-rm \
-                          $GLITE_LOCATION/bin/edg-rm \
-                          $EDG_LOCATION/bin/edg-rm \
-                          `which glite-rm 2>/dev/null` \
-                          `which edg-rm 2>/dev/null`; do
+    for edg_rm_command in "$GLITE_LOCATION/bin/glite-rm" \
+                          "$GLITE_LOCATION/bin/edg-rm" \
+                          "$EDG_LOCATION/bin/edg-rm" \
+                          "`which glite-rm 2>/dev/null`" \
+                          "`which edg-rm 2>/dev/null`"; do
       if [ -x "${edg_rm_command}" ]; then
         break;
       fi
