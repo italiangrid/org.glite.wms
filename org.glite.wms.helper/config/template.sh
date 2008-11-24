@@ -156,12 +156,12 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     done
     if [ $transfer_timeout -le 0 ]; then
       kill -9 $transfer_watchdog_pid
-      log_event_reason "Notice" "Hanging transfer"
+      log_event_reason "Running" "Hanging transfer"
       succeded=1
     else
       succeded=`cat $transfer_exitcode 2>/dev/null`
       if [ -z $succeded ]; then
-        log_event_reason "Notice" "Cannot retrieve return value for transfer"
+        log_event_reason "Running" "Cannot retrieve return value for transfer"
         succeded=1
       fi
     fi
@@ -180,7 +180,7 @@ doExit() # 1 - status, # 2 - mode
   retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   globus_copy_status=$?
 
-  rm -rf "..\${newdir}"
+  rm -rf "../${newdir}"
 
   if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
@@ -226,7 +226,7 @@ doReplicaFile()
   filename="${__dsupload}"
   exit_status=0
 
-  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile    $local" >> "$filename.tmp"
@@ -246,12 +246,12 @@ doReplicaFilewithLFN()
   filename="${__dsupload}"
   exit_status=0
   
-  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
+  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile    $lfn" >> "$filename.tmp"
   else
-    localnew=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+    localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile $localnew" >> "$filename.tmp"
@@ -272,12 +272,12 @@ doReplicaFilewithSE()
   filename="${__dsupload}"
   exit_status=0
 
-  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
+  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile   $local" >> "$filename.tmp"
   else
-    localnew=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+    localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile $localnew" >> "$filename.tmp"
@@ -300,22 +300,22 @@ doReplicaFilewithLFNAndSE()
   filename="${__dsupload}"
   exit_status=0
 
-  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" -d "$se" 2>&1`
+  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" -d "$se" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile    $lfn" >> "$filename.tmp"
   else
-    localse=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
+    localse=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile    $localse" >> "$filename.tmp"
     else
-      locallfn=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
+      locallfn=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
       result=$?
       if [ $result -eq 0 ]; then 
         echo "$sourcefile    $locallfn" >> "$filename.tmp"
       else
-        localnew=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+        localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
         result=$?
         if [ $result -eq 0 ]; then
           echo "$sourcefile    $localnew" >> "$filename.tmp"
@@ -484,7 +484,7 @@ if [ -n "${__ce_application_dir}" ]; then
 fi
 unset vo_hook
 
-# customization point #1
+# customization point
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
@@ -626,7 +626,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
       log_event "ReallyRunning"
       jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
     else
-      fatal_error "Cannot take token for ${GLITE_WMS_JOBID} (${token_fullpath})"
+      fatal_error "Cannot take token for ${GLITE_WMS_JOBID}"
     fi
   fi
 fi
@@ -724,6 +724,13 @@ fi
 
   user_job=$!
 
+  # customization point
+  if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+    if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1_5.sh" ]; then
+      . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1_5.sh"
+    fi
+  fi
+
   exec 2> /dev/null
 
   perl -e '
@@ -772,7 +779,7 @@ if [ -f "$tmp_time_file" -a -n "$time_cmd" ]; then
   rm -f "$tmp_time_file"
 fi 
 
-# customization point #2
+# customization point
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
@@ -791,28 +798,41 @@ if [ ${__output_data} -eq 1 ]; then
     status=$?
     return_value=$status
     local_cnt=0
-    for outputfile in ${__output_file[@]}
-    do
-      local=`doCheckReplicaFile ${__output_file}`
-      status=$?
-      if [ $status -ne 0 ]; then
-        return_value=1
-      else
-        if [ -z "${__output_lfn}" -a -z "${__output_se}"] ; then
-         local=`doReplicaFile $outputfile`
-        elif [ -n "${__output_lfn}" -a -z "${__output_se}"] ; then
-         local=`doReplicaFilewithLFN $outputfile ${__output_lfn[$local_cnt]}`
-        elif [ -z "${__output_lfn}" -a -n "${__output_se}"] ; then
-          local=`doReplicaFilewithSE $outputfile ${__output_se[$local_cnt]}`
-        else
-         local=`doReplicaFilewithLFNAndSE $outputfile ${__output_lfn[$local_cnt]} ${__output_se[$local_cnt]}`
-        fi
-        status=$?
+    for edg_rm_command in $GLITE_LOCATION/bin/glite-rm \
+                          $GLITE_LOCATION/bin/edg-rm \
+                          $EDG_LOCATION/bin/edg-rm \
+                          `which glite-rm 2>/dev/null` \
+                          `which edg-rm 2>/dev/null`; do
+      if [ -x "${edg_rm_command}" ]; then
+        break;
       fi
-      let "++local_cnt"
     done
-    local=`doDSUpload`
-    status=$?
+    if [ ! -x "${edg_rm_command}" ]; then
+      fatal_error "Cannot find edg-rm command"
+    else
+      for outputfile in ${__output_file[@]}
+      do
+        local=`doCheckReplicaFile ${__output_file}`
+        status=$?
+        if [ $status -ne 0 ]; then
+          return_value=1
+        else
+          if [ -z "${__output_lfn}" -a -z "${__output_se}"] ; then
+            local=`doReplicaFile $outputfile`
+          elif [ -n "${__output_lfn}" -a -z "${__output_se}"] ; then
+            local=`doReplicaFilewithLFN $outputfile ${__output_lfn[$local_cnt]}`
+          elif [ -z "${__output_lfn}" -a -n "${__output_se}"] ; then
+            local=`doReplicaFilewithSE $outputfile ${__output_se[$local_cnt]}`
+          else
+          local=`doReplicaFilewithLFNAndSE $outputfile ${__output_lfn[$local_cnt]} ${__output_se[$local_cnt]}`
+          fi
+          status=$?
+        fi
+        let "++local_cnt"
+      done
+      local=`doDSUpload`
+      status=$?
+    fi
   fi
 fi
 
@@ -866,11 +886,14 @@ if [ ${__wmp_support} -eq 0 ]; then
           file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
-          trunc_len=`expr $remaining_space / $remaining_files || echo 0`
+          trunc_len=`expr $remaining_space / $remaining_files`
+          if [ $? != 0 ]; then
+            trunc_len=0
+          fi
           file_size_acc=`expr $file_size_acc + $trunc_len`
-          if [ $trunc_len -lt 10 ]; then # non trivial truncation
-            jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
-          else
+          #if [ $trunc_len -lt 10 ]; then # non trivial truncation
+            #jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
+          #else
             truncate "${workdir}/${f}" $trunc_len "${workdir}/${f}.tail"
             if [ $? != 0 ]; then
               jw_echo "Could not truncate output sandbox file ${f}, not sending"
@@ -878,7 +901,7 @@ if [ ${__wmp_support} -eq 0 ]; then
               jw_echo "Truncated last $trunc_len bytes for file ${f}"
               retry_copy "globus-url-copy" "file://${workdir}/${f}.tail" "${__output_base_url}${ff}.tail"
             fi
-          fi
+          #fi
         fi
       else
         retry_copy "globus-url-copy" "file://${workdir}/${f}" "${__output_base_url}${ff}"
@@ -923,11 +946,14 @@ else # WMP support
           file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
-          trunc_len=`expr $remaining_space / $remaining_files || echo 0`
+          trunc_len=`expr $remaining_space / $remaining_files`
+          if [ $? != 0 ]; then
+            trunc_len=0
+          fi
           file_size_acc=`expr $file_size_acc + $trunc_len`
-          if [ $trunc_len -lt 10 ]; then # non trivial truncation
-            jw_echo "Not enough room for a significant truncation on file ${file}, not sending"
-          else
+          #if [ $trunc_len -lt 10 ]; then # non trivial truncation
+            #jw_echo "Not enough room for a significant truncation on file ${file}, not sending"
+          #else
             truncate "$s" $trunc_len "$s.tail"
             if [ $? != 0 ]; then
               jw_echo "Could not truncate output sandbox file ${file}, not sending"
@@ -941,7 +967,7 @@ else # WMP support
                 false
               fi
             fi
-          fi
+          #fi
         fi
       else # unlimited osb
         if [ "${f:0:9}" == "gsiftp://" ]; then
@@ -976,7 +1002,7 @@ if [ -n "${PBS_JOBID}" ]; then
   fi
 fi
 
-# customization point #3
+# customization point
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
