@@ -226,7 +226,7 @@ doReplicaFile()
   filename="${__dsupload}"
   exit_status=0
 
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile    $local" >> "$filename.tmp"
@@ -246,12 +246,12 @@ doReplicaFilewithLFN()
   filename="${__dsupload}"
   exit_status=0
   
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
+  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile    $lfn" >> "$filename.tmp"
   else
-    localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+    localnew=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile $localnew" >> "$filename.tmp"
@@ -272,12 +272,12 @@ doReplicaFilewithSE()
   filename="${__dsupload}"
   exit_status=0
 
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
+  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile   $local" >> "$filename.tmp"
   else
-    localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+    localnew=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile $localnew" >> "$filename.tmp"
@@ -300,22 +300,22 @@ doReplicaFilewithLFNAndSE()
   filename="${__dsupload}"
   exit_status=0
 
-  local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" -d "$se" 2>&1`
+  local=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" -d "$se" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile    $lfn" >> "$filename.tmp"
   else
-    localse=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
+    localse=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile    $localse" >> "$filename.tmp"
     else
-      locallfn=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
+      locallfn=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
       result=$?
       if [ $result -eq 0 ]; then 
         echo "$sourcefile    $locallfn" >> "$filename.tmp"
       else
-        localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+        localnew=`$GLITE_WMS_LOCATION/bin/glite-rm --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
         result=$?
         if [ $result -eq 0 ]; then
           echo "$sourcefile    $localnew" >> "$filename.tmp"
