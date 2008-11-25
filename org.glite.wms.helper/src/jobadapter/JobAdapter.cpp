@@ -1029,7 +1029,7 @@ try {
     jdl::set_nordugrid_rsl(
       *result,
       "(runTimeEnvironment>ENV/GLITE)" + globusrsl
-        + "(jobName=\"" + job_id + "\")"
+        + "(jobName=^*" + job_id + "^*)"
     );
   }
 
