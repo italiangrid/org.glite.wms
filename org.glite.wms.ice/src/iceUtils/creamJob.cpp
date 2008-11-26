@@ -258,7 +258,7 @@ void CreamJob::setSequenceCode( const std::string& seq )
 //______________________________________________________________________________
 string CreamJob::getBetterProxy( void ) const
 {
-    string better = DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn );
+    string better = DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn ).first;
     if( better.empty() ) return m_user_proxyfile;
     return better;
 }

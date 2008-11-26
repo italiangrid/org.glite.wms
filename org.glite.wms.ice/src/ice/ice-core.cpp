@@ -609,7 +609,7 @@ throw()
     cream_api::soap_proxy::JobFilterWrapper filter(target, vector<string>(), -1, -1, "", "");
     
     // Gets the proxy to use for authentication
-    string better_proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() );
+    string better_proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() ).first;
     
     cream_api::soap_proxy::VOMSWrapper V( better_proxy );
     if( !V.IsValid( ) ) {

@@ -28,7 +28,11 @@
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "iceUtils.h"
+#include "jobCache.h"
 #include <stdexcept>
+#include <cerrno>
+
+extern int errno;
 
 namespace cream_api = glite::ce::cream_client_api::soap_proxy;
 namespace api_util = glite::ce::cream_client_api::util;
@@ -38,6 +42,8 @@ using namespace std;
 Delegation_manager* Delegation_manager::s_instance = 0;
 boost::recursive_mutex Delegation_manager::m_mutex;
 
+
+//______________________________________________________________________________
 namespace {
 
     /**
@@ -70,6 +76,41 @@ namespace {
 
 };
 
+//______________________________________________________________________________
+string Delegation_manager::computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
+
+  static char* method_name = "Delegation_manager::computeSHA1Digest() - ";
+
+  unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
+  char buffer[ 1024 ]; // buffer for file data
+  SHA_CTX ctx;
+  int fd; // file descriptor
+  unsigned long nread = 0; // number of bytes read
+
+  fd = open( proxyfile.c_str(), O_RDONLY );
+  
+  if ( fd < 0 ) {
+    int saveerr = errno;
+    CREAM_SAFE_LOG( m_log_dev->errorStream()
+		    << method_name
+		    << "Cannot open proxy file ["
+		    << proxyfile << "]: " << strerror(saveerr)
+		    );  
+    throw runtime_error( string( "Cannot open proxy file [" + proxyfile + "]: " + strerror(saveerr) ) );
+  }
+  
+  SHA1_Init( &ctx );
+  while ( ( nread = read( fd, buffer, 1024 ) ) > 0 ) {
+    SHA1_Update( &ctx, buffer, nread );
+  }
+  SHA1_Final( bin_sha1_digest, &ctx );
+  
+  close( fd );
+
+  return bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+}
+
+//______________________________________________________________________________
 Delegation_manager::Delegation_manager( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_operation_count( 0 ),
@@ -77,8 +118,63 @@ Delegation_manager::Delegation_manager( ) :
     m_operation_count_max( 20 ) // FIXME: hardcoded default
 {
 
+  CREAM_SAFE_LOG( m_log_dev->infoStream()
+		  << "Delegation_manager::Delegation_manager( ) - "
+		  << "Populating Delegation_manager's cache..."
+		  );  
+
+  map<string, boost::tuple<string, string, time_t, string> > mapDeleg;
+  {
+    // must populate the delegation's cache
+    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    jobCache::iterator jit = jobCache::getInstance()->begin();
+
+    while( jit != jobCache::getInstance()->end() ) 
+      {
+	
+	if( jit->is_proxy_renewable() ) {
+	  // MYPROXYSERVER is set
+	  mapDeleg[ jit->getUserDN() ] = boost::make_tuple( 
+							   jit->getDelegationId(), 
+							   jit->getCreamURL(), 
+							   jit->getDelegationExpirationTime(),
+							   jit->getUserDN() 
+							   );
+	} else {
+	  
+	  // MYPROXYSERVER is NOT set
+	  
+	  mapDeleg[ computeSHA1Digest( jit->getUserProxyCertificate() ) ] =
+	    boost::make_tuple( jit->getDelegationId(), 
+			       jit->getCreamURL(), 
+			       jit->getDelegationExpirationTime(),
+			       jit->getUserDN());
+	  
+	}
+	
+	++jit;
+      }
+
+  } // unlock the cache
+
+  map<string, boost::tuple<string, string, time_t, string> >::const_iterator dit = mapDeleg.begin();
+  while( dit != mapDeleg.end() ) {
+    
+    m_delegation_set.insert( table_entry( 
+					 dit->first,           // key: user_dn OR SHA1 digest
+					 dit->second.get<1>(), // Cream URL
+					 dit->second.get<2>(), // Deleg's expiration time
+					 dit->second.get<0>(), // Delegation ID
+					 dit->second.get<3>()  // user_dn
+					 )         
+			     );
+
+    ++dit;
+  }
+
 }
 
+//______________________________________________________________________________
 Delegation_manager* Delegation_manager::instance( ) 
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
@@ -87,16 +183,12 @@ Delegation_manager* Delegation_manager::instance( )
     return s_instance;
 }
 
-pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool force, bool USE_NEW ) throw( std::exception )
+//______________________________________________________________________________
+pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force, bool USE_NEW ) throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
     static char* method_name = "Delegation_manager::delegate() - ";
-    unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
-    char buffer[ 1024 ]; // buffer for file data
-    SHA_CTX ctx;
-    int fd; // file descriptor
-    unsigned long nread = 0; // number of bytes read
     string delegation_id; // delegation ID to return as a result
 
     // Utility variables
@@ -111,43 +203,16 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool for
         m_operation_count = 0;
     }
 
-    // Computes digest from file
-    fd = open( certfile.c_str(), O_RDONLY );
-
-    if ( fd < 0 ) {
-        
-        CREAM_SAFE_LOG( m_log_dev->errorStream()
-                        << method_name
-                        << "Cannot open proxy file "
-                        << certfile
-                         );  
-        throw runtime_error( string( "Cannot open proxy file " + certfile ) );
-    }
-
-    cream_api::VOMSWrapper V( certfile );
-    if( !V.IsValid() ) {
-      CREAM_SAFE_LOG( m_log_dev->errorStream()
+    if(USE_NEW) {
+      CREAM_SAFE_LOG( m_log_dev->debugStream()
 		      << method_name
-		      << "Cannot validate proxy file ["
-		      << certfile 
-		      << "]. Error is: "
-		      << V.getErrorMessage( )
-		       );        
-      throw runtime_error( V.getErrorMessage() );
-    }
-
-    SHA1_Init( &ctx );
-    while ( ( nread = read( fd, buffer, 1024 ) ) > 0 ) {
-        SHA1_Update( &ctx, buffer, nread );
-    }
-    SHA1_Final( bin_sha1_digest, &ctx );
-
-    close( fd );
-
-    if(USE_NEW)
+		      << "Using new delegation method, DNFQAN=[" 
+		      << V.getDNFQAN() << "]"
+		      );  
       str_sha1_digest = V.getDNFQAN();
+    }
     else
-      str_sha1_digest = bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+      str_sha1_digest = computeSHA1Digest( certfile );//bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
 
     // Lookup the (sha1_digest,cream_url) into the set
     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
@@ -155,9 +220,21 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool for
     typedef t_delegation_set::nth_index<2>::type t_delegation_by_seq;
     t_delegation_by_seq& delegation_by_seq( m_delegation_set.get<2>() );
 
-    t_delegation_by_key::iterator it = delegation_by_key_view.find( boost::make_tuple(str_sha1_digest,cream_url));
+    CREAM_SAFE_LOG( m_log_dev->debugStream()
+		    << method_name
+		    << "Searching for delegation with key [" 
+		    << str_sha1_digest << "] && CREAM_URL ["
+		    << cream_url << "]"
+		    );  
+
+    t_delegation_by_key::iterator it = delegation_by_key_view.find( boost::make_tuple(str_sha1_digest,cream_url) );
 
     if ( force && delegation_by_key_view.end() != it ) {
+      CREAM_SAFE_LOG( m_log_dev->debugStream()
+		      << method_name
+		      << "FOUND delegation with key [" 
+		      << str_sha1_digest << "] but FORCE is set to [" << force << "]"
+		      );
         delegation_by_key_view.erase( it );
         it = delegation_by_key_view.end();
     }
@@ -227,12 +304,12 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool for
             throw runtime_error( "Delegation failed" );
         }     
         // Inserts the new delegation ID into the delegation set
-        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
+        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id, V.getDNFQAN() ) );
 
         // Inserts into the front of the list; this is guaranteed to
         // be a new element, as it has not been found in this "if"
         // branch
-        delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id ) );
+        delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id,  V.getDNFQAN() ) );
         if ( m_delegation_set.size() > m_max_size ) {
             if ( m_log_dev->isDebugEnabled() ) {
 
@@ -252,6 +329,13 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool for
             delegation_by_seq.pop_back();
         }
     } else {
+
+      CREAM_SAFE_LOG( m_log_dev->debugStream()
+		      << method_name
+		      << "FOUND delegation with key [" 
+		      << str_sha1_digest << "]"
+		      );
+
         // Delegation id FOUND. Returns it
         delegation_id = it->m_delegation_id;
 	expiration_time = it->m_expiration_time;
@@ -274,10 +358,12 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, bool for
                         << V.getDN( )
                          );
     }
+      
     return make_pair(delegation_id, expiration_time);
+
 }
 
-
+//______________________________________________________________________________
 void Delegation_manager::purge_old_delegations( void )
 {
     static char* method_name = "Delegation_manager::purge_old_delegations() - ";
@@ -298,4 +384,51 @@ void Delegation_manager::purge_old_delegations( void )
                         << " elements from the delegation cache"
                         );
     }
+}
+
+//______________________________________________________________________________
+void Delegation_manager::updateDelegation( const pair<string, time_t>& newDeleg ) {
+  
+  const char* method_name = "Delegation_manager::updateDelegation() - ";
+
+  boost::recursive_mutex::scoped_lock L( m_mutex );
+  
+  string delegId = newDeleg.first;
+  
+  typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
+  t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
+  
+  t_delegation_by_ID::iterator it = delegation_by_ID_view.find( /*boost::make_tuple(delegId)*/ delegId );
+  
+  if ( delegation_by_ID_view.end() != it ) {
+    string key     = it->m_sha1_digest;
+    string ceurl   = it->m_cream_url;
+    string delegid = it->m_delegation_id;
+    string user_dn = it->m_user_dn;
+    
+    CREAM_SAFE_LOG( m_log_dev->debugStream()
+		    << method_name
+		    << "Old Delegation was: ID=[" 
+		    << delegid << "] user_dn=["
+		    << user_dn << "] expiration time=["
+		    << time_t_to_string(it->m_expiration_time) << "] CEUrl=["
+		    << ceurl << "]"
+		    );
+    
+    
+    
+    delegation_by_ID_view.erase( it );
+    
+    CREAM_SAFE_LOG( m_log_dev->debugStream()
+		    << method_name
+		    << "New Delegation id: ID=[" 
+		    << delegid << "] user_dn=["
+		    << user_dn << "] expiration time=["
+		    << time_t_to_string(newDeleg.second) << "] CEUrl=["
+		    << ceurl << "]"
+		    );
+    
+    m_delegation_set.insert( table_entry(key, ceurl, newDeleg.second, delegid, user_dn)  );
+  }
+  
 }

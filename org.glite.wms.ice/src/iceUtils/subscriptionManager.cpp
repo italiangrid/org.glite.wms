@@ -322,7 +322,7 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
     string proxy;
     //{
     //  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-    proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it.first );
+    proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it.first ).first;
     //}
 
     try { 

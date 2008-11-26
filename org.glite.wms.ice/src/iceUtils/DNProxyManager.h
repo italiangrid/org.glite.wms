@@ -20,6 +20,7 @@
 #ifndef GLITE_WMS_ICE_UTIL_DNPROXYMGR
 #define GLITE_WMS_ICE_UTIL_DNPROXYMGR
 
+#include <utility>
 #include <string>
 #include <map>
 #include <boost/thread/recursive_mutex.hpp>
@@ -59,12 +60,12 @@ namespace util {
         void setUserProxyIfLonger( const std::string& dn, const std::string& proxy) throw();
 	void setUserProxyIfLonger( const std::string& dn, const std::string& proxy, const time_t ) throw();
         
-        std::string getBetterProxyByDN( const std::string& dn ) const throw() {
+	std::pair<std::string, time_t> getBetterProxyByDN( const std::string& dn ) const throw() {
             
 	    boost::recursive_mutex::scoped_lock M( mutex );
 	    std::map<std::string, std::pair<std::string, time_t> >::const_iterator it = m_DNProxyMap.find( dn );
-	    if( it == m_DNProxyMap.end()) return "";
-	    return it->second.first; // return the local copy of the proxy, because the sandbox's one could be removed
+	    if( it == m_DNProxyMap.end()) return std::make_pair("", 0);
+	    return std::make_pair(it->second.first, it->second.second); // return the local copy of the proxy, because the sandbox's one could be removed
             
         }
         

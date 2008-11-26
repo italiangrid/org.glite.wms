@@ -62,8 +62,11 @@ namespace glite {
 	  iceCommandProxyRenewal( const iceCommandProxyRenewal& );
 	  
 	  //bool iceCommandProxyRenewal::renewProxy( const std::list<CreamJob>& jobs) throw();
-	  bool iceCommandProxyRenewal::renewProxy( const std::pair<std::string, std::string>&, const std::string&) throw();
-	  
+	  //	  bool iceCommandProxyRenewal::renewProxy( const std::pair<std::string, std::string>&, const std::string&) throw();
+	  void renewAllDelegations( void ) throw();
+
+	  void getAllPhysicalNewProxies( std::set<std::string>& ) throw();
+
 	public:
 	  iceCommandProxyRenewal( );
 	  virtual ~iceCommandProxyRenewal( ) {}

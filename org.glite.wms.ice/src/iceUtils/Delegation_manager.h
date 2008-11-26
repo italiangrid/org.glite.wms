@@ -29,12 +29,16 @@
 #include <utility>
 #include <string>
 #include <functional>
+#include <stdexcept>
+
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/ordered_index.hpp"
 #include "boost/multi_index/member.hpp"
 #include "boost/multi_index/sequenced_index.hpp"
 #include "boost/multi_index/composite_key.hpp"
 #include "boost/thread/recursive_mutex.hpp"
+
+#include <glite/ce/cream-client-api-c/VOMSWrapper.h>
 
 #include <openssl/sha.h> // for using SHA1
 
@@ -57,6 +61,8 @@ namespace util {
          */
         void purge_old_delegations( void );
 
+	std::string computeSHA1Digest( const std::string& proxyfile ) throw( std::runtime_error& );
+
         static Delegation_manager* s_instance;
         static boost::recursive_mutex m_mutex;
 
@@ -73,37 +79,35 @@ namespace util {
             std::string m_cream_url;
             time_t m_expiration_time;
             std::string m_delegation_id;
+	    std::string m_user_dn;
 
-            table_entry( const std::string& sha1_digest, const std::string& cream_url, time_t expiration_time, const std::string& delegation_id ) :
+            table_entry( const std::string& sha1_digest, const std::string& cream_url, time_t expiration_time, const std::string& delegation_id, const std::string& user_dn ) :
                 m_sha1_digest( sha1_digest ),
                 m_cream_url( cream_url ),
                 m_expiration_time( expiration_time ),
-                m_delegation_id( delegation_id )
+                m_delegation_id( delegation_id ),
+		m_user_dn( user_dn )
             { };
         };
 
         /**
          * Multi index container 
          */
-        typedef boost::multi_index_container<
-            table_entry,
-            boost::multi_index::indexed_by<
-              boost::multi_index::ordered_unique<
-            // The index here is the (sha1_digest, cream_url) pair
-                boost::multi_index::composite_key<
-                table_entry,
-            // The first composite element is the sha1_digest
-                boost::multi_index::member<table_entry,std::string,&table_entry::m_sha1_digest>,
-            // The second composite element is the cream_url
-                boost::multi_index::member<table_entry,std::string,&table_entry::m_cream_url>
-              > 
-            >,
-            boost::multi_index::ordered_non_unique<
-              boost::multi_index::member<table_entry,time_t,&table_entry::m_expiration_time>
-            >,
-            boost::multi_index::sequenced<>
-          >
-        > t_delegation_set;
+      typedef boost::multi_index_container< table_entry,
+					    boost::multi_index::indexed_by< boost::multi_index::ordered_unique<
+        // The index here is the (sha1_digest, cream_url) pair
+	boost::multi_index::composite_key<
+	table_entry,
+	// The first composite element is the sha1_digest
+	boost::multi_index::member<table_entry,std::string,&table_entry::m_sha1_digest>,
+	// The second composite element is the cream_url
+	boost::multi_index::member<table_entry,std::string,&table_entry::m_cream_url> > >,
+									    boost::multi_index::ordered_non_unique< boost::multi_index::member<table_entry,time_t,&table_entry::m_expiration_time> >,
+									    
+									    boost::multi_index::sequenced<>,
+									    boost::multi_index::ordered_unique< boost::multi_index::member<table_entry,std::string,&table_entry::m_delegation_id> >
+									    >
+      > t_delegation_set;
         
         t_delegation_set m_delegation_set;
 
@@ -165,9 +169,13 @@ namespace util {
          *
          * @throw exception if the delegation operation fails.
          */
-	std::pair<std::string, time_t> delegate( const CreamJob& job, bool force = false, bool USE_NEW = false ) throw( std::exception );
+	std::pair<std::string, time_t> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false ) throw( std::exception& );
 	
-	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, time_t> >& target)
+
+	/**
+
+	*/
+	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t> >& target)
         {
           boost::recursive_mutex::scoped_lock L( m_mutex );
           typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
@@ -178,15 +186,17 @@ namespace util {
           t_delegation_by_key::iterator it = delegation_by_key_view.begin();
 	  
           while( it != delegation_by_key_view.end() ) {
-	    /*          it->m_cream_url; */
-	    /*          it->m_delegation_id; */
-	    /*          it->m_expiration_time; */
-            target.push_back( boost::make_tuple(it->m_delegation_id, it->m_cream_url, it->m_expiration_time) )
+            target.push_back( boost::make_tuple(it->m_delegation_id, it->m_cream_url, it->m_user_dn, it->m_expiration_time) )
 	      ;
             ++it;
           }
 	}
 
+      /**
+	 < delegID, cream_url, exp_time, user_dn, 
+      */
+      void updateDelegation( const std::pair<std::string, time_t>& newDeleg );
+      
     };
 
 } // namespace util

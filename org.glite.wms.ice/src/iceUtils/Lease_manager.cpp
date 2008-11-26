@@ -317,7 +317,7 @@ time_t Lease_manager::renew_lease( const string& lease_id ) throw( lease_excepti
         throw lease_exception( error_msg );
     }
 
-    string cert_file = DNProxyManager::getInstance()->getBetterProxyByDN( it->m_user_dn );
+    string cert_file = DNProxyManager::getInstance()->getBetterProxyByDN( it->m_user_dn ).first;
 
     if ( cert_file.empty() ) {
         string error_msg( boost::str( boost::format( "Cannot renew lease with lease ID \"%1%\" because ICE cannot retrieve a proxy cert file for user DN \"%2%\"") % lease_id % it->m_user_dn ) );

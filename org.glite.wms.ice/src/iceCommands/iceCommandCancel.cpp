@@ -218,7 +218,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
      */
     string betterproxy;
 
-    betterproxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( theJob.getUserDN() );
+    betterproxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( theJob.getUserDN() ).first;
 
     try {
       //m_theProxy->Authenticate( betterproxy /* theJob.getUserProxyCertificate() */ );

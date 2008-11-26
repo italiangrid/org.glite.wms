@@ -320,7 +320,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
      */
     cream_api::VOMSWrapper V( m_theJob.getUserProxyCertificate() );
     if( !V.IsValid( ) ) {
-        throw( iceCommandTransient_ex( "Authentication error " + V.getErrorMessage() ) );
+        throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
     }
     m_theJob.setUserDN( V.getDNFQAN() );
     m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
@@ -415,7 +415,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // Delegates the proxy
         //
         try {
-	  pair<string, time_t> delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, force_delegation );        
+	  delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation, m_theJob.is_proxy_renewable() );
         } catch( const exception& ex ) {
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
@@ -426,7 +426,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                 
             CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                             << "Going to REGISTER Job "
-                            << m_theJob.describe() << "..."
+                            << m_theJob.describe() << " with delegation ID ["
+			    << delegation.first << "]..."
                              );
             
             cream_api::AbsCreamProxy::RegisterArrayRequest req;
