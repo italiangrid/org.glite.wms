@@ -8,7 +8,8 @@
 # in the same directory with the scripts and a valid proxy for the user running
 # the test suite to be present in the subdir 'test_job' 
 #
-# Author: SA3-IT <sa3-italia@mi.infn.it>
+# Author: Francesco Prelz (francesco.prelz@mi.infn.it), 
+#         SA3-IT <sa3-italia@mi.infn.it>
 #
 ###############################################################################
 
