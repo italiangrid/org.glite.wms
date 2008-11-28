@@ -67,7 +67,10 @@ function load_conf_vars()
   blex_possible_job_types=`echo $JOB_TYPES`
   blex_n_DEFAULT_jobs=`echo $DEFAULT_JOBS`
   blex_n_HOLDRELEASE_jobs=`echo $HOLDRELEASE_JOBS`
-  usage
+  if [ "$1" == "-h" ]
+  then
+   usage
+  fi
   if [ "$1" == "-d" ]
   then
     blex_debug=1
