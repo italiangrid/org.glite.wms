@@ -227,6 +227,26 @@ chmod_tar_extract_all(TAR *t, char *prefix)
 			if (outcome) {
 				return UNTAR_ERR_EXTRACTING_FILE;
 			}
+		
+		} else if (TH_ISLNK(t)) {
+
+			// In case of DAG ZippedISB the item could be an hardlink
+			if (prefix != NULL) {
+				snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
+			} else {
+				strncpy(buf, filename, sizeof(buf));
+			}
+			// Extracting the hardlink
+			if (tar_extract_hardlink(t, buf)) {
+				fprintf(stderr, "Unable to uncompress ISB file: %s\n", buf);
+				return UNTAR_ERR_EXTRACTING_FILE;
+			}
+
+			int outcome = chmod(buf, mode);
+			if (outcome) {
+				return UNTAR_ERR_EXTRACTING_FILE;
+			}
+
 		} else {
 			fprintf(stderr, "Item in ISB file is not a regular file: %s\n",
 				filename);
