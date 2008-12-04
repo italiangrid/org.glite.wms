@@ -1,3 +1,4 @@
+
 /* 
  * Copyright (c) Members of the EGEE Collaboration. 2004. 
  * See http://www.eu-egee.org/partners/ for details on the copyright
@@ -344,13 +345,17 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
      Now, let's check all delegations for expiration
      and renew them
   */
-  //vector<boost::tuple<string, string, string, time_t> > allDelegations;
 
   vector< boost::tuple< string, string, string, time_t> > allDelegations;
   map< string, CreamJob > delegID_CreamJob;
 
   Delegation_manager::instance()->getDelegationEntries( allDelegations );
 
+  /**
+     Create a MAP
+     delegationID -> array<Job> (jobs that have that delegationID)
+     This maps is needed below to update all jobs for the deleg expiration times.
+   */
   map<string, list<CreamJob> > mapDelegJob;
   {
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
@@ -364,14 +369,18 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 
   map<string, time_t> mapDelegTime;
   
+  /**
+     Loop over all different delegations
+  */
   while( it != allDelegations.end() )
     {
       time_t thisExpTime = it->get<3>();
       
       if( thisExpTime - time(0) > DELEGATION_EXPIRATION_THRESHOLD_TIME ) {
+	mapDelegTime[ it->get<0>() ] = thisExpTime;
 	++it;
 	continue;
-      }
+      } 
       
       string thisUserDN    = it->get<2>();
       string thisCEUrl     = it->get<1>();
@@ -384,13 +393,16 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 		      << "Will Renew Delegation ID ["
 		      << thisDelegID << "] with BetterProxy ["
 		      << thisBetterPrx.first
-		      << "]..."
+		      << "] that will expire on ["
+		      << time_t_to_string(thisBetterPrx.second) << "]"
 		      );
       try {
 	
 	CreamProxy_ProxyRenew( thisCEUrl,
 			       thisBetterPrx.first,
 			       thisDelegID).execute( 3 );
+
+	mapDelegTime[ thisDelegID ] = thisBetterPrx.second;
 	
       } catch( exception& ex ) {
 	CREAM_SAFE_LOG( m_log_dev->errorStream() 
@@ -399,16 +411,14 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 			<< thisDelegID
 			<< "] failed: "
 			<< ex.what() 
-			);	  
+			);
       }
-      
-      mapDelegTime[ thisDelegID ] = thisBetterPrx.second;
 
       ++it;
     }
     
   /**
-     Now that all delegations have been updated, lets update the jobCache and
+     Now that all delegations have been renewed; lets update the jobCache and
      the Delegation_manager's cache too
   */
   {

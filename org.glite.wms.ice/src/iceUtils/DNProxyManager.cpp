@@ -201,15 +201,13 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger() - "
 		   << "Cannot retrieve the Subject for the proxy ["
-		   << prx << "]. ICE will continue to use the old proxy.Error is: "
+		   << prx << "]. ICE will continue to use the old better proxy. Error is: "
 		   << V.getErrorMessage()
 		   );
     return;
   }
   
-  //string dn = V.getDNFQAN();
-  
-  this->setUserProxyIfLonger( V.getDNFQAN(), prx );
+  this->setUserProxyIfLonger( V.getDNFQAN(), prx, V.getProxyTimeEnd() );
   
 }
 
@@ -218,14 +216,19 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 						    const string& prx
 						    ) throw()
 {
+  boost::recursive_mutex::scoped_lock M( mutex );
+
   time_t newT;
+
   try {
+
     newT= glite::ce::cream_client_api::certUtil::getProxyTimeLeft( prx );
+
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger() - "
 		   << "Cannot retrieve time left for proxy ["
-		   << prx << "]: "
+		   << prx << "]. ICE will continue to use the old better proxy. Error is: "
 		   << ex.what()
 		   );
     
@@ -242,21 +245,15 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 						    ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
-    // string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + iceUtil::canonizeString( dn ) + ".proxy";
+
     string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
 
-
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
-    CREAM_SAFE_LOG(m_log_dev->warnStream() 
-		   << "DNProxyManager::setUserProxyIfLonger() - "
-		   << "DN ["
-		   << dn << "] not found. Inserting the proxy ["
-		   << prx << "]. Copied into ["
-		   << localProxy << "]"
-		   );
 
     try {
+
       this->copyProxy( prx, localProxy );
+
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
@@ -267,6 +264,16 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
       return;
       
     }
+    
+    CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "DN ["
+		   << dn << "] not found. Inserting the new proxy ["
+		   << prx << "]. Will be Copied into ["
+		   << localProxy << "] - New Expiration Time is ["
+		   << time_t_to_string(exptime) << "]"
+		   );
+
     m_DNProxyMap[ dn ] = make_pair(localProxy, exptime);
 
     return;
@@ -288,38 +295,18 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
      		     );
       return;
     }
+
+    CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "New proxy ["
+		   << prx << "] has been copied into ["
+		   << localProxy << "] - New Expiration Time is ["
+		   << time_t_to_string(exptime) << "]"
+		   );
     m_DNProxyMap[ dn ] = make_pair(localProxy, exptime);
     return;
   }
   
-//   try {
-//     // check time validity of the ICE's local proxy
-//     //oldT = glite::ce::cream_client_api::certUtil::getProxyTimeLeft( m_DNProxyMap[ dn ].second ); 
-
-//   } catch(exception& ex) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream() 
-// 		   << "DNProxyManager::setUserProxyIfLonger() - "
-// 		   << "Cannot retrieve time left for old proxy ["
-// 		   << m_DNProxyMap[ dn ] << "]. Setting user proxy to the new one ["
-// 		   << prx << "] copied to ["
-// 		   << localProxy <<"]: "
-// 		   << ex.what()
-// 		   );
-
-//     try {
-//       this->copyProxy( prx, localProxy );
-//     } catch(SourceProxyNotFoundException& ex) {
-//       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-// 		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
-// 		     << prx << "] to ["
-// 		     << localProxy << "]."
-// 		     );
-//       return;
-//     }
-//     m_DNProxyMap[ dn ] = localProxy;
-//     return;
-//   }
-
   if(newT > oldT) {
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
 		   << "DNProxyManager::setUserProxyIfLonger() - "
@@ -330,7 +317,9 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   );
 
     try {
+
       this->copyProxy( prx, localProxy );
+
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
@@ -338,6 +327,15 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		     << localProxy << "]."
 		     );
     }
+
+    CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "New proxy ["
+		   << prx << "] has been copied into ["
+		   << localProxy << "] - New Expiration Time is ["
+		   << time_t_to_string(newT) << "]"
+		   );
+
     m_DNProxyMap[ dn ] = make_pair(localProxy, newT);
 
   } 
@@ -422,6 +420,11 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
   throw() 
 {
   
+  /**
+     This is a private method. It is only invoked from the CTOR of this class
+     that already has taken the joCache's mutex
+  */
+
   time_t besttime = 0;
   iceUtil::jobCache::iterator bestProxy = iceUtil::jobCache::getInstance()->end();
 
@@ -436,10 +439,6 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
       ) 
     {
       if( jit->getUserDN() != dn ) {
-        CREAM_SAFE_LOG(
-  	m_log_dev->debugStream() 
-		<< "DNProxyManager::searchBetterProxyForUser() - Skipping DN ["
-		<< jit->getUserDN() << "]"  );
 	++jit;
 	continue;
       }
@@ -479,16 +478,6 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
 	continue;
       }
 	
-//       } catch(exception& ex) {
-// 	CREAM_SAFE_LOG(m_log_dev->errorStream() 
-// 		       << "DNProxyManager::searchBetterProxyForUser - "
-// 		       << "Cannot extract proxy time left from proxy file "
-// 		       << "[" << jobCert << "]: "<< ex.what() << ". Skipping"
-// 		       );
-// 	++jit;
-// 	continue;
-//       }
-
       time_t timeleft = V.getProxyTimeEnd() - time(NULL);
 
       if (timeleft > besttime)
