@@ -429,7 +429,7 @@ int doTheQuery(){
 	e_searchfail++;
 
     }
-    ldap_msgfree( searchResult );
+    if ( searchResult ) ldap_msgfree( searchResult );
     ldap_unbind_s( ld );
     return 0;
   }   
