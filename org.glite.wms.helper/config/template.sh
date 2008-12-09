@@ -5,8 +5,6 @@ trap 'fatal_error "Job has been terminated (got SIGQUIT) "OSB""' QUIT
 trap 'fatal_error "Job has been terminated (got SIGINT) "OSB""' INT
 trap 'fatal_error "Job has been terminated (got SIGTERM) "OSB""' TERM
 
-__wmp_support=1
-
 do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
 {
   $1 "$2" "$3" 2>"$4"
