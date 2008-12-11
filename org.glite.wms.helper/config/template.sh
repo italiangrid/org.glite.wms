@@ -22,7 +22,7 @@ proxy_checker()
     fi
   done
 
-  fatal_error "Job killed because of user proxy expiration"
+  fatal_error "Job killed by the jobwrapper because of user proxy expiration"
 }
 
 jw_echo() # 1 - msg
@@ -874,6 +874,7 @@ if [ ${__output_data} -eq 1 ]; then
     return_value=$status
     local_cnt=0
     for edg_rm_command in "${GLITE_LOCATION}/bin/lcg-replica-manager" \
+                          "/opt/lcg/bin/lcg-replica-manager" \
                           "${GLITE_LOCATION}/bin/edg-rm" \
                           "${EDG_LOCATION}/bin/edg-rm" \
                           "`which lcg-replica-manager 2>/dev/null`" \
