@@ -48,6 +48,8 @@ fi
 
 if [ "$1" = "-f" ]; then
   conffile=$2
+else
+  conffile="./DM-certconfig"
 fi
 ###################################
 # Check for environment variables #
@@ -57,13 +59,8 @@ if [ -e $conffile ]; then
   echo "Using $conffile"
   source $conffile
 else
-  if [ -e ./DM-certconfig ]; then
-    echo "Using ./DM-certconfig"
-    source ./DM-certconfig
-  else
-    echo "File ./DM-certconfig does not exist"
-    exitFailure
-  fi
+  echo "Config File $conffile does not exist"
+  exitFailure
 fi
 
 if [ -z "$LFC_HOST" ]; then
