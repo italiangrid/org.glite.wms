@@ -97,13 +97,26 @@ WMPDelegation::getProxyDir()
 }
 
 string
-WMPDelegation::getProxyRequest(const string &delegation_id)
+WMPDelegation::getProxyRequest(const string &original_delegation_id)
 {
 	GLITE_STACK_TRY("getProxyRequest()");
 	edglog_fn("WMPDelegation::getProxyRequest");
 
-	char * user_dn = NULL;
-	user_dn = wmputilities::getUserDN();
+        // Initialise delegation_id
+        string delegation_id = original_delegation_id;
+        if (original_delegation_id== "" ){
+#ifndef GRST_VERSION
+                throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+                        "renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+                        "Empty delegation id not allowed with delegation 1");
+#else
+                delegation_id=string(GRSTx509MakeDelegationID());
+                edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
+#endif
+        }
+        edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
+
+	char * user_dn = wmputilities::getUserDN();
 	char * request = NULL;
 	if (GRSTx509MakeProxyRequest(&request, (char*) getProxyDir().c_str(), 
 			(char*) delegation_id.c_str(), user_dn) != 0) {
@@ -125,14 +138,28 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 }
 
 void
-WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
+WMPDelegation::putProxy(const string &original_delegation_id, const string &proxy_req)
 {
 	GLITE_STACK_TRY("putProxy()");
 	edglog_fn("WMPDelegation::putProxy");
 	
 	char * user_dn = NULL;
   	user_dn = wmputilities::getUserDN();
-  	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
+  	
+        // Initialise delegation_id
+        string delegation_id = original_delegation_id;
+        if (original_delegation_id== "" ){
+#ifndef GRST_VERSION
+                throw wmputilities::ProxyOperationException(__FILE__, __LINE__,
+                        "renewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
+                        "Empty delegation id not allowed with delegation 1");
+#else
+                delegation_id=string(GRSTx509MakeDelegationID());
+                edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
+#endif
+        }
+
+	edglog(debug)<<"Proxy dir: "<<getProxyDir()<<endl;
   	edglog(debug)<<"delegation id: "<<delegation_id<<endl;
   	edglog(debug)<<"User DN: "<<string(user_dn)<<endl;
 	if (GRSTx509CacheProxy((char*) getProxyDir().c_str(),
