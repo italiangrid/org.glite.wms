@@ -134,3 +134,26 @@ like 'pildtm01', 'pildtm10' etc..)
 
 The file to be provided as second argument is the one created by the script
 setup_test.sh, and it is named as the host that will write on that file.
+
+- scas-mon.pl -
+Usage: ./scas-mon.pl
+
+This is a monitor script for SCAS daemon. Upon startup it will look through process
+table for an active SCAS daemon, hence the script must be started after SCAS.
+A log file /var/tmp/scas-mon.log will be written in CSV format with the following
+fields: Timestamp, Load1, Load5, Load15, Number of open FDs, Memory consumption.
+Records are made every 5 seconds. Script does not accept any parameters and
+all reconfiguration (process name, log file path, time interval) must be done
+by editing the script (but default parameters are just fine).
+
+- combine.pl -
+Usage: ./combine.pl <log1> <log2> ...
+
+This script is used to combine log files from other scripts into one. Input files
+should be specified as a command line arguments and output is written to stdout
+(you probably want to redirect it somewhere). Input files should be in CSV format
+with timestamp as a first field of every record. Script will add fields from specified
+files in the order of appearance. All gaps will be filled automatically, values with
+the same timestamp will be replaced by a mean value.
+This script is useful for importing log information into applications like OpenOffice
+or Gnuplot for further analysis.
