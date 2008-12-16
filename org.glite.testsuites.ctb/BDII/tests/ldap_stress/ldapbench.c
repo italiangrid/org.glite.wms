@@ -284,6 +284,7 @@ void * myLittleThread(void *threadid){
   t_data[my_id]->id = my_id;
   t_data[my_id]->avg_time = 0;
   t_data[my_id]->connections = 0;
+  double ret=0;
 
 
   /* do loop execution */
@@ -302,14 +303,15 @@ void * myLittleThread(void *threadid){
     gettimeofday(&startTime,0);
     gettimeofday(&currentTime,0);
     while ( currentTime.tv_sec < startTime.tv_sec+runTime ) {
-      total += measureExecutionTime( &doTheQuery );
+      ret = measureExecutionTime( &doTheQuery );
       gettimeofday( &currentTime, 0 );
       t_data[my_id]->connections++;
+      total += ret;
     }
   }
 
   /* Tell the main() what our average is */
-  t_data[my_id]->avg_time = total/t_data[my_id]->connections;
+  t_data[my_id]->avg_time = (total)/t_data[my_id]->connections;
   
   fflush(stdout);
   return ( NULL );
@@ -336,12 +338,18 @@ double measureExecutionTime(int (*function)()){
   t1=tv0.tv_sec+(tv0.tv_usec/1000000.0);
   
   ret = (*function)();
+
+  gettimeofday(&tv0,0);
+  t2 = tv0.tv_sec + (tv0.tv_usec/1000000.0);
   
-  if ( ret ) {  
-    gettimeofday(&tv0,0);
-    t2 = tv0.tv_sec + (tv0.tv_usec/1000000.0);
+  if ( ret == 0 ) {  
     printf("%.6lf\t%.6lf\t%.6lf\n", t1, t2, t2-t1);
     return t2-t1;
+  }
+  if ( ret == LDAP_TIMEOUT ) {  
+    printf("%.6lf\tTIMEOUT\t%d\n", t1,(int)timeout.tv_sec);
+  }else {
+    printf("%.6lf\tERROR\t%d\n", t1,(int)timeout.tv_sec);
   }
 
   return 0;
@@ -389,7 +397,7 @@ int doTheQuery(){
     fprintf (stderr, "ldap_simple_bind_s: %s\n", ldap_err2string( rc ));
     e_logonfail++;
     ldap_unbind_s ( ld );
-    return 0;
+    return rc;
   }
 
 
@@ -417,11 +425,11 @@ int doTheQuery(){
   /* Error handling */
   if ( rc != LDAP_SUCCESS ){
     if  ( rc == LDAP_TIMEOUT ) {
-    	fprintf (stderr, "TIMEOUT\n");
+    	//fprintf (stderr, "TIMEOUT\n");
 	e_searchtimeout++;
     }
     else if ( rc == LDAP_NO_RESULTS_RETURNED ) {
-        fprintf (stderr, "NO RESULTS\n");
+        //fprintf (stderr, "NO RESULTS\n");
 	e_searchnoresults++;
     }
     else {
@@ -431,7 +439,7 @@ int doTheQuery(){
     }
     if ( searchResult ) ldap_msgfree( searchResult );
     ldap_unbind_s( ld );
-    return 0;
+    return rc;
   }   
 
   /* Check, if we got sth. back */     
@@ -492,7 +500,7 @@ int doTheQuery(){
   fflush(stdout);
   
 
-  return 1;
+  return 0;
 }
 
 
@@ -508,18 +516,19 @@ void printProgress(){
   for (i=0; i<num_pthreads; i++ ) {
      avg  += t_data[i]->avg_time;
      conn += t_data[i]->connections;
-     printf("# Thread %d: %.6lf %ld\n", t_data[i]->id ,
-                                        t_data[i]->avg_time,
-					t_data[i]->connections);
+     //printf("# Thread %d: %.6lf %ld\n", t_data[i]->id ,
+     //                                   t_data[i]->avg_time,
+     //                                   t_data[i]->connections);
   }
 
+  conn = conn -(e_sessionInit+e_logonfail+e_searchfail+e_searchnoresults+e_searchtimeout);
   printf("# --------------SUM--------------\n");
   printf("# e_sessionInit    : %d\n", e_sessionInit );
   printf("# e_logonfail      : %d\n", e_logonfail );
   printf("# e_searchfail     : %d\n", e_searchfail  );
   printf("# e_searchnoresults: %d\n", e_searchnoresults  );
   printf("# e_searchtimeout  : %d\n", e_searchtimeout  );
-  printf("# avg_searchTime   : %.6lf\n", avg/conn  );
+  printf("# avg_searchTime   : %.6lf\n", avg/num_pthreads  );
   printf("# connections      : %ld\n", conn  );
   printf("# -------------------------------\n");
 }
