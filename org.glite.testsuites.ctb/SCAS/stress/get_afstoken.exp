@@ -1,0 +1,12 @@
+
+set afs_user "[lindex $argv 0]"
+set afs_password "[lindex $argv 1]"
+
+spawn klog $afs_user
+expect "Password:" {send "$afs_password\r"}
+expect "#" {puts "AFS token retrieved"
+            exit 0} \
+       "Unable to authenticate to AFS" {puts "Error retrieving AFS token: password incorrect"
+                                        exit 1}
+
+

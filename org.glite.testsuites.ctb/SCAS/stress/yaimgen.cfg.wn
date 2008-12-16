@@ -1,0 +1,8 @@
+#
+# Example configuration file for the yaimgen utility
+# This file is sourced, so follow the bash syntax !
+#
+
+ygSITENAME="cert-tb-cern"    # Can be anything
+ygREPO="prod"           # Can be cert,pps,prod
+ygHOST_1="lxb7605v1.cern.ch glite-WN patch2703 patch2017 patch2598"
