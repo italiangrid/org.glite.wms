@@ -47,7 +47,7 @@ class JobMonitor(threading.Thread):
         jobLeft = self.parameters.numberOfJob
         jobProcessed = 0
         
-        while jobProcessed<self.parameters.numberOfJob:
+        while (jobProcessed+self.pool.getFailures())<self.parameters.numberOfJob:
             
             ts = time.time()
             
@@ -85,7 +85,8 @@ class JobMonitor(threading.Thread):
 #            if len(snapshot)>0:
 #                minTS = float(min(snapshot)) -1
             jobLeft = self.parameters.numberOfJob - self.pool.count()
-            JobMonitor.logger.debug("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
+            JobMonitor.logger.debug("Job left: " + str(jobLeft) + " job processed: " 
+                                    + str(jobProcessed+self.pool.getFailures()))
             
             timeToSleep = self.parameters.rate - int(time.time() - ts)
             if timeToSleep>0:
