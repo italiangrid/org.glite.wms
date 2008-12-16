@@ -52,7 +52,7 @@ function prepare(){
 # Checks for a valid proxy.
 #=============================================================================
 function check_proxy(){
-    $(grid-proxy-info >/dev/null 2>&1)
+    $(voms-proxy-info >/dev/null 2>&1)
     if [ $? -gt 0 ]; then
 	echo "Error: Couldn't find a valid proxy."
 	exit 1
