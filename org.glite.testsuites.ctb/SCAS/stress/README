@@ -157,3 +157,14 @@ files in the order of appearance. All gaps will be filled automatically, values 
 the same timestamp will be replaced by a mean value.
 This script is useful for importing log information into applications like OpenOffice
 or Gnuplot for further analysis.
+
+- mkugconf.pl -
+Usage: ./mkugconf.pl -v <vo>,... [-g <group>,...] [-r <role>,...] [-n <num>]
+	<vo>	- VO name
+	<group> - VOMS group
+	<role>	- VOMS role
+	<num>	- number of pool accounts per combination (10 by default)
+
+This script is intended for easy creation of users.conf and groups.conf files for
+YAIM. It accepts a comma-separated lists of VOs, groups and roles and creates both
+files with all possible combinations.
