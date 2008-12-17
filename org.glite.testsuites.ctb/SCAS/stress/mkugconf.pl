@@ -37,11 +37,12 @@ foreach my $vo (split /,/, $opts{v}) {
 		$sgid = $grp ? $gid : "";
 		$sgnam = $grp ? $nam . $gcnt : "";
 		foreach my $att ("", split /,/, $opts{a}) {
+			my $sgif = $sgid ? ",$sgid" : ($att and ! $grp ? ",-" : "");
+			my $sgnf = $sgnam ? ",$sgnam": ($att and ! $grp ? ",-" : "");
 			my $fqan = "/$vo" . ($grp ? "/$grp" : "") . ($att ? "/ROLE=$att" : "");
 			print GRP "\"$fqan\"", $sgid, $sgnam, $att, $vo;
-			$sgid = $sgnam = "-" if $att and ! $grp;
 			for(my $i = 1; $i <= $opts{n}; $i++) {
-				print USR $uid++, $nam . $ucnt++, $pgid . ($sgid ? ",$sgid" : ""), "${nam}1" . ($sgnam ? ",$sgnam" : ""), $vo, $att;
+				print USR $uid++, $nam . $ucnt++, $pgid . $sgif, "${nam}1" . $sgnf, $vo, $att;
 			}
 		}
 	}
