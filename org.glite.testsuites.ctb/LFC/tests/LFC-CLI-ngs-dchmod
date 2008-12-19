@@ -78,6 +78,8 @@ echo
 echo "1. Change mode for nonexist directory"
 #lfc-chmod 777 $main_dir
 $LCG_LOCATION/bin/lfc-chmod 777 $main_dir 2> $lfc_tmp
+echo "cat $LFC_tmp"
+cat $LFC_tmp
 grep "No such file or directory" $lfc_tmp > /dev/null
 if [ $? == 1 ]; then 
    echo "Noncorrect diagn, exit"

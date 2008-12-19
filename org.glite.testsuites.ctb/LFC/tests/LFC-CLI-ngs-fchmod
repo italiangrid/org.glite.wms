@@ -21,11 +21,15 @@ access=( --- --x -w- -wx r-- r-x rw- rwx )
 GUID=""
 
 function clear (){
+   echo "Remove file/dir: $1"
    $LCG_LOCATION/bin/lfc-rm -r -f $1
 }
 function delGuid () {
     echo "Delete $GUID"
     $LCG_LOCATION/bin/lcg-del -a $GUID
+}
+function delLFN () {
+    $LCG_LOCATION/bin/lcg-del -a $1
 }
 function checkMode () {
     file=$4
@@ -83,6 +87,8 @@ echo
 echo "1. Change access mode for nonexist directory/file"
 
 $LCG_LOCATION/bin/lfc-chmod 777 $main_dir 2> $lfc_tmp
+cat $lfc_tmp
+#grep "Operation not permitted" $lfc_tmp > /dev/null
 grep "No such file or directory" $lfc_tmp > /dev/null
 if [ $? == 1 ]; then 
    echo "Noncorrect diagn, exit"
@@ -94,7 +100,7 @@ fi
 echo "OK"
 
 echo
-echo "SCENARIO: check mode for existing  file"
+echo "2. SCENARIO: check mode for existing  file"
 echo "SHORT=$SHORT, MODE=$MODE"
 
 echo "Create main directory: $main_dir"
@@ -104,10 +110,13 @@ LFN="$main_dir/test_file"
 echo "SE=$SE, LFN=$LFN"
 
 echo "Create guid and lfn:$LFN"
+echo "Prelimenary delete real file"
 
+delLFN "lfn:"$LFN
+echo "CLI: $LCG_LOCATION/bin/lcg-cr -l $LFN -d $SE --vo $vo_name file:$FILE"
 fguid=`$LCG_LOCATION/bin/lcg-cr -l $LFN -d $SE --vo $vo_name file:$FILE`
 GUID=$fguid
-#echo $fguid
+echo $fguid
 echo $fguid > $lfc_tmp
 
 grep "guid:" $lfc_tmp
@@ -115,6 +124,7 @@ if [ $? == 1 ]; then
    echo "Noncorrect create GUID, exit"
    cat $lfc_tmp
    echo "Test is failed"
+   delLFN "lfn:"$LFN
    clear $main_dir
    exit $SAME_ERROR
 fi

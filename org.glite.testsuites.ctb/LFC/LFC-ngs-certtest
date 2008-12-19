@@ -36,6 +36,12 @@ exitFailure ()	{
     exit $STATE_CRITICAL
 }
 
+exitWarning () {
+    echo "------------------------------------------------"
+    echo "END `date`"
+    echo "-TEST FAILED-"
+    exit $STATE_WARNING
+}
 #######################
 #Parsing the arguments#
 #######################
@@ -61,6 +67,7 @@ if [ -e $PROGPATH/LFC-ngs-certconfig ]; then
     echo "vo=$VO"
     echo "LFC_HOST=$LFC_HOST"
     echo "LCG_GFAL_INFOSYS=$LCG_GFAL_INFOSYS"
+    echo "SE: $SE"
 else
     echo "The file $PROGPATH/LFC-ngs-certconfig must be sourced in order to run the tests"
     exitFailure
@@ -68,12 +75,12 @@ fi
 
 if [ -z "$VO" ]; then
     echo "You need to set VO in order to run the tests"
-    exitFailure
+    exitWarning
 fi
 
 if [ -z "$LFC_HOST" ]; then
     echo "You need to set LFC_HOST in order to run the tests"
-    exitFailure
+    exitWarning
 fi
 
 #########
@@ -87,20 +94,6 @@ echo "------------------------------------------------"
 # Checking if there is valid proxy #
 ####################################
 
-#echo "Check if running glite:"
-#echo "Start: $LCG_LOCATION/bin/lcg-infosites --vo $VO se"
-#$LCG_LOCATION/bin/lcg-infosites --vo $VO se
-#echo "Ret=$?"
-echo "------------------------------------------------"
-
-#$LCG_LOCATION/bin/lfc-ls /grid/dteam/vgalakti
-#echo "Ret: $?"
-#$LCG_LOCATION/bin/lfc-ls /grid/dteam
-#$LCG_LOCATION/bin/lfc-ls /grid/dteam/vgalakti
-
-#echo "Start $GLITE_LOCATION/bin/glite-voms-proxy-info -all"
-#$GLITE_LOCATION/bin/glite-voms-proxy-info -all
-#echo  "Ret: $?"
 
 echo "Check proxy certificate"
 ProxyExist=`$GLITE_LOCATION/bin/glite-voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
@@ -118,10 +111,33 @@ else
     if [ $ProxyExpired -gt 0 ]; then
 	echo "Proxy credential expired!"
     fi
-    exitFailure
+    exitWarning
 fi
 $GLITE_LOCATION/bin/glite-voms-proxy-info 2>/dev/null | grep  "timeleft" 
 echo "Proxy is valid"
+
+echo "Check if GLITE  running well"
+if [ "$UI" = "yes" ]; then
+    echo "Check if running glite:"
+    echo "Start: $LCG_LOCATION/bin/lcg-infosites --vo $VO se"
+    $LCG_LOCATION/bin/lcg-infosites --vo $VO se
+    echo "Ret=$?"
+    echo "$LCG_LOCATION/bin/lfc-ls /grid"
+    $LCG_LOCATION/bin/lfc-ls /grid 2>&1
+    echo "Ret: $?"
+    $LCG_LOCATION/bin/lfc-ls /grid/dteam
+    $LCG_LOCATION/bin/lfc-ls /grid/dteam/vgalakti
+
+    echo "Start $GLITE_LOCATION/bin/glite-voms-proxy-info -all"
+    $GLITE_LOCATION/bin/glite-voms-proxy-info -all
+    echo  "Ret: $?"
+    echo "------------------------------------------------"
+else
+    echo "Check GLITE UI - skipped"
+fi
+
+
+
 ########################
 # Launch all the tests #
 ########################
@@ -146,8 +162,9 @@ if [ "$CLI" = "yes" ]; then
     do
 	rm -rf  /tmp/${item}_result.txt
 	echo -n "$count. executing $item"
-
-	$PROGPATH/tests/${item} $LFC_HOST   > /tmp/${item}_result.txt
+	$PROGPATH/tests/${item} $LFC_HOST  > /tmp/${item}_result.txt
+	#$PROGPATH/tests/${item} $LFC_HOST  2>&1  #> /tmp/${item}_result.txt
+	
 	res=$?
   
 	if [ "$res" != 0 ]; then 

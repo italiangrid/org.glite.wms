@@ -24,6 +24,11 @@ function delGuid () {
     echo "Delete $GUID"
     $LCG_LOCATION/bin/lcg-del -a $GUID
 }
+function delLFN () {
+    echo "Delete $1"
+    $LCG_LOCATION/bin/lcg-del -a $1
+}
+
            
 function clear (){
     $LCG_LOCATION/bin/lfc-rm -r -f $1
@@ -32,7 +37,7 @@ function clear (){
 
 #source $SAME_SENSOR_HOME/tests/config_file
 
-
+vo_name=$VO
 rm -rf $lfc_tmp
 rm -rf $lfc_stderr
 
@@ -76,7 +81,10 @@ LFN="$main_dir/$fname"
 echo "SE=$SE, LFN=$LFN, file=$FILE"
 
 echo "2.2. Create guid and lfn:$LFN"
+echo "2.2.1. Prelimenary delete file $LFN"
+delLFN "lfn:"$LFN
 
+echo "CLI: $LCG_LOCATION/bin/lcg-cr -l $LFN -d $SE --vo $vo_name file:$FILE"
 fguid=`$LCG_LOCATION/bin/lcg-cr -l $LFN -d $SE --vo $vo_name file:$FILE`
 GUID=$fguid
 echo $fguid
@@ -87,6 +95,7 @@ if [ $? == 1 ]; then
     echo "Noncorrect create GUID, exit"
     cat $lfc_tmp
     echo "Test is failed"
+    delLFN "lfn:"$LFN
     clear $main_dir
     exit $SAME_ERROR
 fi

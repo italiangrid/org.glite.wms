@@ -1,12 +1,17 @@
 #!/bin/bash
-#The hostname of the LCG File Catalog
+
+#------  Testbed servers  -----------------
+export SE=lxbra1910.cern.ch
+export LCG_GFAL_INFOSYS=lxbra2305.cern.ch:2170
 export LFC_HOST="lxb7608v3.cern.ch"
+#The hostname of the LCG File Catalog
+
 
 #VO name
 export VO="dteam"
 
 export STATE_OK=0
-export STATE_WAITING=1
+export STATE_WARNING=1
 export STATE_CRITICAL=2
 export STATE_UNKNOWN=3
 
@@ -16,13 +21,9 @@ export vo_name=$VO
 export SAME_OK=$STATE_OK
 export SAME_ERROR=$STATE_CRITICAL
 
-#------  Testbed servers  -----------------
-export SE=lxbra1910.cern.ch
-export LCG_GFAL_INFOSYS=lxbra2305.cern.ch:2170
-
 #----  working directory in LFC
-export D_LFC=/grid/$VO/generated/LFC
-export LFCDIR=/grid/$VO/generated/LFC/$LFC_HOST
+export D_LFC=/grid/$VO/nagios/LFC
+export LFCDIR=/grid/$VO/nagios/LFC/$LFC_HOST
 
 #----- Check all access (pointed in var MODE)
 export SHORT=1                  # Check short access: 000, 777
@@ -36,7 +37,8 @@ export lfc_stderr=/tmp/$LFC_HOST.lfc_stderr
 export tempo=/tmp/$LFC_HOST.lfc_tempo
 
 #------ Tests to be executed {yes|no}
-export CLI="yes"
-API_PYTHON="yes"
+export CLI="no"
+export API_PYTHON="no"
+export UI="no"
 SEQUENCE="no"
 
