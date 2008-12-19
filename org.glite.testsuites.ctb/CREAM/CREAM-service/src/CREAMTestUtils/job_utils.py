@@ -53,10 +53,11 @@ def subscribeToCREAMJobs(cemonURL, parameters, proxyFile, useSSL=False):
         consumerURL = 'https://%s:%d' % (hostname, parameters.consumerPort)
     else:
         consumerURL = 'http://%s:%d' % (hostname, parameters.consumerPort)
-    subscrCmd = "%s %s %s %s %s %s %s %d %d" % \
+    subscrCmd = '''%s --cert %s --capath %s --topic %s --dialects %s \
+--consumer-url %s --rate %d --duration %d %s''' % \
             (cmdTable['subscribe'], proxyFile, getCACertDir(), \
-             cemonURL, consumerURL, \
-             'CREAM_JOBS',  'CLASSAD', parameters.rate,  31536000)
+             'CREAM_JOBS',  'CLASSAD',
+             consumerURL, parameters.rate,  31536000, cemonURL)
     mainLogger.debug("Subscription command: " + subscrCmd)
     
     subscriptionId = None
@@ -79,9 +80,9 @@ def subscribeToCREAMJobs(cemonURL, parameters, proxyFile, useSSL=False):
     return subscriptionId
 
 def unSubscribeToCREAMJobs(cemonURL, subscrID, parameters, proxyFile):
-    unSubscrCmd = "%s %s %s %s %s" % \
+    unSubscrCmd = "%s --cert %s --capath %s --id %s %s" % \
             (cmdTable['unsubscribe'], proxyFile, getCACertDir(), \
-             cemonURL, subscrID)
+             subscrID, cemonURL)
     mainLogger.debug("UnSubscription command: " + unSubscrCmd)
     unSubscrProc = popen2.Popen4(unSubscrCmd)
     for line in unSubscrProc.fromchild:

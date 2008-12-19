@@ -61,10 +61,29 @@ class JobPoller(threading.Thread):
         while jobProcessed<self.parameters.numberOfJob:
             
             ts = time.time()
-
-            statusCmd = testsuite_utils.cmdTable['status'] \
-                        + " -f \"" + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)) \
-                        + "\" -e " + serviceHost + " --all"
+            
+            if hasattr(self.parameters, 'statusFromList') and self.parameters.statusFromList:
+                self.lock.acquire()
+                jobList = self.table.keys()
+                self.lock.release()
+                
+                tmpName = "/tmp/joblist." + testsuite_utils.applicationID
+                try:
+                    tFile = open(tmpName , 'w+b')
+                    tFile.write("##CREAMJOBS##\n")
+                    for job in jobList:
+                        tFile.write(job + "\n")
+                    tFile.close()
+                except Exception, ex:
+                    JobPoller.logger.error(ex)
+                    continue
+                
+                statusCmd = "%s -i %s" % (testsuite_utils.cmdTable['status'], tmpName)
+                
+            else:
+                statusCmd = "%s -f \"%s\" -e %s --all" % (testsuite_utils.cmdTable['status'], \
+                            time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)), serviceHost)
+                
             JobPoller.logger.debug('Command line: ' + statusCmd)
             
             if self.proxyMan<>None:
