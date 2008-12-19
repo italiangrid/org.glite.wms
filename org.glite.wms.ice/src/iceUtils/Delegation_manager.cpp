@@ -432,3 +432,20 @@ void Delegation_manager::updateDelegation( const pair<string, time_t>& newDeleg 
   }
   
 }
+
+//______________________________________________________________________________
+void Delegation_manager::removeDelegation( const string& delegToRemove )
+{
+  boost::recursive_mutex::scoped_lock L( m_mutex );
+
+  typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
+  t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
+  
+  t_delegation_by_ID::iterator it = delegation_by_ID_view.find( delegToRemove );
+  
+  if ( delegation_by_ID_view.end() != it )
+    {
+      delegation_by_ID_view.erase( it );
+    }
+  
+}

@@ -31,15 +31,17 @@
 #include "Delegation_manager.h"
 #include "CreamProxyMethod.h"
 #include "DNProxyManager.h"
+#include "iceConfManager.h"
 #include "jobCache.h"
 #include "iceUtils.h"
-
+#include "glite/wms/common/configuration/ICEConfiguration.h"
 /**
  *
  * Cream Client API C++ Headers
  *
  */
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/CEUrl.h"
 
 /**
  *
@@ -369,26 +371,72 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 
   map<string, time_t> mapDelegTime;
   
+  CREAM_SAFE_LOG( m_log_dev->debugStream() 
+		  << "iceCommandProxyRenewal::renewAllDelegations() - "
+		  << "There are [" << allDelegations.size() << "] Delegation(s) to check..."
+		  );
+
   /**
      Loop over all different delegations
   */
-  while( it != allDelegations.end() )
+  //  while( it != allDelegations.end() )
+  for( vector<boost::tuple<string, string, string, time_t> >::const_iterator it = allDelegations.begin();
+       it != allDelegations.end();
+       ++it)
     {
-      time_t thisExpTime = it->get<3>();
-      
+
+      time_t thisExpTime   = it->get<3>();
+      string thisDelegID   = it->get<0>();
+
+      mapDelegTime[ thisDelegID ] = thisExpTime;
+
+      /**
+	 if the current delegation ID is not expiring then skip it 
+	 but update the map mapDelegTime anyway, in order to update the job cache
+	 later
+       */
       if( thisExpTime - time(0) > DELEGATION_EXPIRATION_THRESHOLD_TIME ) {
-	mapDelegTime[ it->get<0>() ] = thisExpTime;
-	++it;
+
+	CREAM_SAFE_LOG( m_log_dev->debugStream() 
+			<< "iceCommandProxyRenewal::renewAllDelegations() - "
+			<< "Delegation ID ["
+			<< thisDelegID << "] will expire on ["
+			<< time_t_to_string(thisExpTime) << "]. Threshold time is ["
+			<< DELEGATION_EXPIRATION_THRESHOLD_TIME << "] seconds. Will NOT renew it now..."
+			);
+
 	continue;
       } 
       
       string thisUserDN    = it->get<2>();
       string thisCEUrl     = it->get<1>();
-      string thisDelegID   = it->get<0>();
+
+      /**
+	 Obtain the better proxy for the DN-FQAN related to current delegation ID
+      */
       pair<string, time_t> thisBetterPrx = DNProxyManager::getInstance()->getBetterProxyByDN( thisUserDN ); // all better proxies have been updated (see above)
       
-      
-      CREAM_SAFE_LOG( m_log_dev->debugStream() 
+      /**
+	 If the better proxy for this delegation ID is expired, it means that
+	 there're no new jobs for this DN-FQAN since long... then we can
+	 remove the delegatiob ID from memory.
+      */
+      if( thisBetterPrx.second <= (time(0)-5) ) {
+	CREAM_SAFE_LOG( m_log_dev->errorStream() 
+			<< "iceCommandProxyRenewal::renewAllDelegations() - "
+			<< "For current Delegation ID ["
+			<< thisDelegID <<"] DNProxyManager returned the Better Proxy ["
+			<< thisBetterPrx.first << "] that is EXPIRED. Removing this delegation ID from "
+			<< "Delegation_manager ..."
+		      );
+	
+	Delegation_manager::instance()->removeDelegation( thisDelegID );
+	mapDelegTime.erase( thisDelegID );
+	mapDelegJob.erase( thisDelegID );
+	continue;
+      }
+
+      CREAM_SAFE_LOG( m_log_dev->infoStream() 
 		      << "iceCommandProxyRenewal::renewAllDelegations() - "
 		      << "Will Renew Delegation ID ["
 		      << thisDelegID << "] with BetterProxy ["
@@ -397,8 +445,15 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 		      << time_t_to_string(thisBetterPrx.second) << "]"
 		      );
       try {
+
+	string thisDelegUrl = thisCEUrl;
+
+	boost::replace_all( thisDelegUrl, 
+			    iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), 
+			    iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix() 
+			    );
 	
-	CreamProxy_ProxyRenew( thisCEUrl,
+	CreamProxy_ProxyRenew( thisDelegUrl,
 			       thisBetterPrx.first,
 			       thisDelegID).execute( 3 );
 
@@ -414,7 +469,6 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 			);
       }
 
-      ++it;
     }
     
   /**
@@ -423,22 +477,24 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
   */
   {
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    //    jobCache::iterator jobit = m_cache->begin();
-    map<string, list<CreamJob> >::iterator dit = mapDelegJob.begin();
-    for( ; dit != mapDelegJob.end(); ++dit )
+    //map<string, list<CreamJob> >::iterator delegationIT = mapDelegJob.begin();
+
+    for( map<string, list<CreamJob> >::iterator delegationIT = mapDelegJob.begin();
+	 delegationIT != mapDelegJob.end(); 
+	 ++delegationIT )
       {
-	for(list<CreamJob>::iterator jit = dit->second.begin();
-	    jit != dit->second.end();
-	    ++jit) 
+	for(list<CreamJob>::iterator jobIT = delegationIT->second.begin();
+	    jobIT != delegationIT->second.end();
+	    ++jobIT) 
 	  {
-	    jit->setDelegationExpirationTime( mapDelegTime[ dit->first ] );
-	    m_cache->put( *jit );
+	    jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ] );
+	    m_cache->put( *jobIT );
 	  }
 	
       }
   }
 
-  for(map<string, time_t>::iterator it=mapDelegTime.begin();
+  for(map<string, time_t>::iterator it = mapDelegTime.begin();
       it != mapDelegTime.end();
       ++it)
     {

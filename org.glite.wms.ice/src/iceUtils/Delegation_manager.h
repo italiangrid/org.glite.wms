@@ -197,6 +197,8 @@ namespace util {
       */
       void updateDelegation( const std::pair<std::string, time_t>& newDeleg );
       
+      void removeDelegation( const std::string& delegToRemove );
+
     };
 
 } // namespace util
