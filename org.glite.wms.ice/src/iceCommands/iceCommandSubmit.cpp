@@ -476,6 +476,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                 << ex.what() << ". Will retry once by enforcing creation of a new lease ID..."
                                  );
                 force_lease = true;
+		continue;
             } else {
                 throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % ex.what() ) ) ); // Rethrow
             }                        
