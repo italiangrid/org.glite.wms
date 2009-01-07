@@ -97,9 +97,9 @@ namespace util {
 
     void makePath(const std::string& file) throw(std::exception&); // FIXME: never used?
 
-    std::string getNotificationClientDN( const std::string& );
+    //std::string getNotificationClientDN( const std::string& );
 
-    std::string getCompleteHostname( const std::string& );
+    //std::string getCompleteHostname( const std::string& );
 
     std::string canonizeString( const std::string& ) throw();
 
