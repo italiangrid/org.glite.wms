@@ -179,8 +179,12 @@ class JobSubmit : public Job {
 		* Retrieve JobId from a specified node name
 		*/
 		std::string getJobIdFromNode(const std::string& node);
+		/**
+		* Retrieve all JobIds and Names for the collection/DAG/parametric
+		*/
+		vector<std::string> getJobIdsAndNodes( );
 		/*
-                * Performs either registration or submission.
+		* Performs either registration or submission.
 		* The WMProxy submission service, that performs both registration and start of the job, is invoked
 		* if no local files are referenced in the JDL InputSandbox. If there are files that needed
 		* to be transferred to the server, only the jobRegistration is performed.
@@ -305,9 +309,10 @@ class JobSubmit : public Job {
 		/**
                 *	Boolean input arguments
                 */
+        bool json ;
 		bool nomsgOpt ;
 		bool nolistenOpt ;
-                bool registerOnly;
+        bool registerOnly;
 		bool startJob;
 		bool toBretrieved; // indicate whether there are files to be retrieved
 		/** Final Warning Message*/

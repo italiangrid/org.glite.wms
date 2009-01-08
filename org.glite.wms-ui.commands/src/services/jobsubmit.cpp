@@ -92,6 +92,7 @@ JobSubmit::JobSubmit( ){
 	m_validOpt = "";
 	// init of the boolean attributes
 	nomsgOpt = false ;
+	json = false;
 	nolistenOpt = false ;
 	startJob = false ;
 	// JDL file
@@ -173,23 +174,36 @@ void JobSubmit::readOptions (int argc,char **argv){
 			logInfo->print(WMS_DEBUG,   "--input option: The job will be submitted to the resource", m_resourceOpt);
 		}
 	}
-	
+
+	nomsgOpt = wmcOpts->getBoolAttribute (Options::NOMSG);
+	json = wmcOpts->getBoolAttribute (Options::JSON);
+
+	if (json && nomsgOpt) {
+		info << "The following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::JSON) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::NOMSG) << "\n";
+
+		throw WmsClientException(__FILE__,__LINE__,
+			"readOptions",DEFAULT_ERR_CODE,
+			"Input Option Error", info.str());
+	}
+
 	// --collect
 	m_collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
-		
+
 	// --jsdl
 	m_jsdlOpt = wmcOpts->getStringAttribute(Options::JSDL);
-		
+
 	// --dag
 	m_dagOpt = wmcOpts->getStringAttribute(Options::DAG);
-	
+
 	// --default-jdl
 	m_defJdlOpt = wmcOpts->getStringAttribute(Options::DEFJDL);
-		
+
 	// register-only & start
 	m_startOpt = wmcOpts->getStringAttribute(Options::START);
 	registerOnly = wmcOpts->getBoolAttribute(Options::REGISTERONLY);
-	
+
 	// --valid & --to
 	m_validOpt = wmcOpts->getStringAttribute(Options::VALID);
 	m_toOpt = wmcOpts->getStringAttribute(Options::TO);
@@ -232,7 +246,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 	// lrms has to be used with input o resource
 	m_lrmsOpt = wmcOpts->getStringAttribute(Options::LRMS);
-	
+
 	if (!m_lrmsOpt.empty() && !( !m_resourceOpt.empty() || !m_inOpt.empty() ) ){
 		info << "LRMS option cannot be specified without a resource:\n";
 		info << "use " + wmcOpts->getAttributeUsage(Options::LRMS) << " with\n";
@@ -281,7 +295,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 	// file Protocol
 	m_fileProto = wmcOpts->getStringAttribute( Options::PROTO) ;
-	
+
 	if (!m_startOpt.empty() && !m_fileProto.empty()) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (start operation doesn't need any file transfer)\n", "", true );
 	}  else if (registerOnly && !m_fileProto.empty()) {
@@ -330,7 +344,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
 	// path to the JDL file
 	m_jdlFile = wmcOpts->getPath2Jdl( );
-	nomsgOpt = wmcOpts->getBoolAttribute (Options::NOMSG);
 
 }
 
@@ -344,7 +357,7 @@ void JobSubmit::submission ( ){
 	if (!m_startOpt.empty()){
 		jobStarter(m_startOpt);
 	} else {
-		
+
 		// Check if a JSDL file has to be managed
 		if(m_jsdlOpt.empty()) {
 			// Normal management
@@ -354,7 +367,7 @@ void JobSubmit::submission ( ){
 			// JSDL management
 			this->checkJSDL();
 		}
-	
+
 		// Perform Submission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
 		// and initialize internal JobId:
@@ -465,13 +478,37 @@ void JobSubmit::submission ( ){
 	}
 	out << getLogFileMsg ( ) << "\n";
 	// ==============================================================
-        if (!nomsgOpt) {
-                // Displays the output message
+    if ( !nomsgOpt && !json) {
+            // Displays the output message
                 cout << out.str() ;
-        } else {
-                // Displays only the jobid
-                cout << this->getJobId( ) << "\n";
-        }
+    } else if (nomsgOpt) {
+            // Displays only the jobid
+        	cout << this->getJobId( ) << "\n";
+    } else if (json) {
+			//format the output message in json format
+			string json = "";
+
+			vector<string> jobids = this->getJobIdsAndNodes();
+			json += "result: success\n";
+			json += jobids[0]+": "+jobids[1]+"\n";
+			json += "endpoint: "+getEndPoint()+"\n" ;
+
+			int sizeN = jobids.size();
+			if (sizeN>2) {
+
+				json += "children: {\n";
+
+				for (int i=2;i<sizeN;i++) {
+					json += "    "+jobids[i]+": "+jobids[i+1]+"\n";
+					i++;
+				}
+				json += "   }\n";
+			}
+
+			json = "{\n"+json+"}\n";
+			cout << json;
+	}
+
 	// Interactive Jobs management:
 	if (jobShadow!=NULL){
 		if (jobShadow->isLocalConsole()){
@@ -510,10 +547,10 @@ void JobSubmit::checkUserServerQuota() {
 	try{
 		// Gets the user-free quota from the WMProxy server
 		logInfo->service(WMP_FREEQUOTA_SERVICE);
-			
+
 		// Set the SOAP timeout
 		setSoapTimeout(SOAP_GET_FREE_QUOTA_TIMEOUT);
-			
+
 		free_quota = api::getFreeQuota(getContext( ));
 	} catch (api::BaseException &exc){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -547,10 +584,10 @@ void JobSubmit::checkUserServerQuota() {
 			// Gets the maxISb size from the WMProxy server
 			logInfo->print(WMS_DEBUG, "Getting the max ISB size from the server", getEndPoint( ) );
 			logInfo->service(WMP_MAXISBSIZE_SERVICE);
-			
+
 			// Set the SOAP timeout
 			setSoapTimeout(SOAP_GET_MAX_INPUT_SANBOX_SIZE_TIMEOUT);
-			
+
 			maxIsbSize = api::getMaxInputSandboxSize(getContext( ));
 		} catch (api::BaseException &exc){
 				throw WmsClientException(__FILE__,__LINE__,
@@ -812,13 +849,13 @@ int JobSubmit::checkInputSandbox ( ) {
 	} else {
 		FileAd::setMaxFileSize(Options::getMinimumAllowedFileSize("", zipAllowed));
 	}
-	
+
 	// Get the Total of the Input Sandbox
 	isbSize = extractAd->getTotalSize ( );
-	
+
 	// Get the highest file size from all the available in the input sandbox
 	maxJobIsbSize = extractAd->getMaxJobFileSize();
-	
+
 	if (isbSize > 0) {
 		logInfo->print (WMS_DEBUG,
 			"Total size of the ISB file(s) to be transferred to:",
@@ -877,13 +914,13 @@ int JobSubmit::checkInputSandbox ( ) {
 *  Checks the user JSDL
 */
 void JobSubmit::checkJSDL(){
-	
+
 	string message = "";
 	const string JSDL_WARNING_TITLE= "Following Warning(s) found while parsing JDL:";
 
 	// Normalize the JSDL file path
 	fs::path cp(Utils::normalizePath(m_jsdlOpt), fs::native);
-	
+
 	// Check if is a file and if it exists
 	if (!fs::exists(cp) ) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1156,11 +1193,13 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				toBretrieved = (this->checkInputSandbox ( )>0)?true:false;
 				// Submission string
 				m_jdlString = jobAdSP.toString();
+
 				break;
 
 		default:
 				break ;
 			}
+
 	if (zipAllowed) { message ="allowed by user in the JDL";}
 		else { message = "disabled by user in the JDL"; }
 	logInfo->print (WMS_DEBUG, "File archiving and file compression", message);
@@ -1205,13 +1244,13 @@ void JobSubmit::jobRegOrSub(const bool &submit) {
 				method = "submit";
 				logInfo->print(WMS_DEBUG, "Submitting JDL", m_jdlString);
 				logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
-				
+
 				//Submitting....
 				logInfo->service(WMP_SUBMIT_SERVICE);
 
 				// Set the SOAP timeout
 				setSoapTimeout(SOAP_JOB_SUBMIT_TIMEOUT);
-				
+
 				jobIds = api::jobSubmit(m_jdlString, m_dgOpt, getContext( ));
 				logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
 			}
@@ -1226,14 +1265,14 @@ void JobSubmit::jobRegOrSub(const bool &submit) {
 
 				// Set the SOAP timeout
 				setSoapTimeout(SOAP_JOB_SUBMIT_TIMEOUT);
-				
+
 				// Open the JSDL file stream
 				ifstream jsdlFile(m_jsdlOpt.c_str());
-				
+
 				jobIds = api::jobSubmitJSDL(jsdlFile, m_dgOpt, getContext( ));
 				logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
 			}
-		} 
+		}
 		else {
 			if(m_jsdlOpt.empty())  {
 				// jobRegister
@@ -1243,10 +1282,10 @@ void JobSubmit::jobRegOrSub(const bool &submit) {
 
 				// registering ...
 				logInfo->service(WMP_REGISTER_SERVICE);
-			
+
 				// Set the SOAP timeout
 				setSoapTimeout(SOAP_JOB_REGISTER_TIMEOUT);
-			
+
 				jobIds = api::jobRegister(m_jdlString , m_dgOpt, getContext( ));
 				logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
 			}
@@ -1258,16 +1297,16 @@ void JobSubmit::jobRegOrSub(const bool &submit) {
 
 				// registering ...
 				logInfo->service(WMP_REGISTER_JSDL_SERVICE);
-			
+
 				// Set the SOAP timeout
 				setSoapTimeout(SOAP_JOB_REGISTER_TIMEOUT);
 
 				// Open the JSDL file stream
 				ifstream jsdlFile(m_jsdlOpt.c_str());
-				
+
 				jobIds = api::jobRegisterJSDL(jsdlFile, m_dgOpt, getContext( ));
 				logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
-			}				
+			}
 		}
 	} catch (api::BaseException &exc) {
 		ostringstream err ;
@@ -1295,7 +1334,7 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 
 		// Set the SOAP timeout
 		setSoapTimeout(SOAP_JOB_START_TIMEOUT);
-			
+
 		api::jobStart(jobid, getContext( ));
 	} catch (api::BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1378,10 +1417,10 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
                        			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));
 					logInfo->print (WMS_DEBUG,
 							"Calling the WMProxy " + service + " service with " + proto + " protocol", "" );
-			
+
 					// Set the SOAP timeout
 					setSoapTimeout(SOAP_GET_SANDBOX_DEST_URI_TIMEOUT);
-			
+
 					uris = api::getSandboxDestURI(jobid, getContext( ), proto);
 					dsURIs.push_back(make_pair(jobid,uris));
 				} else {
@@ -1391,10 +1430,10 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 
 					logInfo->print (WMS_DEBUG,
 							"Calling the WMProxy " + service  + " service with " + proto + " protocol", "" );
-			
+
 					// Set the SOAP timeout
 					setSoapTimeout(SOAP_GET_SANDBOX_BULK_DEST_URI_TIMEOUT);
-			
+
 					dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ), proto);
 				}
 			} else {
@@ -1404,10 +1443,10 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
                        			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));
 					logInfo->print (WMS_DEBUG,
 							"Calling the WMProxy " + service + " service with no request of specific protocol (all available protocols requested)" );
-			
+
 					// Set the SOAP timeout
 					setSoapTimeout(SOAP_GET_SANDBOX_DEST_URI_TIMEOUT);
-			
+
 					uris = api::getSandboxDestURI(jobid, getContext( ), proto);
 					dsURIs.push_back(make_pair(jobid,uris));
 				} else {
@@ -1416,10 +1455,10 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 					logInfo->print (WMS_DEBUG,
 						"Calling the WMProxy " + service +
 							" service with no request of specific protocol (all available protocols requested)");
-			
+
 					// Set the SOAP timeout
 					setSoapTimeout(SOAP_GET_SANDBOX_BULK_DEST_URI_TIMEOUT);
-			
+
 					dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ));
 				}
 			}
@@ -1570,6 +1609,33 @@ std::string JobSubmit::getJobIdFromNode(const std::string& node){
 	return jobid;
 }
 
+/**
+* Retrieve all JobIds and its node names
+*/
+vector<std::string> JobSubmit::getJobIdsAndNodes ( ) {
+	vector<string> jobids;
+	string err = "";
+
+	if (jobIds.children.size() != 0) {
+		// Job is a dag/collection/parametric
+		// It's the root node, return root id
+		jobids.push_back("parent");
+  		jobids.push_back(jobIds.jobid);
+
+		// Storing childrens jobids into the vector of strings
+		std::vector<api::JobIdApi*>::iterator it = (jobIds.children).begin( );
+		std::vector<api::JobIdApi*>::iterator const end = (jobIds.children).end( );
+		for ( ; it != end; it++) {
+				jobids.push_back(*(*it)->nodeName) ;
+				jobids.push_back((*it)->jobid) ;
+		}
+	} else {
+		// Normal type job
+		jobids.push_back("jobid");
+		jobids.push_back(jobIds.jobid);
+	}
+	return jobids;
+}
 
 
 /**
@@ -1759,7 +1825,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		params.push_back(destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+globusUrlCopy+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-	
+
 		// Set the default value;
 		int timeout = 0;
 
@@ -1768,7 +1834,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 			// Retrieve and set the attribute SystemCallTimeout
 			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
 		}
-			
+
 		// launches the command
 		if (int code = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
 			if (code > 0 ) {
@@ -1852,7 +1918,7 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 		params.push_back(destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+htcp+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-	
+
 		// Set the default value;
 		int timeout = 0;
 
@@ -1861,7 +1927,7 @@ void JobSubmit::htcpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::str
 			// Retrieve and set the attribute SystemCallTimeout
 			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
 		}
-			
+
 		// launches the command
 		if (int code = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
 			// EXIT CODE > 0
@@ -2010,7 +2076,7 @@ void JobSubmit::submitPerformStep(submitRecoveryStep step){
 		case STEP_CHECK_US_QUOTA:
 			// logInfo->print(WMS_DEBUG, "JobSubmit Performing", "STEP_CHECK_US_QUOTA");
 			try{
-                            checkUserServerQuota(); 
+                            checkUserServerQuota();
                             }
 			catch (WmsClientException &exc) {
 				logInfo->print(WMS_WARNING, string(exc.what()), "");

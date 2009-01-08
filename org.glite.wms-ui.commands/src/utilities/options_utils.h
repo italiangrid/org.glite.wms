@@ -40,17 +40,17 @@ class Options
 		*	options attribute codes
 		*/
 		enum OptsAttributes{
-                	NONE_ATTR = 1000 ,
+            NONE_ATTR = 1000 ,
 			ALL ,
-                        AUTODG ,
-                        COLLECTION,
+            AUTODG ,
+            COLLECTION,
 			CONFIG ,
 			DAG,
 			DBG , //debug
 			DEFJDL,
-                        DELEGATION,
+            DELEGATION,
 			DIR ,
-                        ENDPOINT,
+            ENDPOINT,
 			EXCLUDE ,
 			GET,
 			FILENAME,
@@ -59,6 +59,7 @@ class Options
 			INPUT ,
 			JDL,
 			JDLORIG,
+			JSON,
 			JSDL,
    			LISTONLY,
 			LRMS ,
@@ -76,7 +77,7 @@ class Options
 			PROTO,
 			PROXY,
 			RANK ,
-                        REGISTERONLY,
+            REGISTERONLY,
 			RESOURCE ,
 			SET,
 			START ,
@@ -107,7 +108,7 @@ class Options
 			JOBMATCH,
 			JOBOUTPUT,
 			JOBATTACH,
-                        JOBDELEGATION,
+            JOBDELEGATION,
 			JOBINFO,
 			JOBPERUSAL
 		};
@@ -389,6 +390,7 @@ class Options
 		static const char* LONG_FROM ;
 		static const char* LONG_GET ;
 		static const char* LONG_HELP ;
+		static const char* LONG_JSON ;
 		static const char* LONG_JSDL ;
 		static const char* LONG_LISTONLY;
 		static const char* LONG_LRMS	;
@@ -481,6 +483,7 @@ class Options
 		static const std::string USG_INPUT ;
 		static const std::string USG_JDL ;
 		static const std::string USG_JDLORIG ;
+		static const std::string USG_JSON ;
 		static const std::string USG_JSDL ;
                 static const std::string USG_LISTONLY;
 		static const std::string USG_LRMS	;
@@ -550,13 +553,14 @@ class Options
 		*	boolean attributes
 		*/
 		bool all ;
-                bool autodg ;
+        bool autodg ;
 		bool debug ;
 		bool get ;
 		bool help ;
 		bool jdl ;
 		bool jdlorig ;
-                bool listonly ;
+		bool json ;
+        bool listonly ;
 		bool nodisplay ;
 		bool nosubdir ;
 		bool nogui ;

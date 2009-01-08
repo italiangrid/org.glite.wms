@@ -320,7 +320,7 @@ Utils::~Utils( ){
 *** General Utilities methods *
 **************************************/
 bool Utils::answerYes (const std::string& question, bool defaultAnswer, bool defaultValue){
-	if ( this->wmcOpts->getBoolAttribute(Options::NOINT)){
+	if ( this->wmcOpts->getBoolAttribute(Options::NOINT) || this->wmcOpts->getBoolAttribute(Options::JSON)){
 		// No interaction required
 		return defaultValue ;
 	}
@@ -1282,7 +1282,7 @@ const long Utils::getTime(const std::string &st,
 				ts.tm_min = atoi(vt[1].c_str())+ns->tm_min;
 				ts.tm_hour = atoi(vt[0].c_str())+ns->tm_hour;
 			} else {
-				// option --to, replacing time 
+				// option --to, replacing time
 				ts.tm_min = atoi(vt[1].c_str());
 				ts.tm_hour = atoi(vt[0].c_str());
 			}

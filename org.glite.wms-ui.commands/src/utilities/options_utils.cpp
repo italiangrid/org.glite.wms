@@ -44,8 +44,8 @@ const std::string WMP_CLT_POINT_VERSION = ".";
 /**
  * Help Info messages
 */
-const std::string Options::HELP_COPYRIGHT = "Copyright (C) 2005 by DATAMAT SpA";
-const std::string Options::HELP_EMAIL = "egee@datamat.it";
+const std::string Options::HELP_COPYRIGHT = "Copyright (C) 2008 by ElsagDatamat SpA";
+const std::string Options::HELP_EMAIL = "egee@elsagdatamat.com";
 const std::string Options::HELP_UI = "WMS User Interface" ;
 const std::string Options::HELP_VERSION = "version  "+  boost::lexical_cast<string>(WMP_CLT_MAJOR_VERSION)
         + WMP_CLT_POINT_VERSION +  boost::lexical_cast<string>(WMP_CLT_MINOR_VERSION)
@@ -101,6 +101,7 @@ const char* Options::LONG_FROM		= "from";
 const char* Options::LONG_GET			= "get";
 const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_INPUTFILE		= "input-file";
+const char* Options::LONG_JSON      = "json";
 const char* Options::LONG_JSDL		= "jsdl";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
@@ -205,6 +206,7 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+ 	{	Options::LONG_JSON,    	no_argument,		0,		Options::JSON},
 	{0, 0, 0, 0}
 };
 /*
@@ -258,6 +260,7 @@ const struct option Options::cancelLongOpts[] = {
 	{	Options::LONG_DEBUG,		no_argument,			0,		Options::DBG	},
 	{	Options::LONG_LOGFILE,      	required_argument,		0,		Options::LOGFILE},
         {	Options::LONG_VO,             	 required_argument,	0,		Options::VO	},
+ 	{	Options::LONG_JSON,    	no_argument,		0,		Options::JSON},
 	{0, 0, 0, 0}
 };
 /*
@@ -417,6 +420,8 @@ const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG)+ ", -" + SHORT_J
 
 const string Options::USG_JSDL = "--" + string(LONG_JSDL)	 + "\t<file_path>" ;
 
+const string Options::USG_JSON = "--" + string(LONG_JSON) ;
+
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
 const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE) + "\t<file_path>";
@@ -515,9 +520,10 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_DEFJDL << "\n";
         cerr << "\t" << USG_DAG << " (**)\n";
         cerr << "\t" << USG_JSDL << " (**)\n";
+        cerr << "\t" << USG_JSON << "\n" ;
         cerr << "\t" << USG_COLLECTION << " (**)\n\n";
         cerr << "\t" << "(*) To be used only with " << USG_REGISTERONLY  << "\n";
-        cerr << "\t" << "(**) Using this option you MUSTN'T specified any JDL file\n\n";
+        cerr << "\t" << "(**) Not to be used with a JDL file\n\n";
 	cerr << "Please report any bug at:\n" ;
 	cerr << "\t" << HELP_EMAIL << "\n";
 	if (long_usg){
@@ -594,6 +600,7 @@ void Options::cancel_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
+    cerr << "\t" << USG_JSON << "\n" ;
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
@@ -1114,7 +1121,7 @@ string Options::getStringAttribute (const OptsAttributes &attribute){
 			value = m_collection;
 			break ;
 		}
-        	case(JSDL) : {
+        case(JSDL) : {
 			value = m_jsdl;
 			break ;
 		}
@@ -1291,7 +1298,11 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 			value = nopurg ;
 			break ;
 		}
-                case(DBG) : {
+		case(JSON) : {
+			value = json;
+			break ;
+		}
+        case(DBG) : {
 			value = debug ;
 			break ;
 		}
@@ -1365,16 +1376,19 @@ const int Options::getVerbosityLevel ( ){
         if (verbosityLevel != WMSLOG_UNDEF) {
 		level = verbosityLevel ;
         } else {
-                if (nomsg && debug){
+                if ((nomsg && debug) ||
+                	(nomsg && json) ||
+                	(json && debug)){
                 	ostringstream info ;
                         info << "the following options cannot be specified together:\n" ;
                         info << this->getAttributeUsage(Options::DBG) << "\n";
-                        info << this->getAttributeUsage(Options::NOMSG) ;
+                        info << this->getAttributeUsage(Options::NOMSG) << "\n";
+                        info << this->getAttributeUsage(Options::JSON) ;
                         throw WmsClientException(__FILE__,__LINE__,
                                         "getLogLevel",DEFAULT_ERR_CODE,
                                         "Input Option Error", info.str());
                 }
-		if (nomsg){
+		if (nomsg || json){
                 	// nomsg=1
 			level = WMSLOG_ERROR;
                 } else if (debug){
@@ -1405,6 +1419,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		}
 		case(JSDL) : {
 			msg = USG_JSDL ;
+			break ;
+		}
+		case(JSON) : {
+			msg = USG_JSON ;
 			break ;
 		}
 		case(DAG) : {
@@ -2215,7 +2233,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			}
 			break ;
 		};
-                case ( Options::JSDL ) : {
+        case ( Options::JSDL ) : {
 			if (m_jsdl.empty()){
 				m_jsdl = checkArg(LONG_JSDL, optarg, Options::JSDL);
                                 inCmd += px + LONG_JSDL + ws + m_jsdl  + ";" + ws ;
@@ -2439,6 +2457,15 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
   				inCmd += px + LONG_NOPURG + ws + ";" + ws ;
                       }
                         break ;
+		};
+		        case ( Options::JSON ) : {
+					if (json){
+						dupl = LONG_JSON;
+					} else {
+						json = true;
+  						inCmd += px + LONG_JSON + ws + ";" + ws ;
+					}
+					break ;
 		};
                 case ( Options::UIVERSION ) : {
                 	if (version){

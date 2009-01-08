@@ -58,7 +58,7 @@ void JobCancel::readOptions (int argc,char **argv){
 	Job::readOptions  (argc, argv, Options::JOBCANCEL);
         // input file
         m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
-	
+
 	// JobId's
         if (!m_inOpt.empty()){
 		// From input file
@@ -72,7 +72,7 @@ void JobCancel::readOptions (int argc,char **argv){
 		jobIds = wmcUtils->checkJobIds (jobIds);
         }
 	njobs = jobIds.size( ) ;
-	if (njobs > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+	if (njobs > 1 && !( wmcOpts->getBoolAttribute(Options::NOINT) || wmcOpts->getBoolAttribute(Options::JSON)) ){
 		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ", false);
         	jobIds = wmcUtils->askMenu(jobIds,Utils::MENU_JOBID);
 		if (jobIds.size() != njobs) {
@@ -84,6 +84,16 @@ void JobCancel::readOptions (int argc,char **argv){
 		cout << "bye\n";
 		getLogFileMsg ( );
 		Utils::ending(ECONNABORTED);
+	}
+	if (!m_outOpt.empty() && json) {
+		ostringstream info ;
+		info << "The following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::OUTPUT) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::JSON) << "\n";
+
+		throw WmsClientException(__FILE__,__LINE__,
+			"readOptions",DEFAULT_ERR_CODE,
+			"Input Option Error", info.str());
 	}
 };
 
@@ -151,7 +161,7 @@ void JobCancel::cancel ( ){
 
 				// Set the SOAP timeout
 				setSoapTimeout(SOAP_JOB_CANCEL_TIMEOUT);
-			
+
                                 jobCancel(jobid, getContext( ) );
 				logInfo->result(WMP_CANCEL_SERVICE, "The cancellation request has been successfully sent" );
                          	 // list of jobs successfully cancelled
@@ -197,7 +207,7 @@ void JobCancel::cancel ( ){
                                 os << Utils::getAbsolutePath(m_outOpt) << "\n";
 				os << "\n" << wmcUtils->getStripe(74, "=" ) << "\n\n";
                                 cout << os.str( );
-			} else{
+			} else {
                         	// couldn't save the results (prints the result message on the stdout)
                         	logInfo->print (WMS_WARNING,
                                 	"unable to write the to cancellation results in the output file " ,
@@ -205,7 +215,24 @@ void JobCancel::cancel ( ){
 				out << "\n" << wmcUtils->getStripe(88, "=" ) << "\n\n";
                                 cout << out.str( );
    			}
-    		} else {
+    	} else if (json) {
+				//format the output message in json format
+				string json = "";
+
+				json += "result: success \n";
+				json += "endpoint: "+getEndPoint()+"\n" ;
+
+				int sizeJ = jobIds.size();
+
+				for (int i=0;i<sizeJ;i++) {
+					json += "jobid: "+jobIds[i]+" {\n";
+					json += "   status: cancel requested\n   }\n";
+				}
+
+				json = "{\n"+json+"}\n";
+				cout << json;
+
+    	} else{
 			out << "\n" << wmcUtils->getStripe(88, "=" ) << "\n\n";
 			//prints the result message on the stdout
                 	cout << out.str( );
