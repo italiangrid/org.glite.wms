@@ -28,7 +28,8 @@ import random # for  TCP port range
 """
 Initialise the LB Events Names variables
 """
-events_names = [eventName.replace("_"," ").capitalize() for eventName in Eve.getEventsNames()]
+events = []
+events_names = [eventName.replace("_"," ").capitalize() for eventName in events.getEventsNames()]
 EVENT_ATTR_MAX = len(events_names)
 
 """
