@@ -414,7 +414,7 @@ dump(std::ostream& os,
   const std::string& value)
 {
   os << name << '=';
-  if ( !value.empty() ) {
+  if (!value.empty()) {
     os << '"' << value << '"';
   }
   return os << '\n';
@@ -488,7 +488,13 @@ JobWrapper::dump_vars(std::ostream& os) const
       m_pimpl->m_shallow_resubmission_token
     ) &&
     dump(os, "__perusal_support", m_pimpl->m_perusal_support) &&
-    dump(os, "__perusal_timeinterval", m_pimpl->m_perusal_timeinterval) &&
+    dump(os, "__perusal_timeinterval",
+      (
+        m_pimpl->m_perusal_support
+        ? m_pimpl->m_perusal_timeinterval
+        : 0
+      )
+    ) &&
     dump(os, "__perusal_filesdesturi", m_pimpl->m_perusal_filesdesturi) &&
     dump(os, "__perusal_listfileuri", m_pimpl->m_perusal_listfileuri) &&
     dump(os, "__prologue", m_pimpl->m_prologue) &&
@@ -515,8 +521,9 @@ JobWrapper::fill_out_script(std::ostream& output_stream) const
 {
   output_stream << "#!/bin/sh\n\n";
 
-  if ( !dump_vars(output_stream) )
+  if (!dump_vars(output_stream)) {
     return false;
+  }
 
   output_stream << '\n' << *m_pimpl->m_jw_template;
   return true;

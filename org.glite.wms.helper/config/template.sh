@@ -1,9 +1,10 @@
 #!/bin/sh
 
-trap 'fatal_error "Job has been terminated (got SIGXCPU) "OSB""' XCPU
-trap 'fatal_error "Job has been terminated (got SIGQUIT) "OSB""' QUIT
-trap 'fatal_error "Job has been terminated (got SIGINT) "OSB""' INT
-trap 'fatal_error "Job has been terminated (got SIGTERM) "OSB""' TERM
+trap 'fatal_error "Job has been terminated (got SIGXCPU)" "OSB"' XCPU
+trap 'fatal_error "Job has been terminated (got SIGQUIT)" "OSB"' QUIT
+trap 'fatal_error "Job has been terminated (got SIGINT)" "OSB"' INT
+trap 'fatal_error "Job has been terminated (got SIGTERM)" "OSB"' TERM
+#trap 'warning "Job has been signalled (got SIGUSR1)" "OSB"' SIGUSR1
 
 do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
 {
@@ -95,10 +96,10 @@ warning()
 {
   term_delay=10
   jw_echo "$1"
-  log_event_reason "Running" "SIGUSR1 sent to the job as warning, terminating in $term_delay seconds"
-  kill -SIGUSR1 -$user_job_pid # TODO
-  sleep 10
-  fatal_error "Job termination $term_delay seconds after having it warned"
+  log_event_reason "Running" "job received SIGUSR1 as warning, terminating in $term_delay seconds"
+  kill -USR1 -$user_job_pid # forwarding to the user job (just in case)
+  sleep $term_delay
+  fatal_error "Job termination $term_delay seconds after having being warned" $2
 }
 
 fatal_error() # 1 - reason, 2 - transfer OSB
@@ -527,10 +528,6 @@ OSB_transfer()
   done
 }
 
-#
-# beginning
-#
-
 # the bash builtin kill command is sometimes buggy with process groups
 enable -n kill
 
@@ -668,7 +665,7 @@ done
 
 umask 022
 
-# input sandbox upload
+# input sandbox download
 for f in ${__wmp_input_base_file[@]}
 do
   if [ -z "${__wmp_input_base_dest_file}" ]; then
@@ -697,6 +694,10 @@ fi
 # user script (before taking the token, shallow-sensitive)
 if [ -n "${__prologue}" ]; then
   if [ -f "${__prologue}" ]; then
+    for env in ${__environment[@]}
+    do
+      eval export $env
+    done
     chmod +x "${__prologue}" 2>/dev/null
     ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
     prologue_status=$?
@@ -791,39 +792,54 @@ if [ 1 -eq 1 ]; then # dump variable to be set?
 fi
 
 if [ ${__job_type} -eq 0 ]; then # normal
-  cmd_line="${__job}"
+  executable="${__job}"
 elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
-  cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job}"
-fi
-
-if [ -f "$tmp_time_file" ]; then
-  cmd_line="$time_cmd $cmd_line"
+  executable="mpirun"
+  arguments="-np ${__nodes} -machinefile ${HOSTFILE} ${__job}"
+# support for interactive jobs is dismissed
+#elif [ ${__job_type} -eq 3 ]; then # interactive
+#  executable="./glite-wms-job-agent"
+#  arguments="$BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
 fi
 
 if [ ${__job_type} -ne 3 ]; then # all but interactive
   if [ -n "${__standard_input}" ]; then
-    std_input=" <${__standard_input} "
+    std_input=" <\"${__standard_input}\" "
   fi
   if [ -n "${__standard_output}" ]; then
-    std_output=" >${__standard_output} "
+    std_output=" >\"${__standard_output}\" "
   else
     std_output=" >/dev/null "
   fi
   if [ -n "${__standard_error}" ]; then
-    std_error=" 2>${__standard_error} "
+    std_error=" 2>\"${__standard_error}\" "
   else
     std_error=" 2>/dev/null "
   fi
-else # interactive
-  ./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${arguments}'
+# support for interactive jobs is dismissed
+#else # interactive
+#  ./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${arguments}'
 fi
 
 (
-  if [ -z "$EDG_WL_NOSETPGRP" ]; then
-    trap '' TTIN # ignore
-    trap '' TTOU # ignore
+  for env in ${__environment[@]}
+  do
+    eval export $env
+  done
+
+  if [ -f "$tmp_time_file" ]; then
+    full_cmd_line="($time_cmd \"${executable}\" ${__arguments} ${std_input} ${std_output} ${std_error}) > \"$tmp_time_file\""
+  else
+    full_cmd_line="\"${executable}\" ${__arguments} ${std_input} ${std_output} ${std_error}"
   fi
-  "${cmd_line}" ${__arguments} "${std_input}" "${std_output}" "${std_error}" &
+
+  if [ -z "$EDG_WL_NOSETPGRP" ]; then
+    trap 'IGNORING' TTIN
+    trap 'IGNORING' TTOU
+  fi
+
+  # finally getting to the core business
+  eval "${full_cmd_line}" &
   user_job_pid=$!
 
   # customization point
@@ -838,9 +854,7 @@ fi
 
   wait $user_job_pid
   user_job_status=$?
-
-  kill -9 $proxy_watchdog #-$user_job_pid 2>/dev/null
-
+  kill -9 $proxy_watchdog
   exit $user_job_status
 )
 status=$?
@@ -875,6 +889,8 @@ if [ ${__output_data} -eq 1 ]; then
     local_cnt=0
     for edg_rm_command in "${GLITE_LOCATION}/bin/lcg-replica-manager" \
                           "/opt/lcg/bin/lcg-replica-manager" \
+                          "${LCG_LOCATION}/bin/lcg-replica-manager" \
+                          "/opt/lcg/bin/lcg-replica-manager" \
                           "${GLITE_LOCATION}/bin/edg-rm" \
                           "${EDG_LOCATION}/bin/edg-rm" \
                           "`which lcg-replica-manager 2>/dev/null`" \
@@ -884,6 +900,7 @@ if [ ${__output_data} -eq 1 ]; then
       fi
     done
     if [ ! -x "${edg_rm_command}" ]; then
+      fatal_error "Cannot find edg-rm command"
     else
       for outputfile in ${__output_file[@]}
       do
@@ -913,6 +930,10 @@ fi
 
 if [ -n "${__epilogue}" ]; then
   if [ -f "${__epilogue}" ]; then
+    for env in ${__environment[@]}
+    do
+      eval export $env
+    done
     chmod +x "${__epilogue}" 2>/dev/null
     ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
     epilogue_status=$?
@@ -925,6 +946,7 @@ if [ -n "${__epilogue}" ]; then
 fi
 
 OSB_transfer
+
 log_done_ok "${status}"
 
 if [ -n "${LSB_JOBID}" ]; then
