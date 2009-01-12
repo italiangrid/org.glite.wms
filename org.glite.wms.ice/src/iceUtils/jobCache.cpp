@@ -20,6 +20,7 @@
 // PROJECT INCLUDES
 #include "jobCache.h"
 #include "iceConfManager.h"
+#include "SerializeException.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "boost/algorithm/string.hpp"
@@ -106,32 +107,32 @@ void jobCache::load( void ) throw()
             CreamJob cj;
             istringstream tmpOs;//( string(data) );
             tmpOs.str( data );
-            try {
+
+	    bool retry = true;
+	    int sertry = 0;
+	    while( retry ) {
+	      try {
 		{
                   boost::archive::text_iarchive ia(tmpOs);
                   ia >> cj;
                 }
-//                 CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-//                                 << "Loading job "
-//                                 << cj.describe()
-//                                  );
                 
                 m_GridJobIDSet.insert( cj.getGridJobID() );
                 
-            } catch(exception& ex ) {
-                CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                                << method_name
-                                << "boost::archive::text_iarchive raised an exception: "
-                                << ex.what()
-                                 );
-                abort();
-            } catch(...) {
-                CREAM_SAFE_LOG( m_log_dev->fatalStream()
-                                << method_name
-                                << "Unknown exception catched"
-                                 );
-                abort();
-            }
+	      } catch(SerializeException& ex ) {
+		//                 CREAM_SAFE_LOG( m_log_dev->fatalStream()
+		//                                 << method_name
+		//                                 << "boost::archive::text_iarchive raised an exception: "
+		//                                 << ex.what()
+		//                                  );
+		sertry++;
+		if( sertry >= 3 ) {
+		  // FIXME: put a FATAL log message here
+		  exit(2);
+		}
+		
+	      } 
+	    } // while( retry )
         }
         
         m_dbMgr->endCursor();
@@ -143,6 +144,12 @@ void jobCache::load( void ) throw()
                         << "Reason is: " << dbex.what() << ". Giving up."
                          );
         abort();
+    } catch(...) {
+      CREAM_SAFE_LOG( m_log_dev->fatalStream()
+		      << method_name
+		      << "Unknown exception catched"
+		      );
+      abort();
     }
 }
 
@@ -152,23 +159,44 @@ jobCache::iterator jobCache::put(const CreamJob& cj)
     static const char* method_name = "jobCache::put() - ";
 
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache? 
-    try {
-      ostringstream ofs;
-      {
-        boost::archive::text_oarchive oa(ofs);
-        oa << cj;
-      }
-//       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-//                       << "Putting "
-//                       << cj.describe()
-//                        );
-      m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
-    } catch(JobDbException& dbex) {
+
+    bool retry = true;
+    int sertry = 0;
+
+    while( retry ) {
+      try {
+	ostringstream ofs;
+	{
+	  boost::archive::text_oarchive oa(ofs);
+	  oa << cj;
+	}
+	
+	m_dbMgr->put( ofs.str(), cj.getCompleteCreamJobID(), cj.getGridJobID() );
+	
+	retry = false;
+
+      } catch(JobDbException& dbex) {
+
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
 			<< dbex.what() 
-			 );
+			);
         abort();
+
+      } catch( SerializeException& ex ) {
+	sertry++;
+	if(sertry >= 3 ) {
+	  // FIXME: put a FATAL log message here
+	  exit(2);
+	}
+      } catch(...) {
+	CREAM_SAFE_LOG( m_log_dev->fatalStream()
+		      << method_name
+		      << "Unknown exception catched"
+		      );
+	abort();
+      }
     }
+    
     return make_iterator( (m_GridJobIDSet.insert( cj.getGridJobID() )).first );
 }
 
@@ -179,24 +207,54 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
   throw()
 {
     boost::recursive_mutex::scoped_lock L( jobCache::mutex ); // FIXME: Should locking be moved outside the jobCache?
-    try {
+
+    int sertry = 0;
+    bool retry = true;
+    CreamJob cj;
+
+    while( retry ) {
+      
+      try {
         string serializedJob( m_dbMgr->getByCid( completeCreamJID ) );
-        CreamJob cj;
+        
         istringstream tmpOs;//( string(data) );
         tmpOs.str( serializedJob );
         {
           boost::archive::text_iarchive ia(tmpOs);
           ia >> cj;
 	}
-        set<string>::const_iterator it = m_GridJobIDSet.find( cj.getGridJobID() );
-        return make_iterator(m_GridJobIDSet.find( cj.getGridJobID() ));
-    } catch(JobDbNotFoundException& ex) {
-        return this->end();        
-    } catch(exception& ex) {
-        CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-                        << ex.what()  );
-        abort();
+        
+	retry = false;
+
+      } catch(SerializeException& ex ) {
+	
+	sertry++;
+	if(sertry >= 3 ) {
+	  // FIXME: put a FATAL log message here
+	  exit(2); // the ICE-safe will restart ICE soon
+	}
+	
+      }
     }
+
+
+    try {
+      
+      set<string>::const_iterator it = m_GridJobIDSet.find( cj.getGridJobID() );
+      return make_iterator(m_GridJobIDSet.find( cj.getGridJobID() ));
+
+    } catch(JobDbNotFoundException& ex) {
+      
+      return this->end();    
+
+    } catch(exception& ex) {
+      
+      CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+		      << ex.what()  );
+      abort();
+      
+    }
+
 }
 
 //______________________________________________________________________________

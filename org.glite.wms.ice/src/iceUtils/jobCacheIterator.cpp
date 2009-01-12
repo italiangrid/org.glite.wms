@@ -26,6 +26,9 @@ namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
+boost::recursive_mutex jobCacheIterator::mutex;
+
+//____________________________________________________________________
 jobCacheIterator::jobCacheIterator() throw() :
     m_valid_it( false ),
     m_grid_job_id(),
@@ -34,6 +37,7 @@ jobCacheIterator::jobCacheIterator() throw() :
 
 }
 
+//____________________________________________________________________
 jobCacheIterator::jobCacheIterator( const std::string& an_id ) throw() :
     m_valid_it( false ), 
     m_grid_job_id( an_id ),
@@ -46,6 +50,7 @@ jobCacheIterator::jobCacheIterator( const std::string& an_id ) throw() :
 bool jobCacheIterator::operator==( const jobCacheIterator& anIt ) 
   const throw()
 {
+  boost::recursive_mutex::scoped_lock L( jobCacheIterator::mutex );
     return ( m_grid_job_id == anIt.m_grid_job_id );
 }
 
@@ -53,6 +58,7 @@ bool jobCacheIterator::operator==( const jobCacheIterator& anIt )
 bool jobCacheIterator::operator!=( const jobCacheIterator& anIt ) 
   const throw()
 {
+  boost::recursive_mutex::scoped_lock L( jobCacheIterator::mutex );
   return !( m_grid_job_id == anIt.m_grid_job_id );
 }
 
@@ -61,6 +67,7 @@ jobCacheIterator&
 jobCacheIterator::operator=( const jobCacheIterator& anIt ) 
   throw()
 {
+  boost::recursive_mutex::scoped_lock L( jobCacheIterator::mutex );
     if ( this != &anIt ) {
         m_grid_job_id = anIt.m_grid_job_id;
         m_valid_it = false;
@@ -72,6 +79,7 @@ jobCacheIterator::operator=( const jobCacheIterator& anIt )
 CreamJob*
 jobCacheIterator::operator->() throw()
 {
+  boost::recursive_mutex::scoped_lock L( jobCacheIterator::mutex );
    static const char* method_name = "jobCacheIterator::operator->() - ";
 
     if( m_grid_job_id.empty() ) {
@@ -90,6 +98,7 @@ jobCacheIterator::operator->() throw()
 CreamJob
 jobCacheIterator::operator*() throw()
 {
+  boost::recursive_mutex::scoped_lock L( jobCacheIterator::mutex );
     static const char* method_name = "jobCacheIterator::operator*() - ";
 
     if( m_grid_job_id.empty() ) {
@@ -104,8 +113,10 @@ jobCacheIterator::operator*() throw()
     return m_theJob;
 }
 
+//____________________________________________________________________
 void jobCacheIterator::refresh( ) throw()
 {
+  boost::recursive_mutex::scoped_lock L( jobCacheIterator::mutex );
     static const char* method_name = "jobCacheIterator::refresh() - ";
 
     if ( m_valid_it )
@@ -113,20 +124,20 @@ void jobCacheIterator::refresh( ) throw()
 
     m_theJob = CreamJob();
     jobCache* cache( jobCache::getInstance() );
-    
+    istringstream is;
     try {
-        istringstream is;
+        
 	string tmpGid = cache->getDbManager()->getByGid( m_grid_job_id );
 	if( tmpGid.empty() ) {
 	  m_valid_it = false;
 	  return;
 	}
         is.str( /*cache->getDbManager()->getByGid( m_grid_job_id )*/ tmpGid );
-	{
-          boost::archive::text_iarchive ia(is);
-          ia >> m_theJob;
-	}
-        m_valid_it = true;
+// 	{
+//           boost::archive::text_iarchive ia(is);
+//           ia >> m_theJob;
+// 	}
+//         m_valid_it = true;
     } catch( JobDbException& ex ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
                        << "Got JobDbException while loading job from cache. "
@@ -146,10 +157,32 @@ void jobCacheIterator::refresh( ) throw()
                         );
         abort();            
     }
+
+    bool retry = true;
+    int sertry = 0;
+    while( retry ) {
+      try
+	{
+	  boost::archive::text_iarchive ia(is);
+	  ia >> m_theJob;
+	  retry = false;
+	}
+      catch(SerializeException& ex) {
+	sertry++;
+	if(sertry>=3) {
+	  // FIXME: put a FATAL log message here
+	  exit(2);
+	}
+      }
+      m_valid_it = true;
+
+    } // while( retry )
 }
 
+//____________________________________________________________________
 jobCacheIterator& jobCacheIterator::operator++() throw()          
 { 
+  boost::recursive_mutex::scoped_lock L( jobCacheIterator::mutex );
     jobCache* cache( jobCache::getInstance() );
     m_valid_it = false;
     m_grid_job_id = cache->get_next_grid_job_id( m_grid_job_id );

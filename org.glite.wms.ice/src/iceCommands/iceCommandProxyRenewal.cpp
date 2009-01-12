@@ -395,7 +395,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	 but update the map mapDelegTime anyway, in order to update the job cache
 	 later
        */
-      if( thisExpTime - time(0) > DELEGATION_EXPIRATION_THRESHOLD_TIME ) {
+      int remainingTime = thisExpTime - time(0);
+      if( remainingTime > DELEGATION_EXPIRATION_THRESHOLD_TIME ) {
 
 	CREAM_SAFE_LOG( m_log_dev->debugStream() 
 			<< "iceCommandProxyRenewal::renewAllDelegations() - "
@@ -407,6 +408,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 
 	continue;
       } 
+
+      
       
       string thisUserDN    = it->get<2>();
       string thisCEUrl     = it->get<1>();

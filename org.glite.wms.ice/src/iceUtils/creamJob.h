@@ -26,7 +26,7 @@
  *
  */
 #include "ClassadSyntax_ex.h"
-
+#include "SerializeException.h"
 /**
  *
  * Cream Client API C++ Headers
@@ -49,9 +49,6 @@
 #include <set>
 
 namespace api_util = glite::ce::cream_client_api::util;
-
-/* #include <boost/archive/text_oarchive.hpp> */
-/* #include <boost/archive/text_iarchive.hpp> */
 
 namespace glite {
   namespace wms {
@@ -323,7 +320,7 @@ namespace glite {
            */
           std::string get_cemon_dn( void ) const;
 
-	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw()
+	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw(SerializeException&)
 	  {
 	    
 	    boost::recursive_mutex::scoped_lock L( serialize_mutex );
@@ -412,7 +409,8 @@ namespace glite {
 		       << "creamJob::serialize() - [De]Serialization error: ["
 		       << ex.what() << "]"
 		       );
-	      abort();
+	      //abort();
+	      throw SerializeException( ex.what() );
 	    }
 	  }
 

@@ -36,12 +36,17 @@ namespace ice {
 namespace util {
 	
     class jobCacheIterator {
+
+      static boost::recursive_mutex mutex;
+
     protected:
         bool m_valid_it;
         std::string m_grid_job_id;
         CreamJob m_theJob;
         log4cpp::Category* m_log_dev;
 
+	
+	
         /**
          * Loads the creamJob data structure from the database.  if
          * m_valid_it is true, then this method does nothing.  If
