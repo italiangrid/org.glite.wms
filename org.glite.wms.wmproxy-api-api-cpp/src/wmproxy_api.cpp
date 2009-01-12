@@ -49,26 +49,26 @@ void destroyDomParser() {
 
 }
 
-void printJSDL(jsdlns__JobDefinition_USCOREType *jsdl)
+void printJSDL(jsdl__JobDefinition_USCOREType *jsdl)
 {
-        jsdlns__JobDescription_USCOREType *JobDescription;
-        jsdlns__JobIdentification_USCOREType *JobIdentification;
-        jsdlns__Application_USCOREType *Application;
+        jsdl__JobDescription_USCOREType *JobDescription;
+        jsdl__JobIdentification_USCOREType *JobIdentification;
+        jsdl__Application_USCOREType *Application;
 
         if (jsdl != NULL){
-                JobDescription = jsdl->jsdlns__JobDescription;
-                JobIdentification = JobDescription->jsdlns__JobIdentification;;
-                Application = JobDescription->jsdlns__Application;
+                JobDescription = jsdl->jsdl__JobDescription;
+                JobIdentification = JobDescription->jsdl__JobIdentification;;
+                Application = JobDescription->jsdl__Application;
         } else {
                  cout << "JSDL is empty" << endl;
         }
         // Print out JOB IDENTIFICATION
-        cout << "JobIdentification JobName " << JobIdentification->jsdlns__JobName->c_str() << endl;
+        cout << "JobIdentification JobName " << JobIdentification->jsdl__JobName->c_str() << endl;
 
         // Print out APPLICATION
-        cout << "Application ApplicationName " << Application->jsdlns__ApplicationName->c_str() << endl;
-        cout << "Application ApplicationVersion " << Application->jsdlns__ApplicationVersion->c_str() << endl;
-        cout << "Application ApplicationDescription " << Application->jsdlns__Description->c_str() << endl;
+        cout << "Application ApplicationName " << Application->jsdl__ApplicationName->c_str() << endl;
+        cout << "Application ApplicationVersion " << Application->jsdl__ApplicationVersion->c_str() << endl;
+        cout << "Application ApplicationDescription " << Application->jsdl__Description->c_str() << endl;
 }
 
 
@@ -76,9 +76,9 @@ void printJSDL(jsdlns__JobDefinition_USCOREType *jsdl)
 /******************************************************************
 readJsdlFile TODO backport to void
 ******************************************************************/
-jsdlns__JobDefinition_USCOREType readJsdlFile(std::ifstream &jsdlFile) {
+jsdl__JobDefinition_USCOREType readJsdlFile(std::ifstream &jsdlFile) {
 
-  jsdlns__JobDefinition_USCOREType reader; 
+  jsdl__JobDefinition_USCOREType reader; 
 
   try
   {
@@ -87,7 +87,7 @@ jsdlns__JobDefinition_USCOREType readJsdlFile(std::ifstream &jsdlFile) {
     jsdlFile >> document;
 
     // Search the JSDL root node 
-    soap_dom_element::iterator rootNode = document.find(SOAP_TYPE_jsdlns__JobDefinition_USCOREType);
+    soap_dom_element::iterator rootNode = document.find(SOAP_TYPE_jsdl__JobDefinition_USCOREType);
 
     // Check if the JSDL root node has been found and it's valid
     if(rootNode != document.end())
@@ -97,7 +97,7 @@ jsdlns__JobDefinition_USCOREType readJsdlFile(std::ifstream &jsdlFile) {
       {
 
         // Retrieve the JSDL parsed file	
-	reader = *(jsdlns__JobDefinition_USCOREType*)(*rootNode).node;
+	reader = *(jsdl__JobDefinition_USCOREType*)(*rootNode).node;
 	
 	return reader;
       }
@@ -748,7 +748,7 @@ jobRegisterJSDL TO BE PORTED LIKE JOBSUBMITJSDL
 ******************************************************************/
 JobIdApi jobRegisterJSDL (ifstream &jsdlFile, const string &delegationId, ConfigContext *cfs){
 
-	jsdlns__JobDefinition_USCOREType *jsdl = NULL;
+	jsdl__JobDefinition_USCOREType *jsdl = NULL;
 	
 	// Initialise the GSOAP Dom Parser 
 	initialiseDomParser();
@@ -791,13 +791,13 @@ jobSubmitJSDL
 ******************************************************************/
 JobIdApi jobSubmitJSDL(ifstream &jsdlFile, const string &delegationId, ConfigContext *cfs){
 
-	jsdlns__JobDefinition_USCOREType *jsdl = NULL;
+	jsdl__JobDefinition_USCOREType *jsdl = NULL;
 	
 	// Initialise the GSOAP Dom Parser 
 	initialiseDomParser();
 
 	// Read the JSDL file
-	jsdlns__JobDefinition_USCOREType reader = readJsdlFile(jsdlFile);
+	jsdl__JobDefinition_USCOREType reader = readJsdlFile(jsdlFile);
 
 	WMProxy wmp;
 	JobIdApi jobid ;
@@ -805,7 +805,7 @@ JobIdApi jobSubmitJSDL(ifstream &jsdlFile, const string &delegationId, ConfigCon
 	ns1__jobSubmitJSDLResponse response;
 
 	// Setting the JSDL
-	jsdl = new jsdlns__JobDefinition_USCOREType( reader );
+	jsdl = new jsdl__JobDefinition_USCOREType( reader );
 
 	// Prints the JSDL on command line 
 	//printJSDL(jsdl);
@@ -990,7 +990,7 @@ jobListMatchJSDL TODO PORTING TO JOBSUBMITJSDL approach
 ******************************************************************/
 std::vector <std::pair<std::string , long> > jobListMatch (ifstream &jsdlFile, const std::string &delegationId,ConfigContext *cfs){
 
-	jsdlns__JobDefinition_USCOREType *jsdl = NULL;
+	jsdl__JobDefinition_USCOREType *jsdl = NULL;
 
 	// Initialise the GSOAP Dom Parser 
 	initialiseDomParser();
