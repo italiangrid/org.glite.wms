@@ -25,8 +25,8 @@ class JobProcessed(job_utils.JobProcessed):
 
 class JobMonitor(job_monitor.JobMonitor):
     
-    def __init__(self, parameters, pManager=None):
-        job_monitor.JobMonitor.__init__(self, parameters, pManager)
+    def __init__(self, parameters, pManager=None, iManager=None):
+        job_monitor.JobMonitor.__init__(self, parameters, pManager, iManager)
         self.finishedJobs = JobProcessed()
         
     def shutdown(self):
@@ -121,6 +121,10 @@ of the long options of this test'''))
         sys.exit(1)
             
     try:
+        if parameters.interactive:
+            interfaceMan = testsuite_utils.InterfaceManager()
+        else:
+            interfaceMan = None
         vomsManager = job_utils.VOMSProxyManager(parameters)
         monitorThread = JobMonitor(parameters, vomsManager)
         renewalManager = job_utils.ProxyRenewer(parameters, monitorThread, vomsManager)
@@ -135,6 +139,9 @@ of the long options of this test'''))
         monitorThread.start()
         leaseManager.start()
         renewalManager.start()
+        if parameters.interactive:
+            interfaceMan.run()
+            interfaceMan.close()
         monitorThread.join()
         renewalManager.halt()
         leaseManager.halt()

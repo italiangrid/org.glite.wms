@@ -6,6 +6,7 @@ import time
 import popen2
 import getopt
 import log4py
+import tty, termios, threading
 
 class BadValueException(Exception):
     def __init__(self, message):
@@ -66,6 +67,7 @@ class Parameters:
         self.register('logConf', 's', check=checkFile, descr='''\
 Set the location of the configuration file for log4py, \
 (DEFAULT as provided by log4py)''')
+        self.register('interactive','b', optChar='', descr='Enable the test control via terminal')
         
         
     def addEnvItem(self, item):
@@ -342,7 +344,36 @@ class Logger:
     def info(self, message):
         self.main.info(message)
         
-
+class InterfaceManager:
+    
+    def __init__(self):
+        self.cond = threading.Condition()
+        self.isRunning = True
+        self.old_settings = termios.tcgetattr(sys.stdin.fileno())
+        
+    def run(self):
+        tty.setraw(sys.stdin.fileno())
+        new_settings = termios.tcgetattr(sys.stdin.fileno())
+        new_settings[1] = new_settings[1] | 1
+        termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, new_settings)
+        
+        ch = ''
+        while ch<>'S':
+            ch = sys.stdin.read(1)
+        self.cond.acquire()
+        self.isRunning = False
+        self.cond.notify()
+        self.cond.release()
+            
+    def sleep(self, timeToSleep):
+        self.cond.acquire()
+        self.cond.wait(timeToSleep)
+        result = self.isRunning
+        self.cond.release()
+        return result
+    
+    def close(self):
+        termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, self.old_settings)
 
 if 'testsuite_utils' in __name__:
     global cmdTable

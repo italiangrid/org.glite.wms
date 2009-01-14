@@ -21,8 +21,8 @@ class JobProcessed(job_utils.JobProcessed):
 
 class JobPoller(job_poller.JobPoller):
     
-    def __init__(self, parameters, pManager=None):
-        job_poller.JobPoller.__init__(self, parameters, pManager)
+    def __init__(self, parameters, pManager=None, iManager=None):
+        job_poller.JobPoller.__init__(self, parameters, pManager, iManager)
         self.finishedJobs = JobProcessed()
         
     def shutdown(self):
@@ -112,13 +112,20 @@ of the long options of this test'''))
     if parameters.jdl==None:
         sys.exit(1)
             
+    if parameters.interactive:
+        interfaceMan = testsuite_utils.InterfaceManager()
+    else:
+        interfaceMan = None
     vomsManager = job_utils.VOMSProxyManager(parameters)
-    pollerThread = JobPoller(parameters, vomsManager)
+    pollerThread = JobPoller(parameters, vomsManager, interfaceMan)
     renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
     leaseManager = job_utils.LeaseRenewer(parameters, pollerThread)
     
     pollerThread.start()
     renewalManager.start()
+    if parameters.interactive:
+        interfaceMan.run()
+        interfaceMan.close()
     pollerThread.join()
     renewalManager.halt()
     

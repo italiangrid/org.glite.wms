@@ -12,7 +12,7 @@ class JobMonitor(threading.Thread):
     runningStates = ['IDLE', 'RUNNING', 'REALLY-RUNNING']
     finalStates = ['DONE-OK', 'DONE-FAILED', 'ABORTED', 'CANCELLED']
     
-    def __init__(self, parameters, pManager=None):
+    def __init__(self, parameters, pManager=None, iManager=None):
         threading.Thread.__init__(self)
         self.table = {}
         self.notified = []
@@ -20,6 +20,7 @@ class JobMonitor(threading.Thread):
         self.parameters = parameters
         self.pool = JobSubmitterPool(parameters, self, pManager)
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, 'ABORTED': 0, 'CANCELLED': 0}
+        self.interfaceMan = iManager
         
         self.lastNotifyTS = time.time()
         
@@ -46,8 +47,9 @@ class JobMonitor(threading.Thread):
          
         jobLeft = self.parameters.numberOfJob
         jobProcessed = 0
+        isRunning =True
         
-        while (jobProcessed+self.pool.getFailures())<self.parameters.numberOfJob:
+        while (jobProcessed+self.pool.getFailures())<self.parameters.numberOfJob and isRunning:
             
             ts = time.time()
             
@@ -85,12 +87,15 @@ class JobMonitor(threading.Thread):
 #            if len(snapshot)>0:
 #                minTS = float(min(snapshot)) -1
             jobLeft = self.parameters.numberOfJob - self.pool.count()
-            JobMonitor.logger.debug("Job left: " + str(jobLeft) + " job processed: " 
+            JobMonitor.logger.info("Job left: " + str(jobLeft) + " job processed: " 
                                     + str(jobProcessed+self.pool.getFailures()))
             
             timeToSleep = self.parameters.rate - int(time.time() - ts)
             if timeToSleep>0:
-                time.sleep(timeToSleep)
+                if self.interfaceMan==None:
+                    time.sleep(timeToSleep)
+                else:
+                    isRunning = self.interfaceMan.sleep(timeToSleep)
                 
     def notify(self, jobHistory):
         self.lock.acquire()

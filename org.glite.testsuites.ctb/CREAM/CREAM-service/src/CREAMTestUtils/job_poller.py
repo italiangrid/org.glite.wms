@@ -13,12 +13,13 @@ class JobPoller(threading.Thread):
     runningStates = ['IDLE', 'RUNNING', 'REALLY-RUNNING']
     finalStates = ['DONE-OK', 'DONE-FAILED', 'ABORTED', 'CANCELLED']
     
-    def __init__(self, parameters, pManager=None):
+    def __init__(self, parameters, pManager=None, iManager=None):
         threading.Thread.__init__(self)
         self.table = {}
         self.lock = threading.Lock()
         self.parameters = parameters
         self.proxyMan = pManager
+        self.interfaceMan = iManager
         
         self.finishedJobs = None
         
@@ -57,8 +58,9 @@ class JobPoller(threading.Thread):
                 
         jobLeft = self.parameters.numberOfJob
         jobProcessed = 0
+        isRunning = True
         
-        while jobProcessed<self.parameters.numberOfJob:
+        while jobProcessed<self.parameters.numberOfJob and isRunning:
             
             ts = time.time()
             
@@ -169,11 +171,15 @@ class JobPoller(threading.Thread):
                 if len(snapshot)>0:
                     minTS = float(min(snapshot)) -1
                 jobLeft = self.parameters.numberOfJob - self.pool.count()
-            JobPoller.logger.debug("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
+            JobPoller.logger.info("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
             
             timeToSleep = self.parameters.rate - int(time.time() - ts)
             if timeToSleep>0:
-                time.sleep(timeToSleep)
+                if self.interfaceMan==None:
+                    time.sleep(timeToSleep)
+                else:
+                    isRunning = self.interfaceMan.sleep(timeToSleep)
+
 
     def put(self, uri, timestamp):
         self.lock.acquire()
