@@ -123,7 +123,7 @@ Delegation_manager::Delegation_manager( ) :
 		  << "Populating Delegation_manager's cache..."
 		  );  
 
-  map<string, boost::tuple<string, string, time_t, string> > mapDeleg;
+  map<string, boost::tuple<string, string, time_t, int, string> > mapDeleg;
   {
     // must populate the delegation's cache
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
@@ -138,6 +138,7 @@ Delegation_manager::Delegation_manager( ) :
 							   jit->getDelegationId(), 
 							   jit->getCreamURL(), 
 							   jit->getDelegationExpirationTime(),
+							   jit->getDelegationDuration(),
 							   jit->getUserDN() 
 							   );
 	} else {
@@ -148,6 +149,7 @@ Delegation_manager::Delegation_manager( ) :
 	    boost::make_tuple( jit->getDelegationId(), 
 			       jit->getCreamURL(), 
 			       jit->getDelegationExpirationTime(),
+			       jit->getDelegationDuration(),
 			       jit->getUserDN());
 	  
 	}
@@ -157,15 +159,16 @@ Delegation_manager::Delegation_manager( ) :
 
   } // unlock the cache
 
-  map<string, boost::tuple<string, string, time_t, string> >::const_iterator dit = mapDeleg.begin();
+  map<string, boost::tuple<string, string, time_t, int, string> >::const_iterator dit = mapDeleg.begin();
   while( dit != mapDeleg.end() ) {
     
     m_delegation_set.insert( table_entry( 
 					 dit->first,           // key: user_dn OR SHA1 digest
 					 dit->second.get<1>(), // Cream URL
 					 dit->second.get<2>(), // Deleg's expiration time
+					 dit->second.get<3>(),
 					 dit->second.get<0>(), // Delegation ID
-					 dit->second.get<3>()  // user_dn
+					 dit->second.get<4>()  // user_dn
 					 )         
 			     );
 
@@ -184,7 +187,7 @@ Delegation_manager* Delegation_manager::instance( )
 }
 
 //______________________________________________________________________________
-pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force, bool USE_NEW ) throw( std::exception& )
+boost::tuple<string, time_t, int> Delegation_manager::delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force, bool USE_NEW ) throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -240,12 +243,15 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, const gl
     }
 
     time_t expiration_time;
+    int duration;
     if ( delegation_by_key_view.end() == it ) {
+
         // Delegation id not found (or force). Performs a new delegation   
-      //        time_t expiration_time;
 
         // The delegation ID is the "canonized" GRID job id
-        delegation_id = canonizeString( job.getGridJobID() );
+        delegation_id   = canonizeString( job.getGridJobID() );
+	expiration_time = V.getProxyTimeEnd( ); 
+	duration        = V.getProxyTimeEnd( ) - time(0);
 
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
@@ -264,7 +270,7 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, const gl
         
         try {
             // Gets the proxy expiration time
-            expiration_time = V.getProxyTimeEnd( );            
+            //expiration_time = V.getProxyTimeEnd( );            
 	    CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
         } catch( exception& ex ) {
             // Delegation failed
@@ -304,12 +310,12 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, const gl
             throw runtime_error( "Delegation failed" );
         }     
         // Inserts the new delegation ID into the delegation set
-        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id, V.getDNFQAN() ) );
+        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id, V.getDNFQAN() ) );
 
         // Inserts into the front of the list; this is guaranteed to
         // be a new element, as it has not been found in this "if"
         // branch
-        delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, delegation_id,  V.getDNFQAN() ) );
+        delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id,  V.getDNFQAN() ) );
         if ( m_delegation_set.size() > m_max_size ) {
             if ( m_log_dev->isDebugEnabled() ) {
 
@@ -337,8 +343,9 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, const gl
 		      );
 
         // Delegation id FOUND. Returns it
-        delegation_id = it->m_delegation_id;
+        delegation_id   = it->m_delegation_id;
 	expiration_time = it->m_expiration_time;
+	duration        = it->m_delegation_duration;
 
         // Project the iterator to the sequencedd index
         t_delegation_by_seq::iterator it_seq( m_delegation_set.project<2>( it ) );
@@ -359,7 +366,8 @@ pair<string, time_t> Delegation_manager::delegate( const CreamJob& job, const gl
                          );
     }
       
-    return make_pair(delegation_id, expiration_time);
+    //return make_pair(delegation_id, expiration_time);
+    return boost::make_tuple( delegation_id, expiration_time, duration );
 
 }
 
@@ -387,18 +395,18 @@ void Delegation_manager::purge_old_delegations( void )
 }
 
 //______________________________________________________________________________
-void Delegation_manager::updateDelegation( const pair<string, time_t>& newDeleg ) {
+void Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& newDeleg ) {
   
   const char* method_name = "Delegation_manager::updateDelegation() - ";
 
   boost::recursive_mutex::scoped_lock L( m_mutex );
   
-  string delegId = newDeleg.first;
+  string delegId = newDeleg.get<0>();
   
   typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
   t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
   
-  t_delegation_by_ID::iterator it = delegation_by_ID_view.find( /*boost::make_tuple(delegId)*/ delegId );
+  t_delegation_by_ID::iterator it = delegation_by_ID_view.find( delegId );
   
   if ( delegation_by_ID_view.end() != it ) {
     string key     = it->m_sha1_digest;
@@ -424,11 +432,11 @@ void Delegation_manager::updateDelegation( const pair<string, time_t>& newDeleg 
 		    << "New Delegation id: ID=[" 
 		    << delegid << "] user_dn=["
 		    << user_dn << "] expiration time=["
-		    << time_t_to_string(newDeleg.second) << "] CEUrl=["
+		    << time_t_to_string(newDeleg.get<1>()) << "] CEUrl=["
 		    << ceurl << "]"
 		    );
     
-    m_delegation_set.insert( table_entry(key, ceurl, newDeleg.second, delegid, user_dn)  );
+    m_delegation_set.insert( table_entry(key, ceurl, newDeleg.get<1>(), newDeleg.get<2>(), delegid, user_dn)  );
   }
   
 }

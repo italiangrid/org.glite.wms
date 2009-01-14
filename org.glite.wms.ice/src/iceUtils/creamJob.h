@@ -85,6 +85,7 @@ namespace glite {
           std::string m_sequence_code;
           std::string m_delegation_id; 
 	  time_t      m_delegation_exptime;
+	  int         m_delegation_duration;
           std::string m_wn_sequence_code; //! The sequence code for the job sent to the worker node      
           glite::ce::cream_client_api::job_statuses::job_status m_prev_status; //! previous status of the job
 	  glite::ce::cream_client_api::job_statuses::job_status m_status; //! Current status of the job
@@ -99,6 +100,7 @@ namespace glite {
           bool m_is_killed_by_ice;
           time_t m_last_empty_notification; //! The timestamp of the last received empty notification
 	  bool m_proxy_renew;
+	  
 	  
 	protected:
 	  /**
@@ -136,6 +138,8 @@ namespace glite {
 
 	  void setDelegationExpirationTime( const time_t T ) { m_delegation_exptime = T; }
 
+	  void setDelegationDuration( const int T ) { m_delegation_duration = T; }
+
           /**
            * Sets the job failure reason. NOTE: the failure reason can
            * be set ONLY ONCE. Attempts to set the failure reason
@@ -151,6 +155,8 @@ namespace glite {
           };
 
 	  time_t getDelegationExpirationTime( void ) const { return m_delegation_exptime; }
+
+	  int    getDelegationDuration( void ) const { return m_delegation_duration; }
 
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return m_grid_jobid; }
@@ -361,6 +367,9 @@ namespace glite {
 
 
 	      ar & m_delegation_exptime;
+
+
+	      ar & m_delegation_duration;
 
 	      
 	      ar & m_wn_sequence_code;

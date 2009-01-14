@@ -226,7 +226,11 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
         
 	retry = false;
 
-      } catch(SerializeException& ex ) {
+      }  catch(JobDbNotFoundException& ex) {
+	
+	return this->end();    
+
+      }  catch(SerializeException& ex ) {
 	
 	sertry++;
 	if(sertry >= 3 ) {
@@ -234,26 +238,32 @@ jobCache::lookupByCompleteCreamJobID( const string& completeCreamJID )
 	  exit(2); // the ICE-safe will restart ICE soon
 	}
 	
+      } catch(exception& ex) {
+	
+	CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+			<< ex.what()  );
+	abort();
+	
       }
     }
 
 
-    try {
+    //    try {
       
       set<string>::const_iterator it = m_GridJobIDSet.find( cj.getGridJobID() );
       return make_iterator(m_GridJobIDSet.find( cj.getGridJobID() ));
 
-    } catch(JobDbNotFoundException& ex) {
+//     } catch(JobDbNotFoundException& ex) {
       
-      return this->end();    
+//       return this->end();    
 
-    } catch(exception& ex) {
+//     } catch(exception& ex) {
       
-      CREAM_SAFE_LOG( m_log_dev->fatalStream() 
-		      << ex.what()  );
-      abort();
+//       CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+// 		      << ex.what()  );
+//       abort();
       
-    }
+//     }
 
 }
 

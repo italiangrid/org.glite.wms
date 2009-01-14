@@ -77,14 +77,16 @@ namespace util {
         struct table_entry {
             std::string m_sha1_digest;
             std::string m_cream_url;
-            time_t m_expiration_time;
+ 	    time_t      m_expiration_time;
+	    int         m_delegation_duration;
             std::string m_delegation_id;
 	    std::string m_user_dn;
 
-            table_entry( const std::string& sha1_digest, const std::string& cream_url, time_t expiration_time, const std::string& delegation_id, const std::string& user_dn ) :
+	  table_entry( const std::string& sha1_digest, const std::string& cream_url, const time_t expiration_time, const int deleg_duration, const std::string& delegation_id, const std::string& user_dn ) :
                 m_sha1_digest( sha1_digest ),
                 m_cream_url( cream_url ),
                 m_expiration_time( expiration_time ),
+		m_delegation_duration( deleg_duration ),
                 m_delegation_id( delegation_id ),
 		m_user_dn( user_dn )
             { };
@@ -169,13 +171,13 @@ namespace util {
          *
          * @throw exception if the delegation operation fails.
          */
-	std::pair<std::string, time_t> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false ) throw( std::exception& );
+	boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false ) throw( std::exception& );
 	
 
 	/**
 
 	*/
-	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t> >& target)
+	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int> >& target)
         {
           boost::recursive_mutex::scoped_lock L( m_mutex );
           typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
@@ -186,7 +188,7 @@ namespace util {
           t_delegation_by_key::iterator it = delegation_by_key_view.begin();
 	  
           while( it != delegation_by_key_view.end() ) {
-            target.push_back( boost::make_tuple(it->m_delegation_id, it->m_cream_url, it->m_user_dn, it->m_expiration_time) )
+            target.push_back( boost::make_tuple(it->m_delegation_id, it->m_cream_url, it->m_user_dn, it->m_expiration_time, it->m_delegation_duration) )
 	      ;
             ++it;
           }
@@ -195,7 +197,7 @@ namespace util {
       /**
 	 < delegID, cream_url, exp_time, user_dn, 
       */
-      void updateDelegation( const std::pair<std::string, time_t>& newDeleg );
+	void updateDelegation( const boost::tuple<std::string, time_t, int>& newDeleg );
       
       void removeDelegation( const std::string& delegToRemove );
 

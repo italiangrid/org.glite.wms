@@ -359,12 +359,15 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                    );
 
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
-    pair<string, time_t> delegation;
+    //pair<string, time_t> delegation;
+    boost::tuple<string, time_t, int> delegation;
     string lease_id; // empty delegation id
     bool force_delegation = false;
     bool force_lease = false;  
     bool retry = true;  
     cream_api::AbsCreamProxy::RegisterArrayResult res;        
+
+    //int delegation_duration;
 
     while( retry ) {
 
@@ -419,15 +422,18 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         } catch( const exception& ex ) {
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
+
+	//delegation_duration = delegation.second - time(0);
+
         //
-        // Registers the job (with autostart)
+        // Registers the job (without autostart)
         //
         try {
                 
             CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                             << "Going to REGISTER Job "
                             << m_theJob.describe() << " with delegation ID ["
-			    << delegation.first << "]..."
+			    << delegation.get<0>() << "]..."
                              );
             
             cream_api::AbsCreamProxy::RegisterArrayRequest req;
@@ -436,7 +442,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             // (delegationProxy, leaseID) last asrgument is irrelevant
             // now, because we register jobs one by one
             cream_api::JobDescriptionWrapper jd(modified_jdl, 
-                                                delegation.first, 
+                                                delegation.get<0>(), 
                                                 ""/* delegPRoxy */, 
                                                 lease_id /* leaseID */, 
                                                 false, /* NO autostart */
@@ -612,8 +618,9 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     
     m_theJob.setCreamJobID( jobId );
     m_theJob.setStatus(glite::ce::cream_client_api::job_statuses::PENDING);    
-    m_theJob.setDelegationId( delegation.first );
-    m_theJob.setDelegationExpirationTime( delegation.second);
+    m_theJob.setDelegationId( delegation.get<0>() );
+    m_theJob.setDelegationExpirationTime( delegation.get<1>() );
+    m_theJob.setDelegationDuration( delegation.get<2>() );
     m_theJob.set_lease_id( lease_id ); // FIXME: redundant??
     m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );

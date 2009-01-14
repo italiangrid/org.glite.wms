@@ -348,7 +348,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
      and renew them
   */
 
-  vector< boost::tuple< string, string, string, time_t> > allDelegations;
+  vector< boost::tuple< string, string, string, time_t, int> > allDelegations;
   map< string, CreamJob > delegID_CreamJob;
 
   Delegation_manager::instance()->getDelegationEntries( allDelegations );
@@ -367,7 +367,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
       }
   }
 
-  vector<boost::tuple<string, string, string, time_t> >::const_iterator it = allDelegations.begin();
+  vector<boost::tuple<string, string, string, time_t, int> >::const_iterator it = allDelegations.begin();
 
   map<string, time_t> mapDelegTime;
   
@@ -380,13 +380,15 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
      Loop over all different delegations
   */
   //  while( it != allDelegations.end() )
-  for( vector<boost::tuple<string, string, string, time_t> >::const_iterator it = allDelegations.begin();
+  for( vector<boost::tuple<string, string, string, time_t, int> >::const_iterator it = allDelegations.begin();
        it != allDelegations.end();
        ++it)
     {
 
       time_t thisExpTime   = it->get<3>();
       string thisDelegID   = it->get<0>();
+
+      int    thisDuration  = it->get<4>();
 
       mapDelegTime[ thisDelegID ] = thisExpTime;
 
@@ -396,20 +398,51 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	 later
        */
       int remainingTime = thisExpTime - time(0);
-      if( remainingTime > DELEGATION_EXPIRATION_THRESHOLD_TIME ) {
 
-	CREAM_SAFE_LOG( m_log_dev->debugStream() 
-			<< "iceCommandProxyRenewal::renewAllDelegations() - "
-			<< "Delegation ID ["
-			<< thisDelegID << "] will expire on ["
-			<< time_t_to_string(thisExpTime) << "]. Threshold time is ["
-			<< DELEGATION_EXPIRATION_THRESHOLD_TIME << "] seconds. Will NOT renew it now..."
+//       if( remainingTime > DELEGATION_EXPIRATION_THRESHOLD_TIME ) {
+
+// 	CREAM_SAFE_LOG( m_log_dev->debugStream() 
+// 			<< "iceCommandProxyRenewal::renewAllDelegations() - "
+// 			<< "Delegation ID ["
+// 			<< thisDelegID << "] will expire on ["
+// 			<< time_t_to_string(thisExpTime) << "]. Threshold time is ["
+// 			<< DELEGATION_EXPIRATION_THRESHOLD_TIME << "] seconds. Will NOT renew it now..."
+// 			);
+
+// 	continue;
+//       } 
+
+//       if( remainingTime > 0.2 * thisDuration ) {
+	
+// 	CREAM_SAFE_LOG( m_log_dev->debugStream() 
+// 			<< "iceCommandProxyRenewal::renewAllDelegations() - "
+// 			<< "Delegation ID ["
+// 			<< thisDelegID << "] will expire in ["
+// 			<< remainingTime << "] seconds (on ["
+// 			<< time_t_to_string(thisExpTime) << "]). Duration is ["
+// 			<< thisDuration << "] seconds. Will NOT renew it now..."
+// 			);
+	
+// 	continue;
+	
+//       }
+      
+      if( (remainingTime > 0.2 * thisDuration) && (remainingTime > DELEGATION_EXPIRATION_THRESHOLD_TIME) )
+	{
+	  CREAM_SAFE_LOG( m_log_dev->debugStream() 
+			  << "iceCommandProxyRenewal::renewAllDelegations() - "
+			  << "Delegation ID ["
+			  << thisDelegID << "] will expire in ["
+			  << remainingTime << "] seconds (on ["
+			  << time_t_to_string(thisExpTime) << "]). Duration is ["
+			  << thisDuration << "] seconds. Will NOT renew it now..."
 			);
 
-	continue;
-      } 
+	  continue;
 
-      
+	}
+    
+
       
       string thisUserDN    = it->get<2>();
       string thisCEUrl     = it->get<1>();
@@ -501,7 +534,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
       it != mapDelegTime.end();
       ++it)
     {
-      Delegation_manager::instance()->updateDelegation( *it );
+      Delegation_manager::instance()->updateDelegation( boost::make_tuple((*it).first, (*it).second, (*it).second-time(0)) );
     }
   
 }
