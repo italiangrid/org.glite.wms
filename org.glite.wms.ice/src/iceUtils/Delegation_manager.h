@@ -172,27 +172,31 @@ namespace util {
          * @throw exception if the delegation operation fails.
          */
 	boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false ) throw( std::exception& );
-	
+
+        /**
+         * Tries to delegate an already delegated ID. I hope that this
+         * method will eventually disappear, as in ideal situations
+         * there will be no need to retry to delegate again an already
+         * delegated id, as this operation is _alsays_ supposed to
+         * raise a fault. If not, there is some serious problem
+         * somewhere.
+         */	
+        void redelegate( const std::string& certfile,
+                         const std::string& delegation_url,
+                         const std::string& delegation_id );
 
 	/**
-
-	*/
-	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int> >& target)
-        {
-          boost::recursive_mutex::scoped_lock L( m_mutex );
-          typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
-          t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
-          //typedef t_delegation_set::nth_index<2>::type t_delegation_by_seq;
-          //t_delegation_by_seq& delegation_by_seq( m_delegation_set.get<2>() );
-          
-          t_delegation_by_key::iterator it = delegation_by_key_view.begin();
-	  
-          while( it != delegation_by_key_view.end() ) {
-            target.push_back( boost::make_tuple(it->m_delegation_id, it->m_cream_url, it->m_user_dn, it->m_expiration_time, it->m_delegation_duration) )
-	      ;
-            ++it;
-          }
-	}
+         * Get all entries from the delegation cache. Each entry is a tuple
+         * with the following elements: 
+         * <ul>
+         * <li>delegation_id</li>
+         * <li>cream URL</li>
+         * <li>User DN</li>
+         * <li>Delegation Expiration Time</li>
+         * <li>Delegation duration</li>
+         * </ul>
+         */
+	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int> >& target);
 
       /**
 	 < delegID, cream_url, exp_time, user_dn, 

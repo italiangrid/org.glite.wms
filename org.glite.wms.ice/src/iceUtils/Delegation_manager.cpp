@@ -457,3 +457,84 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
     }
   
 }
+
+void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int> >& target)
+{
+    boost::recursive_mutex::scoped_lock L( m_mutex );
+    typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
+    t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
+    t_delegation_by_key::iterator it = delegation_by_key_view.begin();
+    
+    while( it != delegation_by_key_view.end() ) {
+        target.push_back( boost::make_tuple(it->m_delegation_id, 
+                                            it->m_cream_url, 
+                                            it->m_user_dn, 
+                                            it->m_expiration_time, 
+                                            it->m_delegation_duration) );
+        ++it;
+    }
+}
+
+//----------------------------------------------------------------------------
+void Delegation_manager::redelegate( const string& certfile, 
+                                     const string& delegation_url,
+                                     const string& delegation_id ) 
+{
+    boost::recursive_mutex::scoped_lock L( m_mutex );
+
+    static char* method_name = "Delegation_manager::ridelegate() - ";
+
+    // Lookup the delegation_id into the set
+    typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
+    t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
+    
+    t_delegation_by_ID::iterator it = delegation_by_ID_view.find( delegation_id );    
+
+    if ( delegation_by_ID_view.end() == it ) {
+        // The delegation ID was not found. This must _never_ happen,
+        // so we simply give up here.
+
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
+                        << "Could not find delegaion id ["
+                        << delegation_id << "]. Giving up"
+                        );
+        abort(); // FIXME
+    }
+
+    try {
+        CreamProxy_Delegate( delegation_url, certfile, delegation_id ).execute( 3 );
+    } catch( exception& ex ) {
+        // Delegation failed. Ignore it, it is supposed to fail
+        CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                        << "Redelegation failed (as probably expected) "
+                        << "with delegation id "
+                        << delegation_id
+                        << " Delegation URL "
+                        << delegation_url
+                        << " - ERROR is: ["
+                        << ex.what() << "]. "
+                        << "This error will be ignored"
+                        );
+        // ignore error
+    }  catch( ... ) {
+        CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+                        << "Redelegation failed (as probably expected) "
+                        << "with delegation id "
+                        << delegation_id
+                        << " Delegation URL "
+                        << delegation_url
+                        << " - Unknown exception. " 
+                        << "This error will be ignored"
+                        );
+        // throw runtime_error( "Delegation failed" );
+    }     
+
+    typedef t_delegation_set::nth_index<2>::type t_delegation_by_seq;
+    t_delegation_by_seq& delegation_by_seq( m_delegation_set.get<2>() );
+
+    // Project the iterator to the sequencedd index
+    t_delegation_by_seq::iterator it_seq( m_delegation_set.project<2>( it ) );
+    
+    // Relocates the newly-found element to the front of the list
+    delegation_by_seq.relocate( delegation_by_seq.begin(), it_seq );    
+}
