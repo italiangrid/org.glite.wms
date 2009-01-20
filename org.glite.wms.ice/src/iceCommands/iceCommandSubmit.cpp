@@ -423,8 +423,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
 
-	//delegation_duration = delegation.second - time(0);
-
+        const string the_delegation( delegation.get<0>() );
+        
         //
         // Registers the job (without autostart)
         //
@@ -433,8 +433,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                             << "Going to REGISTER Job "
                             << m_theJob.describe() << " with delegation ID ["
-			    << delegation.get<0>() << "]..."
-                             );
+			    << the_delegation << "]..."
+                            );
             
             cream_api::AbsCreamProxy::RegisterArrayRequest req;
             
@@ -442,8 +442,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             // (delegationProxy, leaseID) last asrgument is irrelevant
             // now, because we register jobs one by one
             cream_api::JobDescriptionWrapper jd(modified_jdl, 
-                                                delegation.get<0>(), 
-                                                ""/* delegPRoxy */, 
+                                                the_delegation,
+                                                "" /* delegPRoxy */, 
                                                 lease_id /* leaseID */, 
                                                 false, /* NO autostart */
                                                 "foo");
@@ -460,7 +460,15 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                                           (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
                                           &res,
                                           iceid).execute( 3 );
+        } catch ( glite::ce::cream_client_api::cream_exceptions::GridProxyDelegationException& ex ) {
+            // Here CREAM tells us that the delegation ID is unknown.
+            // We do not trust this fault, and try to redelegate the
+            // _same_ delegation ID, hoping for the best.
             
+            const string the_delegation_url( m_theJob.getCreamDelegURL() );
+
+            iceUtil::Delegation_manager::instance()->redelegate( m_theJob.getUserProxyCertificate(), the_delegation_url, the_delegation );
+            // no exception is raised, we simply hope for the best
         } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
             if ( !force_delegation ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
