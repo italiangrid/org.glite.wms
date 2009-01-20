@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2009/01/20 11:00:53  lpetronz
+#       SL5 build fixing: not needed marcos removed
+#
 #       Revision 1.8  2006/03/20 15:45:23  eronchie
 #       Increased version
 #
@@ -98,11 +101,6 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 AC_GLITE
-
-AC_JAVA
-AC_JCLASSAD
-AC_JGLOBUS
-AC_LOG4J
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
