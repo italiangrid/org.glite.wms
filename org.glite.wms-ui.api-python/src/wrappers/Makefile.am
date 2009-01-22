@@ -110,6 +110,7 @@ libglite_wmsui_UcWrapper_la_LDFLAGS = \
 
 libglite_wmsui_UcWrapper_la_LIBADD = \
 	-lc \
+	$(GRIDSITE_OPENSSL_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	-lstdc++
 
@@ -240,6 +241,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(PYTHON_CFLAGS) \
+	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(GLOBUS_NOTHR_CFLAGS) \
 	$(GLOBUS_SSL_UTILS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
