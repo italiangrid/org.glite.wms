@@ -101,7 +101,7 @@ if [ ! -z $END_DATE ]; then
   while [ $CURR_DATE -lt $END_DATE ]
   do
     START_TIME=`date +%s.%N`
-    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE
+    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" 2>&1 >> $LOG_FILE
 #    TIME=`/usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE`
 #    TIME=`/usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE`
     END_TIME=`date +%s.%N`
@@ -116,7 +116,7 @@ if [ ! -z $ITERATIONS ]; then
   while [ $count -le $ITERATIONS ]
   do
     START_TIME=`date +%s.%N`
-    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE
+    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" 2>&1 >> $LOG_FILE
 #    /usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE
 #    TIME=`/usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE`
     END_TIME=`date +%s.%N`

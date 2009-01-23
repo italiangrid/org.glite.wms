@@ -146,6 +146,8 @@ and Memory consumption in kilobytes.
 Records are made every 5 seconds. Script does not accept any parameters and
 all reconfiguration (process name, log file path, time interval) must be done
 by editing the script (but default parameters are just fine).
+The string 'Monitored process has died' will be printed when, during the monitoring,
+the monitored process dies.
 
 - combine.pl -
 Usage: ./combine.pl <log1> <log2> ...
