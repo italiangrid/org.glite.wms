@@ -187,10 +187,10 @@ long asn1TimeToTimeT(char *asn1time, size_t len) {
 /*************************************************************************
 * private method: parses the proxy info and extracts the fqan's
 *************************************************************************/
-const string proxy_parser (BIO *bp, unsigned char **pp,
+const string proxy_parser (BIO *bp, const unsigned char **pp,
 			long length, int offset, int depth, int indent, int dump,
 			std::vector<std::string> &fqans, std::vector<std::pair<std::string, long> > &exps) {
-	unsigned char *p,*ep,*tot,*op,*opp;
+	const unsigned char *p,*ep,*tot,*op,*opp;
 	long len;
 	int tag,xclass;
 	int nl,hl,j,r = 0;
@@ -325,7 +325,7 @@ const string proxy_parser (BIO *bp, unsigned char **pp,
 * private method: returns a vector (fqans) with the list of FQAN's
 in the input voms proxy
 **************************************************************************/
-void get_fqans (BIO *bp, unsigned char **pp, long length, int offset,
+void get_fqans (BIO *bp, const unsigned char **pp, long length, int offset,
 	     int depth, int indent, int dump, std::vector<std::string> &fqans) {
 	std::vector<std::pair<std::string, long> > v;
 	proxy_parser (bp, pp, length, offset, depth, indent, dump, fqans, v);
@@ -335,7 +335,7 @@ void get_fqans (BIO *bp, unsigned char **pp, long length, int offset,
 *  private method: returns a vector (exps) which elements are pairs
 like tihs: <FQAN string, VOMS proxy time left>
 *************************************************************************/
-void get_expiration_info (BIO *bp, unsigned char **pp, long length, int offset,
+void get_expiration_info (BIO *bp, const unsigned char **pp, long length, int offset,
 	     int depth, int indent, int dump, std::vector<std::pair<std::string, long> > &exps) {
 	std::vector<std::string> v;
 	proxy_parser (bp, pp, length, offset, depth, indent, dump, v, exps);
@@ -347,7 +347,7 @@ void get_expiration_info (BIO *bp, unsigned char **pp, long length, int offset,
 const vector<std::string> getFQANs(std::string pxfile){
 	int i = 0;
 	int lasttag=-1;
-	unsigned char *p1 ;
+	const unsigned char *p1 ;
  	string fqan = "";
 	FILE *fp = NULL ;
 	X509 *cert = NULL ;
@@ -428,7 +428,7 @@ const long getCertTimeLeft( std::string pxfile ) {
 const long getProxyTimeLeft( std::string pxfile ) {
 	int i = 0;
 	int lasttag=-1;
-	unsigned char *p1 ;
+	const unsigned char *p1 ;
  	string fqan = "";
 	FILE *fp = NULL ;
 	X509 *cert = NULL ;
