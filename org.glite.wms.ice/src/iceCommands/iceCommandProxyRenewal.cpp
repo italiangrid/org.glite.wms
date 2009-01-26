@@ -255,6 +255,12 @@ void iceCommandProxyRenewal::getAllPhysicalNewProxies( set<string>& allPhysicalP
      for each job must also update the last modification time of the certificate
   */
   for(jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
+      // Skip jobs which do not have the CREAM job id yet. Those are
+      // jobs being submitted, whose submission operation did not
+      // complete so far.
+      if ( jobIt->getCompleteCreamJobID().empty() )
+          continue;
+
     struct stat buf;
     
     thisProxy = jobIt->getUserProxyCertificate();
@@ -360,10 +366,11 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
    */
   map<string, list<CreamJob> > mapDelegJob;
   {
-    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    for( jobCache::iterator jobit = m_cache->begin(); jobit != m_cache->end(); ++jobit )
-      {
-	mapDelegJob[ jobit->getDelegationId() ].push_back( *jobit );
+      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      for( jobCache::iterator jobit = m_cache->begin(); jobit != m_cache->end(); ++jobit ) {
+          if ( ! jobit->getCompleteCreamJobID().empty() ) {
+              mapDelegJob[ jobit->getDelegationId() ].push_back( *jobit );
+          }
       }
   }
 
