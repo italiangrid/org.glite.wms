@@ -144,6 +144,13 @@ void jobCache::load( void ) throw()
                         << "Reason is: " << dbex.what() << ". Giving up."
                          );
         abort();
+    } catch(exception& ex) {
+      CREAM_SAFE_LOG( m_log_dev->fatalStream() 
+		      << method_name
+		      << "Failed to get a record from the database. "
+		      << "Reason is: " << ex.what() << ". Giving up."
+		      );
+        abort();
     } catch(...) {
       CREAM_SAFE_LOG( m_log_dev->fatalStream()
 		      << method_name
