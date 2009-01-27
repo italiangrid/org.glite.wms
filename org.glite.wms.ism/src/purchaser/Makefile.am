@@ -13,7 +13,7 @@ lib_LTLIBRARIES    = \
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
         common.cpp \
         ldap-utils.cpp \
-  ldap-utils-asynch.cpp \
+        ldap-utils-asynch.cpp \
         ldap-dn-utils.cpp \
         schema_utils.cpp \
         ism-ii-purchaser.cpp

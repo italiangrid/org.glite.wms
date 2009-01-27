@@ -24,6 +24,7 @@ bool is_gluecluster_info_dn(std::vector<std::string> const&);
 bool is_gluece_info_dn(std::vector<std::string> const&);
 bool is_gluesubcluster_info_dn(std::vector<std::string> const&);
 bool is_gluecesebind_info_dn(std::vector<std::string> const&);
+bool is_gluelocation_info_dn(std::vector<std::string> const&);
 bool is_gluevoview_info_dn(std::vector<std::string> const&);
 bool is_gluese_info_dn(std::vector<std::string> const&);
 bool is_gluesa_info_dn(std::vector<std::string> const&);

@@ -9,57 +9,43 @@
 #define GLITE_WMS_ISM_PURCHASER_LDAP_UTILS_H
 
 #include <string>
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-#include "ldap-dn-utils.h"
 #include "glite/wms/ism/purchaser/common.h"
 
 namespace glite {
 namespace wms {
-
-namespace common {
-namespace ldif2classad {
-class LDIFObject;
-class LDAPConnection;
-}
-}
-
-namespace ldif2classad = common::ldif2classad;
-
 namespace ism {
 namespace purchaser {
 
-std::string get_cluster_name(ldif2classad::LDIFObject& ldif_CE);
-std::string get_site_name(ldif2classad::LDIFObject& ldif_CE);
-
 void
 fetch_bdii_ce_info(
-  boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
-  gluece_info_container_type& gluece_info_container
+  std::string const& hostname,
+  size_t port,
+  std::string const& basedn,
+  time_t timeout,
+  const std::string& ldap_ce_filter_ext,
+  glite::wms::ism::purchaser::PurchaserInfoContainer&
 );
 
 void
 fetch_bdii_se_info(
-  boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
-  gluese_info_container_type& gluese_info_container
+  std::string const& hostname,
+  size_t port,
+  std::string const& basedn,
+  time_t timeout,
+  glite::wms::ism::purchaser::PurchaserInfoContainer&
 );
 
 void 
 fetch_bdii_info(
   std::string const& hostname,
-  int port,
-  std::string const& dn,
-  int timeout,
+  size_t port,
+  std::string const& basedn,
+  time_t timeout,
   const std::string& ldap_ce_filter_ext,
-  gluece_info_container_type& gluece_info_container,
-  gluese_info_container_type& gluese_info_container
+  glite::wms::ism::purchaser::PurchaserInfoContainer&,
+  glite::wms::ism::purchaser::PurchaserInfoContainer&
 );
 
-
-} // namespace purchaser
-} // namespace ism
-} // namespace wms
-} // namespace glite
+}}}}
 
 #endif

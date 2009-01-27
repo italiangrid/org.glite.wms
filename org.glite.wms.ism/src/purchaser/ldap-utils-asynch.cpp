@@ -71,8 +71,15 @@ struct CEInfo
   std::vector<ClassAdPtr> ses_binds;
 };
 
+struct SubClusterInfo {
+  SubClusterInfo(ClassAdPtr a, std::vector<ClassAdPtr> const& l) 
+    : ad(a), locations(l) {}
+  ClassAdPtr ad;
+  std::vector<ClassAdPtr> locations; 
+};
+
 typedef std::map<std::string, CEInfo> CEInfoMap;
-typedef std::map<std::string, ClassAdPtr> SubClusterInfoMap;
+typedef std::map<std::string, SubClusterInfo> SubClusterInfoMap;
 
 struct ClusterInfo {
   std::string site_id;
@@ -233,6 +240,22 @@ void process_ce_info(
   it->second.ad = ad;
   bdii_info.clusters[cluster_id].ces_links.push_back(it);
 }
+void process_location_info(
+  std::vector<std::string> const& ldap_dn_tokens,
+  ClassAdPtr ad,
+  BDIICEInfo& bdii_info
+)
+{
+  std::string const subcluster_id(
+    ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
+  );
+  SubClusterInfoMap::iterator it;
+  bool insert;
+  boost::tie(it, insert) = bdii_info.subclusters.insert(
+    std::make_pair(subcluster_id, SubClusterInfo(ClassAdPtr(), std::vector<ClassAdPtr>()))
+  );
+  it->second.locations.push_back(ad);
+}
 
 void process_subcluster_info(
   std::vector<std::string> const& ldap_dn_tokens,
@@ -250,9 +273,11 @@ void process_subcluster_info(
   SubClusterInfoMap::iterator it;
   bool insert;
   boost::tie(it, insert) = bdii_info.subclusters.insert(
-    std::make_pair(subcluster_id, ad)
+    std::make_pair(subcluster_id, SubClusterInfo(ad, std::vector<ClassAdPtr>()))
   );
-
+  if(!insert) { // the subcluster was already there
+    it->second.ad = ad;
+  }
   bdii_info.clusters[cluster_id].subclusters_links.push_back(it);
 }
 inline bool iequals(std::string const& a, std::string const& b)
@@ -408,45 +433,45 @@ fetch_bdii_se_info(
           ldap_dn_tokens[0].substr(ldap_dn_tokens[0].find("=")+1)
         );
       
-        SEInfoMap::iterator it;
-        bool insert;
-        boost::tie(it, insert) = se_info.insert(std::make_pair(se_id, SEInfo()));
-        if (is_gluese_info_dn(ldap_dn_tokens)) { 
-          it->second.ad = ad;                          
-        } 
-        else if (is_gluecesebind_info_dn(ldap_dn_tokens)) {
-          it->second.ces_binds.push_back(ad);
-        }
-      }                                                                   
-      else if (is_gluesa_info_dn(ldap_dn_tokens) ||
-        is_gluese_control_protocol_info_dn(ldap_dn_tokens) ||
-        is_gluese_access_protocol_info_dn(ldap_dn_tokens)) {
+      SEInfoMap::iterator it;
+      bool insert;
+      boost::tie(it, insert) = se_info.insert(std::make_pair(se_id, SEInfo()));
+      if (is_gluese_info_dn(ldap_dn_tokens)) { 
+        it->second.ad = ad;                          
+      } 
+      else if (is_gluecesebind_info_dn(ldap_dn_tokens)) {
+        it->second.ces_binds.push_back(ad);
+      }
+    }                                                                   
+    else if (is_gluesa_info_dn(ldap_dn_tokens) ||
+      is_gluese_control_protocol_info_dn(ldap_dn_tokens) ||
+      is_gluese_access_protocol_info_dn(ldap_dn_tokens)) {
 
-        classad::ExprTree* ad(create_classad_from_ldap_entry(ld, lde));
-        std::string const se_id(
-          ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
-        );
-        SEInfoMap::iterator it(se_info.find(se_id));
-        if (it == se_info.end()) {
-          bool insert; 
-          boost::tie(it, insert) = se_info.insert(std::make_pair(se_id, SEInfo()));
+      classad::ExprTree* ad(create_classad_from_ldap_entry(ld, lde));
+      std::string const se_id(
+        ldap_dn_tokens[1].substr(ldap_dn_tokens[1].find("=")+1)
+      );
+      SEInfoMap::iterator it(se_info.find(se_id));
+      if (it == se_info.end()) {
+        bool insert; 
+        boost::tie(it, insert) = se_info.insert(std::make_pair(se_id, SEInfo()));
+        if(insert) {
+           Debug("info for " << se_id << " inserted");
         }
-        if(is_gluesa_info_dn(ldap_dn_tokens)) {
-          it->second.storage_areas.push_back(ad);
-        }
-        else if(is_gluese_control_protocol_info_dn(ldap_dn_tokens)) {
-          it->second.control_protocols.push_back(ad);
-        }
-        else if(is_gluese_access_protocol_info_dn(ldap_dn_tokens)) {
-          it->second.access_protocols.push_back(ad);
-        }
+      }
+      if(is_gluesa_info_dn(ldap_dn_tokens)) {
+        it->second.storage_areas.push_back(ad);
+      }
+      else if(is_gluese_control_protocol_info_dn(ldap_dn_tokens)) {
+        it->second.control_protocols.push_back(ad);
+      }
+      else if(is_gluese_access_protocol_info_dn(ldap_dn_tokens)) {
+        it->second.access_protocols.push_back(ad);
       }
     }
   }
   Debug("#" << n_entries << " LDAP entries received in " << std::time(0)-t0 << " seconds");
-  ut::scope_guard ldresult_guard(
-    boost::bind(ldap_msgfree, ldresult)
-  );
+
   if (result == -1) {
 /*
     Error(
@@ -458,6 +483,7 @@ fetch_bdii_se_info(
     );
 */
     return;
+  }
   }
   SEInfoMap::const_iterator se_it(se_info.begin());
   SEInfoMap::const_iterator const se_e(se_info.end());
@@ -611,6 +637,10 @@ fetch_bdii_ce_info(
         ClassAdPtr ad(create_classad_from_ldap_entry(ld, lde));
         process_subcluster_info(ldap_dn_tokens, ad, bdii_info);
       }
+      else if (is_gluelocation_info_dn(ldap_dn_tokens)) {
+        ClassAdPtr ad(create_classad_from_ldap_entry(ld, lde));
+         process_location_info(ldap_dn_tokens, ad, bdii_info);
+      }
       else if (is_gluecesebind_info_dn(ldap_dn_tokens)) {
         ClassAdPtr ad(create_classad_from_ldap_entry(ld, lde));
         std::string const ce_id(
@@ -660,7 +690,19 @@ fetch_bdii_ce_info(
       cl_it->second.subclusters_links.begin()
     );
 
-    boost::shared_ptr<classad::ClassAd> sc_ad = (*sc_it)->second;
+    boost::shared_ptr<classad::ClassAd> sc_ad = (*sc_it)->second.ad;
+    
+    std::vector<classad::ExprTree*>  location_exprs;
+    std::vector<ClassAdPtr>::const_iterator sci_it(
+      (*sc_it)->second.locations.begin()
+    );
+    std::vector<ClassAdPtr>::const_iterator const sci_e(
+      (*sc_it)->second.locations.end()
+    );
+    for( ; sci_it  != sci_e; ++sci_it) {
+      location_exprs.push_back(new classad::ClassAd);
+      static_cast<classad::ClassAd*>(location_exprs.back())->Update(*sci_it->get());
+    }
 
     std::string const cluster_id(cl_it->first);
     std::vector<CEInfoMap::iterator>::const_iterator ce_it(
@@ -673,6 +715,13 @@ fetch_bdii_ce_info(
     for( ; ce_it != ce_e; ++ce_it) {
 
       (*ce_it)->second.ad->Update(*sc_ad);
+      (*ce_it)->second.ad->Insert(
+         "SubClusterLocations", classad::ExprList::MakeExprList(location_exprs)
+      );
+      (*ce_it)->second.ad->Insert(
+          "SubClusterSoftware", classad::AttributeReference::MakeAttributeReference(
+            0,"SubClusterLocations"
+      ));
       (*ce_it)->second.ad->InsertAttr(
         "GlueSiteUniqueID", cl_it->second.site_id
       );
