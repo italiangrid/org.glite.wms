@@ -236,7 +236,8 @@ WMS_UI_COM_GLITE = glite_wmsui_AdWrapper.a \
 	glite_wmsui_SdWrapper.so.0 \
 	glite_wmsui_SdWrapper.so.0.0.0
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -fPIC \
+	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
