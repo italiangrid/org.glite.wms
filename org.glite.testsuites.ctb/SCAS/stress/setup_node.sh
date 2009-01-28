@@ -47,7 +47,7 @@ cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/gle
 echo "Copying test and proxy to ~pildtm0$INDEX"
 
 #CHANGE THIS: use special certificate
-cp -f /afs/cern.ch/user/p/pucciani/tmp/x509up_u501_g /home/pildtm0$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
+cp -f /afs/cern.ch/user/p/pucciani/tmp/x509up_u501_t500 /home/pildtm0$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
 
 
 #cp -f x509up_u501_$INDEX /home/pildtm0$INDEX 2>&1 >> $LOG_FILE
@@ -58,8 +58,8 @@ chmod u+x /home/pildtm0$INDEX/glexec_stress_test.sh 2>&1 >> $LOG_FILE
 
 
 echo "Starting glexec test as pildtm0$INDEX"
-#su - -c "/home/pildtm0$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 2 -i $INDEX" pildtm0$INDEX
-su - -c "/home/pildtm0$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200901240830 -i $INDEX" pildtm0$INDEX
+su - -c "/home/pildtm0$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 2 -i $INDEX" pildtm0$INDEX
+#su - -c "/home/pildtm0$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200901240830 -i $INDEX" pildtm0$INDEX
 
 exit 0
 
