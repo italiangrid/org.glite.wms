@@ -38,17 +38,6 @@ sub getprocent($$) {
 }
 
 die "Cannot open /proc: $!\n" unless opendir(PROC, "/proc");
-my $mpid;
-while($_ = readdir(PROC)) {
-	next unless /^\d+$/;
-	my $exe = getprocent($_, "exe");
-	next unless $exe and basename($exe) eq $NAME;
-	$mpid = $_;
-	last;
-}
-closedir(PROC);
-die "Cannot find an $NAME process, exiting\n" unless $mpid;
-warn "$NAME process found, pid $mpid\n";
 die "Cannot open log file $LOG: $!\n" unless open(LOG, ">>$LOG");
 exit unless fork() == 0;
 chdir("/");
@@ -56,10 +45,18 @@ setsid();
 select(LOG);
 $| = 1;
 while(1) {
-	my $fdc = getprocent($mpid, "fd");
-	die "Monitored process has died\n" unless defined $fdc;
+	my ($fdc, $mem, $num) = (0, 0, 0);
+	rewinddir(PROC);
+	while($_ = readdir(PROC)) {
+		next unless /^\d+$/;
+		my $exe = getprocent($_, "exe");
+		next unless $exe and basename($exe) eq $NAME;
+		$fdc += getprocent($_, "fd");
+		my @statm = split(/ /, getprocent($_, "statm"));
+		$mem += $statm[0] << 2;
+		$num++;
+	}
 	my @load = split(/ /, getprocent("loadavg", ""));
-	my @statm = split(/ /, getprocent($mpid, "statm"));
-	print LOG join(",", time, @load[0..2], $fdc, $statm[0] << 2) . "\n";
+	print LOG join(",", time, @load[0..2], $fdc, $mem, $num) . "\n";
 	sleep $INT;
 }
