@@ -297,7 +297,8 @@ string CreamJob::get_cemon_dn( void ) const
 //______________________________________________________________________________
 string CreamJob::getCompleteCreamJobID( void ) const 
 {
-  if( this->getCreamURL().empty() ) return "";
+  if ( getCreamURL().empty() || getCreamJobID().empty() ) 
+      return "";
 
   string creamURL = this->getCreamURL();
 

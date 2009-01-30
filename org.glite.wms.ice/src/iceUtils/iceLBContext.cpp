@@ -54,7 +54,7 @@ namespace configuration = glite::wms::common::configuration;
 
 // static member definitions
 unsigned int iceLBContext::s_el_s_retries = 3;
-unsigned int iceLBContext::s_el_s_sleep = 60;
+unsigned int iceLBContext::s_el_s_sleep = 5; // Delay between retries
 const char *iceLBContext::el_s_notLogged = "Event not logged, context unset.";
 const char *iceLBContext::el_s_unavailable = "unavailable";
 const char *iceLBContext::el_s_OK = "OK";
@@ -258,7 +258,7 @@ void iceLBContext::testCode( int &code, bool retry )
             }
             else {
 	      CREAM_SAFE_LOG(m_log_dev->warnStream()
-			     << "iceLBContext::testCode() - L&B call got a transient error. Waiting " << s_el_s_sleep << " seconds and trying again. " 
+			     << "iceLBContext::testCode() - L&B call got a transient error (code=" << code << "). Waiting " << s_el_s_sleep << " seconds and trying again. " 
 			     << "Try n. " << this->m_el_count << "/" << s_el_s_retries 
 			     );
 
