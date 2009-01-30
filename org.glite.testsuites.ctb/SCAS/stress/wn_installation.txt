@@ -6,30 +6,26 @@ yum install ntp
 cp -r /afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/certs/lxb7605vX.cern.ch/ /opt/certs/
 
 cd yaimgen
-
-cp -r /afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/yaimgen.cfg.wn ./
-
-#EDIT yaimgen.cfg.wn to fix the hostname
-
-cp -f /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/yaimgen.conf /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/yaimgen.sh /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/commonFunctions.sh ./
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/yaimgen.cfg.wn ./
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/yaimgen.conf /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/yaimgen.sh /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.glite.ctb.yaimgen/commonFunctions.sh ./
 
 klog pucciani
+#EDIT yaimgen.cfg.wn to fix the hostname
 
-#install prod WN and patch2703 (SCAS client) and patch 2017 (hydra, to solve some dependencies) and patch2598 (for voms-certs dependencies) and 2596 (for yaim-clients)
+#install prod WN and and patch2381 (glexec)
 ./yaimgen.sh install yaimgen.cfg.wn
 
-#install lcas and glexec from ETICS since glexec patch that includes them is not yet ready
+#get yaim configuration file
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/site-info.wn.def /etc/yaim/site-info.def
 
-rpm -Uvh /afs/cern.ch/project/etics/repository/org.glite/org.glite.security.lcas/1.3.7/slc4_ia32_gcc346/glite-security-lcas-1.3.7-2.slc4.i386.rpm
+#get users and groups file (must be the same as in the SCAS server host)
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/users.conf /etc/yaim/users.conf
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/groups.conf /etc/yaim/groups.conf
 
-rpm -Uvh /afs/cern.ch/project/etics/repository/org.glite/org.glite.security.glexec/0.5.41/slc4_ia32_gcc346/glite-security-glexec-0.5.41-1.slc4.i386.rpm
+#configure the node
+/opt/glite/yaim/bin/yaim -c -s /etc/yaim/site-info.def -n glite-WN GLEXEC_wn
 
-#yum install cert-glite-WN this as been removed since no new version of glite-WN will be installed
-
-
-/opt/glite/yaim/bin/yaim -c -s /etc/yaim/site-info.def -n glite-WN
-/opt/glite/yaim/bin/yaim -c -s /etc/yaim/site-info.def -n glite-WN
-
+#TO DO
 mv /etc/cron.daily/logrotate /etc/cron.hourly/
 #change log rotation for lcaslcmaps and glexec
 
