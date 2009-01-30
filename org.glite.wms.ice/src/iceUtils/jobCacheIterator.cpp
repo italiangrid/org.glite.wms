@@ -174,6 +174,18 @@ void jobCacheIterator::refresh( ) throw()
 	  exit(2);
 	}
       }
+      catch(boost::archive::archive_exception& ex) {
+          CREAM_SAFE_LOG(m_log_dev->fatalStream() << method_name
+                         << "Got archive_exception "<< ex.what()
+                         << " on try " << sertry << "/3"
+                         );
+	sertry++;
+	if(sertry>=3) {
+	  // FIXME: put a FATAL log message here
+	  exit(2);
+	}
+      }
+
       m_valid_it = true;
 
     } // while( retry )
