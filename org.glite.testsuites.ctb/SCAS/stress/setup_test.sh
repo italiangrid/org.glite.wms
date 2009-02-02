@@ -49,7 +49,7 @@ i=0
 for host in $host1 $host2;
 do
 i=$[$i+1]
-ssh root@$host "expect $get_afstoken_script $afs_user $afs_pass; touch $log_location/$host; $setup_node_script $i $log_location/$host" >> $log_location/$hostname &
+ssh root@$host "expect $get_afstoken_script $afs_user $afs_pass; touch $log_location/$host; $setup_node_script $i $log_location/$host" 2>&1 >> $log_location/$hostname &
 echo "$host started"
 done
 

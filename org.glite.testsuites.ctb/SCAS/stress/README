@@ -82,7 +82,9 @@ get_afstoken_script
 pass_file
 afs_pass_file
 afs_user
-
+users_certs_dir
+glexec_stress_script
+proxy_ren_script
 
 - setup_node.sh -
 Usage: ./setup_node.sh <index> <log file>

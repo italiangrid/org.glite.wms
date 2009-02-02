@@ -25,7 +25,7 @@ cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.test
 #configure the node
 /opt/glite/yaim/bin/yaim -c -s /etc/yaim/site-info.def -n glite-WN GLEXEC_wn
 
-#TO DO
-mv /etc/cron.daily/logrotate /etc/cron.hourly/
 #change log rotation for lcaslcmaps and glexec
-
+mv /etc/cron.daily/logrotate /etc/cron.hourly/
+cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_wn_lcaslcmaps_log /etc/logrotate.d/
+cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_wn_log /etc/logrotate.d/

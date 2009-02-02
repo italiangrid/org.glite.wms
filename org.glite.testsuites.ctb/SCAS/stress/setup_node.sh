@@ -50,6 +50,8 @@ echo "Retrieving proxy renewal script"
 cp -f --reply=yes $proxy_ren_script ./
 echo "Starting proxy renewal daemon"
 ./proxy_renewal.sh $INDEX &
+#TODO
+#kill this process before quitting
 
 #Give time to create the proxy
 sleep 10s
@@ -65,14 +67,14 @@ sleep 10s
 #  exit 1
 #fi
 
-cp -f ./glexec_stress_test.sh /home/dteampilot$INDEX 2>&1 >> $LOG_FILE
-chown dteampilot$INDEX /home/dteampilot$INDEX/glexec_stress_test.sh 2>&1 >> $LOG_FILE
-chown dteampilot$INDEX /home/dteampilot$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
-chmod u+x /home/dteampilot$INDEX/glexec_stress_test.sh 2>&1 >> $LOG_FILE
+cp -f ./glexec_stress_test.sh /home/dteampilot$INDEX >> $LOG_FILE 2>&1
+chown dteampilot$INDEX /home/dteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
+chown dteampilot$INDEX /home/dteampilot$INDEX/x509up_u501_$INDEX >> $LOG_FILE 2>&1
+chmod u+x /home/dteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
 
 
 echo "Starting glexec test as dteampilot$INDEX"
-su - -c "/home/dteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 2 -i $INDEX" dteampilot$INDEX
+su - -c "/home/dteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 4 -i $INDEX" dteampilot$INDEX
 #su - -c "/home/dteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902010830 -i $INDEX" dteampilot$INDEX
 
 exit 0

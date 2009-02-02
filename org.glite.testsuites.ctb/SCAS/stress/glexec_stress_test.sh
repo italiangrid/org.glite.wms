@@ -111,7 +111,7 @@ if [ ! -z $END_DATE ]; then
   do
     let "executions += 1"
     START_TIME=`date +%s.%N`
-    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" 2>&1 >> $LOG_FILE
+    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE 2>&1
     if [ $? -ne 0 ];then
       let "failures +=1"
     fi
@@ -127,7 +127,7 @@ if [ ! -z $ITERATIONS ]; then
   while [ $count -le $ITERATIONS ]
   do
     START_TIME=`date +%s.%N`
-    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" 2>&1 >> $LOG_FILE
+    $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE 2>&1
     if [ $? -ne 0 ];then
       let "failures +=1"
     fi
