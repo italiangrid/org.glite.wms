@@ -258,8 +258,9 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     
     vector<boost::tuple<string, string, string, time_t, int> >::const_iterator it = allDelegations.begin();
     
-    map<string, time_t> mapDelegTime;
-    
+    //    map<string, time_t> mapDelegTime;
+    map<string, pair<time_t, int> > mapDelegTime; // delegationID -> (Expiration time, Absolute Duration)
+
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                     << "There are [" << allDelegations.size() 
                     << "] Delegation(s) to check..."
@@ -275,7 +276,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
         string thisDelegID   = it->get<0>();        
         int    thisDuration  = it->get<4>();
         
-        mapDelegTime[ thisDelegID ] = thisExpTime;
+        //mapDelegTime[ thisDelegID ] = thisExpTime;
+	mapDelegTime[ thisDelegID ] = make_pair(thisExpTime, thisDuration);
         
         /**
            if the current delegation ID is not expiring then skip it
@@ -293,7 +295,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
                                 << time_t_to_string(thisExpTime) << "]). Duration is ["
                                 << thisDuration << "] seconds. Will NOT renew it now..."
                                 );
-
+		mapDelegTime.erase( thisDelegID );
+		mapDelegJob.erase( thisDelegID );
                 continue;
                 
             }
@@ -347,7 +350,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
                                    thisBetterPrx.first,
                                    thisDelegID).execute( 3 );
             
-            mapDelegTime[ thisDelegID ] = thisBetterPrx.second;
+            //mapDelegTime[ thisDelegID ] = thisBetterPrx.second;
+	    mapDelegTime[ thisDelegID ] = make_pair(thisBetterPrx.second, thisBetterPrx.second - time(0) );
             
         } catch( exception& ex ) {
             CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
@@ -370,17 +374,21 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
             
             for(list<CreamJob>::iterator jobIT = delegationIT->second.begin();
                 jobIT != delegationIT->second.end(); ++jobIT) {                
-                jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ] );
+	      //jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ] );
+	      jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ].first );
                 m_cache->put( *jobIT );
             }
             
         }
     }
     
-    for(map<string, time_t>::iterator it = mapDelegTime.begin();
+    //for(map<string, time_t>::iterator it = mapDelegTime.begin();
+    for(map<string, pair<time_t, int> >::iterator it = mapDelegTime.begin();
         it != mapDelegTime.end(); ++it) {
         
-        Delegation_manager::instance()->updateDelegation( boost::make_tuple((*it).first, (*it).second, (*it).second-time(0)) );
+      //Delegation_manager::instance()->updateDelegation( boost::make_tuple((*it).first, (*it).second, (*it).second-time(0)) );
+      Delegation_manager::instance()->updateDelegation( boost::make_tuple((*it).first, (*it).second.first, (*it).second.second ) );
+
         
     }    
 }
