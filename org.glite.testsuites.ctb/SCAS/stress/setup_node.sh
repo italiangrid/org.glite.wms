@@ -22,44 +22,51 @@ else
 fi
 
 
-#CHANGE BACK THIS: getting an error when using test_user cert
-#get test_user_10$1 cert/key and create a proxy
-#rm -f test_user_*.pem x509up_u501*
-#cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_101_cert.pem ./
-#cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_101_key.pem ./
+#get test_user_50x cert/key
+rm -f test_user_*.pem x509up_u501*
+cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_cert.pem ./
+cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_key.pem ./
 
-#echo "test" | glite-voms-proxy-init -quiet --voms dteam -cert ./test_user_101_cert.pem -key test_user_101_key.pem -out ./x509up_u501_$INDEX -pwstdin 2>&1 >> /dev/null
+#echo "test" | glite-voms-proxy-init -quiet --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin 2>&1 >> /dev/null
 #true
 
-if [ $? -ne 0 ]; then
-  echo "Error creating the proxy"
-  exit 1
-fi
-echo "User proxy ./x509up_u501_$INDEX succesfully created"
+#if [ $? -ne 0 ]; then
+#  echo "Error creating the proxy"
+#  exit 1
+#fi
+#echo "User proxy ./x509up_u501_$INDEX succesfully created"
 
-#start proxy renewal daemon
+
+echo "Retrieving glexec test script"
+cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_stress_test.sh ./
+echo "Retrieving proxy renewal script"
+cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/proxy_renewal.sh ./
 echo "Starting proxy renewal daemon"
-#TODO!!
+./proxy_renewal.sh $INDEX &
 
-echo "Retrieving glexec test"
-cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/glexec_stress_test.sh ./
-
-echo "Copying test and proxy to ~pildtm0$INDEX"
+#Give time to create the proxy
+sleep 10s
 
 #CHANGE THIS: use special certificate
-cp -f /afs/cern.ch/user/p/pucciani/tmp/x509up_u501_t500 /home/pildtm0$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
+#cp -f /afs/cern.ch/user/p/pucciani/tmp/x509up_u501_g /home/dteampilot$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
+
+#echo "Copying test and proxy to ~dteampilot$INDEX"
+
+#cp -f x509up_u501_$INDEX /home/dteampilot$INDEX 2>&1 >> $LOG_FILE
+#if [ $? -ne 0 ]; then
+#  echo "Error copying the proxy"
+#  exit 1
+#fi
+
+cp -f ./glexec_stress_test.sh /home/dteampilot$INDEX 2>&1 >> $LOG_FILE
+chown dteampilot$INDEX /home/dteampilot$INDEX/glexec_stress_test.sh 2>&1 >> $LOG_FILE
+chown dteampilot$INDEX /home/dteampilot$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
+chmod u+x /home/dteampilot$INDEX/glexec_stress_test.sh 2>&1 >> $LOG_FILE
 
 
-#cp -f x509up_u501_$INDEX /home/pildtm0$INDEX 2>&1 >> $LOG_FILE
-cp -f ./glexec_stress_test.sh /home/pildtm0$INDEX 2>&1 >> $LOG_FILE
-chown pildtm0$INDEX /home/pildtm0$INDEX/glexec_stress_test.sh 2>&1 >> $LOG_FILE
-chown pildtm0$INDEX /home/pildtm0$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
-chmod u+x /home/pildtm0$INDEX/glexec_stress_test.sh 2>&1 >> $LOG_FILE
-
-
-echo "Starting glexec test as pildtm0$INDEX"
-su - -c "/home/pildtm0$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 2 -i $INDEX" pildtm0$INDEX
-#su - -c "/home/pildtm0$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200901240830 -i $INDEX" pildtm0$INDEX
+echo "Starting glexec test as dteampilot$INDEX"
+su - -c "/home/dteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 2 -i $INDEX" dteampilot$INDEX
+#su - -c "/home/dteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902010830 -i $INDEX" dteampilot$INDEX
 
 exit 0
 
