@@ -87,8 +87,9 @@ export X509_USER_PROXY=$GLEXEC_CLIENT_CERT
 echo "Using proxy $user_proxy"
 
 DATA_FILE=${LOG_FILE}_data
-rm -f $DATA_FILE
-touch $DATA_FILE
+ERROR_FILE=${LOG_FILE}_data
+rm -f $DATA_FILE $ERROR_FILE
+touch $DATA_FILE $ERROR_FILE
 
 #Wait for the start signal
 while [ ! `grep 'START' $LOG_FILE` ]
@@ -105,6 +106,10 @@ else
 fi
 
 
+#reset the failed flag
+failed=0
+
+#Main Loop
 if [ ! -z $END_DATE ]; then
   CURR_DATE=`date +%Y%m%d%H%M`
   while [ $CURR_DATE -lt $END_DATE ]
@@ -114,10 +119,16 @@ if [ ! -z $END_DATE ]; then
     $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE 2>&1
     if [ $? -ne 0 ];then
       let "failures +=1"
+      failed=1
+    else
+      failed=0
     fi
     END_TIME=`date +%s.%N`
     TIME=`echo "$START_TIME $END_TIME" | awk '{print $2-$1}'`
     echo "`date +%s`,$TIME" >> $DATA_FILE
+    if [ $failed -eq 1 ]
+      echo "`date +%s`" >> $ERROR_FILE
+    fi
     CURR_DATE=`date +%Y%m%d%H%M`
   done
 fi
