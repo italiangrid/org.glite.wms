@@ -96,14 +96,25 @@ do
   sleep 1
 done
 
+#Trace successes and failures of glexec calls
+failures=0
+if [ ! -z $ITERATIONS ]; then
+  executions=$ITERATIONS
+else
+  executions=0
+fi
+
+
 if [ ! -z $END_DATE ]; then
   CURR_DATE=`date +%Y%m%d%H%M`
   while [ $CURR_DATE -lt $END_DATE ]
   do
+    let "executions += 1"
     START_TIME=`date +%s.%N`
     $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" 2>&1 >> $LOG_FILE
-#    TIME=`/usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE`
-#    TIME=`/usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE`
+    if [ $? -ne 0 ];then
+      let "failures +=1"
+    fi
     END_TIME=`date +%s.%N`
     TIME=`echo "$START_TIME $END_TIME" | awk '{print $2-$1}'`
     echo "`date +%s`,$TIME" >> $DATA_FILE
@@ -117,8 +128,9 @@ if [ ! -z $ITERATIONS ]; then
   do
     START_TIME=`date +%s.%N`
     $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" 2>&1 >> $LOG_FILE
-#    /usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE
-#    TIME=`/usr/bin/time -f "%e" $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE`
+    if [ $? -ne 0 ];then
+      let "failures +=1"
+    fi
     END_TIME=`date +%s.%N`
     TIME=`echo "$START_TIME $END_TIME" | awk '{print $2-$1}'`
     echo "`date +%s`,$TIME" >> $DATA_FILE
@@ -126,6 +138,8 @@ if [ ! -z $ITERATIONS ]; then
   done
 fi
 
+echo "#Executions: $executions" >> $LOG_FILE
+echo "#Failures: $failures" >> $LOG_FILE
 echo "END"
 
 exit 0
