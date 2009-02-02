@@ -141,15 +141,15 @@ setup_test.sh, and it is named as the host that will write on that file.
 Usage: ./scas-mon.pl
 
 This is a monitor script for SCAS daemon. Upon startup it will look through process
-table for an active SCAS daemon, hence the script must be started after SCAS.
+table for an active SCAS daemons.
 A log file /var/tmp/scas-mon.log will be written in CSV format with the following
-fields: Timestamp in seconds since epoch, Load1, Load5, Load15, Number of open FDs
-and Memory consumption in kilobytes.
+fields: Timestamp in seconds since epoch, Load1, Load5, Load15, Number of open FDs,
+Memory consumption in kilobytes and number of SCAS processes.
 Records are made every 5 seconds. Script does not accept any parameters and
 all reconfiguration (process name, log file path, time interval) must be done
 by editing the script (but default parameters are just fine).
-The string 'Monitored process has died' will be printed when, during the monitoring,
-the monitored process dies.
+Script will stay in memory even if all SCAS daemons die. It will pick ip new ones
+as soon as they are started.
 
 - combine.pl -
 Usage: ./combine.pl <log1> <log2> ...
@@ -173,6 +173,13 @@ Usage: ./mkugconf.pl -v <vo>,... [-g <group>,...] [-r <role>,...] [-n <num>]
 This script is intended for easy creation of users.conf and groups.conf files for
 YAIM. It accepts a comma-separated lists of VOs, groups and roles and creates both
 files with all possible combinations.
+
+- userwipe.pl -
+Usage: ./userwipe.pl <uid regexp>
+
+This script will erase all (pool) accounts with UIDs that match the regexp.
+Corresponding home directories and groups will also be removed. You should
+type "yes" on a terminal in order to let the script do its dirty job.
 
 - proxy_renewal.sh -
 Usage: ./proxy_renewal.sh <index>"
