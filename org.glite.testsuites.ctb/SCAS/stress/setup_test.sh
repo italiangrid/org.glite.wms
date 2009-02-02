@@ -23,6 +23,7 @@ afs_pass=`cat $afs_pass_file`
 hostname=`hostname`
 host1=vtb-generic-110.cern.ch
 host2=vtb-generic-111.cern.ch
+host3=lxb7606v1.cern.ch
 #host1=lxb7605v1.cern.ch
 #host2=lxb7605v2.cern.ch
 #host3=lxb7605v3.cern.ch

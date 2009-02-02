@@ -23,9 +23,9 @@ fi
 
 
 #get test_user_50x cert/key
-rm -f test_user_*.pem x509up_u501*
-cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_cert.pem ./
-cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_key.pem ./
+#rm -f test_user_*.pem x509up_u501*
+#cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_cert.pem ./
+#cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_key.pem ./
 
 #echo "test" | glite-voms-proxy-init -quiet --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin 2>&1 >> /dev/null
 #true
@@ -36,11 +36,18 @@ cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50$
 #fi
 #echo "User proxy ./x509up_u501_$INDEX succesfully created"
 
+#Retrieve the configuration file
+source /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/setup_test.cfg
+if [ $? -ne 0 ]; then
+  echo "Error sourcing the setup_test.cfg file"
+  exit 1
+fi
+
 
 echo "Retrieving glexec test script"
-cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_stress_test.sh ./
+cp -f --reply=yes $glexec_stress_script ./
 echo "Retrieving proxy renewal script"
-cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/proxy_renewal.sh ./
+cp -f --reply=yes $proxy_ren_script ./
 echo "Starting proxy renewal daemon"
 ./proxy_renewal.sh $INDEX &
 

@@ -171,3 +171,15 @@ Usage: ./mkugconf.pl -v <vo>,... [-g <group>,...] [-r <role>,...] [-n <num>]
 This script is intended for easy creation of users.conf and groups.conf files for
 YAIM. It accepts a comma-separated lists of VOs, groups and roles and creates both
 files with all possible combinations.
+
+- proxy_renewal.sh -
+Usage: ./proxy_renewal.sh <index>"
+  <index> integer number to discriminate clients in the test"
+
+This script creates a proxy certificate for test users 50x and
+renew the proxy every hour.
+The index that must be given as argument is used to choose the user.
+The proxy is created into the current directory and copied
+into the pilot user account: pilotdteamx
+
+
