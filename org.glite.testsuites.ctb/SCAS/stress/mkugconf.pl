@@ -43,6 +43,8 @@ foreach my $vo (split /,/, $opts{v}) {
 			my $sgnf = $sgnam ? ",$sgnam": ($role and ! $grp ? ",-" : "");
 			my $fqan = "/$vo" . ($grp ? "/$grp" : "") . ($role ? "/ROLE=$role" : "");
 			print GRP "\"$fqan\"", $sgnam, $sgid, $role, $vo;
+			my $lim = $opts{n};
+			$lim++ if ! $role and ! $grp;
 			for(my $i = 1; $i <= $opts{n}; $i++) {
 				print USR $uid++, $nam . $grp . $role . $ucnt++, $pgid . $sgif, "${nam}1" . $sgnf, $vo, $role;
 			}
