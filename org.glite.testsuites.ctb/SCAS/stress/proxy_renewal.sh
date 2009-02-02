@@ -21,8 +21,8 @@ fi
 
 #TODO remove hardcoded path
 echo "Retrieving test user cert and key"
-cp --reply=yes /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_cert.pem ./
-cp --reply=yes /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_key.pem ./
+cp --reply=yes $users_certs_dir/test_user_50${INDEX}_cert.pem ./
+cp --reply=yes $users_certs_dir/test_user_50${INDEX}_key.pem ./
 chown root ./test_user_50${INDEX}_cert.pem
 chown root ./test_user_50${INDEX}_key.pem
 
