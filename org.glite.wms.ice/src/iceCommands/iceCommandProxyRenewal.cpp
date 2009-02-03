@@ -40,6 +40,7 @@
  * Cream Client API C++ Headers
  *
  */
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 
@@ -74,44 +75,49 @@ void iceCommandProxyRenewal::execute( void ) throw()
 {  
     static const char* method_name = "iceCommandProxyRenewal()::execute() - ";
 
+#ifdef ICE_PROFILE_ENABLE
+  api_util::scoped_timer T( "iceCommandProxyRenewal::execute()" );
+#endif
+
     set<string> allPhysicalProxyFiles;
-    {    
-        /** 
-            lock the cache
-        */
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+
         
-        /**
-           First: must check all on-disk different proxyfiles for the
-           recently modified in order to update the better proxy
-        */
-
-        CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name 
-                       << "Going to collect al physical different proxies that has been renewed..."
-                       );
-
-        // this is matter of cycle over the cache and get and readlink
-        // the certs it should be quite fast.
-        getAllPhysicalNewProxies( allPhysicalProxyFiles );
-        
-        CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-                       << "Found " << allPhysicalProxyFiles.size() 
-                       << " physical proxies modified:"
-                       );
-
-        for(set<string>::const_iterator it=allPhysicalProxyFiles.begin();
-            it != allPhysicalProxyFiles.end();
-            ++it) {
-            CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                           << "Renewed physical proxy: [" << *it << "]"
-                           );
-        }
+    /**
+       Let's move this mutex into the getAllPhysicalNewProxies method
+       in order to make it faster...
+    */
+    //glite::wms::ice::util::iceMutex M(method_name, jobCache::s_mutex );
     
-    } // unlock the jobCache
+    /**
+       First: must check all on-disk different proxyfiles for the
+       recently modified in order to update the better proxy
+    */
+    
+    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name 
+		   << "Going to collect all physical different proxies that has been renewed..."
+		   );
+    
+    // this is matter of cycle over the cache and get and readlink
+    // the certs it should be quite fast.
+    getAllPhysicalNewProxies( allPhysicalProxyFiles );
+    
+    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
+		   << "Found " << allPhysicalProxyFiles.size() 
+		   << " physical proxies modified:"
+		   );
+    
+    for(set<string>::const_iterator it=allPhysicalProxyFiles.begin();
+	it != allPhysicalProxyFiles.end();
+	++it) {
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		     << "Renewed physical proxy: [" << *it << "]"
+		     );
+    }
+    
   
     /**
        Second: in allPhysicalProxyFiles set there are all different
-       physical proxy files that have been "touched" (i.e. renewd by
+       physical proxy files that have been "touched" (i.e. renewed by
        myproxy).  Now let's check all of them to update the better
        proxies... also we hope that in the meanwhile the proxy files
        do not disappear from disk.
@@ -136,21 +142,49 @@ void iceCommandProxyRenewal::getAllPhysicalNewProxies( set<string>& allPhysicalP
 
     static const char* method_name = "iceCommandProxyRenewal::getAllPhysicalNewProxies() - ";
     string thisProxy;
+
+    list<CreamJob> allJobs;
+
+    { // collect all jobs from jobcache
+
+      //glite::wms::ice::util::iceMutex M(method_name, jobCache::s_mutex );
+      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      
+      for( jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt)
+	{
+	  if ( jobIt->getCompleteCreamJobID().empty() )
+	    continue;
+	  
+// 	  allProxiesAndJobs.insert( boost:make_tuple(jobIt->getUserProxyCertificate(),
+// 						     jotIt->getCompleteCreamJobID(),
+// 						     jotIt->getGridJobID(),
+// 						     jobIt->getProxyCertLastMTime()
+// 						     )
+// 				    );
+	  
+	  allJobs.push_back( *jobIt );
+	  
+	}
+    } // unlock the cache
+
     /**
        loop over all jobs in the cache. Must loop over all the cache
        because for each job must also update the last modification
        time of the certificate
     */
-    for( jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
+    //    for( jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
         // Skip jobs which do not have the CREAM job id yet. Those are
         // jobs being submitted, whose submission operation did not
         // complete so far.
-        if ( jobIt->getCompleteCreamJobID().empty() )
-            continue;
-        
+    //        if ( jobIt->getCompleteCreamJobID().empty() )
+    //            continue;
+    for( list<CreamJob>::iterator jit = allJobs.begin();
+	 jit != allJobs.end();
+	 ++jit)
+      {
         struct stat buf;
         
-        thisProxy = jobIt->getUserProxyCertificate();
+        thisProxy = jit->getUserProxyCertificate();
         
         CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                        << "Checking proxyfile ["
@@ -161,9 +195,9 @@ void iceCommandProxyRenewal::getAllPhysicalNewProxies( set<string>& allPhysicalP
             int saveerr = errno;
             CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
                            << "Cannot stat proxy file ["
-                           << thisProxy << "] for job "
-                           << jobIt->describe()
-                           << ": " 
+                           << thisProxy << "] related to Job ["
+			   << jit->describe()
+			   << "]: "
                            << strerror( saveerr )
                            << ". Skipping it..."
                            );
@@ -173,18 +207,19 @@ void iceCommandProxyRenewal::getAllPhysicalNewProxies( set<string>& allPhysicalP
         
         /**
            If file has been touched, we assume the proxy renewal
-           (myproxy) renewed it
+           (myproxy) has renewed it
         */
-        if( buf.st_mtime > jobIt->getProxyCertLastMTime() ) {
+        if( buf.st_mtime > jit->getProxyCertLastMTime() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                            << "Proxy file ["
-                           << thisProxy << "] for job "
-                           << jobIt->describe()
-                           << " was modified on "
+                           << thisProxy
+			   << "] related to CREAM JobID ["
+			   << jit->describe()
+                           << "] was modified on "
                            << time_t_to_string( buf.st_mtime )
                            << ", the last proxy file modification time "
                            << "recorded by ICE is "
-                           << time_t_to_string( jobIt->getProxyCertLastMTime() )
+                           << time_t_to_string( jit->getProxyCertLastMTime() )
                            << ". Will use it to check the better proxy of the same user."
                            );
             
@@ -217,13 +252,19 @@ void iceCommandProxyRenewal::getAllPhysicalNewProxies( set<string>& allPhysicalP
                                << "The proxyfile ["
                                << thisProxy << "] is NOT a symlink."
                                );
-                allPhysicalProxyFiles.insert(thisProxy);
+                allPhysicalProxyFiles.insert( thisProxy );
             }
             
-            jobIt->setProxyCertMTime( buf.st_mtime );
-            m_cache->put( *jobIt );
+	    {// Re-read the job before to put it in cache
+	      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	      //glite::wms::ice::util::iceMutex M( "", jobCache::s_mutex );
+	      jobCache::iterator toSave = m_cache->lookupByGridJobID( jit->getGridJobID() );
+	      toSave->setProxyCertMTime( buf.st_mtime );
+	    
+	      m_cache->put( *toSave );
+	    }
             
-        }
+        } // if( buf.st_mtime > jit->getProxyCertLastMTime() ) 
     }
 }
 
@@ -235,6 +276,10 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     /**
        Now, let's check all delegations for expiration and renew them
     */
+
+#ifdef ICE_PROFILE_ENABLE
+  api_util::scoped_timer T( "iceCommandProxyRenewal::renewAllDelegations()" );
+#endif
 
     vector< boost::tuple< string, string, string, time_t, int> > allDelegations;
     map< string, CreamJob > delegID_CreamJob;
@@ -248,7 +293,9 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     */
     map<string, list<CreamJob> > mapDelegJob;
     {
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      //glite::wms::ice::util::iceMutex M(method_name, jobCache::s_mutex );
+
         for( jobCache::iterator jobit = m_cache->begin(); jobit != m_cache->end(); ++jobit ) {
             if ( ! jobit->getCompleteCreamJobID().empty() ) {
                 mapDelegJob[ jobit->getDelegationId() ].push_back( *jobit );
@@ -258,9 +305,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     
     vector<boost::tuple<string, string, string, time_t, int> >::const_iterator it = allDelegations.begin();
     
-    //    map<string, time_t> mapDelegTime;
     map<string, pair<time_t, int> > mapDelegTime; // delegationID -> (Expiration time, Absolute Duration)
-
+    
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                     << "There are [" << allDelegations.size() 
                     << "] Delegation(s) to check..."
@@ -276,8 +322,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
         string thisDelegID   = it->get<0>();        
         int    thisDuration  = it->get<4>();
         
-        //mapDelegTime[ thisDelegID ] = thisExpTime;
-	mapDelegTime[ thisDelegID ] = make_pair(thisExpTime, thisDuration);
+        mapDelegTime[ thisDelegID ] = make_pair(thisExpTime, thisDuration);
         
         /**
            if the current delegation ID is not expiring then skip it
@@ -350,8 +395,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
                                    thisBetterPrx.first,
                                    thisDelegID).execute( 3 );
             
-            //mapDelegTime[ thisDelegID ] = thisBetterPrx.second;
-	    mapDelegTime[ thisDelegID ] = make_pair(thisBetterPrx.second, thisBetterPrx.second - time(0) );
+            mapDelegTime[ thisDelegID ] = make_pair(thisBetterPrx.second, thisBetterPrx.second - time(0) );
             
         } catch( exception& ex ) {
             CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
@@ -363,32 +407,36 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     }
     
     /**
-       Now that all delegations have been renewed; lets update the
+       Now that all delegations have been renewed; let's update the
        jobCache and the Delegation_manager's cache too
     */
     {
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      //      glite::wms::ice::util::iceMutex M(method_name, jobCache::s_mutex );
 
         for( map<string, list<CreamJob> >::iterator delegationIT = mapDelegJob.begin();
              delegationIT != mapDelegJob.end(); ++delegationIT ) {      
             
             for(list<CreamJob>::iterator jobIT = delegationIT->second.begin();
-                jobIT != delegationIT->second.end(); ++jobIT) {                
-	      //jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ] );
-	      jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ].first );
-                m_cache->put( *jobIT );
-            }
+                jobIT != delegationIT->second.end(); ++jobIT) 
+	      {                
+		
+		jobCache::iterator toSave = m_cache->lookupByGridJobID( jobIT->getGridJobID() );
+		if( toSave != m_cache->end() ) {
+		  //jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ].first );
+		  toSave->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ].first );
+		  //m_cache->put( *jobIT );
+		  m_cache->put( *toSave );
+		}
+	      }
             
-        }
-    }
+        } // for
+    } // unlock the cache
     
-    //for(map<string, time_t>::iterator it = mapDelegTime.begin();
     for(map<string, pair<time_t, int> >::iterator it = mapDelegTime.begin();
         it != mapDelegTime.end(); ++it) {
         
-      //Delegation_manager::instance()->updateDelegation( boost::make_tuple((*it).first, (*it).second, (*it).second-time(0)) );
-      Delegation_manager::instance()->updateDelegation( boost::make_tuple((*it).first, (*it).second.first, (*it).second.second ) );
-
+        Delegation_manager::instance()->updateDelegation( boost::make_tuple((*it).first, (*it).second.first, (*it).second.second ) );
         
     }    
 }
