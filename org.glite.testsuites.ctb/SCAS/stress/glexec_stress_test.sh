@@ -87,7 +87,7 @@ export X509_USER_PROXY=$GLEXEC_CLIENT_CERT
 echo "Using proxy $user_proxy"
 
 DATA_FILE=${LOG_FILE}_data
-ERROR_FILE=${LOG_FILE}_data
+ERROR_FILE=${LOG_FILE}_error
 rm -f $DATA_FILE $ERROR_FILE
 touch $DATA_FILE $ERROR_FILE
 
@@ -126,7 +126,7 @@ if [ ! -z $END_DATE ]; then
     END_TIME=`date +%s.%N`
     TIME=`echo "$START_TIME $END_TIME" | awk '{print $2-$1}'`
     echo "`date +%s`,$TIME" >> $DATA_FILE
-    if [ $failed -eq 1 ]
+    if [ $failed -eq 1 ]; then
       echo "`date +%s`" >> $ERROR_FILE
     fi
     CURR_DATE=`date +%Y%m%d%H%M`

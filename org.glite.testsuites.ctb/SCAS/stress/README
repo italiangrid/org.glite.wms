@@ -5,6 +5,10 @@
 #
 ##############################################################################
 
+The procedure to follow for the WN installation is described in
+wn_installation.txt.
+
+
 The following scripts are meant to be used during the certification of the
 first SCAS patch to run stress tests.
 
@@ -189,6 +193,18 @@ This script creates a proxy certificate for test users 50x and
 renew the proxy every hour.
 The index that must be given as argument is used to choose the user.
 The proxy is created into the current directory and copied
-into the pilot user account: pilotdteamx
+into the pilot user account: dteamdteampilotx
+
+- start_stress_test.sh -
+Usage: ./start_stress_test.sh
+
+This file can be used to start the stress test on all the machines
+at the same time. It will insert the string 'START' in the hosts
+log files to trigger the start of the stress test.
 
 
+- vomses.tar.gz -
+This file is used to create the /opt/glite/etc/vomses directory
+that is not present in a WN installation but is used by the
+proxy_renewal script.
+This file must be extracted as explained in wn_installation.txt.

@@ -22,6 +22,9 @@ cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.test
 cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/users.conf /etc/yaim/users.conf
 cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/groups.conf /etc/yaim/groups.conf
 
+#install vomses files (for proxy renewal)
+tar -xvzf /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/vomses.tar.gz -C /
+
 #configure the node
 /opt/glite/yaim/bin/yaim -c -s /etc/yaim/site-info.def -n glite-WN GLEXEC_wn
 

@@ -1,5 +1,9 @@
 #!/bin/sh
 
+
+#TODO
+#Redirect all the output messages to the log file
+
 function usage() {
 echo "Usage: ./setup_node.sh <index> <log file>"
 echo "    <index> integer number to identify the node."
@@ -50,8 +54,7 @@ echo "Retrieving proxy renewal script"
 cp -f --reply=yes $proxy_ren_script ./
 echo "Starting proxy renewal daemon"
 ./proxy_renewal.sh $INDEX &
-#TODO
-#kill this process before quitting
+proxy_renewal_pid=$! 
 
 #Give time to create the proxy
 sleep 10s
@@ -67,15 +70,23 @@ sleep 10s
 #  exit 1
 #fi
 
-cp -f ./glexec_stress_test.sh /home/dteampilot$INDEX >> $LOG_FILE 2>&1
-chown dteampilot$INDEX /home/dteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
-chown dteampilot$INDEX /home/dteampilot$INDEX/x509up_u501_$INDEX >> $LOG_FILE 2>&1
-chmod u+x /home/dteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
+cp -f ./glexec_stress_test.sh /home/dteamdteampilot$INDEX >> $LOG_FILE 2>&1
+chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
+chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/x509up_u501_$INDEX >> $LOG_FILE 2>&1
+chmod u+x /home/dteamdteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
 
 
-echo "Starting glexec test as dteampilot$INDEX"
-su - -c "/home/dteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 4 -i $INDEX" dteampilot$INDEX
-#su - -c "/home/dteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902010830 -i $INDEX" dteampilot$INDEX
+echo "Starting glexec test as dteamdteampilot$INDEX"
+#su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX
+su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902041400 -i $INDEX" dteamdteampilot$INDEX
+
+#kill the proxy renewal process
+kill $proxy_renewal_pid
+if [ $? -eq 0 ];then
+  echo "Proxy renewal daemon killed"
+else
+  echo "Error in killing proxy renewal daemon, pid is $proxy_renewal_pid"
+fi
 
 exit 0
 

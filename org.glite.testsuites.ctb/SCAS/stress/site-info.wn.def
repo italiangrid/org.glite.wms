@@ -239,8 +239,8 @@ GRID_TRUSTED_BROKERS="
 # RGMA configuration variables #
 ################################
 
-MON_HOST=lxb7607v1.$MY_DOMAIN
-REG_HOST=lxb7607v1.$MY_DOMAIN
+MON_HOST=lxb7604.$MY_DOMAIN
+REG_HOST=lxb7604.$MY_DOMAIN
 
 ###################################
 # FTS configuration variables #
@@ -433,13 +433,13 @@ DCACHE_POOLS="my-pool-node1:[size]:/pool-path1 my-pool-node2:/pool-path2"
 # directories and runs the daemons.
 
 # The name of the DPM head node 
-DPM_HOST="lxb7607v1.$MY_DOMAIN"   # my-dpm.$MY_DOMAIN
+DPM_HOST="lxb7608v1.$MY_DOMAIN"   # my-dpm.$MY_DOMAIN
 
 # The DPM pool name (max 15 character long name)
 DPMPOOL=the_dpm_pool
 
 # The filesystems/partitions parts of the pool
-DPM_FILESYSTEMS="$DPM_HOST:/storage lxb7608v2.$MY_DOMAIN:/path2 lxfsrd0502.$MY_DOMAIN:/storage"
+DPM_FILESYSTEMS="$DPM_HOST:/storage lxbra7606.$MY_DOMAIN:/path2"
 
 # The database user
 DPM_DB_USER=dpmdbuser
@@ -547,7 +547,7 @@ BDII_CREAMCE_URL="ldap://$CREAMCE_HOST:2170/mds-vo-name=resource,o=grid"
 
 GLEXEC_WN_OPMODE=setuid
 GLEXEC_WN_SCAS_ENABLED=yes
-SCAS_HOST=vtb-generic-115.cern.ch
+SCAS_HOST=vtb-generic-83.cern.ch
 SCAS_PORT=8443
 GLEXEC_WN_LOG_DESTINATION=file
 GLEXEC_WN_LOG_FILE=/var/log/glexec/glexec.log
@@ -595,7 +595,13 @@ QUEUES=${VOS}
 # Ex.: MYQUEUE_GROUP_ENABLE="my.test-queue"
 #      MY_TEST_QUEUE_GROUP_ENABLE="ops atlas"
 
+ATLAS_GROUP_ENABLE="atlas"
+ALICE_GROUP_ENABLE="alice"
+LHCB_GROUP_ENABLE="lhcb"
+CMS_GROUP_ENABLE="cms"
 DTEAM_GROUP_ENABLE="dteam"
+BIOMED_GROUP_ENABLE="biomed"
+OPS_GROUP_ENABLE="ops"
 ORG_GLITE_VOMS_TEST_GROUP_ENABLE="org.glite.voms-test
 /VO=org.glite.voms-test/GROUP=/org.glite.voms-test/ROLE=lcgadmin
 /VO=org.glite.voms-test/GROUP=/org.glite.voms-test/ROLE=production"
@@ -606,6 +612,49 @@ VO_SW_DIR=/opt/exp_soft
 EDG_WL_SCRATCH=""
  
 #########
+# atlas #
+#########
+VO_ATLAS_SW_DIR=$VO_SW_DIR/atlas
+VO_ATLAS_DEFAULT_SE=$CLASSIC_HOST
+VO_ATLAS_STORAGE_DIR=$CLASSIC_STORAGE_DIR/atlas
+VO_ATLAS_VOMS_SERVERS='vomss://voms.cern.ch:8443/voms/atlas?/atlas/'
+#VO_ATLAS_VOMS_EXTRA_MAPS="'Role=production production' 'usatlas .usatlas'"
+VO_ATLAS_VOMSES="'atlas lcg-voms.cern.ch 15001 /DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch atlas 24' 'atlas voms.cern.ch 15001 /DC=ch/DC=cern/OU=computers/CN=voms.cern.ch atlas 24' 'atlas lxbra2309.cern.ch 15001 /DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch atlas 24'"
+VO_ATLAS_VOMS_CA_DN="'/DC=ch/DC=cern/CN=CERN Trusted Certification Authority' '/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'"
+#VO_ATLAS_RBS="atlasrb1.cern.ch atlasrb2.cern.ch"
+
+##########
+# alice  #
+##########
+VO_ALICE_SW_DIR=$VO_SW_DIR/alice
+VO_ALICE_DEFAULT_SE=$CLASSIC_HOST
+VO_ALICE_STORAGE_DIR=$CLASSIC_STORAGE_DIR/alice
+VO_ALICE_VOMS_SERVERS='vomss://voms.cern.ch:8443/voms/alice?/alice/'
+VO_ALICE_VOMSES="'alice lcg-voms.cern.ch 15000 /DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch alice 24' 'alice voms.cern.ch 15000 /DC=ch/DC=cern/OU=computers/CN=voms.cern.ch alice 24' "
+VO_ALICE_VOMS_CA_DN="'/DC=ch/DC=cern/CN=CERN Trusted Certification Authority' '/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'"
+
+#######
+# cms #
+#######
+VO_CMS_SW_DIR=$VO_SW_DIR/cms
+VO_CMS_DEFAULT_SE=$CLASSIC_HOST
+VO_CMS_STORAGE_DIR=$CLASSIC_STORAGE_DIR/cms
+VO_CMS_VOMS_SERVERS='vomss://voms.cern.ch:8443/voms/cms?/cms/'
+VO_CMS_VOMSES="'cms lcg-voms.cern.ch 15002 /DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch cms 24' 'cms voms.cern.ch 15002 /DC=ch/DC=cern/OU=computers/CN=voms.cern.ch cms 24'"
+VO_CMS_VOMS_CA_DN="'/DC=ch/DC=cern/CN=CERN Trusted Certification Authority' '/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'"
+
+########
+# lhcb #
+########
+VO_LHCB_SW_DIR=$VO_SW_DIR/lhcb
+VO_LHCB_DEFAULT_SE=$CLASSIC_HOST
+VO_LHCB_STORAGE_DIR=$CLASSIC_STORAGE_DIR/lhcb
+VO_LHCB_VOMS_SERVERS='vomss://voms.cern.ch:8443/voms/lhcb?/lhcb/'
+VO_LHCB_VOMS_EXTRA_MAPS="lcgprod lhcbprod"
+VO_LHCB_VOMSES="'lhcb lcg-voms.cern.ch 15003 /DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch lhcb 24' 'lhcb voms.cern.ch 15003 /DC=ch/DC=cern/OU=computers/CN=voms.cern.ch lhcb 24'"
+VO_LHCB_VOMS_CA_DN="'/DC=ch/DC=cern/CN=CERN Trusted Certification Authority' '/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'"
+
+#########
 # dteam #
 #########
 VO_DTEAM_SW_DIR=$VO_SW_DIR/dteam
@@ -614,6 +663,26 @@ VO_DTEAM_STORAGE_DIR=$CLASSIC_STORAGE_DIR/dteam
 VO_DTEAM_VOMS_SERVERS='vomss://lxbra2309.cern.ch:8443/voms/dteam?/dteam/'
 VO_DTEAM_VOMSES="'dteam lcg-voms.cern.ch 15004 /DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch dteam 24' 'dteam voms.cern.ch 15004 /DC=ch/DC=cern/OU=computers/CN=voms.cern.ch dteam 24' 'dteam lxbra2309.cern.ch 15002 /DC=ch/DC=cern/OU=computers/CN=lxbra2309.cern.ch dteam 24'"
 VO_DTEAM_VOMS_CA_DN="'/DC=ch/DC=cern/CN=CERN Trusted Certification Authority' '/DC=ch/DC=cern/CN=CERN Trusted Certification Authority' '/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'"
+
+##########
+# biomed #
+##########
+VO_BIOMED_SW_DIR=$VO_SW_DIR/biomed
+VO_BIOMED_DEFAULT_SE=$CLASSIC_HOST
+VO_BIOMED_STORAGE_DIR=$CLASSIC_STORAGE_DIR/biomed
+VO_BIOMED_VOMS_SERVERS="vomss://cclcgvomsli01.in2p3.fr:8443/voms/biomed?/biomed/"
+VO_BIOMED_VOMSES="'biomed cclcgvomsli01.in2p3.fr 15000 /O=GRID-FR/C=FR/O=CNRS/OU=CC-LYON/CN=cclcgvomsli01.in2p3.fr biomed 24'"
+VO_BIOMED_VOMS_CA_DN="'/C=FR/O=CNRS/CN=GRID-FR'"
+
+#######
+# ops #
+#######
+VO_OPS_SW_DIR=$VO_SW_DIR/ops
+VO_OPS_DEFAULT_SE=$CLASSIC_HOST
+VO_OPS_STORAGE_DIR=$CLASSIC_STORAGE_DIR/ops
+VO_OPS_VOMS_SERVERS="vomss://voms.cern.ch:8443/voms/ops?/ops/"
+VO_OPS_VOMSES="'ops lcg-voms.cern.ch 15009 /DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch ops 24' 'ops voms.cern.ch 15004 /DC=ch/DC=cern/OU=computers/CN=voms.cern.ch ops 24'"
+VO_OPS_VOMS_CA_DN="'/DC=ch/DC=cern/CN=CERN Trusted Certification Authority' '/DC=ch/DC=cern/CN=CERN Trusted Certification Authority'"
 
 
 #######################################

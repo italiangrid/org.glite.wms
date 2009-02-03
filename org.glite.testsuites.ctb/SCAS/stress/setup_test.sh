@@ -38,7 +38,7 @@ host3=lxb7606v1.cern.ch
 echo "Removing old log files"
 
 rm -f $log_location/$hostname
-for host in $host1 $host2;
+for host in $host1 $host2 $host3;
 do
   rm -f $log_location/$host
 done
@@ -46,7 +46,7 @@ done
 echo "Preparing the nodes"
 
 i=0
-for host in $host1 $host2;
+for host in $host1 $host2 $host3;
 do
 i=$[$i+1]
 ssh root@$host "expect $get_afstoken_script $afs_user $afs_pass; touch $log_location/$host; $setup_node_script $i $log_location/$host" 2>&1 >> $log_location/$hostname &
