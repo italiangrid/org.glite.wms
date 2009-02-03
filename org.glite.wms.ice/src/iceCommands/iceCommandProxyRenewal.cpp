@@ -259,9 +259,11 @@ void iceCommandProxyRenewal::getAllPhysicalNewProxies( set<string>& allPhysicalP
 	      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 	      //glite::wms::ice::util::iceMutex M( "", jobCache::s_mutex );
 	      jobCache::iterator toSave = m_cache->lookupByGridJobID( jit->getGridJobID() );
-	      toSave->setProxyCertMTime( buf.st_mtime );
-	    
-	      m_cache->put( *toSave );
+	      if( toSave != m_cache->end() ) {
+		toSave->setProxyCertMTime( buf.st_mtime );
+		
+		m_cache->put( *toSave );
+	      }
 	    }
             
         } // if( buf.st_mtime > jit->getProxyCertLastMTime() ) 
