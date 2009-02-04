@@ -31,7 +31,7 @@ soapC.cpp : wm.h
 	@echo "gsoap compiling .h"
 	$(GSOAP_LOCATION)/bin/soapcpp2  -I$(GSOAP_LOCATION)/include:$(GSOAP_LOCATION)/import wm.h
 
-
+soapClient.cpp : soapC.cpp
 
 lib_LTLIBRARIES = libglite_wms_wmproxy_api_cpp.la
 
