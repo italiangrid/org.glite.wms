@@ -32,3 +32,7 @@ tar -xvzf /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuite
 mv /etc/cron.daily/logrotate /etc/cron.hourly/
 cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_wn_lcaslcmaps_log /etc/logrotate.d/
 cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_wn_log /etc/logrotate.d/
+
+#change SCAS log rotation
+#edit /etc/logrotate.d/scas and change daily with size 500M (for example)
+mv /etc/cron.daily/logrotate /etc/cron.hourly/

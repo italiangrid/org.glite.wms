@@ -78,7 +78,7 @@ chmod u+x /home/dteamdteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
 
 echo "Starting glexec test as dteamdteampilot$INDEX"
 #su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX
-su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902041400 -i $INDEX" dteamdteampilot$INDEX
+su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902050900 -i $INDEX" dteamdteampilot$INDEX
 
 #kill the proxy renewal process
 kill $proxy_renewal_pid
