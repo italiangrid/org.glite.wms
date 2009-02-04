@@ -547,7 +547,7 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
     tmpTarget[ jit->getUserDN() ].insert( cemon );
     // {
     //  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
+//    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
     //}
     
     if( m_authz && m_authn ) {
