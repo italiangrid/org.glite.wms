@@ -51,7 +51,7 @@ echo "Entering the loop" >> $logfile
 while [ 1 ] 
 do
   sleep 1h
-  echo "Creating proxy file x509up_u501_$INDEX" >> $log_file
+  echo "Creating proxy file x509up_u501_$INDEX" >> $logfile
   echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin >> $logfile 2>&1
   if [ $? -ne 0 ]; then
     echo "Error creating the proxy" >> $logfile
