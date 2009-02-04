@@ -202,9 +202,15 @@ This file can be used to start the stress test on all the machines
 at the same time. It will insert the string 'START' in the hosts
 log files to trigger the start of the stress test.
 
-
 - vomses.tar.gz -
 This file is used to create the /opt/glite/etc/vomses directory
 that is not present in a WN installation but is used by the
 proxy_renewal script.
 This file must be extracted as explained in wn_installation.txt.
+
+- respTime.gnuplot -
+Usage: gnuplot <datafile>
+
+GNUPlot file to create a graph from the data files.
+The file with the graph is plot.ps.
+
