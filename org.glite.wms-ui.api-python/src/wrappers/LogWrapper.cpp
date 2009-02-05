@@ -1,6 +1,6 @@
 #include "LogWrapper.h"
 #include "glite/wmsutils/exception/Exception.h"
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 #include "glite/lb/consumer.h"
 //#include "glite/lb/producer.h"
 #include <stdio.h>
@@ -121,8 +121,8 @@ void LOG::regist( const std::string& jobid , const std::string& jdl , const std:
    error ="" ;
    error_code= 0 ;
    try{
-     glite::wmsutils::jobid::JobId jid ( jobid );
-     error_code =  edg_wll_RegisterJobSync ( ctx , jid.getId() ,  EDG_WLL_JOB_SIMPLE , jdl.c_str() , ns.c_str() , 0 ,  NULL, NULL)   ;
+     glite::jobid::JobId jid ( jobid );
+     error_code =  edg_wll_RegisterJobSync ( ctx , jid.c_jobid() ,  EDG_WLL_JOB_SIMPLE , jdl.c_str() , ns.c_str() , 0 ,  NULL, NULL)   ;
      if ( error_code !=0 ){
         char error_message [1024];
         char *msg, *dsc ;
@@ -175,8 +175,8 @@ void LOG::log_tag (const std::string& attrName  , const std::string& attrValue )
 	}
 }
 void LOG::log_jobid(const std::string& j ){
-	glite::wmsutils::jobid::JobId jobid (j) ;
-	edg_wll_SetLoggingJob(  ctx , jobid.getId() ,NULL, EDG_WLL_SEQ_NORMAL) ;
+	glite::jobid::JobId jobid (j) ;
+	edg_wll_SetLoggingJob(  ctx , jobid.c_jobid() ,NULL, EDG_WLL_SEQ_NORMAL) ;
 }
 void LOG::free (){
 	error_code= 0 ; 
@@ -189,8 +189,8 @@ void LOG::log_listener( const std::string& jobid, const std::string& host , int 
    error_code= 0 ;
    if (jobid!= "")
      try{
-        glite::wmsutils::jobid::JobId jid ( jobid );
-        if ( edg_wll_SetLoggingJob(ctx , jid.getId() , NULL , EDG_WLL_SEQ_DUPLICATE) )
+        glite::jobid::JobId jid ( jobid );
+        if ( edg_wll_SetLoggingJob(ctx , jid.c_jobid() , NULL , EDG_WLL_SEQ_DUPLICATE) )
                log_error ( "Unable to perform edg_wll_SetLoggingJob LB api to " + string ( getenv ( GLITE_LB_LOG_DESTINATION) )  ) ;
         return ;
      } catch (exception &exc) {    log_error ( "Unable parse JobId: " + jobid ) ;     return ;     }
@@ -230,12 +230,12 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 	//  array of subjob ID's
 	edg_wlc_JobId* subjobs = NULL ;
 	// Register The Dag
-	edg_wlc_JobId id = NULL;
+	glite::jobid::JobId id ;
 	try{
-		glite::wmsutils::jobid::JobId jid (jobid );
-		id = jid.getId();
+		glite::jobid::JobId jid (jobid );
+		id = jid;
 	} catch (exception &exc) {  log_error ( "Unable parse JobId: " + jobid ) ;       return jobids ;  }
-	if (edg_wll_RegisterJobSync(ctx,id,(regType==UI_DAGTYPE)?EDG_WLL_REGJOB_DAG:EDG_WLL_REGJOB_PARTITIONED, jdl.c_str(),
+	if (edg_wll_RegisterJobSync(ctx,id.c_jobid(),(regType==UI_DAGTYPE)?EDG_WLL_REGJOB_DAG:EDG_WLL_REGJOB_PARTITIONED, jdl.c_str(),
 		ns.c_str() ,    length,   USERINTERFACE_SEED,   &subjobs  ) ){
 		char error_message [1024];
 		char *msg, *dsc ;
@@ -264,7 +264,7 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 			sprintf (*jdls_char,"%s",iter->c_str());
 			jdls_char++;
 		}
-		if ( edg_wll_RegisterSubjobs (ctx, id, zero_char,ns.c_str(),subjobs)){
+		if ( edg_wll_RegisterSubjobs (ctx, id.c_jobid(), zero_char,ns.c_str(),subjobs)){
 			char error_message [1024];
 			char *msg, *dsc ;
 			edg_wll_Error( ctx , &msg , &dsc ) ;
@@ -284,14 +284,14 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 std::vector<std::string>  LOG::generate_sub_jobs( const std::string& jobid, int res_num){
 	vector <string> jobids ;
 	error_code= false ;
-	edg_wlc_JobId id = NULL;
+	glite::jobid::JobId id;
 	edg_wlc_JobId* subjobs = NULL;
 	try{
-		id = glite::wmsutils::jobid::JobId (jobid ).getId();
+		id = glite::jobid::JobId (jobid );
 	}catch (exception &exc) {
 		log_error("Unable parse JobId: "+jobid);return jobids;
 	}
-	edg_wll_GenerateSubjobIds(ctx, id, res_num, USERINTERFACE_SEED, &subjobs);
+	edg_wll_GenerateSubjobIds(ctx, id.c_jobid(), res_num, USERINTERFACE_SEED, &subjobs);
 	for (int i = 0; i < res_num; i++) {
 		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
 	}

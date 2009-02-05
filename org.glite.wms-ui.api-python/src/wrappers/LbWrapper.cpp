@@ -4,8 +4,8 @@
 #include <iostream>
 #include <vector>
 /**  LB Class implementation:  */
-#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/exception/Exception.h"
+#include "glite/jobid/JobId.h"
 #include "glite/lb/producer.h"
 #include "glite/lb/Job.h"
 
@@ -114,7 +114,7 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 			}
 			break;
 			case JobStatus::JOBID_T    :{
-				if(((glite::wmsutils::jobid::JobId)status_retrieved.getValJobId(attrList[i].first)).isSet())
+				 if( ((glite::jobid::JobId)status_retrieved.getValJobId(attrList[i].first)).c_jobid() != 0 )
 					result[VECT_OFFSET +  attrList[i].first ] =
 						status_retrieved.getValJobId(attrList[i].first).toString()  ;
 			}
@@ -180,7 +180,7 @@ Status::Status (const std::string& jobid, int level = 0) {
 	// Retrieve all the Statuses associated to the current Job ID
 	try{
 		// Set the Job ID
-		glite::lb::Job lbJob = glite::wmsutils::jobid::JobId(this->jobid);
+		glite::lb::Job lbJob = glite::jobid::JobId(this->jobid);
 		
 		// Check if the level is set in order to retrieve Class ADs
 		if(0 != level) {
@@ -322,7 +322,7 @@ Status::Status (
 			// Fill the vector of Query Records for the Job ID's
 			for (unsigned int i = 0; i<jobids.size(); i++){
 				// Create a Query Record 
-				QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
+				QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::jobid::JobId(jobids[i]));
 			
 				// Add the Query Record to the vector
 				jobIdCond.push_back(queryRecord);
@@ -469,7 +469,7 @@ Eve::Eve (const std::string& jobid) {
 	// Retrieve all the Events associated to the current Job ID
 	try{
 		// Set the Job ID
-		glite::lb::Job lbJob = glite::wmsutils::jobid::JobId(this->jobid);
+		glite::lb::Job lbJob = glite::jobid::JobId(this->jobid);
 		
 		// Retrieve the Events
 		lbJob.log(events);
@@ -523,7 +523,7 @@ Eve::Eve (const std::vector<std::string>& jobids,
 		// Fill the vector of Query Records for the Job ID's
 		for (unsigned int i = 0; i<jobids.size(); i++){
 			// Create a Query Record 
-			QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
+			QueryRecord queryRecord(QueryRecord::JOBID, QueryRecord::EQUAL, glite::jobid::JobId(jobids[i]));
 			
 			// Add the Query Record to the vector
 			queryRecordCond.push_back(queryRecord);
@@ -731,7 +731,7 @@ std::vector< std::string > Eve::getEventAttributes( int eventNumber ) {
 			
 				case Event::JOBID_T :{
 
-					if(((glite::wmsutils::jobid::JobId)eventRequested.getValJobId(attribute)).isSet()) {
+					if(((glite::jobid::JobId)eventRequested.getValJobId(attribute)).c_jobid() != 0) {
 						eventAttributes[attribute] = eventRequested.getValJobId(attribute).toString();
 					}
 				}
