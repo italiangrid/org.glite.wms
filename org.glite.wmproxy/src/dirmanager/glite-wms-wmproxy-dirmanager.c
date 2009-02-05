@@ -120,7 +120,6 @@ gzUncompress(char *source, char *dest)
     		"(error opening file or null size)\n", source);
         return UNTAR_ERR_OPEN_FILE;
 	}
-	char buf[size];
 	in = gzopen(source, "rb");
     if (in == NULL) {
     	fprintf(stderr, "Unable to uncompress the ISB file: %s\n"
@@ -133,6 +132,7 @@ gzUncompress(char *source, char *dest)
 			"(unable to create the uncompressed file: %s)\n", source, dest);
         return UNTAR_ERR_OPEN_FILE;
     }
+	unsigned char buf[65535];
 	for (;;) {
 		len = gzread(in, buf, sizeof(buf));
 		if (len < 0)  {
