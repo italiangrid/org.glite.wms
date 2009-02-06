@@ -1,0 +1,9 @@
+Some useful R functions to analyze data
+
+table <- read.table("vtb-generic-111.cern.ch_data",sep=",")
+respTime <- table[,2]
+meanRespTime <- mean(respTime)
+nrequests <- NROW(respTime)
+maxRespTime <- max(respTime)
+minRespTime <- min(respTime)
+
