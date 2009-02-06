@@ -21,9 +21,8 @@ afs_pass=`cat $afs_pass_file`
 
 
 hostname=`hostname`
-host1=vtb-generic-110.cern.ch
-host2=vtb-generic-111.cern.ch
-host3=lxb7606v1.cern.ch
+host1=vtb-generic-111.cern.ch
+host2=lxb7606v1.cern.ch
 #host1=lxb7605v1.cern.ch
 #host2=lxb7605v2.cern.ch
 #host3=lxb7605v3.cern.ch
@@ -35,10 +34,11 @@ host3=lxb7606v1.cern.ch
 #host9=lxb7606v4.cern.ch
 #host10=lxb7606v5.cern.ch
 
+echo "Log file location: $log_location"
 echo "Removing old log files"
 
 rm -f $log_location/$hostname
-for host in $host1 $host2 $host3;
+for host in $host1 $host2;
 do
   rm -f $log_location/$host
 done
@@ -46,11 +46,15 @@ done
 echo "Preparing the nodes"
 
 i=0
-for host in $host1 $host2 $host3;
+for host in $host1 $host2;
 do
-i=$[$i+1]
-ssh root@$host "expect $get_afstoken_script $afs_user $afs_pass; touch $log_location/$host; $setup_node_script $i $log_location/$host" 2>&1 >> $log_location/$hostname &
-echo "$host started"
+  i=$[$i+1]
+  echo "Starting host $host"
+  hostlogfile=$host.log
+  echo "Log file: $hostlogfile"
+  ssh root@$host "expect $get_afstoken_script $afs_user $afs_pass; touch $log_location/$host; rm -f $hostlogfile; touch $hostlogfile; $setup_node_script $i $log_location/$host >> $hostlogfile 2>&1" &
+  #ssh root@$host "expect $get_afstoken_script $afs_user $afs_pass; touch $log_location/$host; rm -f $hostlogfile; touch $hostlogfile; $setup_node_script $i $log_location/$host" &
+  echo "$host started"
 done
 
 echo "Nodes started, add the string "START" to their log file to trigger the start of the stress test"

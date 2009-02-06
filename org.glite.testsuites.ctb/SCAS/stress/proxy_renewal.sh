@@ -20,11 +20,6 @@ else
   INDEX=$1
 fi
 
-#Create log file
-logfile=$0.out
-rm -f $logfile
-touch $logfile
-
 
 #TODO remove hardcoded path
 echo "Retrieving test user cert and key"
@@ -35,28 +30,45 @@ chown root ./test_user_50${INDEX}_key.pem
 
 export PATH="$PATH:/opt/glite/bin/"
 
-echo "Creating proxy file x509up_u501_$INDEX" >> $logfile 
-echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin >> $logfile 2>&1
+echo "Creating proxy file x509up_u501_$INDEX"  
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin 
 #true
-
 if [ $? -ne 0 ]; then
-  echo "Error creating the proxy" >> $logfile
+  echo "Error creating the proxy" 
   exit 1
 fi
+cp --reply=yes ./x509up_u501_$INDEX /home/dteamdteampilot$INDEX
+if [ $? -ne 0 ]; then
+  echo "Error copying the proxy" 
+  exit 1
+fi
+echo "User proxy ./x509up_u501_$INDEX succesfully created and stored in pilot user account" 
 
-cp -f --reply=yes ./x509up_u501_$INDEX /home/dteamdteampilot$INDEX
-echo "User proxy ./x509up_u501_$INDEX succesfully created and stored in pilot user account" >> $logfile
-
-echo "Entering the loop" >> $logfile
+echo "Entering the loop" 
 while [ 1 ] 
 do
-  sleep 1h
-  echo "Creating proxy file x509up_u501_$INDEX" >> $logfile
-  echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin >> $logfile 2>&1
+  sleep 4h
+  echo "Creating proxy file x509up_u501_$INDEX" 
+  echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin 
   if [ $? -ne 0 ]; then
-    echo "Error creating the proxy" >> $logfile
+    echo "Error creating the proxy" 
+    break #do not exit, could be a temporary problem
+  fi
+  cp --reply=yes ./x509up_u501_$INDEX /home/dteamdteampilot$INDEX
+  if [ $? -ne 0 ]; then
+    echo "Error copying the proxy" 
     exit 1
   fi
-  echo "User proxy ./x509up_u501_$INDEX succesfully created" >> $logfile
+  echo "User proxy ./x509up_u501_$INDEX succesfully created and stored in pilot user account" 
+  echo "Let's get the AFS token too then!"
+  echo "Using get_afs_token script: $get_afstoken_script" 
+  afs_pass=`cat $afs_pass_file`
+  expect $get_afstoken_script $afs_user $afs_pass
+  if [ $? -ne 0 ]; then
+    echo "Error getting AFS token" 
+    break #do not exit, could be a temporary problem
+  fi
+  echo "AFS token got" 
+  echo "Let's rest now" 
 done
 

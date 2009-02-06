@@ -5,4 +5,4 @@
 
 ygSITENAME="cert-tb-cern"    # Can be anything
 ygREPO="prod"           # Can be cert,pps,prod
-ygHOST_1="lxb7605v1.cern.ch glite-WN patch2381"
+ygHOST_1="<hostname> glite-WN patch2770"

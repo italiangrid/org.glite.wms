@@ -18,7 +18,7 @@ fi
 INDEX=$1
 
 if [ ! -f $2 ]; then
-  echo "The second argument must be a valid log file"
+  echo "The second argument must be a valid log file" 
   usage
   exit 1
 else
@@ -43,18 +43,21 @@ fi
 #Retrieve the configuration file
 source /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/setup_test.cfg
 if [ $? -ne 0 ]; then
-  echo "Error sourcing the setup_test.cfg file"
+  echo "Error sourcing the setup_test.cfg file" 
   exit 1
 fi
 
+rm -f ./proxy_renewal.out
+touch ./proxy_renewal.out
 
-echo "Retrieving glexec test script"
+echo "Retrieving glexec test script" 
 cp -f --reply=yes $glexec_stress_script ./
-echo "Retrieving proxy renewal script"
+echo "Retrieving proxy renewal script" 
 cp -f --reply=yes $proxy_ren_script ./
-echo "Starting proxy renewal daemon"
-./proxy_renewal.sh $INDEX &
+echo "Starting proxy renewal daemon" 
+./proxy_renewal.sh $INDEX >> ./proxy_renewal.out 2>&1 &
 proxy_renewal_pid=$! 
+echo "Proxy renewal script has pid $proxy_renewal_pid " 
 
 #Give time to create the proxy
 sleep 10s
@@ -70,22 +73,24 @@ sleep 10s
 #  exit 1
 #fi
 
-cp -f ./glexec_stress_test.sh /home/dteamdteampilot$INDEX >> $LOG_FILE 2>&1
-chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
-chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/x509up_u501_$INDEX >> $LOG_FILE 2>&1
-chmod u+x /home/dteamdteampilot$INDEX/glexec_stress_test.sh >> $LOG_FILE 2>&1
+cp -f ./glexec_stress_test.sh /home/dteamdteampilot$INDEX 
+chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
+chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/x509up_u501_$INDEX 
+chmod u+x /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
 
+hostname=`hostname`
+hostlogfile=$hostname.log
 
-echo "Starting glexec test as dteamdteampilot$INDEX"
-#su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX
-su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902050900 -i $INDEX" dteamdteampilot$INDEX
+echo "Starting glexec test as dteamdteampilot$INDEX" 
+#su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX 
+su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902090800 -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
 
 #kill the proxy renewal process
 kill $proxy_renewal_pid
 if [ $? -eq 0 ];then
-  echo "Proxy renewal daemon killed"
+  echo "Proxy renewal daemon killed" 
 else
-  echo "Error in killing proxy renewal daemon, pid is $proxy_renewal_pid"
+  echo "Error in killing proxy renewal daemon, pid is $proxy_renewal_pid" 
 fi
 
 exit 0
