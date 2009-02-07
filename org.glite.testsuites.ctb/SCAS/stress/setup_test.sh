@@ -9,33 +9,20 @@ if [ $# -gt 0 ]; then
   exit 1
 fi
 
-#setup_node="/afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/setup_node.sh"
-#log_location="/afs/cern.ch/user/p/pucciani/tmp"
-#get_afstoken_script="/afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/get_afstoken.exp"
-#pass_file="/afs/cern.ch/user/p/pucciani/public/glitetests/scas/stress/passwd.txt"
-#afs_pass_file=/afs/cern.ch/user/p/pucciani/private/afs_magic
-#afs_user="pucciani"
+#source the main configuration file
 source setup_test.cfg
 
 afs_pass=`cat $afs_pass_file` 
 
 
+#TODO
+#hostnames are defined in cfg file
 hostname=`hostname`
 host1=vtb-generic-111.cern.ch
 host2=lxb7606v1.cern.ch
-#host1=lxb7605v1.cern.ch
-#host2=lxb7605v2.cern.ch
-#host3=lxb7605v3.cern.ch
-#host4=lxb7605v4.cern.ch
-#host5=lxb7605v5.cern.ch
-#host6=lxb7606v1.cern.ch
-#host7=lxb7606v2.cern.ch
-#host8=lxb7606v3.cern.ch
-#host9=lxb7606v4.cern.ch
-#host10=lxb7606v5.cern.ch
 
 echo "Log file location: $log_location"
-echo "Removing old log files"
+echo "Removing old log files if present"
 
 rm -f $log_location/$hostname
 for host in $host1 $host2;

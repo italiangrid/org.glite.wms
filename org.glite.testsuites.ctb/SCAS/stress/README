@@ -5,18 +5,15 @@
 #
 ##############################################################################
 
-The procedure to follow for the WN installation is described in
-wn_installation.txt.
-
-
-The following scripts are meant to be used during the certification of the
-first SCAS patch to run stress tests.
+The files in this directory have been created and used to stress test
+the first releases of the SCAS service in the multi-user pilot
+jobs scenario where GLEXEC is installed on the WNs.
 
 
 Files
 -----
 
-setup_test.exp
+- setup_test.exp -
 
 This Expect script is used to automatically login on several machines
 and call a script to setup the test on each machine.
@@ -48,34 +45,36 @@ It is important to remind that the node setup script must be available on
 an AFS space where it can be retrieved.
 The log file location must also be on an AFS space.
 
-
 KNOWN ISSUES
-From time to time to time the script signal an error in the log file
+From time to time the script signals an error in the log file
 creation step, or it does not signal errors but the file does not
 show up.
 This problem appears randomly and it is usually solved calling the
 script after a short pause of 10-30 seconds. 
+Due to this problem this file has not been used.
 In case an automatic ssh login can be done with the ssh-agent,
 the next script must be used.
 
+
 - setup_test.sh -
-This script will be used in place of the previous expect script.
+Usage: ./setup_test.sh
+
+This script is used in place of the previous expect script.
 In order to run the script, you first have to launch the ssh-agent:
 #eval `ssh-agent`
 #ssh-add /home/<user>/.ssh/id_rsa
 #ssh-add -l
 
-Usage: ./setup_test.sh
-
 The script is called without arguments, the machine names used to launch glexec requests
-are hardcoded.
-The script setup_test.cfg is sourced to export some variables used by this script.
-The script creates a log file in the location specified in the configuration file, and
-for each defined machine the script logs into it and:
-- get an AFS token with a script stored in $get_afstoken_script (from the cfg file)
+are stored in the setup_test.cfg file.
+For each defined machine the script logs into it and:
+- gets an AFS token with a script stored in $get_afstoken_script (from the cfg file)
 - touch a log file with the name of the machine in $log_location (from the cfg file)
-- call the setup node script (explained later) stored in $setup_node_script (from the cfg file) 
-passing as arguments the log file name just created plus an index used to discriminate the node.
+to store the results of the glexec calls
+- touch a log file in the root directory to store log information printed by the setup
+node script (see below)
+- calls (in background) the setup node script stored in $setup_node_script (from the cfg file) 
+passing as arguments an index used to discriminate the node plus the log file (first).
 
 - setup_test.cfg -
 Configuration file for the previous script.
@@ -89,6 +88,7 @@ afs_user
 users_certs_dir
 glexec_stress_script
 proxy_ren_script
+<hostnames> of the WNs
 
 - setup_node.sh -
 Usage: ./setup_node.sh <index> <log file>
@@ -98,11 +98,10 @@ Usage: ./setup_node.sh <index> <log file>
 This script is called by the previous one.
 It is used to setup a node on which the test will run and call the real test
 script (glexec_stress_test.sh, hardcoded).
-The operations that are done before calling the test script are:
- *get test_user_<index> cert/key and create a proxy
- *run a daemon to renew the proxy
- *retrieve the glexec test
- *launch the glexec test
+The operations done are:
+ *retrieve and start the proxy renewal script to get (periodicity is hardcoded) proxy and AFS token
+ *retrieve and launch the glexec test
+ *when the test is finished kill the proxy renewal daemon.
 
 - glexec_stress_test.sh -
 Usage: ./glexec_stress_test.sh -f <log file> {-n <number>|-d <end date>} -i <index>
@@ -113,8 +112,7 @@ Usage: ./glexec_stress_test.sh -f <log file> {-n <number>|-d <end date>} -i <ind
       <index> an integer number to identify the node
 
 This script is called by the previous one.
-It is the one used on the WN to launch a certain amount
-of glexec commands.
+It is the one used on the WN to launch a certain amount of glexec commands.
 In particular, the script will execute the glexec test either n times or until
 a specified date. The starting of test is triggered when the word 'START' is 
 found in the specified log file.
@@ -123,6 +121,8 @@ The index passed with the -i option is used to distinguish node and test user.
 The data file named <log file>_data will be created in the same directory as the
 <log file> and will be used to store pairs (timestamp , response time of glexec call).
 In the <log file> the output of the glexec call is stored.
+Two more lines are stored at the end of the log file, the number of glexec
+executions and the number of errors (glexec returned non zero code) 
 
 - verify_glexec_output.sh -
 Usage: ./verify_glexec_output.sh <mapped_user> <output file>
@@ -133,13 +133,14 @@ Usage: ./verify_glexec_output.sh <mapped_user> <output file>
 This script is used to verify the output produced by the glexec_stress_test file,
 which should contain just the word 'START' (inserted by the user to trigger the start
 of the stress test) and the mapped user returned by the command:
-$GLITE_LOCATION/sbin/glexec "/usr/bin/whoami".
-Since the script look uses the regular expression [^$user], in case of pool accounts
+$GLITE_LOCATION/sbin/glexec "/usr/bin/whoami", plus the last two comment lines.
+Since the script  uses the regular expression [^$user], in case of pool accounts
 one can just specify the prefix (E.g 'pildtm' can be specified to verify accounts
 like 'pildtm01', 'pildtm10' etc..)
 
 The file to be provided as second argument is the one created by the script
-setup_test.sh, and it is named as the host that will write on that file.
+setup_test.sh in $logs_dir (from cfg file), and it is named as the host that will 
+write on that file.
 
 - scas-mon.pl -
 Usage: ./scas-mon.pl
@@ -190,10 +191,14 @@ Usage: ./proxy_renewal.sh <index>"
   <index> integer number to discriminate clients in the test"
 
 This script creates a proxy certificate for test users 50x and
-renew the proxy every hour.
+renews the proxy every 4 hours (hardcoded).
 The index that must be given as argument is used to choose the user.
 The proxy is created into the current directory and copied
-into the pilot user account: dteamdteampilotx
+into the pilot user account: dteamdteampilotx.
+With the same periodicity the AFS token for the account specified
+in the configuration file is acquired.
+This scripts is called by setup_node.sh and the output is redirected
+to proxy_renewal.out in the root home directory.
 
 - start_stress_test.sh -
 Usage: ./start_stress_test.sh
@@ -202,11 +207,13 @@ This file can be used to start the stress test on all the machines
 at the same time. It will insert the string 'START' in the hosts
 log files to trigger the start of the stress test.
 
-- vomses.tar.gz -
-This file is used to create the /opt/glite/etc/vomses directory
-that is not present in a WN installation but is used by the
-proxy_renewal script.
-This file must be extracted as explained in wn_installation.txt.
+- start_stress_test_grad.sh -
+Usage: ./start_stress_test_grad.sh <hours>
+  <hours> number of hours between nodes activation
+
+This file can be used to start the stress specifying an interval
+in hours between two activation. Giving '0' as argument it behaves
+as the previous script.
 
 - mkRespTimePlots -
 Usage ./mkRespTimePlots <datafile> [...<datafile>]
@@ -215,4 +222,18 @@ Usage ./mkRespTimePlots <datafile> [...<datafile>]
 This script is used to create graphs (ps files) of the response time
 of the glexec calls. The input file are the *_data files
 generated by glexec_stress_test.sh script.
+
+- mkMemConsPlot.sh -
+Same as above but print the memory consuption plot, to be used with
+the scas monitoring log file.
+________________________________________________________________
+
+The procedure to follow for the WN installation is described in
+wn_installation.txt.
+
+- vomses.tar.gz -
+This file is used to create the /opt/glite/etc/vomses directory
+that is not present in a WN installation but is used by the
+proxy_renewal script.
+This file must be extracted as explained in wn_installation.txt.
 

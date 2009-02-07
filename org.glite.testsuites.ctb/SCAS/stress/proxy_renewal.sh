@@ -1,13 +1,5 @@
 #!/bin/sh
 
-#This script creates a proxy certificate for test users 50x and
-#renew the proxy every hour.
-#The index that must be given as argument is used to choose 
-#the user.
-#The proxy is created into the current directory and copied
-#into the pilot user account: dteamdteampilotx
-#The output is stored in proxy_renewal.out
-
 function usage() {
 echo "Usage: $0 <index>"
 echo "  <index> integer number to discriminate clients in the test"

@@ -2,7 +2,7 @@
 
 
 #TODO
-#Redirect all the output messages to the log file
+#Remove hardcoded conf file
 
 function usage() {
 echo "Usage: ./setup_node.sh <index> <log file>"
@@ -25,22 +25,7 @@ else
   LOG_FILE=$2
 fi
 
-
-#get test_user_50x cert/key
-#rm -f test_user_*.pem x509up_u501*
-#cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_cert.pem ./
-#cp /afs/cern.ch/project/gd/yaim-server/BitFaceCA/user_certificates/test_user_50${INDEX}_key.pem ./
-
-#echo "test" | glite-voms-proxy-init -quiet --voms dteam -cert ./test_user_50${INDEX}_cert.pem -key test_user_50${INDEX}_key.pem -out ./x509up_u501_$INDEX -pwstdin 2>&1 >> /dev/null
-#true
-
-#if [ $? -ne 0 ]; then
-#  echo "Error creating the proxy"
-#  exit 1
-#fi
-#echo "User proxy ./x509up_u501_$INDEX succesfully created"
-
-#Retrieve the configuration file
+#source the configuration file
 source /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/setup_test.cfg
 if [ $? -ne 0 ]; then
   echo "Error sourcing the setup_test.cfg file" 
@@ -62,11 +47,9 @@ echo "Proxy renewal script has pid $proxy_renewal_pid "
 #Give time to create the proxy
 sleep 10s
 
-#CHANGE THIS: use special certificate
+#use special certificate for debugging
 #cp -f /afs/cern.ch/user/p/pucciani/tmp/x509up_u501_g /home/dteampilot$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
-
 #echo "Copying test and proxy to ~dteampilot$INDEX"
-
 #cp -f x509up_u501_$INDEX /home/dteampilot$INDEX 2>&1 >> $LOG_FILE
 #if [ $? -ne 0 ]; then
 #  echo "Error copying the proxy"
