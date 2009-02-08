@@ -231,10 +231,10 @@ the scas monitoring log file.
 Usage: getErrorRate <logs_dir>
   <logs_dir> log files directory
 
-This is a simple script to get the error rate from the log files.
+This is a simple script to get the error rate (%) from the log files.
 It can be used to retrieve temporary information while the test
 is running.
-
+The output is like the following:
 -------------------------------
 Sun Feb  8 10:02:14 CET 2009
 -------------------------------
@@ -242,6 +242,18 @@ Total requests: 1658331
 Total errors: 616
 Error rate: .03714578090863645400
 -------------------------------
+
+
+- getHourlyErrorRate.sh -
+Usage: ./getHourlyErrorRate.sh <logs_dir> <hours>"
+  <logs_dir> log files directory
+  <hours> time interval in hours
+
+This script enter an infinite cycle where it prints,
+every <hous>, the pair timestamp,errorRate to the
+file hourlyErrorRate (in $logs_dir).
+The timestamp is in seconds from the Unix epoch and the
+error rate is the total error rate (all the nodes) in %.
 
 ________________________________________________________________
 
