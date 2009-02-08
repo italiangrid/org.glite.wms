@@ -38,7 +38,17 @@ do
   sleep ${hours}h 
 done
 
+echo "-----------------------------------------"
 echo "`date`: test started"
 echo "`date +%s` seconds"
+echo "-----------------------------------------"
+
+echo "Starting getHourlyErrorRate script"
+./getHourlyErrorRate.sh $log_location 1 &
+errorRate_pid=$!
+echo "getHourlyErrorRate script pid: $errorRate_pid"
+rm -f errorRate_pid.txt
+touch errorRate_pid.txt
+echo "$errorRate_pid" >> errorRate_pid.txt
 exit 0
 

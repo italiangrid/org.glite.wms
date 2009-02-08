@@ -214,6 +214,8 @@ Usage: ./start_stress_test_grad.sh <hours>
 This file can be used to start the stress specifying an interval
 in hours between two activation. Giving '0' as argument it behaves
 as the previous script.
+This script also starts in background the getHourlyErrorRate.sh script
+to collect error rate data in ./hourlyErrorRate.txt (every 1h hardcoded).
 
 - mkRespTimePlots -
 Usage ./mkRespTimePlots <datafile> [...<datafile>]
