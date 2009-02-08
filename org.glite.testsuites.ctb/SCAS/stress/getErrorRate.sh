@@ -1,7 +1,7 @@
 #!/bin/sh
 
 function usage() {
-echo "$0 <logs_dir>"
+echo "Usage: $0 <logs_dir>"
 echo "  <logs_dir> log files directory"
 }
 
