@@ -139,7 +139,7 @@ one can just specify the prefix (E.g 'pildtm' can be specified to verify account
 like 'pildtm01', 'pildtm10' etc..)
 
 The file to be provided as second argument is the one created by the script
-setup_test.sh in $logs_dir (from cfg file), and it is named as the host that will 
+setup_test.sh in $log_location (from cfg file), and it is named as the host that will 
 write on that file.
 
 - scas-mon.pl -
@@ -215,7 +215,7 @@ This file can be used to start the stress specifying an interval
 in hours between two activation. Giving '0' as argument it behaves
 as the previous script.
 This script also starts in background the getHourlyErrorRate.sh script
-to collect error rate data in ./hourlyErrorRate.txt (every 1h hardcoded).
+to collect error rate data in $log_location/hourlyErrorRate.txt (every 1h hardcoded).
 
 - mkRespTimePlots -
 Usage ./mkRespTimePlots <datafile> [...<datafile>]
