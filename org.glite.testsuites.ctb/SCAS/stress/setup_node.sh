@@ -56,7 +56,7 @@ sleep 10s
 #  exit 1
 #fi
 
-cp -f ./glexec_stress_test.sh /home/dteamdteampilot$INDEX 
+cp -f ./glexec_stress_test.sh /home/dteamdteampilot$INDEX/ 
 chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
 chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/x509up_u501_$INDEX 
 chmod u+x /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
@@ -66,7 +66,7 @@ hostlogfile=$hostname.log
 
 echo "Starting glexec test as dteamdteampilot$INDEX" 
 #su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX 
-su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902090800 -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
+su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902101600 -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
 
 #kill the proxy renewal process
 kill $proxy_renewal_pid

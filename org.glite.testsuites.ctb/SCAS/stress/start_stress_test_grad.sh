@@ -18,7 +18,6 @@ fi
 
 source ./setup_test.cfg
 
-
 hostfile1=$log_location/$m1
 hostfile2=$log_location/$m2
 hostfile3=$log_location/$m3
@@ -30,16 +29,8 @@ hostfile8=$log_location/$m8
 hostfile9=$log_location/$m9
 hostfile10=$log_location/$m10
 
-
-#for hostfile in $hostfile1 $hostfile2 $hostfile3 $hostfile4 $hostfile5 $hostfile6 $hostfile7 $hostfile8 $hostfile9 $hostfile10
-for hostfile in $hostfile1 $hostfile2;
-do
-  echo "START" >> $hostfile
-  sleep ${hours}h 
-done
-
 echo "-----------------------------------------"
-echo "`date`: test started"
+echo "`date`: starting test"
 echo "`date +%s` seconds"
 echo "-----------------------------------------"
 
@@ -50,5 +41,13 @@ echo "getHourlyErrorRate script pid: $errorRate_pid"
 rm -f errorRate_pid.txt
 touch errorRate_pid.txt
 echo "$errorRate_pid" >> errorRate_pid.txt
+
+#for hostfile in $hostfile1 $hostfile2 $hostfile3 $hostfile4 $hostfile5 $hostfile6 $hostfile7 $hostfile8 $hostfile9 $hostfile10
+for hostfile in $hostfile1 $hostfile2 $hostfile3 $hostfile4 $hostfile5;
+do
+  echo "START" >> $hostfile
+  sleep ${hours}h 
+done
+
 exit 0
 
