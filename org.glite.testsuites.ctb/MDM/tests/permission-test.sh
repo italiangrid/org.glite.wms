@@ -38,6 +38,9 @@ function cleanup () {
     echo "There was an error removing image $TEST_IMAGE_1"
     my_exit $ERROR
   fi
+
+  # Reset IFS
+  unset IFS
 }
 
 ###############################
@@ -81,7 +84,9 @@ function verify_perms () {
     echo $DN_PERM | grep "x" >/dev/null 2>&1
     DN_X=$?
   fi
-  
+
+  # Play with IFS so we can get the newlines using ``
+  IFS=" "
 
   # Check hydra permissions
   if [ $# -eq 1 ] ; then
@@ -246,6 +251,9 @@ function verify_perms () {
       my_exit $ERROR
     fi
   fi
+
+  # Reset IFS
+  unset IFS
 }
 
 ###############################
