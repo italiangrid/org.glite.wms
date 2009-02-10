@@ -127,7 +127,9 @@ if [ ! -z $END_DATE ]; then
     TIME=`echo "$START_TIME $END_TIME" | awk '{print $2-$1}'`
     echo "`date +%s`,$TIME" >> $DATA_FILE
     if [ $failed -eq 1 ]; then
-      echo "`date +%s`" >> $ERROR_FILE
+      echo "`date +%s`,1" >> $ERROR_FILE
+    else
+      echo "`date +%s`,0" >> $ERROR_FILE
     fi
     CURR_DATE=`date +%Y%m%d%H%M`
   done
