@@ -739,7 +739,7 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
                        
                        );
         
-        err = glite_renewal_UnregisterProxy( job.getUserProxyCertificate().c_str(), NULL );
+        err = glite_renewal_UnregisterProxy( job.getUserProxyCertificate().c_str(), job.getGridJobID().c_str() );
         
         if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
             CREAM_SAFE_LOG(
