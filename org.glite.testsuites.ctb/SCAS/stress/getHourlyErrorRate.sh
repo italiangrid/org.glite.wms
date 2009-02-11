@@ -26,8 +26,8 @@ touch hourlyErrorRate.txt
 while [ 1 ]
 do
   sleep 1h
-  totalRequests=`cat *_data | wc -l`
-  totalErrors=`cat *_error | wc -l`
+  totalRequests=`cat *_error | wc -l`
+  totalErrors=`grep ',1' *_error | wc -l`
   errorRate=$(echo "$totalErrors / $totalRequests" | bc -l)
   errorRate=$(echo "$errorRate * 100" | bc -l)
   echo "`date +%s`,$errorRate" >> hourlyErrorRate.txt
