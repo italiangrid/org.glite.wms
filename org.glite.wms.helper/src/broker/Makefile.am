@@ -6,41 +6,8 @@
 ## *
 ## *********************************************************************
 
-#lib_LTLIBRARIES = \
-#	libglite_wms_helper_broker_ii.la \
-#	libglite_wms_helper_broker_ii_prefetch.la 
 lib_LTLIBRARIES = \
 	libglite_wms_helper_broker_ism.la
-
-#LD = $(GLITE_WMS_BROKER_LIBS) \
-#	$(GLITE_WMS_MATCHMAKING_LIBS) \
-#	$(GLITE_WMS_BROKERINFO_LIBS) \
-#	$(GLITE_GPBOX_LIBS) \
-#        $(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
-#	$(GLITE_WMS_ISM_LIBS)
-
-#libglite_wms_helper_broker_ii_la_SOURCES = \
-#        Helper.h \
-#        Helper_ii.cpp \
-#        gpbox_utils.cpp \
-#        Helper_matcher.cpp \
-#        exceptions.cpp
-
-#libglite_wms_helper_broker_ii_la_LIBADD = \
-#	$(LD)
-
-#libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
-#        Helper.h \
-#        Helper_ii_prefetch.cpp \
-#        gpbox_utils.cpp \
-#        Helper_matcher_prefetch.cpp \
-#        exceptions.cpp
-
-#libglite_wms_helper_broker_ii_prefetch_la_LIBADD = \
-#        $(LD)
-
-#$(srcdir)/Helper_ii_prefetch.cpp: $(srcdir)/Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_ii.cpp > $(srcdir)/Helper_ii_prefetch.cpp
-#$(srcdir)/Helper_matcher_prefetch.cpp: $(srcdir)/Helper_matcher.cpp ; $(CXXCOMPILE) -D MATCHER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_matcher.cpp > $(srcdir)/Helper_matcher_prefetch.cpp
 
 libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
@@ -53,7 +20,6 @@ libglite_wms_helper_broker_ism_la_LIBADD = \
 	$(GLITE_WMS_BROKER_LIBS) \
 	$(GLITE_WMS_MATCHMAKING_LIBS) \
 	$(GLITE_WMS_BROKERINFO_LIBS) \
-	$(GLITE_WMS_OPTIONAL_GPBOX_LIBS) \
   $(XERCESC_LIBS) \
 	$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
 	$(GLITE_WMS_ISM_LIBS)
@@ -67,8 +33,6 @@ AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
-	$(CLASSAD_CFLAGS) \
-	$(GLITE_WMS_OPTIONAL_GPBOX_CFLAGS)
+	$(CLASSAD_CFLAGS)
 
-#MAINTAINERCLEANFILES = Makefile.in Helper_ii_prefetch.*
 MAINTAINERCLEANFILES = Makefile.in
