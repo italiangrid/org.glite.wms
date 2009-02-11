@@ -23,7 +23,7 @@
 
 
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
-//#include "glite/ce/cream-client-api-c/scoped_timer.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include "CreamProxyMethod.h"
@@ -132,8 +132,11 @@ void CreamProxy_Register::method_call( int timeout )
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyRegister( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile );
   theProxy->setSoapHeader( m_iceid );
+  
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_Register::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
   theProxy->execute( m_service );  
 }
 
@@ -174,8 +177,12 @@ void CreamProxy_Start::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyStart( m_req, m_res, timeout ) );
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_Start::execute() - [")+m_service+"] TIMER";
- // api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
+
   theProxy->execute( m_service );
 }
 
@@ -214,8 +221,12 @@ void CreamProxy_Cancel::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyCancel( m_req, m_res, timeout ));
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_Cancel::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
+
   theProxy->execute( m_service );
 }
     
@@ -253,8 +264,12 @@ void CreamProxy_Lease::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyLease( m_lease_IN, m_lease_OUT, timeout ));
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_Lease::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
+
   theProxy->execute( m_service );
 }
     
@@ -292,8 +307,12 @@ void CreamProxy_LeaseInfo::method_call( int timeout )
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyLeaseInfo( m_lease_IN, m_lease_OUT, timeout ));
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_LeaseInfo::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
+
   theProxy->execute( m_service );
 }
 
@@ -330,8 +349,12 @@ void CreamProxy_Info::method_call( int timeout )
 {   
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyInfo( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile ); 
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_Info::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
+
   theProxy->execute( m_service );
 }
 
@@ -368,8 +391,12 @@ void CreamProxy_Purge::method_call( int timeout )
 {    
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyPurge( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_Purge::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
+
   theProxy->execute( m_service );
 }
 
@@ -405,8 +432,12 @@ void CreamProxy_Delegate::method_call( int timeout )
 { 
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyDelegate( m_delegation_id, timeout ) );   
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_Delegate::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );  
+  api_util::scoped_timer T( timer_message );  
+#endif
+
   theProxy->execute( m_service );
 }
 
@@ -442,8 +473,12 @@ void CreamProxy_ProxyRenew::method_call( int timeout )
 {    
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > p( soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( m_delegation_id, timeout ) );   
   p->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
   string timer_message = string("CreamProxy_ProxyRenew::execute() - [")+m_service+"] TIMER";
-  //api_util::scoped_timer T( timer_message );
+  api_util::scoped_timer T( timer_message );
+#endif
+
   p->execute( m_service );
 }
 

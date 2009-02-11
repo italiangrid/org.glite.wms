@@ -246,7 +246,7 @@ void iceCommandJobKill::execute() throw()
 void iceCommandJobKill::killJob( const pair< pair<string, string>, list< CreamJob > >& aList ) throw()
 {
     // static const char* method_name = "iceCommandJobKill::killJob() - ";
-    string better_proxy( DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first ).first );
+  string better_proxy( DNProxyManager::getInstance()->getBetterProxyByDN( aList.first.first ).get<0>() );
     int query_size( iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() );
 
     cream_api::soap_proxy::VOMSWrapper V( better_proxy );

@@ -21,6 +21,8 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/security/proxyrenewal/renewal.h"
+
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -112,10 +114,23 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
   /**
    * Retrieve all distinguished DNs
    */
+  map<string, int> dnSet_myproxy; // DN -> how many jobs active for this DN having MYPROXYSERVER
   set<string> dnSet;
-  transform( cache->begin(), cache->end(), 
-	     inserter(dnSet, dnSet.begin()), 
-	     mem_fun_ref(&iceUtil::CreamJob::getUserDN));
+
+  for( jobCache::iterator jit = cache->begin();
+       jit != cache->end();
+       ++jit) 
+    {
+      if(jit->is_proxy_renewable()) {
+	dnSet_myproxy[ jit->getUserDN() ]++;
+      } else {
+	dnSet.insert( jit->getUserDN() );
+      }
+    }
+
+//   transform( cache->begin(), cache->end(), 
+// 	     inserter(dnSet, dnSet.begin()), 
+// 	     mem_fun_ref(&iceUtil::CreamJob::getUserDN));
 
   /**
    * for each DN check if the better ICE's local proxy is there
@@ -123,7 +138,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
   string localProxy;
   string prefix = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
   
-  //iceUtil::jobCache::iterator job_with_better_proxy_from_sandboxDir;
+  iceUtil::jobCache::iterator job_with_better_proxy_from_sandboxDir;
   
   
 
@@ -169,7 +184,8 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 	    continue;
 	  }
 	  
-	  m_DNProxyMap[*it] = make_pair( localProxy, job_with_better_proxy_from_sandboxDir.second ) ;
+	  //m_DNProxyMap[*it] = make_pair( localProxy, job_with_better_proxy_from_sandboxDir.second ) ;
+	  m_DNProxyMap_Legacy[*it] = boost::make_tuple(localProxy, job_with_better_proxy_from_sandboxDir.second );
 	    
 	} else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
           if( job_with_better_proxy_from_sandboxDir.first == cache->end() )
@@ -180,16 +196,196 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			     );
 	      continue;
 	    }
-          this->setUserProxyIfLonger(*it, 
+          this->setUserProxyIfLonger_Legacy(*it, 
 				     job_with_better_proxy_from_sandboxDir.first->getUserProxyCertificate(), 
 				     job_with_better_proxy_from_sandboxDir.second);
       
         } // if( !boost::filesystem::exists( thisPath ) )
      } // for
+
+  /**
+     All "legacy" better proxy have been loaded (those ones related to DN that submitted jobs without MYPROXYSERVER.
+     Now let's proceed with loading of all "NEW" better proxies 
+  */
+  for(map<string, int>::const_iterator it = dnSet_myproxy.begin();
+      it != dnSet_myproxy.end();
+      ++it)
+    {
+      string localproxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
+      localproxy += compressed_string( it->first ) + "_NEW.proxy";
+      boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
+      
+      if( boost::filesystem::exists( thisPath ) ) {
+	cream_api::soap_proxy::VOMSWrapper V( localProxy );
+	if( !V.IsValid( ) ) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
+			 << "DNProxyManager::CTOR() - "
+			 << "Cannot retrieve the Subject for the proxy ["
+			 << localProxy << "]. Error is: "
+			 << V.getErrorMessage() <<". Skipping..."
+			 );
+	  continue;
+	}
+	
+	if(V.getProxyTimeEnd()> time(0)) {
+	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+			 << "DNProxyManager::CTOR() - "
+			 << "Inserting tuple (" << localProxy<<", "
+			 << V.getProxyTimeEnd() << ", " << it->second<< ") into m_DNProxyMap_NEW for DN ["
+			 << it->first<< "]..."
+			 );
+
+	  m_DNProxyMap_NEW[ it->first ] = boost::make_tuple( localProxy, V.getProxyTimeEnd(), it->second);
+
+	}
+      }
+    }
+
 }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
+void iceUtil::DNProxyManager::decrementUserProxyCounter( const std::string& userDN ) 
+  throw()
+{
+  boost::recursive_mutex::scoped_lock M( mutex );
+  string regID = compressed_string(userDN);
+  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap_NEW.find( userDN );
+  if( it != m_DNProxyMap_NEW.end() ) {
+
+    CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::decrementUserProxyCounter() - "
+		   << "Decrementing proxy counter for DN ["
+		   << regID << "]"
+		   );
+
+    m_DNProxyMap_NEW[ userDN ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() - 1);
+
+    if(it->second.get<2>() == 1) {
+      
+      /**
+	 If the counter is 0 deregister the current proxy and clear the map and delete the file.
+      */
+      int err = glite_renewal_UnregisterProxy( regID.c_str(), NULL );
+      
+      if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+	CREAM_SAFE_LOG(
+		       m_log_dev->errorStream()
+		       << "DNProxyManager::decrementUserProxyCounter() - "
+		       << "Couldn't unregister the proxy registered with ID ["
+		       << regID << "]. Error is: "
+		       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
+		       );
+      }
+
+      CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::decrementUserProxyCounter() - "
+		   << "Proxy Counter is ZERO for DN ["
+		   << regID << "]. Unregistering it and removing symlink from persist_dir..."
+		   );
+
+      unlink( m_DNProxyMap_NEW[ userDN ].get<0>().c_str() );
+      m_DNProxyMap_NEW.erase( userDN );
+      return;
+      
+    }
+
+  }
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::registerUserProxy( const string& userDN, 
+						 const string& userProxy,
+						 const string& my_proxy_server,
+						 const time_t proxy_time_end)
+  throw()
+{
+
+  boost::recursive_mutex::scoped_lock M( mutex );
+
+  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap_NEW.find( userDN );
+  if( it != m_DNProxyMap_NEW.end() ) {
+
+    CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		   << "DNProxyManager::registerUserProxy() - Found a proxy for user DN ["
+		   << userDN <<"]. Will not register it to MyProxyServer..."
+		   );
+
+    m_DNProxyMap_NEW[ userDN ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() + 1);
+    return;
+  }
+
+  char *renewal_proxy_path = NULL;
+
+  string regID = compressed_string(userDN);
+
+  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		 << "DNProxyManager::registerUserProxy() - Going to register proxy ["
+		 << userProxy << "] to MyProxyServer ["
+		 << my_proxy_server << "] with ID ["
+		 << regID << "]."
+		 );
+
+  int register_result = glite_renewal_RegisterProxy(userProxy.c_str(), 
+						    my_proxy_server.c_str(), 
+						    7512, 
+						    regID.c_str(), 
+						    EDG_WLPR_FLAG_UNIQUE, 
+						    &renewal_proxy_path);
+
+  if(register_result) {
+
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::registerUserProxy() - glite_renewal_RegisterProxy failed with error code: "
+		   << register_result << ". Will retry with proxy of the next job..."
+		   );
+    return;
+
+  } else {
+    
+    /**
+       make a symlink in the persist_dir to the path of the renewal_proxy_path. 
+       Used at ICE's boot to restore the m_DNProxyMap_NEW.
+    */
+    string proxylink = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
+    proxylink += regID + "_NEW.proxy";
+
+    if( symlink( renewal_proxy_path, proxylink.c_str() ) < 0) {
+      CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		     << "DNProxyManager::registerUserProxy() - "
+		     << "Cannot symlink [" << renewal_proxy_path << "] to ["
+		     << proxylink << "]. Error is: " << strerror(errno) << ". Will retry with proxy of the next job..."
+		     );
+      /**
+	 UN-register 
+      */
+
+      int err = glite_renewal_UnregisterProxy( regID.c_str(), NULL );
+
+      if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+	CREAM_SAFE_LOG(
+		       m_log_dev->errorStream()
+		       << "DNProxyManager::registerUserProxy() - "
+		       << "Couldn't unregister the proxy registered with ID ["
+		       << regID << "]. Error is: "
+		       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
+		       );
+	
+	return;
+      }
+    }
+
+    /**
+       Everything went ok. Now let's save the registered proxy !
+    */
+    m_DNProxyMap_NEW[ userDN ] = boost::make_tuple(string(renewal_proxy_path), proxy_time_end, 1);
+
+  }
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
   //string dn;
@@ -199,20 +395,20 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& prx ) throw()
   cream_api::soap_proxy::VOMSWrapper V( prx );
   if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		   << "DNProxyManager::setUserProxyIfLonger() - "
-		   << "Cannot retrieve the Subject for the proxy ["
+		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
+		   << "Cannot read the proxy ["
 		   << prx << "]. ICE will continue to use the old better proxy. Error is: "
 		   << V.getErrorMessage()
 		   );
     return;
   }
   
-  this->setUserProxyIfLonger( V.getDNFQAN(), prx, V.getProxyTimeEnd() );
+  this->setUserProxyIfLonger_Legacy( V.getDNFQAN(), prx, V.getProxyTimeEnd() );
   
 }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn, 
+void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn, 
 						    const string& prx
 						    ) throw()
 {
@@ -235,20 +431,20 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
     return;
   }
 
-  this->setUserProxyIfLonger( dn, prx, newT );
+  this->setUserProxyIfLonger_Legacy( dn, prx, newT );
 }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn, 
-						    const string& prx,
-						    const time_t exptime
-						    ) throw()
+void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn, 
+							   const string& prx,
+							   const time_t exptime
+							   ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
 
     string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
 
-  if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
+  if( m_DNProxyMap_Legacy.find( dn ) == m_DNProxyMap_Legacy.end() ) {
 
     try {
 
@@ -274,7 +470,8 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << time_t_to_string(exptime) << "]"
 		   );
 
-    m_DNProxyMap[ dn ] = make_pair(localProxy, exptime);
+    //m_DNProxyMap_Legacy[ dn ] = make_pair(localProxy, exptime);
+    m_DNProxyMap_Legacy[ dn ] = boost::make_tuple( localProxy, exptime);
 
     return;
   }
@@ -282,7 +479,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
   time_t newT, oldT;
 
   newT = exptime;
-  oldT = m_DNProxyMap[ dn ].second;
+  oldT = m_DNProxyMap_Legacy[ dn ].get<1>();
 
   if( !oldT ) { // couldn't get the proxy time for some reason
     try {
@@ -303,7 +500,8 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << localProxy << "] - New Expiration Time is ["
 		   << time_t_to_string(exptime) << "]"
 		   );
-    m_DNProxyMap[ dn ] = make_pair(localProxy, exptime);
+    m_DNProxyMap_Legacy[ dn ] = boost::make_tuple(localProxy, exptime);//make_pair(localProxy, exptime);
+    //m_DNProxyMap[ dn ] = boost::make_tuple(localProxy, exptime, (long long int)0);
     return;
   }
   
@@ -336,7 +534,8 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger( const string& dn,
 		   << time_t_to_string(newT) << "]"
 		   );
 
-    m_DNProxyMap[ dn ] = make_pair(localProxy, newT);
+    m_DNProxyMap_Legacy[ dn ] = boost::make_tuple(localProxy, newT);//make_pair(localProxy, newT);
+    //m_DNProxyMap[ dn ] = boost::make_tuple(localProxy, newT, 0);
 
   } 
 }

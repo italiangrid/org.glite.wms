@@ -81,14 +81,16 @@ namespace util {
 	    int         m_delegation_duration;
             std::string m_delegation_id;
 	    std::string m_user_dn;
+	    bool        m_renewable;
 
-	  table_entry( const std::string& sha1_digest, const std::string& cream_url, const time_t expiration_time, const int deleg_duration, const std::string& delegation_id, const std::string& user_dn ) :
+	  table_entry( const std::string& sha1_digest, const std::string& cream_url, const time_t expiration_time, const int deleg_duration, const std::string& delegation_id, const std::string& user_dn, const bool renewable ) :
                 m_sha1_digest( sha1_digest ),
                 m_cream_url( cream_url ),
                 m_expiration_time( expiration_time ),
 		m_delegation_duration( deleg_duration ),
                 m_delegation_id( delegation_id ),
-		m_user_dn( user_dn )
+		m_user_dn( user_dn ),
+		m_renewable( renewable )
             { };
         };
 
@@ -194,9 +196,10 @@ namespace util {
          * <li>User DN</li>
          * <li>Delegation Expiration Time</li>
          * <li>Delegation duration</li>
+	 * <li>Renewable (bool: yes/no)<li>
          * </ul>
          */
-	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int> >& target);
+	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool> >& target);
 
       /**
 	 < delegID, cream_url, exp_time, user_dn, 

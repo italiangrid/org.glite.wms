@@ -609,7 +609,7 @@ throw()
     cream_api::soap_proxy::JobFilterWrapper filter(target, vector<string>(), -1, -1, "", "");
     
     // Gets the proxy to use for authentication
-    string better_proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() ).first;
+    string better_proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() ).get<0>();
     
     cream_api::soap_proxy::VOMSWrapper V( better_proxy );
     if( !V.IsValid( ) ) {
@@ -841,6 +841,8 @@ throw()
 
             it = purge_job( it, "Job purged by ICE" );
 
+	    if(tmp_job.is_proxy_renewable())
+	      ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN() );
         }
         if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ) {
 

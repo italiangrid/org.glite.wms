@@ -100,6 +100,7 @@ namespace glite {
           bool m_is_killed_by_ice;
           time_t m_last_empty_notification; //! The timestamp of the last received empty notification
 	  bool m_proxy_renew;
+	  std::string m_myproxy_address;
 	  
 	  
 	protected:
@@ -286,6 +287,8 @@ namespace glite {
 	  }
 
 	  bool is_proxy_renewable() const { return m_proxy_renew; }
+
+	  std::string getMyProxyAddress() const { return m_myproxy_address; }
 
 
           /**

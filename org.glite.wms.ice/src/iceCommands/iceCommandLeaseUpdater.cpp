@@ -203,7 +203,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
                        << " because the lease id does not exist or is expired"
                        );
     
-        string proxy = DNProxyManager::getInstance()->getBetterProxyByDN( the_job.getUserDN() ).first ;
+        string proxy = DNProxyManager::getInstance()->getBetterProxyByDN( the_job.getUserDN() ).get<0>() ;
         
         try {
             soap_proxy::VOMSWrapper V( the_job.getUserProxyCertificate() );

@@ -246,7 +246,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
     // boost::function<void()> remove_f_ref = boost::ref( remove_f );
     // wms_utils::scope_guard remove_jobs_guard( remove_f_ref );
     
-    string proxy( DNProxyManager::getInstance()->getBetterProxyByDN( user_dn ).first );
+    string proxy( DNProxyManager::getInstance()->getBetterProxyByDN( user_dn ).get<0>() );
     
     if ( proxy.empty() ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name

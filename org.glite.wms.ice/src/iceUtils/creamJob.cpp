@@ -92,7 +92,8 @@ CreamJob::CreamJob( ) :
     m_exit_code( 0 ),
     m_is_killed_by_ice( false ),
     m_last_empty_notification( time(0) ),
-    m_proxy_renew( false )
+    m_proxy_renew( false ),
+    m_myproxy_address( "" )
 {
 
 }
@@ -130,6 +131,7 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     string tmp;
     if ( classad_safe_ptr->EvaluateAttrString( "MYPROXYSERVER", tmp ) ) {
       m_proxy_renew = true;
+      m_myproxy_address = tmp;
     } else {
       m_proxy_renew = false;
     }
@@ -258,9 +260,9 @@ void CreamJob::setSequenceCode( const std::string& seq )
 //______________________________________________________________________________
 string CreamJob::getBetterProxy( void ) const
 {
-    string better = DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn ).first;
-    if( better.empty() ) return m_user_proxyfile;
-    return better;
+  string better = DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn ).get<0>();
+  if( better.empty() ) return m_user_proxyfile;
+  return better;
 }
 
 //______________________________________________________________________________

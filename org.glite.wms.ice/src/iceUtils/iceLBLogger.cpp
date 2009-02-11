@@ -21,7 +21,7 @@
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
 #include "jobCache.h"
-//#include "glite/ce/cream-client-api-c/scoped_timer.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <boost/scoped_ptr.hpp>
@@ -69,8 +69,9 @@ iceLBLogger::~iceLBLogger( void )
 CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 {
     static const char* method_name = "iceLBLogger::logEvent() - ";
-    //    api_util::scoped_timer T( "logEvent()" );
-
+#ifdef ICE_PROFILE_ENABLE
+    api_util::scoped_timer T( "logEvent()" );
+#endif
     // Aborts if trying to log the NULL event
     if ( ! ev ) {
         CREAM_SAFE_LOG(m_log_dev->fatalStream()
@@ -129,9 +130,9 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     if ( edg_wll_GetSequenceCode( *(m_ctx->el_context) ) ) { // update the sequence code only if it is non null
         new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
         { // Lock the job cache
-
-	  //	  api_util::scoped_timer T( "logEvent::mutex_aquisition-EntireBlock" );//126
-
+#ifdef ICE_PROFILE_ENABLE
+	  api_util::scoped_timer T( "logEvent::mutex_aquisition-EntireBlock" );//126
+#endif
             jobCache* m_cache( jobCache::getInstance() );
             boost::recursive_mutex::scoped_lock( m_cache->mutex );
 
@@ -139,8 +140,9 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
             CreamJob theJob( ev->getJob() );
 	    
             theJob.setSequenceCode( new_seq_code );
-	    
-	    //	    api_util::scoped_timer T3( "logEvent::put_in_cache" );//10
+#ifdef ICE_PROFILE_ENABLE
+	    api_util::scoped_timer T3( "logEvent::put_in_cache" );//10
+#endif
             m_cache->put( theJob );
             return theJob;
 

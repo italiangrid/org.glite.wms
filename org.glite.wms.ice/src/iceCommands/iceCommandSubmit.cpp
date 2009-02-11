@@ -49,7 +49,7 @@
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/JobDescriptionWrapper.h"
-//#include "glite/ce/cream-client-api-c/scoped_timer.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -229,8 +229,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 {
     static const char* method_name="iceCommandSubmit::execute() - ";
 
-    // api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
-    
+#ifdef ICE_PROFILE_ENABLE
+    api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
+#endif
+
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << method_name
@@ -637,9 +639,22 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     
     // now the job is in cache and has been registered we can save its
     // proxy into the DN-Proxy Manager's cache
-    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( m_theJob.getUserDN(), 
-								  m_theJob.getUserProxyCertificate(), 
-								  V.getProxyTimeEnd() );
+    if( m_theJob.is_proxy_renewable() ) {
+
+      iceUtil::DNProxyManager::getInstance()->registerUserProxy( 
+								m_theJob.getUserDN(),
+								m_theJob.getUserProxyCertificate(),
+								m_theJob.getMyProxyAddress(),
+								V.getProxyTimeEnd()
+								);
+
+    } else {
+
+      iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger_Legacy( m_theJob.getUserDN(), 
+									   m_theJob.getUserProxyCertificate(), 
+									   V.getProxyTimeEnd() );
+
+    }
 
     /*
      * here must check if we're subscribed to the CEMon service
@@ -651,7 +666,9 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     }
            
     {
-      //api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in cache" );
+#ifdef ICE_PROFILE_ENABLE
+      api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in cache" );
+#endif
         boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
         m_theJob.setLastSeen( time(0) );
         iceUtil::jobCache::getInstance()->put( m_theJob );

@@ -65,7 +65,7 @@ namespace glite {
 	  //	  bool iceCommandProxyRenewal::renewProxy( const std::pair<std::string, std::string>&, const std::string&) throw();
 	  void renewAllDelegations( void ) throw();
 
-	  void getAllPhysicalNewProxies( std::set<std::string>& ) throw();
+	  //	  void getAllPhysicalNewProxies( std::set<std::string>& ) throw();
 
 	public:
 	  iceCommandProxyRenewal( );
