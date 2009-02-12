@@ -45,6 +45,7 @@ echo "$errorRate_pid" >> errorRate_pid.txt
 for hostfile in $hostfile1 $hostfile2 $hostfile3 $hostfile4 $hostfile5 $hostfile6 $hostfile7 $hostfile8 $hostfile9 $hostfile10
 #for hostfile in $hostfile1 $hostfile2 $hostfile3 $hostfile4 $hostfile5;
 do
+  echo "Starting $hostfile"
   echo "START" >> $hostfile
   sleep ${hours}h 
 done
