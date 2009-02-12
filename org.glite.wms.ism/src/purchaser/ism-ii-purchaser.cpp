@@ -111,7 +111,7 @@ void populate_ism(
     gluece_info_container_updated_entries.end()
   );
 
-  // no locking is needed here
+  // no locking is needed here (before the switch)
   int dark_side = ism::dark_side();
   get_ism(the_ism_index, dark_side).clear(); // should be unnecessary
   for ( ; it != e; ++it ) {
