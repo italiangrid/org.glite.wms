@@ -287,10 +287,21 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const std::string& user
 		   << "]from persist_dir..."
 		   );
 
-      unlink( m_DNProxyMap_NEW[ userDN ].get<0>().c_str() );
+      if(::unlink( m_DNProxyMap_NEW[ userDN ].get<0>().c_str() ) < 0)
+	{
+	  int saveerr = errno;
+	  CREAM_SAFE_LOG(
+			 m_log_dev->errorStream()
+			 << "DNProxyManager::decrementUserProxyCounter() - "
+			 << "Unlink of file ["
+			 << m_DNProxyMap_NEW[ userDN ].get<0>() << "] is failed. Error is: "
+			 << strerror(saveerr);
+			 );
+	}
+      
       m_DNProxyMap_NEW.erase( userDN );
       return;
-      
+    
     }
 
   }
@@ -701,6 +712,6 @@ void iceUtil::DNProxyManager::removeProxyForDN( const std::string& userDN)
 {
   boost::recursive_mutex::scoped_lock M( mutex );
 
-  m_DNProxyMap_Legacy.erase( userDN );
+  //  m_DNProxyMap_Legacy.erase( userDN );
   m_DNProxyMap_NEW.erase( userDN );
 }

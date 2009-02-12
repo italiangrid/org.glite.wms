@@ -435,6 +435,9 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
             
             Delegation_manager::instance()->removeDelegation( thisDelegID );
 	    DNProxyManager::getInstance()->removeProxyForDN( thisUserDN );
+	    /**
+	       FIXME: must unregister the proxy...
+	    */
             mapDelegTime.erase( thisDelegID );
             mapDelegJob.erase( thisDelegID );
             continue;
