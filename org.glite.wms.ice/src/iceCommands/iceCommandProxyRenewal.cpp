@@ -292,6 +292,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     vector< boost::tuple< string, string, string, time_t, int, bool> > allDelegations;
     map< string, CreamJob > delegID_CreamJob;
     
+    
     Delegation_manager::instance()->getDelegationEntries( _allDelegations );
     /**
        must remove the non-renewable delegations...
@@ -376,7 +377,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	   1. as the proxy that ICE registered to the myproxyserver and that is automatically renewed by it
 	   2. as the ICE-calculated better proxy (calculated at each submission)
         */
-	boost::tuple<string, time_t, long long int> thisBetterPrx = DNProxyManager::getInstance()->getBetterProxyByDN( thisUserDN ); 
+	boost::tuple<string, time_t, long long int> thisBetterPrx = DNProxyManager::getInstance()->getBetterProxyByDN( thisUserDN );
+ 
 	/**
 	   if the returned better proxy is the "new" one must get the actual expiration time
 	   (remember that it is renewed by myproxyserver asynchronously and ICE doesn't know
@@ -406,8 +408,13 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 
 	    proxy_time_end = V.getProxyTimeEnd();
 
+	    
+
 	  } else {
 	  
+	  /**
+	     this is a old-style better proxy...
+	  */
 	  proxy_time_end = thisBetterPrx.get<1>();
 
 	}
@@ -422,11 +429,12 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
                             << "For current Delegation ID [" << thisDelegID 
                             <<"] DNProxyManager returned the Better Proxy ["
                             << thisBetterPrx.get<0>() 
-                            << "] that is EXPIRED. Removing this delegation ID from "
-                            << "Delegation_manager ..."
+                            << "] that is EXPIRED! Removing this delegation ID from "
+                            << "Delegation_manager, removing proxy from DNProxyManager's cache, won't renew delegation ..."
                             );
             
             Delegation_manager::instance()->removeDelegation( thisDelegID );
+	    DNProxyManager::getInstance()->removeProxyForDN( thisUserDN );
             mapDelegTime.erase( thisDelegID );
             mapDelegJob.erase( thisDelegID );
             continue;

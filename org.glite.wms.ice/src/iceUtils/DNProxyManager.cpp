@@ -282,7 +282,9 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const std::string& user
 		   m_log_dev->debugStream()
 		   << "DNProxyManager::decrementUserProxyCounter() - "
 		   << "Proxy Counter is ZERO for DN ["
-		   << regID << "]. Unregistering it and removing symlink from persist_dir..."
+		   << regID << "]. Unregistering it and removing symlink ["
+		   << m_DNProxyMap_NEW[ userDN ].get<0>()
+		   << "]from persist_dir..."
 		   );
 
       unlink( m_DNProxyMap_NEW[ userDN ].get<0>().c_str() );
@@ -422,7 +424,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
 		   << "Cannot retrieve time left for proxy ["
 		   << prx << "]. ICE will continue to use the old better proxy. Error is: "
 		   << ex.what()
@@ -452,7 +454,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
+		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
 		     );
@@ -462,7 +464,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
     }
     
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
 		   << "DN ["
 		   << dn << "] not found. Inserting the new proxy ["
 		   << prx << "]. Will be Copied into ["
@@ -486,7 +488,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
       this->copyProxy( prx, localProxy );
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-     		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
+     		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
      		     );
@@ -494,7 +496,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
     }
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
 		   << "New proxy ["
 		   << prx << "] has been copied into ["
 		   << localProxy << "] - New Expiration Time is ["
@@ -507,7 +509,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
   
   if(newT > oldT) {
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
 		   << "Setting user proxy to [ "
 		   << prx
 		   << "] copied to " << localProxy 
@@ -520,14 +522,14 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "DNProxyManager::setUserProxyIfLonger() - Error copying proxy ["
+		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
 		     << prx << "] to ["
 		     << localProxy << "]."
 		     );
     }
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		   << "DNProxyManager::setUserProxyIfLonger() - "
+		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
 		   << "New proxy ["
 		   << prx << "] has been copied into ["
 		   << localProxy << "] - New Expiration Time is ["
@@ -612,7 +614,6 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
   ::chmod( target.c_str(), 00600 );
 }
 
-
 //________________________________________________________________________
 pair<iceUtil::jobCache::iterator, time_t>
 iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn ) 
@@ -692,4 +693,14 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
 
   return make_pair(bestProxy, besttime);
 
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::removeProxyForDN( const std::string& userDN)
+  throw()
+{
+  boost::recursive_mutex::scoped_lock M( mutex );
+
+  m_DNProxyMap_Legacy.erase( userDN );
+  m_DNProxyMap_NEW.erase( userDN );
 }

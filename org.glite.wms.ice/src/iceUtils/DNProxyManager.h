@@ -98,8 +98,9 @@ namespace util {
 	      return boost::make_tuple(it->second.get<0>(), it->second.get<1>(), it->second.get<2>());
 	    }
 
-            
         }
+
+	void removeProxyForDN( const std::string& dn ) throw();
         
     private:
         void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
