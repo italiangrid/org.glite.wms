@@ -24,15 +24,14 @@ gnuplotfile=$datafile_noext.plt
 echo "Creating $gnuplotfile file"
 
 cat <<EOF > $gnuplotfile
-set title "Response Time"
+set title "SCAS server memory consumption"
 set xlabel "Time (sec from Unix epoch)"
-set ylabel "Response time (sec)"
-#set key title "$datafile"
+set ylabel "Memory consumption (KB)"
 set autoscale
 set datafile separator ","
 set terminal postscript enhanced color
 set output "$datafile_noext.ps"
-plot "$datafile" using 1:6
+plot "$datafile" using 1:6 title ""
 EOF
 gnuplot $gnuplotfile
 if [ $? -ne 0 ]; then

@@ -58,15 +58,21 @@ sleep 10s
 
 cp -f ./glexec_stress_test.sh /home/dteamdteampilot$INDEX/ 
 chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
-chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/x509up_u501_$INDEX 
 chmod u+x /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
+#chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/x509up_u501_$INDEX 
 
 hostname=`hostname`
 hostlogfile=$hostname.log
 
 echo "Starting glexec test as dteamdteampilot$INDEX" 
-#su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX 
-su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902101600 -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
+if [ "x$iterations" != "x" ];then
+  #su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX 
+  su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n $iterations -i $INDEX" dteamdteampilot$INDEX
+fi
+if [ "x$end_date" != "x" ];then
+  #su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902121000 -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
+  su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d $end_date -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
+fi
 
 #kill the proxy renewal process
 kill $proxy_renewal_pid

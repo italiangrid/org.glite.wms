@@ -22,6 +22,7 @@ else
   usernum=50${INDEX}
 fi
 
+echo "using test user $usernum"
 #cp --reply=yes $users_certs_dir/test_user_50${INDEX}_cert.pem ./
 cp --reply=yes $users_certs_dir/test_user_${usernum}_cert.pem ./
 cp --reply=yes $users_certs_dir/test_user_${usernum}_key.pem ./
@@ -37,7 +38,7 @@ if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   exit 1
 fi
-cp --reply=yes ./x509up_u501_${usernum} /home/dteamdteampilot${usernum}
+cp --reply=yes ./x509up_u501_${usernum} /home/dteamdteampilot${INDEX}/x509up_u501_${INDEX}
 if [ $? -ne 0 ]; then
   echo "Error copying the proxy" 
   exit 1
@@ -54,7 +55,7 @@ do
     echo "Error creating the proxy" 
     break #do not exit, could be a temporary problem
   fi
-  cp --reply=yes ./x509up_u501_${usernum} /home/dteamdteampilot${usernum}
+  cp --reply=yes ./x509up_u501_${usernum} /home/dteamdteampilot${INDEX}/x509up_u501_${INDEX}
   if [ $? -ne 0 ]; then
     echo "Error copying the proxy" 
     exit 1

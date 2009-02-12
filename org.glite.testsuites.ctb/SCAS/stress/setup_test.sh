@@ -18,7 +18,7 @@ afs_pass=`cat $afs_pass_file`
 echo "Log file location: $log_location"
 echo "Removing old log files if present"
 
-for host in $m1 $m2 $m3 $m4 $m5;
+for host in $m1 $m2 $m3 $m4 $m5 $m6 $m7 $m8 $m9 $m10;
 do
   rm -f $log_location/$host
 done
@@ -26,7 +26,7 @@ done
 echo "Preparing the nodes"
 
 i=0
-for host in $m1 $m2 $m3 $m4 $m5;
+for host in $m1 $m2 $m3 $m4 $m5 $m6 $m7 $m8 $m9 $m10;
 do
   i=$[$i+1]
   echo "Starting host $host"

@@ -257,6 +257,23 @@ file hourlyErrorRate (in $logs_dir).
 The timestamp is in seconds from the Unix epoch and the
 error rate is the total error rate (all the nodes) in %.
 
+- normalize_time.sh -
+Usage $0 <file> <t0>
+  <file> the data file to normalize
+  <t0> start time
+
+This script is used to normalize the time; t0 is subtracted to all the
+timestamps.
+
+- normalize_all.sh -
+Usage $0 <t0> <log_location>
+  <t0> start time
+  <log_location> directory where all data files are stored
+
+This file is used to normalize the time in all the data files (*_data, *_error and scas*.log).
+It uses the previous script to do the job.
+
+
 ________________________________________________________________
 
 The procedure to follow for the WN installation is described in

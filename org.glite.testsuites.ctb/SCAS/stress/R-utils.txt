@@ -7,3 +7,15 @@ nrequests <- NROW(respTime)
 maxRespTime <- max(respTime)
 minRespTime <- min(respTime)
 
+To shift the time so that x starts from 0, beginning of test
+mat1 <-read.table("<host>_data",sep=",")
+rows <- nrow(mat1)
+vect1 <- rep(<time_start>,times=rows)
+vect2 <- rep(0,times=rows)
+matr <- c(vect1,vect2)
+dim(matr) <- c(rows,2)
+mat2 <- mat1 - matr
+plot(mat2)
+sink ("<host>_norm_data")
+mat2
+sink
