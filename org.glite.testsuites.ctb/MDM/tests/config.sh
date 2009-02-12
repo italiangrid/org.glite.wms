@@ -19,6 +19,9 @@
 # MDM config file
 #MDM_CONFIG_FILE=/etc/MedicalDataManager.conf
 
+#Test DN to test permissions setting with. Test DN must exist in VO
+#TEST_DN="/C=CH/O=CERN/OU=GD/CN=Test user 101/CN=proxy"
+
 # Test images
 TEST_IMAGE_1=images/test1.dcm
 

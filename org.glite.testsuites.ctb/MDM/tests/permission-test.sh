@@ -17,7 +17,6 @@ fi
 
 setup 
 
-TEST_DN="/C=CH/O=Test organisation/CN=Testy tester" 
 ###############################
 ###### Test for man pages #####
 ###############################
@@ -140,6 +139,92 @@ function verify_perms () {
     fi
   fi
   
+
+  # Check LFN perms
+
+  if [ $# -eq 1 ] ; then
+
+    LFN_PERMS=`lfc-ls -l $LFN |cut -f1 -d " " | cut -c2-10`
+    if [ $? -ne 0 ] ; then
+      echo "Could not get LFN permissions for $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+
+    echo $LFN_PERMS |grep  ^$1$ >/dev/null 2>&1 
+    if [ $? -ne 0 ] ; then
+      echo "LFN permissions are incorrect for $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+    
+  else
+    LFN_PERMS=`lfc-getacl $LFN |grep "$DN"  |grep -v ^# |cut -f3 -d ":" |cut -c1-3`
+    if [ $? -ne 0 ] ; then
+      echo "Could not get LFN permissions for $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+
+    echo $LFN_PERMS |grep  ^$DN_PERM$ >/dev/null 2>&1 
+    if [ $? -ne 0 ] ; then
+      echo "LFN permissions are incorrect for $DN on $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+  fi
+
+  # Check DPM perms
+  SURL=`lcg-lr lfn:$LFN |grep srm`
+  if [ $# -eq 1 ] ; then
+
+    DPM_PERMS=`lcg-ls -l $SURL |cut -f1 -d " " | cut -c2-10`
+    if [ $? -ne 0 ] ; then
+      echo "Could not get DPM permissions for $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+
+    echo $DPM_PERMS |grep  ^$1$ >/dev/null 2>&1 
+    if [ $? -ne 0 ] ; then
+      echo "DPM permissions are incorrect for $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+    
+  else
+    DPM_PERMS=`dpns-getacl $MDM_DpmPath/$TEST_IMAGE_1_STUDY"/"$TEST_IMAGE_1_SERIES"/"$TEST_IMAGE_1_SOP |grep "$DN"  |grep -v ^# |cut -f3 -d ":" |cut -c1-3`
+    if [ $? -ne 0 ] ; then
+      echo "Could not get DPM permissions for $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+
+    echo $DPM_PERMS |grep  ^$DN_PERM$ >/dev/null 2>&1 
+    if [ $? -ne 0 ] ; then
+      echo "DPM permissions are incorrect for $DN on $TEST_IMAGE_1" 
+      cleanup
+      my_exit $ERROR
+    fi
+  fi
+
+  # Reset IFS
+  unset IFS
+}
+
+
+###############################
+###### verify AMGA perms ######
+###############################
+
+function verify_amga_perms () {
+  # 1 argument, check that the permissions are $1
+  # 2 arguments, check that the permissions are $1 for $2
+  
+
+  # Play with IFS so we can get the newlines using ``
+  IFS=" "
+
   # Check AMGA permissions
   GUID=`lcg-lg lfn:$LFN`
   if [ $? -ne 0 ] ; then
@@ -184,78 +269,9 @@ function verify_perms () {
     fi
   fi
 
-  # Check LFN perms
-
-  if [ $# -eq 0 ] ; then
-
-    LFN_PERMS=`lfc-ls -l $LFN |cut -f1 -d " " | cut -c2-10`
-    if [ $? -ne 0 ] ; then
-      echo "Could not get LFN permissions for $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-
-    echo $LFN_PERMS |grep  ^$1$ >/dev/null 2>&1 
-    if [ $? -ne 0 ] ; then
-      echo "LFN permissions are incorrect for $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-    
-  else
-    LFN_PERMS=`lfc-getacl $LFN |grep "$DN"  |grep -v ^# |cut -f3 -d ":" |cut -c1-3`
-    if [ $? -ne 0 ] ; then
-      echo "Could not get LFN permissions for $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-
-    echo $LFN_PERMS |grep  ^$DN_PERM$ >/dev/null 2>&1 
-    if [ $? -ne 0 ] ; then
-      echo "LFN permissions are incorrect for $DN on $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-  fi
-
-  # Check DPM perms
-  SURL=`lcg-lr lfn:$LFN |grep surl`
-  if [ $# -eq 0 ] ; then
-
-    DPM_PERMS=`lcg-ls -l $SURL |cut -f1 -d " " | cut -c2-10`
-    if [ $? -ne 0 ] ; then
-      echo "Could not get DPM permissions for $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-
-    echo $DPM_PERMS |grep  ^$1$ >/dev/null 2>&1 
-    if [ $? -ne 0 ] ; then
-      echo "DPM permissions are incorrect for $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-    
-  else
-    DPM_PERMS=`dpns-getacl $MDM_DpmPath/$TEST_IMAGE_1_STUDY"/"$TEST_IMAGE_1_SERIES"/"$TEST_IMAGE_1_SOP |grep "$DN"  |grep -v ^# |cut -f3 -d ":" |cut -c1-3`
-    if [ $? -ne 0 ] ; then
-      echo "Could not get DPM permissions for $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-
-    echo $DPM_PERMS |grep  ^$DN_PERM$ >/dev/null 2>&1 
-    if [ $? -ne 0 ] ; then
-      echo "DPM permissions are incorrect for $DN on $TEST_IMAGE_1" 
-      cleanup
-      my_exit $ERROR
-    fi
-  fi
-
   # Reset IFS
   unset IFS
 }
-
 ###############################
 #### Register test image ######
 ###############################
@@ -285,8 +301,48 @@ verify_perms rwxrw-r--
 
 echo "...permissions correct in all services"
 
+
 ###############################
-## Set permissions with LFN ###
+## Set permissions with guid ##
+###############################
+
+GUID=`lcg-lg lfn:$LFN`
+
+glite-mdm-set-right -g $GUID  -u "$TEST_DN" biomed r-- none >/dev/null 2>&1
+
+if [ $? -ne 0 ] ; then
+  echo "There was an error changing permissions to '-u \"$TEST_DN\" biomed rw- none' with the flag -g $GUID"
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "Succesfully changed permissions using GUID and -u <DN> biomed rw- none, verifying..."
+
+verify_perms $TEST_DN r--
+#verify_perms_amga $TEST_DN none
+
+echo "...permissions correct in all services"
+
+###############################
+### Set AMGA perms with file ##
+###############################
+
+glite-mdm-set-right -f $TEST_IMAGE_1 "group"  >/dev/null 2>&1
+
+if [ $? -ne 0 ] ; then
+  echo "There was an error changing amga permissions to \"group\" with the flag -d $TEST_IMAGE_1"
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "Succesfully changed amga permissions using file and \"group\", verifying..."
+
+#verify_perms_amga group
+
+echo "...permissions correct in all services"
+
+###############################
+### Set AMGA perms with LFN ###
 ###############################
 
 glite-mdm-set-right -l $LFN private >/dev/null 2>&1
@@ -297,49 +353,45 @@ if [ $? -ne 0 ] ; then
   my_exit $ERROR
 fi
 
-echo "Succesfully changed permissions using the file lfn and \"private\", verifying..."
+echo "Succesfully changed amga permissions using the file lfn and \"private\", verifying..."
 
-verify_perms rwx------
+#verify_perms_amga private
 
 echo "...permissions correct in all services"
 
 ###############################
-## Set permissions with guid ##
+##### Set AMGA user perms #####
 ###############################
 
-GUID=`lcg-lg lfn:$LFN`
-
-glite-mdm-set-right -g $GUID  -u "/C=CH/O=Test organisation/CN=Testy tester" r-- >/dev/null 2>&1
+glite-mdm-set-right -l $LFN -u "$TEST_DN" biomed rwx anonymous >/dev/null 2>&1
 
 if [ $? -ne 0 ] ; then
-  echo "There was an error changing permissions to \'-u \"/C=CH/O=Test organisation/CN=Testy tester\" rw-\' with the flag -g $GUID"
+  echo "There was an error changing permissions to \"anonymous\" for user $TEST_DN on image with flag -l lfn:/grid/dteam/mdm/$LFN -u $TEST_DN biomed rwx anonymous"
   cleanup
   my_exit $ERROR
 fi
 
-echo "Succesfully changed permissions using GUID and -u <DN> rw, verifying..."
+echo "Succesfully changed amga permissions for $TEST_DN using the file lfn and \"anonymous\", verifying..."
 
-verify_perms $TEST_DN r--
+verify_perms $TEST_DN rwx
+#verify_perms_amga $TEST_DN anonymous
 
 echo "...permissions correct in all services"
 
 ###############################
-## Set permissions with file ##
+##### Set AMGA user perms #####
 ###############################
 
-glite-mdm-set-right -f $TEST_IMAGE_1 "group"  >/dev/null 2>&1
+glite-mdm-set-right -l $LFN -u "$TEST_DN" anon rex biomed >/dev/null 2>&1
 
-if [ $? -ne 0 ] ; then
-  echo "There was an error changing permissions to \"group\" with the flag -d $TEST_IMAGE_1"
+if [ $? -eq 0 ] ; then
+  echo "Giving wrong parameters to glite-mdm-set-right -u does not give an error"
   cleanup
   my_exit $ERROR
 fi
 
-echo "Succesfully changed permissions using file and \"group\", verifying..."
+echo "Giving wrong parameters to glite-mdm-set-right -u correctly gives an error"
 
-verify_perms rwxrwx---
-
-echo "...permissions correct in all services"
 
 ###############################
 ############ Done #############

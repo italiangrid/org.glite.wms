@@ -38,6 +38,7 @@ function setup() {
   MAN_PAGE_CHECK=${MAN_PAGE_CHECK:-1}
   TOMCAT_CFG_DIR=${TOMCAT_CFG_DIR:-/etc/tomcat5/Catalina/localhost/}
   MDM_CONFIG_FILE=${MDM_CONFIG_FILE:-/etc/MedicalDataManager.conf}
+  TEST_DN=${TEST_DN:-"/C=CH/O=CERN/OU=GD/CN=Test user 101/CN=proxy"}
   TEST_IMAGE_1=${TEST_IMAGE_1:-images/test1.dcm}
 
   export GLITE_SD_PLUGIN
@@ -46,6 +47,7 @@ function setup() {
   export MAN_PAGE_CHECK
   export TOMCAT_CFG_FIR
   export MDM_CONFIG_FILE
+  export TEST_DN
   export TEST_IMAGE_1
 
   source $MDM_CONFIG_FILE
@@ -75,8 +77,8 @@ EOF
   TEST_IMAGE_1_SOP=`$MDM_GetUiDFile  $TEST_IMAGE_1 SOP_INSTANCE_UID`
   RES=$(($RES+$?))
 
-  if [ $RES -ne 0 ] ; then
-    echo "Failed getting info from test files, are these DICOM files?"
+  if [ $RES -ne 0 ] || [ x"$TEST_IMAGE_1_STUDY" = "x" ]; then
+    echo "Failed getting info from test file, is it a DICOM file?"
     my_exit $ERROR
   fi
 
