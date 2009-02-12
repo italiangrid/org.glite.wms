@@ -24,8 +24,6 @@ libglite_wms_helper_broker_ism_la_LIBADD = \
 	$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
 	$(GLITE_WMS_ISM_LIBS)
 
-$(srcdir)/Helper_matcher_ism.cpp: $(srcdir)/Helper_matcher.cpp ; $(CXXCOMPILE) -D MATCHER_HELPER_USE_ISM -E $(srcdir)/Helper_matcher.cpp > $(srcdir)/Helper_matcher_ism.cpp
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/../org.glite.wms.broker/src/selectors \
