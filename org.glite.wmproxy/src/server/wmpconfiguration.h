@@ -28,6 +28,7 @@ limitations under the License.
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMPConfiguration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
 
 
@@ -230,7 +231,7 @@ class WMProxyConfiguration {
 		 * Workload Manager Proxy configuration instance
 		 */
 		glite::wms::common::configuration::WMPConfiguration const* wmp_config;
-		
+    glite::wms::common::configuration::CommonConfiguration const* common_config;
 		
 	private:
 		void loadConfiguration();

@@ -169,6 +169,7 @@ WMProxyConfiguration::refreshConfiguration()
 	}
 	config = new configuration::Configuration(opt_conf_file, module);
 	wmp_config = config->wp();
+  common_config = config->common();
 	loadConfiguration();
 	
 	GLITE_STACK_CATCH();
@@ -182,7 +183,7 @@ WMProxyConfiguration::loadConfiguration()
 	// If attribute not present in configuration file then
 	// wmp_config->lbproxy() (dispatcher_threads(), max_input_sandbox_size())
 	// return 0
-	this->lbproxyavailable = wmp_config->lbproxy();
+	this->lbproxyavailable = wmp_common->lbproxy();
 	
 	// [Service Discovery attributes
 	this->servicediscoveryenabled = wmp_config->enable_service_discovery();
