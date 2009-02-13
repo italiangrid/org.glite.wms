@@ -54,10 +54,6 @@
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-#include "gpbox_utils.h"
-#endif
-
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
@@ -240,29 +236,6 @@ try {
   configuration::Configuration const* const config
     = configuration::Configuration::instance();
   assert(config);
-
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-  std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
-  //std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
-  //jobid::JobId dg_jobid(dg_jobid_str);
-
-  std::string PBOX_host_name(config->wm()->pbox_host_name());
-
-  if (!PBOX_host_name.empty()) {
-    if (!gpbox::interact(
-      *config,
-      x509_user_proxy_file_name, //dg_jobid,
-      PBOX_host_name,
-      *suitable_CEs
-    ))
-      Info("Error during gpbox interaction");
-  }
-
-  if (suitable_CEs->empty()) {
-    Info("Empty CE list after gpbox screening");
-    throw NoCompatibleCEs();
-  }
-#endif
 
   matchmaking::matchtable::const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
  

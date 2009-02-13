@@ -12,7 +12,6 @@ lib_LTLIBRARIES = \
 libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
         Helper_ism.cpp \
-        gpbox_utils.cpp \
         Helper_matcher_ism.cpp \
         exceptions.cpp
 

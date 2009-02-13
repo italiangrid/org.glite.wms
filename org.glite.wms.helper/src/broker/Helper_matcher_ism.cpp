@@ -50,10 +50,6 @@
 #include "glite/jdl/PrivateAttributes.h"
 #include "glite/jdl/ManipulationExceptions.h"
 
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-#include "gpbox_utils.h"
-#endif
-
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
@@ -61,9 +57,6 @@ namespace configuration = glite::wms::common::configuration;
 namespace requestad = glite::jdl;
 namespace utils = glite::wmsutils::classads;
 namespace matchmaking = glite::wms::matchmaking;
-
-
-
 
 namespace glite {
 namespace wms {
@@ -165,28 +158,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     input_ad.EvaluateAttrBool("include_brokerinfo", include_brokerinfo);
     int number_of_results = -1;
     input_ad.EvaluateAttrInt("number_of_results", number_of_results);
-
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
-    std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
-    if (!suitableCEs->empty()) { 
-      configuration::Configuration const* const config(
-        configuration::Configuration::instance()
-      );
-      assert(config);
- 
-      std::string PBOX_host_name(config->wm()->pbox_host_name());
-      if (!PBOX_host_name.empty())
-      {
-        if (!glite::wms::helper::broker::gpbox::interact(
-          *config,
-          x509_user_proxy_file_name,
-          PBOX_host_name,
-          *suitableCEs
-        ))
-          Debug("Error during gpbox interaction");
-      }
-    }
-#endif
 
     if (!suitableCEs->empty() ) {
       matchmaking::matchvector suitableCEs_vector(
