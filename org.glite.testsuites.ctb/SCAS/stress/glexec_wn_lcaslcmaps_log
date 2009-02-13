@@ -1,0 +1,18 @@
+/var/log/glexec/glexec.log {
+  size 500M
+  rotate 90
+  copytruncate
+  compress
+  delaycompress
+  missingok
+  create 0600 root root
+}
+
+/var/log/glexec/lcas_lcmaps.log {
+  size 500M
+  rotate 90
+  copytruncate
+  compress
+  delaycompress
+  missingok
+}
