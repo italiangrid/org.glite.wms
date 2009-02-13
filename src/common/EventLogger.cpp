@@ -7,22 +7,18 @@
 
 #include <classad_distribution.h>
 
-#ifdef GLITE_WMS_HAVE_LOGGING
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
 namespace fs = boost::filesystem;
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-#endif
 
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/lb/producer.h"
 #include "glite/lb/consumer.h"
 #include "glite/lb/context.h"
-#endif
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -89,7 +85,6 @@ string EventLogger::getLoggingError( const char *preamble )
 
   if( preamble ) cause.append( 1, ' ' ); 
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   char        *text, *desc;
 
   edg_wll_Error( *this->el_context, &text, &desc );
@@ -97,9 +92,6 @@ string EventLogger::getLoggingError( const char *preamble )
   cause.append( " - " ); cause.append( desc );
 
   free( desc ); free( text );
-#else
-  cause.append( "Logging disabled !!! Are you sure there was an error ???" );
-#endif
 
   return cause;
 }
@@ -121,7 +113,6 @@ void EventLogger::testCode( int &code, bool retry )
 
       code = 0; // Don't retry...
       break;
-#ifdef GLITE_WMS_HAVE_LOGGING
     case EDG_WLL_ERROR_GSS:
       ts::edglog << logger::setlevel( logger::severe )
 		 << "Severe error in GSS layer while communicating with L&B daemons." << endl
@@ -162,7 +153,6 @@ void EventLogger::testCode( int &code, bool retry )
       }
 
       break;
-#endif
     default:
       if( ++this->el_count > el_s_retries ) {
 	ts::edglog << logger::setlevel( logger::error )
@@ -191,19 +181,13 @@ void EventLogger::testCode( int &code, bool retry )
 }
 
 EventLogger::EventLogger( void ) : el_remove( true ),
-#ifdef GLITE_WMS_HAVE_LOGGING
 				   el_flag( EDG_WLL_SEQ_NORMAL ),
-#else
-				   el_flag( 0 ),
-#endif
 				   el_count( 0 ), el_context( NULL ), el_proxy()
 {
   this->el_context = new edg_wll_Context;
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   if( edg_wll_InitContext(this->el_context) )
     throw LoggerException( "Cannot initialize logging context" );
-#endif
 }
 
 EventLogger::EventLogger( edg_wll_Context *cont, int flag ) : el_remove( false ), el_hostProxy( false ),
@@ -214,9 +198,7 @@ EventLogger::EventLogger( edg_wll_Context *cont, int flag ) : el_remove( false )
 EventLogger::~EventLogger( void )
 {
   if( this->el_context && this->el_remove ) {
-#ifdef GLITE_WMS_HAVE_LOGGING
     edg_wll_FreeContext( *this->el_context );
-#endif
 
     delete this->el_context;
   }
@@ -224,7 +206,6 @@ EventLogger::~EventLogger( void )
 
 EventLogger &EventLogger::initialize_jobcontroller_context( ProxySet *ps )
 {
-#ifdef GLITE_WMS_HAVE_LOGGING
   int   res = 0;
 
   if( this->el_context ) {
@@ -239,14 +220,12 @@ EventLogger &EventLogger::initialize_jobcontroller_context( ProxySet *ps )
 
     if( res ) throw LoggerException( "Invalid context parameter setting." );
   }
-#endif
 
   return *this;
 }
 
 EventLogger &EventLogger::initialize_logmonitor_context( ProxySet *ps )
 {
-#ifdef GLITE_WMS_HAVE_LOGGING
   int    res = 0;
 
   if( this->el_context ) {
@@ -261,14 +240,12 @@ EventLogger &EventLogger::initialize_logmonitor_context( ProxySet *ps )
 
     if( res ) throw LoggerException( "Invalid context parameter setting." );
   }
-#endif
 
   return *this;
 }
 
 EventLogger &EventLogger::reset_context( const string &jobid, const string &sequence, int flag )
 {
-#ifdef GLITE_WMS_HAVE_LOGGING
   int             res;
   edg_wlc_JobId   id;
 
@@ -278,14 +255,12 @@ EventLogger &EventLogger::reset_context( const string &jobid, const string &sequ
     edg_wlc_JobIdFree( id );	
     if( res != 0 ) throw LoggerException( this->getLoggingError("Cannot reset logging context:") );
   }
-#endif
 
   return *this;
 }
 
 EventLogger &EventLogger::reset_user_proxy( const string &proxyfile )
 {
-#ifdef GLITE_WMS_HAVE_LOGGING
   bool    erase = false;
   int     res;
 
@@ -310,14 +285,12 @@ EventLogger &EventLogger::reset_user_proxy( const string &proxyfile )
 
     if( res ) throw LoggerException( this->getLoggingError("Cannot reset proxyfile path inside context:") );
   }
-#endif
 
   return *this;
 }
 
 EventLogger &EventLogger::reset_context( const string &jobid, const string &sequence )
 {
-#ifdef GLITE_WMS_HAVE_LOGGING
   int             res;
   edg_wlc_JobId   id;
 
@@ -327,7 +300,6 @@ EventLogger &EventLogger::reset_context( const string &jobid, const string &sequ
     edg_wlc_JobIdFree( id );
     if( res != 0 ) throw LoggerException( this->getLoggingError("Cannot reset logging context:") );
   }
-#endif
 
   return *this;
 }
@@ -336,7 +308,6 @@ EventLogger &EventLogger::reset_context( const string &jobid, const string &sequ
 
 EventLogger &EventLogger::set_LBProxy_context( const string &jobid, const string &sequence, const string &proxyfile)
 { 
-#ifdef GLITE_WMS_HAVE_LOGGING
   bool              erase = false;
   int               res;
   edg_wlc_JobId     id;
@@ -368,7 +339,6 @@ EventLogger &EventLogger::set_LBProxy_context( const string &jobid, const string
     edg_wlc_JobIdFree( id );
     if( res != 0 ) throw LoggerException( this->getLoggingError("Cannot set LBProxy context:") );
   }
-#endif
                                                                                 
   return *this;
 }
@@ -390,7 +360,6 @@ void EventLogger::condor_submit_event( const string &condorId, const string &rsl
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::condor_submit_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int          res;
 
   if( this->el_context ) {
@@ -408,10 +377,6 @@ void EventLogger::condor_submit_event( const string &condorId, const string &rsl
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got condor submit event, condor id = " << condorId << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::ugly )
-		<< "Unlogged event condor submit, condor id = " << condorId << endl;
-#endif
 
   return;
 }
@@ -420,7 +385,6 @@ void EventLogger::globus_submit_event( const string &ce, const string &rsl, cons
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::globus_submit_event(...)" );
   
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -443,10 +407,6 @@ void EventLogger::globus_submit_event( const string &ce, const string &rsl, cons
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got globus submit event, ce = " << ce << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event globus submit, ce = " << ce << endl;
-#endif
 
   return;
 }
@@ -455,7 +415,6 @@ void EventLogger::grid_submit_event( const string &ce, const string &logfile )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::grid_submit_event(...)" );
   
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -477,10 +436,6 @@ void EventLogger::grid_submit_event( const string &ce, const string &logfile )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got grid submit event, ce = " << ce << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event grid submit, ce = " << ce << endl;
-#endif
 
   return;
 }
@@ -489,7 +444,6 @@ void EventLogger::execute_event( const char *host )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::execute_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -508,10 +462,6 @@ void EventLogger::execute_event( const char *host )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got job execute event, host = " << host << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event execute, host = " << host << endl;
-#endif
 
   return;
 }
@@ -520,7 +470,6 @@ void EventLogger::terminated_event( int retcode )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::terminated_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int          res;
 
   if( this->el_context ) {
@@ -539,10 +488,6 @@ void EventLogger::terminated_event( int retcode )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got job terminated event, return code = " << retcode << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event terminated, return code = " << retcode << endl;
-#endif
 
   return;
 }
@@ -551,7 +496,6 @@ void EventLogger::failed_on_error_event( const string &cause )
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::failed_on_error_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -571,11 +515,6 @@ void EventLogger::failed_on_error_event( const string &cause )
 		  << "Got a job failed event." << endl
 		  << "Reason = \"" << cause << "\"." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job failed." << endl
-		<< "Reason = \"" << cause << "\"." << endl;
-#endif
 
   return;
 }
@@ -584,7 +523,6 @@ void EventLogger::abort_on_error_event( const string &cause )
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::abort_on_error_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -604,11 +542,6 @@ void EventLogger::abort_on_error_event( const string &cause )
 		  << "Got a job aborted event." << endl
 		  << "Reason = \"" << cause << "\"." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job failed." << endl
-		<< "Reason = \"" << cause << "\"." << endl;
-#endif
 
   return;
 }
@@ -617,7 +550,6 @@ void EventLogger::aborted_by_system_event( const string &cause )
 {
   logger::StatePusher        pusher( elog::cedglog, "EventLogger::abort_by_system_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -637,11 +569,6 @@ void EventLogger::aborted_by_system_event( const string &cause )
 		  << "Got aborted by system event." << endl
 		  << "Cause = \"" << cause << "\"" << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event aborted by system." << endl
-		<< "Cause = \"" << cause << "\"" << endl;
-#endif
 
   return;
 }
@@ -650,7 +577,6 @@ void EventLogger::aborted_by_user_event( void )
 {
   logger::StatePusher       pusher( elog::cedglog, "EventLogger::aborted_by_user_event()" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -680,10 +606,6 @@ void EventLogger::aborted_by_user_event( void )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got aborted by user event." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event aborted by user." << endl;
-#endif
 
   return;
 }
@@ -692,7 +614,6 @@ void EventLogger::globus_submit_failed_event( const string &rsl, const char *rea
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::globus_submit_failed_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -714,11 +635,6 @@ void EventLogger::globus_submit_failed_event( const string &rsl, const char *rea
 		  << "Got globus submission failed event." << endl
 		  << "Reason = \"" << reason << "\"" << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event globus submission failed." << endl
-		<< "Reason = \"" << reason << "\"" << endl;
-#endif
 
   return;
 }
@@ -727,7 +643,6 @@ void EventLogger::globus_resource_down_event( void )
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::globus_resource_down_event()" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int           res;
 
   if( this->el_context ) {
@@ -746,10 +661,6 @@ void EventLogger::globus_resource_down_event( void )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got Globus resource down event." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event globus resource down." << endl;
-#endif
 
   return;
 }
@@ -758,7 +669,6 @@ void EventLogger::job_held_event( const string &reason )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::job_held_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
   string         what( "Got a job held event, reason: " );
 
@@ -781,18 +691,12 @@ void EventLogger::job_held_event( const string &reason )
 		  << "Got job held event." << endl
 		  << "Reason = \"" << reason << "\"" << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job held." << endl
-		<< "Reason = \"" << reason << "\"" << endl;
-#endif
 }
 
 void EventLogger::job_enqueued_start_event( const string &filename, const classad::ClassAd *ad )
 {
   logger::StatePusher      pusher( ts::edglog, "EventLogger::job_enqueued_start_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int                         res;
   string                      job;
   classad::ClassAdUnParser    unparser;
@@ -816,11 +720,6 @@ void EventLogger::job_enqueued_start_event( const string &filename, const classa
 	       << "Job enqueued start event." << endl
 	       << el_s_notLogged << endl;
 
-#else
-  ts::edglog << logger::setlevel( logger::null )
-	     << "Unlogged event job enqueued start." << endl;
-#endif
-
   return;
 }
 
@@ -828,7 +727,6 @@ void EventLogger::job_enqueued_ok_event( const string &filename, const classad::
 {
   logger::StatePusher      pusher( ts::edglog, "EventLogger::job_enqueued_ok_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int                         res;
   string                      job;
   classad::ClassAdUnParser    unparser;
@@ -852,10 +750,6 @@ void EventLogger::job_enqueued_ok_event( const string &filename, const classad::
 	       << "Job enqueued ok event." << endl
 	       << el_s_notLogged << endl;
 
-#else
-  ts::edglog << logger::setlevel( logger::null )
-	     << "Unlogged event job enqueued ok." << endl;
-#endif
 
   return;
 }
@@ -864,7 +758,6 @@ void EventLogger::job_enqueued_failed_event( const string &filename, const strin
 {
   logger::StatePusher       pusher( ts::edglog, "EventLogger::job_enqueued_failed_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int                        res;
   string                     job;
   classad::ClassAdUnParser   unparser;
@@ -889,11 +782,6 @@ void EventLogger::job_enqueued_failed_event( const string &filename, const strin
 	       << "Reason = \"" << error << "\"" << endl
 	       << el_s_notLogged << endl;
 
-#else
-  ts::edglog << logger::setlevel( logger::null )
-	     << "Unlogged event job enqueud failed." << endl
-	     << "Reason = \"" << error << "\"" << endl;
-#endif
 
   return;
 }
@@ -902,7 +790,6 @@ void EventLogger::job_dequeued_event( const string &filename )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::job_dequeued_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
 
   if( this->el_context ) {
@@ -921,10 +808,6 @@ void EventLogger::job_dequeued_event( const string &filename )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Job dequeued from file " << filename << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job dequeueud." << endl;
-#endif
 
   return;
 }
@@ -933,7 +816,6 @@ void EventLogger::job_cancel_requested_event( const string &source )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::job_cancel_requested_event()" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
   string         reason( "Cancel requested by " );
 
@@ -955,10 +837,6 @@ void EventLogger::job_cancel_requested_event( const string &source )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Got cancel from " << source << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event cancel requested." << endl;
-#endif
 
   return;
 }
@@ -967,7 +845,6 @@ void EventLogger::condor_submit_start_event( const string &logfile )
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::condor_submit_start_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
 
   if( this->el_context ) {
@@ -988,10 +865,6 @@ void EventLogger::condor_submit_start_event( const string &logfile )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Condor submit start event." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event condor submit start." << endl;
-#endif
 
   return;
 }
@@ -1000,7 +873,6 @@ void EventLogger::condor_submit_ok_event( const string &rsl, const string &condo
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::condor_submit_ok_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
 
   if( this->el_context ) {
@@ -1021,10 +893,6 @@ void EventLogger::condor_submit_ok_event( const string &rsl, const string &condo
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Condor submit ok event." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event condor submit ok." << endl;
-#endif
 
   return;
 }
@@ -1033,7 +901,6 @@ void EventLogger::condor_submit_failed_event( const string &rsl, const string &r
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::condor_submit_failed_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
 
   if( this->el_context ) {
@@ -1068,12 +935,6 @@ void EventLogger::condor_submit_failed_event( const string &rsl, const string &r
 		  << el_s_notLogged << endl;
     elog::cedglog << logger::setmultiline( false );
   }
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event condor submit failed." << endl
-		<< logger::setmultiline( true, "CE-> " ) << "Reason\n" << reason << endl;
-  elog::cedglog << logger::setmultiline( false );
-#endif
 
   return;
 }
@@ -1082,7 +943,6 @@ void EventLogger::job_cancel_refused_event( const string &info )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::job_cancel_refused_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
 
   if( this->el_context ) {
@@ -1102,11 +962,6 @@ void EventLogger::job_cancel_refused_event( const string &info )
 		  << "Cancel refused failed event." << endl
 		  << "Reason \"" << info << "\"" << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event condor cancel failed." << endl
-		<< "Reason: \"" << info << "\"" << endl;
-#endif
 
   return;
 }
@@ -1115,7 +970,6 @@ void EventLogger::job_abort_classad_invalid_event( const string &logfile, const 
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::job_abort_classad_invalid_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
   string         info( "Invalid classad syntax: " );
 
@@ -1150,10 +1004,6 @@ void EventLogger::job_abort_classad_invalid_event( const string &logfile, const 
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Job aborted for invalid classad." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job abort for invalid classad." << endl;
-#endif
 
   return;
 }
@@ -1162,7 +1012,6 @@ void EventLogger::job_abort_cannot_write_submit_file_event( const string &logfil
 {
   logger::StatePusher    pusher( elog::cedglog, "EventLogger::job_abort_cannot_write_submit_file_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
   string         info( "Cannot create condor submit file \"" );
 
@@ -1198,10 +1047,6 @@ void EventLogger::job_abort_cannot_write_submit_file_event( const string &logfil
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Job aborted for condor submit error." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job abort for condor submit error." << endl;
-#endif
 
   return;
 }
@@ -1210,7 +1055,6 @@ void EventLogger::job_resubmitting_event( void )
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::job_resubmitted_event()" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int            res;
 
   if( this->el_context ) {
@@ -1229,10 +1073,6 @@ void EventLogger::job_resubmitting_event( void )
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Job resubmitting event." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job resubmitting to WM." << endl;
-#endif
 
   return;
 }
@@ -1241,7 +1081,6 @@ void EventLogger::job_wm_enqueued_start_event( const string &filename, const cla
 {
   logger::StatePusher        pusher(elog::cedglog, "EventLogger::job_wm_enqueued_start_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int                       res;
   string                    job;
   classad::ClassAdUnParser  unparser;
@@ -1265,11 +1104,6 @@ void EventLogger::job_wm_enqueued_start_event( const string &filename, const cla
 		  << "Job enqeueued to WM start event." << endl
 		  << el_s_notLogged << endl;
 
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job enqueued to WM start." << endl;
-#endif
-
   return;
 }
 
@@ -1277,7 +1111,6 @@ void EventLogger::job_wm_enqueued_ok_event( const string &filename, const classa
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::job_wm_enqueued_ok_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int                       res;
   string                    job;
   classad::ClassAdUnParser  unparser;
@@ -1300,10 +1133,6 @@ void EventLogger::job_wm_enqueued_ok_event( const string &filename, const classa
     elog::cedglog << logger::setlevel( logger::null )
 		  << "Job enqueued to WM ok event." << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job enqueued to WM ok." << endl;
-#endif
 
   return;
 }
@@ -1312,7 +1141,6 @@ void EventLogger::job_wm_enqueued_failed_event( const string &filename, const cl
 {
   logger::StatePusher    pusher( elog::cedglog, "EventLogger::job_wm_enqueued_failed_event(...)" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   int                       res;
   string                    job;
   classad::ClassAdUnParser  unparser;
@@ -1336,11 +1164,6 @@ void EventLogger::job_wm_enqueued_failed_event( const string &filename, const cl
 		  << "Job enqueued to WM failed." << endl
 		  << "Reason = \"" << error << "\"" << endl
 		  << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-		<< "Unlogged event job enqueued to wm failed." << endl
-		<< "Reason = \"" << error << "\"" << endl;
-#endif
 
   return;
 }
@@ -1350,7 +1173,6 @@ void EventLogger::job_really_run_event( const string &sc )
 {
   logger::StatePusher    pusher( elog::cedglog, "EventLogger::job_really_run_event(...)" );
                                                                                    
-#ifdef GLITE_WMS_HAVE_LOGGING
   int                       res;
                                                                                    
   if( this->el_context ) {
@@ -1368,10 +1190,6 @@ void EventLogger::job_really_run_event( const string &sc )
     elog::cedglog << logger::setlevel( logger::null )
                   << "Really running event." << endl
                   << el_s_notLogged << endl;
-#else
-  elog::cedglog << logger::setlevel( logger::null )
-                << "Unlogged really running event." << endl;
-#endif
   
   return;
 }
@@ -1404,16 +1222,12 @@ string EventLogger::sequence_code( void )
   char          *seqcode;
   string         res( "undefined" );
 
-#ifdef GLITE_WMS_HAVE_LOGGING
   if( this->el_context ) {
     seqcode = edg_wll_GetSequenceCode( *this->el_context );
 
     res.assign( seqcode );
     free( seqcode );
   }
-#else
-  res.assign( "UI=000000:NS=000000:WM=000000:BH=000000:JSS=000000:LM=000000:LRMS=000000:APP=000000" );
-#endif
 
   return res;
 }

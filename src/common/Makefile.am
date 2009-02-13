@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.1  2009/02/13 13:09:26  mcecchi
+#       some cleanup
+#
 #       Revision 1.11.2.1  2007/02/13 12:30:27  gianelle
 #       - Fix for bug #23401
 #       - Add support for jobdir to LM
@@ -95,7 +98,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	-DGLITE_WMS_HAVE_LOGGING -DGLITE_WMS_HAVE_PURGER \
-        -DGLITE_WMS_HAVE_RENEWAL -DGLITE_WMS_HAVE_LBPROXY
+	-DGLITE_WMS_HAVE_PURGER -DGLITE_WMS_HAVE_RENEWAL -DGLITE_WMS_HAVE_LBPROXY
 
 MAINTAINERCLEANFILES = Makefile.in *~
