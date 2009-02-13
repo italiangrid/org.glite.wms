@@ -1,0 +1,128 @@
+THIS IS NOT A PUBLIC DOCUMENTATION, THEN IT IS IN ITALIAN AND RAPIDLY 
+EVOLVING
+
+Ci sono in ICE due mappe (chiave, valore) (ovvero (DN, BetterProxy) ) 
+che chiamiamo NEW e LEGACY gestite dalla classe DNProxyManager. 
+Per DN si intende la catena DN+FQAN.
+
+Quando si domanda un better proxy per un certo DN il sistema prima cerca 
+di recuperarlo dalla mappa NEW; se non c'e' si cerca di recuperarlo 
+dalla mappa LEGACY. Altrimenti si torna stringa vuota che poi viene 
+gestita dal chiamante.
+
+		* * * * * * * * * * 
+
+SOTTOMISSIONE:
+
+=> Arriva un job con MYPROXY settato
+ - Si cerca se c'e' una entry con chiave pari al DN del proprietario del job 
+   corrente nella mappa NEW.
+   - c'e' -> si incrementa un contatore di job per questo better proxy e non 
+     si fa nient'altro
+   - non c'e' -> si registra il proxy corrente al myproxy server (con ID = DN); 
+     - la registrazione torna un path che viene symlinkato ad un file il cui 
+       nome e' pari al DN corrente e che risiedera' nelle persistdir di ICE.
+       - il symlink fallisce -> si deregistra il proxy appena registrato al 
+         myproxyserver (se fallisce la un-register si ignora). si "calcola" il 
+         better alla vecchia maniera e in caso verra' inserito nella mappa 
+         LEGACY se piu' nuovo di quelle eventualmente gia' esistente per il 
+         corrente DN.
+           
+         
+         - il symlink va a buon fine -> si inserisce nella mappa NEW la coppia 
+           (DN, symlink-appena-creato), si setta il contatore a 1
+     - la registrazione fallisce, si "calcola" il better alla vecchia maniera 
+       e in caso verra' inserito nella mappa LEGACY se piu' nuovo di quelle 
+       eventualmente gia' esistente per il corrente DN.
+
+		* * * * * * * * * * 
+
+=> Arriva un job con MYPROXY NON settato (il proxy del job corrente e' 
+   candidato a diventare betterproxy, previa verifica dei tempi residui)
+   - Si cerca se c'e' una entry con chiave pari al DN del proprietario del job 
+     corrente nella mappa LEGACY.
+     - c'e': si controlla se il betterproxy corrispondente e' meno longevo di 
+       quello con cui e' arrivato il job e si fa la sostituzione se necessario.
+       - fallisce l'estrazione del tempo redisuo dal proxy candidato a 
+         diventare betterproxy nella mappa LEGACY: non si fa nulla 
+         (alla prossima sottomissione si ritenta la procedura)
+	 ATTENZIONE PROBLEMA: cosa succede se non arrivano piu' job per questo 
+         DN (l'utente ha sottomesso un solo job) ? succede che non c'e' un 
+         betterproxy per questo DN con cui rinnovare la delega con cui gira il 
+         sui job nel CE e con cui fare le operazioni al CE come 
+         Poll/Purge/Cancel
+
+ALE SAID: precisiamo: siamo nel ramo in cui "c'e` gia' un betterproxy" quindi 
+          per un po' il job e' coperto (non era l'unico job sottomesso) e 
+          inoltre non sono necessari i rinnovi quindi non facciamo casino. 
+          Il problema se vogliamo fare come dice mbuto la punto allo s... 
+          e' se il nuovo job ha un proxy + longevo, in tal caso l'ultima parte 
+          della vita di quel job (ossia da quando scade il mio betterproxy e 
+          il proxy del job) non sara' coperta... 
+
+          L'unica strada in questo caso e' quella di usare il proxy del job, 
+          ma essendo un caso estremo possiamo anche far finta di nulla....
+
+
+
+    - non c'e': si inserisce la coppia (DN, proxy del job corrente) nella 
+      mappa LEGACY in modo da avere un betterproxy per il DN corrente
+
+		* * * * * * * * * * 
+
+=> Ad ICE arriva una notifica di job terminato 
+   (ABORTED, DONE-OK, DONE-FAILED, CANCELLED) oppure la ottiene mediante poll
+   - se per il DN relativo al job corrente se c'e' la coppia (DN, BetterProxy) 
+     nella mappa NEW, decrementa il contatore
+   - se il contatore e' 0 (non ci sono piu' job relativo a questo BetterProxy 
+     nella mappa NEW) deregistra il betterproxy, rimuove dalla mappa NEW e 
+     solo da quella la coppia (DN, BetterProxy), unlinka dalla persist dir il 
+     link al betterproxy fisico mantenuto dal myproxyserver per l'ID=DN
+     - la deregister fallisce, si ignora
+     - l'unlink fallisce, si ignora
+     ATTENZIONE PROBLEMA: la unregister e' fallita. Quindi nel myproxyserver 
+                          c'e' ancora una registrazione fantasma con ID=DN. 
+                          La prossima registrazione per lo stesso DN di un 
+                          betterproxy fallira' ?
+
+ALE SAID: da verificare
+
+     ATTENZIONE PROBLEMA: l'unlink fallisce. Il prossimo tentativo di symlink 
+		          per lo stesso DN fallira'.
+
+
+     		* * * * * * * * * * 
+
+=> Operazioni varie al CE se non si trova il better proxy:
+ - Purge: si tenta il purge con il proxy nella sandbox del job
+ - Poll: se non si trova il betterproxy del DN dei 100 job da pollare si
+         rinuncia
+ - LBContext: fallisce la creazione del contesto
+
+ALE SAID: in questo caso usi l'host proxy se non erro
+
+ - Subscribe: fallisce il check della sottoscrizione per conto dell'utente DN, 
+              fallisce la richiesta getCEMonDN, fallisce la subscribe o 
+              l'update => Niente NOTIFICHE
+ - Lease: NIENTE rinnovo del LEASE
+ - Cancel: si prova a usare il proxy nella sandbox del job da cancellare
+ - Lease: fallisce
+
+
+     		* * * * * * * * * * 
+
+=> Il PROXYRENEWAL
+ - si caricano dalla memoria le deleghe relative a job che sono stati 
+   sottomessi con MYPROXYSERVER settato
+ - ad ogni delega e' associato un DN. Si fa un loop su queste deleghe.
+ - si cerca il BetterProxy per il DN corrente.
+   - tale betterproxy e' EXPIRED: si rimuove la delega dalla memoria. 
+     Si rimuove il betterproxy dalla mappa NEW o LEGACY da cui proveniva. 
+     Se proveniva dalla mappa NEW lo di deregistra dal myproxyserver e si 
+     cancella il symlink.
+     - fallisce questa deregister: si ignora.
+   - tale betterproxy e' "BUONO": si rinnova la delega con tale betterproxy, 
+     settando la scadenza della delega pari alla scadenza di tale betterproxy. 
+     In tutti i job relativi a tale delega si aggiorna la scadenza della 
+     stessa in modo da renderla persistente nel database di ICE.
+
