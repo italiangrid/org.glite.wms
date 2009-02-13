@@ -459,6 +459,21 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 			       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
 			       );
 	      }
+
+	      /**
+		 FIXME: must also unlink the symlink
+	      */
+	      if(::unlink( thisBetterPrx.get<0>().c_str() ) < 0)
+		{
+		  int saveerr = errno;
+		  CREAM_SAFE_LOG(
+				 m_log_dev->errorStream()
+				 << method_name
+				 << "Unlink of file ["
+				 << thisBetterPrx.get<0>() << "] is failed. Error is: "
+				 << strerror(saveerr);
+				 );
+		}
 	    }
 
             mapDelegTime.erase( thisDelegID );
