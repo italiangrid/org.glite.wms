@@ -23,11 +23,11 @@ echo "Creating $gnuplotfile file"
 cat <<EOF > $gnuplotfile
 
 set title "Response Time"
-set xlabel "Time (sec from Unix epoch)"
+set xlabel "Time (sec)"
 set ylabel "Response time (sec)"
 set autoscale
 set datafile separator ","
-set terminal postscript enhanced color
+set terminal postscript landscape enhanced color
 set output "$datafile_noext.ps"
 plot "$datafile" using 1:2 title "$datafile"
 EOF

@@ -25,11 +25,11 @@ echo "Creating $gnuplotfile file"
 
 cat <<EOF > $gnuplotfile
 set title "SCAS server memory consumption"
-set xlabel "Time (sec from Unix epoch)"
+set xlabel "Time (sec)"
 set ylabel "Memory consumption (KB)"
 set autoscale
 set datafile separator ","
-set terminal postscript enhanced color
+set terminal postscript landscape enhanced color
 set output "$datafile_noext.ps"
 plot "$datafile" using 1:6 title ""
 EOF
