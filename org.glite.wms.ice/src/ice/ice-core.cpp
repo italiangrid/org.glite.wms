@@ -610,6 +610,17 @@ throw()
     
     // Gets the proxy to use for authentication
     string better_proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() ).get<0>();
+
+    if( better_proxy.empty() ) {
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+		      << "DNProxyManager returned an empty string for BetterProxy of user DN ["
+		      << "] for job ["
+		      << jit->describe()
+		      << "]. Using the Job's proxy." 
+		      );
+
+      better_proxy = jit->getUserProxyCertificate();
+    }
     
     cream_api::soap_proxy::VOMSWrapper V( better_proxy );
     if( !V.IsValid( ) ) {

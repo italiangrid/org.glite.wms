@@ -45,6 +45,7 @@
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 
+#include "glite/security/proxyrenewal/renewal.h"
 /**
  *
  * OS Headers
@@ -387,11 +388,16 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 
 	time_t proxy_time_end;
 
+	bool is_legacy_betterproxy = true;
+
 	if(thisBetterPrx.get<2>() > 0) 
 	  {
 	    /**
 	       This is a "new" better proxy
 	    */
+
+	    is_legacy_betterproxy = false;
+
 	    cream_api::soap_proxy::VOMSWrapper V( thisBetterPrx.get<0>() );
 	    if( !V.IsValid( ) ) {
 	      CREAM_SAFE_LOG(m_log_dev->errorStream() 
@@ -434,10 +440,27 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
                             );
             
             Delegation_manager::instance()->removeDelegation( thisDelegID );
-	    DNProxyManager::getInstance()->removeProxyForDN( thisUserDN );
-	    /**
-	       FIXME: must unregister the proxy...
-	    */
+	    
+	    if( is_legacy_betterproxy )
+	      DNProxyManager::getInstance()->removeBetterProxyForDN( thisUserDN );
+	    else
+	      DNProxyManager::getInstance()->removeNewBetterProxyForDN( thisUserDN );
+	    
+	    if(is_legacy_betterproxy) {
+	      const char* regID = compressed_string( thisUserDN ).c_str();
+	      int err = glite_renewal_UnregisterProxy( regID, NULL );
+	      
+	      if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+		CREAM_SAFE_LOG(
+			       m_log_dev->errorStream()
+			       << method_name
+			       << "Couldn't unregister the proxy registered with ID ["
+			       << regID << "]. Error is: "
+			       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
+			       );
+	      }
+	    }
+
             mapDelegTime.erase( thisDelegID );
             mapDelegJob.erase( thisDelegID );
             continue;

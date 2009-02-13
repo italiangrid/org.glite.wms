@@ -100,7 +100,9 @@ namespace util {
 
         }
 
-	void removeProxyForDN( const std::string& dn ) throw();
+	//void removeProxyForDN( const std::string& dn, const bool remove_only_new_betterproxy ) throw();
+	void removeNewBetterProxyForDN( const std::string& dn ) throw();
+	void removeBetterProxyForDN( const std::string& dn ) throw();
         
     private:
         void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);

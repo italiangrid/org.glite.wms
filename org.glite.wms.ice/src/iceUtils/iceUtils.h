@@ -45,6 +45,17 @@ namespace wms {
 namespace ice {
 namespace util {
 
+  //
+  // Utility function: Computes a SHA1 hash of the input string. The
+  // resulting hash is made of 40 printable characters, each
+  // character in the range [0-9A-F].
+  //
+  // @input name an input string; 
+  //
+  // @return a string of 40 printable characters, each in the range [0-9A-F]
+  //
+  std::string compressed_string( const std::string& name );
+
     class jobCache;
 
     struct ltstring {

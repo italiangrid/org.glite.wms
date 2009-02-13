@@ -52,35 +52,41 @@ using namespace std;
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::s_instance = NULL;
 boost::recursive_mutex iceUtil::DNProxyManager::mutex;
 
-//______________________________________________________________________________
-namespace {
 
-    //
-    // Utility function: Computes a SHA1 hash of the input string. The
-    // resulting hash is made of 40 printable characters, each
-    // character in the range [0-9A-F].
-    //
-    // @input name an input string; 
-    //
-    // @return a string of 40 printable characters, each in the range [0-9A-F]
-    //
-    string compressed_string( const string& name ) {
-        string result;
-        unsigned char buf[ SHA_DIGEST_LENGTH ]; // output buffer
-        const unsigned char idx[ 17 ] = "0123456789ABCDEF"; // must be 17 chars, as the trailing \0 counts
-        SHA1( (const unsigned char*)name.c_str(), name.length(), buf ); // stores SHA1 hash in buf
-        for ( int i=0; i<SHA_DIGEST_LENGTH; ++i ) {
-            unsigned char to_append;
-            // left nibble;
-            to_append = idx[ ( buf[i] & 0xf0 ) >> 4 ];
-            result.push_back( to_append );
-            // right nibble
-            to_append = idx[ buf[i] & 0x0f ];
-            result.push_back( to_append );
-        }
-        return result;
-    }
-}
+//______________________________________________________________________________
+/**
+   
+MOVED TO iceUtils
+
+*/
+// namespace {
+
+//     //
+//     // Utility function: Computes a SHA1 hash of the input string. The
+//     // resulting hash is made of 40 printable characters, each
+//     // character in the range [0-9A-F].
+//     //
+//     // @input name an input string; 
+//     //
+//     // @return a string of 40 printable characters, each in the range [0-9A-F]
+//     //
+//     string compressed_string( const string& name ) {
+//         string result;
+//         unsigned char buf[ SHA_DIGEST_LENGTH ]; // output buffer
+//         const unsigned char idx[ 17 ] = "0123456789ABCDEF"; // must be 17 chars, as the trailing \0 counts
+//         SHA1( (const unsigned char*)name.c_str(), name.length(), buf ); // stores SHA1 hash in buf
+//         for ( int i=0; i<SHA_DIGEST_LENGTH; ++i ) {
+//             unsigned char to_append;
+//             // left nibble;
+//             to_append = idx[ ( buf[i] & 0xf0 ) >> 4 ];
+//             result.push_back( to_append );
+//             // right nibble
+//             to_append = idx[ buf[i] & 0x0f ];
+//             result.push_back( to_append );
+//         }
+//         return result;
+//     }
+// }
 
 //______________________________________________________________________________
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
@@ -262,7 +268,15 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const std::string& user
     m_DNProxyMap_NEW[ userDN ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() - 1);
 
     if(it->second.get<2>() == 1) {
-      
+
+      CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::decrementUserProxyCounter() - "
+		   << "Proxy Counter is ZERO for DN ["
+		   << regID << "]. Unregistering it and removing symlink ["
+		   << m_DNProxyMap_NEW[ userDN ].get<0>()
+		   << "] from persist_dir..."
+		   );
       /**
 	 If the counter is 0 deregister the current proxy and clear the map and delete the file.
       */
@@ -278,14 +292,7 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const std::string& user
 		       );
       }
 
-      CREAM_SAFE_LOG(
-		   m_log_dev->debugStream()
-		   << "DNProxyManager::decrementUserProxyCounter() - "
-		   << "Proxy Counter is ZERO for DN ["
-		   << regID << "]. Unregistering it and removing symlink ["
-		   << m_DNProxyMap_NEW[ userDN ].get<0>()
-		   << "]from persist_dir..."
-		   );
+      
 
       if(::unlink( m_DNProxyMap_NEW[ userDN ].get<0>().c_str() ) < 0)
 	{
@@ -351,8 +358,11 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
 
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::registerUserProxy() - glite_renewal_RegisterProxy failed with error code: "
-		   << register_result << ". Will retry with proxy of the next job..."
+		   << register_result << ". Falling back to LEGACY BetterProxy calculation..."
 		   );
+
+    this->setUserProxyIfLonger_Legacy( userDN, userProxy );
+
     return;
 
   } else {
@@ -368,7 +378,8 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::registerUserProxy() - "
 		     << "Cannot symlink [" << renewal_proxy_path << "] to ["
-		     << proxylink << "]. Error is: " << strerror(errno) << ". Will retry with proxy of the next job..."
+		     << proxylink << "]. Error is: " << strerror(errno) 
+		     << ". Falling back to LEGACY BetterProxy calculation..."
 		     );
       /**
 	 UN-register 
@@ -385,14 +396,21 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
 		       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
 		       );
 	
+	
+
 	return;
       }
+
+      this->setUserProxyIfLonger_Legacy( userDN, userProxy );
+
+      return;
+
     }
 
     /**
        Everything went ok. Now let's save the registered proxy !
     */
-    m_DNProxyMap_NEW[ userDN ] = boost::make_tuple(string(renewal_proxy_path), proxy_time_end, 1);
+    m_DNProxyMap_NEW[ userDN ] = boost::make_tuple( proxylink, proxy_time_end, 1);
 
   }
 }
@@ -707,11 +725,22 @@ iceUtil::DNProxyManager::searchBetterProxyForUser( const std::string& dn )
 }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::removeProxyForDN( const std::string& userDN)
+void iceUtil::DNProxyManager::removeNewBetterProxyForDN( const std::string& userDN )
   throw()
 {
   boost::recursive_mutex::scoped_lock M( mutex );
 
-  //  m_DNProxyMap_Legacy.erase( userDN );
+//   if(!remove_only_new_betterproxy)
+//     m_DNProxyMap_Legacy.erase( userDN );
+
   m_DNProxyMap_NEW.erase( userDN );
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::removeBetterProxyForDN( const std::string& userDN )
+  throw()
+{
+  boost::recursive_mutex::scoped_lock M( mutex );
+
+  m_DNProxyMap_Legacy.erase( userDN );
 }

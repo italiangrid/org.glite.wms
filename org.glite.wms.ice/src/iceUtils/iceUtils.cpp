@@ -263,6 +263,24 @@ string canonizeString( const string& aString ) throw()
   return c.getString();
 }
 
+//______________________________________________________________________________
+string compressed_string( const string& name ) {
+  string result;
+  unsigned char buf[ SHA_DIGEST_LENGTH ]; // output buffer
+  const unsigned char idx[ 17 ] = "0123456789ABCDEF"; // must be 17 chars, as the trailing \0 counts
+  SHA1( (const unsigned char*)name.c_str(), name.length(), buf ); // stores SHA1 hash in buf
+  for ( int i=0; i<SHA_DIGEST_LENGTH; ++i ) {
+    unsigned char to_append;
+    // left nibble;
+    to_append = idx[ ( buf[i] & 0xf0 ) >> 4 ];
+    result.push_back( to_append );
+    // right nibble
+    to_append = idx[ buf[i] & 0x0f ];
+    result.push_back( to_append );
+  }
+  return result;
+}
+
 } // namespace util
 } // namespace ice
 } // namespace wms

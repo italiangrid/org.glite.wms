@@ -220,6 +220,17 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 
     betterproxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( theJob.getUserDN() ).get<0>();
 
+    if( betterproxy.empty() ) {
+      CREAM_SAFE_LOG( m_log_dev->warnStream()
+		      << "iceCommandCancel::execute() - DNProxyManager returned an empty string for BetterProxy of user DN ["
+		      << "] for job ["
+		      << theJob.describe()
+		      << "]. Using the Job's proxy." 
+		      );
+
+      betterproxy = theJob.getUserProxyCertificate();
+    }
+
     try {
       //m_theProxy->Authenticate( betterproxy /* theJob.getUserProxyCertificate() */ );
 
