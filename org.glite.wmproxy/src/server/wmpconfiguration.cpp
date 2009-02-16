@@ -183,7 +183,7 @@ WMProxyConfiguration::loadConfiguration()
 	// If attribute not present in configuration file then
 	// wmp_config->lbproxy() (dispatcher_threads(), max_input_sandbox_size())
 	// return 0
-	this->lbproxyavailable = wmp_common->lbproxy();
+	this->lbproxyavailable = common_config->lbproxy();
 	
 	// [Service Discovery attributes
 	this->servicediscoveryenabled = wmp_config->enable_service_discovery();
