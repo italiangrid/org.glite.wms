@@ -32,13 +32,15 @@ do
   let "hours++" 
   totalRequests=`cat *_error | wc -l`
   totalErrors=`grep ',1' *_error | wc -l`
-  time=$(echo "60*60*$hours")
+  time=$(echo "60 * 60 * $hours")
   frequency=$(echo "$totalRequests / $time" | bc -l)
-  echo "`date +%s`,$frequency" >> frequency.txt
+#  echo "`date +%s`,$frequency" >> frequency.txt
+  echo "${hours},${frequency}" >> frequency.txt
 
   errorRate=$(echo "$totalErrors / $totalRequests" | bc -l)
   errorRate=$(echo "$errorRate * 100" | bc -l)
-  echo "`date +%s`,$errorRate" >> hourlyErrorRate.txt
+  echo "${hours},${errorRate}" >> hourlyErrorRate.txt
+#  echo "`date +%s`,$errorRate" >> hourlyErrorRate.txt
 done
 exit 0
 

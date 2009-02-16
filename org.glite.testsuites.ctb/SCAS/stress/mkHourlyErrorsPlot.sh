@@ -25,7 +25,7 @@ echo "Creating $gnuplotfile file"
 
 cat <<EOF > $gnuplotfile
 set title "Hourly error rate"
-set xlabel "Time (sec)"
+set xlabel "Time (hour)"
 set ylabel "Error rate %"
 set autoscale
 set datafile separator ","

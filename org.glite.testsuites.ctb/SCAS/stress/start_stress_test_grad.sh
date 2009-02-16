@@ -29,6 +29,15 @@ hostfile8=$log_location/$m8
 hostfile9=$log_location/$m9
 hostfile10=$log_location/$m10
 
+
+rm -f ./token_renewal.out
+touch ./token_renewal.out
+echo "Starting token renewal daemon" 
+./token_renewal.sh >> ./token_renewal.out 2>&1 &
+token_renewal_pid=$!
+echo "Token renewal script has pid $token_renewal_pid " 
+
+
 echo "-----------------------------------------"
 echo "`date`: starting test"
 echo "`date +%s` seconds"
