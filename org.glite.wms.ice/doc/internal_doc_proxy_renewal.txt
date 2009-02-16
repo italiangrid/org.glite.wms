@@ -5,6 +5,9 @@ Ci sono in ICE due mappe (chiave, valore) (ovvero (DN, BetterProxy) )
 che chiamiamo NEW e LEGACY gestite dalla classe DNProxyManager. 
 Per DN si intende la catena DN+FQAN.
 
+Inoltre abbiamo una tabella di DelegationID da [ri-]utilizzare per le 
+operazioni di registrazione dei job a CREAM.
+
 Quando si domanda un better proxy per un certo DN il sistema prima cerca 
 di recuperarlo dalla mappa NEW; se non c'e' si cerca di recuperarlo 
 dalla mappa LEGACY. Altrimenti si torna stringa vuota che poi viene 
@@ -15,6 +18,13 @@ gestita dal chiamante.
 SOTTOMISSIONE:
 
 => Arriva un job con MYPROXY settato
+ - Si cerca se esiste nella mappa DelegationID una chiave DN
+   - c'e', si estrare il corrispondente delegation ID per la registrazione del 
+     job corrente
+   - non c'e', si crea una nuova delega sul CE con un delegation ID 
+     codificato a partire dal jobID e lo inserisce nella mappa DelegationID
+     in corrispondenza di una nuova chiave pari al DN del proprietario
+     del job.
  - Si cerca se c'e' una entry con chiave pari al DN del proprietario del job 
    corrente nella mappa NEW.
    - c'e' -> si incrementa un contatore di job per questo better proxy e non 
@@ -39,6 +49,17 @@ SOTTOMISSIONE:
 
 => Arriva un job con MYPROXY NON settato (il proxy del job corrente e' 
    candidato a diventare betterproxy, previa verifica dei tempi residui)
+
+   - si calcola lo SHA1_DIGEST del certificato dentro il associato al job
+     corrente
+   - si cerca questo SHA1_DIGEST come chiave all'interno della mappa DelegationID
+     - c'e', si estrare il corrispondente delegation ID per la registrazione del 
+     job corrente
+     - non c'e', si crea una nuova delega sul CE con un delegation ID 
+     codificato a partire dal jobID e lo inserisce nella mappa DelegationID
+     in corrispondenza di una nuova chiave pari al SHA1_DIGEST
+     precedentemente calcolato.
+
    - Si cerca se c'e' una entry con chiave pari al DN del proprietario del job 
      corrente nella mappa LEGACY.
      - c'e': si controlla se il betterproxy corrispondente e' meno longevo di 
@@ -46,11 +67,7 @@ SOTTOMISSIONE:
        - fallisce l'estrazione del tempo redisuo dal proxy candidato a 
          diventare betterproxy nella mappa LEGACY: non si fa nulla 
          (alla prossima sottomissione si ritenta la procedura)
-	 ATTENZIONE PROBLEMA: cosa succede se non arrivano piu' job per questo 
-         DN (l'utente ha sottomesso un solo job) ? succede che non c'e' un 
-         betterproxy per questo DN con cui rinnovare la delega con cui gira il 
-         sui job nel CE e con cui fare le operazioni al CE come 
-         Poll/Purge/Cancel
+	 
 
 ALE SAID: precisiamo: siamo nel ramo in cui "c'e` gia' un betterproxy" quindi 
           per un po' il job e' coperto (non era l'unico job sottomesso) e 
