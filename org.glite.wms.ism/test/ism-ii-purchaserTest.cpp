@@ -29,13 +29,13 @@ LineOption  options[] = {
     { 'v', no_argument, "verbose",     "\t be verbose." }
 };
 namespace {
-ism_type the_ism[2];
+ism_type the_ism[4];
 ism_mutex_type the_ism_mutex[2];
 }
 int main(int argc, char* argv[]) {
 
-  set_ism(the_ism,the_ism_mutex,ce);
-  set_ism(the_ism,the_ism_mutex,se);
+  set_ism(the_ism,the_ism+2,the_ism_mutex,ce);
+  set_ism(the_ism,the_ism+2,the_ism_mutex,se);
 
   std::vector<LineOption> optvec( options, options + sizeof(options)/sizeof(LineOption) );
   LineParser options( optvec, 0 );
@@ -51,8 +51,15 @@ int main(int argc, char* argv[]) {
 
     if( options.is_present('v') ) logger::edglog.open(std::clog, glite::wms::common::logger::debug);
     
-    ism_ii_purchaser icp(ns_config->ii_contact(), ns_config->ii_port(),
-        ns_config->ii_dn(),ns_config->ii_timeout(), once);
+    ism_ii_purchaser icp(
+      ns_config->ii_contact(), 
+      ns_config->ii_port(),
+      ns_config->ii_dn(),
+      ns_config->ii_timeout(),
+      wm_config->ism_ii_ldapcefilter_ext(),
+      wm_config->ism_ii_ldapsearch_async(),
+      once
+    );
 
     if( options.is_present('b') ) icp.skip_predicate(is_in_black_list(wm_config->ism_black_list()));
 

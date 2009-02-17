@@ -107,6 +107,14 @@ bool is_gluese_control_protocol_info_dn(std::vector<std::string> const& dn)
     boost::algorithm::istarts_with(dn[2],"mds-vo-name");
 }
 
+bool is_gluelocation_info_dn(std::vector<std::string> const& dn)
+{
+ return dn.size() > 3 &&
+   boost::algorithm::istarts_with(dn[0], "GlueLocationLocalID") &&
+   boost::algorithm::istarts_with(dn[1], "GlueSubClusterUniqueID") &&
+   boost::algorithm::istarts_with(dn[2], "GlueClusterUniqueID");
+}
+
 } // namespace purchaser
 } // namespace ism
 } // namespace wms

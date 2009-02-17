@@ -353,7 +353,7 @@ fetch_bdii_se_info(
 
   LDAPMessage *ldresult = 0;
   ut::scope_guard ldresult_guard(boost::bind(ldap_msgfree, ldresult));
-  struct timeval to;
+  struct timeval to = {0,0};
   to.tv_sec = timeout;
   ldap_set_option(ld.get(), LDAP_OPT_NETWORK_TIMEOUT, &to);
   result = ldap_search_st(
@@ -476,7 +476,7 @@ fetch_bdii_ce_info(
   ism::purchaser::PurchaserInfoContainer& ce_info_container) 
 {
   std::string filter(
-    "(|(objectclass=gluecesebind)(objectclass=gluecluster)(objectclass=gluesubcluster)"
+    "(|(objectclass=gluecesebind)(objectclass=gluecluster)(objectclass=gluesubcluster)"/*(objectclass=gluelocation)*/
   );
 
   if (!ldap_ce_filter_ext.empty()) {
@@ -488,7 +488,11 @@ fetch_bdii_ce_info(
   }
   filter += ")";
 
-  boost::shared_ptr<LDAP> ld( ldap_init(host.c_str(), port), ldap_unbind);
+  boost::shared_ptr<LDAP> ld( 
+    ldap_init(host.c_str(), port), 
+    ldap_unbind
+  );
+  
   int result = ldap_simple_bind_s(ld.get(),0,0);
   
   if (result != LDAP_SUCCESS ) {
@@ -498,11 +502,19 @@ fetch_bdii_ce_info(
 
   LDAPMessage *ldresult = 0;
   ut::scope_guard ldresult_guard(boost::bind(ldap_msgfree, ldresult));
-  struct timeval to;
+  struct timeval to = {0,0};
   to.tv_sec = timeout;
   ldap_set_option(ld.get(), LDAP_OPT_NETWORK_TIMEOUT, &to);
+  
   result = ldap_search_st(
-    ld.get(), dn.c_str(), LDAP_SCOPE_SUBTREE, filter.c_str(), 0, false, &to, &ldresult
+    ld.get(), 
+    dn.c_str(), 
+    LDAP_SCOPE_SUBTREE, 
+    filter.c_str(), 
+    0, 
+    false, 
+    &to, 
+    &ldresult
   );
 
   if (result != LDAP_SUCCESS ) {
