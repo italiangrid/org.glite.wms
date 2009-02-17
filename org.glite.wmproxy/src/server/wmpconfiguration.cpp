@@ -154,6 +154,7 @@ WMProxyConfiguration::init(const std::string& opt_conf_file,
 	}
 	config = new configuration::Configuration(opt_conf_file, module);
 	wmp_config = config->wp();
+  common_config = config->common();
 	loadConfiguration();
 	
 	GLITE_STACK_CATCH();
@@ -180,9 +181,6 @@ WMProxyConfiguration::loadConfiguration()
 {
 	GLITE_STACK_TRY("loadConfiguration()");
 	
-	// If attribute not present in configuration file then
-	// wmp_config->lbproxy() (dispatcher_threads(), max_input_sandbox_size())
-	// return 0
 	this->lbproxyavailable = common_config->lbproxy();
 	
 	// [Service Discovery attributes
