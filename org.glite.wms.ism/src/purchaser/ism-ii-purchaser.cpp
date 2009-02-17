@@ -113,7 +113,6 @@ void populate_ism(
 
   // no locking is needed here (before the switch)
   int dark_side = ism::dark_side();
-  get_ism(the_ism_index, dark_side).clear(); // should be unnecessary
   for ( ; it != e; ++it ) {
     get_ism(the_ism_index, dark_side).insert( 
       make_ism_entry(
@@ -180,16 +179,16 @@ void ism_ii_purchaser::operator()()
      // do not populate until the existing ism has threads still matching against it
      while (ism::matching_threads(ism::dark_side()) > 0) {
 
-      Warning(
-        "waiting for ISM side "
-        + boost::lexical_cast<std::string>(
-          (ism::matching_threads((ism::active_side() + 1) % 2))
-        )
-        + " to have no more matching threads against it"
+      Debug(
+        "waiting for " <<
+        ism::matching_threads(ism::active_side()) <<
+        " threads to match before switching the ISM side "
       );
 
-      ::sleep(1);
+      ::sleep(1); // TODO
      }
+     ism::get_ism(ism::ce, ism::dark_side()).clear();
+     ism::get_ism(ism::se, ism::dark_side()).clear();
 
      // incoming requests asking for MM will be assigned the current active
      // side so we can operate without locking here, now that older threads

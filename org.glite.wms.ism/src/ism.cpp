@@ -5,11 +5,10 @@
 #include <cstdio>
 
 #include <boost/lexical_cast.hpp>
-
 #include <classad_distribution.h>
+#include <boost/shared_ptr.hpp>
 
 #include "glite/wms/ism/ism.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -18,7 +17,7 @@ namespace configuration = glite::wms::common::configuration;
 
 namespace {
   int s_active_side = -1;
-  int s_matching_threads[2] = {0, 0};
+  boost::shared_ptr<void> s_matching_threads[2];
 }
 
 namespace glite {
@@ -35,18 +34,6 @@ void switch_active_side()
   }
 
   Debug("switched active side to ISM " << s_active_side);
-  if (s_matching_threads[s_active_side]) {
-    assert(true);
-  }
-
-  int dark_side = (s_active_side + 1) % 2;
-  if (!s_matching_threads[dark_side]) {
-    Debug(
-      "No more threads matching against the dark side of the ISM, clearing"
-    );
-    get_ism(ism::ce, dark_side).clear();
-    get_ism(ism::se, dark_side).clear();
-  }
 }
 
 int dark_side()
@@ -69,15 +56,19 @@ int active_side()
   }
 }
 
-int match_on_active_side()
+boost::shared_ptr<void>& match_on_active_side()
 {
   ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  ++s_matching_threads[s_active_side];
-  if (s_active_side == -1) { // first time
-    return 1;
-  } else {
-    return s_active_side;
+  if (!s_matching_threads[s_active_side]) {
+    s_matching_threads[s_active_side].reset(new int); 
   }
+  return s_matching_threads[(-1 == s_active_side ? 1 : s_active_side)];
+}
+
+namespace {
+  ism_mutex_type* the_ism_mutex[2];
+  ism_type* the_ism1[2];
+  ism_type* the_ism2[2];
 }
 
 ism_type::value_type make_ism_entry(
@@ -93,14 +84,6 @@ ism_type::value_type make_ism_entry(
     id,
     boost::make_tuple(update_time, expiry_time, ad, uf, mt)
   );
-}
-
-namespace {
-
-ism_type* the_ism1[2];
-ism_type* the_ism2[2];
-ism_mutex_type* the_ism_mutex[2];
-
 }
 
 void set_ism(
@@ -141,21 +124,7 @@ ism_type& get_ism(size_t the_ism_index)
 
 int matching_threads(int side)
 {
-  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  return s_matching_threads[side];
-}
-
-void matched_thread(int side)
-{
-  ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
-  --s_matching_threads[side];
-  if (!s_matching_threads[side] && side != s_active_side) {
-    Debug(
-      "No more threads matching against the dark side of the ISM, clearing"
-    );
-    get_ism(ism::ce, side).clear();
-    get_ism(ism::se, side).clear();
-  }
+  return s_matching_threads[side].use_count() - 1;
 }
 
 std::ostream&
@@ -215,7 +184,6 @@ void call_update_ism_entries::_(size_t the_ism_index)
       boost::tuples::get<update_time_entry>(pos->second) = -1;
     }
 
-    l.unlock();
   }
 }
 
