@@ -66,11 +66,9 @@ hostlogfile=$hostname.log
 
 echo "Starting glexec test as dteamdteampilot$INDEX" 
 if [ "x$iterations" != "x" ];then
-  #su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n 3 -i $INDEX" dteamdteampilot$INDEX 
   su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n $iterations -i $INDEX" dteamdteampilot$INDEX
 fi
 if [ "x$end_date" != "x" ];then
-  #su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d 200902121000 -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
   su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d $end_date -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
 fi
 

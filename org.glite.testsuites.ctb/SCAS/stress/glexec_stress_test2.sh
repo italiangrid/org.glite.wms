@@ -79,17 +79,6 @@ if [ ! -r $LOG_FILE -o  ! -w $LOG_FILE ]; then
   exit 1
 fi
 
-#Choose a random user between 5x0 and 5x9
-let random=$RANDOM%10; #random between 0 and 9
-let "majindex = $INDEX -1"
-usernum=5${majindex}${random}
-
-#Set proxies for glexec
-user_proxy="./x509up_u501_${usernum}"
-export GLEXEC_CLIENT_CERT=$user_proxy
-export GLEXEC_SOURCE_PROXY=$user_proxy
-export X509_USER_PROXY=$GLEXEC_CLIENT_CERT
-echo "Using proxy $user_proxy"
 
 DATA_FILE=${LOG_FILE}_data
 ERROR_FILE=${LOG_FILE}_error
@@ -114,13 +103,27 @@ fi
 #reset the failed flag
 failed=0
 
-#Main Loop
+######################################################
 if [ ! -z $END_DATE ]; then
   CURR_DATE=`date +%Y%m%d%H%M`
   while [ $CURR_DATE -lt $END_DATE ]
   do
+  #Choose a random user between 5x0 and 5x9
+    let random=$RANDOM%10; #random between 0 and 9
+    let "majindex = $INDEX -1"
+    usernum=5${majindex}${random}
+
+    #Set proxies for glexec
+    user_proxy="./x509up_u501_${usernum}"
+    export GLEXEC_CLIENT_CERT=$user_proxy
+    export GLEXEC_SOURCE_PROXY=$user_proxy
+    export X509_USER_PROXY=$user_proxy
+    echo "Using proxy $user_proxy"
+
     let "executions += 1"
     START_TIME=`date +%s.%N`
+
+    #glexec call
     $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE 2>&1
     if [ $? -ne 0 ];then
       let "failures +=1"
@@ -128,6 +131,7 @@ if [ ! -z $END_DATE ]; then
     else
       failed=0
     fi
+
     END_TIME=`date +%s.%N`
     TIME=`echo "$START_TIME $END_TIME" | awk '{print $2-$1}'`
     echo "`date +%s`,$TIME" >> $DATA_FILE
@@ -139,20 +143,43 @@ if [ ! -z $END_DATE ]; then
     CURR_DATE=`date +%Y%m%d%H%M`
   done
 fi
-
+####################################################
 count=1
 if [ ! -z $ITERATIONS ]; then
   while [ $count -le $ITERATIONS ]
   do
+  #Choose a random user between 5x0 and 5x9
+    let random=$RANDOM%10; #random between 0 and 9
+    let "majindex = $INDEX -1"
+    usernum=5${majindex}${random}
+
+    #Set proxies for glexec
+    user_proxy="./x509up_u501_${usernum}"
+    export GLEXEC_CLIENT_CERT=$user_proxy
+    export GLEXEC_SOURCE_PROXY=$user_proxy
+    export X509_USER_PROXY=$user_proxy
+    echo "Using proxy $user_proxy"
+
     START_TIME=`date +%s.%N`
+
+    #glxec call
     $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami" >> $LOG_FILE 2>&1
     if [ $? -ne 0 ];then
       let "failures +=1"
+      failed=1
+    else
+      failed=0
     fi
+
     END_TIME=`date +%s.%N`
     TIME=`echo "$START_TIME $END_TIME" | awk '{print $2-$1}'`
     echo "`date +%s`,$TIME" >> $DATA_FILE
-    count=$[count+1]
+    if [ $failed -eq 1 ]; then
+      echo "`date +%s`,1" >> $ERROR_FILE
+    else
+      echo "`date +%s`,0" >> $ERROR_FILE
+    fi
+    CURR_DATE=`date +%Y%m%d%H%M`
   done
 fi
 
