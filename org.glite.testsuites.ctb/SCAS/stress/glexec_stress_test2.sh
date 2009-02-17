@@ -179,7 +179,7 @@ if [ ! -z $ITERATIONS ]; then
     else
       echo "`date +%s`,0" >> $ERROR_FILE
     fi
-    CURR_DATE=`date +%Y%m%d%H%M`
+    count=$[count+1]
   done
 fi
 
