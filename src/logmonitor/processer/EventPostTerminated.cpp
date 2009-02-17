@@ -79,11 +79,11 @@ void EventPostTerminated::process_event( void )
 	elog::cedglog << logger::setlevel( logger::warning )
 		      << "Signal number for abnormal termination: " << this->ept_event->signalNumber << endl;
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-#else
-      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-#endif
+      if (this->ei_data->md_logger->have_lbproxy()) {
+        this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
+      } else {
+        this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
+      }
 
       if( this->ei_data->md_aborted->search(this->ei_condor) ) { // Aborting node ??? Huh ???
 	elog::cedglog << logger::setlevel( logger::info )

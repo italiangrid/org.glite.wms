@@ -190,7 +190,7 @@ ControllerLoop::ControllerLoop( const utilities::LineParser &options ) : cl_verb
 									 cl_stream( elog::cedglog ),
 									 cl_logger(), cl_queuefilename(), cl_executer(),
 									 cl_client(),
-									 cl_options( options )
+									 cl_options( options ), cl_have_lbproxy(true)
 {
   const configuration::JCConfiguration       *config = configuration::Configuration::instance()->jc();
   const configuration::CommonConfiguration   *common = configuration::Configuration::instance()->common();
@@ -227,6 +227,7 @@ ControllerLoop::ControllerLoop( const utilities::LineParser &options ) : cl_verb
   else if( this->cl_verbose )
     clog << "Running in an unprivileged account..." << endl;
 
+  this->cl_have_lbproxy = common->lbproxy();
   this->createDirectories();
 
   this->cl_stream.open( logname.native_file_string(), (logger::level_t) config->log_level() );
@@ -260,9 +261,6 @@ ControllerLoop::ControllerLoop( const utilities::LineParser &options ) : cl_verb
 
   this->cl_stream << logger::setlevel( logger::high )
 		  << "**********************************************************************" << endl
-		  << logger::setlevel( logger::veryugly )
-		  << "* Vax Headroom Enterprises Inc. and INFN are proud to present you... *" << endl
-		  << "* ...the very shiny and groovy brand new JobController !!!           *" << endl
 		  << logger::setlevel( logger::high )
 		  << "* GLITE JobController Version. " << cl_s_version << "                                     *" << endl
 		  << "* Compiled at " << cl_s_date << ", " << cl_s_time << "                                  *" << endl
@@ -325,15 +323,14 @@ try {
 
 	  this->cl_stream << logger::setlevel( logger::info ) << "Got new submit request..." << endl; 
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-          this->cl_logger->set_LBProxy_context(glite::jdl::get_edg_jobid(*jobad),
+    if (this->cl_have_lbproxy) {
+      this->cl_logger->set_LBProxy_context(glite::jdl::get_edg_jobid(*jobad),
                                                glite::jdl::get_lb_sequence_code(*jobad),
                                                glite::jdl::get_x509_user_proxy(*jobad) );
-#else
-	  this->cl_logger->reset_user_proxy( glite::jdl::get_x509_user_proxy(*jobad) );
-	  this->cl_logger->reset_context( glite::jdl::get_edg_jobid(*jobad), glite::jdl::get_lb_sequence_code(*jobad) );
-#endif
-
+    } else {
+	    this->cl_logger->reset_user_proxy( glite::jdl::get_x509_user_proxy(*jobad) );
+	    this->cl_logger->reset_context( glite::jdl::get_edg_jobid(*jobad), glite::jdl::get_lb_sequence_code(*jobad) );
+    }
 	  this->cl_logger->job_dequeued_event( this->cl_queuefilename );
 
 	  this->cl_stream << logger::setlevel( logger::debug ) << logger::setmultiline( true, "--> " )
@@ -352,12 +349,12 @@ try {
 
 	  this->cl_stream << logger::setlevel( logger::info ) << "Got new remove request (JOB ID = " << jobid << ")..." << endl;
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-          this->cl_logger->set_LBProxy_context( jobid, remreq->get_sequence_code(), remreq->get_proxyfile() );
-#else 
-	  this->cl_logger->reset_user_proxy( remreq->get_proxyfile() );
-	  this->cl_logger->reset_context( jobid, remreq->get_sequence_code() );
-#endif
+    if (this->cl_have_lbproxy) {
+      this->cl_logger->set_LBProxy_context( jobid, remreq->get_sequence_code(), remreq->get_proxyfile() );
+    } else {
+	    this->cl_logger->reset_user_proxy( remreq->get_proxyfile() );
+	    this->cl_logger->reset_context( jobid, remreq->get_sequence_code() );
+    }
 
 	  if( source == configuration::ModuleType::workload_manager )
 	    this->cl_logger->job_cancel_requested_event( configuration::ModuleType::module_name(source) );

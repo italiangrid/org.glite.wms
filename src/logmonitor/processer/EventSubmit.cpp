@@ -56,11 +56,11 @@ void EventSubmit::finalProcess( const string &edgid, const string &seqcode )
 
     reader.reset( this->createReader(edgid) );
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    this->ei_data->md_logger->set_LBProxy_context( edgid, seqcode, position->proxy_file() );
-#else
-    this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, seqcode );
-#endif 
+    if (this->ei_data->md_logger->have_lbproxy()) {
+      this->ei_data->md_logger->set_LBProxy_context( edgid, seqcode, position->proxy_file() );
+    } else {
+      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, seqcode );
+    }
    this->ei_data->md_logger->condor_submit_event( this->ei_condor, reader->get_globus_rsl() );
 
    this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->es_event->eventNumber );

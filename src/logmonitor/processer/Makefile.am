@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6.2.1.4.1  2009/02/17 15:35:47  mcecchi
+#       LB type run-time selection
+#
 #       Revision 1.6.2.1  2008/02/04 07:12:34  giaco
 #       - remove deps from expat and libtar
 #
@@ -100,6 +103,6 @@ EXTRA_DIST = EventFactory.cpp \
 	SubmitReader.cpp \
 	JobResubmitter.cpp
 
-AM_CPPFLAGS = -DGLITE_WMS_HAVE_LBPROXY
+AM_CPPFLAGS = 
 
 MAINTAINERCLEANFILES = Makefile.in *~

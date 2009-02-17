@@ -3,9 +3,7 @@
 
 #include <exception>
 
-#ifdef GLITE_WMS_HAVE_LOGGING
 #include "glite/lb/context.h"
-#endif
 
 #include "jobcontrol_namespace.h"
 
@@ -36,11 +34,7 @@ private:
 class EventLogger {
 public:
   EventLogger( void );
-#ifdef GLITE_WMS_HAVE_LOGGING
   EventLogger( edg_wll_Context *cont, int flag = EDG_WLL_SEQ_NORMAL );
-#else
-  EventLogger( edg_wll_Context *cont, int flag = 0 );
-#endif
   ~EventLogger( void );
 
   EventLogger &initialize_jobcontroller_context( ProxySet *ps = NULL );
@@ -51,9 +45,7 @@ public:
 
   EventLogger &reset_user_proxy( const std::string &proxyfile );
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
   EventLogger &set_LBProxy_context( const std::string &jobid, const std::string &sequence, const std::string &proxyfile);
-#endif
 
   /*
     LogMonitor events
@@ -119,6 +111,7 @@ public:
 
   inline static void set_lb_retries( unsigned int r ) { el_s_retries = r; return; }
   inline static void set_lb_interval( unsigned int sec ) { el_s_sleep = sec; return; }
+  bool have_lbproxy() { return this->el_have_lbproxy; }
 
 private:
   inline void startLogging( void ) { this->el_count = 0; this->el_hostProxy = false; }
@@ -131,6 +124,7 @@ private:
   unsigned int       el_count;
   edg_wll_Context   *el_context;
   std::string        el_proxy;
+  bool el_have_lbproxy;
 
   static unsigned int         el_s_retries, el_s_sleep;
   static const char          *el_s_notLogged, *el_s_unavailable, *el_s_OK, *el_s_failed;

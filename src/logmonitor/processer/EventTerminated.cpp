@@ -59,11 +59,11 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
 
     this->ei_data->md_aborted->remove( this->ei_condor );
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-#else
-    this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-#endif  
+    if (this->ei_data->md_logger->have_lbproxy()) {
+      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
+    } else {
+      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
+    }
     this->ei_data->md_logger->failed_on_error_event( ei_s_joberror );
 
     jccommon::JobFilePurger( position->edg_id() ).do_purge();
@@ -74,11 +74,11 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
   else if( (stat = parser.parse_file(retcode, errors, sc)) == JWOP::good ) { // Job terminated successfully...
     elog::cedglog << logger::setlevel( logger::info ) << "Real return code: " << retcode << endl;
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-#else
-    this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-#endif   
+    if (this->ei_data->md_logger->have_lbproxy()) {
+      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
+    } else {
+      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
+    }
 
     if ( !sc.empty() && ( sc != "NoToken" ) )
       this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
@@ -95,11 +95,11 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
 		  << ") aborted." << endl
 		  << "Reason: \"" << errors << "\"." << endl;
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-    this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-#else
-    this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-#endif
+    if (this->ei_data->md_logger->have_lbproxy()) {
+      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
+    } else {
+      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
+    }
 
     if ( !sc.empty() && ( sc != "NoToken" ) )
       this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
@@ -151,11 +151,11 @@ void EventTerminated::process_event( void )
       elog::cedglog << logger::setlevel( logger::info ) << ei_s_dagideq << position->edg_id() << endl
 		    << "Return code = " << this->et_event->returnValue << endl;
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-#else
-      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-#endif
+      if (this->ei_data->md_logger->have_lbproxy()) {
+        this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
+      } else {
+        this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
+      }
       
       if( this->ei_data->md_aborted->search(this->ei_condor) ) { // The POST script bug
 	this->ei_data->md_aborted->remove( this->ei_condor );

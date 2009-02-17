@@ -112,11 +112,11 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
       
       elog::cedglog << logger::setlevel( logger::verylow ) << "Real return code: " << retcode << endl;
       
-#ifdef GLITE_WMS_HAVE_LBPROXY
-      this->jr_logger->set_LBProxy_context( edgid, position->sequence_code(), position->proxy_file() );
-#else 
-      this->jr_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, position->sequence_code() );
-#endif    
+      if (this->jr_logger->have_lbproxy()) {
+        this->jr_logger->set_LBProxy_context( edgid, position->sequence_code(), position->proxy_file() );
+      } else {
+        this->jr_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, position->sequence_code() );
+      }
       
       if ( !sc.empty() && ( sc != "NoToken" ) ) 
         this->jr_logger->job_really_run_event( sc ); // logged really running event 

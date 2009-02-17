@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.2  2009/02/17 15:35:47  mcecchi
+#       LB type run-time selection
+#
 #       Revision 1.11.2.1.4.1  2009/02/13 13:09:26  mcecchi
 #       some cleanup
 #
@@ -98,6 +101,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	-DGLITE_WMS_HAVE_PURGER -DGLITE_WMS_HAVE_RENEWAL -DGLITE_WMS_HAVE_LBPROXY
+	-DGLITE_WMS_HAVE_PURGER -DGLITE_WMS_HAVE_RENEWAL
 
 MAINTAINERCLEANFILES = Makefile.in *~

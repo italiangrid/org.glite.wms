@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1  2009/02/17 15:35:47  mcecchi
+#       LB type run-time selection
+#
 #       Revision 1.17.2.3  2008/02/04 07:12:34  giaco
 #       - remove deps from expat and libtar
 #
@@ -153,6 +156,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(CONDORG_CFLAGS) -DGLITE_WMS_HAVE_LBPROXY
+	$(CONDORG_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~

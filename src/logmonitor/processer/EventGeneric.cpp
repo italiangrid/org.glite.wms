@@ -160,13 +160,13 @@ void EventGeneric::finalProcess( int cn )
 	    throw CannotExecute( ei_s_failedinsertion );
 	  }
 */
-#ifdef GLITE_WMS_HAVE_LBPROXY
+    if (this->ei_data->md_logger->have_lbproxy()) {
           this->ei_data->md_logger->set_LBProxy_context( edgid, position->sequence_code(), 
 							 position->proxy_file() );
-#else
-	  this->ei_data->md_logger->reset_user_proxy( position->proxy_file() );
-	  this->ei_data->md_logger->reset_context( edgid, position->sequence_code() );
-#endif
+    } else {
+	    this->ei_data->md_logger->reset_user_proxy( position->proxy_file() );
+	    this->ei_data->md_logger->reset_context( edgid, position->sequence_code() );
+    }
           this->ei_data->md_logger->abort_on_error_event( string("Removal retries exceeded.") );
 
 /* Not remove the dag see bugs #16034
@@ -180,11 +180,11 @@ void EventGeneric::finalProcess( int cn )
 	  elog::cedglog << logger::setlevel( logger::severe )
 			<< "Cancellation retries exceeded maximum (" << retry << '/' << maxretries << ')' << endl
 			<< "Job will be removed from the queue and aborted." << endl;
-#ifdef GLITE_WMS_HAVE_LBPROXY
-          this->ei_data->md_logger->set_LBProxy_context( edgid, position->sequence_code(), position->proxy_file() );
-#else
-	  this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, position->sequence_code() );
-#endif
+    if (this->ei_data->md_logger->have_lbproxy()) {
+      this->ei_data->md_logger->set_LBProxy_context( edgid, position->sequence_code(), position->proxy_file() );
+    } else {
+	    this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, position->sequence_code() );
+    }
 	  this->ei_data->md_logger->abort_on_error_event( string("Removal retries exceeded.") );
 
 	  jccommon::ProxyUnregistrar( edgid ).unregister();

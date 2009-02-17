@@ -77,11 +77,11 @@ void EventGridSubmit::process_event( void )
       reader.reset( this->createReader(position->edg_id()) );
 
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
-#else
-      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-#endif
+      if (this->ei_data->md_logger->have_lbproxy()) {
+        this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
+      } else {
+        this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
+      }
       this->ei_data->md_logger->grid_submit_event( ce, this->ei_data->md_logfile_name );
     
 

@@ -60,6 +60,7 @@ private:
   static const char         *cl_s_buildUser, *cl_s_buildHost;
   static const int           cl_s_signals[];
   static ControllerLoop     *cl_s_instance;
+  bool               cl_have_lbproxy;
 };
 
 }; // Namespace daemons
