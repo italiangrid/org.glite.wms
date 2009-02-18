@@ -218,7 +218,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
      */
     string betterproxy;
 
-    betterproxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( theJob.getUserDN() ).get<0>();
+    betterproxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.getUserDN() ).get<0>();
 
     if( betterproxy.empty() ) {
       CREAM_SAFE_LOG( m_log_dev->warnStream()

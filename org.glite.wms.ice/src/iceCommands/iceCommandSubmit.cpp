@@ -420,7 +420,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // Delegates the proxy
         //
         try {
-	  delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation, m_theJob.is_proxy_renewable() );
+	  delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation, m_theJob.is_proxy_renewable(), m_theJob.getMyProxyAddress() );
         } catch( const exception& ex ) {
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
@@ -640,6 +640,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     // now the job is in cache and has been registered we can save its
     // proxy into the DN-Proxy Manager's cache
     if( m_theJob.is_proxy_renewable() ) {
+
+      //string key = m_theJob.getUserDN() + string("_") + m_theJob.getMyProxyAddress();
 
       iceUtil::DNProxyManager::getInstance()->registerUserProxy( 
 								m_theJob.getUserDN(),

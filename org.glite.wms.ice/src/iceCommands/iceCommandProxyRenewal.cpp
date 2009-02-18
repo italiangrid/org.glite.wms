@@ -55,6 +55,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctime>
+#include <cerrno>
+
+extern int errno;
 
 namespace cream_api = glite::ce::cream_client_api;
 
@@ -289,8 +292,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     api_util::scoped_timer T( "iceCommandProxyRenewal::renewAllDelegations()" );
 #endif
 
-    vector< boost::tuple< string, string, string, time_t, int, bool> > _allDelegations;
-    vector< boost::tuple< string, string, string, time_t, int, bool> > allDelegations;
+    vector< boost::tuple< string, string, string, time_t, int, bool, string> > _allDelegations;
+    vector< boost::tuple< string, string, string, time_t, int, bool, string> > allDelegations;
     map< string, CreamJob > delegID_CreamJob;
     
     
@@ -298,12 +301,12 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     /**
        must remove the non-renewable delegations...
     */
-    for(vector< boost::tuple< string, string, string, time_t, int, bool> >::const_iterator it = _allDelegations.begin();
+    for(vector< boost::tuple< string, string, string, time_t, int, bool, string> >::const_iterator it = _allDelegations.begin();
 	it != _allDelegations.end();
 	++it)
       {
 	if( it->get<5>() )
-	  allDelegations.push_back( boost::make_tuple(it->get<0>(),it->get<1>(),it->get<2>(),it->get<3>(),it->get<4>(),it->get<5>() ) );
+	  allDelegations.push_back( boost::make_tuple(it->get<0>(),it->get<1>(),it->get<2>(),it->get<3>(),it->get<4>(),it->get<5>(), it->get<6>() ) );
       }
     
 
@@ -324,7 +327,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
         }
     }
     
-    vector<boost::tuple<string, string, string, time_t, int, bool> >::const_iterator it = allDelegations.begin();
+    vector<boost::tuple<string, string, string, time_t, int, bool, string> >::const_iterator it = allDelegations.begin();
     
     map<string, pair<time_t, int> > mapDelegTime; // delegationID -> (Expiration time, Absolute Duration)
     
@@ -336,7 +339,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
     /**
        Loop over all different delegations
     */
-    for( vector<boost::tuple<string, string, string, time_t, int, bool> >::const_iterator it = allDelegations.begin();
+    for( vector<boost::tuple<string, string, string, time_t, int, bool, string> >::const_iterator it = allDelegations.begin();
          it != allDelegations.end(); ++it) {        
         
         time_t thisExpTime   = it->get<3>();
@@ -369,6 +372,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
         
         string thisUserDN    = it->get<2>();
         string thisCEUrl     = it->get<1>();
+	string thisMyPR      = it->get<6>();
         
         /**
            Obtain the better proxy for the DN-FQAN related to current
@@ -378,8 +382,29 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	   1. as the proxy that ICE registered to the myproxyserver and that is automatically renewed by it
 	   2. as the ICE-calculated better proxy (calculated at each submission)
         */
-	boost::tuple<string, time_t, long long int> thisBetterPrx = DNProxyManager::getInstance()->getBetterProxyByDN( thisUserDN );
+
+	CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		       << method_name
+		       << "Looking for the better proxy for DN ["
+		       << thisUserDN << "] MyProxy Server name ["
+		       << thisMyPR << "]..."
+			 );
+
+	boost::tuple<string, time_t, long long int> thisBetterPrx = DNProxyManager::getInstance()->getExactBetterProxyByDN( thisUserDN, thisMyPR );
  
+	if(thisBetterPrx.get<0>().empty()) {
+	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+			 << method_name
+			 << "DNProxyManager::getExactBetterProxyByDN didn't return any better proxy for DN ["
+			 << thisUserDN << "] and MyProxy Server name ["
+			 << thisMyPR << "]... Skipping renew of this delegation ["
+			 << thisDelegID << "]."
+			 );
+	  mapDelegTime.erase( thisDelegID );
+	  mapDelegJob.erase( thisDelegID );
+	  continue;
+	}
+
 	/**
 	   if the returned better proxy is the "new" one must get the actual expiration time
 	   (remember that it is renewed by myproxyserver asynchronously and ICE doesn't know
@@ -388,97 +413,102 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 
 	time_t proxy_time_end;
 
-	bool is_legacy_betterproxy = true;
-
-	if(thisBetterPrx.get<2>() > 0) 
-	  {
-	    /**
-	       This is a "new" better proxy
-	    */
-
-	    is_legacy_betterproxy = false;
-
-	    cream_api::soap_proxy::VOMSWrapper V( thisBetterPrx.get<0>() );
-	    if( !V.IsValid( ) ) {
-	      CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			     << "iceCommandProxyRenewal::renewAllDelegations() - "
-			     << "Cannot read the proxy ["
-			     << thisBetterPrx.get<0>() << "]. Error is: ["
-			     << V.getErrorMessage() << "]. Skipping renew of delegation ["
-			     << thisDelegID <<"]"
-			     );
-	      mapDelegTime.erase( thisDelegID );
-	      mapDelegJob.erase( thisDelegID );
-	      continue;
-	    }
-
-	    proxy_time_end = V.getProxyTimeEnd();
-
-	    
-
-	  } else {
-	  
-	  /**
-	     this is a old-style better proxy...
-	  */
-	  proxy_time_end = thisBetterPrx.get<1>();
-
+	cream_api::soap_proxy::VOMSWrapper V( thisBetterPrx.get<0>() );
+	if( !V.IsValid( ) ) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
+			 << "iceCommandProxyRenewal::renewAllDelegations() - "
+			 << "Cannot read the proxy ["
+			 << thisBetterPrx.get<0>() << "]. Error is: ["
+			 << V.getErrorMessage() << "]. Skipping renew of delegation ["
+			 << thisDelegID <<"]"
+			 );
+	  mapDelegTime.erase( thisDelegID );
+	  mapDelegJob.erase( thisDelegID );
+	  continue;
 	}
+	
+	proxy_time_end = V.getProxyTimeEnd();
+	
+	/**
+	   Must update the expiration time inside the map of DNProxyManager
+	*/
+	DNProxyManager::getInstance()->updateBetterProxy( thisUserDN, thisMyPR, boost::make_tuple(thisBetterPrx.get<0>(), proxy_time_end, thisBetterPrx.get<2>()) );
+	
+	/**
+	   this is a old-style better proxy...
+	*/
+	proxy_time_end = thisBetterPrx.get<1>();
+
+	
+	
+	/**
+	   If the BetterProxy for this delegation is less long-living than the delegation itself
+	   let's continue with next delegation...
+	*/
+	if( proxy_time_end < thisExpTime-(5)) {
+	  CREAM_SAFE_LOG(m_log_dev->warnStream() 
+			 << "iceCommandProxyRenewal::renewAllDelegations() - "
+			 << "The better proxy ["
+			 << thisBetterPrx.get<0>() << "] is expiring before the current delegation ["
+			 << thisDelegID << "]. Skipping ... "
+			 );
+	  
+	  mapDelegTime.erase( thisDelegID );
+	  mapDelegJob.erase( thisDelegID );
+	  continue;
+	}
+
 
         /**
            If the better proxy for this delegation ID is expired, it
-           means that there're no new jobs for this DN-FQAN since
+           means that there're no new jobs for this DN-FQAN_MYPROXY since
            long... then we can remove the delegatiob ID from memory.
         */
         if( proxy_time_end <= (time(0)-5) ) {
-            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                            << "For current Delegation ID [" << thisDelegID 
-                            <<"] DNProxyManager returned the Better Proxy ["
-                            << thisBetterPrx.get<0>() 
-                            << "] that is EXPIRED! Removing this delegation ID from "
-                            << "Delegation_manager, removing proxy from DNProxyManager's cache, won't renew delegation ..."
-                            );
-            
-            Delegation_manager::instance()->removeDelegation( thisDelegID );
-	    
-	    if( is_legacy_betterproxy )
-	      DNProxyManager::getInstance()->removeBetterProxyForDN( thisUserDN );
-	    else
-	      DNProxyManager::getInstance()->removeNewBetterProxyForDN( thisUserDN );
-	    
-	    if(is_legacy_betterproxy) {
-	      const char* regID = compressed_string( thisUserDN ).c_str();
-	      int err = glite_renewal_UnregisterProxy( regID, NULL );
-	      
-	      if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
-		CREAM_SAFE_LOG(
-			       m_log_dev->errorStream()
-			       << method_name
-			       << "Couldn't unregister the proxy registered with ID ["
-			       << regID << "]. Error is: "
-			       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
-			       );
-	      }
-
-	      /**
-		 FIXME: must also unlink the symlink
-	      */
-	      if(::unlink( thisBetterPrx.get<0>().c_str() ) < 0)
-		{
-		  int saveerr = errno;
-		  CREAM_SAFE_LOG(
-				 m_log_dev->errorStream()
-				 << method_name
-				 << "Unlink of file ["
-				 << thisBetterPrx.get<0>() << "] is failed. Error is: "
-				 << strerror(saveerr);
-				 );
-		}
+	  CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+			  << "For current Delegation ID [" << thisDelegID 
+			  <<"] DNProxyManager returned the Better Proxy ["
+			  << thisBetterPrx.get<0>() 
+			  << "] that is EXPIRED! Removing this delegation ID from "
+			  << "Delegation_manager, removing proxy from DNProxyManager's cache, won't renew delegation ..."
+			  );
+	  
+	  Delegation_manager::instance()->removeDelegation( thisDelegID );
+	  
+	  DNProxyManager::getInstance()->removeBetterProxy( thisUserDN, thisMyPR );
+	  
+	  const char* regID = compressed_string( thisUserDN ).c_str();
+	  int err = glite_renewal_UnregisterProxy( regID, NULL );
+	  
+	  if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+	    CREAM_SAFE_LOG(
+			   m_log_dev->errorStream()
+			   << method_name
+			   << "Couldn't unregister the proxy registered with ID ["
+			   << regID << "]. Error is: "
+			   << edg_wlpr_GetErrorText(err) << ". Ignoring..."
+			   );
+	  }
+	  
+	  /**
+	    must also unlink the symlink
+	  */
+	  if(::unlink( thisBetterPrx.get<0>().c_str() ) < 0)
+	    {
+	      int saveerr = errno;
+	      CREAM_SAFE_LOG(
+			     m_log_dev->errorStream()
+			     << method_name
+			     << "Unlink of file ["
+			     << thisBetterPrx.get<0>() << "] is failed. Error is: "
+			     << strerror(saveerr);
+			     );
 	    }
-
-            mapDelegTime.erase( thisDelegID );
-            mapDelegJob.erase( thisDelegID );
-            continue;
+	  
+	  
+	  mapDelegTime.erase( thisDelegID );
+	  mapDelegJob.erase( thisDelegID );
+	  continue;
         }
         
         CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
@@ -489,25 +519,29 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
                         << time_t_to_string(thisBetterPrx.get<1>()) << "]"
                         );
         try {
-            
-            string thisDelegUrl = thisCEUrl;
-            
-            boost::replace_all( thisDelegUrl, 
-                                iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), 
-                                iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix() 
-                                );
-            
-            CreamProxy_ProxyRenew( thisDelegUrl,
-                                   thisBetterPrx.get<0>(),
-                                   thisDelegID).execute( 3 );
-            
-            mapDelegTime[ thisDelegID ] = make_pair(thisBetterPrx.get<1>(), thisBetterPrx.get<1>() - time(0) );
-            
+	  
+	  string thisDelegUrl = thisCEUrl;
+          
+	  boost::replace_all( thisDelegUrl, 
+			      iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), 
+			      iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix() 
+			      );
+	  
+	  CreamProxy_ProxyRenew( thisDelegUrl,
+				 thisBetterPrx.get<0>(),
+				 thisDelegID).execute( 3 );
+	  
+	  mapDelegTime[ thisDelegID ] = make_pair(thisBetterPrx.get<1>(), thisBetterPrx.get<1>() - time(0) );
+          
         } catch( exception& ex ) {
-            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                            << "Proxy renew for delegation ID ["
-                            << thisDelegID << "] failed: " << ex.what() 
-                            );
+	  CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+			  << "Proxy renew for delegation ID ["
+			  << thisDelegID << "] failed: " << ex.what() 
+			  );
+	  
+	  mapDelegTime.erase( thisDelegID );
+	  mapDelegJob.erase( thisDelegID );
+	  continue;
         }
         
     }

@@ -99,6 +99,8 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
 				      vector<cemon_api::Subscription>& vec)
   throw (exception&)
 {
+  
+
   CREAM_SAFE_LOG(m_log_dev->infoStream() 
   		 << "subscriptionProxy::list() - retrieving list of "
 		 << "subscriptions from [" << url << "] for proxy ["

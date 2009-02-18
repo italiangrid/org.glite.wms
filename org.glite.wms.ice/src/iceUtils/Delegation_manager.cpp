@@ -123,7 +123,7 @@ Delegation_manager::Delegation_manager( ) :
 		  << "Populating Delegation_manager's cache..."
 		  );  
 
-  map<string, boost::tuple<string, string, time_t, int, string,bool> > mapDeleg;
+  map<string, boost::tuple<string, string, time_t, int, string,bool,string> > mapDeleg;
   {
     // must populate the delegation's cache
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
@@ -140,7 +140,8 @@ Delegation_manager::Delegation_manager( ) :
 							   jit->getDelegationExpirationTime(),
 							   jit->getDelegationDuration(),
 							   jit->getUserDN(),
-							   true
+							   true,
+							   jit->getMyProxyAddress()
 							   );
 	} else {
 	  
@@ -151,7 +152,10 @@ Delegation_manager::Delegation_manager( ) :
 			       jit->getCreamURL(), 
 			       jit->getDelegationExpirationTime(),
 			       jit->getDelegationDuration(),
-			       jit->getUserDN(), false);
+			       jit->getUserDN(), 
+			       false,
+			       jit->getMyProxyAddress()
+			       );
 	  
 	}
 	
@@ -160,7 +164,7 @@ Delegation_manager::Delegation_manager( ) :
 
   } // unlock the cache
 
-  map<string, boost::tuple<string, string, time_t, int, string,bool> >::const_iterator dit = mapDeleg.begin();
+  map<string, boost::tuple<string, string, time_t, int, string,bool,string> >::const_iterator dit = mapDeleg.begin();
   while( dit != mapDeleg.end() ) {
     
     m_delegation_set.insert( table_entry( 
@@ -170,7 +174,9 @@ Delegation_manager::Delegation_manager( ) :
 					 dit->second.get<3>(),
 					 dit->second.get<0>(), // Delegation ID
 					 dit->second.get<4>(),  // user_dn
-					 dit->second.get<5>()
+					 dit->second.get<5>(), // renewable ?
+					 dit->second.get<6>()
+					 
 					 )         
 			     );
 
@@ -189,7 +195,7 @@ Delegation_manager* Delegation_manager::instance( )
 }
 
 //______________________________________________________________________________
-boost::tuple<string, time_t, int> Delegation_manager::delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force, bool USE_NEW ) throw( std::exception& )
+boost::tuple<string, time_t, int> Delegation_manager::delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force, bool USE_NEW, const string& myproxy_address ) throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
 
@@ -315,12 +321,12 @@ boost::tuple<string, time_t, int> Delegation_manager::delegate( const CreamJob& 
 	/**
 	   if USE_NEW is true it means that we're using the new delegation mechanism because the user set the MYPROXYSERVER
 	*/
-        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id, V.getDNFQAN(), USE_NEW) );
+        m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id, V.getDNFQAN(), USE_NEW, myproxy_address) );
 
         // Inserts into the front of the list; this is guaranteed to
         // be a new element, as it has not been found in this "if"
         // branch
-        delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id,  V.getDNFQAN(), USE_NEW ) );
+        delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id,  V.getDNFQAN(), USE_NEW, myproxy_address ) );
         if ( m_delegation_set.size() > m_max_size ) {
             if ( m_log_dev->isDebugEnabled() ) {
 
@@ -419,6 +425,7 @@ void Delegation_manager::updateDelegation( const boost::tuple<string, time_t, in
     string delegid = it->m_delegation_id;
     string user_dn = it->m_user_dn;
     bool renewable = it->m_renewable;
+    string myproxy = it->m_myproxyserver;
     
     CREAM_SAFE_LOG( m_log_dev->debugStream()
 		    << method_name
@@ -442,7 +449,7 @@ void Delegation_manager::updateDelegation( const boost::tuple<string, time_t, in
 		    << ceurl << "]"
 		    );
     
-    m_delegation_set.insert( table_entry(key, ceurl, newDeleg.get<1>(), newDeleg.get<2>(), delegid, user_dn, renewable)  );
+    m_delegation_set.insert( table_entry(key, ceurl, newDeleg.get<1>(), newDeleg.get<2>(), delegid, user_dn, renewable, myproxy)  );
   }
   
 }
@@ -465,7 +472,7 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 }
 
 //______________________________________________________________________________
-void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool> >& target )
+void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target )
 {
     boost::recursive_mutex::scoped_lock L( m_mutex );
     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
@@ -478,7 +485,8 @@ void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, strin
                                             it->m_user_dn, 
                                             it->m_expiration_time, 
                                             it->m_delegation_duration,
-					    it->m_renewable ));
+					    it->m_renewable,
+					    it->m_myproxyserver));
         ++it;
     }
 }

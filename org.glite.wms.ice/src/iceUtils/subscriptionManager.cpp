@@ -24,7 +24,6 @@
  */
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/monitor-client-api-c/CEInfo.h"
 
@@ -309,9 +308,6 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
 {
   boost::recursive_mutex::scoped_lock M( mutex );
 
-  // it.first is the user DN
-  // it.second is the set of cemons to check for subscriptions
-
   for(set<string>::const_iterator sit=it.second.begin(); sit!=it.second.end(); ++sit)
   {
     
@@ -320,10 +316,17 @@ void iceUtil::subscriptionManager::checkSubscription( const pair<string, set<str
     bool subscribed;
 
     string proxy;
-    //{
-    //  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-    proxy = iceUtil::DNProxyManager::getInstance()->getBetterProxyByDN( it.first ).get<0>();
-    //}
+    
+    proxy = iceUtil::DNProxyManager::getInstance()->getAnyBetterProxyByDN( it.first ).get<0>();
+
+    if( proxy.empty() ) {
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "subscriptionManager::checkSubscription() - Better Proxy for "
+		     << "DN [" << it.first << "] has not been found. Removing subscriptions for this user..."
+		     );
+      
+      continue;
+    }
 
     try { 
 
@@ -628,6 +631,18 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
 
   m_Subs[ make_pair( V.getDNFQAN(), cemonURL) ] = S;
   m_Subs_inverse[ S.getSubscriptionID() ] = make_pair( V.getDNFQAN(), cemonURL);
+}
+
+//________________________________________________________________________
+void iceUtil::subscriptionManager::removeSubscriptionForDN( const std::string& userDN ) throw()
+{
+  for(set<string>::const_iterator it = m_cemonURL.begin();
+      it != m_cemonURL.end();
+      ++it) 
+    {
+      m_Subs.erase( make_pair(userDN, *it) );
+    }
+  m_DN.erase( userDN );
 }
 
 //________________________________________________________________________

@@ -68,10 +68,10 @@
 #include <unistd.h>
 #include <cerrno>
 
-//extern int errno;
+extern int errno;
 
-extern int *__errno_location(void);
-#define errno (*__errno_location())
+//extern int *__errno_location(void);
+//#define errno (*__errno_location())
 
 namespace api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
@@ -258,19 +258,23 @@ void CreamJob::setSequenceCode( const std::string& seq )
 }
 
 //______________________________________________________________________________
-string CreamJob::getBetterProxy( void ) const
-{
-  string better = DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn ).get<0>();
-  if( better.empty() ) return m_user_proxyfile;
-  return better;
-}
+// string CreamJob::getBetterProxy( void ) const
+// {
+//   //string better = DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn ).get<0>();
+//   string better = DNProxyManager::getInstance()->getBetterProxy( m_user_dn ).get<0>();
+//   if( better.empty() ) return m_user_proxyfile;
+//   return better;
+// }
 
 //______________________________________________________________________________
 string CreamJob::getCEMonURL( void ) const 
 {
     string cemon_url;
     subscriptionManager* submgr( subscriptionManager::getInstance() );
-    submgr->getCEMonURL( getBetterProxy(), m_cream_address, cemon_url );
+
+    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( this->getUserDN() ).get<0>();
+
+    submgr->getCEMonURL( proxy, m_cream_address, cemon_url );
     return cemon_url;
 }
 

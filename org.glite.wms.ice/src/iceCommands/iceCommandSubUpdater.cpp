@@ -75,7 +75,7 @@ namespace {
 	string betterProxy;
 	//{
 	//  boost::recursive_mutex::scoped_lock M( ice_util::DNProxyManager::mutex );
-	betterProxy = ice_util::DNProxyManager::getInstance()->getBetterProxyByDN( m_dn ).get<0>();//first;
+	betterProxy = ice_util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn ).get<0>();//first;
 	  //}
 	
 	if(betterProxy == "") {

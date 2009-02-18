@@ -42,10 +42,10 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
 extern int h_errno;
-//extern int errno;
+extern int errno;
 
-extern int *__errno_location(void);
-#define errno (*__errno_location())
+//extern int *__errno_location(void);
+//#define errno (*__errno_location())
 
 int setET(char **errtxt, int rc);
 //int setETni(char **errtxt, int rc);

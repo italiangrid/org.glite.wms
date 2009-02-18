@@ -26,7 +26,6 @@
 
 #include <cstdlib>
 #include <cstdio>
-//#include <cerrno>
 
 #include <iostream>
 #include <string>
@@ -38,11 +37,14 @@ namespace fs = boost::filesystem;
 
 #include "glite/lb/producer.h"
 #include "iceLBContext.h"
+#include "DNProxyManager.h"
+#include "iceConfManager.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 //#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
+
 // #include "jobCache.h"
 #include "iceUtils.h"
 
@@ -329,19 +331,13 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
 
     if ( !theJob.getSequenceCode().empty() ) {
 #ifdef GLITE_WMS_HAVE_LBPROXY
-        string const user_dn( get_proxy_subject( theJob.getBetterProxy() ) );
+      string const user_dn( get_proxy_subject( DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.getUserDN()).get<0>()) );
 
         res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.getSequenceCode().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
 #else
         res |= edg_wll_SetLoggingJob( *el_context, id, theJob.getSequenceCode().c_str(), EDG_WLL_SEQ_NORMAL );
 #endif
     }
-
-//     CREAM_SAFE_LOG(m_log_dev->infoStream()
-//                    << "After SetLoggingJob: "
-//                    << " Seq code from job=[" << theJob.getSequenceCode() << "]"
-//                    << " Seq code from ctx=[" << edg_wll_GetSequenceCode( *el_context ) << "]"
-//                    );
 
     edg_wlc_JobIdFree( id );
 
@@ -356,12 +352,13 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     }
 
     // Set user proxy for L&B stuff
-    fs::path    pf( theJob.getBetterProxy(), fs::native);
+    string betterproxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.getUserDN()).get<0>();
+    fs::path    pf( betterproxy, fs::native);
     pf.normalize();
 
     if( fs::exists(pf) ) {
         res = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, 
-                                theJob.getBetterProxy().c_str() );
+                                betterproxy.c_str() );
 
         if( res ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
@@ -376,9 +373,9 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		     << "Unable to set logging job to jobid=["
 		     << theJob.getGridJobID()
-		     << "]. Proxy file "
-		     << theJob.getBetterProxy()
-		     << " does not exist. "
+		     << "]. Proxy file ["
+		     << betterproxy
+		     << "] does not exist. "
 		     << "Trying to use the host proxy cert, and hoping for the best..."
 		     );
     }

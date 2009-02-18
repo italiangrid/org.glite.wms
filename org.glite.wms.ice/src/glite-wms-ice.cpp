@@ -406,30 +406,32 @@ int main(int argc, char*argv[])
                            );
 	  
 	  for( list< iceUtil::Request* >::iterator it = requests.begin();
-	       it != requests.end(); ++it ) {
-            CREAM_SAFE_LOG(
-                           log_dev->debugStream()
-                           << method_name
-                           << "*** Unparsing request <"
-                           << (*it)->to_string()
-                           << ">"
-                           
-                           );
-            glite::wms::ice::iceAbsCommand* cmd;
-            try {
-	      cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
-	      threadPool->add_request( cmd );
-            } catch( std::exception& ex ) {
-	      CREAM_SAFE_LOG( log_dev->errorStream()
-			      << method_name
-			      << "Got exception \"" << ex.what()
-			      << "\". Removing BAD request..." 
-			      
-			      );
-	      iceManager->removeRequest( *it );
-	      //continue;
-            }
-	  }
+	       it != requests.end(); ++it ) 
+	    {
+	      string reqstr = (*it)->to_string();
+	      CREAM_SAFE_LOG(
+			     log_dev->debugStream()
+			     << method_name
+			     << "*** Unparsing request <"
+			     << reqstr
+			     << ">"
+			     
+			     );
+	      glite::wms::ice::iceAbsCommand* cmd;
+	      try {
+		cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
+		threadPool->add_request( cmd );
+	      } catch( std::exception& ex ) {
+		CREAM_SAFE_LOG( log_dev->errorStream()
+				<< method_name
+				<< "Got exception \"" << ex.what()
+				<< "\". Removing BAD request..." 
+				
+				);
+		iceManager->removeRequest( *it );
+		//continue;
+	      }
+	    }
 	}
 
 	sleep(2);

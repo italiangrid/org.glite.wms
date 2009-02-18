@@ -82,18 +82,27 @@ namespace util {
             std::string m_delegation_id;
 	    std::string m_user_dn;
 	    bool        m_renewable;
+	  std::string   m_myproxyserver;
 
-	  table_entry( const std::string& sha1_digest, const std::string& cream_url, const time_t expiration_time, const int deleg_duration, const std::string& delegation_id, const std::string& user_dn, const bool renewable ) :
-                m_sha1_digest( sha1_digest ),
-                m_cream_url( cream_url ),
-                m_expiration_time( expiration_time ),
-		m_delegation_duration( deleg_duration ),
-                m_delegation_id( delegation_id ),
-		m_user_dn( user_dn ),
-		m_renewable( renewable )
-            { };
+	  table_entry( const std::string& sha1_digest, 
+		       const std::string& cream_url, 
+		       const time_t expiration_time, 
+		       const int deleg_duration, 
+		       const std::string& delegation_id, 
+		       const std::string& user_dn, 
+		       const bool renewable, 
+		       const std::string& myproxyserver ) :
+	    m_sha1_digest( sha1_digest ),
+	    m_cream_url( cream_url ),
+	    m_expiration_time( expiration_time ),
+	    m_delegation_duration( deleg_duration ),
+	    m_delegation_id( delegation_id ),
+	    m_user_dn( user_dn ),
+	    m_renewable( renewable ),
+	    m_myproxyserver( myproxyserver )
+	  { };
         };
-
+	
         /**
          * Multi index container 
          */
@@ -173,7 +182,7 @@ namespace util {
          *
          * @throw exception if the delegation operation fails.
          */
-	boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false ) throw( std::exception& );
+	boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
 
         /**
          * Tries to delegate an already delegated ID. I hope that this
@@ -199,7 +208,7 @@ namespace util {
 	 * <li>Renewable (bool: yes/no)<li>
          * </ul>
          */
-	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool> >& target);
+	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool, std::string> >& target);
 
       /**
 	 < delegID, cream_url, exp_time, user_dn, 

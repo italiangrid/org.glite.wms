@@ -34,7 +34,7 @@
 #include "eventStatusPoller.h"
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
-#include "jobKiller.h"
+//#include "jobKiller.h"
 #include "iceLBEvent.h"
 #include "iceLBLogger.h"
 #include "CreamProxyMethod.h"
@@ -212,10 +212,11 @@ Ice::Ice( ) throw(iceInit_ex&) :
       m_hostdn = cream_api::certUtil::getDN( m_configuration->ice()->ice_host_cert() );
 
     } catch( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+      string hostcert = m_configuration->ice()->ice_host_cert();
         CREAM_SAFE_LOG( m_log_dev->fatalStream()
                         << "Ice::CTOR() - Unable to extract user DN from ["
-                        <<  m_configuration->ice()->ice_host_cert() << "]"
-                        << ". Cannot perform JobRegister and cannot start Listeneri. Stop!"
+                        <<  hostcert << "]"
+                        << ". Cannot perform JobRegister and cannot start Listener. Stop!"
                         );
         exit(1);
     }
@@ -478,7 +479,7 @@ void Ice::startProxyRenewer( void )
 void Ice::startJobKiller( void )
 {
     // FIXME: uncomment this method to activate the jobKiller    
-    if ( !m_configuration->ice()->start_job_killer() ) {
+/*    if ( !m_configuration->ice()->start_job_killer() ) {
         CREAM_SAFE_LOG( m_log_dev->warnStream()
                         << "Ice::startJobKiller() - "
                         << "Job Killer disabled in configuration file. "
@@ -488,7 +489,7 @@ void Ice::startJobKiller( void )
         return;
     }
     util::jobKiller* jobkiller = new util::jobKiller( );
-    m_job_killer_thread.start( jobkiller );
+    m_job_killer_thread.start( jobkiller ); */
 }
 
 //____________________________________________________________________________
@@ -609,7 +610,7 @@ throw()
     cream_api::soap_proxy::JobFilterWrapper filter(target, vector<string>(), -1, -1, "", "");
     
     // Gets the proxy to use for authentication
-    string better_proxy = util::DNProxyManager::getInstance()->getBetterProxyByDN( jit->getUserDN() ).get<0>();
+    string better_proxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( jit->getUserDN() ).get<0>();
 
     if( better_proxy.empty() ) {
       CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
@@ -853,7 +854,7 @@ throw()
             it = purge_job( it, "Job purged by ICE" );
 
 	    if(tmp_job.is_proxy_renewable())
-	      ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN() );
+	      ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN(), tmp_job.getMyProxyAddress() );
         }
         if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ) {
 

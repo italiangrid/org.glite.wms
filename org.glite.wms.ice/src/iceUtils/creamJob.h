@@ -193,7 +193,7 @@ namespace glite {
           std::string getUserProxyCertificate( void ) const { return m_user_proxyfile; }
 
           //! Gets the path and file name of the "better proxy" for the DN of the user owning this job
-          std::string getBetterProxy( void ) const;
+          //std::string getBetterProxy( void ) const;
 
 	  //! Gets the number of job status changes which have been already logged to L&B
 	  int get_num_logged_status_changes( void ) const { return m_num_logged_status_changes; }

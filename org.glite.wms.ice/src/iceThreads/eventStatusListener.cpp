@@ -47,9 +47,9 @@
 #include <cerrno>
 //#include <errno.h>
 
-//extern int errno;
-extern int *__errno_location(void);
-#define errno (*__errno_location())
+extern int errno;
+//extern int *__errno_location(void);
+//#define errno (*__errno_location())
 
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
@@ -245,11 +245,13 @@ void eventStatusListener::acceptJobStatus(void)
     
     iceThreadPool* threadPool( m_ice_manager->get_ice_commands_pool() );
 
-    if( threadPool->get_command_count()  > (10*m_conf->max_ice_threads()) ) {
+    int command_count = threadPool->get_command_count();
+
+    if( command_count  > (10*m_conf->max_ice_threads()) ) {
       CREAM_SAFE_LOG(m_log_dev->debugStream()
-    		     << "eventStatusListener::acceptJobStatus() - Currently threadPool contains "
-		     << threadPool->get_command_count()
-		     << " requests still to be processed. Dropping notification..."
+    		     << "eventStatusListener::acceptJobStatus() - Currently threadPool contains ["
+		     << command_count
+		     << "] requests still to be processed. Dropping notification..."
 		     );
     } else {
 

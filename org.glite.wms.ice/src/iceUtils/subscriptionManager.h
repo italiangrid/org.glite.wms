@@ -86,10 +86,10 @@ namespace util {
         std::map<std::string, std::string>      		  m_mappingCreamCemon;
         std::map<std::string, std::string>      		  m_mappingCemonDN;
         
-        iceConfManager                         		 *m_conf;  
-        subscriptionProxy                     		 *m_subProxy;
+        iceConfManager                         		         *m_conf;  
+        subscriptionProxy                     		         *m_subProxy;
         static subscriptionManager                   		 *s_instance;
-        log4cpp::Category                      		 *m_log_dev;
+        log4cpp::Category                      		         *m_log_dev;
         
         static std::string 			  		  s_persist_dir;
         static bool				  		  s_recoverable_db;
@@ -145,6 +145,8 @@ namespace util {
         void checkSubscription(const std::pair<std::string, std::set<std::string> >&) throw();
         void purgeOldSubscription( std::map<std::string, std::set<std::string> >::const_iterator it ) throw();
         
+	void removeSubscriptionForDN( const std::string& userDN ) throw();
+
         static void setPersistDirectory(const std::string& dir) { s_persist_dir = dir; }
         static void setRecoverableDb( const bool recover ) { s_recoverable_db=recover; }
         
