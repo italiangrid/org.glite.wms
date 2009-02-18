@@ -2282,11 +2282,11 @@
 
 
 		<!-- ==== Delegation service (client version 3.2 or greater) ==== -->
-		<!--wsdl:port name="WMProxyDelegation2_PortType" binding="glitedelegns2:DelegationSoapBinding">
+		<wsdl:port name="WMProxyDelegation2_PortType" binding="glitedelegns2:DelegationSoapBinding">
 			<wsdl:documentation>
 				Workload Manager Proxy delegation service
 				This is the service that allows delegation funcionalities
 			</wsdl:documentation>
-		</wsdl:port-->
+		</wsdl:port>
 	</wsdl:service>
 </wsdl:definitions>
