@@ -31,6 +31,7 @@
 #include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "ice-core.h"
+#include "DNProxyManager.h"
 
 // CREAM and WMS stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -332,7 +333,14 @@ void normalStatusNotification::apply( void ) // can throw anything
         return;
     }
 
-    if( m_cemondn.compare( jc_it->get_cemon_dn() ) ) {
+    string _cemon_url;
+    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( jc_it->getUserDN() ).get<0>();
+    subscriptionManager::getInstance()->getCEMonURL(proxy, jc_it->getCreamURL()/*m_cream_address*/, _cemon_url);
+    string _cemon_dn;
+    subscriptionManager::getInstance()->getCEMonDN( jc_it->getUserDN()/*m_user_dn*/, _cemon_url, _cemon_dn );
+    //_cemon_dn = jc_it->get_cemon_dn();
+
+    if( m_cemondn.compare( _cemon_dn /*jc_it->get_cemon_dn()*/ ) ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
 		       << method_name
 		       << "the CEMon ["

@@ -35,6 +35,7 @@
 #include "iceUtils.h"
 #include "ice-core.h"
 #include "subscriptionManager.h"
+#include "DNProxyManager.h"
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -200,14 +201,20 @@ void iceCommandUpdateStatus::execute( ) throw( )
 
             // Gets the job which is mentioned in the notification
             boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
-            //jobCache::const_iterator job_it( cache->lookupByCreamJobID( notif->get_cream_job_id() ) );
+           
             jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( notif->get_complete_cream_job_id() ) );
             
             if ( cache->end() != job_it ) {
 
                 // Gets the subscription ID which is used to get
                 // notifications associated with that job.
-                string subs_id( job_it->getSubscriptionID() );
+		
+		iceSubscription subscription;
+		string cemon_url;
+		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
+		subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
+		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
+                string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
 
                 // Then, push the pair (subs_id, cemondn) into the
                 // set.  This is necessary, as a normal status
@@ -244,7 +251,14 @@ void iceCommandUpdateStatus::execute( ) throw( )
         for ( jobCache::iterator job_it=cache->begin();
               cache->end() != job_it; ++job_it ) {
             
-            if ( subscription_set.end() !=  subscription_set.find( job_it->getSubscriptionID() ) ) {
+	    iceSubscription subscription;
+	    string cemon_url;
+	    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
+	    subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
+	    subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
+            string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
+	    
+            if ( subscription_set.end() !=  subscription_set.find( subs_id /*job_it->getSubscriptionID()*/ ) ) {
                 CREAM_SAFE_LOG( m_log_dev->debugStream()
                                 << method_name 
                                 << "Making empty status notification command for job "

@@ -309,7 +309,7 @@ namespace glite {
            *
            * @return the CEMon Subscription ID 
            */
-          std::string getSubscriptionID( void ) const;
+          //std::string _getSubscriptionID( void ) const;
 
           /**
            * Gets the CEMonitor URL for the CEMon which sends
@@ -318,8 +318,10 @@ namespace glite {
            * @return the CEMon URL for the CEMon which sends
            * notifications for this job
            */
-          std::string getCEMonURL( void ) const;
+	 protected:
+          //std::string _getCEMonURL( void ) const;
 
+         public:
           /**
            * Returns the CEMon DN for the CEMon which is sending 
            * status change notifications for this job.
@@ -327,7 +329,7 @@ namespace glite {
            * @return the CEMon DN for the CEMon which sends
            * notifications for this job.
            */
-          std::string get_cemon_dn( void ) const;
+          //std::string _get_cemon_dn( void ) const;
 
 	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw(SerializeException&)
 	  {
@@ -415,6 +417,8 @@ namespace glite {
 	      
 
 	      ar & m_proxy_renew;
+
+	      ar & m_myproxy_address;
 
 	    } catch(std::exception& ex) {
 	      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()

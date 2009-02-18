@@ -90,7 +90,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
     {
       if(jit->is_proxy_renewable()) {
 
-	dnSet_myproxy[ jit->getUserDN()+"_"+jit->getMyProxyAddress() ]++;
+	dnSet_myproxy[ this->composite(jit->getUserDN(), jit->getMyProxyAddress()) ]++;
 	
       } else {
 	dnSet.insert( jit->getUserDN() );
@@ -212,18 +212,32 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
   throw()
 {
   boost::recursive_mutex::scoped_lock M( mutex );
-  string regID = compressed_string( userDN+"_"+myproxy_name );
-  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( userDN+"_"+myproxy_name );
+  
+  string mapKey = this->composite( userDN, myproxy_name );
+  
+  string regID = compressed_string( mapKey );
+  
+  CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::decrementUserProxyCounter() - "
+		   << "Looking for for DN ["
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name << "] in the m_DNProxyMap..."
+		   );
+  
+  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( mapKey );
+  
   if( it != m_DNProxyMap.end() ) {
 
     CREAM_SAFE_LOG(
 		   m_log_dev->debugStream()
 		   << "DNProxyManager::decrementUserProxyCounter() - "
 		   << "Decrementing proxy counter for DN ["
-		   << regID << "]"
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name <<"]"
 		   );
 
-    m_DNProxyMap[ userDN+"_"+myproxy_name ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() - 1);
+    m_DNProxyMap[ mapKey ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() - 1);
 
     if(it->second.get<2>() == 1) {
 
@@ -231,8 +245,9 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 		   m_log_dev->debugStream()
 		   << "DNProxyManager::decrementUserProxyCounter() - "
 		   << "Proxy Counter is ZERO for DN ["
-		   << regID << "]. Unregistering it and removing symlink ["
-		   << m_DNProxyMap[ userDN+"_"+myproxy_name ].get<0>()
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name<<"]. Unregistering it and removing symlink ["
+		   << m_DNProxyMap[ mapKey ].get<0>()
 		   << "] from persist_dir..."
 		   );
       /**
@@ -252,19 +267,19 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 
       
 
-      if(::unlink( m_DNProxyMap[ userDN+"_"+myproxy_name ].get<0>().c_str() ) < 0)
+      if(::unlink( m_DNProxyMap[ mapKey ].get<0>().c_str() ) < 0)
 	{
 	  int saveerr = errno;
 	  CREAM_SAFE_LOG(
 			 m_log_dev->errorStream()
 			 << "DNProxyManager::decrementUserProxyCounter() - "
 			 << "Unlink of file ["
-			 << m_DNProxyMap[ userDN+"_"+myproxy_name ].get<0>() << "] is failed. Error is: "
+			 << m_DNProxyMap[ mapKey ].get<0>() << "] is failed. Error is: "
 			 << strerror(saveerr);
 			 );
 	}
       
-      m_DNProxyMap.erase( userDN+"_"+myproxy_name );
+      m_DNProxyMap.erase( mapKey );
       return;
     
     }
@@ -282,21 +297,23 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
 
   boost::recursive_mutex::scoped_lock M( mutex );
 
-  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( userDN+"_"+my_proxy_server );
+  string mapKey = this->composite( userDN, my_proxy_server );
+
+  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( mapKey );
   if( it != m_DNProxyMap.end() ) {
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		   << "DNProxyManager::registerUserProxy() - Found a proxy for user DN ["
-		   << userDN+"_"+my_proxy_server <<"]. Will not register it to MyProxyServer..."
+		   << mapKey <<"]. Will not register it to MyProxyServer..."
 		   );
 
-    m_DNProxyMap[ userDN+"_"+my_proxy_server ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() + 1);
+    m_DNProxyMap[ mapKey ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() + 1);
     return;
   }
 
   char *renewal_proxy_path = NULL;
 
-  string regID = compressed_string( userDN+"_"+my_proxy_server );
+  string regID = compressed_string( mapKey );
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		 << "DNProxyManager::registerUserProxy() - Going to register proxy ["
@@ -368,7 +385,7 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
     /**
        Everything went ok. Now let's save the registered proxy !
     */
-    m_DNProxyMap[  userDN+"_"+my_proxy_server ] = boost::make_tuple( proxylink, proxy_time_end, 1);
+    m_DNProxyMap[ mapKey ] = boost::make_tuple( proxylink, proxy_time_end, 1);
 
   }
 }
@@ -681,7 +698,7 @@ void iceUtil::DNProxyManager::removeBetterProxy( const string& userDN, const str
 {
   boost::recursive_mutex::scoped_lock M( mutex );
 
-  m_DNProxyMap.erase( userDN+"_"+myproxyname );
+  m_DNProxyMap.erase( this->composite(userDN, myproxyname) );
 }
 
 //________________________________________________________________________
@@ -691,9 +708,10 @@ void iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
   throw()
 {
   boost::recursive_mutex::scoped_lock M( mutex );
+  string mapKey = this->composite( userDN, myproxyname );
 
-  m_DNProxyMap.erase( userDN+"_"+myproxyname );
-  m_DNProxyMap[ userDN+"_"+myproxyname ] = newEntry;
+  m_DNProxyMap.erase( mapKey );
+  m_DNProxyMap[ mapKey ] = newEntry;
 }
 
 //________________________________________________________________________
@@ -757,7 +775,7 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
 	    
 	    boost::recursive_mutex::scoped_lock M( mutex );
 	    
-	    map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( dn+"_"+myproxyname );
+	    map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( this->composite(dn, myproxyname ) );
 	    
 	    if( it == m_DNProxyMap.end() ) {
 	      return boost::make_tuple("", 0, 0);

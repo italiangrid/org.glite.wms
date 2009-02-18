@@ -267,38 +267,39 @@ void CreamJob::setSequenceCode( const std::string& seq )
 // }
 
 //______________________________________________________________________________
-string CreamJob::getCEMonURL( void ) const 
-{
-    string cemon_url;
-    subscriptionManager* submgr( subscriptionManager::getInstance() );
-
-    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( this->getUserDN() ).get<0>();
-
-    submgr->getCEMonURL( proxy, m_cream_address, cemon_url );
-    return cemon_url;
-}
+// string CreamJob::_getCEMonURL( void ) const 
+// {
+//     string cemon_url;
+//     subscriptionManager* submgr( subscriptionManager::getInstance() );
+// 
+//     string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( this->getUserDN() ).get<0>();
+// 
+//     submgr->getCEMonURL( proxy, m_cream_address, cemon_url );
+//     return cemon_url;
+// }
 
 //______________________________________________________________________________
-string CreamJob::getSubscriptionID( void ) const
-{
-    subscriptionManager* submgr( subscriptionManager::getInstance() );
-    iceSubscription subscription;
-    string cemon_url( getCEMonURL() );
-    // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
-    submgr->getSubscriptionByDNCEMon( m_user_dn, cemon_url, subscription );
-    return subscription.getSubscriptionID();
-}
+// string CreamJob::_getSubscriptionID( void ) const
+// {
+//     subscriptionManager* submgr( subscriptionManager::getInstance() );
+//     iceSubscription subscription;
+//     string cemon_url( _getCEMonURL() );
+//     // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
+//     submgr->getSubscriptionByDNCEMon( m_user_dn, cemon_url, subscription );
+//     return subscription.getSubscriptionID();
+// }
 
+//______________________________________________________________________________
 // Returns the DN for the CEMon which send snotifications for this job
-string CreamJob::get_cemon_dn( void ) const
-{
-  subscriptionManager* submgr( subscriptionManager::getInstance() );
-  string cemondn;
-  string cemon_url( getCEMonURL() );
-  // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
-  submgr->getCEMonDN( m_user_dn, cemon_url, cemondn );
-  return cemondn;
-}
+// string CreamJob::_get_cemon_dn( void ) const
+// {
+//   subscriptionManager* submgr( subscriptionManager::getInstance() );
+//   string cemondn;
+//   string cemon_url( _getCEMonURL() );
+//   // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
+//   submgr->getCEMonDN( m_user_dn, cemon_url, cemondn );
+//   return cemondn;
+// }
 
 //______________________________________________________________________________
 string CreamJob::getCompleteCreamJobID( void ) const 
@@ -307,13 +308,6 @@ string CreamJob::getCompleteCreamJobID( void ) const
       return "";
 
   string creamURL = this->getCreamURL();
-
-//   string::size_type loc = creamURL.find(iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix());
-  
-//   if( loc != string::npos)
-//     {
-//       creamURL = creamURL.substr(0,loc);
-//     }
 
   boost::replace_all( creamURL, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
 
