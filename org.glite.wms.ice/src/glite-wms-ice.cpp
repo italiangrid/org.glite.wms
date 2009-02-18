@@ -65,6 +65,7 @@ namespace fs = boost::filesystem;
 #define MAX_ICE_MEM 550000LL
 
 long long check_my_mem( const pid_t pid ) throw();
+void dumpIceCache( const string& pathfile ) throw();
 
 void sigusr1_handle(int x) { 
   exit(2);
@@ -111,6 +112,15 @@ int main(int argc, char*argv[])
 {
     string opt_pid_file;
     string opt_conf_file;
+
+    int cache_dump_delay = 900;
+
+    if( getenv("GLITE_WMS_ICE_CACHEDUMP_DELAY" ) ) {
+      cache_dump_delay = atoi(getenv("GLITE_WMS_ICE_CACHEDUMP_DELAY" ));
+      if(cache_dump_delay < 300)
+	cache_dump_delay = 300;
+    }
+
     static const char* method_name = "glite-wms-ice::main() - ";
     
     po::options_description desc("Usage");
@@ -343,6 +353,7 @@ int main(int argc, char*argv[])
      
     pid_t myPid = ::getpid();
     int mem_threshold_counter = 0;
+    int dump_threshold_counter = 0;
 
     //    char* mem=::getenv("MAX_ICE_MEM");
 
@@ -448,6 +459,13 @@ int main(int argc, char*argv[])
 	 *
 	 */
 	mem_threshold_counter++;
+	dump_threshold_counter++;
+
+	if(dump_threshold_counter >= cache_dump_delay) {
+	  dump_threshold_counter = 0;
+	  if( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") )
+	    dumpIceCache( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") );
+	}
 
 	if(mem_threshold_counter >= 60) { // every 120 seconds check the memory
 	  mem_threshold_counter = 0;
@@ -509,4 +527,58 @@ long long check_my_mem( const pid_t pid ) throw()
   pclose(in);
 
   return atoll(used_rss_mem);
+}
+
+//______________________________________________________________________________
+void dumpIceCache( const string& pathfile ) throw() 
+{
+  boost::recursive_mutex::scoped_lock L( iceUtil::jobCache::mutex );
+
+  char buf[30];
+  memset( (void*)buf, 0 ,30);
+  time_t tnow = time(0);
+  struct tm *now = localtime( &tnow );
+  
+  strftime( buf, 29, "%Y-%m-%d_%H:%M:%S", now);
+
+  string completepath = pathfile + "." + buf;
+
+  FILE* OUT = fopen(completepath.c_str(), "w");
+
+  if(!OUT) {
+    int saveerr = errno;
+    CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->errorStream()
+		    << "glite-wms-ice::main - Couldn't open file ["
+		    << completepath << "] for JobCache dump. Error is: "
+		    << strerror(saveerr)
+		    );	
+    return;
+  }
+
+  cout << endl
+       << "Cream Job ID / Grid Job ID / Status" 
+       << endl 
+       << endl;
+  
+  
+  int count = 0;
+  map<string, int> statusMap;
+  iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
+
+  iceUtil::jobCache::iterator it( cache->begin() );
+
+  for ( it = cache->begin(); it != cache->end(); ++it ) {
+    iceUtil::CreamJob aJob( *it );
+    cout << aJob.getCreamJobID() << "   "
+	 << aJob.getGridJobID() << "   "
+	 << glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus() ] 
+	 << endl;
+    count++;
+    statusMap[string(glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus()] )]++;
+  }
+  
+  cout << endl<< "Total number of job(s)=" << count << endl;
+  for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
+    cout << "Status ["<< it->first << "] has "<< it->second<<" job(s)"<<endl;
+  }
 }
