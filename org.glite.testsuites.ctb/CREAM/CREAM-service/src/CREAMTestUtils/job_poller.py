@@ -198,6 +198,12 @@ class JobPoller(threading.Thread):
         result = self.table.values()
         self.lock.release()
         return result
+    
+    def jobIdList(self):
+        self.lock.acquire()
+        result = self.table.keys()
+        self.lock.release()
+        return result
             
     def shutdown(self):
         self.pool.shutdown()

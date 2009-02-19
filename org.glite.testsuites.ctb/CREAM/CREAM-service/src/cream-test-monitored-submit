@@ -123,7 +123,7 @@ of the long options of this test'''))
     pollerThread.start()
     renewalManager.start()
     if parameters.interactive:
-        interfaceMan.run()
+        interfaceMan.run(pollerThread)
         interfaceMan.close()
     pollerThread.join()
     renewalManager.halt()

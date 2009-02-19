@@ -351,7 +351,7 @@ class InterfaceManager:
         self.isRunning = True
         self.old_settings = termios.tcgetattr(sys.stdin.fileno())
         
-    def run(self):
+    def run(self, jobTable=None):
         tty.setraw(sys.stdin.fileno())
         new_settings = termios.tcgetattr(sys.stdin.fileno())
         new_settings[1] = new_settings[1] | 1
@@ -360,6 +360,12 @@ class InterfaceManager:
         ch = ''
         while ch<>'S':
             ch = sys.stdin.read(1)
+            if ch=='L' and jobTable<>None:
+                print "---------------------------------- JOB ID LIST ----------------------------------"
+                for job in jobTable.jobIdList():
+                    print job
+                print "---------------------------------------------------------------------------------"
+        
         self.cond.acquire()
         self.isRunning = False
         self.cond.notify()
