@@ -150,11 +150,11 @@ class Job{
 		/**
 		* Set the WMProxy SOAP Timeout for the default Config Context
 		*/
-		virtual void Job::setSoapTimeout(std::string timeoutName);
+		virtual void setSoapTimeout(std::string timeoutName);
 		/**
 		* Set the WMProxy SOAP Timeout for a specific Config Context
 		*/
-		virtual void Job::setSoapTimeout(glite::wms::wmproxyapi::ConfigContext* p_configContext, std::string timeoutName);
+		virtual void setSoapTimeout(glite::wms::wmproxyapi::ConfigContext* p_configContext, std::string timeoutName);
 		/**		
 		* Returns the path location to the user proxy file
 		* @returns the string with the filepath

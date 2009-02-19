@@ -27,7 +27,7 @@ namespace classad{
 }
 namespace glite {
 namespace jdl { class Ad; class JobAd; class ExpDagAd;class CollectionAd; }
-namespace wmsutils { namespace jobid { class JobId; } }
+namespace jobid { class JobId; } 
 namespace wms{
 namespace client {
 namespace utilities {
@@ -157,7 +157,7 @@ class AdUtils{
 		* or jobid unique string representation if any error occurred
 		 */
 		static std::string JobId2Node (const std::map< std::string, std::string > &map,
-			glite::wmsutils::jobid::JobId jobid);
+			glite::jobid::JobId jobid);
 	private:
 		/**
 		* fill the classad attributes, if missing, from another classad.

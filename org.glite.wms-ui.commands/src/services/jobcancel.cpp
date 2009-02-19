@@ -140,7 +140,7 @@ void JobCancel::cancel ( ){
 				status.checkCodes(Status::OP_CANCEL, warns );
 				if (warns.size()>0){
 				// JobId
-					glite::wmsutils::jobid::JobId jobid= status.getJobId();
+					glite::jobid::JobId jobid= status.getJobId();
 					logInfo->print(WMS_WARNING, jobid.toString() + ": " + warns, "trying to cancel the job...", true);
 				}
 				// EndPoint URL

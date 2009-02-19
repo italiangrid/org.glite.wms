@@ -272,21 +272,21 @@ std::string Status::getJdl()  {
 }
 
 
-glite::wmsutils::jobid::JobId Status::getJobId(){
+glite::jobid::JobId Status::getJobId(){
 	return status.getValJobId(JobStatus::JOB_ID).toString();
 }
-glite::wmsutils::jobid::JobId Status::getParent(){
-	glite::wmsutils::jobid::JobId jid ;
+glite::jobid::JobId Status::getParent(){
+	glite::jobid::JobId jid ;
 	try{
-		jid = ((glite::wmsutils::jobid::JobId) status.getValJobId(JobStatus::PARENT_JOB));
+		jid = ((glite::jobid::JobId) status.getValJobId(JobStatus::PARENT_JOB));
 	}catch (std::exception &exc){ /**Do nothing: parent not present*/}
 	return jid ;
 }
 
 bool Status::hasParent ( ){
-	glite::wmsutils::jobid::JobId pj ;
+	glite::jobid::JobId pj ;
 	pj = getParent() ;
-	return (pj.isSet( ));
+	return (pj.c_jobid() != 0);
 }
 
 std::string Status::toString(Verbosity verb){
@@ -299,9 +299,9 @@ std::string Status::toString(Verbosity verb){
 LbApi::LbApi(){}
 
 void LbApi::setJobId(const std::string& jobid){
-	lbJob = glite::wmsutils::jobid::JobId( jobid  ) ;
+	lbJob = glite::jobid::JobId( jobid  ) ;
 }
-void LbApi::setJobId(const glite::wmsutils::jobid::JobId& jobid){
+void LbApi::setJobId(const glite::jobid::JobId& jobid){
 	lbJob = jobid;
 }
 Status LbApi::getStatus(bool classads, bool subjobs){

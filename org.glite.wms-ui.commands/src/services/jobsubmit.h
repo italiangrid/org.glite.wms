@@ -274,11 +274,11 @@ class JobSubmit : public Job {
 		* Checks the user JDL
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
 		*/
-		void JobSubmit::checkAd(bool &filestoBtransferred);
+		void checkAd(bool &filestoBtransferred);
 		/**
 		* Checks the user JSDL
 		*/
-		void JobSubmit::checkJSDL();
+		void checkJSDL();
 		/** Failover approach: if a service call fails the client may recover
 		from the reached point contacting another wmproxy endpoint */
 		enum submitRecoveryStep {

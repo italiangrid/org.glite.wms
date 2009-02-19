@@ -249,7 +249,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 	bool createDir=false;
 	bool checkChildren = true;
 	// JobId
-	glite::wmsutils::jobid::JobId jobid = status.getJobId();
+	glite::jobid::JobId jobid = status.getJobId();
 	id = jobid.toString() ;
 	logInfo->print(WMS_DEBUG,"Checking the status of the job:" , id);
 	logInfo->print(WMS_DEBUG,"Found Status:", status.getStatusName());
@@ -358,7 +358,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 			for (unsigned int i = 0 ; i < size ;i++){
 				retrieveOutput (result,children[i],
 					dirAbs+"/"+
-					children[i].getJobId().getUnique(), false, true);
+					children[i].getJobId().unique(), false, true);
 			}
 		}
 	}

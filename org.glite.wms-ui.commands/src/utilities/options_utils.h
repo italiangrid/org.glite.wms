@@ -180,7 +180,7 @@ class Options
 		*	Returns the path to the JDL file
 		*	@return a pointer to the string of the JDL pathname
 		*/
-		std::string Options::getPath2Jdl ();
+		std::string getPath2Jdl ();
 		/**
 		*	Displays the usage help message for the submission
 		*	@param exename name of the programme executable
@@ -340,7 +340,7 @@ class Options
 		/**
 		* Byte offset for tar files
 		*/
-		static const long Options::TAR_OFFSET;
+		static const long TAR_OFFSET;
 	private:
         	/**
                 * Gets the default name of the application that is being executed
@@ -361,7 +361,7 @@ class Options
 		*	@param shortopt the short option character (if defined)
 		*	@return the string with the argument value if it is valid
 		*/
-		const std::string  Options::checkArg(const std::string &opt, const std::string &arg,  const Options::OptsAttributes &code , const std::string &shortopt="" );
+		const std::string  checkArg(const std::string &opt, const std::string &arg,  const Options::OptsAttributes &code , const std::string &shortopt="" );
 		/**
 		* Maps the common short option to the correspondent OptsAttributes enumeration code
 		* @param opt the short option code

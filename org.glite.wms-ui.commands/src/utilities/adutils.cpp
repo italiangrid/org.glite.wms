@@ -11,6 +11,9 @@
 #include "adutils.h"
 #include "excman.h"
 #include "utils.h"
+// JobId
+#include "glite/jobid/JobId.h"
+
 using namespace std ;
 using namespace glite::jdl;
 
@@ -561,7 +564,7 @@ std::map< std::string, std::string > AdUtils::getJobIdMap(const string& jdl){
 	}
 }
 std::string AdUtils::JobId2Node (const std::map< std::string, std::string > &map,
-	glite::wmsutils::jobid::JobId jobid){
+	glite::jobid::JobId jobid){
 	if (map.size()){
 		std::map<std::string,std::string >::const_iterator it = map.find(jobid.toString());
 		if (it !=map.end()){
@@ -569,7 +572,7 @@ std::string AdUtils::JobId2Node (const std::map< std::string, std::string > &map
 		}
 	}
 	// If this point is reached, no mapping found. Simply return job unique string
-	return jobid.getUnique();
+	return jobid.unique();
 }
 } // glite
 } // wms

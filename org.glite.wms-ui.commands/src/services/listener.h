@@ -14,7 +14,7 @@
 #ifndef GLITE_WMS_CLIENT_SERVICES_LISTENER_H
 #define GLITE_WMS_CLIENT_SERVICES_LISTENER_H
 
-#include "glite/wmsutils/jobid/JobId.h" // JobId
+#include "glite/jobid/JobId.h" // JobId
 #include <boost/thread/thread.hpp>  // reading thread
 #include <fstream>  // pipestream
 
@@ -32,12 +32,12 @@ class Shadow{
 		/** Copy Contructor */
 		Shadow(const Shadow& shadow);
 		/** = operation*/
-		void Shadow::operator=(const Shadow& shadow);
+		void operator=(const Shadow& shadow);
 		/**  Default destructror */
 		virtual ~Shadow();
 		/**Constructor with JobId
 		@param the jobid of the attached/submitted job*/
-		Shadow(glite::wmsutils::jobid::JobId jobid);
+		Shadow(glite::jobid::JobId jobid);
 		/**
 		* Write in the input stream pipe
 		@param txt the string to be written
@@ -104,7 +104,7 @@ class Shadow{
 		* Retrieve the JobId
 		* @return the string representation of the jobid
 		*/
-		glite::wmsutils::jobid::JobId getJobId(){return jobid;}
+		glite::jobid::JobId getJobId(){return jobid;}
 		/**
 		* Read a char from the Output buffer
 		* @return the output stream next char
@@ -127,7 +127,7 @@ class Shadow{
 		* have to be retrieved from the info named pipe
 		*/
 		int getConsoleInfo();
-		glite::wmsutils::jobid::JobId jobid ;
+		glite::jobid::JobId jobid ;
 		std::string pipeRoot,host,storage,prefix;
 		int port,pid;
 		bool writing,localConsole,goodbyeMessage;
@@ -149,7 +149,7 @@ class Listener{
 		/** Copy Contructor */
 		Listener(const Listener& listener);
 		/** = operation*/
-		void Listener::operator=(const Listener& listener);
+		void operator=(const Listener& listener);
 		/** Empty the output stram*/
 		void emptyOut();
 		/** Empty the input stream*/

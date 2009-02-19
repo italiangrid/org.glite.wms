@@ -129,7 +129,7 @@ Shadow::Shadow(){
 	this->port=0;
 	goodbyeMessage=false;
 }
-Shadow::Shadow(glite::wmsutils::jobid::JobId jobid){
+Shadow::Shadow(glite::jobid::JobId jobid){
 	this->jobid=jobid;
 	this->storage="/tmp";
 	localConsole=true;
@@ -199,7 +199,7 @@ void Shadow::setGoodbyeMessage(bool goodbyeMessage){
 	this->goodbyeMessage=goodbyeMessage;
 }
 void Shadow::setJobId(const std::string &jobid){
-	this->jobid=glite::wmsutils::jobid::JobId(jobid);
+	this->jobid=glite::jobid::JobId(jobid);
 }
 void Shadow::setPrefix(const std::string &path){
 	this->prefix=path;
@@ -226,18 +226,17 @@ char Shadow::emptyOut(){
 	}
 }
 std::string getUnique(){
-	glite::wmsutils::jobid::JobId fake;
-	fake.setJobId("F");
-	return fake.getUnique();
+	glite::jobid::JobId fake("F");
+	return fake.unique();
 }
 
 std::string Shadow::getPipe(){
 	if (pipeRoot!=""){
 		//Do nothing, pipeRoot already initialized
 	}else if (storage!=""){
-		this->pipeRoot = storage + "/listener-" + (jobid.isSet()?jobid.getUnique():getUnique());
+		this->pipeRoot = storage + "/listener-" + ((jobid.c_jobid() != 0)?jobid.unique():getUnique());
 	}else {
-		this->pipeRoot= "/tmp/listener-" + (jobid.isSet()?jobid.getUnique():getUnique());
+		this->pipeRoot= "/tmp/listener-" + ((jobid.c_jobid() != 0)?jobid.unique():getUnique());
 	}
 	return pipeRoot;
 }

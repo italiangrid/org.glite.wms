@@ -57,7 +57,7 @@ class JobListMatch : public Job {
                 /**
                 * Retrieves the list of matching resources
                 */
-                void JobListMatch::jobMatching( ) ;
+                void jobMatching( ) ;
         	/**
                 *	check the input JDL
                 */

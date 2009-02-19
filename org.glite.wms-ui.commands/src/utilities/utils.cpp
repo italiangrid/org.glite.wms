@@ -19,11 +19,8 @@
 #include "boost/filesystem/exception.hpp" //managing boost errors
 #include <boost/lexical_cast.hpp> // string->int conversion
 #include "boost/regex.hpp"
-// GLITE
-#include "glite/wmsutils/jobid/JobId.h" // JobId
 // JobId
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "glite/jobid/JobId.h"
 // WMProxy API's
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
@@ -59,7 +56,7 @@ namespace utilities {
 
 using namespace std ;
 using namespace glite::jdl;
-using namespace glite::wmsutils::jobid ;
+using namespace glite::jobid ;
 
 //using namespace boost ;
 using namespace glite::wms::wmproxyapi;
@@ -1141,7 +1138,7 @@ string Utils::checkJobId(std::string jobid){
                         try{
                                 Utils::checkJobId(*it);
 				rights.push_back(*it);
-                        } catch (WrongIdException &exc){
+                        } catch (JobIdError &exc){
                         	wrongs.push_back(*it);
                         }
                 }
@@ -1172,7 +1169,7 @@ string Utils::checkJobId(std::string jobid){
 
 string Utils::getUnique(std::string jobid){
 	JobId jid (jobid);
-        return jid.getUnique();
+        return jid.unique();
 }
 
 /**********************************

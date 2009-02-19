@@ -13,7 +13,7 @@
 #ifndef GLITE_WMS_CLIENT_SERVICES_LBAPI_H
 #define GLITE_WMS_CLIENT_SERVICES_LBAPI_H
 
-#include "glite/wmsutils/jobid/JobId.h" // JobId
+#include "glite/jobid/JobId.h" // JobId
 #include "glite/wms/wmproxyapi/wmproxy_api.h" // wmproxy API
 #include "glite/lb/Job.h"  // Lb Job (Status & Loginfo)
 namespace glite {
@@ -70,7 +70,7 @@ class Status{
 		/** Retrieve current status
 		* @param retrieve the string representation of the status name
 		*/
-		glite::wmsutils::jobid::JobId getParent();
+		glite::jobid::JobId getParent();
 		/** Check whether the jobid associated with the status
 		* belong to a dag/collection/parametric job
 		*/
@@ -78,7 +78,7 @@ class Status{
 		/** Retrieve the jobid related to retrieved Status
 		* @return the string representation of the jobid
 		*/
-		glite::wmsutils::jobid::JobId getJobId();
+		glite::jobid::JobId getJobId();
 		/** Retrieve relevant codes
 		*@return a pair containing STATUS_CODE, DONE_CODE
 		*/
@@ -119,7 +119,7 @@ class LbApi{
 		* Override (if present) previous JobId
 		* param jobid the working jobid
 		*/
-		void setJobId(const glite::wmsutils::jobid::JobId& jobid);
+		void setJobId(const glite::jobid::JobId& jobid);
 		/** Retrieve the status information
 		* @param classads determine whether to download (true) or not(false) jdl information
 		* @param subjobs determine whether to download (true) or not(false) children information

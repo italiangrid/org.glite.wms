@@ -33,7 +33,9 @@ libglite_wmsui_commands_utilities_la_SOURCES = \
 	utils.cpp
 
 
-#libglite_wmsui_commands_utilities_la_LIBADD =
+libglite_wmsui_commands_utilities_la_LIBADD =
+	$(GLITE_LIBS) \
+	$(GLITE_JOBID_LIBS)
 
 AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \
