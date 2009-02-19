@@ -19,8 +19,7 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandLeaseUpdater.cpp \
 	Request_source_purger.cpp \
 	normalStatusNotification.cpp \
-	emptyStatusNotification.cpp \
-	iceCommandJobKill.cpp
+	emptyStatusNotification.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src/iceUtils \
@@ -34,7 +33,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		$(BOOST_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \
-		$(GLOBUS_THR_CFLAGS) \
+		$(GLOBUS_THR_CFLAGS)
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in
