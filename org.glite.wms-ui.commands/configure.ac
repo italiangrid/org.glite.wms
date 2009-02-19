@@ -141,14 +141,17 @@ have_glite_jdl=no
 have_glite_lb=no
 have_glite_wms_wmproxy=no
 have_glite_security=no
+have_glite_jobid=no
 
 AC_GLITE
 AC_GLITE_SERVICE_DISCOVERY
 AC_OPTIMIZE
 
-
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+
+GLITE_CHECK_JOBID([], have_glite_jobid=yes, have_glite_jobid=no)
+AC_MSG_RESULT(["GLITE_JOBID found $have_glite_jobid"])
 
 AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
 AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
