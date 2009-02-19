@@ -552,12 +552,12 @@ void dumpIceCache( const string& pathfile ) throw()
   }
   
   char outputBuf[1024], thisStatus[128];
-  memset( (void*)outputBuf, 0, 1024 );
+  memset( (void*)outputBuf, 0, sizeof(thisStatus) );
   sprintf( outputBuf, "Total_Job(s)=%d", count);
   
   for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
 
-    memset( (void*)thisStatus, 0, 1024 );
+    memset( (void*)thisStatus, 0, sizeof(thisStatus) );
 
     sprintf( thisStatus, " - %s_Jobs=%d", it->first.c_str(), it->second);
 
