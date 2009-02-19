@@ -198,8 +198,8 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
            ceinfo->Insert(
              "brokerinfo",
              brokerinfo::create_brokerinfo(
-               *matchmaking::getAd(it->second),
                input_ad,
+               *matchmaking::getAd(it->second),
                brokerinfo::DataInfo(
                  boost::tuples::get<1>(brokering_result),
                  boost::tuples::get<2>(brokering_result)

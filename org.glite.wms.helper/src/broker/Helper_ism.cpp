@@ -272,15 +272,15 @@ try {
   if (!BIfilestream) {
     throw CannotCreateBrokerinfo(brokerinfo_path);
   }
-
+  
+  boost::shared_ptr<brokerinfo::FileMapping> fm = boost::tuples::get<1>(brokering_result);
+  boost::shared_ptr<brokerinfo::StorageMapping> sm = boost::tuples::get<2>(brokering_result);
+  
   boost::scoped_ptr<classad::ClassAd> biAd(
     brokerinfo::create_brokerinfo(
-      *matchmaking::getAd(ce_it->second),
       input_ad,
-      brokerinfo::DataInfo(
-        boost::tuples::get<1>(brokering_result),
-        boost::tuples::get<2>(brokering_result)
-      )
+      *matchmaking::getAd(ce_it->second),
+      brokerinfo::DataInfo(fm,sm)
     )
   );
   classad::ExprTree const* DACexpr = input_ad.Lookup("DataAccessProtocol");
