@@ -42,6 +42,7 @@ glite_wms_job_delegate_proxy_SOURCES = \
 glite_wms_job_delegate_proxy_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_delegate_proxy_LDADD = \
 	$(GLITE_WMS_WMPROXY_LIBS) \
+	$(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 	$(GLITE_JDL_LIBS) \
@@ -51,7 +52,6 @@ glite_wms_job_delegate_proxy_LDADD = \
 	$(CLASSAD_LIBS) \
 	$(GRIDSITE_OPENSSL_LIBS) \
 	$(BOOST_LIBS) \
-        $(GLITE_JOBID_LIBS) \
 	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(WSSE_LIBS) 
@@ -64,9 +64,9 @@ glite_wms_job_info_LDADD = \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
+        $(GLITE_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-	$(GLITE_JOBID_LIBS) \
 	$(WMPROXY_PROXYINFO) \
 	$(GLITE_JDL_LIBS) \
 	$(WMPROXY_STATUS) \
