@@ -387,7 +387,7 @@ int main(int argc, char*argv[])
         // block, because it would result in a hold-and-wait potential
         // race condition.
         //
-        int command_count = threadPool->get_command_count();
+        unsigned int command_count = threadPool->get_command_count();
         if ( command_count > conf->ice()->max_ice_threads() ) {
             CREAM_SAFE_LOG(log_dev->debugStream()
                            << method_name
@@ -477,13 +477,6 @@ int main(int argc, char*argv[])
 	    threadPool->stopAllThreads();
 	    threadPool_ice_cmds->stopAllThreads();
 
-	    // Now all thread are stopped so closing the Berkeley database is safe
-	    // but to do that is sufficient to delete the jobCache single instance
-	    // in fact its DTOR will call the jobDbManager's DTOR that 
-	    // cleanly closes the database on disk
-// 	    iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
-// 	    delete cache; // this trigger the destruction of jobDbManager and then the safe closing of databases
-	    
 	    CREAM_SAFE_LOG( log_dev->fatalStream()
 			    << method_name
 			    << "glite-wms-ice::main - Max memory reached ["
@@ -522,8 +515,6 @@ long long check_my_mem( const pid_t pid ) throw()
 		    << "glite-wms-ice::main() - Used RSS Memory: "
 		    << used_rss_mem 
 		    );
-  //printf("glite-wms-ice::main() - Used RSS Memory: %s", used_rss_mem);
-  
   pclose(in);
 
   return atoll(used_rss_mem);
@@ -534,33 +525,20 @@ void dumpIceCache( const string& pathfile ) throw()
 {
   boost::recursive_mutex::scoped_lock L( iceUtil::jobCache::mutex );
 
-  char buf[30];
-  memset( (void*)buf, 0 ,30);
-  time_t tnow = time(0);
-  struct tm *now = localtime( &tnow );
-  
-  strftime( buf, 29, "%Y-%m-%d_%H:%M:%S", now);
-
-  string completepath = pathfile + "." + buf;
-
-  FILE* OUT = fopen(completepath.c_str(), "w");
+  FILE* OUT = fopen(pathfile.c_str(), "a");
 
   if(!OUT) {
     int saveerr = errno;
     CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->errorStream()
 		    << "glite-wms-ice::main - Couldn't open file ["
-		    << completepath << "] for JobCache dump. Error is: "
+		    << pathfile << "] for JobCache dump. Error is: "
 		    << strerror(saveerr)
 		    );	
     return;
   }
 
-  cout << endl
-       << "Cream Job ID / Grid Job ID / Status" 
-       << endl 
-       << endl;
   
-  
+
   int count = 0;
   map<string, int> statusMap;
   iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
@@ -569,16 +547,30 @@ void dumpIceCache( const string& pathfile ) throw()
 
   for ( it = cache->begin(); it != cache->end(); ++it ) {
     iceUtil::CreamJob aJob( *it );
-    cout << aJob.getCreamJobID() << "   "
-	 << aJob.getGridJobID() << "   "
-	 << glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus() ] 
-	 << endl;
     count++;
     statusMap[string(glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus()] )]++;
   }
   
-  cout << endl<< "Total number of job(s)=" << count << endl;
+  char outputBuf[1024], thisStatus[128];
+  memset( (void*)outputBuf, 0, 1024 );
+  sprintf( outputBuf, "Total_Job(s)=%d", count);
+  
   for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
-    cout << "Status ["<< it->first << "] has "<< it->second<<" job(s)"<<endl;
+
+    memset( (void*)thisStatus, 0, 1024 );
+
+    sprintf( thisStatus, " - %s_Jobs=%d", it->first.c_str(), it->second);
+
+    strcat( outputBuf, thisStatus );
   }
+
+  char bufTime[30];
+  memset( (void*)bufTime, 0 ,30);
+  time_t tnow = time(0);
+  struct tm *now = localtime( &tnow );
+  
+  strftime( bufTime, 29, "%Y-%m-%d_%H:%M:%S", now);
+
+  fprintf( OUT, "%s - %s\n", bufTime, outputBuf );
+  fclose( OUT );
 }
