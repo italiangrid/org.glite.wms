@@ -1759,7 +1759,7 @@ public class WMProxyAPI{
 			// sets the lifetime
 			generator.setLifetime ((int)lifetime);
 			// creates the new proxy
-			proxy =  generator.x509MakeProxyCert(certReq.getBytes( ) , proxy, "");
+			proxy =  generator.x509MakeProxyCert(certReq.getBytes( ) , proxy);
 			// converts the proxy from byte[] to String
 			return new String(proxy);
 		} catch (Exception exc) {
