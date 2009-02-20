@@ -2276,7 +2276,7 @@
 				Workload Manager Proxy delegation service
 				This is the service that allows delegation funcionalities
 			</wsdl:documentation>
-			<!-- ghemon.cnaf.infn.it -->
+			<!-- generic service endpoint -->
 			<soap:address location="https://my.default.wmproxy.endpoint:7443/glite_wms_wmproxy_server"/>
 		</wsdl:port>
 
@@ -2287,6 +2287,8 @@
 				Workload Manager Proxy delegation service
 				This is the service that allows delegation funcionalities
 			</wsdl:documentation>
+                        <!-- generic service endpoint -->
+                        <soap:address location="https://my.default.wmproxy.endpoint:7443/glite_wms_wmproxy_server"/>
 		</wsdl:port>
 	</wsdl:service>
 </wsdl:definitions>
