@@ -1,180 +1,204 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-	Copyright (c) 2004 on behalf of the EU EGEE Project: 
-	The European Organization for Nuclear Research (CERN), 
-	Istituto Nazionale di Fisica Nucleare (INFN), Italy
-	Datamat Spa, Italy
-	Centre National de la Recherche Scientifique (CNRS), France
-	CS Systeme d'Information (CSSI), France
-	Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
-	Universiteit van Amsterdam (UvA), Netherlands
-	University of Helsinki (UH.HIP), Finland
-	University of Bergen (UiB), Norway
-	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+    Copyright (c) Members of the EGEE Collaboration. 2004-2008.
+    See http://public.eu-egee.org/partners/ for details on 
+    the copyright holders.
+    For license conditions see the license file or
+    http://www.apache.org/licenses/LICENSE-2.0
 
-	Build file for the GLite ce cream-api-java component
-	
-	Authors: Luigi Zangrando <luigi.zangrando@pd.infn.it>	
-	Version info: $Id$
-	Release: $Name$
+    Build file for the gLite WMProxy API Java
 
-	
+    Authors: Luca Petronzio <luca.petronzio@elsagdatamat.com>
 -->
 
-<project name="wmproxy-api-java" default="dist">
+<project name="wmproxy-api-java" >
+    
+    <!-- locations -->
+    
+    <property environment="env"/>
+    <!-- optional property file for non-default locations -->
+    <property file="location.properties"/>
+    <!-- using defaults, if no specific location is set -->
+    <condition property="glite.location" value="/opt/glite">
+        <not>
+            <isset property="env.GLITE_LOCATION"/>
+        </not>
+    </condition>
+    <condition property="glite.location" value="${env.GLITE_LOCATION}">
+        <isset property="env.GLITE_LOCATION"/>
+    </condition>
+    <condition property="util-java.location" value="${glite.location}">
+        <not>
+            <isset property="util-java.location"/>
+        </not>
+    </condition>
+    <property name="builddir" value="${basedir}/build"/>
+    <property name="stagedir" value="${stageDir}"/>
 
-	<!-- ==============================================
-	      Builds the GLite wms wmproxy-api-java component
-	     ============================================== -->
+    <!-- dumping the most important locations for later use -->
+    <target  name="configure">
+        <echo message="glite.location                =${glite.location}"/>
+        <echo message="axis.location                =${axis.location}"/>    
+        <echo file="location.properties">
+glite.location                =${glite.location}
+axis.location		      =${axis.location}
+        </echo>
+    </target>
 
-	
-	<!-- =========================================
-	      Import properties (order is important)
-	     ========================================= -->
-	
-	<!-- Import baseline properties & user properties -->
-	<import file="../org.glite/project/baseline.properties.xml" />
+    <!-- version numbers -->
+    <property file="${basedir}/VERSION"/>
+    <property name="NAME" value="glite-wms-wmproxy-api-java"/>
 
-	<!-- import component build properties,
-		        component properties &
-		        component common properties -->
-	<import file="./project/properties.xml"/>
-	
-	<!-- import subsystem build properties,
-		        subsystem properties &
-		        subsystem common properties -->
-	<import file="${subsystem.properties.file}"/>
+    <path id="compile.classpath">
+        <fileset dir="${axis.location}/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${glite.location}/share/java">
+            <include name="glite-security-trustmanager.jar"/>
+        </fileset>
+        <fileset dir="${glite.location}/share/java">
+            <include name="glite-security-delegation-java.jar"/>
+        </fileset>
+    </path>
 
-	<!-- import global build properties &
-		        global properties -->
-	<import file="${global.properties.file}" />
-		
-	<!-- =========================================
- 	      Load dependency property files (order is important)
-	     ========================================= -->
-	<property file="${user.dependencies.file}"/>
-	<property file="${component.dependencies.file}" />
-	<property file="${subsystem.dependencies.file}" />
-	<property file="${global.dependencies.file}"/>
-
-	<!-- =========================================
-                 Load configuration definitions (order is important)
-             ========================================= -->
-        <import file="${global.configure.options.file}"/>
-        <import file="${component.configure.options.file}"/>
-	
-	<!-- =========================================
-      	      Import task definitions (order is important)
-	     ========================================= -->
-	<import file="${subsystem.taskdefs.file}" />
-	<import file="${global.taskdefs.file}" />
-	
-        <taskdef name="wsdl2java" classname="org.apache.axis.tools.ant.wsdl.Wsdl2javaAntTask"
+    <taskdef name="wsdl2java" classname="org.apache.axis.tools.ant.wsdl.Wsdl2javaAntTask"
          loaderref="axis" >
-            <classpath refid="ext.axis.classpath"/>
-        </taskdef>
+            <classpath refid="compile.classpath"/>
+    </taskdef>
 
-	<!-- =========================================
-		 Load common targets
-	     ========================================= -->
-	<import file="${global.targets-java.file}" />
-		
-	<!-- =========================================
-		 Load version file 
-	     ========================================= -->
-	<property file="${module.version.file}"/>
-	<property file="${module.build.file}"/>
-	
-	<!-- ==============================================
-		 Local private targets
-	     ============================================== -->
-	
-        <path id="compile.classpath">
-            <path refid="ext.axis.classpath"/>
-            <path refid="stage.classpath"/>
-            <path refid="ext.log4j.classpath"/>
-            <pathelement location="${repository}/${ext.junit.subdir}/${ext.junit.rep.file}"/>
-            <pathelement location="${repository}/${ext.jclassads.subdir}/${ext.jclassads.rep.file}"/>
-            <pathelement location="${stage.java.dir}/glite-security-delegation-java.jar"/>
-            <pathelement location="${module.classes.dir}"/>
-            <pathelement location="${module.autosrc.dir}"/>
-        </path>
+    <target name="init">
+        <mkdir dir="${builddir}"/>
+        <mkdir dir="${builddir}/src/classes"/>
+    </target>
 
-        <path id="test.classpath">
-            <path refid="ext.axis.classpath"/>
-            <pathelement location="${repository}/${ext.junit.subdir}/${ext.junit.rep.file}"/>
-            <pathelement location="${ext.xerces2-j.subdir}/xml-apis.jar"/>
-            <pathelement location="${ext.xerces2-j.subdir}/xercesImpl.jar"/>
-            <pathelement location="${module.classes.dir}"/>
-            <pathelement location="${module.autosrc.dir}"/>
-            <pathelement location="${module.test.classes.dir}"/>
-            <path refid="stage.classpath"/>
-        </path>
+    <target name="clean">
+        <delete dir="${builddir}"/>
+    </target>
 
-	<target name="localinit" description="Module specific initialization tasks">
-      <wsdl2java url="${stage.int.dir}/WMProxy.wsdl"
-         output="${module.autosrc.dir}"
+    <target name="src.compile" depends="init">
+        <mkdir dir="${builddir}/src/classes"/>
+
+        <wsdl2java url="${glite.location}/interface/WMProxy.wsdl"
+         output="${basedir}/src"
          deployscope="application"
          serverSide="no"
+	 debug="yes"
          skeletonDeploy="false"
-         noimports="no"
-         verbose="no"
-         typeMappingVersion="1.1"
-         testcase="no"/>
+         noimports="false"
+         verbose="true"
+         typeMappingVersion="1.2"
+         testcase="no"
+	 namespacemappingfile="project/NStoPkg.properties"/>
 
-      <!--copy file="${module.autosrc.dir}/org/glite/wms/wmproxy/deploy.wsdd" tofile="${module.config.dir}/wms-wmproxy-service-deploy.wsdd" /-->
-      <!--copy file="${module.autosrc.dir}/org/glite/wms/wmproxy/undeploy.wsdd" tofile="${module.config.dir}/wms-wmproxy-service-undeploy.wsdd" /-->
+        <javac srcdir="${basedir}/src" 
+               destdir="${builddir}/src/classes"
+               debug="true"
+               deprecation="false">
+            <!--
+            <compilerarg value="-Xlint:unchecked"/>
+            <compilerarg value="-Xlint:deprecation"/>
+            -->
+            <classpath refid="compile.classpath"/>
+        </javac>
+    </target>
 
-	</target>
+    <target name="compile" depends="init, src.compile"/>
+
+    <target name="makejars" depends="src.compile">
+        <mkdir dir="${builddir}/share/java"/>
+        <jar destfile="${builddir}/share/java/${NAME}.jar"
+             basedir="${builddir}/src/classes">
+    		<manifest>
+        		<attribute name="Package-Title" value="${NAME}"/>
+        		<attribute name="Package-Version" value="${VERSION}"/>
+        		<attribute name="Package-Vendor" value="glite.org"/>
+    		</manifest>
+        </jar>
+		
+    </target>
+
+    <target name="doc.check" depends="init">
+        <uptodate  property="doc.skip"
+            targetfile="${builddir}/doc/index.html">
+            <srcfiles dir="src" includes="**/*.java, **/*.html"/>
+        </uptodate>
+    </target>
+    <target name="doc" depends="init,doc.check" unless="doc.skip">
+        <mkdir dir="${builddir}/doc"/>
+        <javadoc
+            packagenames="org.glite.wms.wmproxy*"
+            sourcepath="${basedir}/src"
+            destdir="${builddir}/doc"
+            windowtitle="${NAME}"
+            breakiterator="yes">
+            <bottom><![CDATA[<i>Copyright &#169; 2004-2008. <A href="http://public.eu-egee.org/">EU-EGEE</A></i>]]></bottom>
+            <doctitle><![CDATA[<h1>gLite Security</h1>]]></doctitle>
+            <classpath refid="compile.classpath"/>
+        </javadoc>
+    </target>
+
+
+    <target name="install" depends="init,doc,makejars">
+        
+        <mkdir dir="${prefix}"/>
+
+		<mkdir dir="${prefix}/share/java" />
+
+		<copy toDir="${prefix}/share/java">
+			<fileset dir="${builddir}/share/java">
+				<include name="${NAME}.jar" />
+			</fileset>
+		</copy>
 	
-	<target name="localcompile"
-		description="Module specific compile tasks">
-	</target>
+		<mkdir dir="${prefix}/share/doc/${NAME}" />
+		<copy toDir="${prefix}/share/doc/${NAME}">
+			<fileset dir="${basedir}">
+				<include name="LICENSE" />
+				<include name="RELEASE-NOTES" />
+				<include name="VERSION" />
+			</fileset>
+		</copy>
+
+		<mkdir dir="${prefix}/share/doc/${NAME}/html" />
+		<copy toDir="${prefix}/share/doc/${NAME}/html">
+            <fileset dir="${builddir}/doc"/>
+		</copy>
+
+    </target>
+
+    <target name="tar">
+        <antcall target="install">
+			<param name="prefix" value="${builddir}/tar"/>
+		</antcall>
+        <mkdir dir="${basedir}/tgz"/>
+        <exec executable="tar" dir="${builddir}/tar">
+            <arg line="-czf ${basedir}/tgz/${NAME}-${VERSION}.tar.gz ." />
+        </exec>
+    </target>
 
 
-        <!-- ========================================================
-              Generate DOC : genrate DOCs
-             ======================================================== -->
 
-        <target name="doc"
-                depends="unitcoverage"
-                description="Build Javadoc">
-            <mkdir dir="${module.autodoc.dir}/html"/>
-            <javadoc packagenames="org.glite.wms.wmproxy"
-                     classpathref="compile.classpath"
-                     sourcepath="${module.src.dir}:${module.int.dir}"
-                     destdir="${module.autodoc.dir}/html"
-                     author="true"
-                     version="true"
-                     use="true"
-                     access="public"/>
-        </target>
+    <!-- ================================================================= -->
+    <!-- Testing Targets                                                   -->
+    <!-- These are normall not used in the builds and require extra        -->
+    <!-- dependencies, like org.glite.data.test-utils and voms-clients     -->
+    <!-- ================================================================= -->
 
+    <available property="certs.available" file="${builddir}/certs/grid-security"/>
+    <target name="certs.generate" depends="init" unless="certs.available">
+        <mkdir dir="${builddir}/certs"/>
+        <exec dir="${builddir}/certs"
+            executable="${glite.location}/share/test/utils/glite-test-certs">
+        	<env key="PATH" path="${env.PATH}:${glite.location}/bin"/>
+        	<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${glite.location}/lib"/>
+            <arg value="--verbose"/>
+            <arg value="--some"/>
+            <arg value="--env"/>
+            <arg value="--system"/>
+        </exec>
+    </target>
+    <target name="certs.remove" if="certs.available">
+        <delete dir="${builddir}/certs"/>
+    </target>
 
-	<target name="localclean"
-		description="Module specific cleaning tasks">
-                <delete failonerror="false">
-                        <fileset dir="${module.config.dir}" includes="**/*.wsdd"/>
-                </delete>
-	</target>
-
-        <target name="stage" depends="makejars"
-                description="Stage the libraries to the central repositories.">
-                <echo>Staging binaries to stage area...</echo>
-                <copy toDir="${stage.java.dir}">
-                        <fileset dir="${module.lib.dir}">
-                                <include name="*.jar" />
-                                <exclude name="*-test.jar" />
-                        </fileset>
-                </copy>
-
-                <copy todir="${stage.conf.dir}">
-                        <fileset dir="${module.config.dir}">
-                                <include name="*.wsdd" />
-                        </fileset>
-                </copy>
-
-                <echo>Done!</echo>
-        </target>
-
-</project>		
+</project>
