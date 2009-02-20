@@ -104,7 +104,7 @@ axis.location		      =${axis.location}
 
     <target name="compile" depends="init, src.compile"/>
 
-    <target name="makejars" depends="src.compile">
+    <target name="makejars" depends="">
         <mkdir dir="${builddir}/share/java"/>
         <jar destfile="${builddir}/share/java/${NAME}.jar"
              basedir="${builddir}/src/classes">
