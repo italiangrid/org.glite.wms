@@ -60,7 +60,7 @@ class JobPoller(threading.Thread):
         jobProcessed = 0
         isRunning = True
         
-        while jobProcessed<self.parameters.numberOfJob and isRunning:
+        while (jobProcessed+self.pool.getFailures())<self.parameters.numberOfJob and isRunning:
             
             ts = time.time()
             
@@ -171,7 +171,8 @@ class JobPoller(threading.Thread):
                 if len(snapshot)>0:
                     minTS = float(min(snapshot)) -1
                 jobLeft = self.parameters.numberOfJob - self.pool.count()
-            JobPoller.logger.info("Job left: " + str(jobLeft) + " job processed: " + str(jobProcessed))
+            JobPoller.logger.info("Job left: " + str(jobLeft) + " job processed: " 
+                                  + str(jobProcessed+self.pool.getFailures()))
             
             timeToSleep = self.parameters.rate - int(time.time() - ts)
             if timeToSleep>0:
