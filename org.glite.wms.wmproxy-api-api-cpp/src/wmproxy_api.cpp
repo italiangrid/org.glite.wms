@@ -3,6 +3,7 @@
 #include <stdlib.h> // getenv(...)
 
 #include "soapDelegationSoapBindingProxy.h"
+#include "soapDelegation1SoapBindingProxy.h" 
 
 #include <ctype.h>
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
@@ -390,6 +391,24 @@ void grstSoapErrorMng (const DelegationSoapBinding &grst){
                                 "Unknown Soap fault" ) ;
 	}
 }
+
+void grst1SoapErrorMng (const Delegation1SoapBinding &grst){
+        char **fault = NULL ;
+        char **details = NULL ;
+        string msg = "";
+        // retrieve information on the exception
+        BaseException *b_ex =grstCreateWmpException (grst.soap);
+        soapDestroy(grst.soap);
+        if (b_ex){
+                throw *b_ex ;
+        } else{
+                throw *createWmpException (new GenericException ,
+                                "Soap Error" ,
+                                "Unknown Soap fault" ) ;
+        }
+}
+
+
 /*****************************************************************
 Performs SSL initialisation
 Updates configuration properties
@@ -474,6 +493,46 @@ void grstSoapAuthentication(DelegationSoapBinding &grst,ConfigContext *cfs){
 	}
 
 }
+
+void grst1SoapAuthentication(Delegation1SoapBinding &grst,ConfigContext *cfs){
+        grst.endpoint = (cfs->endpoint).c_str();
+        // initialise timeout settings
+        setSoapTimeout(grst.soap, cfs->soap_timeout);
+        const char *proxy = getProxyFile(cfs) ;
+        const char *trusted = getTrustedCert(cfs) ;
+        unsigned short flag ;
+        //setting the authentication flag for the ssl client context
+        if ( cfs->server_authentication ) {
+                flag = SOAP_SSL_DEFAULT ;
+        } else {
+                flag = SOAP_SSL_NO_AUTHENTICATION ;
+        }
+        if ( proxy ){
+                if (trusted){
+                        // Perform ssl authentication with server
+                        if (soap_ssl_client_context(grst.soap,
+                                flag,
+                                proxy,// keyfile: required only when client must authenticate to server
+                                "", // password to read the key file
+                                NULL, // optional cacert file to store trusted certificates (needed to verify server)
+                                trusted,
+                                // if randfile!=NULL: use a file with random data to seed randomness
+                                NULL
+                        ))grst1SoapErrorMng(grst);
+                } else {
+                        throw *createWmpException (new ProxyFileException ,
+                                "Trusted Certificates Location  Error" ,
+                                "Unable to find a valid directory with CA certificates" ) ;
+                }
+        } else {
+                throw *createWmpException (new ProxyFileException ,
+                                "Proxy File Error" ,
+                                "Unable to find a valid proxy file" ) ;
+        }
+
+}
+
+
 /*****************************************************************
 jobidSoap2cpp
 Tranform the soap jobid structure into cpp primitive object structure
@@ -1149,6 +1208,19 @@ std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs){
 }
 
 
+std::string grst1GetProxyReq(const std::string &delegationId, ConfigContext *cfs){
+        Delegation1SoapBinding deleg;
+        string proxy = "";
+        grst1SoapAuthentication(deleg, cfs);
+        delegation1__getProxyReqResponse response;
+        if (deleg.delegation1__getProxyReq(delegationId, response) == SOAP_OK) {
+                proxy = response._getProxyReqReturn;
+                soapDestroy(deleg.soap) ;
+        } else grst1SoapErrorMng(deleg) ;
+        return proxy;
+}
+
+
 std::string grstGetProxyReq(const std::string &delegationId, ConfigContext *cfs){
 	DelegationSoapBinding deleg;
 	string proxy = "";
@@ -1276,6 +1348,31 @@ void putProxy(const std::string &delegationId, const std::string &request, Confi
 	if (wmp.ns1__putProxy(delegationId, certtxt, response) == SOAP_OK) {
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
+}
+
+void grst1PutProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs){
+        Delegation1SoapBinding deleg;
+        grst1SoapAuthentication (deleg, cfs);
+        time_t timeleft ;
+        char *certtxt;
+        // gets the path to the user proxy file
+        const char *proxy = getProxyFile(cfs);
+        //soapDestroy(wmp.soap) ;
+        // proxy time  left
+        if (!proxy){
+                throw *createWmpException (new GenericException , "getProxyFile" , "unable to get a valid proxy" ) ;
+        }
+        timeleft = getCertTimeLeft(proxy);
+        // makes certificate
+        if (GRSTx509MakeProxyCert(&certtxt, stderr, (char*)request.c_str(), (char*) proxy, (char*)proxy,
+                timeleft) ){
+                throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
+        }
+        grst1SoapAuthentication (deleg, cfs);
+        delegation1__putProxyResponse response;
+        if (deleg.delegation1__putProxy(delegationId, certtxt, response) == SOAP_OK) {
+                soapDestroy(deleg.soap) ;
+        } else grst1SoapErrorMng(deleg) ;
 }
 
 void grstPutProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs){

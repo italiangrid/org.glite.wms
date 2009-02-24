@@ -768,6 +768,7 @@ std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs=NULL
 * @see #getVersion
 * @see #BaseException
 */
+std::string grst1GetProxyReq(const std::string &delegationId, ConfigContext *cfs=NULL);
 std::string grstGetProxyReq(const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 * Generates a proxy certificate in PEM format with Base64 encoding that is associated to a server side generated sting identifier (delegation ID)
@@ -860,6 +861,7 @@ void putProxy(const std::string &delegationId, const std::string &request, Confi
 * @see #getVersion
 * @see BaseException
 */
+void grst1PutProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs=NULL);
 void grstPutProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs=NULL);
 /**
 * Returns the Delegated Proxy information identified by the delegationId string
