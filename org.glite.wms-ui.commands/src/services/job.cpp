@@ -497,20 +497,40 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 		// Set the SOAP time out
 		setSoapTimeout(sp_cfg.get(), SOAP_GET_PROXY_REQ_TIMEOUT);
 
-		const string proxyReq = api::grstGetProxyReq(id, sp_cfg.get()) ;
-		logInfo->result(WMP_NS4_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
-		// PutProxy
-		logInfo->service(WMP_NS4_PUTPROXY_SERVICE);
+		if ( checkWMProxyRelease ( 2, 9, 0 ) ) {
+			//delegation 2
+			const string proxyReq = api::grstGetProxyReq(id, sp_cfg.get()) ;
+			logInfo->result(WMP_NS4_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
+			// PutProxy
+			logInfo->service(WMP_NS4_PUTPROXY_SERVICE);
+	
+			// Set the SOAP time out
+			setSoapTimeout(sp_cfg.get(), SOAP_PUT_PROXY_TIMEOUT);
+	
+			api::grstPutProxy(id, proxyReq, sp_cfg.get());
+			if (id==""){
+				logInfo->result(WMP_NS4_PUTPROXY_SERVICE,
+					string("The proxy has been successfully delegated with automatic identifier") );
+			}else{
+      				 logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  m_dgOpt);
+			}
+		} else {
+			//delegation 1
+			const string proxyReq = api::grst1GetProxyReq(id, sp_cfg.get()) ;
+	                logInfo->result(WMP_NS4_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
+	                // PutProxy
+	                logInfo->service(WMP_NS4_PUTPROXY_SERVICE);
+	
+	                // Set the SOAP time out
+	                setSoapTimeout(sp_cfg.get(), SOAP_PUT_PROXY_TIMEOUT);
 
-		// Set the SOAP time out
-		setSoapTimeout(sp_cfg.get(), SOAP_PUT_PROXY_TIMEOUT);
-
-		api::grstPutProxy(id, proxyReq, sp_cfg.get());
-		if (id==""){
-			logInfo->result(WMP_NS4_PUTPROXY_SERVICE,
-				string("The proxy has been successfully delegated with automatic identifier") );
-		}else{
-      			 logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  m_dgOpt);
+        	        api::grst1PutProxy(id, proxyReq, sp_cfg.get());
+        	        if (id==""){
+                	        logInfo->result(WMP_NS4_PUTPROXY_SERVICE,
+                        	        string("The proxy has been successfully delegated with automatic identifier") );
+                	}else{
+                        	 logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  m_dgOpt);
+                	}
 		}
 	} catch (api::BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -551,12 +571,7 @@ void  Job::jobPerformStep(jobRecoveryStep step){
 			m_cfgCxt.reset(new api::ConfigContext(getProxyPath(),m_endPoint, getCertsPath()));
 			break;
 		case STEP_DELEGATE_PROXY:
-			// Checks if WMProxy supports delegation-2
-			if ( !checkWMProxyRelease ( 3, 0, 0 ) )  {
-				logInfo->print(WMS_WARNING, "The WMProxy Server " + this->getEndPoint( )+ " does not support delegation 2");
-				jobRecoverStep(step);
-				break;
-			}
+			// Delegation step
 			try{
 				delegateUserProxy(m_endPoint);
 				}
