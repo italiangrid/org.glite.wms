@@ -440,6 +440,7 @@ int main(int argc, char*argv[])
 				
 				);
 		iceManager->removeRequest( *it );
+		delete( *it );
 		//continue;
 	      }
 	    }
