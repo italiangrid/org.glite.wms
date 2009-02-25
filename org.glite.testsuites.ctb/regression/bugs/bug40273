@@ -1,0 +1,242 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+test_bug40273_pre () {
+
+   gcc -I/opt/lcg/include/dpm -L/opt/lcg/lib -ldpm -ldl \
+       native/bug40273.c -o native/bug40273
+   retcode=$?
+
+   if [ $retcode -ne 0 ]; then
+      echo "Native code did not compile successfully. Abort."
+      return $REGTEST_FAIL
+   fi
+
+   VO_virtgid=$(dpns-listgrpmap --group $VO | sed -e 's/\s*\([0-9]*\)\s.*/\1/')
+   if [ $? -ne 0 ]; then
+      echo "Unable to obtain the virtual group id for VO $VO"
+      return $REGTEST_FAIL
+   fi
+
+   return $REGTEST_OK
+}
+
+test_bug40273_post () {
+
+   if dpns-ls -l /dpm/cern.ch/home/$VO/testfile_bug40273 2> /dev/null | grep -q testfile_bug40273; then
+      lcg-del -l srm://$DPM_HOST/dpm/cern.ch/home/$VO/testfile_bug40273
+   fi
+
+   if [ -f native/bug40273 ]; then
+      rm -f native/bug40273
+   fi
+
+   dpm-releasespace --token_desc spacetoken_bug40273
+
+   for dpm_disk in $disks_to_disable; do
+
+      disk_hostname=$(echo $dpm_disk | cut -f 1 -d ';')
+      disk_filesystem=$(echo $dpm_disk | cut -f 2 -d ';')
+
+      ssh_command="
+         export DPM_HOST=localhost;
+         export DPNS_HOST=localhost;
+         export PATH=$PATH:/opt/lcg/bin;
+         dpm-modifyfs --server $disk_hostname --fs $disk_filesystem --st 0
+      "
+
+      ssh -l root -2 $DPM_HOST "$ssh_command"
+
+      if [ $? -ne 0 ]; then
+         echo "Error restoring status of filesystem [$disk_filesystem] on diskhost [$disk_hostname] to 0."
+         return $REGTEST_FAIL
+      fi
+
+   done
+
+   ssh_command="
+      export DPM_HOST=localhost;
+      export DPNS_HOST=localhost;
+      export PATH=$PATH:/opt/lcg/bin;
+      dpm-modifyfs --server $disk_host --fs $disk_fs --st 0
+   "
+
+   ssh -l root -2 $DPM_HOST "$ssh_command"
+
+   return $REGTEST_OK
+}
+
+test_bug40273 () {
+
+   #
+   # Check whether the file exists in the namespace after a successfull DPM_ABORT
+   # 
+
+#
+# Python script that selects two pools accessible to the VO and returns "name1:name2"
+#
+
+python_script_get_pools="
+
+import dpm
+import sys
+result, pools = dpm.dpm_getpools()
+names=[]
+if result :
+   sys.exit(1)
+for pool in pools :
+   if 0 in pool.gids or $VO_virtgid in pool.gids :
+      names.append (pool.poolname)
+      if len (names) == 2 :
+         print names[0] + ';' + names[1]
+         sys.exit(0)
+sys.exit(1)
+
+"
+
+   selected_pools=$(python -c "$python_script_get_pools")
+   if [ $? -ne 0 ]; then
+      echo "Error: At least two pools are nedded for this test. Abort."
+      return $REGTEST_FAIL
+   fi
+
+   pool1=$(echo $selected_pools | cut -f 1 -d ';')
+   pool2=$(echo $selected_pools | cut -f 2 -d ';')
+
+   spacetoken=$(dpm-reservespace --gspace 8M --poolname $pool1 --token_desc spacetoken_bug40273)
+   echo "Spacetoken is: $spacetoken"
+   if [ $? -ne 0 ]; then
+      echo "Error while reserving space. Test cannot continue."
+      return $REGTEST_FAIL
+   fi
+
+   lcg-cp --dst spacetoken_bug40273 /bin/bash srm://$DPM_HOST/dpm/cern.ch/home/$VO/testfile_bug40273
+   if [ $? -ne 0 ]; then
+      echo "Error executing lcg-cp to copy file to space. Abort."
+      return $REGTEST_FAIL
+   fi
+
+   # 
+   # Now we need to know the dpm_disk that stores our file and the list of other dpm_disks in the
+   # pool. The test will try to put them in READONLY mode and then drain the disk storing our file. 
+   # dpm-drain is supposed to fail. Replication of this file to other pools (we know there is at 
+   # least one which our VO can access) should not succeed because this will put the replica
+   # out of the spacetoken.
+   # 
+
+   replicas_info=$(./native/bug40273 /dpm/cern.ch/home/$VO/testfile_bug40273)
+   disk_host=$(echo $replicas_info | cut -f 3 -d ';')
+   disk_fs=$(echo $replicas_info | cut -f 4 -d ';')
+
+   echo "Disk host is: $disk_host"
+
+python_script_get_fsnames_to_disable="
+
+import dpm
+import sys
+result, filesystems = dpm.dpm_getpoolfs('$pool1')
+
+if result :
+   sys.exit(1)
+
+for fs in filesystems :
+   if fs.status == 0 and fs.server != '$disk_host' :
+      print fs.server + ';' + fs.fs
+
+sys.exit(0)
+"
+
+   disks_to_disable=$(python -c "$python_script_get_fsnames_to_disable")
+   if [ $? -ne 0 ]; then
+      echo "Error: cannot list dpm_disks for pool: $pool1. Abort."
+      return $REGTEST_FAIL
+   fi
+
+   for dpm_disk in $disks_to_disable; do 
+
+      disk_hostname=$(echo $dpm_disk | cut -f 1 -d ';')
+      disk_filesystem=$(echo $dpm_disk | cut -f 2 -d ';')
+
+      ssh_command="
+         export DPM_HOST=localhost;
+         export DPNS_HOST=localhost;
+         export PATH=$PATH:/opt/lcg/bin;
+         dpm-modifyfs --server $disk_hostname --fs $disk_filesystem --st 1
+      "
+
+      ssh -l root -2 $DPM_HOST "$ssh_command"
+
+      if [ $? -ne 0 ]; then 
+         echo "Error changing status of filesystem [$disk_filesystem] on diskhost [$disk_hostname] to READONLY. Abort"
+         return $REGTEST_FAIL
+      fi
+
+   done
+
+   #
+   # Now we are ready to do the drain
+   #
+
+   ssh_command="
+      export DPM_HOST=localhost;
+      export DPNS_HOST=localhost;
+      export PATH=$PATH:/opt/lcg/bin;
+      dpm-drain --server $disk_host
+   "
+   echo
+   echo "---------- Starting the drain process ----------"
+
+   ssh -l root -2 $DPM_HOST "$ssh_command"
+
+   if [ $? -eq 0 ]; then
+      echo "Warning: dpm-drain completed successfully. This is not supposed to happen."
+   fi
+
+   echo
+   echo "--------  Dpm-drain finished execution ---------" 
+   echo
+   echo "Checking replicas of testfile_bug40273"
+
+   replicas_info=$(./native/bug40273 /dpm/cern.ch/home/$VO/testfile_bug40273)
+   if [ $? -ne 0 ]; then
+      echo "Error while obtaining replica information. Abort"
+      return $REGTEST_FAIL
+   fi
+
+   echo $replicas_info
+
+   for repl in $replicas_info; do
+      elem_poolname=$(echo $repl | cut -f 1 -d ';')
+      elem_spacetoken=$(echo $repl | cut -f 2 -d ';')
+
+      if [ "$elem_poolname" != "$pool1" ]; then
+         echo "Error: file migrated to a different pool and thus outside the spacetoken";
+         return $REGTEST_FAIL
+      fi
+
+   done
+
+   echo "OK: File not migrated to another pool"
+   return $REGTEST_OK
+}
+

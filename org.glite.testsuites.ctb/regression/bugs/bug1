@@ -65,6 +65,7 @@ fi
 # Example usage of the run_command function
 
 command="lcg-cr --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${DPM_SE}"
+
 message="Running lcg-cr with DPM SE"
 run_command "${command}" "${message}"
 
@@ -74,3 +75,5 @@ fi
 # The output of command is available in the variable OUTPUT
 
 }
+
+
