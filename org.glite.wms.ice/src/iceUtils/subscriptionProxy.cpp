@@ -110,8 +110,8 @@ void iceUtil::subscriptionProxy::list(const string& userProxy,
   cemon_api::CESubscriptionMgr ceSMgr;
   
   try {
-    ceSMgr.authenticate(userProxy.c_str(), "/");
-    ceSMgr.list(url, vec); // can throw an std::exception
+    ceSMgr.authenticate( userProxy.c_str(), userProxy.c_str() );
+    ceSMgr.list( url, vec ); // can throw an std::exception
   } catch(exception& ex) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "subscriptionProxy::list() - retrieving list of "
@@ -219,7 +219,7 @@ bool iceUtil::subscriptionProxy::subscribe(const string& proxy,
   }
   try {
     
-    ceS.authenticate(proxy.c_str(), "/");
+    ceS.authenticate( proxy.c_str(), proxy.c_str() );
     ceS.subscribe();
     
     CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionProxy::subscribe() - Subscribed with ID ["
@@ -286,7 +286,7 @@ bool iceUtil::subscriptionProxy::updateSubscription( const string& proxy,
   try {
     
     cemon_api::CESubscriptionMgr ceSMgr;
-    ceSMgr.authenticate(proxy.c_str(), "/");
+    ceSMgr.authenticate( proxy.c_str(), proxy.c_str() );
     newID = ceSMgr.update(endpoint, ID, m_myurl, T, P, time(NULL)+m_conf->getConfiguration()->ice()->subscription_duration());
     
   } catch(exception& ex) {

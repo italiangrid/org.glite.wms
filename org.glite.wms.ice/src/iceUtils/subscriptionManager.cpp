@@ -239,9 +239,8 @@ bool iceUtil::subscriptionManager::getCEMonDN(
 
   try {
 
-    ceInfo.reset(new cemon_api::CEInfo( m_conf->getConfiguration()->ice()->ice_host_cert(), "/") ); // this can raise an exception caused by failed authentication
+    ceInfo.reset( new cemon_api::CEInfo(proxy, proxy) ); // this can raise an exception caused by failed authentication
     ceInfo->setServiceURL( cemonURL );
-    ceInfo->authenticate( proxy.c_str(), "/");
     ceInfo->getInfo();
     DN = ceInfo->getDN();
     m_mappingCemonDN[cemonURL] = DN;
