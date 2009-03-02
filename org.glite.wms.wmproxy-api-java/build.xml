@@ -78,7 +78,7 @@ axis.location		      =${axis.location}
     <target name="src.compile" depends="init">
         <mkdir dir="${builddir}/src/classes"/>
 
-        <wsdl2java url="${glite.location}/interface/WMProxy.wsdl"
+        <wsdl2java url="${builddir}/WMProxy.wsdl"
          output="${basedir}/src"
          deployscope="application"
          serverSide="no"
