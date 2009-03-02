@@ -127,8 +127,11 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         
     } while( res != 0 );        
 
-    if ( edg_wll_GetSequenceCode( *(m_ctx->el_context) ) ) { // update the sequence code only if it is non null
-        new_seq_code = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+    char* _tmp_seqcode = edg_wll_GetSequenceCode( *(m_ctx->el_context) );
+
+    if ( _tmp_seqcode ) { // update the sequence code only if it is non null
+        new_seq_code = _tmp_seqcode;
+	free( _tmp_seqcode );
         { // Lock the job cache
 #ifdef ICE_PROFILE_ENABLE
 	  api_util::scoped_timer T( "logEvent::mutex_aquisition-EntireBlock" );//126
