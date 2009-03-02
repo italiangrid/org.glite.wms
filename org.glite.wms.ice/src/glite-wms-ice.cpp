@@ -524,10 +524,11 @@ long long check_my_mem( const pid_t pid ) throw()
 //______________________________________________________________________________
 void dumpIceCache( const string& pathfile ) throw() 
 {
+  
   boost::recursive_mutex::scoped_lock L( iceUtil::jobCache::mutex );
-
+  
   FILE* OUT = fopen(pathfile.c_str(), "a");
-
+  
   if(!OUT) {
     int saveerr = errno;
     CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->errorStream()
@@ -537,41 +538,27 @@ void dumpIceCache( const string& pathfile ) throw()
 		    );	
     return;
   }
-
   
-
   int count = 0;
   map<string, int> statusMap;
   iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
-
+  
   iceUtil::jobCache::iterator it( cache->begin() );
-
+  
   for ( it = cache->begin(); it != cache->end(); ++it ) {
     iceUtil::CreamJob aJob( *it );
     count++;
     statusMap[string(glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus()] )]++;
   }
   
-  char outputBuf[1024], thisStatus[128];
-  memset( (void*)outputBuf, 0, sizeof(thisStatus) );
-  sprintf( outputBuf, "Total_Job(s)=%d", count);
+  ostringstream outputBuf("");
+  
+  outputBuf << iceUtil::time_t_to_string( time(0) ) << " - Total_Job(s)=" << count;
   
   for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
-
-    memset( (void*)thisStatus, 0, sizeof(thisStatus) );
-
-    sprintf( thisStatus, " - %s_Jobs=%d", it->first.c_str(), it->second);
-
-    strcat( outputBuf, thisStatus );
+    outputBuf << " - " << it->first << "_Jobs=" << it->second;
   }
-
-  char bufTime[30];
-  memset( (void*)bufTime, 0 ,30);
-  time_t tnow = time(0);
-  struct tm *now = localtime( &tnow );
   
-  strftime( bufTime, 29, "%Y-%m-%d_%H:%M:%S", now);
-
-  fprintf( OUT, "%s - %s\n", bufTime, outputBuf );
+  fprintf( OUT, "%s\n", outputBuf.str().c_str() );
   fclose( OUT );
 }
