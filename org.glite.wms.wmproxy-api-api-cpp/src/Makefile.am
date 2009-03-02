@@ -24,7 +24,7 @@ wm.h :
 	$(GSOAP_LOCATION)/bin/wsdl2h -o wm.h \
 	-I$(GSOAP_LOCATION)/include \
 	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
-	$(GLITE_LOCATION)/interface/WMProxy.wsdl
+	$(top_srcdir)/interface/WMProxy.wsdl
 
 soapC.cpp : wm.h
 	@#Create the files
