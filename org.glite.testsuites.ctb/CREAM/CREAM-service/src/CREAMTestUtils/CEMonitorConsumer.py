@@ -37,6 +37,9 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
     def send_fault(self, f, code=500):
 
         self.send_xml(f.AsSOAP(), code)
+        
+    def log_message(self, format, *args):
+        ConsumerServer.logger.debug(format%args)
 
     def handleNotify(self, soap):
     
