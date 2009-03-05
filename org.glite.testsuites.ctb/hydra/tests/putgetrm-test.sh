@@ -4,12 +4,6 @@
 # 
 # Author: Kalle Happonen <kalle.happonen@cern.ch>
 
-echo "This test is not implemented yet, because of outstanding known bugs
-in the hydra-client. When this changes, please modify the test
-to reflect changes/functionality in the hydra-client"
-
-exit 0
-
 . $(dirname $0)/functions.sh
 
 if [ $# -ne 0 ] ; then
@@ -63,7 +57,7 @@ if [ $? -ne 0 ] ; then
   my_exit $ERROR
 fi
 
-LFC_HOME=$LFC_TEST_DIR
+export LFC_HOME=$LFC_TEST_DIR
 
 ###############################
 ########### Cleanup ###########
@@ -82,15 +76,15 @@ function cleanup () {
     rm -f $ENC_FILE
   fi
  
-  lcg-del -a lfn:testfile1
-  lfc-rm -r $LFC_TEST_DIR
+  lcg-del -a lfn:testfile1 >/dev/null 2>&1
+  lfc-rm -r $LFC_TEST_DIR >/dev/null 2>&1
 }
 
 ###############################
 ##### Write and read file #####
 ###############################
 
-glite-eds-put -i testkey-1  $ORIG_FILE lfc:testfile1
+TESTFILEGUID=`glite-eds-put $ORIG_FILE lfn:testfile1 2>/dev/null |grep GUID |cut -f2 -d ':'`
 
 if [ $? -ne 0 ] ; then
   echo "Error in creating file"
@@ -98,39 +92,45 @@ if [ $? -ne 0 ] ; then
   my_exit $ERROR
 fi
 
-glite-eds-get -i testkey-1 lfc:testfile1 $RETR_FILE
+echo "File encrypted and stored"
+
+glite-eds-get lfn:testfile1 $RETR_FILE >/dev/null 2>&1
 if [ $? -ne 0 ] ; then
   echo "Error retrieving file"
-  glite-eds-rm lfc:testfile1
+  glite-eds-rm lfn:testfile1
   cleanup
   my_exit $ERROR
 fi
 
-diff --brief $RETR_FILE $ORIG_FILE
+echo "File retrieved and decrypted"
+
+diff --brief $RETR_FILE $ORIG_FILE >/dev/null 2>&1
 if [ $? -ne 0 ] ; then
   echo "Original and retrieved files don't match"
   cleanup
   my_exit $ERROR
 fi
 
-echo "Stored file matched retrieved file"
+echo "Original and retrieved files match"
 
 ###############################
 ### Retrieve encrypted file ###
 ###############################
 
-lcg-cp lfc:testfile1 file:$ENC_FILE
+lcg-cp lfn:testfile1 file:$ENC_FILE >/dev/null 2>&1
 if [ $? -ne 0 ] ; then
   echo "Unable to retrieve (lfc-cp) file"
-  glite-eds-rm lfc:testfile1
+  glite-eds-rm lfn:testfile1
   cleanup
   my_exit $ERROR
 fi
 
-diff --brief $ENC_FILE $ORIG_FILE
+echo "Retrieved encrypted file with lcg tools"
+
+diff --brief $ENC_FILE $ORIG_FILE >/dev/null 2>&1
 if [ $? -eq 0 ] ; then
   echo "Original file the same as the encrypted file"
-  glite-eds-rm lfc:testfile1
+  glite-eds-rm lfn:testfile1
   cleanup
   my_exit $ERROR
 fi
@@ -138,26 +138,28 @@ fi
 echo "Stored encrypted file differs from original file"
 
 echo "" > $RETR_FILE
-glite-eds-decrypt $ENC_FILE $RETR_FILE testkey-1
+glite-eds-decrypt $TESTFILEGUID $ENC_FILE $RETR_FILE >/dev/null 2>&1
 
-if [ $? -eq 0 ] ; then
+if [ $? -ne 0 ] ; then
   echo "Unable to decrypt file"
   cleanup
-  glite-eds-rm lfc:testfile1
+  glite-eds-rm lfn:testfile1
   my_exit $ERROR
 fi
 
 echo "Stored decrypted file matches original file"
 
-diff --brief $RETR_FILE $ORIG_FILE
+diff --brief $RETR_FILE $ORIG_FILE >/dev/null 2>&1
 if [ $? -ne 0 ] ; then
   echo "Original and retrieved files don't match"
-  glite-eds-rm lfc:testfile1
+  glite-eds-rm lfn:testfile1
   cleanup
   my_exit $ERROR
 fi
 
-glite-eds-rm lfc:testfile1
+echo "Original file and manually decrypted files match"
+
+glite-eds-rm lfn:testfile1 >/dev/null 2>&1
 if [ $? -ne 0 ] ; then
   echo "Error removing file and key"
   cleanup
@@ -166,6 +168,75 @@ fi
 
 echo "File removal succeeded"
 
+
+###############################
+### Test separating the save ##
+###############################
+
+echo "Testing a manual registration process"
+
+glite-eds-key-register testkey1 >/dev/null 2>&1 
+
+if [ $? -ne 0 ] ; then
+  echo "Error registering key"
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "Testkey registered"
+
+glite-eds-encrypt testkey1 $ORIG_FILE $ENC_FILE >/dev/null 2>&1
+
+if [ $? -ne 0 ] ; then
+  echo "Unable to encrypt file"
+  glite-eds-key-unregister testkey1 >/dev/null 2>&1 
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "File encrypted successfully"
+
+lcg-cr file:$ENC_FILE -l lfn:testfile1 >/dev/null 2>&1
+
+if [ $? -ne 0 ] ; then
+  echo "Unable to store file in LFC"
+  glite-eds-key-unregister testkey1 >/dev/null 2>&1 
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "File stored in LFC"
+
+glite-eds-get -i testkey1 lfn:testfile1 $RETR_FILE >/dev/null 2>&1
+
+if [ $? -ne 0 ] ; then
+  echo "Unable to retrieve and decrypt file"
+  glite-eds-key-unregister testkey1 >/dev/null 2>&1 
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "Successfully retrieved and decrypted stored file"
+
+diff --brief $RETR_FILE $ORIG_FILE >/dev/null 2>&1
+if [ $? -ne 0 ] ; then
+  echo "Original and retrieved files don't match"
+  glite-eds-key-unregister testkey1 >/dev/null 2>&1 
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "Original file and manually decrypted files match"
+
+glite-eds-key-unregister testkey1 >/dev/null 2>&1 
+
+if [ $? -ne 0 ] ; then
+  echo "Error unregistering key"
+  cleanup
+  my_exit $ERROR
+fi
+
+echo "Testkey unregistered" 
 ###############################
 ############ Done #############
 ###############################
