@@ -123,7 +123,8 @@ of the long options of this test'''))
         renewalManager = job_utils.ProxyRenewer(parameters, monitorThread, vomsManager)
         
         address = ('', parameters.consumerPort)
-        consumer = CEMonitorConsumer.ConsumerServer(address, parameters, monitorThread)
+        consumer = CEMonitorConsumer.ConsumerServer(address, parameters, 
+                                                    monitorThread, vomsManager)
         
         consumerThread = threading.Thread(target=consumer)
         consumerThread.start()

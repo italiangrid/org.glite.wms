@@ -64,7 +64,7 @@ class JobPoller(threading.Thread):
             
             ts = time.time()
             
-            if hasattr(self.parameters, 'statusFromList') and self.parameters.statusFromList:
+            if hasattr(self.parameters, 'listQuery') and self.parameters.listQuery:
                 self.lock.acquire()
                 jobList = self.table.keys()
                 self.lock.release()

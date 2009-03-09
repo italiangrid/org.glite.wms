@@ -143,7 +143,7 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
                 raise Exception, "Cannot find: " + self.consumerKey
             import getpass
             self.password = getpass.getpass('Password for consumer key: ')
-        elif proxyMan<>None:
+        elif proxyMan<>None and proxyMan.key<>None:
                 self.consumerCert = proxyMan.cert
                 self.consumerKey = proxyMan.key
                 self.password = proxyMan.password

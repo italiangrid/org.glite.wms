@@ -84,6 +84,9 @@ X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
     parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
 set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
     
+    parameters.register('listQuery','b', optChar='', descr='''\
+use the internal job list instead of the oldest timestamp for building the status query''')
+    
     parameters.setDefaultEnvs()
     parameters.addEnvItem(('MONITORED_LEASE_UP_CONFIG_FILE','''\
 location of the configuration file for this test. The configuration file contains a list \
