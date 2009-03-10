@@ -285,3 +285,27 @@ that is not present in a WN installation but is used by the
 proxy_renewal script.
 This file must be extracted as explained in wn_installation.txt.
 
+----------------------------------------------------------------
+At the end of a test, to create all the necessary graphs:
+
+1) create a new directory to store working files and save original results
+in a zipped archive.
+
+mkdir /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
+tar -cvzf 090306_4days.tar.gz lxb760*.*
+mv lxb760*.* /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
+
+2) normalize time values to make time axis starting at 0 sec 
+./normalize_all 1236343721 /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
+
+3) create response time graphs 
+./mkRespTimePlots.sh /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
+
+4) normalize scas-mon.log file
+./normalize_time.sh /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod/scas-mon.log 1236343721 
+
+5) create scas service memory consumption plot and move the file to the mod directory
+./mkMemConsPlots.sh /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod/scas-mon.log_norm
+mv scas-mon.ps scas-mon.plt scas-mon.log_norm /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
+
+6) look at the graph and enjoy!
