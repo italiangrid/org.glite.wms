@@ -309,3 +309,15 @@ mv lxb760*.* /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
 mv scas-mon.ps scas-mon.plt scas-mon.log_norm /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
 
 6) look at the graph and enjoy!
+
+7) get number of calls and number of errors
+./getErrorRate.sh /afs/.cern.ch/project/gd/sa3_test_result/090306_4days/mod
+-------------------------------
+Tue Mar 10 11:14:24 CET 2009
+-------------------------------
+Total requests: 3306508
+Total errors: 1
+Error rate: .00003024338667863400
+-------------------------------
+
+

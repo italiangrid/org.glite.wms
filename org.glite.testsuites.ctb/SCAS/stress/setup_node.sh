@@ -35,17 +35,20 @@ fi
 rm -f ./proxy_renewal.out
 touch ./proxy_renewal.out
 
+proxy_renewal=`basename $proxy_ren_script`
+glexec_stress=`basename $glexec_stress_script`
+
 echo "Retrieving glexec test script" 
-cp -f --reply=yes $glexec_stress_script ./
+cp -f --reply=yes $glexec_stress_script ./$glexec_stress
 echo "Retrieving proxy renewal script" 
-cp -f --reply=yes $proxy_ren_script ./
+cp -f --reply=yes $proxy_ren_script ./$proxy_renewal
 echo "Starting proxy renewal daemon" 
-./proxy_renewal.sh $INDEX >> ./proxy_renewal.out 2>&1 &
+./$proxy_renewal $INDEX >> ./proxy_renewal.out 2>&1 &
 proxy_renewal_pid=$! 
 echo "Proxy renewal script has pid $proxy_renewal_pid " 
 
 #Give time to create the proxy
-sleep 10s
+sleep 30s
 
 #use special certificate for debugging
 #cp -f /afs/cern.ch/user/p/pucciani/tmp/x509up_u501_g /home/dteampilot$INDEX/x509up_u501_$INDEX 2>&1 >> $LOG_FILE
@@ -56,9 +59,9 @@ sleep 10s
 #  exit 1
 #fi
 
-cp -f ./glexec_stress_test.sh /home/dteamdteampilot$INDEX/ 
-chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
-chmod u+x /home/dteamdteampilot$INDEX/glexec_stress_test.sh 
+cp -f ./$glexec_stress /home/dteamdteampilot$INDEX/ 
+chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/$glexec_stress
+chmod u+x /home/dteamdteampilot$INDEX/$glexec_stress 
 #chown dteamdteampilot$INDEX /home/dteamdteampilot$INDEX/x509up_u501_$INDEX 
 
 hostname=`hostname`
@@ -66,10 +69,10 @@ hostlogfile=$hostname.log
 
 echo "Starting glexec test as dteamdteampilot$INDEX" 
 if [ "x$iterations" != "x" ];then
-  su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -n $iterations -i $INDEX" dteamdteampilot$INDEX
+  su - -c "/home/dteamdteampilot$INDEX/$glexec_stress -f $LOG_FILE -n $iterations -i $INDEX" dteamdteampilot$INDEX
 fi
 if [ "x$end_date" != "x" ];then
-  su - -c "/home/dteamdteampilot$INDEX/glexec_stress_test.sh -f $LOG_FILE -d $end_date -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
+  su - -c "/home/dteamdteampilot$INDEX/$glexec_stress -f $LOG_FILE -d $end_date -i $INDEX" dteamdteampilot$INDEX >> $hostlogfile 2>&1
 fi
 
 #kill the proxy renewal process

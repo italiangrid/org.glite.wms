@@ -23,8 +23,9 @@ cat <<EOF > $gnuplotfile
 
 set title "Response Time Frequency Histogram"
 set xlabel "Time (sec)"
-set ylabel "Response time (sec)"
+set ylabel "Response time (sec) LOG SCALE"
 set autoscale
+set logscale y
 set style data boxes
 set style fill solid
 set xtics 1

@@ -1,7 +1,11 @@
 #!/bin/sh
 
 #This file produce the correct results only when using 
-#during the test, not at the end of the test
+#during the test, not at the end of the test.
+#It assumes that:
+# - 10 machines are used
+# - 10 users on each machine are used
+# - all the WNs are active
 
 function usage() {
 

@@ -18,8 +18,8 @@ if [ $? -ne 0 ]; then
   echo "Failed to cd into logs_dir: $logs_dir"
   exit 1
 fi 
-totalRequests=`cat *_data | wc -l`
-totalErrors=`cat *_error | wc -l`
+totalRequests=`cat *_error | wc -l`
+totalErrors=`grep ',1' *_error | wc -l`
 errorRate=$(echo "$totalErrors / $totalRequests" | bc -l)
 errorRate=$(echo "$errorRate * 100" | bc -l)
 

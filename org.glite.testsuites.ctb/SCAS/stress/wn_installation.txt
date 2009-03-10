@@ -12,7 +12,7 @@ cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/yaimgen/src/org.gl
 klog pucciani
 #EDIT yaimgen.cfg.wn to fix the hostname
 
-#install prod WN and and patch2770 (glexec)
+#install prod WN and and patch2829 (glexec)
 ./yaimgen.sh install yaimgen.cfg.wn
 
 #get yaim configuration file
@@ -29,10 +29,31 @@ tar -xvzf /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuite
 /opt/glite/yaim/bin/yaim -c -s /etc/yaim/site-info.def -n glite-WN -n GLEXEC_wn
 
 #change log rotation for lcaslcmaps and glexec
-#edit /etc/logrotate.d/glexec_wn_lcaslcmaps_log, change daily to 500M
+#change daily to 500M
 mv /etc/cron.daily/logrotate /etc/cron.hourly/
 cp -f --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec_wn_lcaslcmaps_log /etc/logrotate.d/
 
+#if necessary
+cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/glexec.conf /opt/glite/etc/
+
+----------------------------------SCAS---------------------------------
 #change SCAS log rotation
 #edit /etc/logrotate.d/scas and change daily with size 500M (for example)
 mv /etc/cron.daily/logrotate /etc/cron.hourly/
+
+#disable the automatic grid-mapfile update
+
+
+#To wipe users
+cd /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SCAS/stress/
+./userwipe.pl 70...
+
+#To create users and groups.conf
+./mkugconf.pl -v dteam,org.glite.voms-test -g dteam -r production,pilot,lcgadmin -n 200
+
+#To clean glexec log files when needed
+rm -f /var/log/glexec/*.gz
+rm -f /var/log/glexec/lcas_lcmaps.log
+touch /var/log/glexec/lcas_lcmaps.log
+chmod 640 /var/log/glexec/lcas_lcmaps.log
+

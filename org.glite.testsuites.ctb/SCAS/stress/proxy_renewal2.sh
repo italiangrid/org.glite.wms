@@ -34,6 +34,7 @@ do
     echo "Error copying the proxy" 
     exit 1
   fi
+  chown dteamdteampilot${INDEX} /home/dteamdteampilot${INDEX}/x509up_u501_${usernum}
   echo "User proxy ./x509up_u501_${usernum} succesfully created and stored in pilot user account" 
 done
 
@@ -61,6 +62,7 @@ do
       echo "Error copying the proxy" 
       exit 1
     fi
+    chown dteamdteampilot${INDEX} /home/dteamdteampilot${INDEX}/x509up_u501_${usernum}
     echo "User proxy ./x509up_u501_${usernum} succesfully created and stored in pilot user account" 
   done
 
