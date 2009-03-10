@@ -13,7 +13,7 @@
 #include "lbapi.h"
 #include <string>
 #include <sys/stat.h> //mkdir
-#include "netdb.h" //gethostbyname
+#include "netdb.h" //getnameinfo,getaddrinfo
 // streams
 #include<sstream>
 // wmproxy-api

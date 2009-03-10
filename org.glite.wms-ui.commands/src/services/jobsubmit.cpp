@@ -634,7 +634,7 @@ void JobSubmit::toBCopiedZippedFileList() {
 	int nc = 0;
 	int i = 0;
 	// Unique string to be used for the name of the tar.gz files
-	string us = Utils::getUniqueString( );
+	string us = wmcUtils -> getUniqueString( );
 	if (us.empty()) {
 		ostringstream u ;
 		u << getpid( ) << "_" << getuid( );

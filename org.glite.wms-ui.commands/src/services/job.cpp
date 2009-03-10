@@ -469,11 +469,11 @@ void Job::printServerVersion( ) {
         if (!endPoint.empty()) {
 		// --endpoint option used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from --" +  wmcOpts->getAttributeUsage(Options::ENDPOINT) +" option:", endPoint);
-	        urls.push_back(wmcUtils->resolveHostname(endPoint));
+		urls.push_back(wmcUtils->resolveAddress(endPoint));
         } else if (ep){
 		// GLITE_WMS_WMPROXY_ENDPOINT ENV variable used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", string(ep) );
-	        urls.push_back(wmcUtils->resolveHostname(string(ep)));
+		urls.push_back(wmcUtils->resolveAddress(string(ep)));
 	} else {
 		// just retrieve URLS from configuration file
 		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
@@ -646,11 +646,11 @@ void Job::retrieveEndPointURL (const bool &delegation) {
 	if (!endPoint.empty()){
 		// --endpoint option used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from user option:", endPoint);
-		urls.push_back(wmcUtils->resolveHostname(endPoint));
+		urls.push_back(wmcUtils->resolveAddress(endPoint));
         } else  if (ep){
 		// GLITE_WMS_WMPROXY_ENDPOINT Variable used
 		logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", string(ep) );
-		urls.push_back(wmcUtils->resolveHostname(string(ep)));
+		urls.push_back(wmcUtils->resolveAddress(string(ep)));
 	} else {
 		// list of endpoints from the configuration file
 		logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );

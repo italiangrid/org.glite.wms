@@ -173,19 +173,6 @@ public:
         */
         glite::jdl::Ad* getConf(){return wmcConf;}
 	/**
-	* Resolves an hostname, supposed to be an alias, into its CNAME.
-	* @param hostname the hostanem to resolve.
-	* @param resolved to be filled with DNS record A host entry.
-	* @return whether there has been an error (true) or success (false)
-	*/
-	void resolveHost(const std::string& hostname, std::string& resolved);
-	/**
-        * Resolves an hostname, given into the sring describing the service
-        * @param relpath to be filled with the service endpoint
-        * @return the service with the hostname resolved to its CNAME
-        */
-	std::string resolveHostname(std::string relpath);
-	/**
 	* Check the format of a jobid string
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
 	* @param jobid jobid string to be checked
@@ -262,7 +249,7 @@ public:
 	* generate a unique string
         * @return the generated string
 	*/
-        static std::string getUniqueString(void);
+        std::string getUniqueString(void);
         /**
         * Gets the virtualOrganisation associated to this option
 	* @return the point to the virtualOrganisation string
@@ -433,9 +420,15 @@ public:
         */
         int doExecv(const std::string &command, std::vector<std::string> &params, std::string &errormsg, const int &delay);
         /**
-        * Gets a relative path and extracts the IP address of the host
+        * Gets an hostname/DNS/Alias/IP address and resolves its hostname, IPv6 compliant
+        * @extracted endpoint URL
+        * @return resolved hostname
+        */
+	std::string resolveIPv4_IPv6(std::string host_tbr);
+	/**
+        * Gets a relative path and extracts the hostname/IP address of the host
         * @relpath the relative path
-        * @return the IP address of the host
+        * @return the hostname/IP address
         */
         std::string resolveAddress(std::string relpath) ;
 private:

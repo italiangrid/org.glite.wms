@@ -1,5 +1,5 @@
  // PRIMITIVE
-#include "netdb.h" // gethostbyname (resolveHost)
+#include "netdb.h" // getaddrinfo/getnameinfo
 #include "iostream" // cin/cout     ()
 #include "fstream" // filestream (ifstream)
 #include "time.h" // time (getTime)
@@ -537,61 +537,6 @@ std::vector<std::string> Utils::askMenu(std::vector<std::string> &items, const e
 /**********************************
 *** WMP, LB, Host Static methods ***
 ***********************************/
-void Utils::resolveHost(const std::string& hostname, std::string& resolved_name){
-	struct hostent *result = NULL;
-	if( (result = gethostbyname(hostname.c_str())) == NULL ){
-		throw WmsClientException(__FILE__,__LINE__,"resolveHost",DEFAULT_ERR_CODE,
-					"Wrong Value","Unable to resolve host: "+hostname);
-	}
-	resolved_name=result->h_name;
-}
-
-string Utils::resolveHostname( string relpath ) {
-    int it = 0;
-    string pathtemp = "";
-    string realhost = "";
-    struct hostent *result = NULL;
-    if (relpath ==""){
-            throw WmsClientException(__FILE__,__LINE__,"resolveHostname",
-                    DEFAULT_ERR_CODE,
-                    "Wrong Value", "Unable to parse empty hostname");
-    }
-    boost::char_separator<char> separator(":/");
-    boost::tokenizer<boost::char_separator<char> >tok(relpath, separator);
-    boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
-    boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
-    for( ; token != end; token++) {
-            if ( it == 1 ) {
-                    realhost = *token ;
-            }
-            if (it > 1 && it < 3) {
-                    pathtemp += *token + "/"  ;
-            }
-            if (it == 3) {
-                    pathtemp += *token  ;
-            }
-            it++;
-    }
-
-    if( (result = gethostbyname( realhost.c_str() )) == NULL ) {
-    	throw WmsClientException(__FILE__,__LINE__,"resolveHostname",DEFAULT_ERR_CODE,
-                                    "Wrong Value","Unable to resolve the hostname: "+ realhost);
-    }
-
-    string hostname = result->h_name;
-    string addr = inet_ntoa(*(struct in_addr *)result->h_addr);
-    string path = "";
-    if (!addr.empty()) {
-        path = resolveAddress("https://"+addr+":"+pathtemp);
-    } else if (!hostname.empty()) {
-        path = "https://"+hostname+":"+pathtemp ;
-    } else {
-        throw WmsClientException(__FILE__,__LINE__,"resolveHostname",DEFAULT_ERR_CODE,
-                                "Wrong Value","Unable to find a valid hostname nor its IPv4 address");
-    }
-    return path ;
-}
-
 std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string> >& lbGroup, int nsNum){
 	std::vector<std::string> lbs ;
 	unsigned int lbGroupSize=lbGroup.size();
@@ -642,26 +587,30 @@ std::vector<std::string> Utils::getWmps(){
 	string eps = "";
 	// URL by the command line options
 	eps = wmcOpts->getStringAttribute(Options::ENDPOINT);
+
 	if (!eps.empty()){
-		wmps.push_back(resolveHostname(eps));
+		wmps.push_back(resolveAddress(eps));
 	} else {
 		// URL by the environment
 		ep = getenv(  GLITE_WMS_WMPROXY_ENDPOINT);
 		if (ep){
-			wmps.push_back(resolveHostname(string(ep)));
+			wmps.push_back(resolveAddress(string(ep)));
 		} else if (wmcConf){
 			// Check if exists the attribute WmProxyEndPoints
 			if(wmcConf->hasAttribute(JDL_WMPROXY_ENDPOINT)) {
 				// Retrieve and set the attribute WmProxyEndPoints
 				wmps = wmcConf->getStringValue(JDL_WMPROXY_ENDPOINT);
+				// removing wrong endpoints
+				wmps = checkResources(wmps);
 				int i;
 				int size = wmps.size();
 				for (i=0;i<size;i++) {
-					wmps[i]=resolveHostname(wmps[i]);
+					wmps[i]=resolveAddress(wmps[i]);
 				}
 			}
 		}
 	}
+
 	return wmps;
 }
 /*
@@ -1438,21 +1387,20 @@ const char * Utils::str2md5Base64(const char *s)
 */
 std::string Utils::getUniqueString (){
 
-        struct hostent* he;
-        struct timeval tv;
+        string hname = "";
+	struct timeval tv;
         int skip;
         // to hold string for encrypt
         char hostname[1024];
         char* unique = NULL ;
         // generation of the string
-        gethostname(hostname, 100);
-        he = gethostbyname(hostname);
-        assert(he->h_length > 0);
+	gethostname(hostname,100);
+        hname = this->resolveIPv4_IPv6(hostname);
         gettimeofday(&tv, NULL);
         srandom(tv.tv_usec);
         skip = strlen(hostname);
         skip += sprintf(hostname + skip, "-IP:0x%x-pid:%d-rnd:%d-time:%d:%d",
-                    *((int*)he->h_addr_list[0]), getpid(), (int)random(),
+                    *(int*)hname.c_str(), getpid(), (int)random(),
                     (int)tv.tv_sec, (int)tv.tv_usec);
         //gets back the generated del-id
        unique = ((char*)str2md5Base64(hostname) );
@@ -2211,17 +2159,70 @@ int Utils::doExecv(const string &command, vector<string> &params, string &errorm
 	return SUCCESS;
 	GLITE_STACK_CATCH();
 }
+
+string Utils::resolveIPv4_IPv6(string host_tbr) {
+
+    struct addrinfo * result;
+    struct addrinfo * res;
+    int error; 
+    string resolved_host = "";
+
+
+	/* resolve the domain name into a list of addresses */
+	error = getaddrinfo((char*)host_tbr.c_str(), NULL, NULL, &result);
+	    
+	if (error != 0) {
+		//perror("error in getaddrinfo: ");
+		//return "UnresolvedHost";
+	        throw WmsClientException(__FILE__,__LINE__,"resolveIPv4_IPv6", DEFAULT_ERR_CODE,
+                       "Wrong Value", "Unable to resolve hostname");
+
+	}
+	    
+	if (result == NULL) {
+		throw WmsClientException(__FILE__,__LINE__,"resolveIPv4_IPv6", DEFAULT_ERR_CODE,
+                        "Wrong Value", "Unable to resolve hostname");
+	}
+    
+	resolved_host = "UnresolvedHost";
+
+	for (res = result; res != NULL; res = res->ai_next) {
+		char hostname[NI_MAXHOST] = "";
+	
+		error = getnameinfo(res->ai_addr, res->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, 0);
+	
+		if (0 != error ) {
+	            continue;
+		}
+	
+		if (*hostname) {
+	  	    resolved_host = hostname;
+	       	    break;
+	  	}
+	
+	}
+ 
+    	if( resolved_host == "UnresolvedHost" ) {
+		freeaddrinfo(result);
+	        throw WmsClientException(__FILE__,__LINE__,"resolveIPv4_IPv6",DEFAULT_ERR_CODE,
+                        "Wrong Value", "Unable to resolve hostname");
+	}
+
+    	freeaddrinfo(result);
+
+	return resolved_host;
+
+}
+
 /**
 * Gets an URL in input, extracts the IP address, and returns the same URL
 * with the hostname instead of the address
 */
 string Utils::resolveAddress( string relpath ) {
-	// Setting the regular expression for an IP address
-	boost::regex regExp ( "^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}$" ) ;
+	
 	int it = 0;
 	string pathtemp = "";
 	string address = "";
-	struct hostent *result = NULL;
 	string hostname = "";
 	if (relpath ==""){
 		throw WmsClientException(__FILE__,__LINE__,"resolveAddress",
@@ -2244,20 +2245,8 @@ string Utils::resolveAddress( string relpath ) {
 		}
 		it++;
 	}
-	// Checking if the string extracted is an IP or an hostname
-	if ( regex_match ( address, regExp ) ) {
-		// IP Address
-		struct sockaddr_in ip;
-		inet_aton( address.c_str(), &ip.sin_addr ) ;
-		if( (result = gethostbyaddr( (char*)&ip.sin_addr, sizeof(ip.sin_addr), AF_INET)) == NULL ){
-			throw WmsClientException(__FILE__,__LINE__,"resolveAddress",DEFAULT_ERR_CODE,
-					"Wrong Value","Unable to resolve address: "+address);
-		}
-		hostname = result->h_name;
-	} else {
-		// Hostname
-		hostname = address ;
-	}
+	
+	hostname = resolveIPv4_IPv6(address);
 	string path = "https://"+hostname+":"+pathtemp ;
 	return path ;
 }
