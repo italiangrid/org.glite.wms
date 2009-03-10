@@ -32,6 +32,7 @@ MASTERBASE=condor_master
 gliteuid=`id -u ${GLITE_WMS_USER} 2>&1` || do_failure $gliteuid
 glitegid=`id -g ${GLITE_WMS_USER} 2>&1` || do_failure $glitegid
 export CONDOR_IDS="$gliteuid.$glitegid"
+CONDOR_MASTER=${CONDORG_INSTALL_PATH}/sbin/${MASTERBASE}
 CONDOR_OFF=${CONDORG_INSTALL_PATH}/sbin/condor_off
 CONDOR_SCHEDD=${CONDORG_INSTALL_PATH}/sbin/condor_schedd
 JOBCONTROLLER=${GLITE_WMS_BIN_DIR}/${CONTROLLERBASE}
