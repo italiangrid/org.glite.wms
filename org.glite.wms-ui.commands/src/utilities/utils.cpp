@@ -344,7 +344,7 @@ void Utils::ending(unsigned int exitCode){
 bool Utils::askForFileOverwriting(const std::string &path){
 	bool ow = true;
 	// checks if the output file already exists
-	if ( isFile(path) && ! this->wmcOpts->getBoolAttribute(Options::NOINT) ){
+	if ( isFile(path) && ! (this->wmcOpts->getBoolAttribute(Options::NOINT) || this->wmcOpts->getBoolAttribute(Options::JSON)) ){
 		// if the file exists ......
 		string info = Utils::getAbsolutePath(path) + " file already exists";
 		// writes a warning msg in the log file
@@ -1092,7 +1092,7 @@ string Utils::checkJobId(std::string jobid){
                         }
                 }
 		// the found wrongs jobids
-                if ( ! wmcOpts->getBoolAttribute(Options::NOINT) && ! wrongs.empty() ){
+                if ( ! ( wmcOpts->getBoolAttribute(Options::NOINT) || wmcOpts->getBoolAttribute(Options::JSON)) && ! wrongs.empty() ){
 			if (rights.size()){
 				ostringstream err ;
 				err << "bad format for the following jobid(s) :\n";
@@ -1150,7 +1150,7 @@ void Utils::checkResource(const std::string& resource){
 			}
 		}
 		// the found wrongs resources
-		if ( ! wmcOpts->getBoolAttribute(Options::NOINT) && ! wrongs.empty() ){
+		if ( ! (wmcOpts->getBoolAttribute(Options::NOINT) || wmcOpts->getBoolAttribute(Options::JSON)) && ! wrongs.empty() ){
 			if (rights.empty()){
 				// Not even a right resource
 				throw WmsClientException(__FILE__,__LINE__,
@@ -1655,7 +1655,7 @@ int Utils::saveToFile(const std::string &path, const std::string &msg) {
 	int len = 0;
 	int result = 0;
 	// checks if the output file already exists
-	if ( isFile(path ) && ! this->wmcOpts->getBoolAttribute(Options::NOINT) ){
+	if ( isFile(path ) && !( this->wmcOpts->getBoolAttribute(Options::NOINT) || this->wmcOpts->getBoolAttribute(Options::JSON) )){
 		// if the file exists ......
 		string info = Utils::getAbsolutePath(path) + " file already exists";
 		// writes a warning msg in the log file
@@ -1847,7 +1847,7 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 			string comment = "";
 			string it = *token;
 			it = Utils::cleanString( (char*) it.c_str()) ;
-			if ( it.find("#*")==0 &&!this->wmcOpts->getBoolAttribute(Options::NOINT) ) {
+			if ( it.find("#*")==0 &&!( this->wmcOpts->getBoolAttribute(Options::NOINT) || this->wmcOpts->getBoolAttribute(Options::JSON)) ) {
 				// It's a special comment, insert line
 				comment = it ;
 				items.push_back(comment);
