@@ -108,7 +108,7 @@ void JobOutput::readOptions ( int argc,char **argv)  {
         }
         jobIds = wmcUtils->checkJobIds (jobIds);
 	njobs = jobIds.size( ) ;
-	if ( njobs > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+	if ( njobs > 1 && ! ( wmcOpts->getBoolAttribute(Options::NOINT) || json )){
 		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ", false);
         	jobIds = wmcUtils->askMenu(jobIds, Utils::MENU_JOBID);
 		if (jobIds.size() != njobs) {
@@ -226,6 +226,7 @@ void JobOutput::getOutput ( ){
 
 							for (int i=0;i<sizeJ;i++) {
 								json += "jobid: "+jobIds[i]+" {\n";
+								json += result ;
 								json += " }\n";
 							}
 							json += parentFileList + childrenFileList + fileList;
@@ -398,8 +399,12 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 	// checks Children
 	if (checkChildren && children.size()>0){
 		if (hasFiles){
-			result += "Output sandbox files for the DAG/Collection :\n" +  id ;
-			result += "\nhave been successfully retrieved and stored in the directory:\n" + dirAbs + "\n\n";
+			if (!json) {
+				result += "Output sandbox files for the DAG/Collection :\n" +  id ;
+				result += "\nhave been successfully retrieved and stored in the directory:\n" + dirAbs + "\n\n";
+			} else {
+			        result = "   location:" + dirAbs + "\n";	
+			} 
 		} else{
 			result += "No output files to be retrieved for the DAG/Collection:\n" + id + "\n\n";
 			if (createDir) {
@@ -510,8 +515,12 @@ bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const s
 					"Protocol Error", err);
 			}
 			// Result message
-			result += "Output sandbox files for the job:\n" + jobid  ;
-			result += "\nhave been successfully retrieved and stored in the directory:\n" + dirAbs + "\n\n";
+			if (!json) {
+				result += "Output sandbox files for the job:\n" + jobid  ;
+				result += "\nhave been successfully retrieved and stored in the directory:\n" + dirAbs + "\n\n";
+			} else {
+				result = "   location:" + dirAbs + "\n";
+			}
 		} else {
 			// Prints file list (only verbose result)
 			this->listResult(files, jobid, child);
