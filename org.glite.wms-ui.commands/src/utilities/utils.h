@@ -249,7 +249,7 @@ public:
 	* generate a unique string
         * @return the generated string
 	*/
-        std::string getUniqueString(void);
+        static std::string getUniqueString(void);
         /**
         * Gets the virtualOrganisation associated to this option
 	* @return the point to the virtualOrganisation string
@@ -424,13 +424,13 @@ public:
         * @extracted endpoint URL
         * @return resolved hostname
         */
-	std::string resolveIPv4_IPv6(std::string host_tbr);
+	static std::string resolveIPv4_IPv6(std::string host_tbr);
 	/**
         * Gets a relative path and extracts the hostname/IP address of the host
         * @relpath the relative path
         * @return the hostname/IP address
         */
-        std::string resolveAddress(std::string relpath) ;
+        static std::string resolveAddress(std::string relpath) ;
 private:
 	/**
 	* Performs parsing on the FQAN fields an retrurns a vector which elements

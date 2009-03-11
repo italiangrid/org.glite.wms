@@ -1395,7 +1395,7 @@ std::string Utils::getUniqueString (){
         char* unique = NULL ;
         // generation of the string
 	gethostname(hostname,100);
-        hname = this->resolveIPv4_IPv6(hostname);
+        hname = resolveIPv4_IPv6(hostname);
         gettimeofday(&tv, NULL);
         srandom(tv.tv_usec);
         skip = strlen(hostname);
