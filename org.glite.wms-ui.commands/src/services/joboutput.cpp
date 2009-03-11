@@ -13,7 +13,7 @@
 #include "lbapi.h"
 #include <string>
 #include <sys/stat.h> //mkdir
-#include "netdb.h" //getnameinfo,getaddrinfo
+#include "netdb.h" //gethostbyname
 // streams
 #include<sstream>
 // wmproxy-api
@@ -65,6 +65,7 @@ JobOutput::JobOutput () : Job() {
 	// init of the boolean attributes
 	listOnlyOpt = false;
 	nosubdir = false;
+	json = false;
 	//nopgOpt = false;
 	// list of files
 	childrenFileList = "";
@@ -92,6 +93,9 @@ void JobOutput::readOptions ( int argc,char **argv)  {
         m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	//--nosubdir
 	nosubdir = wmcOpts->getBoolAttribute(Options::NOSUBDIR);
+
+	// --json
+	json = wmcOpts->getBoolAttribute (Options::JSON);
 
 	// JobId's
         if (!m_inOpt.empty()){
@@ -207,6 +211,29 @@ void JobOutput::getOutput ( ){
 		}
 	}
 	if (code == SUCCESS && successRt){
+
+		if (json ){
+			// json format output
+
+
+			//format the output message in json format
+							string json = "";
+
+							json += "result: success \n";
+							json += "endpoint: "+getEndPoint()+"\n" ;
+
+							int sizeJ = jobIds.size();
+
+							for (int i=0;i<sizeJ;i++) {
+								json += "jobid: "+jobIds[i]+" {\n";
+								json += " }\n";
+							}
+							json += parentFileList + childrenFileList + fileList;
+
+							json = "{\n"+json+"}\n";
+							cout << json;
+
+		} else {
 		out << "\n" << wmcUtils->getStripe(80, "=" , "") << "\n\n";
 		out << "\t\t\tJOB GET OUTPUT OUTCOME\n\n";
 		if (listOnlyOpt && hasFiles){
@@ -222,21 +249,21 @@ void JobOutput::getOutput ( ){
 		// Warnings/errors messages
 		if (  wmcOpts->getBoolAttribute(Options::DBG) && !m_warnsList.empty()) {
 			out << m_warnsList << "\n";
+		} else {
+			string err = "";
+			if (size==1) { err ="Unable to retrieve the output"; }
+			else { err ="Unable to retrieve the output for any job"; }
+			throw WmsClientException(__FILE__,__LINE__,
+					"output", ECONNABORTED,
+					"Operation Failed",
+					err  );
 		}
-
-	} else {
-		string err = "";
-		if (size==1) { err ="Unable to retrieve the output"; }
-		else { err ="Unable to retrieve the output for any job"; }
-		throw WmsClientException(__FILE__,__LINE__,
-				"output", ECONNABORTED,
-				"Operation Failed",
-				err  );
+		// logfile
+		out << getLogFileMsg ( ) << "\n";
+		// STD-OUT
+		cout << out.str ( );
+		}
 	}
-	// logfile
-	out << getLogFileMsg ( ) << "\n";
-	// STD-OUT
-	cout << out.str ( );
 }
 /*********************************************
 *	PRIVATE METHODS:
@@ -319,10 +346,10 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 				try {
 					logInfo->service(WMP_JDL_SERVICE, jobid.toString());
 					// Retrieve JDL
-			
+
 					// Set the SOAP timeout
 					setSoapTimeout(SOAP_GET_JDL_TIMEOUT);
-			
+
 					string JDLretrieved=getJDL(jobid.toString(), glite::wms::wmproxyapi::REGISTERED,getContext());
 					map = AdUtils::getJobIdMap(JDLretrieved);
 					logInfo->result(WMP_JDL_SERVICE, "JDL successfully retrieved for jobid: "+jobid.toString());
@@ -418,10 +445,10 @@ bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const s
 	try {
 		// gets the list of the out-files from the EndPoint
 		logInfo->service(WMP_OUTPUT_SERVICE, jobid);
-			
+
 		// Set the SOAP timeout
 		setSoapTimeout(SOAP_GET_OUTPUT_FILE_LIST_TIMEOUT);
-			
+
 		files = getOutputFileList(jobid, getContext(), m_fileProto);
 		logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
 		hasFiles = hasFiles || (files.size()>0);
@@ -575,16 +602,16 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 		params.push_back("file://"+destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) \n", "Command: "+globusUrlCopy+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-	
+
 		// Set the default value;
 		int timeout = 0;
-	
+
 		// Check if exists the attribute SystemCallTimeout
 		if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
 			// Retrieve and set the attribute SystemCallTimeout
 			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
 		}
-			
+
 		// launches the command
 		if (int code = wmcUtils->doExecv(globusUrlCopy, params, errormsg, timeout)) {
 			if (code > 0) {
@@ -650,16 +677,16 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 		params.push_back("file://"+destination);
 		logInfo->print(WMS_DEBUG, "File Transfer (https) \n", "Command: "+htcp+"\n"+"Source: "+params[0]+"\n"+"Destination: "+params[1]);
 		string errormsg = "";
-	
+
 		// Set the default value;
 		int timeout = 0;
-	
+
 		// Check if exists the attribute SystemCallTimeout
 		if(wmcUtils->getConf()->hasAttribute(JDL_SYSTEM_CALL_TIMEOUT)) {
 			// Retrieve and set the attribute SystemCallTimeout
 			timeout = wmcUtils->getConf()->getInt(JDL_SYSTEM_CALL_TIMEOUT);
 		}
-			
+
 		// launches the command
 		if (int code = wmcUtils->doExecv(htcp, params, errormsg, timeout)) {
 			if (code > 0) {

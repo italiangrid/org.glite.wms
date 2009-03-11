@@ -90,7 +90,8 @@ class JobOutput  : public Job {
                 /**
                 *	Boolean input arguments
                 */
-                bool listOnlyOpt ;
+        bool listOnlyOpt ;
+        bool json;
 		bool nopgOpt ;
 		bool firstCall ;
 		bool nosubdir ;

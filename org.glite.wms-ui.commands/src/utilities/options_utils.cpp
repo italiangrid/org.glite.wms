@@ -300,6 +300,7 @@ const struct option Options::outputLongOpts[] = {
 	{ 	Options::LONG_DEBUG,      	no_argument,			0,	Options::DBG},
 	{	Options::LONG_LOGFILE,    	required_argument,		0,	Options::LOGFILE},
 	{	Options::LONG_NOPURG,    	no_argument,			0,	Options::SHORT_NOPURG},
+ 	{	Options::LONG_JSON,    	no_argument,		0,		Options::JSON},
 	{0, 0, 0, 0}
 };
 
@@ -661,6 +662,7 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOSUBDIR << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_NOPURG << "\n";
+    cerr << "\t" << USG_JSON << "\n" ;
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "Please report any bug at:\n" ;
@@ -824,7 +826,8 @@ Options::Options (const WMPCommands &command){
 	help = false  ;
 	jdl = false ;
 	jdlorig = false ;
-        listonly = false;
+	json = false ;
+    listonly = false;
 	nodisplay = false ;
 	nosubdir = false ;
 	nogui  = false ;
@@ -835,7 +838,7 @@ Options::Options (const WMPCommands &command){
 	proxy = false ;
 	rank = false  ;
 	set = false;
-        registeronly = false;
+    registeronly = false;
 	transfer = false;
 	unset = false;
 	version  = false ;
