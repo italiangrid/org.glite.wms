@@ -42,6 +42,7 @@ namespace services {
 JobCancel::JobCancel() {
 	// init of the string attributes
         m_inOpt = "";
+        json = false;
 };
 
 /**
@@ -59,6 +60,9 @@ void JobCancel::readOptions (int argc,char **argv){
         // input file
         m_inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 
+        // json output
+    	json = wmcOpts->getBoolAttribute (Options::JSON);
+
 	// JobId's
         if (!m_inOpt.empty()){
 		// From input file
@@ -72,7 +76,7 @@ void JobCancel::readOptions (int argc,char **argv){
 		jobIds = wmcUtils->checkJobIds (jobIds);
         }
 	njobs = jobIds.size( ) ;
-	if (njobs > 1 && !( wmcOpts->getBoolAttribute(Options::NOINT) || wmcOpts->getBoolAttribute(Options::JSON)) ){
+	if (njobs > 1 && !( wmcOpts->getBoolAttribute(Options::NOINT) || json )) {
 		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ", false);
         	jobIds = wmcUtils->askMenu(jobIds,Utils::MENU_JOBID);
 		if (jobIds.size() != njobs) {
