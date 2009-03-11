@@ -118,7 +118,7 @@ void jobCache::load( void ) throw()
                 }
                 
                 m_GridJobIDSet.insert( cj.getGridJobID() );
-                
+                retry = false; 
 	      } catch(SerializeException& ex ) {
 		//                 CREAM_SAFE_LOG( m_log_dev->fatalStream()
 		//                                 << method_name
