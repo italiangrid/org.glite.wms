@@ -114,7 +114,75 @@ else
   echo "Test 3 passed"
 fi
 
+##################################################################
 
+echo "Test 4:"
+echo "Check that glexec returns 201 when the binary to execute does not exist"
+
+export GLEXEC_CLIENT_CERT=$proxy
+export GLEXEC_SOURCE_PROXY=$proxy
+export X509_USER_PROXY=$proxy
+unset GLEXEC_TARGET_PROXY
+
+$GLITE_LOCATION/sbin/glexec "/usr/bin/idontexist"
+ret=$?
+if [ $ret -ne 201 ]; then
+  echo "Return code expected was 201 but $ret was given"
+  echo "Test 4 failed"
+  fail=1
+else
+  echo "Test 4 passed"
+fi
+
+##################################################################
+
+echo "Test 5:"
+echo "Check that glexec returns 201 when the mapped user has no rigths to execute the binary"
+
+export GLEXEC_CLIENT_CERT=$proxy
+export GLEXEC_SOURCE_PROXY=$proxy
+export X509_USER_PROXY=$proxy
+unset GLEXEC_TARGET_PROXY
+
+$GLITE_LOCATION/sbin/glexec "/usr/sbin/userdel"
+ret=$?
+if [ $ret -ne 201 ]; then
+  echo "Return code expected was 201 but $ret was given"
+  echo "Test 5 failed"
+  fail=1
+else
+  echo "Test 5 passed"
+fi
+
+##################################################################
+
+echo "Test 6:"
+echo "Check that glexec returns 204 when the binary returns the exit codes: 201, 202, 203, 204"
+
+export GLEXEC_CLIENT_CERT=$proxy
+export GLEXEC_SOURCE_PROXY=$proxy
+export X509_USER_PROXY=$proxy
+unset GLEXEC_TARGET_PROXY
+
+#create exit201 script
+cat <<EOF > /tmp/exit201.sh
+
+echo "Exit 201 dummy program"
+exit 201
+EOF
+chmod a+x /tmp/exit201.sh
+
+$GLITE_LOCATION/sbin/glexec "/tmp/exit201.sh"
+ret=$?
+if [ $ret -ne 204 ]; then
+  echo "Return code expected was 204 but $ret was given"
+  echo "Test 6 failed"
+  fail=1
+else
+  echo "Test 6 passed"
+fi
+
+rm -f /tmp/exit201.sh
 
 ##################################################################
 #echo "Test 10:"
