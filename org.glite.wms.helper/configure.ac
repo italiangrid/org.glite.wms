@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.22.4.1  2009/03/11 15:48:42  monforte
+#       *** empty log message ***
+#
 #       Revision 1.22.2.22  2007/12/20 16:42:42  amarasch
 #       not all needed files were included in tag 3.1.19
 #
@@ -326,13 +329,13 @@ AC_MSG_RESULT(["GLITE_WMS_BROKER found $have_glite_wms_broker"])
 AC_MSG_RESULT(["GLITE_WMS_MATCHMAKING found $have_glite_wms_matchmaking"])
 AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
 
-have_security=no
-have_gpbox=no
-AC_GLITE_SECURITY([], have_security=yes, have_security=no)
-AC_MSG_RESULT(["GLITE_GLITE_SECURITY found $have_security"])
+#have_security=no
+#have_gpbox=no
+#AC_GLITE_SECURITY([], have_security=yes, have_security=no)
+#AC_MSG_RESULT(["GLITE_GLITE_SECURITY found $have_security"])
 
-AC_GLITE_GPBOX([], have_gpbox=yes, have_gpbox=no)
-AC_MSG_RESULT(["GLITE_GLITE_GPBOX found $have_gpbox"])
+#AC_GLITE_GPBOX([], have_gpbox=yes, have_gpbox=no)
+#AC_MSG_RESULT(["GLITE_GLITE_GPBOX found $have_gpbox"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
