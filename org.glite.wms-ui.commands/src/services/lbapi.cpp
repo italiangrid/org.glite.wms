@@ -17,6 +17,7 @@
 #include "glite/lb/producer.h"
 #include "glite/lb/JobStatus.h"  // Lb Job (Status & Loginfo)
 #include "glite/lb/LoggingExceptions.h"
+#include "utilities/utils.h"
 
 using namespace std ;
 using namespace glite::lb ;
@@ -41,7 +42,11 @@ pair<int,int> Status::getCodes(){
 	return result;
 }
 std::string Status::getEndpoint(){
-	return status.getValString(JobStatus::NETWORK_SERVER);
+	string endPt = status.getValString(JobStatus::NETWORK_SERVER);
+        if (endPt != "" ) {	
+                endPt = Utils::resolveAddress(endPt);
+        }
+        return endPt;
 }
 int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 	int code = 0;
