@@ -24,8 +24,7 @@ certfile="test_user_${usernum}_cert.pem"
 proxy="x509up_u501_${usernum}"
 if [ ! -f $keyfile ] || [ ! -f $certfile ]; then
   echo "test user certificate r key not found"
-  echo "Test 2 failed"
-  fail=1
+  exit 1
 fi
 
 echo "Creating proxy file x509up_u501_${usernum}"  
@@ -64,11 +63,13 @@ unset GLEXEC_SOURCE_PROXY
 unset X509_USER_PROXY
 $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami"
 ret=$?
+
 if [ $ret -ne 201 ]; then
   echo "Return code expected was 201 but $ret was given"
   echo "Test 1 failed (Know Issue)"
-  fail=1
+  fail=`echo "$fail +1" | bc`
 fi
+
 ##################################################################
 
 createProxy
@@ -87,7 +88,7 @@ ret=$?
 if [ $ret -ne 201 ]; then
   echo "Return code expected was 201 but $ret was given"
   echo "Test 2 failed (known issue)"
-  fail=1
+  fail=`echo "$fail +1" | bc`
 else
   echo "Test 2 passed"
 fi
@@ -109,7 +110,7 @@ ret=$?
 if [ $ret -ne 201 ]; then
   echo "Return code expected was 201 but $ret was given"
   echo "Test 3 failed"
-  fail=1
+  fail=`echo "$fail +1" | bc`
 else
   echo "Test 3 passed"
 fi
@@ -129,7 +130,7 @@ ret=$?
 if [ $ret -ne 201 ]; then
   echo "Return code expected was 201 but $ret was given"
   echo "Test 4 failed"
-  fail=1
+  fail=`echo "$fail +1" | bc`
 else
   echo "Test 4 passed"
 fi
@@ -149,7 +150,7 @@ ret=$?
 if [ $ret -ne 201 ]; then
   echo "Return code expected was 201 but $ret was given"
   echo "Test 5 failed"
-  fail=1
+  fail=`echo "$fail +1" | bc`
 else
   echo "Test 5 passed"
 fi
@@ -166,7 +167,7 @@ unset GLEXEC_TARGET_PROXY
 
 #create exit201 script
 cat <<EOF > /tmp/exit201.sh
-
+#!/bin/bash
 echo "Exit 201 dummy program"
 exit 201
 EOF
@@ -177,7 +178,7 @@ ret=$?
 if [ $ret -ne 204 ]; then
   echo "Return code expected was 204 but $ret was given"
   echo "Test 6 failed"
-  fail=1
+  fail=`echo "$fail +1" | bc`
 else
   echo "Test 6 passed"
 fi
@@ -225,7 +226,7 @@ if [ $fail -eq 0 ];then
   echo "TEST PASSED"
   exit 0
 else
-  echo "TEST FAILED"
+  echo "$fail TESTS FAILED"
   exit 1
 fi
 
