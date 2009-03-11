@@ -43,7 +43,7 @@ pair<int,int> Status::getCodes(){
 }
 std::string Status::getEndpoint(){
 	string endPt = status.getValString(JobStatus::NETWORK_SERVER);
-        if (endPt != "" ) {	
+        if (!endPt.empty()) {	
                 endPt = Utils::resolveAddress(endPt);
         }
         return endPt;
