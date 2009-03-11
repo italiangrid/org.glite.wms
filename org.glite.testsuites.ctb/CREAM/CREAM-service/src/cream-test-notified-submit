@@ -78,7 +78,7 @@ X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
     parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
 set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
     
-    parameters.setDefaultEnvs()
+    parameters.setDefaultEnvs(consumerKeys=True)
     parameters.addEnvItem(('NOTIFIED_SUBMIT_CONFIG_FILE','''\
 location of the configuration file for this test. The configuration file contains a list \
 of properties (the format is key=value); the set of keys correspond to the set \
@@ -123,8 +123,7 @@ of the long options of this test'''))
         renewalManager = job_utils.ProxyRenewer(parameters, monitorThread, vomsManager)
         
         address = ('', parameters.consumerPort)
-        consumer = CEMonitorConsumer.ConsumerServer(address, parameters, 
-                                                    monitorThread, vomsManager)
+        consumer = CEMonitorConsumer.ConsumerServer(address, parameters, monitorThread)
         
         consumerThread = threading.Thread(target=consumer)
         consumerThread.start()

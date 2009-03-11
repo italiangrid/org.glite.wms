@@ -73,13 +73,22 @@ Set the location of the configuration file for log4py, \
     def addEnvItem(self, item):
         self._env.append(item)
         
-    def setDefaultEnvs(self):
+    def setDefaultEnvs(self, consumerKeys=False):
         self.addEnvItem(('GLITE_LOCATION', 'location of gLite packages (DEFAULT=/opt/glite)'))
         self.addEnvItem(('X509_USER_PROXY', 'location of the user proxy'))
         self.addEnvItem(('X509_USER_CERT', 'location of the user certificate, this variable has \
 priority upon the X509_USER_PROXY variable'))
-        self.addEnvItem(('X509_USER_KEY', 'location of the user private key'))
+        self.addEnvItem(('X509_USER_KEY', '''location of the user private key. \
+The key must be protected by a passphrase.'''))
         
+        if consumerKeys:
+            self.addEnvItem(('X509_CONSUMER_CERT','''location of the consumer certificate, \
+if this variable is set together with X509_CONSUMER_KEY the test suite enables the \
+notifications over secure channel'''))
+            self.addEnvItem(('X509_CONSUMER_KEY','''location of the consumer private key, \
+if this variable is set together with X509_CONSUMER_CERT the test suite enables the \
+notifications over secure channel. The key must be protected by a passphrase.'''))
+
         
     def register(self, name, type, default=None, check=None, optChar=None, \
                  descr=''):

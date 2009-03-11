@@ -67,6 +67,8 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
                 if r1<>None and r2<> None:
                     jobHistory.append( (self.server.servicePrefix+r1.group(1), \
                                                     r2.group(1), failureReason) )
+                elif 'KEEP_ALIVE' in classad:
+                    ConsumerServer.logger.debug('Keep alive notification')
                 else:
                     ConsumerServer.logger.debug('Irregular classad: ' + classad)
                     
@@ -133,6 +135,9 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
     def __init__(self, address, parameters, jobTable=None, proxyMan=None):
         HTTPServer.__init__(self, address, SOAPRequestHandler)
         
+        if ConsumerServer.logger==None:
+            ConsumerServer.logger = testsuite_utils.mainLogger.get_instance(classid='ConsumerServer')
+        
         if os.environ.has_key("X509_CONSUMER_CERT") and \
             os.environ.has_key("X509_CONSUMER_KEY"):
             self.consumerCert = os.environ["X509_CONSUMER_CERT"]
@@ -143,16 +148,17 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
                 raise Exception, "Cannot find: " + self.consumerKey
             import getpass
             self.password = getpass.getpass('Password for consumer key: ')
-        elif proxyMan<>None and proxyMan.key<>None:
-                self.consumerCert = proxyMan.cert
-                self.consumerKey = proxyMan.key
-                self.password = proxyMan.password
+#        elif proxyMan<>None and proxyMan.key<>None:
+#                self.consumerCert = proxyMan.cert
+#                self.consumerKey = proxyMan.key
+#                self.password = proxyMan.password
         else:
             self.consumerCert = None
             self.consumerKey = None
             self.password = None
         
         if self.consumerKey<>None:
+            ConsumerServer.logger.debug("Enabled secure channel for notifications")
             self.ssl_context = SSL.Context(SSL.SSLv23_METHOD)
             buffer = self.readPEMFile(self.consumerKey)
             privateKey = crypto.load_privatekey(crypto.FILETYPE_PEM, buffer, self.password)
@@ -182,9 +188,6 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
         self.proxyFile = testsuite_utils.getProxyFile()
         self.subscrId = job_utils.subscribeToCREAMJobs(self.cemonURL, \
                                                        self.parameters, self.proxyFile, self.ssl_context<>None)
-        
-        if ConsumerServer.logger==None:
-            ConsumerServer.logger = testsuite_utils.mainLogger.get_instance(classid='ConsumerServer')
         
     def readPEMFile(self, filename):
         tmpf = file(filename)
