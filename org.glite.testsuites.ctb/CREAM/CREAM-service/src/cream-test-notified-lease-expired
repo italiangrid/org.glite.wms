@@ -133,7 +133,7 @@ of the long options of this test'''))
         monitorThread.start()
         renewalManager.start()
         if parameters.interactive:
-            interfaceMan.run()
+            interfaceMan.run(monitorThread)
             interfaceMan.close()
         monitorThread.join()
         renewalManager.halt()

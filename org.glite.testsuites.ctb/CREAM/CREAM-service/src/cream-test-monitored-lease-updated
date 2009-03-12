@@ -135,7 +135,7 @@ of the long options of this test'''))
     leaseRenewer.start()
     renewalManager.start()
     if parameters.interactive:
-        interfaceMan.run()
+        interfaceMan.run(pollerThread)
         interfaceMan.close()
     pollerThread.join()
     renewalManager.halt()

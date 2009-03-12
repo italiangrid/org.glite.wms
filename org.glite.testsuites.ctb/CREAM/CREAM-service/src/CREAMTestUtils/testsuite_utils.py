@@ -67,7 +67,8 @@ class Parameters:
         self.register('logConf', 's', check=checkFile, descr='''\
 Set the location of the configuration file for log4py, \
 (DEFAULT as provided by log4py)''')
-        self.register('interactive','b', optChar='', descr='Enable the test control via terminal')
+        self.register('interactive','b', optChar='', 
+                      descr='Enable the test control via terminal (EXPERIMENTAL)')
         
         
     def addEnvItem(self, item):
