@@ -1,6 +1,7 @@
 #!/bin/sh
 
-#This is a simple test to verify that glite-brokerinfo is correctly linked.
+#This is a simple test to verify glite-brokerinfo is correctly linked
+#plus a segfault bug https://savannah.cern.ch/bugs/index.php?48048
 
 function usage() {
 echo "Usage: $0"
@@ -11,9 +12,23 @@ if [ $# -gt 0 ]; then
   exit 1
 fi
 
-/opt/glite/bin/glite-brokerinfo --help >> /dev/null
+failed=0
+
+/opt/glite/bin/glite-brokerinfo --help
 ret=$?
 if [ $ret -ne 0 ]; then
+  echo "glite-brokerinfo --help failed"
+  failed=1
+fi
+
+/opt/glite/bin/glite-brokerinfo -f xxx
+ret=$?
+if [ $ret -ne 0 ]; then
+  echo "glite-brokerinfo -f xxx failed"
+  failed=1
+fi
+
+if [ $failed -ne 0 ]; then
   echo "Test Failed"
 else
   echo "Test Passed"
