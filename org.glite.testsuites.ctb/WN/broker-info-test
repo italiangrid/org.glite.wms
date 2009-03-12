@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#This is a simple test to verify that glite-brokerinfo is correctly linked.
+
+function usage() {
+echo "Usage: $0"
+}
+
+if [ $# -gt 0 ]; then
+  usage
+  exit 1
+fi
+
+/opt/glite/bin/glite-brokerinfo --help >> /dev/null
+ret=$?
+if [ $ret -ne 0 ]; then
+  echo "Test Failed"
+else
+  echo "Test Passed"
+fi
+
+exit 0
+
