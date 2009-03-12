@@ -23,8 +23,7 @@ noinst_HEADERS     = \
 	joboutput.h \
 	jobsubmit.h \
 	job.h \
-	lbapi.h \
-	listener.h
+	lbapi.h 
 
 
 libglite_wmsui_commands_delegateproxy_la_SOURCES = \
@@ -44,8 +43,7 @@ libglite_wmsui_commands_jobinfo_la_SOURCES = \
 libglite_wmsui_commands_jobsubmit_la_SOURCES = \
 	jobsubmit.cpp \
 	lbapi.cpp \
-	job.cpp \
-	listener.cpp
+	job.cpp 
 
 libglite_wmsui_commands_joboutput_la_SOURCES = \
 	joboutput.cpp \

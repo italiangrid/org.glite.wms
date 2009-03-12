@@ -103,8 +103,6 @@ JobSubmit::JobSubmit( ){
 	dagAd = NULL;
 	collectAd = NULL;
 	extractAd = NULL;
-	// shadow
-	jobShadow = NULL;
 	// time opt
 	expireTime = 0;
 	// Transfer Files Message
@@ -121,9 +119,6 @@ JobSubmit::~JobSubmit( ){
 	if (jobAd){ delete(jobAd); }
 	if (dagAd){ delete(dagAd); }
 	if (collectAd){ delete(collectAd);  }
-	// Shadow must not be killed
-	// (keep being alive,at least Listener will kill it)
-	// if (jobShadow){ delete( jobShadow); }
 }
 
 /*
@@ -427,37 +422,6 @@ void JobSubmit::submission ( ){
 	/// OUTPUT MESSAGE (jobid and other information)============================================
 	out << "Your job identifier is:\n\n";
 	out << this->getJobId( ) << "\n";
-	if (jobShadow!=NULL){
-		// The job is interactive
-		jobShadow->setJobId(this->getJobId());
-		if (jobShadow->isLocalConsole()){
-			// console-shadow running
-			if (nolistenOpt){
-				// console-listener NOT running (only shadow)
-				out << "\nInteractive Shadow Console successfully launched"<<"\n";
-			} else {
-				// console-listener running
-				out << "\nInteractive Session Listener successfully launched"<<"\n";
-				jobShadow->setGoodbyeMessage(true);
-			}
-			out <<"With the following parameters:"<<"\n";
-			out << "- Host: " << jobShadow->getHost() <<"\n";
-			out << "- Port: " << jobShadow->getPort() <<"\n";
-			if (nolistenOpt|| wmcOpts->getBoolAttribute(Options::DBG)) {
-				out << "- Shadow process Id: " << jobShadow->getPid() << "\n";
-				out << "- Input Stream  location: " << jobShadow->getPipeIn() <<"\n";
-				out << "- Output Stream  location: " << jobShadow->getPipeOut() <<"\n";
-				if (nolistenOpt){
-					out << "*** Warning ***\n Make sure you will kill the Shadow process"<<"\n";
-					out <<" and remove the input/output streams when interaction finishes"<<"\n";
-				}
-			}
-		}else {
-			// console-shadow NOT running
-			out << "Remote Shadow console set: " << jobShadow->getHost() <<"\n";
-		}
-	}
-
 
 	// saves the result
 	if (!m_outOpt.empty()){
@@ -509,17 +473,6 @@ void JobSubmit::submission ( ){
 			cout << json;
 	}
 
-	// Interactive Jobs management:
-	if (jobShadow!=NULL){
-		if (jobShadow->isLocalConsole()){
-			if (!nolistenOpt){
-				// Interactive console needed
-				logInfo->print(WMS_DEBUG,"Running Listener",this->getJobId());
-				Listener listener(jobShadow);
-				listener.run();
-			}
-		}
-	}
 }
 
 /*====================================
@@ -1120,38 +1073,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				if (!m_resourceOpt.empty()) {
 					jobAdSP.setAttribute(JDL::SUBMIT_TO, m_resourceOpt);
 				}
-				// INTERACTIVE =================================
-				if (  jobAdSP.hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
-					// Interactive Job management
-					logInfo->print (WMS_DEBUG, "An interactive job is being submitted.");
-					jobShadow = new Shadow();
-					jobShadow->setPrefix(wmcUtils->getPrefix()+"/bin");
-					// Insert jdl attributes port/pipe/host inside shadow(if present)
-					if (jobAdSP.hasAttribute(JDL::SHPORT)){
-						jobShadow->setPort(jobAdSP.getInt ( JDL::SHPORT ));
-					}
-					if (jobAdSP.hasAttribute(JDL::SHPIPEPATH)){
-						jobShadow->setPipe(jobAdSP.getString(JDL::SHPIPEPATH));
-					}else{
-						jobAdSP.setAttribute(JDL::SHPIPEPATH,jobShadow->getPipe());
-					}
-					if (jobAdSP.hasAttribute(JDL::SHHOST)){
-						jobShadow->setHost(jobAdSP.getString(JDL::SHHOST));
-					}else{
-						jobAdSP.setAttribute(JDL::SHHOST,jobShadow->getHost());
-					}
-					// Launch console
-					if (jobShadow->isLocalConsole()){
-						logInfo->print(WMS_DEBUG,"Running console shadow");
-						jobShadow->setGoodbyeMessage(true);
-						jobShadow->console();
-						logInfo->print(WMS_DEBUG,"Console properly started");
-						// Insert listening port number (if necessary replace old value)
-						if (jobAdSP.hasAttribute(JDL::SHPORT)){jobAdSP.delAttribute(JDL::SHPORT);}
-						jobAdSP.setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
-					}
-				if (jobAdSP.hasWarnings()){ printWarnings(JDL_WARNING_TITLE, jobAdSP.getWarnings() ); }
-				}
 				// MPICH ==================================================
 				if (  jobAdSP.hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
 				// MpiCh Job:
@@ -1216,10 +1137,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			"checkAd",  DEFAULT_ERR_CODE,
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::NODESRES),
 			"cannot be used for jobs");
-	}
-	// if --nolisten has been selected for a not interactive job
-	if (nolistenOpt && jobShadow==NULL) {
-		logInfo->print (WMS_WARNING, "--nolisten: option ignored (the job is not interactive)\n", "", true );
 	}
 }
 /**

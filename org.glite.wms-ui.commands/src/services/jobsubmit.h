@@ -13,7 +13,6 @@
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
 
-#include "listener.h"
 // inheritance
 #include "job.h"
 // options utilities
@@ -336,10 +335,6 @@ class JobSubmit : public Job {
 		glite::jdl::ExpDagAd *dagAd  ;
         	glite::jdl::CollectionAd *collectAd ;
 		glite::jdl::ExtractedAd *extractAd ;
-		/**
-                * JobShadow for interactive jobs
-                */
-                Shadow *jobShadow ;
 		/**
 		*	path to the JDL file
 		*/
