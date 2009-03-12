@@ -14,14 +14,19 @@ fi
 
 failed=0
 
-/opt/glite/bin/glite-brokerinfo --help
+if [ "x$GLITE_LOCATION" == "x" ]; then
+  echo "GLITE_LOCATION is not set"
+  exit 1
+fi
+
+$GLITE_LOCATION/bin/glite-brokerinfo --help
 ret=$?
 if [ $ret -ne 0 ]; then
   echo "glite-brokerinfo --help failed"
   failed=1
 fi
 
-/opt/glite/bin/glite-brokerinfo -f xxx
+$GLITE_LOCATION/bin/glite-brokerinfo -f xxx
 ret=$?
 if [ $ret -ne 0 ]; then
   echo "glite-brokerinfo -f xxx failed"
