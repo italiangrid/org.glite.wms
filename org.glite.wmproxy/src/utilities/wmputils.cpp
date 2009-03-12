@@ -32,7 +32,7 @@ limitations under the License.
 #include <sys/vfs.h>
 #include <sys/param.h> // MAXLENPATH
 #include <fcntl.h> // O_RDONLY
-#include <netdb.h> // gethostbyname
+#include <netdb.h> // getnameinfo/getaddrinfo
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h> // wait
@@ -739,11 +739,11 @@ string
 getServerHost() {
 	GLITE_STACK_TRY("getServerHost()");
 	edglog_fn("wmputils::getServerHost");
-	struct hostent *server = NULL;
 	char * servername = getenv("SERVER_NAME");
+	string result = "";
 	if (servername) {
-		edglog(debug)<<"SERVER_NAME: "<<string(servername)<<endl;
-		if ((server = gethostbyname(servername)) == NULL) {
+		result = resolveIPv4_IPv6(string(servername));
+		if (result.empty()) {
 			edglog(critical)<<"Unable to get server address"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
 				"getServerHost()", WMS_PROXY_ERROR,
@@ -754,8 +754,63 @@ getServerHost() {
 				"getServerHost()", WMS_PROXY_ERROR,
 				"Environment variable SERVER_NAME null\n(please contact server administrator)");
 	}
-	return string(server->h_name);
+	return result;
 	GLITE_STACK_CATCH();
+}
+
+string 
+resolveIPv4_IPv6(string host_tbr) {
+
+    struct addrinfo * result;
+    struct addrinfo * res;
+    int error;
+    string resolved_host = "";
+
+
+        /* resolve the domain name into a list of addresses */
+        error = getaddrinfo((char*)host_tbr.c_str(), NULL, NULL, &result);
+
+        if (error != 0) {
+                //perror("error in getaddrinfo: ");
+                //return "UnresolvedHost";
+                throw FileSystemException(__FILE__,__LINE__,"resolveIPv4_IPv6", WMS_PROXY_ERROR,
+                       "Unable to resolve hostname");
+
+        }
+
+        if (result == NULL) {
+                throw FileSystemException(__FILE__,__LINE__,"resolveIPv4_IPv6", WMS_PROXY_ERROR,
+                        "Unable to resolve hostname");
+        }
+
+        resolved_host = "UnresolvedHost";
+
+        for (res = result; res != NULL; res = res->ai_next) {
+                char hostname[NI_MAXHOST] = "";
+
+                error = getnameinfo(res->ai_addr, res->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, 0);
+
+                if (0 != error ) {
+                    continue;
+                }
+
+                if (*hostname) {
+                    resolved_host = hostname;
+                    break;
+                }
+
+        }
+
+        if( resolved_host == "UnresolvedHost" ) {
+                freeaddrinfo(result);
+                throw FileSystemException(__FILE__,__LINE__,"resolveIPv4_IPv6",WMS_PROXY_ERROR,
+                        "Unable to resolve hostname");
+        }
+
+        freeaddrinfo(result);
+
+        return resolved_host;
+
 }
 
 bool

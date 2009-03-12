@@ -114,7 +114,12 @@ std::string readTextFile(const std::string &path);
  */
 std::string getServerHost();
 
-//std::string retrieveHostName();
+/**
+ * Gets the hostname given a DNS/IP/Alias
+ * @input DNS/IP/Alias
+ * @return the service hostname
+ */
+std::string resolveIPv4_IPv6(std::string h_tbr);
 
 /**
  * Returns the service endpoint as an URL format
