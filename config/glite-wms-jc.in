@@ -111,6 +111,7 @@ start()
       echo -ne "\tStarting JobController..."
       daemon ${JOBCONTROLLER} -c ${CONFIGURATION_FILE}
       local result=$?
+      echo
       if [ ${result} -eq 1 ]; then # Startup of the daemon is failed, try to understand the cause
         local pid=`pidofproc ${JOBCONTROLLER}`
         if [ -z "${pid}" -a -f "${LOCKFILE}" ]; then
@@ -130,6 +131,7 @@ start()
     echo -ne "\tStarting CondorG..."
     ulimit -n 32768
     daemon --user ${GLITE_WMS_USER} ${CONDOR_MASTER}
+    echo
 
     if [ ${SCRIPT_UID} -eq 0 ]; then
       echo `pidofproc ${CONDOR_MASTER}` > /var/run/${MASTERBASE}.pid
