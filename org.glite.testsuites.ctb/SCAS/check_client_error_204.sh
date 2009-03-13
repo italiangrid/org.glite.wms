@@ -75,10 +75,10 @@ $GLITE_LOCATION/sbin/glexec "/tmp/exit201.sh"
 ret=$?
 if [ $ret -ne 204 ]; then
   echo "Return code expected was 204 but $ret was given"
-  echo "Test 6 failed"
+  echo "Test 1 failed"
   fail=`echo "$fail +1" | bc`
 else
-  echo "Test 6 passed"
+  echo "Test 1 passed"
 fi
 
 rm -f /tmp/exit201.sh
