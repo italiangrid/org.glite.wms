@@ -315,16 +315,22 @@ create_classad_from_ldap_entry(
 ) {
   classad::ClassAd* result = new classad::ClassAd;
   BerElement *ber = 0;
-  ut::scope_guard ber_guard(boost::bind(ber_free, ber, 0));
+  boost::shared_ptr<void> ber_guard(
+    static_cast<void*>(0), boost::bind(ber_free, ber, 1)
+  );
   for(
     char* attr = ldap_first_attribute(ld.get(), lde, &ber);
     attr; attr = ldap_next_attribute(ld.get(), lde, ber)
   ) {
-    ut::scope_guard attr_guard(boost::bind(ber_memfree, attr));
+    boost::shared_ptr<void> attr_guard(
+       static_cast<void*>(0), boost::bind(ber_memfree, attr)
+    );
     boost::shared_array<char*> values(
       ldap_get_values(ld.get(), lde, attr), ldap_value_free
     );
-    if (!values) continue; 
+    if (!values) { 
+      continue; 
+    }
     insert_values(attr, values, *result);
   }
   return result;
@@ -501,7 +507,9 @@ fetch_bdii_ce_info(
   }
 
   LDAPMessage *ldresult = 0;
-  ut::scope_guard ldresult_guard(boost::bind(ldap_msgfree, ldresult));
+  boost::shared_ptr<void> ldresult_guard(
+    static_cast<void*>(0), boost::bind(ldap_msgfree, ldresult)
+  );
   struct timeval to = {0,0};
   to.tv_sec = timeout;
   ldap_set_option(ld.get(), LDAP_OPT_NETWORK_TIMEOUT, &to);

@@ -334,7 +334,7 @@ create_classad_from_ldap_entry(
 ) {
   classad::ClassAd* result = new classad::ClassAd;
   BerElement *ber = 0;
-  ut::scope_guard ber_guard(boost::bind(ber_free, ber, 0));
+  ut::scope_guard ber_guard(boost::bind(ber_free, ber, 1));
   for(
     char* attr = ldap_first_attribute(ld.get(), lde, &ber);
     attr; attr = ldap_next_attribute(ld.get(), lde, ber)
