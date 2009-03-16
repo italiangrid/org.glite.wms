@@ -121,7 +121,7 @@ getTypes()
 
     BerElement *ber = 0;
     ut::scope_guard ber_guard(
-      boost::bind(ber_free, ber, 0)
+      boost::bind(ber_free, ber, 1)
     );
     
     for( 
