@@ -323,7 +323,7 @@ create_classad_from_ldap_entry(
     attr; attr = ldap_next_attribute(ld.get(), lde, ber)
   ) {
     boost::shared_ptr<void> attr_guard(
-       static_cast<void*>(0), boost::bind(ber_memfree, attr)
+       static_cast<void*>(0), boost::bind(ldap_memfree, attr)
     );
     boost::shared_array<char*> values(
       ldap_get_values(ld.get(), lde, attr), ldap_value_free
@@ -376,7 +376,7 @@ fetch_bdii_se_info(
   for (LDAPMessage* lde = ldap_first_entry(ld.get(), ldresult); lde != 0; 
     lde = ldap_next_entry(ld.get(), lde)) {
 
-    boost::shared_ptr<char> dn_str(ldap_get_dn(ld.get(), lde), ber_memfree);
+    boost::shared_ptr<char> dn_str(ldap_get_dn(ld.get(), lde), ldap_memfree);
 
     std::vector<std::string> ldap_dn_tokens;
     tokenize_ldap_dn(dn_str.get(), ldap_dn_tokens);
@@ -537,7 +537,7 @@ fetch_bdii_ce_info(
   for (LDAPMessage* lde = ldap_first_entry(ld.get(), ldresult); lde != 0; 
     lde = ldap_next_entry(ld.get(), lde)) {
 
-    boost::shared_ptr<char> dn_str(ldap_get_dn(ld.get(), lde), ber_memfree);
+    boost::shared_ptr<char> dn_str(ldap_get_dn(ld.get(), lde), ldap_memfree);
     n_entries++;
     std::vector<std::string> ldap_dn_tokens;
     tokenize_ldap_dn(dn_str.get(), ldap_dn_tokens);

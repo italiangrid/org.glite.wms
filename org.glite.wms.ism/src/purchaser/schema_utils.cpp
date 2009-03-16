@@ -116,7 +116,7 @@ getTypes()
   ) {
     boost::shared_ptr<char> dn_str(
       ldap_get_dn( handle.get(), lde ),
-      ber_memfree
+      ldap_memfree
     );
 
     BerElement *ber = 0;
@@ -129,7 +129,7 @@ getTypes()
       attr; attr = ldap_next_attribute(handle.get(), lde, ber) 
     ) {
       ut::scope_guard attr_guard(
-        boost::bind(ber_memfree, attr)
+        boost::bind(ldap_memfree, attr)
       );
       boost::shared_array<char *> values(
         ldap_get_values(handle.get(), lde, attr),
