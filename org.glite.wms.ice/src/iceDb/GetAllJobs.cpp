@@ -91,7 +91,7 @@ void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 	   << api::job_statuses::REALLY_RUNNING
 	   << "\' OR status=\'"
 	   << api::job_statuses::HELD
-	   << "\' AND is_killed_by_ice=\'0\';";
+	   << "\' AND is_killed_byice=\'0\';";
   else
     sqlcmd << "SELECT serialized FROM jobs;";
   
