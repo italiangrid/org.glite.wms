@@ -24,6 +24,7 @@ glite_wms_wmproxy_purge_proxycache_SOURCES = wmpcleanproxies.cpp wmputils.cpp ut
 glite_wms_wmproxy_purge_proxycache_LDFLAGS = -Xlinker --export-dynamic -DGLITE_WMS_WMPROXY_TOOLS
 glite_wms_wmproxy_purge_proxycache_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
+  $(CLASSAD_LIBS) \
 	$(BOOST_FS_LIBS)
 
 
@@ -58,8 +59,10 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/authorizer \
 	-I$(top_srcdir)/src/utilities \
+	-I$(top_srcdir)/src/eventlogger \
 	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(GRIDSITE_CFLAGS) \
+  $(CLASSAD_CFLAGS) \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	-DHAVE_STRINGSTREAM
