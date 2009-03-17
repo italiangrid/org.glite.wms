@@ -15,29 +15,33 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * DB operation used to remove a job with given grid job id
+ * DB operation used to update a job's sequence code
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "RemoveJobByGid.h"
-
-#include "boost/format.hpp"
+#include "UpdateLastEmpty.h"
 
 using namespace glite::wms::ice::db;
+
 using namespace std;
 
-RemoveJobByGid::RemoveJobByGid( const string& gid ) :
-    m_gridjobid( gid )
+UpdateLastEmpty::UpdateLastEmpty( const glite::wms::ice::util::CreamJob& aJob ): m_theJob( aJob )
 {
-
 }
 
-void RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
+void UpdateLastEmpty::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    string sqlcmd = boost::str( boost::format( 
-      "delete from jobs " \
-      " where gridjobid = \'%1%\'; " ) % m_gridjobid );
-    do_query( db, sqlcmd );
+
+ 
+    ostringstream sqlcmd("");
+ 
+    sqlcmd << "UPDATE jobs SET "
+    	   << "last_empty_notification=\'"
+	   << m_theJob.get_last_empty_notification() << "\' "
+	   << " WHERE gridjobid=\'"
+	   << m_theJob.getGridJobID() << "\';";
+    
+    do_query( db, sqlcmd.str() );
 }

@@ -27,7 +27,7 @@
 using namespace glite::wms::ice::db;
 using namespace std;
 
-void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callback_t callback, void* param ) throw( DbOperationException )
+void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callback_t callback, void* param ) throw( DbOperationException& )
 {
     char* errMsg; 
     string error;                               

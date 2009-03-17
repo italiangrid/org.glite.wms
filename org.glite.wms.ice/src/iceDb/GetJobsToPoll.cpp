@@ -50,20 +50,26 @@ GetJobsToPoll::GetJobsToPoll( bool poll_all_jobs ) :
 
 namespace { // begin local namespace
 
-    // Local helper function: callback for sqlite
-    static int fetch_cream_job_id_callback(void *param, int argc, char **argv, char **azColName){
-        if ( argv && argv[0] ) {
-            list< string > *result( (list< string >*)param );
-            result->push_back( argv[0] );
-        }
-        return 0;
-    }
+  // Local helper function: callback for sqlite
+  static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
+    //    string* serialized = (string*)param;
+    list<string> *jobs = (list<string>*)param;
+    if( argv && argv[0] )
+      jobs->push_back( argv[0] );
 
+
+    //         if ( argv && argv[0] && argv[1] && argv[2] && argv[3] && argv[4] && argv[5] && argv[6] ) {
+    //             list< JobToPoll > *result( (list< JobToPoll >*)param );
+    //             result->push_back( boost::make_tuple(argv[0], argv[1], argv[2], argv[3], argv[4], (time_t)atoi(argv[5]), (time_t)atoi(argv[6]) ) );
+    //         }
+    return 0;
+  }
+  
 } // end local namespace
 
-void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException )
+void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    static const char* method_name = "GetJobsToPoll::execute() - ";
+  //    static const char* method_name = "GetJobsToPoll::execute() - ";
     time_t 
         threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
         empty_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->ice_empty_threshold() );
@@ -71,17 +77,55 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException )
     // time_t oldness = t_now - t_last_seen;
     // time_t empty_oldness = t_now - t_last_empty_notification;
 
+            //
+        // Q: When does a job get polled?
+        //
+        // A: A job gets polled if one of the following situations are true:
+        //
+        // 1. ICE starts. When ICE starts, it polls all the jobs it thinks
+        // have not been purged yet.
+        //
+        // 2. ICE received the last non-empty status change
+        // notification more than m_threshold seconds ago.
+        //
+        // 3. ICE received the last empty status change notification
+        // more than 10*60 seconds ago (that is, 10 minutes).
+        //
+	// empty notification are effective to reduce the polling frequency if the m_threshold is much greater than 10x60 seconds
+
     string sqlcmd;
     if ( m_poll_all_jobs ) {
-        sqlcmd = "select cream_job_id from jobs where creamjobid not null;" ;
+        sqlcmd = "SELECT serialized FROM jobs WHERE creamjobid not null;" ;
     } else {
         time_t t_now( time(NULL) );
         sqlcmd = boost::str( boost::format( 
-                  "select cream_job_id from jobs" \
-                  " where ( creamjobid not null ) and"\
-                  "       ( last_seen > 0 and ( %1% - last_seen >= %2% ) ) "\
-                  "       ( last_empty_notification > 0 and ( %3% - last_empty_notification > %4% ) )" ) % t_now % threshold % t_now % empty_threshold );
+                  "SELECT serialized FROM jobs" \
+                  " WHERE ( creamjobid not null ) AND"\
+                  "       ( last_seen > 0 AND ( %1% - last_seen >= %2% ) ) "\
+                  "  OR   ( last_empty_notification > 0 AND ( %3% - last_empty_notification > %4% ) )" ) % t_now % threshold % t_now % empty_threshold );
     }
 
-    do_query( db, sqlcmd, fetch_cream_job_id_callback, &m_result );
+    list<string> jobs;
+    do_query( db, sqlcmd, fetch_jobs_callback, &jobs );
+
+    for(list<string>::const_iterator it = jobs.begin();
+	it != jobs.end();
+	++it)
+      {
+	if( !it->empty() ) {
+	  try {
+	    istringstream is;
+	    is.str( *it );
+	    {
+	      CreamJob aJob;
+	      boost::archive::text_iarchive ia(is);
+	      ia >> aJob;
+	      m_result.push_back( aJob );
+	    }
+	  } catch( std::exception& ex ) {
+	    throw DbOperationException( ex.what() );
+	  }
+	  
+	}
+      }
 }

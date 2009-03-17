@@ -24,9 +24,9 @@
 #include "GetJobByGid.h"
 
 #include "boost/algorithm/string.hpp"
-#include "boost/format.hpp"
+//#include "boost/format.hpp"
 #include "boost/archive/text_iarchive.hpp"
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+//#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <sstream>
 
@@ -47,40 +47,61 @@ GetJobByGid::GetJobByGid( const string& gid ) :
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
-    static int fetch_jdl_callback(void *param, int argc, char **argv, char **azColName){
+    static int fetch_job_callback(void *param, int argc, char **argv, char **azColName){
         string* jdl = (string*)param;
-        *jdl = argv[0];
-        return 0;
+	if ( argv && argv[0] )
+	  *jdl = argv[0];
+	return 0;
     }
 
 } // end local namespace
 
-void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException )
+void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    static const char* method_name = "GetJobByGid::execute() - ";
+    //static const char* method_name = "GetJobByGid::execute() - ";
 
-    string sqlcmd = boost::str( boost::format( 
-      "select jdl from jobs" \
-      " where gridjobid = \'%1%\';" ) % m_gridjobid );
-    string serialized_job;
-    do_query( db, sqlcmd, fetch_jdl_callback, &serialized_job );
-    if ( !serialized_job.empty() ) {
+//     string sqlcmd = boost::str( boost::format( 
+//       "select jdl from jobs" \
+//       " where gridjobid = \'%1%\';" ) % m_gridjobid );
+//     string serialized_job;
+//     do_query( db, sqlcmd, fetch_jdl_callback, &serialized_job );
+//     if ( !serialized_job.empty() ) {
+//       try {
+// 	//             istringstream is;
+// 	//             is.str( serialized_job );
+// 	//             {
+// 	//                 boost::archive::text_iarchive ia(is);
+// 	//                 ia >> m_theJob;
+// 	//             }
+// 	m_theJob.setJdl( serialized_job );
+// 	m_found = true;
+//       } catch( std::exception& ex ) {
+// 	CREAM_SAFE_LOG(cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream() << method_name
+// 		       << "Deserialization error of the string "
+// 		       << serialized_job
+// 		       << ". Exception string is  \"" 
+// 		       << ex.what() << "\". Aborting."
+// 		       );
+// 	abort();
+//       }
+//     }
+
+    ostringstream sqlcmd("");
+    sqlcmd << "SELECT serialized from jobs WHERE gridjobid=\'" << m_gridjobid << "\';";
+    do_query( db, sqlcmd.str(), fetch_job_callback, &m_serialized_job );
+    if( !m_serialized_job.empty() ) {
+    
         try {
-            istringstream is;
-            is.str( serialized_job );
-            {
-                boost::archive::text_iarchive ia(is);
-                ia >> m_theJob;
-            }
-            m_found = true;
-        } catch( std::exception& ex ) {
-            CREAM_SAFE_LOG(cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream() << method_name
-                           << "Deserialization error of the string "
-                           << serialized_job
-                           << ". Exception string is  \"" 
-                           << ex.what() << "\". Aborting."
-                           );
-            abort();
-        }
+	  istringstream is;
+	  is.str( m_serialized_job );
+	  {
+	    boost::archive::text_iarchive ia(is);
+	    ia >> m_theJob;
+	  }
+	} catch( std::exception& ex ) {
+	  throw DbOperationException( ex.what() );
+	}
+  
+      m_found = true;
     }
 }

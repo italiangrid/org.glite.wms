@@ -15,17 +15,18 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * DB operation used to update an existing job
+ * Lookup for a job with given Grid Job Id
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef GLITE_WMS_ICE_ICEDB_UPDATE_JOB_H
-#define GLITE_WMS_ICE_ICEDB_UPDATE_JOB_H
+#ifndef GLITE_WMS_ICE_ICEDB_CHECKGID_H
+#define GLITE_WMS_ICE_ICEDB_CHECKGID_H
 
 #include "AbsDbOperation.h"
-#include "iceUtils/creamJob.h"
+//#include "iceUtils/creamJob.h"
+//#include <string>
 
 namespace glite {
 namespace wms {
@@ -33,14 +34,27 @@ namespace ice {
 namespace db {
 
     /**
-     * This operation updates the information on an existing job.
+     *
      */
-    class UpdateJob : public AbsDbOperation { 
-    public:
-        UpdateJob( const glite::wms::ice::util::CreamJob& j );
-        virtual void execute( sqlite3* db ) throw( DbOperationException& );
+    class CheckGridJobID : public AbsDbOperation { 
     protected:
-        const glite::wms::ice::util::CreamJob m_job;
+        const std::string m_gridjobid;
+	//        glite::wms::ice::util::CreamJob m_theJob;
+        bool m_found;
+    public:
+        CheckGridJobID( const std::string& gid );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
+
+        /**
+         * Return the job which has been found. Returns a dummy
+         * job if none has been found
+         */
+        //glite::wms::ice::util::CreamJob get_job( void ) const { return m_theJob; };
+
+        /**
+         * True iff a job has been found
+         */
+        bool found( void ) const { return m_found; };
     };
 
 } // namespace db

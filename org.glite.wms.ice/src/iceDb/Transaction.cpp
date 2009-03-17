@@ -60,13 +60,38 @@ namespace {
         virtual void execute( sqlite3* db ) throw() {            
             try {
                 string sqlcmd = 
-                    "create table jobs ( " \
-                    " gridjobid text primary key," \
-                    " creamjobid text," \
-                    " jdl blob not null," \
-                    " last_empty_notification integer(4)," \
-                    " last_seen integer(4) " \
-                    ")";
+		  "CREATE TABLE jobs ( "	          \
+		  " gridjobid text primary key, "         \
+		  " creamjobid text, "		          \
+		  " complete_cream_jobid text,"           \
+		  " jdl blob not null, "		  \
+		  " serialized blob not null, "           \
+		  " userproxy text not null, "            \
+		  " ceid text, "                          \
+		  " endpoint text, "                      \
+		  " creamurl text not null, "             \
+		  " creamdelegurl text not null, "        \
+		  " userdn text not null, "               \
+		  " myproxyurl text not null, "           \
+		  " proxy_renewable integer(1) not null," \
+		  " failure_reason blob,"                 \
+		  " sequence_code text,"                  \
+		  " wn_sequence_code text,"               \
+		  " prev_status integer(1),"              \
+		  " status integer(1),"                   \
+		  " num_logged_status_changes integer(1),"\
+		  " leaseid text,"                        \
+		  " proxycert_timestamp integer(4),"      \
+		  " status_poller_retry_count integer(1),"\
+		  " exit_code integer(1),"                \
+		  " worker_node text,"                    \
+		  " is_killed_byice integer(1),"          \
+		  " delegationid text,"                   \
+		  " delegation_exptime integer(4),"       \
+		  " delegation_duration integer(4),"      \
+		  " last_empty_notification integer(4),"  \
+		  " last_seen integer(4) "		  \
+		  ")";
                 do_query( db, sqlcmd );
             } catch( ... ) {
             }
@@ -95,7 +120,7 @@ namespace {
     public:
         BeginTransaction( bool exclusive = false ) : AbsDbOperation(), m_exclusive( exclusive ) { };
         virtual ~BeginTransaction() { };
-        virtual void execute( sqlite3* db ) throw( DbOperationException ) {
+        virtual void execute( sqlite3* db ) throw( DbOperationException& ) {
             string sqlcmd;
             if ( m_exclusive ) 
                 sqlcmd = string( "begin exclusive transaction;" );
@@ -112,7 +137,7 @@ namespace {
     public:
         CommitTransaction() : AbsDbOperation() { };
         virtual ~CommitTransaction() { };
-        virtual void execute( sqlite3* db ) throw( DbOperationException ) {
+        virtual void execute( sqlite3* db ) throw( DbOperationException& ) {
             string sqlcmd( "commit transaction;" );
             do_query( db, sqlcmd );
         };
@@ -126,7 +151,7 @@ namespace {
     public:
         RollbackTransaction() : AbsDbOperation() { };
         virtual ~RollbackTransaction() { };
-        virtual void execute( sqlite3* db ) throw( DbOperationException ) {
+        virtual void execute( sqlite3* db ) throw( DbOperationException& ) {
             string sqlcmd( "rollback transaction;" );
             do_query( db, sqlcmd );
         };
@@ -236,7 +261,7 @@ void Transaction::abort( void )
     m_commit = false;
 }
 
-Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationException )
+Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationException& )
 {
     if ( !op ) 
         return *this; // nothing to do

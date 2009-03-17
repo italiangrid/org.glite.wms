@@ -35,27 +35,94 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 CreateJob::CreateJob( const CreamJob& j ) :
-    m_gridjobid( j.getGridJobID() ),
-    m_creamjobid( j.getCompleteCreamJobID() ),
-    m_serialized_job()
-    
+  m_theJob( j ),
+  m_JDL( j.getJDL() ),
+  m_serialized_job()
 {
-    ostringstream ofs;
-    {
-        boost::archive::text_oarchive oa(ofs);
-        oa << j;
-    }
-    m_serialized_job = ofs.str();
-    // Replace single quotes with double quotes, so that the SQL query
-    // will not fail
-    boost::replace_all( m_serialized_job, "'", "''" );
+  ostringstream ofs;
+  {
+    boost::archive::text_oarchive oa(ofs);
+    oa << m_theJob;
+  }
+  m_serialized_job = ofs.str();
+  // Replace single quotes with double quotes, so that the SQL query
+  // will not fail
+  boost::replace_all( m_JDL, "'", "''" );
+  boost::replace_all( m_serialized_job, "'", "''" );
 }
 
-void CreateJob::execute( sqlite3* db ) throw ( DbOperationException )
+void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    string sqlcmd = boost::str( boost::format( 
-      "insert into jobs " \
-      " (gridjobid, creamjobid, jdl) " \
-      " values ( \'%1%\', \'%2%\', \'%3%\')" ) % m_gridjobid % m_creamjobid % m_serialized_job );
-    do_query( db, sqlcmd );
+//     string sqlcmd = boost::str( boost::format( 
+//       "insert or replace into jobs " 
+//       " (gridjobid, creamjobid, jdl, userdn, myproxyurl, proxy_renewable) " 
+//       " values ( \'%1%\', \'%2%\', \'%3%\')" ) % m_gridjobid % m_creamjobid % m_serialized_job );
+
+  ostringstream sqlcmd("");
+  //  string sqlcmd = 
+  sqlcmd << "INSERT OR REPLACE INTO jobs " 
+	 << " (gridjobid, "	     
+	 << " creamjobid, "			     
+    	 << " complete_cream_jobid, "
+	 << " jdl, "
+	 << " serialized, "
+	 << " userproxy, "			     
+	 << " ceid, "				     
+	 << " endpoint, "			     
+	 << " creamurl, "			     
+	 << " creamdelegurl, "		     
+	 << " userdn, "			     
+	 << " myproxyurl, "			     
+	 << " proxy_renewable, "		     
+	 << " failure_reason, "		     
+	 << " sequence_code, "		     
+	 << " wn_sequence_code, "		     
+	 << " prev_status, "			     
+	 << " status, "			     
+	 << " num_logged_status_changes, "	     
+	 << " leaseid, "			     
+	 << " proxycert_timestamp, "		     
+	 << " status_poller_retry_count, "	     
+	 << " exit_code, "			     
+	 << " worker_node, "			     
+	 << " is_killed_byice, "		     
+	 << " delegationid, "			     
+	 << " delegation_exptime, "		     
+	 << " delegation_duration, "		     
+	 << " last_empty_notification, "	     
+	 << " last_seen) "			     
+	 << " VALUES (" 
+	 << "\'"<< m_theJob.getGridJobID() <<"\',"
+	 << "\'"<< m_theJob.getCreamJobID() <<"\'," 
+	 << "\'"<< m_theJob.getCompleteCreamJobID() <<"\',"
+	 << "\'"<< m_JDL <<"\',"
+	 << "\'"<< m_serialized_job <<"\',"
+	 << "\'"<< m_theJob.getUserProxyCertificate() <<"\',"
+	 << "\'"<< m_theJob.getCEID() <<"\',"
+	 << "\'"<< m_theJob.getEndpoint() <<"\',"
+	 << "\'"<< m_theJob.getCreamURL() <<"\',"
+	 << "\'"<< m_theJob.getCreamDelegURL() <<"\',"
+	 << "\'"<< m_theJob.getUserDN() <<"\',"
+	 << "\'"<< m_theJob.getMyProxyAddress() <<"\',"
+	 << "\'"<< m_theJob.is_proxy_renewable() <<"\',"
+	 << "\'"<< m_theJob.get_failure_reason() <<"\',"
+	 << "\'"<< m_theJob.getSequenceCode() <<"\',"
+	 << "\'"<< m_theJob.get_wn_sequence_code() <<"\',"
+	 << "\'"<< m_theJob.get_prev_status() <<"\',"
+	 << "\'"<< m_theJob.getStatus() <<"\',"
+	 << "\'"<< m_theJob.get_num_logged_status_changes() <<"\',"
+	 << "\'"<< m_theJob.get_lease_id() <<"\',"
+	 << "\'"<< m_theJob.getProxyCertLastMTime() <<"\',"
+	 << "\'"<< m_theJob.getStatusPollRetryCount() <<"\',"
+	 << "\'"<< m_theJob.get_exit_code() <<"\',"
+	 << "\'"<< m_theJob.get_worker_node() <<"\',"
+	 << "\'"<< m_theJob.is_killed_by_ice() <<"\',"
+	 << "\'"<< m_theJob.getDelegationId() <<"\',"
+	 << "\'"<< m_theJob.getDelegationExpirationTime() <<"\',"
+	 << "\'"<< m_theJob.getDelegationDuration() <<"\',"
+	 << "\'"<< m_theJob.get_last_empty_notification() <<"\',"
+	 << "\'"<< m_theJob.getLastSeen()  <<"\')";
+    
+			      
+  do_query( db, sqlcmd.str() );
 }

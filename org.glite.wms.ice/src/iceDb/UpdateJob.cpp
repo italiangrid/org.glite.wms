@@ -40,7 +40,7 @@ UpdateJob::UpdateJob( const CreamJob& j ) :
 
 }
 
-void UpdateJob::execute( sqlite3* db ) throw ( DbOperationException )
+void UpdateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     //string m_gridjobid( m_job.getGridJobID() );
     //string m_creamjobid( m_job.getCompleteCreamJobID() );

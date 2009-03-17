@@ -15,17 +15,19 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * DB operation used to update an existing job
+ * Get all User DN
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef GLITE_WMS_ICE_ICEDB_UPDATE_JOB_H
-#define GLITE_WMS_ICE_ICEDB_UPDATE_JOB_H
+#ifndef GLITE_WMS_ICE_GET_GETCIDCREAMURLUSERDN_H
+#define GLITE_WMS_ICE_GET_GETCIDCREAMURLUSERDN_H
 
 #include "AbsDbOperation.h"
-#include "iceUtils/creamJob.h"
+#include <list>
+#include <utility>
+#include <string>
 
 namespace glite {
 namespace wms {
@@ -33,14 +35,24 @@ namespace ice {
 namespace db {
 
     /**
-     * This operation updates the information on an existing job.
+     *
      */
-    class UpdateJob : public AbsDbOperation { 
-    public:
-        UpdateJob( const glite::wms::ice::util::CreamJob& j );
-        virtual void execute( sqlite3* db ) throw( DbOperationException& );
+    class GetCidByCreamURLUserDN : public AbsDbOperation {
     protected:
-        const glite::wms::ice::util::CreamJob m_job;
+        std::list< std::string > m_result;
+	std::pair< std::string, std::string> m_creamurl_userdn;
+
+    public:
+        GetCidByCreamURLUserDN( const std::pair<std::string, std::string>& );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
+
+        /**
+         * Return the list of jobs to poll
+         */ 
+        std::list< std::string > get( void ) const {
+            return m_result;
+        };
+
     };
 
 } // namespace db

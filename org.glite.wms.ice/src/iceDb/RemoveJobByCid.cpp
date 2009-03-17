@@ -34,7 +34,7 @@ RemoveJobByCid::RemoveJobByCid( const string& cream_job_id ) :
 
 }
 
-void RemoveJobByCid::execute( sqlite3* db ) throw ( DbOperationException )
+void RemoveJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = boost::str( boost::format( 
       "delete from jobs " \

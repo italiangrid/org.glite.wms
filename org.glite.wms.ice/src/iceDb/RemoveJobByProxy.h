@@ -15,29 +15,37 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * DB operation used to remove a job with given grid job id
+ * DB operation used to remove a job with given proxy certificate
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "RemoveJobByGid.h"
+#ifndef GLITE_WMS_ICE_ICEDB_REMOVE_JOB_BY_PROXY_H
+#define GLITE_WMS_ICE_ICEDB_REMOVE_JOB_BY_PROXY_H
 
-#include "boost/format.hpp"
+#include "AbsDbOperation.h"
+#include <string>
 
-using namespace glite::wms::ice::db;
-using namespace std;
+namespace glite {
+namespace wms {
+namespace ice {
+namespace db {
 
-RemoveJobByGid::RemoveJobByGid( const string& gid ) :
-    m_gridjobid( gid )
-{
+    /**
+     *
+     */
+    class RemoveJobByProxy : public AbsDbOperation { 
+    public:
+        RemoveJobByProxy( const std::string& proxy );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
+    protected:
+        std::string m_proxy;
+    };
 
-}
+} // namespace db
+} // namespace ice
+} // namespace wms
+} // namespace glite
 
-void RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
-{
-    string sqlcmd = boost::str( boost::format( 
-      "delete from jobs " \
-      " where gridjobid = \'%1%\'; " ) % m_gridjobid );
-    do_query( db, sqlcmd );
-}
+#endif

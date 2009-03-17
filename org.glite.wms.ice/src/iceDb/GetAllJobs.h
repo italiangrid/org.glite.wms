@@ -15,29 +15,48 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * DB operation used to remove a job with given grid job id
+ * Get all grid job ids
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "RemoveJobByGid.h"
+#ifndef GLITE_WMS_ICE_GET_ALLGID_H
+#define GLITE_WMS_ICE_GET_ALLGID_H
 
-#include "boost/format.hpp"
+#include "AbsDbOperation.h"
+#include <list>
+#include <string>
+#include "iceUtils/creamJob.h"
 
-using namespace glite::wms::ice::db;
-using namespace std;
+namespace glite {
+namespace wms {
+namespace ice {
+namespace db {
 
-RemoveJobByGid::RemoveJobByGid( const string& gid ) :
-    m_gridjobid( gid )
-{
+    /**
+     *
+     */
+    class GetAllJobs : public AbsDbOperation {
+    protected:
+        std::list< glite::wms::ice::util::CreamJob > m_result;
 
-}
+    public:
+        GetAllJobs( );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
-void RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
-{
-    string sqlcmd = boost::str( boost::format( 
-      "delete from jobs " \
-      " where gridjobid = \'%1%\'; " ) % m_gridjobid );
-    do_query( db, sqlcmd );
-}
+        /**
+         * Return the list of jobs to poll
+         */ 
+        std::list< glite::wms::ice::util::CreamJob > get_jobs( void ) const {
+            return m_result;
+        };
+
+    };
+
+} // namespace db
+} // namespace ice
+} // namespace wms
+} // namespace glite
+
+#endif

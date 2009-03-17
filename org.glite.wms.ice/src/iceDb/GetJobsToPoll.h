@@ -28,6 +28,10 @@
 #include "iceUtils/creamJob.h"
 #include <list>
 #include <string>
+//#include <boost/tuple/tuple.hpp>
+
+//                   creamjobid,  complete cid gridjobid,   userdn,      creamurl     last seen   last empty
+//typedef boost::tuple<std::string, std::string, std::string, std::string, std::string, time_t,     time_t     > JobToPoll;
 
 namespace glite {
 namespace wms {
@@ -40,15 +44,17 @@ namespace db {
     class GetJobsToPoll : public AbsDbOperation {
     protected:
         bool m_poll_all_jobs;
-        std::list< std::string > m_result;
+//        std::list< boost::tuple<std::string, std::string, std::string> > m_result;
+	std::list< glite::wms::ice::util::CreamJob > m_result;
+
     public:
         GetJobsToPoll( bool poll_all_jobs );
-        virtual void execute( sqlite3* db ) throw( DbOperationException );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**
          * Return the list of jobs to poll
          */ 
-        std::list< std::string > get_jobs( void ) const {
+        std::list< glite::wms::ice::util::CreamJob > get_jobs( void ) const {
             return m_result;
         };
 

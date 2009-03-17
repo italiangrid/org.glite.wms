@@ -40,10 +40,11 @@ namespace db {
     protected:
         const std::string m_gridjobid;
         glite::wms::ice::util::CreamJob m_theJob;
+	std::string m_serialized_job;
         bool m_found;
     public:
         GetJobByGid( const std::string& gid );
-        virtual void execute( sqlite3* db ) throw( DbOperationException );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**
          * Return the job which has been found. Returns a dummy

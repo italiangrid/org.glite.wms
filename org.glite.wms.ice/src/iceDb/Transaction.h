@@ -97,7 +97,7 @@ namespace db {
          * the caller owns the pointer to op. If op is null, this
          * operation does nothing.
          */
-        Transaction& execute( AbsDbOperation* op ) throw( DbOperationException );
+        Transaction& execute( AbsDbOperation* op ) throw( DbOperationException& );
 
     protected:
 

@@ -34,7 +34,7 @@ RemoveJob::RemoveJob( const string& grid_job_id ) :
 
 }
 
-void RemoveJob::execute( sqlite3* db ) throw ( DbOperationException )
+void RemoveJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = boost::str( boost::format( 
       "delete from jobs " \

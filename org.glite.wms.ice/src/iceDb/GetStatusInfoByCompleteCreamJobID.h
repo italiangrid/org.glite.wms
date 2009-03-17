@@ -15,17 +15,22 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * DB operation used to update an existing job
+ * Get job status information by Complete Cream JOB ID
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef GLITE_WMS_ICE_ICEDB_UPDATE_JOB_H
-#define GLITE_WMS_ICE_ICEDB_UPDATE_JOB_H
+#ifndef GLITE_WMS_ICE_ICEDB_GETSTATUSINFOBYCID_H
+#define GLITE_WMS_ICE_ICEDB_GETSTATUSINFOBYCID_H
 
 #include "AbsDbOperation.h"
-#include "iceUtils/creamJob.h"
+//#include "iceUtils/creamJob.h"
+#include <string>
+#include <boost/tuple/tuple.hpp>
+
+//                   gridjobid  complete cid  num status changes   status
+typedef boost::tuple<std::string,    std::string,       int,                 int>     StatusInfo;
 
 namespace glite {
 namespace wms {
@@ -33,14 +38,29 @@ namespace ice {
 namespace db {
 
     /**
-     * This operation updates the information on an existing job.
+     *
      */
-    class UpdateJob : public AbsDbOperation { 
-    public:
-        UpdateJob( const glite::wms::ice::util::CreamJob& j );
-        virtual void execute( sqlite3* db ) throw( DbOperationException& );
+    class GetStatusInfoByCompleteCreamJobID : public AbsDbOperation { 
     protected:
-        const glite::wms::ice::util::CreamJob m_job;
+        const std::string m_creamjobid;
+        //glite::wms::ice::util::CreamJob m_theJob;
+	StatusInfo m_info;
+        bool m_found;
+	
+    public:
+        GetStatusInfoByCompleteCreamJobID( const std::string& cid );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
+
+        /**
+         * Return the job which has been found. Returns a dummy
+         * job if none has been found
+         */
+        StatusInfo get_info( void ) const { return m_info; };
+
+        /**
+         * True iff a job has been found
+         */
+        bool found( void ) const { return m_found; };
     };
 
 } // namespace db

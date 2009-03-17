@@ -39,9 +39,11 @@ namespace db {
     class CreateJob : public AbsDbOperation { 
     public:
         CreateJob( const glite::wms::ice::util::CreamJob& j );
-        virtual void execute( sqlite3* db ) throw( DbOperationException );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:
-        std::string m_gridjobid, m_creamjobid, m_serialized_job;
+        std::string                       m_serialized_job;
+	glite::wms::ice::util::CreamJob   m_theJob;
+	std::string                       m_JDL;
     };
 
 } // namespace db

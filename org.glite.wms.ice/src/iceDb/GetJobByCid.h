@@ -38,12 +38,13 @@ namespace db {
      */
     class GetJobByCid : public AbsDbOperation { 
     protected:
-        const std::string m_creamjobid;
-        glite::wms::ice::util::CreamJob m_theJob;
-        bool m_found;
+        const std::string                m_creamjobid;
+        glite::wms::ice::util::CreamJob  m_theJob;
+	std::string                      m_serialized_job;
+        bool                             m_found;
     public:
         GetJobByCid( const std::string& cid );
-        virtual void execute( sqlite3* db ) throw( DbOperationException );
+        virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**
          * Return the job which has been found. Returns a dummy

@@ -60,10 +60,10 @@ namespace db {
         typedef int (*sqlite_callback_t)(void*,int,char**,char**);    
 
         virtual ~AbsDbOperation() { };
-        virtual void execute( sqlite3* db ) throw( DbOperationException ) = 0;
+        virtual void execute( sqlite3* db ) throw( DbOperationException& ) = 0;
     protected:
         AbsDbOperation() { };
-        void do_query( sqlite3* db, const std::string& sqlcmd, sqlite_callback_t callback = 0, void* param = 0 ) throw( DbOperationException );
+        void do_query( sqlite3* db, const std::string& sqlcmd, sqlite_callback_t callback = 0, void* param = 0 ) throw( DbOperationException& );
     };
 
 } // namespace db
