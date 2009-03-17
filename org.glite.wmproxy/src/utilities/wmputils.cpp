@@ -819,24 +819,18 @@ doPurge(string dg_jobid, bool force)
 	GLITE_STACK_TRY("doPurge()");
 	edglog_fn("wmputils::doPurge");
 	if (dg_jobid.length()) {
+    WMPEventLogger wmplogger(wmputilities::getEndpoint());
 		edglog(debug)<<"JobId object for purging created: "
 			<<dg_jobid<<endl;
 		// DTMT issue 56 fix: (DAG node PURGE)
 		if (force){
 			// Forcing purge (needed for dag nodes)
-			return purger::Purger().force_dag_node_removal()(jobid::JobId(dg_jobid));
+			return purger::Purger(
+        getLBProxy()
+      ).force_dag_node_removal()(jobid::JobId(dg_jobid));
 		}else{
-			return purger::Purger()(jobid::JobId(dg_jobid));
+			return purger::Purger(getLBProxy())(jobid::JobId(dg_jobid));
 		}
-
-		/* TODO NEW PURGER APPROACH
-		if (force) {
-			return purger::Purger().force_dag_node_removal()(path);
-		}else{
-			return purger::Purger()(path);
-		}
-		*/
-		
 	} else {
 		edglog(critical)
 			<<"Error in Purging: Invalid Job Id. Purge not done."<<endl;
