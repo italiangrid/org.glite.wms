@@ -43,6 +43,8 @@ limitations under the License.
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include <classad_distribution.h>
+
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
@@ -52,6 +54,8 @@ limitations under the License.
 #include "logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
+// Event logger
+#include "eventlogger/wmpeventlogger.h"
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 #include "glite/wms/purger/purger.h"
@@ -819,17 +823,17 @@ doPurge(string dg_jobid, bool force)
 	GLITE_STACK_TRY("doPurge()");
 	edglog_fn("wmputils::doPurge");
 	if (dg_jobid.length()) {
-    WMPEventLogger wmplogger(wmputilities::getEndpoint());
+    eventlogger::WMPEventLogger wmplogger(utilities::getEndpoint());
 		edglog(debug)<<"JobId object for purging created: "
 			<<dg_jobid<<endl;
 		// DTMT issue 56 fix: (DAG node PURGE)
 		if (force){
 			// Forcing purge (needed for dag nodes)
 			return purger::Purger(
-        getLBProxy()
+        wmplogger.getLBProxy()
       ).force_dag_node_removal()(jobid::JobId(dg_jobid));
 		}else{
-			return purger::Purger(getLBProxy())(jobid::JobId(dg_jobid));
+			return purger::Purger(wmplogger.getLBProxy())(jobid::JobId(dg_jobid));
 		}
 	} else {
 		edglog(critical)

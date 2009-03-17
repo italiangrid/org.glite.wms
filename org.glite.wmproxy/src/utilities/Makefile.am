@@ -30,6 +30,8 @@ libglite_wms_wmproxy_utilities_la_SOURCES = \
 #        $(GLITE_WMS_COMMON_QUOTA_LIBS)
 
 AM_CPPFLAGS = \
+  -I$(top_srcdir)/src/ \
+  $(CLASSAD_CFLAGS) \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(LIBTAR_CFLAGS) \
