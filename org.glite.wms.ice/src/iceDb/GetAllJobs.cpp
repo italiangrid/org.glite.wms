@@ -31,18 +31,21 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/ce/cream-client-api-c/job_statuses.h"
 
 // #include <sstream>
 // #include <cstdlib>
 
+namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
 //namespace cream_api = glite::ce::cream_client_api;
 //namespace wms_utils  = glite::wms::common::utilities;
 
-GetAllJobs::GetAllJobs( ) :    
-    AbsDbOperation()
+GetAllJobs::GetAllJobs( const bool only_active) :    
+    AbsDbOperation(),
+    m_only_active( only_active )
 {
 }
 
@@ -74,7 +77,23 @@ void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   //static const char* method_name = "GetAllGridJobID::execute() - ";
 
-  string sqlcmd = "SELECT serialized FROM jobs;";
+  ostringstream sqlcmd( "" );
+  if(m_only_active)
+    sqlcmd << "SELECT serialized FROM jobs WHERE status=\'"
+	   << api::job_statuses::REGISTERED 
+	   << "\' OR status=\'"
+	   << api::job_statuses::PENDING 
+	   << "\' OR status=\'"
+	   << api::job_statuses::IDLE
+	   << "\' OR status=\'"
+	   << api::job_statuses::RUNNING
+	   << "\' OR status=\'"
+	   << api::job_statuses::REALLY_RUNNING
+	   << "\' OR status=\'"
+	   << api::job_statuses::HELD
+	   << "\' AND is_killed_by_ice=\'0\';";
+  else
+    sqlcmd << "SELECT serialized FROM jobs;";
   
-  do_query( db, sqlcmd, fetch_jobs_callback, &m_result );
+  do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_result );
 }

@@ -40,9 +40,10 @@ namespace db {
     class GetAllJobs : public AbsDbOperation {
     protected:
         std::list< glite::wms::ice::util::CreamJob > m_result;
+	const bool                                   m_only_active;
 
     public:
-        GetAllJobs( );
+        GetAllJobs( const bool only_active = false );
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**
