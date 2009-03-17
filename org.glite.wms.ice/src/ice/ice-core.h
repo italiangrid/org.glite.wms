@@ -28,7 +28,7 @@
 #include "creamJob.h"
 #include "iceThread.h"
 #include "iceThreadPool.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 
 #include "ClassadSyntax_ex.h"
 
@@ -130,7 +130,7 @@ namespace ice {
         log4cpp::Category* m_log_dev;
         
         util::iceLBLogger* m_lb_logger;
-        util::jobCache* m_cache;
+        //util::jobCache* m_cache;
         glite::wms::common::configuration::Configuration* m_configuration;
 
         // 
@@ -185,7 +185,8 @@ namespace ice {
          * the purge(and subsequent removal) was succesful. jit if
          * not.
          */
-        util::jobCache::iterator purge_job( util::jobCache::iterator j, const std::string& reason ) throw();
+        //util::jobCache::iterator 
+	void purge_job( /*util::jobCache::iterator */ const util::CreamJob& j, const std::string& reason ) throw();
         
     public:
         
@@ -235,7 +236,9 @@ namespace ice {
          * the job is purged or resubmitted (and hence removed from
          * the job cache).
          */
-        util::jobCache::iterator resubmit_or_purge_job( util::jobCache::iterator it ) throw();
+	//        util::jobCache::iterator 
+	void resubmit_or_purge_job( /*util::jobCache::iterator it*/ util::CreamJob& ) throw();
+	
         
         /**
          * returns the singleton instance of this class.

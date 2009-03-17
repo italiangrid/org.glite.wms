@@ -56,6 +56,7 @@ namespace glite {
                      * thus responsible for relinquishing it.
                      */
                     static iceLBEvent* mkEvent( const CreamJob& j );
+
                 protected:
                     iceLBEventFactory( ) { };
                 };

@@ -25,6 +25,10 @@
 #include "CreamProxyMethod.h"
 #include "DNProxyManager.h"
 #include "Lease_manager.h"
+#include "iceDb/GetAllJobs.h"
+#include "iceDb/Transaction.h"
+#include "iceDb/GetJobByGid.h"
+#include "iceDb/RemoveJobByGid.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -33,7 +37,7 @@
 
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "creamJob.h"
@@ -56,7 +60,8 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 //________________________________________________________________________
-bool iceCommandLeaseUpdater::job_can_be_removed( const CreamJob& job ) const throw()
+bool iceCommandLeaseUpdater::job_can_be_removed( const CreamJob& job ) 
+  const throw()
 {
     if ( !job.get_lease_id().empty() ) {
         Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
@@ -86,6 +91,7 @@ bool iceCommandLeaseUpdater::job_can_be_removed( const CreamJob& job ) const thr
     return false;
 }
             
+//________________________________________________________________________
 bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const throw() 
 {
     //
@@ -120,7 +126,7 @@ iceCommandLeaseUpdater::iceCommandLeaseUpdater( bool only_update ) throw() :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
     m_frequency( iceConfManager::getInstance()->getConfiguration()->ice()->lease_update_frequency() ),
-    m_cache( jobCache::getInstance() ),
+    //    m_cache( jobCache::getInstance() ),
     m_only_update( only_update ),
     m_lease_manager( Lease_manager::instance() )
 {
@@ -136,9 +142,19 @@ void iceCommandLeaseUpdater::execute( ) throw()
     list< string > jobs_to_remove; //< List of Grid job IDs which have the lease expired, and thus must be removed from the job cache
 
     { // acquire lock on the job cache
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-        for ( jobCache::iterator it = m_cache->begin();
-              it != m_cache->end(); ++it ) {
+      //        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+
+      list< CreamJob > allJobs;
+      {
+	db::GetAllJobs getter;
+	db::Transaction tnx;
+	tnx.execute( &getter );
+	allJobs = getter.get_jobs();
+      }
+
+      for ( list< CreamJob >::const_iterator it = allJobs.begin();
+	    it != allJobs.end(); ++it ) {
 
             // WATNING: There exists an interval in which both
             // lease_can_be_renewed( x ) and job_can_be_removed( x )
@@ -157,42 +173,52 @@ void iceCommandLeaseUpdater::execute( ) throw()
     // Renew leases which are going to expire
     //
     for ( set< string >::const_iterator it = lease_to_renew.begin();
-          it != lease_to_renew.end(); ++it ) {
-
+          it != lease_to_renew.end(); ++it ) 
+      {
+	
         CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                        << "Will renew lease ID " << *it
                        );
         
         // Get the Lease_t object from the lease manager cache
         try {
-            time_t new_lease = m_lease_manager->renew_lease( *it );
+	  time_t new_lease = m_lease_manager->renew_lease( *it );
         } catch( const std::exception& ex ) {
-            CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
-                            << "Lease update for lease ID " << *it << " failed. " 
-                            << "Exception is " << ex.what()
-                            << ". This lease will be removed after expiration."
-                            );
-            // Nothing to do. The next iteration will take care of
-            // non existing leases, or expired leases
+	  CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+			  << "Lease update for lease ID " << *it << " failed. " 
+			  << "Exception is " << ex.what()
+			  << ". This lease will be removed after expiration."
+			  );
+	  // Nothing to do. The next iteration will take care of
+	  // non existing leases, or expired leases
         } catch( ... ) {
-            CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
-                            << "Lease update for lease ID " << *it << " failed " 
-                            << "due to an unknown exception. "
-                            << "This lease will be removed after expiration."
-                            );
+	  CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+			  << "Lease update for lease ID " << *it << " failed " 
+			  << "due to an unknown exception. "
+			  << "This lease will be removed after expiration."
+			  );
         }        
-    }
+      }
+    
 
-
-    for ( list<string>::const_iterator it = jobs_to_remove.begin();
+    for( list<string>::const_iterator it = jobs_to_remove.begin();
           jobs_to_remove.end() != it; ++it ) {
 
-        jobCache::iterator job_it( m_cache->lookupByGridJobID( *it ) );
+      //        jobCache::iterator job_it( m_cache->lookupByGridJobID( *it ) );
+      CreamJob the_job;
+      {
+	db::GetJobByGid getter( *it );
+	db::Transaction tnx;
+	tnx.execute( &getter );
+	if( !getter.found() )
+	  continue;
+	the_job = getter.get_job();
+      }
 
-        if ( m_cache->end() == job_it ) 
-             continue; // something wrong happened, skip this job
+//         if ( m_cache->end() == job_it ) 
+//              continue; // something wrong happened, skip this job
 
-        CreamJob the_job( *job_it );
+        //CreamJob the_job( *job_it );
 
         // 
         // Remove lease-expired jobs from the job cache
@@ -231,7 +257,11 @@ void iceCommandLeaseUpdater::execute( ) throw()
         iceLBLogger::instance()->logEvent( new job_done_failed_event( the_job ) );
         glite::wms::ice::Ice::instance()->resubmit_job( the_job, "Lease expired" );
         
-        m_cache->erase( job_it );
+        //m_cache->erase( job_it );
+	{
+	  db::RemoveJobByGid remover( the_job.getGridJobID() );
+	  db::Transaction tnx;
+	  tnx.execute( &remover );
+	}
     }
-
 }

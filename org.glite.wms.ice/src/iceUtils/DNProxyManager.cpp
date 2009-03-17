@@ -23,7 +23,12 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/security/proxyrenewal/renewal.h"
 
-#include "jobCache.h"
+#include "iceDb/GetAllProxyByDN.h"
+#include "iceDb/RemoveJobByProxy.h"
+#include "iceDb/GetAllUserDN.h"
+#include "iceDb/GetAllUserDN_MyProxy.h"
+#include "iceDb/Transaction.h"
+
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -64,11 +69,10 @@ iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 {
   m_log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
-  iceUtil::jobCache *cache = iceUtil::jobCache::getInstance();
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		 << "DNProxyManager::CTOR() - "
-		 << "Populating DN -> Proxy cache by scannig the jobCache..."
+		 << "Populating DN -> Proxy cache by scannig the database..."
 		 );
   
   /**
@@ -76,7 +80,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
    * initialization, when no other thread acquire the cache's mutex
    *
    */
-  boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+  //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 
   /**
    * Retrieve all distinguished DNs
@@ -84,26 +88,41 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
   map<string, long long int > dnSet_myproxy; // DN -> (myproxy, how many jobs active for this DN having MYPROXYSERVER)
   set<string> dnSet;
 
-  for( jobCache::iterator jit = cache->begin();
-       jit != cache->end();
-       ++jit) 
-    {
-      if(jit->is_proxy_renewable()) {
+  {
+    db::GetAllUserDN get( false );
+    db::Transaction tnx;
+    tnx.execute( &get );
+    dnSet = get.get_dn();
+  }
 
-	dnSet_myproxy[ this->composite(jit->getUserDN(), jit->getMyProxyAddress()) ]++;
-	
-      } else {
-	dnSet.insert( jit->getUserDN() );
+  {
+    db::GetAllUserDN_MyProxy get;
+    db::Transaction tnx;
+    tnx.execute( &get );
+    set<string> tmp = get.get(); 
+    for(set<string>::const_iterator it = tmp.begin();
+	it != tmp.end();
+	++it)
+      {
+	dnSet_myproxy[ *it ]++;
       }
-    }
+  }
+
+  for( set< string >::const_iterator it = dnSet.begin();
+       it != dnSet.end();
+       ++it) {
+    
+    db::GetAllProxyByDN get( *it );
+    db::Transaction tnx;
+    tnx.execute( &get );
+    m_temp_dnproxy_Map[ *it ] = get.get_proxies();
+  }
 
   /**
    * for each DN check if the better ICE's local proxy is there
    */
   string localProxy;
   string prefix = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
-  
-  iceUtil::jobCache::iterator job_with_better_proxy_from_sandboxDir;
   
   for(set<string>::const_iterator it = dnSet.begin();
       it != dnSet.end();
@@ -114,7 +133,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
       localProxy = prefix + compressed_string( *it ) + ".proxy";
       boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
       
-      pair<iceUtil::jobCache::iterator, time_t> job_with_better_proxy_from_sandboxDir = this->searchBetterProxy( *it );
+      pair< string, time_t > job_with_better_proxy_from_sandboxDir = this->searchBetterProxy( *it );
       
       if( !boost::filesystem::exists( thisPath ) )
 	{
@@ -128,30 +147,29 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 			 << " one in the job cache for the current DN..."
 			 );
 
-	  if( job_with_better_proxy_from_sandboxDir.first == cache->end() )
+	  if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
 	    {
 	      continue;
 	    }
 	    
 	  try {
 	  
-	    this->copyProxy(job_with_better_proxy_from_sandboxDir.first->getUserProxyCertificate(), localProxy);
+	    this->copyProxy(job_with_better_proxy_from_sandboxDir.first, localProxy);
 	    
 	  } catch(SourceProxyNotFoundException& ex) {
 	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			   << "DNProxyManager::CTOR() - Error copying proxy ["
-			   << job_with_better_proxy_from_sandboxDir.first->getUserProxyCertificate() << "] to ["
+			   << job_with_better_proxy_from_sandboxDir.first << "] to ["
 			   << localProxy << "] for DN ["
 			   << *it << "]. Skipping"
 			   );
 	    continue;
 	  }
 	  
-	  //m_DNProxyMap[*it] = make_pair( localProxy, job_with_better_proxy_from_sandboxDir.second ) ;
 	  m_DNProxyMap[*it] = boost::make_tuple(localProxy, job_with_better_proxy_from_sandboxDir.second, 0 );
 	    
 	} else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
-          if( job_with_better_proxy_from_sandboxDir.first == cache->end() )
+	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
 	    {
 	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
 			     << "DNProxyManager::CTOR() - Not found any proxy for DN ["
@@ -160,7 +178,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 	      continue;
 	    }
           this->setUserProxyIfLonger_Legacy(*it, 
-					    job_with_better_proxy_from_sandboxDir.first->getUserProxyCertificate(), 
+					    job_with_better_proxy_from_sandboxDir.first, 
 					    job_with_better_proxy_from_sandboxDir.second);
       
         } // if( !boost::filesystem::exists( thisPath ) )
@@ -394,9 +412,6 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
 void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
-  //string dn;
-  //  try {
-  //dn = glite::ce::cream_client_api::certUtil::getDNFQAN( prx );
   
   cream_api::soap_proxy::VOMSWrapper V( prx );
   if( !V.IsValid( ) ) {
@@ -476,7 +491,6 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 		   << time_t_to_string(exptime) << "]"
 		   );
 
-    //m_DNProxyMap_Legacy[ dn ] = make_pair(localProxy, exptime);
     m_DNProxyMap[ dn ] = boost::make_tuple( localProxy, exptime, 0);
 
     return;
@@ -618,8 +632,8 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 }
 
 //________________________________________________________________________
-pair<iceUtil::jobCache::iterator, time_t>
-iceUtil::DNProxyManager::searchBetterProxy( const string& dn ) 
+pair<string, time_t>
+iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
   throw() 
 {
   
@@ -629,7 +643,8 @@ iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
   */
 
   time_t besttime = 0;
-  iceUtil::jobCache::iterator bestProxy = iceUtil::jobCache::getInstance()->end();
+  //iceUtil::jobCache::iterator bestProxy = iceUtil::jobCache::getInstance()->end();
+  string bestProxy = "";
 
   CREAM_SAFE_LOG(
   	m_log_dev->debugStream() 
@@ -637,16 +652,15 @@ iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
 		<< dn << "]" 
   );
 
-  for(iceUtil::jobCache::iterator jit = iceUtil::jobCache::getInstance()->begin();
-      jit != iceUtil::jobCache::getInstance()->end();
-      ) 
+  set<string> proxies = m_temp_dnproxy_Map[ dn ];
+  if( proxies.empty() )
+    return make_pair( "", 0 );
+
+  for( set<string>::const_iterator it = proxies.begin();
+       it != proxies.end();
+       ++it)
     {
-      if( jit->getUserDN() != dn ) {
-	++jit;
-	continue;
-      }
-    
-      string jobCert = jit->getUserProxyCertificate();
+      string jobCert = *it;
       boost::filesystem::path thisPath( jobCert, boost::filesystem::native );
 
 
@@ -656,10 +670,13 @@ iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			 << "DNProxyManager::searchBetterProxyForUser() - "
 			 << "Cannot find SandboxDir's proxy file ["
-			 << jobCert << "]. Removing job "
-			 << jit->describe() << " from cache."
+			 << jobCert << "]. Removing all jobs submitted with this "
+			 << "certificate from ICE's database... "
 			 );
-	  jit = iceUtil::jobCache::getInstance()->erase( jit );
+	  
+	  db::RemoveJobByProxy remover( jobCert );
+	  db::Transaction tnx;
+	  tnx.execute( &remover );
 	  continue;
 	}
 
@@ -671,7 +688,6 @@ iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
 		       << jobCert << "]: "
 		       << V.getErrorMessage() << ". Skipping"
 		       );
-	++jit;
 	continue;
       }
 	
@@ -679,11 +695,10 @@ iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
 
       if (timeleft > besttime)
 	{
-	  bestProxy = jit;
+	  bestProxy = *it;
 	  besttime = timeleft;
 	}
 
-      ++jit;
       continue;
       
     }
@@ -770,17 +785,17 @@ const throw()
 boost::tuple<string, time_t, long long int> 
 iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
 						  const string& myproxyname)
- const throw() 
-	  {
-	    
-	    boost::recursive_mutex::scoped_lock M( mutex );
-	    
-	    map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( this->composite(dn, myproxyname ) );
-	    
-	    if( it == m_DNProxyMap.end() ) {
-	      return boost::make_tuple("", 0, 0);
-	    } else {
-	      return boost::make_tuple(it->second.get<0>(), it->second.get<1>(), it->second.get<2>());
-	    }
-	    
-	  }
+  const throw() 
+{
+  
+  boost::recursive_mutex::scoped_lock M( mutex );
+  
+  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( this->composite(dn, myproxyname ) );
+  
+  if( it == m_DNProxyMap.end() ) {
+    return boost::make_tuple("", 0, 0);
+  } else {
+    return boost::make_tuple(it->second.get<0>(), it->second.get<1>(), it->second.get<2>());
+  }
+  
+}

@@ -25,7 +25,6 @@
 #include "Delegation_manager.h"
 #include "iceConfManager.h"
 #include "iceSubscription.h"
-#include "jobCache.h"
 #include "creamJob.h"
 #include "ice-core.h"
 #include "eventStatusListener.h"
@@ -35,6 +34,11 @@
 #include "Request.h"
 #include "Request_source_purger.h"
 #include "iceUtils.h"
+
+#include "iceDb/RemoveJobByGid.h"
+#include "iceDb/CheckGridJobID.h"
+#include "iceDb/Transaction.h"
+#include "iceDb/CreateJob.h"
 
 /**
  *
@@ -89,7 +93,6 @@ namespace { // Anonymous namespace
     class remove_job_from_cache {
     protected:
         const std::string m_grid_job_id;
-        iceUtil::jobCache* m_cache;
         
     public:
         /**
@@ -97,18 +100,23 @@ namespace { // Anonymous namespace
          * the job with given grid_job_id from the cache.
          */
         remove_job_from_cache( const std::string& grid_job_id ) :
-            m_grid_job_id( grid_job_id ),
-            m_cache( iceUtil::jobCache::getInstance() )
+            m_grid_job_id( grid_job_id )
         { };
         /**
          * Actually removes the job from cache. If the job is no
          * longer in the job cache, nothing is done.
          */
         void operator()( void ) {
-//	  api_util::scoped_timer tmp_timer( "remove_job_from_cache::operator()" );
-            boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-            iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
-            m_cache->erase( it );
+	  //	  api_util::scoped_timer tmp_timer( "remove_job_from_cache::operator()" );
+	 
+	  db::RemoveJobByGid remover( m_grid_job_id );
+
+	  //            boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+	  //            iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
+	  //            m_cache->erase( it );
+	  db::Transaction tnx;
+	  tnx.execute( &remover );
+
         }
     };       
     
@@ -229,18 +237,17 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 {
     static const char* method_name="iceCommandSubmit::execute() - ";
 
-#ifdef ICE_PROFILE_ENABLE
-    api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
-#endif
+// #ifdef ICE_PROFILE_ENABLE
+//     api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
+// #endif
 
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << method_name
                    << "This request is a Submission..."
-                   
                    );   
     
-    iceUtil::jobCache* cache( iceUtil::jobCache::getInstance() );
+    //    iceUtil::jobCache* cache( iceUtil::jobCache::getInstance() );
     
     Request_source_purger purger_f( m_request );
     wms_utils::scope_guard remove_request_guard( purger_f );
@@ -253,19 +260,24 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     // take care of actual removal.
     {
 //      api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute() - First mutex: Check of GridJobID" );
-        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-	iceUtil::jobCache::iterator it( cache->lookupByGridJobID( m_theJob.getGridJobID() ) );
-        if ( cache->end() != it ) {
-            CREAM_SAFE_LOG( m_log_dev->warnStream()
-                            << method_name
-                            << "Submit request for job "
-                            << m_theJob.describe()
-                            << " is related to a job already in ICE cache. "
-                            << "Removing the request and going ahead."
-                            );
-            return;
-        }
-    } // unlocks the cache
+//        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
+      
+      db::CheckGridJobID check( m_theJob.getGridJobID() );
+      db::Transaction tnx;
+      tnx.execute( &check );
+      if( check.found() ) {
+	CREAM_SAFE_LOG( m_log_dev->warnStream()
+			<< method_name
+			<< "Submit request for job "
+			<< m_theJob.describe()
+			<< " is related to a job already in ICE's database. "
+			<< "Removing the request and going ahead."
+			);
+	return;
+      }
+
+    } 
 
 
     // This must be left AFTER the above code. The remove_job_guard
@@ -347,7 +359,6 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 		   << modified_jdl << " to [" 
                    << m_theJob.getCreamURL() <<"]["
                    << m_theJob.getCreamDelegURL() << "]"
-                   
                    );
     
     CREAM_SAFE_LOG(
@@ -357,7 +368,6 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
                    << m_theJob.describe()
                    << " is "
                    << m_theJob.getSequenceCode()
-                                      
                    );
 
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
@@ -530,28 +540,28 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             }            
             break;
         case cream_api::JobIdWrapper::LEASEIDMISMATCH:
-            if ( is_lease_enabled && !force_lease ) {
-                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                                << "Cannot register GridJobID ["
-                                << m_theJob.getGridJobID() 
-                                << "] due to Lease Error: " 
-                                << err << ". Will retry once by enforcing creation of a new lease ID..."
-                                 );
-                force_lease = true;
-            } else {
-                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned lease id mismatch \"%1%\"") % err ) ) );
-            }     
-            break;                               
+	  if ( is_lease_enabled && !force_lease ) {
+	    CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+			    << "Cannot register GridJobID ["
+			    << m_theJob.getGridJobID() 
+			    << "] due to Lease Error: " 
+			    << err << ". Will retry once by enforcing creation of a new lease ID..."
+			    );
+	    force_lease = true;
+	  } else {
+	    throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned lease id mismatch \"%1%\"") % err ) ) );
+	  }     
+	  break;                               
         default:
-            CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-                            << "Error while registering GridJobID ["
-                            << m_theJob.getGridJobID() 
-                            << "] due to Error: " 
-                            << err
-                             );
-            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned error \"%1%\"") % err ) ) ); 
+	  CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+			  << "Error while registering GridJobID ["
+			  << m_theJob.getGridJobID() 
+			  << "] due to Error: " 
+			  << err
+			  );
+	  throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned error \"%1%\"") % err ) ) ); 
         }
-
+	
     } // end while(1)
     
     string jobId      = res.begin()->second.get<1>().getCreamJobID();
@@ -583,7 +593,11 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         
       // FIXME: must create the request JobFilterWrapper for the Start operation
       vector<cream_api::JobIdWrapper> toStart;
-      toStart.push_back( cream_api::JobIdWrapper( (const string&)jobId, (const string&)__creamURL, vector<cream_api::JobPropertyWrapper>()));
+      toStart.push_back( cream_api::JobIdWrapper( (const string&)jobId, 
+						  (const string&)__creamURL, 
+						  vector<cream_api::JobPropertyWrapper>()
+						  )
+			 );
 
       cream_api::JobFilterWrapper jw(toStart, vector<string>(), -1, -1, "", "");
 
@@ -668,12 +682,14 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     }
            
     {
-#ifdef ICE_PROFILE_ENABLE
-      api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in cache" );
-#endif
-        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+// #ifdef ICE_PROFILE_ENABLE
+//       api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in database" );
+// #endif
+      //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
         m_theJob.setLastSeen( time(0) );
-        iceUtil::jobCache::getInstance()->put( m_theJob );
+	db::CreateJob aJob( m_theJob ); // FIXME: could use ad-hoc UpdateXYZ ???
+	db::Transaction tnx;
+	tnx.execute( &aJob );
     }
 } // try_to_submit
 

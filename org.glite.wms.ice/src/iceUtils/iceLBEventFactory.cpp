@@ -25,6 +25,7 @@
 using namespace glite::wms::ice::util;
 namespace jobstat = glite::ce::cream_client_api::job_statuses;
 
+//------------------------------------------------------------------------------
 iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
 {
     switch( theJob.getStatus() ) {

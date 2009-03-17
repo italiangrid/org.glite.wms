@@ -20,7 +20,7 @@
 #include "iceCommandSubUpdater.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "iceConfManager.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "subscriptionManager.h"
 #include "DNProxyManager.h"
 #include "glite/wms/common/configuration/Configuration.h"

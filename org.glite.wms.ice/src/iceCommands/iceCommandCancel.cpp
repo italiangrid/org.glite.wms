@@ -23,7 +23,6 @@
  *
  */
 #include "iceCommandCancel.h"
-#include "jobCache.h"
 #include "ice-core.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
@@ -31,7 +30,10 @@
 #include "Request_source_purger.h"
 #include "Request.h"
 #include "DNProxyManager.h"
-
+#include "iceDb/Transaction.h"
+#include "iceDb/CreateJob.h"
+#include "iceDb/GetJobByGid.h"
+#include "iceDb/UpdateJobFailureReason.h"
 /**
  *
  * Cream Client API Headers
@@ -151,23 +153,43 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     Request_source_purger r( m_request );
     wms_utils::scope_guard remove_request_guard( r );
     
-    boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
+    
+    db::Transaction tnx;
+    db::GetJobByGid get( m_gridJobId );
+    tnx.execute( &get );
+    
 
     // Lookup the job in the jobCache
-    util::jobCache::iterator it = util::jobCache::getInstance()->lookupByGridJobID( m_gridJobId );
+    //util::jobCache::iterator it = util::jobCache::getInstance()->lookupByGridJobID( m_gridJobId );
     
-    if ( it == util::jobCache::getInstance()->end() ) {
-        CREAM_SAFE_LOG( 
-                       m_log_dev->errorStream()
-                       << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
-                       << m_gridJobId 
-                       << "] in the jobCache. Giving up"
+//     if ( it == util::jobCache::getInstance()->end() ) {
+//         CREAM_SAFE_LOG( 
+//                        m_log_dev->errorStream()
+//                        << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
+//                        << m_gridJobId 
+//                        << "] in the jobCache. Giving up"
                        
-                       );
+//                        );
 
-        throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") 
-				  + m_gridJobId 
-				  + string("], as the job does not appear to exist") );
+//         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") 
+// 				  + m_gridJobId 
+// 				  + string("], as the job does not appear to exist") );
+//     }
+
+    if( !get.found() ) {
+      CREAM_SAFE_LOG( 
+		     m_log_dev->errorStream()
+		     << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
+		     << m_gridJobId 
+		     << "] in the database. Giving up"
+		     );
+      
+
+      throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") 
+				+ m_gridJobId 
+				+ string("], as the job does not appear to exist") );
+      
     }
 
     // According to the following mail, the sequence from a cancel
@@ -186,7 +208,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     // if ( ! m_sequence_code.empty() )  
     // it->setSequenceCode( m_sequence_code );
 
-    util::CreamJob theJob( *it );
+    util::CreamJob theJob( get.get_job() );
 
     // Log cancel request event
     theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ) );    
@@ -232,15 +254,16 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     }
 
     try {
-      //m_theProxy->Authenticate( betterproxy /* theJob.getUserProxyCertificate() */ );
-
       cream_api::VOMSWrapper V( betterproxy );
       if( !V.IsValid( ) ) {
         throw cream_api::auth_ex( V.getErrorMessage() );
       }
 
-        theJob.set_failure_reason( "Aborted by user" );
-        util::jobCache::getInstance()->put( theJob );
+      theJob.set_failure_reason( "Aborted by user" );
+      db::Transaction tnx2;
+      db::UpdateJobFailureReason updater( theJob.getGridJobID(), "Aborted by user" );//CreateJob aJob( theJob );
+      tnx2.execute( &updater );
+      //        util::jobCache::getInstance()->put( theJob );
 
 	vector<cream_api::JobIdWrapper> toCancel;
 	toCancel.push_back( cream_api::JobIdWrapper(theJob.getCreamJobID(), 
@@ -256,12 +279,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 	// theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
  	
 	list< pair<cream_api::JobIdWrapper, string> > tmp;
-// 	res.getOkJobs( tmp );
-// 	if(!tmp.empty()) { // the unique job we cancelled is 
-// 			   // in the OkJobs array. Then it has been
-// 			   // cancelled.
-// 	  return;
-// 	}
+
 	res.getNotExistingJobs( tmp );
 	res.getNotMatchingStatusJobs( tmp );
 	res.getNotMatchingDateJobs( tmp );

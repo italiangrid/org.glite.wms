@@ -29,6 +29,7 @@
 #include "iceAbsCommand.h"
 #include "creamJob.h"
 #include "glite/ce/cream-client-api-c/JobInfoWrapper.h"
+#include "iceDb/GetJobsToPoll.h" // needed for definition of type 'JobToPoll'
 
 #include <boost/scoped_ptr.hpp>
 
@@ -49,7 +50,7 @@ namespace glite {
       namespace util {
         
         class iceLBLogger;
-	class jobCache;
+	//	class jobCache;
 	class iceConfManager;
 
 	class iceCommandStatusPoller : public iceAbsCommand {
@@ -57,7 +58,7 @@ namespace glite {
           log4cpp::Category *m_log_dev;
           glite::wms::ice::util::iceLBLogger* m_lb_logger;
           Ice* m_iceManager;
-	  jobCache* m_cache;
+	  //	  jobCache* m_cache;
 	  time_t m_threshold;
           const unsigned int m_max_chunk_size; ///< maximum number of jobs which will be used in a cumulative request to CREAM
           time_t m_empty_threshold; ///< Threshold for empty notifications
@@ -73,7 +74,7 @@ namespace glite {
            *
            * @return the list of Cream Job IDs for jobs to poll.
            */ 
-	  void get_jobs_to_poll( std::list< glite::wms::ice::util::CreamJob >& ) throw();
+	  void get_jobs_to_poll( std::list<CreamJob>& /* std::list< glite::wms::ice::util::CreamJob >& */ ) throw();
 
           
 	  /**
@@ -106,7 +107,8 @@ namespace glite {
 	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfoWrapper > 
 	    check_multiple_jobs( const std::string& user_dn, 
 				 const std::string& cream_url, 
-				 const std::vector< glite::wms::ice::util::CreamJob >& cream_job_ids ) throw();
+				 //const std::vector< glite::wms::ice::util::CreamJob >& cream_job_ids ) throw();
+				 const std::vector< CreamJob >& cream_job_ids ) throw();
 
           /**
            * This method removes jobs which have been reported as not found by

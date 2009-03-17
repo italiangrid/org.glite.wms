@@ -33,10 +33,16 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "iceLBEvent.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "ice-core.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "iceUtils.h"
+#include "iceDb/GetJobByCid.h"
+#include "iceDb/RemoveJobByCid.h"
+#include "iceDb/RemoveJobByGid.h"
+#include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
+#include "iceDb/Transaction.h"
+#include "iceDb/UpdateJobInfo.h"
 
 // Cream Client API Headers
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -66,11 +72,12 @@ using namespace std;
 
 namespace { // begin anonymous namespace
     
+  // See iceDb/GetJobsToPoll for definitions of type 'JobToPoll'
     bool insert_condition(const CreamJob& J) {        
-        if( J.getCompleteCreamJobID().empty() ) 
-            return false;
-        else 
-            return true;
+      if( J.getCompleteCreamJobID().empty() ) 
+	return false;
+      else 
+	return true;
     }
     
     /**
@@ -86,7 +93,7 @@ namespace { // begin anonymous namespace
         vector< string > m_cream_job_ids;
         string m_reason;
         iceLBLogger* m_lb_logger;
-        jobCache* m_cache;
+      //        jobCache* m_cache;
         log4cpp::Category* m_log_dev;
     public:
         /**
@@ -96,7 +103,7 @@ namespace { // begin anonymous namespace
             m_cream_job_ids( jobs ),
             m_reason( "Removed by ICE status poller" ),
             m_lb_logger( iceLBLogger::instance() ),
-            m_cache( jobCache::getInstance() ),
+            //m_cache( 0 /* jobCache::getInstance() */ ),
             m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() )
         { };
         void set_reason( const string& new_reason ) {
@@ -106,19 +113,33 @@ namespace { // begin anonymous namespace
             static const char* method_name = "remove_bunch_of_jobs::operator() - ";
             vector< string >::const_iterator it;
             for ( it=m_cream_job_ids.begin(); it != m_cream_job_ids.end(); ++it ) {
-                boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-                jobCache::iterator j = m_cache->lookupByCompleteCreamJobID( *it );
-                if ( m_cache->end() == j )
-                    continue; // nothing to do
+	      //                boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+	      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
-                CreamJob job( *j );
-                CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                               << "Removing job " << job.describe()
-                               << " from the cache. Reason is: "
-                               << m_reason);
+	      glite::wms::ice::db::GetJobByCid aJob( *it );
+	      glite::wms::ice::db::Transaction tnx;
+	      tnx.execute( &aJob );
+	      if( !aJob.found() ) {
+		continue; // nothing to do
+	      }
+
+//                 jobCache::iterator j = m_cache->lookupByCompleteCreamJobID( *it );
+//                 if ( m_cache->end() == j )
+//                     continue; // nothing to do
+
+	      CreamJob job( aJob.get_job() );
+	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+			     << "Removing job " << job.describe()
+			     << " from the cache. Reason is: "
+			     << m_reason);
                 job.set_failure_reason( m_reason );
                 m_lb_logger->logEvent( new job_aborted_event( job ) ); // ignore return value, the job will be removed from ICE cache anyway
-                m_cache->erase( j );
+                //m_cache->erase( j );
+		{
+		  glite::wms::ice::db::RemoveJobByGid remover( job.getGridJobID() );
+		  glite::wms::ice::db::Transaction tnx2;
+		  tnx.execute( &remover );
+		}
             }
         }
     };
@@ -132,7 +153,6 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bo
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
     m_iceManager( theIce ),
-    m_cache( jobCache::getInstance() ),
     m_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
     m_max_chunk_size( iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() ), 
     m_empty_threshold( 10*60 ), // 10 minutes
@@ -143,63 +163,99 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bo
 }
 
 
+// See GetJobsToPoll.h source code for definition of type 'JobToPoll'
 //____________________________________________________________________________
 void iceCommandStatusPoller::get_jobs_to_poll( list< CreamJob >& result ) throw()
 {
     static const char* method_name = "iceCommandStatusPoller::get_jobs_to_poll() - ";
 
-    for( jobCache::iterator jit = m_cache->begin(); 
-         jit != m_cache->end(); ++jit ) {
-        
-        if( jit->getCompleteCreamJobID().empty() ) {
-            // This job doesn't have yet the CREAM Job ID. Skipping...
-            continue;
-        }
-        
-        time_t t_now( time(NULL) );
-        time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
-        time_t t_last_empty_notification( jit->get_last_empty_notification() ); // The time ICE received the last empty notification for this job
+    {
+      glite::wms::ice::db::GetJobsToPoll getter( m_poll_all_jobs );
+      glite::wms::ice::db::Transaction tnx;
+      tnx.execute( &getter );
+      result = getter.get_jobs();
+    }
+
+    for(list< CreamJob >::const_iterator it = result.begin();
+	it != result.end();
+	++it)
+      {
+	time_t t_now( time(NULL) );
+        time_t t_last_seen( it->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
+        time_t t_last_empty_notification( it->get_last_empty_notification() ); // The time ICE received the last empty notification for this job
         time_t oldness = t_now - t_last_seen;
         time_t empty_oldness = t_now - t_last_empty_notification;
-
-        //
-        // Q: When does a job get polled?
-        //
-        // A: A job gets polled if one of the following situations are true:
-        //
-        // 1. ICE starts. When ICE starts, it polls all the jobs it thinks
-        // have not been purged yet.
-        //
-        // 2. ICE received the last non-empty status change
-        // notification more than m_threshold seconds ago.
-        //
-        // 3. ICE received the last empty status change notification
-        // more than 10*60 seconds ago (that is, 10 minutes).
-        //
-	// empty notification are effective to reduce the polling frequency if the m_threshold is much greater than 10x60 seconds
 	
-        if ( m_poll_all_jobs ||
-	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ||
-             ( ( t_last_empty_notification > 0 ) && empty_oldness > m_empty_threshold ) ) { // empty_oldness must be greater than 10 minutes
-            CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                           << "Adding job " << jit->describe()
-                           << " t_now=" << time_t_to_string( t_now )
-                           << " t_last_nonempty_notification=" 
-                           << time_t_to_string(t_last_seen)
-                           << " oldness (t_last_nonempty_notification - t_now)="
-                           << oldness 
-                           << " threshold=" << m_threshold
-                           << " t_last_empty_notification=" 
-                           << time_t_to_string( t_last_empty_notification )
-                           << " empty_oldness (t_last_empty_notification - t_now)=" 
-                           << empty_oldness
-                           << " empty_threshold=" << m_empty_threshold
-                           << " force_polling=" << m_poll_all_jobs
-                           );
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		       << "Adding job " << it->describe()
+		       << " t_now=" << time_t_to_string( t_now )
+		       << " t_last_nonempty_notification=" 
+		       << time_t_to_string(t_last_seen)
+		       << " oldness (t_last_nonempty_notification - t_now)="
+		       << oldness 
+		       << " threshold=" << m_threshold
+		       << " t_last_empty_notification=" 
+		       << time_t_to_string( t_last_empty_notification )
+		       << " empty_oldness (t_last_empty_notification - t_now)=" 
+		       << empty_oldness
+		       << " empty_threshold=" << m_empty_threshold
+		       << " force_polling=" << m_poll_all_jobs
+		       );
 
-            result.push_back( *jit );
-        }
-    }
+      }
+
+//     for( jobCache::iterator jit = m_cache->begin(); 
+//          jit != m_cache->end(); ++jit ) {
+        
+//         if( jit->getCompleteCreamJobID().empty() ) {
+//             // This job doesn't have yet the CREAM Job ID. Skipping...
+//             continue;
+//         }
+        
+//         time_t t_now( time(NULL) );
+//         time_t t_last_seen( jit->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
+//         time_t t_last_empty_notification( jit->get_last_empty_notification() ); // The time ICE received the last empty notification for this job
+//         time_t oldness = t_now - t_last_seen;
+//         time_t empty_oldness = t_now - t_last_empty_notification;
+
+//         //
+//         // Q: When does a job get polled?
+//         //
+//         // A: A job gets polled if one of the following situations are true:
+//         //
+//         // 1. ICE starts. When ICE starts, it polls all the jobs it thinks
+//         // have not been purged yet.
+//         //
+//         // 2. ICE received the last non-empty status change
+//         // notification more than m_threshold seconds ago.
+//         //
+//         // 3. ICE received the last empty status change notification
+//         // more than 10*60 seconds ago (that is, 10 minutes).
+//         //
+// 	// empty notification are effective to reduce the polling frequency if the m_threshold is much greater than 10x60 seconds
+	
+//         if ( m_poll_all_jobs ||
+// 	     ( ( t_last_seen > 0 ) && oldness >= m_threshold ) ||
+//              ( ( t_last_empty_notification > 0 ) && empty_oldness > m_empty_threshold ) ) { // empty_oldness must be greater than 10 minutes
+//             CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+//                            << "Adding job " << jit->describe()
+//                            << " t_now=" << time_t_to_string( t_now )
+//                            << " t_last_nonempty_notification=" 
+//                            << time_t_to_string(t_last_seen)
+//                            << " oldness (t_last_nonempty_notification - t_now)="
+//                            << oldness 
+//                            << " threshold=" << m_threshold
+//                            << " t_last_empty_notification=" 
+//                            << time_t_to_string( t_last_empty_notification )
+//                            << " empty_oldness (t_last_empty_notification - t_now)=" 
+//                            << empty_oldness
+//                            << " empty_threshold=" << m_empty_threshold
+//                            << " force_polling=" << m_poll_all_jobs
+//                            );
+
+//             result.push_back( *jit );
+//         }
+//     }
 }
 
 //____________________________________________________________________________
@@ -216,17 +272,18 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                    << cream_url << "]"
                    );
 
-    vector< string > job_id_vector;
+    //vector< string > job_id_vector;
 
     for( vector< CreamJob >::const_iterator thisJob = cream_job_ids.begin(); 
          thisJob != cream_job_ids.end(); 
-         ++thisJob) {
-        job_id_vector.push_back( thisJob->getCompleteCreamJobID() );
-        CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                       << "Will poll job with CREAM job id = ["
-                       << thisJob->getCompleteCreamJobID() << "]"
-                       );
-    }    
+         ++thisJob) 
+      {
+	//job_id_vector.push_back( thisJob->getCreamJobID() );
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		       << "Will poll job with CREAM job id = ["
+		       << thisJob->getCompleteCreamJobID() << "]"
+		       );
+      }    
 
     // Following a discussion on 2008-11-12, we decided not to remove
     // jobs which cannot be polled. The reason being that errors may
@@ -287,10 +344,10 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
             vector< soap_proxy::JobIdWrapper > jobVec;
             
             for(jobit = cream_job_ids.begin(); jobit != cream_job_ids.end(); ++jobit) {
-                soap_proxy::JobIdWrapper J( jobit->getCreamJobID(), 
-                                            cream_url, // we trust cream_url is the same for all jobs!!!
-                                            vector<soap_proxy::JobPropertyWrapper>());
-                jobVec.push_back( J );
+	      soap_proxy::JobIdWrapper J( jobit->getCreamJobID(), 
+					  cream_url, // we trust cream_url is the same for all jobs!!!
+					  vector<soap_proxy::JobPropertyWrapper>());
+	      jobVec.push_back( J );
             }
             
             soap_proxy::JobFilterWrapper req( jobVec, 
@@ -332,9 +389,13 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                                << ". Removing this job from the cache"
                                );
                 {
-                    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-                    jobCache::iterator it = m_cache->lookupByCompleteCreamJobID( infoIt->first );
-                    m_cache->erase( it );
+		  //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+		  boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+		  db::RemoveJobByCid remover( infoIt->first );
+		  db::Transaction tnx;
+		  tnx.execute( &remover );
+		  //  jobCache::iterator it = m_cache->lookupByCompleteCreamJobID( infoIt->first );
+		  //  m_cache->erase( it );
                 }
                 
             }
@@ -407,7 +468,9 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 {
     static const char* method_name = "iceCommandStatusPoller::update_single_job() - ";
     // Lock the cache
-    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+
     vector< soap_proxy::JobStatusWrapper > status_changes;
     info_obj.getStatus( status_changes );
     
@@ -424,21 +487,51 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
                     << info_obj.getCreamURL() << "]"
                     );
     
-    jobCache::iterator job_pos( m_cache->lookupByCompleteCreamJobID( completeJobID ) );
-    if ( m_cache->end() != job_pos ) {
-        CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                        << " Managing Job " << job_pos->describe()
-                        << " for which I already processed "
-                        << job_pos->get_num_logged_status_changes()
-                        << " status changes, and JobStatus contains "
-                        << status_changes.size() << " status changes"
-                        );
-
-        CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name 
-                        << "Job " << job_pos->describe()
-                        << " has worker_node=" << info_obj.getWorkerNode()
-                        );
+    bool found = false;
+    //           gridjobid  complete cid  num status changes   status
+    //boost::tuple<string,    string,       int,                 int    > info;
+    // See GetStatusInfoByCompleteCreamJobID for 'StatusInfo' definition
+    //    StatusInfo info;
+    CreamJob theJob;
+    {
+      glite::wms::ice::db::GetJobByCid getter( completeJobID );
+      glite::wms::ice::db::Transaction tnx;
+      tnx.execute( &getter );
+      found = getter.found();
+      theJob = getter.get_job();
+      //      info = getter.get_info();
     }
+
+    if(found) {
+      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+		      << " Managing Job " << theJob.describe()
+		      << " for which I already processed "
+		      << theJob.get_num_logged_status_changes()
+		      << " status changes, and JobStatus contains "
+		      << status_changes.size() << " status changes"
+		      );
+      
+      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name 
+		      << "Job " << theJob.describe()
+		      << " has worker_node=" << info_obj.getWorkerNode()
+		      );
+    }
+
+//     jobCache::iterator job_pos( m_cache->lookupByCompleteCreamJobID( completeJobID ) );
+//     if ( m_cache->end() != job_pos ) {
+//         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+//                         << " Managing Job " << job_pos->describe()
+//                         << " for which I already processed "
+//                         << job_pos->get_num_logged_status_changes()
+//                         << " status changes, and JobStatus contains "
+//                         << status_changes.size() << " status changes"
+//                         );
+
+//         CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name 
+//                         << "Job " << job_pos->describe()
+//                         << " has worker_node=" << info_obj.getWorkerNode()
+//                         );
+//     }
 
     int count;
     vector< soap_proxy::JobStatusWrapper >::const_iterator it;
@@ -454,90 +547,130 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
         // no longer be valid. Hence, the necessity to check each
         // time.
         //
-        jobCache::iterator jit( m_cache->lookupByCompleteCreamJobID( completeJobID ) );    
+        //jobCache::iterator jit( m_cache->lookupByCompleteCreamJobID( completeJobID ) );    
 	
-        if ( m_cache->end() == jit ) {
-            CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name 
-                           << "cream_jobid [" << completeJobID 
-                           << "] disappeared!"
-                           );
-            return;
-        }
-        
-        // Creates a temporary job
-        CreamJob tmp_job( *jit );
-        
-        // Update the worker node
-        tmp_job.set_worker_node( info_obj.getWorkerNode() );
+      CreamJob tmp_job;
+      {
+	glite::wms::ice::db::GetJobByCid getter( completeJobID );
+	glite::wms::ice::db::Transaction tnx;
+	tnx.execute( &getter );
+	if( !getter.found() )
+	  {
+	    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name 
+			   << "cream_jobid [" << completeJobID 
+			   << "] disappeared!"
+			   );
+	    return;
+	  }
+	tmp_job = getter.get_job();
+      }
+      
+      //         if ( m_cache->end() == jit ) {
+      //             CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name 
+      //                            << "cream_jobid [" << completeJobID 
+      //                            << "] disappeared!"
+      //                            );
+      //             return;
+      //         }
+      
+      // Creates a temporary job
+      
+      // Update the worker node
+      tmp_job.set_worker_node( info_obj.getWorkerNode() );
 
-        //
-        // END block NOT to be moved outside the 'for' loop
-        //
-        tmp_job.setLastSeen( time(0) );
-        tmp_job.set_last_empty_notification( time(0) );
-
-        jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
-        // before doing anything, check if the job is "purged". If so,
-        // remove from the cache and forget about it.
-        if ( stNum == jobstat::PURGED ) {
-            CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
-                           << "Job " << tmp_job.describe()
-                           << " is reported as PURGED. Removing from cache"
-                           ); 
-            m_cache->erase( jit );
-            return;
-        }
-        
-        string exitCode( it->getExitCode() );
-        
-        if ( tmp_job.get_num_logged_status_changes() < count ) {
-            
-            CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                           << "Updating jobcache for " << jit->describe()
-                           << " status = [" << it->getStatusName() << "]"
-                           << " exit_code = [" << exitCode << "]"
-                           << " failure_reason = [" << it->getFailureReason() << "]"
-                           << " description = [" << it->getDescription() << "]"
-                           );
-
-            tmp_job.setStatus( stNum );
-            try {
-                tmp_job.set_exit_code( boost::lexical_cast< int >( exitCode ) );
-            } catch( boost::bad_lexical_cast & ) {
-                tmp_job.set_exit_code( 0 );
-            }
-            //
-            // See comment in normalStatusNotification.cpp
-            //
-            if ( stNum == jobstat::CANCELLED ) {
-                tmp_job.set_failure_reason( it->getDescription() );
-            } else {
-                tmp_job.set_failure_reason( it->getFailureReason() );
-            }
-            tmp_job.set_num_logged_status_changes( count );
-
-            // Log to L&B
-            iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
-            if ( ev ) {
-                tmp_job = m_lb_logger->logEvent( ev );
-            }
-        }
-        jit = m_cache->put( tmp_job );
-        
-        m_iceManager->resubmit_or_purge_job( jit );
+      //
+      // END block NOT to be moved outside the 'for' loop
+      //
+      tmp_job.setLastSeen( time(0) );
+      tmp_job.set_last_empty_notification( time(0) );
+      
+      jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
+      // before doing anything, check if the job is "purged". If so,
+      // remove from the cache and forget about it.
+      if ( stNum == jobstat::PURGED ) {
+	CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+		       << "Job " << tmp_job.describe()
+		       << " is reported as PURGED. Removing from cache"
+		       ); 
+	//m_cache->erase( jit );
+	{
+	  glite::wms::ice::db::RemoveJobByCid remover( tmp_job.getCompleteCreamJobID() );
+	  glite::wms::ice::db::Transaction tnx;
+	  tnx.execute( &remover );
+	}
+	return;
+      }
+      
+      string exitCode( it->getExitCode() );
+      //      int exit_code = -1;
+      if (  tmp_job.get_num_logged_status_changes() < count ) {
+	
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		       << "Updating jobcache for " << tmp_job.describe()
+		       << " status = [" << it->getStatusName() << "]"
+		       << " exit_code = [" << exitCode << "]"
+		       << " failure_reason = [" << it->getFailureReason() << "]"
+		       << " description = [" << it->getDescription() << "]"
+		       );
+	tmp_job.setStatus( stNum );
+	
+	try {
+	  tmp_job.set_exit_code( boost::lexical_cast< int >( exitCode ) );
+	} catch( boost::bad_lexical_cast & ) {
+	  tmp_job.set_exit_code( 0 );
+	}
+	//
+	// See comment in normalStatusNotification.cpp
+	//
+	string reason = "";
+	if ( stNum == jobstat::CANCELLED ) {
+	  tmp_job.set_failure_reason( it->getDescription() );
+	  //  reason = it->getDescription();
+	} else {
+	  tmp_job.set_failure_reason( it->getFailureReason() );
+	  //reason = it->getFailureReason()
+	}
+	tmp_job.set_num_logged_status_changes( count );
+	
+	// Log to L&B
+	iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
+	if ( ev ) {
+	  tmp_job = m_lb_logger->logEvent( ev );
+	}
+      }
+      
+      {
+// 	db::UpadteJobInfo updater( tmp_job.getGridJobID(),
+// 				   info_obj.getWorkerNode(),
+// 				   time(0),
+// 				   time(0),
+// 				   stNum,
+// 				   exit_code,
+// 				   count,
+// 				   reason);
+	db::UpdateJobInfo updater( tmp_job );
+	db::Transaction tnx;
+	tnx.execute( &updater );
+      }
+      //        jit = m_cache->put( tmp_job );
+      
+      m_iceManager->resubmit_or_purge_job( tmp_job/*jit*/ );
     }
 }
 
 //____________________________________________________________________________
 void iceCommandStatusPoller::execute( ) throw()
 {
-    list< CreamJob > j_list;
-    {
-        // moved mutex here (from the get_jobs_to_poll's body) because
-        // of more code readability
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-        this->get_jobs_to_poll( j_list ); // this method locks the cache
-    }
+  //list< CreamJob > j_list;
+  // See iceDb/GetJobsToPoll.h for definition of type 'JobToPoll'
+  list< CreamJob > j_list;
+  {
+    // moved mutex here (from the get_jobs_to_poll's body) because
+    // of more code readability
+    //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
+    this->get_jobs_to_poll( j_list ); // this method locks the cache
+  }
     
     if ( j_list.empty() ) 
         return; // give up if no job to check    
@@ -552,28 +685,27 @@ void iceCommandStatusPoller::execute( ) throw()
  	      appender);
 
     // Step 2. Iterates over the map which has just been constructed.
-    for( map< pair<string, string>, list<CreamJob> >::const_iterator jit = jobMap.begin(); 
-         jit != jobMap.end(); ++jit ) {
-        
+    for( map< pair<string, string>, list<CreamJob> >::const_iterator jit = jobMap.begin();
+         jit != jobMap.end(); ++jit ) 
+      {
+	
         const string user_dn( jit->first.first );
         const string cream_url( jit->first.second );
-        
- 	
         
         list< CreamJob >::const_iterator it = (jit->second).begin();
         list< CreamJob >::const_iterator list_end = (jit->second).end();
         while ( it != list_end ) {
-            vector<CreamJob> jobs_to_poll;
-            it = copy_n_elements( it, 
-                                  list_end, 
-                                  m_max_chunk_size, 
-                                  back_inserter( jobs_to_poll )
-                                  );
-            
-            list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
-            
-            updateJobCache( j_status );// modifies the cache, locks it job by job
-        }
-    }
+	  vector<CreamJob> jobs_to_poll;
+	  it = copy_n_elements( it, 
+				list_end, 
+				m_max_chunk_size, 
+				back_inserter( jobs_to_poll )
+				);
+	  
+	  list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
+	  
+	  updateJobCache( j_status );// modifies the cache, locks it job by job
+	}
+      }
 }
 

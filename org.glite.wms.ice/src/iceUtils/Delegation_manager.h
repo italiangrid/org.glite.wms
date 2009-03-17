@@ -61,10 +61,10 @@ namespace util {
          */
         void purge_old_delegations( void );
 
-	std::string computeSHA1Digest( const std::string& proxyfile ) throw( std::runtime_error& );
+	//std::string computeSHA1Digest( const std::string& proxyfile ) throw( std::runtime_error& );
 
         static Delegation_manager* s_instance;
-        static boost::recursive_mutex m_mutex;
+        static boost::recursive_mutex s_mutex;
 
         log4cpp::Category* m_log_dev;
         unsigned int m_operation_count;

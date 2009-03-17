@@ -24,7 +24,9 @@
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "DNProxyManager.h"
-#include "jobCache.h"
+#include "iceDb/GetAllJobs.h"
+#include "iceDb/Transaction.h"
+//#include "jobCache.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
@@ -127,10 +129,22 @@ void Lease_manager::init( void )
                                   // into.
 
     // Scan the job cache 
-    jobCache* the_cache( jobCache::getInstance() );
-    boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+    //    jobCache* the_cache( jobCache::getInstance() );
+    //    boost::recursive_mutex::scoped_lock L( jobCache::mutex );
+    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
 
-    for ( jobCache::iterator it = the_cache->begin(); the_cache->end() != it; ++it ) {
+    list< CreamJob > allJobs;
+
+    //    for ( jobCache::iterator it = the_cache->begin(); the_cache->end() != it; ++it ) {
+
+    {
+      db::GetAllJobs getter;
+      db::Transaction tnx;
+      tnx.execute( &getter );
+      allJobs = getter.get_jobs();
+    }
+
+    for ( list< CreamJob >::const_iterator it = allJobs.begin(); allJobs.end() != it; ++it ) {
 
         string lease_id( it->get_lease_id() );
         // If a lease id: 1) is empty, OR 2) has already been inserted

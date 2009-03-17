@@ -36,7 +36,9 @@
 #include "subscriptionProxy.h"
 #include "iceConfManager.h"
 #include "DNProxyManager.h"
-#include "jobCache.h"
+#include "iceDb/GetAllJobs.h"
+#include "iceDb/Transaction.h"
+//#include "jobCache.h"
 
 
 //#include "ICECreamProxyFactory.h"
@@ -94,7 +96,7 @@ iceUtil::subscriptionManager* iceUtil::subscriptionManager::getInstance() throw(
 iceUtil::subscriptionManager::subscriptionManager() throw() :
   m_conf(iceUtil::iceConfManager::getInstance()),
   m_log_dev(api_util::creamApiLogger::instance()->getLogger()),
-  m_cache( iceUtil::jobCache::getInstance() ),
+  //m_cache( iceUtil::jobCache::getInstance() ),
   m_authz( m_conf->getConfiguration()->ice()->listener_enable_authz() ),
   m_authn( m_conf->getConfiguration()->ice()->listener_enable_authn() )
 { 
@@ -529,32 +531,42 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
    * where a proxy is better than another one if it is more long-lived.
    */
   
-  boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+  //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+  boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+
   string cemon;
   set<string> goodCEMons, toCheck;
   map< string, set<string> > tmpTarget;
   string tmpDN;
 
-  for(iceUtil::jobCache::iterator jit=iceUtil::jobCache::getInstance()->begin();
-      jit != iceUtil::jobCache::getInstance()->end();
-      ++jit)
+  list< CreamJob > jobs;
   {
-    if(only_active_jobs)
-      if( !jit->is_active() ) continue;
+    db::GetAllJobs getter( only_active_jobs );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    jobs = getter.get_jobs();
+  }
+
+  //  for(iceUtil::jobCache::iterator jit=iceUtil::jobCache::getInstance()->begin();
+  //      jit != iceUtil::jobCache::getInstance()->end();
+  //      ++jit)
+  for( list< CreamJob >::const_iterator it = jobs.begin();
+       it != jobs.begin();
+       ++it)
+  {
+//     if(only_active_jobs)
+//       if( !jit->is_active() ) continue;
 
     
-    this->getCEMonURL( jit->getUserProxyCertificate(), jit->getCreamURL(), cemon );
+    this->getCEMonURL( it->getUserProxyCertificate(), it->getCreamURL(), cemon );
 
 
-    tmpTarget[ jit->getUserDN() ].insert( cemon );
-    // {
-    //  boost::recursive_mutex::scoped_lock M( iceUtil::DNProxyManager::mutex );
-//    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger( jit->getUserDN(), jit->getUserProxyCertificate() );
-    //}
+    tmpTarget[ it->getUserDN() ].insert( cemon );
+
     
     if( m_authz && m_authn ) {
 
-      if( this->getCEMonDN( jit->getUserProxyCertificate(), cemon, tmpDN ) ) {
+      if( this->getCEMonDN( it->getUserProxyCertificate(), cemon, tmpDN ) ) {
 
 	goodCEMons.insert( cemon );
 

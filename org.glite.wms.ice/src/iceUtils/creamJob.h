@@ -113,6 +113,8 @@ namespace glite {
 
 	public:
 
+	  static boost::recursive_mutex globalICEMutex;
+
           //! Default constructor
           CreamJob( );
 

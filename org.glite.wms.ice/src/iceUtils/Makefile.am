@@ -9,8 +9,6 @@
 lib_LTLIBRARIES = libglite_wms_iceUtils.la
 
 libglite_wms_iceUtils_la_SOURCES = \
-				jobCache.cpp \
-				jobCacheIterator.cpp \
 				creamJob.cpp \
 				iceConfManager.cpp \
 				iceLBLogger.cpp \
@@ -21,7 +19,6 @@ libglite_wms_iceUtils_la_SOURCES = \
 				subscriptionProxy.cpp \
 				DNProxyManager.cpp \
 				iceUtils.cpp \
-				jobDbManager.cpp \
 				Request_jobdir.cpp \
 				CreamProxyMethod.cpp \
 				Request_source_filelist.cpp \
@@ -37,6 +34,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autog
 		-I$(top_srcdir)/src/ice \
 		-I$(top_srcdir)/src/iceCommands \
 		-I$(top_srcdir)/src/iceThreads \
+		-I$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/include/ \
 		$(GLITE_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \

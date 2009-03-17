@@ -20,9 +20,16 @@
 #include "iceLBLogger.h"
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+
+#include "iceDb/UpdateJobSequenceCode.h"
+#include "iceDb/CheckGridJobID.h"
+#include "iceDb/Transaction.h"
+#include "iceDb/CreateJob.h"
+
+#include "creamJob.h"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -133,23 +140,41 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         new_seq_code = _tmp_seqcode;
 	free( _tmp_seqcode );
         { // Lock the job cache
-#ifdef ICE_PROFILE_ENABLE
-	  api_util::scoped_timer T( "logEvent::mutex_aquisition-EntireBlock" );//126
-#endif
-            jobCache* m_cache( jobCache::getInstance() );
-            boost::recursive_mutex::scoped_lock( m_cache->mutex );
+// #ifdef ICE_PROFILE_ENABLE
+// 	  api_util::scoped_timer T( "logEvent::mutex_aquisition-EntireBlock" );//126
+// #endif
+	  //            jobCache* m_cache( jobCache::getInstance() );
+	  //            boost::recursive_mutex::scoped_lock( m_cache->mutex );
+	  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
 
 	    //api_util::scoped_timer T2( "logEvent::CreamJob_Creation+setSeqCode+put_in_cache" );//10
             CreamJob theJob( ev->getJob() );
 	    
             theJob.setSequenceCode( new_seq_code );
-#ifdef ICE_PROFILE_ENABLE
-	    api_util::scoped_timer T3( "logEvent::put_in_cache" );//10
-#endif
-            m_cache->put( theJob );
+// #ifdef ICE_PROFILE_ENABLE
+// 	    api_util::scoped_timer T3( "logEvent::put_in_cache" );//10
+// #endif
+            //m_cache->put( theJob );
+	    
+	    //glite::wms::ice::db::CheckGridJobID check( theJob.getGridJobID() );
+	    //{
+	    //  glite::wms::ice::db::Transaction tnx;
+	    //  tnx.execute( &check );
+	   // }
+
+	    //if( check.found() ) {
+	    //  glite::wms::ice::db::UpdateJobSequenceCode upd( theJob.getGridJobID(), new_seq_code );
+	    //  glite::wms::ice::db::Transaction tnx;
+	    //  tnx.execute( &upd );
+	    //} else {
+	      glite::wms::ice::db::CreateJob aJob( theJob );
+	      glite::wms::ice::db::Transaction tnx;
+	      tnx.execute( &aJob );
+	    //}
+	    
             return theJob;
 
-        } // Unlock the job cache
+        } 
     } else {
         return ev->getJob(); // Make the compiler happy
     }

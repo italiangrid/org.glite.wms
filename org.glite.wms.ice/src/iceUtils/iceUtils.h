@@ -39,11 +39,19 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/find.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+
+#include "iceDb/GetJobsToPoll.h" // for definition of type JobToPoll
 
 namespace glite {
 namespace wms {
 namespace ice {
 namespace util {
+
+  std::string computeSHA1Digest( const std::string& proxyfile ) throw( std::runtime_error& );
+  std::string bintostring( unsigned char* buf, size_t len );
+
+  //static boost::recursive_mutex globalICEMutex;
 
   //
   // Utility function: Computes a SHA1 hash of the input string. The
@@ -181,17 +189,21 @@ namespace util {
 
   class jobMap_appender {
 
+    // See iceDb/GetJobsToPoll.h for definition of type 'JobToPoll'
     std::map< std::pair<std::string, std::string>, std::list< CreamJob >, ltstring>& m_jobMap;
-    bool (*m_predicate)(const CreamJob&);
+
+    //bool (*m_predicate)(const CreamJob&);
+
+    
+    bool (*m_predicate)(const CreamJob& );
 
   public:
     jobMap_appender( std::map< std::pair<std::string, std::string>, std::list< CreamJob >, ltstring>& jobMap, bool (*pred)(const CreamJob&)) : m_jobMap( jobMap ), m_predicate( pred ) {}
     
-    void operator()( const CreamJob& j ) {
-      if( m_predicate( j ) )
-	m_jobMap[std::make_pair( j.getUserDN(), j.getCreamURL())].push_back( j );
-    }
-    
+      void operator()( const CreamJob& j ) {
+	if( m_predicate( j ) )
+	  m_jobMap[std::make_pair( j.getUserDN(), j.getCreamURL())].push_back( j );
+      }
   };
 
 } // namespace util

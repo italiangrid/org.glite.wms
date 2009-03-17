@@ -28,9 +28,11 @@
 #include "glite/ce/cream-client-api-c/certUtil.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "iceUtils.h"
-#include "jobCache.h"
 #include <stdexcept>
 #include <cerrno>
+
+#include "iceDb/GetDelegationInformation.h"
+#include "iceDb/Transaction.h"
 
 extern int errno;
 
@@ -40,75 +42,50 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 Delegation_manager* Delegation_manager::s_instance = 0;
-boost::recursive_mutex Delegation_manager::m_mutex;
+boost::recursive_mutex Delegation_manager::s_mutex;
 
-
-//______________________________________________________________________________
-namespace {
-
-    /**
-     * Utility function which converts a binary blob into a string.
-     *
-     * @param buf The binary data blob to convert
-     *
-     * @param len The length of the binary data bloc buf
-     *
-     * @return a string univocally representing the buffer buf. The
-     * string contains a list of exactly (len * 2) hex characters, as
-     * follows.  If the blob contains the following bytes (in hex):
-     *
-     * 0xfe 0xa0 0x01 0x90
-     *
-     * Then the resulting string will be the following:
-     *
-     * "fea00190"
-     */ 
-    string bintostring( unsigned char* buf, size_t len ) {
-        string result;
-        const char alpha[] = "0123456789abcdef";
-        
-        for ( size_t i=0; i<len; ++i ) {
-            result.push_back( alpha[ ( buf[i] >> 4 ) & 0x0f ] );
-            result.push_back( alpha[ buf[i] & 0x0f ] );
-        }
-        return result;
-    };
-
-};
+typedef map<string, boost::tuple<string, string, time_t, int, string,bool,string> > DelegInfo;
 
 //______________________________________________________________________________
-string Delegation_manager::computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
+// namespace {
 
-  static char* method_name = "Delegation_manager::computeSHA1Digest() - ";
 
-  unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
-  char buffer[ 1024 ]; // buffer for file data
-  SHA_CTX ctx;
-  int fd; // file descriptor
-  unsigned long nread = 0; // number of bytes read
 
-  fd = open( proxyfile.c_str(), O_RDONLY );
+// };
+
+//______________________________________________________________________________
+// string Delegation_manager::computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
+
+//   static char* method_name = "Delegation_manager::computeSHA1Digest() - ";
+
+//   unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
+//   char buffer[ 1024 ]; // buffer for file data
+//   SHA_CTX ctx;
+//   int fd; // file descriptor
+//   unsigned long nread = 0; // number of bytes read
+
+//   fd = open( proxyfile.c_str(), O_RDONLY );
   
-  if ( fd < 0 ) {
-    int saveerr = errno;
-    CREAM_SAFE_LOG( m_log_dev->errorStream()
-		    << method_name
-		    << "Cannot open proxy file ["
-		    << proxyfile << "]: " << strerror(saveerr)
-		    );  
-    throw runtime_error( string( "Cannot open proxy file [" + proxyfile + "]: " + strerror(saveerr) ) );
-  }
+//   if ( fd < 0 ) {
+//     int saveerr = errno;
+//     CREAM_SAFE_LOG( m_log_dev->errorStream()
+// 		    << method_name
+// 		    << "Cannot open proxy file ["
+// 		    << proxyfile << "]: " << strerror(saveerr)
+// 		    );  
+//     throw runtime_error( string( "Cannot open proxy file [" + proxyfile + "]: " + strerror(saveerr) ) );
+//   }
   
-  SHA1_Init( &ctx );
-  while ( ( nread = read( fd, buffer, 1024 ) ) > 0 ) {
-    SHA1_Update( &ctx, buffer, nread );
-  }
-  SHA1_Final( bin_sha1_digest, &ctx );
+//   SHA1_Init( &ctx );
+//   while ( ( nread = read( fd, buffer, 1024 ) ) > 0 ) {
+//     SHA1_Update( &ctx, buffer, nread );
+//   }
+//   SHA1_Final( bin_sha1_digest, &ctx );
   
-  close( fd );
+//   close( fd );
 
-  return bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
-}
+//   return bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+// }
 
 //______________________________________________________________________________
 Delegation_manager::Delegation_manager( ) :
@@ -123,48 +100,74 @@ Delegation_manager::Delegation_manager( ) :
 		  << "Populating Delegation_manager's cache..."
 		  );  
 
-  map<string, boost::tuple<string, string, time_t, int, string,bool,string> > mapDeleg;
+  DelegInfo mapDeleg, mapDeleg_tmp;
+
   {
     // must populate the delegation's cache
-    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    jobCache::iterator jit = jobCache::getInstance()->begin();
+    //    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
+    //jobCache::iterator jit = jobCache::getInstance()->begin();
 
-    while( jit != jobCache::getInstance()->end() ) 
+    {
+      glite::wms::ice::db::GetDelegationInformation get( true );
+      glite::wms::ice::db::Transaction tnx;
+      tnx.execute( &get );
+      mapDeleg_tmp = get.get_info();
+    }
+
+    mapDeleg = mapDeleg_tmp;
+    
+    {
+      glite::wms::ice::db::GetDelegationInformation get( false );
+      glite::wms::ice::db::Transaction tnx;
+      tnx.execute( &get );
+      mapDeleg_tmp = get.get_info();
+    }
+
+    for(DelegInfo::const_iterator it=mapDeleg_tmp.begin();
+	it != mapDeleg_tmp.end();
+	++it)
       {
-	
-	if( jit->is_proxy_renewable() ) {
-	  // MYPROXYSERVER is set
-	  mapDeleg[ jit->getUserDN() ] = boost::make_tuple( 
-							   jit->getDelegationId(), 
-							   jit->getCreamURL(), 
-							   jit->getDelegationExpirationTime(),
-							   jit->getDelegationDuration(),
-							   jit->getUserDN(),
-							   true,
-							   jit->getMyProxyAddress()
-							   );
-	} else {
-	  
-	  // MYPROXYSERVER is NOT set
-	  
-	  mapDeleg[ computeSHA1Digest( jit->getUserProxyCertificate() ) ] =
-	    boost::make_tuple( jit->getDelegationId(), 
-			       jit->getCreamURL(), 
-			       jit->getDelegationExpirationTime(),
-			       jit->getDelegationDuration(),
-			       jit->getUserDN(), 
-			       false,
-			       jit->getMyProxyAddress()
-			       );
-	  
-	}
-	
-	++jit;
+	mapDeleg[ it->first ] = it->second;
       }
+
+//     while( jit != jobCache::getInstance()->end() ) 
+//       {
+	
+// 	if( jit->is_proxy_renewable() ) {
+// 	  // MYPROXYSERVER is set
+// 	  mapDeleg[ jit->getUserDN() ] = boost::make_tuple( 
+// 							   jit->getDelegationId(), 
+// 							   jit->getCreamURL(), 
+// 							   jit->getDelegationExpirationTime(),
+// 							   jit->getDelegationDuration(),
+// 							   jit->getUserDN(),
+// 							   true,
+// 							   jit->getMyProxyAddress()
+// 							   );
+// 	} else {
+	  
+// 	  // MYPROXYSERVER is NOT set
+	  
+// 	  mapDeleg[ computeSHA1Digest( jit->getUserProxyCertificate() ) ] =
+// 	    boost::make_tuple( jit->getDelegationId(), 
+// 			       jit->getCreamURL(), 
+// 			       jit->getDelegationExpirationTime(),
+// 			       jit->getDelegationDuration(),
+// 			       jit->getUserDN(), 
+// 			       false,
+// 			       jit->getMyProxyAddress()
+// 			       );
+	  
+// 	}
+	
+// 	++jit;
+//       }
 
   } // unlock the cache
 
-  map<string, boost::tuple<string, string, time_t, int, string,bool,string> >::const_iterator dit = mapDeleg.begin();
+  DelegInfo::const_iterator dit = mapDeleg.begin();
+
   while( dit != mapDeleg.end() ) {
     
     m_delegation_set.insert( table_entry( 
@@ -176,10 +179,9 @@ Delegation_manager::Delegation_manager( ) :
 					 dit->second.get<4>(),  // user_dn
 					 dit->second.get<5>(), // renewable ?
 					 dit->second.get<6>()
-					 
 					 )         
 			     );
-
+    
     ++dit;
   }
 
@@ -188,7 +190,7 @@ Delegation_manager::Delegation_manager( ) :
 //______________________________________________________________________________
 Delegation_manager* Delegation_manager::instance( ) 
 {
-    boost::recursive_mutex::scoped_lock L( m_mutex );
+    boost::recursive_mutex::scoped_lock L( s_mutex );
     if ( 0 == s_instance ) 
         s_instance = new Delegation_manager( );
     return s_instance;
@@ -197,7 +199,7 @@ Delegation_manager* Delegation_manager::instance( )
 //______________________________________________________________________________
 boost::tuple<string, time_t, int> Delegation_manager::delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force, bool USE_NEW, const string& myproxy_address ) throw( std::exception& )
 {
-    boost::recursive_mutex::scoped_lock L( m_mutex );
+    boost::recursive_mutex::scoped_lock L( s_mutex );
 
     static char* method_name = "Delegation_manager::delegate() - ";
     string delegation_id; // delegation ID to return as a result
@@ -410,7 +412,7 @@ void Delegation_manager::updateDelegation( const boost::tuple<string, time_t, in
   
   const char* method_name = "Delegation_manager::updateDelegation() - ";
 
-  boost::recursive_mutex::scoped_lock L( m_mutex );
+  boost::recursive_mutex::scoped_lock L( s_mutex );
   
   string delegId = newDeleg.get<0>();
   
@@ -457,7 +459,7 @@ void Delegation_manager::updateDelegation( const boost::tuple<string, time_t, in
 //______________________________________________________________________________
 void Delegation_manager::removeDelegation( const string& delegToRemove )
 {
-  boost::recursive_mutex::scoped_lock L( m_mutex );
+  boost::recursive_mutex::scoped_lock L( s_mutex );
 
   typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
   t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
@@ -474,7 +476,7 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 //______________________________________________________________________________
 void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target )
 {
-    boost::recursive_mutex::scoped_lock L( m_mutex );
+    boost::recursive_mutex::scoped_lock L( s_mutex );
     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
     t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
     t_delegation_by_key::iterator it = delegation_by_key_view.begin();
@@ -496,7 +498,7 @@ void Delegation_manager::redelegate( const string& certfile,
                                      const string& delegation_url,
                                      const string& delegation_id ) 
 {
-    boost::recursive_mutex::scoped_lock L( m_mutex );
+    boost::recursive_mutex::scoped_lock L( s_mutex );
 
     static char* method_name = "Delegation_manager::ridelegate() - ";
 

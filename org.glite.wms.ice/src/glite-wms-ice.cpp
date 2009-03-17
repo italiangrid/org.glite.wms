@@ -35,7 +35,7 @@
 #include "ice-core.h"
 #include "iceAbsCommand.h"
 #include "iceCommandFactory.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
@@ -65,7 +65,7 @@ namespace fs = boost::filesystem;
 #define MAX_ICE_MEM 550000LL
 
 long long check_my_mem( const pid_t pid ) throw();
-void dumpIceCache( const string& pathfile ) throw();
+//void dumpIceCache( const string& pathfile ) throw();
 
 void sigusr1_handle(int x) { 
   exit(2);
@@ -287,28 +287,28 @@ int main(int argc, char*argv[])
     /*****************************************************************************
      * Initializes job cache
      ****************************************************************************/
-    string jcachedir( conf->ice()->persist_dir() );
+    //    string jcachedir( conf->ice()->persist_dir() );
 
-    CREAM_SAFE_LOG(
-                   log_dev->infoStream() 
-                   << method_name
-                   << "Initializing jobCache with persistency directory ["
-                   << jcachedir
-                   << "]..."
+//     CREAM_SAFE_LOG(
+//                    log_dev->infoStream() 
+//                    << method_name
+//                    << "Initializing jobCache with persistency directory ["
+//                    << jcachedir
+//                    << "]..."
                    
-                   );
+//                    );
 
-    iceUtil::jobCache::setPersistDirectory( jcachedir );
-    iceUtil::jobCache::setRecoverableDb( true );
-    iceUtil::jobCache::setReadOnly( false );
+//     iceUtil::jobCache::setPersistDirectory( jcachedir );
+//     iceUtil::jobCache::setRecoverableDb( true );
+//     iceUtil::jobCache::setReadOnly( false );
 
-    try {
-        iceUtil::jobCache::getInstance();
-    }
-    catch(exception& ex) {
-        CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );
-        exit( 1 );
-    }
+//     try {
+//         iceUtil::jobCache::getInstance();
+//     }
+//     catch(exception& ex) {
+//         CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );
+//         exit( 1 );
+//     }
 
     /**
      * Now the cache is ready and filled with all job's information
@@ -460,13 +460,13 @@ int main(int argc, char*argv[])
 	 *
 	 */
 	mem_threshold_counter++;
-	dump_threshold_counter++;
+	//	dump_threshold_counter++;
 
-	if(dump_threshold_counter >= cache_dump_delay) {
-	  dump_threshold_counter = 0;
-	  if( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") )
-	    dumpIceCache( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") );
-	}
+// 	if(dump_threshold_counter >= cache_dump_delay) {
+// 	  dump_threshold_counter = 0;
+// 	  if( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") )
+// 	    dumpIceCache( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") );
+// 	}
 
 	if(mem_threshold_counter >= 60) { // every 120 seconds check the memory
 	  mem_threshold_counter = 0;
@@ -522,43 +522,43 @@ long long check_my_mem( const pid_t pid ) throw()
 }
 
 //______________________________________________________________________________
-void dumpIceCache( const string& pathfile ) throw() 
-{
+// void dumpIceCache( const string& pathfile ) throw() 
+// {
   
-  boost::recursive_mutex::scoped_lock L( iceUtil::jobCache::mutex );
+//   boost::recursive_mutex::scoped_lock L( iceUtil::jobCache::mutex );
   
-  FILE* OUT = fopen(pathfile.c_str(), "a");
+//   FILE* OUT = fopen(pathfile.c_str(), "a");
   
-  if(!OUT) {
-    int saveerr = errno;
-    CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->errorStream()
-		    << "glite-wms-ice::main - Couldn't open file ["
-		    << pathfile << "] for JobCache dump. Error is: "
-		    << strerror(saveerr)
-		    );	
-    return;
-  }
+//   if(!OUT) {
+//     int saveerr = errno;
+//     CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->errorStream()
+// 		    << "glite-wms-ice::main - Couldn't open file ["
+// 		    << pathfile << "] for JobCache dump. Error is: "
+// 		    << strerror(saveerr)
+// 		    );	
+//     return;
+//   }
   
-  int count = 0;
-  map<string, int> statusMap;
-  iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
+//   int count = 0;
+//   map<string, int> statusMap;
+//   iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
   
-  iceUtil::jobCache::iterator it( cache->begin() );
+//   iceUtil::jobCache::iterator it( cache->begin() );
   
-  for ( it = cache->begin(); it != cache->end(); ++it ) {
-    iceUtil::CreamJob aJob( *it );
-    count++;
-    statusMap[string(glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus()] )]++;
-  }
+//   for ( it = cache->begin(); it != cache->end(); ++it ) {
+//     iceUtil::CreamJob aJob( *it );
+//     count++;
+//     statusMap[string(glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus()] )]++;
+//   }
   
-  ostringstream outputBuf("");
+//   ostringstream outputBuf("");
   
-  outputBuf << iceUtil::time_t_to_string( time(0) ) << " - Total_Job(s)=" << count;
+//   outputBuf << iceUtil::time_t_to_string( time(0) ) << " - Total_Job(s)=" << count;
   
-  for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
-    outputBuf << " - " << it->first << "_Jobs=" << it->second;
-  }
+//   for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
+//     outputBuf << " - " << it->first << "_Jobs=" << it->second;
+//   }
   
-  fprintf( OUT, "%s\n", outputBuf.str().c_str() );
-  fclose( OUT );
-}
+//   fprintf( OUT, "%s\n", outputBuf.str().c_str() );
+//   fclose( OUT );
+// }

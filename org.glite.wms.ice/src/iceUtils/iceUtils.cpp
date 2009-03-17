@@ -18,7 +18,7 @@
  */
 
 #include "iceUtils.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "iceConfManager.h"
 
 #include <cstdlib>
@@ -41,6 +41,8 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+
 extern int h_errno;
 extern int errno;
 
@@ -56,14 +58,78 @@ int setET(char **errtxt, int rc);
 //char *resolveHostName(struct sockaddr &, char**);
 //int resolveHostName(struct sockaddr &, char *InetName[], int, char**);    
 //int resolveHostAddr(const char *InetName, struct sockaddr &InetAddr, char  **errtxt=0);    
-    
+
+//boost::recursive_mutex glite::wms::ice::util::globalICEMutex;
+
 using namespace std;
+namespace api_util = glite::ce::cream_client_api::util;
 
 namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
+	
+	/**
+	 * Utility function which converts a binary blob into a string.
+	 *
+	 * @param buf The binary data blob to convert
+	 *
+	 * @param len The length of the binary data bloc buf
+	 *
+	 * @return a string univocally representing the buffer buf. The
+	 * string contains a list of exactly (len * 2) hex characters, as
+	 * follows.  If the blob contains the following bytes (in hex):
+	 *
+	 * 0xfe 0xa0 0x01 0x90
+	 *
+	 * Then the resulting string will be the following:
+	 *
+	 * "fea00190"
+	 */ 
+	string bintostring( unsigned char* buf, size_t len ) {
+	  string result;
+	  const char alpha[] = "0123456789abcdef";
+	  
+	  for ( size_t i=0; i<len; ++i ) {
+            result.push_back( alpha[ ( buf[i] >> 4 ) & 0x0f ] );
+            result.push_back( alpha[ buf[i] & 0x0f ] );
+	  }
+	  return result;
+	};
+
+string computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
+
+  static char* method_name = "util::computeSHA1Digest() - ";
+
+  unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
+  char buffer[ 1024 ]; // buffer for file data
+  SHA_CTX ctx;
+  int fd; // file descriptor
+  unsigned long nread = 0; // number of bytes read
+
+  fd = open( proxyfile.c_str(), O_RDONLY );
   
+  if ( fd < 0 ) {
+    int saveerr = errno;
+    CREAM_SAFE_LOG( api_util::creamApiLogger::instance()->getLogger()->errorStream()
+		    << method_name
+		    << "Cannot open proxy file ["
+		    << proxyfile << "]: " << strerror(saveerr)
+		    );  
+    throw runtime_error( string( "Cannot open proxy file [" + proxyfile + "]: " + strerror(saveerr) ) );
+  }
+  
+  SHA1_Init( &ctx );
+  while ( ( nread = read( fd, buffer, 1024 ) ) > 0 ) {
+    SHA1_Update( &ctx, buffer, nread );
+  }
+  SHA1_Final( bin_sha1_digest, &ctx );
+  
+  close( fd );
+
+  return bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+}
+
 //________________________________________________________________________
 string getHostName( void ) throw ( runtime_error& )
 {

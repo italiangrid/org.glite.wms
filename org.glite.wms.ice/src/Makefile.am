@@ -12,9 +12,9 @@
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
 
-SUBDIRS = iceCommands ice iceThreads iceUtils
+SUBDIRS = iceCommands ice iceThreads iceUtils iceDb
 
-bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache glite-wms-ice-safe
+bin_PROGRAMS = putFL putFL_cancel glite-wms-ice glite-wms-ice-safe
 
 putFL_SOURCES = putFL.cpp
 
@@ -24,7 +24,7 @@ glite_wms_ice_SOURCES = glite-wms-ice.cpp
 
 glite_wms_ice_safe_SOURCES = glite-wms-ice-safe.cpp
 
-dumpICECache_SOURCES = dumpICECache.cpp
+###dumpICECache_SOURCES = dumpICECache.cpp
 
 putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
@@ -40,6 +40,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
 		../src/ice/libglite_wms_ice.la \
+		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -58,7 +59,9 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(BDB_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		-lvomsapi_gcc32dbgpthr
+		-lvomsapi_gcc32dbgpthr \
+		-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib \
+		-lsqlite3
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -92,6 +95,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
 		../src/ice/libglite_wms_ice.la \
+		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
 		$(CLASSAD_LIBS) \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -110,7 +114,9 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BDB_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		-lvomsapi_gcc32dbgpthr
+		-lvomsapi_gcc32dbgpthr \
+		-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib \
+		-lsqlite3
 
 dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
@@ -128,6 +134,7 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/iceThreads/libglite_wms_iceThreads.la \
 		../src/iceCommands/libglite_wms_iceCommands.la \
 		../src/ice/libglite_wms_ice.la \
+		../src/iceDb/libglite_wms_iceDb.la \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -143,7 +150,9 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_serialization \
 		-lglite_ce_monitor_consumer \
 		$(BDB_LIBS) \
-		-lvomsapi_gcc32dbgpthr
+		-lvomsapi_gcc32dbgpthr \
+		-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib \
+		-lsqlite3
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen  \
 		-I$(top_srcdir)/src/iceUtils \
@@ -151,6 +160,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		-I$(top_srcdir)/src/iceCommands \
 		-I$(top_srcdir)/src/ice \
 		-I$(GSOAP_LOCATION)/include \
+		-I$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/include/ \
 		$(GLITE_CFLAGS) \
 		$(GSOAP_CFLAGS) \
 		$(GLOBUS_THR_CFLAGS) \

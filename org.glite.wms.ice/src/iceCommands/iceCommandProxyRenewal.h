@@ -52,12 +52,12 @@ namespace glite {
     namespace ice {
       namespace util {
 	
-	class jobCache;
+	//class jobCache;
 	
 	class iceCommandProxyRenewal : public iceAbsCommand {
 	  log4cpp::Category* m_log_dev;
 	  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-	  jobCache* m_cache;
+	  //jobCache* m_cache;
 	  
 	  iceCommandProxyRenewal( const iceCommandProxyRenewal& );
 	  

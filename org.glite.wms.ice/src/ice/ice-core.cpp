@@ -24,7 +24,7 @@
 #include "ice-core.h"
 #include "iceCommandLeaseUpdater.h"
 #include "iceConfManager.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "subscriptionManager.h"
 #include "subscriptionManager.h"
 #include "iceLBLogger.h"
@@ -44,6 +44,14 @@
 #include "Request.h"
 #include "DNProxyManager.h"
 #include "iceUtils.h"
+#include "creamJob.h"
+
+#include "iceDb/GetJobsToPoll.h"
+#include "iceDb/CheckGridJobID.h"
+#include "iceDb/GetJobByGid.h"
+#include "iceDb/GetAllGridJobID.h"
+#include "iceDb/Transaction.h"
+#include "iceDb/RemoveJobByGid.h"
 
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -186,7 +194,7 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_ice_input_queue( util::Request_source_factory::make_source_input_ice() ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( ice_util::iceLBLogger::instance() ),
-    m_cache( ice_util::jobCache::getInstance() ),
+    //    m_cache( ice_util::jobCache::getInstance() ),
     m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() )
 //    m_requests_pool( new util::iceThreadPool("ICE Requests Pool", m_configuration->ice()->max_ice_threads() ) ),
 //    m_ice_commands_pool( new util::iceThreadPool( "ICE Internal Commands Pool",  (m_configuration->ice()->max_ice_threads()/2) ) ) // FIXME: remove hardcoded default
@@ -269,14 +277,36 @@ void Ice::stopAllThreads( void )
 void Ice::init( void )
 {    
     // Handle resubmitted/purged jobs
-    for ( util::jobCache::iterator it=m_cache->begin(); it != m_cache->end() ; ) {
-        util::jobCache::iterator old_it( it );
-        it = resubmit_or_purge_job( it );
-        // If resubmit_or_purge_job fails, for whatever reason, the
-        // iterator if NOT incremented to the next element.
-        if ( old_it == it ) {
-            ++it;
-        }
+//     for ( util::jobCache::iterator it=m_cache->begin(); it != m_cache->end() ; ) {
+//         util::jobCache::iterator old_it( it );
+//         it = resubmit_or_purge_job( it );
+//         // If resubmit_or_purge_job fails, for whatever reason, the
+//         // iterator if NOT incremented to the next element.
+//         if ( old_it == it ) {
+//             ++it;
+//         }
+//     }
+
+  set<string> allGids;
+  {
+    db::GetAllGridJobID getter;
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    allGids = getter.get_jobs();
+  }
+
+  for(set<string>::const_iterator it = allGids.begin();
+      it != allGids.end();
+      ++it)
+    {
+      util::CreamJob thisJob;
+      {
+	db::GetJobByGid getter( *it );
+	db::Transaction tnx;
+	tnx.execute( &getter );
+	thisJob = getter.get_job();
+      }
+      resubmit_or_purge_job( thisJob );
     }
 
     if(m_configuration->ice()->start_lease_updater() ) {
@@ -544,7 +574,8 @@ bool Ice::is_job_killer_started( void ) const
 void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) throw()
 {
     try {
-        boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
+      //boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
+      boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
         
         the_job = m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
         
@@ -591,47 +622,57 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 }
 
 //----------------------------------------------------------------------------
-ice_util::jobCache::iterator Ice::purge_job( ice_util::jobCache::iterator jit, const string& reason )
-throw() 
+//ice_util::jobCache::iterator
+void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator jit*/, 
+		     const string& reason )
+  throw() 
 {
     static const char* method_name = "Ice::::purge_job() - ";
 
-    if ( jit == m_cache->end() )
-      return jit;
+//     if ( jit == m_cache->end() )
+//       return jit;
+
+    {
+      db::CheckGridJobID checker( theJob.getGridJobID() );
+      db::Transaction tnx;
+      tnx.execute( &checker );
+      if( !checker.found() )
+	return;
+    }
 
     vector<cream_api::soap_proxy::JobIdWrapper> target;
     cream_api::soap_proxy::ResultWrapper result;
 
-    target.push_back(cream_api::soap_proxy::JobIdWrapper (jit->getCreamJobID(), 
-				   jit->getCreamURL(), 
-				   std::vector<cream_api::soap_proxy::JobPropertyWrapper>()
-				   ));
+    target.push_back(cream_api::soap_proxy::JobIdWrapper (theJob.getCreamJobID(), 
+							  theJob.getCreamURL(), 
+							  std::vector<cream_api::soap_proxy::JobPropertyWrapper>()
+							  ));
     
     cream_api::soap_proxy::JobFilterWrapper filter(target, vector<string>(), -1, -1, "", "");
     
     // Gets the proxy to use for authentication
-    string better_proxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( jit->getUserDN() ).get<0>();
+    string better_proxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.getUserDN() ).get<0>();
 
     if( better_proxy.empty() ) {
       CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
 		      << "DNProxyManager returned an empty string for BetterProxy of user DN ["
 		      << "] for job ["
-		      << jit->describe()
+		      << theJob.describe()
 		      << "]. Using the Job's proxy." 
 		      );
 
-      better_proxy = jit->getUserProxyCertificate();
+      better_proxy = theJob.getUserProxyCertificate();
     }
     
     cream_api::soap_proxy::VOMSWrapper V( better_proxy );
     if( !V.IsValid( ) ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
                         << "Unable to purge job "
-                        << jit->describe()
+                        << theJob.describe()
                         << " due to authentication error: " 
                         << V.getErrorMessage()
                         );
-        return jit;
+        return;// jit;
     }
 
     try {
@@ -639,13 +680,13 @@ throw()
         if ( m_configuration->ice()->purge_jobs() ) {
             CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                            << "Calling JobPurge for job "
-                           << jit->describe()
+                           << theJob.describe()
                            );
             // We cannot accumulate more jobs to purge in a
             // vector because we must authenticate different
             // jobs with different user certificates.
 
-	    glite::wms::ice::util::CreamProxy_Purge( jit->getCreamURL(), 
+	    glite::wms::ice::util::CreamProxy_Purge( theJob.getCreamURL(), 
 						     better_proxy,
 						     &filter, 
 						     &result ).execute( 3 );
@@ -654,7 +695,7 @@ throw()
             CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
                            << "There are jobs to purge, but PURGE IS DISABLED. "
                            << "Will not purge job "
-                           << jit->describe()
+                           << theJob.describe()
                            << " (but will be removed from ICE cache)"
                            );
         }
@@ -676,19 +717,25 @@ throw()
 	  string errMex = wrong.second;
 	  
 	  CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-			 << "Cannot purge job " << jit->describe()
+			 << "Cannot purge job " << theJob.describe()
 			 << ". Reason is: " << errMex
 			 );
 	  
-	  return jit;
+	  return;// jit;
 	}
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                       << "Removing purged job " << jit->describe()
+                       << "Removing purged job " << theJob.describe()
                        << " from cache"
                        );
 
-	boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); 
-        jit = m_cache->erase( jit );
+	//boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex ); 
+	boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
+        //jit = m_cache->erase( jit );
+	{
+	  db::RemoveJobByGid remover( theJob.getGridJobID() );
+	  db::Transaction tnx;
+	  tnx.execute( &remover );
+	}
 
     } catch (ice_util::ClassadSyntax_ex& ex) {
         /**
@@ -702,37 +749,37 @@ throw()
         abort();
     } catch(cream_api::soap_proxy::auth_ex& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                       << "Cannot purge job " << jit->describe()
+                       << "Cannot purge job " << theJob.describe()
                        << ". Reason is: " << ex.what()
                        );
     } catch(cream_api::cream_exceptions::BaseException& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                       << "Cannot purge job " << jit->describe()
+                       << "Cannot purge job " << theJob.describe()
                        << ". Reason is BaseException: " << ex.what()
                        );
     } catch(cream_api::cream_exceptions::InternalException& ex) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                       << "Cannot purge job " << jit->describe()
+                       << "Cannot purge job " << theJob.describe()
                        << ". Reason is InternalException: " << ex.what()
                        );
-    } catch(ice_util::elementNotFound_ex& ex) {
+//     } catch(ice_util::elementNotFound_ex& ex) {
+//         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+//                        << "Cannot purge job " << theJob.describe()
+//                        << ". Reason is elementNotFound_ex: " << ex.what()
+//                        );
+     } catch( std::exception& ex ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                       << "Cannot purge job " << jit->describe()
-                       << ". Reason is elementNotFound_ex: " << ex.what()
-                       );
-    } catch( std::exception& ex ) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                       << "Cannot purge job " << jit->describe()
+                       << "Cannot purge job " << theJob.describe()
                        << ". Reason is an exception: " << ex.what()
                        
                        );
     } catch( ... ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                       << "Cannot purge job " << jit->describe()
+                       << "Cannot purge job " << theJob.describe()
                        << ". Reason is an unknown exception"
                        );
     }
-    return jit;
+    return;// jit;
 }
 
 
@@ -748,7 +795,6 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
                        << "Ice::deregister_proxy_renewal() - "
                        << "Unregistering Proxy for job "
                        << job.describe()
-                       
                        );
         
         err = glite_renewal_UnregisterProxy( job.getGridJobID().c_str(), NULL );
@@ -761,7 +807,6 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
                            << "for job " << job.describe()
                            << ". Reason: \"" << edg_wlpr_GetErrorText(err) 
                            << "\"."
-                           
                            );
         } else {
             if ( err == EDG_WLPR_PROXY_NOT_REGISTERED ) {
@@ -771,7 +816,6 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
                                << "Job proxy not registered for job "
                                << job.describe() 
                                << ". Going ahead." 
-                               
                                );
             }
         }
@@ -781,7 +825,6 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
                        << "Ice::deregister_proxy_renewal() - "
                        << "Proxy unregistration disable. To reenable, " 
                        << "unset the environment variable ICE_DISABLE_DEREGISTER"
-                       
                        );
     }
 }
@@ -825,12 +868,21 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 }
 
 //____________________________________________________________________________
-ice_util::jobCache::iterator Ice::resubmit_or_purge_job( ice_util::jobCache::iterator it )
+//ice_util::jobCache::iterator 
+void Ice::resubmit_or_purge_job( /*ice_util::jobCache::iterator it*/ util::CreamJob& tmp_job )
 throw() 
 {
-    if ( it != m_cache->end() ) {
+  bool found = false;
+  {
+    db::CheckGridJobID checker( tmp_job.getGridJobID() );
+    db::Transaction tnx;
+    tnx.execute( &checker );
+    found = checker.found();
+  }
+  
+  if ( found /*it != m_cache->end()*/ ) {
 
-        ice_util::CreamJob tmp_job( *it ); ///< This is necessary because the purge_job() method REMOVES the job from the cache; so we need to keep a local copy and work on that copy
+      //        ice_util::CreamJob tmp_job( *it ); ///< This is necessary because the purge_job() method REMOVES the job from the cache; so we need to keep a local copy and work on that copy
 
         if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ||
              cream_api::job_statuses::DONE_OK == tmp_job.getStatus() ) {
@@ -851,7 +903,7 @@ throw()
              cream_api::job_statuses::ABORTED == tmp_job.getStatus() ) {
             // WARNING: the next line removes the job from the job cache!
 
-            it = purge_job( it, "Job purged by ICE" );
+	  purge_job( /*it*/tmp_job, "Job purged by ICE" );
 
 	    if(tmp_job.is_proxy_renewable())
 	      ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN(), tmp_job.getMyProxyAddress() );
@@ -862,6 +914,6 @@ throw()
 
         }
     }
-    return it;
+    //return it;
 }
 

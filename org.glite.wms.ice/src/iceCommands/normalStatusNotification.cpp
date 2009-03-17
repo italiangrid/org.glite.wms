@@ -23,7 +23,7 @@
 #include "normalStatusNotification.h"
 
 // ICE stuff
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
@@ -32,6 +32,11 @@
 #include "iceConfManager.h"
 #include "ice-core.h"
 #include "DNProxyManager.h"
+
+#include "iceDb/GetJobByCid.h"
+#include "iceDb/UpdateJobInfo.h"
+#include "iceDb/RemoveJobByGid.h"
+#include "iceDb/Transaction.h"
 
 // CREAM and WMS stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -288,7 +293,7 @@ void normalStatusNotification::apply( void ) // can throw anything
                     );
 
     iceLBLogger *m_lb_logger( iceLBLogger::instance() );
-    jobCache *m_cache( jobCache::getInstance() );
+    //jobCache *m_cache( jobCache::getInstance() );
     glite::wms::ice::Ice* m_ice_manager( glite::wms::ice::Ice::instance() );
 
     string cream_job_id;
@@ -316,28 +321,50 @@ void normalStatusNotification::apply( void ) // can throw anything
     // Now that we (hopefully) have the jobid, we lock the cache
     // and find the job
     
-    boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );    
-    jobCache::iterator jc_it( m_cache->lookupByCompleteCreamJobID( cream_job_id ) );
+    //    boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );    
+    boost::recursive_mutex::scoped_lock jc_M( CreamJob::globalICEMutex );
+    //    jobCache::iterator jc_it( m_cache->lookupByCompleteCreamJobID( cream_job_id ) );
 
-    // No job found in cache. This is fine, we may be receiving "old"
-    // notifications, for jobs which have been already purged.
-    if ( jc_it == m_cache->end() ) {
-        if(!getenv("NO_LISTENER_MESS"))
+    CreamJob theJob;
+    {
+      db::GetJobByCid getter( cream_job_id );
+      db::Transaction tnx;
+      tnx.execute( &getter );
+      if( !getter.found() )
+	{
+	  if(!getenv("NO_LISTENER_MESS"))
 	    CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << method_name
                            << "creamjobid ["
                            << cream_job_id
-                           << "] was not found in the cache. "
+                           << "] was not found in the database. "
                            << "Ignoring the whole notification..."
                            );
-        return;
+	  return;
+	} else {
+	theJob = getter.get_job();
+      }
     }
 
+    // No job found in cache. This is fine, we may be receiving "old"
+    // notifications, for jobs which have been already purged.
+//     if ( jc_it == m_cache->end() ) {
+//         if(!getenv("NO_LISTENER_MESS"))
+// 	    CREAM_SAFE_LOG(m_log_dev->warnStream()
+//                            << method_name
+//                            << "creamjobid ["
+//                            << cream_job_id
+//                            << "] was not found in the cache. "
+//                            << "Ignoring the whole notification..."
+//                            );
+//         return;
+//     }
+
     string _cemon_url;
-    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( jc_it->getUserDN() ).get<0>();
-    subscriptionManager::getInstance()->getCEMonURL(proxy, jc_it->getCreamURL()/*m_cream_address*/, _cemon_url);
+    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.getUserDN() ).get<0>();
+    subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.getCreamURL()/*m_cream_address*/, _cemon_url);
     string _cemon_dn;
-    subscriptionManager::getInstance()->getCEMonDN( jc_it->getUserDN()/*m_user_dn*/, _cemon_url, _cemon_dn );
+    subscriptionManager::getInstance()->getCEMonDN( theJob.getUserDN()/*m_user_dn*/, _cemon_url, _cemon_dn );
     //_cemon_dn = jc_it->get_cemon_dn();
 
     if( m_cemondn.compare( _cemon_dn /*jc_it->get_cemon_dn()*/ ) ) {
@@ -346,7 +373,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 		       << "the CEMon ["
 		       << m_cemondn << "] that sent this notification "
 		       << "apparently didn't receive the submission of current job "
-		       << jc_it->describe()
+		       << theJob.describe()
 		       << ". Ignoring the whole notification..."
 		       );
 	return;
@@ -365,14 +392,20 @@ void normalStatusNotification::apply( void ) // can throw anything
         // TERMINAL state (that means that more states are coming...),
         // like DONE-OK; otherwise the eventStatusPoller will never
         // purge it...
-        if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
-            jc_it->setLastSeen( time(0) );
-            jc_it->set_last_empty_notification( time(0) );
+        if( !api::job_statuses::isFinished( theJob.getStatus() ) ) {
+            theJob.setLastSeen( time(0) );
+            theJob.set_last_empty_notification( time(0) );
 	    
-            jc_it = m_cache->put( *jc_it );
+            //jc_it = m_cache->put( *jc_it );
+	    {
+	      db::UpdateJobInfo updater( theJob );
+	      db::Transaction tnx;
+	      tnx.execute( &updater );
+	    }
+	    
         }
         
-        if ( count <= jc_it->get_num_logged_status_changes() ) {
+        if ( count <= theJob.get_num_logged_status_changes() ) {
             if (!getenv("NO_LISTENER_MESS")) {
                 CREAM_SAFE_LOG(m_log_dev->debugStream()
                                << method_name
@@ -403,10 +436,16 @@ void normalStatusNotification::apply( void ) // can throw anything
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->warnStream()
                                << method_name
-                               << jc_it->describe()
+                               << theJob.describe()
                                << " is reported as PURGED. Removing from cache"
                                ); 
-            m_cache->erase( jc_it );
+            //m_cache->erase( jc_it );
+	    //db::ERASE !
+	    {
+	      db::RemoveJobByGid remover( theJob.getGridJobID() );
+	      db::Transaction tnx;
+	      tnx.execute( &remover );
+	    }
             return;
         }
         
@@ -418,19 +457,30 @@ void normalStatusNotification::apply( void ) // can throw anything
                            << api::job_statuses::job_status_str[ notif_ptr->get_status() ] << "]"
                            << " This is CEMON notification notification count=" << count
                            << " num already logged=" 
-                           << jc_it->get_num_logged_status_changes()
+                           << theJob.get_num_logged_status_changes()
                            );
         
-        CreamJob tmp_job( *jc_it );
-        notif_ptr->apply_to_job( tmp_job ); // apply status change to job
-        tmp_job.set_num_logged_status_changes( count );
-        iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
+	//        CreamJob tmp_job( *jc_it );
+	//        notif_ptr->apply_to_job( tmp_job ); // apply status change to job
+	notif_ptr->apply_to_job( theJob );
+	//        tmp_job.set_num_logged_status_changes( count );
+	theJob.set_num_logged_status_changes( count );
+        iceLBEvent* ev = iceLBEventFactory::mkEvent( theJob /*tmp_job*/ );
         if ( ev ) {
-            tmp_job = m_lb_logger->logEvent( ev );
+	  //tmp_job = m_lb_logger->logEvent( ev );
+	  theJob = m_lb_logger->logEvent( ev );
         }
-        jc_it = m_cache->put( tmp_job );
-        jobCache::iterator jc_it_new = m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
-        if ( jc_it_new != jc_it )
-            return; // FIXME: Remove this temporary patch
+	//        jc_it = m_cache->put( tmp_job );
+	//	db::PUT !!
+	
+	// For NOW we can trust on logEvent that put the entire job into the database
+	// but a more elegant solution must be found later.
+
+	  //        jobCache::iterator jc_it_new = m_ice_manager->resubmit_or_purge_job( jc_it ); // FIXME!! May invalidate the jc_it iterator
+	  m_ice_manager->resubmit_or_purge_job( theJob );
+	  
+
+//         if ( jc_it_new != jc_it )
+//             return; // FIXME: Remove this temporary patch
     }
 }

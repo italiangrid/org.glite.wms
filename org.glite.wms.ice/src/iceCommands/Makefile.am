@@ -34,6 +34,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
+		-I$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/include/ \
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in

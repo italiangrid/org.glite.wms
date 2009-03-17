@@ -69,7 +69,7 @@ namespace util {
     
     class subscriptionProxy;
     
-    class jobCache;
+    //    class jobCache;
     
     class subscriptionManager {
         
@@ -94,7 +94,7 @@ namespace util {
         static std::string 			  		  s_persist_dir;
         static bool				  		  s_recoverable_db;
         
-        jobCache						 *m_cache;
+	//        jobCache						 *m_cache;
         
         bool							  m_authz;
         bool							  m_authn;

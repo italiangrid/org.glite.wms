@@ -29,13 +29,17 @@
 #include "iceCommandUpdateStatus.h"
 #include "emptyStatusNotification.h"
 #include "normalStatusNotification.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
 #include "ice-core.h"
 #include "subscriptionManager.h"
 #include "DNProxyManager.h"
+#include "iceDb/GetJobByCid.h"
+#include "iceDb/Transaction.h"
+#include "iceDb/GetCreamURLUserDN.h"
+#include "iceDb/GetCidByCreamURLUserDN.h"
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -90,7 +94,7 @@ iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event
 //____________________________________________________________________________
 void iceCommandUpdateStatus::execute( ) throw( )
 {   
-    jobCache *cache( jobCache::getInstance() );
+  //    jobCache *cache( jobCache::getInstance() );
     static const char* method_name = "iceCommandUpdateStatus::execute() - ";
 
     // We define two "sets" of operations which must be performed by 
@@ -200,22 +204,36 @@ void iceCommandUpdateStatus::execute( ) throw( )
             commands.push_front( notif );
 
             // Gets the job which is mentioned in the notification
-            boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
+	    //            boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
+	    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
            
-            jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( notif->get_complete_cream_job_id() ) );
-            
-            if ( cache->end() != job_it ) {
-
-                // Gets the subscription ID which is used to get
+            //jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( notif->get_complete_cream_job_id() ) );
+	    CreamJob theJob;
+	    {
+	      db::GetJobByCid getter( notif->get_complete_cream_job_id() );
+	      db::Transaction tnx;
+	      tnx.execute( &getter );
+	      if( !getter.found() ) 
+		{
+		  CREAM_SAFE_LOG( m_log_dev->warnStream()
+				  << method_name
+				  << "Job with CREAM job id ["
+				  << notif->get_complete_cream_job_id()
+				  << "] was not found in the cache. Cannot update "
+				  << "the set of subscriptions the jobs belongs to"
+				  );
+		} else {
+		theJob = getter.get_job();
+		// Gets the subscription ID which is used to get
                 // notifications associated with that job.
 		
 		iceSubscription subscription;
 		string cemon_url;
-		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
-		subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
-		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
+		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.getUserDN() ).get<0>();
+		subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.getCreamURL(), cemon_url);
+		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( theJob.getUserDN(), cemon_url, subscription );
                 string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
-
+		
                 // Then, push the pair (subs_id, cemondn) into the
                 // set.  This is necessary, as a normal status
                 // notification should also update all the jobs of
@@ -224,22 +242,53 @@ void iceCommandUpdateStatus::execute( ) throw( )
                 CREAM_SAFE_LOG( m_log_dev->debugStream()
                                 << method_name
                                 << "Normal status notification for job "
-                                << job_it->describe()
+                                << theJob.describe()
                                 << " requires adding subscription id "
                                 << subs_id
                                 << " to the set of subscriptions whose jobs "
                                 << "will be updated"
                                 );
-
+		
                 subscription_set.insert( subs_id );
-            } else {
-                CREAM_SAFE_LOG( m_log_dev->warnStream()
-                                << method_name
-                                << "Job with CREAM job id ["
-                                << notif->get_complete_cream_job_id()
-                                << "] was not found in the cache. Cannot update the set of subscriptions the jobs belongs to"
-                                );
-            }
+	      }
+	    }
+            
+//             if ( cache->end() != job_it ) {
+
+//                 // Gets the subscription ID which is used to get
+//                 // notifications associated with that job.
+		
+// 		iceSubscription subscription;
+// 		string cemon_url;
+// 		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
+// 		subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
+// 		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
+//                 string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
+
+//                 // Then, push the pair (subs_id, cemondn) into the
+//                 // set.  This is necessary, as a normal status
+//                 // notification should also update all the jobs of
+//                 // that subs_id, in the exact same way as empty status
+//                 // notifications do.
+//                 CREAM_SAFE_LOG( m_log_dev->debugStream()
+//                                 << method_name
+//                                 << "Normal status notification for job "
+//                                 << job_it->describe()
+//                                 << " requires adding subscription id "
+//                                 << subs_id
+//                                 << " to the set of subscriptions whose jobs "
+//                                 << "will be updated"
+//                                 );
+
+//                 subscription_set.insert( subs_id );
+//             } else {
+//                 CREAM_SAFE_LOG( m_log_dev->warnStream()
+//                                 << method_name
+//                                 << "Job with CREAM job id ["
+//                                 << notif->get_complete_cream_job_id()
+//                                 << "] was not found in the cache. Cannot update the set of subscriptions the jobs belongs to"
+//                                 );
+//             }
         }
     }
 
@@ -247,37 +296,89 @@ void iceCommandUpdateStatus::execute( ) throw( )
     // processing of empty status notifications. We do this by
     // checking al the jobs in the cache.
     {
-        boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
-        for ( jobCache::iterator job_it=cache->begin();
-              cache->end() != job_it; ++job_it ) {
-            
-	    iceSubscription subscription;
-	    string cemon_url;
-	    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
-	    subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
-	    subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
-            string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
-	    
-            if ( subscription_set.end() !=  subscription_set.find( subs_id /*job_it->getSubscriptionID()*/ ) ) {
-                CREAM_SAFE_LOG( m_log_dev->debugStream()
-                                << method_name 
-                                << "Making empty status notification command for job "
-                                << job_it->describe()
-                                );
+      //boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
+      boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
+      
 
-                commands.push_front( new emptyStatusNotification( job_it->getCompleteCreamJobID() ) );
-            }            
-        }
+      /**
+	 SELECT DISTINCT creamurl,userdn FROM jobs;
+      */
+
+      list< pair<string, string> > list_creamurl_userdn, save;
+      {
+	db::GetCreamURLUserDN getter;
+	db::Transaction tnx;
+	tnx.execute( &getter );
+	list_creamurl_userdn = getter.get();
+      }
+
+      for( list< pair<string, string> >::const_iterator it=list_creamurl_userdn.begin();
+	   it != list_creamurl_userdn.end();
+	   ++it)
+	{
+	  string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( it->second ).get<0>();
+	  iceSubscription subscription;
+	  string cemon_url;
+	  subscriptionManager::getInstance()->getCEMonURL(proxy, it->first, cemon_url);
+	  subscriptionManager::getInstance()->getSubscriptionByDNCEMon( it->second, cemon_url, subscription );
+	  string subs_id( subscription.getSubscriptionID() );
+	  
+	  if ( subscription_set.end() !=  subscription_set.find( subs_id ) ) {
+	    save.push_back( *it );
+	  }
+	}
+
+
+      list<string> cids;
+      for( list< pair<string, string> >::const_iterator it=save.begin();
+	   it != save.end();
+	   ++it) 
+	{
+	  db::GetCidByCreamURLUserDN getter( *it );
+	  db::Transaction tnx;
+	  tnx.execute( &getter );
+	  list<string> tmp = getter.get();
+	  cids.merge( tmp );
+	}
+      
+      for( list<string>::const_iterator it=cids.begin();
+	   it != cids.end();
+	   ++it)
+	{
+	  commands.push_front( new emptyStatusNotification( *it ) );
+	}
+      
+//       for ( jobCache::iterator job_it=cache->begin();
+//               cache->end() != job_it; ++job_it ) {
+            
+// 	    iceSubscription subscription;
+// 	    string cemon_url;
+// 	    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
+// 	    subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
+// 	    subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
+//             string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
+	    
+//             if ( subscription_set.end() !=  subscription_set.find( subs_id /*job_it->getSubscriptionID()*/ ) ) {
+//                 CREAM_SAFE_LOG( m_log_dev->debugStream()
+//                                 << method_name 
+//                                 << "Making empty status notification command for job "
+//                                 << job_it->describe()
+//                                 );
+
+//                 commands.push_front( new emptyStatusNotification( job_it->getCompleteCreamJobID() ) );
+//             }            
+//         }
     } // end block
 
     // Now executes all the commands in the list
-    while( ! commands.empty() ) {
+      while( ! commands.empty() ) {
         boost::scoped_ptr< absStatusNotification > elem( commands.front() );
         commands.pop_front();
         try {
-            elem->apply();
+	  elem->apply();
         } catch( ... ) {
-            // FIXME
+	  // FIXME
         }
+      }
     }
-}
+

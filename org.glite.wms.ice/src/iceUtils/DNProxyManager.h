@@ -28,7 +28,7 @@
 #include <cstring>
 #include <string.h>
 
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "SourceProxyNotFoundException.h"
 
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -53,7 +53,7 @@ namespace util {
          */
         
 	std::map< std::string, boost::tuple<std::string, time_t, long long int> > m_DNProxyMap;
-
+	std::map< std::string, std::set< std::string> > m_temp_dnproxy_Map;
         log4cpp::Category *m_log_dev;
         
     protected:
@@ -94,7 +94,7 @@ namespace util {
     private:
         void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
 
-	std::pair<jobCache::iterator, time_t> searchBetterProxy( const std::string& ) throw();
+	std::pair< std::string, time_t> searchBetterProxy( const std::string& ) throw();
         
 	std::string composite( const std::string& userDN, const std::string& myproxy_name) const throw()
 	  {
