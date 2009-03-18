@@ -22,6 +22,8 @@ namespace wms{
 namespace client {
 namespace utilities {
 
+Log* logInfo;
+
 const string DEFAULT_UI_CLIENTCONFILE	=	"glite_wmsui.conf";  //Used in utils as well
 const string JDL_WMS_CLIENT		=	"WmsClient";
 /******************************
@@ -35,7 +37,7 @@ AdUtils::AdUtils(Options *wmcOpts){
         	// default
 		vbLevel = WMSLOG_WARNING;
         }
-
+        logInfo = new Log (vbLevel);
 }
 /******************************
 *Default destructor
@@ -119,8 +121,19 @@ void AdUtils::checkDeprecatedAttributes(glite::jdl::Ad &ad,
 }
 
 string AdUtils::generateVoPath(string& voName){
-	//new approach
-	return string(getenv("HOME"))+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CLIENTCONFILE;
+        string conf;
+        char* home = getenv("HOME");
+        if (home == NULL)  {
+                logInfo->print(WMS_INFO, "Unable to find user HOME environment variable: ","Not Set",true,false);
+                return conf;
+        } else {
+                // new approach
+                conf = string(home)+"/.glite/"+glite_wms_client_toLower(voName)+"/"+DEFAULT_UI_CLIENTCONFILE;
+                if (Utils::isFile(conf)) {
+                        return conf;
+              	}
+	}
+	return conf;
 }
 
 void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
