@@ -29,7 +29,7 @@
 #include "DNProxyManager.h"
 #include "iceDb/GetJobByCid.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/UpdateLastEmpty.h"
+#include "iceDb/UpdateJobByGid.h"
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -93,7 +93,7 @@ void emptyStatusNotification::apply( void )
 //     }
 
     //job_it->set_last_empty_notification( time(0) );
-    theJob.set_last_empty_notification( time(0) );
+    theJob.set_last_empty_notification_time( time(0) );
     CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << method_name
                     << "Timestamp of last empty "
@@ -105,7 +105,10 @@ void emptyStatusNotification::apply( void )
                     );
     //cache->put( *job_it );
     {
-      db::UpdateLastEmpty updater( theJob );
+      //      db::UpdateLastEmpty updater( theJob );
+      list< pair<string, string> > params;
+      params.push_back( make_pair( "last_empty_notification", int_to_string(theJob.get_last_empty_notification())));
+      db::UpdateJobByGid updater( theJob.getGridJobID(), params );
       db::Transaction tnx;
       tnx.execute( &updater );
     }

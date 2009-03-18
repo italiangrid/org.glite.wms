@@ -101,6 +101,8 @@ namespace util {
      */ 
     std::string time_t_to_string( time_t tval );
 
+    std::string int_to_string( const int val );
+
     /**
      * This function outputs a string containing the CREAM and grid
      * jobid for a given job. This function should be used whenever

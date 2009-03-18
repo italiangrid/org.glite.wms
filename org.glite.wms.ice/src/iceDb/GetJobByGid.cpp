@@ -23,9 +23,9 @@
 
 #include "GetJobByGid.h"
 
-#include "boost/algorithm/string.hpp"
+//#include "boost/algorithm/string.hpp"
 //#include "boost/format.hpp"
-#include "boost/archive/text_iarchive.hpp"
+//#include "boost/archive/text_iarchive.hpp"
 //#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <sstream>
@@ -47,61 +47,65 @@ GetJobByGid::GetJobByGid( const string& gid ) :
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
-    static int fetch_job_callback(void *param, int argc, char **argv, char **azColName){
-        string* jdl = (string*)param;
-	if ( argv && argv[0] )
-	  *jdl = argv[0];
-	return 0;
-    }
-
+  static int fetch_job_callback(void *param, int argc, char **argv, char **azColName){
+    vector<string> *fields = (vector<string>*)param;
+    if ( argv && argv[0] ) 
+      {
+	for(int i = 0; i<=28; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+	  if( argv[i] )
+	    fields->push_back( argv[i] );
+	  else
+	    fields->push_back( "" );
+	}
+      }
+    return 0;
+  }
+  
 } // end local namespace
-
+  
 void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    //static const char* method_name = "GetJobByGid::execute() - ";
 
-//     string sqlcmd = boost::str( boost::format( 
-//       "select jdl from jobs" \
-//       " where gridjobid = \'%1%\';" ) % m_gridjobid );
-//     string serialized_job;
-//     do_query( db, sqlcmd, fetch_jdl_callback, &serialized_job );
-//     if ( !serialized_job.empty() ) {
-//       try {
-// 	//             istringstream is;
-// 	//             is.str( serialized_job );
-// 	//             {
-// 	//                 boost::archive::text_iarchive ia(is);
-// 	//                 ia >> m_theJob;
-// 	//             }
-// 	m_theJob.setJdl( serialized_job );
-// 	m_found = true;
-//       } catch( std::exception& ex ) {
-// 	CREAM_SAFE_LOG(cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream() << method_name
-// 		       << "Deserialization error of the string "
-// 		       << serialized_job
-// 		       << ". Exception string is  \"" 
-// 		       << ex.what() << "\". Aborting."
-// 		       );
-// 	abort();
-//       }
-//     }
 
     ostringstream sqlcmd("");
-    sqlcmd << "SELECT serialized from jobs WHERE gridjobid=\'" << m_gridjobid << "\';";
-    do_query( db, sqlcmd.str(), fetch_job_callback, &m_serialized_job );
-    if( !m_serialized_job.empty() ) {
+    sqlcmd << "SELECT * FROM jobs WHERE gridjobid=\'" << m_gridjobid << "\';";
     
-        try {
-	  istringstream is;
-	  is.str( m_serialized_job );
-	  {
-	    boost::archive::text_iarchive ia(is);
-	    ia >> m_theJob;
-	  }
-	} catch( std::exception& ex ) {
-	  throw DbOperationException( ex.what() );
-	}
-  
+    vector<string> field_list;
+    
+    do_query( db, sqlcmd.str(), fetch_job_callback, &field_list );
+
+    if( !field_list.empty() ) {
       m_found = true;
+      m_theJob = CreamJob( field_list );
+ //      m_theJob = CreamJob(
+// 			  (const string&)field_list.at(0),
+// 			  (const string&)field_list.at(1),
+// 			  (const string&)field_list.at(3),
+// 			  (const string&)field_list.at(4),
+// 			  (const string&)field_list.at(5),
+// 			  (const string&)field_list.at(6),
+// 			  (const string&)field_list.at(7),
+// 			  (const string&)field_list.at(8),
+// 			  (const string&)field_list.at(9),
+// 			  (const string&)field_list.at(11),
+// 			  (const string&)field_list.at(12),
+// 			  (const string&)field_list.at(13),
+// 			  (const string&)field_list.at(14),
+// 			  (const string&)field_list.at(15),
+// 			  (const string&)field_list.at(16),
+// 			  (const string&)field_list.at(17),
+// 			  (const string&)field_list.at(18),
+// 			  (const string&)field_list.at(19),
+// 			  (const string&)field_list.at(20),
+// 			  (const string&)field_list.at(21),
+// 			  (const string&)field_list.at(22),
+// 			  (const string&)field_list.at(23),
+// 			  (const string&)field_list.at(24),
+// 			  (const string&)field_list.at(25),
+// 			  (const string&)field_list.at(26),
+// 			  (const string&)field_list.at(27),
+// 			  (const string&)field_list.at(28)
+// 			  );
+			  
     }
 }

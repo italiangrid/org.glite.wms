@@ -42,7 +42,7 @@
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/UpdateJobInfo.h"
+#include "iceDb/UpdateJobByGid.h"
 
 // Cream Client API Headers
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -133,6 +133,13 @@ namespace { // begin anonymous namespace
 			     << " from the cache. Reason is: "
 			     << m_reason);
                 job.set_failure_reason( m_reason );
+		{
+		  list<pair<string, string> > params;
+		  params.push_back( make_pair("failure_reason", job.get_failure_reason() ) );
+		  glite::wms::ice::db::UpdateJobByGid updater( job.getGridJobID(), params );
+		  glite::wms::ice::db::Transaction tnx;
+		  tnx.execute( &updater );
+		}
                 m_lb_logger->logEvent( new job_aborted_event( job ) ); // ignore return value, the job will be removed from ICE cache anyway
                 //m_cache->erase( j );
 		{
@@ -576,13 +583,13 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
       // Creates a temporary job
       
       // Update the worker node
-      tmp_job.set_worker_node( info_obj.getWorkerNode() );
+      tmp_job.set_workernode( info_obj.getWorkerNode() );
 
       //
       // END block NOT to be moved outside the 'for' loop
       //
-      tmp_job.setLastSeen( time(0) );
-      tmp_job.set_last_empty_notification( time(0) );
+      tmp_job.set_last_seen( time(0) );
+      tmp_job.set_last_empty_notification_time( time(0) );
       
       jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
       // before doing anything, check if the job is "purged". If so,
@@ -606,18 +613,18 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
       if (  tmp_job.get_num_logged_status_changes() < count ) {
 	
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		       << "Updating jobcache for " << tmp_job.describe()
+		       << "Updating ICE's database for " << tmp_job.describe()
 		       << " status = [" << it->getStatusName() << "]"
 		       << " exit_code = [" << exitCode << "]"
 		       << " failure_reason = [" << it->getFailureReason() << "]"
 		       << " description = [" << it->getDescription() << "]"
 		       );
-	tmp_job.setStatus( stNum );
+	tmp_job.set_status( stNum );
 	
 	try {
-	  tmp_job.set_exit_code( boost::lexical_cast< int >( exitCode ) );
+	  tmp_job.set_exitcode( boost::lexical_cast< int >( exitCode ) );
 	} catch( boost::bad_lexical_cast & ) {
-	  tmp_job.set_exit_code( 0 );
+	  tmp_job.set_exitcode( 0 );
 	}
 	//
 	// See comment in normalStatusNotification.cpp
@@ -630,8 +637,20 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  tmp_job.set_failure_reason( it->getFailureReason() );
 	  //reason = it->getFailureReason()
 	}
-	tmp_job.set_num_logged_status_changes( count );
-	
+	tmp_job.set_numlogged_status_changes( count );
+	{
+	  list<pair<string, string> > params;
+	  params.push_back( make_pair("worker_node", info_obj.getWorkerNode()) );
+	  params.push_back( make_pair("last_seen", int_to_string(time(0))) );
+	  params.push_back( make_pair("last_empty_notification", int_to_string(time(0))));
+	  params.push_back( make_pair("status", int_to_string(stNum)));
+	  params.push_back( make_pair("exit_code", int_to_string(tmp_job.get_exit_code())));
+	  params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
+	  params.push_back( make_pair("failure_reason", it->getFailureReason()));
+	  db::UpdateJobByGid updater( tmp_job.getGridJobID(), params);
+	  db::Transaction tnx;
+	  tnx.execute( &updater );
+	}
 	// Log to L&B
 	iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
 	if ( ev ) {
@@ -639,19 +658,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	}
       }
       
-      {
-// 	db::UpadteJobInfo updater( tmp_job.getGridJobID(),
-// 				   info_obj.getWorkerNode(),
-// 				   time(0),
-// 				   time(0),
-// 				   stNum,
-// 				   exit_code,
-// 				   count,
-// 				   reason);
-	db::UpdateJobInfo updater( tmp_job );
-	db::Transaction tnx;
-	tnx.execute( &updater );
-      }
+
       //        jit = m_cache->put( tmp_job );
       
       m_iceManager->resubmit_or_purge_job( tmp_job/*jit*/ );

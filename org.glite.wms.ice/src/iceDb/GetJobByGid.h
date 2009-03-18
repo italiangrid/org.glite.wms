@@ -40,7 +40,7 @@ namespace db {
     protected:
         const std::string m_gridjobid;
         glite::wms::ice::util::CreamJob m_theJob;
-	std::string m_serialized_job;
+	//std::string m_serialized_job;
         bool m_found;
     public:
         GetJobByGid( const std::string& gid );

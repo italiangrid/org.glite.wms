@@ -37,6 +37,7 @@
 
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/CheckGridJobID.h"
+#include "iceDb/UpdateJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/CreateJob.h"
 
@@ -217,8 +218,8 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
   } // end classad-mutex protected regions
   
   try {
-    m_theJob.setJdl( m_jdl );
-    m_theJob.setStatus( glite::ce::cream_client_api::job_statuses::UNKNOWN );
+    m_theJob.set_jdl( m_jdl );
+    m_theJob.set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
   } catch( iceUtil::ClassadSyntax_ex& ex ) {
     CREAM_SAFE_LOG(
 		   m_log_dev->errorStream() 
@@ -228,6 +229,7 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
 		   );
     throw( iceUtil::ClassadSyntax_ex( ex.what() ) );
   }
+
 }
 
 //
@@ -269,9 +271,9 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
       if( check.found() ) {
 	CREAM_SAFE_LOG( m_log_dev->warnStream()
 			<< method_name
-			<< "Submit request for job "
-			<< m_theJob.describe()
-			<< " is related to a job already in ICE's database. "
+			<< "Submit request for job GridJobID=["
+			<< m_theJob.getGridJobID()
+			<< "] is related to a job already in ICE's database. "
 			<< "Removing the request and going ahead."
 			);
 	return;
@@ -289,7 +291,14 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
      * We now try to actually submit the job. Any exception raised by
      * the try_to_submit() method is catched, and triggers the
      * appropriate actions (logging to LB and resubmitting).
-     */        
+     */       
+
+    {
+      db::CreateJob creator( m_theJob );
+      db::Transaction tnx;
+      tnx.execute( &creator );
+    }
+ 
     try {
         try_to_submit( );        
     } catch( const iceCommandFatal_ex& ex ) {
@@ -301,7 +310,17 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                        
                        );
         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) ) );
-        m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) );
+	string reason = boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() );
+        m_theJob.set_failure_reason( reason );
+	{
+	  list< pair<string, string> > params;
+	  params.push_back( make_pair("failure_reason", reason) );
+	  //	  db::UpdateJobFailureReason updater( m_theJob.getGridJobID(), reason );
+	  db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
+	  db::Transaction tnx;
+	  tnx.execute( &updater );
+	}
+
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ) );
         throw( iceCommandFatal_ex( ex.what() ) );
     } catch( const iceCommandTransient_ex& ex ) {
@@ -309,7 +328,16 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         // The next event is used to show the failure reason in the
         // status info JC+LM log transfer-fail / aborted in case of
         // condor transfers fail
-        m_theJob.set_failure_reason( boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() ) );
+      string reason = boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() );
+      m_theJob.set_failure_reason( reason );
+      {
+	//	db::UpdateJobFailureReason updater( m_theJob.getGridJobID(), reason );
+	list< pair<string, string> > params;
+	params.push_back( make_pair("failure_reason", reason) );
+	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
+	db::Transaction tnx;
+	tnx.execute( &updater );
+      }
         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
         m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
@@ -336,7 +364,16 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     if( !V.IsValid( ) ) {
         throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
     }
-    m_theJob.setUserDN( V.getDNFQAN() );
+
+    m_theJob.set_userdn( V.getDNFQAN() );
+    {
+      list< pair<string, string> > params;
+      params.push_back( make_pair("userdn", V.getDNFQAN()) );
+      db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
+      db::Transaction tnx;
+      tnx.execute( &updater );
+    }
+
     m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_start_event( m_theJob ) );
     
@@ -640,15 +677,31 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
     
-    m_theJob.setCreamJobID( jobId );
-    m_theJob.setStatus(glite::ce::cream_client_api::job_statuses::PENDING);    
-    m_theJob.setDelegationId( delegation.get<0>() );
-    m_theJob.setDelegationExpirationTime( delegation.get<1>() );
-    m_theJob.setDelegationDuration( delegation.get<2>() );
-    m_theJob.set_lease_id( lease_id ); // FIXME: redundant??
-    m_theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
-    m_theJob.set_wn_sequence_code( m_theJob.getSequenceCode() );
+    m_theJob.set_cream_jobid( jobId );
+    m_theJob.set_status(glite::ce::cream_client_api::job_statuses::PENDING);    
+    m_theJob.set_delegation_id( delegation.get<0>() );
+    m_theJob.set_delegation_expiration_time( delegation.get<1>() );
+    m_theJob.set_delegation_duration( delegation.get<2>() );
+    m_theJob.set_leaseid( lease_id ); // FIXME: redundant??
+    m_theJob.set_proxycert_mtime( time(0) ); // FIXME: should be the modification time of the proxy file?
+    m_theJob.set_wn_sequencecode( m_theJob.getSequenceCode() );
     
+    {
+      list< pair<string, string> > params;
+      params.push_back( make_pair("creamjobid", jobId) );
+      params.push_back( make_pair("complete_cream_jobid", m_theJob.getCompleteCreamJobID() ) );
+      params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::PENDING )));
+      params.push_back( make_pair("delegationid", delegation.get<0>() ));
+      params.push_back( make_pair("delegation_exptime", iceUtil::int_to_string( delegation.get<1>())));
+      params.push_back( make_pair("delegation_duration", iceUtil::int_to_string( delegation.get<2>() )));
+      params.push_back( make_pair("leaseid", lease_id ));
+      params.push_back( make_pair("proxycert_timestamp", iceUtil::int_to_string( time(0))));
+      params.push_back( make_pair("wn_sequence_code", m_theJob.getSequenceCode() ));
+      db::UpdateJobByGid updater(m_theJob.getGridJobID(), params );
+      db::Transaction tnx;
+      tnx.execute( &updater );
+    }
+
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_ok_event( m_theJob ) );
     
     // now the job is in cache and has been registered we can save its
@@ -686,10 +739,12 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 //       api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in database" );
 // #endif
       //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-        m_theJob.setLastSeen( time(0) );
-	db::CreateJob aJob( m_theJob ); // FIXME: could use ad-hoc UpdateXYZ ???
+        m_theJob.set_last_seen( time(0) );
+	list< pair<string, string> > params;
+	params.push_back( make_pair("last_seen", iceUtil::int_to_string(m_theJob.getLastSeen())));
+	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params ); // FIXME: could use ad-hoc UpdateXYZ ???
 	db::Transaction tnx;
-	tnx.execute( &aJob );
+	tnx.execute( &updater );
     }
 } // try_to_submit
 
@@ -1036,11 +1091,6 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );
-  //  iceUtil::DNProxyManager* dnprxMgr( iceUtil::DNProxyManager::getInstance() );
-  
-  //string userDN    = aJob.getUserDN();
-  //string userProxy = aJob.getUserProxyCertificate();
-  // string ce        = aJob.getCreamURL();
 
   subMgr->getCEMonURL( aJob.getUserProxyCertificate(), aJob.getCreamURL(), cemon_url ); // also updated the internal subMgr's cache cream->cemon
   
@@ -1156,9 +1206,6 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 	{
 	  subMgr->insertSubscription( aJob.getUserProxyCertificate(), cemon_url, sub );
 	}
-
-	//dnprxMgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate() );
-
       } else {
           CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 		       << "Couldn't subscribe to [" 

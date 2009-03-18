@@ -26,7 +26,7 @@
 
 #include "boost/algorithm/string.hpp"
 #include "boost/format.hpp"
-#include "boost/archive/text_iarchive.hpp"
+//#include "boost/archive/text_iarchive.hpp"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
@@ -53,9 +53,18 @@ namespace { // begin local namespace
   // Local helper function: callback for sqlite
   static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
     //    string* serialized = (string*)param;
-    list<string> *jobs = (list<string>*)param;
-    if( argv && argv[0] )
-      jobs->push_back( argv[0] );
+    list< vector<string> > *jobs = (list<vector<string> >*)param;
+    if( argv && argv[0] ) {
+      vector<string> fields;
+      for(int i = 0; i<=28; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+	if( argv[i] )
+	  fields.push_back( argv[i] );
+	else
+	  fields.push_back( "" );
+      }
+
+      jobs->push_back( fields );
+    }
 
 
     //         if ( argv && argv[0] && argv[1] && argv[2] && argv[3] && argv[4] && argv[5] && argv[6] ) {
@@ -95,37 +104,44 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 
     string sqlcmd;
     if ( m_poll_all_jobs ) {
-        sqlcmd = "SELECT serialized FROM jobs WHERE creamjobid not null;" ;
+        sqlcmd = "SELECT * FROM jobs WHERE creamjobid not null;" ;
     } else {
         time_t t_now( time(NULL) );
         sqlcmd = boost::str( boost::format( 
-                  "SELECT serialized FROM jobs" \
+                  "SELECT * FROM jobs" \
                   " WHERE ( creamjobid not null ) AND"\
                   "       ( last_seen > 0 AND ( %1% - last_seen >= %2% ) ) "\
                   "  OR   ( last_empty_notification > 0 AND ( %3% - last_empty_notification > %4% ) )" ) % t_now % threshold % t_now % empty_threshold );
     }
 
-    list<string> jobs;
+    list< vector<string> > jobs;
     do_query( db, sqlcmd, fetch_jobs_callback, &jobs );
 
-    for(list<string>::const_iterator it = jobs.begin();
-	it != jobs.end();
-	++it)
+    for( list< vector<string> >::const_iterator it=jobs.begin();
+	 it != jobs.end();
+	 ++it )
       {
-	if( !it->empty() ) {
-	  try {
-	    istringstream is;
-	    is.str( *it );
-	    {
-	      CreamJob aJob;
-	      boost::archive::text_iarchive ia(is);
-	      ia >> aJob;
-	      m_result.push_back( aJob );
-	    }
-	  } catch( std::exception& ex ) {
-	    throw DbOperationException( ex.what() );
-	  }
-	  
-	}
+	m_result.push_back( CreamJob( *it ) );
       }
+
+//     for(list<string>::const_iterator it = jobs.begin();
+// 	it != jobs.end();
+// 	++it)
+//       {
+// 	if( !it->empty() ) {
+// 	  try {
+// 	    istringstream is;
+// 	    is.str( *it );
+// 	    {
+// 	      CreamJob aJob;
+// 	      boost::archive::text_iarchive ia(is);
+// 	      ia >> aJob;
+// 	      m_result.push_back( aJob );
+// 	    }
+// 	  } catch( std::exception& ex ) {
+// 	    throw DbOperationException( ex.what() );
+// 	  }
+	  
+// 	}
+//       }
 }

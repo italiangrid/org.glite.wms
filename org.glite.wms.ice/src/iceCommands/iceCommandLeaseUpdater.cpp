@@ -29,6 +29,7 @@
 #include "iceDb/Transaction.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/RemoveJobByGid.h"
+#include "iceDb/UpdateJobByGid.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -254,6 +255,13 @@ void iceCommandLeaseUpdater::execute( ) throw()
         }
         
         the_job.set_failure_reason( "Lease expired" );
+	{
+	  list<pair<string, string> > params;
+	  params.push_back( make_pair("failure_reson", "Lease expired" ) );
+	  db::UpdateJobByGid updater( the_job.getGridJobID(), params );
+	  db::Transaction tnx;
+	  tnx.execute( &updater );
+	}
         iceLBLogger::instance()->logEvent( new job_done_failed_event( the_job ) );
         glite::wms::ice::Ice::instance()->resubmit_job( the_job, "Lease expired" );
         

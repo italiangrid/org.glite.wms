@@ -44,6 +44,7 @@
  *
  */
 #include <exception>
+#include <vector>
 #include <string>
 #include <ctime>
 #include <set>
@@ -117,31 +118,61 @@ namespace glite {
 
           //! Default constructor
           CreamJob( );
+	  CreamJob( const std::string& gid,
+		    const std::string& cid,
+		    const std::string& jdl,
+		    const std::string& userproxy,
+		    const std::string& ceid,
+		    const std::string& endpoint,
+		    const std::string& creamurl,
+		    const std::string& creamdelegurl,
+		    const std::string& userdn,
+		    const std::string& myproxyurl,
+		    const std::string& proxy_renewable,
+		    const std::string& failure_reason,
+		    const std::string& sequence_code,
+		    const std::string& wn_sequence_code,
+		    const std::string& prev_status,
+		    const std::string& status,
+		    const std::string& num_logged_status_changes,
+		    const std::string& leaseid,
+		    const std::string& proxycert_timestamp,
+		    const std::string& status_poller_retry_count,
+		    const std::string& exit_code,
+		    const std::string& worker_node,
+		    const std::string& is_killed_byice,
+		    const std::string& delegationid,
+		    const std::string& delegation_exptime,
+		    const std::string& delegation_duration,
+		    const std::string& last_empty_notification,
+		    const std::string& last_seen);
+
+	  CreamJob( const std::vector< std::string >& );
 
 	  //! Sets the status of the CreamJob object
-	  void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_prev_status = m_status; m_status = st; }
+	  void set_status( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_prev_status = m_status; m_status = st; }
 	  //! Sets the cream unique identifier for this job
-          void setCreamJobID( const std::string& cid ) { m_cream_jobid = cid; }
+          void set_cream_jobid( const std::string& cid ) { m_cream_jobid = cid; }
           //! Sets the jdl for this job
-          void setJdl( const std::string& j ) throw( ClassadSyntax_ex& );
+          void set_jdl( const std::string& j ) throw( ClassadSyntax_ex& );
           //! Sets the sequence code
-          void setSequenceCode( const std::string& seq ); // { m_sequence_code = seq; }
+          void set_sequence_code( const std::string& seq ); // { m_sequence_code = seq; }
           //! Sets the delegation id
-          void setDelegationId( const std::string& delid ) { m_delegation_id = delid; }
+          void set_delegation_id( const std::string& delid ) { m_delegation_id = delid; }
           //! Sets the time we got info about this job from CREAM
-          void setLastSeen( const time_t& l ) { m_last_seen = l; }
+          void set_last_seen( const time_t& l ) { m_last_seen = l; }
 	  //! Sets the user proxy cert file last modification time
-	  void setProxyCertMTime( const time_t& l ) { m_proxyCertTimestamp = l; }
+	  void set_proxycert_mtime( const time_t& l ) { m_proxyCertTimestamp = l; }
           //! Sets the job exit code
-          void set_exit_code( int c ) { m_exit_code = c; }
+          void set_exitcode( int c ) { m_exit_code = c; }
           //! Sets the sequence code for the job sent to the WN
-          void set_wn_sequence_code( const std::string& wn_seq ) { m_wn_sequence_code = wn_seq; };
+          void set_wn_sequencecode( const std::string& wn_seq ) { m_wn_sequence_code = wn_seq; };
 	  //! Sets the user's distinguished name
-	  void setUserDN( const std::string& udn ) { m_user_dn = udn; };
+	  void set_userdn( const std::string& udn ) { m_user_dn = udn; };
 
-	  void setDelegationExpirationTime( const time_t T ) { m_delegation_exptime = T; }
+	  void set_delegation_expiration_time( const time_t T ) { m_delegation_exptime = T; }
 
-	  void setDelegationDuration( const int T ) { m_delegation_duration = T; }
+	  void set_delegation_duration( const int T ) { m_delegation_duration = T; }
 
           /**
            * Sets the job failure reason. NOTE: the failure reason can
@@ -201,19 +232,19 @@ namespace glite {
 	  int get_num_logged_status_changes( void ) const { return m_num_logged_status_changes; }
 
           //! Sets the number of job status changes whcih have been already logged to L&B
-          void set_num_logged_status_changes( int l ) { m_num_logged_status_changes = l; }
+          void set_numlogged_status_changes( int l ) { m_num_logged_status_changes = l; }
 
           //! Return the lease ID associated with this job
           std::string get_lease_id( void ) const { return m_lease_id; };
 
           //! Set the lease ID associated with this job
-          void set_lease_id( const std::string& lease_id ) { m_lease_id = lease_id; };
+          void set_leaseid( const std::string& lease_id ) { m_lease_id = lease_id; };
 
           //! Gets the worker node on which the job is being execute (empty string if no worker node has been set)
           std::string get_worker_node( void ) const { return m_worker_node; }
 
           //! Sets the worker node on which the job is being executed
-          void set_worker_node( const std::string& w_node ) { m_worker_node = w_node; }
+          void set_workernode( const std::string& w_node ) { m_worker_node = w_node; }
 
           //! Gets the time we last got information about this job
           time_t getLastSeen( void ) const { return m_last_seen; }
@@ -232,9 +263,9 @@ namespace glite {
 
 	  int    getStatusPollRetryCount( void ) const { return m_statusPollRetryCount; }
 
-	  void   incStatusPollRetryCount( void ) { m_statusPollRetryCount++; }
+	  void   inc_status_pollretry_count( void ) { m_statusPollRetryCount++; }
 
-	  void   resetStatusPollRetryCount( void ) { m_statusPollRetryCount=0; }
+	  void   reset_status_pollretry_count( void ) { m_statusPollRetryCount=0; }
 
 	  std::string getUserDN( void ) const { return m_user_dn; }
 
@@ -255,10 +286,10 @@ namespace glite {
            * killed by ICE, instead of by the user. This is used by
            * logging the appropriate event when the job terminates.
            */
-          void set_killed_by_ice( void ) { m_is_killed_by_ice = true; }
+          void set_killed_byice( void ) { m_is_killed_by_ice = true; }
 
           time_t get_last_empty_notification( void ) const { return m_last_empty_notification; };
-          void set_last_empty_notification( time_t t ) { m_last_empty_notification = t; };
+          void set_last_empty_notification_time( time_t t ) { m_last_empty_notification = t; };
 
           /**
            * Checke whether a job can be purged (by issuing a "purge"
@@ -431,6 +462,8 @@ namespace glite {
 	      throw SerializeException( ex.what() );
 	    }
 	  }
+
+	  void get_fields( std::vector<std::string>& ) const;
 
 	};
       }

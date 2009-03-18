@@ -65,7 +65,6 @@ namespace {
 		  " creamjobid text, "		          \
 		  " complete_cream_jobid text,"           \
 		  " jdl blob not null, "		  \
-		  " serialized blob not null, "           \
 		  " userproxy text not null, "            \
 		  " ceid text, "                          \
 		  " endpoint text, "                      \

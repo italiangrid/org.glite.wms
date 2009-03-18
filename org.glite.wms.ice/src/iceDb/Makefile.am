@@ -6,14 +6,9 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetAllUserDN.cpp \
 				GetAllProxyByDN.cpp \
 				GetAllUserDN_MyProxy.cpp \
-				GetDelegationInformation.cpp \	
+				GetDelegationInformation.cpp \
 				CreateJob.cpp \
-				UpdateJob.cpp \
-				UpdateJobFailureReason.cpp \
-				UpdateJobInfo.cpp \
-				UpdateJobSequenceCode.cpp \
-				UpdateLastEmpty.cpp \
-				UpdateDelegExpTime.cpp \
+				UpdateJobByGid.cpp \
 				RemoveJobByGid.cpp \
 				RemoveJobByCid.cpp \
 				RemoveJobByProxy.cpp \

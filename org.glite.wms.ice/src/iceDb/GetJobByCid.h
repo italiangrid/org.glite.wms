@@ -38,9 +38,9 @@ namespace db {
      */
     class GetJobByCid : public AbsDbOperation { 
     protected:
-        const std::string                m_creamjobid;
+        const std::string                m_complete_creamjobid;
         glite::wms::ice::util::CreamJob  m_theJob;
-	std::string                      m_serialized_job;
+	//	std::string                      m_serialized_job;
         bool                             m_found;
     public:
         GetJobByCid( const std::string& cid );

@@ -100,7 +100,101 @@ CreamJob::CreamJob( ) :
 }
 
 //______________________________________________________________________________
-void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
+CreamJob::CreamJob( const std::string& gid,
+		    const std::string& cid,
+		    const std::string& jdl,
+		    const std::string& userproxy,
+		    const std::string& ceid,
+		    const std::string& endpoint,
+		    const std::string& creamurl,
+		    const std::string& creamdelegurl,
+		    const std::string& userdn,
+		    const std::string& myproxyurl,
+		    const std::string& proxy_renewable,
+		    const std::string& failure_reason,
+		    const std::string& sequence_code,
+		    const std::string& wn_sequence_code,
+		    const std::string& prev_status,
+		    const std::string& status,
+		    const std::string& num_logged_status_changes,
+		    const std::string& leaseid,
+		    const std::string& proxycert_timestamp,
+		    const std::string& status_poller_retry_count,
+		    const std::string& exit_code,
+		    const std::string& worker_node,
+		    const std::string& is_killed_byice,
+		    const std::string& delegationid,
+		    const std::string& delegation_exptime,
+		    const std::string& delegation_duration,
+		    const std::string& last_empty_notification,
+		    const std::string& last_seen) 
+{
+  m_cream_jobid                = cid;
+  m_grid_jobid                 = gid; 
+  m_jdl                        = jdl;
+  m_ceid                       = ceid;
+  m_endpoint                   = endpoint;
+  m_cream_address              = creamurl;
+  m_cream_deleg_address        = creamdelegurl; 
+  m_user_proxyfile             = userproxy;
+  m_user_dn                    = userdn;
+  m_sequence_code              = sequence_code;
+  m_delegation_id              = delegationid; 
+  m_delegation_exptime         = (time_t)atoi(delegation_exptime.c_str());
+  m_delegation_duration        = atoi(delegation_duration.c_str());
+  m_wn_sequence_code           = wn_sequence_code;
+  m_prev_status                = (glite::ce::cream_client_api::job_statuses::job_status)atoi(prev_status.c_str());
+  m_status                     = (glite::ce::cream_client_api::job_statuses::job_status)atoi(status.c_str());
+  m_num_logged_status_changes  = atoi(num_logged_status_changes.c_str());
+  m_last_seen                  = (time_t)atoi(last_seen.c_str());
+  m_lease_id                   = leaseid;
+  m_proxyCertTimestamp         = (time_t)atoi(proxycert_timestamp.c_str());
+  m_statusPollRetryCount       = atoi(status_poller_retry_count.c_str());
+  m_exit_code                  = atoi(exit_code.c_str());
+  m_failure_reason             = failure_reason;
+  m_worker_node                = worker_node;
+  m_is_killed_by_ice           = (bool)atoi(is_killed_byice.c_str());
+  m_last_empty_notification    = (time_t)atoi(last_empty_notification.c_str());
+  m_proxy_renew                = (bool)atoi(proxy_renewable.c_str());
+  m_myproxy_address            = myproxyurl;
+}
+
+//______________________________________________________________________________
+CreamJob::CreamJob( const vector< string >& src ) 
+{
+  m_grid_jobid                 = src.at(0);//cid;
+  m_cream_jobid                = src.at(1);//gid; 
+  m_jdl                        = src.at(3);//jdl;
+  m_user_proxyfile	       = src.at(4);
+  m_ceid                       = src.at(5);//ceid;
+  m_endpoint                   = src.at(6);//endpoint;
+  m_cream_address              = src.at(7);//creamurl;
+  m_cream_deleg_address        = src.at(8);//creamdelegurl; 
+  m_user_dn 	               = src.at(9);//userproxy;
+  m_myproxy_address	       = src.at(10);
+  m_proxy_renew                = (bool)atoi(src.at(11).c_str());
+  m_failure_reason             = src.at(12);
+  m_sequence_code              = src.at(13);
+  m_wn_sequence_code           = src.at(14);
+  m_prev_status                = (glite::ce::cream_client_api::job_statuses::job_status)atoi(src.at(15).c_str());
+  m_status                     = (glite::ce::cream_client_api::job_statuses::job_status)atoi(src.at(16).c_str());
+  m_num_logged_status_changes  = atoi(src.at(17).c_str());
+  m_lease_id                   = src.at(18);
+  m_proxyCertTimestamp         = (time_t)atoi(src.at(19).c_str());
+  m_statusPollRetryCount       = atoi(src.at(20).c_str());
+  m_exit_code                  = atoi(src.at(21).c_str());
+  m_worker_node                = src.at(22);
+  m_is_killed_by_ice           = (bool)atoi(src.at(23).c_str());
+  m_delegation_id              = src.at(24);
+  m_delegation_exptime         = (time_t)atoi(src.at(25).c_str());
+  m_delegation_duration        = atoi(src.at(26).c_str());
+  m_last_empty_notification    = (time_t)atoi(src.at(27).c_str());
+  m_last_seen                  = (time_t)atoi(src.at(28).c_str());
+  
+}
+
+//______________________________________________________________________________
+void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
 {
   /**
    * Classad-mutex protected region
@@ -111,7 +205,7 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     // int res = 0;
 
     if ( 0 == jdlAd ) {
-        throw ClassadSyntax_ex( string("CreamJob::setJdl unable to parse jdl=[") + j + string("]") );
+        throw ClassadSyntax_ex( string("CreamJob::set_jdl unable to parse jdl=[") + j + string("]") );
     }
 
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
@@ -226,7 +320,7 @@ string CreamJob::describe( void ) const
 }
 
 //______________________________________________________________________________
-void CreamJob::setSequenceCode( const std::string& seq )
+void CreamJob::set_sequence_code( const std::string& seq )
 {
   /**
    * mutex-protected region: REM that ClassAd is not
@@ -243,7 +337,7 @@ void CreamJob::setSequenceCode( const std::string& seq )
   
   if (!jdl_ad) {
     CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
-		   << "CreamJob::setSequenceCode() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
+		   << "CreamJob::set_sequencecode() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
 		   << m_jdl << "]. STOP!"
 		   );
     abort();
@@ -315,4 +409,59 @@ string CreamJob::getCompleteCreamJobID( void ) const
   creamURL += "/" + this->getCreamJobID();
 
   return creamURL;
+}
+
+//______________________________________________________________________________
+void CreamJob::get_fields( vector<string>& target ) const
+{
+  ostringstream tmp("");
+  target.push_back( m_grid_jobid );
+  target.push_back( m_cream_jobid );
+  target.push_back( getCompleteCreamJobID() );
+  target.push_back( m_jdl );
+  target.push_back( m_user_proxyfile );
+  target.push_back( m_ceid );
+  target.push_back( m_endpoint );
+  target.push_back( m_cream_address );
+  target.push_back( m_cream_deleg_address );
+  target.push_back( m_user_dn );
+  target.push_back( m_myproxy_address );
+  target.push_back( (m_proxy_renew ? "1" : "0" ) );
+  target.push_back( m_failure_reason );
+  target.push_back( m_sequence_code );
+  target.push_back( m_wn_sequence_code );
+  tmp << m_prev_status;
+  target.push_back( tmp.str() );
+  tmp.str("");
+  tmp << m_status;
+  target.push_back( tmp.str() );
+  tmp.str("");
+  tmp << m_num_logged_status_changes;
+  target.push_back( tmp.str() );
+  target.push_back( m_lease_id );
+  tmp.str("");
+  tmp << m_proxyCertTimestamp;
+  target.push_back( tmp.str() );
+  tmp.str("");
+  tmp << m_statusPollRetryCount;
+  target.push_back( tmp.str() );
+  tmp.str("");
+  tmp << m_exit_code;
+  target.push_back( tmp.str() );
+  target.push_back( m_worker_node );
+  target.push_back( (m_is_killed_by_ice ? "1" : "0" ));
+  target.push_back( m_delegation_id );
+  tmp.str("");
+  tmp << m_delegation_exptime;
+  target.push_back( tmp.str() );
+  tmp.str("");
+  tmp << m_delegation_duration;
+  target.push_back( tmp.str() );
+  tmp.str("");
+  tmp << m_last_empty_notification;
+  target.push_back( tmp.str() );
+  tmp.str("");
+  tmp << m_last_seen;
+  target.push_back( tmp.str() );
+
 }

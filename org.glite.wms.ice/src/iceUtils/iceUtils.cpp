@@ -28,6 +28,7 @@
 #include <vector>
 #include <ctype.h>
 #include <cstdio>
+#include <sstream>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -231,6 +232,13 @@ string time_t_to_string( time_t tval ) {
     if(buf[strlen(buf)-1] == '\n')
       buf[strlen(buf)-1] = '\0';
     return string( buf );
+}
+
+//________________________________________________________________________
+string int_to_string( const int val ) {
+  ostringstream os("");
+  os << val;
+  return os.str();
 }
 
 //________________________________________________________________________

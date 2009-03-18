@@ -23,10 +23,7 @@
 
 #include "GetJobByCid.h"
 
-#include "boost/algorithm/string.hpp"
-//#include "boost/format.hpp"
-#include "boost/archive/text_iarchive.hpp"
-//#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+//#include "boost/algorithm/string.hpp"
 
 #include <sstream>
 
@@ -36,69 +33,44 @@ using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
 GetJobByCid::GetJobByCid( const string& cid ) :
-    AbsDbOperation(),
-    m_creamjobid( cid ),
-    m_theJob(),
-    m_found( false ),
-    m_serialized_job( "" )
+  AbsDbOperation(),
+  m_complete_creamjobid( cid ),
+  m_theJob(),
+  m_found( false )
+  //    m_serialized_job( "" )
 {
-
+  
 }
 
 // Local helper function: callback for sqlite
 static int fetch_job_callback(void *param, int argc, char **argv, char **azColName){
-    string* jdl = (string*)param;
-    if(argv && argv[0])
-      *jdl = argv[0];
-    return 0;
+  
+  vector<string> *fields = (vector<string>*)param;
+  if ( argv && argv[0] ) 
+    {
+      for(int i = 0; i<=28; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+	if( argv[i] )
+	  fields->push_back( argv[i] );
+	else
+	  fields->push_back( "" );
+      }
+    }
+  return 0;
 }
 
 void GetJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-//     static const char* method_name = "GetJobByCid::execute() - ";
 
-//     string sqlcmd = boost::str( boost::format( 
-//       "select jdl from jobs" \
-//       " where creamjobid = \'%1%\';" ) % m_creamjobid );
-//     string serialized_job;
-//     do_query( db, sqlcmd, fetch_jdl_callback, &serialized_job );
-//     if ( !serialized_job.empty() ) {
-//         try {
-//             istringstream is;
-//             is.str( serialized_job );
-//             {
-//                 boost::archive::text_iarchive ia(is);
-//                 ia >> m_theJob;
-//             }
-//             m_found = true;
-//         } catch( std::exception& ex ) {
-//             CREAM_SAFE_LOG(cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream() << method_name
-//                            << "Deserialization error of the string "
-//                            << serialized_job
-//                            << ". Exception string is  \"" 
-//                            << ex.what() << "\". Aborting."
-//                            );
-//             abort();
-//         }
-//     }
-
-  ostringstream sqlcmd("");
-  sqlcmd << "SELECT serialized from jobs WHERE complete_cream_jobid=\'" << m_creamjobid << "\';";
-  do_query( db, sqlcmd.str(), fetch_job_callback, &m_serialized_job );
-  if( !m_serialized_job.empty() ) {
+    ostringstream sqlcmd("");
+    sqlcmd << "SELECT * FROM jobs WHERE complete_cream_jobid=\'" << m_complete_creamjobid << "\';";
     
-    try {
-      istringstream is;
-      is.str( m_serialized_job );
-      {
-	boost::archive::text_iarchive ia(is);
-	ia >> m_theJob;
-      }
-    } catch( std::exception& ex ) {
-      throw DbOperationException( ex.what() );
+    vector<string> field_list;
+    
+    do_query( db, sqlcmd.str(), fetch_job_callback, &field_list );
+
+    if( !field_list.empty() ) {
+      m_found = true;
+      m_theJob = CreamJob( field_list );
+			  
     }
-    
-    m_found = true;
-  }
-  
 }

@@ -37,7 +37,7 @@
 #include "iceDb/GetAllJobs.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/UpdateDelegExpTime.h"
+#include "iceDb/UpdateJobByGid.h"
 
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 /**
@@ -596,11 +596,14 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	    if( found ) {
 	      //jobIT->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ].first );
 	      //toSave->setDelegationExpirationTime( mapDelegTime[ delegationIT->first ].first );
-	      theJob.setDelegationExpirationTime( mapDelegTime[ delegationIT->first ].first );
+	      theJob.set_delegation_expiration_time( mapDelegTime[ delegationIT->first ].first );
 	      //m_cache->put( *jobIT );
 	      //m_cache->put( *toSave );
 	      {
-		db::UpdateDelegExpTime updater( theJob );
+		//db::UpdateDelegExpTime updater( theJob );
+		list<pair<string, string> > params;
+		params.push_back( make_pair("delegation_exptime", int_to_string(mapDelegTime[ delegationIT->first ].first)));
+		db::UpdateJobByGid updater( theJob.getGridJobID(), params);
 		db::Transaction tnx;
 		tnx.execute( &updater );
 	      }

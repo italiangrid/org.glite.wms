@@ -34,7 +34,7 @@
 #include "DNProxyManager.h"
 
 #include "iceDb/GetJobByCid.h"
-#include "iceDb/UpdateJobInfo.h"
+#include "iceDb/UpdateJobByGid.h"
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/Transaction.h"
 
@@ -83,7 +83,7 @@ public:
     /**
      * Returns the CREAM job ID for this notification
      */
-    string get_cream_job_id( void ) const { 
+    string get_complete_cream_job_id( void ) const { 
 
       string completeURL = m_cream_url;
       boost::replace_all( completeURL, 
@@ -155,21 +155,21 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
     classad::ClassAd *ad = parser.ParseClassAd( ad_string );	
     
     if (!ad)
-      throw ClassadSyntax_ex( boost::str( boost::format("StatusChange() got an error while parsing notification classad: %1%" ) % ad_string ) );
+      throw ClassadSyntax_ex( boost::str( boost::format("StatusChange::CTOR(): Got an error while parsing notification classad: %1%" ) % ad_string ) );
     
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( ad );
     
     if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_JOB_ID", m_cream_job_id ) )
-      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange::CTOR(): CREAM_JOB_ID attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( m_cream_job_id, boost::is_any_of("\"" ) );
     
     if ( !classad_safe_ptr->EvaluateAttrString( "CREAM_URL", m_cream_url ) )
-      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): CREAM_URL attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange::CTOR(): CREAM_URL attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( m_cream_url, boost::is_any_of("\"" ) );
     
     string job_status_str;
     if ( !classad_safe_ptr->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
-      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
+      throw ClassadSyntax_ex( boost::str( boost::format( "StatusChange::CTOR(): JOB_STATUS attribute not found, or is not a string, in classad: %1%") % ad_string ) );
     boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
     m_job_status = api::job_statuses::getStatusNum( job_status_str );
     
@@ -210,10 +210,10 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
 //______________________________________________________________________________
 void StatusChange::apply_to_job( CreamJob& j ) const
 {
-    j.setStatus( get_status() );
-    j.set_worker_node( m_worker_node );
+    j.set_status( get_status() );
+    j.set_workernode( m_worker_node );
     if ( m_has_exit_code ) {
-        j.set_exit_code( m_exit_code );
+        j.set_exitcode( m_exit_code );
     }    
     // 
     // Discussion with Gi, 2008/02/11: The failure reason field should
@@ -227,6 +227,20 @@ void StatusChange::apply_to_job( CreamJob& j ) const
     } else {
         j.set_failure_reason( m_failure_reason );
     }
+
+    {
+      list<pair<string ,string> > params;
+      params.push_back( make_pair("status", int_to_string(get_status())));
+      params.push_back( make_pair("worker_node", m_worker_node));
+      if( m_has_exit_code ) 
+	params.push_back( make_pair("exit_code", int_to_string(m_exit_code)));
+
+      params.push_back( make_pair("failure_reason", j.get_failure_reason() ));
+
+      glite::wms::ice::db::UpdateJobByGid updater( j.getGridJobID(), params );
+      glite::wms::ice::db::Transaction tnx;
+      tnx.execute( &updater );
+    }
 }
 
 
@@ -239,22 +253,22 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
     m_cemondn( cemondn )
 {
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
-    static const char *method_name = "normalStatusNotification::normalStatusNotification() - ";
+    static const char *method_name = "normalStatusNotification::CTOR() - ";
     
     if( m_ev.Message.empty() ) {        
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
-                        << "got a CEMon notification with no messages. Skipping"
+                        << "Got a CEMon notification with no messages. Skipping"
                         );
         throw runtime_error( "got empty notification" );
     }
     
     CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << method_name
-                    << "processing normal status change notification"
+                    << "Processing normal status change notification"
                     );
     
-    string cream_job_id;
+    //string cream_job_id;
     
     // First, we need to get the jobID for which this notification 
     // refers. In order to do so, we need to parse at least the first
@@ -262,7 +276,7 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
     try {
 
         StatusChange first_notification( *(m_ev.Message.begin()) );
-        m_complete_cream_jobid = first_notification.get_cream_job_id();
+        m_complete_cream_jobid = first_notification.get_complete_cream_job_id();
 
     } catch( ClassadSyntax_ex& ex ) {
         CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -284,39 +298,37 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
 void normalStatusNotification::apply( void ) // can throw anything
 {    
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
-    static const char* method_name = "normalStatusNotification::execute() - ";
+    static const char* method_name = "normalStatusNotification::apply() - ";
 
     // the costructor ensures that the notification is non-empty
     CREAM_SAFE_LOG( m_log_dev->debugStream()
                     << method_name
-                    << "processing notification"
+                    << "Processing notification"
                     );
 
     iceLBLogger *m_lb_logger( iceLBLogger::instance() );
-    //jobCache *m_cache( jobCache::getInstance() );
     glite::wms::ice::Ice* m_ice_manager( glite::wms::ice::Ice::instance() );
 
-    string cream_job_id;
 
     // First, we need to get the jobID for which this notification 
     // refers. In order to do so, we need to parse at least the first
     // notification in the event.
-    try {
-
-        StatusChange first_notification( *(m_ev.Message.begin()) );
-        cream_job_id = first_notification.get_cream_job_id();
-
-    } catch( ClassadSyntax_ex& ex ) {
-        CREAM_SAFE_LOG( m_log_dev->errorStream()
-                        << method_name
-                        << "Cannot parse the first notification "
-                        << *(m_ev.Message.begin())
-                        << " due to error: "
-                        << ex.what() << ". "
-                        << "Skipping the whole monitor event and hoping for the best..." 
-                        );
-        return;
-    }
+//     try {
+// 
+//         StatusChange first_notification( *(m_ev.Message.begin()) );
+//         cream_job_id = first_notification.get_cream_job_id();
+// 
+//     } catch( ClassadSyntax_ex& ex ) {
+//         CREAM_SAFE_LOG( m_log_dev->errorStream()
+//                         << method_name
+//                         << "Cannot parse the first notification "
+//                         << *(m_ev.Message.begin())
+//                         << " due to error: "
+//                         << ex.what() << ". "
+//                         << "Skipping the whole monitor event and hoping for the best..." 
+//                         );
+//         return;
+//     }
 
     // Now that we (hopefully) have the jobid, we lock the cache
     // and find the job
@@ -327,7 +339,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 
     CreamJob theJob;
     {
-      db::GetJobByCid getter( cream_job_id );
+      db::GetJobByCid getter( m_complete_cream_jobid );
       db::Transaction tnx;
       tnx.execute( &getter );
       if( !getter.found() )
@@ -336,7 +348,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 	    CREAM_SAFE_LOG(m_log_dev->warnStream()
                            << method_name
                            << "creamjobid ["
-                           << cream_job_id
+                           << m_complete_cream_jobid
                            << "] was not found in the database. "
                            << "Ignoring the whole notification..."
                            );
@@ -393,12 +405,15 @@ void normalStatusNotification::apply( void ) // can throw anything
         // like DONE-OK; otherwise the eventStatusPoller will never
         // purge it...
         if( !api::job_statuses::isFinished( theJob.getStatus() ) ) {
-            theJob.setLastSeen( time(0) );
-            theJob.set_last_empty_notification( time(0) );
+            theJob.set_last_seen( time(0) );
+            theJob.set_last_empty_notification_time( time(0) );
 	    
             //jc_it = m_cache->put( *jc_it );
 	    {
-	      db::UpdateJobInfo updater( theJob );
+	      list< pair<string, string> > params;
+	      params.push_back( make_pair("last_seen", int_to_string(time(0))));
+	      params.push_back( make_pair("last_empty_notification", int_to_string(time(0))));
+	      db::UpdateJobByGid updater( theJob.getGridJobID(), params);
 	      db::Transaction tnx;
 	      tnx.execute( &updater );
 	    }
@@ -423,7 +438,7 @@ void normalStatusNotification::apply( void ) // can throw anything
             if (!getenv("NO_LISTENER_MESS"))
                 CREAM_SAFE_LOG(m_log_dev->errorStream()
                                << method_name
-                               << "received a notification "
+                               << "Received a notification "
                                << *msg_it << " which could not be understood; error is: "
                                << ex.what() << ". "
                                << "Skipping this notification and hoping for the best..."
@@ -437,10 +452,10 @@ void normalStatusNotification::apply( void ) // can throw anything
                 CREAM_SAFE_LOG(m_log_dev->warnStream()
                                << method_name
                                << theJob.describe()
-                               << " is reported as PURGED. Removing from cache"
+                               << " is reported as PURGED. Removing from database"
                                ); 
             //m_cache->erase( jc_it );
-	    //db::ERASE !
+	    
 	    {
 	      db::RemoveJobByGid remover( theJob.getGridJobID() );
 	      db::Transaction tnx;
@@ -452,10 +467,10 @@ void normalStatusNotification::apply( void ) // can throw anything
         if (!getenv("NO_LISTENER_MESS"))
             CREAM_SAFE_LOG(m_log_dev->debugStream() 
                            << method_name
-                           << "Checking job [" << notif_ptr->get_cream_job_id()
+                           << "Checking job [" << notif_ptr->get_complete_cream_job_id()
                            << "] with status [" 
                            << api::job_statuses::job_status_str[ notif_ptr->get_status() ] << "]"
-                           << " This is CEMON notification notification count=" << count
+                           << " This is CEMON notification's count=" << count
                            << " num already logged=" 
                            << theJob.get_num_logged_status_changes()
                            );
@@ -464,7 +479,14 @@ void normalStatusNotification::apply( void ) // can throw anything
 	//        notif_ptr->apply_to_job( tmp_job ); // apply status change to job
 	notif_ptr->apply_to_job( theJob );
 	//        tmp_job.set_num_logged_status_changes( count );
-	theJob.set_num_logged_status_changes( count );
+	theJob.set_numlogged_status_changes( count );
+	{
+	  list< pair<string, string> > params;
+	  params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
+	  db::UpdateJobByGid updater( theJob.getGridJobID(), params );
+	  db::Transaction tnx;
+	  tnx.execute( &updater );
+	}
         iceLBEvent* ev = iceLBEventFactory::mkEvent( theJob /*tmp_job*/ );
         if ( ev ) {
 	  //tmp_job = m_lb_logger->logEvent( ev );

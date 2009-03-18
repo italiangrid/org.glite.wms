@@ -29,7 +29,6 @@
 #include "iceCommandUpdateStatus.h"
 #include "emptyStatusNotification.h"
 #include "normalStatusNotification.h"
-//#include "jobCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"

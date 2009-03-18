@@ -51,35 +51,30 @@ GetAllJobs::GetAllJobs( const bool only_active) :
 
 namespace { // begin local namespace
 
-    // Local helper function: callback for sqlite
-    static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
-        if ( argv && argv[0] ) {
-            list< CreamJob > *result( (list< CreamJob >*)param );
-	    CreamJob theJob;
-	        try {
-      istringstream is;
-      is.str( argv[0] );
-      {
-        boost::archive::text_iarchive ia(is);
-        ia >> theJob;
-      }
-    } catch( std::exception& ex ) {
-      throw DbOperationException( ex.what() );
-    }
-            result->push_back( theJob );
-        }
-        return 0;
-    }
+  // Local helper function: callback for sqlite
+  static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
 
+    list< vector<string> > *jobs = (list<vector<string> >*)param;
+    if( argv && argv[0] ) {
+      vector<string> fields;
+      for(int i = 0; i<=28; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+	if( argv[i] )
+	  fields.push_back( argv[i] );
+	else
+	  fields.push_back( "" );
+      }
+      
+      jobs->push_back( fields );
+    }
+    return 0;
+  }
 } // end local namespace
 
 void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  //static const char* method_name = "GetAllGridJobID::execute() - ";
-
   ostringstream sqlcmd( "" );
   if(m_only_active)
-    sqlcmd << "SELECT serialized FROM jobs WHERE status=\'"
+    sqlcmd << "SELECT * FROM jobs WHERE status=\'"
 	   << api::job_statuses::REGISTERED 
 	   << "\' OR status=\'"
 	   << api::job_statuses::PENDING 
@@ -93,7 +88,15 @@ void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 	   << api::job_statuses::HELD
 	   << "\' AND is_killed_byice=\'0\';";
   else
-    sqlcmd << "SELECT serialized FROM jobs;";
-  
-  do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_result );
+    sqlcmd << "SELECT * FROM jobs;";
+
+  list< vector<string> > jobs;
+  do_query( db, sqlcmd.str(), fetch_jobs_callback, &jobs );
+
+  for( list< vector<string> >::const_iterator it=jobs.begin();
+       it != jobs.end();
+       ++it )
+    {
+      m_result.push_back( CreamJob( *it ) );
+    }
 }

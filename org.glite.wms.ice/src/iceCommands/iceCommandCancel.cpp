@@ -33,7 +33,7 @@
 #include "iceDb/Transaction.h"
 #include "iceDb/CreateJob.h"
 #include "iceDb/GetJobByGid.h"
-#include "iceDb/UpdateJobFailureReason.h"
+#include "iceDb/UpdateJobByGid.h"
 /**
  *
  * Cream Client API Headers
@@ -261,7 +261,10 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 
       theJob.set_failure_reason( "Aborted by user" );
       db::Transaction tnx2;
-      db::UpdateJobFailureReason updater( theJob.getGridJobID(), "Aborted by user" );//CreateJob aJob( theJob );
+      list< pair<string, string> > params;
+      params.push_back( make_pair("failure_reason", "Aborted by user" ));
+      //      db::UpdateJobFailureReason updater( theJob.getGridJobID(), "Aborted by user" );//CreateJob aJob( theJob );
+      db::UpdateJobByGid updater( theJob.getGridJobID(), params );
       tnx2.execute( &updater );
       //        util::jobCache::getInstance()->put( theJob );
 
