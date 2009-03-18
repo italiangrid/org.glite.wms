@@ -589,24 +589,42 @@ std::vector<std::string> Utils::getWmps(){
 	eps = wmcOpts->getStringAttribute(Options::ENDPOINT);
 
 	if (!eps.empty()){
-		wmps.push_back(resolveAddress(eps));
+		try {
+			wmps.push_back(resolveAddress(eps));
+		} catch (WmsClientException &exc){
+                        throw WmsClientException(__FILE__,__LINE__,"getWmps",DEFAULT_ERR_CODE,
+                                "Unable to resolve endpoint passed through option --endpoint: ", eps);
+		}			
 	} else {
 		// URL by the environment
 		ep = getenv(  GLITE_WMS_WMPROXY_ENDPOINT);
 		if (ep){
-			wmps.push_back(resolveAddress(string(ep)));
+			try {
+				wmps.push_back(resolveAddress(string(ep)));
+			} catch (WmsClientException &exc){
+                        	throw WmsClientException(__FILE__,__LINE__,"getWmps",DEFAULT_ERR_CODE,
+                                	"Unable to resolve endpoint passed through environment variable GLITE_WMS_WMPROXY_ENDPOINT: ", string(ep));
+	                }
 		} else if (wmcConf){
 			// Check if exists the attribute WmProxyEndPoints
 			if(wmcConf->hasAttribute(JDL_WMPROXY_ENDPOINT)) {
+				vector<string> tmp_wmps ;
 				// Retrieve and set the attribute WmProxyEndPoints
-				wmps = wmcConf->getStringValue(JDL_WMPROXY_ENDPOINT);
+				tmp_wmps = wmcConf->getStringValue(JDL_WMPROXY_ENDPOINT);
 				// removing wrong endpoints
-				wmps = checkResources(wmps);
-				int i;
-				int size = wmps.size();
-				for (i=0;i<size;i++) {
-					wmps[i]=resolveAddress(wmps[i]);
+				tmp_wmps = checkResources(tmp_wmps);
+				while (tmp_wmps.size() > 0) {
+					try {
+						wmps.push_back(resolveAddress(tmp_wmps[0]));
+					} catch (WmsClientException &exc){
+						logInfo->print(WMS_WARNING, "getWmps","Unable to resolve endpoint passed through configuration file: "+tmp_wmps[0],true,true);
+                        		}
+					tmp_wmps.erase(tmp_wmps.begin());
 				}
+				if ( wmps.empty() )  {
+                                                throw WmsClientException(__FILE__,__LINE__,"getWmps",DEFAULT_ERR_CODE,
+                                                        "None of the endpoints passed through the configuration file were contacted","please check hosts availability");
+			 	}
 			}
 		}
 	}
