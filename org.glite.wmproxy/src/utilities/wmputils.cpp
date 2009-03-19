@@ -827,13 +827,12 @@ doPurge(string dg_jobid, bool force)
 		edglog(debug)<<"JobId object for purging created: "
 			<<dg_jobid<<endl;
 		// DTMT issue 56 fix: (DAG node PURGE)
+    purger::Purger ThePurger(wmplogger.getLBProxy());
 		if (force){
 			// Forcing purge (needed for dag nodes)
-			return purger::Purger(
-        wmplogger.getLBProxy()
-      ).force_dag_node_removal()(jobid::JobId(dg_jobid));
+			return ThePurger.force_dag_node_removal()(jobid::JobId(dg_jobid));
 		}else{
-			return purger::Purger(wmplogger.getLBProxy())(jobid::JobId(dg_jobid));
+			return ThePurger(jobid::JobId(dg_jobid));
 		}
 	} else {
 		edglog(critical)
