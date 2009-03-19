@@ -28,7 +28,7 @@ int main(void)
 
   configuration::WMConfiguration const* const wm_config(config.wm());
   configuration::NSConfiguration const* const ns_config(config.ns()); 
-
+while (true) {
   purchaser::ism_ii_purchaser icp(ns_config->ii_contact(), 
 				  ns_config->ii_port(),
 				  ns_config->ii_dn(),
@@ -38,9 +38,8 @@ int main(void)
   try { 
     icp();
 
-    sleep(100);
+    sleep(1);
     ism::call_update_ism_entries()();
-
     ism::call_dump_ism_entries()();
 
     std::string filename(ism::get_ism_dump());
@@ -49,6 +48,7 @@ int main(void)
   } catch(std::exception& e) {
     std::cerr << e.what() << std::endl;
   }
+}
 
   return 0;	
 }
