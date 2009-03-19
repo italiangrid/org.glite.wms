@@ -46,7 +46,7 @@ run_command lcg-ls -d -l $LCG_LS_OPTIONS $DIR_SURL
 
 # ... IV. Get TURLs (all available)
 
-run_command lcg-getturls $LCG_GT_OPTIONS $SURL
+run_command lcg-getturls -p gsiftp $LCG_GT_OPTIONS $SURL
 
 # ... Remove the GRID file referred by GUID and exit
 
