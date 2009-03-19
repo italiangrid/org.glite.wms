@@ -66,7 +66,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     }
     this->ei_data->md_logger->failed_on_error_event( ei_s_joberror );
 
-    jccommon::JobFilePurger( position->edg_id() ).do_purge();
+    jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge();
     this->ei_data->md_resubmitter->resubmit( position->last_status(), position->edg_id(), position->sequence_code() );
 
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
@@ -88,7 +88,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
 
     jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
-    jccommon::JobFilePurger( position->edg_id() ).do_purge();
+    jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge();
   }
   else { // Job got an error in the jobwrapper
     elog::cedglog << logger::setlevel( logger::warning ) << "Last job terminated (" << this->ei_condor
@@ -106,7 +106,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
 
     this->ei_data->md_logger->failed_on_error_event( errors );
 
-    jccommon::JobFilePurger   purger( position->edg_id() );
+    jccommon::JobFilePurger   purger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false);
     switch( stat ) {
     case JWOP::resubmit:
       purger.do_purge();
@@ -172,7 +172,7 @@ void EventTerminated::process_event( void )
       this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
 
       jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
-      jccommon::JobFilePurger( position->edg_id(), true ).do_purge();
+      jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), true ).do_purge();
 
       this->ei_data->md_sizefile->decrement_pending();
     }

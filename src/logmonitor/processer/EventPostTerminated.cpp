@@ -146,7 +146,7 @@ void EventPostTerminated::process_event( void )
       }
 
       this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->ept_event->eventNumber );
-      jccommon::JobFilePurger( this->ei_data->md_dagId, position->edg_id() ).do_purge();
+      jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), position->edg_id() ).do_purge();
 
       if( this->ei_data->md_container->remove(position) ) {
 	elog::cedglog << logger::setlevel( logger::null ) << ei_s_errremcorr << endl

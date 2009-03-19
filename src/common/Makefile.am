@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11.2.1.4.3  2009/03/19 15:45:45  mcecchi
+#       LB type run-time selection for purger
+#
 #       Revision 1.11.2.1.4.2  2009/02/17 15:35:47  mcecchi
 #       LB type run-time selection
 #
@@ -100,7 +103,6 @@ libglite_wms_jss_common_la_SOURCES = IdContainer.cpp \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(BOOST_CFLAGS) \
-	-DGLITE_WMS_HAVE_PURGER -DGLITE_WMS_HAVE_RENEWAL
+	$(BOOST_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~

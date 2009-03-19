@@ -16,9 +16,7 @@ namespace fs = boost::filesystem;
 #include "glite/wmsutils/jobid/JobId.h"
 
 #include "glite/wms/common/utilities/boost_fs_add.h"
-#ifdef GLITE_WMS_HAVE_PURGER
 #include "glite/wms/purger/purger.h"
-#endif
 #include "jobcontrol_namespace.h"
 #include "common/files.h"
 
@@ -32,10 +30,11 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace jccommon {
 
-JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &id, bool isdag ) : jfp_isDag( isdag ), jfp_jobId( id ), jfp_dagId() {}
+JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &id, bool have_lbproxy, bool isdag )
+  : jfp_isDag( isdag ), jfp_jobId( id ), jfp_have_lbproxy(have_lbproxy), jfp_dagId() { }
 
-JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &jobid ) : jfp_isDag( false ),
-										       jfp_jobId( jobid ), jfp_dagId( dagid )
+JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &dagid, bool have_lbproxy, const glite::wmsutils::jobid::JobId &jobid )
+  : jfp_isDag( false ), jfp_have_lbproxy(have_lbproxy), jfp_jobId( jobid ), jfp_dagId( dagid )
 {}
 
 JobFilePurger::~JobFilePurger( void ) {}
@@ -44,9 +43,7 @@ void JobFilePurger::do_purge( bool everything )
 {
   const configuration::LMConfiguration    *lmconfig = configuration::Configuration::instance()->lm();
   logger::StatePusher                      pusher( elog::cedglog, "JobFilePurger::do_purge(...)" );
-#ifdef GLITE_WMS_HAVE_PURGER
   bool     purge;
-#endif
 
   if( lmconfig->remove_job_files() ) {
     unsigned long int            removed;
@@ -114,12 +111,9 @@ void JobFilePurger::do_purge( bool everything )
   if( everything ) {
     elog::cedglog << logger::setlevel( logger::ugly ) << "Going to purge job storage..." << endl;
 
-#ifdef GLITE_WMS_HAVE_PURGER
-    purger::Purger().force_dag_node_removal()(this->jfp_jobId);
+    purger::Purger ThePurger(this->jfp_have_lbproxy);
+    ThePurger.force_dag_node_removal()(this->jfp_jobId);
     elog::cedglog << logger::setlevel( logger::verylow ) << "Purging command returned " << (purge ? "ok" : "an error") << endl;
-#else
-    elog::cedglog << logger::setlevel( logger::null ) << "Job purging support not compiled." << endl;
-#endif
   }
 
   return;

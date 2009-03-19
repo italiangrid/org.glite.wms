@@ -9,14 +9,14 @@ namespace jccommon {
 
 class JobFilePurger {
 public:
-  JobFilePurger( const glite::wmsutils::jobid::JobId &jobid, bool isdag = false );
-  JobFilePurger( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &jobid );
+  JobFilePurger( const glite::wmsutils::jobid::JobId &jobid, bool have_lbproxy, bool isdag);
+  JobFilePurger( const glite::wmsutils::jobid::JobId &dagid, bool have_lbproxy, const glite::wmsutils::jobid::JobId &jobid );
   ~JobFilePurger( void );
 
   void do_purge( bool everything = false );
 
 private:
-  bool                    jfp_isDag;
+  bool                    jfp_isDag, jfp_have_lbproxy;
   glite::wmsutils::jobid::JobId    jfp_jobId, jfp_dagId;
 };
 

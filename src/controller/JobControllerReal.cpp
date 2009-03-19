@@ -31,6 +31,7 @@ namespace fs = boost::filesystem;
 #include <user_log.c++.h>
 
 #include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
@@ -218,6 +219,7 @@ try {
 #else
   ostrstream                         oss;
 #endif
+  bool const have_lbproxy = configuration::Configuration::instance()->common()->lbproxy();
 
   boost::match_results<string::const_iterator>    pieces;
   static boost::regex                             expr( "^.*[0-9]+ job\\(s\\) submitted to cluster ([0-9]+)\\.[0-9]*.*$" );
@@ -238,7 +240,7 @@ try {
       this->jcr_logger.job_abort_cannot_write_submit_file_event( sad->log_file(), sad->submit_file(), "Submit file empty" );
 
       jccommon::ProxyUnregistrar( sad->job_id() ).unregister();
-      jccommon::JobFilePurger( sad->job_id(), sad->is_dag() ).do_purge( true );
+      jccommon::JobFilePurger( sad->job_id(), , sad->is_dag() ).do_purge( true );
 
       return 0;
     }
@@ -254,7 +256,7 @@ try {
       this->jcr_logger.job_abort_cannot_write_submit_file_event( sad->log_file(), sad->submit_file(), "Submit file empty" );
 
       jccommon::ProxyUnregistrar( sad->job_id() ).unregister();
-      jccommon::JobFilePurger( sad->job_id(), sad->is_dag() ).do_purge( true );
+      jccommon::JobFilePurger( sad->job_id(), have_lbproxy, sad->is_dag() ).do_purge( true );
 
       return 0;
     }
@@ -288,7 +290,7 @@ try {
 	this->jcr_logger.condor_submit_failed_event( rsl, info, sad->log_file() );
 
 	jccommon::ProxyUnregistrar( sad->job_id() ).unregister();
-	jccommon::JobFilePurger( sad->job_id(), sad->is_dag() ).do_purge( true );
+	jccommon::JobFilePurger( sad->job_id(), have_lbproxy, sad->is_dag() ).do_purge( true );
       }
       else {
 	// The condor command worked fine... Do the right thing
@@ -312,7 +314,7 @@ try {
       this->jcr_logger.job_abort_cannot_write_submit_file_event( sad->log_file(), sad->submit_file(), "Cannot open file" );
 
       jccommon::ProxyUnregistrar( sad->job_id() ).unregister();
-      jccommon::JobFilePurger( sad->job_id(), sad->is_dag() ).do_purge( true );
+      jccommon::JobFilePurger( sad->job_id(), have_lbproxy, sad->is_dag() ).do_purge( true );
 
       throw CannotExecute( "Cannot open condor submit file." );
     }
@@ -328,7 +330,7 @@ try {
 
     transform( type.begin(), type.end(), type.begin(), ::tolower );
     jccommon::ProxyUnregistrar( id ).unregister();
-    jccommon::JobFilePurger( id, (type == "dag") ).do_purge( true );
+    jccommon::JobFilePurger( id, have_lbproxy, (type == "dag") ).do_purge( true );
   }
 
   return numberId;

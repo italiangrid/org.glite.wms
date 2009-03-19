@@ -90,9 +90,9 @@ void EventAborted::process_event( void )
       this->ei_data->md_logger->aborted_by_system_event( ei_s_joberror );
 
       if( this->ei_data->md_isDagLog )
-	jccommon::JobFilePurger( this->ei_data->md_dagId, position->edg_id() ).do_purge();
+	jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), position->edg_id() ).do_purge();
       else {
-	jccommon::JobFilePurger( position->edg_id() ).do_purge();
+	jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge();
 	// Only resubmit common jobs...
 	this->ei_data->md_resubmitter->resubmit( position->last_status(), position->edg_id(), position->sequence_code(), this->ei_data->md_container );
       }
@@ -103,10 +103,10 @@ void EventAborted::process_event( void )
       this->ei_data->md_logger->aborted_by_user_event();
 
       if( this->ei_data->md_isDagLog )
-	jccommon::JobFilePurger( this->ei_data->md_dagId, position->edg_id() ).do_purge( true ); // Remove also Sandbox
+	jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), position->edg_id() ).do_purge( true ); // Remove also Sandbox
       else {
 	jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
-	jccommon::JobFilePurger( position->edg_id() ).do_purge( true ); // Remove also Sandbox
+	jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge( true ); // Remove also Sandbox
       }
     }
 
@@ -118,7 +118,7 @@ void EventAborted::process_event( void )
 		    << logger::setlevel( logger::info ) << "Removing DAG proxy and files." << endl;
 
       jccommon::ProxyUnregistrar( this->ei_data->md_dagId ).unregister();
-      jccommon::JobFilePurger( this->ei_data->md_dagId, true ).do_purge( true );
+      jccommon::JobFilePurger( this->ei_data->md_dagId, this->ei_data->md_logger->have_lbproxy(), true ).do_purge( true );
     }
 
     if( this->ei_data->md_container->remove(position) ) {
