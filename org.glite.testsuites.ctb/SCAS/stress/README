@@ -215,7 +215,7 @@ This file can be used to start the stress specifying an interval
 in hours between two activation. Giving '0' as argument it behaves
 as the previous script.
 This script also starts in background the getHourlyErrorRate.sh script
-to collect error rate data in $log_location/hourlyErrorRate.txt (every 1h hardcoded).
+to collect error rate data in $log_location/hourlyErrorRate.txt.
 
 - mkRespTimePlots -
 Usage ./mkRespTimePlots <datafile> [...<datafile>]
@@ -252,10 +252,11 @@ Usage: ./getHourlyErrorRate.sh <logs_dir> <hours>"
   <hours> time interval in hours
 
 This script enter an infinite cycle where it prints,
-every <hous>, the pair timestamp,errorRate to the
+every <hous>, the pair hour,errorRate to the
 file hourlyErrorRate (in $logs_dir).
-The timestamp is in seconds from the Unix epoch and the
-error rate is the total error rate (all the nodes) in %.
+In addition, a file frequency.txt, will be created in
+the same directory with the frequency (requests per second)
+detected each hour.
 
 - normalize_time.sh -
 Usage $0 <file> <t0>
