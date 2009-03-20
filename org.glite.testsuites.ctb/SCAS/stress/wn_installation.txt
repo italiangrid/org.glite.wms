@@ -41,7 +41,7 @@ cp --reply=yes /afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.test
 #edit /etc/logrotate.d/scas and change daily with size 500M (for example)
 mv /etc/cron.daily/logrotate /etc/cron.hourly/
 
-#disable the automatic grid-mapfile update
+-----------------------------------------------------------------------
 
 
 #To wipe users
