@@ -1,9 +1,9 @@
 #!/bin/sh
 
 function usage() {
-echo "Usage $0  [<log_location>] [<datafile>]"
+echo "Usage $0  [<log_location>] [<errorfile>]"
 echo "   <log_location> a directory were *_data_norm files are stored"
-echo "   <datafile> a file with time,resptime data"
+echo "   <errorfile> a file with time,{0|1} pairs"
 }
 
 function createPlot() {

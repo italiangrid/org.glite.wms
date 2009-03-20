@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#This file produce the correct results only when using 
+#This file produces the correct results only when using 
 #during the test, not at the end of the test.
 #It assumes that:
 # - 10 machines are used
