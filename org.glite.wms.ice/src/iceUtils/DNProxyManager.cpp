@@ -464,14 +464,14 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 //________________________________________________________________________
 void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn, 
 							   const string& prx,
-							   const time_t timeleft
+							   const time_t exptime
 							   ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
 
     string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
 
-    time_t exptime = timeleft+time(0);
+//    time_t exptime = timeleft+time(0);
     
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
 
@@ -700,12 +700,12 @@ iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
 	continue;
       }
 	
-      time_t timeleft = V.getProxyTimeEnd() - time(NULL);
+      time_t exptime = V.getProxyTimeEnd();// - time(NULL);
 
       if (timeleft > besttime)
 	{
 	  bestProxy = *it;
-	  besttime = timeleft;
+	  besttime = exptime;
 	}
 
       continue;
