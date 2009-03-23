@@ -113,6 +113,7 @@ namespace { // Anonymous namespace
 	  db::RemoveJobByGid remover( m_grid_job_id );
 
 	  //            boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+	  boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
 	  //            iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
 	  //            m_cache->erase( it );
 	  db::Transaction tnx;
@@ -739,6 +740,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 //       api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in database" );
 // #endif
       //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
         m_theJob.set_last_seen( time(0) );
 	list< pair<string, string> > params;
 	params.push_back( make_pair("last_seen", iceUtil::int_to_string(m_theJob.getLastSeen())));
