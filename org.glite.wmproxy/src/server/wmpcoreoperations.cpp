@@ -224,21 +224,24 @@ copyEnvironment(char** sourceEnv)
 Append a tail to an existing ExprTree and build a new exprTree
 */
 classad::ExprTree *
-appendExprTree(classad::ExprTree * src, classad::ExprTree * tail)
+appendExprTree(classad::ExprTree * src, const string &logic_s , bool positive_b,  classad::ExprTree * tail)
 {
         classad::PrettyPrint unp;
         unp.SetClassAdIndentation(0);
         unp.SetListIndentation(0);
-        string src_s, tail_s;
+	string expr_s, tail_s;
 	if (src){ 
-		unp.Unparse(src_s, src);
+	        unp.Unparse(expr_s, src);
 		// if a Tail exists then modify the src properly
-		if (tail) { src_s="("+src_s+")"+ " && "; }
+		if (tail) { expr_s="("+expr_s+")"+ logic_s; }
 	}
-	if (tail){unp.Unparse(tail_s, tail);}
-        src_s = src_s + tail_s;
+	if (tail){
+		unp.Unparse(tail_s, tail);
+                if (!positive_b){tail_s="!"+tail_s ;}
+       	} 	 
+	expr_s = expr_s + tail_s; 	 
         classad::ClassAdParser parser;
-        return parser.ParseExpression(src_s, true);
+        return parser.ParseExpression(expr_s, true);
 }
 
 // make NOT an expression
@@ -1522,7 +1525,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			// SDJ CHECKS/adjust Requirements attribute
 			classad::ExprTree * sdjrequirements= conf.getSDJRequirements(); 
 			if (sdjrequirements){
-				checkSDJRequirements (jad, sdjrequirements);
+				checkSDJRequirements (&jad, sdjrequirements);
 			}else{
 				// SDJ conf not found, nothing to change
 				edglog(warning)<<"Unable to find SDJRequirements in configuration file"<< endl;
@@ -1592,8 +1595,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
                         	edglog(warning)<<"Short Deadline Job attribute not found in configuration file"<<endl;
 			}
 			// force SDJ required inheritance rules #bug 39217
-			dag->inherit( JDL::SHORT_DEADLINE_JOB);
-			dag->inherit( JDL::REQUIREMENTS);		
+			dag.inherit( JDL::SHORT_DEADLINE_JOB);
+			dag.inherit( JDL::REQUIREMENTS);		
 	
 			string jobidstring;
 			string dest_uri;
