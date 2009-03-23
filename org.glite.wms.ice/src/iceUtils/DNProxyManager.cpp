@@ -68,7 +68,7 @@ iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 //______________________________________________________________________________
 iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 {
-  m_log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
+  m_log_dev = cream_api::util::creamApiLogger::instance()->getLogger();
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		 << "DNProxyManager::CTOR() - "
@@ -115,6 +115,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
     db::GetAllProxyByDN get( *it );
     db::Transaction tnx;
     tnx.execute( &get );
+    
     m_temp_dnproxy_Map[ *it ] = get.get_proxies();
   }
 
@@ -135,55 +136,60 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
       
       pair< string, time_t > job_with_better_proxy_from_sandboxDir = this->searchBetterProxy( *it );
       
-      if( !boost::filesystem::exists( thisPath ) )
-	{
-	  CREAM_SAFE_LOG(m_log_dev->infoStream() 
-			 << "DNProxyManager::CTOR() - "
-			 << "Proxy file ["
-			 << localProxy << "] not found for DN ["
-			 << *it 
-			 << "] in ICE's persistency dir. "
-			 << "Trying to find the most long-lived"
-			 << " one in the job cache for the current DN..."
-			 );
-
-	  if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
-	    {
-	      continue;
-	    }
-	    
-	  try {
+      if( !boost::filesystem::exists( thisPath ) ) {
+	CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		       << "DNProxyManager::CTOR() - "
+		       << "Proxy file ["
+		       << localProxy << "] not found for DN ["
+		       << *it 
+		       << "] in ICE's persistency dir. "
+		       << "Trying to find the most long-lived"
+		       << " one in the job cache for the current DN..."
+		       );
+	
+	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
+	  {
+	    continue;
+	  }
+	
+	try {
 	  
-	    this->copyProxy(job_with_better_proxy_from_sandboxDir.first, localProxy);
-	    
-	  } catch(SourceProxyNotFoundException& ex) {
-	    CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			   << "DNProxyManager::CTOR() - Error copying proxy ["
-			   << job_with_better_proxy_from_sandboxDir.first << "] to ["
-			   << localProxy << "] for DN ["
-			   << *it << "]. Skipping"
+	  this->copyProxy(job_with_better_proxy_from_sandboxDir.first, localProxy);
+	  
+	} catch(SourceProxyNotFoundException& ex) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
+			 << "DNProxyManager::CTOR() - Error copying proxy ["
+			 << job_with_better_proxy_from_sandboxDir.first << "] to ["
+			 << localProxy << "] for DN ["
+			 << *it << "]. Skipping"
+			 );
+	  continue;
+	}
+	
+	m_DNProxyMap[*it] = boost::make_tuple(localProxy, job_with_better_proxy_from_sandboxDir.second, 0 );
+	
+      } else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
+	
+	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
+	  {
+	    CREAM_SAFE_LOG(m_log_dev->warnStream() 
+			   << "DNProxyManager::CTOR() - Not found any proxy for DN ["
+			   << *it << "] in the sandBoxDirs. Skipping"
 			   );
 	    continue;
 	  }
-	  
-	  m_DNProxyMap[*it] = boost::make_tuple(localProxy, job_with_better_proxy_from_sandboxDir.second, 0 );
-	    
-	} else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
-	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
-	    {
-	      CREAM_SAFE_LOG(m_log_dev->warnStream() 
-			     << "DNProxyManager::CTOR() - Not found any proxy for DN ["
-			     << *it << "] in the sandBoxDirs. Skipping"
-			     );
-	      continue;
-	    }
-          this->setUserProxyIfLonger_Legacy(*it, 
-					    job_with_better_proxy_from_sandboxDir.first, 
-					    job_with_better_proxy_from_sandboxDir.second);
-      
-        } // if( !boost::filesystem::exists( thisPath ) )
-     } // for
-
+	
+// 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// 		       << "DNProxyManager::CTOR() - proxy=" << *it << " - first=" << job_with_better_proxy_from_sandboxDir.first << " - second=" << job_with_better_proxy_from_sandboxDir.second
+// 		       );
+	
+	this->setUserProxyIfLonger_Legacy(*it, 
+					  job_with_better_proxy_from_sandboxDir.first, 
+					  job_with_better_proxy_from_sandboxDir.second);
+	
+      } // if( !boost::filesystem::exists( thisPath ) )
+    } // for
+  
 
   /**
      All "legacy" better proxy have been loaded (those ones related to DN that submitted jobs without MYPROXYSERVER.
@@ -458,13 +464,15 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 //________________________________________________________________________
 void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn, 
 							   const string& prx,
-							   const time_t exptime
+							   const time_t timeleft
 							   ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
 
     string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
 
+    time_t exptime = timeleft+time(0);
+    
   if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
 
     try {
@@ -482,6 +490,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
       
     }
     
+
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
 		   << "DN ["

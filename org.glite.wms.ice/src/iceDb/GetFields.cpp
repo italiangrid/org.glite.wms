@@ -88,15 +88,15 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
 	   it != m_clause.end();
 	   ++it)
 	{
-	  sqlcmd << it->first << "=\'" << it->second << "\',";
+	  sqlcmd << it->first << "=\'" << it->second << "\' AND ";
 	}
 
       string tmp = sqlcmd.str();
       if( !tmp.empty() )
-	tmp = tmp.substr(0, tmp.length()-1); // remove the trailing ","
+	tmp = tmp.substr(0, tmp.length()-4); // remove the trailing ","
       
       sqlcmd.str( "" );
-      sqlcmd << tmp;
+      sqlcmd << tmp << ";";
 
     } else {
     sqlcmd << ";";

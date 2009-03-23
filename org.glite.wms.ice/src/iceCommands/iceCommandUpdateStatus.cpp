@@ -39,6 +39,7 @@
 #include "iceDb/Transaction.h"
 #include "iceDb/GetCreamURLUserDN.h"
 #include "iceDb/GetCidByCreamURLUserDN.h"
+#include "iceDb/GetFields.h"
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -305,10 +306,27 @@ void iceCommandUpdateStatus::execute( ) throw( )
 
       list< pair<string, string> > list_creamurl_userdn, save;
       {
-	db::GetCreamURLUserDN getter;
+ 	list<string> params;
+	params.push_back( "creamurl" );
+	params.push_back( "userdn" );
+	db::GetFields getter( params, list<pair<string, string> >() );
+	//db::GetCreamURLUserDN getter;
 	db::Transaction tnx;
 	tnx.execute( &getter );
-	list_creamurl_userdn = getter.get();
+
+	list< list<string> > result = getter.get_values();
+
+        for( list< list<string> >::const_iterator it=result.begin();
+             it != result.end();
+	     ++it )
+	{
+	  list<string>::const_iterator fit = (*it).begin();
+	  string creamurl = *fit; fit++;
+	  string userdn   = *fit;
+	  list_creamurl_userdn.push_back( make_pair( creamurl, userdn) );
+	}	
+
+//	list_creamurl_userdn = getter.get();
       }
 
       for( list< pair<string, string> >::const_iterator it=list_creamurl_userdn.begin();
@@ -333,11 +351,31 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	   it != save.end();
 	   ++it) 
 	{
-	  db::GetCidByCreamURLUserDN getter( *it );
+	  list<string> fields_to_retrieve;
+	  fields_to_retrieve.push_back( "complete_cream_jobid" );
+	  list<pair<string, string> > clause;
+	  clause.push_back( make_pair("creamurl", it->first ) );
+	  clause.push_back( make_pair("userdn", it->second ) );
+	  
+	  list<list<string> > result;
+	  //db::GetCidByCreamURLUserDN getter( *it );
+	  db::GetFields getter( fields_to_retrieve, clause );
+	  
 	  db::Transaction tnx;
 	  tnx.execute( &getter );
-	  list<string> tmp = getter.get();
-	  cids.merge( tmp );
+	  //list<string> tmp = getter.get();
+	  
+	  list<list<string> > tmp = getter.get_values();
+	  list<string> _tmp_cids;
+	  for(list<list<string> >::const_iterator it=tmp.begin();
+	      it!=tmp.end();
+	      ++it)
+	      {
+	        string thisCompleteCreamJobID = *(*it).begin();
+	        _tmp_cids.push_back( thisCompleteCreamJobID );
+	      }
+	  
+	  cids.merge( _tmp_cids );
 	}
       
       for( list<string>::const_iterator it=cids.begin();

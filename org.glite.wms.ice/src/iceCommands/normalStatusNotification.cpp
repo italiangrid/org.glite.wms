@@ -477,8 +477,9 @@ void normalStatusNotification::apply( void ) // can throw anything
         
 	//        CreamJob tmp_job( *jc_it );
 	//        notif_ptr->apply_to_job( tmp_job ); // apply status change to job
-	notif_ptr->apply_to_job( theJob );
-	//        tmp_job.set_num_logged_status_changes( count );
+
+	notif_ptr->apply_to_job( theJob );// this method internally updates the database
+
 	theJob.set_numlogged_status_changes( count );
 	{
 	  list< pair<string, string> > params;
