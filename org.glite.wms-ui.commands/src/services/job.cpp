@@ -402,15 +402,8 @@ void Job::setVersionNumbers(const string& version) {
 				wmpVersion.minor = atoi (v.substr(0,p).c_str() );
 			// Release version number
 			} if (p < version.size( )) {
-				v = v.substr((p+1),(version.size()-p));
-				p = v.find(".");
-				if (p == string::npos){
-					wmpVersion.subminor = atoi (v.substr(0,p).c_str() );
-				} else {
-					logInfo->print(WMS_WARNING, "error on extracting release version number",
-						"setting the number to 0",false);
-					wmpVersion.subminor = 0;
-				}
+                                v = v.substr((p+1),(version.size()-p));
+				wmpVersion.subminor =  atoi (v.substr(0,p).c_str() );
 			} else {
 				wmpVersion.subminor = 0;
 			}
