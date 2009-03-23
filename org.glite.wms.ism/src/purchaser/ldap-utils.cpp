@@ -653,7 +653,4 @@ void fetch_bdii_info(const std::string& hostname,
   fetch_bdii_se_info(IIconnection, gluese_info_container);
 }
 
-} // namespace purchaser
-} // namespace ism
-} // namespace wms
-} // namespace glite
+}}}}
