@@ -241,9 +241,6 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                 )
               )
             );
-            if(gluese_info_map_insert) {
-              Debug("info for " << gluese_unique_id << " inserted");
-            }
           }
           if(is_gluesa_info_dn(ldap_dn_tokens)) {
             boost::tuples::get<1>(it->second).push_back(ad);
@@ -267,8 +264,10 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 
       for( ; se_it != se_e; ++se_it) {
 
-        if (!boost::tuples::get<0>(se_it->second)) continue;
-       
+        if (!boost::tuples::get<0>(se_it->second)) {
+          Debug("Skipping se " << se_it->first << " due to empty classad reppresentation ");
+          continue;
+        }       
         if (!boost::tuples::get<1>(se_it->second).empty()) {
           boost::tuples::get<0>(se_it->second)->
             Insert("GlueSA", classad::ExprList::MakeExprList(
@@ -461,6 +460,17 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
       for( ; cl_it != cl_e; ++cl_it) { // for each cluster
         
         if (boost::tuples::get<2>(cl_it->second).empty()) {
+          
+          Debug("Skipping cluster " << cl_it->first << " due to empty subcluster definition");
+          vector<gluece_info_map_type::iterator>::const_iterator ce_it(
+	    boost::tuples::get<1>(cl_it->second).begin()
+          );
+          vector<gluece_info_map_type::iterator>::const_iterator const ce_e( 
+            boost::tuples::get<1>(cl_it->second).end()
+          );
+          for ( ; ce_it != ce_e ; ++ce_it) {
+            Debug("Skipping ce " << (*ce_it)->first << " belonging to cluster " <<  cl_it->first);  
+          }
           continue; // Addresses bug #15098
         }
 
@@ -569,7 +579,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 
               if (view_access_control_base_rules.empty() )
               {
-                Info(vo_view_it->first << ": skipped due to empty ACBR.");
+                Debug("Skipping view " << vo_view_it->first << " for ce " << (*ce_it)->first << " due to empty ACBR.");
                 continue;
               }
               set<string> _;

@@ -90,6 +90,9 @@ void apply_skip_predicate(
       it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
       gluece_info_container_updated_entries.push_back(it);
     }
+    else {
+      Debug("Skipping " << it->first << " due to skip predicate settings");
+    }
   }
 }
 
@@ -123,6 +126,7 @@ void populate_ism(
         expiry_time
       )
     );
+    Debug((*it)->first << " added to ISM ");
   } 
 }
 
