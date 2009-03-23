@@ -638,13 +638,14 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
   }
 }
 
-void fetch_bdii_info(const std::string& hostname,
-      int port,
-      const std::string& dn,
-      int timeout,
-                        const std::string& ldap_ce_filter_ext,
+void fetch_bdii_info(
+      std::string const& hostname,
+      size_t port,
+      std::string const& dn,
+      time_t timeout,
+      std::string const& ldap_ce_filter_ext,
       gluece_info_container_type& gluece_info_container,
-                        gluese_info_container_type& gluese_info_container)
+      gluese_info_container_type& gluese_info_container)
 {
   boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection(
     new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
