@@ -121,10 +121,14 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   glite::wms::broker::ResourceBroker rb;
 
   bool input_data_exists = false;
-  std::vector<std::string> input_data;
-  requestad::get_input_data(input_ad, input_data, input_data_exists);
+  bool data_requiremets_exist = false;
 
-  if (input_data_exists) {
+  std::vector<std::string> input_data;
+
+  requestad::get_input_data(input_ad, input_data, input_data_exists);
+  requestad::get_data_requirements(input_ad, data_requiremets_exist);
+
+  if (input_data_exists || data_requiremets_exist) {
     // Here we have to check if the rank expression in the request
     // is rank = other.dataAccessCost and change the implementation
     // of the broker (RBMinimizeAccessCost)
