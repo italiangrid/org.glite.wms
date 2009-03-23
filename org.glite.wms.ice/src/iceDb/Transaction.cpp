@@ -92,20 +92,40 @@ namespace {
 		  " last_seen integer(4) "		  \
 		  ")";
                 do_query( db, sqlcmd );
+		
             } catch( ... ) {
             }
+	    try {
+	      string sqlcmd = 
+		"CREATE TABLE proxy ( "		     \
+		"userdn text primary key not null, " \
+		"proxyfile text not null, "	     \
+		"exptime integer(4) not null, "	     \
+		"counter integer(8) not null"	     \
+		")";
+	      do_query( db, sqlcmd );
+
+	    } catch( ... ) {
+	    }
             try {
-                string sqlcmd = 
-                    "create unique index gid_index on jobs (gridjobid)"; 
-                do_query( db, sqlcmd );
+	      string sqlcmd = 
+		"create unique index gid_index on jobs (gridjobid)"; 
+	      do_query( db, sqlcmd );
             } catch( ... ) {
             }
             try { 
-                string sqlcmd = 
-                    "create index cid_index on jobs (creamjobid)";
-                do_query( db, sqlcmd );
+	      string sqlcmd = 
+		"create index cid_index on jobs (creamjobid)";
+	      do_query( db, sqlcmd );
             } catch( ... ) {
             }
+	    try {
+	      string sqlcmd = 
+		"create unique index userdn_index on proxy (userdn)";
+	      do_query( db, sqlcmd );
+	    } catch( ... ) {
+	    }
+
         };
     };
 
