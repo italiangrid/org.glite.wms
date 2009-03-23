@@ -702,7 +702,7 @@ iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
 	
       time_t exptime = V.getProxyTimeEnd();// - time(NULL);
 
-      if (timeleft > besttime)
+      if (exptime > besttime)
 	{
 	  bestProxy = *it;
 	  besttime = exptime;
