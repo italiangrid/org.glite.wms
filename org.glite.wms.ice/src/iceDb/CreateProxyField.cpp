@@ -15,29 +15,43 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * Remove a job from the cache
+ * DB operation used to create a new job
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "RemoveJobByCid.h"
+#include "CreateProxyField.h"
 
-#include "boost/format.hpp"
+#include <sstream>
 
 using namespace glite::wms::ice::db;
 using namespace std;
 
-RemoveJobByCid::RemoveJobByCid( const string& cream_job_id ) :
-    m_creamjobid( cream_job_id )
+CreateProxyField::CreateProxyField( const std::string& userdn,
+			  const std::string proxyfile,
+			  const time_t exptime,
+			  const long long counter ) :
+  m_userdn( userdn),
+  m_proxyfile( proxyfile ),
+  m_exptime( exptime ),
+  m_counter( counter )
 {
-
 }
 
-void RemoveJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
+void CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    string sqlcmd = boost::str( boost::format( 
-      "delete from jobs " \
-      " where complete_cream_jobid = \'%1%\'; " ) % m_creamjobid );
-    do_query( db, sqlcmd );
+
+  ostringstream sqlcmd("");
+  sqlcmd << "INSERT OR REPLACE INTO proxy (" 
+         << " userdn,proxyfile,exptime,counter) VALUES ("
+	 << "\'" << m_userdn << "\',"
+	 << "\'" << m_proxyfile << "\',"
+	 << "\'" << m_exptime << "\',"
+	 << "\'" << m_counter << "\'"
+	 << ");";
+   
+	 
+			      
+  do_query( db, sqlcmd.str() );
 }

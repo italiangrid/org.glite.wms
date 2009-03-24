@@ -15,29 +15,47 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * Remove a job from the cache
+ * Get all user proxies
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "RemoveJobByCid.h"
-
-#include "boost/format.hpp"
+#include "GetAllProxyInfo.h"
+#include <sstream>
+#include <list>
 
 using namespace glite::wms::ice::db;
 using namespace std;
 
-RemoveJobByCid::RemoveJobByCid( const string& cream_job_id ) :
-    m_creamjobid( cream_job_id )
+GetAllProxyInfo::GetAllProxyInfo( ) :    
+  AbsDbOperation()
 {
-
 }
 
-void RemoveJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
+namespace { // begin local namespace
+
+    // Local helper function: callback for sqlite
+    static int fetch_fields_callback(void *param, int argc, char **argv, char **azColName) {
+    
+      map<string, boost::tuple< string, time_t, long long> >* result = (map<string, boost::tuple< string, time_t, long long> >*) param;
+      
+      if ( argv && argv[0] ) {
+        (*result)[ argv[0] ] = boost::make_tuple(argv[1], (time_t)atoi(argv[2]), atoll(argv[3]) );
+      }
+	  
+      return 0;
+      
+    }
+
+} // end local namespace
+
+void GetAllProxyInfo::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    string sqlcmd = boost::str( boost::format( 
-      "delete from jobs " \
-      " where complete_cream_jobid = \'%1%\'; " ) % m_creamjobid );
-    do_query( db, sqlcmd );
+ 
+  string sqlcmd = "SELECT * FROM proxy;";
+    
+  do_query( db, sqlcmd, fetch_fields_callback, &m_result );
+  
+
 }

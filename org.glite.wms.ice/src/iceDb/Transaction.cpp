@@ -119,6 +119,12 @@ namespace {
 	      do_query( db, sqlcmd );
             } catch( ... ) {
             }
+            try {
+              string sqlcmd =
+                "create index ccid_index on jobs (complete_cream_jobid)";
+              do_query( db, sqlcmd );
+            } catch( ... ) {
+            }
 	    try {
 	      string sqlcmd = 
 		"create unique index userdn_index on proxy (userdn)";

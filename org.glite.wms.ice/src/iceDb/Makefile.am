@@ -9,7 +9,9 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetDelegationInformation.cpp \
 				GetFields.cpp \
 				GetProxyInfoByDN.cpp \
+				GetAllProxyInfo.cpp \
 				CreateJob.cpp \
+				CreateProxyField.cpp \
 				UpdateJobByGid.cpp \
 				UpdateProxyFieldsByDN.cpp \
 				RemoveJobByGid.cpp \
