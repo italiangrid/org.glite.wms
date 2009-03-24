@@ -203,14 +203,14 @@ try {
   glite::wms::broker::ResourceBroker rb;
   
   bool input_data_exists = false;
-  bool data_requiremets_exist = false;
+  bool data_requirements_exist = false;
 
   std::vector<std::string> input_data;
 
   requestad::get_input_data(input_ad, input_data, input_data_exists);
-  requestad::get_data_requirements(input_ad, data_requiremets_exist);
+  requestad::get_data_requirements(input_ad, data_requirements_exist);
 
-  if (input_data_exists  || data_requiremets_exist) {
+  if (input_data_exists  || data_requirements_exist) {
     rb.changeImplementation(
       boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
         new glite::wms::broker::RBMaximizeFilesISMImpl()
