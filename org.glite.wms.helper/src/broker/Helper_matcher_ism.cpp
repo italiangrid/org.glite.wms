@@ -128,20 +128,12 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   requestad::get_input_data(input_ad, input_data, input_data_exists);
   requestad::get_data_requirements(input_ad, data_requiremets_exist);
 
-  if (input_data_exists || data_requiremets_exist) {
-    // Here we have to check if the rank expression in the request
-    // is rank = other.dataAccessCost and change the implementation
-    // of the broker (RBMinimizeAccessCost)
-    classad::ExprTree* rank_expr = input_ad.Lookup("rank");
-    if (rank_expr) {
-      std::vector<std::string> rankAttributes;
-      utils::insertAttributeInVector(&rankAttributes, rank_expr, utils::is_reference_to("other"));
-      rb.changeImplementation(
-        boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
-          new glite::wms::broker::RBMaximizeFilesISMImpl()
-        )
-      );
-    }
+  if (input_data_exists  || data_requiremets_exist) {
+    rb.changeImplementation(
+      boost::shared_ptr<glite::wms::broker::ResourceBroker::Impl>(
+        new glite::wms::broker::RBMaximizeFilesISMImpl()
+      )
+    );
   }
 
   boost::tuple<
