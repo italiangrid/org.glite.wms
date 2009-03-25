@@ -66,7 +66,8 @@ typedef std::map<
     classad_shared_ptr, // sead
     std::vector<classad::ExprTree*>, // list of sa info
     std::vector<classad::ExprTree*>, // list of control protocol info
-    std::vector<classad::ExprTree*>  // list of access  protocol info
+    std::vector<classad::ExprTree*>, // list of access  protocol info
+    vector_classad_shared_ptr
   >
 > gluese_info_map_type;
 
@@ -186,7 +187,10 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 
   vector<string> ldap_dn_tokens;
   tokenize_ldap_dn(ldap_it.ldap_dn(), ldap_dn_tokens);
-        if (is_gluese_info_dn(ldap_dn_tokens)) {
+
+        if (is_gluese_info_dn(ldap_dn_tokens) ||
+          is_gluecesebind_info_dn(ldap_dn_tokens)) {
+
           ldif2classad::LDIFObject ldif_SE(*ldap_it);
           boost::shared_ptr<classad::ClassAd> seAd(
             ldif_SE.asClassAd(multi_attrs_begin, multi_attrs_end)
@@ -200,18 +204,21 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             std::make_pair(
               gluese_unique_id, 
               boost::make_tuple(
-                seAd,
+                classad_shared_ptr(),
                 std::vector<classad::ExprTree*>(),
                 std::vector<classad::ExprTree*>(),
-                std::vector<classad::ExprTree*>()
+                std::vector<classad::ExprTree*>(),
+                vector_classad_shared_ptr()
               )
             )
           );
-          if (!gluese_info_map_insert) { 
-            // The entry has been previously added (*)
-            // only the ad should be updated now                              
-            boost::tuples::get<0>(it->second) = seAd;                          
-          }                                                                   
+          if (is_gluese_info_dn(ldap_dn_tokens)) {
+            boost::tuples::get<0>(it->second) = seAd;
+          }
+          else if (is_gluecesebind_info_dn(ldap_dn_tokens)) {
+            boost::tuples::get<4>(it->second).push_back(seAd);
+          }
+
         }                                                                     
         else if (
           is_gluesa_info_dn(ldap_dn_tokens) ||
@@ -237,7 +244,8 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                   classad_shared_ptr(),
                   std::vector<classad::ExprTree*>(),
                   std::vector<classad::ExprTree*>(),
-                  std::vector<classad::ExprTree*>()
+                  std::vector<classad::ExprTree*>(),
+                  vector_classad_shared_ptr()
                 )
               )
             );
@@ -286,6 +294,29 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
               boost::tuples::get<3>(se_it->second)
             ));
         }
+        std::vector<ClassAdPtr>::const_iterator it(
+          boost::tuples::get<4>(se_it->second).begin()
+        );
+        std::vector<ClassAdPtr>::const_iterator const e(
+          boost::tuples::get<4>(se_it->second).end()
+        );
+        std::vector<classad::ExprTree*> exprs;
+
+        for( ; it != e; ++it ) {
+          
+          classad::ClassAd* ad = static_cast<classad::ClassAd*>(it->get()->Copy());
+          ad->Insert("name", classad::AttributeReference::MakeAttributeReference(
+           0, "GlueCESEBindSEUniqueID"
+          ));
+          ad->Insert("mount", classad::AttributeReference::MakeAttributeReference(
+           0,"GlueCESEBindCEAccesspoint"
+          ));
+          exprs.push_back(ad);
+        }
+        boost::tuples::get<0>(se_it->second)->Insert(
+          "CloseComputingElements", classad::ExprList::MakeExprList(exprs)
+        );
+
         gluese_info_container[se_it->first] =
           boost::tuples::get<0>(se_it->second);
       }
