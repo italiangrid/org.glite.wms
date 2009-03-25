@@ -246,7 +246,7 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 		job_id_struct->id = jobRegister_response.jobIdStruct->id;
 		job_id_struct->name = jobRegister_response.jobIdStruct->name;
-		if (job_id_struct->path) {
+		if (jobRegister_response.jobIdStruct->path) {
 			job_id_struct->path = jobRegister_response.jobIdStruct->path;
 		} else {
 			job_id_struct->path = NULL;
