@@ -318,16 +318,6 @@ The job logging information are stored permanently by the LB service and can be 
 ###glite-wms-job-logging-info###
 
 
-###glite-wms-job-attach###
-<<<SYNOPSIS>>>
-[options] <jobId>
-<<<SYNOPSIS>>>
-<<<DESCRIPTION>>>
-This commands starts a listener process on the UI machine (grid_console_shadow) that allows attaching to the standard streams of a previously submitted interactive job and displays them on a dedicated window. As the command opens a X window, the user should make sure the DISPLAY environment variable is correctly set and if she/he is connected to the UI node from remote machine (e.g. with ssh) enable secure X11 tunneling
-<<<DESCRIPTION>>>
-###glite-wms-job-attach###
-
-
 ###COMMON###
 
 <<<AUTHORS>>>

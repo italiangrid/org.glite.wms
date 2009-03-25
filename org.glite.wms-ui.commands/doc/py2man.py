@@ -118,7 +118,6 @@ commands2options={
 "glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename",\
    "all", "perusal-dir", "proto", "perusal-output", "nodisplay"],\
 "glite-wms-job-info":["info-input","info-delegationid","proxy","jdl","jdl-original","endpoint","info-output"],\
-"glite-wms-job-attach":["input_python","nolisten_python", "nogui_python","port_python"], \
 "glite-wms-job-logging-info":["input_python","output_python","verbosity_python","from_python","to_python",\
 "user-tag_python","event_python", "excludeL_python"], \
 "glite-wms-job-status":["input_python","output_python","all_python","verbosity_python","from_python","to_python",\
