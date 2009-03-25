@@ -35,11 +35,6 @@ libglite_wmsui_commands_jobinfo_la_SOURCES = \
 	lbapi.cpp \
 	job.cpp
 
-#libglite_wmsui_commands_jobattach_la_SOURCES = \
-#	jobattach.cpp \
-#	lbapi.cpp \
-#	job.cpp
-
 libglite_wmsui_commands_jobsubmit_la_SOURCES = \
 	jobsubmit.cpp \
 	lbapi.cpp \

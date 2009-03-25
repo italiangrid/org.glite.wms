@@ -107,7 +107,6 @@ class Options
 			JOBLOGINFO,
 			JOBMATCH,
 			JOBOUTPUT,
-			JOBATTACH,
             JOBDELEGATION,
 			JOBINFO,
 			JOBPERUSAL

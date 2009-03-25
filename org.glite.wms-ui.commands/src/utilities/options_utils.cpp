@@ -305,22 +305,6 @@ const struct option Options::outputLongOpts[] = {
 };
 
 /*
-*	Long options for  job-attach
-*/
-const struct option Options::attachLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::UIVERSION	},
-	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
-	{	Options::LONG_PORT,              	required_argument,		0,		Options::SHORT_P},
-	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
-	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
-	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
-	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
-	{ 	Options::LONG_DEBUG,              no_argument,			0,		Options::DBG},
-	{	Options::LONG_LOGFILE,             required_argument,		0,		Options::LOGFILE},
-	{0, 0, 0, 0}
-};
-/*
 *	Long options for proxy-delegation
 */
 const struct option Options::delegationLongOpts[] = {
@@ -765,31 +749,6 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	}
 };
 /*
-*	Prints the help usage message for the job-attach
-*	@param exename the name of the executable
-*	@param long_usage if the value is true it prints the long help msg
-*/
-void Options::attach_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
-	cerr << "Usage: " << exename <<   " [options]   <job Id>\n\n";
-	cerr << "options:\n" ;
-	cerr << "\t" << USG_HELP << "\n";
-	cerr << "\t" << USG_VERSION << "\n";
-	cerr << "\t" << USG_PORT << "\n";
-	cerr << "\t" << USG_NOLISTEN << "\n";
-	cerr << "\t" << USG_CONFIG << "\n";
- 	cerr << "\t" << USG_VO << "\n";
-	cerr << "\t" << USG_INPUT << "\n";
-	cerr << "\t" << USG_NOINT << "\n";
-	cerr << "\t" << USG_DEBUG << "\n";
-	cerr << "\t" << USG_LOGFILE << "\n\n";
-	cerr << "Please report any bug at:\n" ;
-	cerr << "\t" << HELP_EMAIL << "\n";
-	if (long_usg){
-		cerr  << exename << " full help\n\n" ;
-	}
-};
-/*
 *	Default constructor
 *	@param command command to be handled
 */
@@ -941,18 +900,6 @@ Options::Options (const WMPCommands &command){
 			// long options
 			longOpts = outputLongOpts ;
 			numOpts = (sizeof(outputLongOpts)/sizeof(option)) -1;
-			break;
-		} ;
-		case(JOBATTACH) :{
-			// short options
-			asprintf (&shortOpts,
-				"%c%c%c%c%c%c" ,
-				Options::SHORT_P, short_required_arg,
-				Options::SHORT_INPUT, short_required_arg,
-				Options::SHORT_CONFIG, short_required_arg);
-			// long options
-			longOpts = attachLongOpts ;
-			numOpts = (sizeof(attachLongOpts)/sizeof(option)) -1;
 			break;
 		} ;
                 case (JOBDELEGATION) :{
@@ -1652,10 +1599,6 @@ void Options::printUsage(const char* exename) {
                         lsmatch_usage(exename);
                         break;
                 } ;
-                case (JOBATTACH) :{
-                        attach_usage(exename);
-                        break;
-                } ;
                 case (JOBDELEGATION) :{
                         delegation_usage(exename);
                         break;
@@ -1753,11 +1696,6 @@ void Options::readOptions(const int &argc, const char **argv){
 						"readOptions", DEFAULT_ERR_CODE,
 						"Arguments Error"  ,
 						"Last argument of the command must be a JDL file" );
-			} else if ( cmdType == JOBATTACH ){
-				throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Arguments Error" ,
-							"Last argument of the command must be a JobId");
 			} else if ( cmdType == JOBSTATUS  ||
 				cmdType == JOBLOGINFO ||
 				cmdType == JOBCANCEL ||
@@ -1890,8 +1828,7 @@ void Options::readOptions(const int &argc, const char **argv){
 			// =========================================================
 			// JobPerusal /JobAttach : need only one jobid as last argument
 			// ========================================================
-			 if ( cmdType == JOBPERUSAL ||
-			 	cmdType == JOBATTACH ) {
+			 if ( cmdType == JOBPERUSAL ) {
 				if (m_input.empty()){
 					// all the options have been processed by getopt (JobId file is missing)
 					if (m_input.empty() && optind == argc){
@@ -2029,10 +1966,6 @@ std::string Options::getDefaultApplicationName() {
 			name = "glite-wms-job-list-match";
                         break;
                 } ;
-                case ( JOBATTACH) :{
-			name = "glite-wms-job-attach";
-                        break;
-                } ;
                 case ( JOBDELEGATION) :{
 			name = "glite-wms-job-delegate-proxy";
                         break;
@@ -2078,7 +2011,7 @@ const int Options::checkCommonShortOpts (const int &opt ) {
 			break;
 		}
 		case (SHORT_P) : {
-			if (cmdType==JOBSUBMIT || cmdType==JOBATTACH) {
+			if (cmdType==JOBSUBMIT ) {
 				r = Options::PORT;
 			} else if (cmdType==JOBINFO) {
 				r = Options::PROXY;

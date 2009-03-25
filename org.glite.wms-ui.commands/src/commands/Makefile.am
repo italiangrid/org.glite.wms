@@ -16,7 +16,6 @@
 
 
 
-WMPROXY_ATTACH = $(top_builddir)/src/services/libglite_wmsui_commands_jobattach.la
 WMPROXY_PERUSAL= $(top_builddir)/src/services/libglite_wmsui_commands_jobperusal.la
 WMPROXY_CANCEL = $(top_builddir)/src/services/libglite_wmsui_commands_jobcancel.la
 WMPROXY_DELEGATE = $(top_builddir)/src/services/libglite_wmsui_commands_delegateproxy.la

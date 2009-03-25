@@ -7,12 +7,10 @@
 ## *********************************************************************
 
 EXTRA_DIST = \
-	glite-wms-job-attach \
         glite-wms-job-logging-info \
         glite-wms-job-status
 
 bin_SCRIPTS = \
-	glite-wms-job-attach \
 	glite-wms-job-logging-info \
 	glite-wms-job-status 
 
