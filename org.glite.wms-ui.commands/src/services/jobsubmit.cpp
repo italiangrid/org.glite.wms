@@ -1472,11 +1472,9 @@ std::string JobSubmit::getJobPathFromDestURI(const std::string& jobid, const std
 			vector<string>::iterator const end2 = (it1->second).end() ;
                         for (; it2 != end2  ; it2++) {
                                 // Looks for the destURi for file transfer
-                                if ( it2->substr (0, (protocol.size())) ==  protocol){
-					jobPath = new string(*it2);
-					logInfo->print(WMS_DEBUG,  "JobId : " + jobid, " - JobPath : " + *jobPath, false);
-					break;
-				}
+				jobPath = new string(*it2);
+				logInfo->print(WMS_DEBUG,  "JobId : " + jobid, " - JobPath : " + *jobPath, false);
+				break;
 			}
 		}
 	}
@@ -1576,11 +1574,17 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 				jobPath = new string(*(jobIds.jobPath));
 
 			} else {
+				string proto ;
 				logInfo->print(WMS_DEBUG,
 					"JobPath: missing information in the struct returned by the jobRegister/jobSubmit service;",
 					"Research based on the DestionationURI with protocol: "+ Options::JOBPATH_URI_PROTO, false);
 				// jobPath info from BulkDestURI
-				jobPath = new string(this->getJobPathFromDestURI(this->getJobId( ), string(Options::JOBPATH_URI_PROTO)));
+				if (m_fileProto.empty()) {
+					proto = Options::TRANSFER_FILES_GUC_PROTO;
+				} else {
+					proto = m_fileProto;
+				}
+				jobPath = new string(this->getJobPathFromDestURI(this->getJobId( ), proto));
 			}
 		} catch (WmsClientException &exc) {
 			throw WmsClientException(__FILE__,__LINE__,
