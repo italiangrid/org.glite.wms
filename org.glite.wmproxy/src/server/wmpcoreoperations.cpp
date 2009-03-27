@@ -273,7 +273,6 @@ void checkSDJRequirements (JobAd *jad, classad::ExprTree * sdjrequirements){
         	// sdj requested by user within JDL
 	        jad->setAttributeExpr(JDL::REQUIREMENTS, appendExprTree (jadREQ," && ",true,sdjrequirements));
 	}else {
-		sdjrequirements=notExprTree(sdjrequirements);
 	        jad->setAttributeExpr(JDL::REQUIREMENTS, appendExprTree (jadREQ," && ",false,sdjrequirements)); 	 
 	} 	 
 	// release memory from old REQ expression 	 
@@ -683,14 +682,6 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri,
 	edglog(debug)<<"Setting attribute JDL::CERT_SUBJ"<<endl;
 	if (jad->hasAttribute(JDL::CERT_SUBJ)) {
 		jad->delAttribute(JDL::CERT_SUBJ);
-	}
-
-	// SDJ CHECKS/adjust Requirements attribute
-	classad::ExprTree * sdjrequirements= conf.getSDJRequirements();
-	if (sdjrequirements){ 	 
-	        checkSDJRequirements (jad, sdjrequirements); 	 
-	}else{ 	 
-	     	edglog(warning)<<"Unable to find SDJRequirements in configuration file"<< endl; 	 
 	}
 
         char * temp_user_dn = wmputilities::convertDNEMailAddress(wmputilities::getUserDN());
@@ -1528,7 +1519,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			}
 			// SDJ CHECKS/adjust Requirements attribute
 			classad::ExprTree * sdjrequirements= conf.getSDJRequirements(); 
-			if (sdjrequirements){
+			if (sdjrequirements){	
 				checkSDJRequirements (&jad, sdjrequirements);
 			}else{
 				// SDJ conf not found, nothing to change
