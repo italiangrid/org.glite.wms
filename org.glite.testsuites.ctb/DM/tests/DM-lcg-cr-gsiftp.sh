@@ -35,7 +35,8 @@ convert_to_full_surl SURL
 
 run_command lcg-gt $LCG_GT_OPTIONS $SURL gsiftp
 extract_gsiftp_turl TURL "$OUTPUT"
-extract_reqid REQID "$OUTPUT"
+#extract_reqid REQID "$OUTPUT"
+extract_reqid REQTOKEN "$OUTPUT"
 
 # ... V. Make a copy of this file and register it in the catalog
 
@@ -76,7 +77,7 @@ run_command lcg-del $LCG_DEL_OPTIONS_BDII -a $GUID2
 
 # ... VII. Set file status to Done
 
-run_command lcg-sd $LCG_SD_OPTIONS $SURL $REQID 0 0
+run_command lcg-sd $LCG_SD_OPTIONS $SURL -- $REQTOKEN 0
 
 # ... Remove file and exit with success
 
