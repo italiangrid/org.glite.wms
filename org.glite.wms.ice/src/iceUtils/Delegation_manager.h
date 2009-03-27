@@ -52,8 +52,12 @@ namespace ice {
 namespace util {
 
     class Delegation_manager {
+
     protected:
-        Delegation_manager( );
+
+
+      
+      Delegation_manager( );
 
         /**
          * Iterates over the delegation set. Removes all entries whose
@@ -71,6 +75,7 @@ namespace util {
         const size_t m_max_size; ///< Maximum size of the delegation cache
         const unsigned int m_operation_count_max;
 
+    public:
         /**
          * Entry of the delegation table
          */
@@ -83,6 +88,16 @@ namespace util {
 	    std::string m_user_dn;
 	    bool        m_renewable;
 	  std::string   m_myproxyserver;
+
+	  table_entry( ) : m_sha1_digest( "" ),
+			   m_cream_url( "" ),
+			   m_expiration_time( 0 ),
+			   m_delegation_duration( 0 ),
+			   m_delegation_id( "" ),
+			   m_user_dn( "" ),
+			   m_renewable( false ),
+			   m_myproxyserver( "" ) 
+	  { };
 
 	  table_entry( const std::string& sha1_digest, 
 		       const std::string& cream_url, 
@@ -103,6 +118,7 @@ namespace util {
 	  { };
         };
 	
+    protected:
         /**
          * Multi index container 
          */
