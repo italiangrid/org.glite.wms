@@ -107,31 +107,52 @@ namespace {
 
 	    } catch( ... ) {
 	    }
+	    try {
+	      string sqlcmd = 
+		"CREATE TABLE delegation ( "		     \
+		"digest text not null, " \
+		"creamurl text not null, "	     \
+		"exptime integer(4) not null, "	     \
+		"duration integer(4) not null,"	     \
+		"delegationid text not null,"        \
+		"userdn text not null,"              \
+		"renewable integer(1),"              \
+		"myproxyurl text not null"           \
+		")";
+	      do_query( db, sqlcmd );
+	      
+	    } catch( ... ) {
+	    }
             try {
 	      string sqlcmd = 
-		"create unique index gid_index on jobs (gridjobid)"; 
+		"CREATE UNIQUE INDEX gid_index ON jobs (gridjobid)"; 
 	      do_query( db, sqlcmd );
             } catch( ... ) {
             }
             try { 
 	      string sqlcmd = 
-		"create index cid_index on jobs (creamjobid)";
+		"CREATE INDEX cid_index ON jobs (creamjobid)";
 	      do_query( db, sqlcmd );
             } catch( ... ) {
             }
             try {
               string sqlcmd =
-                "create index ccid_index on jobs (complete_cream_jobid)";
+                "CREATE INDEX ccid_index ON jobs (complete_cream_jobid)";
               do_query( db, sqlcmd );
             } catch( ... ) {
             }
 	    try {
 	      string sqlcmd = 
-		"create unique index userdn_index on proxy (userdn)";
+		"CREATE UNIQUE INDEX userdn_index ON proxy (userdn)";
 	      do_query( db, sqlcmd );
 	    } catch( ... ) {
 	    }
-
+	    try {
+	      string sqlcmd = 
+		"CREATE UNIQUE INDEX delegkey ON delegation (digest,creamurl)";
+	      do_query( db, sqlcmd );
+	    } catch( ... ) {
+	    }
         };
     };
 

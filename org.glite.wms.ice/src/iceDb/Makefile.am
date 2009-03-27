@@ -3,21 +3,29 @@ lib_LTLIBRARIES = libglite_wms_iceDb.la
 libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				AbsDbOperation.cpp \
 				CheckGridJobID.cpp \
+				CheckDelegationByID.cpp \
 				GetAllUserDN.cpp \
 				GetAllProxyByDN.cpp \
 				GetAllUserDN_MyProxy.cpp \
-				GetDelegationInformation.cpp \
+				GetDelegation.cpp \
+				GetDelegationByID.cpp \
+				GetAllDelegation.cpp \
 				GetFields.cpp \
+				GetFieldsCount.cpp \
 				GetProxyInfoByDN.cpp \
 				GetAllProxyInfo.cpp \
 				CreateJob.cpp \
 				CreateProxyField.cpp \
+				CreateDelegation.cpp \
 				UpdateJobByGid.cpp \
 				UpdateProxyFieldsByDN.cpp \
+				UpdateDelegationTimesByID.cpp \
 				RemoveJobByGid.cpp \
 				RemoveJobByCid.cpp \
 				RemoveJobByProxy.cpp \
 				RemoveProxyByDN.cpp \
+				RemoveDelegationByID.cpp \
+				RemoveDelegation.cpp \
 				GetJobByCid.cpp \
 				GetAllJobs.cpp \
 				GetJobByGid.cpp \
