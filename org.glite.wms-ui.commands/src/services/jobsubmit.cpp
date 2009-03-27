@@ -2025,6 +2025,7 @@ void JobSubmit::submitRecoverStep(submitRecoveryStep step){
 	doneUrls.push_back(m_endPoint);
 	this->m_endPoint = "";
 	jobPerformStep(STEP_GET_ENDPOINT);
+	jobPerformStep(STEP_DELEGATE_PROXY);
 	jobPerformStep(STEP_CHECK_FILE_TP);
 	// PERFORM STEP_CHECK_US_QUOTA
 	submitPerformStep(STEP_CHECK_US_QUOTA);
