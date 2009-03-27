@@ -27,7 +27,12 @@
 #include "iceDb/RemoveJobByProxy.h"
 #include "iceDb/GetAllUserDN.h"
 #include "iceDb/GetAllUserDN_MyProxy.h"
+#include "iceDb/GetProxyInfoByDN.h"
+#include "iceDb/RemoveProxyByDN.h"
+#include "iceDb/UpdateProxyFieldsByDN.h"
 #include "iceDb/Transaction.h"
+#include "iceDb/CreateProxyField.h"
+#include "iceDb/GetAllProxyInfo.h"
 
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -42,8 +47,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <openssl/sha.h> // for using SHA1
+#include <map>
+#include <string>
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/tuple/tuple.hpp>
 
 extern int errno;
 
@@ -68,166 +76,176 @@ iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 //______________________________________________________________________________
 iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 {
-  m_log_dev = cream_api::util::creamApiLogger::instance()->getLogger();
+   m_log_dev = cream_api::util::creamApiLogger::instance()->getLogger();
 
-  CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		 << "DNProxyManager::CTOR() - "
-		 << "Populating DN -> Proxy cache by scannig the database..."
-		 );
+//   CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// 		 << "DNProxyManager::CTOR() - "
+// 		 << "Populating DN -> Proxy cache by scannig the database..."
+// 		 );
   
-  /**
-   * This lock acquisition should be safe because it is done at the ICE
-   * initialization, when no other thread acquire the cache's mutex
-   *
-   */
-  //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+//   /**
+//    * This lock acquisition should be safe because it is done at the ICE
+//    * initialization, when no other thread acquire the cache's mutex
+//    *
+//    */
+//   //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 
-  /**
-   * Retrieve all distinguished DNs
-   */
-  map<string, long long int > dnSet_myproxy; // DN -> (myproxy, how many jobs active for this DN having MYPROXYSERVER)
-  set<string> dnSet;
+//   /**
+//    * Retrieve all distinguished DNs
+//    */
+//   map<string, long long int > dnSet_myproxy; // DN -> (myproxy, how many jobs active for this DN having MYPROXYSERVER)
+//   set<string> dnSet;
 
-  {
-    db::GetAllUserDN get( false );
-    db::Transaction tnx;
-    tnx.execute( &get );
-    dnSet = get.get_dn();
-  }
+//   {
+//     db::GetAllUserDN get( false );
+//     db::Transaction tnx;
+//     tnx.execute( &get );
+//     dnSet = get.get_dn();
+//   }
 
-  {
-    db::GetAllUserDN_MyProxy get;
-    db::Transaction tnx;
-    tnx.execute( &get );
-    set<string> tmp = get.get(); 
-    for(set<string>::const_iterator it = tmp.begin();
-	it != tmp.end();
-	++it)
-      {
-	dnSet_myproxy[ *it ]++;
-      }
-  }
+//   {
+//     db::GetAllUserDN_MyProxy get;
+//     db::Transaction tnx;
+//     tnx.execute( &get );
+//     set<string> tmp = get.get(); 
+//     for(set<string>::const_iterator it = tmp.begin();
+// 	it != tmp.end();
+// 	++it)
+//       {
+// 	dnSet_myproxy[ *it ]++;
+//       }
+//   }
 
-  for( set< string >::const_iterator it = dnSet.begin();
-       it != dnSet.end();
-       ++it) {
+//   for( set< string >::const_iterator it = dnSet.begin();
+//        it != dnSet.end();
+//        ++it) {
     
-    db::GetAllProxyByDN get( *it );
-    db::Transaction tnx;
-    tnx.execute( &get );
+//     db::GetAllProxyByDN get( *it );
+//     db::Transaction tnx;
+//     tnx.execute( &get );
     
-    m_temp_dnproxy_Map[ *it ] = get.get_proxies();
-  }
+//     m_temp_dnproxy_Map[ *it ] = get.get_proxies();
+//   }
 
-  /**
-   * for each DN check if the better ICE's local proxy is there
-   */
-  string localProxy;
-  string prefix = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
+//   /**
+//    * for each DN check if the better ICE's local proxy is there
+//    */
+//   string localProxy;
+//   string prefix = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
   
-  for(set<string>::const_iterator it = dnSet.begin();
-      it != dnSet.end();
-      ++it)
-    {
-      if( it->empty() ) continue;
+//   for(set<string>::const_iterator it = dnSet.begin();
+//       it != dnSet.end();
+//       ++it)
+//     {
+//       if( it->empty() ) continue;
 
-      localProxy = prefix + compressed_string( *it ) + ".proxy";
-      boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
+//       localProxy = prefix + compressed_string( *it ) + ".proxy";
+//       boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
       
-      pair< string, time_t > job_with_better_proxy_from_sandboxDir = this->searchBetterProxy( *it );
+//       pair< string, time_t > job_with_better_proxy_from_sandboxDir = this->searchBetterProxy( *it );
       
-      if( !boost::filesystem::exists( thisPath ) ) {
-	CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		       << "DNProxyManager::CTOR() - "
-		       << "Proxy file ["
-		       << localProxy << "] not found for DN ["
-		       << *it 
-		       << "] in ICE's persistency dir. "
-		       << "Trying to find the most long-lived"
-		       << " one in the job cache for the current DN..."
-		       );
-	
-	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
-	  {
-	    continue;
-	  }
-	
-	try {
-	  
-	  this->copyProxy(job_with_better_proxy_from_sandboxDir.first, localProxy);
-	  
-	} catch(SourceProxyNotFoundException& ex) {
-	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			 << "DNProxyManager::CTOR() - Error copying proxy ["
-			 << job_with_better_proxy_from_sandboxDir.first << "] to ["
-			 << localProxy << "] for DN ["
-			 << *it << "]. Skipping"
-			 );
-	  continue;
-	}
-	
-	m_DNProxyMap[*it] = boost::make_tuple(localProxy, job_with_better_proxy_from_sandboxDir.second, 0 );
-	
-      } else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
-	
-	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
-	  {
-	    CREAM_SAFE_LOG(m_log_dev->warnStream() 
-			   << "DNProxyManager::CTOR() - Not found any proxy for DN ["
-			   << *it << "] in the sandBoxDirs. Skipping"
-			   );
-	    continue;
-	  }
-	
-// 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
-// 		       << "DNProxyManager::CTOR() - proxy=" << *it << " - first=" << job_with_better_proxy_from_sandboxDir.first << " - second=" << job_with_better_proxy_from_sandboxDir.second
+//       if( !boost::filesystem::exists( thisPath ) ) {
+// 	CREAM_SAFE_LOG(m_log_dev->infoStream() 
+// 		       << "DNProxyManager::CTOR() - "
+// 		       << "Proxy file ["
+// 		       << localProxy << "] not found for DN ["
+// 		       << *it 
+// 		       << "] in ICE's persistency dir. "
+// 		       << "Trying to find the most long-lived"
+// 		       << " one in the job cache for the current DN..."
 // 		       );
 	
-	this->setUserProxyIfLonger_Legacy(*it, 
-					  job_with_better_proxy_from_sandboxDir.first, 
-					  job_with_better_proxy_from_sandboxDir.second);
+// 	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
+// 	  {
+// 	    continue;
+// 	  }
 	
-      } // if( !boost::filesystem::exists( thisPath ) )
-    } // for
+// 	try {
+	  
+// 	  this->copyProxy(job_with_better_proxy_from_sandboxDir.first, localProxy);
+	  
+// 	} catch(SourceProxyNotFoundException& ex) {
+// 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 			 << "DNProxyManager::CTOR() - Error copying proxy ["
+// 			 << job_with_better_proxy_from_sandboxDir.first << "] to ["
+// 			 << localProxy << "] for DN ["
+// 			 << *it << "]. Skipping"
+// 			 );
+// 	  continue;
+// 	}
+	
+// 	//m_DNProxyMap[*it] = boost::make_tuple(localProxy, job_with_better_proxy_from_sandboxDir.second, 0 );
+	
+// 	{
+// 	  db::CreateProxyField creator( *it, localProxy, job_with_better_proxy_from_sandboxDir.second, 0 );
+// 	  db::Transaction tnx;
+// 	  tnx.execute( &creator );
+// 	}
+
+//       } else {// the local proxy could be there but older than that one owned by the job in the sandbox dir
+	
+// 	if( job_with_better_proxy_from_sandboxDir.first.empty() /* == cache->end()*/ )
+// 	  {
+// 	    CREAM_SAFE_LOG(m_log_dev->warnStream() 
+// 			   << "DNProxyManager::CTOR() - Not found any proxy for DN ["
+// 			   << *it << "] in the sandBoxDirs. Skipping"
+// 			   );
+// 	    continue;
+// 	  }
+	
+// // 	CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// // 		       << "DNProxyManager::CTOR() - proxy=" << *it << " - first=" << job_with_better_proxy_from_sandboxDir.first << " - second=" << job_with_better_proxy_from_sandboxDir.second
+// // 		       );
+	
+// 	this->setUserProxyIfLonger_Legacy(*it, 
+// 					  job_with_better_proxy_from_sandboxDir.first, 
+// 					  job_with_better_proxy_from_sandboxDir.second);
+	
+//       } // if( !boost::filesystem::exists( thisPath ) )
+//     } // for
   
 
-  /**
-     All "legacy" better proxy have been loaded (those ones related to DN that submitted jobs without MYPROXYSERVER.
-     Now let's proceed with loading of all "NEW" better proxies 
-  */
-  for(map<string, long long int>::const_iterator it = dnSet_myproxy.begin();
-      it != dnSet_myproxy.end();
-      ++it)
-    {
-      string localproxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
-      localproxy += compressed_string( it->first ) + "_NEW.proxy";
-      boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
+//   /**
+//      All "legacy" better proxy have been loaded (those ones related to DN that submitted jobs without MYPROXYSERVER.
+//      Now let's proceed with loading of all "NEW" better proxies 
+//   */
+//   for(map<string, long long int>::const_iterator it = dnSet_myproxy.begin();
+//       it != dnSet_myproxy.end();
+//       ++it)
+//     {
+//       string localproxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
+//       localproxy += compressed_string( it->first ) + "_NEW.proxy";
+//       boost::filesystem::path thisPath( localProxy, boost::filesystem::native );
       
-      if( boost::filesystem::exists( thisPath ) ) {
-	cream_api::soap_proxy::VOMSWrapper V( localProxy );
-	if( !V.IsValid( ) ) {
-	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			 << "DNProxyManager::CTOR() - "
-			 << "Cannot retrieve the Subject for the proxy ["
-			 << localProxy << "]. Error is: "
-			 << V.getErrorMessage() <<". Skipping..."
-			 );
-	  continue;
-	}
+//       if( boost::filesystem::exists( thisPath ) ) {
+// 	cream_api::soap_proxy::VOMSWrapper V( localProxy );
+// 	if( !V.IsValid( ) ) {
+// 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 			 << "DNProxyManager::CTOR() - "
+// 			 << "Cannot retrieve the Subject for the proxy ["
+// 			 << localProxy << "]. Error is: "
+// 			 << V.getErrorMessage() <<". Skipping..."
+// 			 );
+// 	  continue;
+// 	}
 	
-	if(V.getProxyTimeEnd()> time(0)) {
-	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
-			 << "DNProxyManager::CTOR() - "
-			 << "Inserting tuple (" << localProxy<<", "
-			 << V.getProxyTimeEnd() << ", " << it->second<< ") into m_DNProxyMap for DN ["
-			 << it->first << "]..."
-			 );
+// 	if(V.getProxyTimeEnd()> time(0)) {
+// 	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// 			 << "DNProxyManager::CTOR() - "
+// 			 << "Inserting tuple (" << localProxy<<", "
+// 			 << V.getProxyTimeEnd() << ", " << it->second<< ") into m_DNProxyMap for DN ["
+// 			 << it->first << "]..."
+// 			 );
 
-	  m_DNProxyMap[ it->first ] = boost::make_tuple( localProxy, V.getProxyTimeEnd(), it->second);
-
-	}
-      }
-    }
+// 	  //m_DNProxyMap[ it->first ] = boost::make_tuple( localProxy, V.getProxyTimeEnd(), it->second);
+// 	  {
+// 	    db::CreateProxyField creator( it->first, localProxy, V.getProxyTimeEnd(), it->second );
+// 	    db::Transaction tnx;
+// 	    tnx.execute( &creator );
+// 	  }
+// 	}
+//       }
+//     }
 
 }
 
@@ -249,9 +267,20 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 		   << myproxy_name << "] in the m_DNProxyMap..."
 		   );
   
-  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( mapKey );
+  //map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( mapKey );
+
+  bool found = false;
+  boost::tuple<string, time_t, long long int> proxy_info;
+  {
+    db::GetProxyInfoByDN getter( mapKey );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    found = getter.found();
+    if(found)
+      proxy_info = getter.get_info();
+  }
   
-  if( it != m_DNProxyMap.end() ) {
+  if( /*it != m_DNProxyMap.end()*/ found ) {
 
     CREAM_SAFE_LOG(
 		   m_log_dev->debugStream()
@@ -261,9 +290,19 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 		   << myproxy_name <<"]"
 		   );
 
-    m_DNProxyMap[ mapKey ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() - 1);
+    //    m_DNProxyMap[ mapKey ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() - 1);
+    {
+      list<pair<string, string> > params;
+      ostringstream tmp;
+      tmp << (proxy_info.get<2>() - 1);
+      params.push_back( make_pair("counter", tmp.str()) );
+      db::UpdateProxyFieldsByDN updater( mapKey, params );
+      db::Transaction tnx;
+      tnx.execute( &updater );
+    }
+    
 
-    if(it->second.get<2>() == 1) {
+    if( /*it->second.get<2>() == 1 */ proxy_info.get<2>() ) {
 
       CREAM_SAFE_LOG(
 		   m_log_dev->debugStream()
@@ -271,7 +310,8 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 		   << "Proxy Counter is ZERO for DN ["
 		   << userDN << "] MyProxy server ["
 		   << myproxy_name<<"]. Unregistering it and removing symlink ["
-		   << m_DNProxyMap[ mapKey ].get<0>()
+		   //		   << m_DNProxyMap[ mapKey ].get<0>()
+		   << proxy_info.get<0>()
 		   << "] from persist_dir..."
 		   );
       /**
@@ -291,19 +331,26 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 
       
 
-      if(::unlink( m_DNProxyMap[ mapKey ].get<0>().c_str() ) < 0)
+      //if(::unlink( m_DNProxyMap[ mapKey ].get<0>().c_str() ) < 0)
+      if(::unlink( proxy_info.get<0>().c_str()) < 0 )
 	{
 	  int saveerr = errno;
 	  CREAM_SAFE_LOG(
 			 m_log_dev->errorStream()
 			 << "DNProxyManager::decrementUserProxyCounter() - "
 			 << "Unlink of file ["
-			 << m_DNProxyMap[ mapKey ].get<0>() << "] is failed. Error is: "
+			 //			 << m_DNProxyMap[ mapKey ].get<0>() << "] is failed. Error is: "
+			 << proxy_info.get<0>() << "] is failed. Error is: "
 			 << strerror(saveerr);
 			 );
 	}
       
-      m_DNProxyMap.erase( mapKey );
+      //m_DNProxyMap.erase( mapKey );
+      {
+	db::RemoveProxyByDN remover( mapKey );
+	db::Transaction tnx;
+	tnx.execute( &remover );
+      }
       return;
     
     }
@@ -323,15 +370,37 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
 
   string mapKey = this->composite( userDN, my_proxy_server );
 
-  map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( mapKey );
-  if( it != m_DNProxyMap.end() ) {
+  bool found = false;
+  boost::tuple<string, time_t, long long int> proxy_info;
+  {
+    db::GetProxyInfoByDN getter( mapKey );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    found = getter.found();
+    if(found)
+      proxy_info = getter.get_info();
+  }
+  
+  //map<string, boost::tuple<string, time_t, long long int> >::iterator it = m_DNProxyMap.find( mapKey );
+  if( /*it != m_DNProxyMap.end()*/ found ) {
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		   << "DNProxyManager::registerUserProxy() - Found a proxy for user DN ["
 		   << mapKey <<"]. Will not register it to MyProxyServer..."
 		   );
 
-    m_DNProxyMap[ mapKey ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() + 1);
+    //m_DNProxyMap[ mapKey ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() + 1);
+
+    {
+      list<pair<string, string> > params;
+      ostringstream tmp;
+      tmp << (proxy_info.get<2>() + 1);
+      params.push_back( make_pair("counter", tmp.str()) );
+      db::UpdateProxyFieldsByDN updater( mapKey, params );
+      db::Transaction tnx;
+      tnx.execute( &updater );
+    }
+
     return;
   }
 
@@ -404,13 +473,22 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
 
       return;
 
+    } else {
+      
+      /**
+	 Everything went ok. Now let's save the registered proxy !
+      */
+      //m_DNProxyMap[ mapKey ] = boost::make_tuple( proxylink, proxy_time_end, 1);
+      
+      {
+	//list<pair<string, string> > params;
+	//      params.push_back( make_pair("counter", proxy_info.get<2>() + 1) );
+	
+	db::CreateProxyField creator( mapKey, proxylink, proxy_time_end, 1 );
+	db::Transaction tnx;
+	tnx.execute( &creator );
+      }
     }
-
-    /**
-       Everything went ok. Now let's save the registered proxy !
-    */
-    m_DNProxyMap[ mapKey ] = boost::make_tuple( proxylink, proxy_time_end, 1);
-
   }
 }
 
@@ -468,17 +546,27 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 							   ) throw()
 { 
   boost::recursive_mutex::scoped_lock M( mutex );
+  
+  string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
+  
+  
+  bool found = false;
+  boost::tuple<string, time_t, long long int> proxy_info;
+  {
+    db::GetProxyInfoByDN getter( dn );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    found = getter.found();
+    if(found)
+      proxy_info = getter.get_info();
+  }
 
-    string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
-
-//    time_t exptime = timeleft+time(0);
+  if( !found /*m_DNProxyMap.find( dn ) == m_DNProxyMap.end()*/ ) {
     
-  if( m_DNProxyMap.find( dn ) == m_DNProxyMap.end() ) {
-
     try {
-
+      
       this->copyProxy( prx, localProxy );
-
+      
     } catch(SourceProxyNotFoundException& ex) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		     << "DNProxyManager::setUserProxyIfLonger_Legacy() - Error copying proxy ["
@@ -490,7 +578,6 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
       
     }
     
-
     CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
 		   << "DN ["
@@ -499,16 +586,25 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 		   << localProxy << "] - New Expiration Time is ["
 		   << time_t_to_string(exptime) << "]"
 		   );
-
-    m_DNProxyMap[ dn ] = boost::make_tuple( localProxy, exptime, 0);
-
+    
+    //m_DNProxyMap[ dn ] = boost::make_tuple( localProxy, exptime, 0);
+    {
+      //list<pair<string, string> > params;
+      //      params.push_back( make_pair("counter", proxy_info.get<2>() + 1) );
+      
+      db::CreateProxyField creator( dn, localProxy, exptime, 0 );
+      db::Transaction tnx;
+      tnx.execute( &creator );
+    }
+    
     return;
   }
-
+  
   time_t newT, oldT;
 
   newT = exptime;
-  oldT = m_DNProxyMap[ dn ].get<1>();
+  //oldT = m_DNProxyMap[ dn ].get<1>();
+  oldT = proxy_info.get<1>();
 
   if( !oldT ) { // couldn't get the proxy time for some reason
     try {
@@ -529,7 +625,15 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 		   << localProxy << "] - New Expiration Time is ["
 		   << time_t_to_string(exptime) << "]"
 		   );
-    m_DNProxyMap[ dn ] = boost::make_tuple(localProxy, exptime, 0);//make_pair(localProxy, exptime);
+    //m_DNProxyMap[ dn ] = boost::make_tuple(localProxy, exptime, 0);//make_pair(localProxy, exptime);
+    {
+      //list<pair<string, string> > params;
+      //      params.push_back( make_pair("counter", proxy_info.get<2>() + 1) );
+      
+      db::CreateProxyField creator( dn, localProxy, exptime, 0 );
+      db::Transaction tnx;
+      tnx.execute( &creator );
+    }
 
     return;
   }
@@ -563,8 +667,15 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 		   << time_t_to_string(newT) << "]"
 		   );
 
-    m_DNProxyMap[ dn ] = boost::make_tuple(localProxy, newT, 0);//make_pair(localProxy, newT);
-
+    //m_DNProxyMap[ dn ] = boost::make_tuple(localProxy, newT, 0);//make_pair(localProxy, newT);
+    {
+      //list<pair<string, string> > params;
+      //      params.push_back( make_pair("counter", proxy_info.get<2>() + 1) );
+      
+      db::CreateProxyField creator( dn, localProxy, exptime, 0 );
+      db::Transaction tnx;
+      tnx.execute( &creator );
+    }
   } 
 }
 
@@ -585,8 +696,6 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 
   ifstream input( source.c_str() );
   ofstream output( tmpTargetFilename.c_str() );
-
-  
 
   if(!input) {
     CREAM_SAFE_LOG(m_log_dev->fatalStream() 
@@ -641,80 +750,80 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 }
 
 //________________________________________________________________________
-pair<string, time_t>
-iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
-  throw() 
-{
+// pair<string, time_t>
+// iceUtil::DNProxyManager::searchBetterProxy( const string& dn )
+//   throw() 
+// {
   
-  /**
-     This is a private method. It is only invoked from the CTOR of this class
-     that already has taken the joCache's mutex
-  */
+//   /**
+//      This is a private method. It is only invoked from the CTOR of this class
+//      that already has taken the joCache's mutex
+//   */
 
-  time_t besttime = 0;
-  //iceUtil::jobCache::iterator bestProxy = iceUtil::jobCache::getInstance()->end();
-  string bestProxy = "";
+//   time_t besttime = 0;
+//   //iceUtil::jobCache::iterator bestProxy = iceUtil::jobCache::getInstance()->end();
+//   string bestProxy = "";
 
-  CREAM_SAFE_LOG(
-  	m_log_dev->debugStream() 
-		<< "DNProxyManager::searchBetterProxyForUser() - Searching better proxy for DN ["
-		<< dn << "]" 
-  );
+//   CREAM_SAFE_LOG(
+//   	m_log_dev->debugStream() 
+// 		<< "DNProxyManager::searchBetterProxyForUser() - Searching better proxy for DN ["
+// 		<< dn << "]" 
+//   );
 
-  set<string> proxies = m_temp_dnproxy_Map[ dn ];
-  if( proxies.empty() )
-    return make_pair( "", 0 );
+//   set<string> proxies = m_temp_dnproxy_Map[ dn ];
+//   if( proxies.empty() )
+//     return make_pair( "", 0 );
 
-  for( set<string>::const_iterator it = proxies.begin();
-       it != proxies.end();
-       ++it)
-    {
-      string jobCert = *it;
-      boost::filesystem::path thisPath( jobCert, boost::filesystem::native );
+//   for( set<string>::const_iterator it = proxies.begin();
+//        it != proxies.end();
+//        ++it)
+//     {
+//       string jobCert = *it;
+//       boost::filesystem::path thisPath( jobCert, boost::filesystem::native );
 
 
-      // check if sandboxdir proxy is there; if not remove the job from cache
-      if( !boost::filesystem::exists( thisPath ) )
-	{
-	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
-			 << "DNProxyManager::searchBetterProxyForUser() - "
-			 << "Cannot find SandboxDir's proxy file ["
-			 << jobCert << "]. Removing all jobs submitted with this "
-			 << "certificate from ICE's database... "
-			 );
+//       // check if sandboxdir proxy is there; if not remove the job from cache
+//       if( !boost::filesystem::exists( thisPath ) )
+// 	{
+// 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 			 << "DNProxyManager::searchBetterProxyForUser() - "
+// 			 << "Cannot find SandboxDir's proxy file ["
+// 			 << jobCert << "]. Removing all jobs submitted with this "
+// 			 << "certificate from ICE's database... "
+// 			 );
 	  
-	  db::RemoveJobByProxy remover( jobCert );
-	  db::Transaction tnx;
-	  tnx.execute( &remover );
-	  continue;
-	}
+// 	  db::RemoveJobByProxy remover( jobCert );
+// 	  db::Transaction tnx;
+// 	  tnx.execute( &remover );
+// 	  continue;
+// 	}
 
-      cream_api::soap_proxy::VOMSWrapper V( jobCert );
-      if( !V.IsValid( ) ) {
-	CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		       << "DNProxyManager::searchBetterProxyForUser() - "
-		       << "Cannot extract proxy time left from proxy file ["
-		       << jobCert << "]: "
-		       << V.getErrorMessage() << ". Skipping"
-		       );
-	continue;
-      }
+//       cream_api::soap_proxy::VOMSWrapper V( jobCert );
+//       if( !V.IsValid( ) ) {
+// 	CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		       << "DNProxyManager::searchBetterProxyForUser() - "
+// 		       << "Cannot extract proxy time left from proxy file ["
+// 		       << jobCert << "]: "
+// 		       << V.getErrorMessage() << ". Skipping"
+// 		       );
+// 	continue;
+//       }
 	
-      time_t exptime = V.getProxyTimeEnd();// - time(NULL);
+//       time_t exptime = V.getProxyTimeEnd();// - time(NULL);
 
-      if (exptime > besttime)
-	{
-	  bestProxy = *it;
-	  besttime = exptime;
-	}
+//       if (exptime > besttime)
+// 	{
+// 	  bestProxy = *it;
+// 	  besttime = exptime;
+// 	}
 
-      continue;
+//       continue;
       
-    }
+//     }
 
-  return make_pair(bestProxy, besttime);
+//   return make_pair(bestProxy, besttime);
 
-}
+// }
 
 //________________________________________________________________________
 void iceUtil::DNProxyManager::removeBetterProxy( const string& userDN, const string& myproxyname )
@@ -722,7 +831,12 @@ void iceUtil::DNProxyManager::removeBetterProxy( const string& userDN, const str
 {
   boost::recursive_mutex::scoped_lock M( mutex );
 
-  m_DNProxyMap.erase( this->composite(userDN, myproxyname) );
+  //m_DNProxyMap.erase( this->composite(userDN, myproxyname) );
+  {
+    db::RemoveProxyByDN remover( this->composite(userDN, myproxyname) );
+    db::Transaction tnx;
+    tnx.execute( &remover );
+  }
 }
 
 //________________________________________________________________________
@@ -734,61 +848,89 @@ void iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
   boost::recursive_mutex::scoped_lock M( mutex );
   string mapKey = this->composite( userDN, myproxyname );
 
-  m_DNProxyMap.erase( mapKey );
-  m_DNProxyMap[ mapKey ] = newEntry;
+  //  m_DNProxyMap.erase( mapKey );
+  //  m_DNProxyMap[ mapKey ] = newEntry;
+
+  {
+    list<pair<string, string> > params;
+    ostringstream tmp1, tmp2;
+    tmp1 << newEntry.get<1>();
+    tmp2 << newEntry.get<2>();
+    params.push_back( make_pair("proxyfile", newEntry.get<0>() ));
+    params.push_back( make_pair("exptime", tmp1.str() ));
+    params.push_back( make_pair("counter", tmp2.str() ));
+    db::UpdateProxyFieldsByDN updater( mapKey, params );
+    db::Transaction tnx;
+    tnx.execute( &updater );
+  }
 }
 
 //________________________________________________________________________
 boost::tuple<string, time_t, long long int> 
 iceUtil::DNProxyManager::getAnyBetterProxyByDN( const string& dn )
 const throw() 
-	  {
-	    
-	    boost::recursive_mutex::scoped_lock M( mutex );
-	    
-	    map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.begin();
-	    
-	    //printf("*** DEBUG DNProxyManager: Searching a betterproxy for DN [%s]...\n", dn.c_str());
+{
+  
+  boost::recursive_mutex::scoped_lock M( mutex );
+  
+  //  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.begin();
 
-	    while( it != m_DNProxyMap.end() ) {
-	      
-	      /**
-		 does a regex match. The DN must be present in the key (that can also contains the myproxy server name)
-	      */
-	      
+  map<string, boost::tuple<string, time_t, long long int> > all_proxy_info;
+  {
+    db::GetAllProxyInfo getter;
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    all_proxy_info = getter.get_info();
+  }
 
+  //printf("*** DEBUG DNProxyManager: Searching a betterproxy for DN [%s]...\n", dn.c_str());
 
-	      if( strstr( it->first.c_str(),dn.c_str() ) == 0 ) {
-	       /**
-		  'dn' is not found in the it->first string
-	       */
-	      // printf("*** DEBUG DNProxyManager: [%s] doesn't match...\n", it->first.c_str() );
-	       ++it;
-	       continue;
-	     }
+  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = all_proxy_info.begin();
+  
 
-
-	      /**
-		 The better proxy is used for operation about job management like: poll, purge, cancel... all but proxy renewal.
-		 Then, it is not important that the better proxy is the most long-living one, but a valid one that is valid at least
-		 for 2 times the SOAP_TIMEOUT.
-	      */
-	     if( it->second.get<1>() > (time(0)+(2*iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout())) ) 
-	       {
-		// printf("*** DEBUG DNProxyManager: [%s] MATCH and has a profer lifetime!...\n", it->first.c_str() );
-		return (it->second);
-	       }
-	      
-	     //printf("*** DEBUG DNProxyManager: [%s] MATCH but has NOT a profer lifetime [%s]!...\n", it->first.c_str(), time_t_to_string( it->second.get<1>() ).c_str() );
-	     //	     cout << "*** DEBUG DNProxyManager: ["<<it->first.c_str()<<"] MATCH but has NOT a profer lifetime [" << it->second.get<1>() << "]" <<endl;
-
-	      ++it;
-	    }
-	    
-	    //printf("*** DEBUG DNProxyManager: No PROXY suitable for DN [%s]...\n", dn.c_str() );
-	    return boost::make_tuple("", 0, 0);
-	    
-	  }
+  while( it != all_proxy_info.end() /*m_DNProxyMap.end()*/ ) {
+    
+    /**
+       does a regex match. The DN must be present in the key (that can also contains the myproxy server name)
+    */
+    
+    // 	      printf("*** DEBUG DNProxyManager: dn=[%s] it->first=[%s]...\n", 
+    // 		     dn.c_str(), it->first.c_str());
+    
+    if( strstr( it->first.c_str(),dn.c_str() ) == 0 ) {
+      /**
+	 'dn' is not found in the it->first string
+      */
+      // printf("*** DEBUG DNProxyManager: [%s] doesn't match...\n", it->first.c_str() );
+      ++it;
+      continue;
+    }
+    
+    
+    /**
+       The better proxy is used for operation about job management like: poll, purge, cancel... all but proxy renewal.
+       Then, it is not important that the better proxy is the most long-living one, but a valid one that is valid at least
+       for 2 times the SOAP_TIMEOUT.
+    */
+    if( it->second.get<1>() > (time(0)+(2*iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout())) ) 
+      {
+	// 		 printf("*** DEBUG DNProxyManager: [%s] MATCH and has a proper lifetime!...\n", 
+	// 			it->first.c_str() );
+	return (it->second);
+      }
+    
+    // 	     printf("*** DEBUG DNProxyManager: [%s] MATCH but has NOT a profer lifetime [%s]!...\n", 
+    // 		    it->first.c_str(), time_t_to_string( it->second.get<1>() ).c_str() );
+    // 	     cout << "*** DEBUG DNProxyManager: ["<<it->first.c_str()
+    // 		  <<"] MATCH but has NOT a profer lifetime [" << it->second.get<1>() << "]" <<endl;
+    
+    ++it;
+  }
+  
+  //	    printf("*** DEBUG DNProxyManager: No PROXY suitable for DN [%s]...\n", dn.c_str() );
+  return boost::make_tuple("", 0, 0);
+  
+}
 
 //________________________________________________________________________
 boost::tuple<string, time_t, long long int> 
@@ -799,12 +941,24 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
   
   boost::recursive_mutex::scoped_lock M( mutex );
   
-  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( this->composite(dn, myproxyname ) );
+  //  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( this->composite(dn, myproxyname ) );
   
-  if( it == m_DNProxyMap.end() ) {
+  boost::tuple< string, time_t, long long> proxy_info;
+  bool found;
+  {
+    db::GetProxyInfoByDN getter( this->composite(dn, myproxyname ) );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    found = getter.found();
+    if( found )
+      proxy_info = getter.get_info();
+  }
+
+  if( /*it == m_DNProxyMap.end()*/ !found ) {
     return boost::make_tuple("", 0, 0);
   } else {
-    return boost::make_tuple(it->second.get<0>(), it->second.get<1>(), it->second.get<2>());
+    //return boost::make_tuple(it->second.get<0>(), it->second.get<1>(), it->second.get<2>());
+    return proxy_info;
   }
   
 }
