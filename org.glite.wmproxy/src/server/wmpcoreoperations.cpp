@@ -378,7 +378,7 @@ jobregister (jobRegisterResponse &jobRegister_response, const string &jdl,
 
 void
 jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
-	const string &delegation_id)
+	string &delegation_id)
 {
 	GLITE_STACK_TRY("jobRegister()");
 	edglog_fn("wmpcoreoperations::jobRegister");
@@ -388,14 +388,18 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	// Checking delegation id
 	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
 
+        if (delegation_id == "") {
 #ifndef GRST_VERSION	
-	if (delegation_id == "") {
 		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
-	}
+#else
+                delegation_id=string(GRSTx509MakeDelegationID());
+                edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
 #endif
+        }
+
 	edglog(debug)<<"JDL to Register:\n"<<jdl<<endl;
 
 	// complicate checkSecurity: TODO
@@ -2027,7 +2031,7 @@ soap_serve_submitJSDL(struct soap *soap, struct ns1__jobSubmitJSDLResponse respo
 void
 jobSubmit(struct ns1__jobSubmitResponse &response,
 	jobSubmitResponse &jobSubmit_response, const string &jdl,
-	const string &delegation_id, struct soap *soap)
+	string &delegation_id, struct soap *soap)
 {
 	GLITE_STACK_TRY("jobSubmit()");
 	edglog_fn("wmpcoreoperations::jobSubmit");
@@ -2036,15 +2040,18 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	
 	// Checking delegation id
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
-	
+
+        if (delegation_id == "") {
 #ifndef GRST_VERSION
-	if (delegation_id == "") {
 		edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
 			"Delegation id not valid");
-	}
+#else
+                delegation_id=string(GRSTx509MakeDelegationID());
+                edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
 #endif
+        }
 
 	edglog(debug)<<"JDL to Submit:\n"<<jdl<<endl;
 
@@ -2146,7 +2153,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 void
 jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
         jobSubmitResponse &jobSubmit_response, const string &jdl,
-        const string &delegation_id, struct soap *soap)
+        string &delegation_id, struct soap *soap)
 {
         GLITE_STACK_TRY("jobSubmit()");
         edglog_fn("wmpcoreoperations::jobSubmit");
@@ -2156,14 +2163,18 @@ jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
         // Checking delegation id
         edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
 
+        if (delegation_id == "") { 
 #ifndef GRST_VERSION
-        if (delegation_id == "") {
                 edglog(error)<<"Empty delegation id not allowed with delegation 1"<<endl;
                 throw ProxyOperationException(__FILE__, __LINE__,
                         "jobRegister()", wmputilities::WMS_INVALID_ARGUMENT,
                         "Delegation id not valid");
-        }
+#else
+                delegation_id=string(GRSTx509MakeDelegationID());
+                edglog(debug)<<"Automatically generated Delegation ID: "<<delegation_id<<endl;
 #endif
+        }
+
 
         edglog(debug)<<"JSDL to Submit:\n"<<jdl<<endl;
 

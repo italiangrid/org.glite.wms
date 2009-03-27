@@ -39,14 +39,14 @@ void jobListMatch(jobListMatchResponse &jobListMatch_response,
 
 void jobSubmit(struct ns1__jobSubmitResponse &response, 
 	jobSubmitResponse &jobSubmit_response, const std::string &jdl,
-	const std::string &delegation_id, struct soap *soap);
+	std::string &delegation_id, struct soap *soap);
 
 void jobSubmitJSDL(struct ns1__jobSubmitJSDLResponse &response,
         jobSubmitResponse &jobSubmit_response, const std::string &jdl,
-        const std::string &delegation_id, struct soap *soap);
+        std::string &delegation_id, struct soap *soap);
 	
 void jobRegister(jobRegisterResponse &jobRegister_response,
-	const std::string &jdl, const std::string &delegation_id);
+	const std::string &jdl, std::string &delegation_id);
 
 void jobStart(jobStartResponse &jobStart_response, const std::string &job_id,
 	struct soap *soap);
