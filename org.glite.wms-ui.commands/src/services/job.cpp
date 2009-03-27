@@ -318,9 +318,20 @@ void Job::setDelegationId ( ){
 		autodgOpt = false;
 	} else if (autodg){
 		// automatic generation of the delegationId string ONLY FOR WMPROXY 3.0 - 3.1
-		id = "";
-		logInfo->print  (WMS_DEBUG, "Delegation ID automatically generated");
-		m_dgOpt = "";
+		if (checkWMProxyRelease(3,0,0)) {
+			id = "";
+			logInfo->print  (WMS_DEBUG, "Delegation ID automatically generated");
+			m_dgOpt = "";
+		} else {
+			id = Utils::getUniqueString();
+                	if (id.empty()){
+                        	throw WmsClientException(__FILE__,__LINE__,
+                                	"getDelegationId",DEFAULT_ERR_CODE,
+                                	"Unexpected Severe Error",
+                                	"Unknown problem occurred during the auto-generation of the delegationId string");
+                		}
+			m_dgOpt = id;
+		}
 		autodgOpt = true;
 	} else if ( !confid.empty()) {
 		// delegation-id string by configuration file
