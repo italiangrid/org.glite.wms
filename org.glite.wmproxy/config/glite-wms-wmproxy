@@ -59,6 +59,11 @@ case "$1" in
         fi
 	;;
   start|stop|restart)
+	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15
+	sleep 5
+	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -ALRM
+	sleep 5
+	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -9 
 	#$apachectl -k $@ -f $config
 	$httpdpath -k $@ -f $config
 	RETVAL=$?
