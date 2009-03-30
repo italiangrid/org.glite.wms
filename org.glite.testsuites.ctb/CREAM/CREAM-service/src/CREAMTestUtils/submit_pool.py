@@ -77,11 +77,11 @@ class SubmitterThread(threading.Thread):
                             submCmd = self.submitFStr
                                             
                         SubmitterThread.logger.debug("Submit  cmd: " + submCmd)
+                        tmpErr = 'Internal error:'
                         try:
                             if self.pool.proxyMan<>None:
                                 self.pool.proxyMan.beginLock()
 
-                            tmpErr = ''
                             submitProc = popen2.Popen4(submCmd)
                             for line in submitProc.fromchild:
                                 if line[0:8]=='https://':
@@ -93,11 +93,11 @@ class SubmitterThread(threading.Thread):
                                     notified = True
                                     break
                                 tmpErr = tmpErr + string.strip(line) + ";"
-                            if not notified:
-                                self.pool.notifySubmitResult(failure=tmpErr)
                             submitProc.fromchild.close()
                             
                         finally:
+                            if not notified:
+                                self.pool.notifySubmitResult(failure=tmpErr)
                             if self.pool.proxyMan<>None:
                                 self.pool.proxyMan.endLock()
 
@@ -195,11 +195,7 @@ class JobSubmitterPool:
     def __call__(self, numberOfSubmit):
         self.submit(numberOfSubmit)
             
-    def notifySubmitResult(self, jobId='', failure=None, timestamp=0):
-        self.slaveCond.acquire()
-        self.processed += 1
-        self.slaveCond.release()
-        
+    def notifySubmitResult(self, jobId='', failure=None, timestamp=0):        
         self.masterCond.acquire()
         if jobId<>'':
             if self.jobTable<>None:
@@ -208,6 +204,7 @@ class JobSubmitterPool:
         if failure<>None:
             JobSubmitterPool.logger.error(failure)
             self.failures += 1
+        self.processed += 1
         self.masterCond.notify()
         self.masterCond.release()
 
