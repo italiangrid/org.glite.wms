@@ -60,8 +60,9 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib \
 		-lsqlite3
+
+###-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
 putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -115,44 +116,9 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib \
 		-lsqlite3
 
-dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
-		$(GRIDSITE_GLOBUS_LIBS) \
-		$(XML2_LIBS) \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_consumer \
-		-lglite_ce_monitor_client \
-		$(GLITE_WMSUTILS_CLASSADS_LIBS) \
-		$(CLASSAD_LIBS) \
-		$(SEC_GSOAP_PLUGIN_276b_THR_LIBS) \
-		$(LOG4CPP_LIBS) \
-		$(GLOBUS_THR_LIBS) \
-		../src/iceUtils/libglite_wms_iceUtils.la \
-		../src/iceThreads/libglite_wms_iceThreads.la \
-		../src/iceCommands/libglite_wms_iceCommands.la \
-		../src/ice/libglite_wms_ice.la \
-		../src/iceDb/libglite_wms_iceDb.la \
-		$(GLITE_WMSUTILS_JOBID_LIBS) \
-		$(GLITE_WMS_COMMON_CONF_LIBS) \
-		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
-	        $(GLITE_LB_THR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
-                $(GLITE_WMS_PURGER_LIBS) \
-                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
-		$(BOOST_FS_LIBS) \
-		$(BOOST_THREAD_LIBS) \
-		$(BOOST_REGEX_LIBS) \
-		-lboost_serialization \
-		-lglite_ce_monitor_consumer \
-		$(BDB_LIBS) \
-		-lvomsapi_gcc32dbgpthr \
-		-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib \
-		-lsqlite3
+### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen  \
 		-I$(top_srcdir)/src/iceUtils \
