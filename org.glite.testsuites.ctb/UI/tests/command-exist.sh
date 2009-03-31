@@ -13,6 +13,19 @@
 # Author: Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
 # Version info: $Id$
 
+
+function usage() {
+  echo "Usage $0 <command>"
+  echo "  <command> a command to look for"
+}
+
+
+if [ $# -lt 1 ]; then
+  echo "Wrong arguments"
+  usage
+  exit 1
+fi
+
 echo "testing if $1 exists in the system ..."
 
 /usr/bin/which "$1" && (echo "... Yes"; true) || (echo "... Error! $1 not found!"; false)
