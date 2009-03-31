@@ -241,6 +241,7 @@ void JobListMatch::listmatchRecoverStep(listmatchRecoveryStep step){
 	doneUrls.push_back(m_endPoint);
 	this->m_endPoint = "";
 	jobPerformStep(STEP_GET_ENDPOINT);
+        jobPerformStep(STEP_DELEGATE_PROXY);
 	// PERFORM STEP_LISTMATCH
 	listmatchPerformStep(STEP_LISTMATCH);
 	if (step==STEP_LISTMATCH){return;}
