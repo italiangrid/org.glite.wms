@@ -83,7 +83,7 @@ fi
 #=============================================================================
 # Check Grid Proxy
 #=============================================================================
-grid-proxy-info > /dev/null
+voms-proxy-info > /dev/null
 if [ $? -gt 0 ]; then
     exit 1
 fi
@@ -139,6 +139,8 @@ for pair in ${pairs}; do
     echo "#################################################"
     echo "Testing source=${SOURCE} and destination=${DEST}."
     echo "#################################################"
+
+    sleep 10
 
     command="lcg-cr -v --vo ${VO} -l ${LFN} file:${LOCAL_FILE} -d ${SOURCE}"
     message="Running copy and register command"
@@ -234,12 +236,14 @@ for pair in ${pairs}; do
     REQID=$(echo ${OUTPUT} | awk '{print $2;}')
     
 #The following call is meaningful only in case of SRM service
-    if [ "$SOURCE" != "$CLASSIC" ];then
-      command="lcg-sd ${SURL} ${REQID} 0 "
-      message="Running sd command"
-      run_command "${command}" "${message}"
-    fi 
-    
+#It has been skipped to an open bug
+#    if [ "$SOURCE" != "$CLASSIC" ];then
+#      command="lcg-sd ${SURL} ${REQID} 0 "
+#      message="Running sd command"
+#      run_command "${command}" "${message}"
+#   fi 
+    echo "WARNING! lcg-sd skipped due to bug #43002"
+   
     command="lcg-del -v -a --vo ${VO} ${LFN}"
     message="Running delete command"
     run_command "${command}" "${message}"
@@ -254,6 +258,7 @@ for pair in ${pairs}; do
     run_command "${command}" "${message}"
 done
 
+echo "DEBUG RETVAL ${RETVAL}"
 
 if [ ${RETVAL} -gt 0 ]; then
     echo "#################"
