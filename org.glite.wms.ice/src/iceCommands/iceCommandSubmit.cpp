@@ -693,8 +693,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       params.push_back( make_pair("complete_cream_jobid", m_theJob.getCompleteCreamJobID() ) );
       params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::PENDING )));
       params.push_back( make_pair("delegationid", delegation.get<0>() ));
-      params.push_back( make_pair("delegation_exptime", iceUtil::int_to_string( delegation.get<1>())));
-      params.push_back( make_pair("delegation_duration", iceUtil::int_to_string( delegation.get<2>() )));
+      //params.push_back( make_pair("delegation_exptime", iceUtil::int_to_string( delegation.get<1>())));
+      //params.push_back( make_pair("delegation_duration", iceUtil::int_to_string( delegation.get<2>() )));
       params.push_back( make_pair("leaseid", lease_id ));
       params.push_back( make_pair("proxycert_timestamp", iceUtil::int_to_string( time(0))));
       params.push_back( make_pair("wn_sequence_code", m_theJob.getSequenceCode() ));
