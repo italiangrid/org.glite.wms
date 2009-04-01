@@ -85,8 +85,8 @@ namespace glite {
 	  std::string m_user_dn;
           std::string m_sequence_code;
           std::string m_delegation_id; 
-	  time_t      m_delegation_exptime;
-	  int         m_delegation_duration;
+	  //time_t      m_delegation_exptime;
+	  //	  int         m_delegation_duration;
           std::string m_wn_sequence_code; //! The sequence code for the job sent to the worker node      
           glite::ce::cream_client_api::job_statuses::job_status m_prev_status; //! previous status of the job
 	  glite::ce::cream_client_api::job_statuses::job_status m_status; //! Current status of the job
@@ -142,8 +142,8 @@ namespace glite {
 		    const std::string& worker_node,
 		    const std::string& is_killed_byice,
 		    const std::string& delegationid,
-		    const std::string& delegation_exptime,
-		    const std::string& delegation_duration,
+		    //		    const std::string& delegation_exptime,
+		    //		    const std::string& delegation_duration,
 		    const std::string& last_empty_notification,
 		    const std::string& last_seen);
 
@@ -170,9 +170,9 @@ namespace glite {
 	  //! Sets the user's distinguished name
 	  void set_userdn( const std::string& udn ) { m_user_dn = udn; };
 
-	  void set_delegation_expiration_time( const time_t T ) { m_delegation_exptime = T; }
+	  //	  void set_delegation_expiration_time( const time_t T ) { m_delegation_exptime = T; }
 
-	  void set_delegation_duration( const int T ) { m_delegation_duration = T; }
+	  //	  void set_delegation_duration( const int T ) { m_delegation_duration = T; }
 
           /**
            * Sets the job failure reason. NOTE: the failure reason can
@@ -188,9 +188,9 @@ namespace glite {
 	    }
           };
 
-	  time_t getDelegationExpirationTime( void ) const { return m_delegation_exptime; }
+	  //	  time_t getDelegationExpirationTime( void ) const { return m_delegation_exptime; }
 
-	  int    getDelegationDuration( void ) const { return m_delegation_duration; }
+	  //	  int    getDelegationDuration( void ) const { return m_delegation_duration; }
 
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return m_grid_jobid; }
@@ -404,10 +404,10 @@ namespace glite {
 	      ar & m_delegation_id;
 
 
-	      ar & m_delegation_exptime;
+	      //	      ar & m_delegation_exptime;
 
 
-	      ar & m_delegation_duration;
+	      //	      ar & m_delegation_duration;
 
 	      
 	      ar & m_wn_sequence_code;

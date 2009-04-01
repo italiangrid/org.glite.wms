@@ -56,7 +56,11 @@ namespace { // begin local namespace
 
 void GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd = "SELECT * FROM delegation;";
+  string sqlcmd;
+  if( m_only_renewable)
+    sqlcmd = "SELECT * FROM delegation WHERE renewable=\'1\';";
+  else
+    sqlcmd = "SELECT * FROM delegation;";
 
   list<vector<string> > tmp;
   do_query( db, sqlcmd, fetch_fields_callback, &tmp );

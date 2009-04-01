@@ -86,8 +86,6 @@ namespace {
 		  " worker_node text,"                    \
 		  " is_killed_byice integer(1),"          \
 		  " delegationid text,"                   \
-		  " delegation_exptime integer(4),"       \
-		  " delegation_duration integer(4),"      \
 		  " last_empty_notification integer(4),"  \
 		  " last_seen integer(4) "		  \
 		  ")";

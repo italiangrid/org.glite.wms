@@ -34,9 +34,10 @@ namespace glite {
 	class GetAllDelegation : public AbsDbOperation {
 	protected:
 	  std::list<glite::wms::ice::util::Delegation_manager::table_entry> m_result;
+	  const bool                                                        m_only_renewable;
 	 
 	public:
-	  GetAllDelegation( ) : AbsDbOperation(), m_result() {}
+	  GetAllDelegation( const bool only_renewable ) : AbsDbOperation(), m_result(), m_only_renewable( only_renewable ) { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  

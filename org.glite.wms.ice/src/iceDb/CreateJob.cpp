@@ -65,8 +65,6 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << " worker_node, "			     
 	 << " is_killed_byice, "		     
 	 << " delegationid, "			     
-	 << " delegation_exptime, "		     
-	 << " delegation_duration, "		     
 	 << " last_empty_notification, "	     
 	 << " last_seen) "			     
 	 << " VALUES (" 
@@ -95,8 +93,6 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.get_worker_node() <<"\',"
 	 << "\'"<< ( m_theJob.is_killed_by_ice() ? "1" : "0" ) <<"\',"
 	 << "\'"<< m_theJob.getDelegationId() <<"\',"
-	 << "\'"<< m_theJob.getDelegationExpirationTime() <<"\',"
-	 << "\'"<< m_theJob.getDelegationDuration() <<"\',"
 	 << "\'"<< m_theJob.get_last_empty_notification() <<"\',"
 	 << "\'"<< m_theJob.getLastSeen()  <<"\')";
 			      

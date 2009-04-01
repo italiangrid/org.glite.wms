@@ -454,7 +454,7 @@ void Delegation_manager::purge_old_delegations( void )
     list<table_entry> allDelegations;
     {
       //Get
-      db::GetAllDelegation getter;
+      db::GetAllDelegation getter( false );
       db::Transaction tnx;
       tnx.execute( &getter );
       allDelegations = getter.get_delegations();
@@ -611,7 +611,7 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 }
 
 //______________________________________________________________________________
-void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target )
+void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target, const bool only_renewable )
 {
   boost::recursive_mutex::scoped_lock L( s_mutex );
 //     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
@@ -631,7 +631,7 @@ void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, strin
 
   list< table_entry > allDelegations;
   {
-    db::GetAllDelegation getter;
+    db::GetAllDelegation getter( only_renewable );
     db::Transaction tnx;
     tnx.execute( &getter );
     allDelegations = getter.get_delegations();

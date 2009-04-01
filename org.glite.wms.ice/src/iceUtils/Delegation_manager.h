@@ -224,7 +224,7 @@ namespace util {
 	 * <li>Renewable (bool: yes/no)<li>
          * </ul>
          */
-	void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool, std::string> >& target);
+      void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool, std::string> >& target, const bool only_renewable = false);
 
       /**
 	 < delegID, cream_url, exp_time, user_dn, 

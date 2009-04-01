@@ -124,8 +124,8 @@ CreamJob::CreamJob( const std::string& gid,
 		    const std::string& worker_node,
 		    const std::string& is_killed_byice,
 		    const std::string& delegationid,
-		    const std::string& delegation_exptime,
-		    const std::string& delegation_duration,
+		    //		    const std::string& delegation_exptime,
+		    //		    const std::string& delegation_duration,
 		    const std::string& last_empty_notification,
 		    const std::string& last_seen) 
 {
@@ -140,8 +140,6 @@ CreamJob::CreamJob( const std::string& gid,
   m_user_dn                    = userdn;
   m_sequence_code              = sequence_code;
   m_delegation_id              = delegationid; 
-  m_delegation_exptime         = (time_t)atoi(delegation_exptime.c_str());
-  m_delegation_duration        = atoi(delegation_duration.c_str());
   m_wn_sequence_code           = wn_sequence_code;
   m_prev_status                = (glite::ce::cream_client_api::job_statuses::job_status)atoi(prev_status.c_str());
   m_status                     = (glite::ce::cream_client_api::job_statuses::job_status)atoi(status.c_str());
@@ -186,10 +184,10 @@ CreamJob::CreamJob( const vector< string >& src )
   m_worker_node                = src.at(22);
   m_is_killed_by_ice           = (bool)atoi(src.at(23).c_str());
   m_delegation_id              = src.at(24);
-  m_delegation_exptime         = (time_t)atoi(src.at(25).c_str());
-  m_delegation_duration        = atoi(src.at(26).c_str());
-  m_last_empty_notification    = (time_t)atoi(src.at(27).c_str());
-  m_last_seen                  = (time_t)atoi(src.at(28).c_str());
+  //  m_delegation_exptime         = (time_t)atoi(src.at(25).c_str());
+  //  m_delegation_duration        = atoi(src.at(26).c_str());
+  m_last_empty_notification    = (time_t)atoi(src.at(25).c_str());
+  m_last_seen                  = (time_t)atoi(src.at(26).c_str());
   
 }
 
@@ -452,12 +450,12 @@ void CreamJob::get_fields( vector<string>& target ) const
   target.push_back( (m_is_killed_by_ice ? "1" : "0" ));
   target.push_back( m_delegation_id );
   tmp.str("");
-  tmp << m_delegation_exptime;
-  target.push_back( tmp.str() );
-  tmp.str("");
-  tmp << m_delegation_duration;
-  target.push_back( tmp.str() );
-  tmp.str("");
+  //  tmp << m_delegation_exptime;
+  //  target.push_back( tmp.str() );
+  //  tmp.str("");
+  //  tmp << m_delegation_duration;
+  //  target.push_back( tmp.str() );
+  //  tmp.str("");
   tmp << m_last_empty_notification;
   target.push_back( tmp.str() );
   tmp.str("");

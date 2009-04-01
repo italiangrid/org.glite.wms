@@ -681,8 +681,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     m_theJob.set_cream_jobid( jobId );
     m_theJob.set_status(glite::ce::cream_client_api::job_statuses::PENDING);    
     m_theJob.set_delegation_id( delegation.get<0>() );
-    m_theJob.set_delegation_expiration_time( delegation.get<1>() );
-    m_theJob.set_delegation_duration( delegation.get<2>() );
+    //m_theJob.set_delegation_expiration_time( delegation.get<1>() );
+    //    m_theJob.set_delegation_duration( delegation.get<2>() );
     m_theJob.set_leaseid( lease_id ); // FIXME: redundant??
     m_theJob.set_proxycert_mtime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequencecode( m_theJob.getSequenceCode() );
