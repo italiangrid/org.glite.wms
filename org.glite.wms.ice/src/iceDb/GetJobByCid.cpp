@@ -48,7 +48,7 @@ static int fetch_job_callback(void *param, int argc, char **argv, char **azColNa
   vector<string> *fields = (vector<string>*)param;
   if ( argv && argv[0] ) 
     {
-      for(int i = 0; i<=28; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+      for(int i = 0; i<=26; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
 	if( argv[i] )
 	  fields->push_back( argv[i] );
 	else
