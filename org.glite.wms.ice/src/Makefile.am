@@ -56,7 +56,6 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(BOOST_PO_LIBS) \
-		$(BDB_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
@@ -77,8 +76,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		-lboost_date_time \
-		-lboost_serialization \
-		$(BDB_LIBS)
+		-lboost_serialization
 
 glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS)
 
@@ -112,11 +110,10 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
 		$(BOOST_PO_LIBS) \
-		$(BDB_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		-lsqlite3
+		$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib/libsqlite3.a
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
