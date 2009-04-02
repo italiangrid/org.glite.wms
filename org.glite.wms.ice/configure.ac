@@ -37,6 +37,7 @@ AC_PROG_CXXCPP
 AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 AM_PATH_LOG4CPP
+AM_PATH_SQLITE3
 
 # Checks for libraries.
 
@@ -95,7 +96,7 @@ have_glite_wms_purger=no
 
 AC_OPTIMIZE
 AC_GLITE
-
+#AC_SQLITE3()
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 

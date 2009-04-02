@@ -45,7 +45,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autog
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
 		-DGLITE_WMS_HAVE_LBPROXY \
-		-I$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/include/ \
+		$(SQLITE3_CFLAGS) \
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in

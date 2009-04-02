@@ -59,7 +59,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		-lsqlite3
+		$(SQLITE3_LIBS)
 
 ###-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
@@ -76,7 +76,8 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		-lboost_date_time \
-		-lboost_serialization
+		-lboost_serialization \
+		$(SQLITE3_LIBS)
 
 glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS)
 
@@ -113,7 +114,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib/libsqlite3.a
+		$(SQLITE3_LIBS)
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
@@ -123,7 +124,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		-I$(top_srcdir)/src/iceCommands \
 		-I$(top_srcdir)/src/ice \
 		-I$(GSOAP_LOCATION)/include \
-		-I$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/include/ \
+		$(SQLITE3_CFLAGS) \
 		$(GLITE_CFLAGS) \
 		$(GSOAP_CFLAGS) \
 		$(GLOBUS_THR_CFLAGS) \
