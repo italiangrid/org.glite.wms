@@ -40,6 +40,24 @@ init_variables()
 
     GLITEUSER_HOME=`eval echo ~${GLITE_WMS_USER}`
     [ -d ${GLITEUSER_HOME} ] || do_failure "Missing user directory ${GLITEUSER_HOME}"
+
+    wm_input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.input`
+    wm_input_type=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.DispatcherType | tr "[:upper:]" "[:lower:]"`
+
+}
+
+set_input() # first parameter is the input, second is the input type
+{
+  if [ "$2" = "jobdir" ]; then
+    mkdir -p $1/{tmp,new,old} 2>/dev/null
+    mkdir_ret=$?
+    chown -R ${GLITE_WMS_USER}:${GLITE_WMS_USER} "$1"
+    if [ $? -ne 0 -o $mkdir_ret -ne 0 ]; then
+      false
+    else
+      true
+    fi
+  fi
 }
 
 remove_lockfile()
@@ -61,6 +79,11 @@ do_failure()
 
 start()
 {
+    set_input ${wm_input} ${wm_input_type}
+    if [ $? != 0 ]; then
+        echo "error setting up input structure... failure"
+    fi
+
     daemon ${LOGMONITOR} -c ${CONFIGURATION_FILE}
     local result=$?
     echo ""
