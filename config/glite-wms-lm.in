@@ -41,9 +41,6 @@ init_variables()
     GLITEUSER_HOME=`eval echo ~${GLITE_WMS_USER}`
     [ -d ${GLITEUSER_HOME} ] || do_failure "Missing user directory ${GLITEUSER_HOME}"
 
-    wm_input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.input`
-    wm_input_type=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.DispatcherType | tr "[:upper:]" "[:lower:]"`
-
 }
 
 set_input() # first parameter is the input, second is the input type
@@ -70,7 +67,7 @@ remove_lockfile()
 
 do_failure()
 {
-    echo -n " $*"
+    echo "$*"
     failure $1
     echo ""
 
@@ -78,7 +75,15 @@ do_failure()
 }
 
 start()
-{
+{   wm_input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.input`
+    if [ -z ${wm_input} ]; then
+      do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - WM section"
+    fi 
+    wm_input_type=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.DispatcherType | tr "[:upper:]" "[:lower:]"`
+    if [ -z ${wm_input_type} ]; then
+      do_failure "Please set DispatcherType parameter in ${CONFIGURATION_FILE} - WM section"
+    fi 
+
     set_input ${wm_input} ${wm_input_type}
     if [ $? != 0 ]; then
         echo "error setting up input structure... failure"
@@ -201,6 +206,7 @@ stop()
 
 status()
 {
+    init_variables 
     local pid=
 
     pid=`pidofproc ${LOGMONITOR}`
@@ -267,7 +273,6 @@ case $1 in
 	RETVAL=$?
     ;;
     status)
-	init_variables
 	status
 	RETVAL=$?
     ;;
