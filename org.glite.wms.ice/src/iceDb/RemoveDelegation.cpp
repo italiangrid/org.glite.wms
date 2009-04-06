@@ -33,6 +33,6 @@ void RemoveDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM delegation " \
-      " where digest = \'%1%\' AND creamurl = \'%1%\'; " ) % m_digest % m_creamurl );
+      " where digest = \'%1%\' AND creamurl = \'%2%\'; " ) % m_digest % m_creamurl );
     do_query( db, sqlcmd );
 }
