@@ -75,7 +75,8 @@ do_failure()
 }
 
 start()
-{   wm_input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.input`
+{   
+    wm_input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration WorkloadManager.input`
     if [ -z ${wm_input} ]; then
       do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - WM section"
     fi 
@@ -206,7 +207,6 @@ stop()
 
 status()
 {
-    init_variables 
     local pid=
 
     pid=`pidofproc ${LOGMONITOR}`
@@ -273,6 +273,7 @@ case $1 in
 	RETVAL=$?
     ;;
     status)
+        init_variables
 	status
 	RETVAL=$?
     ;;
