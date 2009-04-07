@@ -13,10 +13,13 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetFields.cpp \
 				GetFieldsCount.cpp \
 				GetProxyInfoByDN.cpp \
+				GetLease.cpp \
+				GetLeaseByID.cpp \
 				GetAllProxyInfo.cpp \
 				CreateJob.cpp \
 				CreateProxyField.cpp \
 				CreateDelegation.cpp \
+				CreateLease.cpp \
 				UpdateJobByGid.cpp \
 				UpdateProxyFieldsByDN.cpp \
 				UpdateDelegationTimesByID.cpp \
@@ -26,6 +29,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				RemoveProxyByDN.cpp \
 				RemoveDelegationByID.cpp \
 				RemoveDelegation.cpp \
+				RemoveLease.cpp \
 				GetJobByCid.cpp \
 				GetAllJobs.cpp \
 				GetJobByGid.cpp \

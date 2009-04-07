@@ -121,6 +121,18 @@ namespace {
 	      
 	    } catch( ... ) {
 	    }
+	    try {
+	      string sqlcmd = 
+		"CREATE TABLE lease ( "	\
+		"userdn text not null, "	     \
+		"creamurl text not null, "	     \
+		"exptime integer(4) not null, "	     \
+		"leaseid text not null,"        \
+		")";
+	      do_query( db, sqlcmd );
+	      
+	    } catch( ... ) {
+	    }
             try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX gid_index ON jobs (gridjobid)"; 
@@ -148,6 +160,12 @@ namespace {
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX delegkey ON delegation (digest,creamurl)";
+	      do_query( db, sqlcmd );
+	    } catch( ... ) {
+	    }
+	    try {
+	      string sqlcmd = 
+		"CREATE UNIQUE INDEX leasekey ON lease (userdn,creamurl)";
 	      do_query( db, sqlcmd );
 	    } catch( ... ) {
 	    }
