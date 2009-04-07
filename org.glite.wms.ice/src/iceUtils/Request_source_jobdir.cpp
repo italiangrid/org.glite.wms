@@ -23,6 +23,7 @@
 #include "Request_source_jobdir.h"
 #include "Request_jobdir.h"
 #include "glite/wms/common/utilities/scope_guard.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <vector>
 #include <iostream>
 #include <boost/tuple/tuple.hpp>
@@ -35,6 +36,7 @@
 
 namespace utilities=glite::wms::common::utilities;
 namespace fs=boost::filesystem;
+namespace api_util  = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
@@ -42,17 +44,24 @@ Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name, bool
     Request_source( jdir_name ),
     m_jobdir( 0 )
 {
-    if ( create ) {
-        // Tries to create the directory structure
-        utilities::JobDir::create( jdir_name );
-    }
-
+    static const char* method_name = "Request_source_jobdir::CTOR() - ";
     try {
+        if ( create ) {
+            // Tries to create the directory structure
+            utilities::JobDir::create( jdir_name );
+        }
         m_jobdir = new utilities::JobDir( jdir_name );
     } catch( std::exception& ex ) {
-         CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->errorStream()
-	 		 << "Request_source_jobdir::CTOR - Jobdir creation failed!" 
-			 );
+        CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                       << method_name << "Error creating or opening path ["
+                       << jdir_name << "]: " << ex.what()
+                       );
+        abort();
+    } catch( ... ) {
+        CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                       << method_name << "Error creating or opening path ["
+                       << jdir_name << "]: Catched unknown exception"
+                       );
         abort();
     }
 }

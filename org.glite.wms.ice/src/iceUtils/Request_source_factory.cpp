@@ -44,7 +44,7 @@ Request_source* Request_source_factory::make_source_input_wm( void )
 
     std::string input_name = conf->wm()->input();
     if ( 0 == conf->wm()->dispatcher_type().compare( "jobdir" ) ) {
-        result = new Request_source_jobdir( input_name, false );
+        result = new Request_source_jobdir( input_name, true ); // must create the jobdir if it does not exist
     } else {
         result = new Request_source_filelist( input_name, false );
     }
