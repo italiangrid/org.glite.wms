@@ -124,8 +124,6 @@ CreamJob::CreamJob( const std::string& gid,
 		    const std::string& worker_node,
 		    const std::string& is_killed_byice,
 		    const std::string& delegationid,
-		    //		    const std::string& delegation_exptime,
-		    //		    const std::string& delegation_duration,
 		    const std::string& last_empty_notification,
 		    const std::string& last_seen) 
 {
@@ -158,38 +156,35 @@ CreamJob::CreamJob( const std::string& gid,
 }
 
 //______________________________________________________________________________
-CreamJob::CreamJob( const vector< string >& src ) 
-{
-  m_grid_jobid                 = src.at(0);//cid;
-  m_cream_jobid                = src.at(1);//gid; 
-  m_jdl                        = src.at(3);//jdl;
-  m_user_proxyfile	       = src.at(4);
-  m_ceid                       = src.at(5);//ceid;
-  m_endpoint                   = src.at(6);//endpoint;
-  m_cream_address              = src.at(7);//creamurl;
-  m_cream_deleg_address        = src.at(8);//creamdelegurl; 
-  m_user_dn 	               = src.at(9);//userproxy;
-  m_myproxy_address	       = src.at(10);
-  m_proxy_renew                = (bool)atoi(src.at(11).c_str());
-  m_failure_reason             = src.at(12);
-  m_sequence_code              = src.at(13);
-  m_wn_sequence_code           = src.at(14);
-  m_prev_status                = (glite::ce::cream_client_api::job_statuses::job_status)atoi(src.at(15).c_str());
-  m_status                     = (glite::ce::cream_client_api::job_statuses::job_status)atoi(src.at(16).c_str());
-  m_num_logged_status_changes  = atoi(src.at(17).c_str());
-  m_lease_id                   = src.at(18);
-  m_proxyCertTimestamp         = (time_t)atoi(src.at(19).c_str());
-  m_statusPollRetryCount       = atoi(src.at(20).c_str());
-  m_exit_code                  = atoi(src.at(21).c_str());
-  m_worker_node                = src.at(22);
-  m_is_killed_by_ice           = (bool)atoi(src.at(23).c_str());
-  m_delegation_id              = src.at(24);
-  //  m_delegation_exptime         = (time_t)atoi(src.at(25).c_str());
-  //  m_delegation_duration        = atoi(src.at(26).c_str());
-  m_last_empty_notification    = (time_t)atoi(src.at(25).c_str());
-  m_last_seen                  = (time_t)atoi(src.at(26).c_str());
-  
-}
+// CreamJob::CreamJob( const vector< string >& src ) 
+// {
+//   m_grid_jobid                 = src.at(0);//cid;
+//   m_cream_jobid                = src.at(1);//gid; 
+//   m_jdl                        = src.at(2);//jdl;
+//   m_user_proxyfile	       = src.at(3);
+//   m_ceid                       = src.at(4);//ceid;
+//   m_endpoint                   = src.at(5);//endpoint;
+//   m_cream_address              = src.at(6);//creamurl;
+//   m_cream_deleg_address        = src.at(7);//creamdelegurl; 
+//   m_user_dn 	               = src.at(8);//userproxy;
+//   m_myproxy_address	       = src.at(9);
+//   m_proxy_renew                = (bool)atoi(src.at(10).c_str());
+//   m_failure_reason             = src.at(11);
+//   m_sequence_code              = src.at(12);
+//   m_wn_sequence_code           = src.at(13);
+//   m_prev_status                = (glite::ce::cream_client_api::job_statuses::job_status)atoi(src.at(14).c_str());
+//   m_status                     = (glite::ce::cream_client_api::job_statuses::job_status)atoi(src.at(15).c_str());
+//   m_num_logged_status_changes  = atoi(src.at(16).c_str());
+//   m_lease_id                   = src.at(17);
+//   m_proxyCertTimestamp         = (time_t)atoi(src.at(18).c_str());
+//   m_statusPollRetryCount       = atoi(src.at(19).c_str());
+//   m_exit_code                  = atoi(src.at(20).c_str());
+//   m_worker_node                = src.at(21);
+//   m_is_killed_by_ice           = (bool)atoi(src.at(22).c_str());
+//   m_delegation_id              = src.at(23);
+//   m_last_empty_notification    = (time_t)atoi(src.at(24).c_str());
+//   m_last_seen                  = (time_t)atoi(src.at(25).c_str());
+// }
 
 //______________________________________________________________________________
 void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )

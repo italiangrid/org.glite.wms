@@ -37,6 +37,7 @@
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
 #include "boost/thread/recursive_mutex.hpp"
+#include "boost/tuple/tuple.hpp"
 
 /**
  *
@@ -142,12 +143,10 @@ namespace glite {
 		    const std::string& worker_node,
 		    const std::string& is_killed_byice,
 		    const std::string& delegationid,
-		    //		    const std::string& delegation_exptime,
-		    //		    const std::string& delegation_duration,
 		    const std::string& last_empty_notification,
 		    const std::string& last_seen);
 
-	  CreamJob( const std::vector< std::string >& );
+	  //	  CreamJob( const std::vector< std::string >& );
 
 	  //! Sets the status of the CreamJob object
 	  void set_status( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_prev_status = m_status; m_status = st; }
@@ -404,12 +403,6 @@ namespace glite {
 	      ar & m_delegation_id;
 
 
-	      //	      ar & m_delegation_exptime;
-
-
-	      //	      ar & m_delegation_duration;
-
-	      
 	      ar & m_wn_sequence_code;
 	      
 
@@ -458,7 +451,6 @@ namespace glite {
 		       << "creamJob::serialize() - [De]Serialization error: ["
 		       << ex.what() << "]"
 		       );
-	      //abort();
 	      throw SerializeException( ex.what() );
 	    }
 	  }
