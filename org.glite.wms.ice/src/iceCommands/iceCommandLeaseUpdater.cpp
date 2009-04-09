@@ -28,6 +28,7 @@
 #include "iceDb/GetAllJobs.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/GetJobByGid.h"
+#include "iceDb/GetLeaseByID.h"
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -38,7 +39,6 @@
 
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
-//#include "jobCache.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
 #include "creamJob.h"
@@ -64,34 +64,47 @@ using namespace std;
 bool iceCommandLeaseUpdater::job_can_be_removed( const CreamJob& job ) 
   const throw()
 {
-    if ( !job.get_lease_id().empty() ) {
-        Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
-
-        //
-        // A job which refers to a non-existing lease ID can be removed
-        //
-        if ( it == m_lease_manager->end() )
-            return true;
-        
-        //
-        // A job which refers to an existing lease ID, and such that
-        // the lease ID refers to an expired lease, can be removed
-        // from the cache.
-        //
-        if ( it != m_lease_manager->end() && it->m_expiration_time < time(0) )
-            return true;
-    }
-
-    // 
-    // A job which is active, can be purged or has no lease cannot be
-    // removed from the cache by the lease updater thread.
-    //
-    // if ( job.is_active() || job.can_be_purged() || job.get_lease_id().empty() )
-    // return false; // this job cannot be removed here
+  if ( !job.get_lease_id().empty() ) {
     
-    return false;
+    bool found = false;
+    Lease_manager::Lease_t leaseInfo( "", "", time(0), "" );
+    {
+      db::GetLeaseByID getter( job.get_lease_id() );
+      db::Transaction tnx;
+      tnx.execute( &getter );
+      found = getter.found();
+      if(found)
+	leaseInfo = getter.get_lease();
+    }
+    
+    //Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
+    
+    //
+    // A job which refers to a non-existing lease ID can be removed
+    //
+    if ( !found /*it == m_lease_manager->end()*/ )
+      return true;
+    
+    //
+    // A job which refers to an existing lease ID, and such that
+    // the lease ID refers to an expired lease, can be removed
+    // from the cache.
+    //
+    //        if ( it != m_lease_manager->end() && it->m_expiration_time < time(0) )
+    if( found && leaseInfo.m_expiration_time < time(0) )
+      return true;
+  }
+  
+  // 
+  // A job which is active, can be purged or has no lease cannot be
+  // removed from the cache by the lease updater thread.
+  //
+  // if ( job.is_active() || job.can_be_purged() || job.get_lease_id().empty() )
+  // return false; // this job cannot be removed here
+  
+  return false;
 }
-            
+
 //________________________________________________________________________
 bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const throw() 
 {
@@ -111,12 +124,26 @@ bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const t
     if ( job.getCompleteCreamJobID().empty() || !job.is_active() || job.can_be_purged() )
         return false;
     
-    Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
-    
-    if ( it != m_lease_manager->end() && it->m_expiration_time > time(0)
-         && it->m_expiration_time - time(0) < m_frequency*2 ) 
+    bool found = false;
+    Lease_manager::Lease_t leaseInfo( "", "", time(0), "" );
+    {
+      db::GetLeaseByID getter( job.get_lease_id() );
+      db::Transaction tnx;
+      tnx.execute( &getter );
+      found = getter.found();
+      if(found)
+	leaseInfo = getter.get_lease();
+    }
 
-        return true; 
+    //Lease_manager::const_iterator it = m_lease_manager->find( job.get_lease_id() );
+    
+//     if ( it != m_lease_manager->end() && it->m_expiration_time > time(0)
+//          && it->m_expiration_time - time(0) < m_frequency*2 ) 
+
+//         return true; 
+
+    if( found && (leaseInfo.m_expiration_time > time(0)) && (leaseInfo.m_expiration_time - time(0) < m_frequency*2) )
+      return true;
 
     return false;    
 }
@@ -127,7 +154,6 @@ iceCommandLeaseUpdater::iceCommandLeaseUpdater( bool only_update ) throw() :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
     m_frequency( iceConfManager::getInstance()->getConfiguration()->ice()->lease_update_frequency() ),
-    //    m_cache( jobCache::getInstance() ),
     m_only_update( only_update ),
     m_lease_manager( Lease_manager::instance() )
 {
