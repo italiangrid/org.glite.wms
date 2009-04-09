@@ -82,38 +82,38 @@ namespace util {
         struct idx_expiration_time{}; // used for tagging the index according to the m_expiration_time
         struct idx_sequence{}; // used for tagging the index as a sequence of items
 
-        typedef boost::multi_index_container<
-            Lease_t,
-            boost::multi_index::indexed_by<
-              boost::multi_index::ordered_unique<
-                boost::multi_index::tag< idx_user_dn_cream_url >,
-            // The index here is the (user_dn, cream_url) pair
-                boost::multi_index::composite_key<
-                Lease_t,
-            // The first composite element is the user_dn
-                boost::multi_index::member<Lease_t,std::string,&Lease_t::m_user_dn>,
-            // The second composite element is the cream_url
-                boost::multi_index::member<Lease_t,std::string,&Lease_t::m_cream_url>
-              > 
-            >,
-            boost::multi_index::ordered_non_unique<
-              boost::multi_index::tag< idx_expiration_time >,
-              boost::multi_index::member<Lease_t,time_t,&Lease_t::m_expiration_time>
-            >,
-            boost::multi_index::sequenced<
-              boost::multi_index::tag< idx_sequence >
-            >,
-            boost::multi_index::ordered_unique<
-              boost::multi_index::tag< idx_lease_id >,
-              boost::multi_index::member<Lease_t,std::string,&Lease_t::m_lease_id>
-            >
-          >
-        > t_lease_set;
+//         typedef boost::multi_index_container<
+//             Lease_t,
+//             boost::multi_index::indexed_by<
+//               boost::multi_index::ordered_unique<
+//                 boost::multi_index::tag< idx_user_dn_cream_url >,
+//             // The index here is the (user_dn, cream_url) pair
+//                 boost::multi_index::composite_key<
+//                 Lease_t,
+//             // The first composite element is the user_dn
+//                 boost::multi_index::member<Lease_t,std::string,&Lease_t::m_user_dn>,
+//             // The second composite element is the cream_url
+//                 boost::multi_index::member<Lease_t,std::string,&Lease_t::m_cream_url>
+//               > 
+//             >,
+//             boost::multi_index::ordered_non_unique<
+//               boost::multi_index::tag< idx_expiration_time >,
+//               boost::multi_index::member<Lease_t,time_t,&Lease_t::m_expiration_time>
+//             >,
+//             boost::multi_index::sequenced<
+//               boost::multi_index::tag< idx_sequence >
+//             >,
+//             boost::multi_index::ordered_unique<
+//               boost::multi_index::tag< idx_lease_id >,
+//               boost::multi_index::member<Lease_t,std::string,&Lease_t::m_lease_id>
+//             >
+//           >
+//         > t_lease_set;
 
         /**
          * (Sequence const) iterator to the lease cache
          */ 
-        typedef t_lease_set::index< idx_sequence >::type::iterator const_iterator;
+      //        typedef t_lease_set::index< idx_sequence >::type::iterator const_iterator;
 
     protected:
         Lease_manager( );
@@ -126,7 +126,7 @@ namespace util {
          * for the lease information, and fills the lease cache with
          * the non expired leases only.
          */
-        void init( void );
+      //        void init( void );
 
         /**
          * Iterates over the lease ID set. Removes all lease IDs which
@@ -147,7 +147,7 @@ namespace util {
         int m_lease_delta_time;
         int m_lease_update_frequency;
 
-        t_lease_set m_lease_set;
+      //        t_lease_set m_lease_set;
 
     public:
         ~Lease_manager( ) { };
@@ -237,8 +237,8 @@ namespace util {
          * These methods give access to the lease cache through
          * const iterators
          */
-        const_iterator begin() const;
-        const_iterator end() const;
+      //        const_iterator begin() const;
+      //        const_iterator end() const;
 
         /**
          * Find the lease with the given lease_id; returns end() if no
@@ -249,7 +249,7 @@ namespace util {
          *
          * NOTE: This method is _NOT_ thread-safe
          */
-        const_iterator find( const std::string& lease_id ) const;
+        //const_iterator find( const std::string& lease_id ) const;
     };
 
 } // namespace util
