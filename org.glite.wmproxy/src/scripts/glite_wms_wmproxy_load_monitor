@@ -278,7 +278,7 @@ sub get_input{
 
 sub get_ftpconn{
 
-        $ftpconn=`netstat -tapn | grep -c 2811`;
+        $ftpconn=`netstat -tapn 2>/dev/null| grep -c 2811`;
 	chomp $ftpconn;
 	
 }
