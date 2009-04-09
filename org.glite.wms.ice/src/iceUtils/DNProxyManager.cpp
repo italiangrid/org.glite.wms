@@ -302,7 +302,7 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
     }
     
 
-    if( /*it->second.get<2>() == 1 */ proxy_info.get<2>() ) {
+    if( /*it->second.get<2>() == 1 */ proxy_info.get<2>() == 1 ) {
 
       CREAM_SAFE_LOG(
 		   m_log_dev->debugStream()
@@ -332,6 +332,13 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
       
 
       //if(::unlink( m_DNProxyMap[ mapKey ].get<0>().c_str() ) < 0)
+      CREAM_SAFE_LOG(
+		     m_log_dev->debugStream()
+		     << "DNProxyManager::decrementUserProxyCounter() - "
+		     << "Unlinking file ["
+		     << proxy_info.get<0>() << "]... "
+		     );
+
       if(::unlink( proxy_info.get<0>().c_str()) < 0 )
 	{
 	  int saveerr = errno;
@@ -346,6 +353,14 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 	}
       
       //m_DNProxyMap.erase( mapKey );
+      CREAM_SAFE_LOG(
+		     m_log_dev->debugStream()
+		     << "DNProxyManager::decrementUserProxyCounter() - "
+		     << "Removing Better proxy with key ["
+		     << mapKey << "] for user DN [" 
+		     << userDN << "] MyProxyURL ["
+		     << myproxy_name << "]"
+		     );
       {
 	db::RemoveProxyByDN remover( mapKey );
 	db::Transaction tnx;
