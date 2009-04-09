@@ -57,7 +57,7 @@ namespace { // begin local namespace
     list< vector<string> > *jobs = (list<vector<string> >*)param;
     if( argv && argv[0] ) {
       vector<string> fields;
-      for(int i = 0; i<=26; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+      for(int i = 0; i<=25; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
 	if( argv[i] )
 	  fields.push_back( argv[i] );
 	else
@@ -97,6 +97,62 @@ void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
        it != jobs.end();
        ++it )
     {
-      m_result.push_back( CreamJob( *it ) );
+      string cream_jobid                = it->at(0);
+      string grid_jobid                 = it->at(1);
+      string jdl                        = it->at(2);
+      string ceid                       = it->at(3);
+      string endpoint                   = it->at(4);
+      string cream_address              = it->at(5);
+      string cream_deleg_address        = it->at(6);
+      string user_proxyfile             = it->at(7);
+      string user_dn                    = it->at(8);
+      string sequence_code              = it->at(9);
+      string delegation_id              = it->at(10);
+      string wn_sequence_code           = it->at(11);
+      string prev_status                = it->at(12);
+      string status                     = it->at(13);
+      string num_logged_status_changes  = it->at(14);
+      string last_seen                  = it->at(15);
+      string lease_id                   = it->at(16);
+      string proxyCertTimestamp         = it->at(17);
+      string statusPollRetryCount       = it->at(18);
+      string exit_code                  = it->at(19);
+      string failure_reason             = it->at(20);
+      string worker_node                = it->at(21);
+      string is_killed_by_ice           = it->at(22);
+      string last_empty_notification    = it->at(23);
+      string proxy_renew                = it->at(24);
+      string myproxy_address            = it->at(25);
+
+      CreamJob tmpJob(
+		      cream_jobid,
+		      grid_jobid ,
+		      jdl,
+		      ceid,
+		      endpoint,
+		      cream_address,
+		      cream_deleg_address,
+		      user_proxyfile,
+		      user_dn,
+		      sequence_code,
+		      delegation_id ,
+		      wn_sequence_code ,
+		      prev_status,
+		      status,
+		      num_logged_status_changes,
+		      last_seen,
+		      lease_id,
+		      proxyCertTimestamp,
+		      statusPollRetryCount,
+		      exit_code,
+		      failure_reason,
+		      worker_node,
+		      is_killed_by_ice,
+		      last_empty_notification,
+		      proxy_renew,
+		      myproxy_address
+		      );
+      
+      m_result.push_back( tmpJob );
     }
 }
