@@ -58,7 +58,7 @@ case "$1" in
          RETVAL=1
         fi
 	;;
-  start|stop|restart)
+  start|graceful|stop|restart)
 	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15
 	sleep 5
 	ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -ALRM
