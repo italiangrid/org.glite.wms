@@ -36,7 +36,7 @@
 #include "subscriptionProxy.h"
 #include "iceConfManager.h"
 #include "DNProxyManager.h"
-#include "iceDb/GetAllJobs.h"
+#include "iceDb/GetFields.h"
 #include "iceDb/Transaction.h"
 //#include "jobCache.h"
 
@@ -539,51 +539,100 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
   map< string, set<string> > tmpTarget;
   string tmpDN;
 
-  list< CreamJob > jobs;
+  //list< CreamJob > jobs;
+  //  boost::tuple< string, string, string, string > jobs;
+  list< vector< string > > jobs;
   {
-    db::GetAllJobs getter( only_active_jobs );
+    //    db::GetAllJobs getter( only_active_jobs );
+    list<string> fields;
+    fields.push_back("userproxy");
+    fields.push_back("creamurl");
+    fields.push_back("userdn");
+    fields.push_back("status");
+    list< pair< string, string> > params;
+    params.push_back( make_pair("is_killed_byice", "0") );
+    db::GetFields getter( fields, params, true);
     db::Transaction tnx;
     tnx.execute( &getter );
-    jobs = getter.get_jobs();
+    jobs = getter.get_values();
   }
 
-  //  for(iceUtil::jobCache::iterator jit=iceUtil::jobCache::getInstance()->begin();
-  //      jit != iceUtil::jobCache::getInstance()->end();
-  //      ++jit)
-  for( list< CreamJob >::const_iterator it = jobs.begin();
-       it != jobs.begin();
+  for( list< vector< string > >::iterator it=jobs.begin();
+       it != jobs.end();
        ++it)
-  {
-//     if(only_active_jobs)
-//       if( !jit->is_active() ) continue;
+    {
+      string userproxy = it->at(0);
+      string creamurl  = it->at(1);
+      string userdn    = it->at(2);
+      string status    = it->at(3);
+      int    n_status  = (glite::ce::cream_client_api::job_statuses::job_status)atoi(status.c_str());
+      if( n_status == glite::ce::cream_client_api::job_statuses::REGISTERED ||
+	  n_status == glite::ce::cream_client_api::job_statuses::PENDING ||
+	  n_status == glite::ce::cream_client_api::job_statuses::IDLE || 
+	  n_status == glite::ce::cream_client_api::job_statuses::RUNNING ||
+	  n_status == glite::ce::cream_client_api::job_statuses::REALLY_RUNNING ||
+	  n_status == glite::ce::cream_client_api::job_statuses::HELD )
+	{
+	  this->getCEMonURL( userproxy, creamurl, cemon );
+	  tmpTarget[ userdn ].insert( cemon );
 
-    
-    this->getCEMonURL( it->getUserProxyCertificate(), it->getCreamURL(), cemon );
-
-
-    tmpTarget[ it->getUserDN() ].insert( cemon );
-
-    
-    if( m_authz && m_authn ) {
-
-      if( this->getCEMonDN( it->getUserProxyCertificate(), cemon, tmpDN ) ) {
-
-	goodCEMons.insert( cemon );
-
-      } else {
-	CREAM_SAFE_LOG(m_log_dev->errorStream()
-		       << "subscriptionManager::getUserCEMonMapping() - "
-		       << "Cannot retrieve DN for CEMon ["
-		       << cemon << "]. Will not subscribe to this CEMon!"
-		       );
-      }
-
-    } else {
-
-      goodCEMons.insert( cemon );
-
+	  if( m_authz && m_authn ) {
+	    
+	    if( this->getCEMonDN( userproxy, cemon, tmpDN ) ) {
+	      
+	      goodCEMons.insert( cemon );
+	      
+	    } else {
+	      CREAM_SAFE_LOG(m_log_dev->errorStream()
+			     << "subscriptionManager::getUserCEMonMapping() - "
+			     << "Cannot retrieve DN for CEMon ["
+			     << cemon << "]. Will not subscribe to this CEMon!"
+			     );
+	    }
+	    
+	  } else {
+	    
+	    goodCEMons.insert( cemon );
+	    
+	  }
+	}
+      
     }
-  }
+
+//   for( list< CreamJob >::const_iterator it = jobs.begin();
+//        it != jobs.begin();
+//        ++it)
+//   {
+// //     if(only_active_jobs)
+// //       if( !jit->is_active() ) continue;
+
+    
+//     this->getCEMonURL( it->getUserProxyCertificate(), it->getCreamURL(), cemon );
+
+
+//     tmpTarget[ it->getUserDN() ].insert( cemon );
+
+    
+//     if( m_authz && m_authn ) {
+
+//       if( this->getCEMonDN( it->getUserProxyCertificate(), cemon, tmpDN ) ) {
+
+// 	goodCEMons.insert( cemon );
+
+//       } else {
+// 	CREAM_SAFE_LOG(m_log_dev->errorStream()
+// 		       << "subscriptionManager::getUserCEMonMapping() - "
+// 		       << "Cannot retrieve DN for CEMon ["
+// 		       << cemon << "]. Will not subscribe to this CEMon!"
+// 		       );
+//       }
+
+//     } else {
+
+//       goodCEMons.insert( cemon );
+
+//     }
+//   }
   
   if( m_authz && m_authn )
   {
