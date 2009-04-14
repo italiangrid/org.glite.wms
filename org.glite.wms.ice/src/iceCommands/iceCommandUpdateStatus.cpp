@@ -314,19 +314,22 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	db::Transaction tnx;
 	tnx.execute( &getter );
 
-	list< list<string> > result = getter.get_values();
+	list< vector<string> > result = getter.get_values();
 
-        for( list< list<string> >::const_iterator it=result.begin();
+        for( list< vector<string> >::const_iterator it=result.begin();
              it != result.end();
 	     ++it )
 	{
-	  list<string>::const_iterator fit = (*it).begin();
-	  string creamurl = *fit; fit++;
-	  string userdn   = *fit;
-	  list_creamurl_userdn.push_back( make_pair( creamurl, userdn) );
+// 	  list<string>::const_iterator fit = (*it).begin();
+// 	  string creamurl = *fit; fit++;
+// 	  string userdn   = *fit;
+
+	  string creamurl = it->at(0);
+	  string userdn   = it->at(1);
+
+	  list_creamurl_userdn.push_back( make_pair( creamurl, userdn ) );
 	}	
 
-//	list_creamurl_userdn = getter.get();
       }
 
       for( list< pair<string, string> >::const_iterator it=list_creamurl_userdn.begin();
@@ -357,7 +360,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  clause.push_back( make_pair("creamurl", it->first ) );
 	  clause.push_back( make_pair("userdn", it->second ) );
 	  
-	  list<list<string> > result;
+	  //list<list<string> > result;
 	  //db::GetCidByCreamURLUserDN getter( *it );
 	  db::GetFields getter( fields_to_retrieve, clause );
 	  
@@ -365,13 +368,13 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  tnx.execute( &getter );
 	  //list<string> tmp = getter.get();
 	  
-	  list<list<string> > tmp = getter.get_values();
-	  list<string> _tmp_cids;
-	  for(list<list<string> >::const_iterator it=tmp.begin();
+	  list< vector< string> > tmp = getter.get_values();
+	  list< string > _tmp_cids;
+	  for(list< vector< string> >::const_iterator it=tmp.begin();
 	      it!=tmp.end();
 	      ++it)
 	      {
-	        string thisCompleteCreamJobID = *(*it).begin();
+	        string thisCompleteCreamJobID = it->at(0);
 	        _tmp_cids.push_back( thisCompleteCreamJobID );
 	      }
 	  
@@ -385,26 +388,6 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  commands.push_front( new emptyStatusNotification( *it ) );
 	}
       
-//       for ( jobCache::iterator job_it=cache->begin();
-//               cache->end() != job_it; ++job_it ) {
-            
-// 	    iceSubscription subscription;
-// 	    string cemon_url;
-// 	    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
-// 	    subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
-// 	    subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
-//             string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
-	    
-//             if ( subscription_set.end() !=  subscription_set.find( subs_id /*job_it->getSubscriptionID()*/ ) ) {
-//                 CREAM_SAFE_LOG( m_log_dev->debugStream()
-//                                 << method_name 
-//                                 << "Making empty status notification command for job "
-//                                 << job_it->describe()
-//                                 );
-
-//                 commands.push_front( new emptyStatusNotification( job_it->getCompleteCreamJobID() ) );
-//             }            
-//         }
     } // end block
 
     // Now executes all the commands in the list

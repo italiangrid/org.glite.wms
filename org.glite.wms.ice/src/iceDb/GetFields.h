@@ -21,6 +21,7 @@
 
 #include "AbsDbOperation.h"
 #include <list>
+#include <vector>
 #include <utility>
 #include <string>
 
@@ -34,19 +35,20 @@ namespace glite {
 	 */
 	class GetFields : public AbsDbOperation {
 	protected:
-	  std::list< std::list<std::string> > m_result;
-	  const std::list<std::string> m_fields_to_retrieve;
+	  std::list< std::vector<std::string> >                   m_result;
+	  const std::list<std::string>                          m_fields_to_retrieve;
 	  const std::list<std::pair<std::string, std::string> > m_clause;
+	  bool                                                  m_distinct;
 
 	public:
-	  GetFields( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause );
+	  GetFields( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause, const bool distinct = false );
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  
 	  /**
 	   * Return the list of jobs to poll
 	   */ 
-	  std::list< std::list<std::string> > get_values( void ) const {
+	  std::list< std::vector<std::string> > get_values( void ) const {
             return m_result;
 	  }
 	  

@@ -29,10 +29,11 @@ using namespace std;
 
 int fields_count;
 
-GetFields::GetFields( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause ) :    
+GetFields::GetFields( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause, const bool distinct ) :    
   AbsDbOperation(),
   m_fields_to_retrieve( fields_to_retrieve ),
-  m_clause( clause )
+  m_clause( clause ),
+  m_distinct( distinct )
 {
 }
 
@@ -40,9 +41,9 @@ namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
     static int fetch_fields_callback(void *param, int argc, char **argv, char **azColName){
-      list<list<string> >* result = (list<list<string> >*)param;
+      list< vector< string > >* result = (list< vector< string > >*)param;
         if ( argv && argv[0] ) {
-	  list<string> tmp;
+	  vector<string> tmp;
 	  for( int i = 0; i<fields_count; i++ ) {
 	    if(argv[i])
 	      tmp.push_back( argv[i] );
@@ -62,6 +63,9 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
   ostringstream sqlcmd;
  
   sqlcmd << "SELECT ";
+
+  if(m_distinct)
+    sqlcmd << "DISTINCT ";
 
   fields_count = m_fields_to_retrieve.size();
 
