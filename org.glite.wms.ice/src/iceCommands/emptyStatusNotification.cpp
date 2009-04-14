@@ -1,4 +1,4 @@
-/*
+::/*
  * Copyright (c) Members of the EGEE Collaboration. 2004.
  * See http://www.eu-egee.org/partners/ for details on the copyright
  * holders.
@@ -100,8 +100,9 @@ void emptyStatusNotification::apply( void )
                     << "status notification for job "
                     << theJob.describe()//job_it->describe()
 		    
-                    << " set to " 
+                    << " set to [" 
                     << time_t_to_string( theJob.get_last_empty_notification()/*job_it->get_last_empty_notification()*/ )
+		    << "]"
                     );
     //cache->put( *job_it );
     {

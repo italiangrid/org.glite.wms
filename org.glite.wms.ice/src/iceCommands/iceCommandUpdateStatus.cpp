@@ -309,7 +309,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
  	list<string> params;
 	params.push_back( "creamurl" );
 	params.push_back( "userdn" );
-	db::GetFields getter( params, list<pair<string, string> >() );
+	db::GetFields getter( params, list<pair<string, string> >(), true );
 	//db::GetCreamURLUserDN getter;
 	db::Transaction tnx;
 	tnx.execute( &getter );
@@ -388,7 +388,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  commands.push_front( new emptyStatusNotification( *it ) );
 	}
       
-    } // end block
+    } // end block, unlock global mutex
 
     // Now executes all the commands in the list
       while( ! commands.empty() ) {
