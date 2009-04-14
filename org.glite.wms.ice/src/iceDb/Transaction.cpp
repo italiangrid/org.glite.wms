@@ -152,6 +152,30 @@ namespace {
             } catch( ... ) {
             }
 	    try {
+              string sqlcmd =
+                "CREATE INDEX lastseen ON jobs (last_seen)";
+              do_query( db, sqlcmd );
+            } catch( ... ) {
+            }
+	    try {
+              string sqlcmd =
+                "CREATE INDEX lastemptynotification ON jobs (last_empty_notification)";
+              do_query( db, sqlcmd );
+            } catch( ... ) {
+            }
+	    try {
+              string sqlcmd =
+                "CREATE INDEX stat ON jobs (status)";
+              do_query( db, sqlcmd );
+            } catch( ... ) {
+            }
+	    try {
+              string sqlcmd =
+                "CREATE INDEX killedbyice ON jobs (is_killed_byice)";
+              do_query( db, sqlcmd );
+            } catch( ... ) {
+            }
+	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX userdn_index ON proxy (userdn)";
 	      do_query( db, sqlcmd );
