@@ -215,9 +215,9 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
     string lease_id; // lease ID to return as a result
 
     // Utility variables
-    const string cert_file( job.get_userproxy() );
-    const string cream_url( job.get_creamurl() );
-    const string user_DN( job.get_userdn() );
+    const string cert_file( job.getUserProxyCertificate() );
+    const string cream_url( job.getCreamURL() );
+    const string user_DN( job.getUserDN() );
 
     // Check whether the cache should be cleaned up
     if ( ++m_operation_count > m_operation_count_max ) { // FIXME: Hardcoded default
