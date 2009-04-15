@@ -110,13 +110,14 @@ When the gsissh login fails with the message:
 Permission denied (gssapi-keyex,external-keyx,gssapi-with-mic,gssapi).
 
 Check:
+Is the gridmapfile properly populated? Is there a mapping from the user to sgmdtm01?
+
 Is the gsisshd demon running?
 
 Has the machine a proper host certificate?
 
 Is this host certificate registered into myproxy server at CERN?
 
-Is the gridmapfile properly populated? Is there a mapping from the user to sgmdtm01?
 
 Is the certificates directory properly created onto the vobox?
 
