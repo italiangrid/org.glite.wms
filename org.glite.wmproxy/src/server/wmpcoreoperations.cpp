@@ -463,11 +463,11 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 
 	// Logging Server User ID on syslog
 
-        char time_string[20];
+        char time_string[80];
         struct timeval tv;
         struct tm* ptm;
         gettimeofday(&tv, NULL);
-        ptm = localtime(&tv.tv_sec);
+        ptm = gmtime(&tv.tv_sec);
         strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
 
         string userid_log = "ts="+std::string(time_string);
@@ -559,11 +559,11 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 
         // Logging Server User ID on syslog
 
-	char time_string[20];
+	char time_string[80];
         struct timeval tv;
         struct tm* ptm;
         gettimeofday(&tv, NULL);
-        ptm = localtime(&tv.tv_sec);
+        ptm = gmtime(&tv.tv_sec);
         strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
 
         string userid_log = "ts="+std::string(time_string);
@@ -1555,11 +1555,11 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 
 	        	// Logging Server User ID on syslog
 
-       			char time_string[20];
+       			char time_string[80];
         		struct timeval tv;
         		struct tm* ptm;
         		gettimeofday(&tv, NULL);
-        		ptm = localtime(&tv.tv_sec);
+        		ptm = gmtime(&tv.tv_sec);
         		strftime(time_string, sizeof (time_string), "%Y-%m-%dT%H:%M:%SZ", ptm);
 
         		string userid_log = "ts="+std::string(time_string);
