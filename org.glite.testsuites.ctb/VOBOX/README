@@ -22,7 +22,7 @@ In order to install and configure properly a VOBOX for patch certification purpo
 the following steps must be done:
 
 - Register the VOBOX into the MyProxy server
-Ask Louis.Poncet@cern.ch (or Di.Qing@cern.ch) to modify the configuration
+Ask Louis.Poncet@cern.ch to modify the configuration
 of the MyProxy server in order to include the VOBOX machine.
 
 - Install and configure a VOBOX node
@@ -102,6 +102,23 @@ DN not specified and unable to get DN from user proxy:
 
 The User Proxy Registration not working. Failed to execute vobox-proxy --vo dteam register --force
 Failed to check the timeleft for the user delegated proxy
+
+
+Troubleshooting
+----------------
+When the gsissh login fails with the message:
+Permission denied (gssapi-keyex,external-keyx,gssapi-with-mic,gssapi).
+
+Check:
+Is the gsisshd demon running?
+
+Has the machine a proper host certificate?
+
+Is this host certificate registered into myproxy server at CERN?
+
+Is the gridmapfile properly populated? Is there a mapping from the user to sgmdtm01?
+
+Is the certificates directory properly created onto the vobox?
 
 
 Questions/Bugs
