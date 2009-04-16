@@ -63,7 +63,7 @@ namespace {
                                                                                 
 }
 
-unsigned int  EventLogger::el_s_retries = 3, EventLogger::el_s_sleep = 60;
+unsigned int  EventLogger::el_s_retries = 3, EventLogger::el_s_sleep = 30;
 const char   *EventLogger::el_s_notLogged = "Event not logged, context unset.", *EventLogger::el_s_unavailable = "unavailable";
 const char   *EventLogger::el_s_OK = "OK", *EventLogger::el_s_failed = "Failed";
 
@@ -164,7 +164,7 @@ void EventLogger::testCode( int &code, bool retry )
       }
       else {
 	ts::edglog << logger::setlevel( logger::warning )
-		   << "L&B call got a transient error. Waiting " << el_s_sleep << " seconds and trying again." << endl
+		   << "L&B call got an error (" << code << "). Waiting " << el_s_sleep << " seconds and trying again." << endl
 		   << logger::setlevel( logger::info )
 		   << "Try n. " << this->el_count << "/" << el_s_retries << endl;
 
