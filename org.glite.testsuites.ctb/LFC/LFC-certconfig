@@ -1,9 +1,12 @@
 #The hostname of the LCG File Catalog
-LFC_HOST="lxb7607.cern.ch"
+export LFC_HOST="lxb7608v3.cern.ch"
+export LOGSLOCATION="/tmp"
 
 #VO name
-VO="dteam"
-SAME_VO="dteam"
+#VO="org.glite.voms-test"
+#SAME_VO="org.glite.voms-test"
+export VO="dteam"
+export SAME_VO="dteam"
 
 #Tests to be executed {yes|no}
 CLI="yes"

@@ -70,6 +70,29 @@ fi
 # START #
 #########
 
+
+####################################
+# Create a directory for log files #
+####################################
+
+if [ "x$LOGSLOCATION" != "x" ];then
+  cp=`pwd`
+  id=`date +%y%m%d%H%M%S`
+  loglocation=$cp/logs_$id
+  mkdir -p $loglocation
+else
+  loglocation=$LOGLOCATION/logs_$id
+  mkdir -p $loglocation
+fi
+
+if [ ! -d $loglocation ];then
+  echo   "Error while creating log directory $loglocation"
+  exitFailure
+else
+  echo "Log files will be stored in $loglocation"
+fi
+
+
 echo "START `date` "
 echo "------------------------------------------------"
 
@@ -112,6 +135,8 @@ fi
 # CLI tests #
 #############
 
+pushd cli >> /dev/null
+
 if [ "$CLI" = "yes" ]; then
   echo "*Running CLI test set*"
   tests_list=`cat test-cli.lst`
@@ -122,10 +147,10 @@ if [ "$CLI" = "yes" ]; then
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item $LFC_HOST" > ${item}_result.txt
-    ./$item $LFC_HOST >> ${item}_result.txt 2>&1
+    echo "./$item $LFC_HOST" > $loglocation/${item}_result.txt
+    ./$item $LFC_HOST >> $loglocation/${item}_result.txt 2>&1
     res=$?
-    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
       failed=yes
@@ -138,9 +163,13 @@ else
   echo "*CLI tests skipped*"
 fi
 
+popd >> /dev/null
+
 ##############
 # API_PYTHON #
 ##############
+
+pushd python-api >> /dev/null
 
 #These SAME variables are needed to run the python scripts
 export SAME_OK=0
@@ -155,10 +184,10 @@ if [ "$API_PYTHON" = "yes" ]; then
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item $LFC_HOST" > ${item}_result.txt
-    ./$item $LFC_HOST >> ${item}_result.txt 2>&1
+    echo "./$item $LFC_HOST" > $loglocation/${item}_result.txt
+    ./$item $LFC_HOST >> $loglocation/${item}_result.txt 2>&1
     res=$?
-    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
       failed=yes
@@ -171,9 +200,13 @@ else
   echo "*API_PYTHON tests skipped*"
 fi
 
+popd >> /dev/null
+
 ############
 # SEQUENCE #
 ############
+
+pushd sequence >> /dev/null
 
 #These SAME variables are needed to run the python scripts
 #export SAME_OK=0
@@ -188,10 +221,10 @@ if [ "$SEQUENCE" = "yes" ]; then
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item $LFC_HOST" > ${item}_result.txt
-    ./$item $LFC_HOST >> ${item}_result.txt 2>&1
+    echo "./$item $LFC_HOST" > $loglocation/${item}_result.txt
+    ./$item $LFC_HOST >> $loglocation/${item}_result.txt 2>&1
     res=$?
-    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
       failed=yes
@@ -205,6 +238,7 @@ else
 fi
 
 
+popd >> /dev/null
 
 popd >> /dev/null
 
@@ -221,7 +255,7 @@ if [ $failed = "yes" ]; then
   echo "The following tests failed:"
   for item in ${tests_failed[*]}
   do
-    echo "$item: results in tests/${item}_result.txt"
+    echo "$item: results in $loglocation/${item}_result.txt"
   done
 else
     echo "TEST_PASSED"
