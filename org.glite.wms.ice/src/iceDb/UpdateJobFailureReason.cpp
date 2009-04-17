@@ -25,6 +25,9 @@
 #include "boost/algorithm/string.hpp"
 #include <sstream>
 
+#include "boost/algorithm/string.hpp"
+#include "boost/regex.hpp"
+
 using namespace glite::wms::ice::db;
 
 using namespace std;
@@ -48,6 +51,9 @@ void UpdateJobFailureReason::execute( sqlite3* db ) throw ( DbOperationException
 //       " failure_reason = \'%1%\' where gridjobid=\'%1%\'" ) % m_reason % m_gid );
     
     ostringstream sqlcmd("");
+    
+    boost::replace_all( m_reason, "'", "`" );
+    
     sqlcmd <<   "UPDATE jobs SET " << " failure_reason = \'" << m_reason << "\' WHERE gridjobid=\'" << m_gid << "\'";
     
     do_query( db, sqlcmd.str() );

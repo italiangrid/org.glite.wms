@@ -68,7 +68,7 @@ void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 
 
     ostringstream sqlcmd("");
-    sqlcmd << "SELECT ("\
+    sqlcmd << "SELECT "\
       "gridjobid,"		     \
       "creamjobid,"		     \
       "jdl,"			     \

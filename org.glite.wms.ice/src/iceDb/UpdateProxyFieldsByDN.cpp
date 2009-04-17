@@ -24,6 +24,9 @@
 #include "UpdateProxyFieldsByDN.h"
 #include <sstream>
 
+#include "boost/algorithm/string.hpp"
+#include "boost/regex.hpp"
+
 using namespace glite::wms::ice::db;
 
 using namespace std;
@@ -45,7 +48,11 @@ void UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException&
         it!=m_nameval_list.end();
 	++it)
     {
-      sqlcmd << it->first << "=\'" << it->second << "\',";
+    
+      string value = it->second;
+      boost::replace_all( value, "'", "`" );
+    
+      sqlcmd << it->first << "=\'" << value << "\',";
     }
     
     string tmp = sqlcmd.str();
