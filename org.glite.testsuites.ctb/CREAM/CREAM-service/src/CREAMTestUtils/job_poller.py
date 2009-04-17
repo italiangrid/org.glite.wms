@@ -141,6 +141,9 @@ class JobPoller(threading.Thread):
                                         JobPoller.logger.info(
                                               "Execution terminated for job: %s (%s, %s)"  
                                               % (currId, currStatus, currReason))
+                                        
+                                        if self.parameters.nopurge:
+                                            self.finishedJobs.dontPurge(currId)
                                     else:
                                         JobPoller.logger.debug("Status %s for %s" % (currStatus, currId))
                                 currId = None

@@ -68,6 +68,9 @@ class JobMonitor(threading.Thread):
                         JobMonitor.logger.info("Terminated job %s with status (%s, %s)" \
                                                         % (job, status, fReason))
                         self.tableOfResults[status] += 1
+                        
+                        if self.parameters.nopurge:
+                            self.finishedJobs.dontPurge(currId) 
                             
                 self.notified = []
                         

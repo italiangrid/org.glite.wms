@@ -69,6 +69,8 @@ Set the location of the configuration file for log4py, \
 (DEFAULT as provided by log4py)''')
         self.register('interactive','b', optChar='', 
                       descr='Enable the test control via terminal (EXPERIMENTAL)')
+        self.register('nopurge','b', optChar='',
+                      descr='Disable the purge operation for all jobs submitted (CRITICAL)')
         
         
     def addEnvItem(self, item):
