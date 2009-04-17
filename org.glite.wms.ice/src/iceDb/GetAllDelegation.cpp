@@ -24,6 +24,7 @@
 #include "GetAllDelegation.h"
 #include <string>
 #include <vector>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 using namespace std;
@@ -63,6 +64,10 @@ void GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
     sqlcmd = "SELECT * FROM delegation;";
 
   list<vector<string> > tmp;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
   do_query( db, sqlcmd, fetch_fields_callback, &tmp );
   
   if( tmp.size() ) {

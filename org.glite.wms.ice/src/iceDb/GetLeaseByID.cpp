@@ -22,6 +22,7 @@
  */
 
 #include "GetLeaseByID.h"
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -64,6 +65,10 @@ void GetLeaseByID::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd << m_leaseid << "\';";
 
   boost::tuple< string, string, time_t, string> tmp;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
   do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   
   if( !tmp.get<0>().empty() ) {

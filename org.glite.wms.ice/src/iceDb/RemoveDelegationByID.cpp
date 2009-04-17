@@ -25,6 +25,8 @@
 
 #include "boost/format.hpp"
 
+#include <iostream>
+
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -34,5 +36,9 @@ void RemoveDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& 
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM delegation " \
       " where delegationid = \'%1%\'; " ) % m_id );
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
     do_query( db, sqlcmd );
 }

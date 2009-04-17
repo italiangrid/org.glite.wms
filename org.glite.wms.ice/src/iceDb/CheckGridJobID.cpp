@@ -25,13 +25,11 @@
 
 #include "boost/algorithm/string.hpp"
 #include "boost/format.hpp"
-//#include "boost/archive/text_iarchive.hpp"
+#include <iostream>
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
-//#include <sstream>
-
 using namespace glite::wms::ice::db;
-//using namespace glite::wms::ice::util;
+
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
@@ -60,6 +58,9 @@ void CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 					    "select gridjobid from jobs" \
 					    " where gridjobid = \'%1%\';" ) % m_gridjobid );
   string gid;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
   do_query( db, sqlcmd, fetch_jdl_callback, &gid );
 

@@ -33,7 +33,7 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
-// #include <sstream>
+#include <iostream>
 // #include <cstdlib>
 
 namespace api = glite::ce::cream_client_api;
@@ -91,6 +91,10 @@ void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
     sqlcmd << "SELECT * FROM jobs;";
 
   list< vector<string> > jobs;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
   do_query( db, sqlcmd.str(), fetch_jobs_callback, &jobs );
 
   for( list< vector<string> >::const_iterator it=jobs.begin();

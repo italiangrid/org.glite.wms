@@ -24,6 +24,7 @@
 #include "CreateJob.h"
 
 #include <sstream>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
@@ -95,6 +96,9 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.getDelegationId() <<"\',"
 	 << "\'"<< m_theJob.get_last_empty_notification() <<"\',"
 	 << "\'"<< m_theJob.getLastSeen()  <<"\')";
-			      
+	
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+		      
   do_query( db, sqlcmd.str() );
 }

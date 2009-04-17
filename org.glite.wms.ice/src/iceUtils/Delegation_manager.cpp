@@ -31,7 +31,7 @@
 #include <stdexcept>
 #include <cerrno>
 
-#include "iceDb/GetFields.h"
+//#include "iceDb/GetFields.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/GetDelegation.h"
 #include "iceDb/GetFieldsCount.h"

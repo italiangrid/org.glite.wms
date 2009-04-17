@@ -24,6 +24,7 @@
 #include "UpdateJobSequenceCode.h"
 #include "boost/algorithm/string.hpp"
 #include <sstream>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 
@@ -49,6 +50,9 @@ void UpdateJobSequenceCode::execute( sqlite3* db ) throw ( DbOperationException&
     
     ostringstream sqlcmd("");
     sqlcmd <<   "UPDATE jobs SET " << " sequence_code = \'" << m_seqcode << "\' WHERE gridjobid=\'" << m_gid << "\'";
-    
+     
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
     do_query( db, sqlcmd.str() );
 }

@@ -29,6 +29,7 @@
 #include "boost/archive/text_oarchive.hpp"
 
 #include <sstream>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
@@ -62,5 +63,9 @@ void UpdateJob::execute( sqlite3* db ) throw ( DbOperationException& )
       " gridjobid = \'%3%\' " \
       " last_seen = %4% " \
       " last_empty_notification = %5%" ) % m_job.getCompleteCreamJobID() % m_serialized_job % m_job.getGridJobID() % m_job.getLastSeen() % m_job.get_last_empty_notification() );
+ 
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
     do_query( db, sqlcmd );
 }

@@ -22,6 +22,7 @@
  */
 
 #include "GetFieldsCount.h"
+#include <iostream>
 #include <sstream>
 
 using namespace glite::wms::ice::db;
@@ -95,6 +96,9 @@ void GetFieldsCount::execute( sqlite3* db ) throw ( DbOperationException& )
     } else {
     sqlcmd << ";";
   }
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, &m_fields_count );
 }

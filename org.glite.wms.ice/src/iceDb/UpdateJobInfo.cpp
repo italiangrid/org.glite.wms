@@ -23,7 +23,7 @@
 
 #include "UpdateJobInfo.h"
 //#include "boost/algorithm/string.hpp"
-//#include <sstream>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 
@@ -54,6 +54,9 @@ void UpdateJobInfo::execute( sqlite3* db ) throw ( DbOperationException& )
 	   << m_theJob.get_num_logged_status_changes() << "\'"
 	   << " WHERE gridjobid=\'"
 	   << m_theJob.getGridJobID() << "\';";
-    
+     
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
     do_query( db, sqlcmd.str() );
 }

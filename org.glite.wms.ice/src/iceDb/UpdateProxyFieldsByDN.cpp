@@ -23,6 +23,7 @@
 
 #include "UpdateProxyFieldsByDN.h"
 #include <sstream>
+#include <iostream>
 
 #include "boost/algorithm/string.hpp"
 #include "boost/regex.hpp"
@@ -62,6 +63,9 @@ void UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException&
     sqlcmd.str( "" );
     
     sqlcmd << tmp << " WHERE userdn=\'" << m_dn << "\';";
-    
+     
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
     do_query( db, sqlcmd.str() );
 }

@@ -25,6 +25,8 @@
 
 #include "boost/format.hpp"
 
+#include <iostream>
+
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -39,5 +41,9 @@ void RemoveJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
     string sqlcmd = boost::str( boost::format( 
       "delete from jobs " \
       " where complete_cream_jobid = \'%1%\'; " ) % m_creamjobid );
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
     do_query( db, sqlcmd );
 }

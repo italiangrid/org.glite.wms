@@ -24,6 +24,7 @@
 #include "CheckDelegationByID.h"
 #include <sstream>
 #include <vector>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 using namespace std;
@@ -53,6 +54,10 @@ void CheckDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd << m_delegid << "\';";
 
   string tmp;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
   do_query( db, sqlcmd.str(), fetch_field_callback, &tmp );
   
   if( !tmp.empty() ) {

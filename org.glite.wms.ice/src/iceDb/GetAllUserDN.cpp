@@ -23,7 +23,7 @@
 
 #include "GetAllUserDN.h"
 //#include "iceUtils/iceConfManager.h"
-
+#include <iostream>
 
 
 // #include "glite/wms/common/configuration/Configuration.h"
@@ -66,5 +66,8 @@ void GetAllUserDN::execute( sqlite3* db ) throw ( DbOperationException& )
   else
     sqlcmd = "select userdn from jobs where proxy_renewable='0';" ;
   
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
   do_query( db, sqlcmd, fetch_grid_job_id_callback, &m_result );
 }

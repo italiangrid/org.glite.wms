@@ -28,6 +28,7 @@
 #include "boost/archive/text_iarchive.hpp"
 //#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
+#include <iostream>
 #include <sstream>
 
 using namespace glite::wms::ice::db;
@@ -62,6 +63,10 @@ void GetStatusInfoByCompleteCreamJobID::execute( sqlite3* db ) throw ( DbOperati
       "select gridjobid,complete_cream_jobid,num_logged_status_changes,status from jobs" \
       " where complete_cream_jobid = \'%1%\';" ) % m_creamjobid );
     //string serialized_job;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
     do_query( db, sqlcmd, fetch_jdl_callback, &m_info );
     
     if( !m_info.get<0>().empty() )

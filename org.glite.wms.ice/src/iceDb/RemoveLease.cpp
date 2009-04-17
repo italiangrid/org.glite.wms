@@ -25,6 +25,8 @@
 
 #include "boost/format.hpp"
 
+#include <iostream>
+
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -34,5 +36,9 @@ void RemoveLease::execute( sqlite3* db ) throw ( DbOperationException& )
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM lease " \
       " where userdn = \'%1%\' AND creamurl = \'%2%\'; " ) % m_userdn % m_creamurl );
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
     do_query( db, sqlcmd );
 }

@@ -22,6 +22,7 @@
  */
 
 #include "UpdateLastEmpty.h"
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 
@@ -42,6 +43,9 @@ void UpdateLastEmpty::execute( sqlite3* db ) throw ( DbOperationException& )
 	   << m_theJob.get_last_empty_notification() << "\' "
 	   << " WHERE gridjobid=\'"
 	   << m_theJob.getGridJobID() << "\';";
-    
+     
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
     do_query( db, sqlcmd.str() );
 }

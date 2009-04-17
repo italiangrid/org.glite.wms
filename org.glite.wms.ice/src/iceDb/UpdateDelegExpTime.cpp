@@ -23,6 +23,7 @@
 
 #include "UpdateDelegExpTime.h"
 #include <sstream>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 
@@ -43,5 +44,8 @@ void UpdateDelegExpTime::execute( sqlite3* db ) throw ( DbOperationException& )
 	   <<  m_theJob.getDelegationExpirationTime() << "\' WHERE gridjobid=\'"
 	   << m_theJob.getGridJobID() << "\';";
     
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
     do_query( db, sqlcmd.str() );
 }

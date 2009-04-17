@@ -33,7 +33,6 @@
 #include "DNProxyManager.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
-//#include "iceDb/GetAllJobs.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJobByGid.h"
@@ -222,7 +221,7 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	  continue;
 	}
 	
-	proxy_time_end = thisBetterPrx.get<1>();
+	//proxy_time_end = thisBetterPrx.get<1>();
 
 	/**
 	   If the better proxy for this delegation ID is expired, it

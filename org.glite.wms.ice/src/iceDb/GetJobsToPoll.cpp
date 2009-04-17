@@ -32,6 +32,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
+#include <iostream>
 #include <sstream>
 #include <cstdlib>
 
@@ -162,6 +163,10 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
     }
 
     list< vector<string> > jobs;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
     do_query( db, sqlcmd, fetch_jobs_callback, &jobs );
 
     for( list< vector<string> >::iterator it=jobs.begin();

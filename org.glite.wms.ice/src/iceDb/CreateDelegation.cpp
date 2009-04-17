@@ -24,6 +24,7 @@
 #include "CreateDelegation.h"
 
 #include <sstream>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 using namespace std;
@@ -43,6 +44,9 @@ void CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'" << ( m_renewable ? "1" : "0" ) << "\',"
 	 << "\'" << m_myproxyurl << "\'"
 	 << ");";
-   
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
   do_query( db, sqlcmd.str() );
 }

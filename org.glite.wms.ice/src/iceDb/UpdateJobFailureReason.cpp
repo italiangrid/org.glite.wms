@@ -24,6 +24,7 @@
 #include "UpdateJobFailureReason.h"
 #include "boost/algorithm/string.hpp"
 #include <sstream>
+#include <iostream>
 
 #include "boost/algorithm/string.hpp"
 #include "boost/regex.hpp"
@@ -55,6 +56,9 @@ void UpdateJobFailureReason::execute( sqlite3* db ) throw ( DbOperationException
     boost::replace_all( m_reason, "'", "`" );
     
     sqlcmd <<   "UPDATE jobs SET " << " failure_reason = \'" << m_reason << "\' WHERE gridjobid=\'" << m_gid << "\'";
-    
+     
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
     do_query( db, sqlcmd.str() );
 }

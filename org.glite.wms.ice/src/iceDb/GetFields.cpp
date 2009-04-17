@@ -23,6 +23,7 @@
 
 #include "GetFields.h"
 #include <sstream>
+#include <iostream>
 
 using namespace glite::wms::ice::db;
 using namespace std;
@@ -105,6 +106,9 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
     } else {
     sqlcmd << ";";
   }
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    std::cout << "Executing query [" << sqlcmd.str() << "]" << std::endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, &m_result );
 }

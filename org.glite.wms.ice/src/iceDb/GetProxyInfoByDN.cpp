@@ -22,6 +22,7 @@
  */
 
 #include "GetProxyInfoByDN.h"
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -62,6 +63,10 @@ void GetProxyInfoByDN::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd << m_userdn << "\';";
 
   vector<string> tmp;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+
   do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   
   if( tmp.size() ) {

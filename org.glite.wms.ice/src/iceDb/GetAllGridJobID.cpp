@@ -27,6 +27,8 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
+#include <iostream>
+
 using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
@@ -55,5 +57,8 @@ void GetAllGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 
   string sqlcmd = "SELECT gridjobid FROM jobs;" ;
   
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+
   do_query( db, sqlcmd, fetch_grid_job_id_callback, &m_result );
 }
