@@ -39,10 +39,12 @@ namespace glite {
 	  const std::list<std::string>                          m_fields_to_retrieve;
 	  const std::list<std::pair<std::string, std::string> > m_clause;
 	  bool                                                  m_distinct;
+	  bool 							m_use_or;
 
 	public:
-	  GetFields( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause, const bool distinct = false );
-	  
+	  GetFields( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause, const bool distinct = false);
+	  void use_or_clause( void ) { m_use_or = true; }
+	  void use_and_clause( void ) { m_use_or = false; }
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  
 	  /**

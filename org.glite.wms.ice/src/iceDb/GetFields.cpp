@@ -34,7 +34,8 @@ GetFields::GetFields( const std::list<std::string> fields_to_retrieve, const std
   AbsDbOperation(),
   m_fields_to_retrieve( fields_to_retrieve ),
   m_clause( clause ),
-  m_distinct( distinct )
+  m_distinct( distinct ),
+  m_use_or( false )
 {
 }
 
@@ -93,7 +94,11 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
 	   it != m_clause.end();
 	   ++it)
 	{
-	  sqlcmd << it->first << "=\'" << it->second << "\' AND ";
+	  sqlcmd << it->first << "=\'" << it->second << "\' " ;
+	  if(m_use_or)
+	    sqlcmd << "OR ";
+	  else
+	    sqlcmd << "AND ";
 	}
 
       string tmp = sqlcmd.str();
