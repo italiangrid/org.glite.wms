@@ -315,7 +315,8 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
     if ( proxy.empty() ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
                        << "A Proxy file for DN [" << user_dn
-                       << "] is not available"
+                       << "] CREAM-URL ["
+		       << cream_url << "] is not available"
                        );
         // Cannot process the list of jobs submitted by this user;
         // the scope_guard will remove the jobs.
