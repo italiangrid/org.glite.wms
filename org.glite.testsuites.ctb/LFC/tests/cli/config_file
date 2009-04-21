@@ -3,7 +3,7 @@ export vo_name=$SAME_VO
 export SE=lxbra1910.cern.ch
 export LCG_GFAL_INFOSYS=lxbra2305.cern.ch:2170
 export FILE=config_file
-export LFCDIR=/grid/$SAME_VO/LFC/$LFC_HOST
+export LFCDIR=/grid/$SAME_VO/LFC-`date +%s`/$LFC_HOST
 #export SHORT=0 		
 
 # Check all access (pointed in var MODE)
