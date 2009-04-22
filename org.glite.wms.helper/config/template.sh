@@ -286,7 +286,8 @@ doExit() # 1 - status
       retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
       globus_copy_status=$?
     else
-      jw_echo "maradona not readable"
+      jw_echo "maradona not readable, so not sent"
+      globus_copy_status=0
     fi
   else
     jw_echo "maradona was found unset or empty"
