@@ -6,6 +6,74 @@ trap 'fatal_error "Job has been terminated (got SIGINT)" "OSB"' INT
 trap 'fatal_error "Job has been terminated (got SIGTERM)" "OSB"' TERM
 #trap 'warning "Job has been signalled (got SIGUSR1)" "OSB"' SIGUSR1
 
+# the bash builtin kill command is sometimes buggy with process groups
+enable -n kill
+
+##
+## initializations
+##
+
+# explicitly addresses interoperability with OSG
+if [ -r "${OSG_GRID}/setup.sh" ]; then
+  source "${OSG_GRID}/setup.sh" &>/dev/null
+fi
+
+if [ -n "${__gatekeeper_hostname}" ]; then
+  export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
+fi
+
+if [ -n "${__jobid}" ]; then
+  export GLITE_WMS_JOBID="${__jobid}"
+fi
+
+export GLITE_WMS_SEQUENCE_CODE="$1"
+shift
+
+if [ -z "${GLITE_WMS_LOCATION}" ]; then
+  export GLITE_WMS_LOCATION="${GLITE_LOCATION:-/opt/glite}"
+fi
+
+if [ -z "${EDG_WL_LOCATION}" ]; then
+  export EDG_WL_LOCATION="${EDG_LOCATION:-/opt/edg}"
+fi
+
+if [ -n "${__brokerinfo}" ]; then
+  export GLITE_WMS_RB_BROKERINFO="`pwd`/${__brokerinfo}"
+fi
+
+lb_logevent=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
+if [ ! -x "$lb_logevent" ]; then
+  lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
+fi
+
+host="`hostname -f`"
+maradona="${__jobid_to_filename}.output"
+workdir="`pwd`"
+
+if [ "X${__input_base_url##*/}" != "X" ]; then
+  __input_base_url="${__input_base_url}/"
+fi
+
+if [ "X${__output_base_url##*/}" != "X" ]; then
+  __output_base_url="${__output_base_url}/"
+fi
+
+if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
+  __copy_retry_count=6
+else
+  __copy_retry_count=${GLITE_LOCAL_COPY_RETRY_COUNT}
+fi
+
+if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
+  __copy_retry_first_wait=300
+else
+  __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
+fi
+
+##
+# functions definitions
+##
+
 do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
 {
   $1 "$2" "$3" 2>"$4"
@@ -213,10 +281,21 @@ doExit() # 1 - status
 
   jw_echo "jw exit status = ${jw_status}"
 
-  retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
-  globus_copy_status=$?
+  if [ -n "${maradona}" ]; then
+    if [ -r "${maradona}" ]; then
+      retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+      globus_copy_status=$?
+    else
+      jw_echo "maradona not readable"
+    fi
+  else
+    jw_echo "maradona was found unset or empty"
+    globus_copy_status=0
+  fi
 
-  rm -rf "../${newdir}"
+  if [ -n "${newdir}" ]; then
+    rm -rf "../${newdir}"
+  fi
 
   kill -9 $proxy_watchdog -$user_job_pid 2>/dev/null
 
@@ -528,61 +607,7 @@ OSB_transfer()
   done
 }
 
-# the bash builtin kill command is sometimes buggy with process groups
-enable -n kill
-
-# explicitly addresses some interop issue
-if [ -r "${OSG_GRID}/setup.sh" ]; then
-  source "${OSG_GRID}/setup.sh" &>/dev/null
-fi
-
-if [ -n "${__gatekeeper_hostname}" ]; then
-  export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
-fi
-
-if [ -n "${__jobid}" ]; then
-  export GLITE_WMS_JOBID="${__jobid}"
-fi
-
-export GLITE_WMS_SEQUENCE_CODE="$1"
-shift
-
-if [ -z "${GLITE_WMS_LOCATION}" ]; then
-  export GLITE_WMS_LOCATION="${GLITE_LOCATION:-/opt/glite}"
-fi
-
-if [ -z "${EDG_WL_LOCATION}" ]; then
-  export EDG_WL_LOCATION="${EDG_LOCATION:-/opt/edg}"
-fi
-
-lb_logevent=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
-if [ ! -x "$lb_logevent" ]; then
-  lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
-fi
-
-host="`hostname -f`"
-
 log_event "Running"
-
-if [ "X${__input_base_url##*/}" != "X" ]; then
-  __input_base_url="${__input_base_url}/"
-fi
-
-if [ "X${__output_base_url##*/}" != "X" ]; then
-  __output_base_url="${__output_base_url}/"
-fi
-
-if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
-  __copy_retry_count=6
-else
-  __copy_retry_count=${GLITE_LOCAL_COPY_RETRY_COUNT}
-fi
-
-if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
-  __copy_retry_first_wait=300
-else
-  __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
-fi
 
 max_osb_size=${__max_outputsandbox_size}
 is_integer ${GLITE_LOCAL_MAX_OSB_SIZE}
@@ -615,21 +640,18 @@ if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   fi
 fi
 
-if [ ${__create_subdir} -eq 1 ]; then
-  if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
-    # normal or interactive
-    newdir="${__jobid_to_filename}"
-    mkdir ${newdir}
-    cd ${newdir}
-  elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
-    # MPI (LSF or PBS)
-    newdir="${__jobid_to_filename}"
-    mkdir -p .mpi/${newdir}
-    if [ $? != 0 ]; then
-      fatal_error "Cannot create .mpi/${newdir} directory"
-    fi
-    cd .mpi/${newdir}
+if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
+  # MPI (LSF or PBS)
+  newdir="${__jobid_to_filename}"
+  mkdir -p .mpi/${newdir}
+  if [ $? != 0 ]; then
+    fatal_error "Cannot create .mpi/${newdir} directory"
   fi
+  cd .mpi/${newdir}
+else #if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
+  newdir="${__jobid_to_filename}"
+  mkdir ${newdir}
+  cd ${newdir}
 fi
 
 # the test -w on work dir is unsuitable on AFS machines
@@ -641,13 +663,6 @@ else
 fi
 unset tmpfile
 
-workdir="`pwd`"
-
-if [ -n "${__brokerinfo}" ]; then
-  export GLITE_WMS_RB_BROKERINFO="`pwd`/${__brokerinfo}"
-fi
-
-maradona="${__jobid_to_filename}.output"
 touch "${maradona}"
 
 if [ -z "${GLOBUS_LOCATION}" ]; then
@@ -795,11 +810,7 @@ if [ ${__job_type} -eq 0 ]; then # normal
   executable="${__job}"
 elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
   executable="mpirun"
-  arguments="-np ${__nodes} -machinefile ${HOSTFILE} ${__job}"
-# support for interactive jobs is dismissed
-#elif [ ${__job_type} -eq 3 ]; then # interactive
-#  executable="./glite-wms-job-agent"
-#  arguments="$BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
+  __arguments="-np ${__nodes} -machinefile ${HOSTFILE} ${__job}"
 fi
 
 if [ ${__job_type} -ne 3 ]; then # all but interactive
@@ -816,9 +827,6 @@ if [ ${__job_type} -ne 3 ]; then # all but interactive
   else
     std_error=" 2>/dev/null "
   fi
-# support for interactive jobs is dismissed
-#else # interactive
-#  ./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${arguments}'
 fi
 
 (
