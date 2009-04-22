@@ -46,10 +46,6 @@ if [ ! -x "$lb_logevent" ]; then
   lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
 fi
 
-host="`hostname -f`"
-maradona="${__jobid_to_filename}.output"
-workdir="`pwd`"
-
 if [ "X${__input_base_url##*/}" != "X" ]; then
   __input_base_url="${__input_base_url}/"
 fi
@@ -69,6 +65,11 @@ if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
 else
   __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
 fi
+
+host="`hostname -f`"
+maradona="${__jobid_to_filename}.output"
+workdir="`pwd`"
+newdir="${__jobid_to_filename}"
 
 ##
 # functions definitions
@@ -643,15 +644,16 @@ fi
 
 if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
   # MPI (LSF or PBS)
-  newdir="${__jobid_to_filename}"
   mkdir -p .mpi/${newdir}
   if [ $? != 0 ]; then
     fatal_error "Cannot create .mpi/${newdir} directory"
   fi
   cd .mpi/${newdir}
 else #if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
-  newdir="${__jobid_to_filename}"
   mkdir ${newdir}
+  if [ $? != 0 ]; then
+    fatal_error "Cannot create ${newdir} directory"
+  fi
   cd ${newdir}
 fi
 
