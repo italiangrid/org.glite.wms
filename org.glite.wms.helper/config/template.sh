@@ -67,9 +67,9 @@ else
 fi
 
 host="`hostname -f`"
-maradona="${__jobid_to_filename}.output"
-workdir="`pwd`"
 newdir="${__jobid_to_filename}"
+maradona="${newdir}.output"
+workdir="`pwd`"
 
 ##
 # functions definitions
@@ -131,7 +131,8 @@ log_done_failed() # 1 - exit code
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="Done"\
-   --status_code=FAILED\
+    --reason="$1"\
+    --status_code=FAILED\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
@@ -175,7 +176,7 @@ fatal_error() # 1 - reason, 2 - transfer OSB
 {
   jw_echo "$1"
   log_done_failed "$1"
-  if [ $2 -eq "OSB" ]; then
+  if [ "x$2" -eq "xOSB" ]; then
     OSB_transfer
   fi
   doExit 1
@@ -600,7 +601,7 @@ OSB_transfer()
         fi
       fi
       if [ $? != 0 ]; then
-        fatal_error "Cannot upload ${file} into ${f}" "Done"
+        fatal_error "Cannot upload file://$s into $d"
       fi
     else
       jw_echo "Cannot read or missing file ${__wmp_output_file[$current_file]}"
@@ -608,6 +609,26 @@ OSB_transfer()
     let "++current_file"
   done
 }
+
+##
+## let's start it up
+##
+
+if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
+  # MPI (LSF or PBS)
+  mkdir -p .mpi/${newdir}
+  if [ $? != 0 ]; then
+    fatal_error "Cannot create .mpi/${newdir} directory"
+  fi
+  cd .mpi/${newdir}
+else #if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
+  mkdir ${newdir}
+  if [ $? != 0 ]; then
+    fatal_error "Cannot create ${newdir} directory"
+  fi
+  cd ${newdir}
+fi
+workdir="`pwd`"
 
 log_event "Running"
 
@@ -637,24 +658,9 @@ unset vo_hook
 
 # customization point #1
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
-  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
+  if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
   fi
-fi
-
-if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
-  # MPI (LSF or PBS)
-  mkdir -p .mpi/${newdir}
-  if [ $? != 0 ]; then
-    fatal_error "Cannot create .mpi/${newdir} directory"
-  fi
-  cd .mpi/${newdir}
-else #if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
-  mkdir ${newdir}
-  if [ $? != 0 ]; then
-    fatal_error "Cannot create ${newdir} directory"
-  fi
-  cd ${newdir}
 fi
 
 # the test -w on work dir is unsuitable on AFS machines
@@ -703,7 +709,7 @@ do
   fi
 done
 
-if [ -f "${__job}" ]; then
+if [ -r "${__job}" ]; then
   chmod +x "${__job}" 2>/dev/null
 else
   fatal_error "${__job} not found or unreadable"
@@ -711,7 +717,7 @@ fi
 
 # user script (before taking the token, shallow-sensitive)
 if [ -n "${__prologue}" ]; then
-  if [ -f "${__prologue}" ]; then
+  if [ -r "${__prologue}" ]; then
     for env in ${__environment[@]}
     do
       eval export $env
@@ -725,15 +731,6 @@ if [ -n "${__prologue}" ]; then
   else
     fatal_error "prologue ${__prologue} not found"
   fi
-fi
-
-if [ ${__job_type} -eq 3 ]; then # interactive jobs
-  base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`} #TODO %[xdigit][xdigit] handling
-  for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
-    retry_copy "globus-url-copy" "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
-    chmod +x ${workdir}/${f}
-  done
-  retry_copy "globus-url-copy" "${base_url}/${GLITE_LOCATION}/lib/libglite-wms-grid-console-agent.so.0" "file://${workdir}/libglite-wms-grid-console-agent.so.0"
 fi
 
 if [ ${__perusal_support} -eq 1 ]; then
@@ -855,7 +852,7 @@ fi
 
   # customization point
   if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
-    if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1_5.sh" ]; then
+    if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1_5.sh" ]; then
       . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1_5.sh"
     fi
   fi
@@ -881,7 +878,7 @@ fi
 
 # customization point #2
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
-  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
+  if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
   fi
 fi
@@ -940,7 +937,7 @@ if [ ${__output_data} -eq 1 ]; then
 fi
 
 if [ -n "${__epilogue}" ]; then
-  if [ -f "${__epilogue}" ]; then
+  if [ -r "${__epilogue}" ]; then
     for env in ${__environment[@]}
     do
       eval export $env
@@ -976,7 +973,7 @@ fi
 
 # customization point #3
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
-  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
+  if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
   fi
 fi
