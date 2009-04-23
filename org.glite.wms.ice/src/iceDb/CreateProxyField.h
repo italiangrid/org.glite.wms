@@ -40,7 +40,7 @@ namespace db {
     class CreateProxyField : public AbsDbOperation { 
     public:
         CreateProxyField( const std::string& userdn,
-			  const std::string proxyfile,
+			  const std::string& proxyfile,
 			  const time_t exptime,
 			  const long long counter );
 			  

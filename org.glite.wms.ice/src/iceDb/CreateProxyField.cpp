@@ -30,7 +30,7 @@ using namespace glite::wms::ice::db;
 using namespace std;
 
 CreateProxyField::CreateProxyField( const std::string& userdn,
-			  const std::string proxyfile,
+			  const std::string& proxyfile,
 			  const time_t exptime,
 			  const long long counter ) :
   m_userdn( userdn),

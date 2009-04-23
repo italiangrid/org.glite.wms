@@ -41,7 +41,6 @@ void printhelp( void ) {
        << "  \t\t\tof those specified as option argument; more states can"<<endl
        << "  \t\t\tbe ',' separated and they must be:"<<endl;
   cout << "\t\t\tREGISTERED"<<endl;
-  cout << "\t\t\tREGISTERED"<<endl;
   cout << "\t\t\tPENDING"<<endl;
   cout << "\t\t\tIDLE"<<endl;
   cout << "\t\t\tRUNNING"<<endl;
