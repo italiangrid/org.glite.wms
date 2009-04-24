@@ -75,6 +75,18 @@ workdir="`pwd`"
 # functions definitions
 ##
 
+kill_with_children() { # 1 - parent PID
+ppid=$1
+kill -STOP $ppid
+kill_list=$ppid
+for i in `ps -ef | awk '$3 == '${ppid}' { print $2 }'`
+do
+  kill_list="$kill_list $i"
+done
+kill -9 $kill_list
+unset kill_list
+}
+
 do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
 {
   $1 "$2" "$3" 2>"$4"
@@ -256,7 +268,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
       let "transfer_timeout--"
     done
     if [ $transfer_timeout -le 0 ]; then
-      kill -9 $transfer_watchdog
+      kill_with_children $transfer_watchdog
       log_event_reason "Running" "Hanging transfer"
       return 1
     else
@@ -300,7 +312,8 @@ doExit() # 1 - status
     rm -rf "../${newdir}"
   fi
 
-  kill -9 $proxy_watchdog -$user_job_pid 2>/dev/null
+  kill_with_children $proxy_watchdog 
+  kill -9 -$user_job_pid 2>/dev/null
 
   if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
@@ -810,7 +823,7 @@ if [ ${__job_type} -eq 0 ]; then # normal
   executable="${__job}"
 elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
   executable="mpirun"
-  __arguments="-np ${__nodes} -machinefile ${HOSTFILE} ${__job}"
+  __arguments="-np ${__nodes} -machinefile ${hostfile} ${__job}"
 fi
 
 if [ ${__job_type} -ne 3 ]; then # all but interactive
@@ -862,7 +875,7 @@ fi
 
   wait $user_job_pid
   user_job_status=$?
-  kill -9 $proxy_watchdog
+  kill_with_children $proxy_watchdog
   exit $user_job_status
 )
 status=$?
