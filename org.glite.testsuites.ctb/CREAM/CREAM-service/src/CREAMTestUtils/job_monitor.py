@@ -39,7 +39,7 @@ class JobMonitor(threading.Thread):
         else:
             jobList = self.finishedJobs
         if len(jobList)>0:
-            job_utils.eraseJobs(jobList)
+            job_utils.eraseJobs(jobList, timeout=self.parameters.sotimeout)
         self.finishedJobs.clear()
 
     def run(self):

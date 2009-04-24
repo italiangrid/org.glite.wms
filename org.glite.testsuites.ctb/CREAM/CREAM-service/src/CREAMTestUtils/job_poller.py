@@ -44,7 +44,7 @@ class JobPoller(threading.Thread):
         else:
             jobList = self.finishedJobs
         if len(jobList)>0:
-            job_utils.eraseJobs(jobList)
+            job_utils.eraseJobs(jobList, timeout=self.parameters.sotimeout)
         self.finishedJobs.clear()
     
     def processRunningJobs(self):
@@ -80,11 +80,13 @@ class JobPoller(threading.Thread):
                     JobPoller.logger.error(ex)
                     continue
                 
-                statusCmd = "%s -i %s" % (testsuite_utils.cmdTable['status'], tmpName)
+                statusCmd = "%s -i -T %d %s" % (testsuite_utils.cmdTable['status'],
+                                                self.parameters.sotimeout, tmpName)
                 
             else:
-                statusCmd = "%s -f \"%s\" -e %s --all" % (testsuite_utils.cmdTable['status'], \
-                            time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)), serviceHost)
+                statusCmd = "%s -f \"%s\" -e %s -T %d --all" % (testsuite_utils.cmdTable['status'], \
+                            time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)), serviceHost, \
+                            self.parameters.sotimeout)
                 
             JobPoller.logger.debug('Command line: ' + statusCmd)
             

@@ -71,6 +71,8 @@ Set the location of the configuration file for log4py, \
                       descr='Enable the test control via terminal (EXPERIMENTAL)')
         self.register('nopurge','b', optChar='',
                       descr='Disable the purge operation for all jobs submitted (CRITICAL)')
+        self.register('sotimeout', 'd', 30, optChar='',
+                      descr='Socket timeout in seconds (DEFAULT 30s)')
         
         
     def addEnvItem(self, item):

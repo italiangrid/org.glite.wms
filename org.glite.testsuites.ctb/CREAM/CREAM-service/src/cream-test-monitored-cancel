@@ -40,7 +40,7 @@ class JobPoller(job_poller.JobPoller):
             self.runningJobs.append(currId)
     
     def processRunningJobs(self):
-        job_utils.eraseJobs(self.runningJobs, cmd='cancel')
+        job_utils.eraseJobs(self.runningJobs, cmd='cancel', timeout=self.parameters.sotimeout)
         self.runningJobs = []
     
     def shutdown(self):

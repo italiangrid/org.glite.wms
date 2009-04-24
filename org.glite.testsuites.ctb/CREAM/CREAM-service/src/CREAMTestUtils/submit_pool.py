@@ -126,8 +126,9 @@ class JobSubmitterPool:
         self.proxyMan = pManager
         
         if parameters.delegationType=='multiple':
-            dcmd = '%s -e %s %s' % (cmdTable['delegate'], \
+            dcmd = '%s -e %s -t %d %s' % (cmdTable['delegate'], \
                                               parameters.resourceURI[:string.find(parameters.resourceURI,'/')],
+                                              parameters.sotimeout,
                                               'DELEGID%d.%f')
             delegOpt = '-D DELEGID%d.%f'
         else:
@@ -144,16 +145,16 @@ class JobSubmitterPool:
             else:
                 lTime = 60
                 
-            lcmd = '%s -e %s -T %d %s' % (cmdTable['lease'], \
+            lcmd = '%s -e %s -T %d -t %d %s' % (cmdTable['lease'], \
                                       parameters.resourceURI[:string.find(parameters.resourceURI,'/')], \
-                                      lTime, 'LEASEID%d.%f')
+                                      lTime, parameters.sotimeout, 'LEASEID%d.%f')
             leaseOpt = '-L LEASEID%d.%f'
         else:
             lcmd = None
             leaseOpt = '-L LEASEID' + applicationID
             
-        scmd = '%s %s %s -r %s %s' % (cmdTable['submit'], delegOpt, leaseOpt, \
-                                   parameters.resourceURI, parameters.jdl)
+        scmd = '%s %s %s -r %s -t %d %s' % (cmdTable['submit'], delegOpt, leaseOpt, \
+                                    parameters.resourceURI, parameters.sotimeout, parameters.jdl)
         
         for k in range(0,parameters.maxConcurrentSubmit):
             subThr = SubmitterThread(self, scmd, dcmd, lcmd, "Submitter"  + str(k))

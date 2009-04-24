@@ -12,7 +12,7 @@ from testsuite_utils import applicationTS, applicationID, mainLogger
 
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
 
-def eraseJobs(jobList, cmd='purge',  proxyMan=None):
+def eraseJobs(jobList, cmd='purge', proxyMan=None, timeout=30):
     
     if len(jobList)>0:
         tempFD, tempFilename = tempfile.mkstemp(dir='/tmp')
@@ -23,7 +23,8 @@ def eraseJobs(jobList, cmd='purge',  proxyMan=None):
                 tFile.write(job + "\n")
             tFile.close()
       
-            eraseCmdLine = cmdTable[cmd] + " -N -i " + tempFilename
+            eraseCmdLine = "%s -N -i %s -t %d" % \
+                           (cmdTable[cmd], tempFilename, timeout)
             mainLogger.debug("Command line: " + eraseCmdLine)
             
             if proxyMan<>None:
@@ -185,8 +186,9 @@ class LeaseRenewer(AbstractRenewer):
         AbstractRenewer.__init__(self, container)
 
         endPoint = parameters.resourceURI[:string.find(parameters.resourceURI,'/')] 
-        self.cmdPrefix = '%s -e %s -T %d %s ' % (cmdTable['lease'], endPoint, \
-                                                                        parameters.leaseTime, '%s')
+        self.cmdPrefix = '%s -e %s -T %d -t %d %s ' % \
+                 (cmdTable['lease'], endPoint, parameters.leaseTime, \
+                  parameters.sotimeout, '%s')
         self.sleepTime = parameters.leaseTime
         self.fString = 'LEASEID%d.%f'
         if parameters.leaseType=='none':
@@ -198,8 +200,9 @@ class LeaseRenewer(AbstractRenewer):
         
         if parameters.leaseType=='single':
             cannotLease = False
-            leaseCmd = '%s -e %s  -T %d LEASEID%s' \
-                    % (cmdTable['lease'], endPoint, parameters.leaseTime, applicationID) 
+            leaseCmd = '%s -e %s  -T %d -t %d LEASEID%s' \
+                    % (cmdTable['lease'], endPoint, \
+                       parameters.leaseTime, parameters.sotimeout, applicationID) 
             LeaseRenewer.logger.debug("Lease command: " + leaseCmd)
             leaseProc = popen2.Popen4(leaseCmd)
             for line in leaseProc.fromchild:
@@ -230,8 +233,8 @@ class ProxyRenewer(AbstractRenewer):
         
         if parameters.delegationType=='single':
             cannotDelegate = False
-            delegCmd = '%s -e %s DELEGID%s' \
-                                % (cmdTable['delegate'], endPoint, applicationID) 
+            delegCmd = '%s -e %s -t %d DELEGID%s' \
+                % (cmdTable['delegate'], endPoint, parameters.sotimeout, applicationID) 
             ProxyRenewer.logger.debug("Delegate command: " + delegCmd)
             delegProc = popen2.Popen4(delegCmd)
             for line in delegProc.fromchild:

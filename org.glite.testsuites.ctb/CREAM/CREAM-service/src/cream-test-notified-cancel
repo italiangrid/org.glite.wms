@@ -44,7 +44,7 @@ class JobMonitor(job_monitor.JobMonitor):
         self.runningJobs = []
     
     def processNotifiedJobs(self):
-        job_utils.eraseJobs(self.toCancel, cmd='cancel')
+        job_utils.eraseJobs(self.toCancel, cmd='cancel', timeout=self.parameters.sotimeout)
         for item in self.toCancel:
             self.table[item].scheduled = True
         self.toCancel = []
