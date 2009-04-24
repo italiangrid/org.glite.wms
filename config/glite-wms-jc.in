@@ -40,8 +40,6 @@ LOCKFILE=`${GLITE_WMS_BIN_DIR}/glite-wms-get-configuration JobController.LockFil
 SCRIPT_UID=`/usr/bin/id -u`
 GLITEUSER_HOME=`eval echo ~${GLITE_WMS_USER}`
 [ -d ${GLITEUSER_HOME} ] || do_failure "Missing user directory ${GLITEUSER_HOME}"
-input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration JobController.Input`
-type=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration JobController.InputType | tr "[:upper:]" "[:lower:]"`
 
 do_failure()
 {
@@ -103,6 +101,15 @@ remove_lockfile()
 
 start()
 {
+  input=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration JobController.input`
+    if [ -z ${input} ]; then
+      do_failure "Please set Input parameter in ${CONFIGURATION_FILE} - JC section"
+    fi 
+  type=`${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration JobController.InputType | tr "[:upper:]" "[:lower:]"`
+    if [ -z ${type} ]; then
+      do_failure "Please set InputType parameter in ${CONFIGURATION_FILE} - JC section"
+    fi 
+
   if [ "x$1" = "xJobController" -o "x$1" = "x" ]; then
     check_input
     if [ $? != 0 ]; then
