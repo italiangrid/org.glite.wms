@@ -23,10 +23,12 @@ except:
    except:
       print "Error: Please set the GLITE_WMS_LOCATION environment variable pointing to the userinterface installation path"
       sys.exit(1)
-libPath=path + os.sep + "lib"
-sys.path.append(libPath)
-libPath=path + os.sep + "lib" + os.sep + "python"
-sys.path.append(libPath)
+
+# append lib/lib64 directories to search path
+for app in ["lib","lib64"]:
+        for bpp in ["",os.sep+"python"]:
+                libPath=path+os.sep+app+bpp
+                sys.path.append(libPath)
 
 import wmsui_utils
 import wmsui_checks
