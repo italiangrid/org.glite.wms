@@ -48,8 +48,9 @@
 
 #include "iceDb/GetJobsToPoll.h"
 #include "iceDb/CheckGridJobID.h"
-#include "iceDb/GetJobByGid.h"
-#include "iceDb/GetAllGridJobID.h"
+//#include "iceDb/GetJobByGid.h"
+//#include "iceDb/GetAllGridJobID.h"
+#include "iceDb/GetAllJobs.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/RemoveJobByGid.h"
 
@@ -287,28 +288,34 @@ void Ice::init( void )
 //         }
 //     }
 
-  set<string> allGids;
+  //set<string> allGids;
+  list< glite::wms::ice::util::CreamJob > allJobs;
   {
-    db::GetAllGridJobID getter;
+    //     db::GetAllGridJobID getter;
+    db::GetAllJobs getter;
     db::Transaction tnx;
     tnx.execute( &getter );
-    allGids = getter.get_jobs();
+    //     allGids = getter.get_jobs();
+    allJobs = getter.get_jobs();
   }
 
-  for(set<string>::const_iterator it = allGids.begin();
-      it != allGids.end();
-      ++it)
-    {
-      util::CreamJob thisJob;
-      {
-	db::GetJobByGid getter( *it );
-	db::Transaction tnx;
-	tnx.execute( &getter );
-	thisJob = getter.get_job();
-      }
-      resubmit_or_purge_job( thisJob );
-    }
-
+//   for(set<string>::const_iterator it = allGids.begin();
+//       it != allGids.end();
+//       ++it)
+   for(list< glite::wms::ice::util::CreamJob >::iterator it = allJobs.begin();
+       it != allJobs.end();
+       ++it)
+     {
+//        util::CreamJob thisJob;
+//        {
+// 	 db::GetJobByGid getter( *it );
+// 	 db::Transaction tnx;
+// 	 tnx.execute( &getter );
+// 	 thisJob = getter.get_job();
+//        }
+       resubmit_or_purge_job( /*thisJob*/ *it );
+     }
+   
     if(m_configuration->ice()->start_lease_updater() ) {
         util::iceCommandLeaseUpdater l( true );
         l.execute();
@@ -872,15 +879,15 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 void Ice::resubmit_or_purge_job( /*ice_util::jobCache::iterator it*/ util::CreamJob& tmp_job )
 throw() 
 {
-  bool found = false;
-  {
-    db::CheckGridJobID checker( tmp_job.getGridJobID() );
-    db::Transaction tnx;
-    tnx.execute( &checker );
-    found = checker.found();
-  }
+//   bool found = false;
+//   {
+//     db::CheckGridJobID checker( tmp_job.getGridJobID() );
+//     db::Transaction tnx;
+//     tnx.execute( &checker );
+//     found = checker.found();
+//   }
   
-  if ( found /*it != m_cache->end()*/ ) {
+//  if ( found /*it != m_cache->end()*/ ) {
 
       //        ice_util::CreamJob tmp_job( *it ); ///< This is necessary because the purge_job() method REMOVES the job from the cache; so we need to keep a local copy and work on that copy
 
@@ -913,7 +920,7 @@ throw()
             purge_wms_storage( tmp_job );
 
         }
-    }
+	//    }
     //return it;
 }
 
