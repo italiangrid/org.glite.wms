@@ -83,6 +83,7 @@ lcg-job-monitor
 #lcg_jobStats.py
 
 lcg-ManageVOTag
+lcg-tags
 
 glite-transfer-submit
 glite-transfer-status

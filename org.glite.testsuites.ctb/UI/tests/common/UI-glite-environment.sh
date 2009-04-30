@@ -24,6 +24,16 @@ function testpath() {
   fi
 }
 
+function testvariable() {
+  if [ x$1 == x ] ; then
+    echo -e "info   :  $1  \t= $2" 
+  else
+    echo "WARNING:  $1 is not defined"
+  fi
+}
+
+
+
 testpath GLITE_LOCATION      $GLITE_LOCATION
 testpath GLITE_LOCATION_VAR  $GLITE_LOCATION_VAR
 testpath GLITE_LOCATION_LOG  $GLITE_LOCATION_LOG
@@ -42,6 +52,10 @@ testpath GPT_LOCATION	     $GPT_LOCATION
 
 testpath LCG_LOCATION	     $LCG_LOCATION
 testpath LCG_LOCATION_VAR    $LCG_LOCATION_VAR
+
+testvariable LCG_GFAL_INFOSYS $LCG_GFAL_INFOSYS
+testvariable MYPROXY_SERVER $MYPROXY_SERVER
+
 
 echo " === test PASSED === "
 exit 0

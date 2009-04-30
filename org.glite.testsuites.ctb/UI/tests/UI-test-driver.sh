@@ -24,13 +24,25 @@
 
 usage() {
  echo
- echo "Test driver for executing several UI tests in one go. You can run the tests: UI-data-lcg-*, UI-data-lfc-*, UI-inf-lcg-* (one or several)"
+ echo "Test driver for executing several UI tests in one go. You can run all the tests or a subset of them. Running test-lcg-utils.sh is not supported."
  echo "Usage:"
  echo "======"
- echo "UI-test-driver.sh --sehost|-sehost <SE hostname> --lfchost|-lfchost <LFC hostname> --lfcdir|-lfcdir <LFC directory> --vo|-vo <VO name> UI-data-lcg|UI-data-lfc|UI-inf-lcg"
+ echo "UI-test-driver.sh --platform <gl32-SLC5-x86_64|gl31-SLC4-i386> --sehost|-sehost <SE hostname> --lfchost|-lfchost <LFC hostname> --lfcdir|-lfcdir <LFC directory> --vo|-vo <VO name> --cetag <CE hostname for tag check> [--extended] [--all] [TestCategories]"
+ echo "Test categories can be one or more of the following"
+ echo "UI-environment UI-glite-environment UI-commands UI-libraries"
+ echo "UI-manpage UI-exec UI-security UI-data-lcg UI-data-lfc" 
+ echo "UI-inf-lcg-info UI-workload-glite-wms UI-tags"
+ echo ""
+ echo "Some test categories need to/can be provided with options:"
+ echo "UI-security: --vo (mandatory)"
+ echo "UI-inf-lcg-info options: --vo (optional)"
  echo "UI-data-lcg options: --sehost (mandatory), --vo (optional)"
  echo "UI-data-lfc options: --lfchost (mandatory if LFC_HOST is not defined in your environment), --lfcdir (optional)"
  echo "UI-inf-lcg-info options: --vo (optional)"
+ echo "UI-tags: --vo (mandatory), --cetag (mandatory), --extended (optional, use if you have permission to modify tags on target ce) "
+ echo ""
+ echo "The --platform argument is mandatory"
+ echo "The --all option will run all tests. This requires all test specific mandatory arguments"
  echo
 }
 
@@ -93,8 +105,19 @@ do
  --lfcdir | -lfcdir ) lfcdir=$2
   shift
   ;;
+ --platform | -platform ) platform=$2
+  shift
+  ;;
+ --all | -all ) test_list="UI-environment UI-glite-environment UI-commands UI-libraries UI-manpage UI-exec UI-security UI-data-lcg UI-data-lfc UI-inf-lcg-info UI-workload-glite-wms"
+  all_tests=y
+  ;;
  --vo | -vo ) voname=$2
   shift
+  ;;
+ --cetag | -cetag ) cetag=$2
+  shift
+  ;;
+ --extended | -extended ) extended="--extended"
   ;;
  --help | -help | --h | -h ) usage
   exit 0
@@ -109,12 +132,58 @@ do
  shift
 done
 
+if [ "x$platform" == "x" ] ; then
+ echo "Mandatory argument --platform missing"
+ exit 1
+else
+ if [ $platform != "gl31-SLC4-i386" ] && [ $platform != "gl32-SLC5-x86_64" ] ; then
+  echo "Invalid platform $platform specified"
+  exit 1
+ fi
+fi
+
+if [ x$all_tests != xy ] ; then
+  test_list=$*
+fi
+
 totalNrTest=0
 totalNrTestOK=0
 totalNrTestFAIL=0
 
-for testCategory in $*
+cd `pwd`/${platform}
+
+for testCategory in $test_list
 do
+ options=""
+ # the environment test are special, they need to be run with a shell
+ if [ ${testCategory} = "UI-environment" ] ; then
+  testName=UI-environment.csh
+  tcsh ../common/$testName
+  testResult=$?
+  record_result
+  ((totalNrTest++))
+
+  testName=UI-environment.sh
+  sh ../common/$testName
+  testResult=$?
+  record_result
+  ((totalNrTest++))
+  continue
+ fi
+ if [ $testCategory = "UI-glite-environment" ] ; then
+  testName=UI-glite-environment.csh
+  tcsh ../common/$testName
+  testResult=$?
+  record_result
+  ((totalNrTest++))
+
+  testName=UI-glite-environment.sh
+  sh ../common/$testName
+  testResult=$?
+  record_result
+  ((totalNrTest++))
+  continue
+ fi
  if [ $testCategory = "UI-data-lcg" ]; then
   options="-d $sehost"
   export LFC_HOST=$lfchost
@@ -132,13 +201,30 @@ do
   if [ $voname ]; then
    options="--vo $voname"
   fi
+ elif [ $testCategory = "UI-security" ]; then
+  if [ $voname ]; then
+   options="-voms $voname"
+  fi
+ elif [ $testCategory = "UI-tags" ]; then
+   options="--vo $voname --ce $cetag $extended"
  fi
  for testName in ${testCategory}*
  do
-  ./$testName $options
-  testResult=$?
-  record_result
-  ((totalNrTest++))
+  if [ -e $testName ] ; then
+   ./$testName $options
+   testResult=$?
+   record_result
+   ((totalNrTest++))
+  fi
+ done
+ for testName in ../common/${testCategory}*
+ do
+  if [ -e $testname ] ; then
+   ./$testName $options
+   testResult=$?
+   record_result
+   ((totalNrTest++))
+  fi
  done
 done
 

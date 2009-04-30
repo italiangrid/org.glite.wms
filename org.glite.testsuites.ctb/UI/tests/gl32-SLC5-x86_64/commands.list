@@ -1,0 +1,165 @@
+##################################################################
+# Commands mentioned in gLite User Guide v1.1
+# gLite version: 3.2
+# 
+# The list was first created by Felix
+# Later revision by Dmitry Zaborov <Dmitry.Zaborov@cern.ch>
+# And for gLite 3.2 by Kalle Happonen <kalle.happonen@cern.ch>
+# 
+# Version: $Id$
+##################################################################
+
+grid-cert-request
+grid-cert-info 
+grid-change-pass-phrase
+grid-proxy-init
+grid-proxy-info
+grid-proxy-destroy
+
+voms-proxy-info
+voms-proxy-init
+# [voms-proxy-destroy not mentioned in the guide]
+
+myproxy-init
+myproxy-info # [NEW]
+myproxy-destroy
+
+lcg-infosites 
+lcg-info
+openssl
+
+#ldapsearch # Not installed in 3.2 by default
+#rgma  # obsolete
+glite-sd-query
+
+
+lfc-chmod
+lfc-chown
+lfc-delcomment
+lfc-getacl
+lfc-ln
+lfc-ls
+lfc-mkdir
+lfc-rename
+lfc-rm
+lfc-setacl
+lfc-setcomment
+lfc-entergrpmap
+lfc-enterusrmap
+lfc-modifygrpmap
+lfc-modifyusrmap
+lfc-rmgrpmap
+lfc-rmusrmap
+
+
+#lfc-rmdir # [Does not exist in gLite 3.0] 
+
+lcg-cp
+lcg-cr
+lcg-del
+lcg-rep
+lcg-gt
+lcg-sd
+
+lcg-aa
+lcg-ra
+lcg-rf
+lcg-uf
+lcg-la
+lcg-lg
+lcg-lr
+
+
+# LCG user tools are optional
+#lcg-job-monitor #obsolete
+#lcg-job-status.py
+#lcg-getJobStats
+#lcg-getJobTimes 
+#lcg-getJobStats.py
+#lcg-getJobTimes.py
+#lcg_jobConsumedTimes.py
+#lcg_jobStats.py
+
+lcg-ManageVOTag
+lcg-tags
+
+glite-transfer-submit
+glite-transfer-status
+glite-transfer-list
+glite-transfer-cancel
+
+glite-transfer-channel-add
+glite-transfer-channel-list
+glite-transfer-channel-set
+glite-transfer-channel-signal
+
+glite-wms-job-submit 
+glite-wms-job-status 
+glite-wms-job-logging-info
+glite-wms-job-output
+glite-wms-job-cancel 
+glite-wms-job-list-match
+glite-wms-job-delegate-proxy
+glite-wms-job-perusal
+#glite-wms-job-get-chkpt 
+
+#glite-job* are obsolete
+#glite-job-attach 
+#glite-job-status 
+#glite-job-logging-info 
+
+#edg-job* and edg-gridftp* are obsolete
+#edg-job-submit
+#edg-job-status
+#edg-job-get-logging-info
+#edg-job-get-output
+#edg-job-cancel
+#edg-job-list-match
+#edg-gridftp-exists
+#edg-gridftp-ls
+#edg-gridftp-mkdir
+#edg-gridftp-rename
+#edg-gridftp-rm 
+#edg-gridftp-rmdir
+
+
+globus-url-copy
+
+# CASTOR commands are now considered optional on the UI
+#nsls
+#nsfind
+#nsmkdir
+#nsrm
+#nschmod
+#nschown
+#nsrename
+#nsln
+#nstouch
+#nssetcomment
+#nsdelcomment
+#nssetchecksum
+#nssetacl
+#nschclass
+#nsdeleteclass
+#nsenterclass
+#nslistclass
+#nsmodifyclass
+
+
+rfcp
+rfstat
+rfcat
+
+
+dccp
+
+# these are not really part of the distribution
+#submitter_general.pl
+#get_output.pl
+
+#New commands added by Kalle Happonen
+uberftp
+
+glite-delegation-destroy  
+glite-delegation-info     
+glite-delegation-init

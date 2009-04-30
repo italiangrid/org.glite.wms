@@ -9,7 +9,7 @@ echo ""
 echo "    === test of glite-wms-job-list-match ===    "
 echo ""
 
-JDLFILE=$(dirname $0)/hostname.jdl
+JDLFILE=hostname.jdl
 
 echo "--- will use JDL file as follows --- "
 echo ""

@@ -27,6 +27,15 @@ foreach VAR_NAME_TEST ( GLITE_LOCATION GLITE_LOCATION_VAR GLITE_LOCATION_LOG GLI
   endif
 end
 
+foreach VAR_NAME_TEST ( LCG_GFAL_INFOSYS MYPROXY_SERVER ) 
+  set VAR_TEST=`printenv $VAR_NAME_TEST`
+  if ( "x$VAR_TEST" == "x" ) then
+    echo "WARNING: $VAR_TEST is not defined"
+  else 
+    echo "info   : $VAR_NAME_TEST  \t= $VAR_TEST"
+  endif
+end
+ 
 
 echo " === test PASSED === "
 exit 0

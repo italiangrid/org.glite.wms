@@ -91,6 +91,17 @@ lcg-infosites --vo $VO vobox || exit_failure
 myecho "FTS servers"
 lcg-infosites --vo $VO fts || exit_failure
 
+
+myecho "testing command behaviour with nonexisting server"
+LCG_GFAL_INFOSYS=no.such.machine.cern.ch lcg-infosites --vo $VO tag 
+
+if [ $? -eq 0 ] ; then
+  myecho "ERROR: The lcg-infosites command does not give an error when a nonexisting server is used" 
+  exit_failure
+fi
+
+myecho "lcg-infosites gives an error when a nonexisting server is used, as it should"
+
 echo ""
 echo "    === test PASSED === "
 exit 0;

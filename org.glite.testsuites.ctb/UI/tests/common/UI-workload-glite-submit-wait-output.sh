@@ -118,7 +118,7 @@ echo ""
 
 # ... find the jdl file
 
-JDLFILE=$(dirname $0)/hostname.jdl
+JDLFILE=hostname.jdl
 
 if [ ! -f "$JDLFILE" ]; then
   myecho "Internal ERROR! could not find example jdl file $JDLFILE"

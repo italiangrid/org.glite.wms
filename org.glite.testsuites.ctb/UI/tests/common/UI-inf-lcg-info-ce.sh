@@ -47,5 +47,19 @@ if [ -z "$VO_OPTIONS" ]; then
   echo ""
 fi
 
+
+echo " # lcg-info test # testing command behaviour with nonexisting server"
+echo ""
+LCG_GFAL_INFOSYS=no.such.machine.cern.ch lcg-info $VO_OPTIONS --list-ce -attr "Tag"
+
+if [ $? -eq 0 ] ; then
+  echo " # lcg-info test # ERROR: The lcg-info command does not give an error when a nonexisting server is used" 
+  exit_failure
+fi
+
+echo " # lcg-info test # lcg-info gives an error when a nonexisting server is used, as it should"
+echo ""
+
+
 echo "    === test PASSED === "
 exit 0;

@@ -31,9 +31,9 @@ source `dirname $0`/command-version.sh glite-wms-job-perusal	    --version || ex
 # ... these are normally symbolic links to the corresponding glite-job-* commands
 
 source `dirname $0`/command-version.sh glite-wms-job-status	  --version || exit $?
-source `dirname $0`/command-version.sh glite-wms-job-attach	  --version || exit $?
+#source `dirname $0`/command-version.sh glite-wms-job-attach	  --version || exit $?
 source `dirname $0`/command-version.sh glite-wms-job-logging-info --version || exit $?
-source `dirname $0`/command-version.sh glite-wms-job-get-chkpt	  --version || exit $?
+#source `dirname $0`/command-version.sh glite-wms-job-get-chkpt	  --version || exit $?
 
 echo "    ===    seems Ok    ===    "
 exit 0
