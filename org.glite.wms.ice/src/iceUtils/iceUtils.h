@@ -48,6 +48,8 @@ namespace wms {
 namespace ice {
 namespace util {
 
+  std::pair<bool, time_t> isvalid( const std::string& proxyfile ) throw();
+
   std::string computeSHA1Digest( const std::string& proxyfile ) throw( std::runtime_error& );
   std::string bintostring( unsigned char* buf, size_t len );
 
