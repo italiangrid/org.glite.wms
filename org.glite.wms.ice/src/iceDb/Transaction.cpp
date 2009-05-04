@@ -127,7 +127,7 @@ namespace {
 		"userdn text not null, "	     \
 		"creamurl text not null, "	     \
 		"exptime integer(4) not null, "	     \
-		"leaseid text not null,"        \
+		"leaseid text not null"        \
 		")";
 	      do_query( db, sqlcmd );
 	      
