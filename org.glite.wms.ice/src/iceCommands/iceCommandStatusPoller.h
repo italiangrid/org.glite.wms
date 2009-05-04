@@ -65,6 +65,8 @@ namespace glite {
 	  bool m_poll_all_jobs;
 	  glite::wms::ice::util::iceConfManager* m_conf;
 	  
+	  bool m_stopped;
+
 	  //void purgeJobs( const std::vector< std::string >& );
 
 	  /**
@@ -105,7 +107,8 @@ namespace glite {
            *
            */
 	  std::list< glite::ce::cream_client_api::soap_proxy::JobInfoWrapper > 
-	    check_multiple_jobs( const std::string& user_dn, 
+	    check_multiple_jobs( const std::string& proxy, 
+				 const std::string& user_dn, 
 				 const std::string& cream_url, 
 				 //const std::vector< glite::wms::ice::util::CreamJob >& cream_job_ids ) throw();
 				 const std::vector< CreamJob >& cream_job_ids ) throw();
@@ -148,6 +151,8 @@ namespace glite {
 	  void execute( ) throw();
 	  
 	  std::string get_grid_job_id() const { return std::string(); }
+
+	  void stop() { m_stopped = true; }
 	};
       }
     }

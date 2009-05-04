@@ -78,10 +78,15 @@ void GetDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 
   //vector<string> tmp;
   boost::tuple< string, string, time_t, int, string, string, bool, string> tmp;
+
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+  
   do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   
   if( !tmp.get<0>().empty() ) {
     m_found = true;
+
     m_result = glite::wms::ice::util::Delegation_manager::table_entry( 
 								      tmp.get<0>(), 
 								      tmp.get<1>(),

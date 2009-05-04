@@ -75,7 +75,7 @@ namespace glite {
                * the end of the current iteration, the thread will
                * terminate.
                */
-              void stop( void );// { m_stopped = true; };
+              virtual void stop( void );// { m_stopped = true; };
 
           protected:
               virtual void body( void ) = 0;

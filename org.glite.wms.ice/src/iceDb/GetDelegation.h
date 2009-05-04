@@ -33,14 +33,14 @@ namespace glite {
 	 */
 	class GetDelegation : public AbsDbOperation {
 	protected:
-	  glite::wms::ice::util::Delegation_manager::table_entry m_result;
-	  const std::string m_digest, m_creamurl;
-	  bool m_found;
+	  glite::wms::ice::util::Delegation_manager::table_entry  m_result;
+	  const std::string                                       m_digest, m_creamurl;
+	  bool                                                    m_found;
 
 	public:
 	  GetDelegation( const std::string& digest, 
 			 const std::string& creamurl ) 
-	    : AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ) 
+	    : AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ), m_found( false )
 	    { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );

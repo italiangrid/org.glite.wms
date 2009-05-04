@@ -209,7 +209,8 @@ Delegation_manager* Delegation_manager::instance( )
 }
 
 //______________________________________________________________________________
-boost::tuple<string, time_t, int> 
+//boost::tuple<string, time_t, int> 
+string 
 Delegation_manager::delegate( const CreamJob& job, 
 			      const cream_api::VOMSWrapper& V, 
 			      bool force, 
@@ -409,8 +410,8 @@ Delegation_manager::delegate( const CreamJob& job,
 
         // Delegation id FOUND. Returns it
         delegation_id   = deleg_info.m_delegation_id;
-	expiration_time = deleg_info.m_expiration_time;
-	duration        = deleg_info.m_delegation_duration;
+	//expiration_time = deleg_info.m_expiration_time;
+	//duration        = deleg_info.m_delegation_duration;
 
         // Project the iterator to the sequencedd index
         //t_delegation_by_seq::iterator it_seq( m_delegation_set.project<2>( it ) );
@@ -432,7 +433,8 @@ Delegation_manager::delegate( const CreamJob& job,
     }
       
     //return make_pair(delegation_id, expiration_time);
-    return boost::make_tuple( delegation_id, expiration_time, duration );
+    //return boost::make_tuple( delegation_id, expiration_time, duration );
+    return delegation_id;
 
 }
 

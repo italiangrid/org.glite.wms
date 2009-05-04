@@ -1,3 +1,6 @@
+
+SUBDIRS = sqlite
+
 lib_LTLIBRARIES = libglite_wms_iceDb.la
 
 libglite_wms_iceDb_la_SOURCES = Transaction.cpp \

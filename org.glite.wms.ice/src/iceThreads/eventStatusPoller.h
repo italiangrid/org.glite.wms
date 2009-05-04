@@ -22,6 +22,7 @@
 
 #undef soapStub_H
 #include "iceThread.h"
+#include "iceCommandStatusPoller.h"
 
 namespace log4cpp {
     class Category;
@@ -56,7 +57,8 @@ namespace ice {
           /**
            * Prevents copying
            */
-	  eventStatusPoller( const eventStatusPoller& ) { };
+	  eventStatusPoller( const eventStatusPoller& ) : m_real_poller( 0 ) { };
+	  glite::wms::ice::util::iceCommandStatusPoller m_real_poller;
 
 	public:
 
@@ -75,6 +77,11 @@ namespace ice {
 	  //! Main poller loop (inherited from iceThread)
           virtual void body( void );
 
+	  virtual void stop( void ) { 
+	    iceThread::stop();
+	    m_real_poller.stop();
+	  }
+ 
 	};
 
       }

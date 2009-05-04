@@ -33,9 +33,7 @@
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "iceLBEvent.h"
-//#include "jobCache.h"
 #include "ice-core.h"
-//#include "jobCache.h"
 #include "iceUtils.h"
 #include "iceDb/GetJobByCid.h"
 #include "iceDb/RemoveJobByCid.h"
@@ -48,6 +46,7 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
+
 
 // WMS Headers
 #include "glite/wms/common/configuration/Configuration.h"
@@ -164,7 +163,8 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce, bo
     m_max_chunk_size( iceConfManager::getInstance()->getConfiguration()->ice()->bulk_query_size() ), 
     m_empty_threshold( 10*60 ), // 10 minutes
     m_poll_all_jobs( poll_all_jobs ),
-    m_conf( iceConfManager::getInstance() )
+    m_conf( iceConfManager::getInstance() ),
+    m_stopped( false )
 {
   m_empty_threshold = m_conf->getConfiguration()->ice()->ice_empty_threshold();
 }
@@ -176,40 +176,46 @@ void iceCommandStatusPoller::get_jobs_to_poll( list< CreamJob >& result ) throw(
 {
     static const char* method_name = "iceCommandStatusPoller::get_jobs_to_poll() - ";
 
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+                   << "Collecting jobs to poll..."
+    		);
     {
       glite::wms::ice::db::GetJobsToPoll getter( m_poll_all_jobs );
       glite::wms::ice::db::Transaction tnx;
       tnx.execute( &getter );
       result = getter.get_jobs();
     }
-
-    for(list< CreamJob >::const_iterator it = result.begin();
-	it != result.end();
-	++it)
-      {
-	time_t t_now( time(NULL) );
-        time_t t_last_seen( it->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
-        time_t t_last_empty_notification( it->get_last_empty_notification() ); // The time ICE received the last empty notification for this job
-        time_t oldness = t_now - t_last_seen;
-        time_t empty_oldness = t_now - t_last_empty_notification;
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+                   << "Finished collect jobs to poll."
+    		);
+		
+//     for(list< CreamJob >::const_iterator it = result.begin();
+// 	it != result.end();
+// 	++it)
+//       {
+// 	time_t t_now( time(NULL) );
+//         time_t t_last_seen( it->getLastSeen() ); // This can be zero for jobs which are being submitted right now. The value of the last_seen field of creamJob is set only before exiting from the execute() method of iceCommandSubmit.
+//         time_t t_last_empty_notification( it->get_last_empty_notification() ); // The time ICE received the last empty notification for this job
+//         time_t oldness = t_now - t_last_seen;
+//         time_t empty_oldness = t_now - t_last_empty_notification;
 	
-	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		       << "Adding job " << it->describe()
-		       << " t_now=" << time_t_to_string( t_now )
-		       << " t_last_nonempty_notification=" 
-		       << time_t_to_string(t_last_seen)
-		       << " oldness (t_last_nonempty_notification - t_now)="
-		       << oldness 
-		       << " threshold=" << m_threshold
-		       << " t_last_empty_notification=" 
-		       << time_t_to_string( t_last_empty_notification )
-		       << " empty_oldness (t_last_empty_notification - t_now)=" 
-		       << empty_oldness
-		       << " empty_threshold=" << m_empty_threshold
-		       << " force_polling=" << m_poll_all_jobs
-		       );
+// 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 		       << "Adding job " << it->describe()
+// 		       << " t_now=" << time_t_to_string( t_now )
+// 		       << " t_last_nonempty_notification=" 
+// 		       << time_t_to_string(t_last_seen)
+// 		       << " oldness (t_last_nonempty_notification - t_now)="
+// 		       << oldness 
+// 		       << " threshold=" << m_threshold
+// 		       << " t_last_empty_notification=" 
+// 		       << time_t_to_string( t_last_empty_notification )
+// 		       << " empty_oldness (t_last_empty_notification - t_now)=" 
+// 		       << empty_oldness
+// 		       << " empty_threshold=" << m_empty_threshold
+// 		       << " force_polling=" << m_poll_all_jobs
+// 		       );
 
-      }
+//       }
 
 //     for( jobCache::iterator jit = m_cache->begin(); 
 //          jit != m_cache->end(); ++jit ) {
@@ -267,7 +273,8 @@ void iceCommandStatusPoller::get_jobs_to_poll( list< CreamJob >& result ) throw(
 
 //____________________________________________________________________________
 list< soap_proxy::JobInfoWrapper > 
-iceCommandStatusPoller::check_multiple_jobs( const string& user_dn, 
+iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
+					     const string& user_dn,
                                              const string& cream_url, 
                                              const vector< CreamJob >& cream_job_ids ) 
   throw()
@@ -290,6 +297,13 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
 		       << "Will poll job with CREAM job id = ["
 		       << thisJob->getCompleteCreamJobID() << "]"
 		       );
+	if(m_stopped) {
+	  CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		       << "EMERGENCY CALLED STOP. Returning without polling..."
+		       );
+	  return list<soap_proxy::JobInfoWrapper>();
+	}
+
       }    
 
     // Following a discussion on 2008-11-12, we decided not to remove
@@ -310,37 +324,10 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
     // boost::function<void()> remove_f_ref = boost::ref( remove_f );
     // wms_utils::scope_guard remove_jobs_guard( remove_f_ref );
     
-    string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( user_dn ).get<0>() );
-    
-    if ( proxy.empty() ) {
-        CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-                       << "A Proxy file for DN [" << user_dn
-                       << "] CREAM-URL ["
-		       << cream_url << "] is not available"
-                       );
-        // Cannot process the list of jobs submitted by this user;
-        // the scope_guard will remove the jobs.
-        return list< soap_proxy::JobInfoWrapper >();
-    }
-    
-    CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-                   << "Authenticating with proxy [" << proxy << "]" 
-                   );
 
     list<soap_proxy::JobInfoWrapper> the_job_status;
     
     try {
-        
-        soap_proxy::VOMSWrapper V( proxy );
-        if( !V.IsValid( ) ) {
-            // remove_f.set_reason( V.getErrorMessage() );
-            throw cream_api::soap_proxy::auth_ex( V.getErrorMessage() );
-        }
-        
-        if( V.getProxyTimeEnd() <= time(NULL) ) {
-            // remove_f.set_reason( string("Proxy [")+proxy+"] is expired!" );
-            throw cream_api::soap_proxy::auth_ex( string("Proxy [")+proxy+"] is expired!" );
-        }
         
         CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
                        << "Connecting to [" << cream_url << "]"
@@ -365,11 +352,16 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
                                               "");
             
             
-            
-            CreamProxy_Info( cream_url, 
-                             proxy,
-                             &req,
-                             &res).execute( 3 );
+            if(m_stopped) {
+	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+			     << "EMERGENCY CALLED STOP. Returning without polling..."
+			     );
+	      return list<soap_proxy::JobInfoWrapper>();
+	    }
+ //            CreamProxy_Info( cream_url, 
+//                              proxy,
+//                              &req,
+//                              &res).execute( 3 );
             // remove_jobs_guard.dismiss(); // dismiss the guard, we should be safe here...
             
         } // free some array
@@ -464,7 +456,12 @@ iceCommandStatusPoller::check_multiple_jobs( const string& user_dn,
 //----------------------------------------------------------------------------
 void iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfoWrapper >& info_list ) throw()
 {
-    
+  if(m_stopped) {
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandStatusPoller::updateJobCache() - "
+		   << "EMERGENCY CALLED STOP. Returning without polling..."
+		   );
+    return;
+  }
     for_each( info_list.begin(), 
               info_list.end(), 
               boost::bind1st( boost::mem_fn( &iceCommandStatusPoller::update_single_job ), this ));
@@ -477,6 +474,14 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
     static const char* method_name = "iceCommandStatusPoller::update_single_job() - ";
     // Lock the cache
     //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+
+    if(m_stopped) {
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandStatusPoller::updateJobCache() - "
+		     << "EMERGENCY CALLED STOP. Returning without polling..."
+		     );
+      return;
+    }
+
     boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
     vector< soap_proxy::JobStatusWrapper > status_changes;
@@ -669,6 +674,8 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 //____________________________________________________________________________
 void iceCommandStatusPoller::execute( ) throw()
 {
+  static const char* method_name = "iceCommandStatusPoller::execute() - ";
+
   //list< CreamJob > j_list;
   // See iceDb/GetJobsToPoll.h for definition of type 'JobToPoll'
   list< CreamJob > j_list;
@@ -700,6 +707,30 @@ void iceCommandStatusPoller::execute( ) throw()
         const string user_dn( jit->first.first );
         const string cream_url( jit->first.second );
         
+	string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( user_dn ).get<0>() );
+	
+	if ( proxy.empty() ) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+			 << "A valid proxy file for DN [" << user_dn
+			 << "] CREAM-URL ["
+			 << cream_url << "] is not available"
+			 );
+	  
+	  continue;
+	}
+
+	if( !(isvalid( proxy ).first) ) {
+	  CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+	                 << "Proxy ["
+			 << proxy << "] is expired! Skipping polling for this user..."
+			 );
+	  continue;
+	}
+
+	CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
+		       << "Authenticating with proxy [" << proxy << "]" 
+		       );
+
         list< CreamJob >::const_iterator it = (jit->second).begin();
         list< CreamJob >::const_iterator list_end = (jit->second).end();
         while ( it != list_end ) {
@@ -710,8 +741,15 @@ void iceCommandStatusPoller::execute( ) throw()
 				back_inserter( jobs_to_poll )
 				);
 	  
-	  list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
-	  
+	  list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( proxy, user_dn, cream_url, jobs_to_poll ) ); // doesn't lock the cache
+
+	  if(m_stopped) {
+	    CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandStatusPoller::updateJobCache() - "
+			   << "EMERGENCY CALLED STOP. Returning without polling..."
+			   );
+	    return;
+	  }
+
 	  updateJobCache( j_status );// modifies the cache, locks it job by job
 	}
       }

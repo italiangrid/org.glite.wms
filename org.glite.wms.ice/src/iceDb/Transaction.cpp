@@ -317,6 +317,7 @@ void Transaction::create_db( void )
                         << sqlite3_errmsg( m_db ) );
         exit(-1);
     }
+    sqlite3_soft_heap_limit( 10485760 );
     // Create table if not exists
     CreateDb().execute( m_db );
     // Database intentionally left open
@@ -358,6 +359,12 @@ Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationExcept
     while( 1 ) {
         try {
             op->execute( m_db );
+	    int freed = sqlite3_release_memory( 104800000 );
+	    
+	    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+			    << "SQLite freed [" << freed << "] bytes of heap memory"
+			    );
+
             return *this; // normal termination
         } catch ( DbLockedException& ex ) {
             if ( ++retry_cnt < retry_cnt_max ) {
@@ -383,6 +390,8 @@ Transaction::~Transaction( )
         try {
             if ( m_commit ) {
                 CommitTransaction().execute(m_db);
+		
+		//sqlite3_close( m_db );
             } else {
                 RollbackTransaction().execute(m_db);           
             }
@@ -393,4 +402,5 @@ Transaction::~Transaction( )
             abort();
         }
     }
+
 }

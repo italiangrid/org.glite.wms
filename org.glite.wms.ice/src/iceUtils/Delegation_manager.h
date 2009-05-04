@@ -198,7 +198,8 @@ namespace util {
          *
          * @throw exception if the delegation operation fails.
          */
-	boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
+	//boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
+	std::string delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
 
         /**
          * Tries to delegate an already delegated ID. I hope that this
@@ -229,7 +230,7 @@ namespace util {
       /**
 	 < delegID, cream_url, exp_time, user_dn, 
       */
-	void updateDelegation( const boost::tuple<std::string, time_t, int>& newDeleg );
+      void updateDelegation( const boost::tuple<std::string, time_t, int>& newDeleg );
       
       void removeDelegation( const std::string& delegToRemove );
 

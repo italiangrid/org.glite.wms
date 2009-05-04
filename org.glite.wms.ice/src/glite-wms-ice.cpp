@@ -468,7 +468,7 @@ int main(int argc, char*argv[])
 // 	    dumpIceCache( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") );
 // 	}
 
-	if(mem_threshold_counter >= 60) { // every 120 seconds check the memory
+	if(mem_threshold_counter >= 30) { // every 60 seconds check the memory
 	  mem_threshold_counter = 0;
 	  long long mem_now = check_my_mem(myPid);
 	  if(mem_now > max_ice_mem) {
@@ -520,45 +520,3 @@ long long check_my_mem( const pid_t pid ) throw()
 
   return atoll(used_rss_mem);
 }
-
-//______________________________________________________________________________
-// void dumpIceCache( const string& pathfile ) throw() 
-// {
-  
-//   boost::recursive_mutex::scoped_lock L( iceUtil::jobCache::mutex );
-  
-//   FILE* OUT = fopen(pathfile.c_str(), "a");
-  
-//   if(!OUT) {
-//     int saveerr = errno;
-//     CREAM_SAFE_LOG( util::creamApiLogger::instance()->getLogger()->errorStream()
-// 		    << "glite-wms-ice::main - Couldn't open file ["
-// 		    << pathfile << "] for JobCache dump. Error is: "
-// 		    << strerror(saveerr)
-// 		    );	
-//     return;
-//   }
-  
-//   int count = 0;
-//   map<string, int> statusMap;
-//   iceUtil::jobCache* cache = iceUtil::jobCache::getInstance();
-  
-//   iceUtil::jobCache::iterator it( cache->begin() );
-  
-//   for ( it = cache->begin(); it != cache->end(); ++it ) {
-//     iceUtil::CreamJob aJob( *it );
-//     count++;
-//     statusMap[string(glite::ce::cream_client_api::job_statuses::job_status_str[ aJob.getStatus()] )]++;
-//   }
-  
-//   ostringstream outputBuf("");
-  
-//   outputBuf << iceUtil::time_t_to_string( time(0) ) << " - Total_Job(s)=" << count;
-  
-//   for(map<string, int>::const_iterator it=statusMap.begin(); it!=statusMap.end(); ++it) {
-//     outputBuf << " - " << it->first << "_Jobs=" << it->second;
-//   }
-  
-//   fprintf( OUT, "%s\n", outputBuf.str().c_str() );
-//   fclose( OUT );
-// }

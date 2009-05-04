@@ -410,7 +410,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 
     bool is_lease_enabled = ( m_configuration->ice()->lease_delta_time() > 0 );
     //pair<string, time_t> delegation;
-    boost::tuple<string, time_t, int> delegation;
+    //    boost::tuple<string, time_t, int> delegation;
+    string  delegation;
     string lease_id; // empty delegation id
     bool force_delegation = false;
     bool force_lease = false;  
@@ -468,12 +469,12 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // Delegates the proxy
         //
         try {
-	  delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation, m_theJob.is_proxy_renewable(), m_theJob.getMyProxyAddress() );
+	   delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation, m_theJob.is_proxy_renewable(), m_theJob.getMyProxyAddress() );
         } catch( const exception& ex ) {
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
 
-        const string the_delegation( delegation.get<0>() );
+        //const string the_delegation( delegation.get<0>() );
         
         //
         // Registers the job (without autostart)
@@ -483,7 +484,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                             << "Going to REGISTER Job "
                             << m_theJob.describe() << " with delegation ID ["
-			    << the_delegation << "]..."
+			    << delegation << "] to CREAM [" << m_theJob.getCreamURL()
+			    << "]..."
                             );
             
             cream_api::AbsCreamProxy::RegisterArrayRequest req;
@@ -492,7 +494,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             // (delegationProxy, leaseID) last asrgument is irrelevant
             // now, because we register jobs one by one
             cream_api::JobDescriptionWrapper jd(modified_jdl, 
-                                                the_delegation,
+                                                delegation,
                                                 "" /* delegPRoxy */, 
                                                 lease_id /* leaseID */, 
                                                 false, /* NO autostart */
@@ -515,9 +517,9 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             // We do not trust this fault, and try to redelegate the
             // _same_ delegation ID, hoping for the best.
             
-            const string the_delegation_url( m_theJob.getCreamDelegURL() );
+            //const string the_delegation_url( m_theJob.getCreamDelegURL() );
 
-            iceUtil::Delegation_manager::instance()->redelegate( m_theJob.getUserProxyCertificate(), the_delegation_url, the_delegation );
+            iceUtil::Delegation_manager::instance()->redelegate( m_theJob.getUserProxyCertificate(), m_theJob.getCreamDelegURL(), delegation );
             // no exception is raised, we simply hope for the best
         } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
             if ( !force_delegation ) {
@@ -680,7 +682,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     
     m_theJob.set_cream_jobid( jobId );
     m_theJob.set_status(glite::ce::cream_client_api::job_statuses::PENDING);    
-    m_theJob.set_delegation_id( delegation.get<0>() );
+    m_theJob.set_delegation_id( delegation );
     //m_theJob.set_delegation_expiration_time( delegation.get<1>() );
     //    m_theJob.set_delegation_duration( delegation.get<2>() );
     m_theJob.set_leaseid( lease_id ); // FIXME: redundant??
@@ -692,7 +694,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       params.push_back( make_pair("creamjobid", jobId) );
       params.push_back( make_pair("complete_cream_jobid", m_theJob.getCompleteCreamJobID() ) );
       params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::PENDING )));
-      params.push_back( make_pair("delegationid", delegation.get<0>() ));
+      params.push_back( make_pair("delegationid", delegation ));
       //params.push_back( make_pair("delegation_exptime", iceUtil::int_to_string( delegation.get<1>())));
       //params.push_back( make_pair("delegation_duration", iceUtil::int_to_string( delegation.get<2>() )));
       params.push_back( make_pair("leaseid", lease_id ));

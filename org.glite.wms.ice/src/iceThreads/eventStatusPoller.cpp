@@ -41,7 +41,8 @@ eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
       m_delay( d ),
       m_iceManager( manager ),
       m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
-      m_pool( manager->get_ice_commands_pool() )
+      m_pool( manager->get_ice_commands_pool() ),
+      m_real_poller( m_iceManager )
 {
 
 }
@@ -55,7 +56,8 @@ eventStatusPoller::~eventStatusPoller()
 //____________________________________________________________________________
 void eventStatusPoller::body( void )
 {
-    
+  //iceCommandStatusPoller real_poller( m_iceManager );
+
     while( !isStopped() ) {
 
         /**
@@ -83,6 +85,7 @@ void eventStatusPoller::body( void )
                          );
 
         //m_pool->add_request( new iceCommandStatusPoller( m_iceManager ) );
-	iceCommandStatusPoller( m_iceManager ).execute();
+	//iceCommandStatusPoller( m_iceManager ).execute();
+	m_real_poller.execute();
     }
 }

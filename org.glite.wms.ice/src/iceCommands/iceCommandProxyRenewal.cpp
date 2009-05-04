@@ -45,8 +45,9 @@
  */
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
+//#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
+
 
 #include "glite/security/proxyrenewal/renewal.h"
 /**
@@ -108,6 +109,8 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
                     << "There are [" << allDelegations.size() 
                     << "] Delegation(s) to check..."
                     );
+    
+    if( allDelegations.size() == 0 ) return;
     
     /**
        Loop over all different delegations
@@ -183,20 +186,22 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	   when this happen)
 	*/
 	
-	cream_api::soap_proxy::VOMSWrapper V( thisBetterPrx.get<0>() );
-	if( !V.IsValid( ) ) {
+	//	cream_api::soap_proxy::VOMSWrapper V( thisBetterPrx.get<0>() );
+
+	pair<bool, time_t> result_validity = isvalid( thisBetterPrx.get<0>() );
+	if(!result_validity.first) {
 	  CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			 << "iceCommandProxyRenewal::renewAllDelegations() - "
-			 << "Cannot read the proxy ["
-			 << thisBetterPrx.get<0>() << "]. Error is: ["
-			 << V.getErrorMessage() << "]. Skipping renew of delegation ["
-			 << thisDelegID <<"]"
+			 << "iceUtil::isvalid() function reported an error while" 
+			 << " parsing proxy [ " << thisBetterPrx.get<0>() 
+			 << "]. Skipping renew of delegation ["
+			 << thisDelegID <<"]..."
 			 );
 	  mapDelegTime.erase( thisDelegID );
 	  continue;
 	}
 	
-	time_t proxy_time_end = V.getProxyTimeEnd();
+	time_t proxy_time_end = result_validity.second;
 	
 	/**
 	   Must update the expiration time inside the map of DNProxyManager

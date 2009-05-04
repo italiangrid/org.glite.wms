@@ -12,7 +12,7 @@
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
 
-SUBDIRS = iceCommands ice iceThreads iceUtils iceDb
+SUBDIRS = iceCommands ice iceThreads iceUtils iceDb iceDb/sqlite
 
 bin_PROGRAMS = putFL putFL_cancel glite-wms-ice glite-wms-ice-safe queryDb
 
@@ -61,7 +61,7 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		$(SQLITE3_LIBS)
+		iceDb/sqlite/libsqlite3.a
 
 putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
@@ -96,7 +96,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		$(SQLITE3_LIBS)
+		iceDb/sqlite/libsqlite3.a
 
 ###-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
@@ -114,7 +114,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
                 $(GLITE_WMS_COMMON_LOGGER_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		$(SQLITE3_LIBS)
+		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS)
 
@@ -151,7 +151,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		-lvomsapi_gcc32dbgpthr \
-		$(SQLITE3_LIBS)
+		iceDb/sqlite/libsqlite3.a
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
