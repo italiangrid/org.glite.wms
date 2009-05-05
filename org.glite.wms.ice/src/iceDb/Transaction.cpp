@@ -91,7 +91,15 @@ namespace {
 		  ")";
                 do_query( db, sqlcmd );
 		
-            } catch( ... ) {
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating database table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	       abort();
+	    
             }
 	    try {
 	      string sqlcmd = 
@@ -103,7 +111,15 @@ namespace {
 		")";
 	      do_query( db, sqlcmd );
 
-	    } catch( ... ) {
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating database table proxy:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	      
 	    }
 	    try {
 	      string sqlcmd = 
@@ -119,7 +135,15 @@ namespace {
 		")";
 	      do_query( db, sqlcmd );
 	      
-	    } catch( ... ) {
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating database table delegation:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
 	    }
 	    try {
 	      string sqlcmd = 
@@ -131,67 +155,155 @@ namespace {
 		")";
 	      do_query( db, sqlcmd );
 	      
-	    } catch( ... ) {
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating database table lease:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
 	    }
             try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX gid_index ON jobs (gridjobid)"; 
 	      do_query( db, sqlcmd );
-            } catch( ... ) {
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating index gid_index on table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
             }
             try { 
 	      string sqlcmd = 
 		"CREATE INDEX cid_index ON jobs (creamjobid)";
 	      do_query( db, sqlcmd );
-            } catch( ... ) {
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating index cid_index on table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
             }
             try {
               string sqlcmd =
                 "CREATE INDEX ccid_index ON jobs (complete_cream_jobid)";
               do_query( db, sqlcmd );
-            } catch( ... ) {
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating index ccid_index on table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
             }
 	    try {
               string sqlcmd =
                 "CREATE INDEX lastseen ON jobs (last_seen)";
               do_query( db, sqlcmd );
-            } catch( ... ) {
+            } catch(DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating index lastseen on table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
             }
 	    try {
               string sqlcmd =
                 "CREATE INDEX lastemptynotification ON jobs (last_empty_notification)";
               do_query( db, sqlcmd );
-            } catch( ... ) {
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                        << "CreateDb::execute() - "
+			<< "Error creating index lastemptynotification on table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
             }
 	    try {
               string sqlcmd =
                 "CREATE INDEX stat ON jobs (status)";
               do_query( db, sqlcmd );
-            } catch( ... ) {
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+                        << "CreateDb::execute() - "
+			<< "Error creating index stat on table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
             }
 	    try {
               string sqlcmd =
                 "CREATE INDEX killedbyice ON jobs (is_killed_byice)";
               do_query( db, sqlcmd );
-            } catch( ... ) {
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                        << "CreateDb::execute() - "
+			<< "Error creating index killedbyice on table jobs:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
             }
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX userdn_index ON proxy (userdn)";
 	      do_query( db, sqlcmd );
-	    } catch( ... ) {
+	    } catch(DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                        << "CreateDb::execute() - "
+			<< "Error creating index userdn_index on table proxy:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
 	    }
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX delegkey ON delegation (digest,creamurl)";
 	      do_query( db, sqlcmd );
-	    } catch( ... ) {
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                        << "CreateDb::execute() - "
+			<< "Error creating index delegkey on table delegation:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
 	    }
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX leasekey ON lease (userdn,creamurl)";
 	      do_query( db, sqlcmd );
-	    } catch( ... ) {
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                        << "CreateDb::execute() - "
+			<< "Error creating index leasekey on table lease:"
+			<< ex.what() << ". STOP!"
+                        );
+	      abort();
+	    
 	    }
         };
     };
