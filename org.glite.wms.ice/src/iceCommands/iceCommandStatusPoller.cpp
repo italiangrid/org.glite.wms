@@ -358,10 +358,10 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 			     );
 	      return list<soap_proxy::JobInfoWrapper>();
 	    }
- //            CreamProxy_Info( cream_url, 
-//                              proxy,
-//                              &req,
-//                              &res).execute( 3 );
+             CreamProxy_Info( cream_url, 
+                              proxy,
+                              &req,
+                              &res).execute( 3 );
             // remove_jobs_guard.dismiss(); // dismiss the guard, we should be safe here...
             
         } // free some array
