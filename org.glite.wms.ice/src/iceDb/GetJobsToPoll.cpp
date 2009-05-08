@@ -42,9 +42,15 @@ using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 //namespace wms_utils  = glite::wms::common::utilities;
 
-GetJobsToPoll::GetJobsToPoll( bool poll_all_jobs ) :    
+GetJobsToPoll::GetJobsToPoll( const string& userdn, 
+			      const string& creamurl, 
+			      const bool poll_all_jobs, 
+			      const int limit ) :    
     AbsDbOperation(),
-    m_poll_all_jobs( poll_all_jobs )
+    m_poll_all_jobs( poll_all_jobs ),
+    m_limit( limit ),
+    m_userdn( userdn ),
+    m_creamurl( creamurl )
 {
 
 }
@@ -98,76 +104,93 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
         //
 	// empty notification are effective to reduce the polling frequency if the m_threshold is much greater than 10x60 seconds
 
-    string sqlcmd;
+    ostringstream sqlcmd;
     if ( m_poll_all_jobs ) {
-      sqlcmd = "SELECT "  \
-	"gridjobid,"       \
-	"creamjobid,"      \
-	"jdl,"             \
-	"userproxy,"       \
-	"ceid,"            \
-	"endpoint,"        \
-	"creamurl,"        \
-	"creamdelegurl,"   \
-	"userdn,"          \
-	"myproxyurl,"      \
-	"proxy_renewable," \
-	"failure_reason,"  \
-	"sequence_code,"   \
-	"wn_sequence_code,"\
-	"prev_status,"     \
-	"status,"          \
-	"num_logged_status_changes,"
-	"leaseid,"         \
-	"proxycert_timestamp," \
-	"status_poller_retry_count," \
-	"exit_code," \
-	"worker_node," \
-	"is_killed_byice," \
-	"delegationid,"\
-	"last_empty_notification," \
-	"last_seen FROM jobs WHERE creamjobid not null;" ;
+      sqlcmd << "SELECT "  
+	     <<	"gridjobid,"			
+	     <<	"creamjobid,"			
+	     << "jdl,"	   
+	     <<	"userproxy,"       
+	     <<	"ceid,"            
+	     <<	"endpoint,"        
+	     <<	"creamurl,"        
+	     <<	"creamdelegurl,"   
+	     <<	"userdn,"          
+	     <<	"myproxyurl,"      
+	     <<	"proxy_renewable," 
+	     <<	"failure_reason,"  
+	     <<	"sequence_code,"   
+	     <<	"wn_sequence_code,"
+	     <<	"prev_status,"     
+	     <<	"status,"          
+	     <<	"num_logged_status_changes,"
+	     <<	"leaseid,"         
+	     <<	"proxycert_timestamp," 
+	     <<	"status_poller_retry_count," 
+	     <<	"exit_code," 
+	     <<	"worker_node," 
+	     <<	"is_killed_byice," 
+	     <<	"delegationid,"
+	     <<	"last_empty_notification," 
+	     <<	"last_seen FROM jobs WHERE creamjobid not null" 
+	     << " AND creamurl='" 
+	     << m_creamurl 
+	     << "' AND userdn='" 
+	     << m_userdn << "'";
+
+      if( m_limit ) {
+	sqlcmd << " LIMIT " << m_limit << ";";
+      } else {
+	sqlcmd << ";";
+      }
+ 
     } else {
-        time_t t_now( time(NULL) );
-        sqlcmd = boost::str( boost::format( 
-                  "SELECT " \
-		  "gridjobid,"       \
-		  "creamjobid,"      \
-		  "jdl,"             \
-		  "userproxy,"       \
-		  "ceid,"            \
-		  "endpoint,"        \
-		  "creamurl,"        \
-		  "creamdelegurl,"   \
-		  "userdn,"          \
-		  "myproxyurl,"      \
-		  "proxy_renewable," \
-		  "failure_reason,"  \
-		  "sequence_code,"   \
-		  "wn_sequence_code,"		\
-		  "prev_status,"		\
-		  "status,"			\
-		  "num_logged_status_changes,"
-		  "leaseid,"   \
-		  "proxycert_timestamp,"	\
-		  "status_poller_retry_count,"	\
-		  "exit_code,"			\
-		  "worker_node,"		\
-		  "is_killed_byice,"		\
-		  "delegationid,"		\
-		  "last_empty_notification,"	\
-		  "last_seen FROM jobs"				\
-                  " WHERE ( creamjobid not null ) AND"\
-                  "       ( last_seen > 0 AND ( %1% - last_seen >= %2% ) ) "\
-                  "  OR   ( last_empty_notification > 0 AND ( %3% - last_empty_notification > %4% ) )" ) % t_now % threshold % t_now % empty_threshold );
+      time_t t_now( time(NULL) );
+      sqlcmd << "SELECT "		
+	     << "gridjobid,"		
+	     << "creamjobid,"		
+	     << "jdl,"			
+	     << "userproxy,"		
+	     << "ceid,"		
+	     << "endpoint,"		
+	     << "creamurl,"		
+	     << "creamdelegurl,"	
+	     << "userdn,"		
+	     << "myproxyurl,"		
+	     << "proxy_renewable,"	
+	     << "failure_reason,"	
+	     << "sequence_code,"			
+	     << "wn_sequence_code,"			
+	     << "prev_status,"			
+	     << "status,"				
+	     << "num_logged_status_changes,"
+	     << "leaseid,"		
+	     << "proxycert_timestamp,"		
+	     << "status_poller_retry_count,"	
+	     << "exit_code,"				
+	     << "worker_node,"			
+	     << "is_killed_byice,"			
+	     << "delegationid,"			
+	     << "last_empty_notification,"				
+	     << "last_seen FROM jobs"					
+	     << " WHERE ( creamjobid not null ) AND "			
+	     << "userdn='" << m_userdn << "'"
+	     << " AND creamurl='" << m_creamurl << "' AND "
+	     << "       (( last_seen > 0 AND ( "<<t_now<<" - last_seen >= "<<threshold<<" ) ) "
+	     << "  OR   ( last_empty_notification > 0 AND ( "<<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) ))";
+      if( m_limit ) {
+	sqlcmd << " LIMIT " << m_limit << ";";
+      } else {
+	sqlcmd << ";";
+      }
     }
 
     list< vector<string> > jobs;
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+  //if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
-    do_query( db, sqlcmd, fetch_jobs_callback, &jobs );
+  do_query( db, sqlcmd.str(), fetch_jobs_callback, &jobs );
 
     for( list< vector<string> >::iterator it=jobs.begin();
 	 it != jobs.end();

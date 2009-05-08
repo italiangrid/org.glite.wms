@@ -46,9 +46,16 @@ namespace db {
         bool m_poll_all_jobs;
 //        std::list< boost::tuple<std::string, std::string, std::string> > m_result;
 	std::list< glite::wms::ice::util::CreamJob > m_result;
+	const int                                    m_limit;
+	const std::string                            m_userdn;
+	const std::string                            m_creamurl;
 
     public:
-        GetJobsToPoll( bool poll_all_jobs );
+        GetJobsToPoll( const std::string& userdn, 
+		       const std::string& creamurl, 
+		       const bool poll_all_jobs, 
+		       const int limit = 0 );
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**
