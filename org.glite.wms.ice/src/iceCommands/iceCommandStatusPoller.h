@@ -76,7 +76,7 @@ namespace glite {
            *
            * @return the list of Cream Job IDs for jobs to poll.
            */ 
-	  void get_jobs_to_poll( std::list<CreamJob>& /* std::list< glite::wms::ice::util::CreamJob >& */ ) throw();
+	  void get_jobs_to_poll( std::list<CreamJob>& /* std::list< glite::wms::ice::util::CreamJob >& */,const std::string&, const std::string& ) throw();
 
           
 	  /**
@@ -111,7 +111,9 @@ namespace glite {
 				 const std::string& user_dn, 
 				 const std::string& cream_url, 
 				 //const std::vector< glite::wms::ice::util::CreamJob >& cream_job_ids ) throw();
-				 const std::vector< CreamJob >& cream_job_ids ) throw();
+				 const std::list< CreamJob >& cream_job_ids ) throw();
+
+
 
           /**
            * This method removes jobs which have been reported as not found by
