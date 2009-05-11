@@ -136,7 +136,7 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 	     << " AND creamurl='" 
 	     << m_creamurl 
 	     << "' AND userdn='" 
-	     << m_userdn << "'";
+	     << m_userdn << "' ORDER BY last_seen ASC";
 
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
@@ -177,7 +177,8 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 	     << "userdn='" << m_userdn << "'"
 	     << " AND creamurl='" << m_creamurl << "' AND "
 	     << "       (( last_seen > 0 AND ( "<<t_now<<" - last_seen >= "<<threshold<<" ) ) "
-	     << "  OR   ( last_empty_notification > 0 AND ( "<<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) ))";
+	     << "  OR   ( last_empty_notification > 0 AND ( "<<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) ))"
+	     << " ORDER BY last_seen ASC";
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
       } else {
@@ -187,7 +188,7 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 
     list< vector<string> > jobs;
 
-  //if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_jobs_callback, &jobs );
