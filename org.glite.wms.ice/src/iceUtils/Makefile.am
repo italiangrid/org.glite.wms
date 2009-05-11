@@ -32,9 +32,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autog
 		-I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \
+		-I$(top_srcdir)/src/iceDb/sqlite \
 		-I$(top_srcdir)/src/iceCommands \
 		-I$(top_srcdir)/src/iceThreads \
-		$(SQLITE3_CFLAGS) \
 		$(GLITE_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \

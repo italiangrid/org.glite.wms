@@ -15,6 +15,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		-I$(top_srcdir)/src/iceThreads \
 		-I$(top_srcdir)/src/iceCommands \
 		-I$(top_srcdir)/src/ice \
+		-I$(top_srcdir)/src/iceDb/sqlite \
 		$(GLITE_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
@@ -23,7 +24,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
-		$(SQLITE3_CFLAGS) \
 		-pipe 
 
 MAINTAINERCLEANFILES = Makefile.in

@@ -44,6 +44,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 
 AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src \
+		-I$(top_srcdir)/src/iceDb/sqlite \
 		$(GLITE_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \
@@ -52,7 +53,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autog
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
 		-DGLITE_WMS_HAVE_LBPROXY \
-		$(SQLITE3_CFLAGS) \
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in
