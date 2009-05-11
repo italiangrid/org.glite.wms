@@ -24,6 +24,7 @@ libglite_wms_iceCommands_la_SOURCES = \
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \
+		-I$(top_srcdir)/src/iceDb/sqlite \
 		-I$(top_srcdir)/src/iceCommands \
 		-I$(top_srcdir)/src/iceThreads \
 		$(GLITE_CFLAGS) \
@@ -34,7 +35,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
-		$(SQLITE3_CFLAGS) \
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in

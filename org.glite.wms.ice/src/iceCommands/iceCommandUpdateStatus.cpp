@@ -309,7 +309,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
  	list<string> params;
 	params.push_back( "creamurl" );
 	params.push_back( "userdn" );
-	db::GetFields getter( params, list<pair<string, string> >(), true );
+	db::GetFields getter( params, list<pair<string, string> >(), true/* use DISTINCT = true */ );
 	//db::GetCreamURLUserDN getter;
 	db::Transaction tnx;
 	tnx.execute( &getter );
