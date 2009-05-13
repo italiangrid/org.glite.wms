@@ -44,7 +44,7 @@ void printhelp( void ) {
   cout << "\t\t\tPENDING"<<endl;
   cout << "\t\t\tIDLE"<<endl;
   cout << "\t\t\tRUNNING"<<endl;
-  cout << "\t\t\tREALLY-RUNNING"<<endl;
+  cout << "\t\t\tREALLY_RUNNING"<<endl;
   cout << "\t\t\tCANCELLED"<<endl;
   cout << "\t\t\tHELD"<<endl;
   cout << "\t\t\tABORTED"<<endl;
