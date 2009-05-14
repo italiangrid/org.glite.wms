@@ -7,7 +7,7 @@ getGrstNs
 proxyRequest
 putProxy
 getDelegatedProxyInfo
-The WMSLB_HOST name is obligatory commandline argument.
+The WMProxy_HOST name is obligatory commandline argument.
 Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
 
 '''

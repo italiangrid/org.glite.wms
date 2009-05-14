@@ -5,7 +5,7 @@ If version >= "2.2.0" test gets available Tranfer Protocols.
 Following Wmproxy Methods are included in the test:
 getVersion
 getTransferProtocol
-The WMSLB_HOST name is obligatory commandline argument.
+The WMProxy_HOST name is obligatory commandline argument.
 Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
 
 '''
