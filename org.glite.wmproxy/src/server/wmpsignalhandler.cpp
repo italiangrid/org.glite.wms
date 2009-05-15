@@ -55,6 +55,7 @@ initsignalhandler()
 	signal(SIGPIPE, SIG_IGN);
 	// not needed mod_fastcgi sends SIGUSR1 when signal has been received?
 	signal(SIGTERM, handler);
+	signal(SIGXFSZ, handler);
 	// Apache request for a "graceful" process shutdown (e.g. restart)
 	signal(SIGUSR1, handler);
 	signal(SIGHUP, handler);
@@ -69,6 +70,7 @@ resetsignalhandler()
 	signal(SIGPIPE, SIG_IGN);
 	// not needed mod_fastcgi sends SIGUSR1 when signal has been received?
 	signal(SIGTERM, SIG_DFL);
+	signal(SIGXFSZ, SIG_DFL);
 	// Apache request for a "graceful" process shutdown (e.g. restart)
 	signal(SIGUSR1, SIG_DFL);
 	signal(SIGHUP, SIG_DFL);
