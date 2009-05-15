@@ -306,12 +306,12 @@ WMPAuthorizer::checkGaclUserAuthZ()
 	char *grst_cred = NULL;
 	string fqan = "";
 	string errmsg = "";
-	bool exec = true;
-	bool execDN = true;
-    bool execAU = true;
-    bool exist = false;
-    bool existDN = false;
-    bool existAU = false;
+	bool exec = false;
+	bool execDN = false;
+    	bool execAU = false;
+    	bool exist = false;
+   	bool existDN = false;
+    	bool existAU = false;
 	int pos = 0;
 	grst_cred = getenv ( VOMS_GACL_VAR );
 	if ( grst_cred ){
@@ -410,7 +410,7 @@ WMPAuthorizer::checkGaclUserAuthZ()
                                 exec = true;
                                 execAU = true;
                         }
-                } else if (existAU || exist){
+                } else if (execAU || exec){
                                 execDN = true;
                 } else {
                                 execDN = false;
@@ -440,7 +440,7 @@ WMPAuthorizer::checkGaclUserAuthZ()
                 }
 
                 // gacl file has no valid entries for user proxy without fqan
-                if (!(existDN || existAU)){
+                if (!(execDN || execAU)){
                         exec = false;
                 }
         }
