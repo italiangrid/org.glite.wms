@@ -235,36 +235,36 @@ void JobOutput::getOutput ( ){
 							cout << json;
 
 		} else {
-		out << "\n" << wmcUtils->getStripe(80, "=" , "") << "\n\n";
-		out << "\t\t\tJOB GET OUTPUT OUTCOME\n\n";
-		if (listOnlyOpt && hasFiles){
-			out << parentFileList  << childrenFileList << fileList;
-			// Prints the results into the log file
-			logInfo->print(WMS_INFO,  string(parentFileList+childrenFileList+fileList), "", false );
-		} else {
-			out << result ;
-			// Prints the results into the log file
-			logInfo->print (WMS_INFO,  result, "", false );
+			out << "\n" << wmcUtils->getStripe(80, "=" , "") << "\n\n";
+			out << "\t\t\tJOB GET OUTPUT OUTCOME\n\n";
+			if (listOnlyOpt && hasFiles){
+				out << parentFileList  << childrenFileList << fileList;
+				// Prints the results into the log file
+				logInfo->print(WMS_INFO,  string(parentFileList+childrenFileList+fileList), "", false );
+			} else {
+				out << result ;
+				// Prints the results into the log file
+				logInfo->print (WMS_INFO,  result, "", false );
+			}
+			out << wmcUtils->getStripe(80, "=" , "" ) << "\n\n";
+			// Warnings/errors messages
+			if (  wmcOpts->getBoolAttribute(Options::DBG) && !m_warnsList.empty()) {
+				out << m_warnsList << "\n";
+			}
 		}
-		out << wmcUtils->getStripe(80, "=" , "" ) << "\n\n";
-		// Warnings/errors messages
-		if (  wmcOpts->getBoolAttribute(Options::DBG) && !m_warnsList.empty()) {
-			out << m_warnsList << "\n";
-		} else {
-			string err = "";
-			if (size==1) { err ="Unable to retrieve the output"; }
-			else { err ="Unable to retrieve the output for any job"; }
-			throw WmsClientException(__FILE__,__LINE__,
+	} else {
+		string err = "";
+		if (size==1) { err ="Unable to retrieve the output"; }
+		else { err ="Unable to retrieve the output for any job"; }
+		throw WmsClientException(__FILE__,__LINE__,
 					"output", ECONNABORTED,
 					"Operation Failed",
 					err  );
-		}
-		// logfile
-		out << getLogFileMsg ( ) << "\n";
-		// STD-OUT
-		cout << out.str ( );
-		}
 	}
+	// logfile
+	out << getLogFileMsg ( ) << "\n";
+	// STD-OUT
+	cout << out.str ( );
 }
 /*********************************************
 *	PRIVATE METHODS:
