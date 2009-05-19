@@ -37,10 +37,6 @@ if [ -z "${EDG_WL_LOCATION}" ]; then
   export EDG_WL_LOCATION="${EDG_LOCATION:-/opt/edg}"
 fi
 
-if [ -n "${__brokerinfo}" ]; then
-  export GLITE_WMS_RB_BROKERINFO="`pwd`/${__brokerinfo}"
-fi
-
 lb_logevent=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
 if [ ! -x "$lb_logevent" ]; then
   lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
@@ -66,25 +62,29 @@ else
   __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
 fi
 
-host="`hostname -f`"
-newdir="${__jobid_to_filename}"
-maradona="${newdir}.output"
-workdir="`pwd`"
+jw_host="`hostname -f`"
+jw_newdir="${__jobid_to_filename}"
+jw_maradona="${jw_newdir}.output"
+jw_workdir="`pwd`"
 
 ##
 # functions definitions
 ##
 
 kill_with_children() { # 1 - parent PID
-ppid=$1
-kill -STOP $ppid
-kill_list=$ppid
-for i in `ps -ef | awk '$3 == '${ppid}' { print $2 }'`
-do
-  kill_list="$kill_list $i"
-done
-kill -9 $kill_list
-unset kill_list
+  if [ -n "$1" ]
+  then
+    local ppid=$1
+    kill -STOP $ppid
+    local kill_list=$ppid
+    for i in `ps -ef | awk '$3 == '${ppid}' { print $2 }'`
+    do
+      kill_list="$kill_list $i"
+    done
+    kill -9 $kill_list
+  else
+    echo "kill_with_children() called with an empty pid"
+  fi
 }
 
 do_transfer() # 1 - command, 2 - source, 3 - dest, 4 - std err, 5 - exit code file
@@ -110,7 +110,7 @@ proxy_checker()
 jw_echo() # 1 - msg
 {
   echo "$1"
-  echo "$1" >> "${maradona}"
+  echo "$1" >> "${jw_maradona}"
 }
 
 log_event() # 1 - event
@@ -120,7 +120,7 @@ log_event() # 1 - event
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="$1"\
-    --node="$host"\
+    --node="$jw_host"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
@@ -157,7 +157,7 @@ log_event_reason() # 1 - event, 2 - reason
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="$1"\
     --reason="$2"\
-    --node="$host"\
+    --node="$jw_host"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
@@ -176,7 +176,7 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 
 warning()
 {
-  term_delay=10
+  local term_delay=10
   jw_echo "$1"
   log_event_reason "Running" "job received SIGUSR1 as warning, terminating in $term_delay seconds"
   kill -USR1 -$user_job_pid # forwarding to the user job (just in case)
@@ -202,10 +202,9 @@ truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 
 sort_by_size() # 1 - file names vector, 2 - directory
 {
-  tmp_sort_file=`mktemp -q tmp.XXXXXXXXXX`
+  local tmp_sort_file=`mktemp -q tmp.XXXXXXXXXX`
   if [ ! -f "$tmp_sort_file" ]; then
     jw_echo "Cannot generate temporary file"
-    unset tmp_sort_file
     return $?
   fi
   eval tmpvar="$1[@]"
@@ -220,7 +219,6 @@ sort_by_size() # 1 - file names vector, 2 - directory
   unset "$1"
   eval "$1=(`sort -n $tmp_sort_file|awk '{print $2}'`)"
   rm -f "$tmp_sort_file"
-  unset "$tmp_sort_file"
 }
 
 is_integer() { # 1 - value to be checked
@@ -233,9 +231,9 @@ is_integer() { # 1 - value to be checked
 
 retry_copy() # 1 - command, 2 - source, 3 - dest
 {
-  count=0
-  succeded=1
-  sleep_time=0
+  local count=0
+  local succeded=1
+  local sleep_time=0
   while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
     time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
@@ -268,6 +266,7 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
       let "transfer_timeout--"
     done
     if [ $transfer_timeout -le 0 ]; then
+      echo "Killing transfer watchdog (pid=$transfer_watchdog)..."
       kill_with_children $transfer_watchdog
       log_event_reason "Running" "Hanging transfer"
       return 1
@@ -291,28 +290,32 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
 
 doExit() # 1 - status
 {
-  jw_status=$1
+  local jw_status=$1
 
   jw_echo "jw exit status = ${jw_status}"
 
-  if [ -n "${maradona}" ]; then
-    if [ -r "${maradona}" ]; then
-      retry_copy "globus-url-copy" "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  if [ -n "${jw_maradona}" ]; then
+    if [ -r "${jw_maradona}" ]; then
+      retry_copy "globus-url-copy" "file://${jw_workdir}/${jw_maradona}" "${__jw_maradonaprotocol}"
       globus_copy_status=$?
     else
-      jw_echo "maradona not readable, so not sent"
+      jw_echo "jw_maradona not readable, so not sent"
       globus_copy_status=0
     fi
   else
-    jw_echo "maradona was found unset or empty"
+    jw_echo "jw_maradona was found unset or empty"
     globus_copy_status=0
   fi
 
-  if [ -n "${newdir}" ]; then
-    rm -rf "../${newdir}"
+  if [ -n "${jw_newdir}" ]; then
+    rm -rf "../${jw_newdir}"
   fi
 
-  kill_with_children $proxy_watchdog 
+  if [ -n "$proxy_watchdog" ]
+  then
+    echo "doExit(): Killing proxy watchdog (pid=$proxy_watchdog)..."
+    kill_with_children $proxy_watchdog 
+  fi
   kill -9 -$user_job_pid 2>/dev/null
 
   if [ ${jw_status} -eq 0 ]; then
@@ -324,7 +327,7 @@ doExit() # 1 - status
 
 doDSUploadTmp()
 {
-  filename="${__dsupload}"
+  local filename="${__dsupload}"
   echo "#" >> "$filename.tmp"
   echo "# Autogenerated by JobWrapper!" >> "$filename.tmp"
   echo "#" >> "$filename.tmp"
@@ -336,17 +339,17 @@ doDSUploadTmp()
 
 doDSUpload()
 {
-  filename="${__dsupload}"
+  local filename="${__dsupload}"
   mv -fv "$filename.tmp" "$filename"
 }
 
 doCheckReplicaFile()
 {
-  sourcefile=$1
-  filename="${__dsupload}"
-  exit_status=0
-  if [ ! -f "${workdir}/$sourcefile" ]; then
-    echo "$sourcefile    Error: File $sourcefile has not been found on the WN $host" >> "$filename.tmp"
+  local sourcefile=$1
+  local filename="${__dsupload}"
+  local exit_status=0
+  if [ ! -f "${jw_workdir}/$sourcefile" ]; then
+    echo "$sourcefile    Error: File $sourcefile has not been found on the WN $jw_host" >> "$filename.tmp"
     exit_status=1
   fi
   echo >> "$filename.tmp"
@@ -355,16 +358,15 @@ doCheckReplicaFile()
 
 doReplicaFile()
 {
-  sourcefile=$1
-  filename="${__dsupload}"
-  exit_status=0
-
-  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+  local sourcefile=$1
+  local filename="${__dsupload}"
+  local exit_status=0
+  local localf=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
-    echo "$sourcefile    $local" >> "$filename.tmp"
+    echo "$sourcefile    $localf" >> "$filename.tmp"
   else
-    echo "$sourcefile    Error: $local" >> "$filename.tmp"
+    echo "$sourcefile    Error: $localf" >> "$filename.tmp"
     exit_status=1
   fi
   
@@ -374,22 +376,21 @@ doReplicaFile()
 
 doReplicaFilewithLFN()
 {
-  sourcefile="$1"
-  lfn="$2"
-  filename="${__dsupload}"
-  exit_status=0
-  
-  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
+  local sourcefile="$1"
+  local lfn="$2"
+  local filename="${__dsupload}"
+  local exit_status=0
+  local localf=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" -l "$lfn" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
     echo "$sourcefile    $lfn" >> "$filename.tmp"
   else
-    localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+    local localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile $localnew" >> "$filename.tmp"
     else
-      echo "$sourcefile Error: $local; $localnew" >> "$filename.tmp"
+      echo "$sourcefile Error: $localf; $localnew" >> "$filename.tmp"
       exit_status=1
     fi
   fi
@@ -400,22 +401,21 @@ doReplicaFilewithLFN()
 
 doReplicaFilewithSE()
 {
-  sourcefile="$1"
-  se="$2"
-  filename="${__dsupload}"
-  exit_status=0
-
-  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
+  local sourcefile="$1"
+  local se="$2"
+  local filename="${__dsupload}"
+  local exit_status=0
+  local localf=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" -d "$se" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
-    echo "$sourcefile   $local" >> "$filename.tmp"
+    echo "$sourcefile  $localf" >> "$filename.tmp"
   else
-    localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+    local localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile $localnew" >> "$filename.tmp"
     else
-      echo "$sourcefile Error: $local; $localnew" >> "$filename.tmp"
+      echo "$sourcefile Error: $localf; $localnew" >> "$filename.tmp"
       exit_status=1
     fi
   fi
@@ -426,34 +426,32 @@ doReplicaFilewithSE()
 
 doReplicaFilewithLFNAndSE()
 {
-
-  sourcefile="$1"
-  lfn="$2"
-  se="$3"
-  filename="${__dsupload}"
-  exit_status=0
-
-  local=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" -d "$se" 2>&1`
+  local sourcefile="$1"
+  local lfn="$2"
+  local se="$3"
+  local filename="${__dsupload}"
+  local exit_status=0
+  local localf=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" -l "$lfn" -d "$se" 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
-    echo "$sourcefile    $lfn" >> "$filename.tmp"
+    echo "$sourcefile    $localf" >> "$filename.tmp"
   else
-    localse=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -d "$se" 2>&1`
+    local localse=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" -d "$se" 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
       echo "$sourcefile    $localse" >> "$filename.tmp"
     else
-      locallfn=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" -l "$lfn" 2>&1`
+      local locallfn=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" -l "$lfn" 2>&1`
       result=$?
       if [ $result -eq 0 ]; then 
         echo "$sourcefile    $locallfn" >> "$filename.tmp"
       else
-        localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${workdir}/$sourcefile" 2>&1`
+        local localnew=`${edg_rm_command} --vo=${__vo} copyAndRegisterFile "file://${jw_workdir}/$sourcefile" 2>&1`
         result=$?
         if [ $result -eq 0 ]; then
           echo "$sourcefile    $localnew" >> "$filename.tmp"
         else
-          echo "$sourcefile    Error: $local; $localse; $locallfn; $localnew" >> "$filename.tmp"
+          echo "$sourcefile    Error: $localf; $localse; $locallfn; $localnew" >> "$filename.tmp"
           exit_status=1
         fi    
       fi
@@ -544,16 +542,16 @@ OSB_transfer()
 {
   # uncomment this one below if the order in the osb originally 
   # specified is not of some relevance to the user
-  #sort_by_size __output_file ${workdir}
+  #sort_by_size __output_file ${jw_workdir}
 
-  file_size_acc=0
-  current_file=0
-  total_files=${#__wmp_output_dest_file[@]}
+  local file_size_acc=0
+  local current_file=0
+  local total_files=${#__wmp_output_dest_file[@]}
   for f in "${__wmp_output_dest_file[@]}"
   do
     if [ -r "${__wmp_output_file[$current_file]}" ]; then
       file=`basename $f`
-      s="${workdir}/${__wmp_output_file[$current_file]}"
+      s="${jw_workdir}/${__wmp_output_file[$current_file]}"
       if [ ${__osb_wildcards_support} -eq 0 ]; then
         d="${f}"
       else
@@ -629,19 +627,19 @@ OSB_transfer()
 
 if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
   # MPI (LSF or PBS)
-  mkdir -p .mpi/${newdir}
+  mkdir -p .mpi/${jw_newdir}
   if [ $? != 0 ]; then
-    fatal_error "Cannot create .mpi/${newdir} directory"
+    fatal_error "Cannot create .mpi/${jw_newdir} directory"
   fi
-  cd .mpi/${newdir}
+  cd .mpi/${jw_newdir}
 else #if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
-  mkdir ${newdir}
+  mkdir ${jw_newdir}
   if [ $? != 0 ]; then
-    fatal_error "Cannot create ${newdir} directory"
+    fatal_error "Cannot create ${jw_newdir} directory"
   fi
-  cd ${newdir}
+  cd ${jw_newdir}
 fi
-workdir="`pwd`"
+jw_workdir="`pwd`"
 
 log_event "Running"
 
@@ -670,10 +668,18 @@ fi
 unset vo_hook
 
 # customization point #1
+# Be sure to update workdir as it may be changed by cp_1.sh
 if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
   fi
+fi
+jw_workdir="`pwd`"
+
+# GLITE_WMS_RB_BROKERINFO must be defined after execution of cp_1.sh in case
+# workdir (used as destination when downloading sandbox) has been updated
+if [ -n "${__brokerinfo}" ]; then
+  export GLITE_WMS_RB_BROKERINFO="$jw_workdir/${__brokerinfo}"
 fi
 
 # the test -w on work dir is unsuitable on AFS machines
@@ -685,7 +691,7 @@ else
 fi
 unset tmpfile
 
-touch "${maradona}"
+touch "${jw_maradona}"
 
 if [ -z "${GLOBUS_LOCATION}" ]; then
   fatal_error "GLOBUS_LOCATION undefined"
@@ -694,11 +700,6 @@ elif [ -r "${GLOBUS_LOCATION}/etc/globus-user-env.sh" ]; then
 else
   fatal_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
 fi
-
-for env in ${__environment[@]}
-do
-  eval export $env
-done
 
 umask 022
 
@@ -711,9 +712,9 @@ do
     file=`basename ${__wmp_input_base_dest_file[$index]}`
   fi
   if [ "${f:0:9}" == "gsiftp://" ]; then
-    retry_copy "globus-url-copy" "${f}" "file://${workdir}/${file}"
+    retry_copy "globus-url-copy" "${f}" "file://${jw_workdir}/${file}"
   elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-    retry_copy "htcp" "${f}" "file://${workdir}/${file}"
+    retry_copy "htcp" "${f}" "file://${jw_workdir}/${file}"
   else
     false
   fi 
@@ -731,12 +732,15 @@ fi
 # user script (before taking the token, shallow-sensitive)
 if [ -n "${__prologue}" ]; then
   if [ -r "${__prologue}" ]; then
+    (
     for env in ${__environment[@]}
     do
       eval export $env
     done
     chmod +x "${__prologue}" 2>/dev/null
     ${__prologue} "${__prologue_arguments}" >/dev/null 2>&1
+    exit $?
+    )
     prologue_status=$?
     if [ ${prologue_status} -ne 0 ]; then
       fatal_error "prologue failed with error ${prologue_status}"
@@ -823,7 +827,7 @@ if [ ${__job_type} -eq 0 ]; then # normal
   executable="${__job}"
 elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then # MPI LSF, PBS
   executable="mpirun"
-  __arguments="-np ${__nodes} -machinefile ${hostfile} ${__job}"
+  __arguments="-np ${__nodes} -machinefile ${hostfile} ${__job} ${__arguments}"
 fi
 
 if [ ${__job_type} -ne 3 ]; then # all but interactive
@@ -849,7 +853,7 @@ fi
   done
 
   if [ -f "$tmp_time_file" ]; then
-    full_cmd_line="($time_cmd \"${executable}\" ${__arguments} ${std_input} ${std_output} ${std_error}) > \"$tmp_time_file\""
+    full_cmd_line="($time_cmd -o \"$tmp_time_file\" \"${executable}\" ${__arguments} ${std_input} ${std_output} ${std_error})"
   else
     full_cmd_line="\"${executable}\" ${__arguments} ${std_input} ${std_output} ${std_error}"
   fi
@@ -875,6 +879,7 @@ fi
 
   wait $user_job_pid
   user_job_status=$?
+  echo "Killing proxy watchdog (pid=$proxy_watchdog)..."
   kill_with_children $proxy_watchdog
   exit $user_job_status
 )
@@ -951,12 +956,15 @@ fi
 
 if [ -n "${__epilogue}" ]; then
   if [ -r "${__epilogue}" ]; then
+    (
     for env in ${__environment[@]}
     do
       eval export $env
     done
     chmod +x "${__epilogue}" 2>/dev/null
     ${__epilogue} "${__epilogue_arguments}" >/dev/null 2>&1
+    exit $?
+    )
     epilogue_status=$?
     if [ ${epilogue_status} -ne 0 ]; then
       fatal_error "epilogue failed with error ${epilogue_status}"
@@ -970,18 +978,23 @@ OSB_transfer
 
 log_done_ok "${status}"
 
-if [ -n "${LSB_JOBID}" ]; then
-  cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
-  if [ $? != 0 ]; then
-    jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+# DGAS specific stuff: do it only if DGAS client is installed (thanks to Michel Jouvin)
+if [ -x ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient ]; then
+  if [ -n "${LSB_JOBID}" ]; then
+    cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
+    if [ $? != 0 ]; then
+      jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+    fi
   fi
-fi
 
-if [ -n "${PBS_JOBID}" ]; then
-  cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
-  if [ $? != 0 ]; then
-    jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+  if [ -n "${PBS_JOBID}" ]; then
+    cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
+    if [ $? != 0 ]; then
+      jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+    fi
   fi
+else
+  jw_echo "${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient not installed: ignoring gianduia transfer."
 fi
 
 # customization point #3
