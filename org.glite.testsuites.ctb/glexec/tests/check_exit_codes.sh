@@ -35,7 +35,7 @@ fi
 ##################################################################
 echo
 echo "Test 2:"
-echo "Check that glexec returns 201 when user proxy is expired"
+echo "Check that glexec returns 203 when user proxy is expired"
 
 keyfile="test_user_${usernum}_key.pem"
 certfile="test_user_${usernum}_cert.pem"
@@ -172,6 +172,41 @@ else
   fi
 fi
 
+##################################################################
+echo
+echo "Test 6:"
+echo "Check that glexec returns 203 when X509_USER_PROXY is not properly set"
+
+keyfile="test_user_${usernum}_key.pem"
+certfile="test_user_${usernum}_cert.pem"
+proxy="x509up_u501_${usernum}"
+if [ ! -f $keyfile ] || [ ! -f $certfile ]; then
+  echo "test user certificate r key not found"
+  echo "Test 1 failed"
+  fail=1
+fi
+
+rm -f ./x509up_u501_${usernum}
+echo "Creating proxy file x509up_u501_${usernum}"  
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user
+_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin
+if [ $? -ne 0 ]; then
+  echo "Error creating the proxy" 
+  fail=1
+else
+  export GLEXEC_CLIENT_CERT=$proxy
+  export GLEXEC_SOURCE_PROXY=$proxy
+  unset X509_USER_PROXY
+  $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami"
+  ret=$?
+  if [ $ret -ne 203 ]; then
+    echo "Return code expected was 203 but $ret was given"
+    echo "Test 6 failed"
+    fail=1
+  else
+    echo "Test 6 passed"
+  fi
+fi
 
 
 
