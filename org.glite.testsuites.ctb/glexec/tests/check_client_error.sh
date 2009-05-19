@@ -19,14 +19,14 @@ fail=0
 ##################################################################
 echo 
 echo "Test 1:"
-echo "Check that glexec returns 201 when no proxy is provided"
+echo "Check that glexec returns 203 when no proxy is provided"
 unset GLEXEC_CLIENT_CERT
 unset GLEXEC_SOURCE_PROXY
 unset X509_USER_PROXY
 $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami"
 ret=$?
-if [ $ret -ne 201 ]; then
-  echo "Return code expected was 201 but $ret was given"
+if [ $ret -ne 203 ]; then
+  echo "Return code expected was 203 but $ret was given"
   echo "Test 1 failed"
   fail=1
 fi
