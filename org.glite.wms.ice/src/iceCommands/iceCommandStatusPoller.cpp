@@ -555,7 +555,7 @@ void iceCommandStatusPoller::check_user_jobs( const string& userdn, const string
 
   j_list.clear();
   
-  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
+  
   
   CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
 		 << "Getting ["
@@ -567,6 +567,8 @@ void iceCommandStatusPoller::check_user_jobs( const string& userdn, const string
   
   this->get_jobs_to_poll( j_list, userdn, creamurl ); 
   
+  if( !j_list.size() ) return;
+
   string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( userdn ).get<0>() );
   
   if ( proxy.empty() ) {
@@ -595,8 +597,10 @@ void iceCommandStatusPoller::check_user_jobs( const string& userdn, const string
   
   list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( proxy, userdn, creamurl, j_list ) ); 
   
+  //boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
   updateJobCache( j_status );// modifies the cache, locks it job by job
   
+  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
   for(list<CreamJob>::const_iterator it = j_list.begin();
       it != j_list.end();
       ++it)
