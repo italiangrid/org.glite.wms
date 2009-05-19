@@ -404,32 +404,27 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
                     << info_obj.getCreamURL() << "]"
                     );
     
-    bool found = false;
+//     bool found = false;
+// 
+//     CreamJob theJob;
+//     {
+//       glite::wms::ice::db::GetJobByCid getter( completeJobID );
+//       glite::wms::ice::db::Transaction tnx;
+//       tnx.execute( &getter );
+//       found = getter.found();
+//       theJob = getter.get_job();
+//       //      info = getter.get_info();
+//     }
 
-    CreamJob theJob;
-    {
-      glite::wms::ice::db::GetJobByCid getter( completeJobID );
-      glite::wms::ice::db::Transaction tnx;
-      tnx.execute( &getter );
-      found = getter.found();
-      theJob = getter.get_job();
-      //      info = getter.get_info();
-    }
-
-    if(found) {
-      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-		      << " Managing Job " << theJob.describe()
-		      << " for which I already processed "
-		      << theJob.get_num_logged_status_changes()
-		      << " status changes, and JobStatus contains "
-		      << status_changes.size() << " status changes"
-		      );
-      
-//       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name 
-// 		      << "Job " << theJob.describe()
-// 		      << " has worker_node=" << info_obj.getWorkerNode()
+//     if(found) {
+//       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+// 		      << " Managing Job " << theJob.describe()
+// 		      << " for which I already processed "
+// 		      << theJob.get_num_logged_status_changes()
+// 		      << " status changes, and JobStatus contains "
+// 		      << status_changes.size() << " status changes"
 // 		      );
-    }
+//     }
 
     int count;
     vector< soap_proxy::JobStatusWrapper >::const_iterator it;
@@ -609,6 +604,7 @@ void iceCommandStatusPoller::check_user_jobs( const string& userdn, const string
       list< pair< string, string > > params;
       params.push_back( make_pair("last_seen", int_to_string( time(0)) ));
       params.push_back( make_pair("last_empty_notification", int_to_string(time(0) )));
+      params.push_back( make_pair("last_poller_visited", int_to_string(time(0) )));
       db::UpdateJobByGid updater( it->getGridJobID(), params );
       db::Transaction tnx;
       tnx.execute( &updater );
