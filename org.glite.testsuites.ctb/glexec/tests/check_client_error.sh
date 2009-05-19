@@ -29,6 +29,8 @@ if [ $ret -ne 203 ]; then
   echo "Return code expected was 203 but $ret was given"
   echo "Test 1 failed"
   fail=1
+else
+ echo "Test 1 passed"
 fi
 ##################################################################
 echo
