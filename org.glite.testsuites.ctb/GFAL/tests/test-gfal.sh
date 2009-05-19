@@ -123,7 +123,9 @@ command="./gfal-test file:///tmp/${NAME}"
 message="Running GFAL test script"
 run_command "${command}" "${message}"
 
-command="gfal_testcreatdir lfn:/grid/${VO}/tmp/${NAME}"
+
+#command="gfal_testcreatdir lfn:/grid/${VO}/tmp/${NAME}"
+command="gfal_testcreatdir lfn:/grid/${VO}/sa3tmp-`date +%s`"
 message="Running GFAL create dir test"
 run_command "${command}" "${message}"
 
@@ -139,15 +141,19 @@ run_command "${command}" "${message}"
 
 SURL=$(echo ${OUTPUT} | grep -i -E -o 'sfn.*|srm.*')
 
-command="lcg-gt -v $SURL rfio"
+#command="lcg-gt -v $SURL rfio"
+command="lcg-gt -v $SURL gsiftp"
 message="Getting TURL using lcg-gt"
 run_command "${command}" "${message}"
 
 TURL=$(echo ${OUTPUT})
 
+#What is the point of this? It gives a local file.
 command="gfal_testrw file:///tmp/${NAME}"
-message="Running GFAL read write test"
+message="Running GFAL read write test (local file)"
 run_command "${command}" "${message}"
+
+sleep 20
 
 command="gfal_testread ${LFN}"
 message="Running GFAL read test"
