@@ -27,9 +27,9 @@
 #include "subscriptionManager.h"
 //#include "jobCache.h"
 #include "DNProxyManager.h"
-#include "iceDb/GetJobByCid.h"
+//#include "iceDb/GetJobByCid.h"
 #include "iceDb/Transaction.h"
-#include "iceDb/UpdateJobByGid.h"
+#include "iceDb/UpdateJobByCid.h"
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -62,54 +62,49 @@ void emptyStatusNotification::apply( void )
     //jobCache* cache( jobCache::getInstance() );
     //jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( m_cream_job_id ) );
 
-    CreamJob theJob;
-    {
-      db::GetJobByCid getter( m_cream_job_id );
-      db::Transaction tnx;
-      tnx.execute( &getter );
-      if( !getter.found() ) {
-	CREAM_SAFE_LOG( m_log_dev->debugStream()
-                        << method_name
-                        << " Cannot locate CREAM job ID "
-                        << m_cream_job_id
-                        << " in the database. The empty status notification "
-                        << "for this job cannot be applied"
-                        );
-        return;
-      }
-      
-      theJob = getter.get_job();
-    }
-
-//     if ( cache->end() == job_it ) {
-//         CREAM_SAFE_LOG( m_log_dev->debugStream()
+//     CreamJob theJob;
+//     {
+//       db::GetJobByCid getter( m_cream_job_id );
+//       db::Transaction tnx;
+//       tnx.execute( &getter );
+//       if( !getter.found() ) {
+// 	CREAM_SAFE_LOG( m_log_dev->debugStream()
 //                         << method_name
 //                         << " Cannot locate CREAM job ID "
 //                         << m_cream_job_id
-//                         << " in the job cache. The empty status notification "
+//                         << " in the database. The empty status notification "
 //                         << "for this job cannot be applied"
 //                         );
 //         return;
+//       }
+//       
+//       theJob = getter.get_job();
 //     }
+// 
+//     theJob.set_last_empty_notification_time( time(0) );
+//     CREAM_SAFE_LOG( m_log_dev->debugStream()
+//                     << method_name
+//                     << "Timestamp of last empty "
+//                     << "status notification for job "
+//                     << theJob.describe()//job_it->describe()
+// 		    
+//                     << " set to [" 
+//                     << time_t_to_string( theJob.get_last_empty_notification()/*job_it->get_last_empty_notification()*/ )
+// 		    << "]"
+//                     );
 
-    //job_it->set_last_empty_notification( time(0) );
-    theJob.set_last_empty_notification_time( time(0) );
-    CREAM_SAFE_LOG( m_log_dev->debugStream()
-                    << method_name
-                    << "Timestamp of last empty "
-                    << "status notification for job "
-                    << theJob.describe()//job_it->describe()
-		    
-                    << " set to [" 
-                    << time_t_to_string( theJob.get_last_empty_notification()/*job_it->get_last_empty_notification()*/ )
-		    << "]"
-                    );
-    //cache->put( *job_it );
+  CREAM_SAFE_LOG( m_log_dev->debugStream()
+  		  << method_name
+		  << "Updating last_empty_notification field for CREAM Job ID [" 
+		  << m_cream_job_id <<"]"
+		  );
+
     {
       //      db::UpdateLastEmpty updater( theJob );
       list< pair<string, string> > params;
-      params.push_back( make_pair( "last_empty_notification", int_to_string(theJob.get_last_empty_notification())));
-      db::UpdateJobByGid updater( theJob.getGridJobID(), params );
+      params.push_back( make_pair( "last_empty_notification", int_to_string( time(0)/*theJob.get_last_empty_notification()*/)));
+      
+      db::UpdateJobByCid updater( m_cream_job_id, params );
       db::Transaction tnx;
       tnx.execute( &updater );
     }
