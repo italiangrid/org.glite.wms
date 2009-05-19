@@ -87,7 +87,8 @@ namespace {
 		  " is_killed_byice integer(1),"          \
 		  " delegationid text,"                   \
 		  " last_empty_notification integer(4),"  \
-		  " last_seen integer(4) "		  \
+		  " last_seen integer(4),"		  \
+		  " last_poller_visited integer(4) "
 		  ")";
                 do_query( db, sqlcmd );
 		

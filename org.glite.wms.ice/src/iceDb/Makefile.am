@@ -24,6 +24,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				CreateDelegation.cpp \
 				CreateLease.cpp \
 				UpdateJobByGid.cpp \
+				UpdateJobByCid.cpp \
 				UpdateProxyFieldsByDN.cpp \
 				UpdateDelegationTimesByID.cpp \
 				RemoveJobByGid.cpp \

@@ -136,7 +136,7 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 	     << " AND creamurl='" 
 	     << m_creamurl 
 	     << "' AND userdn='" 
-	     << m_userdn << "' ORDER BY last_seen ASC";
+	     << m_userdn << "' ORDER BY last_poller_visited ASC";
 
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
@@ -178,7 +178,7 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 	     << " AND creamurl='" << m_creamurl << "' AND "
 	     << "       (( last_seen > 0 AND ( "<<t_now<<" - last_seen >= "<<threshold<<" ) ) "
 	     << "  OR   ( last_empty_notification > 0 AND ( "<<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) ))"
-	     << " ORDER BY last_seen ASC";
+	     << " ORDER BY last_poller_visited ASC";
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
       } else {
