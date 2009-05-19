@@ -58,8 +58,8 @@ else
   export X509_USER_PROXY=$proxy
   $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami"
   ret=$?
-  if [ $ret -ne 201 ]; then
-    echo "Return code expected was 201 but $ret was given"
+  if [ $ret -ne 203 ]; then
+    echo "Return code expected was 203 but $ret was given"
     echo "Test 2 failed"
     fail=1
   else
