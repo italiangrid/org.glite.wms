@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Test PRE-requisite:
+#  run this script as root
+#  a proxy should be available on /tmp/x509up_u0
+#  config file is /opt/glite/etc/glexec.conf
+#  a user certificate has to be present in /root/.globus/usercert.pem
+#  glexec should be callable by root, in glexec.conf root has to be in the white list
+
 . ./helper.sh
 globresult=0
 
@@ -22,28 +29,28 @@ echo "   Is /opt/glite/sbin/glexec installed? "
 
 # Are the permissions OK ?
 output=`stat --format=%a /opt/glite/sbin/glexec`
-if [ $output -eq 6755 ]; then
+if [ $output -eq 6555 ]; then
  echo_success; else echo_failure; globresult=1; fi
-echo "   Is the permissions on the executble is OK ? "
+echo "   Is the permissions on the executble is OK (6555)? "
 
 # Can root run -V ?
 output=`/opt/glite/sbin/glexec -V 2>/dev/null`
 ret=$?
 if [ $ret -eq 0 ]; then
  echo_success; else echo_failure; globresult=1; fi
-echo "   Can root run glexec with -V ?"
+echo "   Can root run glexec with -V (should fail due to BUG #50646)?"
 
 # Check the default setting glexec compiled with
 defconfigfile=`/opt/glite/sbin/glexec -V  2>&1 | grep GLEXEC_CONFIG_FILE | cut -d "=" -f 2 | sed -e 's/"//g'`
 output=`stat --format=%a $defconfigfile`
-if [ "x$output" = "x644" ]; then
+if [ "x$output" = "x640" ]; then
  echo_success; else echo_failure ; globresult=1;
 fi
 echo "   Are the permissions on the default config file OK ?"
 
 # Check the owner of the default config file
-output=`stat --format=%u%g $defconfigfile`
-if [ "x$output" = "x00" ]; then
+output=`stat --format=%u $defconfigfile`
+if [ "x$output" = "x0" ]; then
  echo_success; else echo_failure; globresult=1;
 fi
 echo "   Is the ownership of the default config file  OK ?"
@@ -208,17 +215,18 @@ chmod o-w /opt/glite/etc/lcmaps/lcmaps-glexec.db
 #
 
 unset LD_DEBUG
-rm -f /tmp/glexectest*
+rm -f /tmp/glexectest
+touch /tmp/glexectest
 export LD_DEBUG=all
 export LD_DEBUG_OUTPUT=/tmp/glexectest
 /opt/glite/sbin/glexec /usr/bin/whoami 2>/dev/null 1>/dev/null
 unset LD_DEBUG
-searchpath=`cat /tmp/glexectest* | grep condor`
+searchpath=`cat /tmp/glexectest | grep condor`
 if [ ! "x${searchpath}" = "x" ]; then
  echo_failure; globresult=1; else echo_success;
 fi
 echo "   Linker should not look for libraries in condor directories. "
-rm -f /tmp/glexectest*
+rm -f /tmp/glexectest
 
 #
 #
