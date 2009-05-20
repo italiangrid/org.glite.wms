@@ -1,4 +1,8 @@
+- glexec-regtest.sh
+
 Glexec regression tests.
+Run this script as root
+(glexec should be callable by root, in glexec.conf root has to be in the white list)
 
 1.) Prerequists:
     a.) Copy your certificate (cert,key) under /root/.globus
@@ -6,6 +10,7 @@ Glexec regression tests.
     c.) Ensure that glexec is configured properly, i.e. you can run a test
         command successfuly _before_ you run the tests.
     
+
     
 2.) How to run:
     
@@ -18,3 +23,15 @@ Glexec regression tests.
 4.) Where to run:
 
     You can run it on the WN and on the Cream CE
+
+
+- glexec-test
+
+ ./glexec-test.sh -h    
+                                           
+Usage:  ./glexec-test.sh <proxy>    
+  <proxy> a VOMS proxy certificate
+
+Glexec basic tests. It has to be run from a white-listed user account.
+Glexec has to return a correct mapping and a 0 exit code.
+
