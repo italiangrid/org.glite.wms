@@ -6,10 +6,11 @@ echo "Usage $0 <user number>"
 echo "  <user number> Number of the test user"
 }
 
-if [ $# -ne 1 ];then
-  echo  "Wrong arguments"
+
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -ne 1 ];
+ then
   usage
-  exit 1
+  exit 2
 else
   usernum=$1
 fi

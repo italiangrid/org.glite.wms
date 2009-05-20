@@ -35,3 +35,13 @@ Usage:  ./glexec-test.sh <proxy>
 Glexec basic tests. It has to be run from a white-listed user account.
 Glexec has to return a correct mapping and a 0 exit code.
 
+- check_exit_codes.sh
+
+Usage ./check_exit_codes.sh <user number>
+  <user number> Number of the test user
+
+This test has to be run under a white listed user account, and a test user certificate and key
+test_user_<user number>_{cert,key}.pem has to be present in the current directory.
+The scripts tests the glexec exit codes in case of errors.
+
+
