@@ -184,10 +184,30 @@ notifications over secure channel. The key must be protected by a passphrase.'''
             self.testValues()
             
     def parseConfigFileAndOptList(self, optList, confFileName):
-        if confFileName<>None:
-            self.parseConfigFile(confFileName, False)
-        self.parseOptList(optList, True)
+        try:
+            if confFileName<>None:
+                self.parseConfigFile(confFileName, False)
+            self.parseOptList(optList, True)
+        except BadValueException, ex:
+            print "ERROR: %s\n\nUsage:" % ex
+            self.display()
+            sys.exit(1)
+        except IOError, ioError:
+            print "Cannot read configuration file: " + confFileName + " " + str(ioError)
+            sys.exit(1)
+        except Exception, exception:
+            print "Error parsing parameters " + str(exception)
+            sys.exit(1)
+            
+        if self.help:
+            self.display()
+            sys.exit(0)
     
+        for k in cmdTable.keys():
+            if not os.access(cmdTable[k], os.X_OK):
+                print "Cannot find executable " + cmdTable[k]
+                sys.exit(1)
+            
     def getLongOptList(self):
         result = []
         for k in self.pTable.keys():
@@ -428,11 +448,6 @@ if 'testsuite_utils' in __name__:
                        "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy",
                        "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew"};
 
-    for k in cmdTable.keys():
-        if not os.access(cmdTable[k], os.X_OK):
-            print "Cannot find executable " + cmdTable[k]
-            sys.exit(1)
-            
     global hostname
     proc = popen2.Popen4('/bin/hostname -f')
     hostname =  string.strip(proc.fromchild.readline())
@@ -445,6 +460,21 @@ if 'testsuite_utils' in __name__:
     
     global mainLogger
     mainLogger = Logger()
+    
+    if os.path.exists(".failureRegEx"):
+        global failureReList
+        failureFile = None
+        failureReList = []
+        try:
+            failureFile = open(".failureRegEx")
+            for line in failureFile:
+                regex = string.strip(line)
+                if len(regex)>0:
+                    failureReList.append(re.compile(regex))
+        finally:
+            if failureFile<>None:
+                failureFile.close()
+            
 
 else:
     print __name__

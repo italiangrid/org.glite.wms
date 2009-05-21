@@ -6,10 +6,6 @@ import re, string
 from CREAMTestUtils import testsuite_utils, job_utils, job_poller
 
 from CREAMTestUtils.submit_pool import JobSubmitterPool
-
-def failure(reason):
-    print reason
-    sys.exit(1)
     
 class JobProcessed(job_utils.JobProcessed):
     
@@ -91,22 +87,7 @@ of the long options of this test'''))
     else:
         confFileName = None
 
-    try:
-
-        parameters.parseConfigFileAndOptList(sys.argv[1:], confFileName)
-        
-    except testsuite_utils.BadValueException, ex:
-        print "ERROR: %s\n\nUsage:" % ex
-        parameters.display()
-        sys.exit(1)
-    except IOError, ioError:
-        failure("Cannot read configuration file: " + confFileName + " " + str(ioError))
-    except Exception, exception:
-        failure("Error parsing parameters " + str(exception))
-        
-    if parameters.help:
-        parameters.display()
-        sys.exit(0)
+    parameters.parseConfigFileAndOptList(sys.argv[1:], confFileName)
         
     testsuite_utils.mainLogger.setup(parameters.logConf)
 
