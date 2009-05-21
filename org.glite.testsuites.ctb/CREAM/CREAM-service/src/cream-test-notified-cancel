@@ -160,7 +160,7 @@ of the long options of this test'''))
         consumer.halt()
         
     except Exception, e:
-        failure(e)
+        print e
         exitCode = 1
         
     sys.exit(exitCode)

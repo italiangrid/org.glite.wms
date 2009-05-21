@@ -461,12 +461,17 @@ if 'testsuite_utils' in __name__:
     global mainLogger
     mainLogger = Logger()
     
-    if os.path.exists(".failureRegEx"):
-        global failureReList
+    global failureReList
+    failureReList = []
+    if os.environ.has_key("FAILURE_FILE"):
+        failureFilename = os.environ["FAILURE_FILE"]
+    else:
+        failureFilename = ".failureRegEx"
+        
+    if os.path.exists(failureFilename):
         failureFile = None
-        failureReList = []
         try:
-            failureFile = open(".failureRegEx")
+            failureFile = open(failureFilename)
             for line in failureFile:
                 regex = string.strip(line)
                 if len(regex)>0:

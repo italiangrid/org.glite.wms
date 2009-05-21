@@ -7,23 +7,11 @@ from CREAMTestUtils import testsuite_utils, job_utils, job_poller
 
 from CREAMTestUtils.submit_pool import JobSubmitterPool
     
-class JobProcessed(job_utils.JobProcessed):
-    
-    def __init__(self):
-        job_utils.JobProcessed.__init__(self)
-        
-    def canPurge(self, jobStatus, failureReason=''):
-        if jobStatus=='ABORTED' or jobStatus=='CANCELLED':
-            return False
-        if jobStatus=='DONE-FAILED' and failureReason=='Proxy is expired':
-            return False
-        return True
-
 class JobPoller(job_poller.JobPoller):
     
     def __init__(self, parameters, pManager=None, iManager=None):
         job_poller.JobPoller.__init__(self, parameters, pManager, iManager)
-        self.finishedJobs = JobProcessed()
+        self.finishedJobs = job_utils.JobProcessed()
         
     def shutdown(self):
         job_poller.JobPoller.shutdown(self)

@@ -9,6 +9,7 @@ from threading import Condition, Thread
 from testsuite_utils import hostname, getCACertDir, getUserKeyAndCert
 from testsuite_utils import getProxyFile, cmdTable, checkEncryptedKey
 from testsuite_utils import applicationTS, applicationID, mainLogger
+from testsuite_utils import failureReList
 
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
 
@@ -412,6 +413,13 @@ class JobProcessed:
             self.jobTable[jobId] = self.canPurge(jobStatus, failureReason)
             
     def canPurge(self, jobStatus, failureReason=''):
+        if jobStatus=='ABORTED' or jobStatus=='CANCELLED':
+            return False
+        if jobStatus=='DONE-FAILED':
+            for tmpRE in failureReList:
+                if tmpRE.search(failureReason):
+                    return True
+            return False
         return True
     
     def dontPurge(self, jobId):
