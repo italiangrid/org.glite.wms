@@ -55,6 +55,20 @@ def checkFile(value):
     if value<>'' and not os.path.isfile(value):
         raise BadValueException, "Bad file: " + value
     
+def checkEncryptedKey(file):
+    if not os.path.exists(file):
+        raise Exception, "Missing key file"
+    
+    try:
+        keyFile = open(file)
+        for line in keyFile:
+            if 'ENCRYPTED' in line:
+                return True
+    finally:
+        keyFile.close()
+    return False
+                
+    
 class Parameters:
     def __init__(self, shortDescr, synopsis, description):
         self.pTable = {}

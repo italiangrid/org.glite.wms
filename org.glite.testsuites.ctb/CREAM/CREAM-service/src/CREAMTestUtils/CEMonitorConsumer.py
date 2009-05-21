@@ -146,8 +146,12 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
             self.consumerKey = os.environ["X509_CONSUMER_KEY"]
             if not os.path.isfile(self.consumerKey):
                 raise Exception, "Cannot find: " + self.consumerKey
-            import getpass
-            self.password = getpass.getpass('Password for consumer key: ')
+            
+            if testsuite_utils.checkEncryptedKey(self.consumerKey):
+                import getpass
+                self.password = getpass.getpass('Password for consumer key: ')
+            else:
+                self.password = ''
 #        elif proxyMan<>None and proxyMan.key<>None:
 #                self.consumerCert = proxyMan.cert
 #                self.consumerKey = proxyMan.key
@@ -161,7 +165,11 @@ class ConsumerServer(ThreadingMixIn, HTTPServer):
             ConsumerServer.logger.debug("Enabled secure channel for notifications")
             self.ssl_context = SSL.Context(SSL.SSLv23_METHOD)
             buffer = self.readPEMFile(self.consumerKey)
-            privateKey = crypto.load_privatekey(crypto.FILETYPE_PEM, buffer, self.password)
+            if self.password<>'':
+                privateKey = crypto.load_privatekey(crypto.FILETYPE_PEM, 
+                                                    buffer, self.password)
+            else:
+                privateKey = crypto.load_privatekey(crypto.FILETYPE_PEM, buffer)
             self.ssl_context.use_privatekey(privateKey)
             self.ssl_context.use_certificate_file(self.consumerCert)
             caStore = self.ssl_context.get_cert_store()

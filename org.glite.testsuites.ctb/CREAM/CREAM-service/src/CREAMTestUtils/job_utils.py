@@ -7,7 +7,7 @@ import getpass
 
 from threading import Condition, Thread
 from testsuite_utils import hostname, getCACertDir, getUserKeyAndCert
-from testsuite_utils import getProxyFile, cmdTable
+from testsuite_utils import getProxyFile, cmdTable, checkEncryptedKey
 from testsuite_utils import applicationTS, applicationID, mainLogger
 
 subscriptionRE = re.compile("SubscriptionID=\[([^\]]+)")
@@ -160,7 +160,7 @@ class AbstractRenewer(Thread):
                         renewProc = popen2.Popen4(rcmd)
                         for line in renewProc.fromchild:
                             if 'ERROR' in line or 'FATAL' in line:
-                                AbstractRenewer.logger.error("Cannot renew " + rID)
+                                AbstractRenewer.logger.error("Cannot renew " + rID + ": " + line)
                             else:
                                 AbstractRenewer.logger.debug(line)
                         renewProc.fromchild.close()
@@ -269,8 +269,10 @@ class VOMSProxyManager(Thread):
         
         VOMSProxyManager.logger.debug("Enabled voms proxy management")
         self.usingProxy = False
-        #TODO manage key without passphrase
-        self.password = getpass.getpass('Password for user key: ')
+        if checkEncryptedKey(self.key):
+            self.password = getpass.getpass('Password for user key: ')
+        else:
+            self.password = ''
         
         self.proxyFile = '/tmp/x509up_u%d_%d' % (os.getuid(), os.getpid())
             
@@ -313,7 +315,8 @@ class VOMSProxyManager(Thread):
                 self.pCond.release()
                 
                 proxyProc =popen2.Popen4(proxyCmd)
-                proxyProc.tochild.write(self.password)
+                if self.password<>'':
+                    proxyProc.tochild.write(self.password)
                 proxyProc.tochild.close()
                 for line in proxyProc.fromchild:
                     if 'proxy is valid' in line:
