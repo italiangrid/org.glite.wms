@@ -523,7 +523,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
 void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string> >& target,
 							const bool only_active_jobs) throw()
 {
-
+  try{
   /**
    *
    * Creates a map < userDN, set_of_cemons > of only jobs that are active,
@@ -543,7 +543,6 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
   //  boost::tuple< string, string, string, string > jobs;
   list< vector< string > > jobs;
   {
-    //    db::GetAllJobs getter( only_active_jobs );
     list<string> fields;
     fields.push_back("userproxy");
     fields.push_back("creamurl");
@@ -652,6 +651,15 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
     
   } else { // if not using authz authn all cemons are OK
     target = tmpTarget;
+  }
+  
+  } catch( std::out_of_range& ex )
+  {
+     	CREAM_SAFE_LOG(m_log_dev->errorStream()
+ 		       << "subscriptionManager::getUserCEMonMapping() - "
+ 		       << "Cannot retrieve DN for CEMon for an std::out_of_range exception: "
+ 		       << ex.what()
+ 		       );
   }
 }
 
