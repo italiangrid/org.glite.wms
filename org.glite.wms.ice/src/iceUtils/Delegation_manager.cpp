@@ -317,6 +317,8 @@ Delegation_manager::delegate( const CreamJob& job,
                         << V.getDN( )
                         << " proxy hash "
                         << str_sha1_digest
+			<< " Expiring on [" 
+			<< time_t_to_string( expiration_time ) << "]"
                          );
         
         try {
