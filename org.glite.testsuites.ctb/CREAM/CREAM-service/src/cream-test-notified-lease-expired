@@ -95,6 +95,8 @@ of the long options of this test'''))
     if parameters.jdl==None:
         sys.exit(1)
             
+    monitorThread = None
+    consumer = None
     try:
         if parameters.interactive:
             interfaceMan = testsuite_utils.InterfaceManager()
@@ -118,16 +120,15 @@ of the long options of this test'''))
             interfaceMan.close()
         monitorThread.join()
         renewalManager.halt()
+    except Exception, ex:
+        print ex
         
-        exitCode = monitorThread.shutdown()
-        
+    if consumer<>None:
         consumer.halt()
-        
-    except Exception, e:
-        print e
-        exitCode = 1
-
-    sys.exit(exitCode)
+    if monitorThread<>None:
+        sys.exit(monitorThread.shutdown())
+    else:
+        sys.exit(-1)
         
 
 if __name__ == "__main__":

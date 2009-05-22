@@ -84,25 +84,30 @@ of the long options of this test'''))
         if parameters.jdl==None:
             sys.exit(1)
 
-    if parameters.interactive:
-        interfaceMan = testsuite_utils.InterfaceManager()
-    else:
-        interfaceMan = None
-    vomsManager = job_utils.VOMSProxyManager(parameters)
-    pollerThread = JobPoller(parameters, vomsManager, interfaceMan)
-    renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
-
-    pollerThread.start()
-    renewalManager.start()
-    if parameters.interactive:
-        interfaceMan.run(pollerThread)
-        interfaceMan.close()
-    pollerThread.join()
-    renewalManager.halt()
-        
-    exitCode = pollerThread.shutdown()
+    pollerThread = None
+    try:
+        if parameters.interactive:
+            interfaceMan = testsuite_utils.InterfaceManager()
+        else:
+            interfaceMan = None
+        vomsManager = job_utils.VOMSProxyManager(parameters)
+        pollerThread = JobPoller(parameters, vomsManager, interfaceMan)
+        renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
     
-    sys.exit(exitCode)
+        pollerThread.start()
+        renewalManager.start()
+        if parameters.interactive:
+            interfaceMan.run(pollerThread)
+            interfaceMan.close()
+        pollerThread.join()
+        renewalManager.halt()
+    except Exception, ex:
+        print ex
+        
+    if pollerThread<>None:
+        sys.exit(pollerThread.shutdown())
+    else:
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

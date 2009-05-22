@@ -233,18 +233,18 @@ class ProxyRenewer(AbstractRenewer):
             ProxyRenewer.logger = mainLogger.get_instance(classid='ProxyRenewer')
         
         if parameters.delegationType=='single':
-            cannotDelegate = False
+            delegError = None
             delegCmd = '%s -e %s -t %d DELEGID%s' \
                 % (cmdTable['delegate'], endPoint, parameters.sotimeout, applicationID) 
             ProxyRenewer.logger.debug("Delegate command: " + delegCmd)
             delegProc = popen2.Popen4(delegCmd)
             for line in delegProc.fromchild:
                 if 'ERROR' in line or 'FATAL' in line:
-                    cannotDelegate = True
+                    delegError = line[24:]
             delegProc.fromchild.close()
             
-            if cannotDelegate:
-                raise Exception, "Cannot delegate proxy DELEGID" + applicationID
+            if delegError<>None:
+                raise Exception, "Cannot delegate proxy DELEGID%s: %s" % (applicationID, delegError)
         
     def preRun(self):
         self.proxyMan.renewProxy()
@@ -266,6 +266,8 @@ class VOMSProxyManager(Thread):
             VOMSProxyManager.logger.debug("Using external proxy certificate")
             self.usingProxy = True
             self.proxyFile = getProxyFile()
+            if int(self)==0:
+                raise Exception, "Proxy %s is expired" % self.proxyFile
             return
         
         VOMSProxyManager.logger.debug("Enabled voms proxy management")

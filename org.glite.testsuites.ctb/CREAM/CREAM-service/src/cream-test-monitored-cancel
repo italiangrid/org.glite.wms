@@ -110,26 +110,31 @@ of the long options of this test'''))
         parameters.jdl = testsuite_utils.createTempJDL(parameters.rate*10)
         if parameters.jdl==None:
             sys.exit(1)
+
+    pollerThread = None
+    try:
+        if parameters.interactive:
+            interfaceMan = testsuite_utils.InterfaceManager()
+        else:
+            interfaceMan = None
+        vomsManager = job_utils.VOMSProxyManager(parameters)
+        pollerThread = JobPoller(parameters, vomsManager, interfaceMan)
+        renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
     
-    if parameters.interactive:
-        interfaceMan = testsuite_utils.InterfaceManager()
+        pollerThread.start()
+        renewalManager.start()
+        if parameters.interactive:
+            interfaceMan.run(pollerThread)
+            interfaceMan.close()
+        pollerThread.join()
+        renewalManager.halt()
+    except Exception, ex:
+        print str(ex)
+
+    if pollerThread<>None:
+        sys.exit(pollerThread.shutdown())
     else:
-        interfaceMan = None
-    vomsManager = job_utils.VOMSProxyManager(parameters)
-    pollerThread = JobPoller(parameters, vomsManager, interfaceMan)
-    renewalManager = job_utils.ProxyRenewer(parameters, pollerThread, vomsManager)
-
-    pollerThread.start()
-    renewalManager.start()
-    if parameters.interactive:
-        interfaceMan.run(pollerThread)
-        interfaceMan.close()
-    pollerThread.join()
-    renewalManager.halt()
-
-    exitCode = pollerThread.shutdown()
-    
-    sys.exit(exitCode)
+        sys.exit(-1)
     
 if __name__ == "__main__":
     main()
