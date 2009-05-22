@@ -243,6 +243,64 @@ echo "   Glexec should not log newline characters. "
 
 
 #
+#
+
+mv /opt/glite/etc/lcmaps/lcmaps-glexec.db /opt/glite/etc/lcmaps/lcmaps-glexec.db.original
+cat <<EOF > /opt/glite/etc/lcmaps/lcmaps-glexec.db
+#
+# LCMAPS config file generated for regresson tets
+#
+
+# where to look for modules
+path = /opt/glite/lib/modules
+
+verifyproxy = "lcmaps_verify_proxy.mod"
+" -certdir /etc/grid-security/certificates"
+"--max-voms-ttl 2d-13:37"
+"--max-proxy-level-ttl=L 1d-13:37"
+"--max-proxy-level-ttl=0 7d-13:37"
+
+good = "lcmaps_dummy_good.mod"
+
+posix_enf = "lcmaps_posix_enf.mod"
+            " -maxuid 1"
+            " -maxpgid 1"
+            " -maxsgid 32"
+
+scasclient = "lcmaps_scas_client.mod"
+             " -capath /etc/grid-security/certificates/"
+             " -endpoint https://vtb-generic-83.cern.ch:8443"
+             " -resourcetype wn"
+             " -actiontype execute-now"
+# policies
+glexec_get_account:
+verify_proxy -> scasclient
+scasclient -> posix_enf
+
+EOF
+keyfile="/root/.globus/userkey.pem"
+certfile="/root/.globus/usercert.pem"
+proxy="proxy-novoms"
+if [ ! -f $keyfile ] || [ ! -f $certfile ]; then
+  echo "user certificate r key not found"
+  globresult=1
+fi
+
+echo "test" | /opt/glite/bin/glite-voms-proxy-init -cert $certfile -key $keyfile -out $proxy -pwstdin 2>/dev/null 1>/dev/null
+if [ $? -ne 0 ]; then
+  echo "Error creating the proxy" 
+  globresult=1
+else
+ /opt/glite/sbin/glexec /usr/bin/whoami 2>/dev/null 1>/dev/null
+ if [ $? -ne 202 ]; then
+  echo_failure; globresult=1; else echo_success;
+ fi
+ echo "   Glexec should refuse plain proxies if told to do so. "
+fi
+
+mv /opt/glite/etc/lcmaps/lcmaps-glexec.db.original /opt/glite/etc/lcmaps/lcmaps-glexec.db
+
+#
 # Restoring
 #
 
