@@ -208,6 +208,41 @@ else
   fi
 fi
 
+##################################################################
+echo
+echo "Test 7:"
+echo "Check that glexec returns 202 when X509_TARGET_PROXY dir is not accessible"
+
+keyfile="test_user_${usernum}_key.pem"
+certfile="test_user_${usernum}_cert.pem"
+proxy="x509up_u501_${usernum}" 
+if [ ! -f $keyfile ] || [ ! -f $certfile ]; then
+  echo "test user certificate r key not found"
+  echo "Test 1 failed"
+  fail=1
+fi
+
+rm -f ./x509up_u501_${usernum}
+echo "Creating proxy file x509up_u501_${usernum}"   
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert $certfile -key $keyfile -out ./x509up_u501_${usernum} -pwstdin
+if [ $? -ne 0 ]; then
+  echo "Error creating the proxy" 
+  fail=1
+else
+  export GLEXEC_CLIENT_CERT=$proxy
+  export GLEXEC_SOURCE_PROXY=$proxy
+  export X509_USER_PROXY=$proxy
+  export X509_TARGET_PROXY="/root/user_proxy"
+  $GLITE_LOCATION/sbin/glexec "/usr/bin/whoami"
+  ret=$?
+  if [ $ret -ne 201 ]; then
+    echo "Return code expected was 201 but $ret was given"
+    echo "Test 7 failed"
+    fail=1
+  else
+    echo "Test 7 passed"
+  fi
+fi
 
 
 
