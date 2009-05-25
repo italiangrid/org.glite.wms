@@ -22,8 +22,8 @@ In order to install and configure properly a VOBOX for patch certification purpo
 the following steps must be done:
 
 - Register the VOBOX into the MyProxy server
-Ask Louis.Poncet@cern.ch to modify the configuration
-of the MyProxy server in order to include the VOBOX machine.
+Edit /etc/myproxy-server.config on the CTB MyProxy host, if you do not
+have access to it, ask Louis.Poncet@cern.ch in order to include your VOBOX machine among the authorized renewers and retrievers.
 
 - Install and configure a VOBOX node
 On a virtual machine of the VTB, install the CAs (lcg-CA), set hostkey and 
