@@ -287,7 +287,8 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 		   << "DNProxyManager::decrementUserProxyCounter() - "
 		   << "Decrementing proxy counter for DN ["
 		   << userDN << "] MyProxy server ["
-		   << myproxy_name <<"]"
+		   << myproxy_name <<"] from [" << proxy_info.get<2>()
+		   << "] to [" << (proxy_info.get<2>() - 1) << "]"
 		   );
 
     //    m_DNProxyMap[ mapKey ] = boost::make_tuple( it->second.get<0>(), it->second.get<1>(), it->second.get<2>() - 1);
