@@ -168,6 +168,10 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	
 	boost::tuple<string, time_t, long long int> thisBetterPrx = DNProxyManager::getInstance()->getExactBetterProxyByDN( thisUserDN, thisMyPR );
 	
+	/**
+	   Proxy NOT found for the userdn related to this delegation.
+	   Remove the delegation
+	*/
 	if(thisBetterPrx.get<0>().empty()) {
 	  CREAM_SAFE_LOG(m_log_dev->debugStream() 
 			 << method_name
@@ -177,6 +181,9 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 			 << thisDelegID << "]."
 			 );
 	  mapDelegTime.erase( thisDelegID );
+
+	  Delegation_manager::instance()->removeDelegation( thisDelegID );
+
 	  continue;
 	}
 	
