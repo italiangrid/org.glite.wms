@@ -10,6 +10,9 @@ contains the main regTest.sh script
 bugs/
 contains regressions tests for the bugs. Every regression test has to be in a file named bug<bugnr> where <bugnr> is the bug number in Savannah.
 
+native/
+Source code for bugs that need binary tests.
+
 config/
 general configuration for the regTest script:
 config.sh: global variables used by the regTest script and bug<bugnr> functions

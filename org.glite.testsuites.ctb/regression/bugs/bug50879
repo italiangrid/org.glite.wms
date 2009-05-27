@@ -1,0 +1,57 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Andrew Elwell <Andrew.Elwell@cern.ch>
+# CVS TAG: $Id$
+# SUMMARY: Sanity check that Python lfc,gfal and lcg_utils work
+#
+##############################################################################
+test_bug50879_pre () {
+## Check Pythonpath, 64/32 bit
+ echo PYTHONPATH=$PYTHONPATH
+ python -V
+ echo "This test checks that all 3 lfc,gfal and lcg_utils load"
+}
+
+test_bug50879_post () {
+ echo
+# Cleanup after running test_bug1. Unset all variables that were set in test_bug1
+# Delete files created during the test run.
+}
+
+test_bug50879 () {
+# Main test 
+# Return values REGTEST_FAIL, REGTEST_TIMEOUT or REGTEST_OK
+
+# Example usage of the run_command function
+
+for mod in lfc gfal lcg_util ; do
+  command="python -m $mod"
+  message="  Checking Python Module $mod is loadable"
+  run_command "${command}" "${message}"
+
+if [ $? -ne ${REGTEST_OK} ]; then
+ return ${REGTEST_FAIL}
+fi
+done
+# The output of command is available in the variable OUTPUT
+
+}
+
+
