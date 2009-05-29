@@ -1,5 +1,7 @@
 getversion
 delegation
-jobstart_submit
-jobcollection
-jobdag
+test_job
+job_dag
+job_collection
+job_parametric
+job_perusal

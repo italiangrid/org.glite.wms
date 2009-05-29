@@ -4,7 +4,8 @@ This test checks Job submission using Python WMProxy.
 Following Wmproxy Methods are included in the test:
 getVersion
 getGrstNs
-proxyRequest
+getDefaultNs
+getproxyRequest
 putProxy
 getDelegatedProxyInfo
 jobListMatch
@@ -13,12 +14,14 @@ getJobProxyInfo
 getACLItems
 getSandboxDestURI
 getSandboxBulkDestURI
-client.getFreeQuota
-client.getMaxInputSandboxSize
+getFreeQuota
+getMaxInputSandboxSize
 jobStart
 jobSubmit
+getOutputFileList
+jobPurge
 jobCancel
-The WMSLB_HOST name is obligatory commandline argument.
+The WMProxy_HOST name is obligatory commandline argument.
 Author Liudmila Stepanova < Lioudmila.Stepanova@cern.ch >
 
 '''
@@ -27,13 +30,14 @@ def Jdlprep():
 ###################
 # JDL preparation #
 ###################
+
  VOString="voms-proxy-info -vo"
  ifile,ofile=os.popen4(VOString )
  sfile=ofile.read()
  if sfile.find("Error -")>=1:
     flog.write( "\n Error : \n" + sfile + '\n')
     fmsg.write("\n   |  ERR   |  voms-proxy-info")
-    flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+    flog.write( "\n\n**************** test test_job is ERROR *******************")
     flog.close()
     return 1
  else:
@@ -49,12 +53,13 @@ def Jdlprep():
  'StdError        = "std.err";\n'
  'OutputSandbox   = {"std.out","std.err"};\n'
  'VirtualOrganisation = '+ '"' + VO + '"' + ';\n'
- 'requirements    = true;\n'
+ 'requirements    = '+  REQ  + ';\n'
  'rank            = 1;\n')
  f.close()
  return nameFileJdl
 def jobstart():
- delegationId = "Testdelegation"
+# import time
+ delegationId = "Tjobdelegation"
  ERR=0
  try:
     protocolVersion=client.getVersion()
@@ -62,7 +67,7 @@ def jobstart():
     flog.write( "\n========== OK  protocol version = " + protocolVersion + "===========\n")
  except :
        flog.write( "======= FAILED  Connection refused==========================\n")
-       flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+       flog.write( "\n\n**************** test test_job is ERROR *******************")
        fmsg.write("\n   |  ERR   |  getVersion")
        flog.close()
        return 1
@@ -74,7 +79,7 @@ def jobstart():
        flog.write( "=== OK GridSite Delegation namespace string representation :" +  namespace +  "=== \n")
     except :
        flog.write( "======= ERROR the getGrst service dosn't available======= \n")
-       flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+       flog.write( "\n\n**************** test test_job is ERROR *******************")
        fmsg.write("\n   |  ERR   |  getGrstNs")
        flog.close()
        return 1
@@ -99,7 +104,7 @@ def jobstart():
  if sfile.find("Error -")>=1:
                     flog.write( "\n Error : \n" + sfile + '\n')
                     fmsg.write("\n   |  ERR   |  voms-proxy-info -path")
-                    flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+                    flog.write( "\n\n**************** test test_job is ERROR *******************")
                     flog.close()
                     return 1
  else:
@@ -124,12 +129,12 @@ def jobstart():
       ERR=1
  try :
       client.getDelegatedProxyInfo(delegationId)
-      fmsg.write("\n   |   OK   |   getDelegatedProxyInfo")
+      fmsg.write("\n   |   OK   |  getDelegatedProxyInfo")
  except WMPException, err :
       fmsg.write("\n   |  ERR   |   getDelegatedProxyInfo")
       flog.write( "  putProxy Error: Unable to retrive VOMS Proxy information")
       flog.write("\n==========   getDelegatedProxyInfo is Error =========")
-      flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+      flog.write( "\n\n**************** test test_job is ERROR *******************")
       flog.close()
       return 1
 
@@ -144,14 +149,14 @@ def jobstart():
  except:
       fmsg.write("\n   |  ERR   |  jobListMatch")
       flog.write( "\n    jobListMatch   Error       ")
-      flog.write( "\n\n**************** test jobstart_submit is ERROR *******************\n")
+      flog.write( "\n\n**************** test test_job is ERROR *******************")
       flog.close()
       return 1
  flog.write(  "\n===count of CE Ids satisfying the job Requirements specified in the JDL===\n")
  flog.write( "\n               listSize=" + str(listSize) )
  if listSize <= 0 :
      flog.write( "\n     jobListMatch Error: here are no compatible resources")
-     flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+     flog.write( "\n\n**************** test test_job is ERROR *******************")
      flog.close()
      return 1
  else:
@@ -164,7 +169,7 @@ def jobstart():
       except:
         fmsg.write("\n   |  ERR   |  jobRegister")
         flog.write(  "\n   jobRegister Error   ")
-        flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+        flog.write( "\n\n**************** test test_job is ERROR *******************")
         flog.close()
         return 1    
  try:
@@ -200,6 +205,8 @@ def jobstart():
         ERR = 1
  try:
         destUris= client.getSandboxBulkDestURI(jobIdstringform )
+#        print "!!!! it is type of destUris !!!!!"
+#        print type(destUris) 
         flog.write( "\n=========the list of destination URIs associated to a compound job========\n")
         for line in destUris.keys() :
                              flog.writelines(line + "\n")
@@ -236,6 +243,7 @@ def jobstart():
         client.jobStart( jobIdstringform )
         flog.write( "\n OK: Job started with JobID = " + jobIdstringform + "\n")
         fmsg.write("\n   |   OK   |  jobStart " + jobIdstringform)
+        time.sleep(120)
         try:
            client.jobCancel( jobIdstringform )
            flog.write( "\n OK: Job " + jobIdstringform + " was cancel\n")
@@ -252,12 +260,55 @@ def jobstart():
          flog.write( "\n===============jobSubmit=============================\n")
          task = client.jobSubmit ( jdl, delegationId )
          jobId = task.getJobId()
-         flog.write( "\n OK: Submitted job with JobID = " + jobId)
-         fmsg.write("\n   |   OK   |  jobSubmit " + jobId)
+         flog.write( "\n   OK: Submitted job with JobID = " + jobId + "\n ")
+         fmsg.write("\n   |   OK   |  jobSubmit " + jobId )
+#         try:
+         for i in range(20):
+             time.sleep(120)
+             funk="glite-job-status " +  jobId
+#             fmsg.write("\n####### funk ########   " + funk) 
+             ifile,ofile=os.popen4(funk)
+             for line in ofile.readlines():
+#                        print "line=" ,line 
+                        if line.find('Status') > 0 :
+                                  stat = line.split(':')[1]   
+                                  if stat.find('Done') > 0 :
+                                                       try:
+                                                         OutputFileList = client.getOutputFileList(jobId)
+                                                         flog.write( "\n====================the list of URIs where the output files===============\n" )
+                                                         listSize = len(OutputFileList)
+                                                         for l in OutputFileList[:]:
+                                                                             for line in l.keys() :
+                                                                                        flog.writelines("\n" + line + ":\n")
+                                                                                        flog.writelines(l[line] + "\n") 
+                                                         fmsg.write("\n   |   OK   |  getOutputFileList " + jobId)
+                                                         flog.write(  "\n #######   getOutputFileList OK ########")
+                                                       except:
+                                                           fmsg.write("\n   |  ERR   |  getOutputFileList" + jobId)
+                                                           flog.write(  "\n ########   getOutputFileList ERR ########")
+                                                           ERR = 1    
+                                                       try:
+                                                           client.jobPurge(jobId)
+                                                           fmsg.write("\n   |   OK   |  jobPurge " + jobId)
+                                                           flog.write(  "\n #######   jobPurge  OK  ########   ")
+                                                           flog.write( "\n\n**************** test test_job is OK *********************") 
+                                                           return 0
+                                                       except:
+                                                           fmsg.write("\n   |  ERR   |  jobPurge + jobId") 
+                                                           flog.write(  "\n #######  jobPurge  Error #######   ")
+#                                                           ERR = 1
+                                                           flog.write( "\n\n**************** test test_job is ERROR *******************") 
+                                                           return 1
+                                  if stat.find('Aborted') > 0 :
+                                                       fmsg.write("\n   |  ERR   | JobStatus Aborted  ")
+                                                       flog.write(  "\n #######  JobStatus is Aborted #######   ")
+                                                       flog.write( "\n\n**************** test test_job is ERROR ******************") 
+                                                       return 1  
+                                  break
          try:
            client.jobCancel( jobId )
-           fmsg.write("\n   |   OK   |  jobCancel " + jobId)
-           flog.write( "\n OK: Job "+ jobId + " was cancel\n")
+           fmsg.write("\n   | TIMEOUT|  jobCancel " + jobId)
+           flog.write( "\n TIMEOUT: "+ jobId + "   The task is canceled on timeout \n")
          except:
            flog.write( "\n Warning: Job " + jobId + " wasn't cancel\n")
            fmsg.write("\n   |   ERR	   |  jobCancel " + jobId)
@@ -267,17 +318,18 @@ def jobstart():
          fmsg.write("\n   |  ERR   |  jobSubmit " + jobId)
          ERR = 1
  if ( ERR > 0 ):
-           flog.write( "\n\n**************** test jobstart_submit is ERROR *******************")
+           flog.write( "\n\n**************** test test_job is ERROR *******************")
            flog.close()
            return 1
  else:
-           flog.write( "\n\n**************** test jobstart_submit is OK *********************")
+           flog.write( "\n\n**************** test test_job is OK *********************")
  return 0
 if __name__=='__main__':
     import sys
     import os
     import re
-    from datetime import *
+    import time
+    from datetime import datetime
 #    sys.path.append("/opt/fpconst/lib/python2.3/site-packages")
 #    fpconstpath = sys.argv[2]
 #    sys.path.append(fpconstpath)
@@ -287,15 +339,25 @@ if __name__=='__main__':
     scname = sys.argv[0]
     m = re.search('(?<=/)\w+',scname )
     script_name =  m.group(0)
+    tm = time.time()
+    tm = str(tm)
+    std_tmp = "std_tmp."+tm
+    std_log = "std_log." + tm
 #    script_name = sys.argv[0]
-    fmsg = open('std.log','w')
-    flog =open ('std.tmp','w')
+    fmsg = open(std_log,'w')
+    flog =open (std_tmp,'w')
     fmsg.write("\n\n ################  script name is " + script_name + "  ###############\n")
     datetime_now = datetime.now().isoformat(' ')
     fmsg.write("     time is   " + datetime_now + "\n")
     flog.write( "\n\n##################################################################################" )
     flog.write( "\n==================== script name is " + script_name + " ==========================\n")
     node = sys.argv[1]
+    if len(sys.argv) > 2 :
+                      REQ = "other.GlueCEHostingCluster == " + "\"" + sys.argv[2] + "\""
+#                     print REQ
+    else :
+                      REQ = "other.GlueCEStateFreeCPUs >=1"
+#                      print REQ 
     flog.write( "====================WmProxy_host: " + node + "===========\n")
 #    url=  "https://cg08.ific.uv.es:7443/glite_wms_wmproxy_server"
     url=  "https://" + node + ":7443/glite_wms_wmproxy_server"
@@ -304,7 +366,9 @@ if __name__=='__main__':
 #    SAME_OK=os.getenv('SAME_OK','ERROR')
 #    sys.exit(jobstart())
     out = jobstart()
-    flog = open("std.tmp","r")
+    std_tmp = "std_tmp."+tm
+    std_log = "std_log." + tm  
+    flog = open(std_tmp,"r")
     while flog:
               line = flog.readline()
               fmsg.write(line)
@@ -312,15 +376,15 @@ if __name__=='__main__':
                          break
     fmsg.close()
     flog.close()
-    fmsg = open('std.log','r')
+    fmsg = open(std_log,'r')
     sfile= fmsg.read()
     print sfile
-    os.remove("std.tmp")
-    os.remove("std.log")
+    os.remove(std_tmp)
+    os.remove(std_log)
     if ( os.path.exists("proxyresult.log") == 1) :
                    os.remove("proxyresult.log")
-    if ( os.path.exists("example.jdl") == 1) :
-                   os.remove("example.jdl")
+#    if ( os.path.exists("example.jdl") == 1) :
+#                   os.remove("example.jdl")
     fmsg.close()
     sys.exit(out)
 
