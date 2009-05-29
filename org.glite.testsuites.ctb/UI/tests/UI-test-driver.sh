@@ -27,7 +27,7 @@ usage() {
  echo "Test driver for executing several UI tests in one go. You can run all the tests or a subset of them. Running test-lcg-utils.sh is not supported."
  echo "Usage:"
  echo "======"
- echo "UI-test-driver.sh --platform <gl32-SLC5-x86_64|gl31-SLC4-i386> --sehost|-sehost <SE hostname> --lfchost|-lfchost <LFC hostname> --lfcdir|-lfcdir <LFC directory> --vo|-vo <VO name> --cetag <CE hostname for tag check> [--extended] [--all] [TestCategories]"
+ echo "UI-test-driver.sh --platform <gl32-SLC5-x86_64|gl31-SLC4-i386> --sehost|-sehost <SE hostname> --lfchost|-lfchost <LFC hostname> --lfcdir|-lfcdir <LFC directory> --vo|-vo <VO name> --cetag <CE hostname for tag check> [--sctag <subcluster for tag checks>] [--extended] [--all] [TestCategories]"
  echo "Test categories can be one or more of the following"
  echo "UI-environment UI-glite-environment UI-commands UI-libraries"
  echo "UI-manpage UI-exec UI-security UI-data-lcg UI-data-lfc" 
@@ -39,7 +39,8 @@ usage() {
  echo "UI-data-lcg options: --sehost (mandatory), --vo (optional)"
  echo "UI-data-lfc options: --lfchost (mandatory if LFC_HOST is not defined in your environment), --lfcdir (optional)"
  echo "UI-inf-lcg-info options: --vo (optional)"
- echo "UI-tags: --vo (mandatory), --cetag (mandatory), --extended (optional, use if you have permission to modify tags on target ce) "
+ echo "UI-tags: --vo (mandatory), --cetag (mandatory), --sctag (optional, use this to test the the --sc flag too)"
+ echo "          --extended (optional, use if you have permission to modify tags on target ce) "
  echo ""
  echo "The --platform argument is mandatory"
  echo "The --all option will run all tests. This requires all test specific mandatory arguments"
@@ -115,6 +116,9 @@ do
   shift
   ;;
  --cetag | -cetag ) cetag=$2
+  shift
+  ;;
+ --sctag | -sctag ) sctag=$2
   shift
   ;;
  --extended | -extended ) extended="--extended"
@@ -207,6 +211,9 @@ do
   fi
  elif [ $testCategory = "UI-tags" ]; then
    options="--vo $voname --ce $cetag $extended"
+   if [ $sctag ] ; then
+    options="$options --sc $sctag" 
+   fi 
  fi
  for testName in ${testCategory}*
  do

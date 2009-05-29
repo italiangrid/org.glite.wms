@@ -26,8 +26,10 @@ usage() {
  echo "Test to test the lcg-tags command"
  echo "Usage:"
  echo "======"
- echo "UI-tag-lcgtags.sh --ce <CEname> --vo <VO> [--extended]"
+ echo "UI-tag-lcgtags.sh --ce <CEname> --vo <VO> [--sc <Subcluster name>][--extended]"
  echo ""
+ echo "If the --sc flag is given, basic tests are done also by giving the" 
+ echo "subcluster instead of the CE to the command"
  echo "The --extended flag should be used if the tester has"
  echo "privileges to modify the tags of the ce"
  echo ""
@@ -35,6 +37,7 @@ usage() {
 
 haveCE=0
 haveVO=0
+haveSC=0
 extended=0
 
 while [ $# -gt 0 ]
@@ -48,7 +51,11 @@ do
   haveVO=1
   shift
   ;;
- --extended | -extended ) extended=$2
+ --sc | -sc ) sc=$2
+  haveSC=1
+  shift
+  ;;
+ --extended | -extended ) extended=1
   ;;
  --help | -help | --h | -h ) usage
   exit 0
@@ -90,6 +97,16 @@ fi
 
 myecho "The command correctly returns an error on a nonexisting server"
 
+if [ $haveSC -eq 1 ] ; then
+  myecho "Running  list test using subcluster"
+  lcg-tags --sc $sc --vo $vo --list
+  if [ $? -ne 0 ] ; then 
+    myecho "The list test using subcluster failed"
+    myexit 1
+  fi
+  myecho "List test using subcluster succeeded"
+fi
+
 if [ $extended -eq 0 ] ; then
  myecho "Not running extended tests"
  myexit 0
@@ -110,7 +127,7 @@ else
 
  mytmp=`mktemp`
  
- if [$? -ne 0 ] ; then
+ if [ $? -ne 0 ] ; then
   myecho "Error creating required temporary file, trying to remove added tag"
   lcg-tags --ce $ce --vo $vo --remove --tags VO-$vo-certtest
   myexit 1
@@ -129,28 +146,17 @@ else
  
  myecho "Succesfully added tag VO-$vo-certtest2 tag from file"
 
- myecho "Trying to rename a tag"
-
- lcg-tags --ce $ce --vo $vo --replace --tags VO-$vo-certtest VO-$vo-certtest3
- if [ $? -ne 0 ]; then
-  myecho "ERROR: Could not rename tag VO-$vo-certtest to VO-$vo-certtest3. Trying to remove added tags"
-  lcg-tags --ce $ce --vo $vo --remove --tags VO-$vo-certtest
-  lcg-tags --ce $ce --vo $vo --remove --tags VO-$vo-certtest2
-  rm $mytmp
-  myexit 1
- fi
-
  myecho "Trying to remove tag"
- lcg-tags --ce $ce --vo $vo --remove --tags VO-$vo-certtest3
+ lcg-tags --ce $ce --vo $vo --remove --tags VO-$vo-certtest
 
  if [ $? -ne 0 ]; then
-  myecho "ERROR: Could not remove tag VO-$vo-certtest3. Trying to remove other added tags"
+  myecho "ERROR: Could not remove tag VO-$vo-certtest. Trying to remove other added tags"
   lcg-tags --ce $ce --vo $vo --remove --tags VO-$vo-certtest2
   rm $mytmp
   myexit 1
  fi
 
- myecho "Succesfully removed tag VO-$vo-certtest3"
+ myecho "Succesfully removed tag VO-$vo-certtest"
  myecho "Trying to remove tag from file"
 
  lcg-tags --ce $ce --vo $vo --remove --tagfile $mytmp
@@ -176,15 +182,28 @@ else
  fi
  myecho "Correctly received and error on a badly formatted tag"
 
- myecho "Trying to remove a nonexistent tag"
- 
- lcg-tags --ce $ce --vo $vo --remove --tags "VO-$vo-imprettysurethatthistagdoesntexist"
+ if [ $haveSC -eq 1 ] ; then
+  myecho "Running add and remove tests using subclusters"
+  lcg-tags --sc $sc --vo $vo --add --tags VO-$vo-certtest
+  if [ $? -ne 0 ] ; then
+   myecho "Error adding tag VO-$vo-certtest to subcluster $sc"
+   myexit 1
+  fi
+   
+  myecho "Succesfully added tag VO-$vo-certtest to subcluster $sc"
 
- if [ $? -eq 0 ]; then
-  myecho "ERROR: Did not receive an error when trying to remove VO-$vo-imprettysurethatthistagdoesntexist"
-  myexit 1
- fi
- myecho "Correctly received and error when trying to remove VO-$vo-imprettysurethatthistagdoesntexist"
+  myecho "Trying to remove tag from subcluster"
+
+  lcg-tags --sc $sc --vo $vo --remove --tags VO-$vo-certtest
+
+  if [ $? -ne 0 ] ; then
+   myecho "Error removing tag VO-$vo-certtest from subcluster $sc"
+   myexit 1
+  fi
+  
+  myecho "Succesfully removed tag VO-$vo-certtest from subcluster $sc"
+ fi 
+
 
  myexit 0
 

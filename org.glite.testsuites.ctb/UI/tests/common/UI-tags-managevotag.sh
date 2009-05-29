@@ -48,7 +48,9 @@ do
   haveVO=1
   shift
   ;;
- --extended | -extended ) extended=$2
+ --extended | -extended ) extended=1
+  ;;
+ --sc | -sc ) 
   ;;
  --help | -help | --h | -h ) usage
   exit 0
