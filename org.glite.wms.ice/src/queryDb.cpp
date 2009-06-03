@@ -5,6 +5,8 @@
 #include <iostream>
 #include <getopt.h>
 
+#include "glite/ce/cream-client-api-c/job_statuses.h"
+
 #include "iceDb/Transaction.h"
 #include "iceDb/GetFields.h"
 #include "iceConfManager.h"
@@ -78,6 +80,9 @@ int main( int argc, char* argv[] )
   int              option_index( 0 );
   list< string >   fields_to_retrieve;
 
+  int status_pos   = -1;
+  int date_status  = -1;
+
   while( 1 ) {
     int c;
     static struct option long_options[] = {
@@ -137,6 +142,7 @@ int main( int argc, char* argv[] )
       fields_to_retrieve.push_back( "myproxyurl" );
       break;
     case 'S':
+      status_pos = fields_to_retrieve.size();
       fields_to_retrieve.push_back( "status" );
       break;
     case 'L':
@@ -202,12 +208,23 @@ int main( int argc, char* argv[] )
 	 it != result.end();
 	 ++it)
       {
-	for( vector< string >::const_iterator jt=it->begin();
-	     jt != it->end();
-	     ++jt)
+
+	for(unsigned int counter = 0;
+	    counter < it->size();
+	    counter++)
 	  {
-	    cout << "[" << *jt << "] ";
+	    if(counter == status_pos)
+	      cout << "[" << glite::ce::cream_client_api::job_statuses::job_status_str[atoi(it->at(counter).c_str())] << "] ";
+	    else
+	      cout << "[" << it->at(counter) << "] ";
 	  }
+
+// 	for( vector< string >::const_iterator jt=it->begin();
+// 	     jt != it->end();
+// 	     ++jt)
+// 	  {
+// 	    cout << "[" << *jt << "] ";
+// 	  }
 	cout << endl;
       }
     cout << endl << "------------------------------------------------" << endl;
