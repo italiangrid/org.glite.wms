@@ -181,7 +181,7 @@ class JobSubmit : public Job {
 		/**
 		* Retrieve all JobIds and Names for the collection/DAG/parametric
 		*/
-		vector<std::string> getJobIdsAndNodes( );
+		std::vector<std::string> getJobIdsAndNodes( );
 		/*
 		* Performs either registration or submission.
 		* The WMProxy submission service, that performs both registration and start of the job, is invoked
@@ -203,7 +203,7 @@ class JobSubmit : public Job {
 		* @param to_bcopied the list of files to be archived that will be copied to the WMProxy server
 		* @param destURI the destinationURI of the job where the gzip file has to be transferred
 		 */
-		void createZipFile (std::string filename, std::vector<JobFileAd> fileads, std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred);
+		void createZipFile (std::string filename, std::vector<JobFileAd> fileads, std::vector<std::pair<glite::jdl::FileAd, std::string > > &to_btransferred);
 		/*
 		* 	Performs the transfer a set of local files to one(more) remote machine(s) by globus-url-copy (gsiftp protocol)
  		*	@param paths list of files to be transferred (each pair is <source,destination>)
