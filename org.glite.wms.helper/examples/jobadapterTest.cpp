@@ -21,7 +21,6 @@
 #include "jobadapter/url.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
 
 #include "glite/jdl/convert.h"
 
@@ -35,8 +34,6 @@ using namespace std;
 using namespace classad;
 
 using namespace glite::wms::helper::jobadapter;
-
-using namespace glite::wmsutils::jobid;
 
 using namespace glite::wms::common::configuration;
 using namespace glite::wms::common::logger;

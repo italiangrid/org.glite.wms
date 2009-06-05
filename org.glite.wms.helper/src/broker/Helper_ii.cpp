@@ -23,9 +23,8 @@
 #include "glite/wms/broker/RBMaximizeFilesImpl.h"
 #include "glite/wms/broker/RBMinimizeAccessCostImpl.h"
 #include "glite/wms/matchmaking/exceptions.h"
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "glite/jobid/JobId.h"
+#include "glite/wms/common/utilities/manipulation.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
@@ -42,7 +41,7 @@
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
 namespace fs            = boost::filesystem;
-namespace jobid         = glite::wmsutils::jobid;
+namespace jobid         = glite::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::jdl;
@@ -201,8 +200,8 @@ try {
 
   std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
   jobid::JobId dg_jobid(dg_jobid_str);
-  p /= jobid::get_reduced_part(dg_jobid);
-  p /= jobid::to_filename(dg_jobid);
+  p /= utilities::get_reduced_part(dg_jobid);
+  p /= utilities::to_filename(dg_jobid);
 
   fs::path      BIfile((p / "input/.BrokerInfo").native_file_string(), fs::portable_posix_name);
   std::ofstream BIfilestream(BIfile.native_file_string().c_str());
@@ -296,7 +295,7 @@ try {
 
   throw helper::CannotSetAttribute(e, helper_id);
 
-} catch( jobid::JobIdException& jide ) {
+} catch( jobid::JobIdError const& jide ) {
 
   edglog( error ) << jide.what() << std::endl;
   throw helper::InvalidAttributeValue(requestad::JDL::JOBID,
