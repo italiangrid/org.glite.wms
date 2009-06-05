@@ -954,7 +954,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		adObj->fromFile (m_jdlFile);
 		// Adds ExpireTime JDL attribute
 		if ((int)expireTime>0) {
-			adObj->addAttribute (JDL::EXPIRY_TIME, (double)expireTime);
+			adObj->addAttribute (JDL::EXPIRY_TIME, (int)expireTime);
 		}
 		// Simple Ad manipulation (common)
 		if (!adObj->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
