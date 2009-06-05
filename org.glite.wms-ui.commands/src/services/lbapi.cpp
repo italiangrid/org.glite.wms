@@ -282,15 +282,23 @@ glite::jobid::JobId Status::getJobId(){
 glite::jobid::JobId Status::getParent(){
 	glite::jobid::JobId jid ;
 	try{
-		jid = ((glite::jobid::JobId) status.getValJobId(JobStatus::PARENT_JOB));
-	}catch (std::exception &exc){ /**Do nothing: parent not present*/}
+		jid = status.getValJobId(JobStatus::PARENT_JOB);
+	}catch (std::exception &exc){ 
+		// Do Nothing
+	}
 	return jid ;
 }
 
 bool Status::hasParent ( ){
 	glite::jobid::JobId pj ;
-	pj = getParent() ;
-	return (pj.c_jobid() != 0);
+	bool res = false;
+	try {
+		pj = status.getValJobId(JobStatus::PARENT_JOB);
+		res = true;
+	} catch (std::exception &exc){
+        	res = false;
+	}
+	return res;
 }
 
 std::string Status::toString(Verbosity verb){
