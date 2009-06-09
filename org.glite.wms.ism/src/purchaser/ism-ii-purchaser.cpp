@@ -1,7 +1,18 @@
 // File: ism-ii-purchaser.cpp
 // Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
-// Copyright (c) 2002 EU DataGrid.
-// For license conditions see http://www.eu-datagrid.org/license.html
+
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
 
 // $Id$
 
@@ -31,6 +42,8 @@ namespace {
 boost::condition f_purchasing_cycle_run_condition;
 boost::mutex     f_purchasing_cycle_run_mutex;
 
+} // {anonymous}
+
 bool 
 ism_ii_purchaser_entry_update::operator()(
   int a,
@@ -49,7 +62,6 @@ ism_ii_purchaser_entry_update::operator()(
   return false;
 }
 
-} // {anonymous}
 
 ism_ii_purchaser::ism_ii_purchaser(
   std::string const& hostname,
