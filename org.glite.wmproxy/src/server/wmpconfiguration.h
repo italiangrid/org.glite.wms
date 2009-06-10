@@ -163,28 +163,25 @@ class WMProxyConfiguration {
 		 * Returns the value of the configuration attribute LBAddresses
 		 * @return the attribute value
 		 */
-		std::vector<std::pair<std::string, int> >
-			WMProxyConfiguration::getLBServerAddressesPorts();
+		std::vector<std::pair<std::string, int> > getLBServerAddressesPorts();
 			
 		/**
 		 * Returns the value of the configuration attribute LBServer
 		 * @return the attribute value
 		 */
-		std::pair<std::string, int> 
-			WMProxyConfiguration::getLBServerAddressPort();
+		std::pair<std::string, int> getLBServerAddressPort();
 		
 		/**
 		 * Returns the value of the configuration attribute LBLocalLogger
 		 * @return the attribute value
 		 */
-		std::pair<std::string, int> 
-			WMProxyConfiguration::getLBLocalLoggerAddressPort();
+		std::pair<std::string, int> getLBLocalLoggerAddressPort();
 		
 		/**
 		 * Returns the value of the configuration attribute AsyncJobStart
 		 * @return the attribute value
 		 */
-		bool WMProxyConfiguration::getAsyncJobStart();
+		bool getAsyncJobStart();
 		
 		/**
 		 * Returns the value of the configuration attribute SDJRequirements

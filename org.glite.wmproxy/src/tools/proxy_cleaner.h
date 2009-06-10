@@ -63,7 +63,7 @@ class ProxyCleaner {
 		* Prints on the standard error
 		* a message with the usage instructions for this tool
 		*/
-		void ProxyCleaner::usage(char *exe);
+		void usage(char *exe);
 
 		/**
 		* Creates the log file to the specified path

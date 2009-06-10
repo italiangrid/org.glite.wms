@@ -149,7 +149,7 @@ class Converter {
 		void removeOldEntries(const std::vector<std::string> &map,
 				std::vector<std::string> &gacl,
 				const glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType &credential=glite::wms::wmproxy::authorizer::GaclManager::WMPGACL_UNDEFCRED_TYPE) ;
-		static glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType Converter::checkCredentialType (const std::string &raw) ;
+		static glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType checkCredentialType (const std::string &raw) ;
 		int saveGacl ( ) ;
 		std::string entries (int n, bool new_word=false);
 		std::string getResultMsg ( );
