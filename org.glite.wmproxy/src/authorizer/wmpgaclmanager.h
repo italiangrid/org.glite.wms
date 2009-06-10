@@ -320,7 +320,7 @@ class GaclManager {
 	*	Gacl default filenames
 	*/
 	static const char* WMPGACL_DEFAULT_FILE ;
-	static const char* GaclManager::WMPGACL_DEFAULT_DRAIN_FILE ;
+	static const char* WMPGACL_DEFAULT_DRAIN_FILE ;
 	/**
 	* Function result : SUCCES
 	*/
