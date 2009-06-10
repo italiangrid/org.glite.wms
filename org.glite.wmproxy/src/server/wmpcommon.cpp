@@ -41,7 +41,7 @@ limitations under the License.
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/jdl_attributes.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 
 // Logger
 #include "utilities/logging.h"
@@ -93,7 +93,7 @@ using namespace glite::wms::wmproxy::utilities; //Exception
 namespace logger        = glite::wms::common::logger;
 namespace wmputilities	= glite::wms::wmproxy::utilities;
 namespace authorizer 	= glite::wms::wmproxy::authorizer;
-namespace jobid		= glite::wmsutils::jobid;
+namespace jobid		= glite::jobid;
 
 
 

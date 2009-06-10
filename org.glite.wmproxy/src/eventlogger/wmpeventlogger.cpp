@@ -60,14 +60,14 @@ namespace wmproxy {
 namespace eventlogger {
 
 
-namespace jobid        = glite::wmsutils::jobid;
+namespace jobid        = glite::jobid;
 namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 namespace authorizer   = glite::wms::wmproxy::authorizer;
 
 using namespace std;
 using namespace glite::jdl; // DagAd
-using namespace glite::wmsutils::jobid; //JobId
+using namespace glite::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 using namespace glite::wms::wmproxy::utilities; //Exception codes
 
@@ -337,7 +337,7 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering job to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+			register_result = edg_wll_RegisterJobProxy(ctx, id->c_jobid(),
 				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
 			if (register_result) {
 				edglog(severe)
@@ -349,7 +349,7 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	} else {
 		edglog(debug)<<"Registering job to LB..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
+			register_result = edg_wll_RegisterJobSync(ctx, id->c_jobid(),
 				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
 			if (register_result) {
 				edglog(severe)<<error_message("Register job failed\n"
@@ -360,7 +360,7 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	}
 	if (register_result) {
 		string msg = error_message("Register job failed to LB server: "
-			+ id->getServer()
+			+ id->server()
 			+ "\nedg_wll_RegisterJobProxy/Sync", register_result);
 			
 		if (register_result == EAGAIN) {
@@ -424,7 +424,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		*zero_char = (char*) malloc(iter->size() + 1);
 		sprintf(*zero_char, "%s", iter->c_str());
 		zero_char++;
-		jids_id[jid_i]=glite::wmsutils::jobid::JobId (*iterId).getId();
+		jids_id[jid_i]= const_cast<edg_wlc_JobId> (glite::jobid::JobId (*iterId).c_jobid());
 	}
 	
 	int register_result = 1;
@@ -432,7 +432,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterSubjobsProxy(ctx, id->getId(),
+			register_result = edg_wll_RegisterSubjobsProxy(ctx, id->c_jobid(),
 				jdls_char, str_nsAddr, jids_id);
 			if (register_result) {
 				edglog(severe)<<error_message("Register DAG subjobs failed\n"
@@ -443,7 +443,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	} else {
 		edglog(debug)<<"Registering DAG subjobs to LB..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterSubjobs(ctx, id->getId(),
+			register_result = edg_wll_RegisterSubjobs(ctx, id->c_jobid(),
 				jdls_char, str_nsAddr, jids_id);
 			if (register_result) {
 				edglog(severe)<<error_message("Register DAG subjobs failed\n"
@@ -481,7 +481,7 @@ WMPEventLogger::generateSubjobsIds(int res_num)
 	edglog_fn("WMPEventlogger::generateSubjobsIds");
 
 	m_subjobs = NULL;
-	if (edg_wll_GenerateSubjobIds(ctx, id->getId(), res_num, "WMPROXY", &m_subjobs)) {
+	if (edg_wll_GenerateSubjobIds(ctx, id->c_jobid(), res_num, "WMPROXY", &m_subjobs)) {
 		string msg = error_message("Job ID generation failed\n"
 			"edg_wll_GenerateSubjobIds");
 		throw LBException(__FILE__, __LINE__, "generateSubjobsIds()",
@@ -549,7 +549,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	if (m_lbProxy_b) {
 		edglog(debug)<<"Registering "<< registration_type_s <<" to LB Proxy..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+			register_result = edg_wll_RegisterJobProxy(ctx, id->c_jobid(),
 				registration_type_i, path.c_str(), str_addr, dagsize,
 				"WMPROXY", &m_subjobs);
 			if (register_result) {
@@ -561,7 +561,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	} else {
 		edglog(debug)<<"Registering "<< registration_type_s <<"to LB..."<<endl;
 		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
+			register_result = edg_wll_RegisterJobSync(ctx, id->c_jobid(),
 				registration_type_i, path.c_str(), str_addr, dagsize,
 				"WMPROXY", &m_subjobs);
 			if (register_result) {
@@ -573,7 +573,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	}
 	if (register_result) {
 		string msg = error_message("Register "+ registration_type_s +"failed to LB server:"
-			+ id->getServer()
+			+ id->server()
 			+ "\nedg_wll_RegisterJobProxy/Sync", register_result);
 
 		if (register_result == EAGAIN) {
@@ -695,7 +695,7 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
 	GLITE_STACK_TRY("setLoggingJob()");
 	edglog_fn("WMPEventlogger::setLoggingJob");
 	
-	glite::wmsutils::jobid::JobId jobid(jid);
+	glite::jobid::JobId jobid(jid);
 	if (m_lbProxy_b) {
 	        edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
 	
@@ -703,7 +703,7 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
          	string str_tmp_dn(temp_user_dn);
                 free(temp_user_dn);
 
-		if (edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code, str_tmp_dn.c_str(), EDG_WLL_SEQ_NORMAL)){
+		if (edg_wll_SetLoggingJobProxy(ctx, jobid.c_jobid(), seq_code, str_tmp_dn.c_str(), EDG_WLL_SEQ_NORMAL)){
 			string msg = error_message("Set logging job failed\n"
 				"edg_wll_SetLoggingJobProxy");
 			edglog(critical)<<msg<<endl;
@@ -712,7 +712,7 @@ WMPEventLogger::setLoggingJob(const string &jid, const char* seq_code)
 		}
 	} else {
         edglog(debug)<<"Setting job for logging to LB..."<<endl;
-		if (edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code,
+		if (edg_wll_SetLoggingJob(ctx, jobid.c_jobid(), seq_code,
 				EDG_WLL_SEQ_NORMAL)) {
 			string msg = error_message("Set logging job failed\n"
 				"edg_wll_SetLoggingJob");

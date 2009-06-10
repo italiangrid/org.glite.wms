@@ -46,9 +46,8 @@ limitations under the License.
 #include <classad_distribution.h>
 
 // JobId
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "glite/jobid/JobId.h"
+#include "glite/wms/common/utilities/manipulation.h"
 
 // Logging
 #include "logging.h"
@@ -77,7 +76,7 @@ extern bool globusDNS_global;
 
 namespace logger		  = glite::wms::common::logger;
 namespace commonutilities = glite::wms::common::utilities;
-namespace jobid			  = glite::wmsutils::jobid;
+namespace jobid			  = glite::jobid;
 namespace purger          = glite::wms::purger;
 #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
@@ -571,7 +570,7 @@ getJobReducedPath(jobid::JobId jid, int level)
 {
 	GLITE_STACK_TRY("getJobReducedPath()");
 	return string(getenv(DOCUMENT_ROOT) + FILE_SEP
-		+ glite::wmsutils::jobid::get_reduced_part(jid, level));
+		+ glite::wms::common::utilities::get_reduced_part(jid, level));
 	GLITE_STACK_CATCH();
 }
 
@@ -585,7 +584,7 @@ getJobDirectoryPath(jobid::JobId jid, int level)
 }
 
 string
-getJobInputSBRelativePath(glite::wmsutils::jobid::JobId jid, int level){
+getJobInputSBRelativePath(glite::jobid::JobId jid, int level){
 	GLITE_STACK_TRY("getJobInputRelativePath()");
 	return (  to_filename(jid, level) + FILE_SEP
 		+ INPUT_SB_DIRECTORY);
@@ -987,13 +986,13 @@ fileCopy(const string& source, const string& target)
 }
 
 string
-to_filename(glite::wmsutils::jobid::JobId j, int level, bool extended_path)
+to_filename(glite::jobid::JobId j, int level, bool extended_path)
 {
 	GLITE_STACK_TRY("to_filename()");
 	string path(sandboxdir_global + string(FILE_SEP)
-		+ glite::wmsutils::jobid::get_reduced_part(j, level));
+		+ glite::wms::common::utilities::get_reduced_part(j, level));
 	if (extended_path) {
-		path.append(string(FILE_SEP) + glite::wmsutils::jobid::to_filename(j));
+		path.append(string(FILE_SEP) + glite::wms::common::utilities::to_filename(j));
 	}
 	return path;
 	GLITE_STACK_CATCH();
@@ -1408,7 +1407,7 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		int level = 0; 
 	   	bool extended_path = true; 
 		// Vector contains at least one element
-		string path = to_filename (glite::wmsutils::jobid::JobId(jobids[0]),
+		string path = to_filename (glite::jobid::JobId(jobids[0]),
 		   	level, extended_path);
 		int pos = path.find(FILE_SEP, 0);
 		
@@ -1463,7 +1462,7 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		vector<string>::iterator const end = jobids.end();
 		
 		for (; iter != end; ++iter) {
-			path = to_filename(glite::wmsutils::jobid::JobId(*iter),
+			path = to_filename(glite::jobid::JobId(*iter),
 				level, extended_path);
 			allpath = path;
 			pos = path.find(FILE_SEP, 0);

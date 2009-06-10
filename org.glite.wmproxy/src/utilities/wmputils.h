@@ -26,7 +26,7 @@ limitations under the License.
 
 #include <vector>
 
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 
 namespace glite {
 namespace wms {
@@ -166,7 +166,7 @@ std::vector<std::string> * getJobDirectoryURIsVector(
  * @param level level, default value is 0
  * @return job reduced absolute path
  */
-std::string getJobReducedPath(glite::wmsutils::jobid::JobId jid, int level = 0);
+std::string getJobReducedPath(glite::jobid::JobId jid, int level = 0);
 
 /**
  * Returns the job directory absolute path
@@ -174,7 +174,7 @@ std::string getJobReducedPath(glite::wmsutils::jobid::JobId jid, int level = 0);
  * @param level level, default value is 0
  * @return job directory absolute path
  */
-std::string getJobDirectoryPath(glite::wmsutils::jobid::JobId jid, int level = 0);
+std::string getJobDirectoryPath(glite::jobid::JobId jid, int level = 0);
 
 /**
  * Returns the  job input directory relative path
@@ -182,17 +182,17 @@ std::string getJobDirectoryPath(glite::wmsutils::jobid::JobId jid, int level = 0
  * @param level level, default value is 0
  * @return  job input directory relative path
  */
-std::string getJobInputSBRelativePath(glite::wmsutils::jobid::JobId jid, int level = 0);
+std::string getJobInputSBRelativePath(glite::jobid::JobId jid, int level = 0);
 /**
  * Returns the job start lock file path
  * @param jid the job identifier of the job
  * @param level level, default value is 0
  * @return job directory absolute path
  */
-std::string getJobStartLockFilePath(glite::wmsutils::jobid::JobId jid,
+std::string getJobStartLockFilePath(glite::jobid::JobId jid,
 	int level = 0);
 	
-std::string getGetOutputFileListLockFilePath(glite::wmsutils::jobid::JobId jid,
+std::string getGetOutputFileListLockFilePath(glite::jobid::JobId jid,
 	int level = 0);
 
 /** 
@@ -201,7 +201,7 @@ std::string getGetOutputFileListLockFilePath(glite::wmsutils::jobid::JobId jid,
  * @param level level, default value is 0
  * @return input sandbox directory absolute path
  */
-std::string getInputSBDirectoryPath(glite::wmsutils::jobid::JobId jid,
+std::string getInputSBDirectoryPath(glite::jobid::JobId jid,
 	int level = 0);
 	
 /** 
@@ -210,7 +210,7 @@ std::string getInputSBDirectoryPath(glite::wmsutils::jobid::JobId jid,
  * @param level level, default value is 0
  * @return output sandbox directory absolute path
  */
-std::string getOutputSBDirectoryPath(glite::wmsutils::jobid::JobId jid,
+std::string getOutputSBDirectoryPath(glite::jobid::JobId jid,
 	int level = 0);
 
 /** 
@@ -219,7 +219,7 @@ std::string getOutputSBDirectoryPath(glite::wmsutils::jobid::JobId jid,
  * @param level level, default value is 0
  * @return output sandbox directory absolute path
  */
-std::string getPeekDirectoryPath(glite::wmsutils::jobid::JobId jid,
+std::string getPeekDirectoryPath(glite::jobid::JobId jid,
 	int level = 0, bool docroot = true);
 
 /** 
@@ -228,7 +228,7 @@ std::string getPeekDirectoryPath(glite::wmsutils::jobid::JobId jid,
  * @param level level, default value is 0
  * @return delegated Proxy absolute path
  */
-std::string getJobDelegatedProxyPath(glite::wmsutils::jobid::JobId jid,
+std::string getJobDelegatedProxyPath(glite::jobid::JobId jid,
 	int level = 0);
 	
 /** 
@@ -237,19 +237,19 @@ std::string getJobDelegatedProxyPath(glite::wmsutils::jobid::JobId jid,
  * @param level level, default value is 0
  * @return backup delegated Proxy absolute path
  */
-std::string getJobDelegatedProxyPathBak(glite::wmsutils::jobid::JobId jid,
+std::string getJobDelegatedProxyPathBak(glite::jobid::JobId jid,
 	int level = 0);
 
-std::string getJobJDLOriginalPath(glite::wmsutils::jobid::JobId jid,
+std::string getJobJDLOriginalPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
 	
-std::string getJobJDLToStartPath(glite::wmsutils::jobid::JobId jid,
+std::string getJobJDLToStartPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
 	
-std::string getJobJDLStartedPath(glite::wmsutils::jobid::JobId jid,
+std::string getJobJDLStartedPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
 
-std::string getJobJDLExistingStartPath(glite::wmsutils::jobid::JobId jid,
+std::string getJobJDLExistingStartPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
 	
 /**
@@ -267,7 +267,7 @@ std::string getDestURI(const std::string &jobid, const std::string &protocol,
  * @param level
  * @param extended_path
  */
-std::string to_filename(glite::wmsutils::jobid::JobId j, int level = 0,
+std::string to_filename(glite::jobid::JobId j, int level = 0,
 	bool extended_path = true);
 
 

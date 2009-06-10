@@ -29,10 +29,9 @@ namespace jdl {
 }}
 
 namespace glite {
-namespace wmsutils {
 namespace jobid {
 	class JobId;
-}}}
+}}
 
 
 // Possible values for jdl type attribute
@@ -51,8 +50,8 @@ void initWMProxyOperation (const std::string &operation);
 void callLoadScriptFile(const std::string &operation);
 void checkConfiguration();
 int  getType(std::string jdl, glite::jdl::Ad * ad = NULL);
-void checkJobDirectoryExistence(glite::wmsutils::jobid::JobId jid,int level = 0);
+void checkJobDirectoryExistence(glite::jobid::JobId jid,int level = 0);
 /**
 * Perform Authorization/Authentication process
 **/
-void checkSecurity(glite::wmsutils::jobid::JobId *jid=NULL, const std::string *delegation_id=NULL, bool gaclAuthorizing=false);
+void checkSecurity(glite::jobid::JobId *jid=NULL, const std::string *delegation_id=NULL, bool gaclAuthorizing=false);

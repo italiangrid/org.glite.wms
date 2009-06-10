@@ -34,7 +34,7 @@ limitations under the License.
 #include "glite/jdl/JobAd.h"
 
 // JobId
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 
 // LB logger API
 #include "glite/lb/consumer.h"
@@ -71,7 +71,7 @@ class WMPEventLogger  {
 		virtual ~WMPEventLogger() throw();
 		// Initializer
 		void init(const std::string &nsHost, int nsPort,
-			glite::wmsutils::jobid::JobId *id,
+			glite::jobid::JobId *id,
 			const std::string &desturiprotocol = "gridftp",
 			int desturiport = 0);
 
@@ -99,7 +99,7 @@ class WMPEventLogger  {
 		std::vector<std::string> registerDag(WMPExpDagAd *ad,
 			const std::string &path);
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
-		std::vector<std::string> WMPEventLogger::generateSubjobsIds(int res_num);
+		std::vector<std::string> generateSubjobsIds(int res_num);
 		void logListener(const char* host, int port);
 		
 		// Event logging
@@ -138,7 +138,7 @@ class WMPEventLogger  {
 	private:
 		
 		edg_wll_Context ctx;
-		glite::wmsutils::jobid::JobId *id;
+		glite::jobid::JobId *id;
 		std::string dest_uri;
 		std::string lb_host;
 		int lb_port;

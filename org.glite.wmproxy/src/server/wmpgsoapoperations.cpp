@@ -67,7 +67,7 @@ limitations under the License.
 
 #include "glite/lb/JobStatus.h"
 
-namespace jobid        = glite::wmsutils::jobid;
+namespace jobid        = glite::jobid;
 namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities; //Exception codes
 

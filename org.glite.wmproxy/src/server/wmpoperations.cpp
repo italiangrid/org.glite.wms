@@ -37,8 +37,7 @@ limitations under the License.
 
 #include "wmpstructconverter.h"
 
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "glite/wms/common/utilities/manipulation.h"
 
 // Utilities
 #include "utilities/wmputils.h"
@@ -67,7 +66,7 @@ limitations under the License.
 #include "utilities/wmpexception_codes.h"
 
 // RequestAd
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 #include "glite/jdl/PrivateAttributes.h"
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/jdl_attributes.h"
@@ -132,8 +131,7 @@ const std::string DEFAULT_PROTOCOL = "default";
 using namespace std;
 using namespace glite::lb; // JobStatus
 using namespace glite::jdl; // DagAd, AdConverter
-using namespace glite::wmsutils::jobid; //JobId
-using namespace glite::wmsutils::exception; //Exception
+using namespace glite::jobid; //JobId
 
 using namespace glite::wms::wmproxy::server;  //Exception codes
 using namespace glite::wms::wmproxy::utilities; //Exception
@@ -462,17 +460,11 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		edglog(debug)<<"Successfully retrieved files: "<<found.size()<<endl;
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		wmputilities::operationUnlock(fd);
-	} catch (Exception &exc) {
-		edglog(debug)<<"Removing lock..."<<std::endl;
-		wmputilities::operationUnlock(fd);
-		exc.push_back(__FILE__, __LINE__, "getOutputFileList()");
-		throw exc;
 	} catch (exception &ex) {
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		wmputilities::operationUnlock(fd);
-		Exception exc(__FILE__, __LINE__, "getOutputFileList()", 0,
-			"Standard exception: " + std::string(ex.what()));
-		throw exc;
+		edglog(debug)<<"JobId Exception: "<<ex.what()<<std::endl;
+		throw ex;
 	}
 }
 	
