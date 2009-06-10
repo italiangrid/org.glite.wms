@@ -37,8 +37,7 @@ limitations under the License.
 #include "wmpconfiguration.h"
 #include "wmpstructconverter.h"
 
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "glite/wms/common/utilities/manipulation.h"
 
 // Utilities
 #include "utilities/wmputils.h"
@@ -69,7 +68,7 @@ limitations under the License.
 #include "glite/jdl/RequestAdExceptions.h"
 
 // RequestAd
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 #include "glite/jdl/PrivateAttributes.h"
 #include "glite/jdl/JDLAttributes.h"
 #include "glite/jdl/jdl_attributes.h"
@@ -133,8 +132,7 @@ using namespace std;
 using namespace glite::lb; // JobStatus
 using namespace glite::jdl; // DagAd, AdConverter
 using namespace boost::details::pool; //singleton
-using namespace glite::wmsutils::jobid; //JobId
-using namespace glite::wmsutils::exception; //Exception
+using namespace glite::jobid; //JobId
 
 using namespace glite::wms::wmproxy::server;  //Exception codes
 using namespace glite::wms::wmproxy::utilities; //Exception
@@ -777,7 +775,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	}
 	
 	// Creating unique identifier
-	JobId *jid = new JobId();
+	JobId *jid = NULL;
 	
 	std::pair<std::string, int> lbaddress_port;
 	
@@ -793,9 +791,9 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	edglog(debug)<<"LB Port: "
 		<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
 	if (lbaddress_port.second == 0) {
-		jid->setJobId(lbaddress_port.first);
+		jid = new JobId(lbaddress_port.first);
 	} else {
-		jid->setJobId(lbaddress_port.first, lbaddress_port.second);
+		jid = new JobId(lbaddress_port.first, lbaddress_port.second);
 	}
 	string stringjid = jid->toString();
 	edglog(info)<<"Registering id: "<<stringjid<<endl;
@@ -978,9 +976,9 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	edglog(debug)<<"LB Port: "
 		<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
 	if (lbaddress_port.second == 0) {
-		jid->setJobId(lbaddress_port.first);
+		jid = new JobId(lbaddress_port.first);
 	} else {
-		jid->setJobId(lbaddress_port.first, lbaddress_port.second);
+		jid = new JobId(lbaddress_port.first, lbaddress_port.second);
 	}
 	string stringjid = jid->toString();
 	edglog(info)<<"Registering job id: "<<stringjid<<endl;
@@ -1070,7 +1068,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();
-	JobIdStruct job_struct = dag->getJobIdStruct();
+	JobIdStruct job_struct;
+	dag->getJobIdStruct(job_struct);
 	job_id_struct->id = job_struct.jobid.toString(); // should be equal to: jid->toString()
 	job_id_struct->name = job_struct.nodeName;
 	job_id_struct->path = new string(getJobInputSBRelativePath(job_id_struct->id));
@@ -1185,7 +1184,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	// Checking proxy validity
 	try {
 		authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
-	} catch (Exception &ex) {
+	} catch (JobOperationException &ex) {
 		if (ex.getCode() == wmputilities::WMS_PROXY_EXPIRED) {
 			wmplogger.setSequenceCode(EDG_WLL_SEQ_ABORT);
 			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
@@ -1541,7 +1540,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 
 			WMPExpDagAd dag (jdl);
 			dag.setLocalAccess(false);
-			JobIdStruct jobidstruct = dag.getJobIdStruct();
+			JobIdStruct jobidstruct;
+			dag.getJobIdStruct(jobidstruct);
 			JobId parentjobid = jobidstruct.jobid;
 			vector<JobIdStruct*> children = jobidstruct.children;
 
@@ -1914,7 +1914,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			exc.push_back(__FILE__, __LINE__, "submit()");
 			throw exc;
 		}
-	} catch (Exception &exc) {
+	} catch (JobOperationException &exc) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
 			exc.what(), true, true, filelist_global.c_str(),
@@ -1941,7 +1941,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		}
 	    
 		if (!conf.getAsyncJobStart()) {
-			Exception exc(__FILE__, __LINE__, "submit()", 0,
+			JobOperationException exc(__FILE__, __LINE__, "submit()", 0,
 				"Standard exception: " + std::string(ex.what())); 
 			throw exc;
 		}
@@ -2302,7 +2302,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	string seqcode = "";
 	JobId parentjid (status.getValJobId(JobStatus::PARENT_JOB));
 
-	if (parentjid.isSet()) {
+	if (parentjid.c_jobid() != 0) {
 		string parentjdl = wmputilities::readTextFile(wmputilities::getJobJDLExistingStartPath(parentjid));
 		/* bug #19652 fix: WMProxy tries to purge DAG node upon cancellation
 		* DAG node cancellation was forbidden in the past
@@ -2336,7 +2336,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	switch (status.status) {
 		case JobStatus::SUBMITTED: //TBD check this state with call to LBProxy (use events instead of status)
 			// The register of the job has been done
-			if (  !parentjid.isSet()  ) {
+			if ( parentjid.c_jobid() == 0 ) {
 				// SUBMITTED dag/collection/parametric/job (not a node)
 				// #19652 fix: Dag nodes cannot be purged locally,
 				// because the request have not reached WM
@@ -2576,7 +2576,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 	JobStatus status = wmplogger.getStatus(false);
 	// dag nodes have to be forcingly purged  (cfr bug #27074)
 	bool forcePurge=false ;
-        if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
+        if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).c_jobid() != 0) {
 		string msg = "Forcing purge of subjob. The parent is: "
 			+ status.getValJobId(JobStatus::PARENT_JOB).toString();
 		edglog(error)<<msg<<endl;
@@ -2617,7 +2617,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 			userkey = tempproxy;
 			
 			isproxyfile = true;
-		} catch (Exception &ex) {
+		} catch (JobOperationException &ex) {
 			if (ex.getCode() == wmputilities::WMS_PROXY_EXPIRED) {
 				if (!getenv(GLITE_HOST_CERT) || ! getenv(GLITE_HOST_KEY)) {
 					edglog(severe)<<"Unable to get values for environment variable "
