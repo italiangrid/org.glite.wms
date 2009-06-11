@@ -58,7 +58,8 @@ Usage: ./cream-submit-multiple-users-roles.sh <CreamEndPoint> <jdl> <#jobPerUser
 
 The two scripts expect to find users credentials in users-certs.
 Two directories will be created, jobids and status, to store jobids and the the status of the submitted jobs.
-These two drectories are removed and recreated each time the scripts run.
+These two directories are removed and recreated each time the scripts run.
+The test users pass has to be exported in $TESTUSERMAGIC.
 
 The configuration scripts that were used to setup the CREAM CE 
 are packed into creamconffiles.tar.gz.
