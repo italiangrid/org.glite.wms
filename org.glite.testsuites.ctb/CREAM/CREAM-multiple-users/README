@@ -1,0 +1,73 @@
+#
+# Created on Wed Jun 10 16:49:43 CEST 2009
+# Gianni DOT Pucciani AT cern DOT ch
+#
+
+The scripts:
+commonFunctions.sh (functions used by the other two scripts)
+cream-submit-multiple-users-roles.sh (submit using roles)
+cream-submit-multiple-users.sh (submit without using roles)
+
+can be used to submit jobs to a CE (in this case CREAM CE with direct submission)
+using some pre-defined test users that has been prepared in such a way that
+4 VOs (dteam, org.glite.voms-test, creama, creamb), 4 roles (role1,role2,role3,role4)
+will be used.
+
+The scripts have (quite a lot) of hardcoded values but can be easily modified to 
+change the scope of the test.
+The users configuraion is the following:
+-----------------------------------------------------------------------------------
+creama 
+    role1: test users 300-303
+    role2: test users 304-307
+    role3: test users 308-311
+    role4: test users 312-315
+creamb
+    role1: test users 316-319
+    role2: test users 320-323
+    role3: test users 324-327
+    role4: test users 328-331
+dteam
+    role1: test users 332-335
+    role2: test users 336-339
+    role3: test users 340-343
+    role4: test users 344-347
+creama
+    role1: test users 348-351
+    role2: test users 352-355
+    role3: test users 356-359
+    role4: test users 360-363
+-----------------------------------------------------------------------------------
+
+Calling the scripts without arguments will print the usage:
+ > ./cream-submit-multiple-users.sh 
+Usage: ./cream-submit-multiple-users.sh <CreamEndPoint> <jdl> <#jobPerUser> <user1> <userN>
+  <CreamEndPoint> Ex: lxbra1908.cern.ch:8443/cream-lsf-normal
+  <jdl> JDL file
+  <#jobPerUser> Number of Jobs to submit for each user
+  <user1> Number of the first test user
+  <userN> Number of the last test user
+
+> ./cream-submit-multiple-users-roles.sh 
+Usage: ./cream-submit-multiple-users-roles.sh <CreamEndPoint> <jdl> <#jobPerUser> <user1> <userN>
+  <CreamEndPoint> Ex: lxbra1908.cern.ch:8443/cream-lsf-normal
+  <jdl> JDL file
+  <#jobPerUser> Number of Jobs to submit for each user
+  <user1> Number of the first test user
+  <userN> Number of the last test user
+
+The two scripts expect to find users credentials in users-certs.
+Two directories will be created, jobids and status, to store jobids and the the status of the submitted jobs.
+These two drectories are removed and recreated each time the scripts run.
+
+The configuration scripts that were used to setup the CREAM CE 
+are packed into creamconffiles.tar.gz.
+
+Due to a CREAM bug that affect the current production version:
+https://savannah.cern.ch/bugs/?func=detailitem&item_id=48083
+When the user mapping changes, before running the tests again one should remove the old
+sandbox areas(/opt/glite/var/cream_sandbox):
+rm -rf creamb1/* creama1/* ogvtest1/* dteam1/*
+and the current mappings:
+rm -f /etc/grid-security/gridmapdir/%*
+
