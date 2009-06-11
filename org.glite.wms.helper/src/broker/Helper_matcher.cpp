@@ -1,7 +1,18 @@
 // File: Helper.cpp
 // Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
-// Copyright (c) 2002 EU DataGrid.
-// For license conditions see http://www.eu-datagrid.org/license.html
+
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
 
 // $Id$
 
@@ -37,9 +48,6 @@
 
 #include "glite/wms/matchmaking/exceptions.h"
 #include "glite/wms/matchmaking/utility.h"
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -62,7 +70,6 @@
 #endif
 
 namespace fs            = boost::filesystem;
-namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::jdl;
@@ -287,9 +294,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 
   } catch (requestad::CannotSetAttribute const& e) {
     result->InsertAttr("reason", "Cannot set attribute " + e.parameter());
-
-  } catch (jobid::JobIdException const& e) {
-    result->InsertAttr("reason", std::string(e.what()));  
 
   } catch (boost::filesystem::filesystem_error const& e) {
     result->InsertAttr("reason", std::string(e.what()));  
