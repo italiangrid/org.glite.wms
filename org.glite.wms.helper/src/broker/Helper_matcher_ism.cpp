@@ -56,6 +56,7 @@
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/PrivateAttributes.h"
 #include "glite/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
 
 namespace fs            = boost::filesystem;
 namespace logger        = glite::wms::common::logger;
