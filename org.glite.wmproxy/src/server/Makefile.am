@@ -34,6 +34,7 @@ soapC.cpp : wm.h
 	@echo "gsoap compiling .h"
 	$(GSOAP_LOCATION)/bin/soapcpp2 -I$(GSOAP_LOCATION)/include wm.h 
 
+XSLT_LIBS= -L$(top_builddir)/../repository/externals/libxslt/1.1.17/sl5_x86_64_gcc412/lib64 -lxslt
 XSLT_CFALGS= -I/usr/include/libxslt
 JSDL_CFLAGS= -I/usr/include/libxml2
 
@@ -77,7 +78,6 @@ glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(GLITE_WMS_OPTIONAL_JP_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	-lglite_jobid \
@@ -100,8 +100,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(SEC_LCMAPS_RETURN_WITHOUT_GSI_LIBS) \
 	$(VOMS_NOTHR_LIBS) \
 	$(FCGI_CPP_LIBS) \
-	-L/usr/lib64 \
-	-lxslt \
+	$(XSLT_LIBS) \
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
