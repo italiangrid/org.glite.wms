@@ -1,10 +1,20 @@
 /***************************************************************************
  *  filename  : JobAdapter.cpp
  *  authors   : Elisabetta Ronchieri <elisbetta.ronchieri@cnaf.infn.it>
- *  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
- *  For license conditions see LICENSE file or
- *  http://www.edg.org/license.html
  ***************************************************************************/
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 
 #include <string>
 #include <iostream>
@@ -34,9 +44,6 @@
 #include "JobAdapter.h"
 #include "JobWrapper.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
@@ -45,6 +52,8 @@
 #include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
+#include "glite/wms/common/utilities/manipulation.h"
+#include "glite/jobid/JobId.h"
 
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/PrivateAdManipulation.h"
@@ -57,10 +66,10 @@
 
 namespace fs = boost::filesystem;
 namespace config = glite::wms::common::configuration;
-namespace jobid = glite::wmsutils::jobid;
 namespace utilities = glite::wms::common::utilities;
 namespace utils = glite::wmsutils::classads;
 namespace jdl = glite::jdl;
+namespace jobid = glite::jobid;
 
 namespace {
 
@@ -684,11 +693,11 @@ try {
   boost::scoped_ptr<JobWrapper> jw;
    
   // convert the jobid into filename
-  std::string jobid_to_file(jobid::to_filename(job_id));
+  std::string jobid_to_file(utilities::to_filename(jobid::JobId(job_id)));
   // concert the dagid into filename
   std::string dagid_to_file;
   if (!dag_id.empty()) {
-    dagid_to_file.append(jobid::to_filename(dag_id));
+    dagid_to_file.append(utilities::to_filename(jobid::JobId(dag_id)));
   }
 
   // check if there is '/' in the executable
@@ -938,7 +947,7 @@ try {
     // Maradona file path
     try {
       fs::path maradona_path(config.ns()->sandbox_staging_path(), fs::native);
-      maradona_path /= fs::path(jobid::get_reduced_part(job_id), fs::native);
+      maradona_path /= fs::path(utilities::get_reduced_part(jobid::JobId(job_id)), fs::native);
       maradona_path /= fs::path(jobid_to_file, fs::native);
       maradona_path /= fs::path("Maradona.output", fs::native);
       
@@ -963,12 +972,12 @@ try {
       fs::native
     );
     if (!dag_id.empty()) {
-      jw_path /= fs::path(jobid::get_reduced_part(dag_id), fs::native);
+      jw_path /= fs::path(utilities::get_reduced_part(jobid::JobId(dag_id)), fs::native);
       std::string jw_dagid_name("dag.");
       jw_dagid_name.append(dagid_to_file);
       jw_path /= fs::path(jw_dagid_name, fs::native);
     } else {  
-      jw_path /= fs::path(jobid::get_reduced_part(job_id), fs::native);
+      jw_path /= fs::path(utilities::get_reduced_part(jobid::JobId(job_id)), fs::native);
     }
     jw_path /= fs::path(jw_name, fs::native);
     jw_path_string = jw_path.native_file_string();
@@ -1005,11 +1014,11 @@ try {
   std::string output_file_path(config.jc()->output_file_dir());
   output_file_path.append("/");
   if (!dag_id.empty()) {
-    output_file_path.append(jobid::get_reduced_part(dag_id));
+    output_file_path.append(utilities::get_reduced_part(jobid::JobId(dag_id)));
     output_file_path.append("/");
     output_file_path.append(dagid_to_file);
   } else {
-    output_file_path.append(jobid::get_reduced_part(job_id));
+    output_file_path.append(utilities::get_reduced_part(jobid::JobId(job_id)));
   }  
   output_file_path.append("/");
   output_file_path.append(jobid_to_file);
