@@ -34,6 +34,8 @@ Usage:  ./glexec-test.sh <proxy>
 
 Glexec basic tests. It has to be run from a white-listed user account.
 Glexec has to return a correct mapping and a 0 exit code.
+This test should be repeated with the log-only mode option (and syslog) set
+for glexec; in this case there should be no change of identity.
 
 - check_exit_codes.sh
 

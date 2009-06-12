@@ -286,7 +286,7 @@ if [ ! -f $keyfile ] || [ ! -f $certfile ]; then
   globresult=1
 fi
 
-echo "test" | /opt/glite/bin/glite-voms-proxy-init -cert $certfile -key $keyfile -out $proxy -pwstdin 2>/dev/null 1>/dev/null
+echo "test" | /opt/globus/bin/grid-proxy-init -cert $certfile -key $keyfile -out $proxy -valid 48:00 -pwstdin 2>/dev/null 1>/dev/null
 if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   globresult=1
@@ -295,7 +295,7 @@ else
  if [ $? -ne 202 ]; then
   echo_failure; globresult=1; else echo_success;
  fi
- echo "   Glexec should refuse plain proxies if told to do so. "
+ echo "   Glexec should refuse proxieswith lifetime > 24h if told to do so. "
 fi
 
 mv /opt/glite/etc/lcmaps/lcmaps-glexec.db.original /opt/glite/etc/lcmaps/lcmaps-glexec.db

@@ -49,7 +49,7 @@ fi
 
 rm -f ./x509up_u501_${usernum}
 echo "Creating proxy file x509up_u501_${usernum}"  
-echo "test" | glite-voms-proxy-init -valid 0:1 -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin
+echo "test" | glite-voms-proxy-init -valid 0:1 -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin 1>>/dev/null 2>>/dev/null
 if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   fail=1
@@ -85,7 +85,7 @@ fi
 
 rm -f ./x509up_u501_${usernum}
 echo "Creating proxy file x509up_u501_${usernum}"  
-echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin  1>>/dev/null 2>>/dev/null
 if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   fail=1
@@ -119,7 +119,7 @@ fi
 
 rm -f ./x509up_u501_${usernum}
 echo "Creating proxy file x509up_u501_${usernum}"  
-echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin  1>>/dev/null 2>>/dev/null
 if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   fail=1
@@ -153,7 +153,7 @@ fi
 
 rm -f ./x509up_u501_${usernum}
 echo "Creating proxy file x509up_u501_${usernum}"  
-echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert ./test_user_${usernum}_cert.pem -key test_user_${usernum}_key.pem -out ./x509up_u501_${usernum} -pwstdin  1>>/dev/null 2>>/dev/null
 if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   fail=1
@@ -189,7 +189,7 @@ fi
 
 rm -f ./x509up_u501_${usernum}
 echo "Creating proxy file x509up_u501_${usernum}"  
-echo "test" | glite-voms-proxy-init -q --voms dteam -cert $certfile -key $keyfile -out ./x509up_u501_${usernum} -pwstdin
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert $certfile -key $keyfile -out ./x509up_u501_${usernum} -pwstdin  1>>/dev/null 2>>/dev/null
 if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   fail=1
@@ -224,7 +224,7 @@ fi
 
 rm -f ./x509up_u501_${usernum}
 echo "Creating proxy file x509up_u501_${usernum}"   
-echo "test" | glite-voms-proxy-init -q --voms dteam -cert $certfile -key $keyfile -out ./x509up_u501_${usernum} -pwstdin
+echo "test" | glite-voms-proxy-init -q --voms dteam -cert $certfile -key $keyfile -out ./x509up_u501_${usernum} -pwstdin  1>>/dev/null 2>>/dev/null
 if [ $? -ne 0 ]; then
   echo "Error creating the proxy" 
   fail=1
