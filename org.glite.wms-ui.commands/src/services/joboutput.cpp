@@ -186,13 +186,15 @@ void JobOutput::getOutput ( ){
 				} else if (!listOnlyOpt) {
 					string tmpdir = Utils::getAbsolutePath(m_dirOpt);
 					dirName = tmpdir+logName+"_"+Utils::getUnique(*it) ;
-			                if (mkdir(tmpdir.c_str(), 0755)){
-                                		// Error while creating directory
-                                		throw WmsClientException(__FILE__,__LINE__,
-                                		        "retrieveOutput", ECONNABORTED,
-                		                        "Unable create dir",tmpdir.c_str());
-		                        }
-
+					if (Utils::isDirectory(tmpdir)){
+                        			logInfo->print(WMS_DEBUG, "Directory already exists: ", tmpdir);
+                			} else if (mkdir(tmpdir.c_str(), 0755)){
+                                			// Error while creating directory
+                                			throw WmsClientException(__FILE__,__LINE__,
+                                		        	"retrieveOutput", ECONNABORTED,
+                		                        	"Unable create dir",tmpdir.c_str());
+		                        	
+					}
 				}
 			}else{
 				// if --nosubdir do not create subdir in the default directory
@@ -201,7 +203,9 @@ void JobOutput::getOutput ( ){
 					dirName = dirCfg ;
 				} else if (!listOnlyOpt) {
 					dirName = dirCfg+logName+"_"+Utils::getUnique(*it) ;
-                                        if (mkdir(dirCfg.c_str(), 0755)){
+					if (Utils::isDirectory(dirCfg)){
+                                                logInfo->print(WMS_DEBUG, "Directory already exists: ", dirCfg); 
+					} else if (mkdir(dirCfg.c_str(), 0755)){
                                                 // Error while creating directory
                                                 throw WmsClientException(__FILE__,__LINE__,
                                                         "retrieveOutput", ECONNABORTED,
@@ -691,9 +695,6 @@ void JobOutput::htcpGetFiles (std::vector <std::pair<std::string , std::string> 
 	}
 	 while ( paths.empty() == false ){
 		source = paths[0].first ;
-		if (checkWMProxyRelease(2, 2, 0 )) {
-			source = wmcUtils->resolveAddress( source ) ;
-		}
 		destination = paths[0].second ;
 		params.resize(0);
 		params.push_back(source);
