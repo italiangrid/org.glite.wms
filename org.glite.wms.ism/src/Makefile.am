@@ -11,8 +11,6 @@ SUBDIRS = purchaser
 lib_LTLIBRARIES    = \
 	libglite_wms_ism.la 
 
-libglite_wms_ism_la_LDFLAGS = -all-static
-
 libglite_wms_ism_la_SOURCES = \
         ism.cpp 
 
