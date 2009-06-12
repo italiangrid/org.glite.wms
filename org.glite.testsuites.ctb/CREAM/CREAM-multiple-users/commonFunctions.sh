@@ -22,7 +22,7 @@ do
   for count in `seq 1 16`;
   do
     echo "Creating proxy for test user ${index}"
-    echo "test" | voms-proxy-init --voms $vo -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
+    echo "test" | voms-proxy-init -valid 24:00 --voms $vo -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
     if [ $? -ne 0 ]; then
       echo "Error creating proxy"
       exit 1
@@ -59,7 +59,7 @@ do
     for count in `seq 1 4`;
     do
       echo "Creating proxy for test user ${index}"
-      echo "test" | voms-proxy-init --voms $vo:/$vo/Role=$role -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
+      echo "test" | voms-proxy-init -valid 24:00 --voms $vo:/$vo/Role=$role -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
       if [ $? -ne 0 ]; then
         echo "Error creating proxy"
         exit 1
