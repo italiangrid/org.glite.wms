@@ -22,7 +22,7 @@ do
   for count in `seq 1 16`;
   do
     echo "Creating proxy for test user ${index}"
-    echo $TESTUSERMAGIC | voms-proxy-init --voms $vo -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
+    echo "test" | voms-proxy-init --voms $vo -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
     if [ $? -ne 0 ]; then
       echo "Error creating proxy"
       exit 1
@@ -59,7 +59,7 @@ do
     for count in `seq 1 4`;
     do
       echo "Creating proxy for test user ${index}"
-      echo $TESTUSERMAGIC | voms-proxy-init --voms $vo:/$vo/Role=$role -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
+      echo "test" | voms-proxy-init --voms $vo:/$vo/Role=$role -key test_user_${index}_key.pem -cert test_user_${index}_cert.pem  -out proxy_${index} -pwstdin 1>>/dev/null 2>>/dev/null
       if [ $? -ne 0 ]; then
         echo "Error creating proxy"
         exit 1
@@ -102,12 +102,12 @@ failed=$totalfailed
 for index in `seq $user1 $userN`;
 do
   export X509_USER_PROXY=users-certs/proxy_$index
-  glite-ce-job-status `cat jobids/jobid_${index}_${run}.txt` 2>>/dev/null 1>>status/status_${index}
+  glite-ce-job-status `cat jobids/jobid_${index}_${run}.txt` 2>>/dev/null 1>>status/status_${index}_${run}
   if [ $? -ne 0 ]; then
     echo "Job status call failed"
     failed=$(( $failed + 1 ))
   else
-    cat status/status_${index} | grep DONE-OK >>/dev/null
+    cat status/status_${index}_${run} | grep DONE-OK >>/dev/null
     if [ $? -ne 0 ]; then
 #      echo "Job Failed"
       failed=$(( $failed + 1 ))
