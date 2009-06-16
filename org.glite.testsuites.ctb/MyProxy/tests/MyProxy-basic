@@ -28,6 +28,7 @@ function test_ping
 
   if [ $result -gt 0 ]; then
     echo "The $MYPROXY_HOST is not accessible! Exiting !"
+    echo "-TEST FAILED-"
     exit $SAME_ERROR
   fi
 }
@@ -42,6 +43,7 @@ function test_ldap
      result=`ldapsearch -x -H ldap://$MYPROXY_HOST:2135 -b Mds-vo-name=local,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
      if [ $result -eq 0 ]; then
        echo " LDAP is not contactable. Exiting !"
+       echo "-TEST FAILED-"
        exit $SAME_ERROR
     fi
   fi
@@ -56,6 +58,7 @@ function test_bdii
   
   if [ $result -eq 0 ]; then
     echo "No entries found for MyProxy Server: $MYPROXY_HOST on the top level BDII: $BDII_HOST! Exiting !"
+    echo "-TEST FAILED-"
     exit $SAME_ERROR
   fi
 }
@@ -65,9 +68,7 @@ function test_bdii
 export LCG_GFAL_INFOSYS=$BDII_HOST:$BDII_PORT
 export GLITE_SD_PLUGIN=bdii
 
-echo "<pre>"
-echo "<b>Starting MyProxy-basic tests: </b>"
-echo "<ul>"
+echo "Starting MyProxy-basic tests: "
 
 test_ping
 test_ldap
