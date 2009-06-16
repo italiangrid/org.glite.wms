@@ -1,3 +1,16 @@
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 #include <fstream>
 
 #include <classad_distribution.h>
@@ -9,8 +22,8 @@
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/jobid/JobId.h"
+#include "glite/wms/common/utilities/manipulation.h"
 
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
@@ -48,20 +61,20 @@ Files::path *Files::createDagLogFileName( const string &jobid )
   return logfile.release();
 }
 
-Files::Files( const glite::wmsutils::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(), f_maradona(),
+Files::Files( const glite::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(), f_maradona(),
 					 f_sandbox(), f_insbx(), f_outsbx(), f_dagsubdir(),
-					 f_jobid( glite::wmsutils::jobid::to_filename(id) ), f_dagid(),
-					 f_jobReduced( glite::wmsutils::jobid::get_reduced_part(id), fs::native ),
+					 f_jobid( utilities::to_filename(id) ), f_dagid(),
+					 f_jobReduced( utilities::get_reduced_part(id), fs::native ),
 					 f_dagReduced()
 
 {}
 				
-Files::Files( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(),
+Files::Files( const glite::jobid::JobId &dagid, const glite::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(),
 								    f_maradona(), f_insbx(), f_outsbx(), f_dagsubdir(),
-								    f_jobid( glite::wmsutils::jobid::to_filename(id) ),
-								    f_dagid( glite::wmsutils::jobid::to_filename(dagid) ),
-								    f_jobReduced( glite::wmsutils::jobid::get_reduced_part(id), fs::native ),
-								    f_dagReduced( glite::wmsutils::jobid::get_reduced_part(dagid), fs::native )
+								    f_jobid( utilities::to_filename(id) ),
+								    f_dagid( utilities::to_filename(dagid) ),
+								    f_jobReduced( utilities::get_reduced_part(id), fs::native ),
+								    f_dagReduced( utilities::get_reduced_part(dagid), fs::native )
 {}
 
 Files::~Files( void ) {}

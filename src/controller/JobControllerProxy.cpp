@@ -1,8 +1,18 @@
 // File: JobControllerProxy.cpp
 // Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>,
 //         Rosario Peluso <Rosario.Peluso@na.infn.it>
-// Copyright (c) 2001 EU DataGrid.
-// For license conditions see http://www.eu-datagrid.org/license.html
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
 
 // $Id$
 
@@ -18,7 +28,7 @@
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/Configuration.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 #include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/wms/common/logger/manipulators.h"
@@ -123,7 +133,7 @@ catch( RequestException &err ) {
   throw CannotExecute( error );
 }
 
-bool JobControllerProxy::cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile )
+bool JobControllerProxy::cancel( const glite::jobid::JobId &id, const char *logfile )
 {
   bool                          good;
   string                        proxyfile, lf;

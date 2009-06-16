@@ -1,3 +1,16 @@
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 #include <cstdio>
 #include <ctime>
 
@@ -14,8 +27,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "glite/jobid/JobId.h"
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -189,11 +201,10 @@ CondorMonitor::CondorMonitor( const string &filename, MonitorData &data ) :
   if( boost::regex_match(this->cm_shared_data->md_sizefile->header().header(), match_pieces, dagid_expression) ) {
     this->cm_shared_data->md_dagId.assign( match_pieces[1].first, match_pieces[2].second );
     try {
-      glite::wmsutils::jobid::JobId     dId( this->cm_shared_data->md_dagId );
+      glite::jobid::JobId     dId( this->cm_shared_data->md_dagId );
       this->cm_shared_data->md_isDagLog = true;
-      dId.clear();
     }
-    catch( const glite::wmsutils::jobid::JobIdException &err ) {
+    catch( const glite::jobid::JobIdError &err ) {
       elog::cedglog << logger::setlevel( logger::debug ) << "I can not setting the DagId, Error is: "
                     << err.what() << endl; 
       this->cm_shared_data->md_dagId.clear();

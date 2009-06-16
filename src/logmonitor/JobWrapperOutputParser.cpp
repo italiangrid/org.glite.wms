@@ -1,3 +1,16 @@
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 #include <cstring>
 #include <cerrno>
 
@@ -7,8 +20,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/jobid/JobId.h"
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -121,7 +133,7 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
 
   bool                       found = false;
   status_type                stat = good;
-  glite::wmsutils::jobid::JobId               id( this->jwop_edgid );
+  glite::jobid::JobId               id( this->jwop_edgid );
   auto_ptr<jccommon::Files>  files( (this->jwop_dagid.size() != 0) ? new jccommon::Files(this->jwop_dagid, this->jwop_edgid) :
 				    new jccommon::Files(this->jwop_edgid) );
   ifstream                   ifs;

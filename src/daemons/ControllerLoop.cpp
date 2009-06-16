@@ -1,3 +1,16 @@
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 #include <cstring>
 #include <cerrno>
 
@@ -25,8 +38,7 @@
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "glite/jobid/JobId.h"
 
 #include "glite/wms/common/process/process.h"
 #include "glite/wms/common/process/user.h"
@@ -365,9 +377,9 @@ try {
 	  this->cl_stream << logger::setlevel( logger::debug ) << "Executing remove request..." << endl;
 
 	  if( !logfile.empty() )
-	    controller.cancel( glite::wmsutils::jobid::JobId(jobid), logfile.native_file_string().c_str() );
+	    controller.cancel( glite::jobid::JobId(jobid), logfile.native_file_string().c_str() );
 	  else
-	    controller.cancel( glite::wmsutils::jobid::JobId(jobid), NULL );
+	    controller.cancel( glite::jobid::JobId(jobid), NULL );
 	  
 	  break;
 	}
@@ -428,7 +440,7 @@ try {
 			<< logger::setlevel( logger::info )
 			<< "Ignoring request..." << endl;
       }
-      catch( glite::wmsutils::jobid::JobIdException &error ) {
+      catch( glite::jobid::JobIdError &error ) {
 	this->cl_stream << logger::setlevel( logger::severe )
 			<< "Cannot execute command \"" << controller::Request::string_command( command ) << "\"." << endl
 			<< "Error creating job id: \"" << error.what() << "\"" << endl

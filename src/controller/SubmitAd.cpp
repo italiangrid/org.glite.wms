@@ -1,3 +1,16 @@
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 #include <cctype>
 
 #include <iostream>
@@ -24,8 +37,7 @@ namespace fs = boost::filesystem;
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/ManipulationExceptions.h"
 
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/jobid/JobId.h"
 
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "common/files.h"
@@ -99,8 +111,8 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
   int                                      maxjobs = lmconfig->jobs_per_condor_log();
   time_t                                   epoch = 0;
   char                                    *dirType;
+  glite::jobid::JobId                      *dagId = 0, *edgId = 0;
   string                                   buildPath;
-  glite::wmsutils::jobid::JobId                             edgId, dagId;
   auto_ptr<jccommon::Files>                files;
   logger::StatePusher                      pusher( elog::cedglog, "SubmitAd::createFromAd(...)" );
 
@@ -115,14 +127,24 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
     this->sa_dagid.assign( glite::jdl::get_edg_dagid(*this->sa_ad, this->sa_hasDagId) );
 
     if( !this->sa_hasDagId ) this->loadStatus();
-    else dagId.fromString( this->sa_dagid );
+    else try {
+      dagId = new glite::jobid::JobId( this->sa_dagid );
+    } catch (const glite::jobid::JobIdError &e) {
+  elog::cedglog << logger::setlevel( logger::warning ) 
+                << "Could not create JobId from string: " << e.what() << endl;
+    }  
 
     this->sa_jobid.assign( glite::jdl::get_edg_jobid(*this->sa_ad, this->sa_good) );
 
     if( !this->sa_good ) this->sa_reason.assign( "Cannot extract \"edg_jobid\" from given classad." );
     else {
-      edgId.fromString( this->sa_jobid );
-      files.reset( this->sa_hasDagId ? new jccommon::Files(dagId, edgId) : new jccommon::Files(edgId) );
+      try {
+        edgId = new glite::jobid::JobId( this->sa_jobid );
+      } catch (const glite::jobid::JobIdError &e) {
+    elog::cedglog << logger::setlevel( logger::warning )
+                  << "Could not create JobId from string: " << e.what() << endl;
+      } 
+      files.reset( this->sa_hasDagId ? new jccommon::Files(*dagId, *edgId) : new jccommon::Files(*edgId) );
 
       try {
 	dirType = "job directory";
@@ -213,6 +235,9 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
 	this->sa_good = false;
       }
     }
+
+  delete dagId;
+  delete edgId;
   }
 
   return;

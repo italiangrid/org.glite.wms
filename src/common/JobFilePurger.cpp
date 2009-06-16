@@ -1,3 +1,16 @@
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 #include <memory>
 
 #include <boost/filesystem/path.hpp>
@@ -12,8 +25,7 @@ namespace fs = boost::filesystem;
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/purger/purger.h"
@@ -30,10 +42,10 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace jccommon {
 
-JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &id, bool have_lbproxy, bool isdag )
+JobFilePurger::JobFilePurger( const glite::jobid::JobId &id, bool have_lbproxy, bool isdag )
   : jfp_isDag( isdag ), jfp_jobId( id ), jfp_have_lbproxy(have_lbproxy), jfp_dagId() { }
 
-JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &dagid, bool have_lbproxy, const glite::wmsutils::jobid::JobId &jobid )
+JobFilePurger::JobFilePurger( const glite::jobid::JobId &dagid, bool have_lbproxy, const glite::jobid::JobId &jobid )
   : jfp_isDag( false ), jfp_have_lbproxy(have_lbproxy), jfp_jobId( jobid ), jfp_dagId( dagid )
 {}
 
@@ -47,7 +59,7 @@ void JobFilePurger::do_purge( bool everything )
 
   if( lmconfig->remove_job_files() ) {
     unsigned long int            removed;
-    auto_ptr<Files>              files( this->jfp_dagId.isSet() ? new Files(this->jfp_dagId, this->jfp_jobId) : 
+    auto_ptr<Files>              files( ( this->jfp_dagId.c_jobid() != 0 ) ? new Files(this->jfp_dagId, this->jfp_jobId) : 
 					new Files(this->jfp_jobId) );
 
     try {
