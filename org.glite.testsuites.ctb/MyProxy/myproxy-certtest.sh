@@ -88,7 +88,7 @@ declare -a tests_failed
 failed=no
 
 testdir=./tests
-tests_list=(MyProxy-register.sh MyProxy-basic)
+tests_list=(MyProxy-basic MyProxy-register.sh)
 
 pushd $testdir >> /dev/null
 

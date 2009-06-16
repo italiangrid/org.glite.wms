@@ -41,20 +41,20 @@ exitonerror $result
 echo "Checking if a proxy can be registered to $nodeName"
 result=0
 echo "<pre>"
-set -x
+#set -x
 echo 'testpass' |  myproxy-init -d -s $nodeName -c 1 -S
 result=$?
-set +x
+#set +x
 echo "</pre>"
 
 exitonerror $result
 
 echo "Checking if a proxy can be deleted on $nodeName"
 echo "<pre>"
-set -x
+#set -x
 myproxy-destroy -d -s $nodeName
 result=$?
-set +x
+#set +x
 echo "</pre>"
 exitonerror $result
 
