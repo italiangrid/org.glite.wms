@@ -39,18 +39,20 @@ namespace db {
      */
     class GetAllGridJobID : public AbsDbOperation {
     protected:
-        std::set< std::string > m_result;
+        std::set< std::string >* m_result;
 
     public:
-        GetAllGridJobID( );
+        GetAllGridJobID( std::set< std::string >* result ) 
+	  : AbsDbOperation() , m_result( result ) { }
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**
          * Return the list of jobs to poll
          */ 
-        std::set< std::string > get_jobs( void ) const {
-            return m_result;
-        };
+/*         std::set< std::string > get_jobs( void ) const { */
+/*             return m_result; */
+/*         }; */
 
     };
 

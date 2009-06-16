@@ -25,9 +25,7 @@
 
 // ICE stuff
 #include "subscriptionManager.h"
-//#include "jobCache.h"
 #include "DNProxyManager.h"
-//#include "iceDb/GetJobByCid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJobByCid.h"
 
@@ -57,41 +55,7 @@ void emptyStatusNotification::apply( void )
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     static const char *method_name = "emptyStatusNotification::apply() - ";
 
-    //    boost::recursive_mutex::scoped_lock L( jobCache::mutex );
     boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
-    //jobCache* cache( jobCache::getInstance() );
-    //jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( m_cream_job_id ) );
-
-//     CreamJob theJob;
-//     {
-//       db::GetJobByCid getter( m_cream_job_id );
-//       db::Transaction tnx;
-//       tnx.execute( &getter );
-//       if( !getter.found() ) {
-// 	CREAM_SAFE_LOG( m_log_dev->debugStream()
-//                         << method_name
-//                         << " Cannot locate CREAM job ID "
-//                         << m_cream_job_id
-//                         << " in the database. The empty status notification "
-//                         << "for this job cannot be applied"
-//                         );
-//         return;
-//       }
-//       
-//       theJob = getter.get_job();
-//     }
-// 
-//     theJob.set_last_empty_notification_time( time(0) );
-//     CREAM_SAFE_LOG( m_log_dev->debugStream()
-//                     << method_name
-//                     << "Timestamp of last empty "
-//                     << "status notification for job "
-//                     << theJob.describe()//job_it->describe()
-// 		    
-//                     << " set to [" 
-//                     << time_t_to_string( theJob.get_last_empty_notification()/*job_it->get_last_empty_notification()*/ )
-// 		    << "]"
-//                     );
 
   CREAM_SAFE_LOG( m_log_dev->debugStream()
   		  << method_name
@@ -100,7 +64,6 @@ void emptyStatusNotification::apply( void )
 		  );
 
     {
-      //      db::UpdateLastEmpty updater( theJob );
       list< pair<string, string> > params;
       params.push_back( make_pair( "last_empty_notification", int_to_string( time(0)/*theJob.get_last_empty_notification()*/)));
       

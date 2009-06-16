@@ -99,12 +99,11 @@ int main( int argc, char* argv[] )
       {"status",0,0,'S'},
       {"lease-id",0,0,'L'},
       {"delegation-id",0,0,'D'},
-      {"proxy-exptime",0,0,'t'},
       {"worker-node",0,0,'w'},
       {"verbose", 0, 0, 'v'},
       {0, 0, 0, 0}
     };
-    c = getopt_long(argc, argv, "hs:c:uCGprmSLDtwv", long_options, &option_index);
+    c = getopt_long(argc, argv, "hs:c:uCGprmSLDwv", long_options, &option_index);
     
     if ( c == -1 )
       break;
@@ -150,9 +149,6 @@ int main( int argc, char* argv[] )
       break;
     case 'D':
       fields_to_retrieve.push_back( "delegationid" );
-      break;
-    case 't':
-      fields_to_retrieve.push_back( "proxycert_timestamp" );
       break;
     case 'w':
       fields_to_retrieve.push_back( "worker_node" );

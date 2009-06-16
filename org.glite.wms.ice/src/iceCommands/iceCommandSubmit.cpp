@@ -507,8 +507,12 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             boost::replace_all( iceid, "/", "_" );
             boost::replace_all( iceid, "=", "_" );
             
+	    //string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( userdn ).get<0>()
+	    //if( proxy.empty() )
+	    string proxy = m_theJob.getUserProxyCertificate();
+	    
             iceUtil::CreamProxy_Register( m_theJob.getCreamURL(),
-                                          m_theJob.getUserProxyCertificate(),
+                                          proxy,
                                           (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
                                           &res,
                                           iceid).execute( 3 );
@@ -686,7 +690,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     //m_theJob.set_delegation_expiration_time( delegation.get<1>() );
     //    m_theJob.set_delegation_duration( delegation.get<2>() );
     m_theJob.set_leaseid( lease_id ); // FIXME: redundant??
-    m_theJob.set_proxycert_mtime( time(0) ); // FIXME: should be the modification time of the proxy file?
+    //m_theJob.set_proxycert_mtime( time(0) ); // FIXME: should be the modification time of the proxy file?
     m_theJob.set_wn_sequencecode( m_theJob.getSequenceCode() );
     
     {
@@ -698,7 +702,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       //params.push_back( make_pair("delegation_exptime", iceUtil::int_to_string( delegation.get<1>())));
       //params.push_back( make_pair("delegation_duration", iceUtil::int_to_string( delegation.get<2>() )));
       params.push_back( make_pair("leaseid", lease_id ));
-      params.push_back( make_pair("proxycert_timestamp", iceUtil::int_to_string( time(0))));
+      //params.push_back( make_pair("proxycert_timestamp", iceUtil::int_to_string( time(0))));
       params.push_back( make_pair("wn_sequence_code", m_theJob.getSequenceCode() ));
       db::UpdateJobByGid updater(m_theJob.getGridJobID(), params );
       db::Transaction tnx;

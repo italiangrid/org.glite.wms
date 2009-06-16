@@ -49,7 +49,7 @@ static int fetch_job_callback(void *param, int argc, char **argv, char **azColNa
   vector<string> *fields = (vector<string>*)param;
   if ( argv && argv[0] ) 
     {
-      for(int i = 0; i<=25; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+      for(int i = 0; i<=24; i++) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded the complete_cream_jobid from the query
 	if( argv[i] )
 	  fields->push_back( argv[i] );
 	else
@@ -63,33 +63,7 @@ void GetJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
     ostringstream sqlcmd("");
-    sqlcmd << "SELECT " \
-      "gridjobid,"       \
-      "creamjobid,"		     \
-      "jdl,"			     \
-      "userproxy,"		     \
-      "ceid,"			     \
-      "endpoint,"		     \
-      "creamurl,"		     \
-      "creamdelegurl,"		     \
-      "userdn,"			     \
-      "myproxyurl,"		     \
-      "proxy_renewable,"	     \
-      "failure_reason,"		     \
-      "sequence_code,"				\
-      "wn_sequence_code,"			\
-      "prev_status,"				\
-      "status,"					\
-      "num_logged_status_changes,"
-      "leaseid,"				\
-      "proxycert_timestamp,"			\
-      "status_poller_retry_count,"		\
-      "exit_code,"				\
-      "worker_node,"				\
-      "is_killed_byice,"			\
-      "delegationid,"				\
-      "last_empty_notification,"		\
-      "last_seen FROM jobs WHERE complete_cream_jobid=\'" << m_complete_creamjobid << "\';";
+    sqlcmd << "SELECT " << CreamJob::get_query_fields() << " FROM jobs WHERE complete_cream_jobid=\'" << m_complete_creamjobid << "\';";
     
     vector<string> field_list;
     
@@ -119,42 +93,41 @@ void GetJobByCid::execute( sqlite3* db ) throw ( DbOperationException& )
       string status                   = field_list.at(15);			
       string num_logged_status_changes= field_list.at(16);
       string leaseid                  = field_list.at(17);   
-      string proxycert_timestamp      = field_list.at(18);	
-      string status_poller_retry_count= field_list.at(19);	
-      string exit_code                = field_list.at(20);			
-      string worker_node              = field_list.at(21);		
-      string is_killed_byice          = field_list.at(22);
-      string delegationid             = field_list.at(23);
-      string last_empty_notification  = field_list.at(24);
-      string last_seen                = field_list.at(25);
+      string status_poller_retry_count= field_list.at(18);	
+      string exit_code                = field_list.at(19);			
+      string worker_node              = field_list.at(20);		
+      string is_killed_byice          = field_list.at(21);
+      string delegationid             = field_list.at(22);
+      string last_empty_notification  = field_list.at(23);
+      string last_seen                = field_list.at(24);
       
       m_theJob = CreamJob (
-			   gridjobid ,
-			   creamjobid,
-			   jdl,
-			   userproxy,
-			   ceid,
-			   endpoint,
-			   creamurl,
-			   creamdelegurl,
-			   userdn,
-			   myproxyurl,
-			   proxy_renewable,
-			   failure_reason,
-			   sequence_code,
-			   wn_sequence_code,
-			   prev_status,
-			   status,
-			   num_logged_status_changes,
-			   leaseid,
-			   proxycert_timestamp,
-			   status_poller_retry_count,
-			   exit_code,
-			   worker_node,
-			   is_killed_byice,
-			   delegationid,
-			   last_empty_notification,
-			   last_seen
-			   );
+      			field_list.at(0),	    
+                        field_list.at(1),    
+                        field_list.at(2),   
+                        field_list.at(3),
+                        field_list.at(4),
+                        field_list.at(5),
+                        field_list.at(6) ,       
+                        field_list.at(7)  , 
+                        field_list.at(8)   ,       
+                        field_list.at(9)    ,  
+                        field_list.at(10) ,
+                        field_list.at(11)  ,
+                        field_list.at(12)   ,
+                	field_list.at(13)	,	
+                     	field_list.at(14)		,
+                        field_list.at(15)			,
+       			field_list.at(16),
+                        field_list.at(17) ,  
+       			field_list.at(18)	,
+                        field_list.at(19)		,	
+                        field_list.at(20)		,
+             		field_list.at(21),
+                    	field_list.at(22),
+         		field_list.at(23),
+                       	field_list.at(24)
+			);
+			
     }
 }

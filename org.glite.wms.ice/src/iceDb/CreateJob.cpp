@@ -40,35 +40,9 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
   ostringstream sqlcmd("");
-  sqlcmd << "INSERT OR REPLACE INTO jobs " 
-	 << " (gridjobid, "	     
-	 << " creamjobid, "			     
-    	 << " complete_cream_jobid, "
-	 << " jdl, "
-	 << " userproxy, "			     
-	 << " ceid, "				     
-	 << " endpoint, "			     
-	 << " creamurl, "			     
-	 << " creamdelegurl, "		     
-	 << " userdn, "			     
-	 << " myproxyurl, "			     
-	 << " proxy_renewable, "		     
-	 << " failure_reason, "		     
-	 << " sequence_code, "		     
-	 << " wn_sequence_code, "		     
-	 << " prev_status, "			     
-	 << " status, "			     
-	 << " num_logged_status_changes, "	     
-	 << " leaseid, "			     
-	 << " proxycert_timestamp, "		     
-	 << " status_poller_retry_count, "	     
-	 << " exit_code, "			     
-	 << " worker_node, "			     
-	 << " is_killed_byice, "		     
-	 << " delegationid, "			     
-	 << " last_empty_notification, "	     
-	 << " last_seen) "			     
-	 << " VALUES (" 
+  sqlcmd << "INSERT OR REPLACE INTO jobs ("
+	 << CreamJob::get_query_allfields()
+	 << ") VALUES (" 
 	 << "\'"<< m_theJob.getGridJobID() <<"\',"
 	 << "\'"<< m_theJob.getCreamJobID() <<"\'," 
 	 << "\'"<< m_theJob.getCompleteCreamJobID() <<"\',"
@@ -88,7 +62,6 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.getStatus() <<"\',"
 	 << "\'"<< m_theJob.get_num_logged_status_changes() <<"\',"
 	 << "\'"<< m_theJob.get_lease_id() <<"\',"
-	 << "\'"<< m_theJob.getProxyCertLastMTime() <<"\',"
 	 << "\'"<< m_theJob.getStatusPollRetryCount() <<"\',"
 	 << "\'"<< m_theJob.get_exit_code() <<"\',"
 	 << "\'"<< m_theJob.get_worker_node() <<"\',"
@@ -96,7 +69,7 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.getDelegationId() <<"\',"
 	 << "\'"<< m_theJob.get_last_empty_notification() <<"\',"
 	 << "\'"<< m_theJob.getLastSeen()  <<"\')";
-	
+  
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 		      

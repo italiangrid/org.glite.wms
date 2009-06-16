@@ -33,11 +33,6 @@ using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-GetAllGridJobID::GetAllGridJobID( ) :    
-    AbsDbOperation()
-{
-}
-
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
@@ -60,5 +55,5 @@ void GetAllGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
-  do_query( db, sqlcmd, fetch_grid_job_id_callback, &m_result );
+  do_query( db, sqlcmd, fetch_grid_job_id_callback, m_result );
 }

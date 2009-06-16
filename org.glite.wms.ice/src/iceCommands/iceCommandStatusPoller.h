@@ -134,7 +134,7 @@ namespace glite {
 	    remove_unknown_jobs_from_cache(const std::vector<std::string>& all_jobs, 
 					   const std::list< glite::ce::cream_client_api::soap_proxy::JobInfoWrapper >& jobs_found ) throw();
 
-	  void check_user_jobs( const std::string&, const std::string& ) throw();
+	  //void check_user_jobs( const std::string&, const std::string& ) throw();
 
 	public:
 	  //static boost::recursive_mutex mutexJobStatusPoll;

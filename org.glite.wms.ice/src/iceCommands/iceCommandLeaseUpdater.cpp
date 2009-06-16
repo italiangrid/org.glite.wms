@@ -1,4 +1,4 @@
-/* 
+/*  
  * Copyright (c) Members of the EGEE Collaboration. 2004. 
  * See http://www.eu-egee.org/partners/ for details on the copyright
  * holders.  
@@ -174,10 +174,10 @@ void iceCommandLeaseUpdater::execute( ) throw()
 
       list< CreamJob > allJobs;
       {
-	db::GetAllJobs getter;
+	db::GetAllJobs getter(&allJobs, 0,0);
 	db::Transaction tnx;
 	tnx.execute( &getter );
-	allJobs = getter.get_jobs();
+	//	allJobs = getter.get_jobs();
       }
 
       for ( list< CreamJob >::const_iterator it = allJobs.begin();

@@ -39,19 +39,26 @@ namespace db {
      */
     class GetAllJobs : public AbsDbOperation {
     protected:
-        std::list< glite::wms::ice::util::CreamJob > m_result;
-	const bool                                   m_only_active;
+        std::list< glite::wms::ice::util::CreamJob > *m_result;
+	
+	const int                                     m_limit;
+	const int                                     m_offset;
+	const bool                                    m_only_active;
 
     public:
-        GetAllJobs( const bool only_active = false );
+        GetAllJobs( std::list< glite::wms::ice::util::CreamJob >*,
+		    const int limit, 
+		    const int offset, 
+		    const bool only_active = false );
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**
          * Return the list of jobs to poll
          */ 
-        std::list< glite::wms::ice::util::CreamJob > get_jobs( void ) const {
-            return m_result;
-        };
+/*         std::list< glite::wms::ice::util::CreamJob > get_jobs( void ) const { */
+/*             return m_result; */
+/*         }; */
 
     };
 

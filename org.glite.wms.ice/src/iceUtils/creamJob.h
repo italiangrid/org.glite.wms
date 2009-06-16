@@ -94,12 +94,12 @@ namespace glite {
           int m_num_logged_status_changes; //! Number of status changes which have been logged to L&B
           time_t m_last_seen; //! The time of the last received notification for the job. For newly created jobs, this value is set to zero.
           std::string m_lease_id; //! The lease ID associated with this job
-	  time_t m_proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
+	  //time_t m_proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
 	  int    m_statusPollRetryCount; //! number of time we tried to get the status of the job
           int    m_exit_code; //! the job exit code
           std::string m_failure_reason; //! The job failure reason (if the job is done_failed or aborted)
           std::string m_worker_node; //! The worker node on which the job is being executed
-          bool m_is_killed_by_ice;
+          bool m_is_killed_byice;
           time_t m_last_empty_notification; //! The timestamp of the last received empty notification
 	  bool m_proxy_renew;
 	  std::string m_myproxy_address;
@@ -114,11 +114,7 @@ namespace glite {
           // void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
 
 	public:
-
-	  static boost::recursive_mutex globalICEMutex;
-
-          //! Default constructor
-          CreamJob( );
+	  
 	  CreamJob( const std::string& gid,
 		    const std::string& cid,
 		    const std::string& jdl,
@@ -137,7 +133,6 @@ namespace glite {
 		    const std::string& status,
 		    const std::string& num_logged_status_changes,
 		    const std::string& leaseid,
-		    const std::string& proxycert_timestamp,
 		    const std::string& status_poller_retry_count,
 		    const std::string& exit_code,
 		    const std::string& worker_node,
@@ -145,6 +140,100 @@ namespace glite {
 		    const std::string& delegationid,
 		    const std::string& last_empty_notification,
 		    const std::string& last_seen);
+
+	  static std::string get_query_fields() {
+	    return "gridjobid,"			\
+	      "creamjobid,"			\
+	      "jdl,"				\
+	      "userproxy,"			\
+	      "ceid,"				\
+	      "endpoint,"			\
+	      "creamurl,"			\
+	      "creamdelegurl,"			\
+	      "userdn,"				\
+	      "myproxyurl,"			\
+	      "proxy_renewable,"		\
+	      "failure_reason,"			\
+	      "sequence_code,"			\
+	      "wn_sequence_code,"		\
+	      "prev_status,"			\
+	      "status,"				\
+	      "num_logged_status_changes,"	\
+	      "leaseid,"			\
+	      "status_poller_retry_count,"	\
+	      "exit_code,"			\
+	      "worker_node,"			\
+	      "is_killed_byice,"		\
+	      "delegationid,"			\
+	      "last_empty_notification,"	\
+	      "last_seen";
+	  }
+
+	  static std::string get_query_allfields() {
+	    return "gridjobid,"			\
+	      "creamjobid,"			\
+	      "complete_cream_jobid,"		\
+	      "jdl,"				\
+	      "userproxy,"			\
+	      "ceid,"				\
+	      "endpoint,"			\
+	      "creamurl,"			\
+	      "creamdelegurl,"			\
+	      "userdn,"				\
+	      "myproxyurl,"			\
+	      "proxy_renewable,"		\
+	      "failure_reason,"			\
+	      "sequence_code,"			\
+	      "wn_sequence_code,"		\
+	      "prev_status,"			\
+	      "status,"				\
+	      "num_logged_status_changes,"	\
+	      "leaseid,"			\
+	      "status_poller_retry_count,"	\
+	      "exit_code,"			\
+	      "worker_node,"			\
+	      "is_killed_byice,"		\
+	      "delegationid,"			\
+	      "last_empty_notification,"	\
+	      "last_seen";
+	  }
+
+	  static std::string get_createdb_query() {
+	    return 
+	      " gridjobid text primary key, "			\
+	      " creamjobid text, "				\
+	      " complete_cream_jobid text,"			\
+	      " jdl blob not null, "				\
+	      " userproxy text not null, "			\
+	      " ceid text, "					\
+	      " endpoint text, "				\
+	      " creamurl text not null, "			\
+	      " creamdelegurl text not null, "			\
+	      " userdn text not null, "				\
+	      " myproxyurl text not null, "			\
+	      " proxy_renewable integer(1) not null,"		\
+	      " failure_reason blob,"				\
+	      " sequence_code text,"				\
+	      " wn_sequence_code text,"				\
+	      " prev_status integer(1),"			\
+	      " status integer(1),"				\
+	      " num_logged_status_changes integer(1),"		\
+	      " leaseid text,"					\
+	      " status_poller_retry_count integer(1),"		\
+	      " exit_code integer(1),"				\
+	      " worker_node text,"				\
+	      " is_killed_byice integer(1),"			\
+	      " delegationid text,"				\
+	      " last_empty_notification integer(4),"		\
+	      " last_seen integer(4),"				\
+	      " last_poller_visited integer(4) ";
+	  }
+
+	  static boost::recursive_mutex globalICEMutex;
+
+          //! Default constructor
+          CreamJob( );
+	  
 
 	  //	  CreamJob( const std::vector< std::string >& );
 
@@ -161,7 +250,7 @@ namespace glite {
           //! Sets the time we got info about this job from CREAM
           void set_last_seen( const time_t& l ) { m_last_seen = l; }
 	  //! Sets the user proxy cert file last modification time
-	  void set_proxycert_mtime( const time_t& l ) { m_proxyCertTimestamp = l; }
+	  //void set_proxycert_mtime( const time_t& l ) { m_proxyCertTimestamp = l; }
           //! Sets the job exit code
           void set_exitcode( int c ) { m_exit_code = c; }
           //! Sets the sequence code for the job sent to the WN
@@ -258,7 +347,7 @@ namespace glite {
           std::string getDelegationId( void ) const { return m_delegation_id; }
 
 	  //! Gets the last modification time of the user proxy cert file
-	  time_t getProxyCertLastMTime( void ) const { return m_proxyCertTimestamp; }
+//	  time_t getProxyCertLastMTime( void ) const { return m_proxyCertTimestamp; }
 
 	  int    getStatusPollRetryCount( void ) const { return m_statusPollRetryCount; }
 
@@ -277,7 +366,7 @@ namespace glite {
            * important as a job which has been killed by ICE should be
            * reported to be in status ABORTED.
            */
-          bool is_killed_by_ice( void ) const { return m_is_killed_by_ice; }
+          bool is_killed_by_ice( void ) const { return m_is_killed_byice; }
 
 
           /**
@@ -285,7 +374,7 @@ namespace glite {
            * killed by ICE, instead of by the user. This is used by
            * logging the appropriate event when the job terminates.
            */
-          void set_killed_byice( void ) { m_is_killed_by_ice = true; }
+          void set_killed_byice( void ) { m_is_killed_byice = true; }
 
           time_t get_last_empty_notification( void ) const { return m_last_empty_notification; };
           void set_last_empty_notification_time( time_t t ) { m_last_empty_notification = t; };
@@ -421,7 +510,7 @@ namespace glite {
 	      ar & m_lease_id;
 	      
 
-	      ar & m_proxyCertTimestamp;
+	      //ar & m_proxyCertTimestamp;
 	      
 
 	      ar & m_statusPollRetryCount;
@@ -436,7 +525,7 @@ namespace glite {
 	      ar & m_worker_node;
 	      
 
-	      ar & m_is_killed_by_ice;
+	      ar & m_is_killed_byice;
 	      
 
 	      ar & m_last_empty_notification;
@@ -455,7 +544,7 @@ namespace glite {
 	    }
 	  }
 
-	  void get_fields( std::vector<std::string>& ) const;
+	  //	  void get_fields( std::vector<std::string>& ) const;
 
 	};
       }

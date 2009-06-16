@@ -19,6 +19,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetLease.cpp \
 				GetLeaseByID.cpp \
 				GetAllProxyInfo.cpp \
+				GetTerminatedJobs.cpp \
 				CreateJob.cpp \
 				CreateProxyField.cpp \
 				CreateDelegation.cpp \

@@ -28,6 +28,7 @@
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "iceUtils/iceConfManager.h" // iceConfManager
+#include "iceUtils/creamJob.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/convenience.hpp"
@@ -55,51 +56,56 @@ namespace {
      */ 
     class CreateDb : public AbsDbOperation {
     public:
-        CreateDb() : AbsDbOperation() { };
-        virtual ~CreateDb() { };
+      CreateDb() : AbsDbOperation() { };
+      virtual ~CreateDb() { };
+    
+      
         virtual void execute( sqlite3* db ) throw() {            
             try {
-                string sqlcmd = 
-		  "CREATE TABLE IF NOT EXISTS jobs ( "	  \
-		  " gridjobid text primary key, "         \
-		  " creamjobid text, "		          \
-		  " complete_cream_jobid text,"           \
-		  " jdl blob not null, "		  \
-		  " userproxy text not null, "            \
-		  " ceid text, "                          \
-		  " endpoint text, "                      \
-		  " creamurl text not null, "             \
-		  " creamdelegurl text not null, "        \
-		  " userdn text not null, "               \
-		  " myproxyurl text not null, "           \
-		  " proxy_renewable integer(1) not null," \
-		  " failure_reason blob,"                 \
-		  " sequence_code text,"                  \
-		  " wn_sequence_code text,"               \
-		  " prev_status integer(1),"              \
-		  " status integer(1),"                   \
-		  " num_logged_status_changes integer(1),"\
-		  " leaseid text,"                        \
-		  " proxycert_timestamp integer(4),"      \
-		  " status_poller_retry_count integer(1),"\
-		  " exit_code integer(1),"                \
-		  " worker_node text,"                    \
-		  " is_killed_byice integer(1),"          \
-		  " delegationid text,"                   \
-		  " last_empty_notification integer(4),"  \
-		  " last_seen integer(4),"		  \
-		  " last_poller_visited integer(4) "
-		  ")";
-                do_query( db, sqlcmd );
+	      ostringstream sqlcmd;
+	      sqlcmd << "CREATE TABLE IF NOT EXISTS jobs ( "
+		     << iceUtil::CreamJob::get_createdb_query()
+		     << ")";
+		   
+// 		  " gridjobid text primary key, "         
+// 		  " creamjobid text, "		          
+// 		  " complete_cream_jobid text,"           
+// 		  " jdl blob not null, "		  
+// 		  " userproxy text not null, "            
+// 		  " ceid text, "                          
+// 		  " endpoint text, "                      
+// 		  " creamurl text not null, "             
+// 		  " creamdelegurl text not null, "        
+// 		  " userdn text not null, "               
+// 		  " myproxyurl text not null, "           
+// 		  " proxy_renewable integer(1) not null," 
+// 		  " failure_reason blob,"                 
+// 		  " sequence_code text,"                  
+// 		  " wn_sequence_code text,"               
+// 		  " prev_status integer(1),"              
+// 		  " status integer(1),"                   
+// 		  " num_logged_status_changes integer(1),"
+// 		  " leaseid text,"                        
+// 		  " proxycert_timestamp integer(4),"      
+// 		  " status_poller_retry_count integer(1),"
+// 		  " exit_code integer(1),"                
+// 		  " worker_node text,"                    
+// 		  " is_killed_byice integer(1),"          
+// 		  " delegationid text,"                   
+// 		  " last_empty_notification integer(4),"  
+// 		  " last_seen integer(4),"		  
+// 		  " last_poller_visited integer(4) "
+// 		  ")";
+	      do_query( db, sqlcmd.str() );
 		
-            } catch( DbOperationException& ex ) {
+	    } catch( DbOperationException& ex ) {
 	    
 	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
 			      << "CreateDb::execute() - "
 			      << "Error creating database table jobs: "
 			      << ex.what() << ". STOP!"
 			      );
-	       abort();
+	      abort();
 	    
             }
 	    try {
@@ -494,14 +500,16 @@ Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationExcept
 
             return *this; // normal termination
         } catch ( DbLockedException& ex ) {
-            if ( ++retry_cnt < retry_cnt_max ) {
+            //if ( ++retry_cnt < retry_cnt_max ) {
+	    
                 CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
                                 << "Database is locked; retrying operation"
                                 << " in " << retry_cnt << " seconds" );
-                sleep( retry_cnt );                
-            } else {
-                throw ex; // rethrow
-            }
+                sleep( retry_cnt++ );
+		                
+            //} else {
+            //    throw ex; // rethrow
+            //}
         }
     }
     return *this;

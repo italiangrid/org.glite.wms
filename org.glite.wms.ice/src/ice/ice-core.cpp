@@ -1,9 +1,9 @@
 /* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
+ * Copyright (C) Members Of The Egee Collaboration. 2004. 
  * See http://www.eu-egee.org/partners/ for details on the copyright
  * holders.  
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
+ * Licensed Under The Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
  * You may obtain a copy of the License at 
  *
@@ -46,7 +46,7 @@
 
 #include "iceDb/GetJobsToPoll.h"
 #include "iceDb/CheckGridJobID.h"
-#include "iceDb/GetAllJobs.h"
+#include "iceDb/GetTerminatedJobs.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/RemoveJobByGid.h"
 
@@ -265,51 +265,28 @@ void Ice::stopAllThreads( void )
 //____________________________________________________________________________
 void Ice::init( void )
 {    
-    // Handle resubmitted/purged jobs
-//     for ( util::jobCache::iterator it=m_cache->begin(); it != m_cache->end() ; ) {
-//         util::jobCache::iterator old_it( it );
-//         it = resubmit_or_purge_job( it );
-//         // If resubmit_or_purge_job fails, for whatever reason, the
-//         // iterator if NOT incremented to the next element.
-//         if ( old_it == it ) {
-//             ++it;
-//         }
-//     }
-
-  //set<string> allGids;
+  // Handle resubmitted/purged jobs
   list< glite::wms::ice::util::CreamJob > allJobs;
   {
-    //     db::GetAllGridJobID getter;
-    db::GetAllJobs getter;
+    db::GetTerminatedJobs getter( &allJobs );
     db::Transaction tnx;
     tnx.execute( &getter );
-    //     allGids = getter.get_jobs();
-    allJobs = getter.get_jobs();
+    //    allJobs = getter.get_jobs();
   }
-
-//   for(set<string>::const_iterator it = allGids.begin();
-//       it != allGids.end();
-//       ++it)
-   for(list< glite::wms::ice::util::CreamJob >::iterator it = allJobs.begin();
-       it != allJobs.end();
-       ++it)
-     {
-//        util::CreamJob thisJob;
-//        {
-// 	 db::GetJobByGid getter( *it );
-// 	 db::Transaction tnx;
-// 	 tnx.execute( &getter );
-// 	 thisJob = getter.get_job();
-//        }
-       resubmit_or_purge_job( /*thisJob*/ *it );
-     }
-   
-    if(m_configuration->ice()->start_lease_updater() ) {
-        util::iceCommandLeaseUpdater l( true );
-        l.execute();
+  
+  for(list< glite::wms::ice::util::CreamJob >::iterator it = allJobs.begin();
+      it != allJobs.end();
+      ++it)
+    {
+      resubmit_or_purge_job( /*thisJob*/ *it );
     }
-    //util::iceCommandStatusPoller p( this, true );
-    //p.execute( );	
+   
+  if(m_configuration->ice()->start_lease_updater() ) {
+    util::iceCommandLeaseUpdater l( true );
+    l.execute();
+  }
+  //util::iceCommandStatusPoller p( this, true );
+  //p.execute( );	
 }
 
 //____________________________________________________________________________
@@ -622,7 +599,7 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
 		     const string& reason )
   throw() 
 {
-    static const char* method_name = "Ice::::purge_job() - ";
+    static const char* method_name = "Ice::purge_job() - ";
 
 //     if ( jit == m_cache->end() )
 //       return jit;
@@ -854,18 +831,18 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
         try {
             CREAM_SAFE_LOG(
                            m_log_dev->infoStream()
-                           << "Ice::purge_storage_for_job() - "
+                           << "Ice::purge_wms_storage() - "
                            << "Purging storage for job "
                            << job.describe()
                            
                            );
         
             glite::wmsutils::jobid::JobId j_id( job.getGridJobID() );
-            wms::purger::Purger()(j_id);
+            wms::purger::Purger( true )(j_id);
         } catch( std::exception& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
-                           << "Ice::purge_storage_for_job() - "
+                           << "Ice::purge_wms_storage() - "
                            << "Cannot purge storage for job "
                            << job.describe()
                            << ". Reason is: " << ex.what()
@@ -876,7 +853,7 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
     } else {
         CREAM_SAFE_LOG(
                        m_log_dev->warnStream()
-                       << "Ice::purge_storage_for_job() - "
+                       << "Ice::purge_wms_storage() - "
                        << "WMS job purger disabled in ICE. To reenable "
                        << "unset the environment variable ICE_DISABLE_PURGER"
                        

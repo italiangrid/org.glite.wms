@@ -52,7 +52,7 @@ namespace { // begin local namespace
     vector<string> *fields = (vector<string>*)param;
     if ( argv && argv[0] ) 
       {
-	for(int i = 0; i<=25; i++) {// a database record for a CreamJob has 29 fields, as you can see in Transaction.cpp
+	for(int i = 0; i<=24; i++) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded the complete_cream_jobid from query
 	  if( argv[i] )
 	    fields->push_back( argv[i] );
 	  else
@@ -88,7 +88,7 @@ void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
       "status,"					\
       "num_logged_status_changes,"
       "leaseid,"				\
-      "proxycert_timestamp,"			\
+      //"proxycert_timestamp,"			
       "status_poller_retry_count,"		\
       "exit_code,"				\
       "worker_node,"				\
@@ -125,14 +125,14 @@ void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
       string status                   = field_list.at(15);			
       string num_logged_status_changes= field_list.at(16);
       string leaseid                  = field_list.at(17);   
-      string proxycert_timestamp      = field_list.at(18);	
-      string status_poller_retry_count= field_list.at(19);	
-      string exit_code                = field_list.at(20);			
-      string worker_node              = field_list.at(21);		
-      string is_killed_byice          = field_list.at(22);
-      string delegationid             = field_list.at(23);
-      string last_empty_notification  = field_list.at(24);
-      string last_seen                = field_list.at(25);
+      //string proxycert_timestamp      = field_list.at(18);	
+      string status_poller_retry_count= field_list.at(18);	
+      string exit_code                = field_list.at(19);			
+      string worker_node              = field_list.at(20);		
+      string is_killed_byice          = field_list.at(21);
+      string delegationid             = field_list.at(22);
+      string last_empty_notification  = field_list.at(23);
+      string last_seen                = field_list.at(24);
       
       m_theJob = CreamJob (
 			   gridjobid ,
@@ -153,7 +153,7 @@ void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 			   status,
 			   num_logged_status_changes,
 			   leaseid,
-			   proxycert_timestamp,
+			   //proxycert_timestamp,
 			   status_poller_retry_count,
 			   exit_code,
 			   worker_node,

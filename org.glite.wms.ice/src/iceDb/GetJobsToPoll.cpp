@@ -26,7 +26,6 @@
 
 #include "boost/algorithm/string.hpp"
 #include "boost/format.hpp"
-//#include "boost/archive/text_iarchive.hpp"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
@@ -40,13 +39,15 @@ using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
-//namespace wms_utils  = glite::wms::common::utilities;
 
-GetJobsToPoll::GetJobsToPoll( const string& userdn, 
-			      const string& creamurl, 
-			      const bool poll_all_jobs, 
-			      const int limit ) :    
+GetJobsToPoll::GetJobsToPoll(
+			     list<CreamJob>* jobs, 
+			     const string& userdn, 
+			     const string& creamurl, 
+			     const bool poll_all_jobs, 
+			     const int limit ) :    
     AbsDbOperation(),
+    m_result( jobs ),
     m_poll_all_jobs( poll_all_jobs ),
     m_limit( limit ),
     m_userdn( userdn ),
@@ -60,17 +61,47 @@ namespace { // begin local namespace
   // Local helper function: callback for sqlite
   static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
     //    string* serialized = (string*)param;
-    list< vector<string> > *jobs = (list<vector<string> >*)param;
+    //list< vector<string> > *jobs = (list<vector<string> >*)param;
+    
+    list<CreamJob>* jobs = (list<CreamJob>*)param;
+    
     if( argv && argv[0] ) {
       vector<string> fields;
-      for(int i = 0; i<=25; i++) {// a database record for a CreamJob has 27 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
+      for(int i = 0; i<=24; i++) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
 	if( argv[i] )
 	  fields.push_back( argv[i] );
 	else
 	  fields.push_back( "" );
       }
 
-      jobs->push_back( fields );
+      CreamJob tmpJob(fields.at(0),
+		      fields.at(1),
+		      fields.at(2),
+		      fields.at(3),
+		      fields.at(4),
+		      fields.at(5),
+		      fields.at(6),
+		      fields.at(7),
+		      fields.at(8),
+		      fields.at(9),
+		      fields.at(10),
+		      fields.at(11),
+		      fields.at(12),
+		      fields.at(13),
+		      fields.at(14),
+		      fields.at(15),
+		      fields.at(16),
+		      fields.at(17),
+		      fields.at(18),
+		      fields.at(19),
+		      fields.at(20),
+		      fields.at(21),
+		      fields.at(22),
+		      fields.at(23),
+		      fields.at(24)
+		      );
+      
+      jobs->push_back( tmpJob );
     }
 
     return 0;
@@ -80,15 +111,12 @@ namespace { // begin local namespace
 
 void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  //    static const char* method_name = "GetJobsToPoll::execute() - ";
     time_t 
         threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
         empty_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->ice_empty_threshold() );
 
-    // time_t oldness = t_now - t_last_seen;
-    // time_t empty_oldness = t_now - t_last_empty_notification;
 
-            //
+        //
         // Q: When does a job get polled?
         //
         // A: A job gets polled if one of the following situations are true:
@@ -106,33 +134,8 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 
     ostringstream sqlcmd;
     if ( m_poll_all_jobs ) {
-      sqlcmd << "SELECT "  
-	     <<	"gridjobid,"			
-	     <<	"creamjobid,"			
-	     << "jdl,"	   
-	     <<	"userproxy,"       
-	     <<	"ceid,"            
-	     <<	"endpoint,"        
-	     <<	"creamurl,"        
-	     <<	"creamdelegurl,"   
-	     <<	"userdn,"          
-	     <<	"myproxyurl,"      
-	     <<	"proxy_renewable," 
-	     <<	"failure_reason,"  
-	     <<	"sequence_code,"   
-	     <<	"wn_sequence_code,"
-	     <<	"prev_status,"     
-	     <<	"status,"          
-	     <<	"num_logged_status_changes,"
-	     <<	"leaseid,"         
-	     <<	"proxycert_timestamp," 
-	     <<	"status_poller_retry_count," 
-	     <<	"exit_code," 
-	     <<	"worker_node," 
-	     <<	"is_killed_byice," 
-	     <<	"delegationid,"
-	     <<	"last_empty_notification," 
-	     <<	"last_seen FROM jobs WHERE creamjobid not null" 
+      sqlcmd << "SELECT " << CreamJob::get_query_fields() 
+	     << " FROM jobs WHERE (creamjobid not null) AND (last_poller_visited not null) " 
 	     << " AND creamurl='" 
 	     << m_creamurl 
 	     << "' AND userdn='" 
@@ -146,38 +149,15 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
  
     } else {
       time_t t_now( time(NULL) );
-      sqlcmd << "SELECT "		
-	     << "gridjobid,"		
-	     << "creamjobid,"		
-	     << "jdl,"			
-	     << "userproxy,"		
-	     << "ceid,"		
-	     << "endpoint,"		
-	     << "creamurl,"		
-	     << "creamdelegurl,"	
-	     << "userdn,"		
-	     << "myproxyurl,"		
-	     << "proxy_renewable,"	
-	     << "failure_reason,"	
-	     << "sequence_code,"			
-	     << "wn_sequence_code,"			
-	     << "prev_status,"			
-	     << "status,"				
-	     << "num_logged_status_changes,"
-	     << "leaseid,"		
-	     << "proxycert_timestamp,"		
-	     << "status_poller_retry_count,"	
-	     << "exit_code,"				
-	     << "worker_node,"			
-	     << "is_killed_byice,"			
-	     << "delegationid,"			
-	     << "last_empty_notification,"				
-	     << "last_seen FROM jobs"					
-	     << " WHERE ( creamjobid not null ) AND "			
+      sqlcmd << "SELECT "<< CreamJob::get_query_fields() 
+	     << " FROM jobs"					
+	     << " WHERE ( creamjobid not null ) AND (last_poller_visited not null)"	
 	     << "userdn='" << m_userdn << "'"
 	     << " AND creamurl='" << m_creamurl << "' AND "
-	     << "       (( last_seen > 0 AND ( "<<t_now<<" - last_seen >= "<<threshold<<" ) ) "
-	     << "  OR   ( last_empty_notification > 0 AND ( "<<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) ))"
+	     << "       (( last_seen > 0 AND ( " 
+	     <<t_now<<" - last_seen >= "<<threshold<<" ) ) "
+	     << "  OR   ( last_empty_notification/ > 0 AND ( "
+	     <<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) ))"
 	     << " ORDER BY last_poller_visited ASC";
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
@@ -191,71 +171,70 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
-  do_query( db, sqlcmd.str(), fetch_jobs_callback, &jobs );
+  do_query( db, sqlcmd.str(), fetch_jobs_callback, m_result );
 
-    for( list< vector<string> >::iterator it=jobs.begin();
-	 it != jobs.end();
-	 ++it )
-      {
+//     for( list< vector<string> >::iterator it=jobs.begin();
+// 	 it != jobs.end();
+// 	 ++it )
+//       {
 	
-	string gridjobid                = it->at(0);	    
-	string creamjobid               = it->at(1);	    
-	string jdl                      = it->at(2);    
-	string userproxy                = it->at(3);
-	string ceid                     = it->at(4);
-	string endpoint                 = it->at(5);
-	string creamurl                 = it->at(6);        
-	string creamdelegurl            = it->at(7);   
-	string userdn                   = it->at(8);          
-	string myproxyurl               = it->at(9);      
-	string proxy_renewable          = it->at(10); 
-	string failure_reason           = it->at(11);  
-	string sequence_code            = it->at(12);   
-	string wn_sequence_code         = it->at(13);		
-	string prev_status              = it->at(14);		
-	string status                   = it->at(15);			
-	string num_logged_status_changes= it->at(16);
-	string leaseid                  = it->at(17);   
-	string proxycert_timestamp      = it->at(18);	
-	string status_poller_retry_count= it->at(19);	
-	string exit_code                = it->at(20);			
-	string worker_node              = it->at(21);		
-	string is_killed_byice          = it->at(22);
-	string delegationid             = it->at(23);
-	string last_empty_notification  = it->at(24);
-	string last_seen                = it->at(25);
+// 	string gridjobid                = it->at(0);	    
+// 	string creamjobid               = it->at(1);	    
+// 	string jdl                      = it->at(2);    
+// 	string userproxy                = it->at(3);
+// 	string ceid                     = it->at(4);
+// 	string endpoint                 = it->at(5);
+// 	string creamurl                 = it->at(6);        
+// 	string creamdelegurl            = it->at(7);   
+// 	string userdn                   = it->at(8);          
+// 	string myproxyurl               = it->at(9);      
+// 	string proxy_renewable          = it->at(10); 
+// 	string failure_reason           = it->at(11);  
+// 	string sequence_code            = it->at(12);   
+// 	string wn_sequence_code         = it->at(13);		
+// 	string prev_status              = it->at(14);		
+// 	string status                   = it->at(15);			
+// 	string num_logged_status_changes= it->at(16);
+// 	string leaseid                  = it->at(17);   
+// 	//string proxycert_timestamp      = it->at(18);	
+// 	string status_poller_retry_count= it->at(18);	
+// 	string exit_code                = it->at(19);			
+// 	string worker_node              = it->at(20);		
+// 	string is_killed_byice          = it->at(21);
+// 	string delegationid             = it->at(22);
+// 	string last_empty_notification  = it->at(23);
+// 	string last_seen                = it->at(24);
 	
 
-	CreamJob tmpJob(
-			gridjobid ,
-			creamjobid,
-			jdl,
-			userproxy,
-			ceid,
-			endpoint,
-			creamurl,
-			creamdelegurl,
-			userdn,
-			myproxyurl,
-			proxy_renewable,
-			failure_reason,
-			sequence_code,
-			wn_sequence_code,
-			prev_status,
-			status,
-			num_logged_status_changes,
-			leaseid,
-			proxycert_timestamp,
-			status_poller_retry_count,
-			exit_code,
-			worker_node,
-			is_killed_byice,
-			delegationid,
-			last_empty_notification,
-			last_seen
-			);
-	m_result.push_back( tmpJob );
-      }
+// 	CreamJob tmpJob(
+// 			gridjobid ,
+// 			creamjobid,
+// 			jdl,
+// 			userproxy,
+// 			ceid,
+// 			endpoint,
+// 			creamurl,
+// 			creamdelegurl,
+// 			userdn,
+// 			myproxyurl,
+// 			proxy_renewable,
+// 			failure_reason,
+// 			sequence_code,
+// 			wn_sequence_code,
+// 			prev_status,
+// 			status,
+// 			num_logged_status_changes,
+// 			leaseid,
+// 			status_poller_retry_count,
+// 			exit_code,
+// 			worker_node,
+// 			is_killed_byice,
+// 			delegationid,
+// 			last_empty_notification,
+// 			last_seen
+// 			);
+// 	m_result.push_back( tmpJob );
+//      }
 
 
 }
