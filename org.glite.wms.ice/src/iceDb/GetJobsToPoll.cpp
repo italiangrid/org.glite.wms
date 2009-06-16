@@ -152,12 +152,12 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
       sqlcmd << "SELECT "<< CreamJob::get_query_fields() 
 	     << " FROM jobs"					
 	     << " WHERE ( creamjobid not null ) AND (last_poller_visited not null)"	
-	     << "userdn='" << m_userdn << "'"
+	     << " AND userdn='" << m_userdn << "'"
 	     << " AND creamurl='" << m_creamurl << "' AND "
-	     << "       (( last_seen > 0 AND ( " 
+	     << "       ( ( last_seen > 0) AND ( " 
 	     <<t_now<<" - last_seen >= "<<threshold<<" ) ) "
-	     << "  OR   ( last_empty_notification/ > 0 AND ( "
-	     <<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) ))"
+	     << "  OR   ( (last_empty_notification > 0) AND ( "
+	     <<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) )"
 	     << " ORDER BY last_poller_visited ASC";
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
