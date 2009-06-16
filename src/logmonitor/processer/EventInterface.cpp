@@ -1,10 +1,23 @@
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 #include <string>
 
 #include <boost/lexical_cast.hpp>
 
 #include <user_log.c++.h>
 
-#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/jobid/JobId.h"
 
 #include "EventInterface.h"
 #include "MonitorData.h"
@@ -33,9 +46,9 @@ SubmitReader *EventInterface::createReader( const string &edgid )
   SubmitReader   *reader;
 
   if( !this->ei_data->md_isDagLog || (edgid == this->ei_data->md_dagId) )
-    reader = new SubmitReader( glite::wmsutils::jobid::JobId(edgid) );
+    reader = new SubmitReader( glite::jobid::JobId(edgid) );
   else
-    reader = new SubmitReader( glite::wmsutils::jobid::JobId(this->ei_data->md_dagId), glite::wmsutils::jobid::JobId(edgid) );
+    reader = new SubmitReader( glite::jobid::JobId(this->ei_data->md_dagId), glite::jobid::JobId(edgid) );
 
   return reader;
 }
