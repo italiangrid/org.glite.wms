@@ -5,10 +5,20 @@
 //              Rosario Peluso <rosario.peluso@pd.infn.it>
 //              Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
 //              Marco Cecchi <marco.cecchi@cnaf.infn.it>
-//  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
-//  For license conditions see LICENSE file or
-//  http://www.edg.org/license.html
 //**************************************************************************
+// Copyright (c) Members of the EGEE Collaboration. 2009. 
+// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
+
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//     http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// See the License for the specific language governing permissions and 
+// limitations under the License.
+
 
 #include <algorithm>
 #include <cassert>
@@ -161,7 +171,7 @@ JobWrapper::standard_error(const std::string& file)
 
 void
 JobWrapper::input_sandbox(const URL& base_url,
-                          const vector<std::string>& files)
+                          const std::vector<std::string>& files)
 {
   m_pimpl->m_input_base_url.reset(new URL(base_url));
   copy(files.begin(), files.end(), back_inserter(m_pimpl->m_input_files));
@@ -169,7 +179,7 @@ JobWrapper::input_sandbox(const URL& base_url,
 
 void
 JobWrapper::output_sandbox(URL const& base_url,
-                           vector<std::string> const& files)
+                           std::vector<std::string> const& files)
 {
   m_pimpl->m_output_base_url.reset(new URL(base_url));
   copy(files.begin(), files.end(), back_inserter(m_pimpl->m_output_files));
@@ -233,7 +243,7 @@ JobWrapper::globus_resource_contact_string(
 }
 
 void 
-JobWrapper::environment(const vector<std::string>& env)
+JobWrapper::environment(const std::vector<std::string>& env)
 {
   m_pimpl->m_environment = env;
 }
@@ -270,13 +280,13 @@ JobWrapper::wmp_support(void)
 
 void
 JobWrapper::wmp_input_sandbox_support(const URL& base_url,
-				      const vector<std::string>& input_base_files)
+				      const std::vector<std::string>& input_base_files)
 {
   m_pimpl->m_input_base_url.reset(new URL(base_url));
 
   copy(input_base_files.begin(), input_base_files.end(), back_inserter(m_pimpl->m_wmp_input_base_files));
 
-  for (vector<std::string>::const_iterator it = input_base_files.begin();
+  for (std::vector<std::string>::const_iterator it = input_base_files.begin();
       it != input_base_files.end(); it++) {
 
     std::string::size_type pos = it->find_last_of("/");
