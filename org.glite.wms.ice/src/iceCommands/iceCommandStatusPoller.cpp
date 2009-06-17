@@ -544,70 +544,6 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 }
 
 //____________________________________________________________________________
-// void iceCommandStatusPoller::check_user_jobs( const string& userdn, const string& creamurl, list<CreamJob>& j_list) throw()
-// {
-//   static const char* method_name = "iceCommandStatusPoller::check_user_jobs() - ";
-//   //list< CreamJob > j_list;
-   
-//   CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-// 		 << "Getting ["
-// 		 << m_max_chunk_size
-// 		 << "] jobs to poll for user ["
-// 		 << userdn << "] creamurl ["
-// 		 << creamurl << "]"
-// 		 );
-  
-//   this->get_jobs_to_poll( j_list, userdn, creamurl ); // it locks ICE internally
-  
-//   //if( !j_list.size() ) return;
-// }
-
-//   string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( userdn ).get<0>() );
-  
-//   if ( proxy.empty() ) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-// 		   << "A valid proxy file for DN [" << userdn
-// 		   << "] CREAM-URL ["
-// 		   << creamurl << "] is not available. Skipping polling for this user ["
-// 		   << userdn << "]."
-// 		   );
-//     return;
-//   }
-  
-//   if( !(isvalid( proxy ).first) ) {
-//     CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-// 		   << "Proxy ["
-// 		   << proxy << "] for user ["
-// 		   << userdn << "] is expired! Skipping polling for this user..."
-// 		   );
-//     return;
-//   }
-  
-//   CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-// 		 << "Authenticating with proxy [" << proxy << "] for userdn [" 
-// 		 << userdn << "]..."
-// 		 );
-  
-//   list< soap_proxy::JobInfoWrapper > j_status( check_multiple_jobs( proxy, userdn, creamurl, j_list ) ); 
-  
-//   updateJobCache( j_status );// modifies the cache, locks it job by job inside update_single_job
-  
-//   boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
-//   for(list<CreamJob>::const_iterator it = j_list.begin();
-//       it != j_list.end();
-//       ++it)
-//     {
-//       list< pair< string, string > > params;
-//       params.push_back( make_pair("last_seen", int_to_string( time(0)) ));
-//       params.push_back( make_pair("last_empty_notification", int_to_string(time(0) )));
-//       params.push_back( make_pair("last_poller_visited", int_to_string(time(0) )));
-//       db::UpdateJobByGid updater( it->getGridJobID(), params );
-//       db::Transaction tnx;
-//       tnx.execute( &updater );
-//     }
-// }
-
-//____________________________________________________________________________
 void iceCommandStatusPoller::execute( ) throw()
 {
   static const char* method_name = "iceCommandStatusPoller::execute() - ";
@@ -617,6 +553,7 @@ void iceCommandStatusPoller::execute( ) throw()
   */
   list< vector< string > > result;
   {
+    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
     /*
       SELECT DISTINCT (userdn, creamurl) from jobs;
     */
