@@ -258,6 +258,49 @@ namespace {
             }
 	    try {
               string sqlcmd =
+                "CREATE INDEX IF NOT EXISTS udn ON jobs (userdn)";
+              do_query( db, sqlcmd );
+            } catch( DbOperationException& ex ) {
+	      
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating index udn on table jobs: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	    
+            }
+	    try {
+              string sqlcmd =
+                "CREATE INDEX IF NOT EXISTS curl ON jobs (creamurl)";
+              do_query( db, sqlcmd );
+            } catch( DbOperationException& ex ) {
+	      
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating index curl on table jobs: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	    
+            }
+	    
+	    try {
+              string sqlcmd =
+                "CREATE INDEX IF NOT EXISTS lastpollervisit ON jobs (last_poller_visited)";
+              do_query( db, sqlcmd );
+            } catch( DbOperationException& ex ) {
+	      
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating index lastpollervisit on table jobs: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	    
+            }
+	    try {
+              string sqlcmd =
                 "CREATE INDEX IF NOT EXISTS killedbyice ON jobs (is_killed_byice)";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
