@@ -135,7 +135,7 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
     ostringstream sqlcmd;
     if ( m_poll_all_jobs ) {
       sqlcmd << "SELECT " << CreamJob::get_query_fields() 
-	     << " FROM jobs WHERE (creamjobid not null) AND (last_poller_visited not null) " 
+	     << " FROM jobs WHERE (creamjobid not null) AND ( creamjobid != '' ) AND (last_poller_visited not null) " 
 	     << " AND creamurl='" 
 	     << m_creamurl 
 	     << "' AND userdn='" 
@@ -148,17 +148,17 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
       }
  
     } else {
-      time_t t_now( time(NULL) );
+       time_t t_now( time(NULL) );
       sqlcmd << "SELECT "<< CreamJob::get_query_fields() 
 	     << " FROM jobs"					
-	     << " WHERE ( creamjobid not null ) AND (last_poller_visited not null)"	
+	     << " WHERE ( creamjobid not null ) AND ( creamjobid != '' ) AND (last_poller_visited not null)"	
 	     << " AND userdn='" << m_userdn << "'"
-	     << " AND creamurl='" << m_creamurl << "' AND "
-	     << "       ( ( last_seen > 0) AND ( " 
+	     << " AND creamurl='" << m_creamurl << "' AND ("
+	     << "       (  ( " 
 	     <<t_now<<" - last_seen >= "<<threshold<<" ) ) "
-	     << "  OR   ( (last_empty_notification > 0) AND ( "
+	     << "  OR   (  ( "
 	     <<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) )"
-	     << " ORDER BY last_poller_visited ASC";
+	     << ") ORDER BY last_poller_visited ASC";
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
       } else {
