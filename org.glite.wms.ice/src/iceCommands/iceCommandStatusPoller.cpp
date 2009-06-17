@@ -632,21 +632,22 @@ void iceCommandStatusPoller::execute( ) throw()
 
   list< vector< string > >::const_iterator it;
 
-  for( it = result.begin(); it != result.end(); ++it ) {
-
-    /**
-       Let's check if it is requested to exit before to start
-       polling jobs to remote CREAM service...
-    */
-    if(m_stopped) {
-      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		     << "EMERGENCY CALLED STOP. Returning without polling..."
-		     );
-      return;
-    }
+  for( it = result.begin(); it != result.end(); ++it ) 
+    {
+      if( it->at(0).empty() || it->at(1).empty() ) continue;
+      /**
+	 Let's check if it is requested to exit before to start
+	 polling jobs to remote CREAM service...
+      */
+      if(m_stopped) {
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		       << "EMERGENCY CALLED STOP. Returning without polling..."
+		       );
+	return;
+      }
 
     list< CreamJob > jobList;
-
+    
     string userdn   = it->at(0);
     string creamurl = it->at(1);
 

@@ -295,6 +295,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
      */       
 
     {
+      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
       db::CreateJob creator( m_theJob );
       db::Transaction tnx;
       tnx.execute( &creator );

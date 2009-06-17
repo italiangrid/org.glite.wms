@@ -69,41 +69,15 @@ void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 
 
     ostringstream sqlcmd("");
-    sqlcmd << "SELECT "\
-      "gridjobid,"		     \
-      "creamjobid,"		     \
-      "jdl,"			     \
-      "userproxy,"		     \
-      "ceid,"			     \
-      "endpoint,"		     \
-      "creamurl,"		     \
-      "creamdelegurl,"		     \
-      "userdn,"			     \
-      "myproxyurl,"		     \
-      "proxy_renewable,"	     \
-      "failure_reason,"		     \
-      "sequence_code,"				\
-      "wn_sequence_code,"			\
-      "prev_status,"				\
-      "status,"					\
-      "num_logged_status_changes,"
-      "leaseid,"				\
-      //"proxycert_timestamp,"			
-      "status_poller_retry_count,"		\
-      "exit_code,"				\
-      "worker_node,"				\
-      "is_killed_byice,"			\
-      "delegationid,"				\
-      "last_empty_notification,"		\
-      "last_seen FROM jobs WHERE gridjobid=\'" << m_gridjobid << "\';";
+    sqlcmd << "SELECT " << CreamJob::get_query_fields() << " FROM jobs WHERE gridjobid=\'" << m_gridjobid << "\';";
     
     vector<string> field_list;
     
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-
+    if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+      cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+    
     do_query( db, sqlcmd.str(), fetch_job_callback, &field_list );
-
+    
     if( !field_list.empty() ) {
       m_found = true;
 

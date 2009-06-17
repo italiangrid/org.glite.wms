@@ -42,6 +42,7 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
   ostringstream sqlcmd("");
   sqlcmd << "INSERT OR REPLACE INTO jobs ("
 	 << CreamJob::get_query_allfields()
+	 << ", last_poller_visited"
 	 << ") VALUES (" 
 	 << "\'"<< m_theJob.getGridJobID() <<"\',"
 	 << "\'"<< m_theJob.getCreamJobID() <<"\'," 
@@ -67,8 +68,9 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.get_worker_node() <<"\',"
 	 << "\'"<< ( m_theJob.is_killed_by_ice() ? "1" : "0" ) <<"\',"
 	 << "\'"<< m_theJob.getDelegationId() <<"\',"
-	 << "\'"<< m_theJob.get_last_empty_notification() <<"\',"
-	 << "\'"<< m_theJob.getLastSeen()  <<"\')";
+	 << "\'"<< time(0) <<"\',"
+	 << "\'"<< time(0) <<"\',"
+	 << "\'"<< time(0)  <<"\')";
   
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
