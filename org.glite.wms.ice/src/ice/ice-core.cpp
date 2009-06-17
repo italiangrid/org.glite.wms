@@ -838,7 +838,8 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
                            );
         
             glite::wmsutils::jobid::JobId j_id( job.getGridJobID() );
-            wms::purger::Purger( true )(j_id);
+            wms::purger::Purger( ice_util::iceConfManager::getInstance()->getConfiguration()->common()->lbproxy() )(j_id);
+
         } catch( std::exception& ex ) {
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
