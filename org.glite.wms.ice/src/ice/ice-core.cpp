@@ -82,6 +82,7 @@ using namespace glite::wms::ice;
 namespace ice_util = glite::wms::ice::util;
 namespace cream_api = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
+namespace config_ns = glite::wms::common::configuration;
 
 Ice* Ice::s_instance = 0;
 boost::recursive_mutex Ice::ClassAd_Mutex;
@@ -838,7 +839,8 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
                            );
         
             glite::wmsutils::jobid::JobId j_id( job.getGridJobID() );
-            wms::purger::Purger( ice_util::iceConfManager::getInstance()->getConfiguration()->common()->lbproxy() )(j_id);
+            wms::purger::Purger the_purger( ice_util::iceConfManager::getInstance()->getConfiguration()->common()->lbproxy() );
+            the_purger(j_id);
 
         } catch( std::exception& ex ) {
             CREAM_SAFE_LOG(
