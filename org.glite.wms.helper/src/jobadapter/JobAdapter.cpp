@@ -246,12 +246,12 @@ try {
   jdl::set_user_subject_name(*result, certificatesubject);
   
   // Not Mandatory
-  vector<std::string>  outputsandbox;
+  std::vector<std::string>  outputsandbox;
   utils::EvaluateAttrListOrSingle(*m_ad, "outputsandbox", outputsandbox); 
  
   // Not Mandatory
   bool b_osb_dest_uri = false;
-  vector<std::string> outputsandboxdesturi;
+  std::vector<std::string> outputsandboxdesturi;
   if (!outputsandbox.empty()) {
     utils::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
     if (!outputsandboxdesturi.empty()) {
@@ -260,7 +260,7 @@ try {
   }
   
   // Not Mandatory
-  vector<std::string>  inputsandbox;
+  std::vector<std::string>  inputsandbox;
   utils::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
   // Not Mandatory
@@ -310,7 +310,7 @@ try {
   }
 
   /* Not Mandatory */
-  vector<std::string> env;
+  std::vector<std::string> env;
   utils::EvaluateAttrListOrSingle(*m_ad, jdl::JDL::ENVIRONMENT, env);
 
   /* Mandatory */
@@ -752,7 +752,7 @@ try {
       // not possible;
     }
   } else if (ljobtype == "interactive") {
-    if (find_if(env.begin(), env.end(), 
+    if (std::find_if(env.begin(), env.end(), 
           Beginning("BYPASS_SHADOW_PORT=")) == env.end()
        )
     {
@@ -764,7 +764,7 @@ try {
                                           "contains BYPASS_SHADOW_PORT",
                                           helper_id);
     }
-    if (find_if(env.begin(), env.end(),
+    if (std::find_if(env.begin(), env.end(),
 	    Beginning(std::string("BYPASS_SHADOW_HOST="))) == env.end()
     )
     {
