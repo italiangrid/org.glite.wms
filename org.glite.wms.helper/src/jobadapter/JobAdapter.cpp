@@ -752,7 +752,7 @@ try {
       // not possible;
     }
   } else if (ljobtype == "interactive") {
-    if (std::find_if(env.begin(), env.end(), 
+    if (find_if(env.begin(), env.end(), 
           Beginning("BYPASS_SHADOW_PORT=")) == env.end()
        )
     {
@@ -764,7 +764,7 @@ try {
                                           "contains BYPASS_SHADOW_PORT",
                                           helper_id);
     }
-    if (std::find_if(env.begin(), env.end(),
+    if (find_if(env.begin(), env.end(),
 	    Beginning(std::string("BYPASS_SHADOW_HOST="))) == env.end()
     )
     {
