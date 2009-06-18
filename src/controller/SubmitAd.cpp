@@ -111,7 +111,7 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
   int                                      maxjobs = lmconfig->jobs_per_condor_log();
   time_t                                   epoch = 0;
   char                                    *dirType;
-  glite::jobid::JobId                      *dagId = 0, *edgId = 0;
+  glite::jobid::JobId                      dagId, edgId;
   string                                   buildPath;
   auto_ptr<jccommon::Files>                files;
   logger::StatePusher                      pusher( elog::cedglog, "SubmitAd::createFromAd(...)" );
@@ -128,7 +128,7 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
 
     if( !this->sa_hasDagId ) this->loadStatus();
     else try {
-      dagId = new glite::jobid::JobId( this->sa_dagid );
+      dagId = glite::jobid::JobId( this->sa_dagid );
     } catch (const glite::jobid::JobIdError &e) {
   elog::cedglog << logger::setlevel( logger::warning ) 
                 << "Could not create JobId from string: " << e.what() << endl;
@@ -139,12 +139,12 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
     if( !this->sa_good ) this->sa_reason.assign( "Cannot extract \"edg_jobid\" from given classad." );
     else {
       try {
-        edgId = new glite::jobid::JobId( this->sa_jobid );
+        edgId = glite::jobid::JobId( this->sa_jobid );
       } catch (const glite::jobid::JobIdError &e) {
     elog::cedglog << logger::setlevel( logger::warning )
                   << "Could not create JobId from string: " << e.what() << endl;
       } 
-      files.reset( this->sa_hasDagId ? new jccommon::Files(*dagId, *edgId) : new jccommon::Files(*edgId) );
+      files.reset( this->sa_hasDagId ? new jccommon::Files(dagId, edgId) : new jccommon::Files(edgId) );
 
       try {
 	dirType = "job directory";
@@ -236,8 +236,6 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
       }
     }
 
-  delete dagId;
-  delete edgId;
   }
 
   return;
