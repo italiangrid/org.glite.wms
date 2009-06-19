@@ -24,6 +24,7 @@
 #include <pwd.h>                // getpwnam()
 #include <cstdio>               // popen()
 #include <cstdlib>              // atoi()
+#include <csignal>
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
