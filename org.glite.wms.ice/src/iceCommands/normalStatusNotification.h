@@ -42,7 +42,7 @@ namespace util {
 	std::string m_complete_cream_jobid;
 
     public:
-        normalStatusNotification::normalStatusNotification( const monitortypes__Event& ev, const std::string& cemondn ); // FIXME:: can throw anything
+        normalStatusNotification( const monitortypes__Event& ev, const std::string& cemondn ); // FIXME:: can throw anything
         virtual ~normalStatusNotification( ) { };
         std::string get_complete_cream_job_id( void ) const { return m_complete_cream_jobid; };
         void apply( void ); // FIXME:: can throw anything
