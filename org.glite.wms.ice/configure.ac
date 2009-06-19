@@ -56,32 +56,6 @@ AC_HEADER_TIME
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-#
-# The following block is a TEMPORARY FIX to build problems on SLC4.
-# This block should be removed and placed in an appropriate file in 
-# org.glite.build.common-cpp
-#
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-old_LIBS=$LIBS
-bdb_lib_list="db_cxx db_cxx-4.2"
-for bdb_lib in $bdb_lib_list
-do
-        LIBS="-lpthread -l$bdb_lib $old_LIBS"
-        AC_TRY_LINK( [ #include <db_cxx.h> ],
-                     [ Db db(NULL,0); ], [ BDB_LIBS="-l$bdb_lib"; break ] )
-done
-if test "x$BDB_LIBS" == "x"; then
-   AC_MSG_ERROR( "Unable to find a proper version of libdb_cxx (should be one of $bdb_lib_list)" )
-fi
-LIBS=$old_LIBS
-AC_MSG_RESULT( "LIBS used for the Berkeley DB: $BDB_LIBS" )
-AC_SUBST(BDB_LIBS)
-AC_LANG_RESTORE
-#
-# End temporary fix block
-#
-
 have_classads=no
 have_boost=no
 have_glite_wmsutils=no
