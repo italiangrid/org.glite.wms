@@ -1,21 +1,28 @@
 
 #VARIABLES
 #The hostname of the LCG File Catalog
-LFC_HOST="lxb7607.cern.ch"
+export LFC_HOST="lxb7608v3.cern.ch"
 
 #OPTIONS
-FIRSTSE="lxb7605.cern.ch"
-SECONDSE="sligo.desy.de"
+FIRSTSE="lxbra1910.cern.ch"
+SECONDSE="swords.desy.de"
 VO="dteam"
 #VO="org.glite.voms-test"
-#CLASSICHOST="lxbra1910.cern.ch"
-DPMHOST="lxb7605.cern.ch"
-DCACHEHOST="galway.desy.de"
+CLASSICHOST="lxbra1910.cern.ch"
+DPMHOST="lxb7608v1.cern.ch"
+DCACHEHOST="swords.desy.de"
 #CASTORHOST="srm-dteam.cern.ch"
 
 #TEST TO RUN (yes/no)
 LCG_UTILS=no
 GFAL=no
-DM_CROSS_SE=yes
+DM_CROSS_SE=no
+SAME=yes
 
-
+#SAME TESTS
+export SAME_OK=0
+export SAME_ERROR=1
+export SAME_WARNING=2
+export SAME_VO="dteam"
+export LCG_UTIL_TIMEOUT="--connect-timeout 60 --sendreceive-timeout 60 --bdii-timeout 60 --srm-timeout 60"
+export SAME_SENSOR_WORK=`pwd`/tests/SAME/tests

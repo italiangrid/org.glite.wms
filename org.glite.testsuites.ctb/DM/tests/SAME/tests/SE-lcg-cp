@@ -1,0 +1,60 @@
+#!/bin/bash
+#****** SE/SE-lcg-cp
+# NAME
+# SE-lcg-cp - Tries to copy the file back from the SE to the local disk. This sensors returns OK if: 
+# * The lcg-cp operation returned successfuly.
+#
+# AUTHOR
+#
+# SAM Team same-devel[at]cern.ch
+#
+# LAST UPDATED
+#
+# 2008-07-25
+#
+# LANGUAGE
+#
+# bash
+#
+# SOURCE
+
+#. $SAME_SENSOR_HOME/config.sh
+
+#export LFC_HOME=/grid/$SAME_VO/SAM
+export LFC_HOME=/grid/$SAME_VO
+export LCG_CATALOG_TYPE=lfc
+timestamp=`date +%s`
+nodeName=$1
+
+echo "Checking if a file can be copied back from $nodeName"
+
+#echo_config
+
+echo "<p>"
+echo "Using lcg-utils version:"
+echo "<p>"
+echo "<pre>"
+#set -x
+lcg-cp --version
+#set +x
+echo "</pre>"
+
+echo "<pre>"
+lfn=`cat testFile.lfn`
+#set -x
+lcg-cp $LCG_UTIL_TIMEOUT -v --vo $SAME_VO $lfn file:`pwd`/testFile.txt
+result=$?
+#set +x
+echo "</pre>"
+echo "Checking if files are identical"
+echo "<pre>"
+#set -x
+diff testFile.txt $SAME_SENSOR_WORK/testFile.txt
+#set +x
+echo "</pre>"
+if [ $result  == 0 ] ; then
+    exit $SAME_OK
+else
+    exit $SAME_ERROR
+fi
+

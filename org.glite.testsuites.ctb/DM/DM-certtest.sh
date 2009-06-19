@@ -48,9 +48,9 @@ fi
 
 if [ "$1" = "-f" ]; then
   conffile=$2
-else
   conffile="./DM-certconfig"
 fi
+
 ###################################
 # Check for environment variables #
 ###################################
@@ -152,12 +152,12 @@ if [ "$LCG_UTILS" = "yes" ]; then
     exitFailure
   fi
 
-  touch ../GFAL/tests/testfile 2> /dev/null 
+  pushd ./tests >> /dev/null
+  touch testfile 2> /dev/null 
   if [ $? -ne 0 ]; then
-    echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
+    echo "DM tests direcotry is not writable, if you are on AFS be sure to have a valid token"
     exitFailure
   fi
-  pushd ./tests >> /dev/null
   tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rep.sh DM-lcg-rf.sh )
 
 
@@ -207,12 +207,13 @@ if [ "$GFAL" = "yes" ]; then
     echo "GFAL test directory does not exists, check it out from CVS!"
     exitFailure
   fi
-  touch ../GFAL/tests/testfile 2> /dev/null 
+
+  pushd ../GFAL/tests >> /dev/null
+  touch testfile 2> /dev/null
   if [ $? -ne 0 ]; then
     echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
     exitFailure
   fi
-  pushd ../GFAL/tests >> /dev/null
   
   tests_list=( test-gfal.sh )
 
@@ -220,7 +221,8 @@ if [ "$GFAL" = "yes" ]; then
   do
     rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE > $loglocation/${item}_result.txt 2>&1
+    echo "./$item -v $VO -l $LFC_HOST -d $FIRSTSE " > $loglocation/${item}_result.txt 2>&1
+    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE >> $loglocation/${item}_result.txt 2>&1
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt > /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
@@ -308,6 +310,40 @@ fi
 
 echo "------------------------------------------------"
 echo "END `date`"
+
+#############
+# SAM tests #
+#############
+if [ "$SAME" = "yes" ]; then
+  echo "*Running SAME test set*"
+
+  pushd ./tests/SAME/tests >> /dev/null
+  touch testfile 2> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "SAME tests direcotry is not writable, if you are on AFS be sure to have a valid token"
+    exitFailure
+  fi
+  tests_list=( SE-lcg-cr  SE-lcg-cp  SE-lcg-del )
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf ${item}_result.txt testfile
+    echo "Executing $item"
+    ./$item $FIRSTSE > $loglocation/${item}_result.txt 2>&1
+    res=$?
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >> /dev/null
+else 
+  echo "*SAME tests skipped" 
+fi  
 
 #########################
 # Analyse tests outcome #

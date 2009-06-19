@@ -38,7 +38,7 @@ extract_surl SURL "$OUTPUT"
 convert_to_full_surl SURL
 
 # ... II. Replicate file
-
+sleep 20
 run_command lcg-rep $LCG_REP_OPTIONS_BDII -d $SE2 $GUID
 
 run_command lcg-lr $VERBOSE $VO_OPTIONS $GUID

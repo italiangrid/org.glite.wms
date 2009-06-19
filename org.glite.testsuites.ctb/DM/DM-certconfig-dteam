@@ -1,21 +1,21 @@
 
 #VARIABLES
 #The hostname of the LCG File Catalog
-LFC_HOST="lxb7607.cern.ch"
+LFC_HOST="lxb7608v3.cern.ch"
 
 #OPTIONS
-FIRSTSE="galway.desy.de"
-SECONDSE="lxb7605.cern.ch"
+FIRSTSE="swords.desy.de"
+SECONDSE="lxbra1910.cern.ch"
 VO="dteam"
 #VO="org.glite.voms-test"
 CLASSICHOST="lxbra1910.cern.ch"
 DPMHOST="lxb7605.cern.ch"
-DCACHEHOST="galway.desy.de"
+DCACHEHOST="swords.desy.de"
 #CASTORHOST="srm-dteam.cern.ch"
 
 #TEST TO RUN (yes/no)
-LCG_UTILS=yes
-GFAL=yes
+LCG_UTILS=no
+GFAL=no
 DM_CROSS_SE=yes
 
 #LOG FILES LOCATION

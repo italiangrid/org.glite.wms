@@ -60,6 +60,7 @@ run_command lcg-cp $LCG_CP_OPTIONS $LOCAL_FILE_URI $SURL
 
 run_command lcg-rf $LCG_RF_OPTIONS $SURL
 extract_guid GUID "$OUTPUT"
+echo "Known issue, bug #50548"
 
 # ... VII. Finally unregister and remove the file
 
