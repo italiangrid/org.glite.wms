@@ -47,11 +47,6 @@ limitations under the License.
 #include "eventlogger/wmpeventlogger.h"
 #include "eventlogger/wmplbselector.h"	// lbselector
 
-// Authorizer
-#include "authorizer/wmpauthorizer.h"
-#include "authorizer/wmpgaclmanager.h"
-#include "authorizer/wmpvomsauthz.h"
-
 // Logger
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
@@ -88,6 +83,13 @@ limitations under the License.
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
 #include "glite/wms/common/utilities/edgstrstream.h"
+
+
+// Authorizer
+#include "authorizer/wmpauthorizer.h"
+#include "authorizer/wmpgaclmanager.h"
+#include "authorizer/wmpvomsauthz.h"
+
 
 // Global variables for configuration
 extern WMProxyConfiguration conf;

@@ -33,8 +33,6 @@ limitations under the License.
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
-#include "wmpvomsauthz.h"
-
 // Exceptions
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
@@ -58,6 +56,7 @@ extern "C" {
 #include <dlfcn.h>
 #include "wmpgaclmanager.h"
 
+#include "wmpvomsauthz.h"
 #endif  // GLITE_WMS_WMPROXY_TOOLS
 
 // Utilities

@@ -49,7 +49,6 @@ limitations under the License.
 // Authorizer  //TODO may be removed?? all authorizing part can me moved in wmpcommon
 #include "authorizer/wmpauthorizer.h"
 #include "authorizer/wmpgaclmanager.h"
-#include "authorizer/wmpvomsauthz.h"
 
 //Logger
 #include "utilities/logging.h"
@@ -81,6 +80,7 @@ limitations under the License.
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
 #include "versions.h"
+#include "authorizer/wmpvomsauthz.h"
 
 //namespace glite {
 //namespace wms {

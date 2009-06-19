@@ -48,14 +48,12 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
+#include "wmpdelegation.h"
+
 // Authorizer
 #include "authorizer/wmpauthorizer.h"
 #include "authorizer/wmpgaclmanager.h"
 #include "authorizer/wmpvomsauthz.h"
-
-#include "wmpdelegation.h"
-
-
 
 // Global variables for configuration
 extern WMProxyConfiguration conf;

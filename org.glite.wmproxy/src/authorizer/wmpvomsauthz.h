@@ -32,13 +32,12 @@ limitations under the License.
 #undef __THROW
 #define __THROW
 #endif
+#include "server/wmpresponsestruct.h"
 
 // API VOMS
 extern "C" {
 	#include "glite/security/voms/voms_apic.h"
 }
-
-#include "server/wmpresponsestruct.h"
 
 namespace glite {
 namespace wms {

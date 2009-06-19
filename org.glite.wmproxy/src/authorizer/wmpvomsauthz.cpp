@@ -21,8 +21,6 @@ limitations under the License.
 // Author: Giuseppe Avellino <egee@datamat.it>
 //
 
-#include "wmpvomsauthz.h"
-
 #include <string>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
@@ -35,6 +33,7 @@ limitations under the License.
 // Exception
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
+#include "wmpvomsauthz.h"
 
 namespace glite {
 namespace wms {
