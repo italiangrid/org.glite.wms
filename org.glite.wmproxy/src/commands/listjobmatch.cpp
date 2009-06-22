@@ -29,7 +29,6 @@ limitations under the License.
 #include "glite/jdl/ManipulationExceptions.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/JDLAttributes.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
@@ -47,7 +46,6 @@ namespace logger        = glite::wms::common::logger;
 namespace utilities     = glite::wms::common::utilities;
 namespace utils		= glite::wmsutils::classads;
 namespace requestad     = glite::jdl;
-namespace jobid         = glite::wmsutils::jobid;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
 
 using namespace std;
