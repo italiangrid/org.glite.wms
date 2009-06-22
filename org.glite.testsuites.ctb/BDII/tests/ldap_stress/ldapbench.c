@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 
 //For the timing
 #include <sys/time.h>
@@ -133,6 +134,7 @@ int main( int argc, char **argv )
   extern char *optarg;
   extern int  optind, optopt, opterr;
   char *      query_file = NULL;
+  LDAP *ld = NULL;
 
   /* The default timeout */
   timeout.tv_sec = 20;
@@ -229,22 +231,27 @@ int main( int argc, char **argv )
   if ( query_file ) {
         dbFile = init( query_file, debug );
   }
-  
+
+  /* to initalize ldap */
+  ld = ldap_init( ldapHost, ldapPort );
+  ldap_unbind_s( ld );
   
   printf("# Start ... \n");
   
     
+  pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
   pthread_t thread[num_pthreads];
+  /* Space for pointers */
   t_data = (struct thread_data**)malloc(sizeof(struct thread_data*) * num_pthreads);
   
 
   for (i = 0; i < num_pthreads; i++) {
-    
+    /* Space for data */
     t_data[i] = (struct thread_data*)malloc(sizeof(struct thread_data));
     
     if (pthread_create(&thread[i], &attr, &myLittleThread , (void *)(long)i)) {
-      fprintf(stderr, "Error creating a new thread \n");
+      fprintf(stderr, "Error creating a new thread %s\n",strerror(errno));
       exit(1);
     }
   }
@@ -262,7 +269,6 @@ int main( int argc, char **argv )
   	free( t_data[i] );
   }
   free ( t_data );
-  pthread_exit(NULL);
 
   return( 0 );
 }
@@ -277,7 +283,7 @@ int main( int argc, char **argv )
  *
  **************************************/
 void * myLittleThread(void *threadid){
-  int my_id = (int)(long)threadid;
+  int my_id = (long)threadid;
   int i = 0;
   double total = 0 ;
   struct timeval startTime, currentTime;
@@ -285,7 +291,6 @@ void * myLittleThread(void *threadid){
   t_data[my_id]->avg_time = 0;
   t_data[my_id]->connections = 0;
   double ret=0;
-
 
   /* do loop execution */
   if ( runTime == DEFAULT_RUNTIME ) {
