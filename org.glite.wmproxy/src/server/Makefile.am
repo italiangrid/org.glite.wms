@@ -34,8 +34,6 @@ soapC.cpp : wm.h
 	@echo "gsoap compiling .h"
 	$(GSOAP_LOCATION)/bin/soapcpp2 -I$(GSOAP_LOCATION)/include wm.h 
 
-XSLT_LIBS= -L$(top_builddir)/../repository/externals/libxslt/1.1.17/sl5_x86_64_gcc412/lib64 -lxslt
-XSLT_CFALGS= -I/usr/include/libxslt
 JSDL_CFLAGS= -I/usr/include/libxml2
 
 glite_wms_wmproxy_server_SOURCES = \
@@ -114,6 +112,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(GRIDSITE_GLOBUS_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(FCGI_CFLAGS) \
+	$(XSLT_CPPFLAGS) \
 	$(JSDL_CFLAGS) \
 	-DHAVE_STRINGSTREAM \
 	-DWANT_NAMESPACES \
