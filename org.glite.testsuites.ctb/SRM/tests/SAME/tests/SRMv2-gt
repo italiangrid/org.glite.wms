@@ -1,0 +1,137 @@
+#!/bin/sh
+#****** SRMv2/SRMv2-gt
+# NAME
+# SRMv2-gt - Get Transport URLs for the file copied to storage
+#
+# AUTHOR
+#
+# SAM Team same-devel[at]cern.ch
+#
+# LAST UPDATED
+#
+# 2008-07-28
+#
+# LANGUAGE
+#
+# bash
+#
+# SOURCE
+
+nodeName=$1
+
+. config.sh
+
+fn_uniq="$(date '+%Y%m%d-%H%M%S')-$(uuidgen|cut -d'-' -f5)"
+VO=$SAME_VO
+RETCODE=$SAME_OK
+FILE_OUT=/tmp/testFile.txt
+FILE_IN=/tmp/test-${fn_uniq}.txt
+summary=""
+
+do_cleanup() {
+    return 0
+}
+
+echo_config
+
+check_dep_comm
+
+if [ -s $FILE_ENDPNT ] ; then
+    echo "Testing SRMv2 endpoint "
+    #port=`cat $FILE_ENDPNT | cut -d : -f3 | cut -d / -f1`
+    #srmv2=srm://$nodeName:$port/srm/managerv2
+    srmv2=srm://$(cat $FILE_ENDPNT|head -1|sed -e 's|^.*://||')
+    echo "<pre>$srmv2</pre>"
+else
+    no_srmv2_endpoint
+fi
+
+echo "<p>"
+echo "Using lcg-utils version:"
+echo "<p>"
+echo "<pre>"
+set -x
+lcg-cp --version
+set +x
+echo "</pre>"
+
+if [ -s $FILE_SURL ] ; then
+    # Discover SE Access Protocols published in tBDII
+    protos=$(ldapsearch $LDAP_TIMELIMIT -LLL -h $LCG_GFAL_INFOSYS -x -b "o=grid" "(&(objectclass=GlueSEAccessProtocol)(GlueChunkKey=GlueSEUniqueID=${nodeName}))" GlueSEAccessProtocolType|grep ^GlueSEAccessProtocolType|cut -d' ' -f2|sort -u)
+
+    if [ ! -z "${protos}" ] ; then
+        echo "<p>"
+        echo "<b>${protos}</b> protocols were found (in $LCG_GFAL_INFOSYS) to be supported by SRM <b>${nodeName}</b>"
+        echo "</p>"
+        
+        # we may have more than one SAPath
+        while read SAPATH SURL ; do
+            echo "<p>"
+            echo "Testing storage space in path:"
+            echo "</p>"
+            echo "<pre>"
+            echo $SAPATH
+            echo "</pre>"
+            echo "<p>"
+            echo "Testing with SURL:"
+            echo "</p>"
+            echo "<pre>"
+            echo $SURL
+            echo "</pre>"
+            echo "<i>*** Get TURLs for the following protocols:</i> <b>${protos}</b> <i>***</i>"
+            for prot in ${protos} ; do
+                echo "<pre>"
+                echo "$(date -u) [$(date +%s)]"                
+                set -x
+                lcg-gt $LCG_UTIL_TIMEOUT -b -D srmv2 -T srmv2 ${SURL} ${prot}
+                retcode=$?
+                set +x
+                echo "$(date -u) [$(date +%s)]"                
+                echo "</pre>"
+                if [ $retcode -ne 0 ] ; then
+                    echo "<p>"
+                    echo "<font color='#cc0000'><b>ERROR</b></font>: <b>lcg-gt</b> failed with exit status: $retcode"
+                    echo "</p>"
+                   
+#                   if [ echo ${output} | grep "Protocol.*not supported" ] ; then
+#                        echo "<b>${prot}</b> TURL for file ${SURL} not provided"
+#                   fi
+    
+                    if [ ${RETCODE} -lt $SAME_ERROR ] ; then
+                        RETCODE=$SAME_ERROR
+                    fi
+                else
+                    echo "<p>"
+                    echo "<b>OK</b>: <b>${prot}</b> TURL for file ${SURL} provided correctly"
+                    echo "</p>"
+                fi
+            done
+        done < $FILE_SURL
+    else
+        MSG="No access protocol types published in InfoSystem"
+        echo "<p>"
+        echo "<b>WARNING</b>: $MSG"
+        echo "</p>"
+        summary=" $MSG"
+        RETCODE=$SAME_WARNING
+    fi
+    
+else
+     MSG="Masked by SRMv2-put. No files for getting TURLs were provided."
+     echo "<pre>"
+     echo "<font color='#cc0000'><b>WARNING</b></font>: $MSG"
+     echo "</pre>"
+     summary=" $MSG"
+     RETCODE=$SAME_WARNING
+fi
+
+echo "<p>Test status: <b>${RET_CODES[${RETCODE}]}</b></p>"
+
+if [ ! -z "${summary}" ] ; then 
+    echo "summary:${summary}"
+fi
+
+do_cleanup
+exit ${RETCODE}
+
+#****

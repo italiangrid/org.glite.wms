@@ -1,0 +1,27 @@
+
+#Which tests to run
+S2="no"
+SAME="yes"
+
+#Add s2 binary to PATH
+PATH="$PATH:/opt/s2/bin"
+
+#Location of the s2 tests
+S2_TESTS_LOCATION="/opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic"
+
+VO=dteam
+SRM_HOST="galway.desy.de"
+
+#Location of the s2 log files
+export LOGS_DIR="/afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SRM/tests"
+#S2_LOGS_DIR="/opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic"
+
+#SAME (no need to change this part for certification)
+export SAME_OK=0
+export SAME_ERROR=1
+export SAME_WARING=2
+export SAME_VO="dteam"
+export LCG_UTIL_TIMEOUT="--connect-timeout 60 --sendreceive-timeout 60 --bdii-timeout 60 --srm-timeout 60"
+export SAME_SENSOR_WORK=`pwd`/tests/SAME/tests
+export SAME_SENSOR_HOME=.
+

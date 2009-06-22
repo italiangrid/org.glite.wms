@@ -1,0 +1,157 @@
+#!/bin/sh
+#****** SRMv2/SRMv2-get-SURLs
+# NAME
+# SRMv2-get-SURLs - Get full SRM endpoints and space areas from BDII.
+#
+# AUTHOR
+#
+# SAM Team same-devel[at]cern.ch
+#
+# LAST UPDATED
+#
+# 2008-07-18
+#
+# LANGUAGE
+#
+# bash
+#
+# SOURCE
+
+nodeName=$1
+
+. config.sh
+
+RETCODE=$SAME_OK
+TESTNAME=$(basename $0)
+
+# wait at most LDAP_TIMELIMIT seconds for a search at the LDAP server to complete
+ldaptl=7
+LDAP_TIMELIMIT="-l ${ldaptl}"
+# network timeout when contacting LDAP server
+LDAP_TIMEOUT=$((${ldaptl} + 3))
+
+do_cleanup () {
+    rm -f $QUERY_RES $QUERY_ERR
+}
+
+echo "<pre>"
+echo "Testing from host: $(hostname -f)"
+echo "Overall timeout on LDAP: $LDAP_TIMEOUT sec. Search timeout in LDAP: $(echo $LDAP_TIMELIMIT|cut -d' ' -f2) sec."
+echo "</pre>"
+
+echo "<h2>Checking full endpoint and default storage areas in BDII</h2>"
+
+summary=""
+
+# initialise the "communication" file
+echo "$TESTNAME|$SAME_OK|" > $FILE_COMM
+
+#cd $SAME_SENSOR_HOME/tests
+if [ $? -ne 0 ]; then
+    MSG_NOTICE="NOTICE: [$TESTNAME] Could not access tests directory"
+    echo "<pre>"
+    echo $MSG_NOTICE
+    echo "</pre>"
+    echo "summary: $MSG_NOTICE"
+    echo "$TESTNAME|$SAME_NOTICE|$MSG_NOTICE" > $FILE_COMM
+    exit $SAME_NOTICE
+else
+    echo "<p>"
+    echo "The following BDII will be contacted to retrieve the endpoint: "
+    echo "</p>"
+    echo "<pre>"
+    echo $LCG_GFAL_INFOSYS
+    echo "</pre>"
+    echo "<p>"
+    echo "Querying tBDII:"
+    echo "</p>"
+    echo "<pre>"
+    QUERY_RES=$(mktemp /tmp/$$-${nodeName}-XXXX)
+    QUERY_ERR=$(mktemp /tmp/$$-${nodeName}-err-XXXX)
+    echo "$(date -u) [$(date +%s)]"    
+    set -x
+    ldapsearch $LDAP_TIMELIMIT -LLL -h $LCG_GFAL_INFOSYS -x -b "o=grid" \
+       '(| (&(GlueChunkKey=GlueSEUniqueID='$nodeName')(|(GlueSAAccessControlBaseRule='${SAME_VO}')(GlueSAAccessControlBaseRule=VO:'${SAME_VO}'))) (&(GlueChunkKey=GlueSEUniqueID='${nodeName}')(|(GlueVOInfoAccessControlBaseRule='${SAME_VO}')(GlueVOInfoAccessControlBaseRule=VO:'${SAME_VO}'))) (&(GlueServiceUniqueID=*://'${nodeName}'*)(GlueServiceVersion=2.2.0)(GlueServiceType=srm*)))' GlueServiceEndpoint GlueSAPath GlueVOInfoPath \
+       >$QUERY_RES 2>$QUERY_ERR &
+    set +x
+    LD_PID=$!
+    n=0
+    while ps -p $LD_PID > /dev/null 2>&1; do
+       if [ $n -gt $LDAP_TIMEOUT ]; then 
+          kill -9 $LD_PID > /dev/null 2>&1
+          exec 2>/dev/null
+          MSG_NOTICE="$LCG_GFAL_INFOSYS timed out after $LDAP_TIMEOUT sec."
+          echo "<p>"          
+          echo "<b>NOTICE</b>: $MSG_NOTICE"
+          echo "$(date -u) [$(date +%s)]"          
+          echo "</pre>"
+          echo "$TESTNAME|$SAME_NOTICE|$MSG_NOTICE" > $FILE_COMM
+          echo "summary: $MSG_NOTICE"
+          do_cleanup
+          exit $SAME_NOTICE
+       fi
+       sleep 1
+       n=$(( $n + 1 ))
+    done
+    echo "$(date -u) [$(date +%s)]"    
+    echo "</pre>"
+    # Problems contacting LDAP server?
+    if [ -s $QUERY_ERR ] ; then
+        MSG_NOTICE="$(cat $QUERY_ERR|head -1|sed -e "s/'//"). [$LCG_GFAL_INFOSYS]"
+        echo "<pre>"
+        echo "<b>NOTICE</b>: $MSG_NOTICE"
+        echo "</pre>"
+        echo "summary: $MSG_NOTICE"
+        echo "$TESTNAME|$SAME_NOTICE|$MSG_NOTICE" > $FILE_COMM
+        do_cleanup
+        exit $SAME_NOTICE
+    fi
+    awk -v RS="\r?\n " -v ORS="" {print} ${QUERY_RES}|grep ^Glue \
+    	> ${QUERY_RES}.new && mv -f ${QUERY_RES}.new $QUERY_RES
+    echo "<p>"
+    echo "SRMv2 endpoint:"
+    echo  "</p>"
+    echo "<pre>"
+    awk '/^GlueServiceEndpoint/ {print $2}' $QUERY_RES | sort -u > $FILE_ENDPNT
+    if [ ! -z "$(cat $FILE_ENDPNT)" ]; then
+       cat $FILE_ENDPNT
+    else
+       echo "<font color='#cc0000'>ERROR:</font> No SRMv2 endpoint found"
+       summary=" No SRMv2 endpoint found."
+       if [ $RETCODE -lt $SAME_ERROR ]; then
+          RETCODE=$SAME_ERROR
+       fi
+    fi
+    echo "</pre>"
+    echo "<p>"
+    echo "Storage path:"
+    echo  "</p>"
+    echo "<pre>"
+    awk '/^GlueVOInfoPath/ {print $2}' $QUERY_RES | sort -u > $FILE_SAPATH
+    if [ ! -z "$(cat $FILE_SAPATH)" ]; then
+       cat $FILE_SAPATH
+	else # try GlueSAPath
+	   awk '/^GlueSAPath/ {print $2}' $QUERY_RES | sort -u > $FILE_SAPATH
+       if [ ! -z "$(cat $FILE_SAPATH)" ]; then
+	      cat $FILE_SAPATH
+       else
+          echo "<font color='#cc0000'>ERROR:</font> No storage path found"
+          summary="${summary} No storage path found."
+          if [ $RETCODE -lt $SAME_ERROR ]; then 
+             RETCODE=$SAME_ERROR
+          fi
+       fi
+    fi
+    echo "</pre>"
+    echo "</p>"
+fi
+
+echo "<p>Test status: <b>${RET_CODES[${RETCODE}]}</b></p>"
+
+if [ ! -z "${summary}" ] ; then 
+    echo "summary:${summary}"
+fi
+do_cleanup
+exit $RETCODE
+
+#****
