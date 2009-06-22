@@ -94,6 +94,7 @@ AC_MSG_RESULT(["LIBTAR found $have_libtar"])
 AC_ZLIB([], have_zlib=yes, have_zlib=no) 
 AC_MSG_RESULT(["ZLIB found $have_zlib"]) 
 
+GLITE_CHECK_XSLT
 
 if test "$have_globus" = "no"; then
   AC_MSG_RESULT(["Please verify GLOBUS package"])
@@ -193,8 +194,6 @@ AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 AC_SEC_LCAS
 AC_SEC_LCMAPS
 AC_SEC_LCMAPS_WITHOUT_GSI
-
-AC_GLITE_WMS_OPTIONAL
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

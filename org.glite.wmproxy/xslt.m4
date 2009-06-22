@@ -1,33 +1,43 @@
 dnl Usage:
-dnl AC_XSLT(MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for expat, and defines
-dnl - XSLT_CFLAGS (compiler flags)
-dnl - XSLT_LIBS (linker flags, stripping and path)
-dnl - XSLT_STATIC_LIBS (linker flags, stripping and path for static library)
-dnl - XSLT_INSTALL_PATH
-dnl prerequisites:
+dnl GLITE_CHECK_XSLT
 
-AC_DEFUN([AC_XSLT],
-[
-    AC_ARG_WITH(xslt_prefix, 
-	[  --with-xslt-prefix=PFX      prefix where 'xslt' is installed.],
-	[], 
-        with_xslt_prefix=${XSLT_INSTALL_PATH:-/usr})
+dnl Exported variables (i.e. available to the various Makefile.am):
+dnl XSLT_CPPFLAGS
+dnl XSLT_LDFLAGS
+dnl XSLT_LIBS
 
-    AC_MSG_CHECKING([for XSLT installation at ${with_xslt_prefix:-/usr}])
+AC_DEFUN([GLITE_CHECK_XSLT],
+[AC_ARG_WITH(
+    [xslt_prefix],
+    [AS_HELP_STRING(
+        [--with-xslt-prefix=PFX],
+        [prefix where xslt is installed  @<:@default=/usr@:>@]
+    )],
+    [],
+    [with_xslt_prefix=/usr]
+)
 
-    ac_save_CFLAGS=$CFLAGS
-    ac_save_LIBS=$LIBS
-    XSLT_CFLAGS="-I$with_xslt_prefix/include"
-    XSLT_LIBS="-L$with_xslt_prefix/lib64"
+AC_MSG_CHECKING([for xslt])
 
-    XSLT_LIBS="$XSLT_LIBS -lxslt"	
-    CFLAGS=$ac_save_CFLAGS
-    LIBS=$ac_save_LIBS	
+if test -f ${with_xslt_prefix}/include/libxslt/xslt.h; then
+    XSLT_CPPFLAGS="-I${with_xslt_prefix}/include"
+    
+    if test "x${host_cpu}" = xx86_64 -o "x${host_cpu}" = xia64 ; then
+        ac_xslt_lib_dir="lib64"
+    else
+        ac_xslt_lib_dir="lib"
+    fi
 
-    AC_SUBST(XSLT_INSTALL_PATH)
-    AC_SUBST(XSLT_CFLAGS)
-    AC_SUBST(XSLT_LIBS)
-    AC_SUBST(XSLT_STATIC_LIBS)
+    XSLT_LDFLAGS="-L${with_xslt_prefix}/${ac_xslt_lib_dir}"
+    XSLT_LIBS="-lxslt"
+
+    AC_MSG_RESULT([yes])
+else
+    AC_MSG_ERROR([no])
+fi
+
+AC_SUBST(XSLT_CPPFLAGS)
+AC_SUBST(XSLT_LDFLAGS)
+AC_SUBST(XSLT_LIBS)
 ])
 

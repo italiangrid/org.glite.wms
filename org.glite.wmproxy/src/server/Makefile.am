@@ -70,7 +70,7 @@ noinst_HEADERS = \
 	wmpresponsestruct.h \
 	wmpsignalhandler.h
 	
-glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic
+glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic $(XSLT_LDFLAGS)
 
 glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
@@ -97,7 +97,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(SEC_LCMAPS_WITHOUT_GSI_LIBS) \
 	$(SEC_LCMAPS_RETURN_WITHOUT_GSI_LIBS) \
 	$(VOMS_NOTHR_LIBS) \
-	$(FCGI_CPP_LIBS) \
+	$(FCGI_CPP_LIBS) -lfcgi \
 	$(XSLT_LIBS) \
 	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)
 
