@@ -76,13 +76,13 @@ This is so that the server can run with expired certificates too, and is needed
 for the client tests.
 
 Then you need to check out org.glite.security.test-utils and run
-bin/generate-test-certificates.sh with a destination directory where they are
-created. This might take a few minutes. NB! This script creates proxy certs, so
-you need to recreate the certificates if certification takes over 8 ours. This
-is no problem, just run it again and the test-setup.sh mentioned later.
-
-The Trustmanager RPM contains glite-security-trustmanager.war which should be
-deployed under the tomcat webapps dir (copy it to /var/lib/tomcat5/webapps).
+bin/generate-test-certificates.sh --all --voms with a destination directory
+where they are created. This might take a few minutes. NB! This script creates
+proxy certs, so you need to recreate the certificates if certification takes
+over 8 ours. This is no problem, you just need to clean the directory, run it
+and the test-setup.sh (mentioned later) again. The Trustmanager RPM contains
+glite-security-trustmanager.war which should be deployed under the tomcat
+webapps dir (copy it to /var/lib/tomcat5/webapps).
 
 After this has been deployed (tomcat started), and the war has been unpacked,
 you need to compile the client test code too. To do this, check out
