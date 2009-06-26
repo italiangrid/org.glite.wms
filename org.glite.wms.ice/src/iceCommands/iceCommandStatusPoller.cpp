@@ -47,7 +47,7 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
-
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 // WMS Headers
 #include "glite/wms/common/configuration/Configuration.h"
@@ -67,6 +67,8 @@ namespace cream_api  = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace jobstat    = glite::ce::cream_client_api::job_statuses;
 namespace wms_utils  = glite::wms::common::utilities;
+namespace api_util   = glite::ce::cream_client_api::util;
+
 using namespace glite::wms::ice::util;
 using namespace std;
 
@@ -184,6 +186,9 @@ void iceCommandStatusPoller::get_jobs_to_poll( list< CreamJob >& result,
 		   << creamurl << "]. LIMIT set to [" << m_max_chunk_size << "]..."
     		);
     {
+#ifdef ICE_PROFILE_ENABLE
+      api_util::scoped_timer tmp_timer( "iceCommandStatusPoller::check_multiple_jobs - POLL SQL QUERY" );
+#endif
       glite::wms::ice::db::GetJobsToPoll getter( &result, userdn, creamurl, m_poll_all_jobs, m_max_chunk_size );
       glite::wms::ice::db::Transaction tnx;
       tnx.execute( &getter );
@@ -202,6 +207,8 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
                                              const list< CreamJob >& cream_job_ids ) 
   throw()
 {
+    
+
     static const char* method_name = "iceCommandStatusPoller::check_multiple_jobs() - ";
 
     for( list< CreamJob >::const_iterator thisJob = cream_job_ids.begin(); 
@@ -266,6 +273,9 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 			     );
 	      return list<soap_proxy::JobInfoWrapper>();
 	    }
+#ifdef ICE_PROFILE_ENABLE
+	     api_util::scoped_timer tmp_timer( "iceCommandStatusPoller::check_multiple_jobs - CONNECT TO CREAM" );
+#endif
              CreamProxy_Info( cream_url, 
                               proxy,
                               &req,
@@ -392,6 +402,9 @@ void iceCommandStatusPoller::updateJobCache( const list< soap_proxy::JobInfoWrap
 //____________________________________________________________________________
 void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper& info_obj ) throw()
 {
+#ifdef ICE_PROFILE_ENABLE
+    api_util::scoped_timer T0( "iceCommandStatusPoller::update_single_job - ENTIRE METHOD" );
+#endif
     static const char* method_name = "iceCommandStatusPoller::update_single_job() - ";
     
     if(m_stopped) {
@@ -419,11 +432,16 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
     
     int count;
     vector< soap_proxy::JobStatusWrapper >::const_iterator it;
-    
+#ifdef ICE_PROFILE_ENABLE
+    api_util::scoped_timer T1( "iceCommandStatusPoller::update_single_job - MUTEX+PROCESS" );
+#endif
     boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
     
     CreamJob tmp_job;
     {
+#ifdef ICE_PROFILE_ENABLE
+      api_util::scoped_timer T2( "iceCommandStatusPoller::update_single_job - GETJOBBYCID" );
+#endif
       glite::wms::ice::db::GetJobByCid getter( completeJobID );
       glite::wms::ice::db::Transaction tnx;
       tnx.execute( &getter );
@@ -441,8 +459,9 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
     }
     
     tmp_job.set_workernode( info_obj.getWorkerNode() );
-    
-    
+#ifdef ICE_PROFILE_ENABLE
+    api_util::scoped_timer T3( "iceCommandStatusPoller::update_single_job - LOOP OVER STATES" );
+#endif
     for ( it = status_changes.begin(), count = 1; it != status_changes.end(); ++it, ++count ) {
 
        /*
@@ -521,11 +540,17 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  params.push_back( make_pair("exit_code", int_to_string(tmp_job.get_exit_code())));
 	  params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
 	  params.push_back( make_pair("failure_reason", it->getFailureReason()));
+#ifdef ICE_PROFILE_ENABLE
+	  api_util::scoped_timer tmp_timer( "iceCommandStatusPoller::update_single_job - UPDATEJOBBYGID" );
+#endif
 	  db::UpdateJobByGid updater( tmp_job.getGridJobID(), params);
 	  db::Transaction tnx;
 	  tnx.execute( &updater );
 	}
 	// Log to L&B
+#ifdef ICE_PROFILE_ENABLE
+        api_util::scoped_timer T4( "iceCommandStatusPoller::update_single_job - LOG_TO_LB+RESUBMIT_OR_PURGE" );
+#endif
 	iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
 	if ( ev ) {
 	  tmp_job = m_lb_logger->logEvent( ev );
