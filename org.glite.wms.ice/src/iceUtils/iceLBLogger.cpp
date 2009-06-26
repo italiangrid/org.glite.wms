@@ -81,7 +81,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 {
     static const char* method_name = "iceLBLogger::logEvent() - ";
 #ifdef ICE_PROFILE_ENABLE
-    api_util::scoped_timer T( "logEvent()" );
+    api_util::scoped_timer T( "iceLBLogger::logEvent()" );
 #endif
     // Aborts if trying to log the NULL event
     if ( ! ev ) {
@@ -144,42 +144,22 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         new_seq_code = _tmp_seqcode;
 	free( _tmp_seqcode );
         { // Lock the job cache
-// #ifdef ICE_PROFILE_ENABLE
-// 	  api_util::scoped_timer T( "logEvent::mutex_aquisition-EntireBlock" );//126
-// #endif
-	  //            jobCache* m_cache( jobCache::getInstance() );
-	  //            boost::recursive_mutex::scoped_lock( m_cache->mutex );
+#ifdef ICE_PROFILE_ENABLE
+ 	  api_util::scoped_timer T( "iceLBLogger::logEvent - ICE Mutex acquisition" );//126
+#endif
 	  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
 
-	    //api_util::scoped_timer T2( "logEvent::CreamJob_Creation+setSeqCode+put_in_cache" );//10
             CreamJob theJob( ev->getJob() );
 	    
             theJob.set_sequence_code( new_seq_code );
-// #ifdef ICE_PROFILE_ENABLE
-// 	    api_util::scoped_timer T3( "logEvent::put_in_cache" );//10
-// #endif
-            //m_cache->put( theJob );
-	    
-	    //glite::wms::ice::db::CheckGridJobID check( theJob.getGridJobID() );
-	    //{
-	    //  glite::wms::ice::db::Transaction tnx;
-	    //  tnx.execute( &check );
-	   // }
-
-	    //if( check.found() ) {
-	    //  glite::wms::ice::db::UpdateJobSequenceCode upd( theJob.getGridJobID(), new_seq_code );
-	    //  glite::wms::ice::db::Transaction tnx;
-	    //  tnx.execute( &upd );
-	    //} else {
-	    //	      glite::wms::ice::db::CreateJob aJob( theJob );
 	    list< pair<string, string> > params;
 	    params.push_back( make_pair( "sequence_code", new_seq_code ));
-	    //	    glite::wms::ice::db::UpdateSequenceCode updater( theJob.getGridJobID(), new_seq_code );
+#ifdef ICE_PROFILE_ENABLE
+	    api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
+#endif
 	    glite::wms::ice::db::UpdateJobByGid updater( theJob.getGridJobID(), params );
 	    glite::wms::ice::db::Transaction tnx;
 	    tnx.execute( &updater );
-	    //}
-	    
             return theJob;
 
         } 

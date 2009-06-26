@@ -192,8 +192,10 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_ice_input_queue( util::Request_source_factory::make_source_input_ice() ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( ice_util::iceLBLogger::instance() ),
-    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() )
+    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() ),
+    m_reqnum(ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads())
 {
+  if(m_reqnum < 5) m_reqnum = 5;
    int thread_num_commands, thread_num = m_configuration->ice()->max_ice_threads();
    if(thread_num<1) thread_num=1;
    if(thread_num >= 2)
@@ -498,7 +500,9 @@ void Ice::startJobKiller( void )
 //____________________________________________________________________________
 void Ice::getNextRequests( std::list< util::Request* >& ops) 
 {
-    ops = m_ice_input_queue->get_requests( 5 );
+  //  int reqnum = ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads();
+  //  if(reqnum < 5) reqnum = 5;
+  ops = m_ice_input_queue->get_requests( m_reqnum );
 }
 
 //____________________________________________________________________________

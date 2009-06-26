@@ -125,7 +125,7 @@ namespace ice {
         //
         glite::wms::ice::util::Request_source* m_wms_input_queue; ///< Input queue for the WM
         glite::wms::ice::util::Request_source* m_ice_input_queue; ///< Input queue for ICE
-
+	  int m_reqnum;
 
         log4cpp::Category* m_log_dev;
         
