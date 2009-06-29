@@ -48,7 +48,7 @@ ENDPOINT=$1
 #run_command cat $OUTPUTFILE
 #rm -f $OUTPUTFILE
 
-run_command glite-wms-job-list-match $DELEGATION_OPTIONS --logfile $LOGFILE $JDLFILE
+run_command glite-wms-job-list-match $DELEGATION_OPTIONS --config $CONFIG_FILE --logfile $LOGFILE $JDLFILE
 run_command cat $LOGFILE
 rm -f $LOGFILE
 echo "" > $LOGFILE
@@ -58,7 +58,7 @@ run_command cat $OUTPUTFILE
 rm -f $OUTPUTFILE
 
 if [ -n "$ENDPOINT" ]; then
-  run_command glite-wms-job-list-match $DELEGATION_OPTIONS --endpoint $ENDPOINT $JDLFILE
+  run_command glite-wms-job-list-match $DELEGATION_OPTIONS --config $CONFIG_FILE --endpoint $ENDPOINT $JDLFILE
 fi
 
 # ... terminate

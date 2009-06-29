@@ -30,7 +30,7 @@ fi
 
 # ... submit a jdl valid for max 1 minute from NOW
 
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --output $TMPJOBIDFILE --to $NOW $TRUEJDL
+run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --output $TMPJOBIDFILE --to $NOW $TRUEJDL
 run_command cat $TMPJOBIDFILE
 extract_jobid $TMPJOBIDFILE
 

@@ -17,7 +17,7 @@ prepare $@
 
 # ... submit a job
 
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --output $TMPJOBIDFILE --logfile $LOGFILE --nomsg $JDLFILE
+run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --output $TMPJOBIDFILE --logfile $LOGFILE --nomsg $JDLFILE
 extract_jobid $TMPJOBIDFILE
 run_command cat $LOGFILE
 rm -f $LOGFILE
@@ -59,7 +59,7 @@ rm -f $LOGFILE
 
 # ... get job output in a temporary directory
 
-run_command glite-wms-job-output --dir $JOB_OUTPUT_DIR --logfile $LOGFILE $JOBID
+run_command glite-wms-job-output --nosubdir --dir $JOB_OUTPUT_DIR --logfile $LOGFILE $JOBID
 run_command cat $LOGFILE
 rm -f $LOGFILE
 

@@ -12,7 +12,7 @@
 function submit_job()
 {
   rm -f $TMPJOBIDFILE
-  run_command glite-wms-job-submit $DELEGATION_OPTIONS --output $TMPJOBIDFILE $TRUEJDL
+  run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --output $TMPJOBIDFILE $TRUEJDL
   extract_jobid $TMPJOBIDFILE
   #rm -f $TMPJOBIDFILE
   #echo $JOBID > $TMPJOBIDFILE
@@ -27,17 +27,17 @@ prepare $@
 # ... submit a job - cancel job. with different options
 
 submit_job
-run_command glite-wms-job-cancel --noint $JOBID
+run_command glite-wms-job-cancel --config $CONFIG_FILE --noint $JOBID
 
 submit_job
-run_command glite-wms-job-cancel --noint --input $TMPJOBIDFILE
+run_command glite-wms-job-cancel --config $CONFIG_FILE --noint --input $TMPJOBIDFILE
 
 submit_job
-run_command glite-wms-job-cancel --noint --output $OUTPUTFILE $JOBID
+run_command glite-wms-job-cancel --config $CONFIG_FILE --noint --output $OUTPUTFILE $JOBID
 run_command cat $OUTPUTFILE
 
 submit_job
-run_command glite-wms-job-cancel --noint --logfile $LOGFILE $JOBID
+run_command glite-wms-job-cancel --config $CONFIG_FILE --noint --logfile $LOGFILE $JOBID
 run_command cat $LOGFILE
 
 submit_job

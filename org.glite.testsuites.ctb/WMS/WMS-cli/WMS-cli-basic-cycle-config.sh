@@ -48,7 +48,7 @@ run_command glite-wms-job-status --verbosity 2 --config $CONFIG_FILE $JOBID
 
 # ... get job output in a temporary directory
 
-run_command glite-wms-job-output --dir $JOB_OUTPUT_DIR --config $CONFIG_FILE $JOBID
+run_command glite-wms-job-output --nosubdir --dir $JOB_OUTPUT_DIR --config $CONFIG_FILE $JOBID
 
 # ... list the directory and print out its content
 

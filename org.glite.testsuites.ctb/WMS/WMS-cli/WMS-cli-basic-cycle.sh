@@ -31,7 +31,7 @@ wait_until_job_finishes
 
 # ... get job output in a temporary directory
 
-run_command glite-wms-job-output --dir $JOB_OUTPUT_DIR $JOBID
+run_command glite-wms-job-output --nosubdir --dir $JOB_OUTPUT_DIR $JOBID
 
 # ... list the directory and print out its content
 

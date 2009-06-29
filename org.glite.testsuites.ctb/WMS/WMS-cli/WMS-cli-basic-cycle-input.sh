@@ -17,7 +17,7 @@ prepare $@
 
 # ... Find out valid CE IDs
 
-run_command glite-wms-job-list-match $DELEGATION_OPTIONS --output $OUTPUTFILE $JDLFILE
+run_command glite-wms-job-list-match --config $CONFIG_FILE $DELEGATION_OPTIONS --output $OUTPUTFILE $JDLFILE
 run_command cat $OUTPUTFILE
 awk -F ' ' '/:[[:digit:]]*\// {print $NF}' $OUTPUTFILE > $CEIDFILE
 myecho "CE Ids: "
@@ -25,7 +25,7 @@ cat $CEIDFILE
 
 # ... submit a job to the first CE in the list
 
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --noint --input $CEIDFILE --output $TMPJOBIDFILE $JDLFILE
+run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --noint --input $CEIDFILE --output $TMPJOBIDFILE $JDLFILE
 run_command cat $TMPJOBIDFILE
 extract_jobid $TMPJOBIDFILE
 #rm -f $TMPJOBIDFILE

@@ -24,7 +24,7 @@ prepare
 
 # ... try glite-wms-job-delegate-proxy with --autm-delegation
 
-run_command glite-wms-job-delegate-proxy --output $OUTPUTFILE --autm-delegation
+run_command glite-wms-job-delegate-proxy --config $CONFIG_FILE --output $OUTPUTFILE --autm-delegation
 run_command cat $OUTPUTFILE
 
 # ... determine delegation Id and service endpoint
@@ -37,11 +37,11 @@ rm -f $OUTPUTFILE
 
 # ... try with minimum options
 
-run_command glite-wms-job-delegate-proxy -d $DELEGATIONID
+run_command glite-wms-job-delegate-proxy --config $CONFIG_FILE  -d $DELEGATIONID
 
 # ... try with --logfile
 
-run_command glite-wms-job-delegate-proxy --logfile $LOGFILE -d $DELEGATIONID
+run_command glite-wms-job-delegate-proxy --config $CONFIG_FILE  --logfile $LOGFILE -d $DELEGATIONID
 run_command cat $LOGFILE
 rm -f $LOGFILE
 
@@ -51,7 +51,7 @@ run_command glite-wms-job-delegate-proxy --config $CONFIG_FILE -d $DELEGATIONID
 
 # ... try with --endpoint
 
-run_command glite-wms-job-delegate-proxy --endpoint $ENDPOINT -d $DELEGATIONID
+run_command glite-wms-job-delegate-proxy --config $CONFIG_FILE  --endpoint $ENDPOINT -d $DELEGATIONID
 
 # ... create empty files (--noint test)
 

@@ -34,7 +34,7 @@ run_command cat $TMPJDLFILE
 
 # ... submit a job
 
-run_command glite-wms-job-submit $DELEGATION_OPTIONS  --register-only --transfer-files --proto gsiftp --output $TMPJOBIDFILE $TMPJDLFILE
+run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --register-only --transfer-files --proto gsiftp --output $TMPJOBIDFILE $TMPJDLFILE
 extract_jobid $TMPJOBIDFILE
 run_command glite-wms-job-submit --start $JOBID
 
@@ -45,7 +45,7 @@ wait_until_job_finishes
 # ... get job output in a temporary directory
 
 run_command glite-wms-job-output --list-only $JOBID
-run_command glite-wms-job-output --dir $JOB_OUTPUT_DIR --noint $JOBID
+run_command glite-wms-job-output --nosubdir --dir $JOB_OUTPUT_DIR --noint $JOBID
 
 # ... list the directory and print out its content
 

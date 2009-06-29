@@ -33,7 +33,7 @@ run_command cat $TMPJDLFILE
 
 # ... submit a job
 
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --output $TMPJOBIDFILE --default-jdl $TMPJDLFILE $JDLFILE
+run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --output $TMPJOBIDFILE --default-jdl $TMPJDLFILE $JDLFILE
 extract_jobid $TMPJOBIDFILE
 
 run_command_keep_output glite-wms-job-status --verbosity 3 $JOBID

@@ -37,14 +37,14 @@ if [[ "$1" == *:*/* ]]; then
    myecho "CE Id given in command line: $CEID"
 else 
    myecho "Will find a suitable CE with glite-wms-job-list-match"
-   run_command glite-wms-job-list-match $DELEGATION_OPTIONS --output $OUTPUTFILE $JDLFILE
+   run_command glite-wms-job-list-match --config $CONFIG_FILE $DELEGATION_OPTIONS --output $OUTPUTFILE $JDLFILE
    run_command cat $OUTPUTFILE
    CEID=$(awk -F ' ' '/:[[:digit:]]*\// {print $NF; exit}' $OUTPUTFILE)
    myecho "CE Id: $CEID"
 fi
 
 # ... submit a job to the first CE in the list
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --resource $CEID --output $TMPJOBIDFILE $JDLFILE
+run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --resource $CEID --output $TMPJOBIDFILE $JDLFILE
 run_command cat $TMPJOBIDFILE
 extract_jobid $TMPJOBIDFILE
 
@@ -52,6 +52,7 @@ extract_jobid $TMPJOBIDFILE
 wait_until_job_finishes
 
 # ... get job output in a temporary directory
+
 run_command glite-wms-job-output --dir $JOB_OUTPUT_DIR $JOBID
 
 # ... list the directory and print out its content

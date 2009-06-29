@@ -64,7 +64,7 @@ echo ""
 
 # ... get job output in a temporary directory
 
-run_command glite-wms-job-output --noint --dir $JOB_OUTPUT_DIR $JOBID
+run_command glite-wms-job-output --nosubdir --noint --dir $JOB_OUTPUT_DIR $JOBID
 
 # ... list the directory and print out its content
 

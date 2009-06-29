@@ -20,7 +20,7 @@ prepare $@
 
 # ... submit a jdl valid for 1 minute
 
-run_command glite-wms-job-submit $DELEGATION_OPTIONS --output $TMPJOBIDFILE --valid 00:01 $TRUEJDL
+run_command glite-wms-job-submit $DELEGATION_OPTIONS --config $CONFIG_FILE --output $TMPJOBIDFILE --valid 00:01 $TRUEJDL
 run_command cat $TMPJOBIDFILE
 extract_jobid $TMPJOBIDFILE
 
