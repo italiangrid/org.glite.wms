@@ -61,8 +61,13 @@ cd -
 echo "Copying CA certificates"
 for ca in expired trusted bad ; do
  ca_hash=`openssl x509 -in $certdir/$ca-ca/$ca.cert -noout -hash`
- cp $certdir/$ca-ca/$ca.cert /etc/grid-security/certificates/$ca_hash.0
- cp $certdir/$ca-ca/$ca.crl /etc/grid-security/certificates/$ca_hash.r0
+  if [ ca == bad ] ; then
+  cp $certdir/$ca-ca/$ca.cert /etc/grid-security/certificates/$ca_hash.1
+  cp $certdir/$ca-ca/$ca.crl /etc/grid-security/certificates/$ca_hash.r1
+ else
+  cp $certdir/$ca-ca/$ca.cert /etc/grid-security/certificates/$ca_hash.0
+  cp $certdir/$ca-ca/$ca.crl /etc/grid-security/certificates/$ca_hash.r0
+ fi
  if [ -f $certdir/$ca-ca/$ca.namespaces ] ; then 
   cp $certdir/$ca-ca/$ca.namespaces /etc/grid-security/certificates/$ca_hash.namespaces
  fi

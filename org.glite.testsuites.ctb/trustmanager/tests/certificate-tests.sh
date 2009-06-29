@@ -143,7 +143,7 @@ myecho "Test passed"
 myecho "Testing with voms proxy certificate with role"
 test_cert $certdir/home/voms-acme-Radmin.pem $certdir/home/voms-acme-Radmin.pem $SUCCESS $certdir/home/usercert.pem
 myecho "Test passed"
-myecho "Testing with the \"bad-ca\", a normal certificate"
+myecho "Testing with the \"bad-ca\", a normal certificate, CA and CRL files end '.1' and '.r1' respectively"
 test_cert $certdir/bad-certs/bad_client00_nopass.priv $certdir/bad-certs/bad_client00.cert  $SUCCESS 
 myecho "Test passed"
 myecho "Testing with the \"bad-ca\", a not yet valid certificate"
