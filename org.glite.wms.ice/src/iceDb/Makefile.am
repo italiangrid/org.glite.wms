@@ -42,7 +42,8 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetAllGridJobID.cpp \
 				GetCreamURLUserDN.cpp \
 				GetCidByCreamURLUserDN.cpp \
-				GetStatusInfoByCompleteCreamJobID.cpp
+				GetStatusInfoByCompleteCreamJobID.cpp \
+				GetOldestStatusTime.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src \

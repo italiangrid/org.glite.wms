@@ -32,7 +32,7 @@
 #include "iceConfManager.h"
 #include "ice-core.h"
 #include "DNProxyManager.h"
-
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "iceDb/GetJobByCid.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/RemoveJobByGid.h"
@@ -57,6 +57,7 @@
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
 using namespace std;
+namespace api_util   = glite::ce::cream_client_api::util;
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -210,6 +211,9 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
 //______________________________________________________________________________
 void StatusChange::apply_to_job( CreamJob& j ) const
 {
+#ifdef ICE_PROFILE_ENABLE
+  api_util::scoped_timer tmp_timer( "StatusChange::apply_to_job - ENTIRE METHOD" );
+#endif
     j.set_status( get_status() );
     j.set_workernode( m_worker_node );
     if ( m_has_exit_code ) {
@@ -252,6 +256,9 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
     m_ev( ev ),
     m_cemondn( cemondn )
 {
+#ifdef ICE_PROFILE_ENABLE
+  api_util::scoped_timer tmp_timer( "normalStatusNotification::CTOR - ENTIRE METHOD" );
+#endif
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     static const char *method_name = "normalStatusNotification::CTOR() - ";
     
@@ -297,6 +304,9 @@ normalStatusNotification::normalStatusNotification( const monitortypes__Event& e
 //______________________________________________________________________________
 void normalStatusNotification::apply( void ) // can throw anything
 {    
+#ifdef ICE_PROFILE_ENABLE
+  api_util::scoped_timer tmp_timer( "normalStatusNotification::apply - ENTIRE METHOD" );
+#endif
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     static const char* method_name = "normalStatusNotification::apply() - ";
 

@@ -43,6 +43,7 @@
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 // other gLite stuff
 #include "classad_distribution.h"
@@ -61,6 +62,7 @@
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
 using namespace std;
+namespace api_util   = glite::ce::cream_client_api::util;
 
 iceCommandUpdateStatus::iceCommandUpdateStatus( const vector<monitortypes__Event>& ev, const string& cemondn ) :
     iceAbsCommand( "iceCommandUpdateStatus" ),
@@ -96,7 +98,9 @@ void iceCommandUpdateStatus::execute( ) throw( )
 {   
   //    jobCache *cache( jobCache::getInstance() );
     static const char* method_name = "iceCommandUpdateStatus::execute() - ";
-
+#ifdef ICE_PROFILE_ENABLE
+      api_util::scoped_timer tmp_timer( "iceCommandUpdateStatus::execute - ENTIRE METHOD" );
+#endif
     // We define two "sets" of operations which must be performed by 
     // the status change notifications.
  
@@ -153,7 +157,9 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	bool keep_alive;
 	string subs_id;
 	{ // Classad-mutex protected region
-
+#ifdef ICE_PROFILE_ENABLE
+      api_util::scoped_timer tmp_timer( "iceCommandUpdateStatus::execute - CLASSAD PARSING" );
+#endif
 	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
 
 	  classad::ClassAdParser parser;
@@ -204,25 +210,25 @@ void iceCommandUpdateStatus::execute( ) throw( )
             commands.push_front( notif );
 
             // Gets the job which is mentioned in the notification
-	    //            boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
+#ifdef ICE_PROFILE_ENABLE
+	    api_util::scoped_timer tmp_timer( "iceCommandUpdateStatus::execute - MUTEX1+PROCESSING" );
+#endif
 	    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
-           
-            //jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( notif->get_complete_cream_job_id() ) );
 	    CreamJob theJob;
 	    {
 	      db::GetJobByCid getter( notif->get_complete_cream_job_id() );
 	      db::Transaction tnx;
 	      tnx.execute( &getter );
-	      if( !getter.found() ) 
-		{
-		  CREAM_SAFE_LOG( m_log_dev->warnStream()
-				  << method_name
-				  << "Job with CREAM job id ["
-				  << notif->get_complete_cream_job_id()
-				  << "] was not found in the cache. Cannot update "
-				  << "the set of subscriptions the jobs belongs to"
-				  );
-		} else {
+	      if( !getter.found() ) {
+		CREAM_SAFE_LOG( m_log_dev->warnStream()
+				<< method_name
+				<< "Job with CREAM job id ["
+				<< notif->get_complete_cream_job_id()
+				<< "] was not found in the cache. Cannot update "
+				<< "the set of subscriptions the jobs belongs to"
+				);
+	      } else {
+		
 		theJob = getter.get_job();
 		// Gets the subscription ID which is used to get
                 // notifications associated with that job.
@@ -251,52 +257,19 @@ void iceCommandUpdateStatus::execute( ) throw( )
 		
                 subscription_set.insert( subs_id );
 	      }
-	    }
+	    } // releases the ICE mutex
             
-//             if ( cache->end() != job_it ) {
 
-//                 // Gets the subscription ID which is used to get
-//                 // notifications associated with that job.
-		
-// 		iceSubscription subscription;
-// 		string cemon_url;
-// 		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( job_it->getUserDN() ).get<0>();
-// 		subscriptionManager::getInstance()->getCEMonURL(proxy, job_it->getCreamURL(), cemon_url);
-// 		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( job_it->getUserDN(), cemon_url, subscription );
-//                 string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
-
-//                 // Then, push the pair (subs_id, cemondn) into the
-//                 // set.  This is necessary, as a normal status
-//                 // notification should also update all the jobs of
-//                 // that subs_id, in the exact same way as empty status
-//                 // notifications do.
-//                 CREAM_SAFE_LOG( m_log_dev->debugStream()
-//                                 << method_name
-//                                 << "Normal status notification for job "
-//                                 << job_it->describe()
-//                                 << " requires adding subscription id "
-//                                 << subs_id
-//                                 << " to the set of subscriptions whose jobs "
-//                                 << "will be updated"
-//                                 );
-
-//                 subscription_set.insert( subs_id );
-//             } else {
-//                 CREAM_SAFE_LOG( m_log_dev->warnStream()
-//                                 << method_name
-//                                 << "Job with CREAM job id ["
-//                                 << notif->get_complete_cream_job_id()
-//                                 << "] was not found in the cache. Cannot update the set of subscriptions the jobs belongs to"
-//                                 );
-//             }
         }
     }
 
     // At this point, we complete the list of commands to add also the
     // processing of empty status notifications. We do this by
-    // checking al the jobs in the cache.
+    // checking all the jobs in the cache.
     {
-      //boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
+#ifdef ICE_PROFILE_ENABLE
+      api_util::scoped_timer tmp_timer( "iceCommandUpdateStatus::execute - MUTEX2+PROCESSING" );
+#endif
       boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
       
 
@@ -310,7 +283,6 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	params.push_back( "creamurl" );
 	params.push_back( "userdn" );
 	db::GetFields getter( params, list<pair<string, string> >(), true/* use DISTINCT = true */ );
-	//db::GetCreamURLUserDN getter;
 	db::Transaction tnx;
 	tnx.execute( &getter );
 
@@ -320,10 +292,6 @@ void iceCommandUpdateStatus::execute( ) throw( )
              it != result.end();
 	     ++it )
 	{
-// 	  list<string>::const_iterator fit = (*it).begin();
-// 	  string creamurl = *fit; fit++;
-// 	  string userdn   = *fit;
-
 	  string creamurl = it->at(0);
 	  string userdn   = it->at(1);
 

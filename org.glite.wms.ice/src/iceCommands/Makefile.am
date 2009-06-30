@@ -13,6 +13,7 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandCancel.cpp \
 	iceCommandFactory.cpp \
 	iceCommandStatusPoller.cpp \
+	iceCommandStatusPoller2.cpp \
 	iceCommandSubUpdater.cpp \
 	iceCommandUpdateStatus.cpp \
 	iceCommandProxyRenewal.cpp \

@@ -889,8 +889,6 @@ const throw()
   
   boost::recursive_mutex::scoped_lock M( mutex );
   
-  //  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.begin();
-
   map<string, boost::tuple<string, time_t, long long int> > all_proxy_info;
   {
     db::GetAllProxyInfo getter;
@@ -898,8 +896,6 @@ const throw()
     tnx.execute( &getter );
     all_proxy_info = getter.get_info();
   }
-
-  //printf("*** DEBUG DNProxyManager: Searching a betterproxy for DN [%s]...\n", dn.c_str());
 
   map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = all_proxy_info.begin();
   
@@ -910,14 +906,10 @@ const throw()
        does a regex match. The DN must be present in the key (that can also contains the myproxy server name)
     */
     
-    // 	      printf("*** DEBUG DNProxyManager: dn=[%s] it->first=[%s]...\n", 
-    // 		     dn.c_str(), it->first.c_str());
-    
     if( strstr( it->first.c_str(),dn.c_str() ) == 0 ) {
       /**
 	 'dn' is not found in the it->first string
       */
-      // printf("*** DEBUG DNProxyManager: [%s] doesn't match...\n", it->first.c_str() );
       ++it;
       continue;
     }
@@ -930,20 +922,12 @@ const throw()
     */
     if( it->second.get<1>() > (time(0)+(2*iceConfManager::getInstance()->getConfiguration()->ice()->soap_timeout())) ) 
       {
-	// 		 printf("*** DEBUG DNProxyManager: [%s] MATCH and has a proper lifetime!...\n", 
-	// 			it->first.c_str() );
 	return (it->second);
       }
-    
-    // 	     printf("*** DEBUG DNProxyManager: [%s] MATCH but has NOT a profer lifetime [%s]!...\n", 
-    // 		    it->first.c_str(), time_t_to_string( it->second.get<1>() ).c_str() );
-    // 	     cout << "*** DEBUG DNProxyManager: ["<<it->first.c_str()
-    // 		  <<"] MATCH but has NOT a profer lifetime [" << it->second.get<1>() << "]" <<endl;
     
     ++it;
   }
   
-  //	    printf("*** DEBUG DNProxyManager: No PROXY suitable for DN [%s]...\n", dn.c_str() );
   return boost::make_tuple("", 0, 0);
   
 }
@@ -956,8 +940,6 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
 {
   
   boost::recursive_mutex::scoped_lock M( mutex );
-  
-  //  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( this->composite(dn, myproxyname ) );
   
   boost::tuple< string, time_t, long long> proxy_info;
   bool found;
@@ -973,7 +955,6 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
   if( /*it == m_DNProxyMap.end()*/ !found ) {
     return boost::make_tuple("", 0, 0);
   } else {
-    //return boost::make_tuple(it->second.get<0>(), it->second.get<1>(), it->second.get<2>());
     return proxy_info;
   }
   
