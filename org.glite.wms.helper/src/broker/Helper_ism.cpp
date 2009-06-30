@@ -326,10 +326,22 @@ try {
     // Set attribute only if it's not empty, so as not to upset 
     // condor_submit.
     if (!flatten_result.empty()) {
-      requestad::set_remote_remote_ce_requirements(
-        *result,
-         flatten_result
-      );
+
+      boost::regex const cream_ce_id(".+/cream-.+");
+      bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
+
+      if (is_cream_ce) {
+
+        requestad::set_ce_requirements(
+          *result,
+          flatten_result
+        );
+      } else {
+        requestad::set_remote_remote_ce_requirements(
+          *result,
+          flatten_result
+        );
+      }
     }
   } catch (...) {
     // Let's leave remote_remote_requirements undefined if
