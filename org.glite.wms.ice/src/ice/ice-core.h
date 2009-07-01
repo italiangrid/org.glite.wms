@@ -62,16 +62,29 @@ namespace ice {
     };
     
     class Ice {
-        
-    public:
 
+      //      time_t m_first_register_time;
+      //      static boost::recursive_mutex s_regtime_mutex;
+
+    public:
+      
       static boost::recursive_mutex ClassAd_Mutex;
+
+/*       time_t getFirstRegisterTime() const { return m_first_register_time; } */
+/*       void   setFirstRegisterTime( const time_t regtime) { */
+/* 	// set teh mutex */
+/* 	boost::recursive_mutex::scoped_lock M( s_regtime_mutex ); */
+/* 	if( m_first_register_time != -1 ) return; */
+/* 	m_first_register_time = regtime; */
+/*       } */
 
         class IceThreadHelper { 
         public:
             IceThreadHelper( const std::string& name );
             virtual ~IceThreadHelper( );
             
+	    
+
             /**
              * Associates a newly created iceThread object
              * to this thread, and starts it. 

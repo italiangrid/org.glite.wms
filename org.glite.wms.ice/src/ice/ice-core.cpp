@@ -86,6 +86,7 @@ namespace config_ns = glite::wms::common::configuration;
 
 Ice* Ice::s_instance = 0;
 boost::recursive_mutex Ice::ClassAd_Mutex;
+//boost::recursive_mutex Ice::s_regtime_mutex;
 
 //
 // Begin Inner class definitions
@@ -97,7 +98,6 @@ Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
     m_thread( 0 ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() )
 {
-    
 }
 
 //____________________________________________________________________________
@@ -205,7 +205,7 @@ Ice::Ice( ) throw(iceInit_ex&) :
 
    m_requests_pool = new util::iceThreadPool("ICE Requests Pool", thread_num );
    m_ice_commands_pool = new util::iceThreadPool( "ICE Internal Commands Pool", thread_num_commands);
-   
+   //   m_first_register_time = -1;
 
     try {
 
@@ -552,7 +552,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 {
     try {
       //boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::s_globalICEMutex );
         
         the_job = m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
         
@@ -627,7 +627,7 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
       if(theJob.is_proxy_renewable())
 	ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
       {
-	boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
+	boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::s_globalICEMutex );
 	db::RemoveJobByGid remover( theJob.getGridJobID() );
 	db::Transaction tnx;
 	tnx.execute( &remover );
@@ -774,7 +774,7 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
     if(theJob.is_proxy_renewable())
       ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
     {
-      boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::s_globalICEMutex );
       db::RemoveJobByGid remover( theJob.getGridJobID() );
       db::Transaction tnx;
       tnx.execute( &remover );
