@@ -21,8 +21,8 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef GLITE_WMS_ICE_ICECOMMANDSTATUSPOLLER_H
-#define GLITE_WMS_ICE_ICECOMMANDSTATUSPOLLER_H
+#ifndef GLITE_WMS_ICE_ICECOMMANDSTATUSPOLLER2_H
+#define GLITE_WMS_ICE_ICECOMMANDSTATUSPOLLER2_H
 
 #undef soapStub_H
 
