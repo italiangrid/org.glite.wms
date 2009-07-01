@@ -54,7 +54,7 @@ namespace util {
      
   
  class iceCommandSubmit : public iceAbsCommand {
-     
+
  private:
      void  doSubscription( const glite::wms::ice::util::CreamJob& );
      

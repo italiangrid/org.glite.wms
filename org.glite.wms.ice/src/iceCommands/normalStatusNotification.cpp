@@ -328,7 +328,7 @@ void normalStatusNotification::apply( void ) // can throw anything
     // Now that we (hopefully) have the jobid, we lock the cache
     // and find the job
     
-    boost::recursive_mutex::scoped_lock jc_M( CreamJob::globalICEMutex );
+    boost::recursive_mutex::scoped_lock jc_M( CreamJob::s_globalICEMutex );
 
     CreamJob theJob;
     {

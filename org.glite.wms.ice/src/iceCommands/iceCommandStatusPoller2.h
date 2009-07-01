@@ -36,6 +36,7 @@
 #include<string>
 #include<list>
 #include<utility>
+#include<boost/tuple/tuple.hpp>
 
 namespace log4cpp {
   class Category;
@@ -61,20 +62,21 @@ namespace glite {
 	  Ice                  *m_iceManager;
 	  iceConfManager       *m_conf;
 	  bool                  m_stopped;
-	  static time_t         s_last_seen;
+	  //static time_t         s_last_seen;
 	  
-	  std::list<std::pair<std::string,std::string> > getUserDN_CreamURL( void ) const;
-	  void poll_userdn_ce( const std::string& userdn, 
-			       const std::string& cream_url,
-			       const time_t last_seen);
-
+	  void getUserDN_CreamURL( std::list< boost::tuple<std::string, std::string, time_t> >& ) const;
+	  
+	  time_t poll_userdn_ce( const std::string& userdn, 
+				 const std::string& cream_url,
+				 const time_t last_seen );
+	  
 	public:
 	  iceCommandStatusPoller2( Ice* );
 	  virtual ~iceCommandStatusPoller2() throw() { }
 	  void execute( ) throw();
 	  std::string get_grid_job_id() const { return std::string(); }
 	  void stop() { m_stopped = true; }
-
+	  
 	};
       }
     }

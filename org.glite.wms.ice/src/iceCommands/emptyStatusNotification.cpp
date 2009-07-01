@@ -58,7 +58,7 @@ void emptyStatusNotification::apply( void )
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     static const char *method_name = "emptyStatusNotification::apply() - ";
 
-    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
+    boost::recursive_mutex::scoped_lock L( CreamJob::s_globalICEMutex );
 
   CREAM_SAFE_LOG( m_log_dev->debugStream()
   		  << method_name

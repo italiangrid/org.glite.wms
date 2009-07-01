@@ -35,14 +35,18 @@
 #include "iceLBEvent.h"
 #include "ice-core.h"
 #include "iceUtils.h"
-#include "iceDb/GetOldestStatusTime.h"
 #include "iceDb/GetFields.h"
 #include "iceDb/GetJobByCid.h"
+#include "iceDb/Transaction.h"
 #include "iceDb/RemoveJobByCid.h"
 #include "iceDb/RemoveJobByGid.h"
-#include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
-#include "iceDb/Transaction.h"
 #include "iceDb/UpdateJobByGid.h"
+#include "iceDb/GetAllDNCE.h"
+#include "iceDb/GetOldestPollTimeForUserDNCE.h"
+#include "iceDb/UpdateOldestPollTimeForUserDNCE.h"
+#include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
+#include "iceDb/InsertOldestPollTimeForUserDNCE.h"
+
 
 // Cream Client API Headers
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -74,7 +78,7 @@ namespace db         = glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-time_t iceCommandStatusPoller2::s_last_seen = -1;
+//time_t iceCommandStatusPoller2::s_last_seen = -1;
 
 //______________________________________________________________________________
 class processJobInfo {
@@ -83,14 +87,16 @@ class processJobInfo {
   log4cpp::Category    *m_log_dev;
   iceLBLogger          *m_lb_logger;
   glite::wms::ice::Ice *m_iceManager;
+  time_t               *m_last_time;
 
 public:
 
-  processJobInfo( glite::wms::ice::Ice* theIce ) 
+  processJobInfo( glite::wms::ice::Ice* theIce, time_t* T ) 
     : m_conf(iceConfManager::getInstance()),
       m_log_dev(cream_api::util::creamApiLogger::instance()->getLogger()),
       m_lb_logger(iceLBLogger::instance()),
-      m_iceManager( theIce ) {}
+      m_iceManager( theIce ),
+      m_last_time( T ) {}
 		   
   void operator()( const soap_proxy::JobInfoWrapper& jobinfo ) 
   {
@@ -114,7 +120,7 @@ public:
 #ifdef ICE_PROFILE_ENABLE
       api_util::scoped_timer T2( "iceCommandStatusPoller2::processorJobInfo()() - GETJOBBYCID" );
 #endif
-      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
       glite::wms::ice::db::GetJobByCid getter( completeJobID );
       glite::wms::ice::db::Transaction tnx;
       tnx.execute( &getter );
@@ -131,13 +137,13 @@ public:
       
     }
 
-    if( tmp_job.get_num_logged_status_changes() >= status_changes.size()) {
-      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                    << "No new states for CREAM Job ID ["
-                    << completeJobID << "]. Skipping"
-		      );
-      return;
-    }
+//     if( tmp_job.get_num_logged_status_changes() >= status_changes.size()) {
+//       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+//                     << "No new states for CREAM Job ID ["
+//                     << completeJobID << "]. Skipping"
+// 		      );
+//       return;
+//     }
 
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                     << "Updating status for CREAM Job ID ["
@@ -168,7 +174,7 @@ public:
 	      DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN(), tmp_job.getMyProxyAddress() );
 	    
 	    glite::wms::ice::db::RemoveJobByCid remover( tmp_job.getCompleteCreamJobID() );
-	    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+	    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
 	    glite::wms::ice::db::Transaction tnx;
 	    tnx.execute( &remover );
 	  }
@@ -182,7 +188,15 @@ public:
 	   is greater than the number of states of the current job.
 	   In this case also check if the job must be purged or resubmitted
 	*/ 
-	if (  tmp_job.get_num_logged_status_changes() < count ) {
+	if((*m_last_time) <= it->getTimestamp() )
+	  (*m_last_time) = it->getTimestamp();
+
+	//	if (  tmp_job.get_num_logged_status_changes() < count ) {
+	  
+	  /**
+	     save the time of the most recent status in order to
+	     return it to the caller.
+	  */
 	  
 	  string exitCode( it->getExitCode() );
 	  
@@ -194,7 +208,6 @@ public:
 			 << " description = [" << it->getDescription() << "]"
 			 );
 	  tmp_job.set_status( stNum );
-	  tmp_job.set_status_timestamp( it->getTimestamp() );
 
 	  try {
 	    tmp_job.set_exitcode( boost::lexical_cast< int >( exitCode ) );
@@ -211,7 +224,7 @@ public:
 	    tmp_job.set_failure_reason( it->getFailureReason() );
 	  }
 	  tmp_job.set_numlogged_status_changes( count );
-	  {
+	  { // DB UPDATE
 	    list<pair<string, string> > params;
 	    params.push_back( make_pair("worker_node", jobinfo.getWorkerNode()) );
 	    /**
@@ -224,14 +237,14 @@ public:
 	    */
 	    params.push_back( make_pair("status", int_to_string(stNum)));
 	    params.push_back( make_pair("exit_code", int_to_string(tmp_job.get_exit_code())));
-	    params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
+	    //	    params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
 	    params.push_back( make_pair("failure_reason", it->getFailureReason()));
-	    params.push_back( make_pair("status_timestamp", int_to_string(tmp_job.getStatusTimestamp()) ) );
+
 #ifdef ICE_PROFILE_ENABLE
 	    api_util::scoped_timer tmp_timer( "iceCommandStatusPoller2::processorJobInfo()() - UPDATEJOBBYGID" );
 #endif
 	    db::UpdateJobByGid updater( tmp_job.getGridJobID(), params);
-	    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+	    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
 	    db::Transaction tnx;
 	    tnx.execute( &updater );
 	  }
@@ -241,7 +254,7 @@ public:
 #endif
 	  iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
 	  if ( ev ) {
-	    tmp_job = m_lb_logger->logEvent( ev );
+	    tmp_job = m_lb_logger->logEvent( ev ); // also DB UPDATE
 	  }
 	  
 	  /**
@@ -253,7 +266,7 @@ public:
 #endif
 	  m_iceManager->resubmit_or_purge_job( tmp_job/*jit*/ );
 	  
-	} //  if (  tmp_job.get_num_logged_status_changes() < count ) {
+	  //	} //  if (  tmp_job.get_num_logged_status_changes() < count ) {
 	
 	
       } // for over states
@@ -274,35 +287,39 @@ iceCommandStatusPoller2::iceCommandStatusPoller2(glite::wms::ice::Ice* theIce)
 void iceCommandStatusPoller2::execute() throw( )
 {
   static const char* method_name = "iceCommandStatusPoller2::execute() - ";
-  /**
-     Before all must determine the oldest status_timestamp from active jobs
-     SELECT status_timestamp FROM jobs WHERE status='0' OR status='1' 
-     OR status='2' OR status='3' 
-     OR status='4' OR status='6' ORDER BY status_timestamp ASC LIMIT 1
-  */
-  
-  if( s_last_seen == -1 ) {
-    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
-    db::GetOldestStatusTime getter;
-    db::Transaction tnx;
-    tnx.execute( &getter );
-    s_last_seen = getter.get();
-  }
-  
-  list<pair<string, string> > userdn_ce = this->getUserDN_CreamURL();
 
-  list<pair<string, string> >::const_iterator it = userdn_ce.begin();
+  list< boost::tuple<string, string, time_t> > userdn_ce;
+  this->getUserDN_CreamURL( userdn_ce );
+
+  list< boost::tuple<string, string, time_t> >::const_iterator it = userdn_ce.begin();
   
   /*
     Loop over all couples
-    <UserDN,CreamURL> and invoke real polling
+    <UserDN,CreamURL>; for each
+    couple get the last poller visited time;
+    then and invoke real polling from that time to 'now'.
   */
   while( it != userdn_ce.end() ) {
-    poll_userdn_ce( it->first, it->second, s_last_seen );
-    ++it;
-  }
+    time_t last_poll_time;
 
-  
+
+    time_t last_poll_time_for_userdn_ce = 
+      poll_userdn_ce( it->get<0>(), it->get<1>(), it->get<2>() );
+    
+    /**
+       Update the table dn_ce_polltime with the new
+       last poll time
+    */
+    if(last_poll_time_for_userdn_ce != -1 )
+      {
+	db::UpdateOldestPollTimeForUserDNCE updater( it->get<0>(), it->get<1>(), last_poll_time_for_userdn_ce );
+	boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+	db::Transaction tnx;
+	tnx.execute( &updater );
+      }
+    
+    ++it; // next tuple userdn/creamurl/last_seen_poll
+  }
 }
 
 //____________________________________________________________________________
@@ -312,48 +329,32 @@ void iceCommandStatusPoller2::execute() throw( )
  *  of <Userdn,CreamURL>
  *
  */
-list<pair<string,string> >
-iceCommandStatusPoller2::getUserDN_CreamURL() const
+void
+iceCommandStatusPoller2::getUserDN_CreamURL(list< boost::tuple<string, string, time_t> >& result) const
 {
   static const char* method_name = "iceCommandStatusPoller2::getUserDN_CreamURL() - ";
   /**
      Obtain an array of different couples of userdn,creamurl
   */
-  list< vector< string > > result;
 
-  {
 #ifdef ICE_PROFILE_ENABLE
-    api_util::scoped_timer tmp_timer2( "iceCommandStatusPoller2::getUserDN_CreamURL() - SQL SELECT couples userdn,CE + MUTEX" );
+  api_util::scoped_timer tmp_timer2( "iceCommandStatusPoller2::getUserDN_CreamURL() - SQL SELECT couples userdn,CE + MUTEX" );
 #endif
-    
-    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
-
+  
+  boost::recursive_mutex::scoped_lock M( CreamJob::s_globalLastTimePollMutex );
+  
 #ifdef ICE_PROFILE_ENABLE
   api_util::scoped_timer tmp_timer3( "iceCommandStatusPoller2::getUserDN_CreamURL() - SQL SELECT couples userdn,CE" );
 #endif
-    /*
-      SELECT DISTINCT (userdn, creamurl) from jobs;
-    */
-    list< string > fields;
-    fields.push_back( "userdn" );
-    fields.push_back( "creamurl" );
-    
-    db::GetFields getter( fields, list< pair< string, string > >(), true/*=DISTINCT*/ );
-    db::Transaction tnx;
-    tnx.execute( &getter );
-    result = getter.get_values();
-  } // relase ICE mutex
+  /*
+    SELECT userdn,creamurl FROM dn_ce_polltime;
+  */
+  db::GetAllDNCE getter;
+  db::Transaction tnx;
+  tnx.execute( &getter );
+  //return getter.get();
+  result = getter.get();
   
-  list<pair<string,string> > list_to_return;
-  
-  list< vector< string > >::const_iterator it;
-
-  for( it = result.begin(); it != result.end(); ++it ) {
-    if( it->at(0).empty() || it->at(1).empty() ) continue;
-    list_to_return.push_back( make_pair( it->at(0), it->at(1) ) );
-  }
-  
-  return list_to_return;
 }
 
 //____________________________________________________________________________
@@ -365,9 +366,10 @@ iceCommandStatusPoller2::getUserDN_CreamURL() const
  *  whose status changed since last_seen to now.
  *
  */
-void iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn, 
-					      const std::string& cream_url,
-					      const time_t last_seen)
+time_t 
+iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn, 
+					 const std::string& cream_url,
+					 const time_t last_seen)
 {
   static const char* method_name = "iceCommandStatusPoller2::poll_userdn_ce() - ";
 
@@ -390,13 +392,6 @@ void iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn,
   
   soap_proxy::AbsCreamProxy::InfoArrayResult Iresult;
   
-  if(m_stopped) {
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		   << "EMERGENCY CALLED STOP. Returning without polling..."
-		   );
-    return;// list<soap_proxy::JobInfoWrapper>();
-  }
-  
 
 
   /**
@@ -408,7 +403,7 @@ void iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn,
 		   << "A valid proxy file for DN [" << userdn
 		   << "] is not available. Skipping polling for this user."
 		   );
-    return;
+    return -1;
   }  
   if( !(isvalid( proxy ).first) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
@@ -416,7 +411,7 @@ void iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn,
 		   << proxy << "] for user ["
 		   << userdn << "] is expired! Skipping polling for this user..."
 		   );
-    return;
+    return -1;
   }
   
   CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
@@ -444,33 +439,18 @@ void iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn,
    * Process the information returned by CREAM
    *
    */
-  processJobInfo processor( m_iceManager );
+  time_t last_poll_time = -1;
+  processJobInfo processor( m_iceManager, &last_poll_time );
   map< string, boost::tuple<soap_proxy::JobInfoWrapper::RESULT, soap_proxy::JobInfoWrapper, string> >::const_iterator it;
   it = Iresult.begin();
+  /**
+     Loop over all jobs returned for the couple userdn,cream_url
+  */
   while( it != Iresult.end() ) {
     processor( it->second.get<1>() );
     ++it;
   }
-
-  /**
-   *
-   * Now determine the "new" last_seen as the
-   * time of the most recent status change
-   *
-   */
-  it = Iresult.begin();
-  while( it != Iresult.end() ) {
-
-    vector< soap_proxy::JobStatusWrapper > status_changes;
-    it->second.get<1>().getStatus( status_changes );
-    vector< soap_proxy::JobStatusWrapper >::const_iterator sit;
-    sit = status_changes.begin();
-    while( sit != status_changes.end() ) {
-      if( s_last_seen < sit->getTimestamp() )
-	s_last_seen = sit->getTimestamp();
-      sit++;
-    }
-    ++it;
-  }
+  
+  return last_poll_time;
 }
 

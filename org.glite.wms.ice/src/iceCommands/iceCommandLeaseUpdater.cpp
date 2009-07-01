@@ -170,7 +170,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
 
     { // acquire lock on the job cache
       //        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
 
       list< CreamJob > allJobs;
       {

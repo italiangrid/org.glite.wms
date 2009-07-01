@@ -213,7 +213,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 #ifdef ICE_PROFILE_ENABLE
 	    api_util::scoped_timer tmp_timer( "iceCommandUpdateStatus::execute - MUTEX1+PROCESSING" );
 #endif
-	    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
+	    boost::recursive_mutex::scoped_lock L( CreamJob::s_globalICEMutex );
 	    CreamJob theJob;
 	    {
 	      db::GetJobByCid getter( notif->get_complete_cream_job_id() );
@@ -270,7 +270,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
 #ifdef ICE_PROFILE_ENABLE
       api_util::scoped_timer tmp_timer( "iceCommandUpdateStatus::execute - MUTEX2+PROCESSING" );
 #endif
-      boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
+      boost::recursive_mutex::scoped_lock L( CreamJob::s_globalICEMutex );
       
 
       /**
