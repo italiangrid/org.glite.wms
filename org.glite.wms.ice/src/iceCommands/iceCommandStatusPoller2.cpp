@@ -429,30 +429,86 @@ iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn,
 // #ifdef ICE_PROFILE_ENABLE
 //   api_util::scoped_timer tmp_timer3( "iceCommandStatusPoller2::poll_userdn_ce - CONNECT TO CREAM" );
 // #endif
-
-  CreamProxy_Query( cream_url,
-		    proxy,
-		    &filter,
-		    &Iresult,
-		    iceid).execute( 3 );
-  
-  /**
-   *
-   * Process the information returned by CREAM
-   *
-   */
   time_t last_poll_time = -1;
-  processJobInfo processor( m_iceManager, &last_poll_time );
-  map< string, boost::tuple<soap_proxy::JobInfoWrapper::RESULT, soap_proxy::JobInfoWrapper, string> >::const_iterator it;
-  it = Iresult.begin();
-  /**
-     Loop over all jobs returned for the couple userdn,cream_url
-  */
-  while( it != Iresult.end() ) {
-    processor( it->second.get<1>() );
-    ++it;
+  try {
+    
+    CreamProxy_Query( cream_url,
+		      proxy,
+		      &filter,
+		      &Iresult,
+		      iceid).execute( 3 );
+    
+    
+    /**
+     *
+     * Process the information returned by CREAM
+     *
+     */
+    //time_t last_poll_time = -1;
+    processJobInfo processor( m_iceManager, &last_poll_time );
+    map< string, boost::tuple<soap_proxy::JobInfoWrapper::RESULT, soap_proxy::JobInfoWrapper, string> >::const_iterator it;
+    it = Iresult.begin();
+    /**
+       Loop over all jobs returned for the couple userdn,cream_url
+    */
+    while( it != Iresult.end() ) {
+      processor( it->second.get<1>() );
+      ++it;
+    }
+  } catch(soap_proxy::auth_ex& ex) {
+    
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+		   << "Cannot query status job for DN=["
+		   << userdn << "] to Cream URL ["
+		   << cream_url<<"]. Exception is [" << ex.what() << "]"
+		   );
+    sleep(1);
+    
+  } catch(soap_proxy::soap_ex& ex) {
+    
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+		   << "Cannot query status job for DN=["
+		   << userdn << "] to Cream URL ["
+		   << cream_url<< "]. Exception is ["  << ex.what() << "]"
+		   );
+    // remove_f.set_reason( ex.what() );
+    sleep(1);
+    
+  } catch(cream_api::cream_exceptions::InternalException& ex) {
+    
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+		   << "Cannot query status job for DN=["
+		   << userdn << "] to Cream URL ["
+		   << cream_url <<"]. Exception is [" << ex.what() << "]"
+		   );
+    // remove_f.set_reason( ex.what() );
+    
+    // this ex can be raised if the remote service is not
+    // reachable and scanJobs is called again immediately. Until
+    // the service is down this could overload the cpu and the
+    // logfile. So let's wait for a while before returning...
+    sleep(1);
+    
+  } catch(exception& ex) {
+    
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+		   << "Cannot query status job for DN=["
+		   << userdn << "] to Cream URL ["
+		   << cream_url <<"]. Exception is [" << ex.what() << "]"
+		   );
+    // remove_f.set_reason( ex.what() );
+    
+  } catch(...) {
+    
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+		   << "Cannot query status job for DN=["
+		   << userdn << "] to Cream URL ["
+		   << cream_url <<"]. Unknown exception catched"
+		   );
+    
   }
   
   return last_poll_time;
+
 }
 
