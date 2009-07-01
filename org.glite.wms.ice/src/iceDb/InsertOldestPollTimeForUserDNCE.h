@@ -15,14 +15,14 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * Get the oldest status_timestamp from active jobs
+ * Get the oldest poll_timestamp from a couple userdn,creamurl
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef GLITE_WMS_ICE_GET_OLDESTST_H
-#define GLITE_WMS_ICE_GET_OLDESTST_H
+#ifndef GLITE_WMS_ICE_INS_OLDESTPOLLTIME_H
+#define GLITE_WMS_ICE_INS_OLDESTPOLLTIME_H
 
 #include "AbsDbOperation.h"
 #include <list>
@@ -36,16 +36,20 @@ namespace glite {
 	/**
 	 *
 	 */
-	class GetOldestStatusTime : public AbsDbOperation {
+	class InsertOldestPollTimeForUserDNCE : public AbsDbOperation {
+
 	protected:
-	  time_t m_result;
-	  
+	  const time_t      m_last_poll_time;
+	  const std::string m_userdn;
+	  const std::string m_creamurl;
+
 	public:
-	  GetOldestStatusTime( ) : AbsDbOperation(), m_result( 0 ) { }
+	  InsertOldestPollTimeForUserDNCE( const std::string& user,
+					   const std::string& ce,
+					   const time_t last_time) 
+	    : AbsDbOperation(), m_last_poll_time( last_time ), m_userdn( user ), m_creamurl( ce ) { }
 	    
 	    virtual void execute( sqlite3* db ) throw( DbOperationException& );
-	    time_t  get( void ) const { return m_result; }
-	    
 	    
 	};
 	

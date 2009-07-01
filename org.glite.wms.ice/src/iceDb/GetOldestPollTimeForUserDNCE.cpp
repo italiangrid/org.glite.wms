@@ -16,18 +16,16 @@
  * limitations under the License.
  *
  * 
- * Get the oldest status_timestamp from active jobs
+ * Get the oldest poll_timestamp from a couple userdn,creamurl
  *
  * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "GetOldestStatusTime.h"
-#include "glite/ce/cream-client-api-c/job_statuses.h"
+#include "GetOldestPollTimeForUserDNCE.h"
 #include <sstream>
 #include <iostream>
 
-namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -36,36 +34,26 @@ namespace { // begin local namespace
   // Local helper function: callback for sqlite
   static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
 
-    //list< vector<string> > *jobs = (list<vector<string> >*)param;
-    //list<CreamJob>* jobs = (list<CreamJob>*)param;
     time_t* result = (time_t*)param;
 
     if( argv && argv[0] ) {
       *result = (time_t)atoi(argv[0]);
     } else {
-      *result = 0;
+      *result = -1;
     }
 
     return 0;
   }
 } // end local namespace
 
-void GetOldestStatusTime::execute( sqlite3* db ) throw ( DbOperationException& )
+void GetOldestPollTimeForUserDNCE::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd( "" );
-  sqlcmd << "SELECT status_timestamp FROM jobs WHERE status=\'"
-	 << api::job_statuses::REGISTERED 
-	 << "\' OR status=\'"
-	 << api::job_statuses::PENDING 
-	 << "\' OR status=\'"
-	 << api::job_statuses::IDLE
-	 << "\' OR status=\'"
-	 << api::job_statuses::RUNNING
-	 << "\' OR status=\'"
-	 << api::job_statuses::REALLY_RUNNING
-	 << "\' OR status=\'"
-	 << api::job_statuses::HELD
-	 << "\' ORDER BY status_timestamp ASC LIMIT 1;";
+  sqlcmd << "SELECT last_seen_poll FROM dn_ce_polltime WHERE userdn=\'"
+	 << m_userdn 
+	 << "\' AND creamurl=\'"
+	 << m_creamurl 
+	 << "\';";
  
     //list< vector<string> > jobs;
 
