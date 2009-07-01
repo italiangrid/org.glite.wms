@@ -39,7 +39,7 @@ namespace glite {
 	class GetOldestPollTimeForUserDNCE : public AbsDbOperation {
 
 	protected:
-	  time_t m_result;
+	  time_t            m_result;
 	  const std::string m_userdn;
 	  const std::string m_creamurl;
 
@@ -49,7 +49,7 @@ namespace glite {
 	    : AbsDbOperation(), m_result( 0 ), m_userdn( user ), m_creamurl( ce ) { }
 	    
 	    virtual void execute( sqlite3* db ) throw( DbOperationException& );
-	    time_t  get( void ) const { return m_result; }
+	    time_t get( void ) const { return m_result; }
 	    
 	};
 	

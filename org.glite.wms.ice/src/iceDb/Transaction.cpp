@@ -84,9 +84,9 @@ namespace {
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS dn_ce_polltime ( "	\
-		"userdn text primary key not null, "	\
+		"userdn text not null, "	\
 		"creamurl text not null, "		\
-		"last_seen_poll integer(4) not null default 0 "		\
+		"last_seen_poll integer(4) not null"		\
 		")";
 	      do_query( db, sqlcmd );
 	      
@@ -166,20 +166,6 @@ namespace {
 	      
 	    }
 
-	    try {
-	      string sqlcmd = 
-		"CREATE INDEX IF NOT EXISTS stimestamp ON jobs (status_timestamp) ASC"; 
-	      do_query( db, sqlcmd );
-            } catch( DbOperationException& ex ) {
-	      
-	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
-			      << "CreateDb::execute() - "
-			      << "Error creating index stimestamp on table jobs: "
-			      << ex.what() << ". STOP!"
-			      );
-	      abort();
-	      
-            }
 	    try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS dnce ON dn_ce_polltime (userdn,creamurl)"; 

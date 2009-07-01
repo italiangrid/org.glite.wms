@@ -39,7 +39,7 @@ namespace { // begin local namespace
     if( argv && argv[0] ) {
       *result = (time_t)atoi(argv[0]);
     } else {
-      *result = -1;
+      *result = 0;
     }
 
     return 0;

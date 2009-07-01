@@ -30,19 +30,28 @@ using namespace std;
 void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callback_t callback, void* param ) throw( DbOperationException& )
 {
     char* errMsg; 
-    string error;                               
-    int rc = sqlite3_exec(db, sqlcmd.c_str(), callback, param, &errMsg);
-    switch ( rc ) {
-    case SQLITE_OK:
+    string error;      
+    int retry = 0;
+    int s = 2;
+    while(1) {
+      int rc = sqlite3_exec(db, sqlcmd.c_str(), callback, param, &errMsg);
+      switch ( rc ) {
+      case SQLITE_OK:
+	return;
         break; // normal termination        
-    case SQLITE_BUSY:
-    case SQLITE_LOCKED:
+      case SQLITE_BUSY:
+      case SQLITE_LOCKED:
         error = boost::str( boost::format( "Query [%1%] failed due to error [%2%]" ) % sqlcmd % errMsg );
         sqlite3_free(errMsg);
         throw DbLockedException( error );
-    default:
+      default:
         error = boost::str( boost::format( "Query [%1%] failed due to error [%2%]" ) % sqlcmd % errMsg );
         sqlite3_free(errMsg);
-        throw DbOperationException( error );
+	sleep(s);
+	s = s*2;
+	retry++;
+	if(retry > 5)
+	  throw DbOperationException( error );
+      }
     }
 }

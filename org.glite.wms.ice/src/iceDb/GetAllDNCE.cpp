@@ -37,7 +37,7 @@ namespace { // begin local namespace
     list< boost::tuple< string, string, time_t > > *result = (list< boost::tuple< string, string, time_t > > *)param;
 
     if( argv && argv[0] ) {
-      result->push_back( boost::make_tuple( argv[0], argv[1], (time_t)(atoi(argv[1])) ) );
+      result->push_back( boost::make_tuple( argv[0], argv[1], (time_t)(atoi(argv[2])) ) );
     } 
     return 0;
   }
