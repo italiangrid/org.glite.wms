@@ -390,7 +390,7 @@ void JobSubmit::submission ( ){
 					"The job has been successfully registered (the JobId is: " + this->getJobId( ) + "),"+
 					" but an error occurred while transferring files:",
 					 string (exc.what())+"\n"+
-					"To complete the operation start the job by issuing a submission with the option:\n"+
+					"To complete the operation be sure that the files have been transferred and start the job by issuing a submission with the option:\n"+
 					" --start " + this->getJobId( ) + "\n"
 					 );
 			}
