@@ -91,7 +91,7 @@ namespace glite {
           std::string m_wn_sequence_code; //! The sequence code for the job sent to the worker node      
           glite::ce::cream_client_api::job_statuses::job_status m_prev_status; //! previous status of the job
 	  glite::ce::cream_client_api::job_statuses::job_status m_status; //! Current status of the job
-	  time_t      m_status_timestamp;
+	  //	  time_t      m_status_timestamp;
           int m_num_logged_status_changes; //! Number of status changes which have been logged to L&B
           time_t m_last_seen; //! The time of the last received notification for the job. For newly created jobs, this value is set to zero.
           std::string m_lease_id; //! The lease ID associated with this job
@@ -132,7 +132,7 @@ namespace glite {
 		    const std::string& wn_sequence_code,
 		    const std::string& prev_status,
 		    const std::string& status,
-		    const std::string& status_timestamp,
+		    //		    const std::string& status_timestamp,
 		    const std::string& num_logged_status_changes,
 		    const std::string& leaseid,
 		    const std::string& status_poller_retry_count,
@@ -160,7 +160,7 @@ namespace glite {
 	      "wn_sequence_code,"		\
 	      "prev_status,"			\
 	      "status,"				\
-	      "status_timestamp,"		\
+	      //	      "status_timestamp,"	
 	      "num_logged_status_changes,"	\
 	      "leaseid,"			\
 	      "status_poller_retry_count,"	\
@@ -190,7 +190,7 @@ namespace glite {
 	      "wn_sequence_code,"		\
 	      "prev_status,"			\
 	      "status,"				\
-	      "status_timestamp,"		\
+	      //	      "status_timestamp,"	
 	      "num_logged_status_changes,"	\
 	      "leaseid,"			\
 	      "status_poller_retry_count,"	\
@@ -221,7 +221,7 @@ namespace glite {
 	      " wn_sequence_code text,"				\
 	      " prev_status integer(1),"			\
 	      " status integer(1),"				\
-	      " status_timestamp integer(4),"			\
+	      //	      " status_timestamp integer(4),"	
 	      " num_logged_status_changes integer(1),"		\
 	      " leaseid text,"					\
 	      " status_poller_retry_count integer(1),"		\
@@ -234,7 +234,8 @@ namespace glite {
 	      " last_poller_visited integer(4) ";
 	  }
 
-	  static boost::recursive_mutex globalICEMutex;
+	  static boost::recursive_mutex s_globalICEMutex;
+	  static boost::recursive_mutex s_globalLastTimePollMutex;
 
           //! Default constructor
           CreamJob( );
@@ -243,7 +244,7 @@ namespace glite {
 	  //	  CreamJob( const std::vector< std::string >& );
 
 	  //! Sets the status of the CreamJob object
-	  void set_status_timestamp( const time_t T ) { m_status_timestamp = T; } 
+	  //	  void set_status_timestamp( const time_t T ) { m_status_timestamp = T; } 
 	  void set_status( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_prev_status = m_status; m_status = st; }
 	  //! Sets the cream unique identifier for this job
           void set_cream_jobid( const std::string& cid ) { m_cream_jobid = cid; }
@@ -287,7 +288,7 @@ namespace glite {
 	  //	  int    getDelegationDuration( void ) const { return m_delegation_duration; }
 
 
-	  time_t getStatusTimestamp( void ) const { return m_status_timestamp; }
+	  //	  time_t getStatusTimestamp( void ) const { return m_status_timestamp; }
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return m_grid_jobid; }
 
@@ -508,7 +509,7 @@ namespace glite {
 
 	      ar & m_status;
 
-	      ar & m_status_timestamp;
+	      //	      ar & m_status_timestamp;
 	      
 
 	      ar & m_num_logged_status_changes;

@@ -33,7 +33,7 @@
 #include "iceDb/Transaction.h"
 #include "iceDb/CreateProxyField.h"
 #include "iceDb/GetAllProxyInfo.h"
-
+#include "iceDb/RemoveOldestPollTimeForUserDN.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -364,6 +364,13 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
 		     );
       {
 	db::RemoveProxyByDN remover( mapKey );
+	db::Transaction tnx;
+	tnx.execute( &remover );
+      }
+
+      {
+	boost::recursive_mutex::scoped_lock M( CreamJob::s_globalLastTimePollMutex );
+	db::RemoveOldestPollTimeForUserDN remover( userDN );
 	db::Transaction tnx;
 	tnx.execute( &remover );
       }

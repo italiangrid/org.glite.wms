@@ -453,7 +453,7 @@ void Delegation_manager::purge_old_delegations( void )
 //     deleg_time_view.erase( deleg_time_view.begin(), it_end );
 //     size_t size_after = deleg_time_view.size();
 
-    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
 
     list<table_entry> allDelegations;
     {

@@ -532,7 +532,7 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
    */
   
   //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-  boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+  boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
 
   string cemon;
   set<string> goodCEMons, toCheck;
