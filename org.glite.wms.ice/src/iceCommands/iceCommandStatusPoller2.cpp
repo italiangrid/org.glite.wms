@@ -42,10 +42,10 @@
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/GetAllDNCE.h"
-#include "iceDb/GetOldestPollTimeForUserDNCE.h"
+//#include "iceDb/GetOldestPollTimeForUserDNCE.h"
 #include "iceDb/UpdateOldestPollTimeForUserDNCE.h"
 #include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
-#include "iceDb/InsertOldestPollTimeForUserDNCE.h"
+//#include "iceDb/InsertOldestPollTimeForUserDNCE.h"
 
 
 // Cream Client API Headers
@@ -378,7 +378,9 @@ iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn,
 #endif
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		 << "Asking for job status changes from [" 
+		 << "Asking for job status changes for userdn ["
+		 << userdn << "] to Cream URL ["
+		 << cream_url << "] from [" 
 		 << time_t_to_string( last_seen ) << "] to now."
 		 );
 

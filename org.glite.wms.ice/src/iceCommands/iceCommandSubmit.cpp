@@ -514,16 +514,28 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 	    string proxy = m_theJob.getUserProxyCertificate();
 	    
 	    {
+#ifdef ICE_PROFILE_ENABLE
+	      api_util::scoped_timer T0( "iceCommandSubmit::try_to_submit - MUTEX + SQL SELECT LAST POLL" );
+#endif
 	      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::s_globalLastTimePollMutex );
-	      time_t last_poll_time;
+	      int last_poll_time;
 	      {
+#ifdef ICE_PROFILE_ENABLE
+		api_util::scoped_timer T0( "iceCommandSubmit::try_to_submit - SQL SELECT LAST POLL" );
+#endif
 		db::GetOldestPollTimeForUserDNCE getter( m_theJob.getUserDN(), 
 							 m_theJob.getCreamURL() );
 		db::Transaction tnx;
 		tnx.execute( &getter );
 		last_poll_time = getter.get();
 	      }
-	      if( last_poll_time == -1 ) {
+
+	      //cout << "\n **** last_poll_time=[" << last_poll_time << "]\n" << endl;
+
+	      if( !last_poll_time ) {
+#ifdef ICE_PROFILE_ENABLE
+		api_util::scoped_timer T0( "iceCommandSubmit::try_to_submit - SQL INSERT LAST POLL" );
+#endif	
 		db::InsertOldestPollTimeForUserDNCE inserter( m_theJob.getUserDN(), 
 							      m_theJob.getCreamURL(),
 							      time(0) - 600 );
