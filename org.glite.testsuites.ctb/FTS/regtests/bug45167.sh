@@ -23,7 +23,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "Listing grup members"
+echo "Listing group members"
 glite-transfer-group-list $group > out.txt
 if [ $? -ne 0 ]; then
   echo "Error listing group"
@@ -61,7 +61,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "Listing grup members"
+echo "Listing group members"
 glite-transfer-group-list $group > out.txt
 if [ $? -ne 0 ]; then
   echo "Error listing group"
