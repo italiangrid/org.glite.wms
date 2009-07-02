@@ -29,7 +29,7 @@ wm.h :
 	-t $(GLITE_LOCATION)/interface/wmptypemap.dat \
 	$(GLITE_LOCATION)/interface/WMProxy.wsdl
 
-soapC.cpp : wm.h
+soapC.cpp soapServer.cpp soapH.h soapStub.h: wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
 	$(GSOAP_LOCATION)/bin/soapcpp2 -I$(GSOAP_LOCATION)/include wm.h 
