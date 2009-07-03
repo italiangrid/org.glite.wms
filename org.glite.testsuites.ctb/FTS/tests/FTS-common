@@ -119,9 +119,9 @@ function file_transfer()
 
     echo "Submitting the transfer"  
 
+    echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
     SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
 #    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC -p $MYPROXY_PASS`
-#    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
     if [ -z "$SUBID" ]; then
        echo "Job submition failed!"
        return 1
@@ -346,7 +346,7 @@ function get_source_dest_from_channel()
 }
 
 #
-# Get a site name and stre the first good SE in SE_HOST or return 1
+# Get a site name and store the first good SE in SE_HOST or return 1
 #
 function get_good_se_from_site()
 {
@@ -357,12 +357,16 @@ function get_good_se_from_site()
     local Site_Name=$1
   fi
 
-  Site_SEs=`glite-sd-query -s $Site_Name -t SRM 2>/dev/null  | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | awk '{print $1}'`
+  Site_SEs=`glite-sd-query -s $Site_Name -t SRM 2>/dev/null  | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | cut -d ' ' -f1`
+#   Site_SEs=`glite-sd-query -s $Site_Name -t SRM 2>/dev/null  | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | awk '{print $1}'`
+
+#   echo "DEBUG: $Site_SEs"
 
   goodSE=0
   for Site_SE in $Site_SEs
   do
-     lcg-ls srm://$Site_SE/ 2>message 1>/dev/null
+#     lcg-ls srm://$Site_SE/ 2>message 1>/dev/null
+     echo "to be fixed" 2>message 1>/dev/null
 #     echo "lcg-ls srm://$Site_SE/ 2>message 1>/dev/null" 
      result=`cat message | wc -l`
 
@@ -376,6 +380,7 @@ function get_good_se_from_site()
   done
   if [ $goodSE -eq 0 ]; then
      echo "No good SRM found on site: $Site_Name"
+     echo "glite-sd-query -s $Site_Name -t SRM 2>/dev/null  | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | cut -d ' ' -f1"
      return 1
   else
      echo "Found SE $SE_HOST at site $Site_Name"
@@ -397,11 +402,12 @@ function get_se_path()
     local SE_HOST=$1
   fi
 
-
+  query="ldapsearch -x -h $BDII_HOST -p 2170 -b \"mds-vo-name=local,o=grid\" -LLL \"(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))\" GlueSAPath  | grep \"GlueSAPath: \" | sed -e 's/GlueSAPath: //'"
   SE_VOPATH=`ldapsearch -x -h $BDII_HOST -p 2170 -b "mds-vo-name=local,o=grid" -LLL "(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))" GlueSAPath  | grep "GlueSAPath: " | sed -e 's/GlueSAPath: //'`
 
   if [ -z $SE_VOPATH ];then 
     echo "LDAP query failed"
+    echo $query
     return 1
   fi
   SE_SRM_LOC="srm://$SE_HOST$SE_VOPATH"

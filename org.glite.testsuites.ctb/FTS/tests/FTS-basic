@@ -187,15 +187,20 @@ test_ldap
 # Checking if there is information for FTS Server on top level BDII
 ##################################################################
 
-test_bdii
+#test_bdii
 
 #####################################################################
 # Getting Tomcart Port for FTS Server from top level BDII: $BDII_HOST
 #####################################################################
 
-FTS_URL=`glite-sd-query -t org.glite.FileTransfer 2>/dev/null | grep $FTS_HOST | grep Endpoint | sed -e 's/Endpoint://g'`
-FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
-FTS_TOMCAT_PORT=`echo $FTS_URL | awk '{print $2}'`
+#DO NOT USE THE BDII DURING PATCH CERTIFICATION UNTIL AN EFFICIENT WAY
+#TO UPDATE THE BDII IS FOUND
+#FTS_URL=`glite-sd-query -t org.glite.FileTransfer 2>/dev/null | grep $FTS_HOST | grep Endpoint | sed -e 's/Endpoint://g'`
+#FTS_URL=`echo $FTS_URL | awk '{print $1}' | sed -e 's/https:\/\///g' | sed 's/\// /g' | awk '{print $1}' | sed -e 's/:/ /g'`
+#FTS_TOMCAT_PORT=`echo $FTS_URL | awk '{print $2}'`
+
+#FTS PORT HARDCODED
+FTS_TOMCAT_PORT=8443
 
 #######################################################
 # Checking if Tomcat Server on FTS is working properely
