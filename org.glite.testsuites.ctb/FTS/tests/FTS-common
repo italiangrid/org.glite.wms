@@ -345,6 +345,31 @@ function get_source_dest_from_channel()
   return 0
 }
 
+
+#
+# Get default SE from site
+#
+function get_def_se_from_site()
+{
+  if [ -z $1 ];then
+    echo "A site name must be provided to get_good_se_from_site()"
+    return 2
+  else
+    local Site_Name=$1
+  fi
+  if [ $Site_Name == "cert-tb-cern" ]; then
+    SE_HOST=$CERN_SE
+  elif [ $Site_Name == "ddesycerttb"]; then
+    SE_HOST=$DESY_SE
+  else
+    echo "get_def_se_from_site: no SE defined for site $Site_Name"
+    return 1
+  fi
+  return 0
+}
+   
+
+
 #
 # Get a site name and store the first good SE in SE_HOST or return 1
 #
@@ -361,7 +386,6 @@ function get_good_se_from_site()
 #   Site_SEs=`glite-sd-query -s $Site_Name -t SRM 2>/dev/null  | grep Name | sed -e 's/Name: httpg:\/\///g' | sed -e 's/:/ /g' | awk '{print $1}'`
 
 #   echo "DEBUG: $Site_SEs"
-
   goodSE=0
   for Site_SE in $Site_SEs
   do
@@ -369,7 +393,6 @@ function get_good_se_from_site()
      echo "to be fixed" 2>message 1>/dev/null
 #     echo "lcg-ls srm://$Site_SE/ 2>message 1>/dev/null" 
      result=`cat message | wc -l`
-
      if [ $result -gt 0 ];then
         continue
      else
