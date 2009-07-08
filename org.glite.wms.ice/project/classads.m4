@@ -11,13 +11,20 @@ AC_DEFUN([GLITE_CHECK_CLASSADS],
 AC_MSG_CHECKING([for libclassad])
 ac_classads_prefix=$with_classads_prefix
 if test -d "$ac_classads_prefix"; then
-    CLASSAD_CPPFLAGS="-I$ac_classads_prefix/include -DWANT_NAMESPACES"
-    if test x$host_cpu = xx86_64 -o x$host_cpu = xia64; then
-        CLASSAD_LDFLAGS="-L$ac_classads_prefix/lib64"
+    CLASSAD_CPPFLAGS="-I$ac_classads_prefix/include/classad -I$with_classads_prefix/include -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE"
+    if test $host_cpu = x86_64 -o "$host_cpu" = ia64 ; then
+        ac_classads_lib_dir="lib64"
     else
-        CLASSAD_LDFLAGS="-L$ac_classads_prefix/lib"
+        ac_classads_lib_dir="lib"
     fi
-    CLASSAD_LIBS="-lclassad"
+
+    CLASSAD_LDFLAGS="-L$ac_classads_lib_dir"
+
+    if test -e "$ac_classads_prefix/$ac_classads_lib_dir/libclassad_ns.a"; then
+      CLASSAD_LIBS="-lclassad_ns"
+    else
+      CLASSAD_LIBS="-lclassad"
+    fi
 else
     AC_MSG_ERROR([$with_classads_prefix: no such directory])
 fi
@@ -76,14 +83,18 @@ AC_DEFUN([AC_CLASSADS],
     AC_MSG_CHECKING([for CLASSAD installation])
 
     CLASSAD_CFLAGS=""
-    CLASSAD_LIBS="-lclassad -ldl"
+    if test -e "$with_classads_prefix/$ac_classads_lib_dir/libclassad_ns.a"; then
+      CLASSAD_LIBS="-lclassad_ns -ldl"
+    else
+      CLASSAD_LIBS="-lclassad -ldl"
+    fi
     CLASSAD_DL_LIBS="-lclassad_dl"
     if test -n "$with_classads_prefix" -a "$with_classads_prefix" != "/usr" ; then
         AC_MSG_RESULT([prefix: $with_classads_prefix])
 
         ac_classads_prefix=$with_classads_prefix
 
-        CLASSAD_CFLAGS="-I$with_classads_prefix/include"
+        CLASSAD_CFLAGS="-I$with_classads_prefix/include/classad -I$with_classads_prefix/include -DWANT_NAMESPACES -DWANT_CLASSAD_NAMESPACE"
         CLASSAD_LIBS="-L$with_classads_prefix/$ac_classads_lib_dir $CLASSAD_LIBS"
         CLASSAD_DL_LIBS="-L$with_classads_prefix/$ac_classads_lib_dir $CLASSAD_DL_LIBS"
     fi

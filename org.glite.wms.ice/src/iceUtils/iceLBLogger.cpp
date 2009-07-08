@@ -20,6 +20,7 @@
 #include "iceLBLogger.h"
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
+//#include "jobCache.h"
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -146,7 +147,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 #ifdef ICE_PROFILE_ENABLE
  	  api_util::scoped_timer T( "iceLBLogger::logEvent - ICE Mutex acquisition" );//126
 #endif
-	  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::s_globalICEMutex );
+	  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
 
             CreamJob theJob( ev->getJob() );
 	    

@@ -36,11 +36,13 @@ namespace glite {
 	  glite::wms::ice::util::Delegation_manager::table_entry  m_result;
 	  const std::string                                       m_digest, m_creamurl;
 	  bool                                                    m_found;
+	  const std::string                                       m_myproxyurl;
 
 	public:
 	  GetDelegation( const std::string& digest, 
-			 const std::string& creamurl ) 
-	    : AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ), m_found( false )
+			 const std::string& creamurl,
+			 const std::string& myproxyurl) 
+	    : AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ), m_found( false ), m_myproxyurl( myproxyurl )
 	    { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );

@@ -20,7 +20,7 @@
 #include <string>
 #include <iostream>
 #include <sys/types.h>          // getpid(), getpwnam()
-#include <unistd.h>             // getpid()
+#include <unistd.h>             // getpid(), usleep
 #include <pwd.h>                // getpwnam()
 #include <cstdio>               // popen()
 #include <cstdlib>              // atoi()
@@ -395,7 +395,7 @@ int main(int argc, char*argv[])
                            << "There are currently too many requests ("
                            << command_count
                            << ") in the internal command queue. "
-                           << "Will check again in 2 seconds."
+                           << "Will check again in 1/2 second."
                            
                            );
             //sleep( 30 );
@@ -447,7 +447,7 @@ int main(int argc, char*argv[])
 	    }
 	}
 
-	sleep(2);
+	usleep(500000);
 	
 	/**
 	 * Comment the following single line to activate the suicidal

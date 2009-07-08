@@ -30,9 +30,10 @@ using namespace std;
 void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callback_t callback, void* param ) throw( DbOperationException& )
 {
     char* errMsg; 
-    string error;      
+    string error;                               
     int retry = 0;
     int s = 2;
+    
     while(1) {
       int rc = sqlite3_exec(db, sqlcmd.c_str(), callback, param, &errMsg);
       switch ( rc ) {
@@ -51,7 +52,8 @@ void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callbac
 	s = s*2;
 	retry++;
 	if(retry > 5)
-	  throw DbOperationException( error );
+          throw DbOperationException( error );
+	
       }
     }
 }

@@ -81,14 +81,12 @@ using namespace std;
 using namespace glite::wms::ice::util;
 
 boost::recursive_mutex CreamJob::serialize_mutex;
-boost::recursive_mutex CreamJob::s_globalICEMutex;
-boost::recursive_mutex CreamJob::s_globalLastTimePollMutex;
+boost::recursive_mutex CreamJob::globalICEMutex;
 
 //______________________________________________________________________________
 CreamJob::CreamJob( ) :
     m_prev_status( api::job_statuses::UNKNOWN ),
     m_status( api::job_statuses::UNKNOWN ),
-    //    m_status_timestamp( time(0) ),
     m_num_logged_status_changes( 0 ),
     m_last_seen( time(0) ),
     m_statusPollRetryCount( 0 ),
@@ -118,7 +116,6 @@ CreamJob::CreamJob( const std::string& gid,
 		    const std::string& wn_sequence_code,
 		    const std::string& prev_status,
 		    const std::string& status,
-		    //		    const std::string& status_timestamp,
 		    const std::string& num_logged_status_changes,
 		    const std::string& leaseid,
 		    //const std::string& proxycert_timestamp,
@@ -144,7 +141,6 @@ CreamJob::CreamJob( const std::string& gid,
   m_wn_sequence_code           = wn_sequence_code;
   m_prev_status                = (glite::ce::cream_client_api::job_statuses::job_status)atoi(prev_status.c_str());
   m_status                     = (glite::ce::cream_client_api::job_statuses::job_status)atoi(status.c_str());
-  //  m_status_timestamp           = (time_t)atoi(status_timestamp.c_str());
   m_num_logged_status_changes  = atoi(num_logged_status_changes.c_str());
   m_last_seen                  = (time_t)atoi(last_seen.c_str());
   m_lease_id                   = leaseid;

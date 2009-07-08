@@ -13,7 +13,6 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandCancel.cpp \
 	iceCommandFactory.cpp \
 	iceCommandStatusPoller.cpp \
-	iceCommandStatusPoller2.cpp \
 	iceCommandSubUpdater.cpp \
 	iceCommandUpdateStatus.cpp \
 	iceCommandProxyRenewal.cpp \
@@ -36,6 +35,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-a
 		$(LOG4CPP_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
+		-DICE_PROFILE_ENABLE \
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in

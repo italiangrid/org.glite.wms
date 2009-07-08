@@ -40,8 +40,6 @@
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/CreateJob.h"
-#include "iceDb/GetOldestPollTimeForUserDNCE.h"
-#include "iceDb/InsertOldestPollTimeForUserDNCE.h"
 
 /**
  *
@@ -83,7 +81,6 @@ namespace configuration = glite::wms::common::configuration;
 using namespace glite::wms::ice;
 
 boost::recursive_mutex iceCommandSubmit::s_localMutexForSubscriptions;
-//boost::recursive_mutex iceCommandSubmit::s_regtime_mutex;
 
 //
 //
@@ -116,7 +113,7 @@ namespace { // Anonymous namespace
 	  db::RemoveJobByGid remover( m_grid_job_id );
 
 	  //            boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-	  boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::s_globalICEMutex );
+	  boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
 	  //            iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
 	  //            m_cache->erase( it );
 	  db::Transaction tnx;
@@ -267,7 +264,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     {
 //      api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute() - First mutex: Check of GridJobID" );
 //        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::s_globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
       
       db::CheckGridJobID check( m_theJob.getGridJobID() );
       db::Transaction tnx;
@@ -298,7 +295,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
      */       
 
     {
-      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::s_globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
       db::CreateJob creator( m_theJob );
       db::Transaction tnx;
       tnx.execute( &creator );
@@ -511,45 +508,15 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
             boost::replace_all( iceid, "/", "_" );
             boost::replace_all( iceid, "=", "_" );
             
+	    //string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( userdn ).get<0>()
+	    //if( proxy.empty() )
 	    string proxy = m_theJob.getUserProxyCertificate();
 	    
-	    {
-#ifdef ICE_PROFILE_ENABLE
-	      api_util::scoped_timer T0( "iceCommandSubmit::try_to_submit - MUTEX + SQL SELECT LAST POLL" );
-#endif
-	      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::s_globalLastTimePollMutex );
-	      int last_poll_time;
-	      {
-#ifdef ICE_PROFILE_ENABLE
-		api_util::scoped_timer T0( "iceCommandSubmit::try_to_submit - SQL SELECT LAST POLL" );
-#endif
-		db::GetOldestPollTimeForUserDNCE getter( m_theJob.getUserDN(), 
-							 m_theJob.getCreamURL() );
-		db::Transaction tnx;
-		tnx.execute( &getter );
-		last_poll_time = getter.get();
-	      }
-
-	      //cout << "\n **** last_poll_time=[" << last_poll_time << "]\n" << endl;
-
-	      if( !last_poll_time ) {
-#ifdef ICE_PROFILE_ENABLE
-		api_util::scoped_timer T0( "iceCommandSubmit::try_to_submit - SQL INSERT LAST POLL" );
-#endif	
-		db::InsertOldestPollTimeForUserDNCE inserter( m_theJob.getUserDN(), 
-							      m_theJob.getCreamURL(),
-							      time(0) - 600 );
-		db::Transaction tnx;
-		tnx.execute( &inserter );
-	      }
-	    }
-
             iceUtil::CreamProxy_Register( m_theJob.getCreamURL(),
                                           proxy,
                                           (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
                                           &res,
                                           iceid).execute( 3 );
-
         } catch ( glite::ce::cream_client_api::cream_exceptions::GridProxyDelegationException& ex ) {
             // Here CREAM tells us that the delegation ID is unknown.
             // We do not trust this fault, and try to redelegate the
@@ -780,11 +747,11 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 //       api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in database" );
 // #endif
       //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::s_globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
         m_theJob.set_last_seen( time(0) );
 	list< pair<string, string> > params;
 	params.push_back( make_pair("last_seen", iceUtil::int_to_string(m_theJob.getLastSeen())));
-	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params ); 
+	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params ); // FIXME: could use ad-hoc UpdateXYZ ???
 	db::Transaction tnx;
 	tnx.execute( &updater );
     }

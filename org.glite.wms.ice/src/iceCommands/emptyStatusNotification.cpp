@@ -31,13 +31,13 @@
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "glite/ce/cream-client-api-c/scoped_timer.h"
+
 // other gLite stuff
 #include "classad_distribution.h"
 
 // boost
 #include "boost/scoped_ptr.hpp"
-namespace api_util   = glite::ce::cream_client_api::util;
+
 namespace api = glite::ce::cream_client_api;
 using namespace glite::wms::ice::util;
 using namespace std;
@@ -52,13 +52,10 @@ emptyStatusNotification::emptyStatusNotification( const std::string& cream_job_i
 
 void emptyStatusNotification::apply( void )
 {
-#ifdef ICE_PROFILE_ENABLE
-  api_util::scoped_timer tmp_timer( "emptyStatusNotification::apply - ENTIRE METHOD" );
-#endif
     log4cpp::Category *m_log_dev( api::util::creamApiLogger::instance()->getLogger() );
     static const char *method_name = "emptyStatusNotification::apply() - ";
 
-    boost::recursive_mutex::scoped_lock L( CreamJob::s_globalICEMutex );
+    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
 
   CREAM_SAFE_LOG( m_log_dev->debugStream()
   		  << method_name

@@ -80,27 +80,6 @@ namespace {
 	      abort();
 	    
             }
-
-	    try {
-	      string sqlcmd = 
-		"CREATE TABLE IF NOT EXISTS dn_ce_polltime ( "	\
-		"userdn text not null, "	\
-		"creamurl text not null, "		\
-		"last_seen_poll integer(4) not null"		\
-		")";
-	      do_query( db, sqlcmd );
-	      
-	    } catch( DbOperationException& ex ) {
-	      
-	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
-			      << "CreateDb::execute() - "
-			      << "Error creating database table proxy: "
-			      << ex.what() << ". STOP!"
-			      );
-	      abort();
-	      
-	    }
-
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS proxy ( "	\
@@ -165,35 +144,6 @@ namespace {
 	      abort();
 	      
 	    }
-
-	    try {
-	      string sqlcmd = 
-		"CREATE UNIQUE INDEX IF NOT EXISTS dnce ON dn_ce_polltime (userdn,creamurl)"; 
-	      do_query( db, sqlcmd );
-            } catch( DbOperationException& ex ) {
-	      
-	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
-			      << "CreateDb::execute() - "
-			      << "Error creating index dnce on table dn_ce_polltime: "
-			      << ex.what() << ". STOP!"
-			      );
-	      abort();
-	      
-            }
-	    try {
-	      string sqlcmd = 
-		"CREATE INDEX IF NOT EXISTS lastpolltime ON dn_ce_polltime (last_seen_poll)"; 
-	      do_query( db, sqlcmd );
-            } catch( DbOperationException& ex ) {
-	      
-	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
-			      << "CreateDb::execute() - "
-			      << "Error creating index lastpolltime on table dn_ce_polltime: "
-			      << ex.what() << ". STOP!"
-			      );
-	      abort();
-	      
-            }
             try {
 	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS gid_index ON jobs (gridjobid)"; 
@@ -224,7 +174,7 @@ namespace {
             }
             try {
               string sqlcmd =
-                "CREATE UNIQUE INDEX IF NOT EXISTS ccid_index ON jobs (complete_cream_jobid)";
+                "CREATE INDEX IF NOT EXISTS ccid_index ON jobs (complete_cream_jobid)";
               do_query( db, sqlcmd );
             } catch( DbOperationException& ex ) {
 	      
@@ -379,7 +329,7 @@ namespace {
 	    }
 	    try {
 	      string sqlcmd = 
-		"PRAGMA default_cache_size=400;";
+		"PRAGMA default_cache_size=200;";
 	      do_query( db, sqlcmd );
 	    } catch( DbOperationException& ex ) {
 	      

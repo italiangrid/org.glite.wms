@@ -153,7 +153,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     Request_source_purger r( m_request );
     wms_utils::scope_guard remove_request_guard( r );
     
-    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::s_globalICEMutex );
+    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
     
     db::Transaction tnx;
     db::GetJobByGid get( m_gridJobId );

@@ -21,7 +21,6 @@
 #include "ice-core.h"
 #include "eventStatusPoller.h"
 #include "iceCommandStatusPoller.h"
-#include "iceCommandStatusPoller2.h"
 
 
 // other glite includes
@@ -86,7 +85,7 @@ void eventStatusPoller::body( void )
                          );
 
         //m_pool->add_request( new iceCommandStatusPoller( m_iceManager ) );
-	glite::wms::ice::util::iceCommandStatusPoller2( m_iceManager ).execute();
-	//m_real_poller.execute();
+	//iceCommandStatusPoller( m_iceManager ).execute();
+	m_real_poller.execute();
     }
 }

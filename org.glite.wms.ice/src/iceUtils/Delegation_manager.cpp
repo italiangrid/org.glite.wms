@@ -31,7 +31,6 @@
 #include <stdexcept>
 #include <cerrno>
 
-//#include "iceDb/GetFields.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/GetDelegation.h"
 #include "iceDb/GetFieldsCount.h"
@@ -55,46 +54,6 @@ boost::recursive_mutex Delegation_manager::s_mutex;
 
 typedef map<string, boost::tuple<string, string, time_t, int, string,bool,string> > DelegInfo;
 
-//______________________________________________________________________________
-// namespace {
-
-
-
-// };
-
-//______________________________________________________________________________
-// string Delegation_manager::computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
-
-//   static char* method_name = "Delegation_manager::computeSHA1Digest() - ";
-
-//   unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
-//   char buffer[ 1024 ]; // buffer for file data
-//   SHA_CTX ctx;
-//   int fd; // file descriptor
-//   unsigned long nread = 0; // number of bytes read
-
-//   fd = open( proxyfile.c_str(), O_RDONLY );
-  
-//   if ( fd < 0 ) {
-//     int saveerr = errno;
-//     CREAM_SAFE_LOG( m_log_dev->errorStream()
-// 		    << method_name
-// 		    << "Cannot open proxy file ["
-// 		    << proxyfile << "]: " << strerror(saveerr)
-// 		    );  
-//     throw runtime_error( string( "Cannot open proxy file [" + proxyfile + "]: " + strerror(saveerr) ) );
-//   }
-  
-//   SHA1_Init( &ctx );
-//   while ( ( nread = read( fd, buffer, 1024 ) ) > 0 ) {
-//     SHA1_Update( &ctx, buffer, nread );
-//   }
-//   SHA1_Final( bin_sha1_digest, &ctx );
-  
-//   close( fd );
-
-//   return bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
-// }
 
 //______________________________________________________________________________
 Delegation_manager::Delegation_manager( ) :
@@ -103,100 +62,6 @@ Delegation_manager::Delegation_manager( ) :
     m_max_size( 1000 ), // FIXME: Hardcoded default
     m_operation_count_max( 2000 ) // FIXME: hardcoded default
 {
-
-//   CREAM_SAFE_LOG( m_log_dev->infoStream()
-// 		  << "Delegation_manager::Delegation_manager( ) - "
-// 		  << "Populating Delegation_manager's cache..."
-// 		  );  
-
-//   DelegInfo mapDeleg, mapDeleg_tmp;
-
-//   {
-//     // must populate the delegation's cache
-//     //    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-//     boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
-//     //jobCache::iterator jit = jobCache::getInstance()->begin();
-
-//     {
-//       glite::wms::ice::db::GetDelegationInformation get( true );
-//       glite::wms::ice::db::Transaction tnx;
-//       tnx.execute( &get );
-//       mapDeleg_tmp = get.get_info();
-//     }
-
-//     // MAPDELEG contains all delegation info for job with proxy renewable
-//     mapDeleg = mapDeleg_tmp;
-    
-//     {
-//       glite::wms::ice::db::GetDelegationInformation get( false );
-//       glite::wms::ice::db::Transaction tnx;
-//       tnx.execute( &get );
-//       mapDeleg_tmp = get.get_info();
-//     }
-
-//     // MAPDELEG_TMP contains all delegation info for job with proxy renewable
-
-//     for(DelegInfo::const_iterator it=mapDeleg_tmp.begin();
-// 	it != mapDeleg_tmp.end();
-// 	++it)
-//       {
-// 	mapDeleg[ it->first ] = it->second;
-//       }
-
-// //     while( jit != jobCache::getInstance()->end() ) 
-// //       {
-	
-// // 	if( jit->is_proxy_renewable() ) {
-// // 	  // MYPROXYSERVER is set
-// // 	  mapDeleg[ jit->getUserDN() ] = boost::make_tuple( 
-// // 							   jit->getDelegationId(), 
-// // 							   jit->getCreamURL(), 
-// // 							   jit->getDelegationExpirationTime(),
-// // 							   jit->getDelegationDuration(),
-// // 							   jit->getUserDN(),
-// // 							   true,
-// // 							   jit->getMyProxyAddress()
-// // 							   );
-// // 	} else {
-	  
-// // 	  // MYPROXYSERVER is NOT set
-	  
-// // 	  mapDeleg[ computeSHA1Digest( jit->getUserProxyCertificate() ) ] =
-// // 	    boost::make_tuple( jit->getDelegationId(), 
-// // 			       jit->getCreamURL(), 
-// // 			       jit->getDelegationExpirationTime(),
-// // 			       jit->getDelegationDuration(),
-// // 			       jit->getUserDN(), 
-// // 			       false,
-// // 			       jit->getMyProxyAddress()
-// // 			       );
-	  
-// // 	}
-	
-// // 	++jit;
-// //       }
-
-//   } // unlock the cache
-
-//   DelegInfo::const_iterator dit = mapDeleg.begin();
-
-//   while( dit != mapDeleg.end() ) {
-    
-//     m_delegation_set.insert( table_entry( 
-// 					 dit->first,           // key: user_dn OR SHA1 digest
-// 					 dit->second.get<1>(), // Cream URL
-// 					 dit->second.get<2>(), // Deleg's expiration time
-// 					 dit->second.get<3>(),
-// 					 dit->second.get<0>(), // Delegation ID
-// 					 dit->second.get<4>(),  // user_dn
-// 					 dit->second.get<5>(), // renewable ?
-// 					 dit->second.get<6>()
-// 					 )         
-// 			     );
-    
-//     ++dit;
-//   }
-
 }
 
 //______________________________________________________________________________
@@ -209,7 +74,6 @@ Delegation_manager* Delegation_manager::instance( )
 }
 
 //______________________________________________________________________________
-//boost::tuple<string, time_t, int> 
 string 
 Delegation_manager::delegate( const CreamJob& job, 
 			      const cream_api::VOMSWrapper& V, 
@@ -264,7 +128,7 @@ Delegation_manager::delegate( const CreamJob& job,
     bool found = false;
     table_entry deleg_info("", "", 0, 0, "", "", 0, "");
     {
-      db::GetDelegation getter( str_sha1_digest, cream_url );
+      db::GetDelegation getter( str_sha1_digest, cream_url, myproxy_address );
       db::Transaction tnx;
       tnx.execute( &getter );
       found = getter.found();
@@ -453,7 +317,7 @@ void Delegation_manager::purge_old_delegations( void )
 //     deleg_time_view.erase( deleg_time_view.begin(), it_end );
 //     size_t size_after = deleg_time_view.size();
 
-    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
     list<table_entry> allDelegations;
     {

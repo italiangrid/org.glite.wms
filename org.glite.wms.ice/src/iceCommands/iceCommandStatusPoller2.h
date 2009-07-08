@@ -56,19 +56,17 @@ namespace glite {
 
 	class iceCommandStatusPoller2 : public iceAbsCommand {
 	  
-	  //static const char    *s_iceid;
-	  log4cpp::Category    *m_log_dev;
-	  //iceLBLogger          *m_lb_logger;
-	  Ice                  *m_iceManager;
-	  iceConfManager       *m_conf;
-	  bool                  m_stopped;
-	  //static time_t         s_last_seen;
+	  log4cpp::Category  *m_log_dev;
+	  Ice                *m_iceManager;
+	  iceConfManager     *m_conf;
+	  bool                m_stopped;
 	  
 	  void getUserDN_CreamURL( std::list< boost::tuple<std::string, std::string, time_t> >& ) const;
 	  
 	  time_t poll_userdn_ce( const std::string& userdn, 
 				 const std::string& cream_url,
-				 const time_t last_seen );
+				 const time_t last_seen,
+				 bool*);
 	  
 	public:
 	  iceCommandStatusPoller2( Ice* );

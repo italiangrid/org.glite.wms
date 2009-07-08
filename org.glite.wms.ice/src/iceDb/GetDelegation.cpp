@@ -40,14 +40,6 @@ namespace { // begin local namespace
 	(boost::tuple< string, string, time_t, int, string, string, bool, string>*)param;
       
       if ( argv && argv[0] ) {
-//         result->push_back(argv[0]);
-// 	result->push_back(argv[1]);
-// 	result->push_back(argv[2]);
-// 	result->push_back(argv[3]);
-// 	result->push_back(argv[4]);
-// 	result->push_back(argv[5]);
-// 	result->push_back(argv[6]);
-// 	result->push_back(argv[7]);
 	(*result) = boost::make_tuple(
 				      argv[0],
 				      argv[1],
@@ -74,7 +66,8 @@ void GetDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
  
   sqlcmd << "SELECT * FROM delegation WHERE digest=\'";
   sqlcmd << m_digest << "\' AND creamurl=\'";
-  sqlcmd << m_creamurl << "\';";
+  sqlcmd << m_creamurl << "\' AND myproxyurl=\'";
+  sqlcmd << m_myproxyurl << "\';";
 
   //vector<string> tmp;
   boost::tuple< string, string, time_t, int, string, string, bool, string> tmp;

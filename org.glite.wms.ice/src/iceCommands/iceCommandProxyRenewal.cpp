@@ -68,7 +68,7 @@ namespace cream_api = glite::ce::cream_client_api;
 using namespace std;
 using namespace glite::wms::ice::util;
 
-#define DELEGATION_EXPIRATION_THRESHOLD_TIME 1200
+#define DELEGATION_EXPIRATION_THRESHOLD_TIME 3600
 
 //______________________________________________________________________________
 iceCommandProxyRenewal::iceCommandProxyRenewal( ) :

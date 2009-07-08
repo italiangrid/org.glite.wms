@@ -117,7 +117,7 @@ namespace { // begin anonymous namespace
 
             for ( it=m_cream_job_ids.begin(); it != m_cream_job_ids.end(); ++it ) {
 
-	      boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+	      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
 	      glite::wms::ice::db::GetJobByCid getter( *it );
 	      glite::wms::ice::db::Transaction tnx;
@@ -178,7 +178,7 @@ void iceCommandStatusPoller::get_jobs_to_poll( list< CreamJob >& result,
 {
     static const char* method_name = "iceCommandStatusPoller::get_jobs_to_poll() - ";
 
-    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
                    << "Collecting jobs to poll for userdn=[" 
@@ -309,7 +309,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 		/**
 		   Must get the entire job by the Complete Cream JOB ID
 		*/
-		boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+		boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 		bool found = false;
 		CreamJob theJob;
 		{
@@ -323,7 +323,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 		}
 		if(found)
 		  {
-		    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+		    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 		    if( theJob.is_proxy_renewable() )
 		      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
 		    db::RemoveJobByCid remover( infoIt->first );
@@ -435,7 +435,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 #ifdef ICE_PROFILE_ENABLE
     api_util::scoped_timer T1( "iceCommandStatusPoller::update_single_job - MUTEX+PROCESS" );
 #endif
-    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
     
     CreamJob tmp_job;
     {
@@ -578,7 +578,7 @@ void iceCommandStatusPoller::execute( ) throw()
   */
   list< vector< string > > result;
   {
-    boost::recursive_mutex::scoped_lock M( CreamJob::s_globalICEMutex );
+    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
     /*
       SELECT DISTINCT (userdn, creamurl) from jobs;
     */
@@ -677,7 +677,7 @@ void iceCommandStatusPoller::execute( ) throw()
        updates to the ICE's database, then a mutex is needed to
        synchronize the accesses to it.
     */
-    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::s_globalICEMutex );
+    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
     for(list<CreamJob>::const_iterator it = jobList.begin();
 	it != jobList.end();
 	++it)

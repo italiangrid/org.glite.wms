@@ -42,11 +42,8 @@
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/GetAllDNCE.h"
-//#include "iceDb/GetOldestPollTimeForUserDNCE.h"
 #include "iceDb/UpdateOldestPollTimeForUserDNCE.h"
 #include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
-//#include "iceDb/InsertOldestPollTimeForUserDNCE.h"
-
 
 // Cream Client API Headers
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -302,9 +299,11 @@ void iceCommandStatusPoller2::execute() throw( )
   while( it != userdn_ce.end() ) {
     time_t last_poll_time;
 
-
-    time_t last_poll_time_for_userdn_ce = 
-      poll_userdn_ce( it->get<0>(), it->get<1>(), it->get<2>() );
+    bool more = true;
+    time_t last_poll_time_for_userdn_ce;
+    while( more )   
+      last_poll_time_for_userdn_ce = 
+	poll_userdn_ce( it->get<0>(), it->get<1>(), it->get<2>(), &more );
     
     /**
        Update the table dn_ce_polltime with the new
@@ -369,7 +368,8 @@ iceCommandStatusPoller2::getUserDN_CreamURL(list< boost::tuple<string, string, t
 time_t 
 iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn, 
 					 const std::string& cream_url,
-					 const time_t last_seen)
+					 const time_t last_seen,
+					 bool *more)
 {
   static const char* method_name = "iceCommandStatusPoller2::poll_userdn_ce() - ";
 
@@ -436,6 +436,7 @@ iceCommandStatusPoller2::poll_userdn_ce( const std::string& userdn,
 		      proxy,
 		      &filter,
 		      &Iresult,
+		      more,
 		      iceid).execute( 3 );
     
     

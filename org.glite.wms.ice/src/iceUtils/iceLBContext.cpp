@@ -330,9 +330,11 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION, lbserver );
     if ( lbserver ) free( lbserver );
 
+    boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.getUserDN());
+
     if ( !theJob.getSequenceCode().empty() ) {
 #ifdef GLITE_WMS_HAVE_LBPROXY
-      string const user_dn( get_proxy_subject( DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.getUserDN()).get<0>()) );
+      string const user_dn( get_proxy_subject( result.get<0>()) );
 
         res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.getSequenceCode().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
 #else
@@ -353,7 +355,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     }
 
     // Set user proxy for L&B stuff
-    string betterproxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.getUserDN()).get<0>();
+    string betterproxy = result.get<0>();
     fs::path    pf( betterproxy, fs::native);
     pf.normalize();
 
