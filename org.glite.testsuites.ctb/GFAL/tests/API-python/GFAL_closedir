@@ -1,0 +1,172 @@
+#!/usr/bin/env python
+# close a directory (gfal_closedir)
+
+import os,sys,errno,lfc
+sys.path.append("/opt/lcg/lib/python2.3/site-packages/")
+sys.path.append("/opt/lcg/lib64/python2.4/site-packages/")
+import gfal
+from testClass import _test, _ntest
+global prot
+global vo_name
+global path
+global flag
+flag = 0
+
+
+#=== FUNCTION ================================================================
+# Prints the usage
+#=============================================================================
+
+def usage():
+    print "Usage:  " + sys.argv[0] + " <SE>"
+
+#=== FUNCTION ================================================================
+# Checks for a valid proxy.
+#=============================================================================
+
+def check_proxy():
+    vo_name = result = os.popen("voms-proxy-info --vo").read()[:-1]
+    if not vo_name:
+        print "Error: Couldn't find a valid proxy."
+        sys.exit(1)
+
+check_proxy()
+vo_name = result = os.popen("voms-proxy-info --vo").read()[:-1]
+
+
+#=== FUNCTION ================================================================
+# Parse input arguments 
+#=============================================================================
+def check_arguments(): 
+	if (len(sys.argv) != 2):
+        	usage()
+        	sys.exit(1)
+
+check_arguments()    
+
+se = sys.argv[1]
+
+infosys = result = os.popen("echo $LCG_GFAL_INFOSYS").read()[:-1]
+
+setype = result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(objectClass=GlueSEControlProtocol)(GlueChunkKey=GlueSEUniqueid=" + se + "))' | grep 'GlueSEControlProtocolType' | awk 'BEGIN { FS = \" \" } ; {print $2 }' |uniq").read()[:-1]
+
+#path = result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(GlueSALocalID:dn:=" + vo_name + ")(GlueSEUniqueID:dn:=" + se + "))' GlueSAPath | awk 'BEGIN { FS = \"GlueSAPath: \" } ; {print $2 }'").read()[2:-2]
+
+path = "grid/" + vo_name + ""
+
+path1 =  result = os.popen("ldapsearch -x -H ldap://" + infosys + " -b 'mds-vo-name=local,o=grid' -LLL '(&(GlueSALocalID:dn:=" + vo_name + ")(GlueSEUniqueID:dn:=" + se + "))' GlueSAPath | awk 'BEGIN { FS = \"GlueSAPath: \" } ; {print $2 }' |awk 'BEGIN { FS = \"/\" } ; {print $2 }'").read()[2:-2]
+
+lfc_host = result = os.popen("lcg-infosites --vo "+ vo_name +"  -f lfc").read()[:-1]
+
+os.environ['LFC_HOST'] = lfc_host
+
+VO = result = os.popen("echo dteam | tr 'a-z' 'A-Z'").read()[:-1]
+
+os.environ["VO_"+ VO +"_DEFAULT_SE"] = se
+
+defa = result = os.popen("echo $VO_"+ VO +"_DEFAULT_SE").read()[:-1]
+
+#print ("defa", defa)
+
+prot = "lfn:/"
+
+#=== FUNCTION ================================================================
+# test preperation
+#=============================================================================
+class test_closedir_ok(_test):
+    def info(self):
+        return "gfal_closedir: Dir close"
+    def test(self):
+	self.name = prot + path 
+	ret1 = gfal.gfal_opendir(self.name)
+	ret = gfal.gfal_closedir(ret1)	
+	error1 = gfal.gfal_get_errno()
+	code = 0
+	print ("return",ret)
+	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+	if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    #def clean(self):
+    #    gfal.gfal_unlink(self.name)
+    
+class test_EBADF(_ntest):
+    def info(self):
+        return "gfal_closedir errors: descriptor is invalid (EBADF)"
+    def test(self):
+	self.name = prot + path + "/gfal_opendir_test"
+	ret1 = ret1 = gfal.gfal_opendir(self.name)
+        ret = gfal.gfal_closedir(ret1)
+        error1 = gfal.gfal_get_errno()
+        print ("return",ret)
+        print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+        print ("EBADF", errno.EBADF)
+        code = errno.EBADF
+        if (error1 == code):
+                ret = True
+        else:
+                ret = False
+        return ret
+    def clean(self):
+        gfal.gfal_unlink(self.name)
+
+class gfal_closedir_test:
+    def __init__(self):
+        self.tests=[test_closedir_ok, test_EBADF]
+
+    def run(self):
+	flag = 0
+        for testclass in self.tests:
+            testInstance = testclass()
+            testInstance.prepare()
+	    ret1 = testInstance.test()	
+            testInstance.clean()
+            if ret1:
+                print "%-60s[OK]" % testInstance.info()
+		print ""
+            else:
+                print "%-60s[FAILED]" % testInstance.info()
+		print ""
+		flag = 1
+	return flag
+
+#************* Interface for Python tests ***************
+
+if (setype == "SRM"):
+	print "===================================================="
+	print "Start test: close a dir (gfal_closedir)"
+	print "===================================================="
+	#prot = "srm://"
+	ret = gfal_closedir_test().run()
+	if ( ret == 1 ):
+		print "Test failed"
+		print ""
+                sys.exit(2)
+        else:
+                print "Test is OK"
+		print ""
+                sys.exit(0)
+
+if (setype == "classic"):
+	print "===================================================="
+	print sys.argv[1] +" - classic SE"
+	print "Classic SEs aren't officially supported GFAL"
+	print "Start test: close a dir (gfal_closedir)"
+	print "===================================================="
+        #prot = "sfn://"
+        ret = gfal_closedir_test().run()
+        if ( ret == 1 ):
+		print "Test failed"
+		print ""
+                sys.exit(2)
+        else:
+                print "Test is OK"
+		print ""
+                sys.exit(0)
+
+if (setype == ""):
+        print sys.argv[1] + " - unknown SE"
+        sys.exit(1)
+

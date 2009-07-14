@@ -1,0 +1,25 @@
+GFAL tests
+
+This directory contains various tests for testing
+a GFAL API methods. They are not complete, however
+in a working state and can be further developed.
+
+To run the test:
+
+./<script> <SE>
+
+Example:
+
+./GFAL_access some.cern.ch
+
+Notes:
+
+1)
+To run the test you shouldn't be root, and the
+GFAL client libraries has to be installed on the
+usual location. You can use a UI for this purpose.
+
+2)
+Test is OK returns 0.
+Test failed returns 2.
+In other cases (not correctly usage and so on) returns 1.
