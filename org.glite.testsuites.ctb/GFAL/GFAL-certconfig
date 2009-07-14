@@ -7,3 +7,5 @@ FIRSTSE="lxb7605.cern.ch"
 #VO name
 VO="org.glite.voms-test"
 
+#Tests to run apart from basic one
+GFAL_PYTHON_API="yes"

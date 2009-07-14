@@ -133,6 +133,36 @@ do
 done
 popd >> /dev/null
 
+##############
+# PYTHON API #
+##############
+testdir=./tests/API-python/
+tests_list=`ls ./tests/API-python/GFAL_*`
+
+pushd $testdir >> /dev/null
+touch testfile 2> /dev/null
+if [ $? -ne 0 ]; then
+  echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
+  exitFailure
+fi
+
+for item in ${tests_list[*]}
+do
+  rm -rf ${item}_result.txt testfile
+  echo "Executing $item"
+  echo "./$item $FIRSTSE " > ${item}_result.txt
+  ./$item $FIRSTSE >> ${item}_result.txt 2>&1
+  res=$?
+  if [ "$res" != 0 ]; then
+    echo "$item FAILED"
+    failed=yes
+    tests_failed=( "${tests_failed[@]}" "$item" )
+  else
+    echo "$item PASSED"
+  fi
+done
+popd >> /dev/null
+
 echo "------------------------------------------------"
 echo "END `date`"
 
