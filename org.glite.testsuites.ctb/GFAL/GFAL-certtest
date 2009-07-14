@@ -77,6 +77,8 @@ fi
 #########
 
 echo "START `date` "
+echo `rpm -qa | grep -i gfal`
+echo "SE: $FIRSTSE"
 echo "------------------------------------------------"
 
 ####################################
@@ -105,63 +107,93 @@ fi
 declare -a tests_failed
 failed=no
 
-testdir=./tests
-tests_list=( test-gfal.sh )
+if [ x$GFAL_BASIC == "xyes" ]; then
+  
+  echo "*Executing GFAL Python API tests"
+  testdir=./tests
+  tests_list=( test-gfal.sh )
 
-pushd $testdir >> /dev/null
-touch testfile 2> /dev/null
-if [ $? -ne 0 ]; then
-  echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
-  exitFailure
+  pushd $testdir >> /dev/null
+  touch testfile 2> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
+    exitFailure
+  fi
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf ${item}_result.txt testfile
+    echo "Executing $item"
+    echo "./$item -v $VO -l $LFC_HOST -d $FIRSTSE " > ${item}_result.txt
+    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE >> ${item}_result.txt 2>&1
+    res=$?
+    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >> /dev/null
+else
+ echo "*WARNING: GFAL Basic tests skipped"
 fi
 
-for item in ${tests_list[*]}
-do
-  rm -rf ${item}_result.txt testfile
-  echo "Executing $item"
-  echo "./$item -v $VO -l $LFC_HOST -d $FIRSTSE " > ${item}_result.txt
-  ./$item -v $VO -l $LFC_HOST -d $FIRSTSE >> ${item}_result.txt 2>&1
-  res=$?
-  grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
-  if [ "$?" = 0 -o "$res" != 0 ]; then
-    echo "$item FAILED"
-    failed=yes
-    tests_failed=( "${tests_failed[@]}" "$item" )
-  else
-    echo "$item PASSED"
-  fi
-done
-popd >> /dev/null
+#########################
+# Analyse tests outcome #
+#########################
+if [ $failed = "yes" ]; then
+
+  echo "TEST_FAILED"
+  echo "The following tests failed:"
+  for item in ${tests_failed[*]}
+  do
+    echo "$item: results in tests/${item}_result.txt"
+  done
+else
+    echo "TEST_PASSED"
+fi
 
 ##############
 # PYTHON API #
 ##############
-testdir=./tests/API-python/
-tests_list=`ls ./tests/API-python/GFAL_*`
+declare -a tests_failed
+failed=no
 
-pushd $testdir >> /dev/null
-touch testfile 2> /dev/null
-if [ $? -ne 0 ]; then
-  echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
-  exitFailure
-fi
+if [ x$GFAL_PYTHON_API == "xyes" ]; then
+  
+  echo "*Executing GFAL Python API tests"
+  testdir=./tests/API-python/
 
-for item in ${tests_list[*]}
-do
-  rm -rf ${item}_result.txt testfile
-  echo "Executing $item"
-  echo "./$item $FIRSTSE " > ${item}_result.txt
-  ./$item $FIRSTSE >> ${item}_result.txt 2>&1
-  res=$?
-  if [ "$res" != 0 ]; then
-    echo "$item FAILED"
-    failed=yes
-    tests_failed=( "${tests_failed[@]}" "$item" )
-  else
-    echo "$item PASSED"
+  pushd $testdir >> /dev/null
+  tests_list=( GFAL_abortfiles GFAL_access GFAL_bringonline GFAL_chmod GFAL_close GFAL_closedir GFAL_creat GFAL_deletesurls GFAL_get GFAL_getstatus GFAL_ls GFAL_lseek GFAL_mkdir GFAL_open GFAL_opendir GFAL_pin GFAL_prestage GFAL_prestagestatus GFAL_read GFAL_readdir GFAL_release GFAL_rename GFAL_rmdir GFAL_set_xfer_done GFAL_set_xfer_running GFAL_stat GFAL_turlsfromsurls GFAL_unlink GFAL_write )
+  touch testfile 2> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
+    exitFailure
   fi
-done
-popd >> /dev/null
+  
+  for item in ${tests_list[*]}
+  do
+    rm -rf ${item}_result.txt testfile
+    echo "Executing $item"
+    echo "./$item $FIRSTSE " > ${item}_result.txt
+    ./$item $FIRSTSE >> ${item}_result.txt 2>&1
+    res=$?
+    if [ "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >> /dev/null
+else
+ echo "*WARNING: GFAL Python API tests skipped"
+fi
 
 echo "------------------------------------------------"
 echo "END `date`"
@@ -176,7 +208,7 @@ if [ $failed = "yes" ]; then
   echo "The following tests failed:"
   for item in ${tests_failed[*]}
   do
-    echo "$item: results in tests/${item}_result.txt"
+    echo "$item: results in tests/API-python/${item}_result.txt"
   done
 else
     echo "TEST_PASSED"
