@@ -2,12 +2,20 @@
 
 #This script has to be run in a wroking glexec environment, with setuid enabled
 
+
+
+printenv="printenv.sh"
+
+if [ ! -f $printenv ]; then
+  echo "Error: printenv.sh script has to be in the current directory"
+  exit 1
+fi
+
 unset MYVAR1 MYVAR2 MYVAR3 MYVAR4 MYVAR5 MYVAR6 MYVAR7 MYVAR8 MYVAR9
-export MYVAR1=value1
 
 #TEST1
 #Basic execution without exceptions
-
+export MYVAR1=value1
 export GLEXEC_ENV=`/opt/glite/sbin/glexec_wrapenv.pl`
 
 userenvfile=`/opt/glite/sbin/glexec /opt/glite/sbin/glexec_unwrapenv.pl -- /tmp/printenv.sh`
