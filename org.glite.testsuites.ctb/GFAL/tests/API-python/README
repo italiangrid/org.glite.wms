@@ -23,3 +23,65 @@ usual location. You can use a UI for this purpose.
 Test is OK returns 0.
 Test failed returns 2.
 In other cases (not correctly usage and so on) returns 1.
+
+Tests features:
+1) GFAL_abortfiles (create and close file)
+
+2) GFAL_access (check access to dir /path/VO_name/ for example /dpm/cern.ch/home/dteam/
+path is specify by command ldapsearch -x -H ldap://" LCG_GFAL_INFOSYS " -b 'mds-vo-name=local,o=grid' -LLL '(&(GlueSALocalID:dn:=" vo_name  ")(GlueSEUniqueID:dn:=" SE  "))' GlueSAPath)  )
+
+3) GFAL_bringonline (create and close file by path see GFAL_access)
+
+4) GFAL_chmod (create file on lfn)
+
+5) GFAL_close (create and close file by path see GFAL_access)
+
+6) GFAL_closedir (open and close dir on lfn:/grid/vo_name for example lfn:/grid/dteam)
+
+7) GFAL_creat (create file by path see GFAL_access)
+
+8) GFAL_deletesurls (create and close file by path see GFAL_access)
+
+9) GFAL_get (create and close file by path see GFAL_access)
+
+10) GFAL_getstatus (create and close file by path see GFAL_access and command gfal_get)
+
+11) GFAL_ls (ls dir /path/VO_name/ by path see GFAL_access)
+
+12) GFAL_lseek (create and close and open file by path see GFAL_access)
+
+13) GFAL_mkdir (create dir by path see GFAL_access)
+
+14) GFAL_open (create file by path see GFAL_access)
+
+15) GFAL_opendir (open dir on lfn:/grid/vo_name for example lfn:/grid/dteam)
+
+16) GFAL_pin (create and close file by path see GFAL_access and command gfal_bringonline)
+
+17) GFAL_prestage (create and close file by path see GFAL_access)
+
+18) GFAL_prestagestatus (create and close file by path see GFAL_access and command gfal_prestage)
+
+19) GFAL_read (create and close and open file by path see GFAL_access)
+
+20) GFAL_readdir (open dir on lfn:/grid/vo_name for example lfn:/grid/dteam)
+
+21) GFAL_release (create and close file by path see GFAL_access and command gfal_bringonline)
+
+22) GFAL_rename (create file on lfn:/grid/vo_name for example lfn:/grid/dteam)
+
+23) GFAL_rmdir (make dir by path see GFAL_access)
+
+24) GFAL_set_xfer_done (create and close file by path see GFAL_access)
+
+25) GFAL_set_xfer_running (create and close file by path see GFAL_access)
+
+26) GFAL_stat (information  about dir by path see GFAL_access)
+
+27) GFAL_turlsfromsurls (create and close file by path see GFAL_access)
+
+28) GFAL_write (create and close and open file by path see GFAL_access)
+
+29) GFAL_unlink (create and close file by path see GFAL_access)
+ 
+
