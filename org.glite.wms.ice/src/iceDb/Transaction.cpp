@@ -397,67 +397,70 @@ namespace {
 //
 
 
-Transaction::Transaction( ) :
+Transaction::Transaction( const bool create_chek ) :
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_begin( false ),
     m_commit( true )
 {
     if ( 0 == m_db ) { // create the db
-        create_db();
+        create_db( create_chek );
     }
 }
 
 
-void Transaction::create_db( void ) 
+void Transaction::create_db( const bool create_check ) 
 {
     static const char* method_name = "Transaction::create_db() - ";
-
     string persist_dir( iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() );
 
-    if( !boost::filesystem::exists( boost::filesystem::path(persist_dir, boost::filesystem::native) ) ) {
+    if( create_check ) {
+      
+      if( !boost::filesystem::exists( boost::filesystem::path(persist_dir, boost::filesystem::native) ) ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << "job DB Path "
                         << persist_dir
                         << " does not exist. Job DB initializatoin failed."
                         );      
         exit(-1);
-    }
-    
-    if( !boost::filesystem::is_directory( boost::filesystem::path(persist_dir, boost::filesystem::native) ) ) {
+      }
+      
+      if( !boost::filesystem::is_directory( boost::filesystem::path(persist_dir, boost::filesystem::native) ) ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << "Path [" << persist_dir
                         << "] does exist but it is not a directory"
                         );
         exit(-1);
-    }
-    
-    struct stat buf;
-    if( -1==stat( persist_dir.c_str() , &buf) ) {
+      }
+      
+      struct stat buf;
+      if( -1==stat( persist_dir.c_str() , &buf) ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << strerror(errno) );
         exit(-1);
-    }
-    
-    if( !(buf.st_mode & S_IRUSR)) {
+      }
+      
+      if( !(buf.st_mode & S_IRUSR)) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << "Path [" << persist_dir
                         << "] is not readable by the owner" );
         exit(-1);
-    } 
-
-    if( !(buf.st_mode & S_IWUSR)) {
+      } 
+      
+      if( !(buf.st_mode & S_IWUSR)) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << "Path [" << persist_dir
                         << "] is not writable by the owner" );
         exit(-1);
-    } 
-    
-    if( !(buf.st_mode & S_IXUSR)) {
+      } 
+      
+      if( !(buf.st_mode & S_IXUSR)) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << "Path [" << persist_dir
                         << "] is not executable by the owner (cannot cd into it)" );
         exit(-1);
-    }
+      }
+    } // if( create_check )
+
     int rc = sqlite3_open( string(persist_dir + "/ice.db").c_str(), &m_db );
     if ( SQLITE_OK != rc ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
@@ -467,7 +470,8 @@ void Transaction::create_db( void )
     }
     sqlite3_soft_heap_limit( 10485760 );
     // Create table if not exists
-    CreateDb().execute( m_db );
+    if( create_check )
+      CreateDb().execute( m_db );
     // Database intentionally left open
 }
 

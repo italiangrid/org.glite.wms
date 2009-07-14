@@ -56,7 +56,7 @@ namespace db {
     class Transaction {
     public:
         
-        Transaction( );					    
+        Transaction( const bool create_check = false );					    
         ~Transaction( );
 
         /**
@@ -113,7 +113,7 @@ namespace db {
          * Create an empty DB. This method is invoked by the costructor
          * if the DB does not exist.
          */
-        void create_db( void ); // FIXME: Raise exception?
+        void create_db( const bool ); // FIXME: Raise exception?
 
     };
 

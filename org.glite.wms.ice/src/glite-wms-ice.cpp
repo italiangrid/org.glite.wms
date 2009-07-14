@@ -36,7 +36,8 @@
 #include "ice-core.h"
 #include "iceAbsCommand.h"
 #include "iceCommandFactory.h"
-//#include "jobCache.h"
+#include "iceDb/UpdateJobByGid.h"
+#include "iceDb/Transaction.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
@@ -44,6 +45,7 @@
 #include "iceThreadPool.h"
 #include "DNProxyManager.h"
 #include "Request.h"
+
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
@@ -272,44 +274,7 @@ int main(int argc, char*argv[])
                    
                    );
 
-//     try {
-//         string hostdn( certUtil::getDN(hostcert) );
-//         glite::wms::ice::util::CreamProxyFactory::setHostDN( hostdn );
-//     } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-//         CREAM_SAFE_LOG(log_dev->errorStream()
-//                        << method_name
-//                        << "Unable to extract user DN from Proxy File "
-//                        << hostcert 
-//                        << ". Won't set SOAP header"
-//                        );
-//     }
-  
 
-    /*****************************************************************************
-     * Initializes job cache
-     ****************************************************************************/
-    //    string jcachedir( conf->ice()->persist_dir() );
-
-//     CREAM_SAFE_LOG(
-//                    log_dev->infoStream() 
-//                    << method_name
-//                    << "Initializing jobCache with persistency directory ["
-//                    << jcachedir
-//                    << "]..."
-                   
-//                    );
-
-//     iceUtil::jobCache::setPersistDirectory( jcachedir );
-//     iceUtil::jobCache::setRecoverableDb( true );
-//     iceUtil::jobCache::setReadOnly( false );
-
-//     try {
-//         iceUtil::jobCache::getInstance();
-//     }
-//     catch(exception& ex) {
-//         CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );
-//         exit( 1 );
-//     }
 
     /**
      * Now the cache is ready and filled with all job's information
@@ -320,8 +285,17 @@ int main(int argc, char*argv[])
     
 
     /*****************************************************************************
-     * Initializes ice manager
-     ****************************************************************************/ 
+     * Initializes the database by invoking a fake query, and the ice manager
+     ****************************************************************************/
+    
+    {
+      list<pair<string, string> > params;
+      params.push_back( make_pair("failure_reason", "" ));
+      glite::wms::ice::db::UpdateJobByGid updater("", params);
+      glite::wms::ice::db::Transaction tnx( true );
+      tnx.execute( &updater );
+    }
+ 
     glite::wms::ice::Ice* iceManager( glite::wms::ice::Ice::instance( ) );
 
   
@@ -469,7 +443,7 @@ int main(int argc, char*argv[])
 // 	    dumpIceCache( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") );
 // 	}
 
-	if(mem_threshold_counter >= 30) { // every 60 seconds check the memory
+	if(mem_threshold_counter >= 120) { // every 30 seconds check the memory
 	  mem_threshold_counter = 0;
 	  long long mem_now = check_my_mem(myPid);
 	  if(mem_now > max_ice_mem) {
