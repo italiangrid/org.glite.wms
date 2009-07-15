@@ -217,22 +217,6 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	
 	
 	
-	/**
-	   If the BetterProxy for this delegation is less long-living than the delegation itself
-	   let's continue with next delegation...
-	*/
-	if( proxy_time_end < thisExpTime-(5)) {
-	  CREAM_SAFE_LOG(m_log_dev->warnStream() 
-			 << "iceCommandProxyRenewal::renewAllDelegations() - "
-			 << "The better proxy ["
-			 << thisBetterPrx.get<0>() << "] is expiring before the current delegation ["
-			 << thisDelegID << "]. Skipping ... "
-			 );
-	  
-	  mapDelegTime.erase( thisDelegID );
-	  continue;
-	}
-	
 	//proxy_time_end = thisBetterPrx.get<1>();
 
 	/**
@@ -286,6 +270,22 @@ void iceCommandProxyRenewal::renewAllDelegations( void ) throw()
 	  continue;
 	}
 	
+	/**
+	   If the BetterProxy for this delegation is not expiring after the delegation itself
+	   let's continue with next delegation...
+	*/
+	if( !(proxy_time_end > thisExpTime)) {
+	  CREAM_SAFE_LOG(m_log_dev->warnStream() 
+			 << "iceCommandProxyRenewal::renewAllDelegations() - "
+			 << "The better proxy ["
+			 << thisBetterPrx.get<0>() << "] is expiring NOT AFTER the current delegation ["
+			 << thisDelegID << "]. Skipping ... "
+			 );
+	  
+	  mapDelegTime.erase( thisDelegID );
+	  continue;
+	}
+
 	CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
 			<< "Will Renew Delegation ID ["
 			<< thisDelegID << "] with BetterProxy ["
