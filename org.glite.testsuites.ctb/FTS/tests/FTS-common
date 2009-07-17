@@ -131,6 +131,64 @@ function file_transfer()
 
 }
 
+
+#
+# as file_transfer but uses tokens description and file size
+# Usage: file_transfer_tokens SOURCE_SAPATH DEST_SAPATH SRC_DESCR DEST_DESCR FILE_SIZE
+#
+function file_transfer_tokens()
+{
+  if [ $# -ne 5 ]; then
+    echo "Error: file_transfer_tokens: expecting 5 arguments, $# received"
+    return 1
+  fi
+  SOURCE_SAPATH=$1
+  DEST_SAPATH=$2
+  SRC_DESCR=$3
+  DEST_DESCR=$4
+  FILE_SIZE=$5
+
+  SUB_FILE_LOC="$HOME/fts-submission-file"
+  DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+  TMP_FILE="/tmp/FTS_Test_$DATE"
+  TEST_FILE_NAME="FTS_Test_$DATE"
+
+  echo "Creating ${FILE_SIZE}KB temporary test file for transfer"
+  echo "" > $TMP_FILE
+  dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+  echo "Copy the test file $TMP_FILE on: $SOURCE_SAPATH"
+  GUID=`lcg-cr --vo $VO_NAME -d $SOURCE_SAPATH/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+  result=`cat message | wc -l`
+  if [ $result -gt 0 ]; then
+    echo ">>> NOTE: `cat message`"
+    echo ""
+    echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+    echo ""
+    NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+    return 1
+  fi
+  echo "Removing the temporary test file: $TMP_FILE"
+  rm -rf $TMP_FILE
+
+  echo "Creating the submission file in $SUB_FILE_LOC"
+  id=`date +%s`
+  echo "" > $SUB_FILE_LOC
+  echo "$SOURCE_SAPATH/$TEST_FILE_NAME $DEST_SAPATH/$TEST_FILE_NAME$id" >> $SUB_FILE_LOC
+  
+  echo "Submitting the transfer"
+  echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC --dest-token $DEST_DESCR --source-token $SRC_DESCR"
+  SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC --dest-token $DEST_DESCR --source-token $SRC_DESCR`
+#    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC -p $MYPROXY_PASS`
+  if [ -z "$SUBID" ]; then
+     echo "Job submition failed!"
+     return 1
+  fi
+  echo "Job successfully submited"
+  echo "Transfer ID: $SUBID. "
+
+  return 0
+}
+
 #
 # Get a Submission Id and check the status of the file transfer.
 # Return codes:
@@ -275,6 +333,37 @@ function poll_status_with_timeout()
 
 }
 
+function remove_space()
+{
+  if [ $# -ne 2 ]; then
+    echo "Error: remove_space: expecting 2 arguments, $# were given"
+    return 1
+  fi
+  
+  SAPATH=$1
+  TOKEN=$2
+  echo "remove_space: removing space in $SAPATH with token $TOKEN"
+  if [ `echo $SAPATH | grep dpm` ]; then
+    #release space using dpm client
+    dpm-releasespace --space_token $TOKEN
+    if [ $? -ne 0 ]; then
+      echo "Error: remove_space function: error calling dpm-releasespace --token_desc $TOKEN"
+      return 1
+    fi
+    elif [ `echo $SAPATH | grep desy` ]; then
+    #release space using dcache client
+    srm-release-space $SAPATH --space_token=$TOKEN
+    if [ $? -ne 0 ]; then
+      echo "Error: remove_space function: error calling srm-release-space $SAPATH -space_token=$TOKEN"
+      return 1
+    fi
+  else echo "Error: remove_space: I cannot retrieve the SE type"
+  fi
+  echo "remove_space: space released on $SAPATH"
+  return 0
+
+}
+
 #
 # Fill $Channel_List with channels retrieved from glite-transfer-channel-list
 # FTS_HOST must be set
@@ -351,6 +440,8 @@ function get_source_dest_from_channel()
 #
 function get_def_se_from_site()
 {
+  echo "D- get_def_se_from_site called with arg $1"
+
   if [ -z $1 ];then
     echo "A site name must be provided to get_good_se_from_site()"
     return 2
@@ -447,4 +538,44 @@ function get_all_SEs()
       SRMs=`echo $SRMs | sed -e 's/\n//g'`
 }
 
+#
+# Reserve a space on the given host and return token in $TOKEN
+#Usage reserveSpace DEST_SAPATH SIZE DESCR
+#Note: assumptions are made on the SAPATH to choose the SE type!
+#
+function reserveSpace() 
+{
+if [ $# -ne 3 ]; then
+  echo "Error: reserveSpace wants 3 arguments, $# were given"
+  return 1
+fi
+SAPATH=$1
+SIZE=$2
+DESCR=$3
+
+if [ `echo $SAPATH | grep dpm` ]; then 
+  #reserve space using dpm client
+  token=`dpm-reservespace --gspace $SIZE --token_desc $DESCR`
+  if [ $? -ne 0 ]; then
+    echo "Error: reserveSpace function: error calling --gspace $SIZE --token_desc $DESCR"
+    echo "$token"
+    return 1
+  else
+    export TOKEN="$token"
+  fi
+elif [ `echo $SAPATH | grep desy` ]; then
+  #reserve space using dcache client
+  token=`srm-reserve-space -desired_size=$SIZE  -srm_protocol_version=2  -retention_policy=REPLICA -access_latency=ONLINE -guaranteed_size=$SIZE -lifetime=36000 $SAPATH -space_desc=$DESCR | grep 'Space token' | awk -F'=' '{print \$2}'`
+  if [ $? -ne 0 ]; then
+    echo "Error: reserveSpace function: error calling srm-reserve-space -desired_size=$SIZE  -srm_protocol_version=2  -retention_policy=REPLICA -access_latency=ONLINE -guaranteed_size=$SIZE -lifetime=36000 $SAPATH -space_desc=$DESCR"
+    return 1
+  else
+    export TOKEN=$token
+  fi
+else echo "Error: reserveSpace: I cannot retrieve the SE type"
+fi
+
+return 0
+
+}
 
