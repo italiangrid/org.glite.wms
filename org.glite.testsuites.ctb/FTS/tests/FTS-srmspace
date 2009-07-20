@@ -166,6 +166,28 @@ else
 fi
 echo "DEST_TOKEN: $DEST_TOKEN"
 
+#3.1) Fill some space
+fill_space 5 $DEST_SAPATH $DEST_TOKEN
+if [ $? -ne 0 ]; then
+  echo "Error calling function fill_space: fill_space 5 $DEST_SAPATH $DEST_TOKEN"
+  exit 1
+else
+  echo "Filled 5KB space on the dest space reserved"
+fi
+
+#3.2) check space
+get_unused_space $DEST_TOKEN $DEST_SAPATH
+if [ $? -ne 0 ]; then
+  echo "Error calling function check_unused_space: check_unused_space 5 $DEST_TOKEN $DEST_SAPATH"
+  exit 1
+else
+  echo "Space free at destination: $UNUSED"
+fi
+
+
+exit 0
+
+
 #4) Submitting a file transfer
 FILE_SIZE=10
 echo

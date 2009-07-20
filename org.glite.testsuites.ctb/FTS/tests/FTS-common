@@ -579,3 +579,77 @@ return 0
 
 }
 
+#
+# Returns the unused space in $UNUSED
+# Usage get_unused_space <SPACE_TOKEN> <SA_PATH>
+#
+function get_unused_space() 
+{
+if [ $# -ne 2 ]; then
+  echo "Error: get_unused_space wants 2 arguments, $# were given"
+  return 1
+fi
+token=$1
+sa_path=$2
+
+if [ `echo $sapath | grep dpm` ]; then 
+  #get space using dpm client
+  unused=`dpm-getspacemd --space_token $token | awk '{if (NR==3) print $2}'`
+  if [ "x$unused" == "x" ]; then
+    echo "Error: get_unused_space: no field retrieved"
+    return 1
+  fi
+  export UNUSED=$unused
+  echo "Unsed space for token $token: $unused"
+  return 0
+elif [ `echo $sapath | grep desy` ]; then
+  #get space using dcache client
+  unused=`srm-get-space-metadata -space_tokens=$token $sa_path | awk -F":" '/unusedSize/ {print $2}'`
+  if [ "x$unused" == "x" ]; then
+    echo "Error: get_unused_space: no field retrieved"
+    return 1
+  fi
+  export UNUSED=$unused
+  echo "Unsed space for token $token: $unused"
+  return 0
+else echo "Error: reserveSpace: I cannot retrieve the SE type"
+fi
+
+unused=`dpm-getspacemd --space_token $token | awk '{if (NR==3) print $2}'`
+}
+
+#
+#Copy a file of a desired size in a given space on a given SE in order to 
+# reduce the unused space
+#Usage fill_space <size in KB> <SAPATH> <space token>
+#
+function fill_space()
+{
+if [ $# -ne 3 ]; then
+  echo "Error: fill_space wants 3 arguments, $# were given"
+  return 1
+fi
+size=$1
+sapath=$2
+token=$3
+
+DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+FILENAME=FTS_Test_$DATE
+TMP_FILE="/tmp/$FILENAME"
+dd if=/dev/zero of=$TMP_FILE bs=${size}KB count=1 2>/dev/null
+
+echo "Copy the test file $TMP_FILE on: $sapath/$FILENAME" 
+
+GUID=`lcg-cr --vo $VO_NAME -d $sapath/$FILENAME file://$TMP_FILE 2>message`
+result=`cat message | wc -l`
+if [ $result -gt 0 ]; then
+  echo ">>> NOTE: `cat message`"
+  echo ">>> NOTE: lcg-cr command for SRM: $sapath failed!"
+  return 1
+fi
+echo "Removing the ${size}KB temporary test file: $TMP_FILE"
+rm -rf $TMP_FILE
+return 0
+}
+
+
