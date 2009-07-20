@@ -155,7 +155,7 @@ function file_transfer_tokens()
 
   echo "Creating ${FILE_SIZE}KB temporary test file for transfer"
   echo "" > $TMP_FILE
-  dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+  dd if=/dev/zero of=$TMP_FILE bs=${FILE_SIZE}KB count=1 2>/dev/null
   echo "Copy the test file $TMP_FILE on: $SOURCE_SAPATH"
   GUID=`lcg-cr --vo $VO_NAME -d $SOURCE_SAPATH/$TEST_FILE_NAME file://$TMP_FILE 2>message`
   result=`cat message | wc -l`
@@ -540,7 +540,7 @@ function get_all_SEs()
 
 #
 # Reserve a space on the given host and return token in $TOKEN
-#Usage reserveSpace DEST_SAPATH SIZE DESCR
+#Usage reserveSpace DEST_SAPATH SIZE(in bytes) DESCR
 #Note: assumptions are made on the SAPATH to choose the SE type!
 #
 function reserveSpace() 
@@ -621,7 +621,7 @@ unused=`dpm-getspacemd --space_token $token | awk '{if (NR==3) print $2}'`
 #
 #Copy a file of a desired size in a given space on a given SE in order to 
 # reduce the unused space
-#Usage fill_space <size in KB> <SAPATH> <space token>
+#Usage fill_space <size in KB> <SAPATH> <space token description>
 #
 function fill_space()
 {
@@ -631,7 +631,7 @@ if [ $# -ne 3 ]; then
 fi
 size=$1
 sapath=$2
-token=$3
+token_desc=$3
 
 DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
 FILENAME=FTS_Test_$DATE
@@ -640,7 +640,7 @@ dd if=/dev/zero of=$TMP_FILE bs=${size}KB count=1 2>/dev/null
 
 echo "Copy the test file $TMP_FILE on: $sapath/$FILENAME" 
 
-GUID=`lcg-cr --vo $VO_NAME -d $sapath/$FILENAME file://$TMP_FILE 2>message`
+GUID=`lcg-cr --vo $VO_NAME -d $sapath/$FILENAME -s $token_desc file://$TMP_FILE 2>message`
 result=`cat message | wc -l`
 if [ $result -gt 0 ]; then
   echo ">>> NOTE: `cat message`"
