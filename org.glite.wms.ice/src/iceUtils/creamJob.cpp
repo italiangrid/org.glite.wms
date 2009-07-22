@@ -81,7 +81,7 @@ using namespace std;
 using namespace glite::wms::ice::util;
 
 boost::recursive_mutex CreamJob::serialize_mutex;
-boost::recursive_mutex CreamJob::globalICEMutex;
+//boost::recursive_mutex CreamJob::s_GlobalICEMutex;
 
 //______________________________________________________________________________
 CreamJob::CreamJob( ) :

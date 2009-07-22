@@ -205,13 +205,14 @@ void iceCommandUpdateStatus::execute( ) throw( )
 
             // Gets the job which is mentioned in the notification
 	    //            boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
-	    boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
+	    //boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
            
             //jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( notif->get_complete_cream_job_id() ) );
 	    CreamJob theJob;
 	    {
 	      db::GetJobByCid getter( notif->get_complete_cream_job_id() );
 	      db::Transaction tnx;
+	      //tnx.begin( );
 	      tnx.execute( &getter );
 	      if( !getter.found() ) 
 		{
@@ -297,7 +298,7 @@ void iceCommandUpdateStatus::execute( ) throw( )
     // checking al the jobs in the cache.
     {
       //boost::recursive_mutex::scoped_lock L( jobCache::mutex );    
-      boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
+      //      boost::recursive_mutex::scoped_lock L( CreamJob::globalICEMutex );
       
 
       /**
@@ -310,9 +311,12 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	params.push_back( "creamurl" );
 	params.push_back( "userdn" );
 	db::GetFields getter( params, list<pair<string, string> >(), true/* use DISTINCT = true */ );
-	//db::GetCreamURLUserDN getter;
-	db::Transaction tnx;
-	tnx.execute( &getter );
+        {
+	  db::Transaction tnx;
+	  //tnx.begin( );
+	  tnx.execute( &getter );
+	//  tnx.commit( );
+	}
 
 	list< vector<string> > result = getter.get_values();
 
@@ -363,8 +367,8 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  //list<list<string> > result;
 	  //db::GetCidByCreamURLUserDN getter( *it );
 	  db::GetFields getter( fields_to_retrieve, clause );
-	  
 	  db::Transaction tnx;
+	  //tnx.begin( );
 	  tnx.execute( &getter );
 	  //list<string> tmp = getter.get();
 	  

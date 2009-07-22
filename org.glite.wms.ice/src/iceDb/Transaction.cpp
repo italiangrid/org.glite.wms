@@ -43,7 +43,7 @@ namespace iceUtil = glite::wms::ice::util;
 using namespace std;
 using namespace glite::wms::ice::db;
 
-sqlite3* Transaction::m_db = 0;
+sqlite3* Transaction::s_db = 0;
 
 //
 // Local namespace, for locally visible only operation
@@ -341,9 +341,38 @@ namespace {
 	      abort();
 	      
 	    }
+	    
+	    try {
+	      string sqlcmd = 
+		"PRAGMA synchronous=OFF;";
+	      do_query( db, sqlcmd );
+	    } catch( DbOperationException& ex ) {
+	      
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+			      << "CreateDb::execute() - "
+			      << "Error setting database's synchronous: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }
+	    
+	    try {
+	      string sqlcmd = 
+		"PRAGMA temp_store=2;";
+	      do_query( db, sqlcmd );
+	    } catch( DbOperationException& ex ) {
+	      
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+			      << "CreateDb::execute() - "
+			      << "Error setting database's temp_store: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }
         };
     };
-
 
     /**
      * This operation begins a transaction on the database
@@ -359,7 +388,7 @@ namespace {
             if ( m_exclusive ) 
                 sqlcmd = string( "begin exclusive transaction;" );
             else
-                sqlcmd = string( "begin transaction;");
+                sqlcmd = string( "begin immediate transaction;");
             do_query( db, sqlcmd );
         };
     };
@@ -402,7 +431,7 @@ Transaction::Transaction( const bool create_chek ) :
     m_begin( false ),
     m_commit( true )
 {
-    if ( 0 == m_db ) { // create the db
+    if ( 0 == s_db ) { // create the db
         create_db( create_chek );
     }
 }
@@ -461,41 +490,42 @@ void Transaction::create_db( const bool create_check )
       }
     } // if( create_check )
 
-    int rc = sqlite3_open( string(persist_dir + "/ice.db").c_str(), &m_db );
+    int rc = sqlite3_open( string(persist_dir + "/ice.db").c_str(), &s_db );
     if ( SQLITE_OK != rc ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << "Failed to open/create DB. Error message is "
-                        << sqlite3_errmsg( m_db ) );
+                        << sqlite3_errmsg( s_db ) );
         exit(-1);
     }
     sqlite3_soft_heap_limit( 10485760 );
+    sqlite3_busy_timeout( s_db, 5000) ;
     // Create table if not exists
     if( create_check )
-      CreateDb().execute( m_db );
+      CreateDb().execute( s_db );
     // Database intentionally left open
 }
 
 
-Transaction& Transaction::begin( void )
+Transaction& Transaction::Begin( void )
 {
     m_begin = true;
-    BeginTransaction().execute( m_db ); // FIXME: catch exception
+    BeginTransaction().execute( s_db ); // FIXME: catch exception
     return *this;
 }
 
-Transaction& Transaction::begin_exclusive( void )
+Transaction& Transaction::Begin_exclusive( void )
 {
     m_begin = true;
-    BeginTransaction(true).execute( m_db ); // FIXME: catch exception
+    BeginTransaction(true).execute( s_db ); // FIXME: catch exception
     return *this;
 }
 
-void Transaction::commit( void )
+void Transaction::Commit( void )
 {
     m_commit = true;
 }
 
-void Transaction::abort( void )
+void Transaction::Abort( void )
 { 
     m_commit = false;
 }
@@ -510,7 +540,7 @@ Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationExcept
     const int retry_cnt_max = 5;
     while( 1 ) {
         try {
-            op->execute( m_db );
+            op->execute( s_db );
 	    int freed = sqlite3_release_memory( 104800000 );
 	    
 
@@ -540,10 +570,10 @@ Transaction::~Transaction( )
     if ( m_begin ) {
         try {
             if ( m_commit ) {
-                CommitTransaction().execute(m_db);
+                CommitTransaction().execute( s_db );
 		
             } else {
-                RollbackTransaction().execute(m_db);           
+                RollbackTransaction().execute( s_db );           
             }
         } catch( DbOperationException& ex ) {
             CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name

@@ -60,7 +60,7 @@ namespace util {
         
         DNProxyManager() throw();
         ~DNProxyManager() throw() {}
-        static boost::recursive_mutex  mutex;
+        static boost::recursive_mutex  s_mutex;
         
     public:
         

@@ -144,26 +144,27 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         new_seq_code = _tmp_seqcode;
 	free( _tmp_seqcode );
         { // Lock the job cache
+	  //#ifdef ICE_PROFILE_ENABLE
+	  // 	  api_util::scoped_timer T( "iceLBLogger::logEvent - ICE Mutex acquisition" );//126
+	  //#endif
+	  //	  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
+	  
+	  CreamJob theJob( ev->getJob() );
+	  
+	  theJob.set_sequence_code( new_seq_code );
+	  list< pair<string, string> > params;
+	  params.push_back( make_pair( "sequence_code", new_seq_code ));
 #ifdef ICE_PROFILE_ENABLE
- 	  api_util::scoped_timer T( "iceLBLogger::logEvent - ICE Mutex acquisition" );//126
+	  api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
 #endif
-	  boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
-
-            CreamJob theJob( ev->getJob() );
-	    
-            theJob.set_sequence_code( new_seq_code );
-	    list< pair<string, string> > params;
-	    params.push_back( make_pair( "sequence_code", new_seq_code ));
-#ifdef ICE_PROFILE_ENABLE
-	    api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
-#endif
-	    glite::wms::ice::db::UpdateJobByGid updater( theJob.getGridJobID(), params );
-	    glite::wms::ice::db::Transaction tnx;
-	    tnx.execute( &updater );
-            return theJob;
-
+	  glite::wms::ice::db::UpdateJobByGid updater( theJob.getGridJobID(), params );
+	  glite::wms::ice::db::Transaction tnx;
+	  //tnx.begin_exclusive();
+	  tnx.execute( &updater );
+	  return theJob;
+	  
         } 
     } else {
-        return ev->getJob(); // Make the compiler happy
+      return ev->getJob(); // Make the compiler happy
     }
 }

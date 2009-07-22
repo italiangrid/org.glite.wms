@@ -86,7 +86,7 @@ namespace config_ns = glite::wms::common::configuration;
 
 Ice* Ice::s_instance = 0;
 boost::recursive_mutex Ice::ClassAd_Mutex;
-
+boost::recursive_mutex Ice::s_mutex;
 //
 // Begin Inner class definitions
 //
@@ -552,7 +552,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 {
     try {
       //boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
+      boost::recursive_mutex::scoped_lock M( /*ice_util::CreamJob::s_GlobalICEMutex*/ s_mutex );
         
         the_job = m_lb_logger->logEvent( new ice_util::ice_resubmission_event( the_job, reason ) );
         
@@ -613,6 +613,7 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
       db::CheckGridJobID checker( theJob.getGridJobID() );
       db::Transaction tnx;
       tnx.execute( &checker );
+      //tnx.begin_exclusive( );
       if( !checker.found() )
 	return;
     }
@@ -627,9 +628,10 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
       if(theJob.is_proxy_renewable())
 	ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
       {
-	boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
+	//boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
 	db::RemoveJobByGid remover( theJob.getGridJobID() );
 	db::Transaction tnx;
+	//tnx.begin_exclusive( );
 	tnx.execute( &remover );
       }
       return;
@@ -774,9 +776,10 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
     if(theJob.is_proxy_renewable())
       ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
     {
-      boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
+      //boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
       db::RemoveJobByGid remover( theJob.getGridJobID() );
       db::Transaction tnx;
+      //tnx.begin_exclusive( );
       tnx.execute( &remover );
     }
 }

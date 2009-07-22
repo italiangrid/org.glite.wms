@@ -43,7 +43,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autog
 		-UHAVE_CONFIG_H \
 		$(GLOBUS_THR_CFLAGS) \
 		-DGLITE_WMS_HAVE_LBPROXY \
-		-DICE_PROFILE_ENABLE \
 		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in

@@ -197,7 +197,9 @@ int main( int argc, char* argv[] )
   db::GetFields getter( fields_to_retrieve, params );
   getter.use_or_clause();
   db::Transaction tnx;
+  //tnx.begin( );
   tnx.execute( &getter );
+  //tnx.commit( );
   list< vector< string > > result = getter.get_values();
   if(verbose) {
     for( list< vector< string > >::const_iterator it=result.begin();

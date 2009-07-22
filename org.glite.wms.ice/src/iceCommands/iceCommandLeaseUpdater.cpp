@@ -170,14 +170,14 @@ void iceCommandLeaseUpdater::execute( ) throw()
 
     { // acquire lock on the job cache
       //        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+      //      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
       list< CreamJob > allJobs;
       {
 	db::GetAllJobs getter(&allJobs, 0,0);
 	db::Transaction tnx;
+	//tnx.begin( );
 	tnx.execute( &getter );
-	//	allJobs = getter.get_jobs();
       }
 
       for ( list< CreamJob >::const_iterator it = allJobs.begin();
@@ -236,6 +236,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
       {
 	db::GetJobByGid getter( *it );
 	db::Transaction tnx;
+	//tnx.begin( );
 	tnx.execute( &getter );
 	if( !getter.found() )
 	  continue;
@@ -286,6 +287,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
 	  params.push_back( make_pair("failure_reson", "Lease expired" ) );
 	  db::UpdateJobByGid updater( the_job.getGridJobID(), params );
 	  db::Transaction tnx;
+	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );
 	}
         iceLBLogger::instance()->logEvent( new job_done_failed_event( the_job ) );
@@ -295,6 +297,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
 	{
 	  db::RemoveJobByGid remover( the_job.getGridJobID() );
 	  db::Transaction tnx;
+	  //tnx.begin_exclusive( );
 	  tnx.execute( &remover );
 	}
     }

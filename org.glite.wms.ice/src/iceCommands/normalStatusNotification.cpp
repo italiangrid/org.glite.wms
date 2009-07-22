@@ -239,6 +239,7 @@ void StatusChange::apply_to_job( CreamJob& j ) const
 
       glite::wms::ice::db::UpdateJobByGid updater( j.getGridJobID(), params );
       glite::wms::ice::db::Transaction tnx;
+      //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
 }
@@ -318,12 +319,13 @@ void normalStatusNotification::apply( void ) // can throw anything
     // Now that we (hopefully) have the jobid, we lock the cache
     // and find the job
     
-    boost::recursive_mutex::scoped_lock jc_M( CreamJob::globalICEMutex );
+    //    boost::recursive_mutex::scoped_lock jc_M( CreamJob::globalICEMutex );
 
     CreamJob theJob;
     {
       db::GetJobByCid getter( m_complete_cream_jobid );
       db::Transaction tnx;
+      //tnx.begin( );
       tnx.execute( &getter );
       if( !getter.found() )
 	{
@@ -385,6 +387,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 	      params.push_back( make_pair("last_empty_notification", int_to_string(time(0))));
 	      db::UpdateJobByGid updater( theJob.getGridJobID(), params);
 	      db::Transaction tnx;
+	      //tnx.begin_exclusive( );
 	      tnx.execute( &updater );
 	    }
 	    
@@ -429,6 +432,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 	      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
 	      db::RemoveJobByGid remover( theJob.getGridJobID() );
 	      db::Transaction tnx;
+	      //tnx.begin_exclusive( );
 	      tnx.execute( &remover );
 	    }
             return;
@@ -453,6 +457,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 	  params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
 	  db::UpdateJobByGid updater( theJob.getGridJobID(), params );
 	  db::Transaction tnx;
+	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );
 	}
         iceLBEvent* ev = iceLBEventFactory::mkEvent( theJob /*tmp_job*/ );

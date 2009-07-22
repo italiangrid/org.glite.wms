@@ -229,7 +229,7 @@ namespace glite {
 	      " last_poller_visited integer(4) ";
 	  }
 
-	  static boost::recursive_mutex globalICEMutex;
+	  //	  static boost::recursive_mutex s_GlobalICEMutex;
 
           //! Default constructor
           CreamJob( );

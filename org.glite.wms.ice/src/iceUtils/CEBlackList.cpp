@@ -35,7 +35,7 @@ CEBlackList::CEBlackList( ) :
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_operation_count( 0 ),
     m_operation_count_max( 20 ), // FIXME: hardcoded default
-    m_max_blacklist_time( 30*60 ) // FIXME: hardcoded default
+    m_max_blacklist_time( 10*60 ) // FIXME: hardcoded default
 {
 
 }

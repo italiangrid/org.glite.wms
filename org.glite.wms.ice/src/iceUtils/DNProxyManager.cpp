@@ -60,13 +60,13 @@ namespace cream_api = glite::ce::cream_client_api;
 using namespace std;
 
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::s_instance = NULL;
-boost::recursive_mutex iceUtil::DNProxyManager::mutex;
+boost::recursive_mutex iceUtil::DNProxyManager::s_mutex;
 
 //______________________________________________________________________________
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 {
 
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
 
   if( !s_instance ) 
     s_instance = new DNProxyManager();
@@ -253,7 +253,7 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
   throw()
 {
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string mapKey = this->composite( userDN, myproxy_name );
   
@@ -382,15 +382,19 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
   throw()
 {
 
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
 
   string mapKey = this->composite( userDN, my_proxy_server );
 
   bool found = false;
   boost::tuple<string, time_t, long long int> proxy_info;
+
+  db::Transaction tnx;
+  tnx.Begin_exclusive();
+
   {
     db::GetProxyInfoByDN getter( mapKey );
-    db::Transaction tnx;
+    //db::Transaction tnx;
     tnx.execute( &getter );
     found = getter.found();
     if(found)
@@ -413,7 +417,7 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
       tmp << (proxy_info.get<2>() + 1);
       params.push_back( make_pair("counter", tmp.str()) );
       db::UpdateProxyFieldsByDN updater( mapKey, params );
-      db::Transaction tnx;
+      //      db::Transaction tnx;
       tnx.execute( &updater );
     }
 
@@ -511,7 +515,7 @@ void iceUtil::DNProxyManager::registerUserProxy( const string& userDN,
 //________________________________________________________________________
 void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) throw()
 { 
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
   
   cream_api::soap_proxy::VOMSWrapper V( prx );
   if( !V.IsValid( ) ) {
@@ -533,7 +537,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 						    const string& prx
 						    ) throw()
 {
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
 
   time_t newT;
 
@@ -561,7 +565,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 							   const time_t exptime
 							   ) throw()
 { 
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
   
@@ -845,7 +849,7 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 void iceUtil::DNProxyManager::removeBetterProxy( const string& userDN, const string& myproxyname )
   throw()
 {
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
 
   //m_DNProxyMap.erase( this->composite(userDN, myproxyname) );
   {
@@ -861,7 +865,7 @@ void iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
 						 const boost::tuple<string, time_t, long long int>& newEntry )
   throw()
 {
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
   string mapKey = this->composite( userDN, myproxyname );
 
   //  m_DNProxyMap.erase( mapKey );
@@ -887,7 +891,7 @@ iceUtil::DNProxyManager::getAnyBetterProxyByDN( const string& dn )
 const throw() 
 {
   
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
   
   //  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.begin();
 
@@ -955,7 +959,7 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
   const throw() 
 {
   
-  boost::recursive_mutex::scoped_lock M( mutex );
+  boost::recursive_mutex::scoped_lock M( s_mutex );
   
   //  map<string, boost::tuple<string, time_t, long long int> >::const_iterator it = m_DNProxyMap.find( this->composite(dn, myproxyname ) );
   

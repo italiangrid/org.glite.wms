@@ -117,11 +117,13 @@ namespace { // begin anonymous namespace
 
             for ( it=m_cream_job_ids.begin(); it != m_cream_job_ids.end(); ++it ) {
 
-	      boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+	      // boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
 	      glite::wms::ice::db::GetJobByCid getter( *it );
 	      glite::wms::ice::db::Transaction tnx;
+	      //tnx.Begin( );
 	      tnx.execute( &getter );
+	      //tnx.commit( );
 	      if( !getter.found() ) {
 		continue; // nothing to do
 	      }
@@ -136,14 +138,16 @@ namespace { // begin anonymous namespace
 		  list<pair<string, string> > params;
 		  params.push_back( make_pair("failure_reason", job.get_failure_reason() ) );
 		  glite::wms::ice::db::UpdateJobByGid updater( job.getGridJobID(), params );
-		  glite::wms::ice::db::Transaction tnx;
+		  //glite::wms::ice::db::Transaction tnx;
+		  //tnx.begin_exclusive( );
 		  tnx.execute( &updater );
 		}
                 m_lb_logger->logEvent( new job_aborted_event( job ) ); // ignore return value, the job will be removed from ICE cache anyway
                 //m_cache->erase( j );
 		{
 		  glite::wms::ice::db::RemoveJobByGid remover( job.getGridJobID() );
-		  glite::wms::ice::db::Transaction tnx2;
+		  //glite::wms::ice::db::Transaction tnx;
+		  //tnx.begin_exclusive( );
 		  tnx.execute( &remover );
 		}
 		if(job.is_proxy_renewable())
@@ -178,7 +182,7 @@ void iceCommandStatusPoller::get_jobs_to_poll( list< CreamJob >& result,
 {
     static const char* method_name = "iceCommandStatusPoller::get_jobs_to_poll() - ";
 
-    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+    //    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
                    << "Collecting jobs to poll for userdn=[" 
@@ -191,6 +195,7 @@ void iceCommandStatusPoller::get_jobs_to_poll( list< CreamJob >& result,
 #endif
       glite::wms::ice::db::GetJobsToPoll getter( &result, userdn, creamurl, m_poll_all_jobs, m_max_chunk_size );
       glite::wms::ice::db::Transaction tnx;
+      //tnx.begin( );
       tnx.execute( &getter );
       //result = getter.get_jobs();
     }
@@ -309,12 +314,13 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 		/**
 		   Must get the entire job by the Complete Cream JOB ID
 		*/
-		boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+		//boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 		bool found = false;
 		CreamJob theJob;
 		{
 		  db::GetJobByCid getter( infoIt->first );
 		  db::Transaction tnx;
+		  //tnx.begin( );
 		  tnx.execute( &getter );
 		  found = getter.found();
 		  if( found ) {
@@ -323,11 +329,12 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 		}
 		if(found)
 		  {
-		    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+		    // boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 		    if( theJob.is_proxy_renewable() )
 		      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
 		    db::RemoveJobByCid remover( infoIt->first );
 		    db::Transaction tnx;
+		    //tnx.begin_exclusive( );
 		    tnx.execute( &remover );
 		  }
             }
@@ -432,10 +439,10 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
     
     int count;
     vector< soap_proxy::JobStatusWrapper >::const_iterator it;
-#ifdef ICE_PROFILE_ENABLE
-    api_util::scoped_timer T1( "iceCommandStatusPoller::update_single_job - MUTEX+PROCESS" );
-#endif
-    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+// #ifdef ICE_PROFILE_ENABLE
+//     api_util::scoped_timer T1( "iceCommandStatusPoller::update_single_job - MUTEX+PROCESS" );
+// #endif
+//     boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
     
     CreamJob tmp_job;
     {
@@ -444,7 +451,9 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 #endif
       glite::wms::ice::db::GetJobByCid getter( completeJobID );
       glite::wms::ice::db::Transaction tnx;
+      //tnx.begin( );
       tnx.execute( &getter );
+      //      tnx.commit( );
       if( !getter.found() )
       {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name 
@@ -462,110 +471,115 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 #ifdef ICE_PROFILE_ENABLE
     api_util::scoped_timer T3( "iceCommandStatusPoller::update_single_job - LOOP OVER STATES" );
 #endif
-    for ( it = status_changes.begin(), count = 1; it != status_changes.end(); ++it, ++count ) {
-
-       /*
-      tmp_job.set_last_seen( time(0) + iceConfManager::getInstance()->getConfiguration()->ice()->poller_delay()*5 );
-      tmp_job.set_last_empty_notification_time( time(0) + iceConfManager::getInstance()->getConfiguration()->ice()->poller_delay()*5 );
-      */
-      
-      jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
-      
-      /**
-        before doing anything, check if the job is "purged". If so,
-        remove from the cache and forget about it.
-      */
-      if ( stNum == jobstat::PURGED ) {
-	CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
-		       << "Job " << tmp_job.describe()
-		       << " is reported as PURGED. Removing from cache"
-		       ); 
-	{
-	  if( tmp_job.is_proxy_renewable() )
-	    DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN(), tmp_job.getMyProxyAddress() );
-	  glite::wms::ice::db::RemoveJobByCid remover( tmp_job.getCompleteCreamJobID() );
-	  glite::wms::ice::db::Transaction tnx;
-	  tnx.execute( &remover );
-	}
-	return;
-      }
-      
-      
-      
-      /**
-        Update the job in the database only if the number of received states
-	is greater than the number of states of the current job.
-	In this case also check if the job must be purged or resubmitted
-      */ 
-      if (  tmp_job.get_num_logged_status_changes() < count ) {
-      
-	string exitCode( it->getExitCode() );
+    for ( it = status_changes.begin(), count = 1; 
+	  it != status_changes.end(); 
+	  ++it, ++count ) 
+      {
 	
-	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		       << "Updating ICE's database for " << tmp_job.describe()
-		       << " status = [" << it->getStatusName() << "]"
-		       << " exit_code = [" << exitCode << "]"
-		       << " failure_reason = [" << it->getFailureReason() << "]"
-		       << " description = [" << it->getDescription() << "]"
-		       );
-	tmp_job.set_status( stNum );
+	/*
+	  tmp_job.set_last_seen( time(0) + iceConfManager::getInstance()->getConfiguration()->ice()->poller_delay()*5 );
+	  tmp_job.set_last_empty_notification_time( time(0) + iceConfManager::getInstance()->getConfiguration()->ice()->poller_delay()*5 );
+	*/
 	
-	try {
-	  tmp_job.set_exitcode( boost::lexical_cast< int >( exitCode ) );
-	} catch( boost::bad_lexical_cast & ) {
-	  tmp_job.set_exitcode( 0 );
-	}
-	//
-	// See comment in normalStatusNotification.cpp
-	//
-	string reason = "";
-	if ( stNum == jobstat::CANCELLED ) {
-	  tmp_job.set_failure_reason( it->getDescription() );
-	} else {
-	  tmp_job.set_failure_reason( it->getFailureReason() );
-	}
-	tmp_job.set_numlogged_status_changes( count );
-	{
-	  list<pair<string, string> > params;
-	  params.push_back( make_pair("worker_node", info_obj.getWorkerNode()) );
-	  /**
-	     This update of releveat times is done outside, in the check_user_jobs 
-	     method in order to prevent to re-poll always the same jobs 
-	     if something goes wrong...
-
-	     params.push_back( make_pair("last_seen", int_to_string(time(0)  )) );
-	     params.push_back( make_pair("last_empty_notification", int_to_string(time(0)  )));
-	  */
-	  params.push_back( make_pair("status", int_to_string(stNum)));
-	  params.push_back( make_pair("exit_code", int_to_string(tmp_job.get_exit_code())));
-	  params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
-	  params.push_back( make_pair("failure_reason", it->getFailureReason()));
-#ifdef ICE_PROFILE_ENABLE
-	  api_util::scoped_timer tmp_timer( "iceCommandStatusPoller::update_single_job - UPDATEJOBBYGID" );
-#endif
-	  db::UpdateJobByGid updater( tmp_job.getGridJobID(), params);
-	  db::Transaction tnx;
-	  tnx.execute( &updater );
-	}
-	// Log to L&B
-#ifdef ICE_PROFILE_ENABLE
-        api_util::scoped_timer T4( "iceCommandStatusPoller::update_single_job - LOG_TO_LB+RESUBMIT_OR_PURGE" );
-#endif
-	iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
-	if ( ev ) {
-	  tmp_job = m_lb_logger->logEvent( ev );
-	}
+	jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
 	
 	/**
-		Let's check if the job must be purged or resubmitted
-		only if a new status has been received
+	   before doing anything, check if the job is "purged". If so,
+	   remove from the cache and forget about it.
 	*/
-	m_iceManager->resubmit_or_purge_job( tmp_job/*jit*/ );
+	if ( stNum == jobstat::PURGED ) {
+	  CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+			 << "Job " << tmp_job.describe()
+			 << " is reported as PURGED. Removing from cache"
+			 ); 
+	  {
+	    if( tmp_job.is_proxy_renewable() )
+	      DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN(), tmp_job.getMyProxyAddress() );
+	    glite::wms::ice::db::RemoveJobByCid remover( tmp_job.getCompleteCreamJobID() );
+	    glite::wms::ice::db::Transaction tnx;
+	    //tnx.begin_exclusive( );
+	    tnx.execute( &remover );
+	  }
+	  return;
+	}
 	
-      } //  if (  tmp_job.get_num_logged_status_changes() < count ) {
-      
-      
-    } // for over states
+	
+	
+	/**
+	   Update the job in the database only if the number of received states
+	   is greater than the number of states of the current job.
+	   In this case also check if the job must be purged or resubmitted
+	*/ 
+	if (  tmp_job.get_num_logged_status_changes() < count ) {
+	  
+	  string exitCode( it->getExitCode() );
+	  
+	  CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+			 << "Updating ICE's database for " << tmp_job.describe()
+			 << " status = [" << it->getStatusName() << "]"
+			 << " exit_code = [" << exitCode << "]"
+			 << " failure_reason = [" << it->getFailureReason() << "]"
+			 << " description = [" << it->getDescription() << "]"
+			 );
+	  tmp_job.set_status( stNum );
+	  
+	  try {
+	    tmp_job.set_exitcode( boost::lexical_cast< int >( exitCode ) );
+	  } catch( boost::bad_lexical_cast & ) {
+	    tmp_job.set_exitcode( 0 );
+	  }
+	  //
+	  // See comment in normalStatusNotification.cpp
+	  //
+	  string reason = "";
+	  if ( stNum == jobstat::CANCELLED ) {
+	    tmp_job.set_failure_reason( it->getDescription() );
+	  } else {
+	    tmp_job.set_failure_reason( it->getFailureReason() );
+	  }
+	  tmp_job.set_numlogged_status_changes( count );
+	  {
+	    list<pair<string, string> > params;
+	    params.push_back( make_pair("worker_node", info_obj.getWorkerNode()) );
+	    /**
+	       This update of releveat times is done outside, in the check_user_jobs 
+	       method in order to prevent to re-poll always the same jobs 
+	       if something goes wrong...
+	       
+	       params.push_back( make_pair("last_seen", int_to_string(time(0)  )) );
+	       params.push_back( make_pair("last_empty_notification", int_to_string(time(0)  )));
+	    */
+	    params.push_back( make_pair("status", int_to_string(stNum)));
+	    params.push_back( make_pair("exit_code", int_to_string(tmp_job.get_exit_code())));
+	    params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
+	    params.push_back( make_pair("failure_reason", it->getFailureReason()));
+#ifdef ICE_PROFILE_ENABLE
+	    api_util::scoped_timer tmp_timer( "iceCommandStatusPoller::update_single_job - UPDATEJOBBYGID" );
+#endif
+	    db::UpdateJobByGid updater( tmp_job.getGridJobID(), params);
+	    db::Transaction tnx;
+	    //tnx.begin_exclusive( );
+	    tnx.execute( &updater );
+	  }
+	  // Log to L&B
+#ifdef ICE_PROFILE_ENABLE
+	  api_util::scoped_timer T4( "iceCommandStatusPoller::update_single_job - LOG_TO_LB+RESUBMIT_OR_PURGE" );
+#endif
+	  iceLBEvent* ev = iceLBEventFactory::mkEvent( tmp_job );
+	  if ( ev ) {
+	    tmp_job = m_lb_logger->logEvent( ev );
+	  }
+	  
+	  /**
+	     Let's check if the job must be purged or resubmitted
+	     only if a new status has been received
+	  */
+	  m_iceManager->resubmit_or_purge_job( tmp_job/*jit*/ );
+	  
+	} //  if (  tmp_job.get_num_logged_status_changes() < count ) {
+	
+	
+      } // for over states
 }
 
 //____________________________________________________________________________
@@ -578,7 +592,7 @@ void iceCommandStatusPoller::execute( ) throw()
   */
   list< vector< string > > result;
   {
-    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+    // boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
     /*
       SELECT DISTINCT (userdn, creamurl) from jobs;
     */
@@ -588,6 +602,7 @@ void iceCommandStatusPoller::execute( ) throw()
     
     db::GetFields getter( fields, list< pair< string, string > >(), true/*=DISTINCT*/ );
     db::Transaction tnx;
+    //tnx.begin( );
     tnx.execute( &getter );
     result = getter.get_values();
   }
@@ -677,7 +692,7 @@ void iceCommandStatusPoller::execute( ) throw()
        updates to the ICE's database, then a mutex is needed to
        synchronize the accesses to it.
     */
-    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
+    // boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
     for(list<CreamJob>::const_iterator it = jobList.begin();
 	it != jobList.end();
 	++it)
@@ -688,6 +703,7 @@ void iceCommandStatusPoller::execute( ) throw()
 	params.push_back( make_pair("last_poller_visited", int_to_string(time(0) )));
 	db::UpdateJobByGid updater( it->getGridJobID(), params );
 	db::Transaction tnx;
+	//tnx.begin_exclusive( );
 	tnx.execute( &updater );
       }
   }

@@ -532,7 +532,7 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
    */
   
   //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-  boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+    //  boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
   string cemon;
   set<string> goodCEMons, toCheck;
@@ -552,6 +552,7 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
     params.push_back( make_pair("is_killed_byice", "0") );
     db::GetFields getter( fields, params, true);
     db::Transaction tnx;
+    //tnx.begin();
     tnx.execute( &getter );
     jobs = getter.get_values();
   }

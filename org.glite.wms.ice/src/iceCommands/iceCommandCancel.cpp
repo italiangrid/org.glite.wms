@@ -153,12 +153,11 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     Request_source_purger r( m_request );
     wms_utils::scope_guard remove_request_guard( r );
     
-    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::globalICEMutex );
-    
+//    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::s_GlobalICEMutex );
     db::Transaction tnx;
+    tnx.Begin( );
     db::GetJobByGid get( m_gridJobId );
     tnx.execute( &get );
-    
 
     // Lookup the job in the jobCache
     //util::jobCache::iterator it = util::jobCache::getInstance()->lookupByGridJobID( m_gridJobId );
@@ -260,12 +259,12 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
       }
 
       theJob.set_failure_reason( "Aborted by user" );
-      db::Transaction tnx2;
+      //db::Transaction tnx2;
       list< pair<string, string> > params;
       params.push_back( make_pair("failure_reason", "Aborted by user" ));
       //      db::UpdateJobFailureReason updater( theJob.getGridJobID(), "Aborted by user" );//CreateJob aJob( theJob );
       db::UpdateJobByGid updater( theJob.getGridJobID(), params );
-      tnx2.execute( &updater );
+      tnx.execute( &updater );
       //        util::jobCache::getInstance()->put( theJob );
 
 	vector<cream_api::JobIdWrapper> toCancel;

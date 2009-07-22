@@ -68,20 +68,20 @@ namespace db {
          * invocations of the execute() method for the same
          * transaction).
          */        
-        Transaction& begin();
+        Transaction& Begin();
 
         /**
          * Starts an exclusive transaction. No other threads can read or
          * write to the database while this transaction is active.
          */ 
-        Transaction& begin_exclusive();
+        Transaction& Begin_exclusive();
 
         /**
          * Abort the current transaction. Calling this method is only
          * useful if one has called begin() or begin_exclusive()
          * before.
          */ 
-        void abort();
+        void Abort();
 
         /**
          * Commit the current transaction. Calling this method is only
@@ -90,7 +90,7 @@ namespace db {
          * begin_exclusive(), then the transaction is automatically
          * committed after each invocation of the execute() method.
          */ 
-        void commit();
+        void Commit();
 
         /**
          * Executes operation op as part of the current transaction;
@@ -102,7 +102,7 @@ namespace db {
     protected:
 
         log4cpp::Category* m_log_dev;
-        static sqlite3 *m_db;
+        static sqlite3 *s_db;
         bool m_begin; ///< true iff the user called the begin() method
         bool m_commit; ///< false iff the user called abort(); true otherwise
         

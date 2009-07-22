@@ -130,6 +130,7 @@ Delegation_manager::delegate( const CreamJob& job,
     {
       db::GetDelegation getter( str_sha1_digest, cream_url, myproxy_address );
       db::Transaction tnx;
+      //tnx.begin();
       tnx.execute( &getter );
       found = getter.found();
       if(found)
@@ -152,6 +153,7 @@ Delegation_manager::delegate( const CreamJob& job,
       {
 	db::RemoveDelegation remover( str_sha1_digest, cream_url );
 	db::Transaction tnx;
+	//tnx.begin_exclusive();
 	tnx.execute( &remover );
       }
       found = false;
@@ -241,6 +243,7 @@ Delegation_manager::delegate( const CreamJob& job,
 					USE_NEW, 
 					myproxy_address );
 	  db::Transaction tnx;
+	  //tnx.begin_exclusive();
 	  tnx.execute( &creator );
 	}
 
@@ -317,13 +320,14 @@ void Delegation_manager::purge_old_delegations( void )
 //     deleg_time_view.erase( deleg_time_view.begin(), it_end );
 //     size_t size_after = deleg_time_view.size();
 
-    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+//    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
     list<table_entry> allDelegations;
     {
       //Get
       db::GetAllDelegation getter( false );
       db::Transaction tnx;
+      //tnx.begin();
       tnx.execute( &getter );
       allDelegations = getter.get_delegations();
     }
@@ -341,6 +345,7 @@ void Delegation_manager::purge_old_delegations( void )
 	  clause.push_back( make_pair("delegationid", it->m_delegation_id) );
 	  db::GetFieldsCount getter( fields, clause );
 	  db::Transaction tnx;
+	  //tnx.begin();
 	  tnx.execute( &getter );
 	  if( !getter.get_count() ) {
 	    CREAM_SAFE_LOG( m_log_dev->debugStream()
@@ -384,6 +389,7 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
   {
     db::GetDelegationByID getter( newDeleg.get<0>() );
     db::Transaction tnx;
+    //tnx.begin();
     tnx.execute( &getter );
     found = getter.found();
     if(found)
@@ -450,6 +456,7 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
       
       db::UpdateDelegationTimesByID updater( newDeleg.get<0>(), newDeleg.get<1>(), newDeleg.get<2>() );
       db::Transaction tnx;
+      //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
   
@@ -473,6 +480,7 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
   {
     db::RemoveDelegationByID remover( delegToRemove );
     db::Transaction tnx;
+    //tnx.begin_exclusive();
     tnx.execute( &remover );
   }
   
@@ -501,6 +509,7 @@ void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, strin
   {
     db::GetAllDelegation getter( only_renewable );
     db::Transaction tnx;
+    //tnx.begin();
     tnx.execute( &getter );
     allDelegations = getter.get_delegations();
   }
@@ -552,6 +561,7 @@ void Delegation_manager::redelegate( const string& certfile,
     {
       db::CheckDelegationByID checker( delegation_id );
       db::Transaction tnx;
+      //tnx.begin();
       tnx.execute( &checker );
       found = checker.found();
     }

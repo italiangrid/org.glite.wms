@@ -71,11 +71,11 @@
 #include <ctime>
 
 using namespace std;
-namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
-namespace cream_api = glite::ce::cream_client_api::soap_proxy;
-namespace api_util = glite::ce::cream_client_api::util;
-namespace wms_utils = glite::wms::common::utilities;
-namespace iceUtil = glite::wms::ice::util;
+namespace ceurl_util    = glite::ce::cream_client_api::util::CEUrl;
+namespace cream_api     = glite::ce::cream_client_api::soap_proxy;
+namespace api_util      = glite::ce::cream_client_api::util;
+namespace wms_utils     = glite::wms::common::utilities;
+namespace iceUtil       = glite::wms::ice::util;
 namespace configuration = glite::wms::common::configuration;
 
 using namespace glite::wms::ice;
@@ -113,10 +113,11 @@ namespace { // Anonymous namespace
 	  db::RemoveJobByGid remover( m_grid_job_id );
 
 	  //            boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-	  boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
+	  //boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
 	  //            iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
 	  //            m_cache->erase( it );
 	  db::Transaction tnx;
+	  //tnx.Begin_exclusive( );
 	  tnx.execute( &remover );
 
         }
@@ -264,10 +265,11 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     {
 //      api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute() - First mutex: Check of GridJobID" );
 //        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
+//      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
       
       db::CheckGridJobID check( m_theJob.getGridJobID() );
       db::Transaction tnx;
+      //tnx.begin( );
       tnx.execute( &check );
       if( check.found() ) {
 	CREAM_SAFE_LOG( m_log_dev->warnStream()
@@ -295,9 +297,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
      */       
 
     {
-      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
+      //      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
       db::CreateJob creator( m_theJob );
       db::Transaction tnx;
+      //tnx.begin_exclusive( );
       tnx.execute( &creator );
     }
  
@@ -320,6 +323,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 	  //	  db::UpdateJobFailureReason updater( m_theJob.getGridJobID(), reason );
 	  db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
 	  db::Transaction tnx;
+	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );
 	}
 
@@ -338,6 +342,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 	params.push_back( make_pair("failure_reason", reason) );
 	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
 	db::Transaction tnx;
+	//tnx.begin_exclusive( );
 	tnx.execute( &updater );
       }
         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
@@ -373,6 +378,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       params.push_back( make_pair("userdn", V.getDNFQAN()) );
       db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
       db::Transaction tnx;
+      //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
 
@@ -707,6 +713,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       params.push_back( make_pair("wn_sequence_code", m_theJob.getSequenceCode() ));
       db::UpdateJobByGid updater(m_theJob.getGridJobID(), params );
       db::Transaction tnx;
+      //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
 
@@ -747,12 +754,13 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 //       api_util::scoped_timer tmp_timer( "iceCommandSubmit::try_to_submit() - Put in database" );
 // #endif
       //boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
+      //      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
         m_theJob.set_last_seen( time(0) );
 	list< pair<string, string> > params;
 	params.push_back( make_pair("last_seen", iceUtil::int_to_string(m_theJob.getLastSeen())));
 	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params ); // FIXME: could use ad-hoc UpdateXYZ ???
 	db::Transaction tnx;
+	//tnx.begin_exclusive( );
 	tnx.execute( &updater );
     }
 } // try_to_submit
