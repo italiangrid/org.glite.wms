@@ -2,6 +2,12 @@
 
 PAP_HOME=/opt/authz/pap
 
+/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+if [ $? -ne 0 ]; then
+  echo "PAP is not running"
+  exit 1
+fi
+
 echo `date`
 echo "---Test-BAN/UNBAN---"
 echo "1) testing user ban"

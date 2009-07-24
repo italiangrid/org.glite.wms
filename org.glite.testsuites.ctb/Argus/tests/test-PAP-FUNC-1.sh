@@ -12,6 +12,12 @@ authzconffile=$PAP_HOME/conf/pap_authorization.ini
 authzbkpfile=$PAP_HOME/conf/pap_authorization.bkp
 failed="no"
 
+/etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
+if [ $? -ne 0 ]; then
+  echo "PAP is not running"
+  exit 1
+fi
+
 #################################################################
 echo "1) testing required security section"
 mv -f $conffile  $bkpfile
