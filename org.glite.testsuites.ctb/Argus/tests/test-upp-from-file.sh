@@ -102,6 +102,7 @@ fi
 
 ###############################################################
 #clean up
+rm -f $policyfile
 /opt/authz/pap/bin/pap-admin ban subject "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=user/CN=999999/CN=user name" --resource "resource_1"
 if [ $? -ne 0 ]; then
   echo "Error during clean up"
