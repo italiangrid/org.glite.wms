@@ -58,6 +58,26 @@ else
 fi
 
 ###############################################################
+echo "4) test removing local default pap"
+/opt/authz/pap/bin/pap-admin rpap default
+if [ $? -eq 0 ]; then
+  echo "Failed"
+  failed="yes"
+else
+  echo "OK"
+fi
+
+###############################################################
+echo "5) test removing non-existing pap"
+/opt/authz/pap/bin/pap-admin rpap Dummy
+if [ $? -eq 0 ]; then
+  echo "Failed"
+  failed="yes"
+else
+  echo "OK"
+fi
+
+###############################################################
 if [ $failed == "yes" ]; then
   echo "---Test-Add/Remove-local-PAP: TEST FAILED---"
   echo `date`
