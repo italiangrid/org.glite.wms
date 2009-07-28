@@ -81,6 +81,38 @@ else
   fi
 fi
 
+###############################################################
+echo "5) testing dpap default pap"
+/opt/authz/pap/bin/pap-admin dpap default
+if [ $? -ne 0 ]; then
+  echo "Failed"
+  failed="yes"
+else
+  /opt/authz/pap/bin/pap-admin list-paps | grep default | grep -q disabled
+  if [ $? -eq 0 ]; then
+    echo "OK"
+  else
+    echo "Failed"
+    failed="yes"
+  fi
+fi
+
+###############################################################
+echo "6) testing epap default pap"
+/opt/authz/pap/bin/pap-admin epap default
+if [ $? -ne 0 ]; then
+  echo "Failed"
+  failed="yes"
+else 
+  /opt/authz/pap/bin/pap-admin list-paps | grep default | grep -q enabled
+  if [ $? -eq 0 ]; then
+    echo "OK"
+  else
+    echo "Failed"
+    failed="yes"
+  fi
+fi
+
 
 ###############################################################
 #Remove pap
