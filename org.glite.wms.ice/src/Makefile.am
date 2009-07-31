@@ -60,7 +60,7 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		-lvomsapi_gcc32dbgpthr \
+		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
 putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
@@ -95,7 +95,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		-lvomsapi_gcc32dbgpthr \
+		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
 ###-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
@@ -150,7 +150,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
-		-lvomsapi_gcc32dbgpthr \
+		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
 		iceDb/sqlite/libsqlite3.a
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
