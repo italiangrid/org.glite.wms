@@ -61,7 +61,11 @@
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
 #include "glite/wms/purger/purger.h"
+#ifdef HAVE_GLITE_JOBID
+#include "glite/jobid/JobId.h"
+#else
 #include "glite/wmsutils/jobid/JobId.h"
+#endif
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -844,8 +848,11 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
                            << job.describe()
                            
                            );
-        
+#ifdef HAVE_GLITE_JOBID
+            glite::jobid::JobId j_id( job.getGridJobID() );
+#else        
             glite::wmsutils::jobid::JobId j_id( job.getGridJobID() );
+#endif
             wms::purger::Purger the_purger( ice_util::iceConfManager::getInstance()->getConfiguration()->common()->lbproxy() );
             the_purger(j_id);
 
