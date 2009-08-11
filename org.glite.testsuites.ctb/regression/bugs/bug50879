@@ -42,7 +42,7 @@ test_bug50879 () {
 # Example usage of the run_command function
 
 for mod in lfc gfal lcg_util ; do
-  command="python -m $mod"
+  command="python -c \"import $mod\""
   message="  Checking Python Module $mod is loadable"
   run_command "${command}" "${message}"
 
