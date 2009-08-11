@@ -158,7 +158,8 @@ echo "SRC_TOKEN: $SRC_TOKEN"
 #1
 unset TOKEN
 id=1
-DEST_DESCR=dest_descr_$id
+#DEST_DESCR=dest_descr_$id
+DEST_DESCR=dest_descr
 SIZE=5M
 echo "Reserving ${SIZE} on $DEST_SAPATH as $DEST_DESCR"
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
@@ -172,7 +173,8 @@ echo "1st dest token $index: $DEST_TOKEN_1"
 #2
 unset TOKEN
 id=2
-DEST_DESCR=dest_descr_$id
+#DEST_DESCR=dest_descr_$id
+DEST_DESCR=dest_descr
 SIZE=10M
 echo "Reserving ${SIZE} on $DEST_SAPATH as $DEST_DESCR"
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
@@ -187,7 +189,8 @@ echo "2nd dest token $index: $DEST_TOKEN_2"
 #3
 unset TOKEN
 id=3
-DEST_DESCR=dest_descr_$id
+#DEST_DESCR=dest_descr_$id
+DEST_DESCR=dest_descr
 SIZE=15M
 echo "Reserving ${SIZE}Bytes on $DEST_SAPATH as $DEST_DESCR"
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
@@ -274,7 +277,7 @@ else
     echo "-TEST FAILED-"
     exit 1
   else
-    echo "The file has been places in the right space"
+    echo "The file has been placed in the right space"
     remove_space $SOURCE_SAPATH $SRC_TOKEN
     remove_space $DEST_SAPATH $DEST_TOKEN_1
     remove_space $DEST_SAPATH $DEST_TOKEN_2
