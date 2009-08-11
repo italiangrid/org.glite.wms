@@ -24,6 +24,10 @@
 ##############################################################################
 
 #Script for testing FTS behavior with space tokens
+# Scenario:
+#A valid token description is used at the source and the destination SE, the destination space has enough place to store the file. 
+#The transfer has to succeed and the file has to be placed in the right space at the destinations site. This can be checked by 
+#looking at the unused space of the space reserved at the destination site. 
 
 showUsage()
 {
@@ -137,11 +141,11 @@ DEST_SAPATH=$SE_SRM_LOC
 echo "SAPATH_destination: $DEST_SAPATH"
 
 #reserve space src
-SIZE=10
+SIZE=5M
 id=`date +%s`
 SRC_DESCR=src_descr_$id
 unset TOKEN
-echo "Reserving ${SIZE}KB on $SOURCE_SAPATH as $SRC_DESCR"
+echo "Reserving ${SIZE} on $SOURCE_SAPATH as $SRC_DESCR"
 reserveSpace $SOURCE_SAPATH $SIZE $SRC_DESCR
 #if [ "x${TOKEN}" == "x" ] || [ $? -ne 0 ]; then
 if [ $? -ne 0 ]; then
@@ -156,7 +160,7 @@ echo "SRC_TOKEN: $SRC_TOKEN"
 unset TOKEN
 id=`date +%s`
 DEST_DESCR=dest_descr_$id
-echo "Reserving ${SIZE}KB on $DEST_SAPATH as $DEST_DESCR"
+echo "Reserving ${SIZE} on $DEST_SAPATH as $DEST_DESCR"
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
 if [ $? -ne 0 ]; then
   echo "Error calling function reserveSpace: reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR"
@@ -166,30 +170,9 @@ else
 fi
 echo "DEST_TOKEN: $DEST_TOKEN"
 
-#3.1) Fill some space
-fill_space 5 $DEST_SAPATH $DEST_TOKEN
-if [ $? -ne 0 ]; then
-  echo "Error calling function fill_space: fill_space 5 $DEST_SAPATH $DEST_TOKEN"
-  exit 1
-else
-  echo "Filled 5KB space on the dest space reserved"
-fi
-
-#3.2) check space
-get_unused_space $DEST_TOKEN $DEST_SAPATH
-if [ $? -ne 0 ]; then
-  echo "Error calling function check_unused_space: check_unused_space 5 $DEST_TOKEN $DEST_SAPATH"
-  exit 1
-else
-  echo "Space free at destination: $UNUSED"
-fi
-
-
-exit 0
-
 
 #4) Submitting a file transfer
-FILE_SIZE=10
+FILE_SIZE=1000
 echo
 echo "Submitting a file transfer job..."
 file_transfer_tokens $SOURCE_SAPATH $DEST_SAPATH $SRC_DESCR $DEST_DESCR $FILE_SIZE
@@ -205,7 +188,7 @@ fi
 echo
 echo "Retrieving the job status..."
 #Hardcoded timeout
-TIMEOUT=300
+#TIMEOUT=300
 poll_status_with_timeout $SUBID $TIMEOUT
 return=$?
 
@@ -241,7 +224,29 @@ elif [ "$return" -gt 4 ];then
   exit 1
 fi
 
+
+#3.2) check space
+get_unused_space $DEST_TOKEN $DEST_SAPATH
+if [ $? -ne 0 ]; then
+  echo "Error calling function check_unused_space: check_unused_space 5 $DEST_TOKEN $DEST_SAPATH"
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+fi
+
+if [ $UNUSED == "5.00M" ]; then
+  echo "Test Failed: the unused space did not change"
+  echo "Space free at destination: $UNUSED"
+  echo "-TEST FAILED-"
+  remove_space $SOURCE_SAPATH $SRC_TOKEN
+  remove_space $DEST_SAPATH $DEST_TOKEN
+  exit 1
+fi
+
 remove_space $SOURCE_SAPATH $SRC_TOKEN
 remove_space $DEST_SAPATH $DEST_TOKEN
+
 echo "-TEST PASSED-"
 exit 0
+
+

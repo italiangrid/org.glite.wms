@@ -571,8 +571,17 @@ elif [ `echo $SAPATH | grep desy` ]; then
     return 1
   else
     export TOKEN=$token
+    #cross-check whether space was correctly reserved
+    token_check=`dpm-getspacetokens --token_desc $DESCR`
+    if [ "x$token" != "x$token_check" ]; then
+      echo "Error checking token description: dpm-getspacetokens --token_desc $DESCR"
+      return 1
+    else
+      echo "Token cross-check passed"
+    fi
   fi
-else echo "Error: reserveSpace: I cannot retrieve the SE type"
+else 
+  echo "Error: reserveSpace: cannot retrieve the SE type"
 fi
 
 return 0
@@ -592,7 +601,7 @@ fi
 token=$1
 sa_path=$2
 
-if [ `echo $sapath | grep dpm` ]; then 
+if [ `echo $sa_path | grep dpm` ]; then 
   #get space using dpm client
   unused=`dpm-getspacemd --space_token $token | awk '{if (NR==3) print $2}'`
   if [ "x$unused" == "x" ]; then
@@ -602,7 +611,7 @@ if [ `echo $sapath | grep dpm` ]; then
   export UNUSED=$unused
   echo "Unsed space for token $token: $unused"
   return 0
-elif [ `echo $sapath | grep desy` ]; then
+elif [ `echo $sa_path | grep desy` ]; then
   #get space using dcache client
   unused=`srm-get-space-metadata -space_tokens=$token $sa_path | awk -F":" '/unusedSize/ {print $2}'`
   if [ "x$unused" == "x" ]; then
@@ -612,7 +621,9 @@ elif [ `echo $sapath | grep desy` ]; then
   export UNUSED=$unused
   echo "Unsed space for token $token: $unused"
   return 0
-else echo "Error: reserveSpace: I cannot retrieve the SE type"
+else 
+  echo "Error: get_unused_space: I cannot retrieve the SE type: sa_path=$sa_path"
+  return 1
 fi
 
 unused=`dpm-getspacemd --space_token $token | awk '{if (NR==3) print $2}'`
