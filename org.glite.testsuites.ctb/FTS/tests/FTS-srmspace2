@@ -139,11 +139,11 @@ DEST_SAPATH=$SE_SRM_LOC
 echo "SAPATH_destination: $DEST_SAPATH"
 
 #reserve space src
-SIZE=10000
+SIZE=10M
 id=`date +%s`
 SRC_DESCR=src_descr_$id
 unset TOKEN
-echo "Reserving ${SIZE}Bytes on $SOURCE_SAPATH as $SRC_DESCR"
+echo "Reserving ${SIZE} on $SOURCE_SAPATH as $SRC_DESCR"
 reserveSpace $SOURCE_SAPATH $SIZE $SRC_DESCR
 #if [ "x${TOKEN}" == "x" ] || [ $? -ne 0 ]; then
 if [ $? -ne 0 ]; then
@@ -159,8 +159,8 @@ echo "SRC_TOKEN: $SRC_TOKEN"
 unset TOKEN
 id=1
 DEST_DESCR=dest_descr_$id
-SIZE=5000
-echo "Reserving ${SIZE}Bytes on $DEST_SAPATH as $DEST_DESCR"
+SIZE=5M
+echo "Reserving ${SIZE} on $DEST_SAPATH as $DEST_DESCR"
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
 if [ $? -ne 0 ]; then
   echo "Error calling function reserveSpace: reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR"
@@ -173,8 +173,8 @@ echo "1st dest token $index: $DEST_TOKEN_1"
 unset TOKEN
 id=2
 DEST_DESCR=dest_descr_$id
-SIZE=10000
-echo "Reserving ${SIZE}Bytes on $DEST_SAPATH as $DEST_DESCR"
+SIZE=10M
+echo "Reserving ${SIZE} on $DEST_SAPATH as $DEST_DESCR"
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
 if [ $? -ne 0 ]; then
   echo "Error calling function reserveSpace: reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR"
@@ -188,7 +188,7 @@ echo "2nd dest token $index: $DEST_TOKEN_2"
 unset TOKEN
 id=3
 DEST_DESCR=dest_descr_$id
-SIZE=15000
+SIZE=15M
 echo "Reserving ${SIZE}Bytes on $DEST_SAPATH as $DEST_DESCR"
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
 if [ $? -ne 0 ]; then
@@ -201,7 +201,7 @@ echo "3rd dest token $index: $DEST_TOKEN_3"
 
 
 #4) Submitting a file transfer
-FILE_SIZE=8
+FILE_SIZE=8000
 echo
 echo "Submitting a file transfer job..."
 file_transfer_tokens $SOURCE_SAPATH $DEST_SAPATH $SRC_DESCR $DEST_DESCR $FILE_SIZE
@@ -217,7 +217,7 @@ fi
 echo
 echo "Retrieving the job status..."
 #Hardcoded timeout
-TIMEOUT=300
+#TIMEOUT=300
 poll_status_with_timeout $SUBID $TIMEOUT
 return=$?
 
@@ -268,14 +268,26 @@ if [ $? -ne 0 ]; then
   exit 1
 else
   echo "Space free at destination: $UNUSED"
+  if [ $UNUSED == "10.00M" ]; then
+    echo "Error: the file was not placed in the right space"
+    echo "Remove manually the spaces before running againg the test!"
+    echo "-TEST FAILED-"
+    exit 1
+  else
+    echo "The file has been places in the right space"
+    remove_space $SOURCE_SAPATH $SRC_TOKEN
+    remove_space $DEST_SAPATH $DEST_TOKEN_1
+    remove_space $DEST_SAPATH $DEST_TOKEN_2
+    remove_space $DEST_SAPATH $DEST_TOKEN_3
+    echo "-TEST PASSED-"
+    exit 0
+  fi
 fi
 
 
-exit 0
 
-remove_space $SOURCE_SAPATH $SRC_TOKEN
-remove_space $DEST_SAPATH $DEST_TOKEN_1
-remove_space $DEST_SAPATH $DEST_TOKEN_2
-remove_space $DEST_SAPATH $DEST_TOKEN_3
-echo "-TEST PASSED-"
-exit 0
+#remove_space $SOURCE_SAPATH $SRC_TOKEN
+#remove_space $DEST_SAPATH $DEST_TOKEN_1
+#remove_space $DEST_SAPATH $DEST_TOKEN_2
+#remove_space $DEST_SAPATH $DEST_TOKEN_3
+#exit 0
