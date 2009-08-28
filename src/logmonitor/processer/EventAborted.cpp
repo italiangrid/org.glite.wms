@@ -10,7 +10,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 // See the License for the specific language governing permissions and 
 // limitations under the License.
-
 #include <cstdio>
 #include <ctime>
 
@@ -36,6 +35,10 @@
 using namespace std;
 USING_COMMON_NAMESPACE;
 RenameLogStreamNS( elog );
+
+namespace {
+  char const * const periodic_remove_msg = "The job attribute PeriodicRemove expression";
+}
 
 JOBCONTROL_NAMESPACE_BEGIN {
 
@@ -112,6 +115,23 @@ void EventAborted::process_event( void )
     else { // Job had a "normal" life cycle...
       elog::cedglog << logger::setlevel( logger::debug )
                     << "Job has been aborted by the user." << endl;
+
+      if (0 == strncmp(ea_event->getReason(), periodic_remove_msg, strlen(periodic_remove_msg)))
+        {
+          elog::cedglog << logger::setlevel( logger::info ) << " reason: " << ea_event->getReason() << "; periodic remove triggered a resubmit" << endl;
+
+          this->ei_data->md_aborted->remove( this->ei_condor );
+          this->ei_data->md_logger->aborted_by_system_event( ei_s_joberror );
+
+	        jccommon::JobFilePurger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false ).do_purge();
+          this->ei_data->md_resubmitter->resubmit(
+            position->last_status(), position->edg_id(), position->sequence_code(), this->ei_data->md_container
+          );
+
+          this->ei_data->md_container->remove(position);
+          return;
+      }
+
       this->ei_data->md_logger->aborted_by_user_event();
 
       if( this->ei_data->md_isDagLog )
