@@ -92,11 +92,9 @@ void EventJobHeld::process_event( void )
 #if CONDORG_AT_LEAST(6,5,3)
     else if( position->last_status() == GLOBUS_GRAM_PROTOCOL_ERROR_JOB_CANCEL_FAILED ) {
       elog::cedglog << logger::setlevel( logger::warning )
-		    << "Got another held event for an already removing job: Hugh !!!" << endl
-		    << logger::setlevel( logger::debug )
-		    << "I really hate this piece of shit called Condor !!! Sigh !!" << endl
+		    << "Got another held event for an already removing job\n"
 		    << logger::setlevel( logger::info )
-		    << "Ignoring this event..." << endl;
+		    << "Ignoring this event...\n";
     }
     else if( this->ejh_event->getReasonSubCode() == GLOBUS_GRAM_PROTOCOL_ERROR_JOB_CANCEL_FAILED ) {
       elog::cedglog << logger::setlevel( logger::warning )
