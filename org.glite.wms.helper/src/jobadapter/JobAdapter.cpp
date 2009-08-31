@@ -875,6 +875,7 @@ try {
   jdl::set_globus_rsl(*result, globusrsl);
 
   jw->max_osb_size((int64_t)config.wm()->max_output_sandbox_size());
+  jw->sb_retry_different_protocols(config.wm()->sb_retry_different_protocols());
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
   jw->standard_error(stderror);
@@ -951,7 +952,7 @@ try {
       maradona_path /= fs::path(jobid_to_file, fs::native);
       maradona_path /= fs::path("Maradona.output", fs::native);
       
-      jw->maradonaprotocol(
+      jw->maradona_url(
         config.lm()->maradona_transport_protocol() + "://" + local_hostname + "/",
         maradona_path.native_file_string()
       );
@@ -960,7 +961,7 @@ try {
     }
 
   } else {
-    jw->maradonaprotocol(wmpisb_base_uri->as_string(), "/Maradona.output");
+    jw->maradona_url(wmpisb_base_uri->as_string(), "/Maradona.output");
   }
 
   // read the submit file path

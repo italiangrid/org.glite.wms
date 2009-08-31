@@ -56,7 +56,7 @@ struct JobWrapper::pimpl {
   std::string               m_standard_output;
   std::string               m_standard_error;
   std::string               m_arguments;
-  std::string               m_maradonaprotocol;
+  std::string               m_maradona_url;
 
   boost::shared_ptr<URL>    m_input_base_url;
   std::vector<std::string>  m_input_files;
@@ -99,6 +99,7 @@ struct JobWrapper::pimpl {
 
   int                       m_job_type;
   bool                      m_osb_wildcards_support;
+  bool                      m_sb_retry_different_protocols;
 
   std::string               m_broker_hostname;
   std::string               m_ce_application_dir;
@@ -224,9 +225,9 @@ JobWrapper::arguments(const std::string& args){
 }
 
 void
-JobWrapper::maradonaprotocol(const std::string& protocol, const std::string& filename)
+JobWrapper::maradona_url(const std::string& protocol, const std::string& filename)
 {
-  m_pimpl->m_maradonaprotocol = protocol + filename;
+  m_pimpl->m_maradona_url = protocol + filename;
 }
 
 void
@@ -358,6 +359,12 @@ JobWrapper::max_osb_size(int64_t const& m)
   m_pimpl->m_max_osb_size = m;
 }
 
+void
+JobWrapper::sb_retry_different_protocols(bool const& r)
+{
+  m_pimpl->m_sb_retry_different_protocols = r;
+}
+
 namespace {
 
 template<typename T>
@@ -468,7 +475,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__standard_error", m_pimpl->m_standard_error) &&
     dump(os, "__arguments", m_pimpl->m_arguments) &&
     dump(os, "__gatekeeper_hostname", m_pimpl->m_gatekeeper_hostname) &&
-    dump(os, "__maradonaprotocol", m_pimpl->m_maradonaprotocol) &&
+    dump(os, "__maradona_url", m_pimpl->m_maradona_url) &&
     dump(os, "__input_base_url", (m_pimpl->m_input_base_url == 0 ?
       "" : m_pimpl->m_input_base_url->as_string())) &&
     dump(os, "__input_file", m_pimpl->m_input_files) &&
@@ -523,6 +530,7 @@ JobWrapper::dump_vars(std::ostream& os) const
       : m_pimpl->m_output_sandbox_base_dest_uri->as_string())
     ) &&
     dump(os, "__job_type", m_pimpl->m_job_type) &&
+    dump(os, "__retry_different_transports", m_pimpl->m_sb_retry_different_protocols) &&
     dump(os, "__max_outputsandbox_size", m_pimpl->m_max_osb_size);
 }
 

@@ -133,11 +133,11 @@ public:
   void arguments(const std::string& args);
 
   /*
-  * Declare maradonaprotocol
-  * @param maradonaprotocol
-  * \ingroup maradonaprotocol
+  * Declare maradona_url
+  * @param maradona_url
+  * \ingroup maradona_url
   */
-  void maradonaprotocol(const std::string& protocol, 
+  void maradona_url(const std::string& protocol, 
 		        const std::string& filename);
 
   /**
@@ -254,6 +254,8 @@ public:
   void ce_application_dir(std::string const&);
 
   void max_osb_size(const int64_t &);
+  void sb_retry_different_protocols(bool const& r);
+
 private:
 
   static const std::string s_brokerinfo_default;
