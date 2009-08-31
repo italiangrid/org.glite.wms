@@ -22,6 +22,7 @@
  */
 
 #include "Delegation_manager.h"
+#include "DNProxyManager.h"
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/VOMSWrapper.h"
@@ -77,12 +78,13 @@ Delegation_manager* Delegation_manager::instance( )
 string 
 Delegation_manager::delegate( const CreamJob& job, 
 			      const cream_api::VOMSWrapper& V, 
-			      bool force, 
-			      bool USE_NEW, 
-			      const string& myproxy_address ) 
+			      bool force ) 
   throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( s_mutex );
+
+    bool   USE_NEW         = job.is_proxy_renewable();
+    string myproxy_address = job.getMyProxyAddress();
 
     static char* method_name = "Delegation_manager::delegate() - ";
     string delegation_id; // delegation ID to return as a result
@@ -137,23 +139,10 @@ Delegation_manager::delegate( const CreamJob& job,
 	deleg_info = getter.get_delegation();
     }
     
-    //    t_delegation_by_key::iterator it = delegation_by_key_view.find( boost::make_tuple(str_sha1_digest,cream_url) );
-
-//     if ( force && delegation_by_key_view.end() != it ) {
-//       CREAM_SAFE_LOG( m_log_dev->debugStream()
-// 		      << method_name
-// 		      << "FOUND delegation with key [" 
-// 		      << str_sha1_digest << "] but FORCE is set to [" << force << "]"
-// 		      );
-//         delegation_by_key_view.erase( it );
-//         it = delegation_by_key_view.end();
-//     }
-
     if( force && found ) {
       {
 	db::RemoveDelegation remover( str_sha1_digest, cream_url );
 	db::Transaction tnx;
-	//tnx.begin_exclusive();
 	tnx.execute( &remover );
       }
       found = false;
@@ -161,7 +150,7 @@ Delegation_manager::delegate( const CreamJob& job,
 
     time_t expiration_time;
     int duration;
-    if ( /*delegation_by_key_view.end() == it*/ !found ) {
+    if ( !found ) {
 
         // Delegation id not found (or force). Performs a new delegation   
 
@@ -232,7 +221,6 @@ Delegation_manager::delegate( const CreamJob& job,
 	/**
 	   if USE_NEW is true it means that we're using the new delegation mechanism because the user set the MYPROXYSERVER
 	*/
-        //m_delegation_set.insert( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id, V.getDNFQAN(), USE_NEW, myproxy_address) );
 	{
 	  db::CreateDelegation creator( str_sha1_digest, 
 					cream_url, 
@@ -243,33 +231,46 @@ Delegation_manager::delegate( const CreamJob& job,
 					USE_NEW, 
 					myproxy_address );
 	  db::Transaction tnx;
-	  //tnx.begin_exclusive();
 	  tnx.execute( &creator );
 	}
 
-        // Inserts into the front of the list; this is guaranteed to
-        // be a new element, as it has not been found in this "if"
-        // branch
-        //delegation_by_seq.push_front( table_entry( str_sha1_digest, cream_url, expiration_time, duration, delegation_id,  V.getDNFQAN(), USE_NEW, myproxy_address ) );
-//         if ( m_delegation_set.size() > m_max_size ) {
-//             if ( m_log_dev->isDebugEnabled() ) {
+    } else { // if( !found )
 
-//                 // drops least recently used element
-//                 const table_entry last_elem( delegation_by_seq.back() );
-                
-//                 CREAM_SAFE_LOG( m_log_dev->debugStream()
-//                                 << method_name
-//                                 << "Dropping entry for delegation id "
-//                                 << last_elem.m_delegation_id
-//                                 << " CREAM URL "
-//                                 << last_elem.m_cream_url
-//                                 << " proxy hash "
-//                                 << last_elem.m_sha1_digest
-//                                  );
-//             }
-//             delegation_by_seq.pop_back();
-//         }
-    } else {
+      /**
+	 Check the remaining time of delegation. Should not be
+	 less than 1 hour, because it means that the 
+	 proxy renewal service hasn't been able to renew the
+	 'super' better proxy.
+      */
+      
+      if(deleg_info.m_expiration_time >= (time(0)-3600)) {
+
+	CREAM_SAFE_LOG( m_log_dev->debugStream()
+		      << method_name
+		      << "FOUND delegation with key [" 
+		      << str_sha1_digest 
+		      << "] but it is going to expire. "
+		      << "Will substitute the related proxy..."
+		      );
+
+	// Deregister 'super' better proxy;
+	// Register the current job's proxy to PRS as new 'super'
+	// better proxy.
+
+	
+	DNProxyManager::getInstance()->unregisterUserProxy(
+							   job.getUserDN(),
+							   job.getMyProxyAddress()
+							   );// also unlink...
+
+	DNProxyManager::getInstance()->changeRegisteredUserProxy( 
+								 job.getUserDN(),
+								 job.getUserProxyCertificate(),
+								 job.getMyProxyAddress(),
+								 V.getProxyTimeEnd()
+								 );
+	
+      }
 
       CREAM_SAFE_LOG( m_log_dev->debugStream()
 		      << method_name

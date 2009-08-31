@@ -87,7 +87,7 @@ namespace util {
             std::string m_delegation_id;
 	    std::string m_user_dn;
 	    bool        m_renewable;
-	  std::string   m_myproxyserver;
+	    std::string m_myproxyserver;
 
 	  table_entry( ) : m_sha1_digest( "" ),
 			   m_cream_url( "" ),
@@ -199,7 +199,7 @@ namespace util {
          * @throw exception if the delegation operation fails.
          */
 	//boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
-	std::string delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
+	std::string delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false ) throw( std::exception& );
 
         /**
          * Tries to delegate an already delegated ID. I hope that this

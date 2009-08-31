@@ -28,7 +28,6 @@
 #include <cstring>
 #include <string.h>
 
-//#include "jobCache.h"
 #include "SourceProxyNotFoundException.h"
 
 #include "glite/wms/common/configuration/ICEConfiguration.h"
@@ -52,7 +51,6 @@ namespace util {
 	 * The key 'dn' is the distinguished name (DN+FQAN) of the user
          */
         
-	//	std::map< std::string, boost::tuple<std::string, time_t, long long int> > m_DNProxyMap;
 	std::map< std::string, std::set< std::string> > m_temp_dnproxy_Map;
         log4cpp::Category *m_log_dev;
         
@@ -73,6 +71,15 @@ namespace util {
 				const std::string& proxy, 
 				const std::string& server, 
 				const time_t proxy_time_end ) throw();
+
+	void changeRegisteredUserProxy( const std::string& dn, 
+					const std::string& proxy, 
+					const std::string& server, 
+					const time_t proxy_time_end ) throw();
+
+	void unregisterUserProxy( const std::string& dn,
+				  const std::string& server,
+				  const std::string& proxyfile = "" ) throw();
 
 	void decrementUserProxyCounter( const std::string& dn, 
 					const std::string& myproxyname ) throw();
