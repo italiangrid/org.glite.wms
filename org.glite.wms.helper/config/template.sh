@@ -275,11 +275,6 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
       if [ -z $succeded ]; then
         log_event_reason "Running" "Cannot retrieve return value for transfer"
         return 1 # will cause a fatal_error
-      else
-        if [ "$succeded" -ne "0" ]; then
-          log_event_reason "Running" "Error during transfer"
-          return $succeded # will cause a fatal_error
-        fi
       fi
     fi
     rm -f "$transfer_stderr" "$transfer_exitcode"
@@ -296,7 +291,7 @@ doExit() # 1 - status
 
   if [ -n "${jw_maradona}" ]; then
     if [ -r "${jw_maradona}" ]; then
-      retry_copy "globus-url-copy" "file://${jw_workdir}/${jw_maradona}" "${__jw_maradonaprotocol}"
+      retry_copy "globus-url-copy" "file://${jw_workdir}/${jw_maradona}" "${__maradona_url}"
       globus_copy_status=$?
     else
       jw_echo "jw_maradona not readable, so not sent"
