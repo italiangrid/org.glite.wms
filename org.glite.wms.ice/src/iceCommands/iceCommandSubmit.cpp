@@ -118,7 +118,7 @@ namespace { // Anonymous namespace
 	  //            m_cache->erase( it );
 	  db::Transaction tnx;
 	  //tnx.Begin_exclusive( );
-	  tnx.execute( &remover );
+  tnx.execute( &remover );
 
         }
     };       
@@ -476,7 +476,7 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // Delegates the proxy
         //
         try {
-	   delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation, m_theJob.is_proxy_renewable(), m_theJob.getMyProxyAddress() );
+	   delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation );
         } catch( const exception& ex ) {
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
