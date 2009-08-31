@@ -229,11 +229,49 @@ is_integer() { # 1 - value to be checked
   fi
 }
 
-retry_copy() # 1 - command, 2 - source, 3 - dest
+retry_copy() # 1 - source, 2 - dest
 {
+  local source=$1
+  local dest=$2
   local count=0
   local succeded=1
   local sleep_time=0
+  local transport[0]="gsiftp"
+  local transport[1]="https"
+  local transport_client[0]="globus-url-copy"
+  local transport_client[1]="htcp"
+
+  local scheme_src=${source:0:`expr match "${source}" '[[:alpha:]][[:alnum:]+.-]*://' - 3`}
+  local remaining_src=${source:${#scheme_src}:${#source}-${#scheme_src}}
+
+  local scheme_dest=${dest:0:`expr match "${dest}" '[[:alpha:]][[:alnum:]+.-]*://' - 3`}
+  local remaining_dest=${dest:${#scheme_dest}:${#dest}-${#scheme_dest}}
+
+  if [ "x${scheme_src}" == "xfile" ]; then
+    local scheme=${scheme_dest}
+    local remaining=${remaining_dest}
+    local remote="dest"
+  elif [ "x${scheme_dest}" == "xfile" ]; then
+    local scheme=${scheme_src}   
+    local remaining=${remaining_src}
+    local remote="source"
+  else 
+    log_event_reason "Running" "Expected 'file://' scheme in either source or destination"
+    return 1
+  fi    
+
+  local ischeme=0 
+  for (( ; ischeme<${#transport[@]} ; ischeme+=1 )); do
+    if [ "x${scheme}" == "x${transport[$ischeme]}" ]; then
+      break
+    fi
+  done 
+  # ischeme points to the transport specified in the remote resource (either source or dest)
+  if [ ${ischeme} -eq ${#transport[@]} ]; then
+    log_event_reason "Running" "Specified transport protocol is not available"
+    return 1
+  fi 
+
   while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
     time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
@@ -254,30 +292,50 @@ retry_copy() # 1 - command, 2 - source, 3 - dest
     if [ ! -f "$transfer_exitcode" ]; then
       transfer_exitcode="/dev/null"
     fi
-    do_transfer $1 "$2" "$3" "$transfer_stderr" "$transfer_exitcode"&
-    transfer_watchdog=$!
-    transfer_timeout=3600
-    while [ $transfer_timeout -gt 0 ];
+    
+    # cycle through the different transports starting from the one specified by dest (ischeme)
+    i=0
+    while [ $i -lt ${#transport[@]} ]; 
     do
-      if [ -z `ps -p $transfer_watchdog -o pid=` ]; then
-        break;
-      fi 
-      sleep 1
-      let "transfer_timeout--"
-    done
-    if [ $transfer_timeout -le 0 ]; then
-      echo "Killing transfer watchdog (pid=$transfer_watchdog)..."
-      kill_with_children $transfer_watchdog
-      log_event_reason "Running" "Hanging transfer"
-      return 1
-    else
-      succeded=`cat $transfer_exitcode 2>/dev/null`
-      if [ -z $succeded ]; then
-        log_event_reason "Running" "Cannot retrieve return value for transfer"
-        return 1 # will cause a fatal_error
+      if [[ "$succeded" -eq 0 ]] || [[ "${__retry_different_transports}" == 0 ]] && [[ "$i" -gt 0 ]]; then
+        break
       fi
-    fi
-    rm -f "$transfer_stderr" "$transfer_exitcode"
+      local index=$((($ischeme+$i)%${#transport[@]})) 
+
+      if [ "x${remote}" == "xsource" ]; then 
+        do_transfer "${transport_client[$index]}" "${transport[$index]}${remaining}" "${dest}" "$transfer_stderr" "$transfer_exitcode"&
+      else
+        do_transfer "${transport_client[$index]}" "${source}" "${transport[$index]}${remaining}" "$transfer_stderr" "$transfer_exitcode"&
+      fi
+      transfer_watchdog=$!
+      transfer_timeout=3600
+      while [ $transfer_timeout -gt 0 ];
+      do
+        if [ -z `ps -p $transfer_watchdog -o pid=` ]; then
+          break;
+        fi
+        sleep 1
+        let "transfer_timeout--"
+      done
+      if [ $transfer_timeout -le 0 ]; then
+        echo "Killing transfer watchdog (pid=$transfer_watchdog)..."
+        kill_with_children $transfer_watchdog
+        log_event_reason "Running" "Hanging transfer"
+        succeded=1
+      else
+        succeded=`cat $transfer_exitcode 2>/dev/null`
+        if [ -z $succeded ]; then
+          log_event_reason "Running" "Cannot retrieve return value for transfer"
+          return 1 # will cause a fatal_error
+        else
+          if [ "$succeded" -ne "0" ]; then
+            log_event_reason "Running" "Error during transfer"
+          fi
+        fi
+      fi
+      rm -f "$transfer_stderr" "$transfer_exitcode"
+      i=`expr $i + 1`
+    done
     count=`expr $count + 1`
   done
   return ${succeded}
@@ -291,7 +349,7 @@ doExit() # 1 - status
 
   if [ -n "${jw_maradona}" ]; then
     if [ -r "${jw_maradona}" ]; then
-      retry_copy "globus-url-copy" "file://${jw_workdir}/${jw_maradona}" "${__maradona_url}"
+      retry_copy "file://${jw_workdir}/${jw_maradona}" "${__jw_maradonaprotocol}"
       globus_copy_status=$?
     else
       jw_echo "jw_maradona not readable, so not sent"
@@ -562,13 +620,7 @@ OSB_transfer()
           file_size_acc=`expr $file_size_acc + $file_size`
         #fi
         if [ $file_size_acc -le ${max_osb_size} ]; then
-          if [ "${f:0:9}" == "gsiftp://" ]; then
-            retry_copy "globus-url-copy" "file://$s" "$d"
-          elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-            retry_copy "htcp" "file://$s" "$d"
-          else
-            false
-          fi
+          retry_copy "file://$s" "$d"
         else
           jw_echo "OSB quota exceeded for $s, truncating needed"
           file_size_acc=`expr $file_size_acc - $file_size`
@@ -587,24 +639,12 @@ OSB_transfer()
               jw_echo "Could not truncate output sandbox file ${file}, not sending"
             else
               jw_echo "Truncated last $trunc_len bytes for file ${file}"
-              if [ "${f:0:9}" == "gsiftp://" ]; then
-                retry_copy "globus-url-copy" "file://$s.tail" "$d.tail"
-              elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-                retry_copy "htcp" "file://$s.tail" "$d.tail"
-              else
-                false
-              fi
+              retry_copy "file://$s.tail" "$d.tail"
             fi
           #fi
         fi
       else # unlimited osb
-        if [ "${f:0:9}" == "gsiftp://" ]; then
-          retry_copy "globus-url-copy" "file://$s" "$d"
-        elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-          retry_copy "htcp" "file://$s" "$d"
-        else
-          false
-        fi
+        retry_copy "file://$s" "$d"
       fi
       if [ $? != 0 ]; then
         fatal_error "Cannot upload file://$s into $d"
@@ -706,13 +746,7 @@ do
   else
     file=`basename ${__wmp_input_base_dest_file[$index]}`
   fi
-  if [ "${f:0:9}" == "gsiftp://" ]; then
-    retry_copy "globus-url-copy" "${f}" "file://${jw_workdir}/${file}"
-  elif [ "${f:0:8}" == "https://" -o "${f:0:7}" == "http://" ]; then
-    retry_copy "htcp" "${f}" "file://${jw_workdir}/${file}"
-  else
-    false
-  fi 
+  retry_copy "${f}" "file://${jw_workdir}/${file}"
   if [ $? != 0 ]; then
     fatal_error "Cannot download ${file} from ${f}"
   fi
