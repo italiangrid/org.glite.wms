@@ -236,45 +236,73 @@ retry_copy() # 1 - source, 2 - dest
   local count=0
   local succeded=1
   local sleep_time=0
+# If a space separated list of transports is specified in the _same_ vector element 
+# (i.e. the schemes correspond to the same transport client), then 
+# only the scheme specified by the caller is considered. If the caller doesn't specify it, 
+# only the first scheme in the space separated list is considered.
   local transport[0]="gsiftp"
-  local transport[1]="https"
+  local transport[1]="https http"
   local transport_client[0]="globus-url-copy"
   local transport_client[1]="htcp"
 
-  local scheme_src=${source:0:`expr match "${source}" '[[:alpha:]][[:alnum:]+.-]*://' - 3`}
+  local match_index=`expr match "${source}" '[[:alpha:]][[:alnum:]+.-]*://'`
+  if [ ${match_index} -gt 0 ]; then
+    match_index=`expr ${match_index} - 3`
+  fi
+  local scheme_src=${source:0:${match_index}}
   local remaining_src=${source:${#scheme_src}:${#source}-${#scheme_src}}
 
-  local scheme_dest=${dest:0:`expr match "${dest}" '[[:alpha:]][[:alnum:]+.-]*://' - 3`}
+  local match_index=`expr match "${dest}" '[[:alpha:]][[:alnum:]+.-]*://'`
+  if [ ${match_index} -gt 0 ]; then
+    match_index=`expr ${match_index} - 3`
+  fi
+  local scheme_dest=${dest:0:${match_index}}
   local remaining_dest=${dest:${#scheme_dest}:${#dest}-${#scheme_dest}}
 
-  if [ "x${scheme_src}" == "xfile" ]; then
+  if [ "x${scheme_src}" == "xfile" -o "x${scheme_src}" == "x" ]; then
     local scheme=${scheme_dest}
     local remaining=${remaining_dest}
     local remote="dest"
-  elif [ "x${scheme_dest}" == "xfile" ]; then
+  elif [ "x${scheme_dest}" == "xfile" -o "x${scheme_dest}" == "x" ]; then
     local scheme=${scheme_src}   
     local remaining=${remaining_src}
     local remote="source"
   else 
-    log_event_reason "Running" "Expected 'file://' scheme in either source or destination"
+    log_event_reason "Running" "Expected 'file://' or no scheme in either source or destination"
     return 1
   fi    
 
   local ischeme=0 
-  for (( ; ischeme<${#transport[@]} ; ischeme+=1 )); do
-    if [ "x${scheme}" == "x${transport[$ischeme]}" ]; then
+  while [ $ischeme -lt ${#transport[@]} ]; do
+    if [ "x`echo ${transport[$ischeme]}|awk -v sc="${scheme}" '$0 ~ sc {print}'`" != "x" ]; then
+      if [ "x`echo ${transport[$ischeme]}|cut -d' ' -f1`" != "x`echo ${transport[$ischeme]}|cut -d' ' -f2`" ]; then
+        # space separated list matched, select the scheme specified by the caller
+        transport[$ischeme]=`echo "${transport[$ischeme]}"|sed "s/.*\(\\\\${scheme}\).*/\1/"` 
+echo `echo "${transport[$ischeme]}"|sed "s/.*\(\\\\$scheme\).*/\1/"`
+echo $scheme
+      fi
       break
     fi
+  ischeme=`expr $ischeme + 1`
   done 
   # ischeme points to the transport specified in the remote resource (either source or dest)
   if [ ${ischeme} -eq ${#transport[@]} ]; then
     log_event_reason "Running" "Specified transport protocol is not available"
     return 1
   fi 
+  # select first scheme in space separated lists not specified by the caller
+  local i=0
+  while [ $i -lt ${#transport[@]} ]; do
+    if [ "x`echo ${transport[$i]}|cut -d' ' -f1`" != "x`echo ${transport[$i]}|cut -d' ' -f2`" ]; then
+      transport[$i]=`echo "${transport[$i]}"|cut -d' ' -f1`
+    fi
+    i=`expr $i + 1`
+  done
 
   while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
-    time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
+    #time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
+    time_left=1000;
     if [ $time_left -lt $sleep_time ]; then
       return 1
     fi
