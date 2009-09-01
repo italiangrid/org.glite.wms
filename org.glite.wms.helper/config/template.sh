@@ -301,8 +301,7 @@ echo $scheme
 
   while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
-    #time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
-    time_left=1000;
+    time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`;
     if [ $time_left -lt $sleep_time ]; then
       return 1
     fi
