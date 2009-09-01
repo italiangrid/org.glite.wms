@@ -288,7 +288,31 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
 
   if( size > this->cm_shared_data->md_sizefile->size_field().position() ) {
     ReadUserLog id_logfile_parser;
-    id_logfile_parser.initialize(this->cm_shared_data->md_logfile_name.c_str());
+
+    FILE * fp = NULL;
+    fp = fopen( cm_shared_data->md_logfile_name.c_str(), "r");
+    if ( fp == NULL ) {
+      elog::cedglog << logger::setlevel( logger::severe )
+                    << "Cannot open Condor log file \"" << logfile_name << "\"." << endl;
+
+      throw CannotOpenFile( this->cm_shared_data->md_logfile_name );
+    }
+
+    // Seek to last 'position'
+    std::string error;
+    if( fseek(fp, this->cm_shared_data->md_sizefile->size_field().position(), SEEK_SET) == -1 ) {
+      error.assign( "Cannot seek file \"" ); error.append( this->cm_shared_data->md_logfile_name );
+      error.append( "\" to old position " );
+      error.append( boost::lexical_cast<string>(this->cm_shared_data->md_sizefile->size_field().position()) );
+      error.append( ", reason: " );
+      error.append( strerror(errno) ); error.append( "." );
+
+      elog::cedglog << logger::setlevel( logger::fatal ) << "Cannot seek file \"" << logfile_name
+        << "\" to old position " << this->cm_shared_data->md_sizefile->size_field().position() << endl
+        << "Due to: \"" << strerror(errno) << "\"" << endl;
+
+      throw FileSystemError( error );
+    }
 
     outcome = id_logfile_parser.readEvent( event );
     scoped_event.reset( event );
@@ -323,6 +347,7 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
       stat = event_error;
       break;
     }
+  fclose(fp);
   }
   else stat = this->checkAndProcessTimers();
 
