@@ -1,7 +1,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
-
+#include <config.h>
 #include <user_log.c++.h>
 
 #include "glite/wms/common/configuration/Configuration.h"

@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <ctime>
-
+#include <config.h>
 #include <user_log.c++.h>
 
 #include "glite/wms/common/logger/logstream.h"
