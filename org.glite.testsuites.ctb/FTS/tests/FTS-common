@@ -190,6 +190,61 @@ function file_transfer_tokens()
 }
 
 #
+# as file_transfer but uses --fail-nearline
+# Usage: file_transfer_skip_tape SOURCE_SAPATH DEST_SAPATH FILE_SIZE
+#
+function file_transfer_skip_tape()
+{
+  if [ $# -ne 3 ]; then
+    echo "Error: file_transfer_skip_tape: expecting 3 arguments, $# received"
+    return 1
+  fi
+  SOURCE_SAPATH=$1
+  DEST_SAPATH=$2
+  FILE_SIZE=$3
+
+  SUB_FILE_LOC="$HOME/fts-submission-file"
+  DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+  TMP_FILE="/tmp/FTS_Test_$DATE"
+  TEST_FILE_NAME="FTS_Test_$DATE"
+
+  echo "Creating ${FILE_SIZE}KB temporary test file for transfer"
+  echo "" > $TMP_FILE
+  dd if=/dev/zero of=$TMP_FILE bs=${FILE_SIZE}KB count=1 2>/dev/null
+  echo "Copy the test file $TMP_FILE on: $SOURCE_SAPATH"
+  GUID=`lcg-cr --vo $VO_NAME -d $SOURCE_SAPATH/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+  result=`cat message | wc -l`
+  if [ $result -gt 0 ]; then
+    echo ">>> NOTE: `cat message`"
+    echo ""
+    echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+    echo ""
+    NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+    return 1
+  fi
+  echo "Removing the temporary test file: $TMP_FILE"
+  rm -rf $TMP_FILE
+
+  echo "Creating the submission file in $SUB_FILE_LOC"
+  id=`date +%s`
+  echo "" > $SUB_FILE_LOC
+  echo "$SOURCE_SAPATH/$TEST_FILE_NAME $DEST_SAPATH/$TEST_FILE_NAME$id" >> $SUB_FILE_LOC
+  
+  echo "Submitting the transfer"
+  echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC --fail-nearline"
+  SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC --fail-nearline`
+#    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC -p $MYPROXY_PASS`
+  if [ -z "$SUBID" ]; then
+     echo "Job submition failed!"
+     return 1
+  fi
+  echo "Job successfully submited"
+  echo "Transfer ID: $SUBID. "
+
+  return 0
+}
+
+#
 # Get a Submission Id and check the status of the file transfer.
 # Return codes:
 #              - 0 trasfer finished
@@ -450,7 +505,7 @@ function get_def_se_from_site()
   fi
   if [ $Site_Name == "cert-tb-cern" ]; then
     SE_HOST=$CERN_SE
-  elif [ $Site_Name == "ddesycerttb"]; then
+  elif [ $Site_Name == "desycerttb"]; then
     SE_HOST=$DESY_SE
   else
     echo "get_def_se_from_site: no SE defined for site $Site_Name"

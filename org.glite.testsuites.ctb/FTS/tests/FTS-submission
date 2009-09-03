@@ -171,7 +171,8 @@ echo "Source: $Source_Site"
 echo "Dest: $Destin_Site"
 
 #3.b) Retrieve good SEs from source and destination sites
-get_good_se_from_site $Source_Site
+#get_good_se_from_site $Source_Site
+get_def_se_from_site $Source_Site
 if [ $? = 1 ];then
   echo "Failing retrieving good SE from site $Source_Site"
   echo "-TEST FAILED-"
@@ -180,7 +181,8 @@ fi
 SE_SOURCE=$SE_HOST
 echo "SE_source: $SE_SOURCE"
 
-get_good_se_from_site $Destin_Site
+#get_good_se_from_site $Destin_Site
+get_def_se_from_site $Destin_Site
 if [ $? = 1 ];then
   echo "Failing retrieving good SE from site $Destin_Site"
   echo "-TEST FAILED-"
