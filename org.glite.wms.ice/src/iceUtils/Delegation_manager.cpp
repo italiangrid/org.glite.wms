@@ -160,7 +160,7 @@ Delegation_manager::delegate( const CreamJob& job,
         // Delegation id not found (or force). Performs a new delegation   
 
         // The delegation ID is the "canonized" GRID job id
-        delegation_id   = canonizeString( job.getGridJobID() );
+        delegation_id   = canonizeString( job.getGridJobID() + cream_url );
 	expiration_time = V.getProxyTimeEnd( ); 
 	duration        = V.getProxyTimeEnd( ) - time(0);
 
