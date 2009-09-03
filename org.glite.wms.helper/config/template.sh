@@ -50,16 +50,44 @@ if [ "X${__output_base_url##*/}" != "X" ]; then
   __output_base_url="${__output_base_url}/"
 fi
 
-if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
-  __copy_retry_count=6
+if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT_ISB}" ]; then
+  if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
+    __copy_retry_count_isb=6
+  else
+    __copy_retry_count_isb=${GLITE_LOCAL_COPY_RETRY_COUNT}
+  fi
 else
-  __copy_retry_count=${GLITE_LOCAL_COPY_RETRY_COUNT}
+  __copy_retry_count_isb=${GLITE_LOCAL_COPY_RETRY_COUNT_ISB}
 fi
 
-if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
-  __copy_retry_first_wait=300
+if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT_OSB}" ]; then
+  if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
+    __copy_retry_count_osb=6
+  else
+    __copy_retry_count_osb=${GLITE_LOCAL_COPY_RETRY_COUNT}
+  fi
 else
-  __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
+  __copy_retry_count_osb=${GLITE_LOCAL_COPY_RETRY_COUNT_OSB}
+fi
+  
+if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT_ISB}" ]; then
+  if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
+    __copy_retry_first_wait_isb=100
+  else
+    __copy_retry_first_wait_isb=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
+  fi
+else
+  __copy_retry_first_wait_isb=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT_ISB}
+fi
+
+if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT_OSB}" ]; then
+  if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
+    __copy_retry_first_wait_osb=300
+  else
+    __copy_retry_first_wait_osb=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
+  fi
+else
+  __copy_retry_first_wait_osb=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT_OSB}
 fi
 
 jw_host="`hostname -f`"
@@ -263,10 +291,14 @@ retry_copy() # 1 - source, 2 - dest
     local scheme=${scheme_dest}
     local remaining=${remaining_dest}
     local remote="dest"
+    __copy_retry_count=${__copy_retry_count_osb}
+    __copy_retry_first_wait=${__copy_retry_first_wait_osb}
   elif [ "x${scheme_dest}" == "xfile" -o "x${scheme_dest}" == "x" ]; then
     local scheme=${scheme_src}   
     local remaining=${remaining_src}
     local remote="source"
+    __copy_retry_count=${__copy_retry_count_isb}
+    __copy_retry_first_wait=${__copy_retry_first_wait_isb}
   else 
     log_event_reason "Running" "Expected 'file://' or no scheme in either source or destination"
     return 1
@@ -278,8 +310,6 @@ retry_copy() # 1 - source, 2 - dest
       if [ "x`echo ${transport[$ischeme]}|cut -d' ' -f1`" != "x`echo ${transport[$ischeme]}|cut -d' ' -f2`" ]; then
         # space separated list matched, select the scheme specified by the caller
         transport[$ischeme]=`echo "${transport[$ischeme]}"|sed "s/.*\(\\\\${scheme}\).*/\1/"` 
-echo `echo "${transport[$ischeme]}"|sed "s/.*\(\\\\$scheme\).*/\1/"`
-echo $scheme
       fi
       break
     fi
