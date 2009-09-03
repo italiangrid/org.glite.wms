@@ -475,8 +475,70 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         // 
         // Delegates the proxy
         //
+	
+	bool USE_NEW = m_theJob.is_proxy_renewable();
+	boost::tuple<string, time_t, long long int> SBP;
+	if( USE_NEW ) {
+	  SBP = iceUtil::DNProxyManager::getInstance()->getExactBetterProxyByDN( V.getDNFQAN(), m_theJob.getMyProxyAddress());
+
+	  if( SBP.get<0>() == "" ) {
+	    /**
+	       NO SuperBetterProxy for DN.
+	       must use that one in the ISB as SBP
+	    */
+	    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+                            << "Setting new better proxy for userdn ["
+			    << V.getDNFQAN() << "] MyProxy server ["
+			    << m_theJob.getMyProxyAddress() << "] Job ["
+                            << m_theJob.describe()
+			    << "]"
+			    ); 
+	    iceUtil::DNProxyManager::getInstance()->setBetterProxy( V.getDNFQAN(), 
+								    m_theJob.getUserProxyCertificate(),
+								    m_theJob.getMyProxyAddress(),
+								    V.getProxyTimeEnd() );
+	    force_delegation = true;
+
+	    //	    incrementUserProxyCounter = false;
+
+	  } else {
+	    /**
+	       The SBP already exists. Let's check if the ISB one is more
+	       long-living.
+	    */
+	    if( V.getProxyTimeEnd() > SBP.get<1>() ) {
+	      boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.getUserProxyCertificate(), V.getProxyTimeEnd(), SBP.get<2>() );
+	      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+			      << "Updating better proxy for userdn ["
+			      << V.getDNFQAN() << "] MyProxy server ["
+			      << m_theJob.getMyProxyAddress() << "] Job ["
+			      << m_theJob.describe()
+			      << "] Proxy Expiration time ["
+			      << newPrx.get<1>() << "] Counter ["
+			      << newPrx.get<2>()
+			      << "] because this one is more long-living..."
+			    ); 
+	      iceUtil::DNProxyManager::getInstance()->updateBetterProxy( V.getDNFQAN(),
+									 m_theJob.getMyProxyAddress(),
+									 newPrx );
+									
+	    }
+	    /** 
+		Now check the duration of related delegation
+	    */
+	    iceUtil::Delegation_manager::table_entry deleg;
+	    deleg = iceUtil::Delegation_manager::instance()->getDelegation(V.getDNFQAN(),
+									   m_theJob.getCreamURL(),
+									   m_theJob.getMyProxyAddress()
+									   );
+	    if( deleg.m_expiration_time < time(0) + 2*iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->proxy_renewal_frequency() ) // this means that the ICE's delegation renewal has failed. In fact it try to renew much before the exp time of the delegation itself.
+	      force_delegation = true;
+	    
+	  }
+	}
+
         try {
-	   delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, force_delegation );
+	  delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, USE_NEW, force_delegation );
         } catch( const exception& ex ) {
             throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % m_theJob.getGridJobID() % ex.what() ) ) );
 	}
@@ -721,25 +783,18 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     
     // now the job is in cache and has been registered we can save its
     // proxy into the DN-Proxy Manager's cache
-    if( m_theJob.is_proxy_renewable() ) {
-
-      //string key = m_theJob.getUserDN() + string("_") + m_theJob.getMyProxyAddress();
-
-      iceUtil::DNProxyManager::getInstance()->registerUserProxy( 
-								m_theJob.getUserDN(),
-								m_theJob.getUserProxyCertificate(),
-								m_theJob.getMyProxyAddress(),
-								V.getProxyTimeEnd()
-								);
-
-    } else {
-
+    if( !m_theJob.is_proxy_renewable() ) {
+      
       iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger_Legacy( m_theJob.getUserDN(), 
 									   m_theJob.getUserProxyCertificate(), 
 									   V.getProxyTimeEnd() );
-
     }
 
+    /**
+       MUST increment job counter of the 'super' better proxy table.
+    */
+    
+    iceUtil::DNProxyManager::getInstance()->incrementUserProxyCounter(m_theJob.getUserDN(), m_theJob.getMyProxyAddress() );
     /*
      * here must check if we're subscribed to the CEMon service
      * in order to receive the status change notifications

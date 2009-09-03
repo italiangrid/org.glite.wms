@@ -199,7 +199,7 @@ namespace util {
          * @throw exception if the delegation operation fails.
          */
 	//boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
-	std::string delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false ) throw( std::exception& );
+	std::string delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, const bool use_new, bool force = false ) throw( std::exception& );
 
         /**
          * Tries to delegate an already delegated ID. I hope that this
@@ -225,7 +225,11 @@ namespace util {
 	 * <li>Renewable (bool: yes/no)<li>
          * </ul>
          */
-      void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool, std::string> >& target, const bool only_renewable = false);
+//       void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool, std::string> >& target, const bool only_renewable = false); 
+
+	void getDelegationEntries( std::vector< table_entry >& target, const bool only_renewable = false );
+	
+	table_entry getDelegation( const std::string& userdn, const std::string& ceurl, const std::string& myproxy );
 
       /**
 	 < delegID, cream_url, exp_time, user_dn, 

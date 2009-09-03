@@ -61,6 +61,9 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-lglite_security_proxyrenewal_core_gcc32dbg \
+		-L$(GLOBUS_LOCATION)/../../../myproxy/3.6-VDT-1.6.0/slc4_ia32_gcc346/lib \
+		-lmyproxy_gcc32dbgpthr \
 		iceDb/sqlite/libsqlite3.a
 
 putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
@@ -96,6 +99,9 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-lglite_security_proxyrenewal_core_gcc32dbg \
+		-L$(GLOBUS_LOCATION)/../../../myproxy/3.6-VDT-1.6.0/slc4_ia32_gcc346/lib \
+		-lmyproxy_gcc32dbgpthr \
 		iceDb/sqlite/libsqlite3.a
 
 ###-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
@@ -111,9 +117,13 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
 		$(GLITE_LB_THR_COMMON_LIBS) \
-                $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+                $(GLITE_WMS_COMMON_LOGGER_LIBSA) \
+		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
+		-lglite_security_proxyrenewal_core_gcc32dbg \
+		-L$(GLOBUS_LOCATION)/../../../myproxy/3.6-VDT-1.6.0/slc4_ia32_gcc346/lib \
+		-lmyproxy_gcc32dbgpthr \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS)
@@ -150,7 +160,10 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
+		-lglite_security_proxyrenewal_core_gcc32dbg \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-L$(GLOBUS_LOCATION)/../../../myproxy/3.6-VDT-1.6.0/slc4_ia32_gcc346/lib \
+		-lmyproxy_gcc32dbgpthr \
 		iceDb/sqlite/libsqlite3.a
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib

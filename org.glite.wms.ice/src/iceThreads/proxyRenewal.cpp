@@ -26,7 +26,7 @@
 #include "iceUtils.h"
 #include "proxyRenewal.h"
 #include "iceConfManager.h"
-#include "iceCommandProxyRenewal.h"
+#include "iceCommandDelegationRenewal.h"
 
 
 /**
@@ -73,7 +73,7 @@ void proxyRenewal::body( void )
                        << "proxyRenewal::body() - new iteration"
                        );
         
-	iceCommandProxyRenewal().execute();
+	iceCommandDelegationRenewal().execute();
 
 	if(m_delay<=10) 
 	  sleep( m_delay );

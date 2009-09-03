@@ -67,19 +67,22 @@ namespace util {
         void setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy) throw();
 	void setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy, const time_t ) throw();
         
-	void registerUserProxy( const std::string& dn, 
-				const std::string& proxy, 
-				const std::string& server, 
-				const time_t proxy_time_end ) throw();
+	//	void registerUserProxy( const std::string& dn, 
+	//				const std::string& proxy, 
+	//				const std::string& server, 
+	//				const time_t proxy_time_end ) throw();
 
-	void changeRegisteredUserProxy( const std::string& dn, 
-					const std::string& proxy, 
-					const std::string& server, 
-					const time_t proxy_time_end ) throw();
+	//	void changeRegisteredUserProxy( const std::string& dn, 
+	//					const std::string& proxy, 
+	//					const std::string& server, 
+	//					const time_t proxy_time_end ) throw();
 
-	void unregisterUserProxy( const std::string& dn,
-				  const std::string& server,
-				  const std::string& proxyfile = "" ) throw();
+	//	void unregisterUserProxy( const std::string& dn,
+	//				  const std::string& server,
+	//				  const std::string& proxyfile = "" ) throw();
+
+	void incrementUserProxyCounter( const std::string& dn, 
+					const std::string& myproxyname ) throw();
 
 	void decrementUserProxyCounter( const std::string& dn, 
 					const std::string& myproxyname ) throw();
@@ -98,7 +101,15 @@ namespace util {
 				time_t, 
 				long long int>& newEntry ) throw();
 
+	void setBetterProxy( const std::string& dn,
+			     const std::string& proxyfile,
+			     const std::string& myproxyname,
+			     const time_t ) throw();
+	
     private:
+
+	std::string make_betterproxy_path( const std::string& dn, const std::string& myproxy ) throw();
+	
         void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
 
 	//std::pair< std::string, time_t> searchBetterProxy( const std::string& ) throw();

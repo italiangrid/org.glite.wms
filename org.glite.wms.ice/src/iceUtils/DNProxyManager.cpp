@@ -82,420 +82,317 @@ iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 }
 
 //______________________________________________________________________________
-void
-iceUtil::DNProxyManager::unregisterUserProxy( const string& dn,
-					      const string& server,
-					      const string& _proxyfile) throw()
-{
-  boost::recursive_mutex::scoped_lock M( s_mutex );
+// void
+// iceUtil::DNProxyManager::unregisterUserProxy( const string& dn,
+// 					      const string& server,
+// 					      const string& _proxyfile) throw()
+// {
+//   boost::recursive_mutex::scoped_lock M( s_mutex );
   
-  string mapKey = this->composite( dn, server );
+//   string mapKey = this->composite( dn, server );
   
-  string reg_id = compressed_string( mapKey );
+//   string reg_id = compressed_string( mapKey );
 
-  string proxyfile = _proxyfile;
+//   string proxyfile = _proxyfile;
 
-  int err = glite_renewal_UnregisterProxy( reg_id.c_str(), NULL );
+//   int err = glite_renewal_UnregisterProxy( reg_id.c_str(), NULL );
       
-  if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
-    CREAM_SAFE_LOG(
-		   m_log_dev->errorStream()
-		   << "DNProxyManager::unregisterUserProxy() - "
-		   << "Couldn't unregister the proxy registered with ID ["
-		   << reg_id << "]. Error is: "
-		   << edg_wlpr_GetErrorText(err) << ". Ignoring..."
-		   );
-  }
+//   if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+//     CREAM_SAFE_LOG(
+// 		   m_log_dev->errorStream()
+// 		   << "DNProxyManager::unregisterUserProxy() - "
+// 		   << "Couldn't unregister the proxy registered with ID ["
+// 		   << reg_id << "]. Error is: "
+// 		   << edg_wlpr_GetErrorText(err) << ". Ignoring..."
+// 		   );
+//   }
   
-  CREAM_SAFE_LOG(
-		 m_log_dev->debugStream()
-		 << "DNProxyManager::unregisterUserProxy() - "
-		 << "Unlinking file ["
-		 << proxyfile << "]... "
-		 );
+//   CREAM_SAFE_LOG(
+// 		 m_log_dev->debugStream()
+// 		 << "DNProxyManager::unregisterUserProxy() - "
+// 		 << "Unlinking file ["
+// 		 << proxyfile << "]... "
+// 		 );
   
-  if( proxyfile.empty() ) {
-    db::GetProxyInfoByDN getter( mapKey );
-    db::Transaction tnx;
-    tnx.execute( &getter );
-    proxyfile = getter.get_info().get<0>();
-  }
+//   if( proxyfile.empty() ) {
+//     db::GetProxyInfoByDN getter( mapKey );
+//     db::Transaction tnx;
+//     tnx.execute( &getter );
+//     proxyfile = getter.get_info().get<0>();
+//   }
 
-  if(::unlink( proxyfile.c_str()) < 0 )
-    {
-      int saveerr = errno;
-      CREAM_SAFE_LOG(
-		     m_log_dev->errorStream()
-		     << "DNProxyManager::unregisterUserProxy() - "
-		     << "Unlink of file ["
-		     << proxyfile << "] is failed. Error is: "
-		     << strerror(saveerr);
-		     );
-    }
+//   if(::unlink( proxyfile.c_str()) < 0 )
+//     {
+//       int saveerr = errno;
+//       CREAM_SAFE_LOG(
+// 		     m_log_dev->errorStream()
+// 		     << "DNProxyManager::unregisterUserProxy() - "
+// 		     << "Unlink of file ["
+// 		     << proxyfile << "] is failed. Error is: "
+// 		     << strerror(saveerr);
+// 		     );
+//     }
   
-}
+// }
+
+
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
-  throw()
-{
-  boost::recursive_mutex::scoped_lock M( s_mutex );
-  
-  string mapKey = this->composite( userDN, myproxy_name );
-  
-  string regID = compressed_string( mapKey );
-  
-  CREAM_SAFE_LOG(
-		   m_log_dev->debugStream()
-		   << "DNProxyManager::decrementUserProxyCounter() - "
-		   << "Looking for for DN ["
-		   << userDN << "] MyProxy server ["
-		   << myproxy_name << "] in the m_DNProxyMap..."
-		   );
-  
-  bool found = false;
-  boost::tuple<string, time_t, long long int> proxy_info;
-  {
-    db::GetProxyInfoByDN getter( mapKey );
-    db::Transaction tnx;
-    tnx.execute( &getter );
-    found = getter.found();
-    if(found)
-      proxy_info = getter.get_info();
-  }
-  
-  if( found ) {
+// void iceUtil::DNProxyManager::changeRegisteredUserProxy( const string& userDN, 
+// 							 const string& userProxy,
+// 							 const string& my_proxy_server,
+// 							 const time_t proxy_time_end)
+//   throw()
+// {
+//   boost::recursive_mutex::scoped_lock M( s_mutex );
+//   string mapKey = this->composite( userDN, my_proxy_server );
+//   db::Transaction tnx;
+//   tnx.Begin_exclusive();
 
-    CREAM_SAFE_LOG(
-		   m_log_dev->debugStream()
-		   << "DNProxyManager::decrementUserProxyCounter() - "
-		   << "Decrementing proxy counter for DN ["
-		   << userDN << "] MyProxy server ["
-		   << myproxy_name <<"] from [" << proxy_info.get<2>()
-		   << "] to [" << (proxy_info.get<2>() - 1) << "]"
-		   );
+//   char *renewal_proxy_path = NULL;
 
-    {
-      list<pair<string, string> > params;
-      ostringstream tmp;
-      tmp << (proxy_info.get<2>() - 1);
-      params.push_back( make_pair("counter", tmp.str()) );
-      db::UpdateProxyFieldsByDN updater( mapKey, params );
-      db::Transaction tnx;
-      tnx.execute( &updater );
-    }
+//   string regID = compressed_string( mapKey );
+
+//   CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// 		 << "DNProxyManager::changeRegisteredUserProxy() - Going to register proxy ["
+// 		 << userProxy << "] to MyProxyServer ["
+// 		 << my_proxy_server << "] with ID ["
+// 		 << regID << "]."
+// 		 );
+
+//   int register_result = glite_renewal_RegisterProxy(userProxy.c_str(), 
+// 						    my_proxy_server.c_str(), 
+// 						    7512, 
+// 						    regID.c_str(), 
+// 						    EDG_WLPR_FLAG_UNIQUE, 
+// 						    &renewal_proxy_path);
+
+//   if(register_result) {
+
+//     CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		   << "DNProxyManager::changeRegisteredUserProxy() - glite_renewal_RegisterProxy failed with error code: "
+// 		   << register_result << ". Falling back to LEGACY BetterProxy calculation..."
+// 		   );
     
+//     this->setUserProxyIfLonger_Legacy( userDN, userProxy );
+    
+//     return;
 
-    if( proxy_info.get<2>() == 1 ) {
+//   } else {
+    
+//     /**
+//        make a symlink in the persist_dir to the path of the renewal_proxy_path. 
+//        Used at ICE's boot to restore the m_DNProxyMap_NEW.
+//     */
+//     string proxylink = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
+//     proxylink += regID + "_NEW.proxy";
 
-      CREAM_SAFE_LOG(
-		   m_log_dev->debugStream()
-		   << "DNProxyManager::decrementUserProxyCounter() - "
-		   << "Proxy Counter is ZERO for DN ["
-		   << userDN << "] MyProxy server ["
-		   << myproxy_name<<"]. Unregistering it and removing symlink ["
-		   //		   << m_DNProxyMap[ mapKey ].get<0>()
-		   << proxy_info.get<0>()
-		   << "] from persist_dir..."
-		   );
-      /**
-	 If the counter is 0 deregister the current proxy and clear the map and delete the file.
-      */
-
-      this->unregisterUserProxy( regID, proxy_info.get<0>() );
-
-//       int err = glite_renewal_UnregisterProxy( regID.c_str(), NULL );
+//     if( symlink( renewal_proxy_path, proxylink.c_str() ) < 0) {
+//       CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		     << "DNProxyManager::changeRegisteredUserProxy() - "
+// 		     << "Cannot symlink [" << renewal_proxy_path << "] to ["
+// 		     << proxylink << "]. Error is: " << strerror(errno) 
+// 		     << ". Falling back to LEGACY BetterProxy calculation..."
+// 		     );
+//       /**
+// 	 UN-register 
+//       */
       
+//       int err = glite_renewal_UnregisterProxy( regID.c_str(), NULL );
+
 //       if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
 // 	CREAM_SAFE_LOG(
 // 		       m_log_dev->errorStream()
-// 		       << "DNProxyManager::decrementUserProxyCounter() - "
+// 		       << "DNProxyManager::changeRegisteredUserProxy() - "
 // 		       << "Couldn't unregister the proxy registered with ID ["
 // 		       << regID << "]. Error is: "
 // 		       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
 // 		       );
+	
+	
+
+// 	return;
 //       }
 
-//       CREAM_SAFE_LOG(
-// 		     m_log_dev->debugStream()
-// 		     << "DNProxyManager::decrementUserProxyCounter() - "
-// 		     << "Unlinking file ["
-// 		     << proxy_info.get<0>() << "]... "
-// 		     );
-
-//       if(::unlink( proxy_info.get<0>().c_str()) < 0 )
-// 	{
-// 	  int saveerr = errno;
-// 	  CREAM_SAFE_LOG(
-// 			 m_log_dev->errorStream()
-// 			 << "DNProxyManager::decrementUserProxyCounter() - "
-// 			 << "Unlink of file ["
-// 			 //			 << m_DNProxyMap[ mapKey ].get<0>() << "] is failed. Error is: "
-// 			 << proxy_info.get<0>() << "] is failed. Error is: "
-// 			 << strerror(saveerr);
-// 			 );
-// 	}
+//       this->setUserProxyIfLonger_Legacy( userDN, userProxy );
       
-//       CREAM_SAFE_LOG(
-// 		     m_log_dev->debugStream()
-// 		     << "DNProxyManager::decrementUserProxyCounter() - "
-// 		     << "Removing Better proxy with key ["
-// 		     << mapKey << "] for user DN [" 
-// 		     << userDN << "] MyProxyURL ["
-// 		     << myproxy_name << "]"
-// 		     );
-      {
-	db::RemoveProxyByDN remover( mapKey );
-	db::Transaction tnx;
-	tnx.execute( &remover );
-      }
-      return;
-    
-    }
+//       return;
 
-  }
-}
+//     } else {
+      
+//       /**
+// 	 Everything went ok. Now let's save the registered proxy !
+//       */
+//       {
+// 	//db::CreateProxyField creator( mapKey, proxylink, proxy_time_end, 1 );
+// 	CREAM_SAFE_LOG(
+// 		       m_log_dev->errorStream()
+// 		       << "DNProxyManager::changeRegisteredUserProxy() - "
+// 		       << "Goingo to change proxyfile to ["
+// 		       << proxylink << "] and exptime to ["
+// 		       << proxy_time_end << "] for DN ["
+// 		       << userDN << "] myproxyserver ["
+// 		       << my_proxy_server << "]"
+// 		       );
+
+// 	list< pair<string, string> > params;
+// 	params.push_back( make_pair( "proxyfile", proxylink) );
+// 	params.push_back( make_pair( "exptime", time_t_to_string(proxy_time_end )) );
+// 	db::UpdateProxyFieldsByDN updater( mapKey, params );
+	
+// 	db::Transaction tnx;
+// 	tnx.execute( &updater );
+//       }
+//     }
+//   }
+// }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::changeRegisteredUserProxy( const string& userDN, 
-							 const string& userProxy,
-							 const string& my_proxy_server,
-							 const time_t proxy_time_end)
-  throw()
-{
-  boost::recursive_mutex::scoped_lock M( s_mutex );
-  string mapKey = this->composite( userDN, my_proxy_server );
-  db::Transaction tnx;
-  tnx.Begin_exclusive();
+// void iceUtil::DNProxyManager::registerUserProxy( const string& userDN, 
+// 						 const string& userProxy,
+// 						 const string& my_proxy_server,
+// 						 const time_t proxy_time_end)
+//   throw()
+// {
 
-  char *renewal_proxy_path = NULL;
+//   boost::recursive_mutex::scoped_lock M( s_mutex );
 
-  string regID = compressed_string( mapKey );
+//   string mapKey = this->composite( userDN, my_proxy_server );
 
-  CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		 << "DNProxyManager::changeRegisteredUserProxy() - Going to register proxy ["
-		 << userProxy << "] to MyProxyServer ["
-		 << my_proxy_server << "] with ID ["
-		 << regID << "]."
-		 );
+//   bool found = false;
+//   boost::tuple<string, time_t, long long int> proxy_info;
 
-  int register_result = glite_renewal_RegisterProxy(userProxy.c_str(), 
-						    my_proxy_server.c_str(), 
-						    7512, 
-						    regID.c_str(), 
-						    EDG_WLPR_FLAG_UNIQUE, 
-						    &renewal_proxy_path);
+//   db::Transaction tnx;
+//   tnx.Begin_exclusive();
 
-  if(register_result) {
-
-    CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		   << "DNProxyManager::changeRegisteredUserProxy() - glite_renewal_RegisterProxy failed with error code: "
-		   << register_result << ". Falling back to LEGACY BetterProxy calculation..."
-		   );
-    
-    this->setUserProxyIfLonger_Legacy( userDN, userProxy );
-    
-    return;
-
-  } else {
-    
-    /**
-       make a symlink in the persist_dir to the path of the renewal_proxy_path. 
-       Used at ICE's boot to restore the m_DNProxyMap_NEW.
-    */
-    string proxylink = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
-    proxylink += regID + "_NEW.proxy";
-
-    if( symlink( renewal_proxy_path, proxylink.c_str() ) < 0) {
-      CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "DNProxyManager::changeRegisteredUserProxy() - "
-		     << "Cannot symlink [" << renewal_proxy_path << "] to ["
-		     << proxylink << "]. Error is: " << strerror(errno) 
-		     << ". Falling back to LEGACY BetterProxy calculation..."
-		     );
-      /**
-	 UN-register 
-      */
-      
-      int err = glite_renewal_UnregisterProxy( regID.c_str(), NULL );
-
-      if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
-	CREAM_SAFE_LOG(
-		       m_log_dev->errorStream()
-		       << "DNProxyManager::changeRegisteredUserProxy() - "
-		       << "Couldn't unregister the proxy registered with ID ["
-		       << regID << "]. Error is: "
-		       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
-		       );
-	
-	
-
-	return;
-      }
-
-      this->setUserProxyIfLonger_Legacy( userDN, userProxy );
-      
-      return;
-
-    } else {
-      
-      /**
-	 Everything went ok. Now let's save the registered proxy !
-      */
-      {
-	//db::CreateProxyField creator( mapKey, proxylink, proxy_time_end, 1 );
-	CREAM_SAFE_LOG(
-		       m_log_dev->errorStream()
-		       << "DNProxyManager::changeRegisteredUserProxy() - "
-		       << "Goingo to change proxyfile to ["
-		       << proxylink << "] and exptime to ["
-		       << proxy_time_end << "] for DN ["
-		       << userDN << "] myproxyserver ["
-		       << my_proxy_server << "]"
-		       );
-
-	list< pair<string, string> > params;
-	params.push_back( make_pair( "proxyfile", proxylink) );
-	params.push_back( make_pair( "exptime", time_t_to_string(proxy_time_end )) );
-	db::UpdateProxyFieldsByDN updater( mapKey, params );
-	
-	db::Transaction tnx;
-	tnx.execute( &updater );
-      }
-    }
-  }
-}
-
-//________________________________________________________________________
-void iceUtil::DNProxyManager::registerUserProxy( const string& userDN, 
-						 const string& userProxy,
-						 const string& my_proxy_server,
-						 const time_t proxy_time_end)
-  throw()
-{
-
-  boost::recursive_mutex::scoped_lock M( s_mutex );
-
-  string mapKey = this->composite( userDN, my_proxy_server );
-
-  bool found = false;
-  boost::tuple<string, time_t, long long int> proxy_info;
-
-  db::Transaction tnx;
-  tnx.Begin_exclusive();
-
-  {
-    db::GetProxyInfoByDN getter( mapKey );
-    tnx.execute( &getter );
-    found = getter.found();
-    if(found)
-      proxy_info = getter.get_info();
-  }
+//   {
+//     db::GetProxyInfoByDN getter( mapKey );
+//     tnx.execute( &getter );
+//     found = getter.found();
+//     if(found)
+//       proxy_info = getter.get_info();
+//   }
   
-  if( found ) {
+//   if( found ) {
 
-    CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		   << "DNProxyManager::registerUserProxy() - Found a proxy for user DN ["
-		   << mapKey <<"]. Will not register it to MyProxyServer..."
-		   );
+//     CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// 		   << "DNProxyManager::registerUserProxy() - Found a proxy for user DN ["
+// 		   << mapKey <<"]. Will not register it to MyProxyServer..."
+// 		   );
 
-    {
-      list<pair<string, string> > params;
-      ostringstream tmp;
-      tmp << (proxy_info.get<2>() + 1);
-      params.push_back( make_pair("counter", tmp.str()) );
-      db::UpdateProxyFieldsByDN updater( mapKey, params );
-      tnx.execute( &updater );
-    }
+//     {
+//       list<pair<string, string> > params;
+//       ostringstream tmp;
+//       tmp << (proxy_info.get<2>() + 1);
+//       params.push_back( make_pair("counter", tmp.str()) );
+//       db::UpdateProxyFieldsByDN updater( mapKey, params );
+//       tnx.execute( &updater );
+//     }
 
-    return;
-  }
+//     return;
+//   }
 
-  char *renewal_proxy_path = NULL;
+//   char *renewal_proxy_path = NULL;
 
-  string regID = compressed_string( mapKey );
+//   string regID = compressed_string( mapKey );
 
-  CREAM_SAFE_LOG(m_log_dev->debugStream() 
-		 << "DNProxyManager::registerUserProxy() - Going to register proxy ["
-		 << userProxy << "] to MyProxyServer ["
-		 << my_proxy_server << "] with ID ["
-		 << regID << "]."
-		 );
+//   CREAM_SAFE_LOG(m_log_dev->debugStream() 
+// 		 << "DNProxyManager::registerUserProxy() - Going to register proxy ["
+// 		 << userProxy << "] to MyProxyServer ["
+// 		 << my_proxy_server << "] with ID ["
+// 		 << regID << "]."
+// 		 );
 
-  int register_result = glite_renewal_RegisterProxy(userProxy.c_str(), 
-						    my_proxy_server.c_str(), 
-						    7512, 
-						    regID.c_str(), 
-						    EDG_WLPR_FLAG_UNIQUE, 
-						    &renewal_proxy_path);
+//   int register_result = glite_renewal_RegisterProxy(userProxy.c_str(), 
+// 						    my_proxy_server.c_str(), 
+// 						    7512, 
+// 						    regID.c_str(), 
+// 						    EDG_WLPR_FLAG_UNIQUE, 
+// 						    &renewal_proxy_path);
 
-  if(register_result) {
+//   if(register_result) {
 
-    CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		   << "DNProxyManager::registerUserProxy() - glite_renewal_RegisterProxy failed with error code: "
-		   << register_result << ". Falling back to LEGACY BetterProxy calculation..."
-		   );
+//     CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		   << "DNProxyManager::registerUserProxy() - glite_renewal_RegisterProxy failed with error code: "
+// 		   << register_result << ". Falling back to LEGACY BetterProxy calculation..."
+// 		   );
 
-    this->setUserProxyIfLonger_Legacy( userDN, userProxy );
+//     this->setUserProxyIfLonger_Legacy( userDN, userProxy );
 
-    return;
+//     return;
 
-  } else {
+//   } else {
     
-    /**
-       make a symlink in the persist_dir to the path of the renewal_proxy_path. 
-       Used at ICE's boot to restore the m_DNProxyMap_NEW.
-    */
-    string proxylink = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
-    proxylink += regID + "_NEW.proxy";
+//     /**
+//        make a symlink in the persist_dir to the path of the renewal_proxy_path. 
+//        Used at ICE's boot to restore the m_DNProxyMap_NEW.
+//     */
+//     string proxylink = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/";
+//     proxylink += regID + "_NEW.proxy";
 
-    if( symlink( renewal_proxy_path, proxylink.c_str() ) < 0) {
-      CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "DNProxyManager::registerUserProxy() - "
-		     << "Cannot symlink [" << renewal_proxy_path << "] to ["
-		     << proxylink << "]. Error is: " << strerror(errno) 
-		     << ". Falling back to LEGACY BetterProxy calculation..."
-		     );
-      /**
-	 UN-register 
-      */
+//     if( symlink( renewal_proxy_path, proxylink.c_str() ) < 0) {
+//       CREAM_SAFE_LOG(m_log_dev->errorStream() 
+// 		     << "DNProxyManager::registerUserProxy() - "
+// 		     << "Cannot symlink [" << renewal_proxy_path << "] to ["
+// 		     << proxylink << "]. Error is: " << strerror(errno) 
+// 		     << ". Falling back to LEGACY BetterProxy calculation..."
+// 		     );
+//       /**
+// 	 UN-register 
+//       */
 
-      int err = glite_renewal_UnregisterProxy( regID.c_str(), NULL );
+//       int err = glite_renewal_UnregisterProxy( regID.c_str(), NULL );
 
-      if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
-	CREAM_SAFE_LOG(
-		       m_log_dev->errorStream()
-		       << "DNProxyManager::registerUserProxy() - "
-		       << "Couldn't unregister the proxy registered with ID ["
-		       << regID << "]. Error is: "
-		       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
-		       );
+//       if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+// 	CREAM_SAFE_LOG(
+// 		       m_log_dev->errorStream()
+// 		       << "DNProxyManager::registerUserProxy() - "
+// 		       << "Couldn't unregister the proxy registered with ID ["
+// 		       << regID << "]. Error is: "
+// 		       << edg_wlpr_GetErrorText(err) << ". Ignoring..."
+// 		       );
 	
 	
 
-	return;
-      }
+// 	return;
+//       }
 
-      this->setUserProxyIfLonger_Legacy( userDN, userProxy );
+//       this->setUserProxyIfLonger_Legacy( userDN, userProxy );
 
-      return;
+//       return;
 
-    } else {
+//     } else {
       
-      /**
-	 Everything went ok. Now let's save the registered proxy !
-      */
-      {
-	db::CreateProxyField creator( mapKey, proxylink, proxy_time_end, 1 );
-	db::Transaction tnx;
-	tnx.execute( &creator );
-      }
-    }
-  }
-}
+//       /**
+// 	 Everything went ok. Now let's save the registered proxy !
+//       */
+//       {
+// 	db::CreateProxyField creator( mapKey, proxylink, proxy_time_end, 1 );
+// 	db::Transaction tnx;
+// 	tnx.execute( &creator );
+//       }
+//     }
+//   }
+// }
+
+/***************************************************
+ *
+ *
+ *
+ *
+ *
+ *    'NORMAL' Better Proxy Handling methods
+ *
+ *
+ *
+ *
+ *
+ ***************************************************/
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) throw()
+void 
+iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) 
+  throw()
 { 
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
@@ -515,9 +412,10 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) t
 }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn, 
-						    const string& prx
-						    ) throw()
+void 
+iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn, 
+						      const string& prx ) 
+  throw()
 {
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
@@ -542,10 +440,12 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn, 
-							   const string& prx,
-							   const time_t exptime
-							   ) throw()
+void 
+iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( 
+						     const string& dn, 
+						     const string& prx,
+						     const time_t exptime)
+  throw()
 { 
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
@@ -563,7 +463,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
       proxy_info = getter.get_info();
   }
 
-  if( !found /*m_DNProxyMap.find( dn ) == m_DNProxyMap.end()*/ ) {
+  if( !found ) {
     
     try {
       
@@ -589,11 +489,7 @@ void iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 		   << time_t_to_string(exptime) << "]"
 		   );
     
-    //m_DNProxyMap[ dn ] = boost::make_tuple( localProxy, exptime, 0);
     {
-      //list<pair<string, string> > params;
-      //      params.push_back( make_pair("counter", proxy_info.get<2>() + 1) );
-      
       db::CreateProxyField creator( dn, localProxy, exptime, 0 );
       db::Transaction tnx;
       tnx.execute( &creator );
@@ -707,6 +603,13 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
 		   );
     abort();
   }
+
+  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		 << "DNProxyManager::copyProxy() - Copying proxy ["
+		 << source <<"] to ["
+		 << target << "] ..."
+		 );
+
   char c;
   while( input.get(c) ) 
     {
@@ -741,17 +644,59 @@ void iceUtil::DNProxyManager::copyProxy( const string& source, const string& tar
   ::chmod( target.c_str(), 00600 );
 }
 
+/**********************************************
+ *
+ *
+ *
+ *
+ *  'SUPER' Better Proxy Handling methods
+ *  
+ *
+ *
+ *
+ *
+ **********************************************/
 //________________________________________________________________________
-void iceUtil::DNProxyManager::removeBetterProxy( const string& userDN, const string& myproxyname )
+void 
+iceUtil::DNProxyManager::removeBetterProxy( const string& userdn, const string& myproxyname )
   throw()
 {
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
+  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		 << "DNProxyManager::removeBetterProxy() - "
+		 << "Removing from DB better proxy for userdn ["
+		 << userdn << "] MyProxy server ["
+		 << myproxyname << "]"
+		 );
+
   {
-    db::RemoveProxyByDN remover( this->composite(userDN, myproxyname) );
+    db::RemoveProxyByDN remover( this->composite(userdn, myproxyname) );
     db::Transaction tnx;
     tnx.execute( &remover );
   }
+  
+  string localProxy = this->make_betterproxy_path(userdn, myproxyname); //iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( userdn, myproxyname ) ) + ".betterproxy";
+  
+  CREAM_SAFE_LOG(
+		 m_log_dev->debugStream()
+		 << "DNProxyManager::removeBetterProxy() - "
+		 << "Unlinking proxy file ["
+		 << localProxy << "]... "
+		 );
+  
+  if(::unlink( localProxy.c_str() ) < 0 )
+    {
+      int saveerr = errno;
+      CREAM_SAFE_LOG(
+		     m_log_dev->errorStream()
+		     << "DNProxyManager::removeBetterProxy() - "
+		     << "Unlink of file ["
+		     << localProxy << "] is failed. Error is: "
+		     << strerror(saveerr);
+		     );
+    }
+  //::unlink( localProxy.c_str() );
 }
 
 //________________________________________________________________________
@@ -763,6 +708,32 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
 {
   boost::recursive_mutex::scoped_lock M( s_mutex );
   string mapKey = this->composite( userDN, myproxyname );
+  
+  string localProxy = this->make_betterproxy_path(userDN, myproxyname );//iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( userDN, myproxyname ) ) + ".betterproxy";
+  
+  int rc = ::unlink( localProxy.c_str() );
+  if( rc < 0 ) {
+    string errmex = strerror(errno);
+    CREAM_SAFE_LOG(m_log_dev->fatalStream() 
+		   << "DNProxyManager::updateBetterProxy() - Error unlinking ["
+		   << localProxy << "]: " << errmex << ". Skipping Better Proxy update"
+		   );
+    return;
+  }
+
+  try {
+    
+    this->copyProxy( newEntry.get<0>(), localProxy );
+    
+  } catch(SourceProxyNotFoundException& ex) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::updateBetterProxy() - Error copying proxy ["
+		   << newEntry.get<0>() << "] to ["
+		   << localProxy << "]."
+		   );
+    
+    return;
+  }
 
   {
     list<pair<string, string> > params;
@@ -775,6 +746,52 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     db::UpdateProxyFieldsByDN updater( mapKey, params );
     db::Transaction tnx;
     tnx.execute( &updater );
+  }
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::setBetterProxy( const string& dn, 
+					      const string& proxyfile,
+					      const string& myproxyname,
+					      const time_t proxy_time_end )
+  throw()
+{
+
+  boost::recursive_mutex::scoped_lock M( s_mutex );
+  
+  string localProxy = this->make_betterproxy_path(dn, myproxyname);//iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( dn, myproxyname ) ) + ".betterproxy";
+  
+  try {
+    
+    this->copyProxy( proxyfile, localProxy );
+    
+  } catch(SourceProxyNotFoundException& ex) {
+    CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		   << "DNProxyManager::setBetterProxy() - Error copying proxy ["
+		   << proxyfile<< "] to ["
+		   << localProxy << "]."
+		   );
+    
+    return;
+    
+  }
+  
+  string mapKey = this->composite( dn, myproxyname );
+
+  CREAM_SAFE_LOG(m_log_dev->debugStream() 
+		 << "DNProxyManager::setBetterProxy() - "
+		 << "Inserting proxy entry into DB for DN ["
+		 << dn 
+		 << "] and MyProxy ["
+		 << myproxyname
+		 << "] Proxy file ["
+		 << localProxy << "]"
+		 );
+
+  {
+    db::CreateProxyField creator( mapKey, localProxy, proxy_time_end, 0 );
+    db::Transaction tnx;
+    tnx.execute( &creator );    
   }
 }
 
@@ -855,4 +872,138 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
     return proxy_info;
   }
   
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
+  throw()
+{
+  boost::recursive_mutex::scoped_lock M( s_mutex );
+  
+  string mapKey = this->composite( userDN, myproxy_name );
+  
+  string regID = compressed_string( mapKey );
+  
+  CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::incrementUserProxyCounter() - "
+		   << "Looking for DN ["
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name << "] in the DB..."
+		   );
+  
+  bool found = false;
+  boost::tuple<string, time_t, long long int> proxy_info;
+  {
+    db::GetProxyInfoByDN getter( mapKey );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    found = getter.found();
+    if(found)
+      proxy_info = getter.get_info();
+  }
+  if( found ) {
+
+    CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::incrementUserProxyCounter() - "
+		   << "Incrementing proxy counter for DN ["
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name <<"] from [" << proxy_info.get<2>()
+		   << "] to [" << (proxy_info.get<2>() +1 ) << "]"
+		   );
+
+    {
+      list<pair<string, string> > params;
+      ostringstream tmp;
+      tmp << (proxy_info.get<2>() + 1);
+      params.push_back( make_pair("counter", tmp.str()) );
+      db::UpdateProxyFieldsByDN updater( mapKey, params );
+      db::Transaction tnx;
+      tnx.execute( &updater );
+    }
+  }
+}
+
+//________________________________________________________________________
+void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
+  throw()
+{
+  boost::recursive_mutex::scoped_lock M( s_mutex );
+  
+  string mapKey = this->composite( userDN, myproxy_name );
+  
+  string regID = compressed_string( mapKey );
+  
+  CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::decrementUserProxyCounter() - "
+		   << "Looking for DN ["
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name << "] in the DB..."
+		   );
+  
+  bool found = false;
+  boost::tuple<string, time_t, long long int> proxy_info;
+  {
+    db::GetProxyInfoByDN getter( mapKey );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+    found = getter.found();
+    if(found)
+      proxy_info = getter.get_info();
+  }
+  
+  if( found ) {
+
+    CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::decrementUserProxyCounter() - "
+		   << "Decrementing proxy counter for DN ["
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name <<"] from [" << proxy_info.get<2>()
+		   << "] to [" << (proxy_info.get<2>() - 1) << "]"
+		   );
+
+    {
+      list<pair<string, string> > params;
+      ostringstream tmp;
+      tmp << (proxy_info.get<2>() - 1);
+      params.push_back( make_pair("counter", tmp.str()) );
+      db::UpdateProxyFieldsByDN updater( mapKey, params );
+      db::Transaction tnx;
+      tnx.execute( &updater );
+    }
+    
+
+    if( proxy_info.get<2>() == 1 ) {
+
+      CREAM_SAFE_LOG(
+		   m_log_dev->debugStream()
+		   << "DNProxyManager::decrementUserProxyCounter() - "
+		   << "Proxy Counter is ZERO for DN ["
+		   << userDN << "] MyProxy server ["
+		   << myproxy_name<<"]. Removing better proxy ["
+		   //		   << m_DNProxyMap[ mapKey ].get<0>()
+		   << proxy_info.get<0>()
+		   << "] from persist_dir..."
+		   );
+      /**
+	 If the counter is 0 deregister the current proxy and clear the map and delete the file.
+      */
+
+      this->removeBetterProxy( userDN, myproxy_name );
+    
+    }
+
+  }
+}
+
+//________________________________________________________________________
+string 
+iceUtil::DNProxyManager::make_betterproxy_path( const string& dn, 
+						const string& myproxy )
+  throw()
+{
+  return iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
 }

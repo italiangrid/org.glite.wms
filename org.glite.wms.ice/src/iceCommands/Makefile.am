@@ -15,11 +15,12 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandStatusPoller.cpp \
 	iceCommandSubUpdater.cpp \
 	iceCommandUpdateStatus.cpp \
-	iceCommandProxyRenewal.cpp \
 	iceCommandLeaseUpdater.cpp \
 	Request_source_purger.cpp \
 	normalStatusNotification.cpp \
-	emptyStatusNotification.cpp
+	emptyStatusNotification.cpp \
+	iceCommandDelegationRenewal.cpp
+###	iceCommandProxyRenewal.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src/iceUtils \

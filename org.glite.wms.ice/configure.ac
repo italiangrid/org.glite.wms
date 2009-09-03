@@ -66,6 +66,7 @@ have_glite_wms_common=no
 have_gridsite=no
 have_xml2=no
 have_glite_wms_purger=no
+have_myproxy=no
 
 # This is a workaround to enable building ICE against either
 # WMS 3.2 and WMS 3.1
@@ -93,6 +94,7 @@ AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
+AC_MYPROXY([], have_myproxy=yes, have_myproxy=no)
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])

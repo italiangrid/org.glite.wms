@@ -78,19 +78,22 @@ Delegation_manager* Delegation_manager::instance( )
 string 
 Delegation_manager::delegate( const CreamJob& job, 
 			      const cream_api::VOMSWrapper& V, 
+			      const bool USE_NEW,
 			      bool force ) 
   throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( s_mutex );
 
-    bool   USE_NEW         = job.is_proxy_renewable();
+    //bool   USE_NEW         = job.is_proxy_renewable();
+    
     string myproxy_address = job.getMyProxyAddress();
 
     static char* method_name = "Delegation_manager::delegate() - ";
     string delegation_id; // delegation ID to return as a result
 
     // Utility variables
-    const string certfile( job.getUserProxyCertificate() );
+    //    const string certfile( job.getUserProxyCertificate() );
+    //const string certfile( DNProxyManager::getInstance()->getExactBetterProxyByDN(V.getDNFQAN(), myproxy_address).get<0>() );
     const string cream_url( job.getCreamURL() );
     const string cream_deleg_url( job.getCreamDelegURL() );
     string str_sha1_digest;
@@ -109,8 +112,10 @@ Delegation_manager::delegate( const CreamJob& job,
 		      );  
       str_sha1_digest = V.getDNFQAN();
     }
-    else
+    else {
+      string certfile( DNProxyManager::getInstance()->getExactBetterProxyByDN(V.getDNFQAN(), myproxy_address).get<0>() );
       str_sha1_digest = computeSHA1Digest( certfile );//bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+    }
 
     // Lookup the (sha1_digest,cream_url) into the set
 //     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
@@ -162,43 +167,44 @@ Delegation_manager::delegate( const CreamJob& job,
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
                         << "Creating new delegation "
-                        << "with delegation id "
+                        << "with delegation id ["
                         << delegation_id
-                        << " CREAM URL "
+                        << "] CREAM URL ["
                         << cream_url
-                        << " Delegation URL "
+                        << "] Delegation URL ["
                         << cream_deleg_url
-                        << " user DN "
+                        << "] user DN ["
                         << V.getDN( )
-                        << " proxy hash "
+                        << "] proxy hash ["
                         << str_sha1_digest
-			<< " Expiring on [" 
+			<< "] Expiring on [" 
 			<< time_t_to_string( expiration_time ) << "]"
                          );
         
         try {
-            // Gets the proxy expiration time
-            //expiration_time = V.getProxyTimeEnd( );            
-	    CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
+	  // Gets the proxy expiration time
+	  //expiration_time = V.getProxyTimeEnd( );
+	  string certfile( DNProxyManager::getInstance()->getExactBetterProxyByDN(V.getDNFQAN(), myproxy_address).get<0>() );
+	  CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
         } catch( exception& ex ) {
-            // Delegation failed
-            CREAM_SAFE_LOG( m_log_dev->errorStream()
-                            << method_name
-                            << "FAILED Creation of a new delegation "
-                            << "with delegation id "
-                            << delegation_id
-                            << " CREAM URL "
-                            << cream_url
-                            << " Delegation URL "
-                            << cream_deleg_url
-                            << " user DN "
-                            << V.getDN( )
-                            << " proxy hash "
-                            << str_sha1_digest
-			    << " - ERROR is: ["
-			    << ex.what() << "]"
-                             );
-            throw runtime_error(ex.what());
+	  // Delegation failed
+	  CREAM_SAFE_LOG( m_log_dev->errorStream()
+			  << method_name
+			  << "FAILED Creation of a new delegation "
+			  << "with delegation id "
+			  << delegation_id
+			  << " CREAM URL "
+			  << cream_url
+			  << " Delegation URL "
+			  << cream_deleg_url
+			  << " user DN "
+			  << V.getDN( )
+			  << " proxy hash "
+			  << str_sha1_digest
+			  << " - ERROR is: ["
+			  << ex.what() << "]"
+			  );
+	  throw runtime_error(ex.what());
         }  catch( ... ) {
             // Delegation failed
             CREAM_SAFE_LOG( m_log_dev->errorStream()
@@ -258,17 +264,17 @@ Delegation_manager::delegate( const CreamJob& job,
 	// better proxy.
 
 	
-	DNProxyManager::getInstance()->unregisterUserProxy(
-							   job.getUserDN(),
-							   job.getMyProxyAddress()
-							   );// also unlink...
+// 	DNProxyManager::getInstance()->unregisterUserProxy(
+// 							   job.getUserDN(),
+// 							   job.getMyProxyAddress()
+// 							   );// also unlink...
 
-	DNProxyManager::getInstance()->changeRegisteredUserProxy( 
-								 job.getUserDN(),
-								 job.getUserProxyCertificate(),
-								 job.getMyProxyAddress(),
-								 V.getProxyTimeEnd()
-								 );
+// 	DNProxyManager::getInstance()->changeRegisteredUserProxy( 
+// 								 job.getUserDN(),
+// 								 job.getUserProxyCertificate(),
+// 								 job.getMyProxyAddress(),
+// 								 V.getProxyTimeEnd()
+// 								 );
 	
       }
 
@@ -323,7 +329,7 @@ void Delegation_manager::purge_old_delegations( void )
 
 //    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
-    list<table_entry> allDelegations;
+    vector<table_entry> allDelegations;
     {
       //Get
       db::GetAllDelegation getter( false );
@@ -335,7 +341,7 @@ void Delegation_manager::purge_old_delegations( void )
 
     list<string> toRemove;
 
-    for( list<table_entry>::const_iterator it = allDelegations.begin();
+    for( vector<table_entry>::const_iterator it = allDelegations.begin();
 	 it != allDelegations.end();
 	 ++it)
       {
@@ -488,46 +494,33 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 }
 
 //______________________________________________________________________________
-void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target, const bool only_renewable )
+// void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target, const bool only_renewable )
+void Delegation_manager::getDelegationEntries( vector< table_entry >& target, const bool only_renewable )
 {
   boost::recursive_mutex::scoped_lock L( s_mutex );
-//     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
-//     t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
-//     t_delegation_by_key::iterator it = delegation_by_key_view.begin();
-    
-//     while( it != delegation_by_key_view.end() ) {
-//         target.push_back( boost::make_tuple(it->m_delegation_id, 
-//                                             it->m_cream_url, 
-//                                             it->m_user_dn, 
-//                                             it->m_expiration_time, 
-//                                             it->m_delegation_duration,
-// 					    it->m_renewable,
-// 					    it->m_myproxyserver));
-//         ++it;
-//     }
 
-  list< table_entry > allDelegations;
+  vector< table_entry > allDelegations;
   {
     db::GetAllDelegation getter( only_renewable );
     db::Transaction tnx;
-    //tnx.begin();
     tnx.execute( &getter );
     allDelegations = getter.get_delegations();
   }
   
-  for(list< table_entry >::const_iterator it=allDelegations.begin();
+  for(vector< table_entry >::const_iterator it=allDelegations.begin();
       it != allDelegations.end();
       ++it)
     {
-      target.push_back( boost::make_tuple(it->m_delegation_id, 
-					  it->m_cream_url, 
-					  it->m_user_dn, 
-					  it->m_expiration_time, 
-					  it->m_delegation_duration,
-					  it->m_renewable,
-					  it->m_myproxyserver
-					  )
-			);
+//       target.push_back( boost::make_tuple(it->m_delegation_id, 
+// 					  it->m_cream_url, 
+// 					  it->m_user_dn, 
+// 					  it->m_expiration_time, 
+// 					  it->m_delegation_duration,
+// 					  it->m_renewable,
+// 					  it->m_myproxyserver
+// 					  )
+// 			);
+      target.push_back( *it );
     }
 }
 
@@ -611,4 +604,26 @@ void Delegation_manager::redelegate( const string& certfile,
     
 //     // Relocates the newly-found element to the front of the list
 //     delegation_by_seq.relocate( delegation_by_seq.begin(), it_seq );    
+}
+
+//----------------------------------------------------------------------------
+Delegation_manager::table_entry
+Delegation_manager::getDelegation( const string& userdn, const string& ceurl, const string& myproxy )
+{  
+  bool found = false;
+  table_entry deleg_info("", "", 0, 0, "", "", 0, "");
+
+  {
+    db::GetDelegation getter( userdn, ceurl, myproxy );
+    db::Transaction tnx;
+    tnx.execute( &getter );
+
+    found = getter.found();
+    if(found)
+      deleg_info = getter.get_delegation();
+  }
+  
+  //if( deleg_info.m_sha1_digest != "" ) {
+  return deleg_info;
+    //  }
 }
