@@ -57,7 +57,28 @@ namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
-	
+
+	pair<bool, time_t> isgood( const std::string& proxyfile ) throw() {
+	  
+	  X509* x;
+	  try {
+	    x = glite::ce::cream_client_api::certUtil::read_BIO(proxyfile);
+	  } catch(glite::ce::cream_client_api::soap_proxy::auth_ex& ex) {
+	    CREAM_SAFE_LOG(
+			   glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->errorStream()
+			   << "util::isgood() - " << ex.what();
+			   )
+	      return make_pair(false, (time_t)0);
+	  }
+	  
+	  boost::shared_ptr< X509 > tmpIn( x, X509_free );
+	  
+	  time_t proxyTimeEnd = glite::ce::cream_client_api::certUtil::ASN1_UTCTIME_get( X509_get_notAfter(x) );
+	  
+	  return make_pair(true, proxyTimeEnd);
+	  //	  return make_pair(false, (time_t)0);
+	}
+
 	pair<bool, time_t> isvalid( const std::string& proxyfile ) throw() {
 	  
 	  X509* x;
