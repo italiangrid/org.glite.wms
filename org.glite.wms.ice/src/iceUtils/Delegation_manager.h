@@ -140,6 +140,8 @@ namespace util {
         
         t_delegation_set m_delegation_set;
 
+	std::string generateDelegationID() throw();
+
     public:
         ~Delegation_manager( ) { };
 

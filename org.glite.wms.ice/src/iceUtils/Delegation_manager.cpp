@@ -31,6 +31,7 @@
 #include "iceUtils.h"
 #include <stdexcept>
 #include <cerrno>
+#include <sys/time.h>
 
 #include "iceDb/Transaction.h"
 #include "iceDb/GetDelegation.h"
@@ -160,10 +161,10 @@ Delegation_manager::delegate( const CreamJob& job,
         // Delegation id not found (or force). Performs a new delegation   
 
         // The delegation ID is the "canonized" GRID job id
-        delegation_id   = canonizeString( job.getGridJobID() + cream_url );
-	expiration_time = V.getProxyTimeEnd( ); 
-	duration        = V.getProxyTimeEnd( ) - time(0);
-
+      delegation_id   = canonizeString( /*job.getGridJobID() + cream_url*/ this->generateDelegationID() );
+      expiration_time = V.getProxyTimeEnd( ); 
+      duration        = V.getProxyTimeEnd( ) - time(0);
+      
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
                         << "Creating new delegation "
@@ -626,4 +627,18 @@ Delegation_manager::getDelegation( const string& userdn, const string& ceurl, co
   //if( deleg_info.m_sha1_digest != "" ) {
   return deleg_info;
     //  }
+}
+
+
+//----------------------------------------------------------------------------
+string Delegation_manager::generateDelegationID( ) throw()
+{
+  struct timeval T;
+  ::gettimeofday( &T, 0 );
+
+  
+
+  ostringstream id;
+  id << T.tv_sec << "." << T.tv_usec << getHostName();
+  return id.str();
 }
