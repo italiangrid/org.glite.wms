@@ -741,7 +741,7 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     tmp1 << newEntry.get<1>();
     if( newEntry.get<2>() > 0 )
       tmp2 << newEntry.get<2>();
-    params.push_back( make_pair("proxyfile", newEntry.get<0>() ));
+    params.push_back( make_pair("proxyfile", localProxy ));
     params.push_back( make_pair("exptime", tmp1.str() ));
     if(newEntry.get<2>() > 0)
       params.push_back( make_pair("counter", tmp2.str() ));

@@ -11,10 +11,11 @@ static struct option const long_options[] = {
    { "server",   required_argument, 0, 's' },
    { "proxy",    required_argument, 0, 'p' },
    { "help",     no_argument,       0, 'h' },
+   { "output",   required_argument, 0, 'o'},
    { NULL, 0, NULL, 0}
 };
 
-static char short_options[] = "s:p:h";
+static char short_options[] = "s:p:h:o:";
 
 int
 main(int argc, char *argv[])
@@ -27,22 +28,28 @@ main(int argc, char *argv[])
    glite_renewal_core_context ctx = NULL;
    int ret;
 
+   char *outputfile = NULL;
+
    while ((arg = getopt_long(argc, argv, short_options, long_options, NULL)) != EOF) {
       switch(arg) {
-	case 's':
-	   server = optarg; break;
-	case 'p':
-	   proxy = optarg; break;
-	case 'h':
-	  //fprintf(stdout, "Usage: %s --server <myproxy server> --proxy <filename>\n", argv[0]);
-	  cerr << "Usage: "
-	       << argv[0] << " --server <myproxy server> --proxy <filename>\n";
-	   return 1;
+      case 's':
+	server = optarg; break;
+      case 'p':
+	proxy = optarg; break;
+      case 'o':
+	outputfile = optarg;break;
+      case 'h':
+	//fprintf(stdout, "Usage: %s --server <myproxy server> --proxy <filename>\n", argv[0]);
+	cerr << "Usage: "
+	     << argv[0] << " --server <myproxy server> --proxy <filename> --output <output file proxy>\n";
+	return 1;
+      
+	
       }
    }
 
-   if (server == NULL || proxy == NULL) {
-     cout << "both server and proxy parameters must be given\n";
+   if (server == NULL || proxy == NULL || outputfile == NULL) {
+     cout << "both server and proxy parameters must be given and output file name\n";
      return 1;
    }
 
@@ -71,6 +78,8 @@ main(int argc, char *argv[])
 
    //   printf("%s\n", new_proxy);
    cout <<new_proxy<<endl;
+
+   ::rename( new_proxy, outputfile );
 
    return 0;
 }
