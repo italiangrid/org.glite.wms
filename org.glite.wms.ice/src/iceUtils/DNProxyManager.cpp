@@ -739,10 +739,12 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     list<pair<string, string> > params;
     ostringstream tmp1, tmp2;
     tmp1 << newEntry.get<1>();
-    tmp2 << newEntry.get<2>();
+    if( newEntry.get<2>() > 0 )
+      tmp2 << newEntry.get<2>();
     params.push_back( make_pair("proxyfile", newEntry.get<0>() ));
     params.push_back( make_pair("exptime", tmp1.str() ));
-    params.push_back( make_pair("counter", tmp2.str() ));
+    if(newEntry.get<2>() > 0)
+      params.push_back( make_pair("counter", tmp2.str() ));
     db::UpdateProxyFieldsByDN updater( mapKey, params );
     db::Transaction tnx;
     tnx.execute( &updater );

@@ -14,7 +14,9 @@
 
 SUBDIRS = iceCommands ice iceThreads iceUtils iceDb iceDb/sqlite
 
-bin_PROGRAMS = putFL putFL_cancel glite-wms-ice glite-wms-ice-safe queryDb
+bin_PROGRAMS = putFL putFL_cancel glite-wms-ice glite-wms-ice-safe queryDb glite-wms-ice-proxy-renew
+
+glite_wms_ice_proxy_renew_SOURCES = glite-wms-ice-proxy-renew.cpp
 
 queryDb_SOURCES = queryDb.cpp
 
@@ -165,6 +167,12 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		-L$(GLOBUS_LOCATION)/../../../myproxy/3.6-VDT-1.6.0/slc4_ia32_gcc346/lib \
 		-lmyproxy_gcc32dbgpthr \
 		iceDb/sqlite/libsqlite3.a
+
+glite_wms_ice_proxy_renew_LDADD = -L$(GLITE_LOCATION)/lib \
+		$(GLOBUS_NOTHR_LIBS) \
+		-lglite_security_proxyrenewal_core_gcc32dbg \
+		-L$(GLOBUS_LOCATION)/../../../myproxy/3.6-VDT-1.6.0/slc4_ia32_gcc346/lib \
+		-lmyproxy_gcc32dbg
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
