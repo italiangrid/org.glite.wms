@@ -114,6 +114,13 @@ AC_SEC_GSOAP_PLUGIN
 AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
 AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 
+have_renewalcore=no
+have_myproxy=no
+AC_PROXYRENEWALCORE([], have_renewalcore=yes, have_renewalcore=no)
+AC_MSG_RESULT(["RENEWAL CORE found $have_renewalcore"])
+AC_MYPROXY[], have_myproxy=yes, have_myproxy=no)
+AC_MSG_RESULT(["MYPROXY found $have_myproxy"])
+
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([config/Makefile])
