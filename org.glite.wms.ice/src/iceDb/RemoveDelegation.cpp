@@ -35,7 +35,7 @@ void RemoveDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM delegation " \
-      " where digest = \'%1%\' AND creamurl = \'%2%\'; " ) % m_digest % m_creamurl );
+      " WHERE digest = \'%1%\' AND creamurl = \'%2%\' AND myproxyurl=\'%3%\'; " ) % m_digest % m_creamurl %  m_myproxy );
 
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd<<"]"<<endl;

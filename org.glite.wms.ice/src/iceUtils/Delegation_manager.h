@@ -63,7 +63,7 @@ namespace util {
          * Iterates over the delegation set. Removes all entries whose
          * proxy has expired.
          */
-        void purge_old_delegations( void );
+      //        void purge_old_delegations( void );
 
 	//std::string computeSHA1Digest( const std::string& proxyfile ) throw( std::runtime_error& );
 

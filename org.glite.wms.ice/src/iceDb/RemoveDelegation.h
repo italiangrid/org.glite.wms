@@ -38,14 +38,18 @@ namespace db {
     class RemoveDelegation : public AbsDbOperation { 
       
     public:
-      RemoveDelegation( const std::string& digest, const std::string& creamurl ) 
-	: AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ) {}
+      RemoveDelegation( const std::string& digest, 
+			const std::string& creamurl,
+			const std::string& myproxyaddress ) 
+	: AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ),
+	m_myproxy( myproxyaddress ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
     protected:
       const std::string m_digest;
       const std::string m_creamurl;
+      const std::string m_myproxy;
     };
 
 } // namespace db

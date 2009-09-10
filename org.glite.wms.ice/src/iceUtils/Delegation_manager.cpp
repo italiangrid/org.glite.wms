@@ -84,26 +84,23 @@ Delegation_manager::delegate( const CreamJob& job,
   throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( s_mutex );
+    static char* method_name = "Delegation_manager::delegate() - ";
 
-    //bool   USE_NEW         = job.is_proxy_renewable();
-    
+    if( force )
+      CREAM_SAFE_LOG( m_log_dev->debugStream()
+		      << method_name
+		      << "WARNING: force_delegation is set to TRUE." 
+		      );  
+
     string myproxy_address = job.getMyProxyAddress();
 
-    static char* method_name = "Delegation_manager::delegate() - ";
+    
     string delegation_id; // delegation ID to return as a result
 
-    // Utility variables
-    //    const string certfile( job.getUserProxyCertificate() );
-    //const string certfile( DNProxyManager::getInstance()->getExactBetterProxyByDN(V.getDNFQAN(), myproxy_address).get<0>() );
+    
     const string cream_url( job.getCreamURL() );
     const string cream_deleg_url( job.getCreamDelegURL() );
     string str_sha1_digest;
-
-    // Check whether the cache should be cleaned up
-    if ( ++m_operation_count > m_operation_count_max ) { // FIXME: Hardcoded default
-        purge_old_delegations( );
-        m_operation_count = 0;
-    }
 
     if(USE_NEW) {
       CREAM_SAFE_LOG( m_log_dev->debugStream()
@@ -114,18 +111,10 @@ Delegation_manager::delegate( const CreamJob& job,
       str_sha1_digest = V.getDNFQAN();
     }
     else {
-      string certfile( DNProxyManager::getInstance()->getExactBetterProxyByDN(V.getDNFQAN(), myproxy_address).get<0>() );
-      str_sha1_digest = computeSHA1Digest( certfile );//bintostring( bin_sha1_digest, SHA_DIGEST_LENGTH );
+      str_sha1_digest = computeSHA1Digest( job.getUserProxyCertificate() );
     }
 
-    // Lookup the (sha1_digest,cream_url) into the set
-//     typedef t_delegation_set::nth_index<0>::type t_delegation_by_key;
-//     t_delegation_by_key& delegation_by_key_view( m_delegation_set.get<0>() );
-//     typedef t_delegation_set::nth_index<2>::type t_delegation_by_seq;
-//     t_delegation_by_seq& delegation_by_seq( m_delegation_set.get<2>() );
-
-
-
+    
     CREAM_SAFE_LOG( m_log_dev->debugStream()
 		    << method_name
 		    << "Searching for delegation with key [" 
@@ -147,7 +136,7 @@ Delegation_manager::delegate( const CreamJob& job,
     
     if( force && found ) {
       {
-	db::RemoveDelegation remover( str_sha1_digest, cream_url );
+	db::RemoveDelegation remover( str_sha1_digest, cream_url, myproxy_address );
 	db::Transaction tnx;
 	tnx.execute( &remover );
       }
@@ -178,31 +167,33 @@ Delegation_manager::delegate( const CreamJob& job,
                         << V.getDN( )
                         << "] proxy hash ["
                         << str_sha1_digest
-			<< "] Expiring on [" 
+			<< "] MyProxy Server ["
+			<< myproxy_address << "] Expiring on [" 
 			<< time_t_to_string( expiration_time ) << "]"
                          );
         
         try {
 	  // Gets the proxy expiration time
 	  //expiration_time = V.getProxyTimeEnd( );
-	  string certfile( DNProxyManager::getInstance()->getExactBetterProxyByDN(V.getDNFQAN(), myproxy_address).get<0>() );
+	  string certfile( job.getUserProxyCertificate() );
 	  CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
         } catch( exception& ex ) {
 	  // Delegation failed
 	  CREAM_SAFE_LOG( m_log_dev->errorStream()
 			  << method_name
 			  << "FAILED Creation of a new delegation "
-			  << "with delegation id "
+			  << "with delegation id ["
 			  << delegation_id
-			  << " CREAM URL "
+			  << "] CREAM URL ["
 			  << cream_url
-			  << " Delegation URL "
+			  << "] Delegation URL ["
 			  << cream_deleg_url
-			  << " user DN "
+			  << "] user DN ["
 			  << V.getDN( )
-			  << " proxy hash "
+			  << "] proxy hash ["
 			  << str_sha1_digest
-			  << " - ERROR is: ["
+			  << "] MyProxy Server ["
+			  << myproxy_address << "] - ERROR is: ["
 			  << ex.what() << "]"
 			  );
 	  throw runtime_error(ex.what());
@@ -211,16 +202,18 @@ Delegation_manager::delegate( const CreamJob& job,
             CREAM_SAFE_LOG( m_log_dev->errorStream()
                             << method_name
                             << "FAILED Creation of a new delegation "
-                            << "with delegation id "
+                            << "with delegation id ["
                             << delegation_id
-                            << " CREAM URL "
+                            << "] CREAM URL ["
                             << cream_url
-                            << " Delegation URL "
+                            << "] Delegation URL ["
                             << cream_deleg_url
-                            << " user DN "
+                            << "] user DN ["
                             << V.getDN( )
-                            << " proxy hash "
-                            << str_sha1_digest
+                            << "] proxy hash ["
+                            << str_sha1_digest << "]"
+			    << " MyProxy Server ["
+			    << myproxy_address << "]"
                              );
             throw runtime_error( "Delegation failed" );
         }     
@@ -250,34 +243,7 @@ Delegation_manager::delegate( const CreamJob& job,
 	 'super' better proxy.
       */
       
-      if(deleg_info.m_expiration_time >= (time(0)-3600)) {
-
-	CREAM_SAFE_LOG( m_log_dev->debugStream()
-		      << method_name
-		      << "FOUND delegation with key [" 
-		      << str_sha1_digest 
-		      << "] but it is going to expire. "
-		      << "Will substitute the related proxy..."
-		      );
-
-	// Deregister 'super' better proxy;
-	// Register the current job's proxy to PRS as new 'super'
-	// better proxy.
-
-	
-// 	DNProxyManager::getInstance()->unregisterUserProxy(
-// 							   job.getUserDN(),
-// 							   job.getMyProxyAddress()
-// 							   );// also unlink...
-
-// 	DNProxyManager::getInstance()->changeRegisteredUserProxy( 
-// 								 job.getUserDN(),
-// 								 job.getUserProxyCertificate(),
-// 								 job.getMyProxyAddress(),
-// 								 V.getProxyTimeEnd()
-// 								 );
-	
-      }
+ 
 
       CREAM_SAFE_LOG( m_log_dev->debugStream()
 		      << method_name
@@ -298,14 +264,15 @@ Delegation_manager::delegate( const CreamJob& job,
 
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
-                        << "Using existing delegation id "
+                        << "Using existing delegation id ["
                         << delegation_id
-                        << " for CREAM URL "
+                        << "] for CREAM URL ["
                         << cream_url
-                        << " Delegation URL "
+                        << "] Delegation URL ["
                         << cream_deleg_url
-                        << " user DN "
-                        << V.getDN( )
+                        << "] user DN ["
+                        << V.getDN( ) <<"] MyProxy Server ["
+			<< myproxy_address << "]"
                          );
     }
       
@@ -316,72 +283,72 @@ Delegation_manager::delegate( const CreamJob& job,
 }
 
 //______________________________________________________________________________
-void Delegation_manager::purge_old_delegations( void )
-{
-    static char* method_name = "Delegation_manager::purge_old_delegations() - ";
+// void Delegation_manager::purge_old_delegations( void )
+// {
+//     static char* method_name = "Delegation_manager::purge_old_delegations() - ";
 
-//     typedef t_delegation_set::nth_index<1>::type t_delegation_by_expiration;
-//     t_delegation_by_expiration& deleg_time_view( m_delegation_set.get<1>() );
+// //     typedef t_delegation_set::nth_index<1>::type t_delegation_by_expiration;
+// //     t_delegation_by_expiration& deleg_time_view( m_delegation_set.get<1>() );
 
-//     t_delegation_by_expiration::iterator it_end = deleg_time_view.lower_bound( time(0) );
-//     size_t size_before = deleg_time_view.size();    
-//     deleg_time_view.erase( deleg_time_view.begin(), it_end );
-//     size_t size_after = deleg_time_view.size();
+// //     t_delegation_by_expiration::iterator it_end = deleg_time_view.lower_bound( time(0) );
+// //     size_t size_before = deleg_time_view.size();    
+// //     deleg_time_view.erase( deleg_time_view.begin(), it_end );
+// //     size_t size_after = deleg_time_view.size();
 
-//    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
+// //    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 
-    vector<table_entry> allDelegations;
-    {
-      //Get
-      db::GetAllDelegation getter( false );
-      db::Transaction tnx;
-      //tnx.begin();
-      tnx.execute( &getter );
-      allDelegations = getter.get_delegations();
-    }
-
-    list<string> toRemove;
-
-    for( vector<table_entry>::const_iterator it = allDelegations.begin();
-	 it != allDelegations.end();
-	 ++it)
-      {
-	{
-	  list<string> fields;
-	  fields.push_back( "gridjobid" );
-	  list<pair<string, string> > clause;
-	  clause.push_back( make_pair("delegationid", it->m_delegation_id) );
-	  db::GetFieldsCount getter( fields, clause );
-	  db::Transaction tnx;
-	  //tnx.begin();
-	  tnx.execute( &getter );
-	  if( !getter.get_count() ) {
-	    CREAM_SAFE_LOG( m_log_dev->debugStream()
-			    << method_name
-			    << "There're no jobs related to delegation ID ["
-			    << it->m_delegation_id << "]. Removing this delegation from database."
-			    );
-	    toRemove.push_back( it->m_delegation_id);
-	  }
-	}
-      }
-
-    for( list<string>::const_iterator it = toRemove.begin();
-	 it != toRemove.end();
-	 ++it)
-      {
-	this->removeDelegation( *it );
-      }
-
-//     if ( size_before != size_after ) {
-//       CREAM_SAFE_LOG( m_log_dev->debugStream()
-// 		      << method_name
-// 		      << "Purged "
-// 		      << size_before - size_after
-// 		      << " elements from the delegation cache"
-// 		      );
+//     vector<table_entry> allDelegations;
+//     {
+//       //Get
+//       db::GetAllDelegation getter( false );
+//       db::Transaction tnx;
+//       //tnx.begin();
+//       tnx.execute( &getter );
+//       allDelegations = getter.get_delegations();
 //     }
-}
+
+//     list<string> toRemove;
+
+//     for( vector<table_entry>::const_iterator it = allDelegations.begin();
+// 	 it != allDelegations.end();
+// 	 ++it)
+//       {
+// 	{
+// 	  list<string> fields;
+// 	  fields.push_back( "gridjobid" );
+// 	  list<pair<string, string> > clause;
+// 	  clause.push_back( make_pair("delegationid", it->m_delegation_id) );
+// 	  db::GetFieldsCount getter( fields, clause );
+// 	  db::Transaction tnx;
+// 	  //tnx.begin();
+// 	  tnx.execute( &getter );
+// 	  if( !getter.get_count() ) {
+// 	    CREAM_SAFE_LOG( m_log_dev->debugStream()
+// 			    << method_name
+// 			    << "There're no jobs related to delegation ID ["
+// 			    << it->m_delegation_id << "]. Removing this delegation from database."
+// 			    );
+// 	    toRemove.push_back( it->m_delegation_id);
+// 	  }
+// 	}
+//       }
+
+//     for( list<string>::const_iterator it = toRemove.begin();
+// 	 it != toRemove.end();
+// 	 ++it)
+//       {
+// 	this->removeDelegation( *it );
+//       }
+
+// //     if ( size_before != size_after ) {
+// //       CREAM_SAFE_LOG( m_log_dev->debugStream()
+// // 		      << method_name
+// // 		      << "Purged "
+// // 		      << size_before - size_after
+// // 		      << " elements from the delegation cache"
+// // 		      );
+// //     }
+// }
 
 //______________________________________________________________________________
 void 
@@ -484,6 +451,12 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 //     {
 //       delegation_by_ID_view.erase( it );
 //     }
+
+  CREAM_SAFE_LOG( m_log_dev->debugStream()
+		  << "Delegation_manager::removeDelegation() - "
+		  << "Removing Delegation ID [" 
+		  << delegToRemove << "]"
+		  );
 
   {
     db::RemoveDelegationByID remover( delegToRemove );

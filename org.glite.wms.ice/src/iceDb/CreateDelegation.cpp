@@ -32,7 +32,7 @@ using namespace std;
 void CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd("");
-  sqlcmd << "INSERT OR REPLACE INTO delegation (" 
+  sqlcmd << "INSERT INTO delegation (" 
 	 << "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl"
          << " ) VALUES ("
 	 << "\'" << m_digest << "\',"

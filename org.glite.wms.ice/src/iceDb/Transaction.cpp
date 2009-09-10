@@ -107,7 +107,7 @@ namespace {
 		"creamurl text not null, "		  \
 		"exptime integer(4) not null, "		  \
 		"duration integer(4) not null,"		  \
-		"delegationid text not null,"		  \
+		"delegationid text primary key not null,"		  \
 		"userdn text not null,"			  \
 		"renewable integer(1),"			  \
 		"myproxyurl text not null"		  \
@@ -301,7 +301,7 @@ namespace {
 	    }
 	    try {
 	      string sqlcmd = 
-		"CREATE UNIQUE INDEX IF NOT EXISTS delegkey ON delegation (digest,creamurl)";
+		"CREATE UNIQUE INDEX IF NOT EXISTS delegkey ON delegation (digest,creamurl,myproxyurl)";
 	      do_query( db, sqlcmd );
 	    } catch( DbOperationException& ex ) {
 	      

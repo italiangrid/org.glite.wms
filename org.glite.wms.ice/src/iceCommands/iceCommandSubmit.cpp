@@ -793,8 +793,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     /**
        MUST increment job counter of the 'super' better proxy table.
     */
-    
-    iceUtil::DNProxyManager::getInstance()->incrementUserProxyCounter(m_theJob.getUserDN(), m_theJob.getMyProxyAddress() );
+    if( m_theJob.is_proxy_renewable() )
+      iceUtil::DNProxyManager::getInstance()->incrementUserProxyCounter(m_theJob.getUserDN(), m_theJob.getMyProxyAddress() );
     /*
      * here must check if we're subscribed to the CEMon service
      * in order to receive the status change notifications
