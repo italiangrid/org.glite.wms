@@ -122,23 +122,23 @@ namespace util {
         /**
          * Multi index container 
          */
-      typedef boost::multi_index_container< table_entry,
-					    boost::multi_index::indexed_by< boost::multi_index::ordered_unique<
-        // The index here is the (sha1_digest, cream_url) pair
-	boost::multi_index::composite_key<
-	table_entry,
-	// The first composite element is the sha1_digest
-	boost::multi_index::member<table_entry,std::string,&table_entry::m_sha1_digest>,
-	// The second composite element is the cream_url
-	boost::multi_index::member<table_entry,std::string,&table_entry::m_cream_url> > >,
-									    boost::multi_index::ordered_non_unique< boost::multi_index::member<table_entry,time_t,&table_entry::m_expiration_time> >,
+/*       typedef boost::multi_index_container< table_entry, */
+/* 					    boost::multi_index::indexed_by< boost::multi_index::ordered_unique< */
+/*         // The index here is the (sha1_digest, cream_url) pair */
+/* 	boost::multi_index::composite_key< */
+/* 	table_entry, */
+/* 	// The first composite element is the sha1_digest */
+/* 	boost::multi_index::member<table_entry,std::string,&table_entry::m_sha1_digest>, */
+/* 	// The second composite element is the cream_url */
+/* 	boost::multi_index::member<table_entry,std::string,&table_entry::m_cream_url> > >, */
+/* 									    boost::multi_index::ordered_non_unique< boost::multi_index::member<table_entry,time_t,&table_entry::m_expiration_time> >, */
 									    
-									    boost::multi_index::sequenced<>,
-									    boost::multi_index::ordered_unique< boost::multi_index::member<table_entry,std::string,&table_entry::m_delegation_id> >
-									    >
-      > t_delegation_set;
+/* 									    boost::multi_index::sequenced<>, */
+/* 									    boost::multi_index::ordered_unique< boost::multi_index::member<table_entry,std::string,&table_entry::m_delegation_id> > */
+/* 									    > */
+/*       > t_delegation_set; */
         
-        t_delegation_set m_delegation_set;
+/*         t_delegation_set m_delegation_set; */
 
 	std::string generateDelegationID() throw();
 
