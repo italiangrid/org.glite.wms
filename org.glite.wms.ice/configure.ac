@@ -118,14 +118,14 @@ have_renewalcore=no
 have_myproxy=no
 AC_PROXYRENEWALCORE([], have_renewalcore=yes, have_renewalcore=no)
 AC_MSG_RESULT(["RENEWAL CORE found $have_renewalcore"])
-AC_MYPROXY[], have_myproxy=yes, have_myproxy=no)
+AC_MYPROXY([], have_myproxy=yes, have_myproxy=no)
 AC_MSG_RESULT(["MYPROXY found $have_myproxy"])
 
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
+AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([config/glite-wms-ice])
-AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/iceDb/Makefile])
 AC_CONFIG_FILES([src/iceUtils/Makefile])
