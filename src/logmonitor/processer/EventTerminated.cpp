@@ -1,16 +1,3 @@
-// Copyright (c) Members of the EGEE Collaboration. 2009. 
-// See http://www.eu-egee.org/partners/ for details on the copyright holders.  
-
-// Licensed under the Apache License, Version 2.0 (the "License"); 
-// you may not use this file except in compliance with the License. 
-// You may obtain a copy of the License at 
-//     http://www.apache.org/licenses/LICENSE-2.0 
-// Unless required by applicable law or agreed to in writing, software 
-// distributed under the License is distributed on an "AS IS" BASIS, 
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-// See the License for the specific language governing permissions and 
-// limitations under the License.
-
 #include <cstdio>
 #include <ctime>
 
@@ -20,6 +7,7 @@
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "common/EventLogger.h"
 #include "common/IdContainer.h"
 #include "common/JobFilePurger.h"
@@ -65,7 +53,9 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
 
   this->ei_data->md_sizefile->decrement_pending();
 
-  if( this->ei_data->md_aborted->search(this->ei_condor) ) { // Previously aborting job...
+  // why aborting a terminated job with a previous error? better getting the job home, errors do not
+  // necessarily mean that everything screwed up 
+  /* if( this->ei_data->md_aborted->search(this->ei_condor) ) { // Previously aborting job...
     elog::cedglog << logger::setlevel( logger::info )
 		  << "This job has got a previous error, aborting it." << endl;
 
@@ -82,8 +72,9 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     this->ei_data->md_resubmitter->resubmit( position->last_status(), position->edg_id(), position->sequence_code() );
 
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
-  }
-  else if( (stat = parser.parse_file(retcode, errors, sc)) == JWOP::good ) { // Job terminated successfully...
+  } else 
+  */
+  if( (stat = parser.parse_file(retcode, errors, sc)) == JWOP::good ) { // Job terminated successfully...
     elog::cedglog << logger::setlevel( logger::info ) << "Real return code: " << retcode << endl;
 
     if (this->ei_data->md_logger->have_lbproxy()) {
