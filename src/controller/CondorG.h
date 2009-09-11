@@ -17,7 +17,7 @@ namespace controller {
 
 class CondorG {
 public:
-  enum command_t { unknown, submit, remove };
+  enum command_t { unknown, submit, remove, release };
 
   CondorG( const glite::wms::common::configuration::JCConfiguration *config );
 
@@ -31,7 +31,7 @@ public:
   inline static const char *string_command( command_t comm ) { return cg_s_commands[(int) comm]; }
 
 private:
-  std::string   cg_submit, cg_remove, cg_command;
+  std::string   cg_submit, cg_remove, cg_release, cg_command;
   boost::mutex  cg_mutex;
 
   static CondorG      *cg_s_instance;

@@ -42,20 +42,26 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace jccommon {
 
-JobFilePurger::JobFilePurger( const glite::jobid::JobId &id, bool have_lbproxy, bool isdag )
-  : jfp_isDag( isdag ), jfp_jobId( id ), jfp_have_lbproxy(have_lbproxy), jfp_dagId() { }
+JobFilePurger::JobFilePurger(
+  glite::jobid::JobId const& id,
+  bool have_lbproxy,
+  bool isdag
+)
+  : jfp_isDag(isdag), jfp_have_lbproxy(have_lbproxy), jfp_jobId(id), jfp_dagId()
+{ }
 
-JobFilePurger::JobFilePurger( const glite::jobid::JobId &dagid, bool have_lbproxy, const glite::jobid::JobId &jobid )
-  : jfp_isDag( false ), jfp_have_lbproxy(have_lbproxy), jfp_jobId( jobid ), jfp_dagId( dagid )
-{}
-
-JobFilePurger::~JobFilePurger( void ) {}
+JobFilePurger::JobFilePurger(
+  glite::jobid::JobId const& dagid,
+  bool have_lbproxy,
+  glite::jobid::JobId const& jobid
+)
+  : jfp_isDag(false), jfp_have_lbproxy(have_lbproxy), jfp_jobId(jobid), jfp_dagId(dagid)
+{ }
 
 void JobFilePurger::do_purge( bool everything )
 {
   const configuration::LMConfiguration    *lmconfig = configuration::Configuration::instance()->lm();
   logger::StatePusher                      pusher( elog::cedglog, "JobFilePurger::do_purge(...)" );
-  bool     purge;
 
   if( lmconfig->remove_job_files() ) {
     unsigned long int            removed;
@@ -125,7 +131,6 @@ void JobFilePurger::do_purge( bool everything )
 
     purger::Purger ThePurger(this->jfp_have_lbproxy);
     ThePurger.force_dag_node_removal()(this->jfp_jobId);
-    elog::cedglog << logger::setlevel( logger::verylow ) << "Purging command returned " << (purge ? "ok" : "an error") << endl;
   }
 
   return;

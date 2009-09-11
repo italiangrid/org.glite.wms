@@ -24,6 +24,8 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include <user_log.c++.h>
+
 #include "glite/lb/producer.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -211,6 +213,32 @@ bool JobControllerProxy::cancel( int condorid, const char *logfile )
 
   return true;
 }
+
+bool JobControllerProxy::release(int condorid, const char *logfile)
+{   
+  CondorReleaseRequest request(condorid, this->jcp_source);
+  if (logfile) {
+    request.set_logfile(string(logfile));
+  } 
+    
+  if (this->jcp_queue) {
+    try {
+      utilities::FileListLock lock(*this->jcp_mutex);
+      this->jcp_queue->push_back(request);
+    }
+    catch(utilities::FileContainerError &error) {
+      throw CannotExecute(error.string_error());
+    }
+  } else {
+    std::string const ad_str(ca::unparse_classad(classad::ClassAd(request)));
+    try {
+      this->jcp_jobdir->deliver(ad_str);
+    } catch(utilities::JobDirError &error) {
+    }
+  }
+
+  return true;
+} 
 
 size_t JobControllerProxy::queue_size( void )
 {

@@ -94,6 +94,17 @@ bool JobControllerFake::cancel( int condorid, const char *logfile )
   return true;
 }
 
+bool JobControllerFake::release(int condorid, char const* logfile)
+{
+  logger::StatePusher     pusher( elog::cedglog, "JobControllerFake::release(...)" );
+
+  elog::cedglog << logger::setlevel( logger::null )
+		<< "Got request for releasing a job." << endl
+		<< "condor Id = " << condorid << endl;
+
+  return true;
+}
+
 size_t JobControllerFake::queue_size( void )
 {
   return 0;

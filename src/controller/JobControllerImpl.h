@@ -76,6 +76,7 @@ public:
    *  \return Implementation dependent integer. Don't cope on it.
    */
   virtual bool cancel( int condorid, const char *logfile ) = 0;
+  virtual bool release(int condorid, char const* logfile ) = 0;
   /**
    *  Ask for the queue size.
    *  \return The number of request still in the queue.

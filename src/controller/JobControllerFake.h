@@ -31,6 +31,7 @@ public:
   virtual int submit( const classad::ClassAd *ad );
   virtual bool cancel( const glite::jobid::JobId &id, const char *logfile );
   virtual bool cancel( int condorid, const char *logfile );
+  virtual bool release(int condorid, char const* logfile);
   virtual size_t queue_size( void );
 
 private:

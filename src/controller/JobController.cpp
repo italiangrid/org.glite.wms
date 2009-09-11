@@ -39,6 +39,9 @@ bool JobController::cancel( const glite::jobid::JobId &id, const char *logfile )
 bool JobController::cancel( int condorid, const char *logfile )
 { return this->jc_impl->cancel( condorid, logfile ); }
 
+bool JobController::release(int condorid, char const* logfile)
+{ return this->jc_impl->release( condorid, logfile ); }
+
 size_t JobController::queue_size( void )
 { return this->jc_impl->queue_size(); }
 

@@ -10,7 +10,7 @@ namespace controller {
 
 class Request {
 public:
-  enum request_code_t { unknown, submit, remove, condorremove, __last_command };
+  enum request_code_t { unknown, submit, remove, condorremove, condorrelease, __last_command };
 
   Request( void );
   Request( const classad::ClassAd &ad );
@@ -80,6 +80,21 @@ private:
   static const char    *cr_s_JobId;
   static const char    *cr_s_SequenceCode, *cr_s_LogFile, *cr_s_ProxyFile;
 };
+
+class CondorReleaseRequest : public Request {
+public:
+  CondorReleaseRequest(int condorid, int source );
+  virtual ~CondorReleaseRequest();
+
+  CondorReleaseRequest& set_logfile(std::string const& logfile);
+
+  int get_condorid() const;
+  std::string get_logfile() const;
+
+private:
+  static const char   *crr_s_CondorId, *crr_s_LogFile;
+};
+
 
 class CondorRemoveRequest : public Request {
 public:

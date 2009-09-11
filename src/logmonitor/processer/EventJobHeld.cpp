@@ -25,8 +25,16 @@
 #include <globus_gram_protocol_constants.h>
 #endif
 
+#include "glite/jobid/JobId.h"
+
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
+
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
+
+#include "glite/wms/common/utilities/manipulation.h"
+
 #include "common/EventLogger.h"
 #include "common/IdContainer.h"
 #include "controller/JobController.h"
@@ -36,8 +44,13 @@
 #include "EventJobHeld.h"
 #include "MonitorData.h"
 
+namespace {
+  std::string const globus_error10 = "Globus error 10";
+}
+
 using namespace std;
 USING_COMMON_NAMESPACE;
+
 RenameLogStreamNS( elog );
 
 JOBCONTROL_NAMESPACE_BEGIN {
@@ -98,8 +111,8 @@ void EventJobHeld::process_event( void )
       std::string const jobid(position->edg_id());
       configuration::Configuration const& config(*configuration::Configuration::instance());
       std::string condor_retries_file(config.ns()->sandbox_staging_path());
-      condor_retries_file += "/" + jobid::get_reduced_part(jobid);
-      condor_retries_file += "/" + jobid::to_filename(jobid);
+      condor_retries_file += "/" + glite::wms::common::utilities::get_reduced_part(jobid);
+      condor_retries_file += "/" + glite::wms::common::utilities::to_filename(jobid);
       condor_retries_file += "/Condor.retries";
 
       int condor_retries = 0;
@@ -120,7 +133,7 @@ void EventJobHeld::process_event( void )
 
         elog::cedglog << logger::setlevel( logger::info ) << "Forwarding release request to JC." << endl;
         sleep(5);
-        controller.release( this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str());
+        controller.release(this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str());
 
 #if CONDORG_AT_LEAST(6,5,3)
         this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),

@@ -45,6 +45,7 @@ public:
   int submit( const classad::ClassAd *ad );
   bool cancel( const glite::jobid::JobId &id, const char *logfile = NULL );
   bool cancel( int condorid, const char *logfile = NULL );
+  bool release(int condorid, char const* logfile = NULL);
   size_t queue_size( void );
 
 private:

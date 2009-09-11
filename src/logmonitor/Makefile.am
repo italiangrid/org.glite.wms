@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.2  2009/09/11 13:59:47  mcecchi
+#       bug #55452 + some compilation warnings removed
+#
 #       Revision 1.20.2.2.4.1.2.1  2009/06/16 13:40:49  fcapanni
 #       porting to org.glite.jobid
 #
@@ -177,6 +180,7 @@ libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	./processer/EventGlobusResourceUp.cpp \
 	./processer/EventGridResourceUp.cpp \
 	./processer/EventJobHeld.cpp \
+	./processer/EventJobReleased.cpp \
 	./processer/EventGeneric.cpp \
 	./processer/MonitorData.cpp \
 	./processer/SubmitReader.cpp \

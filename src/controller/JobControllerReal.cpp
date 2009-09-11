@@ -416,6 +416,23 @@ bool JobControllerReal::cancel( int condorid, const char *logfile )
   return good;
 }
 
+bool JobControllerReal::release(int condorid, const char *logfile )
+{
+  logger::StatePusher pusher( clog, "JobControllerReal::release(...)" );
+  clog << logger::setlevel( logger::info )
+     << "Asked to release job: " << condorid << " (by condor ID)." << endl;
+  elog::cedglog << logger::setlevel( logger::debug ) << "Condor id of job was: " << condorid << endl;
+  int result;
+  string parameters("-constraint 'ClusterId==" + boost::lexical_cast<std::string>(condorid) + "'");
+  string info;
+  result = CondorG::instance()->set_command( CondorG::release, parameters)->execute(info);
+  if (result) { // normal cancellation has been refused, try to force it
+    elog::cedglog << logger::setlevel( logger::severe ) << "Job release refused." << endl << "Condor ID = " << condorid << endl << "Reason: \"" << info << "\"." << endl;
+  }
+
+  return result ;
+}
+
 size_t JobControllerReal::queue_size( void )
 {
   return 0;

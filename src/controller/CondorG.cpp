@@ -14,11 +14,11 @@ namespace controller {
 CondorG      *CondorG::cg_s_instance = NULL;
 const char   *CondorG::cg_s_commands[] = {
   "Unknown command",
-  "Submit", "Remove"
+  "Submit", "Remove", "Release"
 };
 
 CondorG::CondorG( const configuration::JCConfiguration *config ) : cg_submit( config->condor_submit() ),
-								   cg_remove( config->condor_remove() ),
+								   cg_remove( config->condor_remove() ), cg_release( config->condor_release() ),
 								   cg_command()
 {
   if( cg_s_instance == NULL ) cg_s_instance = this;
@@ -45,6 +45,12 @@ CondorG *CondorG::set_command( command_t command, const string &parameter )
     break;
   case remove:
     this->cg_command.assign( this->cg_remove ); this->cg_command.append( 1, ' ' );
+    this->cg_command.append( parameter );
+    this->cg_command.append( " 2>&1" );
+
+    break;
+  case release:
+    this->cg_command.assign( this->cg_release); this->cg_command.append( 1, ' ' );
     this->cg_command.append( parameter );
     this->cg_command.append( " 2>&1" );
 

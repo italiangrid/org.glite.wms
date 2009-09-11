@@ -14,7 +14,7 @@
 #ifndef EDG_WORKLOAD_JOBCONTROL_COMMON_JOBFILEPURGE_H
 #define EDG_WORKLOAD_JOBCONTROL_COMMON_JOBFILEPURGE_H
 
-#include "glite/jobid/JobId.h";
+#include "glite/jobid/JobId.h"
 
 JOBCONTROL_NAMESPACE_BEGIN {
 
@@ -22,15 +22,22 @@ namespace jccommon {
 
 class JobFilePurger {
 public:
-  JobFilePurger( const glite::jobid::JobId &jobid, bool have_lbproxy, bool isdag);
-  JobFilePurger( const glite::jobid::JobId &dagid, bool have_lbproxy, const glite::jobid::JobId &jobid );
-  ~JobFilePurger( void );
-
-  void do_purge( bool everything = false );
+  JobFilePurger(
+    glite::jobid::JobId const& jobid,
+    bool have_lbproxy, bool isdag
+  );
+  JobFilePurger(
+    glite::jobid::JobId const& dagid,
+    bool have_lbproxy,
+    const glite::jobid::JobId &jobid
+  );
+  void do_purge(bool everything = false);
 
 private:
-  bool                    jfp_isDag, jfp_have_lbproxy;
-  glite::jobid::JobId    jfp_jobId, jfp_dagId;
+  bool                   jfp_isDag;
+  bool                   jfp_have_lbproxy;
+  glite::jobid::JobId    jfp_jobId;
+  glite::jobid::JobId    jfp_dagId;
 };
 
 }; // jccommon namespace
