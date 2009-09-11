@@ -33,6 +33,7 @@
 #endif
 #include "EventJobHeld.h"
 #include "EventGeneric.h"
+#include "EventJobReleased.h"
 
 USING_COMMON_NAMESPACE;
 using namespace std;
@@ -93,6 +94,9 @@ EventInterface *EventFactory::create_processor( ULogEvent *event, bool removeTim
 #endif
   case ULOG_JOB_HELD:
     processer = new EventJobHeld( event, this->ef_data.get() );
+    break;
+  case ULOG_JOB_RELEASED:
+    processer = new EventJobReleased(event, this->ef_data.get());
     break;
   case ULOG_GENERIC:
     processer = new EventGeneric( event, this->ef_data.get() );

@@ -53,7 +53,7 @@ EventJobHeld::~EventJobHeld( void )
 
 void EventJobHeld::process_event( void )
 {
-  string                                 reason( this->ejh_event->getReason() );
+  string                                 reason(this->ejh_event->getReason());
   jccommon::IdContainer::iterator        position;
   controller::JobController              controller( *this->ei_data->md_logger );
   logger::StatePusher                    pusher( elog::cedglog, "EventJobHeld::process_event()" );
@@ -84,11 +84,67 @@ void EventJobHeld::process_event( void )
 #endif
 		  << ei_s_edgideq << position->edg_id() << endl;
 
-    if( this->ei_data->md_isDagLog )
+    if (this->ei_data->md_isDagLog) {
       elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
+    }
 
-    if( this->ei_data->md_aborted->search(this->ei_condor) ) // Job got a previous error, ignoring event...
+    if (reason.substr(0, globus_error10.size()) == globus_error10) {
+
+      elog::cedglog << logger::setlevel( logger::info ) << "This error is likely to be transient." << endl
+        << "Let's retry releasing cluster " << this->ei_condor << " before giving up" << endl;
+
+      int const MAX_CONDOR_RETRIES = 30;
+
+      std::string const jobid(position->edg_id());
+      configuration::Configuration const& config(*configuration::Configuration::instance());
+      std::string condor_retries_file(config.ns()->sandbox_staging_path());
+      condor_retries_file += "/" + jobid::get_reduced_part(jobid);
+      condor_retries_file += "/" + jobid::to_filename(jobid);
+      condor_retries_file += "/Condor.retries";
+
+      int condor_retries = 0;
+      ifstream ifs(condor_retries_file.c_str());
+      if (ifs) {
+        ifs >> condor_retries;
+        ifs.close();
+      }
+      ++condor_retries;
+
+      ofstream ofs(condor_retries_file.c_str());
+      if (ofs) {
+        ofs << condor_retries << '\n';
+        ofs.close();
+      }
+
+      if (condor_retries <= MAX_CONDOR_RETRIES) {
+
+        elog::cedglog << logger::setlevel( logger::info ) << "Forwarding release request to JC." << endl;
+        sleep(5);
+        controller.release( this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str());
+
+#if CONDORG_AT_LEAST(6,5,3)
+        this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),
+        this->ejh_event->eventNumber, this->ejh_event->getReasonSubCode() );
+#else
+        this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->ejh_event->eventNumber );
+#endif
+        return;
+      } else {
+        elog::cedglog << logger::setlevel( logger::info ) << "Number of Condor retries exceeded, __NOT__ forwarding release request to JC." << endl;
+      }
+    }
+
+    if (this->ei_data->md_logger->have_lbproxy()) {
+      this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
+    } else {
+      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
+    }
+    this->ei_data->md_logger->job_held_event(reason);
+
+    if( this->ei_data->md_aborted->search(this->ei_condor)) {
       elog::cedglog << logger::setlevel( logger::info ) << "The job got a previous error, ignoring the held event..." << endl;
+    }
+
 #if CONDORG_AT_LEAST(6,5,3)
     else if( position->last_status() == GLOBUS_GRAM_PROTOCOL_ERROR_JOB_CANCEL_FAILED ) {
       elog::cedglog << logger::setlevel( logger::warning )
@@ -109,10 +165,9 @@ void EventJobHeld::process_event( void )
     }
 #endif
     else {
-      if( this->ei_data->md_aborted->insert(this->ei_condor) ) {
-	elog::cedglog << logger::setlevel( logger::fatal ) << ei_s_failedinsertion << endl;
-
-	throw CannotExecute( ei_s_failedinsertion );
+      if (this->ei_data->md_aborted->insert(this->ei_condor)) {
+        elog::cedglog << logger::setlevel( logger::fatal ) << ei_s_failedinsertion << endl;
+	      throw CannotExecute(ei_s_failedinsertion);
       }
 
       if (this->ei_data->md_logger->have_lbproxy()) {

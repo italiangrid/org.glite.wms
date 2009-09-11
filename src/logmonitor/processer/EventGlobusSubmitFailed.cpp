@@ -35,6 +35,12 @@ using namespace std;
 USING_COMMON_NAMESPACE;
 RenameLogStreamNS( elog );
 
+namespace {
+  std::string globus_error10 = "10 data transfer to the server failed";
+//reason: 37 the provided RSL 'queue' parameter
+//reason: 10 data transfer to the server failed
+}
+
 JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace logmonitor { namespace processer {
@@ -81,11 +87,13 @@ void EventGlobusSubmitFailed::process_event( void )
     }
     this->ei_data->md_logger->globus_submit_failed_event( reader->to_string(), this->egsf_event->reason, this->ei_data->md_logfile_name );
 
-    elog::cedglog << logger::setlevel( logger::info ) << "Forwarding remove request to JC." << endl;
-
-    controller.cancel( this->egsf_event->cluster, this->ei_data->md_logfile_name.c_str() );
-
-    this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->egsf_event->eventNumber );
+    if (std::string(this->egsf_event->reason).substr(0, globus_error10.size()) == globus_error10) {
+      elog::cedglog << logger::setlevel( logger::info ) << "Here it comes! The infamous globus error 10: __NOT__ forwarding remove request to JC." << endl;
+    } else {
+      elog::cedglog << logger::setlevel( logger::info ) << "Forwarding remove request to JC." << endl;
+      controller.cancel( this->egsf_event->cluster, this->ei_data->md_logfile_name.c_str() );
+      this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->egsf_event->eventNumber );
+    }
   }
 
   return;

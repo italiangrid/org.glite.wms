@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6.2.1.4.1.2.1  2009/09/11 12:25:47  mcecchi
+#       bug #55452
+#
 #       Revision 1.6.2.1.4.1  2009/02/17 15:35:47  mcecchi
 #       LB type run-time selection
 #
@@ -76,6 +79,7 @@ noinst_HEADERS = \
 	EventGlobusResourceUp.h \
 	EventGridResourceUp.h \
 	EventJobHeld.h \
+	EventJobReleased.h \
 	EventGeneric.h \
 	EventUnhandled.h \
 	MonitorData.h \
@@ -98,6 +102,7 @@ EXTRA_DIST = EventFactory.cpp \
 	EventGlobusResourceUp.cpp \
 	EventGridResourceUp.cpp \
 	EventJobHeld.cpp \
+	EventJobReleased.cpp \
 	EventGeneric.cpp \
 	MonitorData.cpp \
 	SubmitReader.cpp \
