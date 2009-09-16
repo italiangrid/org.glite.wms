@@ -67,10 +67,9 @@ case "$1" in
 	RETVAL=$?
 	;;
   graceful)
-        ps auxwww | awk '/^glite .*[_]wmproxy/ { print $2 }' | xargs -r kill -15 2>/dev/null
-        $httpdpath -k $@ -f $config
-        RETVAL=$?
-        ;;
+  $httpdpath -k $@ -f $config
+  RETVAL=$?
+  ;;
   configtest)
 	$httpdpath -t -f $config
 	RETVAL=$?

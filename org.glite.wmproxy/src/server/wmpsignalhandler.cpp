@@ -33,10 +33,8 @@ limitations under the License.
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-
 // Global variable for signal handling
 extern volatile sig_atomic_t handled_signal_recv;
-
 
 namespace glite {
 namespace wms {
@@ -48,38 +46,34 @@ using namespace std;
 // Handler prototype
 void handler(int code);
 
+typedef void handler_func(int);
+void install_signal(int signo, handler_func* func)
+{
+  struct sigaction act, old_act;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+  act.sa_handler = func;
+  sigaction(signo, &act, &old_act);
+}
+
 void
 initsignalhandler()
 {
-	// Ignoring PIPE signals, mod_fastcgi already does it
-	signal(SIGPIPE, SIG_IGN);
-	// not needed mod_fastcgi sends SIGUSR1 when signal has been received?
-	signal(SIGTERM, handler);
-	signal(SIGXFSZ, handler);
-	// Apache request for a "graceful" process shutdown (e.g. restart)
-	signal(SIGUSR1, handler);
-	signal(SIGHUP, handler);
-	signal(SIGINT, handler);
-	signal(SIGQUIT, handler);
-}
+  install_signal(SIGUSR1, handler);
+  install_signal(SIGPIPE, SIG_IGN);
+  install_signal(SIGTERM, handler);
+  install_signal(SIGXFSZ, handler);
+  install_signal(SIGHUP, handler);
+  install_signal(SIGINT, handler);
+  install_signal(SIGUSR1, handler);
+  install_signal(SIGQUIT, handler);
 
-void
-resetsignalhandler()
-{
-	// Ignoring PIPE signals, mod_fastcgi already does it
-	signal(SIGPIPE, SIG_IGN);
-	// not needed mod_fastcgi sends SIGUSR1 when signal has been received?
-	signal(SIGTERM, SIG_DFL);
-	signal(SIGXFSZ, SIG_DFL);
-	// Apache request for a "graceful" process shutdown (e.g. restart)
-	signal(SIGUSR1, SIG_DFL);
-	signal(SIGHUP, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
-	signal(SIGQUIT, SIG_DFL);
+	handled_signal_recv = 0;
 }
-
 
 void handler(int code) {
+  edglog(info)<<"received signal " << code << endl;
+
 	handled_signal_recv = code;
 }
 

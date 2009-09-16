@@ -62,6 +62,7 @@ limitations under the License.
 // Exceptions
 #include "glite/wmsutils/exception/Exception.h"
 
+#include "wmpsignalhandler.h"
 
 // Global variable for configuration
 WMProxyConfiguration conf;
@@ -106,6 +107,7 @@ sendFault(WMProxy &proxy, const string &method, const string &msg, int code)
 int
 main(int argc, char* argv[])
 {
+  glite::wms::wmproxy::server::initsignalhandler();
 	try {
 		extern WMProxyConfiguration conf;
 		conf = boost::details::pool::singleton_default<WMProxyConfiguration>

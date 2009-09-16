@@ -67,7 +67,6 @@ limitations under the License.
 
 #include "glite/lb/JobStatus.h"
 
-namespace jobid        = glite::jobid;
 namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities; //Exception codes
 
@@ -82,14 +81,6 @@ const std::string DEFAULT_PROTOCOL = "default";
 
 // WM Web Service available operations
 // To get more infomation see WM service wsdl file
-
-
-void initializingSignalHandler(){
-	// Initializing signal handler for 'graceful' stop/restart
-	extern volatile sig_atomic_t handled_signal_recv;
-	handled_signal_recv = 0;
-	glite::wms::wmproxy::server::initsignalhandler();
-}
 
 string deserializationJSDL(const string &jsdlString){
 	// SYTLESHEET
@@ -154,7 +145,6 @@ ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
 		"ns1__getVersionResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getVersion");
 	edglog(debug)<<"getVersion operation called"<<endl;
-        initializingSignalHandler();
 	int return_value = SOAP_OK;
 	getVersionResponse getVersion_response;
 
@@ -186,7 +176,6 @@ ns1__getJDL(struct soap *soap, string job_id, ns1__JdlType type,
 	edglog_fn("wmpgsoapoperations::ns1__getJDL");
 	edglog(debug)<<"getJDL operation called"<<endl;
 
-        initializingSignalHandler();
 	int return_value = SOAP_OK;
 	getJDLResponse getJDL_response;
 
@@ -236,7 +225,6 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 	edglog_fn("wmpgsoapoperations::ns1__jobRegister");
 	edglog(debug)<<"jobRegister operation called"<<endl;
 
-        initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	jobRegisterResponse jobRegister_response;
@@ -316,7 +304,6 @@ ns1__jobStart(struct soap *soap, string job_id,
 		"ns1__jobStartResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobStart");
 	edglog(debug)<<"jobStart operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	jobStartResponse jobStart_response;
@@ -345,7 +332,6 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id, struct ns1__
 		"delegation_id, struct ns1__jobSubmitResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobSubmit");
 	edglog(debug)<<"jobSubmit operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	jobSubmitResponse jobSubmit_response;
@@ -374,7 +360,6 @@ ns1__jobSubmitJSDL(struct soap *soap, string delegation_id, jsdl__JobDefinition_
 		"jsdl__JobDefinition_USCOREType *jsdl, struct ns1__jobSubmitJSDLResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobSubmitJSDL");
 	edglog(debug)<<"jobSubmitJSDL operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	// Conversion from JSDL to JDL
@@ -408,7 +393,6 @@ ns1__jobCancel(struct soap *soap, string job_id,
 		"ns1__jobCancelResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobCancel");
 	edglog(debug)<<"jobCancel operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	jobCancelResponse jobCancel_response;
@@ -439,7 +423,6 @@ ns1__getMaxInputSandboxSize(struct soap *soap,
 		"ns1__getMaxInputSandboxSizeResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getMaxInputSandboxSize");
 	edglog(debug)<<"getMaxInputSandboxSize operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getMaxInputSandboxSizeResponse getMaxInputSandboxSize_response;
@@ -477,7 +460,6 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol,
 	if (protocol == "") {
 		protocol = ALL_PROTOCOLS;
 	}
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getSandboxDestURIResponse getSandboxDestURI_response;
@@ -523,7 +505,6 @@ ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol,
 	if (protocol == "") {
 		protocol = ALL_PROTOCOLS;
 	}
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getSandboxBulkDestURIResponse getSandboxBulkDestURI_response;
@@ -570,7 +551,6 @@ ns1__getTotalQuota(struct soap *soap,
 		"ns1__getQuotaResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getTotalQuota");
 	edglog(debug)<<"getTotalQuota operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getQuotaResponse getQuota_response;
@@ -601,7 +581,6 @@ ns1__getFreeQuota(struct soap *soap, struct ns1__getFreeQuotaResponse &response)
 		"ns1__getFreeQuotaResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getFreeQuota");
 	edglog(debug)<<"getFreeQuota operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getFreeQuotaResponse getFreeQuota_response;
@@ -633,7 +612,6 @@ ns1__jobPurge(struct soap *soap, string job_id,
 		"ns1__jobPurgeResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__jobPurge");
 	edglog(debug)<<"jobPurge operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	jobPurgeResponse jobPurge_response;
@@ -671,7 +649,6 @@ ns1__getOutputFileList(struct soap *soap, string job_id, string protocol,
 	if (protocol == "") {
 		protocol = DEFAULT_PROTOCOL;
 	}
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getOutputFileListResponse getOutputFileList_response;
@@ -720,7 +697,6 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 	edglog_fn("wmpgsoapoperations::ns1__jobListMatch");
 	edglog(debug)<<"jobListMatch operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	jobListMatchResponse jobListMatch_response;
@@ -800,7 +776,6 @@ ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
 	edglog_fn("wmpgsoapoperations::ns1__getJobTemplate");
 	edglog(debug)<<"getJobTemplate operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	if (!job_type_list) {
@@ -842,7 +817,6 @@ ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies,
 	edglog_fn("wmpgsoapoperations::ns1__getDAGTemplate");
 	edglog(debug)<<"getDAGTemplate operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	if (!dependencies) {
@@ -884,7 +858,6 @@ ns1__getCollectionTemplate(struct soap *soap, int job_number,
 	edglog_fn("wmpgsoapoperations::ns1__getCollectionTemplate");
 	edglog(debug)<<"getCollectionTemplate operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getCollectionTemplateResponse getCollectionTemplate_response;
@@ -920,7 +893,6 @@ ns1__getIntParametricJobTemplate(struct soap *soap, ns1__StringList *attributes,
 	edglog_fn("wmpgsoapoperations::ns1__getIntParametricJobTemplate");
 	edglog(debug)<<"getIntParametricJobTemplate operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	if (!attributes) {
@@ -965,7 +937,6 @@ ns1__getStringParametricJobTemplate(struct soap *soap,
 	edglog_fn("wmpgsoapoperations::ns1__getStringParametricJobTemplate");
 	edglog(debug)<<"getStringParametricJobTemplate operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	if (!attributes || !param) {
@@ -1006,7 +977,6 @@ ns1__getProxyReq(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::ns1__getProxyReq");
 	edglog(debug)<<"getProxyReq operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getProxyReqResponse getProxyReq_response;
@@ -1037,7 +1007,6 @@ ns1__putProxy(struct soap *soap, string delegation_id, string proxy,
 		"string proxy, struct ns1__putProxyResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__putProxy");
 	edglog(debug)<<"putProxy operation called"<<endl;
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 	putProxyResponse putProxy_response;
 	try  {
@@ -1137,7 +1106,6 @@ delegationns__getNewProxyReq(struct soap *soap,
 	edglog_fn("wmpgsoapoperations::delegationns__getNewProxyReq");
 	edglog(debug)<<"getNewProxyReq operation called"<<endl;
 
-        initializingSignalHandler();
 	int return_value = SOAP_OK;
 	pair<string, string> retpair;
 	try {
@@ -1168,7 +1136,6 @@ delegationns__renewProxyReq(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::delegationns__renewProxyReq");
 	edglog(debug)<<"renewProxyReq operation called"<<endl;
 
-        initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	// N.B. same as getProxyReq
@@ -1203,7 +1170,6 @@ delegationns__getTerminationTime(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::delegationns__getTerminationTime");
 	edglog(debug)<<"getTerminationTime operation called"<<endl;
 
-        initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	time_t getProxyTerminationTime_response;
@@ -1236,7 +1202,6 @@ delegationns__destroy(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::delegationns__destroy");
 	edglog(debug)<<"destroy operation called"<<endl;
 
-        initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	try {
@@ -1268,7 +1233,6 @@ delegationns__getProxyReq(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::delegationns__getProxyReq");
 	edglog(debug)<<"getProxyReq operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getProxyReqResponse getProxyReq_response;
@@ -1301,7 +1265,6 @@ delegationns__putProxy(struct soap *soap, string delegation_id, string proxy,
 	edglog_fn("wmpgsoapoperations::delegationns__putProxy");
 	edglog(debug)<<"putProxy operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	putProxyResponse putProxy_response;
@@ -1335,7 +1298,6 @@ delegation1__getProxyReq(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::delegation1__getProxyReq");
 	edglog(debug)<<"delegation1 getProxyReq operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getProxyReqResponse getProxyReq_response;
@@ -1368,7 +1330,6 @@ delegation1__putProxy(struct soap *soap, string delegation_id, string proxy,
 	edglog_fn("wmpgsoapoperations::delegation1__putProxy");
 	edglog(debug)<<"delegation1 putProxy operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	putProxyResponse putProxy_response;
@@ -1403,7 +1364,6 @@ ns1__getACLItems(struct soap *soap, string jobId,
 	edglog_fn("wmpgsoapoperations::ns1__getACLItems");
 	edglog(debug)<<"getACLItems operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getACLItemsResponse getACLItems_response;
@@ -1437,7 +1397,6 @@ ns1__addACLItems(struct soap *soap, string jobId, ns1__StringList* items,
 	edglog_fn("wmpgsoapoperations::ns1__addACLItems");
 	edglog(debug)<<"addACLItems operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	addACLItemsResponse addACLItems_response;
@@ -1468,7 +1427,6 @@ ns1__removeACLItem(struct soap *soap, string jobId, string item,
 	edglog_fn("wmpgsoapoperations::ns1__removeACLItem");
 	edglog(debug)<<"removeACLItem operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	removeACLItemResponse removeACLItem_response;
@@ -1499,7 +1457,6 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::ns1__getDelegatedProxyInfo");
 	edglog(debug)<<"getDelegatedProxyInfo operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getProxyInfoResponse getProxyInfo_response;
@@ -1533,7 +1490,6 @@ ns1__getJobProxyInfo(struct soap *soap, string job_id,
 	edglog_fn("wmpgsoapoperations::ns1__getJobProxyInfo");
 	edglog(debug)<<"getJobProxyInfo operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getProxyInfoResponse getProxyInfo_response;
@@ -1567,7 +1523,6 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 	edglog_fn("wmpgsoapoperations::ns1__enableFilePerusal");
 	edglog(debug)<<"enableFilePerusal operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	enableFilePerusalResponse enableFilePerusal_response;
@@ -1606,7 +1561,6 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
 	if (protocol == "") {
 		protocol = DEFAULT_PROTOCOL;
 	}
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	getPerusalFilesResponse getPerusalFiles_response;
@@ -1640,7 +1594,6 @@ ns1__getTransferProtocols(struct soap *soap,
 	edglog_fn("wmpgsoapoperations::ns1__getTransferProtocols");
 	edglog(debug)<<"getTransferProtocols operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	ns1__StringList *list = new ns1__StringList();
@@ -1678,7 +1631,6 @@ int ns1__getJobStatus(struct soap *soap, string job_id, struct ns1__getJobStatus
 	edglog_fn("wmpgsoapoperations::ns1__getJobStatus");
 	edglog(debug)<<"ns1__getJobStatus operation called"<<endl;
 
-	initializingSignalHandler();
 	int return_value = SOAP_OK;
 
 	ns1__StringList *list = new ns1__StringList();

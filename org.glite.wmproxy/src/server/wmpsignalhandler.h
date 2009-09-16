@@ -30,9 +30,7 @@ namespace wms {
 namespace wmproxy {
 namespace server {
 
-void handler(int code);
 void initsignalhandler();
-void resetsignalhandler();
 
 } // namespace server
 } // namespace wmproxy
