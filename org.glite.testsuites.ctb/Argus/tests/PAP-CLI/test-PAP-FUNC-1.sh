@@ -3,6 +3,13 @@
 #Assumtpions: The PAP is running with a correct configuration file
 #Note: Each single test has this assumption
 
+
+if [ -z $PAP_HOME ]; then
+  echo "Please set PAP_HOME variable"
+  exit 1
+fi
+
+
 echo `date`
 echo "---Test-PAP-FUNC-1---"
 

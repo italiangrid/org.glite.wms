@@ -78,12 +78,12 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ $failed == "yes" ]; then
-  echo "---Test-APF: TEST PASSED---"
+  echo "---Test-APF: TEST FAILED---"
   echo `date`
-  exit 0
+  exit 1
 else
   echo "---Test-APF: TEST PASSED---"
   echo `date`
-  exit 1
+  exit 0
 fi
 

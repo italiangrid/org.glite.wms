@@ -1,0 +1,8 @@
+resource "resource_1" {
+    action "submit-job" {
+        rule deny { fqan="/dteam" }
+        rule deny { subject="subject= CN=Test user 303,OU=GD,O=CERN,C=CH" }
+        rule deny { subject="subject= CN=Test user 306,OU=GD,O=CERN,C=CH" }
+    }
+}
+

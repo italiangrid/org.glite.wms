@@ -1,0 +1,9 @@
+
+export PAP_HOME=/opt/authz/pap
+export LOGSLOCATION=/tmp
+
+#TEST TO RUN (yes/no)
+export PAP_CLI="yes"
+export PAP_management="yes"
+export PEP="yes"
+export PDP="yes"

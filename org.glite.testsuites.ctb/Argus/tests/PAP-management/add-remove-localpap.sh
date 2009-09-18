@@ -24,7 +24,7 @@ fi
 ###############################################################
 echo "2) testing apap with wrong endpoint"
 /opt/authz/pap/bin/pap-admin apap NewPAP --url "https://localhost:8555/pap/services/"
-if [ $? -ne 0 ]; then
+if [ $? -eq 0 ]; then
   echo "Failed"
   failed="yes"
 else
