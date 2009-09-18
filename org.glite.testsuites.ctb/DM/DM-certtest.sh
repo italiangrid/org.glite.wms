@@ -48,6 +48,7 @@ fi
 
 if [ "$1" = "-f" ]; then
   conffile=$2
+else
   conffile="./DM-certconfig"
 fi
 
@@ -108,9 +109,9 @@ fi
 # Create a directory for log files #
 ####################################
 
-if [ -z "$LOGSLOCATION" ];then
+id=`date +%y%m%d%H%M%S`
+if [ -z "$LOGLOCATION" ];then
   cp=`pwd`
-  id=`date +%y%m%d%H%M%S`
   loglocation=$cp/logs_$id
   mkdir -p $loglocation
 else

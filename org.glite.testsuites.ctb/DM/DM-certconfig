@@ -4,20 +4,23 @@
 export LFC_HOST="lxb7608v3.cern.ch"
 
 #OPTIONS
-FIRSTSE="lxbra1910.cern.ch"
-SECONDSE="swords.desy.de"
+FIRSTSE="sligo.desy.de"
+SECONDSE="lxb7608v1.cern.ch"
 VO="dteam"
 #VO="org.glite.voms-test"
 CLASSICHOST="lxbra1910.cern.ch"
 DPMHOST="lxb7608v1.cern.ch"
-DCACHEHOST="swords.desy.de"
+DCACHEHOST="sligo.desy.de"
 #CASTORHOST="srm-dteam.cern.ch"
 
 #TEST TO RUN (yes/no)
-LCG_UTILS=no
+LCG_UTILS=yes
 GFAL=no
 DM_CROSS_SE=no
 SAME=yes
+
+#LOG FILES
+export LOGLOCATION=/tmp
 
 #SAME TESTS
 export SAME_OK=0
