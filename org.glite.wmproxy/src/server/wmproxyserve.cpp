@@ -43,10 +43,8 @@ extern long servedrequestcount_global;
 // Global variable for signal handling 
 extern bool handled_signal_recv;
 
-
 const long MIN_SERVED_REQUESTS_PLAFOND = 40;
 const long BASE_SERVED_REQUESTS_PLAFOND = 100;
-
 
 SOAP_FMAC5 int SOAP_FMAC6
 WMProxyServe::wmproxy_soap_serve(struct soap *soap)
@@ -58,18 +56,16 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 	do
 	{
 #ifdef WITH_FASTCGI
-                // Handling termination signal
-		if (handled_signal_recv>0) {
+		if (handled_signal_recv > 0) {
 			edglog(info)<<"-------- Exiting Server Instance -------"<< std::endl;
 			edglog(info)<<"Signal code received: "<< handled_signal_recv << std::endl;
-			edglog(info)<<"----------------------------------------"<< std::endl;
 			exit(0);
 		}
 		// Checking for server instance served request count. If the maximum
 		// value is reached, the server instance is exited in order to avoid
 		// possible memory leaks.
 		long plafond = BASE_SERVED_REQUESTS_PLAFOND;
-		char * env_plafond = getenv("GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS");
+		char *env_plafond = getenv("GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS");
 		if (env_plafond) {
 			plafond = atol(env_plafond);
 		} else if (conf.getMaxServedRequests()) {
@@ -98,13 +94,13 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 		soap_begin(soap);
 
 #ifndef WITH_FASTCGI
-		if (!--k)
+		if (!--k) {
 			soap->keep_alive = 0;
+    }
 #endif
 
-		if (soap_begin_recv(soap))
-		{	if (soap->error < SOAP_STOP)
-			{
+		if (soap_begin_recv(soap)) {
+      if (soap->error < SOAP_STOP) {
 #ifdef WITH_FASTCGI
 				soap_send_fault(soap);
 #else 
@@ -130,9 +126,14 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 		}
 
 #ifdef WITH_FASTCGI
-	} while (1);
+	} while (0 == handled_signal_recv);
 #else
-	} while (soap->keep_alive);
+	} while (soap->keep_alive && 0 == handled_signal_recv);
 #endif
+	if (handled_signal_recv > 0) {
+		edglog(info)<<"-------- Exiting Server Instance -------"<< std::endl;
+		edglog(info)<<"Signal code received: "<< handled_signal_recv << std::endl;
+		exit(0);
+	}
 	return SOAP_OK;
 }

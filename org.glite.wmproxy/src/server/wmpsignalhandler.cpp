@@ -73,8 +73,8 @@ initsignalhandler()
 
 void handler(int code) {
   edglog(info)<<"received signal " << code << endl;
-
 	handled_signal_recv = code;
+  FCGI_Finish();
 }
 
 } // namespace server
