@@ -28,6 +28,7 @@ limitations under the License.
 #endif
 
 #include <stdio.h>
+#include <signal.h>
 
 #include <string.h> // strdup
 #include <stdlib.h> // exit
@@ -42,8 +43,6 @@ limitations under the License.
 
 #include <fcntl.h> // O_RDONLY
 #include <sys/param.h> // MAXPATHLEN
-
-
 
 #define ADJUST_DIRECTORY_ERR_NO_ERROR       0
 #define ADJUST_DIRECTORY_ERR_OPTIONS        1
@@ -78,6 +77,28 @@ extern int optind, opterr, optopt;
 #define TRUE 1
 #endif
 
+typedef void handler_func(int);
+void install_signal(int signo, handler_func* func)
+{
+  struct sigaction act, old_act;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+  act.sa_handler = func;
+  sigaction(signo, &act, &old_act);
+}
+
+void
+initsignalhandler()
+{
+  install_signal(SIGUSR1, SIG_IGN);
+  install_signal(SIGPIPE, SIG_IGN);
+  install_signal(SIGTERM, SIG_IGN);
+  install_signal(SIGXFSZ, SIG_IGN);
+  install_signal(SIGHUP, SIG_IGN);
+  install_signal(SIGINT, SIG_IGN);
+  install_signal(SIGUSR1, SIG_IGN);
+  install_signal(SIGQUIT, SIG_IGN);
+}
 
 long
 computeFileSize(char *path)
@@ -381,6 +402,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, ADJUST_DIRECTORY_USAGE, argv[0]);
 		exit(ADJUST_DIRECTORY_ERR_OPTIONS);
 	}
+  initsignalhandler();
 	while ((c = getopt(argc,argv,ADJUST_DIRECTORY_GETOPT_STRING)) != EOF) {
 		switch (c) {
 			case 'h':

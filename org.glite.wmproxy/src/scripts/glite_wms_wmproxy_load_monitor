@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 
-require Carp;
+$SIG{'INT'} = 'IGNORE';
+$SIG{'TERM'} = 'IGNORE';
+$SIG{'QUIT'} = 'IGNORE';
+
 require Getopt::Long;
 
 @envir=`. /etc/profile.d/grid-env.sh; set`;
