@@ -289,14 +289,14 @@ try {
       }	
 
       if( result || !boost::regex_match(info, pieces, expr) ) {
-	// The condor command has failed... Do the right thing
-	elog::cedglog << logger::setlevel( logger::null )
-		      << "Error submitting job." << endl
-		      << "condor_submit return code = " << result << endl
-		      << logger::setmultiline( true, "CE-> " ) << "Given reason\n" << info << endl;
-	elog::cedglog << logger::setmultiline( false );
-	
-	this->jcr_logger.condor_submit_failed_event( rsl, info, sad->log_file() );
+  // The condor command has failed... Do the right thing
+  elog::cedglog << logger::setlevel( logger::null )
+          << "Error submitting job." << endl
+          << "condor_submit return code = " << result << endl
+          << logger::setmultiline( true, "CE-> " ) << "Given reason\n" << info << endl;
+  elog::cedglog << logger::setmultiline( false );
+    
+  this->jcr_logger.condor_submit_failed_event( rsl, info, sad->log_file() );
 
 	jccommon::ProxyUnregistrar( sad->job_id() ).unregister();
 	jccommon::JobFilePurger( sad->job_id(), have_lbproxy, sad->is_dag() ).do_purge( true );
@@ -313,7 +313,7 @@ try {
 
 	this->jcr_repository->insert( sad->job_id(), condorid );
 
-	this->jcr_logger.condor_submit_ok_event( rsl, condorid, sad->log_file() );
+	this->jcr_logger.condor_submit_ok_event( "(unavailable)", condorid, sad->log_file() );
       }
     }
     else {

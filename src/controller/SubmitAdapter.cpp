@@ -30,16 +30,16 @@ void SubmitAdapter::adapt( void )
     try {
       this->sa_sad->set_sequence_code( this->sa_seqcode );
 
-      if( (this->sa_good = this->sa_sad->good()) ) {
-	ofstream     ofs( this->sa_sad->classad_file().c_str() );
+//      if( (this->sa_good = this->sa_sad->good()) ) {
+//	ofstream     ofs( this->sa_sad->classad_file().c_str() );
 
-	if( (this->sa_good = ofs.good()) ) {
-	  ofs << this->sa_sad->classad() << endl;
-	  ofs.close();
+//	if( (this->sa_good = ofs.good()) ) {
+//	  ofs << this->sa_sad->classad() << endl;
+//	  ofs.close();
 
-	  ts::edglog << logger::setlevel( logger::medium ) << "Classad file created..." << endl;
-	}
-      }
+//	  ts::edglog << logger::setlevel( logger::medium ) << "Classad file created..." << endl;
+//	}
+//      }
     }
     catch( ... ) { this->sa_good = false; }
   }

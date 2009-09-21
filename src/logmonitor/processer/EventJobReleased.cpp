@@ -33,8 +33,7 @@ void EventJobReleased::process_event()
 {
   logger::StatePusher pusher(elog::cedglog, "EventJobReleased::process_event()");
 
-  elog::cedglog << logger::setlevel(logger::info) << "Got a job release event for cluster: "
-    << ei_condor << "\nReason: " << event_->getReason();
+  elog::cedglog << logger::setlevel(logger::info) << "Got a job release event for cluster: " << ei_condor << '\n';
 
   return;
 }
