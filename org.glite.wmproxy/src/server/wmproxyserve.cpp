@@ -84,7 +84,6 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 	    	}
 		}
 		edglog(debug)<<"Resetting signals handler"<<std::endl;
-		glite::wms::wmproxy::server::resetsignalhandler();
 		if (FCGI_Accept() < 0)
 		{
 			soap->error = SOAP_EOF;
