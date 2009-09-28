@@ -55,6 +55,10 @@ def checkFile(value):
     if value<>'' and not os.path.isfile(value):
         raise BadValueException, "Bad file: " + value
     
+def checkQueryType(value):
+    if value<>'event' and value<>'list' and value<>'timestamp':
+        raise BadValueException, "Bad query type: " + value
+    
 def checkEncryptedKey(file):
     if not os.path.exists(file):
         raise Exception, "Missing key file"
@@ -446,7 +450,8 @@ if 'testsuite_utils' in __name__:
                        "proxy-init": gliteLocation + "/bin/voms-proxy-init",
                        "proxy-info": gliteLocation + "/bin/voms-proxy-info",
                        "delegate": gliteLocation + "/bin/glite-ce-delegate-proxy",
-                       "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew"};
+                       "proxy-renew": gliteLocation + "/bin/glite-ce-proxy-renew",
+                 "event": gliteLocation + "/bin/glite-ce-event-query"};
 
     global hostname
     proc = popen2.Popen4('/bin/hostname -f')

@@ -71,8 +71,11 @@ X509_USER_CERT and X509_USER_KEY are defined, no default is available''')
     parameters.register('valid', 's', '00:10', testsuite_utils.checkValid, '', descr='''\
 set the voms-proxy duration in the format HH:MM (DEFAULT 00:10)''')
 
-    parameters.register('listQuery','b', optChar='', descr='''\
-use the internal job list instead of the oldest timestamp for building the status query''')
+    parameters.register('queryType','s', 'event',
+                        testsuite_utils.checkQueryType, optChar='Q', descr='''\
+speficy the polling mechanism used for retrieving the status of the jobs.
+The supported types are event (new event query), list (internal job list used) or timestamp (query by timestamp).\
+ The default is event.''')
     
     parameters.setDefaultEnvs()
     parameters.addEnvItem(('MONITORED_LEASE_EXP_CONFIG_FILE','''\

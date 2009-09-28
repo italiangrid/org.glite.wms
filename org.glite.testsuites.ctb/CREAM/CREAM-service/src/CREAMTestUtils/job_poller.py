@@ -23,10 +23,11 @@ class JobPoller(threading.Thread):
         
         self.finishedJobs = None
         
-        self.jobRE = re.compile("JobID=\[([^\]]+)")
-        self.statusRE = re.compile('Status\s*=\s*\[([^\]]+)')
-        self.exitCodeRE = re.compile('ExitCode\s*=\s*\[([^\]]*)')
-        self.failureRE = re.compile('FailureReason\s*=\s*\[([^\]]+)')
+        self.jobRE = re.compile("\[?[Jj]ob[Ii][Dd]\]?=\[([^\]]+)")
+        self.statusRE = re.compile('\[?[Ss]tatus\]?\s*=\s*\[([^\]]+)')
+        self.exitCodeRE = re.compile('\[?[Ee]xitCode\]?\s*=\s*\[([^\]]*)')
+        self.failureRE = re.compile('\[?[Ff]ailureReason\]?\s*=\s*\[([^\]]+)')
+        self.eventRE = re.compile('EventID=\[([^\]]+)')
         
         self.pool = JobSubmitterPool(parameters, self, pManager)
         self.tableOfResults = {'DONE-OK': 0, 'DONE-FAILED': 0, \
@@ -53,6 +54,9 @@ class JobPoller(threading.Thread):
     def run(self):
 
         minTS = time.time()
+        
+        evStart = 0
+        evStop = int(minTS)
 
         serviceHost = self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')]
                 
@@ -64,7 +68,7 @@ class JobPoller(threading.Thread):
             
             ts = time.time()
             
-            if hasattr(self.parameters, 'listQuery') and self.parameters.listQuery:
+            if self.parameters.queryType=='list':
                 self.lock.acquire()
                 jobList = self.table.keys()
                 self.lock.release()
@@ -83,6 +87,12 @@ class JobPoller(threading.Thread):
                 statusCmd = "%s -i -T %d %s" % (testsuite_utils.cmdTable['status'],
                                                 self.parameters.sotimeout, tmpName)
                 
+            elif self.parameters.queryType=='event':
+                # TODO missing sotimeout
+                statusCmd = "%s -e %s %d-%d" % (testsuite_utils.cmdTable['event'],
+                                                serviceHost, evStart, evStop) 
+                raise Exception, "Query type unsupported"
+                
             else:
                 statusCmd = "%s -f \"%s\" -e %s -T %d --all" % (testsuite_utils.cmdTable['status'], \
                             time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(minTS)), serviceHost, \
@@ -94,73 +104,58 @@ class JobPoller(threading.Thread):
                 self.proxyMan.beginLock()
             statusProc = popen2.Popen4(statusCmd, True)
                             
-            currId = None
-            currStatus = None
-            currReason = ''
-
             self.lock.acquire()
 
             try:
+                currEvent = -1
+                currId = None
+                currStatus = None
+                currReason = ''
                 
-                try:
-                    line = statusProc.fromchild.next()
-                    while True:
-                        if 'ERROR' in line or 'FATAL' in line:
-                            JobPoller.logger.error(line[24:])
-                            line = statusProc.fromchild.next()
-                            continue
-    
-                        tmpm = self.jobRE.search(line)
-                        if tmpm<>None:
-                            currId = tmpm.group(1)
-                            line = statusProc.fromchild.next()
-    
-                            tmpm = self.statusRE.search(line)
-                            if tmpm==None:
-                                JobPoller.logger.error('Missing status for ' + currId)
-                                continue
-                            
-                            currStatus = tmpm.group(1)
-                            try:
-                                line = statusProc.fromchild.next()
-                                tmpm = self.exitCodeRE.search(line)
-                                if tmpm<>None:
-                                    line = statusProc.fromchild.next()
-                                
-                                tmpm = self.failureRE.search(line)
-                                if tmpm<>None:
-                                    currReason = tmpm.group(1)
-                                    line = statusProc.fromchild.next()
-                            finally:
-                                if currId in self.table:
-                                    if currStatus in JobPoller.runningStates:
-                                        self.manageRunningState(currId)
-                                    elif currStatus in JobPoller.finalStates:
-                                        del(self.table[currId])
-                                        jobProcessed += 1
-                                        self.tableOfResults[currStatus] += 1
-                                        self.finishedJobs.append(currId, currStatus, currReason)
-                                        JobPoller.logger.info(
-                                              "Execution terminated for job: %s (%s, %s)"  
-                                              % (currId, currStatus, currReason))
-                                        
-                                        if self.parameters.nopurge:
-                                            self.finishedJobs.dontPurge(currId)
-                                    else:
-                                        JobPoller.logger.debug("Status %s for %s" % (currStatus, currId))
-                                currId = None
-                                currStatus = None
-                                currReason = ''
+                if self.parameters.queryType=='event':
+                    triggerOnJobid = False
+                else:
+                    triggerOnJobid = True
 
-                        else:
-                            line = statusProc.fromchild.next()
-                
-                except StopIteration:
-                    if currId<>None:
-                        JobPoller.logger.debug("Unprocessed job: " + currId)
-                    statusProc.fromchild.close()
+                for line in statusProc.fromchild:
+                    if 'ERROR' in line or 'FATAL' in line:
+                        JobPoller.logger.error(line[24:])
+                        continue
+                    
+                    if not triggerOnJobid:
+                        tmpm = self.eventRE.search(line)
+                        if tmpm<>None:
+                            jobProcessed += self._updateStatus(currEvent, currId, currStatus, currReason)
+                            currEvent = int(tmpm.group(1))
+                            currId = None
+                            currStatus = None
+                            currReason = ''
+                            continue
+                        
+                    tmpm = self.jobRE.search(line)
+                    if tmpm<>None:
+                        if triggerOnJobid:
+                            jobProcessed += self._updateStatus(currEvent, currId, currStatus, currReason)
+                            currEvent = 0
+                            currStatus = None
+                            currReason = ''
+                        currId = tmpm.group(1)
+                        continue
+                        
+                    tmpm = self.statusRE.search(line)
+                    if tmpm<>None:
+                        currStatus = tmpm.group(1)
+                        continue
+                        
+                    tmpm = self.failureRE.search(line)
+                    if tmpm<>None:
+                        currReason = tmpm.group(1)
+                        
+                jobProcessed += self._updateStatus(currEvent, currId, currStatus, currReason)    
+                                
                 
             finally:
+                statusProc.fromchild.close()
                 jobToSend = min(jobLeft, self.parameters.maxRunningJobs - len(self.table))
                 self.lock.release()
                 if self.proxyMan<>None:
@@ -216,3 +211,35 @@ class JobPoller(threading.Thread):
         for key in self.tableOfResults:
             JobPoller.logger.info("Job with status %s: %d" % (key, self.tableOfResults[key]))
         return 0
+        
+    def _updateStatus(self, currEvent, currId, currStatus, currReason):
+        if currEvent==-1:
+            return 0
+            
+        if currId==None:
+            JobPoller.logger.error('Missing job ID for event ' + str(currEvent))
+            return 0
+            
+        if currStatus==None:
+            JobPoller.logger.error('Missing status for ' + currId)
+            return 0
+            
+        if currId in self.table:
+            if currStatus in JobPoller.runningStates:
+                self.manageRunningState(currId)
+            elif currStatus in JobPoller.finalStates:
+                del(self.table[currId])
+                self.tableOfResults[currStatus] += 1
+                self.finishedJobs.append(currId, currStatus, currReason)
+                JobPoller.logger.info(
+                        "Execution terminated for job: %s (%s, %s)"  
+                        % (currId, currStatus, currReason))
+                
+                if self.parameters.nopurge:
+                    self.finishedJobs.dontPurge(currId)
+                return 1
+            else:
+                JobPoller.logger.debug("Status %s for %s" % (currStatus, currId))
+                
+        return 0
+    
