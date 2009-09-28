@@ -250,46 +250,23 @@ CannotSetAttribute::what() const throw()
   }
 }
 
-class FileSystemError::Impl
-{
-public:
-  Impl(boost::filesystem::filesystem_error const& e)
-    : m_error(e)
-  {}
-  boost::filesystem::filesystem_error m_error;
-};
-
-namespace {
-boost::filesystem::filesystem_error generic_fs_error("unknown", "unknown");
-}
-
 FileSystemError::FileSystemError(
   std::string const& helper,
-  boost::filesystem::filesystem_error const& e
+  std::string const& error 
 )
-  : HelperError(helper)
+  : HelperError(helper),
+    m_error(error)
 {
-  try {
-    m_impl.reset(new Impl(e));
-  } catch (...) {
-    m_impl.reset();
-  }
 }
 
 FileSystemError::~FileSystemError() throw()
 {
 }
 
-boost::filesystem::filesystem_error
-FileSystemError::error() const
-{
-  return m_impl ? m_impl->m_error : generic_fs_error;
-}
-
 char const*
 FileSystemError::what() const throw()
 {
-  return m_impl ? m_impl->m_error.what() : "HelperError: FileSystemError";
+  return m_error.c_str();
 }
 
 }}} // glite::wms::helper

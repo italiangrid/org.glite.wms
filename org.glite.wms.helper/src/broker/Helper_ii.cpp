@@ -317,7 +317,7 @@ try {
 } catch( fs::filesystem_error& fse ) {
 
     edglog( error ) << fse.what() << std::endl;
-    throw helper::FileSystemError(helper_id, fse);
+    throw helper::FileSystemError(helper_id, fse.what());
 
 }
 

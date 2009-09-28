@@ -12,6 +12,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/filesystem/exception.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace glite {
 namespace jdl {
@@ -97,13 +98,11 @@ public:
 
 class FileSystemError: public HelperError
 {
-  class Impl;
-  boost::shared_ptr<Impl> m_impl;
+  std::string m_error;
 public:
   FileSystemError(std::string const& helper,
-                  boost::filesystem::filesystem_error const& e);
+                  std::string const& error);
   ~FileSystemError() throw();
-  boost::filesystem::filesystem_error error() const;
   char const* what() const throw();
 };
 

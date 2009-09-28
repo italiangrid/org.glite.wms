@@ -969,7 +969,7 @@ try {
   std::string jw_path_string;
   try {
     fs::path jw_path(
-      fs::normalize_path(config.jc()->submit_file_dir()),
+      utilities::normalize_path(config.jc()->submit_file_dir()),
       fs::native
     );
     if (!dag_id.empty()) {
@@ -983,13 +983,11 @@ try {
     jw_path /= fs::path(jw_name, fs::native);
     jw_path_string = jw_path.native_file_string();
     
-    try { 
-      fs::create_parents(jw_path.branch_path());
-    } catch(fs::filesystem_error &err) {
-      throw CannotCreateJobWrapper(jw_path_string);
-    }
+    utilities::create_parents(jw_path.branch_path());
   } catch(fs::filesystem_error const&) {
     throw CannotCreateJobWrapper("FS error creating jobwrapper path\n");
+  } catch(utilities::CannotCreateParents const& err) {
+    throw CannotCreateJobWrapper("Cannot create parent path " + jw_path_string + ": " + err.what() + "\n");
   }
 
   // write the JobWrapper in the submit file path
