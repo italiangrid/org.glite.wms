@@ -83,7 +83,6 @@ WMProxyServe::wmproxy_soap_serve(struct soap *soap)
 	    		exit(0);	
 	    	}
 		}
-		edglog(debug)<<"Resetting signals handler"<<std::endl;
 		if (FCGI_Accept() < 0)
 		{
 			soap->error = SOAP_EOF;
