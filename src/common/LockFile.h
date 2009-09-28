@@ -2,10 +2,7 @@
 #define EDG_WORKLOAD_JOBCONTROL_JCCOMMON_LOCKFILE_H
 
 #include <string>
-
-namespace boost { namespace filesystem {
-  class path;
-}}
+#include <boost/filesystem/path.hpp>
 
 JOBCONTROL_NAMESPACE_BEGIN {
 

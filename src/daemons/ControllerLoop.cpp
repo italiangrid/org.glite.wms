@@ -106,7 +106,7 @@ void ControllerLoop::createDirectories( void )
       if( (!pathIt->native_file_string().empty()) && !fs::exists(pathIt->branch_path()) ) {
 	if( this->cl_verbose ) clog << "\tCreating directory: " << pathIt->branch_path().native_file_string() << "..." << endl;
 
-	fs::create_parents( pathIt->branch_path() );
+	utilities::create_parents( pathIt->branch_path() );
       }
       else if( this->cl_verbose ) clog << "\tDirectory: " << pathIt->branch_path().native_file_string() << " exists..." << endl;
     }
@@ -116,6 +116,12 @@ void ControllerLoop::createDirectories( void )
 
     throw CannotStart( err.what() );
   }
+  catch( utilities::CannotCreateParents const& err ) {
+    clog << "Cannot create parent path " << pathIt->branch_path().native_file_string() << " \"" << err.what() << "\"." << endl;
+
+    throw CannotStart( err.what() );
+  }
+
 
   return;
 }

@@ -51,7 +51,7 @@ const string  Files::f_s_Output( "output" ), Files::f_s_Input( "input" );
 Files::path *Files::createDagLogFileName( const string &jobid )
 {
   const configuration::LMConfiguration    *lmconfig = configuration::Configuration::instance()->lm();
-  string               logdir( fs::normalize_path(lmconfig->condor_log_dir()) ), logname( f_s_dagLogPrefix );
+  string               logdir( utilities::normalize_path(lmconfig->condor_log_dir()) ), logname( f_s_dagLogPrefix );
   std::auto_ptr<path>  logfile;
 
   logname.append( jobid ); logname.append( f_s_logSuffix );
@@ -84,7 +84,7 @@ const fs::path &Files::dag_submit_directory( void )
   const configuration::JCConfiguration    *jcconfig = configuration::Configuration::instance()->jc();
 
   if( this->f_dagsubdir.get() == NULL ) {
-    string   subdir( fs::normalize_path(jcconfig->submit_file_dir()) );
+    string   subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
     string   dagname( f_s_dagPrefix );
 
     if( this->f_dagid.size() == 0 ) dagname.append( this->f_jobid );
@@ -109,7 +109,7 @@ const fs::path &Files::submit_file( void )
     filename.append( this->f_jobid ); filename.append( f_s_submitSuffix );
 
     if( this->f_dagid.size() == 0 ) {
-      string    subdir( fs::normalize_path(jcconfig->submit_file_dir()) );
+      string    subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
       this->f_submit.reset( new path(subdir, fs::native) );
 
       *this->f_submit /= this->f_jobReduced;
@@ -132,7 +132,7 @@ const fs::path &Files::jobwrapper_file( void )
     name.append( this->f_jobid ); name.append( f_s_scriptSuffix );
 
     if( this->f_dagid.size() == 0 ) {
-      string     subdir( fs::normalize_path(jcconfig->submit_file_dir()) );
+      string     subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
       this->f_wrapper.reset( new path(subdir, fs::native) );
 
       *this->f_wrapper /= this->f_jobReduced;
@@ -155,7 +155,7 @@ const fs::path &Files::classad_file( void )
     cname.append( this->f_jobid );
 
     if( this->f_dagid.size() == 0 ) {
-      string     subdir( fs::normalize_path(jcconfig->submit_file_dir()) );
+      string     subdir( utilities::normalize_path(jcconfig->submit_file_dir()) );
       this->f_classad.reset( new path(subdir, fs::native) );
 
       *this->f_classad /= this->f_jobReduced;
@@ -173,7 +173,7 @@ const fs::path &Files::output_directory( void )
   const configuration::JCConfiguration    *jcconfig = configuration::Configuration::instance()->jc();
  
   if( this->f_classad.get() == NULL ) {
-    string   dirname( fs::normalize_path(jcconfig->output_file_dir()) );
+    string   dirname( utilities::normalize_path(jcconfig->output_file_dir()) );
 
     this->f_outdir.reset( new path(dirname, fs::native) );
 
@@ -235,7 +235,7 @@ const fs::path &Files::log_file( time_t epoch )
 
   if( (epoch != this->f_epoch) || (this->f_logfile.get() == NULL) ) {
     if( this->f_dagid.size() == 0 ) {
-      string    logdir( fs::normalize_path(lmconfig->condor_log_dir()) ), logname( f_s_logPrefix );
+      string    logdir( utilities::normalize_path(lmconfig->condor_log_dir()) ), logname( f_s_logPrefix );
 
       logname.append( boost::lexical_cast<string>(epoch) );
 
@@ -266,7 +266,7 @@ const fs::path &Files::log_file( void )
 	string   logfile( glite::jdl::get_log(*ad, good) );
 
 	if( good )
-	  this->f_logfile.reset( new path(fs::normalize_path(logfile), fs::native) );
+	  this->f_logfile.reset( new path(utilities::normalize_path(logfile), fs::native) );
 	else
 	  this->f_logfile.reset( new path );
       }
@@ -283,7 +283,7 @@ const fs::path &Files::sandbox_root( void )
   const configuration::NSConfiguration    *nsconfig = configuration::Configuration::instance()->ns();
 
   if( this->f_sandbox.get() == NULL ) {
-    string    sbx( fs::normalize_path(nsconfig->sandbox_staging_path()) );
+    string    sbx( utilities::normalize_path(nsconfig->sandbox_staging_path()) );
 
     this->f_sandbox.reset( new path(sbx, fs::native) );
     *this->f_sandbox /= this->f_jobReduced / fs::path(this->f_jobid, fs::native);

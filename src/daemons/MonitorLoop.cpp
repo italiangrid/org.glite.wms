@@ -9,6 +9,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/timer.hpp>
+#include <boost/version.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
@@ -90,13 +91,18 @@ void MonitorLoop::createDirectories( void )
       if( (!pathIt->native_file_string().empty()) && !fs::exists(pathIt->branch_path()) ) {
 	if( this->ml_verbose ) clog << "\tCreating directory: " << pathIt->branch_path().native_file_string() << "..." << endl;
 
-	fs::create_parents( pathIt->branch_path() );
+	utilities::create_parents( pathIt->branch_path() );
       }
       else if( this->ml_verbose ) clog << "\tDirectory: " << pathIt->branch_path().native_file_string() << " exists..." << endl;
     }
   }
   catch( fs::filesystem_error &err ) {
     clog << "Filesystem error: \"" << err.what() << "\"." << endl;
+
+    throw CannotStart( err.what() );
+  }
+  catch( utilities::CannotCreateParents const& err ) {
+    clog << "Cannot create parent path " << pathIt->branch_path().native_file_string() << " \"" << err.what() << "\"." << endl;
 
     throw CannotStart( err.what() );
   }
@@ -344,12 +350,19 @@ try {
  	if ( !fs::exists(*logIt) ) // see lcg2 bug 3807
  	  ; // ignore
  	else if( !fs::is_directory(*logIt) && !boost::regex_match(name, expr) && (filemap.count(name) == 0) ) {
+    #if BOOST_VERSION >= 103401 
+      std::string logItleaf = logIt->path().leaf();
+      std::string logItstring = logIt->path().native_file_string();
+    #else
+      std::string logItleaf = logIt->leaf();
+      std::string logItstring = logIt->native_file_string();
+    #endif
 	  this->ml_stream << logger::setlevel( logger::low )
-			  << "Adding new condor log file: " << logIt->native_file_string() << endl;
+			  << "Adding new condor log file: " << logItstring << endl;
           
           try {
-            tmp = new logmonitor::CondorMonitor( logIt->native_file_string(), data );
-	    filemap.insert( map<string, MonitorPtr>::value_type(logIt->leaf(), MonitorPtr(tmp)) );
+            tmp = new logmonitor::CondorMonitor( logItstring, data );
+	    filemap.insert( map<string, MonitorPtr>::value_type(logItleaf, MonitorPtr(tmp)) );
 
           } catch( logmonitor::CannotOpenFile &err ) {
             this->ml_stream << logger::setlevel( logger::error )

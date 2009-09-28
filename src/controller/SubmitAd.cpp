@@ -152,7 +152,7 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
 	elog::cedglog << logger::setlevel( logger::info ) << "Creating " << dirType << " path." << endl
 		      << logger::setlevel( logger::debug ) << "Path = \"" << buildPath << "\"." << endl;
 
-	fs::create_parents( files->output_directory() );
+	utilities::create_parents( files->output_directory() );
 
 	if( !fs::exists(files->submit_file().branch_path()) ) {
 	  dirType = "submit file";
@@ -160,7 +160,7 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
 	  elog::cedglog << logger::setlevel( logger::info ) << "Path for " << dirType << " doesn't exist, creating..." << endl
 			<< logger::setlevel( logger::debug ) << "Path = \"" << buildPath << "\"." << endl;
 
-	  fs::create_parents( files->submit_file().branch_path() );
+	  utilities::create_parents( files->submit_file().branch_path() );
 	}
 
 	if( !fs::exists(files->classad_file().branch_path()) ) {
@@ -169,10 +169,10 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
 	  elog::cedglog << logger::setlevel( logger::info ) << "Path for " << dirType << " doesn't exist, creating..." << endl
 			<< logger::setlevel( logger::debug ) << "Path = \"" << buildPath << "\"." << endl;
 
-	  fs::create_parents( files->classad_file().branch_path() );
+	  utilities::create_parents( files->classad_file().branch_path() );
 	}
       }
-      catch( fs::filesystem_error &err ) {
+      catch( utilities::CannotCreateParents const& err ) {
 	elog::cedglog << logger::setlevel( logger::fatal )
 		      << "Failed to create " << dirType << " path \"" << buildPath << "\"." << endl
 		      << "Reason: " << err.what() << endl;

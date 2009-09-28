@@ -268,7 +268,7 @@ EventLogger &EventLogger::reset_user_proxy( const string &proxyfile )
   int     res;
 
   if( proxyfile.size() && (proxyfile != this->el_proxy) ) {
-    fs::path    pf(fs::normalize_path(proxyfile), fs::native);
+    fs::path    pf(utilities::normalize_path(proxyfile), fs::native);
 
     if( fs::exists(pf) ) {
       this->el_proxy.assign( proxyfile );
@@ -314,7 +314,7 @@ EventLogger &EventLogger::set_LBProxy_context( const string &jobid, const string
   edg_wlc_JobId     id;
    
   if( proxyfile.size() && (proxyfile != this->el_proxy) ) {
-    fs::path    pf( fs::normalize_path(proxyfile), fs::native );
+    fs::path    pf( utilities::normalize_path(proxyfile), fs::native );
     if( fs::exists(pf) ) {
       this->el_proxy.assign( proxyfile );
       

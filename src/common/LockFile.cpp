@@ -15,6 +15,7 @@
 
 using namespace std;
 namespace fs = boost::filesystem;
+namespace utilities = glite::wms::common::utilities;
 
 JOBCONTROL_NAMESPACE_BEGIN {
 
@@ -36,7 +37,7 @@ void LockFile::checkLockFile( void )
 }
 
 LockFile::LockFile( const string &filename ) : lf_good( false ), lf_error( false ),
-  lf_file( new fs::path(fs::normalize_path(filename), fs::native) )
+  lf_file( new fs::path(utilities::normalize_path(filename), fs::native) )
 {
   this->checkLockFile();
 }

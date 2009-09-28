@@ -59,7 +59,7 @@ int main( int argn, char *argv[] )
     fs::path logpath(lmconfig->external_log_file(), fs::native);
 
     if( !fs::exists(logpath) ) {
-      fs::create_parents( logpath.branch_path() );
+      utilities::create_parents( logpath.branch_path() );
 
       utilities::create_file( logpath.native_file_string().c_str() ); // GCC 3.x has a strange behaviour with non existsne files...
     }
@@ -104,6 +104,12 @@ int main( int argn, char *argv[] )
   catch( fs::filesystem_error &error ) {
     cerr << "Got an error during filesystem usage." << endl
 	 << error.what() << endl;
+
+    res = 1;
+  }
+  catch( utilities::CannotCreateParents const& error ) {
+    cerr << "Cannot create parent path." << endl
+         << error.what() << endl;
 
     res = 1;
   }
