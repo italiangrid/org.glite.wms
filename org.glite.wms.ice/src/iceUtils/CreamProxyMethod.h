@@ -32,6 +32,7 @@
 
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 
+
 namespace _cream_ex = glite::ce::cream_client_api::cream_exceptions;
 namespace _cream_api= glite::ce::cream_client_api::soap_proxy;
 
@@ -43,6 +44,7 @@ namespace soap_proxy {
     class JobFilterWrapper;
     class StatusArrayResult;
     class ResultWrapper;
+    class EventWrapper;
 
 }
 }
@@ -363,6 +365,40 @@ namespace util {
 
         const std::string m_certfile;
         const std::string m_delegation_id;
+    };
+
+
+    /**
+     * Wrapper class around the ProxyRenew method of CreamProxy
+     */ 
+    class CreamProxy_QueryEvent : public CreamProxyMethod {
+    public:
+      CreamProxy_QueryEvent( const std::string& service,
+			     const std::string& certfile,
+			     const std::string& fromid,
+			     const std::string& toid,
+			     const std::string& type,
+			     const int maxnum,
+			     std::string& dbid,
+			     time_t& etime,
+			     std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& events,
+			     const std::string& iceid);
+    protected:        
+        virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
+						      _cream_ex::InvalidArgumentException&,
+						      _cream_ex::GenericException&,
+						      _cream_ex::AuthorizationException&,
+						      _cream_ex::InternalException&,
+						      _cream_ex::ConnectionTimeoutException&,
+						      _cream_api::auth_ex&);
+
+        const std::string          m_certfile;
+        const std::string          m_fromid, m_toid, m_type;//m_delegation_id;
+	const int                  m_maxnum;
+	std::string               *m_dbid;
+	std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>  *m_events; 
+	const std::string m_iceid;
+	time_t                    *m_etime;
     };
 
 } // namespace util

@@ -238,7 +238,7 @@ namespace ice {
          * the job cache).
          */
 	//        util::jobCache::iterator 
-	void resubmit_or_purge_job( /*util::jobCache::iterator it*/ util::CreamJob& ) throw();
+	bool resubmit_or_purge_job( util::CreamJob& ) throw();
 	
         
         /**

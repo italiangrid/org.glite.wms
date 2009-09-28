@@ -226,7 +226,8 @@ namespace glite {
 	      " delegationid text,"				\
 	      " last_empty_notification integer(4),"		\
 	      " last_seen integer(4),"				\
-	      " last_poller_visited integer(4) ";
+	      " last_poller_visited integer(4), "               
+	      " dbid integer(8) ";
 	  }
 
 	  //	  static boost::recursive_mutex s_GlobalICEMutex;

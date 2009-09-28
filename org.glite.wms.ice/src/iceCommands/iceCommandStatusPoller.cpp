@@ -490,7 +490,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	if ( stNum == jobstat::PURGED ) {
 	  CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
 			 << "Job " << tmp_job.describe()
-			 << " is reported as PURGED. Removing from cache"
+			 << " is reported as PURGED. Removing from database"
 			 ); 
 	  {
 	    if( tmp_job.is_proxy_renewable() )

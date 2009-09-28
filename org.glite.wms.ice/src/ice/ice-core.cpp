@@ -194,10 +194,10 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_job_killer_thread( "Job Killer" ),
     m_wms_input_queue( util::Request_source_factory::make_source_input_wm() ),
     m_ice_input_queue( util::Request_source_factory::make_source_input_ice() ),
+    m_reqnum(ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads()),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( ice_util::iceLBLogger::instance() ),
-    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() ),
-    m_reqnum(ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads())
+    m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() )
 {
   if(m_reqnum < 5) m_reqnum = 5;
    int thread_num_commands, thread_num = m_configuration->ice()->max_ice_threads();
@@ -610,14 +610,10 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
 {
     static const char* method_name = "Ice::purge_job() - ";
 
-//     if ( jit == m_cache->end() )
-//       return jit;
-
     {
       db::CheckGridJobID checker( theJob.getGridJobID() );
       db::Transaction tnx;
       tnx.execute( &checker );
-      //tnx.begin_exclusive( );
       if( !checker.found() )
 	return;
     }
@@ -632,10 +628,8 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
       if(theJob.is_proxy_renewable())
 	ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
       {
-	//boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
 	db::RemoveJobByGid remover( theJob.getGridJobID() );
 	db::Transaction tnx;
-	//tnx.begin_exclusive( );
 	tnx.execute( &remover );
       }
       return;
@@ -780,10 +774,8 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
     if(theJob.is_proxy_renewable())
       ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
     {
-      //boost::recursive_mutex::scoped_lock M( ice_util::CreamJob::globalICEMutex );
       db::RemoveJobByGid remover( theJob.getGridJobID() );
       db::Transaction tnx;
-      //tnx.begin_exclusive( );
       tnx.execute( &remover );
     }
 }
@@ -880,7 +872,7 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 
 //____________________________________________________________________________
 //ice_util::jobCache::iterator 
-void Ice::resubmit_or_purge_job( util::CreamJob& tmp_job )
+bool Ice::resubmit_or_purge_job( util::CreamJob& tmp_job )
 throw() 
 {
   
@@ -905,11 +897,15 @@ throw()
     
     purge_job( /*it*/tmp_job, "Job purged by ICE" );
     
+    return true; // notify to the caller (EventQuery that the job has been removed
+                 // from ICE's database
+
   }
   if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ) {
     
     purge_wms_storage( tmp_job );
     
   }
+  return false;
 }
 

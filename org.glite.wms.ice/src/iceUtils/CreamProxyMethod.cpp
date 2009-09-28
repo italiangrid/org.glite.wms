@@ -140,6 +140,57 @@ void CreamProxy_Register::method_call( int timeout )
   theProxy->execute( m_service );  
 }
 
+//////////////////////////////////////////////////////////////////////////////
+//
+// Query Event
+//
+//////////////////////////////////////////////////////////////////////////////
+
+CreamProxy_QueryEvent::CreamProxy_QueryEvent( const std::string& service,
+					      const std::string& certfile,
+					      const std::string& fromid,
+					      const std::string& toid,
+					      const std::string& type,
+					      const int maxnum,
+					      std::string& dbid,
+					      time_t& etime,
+					      std::list<soap_proxy::EventWrapper*>& events,
+					      const string& iceid ):
+  CreamProxyMethod( service ),
+  m_certfile( certfile ),
+  m_fromid( fromid ),
+  m_toid( toid ),
+  m_type( type ),
+  m_dbid( &dbid ),
+  m_maxnum( maxnum ),
+  m_events( &events ),
+  m_iceid( iceid ),
+  m_etime( &etime )
+{
+  
+}
+void CreamProxy_QueryEvent::method_call( int timeout ) 
+  throw(cream_ex::BaseException&,
+	cream_ex::InvalidArgumentException&,
+	cream_ex::GenericException&,
+	cream_ex::AuthorizationException&,
+	cream_ex::InternalException&,
+	cream_ex::ConnectionTimeoutException&,
+	soap_proxy::auth_ex&)  
+{
+
+  boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxy_QueryEvent( make_pair(m_fromid, m_toid), make_pair( (time_t)-1, (time_t)-1), m_type, m_maxnum, 0, *m_etime, *m_dbid, *m_events, timeout) );
+
+  theProxy->setCredential( m_certfile );
+  theProxy->setSoapHeader( m_iceid );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_QueryEvent::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
+  
+  theProxy->execute( m_service );
+}
 
 //////////////////////////////////////////////////////////////////////////////
 //

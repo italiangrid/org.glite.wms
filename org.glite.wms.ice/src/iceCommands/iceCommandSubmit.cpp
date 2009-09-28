@@ -676,7 +676,9 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         }
 	
     } // end while(1)
-    
+    map< string, string > props;
+    res.begin()->second.get<1>().getProperties( props );
+    string dbid       = props["DB_ID"];
     string jobId      = res.begin()->second.get<1>().getCreamJobID();
     string __creamURL = res.begin()->second.get<1>().getCreamURL();
     
@@ -692,8 +694,9 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 
     CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
                     << "For GridJobID [" << m_theJob.getGridJobID() << "]" 
-                    << " CREAM Returned CREAM-JOBID [" << completeid <<"]"
-                     );
+                    << " CREAM Returned CREAM-JOBID [" << completeid <<"] DB_ID ["
+		    << dbid << "]"
+		    );
 
     cream_api::ResultWrapper startRes;
     
@@ -773,6 +776,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       params.push_back( make_pair("leaseid", lease_id ));
       //params.push_back( make_pair("proxycert_timestamp", iceUtil::int_to_string( time(0))));
       params.push_back( make_pair("wn_sequence_code", m_theJob.getSequenceCode() ));
+      //      string dbid;
+      params.push_back( make_pair("dbid", dbid ) );
       db::UpdateJobByGid updater(m_theJob.getGridJobID(), params );
       db::Transaction tnx;
       //tnx.begin_exclusive( );

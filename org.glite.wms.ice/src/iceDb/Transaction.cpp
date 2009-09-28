@@ -82,6 +82,44 @@ namespace {
             }
 	    try {
 	      string sqlcmd = 
+		"CREATE TABLE IF NOT EXISTS ce_dbid ( "	\
+		"ceurl text primary key not null, "	\
+		"db_id integer(8) not null "		\
+		")";
+	      do_query( db, sqlcmd );
+
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating database table ce_dbid: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }
+	    try {
+	      string sqlcmd = 
+		"CREATE TABLE IF NOT EXISTS event_id ( "	\
+		"userdn text not null, "
+		"ceurl text primary key not null, "	\
+		"eventid integer(8) not null "		\
+		")";
+	      do_query( db, sqlcmd );
+
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating database table event_id: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }
+	    
+	    try {
+	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS proxy ( "	\
 		"userdn text primary key not null, "	\
 		"proxyfile text not null, "		\
@@ -153,6 +191,20 @@ namespace {
 	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
 			      << "CreateDb::execute() - "
 			      << "Error creating index gid_index on table jobs: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+            }
+	    try { 
+	      string sqlcmd = 
+		"CREATE INDEX IF NOT EXISTS dbid_index ON jobs (dbid)";
+	      do_query( db, sqlcmd );
+            } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating index dbid_index on table jobs: "
 			      << ex.what() << ". STOP!"
 			      );
 	      abort();
@@ -322,6 +374,34 @@ namespace {
 	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
 			      << "CreateDb::execute() - "
 			      << "Error creating index leasekey on table lease: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }	    
+	    try {
+	      string sqlcmd = 
+		"CREATE UNIQUE INDEX IF NOT EXISTS udnce ON event_id (userdn,ceurl)";
+	      do_query( db, sqlcmd );
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+			      << "CreateDb::execute() - "
+			      << "Error creating index udnce on table event_id: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }
+	    try {
+	      string sqlcmd = 
+		"CREATE UNIQUE INDEX IF NOT EXISTS ce ON ce_dbid (ceurl)";
+	      do_query( db, sqlcmd );
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+			      << "CreateDb::execute() - "
+			      << "Error creating index ce on table ce_dbid: "
 			      << ex.what() << ". STOP!"
 			      );
 	      abort();
