@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+#include <ctime>
 
 #include <boost/lexical_cast.hpp>
 #include <classad_distribution.h>
