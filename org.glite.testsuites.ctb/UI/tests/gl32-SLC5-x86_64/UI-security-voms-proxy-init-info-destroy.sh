@@ -38,6 +38,8 @@ if [ "$1" == "-voms" ] || [ "$1" == "--voms" ]; then
    USEVO=$2
    VO_OPTIONS="-voms $2"
    myecho "Will use VO: $2"
+else
+   VO_OPTIONS="--voms dteam"
 fi
 
 TMPPROXY=/tmp/proxy_`id  -u`
