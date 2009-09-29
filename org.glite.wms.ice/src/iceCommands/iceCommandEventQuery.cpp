@@ -148,6 +148,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 			     proxy, 
 			     from.str(),
 			     "-1",
+			     m_iceManager->getStartTime(),
 			     "JOB_STATUS",
 			     100,
 			     sdbid,

@@ -377,6 +377,7 @@ namespace util {
 			     const std::string& certfile,
 			     const std::string& fromid,
 			     const std::string& toid,
+			     const time_t       fromDate,
 			     const std::string& type,
 			     const int maxnum,
 			     std::string& dbid,
@@ -399,6 +400,7 @@ namespace util {
 	std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>  *m_events; 
 	const std::string m_iceid;
 	time_t                    *m_etime;
+	const time_t               m_fromDate;
     };
 
 } // namespace util

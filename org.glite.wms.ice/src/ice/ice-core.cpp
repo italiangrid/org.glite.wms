@@ -45,6 +45,7 @@
 #include "creamJob.h"
 
 #include "iceDb/GetJobsToPoll.h"
+#include "iceDb/GetFieldsCount.h"
 #include "iceDb/CheckGridJobID.h"
 #include "iceDb/GetTerminatedJobs.h"
 #include "iceDb/Transaction.h"
@@ -199,6 +200,26 @@ Ice::Ice( ) throw(iceInit_ex&) :
     m_lb_logger( ice_util::iceLBLogger::instance() ),
     m_configuration( ice_util::iceConfManager::getInstance()->getConfiguration() )
 {
+  /**
+     Must check if ICE is starting from scratch. In that case all Event
+     Query calls must be done with fromDate = 'now', because ICE is not
+     intersted in old jobs/events that has been removed from its database
+  */
+  bool db_empty = false;
+  {
+    list<string> fields;
+    fields.push_back( "gridjobid" );
+    db::GetFieldsCount counter( fields, list<pair<string, string> >());
+    db::Transaction tnx;
+    tnx.execute( &counter );
+    db_empty = ( counter.get_count() == 0 );
+  }
+  if( db_empty )
+    m_start_time = time(0)-600;
+  else
+    m_start_time = -1;
+
+
   if(m_reqnum < 5) m_reqnum = 5;
    int thread_num_commands, thread_num = m_configuration->ice()->max_ice_threads();
    if(thread_num<1) thread_num=1;

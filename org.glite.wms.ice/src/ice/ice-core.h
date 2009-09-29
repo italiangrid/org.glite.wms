@@ -109,6 +109,7 @@ namespace ice {
             boost::thread* m_thread; //! The dynamically created thread object. 
             boost::shared_ptr< glite::wms::ice::util::iceThread > m_ptr_thread; //! Used to instantiate the thread.
             log4cpp::Category* m_log_dev; //! Logging device
+
         };
 
         // 
@@ -146,6 +147,8 @@ namespace ice {
 	std::string m_hostdn;
  
 	std::string m_myname;
+
+	time_t      m_start_time;
 
         Ice( ) throw(glite::wms::ice::iceInit_ex&);
 
@@ -196,6 +199,9 @@ namespace ice {
 	std::string getHostDN( void ) const { return m_hostdn; }
  
         void getNextRequests(std::list< util::Request* >&);
+
+	time_t getStartTime( void ) const { return m_start_time; }
+
 	// util::Request* getNextRequest( void );
 
         /**
