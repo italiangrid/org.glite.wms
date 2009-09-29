@@ -80,8 +80,6 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     string userdn = it->at(0);
     string ceurl  = it->at(1);
     
-    //    while( events.size() == 0 ) {
-    
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "Retrieving last EVENT_ID for userdn ["
 		   << userdn << "] and ce url ["
@@ -100,10 +98,10 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       
       this->setEventID( userdn, ceurl, 0 );
       
-      //it++;
-      //continue;
       thisEventID = 0;
+
     } else {
+
       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		     << "Last EVENT_ID for current couple "
 		     << "userdn [" 
@@ -121,7 +119,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		      << ceurl << "] is not available. Skipping EventQuery."
 		      );
       it++;
-      break; // exit from while( events.size() == 0 ) loop
+      continue; // Next couple DN,CE
       
     }  
     if( !(isvalid( proxy ).first) ) {
@@ -130,14 +128,12 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     << proxy << "] for userdn ["
 		     << userdn << "] is expired! Skipping EventQuery."
 		     );
-      //it++;
-      //	continue;
-      break; // exit from while( events.size() == 0 ) loop
+      it++;
+      continue; // Next couple DN,CE
     }
     
     ostringstream from, to;
     from << thisEventID;
-    //to   << (thisEventID+99);
     
     string sdbid;
     time_t exec_time;
@@ -162,50 +158,67 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     } catch(soap_proxy::auth_ex& ex) {
       
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-		     << "Cannot query events for userdn ["
-		     << userdn << "] ceurl ["
+		     << "Cannot query events for UserDN ["
+		     << userdn << "] CEUrl ["
 		     << ceurl << "]. Exception auth_ex is [" << ex.what() << "]"
 		     );
-      sleep(1);
+
+      it++;
+      continue;
       
     } catch(soap_proxy::soap_ex& ex) {
       
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-		     << "Cannot query events for userdn ["
-		     << userdn << "] ceurl ["
+		     << "Cannot query events for UserDN ["
+		     << userdn << "] CEUrl ["
 		     << ceurl << "]. Exception soap_ex is [" << ex.what() << "]"
 		     );
-      sleep(1);
       
+      it++;
+      continue;
+
     } catch(cream_api::cream_exceptions::InternalException& ex) {
       
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-		     << "Cannot query events for userdn ["
-		     << userdn << "] ceurl ["
+		     << "Cannot query events for UserDN ["
+		     << userdn << "] CEUrl ["
 		     << ceurl << "]. Exception Internal ex is [" << ex.what() << "]"
 		     );
       
-      sleep(1);
-      
+      it++;
+      continue;
+
     } catch(exception& ex) {
       
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-		     << "Cannot query events for userdn ["
-		     << userdn << "] ceurl ["
+		     << "Cannot query events for UserDN ["
+		     << userdn << "] CEUrl ["
 		     << ceurl << "]. Exception ex is [" << ex.what() << "]"
 		     );
+      it++;
+      continue;
+      
     } catch(...) {
       
       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-		     << "Cannot query status job for userdn ["
-		     << userdn << "] ceurl ["
+		     << "Cannot query status job for UserDN ["
+		     << userdn << "] CEUrl ["
 		     << ceurl << "]. Unknown Exception"
 		     );
+      it++;
+      continue;
     }
     
     long long dbid = atoll(sdbid.c_str());
     
     if( !this->checkDatabaseID( ceurl, dbid ) ) {
+
+      CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+		     << "*** CREAM HAS PROBABLY BEEN SCRATCHED. GOING TO ERASE"
+		     << "ALL JOBS RELATED TO OLD DB_ID ["
+		     << dbid << "] ***"
+		     );
+
       list<CreamJob> jobs;
       this->getJobsByDbID( jobs, dbid );
       /**
@@ -228,45 +241,45 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "Database  ID=[" << sdbid << "]"
 		   );
+    
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "Exec time ID=[" << exec_time << "]"
 		   );
     
 
-    for(list<soap_proxy::EventWrapper*>::const_iterator eit = events.begin();
-	eit != events.end();
-	++eit)
-      {
-	cout << endl;
-	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		       << "EventID  =[" << (*eit)->id << "]"
-		       );
-	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		       << "Timestamp=[" << (*eit)->timestamp << "]"
-		       );
+//     for(list<soap_proxy::EventWrapper*>::const_iterator eit = events.begin();
+// 	eit != events.end();
+// 	++eit)
+//       {
+// 	cout << endl;
+// 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 		       << "EventID  =[" << (*eit)->id << "]"
+// 		       );
+// 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 		       << "Timestamp=[" << (*eit)->timestamp << "]"
+// 		       );
 	
-	map<string, string> properties;
-	(*eit)->get_event_properties( properties );
-	for(map<string, string>::const_iterator pit = properties.begin();
-	    pit != properties.end();
-	    ++pit)
-	  {
-	    if(pit->first == "type") {
-	      //	      log_dev->info( string("  \t[status]=[") + job_statuses::job_status_str[atoi(pit->second.c_str())] + "]");
-	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-			     << "  \t[status]=[" << cream_api::job_statuses::job_status_str[atoi(pit->second.c_str())] << "]"
-			     );
+// 	map<string, string> properties;
+// 	(*eit)->get_event_properties( properties );
+// 	for(map<string, string>::const_iterator pit = properties.begin();
+// 	    pit != properties.end();
+// 	    ++pit)
+// 	  {
+// 	    if(pit->first == "type") {
+// 	      //	      log_dev->info( string("  \t[status]=[") + job_statuses::job_status_str[atoi(pit->second.c_str())] + "]");
+// 	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 			     << "  \t[status]=[" << cream_api::job_statuses::job_status_str[atoi(pit->second.c_str())] << "]"
+// 			     );
 	      
-	    }
-	    else {
-	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-			     << "  \t[" << pit->first 
-			     << "]=[" << pit->second << "]"
-			     );
-	      //	      log_dev->info( string("  \t[") + pit->first + "]=[" + pit->second + "]");
-	    }
-	  }
-      }
+// 	    }
+// 	    else {
+// 	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 			     << "  \t[" << pit->first 
+// 			     << "]=[" << pit->second << "]"
+// 			     );
+// 	    }
+// 	  }
+//       }
     
     if( events.size() ) {
 
@@ -425,7 +438,7 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
   
   int num_events = ev.size();
 
-  if( !num_events ) // this should happen
+  if( !num_events ) // this should not happen
     return;
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
@@ -446,7 +459,10 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
 		 );
     
     bool removed = false;
-
+    /**
+       WRITE ON ICE's DATABASE ONLY IF THIS IS THE LAST EVENT
+       FOR THE CURRENT JOB, i.e. if evt_counter == (num_events-1)
+    */
     this->processSingleEvent( tmp_job, *evt_it, evt_counter == (num_events-1), removed );
 
     if(removed)
@@ -471,9 +487,6 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 
   boost::scoped_ptr< soap_proxy::EventWrapper > evt_safe_ptr( event );
 
-  //  cream_api::job_statuses::job_status status = cream_api::job_statuses::getStatusNum( event->getPropertyValue("type") );
-
-  //cout << "Status=" << event->getPropertyValue("type") << endl;
   cream_api::job_statuses::job_status status = (cream_api::job_statuses::job_status)atoi(event->getPropertyValue("type").c_str());
 
   string exit_code   = event->getPropertyValue("exitCode");
@@ -515,34 +528,37 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
     theJob.set_failure_reason( fail_reason );
   }
 
+  /**
+     WRITE ON ICE's DATABASE ONLY IF THIS IS THE LAST EVENT
+     FOR THE CURRENT JOB
+  */
+  if(is_last_event) {
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		   << "Updating ICE's database for Job [" << theJob.describe()
+		   << "] status = [" << status << "]"
+		   << " exit_code = [" << exit_code << "]"
+		   << " failure_reason = [" << fail_reason << "]"
+		   << " description = [" << description << "]"
+		   );
+    list<pair<string, string> > params;
+    params.push_back( make_pair("worker_node", worker_node ) );
+    /**
+       This update of releveat times is done outside, in the check_user_jobs 
+       method in order to prevent to re-poll always the same jobs 
+       if something goes wrong...
+       
+       params.push_back( make_pair("last_seen", int_to_string(time(0)  )) );
+       params.push_back( make_pair("last_empty_notification", int_to_string(time(0)  )));
+    */
+    params.push_back( make_pair("status", int_to_string(status)));
+    params.push_back( make_pair("exit_code", int_to_string(theJob.get_exit_code())));
+    params.push_back( make_pair("failure_reason", theJob.get_failure_reason() ));
+    
+    db::UpdateJobByGid updater( theJob.getGridJobID(), params);
+    db::Transaction tnx;
+    tnx.execute( &updater );
+  }
 
-  if(is_last_event)
-    {
-      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		     << "Updating ICE's database for Job [" << theJob.describe()
-		     << "] status = [" << status << "]"
-		     << " exit_code = [" << exit_code << "]"
-		     << " failure_reason = [" << fail_reason << "]"
-		     << " description = [" << description << "]"
-		     );
-      list<pair<string, string> > params;
-      params.push_back( make_pair("worker_node", worker_node ) );
-      /**
-	 This update of releveat times is done outside, in the check_user_jobs 
-	 method in order to prevent to re-poll always the same jobs 
-	 if something goes wrong...
-	 
-	 params.push_back( make_pair("last_seen", int_to_string(time(0)  )) );
-	 params.push_back( make_pair("last_empty_notification", int_to_string(time(0)  )));
-      */
-      params.push_back( make_pair("status", int_to_string(status)));
-      params.push_back( make_pair("exit_code", int_to_string(theJob.get_exit_code())));
-      params.push_back( make_pair("failure_reason", theJob.get_failure_reason() ));
-      
-      db::UpdateJobByGid updater( theJob.getGridJobID(), params);
-      db::Transaction tnx;
-      tnx.execute( &updater );
-    }
   // Log to L&B
 #ifdef ICE_PROFILE_ENABLE
   api_util::scoped_timer T4( "iceCommandEventQuery::processSingleEvent - LOG_TO_LB+RESUBMIT_OR_PURGE" );
