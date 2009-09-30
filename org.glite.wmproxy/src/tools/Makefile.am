@@ -16,13 +16,13 @@
 
 noinst_HEADERS = converter.h  log.h proxy_cleaner.h
 
-bin_PROGRAMS = glite-wms-wmproxy-purge-proxycache \
+bin_PROGRAMS = glite-wms-wmproxy-purge-proxycache-binary \
  glite-wms-wmproxy-gacladmin \
  glite-wms-wmproxy-gridmapfile2gacl
 
-glite_wms_wmproxy_purge_proxycache_SOURCES = wmpcleanproxies.cpp wmputils.cpp utils.cpp log.cpp
-glite_wms_wmproxy_purge_proxycache_LDFLAGS = -Xlinker --export-dynamic -DGLITE_WMS_WMPROXY_TOOLS
-glite_wms_wmproxy_purge_proxycache_LDADD = \
+glite_wms_wmproxy_purge_proxycache_binary_SOURCES = wmpcleanproxies.cpp wmputils.cpp utils.cpp log.cpp
+glite_wms_wmproxy_purge_proxycache_binary_LDFLAGS = -Xlinker --export-dynamic -DGLITE_WMS_WMPROXY_TOOLS
+glite_wms_wmproxy_purge_proxycache_binary_LDADD = \
 	$(GRIDSITE_OPENSSL_LIBS) \
   $(CLASSAD_LIBS) \
 	$(BOOST_FS_LIBS)

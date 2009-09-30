@@ -24,7 +24,11 @@ AC_CONFIG_SRCDIR([src/server/wmproxy.cpp])
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
 See LICENCE file for details
 ])
+<<<<<<< configure.ac
 AC_REVISION([$Revision$])
+=======
+AC_REVISION([$Revision$])
+>>>>>>> 1.27.4.1
 
 #Environment.
 WORKDIR=`pwd`
@@ -212,6 +216,7 @@ AC_CONFIG_FILES([src/scripts/Makefile])
 #AC_CONFIG_FILES([test/Makefile])
 #AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([wmproxy.dox])
+AC_CONFIG_FILES([src/scripts/glite-wms-wmproxy-purge-proxycache])
 
 AC_OUTPUT
 

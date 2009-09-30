@@ -13,10 +13,12 @@ EXTRA_DIST = \
 wletcwmdir = $(sbindir)
 wletcwm_DATA = glite_wms_wmproxy_exit glite_wms_wmproxy_load_monitor
 
+bin_SCRIPTS = glite-wms-wmproxy-purge-proxycache 
+
 install-data-hook:
 	/bin/mv $(DESTDIR)$(sbindir)/glite_wms_wmproxy_load_monitor $(DESTDIR)$(sbindir)/glite_wms_wmproxy_load_monitor.template
 
-CLEANFILES =
+CLEANFILES = glite-wms-wmproxy-purge-proxycache
 
 MAINTAINERCLEANFILES = Makefile.in *~ *.*~
 
