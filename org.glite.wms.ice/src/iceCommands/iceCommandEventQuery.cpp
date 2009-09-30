@@ -1,6 +1,7 @@
 #include "glite/ce/cream-client-api-c/EventWrapper.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
@@ -57,7 +58,9 @@ ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::Ice* theIce )
 void ice::util::iceCommandEventQuery::execute( ) throw()
 {
   static const char* method_name = "iceCommandEventQuery::execute() - ";
-
+  //#ifdef ICE_PROFILE_ENABLE
+    api_util::scoped_timer Tot( "iceCommandEventQuery::execute() - Entire Command Time" );
+    //#endif
   list< vector< string > > result;
   {
     /*
@@ -79,6 +82,9 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     list<soap_proxy::EventWrapper*> events;
     string userdn = it->at(0);
     string ceurl  = it->at(1);
+    
+    api_util::scoped_timer Totdnce( string("iceCommandEventQuery::execute() - Proc Time for DN,CE [") + userdn + "],[" + ceurl + "]" );
+    
     
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "Retrieving last EVENT_ID for userdn ["
@@ -378,6 +384,7 @@ ice::util::iceCommandEventQuery::checkDatabaseID( const string& ceurl,
 long long
 ice::util::iceCommandEventQuery::processEvents( list<soap_proxy::EventWrapper*>& events )
 {
+  api_util::scoped_timer procTimeEvents( "iceCommandEventQuery::processEvents() - All Events Proc Time" );
   /**
      Group the events per GridJobID
   */
