@@ -493,6 +493,22 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 {
   static const char* method_name = "iceCommandEventQuery::processSingleEvent() - ";
 
+
+//   CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 		 << "Dumping EVENT properties..."
+// 		 ); 
+  
+//   map<string, string> pros;
+//   event->get_event_properties( pros );
+//   map<string, string>::const_iterator it = pros.begin();
+//   while( it != pros.end() ) {
+//     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 		   << "[" << it->first << "]=["
+// 		   << it->second << "]"
+// 		   ); 
+//     it++;
+//   }
+
   boost::scoped_ptr< soap_proxy::EventWrapper > evt_safe_ptr( event );
 
   cream_api::job_statuses::job_status status = (cream_api::job_statuses::job_status)atoi(event->getPropertyValue("type").c_str());
@@ -501,6 +517,8 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   string fail_reason = event->getPropertyValue("failureReason");
   string description = event->getPropertyValue("description");
   string worker_node = event->getPropertyValue("workerNode");
+
+  theJob.set_workernode( worker_node );
 
   if ( status == cream_api::job_statuses::PURGED ) {
     CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name

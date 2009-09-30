@@ -21,7 +21,7 @@
 #include "ice-core.h"
 #include "eventStatusPoller.h"
 #include "iceCommandStatusPoller.h"
-
+#include "iceCommandEventQuery.h"
 
 // other glite includes
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -86,6 +86,7 @@ void eventStatusPoller::body( void )
 
         //m_pool->add_request( new iceCommandStatusPoller( m_iceManager ) );
 	//iceCommandStatusPoller( m_iceManager ).execute();
-	m_real_poller.execute();
+//A	m_real_poller.execute();
+	iceCommandEventQuery( m_iceManager ).execute();
     }
 }
