@@ -24,11 +24,7 @@ AC_CONFIG_SRCDIR([src/server/wmproxy.cpp])
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
 See LICENCE file for details
 ])
-<<<<<<< configure.ac
 AC_REVISION([$Revision$])
-=======
-AC_REVISION([$Revision$])
->>>>>>> 1.27.4.1
 
 #Environment.
 WORKDIR=`pwd`
