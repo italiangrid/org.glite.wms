@@ -159,7 +159,6 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 #endif
 	  glite::wms::ice::db::UpdateJobByGid updater( theJob.getGridJobID(), params );
 	  glite::wms::ice::db::Transaction tnx;
-	  //tnx.begin_exclusive();
 	  tnx.execute( &updater );
 	  return theJob;
 	  

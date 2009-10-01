@@ -569,7 +569,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   if(is_last_event) {
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "Updating ICE's database for Job [" << theJob.describe()
-		   << "] status = [" << status << "]"
+		   << "] status = [" << cream_api::job_statuses::job_status_str[ status ] << "]"
 		   << " exit_code = [" << exit_code << "]"
 		   << " failure_reason = [" << fail_reason << "]"
 		   << " description = [" << description << "]"
@@ -597,8 +597,16 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 #ifdef ICE_PROFILE_ENABLE
   api_util::scoped_timer T4( "iceCommandEventQuery::processSingleEvent - LOG_TO_LB+RESUBMIT_OR_PURGE" );
 #endif
+
+  
+
   iceLBEvent* ev = iceLBEventFactory::mkEvent( theJob );
   if ( ev ) {
+//     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 		   << "Going to log to LB... Fail reason=["
+// 		   << theJob.get_failure_reason() << "] WN=["
+// 		   << theJob.get_worker_node() << "]";
+// 		   );
     theJob = m_lb_logger->logEvent( ev );
   }
   

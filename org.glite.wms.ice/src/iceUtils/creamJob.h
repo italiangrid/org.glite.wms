@@ -272,9 +272,12 @@ namespace glite {
            *
            */
           void set_failure_reason( const std::string& f ) { 
-	    if ( m_failure_reason.empty() ) {
-	      m_failure_reason = f; 
-	    }
+	    //if ( m_failure_reason.empty() ) {
+	    if( f.empty() )
+	      m_failure_reason = " "; 
+	    else
+	      m_failure_reason = f;
+	    //}
           };
 
 	  //	  time_t getDelegationExpirationTime( void ) const { return m_delegation_exptime; }
