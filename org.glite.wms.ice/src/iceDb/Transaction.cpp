@@ -102,7 +102,7 @@ namespace {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS event_id ( "	\
 		"userdn text not null, "
-		"ceurl text primary key not null, "	\
+		"ceurl text not null, "	\
 		"eventid integer(8) not null "		\
 		")";
 	      do_query( db, sqlcmd );

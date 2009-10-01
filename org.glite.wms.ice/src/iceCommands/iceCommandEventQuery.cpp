@@ -150,6 +150,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     boost::replace_all( iceid, "=", "_" );
     
     try {
+      api_util::scoped_timer Tot( "iceCommandEventQuery::execute() - SOAP Connection for QueryEvent" );
       CreamProxy_QueryEvent( ceurl, 
 			     proxy, 
 			     from.str(),
@@ -320,6 +321,13 @@ ice::util::iceCommandEventQuery::setEventID( const std::string& dn,
 					     const std::string& ce, 
 					     const long long id)
 {
+  CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandEventQuery::setEventID() - "
+		 << "Setting EventID for UserDN ["
+		 << dn <<"] CEUrl ["
+		 << ce << "] to ["
+		 << id << "]"
+		 );
+
   db::SetEventID setter( dn, ce, id );
   db::Transaction tnx;
   tnx.execute( &setter );
