@@ -56,7 +56,6 @@ class JobPoller(threading.Thread):
         minTS = time.time()
         
         evStart = 0
-        evStop = int(minTS)
 
         serviceHost = self.parameters.resourceURI[:string.find(self.parameters.resourceURI,'/')]
                 
@@ -88,9 +87,9 @@ class JobPoller(threading.Thread):
                                                 self.parameters.sotimeout, tmpName)
                 
             elif self.parameters.queryType=='event':
-                # TODO missing sotimeout
-                statusCmd = "%s -e %s %d-%d" % (testsuite_utils.cmdTable['event'],
-                                                serviceHost, evStart, evStop) 
+                statusCmd = "%s -t %d -e %s %d-%d" % (testsuite_utils.cmdTable['event'],
+                                                self.parameters.sotimeout,
+                                                serviceHost, evStart, int(minTS)) 
                 raise Exception, "Query type unsupported"
                 
             else:
@@ -130,6 +129,9 @@ class JobPoller(threading.Thread):
                             currId = None
                             currStatus = None
                             currReason = ''
+                            
+                            if currEvent>=evStart:
+                                evStart = currEvent+1
                             continue
                         
                     tmpm = self.jobRE.search(line)
