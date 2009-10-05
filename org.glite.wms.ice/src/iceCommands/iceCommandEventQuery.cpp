@@ -157,7 +157,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 			     "-1",
 			     m_iceManager->getStartTime(),
 			     "JOB_STATUS",
-			     100,
+			     400,
 			     sdbid,
 			     exec_time,
 			     events,
@@ -246,6 +246,13 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       }
     } // if( !this->checkDatabaseID..... )
     
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+		   << "There're [" << events.size() << "] event(s) "
+		   << "for the couple DN ["
+		   << userdn <<"] CEUrl [" 
+		   << ceurl <<"]"
+		   );
+
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "Database  ID=[" << sdbid << "]"
 		   );
