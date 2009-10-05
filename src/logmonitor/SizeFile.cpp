@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <limits.h> 
+#include <climits> 
 
 #include <boost/filesystem/path.hpp>
 
