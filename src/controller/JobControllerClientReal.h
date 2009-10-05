@@ -47,9 +47,9 @@ private:
   Request    jccu_request;
 };
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_JOBCONTROLLERCLIENTREAL_H */
 

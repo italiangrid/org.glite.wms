@@ -69,9 +69,9 @@ private:
   static const std::string   f_s_prePrefix, f_s_postPrefix;
 };
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_FILES_H */
 

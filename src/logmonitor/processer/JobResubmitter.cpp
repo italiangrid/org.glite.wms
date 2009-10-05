@@ -195,4 +195,4 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
 
 }} // Namespace processer, logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

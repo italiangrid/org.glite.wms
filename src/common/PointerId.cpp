@@ -168,6 +168,6 @@ CondorId &CondorId::operator=( const CondorId &that )
   return *this;
 }
 
-}; // Namespace common
+} // Namespace common
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

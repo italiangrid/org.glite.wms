@@ -38,7 +38,7 @@ inline classad::ClassAd *adapt_for_submission( const classad::ClassAd &inad )
   return adapter.adapt_for_submission();
 }
 
-}; // Namespace controlelr
+} // Namespace controlelr
 
 }}} // Namespace jobsubmission wms glite
 

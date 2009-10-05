@@ -39,9 +39,9 @@ public:
   { std::cout << id.edg_id() << ", " << id.condor_id() << std::flush; }
 };
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_IDCOMPARE_H */
 

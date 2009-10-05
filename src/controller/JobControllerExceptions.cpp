@@ -37,6 +37,6 @@ CannotExecute::~CannotExecute( void ) throw() {}
 const string &CannotExecute::reason( void ) const
 { return this->ce_reason; }
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

@@ -46,7 +46,7 @@ struct JWErrors {
   JWOP::status_type   jwe_status;
 };
 
-}; // Anonymous namespace
+} // Anonymous namespace
 
 JobWrapperOutputParser::JobWrapperOutputParser( const string &edgid ) : jwop_dagid(), jwop_edgid( edgid ) {}
 
@@ -192,7 +192,7 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
   return stat;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 

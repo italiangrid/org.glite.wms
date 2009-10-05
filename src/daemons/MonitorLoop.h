@@ -68,9 +68,9 @@ private:
   static MonitorLoop      *ml_s_instance;
 };
 
-}; // Namespace daemons
+} // Namespace daemons
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_DAEMONS_MONITORLOOP_H */
 

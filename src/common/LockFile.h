@@ -35,9 +35,9 @@ private:
   boost::filesystem::path  *lf_file;
 };
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_JCCOMMON_LOCKFILE_H */
 

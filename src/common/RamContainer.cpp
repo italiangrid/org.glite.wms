@@ -154,6 +154,6 @@ bool RamContainer::remove_by_condor_id( const string &condorId )
   return error;
 }
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

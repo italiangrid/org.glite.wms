@@ -143,9 +143,9 @@ private:
   static const char          *el_s_notLogged, *el_s_unavailable, *el_s_OK, *el_s_failed;
 };
 
-}; // Namespace common
+} // Namespace common
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_EVENTLOGGER_H */
 

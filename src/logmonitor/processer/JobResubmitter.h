@@ -31,9 +31,9 @@ private:
   jccommon::EventLogger   *jr_logger;
 };
 
-}}; // Namespace processer, logmonitor
+}} // Namespace processer, logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_LOGMONITOR_PROCESSER_JOBRESUBMITTER_H */
 

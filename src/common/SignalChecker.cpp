@@ -161,6 +161,6 @@ const char *SignalChecker::Exception::what( void ) const throw()
   return this->e_reason->c_str();
 }
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

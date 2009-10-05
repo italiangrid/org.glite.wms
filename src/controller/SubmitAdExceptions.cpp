@@ -62,6 +62,6 @@ const char *CannotCreateDirectory::what( void ) const throw()
   return this->sae_what.c_str();
 }
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

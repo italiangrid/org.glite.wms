@@ -39,6 +39,6 @@ void ProxyUnregistrar::unregister( void )
   return;
 }
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

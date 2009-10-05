@@ -31,9 +31,9 @@ private:
   glite::wms::common::utilities::JobDir*    jccjd_jd;
 };
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_JOBCONTROLLERCLIENTJD_H */
 

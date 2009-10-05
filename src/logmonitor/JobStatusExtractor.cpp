@@ -65,6 +65,6 @@ int JobStatusExtractor::get_job_status( string &errors )
   return retcode;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

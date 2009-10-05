@@ -42,7 +42,7 @@ int integer_size( size_t size, int basen = 10 )
   return answer;
 }
 
-}; // Anonymous namespace
+} // Anonymous namespace
 
 size_t  SizeField::sf_s_long = integer_size( sizeof(long int) ), SizeField::sf_s_unsigned = integer_size( sizeof(unsigned int) );
 const string SizeFile::sf_s_defaultHeader( "Condor log size file, DAG enabled.\n"
@@ -612,6 +612,6 @@ SizeFile &SizeFile::update_header( const std::string &newheader )
   return *this;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

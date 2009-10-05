@@ -256,6 +256,6 @@ size_t JobControllerProxy::queue_size( void )
   return size;
 }
 
-}; // namespace jobcontrol
+} // namespace jobcontrol
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

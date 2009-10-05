@@ -85,6 +85,6 @@ int CondorG::execute( std::string &info )
   return result;
 }
 
-};
+}
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

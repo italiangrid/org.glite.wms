@@ -374,6 +374,6 @@ const string &CondorMonitor::logfile_name( void ) const
   return this->cm_shared_data->md_logfile_name;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

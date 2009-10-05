@@ -41,9 +41,9 @@ private:
   std::vector<CondorId>   rc_condors;
 };
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_RAMCONTAINER_H */
 

@@ -136,6 +136,6 @@ void JobFilePurger::do_purge( bool everything )
   return;
 }
 
-}; // jccommon namespace
+} // jccommon namespace
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

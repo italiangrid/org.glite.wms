@@ -39,9 +39,9 @@ private:
   JobControllerFake &operator=( const JobControllerFake & ); // Not implemented
 };
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_JOBCONTROLLERFAKE_H */
 

@@ -53,9 +53,9 @@ private:
   std::string   mp_default, mp_current;
 };
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_REQUESTEXCEPTIONS_H */
 

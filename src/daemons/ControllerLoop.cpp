@@ -501,6 +501,6 @@ catch( ... ) {
   throw;
 }
 
-}; // Namespace daemons
+} // Namespace daemons
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

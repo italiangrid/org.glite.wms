@@ -363,6 +363,6 @@ string CondorRemoveRequest::get_logfile( void ) const
   return file;
 }
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

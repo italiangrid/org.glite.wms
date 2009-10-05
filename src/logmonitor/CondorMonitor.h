@@ -44,9 +44,9 @@ private:
   static std::string    cm_s_recycleDirectory;
 };
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_LOGMONITOR_CONDORMONITOR_H */
 

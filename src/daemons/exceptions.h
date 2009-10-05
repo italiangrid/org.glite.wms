@@ -31,7 +31,7 @@ public:
   virtual ~CannotExecute( void ) throw();
 };
 
-}; // Namespace daemons
+} // Namespace daemons
 
 } JOBCONTROL_NAMESPACE_END
 

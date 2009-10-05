@@ -48,9 +48,9 @@ private:
   std::string                         sa_submitfile, sa_submitad, sa_reason, sa_seqcode, sa_classadfile, sa_logfile;
 };
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_SUBMITAD_H */
 

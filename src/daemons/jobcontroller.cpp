@@ -83,7 +83,7 @@ int run_instance( const string &conffile, const utilities::LineParser &options,
   return res;
 }
 
-}; // Anonymous namespace
+} // Anonymous namespace
 
 int main( int argn, char *argv[] )
 {

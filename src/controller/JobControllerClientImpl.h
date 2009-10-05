@@ -21,9 +21,9 @@ private:
   JobControllerClientImpl &operator=( const JobControllerClientImpl & ); // Not implemented
 };
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_JOBCONTROLLERCLIENTIMPL_H */
 

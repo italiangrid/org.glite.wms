@@ -118,4 +118,4 @@ const Request *JobControllerClientJD::get_current_request( void )
 
 } // end namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

@@ -80,6 +80,6 @@ void LockFile::reset_pid( void )
   return;
 }
 
-}; // namespace jccommon
+} // namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

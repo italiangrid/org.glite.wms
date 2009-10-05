@@ -40,9 +40,9 @@ private:
   glite::jobid::JobId    jfp_dagId;
 };
 
-}; // jccommon namespace
+} // jccommon namespace
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_JOBFILEPURGE_H */
 

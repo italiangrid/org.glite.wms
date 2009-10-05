@@ -64,9 +64,9 @@ private:
   std::string   ccd_path, ccd_dirType, ccd_reason;
 };
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_SUBMITADEXCEPTIONS_H */
 

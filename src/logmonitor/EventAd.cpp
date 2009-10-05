@@ -105,7 +105,7 @@ Rusage classad_to_rusage( const classad::ClassAd *ad )
   return ru;
 }
 
-}; // Anonymous namespace
+} // Anonymous namespace
 
 const char   *EventAd::ea_s_EventTime = "EventTime", *EventAd::ea_s_EventNumber = "EventNumber";
 const char   *EventAd::ea_s_Cluster = "Cluster", *EventAd::ea_s_Proc = "Proc", *EventAd::ea_s_SubProc = "SubProc";
@@ -654,6 +654,6 @@ EventAd &EventAd::set_time( time_t epoch )
   return *this;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

@@ -90,9 +90,9 @@ private:
   std::string   ifn_filename;
 };
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 inline std::ostream &operator<<( std::ostream &os, const glite::wms::jobsubmission::logmonitor::MonitorException &me )
 { os << me.what(); return os; }

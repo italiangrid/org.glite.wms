@@ -63,9 +63,9 @@ private:
   bool               cl_have_lbproxy;
 };
 
-}; // Namespace daemons
+} // Namespace daemons
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_DAEMONS_CONTROLLERLOOP_H */
 

@@ -107,6 +107,6 @@ string InvalidFileName::reason( void ) const
   return reason;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

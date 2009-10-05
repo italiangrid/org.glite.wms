@@ -36,4 +36,4 @@ MonitorData::MonitorData( const string &filename, logmonitor::MonitorData &data 
 
 }} // Namespace processer, logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

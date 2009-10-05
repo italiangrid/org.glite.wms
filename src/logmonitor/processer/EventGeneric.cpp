@@ -282,4 +282,4 @@ void EventGeneric::process_event( void )
 
 }} // namespace processer, logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

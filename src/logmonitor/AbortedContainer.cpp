@@ -105,6 +105,6 @@ void AbortedContainer::compact( void )
   return;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

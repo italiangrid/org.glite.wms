@@ -36,9 +36,9 @@ private:
   Map        ac_pointers;
 };
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_LOGMONITOR_ABORTEDCONTAINER_H */
 

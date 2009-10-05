@@ -74,9 +74,9 @@ private:
   iterator                           ic_last;
 };
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_IDCONTAINER_H */
 

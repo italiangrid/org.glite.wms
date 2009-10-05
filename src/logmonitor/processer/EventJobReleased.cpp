@@ -39,4 +39,4 @@ void EventJobReleased::process_event()
 }
 
 }} // namespace processer, logmonitor
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

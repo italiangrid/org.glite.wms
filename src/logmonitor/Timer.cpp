@@ -55,7 +55,7 @@ char *myStrdup( const string &s )
   return pc;
 }
 
-}; // Anonymous namespace
+} // Anonymous namespace
 
 const char   *TimeoutEvent::te_s_Timeout = "Timeout", *TimeoutEvent::te_s_EventNumber = "EventNumber";
 const char   *TimeoutEvent::te_s_EventTime = "EventTime", *TimeoutEvent::te_s_Cluster = "Cluster";
@@ -143,7 +143,7 @@ Rusage toRusage( const classad::ClassAd *ad )
   return ru;
 }
 
-}; // Anonymous namespace
+} // Anonymous namespace
 
 TimeoutEvent::TimeoutEvent( time_t epoch, ULogEvent *event ) : te_epoch( epoch ), te_event( event ), te_classad(), te_pointer()
 {}
@@ -925,6 +925,6 @@ Timer &Timer::remove_all_timeouts( int condorid )
   return *this;
 }
 
-}; // Namespace logmonitor
+} // Namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

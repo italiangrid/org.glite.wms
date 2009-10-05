@@ -101,6 +101,6 @@ JobControllerClientImpl *JobControllerFactory::create_client( void )
   return result;
 }
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

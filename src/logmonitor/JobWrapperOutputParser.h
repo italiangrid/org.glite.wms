@@ -24,9 +24,9 @@ private:
   std::string     jwop_dagid, jwop_edgid;
 };
 
-}; // namespace logmonitor
+} // namespace logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_LOGMONITOR_JOBWRAPPEROUTPUTPARSER_H */
 

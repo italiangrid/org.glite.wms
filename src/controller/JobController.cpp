@@ -45,7 +45,7 @@ bool JobController::release(int condorid, char const* logfile)
 size_t JobController::queue_size( void )
 { return this->jc_impl->queue_size(); }
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 

@@ -110,9 +110,9 @@ private:
   static const char   *crr_s_CondorId, *crr_s_LogFile;
 };
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_CONTROLLER_REQUEST_H */
 

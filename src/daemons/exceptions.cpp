@@ -26,7 +26,6 @@ CannotExecute::CannotExecute( const string &reason ) : DaemonError( reason ) {}
 
 CannotExecute::~CannotExecute( void ) throw() {}
 
-}; // Namespace daemons
+} // Namespace daemons
 
-} JOBCONTROL_NAMESPACE_END;
-
+} JOBCONTROL_NAMESPACE_END

@@ -27,6 +27,6 @@ const Request *JobControllerClient::get_current_request( void )
   return this->jcc_impl->get_current_request();
 }
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

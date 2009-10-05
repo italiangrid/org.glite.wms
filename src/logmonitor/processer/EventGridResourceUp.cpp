@@ -44,6 +44,6 @@ void EventGridResourceUp::process_event( void )
 
 }} // namespace processer, logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif // Condor v6.7.14 and beyond.

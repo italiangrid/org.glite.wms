@@ -94,9 +94,9 @@ private:
   std::string                        ci_condorId;
 };
 
-}; // Namespace common
+} // Namespace common
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
 
 #endif /* EDG_WORKLOAD_JOBCONTROL_COMMON_POINTERID_H */
 

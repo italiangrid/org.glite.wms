@@ -293,6 +293,6 @@ SubmitAd &SubmitAd::set_sequence_code( const string &code )
   return *this;
 }
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

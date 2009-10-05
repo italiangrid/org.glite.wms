@@ -110,6 +110,6 @@ size_t JobControllerFake::queue_size( void )
   return 0;
 }
 
-}; // namespace controller
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

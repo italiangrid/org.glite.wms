@@ -55,6 +55,6 @@ classad::ClassAd *SubmitAdapter::adapt_for_submission( const string &seqcode )
   return this->sa_good ? static_cast<classad::ClassAd*>(this->sa_sad->classad().Copy()) : NULL;
 }
 
-}; // Namespace controller
+} // Namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

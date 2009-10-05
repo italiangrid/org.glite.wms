@@ -118,6 +118,6 @@ const Request *JobControllerClientUnknown::get_current_request( void )
   return &this->jccu_request;
 }
 
-};
+} // namespace controller
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

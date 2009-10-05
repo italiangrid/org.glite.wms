@@ -1280,6 +1280,6 @@ string EventLogger::query_condorid( const string &jobid )
 }
 
 
-}; // Namespace common
+} // Namespace common
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

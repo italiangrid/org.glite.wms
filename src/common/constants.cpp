@@ -14,4 +14,4 @@ const char   *generic_events_string[] = {
 
 } /* End of jccommon namespace */
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

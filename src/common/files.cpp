@@ -314,6 +314,6 @@ const fs::path &Files::output_sandbox( void )
   return *this->f_outsbx;
 }
 
-}; // Namespace jccommon
+} // Namespace jccommon
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END

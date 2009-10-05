@@ -111,4 +111,4 @@ EventInterface *EventFactory::create_processor( ULogEvent *event, bool removeTim
 
 }} // Namespace processer, logmonitor
 
-} JOBCONTROL_NAMESPACE_END;
+} JOBCONTROL_NAMESPACE_END
