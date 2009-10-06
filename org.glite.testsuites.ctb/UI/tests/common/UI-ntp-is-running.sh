@@ -24,8 +24,7 @@ if type -p ntpstat >/dev/null; then
     echo " # UI ntp test # It seems you have problem with ntp"
     echo ""
     echo " === test NOT passed === "
-    exit 1
-
+    exit 1 
   fi
 
 else

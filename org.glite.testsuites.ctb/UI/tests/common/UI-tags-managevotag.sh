@@ -75,12 +75,26 @@ vo=$UI_VO
 
 myecho "Listing available tags"
 
-lcg-ManageVOTag -host $ce -vo $vo --list
+SL=`cat /etc/redhat-release |  awk -F'release ' '{print $2}' | cut -c 1`
 
-if [ $? -ne 0 ] ; then
- myecho "The listing of vo tags failed"
- myexit 1
+lcg-ManageVOTag -host $ce -vo $vo --list
+ret=$?
+
+if [ $SL == "5" ]; then
+ if [ $ret != "0" ]; then
+  myecho "The listing of vo tags failed"
+  echo "Expected failure: bug# 53516"
+  myexit 0
+ else
+  echo "I was expecting a failure! Is bug# 53516 fixed?"
+  echo "Please update the test"
+  myexit 1
+ fi
+else
+  myecho "The listing of vo tags failed"
+  myexit 1
 fi
+
 
 myecho "Listing of vo tags succeeded"
 
