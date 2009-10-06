@@ -5,7 +5,7 @@
 echo "    == Help test of lcg-tags === "
 echo ""
 
-source `dirname $0`/command-help.sh lcg-tags	  --help || exit $?
+source `dirname $0`/command-help.sh lcg-tags --help || exit $?
 
 echo " == all Ok == "
 exit 0

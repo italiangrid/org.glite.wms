@@ -62,13 +62,15 @@ function exit_success() {
 
 WMSTYPE="gLite"
 
-while getopts ":t:" option; do
-  case $option in
-    t ) WMSTYPE="$OPTARG";;
-    * ) echo "Usage: `basename $0` -t <wms_type>"
-        exit 1;;
-  esac
-done
+#while getopts ":t:" option; do
+#  case $option in
+#    t ) WMSTYPE="$OPTARG";;
+#    * ) echo "Usage: `basename $0` -t <wms_type>"
+#        exit 1;;
+#  esac
+#done
+
+WMSTYPE=gLite-WMS
 
 # ... decide what WMS type is to be tested
 

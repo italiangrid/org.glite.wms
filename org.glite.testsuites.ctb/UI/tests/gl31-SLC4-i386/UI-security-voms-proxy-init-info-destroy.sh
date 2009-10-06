@@ -37,13 +37,16 @@ echo "    === voms-proxy test === "
 if [ "$1" == "-voms" ] || [ "$1" == "--voms" ]; then
    VO_OPTIONS="-voms $2"
    myecho "Will use VO: $2"
+else
+#default
+   VO_OPTIONS="-voms dteam"
 fi
 
 TMPPROXY=/tmp/proxy_`id  -u`
 
 echo ""
 myecho "initializing new proxy, output to file $TMPPROXY ..."
-voms-proxy-init ${VO_OPTIONS} -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY
+echo $PASS | voms-proxy-init ${VO_OPTIONS} -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY -pwstdin
 if [ $? -ne 0 ]; then
   myecho "ERROR: could not create proxy"
   myexit 1

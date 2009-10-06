@@ -70,10 +70,13 @@ do
  shift
 done
 
-if [ $haveCE -eq 0 ] || [ $haveVO -eq 0 ] ; then
- usage
- exit 1
-fi
+#if [ $haveCE -eq 0 ] || [ $haveVO -eq 0 ] ; then
+# usage
+# exit 1
+#fi
+
+ce=$UI_CE
+vo=$UI_VO
 
 myecho "Listing available tags"
 

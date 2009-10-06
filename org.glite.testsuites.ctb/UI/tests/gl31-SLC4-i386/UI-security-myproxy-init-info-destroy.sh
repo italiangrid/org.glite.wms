@@ -27,7 +27,7 @@ TMPPROXY=/tmp/delegation_`id -u`
 
 echo ""
 myecho "initializing new proxy with myproxy"
-myproxy-init --cred_lifetime 1 --proxy_lifetime 1
+echo ${PASS} | myproxy-init --cred_lifetime 1 --proxy_lifetime 1 -n --stdin_pass
 if [ $? -ne 0 ]; then
   myecho "ERROR: could not create long-time proxy"
   exit_failure 1

@@ -76,6 +76,11 @@ fi
 echo "START `date` "
 echo "------------------------------------------------"
 
+#get pass from the user
+echo "Enter the test user pass:"
+read -s PASS
+export PASS
+
 ####################################
 # Create a directory for log files #
 ####################################
@@ -114,12 +119,12 @@ if [ "x${SL4}" = "xyes" ]; then
   pushd ./tests/gl31-SLC4-i386 >> /dev/null
   declare -a tests_list
 #  tests_list=("${tests_list[@]}" "UI-inf-rgma-client.sh")
+#  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-userconf.sh")
+#  tests_list=("${tests_list[@]}" "UI-workload-edg-submit-wait-output.sh") #look at the test!
+#  tests_list=("${tests_list[@]}" "UI-workload-edg-job-list-match.sh")
   tests_list=("${tests_list[@]}" "UI-libraries-exist.sh")
   tests_list=("${tests_list[@]}" "UI-security-myproxy-init-info-destroy.sh")
   tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-info-destroy.sh")
-#  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-userconf.sh")
-  tests_list=("${tests_list[@]}" "UI-workload-edg-job-list-match.sh")
-  tests_list=("${tests_list[@]}" "UI-workload-edg-submit-wait-output.sh")
  
   for item in ${tests_list[*]}
   do
@@ -180,31 +185,31 @@ if [ "x${COMMON}" = "xyes" ]; then
   echo "*Running COMMON tests"
   pushd ./tests/common >> /dev/null
   declare -a tests_list
-  tests_list=("${tests_list[@]}" "command-exist.sh")
-  tests_list=("${tests_list[@]}" "command-help.sh")
-  tests_list=("${tests_list[@]}" "command-version.sh")
-  tests_list=("${tests_list[@]}" "lcg-tests-common.sh")
-  tests_list=("${tests_list[@]}" "lfc-tests-common.sh")
-  tests_list=("${tests_list[@]}" "test-lcg-utils.sh")
-  tests_list=("${tests_list[@]}" "UI-commands-exist-all.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lcg-alias.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lcg-cp.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lcg-cr.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lcg-errors.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lcg-list.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lfc-acl.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lfc-comment.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lfc-errors.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lfc-ln.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lfc-ls.sh")
-  tests_list=("${tests_list[@]}" "UI-data-lfc-mkdir.sh")
+#  tests_list=("${tests_list[@]}" "command-exist.sh")
+#  tests_list=("${tests_list[@]}" "command-help.sh")
+#  tests_list=("${tests_list[@]}" "command-version.sh")
+#  tests_list=("${tests_list[@]}" "lcg-tests-common.sh")
+#  tests_list=("${tests_list[@]}" "lfc-tests-common.sh")
+#  tests_list=("${tests_list[@]}" "test-lcg-utils.sh")
+##  tests_list=("${tests_list[@]}" "UI-commands-exist-all.sh") TODO
+#  tests_list=("${tests_list[@]}" "UI-data-lcg-alias.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lcg-cp.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lcg-cr.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lcg-errors.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lcg-list.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lfc-acl.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lfc-comment.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lfc-errors.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lfc-ln.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lfc-ls.sh")
+#  tests_list=("${tests_list[@]}" "UI-data-lfc-mkdir.sh")
   tests_list=("${tests_list[@]}" "UI-environment.csh")
   tests_list=("${tests_list[@]}" "UI-environment.sh")
   tests_list=("${tests_list[@]}" "UI-exec-help-glite-delegation.sh")
   tests_list=("${tests_list[@]}" "UI-exec-help-glite-sd-query.sh")
   tests_list=("${tests_list[@]}" "UI-exec-help-lcg-info.sh")
-  tests_list=("${tests_list[@]}" "UI-exec-help-lcgtags.sh")
-  tests_list=("${tests_list[@]}" "UI-exec-help-managevotag.sh")
+  tests_list=("${tests_list[@]}" "UI-exec-help-lcgtags.sh") #bug 56603 #Expected failure
+  tests_list=("${tests_list[@]}" "UI-exec-help-managevotag.sh") #bug 53516 #Expected failures on SL5
   tests_list=("${tests_list[@]}" "UI-exec-version-glite-transfer.sh")
   tests_list=("${tests_list[@]}" "UI-exec-version-glite-wms-job.sh")
   tests_list=("${tests_list[@]}" "UI-exec-version-grid-proxy.sh")
@@ -216,17 +221,17 @@ if [ "x${COMMON}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "UI-glite-environment.sh")
   tests_list=("${tests_list[@]}" "UI-inf-lcg-info-ce.sh")
   tests_list=("${tests_list[@]}" "UI-inf-lcg-info-se.sh")
-  tests_list=("${tests_list[@]}" "UI-inf-lcg-infosites.sh")
+  tests_list=("${tests_list[@]}" "UI-inf-lcg-infosites.sh") #bug 53411 #Expected failures
   tests_list=("${tests_list[@]}" "UI-inf-ldapsearch.sh")
-  tests_list=("${tests_list[@]}" "UI-manpage-exist-all.sh")
-  tests_list=("${tests_list[@]}" "UI-ntp-is-running.sh")
+##  tests_list=("${tests_list[@]}" "UI-manpage-exist-all.sh") TODO
+  tests_list=("${tests_list[@]}" "UI-ntp-is-running.sh") #bug? ntp is stopped WARNING
   tests_list=("${tests_list[@]}" "UI-security-grid-cert-info.sh")
   tests_list=("${tests_list[@]}" "UI-security-grid-proxy-info.sh")
   tests_list=("${tests_list[@]}" "UI-security-grid-proxy-init-info-destroy.sh")
   tests_list=("${tests_list[@]}" "UI-security-myproxy-change-pass-phrase.sh")
-  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-info.sh")
+  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-info.sh") #bug 49614 #Expected failures
   tests_list=("${tests_list[@]}" "UI-tags-lcgtags.sh")
-  tests_list=("${tests_list[@]}" "UI-tags-managevotag.sh")
+  tests_list=("${tests_list[@]}" "UI-tags-managevotag.sh") #bug 53516 #Expected failures on SL5
   tests_list=("${tests_list[@]}" "UI-workload-glite-submit-wait-output.sh")
   tests_list=("${tests_list[@]}" "UI-workload-glite-wms-deleg-submit-wait-output.sh")
   tests_list=("${tests_list[@]}" "UI-workload-glite-wms-errors.sh")
@@ -257,7 +262,8 @@ fi
 if [ $failed = "yes" ]; then
 
   echo "TEST_FAILED"
-  echo "The following tests failed:"
+  failures=${#tests_failed[*]}
+  echo "$failures tests failed:"
   for item in ${tests_failed[*]}
   do
     echo "$item: results in $loglocation/${item}_result.txt"

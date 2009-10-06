@@ -18,23 +18,28 @@ EOF
 #=============================================================================
 # Parse input arguments and set global vairables 
 #=============================================================================
-OPTS=$(getopt -o "v" -l "castor:,dcache:,dpm:,classic:,vo:" -n $0 -- "$@")
-if [ $? != 0 ]; then 
-    usage 
-    exit 1 
-fi
-eval set -- $OPTS
-while [ $# -gt 0 ]; do
-  case "$1" in
-      -v|--vo) VO=$2; shift 2;;
-      --castor) CASTOR=$2; shift 2;;
-      --dcache) DCACHE=$2; shift 2;;
-      --dpm) DPM=$2; shift 2;;
-      --classic) CLASSIC=$2; shift 2;;
-      --) shift ; break ;;      
-      *) echo "Error: Invalid Argument $1" 1>&2; exit 1 ;;
-  esac  
-done
+#OPTS=$(getopt -o "v" -l "castor:,dcache:,dpm:,classic:,vo:" -n $0 -- "$@")
+#if [ $? != 0 ]; then 
+#    usage 
+#    exit 1 
+#fi
+#eval set -- $OPTS
+#while [ $# -gt 0 ]; do
+#  case "$1" in
+#      -v|--vo) VO=$2; shift 2;;
+#      --castor) CASTOR=$2; shift 2;;
+#      --dcache) DCACHE=$2; shift 2;;
+#      --dpm) DPM=$2; shift 2;;
+#      --classic) CLASSIC=$2; shift 2;;
+#      --) shift ; break ;;      
+#      *) echo "Error: Invalid Argument $1" 1>&2; exit 1 ;;
+#  esac  
+#done
+
+VO=$UI_VO
+#CASTOR=$UI_CASTOR
+DCACHE=$UI_DCACHE
+DPM=$UI_DPM
 
 if [ -z ${VO} ]; then
     echo "Error: VO not set." 1>&2

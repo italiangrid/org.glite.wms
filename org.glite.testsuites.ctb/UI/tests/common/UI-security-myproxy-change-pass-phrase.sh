@@ -27,9 +27,10 @@ echo ""
 
 # ... ask user for GRID password (-s = silent mode; -r = treat backslashes as normal character; -p = prompt text)
 
-read -s -r -p "Enter GRID pass phrase: "
+#read -s -r -p "Enter GRID pass phrase: "
 
-REPLY="$REPLY" # but if RANDOM unset?
+#REPLY="$REPLY" # but if RANDOM unset?
+REPLY=$PASS
 PD=${RANDOM}${RANDOM}${RANDOM}$$
 
 # ... create myproxy proxy

@@ -46,7 +46,7 @@ TMPPROXY=/tmp/proxy_`id  -u`
 
 echo ""
 myecho "initializing new proxy, output to file $TMPPROXY ..."
-voms-proxy-init ${VO_OPTIONS} -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY
+echo $PASS | voms-proxy-init ${VO_OPTIONS} -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY -pwstdin
 if [ $? -ne 0 ]; then
   myecho "ERROR: could not create proxy"
   myexit 1
@@ -88,7 +88,7 @@ myecho "destroying no proxy failed, as required"
 
 echo ""
 myecho "Trying voms-proxy-init with a role which the user does not have..."
-voms-proxy-init -voms $USEVO:$USEVO/Role=NoSuchRole -verify -out $TMPPROXY
+echo $PASS | voms-proxy-init -voms $USEVO:$USEVO/Role=NoSuchRole -verify -out $TMPPROXY -pwstdin
 if [ $? -eq 0 ]; then
   myecho "ERROR: Requesting a role that the users doesn't have should result in a failure"
   myexit 1
@@ -106,7 +106,7 @@ myecho "Proxy didn't get createdma by failed voms-proxy-init"
 
 echo ""
 myecho "Trying voms-proxy-init with a malformed voms command..."
-voms-proxy-init -voms $USEVO:blabberboooo -verify -out $TMPPROXY
+echo $PASS | voms-proxy-init -voms $USEVO:blabberboooo -verify -out $TMPPROXY -pwstdin
 if [ $? -eq 0 ]; then
   myecho "ERROR: Using a malformen VOMS command should result in a failure"
   myexit 1
@@ -124,7 +124,7 @@ myecho "Proxy didn't get created by failed voms-proxy-init"
 
 echo ""
 myecho "Trying voms-proxy-init with a false vo..."
-voms-proxy-init -voms Imsurethisvodoesntexists -verify -out $TMPPROXY
+echo $PASS | voms-proxy-init -voms Imsurethisvodoesntexists -verify -out $TMPPROXY -pwstdin
 if [ $? -eq 0 ]; then
   myecho "ERROR: Requesting a VO that doesn't exist should result in a failure"
   myexit 1

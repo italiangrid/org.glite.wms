@@ -27,7 +27,7 @@ TMPPROXY=/tmp/delegation_`id -u`
 
 echo ""
 myecho "initializing new proxy with myproxy"
-myproxy-init --cred_lifetime 1 --proxy_lifetime 1
+echo ${PASS} | myproxy-init --cred_lifetime 1 --proxy_lifetime 1 -n --stdin_pass
 if [ $? -ne 0 ]; then
   myecho "ERROR: could not create long-time proxy"
   exit_failure 1
@@ -40,30 +40,6 @@ if [ $? -ne 0 ]; then
   myecho "ERROR: myproxy-info failed"
   exit_failure 1
 fi
-
-#echo ""
-#myecho "trying myproxy-get-delegation ..."
-#myproxy-get-delegation --out $TMPPROXY
-#if [ $? -ne 0 ]; then
-#  myecho "ERROR: could not get delegation"
-#  exit_failure 1
-#fi
-
-#echo ""
-#myecho "checking the delegated proxy with voms-proxy-info ..."
-#voms-proxy-info -file $TMPPROXY
-#if [ $? -ne 0 ]; then
-#  myecho "ERROR: could not find the delegated proxy"
-#  exit_failure 1
-#fi
-
-#echo ""
-#myecho "destroying proxy with voms-proxy-destroy ..."
-#voms-proxy-destroy -file $TMPPROXY
-#if [ $? -ne 0 ]; then
-#  myecho "ERROR: could not destroy delegated proxy"
-#  exit_failure 1
-#fi
 
 echo ""
 myecho "destroying long time proxy with myproxy-destroy ..."
@@ -93,7 +69,8 @@ myecho "destroying no proxy failed, as required"
 
 echo ""
 myecho "initializing new proxy with a false server"
-MYPROXY_SERVER="no.such.server" myproxy-init --cred_lifetime 1 --proxy_lifetime 1
+MYPROXY_SERVER="no.such.server" 
+echo ${PASS} | myproxy-init --cred_lifetime 1 --proxy_lifetime 1 -n --stdin_pass
 if [ $? -eq 0 ]; then
   myecho "ERROR: Using a false server succeeded"
   exit_failure 1

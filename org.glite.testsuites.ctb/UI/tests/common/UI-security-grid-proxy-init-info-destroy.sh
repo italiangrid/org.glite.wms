@@ -32,7 +32,7 @@ echo "    === grid-proxy-init/info/destroy test === "
 TMPPROXY=/tmp/proxy_`id  -u`
 
 myecho "initializing new proxy, output to file $TMPPROXY ..."
-grid-proxy-init -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY
+echo $PASS | grid-proxy-init -verify -debug -limited -valid 1:00 -bits 1024 -out $TMPPROXY -pwstdin
 if [ $? -ne 0 ]; then
   myecho "ERROR: could not create proxy"
   myexit 1
