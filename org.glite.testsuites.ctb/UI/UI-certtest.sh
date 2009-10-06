@@ -122,6 +122,7 @@ if [ "x${SL4}" = "xyes" ]; then
 #  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-userconf.sh") #test out of date
 #  tests_list=("${tests_list[@]}" "UI-workload-edg-submit-wait-output.sh") #obsolete, uses the RB
 #  tests_list=("${tests_list[@]}" "UI-workload-edg-job-list-match.sh") #obsolete, uses the RB
+##  tests_list=("${tests_list[@]}" "UI-manpage-exist-all.sh") #not gonna work, bug open only for SL4
   tests_list=("${tests_list[@]}" "UI-commands-exist-all.sh")
   tests_list=("${tests_list[@]}" "UI-libraries-exist.sh")
   tests_list=("${tests_list[@]}" "UI-security-myproxy-init-info-destroy.sh")
@@ -158,7 +159,8 @@ if [ "x${SL5}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "UI-libraries-exist.sh")
   tests_list=("${tests_list[@]}" "UI-security-myproxy-init-info-destroy.sh")
   tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-info-destroy.sh")
-#  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-userconf.sh")
+##  tests_list=("${tests_list[@]}" "UI-manpage-exist-all.sh") #bugs open for this
+#  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-userconf.sh") test obsolete
 
   for item in ${tests_list[*]}
   do
@@ -224,7 +226,6 @@ if [ "x${COMMON}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "UI-inf-lcg-info-se.sh")
   tests_list=("${tests_list[@]}" "UI-inf-lcg-infosites.sh") #bug 53411 #Expected failures
   tests_list=("${tests_list[@]}" "UI-inf-ldapsearch.sh")
-##  tests_list=("${tests_list[@]}" "UI-manpage-exist-all.sh") TODO
 ##  tests_list=("${tests_list[@]}" "UI-ntp-is-running.sh") #ntp is not running by default
   tests_list=("${tests_list[@]}" "UI-security-grid-cert-info.sh")
   tests_list=("${tests_list[@]}" "UI-security-grid-proxy-info.sh")
