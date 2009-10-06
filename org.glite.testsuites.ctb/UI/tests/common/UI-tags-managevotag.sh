@@ -91,8 +91,10 @@ if [ $SL == "5" ]; then
   myexit 1
  fi
 else
-  myecho "The listing of vo tags failed"
-  myexit 1
+  if [ $ret != "0" ]; then
+    myecho "The listing of vo tags failed"
+    myexit 1
+  fi
 fi
 
 
