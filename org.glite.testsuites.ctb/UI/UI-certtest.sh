@@ -122,6 +122,7 @@ if [ "x${SL4}" = "xyes" ]; then
 #  tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-userconf.sh") #test out of date
 #  tests_list=("${tests_list[@]}" "UI-workload-edg-submit-wait-output.sh") #obsolete, uses the RB
 #  tests_list=("${tests_list[@]}" "UI-workload-edg-job-list-match.sh") #obsolete, uses the RB
+  tests_list=("${tests_list[@]}" "UI-commands-exist-all.sh")
   tests_list=("${tests_list[@]}" "UI-libraries-exist.sh")
   tests_list=("${tests_list[@]}" "UI-security-myproxy-init-info-destroy.sh")
   tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-info-destroy.sh")
@@ -153,6 +154,7 @@ if [ "x${SL5}" = "xyes" ]; then
   echo "*Running SL5 tests"
   pushd ./tests/gl32-SLC5-x86_64 >> /dev/null
   declare -a tests_list
+  tests_list=("${tests_list[@]}" "UI-commands-exist-all.sh")
   tests_list=("${tests_list[@]}" "UI-libraries-exist.sh")
   tests_list=("${tests_list[@]}" "UI-security-myproxy-init-info-destroy.sh")
   tests_list=("${tests_list[@]}" "UI-security-voms-proxy-init-info-destroy.sh")
@@ -191,7 +193,6 @@ if [ "x${COMMON}" = "xyes" ]; then
 #  tests_list=("${tests_list[@]}" "lcg-tests-common.sh")
 #  tests_list=("${tests_list[@]}" "lfc-tests-common.sh")
 #  tests_list=("${tests_list[@]}" "test-lcg-utils.sh")
-##  tests_list=("${tests_list[@]}" "UI-commands-exist-all.sh") TODO
 #  tests_list=("${tests_list[@]}" "UI-data-lcg-alias.sh")
 #  tests_list=("${tests_list[@]}" "UI-data-lcg-cp.sh")
 #  tests_list=("${tests_list[@]}" "UI-data-lcg-cr.sh")
