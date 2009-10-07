@@ -87,10 +87,9 @@ class JobPoller(threading.Thread):
                                                 self.parameters.sotimeout, tmpName)
                 
             elif self.parameters.queryType=='event':
-                statusCmd = "%s -t %d -e %s %d-%d" % (testsuite_utils.cmdTable['event'],
+                statusCmd = "%s -d -t %d -e %s %d-%d" % (testsuite_utils.cmdTable['event'],
                                                 self.parameters.sotimeout,
-                                                serviceHost, evStart, int(minTS)) 
-                raise Exception, "Query type unsupported"
+                                                serviceHost, evStart, int(time.time())) 
                 
             else:
                 statusCmd = "%s -f \"%s\" -e %s -T %d --all" % (testsuite_utils.cmdTable['status'], \
@@ -146,7 +145,7 @@ class JobPoller(threading.Thread):
                         
                     tmpm = self.statusRE.search(line)
                     if tmpm<>None:
-                        currStatus = tmpm.group(1)
+                        currStatus = tmpm.group(1).replace('_', '-')
                         continue
                         
                     tmpm = self.failureRE.search(line)
