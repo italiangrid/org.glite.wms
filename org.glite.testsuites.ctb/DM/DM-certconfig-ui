@@ -1,21 +1,24 @@
+#
+# This file is used to drive DM tests for the UI
+#
 
 #VARIABLES
 #The hostname of the LCG File Catalog
 export LFC_HOST="lxb7608v3.cern.ch"
 
 #OPTIONS
-FIRSTSE="sligo.desy.de"
+FIRSTSE="lxbra1910.cern.ch"
 SECONDSE="lxb7608v1.cern.ch"
 VO="dteam"
 #VO="org.glite.voms-test"
-CLASSICHOST="lxbra1910.cern.ch"
+#CLASSICHOST="lxbra1910.cern.ch"
 DPMHOST="lxb7608v1.cern.ch"
 DCACHEHOST="sligo.desy.de"
 #CASTORHOST="srm-dteam.cern.ch"
 
 #TEST TO RUN (yes/no)
 LCG_UTILS=yes
-GFAL=no
+GFAL=yes
 DM_CROSS_SE=no
 SAME=yes
 

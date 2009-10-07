@@ -12,6 +12,7 @@ export UI_CE=lxbra2307.cern.ch
 
 
 #TEST TO RUN (yes/no)
-export SL4="yes"
+export SL4="no"
 export SL5="no"
 export COMMON="no"
+export DM="yes"

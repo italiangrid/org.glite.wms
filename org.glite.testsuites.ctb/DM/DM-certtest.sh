@@ -231,7 +231,6 @@ if [ "$GFAL" = "yes" ]; then
       failed=yes
       tests_failed=( "${tests_failed[@]}" "$item" )
     else
-      echo "WARNING! lcg-gt lcg-sd have been skipped due to bug #43002"
       echo "$item PASSED"
     fi
   done
@@ -246,17 +245,18 @@ fi
 
 if [ "$DM_CROSS_SE" = "yes" ];then
   echo "*Running DM_CROSS_SE test set*"
-  if [ ! -d ../UI/tests ]; then
-    echo "UI test directory does not exists, check it out from CVS!"
-    exitFailure
-  fi
+#  if [ ! -d ../UI/tests ]; then
+#    echo "UI test directory does not exists, check it out from CVS!"
+#    exitFailure
+#  fi
 
-  touch ../GFAL/tests/testfile 2> /dev/null 
-  if [ $? -ne 0 ]; then
-    echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
-    exitFailure
-  fi
-  pushd ../UI/tests >> /dev/null
+#  touch ../UI/tests/common/testfile 2> /dev/null 
+#  if [ $? -ne 0 ]; then
+#    echo "UI test directory is not writable, if you are on AFS be sure to have a valid token"
+#    exitFailure
+#  fi
+#  pushd ../UI/tests/common >> /dev/null
+  pushd tests >> /dev/null
   tests_list=( test-lcg-utils.sh )
   seoptions=""
 
