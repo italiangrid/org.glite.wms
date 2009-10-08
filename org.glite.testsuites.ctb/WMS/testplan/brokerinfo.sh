@@ -13,7 +13,7 @@ if [ -z $t1 ]; then
 	exit 1
 fi
 t2=`glite-brokerinfo getSEs`
-echo "glite-brokerinfo getSEs: $t2`
+echo "glite-brokerinfo getSEs: $t2"
 if [ -z $t2 ]; then
 	exit 1
 fi
