@@ -1,0 +1,10 @@
+[
+Executable = "brokerinfo.sh";
+Arguments = "";
+StdOutput = "out.log";
+StdError = "err.log";
+InputSandbox = {"brokerinfo.sh"};
+OutputSandbox = {"out.log","err.log",".Brokerinfo", ""};
+rank = - other.GlueCEStateEstimatedResponseTime;
+requirements = true;
+]
