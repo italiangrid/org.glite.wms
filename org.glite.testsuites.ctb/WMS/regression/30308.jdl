@@ -1,7 +1,8 @@
 [
 requirements = ( other.GlueCEStateStatus == "Production" ) && Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment) && ( other.GlueCEInfoTotalCPUs >= 4 ) && ( other.GlueCEInfoLRMSType == "torque" ||   RegExp("pbs",other.GlueCEInfoLRMSType) );
 Type = "Job";
-NodeNumber = 4;
+//NodeNumber = 4;
+cpunumber = 4;
 Executable = "30308_exe.sh";
 Arguments = "cpi 4";
 StdOutput = "test.out";

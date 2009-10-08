@@ -1,5 +1,6 @@
 [
   requirements = other.GlueCEUniqueID == "ce103.cern.ch:2119/jobmanager-lcglsf-grid_dteam" ;
+//  requirements = other.GlueCEUniqueID == "cream-33.pd.infn.it:8443/cream-pbs-cert" ;
   Executable = "/bin/ls";
   prologue = "/bin/false";
   shallowretrycount = 2;  
