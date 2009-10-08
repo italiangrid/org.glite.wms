@@ -9,6 +9,8 @@
   StdError = "echo_PARAM_.err";
   OutputSandbox = {"echo_PARAM_.out","echo_PARAM_.err"};
   Parameters =  {test, 2};
-        usertags = [ jdl = "parametric" ];
+  usertags = [ bug = "27797" ];
+//  requirements = regexp("8443/cream", other.GlueCEUniqueID); 
+
  ]
 

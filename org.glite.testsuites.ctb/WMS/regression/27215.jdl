@@ -8,4 +8,5 @@ Environment = {"GLITE_LOCAL_MAX_OSB_SIZE=35"};
 InputSandbox = {"27215_exe.sh"};
 OutputSandbox = {"test.err","test.out","out2", "out1"};
 usertags = [ bug = "27215" ];
+//requirements = regexp("8443/cream", other.GlueCEUniqueID); 
 ]
