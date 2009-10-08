@@ -61,10 +61,10 @@ fi
 if [ $usage -eq 1 ]; then
   echo "usage: testplan_run test_dir wms.conf"
 else
+	report_name="$app_path/report.html"
 	rm -rf $report_name
 	report_header $report_name
   app_path=`pwd`
-	report_name="$app_path/report.html"
 	cd $1
 	for jdl in `find . -name \*jdl -maxdepth 1 -type f`; do
     log "processing $jdl"
