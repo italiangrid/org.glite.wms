@@ -77,6 +77,8 @@ if [ ! -z $END_DATE ]; then
     index=$(($RANDOM % 10))
     let "iterations[index]=iterations[index]+1"
     cert=$CERTSDIR/test_user_30${index}_cert.pem
+    curr_date=`date +%Y%m%d%H%M`
+    echo -n "$curr_date " >> res_30${index}.txt 
     echo -n "$i " >> out.txt
     (/usr/bin/time --format=%e pepcli --pepd http://vtb-generic-98.cern.ch:8154/authz -c $cert --resourceid "resource_1" --actionid "submit-job" -t 60 -x; echo "exit code: $?") >>res_30${index}.txt 2>>out.txt
 #    sleep $(($RANDOM % 5))
@@ -94,6 +96,8 @@ if [ ! -z $ITERATIONS ]; then
     echo -n "$i " >> out.txt
     index=$(($RANDOM % 10))
     let "iterations[index]=iterations[index]+1"
+    curr_date=`date +%Y%m%d%H%M`
+    echo -n "$curr_date " >> res_30${index}.txt 
     cert=$CERTSDIR/test_user_30${index}_cert.pem
     (/usr/bin/time --format=%e pepcli --pepd http://vtb-generic-98.cern.ch:8154/authz -c $cert --resourceid "resource_1" --actionid "submit-job" -t 60 -x; echo "exit code: $?") >>res_30${index}.txt 2>>out.txt
 #    sleep $(($RANDOM % 5))
