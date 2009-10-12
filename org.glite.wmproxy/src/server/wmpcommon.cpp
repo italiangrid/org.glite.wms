@@ -265,10 +265,10 @@ initWMProxyOperation(const std::string &operation)
 	edglog(info) << displayENV("Remote Host Address","REMOTE_ADDR");
 	if (getenv("REMOTE_PORT")) {edglog(debug) <<":" << string(getenv("REMOTE_PORT"))  << endl ;}
 	else {edglog(debug)<< endl;}
-	edglog(debug) << displayENV("Remote Host Name","REMOTE_HOST")<< endl;
-	edglog(debug) << displayENV("Remote CLIENT S DN","SSL_CLIENT_S_DN")<<endl;
-	edglog(debug) << displayENV("Remote GRST CRED","GRST_CRED_2")<<endl;
-	edglog(debug) << displayENV("Service GRST PROXY LIMIT","GRST_GSIPROXY_LIMIT")<<endl;
+	edglog(info) << displayENV("Remote Host Name","REMOTE_HOST")<< endl;
+	edglog(info) << displayENV("Remote CLIENT S DN","SSL_CLIENT_S_DN")<<endl;
+	edglog(info) << displayENV("Remote GRST CRED","GRST_CRED_2")<<endl;
+	edglog(info) << displayENV("Service GRST PROXY LIMIT","GRST_GSIPROXY_LIMIT")<<endl;
 	// Manage static WMProxy  instance serving request number
 	servedrequestcount_global++;
 	edglog(info)<<"WMProxy instance serving core request N.: " <<servedrequestcount_global<<endl;
