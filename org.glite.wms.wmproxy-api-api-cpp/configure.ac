@@ -48,6 +48,9 @@ AC_C_CONST
 AC_C_INLINE
 AC_HEADER_TIME
 
+AH_TEMPLATE([WITH_IPV6], [For Ipv6 support]) 
+AC_DEFINE(WITH_IPV6)
+
 # Checks for library functions.
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
