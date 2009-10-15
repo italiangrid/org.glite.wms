@@ -52,6 +52,10 @@ AC_HEADER_TIME
 AC_TYPE_SIZE_T
 AC_STRUCT_TM
 
+AH_TEMPLATE([WITH_IPV6], [For Ipv6 support])
+AC_DEFINE(WITH_IPV6)
+
+
 # Checks for library functions.
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
