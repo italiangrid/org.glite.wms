@@ -2454,6 +2454,15 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		string str_tmp_dn(temp_user_dn);
                 free(temp_user_dn);
 		ad->setAttribute(JDL::CERT_SUBJ, str_tmp_dn.c_str());
+
+                // SDJ CHECKS/adjust Requirements attribute
+                classad::ExprTree * sdjrequirements= conf.getSDJRequirements();
+                if (sdjrequirements){
+                        checkSDJRequirements (ad, sdjrequirements);
+                }else{
+                        // SDJ conf not found, nothing to change
+                        edglog(warning)<<"Unable to find SDJRequirements in configuration file"<< endl;
+                }
 	
 		// \/
 		// Adding fake JDL::WMPISB_BASE_URI attribute to pass check (toSubmissionString)
