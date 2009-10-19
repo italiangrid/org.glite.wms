@@ -61,16 +61,15 @@ fi
 if [ $usage -eq 1 ]; then
   echo "usage: testplan_run test_dir wms.conf"
 else
+        app_path=`pwd`
 	report_name="$app_path/report.html"
 	rm -rf $report_name
 	report_header $report_name
-  app_path=`pwd`
 	cd $1
 	for jdl in `find . -name \*jdl -maxdepth 1 -type f`; do
     log "processing $jdl"
     submit_single_job $jdl "$app_path/$2"
-		base="${jdl:0:${#jdl}-4}"
-
+    base="${jdl:0:${#jdl}-4}"
     if [ -r "${base}_pre" ]; then
       . "${base}_pre" # precondition
     fi
@@ -83,6 +82,7 @@ else
     jobstatus=X
     iterations=1
     while [ true ]; do
+      log "Sleeping $CHECK_STATUS_INTERVAL seconds"
       sleep $CHECK_STATUS_INTERVAL
       get_status $jobid
       if [ "X$jobstatus" == "XERROR" ]; then
@@ -117,6 +117,6 @@ else
       . "${base}_post" # postcondition
     fi
   done
-fi
 report_footer $report_name
 cd -
+fi
