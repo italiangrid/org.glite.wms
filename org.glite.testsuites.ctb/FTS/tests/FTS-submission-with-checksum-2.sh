@@ -215,10 +215,10 @@ echo "SAPATH_destination: $DEST_SAPATH"
 #4) Submitting a file transfer using all the checksum algorithms
 if [ "$CHANNEL" == "CERN-CERN" ]; then
   #USING DPM
-  ALGOS="CRC32 ADLER32 MD5 SHA1" 
+  ALGOS="CRC32 ADLER32 MD5 SHA1"
 elif [ "$CHANNEL" == "CERN-DESY" ]; then
   #USING DCACHE
-  ALGOS="ADLER32" 
+  ALGOS="ADLER32"
 else
   echo "Don't know which checksum algorithm can be used on $CHANNEL"
   exit 1
