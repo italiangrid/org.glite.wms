@@ -131,14 +131,14 @@ get_channels
 found=0
 for Channel in $Channel_List
 do
-  if [ "$Channel" = "$CHANNEL" ];then 
+  if [ "$Channel" == "$CHANNEL" ];then 
     echo "Channel exists"
     found=1
     break
   fi
 done
 
-if [ $found = 0 ];then
+if [ $found -eq 0 ];then
   echo "Channel $CHANNEL does not exist"
   echo "-TEST FAILED-"
   exit 1
@@ -148,7 +148,7 @@ fi
 echo
 echo "Checking that $CHANNEL is active..."
 is_channel_active $CHANNEL
-if [ $? = 0 ];then
+if [ $? -eq 0 ];then
   echo "Channel $CHANNEL is Active"
 else
   echo "Channel $CHANNEL is not Active"
@@ -163,7 +163,7 @@ echo "Retrieving SEs info from source and destination sites in $CHANNEL..."
 
 #3.a) Retrieve source and destination sites
 get_source_dest_from_channel $CHANNEL
-if [ $? = 1 ];then
+if [ $? -eq 1 ];then
   echo "Failing retrieving source and destination sites"
   echo "-TEST FAILED-"
   exit 1
@@ -175,7 +175,7 @@ echo "Dest: $Destin_Site"
 #3.b) Retrieve good SEs from source and destination sites
 #get_good_se_from_site $Source_Site
 get_def_se_from_site $Source_Site
-if [ $? = 1 ];then
+if [ $? -eq 1 ];then
   echo "Failing retrieving good SE from site $Source_Site"
   echo "-TEST FAILED-"
   exit 1
@@ -185,7 +185,7 @@ echo "SE_source: $SE_SOURCE"
 
 #get_good_se_from_site $Destin_Site
 get_def_se_from_site $Destin_Site
-if [ $? = 1 ];then
+if [ $? -eq 1 ];then
   echo "Failing retrieving good SE from site $Destin_Site"
   echo "-TEST FAILED-"
   exit 1
@@ -195,7 +195,7 @@ echo "SE_dest: $SE_DEST"
 
 #3.c) Retrieve SEs path to use for file transfer
 get_se_path $SE_SOURCE
-if [ $? = 1 ];then
+if [ $? -eq 1 ];then
   echo "Failing retrieving SAPATH from SE $SE_SOURCE"
   echo "-TEST FAILED-"
   exit 1
@@ -204,7 +204,7 @@ SOURCE_SAPATH=$SE_SRM_LOC
 echo "SAPATH_source: $SOURCE_SAPATH"
 
 get_se_path $SE_DEST
-if [ $? = 1 ];then
+if [ $? -eq 1 ];then
   echo "Failing retrieving SAPATH from SE $SE_DEST"
   echo "-TEST FAILED-"
   exit 1
@@ -213,13 +213,24 @@ DEST_SAPATH=$SE_SRM_LOC
 echo "SAPATH_destination: $DEST_SAPATH"
 
 #4) Submitting a file transfer using all the checksum algorithms
-for ALGO in CRC32 ADLER32 MD5 SHA1 
+if [ "$CHANNEL" == "CERN-CERN" ]; then
+  #USING DPM
+  ALGOS="CRC32 ADLER32 MD5 SHA1" 
+elif [ "$CHANNEL" == "CERN-DESY" ]; then
+  #USING DCACHE
+  ALGOS="ADLER32"
+else
+  echo "Don't know which checksum algorithm can be used on $CHANNEL"
+  exit 1
+fi 
+
+for ALGO in $ALGOS 
 do
   echo 
   echo "Submitting a file transfer job using $ALGO"
   file_transfer_with_checksum $SOURCE_SAPATH $DEST_SAPATH $ALGO
 
-  if [ $? = 1 ];then
+  if [ $? -eq 1 ];then
     echo "Failing submitting a job"
     echo "-TEST FAILED-"
     exit 1
@@ -232,19 +243,19 @@ do
   poll_status_with_timeout $SUBID $TIMEOUT
   return=$?
   
-  if [ "$return" = 1 ];then
+  if [ "$return" -eq 1 ];then
     echo "Failing retrieving the job status"
     echo "-TEST FAILED-"
     exit 1
-  elif [ "$return" = 2 ];then
+  elif [ "$return" -eq 2 ];then
     echo "Failing retrieving the job status"
     echo "-TEST FAILED-"
     exit 1
-  elif [ "$return" = 3 ];then
+  elif [ "$return" -eq 3 ];then
     echo "Job failed"
     echo "-TEST FAILED-"
     exit 1
-  elif [ "$return" = 4 ];then
+  elif [ "$return" -eq 4 ];then
     echo "Timeout exceeded"
     echo "-TEST FAILED-"
     exit 1

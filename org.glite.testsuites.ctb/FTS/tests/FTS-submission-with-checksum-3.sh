@@ -213,7 +213,18 @@ DEST_SAPATH=$SE_SRM_LOC
 echo "SAPATH_destination: $DEST_SAPATH"
 
 #4) Submitting a file transfer using all the checksum algorithms
-for ALGO in CRC32 ADLER32 MD5 SHA1 
+if [ "$CHANNEL" == "CERN-CERN" ]; then
+  #USING DPM
+  ALGOS="CRC32 ADLER32 MD5 SHA1" 
+elif [ "$CHANNEL" == "CERN-DESY" ]; then
+  #USING DCACHE
+  ALGOS="ADLER32" 
+else
+  echo "Don't know which checksum algorithm can be used on $CHANNEL"
+  exit 1
+fi
+
+for ALGO in $ALGOS
 do
   echo 
   echo "Submitting a file transfer job using $ALGO"
