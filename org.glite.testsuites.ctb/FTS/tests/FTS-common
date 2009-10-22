@@ -245,6 +245,96 @@ function file_transfer_skip_tape()
 }
 
 #
+# get SE1_SRM_LOC, SE2_SRM_LOC and ALGO and submit
+# a file transfer using the checksum option. 
+# FTS_HOST must be set. The job Id is stored in SUBID
+#
+function file_transfer_with_checksum()
+{
+    if [ -z $1 ];then
+     echo "An SE source SRM location must be given to file_transfer_with_checksum()"
+     return 2
+    else
+     local SE1_SRM_LOC=$1
+    fi
+
+    if [ -z $2 ];then
+     echo "An SE destination SRM location must be given to file_transfer_with_checksum()"
+     return 2
+    else
+     local SE2_SRM_LOC=$2
+    fi
+
+    if [ -z $3 ];then
+     echo "A checksum algorithm must be given to file_transfer_with_checksum()"
+     return 2
+    else
+     local ALGO=$3
+     if [ "x$ALGO" == "xSHA1" ]; then
+       echo "WARNING: SHA1 will not be tested due to bug #..."
+       return 0
+     fi
+    fi
+
+
+    SUB_FILE_LOC="$HOME/fts-submission-file"
+    RESULT_FILE="$HOME/fts-test-results"
+
+    DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+    TMP_FILE="/tmp/FTS_Test_$DATE"
+    TEST_FILE_NAME="FTS_Test_$DATE"
+
+    echo "Creating 10MB local temporary test file for transfer" 
+
+    echo "" > $TMP_FILE
+
+    dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+
+    echo "Using the 10MB temporary test file: $TMP_FILE" 
+    echo "Copy and register the test file $TMP_FILE on: $SE1_SRM_LOC using md5 checksum" 
+
+#    ALGO="md5"
+    GUID=`lcg-cr --checksum --checksum-type $ALGO --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+
+    result=`cat message | wc -l`
+
+    if [ $result -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ""
+      echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+      echo ""
+      NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+      return 1
+    fi
+    echo "Removing the 10MB temporary test file: $TMP_FILE"
+    rm -rf $TMP_FILE
+
+    echo "Retrieving the SURL for guid: $GUID"
+    SURL=`lcg-lr $GUID`
+
+    echo "Retrieving the checksum for $SURL"
+    CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk '{print $1}'`
+
+    echo "Creating the submission file in $SUB_FILE_LOC"
+    i=0
+    echo "" > $SUB_FILE_LOC
+
+    echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+
+    echo "Submitting the transfer"  
+
+    echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
+    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+    if [ -z "$SUBID" ]; then
+       echo "Job submition failed!"
+       return 1
+    fi
+    echo "Job successfully submited"
+    echo "Transfer ID: $SUBID. " 
+
+}
+
+#
 # Get a Submission Id and check the status of the file transfer.
 # Return codes:
 #              - 0 trasfer finished
@@ -495,8 +585,6 @@ function get_source_dest_from_channel()
 #
 function get_def_se_from_site()
 {
-  echo "D- get_def_se_from_site called with arg $1"
-
   if [ -z $1 ];then
     echo "A site name must be provided to get_good_se_from_site()"
     return 2
@@ -505,7 +593,7 @@ function get_def_se_from_site()
   fi
   if [ $Site_Name == "cert-tb-cern" ]; then
     SE_HOST=$CERN_SE
-  elif [ $Site_Name == "desycerttb"]; then
+  elif [ $Site_Name == "desycerttb" ]; then
     SE_HOST=$DESY_SE
   else
     echo "get_def_se_from_site: no SE defined for site $Site_Name"
