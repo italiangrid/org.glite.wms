@@ -245,7 +245,8 @@ function file_transfer_skip_tape()
 }
 
 #
-# get SE1_SRM_LOC, SE2_SRM_LOC and ALGO and submit
+# get SE1_SRM_LOC, SE2_SRM_LOC and ALGO and an optional 4th argument
+# with the checksum option and submit
 # a file transfer using the checksum option. 
 # FTS_HOST must be set. The job Id is stored in SUBID
 #
@@ -274,8 +275,14 @@ function file_transfer_with_checksum()
        echo "WARNING: SHA1 will not be tested due to bug #..."
        return 0
      fi
-    fi
+   fi
 
+   if [ -z $4 ];then
+     echo "No --compare-checksum will be used"
+     OPTION=""
+   else
+     OPTION=$4
+   fi
 
     SUB_FILE_LOC="$HOME/fts-submission-file"
     RESULT_FILE="$HOME/fts-test-results"
@@ -291,9 +298,8 @@ function file_transfer_with_checksum()
     dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
 
     echo "Using the 10MB temporary test file: $TMP_FILE" 
-    echo "Copy and register the test file $TMP_FILE on: $SE1_SRM_LOC using md5 checksum" 
+    echo "Copy and register the test file $TMP_FILE on: $SE1_SRM_LOC using $ALGO checksum" 
 
-#    ALGO="md5"
     GUID=`lcg-cr --checksum --checksum-type $ALGO --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
 
     result=`cat message | wc -l`
@@ -312,23 +318,34 @@ function file_transfer_with_checksum()
     echo "Retrieving the SURL for guid: $GUID"
     SURL=`lcg-lr $GUID`
 
-    echo "Retrieving the checksum for $SURL"
-    CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk '{print $1}'`
-
-    echo "Creating the submission file in $SUB_FILE_LOC"
-    i=0
-    echo "" > $SUB_FILE_LOC
-
-    echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
-
-    echo "Submitting the transfer"  
-
-    echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
-    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
-    if [ -z "$SUBID" ]; then
-       echo "Job submition failed!"
-       return 1
+    if [ "x$OPTION" == "x" ]; then
+      echo "Retrieving the checksum for $SURL"
+      CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk '{print $1}'`
+      echo "Creating the submission file with $ALGO:$CHECKSUM in $SUB_FILE_LOC"
+      i=0
+      echo "" > $SUB_FILE_LOC
+      echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+      echo "Submitting the transfer"  
+      echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
+      SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+      if [ -z "$SUBID" ]; then
+         echo "Job submition failed!"
+         return 1
+      fi
+    else
+      echo "Creating the submission file in $SUB_FILE_LOC"
+      i=0
+      echo "" > $SUB_FILE_LOC
+      echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
+      echo "Submitting the transfer with $OPTION"  
+      echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
+      SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+      if [ -z "$SUBID" ]; then
+         echo "Job submition failed!"
+         return 1
+      fi
     fi
+
     echo "Job successfully submited"
     echo "Transfer ID: $SUBID. " 
 
@@ -355,10 +372,6 @@ function get_status_result()
 
     export GLITE_SD_SITE=$SITE_NAME
     export LCG_CATALOG_TYPE='lfc'
-
-#    echo "" 
-#    echo "Checking status for job ID: $SubId" 
-#    echo "" 
 
     previous_status="None"
 
@@ -397,6 +410,11 @@ function get_status_result()
     elif test $status == "Ready"
     then
       echo "Job is Ready"
+      return 4
+
+    elif test $status == "Pending"
+    then
+      echo "Job is Pending"
       return 4
 
     elif test $status == "Done"

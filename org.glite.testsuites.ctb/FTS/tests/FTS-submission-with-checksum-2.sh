@@ -217,7 +217,7 @@ for ALGO in CRC32 ADLER32 MD5 SHA1
 do
   echo 
   echo "Submitting a file transfer job using $ALGO"
-  file_transfer_with_checksum $SOURCE_SAPATH $DEST_SAPATH $ALGO
+  file_transfer_with_checksum $SOURCE_SAPATH $DEST_SAPATH $ALGO --compare-checksum
 
   if [ $? = 1 ];then
     echo "Failing submitting a job"
