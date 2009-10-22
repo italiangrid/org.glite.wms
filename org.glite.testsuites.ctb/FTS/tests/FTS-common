@@ -278,10 +278,17 @@ function file_transfer_with_checksum()
    fi
 
    if [ -z $4 ];then
-     echo "No --compare-checksum will be used"
+     echo "No --compare-checksum option will be used"
      OPTION=""
    else
+     echo "Using --compare-option" 
      OPTION=$4
+   fi
+
+   if [ -z $5 ];then
+     echo "" >> /dev/null #do nothing
+   else
+     echo "Using 3rd scenarios with both --compare-checksum and algorithm"
    fi
 
     SUB_FILE_LOC="$HOME/fts-submission-file"
@@ -332,18 +339,33 @@ function file_transfer_with_checksum()
          echo "Job submition failed!"
          return 1
       fi
-    else
+    elif [ "x$5" == "x" ]; then
       echo "Creating the submission file in $SUB_FILE_LOC"
       i=0
       echo "" > $SUB_FILE_LOC
       echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
       echo "Submitting the transfer with $OPTION"  
-      echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
-      SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+      echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC" 
+      SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC`
       if [ -z "$SUBID" ]; then
          echo "Job submition failed!"
          return 1
       fi
+    else
+      echo "Retrieving the checksum for $SURL"
+      CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk '{print $1}'`
+      echo "Creating the submission file with $ALGO:$CHECKSUM in $SUB_FILE_LOC"
+      i=0
+      echo "" > $SUB_FILE_LOC
+      echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+      echo "Submitting the transfer with $OPTION"  
+      echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC" 
+      SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC`
+      if [ -z "$SUBID" ]; then
+         echo "Job submition failed!"
+         return 1
+      fi
+
     fi
 
     echo "Job successfully submited"

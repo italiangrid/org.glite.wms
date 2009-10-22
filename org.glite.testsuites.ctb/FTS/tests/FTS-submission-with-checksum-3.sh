@@ -24,7 +24,7 @@
 ##############################################################################
 
 #Script for testing FTS file transfer submission using checksum option
-# 2nd scenario
+# 3rd scenario
 
 showUsage()
 {
@@ -217,7 +217,7 @@ for ALGO in CRC32 ADLER32 MD5 SHA1
 do
   echo 
   echo "Submitting a file transfer job using $ALGO"
-  file_transfer_with_checksum $SOURCE_SAPATH $DEST_SAPATH $ALGO --compare-checksum
+  file_transfer_with_checksum $SOURCE_SAPATH $DEST_SAPATH $ALGO --compare-checksum both
 
   if [ $? = 1 ];then
     echo "Failing submitting a job"
