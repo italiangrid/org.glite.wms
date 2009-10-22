@@ -42,6 +42,24 @@ using namespace glite::wms;
 namespace cream_api  = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 
+namespace {
+  class cleanup {
+    list<soap_proxy::EventWrapper*>* m_toclean;
+    
+  public:
+    cleanup( list<soap_proxy::EventWrapper*>* toClean ) : m_toclean( toClean ) {}
+    ~cleanup() {
+      if(m_toclean) {
+        list<soap_proxy::EventWrapper*>::iterator it = m_toclean->begin();
+        while( it != m_toclean->end() ) {
+          delete( *it );
+          ++it;
+        }
+      }
+    }
+  };
+}
+
 //______________________________________________________________________________
 ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::Ice* theIce )
   : iceAbsCommand( "iceCommandEventQuery" ),
@@ -80,6 +98,9 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
   while( it != result.end() ) {
     
     list<soap_proxy::EventWrapper*> events;
+    
+    cleanup cleaner( &events );
+
     string userdn = it->at(0);
     string ceurl  = it->at(1);
     
@@ -524,7 +545,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 //     it++;
 //   }
 
-  boost::scoped_ptr< soap_proxy::EventWrapper > evt_safe_ptr( event );
+//  boost::scoped_ptr< soap_proxy::EventWrapper > evt_safe_ptr( event );
 
   cream_api::job_statuses::job_status status = (cream_api::job_statuses::job_status)atoi(event->getPropertyValue("type").c_str());
 
