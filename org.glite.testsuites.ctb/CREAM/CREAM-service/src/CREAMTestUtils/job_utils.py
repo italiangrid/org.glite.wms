@@ -139,7 +139,7 @@ class AbstractRenewer(Thread):
         self.cond.acquire()
         try:
             while self.running:
-                self.cond.wait(int(self.sleepTime) * 3 / 4)
+                self.cond.wait(self.getSleepTime() * 3 / 4)
                 
                 if self.running:
                     
@@ -213,6 +213,9 @@ class LeaseRenewer(AbstractRenewer):
             
             if cannotLease:
                 raise Exception, "Cannot register LEASEID" + applicationID
+
+    def getSleepTime(self):
+        return self.sleepTime
         
 class ProxyRenewer(AbstractRenewer):
     
@@ -224,8 +227,7 @@ class ProxyRenewer(AbstractRenewer):
         
         endPoint = parameters.resourceURI[:string.find(parameters.resourceURI,'/')] 
         self.cmdPrefix = '%s -e %s %s ' % (cmdTable['proxy-renew'], endPoint, '%s')
-        #the timesleep is calculated dynamically
-        self.sleepTime = self.proxyMan
+        self.currentSleep = 0
         self.fString = 'DELEGID%d.%f'
         self.single = ( parameters.delegationType=='single' )
         
@@ -245,9 +247,15 @@ class ProxyRenewer(AbstractRenewer):
             
             if delegError<>None:
                 raise Exception, "Cannot delegate proxy DELEGID%s: %s" % (applicationID, delegError)
+
+    def getSleepTime(self):
+        self.currentSleep = int(self.proxyMan)
+        return self.currentSleep
         
     def preRun(self):
-        self.proxyMan.renewProxy()
+        if self.currentSleep==0 and self.proxyMan.renewProxy()<0:
+            raise Exception, "External proxy is expired, cannot renew"
+        
         
 class VOMSProxyManager(Thread):
     
@@ -299,7 +307,7 @@ class VOMSProxyManager(Thread):
         
         if self.usingProxy:
             VOMSProxyManager.logger.debug("Cannot renew external proxy")
-            return 0
+            return -1
         
         result = 0
         if hasattr(self.parameters, 'vo') and self.parameters.vo<>'':
