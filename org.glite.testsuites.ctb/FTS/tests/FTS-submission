@@ -179,7 +179,6 @@ echo "Dest: $Destin_Site"
 get_def_se_from_site $Source_Site
 if [ $? -eq 1 ];then
   echo "Failing retrieving good SE from site $Source_Site"
-  echo "-TEST FAILED-"
   exit 1
 fi
 if [ "x$SE_HOST" != "x" ]; then
@@ -187,6 +186,7 @@ if [ "x$SE_HOST" != "x" ]; then
   echo "SE_source: $SE_SOURCE"
 else
   echo "Failing retrieving good SE from site $Source_Site"
+  echo "-TEST FAILED-"
   exit 1
 fi
 
@@ -202,6 +202,7 @@ if [ "x$SE_HOST" != "x" ]; then
   echo "SE_dest: $SE_DEST"
 else
   echo "Failing retrieving good SE from site $Source_Site"
+  echo "-TEST FAILED-"
   exit 1
 fi
 
@@ -218,6 +219,7 @@ if [ "x$SE_SRM_LOC" != "x" ]; then
   echo "SAPATH_source: $SOURCE_SAPATH"
 else
   echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
   exit 1
 fi
 
@@ -233,6 +235,7 @@ if [ "x$SE_SRM_LOC" != "x" ]; then
   echo "SAPATH_destination: $DEST_SAPATH"
 else
   echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  echo "-TEST FAILED-"
   exit 1
 fi
 
