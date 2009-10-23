@@ -428,6 +428,13 @@ doExit() # 1 - status
   fi
   kill -9 -$user_job_pid 2>/dev/null
 
+  # customization point #3
+  if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+    if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
+      . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
+    fi
+  fi
+
   if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
   else
@@ -717,6 +724,15 @@ OSB_transfer()
 ## let's start it up
 ##
 
+# customization point #1
+# Be sure to update workdir as it may be changed by cp_1.sh
+if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+  if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
+    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
+  fi
+fi
+jw_workdir="`pwd`"
+
 if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
   # MPI (LSF or PBS)
   mkdir -p .mpi/${jw_newdir}
@@ -758,15 +774,6 @@ if [ -n "${__ce_application_dir}" ]; then
   fi
 fi
 unset vo_hook
-
-# customization point #1
-# Be sure to update workdir as it may be changed by cp_1.sh
-if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
-  if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
-    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
-  fi
-fi
-jw_workdir="`pwd`"
 
 # GLITE_WMS_RB_BROKERINFO must be defined after execution of cp_1.sh in case
 # workdir (used as destination when downloading sandbox) has been updated
@@ -1081,13 +1088,6 @@ if [ -x ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient ]; then
   fi
 else
   jw_echo "${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient not installed: ignoring gianduia transfer."
-fi
-
-# customization point #3
-if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
-  if [ -r "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
-    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
-  fi
 fi
 
 doExit 0
