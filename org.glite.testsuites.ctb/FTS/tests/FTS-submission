@@ -245,7 +245,7 @@ echo "Submitting a file transfer job..."
 file_transfer $SOURCE_SAPATH $DEST_SAPATH
 
 if [ $? -eq 1 ];then
-  echo "Failing submitting a job"
+  echo "file_transfer function failed"
   echo "-TEST FAILED-"
   exit 1
 fi
