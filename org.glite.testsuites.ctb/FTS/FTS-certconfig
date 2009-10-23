@@ -1,7 +1,6 @@
 #Configuration variables for FTS testing scripts
 
 FTS_HOST="vtb-generic-77.cern.ch"
-#FTS_HOST="lxbra2310.cern.ch"
 #The name of the top level BDII
 BDII_HOST="lxbra2305.cern.ch"
 #The hostname of the LCG File Catalog
