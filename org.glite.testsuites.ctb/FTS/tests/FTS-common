@@ -102,10 +102,8 @@ function file_transfer()
 
     if [ $result -gt 0 ]; then
       echo ">>> NOTE: `cat message`"
-      echo ""
       echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
-      echo ""
-      NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+#      NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
       return 1
     fi
     echo "Removing the 10MB temporary test file: $TMP_FILE"
@@ -161,10 +159,8 @@ function file_transfer_tokens()
   result=`cat message | wc -l`
   if [ $result -gt 0 ]; then
     echo ">>> NOTE: `cat message`"
-    echo ""
     echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
-    echo ""
-    NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+#    NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
     return 1
   fi
   echo "Removing the temporary test file: $TMP_FILE"
@@ -216,10 +212,8 @@ function file_transfer_skip_tape()
   result=`cat message | wc -l`
   if [ $result -gt 0 ]; then
     echo ">>> NOTE: `cat message`"
-    echo ""
     echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
-    echo ""
-    NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+#    NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
     return 1
   fi
   echo "Removing the temporary test file: $TMP_FILE"
@@ -313,10 +307,8 @@ function file_transfer_with_checksum()
 
     if [ $result -gt 0 ]; then
       echo ">>> NOTE: `cat message`"
-      echo ""
       echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
-      echo ""
-      NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
+#      NumberOfSuccFinJob=`expr $NumberOfSuccFinJob - 1`
       return 1
     fi
     echo "Removing the 10MB temporary test file: $TMP_FILE"
@@ -626,7 +618,7 @@ function get_source_dest_from_channel()
 function get_def_se_from_site()
 {
   if [ -z $1 ];then
-    echo "A site name must be provided to get_good_se_from_site()"
+    echo "A site name must be provided to get_def_se_from_site()"
     return 2
   else
     local Site_Name=$1
