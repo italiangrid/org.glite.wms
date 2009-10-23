@@ -51,11 +51,18 @@ namespace db {
 	const std::string                             m_creamurl;
 
     public:
-        GetJobsToPoll( std::list< glite::wms::ice::util::CreamJob > *,
+        GetJobsToPoll( std::list< glite::wms::ice::util::CreamJob > *result,
 		       const std::string& userdn, 
 		       const std::string& creamurl, 
 		       const bool poll_all_jobs, 
-		       const int limit = 0 );
+		       const std::string& caller , 
+		       const int limit = 0 ) 
+	: AbsDbOperation( caller ),
+	  m_poll_all_jobs( poll_all_jobs ),
+	  m_result( result ),
+	  m_limit ( limit ),
+	  m_userdn( userdn ),
+	  m_creamurl( creamurl ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

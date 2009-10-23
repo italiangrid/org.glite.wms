@@ -39,8 +39,8 @@ namespace glite {
 	  bool                                           m_found;
 
 	public:
-	  GetLeaseByID( const std::string& leaseid ) 
-	    : AbsDbOperation(), m_leaseid( leaseid ), m_result( "", "", time(0), "")
+	  GetLeaseByID( const std::string& leaseid, const std::string& caller ) 
+	    : AbsDbOperation( caller ), m_leaseid( leaseid ), m_result( "", "", time(0), "")
 	    { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );

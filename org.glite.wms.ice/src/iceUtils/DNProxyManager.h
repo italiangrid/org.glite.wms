@@ -33,6 +33,7 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
+#include "ice_timer.h"
 
 namespace log4cpp {
   class Category;
@@ -116,6 +117,9 @@ namespace util {
         
 	std::string composite( const std::string& userDN, const std::string& myproxy_name) const throw()
 	  {
+#ifdef ICE_PROFILE
+	    ice_timer timer("DNProxyManager::composite");
+#endif
 	    return userDN+"_"+myproxy_name;
 	  }
 

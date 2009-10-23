@@ -26,24 +26,12 @@
 #include "boost/algorithm/string.hpp"
 #include "boost/format.hpp"
 #include "boost/archive/text_iarchive.hpp"
-//#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
 #include <iostream>
 #include <sstream>
 
 using namespace glite::wms::ice::db;
-//using namespace glite::wms::ice::util;
 using namespace std;
-//namespace cream_api = glite::ce::cream_client_api;
-
-GetStatusInfoByCompleteCreamJobID::GetStatusInfoByCompleteCreamJobID( const string& cid ) :
-    AbsDbOperation(),
-    m_creamjobid( cid ),
-    m_info(),
-    m_found( false )
-{
-
-}
 
 // Local helper function: callback for sqlite
 static int fetch_jdl_callback(void *param, int argc, char **argv, char **azColName){

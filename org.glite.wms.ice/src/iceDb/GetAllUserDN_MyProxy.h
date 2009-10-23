@@ -41,7 +41,9 @@ namespace db {
         std::set< std::string > m_result;
 
     public:
-        GetAllUserDN_MyProxy( );
+        GetAllUserDN_MyProxy( const std::string& caller )
+	  : AbsDbOperation( caller ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**

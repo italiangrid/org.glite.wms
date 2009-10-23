@@ -33,23 +33,13 @@ using namespace glite::wms::ice::util;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
-GetJobByCid::GetJobByCid( const string& cid ) :
-  AbsDbOperation(),
-  m_complete_creamjobid( cid ),
-  m_theJob(),
-  m_found( false )
-  //    m_serialized_job( "" )
-{
-  
-}
-
 // Local helper function: callback for sqlite
 static int fetch_job_callback(void *param, int argc, char **argv, char **azColName){
   
   vector<string> *fields = (vector<string>*)param;
   if ( argv && argv[0] ) 
     {
-      for(int i = 0; i<=24; i++) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded the complete_cream_jobid from the query
+      for(int i = 0; i<=24; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded the complete_cream_jobid from the query
 	if( argv[i] )
 	  fields->push_back( argv[i] );
 	else

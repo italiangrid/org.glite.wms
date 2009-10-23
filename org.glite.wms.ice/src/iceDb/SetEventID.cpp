@@ -7,19 +7,6 @@
 using namespace std;
 using namespace glite::wms;
 
-
-//______________________________________________________________________________
-ice::db::SetEventID::SetEventID( const string& userdn, 
-				 const string& ceurl,
-				 const long long newid)
-  : AbsDbOperation(),
-    m_userdn( userdn ), 
-    m_creamurl( ceurl ),
-    m_new_eventid( newid )
-{
-  
-}
-
 //______________________________________________________________________________
 void ice::db::SetEventID::execute( sqlite3* db ) throw ( DbOperationException& )
 {

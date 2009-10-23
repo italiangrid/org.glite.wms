@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 
 #include "creamJob.h"
+#include "ice_timer.h"
 
 #include <algorithm>
 
@@ -74,7 +75,9 @@ namespace util {
       bool operator()( const std::pair<std::string, std::string>& s1, 
 		       const std::pair<std::string, std::string>& s2) const
       {
-	
+#ifdef ICE_PROFILE
+	ice_timer timer("ltstring::operator()");
+#endif
 	if ( s1.first.compare(s2.first) < 0 ) return true;
 	else {
 	  if(s2.first.compare(s1.first) < 0 ) return false;
@@ -172,6 +175,9 @@ namespace util {
 	 */
     template <class InputIterator, class Size, class OutputIterator> 
     InputIterator copy_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest) {
+#ifdef ICE_PROFILE
+	ice_timer timer("util::copy_n_elements()");
+#endif
       for ( ; n > 0 && first != end; --n ) {
 	//*dest = first->getCreamJobID();
 	*dest = *first;
@@ -183,6 +189,9 @@ namespace util {
 
     template <class InputIterator, class Size, class OutputIterator, class UnaryOperation> 
     InputIterator transform_n_elements( InputIterator first, InputIterator end, Size n, OutputIterator dest, UnaryOperation f) {
+#ifdef ICE_PROFILE
+	ice_timer timer("util::transform_n_elements()");
+#endif
       for ( ; n > 0 && first != end; --n ) {
 	*dest = f( *first );
 	++first;
@@ -204,7 +213,11 @@ namespace util {
     bool (*m_predicate)(const CreamJob& );
 
   public:
-    jobMap_appender( std::map< std::pair<std::string, std::string>, std::list< CreamJob >, ltstring>& jobMap, bool (*pred)(const CreamJob&)) : m_jobMap( jobMap ), m_predicate( pred ) {}
+    jobMap_appender( std::map< std::pair<std::string, std::string>, std::list< CreamJob >, ltstring>& jobMap, bool (*pred)(const CreamJob&)) : m_jobMap( jobMap ), m_predicate( pred ) {
+#ifdef ICE_PROFILE
+	ice_timer timer("util::transform_n_elements()");
+#endif
+}
     
       void operator()( const CreamJob& j ) {
 	if( m_predicate( j ) )

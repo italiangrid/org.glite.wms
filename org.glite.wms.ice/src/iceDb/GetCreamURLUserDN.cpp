@@ -35,11 +35,6 @@ using namespace std;
 //namespace cream_api = glite::ce::cream_client_api;
 //namespace wms_utils  = glite::wms::common::utilities;
 
-GetCreamURLUserDN::GetCreamURLUserDN( ) :    
-  AbsDbOperation()
-{
-}
-
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite

@@ -66,7 +66,9 @@ boost::recursive_mutex iceUtil::DNProxyManager::s_mutex;
 //______________________________________________________________________________
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 {
-
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::getInstance");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
   if( !s_instance ) 
@@ -77,6 +79,9 @@ iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 //______________________________________________________________________________
 iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::DNProxyManager");
+#endif
   m_log_dev = cream_api::util::creamApiLogger::instance()->getLogger();
   
 }
@@ -394,6 +399,9 @@ void
 iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) 
   throw()
 { 
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::setUserProxyIfLonger_Legacy_1");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   cream_api::soap_proxy::VOMSWrapper V( prx );
@@ -417,6 +425,9 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 						      const string& prx ) 
   throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::setUserProxyIfLonger_Legacy_2");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
   time_t newT;
@@ -447,6 +458,9 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 						     const time_t exptime)
   throw()
 { 
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::setUserProxyIfLonger_Legacy_3");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
@@ -455,8 +469,8 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
   bool found = false;
   boost::tuple<string, time_t, long long int> proxy_info;
   {
-    db::GetProxyInfoByDN getter( dn );
-    db::Transaction tnx;
+    db::GetProxyInfoByDN getter( dn, "DNProxyManager::setUserProxyIfLonger_Legacy" );
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
     found = getter.found();
     if(found)
@@ -490,8 +504,8 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   );
     
     {
-      db::CreateProxyField creator( dn, localProxy, exptime, 0 );
-      db::Transaction tnx;
+      db::CreateProxyField creator( dn, localProxy, exptime, 0, "DNProxyManager::setUserProxyIfLonger_Legacy" );
+      db::Transaction tnx( false, false );
       tnx.execute( &creator );
     }
     
@@ -523,8 +537,8 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   << time_t_to_string(exptime) << "]"
 		   );
     {
-      db::CreateProxyField creator( dn, localProxy, exptime, 0 );
-      db::Transaction tnx;
+      db::CreateProxyField creator( dn, localProxy, exptime, 0,"DNProxyManager::setUserProxyIfLonger_Legacy" );
+      db::Transaction tnx(false, false);
       tnx.execute( &creator );
     }
 
@@ -561,8 +575,8 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 		   );
 
     {
-      db::CreateProxyField creator( dn, localProxy, exptime, 0 );
-      db::Transaction tnx;
+      db::CreateProxyField creator( dn, localProxy, exptime, 0, "DNProxyManager::setUserProxyIfLonger_Legacy" );
+      db::Transaction tnx(false, false);
       tnx.execute( &creator );
     }
   } 
@@ -572,7 +586,9 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 void iceUtil::DNProxyManager::copyProxy( const string& source, const string& target ) 
   throw(SourceProxyNotFoundException&)
 {
-  
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::copyProxy");
+#endif 
 
   string tmpTargetFilename = target;
   tmpTargetFilename = tmpTargetFilename + string(".tmp") ;
@@ -661,6 +677,9 @@ void
 iceUtil::DNProxyManager::removeBetterProxy( const string& userdn, const string& myproxyname )
   throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::removeBetterProxy");
+#endif 
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() 
@@ -671,8 +690,8 @@ iceUtil::DNProxyManager::removeBetterProxy( const string& userdn, const string& 
 		 );
 
   {
-    db::RemoveProxyByDN remover( this->composite(userdn, myproxyname) );
-    db::Transaction tnx;
+    db::RemoveProxyByDN remover( this->composite(userdn, myproxyname), "DNProxyManager::removeBetterProxy" );
+    db::Transaction tnx(false, false);
     tnx.execute( &remover );
   }
   
@@ -706,6 +725,9 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
 					    const boost::tuple<string, time_t, long long int>& newEntry )
   throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::updateBetterProxy");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   string mapKey = this->composite( userDN, myproxyname );
   
@@ -745,8 +767,8 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     params.push_back( make_pair("exptime", tmp1.str() ));
     if(newEntry.get<2>() > 0)
       params.push_back( make_pair("counter", tmp2.str() ));
-    db::UpdateProxyFieldsByDN updater( mapKey, params );
-    db::Transaction tnx;
+    db::UpdateProxyFieldsByDN updater( mapKey, params, "DNProxyManager::updateBetterProxy" );
+    db::Transaction tnx(false, false);
     tnx.execute( &updater );
   }
 }
@@ -758,7 +780,9 @@ void iceUtil::DNProxyManager::setBetterProxy( const string& dn,
 					      const time_t proxy_time_end )
   throw()
 {
-
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::setBetterProxy");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string localProxy = this->make_betterproxy_path(dn, myproxyname);//iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( dn, myproxyname ) ) + ".betterproxy";
@@ -791,8 +815,8 @@ void iceUtil::DNProxyManager::setBetterProxy( const string& dn,
 		 );
 
   {
-    db::CreateProxyField creator( mapKey, localProxy, proxy_time_end, 0 );
-    db::Transaction tnx;
+    db::CreateProxyField creator( mapKey, localProxy, proxy_time_end, 0, "DNProxyManager::setBetterProxy" );
+    db::Transaction tnx(false, false);
     tnx.execute( &creator );    
   }
 }
@@ -802,13 +826,15 @@ boost::tuple<string, time_t, long long int>
 iceUtil::DNProxyManager::getAnyBetterProxyByDN( const string& dn )
 const throw() 
 {
-  
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::getAnyBetterProxyByDN");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   map<string, boost::tuple<string, time_t, long long int> > all_proxy_info;
   {
-    db::GetAllProxyInfo getter;
-    db::Transaction tnx;
+    db::GetAllProxyInfo getter("DNProxyManager::getAnyBetterProxyByDN");
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
     all_proxy_info = getter.get_info();
   }
@@ -853,15 +879,17 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
 						  const string& myproxyname)
   const throw() 
 {
-  
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::getExactBetterProxyByDN");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   
   boost::tuple< string, time_t, long long> proxy_info;
   bool found;
   {
-    db::GetProxyInfoByDN getter( this->composite(dn, myproxyname ) );
-    db::Transaction tnx;
+    db::GetProxyInfoByDN getter( this->composite(dn, myproxyname ), "DNProxyManager::getExactBetterProxyByDN" );
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
     found = getter.found();
     if( found )
@@ -880,6 +908,9 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
 void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
   throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::incrementUserProxyCounter");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string mapKey = this->composite( userDN, myproxy_name );
@@ -897,8 +928,8 @@ void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, c
   bool found = false;
   boost::tuple<string, time_t, long long int> proxy_info;
   {
-    db::GetProxyInfoByDN getter( mapKey );
-    db::Transaction tnx;
+    db::GetProxyInfoByDN getter( mapKey, "DNProxyManager::incrementUserProxyCounter" );
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
     found = getter.found();
     if(found)
@@ -920,8 +951,8 @@ void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, c
       ostringstream tmp;
       tmp << (proxy_info.get<2>() + 1);
       params.push_back( make_pair("counter", tmp.str()) );
-      db::UpdateProxyFieldsByDN updater( mapKey, params );
-      db::Transaction tnx;
+      db::UpdateProxyFieldsByDN updater( mapKey, params, "DNProxyManager::incrementUserProxyCounter" );
+      db::Transaction tnx(false, false);
       tnx.execute( &updater );
     }
   }
@@ -931,6 +962,9 @@ void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, c
 void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
   throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::decrementUserProxyCounter");
+#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string mapKey = this->composite( userDN, myproxy_name );
@@ -948,8 +982,8 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
   bool found = false;
   boost::tuple<string, time_t, long long int> proxy_info;
   {
-    db::GetProxyInfoByDN getter( mapKey );
-    db::Transaction tnx;
+    db::GetProxyInfoByDN getter( mapKey, "DNProxyManager::decrementUserProxyCounter" );
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
     found = getter.found();
     if(found)
@@ -972,8 +1006,8 @@ void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, c
       ostringstream tmp;
       tmp << (proxy_info.get<2>() - 1);
       params.push_back( make_pair("counter", tmp.str()) );
-      db::UpdateProxyFieldsByDN updater( mapKey, params );
-      db::Transaction tnx;
+      db::UpdateProxyFieldsByDN updater( mapKey, params, "DNProxyManager::decrementUserProxyCounter" );
+      db::Transaction tnx(false, false);
       tnx.execute( &updater );
     }
     
@@ -1007,5 +1041,8 @@ iceUtil::DNProxyManager::make_betterproxy_path( const string& dn,
 						const string& myproxy )
   throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("DNProxyManager::make_betterproxy_path");
+#endif
   return iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
 }

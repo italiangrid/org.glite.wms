@@ -32,12 +32,12 @@ using namespace glite::wms::ice::db;
 
 using namespace std;
 
-UpdateJobByGid::UpdateJobByGid( const string& gid,
-			        const list< pair<string, string> >& nameval_list)
- : m_gid( gid ),
-   m_nameval_list( nameval_list )
-{
-}
+// UpdateJobByGid::UpdateJobByGid( const string& gid,
+// 			        const list< pair<string, string> >& nameval_list)
+//  : m_gid( gid ),
+//    m_nameval_list( nameval_list )
+// {
+// }
 
 void UpdateJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 {

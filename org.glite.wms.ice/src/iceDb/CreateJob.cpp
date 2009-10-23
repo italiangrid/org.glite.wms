@@ -30,11 +30,11 @@ using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-CreateJob::CreateJob( const CreamJob& j ) :
-  m_theJob( j ),
-  m_JDL( j.getJDL() )
-{
-}
+// CreateJob::CreateJob( const CreamJob& j ) :
+//   m_theJob( j ),
+//   m_JDL( j.getJDL() )
+// {
+// }
 
 void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {

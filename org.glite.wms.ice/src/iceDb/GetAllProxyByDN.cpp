@@ -35,22 +35,22 @@ using namespace std;
 //namespace cream_api = glite::ce::cream_client_api;
 //namespace wms_utils  = glite::wms::common::utilities;
 
-GetAllProxyByDN::GetAllProxyByDN( const string& userdn, const bool proxy_renewable ) :    
-  AbsDbOperation(),
-  m_proxy_renewable( proxy_renewable ),
-  m_userdn( userdn ),
-  m_all( false )
-{
+// GetAllProxyByDN::GetAllProxyByDN( const string& userdn, const bool proxy_renewable ) :    
+//   AbsDbOperation(),
+//   m_proxy_renewable( proxy_renewable ),
+//   m_userdn( userdn ),
+//   m_all( false )
+// {
 
-}
+// }
 
-GetAllProxyByDN::GetAllProxyByDN( const string& userdn ) :    
-  AbsDbOperation(),
-  m_userdn( userdn ),
-  m_all( true )
-{
+// GetAllProxyByDN::GetAllProxyByDN( const string& userdn ) :    
+//   AbsDbOperation(),
+//   m_userdn( userdn ),
+//   m_all( true )
+// {
 
-}
+// }
 
 namespace { // begin local namespace
 

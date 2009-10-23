@@ -291,8 +291,8 @@ int main(int argc, char*argv[])
     {
       list<pair<string, string> > params;
       params.push_back( make_pair("failure_reason", "" ));
-      glite::wms::ice::db::UpdateJobByGid updater("", params);
-      glite::wms::ice::db::Transaction tnx( true );
+      glite::wms::ice::db::UpdateJobByGid updater("FAKE QUERY TO INITIALISE DB", params, "glite-wms-ice::main");
+      glite::wms::ice::db::Transaction tnx( false, true );
       tnx.execute( &updater );
     }
  
@@ -434,7 +434,7 @@ int main(int argc, char*argv[])
 	 * Every 2 minutes ICE checks its mem usage
 	 *
 	 */
-	mem_threshold_counter++;
+	++mem_threshold_counter;
 	//	dump_threshold_counter++;
 
 // 	if(dump_threshold_counter >= cache_dump_delay) {

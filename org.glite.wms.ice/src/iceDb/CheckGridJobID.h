@@ -42,7 +42,9 @@ namespace db {
 	//        glite::wms::ice::util::CreamJob m_theJob;
         bool m_found;
     public:
-        CheckGridJobID( const std::string& gid );
+        CheckGridJobID( const std::string& gid, const std::string& caller )
+	  : AbsDbOperation( caller ), m_gridjobid( gid ), m_found( false ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**

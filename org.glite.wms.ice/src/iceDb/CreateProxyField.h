@@ -42,7 +42,13 @@ namespace db {
         CreateProxyField( const std::string& userdn,
 			  const std::string& proxyfile,
 			  const time_t exptime,
-			  const long long counter );
+			  const long long counter, 
+			  const std::string& caller )
+	  : AbsDbOperation( caller ),
+	  m_userdn( userdn),
+	  m_proxyfile( proxyfile ),
+	  m_exptime( exptime ),
+	  m_counter( counter ) {}
 			  
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:

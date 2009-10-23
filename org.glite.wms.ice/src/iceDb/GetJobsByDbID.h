@@ -22,8 +22,9 @@ namespace db {
 	const long long                               m_dbid;
 
     public:
-        GetJobsByDbID( std::list< glite::wms::ice::util::CreamJob >&,
-		       const long long dbid );
+        GetJobsByDbID( std::list< glite::wms::ice::util::CreamJob >& result,
+		       const long long dbid, const std::string& caller ) 
+	: AbsDbOperation( caller ), m_result( &result ), m_dbid( dbid ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

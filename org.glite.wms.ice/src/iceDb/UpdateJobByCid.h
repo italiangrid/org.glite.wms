@@ -39,9 +39,13 @@ namespace db {
      */
     class UpdateJobByCid : public AbsDbOperation { 
     public:
-        UpdateJobByCid( const std::string& gid,
-			const std::list< std::pair<std::string, std::string> >& );
-		       
+        UpdateJobByCid( const std::string& cid,
+			const std::list< std::pair<std::string, std::string> >& nameval_list, 
+			const std::string& caller  )
+	  : AbsDbOperation(caller),
+	  m_cid( cid ),
+	  m_nameval_list( nameval_list ) {}
+	  
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	
     protected:

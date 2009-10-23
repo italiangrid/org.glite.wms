@@ -37,7 +37,9 @@ namespace db {
      */
     class UpdateJobFailureReason : public AbsDbOperation { 
     public:
-        UpdateJobFailureReason( const std::string& gid, const std::string& reason );
+        UpdateJobFailureReason( const std::string& gid, 
+				const std::string& reason, 
+				const std::string& caller  );
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	
     protected:

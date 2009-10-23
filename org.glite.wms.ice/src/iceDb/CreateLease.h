@@ -41,9 +41,10 @@ namespace db {
 
     public:
       CreateLease( const std::string& userdn,
-			const std::string& creamurl,
-			const time_t exptime,
-			const std::string& leaseid) : AbsDbOperation(),
+		   const std::string& creamurl,
+		   const time_t exptime,
+		   const std::string& leaseid, 
+		   const std::string& caller ) : AbsDbOperation( caller ),
 						m_userdn( userdn ),
 						m_creamurl( creamurl ),
 						m_exptime( exptime ),

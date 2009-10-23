@@ -38,7 +38,8 @@ namespace glite {
 	  std::map<std::string, boost::tuple<std::string, time_t, long long int> > m_result;
 
 	public:
-	  GetAllProxyInfo( );
+	  GetAllProxyInfo( const std::string& caller )
+	    : AbsDbOperation( caller ){}
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  

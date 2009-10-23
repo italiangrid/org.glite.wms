@@ -22,24 +22,11 @@
  */
 
 #include "GetCidByCreamURLUserDN.h"
-//#include "iceUtils/iceConfManager.h"
 #include <sstream>
 #include <iostream>
 
-// #include "glite/wms/common/configuration/Configuration.h"
-// #include "glite/wms/common/configuration/ICEConfiguration.h"
-
 using namespace glite::wms::ice::db;
-//using namespace glite::wms::ice::util;
 using namespace std;
-//namespace cream_api = glite::ce::cream_client_api;
-//namespace wms_utils  = glite::wms::common::utilities;
-
-GetCidByCreamURLUserDN::GetCidByCreamURLUserDN( const pair<string, string>& src ) :    
-  AbsDbOperation(),
-  m_creamurl_userdn( src )
-{
-}
 
 namespace { // begin local namespace
 

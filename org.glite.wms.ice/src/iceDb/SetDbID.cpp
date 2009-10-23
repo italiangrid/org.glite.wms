@@ -8,16 +8,6 @@ using namespace std;
 using namespace glite::wms;
 
 //______________________________________________________________________________
-ice::db::SetDbID::SetDbID( const string& ceurl,
-			   const long long newid )
-  : AbsDbOperation(),
-    m_creamurl( ceurl ),
-    m_new_dbid( newid )
-{
-  
-}
-
-//______________________________________________________________________________
 void ice::db::SetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;

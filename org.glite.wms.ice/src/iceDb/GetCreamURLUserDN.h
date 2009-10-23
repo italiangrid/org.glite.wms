@@ -42,7 +42,8 @@ namespace db {
         std::list< std::pair<std::string, std::string> > m_result;
 
     public:
-        GetCreamURLUserDN( );
+        GetCreamURLUserDN( const std::string& caller ) : AbsDbOperation( caller ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**

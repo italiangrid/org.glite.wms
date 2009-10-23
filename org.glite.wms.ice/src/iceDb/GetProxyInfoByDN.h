@@ -42,7 +42,11 @@ namespace glite {
 	  bool m_found;
 
 	public:
-	  GetProxyInfoByDN( const std::string& userdn );
+	  GetProxyInfoByDN( const std::string& userdn, 
+			    const std::string& caller )
+	    :  AbsDbOperation( caller ),
+	    m_userdn( userdn ),
+	    m_found( false ) {}
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  

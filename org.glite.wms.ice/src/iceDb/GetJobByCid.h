@@ -43,7 +43,8 @@ namespace db {
 	//	std::string                      m_serialized_job;
         bool                             m_found;
     public:
-        GetJobByCid( const std::string& cid  );
+        GetJobByCid( const std::string& cid, const std::string& caller ) : AbsDbOperation( caller ), m_complete_creamjobid( cid ), m_theJob(), m_found(false) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**

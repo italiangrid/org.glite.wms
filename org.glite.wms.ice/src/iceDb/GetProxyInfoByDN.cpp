@@ -29,12 +29,12 @@
 using namespace glite::wms::ice::db;
 using namespace std;
 
-GetProxyInfoByDN::GetProxyInfoByDN( const std::string& userdn ) :    
-  AbsDbOperation(),
-  m_userdn( userdn ),
-  m_found( false )
-{
-}
+// GetProxyInfoByDN::GetProxyInfoByDN( const std::string& userdn ) :    
+//   AbsDbOperation(),
+//   m_userdn( userdn ),
+//   m_found( false )
+// {
+// }
 
 namespace { // begin local namespace
 

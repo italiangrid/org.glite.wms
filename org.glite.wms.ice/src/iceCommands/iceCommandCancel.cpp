@@ -63,7 +63,9 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
   m_lb_logger( util::iceLBLogger::instance() ),
   m_request( request )
 {
-
+#ifdef ICE_PROFILE
+  util::ice_timer timer("iceCommandCancel::iceCommandCancel");
+#endif
     
 
 // [ Arguments = 
@@ -144,6 +146,9 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
 //______________________________________________________________________________
 void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
+#ifdef ICE_PROFILE
+  util::ice_timer timer("iceCommandCancel::execute");
+#endif
     CREAM_SAFE_LOG( 
                    m_log_dev->infoStream()
                    << "iceCommandCancel::execute() - This request is a Cancel..."
@@ -154,9 +159,9 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     wms_utils::scope_guard remove_request_guard( r );
     
 //    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::s_GlobalICEMutex );
-    db::Transaction tnx;
+    db::Transaction tnx(false, false);
     tnx.Begin( );
-    db::GetJobByGid get( m_gridJobId );
+    db::GetJobByGid get( m_gridJobId, "iceCommandCancel::execute" );
     tnx.execute( &get );
 
     // Lookup the job in the jobCache
@@ -263,7 +268,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
       list< pair<string, string> > params;
       params.push_back( make_pair("failure_reason", "Aborted by user" ));
       //      db::UpdateJobFailureReason updater( theJob.getGridJobID(), "Aborted by user" );//CreateJob aJob( theJob );
-      db::UpdateJobByGid updater( theJob.getGridJobID(), params );
+      db::UpdateJobByGid updater( theJob.getGridJobID(), params, "iceCommandCancel::cancel" );
       tnx.execute( &updater );
       //        util::jobCache::getInstance()->put( theJob );
 

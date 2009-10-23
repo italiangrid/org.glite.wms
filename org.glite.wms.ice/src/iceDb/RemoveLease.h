@@ -38,8 +38,10 @@ namespace db {
     class RemoveLease : public AbsDbOperation { 
       
     public:
-      RemoveLease( const std::string& userdn, const std::string& creamurl ) 
-	: AbsDbOperation(), m_userdn( userdn ), m_creamurl( creamurl ) {}
+      RemoveLease( const std::string& userdn, 
+		   const std::string& creamurl, 
+		   const std::string& caller  ) 
+	: AbsDbOperation( caller ), m_userdn( userdn ), m_creamurl( creamurl ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

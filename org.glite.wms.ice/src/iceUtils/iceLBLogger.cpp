@@ -157,8 +157,8 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 #ifdef ICE_PROFILE_ENABLE
 	  api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
 #endif
-	  glite::wms::ice::db::UpdateJobByGid updater( theJob.getGridJobID(), params );
-	  glite::wms::ice::db::Transaction tnx;
+	  glite::wms::ice::db::UpdateJobByGid updater( theJob.getGridJobID(), params, "iceLBLogger::logEvent" );
+	  glite::wms::ice::db::Transaction tnx(false, false);
 	  tnx.execute( &updater );
 	  return theJob;
 	  

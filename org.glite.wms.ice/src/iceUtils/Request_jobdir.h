@@ -23,6 +23,7 @@
 #ifndef GLITE_WMS_ICE_REQUEST_JOBDIR_H
 #define GLITE_WMS_ICE_REQUEST_JOBDIR_H
 
+#include "ice_timer.h"
 #include "Request.h"
 #include <string>
 #include <boost/filesystem/operations.hpp>
@@ -45,10 +46,16 @@ namespace util {
         virtual ~Request_jobdir( ) { };
 
         const std::string& to_string( void ) {
+#ifdef ICE_PROFILE
+	  ice_timer timer("Request_jobdir::to_string");
+#endif
             return m_request;
         };
 
         boost::filesystem::path get_path( void ) const {
+#ifdef ICE_PROFILE
+  ice_timer timer("Request_jobdir::get_path");
+#endif
             return m_old_path;
         }
 

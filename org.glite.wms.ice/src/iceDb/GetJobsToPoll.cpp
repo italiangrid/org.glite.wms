@@ -40,22 +40,6 @@ using namespace glite::wms::ice::util;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
-GetJobsToPoll::GetJobsToPoll(
-			     list<CreamJob>* jobs, 
-			     const string& userdn, 
-			     const string& creamurl, 
-			     const bool poll_all_jobs, 
-			     const int limit ) :    
-    AbsDbOperation(),
-    m_result( jobs ),
-    m_poll_all_jobs( poll_all_jobs ),
-    m_limit( limit ),
-    m_userdn( userdn ),
-    m_creamurl( creamurl )
-{
-
-}
-
 namespace { // begin local namespace
 
   // Local helper function: callback for sqlite
@@ -67,7 +51,7 @@ namespace { // begin local namespace
     
     if( argv && argv[0] ) {
       vector<string> fields;
-      for(int i = 0; i<=24; i++) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
+      for(int i = 0; i<=24; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
 	if( argv[i] )
 	  fields.push_back( argv[i] );
 	else

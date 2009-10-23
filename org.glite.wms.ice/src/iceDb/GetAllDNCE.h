@@ -48,7 +48,7 @@ namespace glite {
 	  std::list< boost::tuple< std::string, std::string, time_t > > m_result;
 	  
 	public:
-	  GetAllDNCE( ) : AbsDbOperation() { }
+	  GetAllDNCE( const std::string& caller ) : AbsDbOperation( caller ) { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  std::list< boost::tuple< std::string, std::string, time_t > > get( void ) const { return m_result; }

@@ -37,7 +37,7 @@ namespace db {
      */
     class UpdateJobInfo : public AbsDbOperation { 
     public:
-        UpdateJobInfo( const glite::wms::ice::util::CreamJob& aJob );
+        UpdateJobInfo( const glite::wms::ice::util::CreamJob& aJob, const std::string& caller );
 		       
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	

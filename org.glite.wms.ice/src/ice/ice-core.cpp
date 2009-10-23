@@ -80,7 +80,7 @@
 #include <exception>
 #include <unistd.h>
 #include <cstdlib>
-
+#include "ice_timer.h"
 using namespace std;
 using namespace glite::wms::ice;
 
@@ -102,7 +102,9 @@ Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
     m_thread( 0 ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() )
 {
-    
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("IceThreadHelper::IceThreadHelper");
+#endif
 }
 
 //____________________________________________________________________________
@@ -115,6 +117,9 @@ Ice::IceThreadHelper::~IceThreadHelper( )
 //____________________________________________________________________________
 void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("IceThreadHelper::start");
+#endif
     m_ptr_thread = boost::shared_ptr< util::iceThread >( obj );
     try {
         m_thread = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread) );
@@ -126,12 +131,18 @@ void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
 //____________________________________________________________________________
 bool Ice::IceThreadHelper::is_started( void ) const 
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("IceThreadHelper::is_started");
+#endif
     return ( 0 != m_thread );
 }
 
 //____________________________________________________________________________
 void Ice::IceThreadHelper::stop( void )
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("IceThreadHelper::stop");
+#endif
     if( m_thread && m_ptr_thread->isRunning() ) {
         CREAM_SAFE_LOG( 
                        m_log_dev->debugStream()
@@ -209,8 +220,8 @@ Ice::Ice( ) throw(iceInit_ex&) :
   {
     list<string> fields;
     fields.push_back( "gridjobid" );
-    db::GetFieldsCount counter( fields, list<pair<string, string> >());
-    db::Transaction tnx;
+    db::GetFieldsCount counter( fields, list<pair<string, string> >(), "Ice::Ice");
+    db::Transaction tnx(false, false);
     tnx.execute( &counter );
     db_empty = ( counter.get_count() == 0 );
   }
@@ -223,13 +234,13 @@ Ice::Ice( ) throw(iceInit_ex&) :
   if(m_reqnum < 5) m_reqnum = 5;
    int thread_num_commands, thread_num = m_configuration->ice()->max_ice_threads();
    if(thread_num<1) thread_num=1;
-   if(thread_num >= 2)
-     thread_num_commands = thread_num/2;
-   else
-     thread_num_commands = 1;
+//    if(thread_num >= 4)
+//      thread_num_commands = thread_num/2;
+//    else
+//      thread_num_commands = 2;
 
    m_requests_pool = new util::iceThreadPool("ICE Requests Pool", thread_num );
-   m_ice_commands_pool = new util::iceThreadPool( "ICE Internal Commands Pool", thread_num_commands);
+   m_ice_commands_pool = new util::iceThreadPool( "ICE Internal Commands Pool", thread_num);
    
 
     try {
@@ -296,8 +307,8 @@ void Ice::init( void )
   // Handle resubmitted/purged jobs
   list< glite::wms::ice::util::CreamJob > allJobs;
   {
-    db::GetTerminatedJobs getter( &allJobs );
-    db::Transaction tnx;
+    db::GetTerminatedJobs getter( &allJobs, "Ice::init" );
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
     //    allJobs = getter.get_jobs();
   }
@@ -525,6 +536,9 @@ void Ice::startJobKiller( void )
 //____________________________________________________________________________
 void Ice::getNextRequests( std::list< util::Request* >& ops) 
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::getNextRequests");
+#endif
   //  int reqnum = ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads();
   //  if(reqnum < 5) reqnum = 5;
   ops = m_ice_input_queue->get_requests( m_reqnum );
@@ -533,12 +547,18 @@ void Ice::getNextRequests( std::list< util::Request* >& ops)
 //____________________________________________________________________________
 void Ice::removeRequest( util::Request* req )
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::removeRequest");
+#endif
     m_ice_input_queue->remove_request( req );
 }
 
 //----------------------------------------------------------------------------
 size_t Ice::get_input_queue_size( void )
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::get_input_queue_size");
+#endif
     return m_ice_input_queue->get_size();
 }
 
@@ -575,6 +595,9 @@ bool Ice::is_job_killer_started( void ) const
 //____________________________________________________________________________
 void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) throw()
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::resubmit_job");
+#endif
     try {
       //boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
       boost::recursive_mutex::scoped_lock M( /*ice_util::CreamJob::s_GlobalICEMutex*/ s_mutex );
@@ -625,15 +648,18 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 
 //----------------------------------------------------------------------------
 //ice_util::jobCache::iterator
-void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator jit*/, 
+void Ice::purge_job( const util::CreamJob& theJob , 
 		     const string& reason )
   throw() 
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::purge_job");
+#endif
     static const char* method_name = "Ice::purge_job() - ";
 
     {
-      db::CheckGridJobID checker( theJob.getGridJobID() );
-      db::Transaction tnx;
+      db::CheckGridJobID checker( theJob.getGridJobID(), "Ice::purge_job" );
+      db::Transaction tnx(false, false);
       tnx.execute( &checker );
       if( !checker.found() )
 	return;
@@ -646,11 +672,15 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
 	 - remove job from ICE's database
 	 - return
       */
+      CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
+		     << "JobPurge is DISABLED. Removing job ["
+		     << theJob.describe() << "] from ICE database."
+		     );
       if(theJob.is_proxy_renewable())
 	ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
       {
-	db::RemoveJobByGid remover( theJob.getGridJobID() );
-	db::Transaction tnx;
+	db::RemoveJobByGid remover( theJob.getGridJobID(), "Ice::purge_job" );
+	db::Transaction tnx(false, false);
 	tnx.execute( &remover );
       }
       return;
@@ -795,8 +825,8 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
     if(theJob.is_proxy_renewable())
       ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
     {
-      db::RemoveJobByGid remover( theJob.getGridJobID() );
-      db::Transaction tnx;
+      db::RemoveJobByGid remover( theJob.getGridJobID(), "Ice::purge_job" );
+      db::Transaction tnx(false, false);
       tnx.execute( &remover );
     }
 }
@@ -805,6 +835,9 @@ void Ice::purge_job( const util::CreamJob& theJob /*ice_util::jobCache::iterator
 //____________________________________________________________________________
 void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::deregister_proxy_renewal");
+#endif
     if ( !::getenv( "ICE_DISABLE_DEREGISTER") ) {
         // must deregister proxy renewal
         int      err = 0;
@@ -852,6 +885,9 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
 //____________________________________________________________________________
 void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 {
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::purge_wms_storage");
+#endif
     if ( !::getenv( "ICE_DISABLE_PURGER" ) ) {
         try {
             CREAM_SAFE_LOG(
@@ -896,7 +932,9 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 bool Ice::resubmit_or_purge_job( util::CreamJob& tmp_job )
 throw() 
 {
-  
+#ifdef ICE_PROFILE
+  ice_util::ice_timer timer("Ice::resubmit_or_purge_job");
+#endif
   if ( cream_api::job_statuses::CANCELLED == tmp_job.getStatus() ||
        cream_api::job_statuses::DONE_OK == tmp_job.getStatus() ) {
     

@@ -110,13 +110,13 @@ namespace { // Anonymous namespace
         void operator()( void ) {
 	  //	  api_util::scoped_timer tmp_timer( "remove_job_from_cache::operator()" );
 	 
-	  db::RemoveJobByGid remover( m_grid_job_id );
+	  db::RemoveJobByGid remover( m_grid_job_id, "remove_job_from_cache::operator()" );
 
 	  //            boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 	  //boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
 	  //            iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
 	  //            m_cache->erase( it );
-	  db::Transaction tnx;
+	  db::Transaction tnx(false, false);
 	  //tnx.Begin_exclusive( );
   tnx.execute( &remover );
 
@@ -137,6 +137,10 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
     m_lb_logger( iceUtil::iceLBLogger::instance() ),
     m_request( request )
 {
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::iceCommandSubmit");
+#endif
+
   m_myname = m_theIce->getHostName();
   if( m_configuration->ice()->listener_enable_authn() ) {
     m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
@@ -239,6 +243,10 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
 //____________________________________________________________________________
 void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::execute");
+#endif
+  
     static const char* method_name="iceCommandSubmit::execute() - ";
 
 // #ifdef ICE_PROFILE_ENABLE
@@ -267,8 +275,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 //        boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
 //      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
       
-      db::CheckGridJobID check( m_theJob.getGridJobID() );
-      db::Transaction tnx;
+      db::CheckGridJobID check( m_theJob.getGridJobID(), "iceCommandSubmit::execute" );
+      db::Transaction tnx(false, false);
       //tnx.begin( );
       tnx.execute( &check );
       if( check.found() ) {
@@ -298,8 +306,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 
     {
       //      boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
-      db::CreateJob creator( m_theJob );
-      db::Transaction tnx;
+      db::CreateJob creator( m_theJob, "iceCommandSubmit::execute" );
+      db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &creator );
     }
@@ -321,8 +329,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 	  list< pair<string, string> > params;
 	  params.push_back( make_pair("failure_reason", reason) );
 	  //	  db::UpdateJobFailureReason updater( m_theJob.getGridJobID(), reason );
-	  db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
-	  db::Transaction tnx;
+	  db::UpdateJobByGid updater( m_theJob.getGridJobID(), params, "iceCommandSubmit::execute" );
+	  db::Transaction tnx(false, false);
 	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );
 	}
@@ -340,8 +348,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 	//	db::UpdateJobFailureReason updater( m_theJob.getGridJobID(), reason );
 	list< pair<string, string> > params;
 	params.push_back( make_pair("failure_reason", reason) );
-	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
-	db::Transaction tnx;
+	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params, "iceCommandSubmit::execute" );
+	db::Transaction tnx(false, false);
 	//tnx.begin_exclusive( );
 	tnx.execute( &updater );
       }
@@ -360,6 +368,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 //______________________________________________________________________________
 void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::try_to_submit");
+#endif
+
     static const char* method_name = "iceCommandSubmit::try_to_submit() - ";
     /**
      * Retrieve all usefull cert info.  In order to make the userDN an
@@ -376,8 +388,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     {
       list< pair<string, string> > params;
       params.push_back( make_pair("userdn", V.getDNFQAN()) );
-      db::UpdateJobByGid updater( m_theJob.getGridJobID(), params );
-      db::Transaction tnx;
+      db::UpdateJobByGid updater( m_theJob.getGridJobID(), params, "iceCommandSubmit::try_to_submit" );
+      db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
@@ -778,8 +790,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
       params.push_back( make_pair("wn_sequence_code", m_theJob.getSequenceCode() ));
       //      string dbid;
       params.push_back( make_pair("dbid", dbid ) );
-      db::UpdateJobByGid updater(m_theJob.getGridJobID(), params );
-      db::Transaction tnx;
+      db::UpdateJobByGid updater(m_theJob.getGridJobID(), params,"iceCommandSubmit::try_to_submit" );
+      db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
@@ -818,8 +830,8 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
         m_theJob.set_last_seen( time(0) );
 	list< pair<string, string> > params;
 	params.push_back( make_pair("last_seen", iceUtil::int_to_string(m_theJob.getLastSeen())));
-	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params ); // FIXME: could use ad-hoc UpdateXYZ ???
-	db::Transaction tnx;
+	db::UpdateJobByGid updater( m_theJob.getGridJobID(), params, "iceCommandSubmit::try_to_submit" ); // FIXME: could use ad-hoc UpdateXYZ ???
+	db::Transaction tnx(false, false);
 	//tnx.begin_exclusive( );
 	tnx.execute( &updater );
     }
@@ -828,7 +840,11 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
 
 //____________________________________________________________________________
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::ClassadSyntax_ex& )
-{ // Classad-mutex protected region
+{ 
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::creamJdlHelper");
+#endif
+// Classad-mutex protected region
 
   boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
   const configuration::WMConfiguration* WM_conf = m_configuration->wm();
@@ -881,7 +897,7 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
       std::vector<std::string>::const_iterator req_end = 
           reqs_to_forward.end();
       for (cur_req = reqs_to_forward.begin();
-           cur_req != req_end; cur_req++)
+           cur_req != req_end; ++cur_req)
           {
               local_ce_ad->Remove(*cur_req);
               // Don't care if it doesn't succeed. If the attribute is
@@ -920,7 +936,11 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::
 
 //______________________________________________________________________________
 void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
-{ // synchronized block because the caller is Classad-mutex synchronized
+{ 
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::updateIsbList");
+#endif
+// synchronized block because the caller is Classad-mutex synchronized
     const static char* method_name = "iceCommandSubmit::updateIsbList() - ";
     string default_isbURI = "gsiftp://";
     default_isbURI.append( m_myname );
@@ -969,7 +989,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
             );
 	*/
         string newPath;
-        for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
+        for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); ++it ) {
             
             classad::Value v;
             string s;
@@ -1012,6 +1032,9 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
 //______________________________________________________________________________
 void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 {
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::updateOsbList");
+#endif
     // If no OutputSandbox attribute is defined, then nothing has to be done
     if ( 0 == jdl->Lookup( "OutputSandbox" ) )
         return;
@@ -1053,7 +1076,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 
             string newPath;
             for ( classad::ExprList::iterator it=osbDUList->begin(); 
-                  it != osbDUList->end(); it++ ) {
+                  it != osbDUList->end(); ++it ) {
                 
                 classad::Value v;
                 string s;
@@ -1110,6 +1133,9 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
   m_fullName( p ),
   m_pathType( invalid )
 {
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::pathName");
+#endif
     boost::regex uri_match( "gsiftp://[^/]+(:[0-9]+)?/([^/]+/)*([^/]+)" );
     boost::regex rel_match( "([^/]+/)*([^/]+)" );
     boost::regex abs_match( "(file://)?/([^/]+/)*([^/]+)" );
@@ -1163,6 +1189,9 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
 //______________________________________________________________________________
 void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 {
+#ifdef ICE_PROFILE
+  iceUtil::ice_timer timer("iceCommandSubmit::doSubscription");
+#endif
   static const char* method_name = "iceCommandSubmit::doSubscription() - ";
   boost::recursive_mutex::scoped_lock cemonM( s_localMutexForSubscriptions );
   

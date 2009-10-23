@@ -48,7 +48,9 @@ iceCommandDelegationRenewal::iceCommandDelegationRenewal( ) :
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_ctx( NULL )
 {
-  
+#ifdef ICE_PROFILE
+  ice_timer timer("iceCommandDelegationRenewal::iceCommandDelegationRenewal");
+#endif
   //glite_renewal_core_init_ctx( &m_ctx );
 
 }
@@ -56,13 +58,18 @@ iceCommandDelegationRenewal::iceCommandDelegationRenewal( ) :
 //______________________________________________________________________________
 iceCommandDelegationRenewal::~iceCommandDelegationRenewal( )
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("iceCommandDelegationRenewal::~iceCommandDelegationRenewal");
+#endif
   //glite_renewal_core_destroy_ctx( m_ctx );
 }
 
 //______________________________________________________________________________
 void iceCommandDelegationRenewal::execute( void ) throw()
 {  
-  
+#ifdef ICE_PROFILE
+  ice_timer timer("iceCommandDelegationRenewal::execute");
+#endif
   this->renewAllDelegations();
     
 }
@@ -70,6 +77,9 @@ void iceCommandDelegationRenewal::execute( void ) throw()
 //______________________________________________________________________________
 void iceCommandDelegationRenewal::renewAllDelegations( void ) throw() 
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("iceCommandDelegationRenewal::renewAllDelegations");
+#endif
     static const char* method_name = "iceCommandDelegationRenewal::renewAllDelegations() - ";
     
     //char* new_proxy = NULL;

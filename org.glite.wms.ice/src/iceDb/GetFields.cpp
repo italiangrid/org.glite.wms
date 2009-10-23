@@ -30,15 +30,6 @@ using namespace std;
 
 int fields_count;
 
-GetFields::GetFields( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause, const bool distinct ) :    
-  AbsDbOperation(),
-  m_fields_to_retrieve( fields_to_retrieve ),
-  m_clause( clause ),
-  m_distinct( distinct ),
-  m_use_or( false )
-{
-}
-
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
@@ -115,5 +106,5 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     std::cout << "Executing query [" << sqlcmd.str() << "]" << std::endl;
 
-  do_query( db, sqlcmd.str(), fetch_fields_callback, &m_result );
+  do_query( db, sqlcmd.str(), fetch_fields_callback, m_result );
 }

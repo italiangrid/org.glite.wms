@@ -48,7 +48,9 @@ namespace db {
         bool m_found;
 	
     public:
-        GetStatusInfoByCompleteCreamJobID( const std::string& cid );
+        GetStatusInfoByCompleteCreamJobID( const std::string& cid, const std::string& caller )
+	: AbsDbOperation( caller ), m_creamjobid( cid ), m_info(), m_found( false ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**

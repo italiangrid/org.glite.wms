@@ -40,8 +40,9 @@ namespace db {
     public:
         UpdateDelegationTimesByID( const std::string& id,
 			       const time_t exptime,
-			       const int duration )
-	 : AbsDbOperation(), m_delegid( id ),
+			       const int duration, 
+				   const std::string& caller  )
+	 : AbsDbOperation( caller ), m_delegid( id ),
 	   m_exptime( exptime ),
 	   m_duration( duration ) {}
 		       

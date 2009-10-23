@@ -36,7 +36,7 @@ namespace db {
      */
     class RemoveJob : public AbsDbOperation { 
     public:
-        RemoveJob( const std::string& grid_job_id );
+        RemoveJob( const std::string& grid_job_id, const std::string& caller );
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:
         std::string m_gridjobid;

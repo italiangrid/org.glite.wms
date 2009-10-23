@@ -46,10 +46,18 @@ namespace db {
 	const bool                                    m_only_active;
 
     public:
-        GetAllJobs( std::list< glite::wms::ice::util::CreamJob >*,
+        GetAllJobs( std::list< glite::wms::ice::util::CreamJob >* result,
 		    const int limit, 
 		    const int offset, 
-		    const bool only_active = false );
+		    const std::string& caller,
+		    const bool only_active = false
+		   )
+	:   AbsDbOperation(caller),
+	    m_result( result ),
+ 	    m_limit( limit ),
+ 	    m_offset( offset ),
+	    m_only_active( only_active ) {}
+
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

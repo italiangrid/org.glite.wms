@@ -69,8 +69,8 @@ bool iceCommandLeaseUpdater::job_can_be_removed( const CreamJob& job )
     bool found = false;
     Lease_manager::Lease_t leaseInfo( "", "", time(0), "" );
     {
-      db::GetLeaseByID getter( job.get_lease_id() );
-      db::Transaction tnx;
+      db::GetLeaseByID getter( job.get_lease_id(), "iceCommandLeaseUpdater::job_can_be_removed" );
+      db::Transaction tnx(false, false);
       tnx.execute( &getter );
       found = getter.found();
       if(found)
@@ -127,8 +127,8 @@ bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const t
     bool found = false;
     Lease_manager::Lease_t leaseInfo( "", "", time(0), "" );
     {
-      db::GetLeaseByID getter( job.get_lease_id() );
-      db::Transaction tnx;
+      db::GetLeaseByID getter( job.get_lease_id(), "iceCommandLeaseUpdater::lease_can_be_renewed" );
+      db::Transaction tnx(false, false);
       tnx.execute( &getter );
       found = getter.found();
       if(found)
@@ -174,8 +174,8 @@ void iceCommandLeaseUpdater::execute( ) throw()
 
       list< CreamJob > allJobs;
       {
-	db::GetAllJobs getter(&allJobs, 0,0);
-	db::Transaction tnx;
+	db::GetAllJobs getter(&allJobs, 0,0, "iceCommandLeaseUpdater::execute");
+	db::Transaction tnx(false, false);
 	//tnx.begin( );
 	tnx.execute( &getter );
       }
@@ -234,8 +234,8 @@ void iceCommandLeaseUpdater::execute( ) throw()
       //        jobCache::iterator job_it( m_cache->lookupByGridJobID( *it ) );
       CreamJob the_job;
       {
-	db::GetJobByGid getter( *it );
-	db::Transaction tnx;
+	db::GetJobByGid getter( *it, "iceCommandLeaseUpdater::execute" );
+	db::Transaction tnx(false, false);
 	//tnx.begin( );
 	tnx.execute( &getter );
 	if( !getter.found() )
@@ -285,8 +285,8 @@ void iceCommandLeaseUpdater::execute( ) throw()
 	{
 	  list<pair<string, string> > params;
 	  params.push_back( make_pair("failure_reson", "Lease expired" ) );
-	  db::UpdateJobByGid updater( the_job.getGridJobID(), params );
-	  db::Transaction tnx;
+	  db::UpdateJobByGid updater( the_job.getGridJobID(), params, "iceCommandLeaseUpdater::execute" );
+	  db::Transaction tnx(false, false);
 	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );
 	}
@@ -295,8 +295,8 @@ void iceCommandLeaseUpdater::execute( ) throw()
         
         //m_cache->erase( job_it );
 	{
-	  db::RemoveJobByGid remover( the_job.getGridJobID() );
-	  db::Transaction tnx;
+	  db::RemoveJobByGid remover( the_job.getGridJobID(), "iceCommandLeaseUpdater::execute" );
+	  db::Transaction tnx(false, false);
 	  //tnx.begin_exclusive( );
 	  tnx.execute( &remover );
 	}

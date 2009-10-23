@@ -30,17 +30,17 @@
 using namespace glite::wms::ice::db;
 using namespace std;
 
-RemoveJobByGid::RemoveJobByGid( const string& gid ) :
-    m_gridjobid( gid )
-{
+// RemoveJobByGid::RemoveJobByGid( const string& gid ) :
+//     m_gridjobid( gid )
+// {
 
-}
+// }
 
 void RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = boost::str( boost::format( 
-      "delete from jobs " \
-      " where gridjobid = \'%1%\'; " ) % m_gridjobid );
+      "DELETE FROM jobs " \
+      " WHERE gridjobid = \'%1%\'; " ) % m_gridjobid );
 
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd<<"]"<<endl;

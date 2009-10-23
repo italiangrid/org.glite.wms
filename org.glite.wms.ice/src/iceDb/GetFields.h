@@ -35,7 +35,7 @@ namespace glite {
 	 */
 	class GetFields : public AbsDbOperation {
 	protected:
-	  std::list< std::vector<std::string> >                  m_result;
+	  std::list< std::vector<std::string> >                 *m_result;
 	  const std::list<std::string>                           m_fields_to_retrieve;
 	  const std::list<std::pair<std::string, std::string> >  m_clause;
 	  bool                                                   m_distinct;
@@ -44,19 +44,14 @@ namespace glite {
 	public:
 	  GetFields( 
 		    const std::list<std::string> fields_to_retrieve, 
-		    const std::list<std::pair<std::string, std::string> > clause, 
-		    const bool distinct = false);
+		    const std::list<std::pair<std::string, std::string> > clause,
+                    std::list< std::vector<std::string> >& result,
+		    const std::string& caller ,
+		    const bool distinct = false) : AbsDbOperation( caller ), m_result( &result ), m_fields_to_retrieve(fields_to_retrieve), m_clause( clause ), m_distinct( distinct ), m_use_or( false ) {}
 
 	  void use_or_clause( void ) { m_use_or = true; }
 	  void use_and_clause( void ) { m_use_or = false; }
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
-	  
-	  /**
-	   * Return the list of jobs to poll
-	   */ 
-	  std::list< std::vector<std::string> > get_values( void ) const {
-            return m_result;
-	  }
 	  
 	};
 	

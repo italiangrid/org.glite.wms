@@ -37,7 +37,8 @@ namespace db {
      */
     class RemoveJobByProxy : public AbsDbOperation { 
     public:
-        RemoveJobByProxy( const std::string& proxy );
+    RemoveJobByProxy( const std::string& proxy, const std::string& caller  ) : AbsDbOperation( caller ) , m_proxy( proxy ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:
         std::string m_proxy;

@@ -5,8 +5,6 @@
 
 #include "iceAbsCommand.h"
 #include "creamJob.h"
-//#include "glite/ce/cream-client-api-c/JobInfoWrapper.h"
-//#include "iceDb/GetJobsToPoll.h" // needed for definition of type 'JobToPoll'
 
 #include <boost/scoped_ptr.hpp>
 
@@ -43,11 +41,13 @@ namespace glite {
 
 	class iceCommandEventQuery : public iceAbsCommand {
 
-          log4cpp::Category *m_log_dev;
-          glite::wms::ice::util::iceLBLogger* m_lb_logger;
-          Ice* m_iceManager;
-	  glite::wms::ice::util::iceConfManager* m_conf;
-	  bool m_stopped;
+          log4cpp::Category                     *m_log_dev;
+          glite::wms::ice::util::iceLBLogger    *m_lb_logger;
+          Ice                                   *m_iceManager;
+	  glite::wms::ice::util::iceConfManager *m_conf;
+	  bool                                   m_stopped;
+	  //	  const std::vector<std::string>         m_dnce_array;
+	  const std::string                      m_dn, m_ce;
 	  
 	  long long getEventID( const std::string&, const std::string& );
 	  bool checkDatabaseID( const std::string&, const long long );
@@ -65,7 +65,7 @@ namespace glite {
 	  void getJobsByDbID( std::list<glite::wms::ice::util::CreamJob>& jobs, const long long db_id );
 
 	public:
-	  iceCommandEventQuery( Ice* );
+	  iceCommandEventQuery( Ice*, const std::string& dn, const std::string& ce );
 	  ~iceCommandEventQuery( ) throw() {}
 	  
 	  void execute( ) throw();

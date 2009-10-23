@@ -36,6 +36,9 @@ namespace ice {
 iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request ) 
   throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
 {
+#ifdef ICE_PROFILE
+  util::ice_timer timer("iceCommandFactory::mkCommand");
+#endif
     iceAbsCommand* result = 0;
     
     { // Classad-mutex protected region

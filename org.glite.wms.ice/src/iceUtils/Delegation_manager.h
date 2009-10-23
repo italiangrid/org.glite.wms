@@ -42,6 +42,8 @@
 
 #include <openssl/sha.h> // for using SHA1
 
+#include "ice_timer.h"
+
 namespace log4cpp {
     class Category;
 }
@@ -97,7 +99,11 @@ namespace util {
 			   m_user_dn( "" ),
 			   m_renewable( false ),
 			   m_myproxyserver( "" ) 
-	  { };
+	  { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("table_entry::table_entry_1");
+#endif
+	  };
 
 	  table_entry( const std::string& sha1_digest, 
 		       const std::string& cream_url, 
@@ -115,7 +121,11 @@ namespace util {
 	    m_user_dn( user_dn ),
 	    m_renewable( renewable ),
 	    m_myproxyserver( myproxyserver )
-	  { };
+	  { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("table_entry::table_entry_2");
+#endif
+	  };
         };
 	
     protected:

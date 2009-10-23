@@ -38,19 +38,6 @@ using namespace glite::wms::ice::util;
 using namespace std;
 
 //______________________________________________________________________________
-GetAllJobs::GetAllJobs( list<CreamJob>* result, 
-			const int limit, 
-			const int offset, 
-			const bool only_active) :    
-  AbsDbOperation(),
-  m_result( result ),
-  m_limit( limit ),
-  m_offset( offset ),
-  m_only_active( only_active )
-{
-}
-
-//______________________________________________________________________________
 namespace { // begin local namespace
 
   // Local helper function: callback for sqlite
@@ -63,7 +50,7 @@ namespace { // begin local namespace
     
     if( argv && argv[0] ) {
       vector<string> fields;
-      for(int i = 0; i<=24; i++) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded complete_cream_jobid from the query
+      for(int i = 0; i<=24; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded complete_cream_jobid from the query
 	if( argv[i] )
 	  fields.push_back( argv[i] );
 	else

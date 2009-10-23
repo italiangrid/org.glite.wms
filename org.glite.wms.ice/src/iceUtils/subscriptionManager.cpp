@@ -550,11 +550,9 @@ void iceUtil::subscriptionManager::getUserCEMonMapping( map< string, set<string>
     fields.push_back("status");
     list< pair< string, string> > params;
     params.push_back( make_pair("is_killed_byice", "0") );
-    db::GetFields getter( fields, params, true);
-    db::Transaction tnx;
-    //tnx.begin();
+    db::GetFields getter( fields, params, jobs, "subscriptionManager::getUserCEMonMapping", true);
+    db::Transaction tnx( false, false );
     tnx.execute( &getter );
-    jobs = getter.get_values();
   }
 
   for( list< vector< string > >::iterator it=jobs.begin();

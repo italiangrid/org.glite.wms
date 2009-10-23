@@ -19,9 +19,15 @@ namespace db {
 	const long long    m_new_eventid;
 
     public:
-        SetEventID( const std::string&, 
-		    const std::string&,
-		    const long long);
+        SetEventID( const std::string& userdn, 
+		    const std::string& ceurl,
+		    const long long newid, 
+		    const std::string& caller )
+	  : AbsDbOperation( caller ),
+    m_userdn( userdn ),
+    m_creamurl( ceurl ),
+    m_new_eventid( newid ) {}
+
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

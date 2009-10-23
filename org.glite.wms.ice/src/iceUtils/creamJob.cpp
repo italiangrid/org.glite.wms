@@ -96,7 +96,9 @@ CreamJob::CreamJob( ) :
     m_proxy_renew( false ),
     m_myproxy_address( "" )
 {
-
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::CreamJob_1");
+#endif
 }
 
 //______________________________________________________________________________
@@ -127,6 +129,9 @@ CreamJob::CreamJob( const std::string& gid,
 		    const std::string& last_empty_notification,
 		    const std::string& last_seen) 
 {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::CreamJob_2");
+#endif
   m_cream_jobid                = cid;
   m_grid_jobid                 = gid; 
   m_jdl                        = jdl;
@@ -158,6 +163,9 @@ CreamJob::CreamJob( const std::string& gid,
 //______________________________________________________________________________
 void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
 {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_jdl");
+#endif
   /**
    * Classad-mutex protected region
    */
@@ -237,6 +245,9 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
 //______________________________________________________________________________
 bool CreamJob::is_active( void ) const
 {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::is_active");
+#endif
     if( this->is_killed_by_ice() ) return false;
 
     return ( ( m_status == api::job_statuses::REGISTERED ) ||
@@ -250,6 +261,9 @@ bool CreamJob::is_active( void ) const
 //______________________________________________________________________________
 bool CreamJob::can_be_purged( void ) const
 {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::can_be_purged");
+#endif
     return ( ( m_status == api::job_statuses::DONE_OK ) ||
              ( m_status == api::job_statuses::CANCELLED ) ||
              ( m_status == api::job_statuses::DONE_FAILED ) ||
@@ -259,6 +273,9 @@ bool CreamJob::can_be_purged( void ) const
 //______________________________________________________________________________
 bool CreamJob::can_be_resubmitted( void ) const
 { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::can_be_resubmitted");
+#endif
     int threshold( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
     api::soap_proxy::VOMSWrapper V( getUserProxyCertificate() );
     if ( !V.IsValid() || 
@@ -272,6 +289,9 @@ bool CreamJob::can_be_resubmitted( void ) const
 //______________________________________________________________________________
 string CreamJob::describe( void ) const
 {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::describe");
+#endif
     string result;
     result.append( "gridJobID=\"" );
     result.append( getGridJobID() );
@@ -284,6 +304,9 @@ string CreamJob::describe( void ) const
 //______________________________________________________________________________
 void CreamJob::set_sequence_code( const std::string& seq )
 {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_sequence_code");
+#endif
   /**
    * mutex-protected region: REM that ClassAd is not
    * thread-safe
@@ -361,6 +384,9 @@ void CreamJob::set_sequence_code( const std::string& seq )
 //______________________________________________________________________________
 string CreamJob::getCompleteCreamJobID( void ) const 
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("CreamJob::getCompleteCreamJobID");
+#endif
   if ( getCreamURL().empty() || getCreamJobID().empty() ) 
       return "";
 

@@ -37,7 +37,8 @@ namespace db {
      */
     class UpdateDelegExpTime : public AbsDbOperation { 
     public:
-        UpdateDelegExpTime( const glite::wms::ice::util::CreamJob& aJob );
+        UpdateDelegExpTime( const glite::wms::ice::util::CreamJob& aJob, 
+			    const std::string& caller  );
 		       
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	

@@ -24,16 +24,6 @@ namespace {
 } // end local namespace
 
 //______________________________________________________________________________
-ice::db::GetDbID::GetDbID( const string& ceurl )
-  : AbsDbOperation(),
-    m_creamurl( ceurl ),
-    m_result((long long)-1),
-    m_found( false )
-{
-  
-}
-
-//______________________________________________________________________________
 void ice::db::GetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;

@@ -30,13 +30,13 @@ using namespace std;
 
 int fields_count_a;
 
-GetFieldsCount::GetFieldsCount( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause ) :    
-  AbsDbOperation(),
-  m_fields_to_retrieve( fields_to_retrieve ),
-  m_clause( clause ),
-  m_fields_count( 0 )
-{
-}
+// GetFieldsCount::GetFieldsCount( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause ) :    
+//   AbsDbOperation(),
+//   m_fields_to_retrieve( fields_to_retrieve ),
+//   m_clause( clause ),
+//   m_fields_count( 0 )
+// {
+// }
 
 namespace { // begin local namespace
 

@@ -24,6 +24,7 @@
 #define GLITE_WMS_ICE_REQUEST_SOURCE_FACTORY_H
 
 #include <string>
+#include "ice_timer.h"
 
 namespace glite {
 namespace wms {
@@ -65,7 +66,11 @@ namespace util {
         static Request_source* make_source_input_ice( void );
 
     protected:
-        Request_source_factory( ) { };
+        Request_source_factory( ) { 
+#ifdef ICE_PROFILE
+	  ice_timer timer("Request_source_factory::Request_source_factory_1");
+#endif
+	};
     };
 
 } // namespace util

@@ -27,6 +27,7 @@
  */
 #include "ClassadSyntax_ex.h"
 #include "SerializeException.h"
+#include "ice_timer.h"
 /**
  *
  * Cream Client API C++ Headers
@@ -142,6 +143,10 @@ namespace glite {
 		    const std::string& last_seen);
 
 	  static std::string get_query_fields() {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_query_fields");
+#endif
+
 	    return "gridjobid,"			\
 	      "creamjobid,"			\
 	      "jdl,"				\
@@ -170,6 +175,9 @@ namespace glite {
 	  }
 
 	  static std::string get_query_allfields() {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_query_allfields");
+#endif
 	    return "gridjobid,"			\
 	      "creamjobid,"			\
 	      "complete_cream_jobid,"		\
@@ -199,6 +207,9 @@ namespace glite {
 	  }
 
 	  static std::string get_createdb_query() {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_createdb_query");
+#endif
 	    return 
 	      " gridjobid text primary key, "			\
 	      " creamjobid text, "				\
@@ -239,25 +250,60 @@ namespace glite {
 	  //	  CreamJob( const std::vector< std::string >& );
 
 	  //! Sets the status of the CreamJob object
-	  void set_status( const glite::ce::cream_client_api::job_statuses::job_status& st ) { m_prev_status = m_status; m_status = st; }
+	  void set_status( const glite::ce::cream_client_api::job_statuses::job_status& st ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_status");
+#endif
+	    m_prev_status = m_status; m_status = st; 
+	  }
 	  //! Sets the cream unique identifier for this job
-          void set_cream_jobid( const std::string& cid ) { m_cream_jobid = cid; }
+          void set_cream_jobid( const std::string& cid ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_cream_jobid");
+#endif
+	    m_cream_jobid = cid; 
+	  }
           //! Sets the jdl for this job
           void set_jdl( const std::string& j ) throw( ClassadSyntax_ex& );
           //! Sets the sequence code
           void set_sequence_code( const std::string& seq ); // { m_sequence_code = seq; }
           //! Sets the delegation id
-          void set_delegation_id( const std::string& delid ) { m_delegation_id = delid; }
+          void set_delegation_id( const std::string& delid ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_delegation_id");
+#endif
+	    m_delegation_id = delid; 
+	  }
           //! Sets the time we got info about this job from CREAM
-          void set_last_seen( const time_t& l ) { m_last_seen = l; }
+          void set_last_seen( const time_t& l ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_last_seen");
+#endif
+	    m_last_seen = l; 
+	  }
 	  //! Sets the user proxy cert file last modification time
 	  //void set_proxycert_mtime( const time_t& l ) { m_proxyCertTimestamp = l; }
           //! Sets the job exit code
-          void set_exitcode( int c ) { m_exit_code = c; }
+          void set_exitcode( int c ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_exitcode");
+#endif	    
+	    m_exit_code = c; 
+	  }
           //! Sets the sequence code for the job sent to the WN
-          void set_wn_sequencecode( const std::string& wn_seq ) { m_wn_sequence_code = wn_seq; };
+          void set_wn_sequencecode( const std::string& wn_seq ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_sequencecode");
+#endif
+	    m_wn_sequence_code = wn_seq; 
+	  };
 	  //! Sets the user's distinguished name
-	  void set_userdn( const std::string& udn ) { m_user_dn = udn; };
+	  void set_userdn( const std::string& udn ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_userdn");
+#endif
+	    m_user_dn = udn; 
+	  };
 
 	  //	  void set_delegation_expiration_time( const time_t T ) { m_delegation_exptime = T; }
 
@@ -272,6 +318,9 @@ namespace glite {
            *
            */
           void set_failure_reason( const std::string& f ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_failure_reason");
+#endif
 	    //if ( m_failure_reason.empty() ) {
 	    if( f.empty() )
 	      m_failure_reason = " "; 
@@ -285,81 +334,201 @@ namespace glite {
 	  //	  int    getDelegationDuration( void ) const { return m_delegation_duration; }
 
 	  //! Gets the unique grid job identifier
-          std::string getGridJobID( void ) const { return m_grid_jobid; }
+          std::string getGridJobID( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getGridJobID");
+#endif
+	    return m_grid_jobid; 
+	  }
 
           //! Gets the job exit code
-          int get_exit_code( void ) const { return m_exit_code; }
+          int get_exit_code( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_exit_code");
+#endif
+	    return m_exit_code; 
+	  }
 
           //! Gets the job failure reason
-          std::string get_failure_reason( void ) const { return m_failure_reason; }
+          std::string get_failure_reason( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_failure_reason");
+#endif
+	    return m_failure_reason; 
+	  }
 
 	  //! Gets the unique cream job identifier
-          std::string getCreamJobID( void ) const { return m_cream_jobid; }
+          std::string getCreamJobID( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getCreamJobID");
+#endif
+	    return m_cream_jobid; 
+	  }
 	  
 	  //! Gets the COMPLETE unique cream job identifier
           std::string getCompleteCreamJobID( void ) const;// { return m_cream_jobid; }
 
 	  //! Gets the entire JDL of the job
-          std::string getJDL( void ) const { return m_jdl; }
+          std::string getJDL( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_JDL");
+#endif
+	    return m_jdl; 
+	  }
 
 	  //! Gets the CE identifier for the job (containing the endpoint)
-          std::string getCEID( void ) const { return m_ceid; }
+          std::string getCEID( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getCEID");
+#endif
+	    return m_ceid; 
+	  }
 
 	  //! Gets the endpoint of the cream service the job is submitted to
-          std::string getEndpoint( void ) const { return m_endpoint; }
+          std::string getEndpoint( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getEndpoint");
+#endif
+	    return m_endpoint; 
+	  }
 
 	  //! Gets the cream service URL this job is submitted to
-          std::string getCreamURL( void ) const { return m_cream_address; }
+          std::string getCreamURL( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getCreamURL");
+#endif
+	    return m_cream_address; 
+	  }
 
 	  //! Gets the cream delegation service URL used to delegate the user proxy certificate of this job
-          std::string getCreamDelegURL( void ) const { return m_cream_deleg_address; }
+          std::string getCreamDelegURL( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getCreamDelegURL");
+#endif
+	    return m_cream_deleg_address; 
+	  }
 
 	  //! Gets the path and file name of the user proxy certificate
-          std::string getUserProxyCertificate( void ) const { return m_user_proxyfile; }
+          std::string getUserProxyCertificate( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getUserProxyCertificate");
+#endif
+	    return m_user_proxyfile; 
+	  }
 
           //! Gets the path and file name of the "better proxy" for the DN of the user owning this job
           //std::string getBetterProxy( void ) const;
 
 	  //! Gets the number of job status changes which have been already logged to L&B
-	  int get_num_logged_status_changes( void ) const { return m_num_logged_status_changes; }
+	  int get_num_logged_status_changes( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_num_logged_status_changes");
+#endif
+	    return m_num_logged_status_changes; 
+	  }
 
           //! Sets the number of job status changes whcih have been already logged to L&B
-          void set_numlogged_status_changes( int l ) { m_num_logged_status_changes = l; }
+          void set_numlogged_status_changes( int l ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_numlogged_status_changes");
+#endif
+	    m_num_logged_status_changes = l; 
+	  }
 
           //! Return the lease ID associated with this job
-          std::string get_lease_id( void ) const { return m_lease_id; };
+          std::string get_lease_id( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_lease_id");
+#endif
+	    return m_lease_id; 
+	  };
 
           //! Set the lease ID associated with this job
-          void set_leaseid( const std::string& lease_id ) { m_lease_id = lease_id; };
+          void set_leaseid( const std::string& lease_id ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_leaseid");
+#endif
+	    m_lease_id = lease_id; 
+	  };
 
           //! Gets the worker node on which the job is being execute (empty string if no worker node has been set)
-          std::string get_worker_node( void ) const { return m_worker_node; }
+          std::string get_worker_node( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_worker_node");
+#endif
+	    return m_worker_node; 
+	  }
 
           //! Sets the worker node on which the job is being executed
-          void set_workernode( const std::string& w_node ) { m_worker_node = w_node; }
+          void set_workernode( const std::string& w_node ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_workernode");
+#endif
+	    m_worker_node = w_node; 
+	  }
 
           //! Gets the time we last got information about this job
-          time_t getLastSeen( void ) const { return m_last_seen; }
+          time_t getLastSeen( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getLastSeen");
+#endif
+	    return m_last_seen; 
+	  }
 
           //! Gets the WN sequence code
-          std::string get_wn_sequence_code( void ) const { return m_wn_sequence_code; }
+          std::string get_wn_sequence_code( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_wn_sequence_code");
+#endif
+	    return m_wn_sequence_code; 
+	  }
 
           //! Gets the sequence code
-          std::string getSequenceCode( void ) const { return m_sequence_code; }
+          std::string getSequenceCode( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getSequenceCode");
+#endif
+	    return m_sequence_code; 
+	  }
 
           //! Gets the delegation id
-          std::string getDelegationId( void ) const { return m_delegation_id; }
+          std::string getDelegationId( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getDelegationId");
+#endif
+	    return m_delegation_id; 
+	  }
 
 	  //! Gets the last modification time of the user proxy cert file
 //	  time_t getProxyCertLastMTime( void ) const { return m_proxyCertTimestamp; }
 
-	  int    getStatusPollRetryCount( void ) const { return m_statusPollRetryCount; }
+	  int    getStatusPollRetryCount( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getStatusPollRetryCount");
+#endif
+	    return m_statusPollRetryCount; 
+	  }
 
-	  void   inc_status_pollretry_count( void ) { m_statusPollRetryCount++; }
+	  void   inc_status_pollretry_count( void ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::inc_status_pollretry_count");
+#endif
+	    m_statusPollRetryCount++; 
+	  }
 
-	  void   reset_status_pollretry_count( void ) { m_statusPollRetryCount=0; }
+	  void   reset_status_pollretry_count( void ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::reset_status_pollretry_count");
+#endif
+	    m_statusPollRetryCount=0; 
+	  }
 
-	  std::string getUserDN( void ) const { return m_user_dn; }
+	  std::string getUserDN( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getUserDN");
+#endif 
+	    return m_user_dn; 
+	  }
 
           //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, running, reslly_running or held
           bool is_active( void ) const;
@@ -370,7 +539,12 @@ namespace glite {
            * important as a job which has been killed by ICE should be
            * reported to be in status ABORTED.
            */
-          bool is_killed_by_ice( void ) const { return m_is_killed_byice; }
+          bool is_killed_by_ice( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::is_killed_by_ice");
+#endif
+	    return m_is_killed_byice; 
+	  }
 
 
           /**
@@ -378,10 +552,25 @@ namespace glite {
            * killed by ICE, instead of by the user. This is used by
            * logging the appropriate event when the job terminates.
            */
-          void set_killed_byice( void ) { m_is_killed_byice = true; }
+          void set_killed_byice( void ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_killed_byice");
+#endif
+	    m_is_killed_byice = true; 
+	  }
 
-          time_t get_last_empty_notification( void ) const { return m_last_empty_notification; };
-          void set_last_empty_notification_time( time_t t ) { m_last_empty_notification = t; };
+          time_t get_last_empty_notification( void ) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_last_empty_notification");
+#endif
+	    return m_last_empty_notification; 
+	  };
+          void set_last_empty_notification_time( time_t t ) { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::set_last_empty_notification");
+#endif
+	    m_last_empty_notification = t; 
+	  };
 
           /**
            * Checke whether a job can be purged (by issuing a "purge"
@@ -402,18 +591,41 @@ namespace glite {
           bool can_be_resubmitted( void ) const;
 
 	  //! Gets the status of the job
-          glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { return m_status; }
+          glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getStatus");
+#endif
+	    return m_status; 
+	  }
 
-          glite::ce::cream_client_api::job_statuses::job_status get_prev_status(void) const { return m_prev_status; }
+          glite::ce::cream_client_api::job_statuses::job_status get_prev_status(void) const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::get_prev_status");
+#endif
+	    return m_prev_status; 
+	  }
 
 	  //! Return true if j1 and j2 have the same grid job identifier
           friend bool operator==( const CreamJob& j1, const CreamJob& j2 ) {
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::operator==");
+#endif
 	    return ( j1.getGridJobID() == j2.getGridJobID() );
 	  }
 
-	  bool is_proxy_renewable() const { return m_proxy_renew; }
+	  bool is_proxy_renewable() const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::is_proxy_renewable");
+#endif
+	    return m_proxy_renew; 
+	  }
 
-	  std::string getMyProxyAddress() const { return m_myproxy_address; }
+	  std::string getMyProxyAddress() const { 
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::getMyProxyAddress");
+#endif
+	    return m_myproxy_address; 
+	  }
 
 
           /**
@@ -458,7 +670,9 @@ namespace glite {
 
 	  template<class Archive> void serialize(Archive & ar, const unsigned int version) throw(SerializeException&)
 	  {
-	    
+#ifdef ICE_PROFILE
+	    ice_timer timer("CreamJob::serialize");
+#endif
 	    boost::recursive_mutex::scoped_lock L( serialize_mutex );
 
 	    try {

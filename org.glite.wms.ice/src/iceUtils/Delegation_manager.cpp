@@ -64,11 +64,17 @@ Delegation_manager::Delegation_manager( ) :
     m_max_size( 1000 ), // FIXME: Hardcoded default
     m_operation_count_max( 2000 ) // FIXME: hardcoded default
 {
+#ifdef ICE_PROFILE
+	    ice_timer timer("Delegation_manager::Delegation_manager");
+#endif
 }
 
 //______________________________________________________________________________
 Delegation_manager* Delegation_manager::instance( ) 
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::instance");
+#endif
     boost::recursive_mutex::scoped_lock L( s_mutex );
     if ( 0 == s_instance ) 
         s_instance = new Delegation_manager( );
@@ -83,6 +89,9 @@ Delegation_manager::delegate( const CreamJob& job,
 			      bool force ) 
   throw( std::exception& )
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::delegate");
+#endif
     boost::recursive_mutex::scoped_lock L( s_mutex );
     static char* method_name = "Delegation_manager::delegate() - ";
 
@@ -125,8 +134,8 @@ Delegation_manager::delegate( const CreamJob& job,
     bool found = false;
     table_entry deleg_info("", "", 0, 0, "", "", 0, "");
     {
-      db::GetDelegation getter( str_sha1_digest, cream_url, myproxy_address );
-      db::Transaction tnx;
+      db::GetDelegation getter( str_sha1_digest, cream_url, myproxy_address, method_name );
+      db::Transaction tnx(false, false);
       //tnx.begin();
       tnx.execute( &getter );
       found = getter.found();
@@ -136,8 +145,8 @@ Delegation_manager::delegate( const CreamJob& job,
     
     if( force && found ) {
       {
-	db::RemoveDelegation remover( str_sha1_digest, cream_url, myproxy_address );
-	db::Transaction tnx;
+	db::RemoveDelegation remover( str_sha1_digest, cream_url, myproxy_address, method_name );
+	db::Transaction tnx(false, false);
 	tnx.execute( &remover );
       }
       found = false;
@@ -229,8 +238,9 @@ Delegation_manager::delegate( const CreamJob& job,
 					delegation_id, 
 					V.getDNFQAN(), 
 					USE_NEW, 
-					myproxy_address );
-	  db::Transaction tnx;
+					myproxy_address,
+					method_name);
+	  db::Transaction tnx(false, false);
 	  tnx.execute( &creator );
 	}
 
@@ -354,7 +364,9 @@ Delegation_manager::delegate( const CreamJob& job,
 void 
 Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& newDeleg ) 
 {
-  
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::updateDelegation");
+#endif
   const char* method_name = "Delegation_manager::updateDelegation() - ";
 
   boost::recursive_mutex::scoped_lock L( s_mutex );
@@ -362,8 +374,8 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
   bool found = false;
   table_entry tb;
   {
-    db::GetDelegationByID getter( newDeleg.get<0>() );
-    db::Transaction tnx;
+    db::GetDelegationByID getter( newDeleg.get<0>(), method_name );
+    db::Transaction tnx(false, false);
     //tnx.begin();
     tnx.execute( &getter );
     found = getter.found();
@@ -429,8 +441,8 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
 		      << tb.m_cream_url << "]"
 		      );
       
-      db::UpdateDelegationTimesByID updater( newDeleg.get<0>(), newDeleg.get<1>(), newDeleg.get<2>() );
-      db::Transaction tnx;
+      db::UpdateDelegationTimesByID updater( newDeleg.get<0>(), newDeleg.get<1>(), newDeleg.get<2>(), method_name );
+      db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }
@@ -440,6 +452,9 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
 //______________________________________________________________________________
 void Delegation_manager::removeDelegation( const string& delegToRemove )
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::removeDelegation");
+#endif
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
 //   typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
@@ -459,8 +474,8 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 		  );
 
   {
-    db::RemoveDelegationByID remover( delegToRemove );
-    db::Transaction tnx;
+    db::RemoveDelegationByID remover( delegToRemove, "Delegation_manager::removeDelegation" );
+    db::Transaction tnx(false, false);
     //tnx.begin_exclusive();
     tnx.execute( &remover );
   }
@@ -471,12 +486,15 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 // void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target, const bool only_renewable )
 void Delegation_manager::getDelegationEntries( vector< table_entry >& target, const bool only_renewable )
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::getDelegationEntries");
+#endif
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
   vector< table_entry > allDelegations;
   {
-    db::GetAllDelegation getter( only_renewable );
-    db::Transaction tnx;
+    db::GetAllDelegation getter( only_renewable,  "Delegation_manager::getDelegationEntries" );
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
     allDelegations = getter.get_delegations();
   }
@@ -503,6 +521,9 @@ void Delegation_manager::redelegate( const string& certfile,
                                      const string& delegation_url,
                                      const string& delegation_id ) 
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::redelegate");
+#endif
     boost::recursive_mutex::scoped_lock L( s_mutex );
 
     static char* method_name = "Delegation_manager::redelegate() - ";
@@ -527,8 +548,8 @@ void Delegation_manager::redelegate( const string& certfile,
     //table_entry delegation_entry;
     bool found = false;
     {
-      db::CheckDelegationByID checker( delegation_id );
-      db::Transaction tnx;
+      db::CheckDelegationByID checker( delegation_id, method_name );
+      db::Transaction tnx(false, false);
       //tnx.begin();
       tnx.execute( &checker );
       found = checker.found();
@@ -584,12 +605,15 @@ void Delegation_manager::redelegate( const string& certfile,
 Delegation_manager::table_entry
 Delegation_manager::getDelegation( const string& userdn, const string& ceurl, const string& myproxy )
 {  
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::getDelegation");
+#endif
   bool found = false;
   table_entry deleg_info("", "", 0, 0, "", "", 0, "");
 
   {
-    db::GetDelegation getter( userdn, ceurl, myproxy );
-    db::Transaction tnx;
+    db::GetDelegation getter( userdn, ceurl, myproxy, "Delegation_manager::getDelegation" );
+    db::Transaction tnx(false, false);
     tnx.execute( &getter );
 
     found = getter.found();
@@ -606,6 +630,9 @@ Delegation_manager::getDelegation( const string& userdn, const string& ceurl, co
 //----------------------------------------------------------------------------
 string Delegation_manager::generateDelegationID( ) throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("Delegation_manager::generateDelegationID");
+#endif
   struct timeval T;
   ::gettimeofday( &T, 0 );
 

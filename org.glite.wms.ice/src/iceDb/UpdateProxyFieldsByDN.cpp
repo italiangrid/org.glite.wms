@@ -32,12 +32,12 @@ using namespace glite::wms::ice::db;
 
 using namespace std;
 
-UpdateProxyFieldsByDN::UpdateProxyFieldsByDN( const string& dn,
-			        const list< pair<string, string> >& nameval_list)
- : m_dn( dn ),
-   m_nameval_list( nameval_list )
-{
-}
+// UpdateProxyFieldsByDN::UpdateProxyFieldsByDN( const string& dn,
+// 			        const list< pair<string, string> >& nameval_list)
+//  : m_dn( dn ),
+//    m_nameval_list( nameval_list )
+// {
+// }
 
 void UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
@@ -65,7 +65,7 @@ void UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException&
     sqlcmd << tmp << " WHERE userdn=\'" << m_dn << "\';";
      
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+    cout << "CALLER=[" << get_caller() << "] Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
     do_query( db, sqlcmd.str() );
 }

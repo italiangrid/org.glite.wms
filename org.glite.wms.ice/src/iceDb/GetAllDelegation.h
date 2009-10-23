@@ -37,7 +37,7 @@ namespace glite {
 	  const bool                                                          m_only_renewable;
 	 
 	public:
-	  GetAllDelegation( const bool only_renewable ) : AbsDbOperation(), m_result(), m_only_renewable( only_renewable ) { }
+	  GetAllDelegation( const bool only_renewable, const std::string& caller ) : AbsDbOperation( caller ), m_result(), m_only_renewable( only_renewable ) { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  

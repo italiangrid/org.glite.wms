@@ -43,7 +43,9 @@ namespace db {
 	std::pair< std::string, std::string> m_creamurl_userdn;
 
     public:
-        GetCidByCreamURLUserDN( const std::pair<std::string, std::string>& );
+        GetCidByCreamURLUserDN( const std::pair<std::string, std::string>& src, const std::string& caller )
+	: AbsDbOperation( caller ), m_result(), m_creamurl_userdn( src ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**

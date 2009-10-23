@@ -40,8 +40,9 @@ namespace db {
     public:
       RemoveDelegation( const std::string& digest, 
 			const std::string& creamurl,
-			const std::string& myproxyaddress ) 
-	: AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ),
+			const std::string& myproxyaddress, 
+			const std::string& caller ) 
+	: AbsDbOperation( caller ), m_digest( digest ), m_creamurl( creamurl ),
 	m_myproxy( myproxyaddress ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );

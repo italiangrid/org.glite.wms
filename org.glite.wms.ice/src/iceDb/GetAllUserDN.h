@@ -42,7 +42,9 @@ namespace db {
 	bool m_proxy_renewable;
 
     public:
-        GetAllUserDN( const bool );
+        GetAllUserDN( const bool proxy_renewable, const std::string& caller ) 
+	  : AbsDbOperation( caller ), m_proxy_renewable( proxy_renewable ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 
         /**

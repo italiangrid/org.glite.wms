@@ -46,8 +46,9 @@ namespace glite {
 	public:
 	  InsertOldestPollTimeForUserDNCE( const std::string& user,
 					   const std::string& ce,
-					   const time_t last_time) 
-	    : AbsDbOperation(), m_last_poll_time( last_time ), m_userdn( user ), m_creamurl( ce ) { }
+					   const time_t last_time, 
+					   const std::string& caller ) 
+	    : AbsDbOperation(caller), m_last_poll_time( last_time ), m_userdn( user ), m_creamurl( ce ) { }
 	    
 	    virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	    

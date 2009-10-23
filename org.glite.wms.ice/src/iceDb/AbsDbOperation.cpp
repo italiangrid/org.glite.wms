@@ -50,7 +50,7 @@ void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callbac
         sqlite3_free(errMsg);
 	sleep(s);
 	s = s*2;
-	retry++;
+	++retry;
 	if(retry > 5)
           throw DbOperationException( error );
 	

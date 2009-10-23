@@ -36,15 +36,6 @@ using namespace glite::wms::ice::util;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
-GetJobByGid::GetJobByGid( const string& gid ) :
-    AbsDbOperation(),
-    m_gridjobid( gid ),
-    m_theJob(),
-    m_found( false )
-{
-
-}
-
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
@@ -52,7 +43,7 @@ namespace { // begin local namespace
     vector<string> *fields = (vector<string>*)param;
     if ( argv && argv[0] ) 
       {
-	for(int i = 0; i<=24; i++) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded the complete_cream_jobid from query
+	for(int i = 0; i<=24; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we excluded the complete_cream_jobid from query
 	  if( argv[i] )
 	    fields->push_back( argv[i] );
 	  else

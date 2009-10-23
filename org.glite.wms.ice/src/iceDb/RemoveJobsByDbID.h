@@ -13,7 +13,8 @@ namespace db {
      */
     class RemoveJobsByDbID : public AbsDbOperation { 
     public:
-        RemoveJobsByDbID( const long long );
+        RemoveJobsByDbID( const long long dbid, const std::string& caller ) : AbsDbOperation( caller ), m_dbid( dbid ) {}
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	
     protected:

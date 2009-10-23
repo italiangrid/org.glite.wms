@@ -41,8 +41,13 @@ namespace glite {
 	public:
 	  GetDelegation( const std::string& digest, 
 			 const std::string& creamurl,
-			 const std::string& myproxyurl) 
-	    : AbsDbOperation(), m_digest( digest ), m_creamurl( creamurl ), m_found( false ), m_myproxyurl( myproxyurl )
+			 const std::string& myproxyurl, 
+			 const std::string& caller ) 
+	    : AbsDbOperation( caller ), 
+	    m_digest( digest ), 
+	    m_creamurl( creamurl ), 
+	    m_found( false ), 
+	    m_myproxyurl( myproxyurl )
 	    { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );

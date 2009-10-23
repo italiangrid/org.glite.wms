@@ -29,10 +29,10 @@
 using namespace glite::wms::ice::db;
 using namespace std;
 
-GetAllProxyInfo::GetAllProxyInfo( ) :    
-  AbsDbOperation()
-{
-}
+// GetAllProxyInfo::GetAllProxyInfo( ) :    
+//   AbsDbOperation()
+// {
+// }
 
 namespace { // begin local namespace
 

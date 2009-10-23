@@ -40,7 +40,14 @@ namespace glite {
 	  int m_fields_count;
 
 	public:
-	  GetFieldsCount( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause );
+	  GetFieldsCount( const std::list<std::string> fields_to_retrieve, 
+			  const std::list<std::pair<std::string, std::string> > clause, 
+			  const std::string& caller ) 
+	    : AbsDbOperation( caller ),
+	    m_fields_to_retrieve( fields_to_retrieve ),
+	    m_clause( clause ),
+	    m_fields_count( 0 ) {}
+	    
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  

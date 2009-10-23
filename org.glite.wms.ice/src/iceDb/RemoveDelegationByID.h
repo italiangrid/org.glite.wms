@@ -38,7 +38,8 @@ namespace db {
     class RemoveDelegationByID: public AbsDbOperation { 
       
     public:
-      RemoveDelegationByID( const std::string& id ) : AbsDbOperation(), m_id( id ) {}
+      RemoveDelegationByID( const std::string& id, 
+			    const std::string& caller ) : AbsDbOperation( caller ), m_id( id ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

@@ -59,7 +59,9 @@ namespace glite {
       namespace util {
 
 	pair<bool, time_t> isgood( const std::string& proxyfile ) throw() {
-	  
+#ifdef ICE_PROFILE
+	  ice_timer timer("util::isgood");
+#endif
 	  X509* x;
 	  try {
 	    x = glite::ce::cream_client_api::certUtil::read_BIO(proxyfile);
@@ -131,6 +133,10 @@ namespace glite {
 
 string computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
 
+#ifdef ICE_PROFILE
+  ice_timer timer("util::computeSHA1Digest");
+#endif
+
   static char* method_name = "util::computeSHA1Digest() - ";
 
   unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
@@ -165,6 +171,10 @@ string computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
 //________________________________________________________________________
 string getHostName( void ) throw ( runtime_error& )
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("util::getHostName");
+#endif
+
     char name[256];
     
     if ( ::gethostname(name, 256) == -1 ) { // FIXME: is it thread safe ?
@@ -233,6 +243,9 @@ string getHostName( void ) throw ( runtime_error& )
 //________________________________________________________________________
 string getURL( void ) throw ( runtime_error& )
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("util::getURL");
+#endif
   string tmp_myname, tmp_prefix;
   
   try {
@@ -252,6 +265,9 @@ string getURL( void ) throw ( runtime_error& )
 
 //________________________________________________________________________
 string time_t_to_string( time_t tval ) {
+#ifdef ICE_PROFILE
+  ice_timer timer("util::time_t_to_string");
+#endif
     char buf[26]; // ctime_r wants a buffer of at least 26 bytes
     ctime_r( &tval, buf );
     if(buf[strlen(buf)-1] == '\n')
@@ -261,6 +277,9 @@ string time_t_to_string( time_t tval ) {
 
 //________________________________________________________________________
 string int_to_string( const int val ) {
+#ifdef ICE_PROFILE
+  ice_timer timer("util::int_to_string");
+#endif
   ostringstream os("");
   os << val;
   return os.str();
@@ -269,6 +288,9 @@ string int_to_string( const int val ) {
 //________________________________________________________________________
 void makePath(const string& filename) throw(exception&)
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("util::makePath");
+#endif
   boost::filesystem::path tmpFile( filename, boost::filesystem::native );
   boost::filesystem::path parent = tmpFile.branch_path();
   string currentPath("");
@@ -300,11 +322,18 @@ namespace {
     string target;
 
   public:
-    canonizerObject() : target("") {}
+    canonizerObject() : target("") {
+#ifdef ICE_PROFILE
+  ice_timer timer("canonizerObject::canonizerObject");
+#endif
+    }
 
     ~canonizerObject() throw() {}
 
     void operator()( const char c ) throw() {
+#ifdef ICE_PROFILE
+  ice_timer timer("canonizerObject::operator()");
+#endif
       if(isalnum((int)c)) {
 	target.append( 1, c );
       } else {
@@ -322,6 +351,9 @@ namespace {
 //______________________________________________________________________________
 string canonizeString( const string& aString ) throw()
 {
+#ifdef ICE_PROFILE
+  ice_timer timer("util::canonizeString");
+#endif
   canonizerObject c;
   c = for_each(aString.begin(), aString.end(), c);
   return c.getString();
@@ -329,6 +361,9 @@ string canonizeString( const string& aString ) throw()
 
 //______________________________________________________________________________
 string compressed_string( const string& name ) {
+#ifdef ICE_PROFILE
+  ice_timer timer("util::compressed_string");
+#endif
   string result;
   unsigned char buf[ SHA_DIGEST_LENGTH ]; // output buffer
   const unsigned char idx[ 17 ] = "0123456789ABCDEF"; // must be 17 chars, as the trailing \0 counts
@@ -353,6 +388,9 @@ string compressed_string( const string& name ) {
 //________________________________________________________________________
 int setET(char **errtxt, int rc)
 {
+#ifdef ICE_PROFILE
+  glite::wms::ice::util::ice_timer timer("util::setET");
+#endif
     if (rc) *errtxt = strerror(rc);
        else *errtxt = (char *)"unexpected error";
     return 0;

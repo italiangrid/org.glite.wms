@@ -210,8 +210,8 @@ void iceCommandUpdateStatus::execute( ) throw( )
             //jobCache::iterator job_it( cache->lookupByCompleteCreamJobID( notif->get_complete_cream_job_id() ) );
 	    CreamJob theJob;
 	    {
-	      db::GetJobByCid getter( notif->get_complete_cream_job_id() );
-	      db::Transaction tnx;
+	      db::GetJobByCid getter( notif->get_complete_cream_job_id(), "iceCommandUpdateStatus::execute" );
+	      db::Transaction tnx(false, false);
 	      //tnx.begin( );
 	      tnx.execute( &getter );
 	      if( !getter.found() ) 
@@ -306,28 +306,22 @@ void iceCommandUpdateStatus::execute( ) throw( )
       */
 
       list< pair<string, string> > list_creamurl_userdn, save;
+      
       {
  	list<string> params;
 	params.push_back( "creamurl" );
 	params.push_back( "userdn" );
-	db::GetFields getter( params, list<pair<string, string> >(), true/* use DISTINCT = true */ );
+	list< vector<string> > result;
+	db::GetFields getter( params, list<pair<string, string> >(), result, "iceCommandUpdateStatus::execute",true/* use DISTINCT = true */ );
         {
-	  db::Transaction tnx;
-	  //tnx.begin( );
+	  db::Transaction tnx(false, false);
 	  tnx.execute( &getter );
-	//  tnx.commit( );
 	}
-
-	list< vector<string> > result = getter.get_values();
 
         for( list< vector<string> >::const_iterator it=result.begin();
              it != result.end();
 	     ++it )
 	{
-// 	  list<string>::const_iterator fit = (*it).begin();
-// 	  string creamurl = *fit; fit++;
-// 	  string userdn   = *fit;
-
 	  string creamurl = it->at(0);
 	  string userdn   = it->at(1);
 
@@ -366,13 +360,12 @@ void iceCommandUpdateStatus::execute( ) throw( )
 	  
 	  //list<list<string> > result;
 	  //db::GetCidByCreamURLUserDN getter( *it );
-	  db::GetFields getter( fields_to_retrieve, clause );
-	  db::Transaction tnx;
-	  //tnx.begin( );
+	  list< vector< string> > tmp;
+	  db::GetFields getter( fields_to_retrieve, clause, tmp, "iceCommandUpdateStatus::execute" );
+	  db::Transaction tnx(false, false);
 	  tnx.execute( &getter );
-	  //list<string> tmp = getter.get();
 	  
-	  list< vector< string> > tmp = getter.get_values();
+	  //	  list< vector< string> > tmp = getter.get_values();
 	  list< string > _tmp_cids;
 	  for(list< vector< string> >::const_iterator it=tmp.begin();
 	      it!=tmp.end();

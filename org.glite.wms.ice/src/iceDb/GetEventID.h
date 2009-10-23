@@ -20,8 +20,12 @@ namespace db {
 	bool               m_found;
 
     public:
-        GetEventID( const std::string&, 
-		    const std::string&);
+        GetEventID( const std::string& userdn, 
+		    const std::string& ceurl, 
+		    const std::string& caller )
+	 : AbsDbOperation( caller ),
+    m_userdn( userdn ),    m_creamurl( ceurl ),    m_result( -1 ),    m_found( false ) {}
+
 
 	long long getEventID( void ) const { return m_result; }
 	bool      found( void ) const { return m_found; }

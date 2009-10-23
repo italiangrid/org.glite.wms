@@ -54,16 +54,16 @@ namespace glite {
 	class iceConfManager;
 
 	class iceCommandStatusPoller : public iceAbsCommand {
-	  //boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_theProxy;
-          log4cpp::Category *m_log_dev;
-          glite::wms::ice::util::iceLBLogger* m_lb_logger;
-          Ice* m_iceManager;
-	  //	  jobCache* m_cache;
-	  time_t m_threshold;
-          const unsigned int m_max_chunk_size; ///< maximum number of jobs which will be used in a cumulative request to CREAM
-          time_t m_empty_threshold; ///< Threshold for empty notifications
-	  bool m_poll_all_jobs;
-	  glite::wms::ice::util::iceConfManager* m_conf;
+
+          log4cpp::Category                           *m_log_dev;
+          glite::wms::ice::util::iceLBLogger          *m_lb_logger;
+          Ice*                                         m_iceManager;
+	  time_t                                       m_threshold;
+          const unsigned int                           m_max_chunk_size; ///< maximum number of jobs which will be used in a cumulative request to CREAM
+          time_t                                       m_empty_threshold; ///< Threshold for empty notifications
+	  bool                                         m_poll_all_jobs;
+	  glite::wms::ice::util::iceConfManager       *m_conf;
+	  const std::pair< std::string, std::string >  m_dnce;
 	  
 	  bool m_stopped;
 
@@ -148,7 +148,9 @@ namespace glite {
             \throw eventStatusPoller_ex& if the creation of the internal cream communication client failed
             \sa ice
           */
-          iceCommandStatusPoller( Ice*, bool poll_all_jobs = false ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
+          iceCommandStatusPoller( Ice*, 
+				  const std::pair<std::string, std::string>&,
+				  bool poll_all_jobs = false ); //throw(glite::wms::ice::util::eventStatusPoller_ex&, glite::wms::ice::util::ConfigurationManager_ex&);
           
           virtual ~iceCommandStatusPoller() throw() { } 
 

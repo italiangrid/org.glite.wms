@@ -19,7 +19,12 @@ namespace db {
 	bool               m_found;
 
     public:
-        GetDbID( const std::string& );
+        GetDbID( const std::string& ceurl, const std::string& caller ) 
+	  : AbsDbOperation( caller ),
+    m_creamurl( ceurl ),
+    m_result((long long)-1),
+    m_found( false ) {}
+
 		
 
 	long long getDbID( void ) const { return m_result; }

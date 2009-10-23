@@ -38,8 +38,8 @@ RemoveJob::RemoveJob( const string& grid_job_id ) :
 void RemoveJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = boost::str( boost::format( 
-      "delete from jobs " \
-      " where gridjobid = \'%1%\'; " ) % m_gridjobid );
+      "DELETE FROM jobs " \
+      " WHERE gridjobid = \'%1%\'; " ) % m_gridjobid );
 
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd<<"]"<<endl;

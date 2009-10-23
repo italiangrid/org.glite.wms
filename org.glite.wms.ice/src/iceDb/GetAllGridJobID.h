@@ -42,8 +42,8 @@ namespace db {
         std::set< std::string >* m_result;
 
     public:
-        GetAllGridJobID( std::set< std::string >* result ) 
-	  : AbsDbOperation() , m_result( result ) { }
+        GetAllGridJobID( std::set< std::string >* result, const std::string& caller ) 
+	  : AbsDbOperation( caller ) , m_result( result ) { }
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

@@ -45,6 +45,9 @@ namespace util {
         virtual ~Request_filelist( ) { };
 
         const std::string& to_string( void ) {
+#ifdef ICE_PROFILE
+	  ice_timer timer("Request_filelist::to_string");
+#endif
             return *m_pos;
         };
 

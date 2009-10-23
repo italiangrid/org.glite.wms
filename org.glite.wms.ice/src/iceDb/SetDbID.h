@@ -18,8 +18,16 @@ namespace db {
 	const long long    m_new_dbid;
 
     public:
-        SetDbID( const std::string&,
-		    const long long);
+        SetDbID( const std::string& ceurl,
+		 const long long newid, 
+		 const std::string& caller )
+  : AbsDbOperation(caller),
+    m_creamurl( ceurl ),
+    m_new_dbid( newid )
+{
+
+}
+
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

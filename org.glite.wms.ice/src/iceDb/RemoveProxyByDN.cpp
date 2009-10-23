@@ -30,11 +30,11 @@
 using namespace glite::wms::ice::db;
 using namespace std;
 
-RemoveProxyByDN::RemoveProxyByDN( const string& dn ) :
-    m_userdn( dn )
-{
+// RemoveProxyByDN::RemoveProxyByDN( const string& dn ) :
+//     m_userdn( dn )
+// {
 
-}
+// }
 
 void RemoveProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {

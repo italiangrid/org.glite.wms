@@ -37,8 +37,8 @@ namespace glite {
 	  bool m_found;
 
 	public:
-	  CheckDelegationByID( const std::string& delegid ) 
-	    : AbsDbOperation(), m_delegid( delegid ), m_found( false ) {}
+	  CheckDelegationByID( const std::string& delegid, const std::string& caller ) 
+	    : AbsDbOperation( caller ), m_delegid( delegid ), m_found( false ) {}
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	  

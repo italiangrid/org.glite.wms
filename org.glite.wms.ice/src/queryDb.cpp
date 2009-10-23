@@ -193,14 +193,14 @@ int main( int argc, char* argv[] )
     {
       fields_to_retrieve.push_back( "*" );
     }
-
-  db::GetFields getter( fields_to_retrieve, params );
+  list< vector< string > > result;
+  db::GetFields getter( fields_to_retrieve, params, result, "queryDb::main" );
   getter.use_or_clause();
-  db::Transaction tnx;
+  db::Transaction tnx(true,false);
   //tnx.begin( );
   tnx.execute( &getter );
   //tnx.commit( );
-  list< vector< string > > result = getter.get_values();
+  //  list< vector< string > > result = getter.get_values();
   if(verbose) {
     for( list< vector< string > >::const_iterator it=result.begin();
 	 it != result.end();

@@ -52,13 +52,13 @@ namespace ice {
 	  int m_delay;
 	  Ice* m_iceManager;
 	  log4cpp::Category* m_log_dev;
-          iceThreadPool* m_pool;
+          iceThreadPool* m_threadPool;
 
           /**
            * Prevents copying
            */
-	  eventStatusPoller( const eventStatusPoller& ) : m_real_poller( 0 ) { };
-	  glite::wms::ice::util::iceCommandStatusPoller m_real_poller;
+	  eventStatusPoller( const eventStatusPoller& )  { };
+//	  glite::wms::ice::util::iceCommandStatusPoller m_real_poller;
 
 	public:
 
@@ -79,7 +79,7 @@ namespace ice {
 
 	  virtual void stop( void ) { 
 	    iceThread::stop();
-	    m_real_poller.stop();
+	//    m_real_poller.stop();
 	  }
  
 	};

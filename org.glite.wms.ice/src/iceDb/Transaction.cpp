@@ -56,7 +56,7 @@ namespace {
      */ 
     class CreateDb : public AbsDbOperation {
     public:
-      CreateDb() : AbsDbOperation() { };
+      CreateDb() : AbsDbOperation( "iceDb::Transaction" ) { };
       virtual ~CreateDb() { };
     
       
@@ -177,6 +177,24 @@ namespace {
 	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
 			      << "CreateDb::execute() - "
 			      << "Error creating database table lease: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	      
+	    }
+	    try {
+	      string sqlcmd = 
+		"CREATE TABLE IF NOT EXISTS stats ( "	\
+		"timestamp integer(8) not null, "	\
+		"status integer(1) not null "		\
+		")";
+	      do_query( db, sqlcmd );
+	      
+	    } catch( DbOperationException& ex ) {
+	    
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream()
+			      << "CreateDb::execute() - "
+			      << "Error creating database table stats: "
 			      << ex.what() << ". STOP!"
 			      );
 	      abort();
@@ -461,7 +479,7 @@ namespace {
     protected:
         bool m_exclusive;
     public:
-        BeginTransaction( bool exclusive = false ) : AbsDbOperation(), m_exclusive( exclusive ) { };
+        BeginTransaction( bool exclusive = false ) : AbsDbOperation("iceDb::BeginTransation"), m_exclusive( exclusive ) { };
         virtual ~BeginTransaction() { };
         virtual void execute( sqlite3* db ) throw( DbOperationException& ) {
             string sqlcmd;
@@ -478,7 +496,7 @@ namespace {
      */
     class CommitTransaction : public AbsDbOperation {
     public:
-        CommitTransaction() : AbsDbOperation() { };
+        CommitTransaction() : AbsDbOperation("iceDb::CommitTransaction") { };
         virtual ~CommitTransaction() { };
         virtual void execute( sqlite3* db ) throw( DbOperationException& ) {
             string sqlcmd( "commit transaction;" );
@@ -492,7 +510,7 @@ namespace {
      */
     class RollbackTransaction : public AbsDbOperation {
     public:
-        RollbackTransaction() : AbsDbOperation() { };
+        RollbackTransaction() : AbsDbOperation( "iceDb::RollbackTransaction" ) { };
         virtual ~RollbackTransaction() { };
         virtual void execute( sqlite3* db ) throw( DbOperationException& ) {
             string sqlcmd( "rollback transaction;" );
@@ -506,18 +524,18 @@ namespace {
 //
 
 
-Transaction::Transaction( const bool create_chek ) :
+Transaction::Transaction( const bool read_only, const bool create_chek ) :
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     m_begin( false ),
     m_commit( true )
 {
     if ( 0 == s_db ) { // create the db
-        create_db( create_chek );
+      create_db( read_only, create_chek );
     }
 }
 
 
-void Transaction::create_db( const bool create_check ) 
+void Transaction::create_db( const bool read_only, const bool create_check ) 
 {
     static const char* method_name = "Transaction::create_db() - ";
     string persist_dir( iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() );
@@ -570,19 +588,31 @@ void Transaction::create_db( const bool create_check )
       }
     } // if( create_check )
 
-    int rc = sqlite3_open( string(persist_dir + "/ice.db").c_str(), &s_db );
-    if ( SQLITE_OK != rc ) {
+    if(read_only) {
+      //      SQLITE_OPEN_READONLY
+      int rc = sqlite3_open_v2( string(persist_dir + "/ice.db").c_str(), &s_db, SQLITE_OPEN_READONLY, 0 );
+      if ( SQLITE_OK != rc ) {
         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
                         << "Failed to open/create DB. Error message is "
                         << sqlite3_errmsg( s_db ) );
         exit(-1);
+      }
+    } else {
+      
+      int rc = sqlite3_open( string(persist_dir + "/ice.db").c_str(), &s_db );
+      if ( SQLITE_OK != rc ) {
+        CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
+                        << "Failed to open/create DB. Error message is "
+                        << sqlite3_errmsg( s_db ) );
+        exit(-1);
+      }
+      sqlite3_soft_heap_limit( 10485760 );
+      sqlite3_busy_timeout( s_db, 5000) ;
+      // Create table if not exists
+      if( create_check )
+	CreateDb().execute( s_db );
+      // Database intentionally left open
     }
-    sqlite3_soft_heap_limit( 10485760 );
-    sqlite3_busy_timeout( s_db, 5000) ;
-    // Create table if not exists
-    if( create_check )
-      CreateDb().execute( s_db );
-    // Database intentionally left open
 }
 
 

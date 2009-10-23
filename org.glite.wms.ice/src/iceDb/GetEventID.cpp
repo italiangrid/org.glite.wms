@@ -24,17 +24,6 @@ namespace {
 } // end local namespace
 
 //______________________________________________________________________________
-ice::db::GetEventID::GetEventID( const string& userdn, const string& ceurl )
-  : AbsDbOperation(),
-    m_userdn( userdn ), 
-    m_creamurl( ceurl ),
-    m_result( -1 ),
-    m_found( false )
-{
-  
-}
-
-//______________________________________________________________________________
 void ice::db::GetEventID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;

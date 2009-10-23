@@ -62,8 +62,12 @@ namespace db {
         virtual ~AbsDbOperation() { };
         virtual void execute( sqlite3* db ) throw( DbOperationException& ) = 0;
     protected:
-        AbsDbOperation() { };
+        AbsDbOperation( const std::string& caller) : m_caller(caller) { };
         void do_query( sqlite3* db, const std::string& sqlcmd, sqlite_callback_t callback = 0, void* param = 0 ) throw( DbOperationException& );
+	
+	const std::string m_caller;
+	
+	std::string get_caller( void ) const { return m_caller; }
     };
 
 } // namespace db

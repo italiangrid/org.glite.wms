@@ -37,7 +37,9 @@ namespace db {
      */
     class UpdateJob : public AbsDbOperation { 
     public:
-        UpdateJob( const glite::wms::ice::util::CreamJob& j );
+        UpdateJob( const glite::wms::ice::util::CreamJob& j, 
+		   const std::string& caller  );
+
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:
         const glite::wms::ice::util::CreamJob m_job;

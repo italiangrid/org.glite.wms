@@ -67,8 +67,8 @@ void emptyStatusNotification::apply( void )
       list< pair<string, string> > params;
       params.push_back( make_pair( "last_empty_notification", int_to_string( time(0)/*theJob.get_last_empty_notification()*/)));
       
-      db::UpdateJobByCid updater( m_cream_job_id, params );
-      db::Transaction tnx;
+      db::UpdateJobByCid updater( m_cream_job_id, params, "emptyStatusNotification::apply" );
+      db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
     }

@@ -35,11 +35,11 @@ using namespace std;
 //namespace cream_api = glite::ce::cream_client_api;
 //namespace wms_utils  = glite::wms::common::utilities;
 
-GetAllUserDN_MyProxy::GetAllUserDN_MyProxy( ) :    
-  AbsDbOperation()
-{
+// GetAllUserDN_MyProxy::GetAllUserDN_MyProxy( ) :    
+//   AbsDbOperation()
+// {
 
-}
+// }
 
 namespace { // begin local namespace
 

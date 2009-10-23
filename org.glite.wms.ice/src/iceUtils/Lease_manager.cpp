@@ -234,8 +234,8 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
     bool found = false;
     Lease_t leaseInfo("", "", time(0), "");
     {
-      db::GetLease getter(user_DN, cream_url);
-      db::Transaction tnx;
+      db::GetLease getter(user_DN, cream_url, "Lease_manager::make_lease");
+      db::Transaction tnx(false, false);
       tnx.execute( &getter );
       found = getter.found();
       if( found )
@@ -252,8 +252,8 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
 
     if( found && ( force || leaseInfo.m_expiration_time < time(0) ) ) {
       {
-	db::RemoveLease remover( user_DN, cream_url );
-	db::Transaction tnx;
+	db::RemoveLease remover( user_DN, cream_url,"Lease_manager::make_lease" );
+	db::Transaction tnx(false, false);
 	tnx.execute( &remover );
       }
       found = false;
@@ -309,8 +309,8 @@ string Lease_manager::make_lease( const CreamJob& job, bool force )
         // Inserts the lease ID into the lease set
 	//        m_lease_set.insert( Lease_t( user_DN, cream_url, expiration_time, lease_id ) );
 	{
-	  db::CreateLease creator( user_DN, cream_url, expiration_time, lease_id );
-	  db::Transaction tnx;
+	  db::CreateLease creator( user_DN, cream_url, expiration_time, lease_id, "Lease_manager::make_lease" );
+	  db::Transaction tnx(false, false);
 	  tnx.execute( &creator );
 	}
 
@@ -366,8 +366,8 @@ time_t Lease_manager::renew_lease( const string& lease_id )
     bool found = false;
     Lease_t leaseInfo("", "", time(0), "");
     {
-      db::GetLeaseByID getter( lease_id );
-      db::Transaction tnx;
+      db::GetLeaseByID getter( lease_id,"Lease_manager::renew_lease" );
+      db::Transaction tnx(false, false);
       tnx.execute( &getter );
       found = getter.found();
       if(found)
@@ -427,8 +427,8 @@ time_t Lease_manager::renew_lease( const string& lease_id )
     leaseInfo.m_expiration_time = lease_out.second;
     //lease_by_id_view.replace( it, leaseInfo );
     {
-      db::CreateLease creator( leaseInfo.m_user_dn, leaseInfo.m_cream_url, leaseInfo.m_expiration_time, leaseInfo.m_lease_id );
-      db::Transaction tnx;
+      db::CreateLease creator( leaseInfo.m_user_dn, leaseInfo.m_cream_url, leaseInfo.m_expiration_time, leaseInfo.m_lease_id, "Lease_manager::renew_lease" );
+      db::Transaction tnx(false, false);
       tnx.execute( &creator );
     }
     return leaseInfo.m_expiration_time;

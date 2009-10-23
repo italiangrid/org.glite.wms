@@ -42,8 +42,8 @@ namespace db {
         std::list< glite::wms::ice::util::CreamJob >* m_result;
 	
     public:
-        GetTerminatedJobs( std::list< glite::wms::ice::util::CreamJob >* result ) 
-	  : AbsDbOperation(), m_result( result ) { }
+        GetTerminatedJobs( std::list< glite::wms::ice::util::CreamJob >* result, const std::string& caller  ) 
+	  : AbsDbOperation(caller), m_result( result ) { }
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 

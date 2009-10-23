@@ -33,13 +33,13 @@ using namespace glite::wms::ice::db;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
-CheckGridJobID::CheckGridJobID( const string& gid ) :
-    AbsDbOperation(),
-    m_gridjobid( gid ),
-    m_found( false )
-{
+// CheckGridJobID::CheckGridJobID( const string& gid, const std::string& caller  ) :
+//     AbsDbOperation(caller),
+//     m_gridjobid( gid ),
+//     m_found( false )
+// {
 
-}
+// }
 
 namespace { // begin local namespace
 
@@ -55,8 +55,8 @@ namespace { // begin local namespace
 void CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd = boost::str( boost::format( 
-					    "select gridjobid from jobs" \
-					    " where gridjobid = \'%1%\';" ) % m_gridjobid );
+					    "SELECT gridjobid FROM jobs" \
+					    " WHERE gridjobid = \'%1%\';" ) % m_gridjobid );
   string gid;
 
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
