@@ -1,18 +1,24 @@
 #Configuration variables for FTS testing scripts
 
-FTS_HOST="lxbra2310.cern.ch"
+FTS_HOST="vtb-generic-77.cern.ch"
+#FTS_HOST="lxbra2310.cern.ch"
 #The name of the top level BDII
 BDII_HOST="lxbra2305.cern.ch"
 #The hostname of the LCG File Catalog
-LFC_HOST="lxb7607.cern.ch"
+LFC_HOST="lxb7608v3.cern.ch"
 #The name of the site as it stored in the GOC DB and information system.
-SITE="cert-tb-cern"
+SITE_NAME="cert-tb-cern"
 #Name of VO to use
-VO="org.glite.voms-test"
+VO="dteam"
+#VO="org.glite.voms-test"
 #The channel to use for submitting file transfers
-CHANNEL="CERN-CERN"
+CHANNEL="CERN-DESY"
+#export CERN_SE="lxb7608v1.cern.ch"
+export CERN_SE="lxbra1910.cern.ch"
+#CHANNEL="CERN-DESY"
+export DESY_SE="swords.desy.de"
 #Timeout for waiting the job to finish. Default is 100 sec.
-TIMEOUT=100
+TIMEOUT=300
 #The number of jobs to be submitted. Default is 10
 NJOBS=10
 #The number of files per job. Default is 10
