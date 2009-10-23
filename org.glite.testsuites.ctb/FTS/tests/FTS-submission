@@ -129,7 +129,7 @@ get_channels
 found=0
 for Channel in $Channel_List
 do
-  if [ "$Channel" -eq "$CHANNEL" ];then 
+  if [ "$Channel" == "$CHANNEL" ];then 
     echo "Channel exists"
     found=1
     break
