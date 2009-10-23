@@ -125,6 +125,10 @@ fi
 echo
 echo "Retrieving channels list..."
 get_channels
+if [ "x$Channel_List" == "x" ]; then
+  echo "No channels retrieved"
+  exit 1
+fi
 
 found=0
 for Channel in $Channel_List
@@ -178,8 +182,13 @@ if [ $? -eq 1 ];then
   echo "-TEST FAILED-"
   exit 1
 fi
-SE_SOURCE=$SE_HOST
-echo "SE_source: $SE_SOURCE"
+if [ "x$SE_HOST" != "x" ]; then
+  SE_SOURCE=$SE_HOST
+  echo "SE_source: $SE_SOURCE"
+else
+  echo "Failing retrieving good SE from site $Source_Site"
+  exit 1
+fi
 
 #get_good_se_from_site $Destin_Site
 get_def_se_from_site $Destin_Site
@@ -188,8 +197,14 @@ if [ $? -eq 1 ];then
   echo "-TEST FAILED-"
   exit 1
 fi
-SE_DEST=$SE_HOST
-echo "SE_dest: $SE_DEST"
+if [ "x$SE_HOST" != "x" ]; then
+  SE_DEST=$SE_HOST
+  echo "SE_dest: $SE_DEST"
+else
+  echo "Failing retrieving good SE from site $Source_Site"
+  exit 1
+fi
+
 
 #3.c) Retrieve SEs path to use for file transfer
 get_se_path $SE_SOURCE
@@ -198,8 +213,14 @@ if [ $? -eq 1 ];then
   echo "-TEST FAILED-"
   exit 1
 fi
-SOURCE_SAPATH=$SE_SRM_LOC
-echo "SAPATH_source: $SOURCE_SAPATH"
+if [ "x$SE_SRM_LOC" != "x" ]; then
+  SOURCE_SAPATH=$SE_SRM_LOC
+  echo "SAPATH_source: $SOURCE_SAPATH"
+else
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  exit 1
+fi
+
 
 get_se_path $SE_DEST
 if [ $? -eq 1 ];then
@@ -207,8 +228,13 @@ if [ $? -eq 1 ];then
   echo "-TEST FAILED-"
   exit 1
 fi
-DEST_SAPATH=$SE_SRM_LOC
-echo "SAPATH_destination: $DEST_SAPATH"
+if [ "x$SE_SRM_LOC" != "x" ]; then
+  DEST_SAPATH=$SE_SRM_LOC
+  echo "SAPATH_destination: $DEST_SAPATH"
+else
+  echo "Failing retrieving SAPATH from SE $SE_SOURCE"
+  exit 1
+fi
 
 #4) Submitting a file transfer
 echo
