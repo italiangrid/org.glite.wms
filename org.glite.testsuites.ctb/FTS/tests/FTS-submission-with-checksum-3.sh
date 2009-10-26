@@ -101,7 +101,7 @@ done
 
 #source functions definitions
 source FTS-common
-source ../FTS-certconfig
+#source ../FTS-certconfig
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
@@ -214,8 +214,8 @@ echo "SAPATH_destination: $DEST_SAPATH"
 
 #4) Submitting a file transfer using all the checksum algorithms
 if [ "$CHANNEL" == "CERN-CERN" ]; then
-  #USING DPM
-  ALGOS="CRC32 ADLER32 MD5 SHA1" 
+  #USING DPM SHA1 not supported
+  ALGOS="CRC32 ADLER32 MD5" 
 elif [ "$CHANNEL" == "CERN-DESY" ]; then
   #USING DCACHE
   ALGOS="ADLER32" 
