@@ -63,7 +63,6 @@ void printhelp( void ) {
   cout << "  --status|-S\t\tPrint the STATUS column of the job table" << endl;
   cout << "  --lease-id|-L\t\tPrint the LEASE-ID column of the job table" << endl;
   cout << "  --delegation-id|-D\tPrint the DELEGATION-ID column of the job table" << endl;
-  cout << "  --proxy-exptime|-t\tPrint the PROXY EXPIRATION TIME column of the job table" << endl;
   cout << "  --worker-node|-w\tPrint the WORKER-NODE column of the job table" << endl;
   cout << "  --help|-h\t\tPrint this help" << endl;
 }
