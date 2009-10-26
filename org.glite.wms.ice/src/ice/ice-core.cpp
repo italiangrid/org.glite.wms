@@ -598,6 +598,19 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 #ifdef ICE_PROFILE
   ice_util::ice_timer timer("Ice::resubmit_job");
 #endif
+
+  //  string isbproxy( the_job.getUserProxyCertificate() );
+  cream_api::soap_proxy::VOMSWrapper V( the_job.getUserProxyCertificate() );
+  if( !V.IsValid( ) ) {
+    //throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
+    CREAM_SAFE_LOG( m_log_dev->errorStream() 
+		    << "Ice::resubmit_job() - Will NOT resubmit job "
+		    << "because it's Input Sandbox proxy file is not valid: "
+		    << V.getErrorMessage()
+		    );
+    return;
+  }
+
     try {
       //boost::recursive_mutex::scoped_lock M( ice_util::jobCache::mutex );
       boost::recursive_mutex::scoped_lock M( /*ice_util::CreamJob::s_GlobalICEMutex*/ s_mutex );
