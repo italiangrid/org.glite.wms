@@ -155,7 +155,7 @@ declare -a tests_failed
 failed=no
 
 testdir=./tests
-tests_list=(FTS-basic FTS-services FTS-channels FTS-submission)
+tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
 #The last two are failing on CERN-DESY channels
 #tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-stress FTS-channels-submit)
 
@@ -205,6 +205,12 @@ do
             --vo $voname --njobs $njobs  --nfiles $nfiles" > ${item}_result.txt
     ./$item --fts $hostname --bdii $bdiihost --site $sitename \
             --vo $voname --njobs $njobs  --nfiles $nfiles >> ${item}_result.txt
+    res=$?
+  elif [ $item = "FTS-submission-with-checksum-1.sh" ] || [ $item = "FTS-submission-with-checksum-2.sh" ] || [ $item = "FTS-submission-with-checksum-3.sh" ]; then
+    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" > ${item}_result.txt
+    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time >> ${item}_result.txt
     res=$?
   fi
 
