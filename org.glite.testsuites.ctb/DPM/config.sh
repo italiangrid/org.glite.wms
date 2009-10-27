@@ -1,2 +1,0 @@
-BDII_HOST=lxb2017.cern.ch
-BDII_PORT=2170
