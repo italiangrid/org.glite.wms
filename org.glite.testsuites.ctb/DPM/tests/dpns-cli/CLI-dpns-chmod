@@ -1,0 +1,169 @@
+#!/bin/bash
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+export DPNS_HOME="/dpm/$CFG_DPNS_DOMAIN/$CFG_DPNS_BASEDIR/$CFG_VO"
+TEST_DIR=d`date +%s%N`
+TEST_SUBDIR1=s1`date +%s%N`
+TEST_SUBDIR2=s2`date +%s%N`
+DUMMY_USERNAME=u`date +%s%N`
+DUMMY_GROUPNAME=g`date +%s%N`
+TEMP_FILE=/tmp/_dpm_test_temp`date +%s%N`
+TEST_RESULT="SUCCESS"
+
+cleanup ()
+{
+   dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chmod 775 \
+                      \"/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1\""
+
+   dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chmod 775 \
+                      \"/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1\""
+
+   lcg-del --nolfc srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1
+
+   dpns-rm -r $TEST_DIR
+
+   dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-rmusrmap --uid $DUMMY_UID"
+   dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-rmgrpmap --gid $DUMMY_GID"
+
+   rm -f $TEMP_FILE
+}
+
+report_failure ()
+{
+   echo 
+   echo "OVERALL RESULT: FAILURE"
+   exit 1
+}
+
+dpm_exec ()
+{
+   ssh root@"$DPM_HOST" "$1"
+}
+
+echo "Creating directory $TEST_DIR/$TEST_SUBDIR1"
+dpns-mkdir -p $TEST_DIR/$TEST_SUBDIR1
+
+echo "Copying a file in $TEST_DIR/$TEST_SUBDIR1"
+lcg-cp /bin/bash srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1
+
+echo "Revoking permissions from bash_copy_1"
+dpns-chmod 000 $TEST_DIR/$TEST_SUBDIR1/bash_copy_1
+ret=$?
+if [ $ret -ne 0 ]; then
+   echo "dpns-chmod exited with code $ret. Test failed"
+   cleanup
+   report_failure
+fi
+
+echo "Trying to copy the file"
+lcg-cp srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1 $TEMP_FILE
+if [ $? -eq 0 ]; then
+   echo "File copied successfully although access should be denied. Test has failed."
+   cleanup
+   report_failure
+fi
+
+echo "Access to file denied. Test OK"
+
+echo 
+echo "Resetting permissions to 750"
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chmod 755 \
+                \"/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1\""
+
+echo "Registering a dummy user in the DPNS usermap: $DUMMY_USERNAME"
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-enterusrmap --user $DUMMY_USERNAME"
+echo -n "Looking up the UID of the dummy user: "
+DUMMY_UID=$(dpns-listusrmap --user "$DUMMY_USERNAME" | sed -e 's/\s*\([0-9]*\)\s*.*/\1/')
+echo $DUMMY_UID
+
+echo
+echo -n "Looking up owning user id: "
+ORIGINAL_UID=$(dpns-ls -l $DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1 | \
+               sed -e 's/[rwxd-]*\s*[0-9]*\s*\([0-9]*\)\s*.*/\1/')
+echo $ORIGINAL_UID
+
+echo "Changing the owner to $DUMMY_USERNAME. Executing user should be able to read the file."
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chown $DUMMY_UID \
+                          \"/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1\""
+
+echo "Trying to copy the file locally. Access should be allowed (executing user is a member of the owning group with r-x access."
+lcg-cp srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1 $TEMP_FILE
+if [ $? -ne 0 ]; then
+   echo "File was not copied successfully although access should be allowed. Test has failed."
+   cleanup
+   report_failure
+fi
+
+echo "Changing the parent's directory permissions to 555. File deletion should not be possible."
+dpns-chmod 555 $TEST_DIR/$TEST_SUBDIR1
+ret=$?
+if [ $ret -ne 0 ]; then
+   echo "dpns-chmod exited with code $ret. Test has failed"
+   cleanup
+   report_failure
+fi
+
+echo "Trying to delete the file"
+lcg-del --nolfc srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1
+if [ $? -eq 0 ]; then
+   echo "File was deleted successfully although write access shouldn't be allowed. Test has failed."
+   cleanup
+   report_failure
+fi
+
+echo "Changing the owner back to the original."
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chown $ORIGINAL_UID \
+                         \"/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1\""
+
+echo
+echo "Resetting permissions to 440"
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chmod 440 \
+                \"/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1\""
+
+echo
+echo "Registering a dummy group in the DPNS groupmap: $DUMMY_GROUPNAME"
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-entergrpmap --group $DUMMY_GROUPNAME"
+echo -n "Looking up the GID of the dummy group: "
+DUMMY_GID=$(dpns-listgrpmap --group "$DUMMY_GROUPNAME" | sed -e 's/\s*\([0-9]*\)\s*.*/\1/')
+echo $DUMMY_GID
+
+echo "Changing the owner group to $DUMMY_GROUPNAME. Executing user should be able to read the file."
+dpm_exec "export DPNS_HOST=localhost; /opt/lcg/bin/dpns-chown $DUMMY_GID \
+                          \"/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1\""
+
+echo -n "Trying to copy the file locally"
+lcg-cp srm://$DPM_HOST/$DPNS_HOME/$TEST_DIR/$TEST_SUBDIR1/bash_copy_1 $TEMP_FILE
+if [ $? -ne 0 ]; then
+   echo "...failed"
+   echo "File was not copied successfully although access should be allowed. Test has failed."
+   cleanup
+   report_failure
+fi
+echo "...ok"
+
+cleanup
+echo
+echo "OVERALL RESULT: SUCCESS"
+exit 0
+

@@ -63,7 +63,7 @@ int main( int argc, char * argv[] ) {
  mycommand = calloc(200,1);
  mylines   = calloc(2000,1);
 
- strcpy(mycommand,"lxb1921.cern.ch:/bin/ls");
+ strcpy(mycommand,"head32.cern.ch:/bin/ls");
   
  if ( argc > 1 ) {
   strcpy(mypath, argv[1]);
@@ -71,34 +71,6 @@ int main( int argc, char * argv[] ) {
   printf(" Usage: \%s <nodename> <testpath>\n", argv[0]);
   return 1;
  }
-
-// rfio_popen should be disabled on a DPM
-
-// rfio_popen
-
- strcpy(message,"Testing remote execution \t[ rfio_popen ]");
- pfile = rfio_popen(mycommand, "r");
- if ( pfile == NULL ) {
-    report(message, 1);
-    serrno_report(serrno);
-    globalret=-1;
- } else {
-    report(message,0);
- }
-
-// fgets(mylines,10,pfile);
-
-// rfio_pclose
- strcpy(message,"Closing remote execution \t[ rfio_pclose ]");
- ret = rfio_pclose(pfile);
- if ( ret == -1 ) {
-    report(message, 1);
-    serrno_report(serrno);
-    globalret=-1;
- } else {
-    report(message,0);
- }
-
 
 // rfio_mkdir
 

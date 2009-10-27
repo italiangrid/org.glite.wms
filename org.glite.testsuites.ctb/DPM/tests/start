@@ -1,8 +1,0 @@
-#!/bin/bash
-
-
-./DPM-test-ping-services.sh $1
-./DPM-test-infosys.sh  $1
-./DPM-test-rfio-cli.sh $1 $2
-./DPM-test-rfio-c-api.sh $1 $2
-./DPM-test-dpns-c-api.sh $1 $2

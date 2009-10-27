@@ -1,6 +1,6 @@
 #include <serrno.h>
 #include <errno.h>
-
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -85,10 +85,11 @@ int main( int argc, char * argv[] ) {
  sprintf(myfile,"%s/testfile",mypath);
  sprintf(mynewfile,"%s/testfile2",mypath);
 
-// dpns_mkdir
-
  strcpy(message,"Starting session. \t\t[ dpns_startsess ]");
- myserver=getenv("DPNS_HOST");
+
+ myserver = malloc (200);
+ strcpy (myserver, getenv("DPNS_HOST"));
+
  ret = dpns_startsess(myserver,"DPNS C API test");
  handle_result(ret);
 

@@ -27,9 +27,9 @@ echo "Target node is $node. `date`"
 echo "Launching RFIO C API tests:"
 
 rm -f DPM-test-rfio-c-api.exe
-gcc -g -I /opt/lcg/include/dpm/ -L/opt/lcg/lib/ -ldpm -lgfal DPM-test-rfio-c-api.c  -o DPM-test-rfio-c-api.exe
+gcc -g -I /opt/lcg/include/dpm/ -L/opt/lcg/lib/ -ldpm -lgfal rfio-c-api.c -o rfio-c-api
 
-if [ $? -eq 0 ] && [ -f DPM-test-rfio-c-api.exe ]; then
+if [ $? -eq 0 ] && [ -f rfio-c-api ]; then
  echo_success
 else
  echo_failure
@@ -43,5 +43,5 @@ mypath=/dpm/$mydomain/home/$vo/rfiocapitest$RANDOM
 export DPM_HOST=$node
 export DPNS_HOST=$node
 
-./DPM-test-rfio-c-api.exe $mypath
+./rfio-c-api $mypath
 

@@ -47,7 +47,7 @@ fi
 echo "  AccessProtocol $prot published: "
 done
 
-for prot in srm_v1 srm_v2 ; do
+for prot in srmv1 srmv2 ; do
 lines=`ldapsearch  -x -h $mynode -p 2170 -b "mds-vo-name=resource,o=grid" GlueSEControlProtocolLocalID=${prot} | wc -l` 
 if [ $lines -lt 20 ]; then
  echo_failure
@@ -73,7 +73,7 @@ done
 
 lines=`ldapsearch  -x -h $mynode -p 2170 -b "mds-vo-name=resource,o=grid" GlueServiceAccessControlRule | grep "GlueServiceAccessControlRule: " | grep -v ": VO:" | wc -l`
 lines2=`ldapsearch  -x -h $mynode -p 2170 -b "mds-vo-name=resource,o=grid" GlueServiceAccessControlRule | grep "GlueServiceAccessControlRule: " | wc -l`
-lines3=$((lines*2))
+lines3=$((lines))
 
 if [ "$lines3" -ne "$lines2" ]; then
  echo_failure;

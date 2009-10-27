@@ -12,7 +12,7 @@ echo "Target node is $mynode. Date: `date`"
 echo "Testing the default DPM services:"
 
 
-for service in "5001 rfiod" "3306 mysqld" "5010 dpnsdaemon" "5015 dpm"  "2170 bdii" "22 sshd" "8443 srmv1" "8444 srmv2" "8446 srmv2.2" "2811 globus-gridftp"; do
+for service in "5001 rfiod" "3306 mysqld" "5010 dpnsdaemon" "5015 dpm"  "2170 bdii" "22 sshd" "8443 srmv1" "8446 srmv2.2" "2811 globus-gridftp"; do
 port=`echo $service | cut -d " " -f 1`
 serv=`echo $service | cut -d " " -f 2`
 state=`nmap -P0 -sT -p $port --max_rtt_timeout 1000 ${mynode} | grep "$port/tcp" | awk '{print $2}'`
