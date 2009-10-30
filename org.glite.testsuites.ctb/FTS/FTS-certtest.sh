@@ -189,11 +189,14 @@ do
     ./$item --fts $hostname >> ${item}_result.txt
     res=$?
   elif [ $item = "FTS-submission" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+    for channel in $channels
+    do
+      echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" >> ${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost --channel $channel \
             --vo $voname --timeout $time >> ${item}_result.txt
-    res=$?
+      res=$?
+    done
   elif [ $item = "FTS-all-channels" ]; then
     echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
             --vo $voname --timeout $time " > ${item}_result.txt
