@@ -28,7 +28,7 @@ namespace jobstat = glite::ce::cream_client_api::job_statuses;
 //------------------------------------------------------------------------------
 iceLBEvent* iceLBEventFactory::mkEvent( const CreamJob& theJob )
 {
-    switch( theJob.getStatus() ) {
+    switch( theJob.get_status() ) {
     case jobstat::PENDING:
         // nothing to log
         return 0;

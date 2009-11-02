@@ -101,14 +101,14 @@ Delegation_manager::delegate( const CreamJob& job,
 		      << "WARNING: force_delegation is set to TRUE." 
 		      );  
 
-    string myproxy_address = job.getMyProxyAddress();
+    string myproxy_address = job.get_myproxy_address();
 
     
     string delegation_id; // delegation ID to return as a result
 
     
-    const string cream_url( job.getCreamURL() );
-    const string cream_deleg_url( job.getCreamDelegURL() );
+    const string cream_url( job.get_creamurl() );
+    const string cream_deleg_url( job.get_cream_delegurl() );
     string str_sha1_digest;
 
     if(USE_NEW) {
@@ -120,7 +120,7 @@ Delegation_manager::delegate( const CreamJob& job,
       str_sha1_digest = V.getDNFQAN();
     }
     else {
-      str_sha1_digest = computeSHA1Digest( job.getUserProxyCertificate() );
+      str_sha1_digest = computeSHA1Digest( job.get_user_proxy_certificate() );
     }
 
     
@@ -184,7 +184,7 @@ Delegation_manager::delegate( const CreamJob& job,
         try {
 	  // Gets the proxy expiration time
 	  //expiration_time = V.getProxyTimeEnd( );
-	  string certfile( job.getUserProxyCertificate() );
+	  string certfile( job.get_user_proxy_certificate() );
 	  CreamProxy_Delegate( cream_deleg_url, certfile, delegation_id ).execute( 3 );
         } catch( exception& ex ) {
 	  // Delegation failed
@@ -292,73 +292,6 @@ Delegation_manager::delegate( const CreamJob& job,
 
 }
 
-//______________________________________________________________________________
-// void Delegation_manager::purge_old_delegations( void )
-// {
-//     static char* method_name = "Delegation_manager::purge_old_delegations() - ";
-
-// //     typedef t_delegation_set::nth_index<1>::type t_delegation_by_expiration;
-// //     t_delegation_by_expiration& deleg_time_view( m_delegation_set.get<1>() );
-
-// //     t_delegation_by_expiration::iterator it_end = deleg_time_view.lower_bound( time(0) );
-// //     size_t size_before = deleg_time_view.size();    
-// //     deleg_time_view.erase( deleg_time_view.begin(), it_end );
-// //     size_t size_after = deleg_time_view.size();
-
-// //    boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
-
-//     vector<table_entry> allDelegations;
-//     {
-//       //Get
-//       db::GetAllDelegation getter( false );
-//       db::Transaction tnx;
-//       //tnx.begin();
-//       tnx.execute( &getter );
-//       allDelegations = getter.get_delegations();
-//     }
-
-//     list<string> toRemove;
-
-//     for( vector<table_entry>::const_iterator it = allDelegations.begin();
-// 	 it != allDelegations.end();
-// 	 ++it)
-//       {
-// 	{
-// 	  list<string> fields;
-// 	  fields.push_back( "gridjobid" );
-// 	  list<pair<string, string> > clause;
-// 	  clause.push_back( make_pair("delegationid", it->m_delegation_id) );
-// 	  db::GetFieldsCount getter( fields, clause );
-// 	  db::Transaction tnx;
-// 	  //tnx.begin();
-// 	  tnx.execute( &getter );
-// 	  if( !getter.get_count() ) {
-// 	    CREAM_SAFE_LOG( m_log_dev->debugStream()
-// 			    << method_name
-// 			    << "There're no jobs related to delegation ID ["
-// 			    << it->m_delegation_id << "]. Removing this delegation from database."
-// 			    );
-// 	    toRemove.push_back( it->m_delegation_id);
-// 	  }
-// 	}
-//       }
-
-//     for( list<string>::const_iterator it = toRemove.begin();
-// 	 it != toRemove.end();
-// 	 ++it)
-//       {
-// 	this->removeDelegation( *it );
-//       }
-
-// //     if ( size_before != size_after ) {
-// //       CREAM_SAFE_LOG( m_log_dev->debugStream()
-// // 		      << method_name
-// // 		      << "Purged "
-// // 		      << size_before - size_after
-// // 		      << " elements from the delegation cache"
-// // 		      );
-// //     }
-// }
 
 //______________________________________________________________________________
 void 
@@ -383,44 +316,6 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
       tb = getter.get_delegation();
   }
 
-//   string delegId = newDeleg.get<0>();
-  
-//   typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
-//   t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
-  
-//   t_delegation_by_ID::iterator it = delegation_by_ID_view.find( delegId );
-  
-//  if ( /*delegation_by_ID_view.end() != it*/ found ) {
-//     string key     = it->m_sha1_digest;
-//     string ceurl   = it->m_cream_url;
-//     string delegid = it->m_delegation_id;
-//     string user_dn = it->m_user_dn;
-//     bool renewable = it->m_renewable;
-//     string myproxy = it->m_myproxyserver;
-    
-//     CREAM_SAFE_LOG( m_log_dev->debugStream()
-// 		    << method_name
-// 		    << "Old Delegation was: ID=[" 
-// 		    << delegid << "] user_dn=["
-// 		    << user_dn << "] expiration time=["
-// 		    << time_t_to_string(it->m_expiration_time) << "] CEUrl=["
-// 		    << ceurl << "]"
-// 		    );
-    
-    
-    
-//     delegation_by_ID_view.erase( it );
-    
-//     CREAM_SAFE_LOG( m_log_dev->debugStream()
-// 		    << method_name
-// 		    << "New Delegation id: ID=[" 
-// 		    << delegid << "] user_dn=["
-// 		    << user_dn << "] expiration time=["
-// 		    << time_t_to_string(newDeleg.get<1>()) << "] CEUrl=["
-// 		    << ceurl << "]"
-// 		    );
-    
-//     m_delegation_set.insert( table_entry(key, ceurl, newDeleg.get<1>(), newDeleg.get<2>(), delegid, user_dn, renewable, myproxy)  );
   if( found )
     {
       CREAM_SAFE_LOG( m_log_dev->debugStream()
@@ -457,16 +352,6 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 #endif
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
-//   typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
-//   t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
-  
-//   t_delegation_by_ID::iterator it = delegation_by_ID_view.find( delegToRemove );
-  
-//   if ( delegation_by_ID_view.end() != it )
-//     {
-//       delegation_by_ID_view.erase( it );
-//     }
-
   CREAM_SAFE_LOG( m_log_dev->debugStream()
 		  << "Delegation_manager::removeDelegation() - "
 		  << "Removing Delegation ID [" 
@@ -483,7 +368,6 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 }
 
 //______________________________________________________________________________
-// void Delegation_manager::getDelegationEntries( vector<boost::tuple<string, string, string, time_t, int, bool, string> >& target, const bool only_renewable )
 void Delegation_manager::getDelegationEntries( vector< table_entry >& target, const bool only_renewable )
 {
 #ifdef ICE_PROFILE
@@ -503,15 +387,7 @@ void Delegation_manager::getDelegationEntries( vector< table_entry >& target, co
       it != allDelegations.end();
       ++it)
     {
-//       target.push_back( boost::make_tuple(it->m_delegation_id, 
-// 					  it->m_cream_url, 
-// 					  it->m_user_dn, 
-// 					  it->m_expiration_time, 
-// 					  it->m_delegation_duration,
-// 					  it->m_renewable,
-// 					  it->m_myproxyserver
-// 					  )
-// 			);
+
       target.push_back( *it );
     }
 }
@@ -528,24 +404,7 @@ void Delegation_manager::redelegate( const string& certfile,
 
     static char* method_name = "Delegation_manager::redelegate() - ";
 
-    // Lookup the delegation_id into the set
-//     typedef t_delegation_set::nth_index<3>::type t_delegation_by_ID;
-//     t_delegation_by_ID& delegation_by_ID_view( m_delegation_set.get<3>() );
-    
-//     t_delegation_by_ID::iterator it = delegation_by_ID_view.find( delegation_id );    
 
-//     if ( delegation_by_ID_view.end() == it ) {
-//         // The delegation ID was not found. This must _never_ happen,
-//         // so we simply give up here.
-
-//         CREAM_SAFE_LOG( m_log_dev->fatalStream() << method_name
-//                         << "Could not find delegaion id ["
-//                         << delegation_id << "]. Giving up"
-//                         );
-//         abort(); // FIXME
-//     }
-
-    //table_entry delegation_entry;
     bool found = false;
     {
       db::CheckDelegationByID checker( delegation_id, method_name );
@@ -591,14 +450,6 @@ void Delegation_manager::redelegate( const string& certfile,
         // throw runtime_error( "Delegation failed" );
     }     
 
-//     typedef t_delegation_set::nth_index<2>::type t_delegation_by_seq;
-//     t_delegation_by_seq& delegation_by_seq( m_delegation_set.get<2>() );
-
-//     // Project the iterator to the sequencedd index
-//     t_delegation_by_seq::iterator it_seq( m_delegation_set.project<2>( it ) );
-    
-//     // Relocates the newly-found element to the front of the list
-//     delegation_by_seq.relocate( delegation_by_seq.begin(), it_seq );    
 }
 
 //----------------------------------------------------------------------------

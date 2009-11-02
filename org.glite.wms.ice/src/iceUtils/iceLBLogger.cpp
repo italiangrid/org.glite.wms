@@ -20,7 +20,6 @@
 #include "iceLBLogger.h"
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
-//#include "jobCache.h"
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -106,9 +105,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         CREAM_SAFE_LOG(m_log_dev->errorStream()
                        << method_name
                        << ev->describe()
-                       << " GridJobID=[" 
-                       << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getCompleteCreamJobID() << "]"
+                       << " - [" << ev->getJob().describe() << "]"
                        << ". Caught exception " << ex.what()
                        );
         return ev->getJob();
@@ -121,12 +118,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
         CREAM_SAFE_LOG(m_log_dev->infoStream() 
                        << method_name
                        << ev->describe( )
-                       << " GridJobID=[" 
-                       << ev->getJob().getGridJobID() << "]"
-                       << " CreamJobID=[" << ev->getJob().getCompleteCreamJobID() << "]"
-                       // << " Seq code BEFORE from job=[" << ev->getJob().getSequenceCode() << "]"
-                       // << " Seq code BEFORE from ctx=[" << edg_wll_GetSequenceCode( *(m_ctx->el_context) ) << "]"
-                       
+                       << " - [" << ev->getJob().describe() << "]"
                        );
         if ( m_lb_enabled ) {
 
@@ -157,7 +149,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 #ifdef ICE_PROFILE_ENABLE
 	  api_util::scoped_timer T2( "iceLBLogger::logEvent - UPDATE JOB BY GID" );//126
 #endif
-	  glite::wms::ice::db::UpdateJobByGid updater( theJob.getGridJobID(), params, "iceLBLogger::logEvent" );
+	  glite::wms::ice::db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceLBLogger::logEvent" );
 	  glite::wms::ice::db::Transaction tnx(false, false);
 	  tnx.execute( &updater );
 	  return theJob;

@@ -67,21 +67,7 @@ namespace util {
         void setUserProxyIfLonger_Legacy( const std::string& proxy) throw();
         void setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy) throw();
 	void setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy, const time_t ) throw();
-        
-	//	void registerUserProxy( const std::string& dn, 
-	//				const std::string& proxy, 
-	//				const std::string& server, 
-	//				const time_t proxy_time_end ) throw();
-
-	//	void changeRegisteredUserProxy( const std::string& dn, 
-	//					const std::string& proxy, 
-	//					const std::string& server, 
-	//					const time_t proxy_time_end ) throw();
-
-	//	void unregisterUserProxy( const std::string& dn,
-	//				  const std::string& server,
-	//				  const std::string& proxyfile = "" ) throw();
-
+       
 	void incrementUserProxyCounter( const std::string& dn, 
 					const std::string& myproxyname ) throw();
 
@@ -113,8 +99,6 @@ namespace util {
 	
         void copyProxy( const std::string& source, const std::string& target ) throw(SourceProxyNotFoundException&);
 
-	//std::pair< std::string, time_t> searchBetterProxy( const std::string& ) throw();
-        
 	std::string composite( const std::string& userDN, const std::string& myproxy_name) const throw()
 	  {
 #ifdef ICE_PROFILE

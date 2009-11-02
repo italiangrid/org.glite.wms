@@ -286,23 +286,25 @@ void iceLBContext::registerJob( const util::CreamJob& theJob )
     int res;
     edg_wlc_JobId   id;
 
+    string _gid( theJob.get_grid_jobid() );
+
     setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
 
     CREAM_SAFE_LOG(m_log_dev->infoStream() 
-		   << "iceLBContext::registerJob() - Registering jobid=[" << theJob.getGridJobID() << "]"
+		   << "iceLBContext::registerJob() - Registering jobid=[" << _gid << "]"
 		   );
     
-    edg_wlc_JobIdParse( theJob.getGridJobID().c_str(), &id );
+    edg_wlc_JobIdParse( _gid.c_str(), &id );
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
-    res = edg_wll_RegisterJobProxy( *el_context, id, EDG_WLL_JOB_SIMPLE, theJob.getJDL().c_str(), theJob.getEndpoint().c_str(), 0, 0, 0 );
+    res = edg_wll_RegisterJobProxy( *el_context, id, EDG_WLL_JOB_SIMPLE, theJob.get_jdl().c_str(), theJob.get_endpoint().c_str(), 0, 0, 0 );
 #else
-    res = edg_wll_RegisterJob( *el_context, id, EDG_WLL_JOB_SIMPLE, theJob.getJDL().c_str(), theJob.getEndpoint().c_str(), 0, 0, 0 );
+    res = edg_wll_RegisterJob( *el_context, id, EDG_WLL_JOB_SIMPLE, theJob.get_jdl().c_str(), theJob.get_endpoint()().c_str(), 0, 0, 0 );
 #endif
     edg_wlc_JobIdFree( id );
     if( res != 0 ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream() 
-		     << "iceLBContext::registerJob() - Cannot register jobid=[" << theJob.getGridJobID()
+		     << "iceLBContext::registerJob() - Cannot register jobid=[" << _gid
 		     << "]. LB error code=" << res
 		     );
     }
@@ -312,17 +314,17 @@ void iceLBContext::registerJob( const util::CreamJob& theJob )
 void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLBException& )
 {
     static const char* method_name = "iceLBContext::setLoggingJob - ";
-
+    string _gid( theJob.get_grid_jobid() );
     edg_wlc_JobId   id;
     int res = 0;
 
-    res = edg_wlc_JobIdParse( theJob.getGridJobID().c_str(), &id );    
+    res = edg_wlc_JobIdParse( _gid.c_str(), &id );    
 
     char *lbserver;
     unsigned int lbport;
     edg_wlc_JobIdGetServerParts( id, &lbserver, &lbport );
     CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-		   << "Setting log job to jobid=[" << theJob.getGridJobID() << "] "
+		   << "Setting log job to jobid=[" << _gid << "] "
 		   << "LB server=[" << lbserver << ":" << lbport << "] "
 		   << "(port is not used, actually...)"
 		   );
@@ -330,15 +332,15 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION, lbserver );
     if ( lbserver ) free( lbserver );
 
-    boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.getUserDN());
+    boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.get_user_dn());
 
-    if ( !theJob.getSequenceCode().empty() ) {
+    if ( !theJob.get_sequence_code().empty() ) {
 #ifdef GLITE_WMS_HAVE_LBPROXY
       string const user_dn( get_proxy_subject( result.get<0>()) );
 
-        res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.getSequenceCode().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
+        res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.get_sequence_code().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
 #else
-        res |= edg_wll_SetLoggingJob( *el_context, id, theJob.getSequenceCode().c_str(), EDG_WLL_SEQ_NORMAL );
+        res |= edg_wll_SetLoggingJob( *el_context, id, theJob.get_sequence_code().c_str(), EDG_WLL_SEQ_NORMAL );
 #endif
     }
 
@@ -347,7 +349,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     if( res != 0 ) {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		     << "Unable to set logging job to jobid=["
-		     << theJob.getGridJobID()
+		     << _gid
 		     << "]. LB error is "
 		     << getLoggingError( 0 )
 		     );
@@ -366,7 +368,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
         if( res ) {
             CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 			 << "Unable to set logging job to jobid=["
-			 << theJob.getGridJobID()
+			 << _gid
 			 << "]. "
 			 << getLoggingError( 0 )
 			 );
@@ -375,7 +377,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     } else {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		     << "Unable to set logging job to jobid=["
-		     << theJob.getGridJobID()
+		     << _gid
 		     << "]. Proxy file ["
 		     << betterproxy
 		     << "] does not exist. "

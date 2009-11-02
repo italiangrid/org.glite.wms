@@ -121,7 +121,7 @@ bool iceCommandLeaseUpdater::lease_can_be_renewed( const CreamJob& job ) const t
     // 3. Jobs which can be purged (similar to case 2.) FIXME: is this
     // really necessary?
     //
-    if ( job.getCompleteCreamJobID().empty() || !job.is_active() || job.can_be_purged() )
+    if ( job.get_complete_cream_jobid().empty() || !job.is_active() || job.can_be_purged() )
         return false;
     
     bool found = false;
@@ -190,7 +190,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
                 lease_to_renew.insert( it->get_lease_id() );                
             } else {
                 if ( !m_only_update && job_can_be_removed( *it ) ) {
-                    jobs_to_remove.push_back( it->getGridJobID() );
+                    jobs_to_remove.push_back( it->get_grid_jobid() );
                 }
             }
         }
@@ -257,17 +257,17 @@ void iceCommandLeaseUpdater::execute( ) throw()
                        << " because the lease id does not exist or is expired"
                        );
     
-        string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( the_job.getUserDN() ).get<0>() ;
+        string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( the_job.get_user_dn() ).get<0>() ;
         
         try {
-            soap_proxy::VOMSWrapper V( the_job.getUserProxyCertificate() );
+            soap_proxy::VOMSWrapper V( the_job.get_user_proxy_certificate() );
             if( !V.IsValid( ) ) {
                 throw soap_proxy::auth_ex( V.getErrorMessage() );
             }
             
             vector< soap_proxy::JobIdWrapper > job_vec;
-            job_vec.push_back( soap_proxy::JobIdWrapper(the_job.getCreamJobID(), 
-                                                        the_job.getCreamURL(), 
+            job_vec.push_back( soap_proxy::JobIdWrapper(the_job.get_cream_jobid(), 
+                                                        the_job.get_creamurl(), 
                                                         vector<soap_proxy::JobPropertyWrapper>())
                                );
             
@@ -275,7 +275,7 @@ void iceCommandLeaseUpdater::execute( ) throw()
             soap_proxy::JobFilterWrapper req( job_vec, vector<string>(), -1, -1, "", "");
             soap_proxy::ResultWrapper res;
             
-            CreamProxy_Cancel( the_job.getCreamURL(), proxy, &req, &res ).execute( 3 );
+            CreamProxy_Cancel( the_job.get_creamurl(), proxy, &req, &res ).execute( 3 );
 
         } catch(...) {            
             // We ignore any cancellation error here            
@@ -285,19 +285,16 @@ void iceCommandLeaseUpdater::execute( ) throw()
 	{
 	  list<pair<string, string> > params;
 	  params.push_back( make_pair("failure_reson", "Lease expired" ) );
-	  db::UpdateJobByGid updater( the_job.getGridJobID(), params, "iceCommandLeaseUpdater::execute" );
+	  db::UpdateJobByGid updater( the_job.get_grid_jobid(), params, "iceCommandLeaseUpdater::execute" );
 	  db::Transaction tnx(false, false);
-	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );
 	}
         iceLBLogger::instance()->logEvent( new job_done_failed_event( the_job ) );
         glite::wms::ice::Ice::instance()->resubmit_job( the_job, "Lease expired" );
         
-        //m_cache->erase( job_it );
 	{
-	  db::RemoveJobByGid remover( the_job.getGridJobID(), "iceCommandLeaseUpdater::execute" );
+	  db::RemoveJobByGid remover( the_job.get_grid_jobid(), "iceCommandLeaseUpdater::execute" );
 	  db::Transaction tnx(false, false);
-	  //tnx.begin_exclusive( );
 	  tnx.execute( &remover );
 	}
     }

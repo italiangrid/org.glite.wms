@@ -30,44 +30,38 @@ using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-// CreateJob::CreateJob( const CreamJob& j ) :
-//   m_theJob( j ),
-//   m_JDL( j.getJDL() )
-// {
-// }
-
 void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
   ostringstream sqlcmd("");
   sqlcmd << "INSERT OR REPLACE INTO jobs ("
-	 << CreamJob::get_query_allfields()
+	 << CreamJob::get_query_fields()
 	 << ", last_poller_visited"
 	 << ") VALUES (" 
-	 << "\'"<< m_theJob.getGridJobID() <<"\',"
-	 << "\'"<< m_theJob.getCreamJobID() <<"\'," 
-	 << "\'"<< m_theJob.getCompleteCreamJobID() <<"\',"
+	 << "\'"<< m_theJob.get_grid_jobid() <<"\',"
+	 << "\'"<< m_theJob.get_cream_jobid() <<"\'," 
+	 << "\'"<< m_theJob.get_complete_cream_jobid() <<"\',"
 	 << "\'"<< m_JDL <<"\',"
-	 << "\'"<< m_theJob.getUserProxyCertificate() <<"\',"
-	 << "\'"<< m_theJob.getCEID() <<"\',"
-	 << "\'"<< m_theJob.getEndpoint() <<"\',"
-	 << "\'"<< m_theJob.getCreamURL() <<"\',"
-	 << "\'"<< m_theJob.getCreamDelegURL() <<"\',"
-	 << "\'"<< m_theJob.getUserDN() <<"\',"
-	 << "\'"<< m_theJob.getMyProxyAddress() <<"\',"
+	 << "\'"<< m_theJob.get_user_proxy_certificate() <<"\',"
+	 << "\'"<< m_theJob.get_ceid() <<"\',"
+	 << "\'"<< m_theJob.get_endpoint() <<"\',"
+	 << "\'"<< m_theJob.get_creamurl() <<"\',"
+	 << "\'"<< m_theJob.get_cream_delegurl() <<"\',"
+	 << "\'"<< m_theJob.get_user_dn() <<"\',"
+	 << "\'"<< m_theJob.get_myproxy_address() <<"\',"
 	 << "\'"<< ( m_theJob.is_proxy_renewable() ? "1" : "0" ) <<"\',"
 	 << "\'"<< m_theJob.get_failure_reason() <<"\',"
-	 << "\'"<< m_theJob.getSequenceCode() <<"\',"
+	 << "\'"<< m_theJob.get_sequence_code() <<"\',"
 	 << "\'"<< m_theJob.get_wn_sequence_code() <<"\',"
 	 << "\'"<< m_theJob.get_prev_status() <<"\',"
-	 << "\'"<< m_theJob.getStatus() <<"\',"
+	 << "\'"<< m_theJob.get_status() <<"\',"
 	 << "\'"<< m_theJob.get_num_logged_status_changes() <<"\',"
 	 << "\'"<< m_theJob.get_lease_id() <<"\',"
-	 << "\'"<< m_theJob.getStatusPollRetryCount() <<"\',"
+	 << "\'"<< m_theJob.get_status_poll_retry_count() <<"\',"
 	 << "\'"<< m_theJob.get_exit_code() <<"\',"
 	 << "\'"<< m_theJob.get_worker_node() <<"\',"
 	 << "\'"<< ( m_theJob.is_killed_by_ice() ? "1" : "0" ) <<"\',"
-	 << "\'"<< m_theJob.getDelegationId() <<"\',"
+	 << "\'"<< m_theJob.get_delegation_id() <<"\',"
 	 << "\'"<< time(0) <<"\',"
 	 << "\'"<< time(0) <<"\',"
 	 << "\'"<< time(0)  <<"\')";

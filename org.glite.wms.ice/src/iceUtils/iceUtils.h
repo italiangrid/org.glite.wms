@@ -221,7 +221,7 @@ namespace util {
     
       void operator()( const CreamJob& j ) {
 	if( m_predicate( j ) )
-	  m_jobMap[std::make_pair( j.getUserDN(), j.getCreamURL())].push_back( j );
+	  m_jobMap[std::make_pair( j.get_user_dn(), j.get_creamurl())].push_back( j );
       }
   };
 

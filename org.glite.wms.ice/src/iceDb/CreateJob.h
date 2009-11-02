@@ -42,7 +42,7 @@ namespace db {
 		   const std::string& caller ) 
 	  : AbsDbOperation( caller ), 
 	  m_theJob ( j ), 
-	  m_JDL( j.getJDL() ) {}
+	  m_JDL( j.get_jdl() ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:

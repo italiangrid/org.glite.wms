@@ -230,9 +230,9 @@ void iceCommandUpdateStatus::execute( ) throw( )
 		
 		iceSubscription subscription;
 		string cemon_url;
-		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.getUserDN() ).get<0>();
-		subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.getCreamURL(), cemon_url);
-		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( theJob.getUserDN(), cemon_url, subscription );
+		string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
+		subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_creamurl(), cemon_url);
+		subscriptionManager::getInstance()->getSubscriptionByDNCEMon( theJob.get_user_dn(), cemon_url, subscription );
                 string subs_id( subscription.getSubscriptionID()/*job_it->getSubscriptionID()*/ );
 		
                 // Then, push the pair (subs_id, cemondn) into the

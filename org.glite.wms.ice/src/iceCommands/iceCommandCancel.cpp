@@ -219,12 +219,11 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 
     //vector<string> url_jid(1);   
     //url_jid[0] = theJob.getCreamJobID();
+    string jobdesc( theJob.describe()  );
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
-                   << "iceCommandCancel::execute() - Removing job gridJobId [" 
-                   << m_gridJobId
-                   << "], creamJobId [" 
-                   << theJob.getCompleteCreamJobID() 
+                   << "iceCommandCancel::execute() - Removing job [" 
+                   << jobdesc
                    << "]"
                    
                    );
@@ -232,7 +231,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()
                    << "iceCommandCancel::execute() - Sending cancellation request to ["
-                   << theJob.getCreamURL() << "]"
+                   << theJob.get_creamurl() << "]"
                    
                    );
 
@@ -244,17 +243,17 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
      */
     string betterproxy;
 
-    betterproxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.getUserDN() ).get<0>();
+    betterproxy = util::DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
 
     if( betterproxy.empty() ) {
       CREAM_SAFE_LOG( m_log_dev->warnStream()
 		      << "iceCommandCancel::execute() - DNProxyManager returned an empty string for BetterProxy of user DN ["
 		      << "] for job ["
-		      << theJob.describe()
+		      << jobdesc
 		      << "]. Using the Job's proxy." 
 		      );
 
-      betterproxy = theJob.getUserProxyCertificate();
+      betterproxy = theJob.get_user_proxy_certificate();
     }
 
     try {
@@ -268,23 +267,21 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
       list< pair<string, string> > params;
       params.push_back( make_pair("failure_reason", "Aborted by user" ));
       //      db::UpdateJobFailureReason updater( theJob.getGridJobID(), "Aborted by user" );//CreateJob aJob( theJob );
-      db::UpdateJobByGid updater( theJob.getGridJobID(), params, "iceCommandCancel::cancel" );
+      db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceCommandCancel::cancel" );
       tnx.execute( &updater );
       //        util::jobCache::getInstance()->put( theJob );
 
 	vector<cream_api::JobIdWrapper> toCancel;
-	toCancel.push_back( cream_api::JobIdWrapper(theJob.getCreamJobID(), 
-						    theJob.getCreamURL(), 
+	toCancel.push_back( cream_api::JobIdWrapper(theJob.get_cream_jobid(), 
+						    theJob.get_creamurl(), 
 						    std::vector<cream_api::JobPropertyWrapper>())
 			    );
 
 	cream_api::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
 	cream_api::ResultWrapper res;
 
-        util::CreamProxy_Cancel( theJob.getCreamURL(), betterproxy, &req, &res ).execute( 3 );
+        util::CreamProxy_Cancel( theJob.get_creamurl(), betterproxy, &req, &res ).execute( 3 );
 
-	// theProxy->Cancel( theJob.getCreamURL().c_str(), url_jid );
- 	
 	list< pair<cream_api::JobIdWrapper, string> > tmp;
 
 	res.getNotExistingJobs( tmp );
@@ -298,19 +295,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 	// tmp contains only one element, the first one!
 	if( !tmp.empty() )
 	  {
-	  // Should not be empty. Something went wrong in the server
-// 	  string errMex = "iceCommandCancel::execute() - The job to cancel [";
-// 	  errMex += theJob.describe() + "] is not in the OK list neither in the ";
-// 	  errMex += " failed list. Something went wrong in the server or in the ";
-// 	  errMex += "SOAP communication.";
-// 	   CREAM_SAFE_LOG(    
-//                    	   m_log_dev->errorStream()
-//                    	   << errMex
-// 			   
-// 	                  );
-// 	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
-// 	  throw iceCommandFatal_ex( errMex );
-// 	}
+	  
 	    // let's get only the first element of the array
 	    // because we Cancel one job by one
 	    // it is safe to dereference the .begin() because 
@@ -318,7 +303,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
 	    pair<cream_api::JobIdWrapper, string> errorJob = *(tmp.begin());
 	    
 	    string errMex = "iceCommandCancel::execute() - Cancellation of the [";
-	    errMex += theJob.describe() + "] went wrong: [";
+	    errMex += jobdesc + "] went wrong: [";
 	    errMex += errorJob.second + "]";
 	    
 	    CREAM_SAFE_LOG(    

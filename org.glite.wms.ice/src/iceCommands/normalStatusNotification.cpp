@@ -23,7 +23,6 @@
 #include "normalStatusNotification.h"
 
 // ICE stuff
-//#include "jobCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
 #include "iceUtils.h"
@@ -211,7 +210,7 @@ StatusChange::StatusChange( const string& ad_string ) throw( ClassadSyntax_ex& )
 void StatusChange::apply_to_job( CreamJob& j ) const
 {
     j.set_status( get_status() );
-    j.set_workernode( m_worker_node );
+    j.set_worker_node( m_worker_node );
     if ( m_has_exit_code ) {
         j.set_exitcode( m_exit_code );
     }    
@@ -237,7 +236,7 @@ void StatusChange::apply_to_job( CreamJob& j ) const
 
       params.push_back( make_pair("failure_reason", j.get_failure_reason() ));
 
-      glite::wms::ice::db::UpdateJobByGid updater( j.getGridJobID(), params, "StatusChange::apply_to_job" );
+      glite::wms::ice::db::UpdateJobByGid updater( j.get_grid_jobid(), params, "StatusChange::apply_to_job" );
       glite::wms::ice::db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
@@ -347,10 +346,10 @@ void normalStatusNotification::apply( void ) // can throw anything
     // notifications, for jobs which have been already purged.
 
     string _cemon_url;
-    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.getUserDN() ).get<0>();
-    subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.getCreamURL()/*m_cream_address*/, _cemon_url);
+    string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( theJob.get_user_dn() ).get<0>();
+    subscriptionManager::getInstance()->getCEMonURL(proxy, theJob.get_creamurl()/*m_cream_address*/, _cemon_url);
     string _cemon_dn;
-    subscriptionManager::getInstance()->getCEMonDN( theJob.getUserDN()/*m_user_dn*/, _cemon_url, _cemon_dn );
+    subscriptionManager::getInstance()->getCEMonDN( theJob.get_user_dn()/*m_user_dn*/, _cemon_url, _cemon_dn );
 
     if( m_cemondn.compare( _cemon_dn /*jc_it->get_cemon_dn()*/ ) ) {
 	CREAM_SAFE_LOG(m_log_dev->warnStream()
@@ -377,7 +376,7 @@ void normalStatusNotification::apply( void ) // can throw anything
         // TERMINAL state (that means that more states are coming...),
         // like DONE-OK; otherwise the eventStatusPoller will never
         // purge it...
-        if( !api::job_statuses::isFinished( theJob.getStatus() ) ) {
+        if( !api::job_statuses::isFinished( theJob.get_status() ) ) {
             theJob.set_last_seen( time(0) );
             theJob.set_last_empty_notification_time( time(0) );
 	    
@@ -385,7 +384,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 	      list< pair<string, string> > params;
 	      params.push_back( make_pair("last_seen", int_to_string(time(0))));
 	      params.push_back( make_pair("last_empty_notification", int_to_string(time(0))));
-	      db::UpdateJobByGid updater( theJob.getGridJobID(), params, "normalStatusNotification::apply");
+	      db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "normalStatusNotification::apply");
 	      db::Transaction tnx(false, false);
 	      //tnx.begin_exclusive( );
 	      tnx.execute( &updater );
@@ -429,10 +428,9 @@ void normalStatusNotification::apply( void ) // can throw anything
                                ); 
 	    
 	    {
-	      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
-	      db::RemoveJobByGid remover( theJob.getGridJobID(), "normalStatusNotification::apply" );
+	      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
+	      db::RemoveJobByGid remover( theJob.get_grid_jobid(), "normalStatusNotification::apply" );
 	      db::Transaction tnx(false, false);
-	      //tnx.begin_exclusive( );
 	      tnx.execute( &remover );
 	    }
             return;
@@ -455,7 +453,7 @@ void normalStatusNotification::apply( void ) // can throw anything
 	{
 	  list< pair<string, string> > params;
 	  params.push_back( make_pair("num_logged_status_changes", int_to_string(count)));
-	  db::UpdateJobByGid updater( theJob.getGridJobID(), params, "normalStatusNotification::apply" );
+	  db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "normalStatusNotification::apply" );
 	  db::Transaction tnx(false, false);
 	  //tnx.begin_exclusive( );
 	  tnx.execute( &updater );

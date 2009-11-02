@@ -29,7 +29,7 @@ namespace { // begin local namespace
     
     if( argv && argv[0] ) {
       vector<string> fields;
-      for(int i = 0; i<=24; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
+      for(int i = 0; i<=25; ++i) {// a database record for a CreamJob has 26 fields, as you can see in Transaction.cpp, but we want to exlude the field "complete_creamjobid", as specified in the SELECT sql statement;
 	if( argv[i] )
 	  fields.push_back( argv[i] );
 	else
@@ -60,7 +60,8 @@ namespace { // begin local namespace
 		      fields.at(21),
 		      fields.at(22),
 		      fields.at(23),
-		      fields.at(24)
+		      fields.at(24),
+		      fields.at(25)
 		      );
       
       jobs->push_back( tmpJob );

@@ -44,24 +44,6 @@ namespace cream_api  = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace iceUtil    = glite::wms::ice::util;
 
-// namespace {
-//   class cleanup {
-//     list<soap_proxy::EventWrapper*>* m_toclean;
-    
-//   public:
-//     cleanup( list<soap_proxy::EventWrapper*>* toClean ) : m_toclean( toClean ) {}
-//     ~cleanup() {
-//       if(m_toclean) {
-// 	list<soap_proxy::EventWrapper*>::iterator it = m_toclean->begin();
-// 	while( it != m_toclean->end() ) {
-// 	  delete( *it );
-// 	  ++it;
-// 	}
-//       }
-//     }
-//   };
-// }
-
 namespace {
   class cleanup {
     list<soap_proxy::EventWrapper*>* m_toclean;
@@ -561,8 +543,8 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
   CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		 << "Processing [" << num_events << "] event(s) for Job ["
 		 << tmp_job.describe() << "] userdn ["
-		 << tmp_job.getUserDN() << "] and ce url ["
-		 << tmp_job.getCreamURL() << "]."
+		 << tmp_job.get_user_dn() << "] and ce url ["
+		 << tmp_job.get_creamurl() << "]."
 		 );
   
   list<soap_proxy::EventWrapper*>::const_iterator evt_it = ev.begin();
@@ -606,22 +588,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   static const char* method_name = "iceCommandEventQuery::processSingleEvent() - ";
 
 
-//   CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 		 << "Dumping EVENT properties..."
-// 		 ); 
-  
-//   map<string, string> pros;
-//   event->get_event_properties( pros );
-//   map<string, string>::const_iterator it = pros.begin();
-//   while( it != pros.end() ) {
-//     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 		   << "[" << it->first << "]=["
-// 		   << it->second << "]"
-// 		   ); 
-//     it++;
-//   }
-
-//  boost::scoped_ptr< soap_proxy::EventWrapper > evt_safe_ptr( event );
+  string jobdesc( theJob.describe() );
 
   cream_api::job_statuses::job_status status = (cream_api::job_statuses::job_status)atoi(event->getPropertyValue("type").c_str());
 
@@ -630,7 +597,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   string description = event->getPropertyValue("description");
   string worker_node = event->getPropertyValue("workerNode");
 
-  theJob.set_workernode( worker_node );
+  theJob.set_worker_node( worker_node );
 
 #ifdef GLITE_WMS_ICE_ENABLE_STATS
   {
@@ -642,13 +609,13 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 
   if ( status == cream_api::job_statuses::PURGED ) {
     CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
-		   << "Job " << theJob.describe()
-		   << " is reported as PURGED. Removing from database"
+		   << "Job [" << jobdesc
+		   << "] is reported as PURGED. Removing from database"
 		   ); 
     {
       if( theJob.is_proxy_renewable() )
-	DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
-      db::RemoveJobByCid remover( theJob.getCompleteCreamJobID(), "iceCommandEventQuery::processSingleEvent" );
+	DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
+      db::RemoveJobByCid remover( theJob.get_complete_cream_jobid(), "iceCommandEventQuery::processSingleEvent" );
       db::Transaction tnx(false, false);
       tnx.execute( &remover );
     }
@@ -680,7 +647,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
   */
   if(is_last_event) {
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		   << "Updating ICE's database for Job [" << theJob.describe()
+		   << "Updating ICE's database for Job [" << jobdesc
 		   << "] status = [" << cream_api::job_statuses::job_status_str[ status ] << "]"
 		   << " exit_code = [" << exit_code << "]"
 		   << " failure_reason = [" << fail_reason << "]"
@@ -700,7 +667,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
     params.push_back( make_pair("exit_code", int_to_string(theJob.get_exit_code())));
     params.push_back( make_pair("failure_reason", theJob.get_failure_reason() ));
     
-    db::UpdateJobByGid updater( theJob.getGridJobID(), params, "iceCommandEventQuery::processSingleEvent");
+    db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceCommandEventQuery::processSingleEvent");
     db::Transaction tnx(false, false);
     tnx.execute( &updater );
   }

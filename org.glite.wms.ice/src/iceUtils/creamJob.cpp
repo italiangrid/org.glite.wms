@@ -52,10 +52,10 @@
  *
  */
 #include <boost/filesystem/operations.hpp>
-#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
+//#include <boost/regex.hpp>
 
 /**
  *
@@ -70,9 +70,6 @@
 
 extern int errno;
 
-//extern int *__errno_location(void);
-//#define errno (*__errno_location())
-
 namespace api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
 namespace fs = boost::filesystem;
@@ -81,7 +78,6 @@ using namespace std;
 using namespace glite::wms::ice::util;
 
 boost::recursive_mutex CreamJob::serialize_mutex;
-//boost::recursive_mutex CreamJob::s_GlobalICEMutex;
 
 //______________________________________________________________________________
 CreamJob::CreamJob( ) :
@@ -94,16 +90,18 @@ CreamJob::CreamJob( ) :
     m_is_killed_byice( false ),
     m_last_empty_notification( time(0) ),
     m_proxy_renew( false ),
-    m_myproxy_address( "" )
+    m_myproxy_address( "" ),
+    m_complete_cream_jobid( "" )
 {
 #ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::CreamJob_1");
+  ice_timer timer("CreamJob::CreamJob_1");
 #endif
 }
 
 //______________________________________________________________________________
 CreamJob::CreamJob( const std::string& gid,
 		    const std::string& cid,
+		    const std::string& ccid,
 		    const std::string& jdl,
 		    const std::string& userproxy,
 		    const std::string& ceid,
@@ -120,51 +118,50 @@ CreamJob::CreamJob( const std::string& gid,
 		    const std::string& status,
 		    const std::string& num_logged_status_changes,
 		    const std::string& leaseid,
-		    //const std::string& proxycert_timestamp,
 		    const std::string& status_poller_retry_count,
 		    const std::string& exit_code,
 		    const std::string& worker_node,
 		    const std::string& is_killed_byice,
 		    const std::string& delegationid,
 		    const std::string& last_empty_notification,
-		    const std::string& last_seen) 
+		    const std::string& last_seen)
+  : m_cream_jobid( cid ),
+    m_grid_jobid( gid ),
+    m_jdl( jdl ),
+    m_ceid( ceid ),
+    m_endpoint( endpoint ),
+    m_cream_address( creamurl ),
+    m_cream_deleg_address( creamdelegurl ),
+    m_user_proxyfile( userproxy ),
+    m_user_dn( userdn ),
+    m_sequence_code( sequence_code ),
+    m_delegation_id( delegationid ),
+    m_wn_sequence_code( wn_sequence_code ),
+    m_prev_status( (glite::ce::cream_client_api::job_statuses::job_status)atoi(prev_status.c_str()) ),
+    m_status( (glite::ce::cream_client_api::job_statuses::job_status)atoi(status.c_str())),
+    m_num_logged_status_changes( atoi(num_logged_status_changes.c_str()) ),
+    m_last_seen( (time_t)atoi(last_seen.c_str()) ),
+    m_lease_id( leaseid ),
+    m_statusPollRetryCount( atoi(status_poller_retry_count.c_str()) ),
+    m_exit_code( atoi(exit_code.c_str()) ),
+    m_failure_reason( failure_reason ),
+    m_worker_node( worker_node ),
+    m_is_killed_byice( (bool)atoi(is_killed_byice.c_str()) ),
+    m_last_empty_notification( (time_t)atoi(last_empty_notification.c_str()) ),
+    m_proxy_renew( (bool)atoi(proxy_renewable.c_str()) ),
+    m_myproxy_address( myproxyurl ),
+    m_complete_cream_jobid( ccid )
 {
 #ifdef ICE_PROFILE
 	    ice_timer timer("CreamJob::CreamJob_2");
 #endif
-  m_cream_jobid                = cid;
-  m_grid_jobid                 = gid; 
-  m_jdl                        = jdl;
-  m_ceid                       = ceid;
-  m_endpoint                   = endpoint;
-  m_cream_address              = creamurl;
-  m_cream_deleg_address        = creamdelegurl; 
-  m_user_proxyfile             = userproxy;
-  m_user_dn                    = userdn;
-  m_sequence_code              = sequence_code;
-  m_delegation_id              = delegationid; 
-  m_wn_sequence_code           = wn_sequence_code;
-  m_prev_status                = (glite::ce::cream_client_api::job_statuses::job_status)atoi(prev_status.c_str());
-  m_status                     = (glite::ce::cream_client_api::job_statuses::job_status)atoi(status.c_str());
-  m_num_logged_status_changes  = atoi(num_logged_status_changes.c_str());
-  m_last_seen                  = (time_t)atoi(last_seen.c_str());
-  m_lease_id                   = leaseid;
-  //m_proxyCertTimestamp         = (time_t)atoi(proxycert_timestamp.c_str());
-  m_statusPollRetryCount       = atoi(status_poller_retry_count.c_str());
-  m_exit_code                  = atoi(exit_code.c_str());
-  m_failure_reason             = failure_reason;
-  m_worker_node                = worker_node;
-  m_is_killed_byice           = (bool)atoi(is_killed_byice.c_str());
-  m_last_empty_notification    = (time_t)atoi(last_empty_notification.c_str());
-  m_proxy_renew                = (bool)atoi(proxy_renewable.c_str());
-  m_myproxy_address            = myproxyurl;
 }
 
 //______________________________________________________________________________
 void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
 {
 #ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::set_jdl");
+  ice_timer timer("CreamJob::set_jdl");
 #endif
   /**
    * Classad-mutex protected region
@@ -175,7 +172,7 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
     // int res = 0;
 
     if ( 0 == jdlAd ) {
-        throw ClassadSyntax_ex( string("CreamJob::set_jdl unable to parse jdl=[") + j + string("]") );
+        throw ClassadSyntax_ex( string("unable to parse jdl=[") + j + string("]") );
     }
 
     boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
@@ -184,13 +181,13 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
 
     // Look for the "ce_id" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", m_ceid ) ) {
-        throw ClassadSyntax_ex("CreamJob::setJdl: ce_id attribute not found, or is not a string");
+        throw ClassadSyntax_ex("ce_id attribute not found, or is not a string");
     }
     boost::trim_if(m_ceid, boost::is_any_of("\"") );
     
     // Look for the "X509UserProxy" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "X509UserProxy", m_user_proxyfile ) ) {
-        throw ClassadSyntax_ex("CreamJob::setJdl: X509UserProxy attribute not found, or is not a string");
+        throw ClassadSyntax_ex("X509UserProxy attribute not found, or is not a string");
     }
     
     string tmp;
@@ -203,19 +200,6 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
     
     boost::trim_if(m_user_proxyfile, boost::is_any_of("\""));
     
-//     struct stat stat_buf;
-//     if( ::stat( m_user_proxyfile.c_str(), &stat_buf ) == -1 )
-//     {
-// 	int saverr = errno;
-// 	CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->warnStream()
-// 		       << "creamJob::setJdl() - The user proxy file ["
-// 		       << m_user_proxyfile << "] is not stat-able: " << strerror(saverr) 
-// 		       <<". This could compromise the correct working of proxy renewal thread"
-// 		       );
-//     } else {
-// 	m_proxyCertTimestamp = stat_buf.st_mtime;
-//     }
-
     // Look for the "LBSequenceCode" attribute (if this attribute is not in the classad, the sequence code is set to the empty string
     if ( classad_safe_ptr->EvaluateAttrString( "LB_sequence_code", m_sequence_code ) ) {
         boost::trim_if(m_sequence_code, boost::is_any_of("\""));
@@ -223,7 +207,7 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
     
     // Look for the "edg_jobid" attribute
     if ( !classad_safe_ptr->EvaluateAttrString( "edg_jobid", m_grid_jobid ) ) {
-        throw ClassadSyntax_ex( "CreamJob::setJdl: edg_jobid attribute not found, or is not a string" );
+        throw ClassadSyntax_ex( "edg_jobid attribute not found, or is not a string" );
     }
     boost::trim_if(m_grid_jobid, boost::is_any_of("\"") );
   
@@ -233,12 +217,15 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
     } catch(api::util::CEUrl::ceid_syntax_ex& ex) {
         throw ClassadSyntax_ex(ex.what());
     }
+
     m_endpoint = pieces[0] + ":" + pieces[1];
 
     m_cream_address = iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
 	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
+
     m_cream_deleg_address = iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
 	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
+
     // release of Classad-mutex
 }
 
@@ -277,7 +264,7 @@ bool CreamJob::can_be_resubmitted( void ) const
 	    ice_timer timer("CreamJob::can_be_resubmitted");
 #endif
     int threshold( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
-    api::soap_proxy::VOMSWrapper V( getUserProxyCertificate() );
+    api::soap_proxy::VOMSWrapper V( this->get_user_proxy_certificate() );
     if ( !V.IsValid() || 
          ( V.getProxyTimeEnd() < time(0) + threshold ) ) {
         return false;
@@ -294,9 +281,9 @@ string CreamJob::describe( void ) const
 #endif
     string result;
     result.append( "gridJobID=\"" );
-    result.append( getGridJobID() );
+    result.append( m_grid_jobid );
     result.append( "\" CREAMJobID=\"" );
-    result.append( getCompleteCreamJobID() );
+    result.append( m_complete_cream_jobid );
     result.append( "\"" );
     return result;
 }
@@ -322,7 +309,8 @@ void CreamJob::set_sequence_code( const std::string& seq )
   
   if (!jdl_ad) {
     CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
-		   << "CreamJob::set_sequencecode() - ClassAdParser::ParseClassAd() returned a NULL pointer while parsing the jdl=["
+		   << "CreamJob::set_sequencecode() - ClassAdParser::ParseClassAd() "
+		   << "returned a NULL pointer while parsing the jdl=["
 		   << m_jdl << "]. STOP!"
 		   );
     abort();
@@ -338,118 +326,23 @@ void CreamJob::set_sequence_code( const std::string& seq )
 }
 
 //______________________________________________________________________________
-// string CreamJob::getBetterProxy( void ) const
+// string CreamJob::get_complete_cream_jobid( void ) const 
 // {
-//   //string better = DNProxyManager::getInstance()->getBetterProxyByDN( m_user_dn ).get<0>();
-//   string better = DNProxyManager::getInstance()->getBetterProxy( m_user_dn ).get<0>();
-//   if( better.empty() ) return m_user_proxyfile;
-//   return better;
+  
+// #ifdef ICE_PROFILE
+//   ice_timer timer("CreamJob::getCompleteCreamJobID");
+// #endif
+  
+//   if ( m_cream_address.empty() || m_cream_jobid.empty() ) 
+//     return "";
+  
+//   string completecid = m_cream_address;
+  
+//   boost::replace_all( completecid, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
+  
+//   completecid += "/" + m_cream_jobid;
+  
+//   return completecid;
 // }
 
-//______________________________________________________________________________
-// string CreamJob::_getCEMonURL( void ) const 
-// {
-//     string cemon_url;
-//     subscriptionManager* submgr( subscriptionManager::getInstance() );
-// 
-//     string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( this->getUserDN() ).get<0>();
-// 
-//     submgr->getCEMonURL( proxy, m_cream_address, cemon_url );
-//     return cemon_url;
-// }
 
-//______________________________________________________________________________
-// string CreamJob::_getSubscriptionID( void ) const
-// {
-//     subscriptionManager* submgr( subscriptionManager::getInstance() );
-//     iceSubscription subscription;
-//     string cemon_url( _getCEMonURL() );
-//     // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
-//     submgr->getSubscriptionByDNCEMon( m_user_dn, cemon_url, subscription );
-//     return subscription.getSubscriptionID();
-// }
-
-//______________________________________________________________________________
-// Returns the DN for the CEMon which send snotifications for this job
-// string CreamJob::_get_cemon_dn( void ) const
-// {
-//   subscriptionManager* submgr( subscriptionManager::getInstance() );
-//   string cemondn;
-//   string cemon_url( _getCEMonURL() );
-//   // Gets the CEMon Subscription ID from the (user_dn, cemon_url) pair. FIXME: should we check the returned value?
-//   submgr->getCEMonDN( m_user_dn, cemon_url, cemondn );
-//   return cemondn;
-// }
-
-//______________________________________________________________________________
-string CreamJob::getCompleteCreamJobID( void ) const 
-{
-#ifdef ICE_PROFILE
-  ice_timer timer("CreamJob::getCompleteCreamJobID");
-#endif
-  if ( getCreamURL().empty() || getCreamJobID().empty() ) 
-      return "";
-
-  string creamURL = this->getCreamURL();
-
-  boost::replace_all( creamURL, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
-
-  creamURL += "/" + this->getCreamJobID();
-
-  return creamURL;
-}
-
-//______________________________________________________________________________
-// void CreamJob::get_fields( vector<string>& target ) const
-// {
-//   ostringstream tmp("");
-//   target.push_back( m_grid_jobid );
-//   target.push_back( m_cream_jobid );
-//   target.push_back( getCompleteCreamJobID() );
-//   target.push_back( m_jdl );
-//   target.push_back( m_user_proxyfile );
-//   target.push_back( m_ceid );
-//   target.push_back( m_endpoint );
-//   target.push_back( m_cream_address );
-//   target.push_back( m_cream_deleg_address );
-//   target.push_back( m_user_dn );
-//   target.push_back( m_myproxy_address );
-//   target.push_back( (m_proxy_renew ? "1" : "0" ) );
-//   target.push_back( m_failure_reason );
-//   target.push_back( m_sequence_code );
-//   target.push_back( m_wn_sequence_code );
-//   tmp << m_prev_status;
-//   target.push_back( tmp.str() );
-//   tmp.str("");
-//   tmp << m_status;
-//   target.push_back( tmp.str() );
-//   tmp.str("");
-//   tmp << m_num_logged_status_changes;
-//   target.push_back( tmp.str() );
-//   target.push_back( m_lease_id );
-//   tmp.str("");
-//   //tmp << m_proxyCertTimestamp;
-//   //target.push_back( tmp.str() );
-//   //tmp.str("");
-//   tmp << m_statusPollRetryCount;
-//   target.push_back( tmp.str() );
-//   tmp.str("");
-//   tmp << m_exit_code;
-//   target.push_back( tmp.str() );
-//   target.push_back( m_worker_node );
-//   target.push_back( (m_is_killed_byice ? "1" : "0" ));
-//   target.push_back( m_delegation_id );
-//   tmp.str("");
-//   //  tmp << m_delegation_exptime;
-//   //  target.push_back( tmp.str() );
-//   //  tmp.str("");
-//   //  tmp << m_delegation_duration;
-//   //  target.push_back( tmp.str() );
-//   //  tmp.str("");
-//   tmp << m_last_empty_notification;
-//   target.push_back( tmp.str() );
-//   tmp.str("");
-//   tmp << m_last_seen;
-//   target.push_back( tmp.str() );
-
-// }

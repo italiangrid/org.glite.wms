@@ -75,8 +75,8 @@ using namespace std;
 namespace { // begin anonymous namespace
     
   // See iceDb/GetJobsToPoll for definitions of type 'JobToPoll'
-    bool insert_condition(const CreamJob& J) {        
-      if( J.getCompleteCreamJobID().empty() ) 
+    bool insert_condition( const CreamJob& J) {        
+      if( J.get_complete_cream_jobid().empty() ) 
 	return false;
       else 
 	return true;
@@ -134,10 +134,11 @@ namespace { // begin anonymous namespace
 			     << " from the database. Reason is: "
 			     << m_reason);
                 job.set_failure_reason( m_reason );
+		string _gid( job.get_grid_jobid() );
 		{
 		  list<pair<string, string> > params;
 		  params.push_back( make_pair("failure_reason", job.get_failure_reason() ) );
-		  glite::wms::ice::db::UpdateJobByGid updater( job.getGridJobID(), params, "remove_bunch_of_jobs::operator" );
+		  glite::wms::ice::db::UpdateJobByGid updater( _gid, params, "remove_bunch_of_jobs::operator" );
 		  //glite::wms::ice::db::Transaction tnx;
 		  //tnx.begin_exclusive( );
 		  tnx.execute( &updater );
@@ -145,13 +146,13 @@ namespace { // begin anonymous namespace
                 m_lb_logger->logEvent( new job_aborted_event( job ) ); // ignore return value, the job will be removed from ICE cache anyway
                 //m_cache->erase( j );
 		{
-		  glite::wms::ice::db::RemoveJobByGid remover( job.getGridJobID(), "remove_bunch_of_jobs::operator" );
+		  glite::wms::ice::db::RemoveJobByGid remover( _gid, "remove_bunch_of_jobs::operator" );
 		  //glite::wms::ice::db::Transaction tnx;
 		  //tnx.begin_exclusive( );
 		  tnx.execute( &remover );
 		}
 		if(job.is_proxy_renewable())
-		  DNProxyManager::getInstance()->decrementUserProxyCounter( job.getUserDN(), job.getMyProxyAddress() );
+		  DNProxyManager::getInstance()->decrementUserProxyCounter( job.get_user_dn(), job.get_myproxy_address() );
             }
         }
     };
@@ -226,7 +227,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
       {
 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		       << "Will poll job with CREAM job id = ["
-		       << thisJob->getCompleteCreamJobID() << "]"
+		       << thisJob->get_complete_cream_jobid() << "]"
 		       );
       }    
 
@@ -263,7 +264,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
             vector< soap_proxy::JobIdWrapper > jobVec;
             
             for(jobit = cream_job_ids.begin(); jobit != cream_job_ids.end(); ++jobit) {
-	      soap_proxy::JobIdWrapper J( jobit->getCreamJobID(), 
+	      soap_proxy::JobIdWrapper J( jobit->get_cream_jobid(), 
 					  cream_url, // we trust cream_url is the same for all jobs!!!
 					  vector<soap_proxy::JobPropertyWrapper>());
 	      jobVec.push_back( J );
@@ -333,12 +334,10 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
 		}
 		if(found)
 		  {
-		    // boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
 		    if( theJob.is_proxy_renewable() )
-		      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.getUserDN(), theJob.getMyProxyAddress() );
+		      DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
 		    db::RemoveJobByCid remover( infoIt->first, "iceCommandStatusPoller::check_multiple_jobs" );
 		    db::Transaction tnx(false, false);
-		    //tnx.begin_exclusive( );
 		    tnx.execute( &remover );
 		  }
             }
@@ -443,11 +442,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
     
     int count;
     vector< soap_proxy::JobStatusWrapper >::const_iterator it;
-// #ifdef ICE_PROFILE_ENABLE
-//     api_util::scoped_timer T1( "iceCommandStatusPoller::update_single_job - MUTEX+PROCESS" );
-// #endif
-//     boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
-    
+
     CreamJob tmp_job;
     {
 #ifdef ICE_PROFILE_ENABLE
@@ -471,7 +466,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
       
     }
     
-    tmp_job.set_workernode( info_obj.getWorkerNode() );
+    tmp_job.set_worker_node( info_obj.getWorkerNode() );
 #ifdef ICE_PROFILE_ENABLE
     api_util::scoped_timer T3( "iceCommandStatusPoller::update_single_job - LOOP OVER STATES" );
 #endif
@@ -498,10 +493,9 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 			 ); 
 	  {
 	    if( tmp_job.is_proxy_renewable() )
-	      DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.getUserDN(), tmp_job.getMyProxyAddress() );
-	    glite::wms::ice::db::RemoveJobByCid remover( tmp_job.getCompleteCreamJobID(), "iceCommandStatusPoller::update_single_job" );
+	      DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.get_user_dn(), tmp_job.get_myproxy_address() );
+	    glite::wms::ice::db::RemoveJobByCid remover( tmp_job.get_complete_cream_jobid(), "iceCommandStatusPoller::update_single_job" );
 	    glite::wms::ice::db::Transaction tnx(false, false);
-	    //tnx.begin_exclusive( );
 	    tnx.execute( &remover );
 	  }
 	  return;
@@ -560,9 +554,8 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 #ifdef ICE_PROFILE_ENABLE
 	    api_util::scoped_timer tmp_timer( "iceCommandStatusPoller::update_single_job - UPDATEJOBBYGID" );
 #endif
-	    db::UpdateJobByGid updater( tmp_job.getGridJobID(), params, "iceCommandStatusPoller::update_single_job");
+	    db::UpdateJobByGid updater( tmp_job.get_grid_jobid(), params, "iceCommandStatusPoller::update_single_job");
 	    db::Transaction tnx(false, false);
-	    //tnx.begin_exclusive( );
 	    tnx.execute( &updater );
 	  }
 	  // Log to L&B
@@ -590,42 +583,6 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 void iceCommandStatusPoller::execute( ) throw()
 {
   static const char* method_name = "iceCommandStatusPoller::execute() - ";
-
-  /**
-     Obtain an array of different couples of userdn,creamurl
-  */
-//   list< vector< string > > result;
-//   {
-//     // boost::recursive_mutex::scoped_lock M( CreamJob::globalICEMutex );
-//     /*
-//       SELECT DISTINCT (userdn, creamurl) from jobs;
-//     */
-//     list< string > fields;
-//     fields.push_back( "userdn" );
-//     fields.push_back( "creamurl" );
-    
-//     db::GetFields getter( fields, list< pair< string, string > >(), result, "iceCommandStatusPoller::execute", true/*=DISTINCT*/ );
-//     db::Transaction tnx;
-//     //tnx.begin( );
-//     tnx.execute( &getter );
-//     //result = getter.get_values();
-//   }
-
-//   list< vector< string > >::const_iterator it;
-
-//   for( it = result.begin(); it != result.end(); ++it ) 
-//     {
-//       if( it->at(0).empty() || it->at(1).empty() ) continue;
-//       /**
-// 	 Let's check if it is requested to exit before to start
-// 	 polling jobs to remote CREAM service...
-//       */
-//       if(m_stopped) {
-// 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 		       << "EMERGENCY CALLED STOP. Returning without polling..."
-// 		       );
-// 	return;
-//       }
 
   list< CreamJob > jobList;
   
@@ -705,7 +662,7 @@ void iceCommandStatusPoller::execute( ) throw()
       params.push_back( make_pair("last_seen", int_to_string( time(0)) ));
       params.push_back( make_pair("last_empty_notification", int_to_string(time(0) )));
       params.push_back( make_pair("last_poller_visited", int_to_string(time(0) )));
-      db::UpdateJobByGid updater( it->getGridJobID(), params, "iceCommandStatusPoller::execute" );
+      db::UpdateJobByGid updater( it->get_grid_jobid(), params, "iceCommandStatusPoller::execute" );
       db::Transaction tnx(false, false);
       //tnx.begin_exclusive( );
       tnx.execute( &updater );
