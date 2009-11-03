@@ -1,0 +1,19 @@
+#!/bin/sh
+#list_time
+#avg_list_time
+#celist
+#report_name
+#jdl
+
+if [ "x$list_time" == "xERROR" ]; then
+	#log "failed"
+	report_line "$jdl" "red" $report_name
+else
+	#log "success"
+	report_line "$jdl" "Average Real Time $avg_list_time sec" $report_name
+        n=1
+        for ce in $celist; do
+	  report_line "$jdl" "CE$n: $ce" $report_name
+          n=`expr $n + 1`
+        done
+fi
