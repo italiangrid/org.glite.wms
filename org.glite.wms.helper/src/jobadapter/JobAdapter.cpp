@@ -224,6 +224,13 @@ try {
 
   std::auto_ptr<classad::ClassAd> result(new classad::ClassAd);
   
+  jdl::set_ceinfo_host_name(
+    *result, 
+    jdl::get_ceinfo_host_name(*m_ad)
+  );
+
+  /////////////////////////////////////////////////////////////////////////////
+
   /* Mandatory */
   std::string executable(jdl::get_executable(*m_ad));
   if (executable.empty()) {

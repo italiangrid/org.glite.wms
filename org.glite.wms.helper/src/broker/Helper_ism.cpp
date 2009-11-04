@@ -366,6 +366,11 @@ try {
       *result,
       utils::evaluate_attribute(*ce_ad, "CEid")
     );
+    
+    requestad::set_ceinfo_host_name(
+      *result,
+      utils::evaluate_attribute(*ce_ad, "GlueCEInfoHostName")
+    );
 
   } catch (utils::InvalidValue const& e) {
 

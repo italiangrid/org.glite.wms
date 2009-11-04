@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.22.4.1.2.2  2009/11/04 09:33:31  monforte
+#       Fix for bug #45883: Optimization of resubmission
+#
 #       Revision 1.22.2.22.4.1.2.1  2009/06/12 09:00:19  fcapanni
 #       removed AC_GLITE_WMS_OPTIONAL with unused macros AC_GLITE_JP AC_GLITE_GPBOX
 #
@@ -345,7 +348,7 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([examples/Makefile])
-# AC_CONFIG_FILES([test/Makefile])
+AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/broker/Makefile])
