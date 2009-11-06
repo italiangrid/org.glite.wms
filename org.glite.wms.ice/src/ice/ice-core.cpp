@@ -609,6 +609,10 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 		    << "because it's Input Sandbox proxy file is not valid: "
 		    << V.getErrorMessage()
 		    );
+
+    the_job.set_failure_reason( "Input sandbox's proxy is missing. Cannot resubmit job" );
+    m_lb_logger->logEvent( new ice_util::job_aborted_event( the_job ) );
+
     return;
   }
 
