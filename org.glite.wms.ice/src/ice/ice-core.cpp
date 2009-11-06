@@ -604,7 +604,8 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
   if( !V.IsValid( ) ) {
     //throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
     CREAM_SAFE_LOG( m_log_dev->errorStream() 
-		    << "Ice::resubmit_job() - Will NOT resubmit job "
+		    << "Ice::resubmit_job() - Will NOT resubmit job ["
+		    << the_job.describe() << "] " 
 		    << "because it's Input Sandbox proxy file is not valid: "
 		    << V.getErrorMessage()
 		    );
