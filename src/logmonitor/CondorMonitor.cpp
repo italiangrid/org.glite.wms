@@ -326,8 +326,13 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
       stat = this->checkAndProcessTimers();
       break;
     case ULOG_RD_ERROR:
+      elog::cedglog << logger::setlevel( logger::null ) << "Read error while reading log file \""
+		    << logfile_name << "\"." << endl;
+
+      stat = event_error;
+      break;
     case ULOG_UNK_ERROR:
-      elog::cedglog << logger::setlevel( logger::null ) << "Error while reading log file \""
+      elog::cedglog << logger::setlevel( logger::null ) << "Unknown error while reading log file \""
 		    << logfile_name << "\"." << endl;
 
       stat = event_error;
