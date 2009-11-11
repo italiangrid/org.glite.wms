@@ -1,0 +1,150 @@
+#!/bin/sh
+
+test_bug30896_pre () {
+ echo
+# Check for variables that are needed in test_bug1 and which should be defined globally in
+# the *sh that is sourced in regTest
+# Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK
+log "In order to run this test for bug $bugNr first either set maxInputSandboxFiles = 2; or  maxOutputSandboxFiles = 2; in the WorkloadManagerProxy section of the configuration file on the WMS and restart the wmproxy"
+
+}
+                                                                                                                      
+test_bug30896_post () {
+ echo
+# Cleanup after running test_bug1. Unset all variables that were set in test_bug1
+# Delete files created during the test run.
+if [ "x$jobstatus" == "x${statuses[7]}" ]; then
+ report_line "$jdl" "The job with jobid $jobid was set as aborted" $report_name
+else
+ report_line "$jdl" "red" $report_name
+ if [ "$exit_code" == -2 ]; then
+    report_line "$jdl" "hit maximum number of iterations while checking for status and the job was not set to Aborted" $report_name
+    report_line "$jdl" "check that either the maxInputSandboxFiles or maxOutputSandboxFiles parameters are correctly set to 2 in the WorkloadManagerProxy section of the WMS conf file" $report_name
+ elif [ "$exit_code" == -3 ]; then
+    report_line "$jdl" "there's no jdl file for bug $bugNr" $report_name 
+ fi 
+fi
+report_footer $report_name
+}
+
+
+test_bug30896 () {
+# Main test
+# Return values REGTEST_FAIL, REGTEST_TIMEOUT or REGTEST_OK
+
+statuses[0]=Submitted
+statuses[1]=Waiting
+statuses[2]=Ready
+statuses[3]=Scheduled
+statuses[4]=Running
+statuses[5]=Done
+statuses[6]=Abort
+statuses[7]=Aborted
+statusReason=0
+
+MAX_INPUT_FILES=Themaximumnumberofinputsandboxfilesisreached
+MAX_OUTPUT_FILES=Themaximumnumberofoutputsandboxfilesisreached
+MAX_STATUS_ITERATIONS=3
+CHECK_STATUS_INTERVAL=30
+
+
+sanity_check() { # 1 - test_dir  2 - wms.conf
+  bad=0
+  if [ -z $1 ]; then
+    bad=1
+  else
+    if [ -z $2 ]; then
+      bad=1
+    fi
+  fi
+  if [ $bad -eq 1 ]; then
+    echo "usage: testplan_list test_dir wms.conf"
+    return 1
+  fi
+  if [ -r "$app_path/config/testplan_functions" ]; then
+    . $app_path/config/testplan_functions
+  else
+    echo "File testplan_functions not found. Quitting.."
+    return 1
+  fi
+  return 0
+}
+
+exit_code=-1
+exit_while=-1
+app_path=`pwd`
+
+sanity_check $1 $2
+if [ $? -eq 0 ]; then
+        report_name="$app_path/reports/report${bugNr}.html"
+        rm -rf $report_name
+        report_header "Test results: bug 30896"  $report_name
+        cd $1
+        echo "report: $report_name"
+	rm -rf $report_name
+        report_header "Test results: bug 30896" $report_name 
+	if [ -e "${bugNr}.jdl" ]; then 
+         jdl=${bugNr}.jdl 
+         echo "$jdl"
+         log "processing $jdl"
+         submit_single_job $jdl "$app_path/$2"
+         base="${jdl:0:${#jdl}-4}"
+          if [ -r "${base}_pre" ]; then
+            . "${base}_pre" # precondition
+          fi
+          if [ "x$jobid" == "xERROR" ]; then
+            log "got an error while submitting..."
+          else
+            log "job submitted with id: $jobid"
+          fi
+         rm -f $tmpfile
+         jobstatus=X
+         iterations=1
+         while [ true ]; do
+           log "Sleeping $CHECK_STATUS_INTERVAL seconds"
+           sleep $CHECK_STATUS_INTERVAL
+           get_status $jobid
+           if [ "X$jobstatus" == "XERROR" ]; then
+             log "Error getting status for job: $jobid"
+             break
+           else
+             log "waiting for $jobid to complete, current status: $jobstatus"
+           fi
+           if [ "x$jobstatus" == "x${statuses[5]}" ]; then
+             exit_while=1
+           fi
+           if [ "x$jobstatus" == "x${statuses[7]}" ]; then
+                statusReason=`glite-wms-job-status $jobid|awk '/Status Reason/{print $3 $4 $5 $6 $7 $8 $9 $10 $11}'`
+                exit_while=1
+           fi
+           if [ $exit_while -eq 1 ]; then
+             if [ "x$jobstatus" == "x${statuses[7]}" ] && [ "x$statusReason" == "x$MAX_INPUT_FILES" ] || [ "x$statusReason" == "x$MAX_OUTPUT_FILES" ]; then
+                 exit_status=`glite-wms-job-status -v 3  $jobid|awk '/t Status/{print $4}' || echo 1`
+                 log "$jobid was set as aborted with status Reason $statusReason"
+                 break
+             else
+                 log "Test failed, $jobid was not set as aborted"
+                 return 1 
+             fi 
+          fi
+      iterations=`expr $iterations + 1`
+      if [ $iterations -gt $MAX_STATUS_ITERATIONS ]; then
+        log "hit maximum number of iterations while checking for status and the job was not set to Aborted"
+        exit_code=-2
+        return 1
+        break
+      fi
+    done
+    if [ "x$jobstatus" == "x${statuses[5]}" ]; then # get output
+      output_dir=`glite-wms-job-output $jobid|awk '/tmp/{print $3}' || echo 1`
+    fi
+  else
+   log "There is no .jdl file for bug ${bugNr}" 
+   exit_code=-3
+   return 1
+   break
+  fi 
+report_footer $report_name
+cd -
+fi
+}
