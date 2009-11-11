@@ -75,6 +75,9 @@ def initializeClientSSL( key_file = "", cert_file = "", cert = "" ):
                  pass
 
     ctx.set_session_id( "HTTPSConnection%s" % str( time.time() ) )
+    
+    if os.path.isfile("proxytemp"):
+	os.remove("proxytemp")
     return ctx
 
 class FakeSocket:

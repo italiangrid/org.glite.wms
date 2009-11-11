@@ -44,18 +44,19 @@ class WMPConfig:
 		return self.ns
 
 	def setProxyPath(self, proxyPath):
-		proxyStream = open(proxyPath)
-		lines = proxyStream.readlines()
-		for line in lines:
-			self.proxy += line
-
+		self.proxy = proxyPath
 
 	def setProxyStream(self,proxyStream):
-		self.proxy = proxyStream
+		proxytemp = open("proxytemp","w")
+		for i in proxyStream:
+			proxytemp.write(i)
+		proxytemp.close()
+		self.proxy = "proxytemp"
+
 
 	def getProxy(self):
 		if not self.proxy:
-			self.setProxyPath(self.getDefaultProxy())
+			self.proxy = self.getDefaultProxy()
 		return self.proxy
 
 	def setUrl(self,url):
