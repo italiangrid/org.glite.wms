@@ -287,7 +287,6 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
   }
 
   if( size > this->cm_shared_data->md_sizefile->size_field().position() ) {
-    ReadUserLog id_logfile_parser;
 
     FILE * fp = NULL;
     fp = fopen( cm_shared_data->md_logfile_name.c_str(), "r");
@@ -297,6 +296,8 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
 
       throw CannotOpenFile( this->cm_shared_data->md_logfile_name );
     }
+
+    ReadUserLog id_logfile_parser(fp, false);
 
     // Seek to last 'position'
     std::string error;
