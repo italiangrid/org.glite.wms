@@ -17,6 +17,7 @@ report_line "$jdl" "Output was successfully retrieved under $outputdir" $report_
 else
 report_line "$jdl" "red" $report_name
 fi
+report_footer $report_name
 }
 
 
@@ -35,61 +36,38 @@ statuses[6]=Abort
 MAX_STATUS_ITERATIONS=100
 CHECK_STATUS_INTERVAL=30
 
-log() {
-  echo "`date`: $1"
-}
-
-report_header() {
-  echo "<html>" > $1
-  echo "<head>" >> $1
-  echo "..." >> $1
-  echo "</head>" >> $1
-  echo "<body>" >> $1
-  echo "<table border=\"1\">" >> $1
-}
-
-report_line() {
-  echo "<tr><td>$1</td><td>$2</td></tr>" >> $3
-}
-
-report_footer() {
-  echo "</table>" >> $1
-  echo "</body>" >> $1
-  echo "</html>" >> $1
-}
-
-get_status() { # 1 - joibid
-  jobstatus=`glite-wms-job-status $1|awk '/urrent Status/{print $3}'|| echo ERROR`
-}
-
-submit_single_job() { # 1 - jdl  2 - wms.conf / returns jobid
-  tmpfile=`mktemp tmp.XXXXXXXXXX` || exit 1
-  glite-wms-job-submit --noint -o $tmpfile -a -c $2 $1
-  if [ $? != 0 ]; then
-    jobid="ERROR"
+sanity_check() { # 1 - test_dir  2 - wms.conf
+  bad=0
+  if [ -z $1 ]; then
+    bad=1
   else
-    jobid=`tail -1 $tmpfile` 
+    if [ -z $2 ]; then
+      bad=1
+    fi
   fi
+  if [ $bad -eq 1 ]; then
+    echo "usage: testplan_list test_dir wms.conf"
+    return 1
+  fi
+  if [ -r "$app_path/config/testplan_functions" ]; then
+    . $app_path/config/testplan_functions
+  else
+    echo "File testplan_functions not found. Quitting.."
+    return 1
+  fi
+  return 0
 }
 
-usage=0
+app_path=`pwd`
 exit_code=-1
 exit_while=-1
-if [ -z $1 ]; then
-  usage=1
-else
-  if [ -z $2 ]; then
-    usage=1
-  fi
-fi
-if [ $usage -eq 1 ]; then
-  echo "usage: testplan_run test_dir wms.conf"
-else
+sanity_check $1 $2
+if [ $? -eq 0 ]; then
         app_path=`pwd`
 	report_name="$app_path/reports/report${bugNr}.html"
         echo "report: $report_name"
 	rm -rf $report_name
-        report_header $report_name "Test results: job_submit"
+        report_header "Test results: bug $bugNr" $report_name 
 	cd $1
 	if [ -e "${bugNr}.jdl" ]; then 
          jdl=${bugNr}.jdl 
@@ -134,6 +112,7 @@ else
       if [ $iterations -gt $MAX_STATUS_ITERATIONS ]; then
         log "hit maximum number of iterations while checking for status"
         exit_code=-2
+        return 1
         break
       fi
     done
@@ -143,6 +122,7 @@ else
   else
    log "There is no .jdl file for bug ${bugNr}" 
    exit_code=-2
+   return 1
    break
   fi 
 report_footer $report_name
