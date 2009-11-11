@@ -1,0 +1,50 @@
+#!/bin/sh
+
+log() {
+  echo "`date`: $1"
+}
+
+report_header() {
+  echo "<html>" > $2
+  echo "<head>" >> $2
+  echo "$1" >> $2
+  echo "</head>" >> $2
+  echo "<body>" >> $2
+  echo "<table border=\"1\">" >> $2
+}
+
+report_line() {
+  echo "<tr><td>$1</td><td>$2</td></tr>" >> $3
+}
+
+report_footer() {
+  echo "</table>" >> $1
+  echo "</body>" >> $1
+  echo "</html>" >> $1
+}
+
+get_status() { # 1 - joibid
+  jobstatus=`glite-wms-job-status $1|awk '/urrent Status/{print $3}'|| echo ERROR`
+}
+
+submit_single_job() { # 1 - jdl  2 - wms.conf / returns jobid
+  tmpfile=`mktemp tmp.XXXXXXXXXX` || exit 1
+  glite-wms-job-submit --noint -o $tmpfile -a -c $2 $1
+  if [ $? != 0 ]; then
+    jobid="ERROR"
+  else
+    jobid=`tail -1 $tmpfile` 
+  fi
+}
+
+list_match_single_job() { # 1 - jdl  2 - wms.conf / returns list_time celist 
+  tmpfile=`mktemp tmp.XXXXXXXXXX` || exit 1
+  list_time=`( time -p glite-wms-job-list-match --noint -a -o $tmpfile -c $2 $1 ) 2>&1 >/dev/null |awk '/real/ {print $2}'`
+  if [ -s $tmpfile ]; then
+    celist=`awk '/^ - / {print $2}' $tmpfile`
+  else 
+    celist="ERROR"
+    list_time="ERROR"
+  fi
+  rm -f $tmpfile
+}
