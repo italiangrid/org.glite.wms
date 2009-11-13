@@ -84,11 +84,11 @@ else
   sitename=$SITE_NAME
 fi
 
-if [ -z "$CHANNEL" ]; then
-  echo "You need to set CHANNEL in FTS-certconfig in order to run the tests"
+if [ -z "$CHANNELS" ]; then
+  echo "You need to set CHANNELS in FTS-certconfig in order to run the tests"
   exitFailure
 else
-  channel=$CHANNEL
+  channels=$CHANNELS
 fi
 
 if [ -z "$VO" ]; then
