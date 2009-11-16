@@ -24,6 +24,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/function_output_iterator.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
+
 #include <boost/timer.hpp>
 
 #include <classad_distribution.h>
@@ -61,6 +66,7 @@
 #include "glite/wms/matchmaking/matchmaker.h"
 #include "glite/wms/matchmaking/exceptions.h"
 
+namespace ba            = boost::algorithm;
 namespace fs            = boost::filesystem;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
@@ -70,6 +76,10 @@ namespace matchmaking   = glite::wms::matchmaking;
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
+
+#define CLASSAD_REMOVE_GUARD(ad,name) boost::shared_ptr<void> ctx_guard_ ##name ( \
+  static_cast<void*>(0), boost::bind(&classad::ClassAd::Remove, boost::ref(ad), #name) \
+  );
 
 namespace glite {
 namespace wms {
@@ -105,6 +115,70 @@ Register const r;
 
 std::string const f_output_file_suffix(".rbh");
 
+std::string
+unparse_expression_value(
+classad::ClassAd const& ad, std::string const& expression
+)
+{
+  std::string result;
+  classad::Value v;
+  ad.EvaluateExpr(expression, v);
+  classad::ClassAdUnParser unparser;
+  unparser.Unparse(result, v);
+  return result;
+}
+
+struct string_appender
+{
+    string_appender(std::string& s, const std::string& sep) : m_str(&s), m_sep(sep) {}
+    void operator()(const std::string& x) const {
+        if(!x.empty()) *m_str += x + m_sep;
+    }
+    std::string* m_str;
+    const std::string& m_sep;
+};
+
+std::string translate_to_RSL(classad::ClassAd &ctx, classad::ExprTree* e)
+{
+  ctx.Insert("ad", e);
+  CLASSAD_REMOVE_GUARD(ctx, ad);
+
+    classad::Value v;
+    bool predicate = false;
+    if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
+      (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
+      v.IsBooleanValue(predicate) && !predicate) ) {
+      return std::string();
+    }
+  return 
+    ba::trim_copy_if(
+     unparse_expression_value(ctx, "ad.name"),ba::is_any_of("\"")
+    ) + "=" + 
+    ba::trim_copy_if(
+     unparse_expression_value(ctx, "ad.value"),ba::is_any_of("\"")
+    );
+}
+
+std::string translate_to_CREAM(classad::ClassAd &ctx, classad::ExprTree* e)
+{
+  ctx.Insert("ad", e);
+  CLASSAD_REMOVE_GUARD(ctx, ad);
+
+    classad::Value v;
+    bool predicate = false;
+    if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
+      (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
+      v.IsBooleanValue(predicate) && !predicate) ) {
+      return std::string();
+    }
+  return 
+    ba::trim_copy_if(
+     unparse_expression_value(ctx, "ad.name"),ba::is_any_of("\"")
+    ) + "==" + 
+//    ba::trim_copy_if(
+     unparse_expression_value(ctx, "ad.value"); //,ba::is_any_of("\"")
+//    );
+}
 std::auto_ptr<classad::ClassAd>
 f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
 {
@@ -348,6 +422,53 @@ try {
     // anything went wrong.
   }
 
+  classad::ClassAd ctx;
+
+  CLASSAD_REMOVE_GUARD(ctx, ce);
+  CLASSAD_REMOVE_GUARD(ctx, jdl);
+
+  ctx.Insert("ce", matchmaking::getAd(ce_info).get());
+  ctx.Insert("jdl", const_cast<classad::ClassAd*>(&input_ad));
+
+  const configuration::WMConfiguration* WM_conf = config->wm();
+
+  classad::ExprList* e = dynamic_cast<classad::ExprList*>(
+    WM_conf->propagate_to_lrms()
+  );
+  std::vector<classad::ExprTree*> ads;
+  if (e) {
+
+    e->GetComponents(ads);
+ 
+    boost::regex const cream_ce_id(".+/cream-.+");
+    bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
+
+    if (is_cream_ce) {
+
+      std::string s;
+      std::transform(
+        ads.begin(), ads.end(),
+        boost::make_function_output_iterator(string_appender(s,"&&")),
+        boost::bind(translate_to_CREAM, ctx, _1)
+      );
+      std::string r;
+      try {
+        r = requestad::get_ce_requirements(*result);
+      } catch (...) {}
+      if (!r.empty()) r.append("&&");
+      r.append(ba::trim_right_copy_if(s,ba::is_any_of("&")));
+      requestad::set_ce_requirements(*result,r);
+    }
+    else {
+      std::string s;
+      std::transform(
+        ads.begin(), ads.end(),
+        boost::make_function_output_iterator(string_appender(s,",")),
+        boost::bind(translate_to_RSL, ctx, _1)
+      );
+      result->InsertAttr("RSLArguments", ba::trim_right_copy_if(s,ba::is_any_of(",")));
+    }
+  }
   try {
 
     requestad::set_globus_resource_contact_string(
@@ -366,7 +487,6 @@ try {
       *result,
       utils::evaluate_attribute(*ce_ad, "CEid")
     );
-    
     requestad::set_ceinfo_host_name(
       *result,
       utils::evaluate_attribute(*ce_ad, "GlueCEInfoHostName")

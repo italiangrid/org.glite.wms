@@ -727,6 +727,12 @@ try {
     globusrsl += "(count=" + cpu_num + ")(hostCount=" + cpu_num + ')';
   }
 
+  std::string rslarguments;
+  if ( m_ad->EvaluateAttrString("RSLArguments", rslarguments) &&
+    !rslarguments.empty() ) {
+     globusrsl += "(arguments='" + rslarguments + "')";
+  }
+
   if (ljobtype == "mpich") {
     // lowercase all lrmstype characters
     std::string llrmstype(lrmstype);
