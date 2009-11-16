@@ -77,10 +77,6 @@ namespace matchmaking   = glite::wms::matchmaking;
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
-#define CLASSAD_REMOVE_GUARD(ad,name) boost::shared_ptr<void> ctx_guard_ ##name ( \
-  static_cast<void*>(0), boost::bind(&classad::ClassAd::Remove, boost::ref(ad), #name) \
-  );
-
 namespace glite {
 namespace wms {
 namespace helper {
@@ -141,15 +137,18 @@ struct string_appender
 std::string translate_to_RSL(classad::ClassAd &ctx, classad::ExprTree* e)
 {
   ctx.Insert("ad", e);
-  CLASSAD_REMOVE_GUARD(ctx, ad);
+  boost::shared_ptr<void> ctx_guard_ad (
+    static_cast<void*>(0), 
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "ad")
+  );
 
-    classad::Value v;
-    bool predicate = false;
-    if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
-      (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
-      v.IsBooleanValue(predicate) && !predicate) ) {
-      return std::string();
-    }
+  classad::Value v;
+  bool predicate = false;
+  if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
+    (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
+    v.IsBooleanValue(predicate) && !predicate) ) {
+    return std::string();
+  }
   return 
     ba::trim_copy_if(
      unparse_expression_value(ctx, "ad.name"),ba::is_any_of("\"")
@@ -162,22 +161,22 @@ std::string translate_to_RSL(classad::ClassAd &ctx, classad::ExprTree* e)
 std::string translate_to_CREAM(classad::ClassAd &ctx, classad::ExprTree* e)
 {
   ctx.Insert("ad", e);
-  CLASSAD_REMOVE_GUARD(ctx, ad);
+  boost::shared_ptr<void> ctx_guard_ad (
+    static_cast<void*>(0),
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "ad")
+  );
 
-    classad::Value v;
-    bool predicate = false;
-    if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
-      (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
-      v.IsBooleanValue(predicate) && !predicate) ) {
-      return std::string();
-    }
+  classad::Value v;
+  bool predicate = false;
+  if ( (ctx.EvaluateExpr("ad.value", v) && v.IsUndefinedValue()) || 
+    (ctx.EvaluateExpr("ad.requires", v) && !v.IsUndefinedValue() &&
+    v.IsBooleanValue(predicate) && !predicate) ) {
+    return std::string();
+  }
   return 
     ba::trim_copy_if(
      unparse_expression_value(ctx, "ad.name"),ba::is_any_of("\"")
-    ) + "==" + 
-//    ba::trim_copy_if(
-     unparse_expression_value(ctx, "ad.value"); //,ba::is_any_of("\"")
-//    );
+    ) + "==" + unparse_expression_value(ctx, "ad.value");
 }
 std::auto_ptr<classad::ClassAd>
 f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
@@ -424,11 +423,17 @@ try {
 
   classad::ClassAd ctx;
 
-  CLASSAD_REMOVE_GUARD(ctx, ce);
-  CLASSAD_REMOVE_GUARD(ctx, jdl);
-
   ctx.Insert("ce", matchmaking::getAd(ce_info).get());
   ctx.Insert("jdl", const_cast<classad::ClassAd*>(&input_ad));
+
+  boost::shared_ptr<void> ctx_guard_ce (
+    static_cast<void*>(0),
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "ce")
+  );
+  boost::shared_ptr<void> ctx_guard_jdl (
+    static_cast<void*>(0),
+    boost::bind(&classad::ClassAd::Remove, boost::ref(ctx), "jdl")
+  );
 
   const configuration::WMConfiguration* WM_conf = config->wm();
 
