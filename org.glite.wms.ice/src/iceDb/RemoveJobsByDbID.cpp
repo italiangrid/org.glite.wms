@@ -11,7 +11,7 @@ void RemoveJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
   sqlcmd << "DELETE FROM jobs "
-	 << " WHERE db_id = \'" << m_dbid << "\'; ";
+	 << " WHERE dbid = \'" << m_dbid << "\'; ";
   
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd<<"]"<<endl;

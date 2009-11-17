@@ -75,7 +75,8 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
             if ( retry_count < ntries ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream()
                                 << method_name 
-                                << "Connection timed out to CREAM: \""
+                                << "Connection timed out to CREAM ["
+				<< m_service << "]: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
                                 << ". Trying again in " << delay << " sec..."
