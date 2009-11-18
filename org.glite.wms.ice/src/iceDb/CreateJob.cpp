@@ -26,12 +26,24 @@
 #include <sstream>
 #include <iostream>
 
+#include "boost/algorithm/string.hpp"
+
 using namespace glite::wms::ice::db;
 using namespace glite::wms::ice::util;
 using namespace std;
 
 void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 {
+
+  string jdl( m_JDL );
+  boost::replace_all( jdl, "'", "''" );
+
+  string dn( m_theJob.get_user_dn() );
+  boost::replace_all( dn, "'", "''" );
+
+  string failreason( m_theJob.get_failure_reason() );
+  boost::replace_all( failreason, "'", "''" );
+  
 
   ostringstream sqlcmd("");
   sqlcmd << "INSERT OR REPLACE INTO jobs ("
@@ -41,16 +53,16 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.get_grid_jobid() <<"\',"
 	 << "\'"<< m_theJob.get_cream_jobid() <<"\'," 
 	 << "\'"<< m_theJob.get_complete_cream_jobid() <<"\',"
-	 << "\'"<< m_JDL <<"\',"
+	 << "\'"<< jdl <<"\',"
 	 << "\'"<< m_theJob.get_user_proxy_certificate() <<"\',"
 	 << "\'"<< m_theJob.get_ceid() <<"\',"
 	 << "\'"<< m_theJob.get_endpoint() <<"\',"
 	 << "\'"<< m_theJob.get_creamurl() <<"\',"
 	 << "\'"<< m_theJob.get_cream_delegurl() <<"\',"
-	 << "\'"<< m_theJob.get_user_dn() <<"\',"
+	 << "\'"<< dn <<"\',"
 	 << "\'"<< m_theJob.get_myproxy_address() <<"\',"
 	 << "\'"<< ( m_theJob.is_proxy_renewable() ? "1" : "0" ) <<"\',"
-	 << "\'"<< m_theJob.get_failure_reason() <<"\',"
+	 << "\'"<< failreason <<"\',"
 	 << "\'"<< m_theJob.get_sequence_code() <<"\',"
 	 << "\'"<< m_theJob.get_wn_sequence_code() <<"\',"
 	 << "\'"<< m_theJob.get_prev_status() <<"\',"
