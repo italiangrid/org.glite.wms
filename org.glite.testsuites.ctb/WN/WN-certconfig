@@ -1,3 +1,4 @@
 
+export GLITE_LOCATION="/opt/glite"
 export LOGSLOCATION="/tmp"
 

@@ -103,7 +103,7 @@ fi
 declare -a tests_failed
 failed=no
 
-pushd ./tests
+pushd ./tests >>/dev/null
 declare -a tests_list
 tests_list=("${tests_list[@]}" "broker-info-test")
 tests_list=("${tests_list[@]}" "lib.sh")
