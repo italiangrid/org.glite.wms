@@ -1,0 +1,153 @@
+#!/bin/sh
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Gianni Pucciani, CERN
+#
+##############################################################################
+showUsage ()
+{
+ echo "                                           "
+ echo "Usage:  ./$0 [-f <conf.file>]    "
+ echo "  <conf.file> Configuration file, default is WN-certconfig"
+ echo "                                           "
+}
+
+exitFailure ()
+{
+echo "------------------------------------------------"
+echo "END `date`"
+echo "-TEST FAILED-"
+exit -1
+}
+
+#######################
+#Parsing the arguments#
+#######################
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 2 ]; then
+  showUsage
+  exit 2
+fi
+
+if [ "$1" = "-f" ]; then
+  conffile=$2
+else
+  conffile="./WN-certconfig"
+fi
+
+###################################
+# Check for environment variables #
+###################################
+
+if [ -e $conffile ]; then
+  echo "Using $conffile"
+  source $conffile
+else
+  echo "Config File $conffile does not exist"
+  exitFailure
+fi
+
+#########
+# START #
+#########
+
+echo "START `date` "
+echo "------------------------------------------------"
+
+#get pass from the user
+#echo "Enter the test user pass:"
+#read -s PASS
+#export PASS
+
+####################################
+# Create a directory for log files #
+####################################
+
+id=`date +%y%m%d%H%M%S`
+if [ -z "$LOGSLOCATION" ]; then
+  cp=`pwd`
+  loglocation=$cp/logs_$id
+  mkdir -p $loglocation
+else
+  loglocation=$LOGSLOCATION/logs_$id
+  mkdir -p $loglocation
+fi
+
+if [ ! -d $loglocation ];then
+  echo   "Error while creating log directory $loglocation"
+  exitFailure
+else
+  echo "Log files will be stored in $loglocation"
+fi
+
+########################
+# Launch all the tests #
+########################
+
+declare -a tests_failed
+failed=no
+
+pushd ./tests
+declare -a tests_list
+tests_list=("${tests_list[@]}" "broker-info-test")
+tests_list=("${tests_list[@]}" "lib.sh")
+tests_list=("${tests_list[@]}" "UItestsOnWN.sh")
+tests_list=("${tests_list[@]}" "WN-home.sh ")
+tests_list=("${tests_list[@]}" "WN-is.sh")
+tests_list=("${tests_list[@]}" "WN-java.sh")
+tests_list=("${tests_list[@]}" "WN-perl.sh ")
+tests_list=("${tests_list[@]}" "WN-python.sh")
+tests_list=("${tests_list[@]}" "WN-se-ping.sh")
+tests_list=("${tests_list[@]}" "WN-stage2.sh")
+tests_list=("${tests_list[@]}" "WN-swdir.sh")
+tests_list=("${tests_list[@]}" "WN-ver.sh")
+
+for item in ${tests_list[*]}
+do
+  rm -rf ${item}_result.txt
+  ./$item  > $loglocation/${item}_result.txt 2>&1
+  if [ $? -ne 0 ]; then
+    echo "$item FAILED"
+    failed=yes
+    tests_failed=( "${tests_failed[@]}" "$item" )
+  else
+    echo "$item PASSED" 
+  fi
+done
+popd >> /dev/null
+
+#########################
+# Analyse tests outcome #
+#########################
+
+if [ $failed = "yes" ]; then
+
+  echo "TEST_FAILED"
+  failures=${#tests_failed[*]}
+  echo "$failures tests failed:"
+  for item in ${tests_failed[*]}
+  do
+    echo "$item: results in $loglocation/${item}_result.txt"
+  done
+  exit 1
+else
+    echo "TEST_PASSED"
+  exit 0
+fi
+
