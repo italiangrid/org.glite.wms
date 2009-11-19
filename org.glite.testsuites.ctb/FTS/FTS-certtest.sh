@@ -244,7 +244,9 @@ if [ $failed = "yes" ]; then
   do
     echo "$item: results in tests/${item}_result.txt"
   done
+  exit 1
 else
-    echo "TEST_PASSED"
+  echo "TEST_PASSED"
+  exit 0
 fi
 
