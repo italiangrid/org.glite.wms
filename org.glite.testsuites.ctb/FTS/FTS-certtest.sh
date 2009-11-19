@@ -155,7 +155,9 @@ declare -a tests_failed
 failed=no
 
 testdir=./tests
-tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
+tests_list=(FTS-basic FTS-services FTS-channels FTS-submission)
+#Add when FTS2.2.1 reaches production
+#tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
 #The last two are failing on CERN-DESY channels
 #tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-stress FTS-channels-submit)
 
