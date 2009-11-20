@@ -129,6 +129,10 @@ class AbstractRenewer(Thread):
         self.container = container
         self.running = True
         self.cond = Condition()
+        #
+        # TODO define a new parameter for attempts
+        #
+        self.attempts = 3
         if AbstractRenewer.logger==None:
             AbstractRenewer.logger = mainLogger.get_instance(classid='AbstractRenewer')
         
@@ -139,35 +143,45 @@ class AbstractRenewer(Thread):
         self.cond.acquire()
         try:
             while self.running:
-                self.cond.wait(self.getSleepTime() * 3 / 4)
+                tts = self.getSleepTime()
+                retryTime = tts / (4 * (self.attempts +1))
+                self.cond.wait(tts * 3 / 4)
                 
-                if self.running:
+                if not self.running:
+                    break
                     
-                    self.preRun()
+                self.preRun()
+                
+                if self.single:
+                    tsList = [applicationTS]
+                else:
+                    tsList = self.container.valueSnapshot()
                     
-                    if self.single:
-                        tsList = [applicationTS]
-                    else:
-                        tsList = self.container.valueSnapshot()
-                        
-                    for item in tsList:
-                        rID = self.fString % (os.getpid(), float(item))
-                        rcmd = self.cmdPrefix % rID
-                        AbstractRenewer.logger.debug("Renew command: " + rcmd)
-                        
+                for item in tsList:
+                    rID = self.fString % (os.getpid(), float(item))
+                    rcmd = self.cmdPrefix % rID
+                    AbstractRenewer.logger.debug("Renew command: " + rcmd)
+                    
+                    retry = self.attempts
+                    while retry and self.running:
                         if hasattr(self.container, 'proxyMan') and self.container.proxyMan<>None:
                             self.container.proxyMan.beginLock()
-                            
+                        
                         renewProc = popen2.Popen4(rcmd)
                         for line in renewProc.fromchild:
                             if 'ERROR' in line or 'FATAL' in line:
-                                AbstractRenewer.logger.error("Cannot renew " + rID + ": " + line)
+                                AbstractRenewer.logger.error("Cannot renew %s: %s (%d)" % (rID, line, retry))
+                                retry -= 1
                             else:
                                 AbstractRenewer.logger.debug(line)
+                                retry = 0
                         renewProc.fromchild.close()
                         
                         if hasattr(self.container, 'proxyMan') and self.container.proxyMan<>None:
                             self.container.proxyMan.endLock()
+                        
+                        if retry:
+                            self.cond.wait(retryTime)
 
         finally:
             self.cond.release()
@@ -227,7 +241,6 @@ class ProxyRenewer(AbstractRenewer):
         
         endPoint = parameters.resourceURI[:string.find(parameters.resourceURI,'/')] 
         self.cmdPrefix = '%s -e %s %s ' % (cmdTable['proxy-renew'], endPoint, '%s')
-        self.currentSleep = 0
         self.fString = 'DELEGID%d.%f'
         self.single = ( parameters.delegationType=='single' )
         
@@ -249,12 +262,17 @@ class ProxyRenewer(AbstractRenewer):
                 raise Exception, "Cannot delegate proxy DELEGID%s: %s" % (applicationID, delegError)
 
     def getSleepTime(self):
-        self.currentSleep = int(self.proxyMan)
-        return self.currentSleep
+        tte = int(self.proxyMan)
+        # ugly patch for dealing with external expired proxies
+        if tte==0 and self.proxyMan.usingProxy:
+            ProxyRenewer.logger.error("External proxy is expired, cannot renew")
+            raise Exception, "External proxy is expired, cannot renew"
+        return tte
         
     def preRun(self):
-        if self.currentSleep==0 and self.proxyMan.renewProxy()<0:
-            raise Exception, "External proxy is expired, cannot renew"
+        if self.proxyMan.renewProxy():
+            ProxyRenewer.logger.error("Cannot renew proxy")
+            raise Exception, "Cannot renew proxy"
         
         
 class VOMSProxyManager(Thread):
@@ -307,7 +325,7 @@ class VOMSProxyManager(Thread):
         
         if self.usingProxy:
             VOMSProxyManager.logger.debug("Cannot renew external proxy")
-            return -1
+            return 0
         
         result = 0
         if hasattr(self.parameters, 'vo') and self.parameters.vo<>'':
