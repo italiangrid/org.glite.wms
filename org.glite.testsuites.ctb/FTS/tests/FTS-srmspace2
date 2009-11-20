@@ -29,7 +29,7 @@
 
 showUsage()
 {
- echo "Usage: FTS-submission --fts <fts hostname> --src <source SE> --dest <dest SE> --timeout <timeout> --bdii <bdii host> --vo <vo>"
+ echo "Usage: $0 --fts <fts hostname> --src <source SE> --dest <dest SE> --timeout <timeout> --bdii <bdii host> --vo <vo>"
 }
 
 if [ $# -ne 12 ];then

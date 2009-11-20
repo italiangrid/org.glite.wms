@@ -55,6 +55,7 @@ if [ "$1" = "-f" ]; then
 else
   conffile="./FTS-certconfig"
 fi
+echo "Using $conffile"
 
 if [ -e $conffile ]; then
   source $conffile
@@ -181,83 +182,154 @@ fi
 declare -a tests_failed
 failed=no
 
-testdir=./tests
-tests_list=(FTS-basic FTS-services FTS-channels FTS-submission)
-#Add when FTS2.2.1 reaches production
-#tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
-#The last two are failing on CERN-DESY channels
-#tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-stress FTS-channels-submit)
+#########
+# BASIC #
+#########
 
-pushd $testdir >> /dev/null
-touch testfile 2> /dev/null
-if [ $? -ne 0 ]; then
-  echo "FTS test directory is not writable, if you are on AFS be sure to have a valid token"
-  exitFailure
-fi
+if [ "x${BASIC}" = "xyes" ]; then
+  echo "*Running BASIC tests"
+  testdir=./tests
+  declare -a tests_list
+  tests_list=("${tests_list[@]}" "FTS-basic")
+  tests_list=("${tests_list[@]}" "FTS-services")
+  tests_list=("${tests_list[@]}" "FTS-channels")
+  tests_list=("${tests_list[@]}" "FTS-submission")
+  pushd $testdir >> /dev/null
+  touch testfile 2> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "FTS test directory is not writable, if you are on AFS be sure to have a valid token"
+    exitFailure
+  fi
 
-for item in ${tests_list[*]}
-do
-  rm -rf $loglocation/${item}_result.txt testfile
-  echo "Executing $item"
-  if [ $item = "FTS-basic" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-services" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --site $sitename" \
-        > $loglocation/${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-                                                >> $loglocation/${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-basic" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-channels" ]; then
-    echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
-    ./$item --fts $hostname >> $loglocation/${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-submission" ]; then
-    for channel in $channels
-    do
-      echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
-      ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+  for item in ${tests_list[*]}
+  do
+    rm -rf $loglocation/${item}_result.txt testfile
+    echo "Executing $item"
+    if [ $item = "FTS-basic" ]; then
+      echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
       res=$?
-    done
-  elif [ $item = "FTS-all-channels" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --timeout $time " > $loglocation/${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --timeout $time >> $loglocation/${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-stress" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --njobs $njobs  --nfiles $nfiles" > $loglocation/${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --njobs $njobs  --nfiles $nfiles >> $loglocation/${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-submission-with-checksum-1.sh" ] || [ $item = "FTS-submission-with-checksum-2.sh" ] || [ $item = "FTS-submission-with-checksum-3.sh" ]; then
+    elif [ $item = "FTS-services" ]; then
+      echo "./$item --fts $hostname --bdii $bdiihost --site $sitename" \
+          > $loglocation/${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost --site $sitename \
+                                                  >> $loglocation/${item}_result.txt
+      res=$?
+    elif [ $item = "FTS-basic" ]; then
+      echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
+      res=$?
+    elif [ $item = "FTS-channels" ]; then
+      echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
+      ./$item --fts $hostname >> $loglocation/${item}_result.txt
+      res=$?
+    elif [ $item = "FTS-submission" ]; then
+      for channel in $channels
+      do
+        echo "./$item --fts $hostname --bdii $bdiihost --channel $channel --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
+        ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+              --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+        res=$?
+      done
+    fi
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >>/dev/null
+else
+  echo "*BASIC tests skipped"
+fi
+############################
+# CHECKSUM (FROM FTS 2.2.1)#
+############################
+unset tests_list
+
+if [ "x${CHECKSUM}" = "xyes" ]; then
+  echo "*Running CHECKSUM tests"
+  testdir=./tests
+  declare -a tests_list
+  tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-1.sh")
+  tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-2.sh")
+  tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-3.sh")
+  pushd $testdir >> /dev/null
+  touch testfile 2> /dev/null
+  for item in ${tests_list[*]}
+  do
+    rm -rf $loglocation/${item}_result.txt
+    echo "Executing $item"
     echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
             --vo $voname --timeout $time" > $loglocation/${item}_result.txt
     ./$item --fts $hostname --bdii $bdiihost --channel $channel \
             --vo $voname --timeout $time >> $loglocation/${item}_result.txt
     res=$?
-  fi
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >>/dev/null
+else
+  echo "*CHECKSUM tests skipped"
+fi
 
-  grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
-  if [ "$?" = 0 -o "$res" != 0 ]; then
-    echo "$item FAILED"
-    failed=yes
-    tests_failed=( "${tests_failed[@]}" "$item" )
+#########
+# SPACE #
+#########
+unset tests_list
+
+if [ "x${SPACE}" = "xyes" ]; then
+  if [ "x$CERN_SE" != "x" ]; then
+    SOURCESE=$CERN_SE
   else
-    echo "$item PASSED"
+    echo "CERN_SE has to be set to run SPACE tests"
+  fi
+  if [ "x$CERN_SE2" != "x" ]; then
+    DESTSE=$CERN_SE2
+  else
+    echo "CERN_SE2 has to be set to run SPACE tests"
   fi
 
-done
-popd >> /dev/null
+  echo "*Running SPACE tests"
+  testdir=./tests
+  declare -a tests_list
+  tests_list=("${tests_list[@]}" "FTS-srmspace")
+  tests_list=("${tests_list[@]}" "FTS-srmspace2")
+  pushd $testdir >> /dev/null
+  touch testfile 2> /dev/null
+  for item in ${tests_list[*]}
+  do
+    rm -rf $loglocation/${item}_result.txt
+    echo "Executing $item"
+    echo "./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE --vo $voname --timeout $time" > $loglocation/${item}_result.txt
+    ./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+    res=$?
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >>/dev/null
+else
+  echo "*SPACE tests skipped"
+fi
 
+#######
+# END #
+#######
 echo "------------------------------------------------"
 echo "END `date`"
 

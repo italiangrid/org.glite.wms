@@ -4,6 +4,7 @@
 LOGSLOCATION="/tmp"
 
 FTS_HOST="lxbra2310.cern.ch"
+
 #The name of the top level BDII
 BDII_HOST="lxbra2305.cern.ch"
 #The hostname of the LCG File Catalog
@@ -17,6 +18,7 @@ VO="dteam"
 CHANNELS="CERN-CERN CERN-DESY"
 #export CERN_SE="lxb7608v1.cern.ch"
 CERN_SE="lxbra1910.cern.ch"
+CERN_SE2="lxb7608v1.cern.ch"
 DESY_SE="swords.desy.de"
 #Timeout for waiting the job to finish. Default is 100 sec.
 TIMEOUT=300
@@ -24,3 +26,8 @@ TIMEOUT=300
 NJOBS=10
 #The number of files per job. Default is 10
 NFILES=10
+
+#TESTS TO RUN (BASIC, CHECKSUM, SPACE)
+BASIC="yes"
+CHECKSUM="yes"
+SPACE="yes" 
