@@ -617,6 +617,8 @@ function get_source_dest_from_channel()
 #
 function get_def_se_from_site()
 {
+  source ../FTS-certconfig #needed to get CERN_SE and DESY_SE
+
   if [ -z $1 ];then
     echo "A site name must be provided to get_def_se_from_site()"
     return 2
