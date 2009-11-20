@@ -15,7 +15,7 @@ SITE_NAME="cert-tb-cern"
 VO="dteam"
 #VO="org.glite.voms-test"
 #Space separated list of channels to use for submitting file transfers
-CHANNELS="CERN-CERN CERN-DESY"
+CHANNELS="CERN-CERN"
 #export CERN_SE="lxb7608v1.cern.ch"
 CERN_SE="lxbra1910.cern.ch"
 CERN_SE2="lxb7608v1.cern.ch"
@@ -29,5 +29,5 @@ NFILES=10
 
 #TESTS TO RUN (BASIC, CHECKSUM, SPACE)
 BASIC="yes"
-CHECKSUM="yes"
-SPACE="yes" 
+CHECKSUM="no"
+SPACE="no" 
