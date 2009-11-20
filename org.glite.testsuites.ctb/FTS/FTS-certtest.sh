@@ -25,7 +25,8 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  FTS-certtest.sh                   "
+ echo "Usage:  FTS-certtest.sh  [-f <conf.file>]  "
+ echo "  <conf.file> Configuration file, default is FTS-certconfig"
  echo "                                           "
 }
 
@@ -49,10 +50,16 @@ fi
 # Check for environment variables #
 ###################################
 
-if [ -e "FTS-certconfig" ]; then
-  source ./FTS-certconfig
+if [ "$1" = "-f" ]; then
+  conffile=$2
 else
-  echo "The file ./FTS-certconfig must be sourced in order to run the tests"
+  conffile="./FTS-certconfig"
+fi
+
+if [ -e $conffile ]; then
+  source $conffile
+else
+  echo "The file $conffile must be sourced in order to run the tests"
   exitFailure
 fi
 
@@ -119,6 +126,26 @@ else
   nfiles=$NFILES
 fi
 
+####################################
+# Create a directory for log files #
+####################################
+
+id=`date +%y%m%d%H%M%S`
+if [ -z "$LOGSLOCATION" ]; then
+  cp=`pwd`
+  loglocation=$cp/logs_$id
+  mkdir -p $loglocation
+else
+  loglocation=$LOGSLOCATION/logs_$id
+  mkdir -p $loglocation
+fi
+
+if [ ! -d $loglocation ];then
+  echo   "Error while creating log directory $loglocation"
+  exitFailure
+else
+  echo "Log files will be stored in $loglocation"
+fi
 
 #########
 # START #
