@@ -197,56 +197,56 @@ fi
 
 for item in ${tests_list[*]}
 do
-  rm -rf ${item}_result.txt testfile
+  rm -rf $loglocation/${item}_result.txt testfile
   echo "Executing $item"
   if [ $item = "FTS-basic" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost" > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost >> ${item}_result.txt
+    echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
+    ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
     res=$?
   elif [ $item = "FTS-services" ]; then
     echo "./$item --fts $hostname --bdii $bdiihost --site $sitename" \
-        > ${item}_result.txt
+        > $loglocation/${item}_result.txt
     ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-                                                >> ${item}_result.txt
+                                                >> $loglocation/${item}_result.txt
     res=$?
   elif [ $item = "FTS-basic" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost" > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost >> ${item}_result.txt
+    echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
+    ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
     res=$?
   elif [ $item = "FTS-channels" ]; then
-    echo "./$item --fts $hostname" > ${item}_result.txt
-    ./$item --fts $hostname >> ${item}_result.txt
+    echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
+    ./$item --fts $hostname >> $loglocation/${item}_result.txt
     res=$?
   elif [ $item = "FTS-submission" ]; then
     for channel in $channels
     do
       echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" >> ${item}_result.txt
+            --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
       ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time >> ${item}_result.txt
+            --vo $voname --timeout $time >> $loglocation/${item}_result.txt
       res=$?
     done
   elif [ $item = "FTS-all-channels" ]; then
     echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --timeout $time " > ${item}_result.txt
+            --vo $voname --timeout $time " > $loglocation/${item}_result.txt
     ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --timeout $time >> ${item}_result.txt
+            --vo $voname --timeout $time >> $loglocation/${item}_result.txt
     res=$?
   elif [ $item = "FTS-stress" ]; then
     echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --njobs $njobs  --nfiles $nfiles" > ${item}_result.txt
+            --vo $voname --njobs $njobs  --nfiles $nfiles" > $loglocation/${item}_result.txt
     ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --njobs $njobs  --nfiles $nfiles >> ${item}_result.txt
+            --vo $voname --njobs $njobs  --nfiles $nfiles >> $loglocation/${item}_result.txt
     res=$?
   elif [ $item = "FTS-submission-with-checksum-1.sh" ] || [ $item = "FTS-submission-with-checksum-2.sh" ] || [ $item = "FTS-submission-with-checksum-3.sh" ]; then
     echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" > ${item}_result.txt
+            --vo $voname --timeout $time" > $loglocation/${item}_result.txt
     ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time >> ${item}_result.txt
+            --vo $voname --timeout $time >> $loglocation/${item}_result.txt
     res=$?
   fi
 
-  grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+  grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
   if [ "$?" = 0 -o "$res" != 0 ]; then
     echo "$item FAILED"
     failed=yes
@@ -271,7 +271,7 @@ if [ $failed = "yes" ]; then
   echo "The following tests failed:"
   for item in ${tests_failed[*]}
   do
-    echo "$item: results in tests/${item}_result.txt"
+    echo "$item: results in $loglocation/${item}_result.txt"
   done
   exit 1
 else
