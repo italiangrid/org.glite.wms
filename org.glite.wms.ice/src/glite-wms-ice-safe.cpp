@@ -101,7 +101,7 @@ int main( int argc, char *argv[]) {
 
   string logpath = dirname( (char*)logfile.c_str() );
 
-  string consolelog = logpath + "/console.log";
+  string consolelog = logpath + "/ice_console.log";
 
   if ( vm.count("daemon") ) {
     ofstream pid_file(opt_pid_file.c_str());
