@@ -65,7 +65,7 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
 
         // First, check whether the service is blacklisted
         if ( m_blacklist->is_blacklisted( m_service ) ) {
-            throw cream_ex::ConnectionTimeoutException( "The endpoint is blacklisted" ); // FIXME: throw different exception?
+	  throw cream_ex::ConnectionTimeoutException( string("The endpoint [") + m_service + "] is blacklisted" ); // FIXME: throw different exception?
         }
 
         try {
@@ -90,7 +90,8 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
                                 << method_name << "Connection timed out to CREAM: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
-                                << ". Blacklisting endpoint and giving up."
+                                << ". Blacklisting endpoint ["
+				<< m_service <<"] and giving up."
                                  );
                 m_blacklist->blacklist_endpoint( m_service );
                 throw; // rethrow
