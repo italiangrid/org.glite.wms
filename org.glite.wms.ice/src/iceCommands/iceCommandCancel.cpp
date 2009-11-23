@@ -220,13 +220,13 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     //vector<string> url_jid(1);   
     //url_jid[0] = theJob.getCreamJobID();
     string jobdesc( theJob.describe()  );
-    CREAM_SAFE_LOG(
-                   m_log_dev->infoStream()
-                   << "iceCommandCancel::execute() - Removing job [" 
-                   << jobdesc
-                   << "]"
+//     CREAM_SAFE_LOG(
+//                    m_log_dev->infoStream()
+//                    << "iceCommandCancel::execute() - Removing job [" 
+//                    << jobdesc
+//                    << "]"
                    
-                   );
+//                    );
 
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()

@@ -48,7 +48,7 @@
  */
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/certUtil.h"
-#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
+//#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/JobIdWrapper.h"
 #include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -432,254 +432,44 @@ void iceCommandSubmit::try_to_submit( void ) throw( iceCommandFatal_ex&, iceComm
     cream_api::AbsCreamProxy::RegisterArrayResult res;        
 
     while( retry ) {
-
-        //
-        // Manage lease creation
-        //
-        if ( is_lease_enabled ) {
-            
-            if ( force_lease ) {
-                CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
-                                << "Lease is enabled, enforcing creation of a new lease "
-                                << "for job [" << jobdesc << "]"
-                                 );        
-            } else {
-                CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
-                                << "Lease is enabled, trying to get lease "
-                                << "for job [" << jobdesc << "]"
-                                 );        
-            }
-
-            //
-            // Get a (possibly existing) lease ID
-            //
-            try{
-                lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob, force_lease );
-            } catch( const std::exception& ex ) {
-                // something was wrong with the lease creation step. 
-                string err_msg( boost::str( boost::format( "Failed to get lease_id for job %1%. Exception is %2%" ) % _gid % ex.what() ) );
-
-                CREAM_SAFE_LOG( m_log_dev->errorStream()
-                                << method_name << err_msg );
-                throw( iceCommandTransient_ex( err_msg ) );
-            } catch( ... ) {
-                string err_msg( boost::str( boost::format( "Failed to get lease_id for job %1% due to unknown exception" ) % _gid ) );
-                CREAM_SAFE_LOG( m_log_dev->errorStream()
-                                << method_name << err_msg );
-                throw( iceCommandTransient_ex( err_msg ) );
-            }
-            
-            // lease creation OK
-            CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                            << "Using lease ID " << lease_id << " for job ["
-                            << jobdesc << "]"
-                             );        
-        }
-
-        // 
-        // Delegates the proxy
-        //
+      //
+      // Manage lease creation
+      //
+      if ( is_lease_enabled ) {
 	
-	bool USE_NEW = m_theJob.is_proxy_renewable();
-	boost::tuple<string, time_t, long long int> SBP;
-	if( USE_NEW ) {
-	  SBP = iceUtil::DNProxyManager::getInstance()->getExactBetterProxyByDN( V.getDNFQAN(), m_theJob.get_myproxy_address());
-
-	  if( SBP.get<0>() == "" ) {
-	    /**
-	       NO SuperBetterProxy for DN.
-	       must use that one in the ISB as SBP
-	    */
-	    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                            << "Setting new better proxy for userdn ["
-			    << V.getDNFQAN() << "] MyProxy server ["
-			    << m_theJob.get_myproxy_address() << "] Job ["
-                            << jobdesc 
-			    << "]"
-			    ); 
-	    iceUtil::DNProxyManager::getInstance()->setBetterProxy( V.getDNFQAN(), 
-								    m_theJob.get_user_proxy_certificate(),
-								    m_theJob.get_myproxy_address(),
-								    V.getProxyTimeEnd() );
-	    force_delegation = true;
-
-	    //	    incrementUserProxyCounter = false;
-
-	  } else {
-	    /**
-	       The SBP already exists. Let's check if the ISB one is more
-	       long-living.
-	    */
-	    if( V.getProxyTimeEnd() > SBP.get<1>() ) {
-	      boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.get_user_proxy_certificate(), V.getProxyTimeEnd(), SBP.get<2>() );
-	      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-			      << "Updating better proxy for userdn ["
-			      << V.getDNFQAN() << "] MyProxy server ["
-			      << m_theJob.get_myproxy_address() << "] Job ["
-			      << jobdesc
-			      << "] Proxy Expiration time ["
-			      << newPrx.get<1>() << "] Counter ["
-			      << newPrx.get<2>()
-			      << "] because this one is more long-living..."
-			    ); 
-	      iceUtil::DNProxyManager::getInstance()->updateBetterProxy( V.getDNFQAN(),
-									 m_theJob.get_myproxy_address(),
-									 newPrx );
-									
-	    }
-	    /** 
-		Now check the duration of related delegation
-	    */
-	    iceUtil::Delegation_manager::table_entry deleg;
-	    deleg = iceUtil::Delegation_manager::instance()->getDelegation(V.getDNFQAN(),
-									   _ceurl,
-									   m_theJob.get_myproxy_address()
-									   );
-	    if( deleg.m_expiration_time < time(0) + 2*iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->proxy_renewal_frequency() ) // this means that the ICE's delegation renewal has failed. In fact it try to renew much before the exp time of the delegation itself.
-	      force_delegation = true;
-	    
-	  }
-	}
-
-        try {
-	  delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, USE_NEW, force_delegation );
-        } catch( const exception& ex ) {
-            throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % _gid % ex.what() ) ) );
-	}
-
-        //const string the_delegation( delegation.get<0>() );
+	process_lease( force_lease, jobdesc, _gid, lease_id );
         
-        //
-        // Registers the job (without autostart)
-        //
-        try {
-                
-            CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                            << "Going to REGISTER Job ["
-                            << jobdesc << "] with delegation ID ["
-			    << delegation << "] to CREAM [" << m_theJob.get_creamurl()
-			    << "]..."
-                            );
-            
-            cream_api::AbsCreamProxy::RegisterArrayRequest req;
-            
-            // FIXME: must check what to set the 3rd and 4th arguments
-            // (delegationProxy, leaseID) last asrgument is irrelevant
-            // now, because we register jobs one by one
-            cream_api::JobDescriptionWrapper jd(modified_jdl, 
-                                                delegation,
-                                                "" /* delegPRoxy */, 
-                                                lease_id /* leaseID */, 
-                                                false, /* NO autostart */
-                                                "foo");
-            
-            req.push_back( &jd );
-            
-            string iceid = m_theIce->getHostDN();
-            boost::trim_if(iceid, boost::is_any_of("/"));
-            boost::replace_all( iceid, "/", "_" );
-            boost::replace_all( iceid, "=", "_" );
-            
-	    //string proxy = DNProxyManager::getInstance()->getAnyBetterProxyByDN( userdn ).get<0>()
-	    //if( proxy.empty() )
-	    string proxy = m_theJob.get_user_proxy_certificate();
-	    
-            iceUtil::CreamProxy_Register( m_theJob.get_creamurl(),
-                                          proxy,
-                                          (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
-                                          &res,
-                                          iceid).execute( 3 );
-        } catch ( glite::ce::cream_client_api::cream_exceptions::GridProxyDelegationException& ex ) {
-            // Here CREAM tells us that the delegation ID is unknown.
-            // We do not trust this fault, and try to redelegate the
-            // _same_ delegation ID, hoping for the best.
-            
-            //const string the_delegation_url( m_theJob.getCreamDelegURL() );
+      }
+      
+      // 
+      // Delegate the proxy
+      //
+      
+      //	bool USE_NEW = m_theJob.is_proxy_renewable();
+      //boost::tuple<string, time_t, long long int> SBP;
+      
+      handle_delegation( delegation, m_theJob.is_proxy_renewable(), force_delegation, V, jobdesc, _gid, _ceurl );
+      
+      //
+      // Registers the job (without autostart)
+      //
+      if( !register_job( is_lease_enabled,
+			 jobdesc,
+			 _gid,
+			 delegation,
+			 lease_id,
+			 modified_jdl,
+			 force_delegation,
+			 force_lease,
+			 res) )
+	{
+	  continue;
+	}
+      
+      process_result( retry, force_delegation, force_lease, is_lease_enabled, _gid, res );
+      
+    } // end while( retry )
 
-	  iceUtil::Delegation_manager::instance()->redelegate( m_theJob.get_user_proxy_certificate(), m_theJob.get_cream_delegurl(), delegation );
-            // no exception is raised, we simply hope for the best
-        } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
-            if ( !force_delegation ) {
-                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                                << "Cannot register GridJobID ["
-                                << _gid 
-                                << "] due to Delegation Exception: " 
-                                << ex.what() << ". Will retry once..."
-                                 );
-                force_delegation = true;
-            } else {
-                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised DelegationException %1%") % ex.what() ) ) ); // Rethrow
-            }
-        } catch ( glite::ce::cream_client_api::cream_exceptions::GenericException& ex ) {
-            if ( is_lease_enabled && !force_lease ) {
-                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                                << "Cannot register GridJobID ["
-                                << _gid 
-                                << "] due to Generic Fault: " 
-                                << ex.what() << ". Will retry once by enforcing creation of a new lease ID..."
-                                 );
-                force_lease = true;
-		continue;
-            } else {
-                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % ex.what() ) ) ); // Rethrow
-            }                        
-        } catch ( exception& ex ) {
-            CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                            << "Cannot register GridJobID ["
-                            << _gid 
-                            << "] due to std::exception: " 
-                            << ex.what() << "."
-                             );
-            throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
-        }
-
-        // FIXME: This should be updated as soon as the C++ CREAM APIs
-        // have been modified to check the correct return values
-        cream_api::JobIdWrapper::RESULT result = res.begin()->second.get<0>();
-        string err = res.begin()->second.get<2>();
-            
-        switch( result ) {
-        case cream_api::JobIdWrapper::OK: // nothing to do
-            retry = false;
-            break;
-        case cream_api::JobIdWrapper::DELEGATIONIDMISMATCH:
-        case cream_api::JobIdWrapper::DELEGATIONPROXYERROR:
-            if ( !force_delegation ) {
-                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                                << "Cannot register GridJobID ["
-                                << _gid 
-                                << "] due to Delegation Error: " 
-                                << err << ". Will retry once..."
-                                 );
-                force_delegation = true;
-            } else {
-                throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned delegation error \"%1%\"") % err ) ) );
-            }            
-            break;
-        case cream_api::JobIdWrapper::LEASEIDMISMATCH:
-	  if ( is_lease_enabled && !force_lease ) {
-	    CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-			    << "Cannot register GridJobID ["
-			    << _gid 
-			    << "] due to Lease Error: " 
-			    << err << ". Will retry once by enforcing creation of a new lease ID..."
-			    );
-	    force_lease = true;
-	  } else {
-	    throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned lease id mismatch \"%1%\"") % err ) ) );
-	  }     
-	  break;                               
-        default:
-	  CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
-			  << "Error while registering GridJobID ["
-			  << _gid 
-			  << "] due to Error: " 
-			  << err
-			  );
-	  throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned error \"%1%\"") % err ) ) ); 
-        }
-	
-    } // end while(1)
     map< string, string > props;
     res.begin()->second.get<1>().getProperties( props );
     string dbid       = props["DB_ID"];
@@ -1312,3 +1102,286 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   } // else -> if(subscribedTo...)
   
 } // end function, also unlocks the iceCommandSubmit's s_localMutexForSubscription mutex
+
+//______________________________________________________________________________
+void iceCommandSubmit::process_lease( const bool force_lease,
+				      const std::string& jobdesc,
+				      const std::string& _gid,
+				      string& lease_id )
+  throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+{
+  const char* method_name = "iceCommandSubmit::process_lease() - ";
+
+  if ( force_lease ) {
+    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+		    << "Lease is enabled, enforcing creation of a new lease "
+		    << "for job [" << jobdesc << "]"
+		    );        
+  } else {
+    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+		    << "Lease is enabled, trying to get lease "
+		    << "for job [" << jobdesc << "]"
+		    );        
+  }
+  
+  //
+  // Get a (possibly existing) lease ID
+  //
+  try{
+    lease_id = iceUtil::Lease_manager::instance()->make_lease( m_theJob, force_lease );
+  } catch( const std::exception& ex ) {
+    // something was wrong with the lease creation step. 
+    string err_msg( boost::str( boost::format( "Failed to get lease_id for job %1%. Exception is %2%" ) % _gid % ex.what() ) );
+    
+    CREAM_SAFE_LOG( m_log_dev->errorStream()
+		    << method_name << err_msg );
+    throw( iceCommandTransient_ex( err_msg ) );
+
+  } catch( ... ) {
+
+    string err_msg( boost::str( boost::format( "Failed to get lease_id for job %1% due to unknown exception" ) % _gid ) );
+    CREAM_SAFE_LOG( m_log_dev->errorStream()
+		    << method_name << err_msg );
+    throw( iceCommandTransient_ex( err_msg ) );
+
+  }
+  
+  // lease creation OK
+  CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+		  << "Using lease ID " << lease_id << " for job ["
+		  << jobdesc << "]"
+		  );
+}
+
+//______________________________________________________________________________
+void iceCommandSubmit::handle_delegation( string& delegation, 
+					  const bool USE_NEW,
+					  bool& force_delegation,
+					  const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V,
+					  const string& jobdesc,
+					  const string& _gid,
+					  const string& _ceurl)
+  throw( iceCommandTransient_ex& )
+{
+
+  const char* method_name = "iceCommandSubmit::handle_delegation() - ";
+  boost::tuple<string, time_t, long long int> SBP;
+
+  if( USE_NEW ) {
+    SBP = iceUtil::DNProxyManager::getInstance()->getExactBetterProxyByDN( V.getDNFQAN(), m_theJob.get_myproxy_address());
+    
+    if( SBP.get<0>() == "" ) {
+      /**
+	 NO SuperBetterProxy for DN.
+	 must use that one in the ISB as SBP
+      */
+      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+		      << "Setting new better proxy for userdn ["
+		      << V.getDNFQAN() << "] MyProxy server ["
+		      << m_theJob.get_myproxy_address() << "] Job ["
+		      << jobdesc 
+		      << "]"
+		      ); 
+      iceUtil::DNProxyManager::getInstance()->setBetterProxy( V.getDNFQAN(), 
+							      m_theJob.get_user_proxy_certificate(),
+							      m_theJob.get_myproxy_address(),
+							      V.getProxyTimeEnd() );
+      force_delegation = true;
+      
+      //	    incrementUserProxyCounter = false;
+      
+    } else {
+      /**
+	 The SBP already exists. Let's check if the ISB one is more
+	 long-living.
+      */
+      if( V.getProxyTimeEnd() > SBP.get<1>() ) {
+	boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.get_user_proxy_certificate(), V.getProxyTimeEnd(), SBP.get<2>() );
+	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+			<< "Updating better proxy for userdn ["
+			<< V.getDNFQAN() << "] MyProxy server ["
+			<< m_theJob.get_myproxy_address() << "] Job ["
+			<< jobdesc
+			<< "] Proxy Expiration time ["
+			<< newPrx.get<1>() << "] Counter ["
+			<< newPrx.get<2>()
+			<< "] because this one is more long-living..."
+			); 
+	iceUtil::DNProxyManager::getInstance()->updateBetterProxy( V.getDNFQAN(),
+								   m_theJob.get_myproxy_address(),
+								   newPrx );
+	
+      }
+      /** 
+	  Now check the duration of related delegation
+      */
+      iceUtil::Delegation_manager::table_entry deleg;
+      deleg = iceUtil::Delegation_manager::instance()->getDelegation(V.getDNFQAN(),
+								     _ceurl,
+								     m_theJob.get_myproxy_address()
+								     );
+      if( deleg.m_expiration_time < time(0) + 2*iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->proxy_renewal_frequency() ) // this means that the ICE's delegation renewal has failed. In fact it try to renew much before the exp time of the delegation itself.
+	force_delegation = true;
+      
+    }
+  }
+  
+  try {
+    delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, USE_NEW, force_delegation );
+  } catch( const exception& ex ) {
+    throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % _gid % ex.what() ) ) );
+  }
+}
+
+//______________________________________________________________________________
+bool iceCommandSubmit::register_job( const bool is_lease_enabled,
+				     const string& jobdesc,
+				     const string& _gid,
+				     const string& delegation,
+				     const string& lease_id,
+				     const string& modified_jdl,
+				     bool& force_delegation,
+				     bool& force_lease,
+				     cream_api::AbsCreamProxy::RegisterArrayResult& res)
+  throw( iceCommandTransient_ex&)
+{
+  const char* method_name = "iceCommandSubmit::register_job() - ";
+
+  try {
+    
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+		    << "Going to REGISTER Job ["
+		    << jobdesc << "] with delegation ID ["
+		    << delegation << "] to CREAM [" << m_theJob.get_creamurl()
+		    << "]..."
+		    );
+    
+    cream_api::AbsCreamProxy::RegisterArrayRequest req;
+    
+    // FIXME: must check what to set the 3rd and 4th arguments
+    // (delegationProxy, leaseID) last asrgument is irrelevant
+    // now, because we register jobs one by one
+    cream_api::JobDescriptionWrapper jd(modified_jdl, 
+					delegation,
+					"" /* delegPRoxy */, 
+					lease_id /* leaseID */, 
+					false, /* NO autostart */
+					"foo");
+    
+    req.push_back( &jd );
+    
+    string iceid = m_theIce->getHostDN();
+    boost::trim_if(iceid, boost::is_any_of("/"));
+    boost::replace_all( iceid, "/", "_" );
+    boost::replace_all( iceid, "=", "_" );
+    
+    string proxy = m_theJob.get_user_proxy_certificate();
+    
+    iceUtil::CreamProxy_Register( m_theJob.get_creamurl(),
+				  proxy,
+				  (const cream_api::AbsCreamProxy::RegisterArrayRequest*)&req,
+				  &res,
+				  iceid).execute( 3 );
+
+  } catch ( glite::ce::cream_client_api::cream_exceptions::GridProxyDelegationException& ex ) {
+    // Here CREAM tells us that the delegation ID is unknown.
+    // We do not trust this fault, and try to redelegate the
+    // _same_ delegation ID, hoping for the best.
+    
+    iceUtil::Delegation_manager::instance()->redelegate( m_theJob.get_user_proxy_certificate(), m_theJob.get_cream_delegurl(), delegation );
+    // no exception is raised, we simply hope for the best
+    return false;
+
+  } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
+    if ( !force_delegation ) {
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+		      << "Cannot register GridJobID ["
+		      << _gid 
+		      << "] due to Delegation Exception: " 
+		      << ex.what() << ". Will retry once..."
+		      );
+      force_delegation = true;
+      return false;
+    } else {
+      throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised DelegationException %1%") % ex.what() ) ) ); // Rethrow
+    }
+  } catch ( glite::ce::cream_client_api::cream_exceptions::GenericException& ex ) {
+    if ( is_lease_enabled && !force_lease ) {
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+		      << "Cannot register GridJobID ["
+		      << _gid 
+		      << "] due to Generic Fault: " 
+		      << ex.what() << ". Will retry once by enforcing creation of a new lease ID..."
+		      );
+      force_lease = true;
+      return false;//continue;
+    } else {
+      throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % ex.what() ) ) ); // Rethrow
+    }                        
+  } catch ( exception& ex ) {
+    CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+		    << "Cannot register GridJobID ["
+		    << _gid 
+		    << "] due to std::exception: " 
+		    << ex.what() << "."
+		    );
+    throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
+  }
+  return true;
+}
+
+//______________________________________________________________________________
+void iceCommandSubmit::process_result( bool& retry, 
+				       bool& force_delegation, 
+				       bool& force_lease,
+				       const bool is_lease_enabled,
+				       const string& _gid,
+				       const cream_api::AbsCreamProxy::RegisterArrayResult& res )
+  throw( iceCommandTransient_ex& )
+{
+  const char* method_name = "iceCommandSubmit::process_result() - ";
+
+  cream_api::JobIdWrapper::RESULT result = res.begin()->second.get<0>();
+  string err = res.begin()->second.get<2>();
+  
+  switch( result ) {
+  case cream_api::JobIdWrapper::OK: // nothing to do
+    retry = false;
+    break;
+  case cream_api::JobIdWrapper::DELEGATIONIDMISMATCH:
+  case cream_api::JobIdWrapper::DELEGATIONPROXYERROR:
+    if ( !force_delegation ) {
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+		      << "Cannot register GridJobID ["
+		      << _gid 
+		      << "] due to Delegation Error: " 
+		      << err << ". Will retry once..."
+		      );
+      force_delegation = true;
+    } else {
+      throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned delegation error \"%1%\"") % err ) ) );
+    }            
+    break;
+  case cream_api::JobIdWrapper::LEASEIDMISMATCH:
+    if ( is_lease_enabled && !force_lease ) {
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+		      << "Cannot register GridJobID ["
+		      << _gid 
+		      << "] due to Lease Error: " 
+		      << err << ". Will retry once by enforcing creation of a new lease ID..."
+		      );
+      force_lease = true;
+    } else {
+      throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned lease id mismatch \"%1%\"") % err ) ) );
+    }     
+    break;                               
+  default:
+    CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+		    << "Error while registering GridJobID ["
+		    << _gid 
+		    << "] due to Error: " 
+		    << err
+		    );
+    throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register returned error \"%1%\"") % err ) ) ); 
+  }
+}

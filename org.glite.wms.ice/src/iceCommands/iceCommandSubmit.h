@@ -26,6 +26,8 @@
 #include "creamJob.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/AbsCreamProxy.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
@@ -83,8 +85,42 @@ namespace util {
       * ) must take care of the post-failure operations, that is
       * logging the appropriate events to LB and try to resubmit.
       */
+
      void try_to_submit( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+     //bool try_to_register( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+     //     bool try_to_start( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+
+     void process_lease( const bool force_lease, 
+			 const std::string& jobdesc, 
+			 const std::string&, 
+			 std::string& lease_id ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+
+     void handle_delegation( std::string& delegation, 
+			     const bool USE_NEW,
+			     bool&,
+			     const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V,
+			     const std::string& jobdesc,
+			     const std::string& _gid,
+			     const std::string& ceurl) throw( iceCommandTransient_ex& );
+
+     bool iceCommandSubmit::register_job( const bool is_lease_enabled, 
+					  const std::string& jobdesc,
+					  const std::string& _gid,
+					  const std::string& delegation,
+					  const std::string& lease_id,
+					  const std::string& modified_jdl,
+					  bool& force_delegation,
+					  bool& force_lease,
+					  glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult& res) throw( iceCommandTransient_ex&);
      
+     void iceCommandSubmit::process_result( bool& retry, 
+					    bool& force_delegation, 
+					    bool& force_lease,
+					    const bool,
+					    const std::string& _gid,
+					    const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult& res )
+       throw( iceCommandTransient_ex& );
+
      // Inner class definition, used to manipulate paths
      class pathName {
      public:
