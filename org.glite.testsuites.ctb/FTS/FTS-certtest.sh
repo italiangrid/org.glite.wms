@@ -183,7 +183,7 @@ echo "FTS HOST: $hostname"
 ############################
 
 
-echo "test" | voms-proxy-init --voms $VO -pwstdin 2>1 >> /dev/null
+echo "test" | voms-proxy-init --voms $VO -pwstdin 2>&1 >> /dev/null
 if [ $? -ne 0 ]; then
   echo "Failed creating a proxy"
   exitFailure
