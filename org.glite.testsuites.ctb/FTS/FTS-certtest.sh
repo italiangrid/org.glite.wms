@@ -25,7 +25,7 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  FTS-certtest.sh  [-f <conf.file>]  "
+ echo "Usage:  FTS-certtest.sh  [-f <conf.file>] [--fts <FTS HOST>]"
  echo "  <conf.file> Configuration file, default is FTS-certconfig"
  echo "                                           "
 }
@@ -50,9 +50,29 @@ fi
 # Check for environment variables #
 ###################################
 
-if [ "$1" = "-f" ]; then
-  conffile=$2
-else
+#Parse arguments
+while [ $# -ne 0 ]; do
+  case "$1" in
+    -f)
+      shift
+      conffile=$1
+      shift
+      ;;
+    '--fts')
+      shift
+      FTS_HOST_ARG=$1
+      shift
+      ;;
+    *|'')
+      echo "Unknown option '$1'"
+      exit
+      ;;
+  esac
+done
+
+
+if [ "x$conffile" = "x" ]; then
+  #Default value
   conffile="./FTS-certconfig"
 fi
 echo "Using $conffile"
@@ -64,11 +84,13 @@ else
   exitFailure
 fi
 
-if [ -z "$FTS_HOST" ]; then
-  echo "You ned to set FTS_HOST in FTS-certconfig in order to run the tests"
-  exitFailure
-else
+if [ -n "$FTS_HOST_ARG" ]; then
+  hostname=$FTS_HOST_ARG
+elif [ -n "$FTS_HOST" ]; then
   hostname=$FTS_HOST
+else
+  echo "You ned to set FTS_HOST in FTS-certconfig or use the --fts argument"
+  exitFailure
 fi
 
 if [ -z "$BDII_HOST" ]; then
