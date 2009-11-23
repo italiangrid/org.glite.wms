@@ -24,6 +24,9 @@
 #include "iceConfManager.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "Request_source_factory.h"
+#include "Request_source.h"
+#include "Request.h"
 
 #include <string>
 #include <iostream>
@@ -106,8 +109,10 @@ int main(int argc, char* argv[]) {
     }
     
     // int j, howmany;
-    utils::FileList<string> fl;
-    
+    //    utils::FileList<string> fl;
+
+    iceUtil::Request_source* input_queue( iceUtil::Request_source_factory::make_source_input_ice() );
+
     ifstream is( opt_ad.c_str() );
     string a_line;
     string Buf;
@@ -148,24 +153,26 @@ int main(int argc, char* argv[]) {
 
     string filelist_name( iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->input() );
 
-    cout << "Adding JDL <" << request << "> to filelist " << filelist_name << endl;
+    cout << "Adding JDL <" << request << "> to input queue " << filelist_name << endl;
 
-    try{
-        fl.open( filelist_name );
-    }
-    catch(std::exception& ex) {
-        cerr << ex.what()<<endl;
-        exit(1);
-    }
+    input_queue->put_request( request );
 
-    utils::FileListMutex mx(fl);
-    utils::FileListLock  lock(mx);
-    try {
-        fl.push_back(request);
-    } catch(std::exception& ex) {
-        cerr << ex.what() << endl;
-        exit(1);
-    }
+//     try{
+//         fl.open( filelist_name );
+//     }
+//     catch(std::exception& ex) {
+//         cerr << ex.what()<<endl;
+//         exit(1);
+//     }
+
+//     utils::FileListMutex mx(fl);
+//     utils::FileListLock  lock(mx);
+//     try {
+//         fl.push_back(request);
+//     } catch(std::exception& ex) {
+//         cerr << ex.what() << endl;
+//         exit(1);
+//     }
 }
 
 
