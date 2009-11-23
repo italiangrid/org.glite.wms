@@ -10,10 +10,18 @@
 #include <pwd.h>                // getpwnam()
 #include <cerrno>
 
+#include "glite/wms/common/configuration/ICEConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
+#include "iceConfManager.h"
+
 #include <boost/program_options.hpp>
+
+#include <libgen.h> // for dirname
 
 using namespace std;
 namespace po = boost::program_options;
+namespace iceUtil = glite::wms::ice::util;
 
 // change the uid and gid to those of user no-op if user corresponds
 // to the current effective uid only root can set the uid (this
@@ -77,7 +85,24 @@ int main( int argc, char *argv[]) {
     cout << desc << endl;
     return 0;
   }
-  
+
+  iceUtil::iceConfManager::init( opt_conf_file );
+  try{
+    iceUtil::iceConfManager::getInstance();
+  }
+  catch(iceUtil::ConfigurationManager_ex& ex) {
+    cerr << "glite-wms-ice-safe::main() - ERROR: " << ex.what() << endl;
+    exit(1);
+  }
+
+  glite::wms::common::configuration::Configuration* conf = iceUtil::iceConfManager::getInstance()->getConfiguration();
+
+  string logfile = conf->ice()->logfile();
+
+  string logpath = dirname( (char*)logfile.c_str() );
+
+  string consolelog = logpath + "/console.log";
+
   if ( vm.count("daemon") ) {
     ofstream pid_file(opt_pid_file.c_str());
     if (!pid_file) {
@@ -106,9 +131,9 @@ int main( int argc, char *argv[]) {
 	      "/opt/glite/bin/glite-wms-ice",
 	      opt_conf_file.c_str());
     else
-      sprintf(buf, "%s --conf %s", 
+      sprintf(buf, "%s --conf %s 2>1 &> %s", 
 	      "/opt/glite/bin/glite-wms-ice",
-	      opt_conf_file.c_str());
+	      opt_conf_file.c_str(), consolelog.c_str() );
       
 
     while(true) {
