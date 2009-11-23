@@ -176,7 +176,7 @@ fi
 
 echo "START `date` "
 echo "------------------------------------------------"
-echo "FTS HOST: $FTS_HOST"
+echo "FTS HOST: $hostname"
 
 ############################
 # Generate and check proxy #
