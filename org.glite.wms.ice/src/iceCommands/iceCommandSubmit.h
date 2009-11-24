@@ -86,7 +86,7 @@ namespace util {
       * logging the appropriate events to LB and try to resubmit.
       */
 
-     void try_to_submit( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+     void try_to_submit( const bool only_start ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      //bool try_to_register( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
      //     bool try_to_start( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
 
