@@ -108,7 +108,93 @@ function special_cancel_transfer()
     return 0
 }
 
+#
+# Special tests for glite-transfer-channel-list operation
+# Check command return code only 
+#
+# Added by Victor Galaktionov 24/11/2009
+function special_check_channel-list()
+{
+    echo  "special_check_channel-list($1)"
+    CHANNEL=$1
+    
+    echo "1. Check with noncorrect service"
+    
+    echo "glite-transfer-channel-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement"
+    glite-transfer-status -s https://FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement
+    if [ $? == 0 ]; then
+	echo "glite-transfer-channel-list  command - failed"
+	return 1
+    fi 
+    echo "OK"
+     
+    echo "2. Check -h  parameter" 
+    echo "glite-transfer-channel-list -h"
+    glite-transfer-channel-list -h
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-lost command - failed"
+	return 1
+    fi 
+    echo "OK" 
+     
+    echo "3. Check -v  parameter" 
+    echo "glite-transfer-channel-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL"
+    glite-transfer-channel-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-list command - failed"
+	return 1
+    fi 
+    echo "OK"    
+     
+    echo "4. Check -V  parameter" 
+    echo "glite-transfer-channel-list -V"
+    glite-transfer-channel-list -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-list command - failed"
+	return 1
+    fi 
+    echo "OK"     
+    
+    echo "5. Check -q  parameter" 
+    echo "glite-transfer-channel-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL"
+    glite-transfer-channel-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-list command - failed"
+	return 1
+    fi 
+    echo "OK"     
+    
+    echo "6. Check --verbose  parameter" 
+    echo "glite-transfer-channel-list --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHAWNNEL"
+    glite-transfer-channel-list --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-list command - failed"
+	return 1
+    fi 
+    grep "$CHANNEL" message > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-list --verbose command - failed"
+	return 1
+    fi 
 
+    echo "6. Check -x  parameter" 
+    echo "glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL"
+    glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-list -x command - failed"
+	return 1
+    fi 
+    grep "Srm copy" message > /dev/nul 
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-list -x command - failed"
+	return 1
+    fi 
+    
+    echo "OK" 
+    
+     return 0
+}
+    
 #
 # Special tests for glite-transfer-status operation
 # Check command return code only 
