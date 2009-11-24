@@ -118,8 +118,16 @@ int main( int argc, char *argv[]) {
   
 
   //----------------------------------------------
-
-
+  //cout << conf->ice( )->input_type( ) << endl;
+  if( conf->ice( )->input_type( ) == "jobdir" ) {
+    string jobdirpath( conf->ice( )->input( ) );
+    char cmd[1024];
+    memset((void*)cmd, 0, 1024);
+    sprintf( cmd, "mv %s/old/* %s/new/ 2>1 &>/dev/null", jobdirpath.c_str(),jobdirpath.c_str());
+    cout << "Executing [" << cmd << "]" << endl;
+    system( cmd );
+  }
+  
   if( argc>=3 ) {
     char buf[1024];
     memset((void*)buf, 0, 1024);
@@ -134,14 +142,16 @@ int main( int argc, char *argv[]) {
       sprintf(buf, "%s --conf %s 2>1 &> %s", 
 	      "/opt/glite/bin/glite-wms-ice",
 	      opt_conf_file.c_str(), consolelog.c_str() );
-      
-
+    
+    
+    
+    
     while(true) {
-    //  cout << "Starting real ICE..." << endl;
-    //  cout << "executing [" << buf << "]"<<endl;
+      //  cout << "Starting real ICE..." << endl;
+      //  cout << "executing [" << buf << "]"<<endl;
       int ret = ::system( buf );
       int wret = WEXITSTATUS(ret);
-    //  cout << "ret=["<< wret << "]" << endl;
+      //  cout << "ret=["<< wret << "]" << endl;
       /** 
        * Sleeping 5 minutes should ensure that the kernel has a sufficient time
        * to close a previously used bind-port. This to prevent an not
@@ -151,5 +161,5 @@ int main( int argc, char *argv[]) {
       if( 2 == wret) { sleep(300); continue; }
       exit(wret);
     }
-  }
+  } // if(argc>=3)
 }
