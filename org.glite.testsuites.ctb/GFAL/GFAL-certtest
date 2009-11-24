@@ -109,7 +109,7 @@ failed=no
 
 if [ x$GFAL_BASIC == "xyes" ]; then
   
-  echo "*Executing GFAL Python API tests"
+  echo "*Executing GFAL BASIC tests"
   testdir=./tests
   tests_list=( test-gfal.sh )
 
