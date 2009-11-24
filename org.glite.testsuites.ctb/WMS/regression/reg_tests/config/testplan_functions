@@ -32,6 +32,8 @@ submit_single_job() { # 1 - jdl  2 - wms.conf / returns jobid
   glite-wms-job-submit --noint -o $tmpfile -a -c $2 $1
   if [ $? != 0 ]; then
     jobid="ERROR"
+    error_msg=`glite-wms-job-submit --noint -a -c $2 $1 2>&1 | grep Proxy`
+    echo "error msg: $error_msg"
   else
     jobid=`tail -1 $tmpfile` 
   fi
@@ -42,9 +44,13 @@ list_match_single_job() { # 1 - jdl  2 - wms.conf / returns list_time celist
   list_time=`( time -p glite-wms-job-list-match --noint -a -o $tmpfile -c $2 $1 ) 2>&1 >/dev/null |awk '/real/ {print $2}'`
   if [ -s $tmpfile ]; then
     celist=`awk '/^ - / {print $2}' $tmpfile`
+    noCelist=`cat $tmpfile`
+    noCelist=`echo $noCelist | grep "No Computing Element"`
+    noCelist=$?
   else 
     celist="ERROR"
     list_time="ERROR"
+    error_msg=`glite-wms-job-list-match --noint -a -c $2 $1 2>&1 | grep Proxy`
   fi
   rm -f $tmpfile
 }
