@@ -2,11 +2,15 @@
 LFC_HOST="lxb7608v3.cern.ch"
 
 #SE hostname
+#FIRSTSE="lxbra1910.cern.ch"
 FIRSTSE="lxb7608v1.cern.ch"
 
-#VO name
+#VO="org.glite.voms-test"
 VO="dteam"
 
+#directory for log files
+LOGSLOCATION="/tmp"
+
 #Tests to run 
-GFAL_BASIC="no"
-GFAL_PYTHON_API="yes"
+GFAL_BASIC="yes"
+GFAL_PYTHON_API="no"
