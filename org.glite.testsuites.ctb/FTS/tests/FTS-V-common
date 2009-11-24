@@ -184,11 +184,29 @@ function special_check_channel-list()
 	echo "glite-transfer-channel-list -x command - failed"
 	return 1
     fi 
-    grep "Srm copy" message > /dev/nul 
+    grep "Srm copy" message > /dev/null 
     if [ $? != 0 ]; then
 	echo "glite-transfer-channel-list -x command - failed"
 	return 1
     fi 
+    
+    echo "7.  Check nonexisting channel  parameter" 
+    echo "glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement CHANNEL"
+    glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement CHANNEL 2>&1 > message
+    if [ $? == 0 ]; then
+	echo "glite-transfer-channel-list -x command - failed"
+	return 1
+    fi
+     
+    #grep "Srm copy" message > /dev/nul 
+    #if [ $? != 0 ]; then
+	#echo "glite-transfer-channel-list -x command - failed"
+	#return 1
+    #fi 
+    
+    
+    
+    
     
     echo "OK" 
     
