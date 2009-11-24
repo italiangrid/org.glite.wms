@@ -1,10 +1,15 @@
 #!/bin/sh
-                                                                                                                   
+
+log() {
+  echo "`date`: $1"
+}
+                                                                                             
 test_bug22222_pre () {
  echo
 # Check for variables that are needed in test_bug1 and which should be defined globally in
 # the *sh that is sourced in regTest
 # Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK
+log "Testing a list-match for a simple job"
 }
                                                                                                                                                                                                                                        
 test_bug22222_post () {
@@ -19,17 +24,24 @@ test_bug22222_post () {
                                                                                                                    
 if [ "x$list_time" == "xERROR" ]; then
         #log "failed"
-        report_line "$jdl" "red" $report_name
+        report_line "$jdl" "test failed" $report_name
+        report_line "$jdl" "$error_msg" $report_name
+        echo "error msg: $error_msg"
 else
         #log "success"
         report_line "$jdl" "Average Real Time $avg_list_time sec" $report_name
         n=1
+        if [ "$celist" == "" ]; then
+          report_line "$jdl" "No Computing Element matching your job requirements has been found!" $report_name    
+        else 
         for ce in $celist; do
           report_line "$jdl" "CE$n: $ce" $report_name
           n=`expr $n + 1`
         done
+        fi
 fi
-
+report_footer $report_name
+cd - >/dev/null
 }
                                                                                                                    
                                                                                                                    
@@ -44,6 +56,7 @@ celist="N/A"
 list_time="N/A"
 avg_list_time=0
 nlist=5
+error_msg="N/A"
 
 sanity_check() { # 1 - test_dir  2 - wms.conf
   bad=0
@@ -69,15 +82,21 @@ sanity_check() { # 1 - test_dir  2 - wms.conf
 
 sanity_check $1 $2 
 if [ $? -eq 0 ]; then
-	report_name="$app_path/reports/report22222.html"
+	report_name="$app_path/reports/report${bugNr}.html"
 	rm -rf $report_name
 	report_header "Test results: list-match"  $report_name
 	cd $1
-	for jdl in `find . -name \*jdl -maxdepth 1 -type f`; do
+	#for jdl in `find . -name \*jdl -maxdepth 1 -type f`; do
+      jdl=echo.jdl
     log "processing $jdl"
     i=0
     while [ $i -lt $nlist ]; do
       list_match_single_job $jdl $app_path/$2 
+      if [ "x$celist" == "xERROR" ]; then
+           echo "list-match could not be performed"
+           return 1
+           break
+      fi 
       if [ "x$list_time" != "xERROR" ] && [ "x$list_time" != "xN/A" ]; then 
         avg_list_time=`echo "scale=2 ; $avg_list_time + $list_time"|bc -l`
       else
@@ -93,8 +112,6 @@ if [ $? -eq 0 ]; then
     if [ -r "${base}_list_pre" ]; then
       . "${base}_list_pre" # precondition
     fi
-        done
-        report_footer $report_name
-        cd - >/dev/null
+        #done
 fi
 }

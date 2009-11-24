@@ -1,11 +1,16 @@
 #!/bin/sh
 
+log() {
+  echo "`date`: $1"
+}
+
 test_bug30896_pre () {
  echo
 # Check for variables that are needed in test_bug1 and which should be defined globally in
 # the *sh that is sourced in regTest
 # Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK
-log "In order to run this test for bug $bugNr first either set maxInputSandboxFiles = 2; or  maxOutputSandboxFiles = 2; in the WorkloadManagerProxy section of the configuration file on the WMS and restart the wmproxy"
+log "Testing bug $bugNr: WMS must limit number of files per sandbox"
+log "In order to run this test first either set maxInputSandboxFiles = 2; or  maxOutputSandboxFiles = 2; in the WorkloadManagerProxy section of the configuration file on the WMS and restart the wmproxy"
 
 }
                                                                                                                       
@@ -22,9 +27,13 @@ else
     report_line "$jdl" "check that either the maxInputSandboxFiles or maxOutputSandboxFiles parameters are correctly set to 2 in the WorkloadManagerProxy section of the WMS conf file" $report_name
  elif [ "$exit_code" == -3 ]; then
     report_line "$jdl" "there's no jdl file for bug $bugNr" $report_name 
+ else
+    report_line "$jdl" "$error_msg" $report_name 
  fi 
 fi
 report_footer $report_name
+cd - >/dev/null
+
 }
 
 
@@ -78,7 +87,7 @@ sanity_check $1 $2
 if [ $? -eq 0 ]; then
         report_name="$app_path/reports/report${bugNr}.html"
         rm -rf $report_name
-        report_header "Test results: bug 30896"  $report_name
+        report_header "Test results: bug 30896 - WMS must limit number of files per sandbox"  $report_name
         cd $1
         echo "report: $report_name"
 	rm -rf $report_name
@@ -94,6 +103,10 @@ if [ $? -eq 0 ]; then
           fi
           if [ "x$jobid" == "xERROR" ]; then
             log "got an error while submitting..."
+            if [ "$error_msg" == "Error - Proxy File Not Found" ]; then
+              return 1
+              break
+            fi
           else
             log "job submitted with id: $jobid"
           fi
@@ -144,7 +157,5 @@ if [ $? -eq 0 ]; then
    return 1
    break
   fi 
-report_footer $report_name
-cd -
 fi
 }

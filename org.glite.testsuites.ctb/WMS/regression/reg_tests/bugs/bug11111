@@ -1,10 +1,14 @@
 #!/bin/sh
 
+log() {
+  echo "`date`: $1"
+}
+
 test_bug11111_pre () {
- echo
 # Check for variables that are needed in test_bug1 and which should be defined globally in
 # the *sh that is sourced in regTest
 # Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK
+ log "testing simple job submission"
 }
                                                                                                                       
 test_bug11111_post () {
@@ -15,8 +19,12 @@ if [ "x$jobstatus" == "x${statuses[5]}" ]; then
 report_line "$jdl" "The job with jobid $jobid successfully finished" $report_name
 report_line "$jdl" "Output was successfully retrieved under $outputdir" $report_name
 else
-report_line "$jdl" "red" $report_name
+report_line "$jdl" "test failed" $report_name
+report_line "$jdl" "$error_msg" $report_name
+echo "error msg: $error_msg"
 fi
+report_footer $report_name
+cd - >/dev/null 
 }
 
 
@@ -35,62 +43,45 @@ statuses[6]=Abort
 MAX_STATUS_ITERATIONS=100
 CHECK_STATUS_INTERVAL=30
 
-log() {
-  echo "`date`: $1"
-}
 
-report_header() {
-  echo "<html>" > $1
-  echo "<head>" >> $1
-  echo "..." >> $1
-  echo "</head>" >> $1
-  echo "<body>" >> $1
-  echo "<table border=\"1\">" >> $1
-}
-
-report_line() {
-  echo "<tr><td>$1</td><td>$2</td></tr>" >> $3
-}
-
-report_footer() {
-  echo "</table>" >> $1
-  echo "</body>" >> $1
-  echo "</html>" >> $1
-}
-
-get_status() { # 1 - joibid
-  jobstatus=`glite-wms-job-status $1|awk '/urrent Status/{print $3}'|| echo ERROR`
-}
-
-submit_single_job() { # 1 - jdl  2 - wms.conf / returns jobid
-  tmpfile=`mktemp tmp.XXXXXXXXXX` || exit 1
-  glite-wms-job-submit --noint -o $tmpfile -a -c $2 $1
-  if [ $? != 0 ]; then
-    jobid="ERROR"
-  else
-    jobid=`tail -1 $tmpfile` 
-  fi
-}
-
-usage=0
 exit_code=-1
 exit_while=-1
-if [ -z $1 ]; then
-  usage=1
-else
-  if [ -z $2 ]; then
-    usage=1
+app_path=`pwd`
+celist="N/A"
+list_time="N/A"
+avg_list_time=0
+nlist=5
+                                                                                                                   
+sanity_check() { # 1 - test_dir  2 - wms.conf
+  bad=0
+  if [ -z $1 ]; then
+    bad=1
+  else
+    if [ -z $2 ]; then
+      bad=1
+    fi
   fi
-fi
-if [ $usage -eq 1 ]; then
-  echo "usage: testplan_run test_dir wms.conf"
-else
-        app_path=`pwd`
+  if [ $bad -eq 1 ]; then
+    echo "usage: testplan_list test_dir wms.conf"
+    return 1
+  fi
+  if [ -r "$app_path/config/testplan_functions" ]; then
+    . $app_path/config/testplan_functions
+  else
+    echo "File testplan_functions not found. Quitting.."
+    return 1
+  fi
+  return 0
+}
+                                                                                                                   
+sanity_check $1 $2
+if [ $? -eq 0 ]; then
 	report_name="$app_path/reports/report11111.html"
 	rm -rf $report_name
         report_header "Test results: glite-wms-job-submit"  $report_name
 	cd $1
-	for jdl in `find . -name \*jdl -maxdepth 1 -type f`; do
+	#for jdl in `find . -name \*jdl -maxdepth 1 -type f`; do
+    jdl="echo.jdl"
     log "processing $jdl"
     submit_single_job $jdl "$app_path/$2"
     base="${jdl:0:${#jdl}-4}"
@@ -99,6 +90,10 @@ else
     fi
     if [ "x$jobid" == "xERROR" ]; then
       log "got an error while submitting..."
+      if [ "$error_msg" == "Error - Proxy File Not Found" ]; then
+          return 1
+          break 
+      fi
     else
       log "job submitted with id: $jobid"
     fi
@@ -135,13 +130,14 @@ else
       fi
     done
     if [ "x$jobstatus" == "x${statuses[5]}" ]; then # get output
-      output_dir=`glite-wms-job-output $jobid|awk '/tmp/{print $3}' || echo 1`
+      job_output=`glite-wms-job-output $jobid 2>&1` 
+      echo "job output: $job_output"
+      output_dir=`echo $job_output|awk '/tmp/{print $27}'`
+      echo "output dir: $output_dir"
     fi
 #    if [ -r "${base}_post" ]; then
 #      . "${base}_post" # postcondition
 #    fi
-  done
-report_footer $report_name
-cd -
+#  done
 fi
 }

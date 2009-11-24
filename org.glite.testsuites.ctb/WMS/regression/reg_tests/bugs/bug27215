@@ -5,6 +5,7 @@ test_bug27215_pre () {
 # Check for variables that are needed in test_bug1 and which should be defined globally in
 # the *sh that is sourced in regTest
 # Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK
+echo "running test for bug $bugNr: WM to set the maximum output sandbox size"
 }
                                                                                                                       
 test_bug27215_post () {
@@ -15,9 +16,11 @@ if [ "x$jobstatus" == "x${statuses[5]}" ]; then
 report_line "$jdl" "The job with jobid $jobid successfully finished" $report_name
 report_line "$jdl" "Output was successfully retrieved under $outputdir" $report_name
 else
-report_line "$jdl" "red" $report_name
+report_line "$jdl" "Test failed" $report_name
+report_line "$jdl" "$error_msg" $report_name
 fi
 report_footer $report_name
+cd - >/dev/null
 }
 
 
@@ -67,7 +70,7 @@ if [ $? -eq 0 ]; then
 	report_name="$app_path/reports/report${bugNr}.html"
         echo "report: $report_name"
 	rm -rf $report_name
-        report_header "Test results: bug $bugNr" $report_name 
+        report_header "Test results: bug $bugNr - WM to set the maximum output sandbox size" $report_name 
 	cd $1
 	if [ -e "${bugNr}.jdl" ]; then 
          jdl=${bugNr}.jdl 
@@ -80,6 +83,10 @@ if [ $? -eq 0 ]; then
           fi
           if [ "x$jobid" == "xERROR" ]; then
             log "got an error while submitting..."
+            if [ "$error_msg" == "Error - Proxy File Not Found" ]; then
+              return 1
+              break
+            fi
           else
             log "job submitted with id: $jobid"
           fi
@@ -125,7 +132,5 @@ if [ $? -eq 0 ]; then
    return 1
    break
   fi 
-report_footer $report_name
-cd -
 fi
 }
