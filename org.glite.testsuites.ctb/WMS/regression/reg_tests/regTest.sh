@@ -163,6 +163,7 @@ if [ $pretest = "true" ]; then
     ((totalNrTest++))
     record_result
    else
+    echo "current dir: `pwd`" 
     echo "The test for bug $bugNr does not exist. Cannot find file $REGTEST_BUGTESTDIR/bug${bugNr}"
     echo "Terminating regression pretest run."
     exit ${REGTEST_FAIL}
@@ -195,6 +196,7 @@ do
    test_bug${bugNr}_post
    ((totalNrTest++))
   else
+   echo "current dir: `pwd`"
    echo "The test for bug $bugNr does not exist. Cannot find file $REGTEST_BUGTESTDIR/bug${bugNr}"
    echo "Terminating regression test run."
    exit $REGTEST_FAIL
