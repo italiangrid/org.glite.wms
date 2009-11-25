@@ -179,15 +179,8 @@ echo "------------------------------------------------"
 echo "FTS HOST: $hostname"
 
 ############################
-# Generate and check proxy #
+# check valid proxy #
 ############################
-
-
-echo "test" | voms-proxy-init --voms $VO -pwstdin 2>&1 >> /dev/null
-if [ $? -ne 0 ]; then
-  echo "Failed creating a proxy"
-  exitFailure
-fi
 
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
 
