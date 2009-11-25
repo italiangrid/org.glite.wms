@@ -693,8 +693,15 @@ function get_se_path()
     local SE_HOST=$1
   fi
 
-  query="ldapsearch -x -h $BDII_HOST -p 2170 -b \"mds-vo-name=local,o=grid\" -LLL \"(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))\" GlueSAPath  | grep \"GlueSAPath: \" | sed -e 's/GlueSAPath: //'"
-  SE_VOPATH=`ldapsearch -x -h $BDII_HOST -p 2170 -b "mds-vo-name=local,o=grid" -LLL "(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))" GlueSAPath  | grep "GlueSAPath: " | sed -e 's/GlueSAPath: //'`
+  #Need to do two different queries for dcache and dpm
+  echo $SE_HOST | grep -q desy
+  if [ $? == 0 ]; then
+    query="ldapsearch -x -h $BDII_HOST -p 2170 -b \"mds-vo-name=local,o=grid\" -LLL \"(&(GlueChunkKey=GlueSEUniqueID=ennis.desy.de)(GlueVOInfoLocalID=dteam*))\" GlueVOInfoPath | grep -m 1 GlueVOInfoPath | sed -e 's/GlueVOInfoPath: //'"
+    SE_VOPATH=`ldapsearch -x -h $BDII_HOST -p 2170 -b "mds-vo-name=local,o=grid" -LLL "(&(GlueChunkKey=GlueSEUniqueID=ennis.desy.de)(GlueVOInfoLocalID=dteam*))" GlueVOInfoPath | grep -m 1 GlueVOInfoPath | sed -e 's/GlueVOInfoPath: //'`
+  else
+    query="ldapsearch -x -h $BDII_HOST -p 2170 -b \"mds-vo-name=local,o=grid\" -LLL \"(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))\" GlueSAPath  | grep \"GlueSAPath: \" | sed -e 's/GlueSAPath: //'"
+    SE_VOPATH=`ldapsearch -x -h $BDII_HOST -p 2170 -b "mds-vo-name=local,o=grid" -LLL "(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))" GlueSAPath  | grep "GlueSAPath: " | sed -e 's/GlueSAPath: //'`
+  fi
 
   if [ -z $SE_VOPATH ];then 
     echo "LDAP query failed"
