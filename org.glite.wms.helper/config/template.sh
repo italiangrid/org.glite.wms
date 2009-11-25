@@ -52,7 +52,7 @@ fi
 
 if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT_ISB}" ]; then
   if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
-    __copy_retry_count_isb=6
+    __copy_retry_count_isb=3
   else
     __copy_retry_count_isb=${GLITE_LOCAL_COPY_RETRY_COUNT}
   fi
@@ -72,7 +72,7 @@ fi
   
 if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT_ISB}" ]; then
   if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
-    __copy_retry_first_wait_isb=100
+    __copy_retry_first_wait_isb=60
   else
     __copy_retry_first_wait_isb=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
   fi
@@ -159,6 +159,7 @@ log_done_ok() # 1 - exit code
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="Done"\
+    --reason="$done_reason"\
     --status_code=OK\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
@@ -171,22 +172,15 @@ log_done_failed() # 1 - exit code
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
     --event="Done"\
-    --reason="$1"\
+    --reason="$done_reason"\
     --status_code=FAILED\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
-log_event_reason() # 1 - event, 2 - reason
+push_in_done_reason() #  1 - reason
 {
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-    --jobid="$GLITE_WMS_JOBID"\
-    --source=LRMS\
-    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-    --event="$1"\
-    --reason="$2"\
-    --node="$jw_host"\
-    || echo $GLITE_WMS_SEQUENCE_CODE`
+  done_reason="$done_reason`date`: $1"$'\n'
 }
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
@@ -206,7 +200,7 @@ warning()
 {
   local term_delay=10
   jw_echo "$1"
-  log_event_reason "Running" "job received SIGUSR1 as warning, terminating in $term_delay seconds"
+  push_in_done_reason "job received SIGUSR1 as warning, terminating in $term_delay seconds"
   kill -USR1 -$user_job_pid # forwarding to the user job (just in case)
   sleep $term_delay
   fatal_error "Job termination $term_delay seconds after having being warned" $2
@@ -215,7 +209,8 @@ warning()
 fatal_error() # 1 - reason, 2 - transfer OSB
 {
   jw_echo "$1"
-  log_done_failed "$1"
+  push_in_done_reason "$1"
+  log_done_failed 1
   if [ "x$2" -eq "xOSB" ]; then
     OSB_transfer
   fi
@@ -300,7 +295,7 @@ retry_copy() # 1 - source, 2 - dest
     __copy_retry_count=${__copy_retry_count_isb}
     __copy_retry_first_wait=${__copy_retry_first_wait_isb}
   else 
-    log_event_reason "Running" "Expected 'file://' or no scheme in either source or destination"
+    push_in_done_reason "Expected 'file://' or no scheme in either source or destination"
     return 1
   fi    
 
@@ -317,7 +312,7 @@ retry_copy() # 1 - source, 2 - dest
   done 
   # ischeme points to the transport specified in the remote resource (either source or dest)
   if [ ${ischeme} -eq ${#transport[@]} ]; then
-    log_event_reason "Running" "Specified transport protocol is not available"
+    push_in_done_reason "Specified transport protocol is not available"
     return 1
   fi 
   # select first scheme in space separated lists not specified by the caller
@@ -377,16 +372,16 @@ retry_copy() # 1 - source, 2 - dest
       if [ $transfer_timeout -le 0 ]; then
         echo "Killing transfer watchdog (pid=$transfer_watchdog)..."
         kill_with_children $transfer_watchdog
-        log_event_reason "Running" "Hanging transfer"
+        push_in_done_reason "Hanging transfer"
         succeded=1
       else
         succeded=`cat $transfer_exitcode 2>/dev/null`
         if [ -z $succeded ]; then
-          log_event_reason "Running" "Cannot retrieve return value for transfer"
+          push_in_done_reason "Cannot retrieve return value for transfer"
           return 1 # will cause a fatal_error
         else
           if [ "$succeded" -ne "0" ]; then
-            log_event_reason "Running" "Error during transfer"
+            push_in_done_reason "Error during transfer"
           fi
         fi
       fi
@@ -664,6 +659,7 @@ OSB_transfer()
   local file_size_acc=0
   local current_file=0
   local total_files=${#__wmp_output_dest_file[@]}
+  local error
   for f in "${__wmp_output_dest_file[@]}"
   do
     if [ -r "${__wmp_output_file[$current_file]}" ]; then
@@ -686,7 +682,9 @@ OSB_transfer()
         if [ $file_size_acc -le ${max_osb_size} ]; then
           retry_copy "file://$s" "$d"
         else
-          jw_echo "OSB quota exceeded for $s, truncating needed"
+          error="OSB quota exceeded for $s, truncating needed"
+          jw_echo $error
+          push_in_done_reason $error
           file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
@@ -700,9 +698,13 @@ OSB_transfer()
           #else
             truncate "$s" $trunc_len "$s.tail"
             if [ $? != 0 ]; then
-              jw_echo "Could not truncate output sandbox file ${file}, not sending"
+              error="Could not truncate output sandbox file ${file}, not sending"
+              jw_echo $error
+              push_in_done_reason $error
             else
-              jw_echo "Truncated last $trunc_len bytes for file ${file}"
+              error="Truncated last $trunc_len bytes for file ${file}"
+              jw_echo $error
+              push_in_done_reason $error
               retry_copy "file://$s.tail" "$d.tail"
             fi
           #fi
@@ -714,7 +716,9 @@ OSB_transfer()
         fatal_error "Cannot upload file://$s into $d"
       fi
     else
-      jw_echo "Cannot read or missing file ${__wmp_output_file[$current_file]}"
+      error="Cannot read or missing file ${__wmp_output_file[$current_file]}"
+      jw_echo $error
+      push_in_done_reason $error
     fi
     let "++current_file"
   done
