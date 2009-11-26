@@ -67,14 +67,16 @@ class JobPoller(threading.Thread):
             
             ts = time.time()
             
+            listFilename = None
+            
             if self.parameters.queryType=='list':
                 self.lock.acquire()
                 jobList = self.table.keys()
                 self.lock.release()
                 
-                tmpName = "/tmp/joblist." + testsuite_utils.applicationID
+                listFilename = "/tmp/joblist." + testsuite_utils.applicationID
                 try:
-                    tFile = open(tmpName , 'w+b')
+                    tFile = open(listFilename , 'w+b')
                     tFile.write("##CREAMJOBS##\n")
                     for job in jobList:
                         tFile.write(job + "\n")
@@ -83,8 +85,8 @@ class JobPoller(threading.Thread):
                     JobPoller.logger.error(ex)
                     continue
                 
-                statusCmd = "%s -i -T %d %s" % (testsuite_utils.cmdTable['status'],
-                                                self.parameters.sotimeout, tmpName)
+                statusCmd = "%s -T %d -i %s" % (testsuite_utils.cmdTable['status'],
+                                                self.parameters.sotimeout, listFilename)
                 
             elif self.parameters.queryType=='event':
                 statusCmd = "%s -d -t %d -e %s %d-%d" % (testsuite_utils.cmdTable['event'],
@@ -164,6 +166,12 @@ class JobPoller(threading.Thread):
 
             self.processRunningJobs()
             self.processFinishedJobs()
+            
+            if listFilename<>None:
+                try:
+                    os.remove(listFilename)
+                except Exception, e:
+                    JobPoller.logger.error("Cannot remove %s: %s" % (listFilename, str(e))
 
             if jobToSend>0:
                 #TODO: imcremental pool feeding
