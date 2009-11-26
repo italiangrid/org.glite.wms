@@ -42,6 +42,8 @@
 #include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJobByGid.h"
+#include "iceDb/RemoveJobByUserDN.h"
+#include "iceDb/GetJobs.h"
 
 // Cream Client API Headers
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -626,8 +628,13 @@ void iceCommandStatusPoller::execute( ) throw()
     CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		   << "Proxy ["
 		   << proxy << "] for user ["
-		   << userdn << "] is expired! Skipping polling for this user..."
+		   << userdn 
+		   << "] is expired! Skipping polling for this user "
+		   << "and deletegin all his/her jobs..."
 		   );
+
+    deleteJobsByDN( userdn );
+
     return;//continue;
   }
   
@@ -670,3 +677,35 @@ void iceCommandStatusPoller::execute( ) throw()
   //  }
 }
 
+//____________________________________________________________________________
+void 
+iceCommandStatusPoller::deleteJobsByDN( const string& dn ) throw( )
+{
+
+  list< CreamJob > results;
+  {
+    list<pair<string, string> > clause;
+    clause.push_back( make_pair( "userdn", dn ) );
+    
+    db::GetJobs getter( clause, results, "iceCommandStatusPoller::deleteJobsForDN" );
+    db::Transaction tnx( false, false );
+    tnx.execute( &getter );
+  }
+
+  list< CreamJob >::iterator jit = results.begin();
+  while( jit != results.end() ) {
+    jit->set_failure_reason( "Job Aborted because proxy expired." );
+    jit->set_status( cream_api::job_statuses::ABORTED ); 
+    jit->set_exitcode( 0 );
+    iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
+    if ( ev ) {
+      m_lb_logger->logEvent( ev );
+    }
+  }
+
+  {
+    db::RemoveJobByUserDN remover( dn, "iceCommandStatusPoller::deleteJobsForDN" );
+    db::Transaction tnx( false, false );
+    tnx.execute( &remover );
+  }
+}

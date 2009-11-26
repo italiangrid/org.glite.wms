@@ -18,6 +18,7 @@
 
 #include "iceDb/GetDbID.h"
 #include "iceDb/SetDbID.h"
+#include "iceDb/GetJobs.h"
 #include "iceDb/GetFields.h"
 #include "iceDb/InsertStat.h"
 #include "iceDb/GetEventID.h"
@@ -28,6 +29,7 @@
 #include "iceDb/RemoveJobByCid.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/RemoveJobsByDbID.h"
+#include "iceDb/RemoveJobByUserDN.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/functional.hpp>
@@ -91,24 +93,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 #ifdef ICE_PROFILE_ENABLE
     api_util::scoped_timer Tot( "iceCommandEventQuery::execute() - Entire Command Time" );
 #endif
-//   list< vector< string > > result;
-//   {
-//     /*
-//       SELECT DISTINCT (userdn, creamurl) from jobs;
-//     */
-//     list< string > fields;
-//     fields.push_back( "userdn" );
-//     fields.push_back( "creamurl" );
-    
-//     db::GetFields getter( fields, list< pair< string, string > >(), true/*=DISTINCT*/ );
-//     db::Transaction tnx;
-//     tnx.execute( &getter );
-//     result = getter.get_values();
-//   }
 
-//   list< vector< string > >::const_iterator it = result.begin();
-//  while( it != result.end() ) {
-    
     if( m_dn.empty() || m_ce.empty() ) {
       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		     << "Empty DN or CE string. Finishing..."
@@ -159,10 +144,11 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 		      << "A valid proxy file for DN [" << m_dn
 		      << "] ce url ["
-		      << m_ce << "] is not available. Skipping EventQuery."
+		      << m_ce << "] is not available. Skipping EventQuery. Going to remove all jobs of this user..."
 		      );
-      //      ++it;
-      //      continue; // Next couple DN,CE
+      
+      deleteJobsByDN( );
+      
       return;
       
     }  
@@ -172,8 +158,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     << proxy << "] for userdn ["
 		     << m_dn << "] is expired! Skipping EventQuery."
 		     );
-      //      ++it;
-      //      continue; // Next couple DN,CE
+      
       return;
     }
     
@@ -210,8 +195,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     << m_ce << "]. Exception auth_ex is [" << ex.what() << "]"
 		     );
 
-      //      ++it;
-      //      continue;
+      
       return;
       
     } catch(soap_proxy::soap_ex& ex) {
@@ -222,8 +206,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     << m_ce << "]. Exception soap_ex is [" << ex.what() << "]"
 		     );
       
-      //      ++it;
-      //      continue;
+      
       return;
 
     } catch(cream_api::cream_exceptions::InternalException& ex) {
@@ -234,7 +217,6 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     << m_ce << "]. Exception Internal ex is [" << ex.what() << "]"
 		     );
       
-      //      string errmex = ex.what();
       boost::regex pattern;
       boost::cmatch what;
       pattern = ".*No such operation 'QueryEventRequest'.*";
@@ -247,8 +229,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 	iceCommandStatusPoller( m_iceManager, make_pair( m_dn, m_ce), false ).execute();
       }
 
-//       ++it;
-//       continue;
+
       return ;
 
     } catch(exception& ex) {
@@ -258,8 +239,6 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     << m_dn << "] CEUrl ["
 		     << m_ce << "]. Exception ex is [" << ex.what() << "]"
 		     );
-      //      ++it;
-      //      continue;
       return;
 
     } catch(...) {
@@ -269,8 +248,6 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     << m_dn << "] CEUrl ["
 		     << m_ce << "]. Unknown Exception"
 		     );
-      //      ++it;
-      //      continue;
       return;
     }
     
@@ -318,50 +295,12 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		   << "Exec time ID=[" << exec_time << "]"
 		   );
     
-
-//     for(list<soap_proxy::EventWrapper*>::const_iterator eit = events.begin();
-// 	eit != events.end();
-// 	++eit)
-//       {
-// 	cout << endl;
-// 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 		       << "EventID  =[" << (*eit)->id << "]"
-// 		       );
-// 	CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 		       << "Timestamp=[" << (*eit)->timestamp << "]"
-// 		       );
-	
-// 	map<string, string> properties;
-// 	(*eit)->get_event_properties( properties );
-// 	for(map<string, string>::const_iterator pit = properties.begin();
-// 	    pit != properties.end();
-// 	    ++pit)
-// 	  {
-// 	    if(pit->first == "type") {
-// 	      //	      log_dev->info( string("  \t[status]=[") + job_statuses::job_status_str[atoi(pit->second.c_str())] + "]");
-// 	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 			     << "  \t[status]=[" << cream_api::job_statuses::job_status_str[atoi(pit->second.c_str())] << "]"
-// 			     );
-	      
-// 	    }
-// 	    else {
-// 	      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-// 			     << "  \t[" << pit->first 
-// 			     << "]=[" << pit->second << "]"
-// 			     );
-// 	    }
-// 	  }
-//       }
-    
     if( events.size() ) {
 
       long long last_event_id = this->processEvents( events );
       
       this->setEventID( m_dn, m_ce, last_event_id+1 );
     }
-    //    ++it;
-
-    //  }  // while( it != result.end() ) { LOOP OVER COUPLES  DN,CE
 }
 
 //______________________________________________________________________________
@@ -692,4 +631,40 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
     removed = m_iceManager->resubmit_or_purge_job( theJob );
   else
     removed = false;
+}
+
+
+
+//______________________________________________________________________________
+void 
+ice::util::iceCommandEventQuery::deleteJobsByDN( void ) throw( )
+{
+
+  list< CreamJob > results;
+  {
+    list<pair<string, string> > clause;
+    clause.push_back( make_pair( "userdn", m_dn ) );
+    
+    db::GetJobs getter( clause, results, "iceCommandEventQuery::deleteJobsForDN" );
+    db::Transaction tnx( false, false );
+    tnx.execute( &getter );
+  }
+
+  list< CreamJob >::iterator jit = results.begin();
+  while( jit != results.end() ) {
+    jit->set_failure_reason( "Job Aborted because proxy expired." );
+    jit->set_status( cream_api::job_statuses::ABORTED ); 
+    jit->set_exitcode( 0 );
+    iceLBEvent* ev = iceLBEventFactory::mkEvent( *jit );
+    if ( ev ) {
+      m_lb_logger->logEvent( ev );
+    }
+  }
+
+  {
+    db::RemoveJobByUserDN remover( m_dn, "iceCommandEventQuery::deleteJobsForDN" );
+    db::Transaction tnx( false, false );
+    tnx.execute( &remover );
+  }
+
 }

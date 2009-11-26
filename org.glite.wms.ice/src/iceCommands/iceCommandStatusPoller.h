@@ -77,7 +77,7 @@ namespace glite {
            * @return the list of Cream Job IDs for jobs to poll.
            */ 
 	  void get_jobs_to_poll( std::list<CreamJob>& /* std::list< glite::wms::ice::util::CreamJob >& */,const std::string&, const std::string& ) throw();
-
+	  void deleteJobsByDN( const std::string& dn ) throw( );
           
 	  /**
            * Updates the status informations for all jobs in the list

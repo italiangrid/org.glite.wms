@@ -64,6 +64,8 @@ namespace glite {
 
 	  void getJobsByDbID( std::list<glite::wms::ice::util::CreamJob>& jobs, const long long db_id );
 
+	  void deleteJobsByDN( void ) throw();
+
 	public:
 	  iceCommandEventQuery( Ice*, const std::string& dn, const std::string& ce );
 	  ~iceCommandEventQuery( ) throw() {}
