@@ -65,7 +65,7 @@ done
 
 if [ "x$conffile" = "x" ]; then
   #Default value
-  conffile="./DACHE-certconfig"
+  conffile="./dCache-certconfig"
 fi
 echo "Using $conffile"
 
