@@ -159,7 +159,7 @@ do
   rm -rf $loglocation/${item}_result.txt testfile
   echo "Executing $item"
   echo "dCacheTestSuite.py -T $hostname -d desy.de -v dteam -q 0 -r $item" > $loglocation/${item}_result.txt
-  dCacheTestSuite.py -T $hostname -d desy.de -v dteam -q 0 -r $item &> > $loglocation/${item}_result.txt
+  dCacheTestSuite.py -T $hostname -d desy.de -v dteam -q 0 -r $item >> $loglocation/${item}_result.txt 2>&1
   if [ $? -ne 0 ]; then
     echo "$item FAILED"
     failed=yes
