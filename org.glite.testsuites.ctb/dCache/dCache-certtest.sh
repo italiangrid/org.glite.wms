@@ -55,6 +55,7 @@ while [ $# -ne 0 ]; do
     '-h|-help|--help')
       showUsage
       exit 0
+      ;;
     *|'')
       echo "Unknown option '$1'"
       exit
