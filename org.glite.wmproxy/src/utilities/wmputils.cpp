@@ -1,19 +1,19 @@
 
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0 
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
@@ -48,6 +48,9 @@ limitations under the License.
 // JobId
 #include "glite/jobid/JobId.h"
 #include "glite/wms/common/utilities/manipulation.h"
+
+// Logging and Bookkeeping
+#include "glite/lb/JobStatus.h"
 
 // Logging
 #include "logging.h"
@@ -87,13 +90,13 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
-// Define File Separator 
+// Define File Separator
 #ifdef WIN
-	// Windows File Separator 
+	// Windows File Separator
 	const string FILE_SEP = "\\";
-#else 
-	// Linux File Separator 
-   	const string FILE_SEP ="/"; 
+#else
+	// Linux File Separator
+   	const string FILE_SEP ="/";
 #endif
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
@@ -135,11 +138,11 @@ vector<string>
 computeOutputSBDestURIBase(vector<string> outputsb, const string &baseuri)
 {
 	GLITE_STACK_TRY("computeOutputSBDestURIBase()");
-	unsigned int pos;
+	std::string::size_type pos;
 	int size;
 	string path;
 	vector<string> returnvector;
-	
+
 	vector<string>::iterator iter = outputsb.begin();
 	vector<string>::iterator const end = outputsb.end();
 	for (; iter != end; ++iter) {
@@ -161,12 +164,12 @@ vector<string>
 computeOutputSBDestURI(vector<string> osbdesturi, const string &dest_uri)
 {
 	GLITE_STACK_TRY("computeOutputSBDestURI()");
-	unsigned int pos;
+	std::string::size_type pos;
 	string uri;
 	string path;
 	string outputdir;
 	vector<string> returnvector;
-	
+
 	vector<string>::iterator iter = osbdesturi.begin();
 	vector<string>::iterator const end = osbdesturi.end();
 	for (; iter != end; ++iter) {
@@ -288,7 +291,7 @@ getEnvVO()
 	string vo = "";
 	string cred2 = getenv("GRST_CRED_2") ? string(getenv("GRST_CRED_2")) : "";
 	if (cred2 != "") {
-		unsigned int pos = cred2.find("/", 0);
+		std::string::size_type pos = cred2.find("/", 0);
 		if (pos != string::npos) {
 			string fqan = cred2.substr(pos, cred2.size());
 			vo = (parseFQAN(fqan))[0];
@@ -308,7 +311,7 @@ getEnvFQAN()
 		cred2 = string(getenv("GRST_CRED_2"));
 	}
 	if (cred2 != "") {
-		unsigned int pos = cred2.find("/", 0);
+		std::string::size_type pos = cred2.find("/", 0);
 		if (pos != string::npos) {
 			fqan = cred2.substr(pos, cred2.size());
 		}
@@ -322,9 +325,9 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 {
 	GLITE_STACK_TRY("parseAddressPort()");
 	string addressportarg = addressport;
-	unsigned int pos;
+	std::string::size_type pos;
 	unsigned int addressportsize = addressportarg.size();
-	
+
 	// Removing final slashes
 	for (unsigned int i = 0; i < addressportsize; i++) {
 		if (addressportarg.substr(addressportsize - 1, addressportsize - 1)
@@ -333,16 +336,16 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 			addressportsize--;
 		}
 	}
-	
+
 	if (addressportarg != "") {
 		addressportsize = addressportarg.size();
 		if ((pos = addressportarg.find("://")) != string::npos) {
-			addressportarg = addressportarg.substr(pos + 3, addressportsize - 1);
+			addressportarg = addressportarg.substr(pos +1, addressportsize );
 		}
 		if ((pos = addressportarg.rfind(":", addressportarg.size()))
 				!= string::npos) {
 			addresspair.first = addressportarg.substr(0, pos);
-			addresspair.second = 
+			addresspair.second =
 				atoi(addressportarg.substr(pos + 1, addressportarg.size()).c_str());
 		} else {
 			addresspair.first = addressportarg;
@@ -480,11 +483,11 @@ bool checkGlobusVersion(){
  * ----- WARNING!! ----------------------------------------------------------
  * This method is a patch to grant correct behaviour for components using old
  * version of OpenSSL library.
- * 
+ *
  * it converts:
  * - emailAddress to Email
  * - UID          to USERID
- * 
+ *
  * N.B. To be removed when all components will use OpenSSL 0.9.7
  * --------------------------------------------------------------------------
  */
@@ -495,7 +498,7 @@ convertDNEMailAddress(char * dn)
 	edglog_fn("wmputils::convertDNEMailAddress");
 
 /* PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
-	
+
 	if (globusDNS_global){
 		//NO conversion needed, return the original
 		edglog(debug)<<"No Conversion needed, use original DN: "<<dn<<endl;
@@ -505,7 +508,7 @@ convertDNEMailAddress(char * dn)
 
 	string newdn(dn);
 	string toreplace = "emailAddress";
-	unsigned int pos = newdn.rfind(toreplace, newdn.size());
+	std::string::size_type pos = newdn.rfind(toreplace, newdn.size());
 	if (pos != string::npos) {
 		newdn.replace(pos, toreplace.size(), "Email");
 	}
@@ -544,7 +547,7 @@ getFileName(const string &path)
 {
 	GLITE_STACK_TRY("getFileName()");
 	string filename = path;
-	unsigned int pos = path.rfind("/");
+	std::string::size_type pos = path.rfind("/");
 	if (pos != string::npos) {
 		filename = path.substr(pos + 1, string::npos);
 	}
@@ -646,7 +649,7 @@ getPeekDirectoryPath(jobid::JobId jid, int level, bool docroot)
 
 string
 getJobDelegatedProxyPath(jobid::JobId jid, int level)
-{	
+{
 	GLITE_STACK_TRY("getJobDelegatedProxyPath(JobId jid)");
 	//TBD Check path
 	return string(getenv(DOCUMENT_ROOT)
@@ -657,7 +660,7 @@ getJobDelegatedProxyPath(jobid::JobId jid, int level)
 
 string
 getJobDelegatedProxyPathBak(jobid::JobId jid, int level)
-{	
+{
 	GLITE_STACK_TRY("getJobDelegatedProxyPath(JobId jid)");
 	//TBD Check path
 	return string(getenv(DOCUMENT_ROOT)
@@ -668,7 +671,7 @@ getJobDelegatedProxyPathBak(jobid::JobId jid, int level)
 
 string
 getJobJDLOriginalPath(jobid::JobId jid, bool isrelative, int level)
-{	
+{
 	GLITE_STACK_TRY("getJobJDLOriginalPath(JobId jid)");
 	//TBD Check path
 	if (!isrelative) {
@@ -684,7 +687,7 @@ getJobJDLOriginalPath(jobid::JobId jid, bool isrelative, int level)
 
 string
 getJobJDLToStartPath(jobid::JobId jid, bool isrelative, int level)
-{	
+{
 	GLITE_STACK_TRY("getJobJDLToStartPath(JobId jid)");
 	//TBD Check path
 	if (!isrelative) {
@@ -700,7 +703,7 @@ getJobJDLToStartPath(jobid::JobId jid, bool isrelative, int level)
 
 string
 getJobJDLStartedPath(jobid::JobId jid, bool isrelative, int level)
-{	
+{
 	GLITE_STACK_TRY("getJobJDLStartedPath()");
 	//TBD Check path
 	if (!isrelative) {
@@ -718,7 +721,7 @@ string
 getJobJDLExistingStartPath(jobid::JobId jid, bool isrelative, int level)
 {
 	GLITE_STACK_TRY("getJobJDLStartedPath()");
-	
+
 	string started = getJobJDLStartedPath(jid);
 	if (fileExists(started)) {
 		return started;
@@ -761,7 +764,7 @@ getServerHost() {
 	GLITE_STACK_CATCH();
 }
 
-string 
+string
 resolveIPv4_IPv6(string host_tbr) {
 
     struct addrinfo * result;
@@ -868,7 +871,7 @@ getUserDN()
 	char* p = NULL;
 	char* client_dn = NULL;
 	char* user_dn = NULL;
-	
+
 	client_dn = getenv(SSL_CLIENT_DN);
 	if ((client_dn == NULL) || (client_dn == '\0')) {
 		edglog(debug)<<"Environment variable "<<string(SSL_CLIENT_DN)
@@ -876,15 +879,15 @@ getUserDN()
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
 	}
-	
+
 	user_dn = strdup(client_dn);
 	p = strstr(user_dn, "/CN=proxy");
 	if (p != NULL) {
-		*p = '\0';      
+		*p = '\0';
 	}
 	p = strstr(user_dn, "/CN=limited proxy");
 	if (p != NULL) {
-		*p = '\0';      
+		*p = '\0';
 	}
 	if ((user_dn == NULL) || (user_dn[0] == '\0')) {
 		throw ProxyOperationException(__FILE__, __LINE__,
@@ -892,7 +895,7 @@ getUserDN()
 	}
 	// PATCH  FOR BUG  #30006: LCMAPS/Globus DN inconsistency for VDT 1.6 gridftp server
 	char* user_dn_final=strdup(   convertDNEMailAddress(user_dn)  );
-	free (user_dn);
+        free (user_dn);
 	edglog(debug)<<"User DN: "<<user_dn_final<<endl;
 	return user_dn_final;
 	GLITE_STACK_CATCH();
@@ -946,7 +949,7 @@ generateRandomNumber(int lowerlimit, int upperlimit)
 	GLITE_STACK_CATCH();
 }
 
-void 
+void
 fileCopy(const string& source, const string& target)
 {
 	GLITE_STACK_TRY("fileCopy()");
@@ -1021,7 +1024,7 @@ string
 searchForDirmanager()
 {
 	GLITE_STACK_TRY("searchForDirmanager()");
-	
+
 	// Try to find managedirexecutable
 	char * glite_path = getenv(GLITE_WMS_LOCATION);
 	if (!glite_path) {
@@ -1111,7 +1114,7 @@ doExecv(const string &command, vector<string> &params, string &errormsg)
 		strcpy(argvs[i++], (*iter).c_str());
 	}
 	argvs[i] = (char *) 0;
-	
+
 	edglog(debug)<<"Forking process..."<<endl;
 	switch (fork()) {
 		case -1:
@@ -1185,12 +1188,12 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 	// +3 -> difference between index, command at first position, NULL at the end
 	int size = params.size() + endIndex - startIndex + 3;
 	argvs = (char **) calloc(size, sizeof(char *));
-	
+
 	unsigned int i = 0;
-	
+
 	argvs[i] = (char *) malloc(command.length() + 1);
 	strcpy(argvs[i++], (command).c_str());
-	
+
 	vector<string>::iterator iter = params.begin();
 	vector<string>::iterator const end = params.end();
 	for (; iter != end; ++iter) {
@@ -1202,7 +1205,7 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 	        strcpy(argvs[i++], (dirs[j]).c_str());
 	}
 	argvs[i] = (char *) 0;
-	
+
 	if (execv(command.c_str(), argvs)) {
 		unsigned int middle;
 	    switch (errno) {
@@ -1258,9 +1261,9 @@ doExecvSplit(const string &command, vector<string> &params, const vector<string>
 						}
 						break;
 					}
-					
+
 				break;
-				
+
 			default:
 				edglog(severe)<<"execv error, errno: "<<errno
     				<<" - Error message: "<<strerror(errno)<<endl;
@@ -1349,10 +1352,10 @@ untarFile(const string &file, const string &untar_starting_path,
 {
 	GLITE_STACK_TRY("untarFile()");
 	edglog_fn("wmputils::untarFile");
-	
+
 	if (fileExists(file)) {
 		string gliteDirmanExe = searchForDirmanager();
-	   	
+
 	   	// Creating parameters vector for zip file extraction
 		vector<string> extparams;
 		extparams.push_back("-c");
@@ -1363,10 +1366,10 @@ untarFile(const string &file, const string &untar_starting_path,
 		extparams.push_back("0770");
 		extparams.push_back("-x");
 		extparams.push_back(untar_starting_path);
-		
+
 		vector<string> extfiles;
 		extfiles.push_back(file);
-		
+
 		// Extracting files
 		if (doExecv(gliteDirmanExe, extparams, extfiles, 0, extfiles.size() - 1)) {
 			edglog(critical)<<"Unable to untar ISB file:"<<file<<endl;
@@ -1374,7 +1377,7 @@ untarFile(const string &file, const string &untar_starting_path,
 				"untarFile()", WMS_FILE_SYSTEM_ERROR, "Unable to untar ISB file"
 				"\n(please contact server administrator)");
 		}
-		
+
 	} else {
 		edglog(critical)<<"Unable to untar ISB file, file does not exist: "
 			<<file<<endl;
@@ -1382,35 +1385,35 @@ untarFile(const string &file, const string &untar_starting_path,
 			"untarFile()", WMS_FILE_SYSTEM_ERROR,
 			"Unable to untar ISB file\n(please contact server administrator)");
 	}
-	
+
 	GLITE_STACK_CATCH();
 }
 
-void 
+void
 managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 	vector<string> jobids, jobdirectorytype dirtype)
 {
 	GLITE_STACK_TRY("managedir()");
 	edglog_fn("wmputils::managedir");
-	
+
 	time_t starttime = time(NULL);
-	
+
 	unsigned int size = jobids.size();
 	edglog(debug)<<"Job id vector size: "<<size<<endl;
-	
+
 	if (size) {
 	   	string gliteDirmanExe = searchForDirmanager();
-	   	
+
 	   	string useridtxt = boost::lexical_cast<string>(userid);
 	   	string grouptxt = boost::lexical_cast<string>(getgid());
-	   	
-		int level = 0; 
-	   	bool extended_path = true; 
+
+		int level = 0;
+	   	bool extended_path = true;
 		// Vector contains at least one element
 		string path = to_filename (glite::jobid::JobId(jobids[0]),
 		   	level, extended_path);
-		int pos = path.find(FILE_SEP, 0);
-		
+		std::string::size_type pos = path.find(FILE_SEP, 0);
+
 		// Creating SanboxDir directory if needed
 		string sandboxdir = document_root + FILE_SEP + path.substr(0, pos)
 			+ FILE_SEP;
@@ -1429,7 +1432,7 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 					"(please contact server administrator)");
 		   	}
 		}
-		
+
 		// Creating parameters vector for reduced directories creation
 		vector<string> redparams;
 		redparams.push_back("-c");
@@ -1440,7 +1443,7 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		redparams.push_back(group);
 		redparams.push_back("-m");
 		redparams.push_back("0773");
-		
+
 		// Creating parameters vector for job directories creation
 		vector<string> jobparams;
 		jobparams.push_back("-c");
@@ -1451,16 +1454,16 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		jobparams.push_back(group);
 		jobparams.push_back("-m");
 		jobparams.push_back("0770");
-	
+
 		vector<string> reddirs;
 		vector<string> jobdirs;
 	   	string allpath;
 		string reduceddir;
-		
+
 		// Populating directories to create vector
 		vector<string>::iterator iter = jobids.begin();
 		vector<string>::iterator const end = jobids.end();
-		
+
 		for (; iter != end; ++iter) {
 			path = to_filename(glite::jobid::JobId(*iter),
 				level, extended_path);
@@ -1526,7 +1529,7 @@ setFlagFile(const string &file, bool flag)
 {
 	GLITE_STACK_TRY("setFlagFile()");
 	edglog_fn("wmputils::setFlagFile");
-	
+
 	if (flag) {
 		fstream outfile(file.c_str(), ios::out);
 		if (!outfile.good()) {
@@ -1538,7 +1541,7 @@ setFlagFile(const string &file, bool flag)
 		outfile<<"flag";
 		outfile.close();
 	} else {
-		remove(file.c_str());	
+		remove(file.c_str());
 	}
 	GLITE_STACK_CATCH();
 }
@@ -1574,7 +1577,7 @@ operationLock(const string &lockfile, const string &opname)
 			opname + " operation already in progress");
 	}
 	// ]
-        
+
 	return fd;
 
 	GLITE_STACK_CATCH();
@@ -1596,7 +1599,7 @@ operationUnlock(int fd)
 	}
 	close(fd);
 	// ]
-        
+
 	GLITE_STACK_CATCH();
 }
 
@@ -1635,7 +1638,7 @@ isOperationLocked(const string &lockfile)
 		return true;
 	}
 	// ]
-        
+
 	close(fd);
 	return false;
 
@@ -1647,14 +1650,14 @@ createSuidDirectory(const string &directory)
 {
 	GLITE_STACK_TRY("createSuidDirectory()");
 	edglog_fn("wmputils::createSuidDirectory");
-	
+
 	if (!fileExists(directory)) {
 		string gliteDirmanExe = searchForDirmanager();
-	   	
+
 		string dirpermissions = " -m 0773 ";
 		string user = " -c " + boost::lexical_cast<string>(getuid()); // UID
 		string group = " -g " + boost::lexical_cast<string>(getgid()); // GROUP
-		
+
 		string command = gliteDirmanExe + user + group + dirpermissions + directory;
 		edglog(debug)<<"Excecuting command: "<<command<<endl;
 		if (system(command.c_str())) {
@@ -1665,7 +1668,7 @@ createSuidDirectory(const string &directory)
 					"administrator)");
 		}
 	}
-	
+
 	GLITE_STACK_CATCH();
 }
 
@@ -1674,7 +1677,7 @@ writeTextFile(const string &file, const string &text)
 {
 	GLITE_STACK_TRY("writeTextFile()");
 	edglog_fn("wmputils::writeTextFile");
-	
+
 	fstream outfile(file.c_str(), ios::out);
 	if (!outfile.good()) {
 		edglog(severe)<<file<<": !outfile.good()"<<endl;
@@ -1684,7 +1687,7 @@ writeTextFile(const string &file, const string &text)
 	}
 	outfile<<text;
 	outfile.close();
-	
+
 	GLITE_STACK_CATCH();
 }
 
@@ -1693,13 +1696,13 @@ readTextFile(const string &file)
 {
 	GLITE_STACK_TRY("readTextFile()");
 	edglog_fn("wmputils::readTextFile");
-	
+
 	ifstream in(file.c_str(), ios::in);
 	if (!in.good()) {
 		edglog(debug)<<file<<": !in.good()"<<endl;
 		throw FileSystemException(__FILE__, __LINE__,
 			"readTextFile()", WMS_IS_FAILURE, "Unable to read file: "
-			+ file + "\n(please contact server administrator)");	
+			+ file + "\n(please contact server administrator)");
 	}
 	string line;
 	string text = "";
@@ -1708,11 +1711,11 @@ readTextFile(const string &file)
 	}
 	in.close();
 	return text;
-	
+
 	GLITE_STACK_CATCH();
 }
 
-bool 
+bool
 isNull(string field)
 {
 	GLITE_STACK_TRY("isNull()");
@@ -1731,7 +1734,7 @@ isNull(string field)
 /*
 * Removes white spaces form the begininng and from the end of the input string
 */
-const string 
+const string
 cleanString(string str)
 {
 	#ifndef GLITE_WMS_WMPROXY_TOOLS
@@ -1773,7 +1776,7 @@ cleanString(string str)
  /**
 * Converts all of the characters in this String to lower case
  */
-const string 
+const string
 toLower(const string &src)
 {
 	#ifndef GLITE_WMS_WMPROXY_TOOLS
@@ -1786,12 +1789,12 @@ toLower(const string &src)
 	GLITE_STACK_CATCH();
 	#endif
  }
- 
+
  /**
 * Cuts the input string in two pieces (label and value) according to
  * the separator character "="
  */
-void 
+void
 split(const string &field, string &label, string &value)
 {
 	#ifndef GLITE_WMS_WMPROXY_TOOLS
@@ -1799,12 +1802,12 @@ split(const string &field, string &label, string &value)
 	#endif
 	unsigned int size = field.size();
 	if (size > 0) {
-		unsigned int p = field.find("=") ;
+		std::string::size_type p = field.find("=") ;
 		if (p != string::npos & (p < size)) {
 			label = field.substr(0, p);
 			value = field.substr(p+1, size-(p+1));
-			// removes white spaces at the beginning and a the end of the 
-			// strings (if present) and converts the uppercase letters to the 
+			// removes white spaces at the beginning and a the end of the
+			// strings (if present) and converts the uppercase letters to the
 			// corresponding lowercase
 			label = toLower(cleanString(label));
 			value = toLower(cleanString(value));
@@ -1816,7 +1819,7 @@ split(const string &field, string &label, string &value)
 };
 
 
-bool 
+bool
 hasElement(const std::vector<std::string> &vect, const std::string &elem)
 {
 	#ifndef GLITE_WMS_WMPROXY_TOOLS
@@ -1908,6 +1911,28 @@ getAbsolutePath(const string &file)
 	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
 	#endif
+}
+
+glite::jobid::JobId getParent(glite::lb::JobStatus status){
+        glite::jobid::JobId jid ;
+        try{
+                jid = status.getValJobId(glite::lb::JobStatus::PARENT_JOB);
+        }catch (std::exception &exc){
+                // Do Nothing
+        }
+        return jid ;
+}
+
+bool hasParent(glite::lb::JobStatus status ){
+        glite::jobid::JobId pj ;
+        bool res = false;
+        try {
+                pj = status.getValJobId(glite::lb::JobStatus::PARENT_JOB);
+                res = true;
+        } catch (std::exception &exc){
+                res = false;
+        }
+        return res;
 }
 
 } // namespace utilities
