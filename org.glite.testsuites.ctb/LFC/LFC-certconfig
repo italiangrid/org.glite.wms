@@ -1,4 +1,5 @@
 #The hostname of the LCG File Catalog
+#export LFC_HOST="vtb-generic-77.cern.ch"
 export LFC_HOST="lxb7608v3.cern.ch"
 export LOGSLOCATION="/tmp"
 
@@ -11,5 +12,4 @@ export SAME_VO="dteam"
 #Tests to be executed {yes|no}
 CLI="yes"
 API_PYTHON="yes"
-SEQUENCE="yes"
 
