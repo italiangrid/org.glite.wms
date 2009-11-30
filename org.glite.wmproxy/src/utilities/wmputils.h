@@ -1,18 +1,18 @@
 /*
-Copyright (c) Members of the EGEE Collaboration. 2004. 
+Copyright (c) Members of the EGEE Collaboration. 2004.
 See http://www.eu-egee.org/partners/ for details on the copyright
-holders.  
+holders.
 
-Licensed under the Apache License, Version 2.0 (the "License"); 
-you may not use this file except in compliance with the License. 
-You may obtain a copy of the License at 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0 
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software 
-distributed under the License is distributed on an "AS IS" BASIS, 
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
@@ -26,7 +26,11 @@ limitations under the License.
 
 #include <vector>
 
+// JobId
 #include "glite/jobid/JobId.h"
+
+// Logging and Bookkeeping
+#include "glite/lb/JobStatus.h"
 
 namespace glite {
 namespace wms {
@@ -156,10 +160,10 @@ std::string getDestURI(const std::string &jobid, const std::string &protocol,
 
 std::vector<std::string> * getJobDirectoryURIsVector(
 	std::vector<std::pair<std::string, int> > protocols,
-	const std::string &defaultprotocol, int defaultport, int httpsport, 
+	const std::string &defaultprotocol, int defaultport, int httpsport,
 	const std::string &jid, const std::string &protocol,
 	const std::string &extradir = "");
-	
+
 /**
  * Returns the job reduced absolute path
  * @param jid the job identifier of the job
@@ -191,11 +195,11 @@ std::string getJobInputSBRelativePath(glite::jobid::JobId jid, int level = 0);
  */
 std::string getJobStartLockFilePath(glite::jobid::JobId jid,
 	int level = 0);
-	
+
 std::string getGetOutputFileListLockFilePath(glite::jobid::JobId jid,
 	int level = 0);
 
-/** 
+/**
  * Returns the job Input Sandbox directory path
  * @param jid the job identifier of the job
  * @param level level, default value is 0
@@ -203,8 +207,8 @@ std::string getGetOutputFileListLockFilePath(glite::jobid::JobId jid,
  */
 std::string getInputSBDirectoryPath(glite::jobid::JobId jid,
 	int level = 0);
-	
-/** 
+
+/**
  * Returns the job Output Sandbox directory path
  * @param jid the job identifier of the job
  * @param level level, default value is 0
@@ -213,7 +217,7 @@ std::string getInputSBDirectoryPath(glite::jobid::JobId jid,
 std::string getOutputSBDirectoryPath(glite::jobid::JobId jid,
 	int level = 0);
 
-/** 
+/**
  * Returns the job peek directory path
  * @param jid the job identifier of the job
  * @param level level, default value is 0
@@ -222,7 +226,7 @@ std::string getOutputSBDirectoryPath(glite::jobid::JobId jid,
 std::string getPeekDirectoryPath(glite::jobid::JobId jid,
 	int level = 0, bool docroot = true);
 
-/** 
+/**
  * Returns the job delegated Proxy path
  * @param jid the job identifier of the job
  * @param level level, default value is 0
@@ -230,8 +234,8 @@ std::string getPeekDirectoryPath(glite::jobid::JobId jid,
  */
 std::string getJobDelegatedProxyPath(glite::jobid::JobId jid,
 	int level = 0);
-	
-/** 
+
+/**
  * Returns the job delegated Proxy path backup file
  * @param jid the job identifier of the job
  * @param level level, default value is 0
@@ -242,16 +246,16 @@ std::string getJobDelegatedProxyPathBak(glite::jobid::JobId jid,
 
 std::string getJobJDLOriginalPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
-	
+
 std::string getJobJDLToStartPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
-	
+
 std::string getJobJDLStartedPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
 
 std::string getJobJDLExistingStartPath(glite::jobid::JobId jid,
 	bool isrelative = false, int level = 0);
-	
+
 /**
  * Returns the destination URI reading the protocol to use from configuration
  * (default protocol is used)
@@ -260,7 +264,7 @@ std::string getJobJDLExistingStartPath(glite::jobid::JobId jid,
  */
 std::string getDestURI(const std::string &jobid, const std::string &protocol,
 	int port);
- 
+
 /**
  * Transforms a JobId into a valid filename
  * @param jobid the JobId instance
@@ -277,7 +281,7 @@ std::string to_filename(glite::jobid::JobId j, int level = 0,
 //
 std::vector<std::string> computeOutputSBDestURIBase(std::vector<std::string>
 	outputsb, const std::string &baseuri);
-	
+
 std::vector<std::string> computeOutputSBDestURI(std::vector<std::string>
 	osbdesturi, const std::string &dest_uri);
 
@@ -325,7 +329,17 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
 std::vector<std::pair<std::string, std::string> >
 	parseFQANPair(const std::string &fqan);
 
-	
+/**
+ * Checks if the Job has a parent, thus if it's a DAG/Collection
+ */
+bool hasParent(glite::lb::JobStatus status);
+
+/**
+ * Retrieves the JobId of the parent
+ */
+
+glite::jobid::JobId getParent(glite::lb::JobStatus status);
+
 
 //
 // "External" methods
@@ -387,16 +401,16 @@ void waitForSeconds(int seconds);
 #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 /**
-   * Removes white spaces at the beginning and 
-   * at the end of the input string if there is any 
-   * @param the inputs string to be cleaned 
-   * @return the string, with white space removed from the front and end. 
+   * Removes white spaces at the beginning and
+   * at the end of the input string if there is any
+   * @param the inputs string to be cleaned
+   * @return the string, with white space removed from the front and end.
    */
 const std::string cleanString(std::string str);
 
 /**
    * Converts all of the characters in this String to lower case
-   * @param src the input string 
+   * @param src the input string
    * @return the string, converted to lowercase.
  */
 const std::string toLower(const std::string &src);
@@ -404,9 +418,9 @@ const std::string toLower(const std::string &src);
 /**
    * Cuts the input string in two pieces (label and value) according to
    * the separator character "="
-   * @param field the input string which format has to be label=value 
-   * @param label returns the "label" part of the string 
-   * @param value returns the "value" part of the string 
+   * @param field the input string which format has to be label=value
+   * @param label returns the "label" part of the string
+   * @param value returns the "value" part of the string
  */
 void split(const std::string &field, std::string &label, std::string &value);
 
