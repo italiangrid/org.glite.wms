@@ -394,8 +394,17 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 				conf.getDefaultProtocol(), conf.getDefaultPort());
 			wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 
-			// Setting user proxy  //TODO make it return by check security
-			wmplogger.setUserProxy( wmputilities::getJobDelegatedProxyPath(jobid));
+			string userProxyJob =  wmputilities::getJobDelegatedProxyPath(jobid);
+			long timeleft = authorizer::WMPAuthorizer::getProxyTimeLeft(userProxyJob);	
+
+			// Setting user proxy, checks whether the user proxy is still valid
+			// switching to host proxy if the user proxy expired
+			if ( timeleft <= 1) {
+				string hostProxy = configuration::Configuration::instance()->common()->host_proxy_file();
+	                        wmplogger.setUserProxy(hostProxy);
+			} else {
+				wmplogger.setUserProxy(userProxyJob);
+			}
 
 			// Getting job status to check if is a job and its status
 			JobStatus status = wmplogger.getStatus(false);
@@ -993,7 +1002,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 				string uri = jad->getString(JDL::PU_FILES_DEST_URI);
 				
 				string tofind = "://" + serverhost;
-				unsigned int pos = uri.find(tofind);
+				std::string::size_type pos = uri.find(tofind);
 				if (pos == string::npos) {
 					edglog(debug)<<"Remote perusal peek URI set:\n"
 						<<uri<<endl;
