@@ -56,7 +56,7 @@ parseAddressPort(const string &addressport, string &server,
 {
 	GLITE_STACK_TRY("parseAddressPort()");
 	
-	unsigned int pos;
+	std::string::size_type pos;
 	if (addressport != "") {
 		if ((pos = addressport.rfind(":", addressport.size()))
 				!= string::npos) {
@@ -82,7 +82,7 @@ void
 parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 {
 	GLITE_STACK_TRY("parseAddressPort()");
-	unsigned int pos;
+	std::string::size_type pos;
 	if (addressport != "") {
 		if ((pos = addressport.rfind(":", addressport.size()))
 				!= string::npos) {

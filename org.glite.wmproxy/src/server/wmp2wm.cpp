@@ -378,7 +378,7 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 	string couple;
 	string ce_id;
 	long int rank;
-	unsigned int pos = 0;
+	std::string::size_type pos = 0;
 	for (unsigned int i = 0; i < items.size(); i++) {
 		couple = items[i];
 		pos = couple.rfind(",");
