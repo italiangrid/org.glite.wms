@@ -25,7 +25,7 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  LFC-certtest.sh                   "
+ echo "Usage:  LFC-certtest.sh [-f <config file>] [--lfc <LFC_HOST>]                  "
  echo "                                           "
 }
 
@@ -40,7 +40,7 @@ exit -1
 #######################
 #Parsing the arguments#
 #######################
-if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 0 ]; then
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ]; then
   showUsage
   exit 2
 fi
@@ -49,10 +49,45 @@ fi
 # Check for environment variables #
 ###################################
 
-if [ -e "LFC-certconfig" ]; then
-  source ./LFC-certconfig
+#Parse arguments
+while [ $# -ne 0 ]; do
+  case "$1" in
+    -f)
+      shift
+      conffile=$1
+      shift
+      ;;
+    '--lfc')
+      shift
+      LFC_HOST_ARG=$1
+      shift
+      ;;
+    *|'')
+      echo "Unknown option '$1'"
+      exit
+      ;;
+  esac
+done
+
+if [ "x$conffile" = "x" ]; then
+  #Default value
+  conffile="./FTS-certconfig"
+fi
+echo "Using $conffile"
+
+if [ -e $conffile ]; then
+  source $conffile
 else
-  echo "The file ./LFC-certconfig must be sourced in order to run the tests"
+  echo "The file $conffile must be sourced in order to run the tests"
+  exitFailure
+fi
+
+if [ -n "$LFC_HOST_ARG" ]; then
+  hostname=$LFC_HOST_ARG
+elif [ -n "$LFC_HOST" ]; then
+  hostname=$LFC_HOST
+else
+  echo "You ned to set LFC_HOST in LFC-certconfig or use the --lfc argument"
   exitFailure
 fi
 
@@ -92,9 +127,14 @@ else
   echo "Log files will be stored in $loglocation"
 fi
 
-echo "LFC_HOST=$LFC_HOST"
+
+#########
+# START #
+#########
+
 echo "START `date` "
 echo "------------------------------------------------"
+echo "LFC_HOST=$LFC_HOST"
 
 ####################################
 # Checking if there is valid proxy #
@@ -120,14 +160,16 @@ fi
 ########################
 
 declare -a tests_failed
+declare -a tests_warnings
 failed=no
+warning=no
 
 testdir=./tests
 
 pushd $testdir >> /dev/null
 touch testfile 2> /dev/null
 if [ $? -ne 0 ]; then
-  echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
+  echo "LFC test directory is not writable, if you are on AFS be sure to have a valid token"
   exitFailure
 fi
 
@@ -147,8 +189,8 @@ if [ "$CLI" = "yes" ]; then
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item $LFC_HOST" > $loglocation/${item}_result.txt
-    ./$item $LFC_HOST >> $loglocation/${item}_result.txt 2>&1
+    echo "./$item $hostname" > $loglocation/${item}_result.txt
+    ./$item $hostname >> $loglocation/${item}_result.txt 2>&1
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
@@ -174,6 +216,7 @@ pushd python-api >> /dev/null
 #These SAME variables are needed to run the python scripts
 export SAME_OK=0
 export SAME_ERROR=1
+export SAME_WARNING=3
 export SAME_SENSOR_HOME=`pwd`
 export SAME_SENSOR_WORK=`pwd`
 
@@ -184,14 +227,20 @@ if [ "$API_PYTHON" = "yes" ]; then
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item $LFC_HOST" > $loglocation/${item}_result.txt
-    ./$item $LFC_HOST >> $loglocation/${item}_result.txt 2>&1
+    echo "./$item $hostname" > $loglocation/${item}_result.txt
+    ./$item $hostname >> $loglocation/${item}_result.txt 2>&1
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
-      echo "$item FAILED"
-      failed=yes
-      tests_failed=( "${tests_failed[@]}" "$item" )
+      if [ "$res" == "3" ]; then
+        echo "$item WARNING"
+        warning=yes
+        tests_warnings=( "${tests_failed[@]}" "$item" )
+      else
+        echo "$item FAILED"
+        failed=yes
+        tests_failed=( "${tests_failed[@]}" "$item" )
+      fi
     else
       echo "$item PASSED"
     fi
@@ -209,15 +258,20 @@ echo "END `date`"
 # Analyse tests outcome #
 #########################
 
-if [ $failed = "yes" ]; then
-
+if [ $failed == "yes" ]; then
   echo "TEST_FAILED"
   echo "The following tests failed:"
   for item in ${tests_failed[*]}
   do
     echo "$item: results in $loglocation/${item}_result.txt"
   done
+elif [ $warning == "yes" ]; then
+  echo "TEST PASSED with warnings"
+  for item in ${tests_warnings[*]}
+  do
+    echo "$item: results in $loglocation/${item}_result.txt"
+  done
 else
-    echo "TEST_PASSED"
+  echo "TEST PASSED"
 fi
 
