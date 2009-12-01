@@ -25,8 +25,9 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  FTS-certtest.sh  [-f <conf.file>] [--fts <FTS HOST>]"
- echo "  <conf.file> Configuration file, default is FTS-certconfig"
+ echo "Usage:  FTS-certtest.sh  [-f <config file>] [--fts <FTS HOST>]"
+ echo "  <config file> Configuration file, default is FTS-certconfig"
+ echo "  <FTS HOST> FTS host, override the one in the config file"
  echo "                                           "
 }
 
@@ -218,10 +219,6 @@ if [ "x${BASIC}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "FTS-submission")
   pushd $testdir >> /dev/null
   touch testfile 2> /dev/null
-  if [ $? -ne 0 ]; then
-    echo "FTS test directory is not writable, if you are on AFS be sure to have a valid token"
-    exitFailure
-  fi
 
   for item in ${tests_list[*]}
   do
