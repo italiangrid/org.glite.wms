@@ -227,6 +227,8 @@ os.environ['LFC_HOST'] = lfc_host
 
 same_ok   = int(os.environ['SAME_OK'])
 same_err  = int(os.environ['SAME_ERROR'])
+same_warning = int(os.environ['SAME_WARNING'])
+
 lfc_vo    = "/grid/" + vo_name
 
 print "2. Start test run()"
@@ -241,6 +243,7 @@ if ( ret == True ):
     print "Test is OK"
     sys.exit(same_ok)
 else:
-    print "Test is failure"
-    sys.exit(same_err)
+    print "Test is failure (BUG)"
+    sys.exit(same_warning)
+#    sys.exit(same_err)
                         
