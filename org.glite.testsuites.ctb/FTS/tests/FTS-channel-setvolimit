@@ -20,15 +20,13 @@
 ##############################################################################
 # 18.11.2009
 # AUTHORS: Victor Galaktionov, JINR/CERN 
-# Script based on Gianni Pucciani script FTS-submission
-#
 ##############################################################################
 
-#Script for testing FTS file transfer submission
+#Script for testing FTS channel add operation
 
 showUsage()
 {
- echo "Usage: FTS-channel-list --fts <fts hostname> --channel <channel name>"
+ echo "Usage: FTS-channel-setvolimit --fts <fts hostname> --channel <channel name>"
  echo "Options: "
  echo "          --fts  <fts hostname> "
  echo "                   The name of the FTS host."
@@ -121,52 +119,39 @@ else
          exit 1
 fi
 
-#1) Test if channel exists
+echo "1. Test if channel exists"
 
-#Get Channels list
-echo
-echo "Retrieving channels list..."
-get_channels
-echo "List=$Channel_List"
-if [ "x$Channel_List" == "x" ]; then
-  echo "No channels retrieved"
-  exit 1
-fi
-
-found=0
-for Channel in $Channel_List
-do
-  if [ "$Channel" == "$CHANNEL" ];then 
-    echo "Channel exists"
-    found=1
-    break
-  fi
-done
-
-if [ $found -eq 0 ];then
-  echo "Channel $CHANNEL does not exist"
-  echo "-TEST FAILED-"
-  exit 1
-fi
-
-#2) Check that the channel is active
-echo
-echo "Checking that $CHANNEL is active..."
-is_channel_active $CHANNEL
-if [ $? -eq 0 ];then
-  echo "Channel $CHANNEL is Active"
-else
-  echo "Channel $CHANNEL is not Active"
-  echo "-TEST FAILED-"
-  exit 1
-fi
-
-
-echo "Check special parameters "
-special-check-channel-list $CHANNEL
+is-channel-exists $CHANNEL
 if [ $? != 0 ]; then
-   echo "-TEST FAILED-"
-   exit 1
+    echo "Channel not exists, create it"
+ 
+    SITE_A="CERN-TB-CERN"
+    SITE_B="SINPCERTTB"
+
+    echo "Add new channel"
+    simple-channel-add $CHANNEL $SITE_A $SITE_B
+    if [ $? != 0 ]; then
+	echo "Add channel - failed"
+	exit 1
+    fi
+fi        
+echo "OK"
+
+LIMIT=33
+SHARE=43
+echo "Set VO limit for  channel $CHANNEL"
+channel-setvolimit $CHANNEL $VO_NAME $LIMIT $SHARE
+if [ $? != 0 ]; then
+    echo "setvolimit channel - failed"
+    channel-drop $CHANNEL
+    exit 1
+fi        
+echo "OK"
+
+channel-drop $CHANNEL
+if [ $? != 0 ]; then
+    echo "Channel dropped bad"
+    exit 1
 fi
 
 echo "-TEST PASSED-"

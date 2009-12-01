@@ -1,3 +1,4 @@
+#!/bin/bash
 #Configuration variables for FTS testing scripts
 
 FTS_HOST="vtb-generic-105.cern.ch"
@@ -12,7 +13,7 @@ SITE_NAME="cert-tb-cern"
 export VO="dteam"
 #VO="org.glite.voms-test"
 #The channels to use for submitting file transfers
-CHANNELS="CERN-CERN"
+CHANNELS=CERN-CERN
 #export CERN_SE="lxb7608v1.cern.ch"
 export CERN_SE="lxbra1910.cern.ch"
 #CHANNEL="CERN-DESY"
@@ -23,5 +24,7 @@ TIMEOUT=100
 NJOBS=10
 #The number of files per job. Default is 10
 NFILES=10
+#Test channel name for channel management operation
+NEW_CHANNEL="CERN-SINP"
 #The counter for check job transfer list
 export JOBLIST_NUMBER=3

@@ -124,6 +124,9 @@ fi
 # START #
 #########
 
+
+echo
+echo
 echo "START `date` "
 echo "------------------------------------------------"
 echo "FTS HOST: $FTS_HOST"
@@ -157,10 +160,14 @@ failed=no
 
 testdir=./tests
 #tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
-
+#tests_list=(FTS-channel-drop FTS-channel-setvolimit)
+#tests_list=(FTS-channel-add)
+tests_list=(FTS-channel-list FTS-channel-add FTS-channel-drop FTS-channel-setvolimit FTS-channel-audit)
+#tests_list=(FTS-channel-add FTS-channel-list)
+#tests_list=(FTS-channel-list)
 #tests_list=(FTS-status)
 #tests_list=(FTS-joblist)
-tests_list=(FTS-joblist FTS-cancel FTS-status)
+#tests_list=(FTS-joblist FTS-cancel FTS-status)
 #The last two are failing on CERN-DESY channels
 
 pushd $testdir >> /dev/null
@@ -170,81 +177,115 @@ if [ $? -ne 0 ]; then
   exitFailure
 fi
 
+
 for item in ${tests_list[*]}
 do
-  rm -rf ${item}_result.txt testfile
-  echo "Executing $item"
-  if [ $item = "FTS-basic" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost" > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost >> ${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-services" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --site $sitename"  > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --site $sitename >> ${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-cancel" ]; then
-    for channel in $channels
-    do
-	echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" > ${item}_result.txt
-	./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time >> ${item}_result.txt
+    rm -rf ${item}_result.txt testfile
+    echo "Executing $item"
+    if [ $item = "FTS-basic" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost >> ${item}_result.txt
 	res=$?
-    done
+    elif [ $item = "FTS-services" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost --site $sitename"  > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --site $sitename >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-cancel" ]; then
+	for channel in $channels
+	do
+	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	    res=$?
+	done
     
     elif [ $item = "FTS-joblist" ]; then
-    for channel in $channels
-    do
-	echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+	for channel in $channels
+	do
+	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
             --vo $voname --timeout $time" > ${item}_result.txt
-	./$item --fts $hostname --bdii $bdiihost --channel $channel \
+	    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
             --vo $voname --timeout $time >> ${item}_result.txt
-	res=$?
-    done    
-    
-    
+	    res=$?
+	done    
     elif [ $item = "FTS-status" ]; then
-    for channel in $channels
-    do
+	for channel in $channels
+	do
+	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	    res=$?
+	done    
+    
+    elif [ $item = "FTS-channel-list" ]; then
+	echo $channels
+	for channel in $channels
+	do
+	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	    res=$?
+	done
+    elif [ $item = "FTS-channel-setvolimit" ]; then
+    	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-channel-audit" ]; then
+    	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+    
+    elif [ $item = "FTS-channel-drop" ]; then
+    	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-channel-add" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+     
+    elif [ $item = "FTS-channels" ]; then
+	echo "./$item --fts $hostname" > ${item}_result.txt
+	./$item --fts $hostname >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-submission" ]; then
+	for channel in $channels
+	do
+	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" >> ${item}_result.txt
+    	    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time >> ${item}_result.txt
+        res=$?
+	done
+    elif [ $item = "FTS-all-channels" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
+            --vo $voname --timeout $time " > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --site $sitename \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-stress" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
+            --vo $voname --njobs $njobs  --nfiles $nfiles" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --site $sitename \
+            --vo $voname --njobs $njobs  --nfiles $nfiles >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-submission-with-checksum-1.sh" ] || [ $item = "FTS-submission-with-checksum-2.sh" ] || [ $item = "FTS-submission-with-checksum-3.sh" ]; then
 	echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
             --vo $voname --timeout $time" > ${item}_result.txt
 	./$item --fts $hostname --bdii $bdiihost --channel $channel \
             --vo $voname --timeout $time >> ${item}_result.txt
 	res=$?
-    done    
-    
-    
-  elif [ $item = "FTS-channels" ]; then
-    echo "./$item --fts $hostname" > ${item}_result.txt
-    ./$item --fts $hostname >> ${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-submission" ]; then
-    for channel in $channels
-    do
-      echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" #>> ${item}_result.txt
-      ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time #>> ${item}_result.txt
-      res=$?
-    done
-  elif [ $item = "FTS-all-channels" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --timeout $time " > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --timeout $time >> ${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-stress" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --njobs $njobs  --nfiles $nfiles" > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-            --vo $voname --njobs $njobs  --nfiles $nfiles >> ${item}_result.txt
-    res=$?
-  elif [ $item = "FTS-submission-with-checksum-1.sh" ] || [ $item = "FTS-submission-with-checksum-2.sh" ] || [ $item = "FTS-submission-with-checksum-3.sh" ]; then
-    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" > ${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time >> ${item}_result.txt
-    res=$?
   fi
 
   grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
