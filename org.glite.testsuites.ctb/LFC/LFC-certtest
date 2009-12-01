@@ -265,13 +265,16 @@ if [ $failed == "yes" ]; then
   do
     echo "$item: results in $loglocation/${item}_result.txt"
   done
+  exit 1
 elif [ $warning == "yes" ]; then
   echo "TEST PASSED with warnings"
   for item in ${tests_warnings[*]}
   do
     echo "$item: results in $loglocation/${item}_result.txt"
   done
+  exit 0
 else
   echo "TEST PASSED"
+  exit 0
 fi
 
