@@ -1,3 +1,4 @@
 #Export here useful variables
 
 LOGSLOCATION=/tmp
+DCACHE_HOST=ennis.desy.de
