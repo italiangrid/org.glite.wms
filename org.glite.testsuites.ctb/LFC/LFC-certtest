@@ -71,7 +71,7 @@ done
 
 if [ "x$conffile" = "x" ]; then
   #Default value
-  conffile="./FTS-certconfig"
+  conffile="./LFC-certconfig"
 fi
 echo "Using $conffile"
 
