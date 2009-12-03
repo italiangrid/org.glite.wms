@@ -1,0 +1,149 @@
+#!/bin/sh
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Alejandro Alvarez Ayllon, CERN
+# LINK:    https://savannah.cern.ch/bugs/?27899
+#
+##############################################################################
+
+log() {
+  echo "`date`: $1"
+}
+
+test_bug27899_pre () {
+# Check for variables that are needed in test_bug1 and which should be defined globally in
+# the *sh that is sourced in regTest
+# Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK
+ log ""
+}
+                                                                                                                      
+test_bug27899_post () {
+  echo
+  # Cleanup after running test_bug1. Unset all variables that were set in test_bug
+  # Delete files created during the test run.
+  if [ "x$jobstatus" == "x${statuses[5]}" ]; then
+    report_line "$jdl" "The job with jobid $jobid successfully finished" $report_name
+    report_line "$jdl" "Output was successfully retrieved under $outputdir" $report_name
+  else
+    report_line "$jdl" "test failed" $report_name
+    report_line "$jdl" "$error_msg" $report_name
+    echo "error msg: $error_msg"
+  fi
+  report_footer $report_name
+  cd - >/dev/null
+}
+
+
+test_bug27899 () {
+# Main test
+# Return values REGTEST_FAIL, REGTEST_TIMEOUT or REGTEST_OK
+
+  statuses[0]=Submitted
+  statuses[1]=Waiting
+  statuses[2]=Ready
+  statuses[3]=Scheduled
+  statuses[4]=Running
+  statuses[5]=Done
+  statuses[6]=Abort
+
+  MAX_STATUS_ITERATIONS=100
+  CHECK_STATUS_INTERVAL=30
+
+
+  exit_code=-1
+  exit_while=-1
+  app_path=`pwd`
+  celist="N/A"
+  list_time="N/A"
+  avg_list_time=0
+  nlist=5
+                                                                                                                   
+  sanity_check() { # 1 - test_dir  2 - wms.conf
+    bad=0
+    if [ -z $1 ]; then
+      bad=1
+    else
+      if [ -z $2 ]; then
+        bad=1
+      fi
+    fi
+    if [ $bad -eq 1 ]; then
+      echo "usage: testplan_list test_dir wms.conf"
+      return 1
+    fi
+    if [ -r "$app_path/config/testplan_functions" ]; then
+      . $app_path/config/testplan_functions
+    else
+      echo "File testplan_functions not found. Quitting..."
+      return 1
+    fi
+    
+    if [ ! -e "$1/27899.conf" ]; then
+      echo "File $1/27899.conf not found. Quitting..."
+      return 1
+    fi
+
+    return 0
+  }
+                                                           
+  sanity_check $1 $2
+  if [ $? -eq 0 ]; then
+	  report_name="$app_path/reports/report27899.html"
+	  rm -rf $report_name
+    report_header "Test results: glite-wms-job-submit"  $report_name
+	  cd $1
+
+    # Submit a basic job
+    jdl="echo.jdl"
+    log "processing $jdl"
+    submit_single_job $jdl "$app_path/$1/27899.conf"
+    if [ "x$jobid" == "xERROR" ]; then
+      log "got an error while submitting..."
+      return $REGTEST_FAIL
+    else
+      log "job submitted with id: $jobid"
+    fi
+    rm -f $tmpfile
+
+    # Recover the generated JDL with glite-wms-job-info --jdl
+    tmpfile=`mktemp /tmp/generated_jdl.XXXXXXXXXX`
+    run_command "glite-wms-job-info --jdl $jobid > $tmpfile" "Recovering generated JDL..."
+
+    # Get the VirtualOrganisation line from the generated JDL
+    jdlVO=`grep -i "VirtualOrganisation = " $tmpfile | cut -d '='  -f 2 | cut -d '"' -f 2`
+
+    # Get the VirtualOrganisation line from the proxy
+    echo "Recovering user VO from proxy"
+    userVO=`voms-proxy-info -all | egrep "^VO" | cut -d ':' -f 2 | sed 's/ //g'`
+
+    # We do not need longer this job, so cancel
+    rm -f $tmpfile
+    run_command "glite-wms-job-cancel $jobid > /dev/null" "Stopping execution..."
+
+    # They should be the same, overriding the configuration of 27899.conf
+    if [ ! $jdlVO == $userVO ]; then
+      log "The generated JDL VO is $jdlVO, but the user proxy VO is $userVO. Test failed!"
+      return $REGTEST_FAIL
+    else
+      log "The generated JDL VO is $jdlVO, and the user proxy VO is $userVO. Test successful!"
+    fi
+  
+  fi
+}
