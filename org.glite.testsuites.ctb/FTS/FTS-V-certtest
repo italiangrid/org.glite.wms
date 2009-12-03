@@ -161,8 +161,10 @@ failed=no
 testdir=./tests
 #tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
 #tests_list=(FTS-channel-drop FTS-channel-setvolimit)
-#tests_list=(FTS-channel-add)
-tests_list=(FTS-channel-list FTS-channel-add FTS-channel-drop FTS-channel-setvolimit FTS-channel-audit)
+#
+tests_list=(FTS-channel-add FTS-channel-set)
+
+tests_list=(FTS-joblist FTS-cancel FTS-status FTS-channel-list FTS-channel-add FTS-channel-drop FTS-channel-setvolimit FTS-channel-audit FTS-channel-managers FTS-channel-set)
 #tests_list=(FTS-channel-add FTS-channel-list)
 #tests_list=(FTS-channel-list)
 #tests_list=(FTS-status)
@@ -177,11 +179,11 @@ if [ $? -ne 0 ]; then
   exitFailure
 fi
 
-
+count=1
 for item in ${tests_list[*]}
 do
     rm -rf ${item}_result.txt testfile
-    echo "Executing $item"
+    echo "$count. Executing $item"
     if [ $item = "FTS-basic" ]; then
 	echo "./$item --fts $hostname --bdii $bdiihost" > ${item}_result.txt
 	./$item --fts $hostname --bdii $bdiihost >> ${item}_result.txt
@@ -220,7 +222,7 @@ do
 	done    
     
     elif [ $item = "FTS-channel-list" ]; then
-	echo $channels
+	#echo $channels
 	for channel in $channels
 	do
 	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
@@ -230,12 +232,19 @@ do
 	    res=$?
 	done
     elif [ $item = "FTS-channel-setvolimit" ]; then
+	echo "Test consists 2 operations (setvolimit, setvoshare)"
     	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
             --vo $voname --timeout $time" > ${item}_result.txt
 	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
             --vo $voname --timeout $time >> ${item}_result.txt
 	res=$?
     elif [ $item = "FTS-channel-audit" ]; then
+    	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-channel-set" ]; then
     	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
             --vo $voname --timeout $time" > ${item}_result.txt
 	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
@@ -249,6 +258,13 @@ do
             --vo $voname --timeout $time >> ${item}_result.txt
 	res=$?
     elif [ $item = "FTS-channel-add" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-channel-managers" ]; then
+        echo "Test consists command addmanager, listmanagers, removemanager"
 	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
             --vo $voname --timeout $time" > ${item}_result.txt
 	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
@@ -296,7 +312,7 @@ do
   else
     echo "$item PASSED"
   fi
-
+    let count=count+1    
 done
 popd >> /dev/null
 
