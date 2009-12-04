@@ -298,6 +298,7 @@ CondorMonitor::status_t CondorMonitor::process_next_event( void )
     }
 
     ReadUserLog id_logfile_parser(fp, false);
+    id_logfile_parser.initialize(this->cm_shared_data->md_logfile_name.c_str());
 
     // Seek to last 'position'
     std::string error;
