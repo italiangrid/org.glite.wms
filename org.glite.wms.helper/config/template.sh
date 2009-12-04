@@ -52,7 +52,7 @@ fi
 
 if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT_ISB}" ]; then
   if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
-    __copy_retry_count_isb=3
+    __copy_retry_count_isb=2
   else
     __copy_retry_count_isb=${GLITE_LOCAL_COPY_RETRY_COUNT}
   fi
@@ -94,6 +94,7 @@ jw_host="`hostname -f`"
 jw_newdir="${__jobid_to_filename}"
 jw_maradona="${jw_newdir}.output"
 jw_workdir="`pwd`"
+done_reason=
 
 ##
 # functions definitions
@@ -181,6 +182,7 @@ log_done_failed() # 1 - exit code
 push_in_done_reason() #  1 - reason
 {
   done_reason="$done_reason`date`: $1"$'\n'
+  jw_echo "$1"
 }
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
@@ -401,14 +403,14 @@ doExit() # 1 - status
 
   if [ -n "${jw_maradona}" ]; then
     if [ -r "${jw_maradona}" ]; then
-      retry_copy "file://${jw_workdir}/${jw_maradona}" "${__jw_maradonaprotocol}"
+      retry_copy "file://${jw_workdir}/${jw_maradona}" "${__maradona_url}"
       globus_copy_status=$?
     else
-      jw_echo "jw_maradona not readable, so not sent"
+      push_in_done_reason "jw_maradona not readable, so not sent"
       globus_copy_status=0
     fi
   else
-    jw_echo "jw_maradona was found unset or empty"
+    push_in_done_reason "jw_maradona was found unset or empty"
     globus_copy_status=0
   fi
 
