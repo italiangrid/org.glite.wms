@@ -1,0 +1,24 @@
+Here are some instructions on how to create a regression testing script to be included in the testsuite under 'org.glite.testsuites.ctb/WMS/regression/reg_tests'
+
+Directory structure:
+-----------------------
+
+- bugs/ ---> contains  a testing script for each bug
+
+- config/ ---> contains common utility functions to be used for testing WMS and running the regTest.sh script
+
+- reports/ ---> a final report for each bug testing script detailing the results of the test
+
+- test_dir/ ---> contains a .jdl or scripts or some data needed for running the testing script for each bug       
+
+- testlists/ ---> contains files with the list of tests to be run by the main regTest.sh script
+
+How to:
+--------
+
+For each new bug:
+- create a testing script under the 'bugs' dir, adding any necessary file also under the 'test_dir' directory 
+- add a line to the testlist file under the 'testlists' dir
+- define a wms.conf file under the main dir specifying the wms machine under testing  
+- main script runs by launching the following command './regTest.sh --testlists testlists/wms-tests-regression.txt'  
+
