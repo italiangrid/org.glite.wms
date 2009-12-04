@@ -44,9 +44,9 @@
 #include "EventJobHeld.h"
 #include "MonitorData.h"
 
-namespace {
-  std::string const globus_error10 = "Globus error 10";
-}
+//namespace {
+//  std::string const globus_error10 = "Globus error 10";
+//}
 
 using namespace std;
 USING_COMMON_NAMESPACE;
@@ -101,51 +101,51 @@ void EventJobHeld::process_event( void )
       elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
     }
 
-    if (reason.substr(0, globus_error10.size()) == globus_error10) {
+    //if (reason.substr(0, globus_error10.size()) == globus_error10) {
 
-      elog::cedglog << logger::setlevel( logger::info ) << "This error is likely to be transient." << endl
-        << "Let's retry releasing cluster " << this->ei_condor << " before giving up" << endl;
+    //  elog::cedglog << logger::setlevel( logger::info ) << "This error is likely to be transient." << endl
+    //    << "Let's retry releasing cluster " << this->ei_condor << " before giving up" << endl;
 
-      int const MAX_CONDOR_RETRIES = 30;
+    //  int const MAX_CONDOR_RETRIES = 30;
 
-      std::string const jobid(position->edg_id());
-      configuration::Configuration const& config(*configuration::Configuration::instance());
-      std::string condor_retries_file(config.ns()->sandbox_staging_path());
-      condor_retries_file += "/" + glite::wms::common::utilities::get_reduced_part(jobid);
-      condor_retries_file += "/" + glite::wms::common::utilities::to_filename(jobid);
-      condor_retries_file += "/Condor.retries";
+    //  std::string const jobid(position->edg_id());
+    //  configuration::Configuration const& config(*configuration::Configuration::instance());
+    //  std::string condor_retries_file(config.ns()->sandbox_staging_path());
+    //  condor_retries_file += "/" + glite::wms::common::utilities::get_reduced_part(jobid);
+    //  condor_retries_file += "/" + glite::wms::common::utilities::to_filename(jobid);
+    //  condor_retries_file += "/Condor.retries";
 
-      int condor_retries = 0;
-      ifstream ifs(condor_retries_file.c_str());
-      if (ifs) {
-        ifs >> condor_retries;
-        ifs.close();
-      }
-      ++condor_retries;
+    //  int condor_retries = 0;
+    //  ifstream ifs(condor_retries_file.c_str());
+    //  if (ifs) {
+    //    ifs >> condor_retries;
+    //    ifs.close();
+    //  }
+    //  ++condor_retries;
 
-      ofstream ofs(condor_retries_file.c_str());
-      if (ofs) {
-        ofs << condor_retries << '\n';
-        ofs.close();
-      }
+    //  ofstream ofs(condor_retries_file.c_str());
+    //  if (ofs) {
+    //    ofs << condor_retries << '\n';
+    //    ofs.close();
+    //  }
 
-      if (condor_retries <= MAX_CONDOR_RETRIES) {
+    //  if (condor_retries <= MAX_CONDOR_RETRIES) {
 
-        elog::cedglog << logger::setlevel( logger::info ) << "Forwarding release request to JC." << endl;
-        sleep(5);
-        controller.release(this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str());
+    //    elog::cedglog << logger::setlevel( logger::info ) << "Forwarding release request to JC." << endl;
+    //    sleep(5);
+    //    controller.release(this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str());
 
-#if CONDORG_AT_LEAST(6,5,3)
-        this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),
-        this->ejh_event->eventNumber, this->ejh_event->getReasonSubCode() );
-#else
-        this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->ejh_event->eventNumber );
-#endif
-        return;
-      } else {
+//#if CONDORG_AT_LEAST(6,5,3)
+    //    this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),
+    //    this->ejh_event->eventNumber, this->ejh_event->getReasonSubCode() );
+//#else
+    //    this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->ejh_event->eventNumber );
+//#endif
+    //   return;
+    //  } else {
         elog::cedglog << logger::setlevel( logger::info ) << "Number of Condor retries exceeded, __NOT__ forwarding release request to JC." << endl;
-      }
-    }
+    // }
+    //}
 
     if (this->ei_data->md_logger->have_lbproxy()) {
       this->ei_data->md_logger->set_LBProxy_context( position->edg_id(), position->sequence_code(), position->proxy_file() );
