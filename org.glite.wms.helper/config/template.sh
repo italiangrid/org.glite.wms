@@ -128,9 +128,10 @@ proxy_checker()
     time_left=`grid-proxy-info -timeleft 2>/dev/null || echo 0`
     if [ $time_left -lt 0 ]; then
       break;
-    else
-      sleep $time_left
+    elif [ $time_left -gt 1000 ]; then
+      time_left=1000 
     fi
+    sleep $time_left
   done
 
   fatal_error "Job killed by the jobwrapper because of user proxy expiration"
