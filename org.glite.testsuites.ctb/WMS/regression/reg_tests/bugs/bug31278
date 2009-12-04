@@ -19,7 +19,7 @@
 ##############################################################################
 #
 # AUTHORS: Alejandro Alvarez Ayllon, CERN
-# LINK:    https://savannah.cern.ch/bugs/?27899
+# LINK:    https://savannah.cern.ch/bugs/?31278
 #
 ##############################################################################
 
@@ -27,43 +27,25 @@ log() {
   echo "`date`: $1"
 }
 
-test_bug27899_pre () {
+test_bug31278_pre () {
 # Check for variables that are needed in test_bug1 and which should be defined globally in
 # the *sh that is sourced in regTest
 # Return REGTEST_FAIL if something is not O.K. otherwise return $REGTEST_OK
- log ""
+  return $REGTEST_OK
 }
                                                                                                                       
-test_bug27899_post () {
+test_bug31278_post () {
   report_footer $report_name
   cd - >/dev/null
 }
 
 
-test_bug27899 () {
-# Main test
-# Return values REGTEST_FAIL, REGTEST_TIMEOUT or REGTEST_OK
+test_bug31278 () {
+  # Main test
+  # Return values REGTEST_FAIL, REGTEST_TIMEOUT or REGTEST_OK
 
-  statuses[0]=Submitted
-  statuses[1]=Waiting
-  statuses[2]=Ready
-  statuses[3]=Scheduled
-  statuses[4]=Running
-  statuses[5]=Done
-  statuses[6]=Abort
-
-  MAX_STATUS_ITERATIONS=100
-  CHECK_STATUS_INTERVAL=30
-
-
-  exit_code=-1
-  exit_while=-1
   app_path=`pwd`
-  celist="N/A"
-  list_time="N/A"
-  avg_list_time=0
-  nlist=5
-                                                                                                                   
+                                                                                                  
   sanity_check() { # 1 - test_dir  2 - wms.conf
     bad=0
     if [ -z $1 ]; then
@@ -84,59 +66,74 @@ test_bug27899 () {
       return 1
     fi
     
-    if [ ! -e "$1/27899.conf" ]; then
-      echo "File $1/27899.conf not found. Quitting..."
-      return 1
-    fi
-
     return 0
   }
                                                            
   sanity_check $1 $2
   if [ $? -eq 0 ]; then
-	  report_name="$app_path/reports/report27899.html"
+	  report_name="$app_path/reports/report31278.html"
 	  rm -rf $report_name
-    report_header "Test results: VO override does not work with JdlDefaultAttributes"  $report_name
+    report_header "Test results: WMS should prevent non-SDJ jobs from being scheduled on SDJ CEs"  $report_name
 	  cd $1
 
-    # Submit a basic job
-    jdl="echo.jdl"
+    # Submit a SDJ job
+    jdl="31278_sdj.jdl"
     log "processing $jdl"
-    submit_single_job $jdl "$app_path/$1/27899.conf"
+    submit_single_job $jdl "$app_path/$2"
     if [ "x$jobid" == "xERROR" ]; then
       log "got an error while submitting..."
+      report_line $jdl "got an error while submitting" $report_name
       return $REGTEST_FAIL
     else
       log "job submitted with id: $jobid"
     fi
     rm -f $tmpfile
 
-    # Recover the generated JDL with glite-wms-job-info --jdl
-    tmpfile=`mktemp /tmp/generated_jdl.XXXXXXXXXX`
-    run_command "glite-wms-job-info --jdl $jobid > $tmpfile" "Recovering generated JDL..."
+    # Recover the requirements line from the generated JDL
+    sdjReq=`glite-wms-job-info --jdl $jobid | grep -i requirements`
 
-    # Get the VirtualOrganisation line from the generated JDL
-    jdlVO=`grep -i "VirtualOrganisation = " $tmpfile | cut -d '='  -f 2 | cut -d '"' -f 2`
-
-    # Get the VirtualOrganisation line from the proxy
-    echo "Recovering user VO from proxy"
-    userVO=`voms-proxy-info -all | egrep "^VO" | cut -d ':' -f 2 | sed 's/ //g'`
-
-    # We do not need longer this job, so cancel
-    rm -f $tmpfile
-    run_command "glite-wms-job-cancel $jobid > /dev/null" "Stopping execution..."
-
-    # They should be the same, overriding the configuration of 27899.conf
-    if [ ! $jdlVO == $userVO ]; then
-      log "The generated JDL VO is $jdlVO, but the user proxy VO is $userVO. Test failed!"
-      report_line "$jdl" "The generated JDL VO is $jdlVO, but the user proxy VO is $userVO. Test failed!" $report_name
+    # Test if it has the desired value
+    echo $sdjReq | grep "RegExp(\".*sdj$\",other.GlueCEUniqueID);"
+    if [ $? -eq 1 ]; then
+      log "The requirements line is invalid"
+      report_line $jdl "The requirements line is invalid" $report_name
       return $REGTEST_FAIL
     else
-      log "The generated JDL VO is $jdlVO, and the user proxy VO is $userVO. Test successful!"
-      report_line "$jdl" "The generated JDL VO is $jdlVO, and the user proxy VO is $userVO. Test successful!" $report_name
-      return $REGTEST_OK
+       report_line $jdl "The requirements line is valid" $report_name
     fi
-  
+
+    # Cancel
+    glite-wms-job-cancel $jobid
+
+    # Submit a NON-SDJ job
+    jdl="31278_no_sdj.jdl"
+    log "processing $jdl"
+    submit_single_job $jdl "$app_path/$2"
+    if [ "x$jobid" == "xERROR" ]; then
+      log "got an error while submitting..."
+      report_line $jdl "got an error while submitting" $report_name
+      return $REGTEST_FAIL
+    else
+      log "job submitted with id: $jobid"
+    fi
+    rm -f $tmpfile
+
+    # Recover the requirements line from the generated JDL
+    sdjReq=`glite-wms-job-info --jdl $jobid | grep -i requirements`
+
+    # Test if it has the desired value
+    echo $sdjReq | grep "!RegExp(\".*sdj$\",other.GlueCEUniqueID);"
+    if [ $? -eq 1 ]; then
+      log "The requirements line is invalid"
+      report_line $jdl "The requirements line is invalid" $report_name
+      return $REGTEST_FAIL
+    else
+       report_line $jdl "The requirements line is valid" $report_name
+    fi
+
+    # Cancel
+    glite-wms-job-cancel $jobid
+
+    return $REGTEST_OK
   fi
 }
-
