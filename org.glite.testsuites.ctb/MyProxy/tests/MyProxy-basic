@@ -3,7 +3,7 @@
 showUsage ()
 {
  echo "Missing parameter:                                                                 "
- echo "Usage:  MyProxy-basic <fts hostname>                                                  "
+ echo "Usage:  MyProxy-basic <MyProxy hostname>                                                  "
  echo ""
 }
 

@@ -24,7 +24,11 @@
 
 showUsage ()
 {
- echo "Usage: $0 "
+ echo "Usage: $0  [-f <config file>] [--fts <MyProxy HOST>]"
+ echo "  <config file> Configuration file, default is myproxy-certconfig"
+ echo "  <MyProxy HOST> MyProxy host, override the one in the config file"
+ echo "                                           "
+
 }
 
 exitFailure ()
@@ -38,7 +42,7 @@ exit -1
 #######################
 #Parsing the arguments#
 #######################
-if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 0 ]; then
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ]; then
   showUsage
   exit 2
 fi
@@ -47,19 +51,69 @@ fi
 # Check for environment variables #
 ###################################
 
-if [ -e "myproxy-certconfig" ]; then
-  source ./myproxy-certconfig
+#Parse arguments
+while [ $# -ne 0 ]; do
+  case "$1" in
+    -f)
+      shift
+      conffile=$1
+      shift
+      ;;
+    '--myproxy')
+      shift
+      MYPROXY_HOST_ARG=$1
+      shift
+      ;;
+    *|'')
+      echo "Unknown option '$1'"
+      exit
+      ;;
+  esac
+done
+
+if [ "x$conffile" = "x" ]; then
+  #Default value
+  conffile="./myproxy-certconfig"
+fi
+echo "Using $conffile"
+
+if [ -e $conffile ]; then
+  source $conffile
 else
-  echo "The file ./myproxy-certconfig must be sourced in order to run the tests"
-  exit Failure
+  echo "The file $conffile must be sourced in order to run the tests"
+  exitFailure
 fi
 
-if [ -z "$MYPROXY_HOST" ]; then
-  echo "You need to set MYPROXY_HOST in myproxy-certconfig in order to run the tests"
+if [ -n "$MYPROXY_HOST_ARG" ]; then
+  hostname=$MYPROXY_HOST_ARG
+elif [ -n "$MYPROXY_HOST" ]; then
+  hostname=$MYPROXY_HOST
+else
+  echo "You ned to set MYPROXY_HOST in myproxy-certconfig or use the --myproxy argument"
+  exitFailure
+fi
+
+####################################
+# Create a directory for log files #
+####################################
+
+id=`date +%y%m%d%H%M%S`
+if [ -z "$LOGSLOCATION" ]; then
+  cp=`pwd`
+  loglocation=$cp/logs_$id
+  mkdir -p $loglocation
+else
+  loglocation=$LOGSLOCATION/logs_$id
+  mkdir -p $loglocation
+fi
+
+if [ ! -d $loglocation ];then
+  echo   "Error while creating log directory $loglocation"
   exitFailure
 else
-  hostname=$MYPROXY_HOST
+  echo "Log files will be stored in $loglocation"
 fi
+
 
 ####################################
 # Checking if there is valid proxy #
@@ -88,7 +142,7 @@ declare -a tests_failed
 failed=no
 
 testdir=./tests
-tests_list=(MyProxy-basic MyProxy-register.sh)
+tests_list=(check_commands MyProxy-basic MyProxy-register.sh test_myproxy)
 
 pushd $testdir >> /dev/null
 
