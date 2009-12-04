@@ -38,6 +38,7 @@ test_bug31012_post () {
   echo
   # Cleanup after running test_bug1. Unset all variables that were set in test_bug
   # Delete files created during the test run.
+  report_footer $report_name
   cd - >/dev/null
   return $REGTEST_OK  
 }
