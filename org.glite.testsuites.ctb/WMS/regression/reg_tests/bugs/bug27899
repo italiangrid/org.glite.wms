@@ -107,7 +107,7 @@ test_bug27899 () {
   if [ $? -eq 0 ]; then
 	  report_name="$app_path/reports/report27899.html"
 	  rm -rf $report_name
-    report_header "Test results: glite-wms-job-submit"  $report_name
+    report_header "Test results: VO override does not work with JdlDefaultAttributes"  $report_name
 	  cd $1
 
     # Submit a basic job
@@ -143,6 +143,7 @@ test_bug27899 () {
       return $REGTEST_FAIL
     else
       log "The generated JDL VO is $jdlVO, and the user proxy VO is $userVO. Test successful!"
+      return $REGTEST_OK
     fi
   
   fi
