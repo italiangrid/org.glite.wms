@@ -25,7 +25,7 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  $0  [-f <conf.file>] [--dcache <dCache host>]"
+ echo "Usage:  $0  [-f <conf.file>] [--dcache <dCache host>] [-h|--help]"
  echo "  <conf.file> Configuration file, default is FTS-certconfig"
  echo "  <dCache host> Target SE for the tests, default is \$DCACHE_HOST"
  echo "                                           "
@@ -39,6 +39,11 @@ echo "-TEST FAILED-"
 exit -1
 }
 
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ]; then
+  showUsage
+  exit 2
+fi
+
 #Parse arguments
 while [ $# -ne 0 ]; do
   case "$1" in
@@ -51,10 +56,6 @@ while [ $# -ne 0 ]; do
       shift
       DCACHE_HOST_ARG=$1
       shift
-      ;;
-    '-h|-help|--help')
-      showUsage
-      exit 0
       ;;
     *|'')
       echo "Unknown option '$1'"
