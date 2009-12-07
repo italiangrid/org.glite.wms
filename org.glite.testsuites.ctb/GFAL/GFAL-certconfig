@@ -1,9 +1,10 @@
+
 #The hostname of the LCG File Catalog
 LFC_HOST="lxb7608v3.cern.ch"
 
 #SE hostname
-#FIRSTSE="lxbra1910.cern.ch"
-FIRSTSE="lxb7608v1.cern.ch"
+#SE_HOST="lxbra1910.cern.ch"
+SE_HOST="lxb7608v1.cern.ch"
 
 #VO="org.glite.voms-test"
 VO="dteam"
@@ -13,4 +14,4 @@ LOGSLOCATION="/tmp"
 
 #Tests to run 
 GFAL_BASIC="yes"
-GFAL_PYTHON_API="no"
+GFAL_PYTHON_API="yes"

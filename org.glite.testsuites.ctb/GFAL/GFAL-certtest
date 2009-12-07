@@ -24,9 +24,12 @@
 
 showUsage ()
 {
- echo "                                           "
- echo "Usage:  GFAL-certtest.sh                   "
- echo "                                           "
+ echo
+ echo "Usage:  $0 [-f <conf.file>] [--sehost <SE HOST>] [-h|--help] "
+ echo "  <conf.file> Configuration file, default is FTS-certconfig"
+ echo "  <SE HOST> Target SE for the tests, default is \$SE_HOST"
+
+ echo
 }
 
 exitFailure ()
@@ -40,21 +43,57 @@ exit -1
 #######################
 #Parsing the arguments#
 #######################
-if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 0 ]; then
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ]; then
   showUsage
   exit 2
 fi
+
+#Parse arguments
+while [ $# -ne 0 ]; do
+  case "$1" in
+    -f)
+      shift
+      conffile=$1
+      shift
+      ;;
+    '--sehost')
+      shift
+      SE_HOST_ARG=$1
+      shift
+      ;;
+    *|'')
+      echo "Unknown option '$1'"
+      exit
+      ;;
+  esac
+done
 
 ###################################
 # Check for environment variables #
 ###################################
 
-if [ -e "GFAL-certconfig" ]; then
-  source ./GFAL-certconfig
+if [ "x$conffile" = "x" ]; then
+  #Default value
+  conffile="./GFAL-certconfig"
+fi
+echo "Using $conffile"
+
+if [ -e $conffile ]; then
+  source $conffile
 else
-  echo "The file ./GFAL-certconfig must be sourced in order to run the tests"
+  echo "The file $conffile must be sourced in order to run the tests"
   exitFailure
 fi
+
+if [ -n "$SE_HOST_ARG" ]; then
+  hostname=$SE_HOST_ARG
+elif [ -n "$SE_HOST" ]; then
+  hostname=$SE_HOST
+else
+  echo "You ned to set SE_HOST in GFAL-certconfig or use the --sehost argument"
+  exitFailure
+fi
+
 
 if [ -z "$VO" ]; then
   echo "You need to set VO in order to run the tests"
@@ -66,8 +105,8 @@ if [ -z "$LFC_HOST" ]; then
   exitFailure
 fi
 
-if [ -z "$FIRSTSE" ]; then
-  echo "You need to set FIRSTSE in order to run the tests"
+if [ -z "$SE_HOST" ]; then
+  echo "You need to set SE_HOST in order to run the tests"
   exitFailure
 fi
 
@@ -98,7 +137,7 @@ fi
 
 echo "START `date` "
 echo `rpm -qa | grep -i gfal`
-echo "SE: $FIRSTSE"
+echo "SE: $SE_HOST"
 echo "------------------------------------------------"
 
 ####################################
@@ -144,8 +183,8 @@ if [ x$GFAL_BASIC == "xyes" ]; then
   do
     rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item -v $VO -l $LFC_HOST -d $FIRSTSE " > $loglocation/${item}_result.txt
-    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE >> $loglocation/${item}_result.txt 2>&1
+    echo "./$item -v $VO -l $LFC_HOST -d $SE_HOST " > $loglocation/${item}_result.txt
+    ./$item -v $VO -l $LFC_HOST -d $SE_HOST >> $loglocation/${item}_result.txt 2>&1
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
@@ -199,8 +238,8 @@ if [ x$GFAL_PYTHON_API == "xyes" ]; then
   do
     rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item $FIRSTSE " > $loglocation/${item}_result.txt
-    ./$item $FIRSTSE >> $loglocation/${item}_result.txt 2>&1
+    echo "./$item $SE_HOST " > $loglocation/${item}_result.txt
+    ./$item $SE_HOST >> $loglocation/${item}_result.txt 2>&1
     res=$?
     if [ "$res" != 0 ]; then
       echo "$item FAILED"
