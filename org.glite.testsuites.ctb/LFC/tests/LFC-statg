@@ -12,8 +12,9 @@ class test_root_dir(_test):
         return "Test root dir: "
     def test(self):
         statg=lfc.lfc_filestatg()
-        statgPtr=lfc.lfc_filestatgPtr(statg)
-        ret=lfc.lfc_statg("/","", statgPtr)
+#        statgPtr=lfc.lfc_filestatgPtr(statg)
+#        ret=lfc.lfc_statg("/","", statgPtr)
+        ret=lfc.lfc_statg("/","", statg)
         return (statg,ret)
     def ret(self):
         retval=lfc.lfc_filestatg()
@@ -116,8 +117,9 @@ class test_nonexistent_file(_test):
         return "Check for nonexistent file: "
     def test(self):
         stat=lfc.lfc_filestat()
-        statPtr=lfc.lfc_filestatPtr(stat)
-        ret=lfc.lfc_stat("/nonexisting",statPtr)
+#        statPtr=lfc.lfc_filestatPtr(stat)
+#        ret=lfc.lfc_stat("/nonexisting",statPtr)
+        ret=lfc.lfc_stat("/nonexisting",stat)
         return stat,ret
     def ret(self):
         retval=lfc.lfc_filestatg()
