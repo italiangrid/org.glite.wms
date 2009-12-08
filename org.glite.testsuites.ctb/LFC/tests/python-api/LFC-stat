@@ -11,8 +11,9 @@ class lfc_stat_test:
 	self.name = "lfc_stat_test"
     def test(self):
         stat=lfc.lfc_filestat()
-        statPtr=lfc.lfc_filestatPtr(stat)
-        ret=lfc.lfc_stat("/",statPtr)
+#        statPtr=lfc.lfc_filestatPtr(stat)
+#        ret=lfc.lfc_stat("/",statPtr)
+        ret=lfc.lfc_stat("/",stat)
         return stat,ret
 
     def ret(self):
@@ -32,8 +33,9 @@ class lfc_stat_test:
 
     def ntest(self):
         stat=lfc.lfc_filestat()
-        statPtr=lfc.lfc_filestatPtr(stat)
-        ret=lfc.lfc_stat("/nonexisting",statPtr)
+#        statPtr=lfc.lfc_filestatPtr(stat)
+#        ret=lfc.lfc_stat("/nonexisting",statPtr)
+        ret=lfc.lfc_stat("/nonexisting",stat)
         return stat,ret
 
     def nret(self):
