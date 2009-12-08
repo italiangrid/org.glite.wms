@@ -19,14 +19,14 @@
 # limitations under the License.
 ##############################################################################
 # 18.11.2009
-# AUTHORS: Victor Galaktionov, JINR/CERN 
+# AUTHOR: Victor Galaktionov, JINR/CERN 
 ##############################################################################
 
 #Script for testing FTS channel add operation
 
 showUsage()
 {
- echo "Usage: FTS-channel-set --fts <fts hostname> --channel <channel name>"
+ echo "Usage: FTS-channel-managers --fts <fts hostname> --channel <channel name>"
  echo "Options: "
  echo "          --fts  <fts hostname> "
  echo "                   The name of the FTS host."
@@ -125,47 +125,57 @@ is-channel-exists $CHANNEL
 
 if [ $? != 0 ]; then
     echo "Channel is not exists, create it"
+    #CHANNEL="CERN-JINR"
+    BANDWIDTH=100
+    CONTACT="vgalakti@cern.ch"
+    STATE="Stopped"
+    STREAMS=5
+    FILES=10
     SITE_A="CERN-TB-CERN"
     SITE_B="SINPCERTTB"
 
     echo "Add new channel"
-    simple-channel-add $CHANNEL $SITE_A $SITE_B
+    channel-add $CHANNEL $BANDWIDTH $CONTACT $STATE $STREAMS $FILES $SITE_A $SITE_B
     if [ $? != 0 ]; then
 	echo "Add channel - failed"
 	exit 1
     fi        
 fi
 
-BANDWIDTH=100
-CONTACT="vgalakti@cern.ch"
-STATE="Stopped"
-STREAMS=5
-FILES=10
-THROUGHPUT=7
-MESSAGE="My test message"
-echo "Check parameters BANDWIDTH CONTACT STATE STREAMS THROUGHPUT FILES MESSAGE"
-channel-set $CHANNEL $BANDWIDTH $CONTACT $STATE $STREAMS $THROUGHPUT $FILES "$MESSAGE"   
+echo "Add new channel manager"
+echo "Set user DN"
+echo ""
+USERDN=`glite-voms-proxy-info -identity`
+echo "User DN: $USERDN"
+        
+echo "1. Add manager"
+channel-addmanager $CHANNEL "$USERDN"
 if [ $? != 0 ]; then
-    echo "Set channel - failed"
-    exit 1
-fi               
+   echo "channel-addmanager - failed"
+   exit 1
+fi
 echo "OK"
 
-echo "Check special parameters for add channel command"
-special-channel-set $CHANNEL
+echo "2. list channel managers"
+channel-listmanagers $CHANNEL "$USERDN"
 if [ $? != 0 ]; then
-    echo "Set channel - failed"
-    exit 1
-fi     
-echo "OK"
-
-echo "Drop channel"
-channel-drop $CHANNEL
-if [ $? != 0 ]; then
-    echo "Channel is not dropped"
+    echo "channel-listmanagers - failed"
     exit 1
 fi
 echo "OK"
 
-echo "-TEST PASSED-"
+echo "3. Remove channel manager"
+channel-removemanager $CHANNEL "$USERDN"
+if [ $? != 0 ]; then
+    echo "channel-removemanager - failed"
+fi
+echo "OK"
+
+channel-drop $CHANNEL
+if [ $? != 0 ]; then
+    echo "Not dropped channel"
+    exit 1
+fi
+echo "OK"
+
 exit 0

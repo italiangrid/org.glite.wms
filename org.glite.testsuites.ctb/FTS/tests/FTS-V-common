@@ -78,7 +78,7 @@ function special-check-channel-list()
      
     echo "2. Check -h  parameter" 
     echo "glite-transfer-channel-list -h"
-    glite-transfer-channel-list -h
+    glite-transfer-channel-list -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-channel-lost command - failed"
 	return 1
@@ -111,6 +111,15 @@ function special-check-channel-list()
 	return 1
     fi 
     echo "OK"     
+    
+    echo "5.1. Check without -s  parameter" 
+    echo "glite-transfer-channel-list -q"
+    glite-transfer-channel-list -q
+    if [ $? == 0 ]; then
+	echo "glite-transfer-channel-list command - failed"
+	return 1
+    fi 
+    echo "OK"
     
     echo "6. Check --verbose  parameter" 
     echo "glite-transfer-channel-list --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHAWNNEL"
@@ -150,45 +159,6 @@ function special-check-channel-list()
     return 0
 }
     
-#
-# FTS_HOST must be set.
-# Added by Victor Galaktionov 24/11/209
-function special-check-channel-add()
-{
-    echo "special-check-channel-add($1, $2, $3)"
- 
-    local CHANNEL=$1 
- 
-    echo "1. glite-transfer-channel-add  -h"
-    glite-transfer-channel-add  -h
-    if [ $? != 0 ]; then
-	echo "glite-transfer-channel-add -h - failure"
-	return 1
-    fi
-  
- 
-    echo "2. glite-transfer-channel-add  -V"
-    glite-transfer-channel-add  -V
-    if [ $? != 0 ]; then
-	echo "glite-transfer-channel-add -V - failure"
-	return 1
-    fi
- 
- 
-    echo "3. glite-transfer-channel-add -q https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL $SITE_S $SITE_D"
-    glite-transfer-channel-add  -q https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL $SITE_S $SITE_D
-    if [ $? == 0 ]; then
-	echo "glite-transfer-channel-add -q - failure"
-	return 1
-    fi
- 
- # glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL $SITE_S $SITE_D
- #if [ $? 1= 0 ]; then
- #    echo "glite-transfer-channel-add - failure"
- #    return 1
- #fi
- return 0
-} 
 
 # FTS_HOST must be set.
 # Added by Victor Galaktionov 24/11/209
@@ -198,7 +168,7 @@ function special-check-channel-audit()
     local CHANNEL=$1 
  
     echo "1. glite-transfer-channel-audit  -h"
-    glite-transfer-channel-audit  -h
+    glite-transfer-channel-audit  -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-channel-audit -h - failure"
 	return 1
@@ -259,7 +229,7 @@ function channel-setvolimit()
     echo "OK, check special parameters"
   
     echo "4. glite-transfer-channel-setvolimit  -h"
-    glite-transfer-channel-setvolimit  -h
+    glite-transfer-channel-setvolimit  -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-channel-setvolimit -h - failure"
 	return 1
@@ -272,11 +242,11 @@ function channel-setvolimit()
 	return 1
     fi
  
-    echo "6. glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement  $1"
-    glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement  $1
-    if [ $? != 0 ]; then
-	echo "glite-transfer-channel-list  - failure"
-	return 1
+    echo "6. glite-transfer-channel-list -q"
+    glite-transfer-channel-list -q 
+    if [ $? == 0 ]; then
+    	echo "glite-transfer-channel-list -q  - failure"
+    	return 1
     fi
  
     return 0
@@ -322,7 +292,7 @@ function special-check-channel-drop()
     local CHANNEL=$1 
  
     echo "1. glite-transfer-channel-drop  -h"
-    glite-transfer-channel-drop  -h
+    glite-transfer-channel-drop  -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-channel-drop -h - failure"
 	return 1
@@ -341,9 +311,6 @@ function special-check-channel-drop()
     fi
     return 0
 }
-
-
-
 
 
 # FTS_HOST must be set.
@@ -414,7 +381,7 @@ function channel-addmanager()
     
     echo "Again add the same manager"
     echo "glite-transfer-channel-addmanager -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2"
-    glite-transfer-channel-addmanager -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 "$2" 2> message
+    glite-transfer-channel-addmanager -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 "$2" #2> message
     if [ $? == 0 ]; then
 	echo "Channel-addmanager - failed"
 	cat message
@@ -425,7 +392,7 @@ function channel-addmanager()
     
     echo "Check special parameters"
     echo "glite-transfer-channel-addmanager -h"
-    glite-transfer-channel-addmanager -h
+    glite-transfer-channel-addmanager -h > /dev/null
 
     if [ $? != 0 ]; then
 	echo "Channel-addmanager - failed"
@@ -493,7 +460,6 @@ function channel-listmanagers()
 function channel-removemanager()
 {
     echo "channel-removemanager($1, $2)"
-    echo "Remove  manager"
     echo "Remove nonexisting manager"
     echo "glite-transfer-channel-removemanager -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 'bla-bla-bla'"
     glite-transfer-channel-removemanager -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 "bla-bla-bla" 2> message
@@ -514,9 +480,9 @@ function channel-removemanager()
     glite-transfer-channel-removemanager -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 "$2" 2> message
     if [ $? != 0 ]; then
 	echo "Channel-removemanager - failed"
+	cat message
 	return 1
     fi
-    cat message
     echo "OK"
     
     echo "Check removed manager"
@@ -564,7 +530,7 @@ function special-channel-set()
    echo "special-check-channel-set()"
  
     echo "1. glite-transfer-channel-set  -h"
-    glite-transfer-channel-set  -h
+    glite-transfer-channel-set  -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-channel-set -h - failure"
 	return 1
@@ -625,16 +591,61 @@ function channel-set()
 	cat message
 	return 1
     fi
-    
-    #cat message
-    grep -e "$CHANNEL" -e $BANDWIDTH -e $CONTACT -e $STATE -e $STREAMS -e $FILES -e  $THROUGHPUT -e "$MESSAGE" message
-    if [ $? != 0 ]; then
-	echo "Noncorrect create new channel"
-	return 1
-    fi
+    declare -a OPTIONS
+    OPTIONS=("$CHANNEL" $BANDWIDTH  $CONTACT $STATE $STREAMS $FILES $THROUGHPUT  "$MESSAGE")
+
+    for item in ${OPTIONS[*]}
+    do
+	grep $item message > /dev/null
+	if [ $? != 0 ]; then
+	    echo "Noncorrect set new parameters channel"
+	    return 1
+	fi
+    done
     
     return 0
 }
+
+
+#
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function special-check-channel-add()
+{
+    echo "special-check-channel-add($1, $2, $3)"
+ 
+    local CHANNEL=$1 
+ 
+    echo "1. glite-transfer-channel-add  -h"
+    glite-transfer-channel-add  -h > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-add -h - failure"
+	return 1
+    fi
+  
+ 
+    echo "2. glite-transfer-channel-add  -V"
+    glite-transfer-channel-add  -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-add -V - failure"
+	return 1
+    fi
+ 
+    echo "3. glite-transfer-channel-add -q https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL $SITE_S $SITE_D"
+    glite-transfer-channel-add  -q #-s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL $SITE_S $SITE_D
+    if [ $? == 0 ]; then
+	echo "glite-transfer-channel-add -q - failure"
+	return 1
+    fi
+ 
+    echo "4. glite-transfer-channel-add -q"
+    glite-transfer-channel-add  -q 
+    if [ $? == 0 ]; then
+        echo "glite-transfer-channel-add -q -  failure"
+        return 1
+    fi
+    return 0
+} 
 
 # FTS_HOST must be set.
 # Added by Victor Galaktionov 24/11/209
@@ -678,12 +689,17 @@ function channel-add()
 	cat message
 	return 1
     fi
-    
-    grep -e "$CHANNEL" -e $BANDWIDTH -e $CONTACT -e $STATE -e $STREAMS -e $FILES -e $THROUGHPUT message
-    if [ $? != 0 ]; then
-	echo "Noncorrect create new channel"
-	return 1
-    fi
+    declare -a OPTIONS
+    OPTIONS=("$CHANNEL" $BANDWIDTH  $CONTACT $STATE $STREAMS $FILES $THROUGHPUT)
+        
+    for item in ${OPTIONS[*]}
+    do
+        grep $item message > /dev/null
+        if [ $? != 0 ]; then
+    	    echo "Noncorrect add channel"
+    	    return 1
+        fi
+    done                        
     echo "OK"
     
     echo "3. Check channel adding for existing channel"
@@ -702,98 +718,315 @@ function channel-add()
     return 0 
 }
 
+#######################################################################
+#
+#                      SERVICES administration
+#
+######################################################################
+
+# Added by Victor Galaktionov 08/12/2009
+function service-info()
+{
+    echo "service-info()"
+    echo "1. Get simple service-info"
+    echo "glite-transfer-service-info  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
+    glite-transfer-service-info  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer >message
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+
+ 
+    echo "2. Check parameters --version --interface-version --schema-version"
+    glite-transfer-service-info -s https://vtb-generic-105.cern.ch:8443/glite-data-transfer-fts/services/FileTransfer \
+	--version --interface-version --schema-version > message
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+
+    grep "Service version" message
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+    grep "Interface version" message
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+    grep "Schema version" message 
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+    
+    echo "3. Check parameters --service-metadata"
+    glite-transfer-service-info -s https://vtb-generic-105.cern.ch:8443/glite-data-transfer-fts/services/FileTransfer \
+	--service-metadata KEY > message
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+    grep "unknown" message 
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+        
+    echo "4. glite-transfer-service-info -h"
+    glite-transfer-service-info -h > /dev/null 
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+    echo "5. Check glite-transfer-service-info -V"
+    glite-transfer-service-info -V
+    if [ $? != 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+    
+    echo "6. Check without parameters glite-transfer-service-info"
+    glite-transfer-service-info
+    if [ $? == 0 ]; then
+	echo "FTS-service-info - failed"
+	return 1
+    fi
+    return 0
+}
+
+
+# Added by Victor Galaktionov 08/12/2009
+function getroles()
+{
+    echo "getroles($1)"
+    echo "1. Get roles without user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer >message
+    if [ $? != 0 ]; then
+	echo "FTS-getroles - failed"
+	return 1
+    fi
+    
+    grep "Your current clientDN" message > /dev/null
+    if [ $? != 0 ]; then
+	echo "FTS-getroles - failed"
+	return 1
+    fi
+    
+    echo "2. Get roles for real user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1"
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "$1" > message
+    if [ $? != 0 ]; then
+	echo "FTS-getroles - Failed"
+	return 1
+    fi
+    grep "The user is authorised " message > /dev/null
+    if [ $? != 0 ]; then
+	echo "FTS-getroles - failed"
+	cat message
+	return 1
+    fi
+    
+    echo "3. Get roles for nonexisting user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer bla-bla"
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "bla-bla" > message
+    if [ $? != 0 ]; then
+	echo "FTS-getroles - failed"
+	return 1
+    fi
+    grep "This user is not authorised" message > /dev/null
+    if [ $? != 0 ]; then
+	echo "FTS-getroles - failed"
+	return 1
+    fi
+        
+    echo "OK, next - special parameters check"
+    
+    echo "glite-transfer-getroles -h"
+    glite-transfer-getroles -h > /dev/null
+       if [ $? != 0 ]; then
+	echo "FTS-getroles -h  -- failed"
+	return 1
+    fi
+    
+    echo "glite-transfer-getroles -V"
+    glite-transfer-getroles -V
+    if [ $? != 0 ]; then
+	echo "FTS-getroles -V  -- failed"
+	return 1
+    fi
+
+    echo "glite-transfer-getroles -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-getroles -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer > message
+    if [ $? != 0 ]; then
+	echo "FTS-getroles -q  -- failed"
+	return 1
+    fi
+        
+    echo "glite-transfer-getroles -q"
+    glite-transfer-getroles -q
+    if [ $? == 0 ]; then
+	echo "FTS-getroles -q  -- failed"
+	return 1
+    fi
+
+    return 0
+}
+#######################################################################
+#
+#                      VO administration
+#
+######################################################################
+
+
+# Added by Victor Galaktionov 04/12/2009
+function list-vomanagers()
+{
+    echo "list-vomanagers($1)"
+    glite-transfer-listvomanagers  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1
+    if [ $? != 0 ]; then
+	echo "listvomanager - failed"
+	return 1
+    fi
+    return 0
+}
+
+# Added by Victor Galaktionov 04/12/2009
+function add-vomanager()
+{
+    echo "add-vomanager($1, $2)"
+    glite-transfer-addvomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "$2"
+    if [ $? != 0 ]; then
+	echo "addvomanager - failed"
+	return 1
+    fi
+    echo "Again add manager"
+    glite-transfer-addvomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "$2"
+    if [ $? == 0 ]; then
+	echo "addvomanager - failed"
+	return 1
+    fi
+    echo "Check added manager"    
+    glite-transfer-listvomanagers  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+    grep "$2" message 
+    if [ $? != 0 ]; then
+	echo "addvomanager - failed"
+	return 1
+    fi
+     
+    return 0
+}
+
+
+
+# Added by Victor Galaktionov 04/12/2009
+function remove-vomanager()
+{
+    echo "remove-vomanagers($1, $2)"
+    echo "Remove nonexisting manager in VO"
+    glite-transfer-removevomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "bla-bla" 2>message
+    ret=$?
+    #echo "Ret=$ret"
+    
+    grep "No such principal on VO" message 
+    if [ $? != 0 ]; then
+	echo "Removevomanager - failed"
+	return 1
+    fi
+    
+    if [ $ret == 0 ]; then
+	echo "removevomanager - failed"
+	return 1
+    fi
+    
+    echo "Remove real manager"
+    glite-transfer-removevomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "$2"
+    if [ $? != 0 ]; then
+	echo "removevomanager - failed"
+	return 1
+    fi
+    echo "OK"
+    glite-transfer-listvomanagers  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1
+
+    return 0
+}
+
+function special-check-vomanagers()
+{
+    echo "1.1. glite-transfer-addvomanager  -h"
+    glite-transfer-addvomanager  -h > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-addvomanager -h - failure"
+	return 1
+    fi
+  
+    echo "1.2. glite-transfer-addvomanager  -V"
+    glite-transfer-addvomanager  -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-addvomanager -V - failure"
+	return 1
+    fi
+  
+    echo "1.3. glite-transfer-addvomanager  -q"
+    glite-transfer-addvomanager  -q
+    if [ $? == 0 ]; then
+	echo "glite-transfer-addvomanager -q - failure"
+	return 1
+    fi
+  
+  
+    echo "2.1. glite-transfer-removevomanager  -h"
+    glite-transfer-removevomanager  -h > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-removevomanager -h - failure"
+	return 1
+    fi
+  
+    echo "2.2. glite-transfer-removevomanager  -V"
+    glite-transfer-addvomanager  -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-removevomanager -V - failure"
+	return 1
+    fi
+  
+    echo "2.3. glite-transfer-removevomanager  -q"
+    glite-transfer-removevomanager  -q
+    if [ $? == 0 ]; then
+	echo "glite-transfer-removevomanager -q - failure"
+	return 1
+    fi
+    
+    echo "3.1. glite-transfer-listvomanagers  -h"
+    glite-transfer-listvomanagers  -h > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-listvomanagers -h - failure"
+	return 1
+    fi
+  
+    echo "3.2. glite-transfer-listvomanagers  -V"
+    glite-transfer-addvomanager  -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-listvomanagers -V - failure"
+	return 1
+    fi
+  
+    echo "3.3. glite-transfer-addvomanager  -q"
+    glite-transfer-addvomanager  -q
+    if [ $? == 0 ]; then
+	echo "glite-transfer-addvomanager -q - failure"
+	return 1
+    fi
+    return 0 
+ }
+
+
 ###########################################################################
 #
 #                         TRANSFER JOB OPERATIONS
 #
 ##########################################################################
-
-
-# Special tests for glite-transfer-list operation
-# Check command return code only 
-#
-# Added by Victor Galaktionov 18/11/2009
-function special_file_transfer_list()
-{
-     declare -a states
-     #states=(Submitted Canceled Canceling Pending Active Waiting Hold Done Faled)
-     states=(Ready Submitted Finished Canceled Canceling Pending Active Hold Done Failed)
-     echo "1. simple correct command glite-transfer-list" 
-     echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
-     glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
-     if [ $? != 0 ]; then
-	echo "glite-transfer-list command - failed"
-	return 1
-    fi
-    echo "OK"
-        
-    echo "2. Check with noncorrect service"
-    echo "glite-transfer-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
-    glite-transfer-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer 2> message
-    if [ $? == 0 ]; then
-	echo "glite-transfer-list command - failed"
-	cat message
-	return 1
-    fi 
-    echo "OK"
-     
-    echo "3. Check -h  parameter" 
-    echo "glite-transfer-list -h"
-    glite-transfer-list -h
-    if [ $? != 0 ]; then
-	echo "glite-transfer-list command - failed"
-	return 1
-    fi 
-    echo "OK" 
-     
-    echo "4. Check -v  parameter" 
-    echo "glite-transfer-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
-    glite-transfer-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
-    if [ $? != 0 ]; then
-	echo "glite-transfer-list command - failed"
-	return 1
-    fi 
-    echo "OK"    
-     
-    echo "5. Check -V  parameter" 
-    echo "glite-transfer-list -V"
-    glite-transfer-list -V
-    if [ $? != 0 ]; then
-	echo "glite-transfer-list command - failed"
-	return 1
-    fi 
-    echo "OK"     
-    
-    echo "6. Check -q  parameter" 
-    echo "glite-transfer-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
-    glite-transfer-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
-    if [ $? != 0 ]; then
-	echo "glite-transfer-list command - failed"
-	return 1
-    fi 
-    echo "OK"     
-    
-    echo "7. Check status jobs in list command"
-    for ST in ${states[*]}
-    do
-        echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $ST" 
-        glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $ST
-        if [ $? != 0 ]; then
-	    echo "glite-transfer-list command - failed"
-	    return 1
-	fi 
-    done 
-    echo "8. Check noncorrect states"
-    echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer blabla" 
-    glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer blabla 2>message
-    if [ $? == 0 ]; then
-	echo "glite-transfer-list command - failed"
-	cat message
-	return 1
-    fi
-        
-    return 0
-}
 
 
 #
@@ -829,6 +1062,15 @@ function special_cancel_transfer()
 	return 1
     fi 
     echo "OK"    
+    
+    echo "3.1.  Check without -s   parameter" 
+    echo "glite-transfer-cancel -v"
+    glite-transfer-list -v
+    if [ $? == 0 ]; then
+	echo "glite-transfer-cancel command - failed"
+	return 1
+    fi 
+    echo "OK"    
      
     echo "4. Check -V  parameter" 
     echo "glite-transfer-cancel -V"
@@ -839,6 +1081,46 @@ function special_cancel_transfer()
     fi 
  
     echo "OK"     
+    return 0
+}
+
+
+#
+# Cancel transfer job.
+# FTS_HOST must be set.
+# The job Id is stored in SUBID
+#
+# Added by Victor Galaktionov 18/11/209
+function transfer_job_cancel()
+{
+    echo "transfer_job_cancel()"
+    
+    echo "1. Check without SUBID"
+    echo "glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer 2>message
+    if [ $? == 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+     
+    grep "No request ID specified" message > /dev/null
+    if [ $? !=  0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+    echo "OK"
+    
+    echo "2. Check real cancel command" 
+    echo "glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID"
+    glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID 2>message 
+ 
+    if [ $? -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
     return 0
 }
 
@@ -898,50 +1180,16 @@ function special_check_transfer_status()
     fi 
     echo "OK"     
     
+    echo "6. Check without -s   parameter" 
+    echo "glite-transfer-status -q"
+    glite-transfer-status -q
+    if [ $? == 0 ]; then
+	echo "glite-transfer-status command - failed"
+	return 1
+    fi 
+    echo "OK"     
      return 0
 }
-
-
-
-#
-# Cancel transfer job.
-# FTS_HOST must be set.
-# The job Id is stored in SUBID
-#
-# Added by Victor Galaktionov 18/11/209
-function transfer_job_cancel()
-{
-    echo "transfer_job_cancel()"
-    
-    echo "1. Check without SUBID"
-    echo "glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
-    glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer 2>message
-    if [ $? == 0 ]; then
-      echo ">>> NOTE: `cat message`"
-      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
-      return 1
-    fi
-     
-    grep "No request ID specified" message > /dev/null
-    if [ $? !=  0 ]; then
-      echo ">>> NOTE: `cat message`"
-      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
-      return 1
-    fi
-    echo "OK"
-    
-    echo "2. Check real cancel command" 
-    echo "glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID"
-    glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID 2>message 
- 
-    if [ $? -gt 0 ]; then
-      echo ">>> NOTE: `cat message`"
-      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
-      return 1
-    fi
-    return 0
-}
-
     
 #
 # get SE1_SRM_LOC, SE2_SRM_LOC  and submit
@@ -1023,6 +1271,103 @@ function file_transfer_status()
  return 0
 
 }     
+
+
+# Special tests for glite-transfer-list operation
+# Check command return code only 
+#
+# Added by Victor Galaktionov 18/11/2009
+function special_file_transfer_list()
+{
+     declare -a states
+     #states=(Submitted Canceled Canceling Pending Active Waiting Hold Done Faled)
+     states=(Ready Submitted Finished Canceled Canceling Pending Active Hold Done Failed)
+     echo "1. simple correct command glite-transfer-list" 
+     echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
+     glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+     if [ $? != 0 ]; then
+	echo "glite-transfer-list command - failed"
+	return 1
+    fi
+    echo "OK"
+        
+    echo "2. Check with noncorrect service"
+    echo "glite-transfer-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer 2> message
+    if [ $? == 0 ]; then
+	echo "glite-transfer-list command - failed"
+	cat message
+	return 1
+    fi 
+    echo "OK"
+     
+    echo "3. Check -h  parameter" 
+    echo "glite-transfer-list -h"
+    glite-transfer-list -h
+    if [ $? != 0 ]; then
+	echo "glite-transfer-list command - failed"
+	return 1
+    fi 
+    echo "OK" 
+     
+    echo "4. Check -v  parameter" 
+    echo "glite-transfer-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? != 0 ]; then
+	echo "glite-transfer-list command - failed"
+	return 1
+    fi 
+    echo "OK"    
+     
+    echo "5. Check -V  parameter" 
+    echo "glite-transfer-list -V"
+    glite-transfer-list -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-list command - failed"
+	return 1
+    fi 
+    echo "OK"     
+    
+    echo "6. Check -q  parameter" 
+    echo "glite-transfer-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? != 0 ]; then
+	echo "glite-transfer-list command - failed"
+	return 1
+    fi 
+    echo "OK"     
+    
+    echo "6.1. Check without -s   parameter" 
+    echo "glite-transfer-list -q"
+    glite-transfer-list -q
+    if [ $? == 0 ]; then
+	echo "glite-transfer-list command - failed"
+	return 1
+    fi 
+    echo "OK"     
+    
+    echo "7. Check status jobs in list command"
+    for ST in ${states[*]}
+    do
+        echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $ST" 
+        glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $ST
+        if [ $? != 0 ]; then
+	    echo "glite-transfer-list command - failed"
+	    return 1
+	fi 
+    done 
+    echo "8. Check noncorrect states"
+    echo "glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer blabla" 
+    glite-transfer-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer blabla 2>message
+    if [ $? == 0 ]; then
+	echo "glite-transfer-list command - failed"
+	cat message
+	return 1
+    fi
+        
+    return 0
+}
+
 
 #
 # get SE1_SRM_LOC, SE2_SRM_LOC  and submit

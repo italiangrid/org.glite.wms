@@ -160,17 +160,13 @@ failed=no
 
 testdir=./tests
 #tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
-#tests_list=(FTS-channel-drop FTS-channel-setvolimit)
-#
-tests_list=(FTS-channel-add FTS-channel-set)
 
-tests_list=(FTS-joblist FTS-cancel FTS-status FTS-channel-list FTS-channel-add FTS-channel-drop FTS-channel-setvolimit FTS-channel-audit FTS-channel-managers FTS-channel-set)
-#tests_list=(FTS-channel-add FTS-channel-list)
-#tests_list=(FTS-channel-list)
-#tests_list=(FTS-status)
-#tests_list=(FTS-joblist)
-#tests_list=(FTS-joblist FTS-cancel FTS-status)
-#The last two are failing on CERN-DESY channels
+#tests_list=(FTS-service-info)
+
+tests_list=(FTS-joblist 	  FTS-cancel 	  FTS-status \
+	    FTS-channel-list 	  FTS-channel-add FTS-channel-drop 	FTS-channel-setvolimit FTS-channel-set FTS-channel-audit \
+	    FTS-channel-managers  FTS-vomanagers  FTS-getroles 		FTS-service-info)
+
 
 pushd $testdir >> /dev/null
 touch testfile 2> /dev/null
@@ -238,6 +234,14 @@ do
 	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
             --vo $voname --timeout $time >> ${item}_result.txt
 	res=$?
+    elif [ $item = "FTS-vomanagers" ]; then
+	echo "Test consists 3 operations (listvomanagers, addvomanager, removemanager)"
+    	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+	
     elif [ $item = "FTS-channel-audit" ]; then
     	echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
             --vo $voname --timeout $time" > ${item}_result.txt
@@ -271,6 +275,20 @@ do
             --vo $voname --timeout $time >> ${item}_result.txt
 	res=$?
      
+    elif [ $item = "FTS-getroles" ]; then
+        echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+      
+    elif [ $item = "FTS-service-info" ]; then
+        echo "./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	res=$?
+      
     elif [ $item = "FTS-channels" ]; then
 	echo "./$item --fts $hostname" > ${item}_result.txt
 	./$item --fts $hostname >> ${item}_result.txt

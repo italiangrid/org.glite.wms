@@ -19,14 +19,14 @@
 # limitations under the License.
 ##############################################################################
 # 18.11.2009
-# AUTHORS: Victor Galaktionov, JINR/CERN 
+# AUTHOR: Victor Galaktionov, JINR/CERN 
 ##############################################################################
 
-#Script for testing FTS channel add operation
+#Script for testing FTS service info  operation
 
 showUsage()
 {
- echo "Usage: FTS-channel-set --fts <fts hostname> --channel <channel name>"
+ echo "Usage: FTS-getroles --fts <fts hostname> --channel <channel name>"
  echo "Options: "
  echo "          --fts  <fts hostname> "
  echo "                   The name of the FTS host."
@@ -119,53 +119,11 @@ else
          exit 1
 fi
 
-echo "1) Test if channel exists"
-
-is-channel-exists $CHANNEL
-
+echo "Check service info"
+service-info
 if [ $? != 0 ]; then
-    echo "Channel is not exists, create it"
-    SITE_A="CERN-TB-CERN"
-    SITE_B="SINPCERTTB"
-
-    echo "Add new channel"
-    simple-channel-add $CHANNEL $SITE_A $SITE_B
-    if [ $? != 0 ]; then
-	echo "Add channel - failed"
-	exit 1
-    fi        
-fi
-
-BANDWIDTH=100
-CONTACT="vgalakti@cern.ch"
-STATE="Stopped"
-STREAMS=5
-FILES=10
-THROUGHPUT=7
-MESSAGE="My test message"
-echo "Check parameters BANDWIDTH CONTACT STATE STREAMS THROUGHPUT FILES MESSAGE"
-channel-set $CHANNEL $BANDWIDTH $CONTACT $STATE $STREAMS $THROUGHPUT $FILES "$MESSAGE"   
-if [ $? != 0 ]; then
-    echo "Set channel - failed"
-    exit 1
-fi               
-echo "OK"
-
-echo "Check special parameters for add channel command"
-special-channel-set $CHANNEL
-if [ $? != 0 ]; then
-    echo "Set channel - failed"
-    exit 1
-fi     
-echo "OK"
-
-echo "Drop channel"
-channel-drop $CHANNEL
-if [ $? != 0 ]; then
-    echo "Channel is not dropped"
+    echo "FTS-service-info - failed"
     exit 1
 fi
-echo "OK"
 
-echo "-TEST PASSED-"
 exit 0
