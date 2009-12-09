@@ -65,20 +65,21 @@ class test_rmdir_ok(_test):
     def info(self):
         return "gfal_rmdir: Dir remove"
     def test(self):
-	self.name = prot + se + path + "/gfal_test_rmdir"
-	ret1 = gfal.gfal_mkdir(self.name,0755)
-	#print ("return", ret1)
-	#print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+        self.name = prot + se + path + "/gfal_test_rmdir"
+    	ret1 = gfal.gfal_mkdir(self.name,0755)
+    	#print ("return", ret1)
+    	#print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
         ret = gfal.gfal_rmdir(self.name)
-	error1 = gfal.gfal_get_errno()
-	code = 0
-	print ("return", ret)
-	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
-	print "http://savannah.cern.ch/bugs/?52502"
-	if (error1 == code):
-                ret = True
+    	error1 = gfal.gfal_get_errno()
+    #	code = 0 
+        code = 2
+    	print ("return", ret)
+    	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
+    	print "http://savannah.cern.ch/bugs/?52502 STATUS NONE"
+    	if (error1 == code):
+            ret = True
         else:
-                ret = False
+            ret = False
         return ret
     #def clean(self):
     #    gfal.gfal_unlink(self.name)

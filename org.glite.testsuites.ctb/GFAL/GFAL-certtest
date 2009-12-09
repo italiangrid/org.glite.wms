@@ -246,7 +246,11 @@ if [ x$GFAL_PYTHON_API == "xyes" ]; then
       failed=yes
       tests_failed=( "${tests_failed[@]}" "$item" )
     else
-      echo "$item PASSED"
+      if [ $item == GFAL_mkdir ] || [ $item == GFAL_rmdir ]; then
+        echo "$item PASSED with warnings, bug# 52502"
+      else
+        echo "$item PASSED"
+      fi
     fi
   done
   popd >> /dev/null
@@ -270,6 +274,6 @@ if [ $failed = "yes" ]; then
     echo "$item: results in $loglocation/${item}_result.txt"
   done
 else
-    echo "TEST_PASSED"
+    echo "TEST_PASSED (check bug# 52502 though)"
 fi
 

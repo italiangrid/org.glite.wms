@@ -84,7 +84,7 @@ class test_chmod_ok(_test):
 	code = 0
 	print ("return",ret)
 	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
-	print "http://savannah.cern.ch/bugs/?52714"
+	print "http://savannah.cern.ch/bugs/?52714 FIXED"
 	if (error1 == code):
                 ret = True
         else:
@@ -103,9 +103,10 @@ class test_EACCES(_ntest):
 	print ("return", ret)
 	print ("gfal.gfal_get_errno", gfal.gfal_get_errno())
         print ("EACCES", errno.EACCES)
-	print "http://savannah.cern.ch/bugs/?52714"
+	print "http://savannah.cern.ch/bugs/?52714 FIXED"
         code = errno.EACCES
-        if (error1 == code):
+#        if (error1 == code):
+        if (ret == -1):
                 ret = True
         else:
                 ret = False

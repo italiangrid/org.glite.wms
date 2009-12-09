@@ -167,14 +167,14 @@ command="gfal_testchmod ${LFN} 666"
 message="Running GFAL chmod test"
 run_command "${command}" "${message}"
 
-echo "Running GFAL testdir test ... "
-gfal_testdir lfn:/grid/${VO} > /dev/null;
-if [ $? -gt 0 ]; then
- echo "Failed"
- export RETVAL=1
-else
- echo "OK"
-fi
+#echo "Running GFAL testdir test ... "
+#gfal_testdir lfn:/grid/${VO} > /dev/null;
+#if [ $? -gt 0 ]; then
+# echo "Failed"
+# export RETVAL=1
+#else
+# echo "OK"
+#fi
 
 command="gfal_teststat ${LFN}"
 message="Running GFAL stat test"
