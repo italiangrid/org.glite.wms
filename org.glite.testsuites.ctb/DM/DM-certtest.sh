@@ -25,8 +25,9 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  DM-certtest.sh [-f <conf.file>]    "
+ echo "Usage:  DM-certtest.sh [-f <conf.file>] [--sehost <SE HOST>] "
  echo "  <conf.file> Configuration file, default is DM-certconfig"
+ echo "  --sehost The SE used for all the commands"
  echo "                                           "
 }
 
@@ -46,21 +47,51 @@ if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 2 ];
   exit 2
 fi
 
-if [ "$1" = "-f" ]; then
-  conffile=$2
-else
-  conffile="./DM-certconfig"
-fi
+#Parse arguments
+while [ $# -ne 0 ]; do
+  case "$1" in
+    -f)
+      shift
+      conffile=$1
+      shift
+      ;;
+    '--sehost')
+      shift
+      SE_HOST_ARG=$1
+      shift
+      ;;
+    *|'')
+      echo "Unknown option '$1'"
+      exit
+      ;;
+  esac
+done
+
+
 
 ###################################
 # Check for environment variables #
 ###################################
 
+if [ "x$conffile" = "x" ]; then
+  #Default value
+  conffile="./DM-certconfig"
+fi
+echo "Using $conffile"
+
 if [ -e $conffile ]; then
-  echo "Using $conffile"
   source $conffile
 else
-  echo "Config File $conffile does not exist"
+  echo "The file $conffile must be sourced in order to run the tests"
+  exitFailure
+fi
+
+if [ -n "$SE_HOST_ARG" ]; then
+  sehost=$SE_HOST_ARG 
+elif [ -n "$SE_HOST" ]; then
+  sehost=$SE_HOST
+else
+  echo "You ned to set SE_HOST in DM-certconfig or use the --sehost argument"
   exitFailure
 fi
 
@@ -75,7 +106,7 @@ if [ -z "$LCG_GFAL_INFOSYS" ]; then
 fi
 
 if [ -z "$VO" ]; then
-  echo "You need to set LCG_GFAL_INFOSYS in order to run this script"
+  echo "You need to set VO in order to run this script"
   exitFailure
 fi
 
@@ -133,6 +164,8 @@ fi
 declare -a tests_failed
 failed=no
 
+echo "SE: $sehost"
+
 #################
 #LCG_UTILS test #
 #################
@@ -140,41 +173,22 @@ failed=no
 if [ "$LCG_UTILS" = "yes" ]; then
   echo "*Running LCG_UTILS test set*"
 
-  if [ -z $FIRSTSE ]; then
-    echo "LCG_UTILS tests need FIRSTSE to be defined in DM-certconfig"
-    exitFailure
-  fi
-  if [ -z $SECONDSE ]; then
-    echo "LCG_UTILS tests need SECONDSE to be defined in DM-certconfig"
-    exitFailure
-  fi
-  if [ -z $VO ]; then
-    echo "LCG_UTILS tests need VO to be defined in DM-certconfig"
-    exitFailure
-  fi
-
   pushd ./tests >> /dev/null
   touch testfile 2> /dev/null 
   if [ $? -ne 0 ]; then
-    echo "DM tests direcotry is not writable, if you are on AFS be sure to have a valid token"
+    echo "DM tests directory is not writable, if you are on AFS be sure to have a valid token"
     exitFailure
   fi
-  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rep.sh DM-lcg-rf.sh )
+#  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rep.sh DM-lcg-rf.sh )
+  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rf.sh )
 
 
   for item in ${tests_list[*]}
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    if [ "$item" = "DM-lcg-alias.sh" -o "$item" = "DM-lcg-cp-gsiftp.sh" -o "$item" = "DM-lcg-cp.sh" \
-       -o "$item" = "DM-lcg-cr-gsiftp.sh" -o "$item" = "DM-lcg-cr.sh" -o "$item" = "DM-lcg-list.sh" \
-       -o "$item" = "DM-lcg-ls.sh" -o "$item" = "DM-lcg-rf.sh" ]; then
-      ./$item $FIRSTSE --vo $VO  > $loglocation/${item}_result.txt
-      res=$?
-    elif [ "$item" = "DM-lcg-rep.sh" ]; then
-      ./$item $FIRSTSE $SECONDSE --vo $VO  > $loglocation/${item}_result.txt
-      res=$?
-    fi  
+    ./$item $sehost --vo $VO  > $loglocation/${item}_result.txt
+    res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
@@ -195,15 +209,6 @@ fi
 if [ "$GFAL" = "yes" ]; then
   echo "*Running GFAL test set*"
 
-  if [ -z $FIRSTSE ]; then
-    echo "GFAL tests need FIRSTSE to be defined in DM-certconfig"
-    exitFailure
-  fi
-  if [ -z $VO ]; then
-    echo "GFAL tests need VO to be defined in DM-certconfig"
-    exitFailure
-  fi
-
   if [ ! -d ../GFAL/tests ]; then
     echo "GFAL test directory does not exists, check it out from CVS!"
     exitFailure
@@ -222,8 +227,8 @@ if [ "$GFAL" = "yes" ]; then
   do
     rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item -v $VO -l $LFC_HOST -d $FIRSTSE " > $loglocation/${item}_result.txt 2>&1
-    ./$item -v $VO -l $LFC_HOST -d $FIRSTSE >> $loglocation/${item}_result.txt 2>&1
+    echo "./$item -v $VO -l $LFC_HOST -d $sehost " > $loglocation/${item}_result.txt 2>&1
+    ./$item -v $VO -l $LFC_HOST -d $sehost >> $loglocation/${item}_result.txt 2>&1
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt > /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
@@ -245,25 +250,9 @@ fi
 
 if [ "$DM_CROSS_SE" = "yes" ];then
   echo "*Running DM_CROSS_SE test set*"
-#  if [ ! -d ../UI/tests ]; then
-#    echo "UI test directory does not exists, check it out from CVS!"
-#    exitFailure
-#  fi
-
-#  touch ../UI/tests/common/testfile 2> /dev/null 
-#  if [ $? -ne 0 ]; then
-#    echo "UI test directory is not writable, if you are on AFS be sure to have a valid token"
-#    exitFailure
-#  fi
-#  pushd ../UI/tests/common >> /dev/null
   pushd tests >> /dev/null
   tests_list=( test-lcg-utils.sh )
   seoptions=""
-
-  if [ -z $VO ]; then
-    echo "DM CROSS SE tests need VO to be defined in DM-certconfig"
-    exitFailure
-  fi
 
   if [ -z $CLASSICHOST ]; then
     echo "WARNING: CLASSIC SE will not be tested"
@@ -330,7 +319,7 @@ if [ "$SAME" = "yes" ]; then
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    ./$item $FIRSTSE > $loglocation/${item}_result.txt 2>&1
+    ./$item $sehost > $loglocation/${item}_result.txt 2>&1
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
