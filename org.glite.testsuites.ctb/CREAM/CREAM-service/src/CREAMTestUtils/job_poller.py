@@ -1,4 +1,4 @@
-import re, string
+import os, re, string
 import threading
 import time
 import popen2
@@ -62,19 +62,20 @@ class JobPoller(threading.Thread):
         jobLeft = self.parameters.numberOfJob
         jobProcessed = 0
         isRunning = True
+        if self.parameters.queryType=='list':
+            listFilename = "/tmp/joblist." + testsuite_utils.applicationID
+        else:
+            listFilename = None
         
         while (jobProcessed+self.pool.getFailures())<self.parameters.numberOfJob and isRunning:
             
             ts = time.time()
-            
-            listFilename = None
             
             if self.parameters.queryType=='list':
                 self.lock.acquire()
                 jobList = self.table.keys()
                 self.lock.release()
                 
-                listFilename = "/tmp/joblist." + testsuite_utils.applicationID
                 try:
                     tFile = open(listFilename , 'w+b')
                     tFile.write("##CREAMJOBS##\n")
@@ -167,12 +168,6 @@ class JobPoller(threading.Thread):
             self.processRunningJobs()
             self.processFinishedJobs()
             
-            if listFilename<>None:
-                try:
-                    os.remove(listFilename)
-                except Exception, e:
-                    JobPoller.logger.error("Cannot remove %s: %s" % (listFilename, str(e))
-
             if jobToSend>0:
                 #TODO: imcremental pool feeding
                 self.pool.submit(jobToSend)
@@ -189,6 +184,12 @@ class JobPoller(threading.Thread):
                     time.sleep(timeToSleep)
                 else:
                     isRunning = self.interfaceMan.sleep(timeToSleep)
+
+        if listFilename<>None:
+            try:
+                os.remove(listFilename)
+            except Exception, e:
+                JobPoller.logger.error("Cannot remove %s: %s" % (listFilename, str(e)))
 
 
     def put(self, uri, timestamp):
