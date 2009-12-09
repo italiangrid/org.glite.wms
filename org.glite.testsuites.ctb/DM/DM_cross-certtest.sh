@@ -214,28 +214,28 @@ pushd tests >> /dev/null
 tests_list=( test-lcg-utils.sh )
 seoptions=""
 
-if [ -z $CLASSICHOST ]; then
-  echo "WARNING: CLASSIC SE will not be tested"
-else
-  seoptions="$seoptions --classic $CLASSICHOST"
-fi
-
-if [ -z $DPMHOST ]; then
+if [ -z $dpm ]; then
   echo "WARNING: DPM SE will not be tested"
 else
-  seoptions="$seoptions --dpm $DPMHOST"
+  seoptions="$seoptions --dpm $dpm"
 fi
 
-if [ -z $DCACHEHOST ]; then
+if [ -z $dcache ]; then
   echo "WARNING: DCACHE SE will not be tested"
 else
-  seoptions="$seoptions --dcache $DCACHEHOST"
+  seoptions="$seoptions --dcache $dcache"
 fi
 
-if [ -z $CASTORHOST ]; then
+if [ -z $castor ]; then
   echo "WARNING: CASTOR SE will not be tested"
 else
-  seoptions="$seoptions --castor $CASTORHOST"
+  seoptions="$seoptions --castor $castor"
+fi
+
+if [ -z $storm ]; then
+  echo "WARNING: STORM SE will not be tested"
+else
+  seoptions="$seoptions --storm $castor"
 fi
 
 for item in ${tests_list[*]}
