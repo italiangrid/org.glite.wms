@@ -215,7 +215,7 @@ if [ "$LCG_UTILS" = "yes" ]; then
 #  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rep.sh DM-lcg-rf.sh )
   tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rf.sh )
 
-  for sehost in $SEs
+  for $sehost in $SEs
   do
     echo "*Target SE is $sehost"
     for item in ${tests_list[*]}
@@ -243,7 +243,7 @@ fi
 # SAM tests #
 #############
 if [ "$SAME" = "yes" ]; then
-  echo "**Running SAME test set**"
+  echo "**Running SAME tests**"
 
   pushd ./tests/SAME/tests >> /dev/null
   touch testfile 2> /dev/null
