@@ -204,7 +204,7 @@ failed=no
 #################
 
 if [ "$LCG_UTILS" = "yes" ]; then
-  echo "**Running LCG_UTILS test set**"
+  echo "**Running LCG_UTILS tests**"
 
   pushd ./tests >> /dev/null
   touch testfile 2> /dev/null 
@@ -230,7 +230,7 @@ if [ "$LCG_UTILS" = "yes" ]; then
         failed=yes
         tests_failed=( "${tests_failed[@]}" "$item" )
       else 
-        echo "$item PASSED on $sehost"
+        echo "$item PASSED"
       fi
     done
   done
@@ -268,7 +268,7 @@ if [ "$SAME" = "yes" ]; then
         failed=yes
         tests_failed=( "${tests_failed[@]}" "$item" )
       else
-        echo "$item PASSED on $sehost"
+        echo "$item PASSED"
       fi
     done
   done
