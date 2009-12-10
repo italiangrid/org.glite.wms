@@ -7,10 +7,10 @@ export LFC_HOST="lxb7608v3.cern.ch"
 SE_HOST="lxbra1910.cern.ch"
 VO="dteam"
 #VO="org.glite.voms-test"
-#CLASSICHOST="lxbra1910.cern.ch"
 DPMHOST="lxb7608v1.cern.ch"
-DCACHEHOST="sligo.desy.de"
+DCACHEHOST="ennis.desy.de"
 #CASTORHOST="srm-dteam.cern.ch"
+#STORMHOST=""
 
 #TEST TO RUN (yes/no)
 LCG_UTILS=yes
