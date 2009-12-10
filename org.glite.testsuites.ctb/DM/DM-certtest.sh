@@ -58,12 +58,12 @@ while [ $# -ne 0 ]; do
       ;;
     '--dpm')
       shift
-      DPM_HOST=$1
+      DPM_HOST_ARG=$1
       shift
       ;;
     '--dcache')
       shift
-      DCACHE_HOST=$1
+      DCACHE_HOST_ARG=$1
       shift
       ;;
     *|'')
