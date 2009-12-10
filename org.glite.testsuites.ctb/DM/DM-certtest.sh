@@ -114,7 +114,7 @@ if [ -n "$CASTOR_HOST_ARG" ]; then
 elif [ -n "$CASTOR_HOST" ]; then
   SEs="$SEs $CASTOR_HOST"
 else
-  echo "WARNING: no dCache host selected"
+  echo "WARNING: no CASTOR host selected"
 fi
 
 if [ -n "$STORM_HOST_ARG" ]; then
@@ -122,7 +122,7 @@ if [ -n "$STORM_HOST_ARG" ]; then
 elif [ -n "$STORM_HOST" ]; then
   SEs="$SEs $STORM_HOST"
 else
-  echo "WARNING: no dCache host selected"
+  echo "WARNING: no STORM host selected"
 fi
 
 if [ "x$SEs" == "x" ]; then
@@ -198,8 +198,6 @@ fi
 
 declare -a tests_failed
 failed=no
-
-echo "SE: $sehost"
 
 #################
 #LCG_UTILS test #

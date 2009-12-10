@@ -4,18 +4,16 @@
 export LFC_HOST="lxb7608v3.cern.ch"
 
 #OPTIONS
-SE_HOST="lxbra1910.cern.ch"
+#OBSOLETE SE_HOST="lxbra1910.cern.ch"
 VO="dteam"
 #VO="org.glite.voms-test"
-DPMHOST="lxb7608v1.cern.ch"
-DCACHEHOST="ennis.desy.de"
-#CASTORHOST="srm-dteam.cern.ch"
-#STORMHOST=""
+DPM_HOST="lxb7608v1.cern.ch"
+DCACHE_HOST="ennis.desy.de"
+#CASTOR_HOST="srm-dteam.cern.ch"
+#STORM_HOST=""
 
 #TEST TO RUN (yes/no)
 LCG_UTILS=yes
-GFAL=no
-DM_CROSS_SE=no
 SAME=yes
 
 #LOG FILES
