@@ -43,7 +43,7 @@ exit -1
 #######################
 #Parsing the arguments#
 #######################
-if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] || [ $# -gt 2 ]; then
+if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ]; then
   showUsage
   exit 2
 fi
