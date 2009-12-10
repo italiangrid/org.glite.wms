@@ -190,68 +190,6 @@ function special-check-channel-audit()
     return 0
 }
 
-# FTS_HOST must be set.
-# Added by Victor Galaktionov 24/11/209
-function channel-setvolimit()
-{
-    echo "channel-setvolimit($1, $2, $3 $4)"
-    echo "1. glite-transfer-channel-setvolimit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3"
-    glite-transfer-channel-setvolimit --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3 2> message
-    if [ $? == 0 ]; then
-	echo "setvolimit channel command - failed, MUST BE diagnose - not shared VO"
-	return 1
-    fi
-    grep "VO does not have a share defined for this channel" message
-    if [ $? != 0 ]; then
-        echo "Not correct performs glite-transfer-channel-setvolimit"
-        cat message
-        return 1
-    fi
-    echo "Temporary skip setvoshare operation"
-    echo "OK, define shared VO for this channel $1"
-#  
-#    echo "2. glite-transfer-channel-setvoshare  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $4"
-#    glite-transfer-channel-setvoshare  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $4
-#    if [ $? != 0 ]; then
-#        echo "Not correct performs glite-transfer-channel-setvoshare"
-#	return 1
-#    fi
-#
-#  echo "Set VO share - OK"
-   
-#  echo "3. Again glite-transfer-channel-setvolimit  -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement  $1 $2 $3"
-#  glite-transfer-channel-setvolimit  -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3
-#  if [ $? != 0 ]; then
-#    echo "setvolimit channel command - failed"
-#    return 1
-#  fi
- 
-    echo "OK, check special parameters"
-  
-    echo "4. glite-transfer-channel-setvolimit  -h"
-    glite-transfer-channel-setvolimit  -h > /dev/null
-    if [ $? != 0 ]; then
-	echo "glite-transfer-channel-setvolimit -h - failure"
-	return 1
-    fi
- 
-    echo "5. glite-transfer-channel-setvolimit  -V"
-    glite-transfer-channel-setvolimit  -V
-    if [ $? != 0 ]; then
-	echo "glite-transfer-channel-setvolimit -V - failure"
-	return 1
-    fi
- 
-    echo "6. glite-transfer-channel-list -q"
-    glite-transfer-channel-list -q 
-    if [ $? == 0 ]; then
-    	echo "glite-transfer-channel-list -q  - failure"
-    	return 1
-    fi
- 
-    return 0
-}
-
 
 # FTS_HOST must be set.
 # Added by Victor Galaktionov 24/11/209
@@ -527,8 +465,8 @@ function channel-removemanager()
 # Added by Victor Galaktionov 24/11/209
 function special-channel-set()
 {
-   echo "special-check-channel-set()"
- 
+   echo "special-check-channel-set($1)"
+    CHAMNEL=$1
     echo "1. glite-transfer-channel-set  -h"
     glite-transfer-channel-set  -h > /dev/null
     if [ $? != 0 ]; then
@@ -547,6 +485,71 @@ function special-channel-set()
 	echo "glite-transfer-channel-set -V - failure"
 	return 1
     fi
+    
+    echo "4. Set additional channel param"
+    echo "-k Y -x 100 --block-size 500 --http-timeout 200 --tx-log-level DEBUG"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	    -k Y -x 100 --block-size 500 --http-timeout 200 --tx-log-level DEBUG $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+    
+    echo "--preparing-ratio 10 --urlcopy-put-to 100 --urlcopy-putdone-to 15"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	    --preparing-ratio 10 --urlcopy-put-to 100 --urlcopy-putdone-to 150 $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+    
+    echo "--urlcopy-get-to 200 --urlcopy-getdone-to 300 --urlcopy-tx-to 350 --urlcopy-tx-marks-to 399 -urlcopy-no-prog-to 400 "	 
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	--urlcopy-get-to 200 --urlcopy-getdone-to 300 --urlcopy-tx-to 350 --urlcopy-tx-marks-to 399 --urlcopy-no-prog-to 400 $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+
+    echo "--urlcopy-tx-to-per-mb 50 --srmcopy-direction PUSH --srmcopy-to 200 --srmcopy-refresh-to 15"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	--urlcopy-tx-to-per-mb 50 --srmcopy-direction PUSH --srmcopy-to 200 --srmcopy-refresh-to 150 $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+    echo "-k N -x unset --block-size unset --http-timeout unset --tx-log-level WARN"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	    -k N -x unset --block-size unset --http-timeout unset --tx-log-level WARN $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+    
+    echo "--preparing-ratio 200  --urlcopy-put-to unset --urlcopy-putdone-to unset"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	    --preparing-ratio 200 --urlcopy-put-to unset --urlcopy-putdone-to unset $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+    
+    echo "--urlcopy-get-to unset --urlcopy-getdone-to unset --urlcopy-tx-to unset --urlcopy-tx-marks-to unset -urlcopy-no-prog-to unset "	 
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	--urlcopy-get-to unset --urlcopy-getdone-to unset --urlcopy-tx-to unset --urlcopy-tx-marks-to unset --urlcopy-no-prog-to unset $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+    
+    echo "--urlcopy-tx-to-per-mb unset --srmcopy-direction PULL --srmcopy-to unset --srmcopy-refresh-to unset"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+	--urlcopy-tx-to-per-mb  unset --srmcopy-direction PULL --srmcopy-to unset --srmcopy-refresh-to unset $CHANNEL
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-set - failure"
+	return 1
+    fi
+
     return 0
 }
 
@@ -874,6 +877,8 @@ function getroles()
 
     return 0
 }
+
+
 #######################################################################
 #
 #                      VO administration
@@ -1020,6 +1025,72 @@ function special-check-vomanagers()
     fi
     return 0 
  }
+
+
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function channel-setvolimit()
+{
+    echo "channel-setvolimit($1, $2, $3 $4)"
+    echo "1. glite-transfer-channel-setvolimit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3"
+    glite-transfer-channel-setvolimit --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3 2> message
+    if [ $? == 0 ]; then
+	echo "setvolimit channel command - failed, MUST BE diagnose - not shared VO"
+	return 1
+    fi
+    grep "VO does not have a share defined for this channel" message
+    if [ $? != 0 ]; then
+        echo "Not correct performs glite-transfer-channel-setvolimit"
+        cat message
+        return 1
+    fi
+    echo "Temporary skip setvoshare operation"
+    echo "OK, define shared VO for this channel $1"
+#  
+#    echo "2. glite-transfer-channel-setvoshare  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $4"
+#    glite-transfer-channel-setvoshare  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $4
+#    if [ $? != 0 ]; then
+#        echo "Not correct performs glite-transfer-channel-setvoshare"
+#	return 1
+#    fi
+#
+#  echo "Set VO share - OK"
+   
+#  echo "3. Again glite-transfer-channel-setvolimit  -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement  $1 $2 $3"
+#  glite-transfer-channel-setvolimit  -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3
+#  if [ $? != 0 ]; then
+#    echo "setvolimit channel command - failed"
+#    return 1
+#  fi
+ 
+    echo "OK, check special parameters"
+  
+    echo "4. glite-transfer-channel-setvolimit  -h"
+    glite-transfer-channel-setvolimit  -h > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-setvolimit -h - failure"
+	return 1
+    fi
+ 
+    echo "5. glite-transfer-channel-setvolimit  -V"
+    glite-transfer-channel-setvolimit  -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-setvolimit -V - failure"
+	return 1
+    fi
+ 
+    echo "6. glite-transfer-channel-list -q"
+    glite-transfer-channel-list -q 
+    if [ $? == 0 ]; then
+    	echo "glite-transfer-channel-list -q  - failure"
+    	return 1
+    fi
+ 
+    return 0
+}
+
+
 
 
 ###########################################################################
@@ -1190,6 +1261,212 @@ function special_check_transfer_status()
     echo "OK"     
      return 0
 }
+
+
+# Added by Victor Galaktionov 08/12/2009
+function special-channel-signal()
+{
+    echo "special-channel-signal()"
+    echo "glite-transfer-channel-signal -h"
+    glite-transfer-channel-signal -h > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-setpriority -h command - failed"
+	return 1
+    fi 
+    
+    echo "glite-transfer-channel-signal -V"
+    glite-transfer-channel-signal -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-channel-signal -V command - failed"
+	return 1
+    fi 
+    
+    echo "glite-transfer-channel-signal"
+    glite-transfer-channel-signal
+    if [ $? == 0 ]; then
+	echo "glite-transfer-channel-signal command - failed"
+	return 1
+    fi 
+    return 0
+    
+}
+
+
+
+#
+# Added by Victor Galaktionov 08/12/2009
+function channel-signal()
+{
+    echo "channel-signal($1, $2)"
+    echo "Try extract channel nane"
+    #glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+    
+    #grep "Channel" message > mess
+    #if [ $? != 0 ]; then
+#	echo "glite-channel-signal  command - failed"
+#	return 1
+#    fi 
+    count=0
+    while [ $count -lt 10 ];
+    do
+	glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+        grep "Channel" message > mess
+	if [ $? != 0 ]; then
+	    echo "glite-channel-signal  command - failed"
+	    return 1
+	fi
+	grep "None" mess
+	if [ $? != 0 ]; then
+	    break
+	fi	
+	let count=count+1
+	sleep 5
+    done
+    CH=`cat mess | cut -d":" -f2`
+    echo "Channel = $CH"
+     
+    echo "Set signal '$2' to job $1"
+    echo "glite-transfer-channel-signal -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer  -j $1 $2"
+    glite-transfer-channel-signal -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer  -j $1 $2
+    if [ $? != 0 ]; then
+	echo "glite-transfer-setpriority command - failed"
+	return 1
+    fi 
+        
+    echo "OK, check job status glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $"  
+    glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+     return 0
+    
+}
+
+
+#
+# Added by Victor Galaktionov 08/12/2009
+function special-set-job-priority()
+{
+    echo "special-set-job-priority()"
+    echo "glite-transfer-setpriority -h"
+    glite-transfer-setpriority -h > /dev/null
+    if [ $? != 0 ]; then
+	echo "glite-transfer-setpriority -h command - failed"
+	return 1
+    fi 
+    
+    echo "glite-transfer-setpriority -V"
+    glite-transfer-setpriority -V
+    if [ $? != 0 ]; then
+	echo "glite-transfer-setpriority -V command - failed"
+	return 1
+    fi 
+    
+    echo "glite-transfer-setpriority"
+    glite-transfer-setpriority
+    if [ $? == 0 ]; then
+	echo "glite-transfer-setpriority command - failed"
+	return 1
+    fi 
+    return 0
+    
+}
+
+
+#
+# Added by Victor Galaktionov 08/12/2009
+function set-job-priority()
+{
+    echo "set-job-priority($1, $2)"
+    echo "Set pririty $2 to job $1"
+    glite-transfer-setpriority -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 $2 2>message
+    if [ $? != 0 ]; then
+	echo "glite-transfer-setpriority command - failed"
+	return 1
+    fi 
+    cat message
+    
+    echo "OK, check job status glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $"  
+    glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+    grep "Priority" message > mess
+    if [ $? != 0 ]; then
+	echo "glite-transfer-setpriority command - failed"
+	return 1
+    fi 
+    
+    grep $2  mess 
+    if [ $? != 0 ]; then
+	echo "glite-transfer-setpriority command - failed"
+	return 1
+    fi 
+        
+    return 0
+}
+
+#
+# get SE1_SRM_LOC, SE2_SRM_LOC  and submit
+# JOBLIST_NUMBER  file transfer. FTS_HOST must be set. The job Id is stored
+# in SUBID
+#
+# Added by Victor Galaktionov 24/11/209
+function job-submit()
+{
+    echo "job-submit($1, $2)"
+    if [ -z $1 ];then
+        echo "An SE source SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE1_SRM_LOC=$1
+    fi
+
+    if [ -z $2 ];then
+        echo "An SE destination SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE2_SRM_LOC=$2
+    fi
+    
+     
+    SUB_FILE_LOC="$HOME/fts-submission-file"
+    RESULT_FILE="$HOME/fts-test-results"
+    DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+    TMP_FILE="/tmp/FTS_Test_$DATE"
+    TEST_FILE_NAME="FTS_Test_$DATE"
+    echo "Creating 10MB temporary test file for transfer" 
+
+    echo "" > $TMP_FILE
+
+    dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+
+    echo "Using the 10MB temporary test file: $TMP_FILE" 
+    echo "Copy the test file $TMP_FILE on: $SE1_SRM_LOC" 
+
+    GUID=`lcg-cr --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+
+    result=`cat message | wc -l`
+
+    if [ $result -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+      return 1
+    fi
+    echo "Removing the 10MB temporary test file: $TMP_FILE"
+    rm -rf $TMP_FILE
+
+	echo "Submitting the transfer"  
+
+	echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
+	SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+
+	if [ -z "$SUBID" ]; then
+    	    echo "Job submition failed!"
+    	    return 1
+	fi
+	echo "Job successfully submited"
+	echo "Transfer ID: $SUBID. "
+
+	echo "OK"
+ return 0
+
+}     
+    
     
 #
 # get SE1_SRM_LOC, SE2_SRM_LOC  and submit

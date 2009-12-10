@@ -19,6 +19,7 @@
 ##############################################################################
 #
 # AUTHORS: Gianni Pucciani, CERN
+#          Victor Galaktionov, JINR
 #
 ##############################################################################
 
@@ -161,11 +162,11 @@ failed=no
 testdir=./tests
 #tests_list=(FTS-basic FTS-services FTS-channels FTS-submission FTS-submission-with-checksum-1.sh FTS-submission-with-checksum-2.sh FTS-submission-with-checksum-3.sh)
 
-#tests_list=(FTS-service-info)
+#tests_list=(FTS-channel-set)
 
 tests_list=(FTS-joblist 	  FTS-cancel 	  FTS-status \
-	    FTS-channel-list 	  FTS-channel-add FTS-channel-drop 	FTS-channel-setvolimit FTS-channel-set FTS-channel-audit \
-	    FTS-channel-managers  FTS-vomanagers  FTS-getroles 		FTS-service-info)
+	    FTS-channel-list 	  FTS-channel-add FTS-channel-drop 	FTS-channel-setvolimit 	FTS-channel-set FTS-channel-audit \
+	    FTS-channel-managers  FTS-vomanagers  FTS-getroles 		FTS-service-info	FTS-setpriority)
 
 
 pushd $testdir >> /dev/null
@@ -180,15 +181,8 @@ for item in ${tests_list[*]}
 do
     rm -rf ${item}_result.txt testfile
     echo "$count. Executing $item"
-    if [ $item = "FTS-basic" ]; then
-	echo "./$item --fts $hostname --bdii $bdiihost" > ${item}_result.txt
-	./$item --fts $hostname --bdii $bdiihost >> ${item}_result.txt
-	res=$?
-    elif [ $item = "FTS-services" ]; then
-	echo "./$item --fts $hostname --bdii $bdiihost --site $sitename"  > ${item}_result.txt
-	./$item --fts $hostname --bdii $bdiihost --site $sitename >> ${item}_result.txt
-	res=$?
-    elif [ $item = "FTS-cancel" ]; then
+
+    if [ $item = "FTS-cancel" ]; then
 	for channel in $channels
 	do
 	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
@@ -197,7 +191,6 @@ do
             --vo $voname --timeout $time >> ${item}_result.txt
 	    res=$?
 	done
-    
     elif [ $item = "FTS-joblist" ]; then
 	for channel in $channels
 	do
@@ -208,6 +201,25 @@ do
 	    res=$?
 	done    
     elif [ $item = "FTS-status" ]; then
+	for channel in $channels
+	do
+	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" > ${item}_result.txt
+	    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time >> ${item}_result.txt
+	    res=$?
+	done    
+   elif [ $item = "FTS-channel-signal" ]; then
+	for channel in $channels
+	do
+	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time" #> ${item}_result.txt
+	    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+            --vo $voname --timeout $time #>> ${item}_result.txt
+	    res=$?
+	done    
+        
+    elif [ $item = "FTS-setpriority" ]; then
 	for channel in $channels
 	do
 	    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
@@ -288,7 +300,21 @@ do
 	./$item --fts $hostname --bdii $bdiihost --channel $NEW_CHANNEL \
             --vo $voname --timeout $time >> ${item}_result.txt
 	res=$?
-      
+
+#############################################################################
+#
+#         END of my tests
+#
+############################################################################
+	
+    elif [ $item = "FTS-basic" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost" > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost >> ${item}_result.txt
+	res=$?
+    elif [ $item = "FTS-services" ]; then
+	echo "./$item --fts $hostname --bdii $bdiihost --site $sitename"  > ${item}_result.txt
+	./$item --fts $hostname --bdii $bdiihost --site $sitename >> ${item}_result.txt
+	res=$? 
     elif [ $item = "FTS-channels" ]; then
 	echo "./$item --fts $hostname" > ${item}_result.txt
 	./$item --fts $hostname >> ${item}_result.txt
