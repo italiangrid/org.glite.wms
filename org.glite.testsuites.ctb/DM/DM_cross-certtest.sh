@@ -60,22 +60,22 @@ while [ $# -ne 0 ]; do
       ;;
     '--dpm')
       shift
-      DPMHOST_ARG=$1
+      DPM_HOST_ARG=$1
       shift
       ;;
     '--dcache')
       shift
-      DCACHEHOST_ARG=$1
+      DCACHE_HOST_ARG=$1
       shift
       ;;
     '--castor')
       shift
-      CASTORHOST_ARG=$1
+      CASTOR_HOST_ARG=$1
       shift
       ;;
     '--storm')
       shift
-      STORMHOST_ARG=$1
+      STORM_HOST_ARG=$1
       shift
       ;;
     *|'')
@@ -104,36 +104,36 @@ else
   exitFailure
 fi
 
-if [ -n "$DPMHOST_ARG" ]; then
-  dpm=$DPMHOST_ARG 
-elif [ -n "$DPMHOST" ]; then
-  dpm=$DPMHOST
+if [ -n "$DPM_HOST_ARG" ]; then
+  dpm=$DPM_HOST_ARG 
+elif [ -n "$DPM_HOST" ]; then
+  dpm=$DPM_HOST
 else
-  echo "DPMHOST not set"
+  echo "DPM_HOST not set"
 fi
 
-if [ -n "$DCACHEHOST_ARG" ]; then
-  dcache=$DCACHEHOST_ARG 
-elif [ -n "$DCACHEHOST" ]; then
-  dcache=$DCACHEHOST
+if [ -n "$DCACHE_HOST_ARG" ]; then
+  dcache=$DCACHE_HOST_ARG 
+elif [ -n "$DCACHE_HOST" ]; then
+  dcache=$DCACHE_HOST
 else
-  echo "DCACHEHOST not set"
+  echo "DCACHE_HOST not set"
 fi
 
-if [ -n "$CASTORHOST_ARG" ]; then
-  castor=$CASTORHOST_ARG 
-elif [ -n "$CASTORHOST" ]; then
-  castor=$CASTORHOST
+if [ -n "$CASTOR_HOST_ARG" ]; then
+  castor=$CASTOR_HOST_ARG 
+elif [ -n "$CASTOR_HOST" ]; then
+  castor=$CASTOR_HOST
 else
-  echo "CASTORHOST not set"
+  echo "CASTOR_HOST not set"
 fi
 
-if [ -n "$STORMHOST_ARG" ]; then
-  storm=$STORMHOST_ARG 
-elif [ -n "$STORMHOST" ]; then
-  storm=$STORMHOST
+if [ -n "$STORM_HOST_ARG" ]; then
+  storm=$STORM_HOST_ARG 
+elif [ -n "$STORM_HOST" ]; then
+  storm=$STORM_HOST
 else
-  echo "STORMHOST not set"
+  echo "STORM_HOST not set"
 fi
 
 if [ -z "$LFC_HOST" ]; then
