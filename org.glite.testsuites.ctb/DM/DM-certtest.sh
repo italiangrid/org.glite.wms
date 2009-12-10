@@ -24,11 +24,12 @@
 
 showUsage ()
 {
- echo "                                           "
- echo "Usage:  DM-certtest.sh [-f <conf.file>] [--sehost <SE HOST>] "
- echo "  <conf.file> Configuration file, default is DM-certconfig"
- echo "  --sehost The SE used for all the commands"
- echo "                                           "
+cat <<EOF                                       "
+Usage:  DM-certtest.sh [-f <conf.file>] [--dpm <DPM HOST>] [--dcache <DCACHE HOST]"
+  <conf.file> Configuration file, default is DM-certconfig
+  <DPM HOST> = specify an DPM SE, defaults to the CTB one
+  <DCACHE HOST> = specify an DCACHE SE, defaults to the CTB one
+EOF
 }
 
 exitFailure ()
@@ -55,9 +56,14 @@ while [ $# -ne 0 ]; do
       conffile=$1
       shift
       ;;
-    '--sehost')
+    '--dpm')
       shift
-      SE_HOST_ARG=$1
+      DPM_HOST=$1
+      shift
+      ;;
+    '--dcache')
+      shift
+      DCACHE_HOST=$1
       shift
       ;;
     *|'')
@@ -86,12 +92,41 @@ else
   exitFailure
 fi
 
-if [ -n "$SE_HOST_ARG" ]; then
-  sehost=$SE_HOST_ARG 
-elif [ -n "$SE_HOST" ]; then
-  sehost=$SE_HOST
+SEs=""
+if [ -n "$DPM_HOST_ARG" ]; then
+  SEs=$DPM_HOST_ARG
+elif [ -n "$DPM_HOST" ]; then
+  SEs=$DPM_HOST
 else
-  echo "You ned to set SE_HOST in DM-certconfig or use the --sehost argument"
+  echo "WARNING: no DPM host selected"
+fi
+
+if [ -n "$DCACHE_HOST_ARG" ]; then
+  SEs="$SEs $DCACHE_HOST_ARG"
+elif [ -n "$DCACHE_HOST" ]; then
+  SEs="$SEs $DCACHE_HOST"
+else
+  echo "WARNING: no dCache host selected"
+fi
+
+if [ -n "$CASTOR_HOST_ARG" ]; then
+  SEs="$SEs $CASTOR_HOST_ARG"
+elif [ -n "$CASTOR_HOST" ]; then
+  SEs="$SEs $CASTOR_HOST"
+else
+  echo "WARNING: no dCache host selected"
+fi
+
+if [ -n "$STORM_HOST_ARG" ]; then
+  SEs="$SEs $STORM_HOST_ARG"
+elif [ -n "$STORM_HOST" ]; then
+  SEs="$SEs $STORM_HOST"
+else
+  echo "WARNING: no dCache host selected"
+fi
+
+if [ "x$SEs" == "x" ]; then
+  echo "ERROR: no SEs have been selected"
   exitFailure
 fi
 
@@ -171,7 +206,7 @@ echo "SE: $sehost"
 #################
 
 if [ "$LCG_UTILS" = "yes" ]; then
-  echo "*Running LCG_UTILS test set*"
+  echo "**Running LCG_UTILS test set**"
 
   pushd ./tests >> /dev/null
   touch testfile 2> /dev/null 
@@ -182,130 +217,35 @@ if [ "$LCG_UTILS" = "yes" ]; then
 #  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rep.sh DM-lcg-rf.sh )
   tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rf.sh )
 
-
-  for item in ${tests_list[*]}
+  for sehost in $SEs
   do
-    rm -rf ${item}_result.txt testfile
-    echo "Executing $item"
-    ./$item $sehost --vo $VO  > $loglocation/${item}_result.txt
-    res=$?
-    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
-    if [ "$?" = 0 -o "$res" != 0 ]; then
-      echo "$item FAILED"
-      failed=yes
-      tests_failed=( "${tests_failed[@]}" "$item" )
-    else 
-      echo "$item PASSED"
-    fi
+    echo "*Target SE is $sehost"
+    for item in ${tests_list[*]}
+    do
+      rm -rf ${item}_result.txt testfile
+      echo "Executing $item"
+      ./$item $sehost --vo $VO  > $loglocation/${item}_result.txt
+      res=$?
+      grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+      if [ "$?" = 0 -o "$res" != 0 ]; then
+        echo "$item FAILED on $sehost"
+        failed=yes
+        tests_failed=( "${tests_failed[@]}" "$item" )
+      else 
+        echo "$item PASSED on $sehost"
+      fi
+    done
   done
   popd >> /dev/null
 else
-  echo "*LCG_UTILS tests skipped"
+  echo "**LCG_UTILS tests skipped"
 fi
-
-##############
-# GFAL tests #
-##############
-if [ "$GFAL" = "yes" ]; then
-  echo "*Running GFAL test set*"
-
-  if [ ! -d ../GFAL/tests ]; then
-    echo "GFAL test directory does not exists, check it out from CVS!"
-    exitFailure
-  fi
-
-  pushd ../GFAL/tests >> /dev/null
-  touch testfile 2> /dev/null
-  if [ $? -ne 0 ]; then
-    echo "GFAL test directory is not writable, if you are on AFS be sure to have a valid token"
-    exitFailure
-  fi
-  
-  tests_list=( test-gfal.sh )
-
-  for item in ${tests_list[*]}
-  do
-    rm -rf $loglocation/${item}_result.txt testfile
-    echo "Executing $item"
-    echo "./$item -v $VO -l $LFC_HOST -d $sehost " > $loglocation/${item}_result.txt 2>&1
-    ./$item -v $VO -l $LFC_HOST -d $sehost >> $loglocation/${item}_result.txt 2>&1
-    res=$?
-    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt > /dev/null
-    if [ "$?" = 0 -o "$res" != 0 ]; then
-      echo "$item FAILED"
-      failed=yes
-      tests_failed=( "${tests_failed[@]}" "$item" )
-    else
-      echo "$item PASSED"
-    fi
-  done
-  popd >> /dev/null
-else
-  echo "*GFAL tests skipped"
-fi
-
-#####################
-# DM CROSS SE tests #
-#####################
-
-if [ "$DM_CROSS_SE" = "yes" ];then
-  echo "*Running DM_CROSS_SE test set*"
-  pushd tests >> /dev/null
-  tests_list=( test-lcg-utils.sh )
-  seoptions=""
-
-  if [ -z $CLASSICHOST ]; then
-    echo "WARNING: CLASSIC SE will not be tested"
-  else
-    seoptions="$seoptions --classic $CLASSICHOST"
-  fi
-
-  if [ -z $DPMHOST ]; then
-    echo "WARNING: DPM SE will not be tested"
-  else
-    seoptions="$seoptions --dpm $DPMHOST"
-  fi
-
-  if [ -z $DCACHEHOST ]; then
-    echo "WARNING: DCACHE SE will not be tested"
-  else
-    seoptions="$seoptions --dcache $DCACHEHOST"
-  fi
-
-  if [ -z $CASTORHOST ]; then
-    echo "WARNING: CASTOR SE will not be tested"
-  else
-    seoptions="$seoptions --castor $CASTORHOST"
-  fi
-
-  for item in ${tests_list[*]}
-  do
-    rm -rf $loglocation/${item}_result.txt testfile
-    echo "Executing $item"
-    ./$item --vo $VO $seoptions > $loglocation/${item}_result.txt 2>&1
-    res=$?
-    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
-    if [ "$?" = 0 -o "$res" != 0 ]; then
-      echo "$item FAILED"
-      failed=yes
-      tests_failed=( "${tests_failed[@]}" "$item" )
-    else
-      echo "$item PASSED"
-    fi
-  done
-  popd >> /dev/null
-else
-  echo "*DM_CROSS_SE tests skipped"
-fi
-
-echo "------------------------------------------------"
-echo "END `date`"
 
 #############
 # SAM tests #
 #############
 if [ "$SAME" = "yes" ]; then
-  echo "*Running SAME test set*"
+  echo "**Running SAME test set**"
 
   pushd ./tests/SAME/tests >> /dev/null
   touch testfile 2> /dev/null
@@ -315,20 +255,24 @@ if [ "$SAME" = "yes" ]; then
   fi
   tests_list=( SE-lcg-cr  SE-lcg-cp  SE-lcg-del )
 
-  for item in ${tests_list[*]}
+  for $sehost in $SEs
   do
-    rm -rf ${item}_result.txt testfile
-    echo "Executing $item"
-    ./$item $sehost > $loglocation/${item}_result.txt 2>&1
-    res=$?
-    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
-    if [ "$?" = 0 -o "$res" != 0 ]; then
-      echo "$item FAILED"
-      failed=yes
-      tests_failed=( "${tests_failed[@]}" "$item" )
-    else
-      echo "$item PASSED"
-    fi
+    echo "*Target SE is $sehost"
+    for item in ${tests_list[*]}
+    do
+      rm -rf ${item}_result.txt testfile
+      echo "Executing $item"
+      ./$item $sehost > $loglocation/${item}_result.txt 2>&1
+      res=$?
+      grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+      if [ "$?" = 0 -o "$res" != 0 ]; then
+        echo "$item FAILED"
+        failed=yes
+        tests_failed=( "${tests_failed[@]}" "$item" )
+      else
+        echo "$item PASSED on $sehost"
+      fi
+    done
   done
   popd >> /dev/null
 else 
@@ -340,24 +284,15 @@ fi
 #########################
 
 if [ $failed = "yes" ]; then
-
   echo "TEST_FAILED"
   echo "The following tests failed:"
   for item in ${tests_failed[*]}
   do
-    if echo $item | grep DM-lcg.*.sh; then
-      echo "$item: results in $loglocation/${item}_result.txt"
-    elif [ "$item" = "test-gfal.sh" ]; then
-      echo "$item: results in $loglocation/${item}_result.txt"
-    elif [ "$item" = "test-lcg-utils.sh" ]; then
-      echo "$item: results in $loglocation/${item}_result.txt"
-    fi
+    echo "$item: results in $loglocation/${item}_result.txt"
   done
   exit 1
 else 
     echo "TEST_PASSED"
   exit 0
 fi
-
-
 
