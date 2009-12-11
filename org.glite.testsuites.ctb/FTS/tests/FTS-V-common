@@ -29,7 +29,8 @@
 #                       CHANNEL OPERATIONS
 #
 ###################################################################
-
+export JOBLIST_NUMBER=3
+export NEW_CHANNEL=CERN-SINP
 function is-channel-exists()
 {
     echo "is-channel-exists($1)"
@@ -298,7 +299,8 @@ function channel-addmanager()
 {
     echo "channel-addmanager($1, $2)"
     echo "Add manager for nonexisting channel"
-    glite-transfer-channel-addmanager --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement "NOCHANNEL" "$2" 2> message
+    echo "glite-transfer-channel-addmanager --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement BLA-BLA $2"
+    glite-transfer-channel-addmanager --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement "BLA-BLA" "$2" 2> message
     if [ $? == 0 ]; then
 	echo "Channel-addmanager - failed"
 	return 1
@@ -318,8 +320,8 @@ function channel-addmanager()
     fi
     
     echo "Again add the same manager"
-    echo "glite-transfer-channel-addmanager -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2"
-    glite-transfer-channel-addmanager -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 "$2" #2> message
+    echo "glite-transfer-channel-addmanager -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2"
+    glite-transfer-channel-addmanager -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 "$2" #2> message
     if [ $? == 0 ]; then
 	echo "Channel-addmanager - failed"
 	cat message
@@ -370,7 +372,7 @@ function channel-listmanagers()
   
     echo "Check special parameters"
     echo "glite-transfer-channel-listmanagers -h"
-    glite-transfer-channel-listmanagers -h
+    glite-transfer-channel-listmanagers -h > /dev/null
     if [ $? != 0 ]; then
 	echo "Channel-listmanagers - failed"
 	return 1
@@ -439,7 +441,7 @@ function channel-removemanager()
      
     echo "Check special parameters"
     echo "glite-transfer-channel-removemanager -h"
-    glite-transfer-channel-removemanager -h
+    glite-transfer-channel-removemanager -h > /dev/null
     if [ $? != 0 ]; then
 	echo "Channel-removemanager - failed"
 	return 1
@@ -1107,7 +1109,8 @@ function channel-setvolimit()
 # Added by Victor Galaktionov 18/11/2009
 function special_cancel_transfer()
 {
-  echo "1. Check -q  parameter" 
+    echo "special_cancel_transfer()"
+    echo "1. Check -q  parameter" 
     echo "glite-transfer-cancel -q"
     glite-transfer-cancel -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
     if [ $? != 1 ]; then
@@ -1118,7 +1121,7 @@ function special_cancel_transfer()
 
     echo "2. Check -h  parameter"
     echo "glite-transfer-cancel -h"
-    glite-transfer-cancel -h
+    glite-transfer-cancel -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-cancel command - failed"
 	return 1
@@ -1217,7 +1220,7 @@ function special_check_transfer_status()
      
     echo "2. Check -h  parameter" 
     echo "glite-transfer-status -h"
-    glite-transfer-status -h
+    glite-transfer-status -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-status command - failed"
 	return 1
@@ -1580,7 +1583,7 @@ function special_file_transfer_list()
      
     echo "3. Check -h  parameter" 
     echo "glite-transfer-list -h"
-    glite-transfer-list -h
+    glite-transfer-list -h > /dev/null
     if [ $? != 0 ]; then
 	echo "glite-transfer-list command - failed"
 	return 1

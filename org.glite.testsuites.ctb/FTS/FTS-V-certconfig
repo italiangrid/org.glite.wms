@@ -1,14 +1,14 @@
 #!/bin/bash
 #Configuration variables for FTS testing scripts
 
-FTS_HOST="vtb-generic-105.cern.ch"
+export FTS_HOST="vtb-generic-105.cern.ch"
 #FTS_HOST="lxbra2310.cern.ch"
 #The name of the top level BDII
-BDII_HOST="lxbra2305.cern.ch"
+export BDII_HOST="lxbra2305.cern.ch"
 #The hostname of the LCG File Catalog
-LFC_HOST="lxb7608v3.cern.ch"
+export LFC_HOST="lxb7608v3.cern.ch"
 #The name of the site as it stored in the GOC DB and information system.
-SITE_NAME="cert-tb-cern"
+export SITE_NAME="cert-tb-cern"
 #Name of VO to use
 export VO="dteam"
 #VO="org.glite.voms-test"
@@ -25,6 +25,6 @@ NJOBS=10
 #The number of files per job. Default is 10
 NFILES=10
 #Test channel name for channel management operation
-NEW_CHANNEL="CERN-SINP"
+#NEW_CHANNEL="CERN-SINP"
 #The counter for check job transfer list
-export JOBLIST_NUMBER=3
+#export JOBLIST_NUMBER=3

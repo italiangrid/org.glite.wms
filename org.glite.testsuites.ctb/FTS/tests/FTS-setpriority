@@ -264,12 +264,13 @@ if [ $? != 0 ]; then
    echo "-TEST FAILED-"
    exit 1
 fi
-echo "Set noncorrect pririty number"
+echo "Set noncorrect priority number"
 set-job-priority $SUBID 6
 if [ $? == 0 ]; then
    echo "-TEST FAILED-"
    exit 1
 fi
+echo "This is OK, priority should be less 6"
 echo "Check special parameters"
 special-set-job-priority
 if [ $? != 0 ]; then
