@@ -24,11 +24,12 @@
 
 showUsage ()
 {
-cat <<EOF                                       "
-Usage:  DM-certtest.sh [-f <conf.file>] [--dpm <DPM HOST>] [--dcache <DCACHE HOST]"
+cat <<EOF
+Usage:  DM-certtest.sh [-f <conf.file>] [--dpm <DPM HOST>] [--dcache <DCACHE HOST] [--lfc <LFC HOST>]
   <conf.file> Configuration file, default is DM-certconfig
-  <DPM HOST> = specify an DPM SE, defaults to the CTB one
-  <DCACHE HOST> = specify an DCACHE SE, defaults to the CTB one
+  <DPM HOST> = specify a DPM SE, defaults to the CTB one
+  <DCACHE HOST> = specify a DCACHE SE, defaults to the CTB one
+  <LFC HOST> = specify an LFC host, defaults to the CTB one
 EOF
 }
 
@@ -66,14 +67,17 @@ while [ $# -ne 0 ]; do
       DCACHE_HOST_ARG=$1
       shift
       ;;
+    '--lfc')
+      shift
+      LFC_HOST_ARG=$1
+      shift
+      ;;
     *|'')
       echo "Unknown option '$1'"
       exit
       ;;
   esac
 done
-
-
 
 ###################################
 # Check for environment variables #
@@ -130,10 +134,16 @@ if [ "x$SEs" == "x" ]; then
   exitFailure
 fi
 
-if [ -z "$LFC_HOST" ]; then
-  echo "You need to set LFC_HOST in order to run this script"
+if [ -n "$LFC_HOST_ARG" ]; then
+  lfc=$LFC_HOST_ARG
+elif [ -n "$LFC_HOST" ]; then
+  lfc=$LFC_HOST
+else
+  echo "WARNING: an LFC host has to be specified either with LFC_HOST or --lfc"
   exitFailure
 fi
+export LFC_HOST=$lfc
+echo "LFC host is: $LFC_HOST"
 
 if [ -z "$LCG_GFAL_INFOSYS" ]; then
   echo "You need to set LCG_GFAL_INFOSYS in order to run this script"
