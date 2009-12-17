@@ -217,6 +217,21 @@ if [ "x${BASIC}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "FTS-services")
   tests_list=("${tests_list[@]}" "FTS-channels")
   tests_list=("${tests_list[@]}" "FTS-submission")
+  tests_list=("${tests_list[@]}" "FTS-cancel")
+  tests_list=("${tests_list[@]}" "FTS-channel-add")
+  tests_list=("${tests_list[@]}" "FTS-channel-audit")
+  tests_list=("${tests_list[@]}" "FTS-channel-drop")
+  tests_list=("${tests_list[@]}" "FTS-channel-managers")
+  tests_list=("${tests_list[@]}" "FTS-channel-set")
+  tests_list=("${tests_list[@]}" "FTS-channel-setvolimit")
+  tests_list=("${tests_list[@]}" "FTS-getroles")
+  tests_list=("${tests_list[@]}" "FTS-joblist")
+  tests_list=("${tests_list[@]}" "FTS-service-info")
+  tests_list=("${tests_list[@]}" "FTS-setpriority")
+  tests_list=("${tests_list[@]}" "FTS-status")
+  tests_list=("${tests_list[@]}" "FTS-vomanagers")
+
+
   pushd $testdir >> /dev/null
   touch testfile 2> /dev/null
 
@@ -242,7 +257,7 @@ if [ "x${BASIC}" = "xyes" ]; then
       echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
       ./$item --fts $hostname >> $loglocation/${item}_result.txt
       res=$?
-    elif [ $item = "FTS-submission" ]; then
+    elif [ $item = "FTS-submission" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-list" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
       for channel in $channels
       do
         echo "./$item --fts $hostname --bdii $bdiihost --channel $channel --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
@@ -250,6 +265,11 @@ if [ "x${BASIC}" = "xyes" ]; then
               --vo $voname --timeout $time >> $loglocation/${item}_result.txt
         res=$?
       done
+    elif [ $item = "FTS-channel-add" ] || [ $item = "FTS-channel-audit" ] || [ $item = "FTS-channel-drop" ] || [ $item = "FTS-channel-managers" ] || [ $item = "FTS-channel-set" ] || [ $item = "FTS-channel-setvolimit" ] || [ $item = "FTS-service-info" ] || [ $item = "FTS-vomanagers" ] || [ $item = "FTS-getroles" ]; then
+      echo "./$item --fts $hostname --bdii $bdiihost --channel FAKE --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost --channel FAKE \
+              --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+      res=$?
     fi
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
