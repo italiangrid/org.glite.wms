@@ -373,6 +373,8 @@ function file_transfer_with_checksum()
 #              - 2 bad input arguments
 #              - 3 job failed
 #              - 4 job is holded
+#              - 5 job is in cancelling process
+#              - 6 job is canceled 
 #
 function get_status_result()
 {
@@ -441,6 +443,15 @@ function get_status_result()
       echo "Job is Active"
       return 4
     
+    elif test $status == "Canceling"
+    then
+      echo "Job is Canceling"
+      return 5
+    elif test $status == "Canceled"
+    then
+      echo "Job is Canceled"
+      return 6
+
     else
       echo "Job status unknown: $status"
       return 1
@@ -564,7 +575,38 @@ function get_channels()
 }
 
 #
-# Get a Channel name and return 0 if active or 1 if not active
+# channel-exists <CHANNEL NAME>
+# returns 0 is channel exists, 1 otherwise.
+#
+function channel-exists()
+{
+    echo "is-channel-exists($1)"
+    CHANNEL=$1
+
+    #Get Channels list
+    echo
+    echo "Retrieving channels list..."
+    get_channels
+    echo "List=$Channel_List"
+    if [ "x$Channel_List" == "x" ]; then
+    echo "No channels retrieved"
+    return 1
+    fi
+
+    for Channel in $Channel_List
+    do
+        if [ "$Channel" == "$CHANNEL" ];then
+            echo "Channel exists"
+            return 0
+    fi
+    done
+    return 1
+}
+
+
+#
+# is_channel_active <CHANNEL NAME>
+# Returns 0 if active or 1 if not active
 #
 function is_channel_active()
 {
@@ -585,6 +627,192 @@ function is_channel_active()
   fi
   return 0
 }
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function channel-drop()
+{
+    echo "channel-drop($1)"
+    glite-transfer-channel-drop  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 2> message
+    if [ $? != 0 ]; then
+    echo "Drop channel command - failed"
+    cat message
+    return 1
+    fi
+    return 0
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function simple-channel-add()
+{   
+    
+    echo "simple-channel-add($1, $2, $3)"
+    if [ -z $1 ]; then
+     echo "Channel name must be given to channel-add()"
+     return 1
+    fi 
+    
+    local CHANNEL=$1
+    local SITE_S=$2
+    local SITE_D=$3
+      
+    echo "Add channel: $CHANNEL $SITE_S $SITE_D"
+    glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+     $CHANNEL $SITE_S $SITE_D
+    if [ $? != 0 ]; then
+    glite-transfer-channel-list  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement
+    echo "Add channel - failed"
+    return 1
+    fi
+    return 0
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function channel-add()
+{
+    echo "channel-add($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+    if [ -z $1 ]; then
+         echo "Channel name must be given to channel-add()"
+     return 1
+    fi
+
+    local CHANNEL=$1
+    local BANDWIDTH=$2
+    local CONTACT=$3
+    local STATE=$4
+    local STREAMS=$5
+    local FILES=$6
+    local THROUGHPUT=$7
+    local SITE_S=$8
+    local SITE_D=$9
+    localNOTAUTH="You are not authorised"
+
+    echo "1. Add channel: --verbose -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT $CHANNEL $SITE_S $SITE_D"
+    glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement --verbose \
+    -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT $CHANNEL $SITE_S $SITE_D  2> message
+    if [ $? != 0 ]; then
+    grep "$NOTAUTH" message
+    if [ $? == 0 ]; then
+        cat message
+        echo "NOTE>>: add: You are not authorised for channel management upon this service"
+        return 2
+    fi
+    return 1
+    fi
+    echo "OK"
+    echo "2. Check added channel"
+    glite-transfer-channel-list  -x -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
+    if [ $? != 0 ]; then
+    echo "Failure in checking  glite-transfer-channel-list"
+    cat message
+    return 1
+    fi
+    declare -a OPTIONS
+    OPTIONS=("$CHANNEL" $BANDWIDTH  $CONTACT $STATE $STREAMS $FILES $THROUGHPUT)
+
+    for item in ${OPTIONS[*]}
+    do
+        grep $item message > /dev/null
+        if [ $? != 0 ]; then
+            echo "Noncorrect add channel"
+            return 1
+        fi
+    done
+    echo "OK"
+
+    echo "3. Check channel adding for existing channel"
+    glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL  $SITE_S $SITE_D 2> message
+    if [ $? == 0 ]; then
+    echo "Failure in adding new channel"
+    return 1
+    fi
+    grep "already exists" message
+    if [ $? != 0 ]; then
+    echo "Failure in checking  glite-transfer-channel-list"
+    cat message
+    return 1
+    fi
+    echo "OK"
+    return 0
+}
+
+
+# Added by Victor Galaktionov 08/12/2009
+function special-channel-signal()
+{
+    echo "special-channel-signal()"
+    echo "glite-transfer-channel-signal -h"
+    glite-transfer-channel-signal -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-setpriority -h command - failed"
+    return 1
+    fi
+
+    echo "glite-transfer-channel-signal -V"
+    glite-transfer-channel-signal -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-signal -V command - failed"
+    return 1
+    fi
+
+    echo "glite-transfer-channel-signal"
+    glite-transfer-channel-signal
+    if [ $? == 0 ]; then
+    echo "glite-transfer-channel-signal command - failed"
+    return 1
+    fi
+    return 0
+
+}
+
+#
+# Added by Victor Galaktionov 08/12/2009
+function channel-signal() 
+{   
+    echo "channel-signal($1, $2)"
+    echo "Try extract channel nane"
+    #glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+    
+    #grep "Channel" message > mess
+    #if [ $? != 0 ]; then
+#   echo "glite-channel-signal  command - failed"
+#   return 1
+#    fi 
+    count=0
+    while [ $count -lt 10 ];
+    do
+    glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+        grep "Channel" message > mess
+    if [ $? != 0 ]; then
+        echo "glite-channel-signal  command - failed"
+        return 1
+    fi
+    grep "None" mess
+    if [ $? != 0 ]; then
+        break
+    fi
+    let count=count+1
+    sleep 5
+    done
+    CH=`cat mess | cut -d":" -f2`
+    echo "Channel = $CH"
+
+    echo "Set signal '$2' to job $1"
+    echo "glite-transfer-channel-signal -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer  -j $1 $2"
+    glite-transfer-channel-signal -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer  -j $1 $2
+    if [ $? != 0 ]; then
+    echo "glite-transfer-setpriority command - failed"
+    return 1
+    fi
+    echo "OK, check job status glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $"  
+    glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+     return 0
+
+}
+
+
 
 #
 # Store source site in $Source_Site and dest site in $Destin_Site

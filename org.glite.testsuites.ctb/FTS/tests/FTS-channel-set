@@ -24,15 +24,233 @@
 
 #Script for testing FTS channel add operation
 
+showUsage()
+{
+ echo "Usage: FTS-channel-set --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function special-channel-set()
+{
+   echo "special-check-channel-set($1)"
+    CHAMNEL=$1
+    echo "1. glite-transfer-channel-set  -h"
+    glite-transfer-channel-set  -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set -h - failure"
+    return 1
+    fi
+    echo "2. glite-transfer-channel-set  -q"
+    glite-transfer-channel-set  -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-channel-set -q - failure"
+    return 1
+     fi
+    echo "3. glite-transfer-channel-set  -V"
+    glite-transfer-channel-set  -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set -V - failure"
+    return 1
+    fi
+
+    echo "4. Set additional channel param"
+    echo "-k Y -x 100 --block-size 500 --http-timeout 200 --tx-log-level DEBUG"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+        -k Y -x 100 --block-size 500 --http-timeout 200 --tx-log-level DEBUG $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+    echo "--preparing-ratio 10 --urlcopy-put-to 100 --urlcopy-putdone-to 15"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+        --preparing-ratio 10 --urlcopy-put-to 100 --urlcopy-putdone-to 150 $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+
+    echo "--urlcopy-get-to 200 --urlcopy-getdone-to 300 --urlcopy-tx-to 350 --urlcopy-tx-marks-to 399 -urlcopy-no-prog-to 400 "  
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+    --urlcopy-get-to 200 --urlcopy-getdone-to 300 --urlcopy-tx-to 350 --urlcopy-tx-marks-to 399 --urlcopy-no-prog-to 400 $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+
+    echo "--urlcopy-tx-to-per-mb 50 --srmcopy-direction PUSH --srmcopy-to 200 --srmcopy-refresh-to 15"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+    --urlcopy-tx-to-per-mb 50 --srmcopy-direction PUSH --srmcopy-to 200 --srmcopy-refresh-to 150 $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+    echo "-k N -x unset --block-size unset --http-timeout unset --tx-log-level WARN"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+        -k N -x unset --block-size unset --http-timeout unset --tx-log-level WARN $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+
+    echo "--preparing-ratio 200  --urlcopy-put-to unset --urlcopy-putdone-to unset"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+        --preparing-ratio 200 --urlcopy-put-to unset --urlcopy-putdone-to unset $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+    echo "--urlcopy-get-to unset --urlcopy-getdone-to unset --urlcopy-tx-to unset --urlcopy-tx-marks-to unset -urlcopy-no-prog-to unset "    
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+    --urlcopy-get-to unset --urlcopy-getdone-to unset --urlcopy-tx-to unset --urlcopy-tx-marks-to unset --urlcopy-no-prog-to unset $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+
+    echo "--urlcopy-tx-to-per-mb unset --srmcopy-direction PULL --srmcopy-to unset --srmcopy-refresh-to unset"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
+    --urlcopy-tx-to-per-mb  unset --srmcopy-direction PULL --srmcopy-to unset --srmcopy-refresh-to unset $CHANNEL
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-set - failure"
+    return 1
+    fi
+
+    return 0
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function channel-set()
+{
+    echo "channel-set($1, $2, $3, $4, $5, $6, $7 $8)"
+    if [ -z $1 ]; then
+         echo "Channel name must be given to channel-set()"
+     return 1
+    fi
+
+    local CHANNEL=$1
+    local BANDWIDTH=$2
+    local CONTACT=$3
+    local STATE=$4
+    local STREAMS=$5
+    local THROUGHPUT=$6
+    local FILES=$7
+    local MESSAGE=$8
+    localNOTAUTH="You are not authorised"
+
+    echo "1. Set channel param: --verbose -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT -m '$MESSAGE' $CHANNEL"
+    glite-transfer-channel-set  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement --verbose \
+    -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT -m "$MESSAGE"  $CHANNEL  2> message
+    if [ $? != 0 ]; then
+    grep "$NOTAUTH" message
+    if [ $? == 0 ]; then
+        cat message
+        echo "NOTE>>: add: You are not authorised for channel management upon this service"
+        return 2
+    fi
+    return 1
+    fi
+    echo "OK"
+    echo "2. Check added parameters"
+    glite-transfer-channel-list -x  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
+    if [ $? != 0 ]; then
+    echo "Failure in checking  glite-transfer-channel-list"
+    cat message
+    return 1
+    fi
+    declare -a OPTIONS
+    OPTIONS=("$CHANNEL" $BANDWIDTH  $CONTACT $STATE $STREAMS $FILES $THROUGHPUT  "$MESSAGE")
+
+    for item in ${OPTIONS[*]}
+    do
+    grep $item message > /dev/null
+    if [ $? != 0 ]; then
+        echo "Noncorrect set new parameters channel"
+        return 1
+    fi
+    done
+
+    return 0
+}
+
+
+if [ $# -ne 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+     --channel)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                CHANNEL=$2
+                shift 2
+           fi
+     ;;
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+     --vo)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                VO_NAME=$2
+                shift 2
+           fi
+     ;;
+     --timeout)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                TIMEOUT=$2
+                shift 2
+           fi
+     ;;
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 
 echo "1) Test if channel exists"
 
-is-channel-exists $NEW_CHANNEL
+channel-exists $CHANNEL
 
 if [ $? != 0 ]; then
     echo "Channel is not exists, create it"

@@ -178,14 +178,14 @@ echo "Dest: $Destin_Site"
 #get_good_se_from_site $Source_Site
 get_def_se_from_site $Source_Site
 if [ $? -eq 1 ];then
-  echo "Failing retrieving good SE from site $Source_Site"
+  echo "Failing retrieving default SE from site $Source_Site"
   exit 1
 fi
 if [ "x$SE_HOST" != "x" ]; then
   SE_SOURCE=$SE_HOST
   echo "SE_source: $SE_SOURCE"
 else
-  echo "Failing retrieving good SE from site $Source_Site"
+  echo "Failing retrieving default SE from site $Source_Site"
   echo "-TEST FAILED-"
   exit 1
 fi

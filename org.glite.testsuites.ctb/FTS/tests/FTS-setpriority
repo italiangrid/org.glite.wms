@@ -42,6 +42,133 @@ showUsage()
  echo "                   timeout in seconds"
 }
 
+#
+# Added by Victor Galaktionov 08/12/2009
+function special-set-job-priority()
+{
+    echo "special-set-job-priority()"
+    echo "glite-transfer-setpriority -h"
+    glite-transfer-setpriority -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-setpriority -h command - failed"
+    return 1
+    fi
+
+    echo "glite-transfer-setpriority -V"
+    glite-transfer-setpriority -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-setpriority -V command - failed"
+    return 1
+    fi
+
+    echo "glite-transfer-setpriority"
+    glite-transfer-setpriority
+    if [ $? == 0 ]; then
+    echo "glite-transfer-setpriority command - failed"
+    return 1
+    fi
+    return 0
+
+}
+
+#
+# Added by Victor Galaktionov 08/12/2009
+function set-job-priority()
+{
+    echo "set-job-priority($1, $2)"
+    echo "Set pririty $2 to job $1"
+    glite-transfer-setpriority -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 $2 2>message
+    if [ $? != 0 ]; then
+    echo "glite-transfer-setpriority command - failed"
+    return 1
+    fi
+    cat message
+
+    echo "OK, check job status glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $"  
+    glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+    grep "Priority" message > mess
+    if [ $? != 0 ]; then
+    echo "glite-transfer-setpriority command - failed"
+    return 1
+    fi
+
+    grep $2  mess
+    if [ $? != 0 ]; then
+    echo "glite-transfer-setpriority command - failed"
+    return 1
+    fi
+
+    return 0
+}
+
+#
+# get SE1_SRM_LOC, SE2_SRM_LOC  and submit
+# JOBLIST_NUMBER  file transfer. FTS_HOST must be set. The job Id is stored
+# in SUBID
+#
+# Added by Victor Galaktionov 24/11/209
+function job-submit()
+{
+    echo "job-submit($1, $2)"
+    if [ -z $1 ];then
+        echo "An SE source SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE1_SRM_LOC=$1
+    fi
+
+    if [ -z $2 ];then
+        echo "An SE destination SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE2_SRM_LOC=$2
+    fi
+
+
+    SUB_FILE_LOC="$HOME/fts-submission-file"
+    RESULT_FILE="$HOME/fts-test-results"
+    DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+    TMP_FILE="/tmp/FTS_Test_$DATE"
+    TEST_FILE_NAME="FTS_Test_$DATE"
+    echo "Creating 10MB temporary test file for transfer" 
+
+    echo "" > $TMP_FILE
+
+    dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+
+    echo "Using the 10MB temporary test file: $TMP_FILE" 
+    echo "Copy the test file $TMP_FILE on: $SE1_SRM_LOC" 
+
+    GUID=`lcg-cr --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+
+    result=`cat message | wc -l`
+    if [ $result -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+      return 1
+    fi
+    echo "Removing the 10MB temporary test file: $TMP_FILE"
+    rm -rf $TMP_FILE
+
+    echo "Submitting the transfer"  
+
+    echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
+    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+
+    if [ -z "$SUBID" ]; then
+            echo "Job submition failed!"
+            return 1
+    fi
+    echo "Job successfully submited"
+    echo "Transfer ID: $SUBID. "
+
+    echo "OK"
+ return 0
+
+}
+
+
+
 if [ $# -ne 10 ];then
   showUsage
   echo
@@ -101,7 +228,7 @@ done
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

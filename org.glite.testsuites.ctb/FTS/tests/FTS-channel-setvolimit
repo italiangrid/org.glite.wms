@@ -24,13 +24,97 @@
 
 #Script for testing FTS channel add operation
 
+showUsage()
+{
+ echo "Usage: FTS-channel-setvolimit --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function channel-setvolimit()
+{
+    echo "channel-setvolimit($1, $2, $3 $4)"
+    echo "1. glite-transfer-channel-setvolimit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3"
+    glite-transfer-channel-setvolimit --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3 2> message
+    if [ $? == 0 ]; then
+    echo "setvolimit channel command - failed, MUST BE diagnose - not shared VO"
+    return 1
+    fi
+    grep "VO does not have a share defined for this channel" message
+    if [ $? != 0 ]; then
+        echo "Not correct performs glite-transfer-channel-setvolimit"
+        cat message
+        return 1
+    fi
+    echo "Temporary skip setvoshare operation"
+    echo "OK, define shared VO for this channel $1"
+#  
+#    echo "2. glite-transfer-channel-setvoshare  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $4"
+#    glite-transfer-channel-setvoshare  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $4
+#    if [ $? != 0 ]; then
+#        echo "Not correct performs glite-transfer-channel-setvoshare"
+#   return 1
+#    fi
+#
+#  echo "Set VO share - OK"
+#  echo "3. Again glite-transfer-channel-setvolimit  -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement  $1 $2 $3"
+#  glite-transfer-channel-setvolimit  -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1 $2 $3
+#  if [ $? != 0 ]; then
+#    echo "setvolimit channel command - failed"
+#    return 1
+#  fi
+
+    echo "OK, check special parameters"
+
+    echo "4. glite-transfer-channel-setvolimit  -h"
+    glite-transfer-channel-setvolimit  -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-setvolimit -h - failure"
+    return 1
+    fi
+
+    echo "5. glite-transfer-channel-setvolimit  -V"
+    glite-transfer-channel-setvolimit  -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-setvolimit -V - failure"
+    return 1
+    fi
+
+    echo "6. glite-transfer-channel-list -q"
+    glite-transfer-channel-list -q
+    if [ $? == 0 ]; then
+        echo "glite-transfer-channel-list -q  - failure"
+        return 1
+    fi
+
+    return 0
+}
+
+
+if [ $# -ne 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
 
 VO_NAME=$2
 
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
@@ -52,7 +136,7 @@ fi
 
 echo "1. Test if channel exists"
 
-is-channel-exists $NEW_CHANNEL
+channel-exists $CHANNEL
 if [ $? != 0 ]; then
     echo "Channel not exists, create it"
  

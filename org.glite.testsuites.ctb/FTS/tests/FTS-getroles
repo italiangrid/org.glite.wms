@@ -40,11 +40,94 @@ showUsage()
  echo "                   timeout in seconds"
 }
 
+# Added by Victor Galaktionov 08/12/2009
+function getroles()
+{
+    echo "getroles($1)"
+    echo "1. Get roles without user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer >message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+
+    grep "Your current clientDN" message > /dev/null
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+
+    echo "2. Get roles for real user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1"
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "$1" > message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - Failed"
+    return 1
+    fi
+    grep "The user is authorised " message > /dev/null
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    cat message
+    return 1
+    fi
+   echo "3. Get roles for nonexisting user DN"
+    echo "glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer bla-bla"
+    glite-transfer-getroles  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -u "bla-bla" > message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+    grep "This user is not authorised" message > /dev/null
+    if [ $? != 0 ]; then
+    echo "FTS-getroles - failed"
+    return 1
+    fi
+
+    echo "OK, next - special parameters check"
+
+    echo "glite-transfer-getroles -h"
+    glite-transfer-getroles -h > /dev/null
+       if [ $? != 0 ]; then
+    echo "FTS-getroles -h  -- failed"
+    return 1
+    fi
+
+    echo "glite-transfer-getroles -V"
+    glite-transfer-getroles -V
+    if [ $? != 0 ]; then
+    echo "FTS-getroles -V  -- failed"
+    return 1
+    fi
+
+    echo "glite-transfer-getroles -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-getroles -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer > message
+    if [ $? != 0 ]; then
+    echo "FTS-getroles -q  -- failed"
+    return 1
+    fi
+    echo "glite-transfer-getroles -q"
+    glite-transfer-getroles -q
+    if [ $? == 0 ]; then
+    echo "FTS-getroles -q  -- failed"
+    return 1
+    fi
+
+    return 0
+}
+
+
+if [ $# -ne 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
 
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

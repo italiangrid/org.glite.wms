@@ -24,13 +24,172 @@
 
 #Script for testing FTS channel add operation
 
+showUsage()
+{
+ echo "Usage: FTS-vomanagers --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+}
+
+function list-vomanagers()
+{
+    echo "list-vomanagers($1)"
+    glite-transfer-listvomanagers  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1
+    if [ $? != 0 ]; then
+    echo "listvomanager - failed"
+    return 1
+    fi
+    return 0
+}
+
+# Added by Victor Galaktionov 04/12/2009
+function add-vomanager()
+{
+    echo "add-vomanager($1, $2)"
+    glite-transfer-addvomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "$2"
+    if [ $? != 0 ]; then
+    echo "addvomanager - failed"
+    return 1
+    fi
+    echo "Again add manager"
+    glite-transfer-addvomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "$2"
+    if [ $? == 0 ]; then
+    echo "addvomanager - failed"
+    return 1
+    fi
+    echo "Check added manager"    
+    glite-transfer-listvomanagers  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
+    grep "$2" message
+    if [ $? != 0 ]; then
+    echo "addvomanager - failed"
+    return 1
+    fi
+
+    return 0
+}
+
+# Added by Victor Galaktionov 04/12/2009
+function remove-vomanager()
+{
+    echo "remove-vomanagers($1, $2)"
+    echo "Remove nonexisting manager in VO"
+    glite-transfer-removevomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "bla-bla" 2>message
+    ret=$?
+    #echo "Ret=$ret"
+
+    grep "No such principal on VO" message
+    if [ $? != 0 ]; then
+    echo "Removevomanager - failed"
+    return 1
+    fi
+
+    if [ $ret == 0 ]; then
+    echo "removevomanager - failed"
+    return 1
+    fi
+
+    echo "Remove real manager"
+    glite-transfer-removevomanager  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 "$2"
+    if [ $? != 0 ]; then
+    echo "removevomanager - failed"
+    return 1
+    fi
+    echo "OK"
+    glite-transfer-listvomanagers  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1
+
+    return 0
+}
+
+function special-check-vomanagers()
+{
+    echo "1.1. glite-transfer-addvomanager  -h"
+    glite-transfer-addvomanager  -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-addvomanager -h - failure"
+    return 1
+    fi
+
+    echo "1.2. glite-transfer-addvomanager  -V"
+    glite-transfer-addvomanager  -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-addvomanager -V - failure"
+    return 1
+    fi
+
+    echo "1.3. glite-transfer-addvomanager  -q"
+    glite-transfer-addvomanager  -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-addvomanager -q - failure"
+    return 1
+    fi
+
+
+    echo "2.1. glite-transfer-removevomanager  -h"
+    glite-transfer-removevomanager  -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-removevomanager -h - failure"
+    return 1
+    fi
+
+    echo "2.2. glite-transfer-removevomanager  -V"
+    glite-transfer-addvomanager  -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-removevomanager -V - failure"
+    return 1
+    fi
+    echo "2.3. glite-transfer-removevomanager  -q"
+    glite-transfer-removevomanager  -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-removevomanager -q - failure"
+    return 1
+    fi
+
+    echo "3.1. glite-transfer-listvomanagers  -h"
+    glite-transfer-listvomanagers  -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-listvomanagers -h - failure"
+    return 1
+    fi
+
+    echo "3.2. glite-transfer-listvomanagers  -V"
+    glite-transfer-addvomanager  -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-listvomanagers -V - failure"
+    return 1
+    fi
+
+    echo "3.3. glite-transfer-addvomanager  -q"
+    glite-transfer-addvomanager  -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-addvomanager -q - failure"
+    return 1
+    fi
+    return 0
+}
+
+
+if [ $# -ne 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
 
 VO_NAME=$1
 
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

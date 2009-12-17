@@ -43,6 +43,160 @@ showUsage()
  echo "                   timeout in seconds"
 }
 
+# Special tests for glite-transfer-cancel operation
+# Check command return code only 
+#
+# Added by Victor Galaktionov 18/11/2009
+function special_cancel_transfer()
+{
+  echo "1. Check -q  parameter" 
+    echo "glite-transfer-cancel -q"
+    glite-transfer-cancel -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? != 1 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK" 
+
+    echo "2. Check -h  parameter"
+    echo "glite-transfer-cancel -h"
+    glite-transfer-cancel -h
+    if [ $? != 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK" 
+
+    echo "3. Check -v  parameter" 
+    echo "glite-transfer-cancel -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-list -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer
+    if [ $? != 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK"    
+    echo "3.1.  Check without -s   parameter" 
+    echo "glite-transfer-cancel -v"
+    glite-transfer-list -v
+    if [ $? == 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+    echo "OK"    
+
+    echo "4. Check -V  parameter" 
+    echo "glite-transfer-cancel -V"
+    glite-transfer-cancel -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-cancel command - failed"
+    return 1
+    fi
+
+    echo "OK"     
+    return 0
+}
+
+#
+# Cancel transfer job.
+# FTS_HOST must be set.
+# The job Id is stored in SUBID
+#
+# Added by Victor Galaktionov 18/11/209
+function transfer_job_cancel()
+{
+    echo "transfer_job_cancel()"
+
+    echo "1. Check without SUBID"
+    echo "glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer"
+    glite-transfer-cancel -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer 2>message
+    if [ $? == 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+
+    grep "No request ID specified" message > /dev/null
+    if [ $? !=  0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+    echo "OK"
+
+    echo "2. Check real cancel command" 
+    echo "glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID"
+    glite-transfer-cancel --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID 2>message
+
+    if [ $? -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE:  glite-transfer-cancel command  failed!"
+      return 1
+    fi
+    return 0
+}
+
+# Add by Victor Galaktionov 18/11/2009
+#
+# get SUBID and TIMEOUT and poll the status until it is done (0), failed (3)
+# or failed for timeout exceeded (4). 1 ir returned on error and 2 for bad
+# input parameters
+#
+function poll_canceled_status_with_timeout()
+{
+  if [ -z $1 ];then
+    echo "A submission Id must be provided to poll_status_with_timeout()"
+    return 2
+  else
+    local SUBID=$1
+  fi
+
+  if [ -z $2 ];then
+    echo "A timeout must be provided to poll_status_with_timeout()"
+    return 2
+  else
+    local Timeout=$2
+  fi
+
+  echo "Checking status for job ID: $SUBID" 
+
+  previous_status="None"
+  t=0
+  while test $t -lt $Timeout
+  do
+    get_status_result $SUBID
+    status=$?
+
+    if [ "$status" -eq 1 ]; then
+            echo "error retrieving the status with get_status_result()"
+            return 1
+    fi
+
+    if [ "$status" -eq 6 ]; then
+            echo "Job done"
+            return 0
+    fi
+    if [ "$status" -eq 3 ]; then
+            echo "Job failed"
+            return 3
+    fi
+    #if [ "$status" -eq 4 ]; then
+        echo "Waiting for status changes" 
+        sleep 10
+        t=`expr $t + 10`
+        echo "Time is $t timeout is $Timeout"  
+    #fi
+
+    if [ "$t" -eq "$Timeout" ]; then
+            echo "Exceded timeout of $Timeout seconds"
+            return 4
+    else
+            continue
+    fi
+  done
+
+}
+
+
 if [ $# -ne 10 ];then
   showUsage
   echo
@@ -102,7 +256,7 @@ done
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

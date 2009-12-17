@@ -42,6 +42,256 @@ showUsage()
  echo "                   timeout in seconds"
 }
 
+# Special tests for glite-transfer-status operation
+# Check command return code only 
+#
+# Added by Victor Galaktionov 18/11/2009
+function special_check_transfer_status()
+{
+    echo  "special_check_transfer_status($1)"
+
+    echo "1. Check with noncorrect service"
+    JID=$1
+    echo "glite-transfer-status -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID"
+    glite-transfer-status -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID 2> message
+    if [ $? == 0 ]; then
+    echo "glite-transfer-status command - failed"
+    cat message
+    return 1
+    fi
+    echo "OK"
+
+    echo "2. Check -h  parameter" 
+    echo "glite-transfer-status -h"
+    glite-transfer-status -h
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK" 
+
+    echo "3. Check -v  parameter" 
+    echo "glite-transfer-status -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID"
+    glite-transfer-status -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK"    
+    echo "4. Check -V  parameter" 
+    echo "glite-transfer-status -V"
+    glite-transfer-status -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "5. Check -q  parameter" 
+    echo "glite-transfer-status -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID"
+    glite-transfer-status -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "6. Check without -s   parameter" 
+    echo "glite-transfer-status -q"
+    glite-transfer-status -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK"     
+     return 0
+}
+
+# Special tests for glite-transfer-status operation
+# Check command return code only 
+#
+# Added by Victor Galaktionov 18/11/2009
+function special_check_transfer_status()
+{
+    echo  "special_check_transfer_status($1)"
+    
+    echo "1. Check with noncorrect service"
+    JID=$1
+    echo "glite-transfer-status -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID"
+    glite-transfer-status -s https://FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID 2> message
+    if [ $? == 0 ]; then
+    echo "glite-transfer-status command - failed"
+    cat message
+    return 1
+    fi 
+    echo "OK"
+     
+    echo "2. Check -h  parameter" 
+    echo "glite-transfer-status -h"
+    glite-transfer-status -h
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi 
+    echo "OK" 
+     
+    echo "3. Check -v  parameter" 
+    echo "glite-transfer-status -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID"
+    glite-transfer-status -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi 
+    echo "OK"    
+    echo "4. Check -V  parameter" 
+    echo "glite-transfer-status -V"
+    glite-transfer-status -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "5. Check -q  parameter" 
+    echo "glite-transfer-status -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID"
+    glite-transfer-status -q  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $JID
+    if [ $? != 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK"     
+
+    echo "6. Check without -s   parameter" 
+    echo "glite-transfer-status -q"
+    glite-transfer-status -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-status command - failed"
+    return 1
+    fi
+    echo "OK"     
+     return 0
+}
+
+#
+# get SE1_SRM_LOC, SE2_SRM_LOC  and submit
+# JOBLIST_NUMBER  file transfer. FTS_HOST must be set. The job Id is stored
+# in SUBID
+#
+# Added by Victor Galaktionov 24/11/209
+function file_transfer_status()
+{
+    echo "file_transfer_status($1, $2)"
+    if [ -z $1 ];then
+        echo "An SE source SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE1_SRM_LOC=$1
+    fi
+
+    if [ -z $2 ];then
+        echo "An SE destination SRM location must be given to file_transfer()"
+        return 2
+    else
+        local SE2_SRM_LOC=$2
+    fi
+
+
+    SUB_FILE_LOC="$HOME/fts-submission-file"
+    RESULT_FILE="$HOME/fts-test-results"
+    DATE=`date | awk '{print $2"_"$3"_"$4}' | sed -e 's/://g'`
+    TMP_FILE="/tmp/FTS_Test_$DATE"
+    TEST_FILE_NAME="FTS_Test_$DATE"
+    echo "Creating 10MB temporary test file for transfer" 
+
+    echo "" > $TMP_FILE
+
+    dd if=/dev/zero of=$TMP_FILE bs=10MB count=1 2>/dev/null
+    echo "Using the 10MB temporary test file: $TMP_FILE" 
+    echo "Copy the test file $TMP_FILE on: $SE1_SRM_LOC" 
+
+    GUID=`lcg-cr --vo $VO_NAME -d $SE1_SRM_LOC/$TEST_FILE_NAME file://$TMP_FILE 2>message`
+
+    result=`cat message | wc -l`
+
+    if [ $result -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ">>> NOTE: lcg-cr command for SRM: $SE1_SRM_LOC failed!"
+      return 1
+    fi
+    echo "Removing the 10MB temporary test file: $TMP_FILE"
+    rm -rf $TMP_FILE
+
+    echo "Submitting the transfer"  
+
+    echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
+    SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
+
+    if [ -z "$SUBID" ]; then
+            echo "Job submition failed!"
+            return 1
+    fi
+    echo "Job successfully submited"
+    echo "Transfer ID: $SUBID. " 
+    echo "Check --verbose parameter"
+    echo "glite-transfer-status --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID"
+    glite-transfer-status --verbose -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SUBID > message
+
+    if [ $? != 0 ]; then
+        echo "glite-transfer-status --verbose command - failed"
+        return 1
+    fi
+
+    echo "Check verbose string - 'Client DN'"
+    grep "Client DN" message > /dev/null
+    if [ $? != 0 ]; then
+        echo "glite-transfer-status --verbose command - noncorrect"
+        return 1
+    fi
+    echo "OK"
+    return 0
+}
+
+#  Add by Victor Galaktionov 18/11/2009
+#
+# Get a Submission Id and check the status of the file transfer.
+# Return codes:
+#              - 0 status value - valid
+#              - 1 error, not defined status value
+function if_valid_job_status()
+{
+    echo "if_valid_job_status()"
+    declare -a states
+    states=(Ready Submitted Canceled Canceling Pending Active Hold Done Failed Finished )
+    if [ -z $1 ];then
+        echo "A submission Id must be provided to new_get_status_result()"
+        return 2
+    fi
+    SubId=$1
+
+    #echo "glite-transfer-status -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SubId"
+    status=`glite-transfer-status -q -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $SubId 2>message`
+
+    result=`cat message | wc -l`
+
+    echo "Status=$status"
+    if [ $result -gt 0 ]; then
+      echo ">>> NOTE: `cat message`"
+      echo ""
+      return
+    fi
+    for item in ${states[*]}
+    do
+    if [ $status == $item ]; then
+        return 0
+    fi
+    done
+    echo "Not define job status $status"
+    return 1
+}
+
+
+
+
 if [ $# -ne 10 ];then
   showUsage
   echo
@@ -101,7 +351,7 @@ done
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

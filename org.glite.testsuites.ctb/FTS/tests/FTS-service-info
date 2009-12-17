@@ -24,11 +24,105 @@
 
 #Script for testing FTS service info  operation
 
+showUsage()
+{
+ echo "Usage: FTS-getroles --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+}
+
+# Added by Victor Galaktionov 08/12/2009
+function service-info()
+{
+    echo "service-info()"
+    echo "1. Get simple service-info"
+    echo "glite-transfer-service-info  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer" 
+    glite-transfer-service-info  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer >message
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+
+
+    echo "2. Check parameters --version --interface-version --schema-version"
+    glite-transfer-service-info -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer \
+    --version --interface-version --schema-version > message
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+
+    grep "Service version" message
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+    grep "Interface version" message
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+    grep "Schema version" message
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+    echo "3. Check parameters --service-metadata"
+    glite-transfer-service-info -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer \
+    --service-metadata KEY > message
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+    grep "unknown" message
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+
+    echo "4. glite-transfer-service-info -h"
+    glite-transfer-service-info -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+    echo "5. Check glite-transfer-service-info -V"
+    glite-transfer-service-info -V
+    if [ $? != 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+
+    echo "6. Check without parameters glite-transfer-service-info"
+    glite-transfer-service-info
+    if [ $? == 0 ]; then
+    echo "FTS-service-info - failed"
+    return 1
+    fi
+    return 0
+}
+
+
+if [ $# -ne 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
 
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

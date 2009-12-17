@@ -24,10 +24,142 @@
 
 #Script for testing FTS channel add operation
 
+showUsage()
+{
+ echo "Usage: FTS-channel-audit --fts <fts hostname> --channel <channel name>"
+ echo "Options: "
+ echo "          --fts  <fts hostname> "
+ echo "                   The name of the FTS host."
+ echo "          --channel  <channel name> "
+ echo "                   The channel to use for submitting a file transfer"
+ echo "          --bdii  <bdii hostname> "
+ echo "                   The top-level BDII hostname"
+ echo "          --vo  <VO name> "
+ echo "                   VO name"
+ echo "          --timeout  <timeout> "
+ echo "                   timeout in seconds"
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function special-check-channel-audit()
+{
+    echo "special-check-channel-audit($1)"
+    local CHANNEL=$1
+
+    echo "1. glite-transfer-channel-audit  -h"
+    glite-transfer-channel-audit  -h > /dev/null
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-audit -h - failure"
+    return 1
+    fi
+
+    echo "2. glite-transfer-channel-audit  -q"
+    glite-transfer-channel-audit -q
+    if [ $? == 0 ]; then
+    echo "glite-transfer-channel-audit -q - failure"
+    return 1
+    fi
+
+    echo "3. glite-transfer-channel-audit  -V"
+    glite-transfer-channel-audit  -V
+    if [ $? != 0 ]; then
+    echo "glite-transfer-channel-audit -V - failure"
+    return 1
+    fi
+    return 0
+}
+
+# FTS_HOST must be set.
+# Added by Victor Galaktionov 24/11/209
+function channel-audit()
+{
+    echo "channel-audit($1)"
+    echo "glite-transfer-channel-audit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1"
+    glite-transfer-channel-audit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $1
+    if [ $? != 0 ]; then
+    echo "Audit channel command - failed"
+    return 1
+    fi
+
+    echo "glite-transfer-channel-audit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -r state $1"
+    glite-transfer-channel-audit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -r state $1
+    if [ $? != 0 ]; then
+    echo "Audit channel command - failed"
+    return 1
+    fi
+
+    echo "glite-transfer-channel-audit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -m 10 -$1"
+    glite-transfer-channel-audit  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement -m 10 $1
+    if [ $? != 0 ]; then
+    echo "Audit channel command - failed"
+    return 1
+    fi
+
+    return 0
+}
+
+
+if [ $# -ne 10 ];then
+  showUsage
+  echo
+  echo "-TEST FAILED-"
+  exit 2
+fi
+
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+     --channel)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                CHANNEL=$2
+                shift 2
+           fi
+     ;;
+     --bdii)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                BDII_HOST=$2
+                shift 2
+           fi
+     ;;
+     --vo)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                VO_NAME=$2
+                shift 2
+           fi
+     ;;
+     --timeout)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                TIMEOUT=$2
+                shift 2
+           fi
+     ;;
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
 
 #source functions definitions
 source FTS-common
-source FTS-V-common
+#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
@@ -49,7 +181,7 @@ fi
 
 echo "1) Test if channel exists"
 
-is-channel-exists $NEW_CHANNEL
+channel-exists $CHANNEL
 if [ $? != 0 ]; then
     echo "Channel not exists, create it"
  
