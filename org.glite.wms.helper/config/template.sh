@@ -211,7 +211,6 @@ warning()
 
 fatal_error() # 1 - reason, 2 - transfer OSB
 {
-  jw_echo "$1"
   push_in_done_reason "$1"
   log_done_failed 1
   if [ "x$2" -eq "xOSB" ]; then
@@ -686,7 +685,6 @@ OSB_transfer()
           retry_copy "file://$s" "$d"
         else
           error="OSB quota exceeded for $s, truncating needed"
-          jw_echo $error
           push_in_done_reason $error
           file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
@@ -702,11 +700,9 @@ OSB_transfer()
             truncate "$s" $trunc_len "$s.tail"
             if [ $? != 0 ]; then
               error="Could not truncate output sandbox file ${file}, not sending"
-              jw_echo $error
               push_in_done_reason $error
             else
               error="Truncated last $trunc_len bytes for file ${file}"
-              jw_echo $error
               push_in_done_reason $error
               retry_copy "file://$s.tail" "$d.tail"
             fi
@@ -720,7 +716,6 @@ OSB_transfer()
       fi
     else
       error="Cannot read or missing file ${__wmp_output_file[$current_file]}"
-      jw_echo $error
       push_in_done_reason $error
     fi
     let "++current_file"
