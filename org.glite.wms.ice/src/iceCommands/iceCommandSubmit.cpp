@@ -1086,7 +1086,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
   string cemon_url;
   iceUtil::subscriptionManager* subMgr( iceUtil::subscriptionManager::getInstance() );
 
-  subMgr->getCEMonURL( aJob.get_user_proxy_certificate(), aJob.get_cream_jobid(), cemon_url ); // also updated the internal subMgr's cache cream->cemon
+  subMgr->getCEMonURL( aJob.get_user_proxy_certificate(), aJob.get_creamurl(), cemon_url ); // also updated the internal subMgr's cache cream->cemon
   
   CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
                   << "For current CREAM, subscriptionManager returned CEMon URL ["
