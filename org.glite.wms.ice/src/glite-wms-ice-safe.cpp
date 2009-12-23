@@ -123,7 +123,7 @@ int main( int argc, char *argv[]) {
     string jobdirpath( conf->ice( )->input( ) );
     char cmd[1024];
     memset((void*)cmd, 0, 1024);
-    sprintf( cmd, "mv %s/old/* %s/new/ 2>1 &>/dev/null", jobdirpath.c_str(),jobdirpath.c_str());
+    sprintf( cmd, "mv %s/old/* %s/new/ >/dev/null 2>&1", jobdirpath.c_str(),jobdirpath.c_str());
     cout << "Executing [" << cmd << "]" << endl;
     system( cmd );
   }
@@ -139,7 +139,7 @@ int main( int argc, char *argv[]) {
 	      "/opt/glite/bin/glite-wms-ice",
 	      opt_conf_file.c_str());
     else
-      sprintf(buf, "%s --conf %s 2>1 &> %s", 
+      sprintf(buf, "%s --conf %s > %s 2>&1", 
 	      "/opt/glite/bin/glite-wms-ice",
 	      opt_conf_file.c_str(), consolelog.c_str() );
     
