@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.22.4.1.2.3  2009/12/23 12:54:48  fcapanni
+#       revert to previous revision
+#
 #       Revision 1.22.2.22.4.1.2.2  2009/11/04 09:33:31  monforte
 #       Fix for bug #45883: Optimization of resubmission
 #
@@ -348,7 +351,6 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([examples/Makefile])
-AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/broker/Makefile])
