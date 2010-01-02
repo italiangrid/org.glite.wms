@@ -659,6 +659,7 @@ ice::util::iceCommandEventQuery::deleteJobsByDN( void ) throw( )
     if ( ev ) {
       m_lb_logger->logEvent( ev );
     }
+    ++jit;
   }
 
   {
