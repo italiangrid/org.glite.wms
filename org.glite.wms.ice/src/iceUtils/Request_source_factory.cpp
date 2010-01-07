@@ -32,11 +32,9 @@
 using namespace glite::wms::ice::util;
 namespace conf_ns = glite::wms::common::configuration;
 
+//__________________________________________________________________________________________
 Request_source* Request_source_factory::make_source_input_wm( void )
 {    
-#ifdef ICE_PROFILE
-  ice_timer timer("Request_source_factory::make_source_input_wm");
-#endif
     Request_source* result = 0;
     conf_ns::Configuration* conf = 0;
     try {
@@ -54,11 +52,9 @@ Request_source* Request_source_factory::make_source_input_wm( void )
     return result;
 }
 
+//__________________________________________________________________________________________
 Request_source* Request_source_factory::make_source_input_ice( void )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Request_source_factory::make_source_input_ice");
-#endif
     Request_source* result = 0;
     conf_ns::Configuration* conf = 0;
 

@@ -66,9 +66,6 @@ boost::recursive_mutex iceUtil::DNProxyManager::s_mutex;
 //______________________________________________________________________________
 iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::getInstance");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
   if( !s_instance ) 
@@ -79,9 +76,6 @@ iceUtil::DNProxyManager* iceUtil::DNProxyManager::getInstance() throw()
 //______________________________________________________________________________
 iceUtil::DNProxyManager::DNProxyManager( void ) throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::DNProxyManager");
-#endif
   m_log_dev = cream_api::util::creamApiLogger::instance()->getLogger();
   
 }
@@ -399,12 +393,9 @@ void
 iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx ) 
   throw()
 { 
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::setUserProxyIfLonger_Legacy_1");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
-  cream_api::soap_proxy::VOMSWrapper V( prx );
+  cream_api::soap_proxy::VOMSWrapper V( prx, false );
   if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
@@ -425,9 +416,6 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& dn,
 						      const string& prx ) 
   throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::setUserProxyIfLonger_Legacy_2");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
   time_t newT;
@@ -458,9 +446,6 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 						     const time_t exptime)
   throw()
 { 
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::setUserProxyIfLonger_Legacy_3");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string localProxy = iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( dn ) + ".proxy";
@@ -586,9 +571,6 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy(
 void iceUtil::DNProxyManager::copyProxy( const string& source, const string& target ) 
   throw(SourceProxyNotFoundException&)
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::copyProxy");
-#endif 
 
   string tmpTargetFilename = target;
   tmpTargetFilename = tmpTargetFilename + string(".tmp") ;
@@ -677,9 +659,6 @@ void
 iceUtil::DNProxyManager::removeBetterProxy( const string& userdn, const string& myproxyname )
   throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::removeBetterProxy");
-#endif 
   boost::recursive_mutex::scoped_lock M( s_mutex );
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() 
@@ -725,9 +704,6 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
 					    const boost::tuple<string, time_t, long long int>& newEntry )
   throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::updateBetterProxy");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   string mapKey = this->composite( userDN, myproxyname );
   
@@ -777,12 +753,10 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
 void iceUtil::DNProxyManager::setBetterProxy( const string& dn, 
 					      const string& proxyfile,
 					      const string& myproxyname,
-					      const time_t proxy_time_end )
+					      const time_t proxy_time_end,
+					      const unsigned long long init_counter)
   throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::setBetterProxy");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string localProxy = this->make_betterproxy_path(dn, myproxyname);//iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( dn, myproxyname ) ) + ".betterproxy";
@@ -815,7 +789,7 @@ void iceUtil::DNProxyManager::setBetterProxy( const string& dn,
 		 );
 
   {
-    db::CreateProxyField creator( mapKey, localProxy, proxy_time_end, 0, "DNProxyManager::setBetterProxy" );
+    db::CreateProxyField creator( mapKey, localProxy, proxy_time_end, init_counter, "DNProxyManager::setBetterProxy" );
     db::Transaction tnx(false, false);
     tnx.execute( &creator );    
   }
@@ -826,9 +800,6 @@ boost::tuple<string, time_t, long long int>
 iceUtil::DNProxyManager::getAnyBetterProxyByDN( const string& dn )
 const throw() 
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::getAnyBetterProxyByDN");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   map<string, boost::tuple<string, time_t, long long int> > all_proxy_info;
@@ -879,9 +850,6 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
 						  const string& myproxyname)
   const throw() 
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::getExactBetterProxyByDN");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   
@@ -905,15 +873,16 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
 }
 
 //________________________________________________________________________
-void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
+// void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
+//   throw()
+void 
+iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
+                                                    const time_t proxy_time_end)
   throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::incrementUserProxyCounter");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
-  string mapKey = this->composite( userDN, myproxy_name );
+  string mapKey = this->composite( aJob.get_user_dn(), aJob.get_myproxy_address() );
   
   string regID = compressed_string( mapKey );
   
@@ -921,8 +890,8 @@ void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, c
 		   m_log_dev->debugStream()
 		   << "DNProxyManager::incrementUserProxyCounter() - "
 		   << "Looking for DN ["
-		   << userDN << "] MyProxy server ["
-		   << myproxy_name << "] in the DB..."
+		   << aJob.get_user_dn() << "] MyProxy server ["
+		   << aJob.get_myproxy_address() << "] in the DB..."
 		   );
   
   bool found = false;
@@ -941,8 +910,8 @@ void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, c
 		   m_log_dev->debugStream()
 		   << "DNProxyManager::incrementUserProxyCounter() - "
 		   << "Incrementing proxy counter for DN ["
-		   << userDN << "] MyProxy server ["
-		   << myproxy_name <<"] from [" << proxy_info.get<2>()
+		   << aJob.get_user_dn() << "] MyProxy server ["
+		   << aJob.get_myproxy_address() <<"] from [" << proxy_info.get<2>()
 		   << "] to [" << (proxy_info.get<2>() +1 ) << "]"
 		   );
 
@@ -955,6 +924,12 @@ void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, c
       db::Transaction tnx(false, false);
       tnx.execute( &updater );
     }
+  } else {
+    this->setBetterProxy( aJob.get_user_dn(), 
+                          aJob.get_user_proxy_certificate(),
+                          aJob.get_myproxy_address(),
+                          proxy_time_end,
+                          (unsigned long long)1);
   }
 }
 
@@ -962,9 +937,6 @@ void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, c
 void iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
   throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::decrementUserProxyCounter");
-#endif
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
   string mapKey = this->composite( userDN, myproxy_name );
@@ -1041,8 +1013,5 @@ iceUtil::DNProxyManager::make_betterproxy_path( const string& dn,
 						const string& myproxy )
   throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("DNProxyManager::make_betterproxy_path");
-#endif
   return iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->persist_dir() + "/" + compressed_string( this->composite( dn, myproxy ) ) + ".betterproxy";
 }

@@ -21,7 +21,6 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 #include "Request_jobdir.h"
-#include "ice_timer.h"
 #include <boost/filesystem/operations.hpp>
 #include <fstream>
 
@@ -31,9 +30,6 @@ Request_jobdir::Request_jobdir( boost::filesystem::path old_path ) :
     m_old_path( old_path ),
     m_request( )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Request_jobdir::Request_jobdir");
-#endif
     std::ifstream is( old_path.string().c_str() );
     while ( !is.eof() ) {
         std::string line;

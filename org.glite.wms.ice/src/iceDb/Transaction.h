@@ -57,7 +57,7 @@ namespace db {
     public:
         
       Transaction( const bool read_only, const bool create_check = false );					    
-        ~Transaction( );
+      ~Transaction( );
 
         /**
          * Begin a transaction. Other threads might read or write to
@@ -68,20 +68,20 @@ namespace db {
          * invocations of the execute() method for the same
          * transaction).
          */        
-        Transaction& Begin();
+	//        Transaction& Begin();
 
         /**
          * Starts an exclusive transaction. No other threads can read or
          * write to the database while this transaction is active.
          */ 
-        Transaction& Begin_exclusive();
+	//        Transaction& Begin_exclusive();
 
         /**
          * Abort the current transaction. Calling this method is only
          * useful if one has called begin() or begin_exclusive()
          * before.
          */ 
-        void Abort();
+	//        void Abort();
 
         /**
          * Commit the current transaction. Calling this method is only
@@ -90,7 +90,7 @@ namespace db {
          * begin_exclusive(), then the transaction is automatically
          * committed after each invocation of the execute() method.
          */ 
-        void Commit();
+	//        void Commit();
 
         /**
          * Executes operation op as part of the current transaction;

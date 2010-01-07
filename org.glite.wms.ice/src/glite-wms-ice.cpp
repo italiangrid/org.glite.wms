@@ -28,6 +28,7 @@
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -60,15 +61,16 @@
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
-namespace iceUtil = glite::wms::ice::util;
-namespace po = boost::program_options;
-namespace fs = boost::filesystem;
 
-//#define MAX_ICE_MEM 2147483648
+namespace iceUtil   = glite::wms::ice::util;
+namespace po        = boost::program_options;
+namespace fs        = boost::filesystem;
+namespace api_util  = glite::ce::cream_client_api::util;
+namespace cream_api = glite::ce::cream_client_api::soap_proxy;
+
 #define MAX_ICE_MEM 550000LL
 
 long long check_my_mem( const pid_t pid ) throw();
-//void dumpIceCache( const string& pathfile ) throw();
 
 void sigusr1_handle(int x) { 
   exit(2);
@@ -328,19 +330,9 @@ int main(int argc, char*argv[])
      
     pid_t myPid = ::getpid();
     int mem_threshold_counter = 0;
-    int dump_threshold_counter = 0;
-
-    //    char* mem=::getenv("MAX_ICE_MEM");
 
     long long max_ice_mem = conf->ice()->max_ice_mem();
     
-//     if(mem) {
-//       max_ice_mem = atoll(mem);
-//     } else {
-//       max_ice_mem = MAX_ICE_MEM;
-//     }
-
-
     CREAM_SAFE_LOG(log_dev->debugStream()
 		   << method_name
 		   << "Max ICE memory threshold set to "
@@ -349,12 +341,7 @@ int main(int argc, char*argv[])
 		   );
 
     while(true) {
-        // For debug, print the number of requests in the input filelist
-//         size_t input_queue_size = iceManager->get_input_queue_size();
-//         CREAM_SAFE_LOG( log_dev->debugStream() << method_name
-//                         << "Input filelist/jobdir size "
-//                         << input_queue_size );
-
+        
         //
         // BEWARE!! the get_command_count() method locks the
         // threadPool object. Hence, it is *extremely* dangerous to
@@ -369,19 +356,12 @@ int main(int argc, char*argv[])
                            << "There are currently too many requests ("
                            << command_count
                            << ") in the internal command queue. "
-                           << "Will check again in 1/2 second."
-                           
+                           << "Will check again in 1 second."
                            );
-            //sleep( 30 );
-            //continue;
         } else {
 	  
 	  requests.clear();
 	  iceManager->getNextRequests( requests );
-	  // 	for(list< iceUtil::Request* >::const_iterator it=requests.begin();
-	  // 	    it!= requests.end();
-	  // 	    ++it)
-	  // 	  delete(*it);
 	  
 	  if( !requests.empty() )
             CREAM_SAFE_LOG(
@@ -395,6 +375,9 @@ int main(int argc, char*argv[])
 	       it != requests.end(); ++it ) 
 	    {
 	      string reqstr = (*it)->to_string();
+
+	      
+
 	      CREAM_SAFE_LOG(
 			     log_dev->debugStream()
 			     << method_name
@@ -403,31 +386,57 @@ int main(int argc, char*argv[])
 			     << ">"
 			     
 			     );
-	      glite::wms::ice::iceAbsCommand* cmd;
+
 	      try {
-		cmd = glite::wms::ice::iceCommandFactory::mkCommand( *it );
+		glite::wms::ice::util::CreamJob theJob;
+		string cmdtype;
+		glite::wms::ice::util::full_request_unparse( *it,
+							     theJob,
+							     cmdtype );
+		
+		cream_api::VOMSWrapper V( theJob.get_user_proxy_certificate() );
+		if( !V.IsValid( ) ) {
+		  CREAM_SAFE_LOG( log_dev->errorStream()
+				  << method_name
+				  << "For job ["
+				  << theJob.get_grid_jobid() << "]"
+				  << " the proxyfile ["
+				  << theJob.get_user_proxy_certificate() 
+				  << "] is not valid: "
+				  << V.getErrorMessage()
+				  << ". Skipping processing of this job..."
+				  );
+		  continue;
+		}
+
+		theJob.set_userdn( V.getDNFQAN() );
+		theJob.set_isbproxy_time_end( V.getProxyTimeEnd() );
+
+		glite::wms::ice::iceAbsCommand* cmd 
+		  = glite::wms::ice::iceCommandFactory::mkCommand( *it,
+								   theJob,
+								   cmdtype
+								   );
+
+		
+		
 		threadPool->add_request( cmd );
+
 	      } catch( std::exception& ex ) {
 		CREAM_SAFE_LOG( log_dev->errorStream()
 				<< method_name
 				<< "Got exception \"" << ex.what()
 				<< "\". Removing BAD request..." 
-				
 				);
+
 		iceManager->removeRequest( *it );
 		delete( *it );
-		//continue;
 	      }
 	    }
 	}
 
-	usleep(500000);
-	
-	/**
-	 * Comment the following single line to activate the suicidal
-	 * patch
-	 */
-	//continue;
+	//usleep(500000);
+	sleep(1);
 	
 	/**
 	 *
@@ -435,13 +444,7 @@ int main(int argc, char*argv[])
 	 *
 	 */
 	++mem_threshold_counter;
-	//	dump_threshold_counter++;
 
-// 	if(dump_threshold_counter >= cache_dump_delay) {
-// 	  dump_threshold_counter = 0;
-// 	  if( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") )
-// 	    dumpIceCache( getenv("GLITE_WMS_ICE_CACHEDUMP_BASEFILE") );
-// 	}
 
 	if(mem_threshold_counter >= 120) { // every 30 seconds check the memory
 	  mem_threshold_counter = 0;

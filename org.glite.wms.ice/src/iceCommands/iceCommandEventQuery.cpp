@@ -181,7 +181,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 			     "-1",
 			     m_iceManager->getStartTime(),
 			     "JOB_STATUS",
-			     400,
+			     500,
 			     sdbid,
 			     exec_time,
 			     events,

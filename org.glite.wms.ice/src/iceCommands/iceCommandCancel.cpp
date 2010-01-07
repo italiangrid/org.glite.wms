@@ -160,7 +160,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     
 //    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::s_GlobalICEMutex );
     db::Transaction tnx(false, false);
-    tnx.Begin( );
+    //tnx.Begin( );
     db::GetJobByGid get( m_gridJobId, "iceCommandCancel::execute" );
     tnx.execute( &get );
 

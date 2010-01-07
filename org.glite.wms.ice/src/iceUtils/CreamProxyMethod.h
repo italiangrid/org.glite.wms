@@ -102,7 +102,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&) = 0;
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&) = 0;
     };
 
 
@@ -131,7 +133,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
 
         const std::string& m_certfile;
@@ -163,7 +167,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
         const std::string& m_certfile;
         const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
@@ -192,7 +198,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
 	const std::string& m_certfile;
         const std::pair< std::string, time_t>& m_lease_IN;
@@ -221,7 +229,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
 	const std::string& m_certfile;
         const std::string& m_lease_IN;
@@ -249,7 +259,9 @@ namespace util {
 						    _cream_ex::DelegationException&,
 						    _cream_ex::InternalException&,
 						    _cream_ex::ConnectionTimeoutException&,
-						    _cream_api::auth_ex&);
+						    _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
       const std::string& m_certfile;
       const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
@@ -278,7 +290,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
         
 	const std::string& m_certfile;
 	const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
@@ -307,7 +321,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
         
         const std::string m_certfile;
         const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* m_req;
@@ -334,7 +350,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
         const std::string m_certfile;
         const std::string m_delegation_id;
@@ -361,7 +379,9 @@ namespace util {
 						      _cream_ex::DelegationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
         const std::string m_certfile;
         const std::string m_delegation_id;
@@ -391,7 +411,9 @@ namespace util {
 						      _cream_ex::AuthorizationException&,
 						      _cream_ex::InternalException&,
 						      _cream_ex::ConnectionTimeoutException&,
-						      _cream_api::auth_ex&);
+						      _cream_api::auth_ex&,
+						      _cream_api::soap_ex&,
+						      _cream_api::soap_runtime_ex&);
 
         const std::string          m_certfile;
         const std::string          m_fromid, m_toid, m_type;//m_delegation_id;

@@ -80,7 +80,6 @@
 #include <exception>
 #include <unistd.h>
 #include <cstdlib>
-#include "ice_timer.h"
 using namespace std;
 using namespace glite::wms::ice;
 
@@ -102,9 +101,6 @@ Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
     m_thread( 0 ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() )
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("IceThreadHelper::IceThreadHelper");
-#endif
 }
 
 //____________________________________________________________________________
@@ -117,9 +113,6 @@ Ice::IceThreadHelper::~IceThreadHelper( )
 //____________________________________________________________________________
 void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("IceThreadHelper::start");
-#endif
     m_ptr_thread = boost::shared_ptr< util::iceThread >( obj );
     try {
         m_thread = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread) );
@@ -131,18 +124,12 @@ void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
 //____________________________________________________________________________
 bool Ice::IceThreadHelper::is_started( void ) const 
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("IceThreadHelper::is_started");
-#endif
     return ( 0 != m_thread );
 }
 
 //____________________________________________________________________________
 void Ice::IceThreadHelper::stop( void )
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("IceThreadHelper::stop");
-#endif
     if( m_thread && m_ptr_thread->isRunning() ) {
         CREAM_SAFE_LOG( 
                        m_log_dev->debugStream()
@@ -239,8 +226,14 @@ Ice::Ice( ) throw(iceInit_ex&) :
 //    else
 //      thread_num_commands = 2;
 
-   m_requests_pool = new util::iceThreadPool("ICE Requests Pool", thread_num );
-   m_ice_commands_pool = new util::iceThreadPool( "ICE Internal Commands Pool", thread_num);
+   int poll_tnum = 0;
+   if(thread_num >=2)
+     poll_tnum = thread_num/2;
+   else
+     poll_tnum = 2;
+
+   m_requests_pool = new util::iceThreadPool("ICE Submission Pool", thread_num );
+   m_ice_commands_pool = new util::iceThreadPool( "ICE Poller Pool", poll_tnum);
    
 
     try {
@@ -506,7 +499,7 @@ void Ice::startProxyRenewer( void )
   if ( !m_configuration->ice()->start_proxy_renewer() ) {
     CREAM_SAFE_LOG( m_log_dev->warnStream()
 		    << "Ice::startProxyRenewer() - "
-		    << "Proxy Renewer disabled in configuration file. "
+		    << "Delegation Renewal disabled in configuration file. "
 		    << "Not started"
 		    
 		    );
@@ -536,9 +529,6 @@ void Ice::startJobKiller( void )
 //____________________________________________________________________________
 void Ice::getNextRequests( std::list< util::Request* >& ops) 
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::getNextRequests");
-#endif
   //  int reqnum = ice_util::iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads();
   //  if(reqnum < 5) reqnum = 5;
   ops = m_ice_input_queue->get_requests( m_reqnum );
@@ -547,18 +537,12 @@ void Ice::getNextRequests( std::list< util::Request* >& ops)
 //____________________________________________________________________________
 void Ice::removeRequest( util::Request* req )
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::removeRequest");
-#endif
     m_ice_input_queue->remove_request( req );
 }
 
 //----------------------------------------------------------------------------
 size_t Ice::get_input_queue_size( void )
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::get_input_queue_size");
-#endif
     return m_ice_input_queue->get_size();
 }
 
@@ -595,11 +579,17 @@ bool Ice::is_job_killer_started( void ) const
 //____________________________________________________________________________
 void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) throw()
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::resubmit_job");
-#endif
 
   //  string isbproxy( the_job.getUserProxyCertificate() );
+
+  if( !::getenv( "GLITE_WMS_ICE_NORESUBMIT" ) ) {
+
+     CREAM_SAFE_LOG( m_log_dev->warnStream() 
+                    << "Ice::resubmit_job() - RESUBMISSION DISABLED."
+                    );
+     return;
+  }
+
   cream_api::soap_proxy::VOMSWrapper V( the_job.get_user_proxy_certificate() );
   if( !V.IsValid( ) ) {
     //throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
@@ -670,9 +660,6 @@ void Ice::purge_job( const util::CreamJob& theJob ,
 		     const string& reason )
   throw() 
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::purge_job");
-#endif
     static const char* method_name = "Ice::purge_job() - ";
 
     string jobdesc( theJob.describe() );
@@ -856,9 +843,6 @@ void Ice::purge_job( const util::CreamJob& theJob ,
 //____________________________________________________________________________
 void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::deregister_proxy_renewal");
-#endif
   string jobdesc( job.describe() );
     if ( !::getenv( "ICE_DISABLE_DEREGISTER") ) {
         // must deregister proxy renewal
@@ -874,12 +858,13 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
         err = glite_renewal_UnregisterProxy( job.get_grid_jobid().c_str(), NULL );
         
         if ( err && (err != EDG_WLPR_PROXY_NOT_REGISTERED) ) {
+	    const char* errmex = edg_wlpr_GetErrorText(err);
             CREAM_SAFE_LOG(
                            m_log_dev->errorStream()
                            << "Ice::deregister_proxy_renewal() - "
                            << "ICE cannot unregister the proxy " 
                            << "for job [" << jobdesc
-                           << "]. Reason: \"" << edg_wlpr_GetErrorText(err) 
+                           << "]. Reason: \"" << errmex
                            << "\"."
                            );
         } else {
@@ -907,9 +892,6 @@ void Ice::deregister_proxy_renewal( const ice_util::CreamJob& job ) throw()
 //____________________________________________________________________________
 void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::purge_wms_storage");
-#endif
 
   string jobdesc( job.describe() );
     if ( !::getenv( "ICE_DISABLE_PURGER" ) ) {
@@ -956,9 +938,6 @@ void Ice::purge_wms_storage( const ice_util::CreamJob& job ) throw()
 bool Ice::resubmit_or_purge_job( util::CreamJob& tmp_job )
 throw() 
 {
-#ifdef ICE_PROFILE
-  ice_util::ice_timer timer("Ice::resubmit_or_purge_job");
-#endif
   cream_api::job_statuses::job_status st = tmp_job.get_status();
 
   if ( cream_api::job_statuses::CANCELLED == st ||

@@ -22,7 +22,9 @@
 #include "eventStatusPoller.h"
 #include "iceCommandStatusPoller.h"
 #include "iceCommandEventQuery.h"
-#include "iceDb/GetFields.h"
+
+#include "iceDb/GetAllDN.h"
+#include "iceDb/GetCEUrl.h"
 #include "iceDb/Transaction.h"
 
 // other glite includes
@@ -43,14 +45,15 @@ namespace configuration = glite::wms::common::configuration;
 using namespace glite::wms::ice::util;
 using namespace std;
 
+//boost::recursive_mutex eventStatusPoller::s_proxymutex;
+
 //____________________________________________________________________________
 eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
     : iceThread( "event status poller" ),
       m_delay( d ),
       m_iceManager( manager ),
       m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
-      m_threadPool( manager->get_ice_commands_pool() )//,
-      //m_real_poller( m_iceManager )
+      m_threadPool( manager->get_ice_commands_pool() )
 {
 
 }
@@ -64,87 +67,88 @@ eventStatusPoller::~eventStatusPoller()
 //____________________________________________________________________________
 void eventStatusPoller::body( void )
 {
-  //iceCommandStatusPoller real_poller( m_iceManager );
 
-    while( !isStopped() ) {
-
-        /**
-         * We don't use boost::thread::sleep because right now
-         * (18/11/2005) the documentation says it will be replaced by
-         * a more robust mechanism in the future.
-         */
-      if(m_delay<=10) 
-        sleep( m_delay );
-      else {
-
-	for(int i=0; i<=m_delay; i++) {
-	  if( isStopped() ) return;
-	  sleep(1);
-	}
-
+  while( !isStopped() ) {
+    
+    /**
+     * We don't use boost::thread::sleep because right now
+     * (18/11/2005) the documentation says it will be replaced by
+     * a more robust mechanism in the future.
+     */
+    if(m_delay<=10) 
+      sleep( m_delay );
+    else {
+      
+      for(int i=0; i<=m_delay; i++) {
+	if( isStopped() ) return;
+	sleep(1);
       }
-
-        // Thread wakes up
-
-	
-
-        CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << "eventStatusPoller::body() - New iteration"
-                         );
-
-
-	list< vector< string > > result;
-	{
-	  /*
-	    SELECT DISTINCT (userdn, creamurl) from jobs;
-	  */
-	  list< string > fields;
-	  fields.push_back( "userdn" );
-	  fields.push_back( "creamurl" );
-	  
-	  db::GetFields getter( fields, list< pair< string, string > >(), result, "eventStatusPoller::body", true/*=DISTINCT*/ );
-	  db::Transaction tnx(false, false);
-	  tnx.execute( &getter );
-	}
-
-	/**
-	   Organize on distinct DNs
-	   The map is DN -> ArrayOf(CEs)
-	*/
-	list< vector< string > >::const_iterator it;
-	map< string, list<string> > mapDNCE;
-	for(it=result.begin(); it != result.end(); ++it )
-	  {
-	    if( it->at(0).empty() || it->at(1).empty() )
-	      continue;
-
-	    mapDNCE[ it->at(0) ].push_back( it->at(1) );
-	  }
-	
-	CREAM_SAFE_LOG( m_log_dev->infoStream()
-                        << "eventStatusPoller::body() - There're ["
-			<< result.size() << "] distinct couple(s) of DN,CE to "
-			<< " check for job's events..."
-			);
-
-	result.clear();
-	map< string, list<string> >::const_iterator dnit;
-	for(dnit = mapDNCE.begin(); dnit != mapDNCE.end(); ++dnit )
-	  {
-	    /**
-	       dnit is a couple DN,CE1...CEN. Will ask for Events
-	       of DN to multiple CE in parallel
-	    */
-	    list<string>::const_iterator ceit;
-	    for( ceit = mapDNCE[ dnit->first ].begin(); 
-		 ceit != mapDNCE[ dnit->first ].end();
-		 ++ceit )
-	      {
- 		while(m_threadPool->get_command_count() >= iceConfManager::getInstance()->getConfiguration()->ice()->max_ice_threads() ) {
-		  sleep(1);
-		}
- 		m_threadPool->add_request( new iceCommandEventQuery( m_iceManager, dnit->first , *ceit ) );
-	      }
-	  }
+      
     }
+    
+    // Thread wakes up
+    
+    CREAM_SAFE_LOG( m_log_dev->infoStream()
+		    << "eventStatusPoller::body() - New iteration"
+		    );
+    
+    list< string > dns;
+    {
+      db::GetAllDN getter( dns, "eventStatusPoller::body" );
+	
+      db::Transaction tnx(false, false);
+      tnx.execute( &getter ); 
+    }
+    
+    list< string > ces;
+    {
+      db::GetCEUrl getter( ces, "eventStatusPoller::body" );
+	
+      db::Transaction tnx(false, false);
+      tnx.execute( &getter ); 
+    }
+    
+
+
+    list<string>::const_iterator ceit = ces.begin();
+    
+    while( ceit != ces.end() ) {
+    
+      list<string>::const_iterator dnit = dns.begin();
+      
+      while( dnit != dns.end() ) {
+      
+        while( m_threadPool->get_command_count( ) > 10 /*iceCondiguration::getInstance()->ice()->get_max_ice_thread( )*/ ) {
+	  CREAM_SAFE_LOG( m_log_dev->debugStream()
+	  		  << "eventStatusPoller::body() - "
+			  << "Too many commands in the queue. Waiting 10 seconds..."
+			  );
+	  sleep( 10 );
+	}
+      
+        CREAM_SAFE_LOG( m_log_dev->debugStream()
+ 			    << "eventStatusPoller::body() - "
+ 			    << "Adding EventQuery command for couple (" 
+ 			    << *dnit << ", "
+ 			    << *ceit << ") to the thread pool..."
+ 			    );
+      
+        m_threadPool->add_request( new iceCommandEventQuery( m_iceManager, *dnit , *ceit ) );//.execute();
+      
+//         CREAM_SAFE_LOG( m_log_dev->warnStream()
+//  			    << "eventStatusPoller::body() - "
+//  			    << "Finished EventQuery command for couple (" 
+//  			    << *dnit << ", "
+//  			    << *ceit << ")..."
+//  			    );
+      
+        ++dnit;
+      }
+    
+      ++ceit;
+    }
+    
+
+
+  }
 }

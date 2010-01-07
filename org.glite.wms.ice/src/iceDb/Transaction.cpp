@@ -607,7 +607,7 @@ void Transaction::create_db( const bool read_only, const bool create_check )
         exit(-1);
       }
       sqlite3_soft_heap_limit( 10485760 );
-      sqlite3_busy_timeout( s_db, 5000) ;
+      sqlite3_busy_timeout( s_db, 20000) ;
       // Create table if not exists
       if( create_check )
 	CreateDb().execute( s_db );
@@ -616,59 +616,55 @@ void Transaction::create_db( const bool read_only, const bool create_check )
 }
 
 
-Transaction& Transaction::Begin( void )
-{
-    m_begin = true;
-    BeginTransaction().execute( s_db ); // FIXME: catch exception
-    return *this;
-}
+// Transaction& Transaction::Begin( void )
+// {
+//     m_begin = true;
+//     BeginTransaction().execute( s_db ); // FIXME: catch exception
+//     return *this;
+// }
 
-Transaction& Transaction::Begin_exclusive( void )
-{
-    m_begin = true;
-    BeginTransaction(true).execute( s_db ); // FIXME: catch exception
-    return *this;
-}
+// Transaction& Transaction::Begin_exclusive( void )
+// {
+//     m_begin = true;
+//     BeginTransaction(true).execute( s_db ); // FIXME: catch exception
+//     return *this;
+// }
 
-void Transaction::Commit( void )
-{
-    m_commit = true;
-}
+// void Transaction::Commit( void )
+// {
+//     m_commit = true;
+// }
 
-void Transaction::Abort( void )
-{ 
-    m_commit = false;
-}
+// void Transaction::Abort( void )
+// { 
+//     m_commit = false;
+// }
 
 Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationException& )
 {
-    if ( !op ) 
-        return *this; // nothing to do
-
-    static const char* method_name = "Transaction::execute() - ";
-    int retry_cnt = 1;
-    const int retry_cnt_max = 5;
-    while( 1 ) {
-        try {
-            op->execute( s_db );
-	    int freed = sqlite3_release_memory( 104800000 );
-	    
-
-            return *this; // normal termination
-        } catch ( DbLockedException& ex ) {
-            //if ( ++retry_cnt < retry_cnt_max ) {
-	    
-                CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                                << "Database is locked; retrying operation"
-                                << " in " << retry_cnt << " seconds" );
-                sleep( retry_cnt++ );
-		                
-            //} else {
-            //    throw ex; // rethrow
-            //}
-        }
+  if ( !op ) 
+    return *this; // nothing to do
+  
+  static const char* method_name = "Transaction::execute() - ";
+  int retry_cnt = 1;
+  const int retry_cnt_max = 5;
+  while( 1 ) {
+    try {
+      op->execute( s_db );
+      int freed = sqlite3_release_memory( 104800000 );
+      
+      
+      return *this; // normal termination
+    } catch ( DbLockedException& ex ) {
+      
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+		      << "Database is locked; retrying operation"
+		      << " in " << retry_cnt << " seconds" );
+      sleep( retry_cnt++ );
+      
     }
-    return *this;
+  }
+  return *this;
 }
 
 Transaction::~Transaction( ) 

@@ -68,7 +68,7 @@ namespace glite {
                 /**
                  * Return the name of this command
                  */
-                virtual std::string name( void ) { return m_name; };
+                std::string name( void ) { return m_name; };
             protected:
 
                 iceAbsCommand( const std::string& name ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&) : m_name( name ) {};

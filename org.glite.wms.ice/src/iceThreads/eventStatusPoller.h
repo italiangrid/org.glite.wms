@@ -58,9 +58,10 @@ namespace ice {
            * Prevents copying
            */
 	  eventStatusPoller( const eventStatusPoller& )  { };
-//	  glite::wms::ice::util::iceCommandStatusPoller m_real_poller;
 
 	public:
+
+	  //static boost::recursive_mutex s_proxymutex;
 
 	  //! eventStatusPoller constructor
 	  /*!

@@ -24,7 +24,6 @@
 #define GLITE_WMS_ICE_REQUEST_SOURCE_FACTORY_H
 
 #include <string>
-#include "ice_timer.h"
 
 namespace glite {
 namespace wms {

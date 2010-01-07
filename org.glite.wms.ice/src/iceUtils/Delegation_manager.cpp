@@ -64,17 +64,11 @@ Delegation_manager::Delegation_manager( ) :
     m_max_size( 1000 ), // FIXME: Hardcoded default
     m_operation_count_max( 2000 ) // FIXME: hardcoded default
 {
-#ifdef ICE_PROFILE
-	    ice_timer timer("Delegation_manager::Delegation_manager");
-#endif
 }
 
 //______________________________________________________________________________
 Delegation_manager* Delegation_manager::instance( ) 
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::instance");
-#endif
     boost::recursive_mutex::scoped_lock L( s_mutex );
     if ( 0 == s_instance ) 
         s_instance = new Delegation_manager( );
@@ -84,14 +78,10 @@ Delegation_manager* Delegation_manager::instance( )
 //______________________________________________________________________________
 string 
 Delegation_manager::delegate( const CreamJob& job, 
-			      const cream_api::VOMSWrapper& V, 
 			      const bool USE_NEW,
 			      bool force ) 
   throw( std::exception& )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::delegate");
-#endif
     boost::recursive_mutex::scoped_lock L( s_mutex );
     static char* method_name = "Delegation_manager::delegate() - ";
 
@@ -115,9 +105,9 @@ Delegation_manager::delegate( const CreamJob& job,
       CREAM_SAFE_LOG( m_log_dev->debugStream()
 		      << method_name
 		      << "Using new delegation method, DNFQAN=[" 
-		      << V.getDNFQAN() << "]"
+		      << job.get_user_dn() << "]"
 		      );  
-      str_sha1_digest = V.getDNFQAN();
+      str_sha1_digest = job.get_user_dn();
     }
     else {
       str_sha1_digest = computeSHA1Digest( job.get_user_proxy_certificate() );
@@ -160,8 +150,8 @@ Delegation_manager::delegate( const CreamJob& job,
 
         // The delegation ID is the "canonized" GRID job id
       delegation_id   = canonizeString( /*job.getGridJobID() + cream_url*/ this->generateDelegationID() );
-      expiration_time = V.getProxyTimeEnd( ); 
-      duration        = V.getProxyTimeEnd( ) - time(0);
+      expiration_time = job.get_isbproxy_time_end(); 
+      duration        = job.get_isbproxy_time_end() - time(0);
       
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
@@ -173,7 +163,7 @@ Delegation_manager::delegate( const CreamJob& job,
                         << "] Delegation URL ["
                         << cream_deleg_url
                         << "] user DN ["
-                        << V.getDN( )
+                        << job.get_user_dn()
                         << "] proxy hash ["
                         << str_sha1_digest
 			<< "] MyProxy Server ["
@@ -198,7 +188,7 @@ Delegation_manager::delegate( const CreamJob& job,
 			  << "] Delegation URL ["
 			  << cream_deleg_url
 			  << "] user DN ["
-			  << V.getDN( )
+			  << job.get_user_dn()
 			  << "] proxy hash ["
 			  << str_sha1_digest
 			  << "] MyProxy Server ["
@@ -218,7 +208,7 @@ Delegation_manager::delegate( const CreamJob& job,
                             << "] Delegation URL ["
                             << cream_deleg_url
                             << "] user DN ["
-                            << V.getDN( )
+                            << job.get_user_dn()
                             << "] proxy hash ["
                             << str_sha1_digest << "]"
 			    << " MyProxy Server ["
@@ -236,7 +226,7 @@ Delegation_manager::delegate( const CreamJob& job,
 					expiration_time, 
 					duration, 
 					delegation_id, 
-					V.getDNFQAN(), 
+					job.get_user_dn(), 
 					USE_NEW, 
 					myproxy_address,
 					method_name);
@@ -281,7 +271,7 @@ Delegation_manager::delegate( const CreamJob& job,
                         << "] Delegation URL ["
                         << cream_deleg_url
                         << "] user DN ["
-                        << V.getDN( ) <<"] MyProxy Server ["
+                        << job.get_user_dn() <<"] MyProxy Server ["
 			<< myproxy_address << "]"
                          );
     }
@@ -297,9 +287,6 @@ Delegation_manager::delegate( const CreamJob& job,
 void 
 Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& newDeleg ) 
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::updateDelegation");
-#endif
   const char* method_name = "Delegation_manager::updateDelegation() - ";
 
   boost::recursive_mutex::scoped_lock L( s_mutex );
@@ -347,9 +334,6 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
 //______________________________________________________________________________
 void Delegation_manager::removeDelegation( const string& delegToRemove )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::removeDelegation");
-#endif
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
   CREAM_SAFE_LOG( m_log_dev->debugStream()
@@ -368,11 +352,8 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 }
 
 //______________________________________________________________________________
-void Delegation_manager::getDelegationEntries( vector< table_entry >& target, const bool only_renewable )
+int Delegation_manager::getDelegationEntries( vector< table_entry >& target, const bool only_renewable )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::getDelegationEntries");
-#endif
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
   vector< table_entry > allDelegations;
@@ -382,14 +363,16 @@ void Delegation_manager::getDelegationEntries( vector< table_entry >& target, co
     tnx.execute( &getter );
     allDelegations = getter.get_delegations();
   }
-  
+  int counter = 0; 
   for(vector< table_entry >::const_iterator it=allDelegations.begin();
       it != allDelegations.end();
       ++it)
     {
-
+      
       target.push_back( *it );
+      ++counter;
     }
+  return counter;
 }
 
 //----------------------------------------------------------------------------
@@ -397,9 +380,6 @@ void Delegation_manager::redelegate( const string& certfile,
                                      const string& delegation_url,
                                      const string& delegation_id ) 
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::redelegate");
-#endif
     boost::recursive_mutex::scoped_lock L( s_mutex );
 
     static char* method_name = "Delegation_manager::redelegate() - ";
@@ -456,9 +436,6 @@ void Delegation_manager::redelegate( const string& certfile,
 Delegation_manager::table_entry
 Delegation_manager::getDelegation( const string& userdn, const string& ceurl, const string& myproxy )
 {  
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::getDelegation");
-#endif
   bool found = false;
   table_entry deleg_info("", "", 0, 0, "", "", 0, "");
 
@@ -481,9 +458,6 @@ Delegation_manager::getDelegation( const string& userdn, const string& ceurl, co
 //----------------------------------------------------------------------------
 string Delegation_manager::generateDelegationID( ) throw()
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("Delegation_manager::generateDelegationID");
-#endif
   struct timeval T;
   ::gettimeofday( &T, 0 );
 

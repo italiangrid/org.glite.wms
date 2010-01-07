@@ -23,9 +23,11 @@
 
 #include "AbsDbOperation.h"
 #include "boost/format.hpp"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 using namespace glite::wms::ice::db;
 using namespace std;
+namespace api_util   = glite::ce::cream_client_api::util;
 
 void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callback_t callback, void* param ) throw( DbOperationException& )
 {
@@ -34,6 +36,8 @@ void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callbac
     int retry = 0;
     int s = 2;
     
+//    api_util::scoped_timer SQLEXE( string("AbsDbOperation::do_query - CALLER=")+m_caller+" - QUERY=[" + sqlcmd + "]" );
+
     while(1) {
       int rc = sqlite3_exec(db, sqlcmd.c_str(), callback, param, &errMsg);
       switch ( rc ) {

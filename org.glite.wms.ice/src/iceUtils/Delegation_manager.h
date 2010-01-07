@@ -42,7 +42,6 @@
 
 #include <openssl/sha.h> // for using SHA1
 
-#include "ice_timer.h"
 
 namespace log4cpp {
     class Category;
@@ -100,9 +99,6 @@ namespace util {
 			   m_renewable( false ),
 			   m_myproxyserver( "" ) 
 	  { 
-#ifdef ICE_PROFILE
-	    ice_timer timer("table_entry::table_entry_1");
-#endif
 	  };
 
 	  table_entry( const std::string& sha1_digest, 
@@ -122,33 +118,10 @@ namespace util {
 	    m_renewable( renewable ),
 	    m_myproxyserver( myproxyserver )
 	  { 
-#ifdef ICE_PROFILE
-	    ice_timer timer("table_entry::table_entry_2");
-#endif
 	  };
         };
 	
     protected:
-        /**
-         * Multi index container 
-         */
-/*       typedef boost::multi_index_container< table_entry, */
-/* 					    boost::multi_index::indexed_by< boost::multi_index::ordered_unique< */
-/*         // The index here is the (sha1_digest, cream_url) pair */
-/* 	boost::multi_index::composite_key< */
-/* 	table_entry, */
-/* 	// The first composite element is the sha1_digest */
-/* 	boost::multi_index::member<table_entry,std::string,&table_entry::m_sha1_digest>, */
-/* 	// The second composite element is the cream_url */
-/* 	boost::multi_index::member<table_entry,std::string,&table_entry::m_cream_url> > >, */
-/* 									    boost::multi_index::ordered_non_unique< boost::multi_index::member<table_entry,time_t,&table_entry::m_expiration_time> >, */
-									    
-/* 									    boost::multi_index::sequenced<>, */
-/* 									    boost::multi_index::ordered_unique< boost::multi_index::member<table_entry,std::string,&table_entry::m_delegation_id> > */
-/* 									    > */
-/*       > t_delegation_set; */
-        
-/*         t_delegation_set m_delegation_set; */
 
 	std::string generateDelegationID() throw();
 
@@ -210,8 +183,7 @@ namespace util {
          *
          * @throw exception if the delegation operation fails.
          */
-	//boost::tuple<std::string, time_t, int> delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, bool force = false, bool USE_NEW = false, const std::string& myproxy_address = "" ) throw( std::exception& );
-	std::string delegate( const CreamJob& job, const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V, const bool use_new, bool force = false ) throw( std::exception& );
+	std::string delegate( const CreamJob& job, const bool use_new, bool force = false ) throw( std::exception& );
 
         /**
          * Tries to delegate an already delegated ID. I hope that this
@@ -239,7 +211,7 @@ namespace util {
          */
 //       void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool, std::string> >& target, const bool only_renewable = false); 
 
-	void getDelegationEntries( std::vector< table_entry >& target, const bool only_renewable = false );
+	int getDelegationEntries( std::vector< table_entry >& target, const bool only_renewable = false );
 	
 	table_entry getDelegation( const std::string& userdn, const std::string& ceurl, const std::string& myproxy );
 

@@ -49,6 +49,8 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				SetEventID.cpp \
 				GetDbID.cpp \
 				SetDbID.cpp \
+				GetCEUrl.cpp \
+				GetAllDN.cpp \
 				RemoveJobsByDbID.cpp \
 				InsertStat.cpp \
 				GetJobs.cpp \

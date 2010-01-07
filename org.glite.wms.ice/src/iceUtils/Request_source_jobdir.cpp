@@ -40,6 +40,7 @@ namespace api_util  = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
+//__________________________________________________________________________________________
 Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name, bool create ) :
     Request_source( jdir_name ),
     m_jobdir( 0 )
@@ -65,12 +66,14 @@ Request_source_jobdir::Request_source_jobdir( const std::string& jdir_name, bool
         abort();
     }
 }
- 
+
+//__________________________________________________________________________________________
 Request_source_jobdir::~Request_source_jobdir( )
 {
     delete m_jobdir; // FIXME: use a scoped_ptr instead?
 }
 
+//__________________________________________________________________________________________
 list<Request*> Request_source_jobdir::get_requests( size_t max_size  )
 {
     list< Request* > result;
@@ -79,29 +82,48 @@ list<Request*> Request_source_jobdir::get_requests( size_t max_size  )
     boost::tie(b, e) = m_jobdir->new_entries();
     
     for ( ; b != e && result.size() < max_size; ++b) {
-        
-        fs::path const& new_file = *b;
-        fs::path const old_file = m_jobdir->set_old(new_file);
-    
-        result.push_back( new Request_jobdir( old_file ) );
+        try {
+	
+          fs::path const& new_file = *b;
+          fs::path const old_file = m_jobdir->set_old(new_file);
+	  result.push_back( new Request_jobdir( old_file ) );
+	  
+    	} catch( exception& ex ) {
+	  CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                         << "Request_source_jobdir::get_requests() - Error instantiating boost::path: "
+                         << ex.what()
+                         );
+	}
+        //result.push_back( new Request_jobdir( old_file ) );
     }
     
     return result;
 }
 
+//__________________________________________________________________________________________
 void Request_source_jobdir::remove_request( Request* req )
 {
     Request_jobdir* req_jobdir = dynamic_cast< Request_jobdir* >( req );
     if ( 0 != req_jobdir ) {
+      try {
         fs::remove( req_jobdir->get_path() ); // FIXME? does it throw something?
+      } catch( exception& ex ) {
+	  CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream() 
+                         << "Request_source_jobdir::remove_request() - Error removing path ["
+			 << req_jobdir->get_path().string() << "]: "
+                         << ex.what()
+                         );
+      }
     }
 }
 
+//__________________________________________________________________________________________
 void Request_source_jobdir::put_request( const string& ad )
 {
     m_jobdir->deliver( ad );
 }
 
+//__________________________________________________________________________________________
 size_t Request_source_jobdir::get_size( void )
 {
     std::pair< utilities::JobDir::iterator, utilities::JobDir::iterator > entries = m_jobdir->new_entries();

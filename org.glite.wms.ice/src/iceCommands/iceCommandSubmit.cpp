@@ -34,6 +34,7 @@
 #include "Request.h"
 #include "Request_source_purger.h"
 #include "iceUtils.h"
+#include "eventStatusPoller.h" // for the proxymutex
 
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/GetFields.h"
@@ -107,16 +108,11 @@ namespace { // Anonymous namespace
          * longer in the job cache, nothing is done.
          */
         void operator()( void ) {
-	  //	  api_util::scoped_timer tmp_timer( "remove_job_from_cache::operator()" );
 	 
 	  db::RemoveJobByGid remover( m_grid_job_id, "remove_job_from_cache::operator()" );
 
-	  //            boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-	  //boost::recursive_mutex::scoped_lock M( iceUtil::CreamJob::globalICEMutex );
-	  //            iceUtil::jobCache::iterator it( m_cache->lookupByGridJobID( m_grid_job_id ) );
-	  //            m_cache->erase( it );
 	  db::Transaction tnx(false, false);
-	  //tnx.Begin_exclusive( );
+
   tnx.execute( &remover );
 
         }
@@ -127,112 +123,23 @@ namespace { // Anonymous namespace
 //
 //
 //____________________________________________________________________________
-iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
-  throw( iceUtil::ClassadSyntax_ex&, iceUtil::JobRequest_ex& ) :
-    iceAbsCommand( "iceCommandSubmit" ),
+iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request, 
+				    const iceUtil::CreamJob& aJob )
+  : iceAbsCommand( "iceCommandSubmit" ),
     m_theIce( Ice::instance() ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_configuration( iceUtil::iceConfManager::getInstance()->getConfiguration() ),
     m_lb_logger( iceUtil::iceLBLogger::instance() ),
-    m_request( request )
+    m_request( request ),
+    m_theJob( aJob ),
+    m_myname( m_theIce->getHostName() )
 {
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::iceCommandSubmit");
-#endif
 
-  m_myname = m_theIce->getHostName();
+//  m_myname = m_theIce->getHostName();
   if( m_configuration->ice()->listener_enable_authn() ) {
     m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
   } else {
     m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );   
-  }
-
-// [
-//   stream_error = false;
-//   edg_jobid = "https://cert-rb-03.cnaf.infn.it:9000/YeyOVNkR84l6QMHl_PY6mQ";
-//   GlobusScheduler = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs";
-//   ce_id = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs-cert";
-//   Transfer_Executable = true;
-//   Output = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardOutput";
-//   Copy_to_Spool = false;
-//   Executable = "/var/glite/jobcontrol/submit/Ye/JobWrapper.https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ.sh";
-//   X509UserProxy = "/var/glite/SandboxDir/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/user.proxy"; 
-//   Error_ = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardError";
-//   LB_sequence_code = "UI=000002:NS=0000000003:WM=000004:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000:LBS=000000"; 
-//   Notification = "never"; 
-//   stream_output = false; 
-//   GlobusRSL = "(queue=cert)(jobtype=single)"; 
-//   Type = "job"; 
-//   Universe = "grid"; 
-//   UserSubjectName = "/C=IT/O=INFN/OU=Personal Certificate/L=CNAF/CN=Marco Cecchi"; 
-//   Log = "/var/glite/logmonitor/CondorG.log/CondorG.log"; 
-//   grid_type = "globus" 
-// ]
-
-
-  string commandStr;
-  string protocolStr;
-  
-  {// Classad-mutex protected region  
-    boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
-    
-    classad::ClassAdParser parser;
-    classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
-    
-    if (!rootAD) {
-      throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
-    }
-    
-    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
-    
-    // Parse the "command" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-      throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
-    }
-    boost::trim_if( commandStr, boost::is_any_of("\"") );
-    
-    if ( !boost::algorithm::iequals( commandStr, "submit" ) ) {
-      throw iceUtil::JobRequest_ex( boost::str( boost::format( "iceCommandSubmit:: wrong command parsed: %1%" ) % commandStr ) );
-    }
-    
-    // Parse the "version" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
-      throw iceUtil::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
-    }
-    // Check if the version is exactly 1.0.0
-    if ( protocolStr.compare("1.0.0") ) {
-      throw iceUtil::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
-    }
-    
-    classad::ClassAd *argumentsAD = 0; // no need to free this
-    // Parse the "arguments" attribute
-    if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
-      throw iceUtil::JobRequest_ex("attribute 'arguments' not found or is not a classad");
-    }
-    
-    classad::ClassAd *adAD = 0; // no need to free this
-    // Look for "JobAd" attribute inside "arguments"
-    if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
-      throw iceUtil::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
-    }
-    
-    // initializes the m_jdl attribute
-    classad::ClassAdUnParser unparser;
-    unparser.Unparse( m_jdl, argumentsAD->Lookup( "jobad" ) );
-
-  } // end classad-mutex protected regions
-  
-  try {
-    m_theJob.set_jdl( m_jdl );
-    m_theJob.set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
-  } catch( iceUtil::ClassadSyntax_ex& ex ) {
-    CREAM_SAFE_LOG(
-		   m_log_dev->errorStream() 
-		   << "iceCommandSubmit::CTOR() - Cannot instantiate a job from jdl=" << m_jdl
-		   << " due to classad excaption: " << ex.what()
-		   
-		   );
-    throw( iceUtil::ClassadSyntax_ex( ex.what() ) );
   }
 
 }
@@ -242,23 +149,14 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request )
 //____________________________________________________________________________
 void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::execute");
-#endif
   
     static const char* method_name="iceCommandSubmit::execute() - ";
-
-// #ifdef ICE_PROFILE_ENABLE
-//     api_util::scoped_timer tmp_timer( "iceCommandSubmit::execute" );
-// #endif
 
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
                    << method_name
                    << "This request is a Submission..."
                    );   
-    
-    //    iceUtil::jobCache* cache( iceUtil::jobCache::getInstance() );
     
     Request_source_purger purger_f( m_request );
     wms_utils::scope_guard remove_request_guard( purger_f );
@@ -279,23 +177,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
       clause.push_back( make_pair("gridjobid",_gid) );
       list< vector<string> > results;
       
-      //db::CheckGridJobID check( _gid, "iceCommandSubmit::execute" );
       db::GetFields getter(fields_to_retrieve, clause, results, "iceCommandSubmit::execute", false );
       db::Transaction tnx(false, false);
-      //tnx.begin( );
       tnx.execute( &getter );
-      /*
-      if( check.found() ) {
-	CREAM_SAFE_LOG( m_log_dev->warnStream()
-			<< method_name
-			<< "Submit request for job GridJobID=["
-			<< _gid
-			<< "] is related to a job already in ICE's database. "
-			<< "Removing the request and going ahead."
-			);
-	return;
-      }
-      */
+      
       if( results.size() ) {
         int _status( atoi(results.begin()->at(0).c_str()) );
 	
@@ -345,10 +230,32 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
      */       
     if( !only_start ) //here only if the job is UNKNOWN. In this case it has been removed from DB (see above)
     {
-      db::CreateJob creator( m_theJob, "iceCommandSubmit::execute" );
-      db::Transaction tnx(false, false);
-      tnx.execute( &creator );
-    }
+
+      // Must set a mutex to not allow the eventStatusPoller 
+      // to retrieve couples dn,ce before
+      // a valid entry has been inserted into the 'proxy'
+      // table
+      //boost::recursive_mutex::scoped_lock proxy( glite::wms::ice::util::eventStatusPoller::s_proxymutex );
+      {
+	db::CreateJob creator( m_theJob, "iceCommandSubmit::execute" );
+	db::Transaction tnx(false, false);
+	tnx.execute( &creator );
+      }
+      // now the job is in cache and has been registered we can save its
+      // proxy into the DN-Proxy Manager's cache
+      if( !m_theJob.is_proxy_renewable() ) {
+	iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger_Legacy( m_theJob.get_user_dn(), 
+									     m_theJob.get_user_proxy_certificate(), 
+									     m_theJob.get_isbproxy_time_end()
+									     /*V.getProxyTimeEnd()*/ );
+      } else {
+	
+	/**
+	   MUST increment job counter of the 'super' better proxy table.
+	*/
+	iceUtil::DNProxyManager::getInstance()->incrementUserProxyCounter(m_theJob, m_theJob.get_isbproxy_time_end() );
+      }
+    } // releases eventStatusPoller's proxymutex
  
     try {
         try_to_submit( only_start );        
@@ -358,10 +265,9 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
                        << method_name 
                        << "Error during submission of jdl=" << m_jdl
                        << " Fatal Exception is:" << ex.what()
-                       
                        );
         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() ) ) );
-	string reason = boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%") % ex.what() );
+	string reason = boost::str( boost::format( "Transfer to CREAM [%1%] failed due to exception: %2%") % m_theJob.get_creamurl() % ex.what() );
         m_theJob.set_failure_reason( reason );
 	{
 	  list< pair<string, string> > params;
@@ -372,7 +278,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 	}
 
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ) );
-        throw( iceCommandFatal_ex( ex.what() ) );
+        throw( iceCommandFatal_ex( /*ex.what()*/ reason ) );
     } catch( const iceCommandTransient_ex& ex ) {
 
         // The next event is used to show the failure reason in the
@@ -389,8 +295,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
       }
         m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
-        m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1%" ) % ex.what() ) ); // Try to resubmit
-        throw( iceCommandFatal_ex( ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
+        m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1% CEUrl [%2%]" ) % ex.what() % m_theJob.get_creamurl() ) ); // Try to resubmit
+        throw( iceCommandFatal_ex( string("Error submitting job to CE [") + m_theJob.get_creamurl() + "]: " + ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
 
     }
     
@@ -402,9 +308,6 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 //______________________________________________________________________________
 void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::try_to_submit");
-#endif
   
   string _gid( m_theJob.get_grid_jobid() );
   
@@ -418,19 +321,26 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   
   string dbid, completeid, jobId, __creamURL, jobdesc;
   
-  cream_api::VOMSWrapper V( m_theJob.get_user_proxy_certificate() );
-  if( !V.IsValid( ) ) {
-    throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
-  }
+//   cream_api::VOMSWrapper V( m_theJob.get_user_proxy_certificate() );
+//   if( !V.IsValid( ) ) {
+//     throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
+//   }
   
-  time_t proxy_time_end( V.getProxyTimeEnd() );
-  m_theJob.set_userdn( V.getDNFQAN() );
+//   time_t proxy_time_end( V.getProxyTimeEnd() );
+//   m_theJob.set_userdn( V.getDNFQAN() );
+
+  if( m_theJob.get_isbproxy_time_end() <= time(0) ) {
+    throw( iceCommandTransient_ex( "Authentication error: proxyfile [" 
+				   + m_theJob.get_user_proxy_certificate() 
+				   + "] is expired! Skipping submission of the job [" 
+				   + m_theJob.get_grid_jobid() +"]"));
+  }
 
   if(!only_start) {    
     
     {
       list< pair<string, string> > params;
-      params.push_back( make_pair("userdn", V.getDNFQAN()) );
+      params.push_back( make_pair("userdn", m_theJob.get_user_dn()) );
       db::UpdateJobByGid updater( _gid, params, "iceCommandSubmit::try_to_submit" );
       db::Transaction tnx(false, false);
       tnx.execute( &updater );
@@ -441,25 +351,14 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_start_event( m_theJob ) );
     
-    string modified_jdl;
-    try {    
-      // It is important to get the jdl from the job itself, rather
-      // than using the m_jdl attribute. This is because the
-      // sequence_code attribute inside the jdl classad has been
-      // modified by the L&B calls, and we have to pass to CREAM the
-      // "last" sequence code as the job wrapper will need to log
-      // the "really running" event.
-      modified_jdl = creamJdlHelper( m_theJob.get_jdl() );
-    } catch( iceUtil::ClassadSyntax_ex& ex ) {
-      throw( iceCommandFatal_ex( boost::str( boost::format("Cannot convert jdl due to classad exception %1%" ) % ex.what() ) ) );
-    }
+    
     
     string _ceurl( m_theJob.get_creamurl() );
     
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream() 
                    << method_name << "Submitting JDL " 
-		   << modified_jdl << " to [" 
+		   << m_theJob.get_modified_jdl() << " to [" 
                    << _ceurl <<"] ["
                    << m_theJob.get_cream_delegurl() << "]"
                    );
@@ -497,10 +396,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
       // Delegate the proxy
       //
       
-      //	bool USE_NEW = m_theJob.is_proxy_renewable();
-      //boost::tuple<string, time_t, long long int> SBP;
-      
-      handle_delegation( delegation, m_theJob.is_proxy_renewable(), force_delegation, V, jobdesc, _gid, _ceurl );
+      handle_delegation( delegation, force_delegation, jobdesc, _gid, _ceurl );
       
       //
       // Registers the job (without autostart)
@@ -510,7 +406,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 			 _gid,
 			 delegation,
 			 lease_id,
-			 modified_jdl,
+			 m_theJob.get_modified_jdl(),
 			 force_delegation,
 			 force_lease,
 			 res) )
@@ -598,9 +494,6 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   
   cream_api::ResultWrapper startRes;
   
-//   if(::getenv("ICE_START_CRASH"))
-//     exit(1);
-
   try {
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 		    << "Going to START CreamJobID ["
@@ -691,21 +584,6 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   
   m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_ok_event( m_theJob ) );
   
-  // now the job is in cache and has been registered we can save its
-  // proxy into the DN-Proxy Manager's cache
-  if( !m_theJob.is_proxy_renewable() ) {
-    
-    iceUtil::DNProxyManager::getInstance()->setUserProxyIfLonger_Legacy( m_theJob.get_user_dn(), 
-									 m_theJob.get_user_proxy_certificate(), 
-									 proxy_time_end
-									 /*V.getProxyTimeEnd()*/ );
-  }
-  
-  /**
-     MUST increment job counter of the 'super' better proxy table.
-  */
-  if( m_theJob.is_proxy_renewable() )
-    iceUtil::DNProxyManager::getInstance()->incrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
   /*
    * here must check if we're subscribed to the CEMon service
    * in order to receive the status change notifications
@@ -726,360 +604,10 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
 } // try_to_submit
 
 
-//____________________________________________________________________________
-string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( iceUtil::ClassadSyntax_ex& )
-{ 
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::creamJdlHelper");
-#endif
-// Classad-mutex protected region
-
-  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
-  const configuration::WMConfiguration* WM_conf = m_configuration->wm();
-  
-  classad::ClassAdParser parser;
-  classad::ClassAd *root = parser.ParseClassAd( oldJdl );
-  
-  if ( !root ) {
-    throw iceUtil::ClassadSyntax_ex( boost::str( boost::format( "ClassAd parser returned a NULL pointer parsing request=[%1%]") % oldJdl ) );
-  }
-  
-  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
-  
-  string ceid;
-  if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", ceid ) ) {
-    throw iceUtil::ClassadSyntax_ex( "ce_id attribute not found" );
-  }
-  boost::trim_if( ceid, boost::is_any_of("\"") );
-  
-  vector<string> ceid_pieces;
-  ceurl_util::parseCEID( ceid, ceid_pieces );
-  string bsname = ceid_pieces[2];
-  string qname = ceid_pieces[3];
-  
-  // Update jdl to insert two new attributes needed by cream:
-  // QueueName and BatchSystem.
-  
-  classad_safe_ptr->InsertAttr( "QueueName", qname );
-  classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
-
-  if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) && WM_conf ) {
-      classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", WM_conf->max_output_sandbox_size());
-  }
-
-  updateIsbList( classad_safe_ptr.get() );
-  updateOsbList( classad_safe_ptr.get() );
-
-#ifdef PIPPO  
-  // Set CERequirements
-  if ( WM_conf ) {
-      std::vector<std::string> reqs_to_forward(WM_conf->ce_forward_parameters());
-
-      // In order to forward the required attributes, these
-      // have to be *removed* from the CE ad that is used
-      // for flattening.
-      classad::ClassAd* local_ce_ad(new classad::ClassAd(*ce_ad));
-      classad::ClassAd* local_job_ad(new classad::ClassAd(*job_ad));
-
-      std::vector<std::string>::const_iterator cur_req;
-      std::vector<std::string>::const_iterator req_end = 
-          reqs_to_forward.end();
-      for (cur_req = reqs_to_forward.begin();
-           cur_req != req_end; ++cur_req)
-          {
-              local_ce_ad->Remove(*cur_req);
-              // Don't care if it doesn't succeed. If the attribute is
-              // already missing, so much the better.
-          }
-      
-      // Now, flatten the Requirements expression of the Job Ad
-      // with whatever info is left from the CE ad.
-      // Recipe received from Nick Coleman, ncoleman@cs.wisc.edu
-      // on Tue, 8 Nov 2005
-      classad::MatchClassAd mad;
-      mad.ReplaceLeftAd( local_job_ad );
-      mad.ReplaceRightAd( local_ce_ad );
-      
-      classad::ExprTree *req = mad.GetLeftAd()->Lookup( "Requirements" );
-      classad::ExprTree *flattened_req = 0;
-      classad::Value fval;
-      if( ! ( mad.GetLeftAd()->Flatten( req, fval, flattened_req ) ) ) {
-          // Error while flattening. Result is undefined.
-          return result;
-      }
-      
-      // No remaining requirement. Result is undefined.
-      if (!flattened_req) return result;
-  }
-#endif
-  // Produce resulting JDL
-
-  string newjdl;
-  classad::ClassAdUnParser unparser;
-  unparser.Unparse( newjdl, classad_safe_ptr.get() ); // this is safe: Unparse doesn't deallocate its second argument
-  
-  return newjdl;
-} // end of creamJdlHelper(...) and ClassAd-mutex releasing
-
-
-//______________________________________________________________________________
-void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
-{ 
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::updateIsbList");
-#endif
-// synchronized block because the caller is Classad-mutex synchronized
-    const static char* method_name = "iceCommandSubmit::updateIsbList() - ";
-    string default_isbURI = "gsiftp://";
-    default_isbURI.append( m_myname );
-    default_isbURI.push_back( '/' );
-    string isbPath;
-    if ( jdl->EvaluateAttrString( "InputSandboxPath", isbPath ) ) {
-        default_isbURI.append( isbPath );
-    } else {
-        CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
-                        << "\"InputSandboxPath\" attribute in the JDL. "
-                        << "Hope this is correct..."
-                        
-                        );     
-    }
-
-    // If the InputSandboxBaseURI attribute is defined, remove it
-    // after saving its value; the resulting jdl will NEVER have
-    // the InputSandboxBaseURI attribute defined.
-    string isbURI;
-    if ( jdl->EvaluateAttrString( "InputSandboxBaseURI", isbURI ) ) {
-        boost::trim_if( isbURI, boost::is_any_of("\"") );
-        boost::trim_right_if( isbURI, boost::is_any_of("/") );
-        // remove the attribute
-	jdl->Delete( "InputSandboxBaseURI" );
-    } else {
-        isbURI = default_isbURI;
-    }
-
-    pathName isbURIobj( isbURI );
-
-    // OK, not check each item in the InputSandbox and modify it if
-    // necessary
-    classad::ExprList* isbList;
-    if ( jdl->EvaluateAttrList( "InputSandbox", isbList ) ) {
-
-      /**
-       * this pointer is used below as argument of ClassAd::Insert. The classad doc
-       * says that that ptr MUST NOT be deallocated by the caller: 
-       * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
-       */
-        classad::ExprList* newIsbList = new classad::ExprList();
-
-	/*CREAM_SAFE_LOG(m_log_dev->debugStream()
-            << "iceCommandSubmit::updateIsbList() - "
-            << "Starting InputSandbox manipulation..."
-            );
-	*/
-        string newPath;
-        for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); ++it ) {
-            
-            classad::Value v;
-            string s;
-            if ( (*it)->Evaluate( v ) && v.IsStringValue( s ) ) {
-                pathName isbEntryObj( s );
-                pathName::pathType_t pType( isbEntryObj.getPathType() );
-
-                switch( pType ) {
-                case pathName::absolute:
-                    newPath = default_isbURI + '/' + isbEntryObj.getFileName();
-                    break;
-                case pathName::relative:
-                    newPath = isbURI + '/' + isbEntryObj.getFileName();
-                    break;
-                case pathName::invalid: // should abort??
-                case pathName::uri:
-                    newPath = s;
-                    break;
-                }                
-            }
-	    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-                           << s << " became " << newPath
-                           );
-
-            // Builds a new value
-            classad::Value newV;
-            newV.SetStringValue( newPath );
-            // Builds the new string
-            newIsbList->push_back( classad::Literal::MakeLiteral( newV ) );
-        } 
-	/**
-	 * The pointer newIsbList pointer is used as argument of ClassAd::Insert. The classad doc
-	 * says that that ptr MUST NOT be deallocated by the caller: 
-	 * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
-	 */
-        jdl->Insert( "InputSandbox", newIsbList );
-    }
-}
-
-//______________________________________________________________________________
-void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
-{
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::updateOsbList");
-#endif
-    // If no OutputSandbox attribute is defined, then nothing has to be done
-    if ( 0 == jdl->Lookup( "OutputSandbox" ) )
-        return;
-
-    string default_osbdURI = "gsiftp://";
-    default_osbdURI.append( m_myname );
-    default_osbdURI.push_back( '/' );
-    string osbPath;
-    if ( jdl->EvaluateAttrString( "OutputSandboxPath", osbPath ) ) {
-        default_osbdURI.append( osbPath );
-    } else {
-        CREAM_SAFE_LOG(m_log_dev->warnStream()
-            << "iceCommandSubmit::updateOsbList() - found no "
-            << "\"OutputSandboxPath\" attribute in the JDL. "
-            << "Hope this is correct..."
-            );        
-    }
-
-    if ( 0 != jdl->Lookup( "OutputSandboxDestURI" ) ) {
-
-        // Remove the OutputSandboxBaseDestURI from the classad
-        // OutputSandboxDestURI and OutputSandboxBaseDestURI cannot
-        // be given at the same time.
-      if( 0 != jdl->Lookup( "OutputSandboxBaseDestURI") )
-        jdl->Delete( "OutputSandboxBaseDestURI" );
-
-        // Check if all the entries in the OutputSandboxDestURI
-        // are absolute URIs
-
-        classad::ExprList* osbDUList;
-	/**
-	 * this pointer is used below as argument of ClassAd::Insert. The classad doc
-	 * says that that ptr MUST NOT be deallocated by the caller: 
-	 * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
-	 */
-        classad::ExprList* newOsbDUList = new classad::ExprList();
-	
-        if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
-
-            string newPath;
-            for ( classad::ExprList::iterator it=osbDUList->begin(); 
-                  it != osbDUList->end(); ++it ) {
-                
-                classad::Value v;
-                string s;
-                if ( (*it)->Evaluate( v ) && v.IsStringValue( s ) ) {
-                    pathName osbEntryObj( s );
-                    pathName::pathType_t pType( osbEntryObj.getPathType() );
-                    
-                    switch( pType ) {
-                    case pathName::absolute:
-                        newPath = default_osbdURI + '/' + osbEntryObj.getFileName();
-                        break;
-                    case pathName::relative:
-                        newPath = default_osbdURI + '/' + osbEntryObj.getFileName();
-                        break;
-                    case pathName::invalid: // should abort??
-                    case pathName::uri:
-                        newPath = s;
-                        break;
-                    }                
-                }
-
-		CREAM_SAFE_LOG(m_log_dev->debugStream()
-                    << "iceCommandSubmit::updateOsbList() - After input sandbox manipulation, "
-                    << s << " became " << newPath
-                    );        
-
-                // Builds a new value
-                classad::Value newV;
-                newV.SetStringValue( newPath );
-                // Builds the new string
-                newOsbDUList->push_back( classad::Literal::MakeLiteral( newV ) );
-            }
-
-	    /**
-	     * The pointer newOsbDUList pointer is used as argument of ClassAd::Insert. The classad doc
-	     * says that that ptr MUST NOT be deallocated by the caller: 
-	     * http://www.cs.wisc.edu/condor/classad/c++tut.html#insert
-	     */
-            jdl->Insert( "OutputSandboxDestURI", newOsbDUList );
-        }
-    } else {       
-        if ( 0 == jdl->Lookup( "OutputSandboxBaseDestURI" ) ) {
-            // Put a default OutpuSandboxBaseDestURI attribute
-            jdl->InsertAttr( "OutputSandboxBaseDestURI",  default_osbdURI );
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-// URI utility class
-//-----------------------------------------------------------------------------
-iceCommandSubmit::pathName::pathName( const string& p ) :
-  m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-  m_fullName( p ),
-  m_pathType( invalid )
-{
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::pathName");
-#endif
-    boost::regex uri_match( "gsiftp://[^/]+(:[0-9]+)?/([^/]+/)*([^/]+)" );
-    boost::regex rel_match( "([^/]+/)*([^/]+)" );
-    boost::regex abs_match( "(file://)?/([^/]+/)*([^/]+)" );
-    boost::smatch what;
-
-    CREAM_SAFE_LOG(
-                   m_log_dev->debugStream()
-                   << "iceCommandSubmit::pathName::CTOR() - Trying to unparse " << p
-                   
-                   );
-
-    if ( boost::regex_match( p, what, uri_match ) ) {
-        // is a uri
-        m_pathType = uri;
-
-        m_fileName = '/';
-        m_fileName.append(what[3].first,what[3].second);
-        if ( what[2].first != p.end() )
-            m_pathName.assign(what[2].first,what[2].second);
-        m_pathName.append( m_fileName );
-    } else if ( boost::regex_match( p, what, rel_match ) ) {
-        // is a relative path
-        m_pathType = relative;
-
-        m_fileName.assign(what[2].first,what[2].second);
-        if ( what[1].first != p.end() )
-            m_pathName.assign( what[1].first, what[1].second );
-        m_pathName.append( m_fileName );
-    } else if ( boost::regex_match( p, what, abs_match ) ) {
-        // is an absolute path
-        m_pathType = absolute;
-        
-        m_pathName = '/';
-        m_fileName.assign( what[3].first, what[3].second );
-        if ( what[2].first != p.end() ) 
-            m_pathName.append( what[2].first, what[2].second );
-        m_pathName.append( m_fileName );
-    }
-
-    CREAM_SAFE_LOG(
-                   m_log_dev->debugStream()
-                   << "iceCommandSubmit::pathName::CTOR() - "
-                   << "Unparsed as follows: filename=[" 
-                   << m_fileName << "] pathname=["
-                   << m_pathName << "]"
-                   
-                   );
-
-}
 
 //______________________________________________________________________________
 void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 {
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandSubmit::doSubscription");
-#endif
   static const char* method_name = "iceCommandSubmit::doSubscription() - ";
   boost::recursive_mutex::scoped_lock cemonM( s_localMutexForSubscriptions );
   
@@ -1175,7 +703,6 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "User DN [" << aJob.get_user_dn() << "] is already subscribed to CEMon ["
 		   << cemon_url << "] (asked to CEMon itself)"
-		   
 		   );
   } else {
     // MUST subscribe
@@ -1189,7 +716,6 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		       << "Notification authorization is enabled and couldn't "
 		       << "get CEMon's DN. Will not subscribe to it."
-		       
 		       );
       } 
     }
@@ -1206,7 +732,6 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 		       << cemon_url << "] with userDN [" << aJob.get_user_dn()<< "]. Will not"
 		       << " receive job status notification from it for this user. "
 		       << "Hopefully the subscriptionUpdater will retry."
-		       
 		       );
       }
     } // if(can_subscribe)
@@ -1265,21 +790,18 @@ void iceCommandSubmit::process_lease( const bool force_lease,
 }
 
 //______________________________________________________________________________
-void iceCommandSubmit::handle_delegation( string& delegation, 
-					  const bool USE_NEW,
+void iceCommandSubmit::handle_delegation( string& delegation,
 					  bool& force_delegation,
-					  const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V,
 					  const string& jobdesc,
 					  const string& _gid,
 					  const string& _ceurl)
   throw( iceCommandTransient_ex& )
 {
-
   const char* method_name = "iceCommandSubmit::handle_delegation() - ";
   boost::tuple<string, time_t, long long int> SBP;
 
-  if( USE_NEW ) {
-    SBP = iceUtil::DNProxyManager::getInstance()->getExactBetterProxyByDN( V.getDNFQAN(), m_theJob.get_myproxy_address());
+  if( m_theJob.is_proxy_renewable() ) {
+    SBP = iceUtil::DNProxyManager::getInstance()->getExactBetterProxyByDN( m_theJob.get_user_dn(), m_theJob.get_myproxy_address());
     
     if( SBP.get<0>() == "" ) {
       /**
@@ -1288,29 +810,28 @@ void iceCommandSubmit::handle_delegation( string& delegation,
       */
       CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 		      << "Setting new better proxy for userdn ["
-		      << V.getDNFQAN() << "] MyProxy server ["
+		      << m_theJob.get_user_dn() << "] MyProxy server ["
 		      << m_theJob.get_myproxy_address() << "] Job ["
 		      << jobdesc 
 		      << "]"
 		      ); 
-      iceUtil::DNProxyManager::getInstance()->setBetterProxy( V.getDNFQAN(), 
+      iceUtil::DNProxyManager::getInstance()->setBetterProxy( m_theJob.get_user_dn(), 
 							      m_theJob.get_user_proxy_certificate(),
 							      m_theJob.get_myproxy_address(),
-							      V.getProxyTimeEnd() );
+							      m_theJob.get_isbproxy_time_end(),
+							      (unsigned long long)0);
       force_delegation = true;
-      
-      //	    incrementUserProxyCounter = false;
       
     } else {
       /**
 	 The SBP already exists. Let's check if the ISB one is more
 	 long-living.
       */
-      if( V.getProxyTimeEnd() > SBP.get<1>() ) {
-	boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.get_user_proxy_certificate(), V.getProxyTimeEnd(), SBP.get<2>() );
+      if( m_theJob.get_isbproxy_time_end() > SBP.get<1>() ) {
+	boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.get_user_proxy_certificate(), m_theJob.get_isbproxy_time_end(), SBP.get<2>() );
 	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
 			<< "Updating better proxy for userdn ["
-			<< V.getDNFQAN() << "] MyProxy server ["
+			<< m_theJob.get_user_dn() << "] MyProxy server ["
 			<< m_theJob.get_myproxy_address() << "] Job ["
 			<< jobdesc
 			<< "] Proxy Expiration time ["
@@ -1318,7 +839,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 			<< newPrx.get<2>()
 			<< "] because this one is more long-living..."
 			); 
-	iceUtil::DNProxyManager::getInstance()->updateBetterProxy( V.getDNFQAN(),
+	iceUtil::DNProxyManager::getInstance()->updateBetterProxy( m_theJob.get_user_dn(),
 								   m_theJob.get_myproxy_address(),
 								   newPrx );
 	
@@ -1327,7 +848,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 	  Now check the duration of related delegation
       */
       iceUtil::Delegation_manager::table_entry deleg;
-      deleg = iceUtil::Delegation_manager::instance()->getDelegation(V.getDNFQAN(),
+      deleg = iceUtil::Delegation_manager::instance()->getDelegation(m_theJob.get_user_dn(),
 								     _ceurl,
 								     m_theJob.get_myproxy_address()
 								     );
@@ -1338,7 +859,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
   }
   
   try {
-    delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, V, USE_NEW, force_delegation );
+    delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, m_theJob.is_proxy_renewable(), force_delegation );
   } catch( const exception& ex ) {
     throw( iceCommandTransient_ex( boost::str( boost::format( "Failed to create a delegation id for job %1%: reason is %2%" ) % _gid % ex.what() ) ) );
   }
@@ -1437,6 +958,8 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
 		    << ex.what() << "."
 		    );
     throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised std::exception %1%") % ex.what() ) ) ); // Rethrow
+  } catch( ... ) {
+    throw( iceCommandTransient_ex( "Unknown exception catched" ) );
   }
   return true;
 }

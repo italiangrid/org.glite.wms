@@ -76,7 +76,9 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.get_delegation_id() <<"\',"
 	 << "\'"<< time(0) <<"\',"
 	 << "\'"<< time(0) <<"\',"
-	 << "\'"<< time(0)  <<"\')";
+	 << "\'"<< time(0) <<"\',"
+	 << "\'"<< m_theJob.get_isbproxy_time_end() <<"\',"
+	 << "\'"<< m_theJob.get_modified_jdl() <<"\')";
   
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;

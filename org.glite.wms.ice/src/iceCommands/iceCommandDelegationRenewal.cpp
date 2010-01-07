@@ -94,16 +94,16 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
     
     vector< Delegation_manager::table_entry > allDelegations;
     
-    Delegation_manager::instance()->getDelegationEntries( allDelegations, true );
+    int alldeleg_size = Delegation_manager::instance()->getDelegationEntries( allDelegations, true );
     
     map<string, pair<time_t, int> > mapDelegTime; // delegationID -> (Expiration time, Absolute Duration)
     
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-                    << "There are [" << allDelegations.size() 
+                    << "There are [" << alldeleg_size
                     << "] Delegation(s) to check..."
                     );
     
-    if( allDelegations.size() == 0 ) return;
+    if( alldeleg_size == 0 ) return;
     
     /**
        Loop over all different delegations
@@ -157,15 +157,6 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 			<< certfile << "] to renew it..."
 			);
 
-// 	setenv("X509_USER_CERT", iceConfManager::getInstance()->getConfiguration()->ice()->ice_host_cert().c_str(), 0);
-	
-// 	setenv("X509_USER_KEY", iceConfManager::getInstance()->getConfiguration()->ice()->ice_host_key().c_str(), 0);
-// 	int rc = glite_renewal_core_renew(m_ctx,
-// 					  it->m_myproxyserver.c_str(),
-// 					  0,
-// 					  certfile.c_str(),
-// 					  &new_proxy);
-
 	/**
 	 *
 	 * CODE to POPEN to glite-wms-ice-proxy-renew
@@ -188,7 +179,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 			  << "Couldn't popen command [" 		  
 			  << command << "]: " << strerror(errno)
-			  << ". Skipping this proxy renew..."
+			  << ". Skipping this delegation renew..."
 			  );
 	} else {
 

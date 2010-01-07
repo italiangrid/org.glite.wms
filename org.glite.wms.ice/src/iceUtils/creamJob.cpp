@@ -77,7 +77,7 @@ namespace fs = boost::filesystem;
 using namespace std;
 using namespace glite::wms::ice::util;
 
-boost::recursive_mutex CreamJob::serialize_mutex;
+//boost::recursive_mutex CreamJob::serialize_mutex;
 
 //______________________________________________________________________________
 CreamJob::CreamJob( ) :
@@ -93,9 +93,6 @@ CreamJob::CreamJob( ) :
     m_myproxy_address( "" ),
     m_complete_cream_jobid( "" )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("CreamJob::CreamJob_1");
-#endif
 }
 
 //______________________________________________________________________________
@@ -124,7 +121,9 @@ CreamJob::CreamJob( const std::string& gid,
 		    const std::string& is_killed_byice,
 		    const std::string& delegationid,
 		    const std::string& last_empty_notification,
-		    const std::string& last_seen)
+		    const std::string& last_seen,
+		    const std::string& isbproxy_time_end,
+		    const std::string& modif_jdl)
   : m_cream_jobid( cid ),
     m_grid_jobid( gid ),
     m_jdl( jdl ),
@@ -150,91 +149,91 @@ CreamJob::CreamJob( const std::string& gid,
     m_last_empty_notification( (time_t)atoi(last_empty_notification.c_str()) ),
     m_proxy_renew( (bool)atoi(proxy_renewable.c_str()) ),
     m_myproxy_address( myproxyurl ),
-    m_complete_cream_jobid( ccid )
+    m_complete_cream_jobid( ccid ),
+    m_isbproxy_time_end( (time_t)atoi(isbproxy_time_end.c_str() )),
+    m_modified_jdl( modif_jdl )
 {
-#ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::CreamJob_2");
-#endif
 }
 
 //______________________________________________________________________________
 void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("CreamJob::set_jdl");
-#endif
   /**
    * Classad-mutex protected region
    */
-    boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::Ice::ClassAd_Mutex );
-    classad::ClassAdParser parser;
-    classad::ClassAd *jdlAd = parser.ParseClassAd( j );
-    // int res = 0;
-
-    if ( 0 == jdlAd ) {
-        throw ClassadSyntax_ex( string("unable to parse jdl=[") + j + string("]") );
-    }
-
-    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
-
-    m_jdl = j;
-
-    // Look for the "ce_id" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", m_ceid ) ) {
-        throw ClassadSyntax_ex("ce_id attribute not found, or is not a string");
-    }
-    boost::trim_if(m_ceid, boost::is_any_of("\"") );
-    
-    // Look for the "X509UserProxy" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "X509UserProxy", m_user_proxyfile ) ) {
-        throw ClassadSyntax_ex("X509UserProxy attribute not found, or is not a string");
-    }
-    
-    string tmp;
-    if ( classad_safe_ptr->EvaluateAttrString( "MYPROXYSERVER", tmp ) ) {
-      m_proxy_renew = true;
-      m_myproxy_address = tmp;
-    } else {
-      m_proxy_renew = false;
-    }
-    
-    boost::trim_if(m_user_proxyfile, boost::is_any_of("\""));
-    
-    // Look for the "LBSequenceCode" attribute (if this attribute is not in the classad, the sequence code is set to the empty string
-    if ( classad_safe_ptr->EvaluateAttrString( "LB_sequence_code", m_sequence_code ) ) {
-        boost::trim_if(m_sequence_code, boost::is_any_of("\""));
-    }
-    
-    // Look for the "edg_jobid" attribute
-    if ( !classad_safe_ptr->EvaluateAttrString( "edg_jobid", m_grid_jobid ) ) {
-        throw ClassadSyntax_ex( "edg_jobid attribute not found, or is not a string" );
-    }
-    boost::trim_if(m_grid_jobid, boost::is_any_of("\"") );
+  boost::recursive_mutex::scoped_lock M_classad( glite::wms::ice::Ice::ClassAd_Mutex );
+  classad::ClassAdParser parser;
+  classad::ClassAd *jdlAd = parser.ParseClassAd( j );
   
-    vector<string> pieces;
-    try{
-        api::util::CEUrl::parseCEID(m_ceid, pieces);
-    } catch(api::util::CEUrl::ceid_syntax_ex& ex) {
-        throw ClassadSyntax_ex(ex.what());
-    }
-
-    m_endpoint = pieces[0] + ":" + pieces[1];
-
-    m_cream_address = iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
-	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
-
-    m_cream_deleg_address = iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
-	+ m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
-
-    // release of Classad-mutex
+  if ( 0 == jdlAd ) {
+    throw ClassadSyntax_ex( string("unable to parse jdl=[") + j + string("]") );
+  }
+  
+  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
+  
+  m_jdl = j;
+  
+  // Look for the "ce_id" attribute
+  if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", m_ceid ) ) {
+    throw ClassadSyntax_ex("ce_id attribute not found, or is not a string");
+  }
+  boost::trim_if(m_ceid, boost::is_any_of("\"") );
+  
+  // Look for the "X509UserProxy" attribute
+  if ( !classad_safe_ptr->EvaluateAttrString( "X509UserProxy", m_user_proxyfile ) ) {
+    throw ClassadSyntax_ex("X509UserProxy attribute not found, or is not a string");
+  }
+  
+  string tmp;
+  if ( classad_safe_ptr->EvaluateAttrString( "MYPROXYSERVER", tmp ) ) {
+    m_proxy_renew = true;
+    m_myproxy_address = tmp;
+  } else {
+    m_proxy_renew = false;
+  }
+  
+  boost::trim_if(m_user_proxyfile, boost::is_any_of("\""));
+  
+  // Look for the "LBSequenceCode" attribute (if this attribute is not in the classad, the sequence code is set to the empty string
+  if ( classad_safe_ptr->EvaluateAttrString( "LB_sequence_code", m_sequence_code ) ) {
+    boost::trim_if(m_sequence_code, boost::is_any_of("\""));
+  }
+  
+  // Look for the "edg_jobid" attribute
+  if ( !classad_safe_ptr->EvaluateAttrString( "edg_jobid", m_grid_jobid ) ) {
+    throw ClassadSyntax_ex( "edg_jobid attribute not found, or is not a string" );
+  }
+  boost::trim_if(m_grid_jobid, boost::is_any_of("\"") );
+  
+  vector<string> pieces;
+  try{
+    api::util::CEUrl::parseCEID(m_ceid, pieces);
+  } catch(api::util::CEUrl::ceid_syntax_ex& ex) {
+    throw ClassadSyntax_ex(ex.what());
+  }
+  
+  m_endpoint = pieces[0] + ":" + pieces[1];
+  
+  m_cream_address = iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_prefix() 
+    + m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix();
+  
+  m_cream_deleg_address = iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_prefix() 
+    + m_endpoint + iceConfManager::getInstance()->getConfiguration()->ice()->creamdelegation_url_postfix();
+  
+  // It is important to get the jdl from the job itself, rather
+  // than using the m_jdl attribute. This is because the
+  // sequence_code attribute inside the jdl classad has been
+  // modified by the L&B calls, and we have to pass to CREAM the
+  // "last" sequence code as the job wrapper will need to log
+  // the "really running" event.
+  creamJdlHelper( this->get_jdl(), m_modified_jdl );// can throw ClassadSyntax_ex
+  
+  // release of Classad-mutex
 }
 
 //______________________________________________________________________________
 bool CreamJob::is_active( void ) const
 {
-#ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::is_active");
-#endif
     if( this->is_killed_by_ice() ) return false;
 
     return ( ( m_status == api::job_statuses::REGISTERED ) ||
@@ -248,9 +247,6 @@ bool CreamJob::is_active( void ) const
 //______________________________________________________________________________
 bool CreamJob::can_be_purged( void ) const
 {
-#ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::can_be_purged");
-#endif
     return ( ( m_status == api::job_statuses::DONE_OK ) ||
              ( m_status == api::job_statuses::CANCELLED ) ||
              ( m_status == api::job_statuses::DONE_FAILED ) ||
@@ -260,9 +256,6 @@ bool CreamJob::can_be_purged( void ) const
 //______________________________________________________________________________
 bool CreamJob::can_be_resubmitted( void ) const
 { 
-#ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::can_be_resubmitted");
-#endif
     int threshold( iceConfManager::getInstance()->getConfiguration()->ice()->job_cancellation_threshold_time() );
     api::soap_proxy::VOMSWrapper V( this->get_user_proxy_certificate() );
     if ( !V.IsValid() || 
@@ -276,9 +269,6 @@ bool CreamJob::can_be_resubmitted( void ) const
 //______________________________________________________________________________
 string CreamJob::describe( void ) const
 {
-#ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::describe");
-#endif
     string result;
     result.append( "gridJobID=\"" );
     result.append( m_grid_jobid );
@@ -291,9 +281,6 @@ string CreamJob::describe( void ) const
 //______________________________________________________________________________
 void CreamJob::set_sequence_code( const std::string& seq )
 {
-#ifdef ICE_PROFILE
-	    ice_timer timer("CreamJob::set_sequence_code");
-#endif
   /**
    * mutex-protected region: REM that ClassAd is not
    * thread-safe
@@ -324,25 +311,3 @@ void CreamJob::set_sequence_code( const std::string& seq )
   m_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
   unparser.Unparse( m_jdl, jdl_ad );
 }
-
-//______________________________________________________________________________
-// string CreamJob::get_complete_cream_jobid( void ) const 
-// {
-  
-// #ifdef ICE_PROFILE
-//   ice_timer timer("CreamJob::getCompleteCreamJobID");
-// #endif
-  
-//   if ( m_cream_address.empty() || m_cream_jobid.empty() ) 
-//     return "";
-  
-//   string completecid = m_cream_address;
-  
-//   boost::replace_all( completecid, iceConfManager::getInstance()->getConfiguration()->ice()->cream_url_postfix(), "" );
-  
-//   completecid += "/" + m_cream_jobid;
-  
-//   return completecid;
-// }
-
-

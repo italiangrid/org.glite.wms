@@ -28,6 +28,8 @@
 #include <exception>
 #include <string>
 
+//#include "boost/thread/recursive_mutex.hpp"
+
 namespace glite {
 namespace wms {
 namespace ice {
@@ -62,6 +64,9 @@ namespace db {
         virtual ~AbsDbOperation() { };
         virtual void execute( sqlite3* db ) throw( DbOperationException& ) = 0;
     protected:
+
+	//static boost::recursive_mutex  s_mutex;
+
         AbsDbOperation( const std::string& caller) : m_caller(caller) { };
         void do_query( sqlite3* db, const std::string& sqlcmd, sqlite_callback_t callback = 0, void* param = 0 ) throw( DbOperationException& );
 	

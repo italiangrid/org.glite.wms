@@ -30,49 +30,48 @@
 using namespace std;
 
 namespace glite {
-namespace wms {
-namespace ice {
-
-iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request ) 
-  throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
-{
+  namespace wms {
+    namespace ice {
+      
+      iceAbsCommand* iceCommandFactory::mkCommand( util::Request* request,
+						   const util::CreamJob& aJob,
+						   const std::string& cmdtype )
+	throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
+      {
 #ifdef ICE_PROFILE
-  util::ice_timer timer("iceCommandFactory::mkCommand");
+	util::ice_timer timer("iceCommandFactory::mkCommand");
 #endif
-    iceAbsCommand* result = 0;
-    
-    { // Classad-mutex protected region
-      boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
-      
-      classad::ClassAdParser parser;
-      classad::ClassAd *rootAd = parser.ParseClassAd( request->to_string() );
-      
-      if ( !rootAd ) {
-        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
-      }
-      
-      boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAd );
-      
-      string commandStr;
-      if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-        throw util::JobRequest_ex("attribute 'command' not found or is not a string");
-      }
-      boost::trim_if(commandStr, boost::is_any_of("\""));
-      
-      if ( boost::algorithm::iequals( commandStr, "submit" ) ) {
-	//result = new iceCommandSubmit( util::CreamProxyFactory::makeCreamProxy(false), request );
-	result = new iceCommandSubmit( request );
-      } else if ( boost::algorithm::iequals( commandStr, "cancel" ) ) {
-	//        result = new iceCommandCancel( util::CreamProxyFactory::makeCreamProxy(false), request );
-	result = new iceCommandCancel( request );
+	iceAbsCommand* result = 0;
 	
-      } else {
-        throw util::JobRequest_ex( "Unknown command " + commandStr + " in request classad" );
+	//	{ // Classad-mutex protected region
+// 	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+	  
+// 	  classad::ClassAdParser parser;
+// 	  classad::ClassAd *rootAd = parser.ParseClassAd( request->to_string() );
+	  
+// 	  if ( !rootAd ) {
+// 	    throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
+// 	  }
+	  
+// 	  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAd );
+	  
+// 	  string commandStr;
+// 	  if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
+// 	    throw util::JobRequest_ex("attribute 'command' not found or is not a string");
+// 	  }
+// 	  boost::trim_if(commandStr, boost::is_any_of("\""));
+	  
+	  if ( boost::algorithm::iequals( cmdtype, "submit" ) ) {
+	    result = new iceCommandSubmit( request, aJob );
+	  } else if ( boost::algorithm::iequals( cmdtype, "cancel" ) ) {
+	    result = new iceCommandCancel( request );
+	  } else {
+	    throw util::JobRequest_ex( "Unknown command [" + cmdtype + "] in request classad" );
+	  }
+	  //	} // release of Classad-mutex
+	return result;
       }
-    } // release of Classad-mutex
-    return result;
-}
-
-} // namespace ice
-} // namespace wms
+      
+    } // namespace ice
+  } // namespace wms
 } // namespace glite

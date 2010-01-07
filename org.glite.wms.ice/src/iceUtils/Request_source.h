@@ -24,8 +24,6 @@
 #include <string>
 #include <list>
 
-#include "ice_timer.h"
-
 namespace glite {
 namespace wms {
 namespace ice {
@@ -74,9 +72,6 @@ namespace util {
          * Gets the name of this request source
          */
         std::string get_name( void ) const { 
-#ifdef ICE_PROFILE
-	  ice_timer timer("Request_source::put_request");
-#endif
 	  return m_name; 
 	};
 
@@ -89,9 +84,6 @@ namespace util {
          * Creates a new request source object.
          */
         Request_source( const std::string& name ) : m_name( name ) { 
-#ifdef ICE_PROFILE
-	  ice_timer timer("Request_source::Request_source");
-#endif
 	};
     };
 

@@ -63,7 +63,9 @@ namespace util {
      Ice *m_theIce;
      
  public:
-     iceCommandSubmit( util::Request* request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
+     iceCommandSubmit( util::Request* request, 
+		       const util::CreamJob& );
+       //       throw(util::ClassadSyntax_ex&, util::JobRequest_ex&);
      
      virtual ~iceCommandSubmit() { }
      
@@ -96,14 +98,12 @@ namespace util {
 			 std::string& lease_id ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
 
      void handle_delegation( std::string& delegation, 
-			     const bool USE_NEW,
 			     bool&,
-			     const glite::ce::cream_client_api::soap_proxy::VOMSWrapper& V,
 			     const std::string& jobdesc,
 			     const std::string& _gid,
 			     const std::string& ceurl) throw( iceCommandTransient_ex& );
 
-     bool iceCommandSubmit::register_job( const bool is_lease_enabled, 
+     bool register_job( const bool is_lease_enabled, 
 					  const std::string& jobdesc,
 					  const std::string& _gid,
 					  const std::string& delegation,
@@ -113,7 +113,7 @@ namespace util {
 					  bool& force_lease,
 					  glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult& res) throw( iceCommandTransient_ex&);
      
-     void iceCommandSubmit::process_result( bool& retry, 
+     void process_result( bool& retry, 
 					    bool& force_delegation, 
 					    bool& force_lease,
 					    const bool,
@@ -121,27 +121,7 @@ namespace util {
 					    const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult& res )
        throw( iceCommandTransient_ex& );
 
-     // Inner class definition, used to manipulate paths
-     class pathName {
-     public:
-         typedef enum { invalid=-1, absolute, uri, relative } pathType_t;
-         
-         pathName( const std::string& p );
-         virtual ~pathName( ) { }
-         // accessors
-         pathType_t getPathType( void ) const { return m_pathType; }
-         const std::string& getFullName( void ) const { return m_fullName; }
-         const std::string& getPathName( void ) const { return m_pathName; }
-         const std::string& getFileName( void ) const { return m_fileName; }
-         
-     protected:
-         
-         log4cpp::Category* m_log_dev;
-         const std::string m_fullName;
-         pathType_t m_pathType;
-         std::string m_pathName;
-         std::string m_fileName;
-     };
+     
      
      /**
       * This method is used to transform a "standard" jdl into the

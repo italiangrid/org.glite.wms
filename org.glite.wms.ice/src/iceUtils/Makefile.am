@@ -26,8 +26,7 @@ libglite_wms_iceUtils_la_SOURCES = \
 				Request_source_factory.cpp \
 				Delegation_manager.cpp \
 				Lease_manager.cpp \
-				CEBlackList.cpp \
-				ice_timer.cpp
+				CEBlackList.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src \

@@ -137,7 +137,6 @@ namespace glite {
 	  //void check_user_jobs( const std::string&, const std::string& ) throw();
 
 	public:
-	  //static boost::recursive_mutex mutexJobStatusPoll;
 	  
           //! eventStatusPoller constructor
           /*!

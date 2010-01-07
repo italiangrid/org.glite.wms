@@ -103,8 +103,10 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
     sqlcmd << ";";
   }
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    std::cout << "Executing query [" << sqlcmd.str() << "]" << std::endl;
-
+  //if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+  /*std::cout << "Executing query [" << sqlcmd.str() << "] CALLER IS [" 
+	    << m_caller << "]"
+	    << std::endl;
+  */
   do_query( db, sqlcmd.str(), fetch_fields_callback, m_result );
 }

@@ -78,30 +78,6 @@ void iceThreadPool::iceThreadPoolWorker::body( )
                 try {
                     --m_state->m_num_running;
 		    
-		    /**
-		     * Uncomment the following 15 lines
-		     * for the suicidal patch
-		     */
-// 		    while(m_state->m_requests_queue.empty()) {
-// 		      boost::xtime Xtime;
-// 		      boost::xtime_get( &Xtime, boost::TIME_UTC );
-// 		      Xtime.sec += 5;
-// 		      m_state->m_no_requests_available.timed_wait( L, Xtime );
-// 		      if( isStopped() ) {
-// 			CREAM_SAFE_LOG(
-// 				       m_log_dev->debugStream()
-// 				       << "iceThreadPool::iceThreadPoolWorker::body() - Thread ["
-// 				       << getName() << "] ENDING ..."
-// 				       
-// 				       );
-// 			return;
-// 		      }
-// 		    }
-		    
-		    /**
-		     * Comment the following single line for
-		     * the suicidal patch
-		     */
 		    m_state->m_no_requests_available.wait( L );
 
 		    if( isStopped() ) return;
@@ -142,8 +118,23 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 
         try {
             string label = boost::str( boost::format( "%1% TIMER %2% cmd=%3% threadid=%4%" ) % method_name % cmd->name() % m_state->m_name % m_threadNum );
-//            api_util::scoped_timer T( label );
+
+	    CREAM_SAFE_LOG(
+                           m_log_dev->debugStream() << method_name
+                           << "Thread [" 
+			   <<  m_state->m_name << "] is executing an AbsCommand [" 
+			   << cmd->name() << "]"
+                           );
+
             cmd->execute( );
+
+	    CREAM_SAFE_LOG(
+                           m_log_dev->debugStream() << method_name
+                           << "Thread [" 
+                           <<  m_state->m_name << "] has finished execution of command ["
+                           << cmd->name() << "]"
+                           );
+
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
                            m_log_dev->errorStream() << method_name
@@ -189,7 +180,6 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 		   m_log_dev->debugStream()
 		   << "iceThreadPool::iceThreadPoolWorker::body() - Thread ["
 		   << getName() << "] ENDING ..."
-		   
 		   );
 }
 

@@ -33,7 +33,7 @@
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
-#include "ice_timer.h"
+#include "creamJob.h"
 
 namespace log4cpp {
   class Category;
@@ -68,11 +68,20 @@ namespace util {
         void setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy) throw();
 	void setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy, const time_t ) throw();
        
-	void incrementUserProxyCounter( const std::string& dn, 
-					const std::string& myproxyname ) throw();
+/* 	void incrementUserProxyCounter( const std::string& dn,  */
+/* 					const std::string& myproxyname ) throw(); */
+
+	void incrementUserProxyCounter( const CreamJob& aJob,
+					const time_t proxy_time_end) throw();
 
 	void decrementUserProxyCounter( const std::string& dn, 
 					const std::string& myproxyname ) throw();
+
+	void setBetterProxy( const std::string& dn,
+			     const std::string& proxyfile,
+			     const std::string& myproxyname,
+			     const time_t,
+			     const unsigned long long) throw();
 
 	boost::tuple<std::string, time_t, long long int> getExactBetterProxyByDN( const std::string& dn,
 										  const std::string& myproxyname) const throw() ;
@@ -88,10 +97,7 @@ namespace util {
 				time_t, 
 				long long int>& newEntry ) throw();
 
-	void setBetterProxy( const std::string& dn,
-			     const std::string& proxyfile,
-			     const std::string& myproxyname,
-			     const time_t ) throw();
+	
 	
     private:
 
@@ -101,9 +107,6 @@ namespace util {
 
 	std::string composite( const std::string& userDN, const std::string& myproxy_name) const throw()
 	  {
-#ifdef ICE_PROFILE
-	    ice_timer timer("DNProxyManager::composite");
-#endif
 	    return userDN+"_"+myproxy_name;
 	  }
 
