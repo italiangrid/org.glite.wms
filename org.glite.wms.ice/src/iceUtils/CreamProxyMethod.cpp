@@ -23,11 +23,13 @@
 
 
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include "CreamProxyMethod.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "iceConfManager.h"
+
 #include <boost/scoped_ptr.hpp>
 
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
@@ -41,6 +43,7 @@ CreamProxyMethod::CreamProxyMethod( const string& creamurl ) :
     m_blacklist( CEBlackList::instance() ),
     m_service( creamurl )
 {
+
 }
 
 void CreamProxyMethod::execute( int ntries ) // can throw anything
@@ -57,7 +60,7 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
 
         // First, check whether the service is blacklisted
         if ( m_blacklist->is_blacklisted( m_service ) ) {
-	  throw cream_ex::ConnectionTimeoutException( string("The endpoint [") + m_service + "] is blacklisted" ); // FIXME: throw different exception?
+            throw cream_ex::ConnectionTimeoutException( "The endpoint is blacklisted" ); // FIXME: throw different exception?
         }
 
         try {
@@ -67,8 +70,7 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
             if ( retry_count < ntries ) {
                 CREAM_SAFE_LOG( m_log_dev->warnStream()
                                 << method_name 
-                                << "Connection timed out to CREAM ["
-				<< m_service << "]: \""
+                                << "Connection timed out to CREAM: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
                                 << ". Trying again in " << delay << " sec..."
@@ -82,15 +84,14 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
                                 << method_name << "Connection timed out to CREAM: \""
                                 << ex.what()
                                 << "\" on try " << retry_count << "/" << ntries
-                                << ". Blacklisting endpoint ["
-				<< m_service <<"] and giving up."
+                                << ". Blacklisting endpoint and giving up."
                                  );
                 m_blacklist->blacklist_endpoint( m_service );
                 throw; // rethrow
             }            
-        } catch( exception& ex ) {
-            throw ex;
-        } catch( ... ) { throw; }
+        } catch( ... ) {
+            throw; // rethrow anything else
+        }
     }
 }
 
@@ -111,6 +112,7 @@ CreamProxy_Register::CreamProxy_Register( const string& service_uri,
     m_res( res ),
     m_iceid( iceid )  
 {
+  
 }
 
 void CreamProxy_Register::method_call( int timeout ) 
@@ -125,65 +127,19 @@ void CreamProxy_Register::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&) 
+	soap_proxy::auth_ex&) 
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyRegister( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile );
   theProxy->setSoapHeader( m_iceid );
   
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_Register::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
   theProxy->execute( m_service );  
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//
-// Query Event
-//
-//////////////////////////////////////////////////////////////////////////////
-
-CreamProxy_QueryEvent::CreamProxy_QueryEvent( const std::string& service,
-					      const std::string& certfile,
-					      const std::string& fromid,
-					      const std::string& toid,
-					      const time_t       fromDate,
-					      const std::string& type,
-					      const int maxnum,
-					      std::string& dbid,
-					      time_t& etime,
-					      std::list<soap_proxy::EventWrapper*>& events,
-					      const string& iceid ):
-  CreamProxyMethod( service ),
-  m_certfile( certfile ),
-  m_fromid( fromid ),
-  m_toid( toid ),
-  m_type( type ),
-  m_dbid( &dbid ),
-  m_maxnum( maxnum ),
-  m_events( &events ),
-  m_iceid( iceid ),
-  m_etime( &etime ),
-  m_fromDate( fromDate )
-{
-}
-void CreamProxy_QueryEvent::method_call( int timeout ) 
-  throw(cream_ex::BaseException&,
-	cream_ex::InvalidArgumentException&,
-	cream_ex::GenericException&,
-	cream_ex::AuthorizationException&,
-	cream_ex::InternalException&,
-	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)  
-{
-  boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxy_QueryEvent( make_pair(m_fromid, m_toid), make_pair( m_fromDate, (time_t)-1), m_type, m_maxnum, 0, *m_etime, *m_dbid, *m_events, timeout) );
-
-  theProxy->setCredential( m_certfile );
-  theProxy->setSoapHeader( m_iceid );
-
-  theProxy->execute( m_service );
-}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -200,6 +156,7 @@ CreamProxy_Start::CreamProxy_Start( const string& service,
     m_req( req ),
     m_res( res )
 {
+  
 }
 
 void CreamProxy_Start::method_call( int timeout ) 
@@ -214,14 +171,17 @@ void CreamProxy_Start::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)  
+	soap_proxy::auth_ex&)  
   
   
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyStart( m_req, m_res, timeout ) );
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_Start::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
 
   theProxy->execute( m_service );
 }
@@ -241,6 +201,7 @@ CreamProxy_Cancel::CreamProxy_Cancel( const string& service,
     m_req( req ),
     m_res( res )
 {
+  
 }
 
 void CreamProxy_Cancel::method_call( int timeout )
@@ -255,13 +216,16 @@ void CreamProxy_Cancel::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)   
+	soap_proxy::auth_ex&)   
                                      
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyCancel( m_req, m_res, timeout ));
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_Cancel::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
 
   theProxy->execute( m_service );
 }
@@ -280,6 +244,7 @@ CreamProxy_Lease::CreamProxy_Lease( const std::string& service,
     m_lease_IN( lease_IN ),
     m_lease_OUT( lease_OUT )
 {
+  
 }
 
 void CreamProxy_Lease::method_call( int timeout ) 
@@ -294,13 +259,16 @@ void CreamProxy_Lease::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)   
+	soap_proxy::auth_ex&)   
             
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyLease( m_lease_IN, m_lease_OUT, timeout ));
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_Lease::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
 
   theProxy->execute( m_service );
 }
@@ -319,6 +287,7 @@ CreamProxy_LeaseInfo::CreamProxy_LeaseInfo( const std::string& service,
     m_lease_IN( lease_IN ),
     m_lease_OUT( lease_OUT )
 {
+  
 }
 
 void CreamProxy_LeaseInfo::method_call( int timeout ) 
@@ -333,13 +302,16 @@ void CreamProxy_LeaseInfo::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)   
+	soap_proxy::auth_ex&)   
             
 {
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy(soap_proxy::CreamProxyFactory::make_CreamProxyLeaseInfo( m_lease_IN, m_lease_OUT, timeout ));
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_LeaseInfo::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
 
   theProxy->execute( m_service );
 }
@@ -358,6 +330,7 @@ CreamProxy_Info::CreamProxy_Info( const std::string& service,
     m_req( req ),
     m_res( res )
 {
+  
 }
 
 void CreamProxy_Info::method_call( int timeout )  
@@ -372,12 +345,15 @@ void CreamProxy_Info::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&) 
+	soap_proxy::auth_ex&) 
 {   
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyInfo( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile ); 
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_Info::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
 
   theProxy->execute( m_service );
 }
@@ -396,6 +372,7 @@ CreamProxy_Purge::CreamProxy_Purge( const std::string& service,
     m_req( req ),
     m_res( res )
 {
+  
 }
 
 void CreamProxy_Purge::method_call( int timeout ) 
@@ -410,12 +387,15 @@ void CreamProxy_Purge::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)
+	soap_proxy::auth_ex&)
 {    
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyPurge( m_req, m_res, timeout ) );   
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_Purge::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
 
   theProxy->execute( m_service );
 }
@@ -433,6 +413,7 @@ CreamProxy_Delegate::CreamProxy_Delegate( const std::string& service,
     m_certfile( certfile ),
     m_delegation_id( delegation_id )
 {
+  
 }
 
 void CreamProxy_Delegate::method_call( int timeout ) 
@@ -447,12 +428,15 @@ void CreamProxy_Delegate::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)
+	soap_proxy::auth_ex&)
 { 
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxyDelegate( m_delegation_id, timeout ) );   
   theProxy->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_Delegate::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );  
+#endif
 
   theProxy->execute( m_service );
 }
@@ -470,6 +454,7 @@ CreamProxy_ProxyRenew::CreamProxy_ProxyRenew( const std::string& service,
     m_certfile( certfile ),
     m_delegation_id( delegation_id )
 {
+
 }
 
 void CreamProxy_ProxyRenew::method_call( int timeout ) 
@@ -484,12 +469,15 @@ void CreamProxy_ProxyRenew::method_call( int timeout )
 	cream_ex::DelegationException&,
 	cream_ex::InternalException&,
 	cream_ex::ConnectionTimeoutException&,
-	soap_proxy::auth_ex&,
-	soap_proxy::soap_ex&,
-	soap_proxy::soap_runtime_ex&)
+	soap_proxy::auth_ex&)
 {    
   boost::scoped_ptr< soap_proxy::AbsCreamProxy > p( soap_proxy::CreamProxyFactory::make_CreamProxy_ProxyRenew( m_delegation_id, timeout ) );   
   p->setCredential( m_certfile );
+
+#ifdef ICE_PROFILE_ENABLE
+  string timer_message = string("CreamProxy_ProxyRenew::execute() - [")+m_service+"] TIMER";
+  api_util::scoped_timer T( timer_message );
+#endif
 
   p->execute( m_service );
 }
