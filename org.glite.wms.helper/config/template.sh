@@ -211,6 +211,7 @@ warning()
 
 fatal_error() # 1 - reason, 2 - transfer OSB
 {
+  jw_echo "$1"
   push_in_done_reason "$1"
   log_done_failed 1
   if [ "x$2" -eq "xOSB" ]; then
@@ -269,6 +270,15 @@ retry_copy() # 1 - source, 2 - dest
   local transport[1]="https http"
   local transport_client[0]="globus-url-copy"
   local transport_client[1]="htcp"
+  for uberftp_cmd in $GLOBUS_LOCATION/bin/uberftp 2>/dev/null \
+                            `which uberftp 2>/dev/null`; do
+    if [ -x "${uberftp_cmd}" ]; then
+      break;
+    fi
+  done
+  if [ -n ${uberftp_cmd} ]; then
+    local transport_client[2]="$uberftp_cmd"
+  fi
 
   local match_index=`expr match "${source}" '[[:alpha:]][[:alnum:]+.-]*://'`
   if [ ${match_index} -gt 0 ]; then
@@ -685,6 +695,7 @@ OSB_transfer()
           retry_copy "file://$s" "$d"
         else
           error="OSB quota exceeded for $s, truncating needed"
+          jw_echo $error
           push_in_done_reason $error
           file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
@@ -700,9 +711,11 @@ OSB_transfer()
             truncate "$s" $trunc_len "$s.tail"
             if [ $? != 0 ]; then
               error="Could not truncate output sandbox file ${file}, not sending"
+              jw_echo $error
               push_in_done_reason $error
             else
               error="Truncated last $trunc_len bytes for file ${file}"
+              jw_echo $error
               push_in_done_reason $error
               retry_copy "file://$s.tail" "$d.tail"
             fi
@@ -716,6 +729,7 @@ OSB_transfer()
       fi
     else
       error="Cannot read or missing file ${__wmp_output_file[$current_file]}"
+      jw_echo $error
       push_in_done_reason $error
     fi
     let "++current_file"
@@ -856,7 +870,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
                             `which glite-gridftp-rm 2>/dev/null` \
                             $EDG_LOCATION/bin/edg-gridftp-rm \
                             `which edg-gridftp-rm 2>/dev/null` \
-                            $GLOBUS_LOCATION/bin/uberftp \
+                            $GLOBUS_LOCATION/bin/uberftp 2>/dev/null \
                             `which uberftp 2>/dev/null`; do
     if [ -x "${gridftp_rm_command}" ]; then
       break;
