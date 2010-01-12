@@ -20,7 +20,7 @@
 #define GLITE_WMS_ICE_GET_DN_H
 
 #include "AbsDbOperation.h"
-#include <list>
+#include <set>
 #include <string>
 
 #include <boost/tuple/tuple.hpp>
@@ -35,10 +35,10 @@ namespace glite {
 	 */
 	class GetAllDN : public AbsDbOperation {
 	protected:
-	  std::list<std::string>* m_dns;
+	  std::set<std::string>* m_dns;
 
 	public:
-	  GetAllDN( std::list<std::string>& target, 
+	  GetAllDN( std::set<std::string>& target, 
 		    const std::string& caller )
 	    :  AbsDbOperation( caller ), m_dns( &target ) {}
 	  

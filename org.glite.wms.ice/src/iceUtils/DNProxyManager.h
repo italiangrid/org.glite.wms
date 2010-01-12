@@ -63,6 +63,15 @@ namespace util {
         
     public:
         
+	struct proxy_info {
+	  std::string userdn;
+	  std::string myproxy;
+	  std::string proxyfile;
+	  time_t      expiration_time;
+	  long long   counter;
+	};
+	
+
         static DNProxyManager* getInstance() throw();
         void setUserProxyIfLonger_Legacy( const std::string& proxy) throw();
         void setUserProxyIfLonger_Legacy( const std::string& dn, const std::string& proxy) throw();

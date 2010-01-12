@@ -40,7 +40,7 @@ void RemoveProxyByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM proxy " \
-      " where userdn = \'%1%\'; " ) % m_userdn );
+      " where userdn = \'%1%\' AND myproxyurl=\'%2%\'; " ) % m_userdn % m_myproxy );
 
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "Executing query ["<<sqlcmd<<"]"<<endl;

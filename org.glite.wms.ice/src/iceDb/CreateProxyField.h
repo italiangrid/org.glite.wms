@@ -40,12 +40,14 @@ namespace db {
     class CreateProxyField : public AbsDbOperation { 
     public:
         CreateProxyField( const std::string& userdn,
+			  const std::string& myproxy,
 			  const std::string& proxyfile,
 			  const time_t exptime,
 			  const long long counter, 
 			  const std::string& caller )
 	  : AbsDbOperation( caller ),
 	  m_userdn( userdn),
+	  m_myproxy( myproxy ),
 	  m_proxyfile( proxyfile ),
 	  m_exptime( exptime ),
 	  m_counter( counter ) {}
@@ -54,6 +56,7 @@ namespace db {
     protected:
         //std::string                       m_serialized_job;
 	const std::string m_userdn;
+	const std::string m_myproxy;
 	const std::string m_proxyfile;
 	const time_t      m_exptime;
 	const long long   m_counter;

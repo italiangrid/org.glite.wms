@@ -92,7 +92,7 @@ void eventStatusPoller::body( void )
 		    << "eventStatusPoller::body() - New iteration"
 		    );
     
-    list< string > dns;
+    set< string > dns;
     {
       db::GetAllDN getter( dns, "eventStatusPoller::body" );
 	
@@ -100,7 +100,7 @@ void eventStatusPoller::body( void )
       tnx.execute( &getter ); 
     }
     
-    list< string > ces;
+    set< string > ces;
     {
       db::GetCEUrl getter( ces, "eventStatusPoller::body" );
 	
@@ -110,11 +110,11 @@ void eventStatusPoller::body( void )
     
 
 
-    list<string>::const_iterator ceit = ces.begin();
+    set<string>::const_iterator ceit = ces.begin();
     
     while( ceit != ces.end() ) {
     
-      list<string>::const_iterator dnit = dns.begin();
+      set<string>::const_iterator dnit = dns.begin();
       
       while( dnit != dns.end() ) {
       
@@ -135,13 +135,7 @@ void eventStatusPoller::body( void )
       
         m_threadPool->add_request( new iceCommandEventQuery( m_iceManager, *dnit , *ceit ) );//.execute();
       
-//         CREAM_SAFE_LOG( m_log_dev->warnStream()
-//  			    << "eventStatusPoller::body() - "
-//  			    << "Finished EventQuery command for couple (" 
-//  			    << *dnit << ", "
-//  			    << *ceit << ")..."
-//  			    );
-      
+
         ++dnit;
       }
     

@@ -13,9 +13,10 @@ namespace {
     
     if( argv && argv[0] ) {
    
-      list<string>* result = (list<string>*)param;
+      set<string>* result = (set<string>*)param;
       //*result = atoll(argv[0]);
-      result->push_back( argv[0] );
+//      result->push_back( argv[0] );
+	result->insert( argv[0] );
 
     }
 

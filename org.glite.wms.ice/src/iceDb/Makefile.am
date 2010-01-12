@@ -15,6 +15,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetAllDelegation.cpp \
 				GetFieldsCount.cpp \
 				GetProxyInfoByDN.cpp \
+				GetProxyInfoByDN_MYProxy.cpp \
 				GetLease.cpp \
 				GetLeaseByID.cpp \
 				GetAllProxyInfo.cpp \

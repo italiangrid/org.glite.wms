@@ -582,7 +582,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 
   //  string isbproxy( the_job.getUserProxyCertificate() );
 
-  if( !::getenv( "GLITE_WMS_ICE_NORESUBMIT" ) ) {
+  if( ::getenv( "GLITE_WMS_ICE_NORESUBMIT" ) ) {
 
      CREAM_SAFE_LOG( m_log_dev->warnStream() 
                     << "Ice::resubmit_job() - RESUBMISSION DISABLED."

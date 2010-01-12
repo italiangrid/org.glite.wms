@@ -62,7 +62,7 @@ void UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException&
     
     sqlcmd.str( "" );
     
-    sqlcmd << tmp << " WHERE userdn=\'" << m_dn << "\';";
+    sqlcmd << tmp << " WHERE userdn=\'" << m_dn << "\' AND myproxyurl=\'" << m_myproxy << "\';";
      
   if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
     cout << "CALLER=[" << get_caller() << "] Executing query ["<<sqlcmd.str()<<"]"<<endl;

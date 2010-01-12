@@ -41,10 +41,11 @@ namespace { // begin local namespace
     // Local helper function: callback for sqlite
     static int fetch_fields_callback(void *param, int argc, char **argv, char **azColName) {
     
-      list<string>* result = (list<string>*) param;
+      set<string>* result = (set<string>*) param;
       
       if ( argv && argv[0] ) {
-        result->push_back(argv[0]);
+        //result->push_back(argv[0]);
+	result->insert( argv[0] );
       }
 	  
       return 0;

@@ -122,6 +122,7 @@ namespace {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS proxy ( "	\
 		"userdn text primary key not null, "	\
+		"myproxyurl text not null,"		\
 		"proxyfile text not null, "		\
 		"exptime integer(4) not null, "		\
 		"counter integer(8) not null"		\

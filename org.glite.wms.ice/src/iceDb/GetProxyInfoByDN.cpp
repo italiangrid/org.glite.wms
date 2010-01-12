@@ -60,7 +60,7 @@ void GetProxyInfoByDN::execute( sqlite3* db ) throw ( DbOperationException& )
   ostringstream sqlcmd;
  
   sqlcmd << "SELECT proxyfile,exptime,counter FROM proxy WHERE userdn=\'";
-  sqlcmd << m_userdn << "\';";
+  sqlcmd << m_userdn << "\' LIMIT 1;";
 
   vector<string> tmp;
 
@@ -73,4 +73,5 @@ void GetProxyInfoByDN::execute( sqlite3* db ) throw ( DbOperationException& )
     m_found = true;
     m_result = boost::make_tuple( tmp.at(0), (time_t)atoi(tmp.at(1).c_str()), atoll(tmp.at(2).c_str()));  
   }
+
 }

@@ -37,11 +37,12 @@ namespace db {
      */
     class RemoveProxyByDN: public AbsDbOperation { 
     public:
-    RemoveProxyByDN( const std::string& dn, const std::string& caller ) : AbsDbOperation( caller ), m_userdn( dn ) {}
+    RemoveProxyByDN( const std::string& dn, const std::string& myproxy, const std::string& caller ) : AbsDbOperation( caller ), m_userdn( dn ), m_myproxy( myproxy ) {}
 
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
     protected:
         const std::string m_userdn;
+	const std::string m_myproxy;
     };
 
 } // namespace db

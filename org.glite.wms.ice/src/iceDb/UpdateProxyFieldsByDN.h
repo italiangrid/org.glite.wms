@@ -40,16 +40,19 @@ namespace db {
     class UpdateProxyFieldsByDN : public AbsDbOperation { 
     public:
         UpdateProxyFieldsByDN( const std::string& dn,
+			       const std::string& myproxy,
 			       const std::list< std::pair<std::string, std::string> >& nameval_list, 
 			       const std::string& caller )
 	  : AbsDbOperation( caller ),
 	  m_dn( dn ),
+	  m_myproxy( myproxy ),
 	  m_nameval_list( nameval_list ) {}
 	  
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	
     protected:
         const std::string                                      m_dn;
+	const std::string				       m_myproxy;
 	const std::list< std::pair<std::string, std::string> > m_nameval_list;
 	
     };

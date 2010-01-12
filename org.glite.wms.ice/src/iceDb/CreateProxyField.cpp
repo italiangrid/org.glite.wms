@@ -29,24 +29,14 @@
 using namespace glite::wms::ice::db;
 using namespace std;
 
-// CreateProxyField::CreateProxyField( const std::string& userdn,
-// 			  const std::string& proxyfile,
-// 			  const time_t exptime,
-// 			  const long long counter ) :
-//   m_userdn( userdn),
-//   m_proxyfile( proxyfile ),
-//   m_exptime( exptime ),
-//   m_counter( counter )
-// {
-// }
-
 void CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
   ostringstream sqlcmd("");
   sqlcmd << "INSERT OR REPLACE INTO proxy (" 
-         << " userdn,proxyfile,exptime,counter) VALUES ("
+         << " userdn,myproxyurl,proxyfile,exptime,counter) VALUES ("
 	 << "\'" << m_userdn << "\',"
+	 << "\'" << m_myproxy << "\',"
 	 << "\'" << m_proxyfile << "\',"
 	 << "\'" << m_exptime << "\',"
 	 << "\'" << m_counter << "\'"
