@@ -661,83 +661,12 @@ function simple-channel-add()
     glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement \
      $CHANNEL $SITE_S $SITE_D
     if [ $? != 0 ]; then
-    glite-transfer-channel-list  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement
-    echo "Add channel - failed"
-    return 1
+      glite-transfer-channel-list  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement
+      echo "Add channel - failed"
+      return 1
     fi
     return 0
 }
-
-# FTS_HOST must be set.
-# Added by Victor Galaktionov 24/11/209
-function channel-add()
-{
-    echo "channel-add($1, $2, $3, $4, $5, $6, $7, $8, $9)"
-    if [ -z $1 ]; then
-         echo "Channel name must be given to channel-add()"
-     return 1
-    fi
-
-    local CHANNEL=$1
-    local BANDWIDTH=$2
-    local CONTACT=$3
-    local STATE=$4
-    local STREAMS=$5
-    local FILES=$6
-    local THROUGHPUT=$7
-    local SITE_S=$8
-    local SITE_D=$9
-    localNOTAUTH="You are not authorised"
-
-    echo "1. Add channel: --verbose -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT $CHANNEL $SITE_S $SITE_D"
-    glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement --verbose \
-    -b $BANDWIDTH -c $CONTACT  -S $STATE -T $STREAMS -f $FILES -t $THROUGHPUT $CHANNEL $SITE_S $SITE_D  2> message
-    if [ $? != 0 ]; then
-    grep "$NOTAUTH" message
-    if [ $? == 0 ]; then
-        cat message
-        echo "NOTE>>: add: You are not authorised for channel management upon this service"
-        return 2
-    fi
-    return 1
-    fi
-    echo "OK"
-    echo "2. Check added channel"
-    glite-transfer-channel-list  -x -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL > message
-    if [ $? != 0 ]; then
-    echo "Failure in checking  glite-transfer-channel-list"
-    cat message
-    return 1
-    fi
-    declare -a OPTIONS
-    OPTIONS=("$CHANNEL" $BANDWIDTH  $CONTACT $STATE $STREAMS $FILES $THROUGHPUT)
-
-    for item in ${OPTIONS[*]}
-    do
-        grep $item message > /dev/null
-        if [ $? != 0 ]; then
-            echo "Noncorrect add channel"
-            return 1
-        fi
-    done
-    echo "OK"
-
-    echo "3. Check channel adding for existing channel"
-    glite-transfer-channel-add  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $CHANNEL  $SITE_S $SITE_D 2> message
-    if [ $? == 0 ]; then
-    echo "Failure in adding new channel"
-    return 1
-    fi
-    grep "already exists" message
-    if [ $? != 0 ]; then
-    echo "Failure in checking  glite-transfer-channel-list"
-    cat message
-    return 1
-    fi
-    echo "OK"
-    return 0
-}
-
 
 # Added by Victor Galaktionov 08/12/2009
 function special-channel-signal()
