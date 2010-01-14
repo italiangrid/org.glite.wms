@@ -63,9 +63,10 @@ namespace glite {
           time_t                                       m_empty_threshold; ///< Threshold for empty notifications
 	  bool                                         m_poll_all_jobs;
 	  glite::wms::ice::util::iceConfManager       *m_conf;
+	  bool 					       m_stopped;
 	  const std::pair< std::string, std::string >  m_dnce;
 	  
-	  bool m_stopped;
+	  
 
 	  //void purgeJobs( const std::vector< std::string >& );
 

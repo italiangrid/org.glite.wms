@@ -182,7 +182,7 @@ void iceUtil::subscriptionManager::getCEMonURL(const string& proxy,
 
     int timeout = m_conf->getConfiguration()->ice()->soap_timeout();
 
-    boost::scoped_ptr< api::AbsCreamProxy > creamProxy( api::CreamProxyFactory::make_CreamProxyServiceInfo( &info, timeout ) );
+    boost::scoped_ptr< api::AbsCreamProxy > creamProxy( api::CreamProxyFactory::make_CreamProxyServiceInfo( &info, 1, timeout ) );
     
     creamProxy->setCredential( proxy );
     creamProxy->execute( creamURL );

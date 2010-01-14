@@ -42,7 +42,7 @@ namespace glite {
 	  GetLease( const std::string& userdn, 
 		    const std::string& creamurl, 
 		    const std::string& caller ) 
-	    : AbsDbOperation( caller ), m_userdn( userdn ), m_creamurl( creamurl ), m_result( "", "", time(0), "")
+	    : AbsDbOperation( caller ), m_result( "", "", time(0), ""), m_userdn( userdn ), m_creamurl( creamurl )
 	    { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );

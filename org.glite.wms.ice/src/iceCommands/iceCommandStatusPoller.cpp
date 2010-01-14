@@ -592,8 +592,10 @@ void iceCommandStatusPoller::execute( ) throw()
     CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
 		   << "A valid proxy file for DN [" << userdn
 		   << "] CREAM-URL ["
-		   << creamurl << "] is not available. Skipping polling for this user."
+		   << creamurl << "] is not available. Skipping polling for this user and "
+		   << "deleting all his/her jobs" 
 		   );
+    deleteJobsByDN( userdn );
     return;//continue;
   }  
   if( !(isvalid( proxy ).first) ) {

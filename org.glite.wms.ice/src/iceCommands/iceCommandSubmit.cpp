@@ -127,12 +127,12 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request,
 				    const iceUtil::CreamJob& aJob )
   : iceAbsCommand( "iceCommandSubmit" ),
     m_theIce( Ice::instance() ),
+    m_myname( m_theIce->getHostName() ),
+    m_theJob( aJob ),
     m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
     m_configuration( iceUtil::iceConfManager::getInstance()->getConfiguration() ),
     m_lb_logger( iceUtil::iceLBLogger::instance() ),
-    m_request( request ),
-    m_theJob( aJob ),
-    m_myname( m_theIce->getHostName() )
+    m_request( request )  
 {
 
 //  m_myname = m_theIce->getHostName();
