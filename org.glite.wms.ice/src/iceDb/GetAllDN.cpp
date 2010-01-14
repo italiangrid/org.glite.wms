@@ -60,8 +60,8 @@ void GetAllDN::execute( sqlite3* db ) throw ( DbOperationException& )
  
   sqlcmd << "SELECT userdn FROM proxy;";
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, m_dns );
   

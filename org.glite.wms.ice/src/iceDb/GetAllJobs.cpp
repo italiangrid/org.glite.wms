@@ -121,8 +121,8 @@ void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 
   //list< vector<string> > jobs;
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_jobs_callback, m_result );
 

@@ -52,8 +52,8 @@ void GetStatusInfoByCompleteCreamJobID::execute( sqlite3* db ) throw ( DbOperati
       " where complete_cream_jobid = \'%1%\';" ) % m_creamjobid );
     //string serialized_job;
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
     do_query( db, sqlcmd, fetch_jdl_callback, &m_info );
     

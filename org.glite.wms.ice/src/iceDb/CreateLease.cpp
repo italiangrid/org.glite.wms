@@ -40,8 +40,8 @@ void CreateLease::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'" << m_exptime << "\',"	
 	 << "\'" << m_leaseid << "\');";
    
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str() );
 }

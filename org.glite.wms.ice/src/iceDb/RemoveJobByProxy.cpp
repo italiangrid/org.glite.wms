@@ -42,8 +42,8 @@ void RemoveJobByProxy::execute( sqlite3* db ) throw ( DbOperationException& )
       "DELETE FROM jobs " \
       " WHERE userproxy = \'%1%\'; " ) % m_proxy );
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
     do_query( db, sqlcmd );
 }

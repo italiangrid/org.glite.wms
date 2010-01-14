@@ -48,20 +48,11 @@ iceCommandDelegationRenewal::iceCommandDelegationRenewal( ) :
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_ctx( NULL )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("iceCommandDelegationRenewal::iceCommandDelegationRenewal");
-#endif
-  //glite_renewal_core_init_ctx( &m_ctx );
-
 }
 
 //______________________________________________________________________________
 iceCommandDelegationRenewal::~iceCommandDelegationRenewal( )
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("iceCommandDelegationRenewal::~iceCommandDelegationRenewal");
-#endif
-  //glite_renewal_core_destroy_ctx( m_ctx );
 }
 
 //______________________________________________________________________________
@@ -77,9 +68,6 @@ void iceCommandDelegationRenewal::execute( void ) throw()
 //______________________________________________________________________________
 void iceCommandDelegationRenewal::renewAllDelegations( void ) throw() 
 {
-#ifdef ICE_PROFILE
-  ice_timer timer("iceCommandDelegationRenewal::renewAllDelegations");
-#endif
     static const char* method_name = "iceCommandDelegationRenewal::renewAllDelegations() - ";
     
     //char* new_proxy = NULL;
@@ -87,10 +75,6 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
     /**
        Now, let's check all delegations for expiration and renew them
     */
-    
-#ifdef ICE_PROFILE_ENABLE
-    api_util::scoped_timer T( "iceCommandDelegationRenewal::renewAllDelegations()" );
-#endif
     
     vector< Delegation_manager::table_entry > allDelegations;
     
@@ -221,7 +205,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	    /**
 	       Must substitute old better proxy with new downloaded one, if it's more long-living 
 	    */
-	    cream_api::soap_proxy::VOMSWrapper V( certfile + ".renewed" );
+	    cream_api::soap_proxy::VOMSWrapper V( certfile + ".renewed", !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
 	    if( !V.IsValid( ) ) {
 	      CREAM_SAFE_LOG(m_log_dev->errorStream() 
 			     << method_name

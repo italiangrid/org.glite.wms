@@ -77,22 +77,14 @@ ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::Ice* theIce,
     m_dn( dn ),
     m_ce( ce )
 {
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandEventQuery::iceCommandEventQuery");
-#endif
+
 }
 
 //______________________________________________________________________________
 void ice::util::iceCommandEventQuery::execute( ) throw()
 {
-#ifdef ICE_PROFILE
-  iceUtil::ice_timer timer("iceCommandEventQuery::execute");
-#endif
-  static const char* method_name = "iceCommandEventQuery::execute() - ";
 
-#ifdef ICE_PROFILE_ENABLE
-    api_util::scoped_timer Tot( "iceCommandEventQuery::execute() - Entire Command Time" );
-#endif
+  static const char* method_name = "iceCommandEventQuery::execute() - ";
 
     if( m_dn.empty() || m_ce.empty() ) {
       CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
@@ -104,10 +96,6 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     list<soap_proxy::EventWrapper*> events;
     cleanup cleaner( &events );
 
-#ifdef ICE_PROFILE
-    api_util::scoped_timer Totdnce( string("iceCommandEventQuery::execute() - Proc Time for DN,CE [") + m_dn + "],[" + m_ce + "]" );
-#endif
-   
     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
 		   << "Retrieving last EVENT_ID for userdn ["
 		   << m_dn << "] and ce url ["
@@ -139,8 +127,9 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 		     );
     }
     
-    string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn ).get<0>() );
-    if ( proxy.empty() ) {
+    boost::tuple<string, time_t, long long int> proxyinfo = DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn );
+    //string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn ).get<0>() );
+    if ( proxyinfo.get<0>().empty() ) {
       CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
 		      << "A valid proxy file for DN [" << m_dn
 		      << "] ce url ["
@@ -151,16 +140,31 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       
       return;
       
-    }  
-    if( !(isvalid( proxy ).first) ) {
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
-		     << "Proxy ["
-		     << proxy << "] for userdn ["
-		     << m_dn << "] is expired! Skipping EventQuery."
-		     );
+    }
+    
+    if ( proxyinfo.get<1>() < time(0) ) {
+      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+		      << "The returned proxy ["
+		      << proxyinfo.get<0>() << "] for DN [" << m_dn
+		      << "] ce url ["
+		      << m_ce << "] is not valid anymore. Skipping EventQuery. Going to remove all jobs of this user..."
+		      );
+      
+      deleteJobsByDN( );
       
       return;
+      
     }
+    
+//     if( !(isvalid( proxy ).first) ) {
+//       CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+// 		     << "Proxy ["
+// 		     << proxy << "] for userdn ["
+// 		     << m_dn << "] is expired! Skipping EventQuery."
+// 		     );
+//       
+//       return;
+//     }
     
     ostringstream from, to;
     from << thisEventID;
@@ -176,7 +180,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     try {
       api_util::scoped_timer Tot( "iceCommandEventQuery::execute() - SOAP Connection for QueryEvent" );
       CreamProxy_QueryEvent( m_ce, 
-			     proxy, 
+			     proxyinfo.get<0>(), 
 			     from.str(),
 			     "-1",
 			     m_iceManager->getStartTime(),

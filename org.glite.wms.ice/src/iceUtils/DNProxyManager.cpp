@@ -97,7 +97,7 @@ iceUtil::DNProxyManager::setUserProxyIfLonger_Legacy( const string& prx )
 { 
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
-  cream_api::soap_proxy::VOMSWrapper V( prx, false );
+  cream_api::soap_proxy::VOMSWrapper V( prx,  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
   if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::setUserProxyIfLonger_Legacy() - "
@@ -505,6 +505,7 @@ const throw()
 {
   boost::recursive_mutex::scoped_lock M( s_mutex );
   
+	// FIXME: controllare la validita' prima di tornare il proxy
 
   boost::tuple<std::string, time_t, long long int> result;
   {
@@ -530,7 +531,6 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
   
   
   boost::tuple< string, time_t, long long> proxy_info;
-  bool found;
   {
     db::GetProxyInfoByDN_MYProxy getter( dn, myproxyname, "DNProxyManager::getExactBetterProxyByDN" );
     db::Transaction tnx(false, false);
@@ -542,18 +542,11 @@ iceUtil::DNProxyManager::getExactBetterProxyByDN( const string& dn,
     proxy_info = getter.get_info();
   }
 
-  //   if( !found ) {
-  //     return boost::make_tuple("", 0, 0);
-  //   } else {
-
   return proxy_info;
-  //  }
   
 }
 
 //________________________________________________________________________
-// void iceUtil::DNProxyManager::incrementUserProxyCounter( const string& userDN, const string& myproxy_name ) 
-//   throw()
 void 
 iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
                                                     const time_t proxy_time_end)

@@ -257,7 +257,7 @@ void iceCommandCancel::execute( ) throw ( iceCommandFatal_ex&, iceCommandTransie
     }
 
     try {
-      cream_api::VOMSWrapper V( betterproxy );
+      cream_api::VOMSWrapper V( betterproxy,  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
       if( !V.IsValid( ) ) {
         throw cream_api::auth_ex( V.getErrorMessage() );
       }

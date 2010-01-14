@@ -66,8 +66,8 @@ void UpdateJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
     
     sqlcmd << tmp << " WHERE gridjobid=\'" << m_gid << "\';";
      
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
     do_query( db, sqlcmd.str() );
 }

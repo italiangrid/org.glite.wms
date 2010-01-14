@@ -60,8 +60,8 @@ void GetAllUserDN_MyProxy::execute( sqlite3* db ) throw ( DbOperationException& 
 
   string sqlcmd = "select userdn,myproxyurl from jobs where proxy_renewable='1';" ;
   
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
   do_query( db, sqlcmd, fetch_dnmyproxy_job_id_callback, &m_result );
 }

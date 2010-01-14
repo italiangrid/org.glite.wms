@@ -48,8 +48,8 @@ void GetAllDNCE::execute( sqlite3* db ) throw ( DbOperationException& )
   ostringstream sqlcmd( "" );
   sqlcmd << "SELECT userdn,creamurl,last_seen_poll FROM dn_ce_polltime;";
   
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
   
   do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_result );
   

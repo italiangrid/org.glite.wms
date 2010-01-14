@@ -52,8 +52,8 @@ void GetAllGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 
   string sqlcmd = "SELECT gridjobid FROM jobs;" ;
   
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
   do_query( db, sqlcmd, fetch_grid_job_id_callback, m_result );
 }

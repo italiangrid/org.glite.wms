@@ -42,8 +42,8 @@ void CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'" << m_counter << "\'"
 	 << ");";
    
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 			      
   do_query( db, sqlcmd.str() );
 }

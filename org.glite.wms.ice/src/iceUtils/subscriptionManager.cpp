@@ -444,7 +444,7 @@ void iceUtil::subscriptionManager::renewSubscription( const std::string& userPro
     
     //    try {
       //dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
-    api::VOMSWrapper V( userProxy );
+    api::VOMSWrapper V( userProxy, !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
     if( !V.IsValid( ) ) {
       CREAM_SAFE_LOG(m_log_dev->errorStream()  
  		     << "subscriptionManager::renewSubscription() - "
@@ -673,7 +673,7 @@ void iceUtil::subscriptionManager::insertSubscription( const std::string& userPr
     //    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
 
 
-  api::VOMSWrapper V( userProxy );
+  api::VOMSWrapper V( userProxy,  ::getenv("GLITE_WMS_ICE_ENABLE_ACVER") );
   if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::insertSubscription() - "
@@ -721,7 +721,7 @@ bool iceUtil::subscriptionManager::hasSubscription( const std::string& userProxy
   //  try {
     //    dn = glite::ce::cream_client_api::certUtil::getDNFQAN( userProxy );
   
-  api::VOMSWrapper V( userProxy );
+  api::VOMSWrapper V( userProxy,  ::getenv("GLITE_WMS_ICE_ENABLE_ACVER") );
   if( !V.IsValid( ) ) {
     CREAM_SAFE_LOG(m_log_dev->errorStream()
 		   << "subscriptionManager::hasSubscription() - "

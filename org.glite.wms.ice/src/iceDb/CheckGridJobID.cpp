@@ -59,8 +59,8 @@ void CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 					    " WHERE gridjobid = \'%1%\';" ) % m_gridjobid );
   string gid;
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
   do_query( db, sqlcmd, fetch_jdl_callback, &gid );
 

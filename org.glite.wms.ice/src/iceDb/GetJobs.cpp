@@ -1,13 +1,13 @@
 
 #include "GetJobs.h"
-#include "iceUtils/iceConfManager.h"
+//#include "iceUtils/iceConfManager.h"
 
 #include "boost/algorithm/string.hpp"
 #include "boost/format.hpp"
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+////#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
-#include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/ICEConfiguration.h"
+//#include "glite/wms/common/configuration/Configuration.h"
+//#include "glite/wms/common/configuration/ICEConfiguration.h"
 
 #include <iostream>
 #include <sstream>
@@ -107,8 +107,8 @@ void GetJobs::execute( sqlite3* db ) throw ( DbOperationException& )
   //   sqlcmd << "SELECT " << CreamJob::get_query_fields() 
   // 	 << " FROM jobs WHERE "
     
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_jobs_callback, m_result );
 

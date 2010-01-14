@@ -31,8 +31,8 @@ void ice::db::GetCEUrl::execute( sqlite3* db ) throw ( DbOperationException& )
   ostringstream sqlcmd;
   sqlcmd << "SELECT creamurl FROM delegation;";
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
   
   do_query( db, sqlcmd.str(), fetch_jobs_callback, m_celist );
 

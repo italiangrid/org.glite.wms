@@ -40,7 +40,7 @@ namespace glite {
 
 	public:
 	  GetLeaseByID( const std::string& leaseid, const std::string& caller ) 
-	    : AbsDbOperation( caller ), m_leaseid( leaseid ), m_result( "", "", time(0), "")
+	    : AbsDbOperation( caller ), m_result( "", "", time(0), ""),m_leaseid( leaseid ), m_found( false) 
 	    { }
 	  
 	  virtual void execute( sqlite3* db ) throw( DbOperationException& );

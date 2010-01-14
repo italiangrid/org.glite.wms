@@ -80,8 +80,8 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.get_isbproxy_time_end() <<"\',"
 	 << "\'"<< m_theJob.get_modified_jdl() <<"\')";
   
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 		      
   do_query( db, sqlcmd.str() );
 }

@@ -65,8 +65,8 @@ void GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 
   list<vector<string> > tmp;
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
   do_query( db, sqlcmd, fetch_fields_callback, &tmp );
   

@@ -42,8 +42,8 @@ void RemoveJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
       "DELETE FROM jobs " \
       " WHERE gridjobid = \'%1%\'; " ) % m_gridjobid );
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
     do_query( db, sqlcmd );
 }

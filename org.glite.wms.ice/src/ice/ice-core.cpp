@@ -219,7 +219,7 @@ Ice::Ice( ) throw(iceInit_ex&) :
 
 
   if(m_reqnum < 5) m_reqnum = 5;
-   int thread_num_commands, thread_num = m_configuration->ice()->max_ice_threads();
+   int thread_num = m_configuration->ice()->max_ice_threads();
    if(thread_num<1) thread_num=1;
 //    if(thread_num >= 4)
 //      thread_num_commands = thread_num/2;
@@ -590,7 +590,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
      return;
   }
 
-  cream_api::soap_proxy::VOMSWrapper V( the_job.get_user_proxy_certificate() );
+  cream_api::soap_proxy::VOMSWrapper V( the_job.get_user_proxy_certificate(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
   if( !V.IsValid( ) ) {
     //throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
     CREAM_SAFE_LOG( m_log_dev->errorStream() 
@@ -718,7 +718,7 @@ void Ice::purge_job( const util::CreamJob& theJob ,
       better_proxy = theJob.get_user_proxy_certificate();
     }
     
-    cream_api::soap_proxy::VOMSWrapper V( better_proxy );
+    cream_api::soap_proxy::VOMSWrapper V( better_proxy,  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
     if( !V.IsValid( ) ) {
 
       /**

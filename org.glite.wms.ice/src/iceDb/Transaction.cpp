@@ -372,6 +372,20 @@ namespace {
 	    }
 	    try {
 	      string sqlcmd = 
+		"CREATE UNIQUE INDEX IF NOT EXISTS myproxyurl_index ON proxy (myproxyurl)";
+	      do_query( db, sqlcmd );
+	    } catch(DbOperationException& ex ) {
+	      
+	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
+			      << "CreateDb::execute() - "
+			      << "Error creating index userdn_index on table proxy: "
+			      << ex.what() << ". STOP!"
+			      );
+	      abort();
+	    
+	    }
+	    try {
+	      string sqlcmd = 
 		"CREATE UNIQUE INDEX IF NOT EXISTS delegkey ON delegation (digest,creamurl,myproxyurl)";
 	      do_query( db, sqlcmd );
 	    } catch( DbOperationException& ex ) {
@@ -648,11 +662,11 @@ Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationExcept
   
   static const char* method_name = "Transaction::execute() - ";
   int retry_cnt = 1;
-  const int retry_cnt_max = 5;
+  //const int retry_cnt_max = 5;
   while( 1 ) {
     try {
       op->execute( s_db );
-      int freed = sqlite3_release_memory( 104800000 );
+      sqlite3_release_memory( 104800000 );
       
       
       return *this; // normal termination

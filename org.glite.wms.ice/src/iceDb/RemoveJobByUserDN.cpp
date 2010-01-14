@@ -36,8 +36,8 @@ void RemoveJobByUserDN::execute( sqlite3* db ) throw ( DbOperationException& )
       "DELETE FROM jobs " \
       " WHERE userdn = \'%1%\'; " ) % m_dn );
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
     do_query( db, sqlcmd );
 }

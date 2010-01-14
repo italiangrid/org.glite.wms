@@ -37,8 +37,8 @@ void RemoveLease::execute( sqlite3* db ) throw ( DbOperationException& )
       "DELETE FROM lease " \
       " where userdn = \'%1%\' AND creamurl = \'%2%\'; " ) % m_userdn % m_creamurl );
 
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
     do_query( db, sqlcmd );
 }

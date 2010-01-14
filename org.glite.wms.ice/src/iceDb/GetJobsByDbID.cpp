@@ -81,8 +81,8 @@ void GetJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << " FROM jobs WHERE (dbid not null) AND ( dbid= '"
 	 << m_dbid <<"') ;";
     
-  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
+//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_jobs_callback, m_result );
 
