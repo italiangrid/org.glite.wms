@@ -189,7 +189,7 @@ if [ $? != 0 ]; then
     SITE_B="SINPCERTTB"
 
     echo "Add new channel"
-    simple-channel-add $NEW_CHANNEL $SITE_A $SITE_B
+    simple-channel-add $CHANNEL $SITE_A $SITE_B
     if [ $? != 0 ]; then
 	echo "Add channel - failed"
 	exit 1
@@ -197,8 +197,8 @@ if [ $? != 0 ]; then
 fi        
 echo "OK"
 
-echo "Audit channel $NEW_CHANNEL"
-channel-audit $NEW_CHANNEL
+echo "Audit channel $CHANNEL"
+channel-audit $CHANNEL
 if [ $? != 0 ]; then
     echo "Audit channel - failed"
     exit 1
@@ -206,7 +206,7 @@ fi
 echo "OK"
 
 echo "Audit special parameters"
-special-check-channel-audit $NEW_CHANNEL
+special-check-channel-audit $CHANNEL
 if [ $? != 0 ]; then
     echo "Special Audit channel - failed"
     exit 1

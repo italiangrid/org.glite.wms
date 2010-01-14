@@ -150,7 +150,7 @@ echo "1) Test if channel exists"
 channel-exists $CHANNEL
 if [ $? != 0 ]; then
     echo "Drop nonexisting channel"
-    channel-drop $NEW_CHANNEL
+    channel-drop $CHANNEL
     if [ $? == 0 ]; then
 	echo "Noncorrect operation"
 	exit 1
@@ -167,7 +167,7 @@ if [ $? != 0 ]; then
     SITE_B="CINPCERTTB"
 
     echo "Add new channel"
-    simple-channel-add $NEW_CHANNEL $SITE_A $SITE_B
+    simple-channel-add $CHANNEL $SITE_A $SITE_B
     if [ $? != 0 ]; then
 	echo "Add channel - failed"
 	exit 1
@@ -176,7 +176,7 @@ fi
 echo "OK"
 
 echo "Drop channel"
-channel-drop $NEW_CHANNEL
+channel-drop $CHANNEL
 if [ $? != 0 ]; then
     echo "Drop channel - failed"
     exit 1
@@ -184,7 +184,7 @@ fi
 echo "OK"
 
 echo "Drop special parameters"
-special-check-channel-drop $NEW_CHANNEL
+special-check-channel-drop $CHANNEL
 if [ $? != 0 ]; then
     echo "Special Drop channel - failed"
     exit 1

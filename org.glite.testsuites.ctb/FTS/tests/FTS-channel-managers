@@ -274,18 +274,8 @@ echo " Test if channel exists"
 channel-exists $CHANNEL
 
 if [ $? != 0 ]; then
-    echo "Channel is not exists, create it"
-    BANDWIDTH=100
-    CONTACT="vgalakti@cern.ch"
-    STATE="Stopped"
-    STREAMS=5
-    FILES=10
-    SITE_A="CERN-TB-CERN"
-    SITE_B="SINPCERTTB"
-    THROUGHPUT="10"    
-
-    echo "Add new channel"
-    channel-add $CHANNEL $BANDWIDTH $CONTACT $STATE $STREAMS $FILES $THROUGHPUT $SITE_A $SITE_B
+    echo "Channel does not exists, create it"
+    simple-channel-add $CHANNEL SITEA SITEB
     if [ $? != 0 ]; then
 	echo "Add channel - failed"
 	exit 1
@@ -303,7 +293,7 @@ echo "User DN: $MYUSERDN"
 echo "manager DN: $USERDN"
         
 echo "1. Add manager"
-channel-addmanager $NEW_CHANNEL "$USERDN"
+channel-addmanager $CHANNEL "$USERDN"
 if [ $? != 0 ]; then
    echo "channel-addmanager - failed"
    exit 1
@@ -311,7 +301,7 @@ fi
 echo "OK"
 
 echo "2. list channel managers"
-channel-listmanagers $NEW_CHANNEL "$USERDN"
+channel-listmanagers $CHANNEL "$USERDN"
 if [ $? != 0 ]; then
     echo "channel-listmanagers - failed"
     exit 1
@@ -319,13 +309,13 @@ fi
 echo "OK"
 
 echo "3. Remove channel manager"
-channel-removemanager $NEW_CHANNEL "$USERDN"
+channel-removemanager $CHANNEL "$USERDN"
 if [ $? != 0 ]; then
     echo "channel-removemanager - failed"
 fi
 echo "OK"
 
-channel-drop $NEW_CHANNEL
+channel-drop $CHANNEL
 if [ $? != 0 ]; then
     echo "Not dropped channel"
     exit 1

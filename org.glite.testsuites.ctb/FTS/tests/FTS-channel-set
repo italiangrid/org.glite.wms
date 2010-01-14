@@ -258,7 +258,7 @@ if [ $? != 0 ]; then
     SITE_B="SINPCERTTB"
 
     echo "Add new channel"
-    simple-channel-add $NEW_CHANNEL $SITE_A $SITE_B
+    simple-channel-add $CHANNEL $SITE_A $SITE_B
     if [ $? != 0 ]; then
 	echo "Add channel - failed"
 	exit 1
@@ -273,7 +273,7 @@ FILES=10
 THROUGHPUT=7
 MESSAGE="My test message"
 echo "Check parameters BANDWIDTH CONTACT STATE STREAMS THROUGHPUT FILES MESSAGE"
-channel-set $NEW_CHANNEL $BANDWIDTH $CONTACT $STATE $STREAMS $THROUGHPUT $FILES "$MESSAGE"   
+channel-set $CHANNEL $BANDWIDTH $CONTACT $STATE $STREAMS $THROUGHPUT $FILES "$MESSAGE"   
 if [ $? != 0 ]; then
     echo "Set channel - failed"
     exit 1
@@ -281,7 +281,7 @@ fi
 echo "OK"
 
 echo "Check special parameters for add channel command"
-special-channel-set $NEW_CHANNEL
+special-channel-set $CHANNEL
 if [ $? != 0 ]; then
     echo "Set channel - failed"
     exit 1
@@ -289,7 +289,7 @@ fi
 echo "OK"
 
 echo "Drop channel"
-channel-drop $NEW_CHANNEL
+channel-drop $CHANNEL
 if [ $? != 0 ]; then
     echo "Channel is not dropped"
     exit 1
