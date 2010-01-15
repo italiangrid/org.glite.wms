@@ -178,7 +178,7 @@ log_done_ok() # 1 - exit code
     --status_code=OK\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
-  jw_echo "LM_log_done $done_reason"
+  jw_echo "LM_log_done_begin${done_reason}LM_log_done_end"
 }
 
 log_done_failed() # 1 - exit code
@@ -192,7 +192,7 @@ log_done_failed() # 1 - exit code
     --status_code=FAILED\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
-  jw_echo "LM_log_done $done_reason"
+  jw_echo "LM_log_done_begin${done_reason}LM_log_done_end"
 }
 
 push_in_done_reason() #  1 - reason
