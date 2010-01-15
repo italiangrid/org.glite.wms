@@ -474,14 +474,24 @@ void EventLogger::terminated_event(int retcode, std::string const& reason)
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::terminated_event(...)" );
 
   int          res;
+  std::string reason_to_log;
+
+  if (retcode) {
+    reason_to_log = "Warning: job exit code != 0";
+  } else {
+    reason_to_log = "Job terminated successfully";
+  }
+  if (!reason.empty()) {
+    reason_to_log += '\n' + reason;
+  }
 
   if( this->el_context ) {
     this->startLogging();
     do {
       if (this->el_have_lbproxy) {
-        res = edg_wll_LogDoneOKProxy( *this->el_context, (retcode ? "Warning: job exit code != 0" : "Job terminated successfully"), retcode );
+        res = edg_wll_LogDoneOKProxy(*this->el_context, reason_to_log.c_str(), retcode);
       } else {
-        res = edg_wll_LogDoneOK( *this->el_context, (retcode ? "Warning: job exit code != 0" : "Job terminated successfully"), retcode );
+        res = edg_wll_LogDoneOK(*this->el_context, reason_to_log.c_str(), retcode);
       }
 
       this->testCode( res );
