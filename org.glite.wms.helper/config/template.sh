@@ -154,6 +154,19 @@ log_event() # 1 - event
     || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
+log_user_event() # 1 - reason
+{
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+    --jobid="$GLITE_WMS_JOBID"\
+    --source=LRMS\
+    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --event="UserTag"\
+    --name="notice"\
+    --value="$1"\
+    --node="$jw_host"\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
+}
+
 log_done_ok() # 1 - exit code
 {
   export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
@@ -165,6 +178,7 @@ log_done_ok() # 1 - exit code
     --status_code=OK\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
+  jw_echo "LM_log_done $done_reason"
 }
 
 log_done_failed() # 1 - exit code
@@ -178,12 +192,12 @@ log_done_failed() # 1 - exit code
     --status_code=FAILED\
     --exit_code="$1"\
     || echo $GLITE_WMS_SEQUENCE_CODE`
+  jw_echo "LM_log_done $done_reason"
 }
 
 push_in_done_reason() #  1 - reason
 {
   done_reason="$done_reason`date`: $1"$'\n'
-  jw_echo "$1"
 }
 
 log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
@@ -202,7 +216,6 @@ log_resource_usage() # 1 - resource, 2 - quantity, 3 - unit
 warning()
 {
   local term_delay=10
-  jw_echo "$1"
   push_in_done_reason "job received SIGUSR1 as warning, terminating in $term_delay seconds"
   kill -USR1 -$user_job_pid # forwarding to the user job (just in case)
   sleep $term_delay
@@ -211,7 +224,6 @@ warning()
 
 fatal_error() # 1 - reason, 2 - transfer OSB
 {
-  jw_echo "$1"
   push_in_done_reason "$1"
   log_done_failed 1
   if [ "x$2" -eq "xOSB" ]; then
@@ -262,10 +274,10 @@ retry_copy() # 1 - source, 2 - dest
   local count=0
   local succeded=1
   local sleep_time=0
-# If a space separated list of transports is specified in the _same_ vector element 
-# (i.e. the schemes correspond to the same transport client), then 
-# only the scheme specified by the caller is considered. If the caller doesn't specify it, 
-# only the first scheme in the space separated list is considered.
+  # If a space separated list of transports is specified in the _same_ vector element 
+  # (i.e. the schemes correspond to the same transport client), then 
+  # only the scheme specified by the caller is considered. If the caller doesn't specify it, 
+  # only the first scheme in the space separated list is considered.
   local transport[0]="gsiftp"
   local transport[1]="https http"
   local transport_client[0]="globus-url-copy"
@@ -695,8 +707,8 @@ OSB_transfer()
           retry_copy "file://$s" "$d"
         else
           error="OSB quota exceeded for $s, truncating needed"
-          jw_echo $error
-          push_in_done_reason $error
+          log_user_event "$error"
+          push_in_done_reason "$error"
           file_size_acc=`expr $file_size_acc - $file_size`
           remaining_files=`expr $total_files \- $current_file`
           remaining_space=`expr $max_osb_size \- $file_size_acc`
@@ -711,11 +723,11 @@ OSB_transfer()
             truncate "$s" $trunc_len "$s.tail"
             if [ $? != 0 ]; then
               error="Could not truncate output sandbox file ${file}, not sending"
-              jw_echo $error
+              log_user_event "$error"
               push_in_done_reason $error
             else
               error="Truncated last $trunc_len bytes for file ${file}"
-              jw_echo $error
+              log_user_event "$error"
               push_in_done_reason $error
               retry_copy "file://$s.tail" "$d.tail"
             fi
@@ -729,7 +741,7 @@ OSB_transfer()
       fi
     else
       error="Cannot read or missing file ${__wmp_output_file[$current_file]}"
-      jw_echo $error
+      log_user_event "$error"
       push_in_done_reason $error
     fi
     let "++current_file"
