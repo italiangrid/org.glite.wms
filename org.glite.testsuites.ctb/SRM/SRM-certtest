@@ -188,7 +188,7 @@ if [ "$S2" = "yes" ]; then
   do
     rm -rf ${item}_result.txt testfile
     echo "Executing $item"
-    ./$item $sehost > ${item}_result.txt 2>&1 &
+    ./$item $sehost > $loglocation/${item}_result.txt 2>&1 &
   
     # show a rotating dash while command is executing
     while ps |grep $! &>/dev/null; do
@@ -203,7 +203,7 @@ if [ "$S2" = "yes" ]; then
     done
   
     res=$?
-    grep '\-TEST FAILED\-' ${item}_result.txt >> /dev/null
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
       failed=yes
@@ -267,13 +267,11 @@ if [ "x$failed" = "xyes" ]; then
   echo "The following tests failed:"
   for item in ${tests_failed[*]}
   do
-    echo "$item: results in tests/${item}_result.txt"
+    echo "$item: results in $loglocation/${item}_result.txt"
   done
   exit 1
 else 
   echo "TEST_PASSED"
   exit 0
 fi
-
-
 

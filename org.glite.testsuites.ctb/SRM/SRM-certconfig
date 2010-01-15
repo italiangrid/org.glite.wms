@@ -13,7 +13,7 @@ VO=dteam
 SE_HOST="lxb7608v1.cern.ch"
 
 #Location of the s2 log files
-export LOGS_DIR="/afs/cern.ch/user/p/pucciani/tmp/swords"
+export LOGS_DIR="/tmp"
 #export S2_LOGS_DIR="/afs/cern.ch/user/p/pucciani/tmp"
 
 #SAME (no need to change this part for certification)
