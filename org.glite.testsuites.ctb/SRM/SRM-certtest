@@ -26,7 +26,7 @@ showUsage ()
 {
 cat <<EOF
 Usage:  SRM-certtest.sh [-f <conf.file>] [--se <SE_HOST>]
-  <conf.file> Configuration file, default is DM-certconfig
+  <conf.file> Configuration file, default is SRM-certconfig
   <SE_HOST> = specify an SE, defaults to the CTB one
 EOF
 }
@@ -73,7 +73,7 @@ done
   
 if [ "x$conffile" = "x" ]; then
   #Default value
-  conffile="./DM-certconfig"
+  conffile="./SRM-certconfig"
 fi
 echo "Using $conffile"
 

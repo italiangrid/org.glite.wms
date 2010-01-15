@@ -1,6 +1,6 @@
 
 #Which tests to run
-S2="no"
+S2="yes"
 SAME="yes"
 
 #Add s2 binary to PATH
@@ -10,11 +10,11 @@ PATH="$PATH:/opt/s2/bin"
 S2_TESTS_LOCATION="/opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic"
 
 VO=dteam
-SRM_HOST="galway.desy.de"
+SE_HOST="lxb7608v1.cern.ch"
 
 #Location of the s2 log files
-export LOGS_DIR="/afs/cern.ch/user/p/pucciani/public/glitetests/src/org.glite.testsuites.ctb/SRM/tests"
-#S2_LOGS_DIR="/opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic"
+export LOGS_DIR="/afs/cern.ch/user/p/pucciani/tmp/swords"
+#export S2_LOGS_DIR="/afs/cern.ch/user/p/pucciani/tmp"
 
 #SAME (no need to change this part for certification)
 export SAME_OK=0
