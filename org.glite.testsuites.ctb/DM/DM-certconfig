@@ -8,7 +8,7 @@ export LFC_HOST="lxb7608v3.cern.ch"
 VO="dteam"
 #VO="org.glite.voms-test"
 DPM_HOST="lxb7608v1.cern.ch"
-DCACHE_HOST="ennis.desy.de"
+#DCACHE_HOST="ennis.desy.de"
 #CASTOR_HOST="srm-dteam.cern.ch"
 #STORM_HOST=""
 
