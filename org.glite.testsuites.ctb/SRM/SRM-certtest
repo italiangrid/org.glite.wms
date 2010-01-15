@@ -167,7 +167,7 @@ fi
 ########################
 
 export S2_LOGS_DIR=$loglocation
-if [ "$S2" = "yes" ]; then
+if [ "x$S2" == "xyes" ]; then
   echo "*Running S2 test set*"
 
   declare -a tests_failed
@@ -225,7 +225,7 @@ echo "END `date`"
 #############
 # SAME tests #
 #############
-if [ "$SAME" = "yes" ]; then
+if [ "x$SAME" == "xyes" ]; then
   echo "*Running SAME test set*"
 
   pushd ./tests/SAME/tests >> /dev/null
@@ -261,7 +261,7 @@ fi
 # Analyse tests outcome #
 #########################
 
-if [ "x$failed" = "xyes" ]; then
+if [ "x$failed" == "xyes" ]; then
 
   echo "TEST_FAILED"
   echo "The following tests failed:"
