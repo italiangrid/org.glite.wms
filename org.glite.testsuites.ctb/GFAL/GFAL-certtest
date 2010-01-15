@@ -86,9 +86,9 @@ else
 fi
 
 if [ -n "$SE_HOST_ARG" ]; then
-  hostname=$SE_HOST_ARG
+  sehost=$SE_HOST_ARG
 elif [ -n "$SE_HOST" ]; then
-  hostname=$SE_HOST
+  sehost=$SE_HOST
 else
   echo "You ned to set SE_HOST in GFAL-certconfig or use the --sehost argument"
   exitFailure
@@ -105,10 +105,10 @@ if [ -z "$LFC_HOST" ]; then
   exitFailure
 fi
 
-if [ -z "$SE_HOST" ]; then
-  echo "You need to set SE_HOST in order to run the tests"
-  exitFailure
-fi
+#if [ -z "$SE_HOST" ]; then
+#  echo "You need to set SE_HOST in order to run the tests"
+#  exitFailure
+#fi
 
 ####################################
 # Create a directory for log files #
@@ -137,7 +137,7 @@ fi
 
 echo "START `date` "
 echo `rpm -qa | grep -i gfal`
-echo "SE: $SE_HOST"
+echo "SE: $sehost"
 echo "------------------------------------------------"
 
 ####################################
@@ -183,8 +183,8 @@ if [ x$GFAL_BASIC == "xyes" ]; then
   do
     rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item -v $VO -l $LFC_HOST -d $SE_HOST " > $loglocation/${item}_result.txt
-    ./$item -v $VO -l $LFC_HOST -d $SE_HOST >> $loglocation/${item}_result.txt 2>&1
+    echo "./$item -v $VO -l $LFC_HOST -d $sehost " > $loglocation/${item}_result.txt
+    ./$item -v $VO -l $LFC_HOST -d $sehost >> $loglocation/${item}_result.txt 2>&1
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
@@ -238,8 +238,8 @@ if [ x$GFAL_PYTHON_API == "xyes" ]; then
   do
     rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
-    echo "./$item $SE_HOST " > $loglocation/${item}_result.txt
-    ./$item $SE_HOST >> $loglocation/${item}_result.txt 2>&1
+    echo "./$item $sehost " > $loglocation/${item}_result.txt
+    ./$item $sehost >> $loglocation/${item}_result.txt 2>&1
     res=$?
     if [ "$res" != 0 ]; then
       echo "$item FAILED"
