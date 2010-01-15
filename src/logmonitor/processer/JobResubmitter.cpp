@@ -94,7 +94,7 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
   classad::ClassAd                            command, arguments;
   logger::StatePusher                         pusher( elog::cedglog, "JobResubmitter::resubmit(...)" );
   int                                         retcode;
-  string                                      errors, sc;
+  string                                      errors, sc, reason;
   JobWrapperOutputParser                      parser( edgid );
 
   elog::cedglog << logger::setlevel( logger::info )
@@ -118,7 +118,7 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
 		  << "Don't resubmit it." << endl;
     break;
   case GLOBUS_GRAM_PROTOCOL_ERROR_STAGE_OUT_FAILED: // see LCG2 bug 3987
-    if( parser.parse_file( retcode, errors, sc ) == JWOP::good ) { // Job terminated successfully
+    if (parser.parse_file(retcode, errors, sc, reason) == JWOP::good) { // Job terminated successfully
       
       jccommon::IdContainer::iterator position = container->position_by_edg_id( edgid );
       
@@ -133,7 +133,7 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
       if ( !sc.empty() && ( sc != "NoToken" ) ) 
         this->jr_logger->job_really_run_event( sc ); // logged really running event 
       
-      this->jr_logger->terminated_event( retcode ); // This call discriminates between 0 and all other codes.
+      this->jr_logger->terminated_event(retcode, reason); // This call discriminates between 0 and all other codes.
       container->update_pointer( position, this->jr_logger->sequence_code(), ULOG_JOB_TERMINATED );
       
       jccommon::ProxyUnregistrar( edgid ).unregister();

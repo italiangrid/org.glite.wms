@@ -52,7 +52,7 @@ EventPostTerminated::~EventPostTerminated( void )
 void EventPostTerminated::process_event( void )
 {
   int                                retcode, stat;
-  string                             error, sc;
+  string                             error, sc, done_reason;
   jccommon::IdContainer::iterator    position, dagposition;
   logger::StatePusher                pusher( elog::cedglog, "EventPostTerminated::process_event()" );
 
@@ -105,13 +105,13 @@ void EventPostTerminated::process_event( void )
 
 	this->ei_data->md_logger->failed_on_error_event( ei_s_joberror );
       }
-      else if( (stat = parser.parse_file(retcode, error, sc)) == JWOP::good ) { // Node terminated successfully
+      else if( (stat = parser.parse_file(retcode, error, sc, done_reason)) == JWOP::good ) { // Node terminated successfully
 	elog::cedglog << "Return code of the node: " << retcode << endl;
 
 	if ( !sc.empty() && ( sc != "NoToken" ) )
           this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
 	
-	this->ei_data->md_logger->terminated_event( retcode ); // This call will also check if the retcode is == 0
+	this->ei_data->md_logger->terminated_event(retcode, done_reason); // This call will also check if the retcode is == 0
       }
       else { // Node got an error in the JobWrapper
 	elog::cedglog << logger::setlevel( logger::info )
@@ -121,7 +121,7 @@ void EventPostTerminated::process_event( void )
 	if ( !sc.empty() && ( sc != "NoToken" ) )
           this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
 
-	this->ei_data->md_logger->failed_on_error_event( error );
+	this->ei_data->md_logger->failed_on_error_event(error + '\n' + done_reason);
 
 	if( stat == JWOP::resubmit )
 	  elog::cedglog << logger::setlevel( logger::warning )

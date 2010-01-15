@@ -40,7 +40,7 @@ EventTerminated::~EventTerminated( void )
 void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &position )
 {
   int                     retcode, stat;
-  string                  errors, sc;
+  string                  errors, sc, done_reason;
   JobWrapperOutputParser  parser( position->edg_id() );
   logger::StatePusher     pusher( elog::cedglog, "EventTerminated::processNormalJob(...)" );
 
@@ -73,7 +73,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
   } else 
   */
-  if( (stat = parser.parse_file(retcode, errors, sc)) == JWOP::good ) { // Job terminated successfully...
+  if( (stat = parser.parse_file(retcode, errors, sc, done_reason)) == JWOP::good ) { // Job terminated successfully...
     elog::cedglog << logger::setlevel( logger::info ) << "Real return code: " << retcode << endl;
 
     if (this->ei_data->md_logger->have_lbproxy()) {
@@ -85,7 +85,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     if ( !sc.empty() && ( sc != "NoToken" ) )
       this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
 
-    this->ei_data->md_logger->terminated_event( retcode ); // This call discriminates between 0 and all other codes.
+    this->ei_data->md_logger->terminated_event(retcode, done_reason); // This call discriminates between 0 and all other codes.
 
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
 
@@ -106,7 +106,7 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
     if ( !sc.empty() && ( sc != "NoToken" ) )
       this->ei_data->md_logger->job_really_run_event( sc ); // logged really running event
 
-    this->ei_data->md_logger->failed_on_error_event( errors );
+    this->ei_data->md_logger->failed_on_error_event(errors + '\n' + done_reason);
 
     jccommon::JobFilePurger   purger( position->edg_id(), this->ei_data->md_logger->have_lbproxy(), false);
     switch( stat ) {
@@ -169,7 +169,7 @@ void EventTerminated::process_event( void )
 	this->ei_data->md_logger->abort_on_error_event( ei_s_dagfailed );
       }
       else
-	this->ei_data->md_logger->terminated_event( this->et_event->returnValue );
+	this->ei_data->md_logger->terminated_event( this->et_event->returnValue, "");
 
       this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->et_event->eventNumber );
 

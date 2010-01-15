@@ -54,7 +54,7 @@ JobWrapperOutputParser::JobWrapperOutputParser( const string &dagid, const strin
 
 JobWrapperOutputParser::~JobWrapperOutputParser( void ) {}
 
-bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retcode, status_type &stat, string &sc )
+bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retcode, status_type &stat, string &sc, string &done_reason)
 {
   bool                found = false;
   char                buffer[BUFSIZ];
@@ -88,26 +88,35 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
 	      break;
 	    }
 
-	  if( strstr(buffer, "job exit status = ") == buffer ) {
-	    if( sscanf(buffer, "job exit status = %d", &retcode) == 1 ) {
-	      errors.assign( buffer );
-	      found = true;
-	      stat = good;
-	    }
-	    else retcode = -1;
-	  }
-
-          if (strstr(buffer, "Take token: ") == buffer) {
-            char s[256];
-            if (sscanf(buffer, "Take token: %255s", s) == 1) {
-              s[255] = '\0';
-              sc.assign(s);
-            } else { // The sequence code is not set... so what can we do?
-              sc.assign("");
+          if( strstr(buffer, "job exit status = ") == buffer ) {
+            if( sscanf(buffer, "job exit status = %d", &retcode) == 1 ) {
+              errors.assign( buffer );
+              found = true;
+              stat = good;
             }
-          }	
-	}
-	else {
+            else retcode = -1;
+          }
+
+          std::string jw_stdout_err(buffer);
+          int reason_begin_tag = jw_stdout_err.find("LM_log_done_begin", 0);
+          if (reason_begin_tag > 0) {
+            int reason_begin_tag_len = std::string("LM_log_done_begin").size();
+            done_reason = jw_stdout_err.substr(
+              reason_begin_tag + reason_begin_tag_len,
+              jw_stdout_err.find("LM_log_done_end", 0) - reason_begin_tag - reason_begin_tag_len
+            );
+
+            if (strstr(buffer, "Take token: ") == buffer) {
+              char s[256];
+              if (sscanf(buffer, "Take token: %255s", s) == 1) {
+                s[255] = '\0';
+                sc.assign(s);
+              } else { // The sequence code is not set... so what can we do?
+                sc.assign("");
+              }
+            }	
+	  }
+        } else {
 	  errors.assign( "IO error while reading file: " );
 	  errors.append( strerror(errno) );
 	  retcode = -1;
@@ -127,7 +136,7 @@ bool JobWrapperOutputParser::parseStream( istream &is, string &errors, int &retc
   return found;
 }
 
-JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &errors, string &sc )
+JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &errors, string &sc, string& done_reason)
 {
   const configuration::LMConfiguration    *lmconfig = configuration::Configuration::instance()->lm();
 
@@ -144,7 +153,7 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
   elog::cedglog << logger::setlevel( logger::high ) << "Going to parse standard output file." << endl;
 
   ifs.open( files->standard_output().native_file_string().c_str() );
-  found = this->parseStream( ifs, errors, retcode, stat, sc );
+  found = this->parseStream( ifs, errors, retcode, stat, sc, done_reason);
   ifs.close();
   if( !found ) {
     errors.assign( "Standard output does not contain useful data." );
@@ -156,25 +165,15 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
 
       ifs.clear();
       ifs.open( files->maradona_file().native_file_string().c_str() );
-      found = this->parseStream( ifs, errors, retcode, stat, sc );
+      found = this->parseStream( ifs, errors, retcode, stat, sc, done_reason );
       ifs.close();
       if( found )
 	elog::cedglog << logger::setlevel( logger::null )
-		      << "Got info from Maradona..." << endl
-		      << logger::setlevel( logger::ugly )
-		      << "Maradona makes another goal !!!" << endl
-		      << "The legend goes on..." << endl
-		      << logger::setlevel( logger::veryugly )
-		      << "Stuttgard - Naples: 3 - 3" << endl
-		      << "Naples win the UEFA cup !!!" << endl;
+		      << "Got info from Maradona..." << endl;
       else {
 	errors.append( "Cannot read JobWrapper output, both from Condor and from Maradona. " );
 
-	elog::cedglog << logger::setlevel( logger::null ) << errors
-		      << logger::setlevel( logger::ugly )
-		      << "Maradona fails the shot !!!" << endl
-		      << logger::setlevel( logger::veryugly )
-		      << "100000 fans in the stadium boo him !!!" << endl;
+	elog::cedglog << logger::setlevel( logger::null ) << errors << endl;
 
 	retcode = -1;
 	stat = resubmit;
@@ -195,4 +194,3 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
 } // Namespace logmonitor
 
 } JOBCONTROL_NAMESPACE_END
-

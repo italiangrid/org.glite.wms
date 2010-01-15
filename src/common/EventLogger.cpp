@@ -469,7 +469,7 @@ void EventLogger::execute_event( const char *host )
   return;
 }
 
-void EventLogger::terminated_event( int retcode )
+void EventLogger::terminated_event(int retcode, std::string const& reason)
 {
   logger::StatePusher     pusher( elog::cedglog, "EventLogger::terminated_event(...)" );
 
@@ -495,7 +495,7 @@ void EventLogger::terminated_event( int retcode )
   return;
 }
 
-void EventLogger::failed_on_error_event( const string &cause )
+void EventLogger::failed_on_error_event(const string &cause)
 {
   logger::StatePusher      pusher( elog::cedglog, "EventLogger::failed_on_error_event(...)" );
 

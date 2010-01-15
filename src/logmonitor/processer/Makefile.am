@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6.2.1.4.1.2.2  2010/01/15 12:34:09  mcecchi
+#       bug #48636
+#
 #       Revision 1.6.2.1.4.1.2.1  2009/09/11 12:25:47  mcecchi
 #       bug #55452
 #

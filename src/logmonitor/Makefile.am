@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.3  2010/01/15 12:33:43  mcecchi
+#       bug #48636
+#
 #       Revision 1.20.2.2.4.1.2.2  2009/09/11 13:59:47  mcecchi
 #       bug #55452 + some compilation warnings removed
 #

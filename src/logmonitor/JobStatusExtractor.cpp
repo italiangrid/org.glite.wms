@@ -57,10 +57,10 @@ JobStatusExtractor::~JobStatusExtractor( void ) {}
 int JobStatusExtractor::get_job_status( string &errors )
 {
   int                                   retcode;
-  string                                sc; // used for really_run event
+  string                                sc, reason; // used for really_run event
   JobWrapperOutputParser::status_type   status;
 
-  status = this->jse_parser->parse_file( retcode, errors, sc );
+  status = this->jse_parser->parse_file( retcode, errors, sc, reason );
 
   return retcode;
 }
