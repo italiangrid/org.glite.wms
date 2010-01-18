@@ -223,7 +223,7 @@ if [ "$LCG_UTILS" = "yes" ]; then
     exitFailure
   fi
 #  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rep.sh DM-lcg-rf.sh )
-  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rf.sh DM-lcg-get-checksum )
+  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rf.sh DM-lcg-rep.sh DM-lcg-get-checksum.sh )
 
   for sehost in $SEs
   do
@@ -232,7 +232,15 @@ if [ "$LCG_UTILS" = "yes" ]; then
     do
       rm -rf ${item}_result.txt testfile
       echo "Executing $item"
-      ./$item $sehost --vo $VO  > $loglocation/${item}_result.txt
+      if [ $item == "DM-lcg-rep.sh" ] || [ $item == "DM-lcg-get-checksum.sh" ]; then
+        if [ ${#SEs[@]} -gt 1 ]; then
+          ./$item ${SEs[0]} ${SEs[1]} --vo $VO  > $loglocation/${item}_result.txt
+        else
+          echo "WARNING:At least two SEs are needed to run $item, test skipped"
+        fi
+      else
+        ./$item $sehost --vo $VO  > $loglocation/${item}_result.txt
+      fi
       res=$?
       grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
       if [ "$?" = 0 -o "$res" != 0 ]; then
