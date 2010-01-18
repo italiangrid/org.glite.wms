@@ -358,6 +358,13 @@ function extract_reqid() {
 
 }
 
+# ... Find text line 
+function extract_checksum() {
+  export $1=`awk -F ' ' '{print $1}' <<<"$2"`
+  myecho "$1 :" `printenv $1`
+}
+
+
 # .. define endpoints for the SE hosts (to be used with --nobdii of --usefullsurls)
 
 function define_endpoint() {
