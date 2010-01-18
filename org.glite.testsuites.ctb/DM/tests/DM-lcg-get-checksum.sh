@@ -56,7 +56,8 @@ fi
 
 #... IV. Delete replicas.
 
-run_command lcg-del $LCG_DEL_OPTIONS $SURL $SURL_SE2
+run_command lcg-del $LCG_DEL_OPTIONS $SURL
+run_command lcg-del $LCG_DEL_OPTIONS $SURL_SE2
 
 
 myexit 0
