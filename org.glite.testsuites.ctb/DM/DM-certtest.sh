@@ -237,6 +237,7 @@ if [ "$LCG_UTILS" = "yes" ]; then
           ./$item ${SEs[0]} ${SEs[1]} --vo $VO  > $loglocation/${item}_result.txt
         else
           echo "WARNING:At least two SEs are needed to run $item, test skipped"
+          echo "Test skipped" > $loglocation/${item}_result.txt
         fi
       else
         ./$item $sehost --vo $VO  > $loglocation/${item}_result.txt
