@@ -54,10 +54,6 @@ if [ "x$checksum1" != "x$checksum2" ]; then
   myexit 1
 fi
 
-#... IV. Delete replicas.
-
-run_command lcg-del $LCG_DEL_OPTIONS $SURL
-run_command lcg-del $LCG_DEL_OPTIONS $SURL_SE2
-
+#... IV. Delete all replicas (done by cleanup called by myexit).
 
 myexit 0

@@ -96,48 +96,59 @@ else
   exitFailure
 fi
 
-SEs=""
+declare -a SEs
+
 if [ -n "$DPM_HOST_ARG" ]; then
-  SEs=$DPM_HOST_ARG
+  SEs[$[${#SEs[@]}+1]]=$DPM_HOST_ARG
+  echo "DPM HOST: $DPM_HOST_ARG"
 elif [ -n "$DPM_HOST" ]; then
-  SEs=$DPM_HOST
+  SEs[$[${#SEs[@]}+1]]=$DPM_HOST
+  echo "DPM HOST: $DPM_HOST"
 else
   echo "WARNING: no DPM host selected"
 fi
 
 if [ -n "$DCACHE_HOST_ARG" ]; then
-  SEs="$SEs $DCACHE_HOST_ARG"
+  SEs[$[${#SEs[@]}+1]]=$DCACHE_HOST_ARG
+  echo "dCache HOST: $DCACHE_HOST_ARG"
 elif [ -n "$DCACHE_HOST" ]; then
-  SEs="$SEs $DCACHE_HOST"
+  SEs[$[${#SEs[@]}+1]]=$DCACHE_HOST
+  echo "dCache HOST: $DCACHE_HOST"
 else
   echo "WARNING: no dCache host selected"
 fi
 
 if [ -n "$CASTOR_HOST_ARG" ]; then
-  SEs="$SEs $CASTOR_HOST_ARG"
+  SEs[$[${#SEs[@]}+1]]=$CASTOR_HOST_ARG
+  echo "CASTOR HOST: $CASTOR_HOST_ARG"
 elif [ -n "$CASTOR_HOST" ]; then
-  SEs="$SEs $CASTOR_HOST"
+  SEs[$[${#SEs[@]}+1]]=$CASTOR_HOST
+  echo "CASTOR HOST: $CASTOR_HOST"
 else
   echo "WARNING: no CASTOR host selected"
 fi
 
 if [ -n "$STORM_HOST_ARG" ]; then
-  SEs="$SEs $STORM_HOST_ARG"
+  SEs[$[${#SEs[@]}+1]]=$STORM_HOST_ARG
+  echo "STORM HOST: $STORM_HOST_ARG"
 elif [ -n "$STORM_HOST" ]; then
-  SEs="$SEs $STORM_HOST"
+  SEs[$[${#SEs[@]}+1]]=$STORM_HOST
+  echo "STORM HOST: $STORM_HOST_ARG"
 else
   echo "WARNING: no STORM host selected"
 fi
 
-if [ "x$SEs" == "x" ]; then
+if [ ${#SEs[@]} -eq 0 ]; then
   echo "ERROR: no SEs have been selected"
   exitFailure
 fi
 
 if [ -n "$LFC_HOST_ARG" ]; then
   lfc=$LFC_HOST_ARG
+  echo "LFC HOST: $LFC_HOST_ARG"
 elif [ -n "$LFC_HOST" ]; then
   lfc=$LFC_HOST
+  echo "LFC HOST: $LFC_HOST"
 else
   echo "WARNING: an LFC host has to be specified either with LFC_HOST or --lfc"
   exitFailure
@@ -225,7 +236,7 @@ if [ "$LCG_UTILS" = "yes" ]; then
 #  tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rep.sh DM-lcg-rf.sh )
   tests_list=( DM-lcg-alias.sh DM-lcg-cp-gsiftp.sh DM-lcg-cp.sh DM-lcg-cr-gsiftp.sh DM-lcg-cr.sh DM-lcg-list.sh  DM-lcg-ls.sh DM-lcg-rf.sh DM-lcg-rep.sh DM-lcg-get-checksum.sh )
 
-  for sehost in $SEs
+  for sehost in ${SEs[*]}
   do
     echo "*Target SE is $sehost"
     for item in ${tests_list[*]}
@@ -234,7 +245,7 @@ if [ "$LCG_UTILS" = "yes" ]; then
       echo "Executing $item"
       if [ $item == "DM-lcg-rep.sh" ] || [ $item == "DM-lcg-get-checksum.sh" ]; then
         if [ ${#SEs[@]} -gt 1 ]; then
-          ./$item ${SEs[0]} ${SEs[1]} --vo $VO  > $loglocation/${item}_result.txt
+          ./$item ${SEs[1]} ${SEs[2]} --vo $VO  > $loglocation/${item}_result.txt
         else
           echo "WARNING:At least two SEs are needed to run $item, test skipped"
           echo "Test skipped" > $loglocation/${item}_result.txt
