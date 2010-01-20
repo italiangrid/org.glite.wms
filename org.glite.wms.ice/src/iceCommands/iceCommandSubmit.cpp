@@ -81,6 +81,7 @@ namespace configuration = glite::wms::common::configuration;
 using namespace glite::wms::ice;
 
 boost::recursive_mutex iceCommandSubmit::s_localMutexForSubscriptions;
+boost::recursive_mutex iceCommandSubmit::s_localMutexForDelegations;
 
 //
 //
@@ -796,6 +797,9 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 					  const string& _ceurl)
   throw( iceCommandTransient_ex& )
 {
+
+  boost::recursive_mutex::scoped_lock delegM( s_localMutexForDelegations );
+
   const char* method_name = "iceCommandSubmit::handle_delegation() - ";
   boost::tuple<string, time_t, long long int> SBP;
 

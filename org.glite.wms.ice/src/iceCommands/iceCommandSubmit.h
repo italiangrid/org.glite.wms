@@ -61,7 +61,9 @@ namespace util {
      void  doSubscription( const glite::wms::ice::util::CreamJob& );
      
      Ice *m_theIce;
-     
+     static boost::recursive_mutex s_localMutexForSubscriptions;
+     static boost::recursive_mutex s_localMutexForDelegations;
+
  public:
      iceCommandSubmit( util::Request* request, 
 		       const util::CreamJob& );
@@ -76,8 +78,8 @@ namespace util {
      
      std::string get_grid_job_id( void ) const { return m_theJob.get_grid_jobid(); };
 
-     static boost::recursive_mutex s_localMutexForSubscriptions;
-     
+ 
+
  protected:
 
      /**

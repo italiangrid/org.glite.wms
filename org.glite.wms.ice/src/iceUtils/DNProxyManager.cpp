@@ -471,7 +471,7 @@ void iceUtil::DNProxyManager::setBetterProxy( const string& dn,
     
   }
   
-  string mapKey = this->composite( dn, myproxyname );
+  //string mapKey = this->composite( dn, myproxyname );
 
   CREAM_SAFE_LOG(m_log_dev->debugStream() 
 		 << "DNProxyManager::setBetterProxy() - "
@@ -480,7 +480,8 @@ void iceUtil::DNProxyManager::setBetterProxy( const string& dn,
 		 << "] and MyProxy ["
 		 << myproxyname
 		 << "] Proxy file ["
-		 << localProxy << "]"
+		 << localProxy << "] counter=["
+		 << init_counter << "]"
 		 );
 
   {
