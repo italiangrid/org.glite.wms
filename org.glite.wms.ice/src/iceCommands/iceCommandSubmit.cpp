@@ -135,7 +135,6 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request,
     m_request( request )  
 {
 
-//  m_myname = m_theIce->getHostName();
   if( m_configuration->ice()->listener_enable_authn() ) {
     m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_configuration->ice()->listener_port() );
   } else {

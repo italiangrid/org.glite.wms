@@ -21,8 +21,8 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#ifndef GLITE_WMS_ICE_ICEDB_UPDATEPROXYFIELDSBYDN_H
-#define GLITE_WMS_ICE_ICEDB_UPDATEPROXYFIELDSBYDN_H
+#ifndef GLITE_WMS_ICE_ICEDB_UPDATEPROXYCOUNTERBYDN_H
+#define GLITE_WMS_ICE_ICEDB_UPDATEPROXYCOUNTERBYDN_H
 
 #include "AbsDbOperation.h"
 #include <list>
@@ -37,27 +37,23 @@ namespace db {
     /**
      * This operation updates the information on an existing job.
      */
-    class UpdateProxyFieldsByDN : public AbsDbOperation { 
+    class UpdateProxyCounterByDN : public AbsDbOperation { 
     public:
-        UpdateProxyFieldsByDN( const std::string& dn,
+        UpdateProxyCounterByDN( const std::string& dn,
 			       const std::string& myproxy,
-			       const std::string& proxyfile,
-			       const time_t       exptime,
+			       const long long int counter,
 			       const std::string& caller )
 	  : AbsDbOperation( caller ),
 	  m_dn( dn ),
 	  m_myproxy( myproxy ),
-	  m_proxyfile( proxyfile ),
-	  m_exptime( exptime ) {}
+	  m_counter( counter ) {}
 	  
         virtual void execute( sqlite3* db ) throw( DbOperationException& );
 	
     protected:
         const std::string m_dn;
 	const std::string m_myproxy;
-   	const std::string m_proxyfile;
-	const time_t      m_exptime;
-	//const std::list< std::pair<std::string, std::string> > m_nameval_list;
+   	const long long   m_counter;
 	
     };
 

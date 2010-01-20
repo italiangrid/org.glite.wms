@@ -27,6 +27,7 @@
 #include "iceDb/GetProxyInfoByDN_MYProxy.h"
 #include "iceDb/RemoveProxyByDN.h"
 #include "iceDb/UpdateProxyFieldsByDN.h"
+#include "iceDb/UpdateProxyCounterByDN.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/CreateProxyField.h"
 #include "iceDb/GetAllProxyInfo.h"
@@ -437,16 +438,7 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
   }
 
   {
-    list<pair<string, string> > params;
-    ostringstream tmp1, tmp2;
-    tmp1 << newEntry.get<1>();
-    if( newEntry.get<2>() > 0 )
-      tmp2 << newEntry.get<2>();
-    params.push_back( make_pair("proxyfile", localProxy ));
-    params.push_back( make_pair("exptime", tmp1.str() ));
-    if(newEntry.get<2>() > 0)
-      params.push_back( make_pair("counter", tmp2.str() ));
-    db::UpdateProxyFieldsByDN updater( userDN, myproxyname, params, "DNProxyManager::updateBetterProxy" );
+    db::UpdateProxyFieldsByDN updater( userDN, myproxyname, newEntry.get<0>(), newEntry.get<1>(), "DNProxyManager::updateBetterProxy" );
     db::Transaction tnx(false, false);
     tnx.execute( &updater );
   }
@@ -585,11 +577,11 @@ iceUtil::DNProxyManager::incrementUserProxyCounter( const CreamJob& aJob,
 		   );
 
     {
-      list<pair<string, string> > params;
-      ostringstream tmp;
-      tmp << (proxy_info.get<2>() + 1);
-      params.push_back( make_pair("counter", tmp.str()) );
-      db::UpdateProxyFieldsByDN updater( aJob.get_user_dn(), aJob.get_myproxy_address(), params, "DNProxyManager::incrementUserProxyCounter" );
+      //list<pair<string, string> > params;
+      //ostringstream tmp;
+      //tmp << (proxy_info.get<2>() + 1);
+      //params.push_back( make_pair("counter", tmp.str()) );
+      db::UpdateProxyCounterByDN updater( aJob.get_user_dn(), aJob.get_myproxy_address(), proxy_info.get<2>() + 1, "DNProxyManager::incrementUserProxyCounter" );
       db::Transaction tnx(false, false);
       tnx.execute( &updater );
     }
@@ -641,11 +633,11 @@ iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN,
 		   );
 
     {
-      list<pair<string, string> > params;
-      ostringstream tmp;
-      tmp << (proxy_info.get<2>() - 1);
-      params.push_back( make_pair("counter", tmp.str()) );
-      db::UpdateProxyFieldsByDN updater( userDN, myproxy_name, params, "DNProxyManager::decrementUserProxyCounter" );
+      //list<pair<string, string> > params;
+      //ostringstream tmp;
+      //tmp << (proxy_info.get<2>() - 1);
+      //params.push_back( make_pair("counter", tmp.str()) );
+      db::UpdateProxyCounterByDN updater( userDN, myproxy_name, proxy_info.get<2>() - 1, "DNProxyManager::decrementUserProxyCounter" );
       db::Transaction tnx(false, false);
       tnx.execute( &updater );
     }

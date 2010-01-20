@@ -56,6 +56,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				RemoveJobsByDbID.cpp \
 				InsertStat.cpp \
 				GetJobs.cpp \
+				UpdateProxyCounterByDN.cpp \
 				RemoveJobByUserDN.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \

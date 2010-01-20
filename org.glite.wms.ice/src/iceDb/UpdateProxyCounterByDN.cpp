@@ -21,7 +21,7 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
-#include "UpdateProxyFieldsByDN.h"
+#include "UpdateProxyCounterByDN.h"
 #include <sstream>
 #include <iostream>
 
@@ -39,11 +39,11 @@ using namespace std;
 // {
 // }
 
-void UpdateProxyFieldsByDN::execute( sqlite3* db ) throw ( DbOperationException& )
+void UpdateProxyCounterByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     ostringstream sqlcmd("");
  
-    sqlcmd << "UPDATE proxy SET proxyfile=\'" << m_proxyfile << "\',exptime=\'" << m_exptime << "\'"
+    sqlcmd << "UPDATE proxy SET counter=\'" << m_counter << "\'"
 	   << " WHERE userdn=\'" << m_dn << "\' AND myproxyurl=\'" << m_myproxy << "\';";
     
     do_query( db, sqlcmd.str() );

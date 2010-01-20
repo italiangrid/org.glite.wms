@@ -199,7 +199,11 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	    //int pos = output.find('\n');
 	    //new_proxy = (char*)output.substr(0, pos).c_str();
 	    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
-			    << "Proxy renewal successful: new proxy is [" 		  
+			    << "Proxy renewal successful for DN=["
+			    << it->m_user_dn
+			    <<"] MyProxyURL=["
+			    << it->m_myproxyserver
+			    << "]: new proxy is [" 		  
 			    << certfile + ".renewed" << "]. It will overwrite the better one..."
 			    );
 	    /**
@@ -219,7 +223,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	      
 	      /** SUBSTITUTE old better proxy with downloaded one. 
 	       */
-	      boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( certfile + ".renewed", V.getProxyTimeEnd(), -1 ); // -1 means to not modify the job counter
+	      boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( certfile + ".renewed", V.getProxyTimeEnd(), (long long int)-1 ); // -1 means to not modify the job counter
 	      DNProxyManager::getInstance()->updateBetterProxy( it->m_user_dn,
 								it->m_myproxyserver,
 								newPrx );

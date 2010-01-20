@@ -305,7 +305,7 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
                                << infoIt->first << "] - DN=[" << user_dn
                                << "] - ProxyFile=[" << proxy
                                << "]. Error is: " << thisInfo.get<2>() 
-                               << ". Removing this job from the cache"
+                               << ". Removing this job from the database"
                                );
 		/**
 		   Must get the entire job by the Complete Cream JOB ID
