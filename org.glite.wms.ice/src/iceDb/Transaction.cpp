@@ -121,7 +121,7 @@ namespace {
 	    try {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS proxy ( "	\
-		"userdn text primary key not null, "	\
+		"userdn text not null, "	\
 		"myproxyurl text not null,"		\
 		"proxyfile text not null, "		\
 		"exptime integer(4) not null, "		\
@@ -358,21 +358,7 @@ namespace {
             }
 	    try {
 	      string sqlcmd = 
-		"CREATE UNIQUE INDEX IF NOT EXISTS userdn_index ON proxy (userdn)";
-	      do_query( db, sqlcmd );
-	    } catch(DbOperationException& ex ) {
-	      
-	      CREAM_SAFE_LOG( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->fatalStream() 
-			      << "CreateDb::execute() - "
-			      << "Error creating index userdn_index on table proxy: "
-			      << ex.what() << ". STOP!"
-			      );
-	      abort();
-	    
-	    }
-	    try {
-	      string sqlcmd = 
-		"CREATE UNIQUE INDEX IF NOT EXISTS myproxyurl_index ON proxy (myproxyurl)";
+		"CREATE UNIQUE INDEX IF NOT EXISTS userdn_myproxy_index ON proxy (userdn,myproxyurl)";
 	      do_query( db, sqlcmd );
 	    } catch(DbOperationException& ex ) {
 	      
