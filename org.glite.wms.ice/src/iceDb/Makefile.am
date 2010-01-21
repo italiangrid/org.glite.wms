@@ -55,6 +55,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetAllDN.cpp \
 				RemoveJobsByDbID.cpp \
 				InsertStat.cpp \
+				GetStats.cpp \
 				GetJobs.cpp \
 				UpdateProxyCounterByDN.cpp \
 				RemoveJobByUserDN.cpp

@@ -18,7 +18,6 @@ limitations under the License.
 
 END LICENSE */
 
-#include <list>
 #include <string>
 #include <vector>
 #include <utility>
@@ -28,10 +27,11 @@ END LICENSE */
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
 #include "iceDb/Transaction.h"
-#include "iceDb/GetFields.h"
+#include "iceDb/GetStats.h"
 #include "iceConfManager.h"
 
 #include "boost/algorithm/string.hpp"
+#include "boost/regex.hpp"
 
 std::string status_to_numstr( const std::string& status ) {
   if(status == "REGISTERED" ) return "0";
@@ -91,38 +91,27 @@ void printhelp( void ) {
 int main( int argc, char* argv[] )
 {
   string           conf_file( "glite_wms.conf" );
-  string           states("");
-  string           sqlquery("");
-  bool             all_status(true);
-  bool             debug( false );
-  bool             verbose( false );
   int              option_index( 0 );
-  list< string >   fields_to_retrieve;
-
-  int status_pos   = -1;
-  int date_status  = -1;
+  
+  string           fromdate;
+  string           todate;
+  
+  time_t           from = 0;
+  time_t           to = time(0);
+  
+  //int status_pos   = -1;
+  //int date_status  = -1;
 
   while( 1 ) {
     int c;
     static struct option long_options[] = {
       {"help", 0, 0, 'h'},
-      {"status-filter", 1, 0, 's'},
       {"conf", 1, 0, 'c'},
-      /*****************************/
-      {"userdn", 0, 0, 'u'},
-      {"creamjobid",0,0,'C'},
-      {"gridjobid",0,0,'G'},
-      {"userproxy",0,0,'p'},
-      {"cream-url",0,0,'r'},
-      {"myproxy-url",0,0,'m'},
-      {"status",0,0,'S'},
-      {"lease-id",0,0,'L'},
-      {"delegation-id",0,0,'D'},
-      {"worker-node",0,0,'w'},
-      {"verbose", 0, 0, 'v'},
+      {"from-date", 1, 0, 'f'},
+      {"to-date",1,0,'t'},
       {0, 0, 0, 0}
     };
-    c = getopt_long(argc, argv, "hs:c:uCGprmSLDwv", long_options, &option_index);
+    c = getopt_long(argc, argv, "hc:f:t:", long_options, &option_index);
     
     if ( c == -1 )
       break;
@@ -131,49 +120,14 @@ int main( int argc, char* argv[] )
       printhelp();
       exit(0);
       break;
-    case 'd':
-      debug = true;
-      break;
-    case 's':
-      states = string(optarg);
-      all_status = false;
-      break;
     case 'c':
       conf_file = string(optarg);
       break;
-    case 'u':
-      fields_to_retrieve.push_back( "userdn" );
+    case 'f':
+      fromdate = string(optarg);
       break;
-    case 'C':
-      fields_to_retrieve.push_back( "complete_cream_jobid" );
-      break;
-    case 'G':
-      fields_to_retrieve.push_back( "gridjobid" );
-      break;
-    case 'p':
-      fields_to_retrieve.push_back( "userproxy" );
-      break;
-    case 'r':
-      fields_to_retrieve.push_back( "creamurl" );
-      break;
-    case 'm':
-      fields_to_retrieve.push_back( "myproxyurl" );
-      break;
-    case 'S':
-      status_pos = fields_to_retrieve.size();
-      fields_to_retrieve.push_back( "status" );
-      break;
-    case 'L':
-      fields_to_retrieve.push_back( "leaseid" );
-      break;
-    case 'D':
-      fields_to_retrieve.push_back( "delegationid" );
-      break;
-    case 'w':
-      fields_to_retrieve.push_back( "worker_node" );
-      break;
-    case 'v':
-      verbose = true;
+    case 't':
+      todate = string(optarg);
       break;
     default:
       cerr << "Type " << argv[0] << " --help|-h for an help" << endl;
@@ -191,62 +145,52 @@ int main( int argc, char* argv[] )
     exit(1);
   }
 
-  vector< string > _fields_array;
+  vector<pair<time_t, int> > result;
 
-  vector< string > _states_array;
-  boost::split(_states_array, states, boost::is_any_of(","));
-  
-  list< string > states_array;
-  copy( _states_array.begin(), _states_array.end(), back_inserter( states_array ) );
-  
-  list< pair< string, string > > params;
-  
-  for( list< string >::const_iterator it = states_array.begin();
-       it != states_array.end();
-       ++it )
-    {
-      if(!it->empty())
-        params.push_back( make_pair( "status", status_to_numstr(*it) ));
+  boost::regex pattern;
+  pattern = "^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})\\s([0-9][0-9]:[0-9][0-9]:[0-9][0-9])\\b";
+  boost::cmatch what;
+
+  if(!todate.empty()) {
+    if( !boost::regex_match(todate.c_str(), what, pattern) ) {
+      cerr << "Specified to date is wrong; must have the format 'YYYY-MM-DD HH:mm:ss'. Stop" << endl;
+      exit(1);
     }
-
-  if( fields_to_retrieve.empty() )
-    {
-      fields_to_retrieve.push_back( "*" );
-    }
-  list< vector< string > > result;
-  db::GetFields getter( fields_to_retrieve, params, result, "queryDb::main" );
-  getter.use_or_clause();
-  db::Transaction tnx(true,false);
-  //tnx.begin( );
-  tnx.execute( &getter );
-  //tnx.commit( );
-  //  list< vector< string > > result = getter.get_values();
-  if(verbose) {
-    for( list< vector< string > >::const_iterator it=result.begin();
-	 it != result.end();
-	 ++it)
-      {
-
-	for(unsigned int counter = 0;
-	    counter < it->size();
-	    counter++)
-	  {
-	    if(counter == status_pos)
-	      cout << "[" << glite::ce::cream_client_api::job_statuses::job_status_str[atoi(it->at(counter).c_str())] << "] ";
-	    else
-	      cout << "[" << it->at(counter) << "] ";
-	  }
-
-// 	for( vector< string >::const_iterator jt=it->begin();
-// 	     jt != it->end();
-// 	     ++jt)
-// 	  {
-// 	    cout << "[" << *jt << "] ";
-// 	  }
-	cout << endl;
-      }
-    cout << endl << "------------------------------------------------" << endl;
+    struct tm tmp;
+    strptime(todate.c_str(), "%Y-%m-%d %T", &tmp);
+    to = mktime(&tmp);
   }
-  cout << result.size() << " item(s) found" << endl;
+    
+  if(!fromdate.empty()) {
+    if( !boost::regex_match(fromdate.c_str(), what, pattern) ) {
+      cerr << "Specified from date is wrong; must have the format 'YYYY-MM-DD HH:mm:ss'. Stop" << endl;
+      exit(1);
+    }
+    struct tm tmp;
+    strptime(fromdate.c_str(), "%Y-%m-%d %T", &tmp);
+    to = mktime(&tmp);
+  }
+
+  db::GetStats getter( result, from, to, "queryStats::main" );
+  
+  db::Transaction tnx(true, false);
+  
+  tnx.execute( &getter );
+  
+  map<int, unsigned long long> states;
+  
+  for(vector<pair<time_t, int> >::const_iterator it=result.begin();
+      it != result.end();
+      ++it)
+      {
+        states[it->second]++;
+      }
+      
+  for(map<int, unsigned long long>::const_iterator it=states.begin();
+      it!=states.end();
+      ++it)
+      {
+        cout << "JOB_"<<glite::ce::cream_client_api::job_statuses::job_status_str[it->first]<<"="<<it->second<<endl;
+      }
 
 }
