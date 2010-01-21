@@ -1,0 +1,14 @@
+## Main application file
+MAIN = testAPI
+
+all: $(MAIN)
+
+# COMPILE
+
+$(MAIN):
+	
+	gcc $(MAIN).c -o $(MAIN) `pkg-config --cflags --libs glib-2.0` -I$(RGMA_HOME)/include -I$(GLITE_LOCATION)/include -L$(RGMA_HOME)/lib -lglite-sd-c-rgma -lglite-sd-c -lglite-rgma-c -lssl
+
+clean:
+	rm -f *.o  $(MAIN)
+
