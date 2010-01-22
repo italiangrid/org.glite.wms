@@ -88,6 +88,7 @@ voms-proxy-init -rfc  -key $certdir/trusted-certs/trusted_client_nopass.priv -ce
 
 echo "Creating a correct trust chain for proxy proxies"
 cat $certdir/trusted-certs/trusted_client.cert $certdir/trusted-certs/trusted_client.proxy.cert > $certdir/trusted-certs/trusted_client_proxy_chain
+cat $certdir/trusted-certs/trusted_client.cert $certdir/trusted-certs/trusted_client.proxy_rfc_plen.cert $certdir/trusted-certs/trusted_client.proxy_rfc_plen.proxy_rfc.cert > $certdir/trusted-certs/trusted_client_rfc_proxy_chain
 
 
 

@@ -107,6 +107,9 @@ myecho "Test passed"
 myecho "Testing with rfc proxy certificate"
 test_cert $certdir/trusted-certs/trusted_client.proxy_rfc.grid_proxy  $certdir/trusted-certs/trusted_client.proxy_rfc.grid_proxy $SUCCESS $certdir/trusted-certs/trusted_client.cert
 myecho "Test passed"
+myecho "Testing with rfc proxy certificate with limited proxy length"
+test_cert $certdir/trusted-certs/trusted_client.proxy_rfc_plen.proxy_rfc.proxy_rfc.grid_proxy  $certdir/trusted-certs/trusted_client.proxy_rfc_plen.proxy_rfc.proxy_rfc.grid_proxy $FAIL $certdir/trusted-certs/trusted_client_rfc_proxy_chain
+myecho "Test passed"
 myecho "Testing with a proxy certificate with false dn"
 test_cert $certdir/trusted-certs/trusted_client.proxy_dnerror_nopass.priv $certdir/trusted-certs/trusted_client.proxy_dnerror.cert $FAIL $certdir/trusted-certs/trusted_client.cert
 myecho "Test passed"

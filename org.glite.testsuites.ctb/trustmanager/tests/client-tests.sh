@@ -133,6 +133,10 @@ fi
 
 myecho "Test with proxy certificate successful"
 
+myecho "Adding empty CA to test for bug #56623"
+
+touch /etc/grid-security/certificates/12345678.0
+
 myecho "Switching tomcat certificate to an expired one"
 
 cp -f $TOMCAT_CERT $TOMCAT_CERT.bak
@@ -152,7 +156,7 @@ myecho "Confirming that tomcat came up properly"
 wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
 
 if [ $? -ne 0 ] ; then 
- myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
+ myecho "Tomcat didn't seem to come up properly. Please check tomcat logs. Is this bug #56623?"
  myexit 1
 fi
 
