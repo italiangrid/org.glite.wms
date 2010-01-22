@@ -84,20 +84,6 @@ and the test-setup.sh (mentioned later) again. The Trustmanager RPM contains
 glite-security-trustmanager.war which should be deployed under the tomcat
 webapps dir (copy it to /var/lib/tomcat5/webapps).
 
-After this has been deployed (tomcat started), and the war has been unpacked,
-you need to compile the client test code too. To do this, check out
-org.glite.security.trustmanager and compile the test app against the deployed
-war to have all necessary libs. So basically
-CLASSPATH=/var/lib/tomcat5/webapps/glite-security-trustmanager/WEB-INF/classes
-for f in /var/lib/tomcat5/webapps/glite-security-trustmanager/WEB-INF/lib/*.jar  ; do 
- CLASSPATH=$CLASSPATH:$f
-done
-
-cd thediryoucheckedthecodeto/test/src
-javac org/glite/security/trustmanager/axis/CallEchoService.java
-
-This should compile the client against the currect Trustmanager.
-
 Finally, run test-setup.sh --certdir <the place where test-utils put the
 certificates>. This sets up the certificates for the tests. Note! The
 test-setup.sh creates an one hour CRL (to later test CRL expiration), so if

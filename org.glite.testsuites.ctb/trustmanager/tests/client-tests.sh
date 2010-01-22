@@ -9,7 +9,7 @@
 
 #config variables
 #tomcat host and port
-export HOST=localhost:8443
+export HOST=$HOSTNAME:8443
 #tomcat host certificate
 export TOMCAT_CERT=/etc/grid-security/tomcat-cert.pem
 #tomcat host key
@@ -62,7 +62,7 @@ usage() {
  echo "org.glite.security.test-utils and that you have compiled CallEchoService"
  echo "Usage:"
  echo "======"
- echo "client-tests.sh --certdir <directory for test-utils certs> --clidir <dir for client library root>"
+ echo "client-tests.sh --certdir <directory for test-utils certs>"
  echo ""
 }
 
@@ -70,9 +70,6 @@ while [ $# -gt 0 ]
 do
  case $1 in
  --certdir | -c ) certdir=$2
-  shift
-  ;;
- --clidir | -c ) clidir=$2
   shift
   ;;
  --help | -help | --h | -h ) usage
@@ -88,7 +85,7 @@ do
  shift
 done
 
-if [ x"$certdir" == x ]  || [ x"$clidir" == x ] ; then
+if [ x"$certdir" == x ] ; then
  usage
  exit 1
 fi
@@ -112,7 +109,7 @@ done
 export CLASSPATH
 
 pushd .
-cd $clidir
+cd $TOMCAT_WEBAPP/glite-security-trustmanager/WEB-INF/classes
 
 myecho "Testing client with normal certificate" 
 java  -Daxis.socketSecureFactory=org.glite.security.trustmanager.axis.AXISSocketFactory -DtrustStoreDir=/etc/grid-security/certificates -DsslCertFile=$certdir/trusted-certs/trusted_client.cert -DsslKey=$certdir/trusted-certs/trusted_client_nopass.priv org/glite/security/trustmanager/axis/CallEchoService https://$HOST/glite-security-trustmanager/services/EchoService  |grep EchoSecurityService
@@ -141,8 +138,8 @@ myecho "Switching tomcat certificate to an expired one"
 cp -f $TOMCAT_CERT $TOMCAT_CERT.bak
 cp -f $TOMCAT_KEY $TOMCAT_KEY.bak
 
-cp -f $certdir/bad-certs/bad_expired_host.cert $TOMCAT_CERT
-cp -f $certdir/bad-certs/bad_expired_host_nopass.priv $TOMCAT_KEY
+cp -f $certdir/trusted-certs/trusted_host_exp.cert $TOMCAT_CERT
+cp -f $certdir/trusted-certs/trusted_host_exp_nopass.priv $TOMCAT_KEY
 
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
@@ -174,8 +171,8 @@ myecho "Test against expired host certificate successful"
 
 myecho "Switching tomcat certificate to a revoked one"
 
-cp -f $certdir/bad-certs/bad_revoked_host.cert $TOMCAT_CERT
-cp -f $certdir/bad-certs/bad_revoked_host_nopass.priv $TOMCAT_KEY
+cp -f $certdir/trusted-certs/trusted_host_rev.cert $TOMCAT_CERT
+cp -f $certdir/trusted-certs/trusted_host_rev_nopass.priv $TOMCAT_KEY
 
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY
@@ -207,8 +204,8 @@ myecho "Test against revoked host certificate successful"
 
 myecho "Switching tomcat certificate to one not conforming to the namespace"
 
-cp -f $certdir/bad-certs/bad_policy_host.cert $TOMCAT_CERT
-cp -f $certdir/bad-certs/bad_policy_host_nopass.priv $TOMCAT_KEY
+cp -f $certdir/trusted-certs/trusted_host_baddn.cert $TOMCAT_CERT
+cp -f $certdir/trusted-certs/trusted_host_baddn_nopass.priv $TOMCAT_KEY
 
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_CERT
 chown $TOMCAT_CERT_OWN:$TOMCAT_CERT_GRP $TOMCAT_KEY

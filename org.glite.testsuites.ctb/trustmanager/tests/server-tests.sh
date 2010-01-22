@@ -9,7 +9,7 @@
 
 #config variables
 #tomcat host and port
-export HOST=localhost:8443
+export HOST=$HOSTNAME:8443
 #end of config variables
 
 SUCCESS=1

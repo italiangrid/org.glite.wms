@@ -52,22 +52,18 @@ fi
 echo "Generating short crl"
 cd $certdir/trusted-ca
 export CA_DIR=.
+export CASROOT=$certdir
 export CATYPE=trusted
 
-openssl ca -gencrl -crlhours 1 -out $CA_DIR/trusted.crl -config $CA_DIR/ca_conf.cnf
+openssl ca -gencrl -crlhours 1 -out $CA_DIR/trusted.crl -config $CA_DIR/req_conf.cnf
 
 cd -
 
 echo "Copying CA certificates"
-for ca in expired trusted bad ; do
+for ca in expired trusted ; do
  ca_hash=`openssl x509 -in $certdir/$ca-ca/$ca.cert -noout -hash`
-  if [ ca == bad ] ; then
-  cp $certdir/$ca-ca/$ca.cert /etc/grid-security/certificates/$ca_hash.1
-  cp $certdir/$ca-ca/$ca.crl /etc/grid-security/certificates/$ca_hash.r1
- else
-  cp $certdir/$ca-ca/$ca.cert /etc/grid-security/certificates/$ca_hash.0
-  cp $certdir/$ca-ca/$ca.crl /etc/grid-security/certificates/$ca_hash.r0
- fi
+ cp $certdir/$ca-ca/$ca.cert /etc/grid-security/certificates/$ca_hash.0
+ cp $certdir/$ca-ca/$ca.crl /etc/grid-security/certificates/$ca_hash.r0
  if [ -f $certdir/$ca-ca/$ca.namespaces ] ; then 
   cp $certdir/$ca-ca/$ca.namespaces /etc/grid-security/certificates/$ca_hash.namespaces
  fi

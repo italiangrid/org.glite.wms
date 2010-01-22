@@ -99,13 +99,13 @@ myecho "Testing with normal proxy certificate"
 test_cert $certdir/trusted-certs/trusted_client.proxy_nopass.priv $certdir/trusted-certs/trusted_client.proxy.cert $SUCCESS $certdir/trusted-certs/trusted_client.cert
 myecho "Test passed"
 myecho "Testing with proxy proxy certificate"
-test_cert $certdir/trusted-certs/trusted_client.proxy_proxy.proxy_nopass.priv $certdir/trusted-certs/trusted_client.proxy_proxy.proxy.cert $SUCCESS $certdir/trusted-certs/trusted_client_proxy_chain
+test_cert $certdir/trusted-certs/trusted_client.proxy.proxy_nopass.priv $certdir/trusted-certs/trusted_client.proxy.proxy.cert $SUCCESS $certdir/trusted-certs/trusted_client_proxy_chain
 myecho "Test passed"
-myecho "Testing with legacy proxy certificate"
-test_cert $certdir/trusted-certs/trusted_client.proxy.legacy  $certdir/trusted-certs/trusted_client.proxy.legacy $SUCCESS $certdir/trusted-certs/trusted_client.cert
-myecho "Test passed"
+#myecho "Testing with legacy proxy certificate"
+#test_cert $certdir/trusted-certs/trusted_client.proxy.legacy  $certdir/trusted-certs/trusted_client.proxy.legacy $SUCCESS $certdir/trusted-certs/trusted_client.cert
+#myecho "Test passed"
 myecho "Testing with rfc proxy certificate"
-test_cert $certdir/trusted-certs/trusted_client.proxy.rfc  $certdir/trusted-certs/trusted_client.proxy.rfc $SUCCESS $certdir/trusted-certs/trusted_client.cert
+test_cert $certdir/trusted-certs/trusted_client.proxy_rfc.grid_proxy  $certdir/trusted-certs/trusted_client.proxy_rfc.grid_proxy $SUCCESS $certdir/trusted-certs/trusted_client.cert
 myecho "Test passed"
 myecho "Testing with a proxy certificate with false dn"
 test_cert $certdir/trusted-certs/trusted_client.proxy_dnerror_nopass.priv $certdir/trusted-certs/trusted_client.proxy_dnerror.cert $FAIL $certdir/trusted-certs/trusted_client.cert
@@ -134,23 +134,20 @@ myecho "Test passed"
 myecho "Testing with untrusted certificate"
 test_cert $certdir/fake-certs/fake_client_nopass.priv $certdir/fake-certs/fake_client.cert $FAIL
 myecho "Test passed"
-myecho "Testing with voms proxy certificate"
-test_cert $certdir/home/voms-acme.pem $certdir/home/voms-acme.pem $SUCCESS $certdir/home/usercert.pem
+#myecho "Testing with voms proxy certificate"
+#test_cert $certdir/home/voms-acme.pem $certdir/home/voms-acme.pem $SUCCESS $certdir/home/usercert.pem
+#myecho "Test passed"
+#myecho "Testing with voms proxy certificate with group"
+#test_cert $certdir/home/voms-acme-Gproduction.pem $certdir/home/voms-acme-Gproduction.pem $SUCCESS $certdir/home/usercert.pem
+#myecho "Test passed"
+#myecho "Testing with voms proxy certificate with role"
+#test_cert $certdir/home/voms-acme-Radmin.pem $certdir/home/voms-acme-Radmin.pem $SUCCESS $certdir/home/usercert.pem
+#myecho "Test passed"
+myecho "Testing with a not yet valid certificate"
+test_cert $certdir/trusted-certs/trusted_clientfuture_nopass.priv $certdir/trusted-certs/trusted_clientfuture.cert  $FAIL 
 myecho "Test passed"
-myecho "Testing with voms proxy certificate with group"
-test_cert $certdir/home/voms-acme-Gproduction.pem $certdir/home/voms-acme-Gproduction.pem $SUCCESS $certdir/home/usercert.pem
-myecho "Test passed"
-myecho "Testing with voms proxy certificate with role"
-test_cert $certdir/home/voms-acme-Radmin.pem $certdir/home/voms-acme-Radmin.pem $SUCCESS $certdir/home/usercert.pem
-myecho "Test passed"
-myecho "Testing with the \"bad-ca\", a normal certificate, CA and CRL files end '.1' and '.r1' respectively"
-test_cert $certdir/bad-certs/bad_client00_nopass.priv $certdir/bad-certs/bad_client00.cert  $SUCCESS 
-myecho "Test passed"
-myecho "Testing with the \"bad-ca\", a not yet valid certificate"
-test_cert $certdir/bad-certs/bad_future_nopass.priv $certdir/bad-certs/bad_future.cert  $FAIL 
-myecho "Test passed"
-myecho "Testing with the \"bad-ca\", a certificate that doesn't match the signing policy nor namespace"
-test_cert $certdir/bad-certs/bad_policy_nopass.priv $certdir/bad-certs/bad_policy.cert  $FAIL 
+myecho "Testing with a certificate that doesn't match the signing policy nor namespace"
+test_cert $certdir/trusted-certs/trusted_clientbaddn_nopass.priv $certdir/trusted-certs/trusted_clientbaddn.cert  $FAIL 
 myecho "Test passed"
 
 echo ""
