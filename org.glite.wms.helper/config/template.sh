@@ -985,8 +985,10 @@ fi
   fi
 
   # finally getting to the core business
+  set -m
   eval "${full_cmd_line}" &
   user_job_pid=$!
+  set +m
 
   # customization point
   if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
