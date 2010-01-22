@@ -366,7 +366,8 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  
 	  CreamProxy_ProxyRenew( thisDelegUrl,
 				 thisBetterPrx.get<0>(),
-				 thisDelegID).execute( 3 );
+				 thisDelegID,
+				 false /* ignore blacklisted CE */).execute( 3 );
 	  
 	  mapDelegTime[ thisDelegID ] = make_pair(thisBetterPrx.get<1>(), thisBetterPrx.get<1>() - time(0) );
 	  

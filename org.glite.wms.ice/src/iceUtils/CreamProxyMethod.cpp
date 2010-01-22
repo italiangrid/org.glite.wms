@@ -1,26 +1,22 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * CREAM proxy methods for ICE
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
 
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
 
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
@@ -39,8 +35,9 @@ namespace api_util = glite::ce::cream_client_api::util;
 using namespace glite::wms::ice::util;
 using namespace std;
 
-CreamProxyMethod::CreamProxyMethod( const string& creamurl ) :
+CreamProxyMethod::CreamProxyMethod( const string& creamurl, const bool honor_blacklist ) :
     m_blacklist( CEBlackList::instance() ),
+    m_honor_blacklist( honor_blacklist ),
     m_service( creamurl )
 {
 
@@ -59,10 +56,11 @@ void CreamProxyMethod::execute( int ntries ) // can throw anything
     for ( retry_count = 1; do_retry; ++retry_count ) {
 
         // First, check whether the service is blacklisted
-        if ( m_blacklist->is_blacklisted( m_service ) ) {
+	if( m_honor_blacklist ) {
+          if ( m_blacklist->is_blacklisted( m_service ) ) {
             throw cream_ex::ConnectionTimeoutException( "The endpoint is blacklisted" ); // FIXME: throw different exception?
-        }
-
+          }
+	}
         try {
             this->method_call( conn_timeout );            
             do_retry = false; // if everything goes well, do not retry
@@ -105,8 +103,9 @@ CreamProxy_Register::CreamProxy_Register( const string& service_uri,
                                           const string& certfile,
                                           const soap_proxy::AbsCreamProxy::RegisterArrayRequest* req,
                                           soap_proxy::AbsCreamProxy::RegisterArrayResult* res,
-					  const string& iceid ) 
-  : CreamProxyMethod( service_uri ),
+					  const string& iceid,
+					  const bool honor_blacklist  ) 
+  : CreamProxyMethod( service_uri, honor_blacklist ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res ),
@@ -150,8 +149,9 @@ void CreamProxy_Register::method_call( int timeout )
 CreamProxy_Start::CreamProxy_Start( const string& service,
                                     const string& certfile,
                                     const soap_proxy::JobFilterWrapper* req,
-                                    soap_proxy::ResultWrapper* res ):
-    CreamProxyMethod( service ),
+                                    soap_proxy::ResultWrapper* res,
+				    const bool honor_blacklist  ):
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res )
@@ -195,8 +195,9 @@ void CreamProxy_Start::method_call( int timeout )
 CreamProxy_Cancel::CreamProxy_Cancel( const string& service, 
 				      const string& certfile, 
 				      const soap_proxy::JobFilterWrapper* req,
-				      soap_proxy::ResultWrapper* res ) :
-    CreamProxyMethod( service ),
+				      soap_proxy::ResultWrapper* res,
+				      const bool honor_blacklist  ) :
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res )
@@ -238,8 +239,9 @@ void CreamProxy_Cancel::method_call( int timeout )
 CreamProxy_Lease::CreamProxy_Lease( const std::string& service,
 				    const std::string& certfile,
 				    const std::pair<std::string, time_t>& lease_IN,
-				    std::pair<std::string, time_t>* lease_OUT ) :
-    CreamProxyMethod( service ),
+				    std::pair<std::string, time_t>* lease_OUT,
+				    const bool honor_blacklist  ) :
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_lease_IN( lease_IN ),
     m_lease_OUT( lease_OUT )
@@ -281,8 +283,9 @@ void CreamProxy_Lease::method_call( int timeout )
 CreamProxy_LeaseInfo::CreamProxy_LeaseInfo( const std::string& service,
 					    const std::string& certfile,
 					    const std::string& lease_IN,
-					    std::pair<std::string, time_t>* lease_OUT ) :
-    CreamProxyMethod( service ),
+					    std::pair<std::string, time_t>* lease_OUT,
+					    const bool honor_blacklist  ) :
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_lease_IN( lease_IN ),
     m_lease_OUT( lease_OUT )
@@ -324,8 +327,9 @@ void CreamProxy_LeaseInfo::method_call( int timeout )
 CreamProxy_Info::CreamProxy_Info( const std::string& service, 
 				  const std::string& certfile, 
 				  const soap_proxy::JobFilterWrapper* req, 
-				  soap_proxy::AbsCreamProxy::InfoArrayResult* res) :
-    CreamProxyMethod( service ),
+				  soap_proxy::AbsCreamProxy::InfoArrayResult* res,
+				  const bool honor_blacklist ) :
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res )
@@ -366,8 +370,9 @@ void CreamProxy_Info::method_call( int timeout )
 CreamProxy_Purge::CreamProxy_Purge( const std::string& service,
 			  const std::string& certfile,
                           const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
-			  glite::ce::cream_client_api::soap_proxy::ResultWrapper* res ) :
-    CreamProxyMethod( service ),
+			  glite::ce::cream_client_api::soap_proxy::ResultWrapper* res,
+			  const bool honor_blacklist  ) :
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_req( req ),
     m_res( res )
@@ -408,8 +413,9 @@ void CreamProxy_Purge::method_call( int timeout )
 //////////////////////////////////////////////////////////////////////////////
 CreamProxy_Delegate::CreamProxy_Delegate( const std::string& service,
 					  const std::string& certfile,
-					  const std::string& delegation_id ) :
-    CreamProxyMethod( service ),
+					  const std::string& delegation_id,
+					  const bool honor_blacklist  ) :
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_delegation_id( delegation_id )
 {
@@ -448,9 +454,10 @@ void CreamProxy_Delegate::method_call( int timeout )
 //
 //////////////////////////////////////////////////////////////////////////////
 CreamProxy_ProxyRenew::CreamProxy_ProxyRenew( const std::string& service,
-					    const std::string& certfile,
-					    const std::string& delegation_id ) :
-    CreamProxyMethod( service ),
+					      const std::string& certfile,
+					      const std::string& delegation_id,
+					      const bool honor_blacklist  ) :
+    CreamProxyMethod( service, honor_blacklist ),
     m_certfile( certfile ),
     m_delegation_id( delegation_id )
 {
@@ -498,8 +505,9 @@ CreamProxy_QueryEvent::CreamProxy_QueryEvent( const std::string& service,
 					      std::string& dbid,
 					      time_t& etime,
 					      std::list<soap_proxy::EventWrapper*>& events,
-					      const string& iceid ):
-  CreamProxyMethod( service ),
+					      const string& iceid,
+					      const bool honor_blacklist  ):
+  CreamProxyMethod( service, honor_blacklist ),
   m_certfile( certfile ),
   m_fromid( fromid ),
   m_toid( toid ),

@@ -280,7 +280,8 @@ iceCommandStatusPoller::check_multiple_jobs( const string& proxy,
              CreamProxy_Info( cream_url, 
                               proxy,
                               &req,
-                              &res).execute( 3 );
+                              &res,
+			      false /* ignore blacklisted CE */).execute( 3 );
             // remove_jobs_guard.dismiss(); // dismiss the guard, we should be safe here...
             
         } // free some array

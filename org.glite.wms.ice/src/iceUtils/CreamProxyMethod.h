@@ -77,9 +77,11 @@ namespace util {
 	void execute( int ntries ); // may throw anything
 
     protected:
-        CreamProxyMethod( const std::string& creamurl );
+        CreamProxyMethod( const std::string& creamurl,
+			  const bool honor_blacklist );
 
-        CEBlackList* m_blacklist;
+        CEBlackList*      m_blacklist;
+	bool       	  m_honor_blacklist;
         const std::string m_service; ///> URL of the service
 
         /**
@@ -116,7 +118,8 @@ namespace util {
                              const std::string& certfile,
                              const glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayRequest* req, 
                              glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::RegisterArrayResult* res,
-			     const std::string& iceid);
+			     const std::string& iceid,
+			     const bool honor_blacklist = true);
 
     protected:
         virtual void method_call(int timeout  ) throw(_cream_ex::BaseException&,
@@ -149,7 +152,8 @@ namespace util {
         CreamProxy_Cancel( const std::string& service, 
                            const std::string& certfile, 
                            const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
-                           glite::ce::cream_client_api::soap_proxy::ResultWrapper* res );
+                           glite::ce::cream_client_api::soap_proxy::ResultWrapper* res,
+			   const bool honor_blacklist = true );
     protected:
         virtual void method_call( int timeout )throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -178,7 +182,8 @@ namespace util {
         CreamProxy_Lease( const std::string& service,
 			  const std::string& certfile,
                           const std::pair<std::string, time_t>& lease_IN,
-                          std::pair<std::string, time_t>* lease_OUT );
+                          std::pair<std::string, time_t>* lease_OUT,
+			  const bool honor_blacklist = true );
     protected:
         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -207,7 +212,8 @@ namespace util {
       CreamProxy_LeaseInfo( const std::string& service,
 			    const std::string& certfile,
 			    const std::string& lease_IN,
-			    std::pair<std::string, time_t>* lease_OUT );
+			    std::pair<std::string, time_t>* lease_OUT,
+			    const bool honor_blacklist = true );
     protected:
         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -235,7 +241,8 @@ namespace util {
       CreamProxy_Info( const std::string& service, 
 		       const std::string& certfile, 
 		       const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
-		       glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::InfoArrayResult* res );
+		       glite::ce::cream_client_api::soap_proxy::AbsCreamProxy::InfoArrayResult* res,
+		       const bool honor_blacklist = true );
     protected:        
       virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
 						    _cream_ex::InvalidArgumentException&,
@@ -264,7 +271,8 @@ namespace util {
         CreamProxy_Purge( const std::string& service,
 			  const std::string& certfile,
                           const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req, 
-			  glite::ce::cream_client_api::soap_proxy::ResultWrapper* res );
+			  glite::ce::cream_client_api::soap_proxy::ResultWrapper* res,
+			  const bool honor_blacklist = true );
     protected:        
         virtual void method_call(int timeout  ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -293,7 +301,8 @@ namespace util {
         CreamProxy_Start( const std::string& service,
                           const std::string& certfile,
                           const glite::ce::cream_client_api::soap_proxy::JobFilterWrapper* req,
-                          glite::ce::cream_client_api::soap_proxy::ResultWrapper* res );
+                          glite::ce::cream_client_api::soap_proxy::ResultWrapper* res,
+			  const bool honor_blacklist = true  );
     protected:        
         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -320,7 +329,8 @@ namespace util {
     public:
       CreamProxy_Delegate( const std::string& service,
 			   const std::string& certfile,
-			   const std::string& delegation_id);
+			   const std::string& delegation_id,
+			   const bool honor_blacklist = true );
     protected:        
         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -347,7 +357,8 @@ namespace util {
     public:
       CreamProxy_ProxyRenew( const std::string& service,
 			     const std::string& certfile,
-			     const std::string& delegation_id);
+			     const std::string& delegation_id,
+			     const bool honor_blacklist = true );
     protected:        
         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
@@ -381,7 +392,8 @@ namespace util {
 			     std::string& dbid,
 			     time_t& etime,
 			     std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& events,
-			     const std::string& iceid);
+			     const std::string& iceid,
+			     const bool honor_blacklist = true );
     protected:        
         virtual void method_call( int timeout ) throw(_cream_ex::BaseException&,
 						      _cream_ex::InvalidArgumentException&,
