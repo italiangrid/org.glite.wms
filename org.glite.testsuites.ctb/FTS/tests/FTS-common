@@ -442,7 +442,12 @@ function get_status_result()
     then
       echo "Job is Active"
       return 4
-    
+
+    elif test $status == "Finishing"
+    then
+      echo "Job is Finishing"
+      return 4
+     
     elif test $status == "Canceling"
     then
       echo "Job is Canceling"
