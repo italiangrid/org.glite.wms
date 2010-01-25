@@ -291,32 +291,36 @@ unset tests_list
 
 if [ "x${CHECKSUM}" = "xyes" ]; then
   echo "*Running CHECKSUM tests"
-  testdir=./tests
-  declare -a tests_list
-  tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-1.sh")
-  tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-2.sh")
-  tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-3.sh")
-  pushd $testdir >> /dev/null
-  touch testfile 2> /dev/null
-  for item in ${tests_list[*]}
+  for channel in $channels
   do
-    rm -rf $loglocation/${item}_result.txt
-    echo "Executing $item"
-    echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time" > $loglocation/${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-            --vo $voname --timeout $time >> $loglocation/${item}_result.txt
-    res=$?
-    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
-    if [ "$?" = 0 -o "$res" != 0 ]; then
-      echo "$item FAILED"
-      failed=yes
-      tests_failed=( "${tests_failed[@]}" "$item" )
-    else
-      echo "$item PASSED"
-    fi
+    echo "Using channel: $channel"
+    testdir=./tests
+    declare -a tests_list
+    tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-1.sh")
+    tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-2.sh")
+    tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-3.sh")
+    pushd $testdir >> /dev/null
+    touch testfile 2> /dev/null
+    for item in ${tests_list[*]}
+    do
+      rm -rf $loglocation/${item}_result.txt
+      echo "Executing $item"
+      echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+              --vo $voname --timeout $time" > $loglocation/${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+              --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+      res=$?
+      grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+      if [ "$?" = 0 -o "$res" != 0 ]; then
+        echo "$item FAILED"
+        failed=yes
+        tests_failed=( "${tests_failed[@]}" "$item" )
+      else
+        echo "$item PASSED"
+      fi
+    done
+    popd >>/dev/null
   done
-  popd >>/dev/null
 else
   echo "*CHECKSUM tests skipped"
 fi
