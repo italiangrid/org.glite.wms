@@ -199,33 +199,47 @@ return=$?
 if [ "$return" = 1 ];then
   echo "Failing retrieving the job status"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN
   exit 1
 elif [ "$return" = 2 ];then
   echo "Failing retrieving the job status"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN
   exit 1
 elif [ "$return" = 3 ];then
   echo "Job failed"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN
   exit 1
 elif [ "$return" = 4 ];then
   echo "Timeout exceeded"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN
   exit 1
 elif [ "$return" -gt 4 ];then
   echo "return code unknown $?"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN
   exit 1
+fi
+
+if [ "$return" -eq 0 ];then
+  echo "Job status is done"
 fi
 
 
@@ -233,7 +247,9 @@ fi
 get_unused_space $DEST_TOKEN $DEST_SAPATH
 if [ $? -ne 0 ]; then
   echo "Error calling function check_unused_space: check_unused_space 5 $DEST_TOKEN $DEST_SAPATH"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN
   exit 1
 fi
@@ -242,12 +258,16 @@ if [ $UNUSED == "5.00M" ]; then
   echo "Test Failed: the unused space did not change"
   echo "Space free at destination: $UNUSED"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN
   exit 1
 fi
 
+export DPM_HOST=$SRC_SE
 remove_space $SOURCE_SAPATH $SRC_TOKEN
+export DPM_HOST=$DEST_SE
 remove_space $DEST_SAPATH $DEST_TOKEN
 
 echo "-TEST PASSED-"
