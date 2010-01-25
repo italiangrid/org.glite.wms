@@ -368,7 +368,7 @@ function file_transfer_with_checksum()
 #
 # Get a Submission Id and check the status of the file transfer.
 # Return codes:
-#              - 0 trasfer finished
+#              - 0 transfer finished
 #              - 1 error
 #              - 2 bad input arguments
 #              - 3 job failed
@@ -705,45 +705,16 @@ function special-channel-signal()
 # Added by Victor Galaktionov 08/12/2009
 function channel-signal() 
 {   
-    echo "channel-signal($1, $2)"
-    echo "Try extract channel nane"
-    #glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
-    
-    #grep "Channel" message > mess
-    #if [ $? != 0 ]; then
-#   echo "glite-channel-signal  command - failed"
-#   return 1
-#    fi 
-    count=0
-    while [ $count -lt 10 ];
-    do
-    glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
-        grep "Channel" message > mess
-    if [ $? != 0 ]; then
-        echo "glite-channel-signal  command - failed"
-        return 1
-    fi
-    grep "None" mess
-    if [ $? != 0 ]; then
-        break
-    fi
-    let count=count+1
-    sleep 5
-    done
-    CH=`cat mess | cut -d":" -f2`
-    echo "Channel = $CH"
-
     echo "Set signal '$2' to job $1"
-    echo "glite-transfer-channel-signal -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer  -j $1 $2"
-    glite-transfer-channel-signal -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer  -j $1 $2
+    echo "glite-transfer-channel-signal -v -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement  -j $1 $2"
+    glite-transfer-channel-signal -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement  -j $1 $2
     if [ $? != 0 ]; then
-    echo "glite-transfer-setpriority command - failed"
-    return 1
+      echo "glite-transfer-channel-signal command - failed"
+      return 1
     fi
     echo "OK, check job status glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $"  
     glite-transfer-status --verbose  -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $1 > message
-     return 0
-
+    return 0
 }
 
 
