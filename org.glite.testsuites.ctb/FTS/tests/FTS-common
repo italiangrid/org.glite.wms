@@ -907,6 +907,7 @@ if [ `echo $SAPATH | grep dpm` ]; then
     echo "$token"
     return 1
   else
+    token=`srm-reserve-space -desired_size=$SIZE  -srm_protocol_version=2  -retention_policy=REPLICA -access_latency=ONLINE -guaranteed_size=$SIZE -lifetime=36000 $SAPATH -space_desc=$DESCR | grep 'Space token' | awk -F'=' '{print \$2}'`
     export TOKEN="$token"
   fi
 elif [ `echo $SAPATH | grep desy` ]; then
