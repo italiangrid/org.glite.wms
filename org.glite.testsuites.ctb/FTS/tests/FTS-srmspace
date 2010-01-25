@@ -146,6 +146,8 @@ id=`date +%s`
 SRC_DESCR=src_descr_$id
 unset TOKEN
 echo "Reserving ${SIZE} on $SOURCE_SAPATH as $SRC_DESCR"
+#Export DPM_HOST in order to use the dpm CLI
+export DPM_HOST=$SRC_SE
 reserveSpace $SOURCE_SAPATH $SIZE $SRC_DESCR
 #if [ "x${TOKEN}" == "x" ] || [ $? -ne 0 ]; then
 if [ $? -ne 0 ]; then
@@ -161,6 +163,8 @@ unset TOKEN
 id=`date +%s`
 DEST_DESCR=dest_descr_$id
 echo "Reserving ${SIZE} on $DEST_SAPATH as $DEST_DESCR"
+#Export DPM_HOST in order to use the dpm CLI
+export DPM_HOST=$DEST_SE
 reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR
 if [ $? -ne 0 ]; then
   echo "Error calling function reserveSpace: reserveSpace $DEST_SAPATH $SIZE $DEST_DESCR"
