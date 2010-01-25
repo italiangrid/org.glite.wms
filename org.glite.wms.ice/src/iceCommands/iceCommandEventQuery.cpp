@@ -250,7 +250,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       boost::cmatch what;
       pattern = ".*No such operation 'QueryEventRequest'.*";
       if( boost::regex_match(ex.what(), what, pattern) ) {
-	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+	CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
 		     << "Not present QueryEvent on CE ["
 		     << m_ce << "]. Falling back to old-style StatusPoller."
 		     );
