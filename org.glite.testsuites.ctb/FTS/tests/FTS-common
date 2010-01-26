@@ -52,11 +52,42 @@ function get_fts_url_and_host()
   return 0
 }
 
+# Returns in GSIFTP_SOURCE and GSIFTP_DESTINATION the GridFTP
+# equivalent URLS
+# Parameters:
+#   1.- Source SURL
+#   2.- Destination SURL
+# NOTE: A blank destination file will be created (it is needed)
+function get_gsiftp_urls()
+{
+    # Source is straight-forward
+    GSIFTP_SOURCE=`lcg-gt $1 gsiftp`
+
+    # Create a blank file and upload
+    local GSIFTP_TMP_FILE="/tmp/FTS_Test_$DATE_blank"
+    touch $GSIFTP_TMP_FILE
+    local GSIFTP_DEST_GUID=`lcg-cr --vo $VO_NAME -d $2 file://$GSIFTP_TMP_FILE`
+    if [ ! $? -eq 0 ]; then
+        echo "The blank destination file could not be created!!"
+        return 1
+    fi
+    rm -f $GSIFTP_TMP_FILE
+
+    # Recover GSIFTP
+    GSIFTP_DESTINATION=`lcg-gt $2 gsiftp`
+
+    # Warning
+    echo "Using GSIFTP URLs!!"
+    echo "  Source: $GSIFTP_SOURCE"
+    echo "  Destination: $GSIFTP_DESTINATION"
+}
+
 #
 # get SE1_SRM_LOC, SE2_SRM_LOC and MYPROXY_PASS and submit
 # a file transfer. FTS_HOST must be set. The job Id is stored
 # in SUBID
 #
+# If GSIFTP_URL is set to "yes", this will use GridFTP URLs
 function file_transfer()
 {
     if [ -z $1 ];then
@@ -117,7 +148,18 @@ function file_transfer()
     i=0
     echo "" > $SUB_FILE_LOC
 
-    echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
+    # Process the destination and source URLs depending on
+    # the GSIFTP_URL environment variable
+    if [ "x$GSIFTP_URL" = "xyes" ]; then
+        get_gsiftp_urls "$SE1_SRM_LOC/$TEST_FILE_NAME" "$SE2_SRM_LOC/$TEST_FILE_NAME$i"
+        if [ ! $? -eq 0 ]; then
+            echo "get_gsiftp_urls error!"
+            return 1
+        fi
+        echo "$GSIFTP_SOURCE $GSIFTP_DESTINATION" >> $SUB_FILE_LOC
+    else
+        echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
+    fi
 
     echo "Submitting the transfer"  
 

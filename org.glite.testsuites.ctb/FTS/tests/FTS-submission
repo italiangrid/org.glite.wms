@@ -42,9 +42,11 @@ showUsage()
  echo "                   VO name"
  echo "          --timeout  <timeout> "
  echo "                   timeout in seconds"
+ echo "          --gsiftp   [yes|no]"
+ echo "                   If set to 'yes', GSIFTP URLs will be used"
 }
 
-if [ $# -ne 10 ];then
+if [ $# -ne 12 ];then
   showUsage
   echo
   echo "-TEST FAILED-"
@@ -91,6 +93,14 @@ do
                 shift 1
            else
                 TIMEOUT=$2
+                shift 2
+           fi
+     ;;
+     --gsiftp)
+           if [ -z "$2"]; then
+                shift 1
+           else
+                GSIFTP_URL=$2
                 shift 2
            fi
      ;;
