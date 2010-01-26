@@ -24,6 +24,9 @@
 #
 ##############################################################################
 
+#source functions definitions
+source FTS-common
+
 #Script for testing FTS file transfer submission
 
 showUsage()
@@ -348,10 +351,6 @@ do
     ;;
   esac
 done
-
-#source functions definitions
-source FTS-common
-#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

@@ -23,6 +23,9 @@
 #
 ##############################################################################
 
+#source functions definitions
+source FTS-common
+
 #Script for testing FTS file transfer submission using checksum option
 # 3rd scenario
 
@@ -98,10 +101,6 @@ do
     ;;
   esac
 done
-
-#source functions definitions
-source FTS-common
-#source ../FTS-certconfig
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

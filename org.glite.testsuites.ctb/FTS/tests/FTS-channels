@@ -23,6 +23,8 @@
 #
 ##############################################################################
 
+#source functions definitions
+source FTS-common
 
 ###################################
 # Script for testing FTS channels #
@@ -67,9 +69,6 @@ do
     ;;
   esac
 done
-
-#source functions definitions
-source FTS-common
 
 #1)Get Channels list
 echo "Retrieving channels list..."

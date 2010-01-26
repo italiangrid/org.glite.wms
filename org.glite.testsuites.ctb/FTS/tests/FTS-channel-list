@@ -24,6 +24,9 @@
 #
 ##############################################################################
 
+#source functions definitions
+source FTS-common
+
 #Script for testing FTS file transfer submission
 
 showUsage()
@@ -148,11 +151,6 @@ if [ $# -ne 10 ];then
 fi
 
 CHANNEL=$1
-
-#source functions definitions
-source FTS-common
-#source FTS-V-common
-
 
 
 #1) Test if channel exists

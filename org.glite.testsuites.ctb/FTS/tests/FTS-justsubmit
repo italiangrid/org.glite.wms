@@ -30,7 +30,6 @@
 
 #source functions definitions
 source FTS-common
-source ../FTS-certconfig
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

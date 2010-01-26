@@ -22,6 +22,9 @@
 # AUTHOR: Victor Galaktionov, JINR/CERN 
 ##############################################################################
 
+#source functions definitions
+source FTS-common
+
 #Script for testing FTS channel add operation
 
 showUsage()
@@ -234,11 +237,6 @@ do
   esac
 done
 
-
-
-#source functions definitions
-source FTS-common
-#source FTS-V-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

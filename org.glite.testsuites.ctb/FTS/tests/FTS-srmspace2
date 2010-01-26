@@ -23,6 +23,9 @@
 #
 ##############################################################################
 
+#source functions definitions
+source FTS-common
+
 #Script for testing FTS behavior with space tokens
 # Scenario:
 #A valid token description is used at the source SE, and two valid token descriptions (for spaces of 5KB and 10KB) are available at the destination SE. The transfer has to succeed and the file has to be placed in the space with the lowest space. This test can be repeated with 3 and/or 4 spaces at the destination site varying the unused space (by copying data into the space). The file has to be placed in to the space with the lowest unused space.
@@ -97,9 +100,6 @@ do
     ;;
   esac
 done
-
-#source functions definitions
-source FTS-common
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
