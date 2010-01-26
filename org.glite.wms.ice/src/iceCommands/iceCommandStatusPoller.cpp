@@ -1,25 +1,23 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * ICE status poller
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
+
 
 // ICE Headers
 #include "iceCommandStatusPoller.h"
@@ -37,6 +35,7 @@
 #include "iceUtils.h"
 #include "iceDb/GetFields.h"
 #include "iceDb/GetJobByCid.h"
+#include "iceDb/InsertStat.h"
 #include "iceDb/RemoveJobByCid.h"
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
@@ -435,9 +434,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
     {
       glite::wms::ice::db::GetJobByCid getter( completeJobID, "iceCommandStatusPoller::update_single_job" );
       glite::wms::ice::db::Transaction tnx(false, false);
-      //tnx.begin( );
       tnx.execute( &getter );
-      //      tnx.commit( );
       if( !getter.found() )
       {
         CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name 
@@ -456,11 +453,6 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  it != status_changes.end(); 
 	  ++it, ++count ) 
       {
-	
-	/*
-	  tmp_job.set_last_seen( time(0) + iceConfManager::getInstance()->getConfiguration()->ice()->poller_delay()*5 );
-	  tmp_job.set_last_empty_notification_time( time(0) + iceConfManager::getInstance()->getConfiguration()->ice()->poller_delay()*5 );
-	*/
 	
 	jobstat::job_status stNum( jobstat::getStatusNum( it->getStatusName() ) );
 	
@@ -502,6 +494,14 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 			 << " description = [" << it->getDescription() << "]"
 			 );
 	  tmp_job.set_status( stNum );
+	  
+#ifdef GLITE_WMS_ICE_ENABLE_STATS
+	  {
+	    db::InsertStat inserter( time(0), (short)stNum, "iceCommandEventQuery::processSingleEvent" );
+	    db::Transaction tnx(false, false);
+	    tnx.execute( &inserter );
+	  }
+#endif
 	  
 	  try {
 	    tmp_job.set_exitcode( boost::lexical_cast< int >( exitCode ) );
