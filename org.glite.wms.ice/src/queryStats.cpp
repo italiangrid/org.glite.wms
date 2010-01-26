@@ -57,8 +57,8 @@ namespace db = glite::wms::ice::db;
 void printhelp( void ) {
   cout << "USAGE: queryDb --conf|-c <WMS CONFIGURATION FILE> [options]" << endl;
   cout << endl << "options: " << endl;
-  cout << "  --from-date|-f\tSet the lower time limit to collect the stats from" << endl
-  cout << "  --to-date|t\tSet the upper time limit to collect the stats to" << endl
+  cout << "  --from-date|-f\tSet the lower time limit to collect the stats from" << endl;
+  cout << "  --to-date|t\tSet the upper time limit to collect the stats to" << endl;
   cout << "  --help|-h\t\tPrint this help" << endl;
 }
 
