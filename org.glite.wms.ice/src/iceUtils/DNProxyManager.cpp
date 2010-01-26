@@ -423,7 +423,7 @@ iceUtil::DNProxyManager::updateBetterProxy( const string& userDN,
     CREAM_SAFE_LOG(m_log_dev->errorStream() 
 		   << "DNProxyManager::updateBetterProxy() - Error copying proxy ["
 		   << newEntry.get<0>() << "] to ["
-		   << localProxy << "]."
+		   << localProxy << ".tmp]."
 		   );
     
     return;

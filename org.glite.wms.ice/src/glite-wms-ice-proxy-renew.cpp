@@ -22,8 +22,15 @@ END LICENSE */
 #include <stdio.h>
 #include <getopt.h>
 #include <glite/security/proxyrenewal/renewal_core.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <iostream>
+#include <cstring>
+#include <cerrno>
+
+extern int errno;
 
 using namespace std;
 
@@ -72,6 +79,14 @@ main(int argc, char *argv[])
      cout << "both server and proxy parameters must be given and output file name\n";
      return 1;
    }
+
+  struct stat buf;
+  int rc = stat(proxy, &buf);
+  if( rc ) {
+    cerr << strerror( errno ) << endl;
+    return 1;
+  }
+
 
    ret = glite_renewal_core_init_ctx(&ctx);
    if (ret) {
