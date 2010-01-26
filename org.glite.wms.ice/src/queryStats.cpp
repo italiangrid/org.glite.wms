@@ -57,33 +57,8 @@ namespace db = glite::wms::ice::db;
 void printhelp( void ) {
   cout << "USAGE: queryDb --conf|-c <WMS CONFIGURATION FILE> [options]" << endl;
   cout << endl << "options: " << endl;
-  cout << "  --verbose|-v\t\tVerbose output (print each db's record" << endl;
-  //  cout << "\t--debug|-d\tPrint the SQL query before executing it" << endl;
-  cout << "  --status-filter|-s\tSelect only records in which the status column is one"<<endl
-       << "  \t\t\tof those specified as option argument; more states can"<<endl
-       << "  \t\t\tbe ',' separated and they must be:"<<endl;
-  cout << "\t\t\tREGISTERED"<<endl;
-  cout << "\t\t\tPENDING"<<endl;
-  cout << "\t\t\tIDLE"<<endl;
-  cout << "\t\t\tRUNNING"<<endl;
-  cout << "\t\t\tREALLY_RUNNING"<<endl;
-  cout << "\t\t\tCANCELLED"<<endl;
-  cout << "\t\t\tHELD"<<endl;
-  cout << "\t\t\tABORTED"<<endl;
-  cout << "\t\t\tDONE_OK"<<endl;
-  cout << "\t\t\tDONE_FAILED"<<endl;
-  cout << "\t\t\tUNKNOWN"<<endl;
-  cout << "\t\t\tPURGED"<<endl<<endl;
-  cout << "  --userdn|-u\t\tPrint the USERDN column of the job table" << endl;
-  cout << "  --creamjobid|-C\tPrint the CREAM JOB ID column of the job table" << endl;
-  cout << "  --gridjobid|-G\tPrint the GRID JOB ID column of the job table" << endl;
-  cout << "  --userproxy|-p\tPrint the USER PROXY column of the job table" << endl;
-  cout << "  --cream-url|-r\tPrint the CREAM URL column of the job table" << endl;
-  cout << "  --myproxy-url|-m\tPrint the MYPROXY URL column of the job table" << endl;
-  cout << "  --status|-S\t\tPrint the STATUS column of the job table" << endl;
-  cout << "  --lease-id|-L\t\tPrint the LEASE-ID column of the job table" << endl;
-  cout << "  --delegation-id|-D\tPrint the DELEGATION-ID column of the job table" << endl;
-  cout << "  --worker-node|-w\tPrint the WORKER-NODE column of the job table" << endl;
+  cout << "  --from-date|-f\tSet the lower time limit to collect the stats from" << endl
+  cout << "  --to-date|t\tSet the upper time limit to collect the stats to" << endl
   cout << "  --help|-h\t\tPrint this help" << endl;
 }
 

@@ -115,22 +115,22 @@ void iceThreadPool::iceThreadPoolWorker::body( )
         try {
             string label = boost::str( boost::format( "%1% TIMER %2% cmd=%3% threadid=%4%" ) % method_name % cmd->name() % m_state->m_name % m_threadNum );
 
-	    CREAM_SAFE_LOG(
+/*	    CREAM_SAFE_LOG(
                            m_log_dev->debugStream() << method_name
                            << "Thread [" 
 			   <<  m_state->m_name << "] is executing an AbsCommand [" 
 			   << cmd->name() << "]"
                            );
-
+*/
             cmd->execute( );
 
-	    CREAM_SAFE_LOG(
+/*	    CREAM_SAFE_LOG(
                            m_log_dev->debugStream() << method_name
                            << "Thread [" 
                            <<  m_state->m_name << "] has finished execution of command ["
                            << cmd->name() << "]"
                            );
-
+*/
         } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
             CREAM_SAFE_LOG( 
                            m_log_dev->errorStream() << method_name
