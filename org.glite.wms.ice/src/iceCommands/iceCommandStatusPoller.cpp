@@ -497,7 +497,7 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  
 #ifdef GLITE_WMS_ICE_ENABLE_STATS
 	  {
-	    db::InsertStat inserter( time(0), (short)stNum, "iceCommandEventQuery::processSingleEvent" );
+	    db::InsertStat inserter( it->getTimestamp(), (short)stNum, "iceCommandEventQuery::processSingleEvent" );
 	    db::Transaction tnx(false, false);
 	    tnx.execute( &inserter );
 	  }
