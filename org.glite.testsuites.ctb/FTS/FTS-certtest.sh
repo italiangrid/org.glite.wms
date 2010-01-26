@@ -224,6 +224,7 @@ if [ "x${BASIC}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "FTS-channel-managers")
   tests_list=("${tests_list[@]}" "FTS-channel-set")
   tests_list=("${tests_list[@]}" "FTS-channel-setvolimit")
+  tests_list=("${tests_list[@]}" "FTS-channel-signal")
   tests_list=("${tests_list[@]}" "FTS-getroles")
   tests_list=("${tests_list[@]}" "FTS-joblist")
   tests_list=("${tests_list[@]}" "FTS-service-info")

@@ -3,7 +3,7 @@
 #If LOGSLOCATON is not specified logs will be in the tests directory
 LOGSLOCATION="/tmp"
 
-FTS_HOST="lxbra2310.cern.ch"
+FTS_HOST="vtb-generic-85.cern.ch"
 
 #The name of the top level BDII
 BDII_HOST="lxbra2305.cern.ch"
@@ -31,3 +31,9 @@ NFILES=10
 BASIC="yes"
 CHECKSUM="no"
 SPACE="no" 
+
+#TEST WITH GRIDFTP URLS
+#IF SET TO "YES", FTS-CERTTEST.SH WILL RUN TWICE THE COMMANDS
+#THAT INVOLVES SUBMISSION, USING GRIDFTP URLS THE SECOND TIME
+REPEAT_FOR_GRIDFTP="yes"
+
