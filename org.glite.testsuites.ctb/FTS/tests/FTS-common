@@ -66,6 +66,7 @@ function get_gsiftp_urls()
     # Create a blank file and upload
     local GSIFTP_TMP_FILE="/tmp/FTS_Test_$DATE_blank"
     touch $GSIFTP_TMP_FILE
+    echo "Creating blank destination for GSIFTP test"
     local GSIFTP_DEST_GUID=`lcg-cr --vo $VO_NAME -d $2 file://$GSIFTP_TMP_FILE`
     if [ ! $? -eq 0 ]; then
         echo "The blank destination file could not be created!!"
@@ -180,6 +181,7 @@ function file_transfer()
 # as file_transfer but uses tokens description and file size
 # Usage: file_transfer_tokens SOURCE_SAPATH DEST_SAPATH SRC_DESCR DEST_DESCR FILE_SIZE
 #
+# If GSIFTP_URL is set to "yes", this will use GridFTP URLs
 function file_transfer_tokens()
 {
   if [ $# -ne 5 ]; then
@@ -215,7 +217,20 @@ function file_transfer_tokens()
   echo "Creating the submission file in $SUB_FILE_LOC"
   id=`date +%s`
   echo "" > $SUB_FILE_LOC
-  echo "$SOURCE_SAPATH/$TEST_FILE_NAME $DEST_SAPATH/$TEST_FILE_NAME$id" >> $SUB_FILE_LOC
+
+    # Process the destination and source URLs depending on
+    # the GSIFTP_URL environment variable
+    if [ "x$GSIFTP_URL" = "xyes" ]; then
+        get_gsiftp_urls "$SOURCE_SAPATH/$TEST_FILE_NAME" "$DEST_SAPATH/$TEST_FILE_NAME$id"
+        if [ ! $? -eq 0 ]; then
+            echo "get_gsiftp_urls error!"
+            return 1
+        fi
+        echo "$GSIFTP_SOURCE $GSIFTP_DESTINATION" >> $SUB_FILE_LOC
+    else
+        echo "$SOURCE_SAPATH/$TEST_FILE_NAME $DEST_SAPATH/$TEST_FILE_NAME$id" >> $SUB_FILE_LOC
+    fi
+  
   
   echo "Submitting the transfer"
   echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC --dest-token $DEST_DESCR --source-token $SRC_DESCR"
@@ -235,6 +250,7 @@ function file_transfer_tokens()
 # as file_transfer but uses --fail-nearline
 # Usage: file_transfer_skip_tape SOURCE_SAPATH DEST_SAPATH FILE_SIZE
 #
+# If GSIFTP_URL is set to "yes", this will use GridFTP URLs
 function file_transfer_skip_tape()
 {
   if [ $# -ne 3 ]; then
@@ -268,7 +284,19 @@ function file_transfer_skip_tape()
   echo "Creating the submission file in $SUB_FILE_LOC"
   id=`date +%s`
   echo "" > $SUB_FILE_LOC
-  echo "$SOURCE_SAPATH/$TEST_FILE_NAME $DEST_SAPATH/$TEST_FILE_NAME$id" >> $SUB_FILE_LOC
+
+    # Process the destination and source URLs depending on
+    # the GSIFTP_URL environment variable
+    if [ "x$GSIFTP_URL" = "xyes" ]; then
+        get_gsiftp_urls "$SOURCE_SAPATH/$TEST_FILE_NAME" "$DEST_SAPATH/$TEST_FILE_NAME$id"
+        if [ ! $? -eq 0 ]; then
+            echo "get_gsiftp_urls error!"
+            return 1
+        fi
+        echo "$GSIFTP_SOURCE $GSIFTP_DESTINATION" >> $SUB_FILE_LOC
+    else
+        echo "$SOURCE_SAPATH/$TEST_FILE_NAME $DEST_SAPATH/$TEST_FILE_NAME$id" >> $SUB_FILE_LOC
+    fi
   
   echo "Submitting the transfer"
   echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC --fail-nearline"
@@ -290,6 +318,7 @@ function file_transfer_skip_tape()
 # a file transfer using the checksum option. 
 # FTS_HOST must be set. The job Id is stored in SUBID
 #
+# If GSIFTP_URL is set to "yes", this will use GridFTP URLs
 function file_transfer_with_checksum()
 {
     if [ -z $1 ];then
@@ -369,7 +398,20 @@ function file_transfer_with_checksum()
       echo "Creating the submission file with $ALGO:$CHECKSUM in $SUB_FILE_LOC"
       i=0
       echo "" > $SUB_FILE_LOC
-      echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+
+    # Process the destination and source URLs depending on
+    # the GSIFTP_URL environment variable
+    if [ "x$GSIFTP_URL" = "xyes" ]; then
+        get_gsiftp_urls "$SE1_SRM_LOC/$TEST_FILE_NAME" "$SE2_SRM_LOC/$TEST_FILE_NAME$i"
+        if [ ! $? -eq 0 ]; then
+            echo "get_gsiftp_urls error!"
+            return 1
+        fi
+        echo "$GSIFTP_SOURCE $GSIFTP_DESTINATION $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+    else
+        echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+    fi
+
       echo "Submitting the transfer"  
       echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC" 
       SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer -f $SUB_FILE_LOC`
@@ -381,7 +423,20 @@ function file_transfer_with_checksum()
       echo "Creating the submission file in $SUB_FILE_LOC"
       i=0
       echo "" > $SUB_FILE_LOC
-      echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
+
+    # Process the destination and source URLs depending on
+    # the GSIFTP_URL environment variable
+    if [ "x$GSIFTP_URL" = "xyes" ]; then
+        get_gsiftp_urls "$SE1_SRM_LOC/$TEST_FILE_NAME" "$SE2_SRM_LOC/$TEST_FILE_NAME$i"
+        if [ ! $? -eq 0 ]; then
+            echo "get_gsiftp_urls error!"
+            return 1
+        fi
+        echo "$GSIFTP_SOURCE $GSIFTP_DESTINATION" >> $SUB_FILE_LOC
+    else
+        echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i" >> $SUB_FILE_LOC
+    fi
+      
       echo "Submitting the transfer with $OPTION"  
       echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC" 
       SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC`
@@ -395,7 +450,21 @@ function file_transfer_with_checksum()
       echo "Creating the submission file with $ALGO:$CHECKSUM in $SUB_FILE_LOC"
       i=0
       echo "" > $SUB_FILE_LOC
-      echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+
+
+    # Process the destination and source URLs depending on
+    # the GSIFTP_URL environment variable
+    if [ "x$GSIFTP_URL" = "xyes" ]; then
+        get_gsiftp_urls "$SE1_SRM_LOC/$TEST_FILE_NAME" "$SE2_SRM_LOC/$TEST_FILE_NAME$i"
+        if [ ! $? -eq 0 ]; then
+            echo "get_gsiftp_urls error!"
+            return 1
+        fi
+        echo "$GSIFTP_SOURCE $GSIFTP_DESTINATION $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+    else
+        echo "$SE1_SRM_LOC/$TEST_FILE_NAME $SE2_SRM_LOC/$TEST_FILE_NAME$i $ALGO:$CHECKSUM" >> $SUB_FILE_LOC
+    fi
+
       echo "Submitting the transfer with $OPTION"  
       echo "glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC" 
       SUBID=`glite-transfer-submit -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/FileTransfer $OPTION -f $SUB_FILE_LOC`

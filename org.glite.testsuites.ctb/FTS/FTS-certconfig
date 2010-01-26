@@ -18,7 +18,7 @@ VO="dteam"
 CHANNELS="CERN-CERN CERN-DESY"
 #export CERN_SE="lxb7608v1.cern.ch"
 CERN_SE="lxbra1910.cern.ch"
-CERN_SE2="lxb7608v1.cern.ch"
+CERN_SE2="vtb-generic-57.cern.ch"
 DESY_SE="ennis.desy.de"
 #Timeout for waiting the job to finish. Default is 100 sec.
 TIMEOUT=300
@@ -30,10 +30,9 @@ NFILES=10
 #TESTS TO RUN (BASIC, CHECKSUM, SPACE)
 BASIC="yes"
 CHECKSUM="no"
-SPACE="no" 
+SPACE="no"
 
 #TEST WITH GRIDFTP URLS
-#IF SET TO "YES", FTS-CERTTEST.SH WILL RUN TWICE THE COMMANDS
-#THAT INVOLVES SUBMISSION, USING GRIDFTP URLS THE SECOND TIME
-REPEAT_FOR_GRIDFTP="yes"
+#NOTE: This feature is under development. Do NOT use it for certification yet
+GRIDFTP="no"
 

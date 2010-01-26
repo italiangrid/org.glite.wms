@@ -258,7 +258,7 @@ if [ "x${BASIC}" = "xyes" ]; then
       echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
       ./$item --fts $hostname >> $loglocation/${item}_result.txt
       res=$?
-    elif [ $item = "FTS-submission" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-list" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
+    elif [ $item = "FTS-submission" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-channel-signal" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
       for channel in $channels
       do
         echo "./$item --fts $hostname --bdii $bdiihost --channel $channel --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
@@ -369,6 +369,102 @@ if [ "x${SPACE}" = "xyes" ]; then
   popd >>/dev/null
 else
   echo "*SPACE tests skipped"
+fi
+
+###########
+# GRIDFTP #
+###########
+
+if [ "x${GRIDFTP}" = "xyes" ]; then
+  echo "*Running GRIDFTP tests (EXPERIMENTAL)"
+  testdir=./tests
+  declare -a tests_list
+  if [ "x${BASIC}" = "xyes" ]; then
+      echo "  -BASIC tests for GRIDFTP"
+      tests_list=("${tests_list[@]}" "FTS-submission")
+      tests_list=("${tests_list[@]}" "FTS-cancel")
+      tests_list=("${tests_list[@]}" "FTS-joblist")
+      tests_list=("${tests_list[@]}" "FTS-setpriority")
+      tests_list=("${tests_list[@]}" "FTS-status")
+      tests_list=("${tests_list[@]}" "FTS-channel-signal")
+  else
+      echo "  -BASIC tests for GRIDFTP skipped"
+  fi
+  if [ "x${CHECKSUM}" = "xyes" ]; then
+    echo "  -CHECKSUM tests for GRIDFTP"
+    tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-1.sh")
+    tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-2.sh")
+    tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-3.sh")
+  else
+      echo "  -CHECKSUM tests for GRIDFTP skipped"
+  fi
+  if [ "x${SPACE}" = "xyes" ]; then
+    echo "  -SPACE tests for GRIDFTP"
+    tests_list=("${tests_list[@]}" "FTS-srmspace")
+    tests_list=("${tests_list[@]}" "FTS-srmspace2")
+  else
+      echo "  -SPACE tests for GRIDFTP skipped"
+  fi
+
+  pushd $testdir >> /dev/null
+  touch testfile 2> /dev/null
+
+  if [ "x$CERN_SE" != "x" ]; then
+    SOURCESE=$CERN_SE
+  else
+    echo "CERN_SE has to be set to run SPACE tests"
+  fi
+  if [ "x$CERN_SE2" != "x" ]; then
+    DESTSE=$CERN_SE2
+  else
+    echo "CERN_SE2 has to be set to run SPACE tests"
+  fi
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf $loglocation/${item}_result.txt testfile
+    echo "Executing $item"
+    # Basic tests
+    if [ $item = "FTS-submission" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ] || [ $item = "FTS-channel-signal" ]; then
+        for channel in $channels
+        do
+            echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+                 --vo $voname --timeout $time --gsiftp yes" >> $loglocation/${item}_result.txt
+            ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+                 --vo $voname --timeout $time --gsiftp yes >> $loglocation/${item}_result.txt
+            res=$?
+        done
+    # Checksum tests
+    elif [[ "$item" == FTS-submission-with-checksum* ]]; then
+        for channel in $channels
+        do
+            echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
+                  --vo $voname --timeout $time --gsiftp yes" > $loglocation/${item}_result.txt
+            ./$item --fts $hostname --bdii $bdiihost --channel $channel \
+                  --vo $voname --timeout $time --gsiftp yes >> $loglocation/${item}_result.txt
+            res=$?
+        done
+    # Space tests
+    elif [[ "$item" == FTS-srmspace* ]]; then
+        echo "./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE \
+              --vo $voname --timeout $time --gsiftp yes" > $loglocation/${item}_result.txt
+        ./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE \
+            --vo $voname --timeout $time --gsiftp yes >> $loglocation/${item}_result.txt
+        res=$?
+    fi
+
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >>/dev/null
+else
+  echo "*GRIDFTP tests skipped (EXPERIMENTAL)"
 fi
 
 #######

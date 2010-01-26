@@ -43,9 +43,12 @@ showUsage()
  echo "                   VO name"
  echo "          --timeout  <timeout> "
  echo "                   timeout in seconds"
+ echo "          --gsiftp   [yes|no]"
+ echo "                   If set to 'yes', GSIFTP URLs will be used"
+ echo "                   (Optional. Default value: No)"
 }
 
-if [ $# -ne 10 ];then
+if [ $# -lt 10 ];then
   showUsage
   echo
   echo "-TEST FAILED-"
@@ -95,12 +98,25 @@ do
                 shift 2
            fi
      ;;
+     --gsiftp)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                GSIFTP_URL=$2
+                shift 2
+           fi
+     ;;
           *)
            showUsage
            exit 2
     ;;
   esac
 done
+
+if [ -z "$GSIFTP_URL" ]; then
+    GSIFTP_URL="no"
+fi
+
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`

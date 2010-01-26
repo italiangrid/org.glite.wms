@@ -34,10 +34,10 @@ source FTS-common
 
 showUsage()
 {
- echo "Usage: $0 --fts <fts hostname> --src <source SE> --dest <dest SE> --timeout <timeout> --bdii <bdii host> --vo <vo>"
+ echo "Usage: $0 --fts <fts hostname> --src <source SE> --dest <dest SE> --timeout <timeout> --bdii <bdii host> --vo <vo> --gsiftp [yes|no]"
 }
 
-if [ $# -ne 12 ];then
+if [ $# -lt 12 ];then
   echo "One or more arguments are missing"
   showUsage
   echo
@@ -96,12 +96,25 @@ do
                 shift 2
            fi
      ;;
+     --gsiftp)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                GSIFTP_URL=$2
+                shift 2
+           fi
+     ;;
           *)
            showUsage
            exit 2
     ;;
   esac
 done
+
+if [ -z "$GSIFTP_URL" ]; then
+    GSIFTP_URL="no"
+fi
+
 
 #0.1) Check for valid proxy
 ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
