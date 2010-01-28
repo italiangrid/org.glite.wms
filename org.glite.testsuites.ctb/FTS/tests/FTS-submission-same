@@ -20,6 +20,12 @@
 ##############################################################################
 #
 # AUTHORS: Gianni Pucciani, CERN
+#          Alejandro Alvarez Ayllon, CERN
+#
+##############################################################################
+#
+# This script is a variant of FTS-submission, being source and destination SE
+# the same SE
 #
 ##############################################################################
 
@@ -190,7 +196,6 @@ echo "Source: $Source_Site"
 echo "Dest: $Destin_Site"
 
 #3.b) Retrieve good SEs from source and destination sites
-#get_good_se_from_site $Source_Site
 get_def_se_from_site $Source_Site
 if [ $? -eq 1 ];then
   echo "Failing retrieving default SE from site $Source_Site"
@@ -205,22 +210,8 @@ else
   exit 1
 fi
 
-#get_good_se_from_site $Destin_Site
-get_def_se_from_site $Destin_Site $Source_Site
-if [ $? -eq 1 ];then
-  echo "Failing retrieving default SE from site $Destin_Site"
-  echo "-TEST FAILED-"
-  exit 1
-fi
-if [ "x$SE_HOST" != "x" ]; then
-  SE_DEST=$SE_HOST
-  echo "SE_dest: $SE_DEST"
-else
-  echo "Failing retrieving default SE from site $Source_Site"
-  echo "-TEST FAILED-"
-  exit 1
-fi
-
+SE_DEST=$SE_SOURCE
+echo "SE_dest: $SE_DEST"
 
 #3.c) Retrieve SEs path to use for file transfer
 get_se_path $SE_SOURCE

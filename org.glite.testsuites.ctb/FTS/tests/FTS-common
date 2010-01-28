@@ -862,6 +862,9 @@ function get_source_dest_from_channel()
 
 #
 # Get default SE from site
+# The second parameter (optional) can be the source SE, so
+# an alternative SE will be selected for the destination if
+# the source site and the destination site are the same
 #
 function get_def_se_from_site()
 {
@@ -872,9 +875,17 @@ function get_def_se_from_site()
     local Site_Name=$1
   fi
   if [ $Site_Name == "cert-tb-cern" ]; then
-    SE_HOST=$CERN_SE
+    if [ ! -z $2 ] && [ ! -z $CERN_SE2 ]; then
+        SE_HOST=$CERN_SE2
+    else
+        SE_HOST=$CERN_SE
+    fi
   elif [ $Site_Name == "desycerttb" ]; then
-    SE_HOST=$DESY_SE
+    if [ ! -z $2 ] && [ ! -z $CERN_SE2 ]; then
+        SE_HOST=$DESY_SE2
+    else
+        SE_HOST=$DESY_SE
+    fi
   else
     echo "get_def_se_from_site: no SE defined for site $Site_Name"
     return 1
