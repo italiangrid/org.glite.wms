@@ -47,7 +47,7 @@ END LICENSE */
 #include <cerrno>
 //#include <errno.h>
 
-extern int errno;
+//extern int errno;
 //extern int *__errno_location(void);
 //#define errno (*__errno_location())
 

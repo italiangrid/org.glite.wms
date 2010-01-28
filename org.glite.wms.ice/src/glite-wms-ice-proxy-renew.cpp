@@ -30,7 +30,7 @@ END LICENSE */
 #include <cstring>
 #include <cerrno>
 
-extern int errno;
+//extern int errno;
 
 using namespace std;
 
