@@ -156,6 +156,7 @@ id=`date +%s`
 SRC_DESCR=src_descr_$id
 unset TOKEN
 echo "Reserving ${SIZE} on $SOURCE_SAPATH as $SRC_DESCR"
+export DPM_HOST=$SRC_SE
 reserveSpace $SOURCE_SAPATH $SIZE $SRC_DESCR
 #if [ "x${TOKEN}" == "x" ] || [ $? -ne 0 ]; then
 if [ $? -ne 0 ]; then
@@ -167,6 +168,7 @@ fi
 echo "SRC_TOKEN: $SRC_TOKEN"
 
 #reserve 3 spaces at destination, 5K 10K and 15K
+export DPM_HOST=$DEST_SE
 #1
 unset TOKEN
 id=1
@@ -239,13 +241,19 @@ return=$?
 if [ "$return" = 1 ];then
   echo "Failing retrieving the job status"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
-  remove_space $DEST_SAPATH $DEST_TOKEN
+  export DPM_HOST=$DEST_SE
+  remove_space $DEST_SAPATH $DEST_TOKEN_1
+  remove_space $DEST_SAPATH $DEST_TOKEN_2
+  remove_space $DEST_SAPATH $DEST_TOKEN_3
   exit 1
 elif [ "$return" = 2 ];then
   echo "Failing retrieving the job status"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN_1
   remove_space $DEST_SAPATH $DEST_TOKEN_2
   remove_space $DEST_SAPATH $DEST_TOKEN_3
@@ -253,7 +261,9 @@ elif [ "$return" = 2 ];then
 elif [ "$return" = 3 ];then
   echo "Job failed"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN_1
   remove_space $DEST_SAPATH $DEST_TOKEN_2
   remove_space $DEST_SAPATH $DEST_TOKEN_3
@@ -261,7 +271,9 @@ elif [ "$return" = 3 ];then
 elif [ "$return" = 4 ];then
   echo "Timeout exceeded"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $SOURCE_SAPATH $SRC_TOKEN
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN_1
   remove_space $DEST_SAPATH $DEST_TOKEN_2
   remove_space $DEST_SAPATH $DEST_TOKEN_3
@@ -269,7 +281,9 @@ elif [ "$return" = 4 ];then
 elif [ "$return" -gt 4 ];then
   echo "return code unknown $?"
   echo "-TEST FAILED-"
+  export DPM_HOST=$SRC_SE
   remove_space $DEST_SAPATH $DEST_TOKEN_1
+  export DPM_HOST=$DEST_SE
   remove_space $DEST_SAPATH $DEST_TOKEN_2
   remove_space $DEST_SAPATH $DEST_TOKEN_3
   remove_space $SOURCE_SAPATH $SRC_TOKEN
@@ -290,7 +304,9 @@ else
     exit 1
   else
     echo "The file has been placed in the right space"
+    export DPM_HOST=$SRC_SE
     remove_space $SOURCE_SAPATH $SRC_TOKEN
+    export DPM_HOST=$DEST_SE
     remove_space $DEST_SAPATH $DEST_TOKEN_1
     remove_space $DEST_SAPATH $DEST_TOKEN_2
     remove_space $DEST_SAPATH $DEST_TOKEN_3
@@ -300,9 +316,3 @@ else
 fi
 
 
-
-#remove_space $SOURCE_SAPATH $SRC_TOKEN
-#remove_space $DEST_SAPATH $DEST_TOKEN_1
-#remove_space $DEST_SAPATH $DEST_TOKEN_2
-#remove_space $DEST_SAPATH $DEST_TOKEN_3
-#exit 0
