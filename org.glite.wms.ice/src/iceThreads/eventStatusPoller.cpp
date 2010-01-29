@@ -26,6 +26,7 @@ END LICENSE */
 #include "iceDb/GetAllDN.h"
 #include "iceDb/GetCEUrl.h"
 #include "iceDb/Transaction.h"
+#include "iceDb/DNHasJobs.h"
 
 // other glite includes
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -116,7 +117,30 @@ void eventStatusPoller::body( void )
     
       set<string>::const_iterator dnit = dns.begin();
       
+      
+    
       while( dnit != dns.end() ) {
+      
+        if( (*dnit).empty() || (*ceit).empty() ) {
+          CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body()"
+		       << "Empty DN or CE string. "
+		       );
+          continue;
+        }
+	
+        {
+          db::DNHasJobs hasjob( *dnit, *ceit, "eventStatusPoller::body" );
+          db::Transaction tnx(false, false);
+          tnx.execute( &hasjob );
+          if( !hasjob.found( ) ) {
+            CREAM_SAFE_LOG(m_log_dev->warnStream() << "eventStatusPoller::body()"
+		           << "DN [" 
+		           << *dnit << "] has not job one the CE ["
+			   << *ceit << "] in the ICE's database at the moment. Skipping query..."
+		           );
+	    continue;
+          }
+        }
       
         while( m_threadPool->get_command_count( ) > 10 /*iceCondiguration::getInstance()->ice()->get_max_ice_thread( )*/ ) {
 	  CREAM_SAFE_LOG( m_log_dev->debugStream()

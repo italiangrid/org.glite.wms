@@ -107,26 +107,6 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 
   static const char* method_name = "iceCommandEventQuery::execute() - ";
 
-    if( m_dn.empty() || m_ce.empty() ) {
-      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		     << "Empty DN or CE string. Finishing..."
-		     );
-      return;
-    }
-
-    {
-      db::DNHasJobs hasjob( m_dn, "iceCommandEventQuery::execute" );
-      db::Transaction tnx(false, false);
-      tnx.execute( &hasjob );
-      if( !hasjob.found( ) ) {
-        CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
-		     << "DN [" 
-		     << m_dn << "] has not job in the ICE's database at the moment. Skipping query..."
-		     );
-	return;
-      }
-    }
-
     list<soap_proxy::EventWrapper*> events;
     cleanup cleaner( &events );
 

@@ -33,7 +33,7 @@ void DNHasJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
 
-  sqlcmd << "SELECT gridjobid FROM jobs WHERE userdn=\'" << m_dn << "\' LIMIT 1;";
+  sqlcmd << "SELECT gridjobid FROM jobs WHERE userdn=\'" << m_dn << "\' AND creamurl=\'" << m_ce  << "\' LIMIT 1;";
 
   do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_found );
 }
