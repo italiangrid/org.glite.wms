@@ -188,23 +188,23 @@ echo "Dest: $Destin_Site"
 
 #3.b) Retrieve good SEs from source and destination sites
 #get_good_se_from_site $Source_Site
-get_def_se_from_site $Source_Site
-if [ $? = 1 ];then
-  echo "Failing retrieving good SE from site $Source_Site"
-  echo "-TEST FAILED-"
-  exit 1
-fi
-SE_SOURCE=$SE_HOST
+#get_def_se_from_site $Source_Site
+#if [ $? = 1 ];then
+#  echo "Failing retrieving good SE from site $Source_Site"
+#  echo "-TEST FAILED-"
+#  exit 1
+#fi
+SE_SOURCE=$CERN_SE
 echo "SE_source: $SE_SOURCE"
 
 #get_good_se_from_site $Destin_Site
-get_def_se_from_site $Destin_Site
-if [ $? = 1 ];then
-  echo "Failing retrieving good SE from site $Destin_Site"
-  echo "-TEST FAILED-"
-  exit 1
-fi
-SE_DEST=$SE_HOST
+#get_def_se_from_site $Destin_Site
+#if [ $? = 1 ];then
+#  echo "Failing retrieving good SE from site $Destin_Site"
+#  echo "-TEST FAILED-"
+#  exit 1
+#fi
+SE_DEST=$CERN_SE2
 echo "SE_dest: $SE_DEST"
 
 #3.c) Retrieve SEs path to use for file transfer
