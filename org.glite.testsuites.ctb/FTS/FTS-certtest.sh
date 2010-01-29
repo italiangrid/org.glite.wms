@@ -243,34 +243,34 @@ if [ "x${BASIC}" = "xyes" ]; then
     echo "Executing $item"
     if [ $item = "FTS-basic" ]; then
       echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
-      ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost 2>1 >> $loglocation/${item}_result.txt
       res=$?
     elif [ $item = "FTS-services" ]; then
       echo "./$item --fts $hostname --bdii $bdiihost --site $sitename" \
           > $loglocation/${item}_result.txt
       ./$item --fts $hostname --bdii $bdiihost --site $sitename \
-                                                  >> $loglocation/${item}_result.txt
+                                                  2>1 >> $loglocation/${item}_result.txt
       res=$?
     elif [ $item = "FTS-basic" ]; then
       echo "./$item --fts $hostname --bdii $bdiihost" > $loglocation/${item}_result.txt
-      ./$item --fts $hostname --bdii $bdiihost >> $loglocation/${item}_result.txt
+      ./$item --fts $hostname --bdii $bdiihost 2>1 >> $loglocation/${item}_result.txt
       res=$?
     elif [ $item = "FTS-channels" ]; then
       echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
-      ./$item --fts $hostname >> $loglocation/${item}_result.txt
+      ./$item --fts $hostname 2>1 >> $loglocation/${item}_result.txt
       res=$?
     elif [ $item = "FTS-submission" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-channel-signal" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
       for channel in $channels
       do
-        echo "./$item --fts $hostname --bdii $bdiihost --channel $channel --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
+        echo "./$item --fts $hostname --bdii $bdiihost --channel $channel --vo $voname --timeout $time" 2>1 >> $loglocation/${item}_result.txt
         ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-              --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+              --vo $voname --timeout $time 2>1 >> $loglocation/${item}_result.txt
         res=$?
       done
     elif [ $item = "FTS-channel-add" ] || [ $item = "FTS-channel-audit" ] || [ $item = "FTS-channel-drop" ] || [ $item = "FTS-channel-managers" ] || [ $item = "FTS-channel-set" ] || [ $item = "FTS-channel-setvolimit" ] || [ $item = "FTS-service-info" ] || [ $item = "FTS-vomanagers" ] || [ $item = "FTS-getroles" ]; then
-      echo "./$item --fts $hostname --bdii $bdiihost --channel FAKE --vo $voname --timeout $time" >> $loglocation/${item}_result.txt
+      echo "./$item --fts $hostname --bdii $bdiihost --channel FAKE --vo $voname --timeout $time" 2>1 >> $loglocation/${item}_result.txt
       ./$item --fts $hostname --bdii $bdiihost --channel FAKE \
-              --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+              --vo $voname --timeout $time 2>1 >> $loglocation/${item}_result.txt
       res=$?
     fi
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
@@ -310,7 +310,7 @@ if [ "x${CHECKSUM}" = "xyes" ]; then
       echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
               --vo $voname --timeout $time" > $loglocation/${item}_result.txt
       ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-              --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+              --vo $voname --timeout $time 2>1 >> $loglocation/${item}_result.txt
       res=$?
       grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
       if [ "$?" = 0 -o "$res" != 0 ]; then
@@ -356,7 +356,7 @@ if [ "x${SPACE}" = "xyes" ]; then
     rm -rf $loglocation/${item}_result.txt
     echo "Executing $item"
     echo "./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE --vo $voname --timeout $time" > $loglocation/${item}_result.txt
-    ./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE --vo $voname --timeout $time >> $loglocation/${item}_result.txt
+    ./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE --vo $voname --timeout $time 2>1 >> $loglocation/${item}_result.txt
     res=$?
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
@@ -430,9 +430,9 @@ if [ "x${GRIDFTP}" = "xyes" ]; then
         for channel in $channels
         do
             echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
-                 --vo $voname --timeout $time --gsiftp yes" >> $loglocation/${item}_result.txt
+                 --vo $voname --timeout $time --gsiftp yes" 2>1 >> $loglocation/${item}_result.txt
             ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-                 --vo $voname --timeout $time --gsiftp yes >> $loglocation/${item}_result.txt
+                 --vo $voname --timeout $time --gsiftp yes 2>1 >> $loglocation/${item}_result.txt
             res=$?
         done
     # Checksum tests
@@ -442,7 +442,7 @@ if [ "x${GRIDFTP}" = "xyes" ]; then
             echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \
                   --vo $voname --timeout $time --gsiftp yes" > $loglocation/${item}_result.txt
             ./$item --fts $hostname --bdii $bdiihost --channel $channel \
-                  --vo $voname --timeout $time --gsiftp yes >> $loglocation/${item}_result.txt
+                  --vo $voname --timeout $time --gsiftp yes 2>1 >> $loglocation/${item}_result.txt
             res=$?
         done
     # Space tests
@@ -450,7 +450,7 @@ if [ "x${GRIDFTP}" = "xyes" ]; then
         echo "./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE \
               --vo $voname --timeout $time --gsiftp yes" > $loglocation/${item}_result.txt
         ./$item --fts $hostname --bdii $bdiihost --src $SOURCESE --dest $DESTSE \
-            --vo $voname --timeout $time --gsiftp yes >> $loglocation/${item}_result.txt
+            --vo $voname --timeout $time --gsiftp yes 2>1 >> $loglocation/${item}_result.txt
         res=$?
     fi
 
