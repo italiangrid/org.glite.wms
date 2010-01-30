@@ -125,6 +125,7 @@ void eventStatusPoller::body( void )
           CREAM_SAFE_LOG(m_log_dev->debugStream() << "eventStatusPoller::body()"
 		       << "Empty DN or CE string. "
 		       );
+	  ++dnit;
           continue;
         }
 	
@@ -138,6 +139,7 @@ void eventStatusPoller::body( void )
 		           << *dnit << "] has not job one the CE ["
 			   << *ceit << "] in the ICE's database at the moment. Skipping query..."
 		           );
+	    ++dnit;
 	    continue;
           }
         }
