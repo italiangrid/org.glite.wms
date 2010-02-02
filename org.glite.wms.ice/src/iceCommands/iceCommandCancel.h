@@ -48,7 +48,7 @@ namespace ice {
         
         virtual ~iceCommandCancel() { }
         
-        void execute( void ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
+        void execute( const std::string& ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
         std::string get_grid_job_id( void ) const { return m_gridJobId; };
         
     protected:

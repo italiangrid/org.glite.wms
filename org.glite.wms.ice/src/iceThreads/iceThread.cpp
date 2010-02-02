@@ -20,6 +20,8 @@ END LICENSE */
 #include "iceThread.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
+#include <sstream>
+
 using namespace glite::wms::ice::util;
 namespace apiLogger = glite::ce::cream_client_api::util;
 
@@ -28,7 +30,9 @@ iceThread::iceThread( const std::string& name ) :
     m_running( false ),
     m_stopped( false )
 {
-
+  std::ostringstream os;
+  os << (long long) this;
+  m_thread_id = os.str();
 }
 
 iceThread::iceThread( ) :
@@ -36,19 +40,21 @@ iceThread::iceThread( ) :
     m_running( false ),
     m_stopped( false )
 {
-
+  std::ostringstream os;
+  os << (long long) this;
+  m_thread_id = os.str();
 }
 
 void iceThread::operator()()
 {
     m_running = true;
-    CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->debugStream()
-		   << "iceThread::operator() - Thread " << getName() << " starting..."
-		   );
+//    CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->debugStream()
+//		   << "iceThread::operator() - Thread " << getName() << " starting..."
+//		   );
     body( );
-    CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->debugStream()
-		   << "iceThread::operator() - Thread " << getName() << " finished"
-		   );
+//    CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->debugStream()
+//		   << "iceThread::operator() - Thread " << getName() << " finished"
+//		   );
     m_running = false;
 }
 

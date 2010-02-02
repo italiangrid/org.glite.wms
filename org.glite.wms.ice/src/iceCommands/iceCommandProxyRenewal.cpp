@@ -75,7 +75,7 @@ iceCommandProxyRenewal::iceCommandProxyRenewal( ) :
 }
 
 //______________________________________________________________________________
-void iceCommandProxyRenewal::execute( void ) throw()
+void iceCommandProxyRenewal::execute( const std::string& tid) throw()
 {  
   
   renewAllDelegations();

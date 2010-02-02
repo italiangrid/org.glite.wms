@@ -73,7 +73,7 @@ namespace util {
   public:
    iceCommandSubUpdater( ) throw( );
    
-   virtual void execute( ) throw( );
+   virtual void execute( const std::string& ) throw( );
    
    virtual ~iceCommandSubUpdater() { }
    

@@ -67,6 +67,7 @@ namespace glite {
                * @return the name of the thread
                */
               const std::string& getName( void ) const { return m_name; };
+	      const std::string& getThreadID( void ) const { return m_thread_id; }
 
               // Modifiers
 
@@ -84,6 +85,9 @@ namespace glite {
               iceThread( ); // needed by copy costructors...
           private:              
               std::string m_name;
+
+	      std::string m_thread_id;
+
               bool m_running;
               bool m_stopped;
 

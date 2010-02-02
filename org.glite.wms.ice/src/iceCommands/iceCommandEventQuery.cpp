@@ -89,7 +89,7 @@ namespace {
 ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::Ice* theIce,
 						       const std::string& dn,
 						       const std::string& ce)
-  : iceAbsCommand( "iceCommandEventQuery" ),
+  : iceAbsCommand( "iceCommandEventQuery", "" ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( ice::util::iceLBLogger::instance() ),
     m_iceManager( theIce ),
@@ -102,15 +102,15 @@ ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::Ice* theIce,
 }
 
 //______________________________________________________________________________
-void ice::util::iceCommandEventQuery::execute( ) throw()
+void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 {
-
+ m_thread_id = tid;
   static const char* method_name = "iceCommandEventQuery::execute() - ";
 
     list<soap_proxy::EventWrapper*> events;
     cleanup cleaner( &events );
 
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "Retrieving last EVENT_ID for userdn ["
 		   << m_dn << "] and ce url ["
 		   << m_ce << "]..."
@@ -119,7 +119,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     long long thisEventID = this->getEventID( m_dn, m_ce );
     
     if( thisEventID == -1 ) {
-      CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Couldn't find any last EVENT_ID for current couple "
 		     << "userdn [" 
 		     << m_dn << "] and ce url ["
@@ -132,7 +132,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 
     } else {
 
-      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Last EVENT_ID for current couple "
 		     << "userdn [" 
 		     << m_dn << "] and ce url ["
@@ -144,7 +144,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     boost::tuple<string, time_t, long long int> proxyinfo = DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn );
     //string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn ).get<0>() );
     if ( proxyinfo.get<0>().empty() ) {
-      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "A valid proxy file for DN [" << m_dn
 		      << "] ce url ["
 		      << m_ce << "] is not available. Skipping EventQuery. Going to remove all jobs of this user..."
@@ -157,7 +157,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     }
     
     if ( proxyinfo.get<1>() < time(0) ) {
-      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "The returned proxy ["
 		      << proxyinfo.get<0>() << "] for DN [" << m_dn
 		      << "] ce url ["
@@ -198,7 +198,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       
     } catch(soap_proxy::auth_ex& ex) {
       
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Cannot query events for UserDN ["
 		     << m_dn << "] CEUrl ["
 		     << m_ce << "]. Exception auth_ex is [" << ex.what() << "]"
@@ -209,7 +209,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       
     } catch(soap_proxy::soap_ex& ex) {
       
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Cannot query events for UserDN ["
 		     << m_dn << "] CEUrl ["
 		     << m_ce << "]. Exception soap_ex is [" << ex.what() << "]"
@@ -220,7 +220,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 
     } catch(cream_api::cream_exceptions::InternalException& ex) {
       
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Cannot query events for UserDN ["
 		     << m_dn << "] CEUrl ["
 		     << m_ce << "]. Exception Internal ex is [" << ex.what() << "]"
@@ -230,12 +230,12 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       boost::cmatch what;
       pattern = ".*No such operation 'QueryEventRequest'.*";
       if( boost::regex_match(ex.what(), what, pattern) ) {
-	CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+	CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Not present QueryEvent on CE ["
 		     << m_ce << "]. Falling back to old-style StatusPoller."
 		     );
 
-	iceCommandStatusPoller( m_iceManager, make_pair( m_dn, m_ce), false ).execute();
+	iceCommandStatusPoller( m_iceManager, make_pair( m_dn, m_ce), false ).execute( m_thread_id );
       }
 
 
@@ -243,7 +243,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 
     } catch(exception& ex) {
       
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Cannot query events for UserDN ["
 		     << m_dn << "] CEUrl ["
 		     << m_ce << "]. Exception ex is [" << ex.what() << "]"
@@ -252,7 +252,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
 
     } catch(...) {
       
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "Cannot query status job for UserDN ["
 		     << m_dn << "] CEUrl ["
 		     << m_ce << "]. Unknown Exception"
@@ -264,7 +264,7 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
     
     if( !this->checkDatabaseID( m_ce, dbid ) ) {
 
-      CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "*** CREAM HAS PROBABLY BEEN SCRATCHED. GOING TO ERASE"
 		     << "ALL JOBS RELATED TO OLD DB_ID ["
 		     << dbid << "] ***"
@@ -289,18 +289,18 @@ void ice::util::iceCommandEventQuery::execute( ) throw()
       }
     } // if( !this->checkDatabaseID..... )
     
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "There're [" << events.size() << "] event(s) "
 		   << "for the couple DN ["
 		   << m_dn <<"] CEUrl [" 
 		   << m_ce <<"]"
 		   );
 
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "Database  ID=[" << sdbid << "]"
 		   );
     
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "Exec time ID=[" << exec_time << "]"
 		   );
     
@@ -339,7 +339,7 @@ ice::util::iceCommandEventQuery::setEventID( const std::string& dn,
 #ifdef ICE_PROFILE
   iceUtil::ice_timer timer("iceCommandEventQuery::setEventID");
 #endif
-  CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandEventQuery::setEventID() - "
+  CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandEventQuery::setEventID() - " << " TID=[" << getThreadID() << "] "
 		 << "Setting EventID for UserDN ["
 		 << dn <<"] CEUrl ["
 		 << ce << "] to ["
@@ -472,7 +472,7 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
     tnx.execute( &getter );
     if( !getter.found() )
       {
-	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name 
+	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name  << " TID=[" << getThreadID() << "] "
 		       << "GridJobID [" << GID
 		       << "] disappeared!"
 		       );
@@ -488,7 +488,7 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
   if( !num_events ) // this should not happen
     return;
 
-  CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+  CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		 << "Processing [" << num_events << "] event(s) for Job ["
 		 << tmp_job.describe() << "] userdn ["
 		 << tmp_job.get_user_dn() << "] and ce url ["
@@ -499,7 +499,7 @@ ice::util::iceCommandEventQuery::processEventsForJob( const string& GID,
   int evt_counter = 0;
   while( evt_it != ev.end() ) {
     
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "EventID ["
 		   << (*evt_it)->id << "] timestsamp ["
 		   << (*evt_it)->timestamp << "]"
@@ -556,7 +556,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 #endif
 
   if ( status == cream_api::job_statuses::PURGED ) {
-    CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "Job [" << jobdesc
 		   << "] is reported as PURGED. Removing from database"
 		   ); 
@@ -594,7 +594,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
      FOR THE CURRENT JOB
   */
   if(is_last_event) {
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "Updating ICE's database for Job [" << jobdesc
 		   << "] status = [" << cream_api::job_statuses::job_status_str[ status ] << "]"
 		   << " exit_code = [" << exit_code << "]"

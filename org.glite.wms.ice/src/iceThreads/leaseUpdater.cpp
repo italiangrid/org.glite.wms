@@ -50,7 +50,7 @@ void leaseUpdater::body( void )
         CREAM_SAFE_LOG(m_log_dev->infoStream()
                        << "leaseUpdater::body() - new iteration"
                        );
-	iceCommandLeaseUpdater().execute();
+	iceCommandLeaseUpdater().execute( "" );
 
 	if(m_delay<=10) {
 	  if( isStopped() ) return;

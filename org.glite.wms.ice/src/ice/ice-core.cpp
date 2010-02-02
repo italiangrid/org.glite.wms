@@ -313,7 +313,7 @@ void Ice::init( void )
    
   if(m_configuration->ice()->start_lease_updater() ) {
     util::iceCommandLeaseUpdater l( true );
-    l.execute();
+    l.execute( "" );
   }
   //util::iceCommandStatusPoller p( this, true );
   //p.execute( );	

@@ -46,7 +46,7 @@ namespace util {
     public:
         iceCommandUpdateStatus( const std::vector<monitortypes__Event>& ev, const std::string& cemondn );
         virtual ~iceCommandUpdateStatus( ) { };
-        virtual void execute( ) throw( );
+        virtual void execute( const std::string& ) throw( );
         std::string get_grid_job_id( void ) const { return std::string(); };
     };
 

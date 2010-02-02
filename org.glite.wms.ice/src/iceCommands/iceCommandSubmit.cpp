@@ -125,7 +125,7 @@ namespace { // Anonymous namespace
 //____________________________________________________________________________
 iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request, 
 				    const iceUtil::CreamJob& aJob )
-  : iceAbsCommand( "iceCommandSubmit" ),
+  : iceAbsCommand( "iceCommandSubmit", "" ),
     m_theIce( Ice::instance() ),
     m_myname( m_theIce->getHostName() ),
     m_theJob( aJob ),
@@ -146,14 +146,15 @@ iceCommandSubmit::iceCommandSubmit( iceUtil::Request* request,
 //
 //
 //____________________________________________________________________________
-void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
+  m_thread_id = tid;
   
     static const char* method_name="iceCommandSubmit::execute() - ";
 
     CREAM_SAFE_LOG(
                    m_log_dev->infoStream()
-                   << method_name
+                   << method_name << " TID=[" << getThreadID() << "] "
                    << "This request is a Submission..."
                    );   
     
@@ -203,7 +204,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 	  // ICE has been restarted/crashed after a JobStart has finished
 	  // we shall ignore the request
 	  CREAM_SAFE_LOG( m_log_dev->warnStream()
-			<< method_name
+			<< method_name << " TID=[" << getThreadID() << "] "
 			<< "Submit request for job GridJobID=["
 			<< _gid
 			<< "] is related to a job already in ICE's database that has been already submitted. "
@@ -261,7 +262,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     } catch( const iceCommandFatal_ex& ex ) {
         CREAM_SAFE_LOG(
                        m_log_dev->errorStream() 
-                       << method_name 
+                       << method_name  << " TID=[" << getThreadID() << "] "
                        << "Error during submission of jdl=" << m_jdl
                        << " Fatal Exception is:" << ex.what()
                        );
@@ -356,7 +357,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream() 
-                   << method_name << "Submitting JDL " 
+                   << method_name  << " TID=[" << getThreadID() << "] "<< "Submitting JDL " 
 		   << m_theJob.get_modified_jdl() << " to [" 
                    << _ceurl <<"] ["
                    << m_theJob.get_cream_delegurl() << "]"
@@ -366,7 +367,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream()
-                   << method_name
+                   << method_name << " TID=[" << getThreadID() << "] "
                    << "Sequence code for job ["
                    << jobdesc
                    << "] is "
@@ -436,7 +437,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     // m_theJob.getCreamURL() ?!?  If it is not it's VERY severe
     // server error, and I think it is not our businness
     
-    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name << " TID=[" << getThreadID() << "] "
                     << "For GridJobID [" << _gid << "]" 
                     << " CREAM Returned CREAM-JOBID [" << completeid <<"] DB_ID ["
 		    << dbid << "]"
@@ -484,7 +485,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     
     // completeid, __creamURL, proxy_time_end, dbid, jobId, jobdesc
     
-    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name << " TID=[" << getThreadID() << "] "
                     << "GridJobID [" << _gid << "]" 
                     << " has already been REGISTERED. Will only START it..."
 		    );
@@ -494,7 +495,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   cream_api::ResultWrapper startRes;
   
   try {
-    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Going to START CreamJobID ["
 		    << completeid <<"] related to GridJobID ["
 		    << _gid << "]..."
@@ -538,7 +539,7 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     pair<cream_api::JobIdWrapper, string> wrong = *( tmp.begin() ); // we trust there's only one element because we've started ONLY ONE job
     string errMex = wrong.second;
     
-    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "Cannot start job [" << jobdesc
 		   << "]. Reason is: " << errMex
 		   );
@@ -615,7 +616,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 
   subMgr->getCEMonURL( aJob.get_user_proxy_certificate(), aJob.get_creamurl(), cemon_url ); // also updated the internal subMgr's cache cream->cemon
   
-  CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+  CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
                   << "For current CREAM, subscriptionManager returned CEMon URL ["
                   << cemon_url << "]"
                   
@@ -633,7 +634,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       // if this was a ghost subscription (i.e. it does exist in the cemonUrlCache's cache
       // but not actually in the CEMon
       // the subscriptionUpdater will fix it soon
-      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "User [" << aJob.get_user_dn() << "] is already subsdcribed to CEMon ["
 		     << cemon_url << "] (found in subscriptionManager's cache)"
 		     );
@@ -656,7 +657,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
     subscribed = iceUtil::subscriptionProxy::getInstance()->subscribedTo( aJob.get_user_proxy_certificate(), cemon_url, sub );
     
   } catch(exception& ex) {
-      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+      CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
                      << "Couldn't determine if user [" << aJob.get_user_dn() 
                      << "] is subscribed to [" << cemon_url 
                      << "]. Another job could trigger a successful subscription."
@@ -681,7 +682,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 	//dnprxMgr->setUserProxyIfLonger( aJob.getUserDN(), aJob.getUserProxyCertificate() );
 	
       } else {
-          CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+          CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		       << "CEMon [" << cemon_url 
 		       << "] reported that we're already subscribed to it, "
 		       << "but couldn't get its DN. "
@@ -699,7 +700,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 
     }
 
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		   << "User DN [" << aJob.get_user_dn() << "] is already subscribed to CEMon ["
 		   << cemon_url << "] (asked to CEMon itself)"
 		   );
@@ -712,7 +713,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
       if( !subMgr->getCEMonDN( aJob.get_user_proxy_certificate(), cemon_url, DN ) ) {
 	// Cannot subscribe to a CEMon without it's DN
 	can_subscribe = false;
-	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name
+	CREAM_SAFE_LOG(m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		       << "Notification authorization is enabled and couldn't "
 		       << "get CEMon's DN. Will not subscribe to it."
 		       );
@@ -726,7 +727,7 @@ void  iceCommandSubmit::doSubscription( const iceUtil::CreamJob& aJob )
 	  subMgr->insertSubscription( aJob.get_user_proxy_certificate(), cemon_url, sub );
 	}
       } else {
-          CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+          CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		       << "Couldn't subscribe to [" 
 		       << cemon_url << "] with userDN [" << aJob.get_user_dn()<< "]. Will not"
 		       << " receive job status notification from it for this user. "
@@ -748,12 +749,12 @@ void iceCommandSubmit::process_lease( const bool force_lease,
   const char* method_name = "iceCommandSubmit::process_lease() - ";
 
   if ( force_lease ) {
-    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Lease is enabled, enforcing creation of a new lease "
 		    << "for job [" << jobdesc << "]"
 		    );        
   } else {
-    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->infoStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Lease is enabled, trying to get lease "
 		    << "for job [" << jobdesc << "]"
 		    );        
@@ -810,7 +811,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 	 NO SuperBetterProxy for DN.
 	 must use that one in the ISB as SBP
       */
-      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+      CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "Setting new better proxy for userdn ["
 		      << m_theJob.get_user_dn() << "] MyProxy server ["
 		      << m_theJob.get_myproxy_address() << "] Job ["
@@ -831,7 +832,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
       */
       if( m_theJob.get_isbproxy_time_end() > SBP.get<1>() ) {
 	boost::tuple<string, time_t, long long int> newPrx = boost::make_tuple( m_theJob.get_user_proxy_certificate(), m_theJob.get_isbproxy_time_end(), SBP.get<2>() );
-	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+	CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 			<< "Updating better proxy for userdn ["
 			<< m_theJob.get_user_dn() << "] MyProxy server ["
 			<< m_theJob.get_myproxy_address() << "] Job ["
@@ -883,7 +884,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
 
   try {
     
-    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Going to REGISTER Job ["
 		    << jobdesc << "] with delegation ID ["
 		    << delegation << "] to CREAM [" << m_theJob.get_creamurl()
@@ -928,7 +929,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
 
   } catch ( glite::ce::cream_client_api::cream_exceptions::DelegationException& ex ) {
     if ( !force_delegation ) {
-      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "Cannot register GridJobID ["
 		      << _gid 
 		      << "] due to Delegation Exception: " 
@@ -941,7 +942,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
     }
   } catch ( glite::ce::cream_client_api::cream_exceptions::GenericException& ex ) {
     if ( is_lease_enabled && !force_lease ) {
-      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "Cannot register GridJobID ["
 		      << _gid 
 		      << "] due to Generic Fault: " 
@@ -953,7 +954,7 @@ bool iceCommandSubmit::register_job( const bool is_lease_enabled,
       throw( iceCommandTransient_ex( boost::str( boost::format( "CREAM Register raised GenericFault %1%") % ex.what() ) ) ); // Rethrow
     }                        
   } catch ( exception& ex ) {
-    CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Cannot register GridJobID ["
 		    << _gid 
 		    << "] due to std::exception: " 
@@ -987,7 +988,7 @@ void iceCommandSubmit::process_result( bool& retry,
   case cream_api::JobIdWrapper::DELEGATIONIDMISMATCH:
   case cream_api::JobIdWrapper::DELEGATIONPROXYERROR:
     if ( !force_delegation ) {
-      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "Cannot register GridJobID ["
 		      << _gid 
 		      << "] due to Delegation Error: " 
@@ -1000,7 +1001,7 @@ void iceCommandSubmit::process_result( bool& retry,
     break;
   case cream_api::JobIdWrapper::LEASEIDMISMATCH:
     if ( is_lease_enabled && !force_lease ) {
-      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name
+      CREAM_SAFE_LOG( m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "Cannot register GridJobID ["
 		      << _gid 
 		      << "] due to Lease Error: " 
@@ -1012,7 +1013,7 @@ void iceCommandSubmit::process_result( bool& retry,
     }     
     break;                               
   default:
-    CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name
+    CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Error while registering GridJobID ["
 		    << _gid 
 		    << "] due to Error: " 

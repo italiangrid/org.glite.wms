@@ -122,7 +122,7 @@ void iceThreadPool::iceThreadPoolWorker::body( )
 			   << cmd->name() << "]"
                            );
 */
-            cmd->execute( );
+            cmd->execute( getThreadID() );
 
 /*	    CREAM_SAFE_LOG(
                            m_log_dev->debugStream() << method_name

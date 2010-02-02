@@ -63,7 +63,7 @@ using namespace glite::wms::ice::util;
 //int iceCommandDelegationRenewal::DELEGATION_EXPIRATION_THRESHOLD_TIME = 3600
 //______________________________________________________________________________
 iceCommandDelegationRenewal::iceCommandDelegationRenewal( ) :
-    iceAbsCommand( "iceCommandDelegationRenewal" ),
+    iceAbsCommand( "iceCommandDelegationRenewal", "" ),
     m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
     m_ctx( NULL )
 {
@@ -75,7 +75,7 @@ iceCommandDelegationRenewal::~iceCommandDelegationRenewal( )
 }
 
 //______________________________________________________________________________
-void iceCommandDelegationRenewal::execute( void ) throw()
+void iceCommandDelegationRenewal::execute( const std::string& tid ) throw()
 {  
 #ifdef ICE_PROFILE
   ice_timer timer("iceCommandDelegationRenewal::execute");

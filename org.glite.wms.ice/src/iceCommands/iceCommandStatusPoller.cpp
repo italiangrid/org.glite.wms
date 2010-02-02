@@ -163,7 +163,7 @@ iceCommandStatusPoller::iceCommandStatusPoller( glite::wms::ice::Ice* theIce,
 						const pair<string, string>& dnce,
 						bool poll_all_jobs
 						) :
-  iceAbsCommand( "iceCommandStatusPoller" ),
+  iceAbsCommand( "iceCommandStatusPoller", "" ),
   m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger() ),
   m_lb_logger( iceLBLogger::instance() ),
   m_iceManager( theIce ),
@@ -556,8 +556,11 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 }
 
 //____________________________________________________________________________
-void iceCommandStatusPoller::execute( ) throw()
+void iceCommandStatusPoller::execute( const std::string& tid ) throw()
 {
+
+  m_thread_id = tid;
+
   static const char* method_name = "iceCommandStatusPoller::execute() - ";
 
   list< CreamJob > jobList;

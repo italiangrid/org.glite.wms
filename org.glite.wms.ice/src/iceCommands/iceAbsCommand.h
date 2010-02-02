@@ -57,7 +57,7 @@ namespace glite {
                  * @throw an iceCommandTransient_ex if the command failed
                  * but could be tried again and succeed.
                  */
-                virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
+                virtual void execute( const std::string& ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
 
                 /**
                  * Returns the Grid jobID for the job this command
@@ -71,9 +71,12 @@ namespace glite {
                 std::string name( void ) { return m_name; };
             protected:
 
-                iceAbsCommand( const std::string& name ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&) : m_name( name ) {};
+                iceAbsCommand( const std::string& name, const std::string& tid ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&) : m_name( name ) {};
                 std::string m_name; ///< Name of this command, default empty
+		
+		std::string m_thread_id;
 
+		std::string getThreadID( void ) const { return m_thread_id; }
             };
         }
     }
