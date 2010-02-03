@@ -51,8 +51,6 @@ END LICENSE */
 #include <boost/filesystem/operations.hpp>
 #include <boost/tuple/tuple.hpp>
 
-//extern int errno;
-
 namespace iceUtil = glite::wms::ice::util;
 namespace cream_api = glite::ce::cream_client_api;
 using namespace std;
