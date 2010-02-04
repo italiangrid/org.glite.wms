@@ -20,9 +20,9 @@ fi
 echo `date`
 ###############################################################
 echo "---Test-Update-Policy-From-File---"
-echo "1) testing up with non existing file"
+echo "1) testing upf with non existing file"
 
-$PAP_HOME/bin/pap-admin up resource_id dummy.txt
+$PAP_HOME/bin/pap-admin upf resource_id dummy.txt
 
 if [ $? -ne 0 ]; then
   echo "OK"
@@ -32,7 +32,7 @@ else
 fi
 
 ###############################################################
-echo "2) testing up with non existing resource id"
+echo "2) testing upf with non existing resource id"
 
 #Store initial policy
 cat <<EOF > $policyfile
@@ -59,7 +59,7 @@ resource "resource_1" {
 }
 EOF
 
-$PAP_HOME/bin/pap-admin up dummy-id-999 $policyfile
+$PAP_HOME/bin/pap-admin upf dummy-id-999 $policyfile
 if [ $? -ne 0 ]; then
   echo "OK" 
 else
@@ -69,7 +69,7 @@ fi
 
 ###############################################################
 # Retrieve resource id
-echo "3) testing up with correct resource id "
+echo "3) testing upf with correct resource id "
 id=`$PAP_HOME/bin/pap-admin lp -srai | egrep 'id=[^public]' | sed 's/id=//'`
 echo "ID=$id"
 
@@ -82,7 +82,7 @@ resource "resource_1" {
 }
 EOF
 
-$PAP_HOME/bin/pap-admin up $id $policyfile
+$PAP_HOME/bin/pap-admin upf $id $policyfile
 if [ $? -eq 0 ]; then
   echo "OK" 
 else
@@ -93,7 +93,7 @@ fi
 ###############################################################
 # Retrieve resource id
 
-echo "4) testing up with changing only an action "
+echo "4) testing upf with changing only an action "
 
 #Create new policy file
 cat <<EOF > $policyfile
@@ -105,12 +105,12 @@ EOF
 #Retrieve action id and update policy
 id=`$PAP_HOME/bin/pap-admin lp -srai | egrep 'id=public' | awk '{print $1}' | sed 's/id=//'`
 echo "ID=$id"
-$PAP_HOME/bin/pap-admin up $id $policyfile
+$PAP_HOME/bin/pap-admin upf $id $policyfile
 if [ $? -eq 0 ]; then
   echo "OK" 
 else
   echo "Failed"
-  echo "Command run was: $PAP_HOME/bin/pap-admin up $id $policyfile"
+  echo "Command run was: $PAP_HOME/bin/pap-admin upf $id $policyfile"
   failed="yes"
 fi
 
