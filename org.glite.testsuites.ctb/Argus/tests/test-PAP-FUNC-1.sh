@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 #Assumtpions: The PAP is running with a correct configuration file
 #Note: Each single test has this assumption
@@ -8,8 +8,8 @@ echo "---Test-PAP-FUNC-1---"
 
 conffile=$PAP_HOME/conf/pap_configuration.ini
 bkpfile=$PAP_HOME/conf/pap_configuration.bkp
-authzconffile=$PAP_HOME/conf/pap_authorization.ini
-authzbkpfile=$PAP_HOME/conf/pap_authorization.bkp
+argusconffile=$PAP_HOME/conf/pap_authorization.ini
+argusbkpfile=$PAP_HOME/conf/pap_authorization.bkp
 failed="no"
 
 /etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
@@ -32,7 +32,7 @@ ordering = default
 
 [repository]
 
-location = /opt/authz/pap/repository
+location = /opt/argus/pap/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -77,7 +77,7 @@ ordering = default
 
 [repository]
 
-location = /opt/authz/pap/repository
+location = /opt/argus/pap/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -122,7 +122,7 @@ ordering = default
 
 [repository]
 
-location = /opt/authz/pap/repository
+location = /opt/argus/pap/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -167,7 +167,7 @@ ordering  default
 
 [repository]
 
-location = /opt/authz/pap/repository
+location = /opt/argus/pap/repository
 consistency_check = false
 consistency_check.repair = false
 
@@ -199,9 +199,9 @@ else
 fi
 
 #################################################################
-echo "5) testing authz syntax error: missing ']'"
-mv -f $authzconffile $authzbkpfile
-cat <<EOF > $authzconffile
+echo "5) testing argus syntax error: missing ']'"
+mv -f $argusconffile $argusbkpfile
+cat <<EOF > $argusconffile
 [dn
 
 
@@ -219,18 +219,18 @@ sleep 10
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
 else
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
   /etc/rc.d/init.d/pap-standalone start >>/dev/null
   sleep 10
   echo "OK"
 fi
 
 #################################################################
-echo "6) testing authz syntax error: missing ':'"
-mv -f $authzconffile $authzbkpfile
-cat <<EOF > $authzconffile
+echo "6) testing argus syntax error: missing ':'"
+mv -f $argusconffile $argusbkpfile
+cat <<EOF > $argusconffile
 [dn]
 
 
@@ -248,18 +248,18 @@ sleep 10
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
 else
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
   /etc/rc.d/init.d/pap-standalone start >>/dev/null
   sleep 10
   echo "OK"
 fi
 
 #################################################################
-echo "7) testing authz syntax error: missing 'permission'"
-mv -f $authzconffile $authzbkpfile
-cat <<EOF > $authzconffile
+echo "7) testing argus syntax error: missing 'permission'"
+mv -f $argusconffile $argusbkpfile
+cat <<EOF > $argusconffile
 [dn]
 
 
@@ -277,9 +277,9 @@ sleep 10
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
 else
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
   /etc/rc.d/init.d/pap-standalone start >>/dev/null
   sleep 10
   echo "OK"

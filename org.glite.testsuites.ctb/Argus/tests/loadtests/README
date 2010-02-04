@@ -20,7 +20,7 @@ test_user_307_cert.pem
 test_user_308_cert.pem
 test_user_309_cert.pem
 
-The url of the pepd is hardoced in the main request call:
+The url of the pepd is hardcoded in the main request call:
 (/usr/bin/time --format=%e pepcli --pepd http://vtb-generic-98.cern.ch:8154/authz -c $cert --resourceid "resource_1" --actionid "submit-job" -t 60 -x; echo "exit code: $?") >>res_30${index}.txt 2>>out.txt
 
 For each of the ten users, two files are produced: res_30x.txt (with the output of the pepcli command) and out_30x.txt with the time the request took to get a response.

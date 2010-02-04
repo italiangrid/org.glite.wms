@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PAP_HOME=/opt/authz/pap
+PAP_HOME=/opt/argus/pap
 failed="no"
 policyfile=policyfile.txt
 
@@ -11,10 +11,10 @@ if [ $? -ne 0 ]; then
 fi
 
 #Remove all policies defined for the default pap
-/opt/authz/pap/bin/pap-admin rap
+/opt/argus/pap/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin rap"
+  echo "Failed command: /opt/argus/pap/bin/pap-admin rap"
   exit 1
 fi
 
@@ -23,7 +23,7 @@ echo `date`
 echo "---Test-Update-Policy-From-File---"
 echo "1) testing up with non existing file"
 
-/opt/authz/pap/bin/pap-admin up resource_id dummy.txt
+/opt/argus/pap/bin/pap-admin up resource_id dummy.txt
 
 if [ $? -ne 0 ]; then
   echo "OK"
@@ -43,10 +43,10 @@ resource "resource_1" {
     }
 }
 EOF
-/opt/authz/pap/bin/pap-admin apf $policyfile
+/opt/argus/pap/bin/pap-admin apf $policyfile
 if [ $? -ne 0 ]; then
   echo "Error preparing the test environment"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin apf $policyfile"
+  echo "Failed command: /opt/argus/pap/bin/pap-admin apf $policyfile"
   exit 1
 fi
 
@@ -60,7 +60,7 @@ resource "resource_1" {
 }
 EOF
 
-/opt/authz/pap/bin/pap-admin up dummy-id-999 $policyfile
+/opt/argus/pap/bin/pap-admin up dummy-id-999 $policyfile
 if [ $? -ne 0 ]; then
   echo "OK" 
 else
@@ -70,7 +70,7 @@ fi
 
 ###############################################################
 # Retrieve resource id
-id=`/opt/authz/pap/bin/pap-admin lp -srai | egrep 'id=[^public]' | sed 's/id=//'`
+id=`/opt/argus/pap/bin/pap-admin lp -srai | egrep 'id=[^public]' | sed 's/id=//'`
 echo "ID=$id"
 
 echo "4) testing up with correct resource id "
@@ -84,7 +84,7 @@ resource "resource_1" {
 }
 EOF
 
-/opt/authz/pap/bin/pap-admin up $id $policyfile
+/opt/argus/pap/bin/pap-admin up $id $policyfile
 if [ $? -eq 0 ]; then
   echo "OK" 
 else
@@ -96,10 +96,10 @@ fi
 #clean up
 rm -f $policyfile
 #Remove all policies defined for the default pap
-/opt/authz/pap/bin/pap-admin rap
+/opt/argus/pap/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin rap"
+  echo "Failed command: /opt/argus/pap/bin/pap-admin rap"
   exit 1
 fi
 

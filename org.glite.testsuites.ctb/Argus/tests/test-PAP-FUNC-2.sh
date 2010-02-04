@@ -8,8 +8,8 @@ echo "---Test-PAP-FUNC-2---"
 
 conffile=$PAP_HOME/conf/pap_configuration.ini
 bkpfile=$PAP_HOME/conf/pap_configuration.bkp
-authzconffile=$PAP_HOME/conf/pap_authorization.ini
-authzbkpfile=$PAP_HOME/conf/pap_authorization.bkp
+argusconffile=$PAP_HOME/conf/pap_authorization.ini
+argusbkpfile=$PAP_HOME/conf/pap_authorization.bkp
 failed="no"
 
 /etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
@@ -37,8 +37,8 @@ else
 fi
 
 #################################################################
-echo "2) testing missing authz file"
-mv -f $authzconffile  $authzbkpfile
+echo "2) testing missing argus file"
+mv -f $argusconffile  $argusbkpfile
 
 /etc/rc.d/init.d/pap-standalone restart >>/dev/null
 sleep 10
@@ -46,9 +46,9 @@ sleep 10
 if [ $? -eq 0 ]; then
   failed="yes"
   echo "FAILED"
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
 else
-  mv -f $authzbkpfile $authzconffile
+  mv -f $argusbkpfile $argusconffile
   /etc/rc.d/init.d/pap-standalone start >>/dev/null
   sleep 40
   echo "OK"
