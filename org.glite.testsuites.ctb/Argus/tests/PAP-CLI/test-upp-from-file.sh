@@ -1,6 +1,5 @@
 #!/bin/sh
 
-PAP_HOME=/opt/authz/pap
 failed="no"
 policyfile=policyfile.txt
 
@@ -11,10 +10,10 @@ if [ $? -ne 0 ]; then
 fi
 
 #Remove all policies defined for the default pap
-/opt/authz/pap/bin/pap-admin rap
+$PAP_HOME/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin rap"
+  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
   exit 1
 fi
 
@@ -23,7 +22,7 @@ echo `date`
 echo "---Test-Update-Policy-From-File---"
 echo "1) testing up with non existing file"
 
-/opt/authz/pap/bin/pap-admin up resource_id dummy.txt
+$PAP_HOME/bin/pap-admin up resource_id dummy.txt
 
 if [ $? -ne 0 ]; then
   echo "OK"
@@ -43,10 +42,10 @@ resource "resource_1" {
     }
 }
 EOF
-/opt/authz/pap/bin/pap-admin apf $policyfile
+$PAP_HOME/bin/pap-admin apf $policyfile
 if [ $? -ne 0 ]; then
   echo "Error preparing the test environment"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin apf $policyfile"
+  echo "Failed command: $PAP_HOME/bin/pap-admin apf $policyfile"
   exit 1
 fi
 
@@ -60,7 +59,7 @@ resource "resource_1" {
 }
 EOF
 
-/opt/authz/pap/bin/pap-admin up dummy-id-999 $policyfile
+$PAP_HOME/bin/pap-admin up dummy-id-999 $policyfile
 if [ $? -ne 0 ]; then
   echo "OK" 
 else
@@ -71,7 +70,7 @@ fi
 ###############################################################
 # Retrieve resource id
 echo "3) testing up with correct resource id "
-id=`/opt/authz/pap/bin/pap-admin lp -srai | egrep 'id=[^public]' | sed 's/id=//'`
+id=`$PAP_HOME/bin/pap-admin lp -srai | egrep 'id=[^public]' | sed 's/id=//'`
 echo "ID=$id"
 
 #Create new policy file
@@ -83,7 +82,7 @@ resource "resource_1" {
 }
 EOF
 
-/opt/authz/pap/bin/pap-admin up $id $policyfile
+$PAP_HOME/bin/pap-admin up $id $policyfile
 if [ $? -eq 0 ]; then
   echo "OK" 
 else
@@ -104,14 +103,14 @@ action ".*" {
 EOF
 
 #Retrieve action id and update policy
-id=`/opt/authz/pap/bin/pap-admin lp -srai | egrep 'id=public' | awk '{print $1}' | sed 's/id=//'`
+id=`$PAP_HOME/bin/pap-admin lp -srai | egrep 'id=public' | awk '{print $1}' | sed 's/id=//'`
 echo "ID=$id"
-/opt/authz/pap/bin/pap-admin up $id $policyfile
+$PAP_HOME/bin/pap-admin up $id $policyfile
 if [ $? -eq 0 ]; then
   echo "OK" 
 else
   echo "Failed"
-  echo "Command run was: /opt/authz/pap/bin/pap-admin up $id $policyfile"
+  echo "Command run was: $PAP_HOME/bin/pap-admin up $id $policyfile"
   failed="yes"
 fi
 
@@ -119,10 +118,10 @@ fi
 #clean up
 rm -f $policyfile
 #Remove all policies defined for the default pap
-/opt/authz/pap/bin/pap-admin rap
+$PAP_HOME/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin rap"
+  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
   exit 1
 fi
 

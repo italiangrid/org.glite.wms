@@ -1,6 +1,5 @@
 #!/bin/sh
 
-PAP_HOME=/opt/authz/pap
 failed="no"
 policyfile=policyfile.txt
 
@@ -11,10 +10,10 @@ if [ $? -ne 0 ]; then
 fi
 
 #Remove all policies defined for the default pap
-/opt/authz/pap/bin/pap-admin rap
+$PAP_HOME/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin rap"
+  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
   exit 1
 fi
 
@@ -42,24 +41,24 @@ resource "resource_3" {
 }
 
 EOF
-/opt/authz/pap/bin/pap-admin apf $policyfile
+$PAP_HOME/bin/pap-admin apf $policyfile
 if [ $? -ne 0 ]; then
   echo "Error preparing the test environment"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin apf $policyfile"
+  echo "Failed command: $PAP_HOME/bin/pap-admin apf $policyfile"
   exit 1
 fi
 
 #remove all
-/opt/authz/pap/bin/pap-admin rap
+$PAP_HOME/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error preparing the test environment"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin rap"
+  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
   exit 1
 fi
 
 
 #Retrieve resource id
-lines=`/opt/authz/pap/bin/pap-admin lp -sai | egrep -c 'id='`
+lines=`$PAP_HOME/bin/pap-admin lp -sai | egrep -c 'id='`
 
 if [ $lines -eq 0 ]; then
   echo "OK" 
@@ -72,10 +71,10 @@ fi
 #clean up
 rm -f $policyfile
 #Remove all policies defined for the default pap
-/opt/authz/pap/bin/pap-admin rap
+$PAP_HOME/bin/pap-admin rap
 if [ $? -ne 0 ]; then
   echo "Error cleaning the default pap"
-  echo "Failed command: /opt/authz/pap/bin/pap-admin rap"
+  echo "Failed command: $PAP_HOME/bin/pap-admin rap"
   exit 1
 fi
 
