@@ -81,19 +81,19 @@ namespace glite {
 	    classad::ClassAd *rootAD = parser.ParseClassAd( request->to_string() );
 	    
 	    if (!rootAD) {
-	      throw ClassadSyntax_ex( boost::str( boost::format( "iceCommandSubmit: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
+	      throw ClassadSyntax_ex( boost::str( boost::format( "full_request_unparse: ClassAd parser returned a NULL pointer parsing request: %1%" ) % request->to_string() ) );        
 	    }
 	    
 	    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAD );
 	    
 	    // Parse the "command" attribute
 	    if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-	      throw JobRequest_ex( boost::str( boost::format( "iceCommandSubmit: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
+	      throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: attribute 'command' not found or is not a string in request: %1%") % request->to_string() ) );
 	    }
 	    boost::trim_if( commandStr, boost::is_any_of("\"") );
 	    
-	    if ( !boost::algorithm::iequals( commandStr, "submit" ) ) {
-	      throw JobRequest_ex( boost::str( boost::format( "iceCommandSubmit:: wrong command parsed: %1%" ) % commandStr ) );
+	    if ( !boost::algorithm::iequals( commandStr, "submit" ) && !boost::algorithm::iequals( commandStr, "cancel" )) {
+	      throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: wrong command parsed: %1%" ) % commandStr ) );
 	    }
 	    
 	    // Parse the "version" attribute
@@ -130,7 +130,7 @@ namespace glite {
 	    
 	    CREAM_SAFE_LOG(
 			   api_util::creamApiLogger::instance()->getLogger()->errorStream() 
-			   << "util::full_request_unparse() - Cannot instantiate a job from jdl=[" << jdl
+			   << "full_request_unparse() - Cannot instantiate a job from jdl=[" << jdl
 			   << "] due to classad excaption: " << ex.what()
 			   
 			   );
