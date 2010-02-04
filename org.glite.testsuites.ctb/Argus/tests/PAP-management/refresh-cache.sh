@@ -1,6 +1,5 @@
 #!/bin/sh
 
-PAP_HOME=/opt/authz/pap
 failed="no"
 
 /etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
@@ -13,7 +12,7 @@ echo `date`
 echo "---Test-Refesh-Cache---"
 ###############################################################
 echo "1) testing rc with non existing alias"
-/opt/authz/pap/bin/pap-admin rc Do-Not-Exist
+$PAP_HOME/bin/pap-admin rc Do-Not-Exist
 if [ $? -eq 0 ]; then
   echo "Failed"
   failed="yes"
@@ -23,7 +22,7 @@ fi
 
 ###############################################################
 echo "2) testing rc with a local pap"
-/opt/authz/pap/bin/pap-admin rc default
+$PAP_HOME/bin/pap-admin rc default
 if [ $? -eq 0 ]; then
   echo "Failed"
   failed="yes"

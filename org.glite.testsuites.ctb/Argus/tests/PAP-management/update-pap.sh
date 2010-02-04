@@ -1,6 +1,5 @@
 #!/bin/sh
 
-PAP_HOME=/opt/authz/pap
 failed="no"
 
 /etc/rc.d/init.d/pap-standalone status | grep -q 'PAP running'
@@ -13,7 +12,7 @@ echo `date`
 echo "---Test-Update-PAP---"
 ###############################################################
 echo "1) testing upap with non existing alias"
-/opt/authz/pap/bin/pap-admin upap Dummy
+$PAP_HOME/bin/pap-admin upap Dummy
 if [ $? -eq 0 ]; then
   echo "Failed"
   failed="yes"
