@@ -278,12 +278,23 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 	}
 
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ) );
+	
+	iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
+	
         throw( iceCommandFatal_ex( /*ex.what()*/ reason ) );
     } catch( const iceCommandTransient_ex& ex ) {
 
         // The next event is used to show the failure reason in the
         // status info JC+LM log transfer-fail / aborted in case of
         // condor transfers fail
+	
+	CREAM_SAFE_LOG(
+                       m_log_dev->errorStream() 
+                       << method_name  << " TID=[" << getThreadID() << "] "
+                       << "Error during submission of jdl=" << m_jdl
+                       << " Fatal Exception is:" << ex.what()
+                       );
+	
       string reason = boost::str( boost::format( "Transfer to CREAM failed due to exception: %1%" ) % ex.what() );
       m_theJob.set_failure_reason( reason );
       {
@@ -293,10 +304,13 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 	db::Transaction tnx(false, false);
 	tnx.execute( &updater );
       }
-        m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
-        m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
-        m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1% CEUrl [%2%]" ) % ex.what() % m_theJob.get_creamurl() ) ); // Try to resubmit
-        throw( iceCommandFatal_ex( string("Error submitting job to CE [") + m_theJob.get_creamurl() + "]: " + ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
+      m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_fail_event( m_theJob, ex.what()  ) );
+      m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
+      m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1% CEUrl [%2%]" ) % ex.what() % m_theJob.get_creamurl() ) ); // Try to resubmit
+      
+      iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
+      
+      throw( iceCommandFatal_ex( string("Error submitting job to CE [") + m_theJob.get_creamurl() + "]: " + ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
 
     }
     
@@ -321,14 +335,6 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   
   string dbid, completeid, jobId, __creamURL, jobdesc;
   
-//   cream_api::VOMSWrapper V( m_theJob.get_user_proxy_certificate() );
-//   if( !V.IsValid( ) ) {
-//     throw( iceCommandTransient_ex( "Authentication error: " + V.getErrorMessage() ) );
-//   }
-  
-//   time_t proxy_time_end( V.getProxyTimeEnd() );
-//   m_theJob.set_userdn( V.getDNFQAN() );
-
   if( m_theJob.get_isbproxy_time_end() <= time(0) ) {
     throw( iceCommandTransient_ex( "Authentication error: proxyfile [" 
 				   + m_theJob.get_user_proxy_certificate() 
@@ -859,7 +865,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
 	force_delegation = true;
       
     }
-  }
+  } // if( m_theJob.is_proxy_renewable() ) {
   
   try {
     delegation = iceUtil::Delegation_manager::instance()->delegate( m_theJob, m_theJob.is_proxy_renewable(), force_delegation );

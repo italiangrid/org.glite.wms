@@ -219,7 +219,8 @@ namespace util {
       void updateDelegation( const boost::tuple<std::string, time_t, int>& newDeleg );
       
       void removeDelegation( const std::string& delegToRemove );
-
+      void removeDelegation( const std::string& userDN, const std::string& myproxyurl );
+      
     };
 
 } // namespace util

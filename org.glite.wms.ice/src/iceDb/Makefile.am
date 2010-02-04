@@ -34,6 +34,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				RemoveJobByProxy.cpp \
 				RemoveProxyByDN.cpp \
 				RemoveDelegationByID.cpp \
+				RemoveDelegationByDNMyProxy.cpp \
 				RemoveDelegation.cpp \
 				RemoveLease.cpp \
 				GetJobByCid.cpp \

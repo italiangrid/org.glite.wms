@@ -39,6 +39,7 @@ END LICENSE */
 #include "iceDb/CheckDelegationByID.h"
 #include "iceDb/RemoveDelegationByID.h"
 #include "iceDb/UpdateDelegationTimesByID.h"
+#include "iceDb/RemoveDelegationByDNMyProxy.h"
 
 
 namespace cream_api = glite::ce::cream_client_api::soap_proxy;
@@ -248,14 +249,6 @@ Delegation_manager::delegate( const CreamJob& job,
 
         // Delegation id FOUND. Returns it
         delegation_id   = deleg_info.m_delegation_id;
-	//expiration_time = deleg_info.m_expiration_time;
-	//duration        = deleg_info.m_delegation_duration;
-
-        // Project the iterator to the sequencedd index
-        //t_delegation_by_seq::iterator it_seq( m_delegation_set.project<2>( it ) );
-
-        // Relocates the newly-found element to the front of the list
-        //delegation_by_seq.relocate( delegation_by_seq.begin(), it_seq );
 
         CREAM_SAFE_LOG( m_log_dev->debugStream()
                         << method_name
@@ -339,6 +332,27 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 
   {
     db::RemoveDelegationByID remover( delegToRemove, "Delegation_manager::removeDelegation" );
+    db::Transaction tnx(false, false);
+    //tnx.begin_exclusive();
+    tnx.execute( &remover );
+  }
+  
+}
+
+//______________________________________________________________________________
+void Delegation_manager::removeDelegation( const string& userDN, const string& myproxyurl )
+{
+  boost::recursive_mutex::scoped_lock L( s_mutex );
+
+  CREAM_SAFE_LOG( m_log_dev->debugStream()
+		  << "Delegation_manager::removeDelegation() - "
+		  << "Removing Delegation for DN [" 
+		  << userDN << "] MyProxy URL ["
+		  << myproxyurl << "]"
+		  );
+
+  {
+    db::RemoveDelegationByDNMyProxy remover( userDN, myproxyurl, "Delegation_manager::removeDelegation" );
     db::Transaction tnx(false, false);
     //tnx.begin_exclusive();
     tnx.execute( &remover );

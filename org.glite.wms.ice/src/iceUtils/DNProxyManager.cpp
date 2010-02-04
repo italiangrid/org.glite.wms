@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 END LICENSE */
+#include "Delegation_manager.h"
 #include "DNProxyManager.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
@@ -661,6 +662,8 @@ iceUtil::DNProxyManager::decrementUserProxyCounter( const string& userDN,
       */
 
       this->removeBetterProxy( userDN, myproxy_name );
+    
+      iceUtil::Delegation_manager::instance()->removeDelegation( userDN, myproxy_name );
     
     }
 
