@@ -1,4 +1,4 @@
-
+#include <cstring>
 #include <openssl/pem.h>
 #include <vector>
 #include <iostream>
@@ -37,7 +37,7 @@ const char* checkPathExistence(const char* path){
 }
 
 /*****************************************************************
-Calculates the  Trusted Certificates directory pathnaìme
+Calculates the  Trusted Certificates directory pathname
 ******************************************************************/
 const char* getTrustedCert(ConfigContext *cfs){
 	char *path = NULL ;
