@@ -803,6 +803,8 @@ int JobSubmit::checkInputSandbox ( ) {
 		FileAd::setMaxFileSize(Options::getMinimumAllowedFileSize("", zipAllowed));
 	}
 
+	
+
 	// Get the Total of the Input Sandbox
 	isbSize = extractAd->getTotalSize ( );
 
@@ -810,6 +812,15 @@ int JobSubmit::checkInputSandbox ( ) {
 	maxJobIsbSize = extractAd->getMaxJobFileSize();
 
 	if (isbSize > 0) {
+
+                vector<FileAd> files = extractAd->getFiles();
+		int sizeF = files.size();
+		for (int i=0; i<sizeF ; i++) {
+			string cwd = Utils::getAbsolutePath("");
+			if (files[i].file.compare(cwd))
+				files.erase(files.begin()+i);
+		}
+			
 		logInfo->print (WMS_DEBUG,
 			"Total size of the ISB file(s) to be transferred to:",
 			boost::lexical_cast<string>(isbSize) );
@@ -856,6 +867,12 @@ int JobSubmit::checkInputSandbox ( ) {
 			}
 		}
 
+	} else if (extractAd->hasFiles() ){
+                vector<FileAd> files = extractAd->getFiles();
+		if (files[0].file != "")
+			isbSize = 1;
+		logInfo->print (WMS_DEBUG,
+                        "Total size of the ISB file(s) to be transferred is 0, please check your ISB files whether this is correct, the file(s) will be transferred anyway");
 	} else {
 		logInfo->print(WMS_DEBUG, "The user JDL does not contain any local ISB file:" ,
 			"no ISB-FileTransfer to be performed");
