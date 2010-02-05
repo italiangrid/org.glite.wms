@@ -63,22 +63,6 @@ iceCommandCancel::iceCommandCancel( util::Request* request )
   m_lb_logger( util::iceLBLogger::instance() ),
   m_request( request )
 {
-#ifdef ICE_PROFILE
-  util::ice_timer timer("iceCommandCancel::iceCommandCancel");
-#endif
-    
-
-// [ Arguments = 
-//   [ Force = false; 
-//     LogFile = "/var/glite/logmonitor/CondorG.log/CondorG.1140166320.log"; 
-//     ProxyFile = "/var/glite/SandboxDir/tC/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2ftCDrNTu0b0uPbeUEDlpTjg/user.proxy";
-//     SequenceCode = "UI=000002:NS=0000000007:WM=000002:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000:LBS=000000"; 
-//     JobId = "https://cert-rb-03.cnaf.infn.it:9000/tCDrNTu0b0uPbeUEDlpTjg" 
-//   ]; 
-//   Command = "Cancel"; 
-//   Source = 2; 
-//   Protocol = "1.0.0" 
-// ]
 
   
   string commandStr;
