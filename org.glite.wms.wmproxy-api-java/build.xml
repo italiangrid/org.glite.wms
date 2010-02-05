@@ -59,6 +59,9 @@ axis.location		      =${axis.location}
         <fileset dir="${glite.location}/share/java">
             <include name="glite-security-delegation-java.jar"/>
         </fileset>
+	<fileset dir="${glite.location}/share/java">
+            <include name="glite-security-util-java.jar"/>
+        </fileset>
     </path>
 
     <taskdef name="wsdl2java" classname="org.apache.axis.tools.ant.wsdl.Wsdl2javaAntTask"
