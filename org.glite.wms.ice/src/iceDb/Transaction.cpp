@@ -614,29 +614,29 @@ void Transaction::create_db( const bool read_only, const bool create_check )
 }
 
 
-// Transaction& Transaction::Begin( void )
-// {
-//     m_begin = true;
-//     BeginTransaction().execute( s_db ); // FIXME: catch exception
-//     return *this;
-// }
+ Transaction& Transaction::Begin( void )
+ {
+     m_begin = true;
+     BeginTransaction().execute( s_db ); // FIXME: catch exception
+     return *this;
+ }
 
-// Transaction& Transaction::Begin_exclusive( void )
-// {
-//     m_begin = true;
-//     BeginTransaction(true).execute( s_db ); // FIXME: catch exception
-//     return *this;
-// }
+ Transaction& Transaction::Begin_exclusive( void )
+ {
+     m_begin = true;
+     BeginTransaction(true).execute( s_db ); // FIXME: catch exception
+     return *this;
+ }
 
-// void Transaction::Commit( void )
-// {
-//     m_commit = true;
-// }
+ void Transaction::Commit( void )
+ {
+     m_commit = true;
+ }
 
-// void Transaction::Abort( void )
-// { 
-//     m_commit = false;
-// }
+ void Transaction::Abort( void )
+ { 
+    m_commit = false;
+ }
 
 Transaction& Transaction::execute( AbsDbOperation* op ) throw( DbOperationException& )
 {
