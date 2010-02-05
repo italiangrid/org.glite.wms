@@ -38,28 +38,8 @@ namespace glite {
 						   const std::string& cmdtype )
 	throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) 
       {
-#ifdef ICE_PROFILE
-	util::ice_timer timer("iceCommandFactory::mkCommand");
-#endif
+
 	iceAbsCommand* result = 0;
-	
-	//	{ // Classad-mutex protected region
-// 	  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
-	  
-// 	  classad::ClassAdParser parser;
-// 	  classad::ClassAd *rootAd = parser.ParseClassAd( request->to_string() );
-	  
-// 	  if ( !rootAd ) {
-// 	    throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
-// 	  }
-	  
-// 	  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( rootAd );
-	  
-// 	  string commandStr;
-// 	  if ( !classad_safe_ptr->EvaluateAttrString( "command", commandStr ) ) {
-// 	    throw util::JobRequest_ex("attribute 'command' not found or is not a string");
-// 	  }
-// 	  boost::trim_if(commandStr, boost::is_any_of("\""));
 	  
 	  if ( boost::algorithm::iequals( cmdtype, "submit" ) ) {
 	    result = new iceCommandSubmit( request, aJob );
@@ -68,7 +48,7 @@ namespace glite {
 	  } else {
 	    throw util::JobRequest_ex( "Unknown command [" + cmdtype + "] in request classad" );
 	  }
-	  //	} // release of Classad-mutex
+	  
 	return result;
       }
       
