@@ -11,9 +11,10 @@ void InsertStat::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd("");
   sqlcmd << "INSERT INTO stats (" 
-	 << "timestamp,status"
+	 << "timestamp,ce_timestamp,status"
          << " ) VALUES ("
 	 << "\'" << m_timestamp << "\',"
+	 << "\'" << m_ce_timestamp << "\',"
 	 << "\'" << m_status << "\'"
 	 << ");";
 

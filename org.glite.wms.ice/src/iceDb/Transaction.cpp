@@ -184,6 +184,7 @@ namespace {
 	      string sqlcmd = 
 		"CREATE TABLE IF NOT EXISTS stats ( "	\
 		"timestamp integer(8) not null, "	\
+		"ce_timestamp integer(8) not null, "    \
 		"status integer(1) not null "		\
 		")";
 	      do_query( db, sqlcmd );

@@ -144,7 +144,7 @@ void eventStatusPoller::body( void )
           }
         }
       
-        while( m_threadPool->get_command_count( ) > 10 /*iceCondiguration::getInstance()->ice()->get_max_ice_thread( )*/ ) {
+        while( m_threadPool->get_command_count( ) >= 10 /*iceCondiguration::getInstance()->ice()->get_max_ice_thread( )*/ ) {
 	  CREAM_SAFE_LOG( m_log_dev->debugStream()
 	  		  << "eventStatusPoller::body() - "
 			  << "Too many commands in the queue. Waiting 10 seconds..."
@@ -167,8 +167,6 @@ void eventStatusPoller::body( void )
     
       ++ceit;
     }
-    
-
 
   }
 }

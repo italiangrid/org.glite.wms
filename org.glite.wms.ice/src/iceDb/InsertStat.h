@@ -17,16 +17,19 @@ namespace db {
     class InsertStat : public AbsDbOperation { 
 
     public:
-    InsertStat( const time_t timestamp,
+    InsertStat( const time_t timestamp_now,
+		const time_t timestamp_ce,
 		const short status, 
 		const std::string& caller ) : AbsDbOperation(caller),
-      m_timestamp( timestamp ),
+      m_timestamp( timestamp_now ),
+      m_ce_timestamp( timestamp_ce ),
       m_status( status ) {}
       
       virtual void execute( sqlite3* db ) throw( DbOperationException& );
       
   protected:
       const time_t            m_timestamp;
+      const time_t            m_ce_timestamp;
       const short             m_status;
   };
   

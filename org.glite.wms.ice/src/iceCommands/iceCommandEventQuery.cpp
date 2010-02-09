@@ -549,7 +549,7 @@ ice::util::iceCommandEventQuery::processSingleEvent( CreamJob& theJob,
 
 #ifdef GLITE_WMS_ICE_ENABLE_STATS
   {
-    db::InsertStat inserter( event->timestamp, (short)status, "iceCommandEventQuery::processSingleEvent" );
+    db::InsertStat inserter( /*event->timestamp*/ time(0), event->timestamp,(short)status, "iceCommandEventQuery::processSingleEvent" );
     db::Transaction tnx(false, false);
     tnx.execute( &inserter );
   }
