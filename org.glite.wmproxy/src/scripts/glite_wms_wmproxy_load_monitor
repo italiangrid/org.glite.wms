@@ -25,8 +25,6 @@ $glitewmsdir='/opt/glite' unless($glitewmsdir);
 
 $wmsconffile="${glitedir}/etc/glite_wms.conf";
 
-%conf=();
-
 #valid keys for %mems:
 #MemTotal:MemFree:MemShared:Buffers:Cached
 #SwapCached:Active:Inactive:HighTotal:HighFree
@@ -167,6 +165,12 @@ sub read_conf{
         }
         $ice_input= `${glitewmsdir}/bin/glite-wms-get-configuration ICE.Input`;
         chomp($ice_input);
+	
+	$wmp_sand=`${glitewmsdir}/bin/glite-wms-get-configuration WorkloadManagerProxy.SandboxStagingPath`;
+        chomp($wmp_sand);
+	
+	$ns_sand=`${glitewmsdir}/bin/glite-wms-get-configuration NetworkServer.SandboxStagingPath`;
+        chomp($ns_sand);
 
 }
 
@@ -203,7 +207,7 @@ sub get_mem_usage{
 
 sub get_disk_usage{
 
-        foreach (`df|grep -v Filesystem`){
+        foreach (`df -P|grep -v Filesystem`){
                  $diskusage{$3} = $2 if (/^(\S+)\s+\d+\s+\d+\s+\d+\s+(\d+)\%\s+(\S+)/);
         } 
 }
@@ -564,15 +568,16 @@ sub GetPartition{
 
         my @list = ();
 
-        push (@list,`df / |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
-        push (@list,`df /tmp |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P / |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P /tmp |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P /var/lib/mysql |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P /var/log |grep -v Filesystem|awk -F" " '{ print \$6 }'`);
 	
-        $conf{'SandboxStagingPath'}=~s/\;//;
-        push (@list,`df $conf{'SandboxStagingPath'}|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
-	
-        push (@list,`df $wms_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
-        push (@list,`df $jc_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
-        push (@list,`df $ice_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P $wms_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P $jc_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P $ice_input|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P $wmp_sand|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
+        push (@list,`df -P $ns_sand|grep -v Filesystem|awk -F" " '{ print \$6 }'`);
 	
         my %seen = ();
         foreach my $item (@list) {
