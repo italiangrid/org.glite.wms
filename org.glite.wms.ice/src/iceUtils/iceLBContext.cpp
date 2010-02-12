@@ -27,7 +27,7 @@ END LICENSE */
 
 #include <cstdlib>
 #include <cstdio>
-
+#include <cerrno>
 #include <iostream>
 #include <string>
 

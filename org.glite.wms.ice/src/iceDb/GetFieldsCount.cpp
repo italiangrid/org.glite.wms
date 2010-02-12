@@ -24,6 +24,7 @@
 #include "GetFieldsCount.h"
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
 
 using namespace glite::wms::ice::db;
 using namespace std;

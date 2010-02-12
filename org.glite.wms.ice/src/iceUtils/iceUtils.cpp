@@ -548,7 +548,7 @@ namespace glite {
 	
 	//______________________________________________________________________________
 	string computeSHA1Digest( const string& proxyfile ) throw(runtime_error&) {
-	  static char* method_name = "util::computeSHA1Digest() - ";
+	  static const char* method_name = "util::computeSHA1Digest() - ";
 	  
 	  unsigned char bin_sha1_digest[SHA_DIGEST_LENGTH];
 	  char buffer[ 1024 ]; // buffer for file data

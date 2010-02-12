@@ -21,6 +21,7 @@ END LICENSE */
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 
 using namespace glite::wms::ice::db;
 using namespace std;

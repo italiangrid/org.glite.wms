@@ -79,7 +79,7 @@ Delegation_manager::delegate( const CreamJob& job,
   throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( s_mutex );
-    static char* method_name = "Delegation_manager::delegate() - ";
+    static const char* method_name = "Delegation_manager::delegate() - ";
 
     if( force )
       CREAM_SAFE_LOG( m_log_dev->debugStream()
@@ -391,7 +391,7 @@ void Delegation_manager::redelegate( const string& certfile,
 {
     boost::recursive_mutex::scoped_lock L( s_mutex );
 
-    static char* method_name = "Delegation_manager::redelegate() - ";
+    static const char* method_name = "Delegation_manager::redelegate() - ";
 
 
     bool found = false;
