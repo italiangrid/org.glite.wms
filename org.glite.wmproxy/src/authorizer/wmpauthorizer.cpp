@@ -200,7 +200,7 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	edglog(debug)<<"Request's Proxy FQAN: "<<envFQAN<<endl;
 	if (certfqan != "") {
 		this->certfqan = certfqan;
-		if (!compareFQAN(certfqan, envFQAN)) {
+		if (!compareFQANAuthN(certfqan, envFQAN)) {
 			throw wmputilities::AuthorizationException(__FILE__, __LINE__,
 		    		"authorize()", wmputilities::WMS_AUTHORIZATION_ERROR,
 		    		"Client proxy FQAN (" + envFQAN +
@@ -862,7 +862,7 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 	vect_ref.erase(vect_ref.begin());
 	vect_in.erase(vect_in.begin());
 	//Checks Group and SubGroup(s)
-	while (vect_ref.empty()==false && match) {
+	while (vect_ref.empty()==false && match)  {
 		if (vect_in.empty()) {
 			// ref-FQQAN contains other fields
 			// in-FQAN does not
@@ -967,6 +967,187 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
         return match ;
 #ifndef GLITE_WMS_WMPROXY_TOOLS
    	GLITE_STACK_CATCH();
+#endif
+}
+
+
+bool
+WMPAuthorizer::compareFQANAuthN (const string &ref, const string &in )
+{
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+        GLITE_STACK_TRY("compareFQAN");
+        edglog_fn("WMPAuthorizer::compareFQANAuthN");
+#endif
+
+        // Checking for empty FQAN
+        if ((ref == "") && (in == "")) {
+                return true;
+        }
+        if ((ref == "") || (in == "")) {
+                return false;
+        }
+
+        bool match = true;
+
+        vector<pair<string,string> > vect_ref, vect_in;
+        string lab_ref = "";
+        string lab_in = "";
+        string val_ref = "";
+        string val_in = "";
+
+        // the vectors contain pairs like this <label,value> (label may be an empty string)
+        vect_ref = parseFQAN(ref );
+        for (unsigned int i = 0; i<vect_ref.size(); i++) {
+                edglog(debug)<<"FQAN del CERTFQAN ["<<i<<"] : "<<vect_ref[i].first<<" "<<vect_ref[i].second<<endl;
+        }
+        if ( vect_ref.empty()){
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                        "compareFQAN(string, string)", wmputilities::WMS_AUTHORIZATION_ERROR,
+                        "no valid fields in the FQAN string: [" + ref + "] (please contact the server administrator");
+#else
+                cerr << "Error - no valid fields in the FQAN string: [" << ref << "]";
+                exit(-1);
+#endif
+
+        }
+        // vin=<input-vect>
+        vect_in = parseFQAN(in);
+        if (vect_in.empty()) {
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+                throw wmputilities::AuthorizationException(__FILE__, __LINE__,
+                        "compareFQAN(string, string)", wmputilities::WMS_AUTHORIZATION_ERROR,
+                        "no valid fields in the user FQAN string: [" + in+ "]");
+#else
+                cerr << "Error - no valid fields in the user FQAN string: [" << in<< "]";
+                exit(-1);
+#endif
+        }
+        // Compare VO's==================
+        val_ref = vect_ref[0].second;
+        val_in = vect_in[0].second;
+        if (val_ref.compare(val_in) != 0){
+                match = false;
+        }
+        vect_ref.erase(vect_ref.begin());
+        vect_in.erase(vect_in.begin());
+        //Checks Group and SubGroup(s)
+        while ((vect_ref.empty()==false && match) || (vect_in.empty()==false && match)) {
+                if (vect_ref.empty()) {
+                        // ref-FQQAN contains no other fields
+                        // in-FQAN does
+                        match = false;
+                        break;
+                }
+                if (vect_in.empty()) {
+                        // ref-FQQAN contains other fields
+                        // in-FQAN does not
+                        match = false;
+                        break;
+                } else {
+                        lab_ref = vect_ref[0].first;
+                        if (lab_ref.compare(FQAN_FIELDS[FQAN_GROUP])==0 ) {
+                                lab_in = vect_in[0].first;
+                                //cout << "####compareFQANs> A) lab_in = " << lab_in << "\n";
+                                // ref-FQAN contains a group(or subgroup) field
+                                if (lab_in.compare(FQAN_FIELDS[FQAN_GROUP])==0){
+
+                                        val_ref = vect_ref[0].second;
+                                        val_in = vect_in[0].second;
+                                        if (val_ref.compare(val_in)==0) {
+                                                //cout << "####compareFQANs> match OK\n";
+                                                // match=OK
+                                                vect_ref.erase(vect_ref.begin());
+                                                vect_in.erase(vect_in.begin());
+                                        } else {
+                                                // different groups !
+                                                match = false;
+                                                break;
+                                        }
+                                } else {
+                                        // in-FQAN does not contain a group field in the same position
+                                        match = false;
+                                        break;
+                                }
+                        //      cout << "####compareFQANs> GROUPS (0) - match = " << match << "\n";
+                        } else {
+                                // ref-FQAN has one or two fields (Role or/and Capability)
+                                // in-FQAN : removal of the Other groups(subgroups) which must be ignored
+                                lab_in = vect_in[0].first;
+                                //cout << "####compareFQANs> B) lab_in = " << lab_in << "\n";
+                                if (lab_in.compare(FQAN_FIELDS[FQAN_GROUP])==0) {
+                                        // ref-FQAN has one or two fields (Role or/and Capability)
+                                        // in-FQAN has other group/subgroup field
+                                        match = false;
+                                }
+                                break;
+                        }
+                }
+        }
+        //Checks Role
+        if ((vect_ref.empty()==false && match)  || (vect_in.empty()==false && match)) {
+                if (vect_ref.empty()) {
+                        // ref-FQQAN contains no other fields
+                        // in-FQAN does
+                        match = false;
+                }
+                if (vect_in.empty()) {
+                        // ref-FQQAN contains other fields
+                        // in-FQAN does not
+                        match = false;
+                } else {
+                        lab_ref = vect_ref[0].first;
+                        if (lab_ref.compare(FQAN_FIELDS[FQAN_ROLE])==0 ) {
+                                lab_in = vect_in[0].first;
+                                // ref-FQAN contains a Role field
+                                if (lab_in.compare(FQAN_FIELDS[FQAN_ROLE])==0){
+                                        val_ref = vect_ref[0].second;
+                                        val_in = vect_in[0].second;
+                                        if (val_ref.compare(val_in)==0) {
+                                                // removal of the fields just checked
+                                                vect_ref.erase(vect_ref.begin());
+                                                vect_in.erase(vect_in.begin());
+                                        } else {
+                                                // different roles !
+                                                match = false;
+                                        }
+                                } else {
+                                        // ref-FQAN contains Role field
+                                        // in-FQAN does not
+                                        match = false;
+                                }
+                        }
+                }
+        }
+        //Checks Capability
+        if ((vect_ref.empty()==false && match) || (vect_in.empty()==false && match)) {
+                lab_ref = vect_ref[0].first;
+                if (lab_ref.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0 ) {
+                        lab_in = vect_in[0].first;
+                        // ref-FQAN contains a Role field
+                        if (lab_in.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0){
+                                val_ref = vect_ref[0].second;
+                                val_in = vect_in[0].second;
+                                if (val_ref.compare(val_in)==0) {
+                                        // removal of the fields just checked
+                                        vect_ref.erase(vect_ref.begin());
+                                        vect_in.erase(vect_in.begin());
+                                } else {
+                                        // different capabilities !
+                                        match = false;
+
+                                }
+                        } else {
+                                // ref-FQAN contains Capablity field
+                                // in-FQAN does not
+                                match = false;
+                        }
+
+                }
+        }
+        return match ;
+#ifndef GLITE_WMS_WMPROXY_TOOLS
+        GLITE_STACK_CATCH();
 #endif
 }
 

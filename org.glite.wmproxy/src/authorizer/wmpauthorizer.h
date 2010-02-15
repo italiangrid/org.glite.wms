@@ -124,7 +124,11 @@ public:
      */
     static bool compareFQAN(const std::string &infqan,
     	const std::string &reffqan);
-    	
+
+    static bool compareFQANAuthN(const std::string &infqan,
+        const std::string &reffqan);
+   
+ 	
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 
     /**
