@@ -529,7 +529,7 @@ void CreamProxy_QueryEvent::method_call( int timeout )
 	cream_ex::ConnectionTimeoutException&,
 	soap_proxy::auth_ex&)  
 {
-  boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxy_QueryEvent( make_pair(m_fromid, m_toid), make_pair( m_fromDate, (time_t)-1), m_type, m_maxnum, 0, *m_etime, *m_dbid, *m_events, timeout) );;
+  boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxy_QueryEvent( make_pair(m_fromid, m_toid), make_pair( m_fromDate, (time_t)-1), m_type, m_maxnum, 0, vector<pair<string, string> >(), *m_etime, *m_dbid, *m_events, timeout) );;
   
   theProxy->setCredential( m_certfile );
   theProxy->setSoapHeader( m_iceid );
