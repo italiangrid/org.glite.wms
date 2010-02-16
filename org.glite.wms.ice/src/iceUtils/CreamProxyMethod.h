@@ -1,25 +1,22 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * CREAM proxy methods for ICE
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
 
 #ifndef ICE_CREAMPROXYMETHOD_H
 #define ICE_CREAMPROXYMETHOD_H
@@ -389,6 +386,7 @@ namespace util {
 			     const time_t       fromDate,
 			     const std::string& type,
 			     const int maxnum,
+			     const std::vector<std::pair<std::string, std::string> >& properties,
 			     std::string& dbid,
 			     time_t& etime,
 			     std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& events,
@@ -411,6 +409,7 @@ namespace util {
 	const std::string m_iceid;
 	time_t                    *m_etime;
 	const time_t               m_fromDate;
+	std::vector<std::pair<std::string, std::string> > m_properties;
     };
 
 } // namespace util

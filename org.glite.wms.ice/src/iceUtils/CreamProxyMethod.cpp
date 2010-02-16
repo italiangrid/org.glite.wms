@@ -502,6 +502,7 @@ CreamProxy_QueryEvent::CreamProxy_QueryEvent( const std::string& service,
 					      const time_t       fromDate,
 					      const std::string& type,
 					      const int maxnum,
+					      const vector<pair<string, string> >& properties,
 					      std::string& dbid,
 					      time_t& etime,
 					      std::list<soap_proxy::EventWrapper*>& events,
@@ -517,7 +518,8 @@ CreamProxy_QueryEvent::CreamProxy_QueryEvent( const std::string& service,
   m_events( &events ),
   m_iceid( iceid ),
   m_etime( &etime ),
-  m_fromDate( fromDate )
+  m_fromDate( fromDate ),
+  m_properties( properties )
 {
 }
 void CreamProxy_QueryEvent::method_call( int timeout ) 
@@ -529,7 +531,7 @@ void CreamProxy_QueryEvent::method_call( int timeout )
 	cream_ex::ConnectionTimeoutException&,
 	soap_proxy::auth_ex&)  
 {
-  boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxy_QueryEvent( make_pair(m_fromid, m_toid), make_pair( m_fromDate, (time_t)-1), m_type, m_maxnum, 0, vector<pair<string, string> >(), *m_etime, *m_dbid, *m_events, timeout) );;
+  boost::scoped_ptr< soap_proxy::AbsCreamProxy > theProxy( soap_proxy::CreamProxyFactory::make_CreamProxy_QueryEvent( make_pair(m_fromid, m_toid), make_pair( m_fromDate, (time_t)-1), m_type, m_maxnum, 0, m_properties, *m_etime, *m_dbid, *m_events, timeout) );;
   
   theProxy->setCredential( m_certfile );
   theProxy->setSoapHeader( m_iceid );
