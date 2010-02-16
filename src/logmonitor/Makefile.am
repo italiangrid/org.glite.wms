@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.2.4.1.2.4  2010/02/16 15:23:28  fcapanni
+#       wrong lib staging by lb
+#
 #       Revision 1.20.2.2.4.1.2.3  2010/01/15 12:33:43  mcecchi
 #       bug #48636
 #
@@ -158,7 +161,9 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) $(GLITE_WMS_PURGER_LIBS) \
-        $(RENEWAL_NOTHR_LIBS)	
+        $(RENEWAL_NOTHR_LIBS) \
+  -lglite_jobid	\
+  -lglite_lbu_trio
 
 libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \

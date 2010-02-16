@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17.2.3.4.1.2.2  2010/02/16 15:26:01  fcapanni
+#       wrong lib staging by lb
+#
 #       Revision 1.17.2.3.4.1.2.1  2009/06/16 13:15:22  fcapanni
 #       porting to org.glite.jobid
 #
@@ -125,7 +128,9 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(CONDORG_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-	$(GLITE_WMS_PURGER_LIBS) 
+	$(GLITE_WMS_PURGER_LIBS) \
+  -lglite_jobid  \
+  -lglite_lbu_trio
 
 glite_wms_log_monitor_SOURCES = logmonitor.cpp \
 	MonitorLoop.cpp \
@@ -150,7 +155,10 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(CONDORG_LIBS) \
         $(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-	$(GLITE_WMS_PURGER_LIBS) 
+	$(GLITE_WMS_PURGER_LIBS) \
+  -lglite_jobid  \
+  -lglite_lbu_trio
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
