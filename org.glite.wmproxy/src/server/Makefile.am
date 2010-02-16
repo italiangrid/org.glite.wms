@@ -99,7 +99,8 @@ glite_wms_wmproxy_server_LDADD = \
 	$(VOMS_NOTHR_LIBS) \
 	$(FCGI_CPP_LIBS) -lfcgi \
 	$(XSLT_LIBS) \
-	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)
+	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
+  -lglite_lbu_trio
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \

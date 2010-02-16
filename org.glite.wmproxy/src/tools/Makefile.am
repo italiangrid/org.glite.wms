@@ -28,7 +28,10 @@ glite_wms_wmproxy_purge_proxycache_binary_LDADD = \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(BOOST_FS_LIBS)
+	$(BOOST_FS_LIBS) \
+  $(GLITE_JOBID_LIBS) \
+  -lglite_lbu_trio \
+  -lglite_jobid
 
 
 glite_wms_wmproxy_gacladmin_SOURCES = wmpgacladmin.cpp wmpgaclmanager.cpp wmpauthorizer.cpp wmputils.cpp utils.cpp
@@ -38,7 +41,9 @@ glite_wms_wmproxy_gacladmin_LDADD = \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GRIDSITE_OPENSSL_LIBS) \
-	$(GRIDSITE_LIBS)
+	$(GRIDSITE_LIBS) \
+  -lglite_lbu_trio \
+  -lglite_jobid
 
 
 glite_wms_wmproxy_gridmapfile2gacl_SOURCES = wmpgridmap2gacl.cpp wmpgaclmanager.cpp wmpauthorizer.cpp wmputils.cpp log.cpp utils.cpp
@@ -49,7 +54,9 @@ glite_wms_wmproxy_gridmapfile2gacl_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(BOOST_FS_LIBS)
+	$(BOOST_FS_LIBS) \
+  -lglite_lbu_trio \
+  -lglite_jobid
 
 
 wmputils.cpp:
