@@ -136,7 +136,7 @@ namespace util {
       * @param oldJdl the original jdl
       * @retyrn the CREAM-compliand jdl
       */
-     std::string creamJdlHelper( const std::string& oldJdl ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
+     //std::string creamJdlHelper( const std::string& oldJdl ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
      
      /**
       * This function updates the "InputSandbox" attribute value on
@@ -145,7 +145,7 @@ namespace util {
       * @param jdl the original jdl, which will be modified
       * by this function
       */
-     void updateIsbList( classad::ClassAd* jdl );
+     //void updateIsbList( classad::ClassAd* jdl );
      
      /**
       * This function updates the "OutputSandbox"-related
@@ -154,7 +154,7 @@ namespace util {
       * @param jdl the original jdl, which will be modified
       * by this function
       */
-     void updateOsbList( classad::ClassAd* jdl );
+     //void updateOsbList( classad::ClassAd* jdl );
      
      std::string m_myname;	
      std::string m_jdl;
