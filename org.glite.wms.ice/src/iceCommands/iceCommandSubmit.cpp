@@ -553,25 +553,18 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     throw iceCommandTransient_ex( boost::str( boost::format( "CREAM Start failed due to error %1%") % errMex ) );
   }
   
-  // no failure: put jobids and status in cache
+  // no failure: put jobids and status in database
   // and remove last request from WM's filelist
-  
   
   m_theJob.set_cream_jobid( jobId );
   m_theJob.set_status(glite::ce::cream_client_api::job_statuses::PENDING);    
-  // SET ABOVE... m_theJob.set_delegation_id( delegation );
-  //m_theJob.set_delegation_expiration_time( delegation.get<1>() );
-  //    m_theJob.set_delegation_duration( delegation.get<2>() );
-  // SET ABOVE m_theJob.set_lease_id( lease_id ); // FIXME: redundant??
-  //m_theJob.set_proxycert_mtime( time(0) ); // FIXME: should be the modification time of the proxy file?
   m_theJob.set_wn_sequencecode( m_theJob.get_sequence_code() );
   
-  //if(!only_start)
-  //{
   list< pair<string, string> > params;
   params.push_back( make_pair("creamjobid", jobId) );
   params.push_back( make_pair("complete_cream_jobid", m_theJob.get_complete_cream_jobid() ) );
-  params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::PENDING )));
+  //params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::PENDING )));
+  params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::IDLE )));
   params.push_back( make_pair("delegationid", m_theJob.get_delegation_id() ));
   params.push_back( make_pair("leaseid", m_theJob.get_lease_id() ));
   params.push_back( make_pair("wn_sequence_code", m_theJob.get_sequence_code() ));
@@ -579,14 +572,6 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   db::UpdateJobByGid updater( _gid , params,"iceCommandSubmit::try_to_submit" );
   db::Transaction tnx(false, false);
   tnx.execute( &updater );
-  //     } else {
-  //       list< pair<string, string> > params;
-  //       params.push_back( make_pair("status", iceUtil::int_to_string( glite::ce::cream_client_api::job_statuses::PENDING )));
-  //       params.push_back( make_pair("wn_sequence_code", m_theJob.get_sequence_code() ));
-  //       db::UpdateJobByGid updater( _gid , params,"iceCommandSubmit::try_to_submit" );
-  //       db::Transaction tnx(false, false);
-  //       tnx.execute( &updater );
-  //     }
   
   m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_ok_event( m_theJob ) );
   
