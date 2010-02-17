@@ -997,9 +997,6 @@ WMPAuthorizer::compareFQANAuthN (const string &ref, const string &in )
 
         // the vectors contain pairs like this <label,value> (label may be an empty string)
         vect_ref = parseFQAN(ref );
-        for (unsigned int i = 0; i<vect_ref.size(); i++) {
-                edglog(debug)<<"FQAN del CERTFQAN ["<<i<<"] : "<<vect_ref[i].first<<" "<<vect_ref[i].second<<endl;
-        }
         if ( vect_ref.empty()){
 #ifndef GLITE_WMS_WMPROXY_TOOLS
                 throw wmputilities::AuthorizationException(__FILE__, __LINE__,
