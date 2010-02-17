@@ -65,6 +65,7 @@ queryDb_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-lglite_lbu_trio -lglite_jobid \
 		iceDb/sqlite/libsqlite3.a
 		
 queryStats_LDADD = -L$(GLITE_LOCATION)/lib \
@@ -100,6 +101,7 @@ queryStats_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-lglite_lbu_trio -lglite_jobid \
 		iceDb/sqlite/libsqlite3.a
 		
 putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
@@ -135,6 +137,7 @@ putFL_LDADD =  -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-lglite_lbu_trio -lglite_jobid \
 		iceDb/sqlite/libsqlite3.a
 
 ###-L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
@@ -154,6 +157,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 		$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
+		-lglite_lbu_trio -lglite_jobid \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
@@ -190,6 +194,7 @@ glite_wms_ice_safe_LDADD = $(BOOST_PO_LIBS) \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-lglite_lbu_trio -lglite_jobid \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
@@ -225,6 +230,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lboost_date_time \
 		-lboost_serialization \
 		$(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+		-lglite_lbu_trio -lglite_jobid \
 		iceDb/sqlite/libsqlite3.a
 
 glite_wms_ice_proxy_renew_LDADD = -L$(GLITE_LOCATION)/lib \
