@@ -191,7 +191,6 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
       states.push_back( make_pair("STATUS", "ABORTED") );
       states.push_back( make_pair("STATUS", "CANCELLED") );
       states.push_back( make_pair("STATUS", "HELD") );
-      states.push_back( make_pair("STATUS", "PURGED") );
       
       CreamProxy_QueryEvent( m_ce, 
 			     proxyinfo.get<0>(), 
