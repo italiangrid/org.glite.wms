@@ -849,7 +849,7 @@ void iceCommandSubmit::handle_delegation( string& delegation,
       if( deleg.m_expiration_time < time(0) + 2*iceUtil::iceConfManager::getInstance()->getConfiguration()->ice()->proxy_renewal_frequency() ) // this means that the ICE's delegation renewal has failed. In fact it try to renew much before the exp time of the delegation itself.
 	force_delegation = true;
       
-    }
+    }  // does exist SBP
   } // if( m_theJob.is_proxy_renewable() ) {
   
   try {

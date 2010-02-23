@@ -184,14 +184,16 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     try {
       api_util::scoped_timer Tot( "iceCommandEventQuery::execute() - SOAP Connection for QueryEvent" );
       vector<pair<string, string> > states;
+/*      states.push_back( make_pair("STATUS", "REGISTERED") );
+states.push_back( make_pair("STATUS", "PENDING") );
+states.push_back( make_pair("STATUS", "IDLE") );
       states.push_back( make_pair("STATUS", "RUNNING") );
       states.push_back( make_pair("STATUS", "REALLY-RUNNING") );
       states.push_back( make_pair("STATUS", "DONE-OK") );
       states.push_back( make_pair("STATUS", "DONE-FAILED") );
       states.push_back( make_pair("STATUS", "ABORTED") );
       states.push_back( make_pair("STATUS", "CANCELLED") );
-      states.push_back( make_pair("STATUS", "HELD") );
-      
+      states.push_back( make_pair("STATUS", "HELD") ); */
       CreamProxy_QueryEvent( m_ce, 
 			     proxyinfo.get<0>(), 
 			     from.str(),
