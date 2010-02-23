@@ -26,7 +26,7 @@ if [ -n "${__jobid}" ]; then
   export GLITE_WMS_JOBID="${__jobid}"
 fi
 
-export GLITE_WMS_SEQUENCE_CODE="$1"
+export GLITE_WMS_SEQUENCE_CODE="`eval echo $1`"
 shift
 
 if [ -z "${GLITE_WMS_LOCATION}" ]; then
