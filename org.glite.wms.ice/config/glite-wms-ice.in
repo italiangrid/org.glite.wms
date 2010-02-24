@@ -119,21 +119,23 @@ start()
 
 stop()
 {
-    echo -n "stopping ICE... "
+   echo -n "stopping ICE... "
 
 #    if running; then
 #        pid=`cat ${pid_file} 2> /dev/null`
-        binpath_child=${GLITE_LOCATION}/bin/glite-wms-ice
+       binpath_child=${GLITE_LOCATION}/bin/glite-wms-ice
 #        killall ${binpath_child}
-	killall -9 glite-wms-ice-safe 2> /dev/null
+	killall -9 ${GLITE_LOCATION}/bin/glite-wms-ice-safe 2> /dev/null
 #	killall ${binpath_child}
-	killall -9 glite-wms-ice 2> /dev/null
+	killall -9 ${GLITE_LOCATION}/bin/glite-wms-ice 2> /dev/null
 	rm -f ${pid_file}
-        ## When the child process dies, the father will exit as well,
-        ## so the following line should not be necessary any more.
-        ##
-        ## kill ${pid}
-        sleep 2
+       ## When the child process dies, the father will exit as well,
+       ## so the following line should not be necessary any more.
+       ##
+       ## kill ${pid}
+       sleep 2
+       echo "ok"
+       return 0
 #        if running; then
 #            kill -9 ${pid}
 #            sleep 2
@@ -148,9 +150,9 @@ stop()
 #            echo "ok"
 #            rm -f ${pid_file}
 #        fi
- #   else
- #       echo "ok (was not running)"
- #   fi
+#   else
+#       echo "ok (was not running)"
+#   fi
 }
 
 status()
