@@ -144,6 +144,9 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
     boost::tuple<string, time_t, long long int> proxyinfo = DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn );
     //string proxy( DNProxyManager::getInstance()->getAnyBetterProxyByDN( m_dn ).get<0>() );
     if ( proxyinfo.get<0>().empty() ) {
+    
+      // see BUG https://savannah.cern.ch/bugs/index.php?59453 
+    
       CREAM_SAFE_LOG( m_log_dev->errorStream() << method_name << " TID=[" << getThreadID() << "] "
 		      << "A valid proxy file for DN [" << m_dn
 		      << "] ce url ["
