@@ -409,12 +409,26 @@ class Wmproxy:
 		return self.remote.methods
 
 	def signProxyReqEnv(self, proxyEnv):
-		os.system("/opt/glite/bin/glite-wms-proxy-sign -e " + proxyEnv)
+		proxy_sign = ""
+		try:
+			glite_path = os.environ['GLITE_LOCATION']
+			proxy_sign = os.path.join (glite_path, 'bin', 'glite-wms-proxy-sign')
+		except:
+			proxy_sign = os.path.join ('/opt', 'glite', 'bin', 'glite-wms-proxy-sign')		
+	
+		os.system(proxy_sign + " -e " + proxyEnv)
 		return self.signProxyReq()
 
 	def signProxyReqStr(self, proxyStr):
 		proxyStr = '"'+proxyStr+'"'
-		os.system("/opt/glite/bin/glite-wms-proxy-sign -p " + proxyStr)
+		proxy_sign = ""
+		try:
+                	glite_path = os.environ['GLITE_LOCATION']
+                        proxy_sign = os.path.join (glite_path, 'bin', 'glite-wms-proxy-sign')
+                except:   
+                        proxy_sign = os.path.join ('/opt', 'glite', 'bin', 'glite-wms-proxy-sign')
+
+		os.system(proxy_sign + " -p " + proxyStr)
 		return self.signProxyReq()
 
 	def signProxyReq(self):
