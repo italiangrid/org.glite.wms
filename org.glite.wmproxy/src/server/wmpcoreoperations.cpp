@@ -1908,6 +1908,29 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			wmputilities::getJobJDLToStartPath(*jid).c_str());
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
 				exc.what(), true, true);
+		
+		// Forcing Abort log for each node of the DAG/Collection bug 40982
+		int type = getType(jdl);
+		if (type != TYPE_JOB) {
+			
+			WMPExpDagAd dag (jdl);
+                        dag.setLocalAccess(false);
+                        JobIdStruct jobidstruct;
+                        dag.getJobIdStruct(jobidstruct);
+                        vector<JobIdStruct*> children = jobidstruct.children;
+			vector<JobIdStruct*>::iterator iter = children.begin();
+                        vector<JobIdStruct*>::iterator const end = children.end();
+
+		        std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+
+			for (; iter != end; ++iter) {
+				JobId * subjobid = new JobId ((*iter)->jobid);
+				wmplogger.init(lbaddress_port.first, lbaddress_port.second, subjobid, conf.getDefaultProtocol(), conf.getDefaultPort());
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT, exc.what(), true, true);
+				free(subjobid);
+			}
+		}
+
 		if (!issubmit) {
 			edglog(debug)<<"Removing lock..."<<std::endl;
 			wmputilities::operationUnlock(fd);
