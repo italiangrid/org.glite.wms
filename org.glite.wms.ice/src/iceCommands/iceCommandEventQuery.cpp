@@ -102,6 +102,16 @@ ice::util::iceCommandEventQuery::iceCommandEventQuery( ice::Ice* theIce,
 }
 
 //______________________________________________________________________________
+std::string ice::util::iceCommandEventQuery::get_grid_job_id() const
+{
+  ostringstream randid( "" );
+  struct timeval T;
+  gettimeofday( &T, 0 );
+  randid << T.tv_sec << "." << T.tv_usec;
+  return randid.str();
+}
+
+//______________________________________________________________________________
 void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 {
  m_thread_id = tid;
@@ -115,6 +125,16 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 		   << m_dn << "] and ce url ["
 		   << m_ce << "]..."
 		   );
+		   
+//     sleep(10);
+//     
+//     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
+// 		   << "Ended EventQuery for userdn ["
+// 		   << m_dn << "] and ce url ["
+// 		   << m_ce << "]..."
+// 		   );
+//     
+//     return;
     
     long long thisEventID = this->getEventID( m_dn, m_ce );
     

@@ -92,7 +92,7 @@ namespace glite {
 	  
 	  void execute( const std::string& ) throw();
 	  
-	  std::string get_grid_job_id() const { return std::string(); }
+	  std::string get_grid_job_id() const;// { return std::string(); }
 	  
 	  void stop() { m_stopped = true; }
 	  
