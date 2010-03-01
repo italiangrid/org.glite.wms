@@ -7,7 +7,7 @@
 #
 # This script needs the location of the basic SRM 2.2 tests to be defined in $S2_TESTS_LOCATION
 # (usually /opt/s2/share/doc/s2-1.0.2/testing/scripts/protos/srm/2.2/basic/).
-# It also needs the s2 binary to be foundable in the $PATH (usually /opt/s2/bin).
+# It also needs the s2 binary in the $PATH (usually /opt/s2/bin).
 # By default VO name from voms proxy is used. Another VO name can be specified using $VO.
 # The s2 output files useful for debugging are stored in $S2_LOGS_DIR, if defined, oterwise
 # a directory in /tmp with the name of the target host is created and log files will be stored
@@ -97,64 +97,20 @@ fi
 echo " "
 echo "using VO                              : $VO"
 
-# ... ask the tested SE for SRM 2.2 Service Endpoint
-
-echo "Interrogating the GRIS on $SRM_HOST ..."
-
-LDAP_RESULT=`ldapsearch -x -H ldap://lxbra2306:2170 -b "mds-vo-name=local, o=grid" '(& (objectclass=GlueService) (GlueServiceVersion=2.2*))' GlueServiceEndpoint`
-LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2170 -b "mds-vo-name=resource, o=grid" '(& (objectclass=GlueService) (GlueServiceVersion=2.2*))' GlueServiceEndpoint`
-
-if [ $? -ne 0 ] || [ -z "$LDAP_RESULT" ]; then
-
-  echo "ldapsearch result:"
-  echo "$LDAP_RESULT"
-  echo "Error: could not find SRM2.2 endpoint for $SRM_HOST. Possibly it is not published by $SRM_HOST GIIS."
-  exit_failure
+#Create the endpoint string
+echo $SRM_HOST | grep -q desy
+if [ $? -eq 0 ]; then
+  SRM_ENDPOINT="srm://${SRM_HOST}:8443/srm/managerv2?SFN=/pnfs/desy.de/data/dteam/"
+fi
+echo $SRM_HOST | grep -q cern
+if [ $? -eq 0 ]; then
+  SRM_ENDPOINT="srm://${SRM_HOST}:8446/srm/managerv2?SFN=/dpm/cern.ch/home/dteam/"
+fi
+if [ "x$SRM_ENDPOINT" == "x" ]; then
+  echo "Failed creating the SRM_ENDPOINT string"
+  exit 1
 fi
 
-ENDPOINT=`echo "$LDAP_RESULT" | grep 'GlueServiceEndpoint:' | awk -F ' ' '{print $2}'`
-
-# ... in case we got few endpoints take the first one
-
-ENDPOINT=`echo $ENDPOINT | awk -F ' ' '{print $1}'`
-
-echo "SRM 2.2 endpoint published by SRM host: $ENDPOINT"
-
-# ... ask the SE for SAPath for the VO
-
-echo "SRM host to be tested                 : $SRM_HOST"
-
-LDAP_RESULT=`ldapsearch -x -H ldap://$SRM_HOST:2170 -b "mds-vo-name=resource, o=grid" "(& (objectclass=GlueSAAccessControlBase) (GlueSAAccessControlBaseRule=$VO))" GlueSAPath`
-#LDAP_RESULT=`ldapsearch -x -H ldap://lxbra2306:2170 -b "mds-vo-name=local,o=grid" -LLL "(&(GlueSALocalID:dn:=dteam)(GlueSEUniqueID:dn:=$SRM_HOST))" GlueSAPath`
-
-if [ $? -ne 0 ] || [ -z "$LDAP_RESULT" ]; then
-
-  echo "ldapsearch result:"
-  echo "$LDAP_RESULT"
-  echo "Error: could not determine SE Path for $SRM_HOST. Possibly it is not published by $SRM_HOST GIIS."
-  exit_failure
-fi
-
-SE_PATH=`echo "$LDAP_RESULT" | grep 'GlueSAPath:' | awk -F ' ' '{print $2}'`
-
-if [ -z "$SE_PATH" ]; then
-  echo "Error! could not determine SE Path for $SRM_HOST"
-  exit_failure
-fi
-
-echo "SE Path published by SRM host         : $SE_PATH"
-
-# ... finally define the endpoint
-
-#PORT=`echo $ENDPOINT | awk -F ':' '{print $3}' | awk -F '/' '{print $1}'`
-#ENDPOINT=srm://$SRM_HOST:$PORT
-#echo "Basic part of the endpoint            : $ENDPOINT"
-
-ENDPOINT=${ENDPOINT/httpg/srm}
-
-export SRM_ENDPOINT=${ENDPOINT}?SFN=$SE_PATH
-
-#export SRM_ENDPOINT=srm://$SRM_HOST:8446/srm/managerv2?SFN=$SE_PATH
 
 echo "The following endpoint will be used   : $SRM_ENDPOINT"
 echo ""
