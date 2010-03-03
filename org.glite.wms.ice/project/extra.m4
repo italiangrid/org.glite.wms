@@ -77,8 +77,14 @@ AC_DEFUN([AC_MYPROXY],
 AC_DEFUN([AC_PROXYRENEWALCORE],
 [ 
   with_renewalcore_prefix=$GLITE_LOCATION
+
+  if test "x$host_cpu" = "xx86_64"; then
+     library_path="lib64"
+  else
+     library_path="lib"
+  fi
   
-  rclibdir="$with_renewalcore_prefix/lib"
+  rclibdir="$with_renewalcore_prefix/$library_path"
   
 
   AC_MSG_CHECKING([for RENEWALCORE THR installation at ${with_renewalcore_prefix}])
