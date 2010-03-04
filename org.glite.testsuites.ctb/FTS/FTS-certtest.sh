@@ -216,6 +216,7 @@ if [ "x${BASIC}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "FTS-basic")
   tests_list=("${tests_list[@]}" "FTS-services")
   tests_list=("${tests_list[@]}" "FTS-channels")
+  tests_list=("${tests_list[@]}" "FTS-submission-same")
   tests_list=("${tests_list[@]}" "FTS-submission")
   tests_list=("${tests_list[@]}" "FTS-cancel")
   tests_list=("${tests_list[@]}" "FTS-channel-add")
@@ -259,7 +260,7 @@ if [ "x${BASIC}" = "xyes" ]; then
       echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
       ./$item --fts $hostname 2>1 >> $loglocation/${item}_result.txt
       res=$?
-    elif [ $item = "FTS-submission" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-channel-signal" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
+    elif [ $item = "FTS-submission" ] || [ $item = "FTS-submission-same" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-channel-signal" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
       for channel in $channels
       do
         echo "./$item --fts $hostname --bdii $bdiihost --channel $channel --vo $voname --timeout $time" 2>1 >> $loglocation/${item}_result.txt
@@ -382,6 +383,7 @@ if [ "x${GRIDFTP}" = "xyes" ]; then
   declare -a tests_list
   if [ "x${BASIC}" = "xyes" ]; then
       echo "  -BASIC tests for GRIDFTP"
+      tests_list=("${tests_list[@]}" "FTS-submission-same")
       tests_list=("${tests_list[@]}" "FTS-submission")
       tests_list=("${tests_list[@]}" "FTS-cancel")
       tests_list=("${tests_list[@]}" "FTS-joblist")
@@ -426,7 +428,7 @@ if [ "x${GRIDFTP}" = "xyes" ]; then
     rm -rf $loglocation/${item}_result.txt testfile
     echo "Executing $item"
     # Basic tests
-    if [ $item = "FTS-submission" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ] || [ $item = "FTS-channel-signal" ]; then
+    if [[ "$item" == FTS-submission* ]] || [ $item = "FTS-cancel" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ] || [ $item = "FTS-channel-signal" ]; then
         for channel in $channels
         do
             echo "./$item --fts $hostname --bdii $bdiihost --channel $channel \

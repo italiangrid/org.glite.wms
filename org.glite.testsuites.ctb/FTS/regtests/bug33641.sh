@@ -76,8 +76,6 @@ select proxy from t_credential where dlg_id='$DELEGATION_ID';
 EOF
 
 
-# Clean proxy file?
-
 # Extract x509 modulus
 X509_MODULUS=`openssl x509 -in $PROXY_FILE -noout -modulus`
 if [ $? -ne 0 ]; then
