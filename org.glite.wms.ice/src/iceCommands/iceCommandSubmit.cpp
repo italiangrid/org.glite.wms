@@ -33,12 +33,13 @@ END LICENSE */
 #include "Request.h"
 #include "Request_source_purger.h"
 #include "iceUtils.h"
-#include "eventStatusPoller.h" // for the proxymutex
+//#include "eventStatusPoller.h" // for the proxymutex
 
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/GetFields.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/Transaction.h"
+#include "iceDb/InsertStat.h"
 #include "iceDb/CreateJob.h"
 
 /**
@@ -500,6 +501,12 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   
   cream_api::ResultWrapper startRes;
   
+  {
+    db::InsertStat inserter( time(0), time(0),(short)glite::ce::cream_client_api::job_statuses::REGISTERED, "iceCommandSubmit::try_to_submit" );
+    db::Transaction tnx(false, false);
+    tnx.execute( &inserter );
+  }
+
   try {
     CREAM_SAFE_LOG( m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
 		    << "Going to START CreamJobID ["
@@ -555,9 +562,14 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
   
   // no failure: put jobids and status in database
   // and remove last request from WM's filelist
-  
+  {
+    db::InsertStat inserter( time(0), time(0),(short)glite::ce::cream_client_api::job_statuses::IDLE, "iceCommandSubmit::try_to_submit" );
+    db::Transaction tnx(false, false);
+    tnx.execute( &inserter );
+  }
+
   m_theJob.set_cream_jobid( jobId );
-  m_theJob.set_status(glite::ce::cream_client_api::job_statuses::PENDING);    
+  m_theJob.set_status(glite::ce::cream_client_api::job_statuses::IDLE);    
   m_theJob.set_wn_sequencecode( m_theJob.get_sequence_code() );
   
   list< pair<string, string> > params;
