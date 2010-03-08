@@ -26,7 +26,7 @@ showUsage ()
 {
  echo "                                           "
  echo "Usage:  $0  [-f <conf.file>] [--dcache <dCache host>] [-h|--help]"
- echo "  <conf.file> Configuration file, default is FTS-certconfig"
+ echo "  <conf.file> Configuration file, default is dCache-certconfig"
  echo "  <dCache host> Target SE for the tests, default is \$DCACHE_HOST"
  echo "                                           "
 }
