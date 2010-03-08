@@ -79,8 +79,14 @@ list<Request*> Request_source_jobdir::get_requests( size_t max_size  )
     list< Request* > result;
     
     utilities::JobDir::iterator b, e;
-    boost::tie(b, e) = m_jobdir->new_entries();
-    
+    try {
+      boost::tie(b, e) = m_jobdir->new_entries();
+    } catch(exception& ex) {
+      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->errorStream()
+                         << "Request_source_jobdir::get_requests() - Error returned by method jobDir::new_entries(): "
+                         << ex.what()
+                         );
+    }
     for ( ; b != e && result.size() < max_size; ++b) {
         try {
 	
