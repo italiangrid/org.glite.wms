@@ -496,6 +496,9 @@ void iceCommandStatusPoller::update_single_job( const soap_proxy::JobInfoWrapper
 	  tmp_job.set_status( stNum );
 	  
 #ifdef GLITE_WMS_ICE_ENABLE_STATS
+	  if( stNum != cream_api::job_statuses::REGISTERED &&
+	      stNum != cream_api::job_statuses::PENDING &&
+	      stNum != cream_api::job_statuses::IDLE )
 	  {
 	    db::InsertStat inserter( time(0), it->getTimestamp(), (short)stNum, "iceCommandEventQuery::processSingleEvent" );
 	    db::Transaction tnx(false, false);
