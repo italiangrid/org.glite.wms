@@ -195,21 +195,7 @@ else
   if [ $ProxyExpired -gt 0 ]; then
     echo "Proxy credential expired!"
   fi
-
-  # If the user is testuser, we might be able to create the proxy
-  # (Useful for remote testing)
-  if [ `whoami` == 'testuser' ]; then
-    echo "testuser is running this script. Trying to init the proxy."
-    echo "test" | voms-proxy-init --voms dteam:/dteam
-    if [ $? -eq 0 ]; then
-      echo "Proxy created successfully!!"
-    else
-      echo "The proxy could not be created"
-      exitFailure
-    fi
-  else
-    exitFailure
-  fi
+  exitFailure
 fi
 
 ########################
