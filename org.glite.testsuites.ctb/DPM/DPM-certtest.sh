@@ -240,7 +240,7 @@ if [ x$CFG_DPNS_API_C == "xyes" ]; then
    echo "*Executing DPNS-API-C tests"
    testdir=./tests/dpns-api-c
    pushd $testdir >> /dev/null
-   tests_list=(dpns_mixed.sh)
+   tests_list=(DPNS_aborttrans DPNS_addreplica DPNS_chdir DPNS_chmod DPNS_chown DPNS_closedir DPNS_delreplica DPNS_endtrans DPNS_getacl DPNS_opendir DPNS_readdir DPNS_rewinddir DPNS_session DPNS_setacl DPNS_setatime DPNS_setfsize DPNS_setfsizec DPNS_setptime DPNS_setratime DPNS_setrltime DPNS_setrstatus DPNS_setrtype DPNS_symlink DPNS_umask DPNS_utime)
 
    touch testfile 2> /dev/null
    if [ $? -ne 0 ]; then
@@ -248,16 +248,57 @@ if [ x$CFG_DPNS_API_C == "xyes" ]; then
       exitFailure
    fi
 
-  for item in ${tests_list[*]}
-  do
-    rm -rf ${item}_result.txt testfile
-    echo
-    echo "Executing $item"
-    ./$item >> ${item}_result.txt 2>&1
-    echo
-    cat ${item}_result.txt
-  done
+  api_test_dir="/dpm/$CFG_DPNS_DOMAIN/$CFG_DPNS_BASEDIR/$CFG_VO/dpns-tests-$(date +%s)"
+  dpns-mkdir $api_test_dir
+
+  if [ $? -eq 0 ]; then
+    for item in ${tests_list[*]}
+    do
+      rm -rf ${item}_result.txt testfile
+      echo
+
+      echo "Compiling item"
+      rm -f $item
+      gcc -I/opt/lcg/include/dpm -L/opt/lcg/lib -ldpm -lgfal utils.c $item.c -o $item
+      chmod +x $item
+
+      echo "Executing $item"
+      ./$item "$CFG_DPNS_HOST" "$api_test_dir" >> ${item}_result.txt 2>&1
+
+      res=$?
+      if [ "$res" != 0 ]; then
+        echo "$item FAILED"
+        failed=yes
+        tests_failed=( "${tests_failed[@]}" "$item" )
+      else
+        echo "$item PASSED"
+      fi
+
+      echo
+      cat ${item}_result.txt
+    done
+    dpns-rm -r $api_test_dir
+  else
+    failed="yes"
+    dir_problem="yes"
+    echo "Error creating working directory for DPNS-API tests"
+  fi
   popd >> /dev/null
+
+  if [ $failed = "yes" ]; then
+     echo "OVERALL RESULT: FAILURE"
+     echo
+     if [ "$dir_problem" != "yes" ]; then
+         echo "The following tests have failed:"
+         for item in ${tests_failed[*]}
+         do
+           echo "$item: results in tests/dpns-api-c/${item}_result.txt"
+         done
+     fi
+   else
+     echo "OVERALL RESULT: SUCCESS"
+   fi
+
 else
  echo "*WARNING: DPNS-API-C tests skipped"
 fi
