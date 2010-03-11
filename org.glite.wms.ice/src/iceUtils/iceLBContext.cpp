@@ -278,7 +278,7 @@ void iceLBContext::testCode( int &code, bool retry )
     return;
 
 }
-
+/*
 void iceLBContext::registerJob( const util::CreamJob& theJob )
 {
     int res;
@@ -307,7 +307,7 @@ void iceLBContext::registerJob( const util::CreamJob& theJob )
 		     );
     }
 }
-
+*/
 
 void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLBException& )
 {

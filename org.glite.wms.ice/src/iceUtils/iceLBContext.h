@@ -68,7 +68,7 @@ namespace glite {
                      * @obsolete{Registers a new job (this would
                      * normally be done by the UI).}
                      */
-                    void registerJob( const CreamJob& theJob );
+//                    void registerJob( const CreamJob& theJob );
 
                     inline void startLogging( void ) { this->m_el_count = 0; this->m_el_hostProxy = false; }
 
