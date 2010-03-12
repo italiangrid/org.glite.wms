@@ -134,7 +134,7 @@ fi
 
 echo "START `date` "
 echo "------------------------------------------------"
-echo "LFC_HOST=$LFC_HOST"
+echo "LFC_HOST=$hostname"
 
 ####################################
 # Checking if there is valid proxy #
