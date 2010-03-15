@@ -366,3 +366,17 @@ StdError=\"err.txt\";
 
 return 0
 }
+
+# Extract the last event ID
+# Parameter: the output of a event query command ($@)
+# Set: LASTEVENTID with the event ID
+# Return: 0 or exit with failure
+function get_last_event_id ()
+{
+  LASTEVENTID=$(echo $@ | grep -Eo 'EventID=\[[0-9]+\]' | tail -1 | grep -Eo [0-9]+)
+  debug "Job status is: $LASTEVENTID"
+  if [ -z "$LASTEVENTID" ]; then
+    exit_failure "ERROR: could not determine last event ID!"
+  fi
+	return 0
+}
