@@ -15,7 +15,7 @@
 
 prepare $@
 
-TESTLIST="./CREAM-cli-delegation.sh ./CREAM-cli-delegation-renew.sh ./CREAM-cli-job-submit.sh ./CREAM-cli-job-status-simple.sh ./CREAM-cli-job-cancel.sh ./CREAM-cli-job-suspend.sh ./CREAM-cli-job-resume.sh ./CREAM-cli-job-purge.sh ./CREAM-cli-job-list.sh ./CREAM-cli-submission-management.sh ./CREAM-cli-get-cemon-url.sh"
+TESTLIST="./CREAM-cli-delegation.sh ./CREAM-cli-delegation-renew.sh ./CREAM-cli-job-submit.sh ./CREAM-cli-job-status-simple.sh ./CREAM-cli-job-cancel.sh ./CREAM-cli-job-suspend.sh ./CREAM-cli-job-resume.sh ./CREAM-cli-job-purge.sh ./CREAM-cli-job-list.sh ./CREAM-cli-submission-management.sh ./CREAM-cli-event-query.sh"
 
 FAILED=0
 
