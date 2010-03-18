@@ -258,6 +258,29 @@ int verifyContents (dir_contents* dc, int n)
     return 0;
 }
 
+int CnsUserInfoCompare (const void * elem1, const void * elem2)
+{
+    struct dpns_userinfo * left = (struct dpns_userinfo *) elem1;
+    struct dpns_userinfo * right = (struct dpns_userinfo *) elem2;
+
+    if ( left->userid < right->userid ) return -1;
+
+    if ( left->userid > right->userid ) return 1;
+
+    return 0;
+}
+
+int CnsGroupInfoCompare (const void * elem1, const void * elem2)
+{
+    struct dpns_groupinfo * left = (struct dpns_groupinfo *) elem1;
+    struct dpns_groupinfo * right = (struct dpns_groupinfo *) elem2;
+
+    if ( left->gid < right->gid ) return -1;
+
+    if ( left->gid > right->gid ) return 1;
+
+    return 0;
+}
 
 void reportHeader (char *message)
 {

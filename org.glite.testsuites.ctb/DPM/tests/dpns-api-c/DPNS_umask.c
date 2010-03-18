@@ -27,7 +27,7 @@ int main (int argc, char** argv)
 
     if ( argc != 3 )
     {
-        printf ("Usage: DPNS_setratime <DPNS_HOST> <BASE_DIR>\n");
+        printf ("Usage: DPNS_umask <DPNS_HOST> <BASE_DIR>\n");
         return -1;
     }
 

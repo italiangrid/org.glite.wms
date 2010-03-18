@@ -123,16 +123,53 @@ int main (int argc, char** argv)
         sprintf (filename, "%s/file_addrep", base_dir);
         ret = dpns_unlink (filename);
 
+    // Test 2: Adding replica for a directory (EISDIR)
+    strcpy (testdesc, "Test 2:Adding replica for a directory (EISDIR)");
+    sprintf (dirname, "%s/add_dir_replica", base_dir);
+    ret = dpns_mkdir (dirname, 0755);
+    if ( ret != 0 )
+    {
+        error = 1;
+        reportComponent (testdesc, "Error creating directory", sstrerror (serrno), 1);
+        goto test2_end;
+    }
 
+    struct dpns_filestat fs;
+    ret = dpns_stat (dirname, &fs);
+    if ( ret != 0 )
+    {
+        error = 1;
+        reportComponent (testdesc, "Error returned by dpns_stat", sstrerror (serrno), 1);
+        goto test2_end;
+    }
 
+    struct dpns_fileid fid;
+    strcpy (fid.server, dpns_host);
+    fid.fileid = fs.fileid;
+    ret = dpns_addreplica (NULL, &fid, dpns_host, "disk64.cern.ch:/fs3/email/file_addrep.3", 'P', 'V', "siteX", "/fs3");
+    if ( ret != 0 )
+    {
+        if ( serrno == EISDIR )
+            reportComponent (testdesc, "returns -1, EISDIR", sstrerror(serrno), 0);
+        else
+        {
+            reportComponent (testdesc, "Unexpected serrno", sstrerror(serrno), 1);
+            error = 1;
+        }
+    }
+    else
+    {
+        reportComponent (testdesc, "Returns 0", "", 1);
+        dpns_delreplica (NULL, &fid, "disk64.cern.ch:/fs3/email/file_addrep.3");
+        error = 1;
+    }
 
+    test2_end:
 
-
-
+        dpns_rmdir (dirname);
 
     // Test 3: Execute for non-existing file
     strcpy (testdesc, "Test 3:Execute for non-existing file(ENOENT)");
-    struct dpns_fileid fid;
     strcpy (fid.server, dpns_host);
     fid.fileid = 0x0FFFFFFF;
     fid.fileid = fid.fileid << 32;
@@ -223,6 +260,103 @@ int main (int argc, char** argv)
         dpns_chmod (dirname, 0770);
         dpns_unlink (filename);
         dpns_rmdir (dirname);
+
+    //Test 6: dpns_addreplica for sfn which is exceeding CA_MAXSFNLEN
+    strcpy (testdesc, "Test 6:SFN exceeding CA_MAXSFNLEN(ENAMETOOLONG)");
+    char sfnname[CA_MAXSFNLEN + 2];
+    memset (sfnname, 61, CA_MAXSFNLEN + 1);
+    sprintf (filename, "%s/symlink_maxsfnlen", base_dir);
+    filename[CA_MAXSFNLEN + 1] = '\0';
+
+    ret = dpns_creatx (filename, 0664, &fid);
+    if ( ret != 0 )
+    {
+        error = 1;
+        reportComponent (testdesc, "Cannot create symlink_maxpathlen", sstrerror (serrno), 1);
+        goto test6_end;
+    }
+    ret = dpns_addreplica (NULL, &fid, "disk64.cern.ch", sfnname, 'P', 'V', "siteX", "/fs3");
+    if ( ret != 0 )
+    {
+        if ( serrno == ENAMETOOLONG )
+            reportComponent (testdesc, "Returns -1 (ENAMETOOLONG)", sstrerror(serrno), 0);
+        else
+        {
+            reportComponent (testdesc, "Returns -1. Unexpected serrno", sstrerror(serrno), 1);
+            error = 1;
+        }
+    }
+    else
+    {
+        reportComponent (testdesc, "Returns 0", "", 1);
+        error = 1;
+    }
+    test6_end:
+        dpns_delreplica (NULL, &fid, sfnname);
+        dpns_unlink (filename);
+
+    // Test 7: Entry already exists (EEXIST)
+    strcpy (testdesc, "Test 7:Entry already exists (EEXIST)");
+    sprintf (filename, "%s/exfile", base_dir);
+    ret = dpns_creatx (filename, 0664, &fid);
+    if ( ret != 0 )
+    {
+        reportComponent (testdesc, "Error creating file base_dir/exfile", sstrerror(serrno), 1);
+        error = 1;
+        goto test7_end;
+    }
+
+    ret = dpns_addreplica (NULL, &fid, "disk64.cern.ch", "disk64.cern.ch:/fs3/email/file_addrep.1", 'P', 'V', "siteX", "/fs3");
+    if ( ret != 0 )
+    {
+        reportComponent (testdesc, "Error creating primary replica", sstrerror(serrno), 1);
+        error = 1;
+        goto test7_end;
+    }
+
+    ret = dpns_addreplica (NULL, &fid, "disk64.cern.ch", "disk64.cern.ch:/fs3/email/file_addrep.1", '-', 'P', "siteY", "/fs4");
+    if ( ret != 0 )
+    {
+        if ( serrno == EEXIST )
+            reportComponent (testdesc, "Returns -1, serrno OK (EEXIST)", sstrerror(serrno), 0);
+        else
+        {
+            reportComponent (testdesc, "Returns -1, serrno BAD", sstrerror(serrno), 1);
+            error = 1;
+        }
+    }
+    else
+    {
+        reportComponent (testdesc, "Returns 0", "", 1);
+        error = 1;
+    }
+
+    test7_end:
+        dpns_delreplica (NULL, &fid, "disk64.cern.ch:/fs3/email/file_addrep.1");
+        dpns_unlink (filename);
+
+
+    // Test 8: DPNS_HOST unknown
+    strcpy (testdesc, "Test 8:Call dpns_symlink with unknown DPNS_HOST(SENOSHOST)");
+    setenv ("DPNS_HOST", "host.which.does.not.exist", 1);
+    strcpy (fid.server, "host.which.does.not.exist");
+    sprintf (filename, "%s/file", base_dir);
+    ret = dpns_addreplica (NULL, &fid, "disk64.cern.ch", "disk64.cern.ch:/fs3/email/file_addrep.3", 'P', 'V', "siteX", "/fs3");
+    if ( ret != 0 )
+    {
+        if ( serrno == SENOSHOST )
+            reportComponent (testdesc, "Returns -1, serrno OK (SENOHOST)", sstrerror(serrno), 0);
+        else
+        {
+            reportComponent (testdesc, "Returns -1, serrno BAD", sstrerror(serrno), 1);
+            error = 1;
+        }
+    }
+    else
+    {
+        reportComponent (testdesc, "Returns 0", "", 1);
+        error = 1;
+    }
 
     reportFooter ("");
     reportOverall (error);

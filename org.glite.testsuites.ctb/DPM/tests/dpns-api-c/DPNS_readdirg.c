@@ -15,6 +15,7 @@ int main (int argc, char** argv)
     char testdesc[256];
     struct dirent *dentry;
     struct dirent entries[16];
+    struct dpns_direnstatg *dentryg;
     char dirname[CA_MAXPATHLEN + 2];
     char filename[CA_MAXPATHLEN + 2];
     char filemap[10];
@@ -22,7 +23,7 @@ int main (int argc, char** argv)
 
     if ( argc != 3 )
     {
-        printf ("Usage: DPNS_readdir <DPNS_HOST> <BASE_DIR>\n");
+        printf ("Usage: DPNS_readdirg <DPNS_HOST> <BASE_DIR>\n");
         return -1;
     }
 
@@ -31,7 +32,7 @@ int main (int argc, char** argv)
 
     setenv ("DPNS_HOST", dpns_host, 1);
 
-    reportHeader ("* Executing dpns_readdir tests...");
+    reportHeader ("* Executing dpns_readdirg tests...");
 
     // Test 1: Opening and reading the empty directory <BASE_DIR>
     strcpy (testdesc, "Test 1:Read the initially empty <BASE_DIR>");
@@ -46,11 +47,11 @@ int main (int argc, char** argv)
         cnt = 0;
         serrno = 0;
 
-        while ( dentry = dpns_readdir (dir) ) ++cnt;
+        while ( dentryg = dpns_readdirg (dir) ) ++cnt;
 
-        if ( dentry == NULL && serrno != 0 )
+        if ( dentryg == NULL && serrno != 0 )
         {
-            reportComponent (testdesc, "dpns_opendir returns NULL", sstrerror (serrno), 1);
+            reportComponent (testdesc, "dpns_readdirg returns NULL", sstrerror (serrno), 1);
             error = 1;
         }
         else
