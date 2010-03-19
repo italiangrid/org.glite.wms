@@ -20,7 +20,7 @@ for openssl_command in "/usr/bin/openssl" "`which openssl 2>/dev/null`"; do
 done
 
 tmp_file=`mktemp -q tmp.XXXXXXXXXX`
-find $1 -maxdepth 1 -type f > $tmp_file
+find $1 -type f > $tmp_file
 valid_proxies=0
 removed_proxies=0
 not_removed_proxies=0
