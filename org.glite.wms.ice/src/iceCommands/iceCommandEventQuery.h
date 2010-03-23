@@ -70,7 +70,7 @@ namespace glite {
 	  const std::string                      m_dn, m_ce;
 	  
 	  long long getEventID( const std::string&, const std::string& );
-	  bool checkDatabaseID( const std::string&, const long long );
+	  bool checkDatabaseID( const std::string&, const long long, long long& );
 	  long long processEvents( std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& );
 	  void processEventsForJob( const std::string&,
 				    const std::list<glite::ce::cream_client_api::soap_proxy::EventWrapper*>& );

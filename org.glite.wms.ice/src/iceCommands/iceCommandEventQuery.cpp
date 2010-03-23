@@ -294,24 +294,25 @@ states.push_back( make_pair("STATUS", "IDLE") );
     }
     
     long long dbid = atoll(sdbid.c_str());
+    long long olddbid;
     
-    if( !this->checkDatabaseID( m_ce, dbid ) ) {
+    if( !this->checkDatabaseID( m_ce, dbid, olddbid ) ) {
 
       CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "*** CREAM HAS PROBABLY BEEN SCRATCHED. GOING TO ERASE"
 		     << "ALL JOBS RELATED TO OLD DB_ID ["
-		     << dbid << "] ***"
+		     << olddbid << "] ***"
 		     );
 
-      list<CreamJob> jobs;
-      this->getJobsByDbID( jobs, dbid );
+//       list<CreamJob> jobs;
+//       this->getJobsByDbID( jobs, dbid );
       /**
 	 TODO
 	 Must enqueue them to log to LB
 	 and then delete all of them.
       */
       {
-	db::RemoveJobsByDbID remover( dbid, "iceCommandEventQuery::execute" );
+	db::RemoveJobsByDbID remover( olddbid, "iceCommandEventQuery::execute" );
 	db::Transaction tnx(false, false);
 	tnx.execute( &remover );
       }
@@ -390,7 +391,8 @@ ice::util::iceCommandEventQuery::getJobsByDbID( std::list<ice::util::CreamJob>& 
 //______________________________________________________________________________
 bool
 ice::util::iceCommandEventQuery::checkDatabaseID( const string& ceurl,
-						  const long long dbid )
+						  const long long dbid,
+						  long long& olddbid )
 {
   db::GetDbID getter( ceurl, "iceCommandEventQuery::checkDatabaseID" );
   {
@@ -415,6 +417,7 @@ ice::util::iceCommandEventQuery::checkDatabaseID( const string& ceurl,
     */
     if( getter.getDbID() != dbid )
       {
+        olddbid = getter.getDbID();
 	/**
 	   CREAM has been scratched because the 
 	   previously saved DB_ID differs
