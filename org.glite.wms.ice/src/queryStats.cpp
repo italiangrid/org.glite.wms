@@ -143,8 +143,10 @@ int main( int argc, char* argv[] )
     }
     struct tm tmp;
     strptime(fromdate.c_str(), "%Y-%m-%d %T", &tmp);
-    to = mktime(&tmp);
+    from = mktime(&tmp);
   }
+
+//  cout << "from="<<from << " - to=" << to << endl; 
 
   db::GetStats getter( result, from, to, "queryStats::main" );
   
