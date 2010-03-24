@@ -15,3 +15,5 @@ trusted-certs/trusted_clientfuture
 trusted-certs/trusted_host_exp
 trusted-certs/trusted_host_rev
 trusted-certs/trusted_host_baddn
+subsubca-certs/subsubca_client
+subsubca-certs/subsubca_clientbaddn

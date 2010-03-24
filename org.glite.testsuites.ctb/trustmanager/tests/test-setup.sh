@@ -42,7 +42,8 @@ fi
 
 echo "Copying host certificates"
 
-cp $certdir/grid-security/host* /etc/grid-security/
+cp $certdir/grid-security/hostcert.pem /etc/grid-security/tomcat-cert.pem
+cp $certdir/grid-security/hostkey.pem /etc/grid-security/tomcat-key.pem
 
 if [ $? -ne 0 ] ; then
  echo "Error copying certificates"
@@ -60,18 +61,12 @@ openssl ca -gencrl -crlhours 1 -out $CA_DIR/trusted.crl -config $CA_DIR/req_conf
 cd -
 
 echo "Copying CA certificates"
-for ca in expired trusted ; do
- ca_hash=`openssl x509 -in $certdir/$ca-ca/$ca.cert -noout -hash`
- cp $certdir/$ca-ca/$ca.cert /etc/grid-security/certificates/$ca_hash.0
- cp $certdir/$ca-ca/$ca.crl /etc/grid-security/certificates/$ca_hash.r0
- if [ -f $certdir/$ca-ca/$ca.namespaces ] ; then 
-  cp $certdir/$ca-ca/$ca.namespaces /etc/grid-security/certificates/$ca_hash.namespaces
- fi
- if [ -f $certdir/$ca-ca/$ca.signing_policy ] ; then 
-  cp $certdir/$ca-ca/$ca.signing_policy /etc/grid-security/certificates/$ca_hash.signing_policy
- fi
+cp $certdir/grid-security/certificates/* /etc/grid-security/certificates/
 
-done
+#copy the generated crl
+ca_hash=`openssl x509 -in $certdir/trusted-ca/trusted.cert -noout -hash`
+cp $certdir/trusted-ca/trusted.crl /etc/grid-security/certificates/$ca_hash.r0
+
 
 echo "Removing passphrases from certificates"
 while read LINE; do 
@@ -79,11 +74,6 @@ while read LINE; do
 done < testcerts.txt
 
 chmod 400 $certdir/trusted-certs/*priv
-echo "Creating a legacy proxy certificate"
-voms-proxy-init -proxyver old -key $certdir/trusted-certs/trusted_client_nopass.priv -cert $certdir/trusted-certs/trusted_client.cert -out $certdir/trusted-certs/trusted_client.proxy.legacy
-
-echo "Creating a rfc proxy certificate"
-voms-proxy-init -rfc  -key $certdir/trusted-certs/trusted_client_nopass.priv -cert $certdir/trusted-certs/trusted_client.cert -out $certdir/trusted-certs/trusted_client.proxy.rfc
 
 
 echo "Creating a correct trust chain for proxy proxies"

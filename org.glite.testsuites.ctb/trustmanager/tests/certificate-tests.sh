@@ -6,7 +6,8 @@
 
 #config variables
 #tomcat host and port
-export HOST=localhost:8443
+export HOST=$HOSTNAME:8443
+export TOMCAT_SERVICE=tomcat5
 #end of config variables
 
 SUCCESS=1
@@ -17,6 +18,10 @@ function myexit() {
   if [ $1 -ne 0 ]; then
     echo " *** something went wrong *** "
     echo " *** test NOT passed *** "
+    echo "Restoring original namespace files"
+    cp -f $certdir/grid-security/certificates/*.namespaces /etc/grid-security/certificates/
+    cp -f $certdir/grid-security/certificates/*.signing_policy /etc/grid-security/certificates/
+
     exit $1
   else
     echo ""
@@ -137,21 +142,95 @@ myecho "Test passed"
 myecho "Testing with untrusted certificate"
 test_cert $certdir/fake-certs/fake_client_nopass.priv $certdir/fake-certs/fake_client.cert $FAIL
 myecho "Test passed"
-#myecho "Testing with voms proxy certificate"
-#test_cert $certdir/home/voms-acme.pem $certdir/home/voms-acme.pem $SUCCESS $certdir/home/usercert.pem
-#myecho "Test passed"
-#myecho "Testing with voms proxy certificate with group"
-#test_cert $certdir/home/voms-acme-Gproduction.pem $certdir/home/voms-acme-Gproduction.pem $SUCCESS $certdir/home/usercert.pem
-#myecho "Test passed"
-#myecho "Testing with voms proxy certificate with role"
-#test_cert $certdir/home/voms-acme-Radmin.pem $certdir/home/voms-acme-Radmin.pem $SUCCESS $certdir/home/usercert.pem
-#myecho "Test passed"
 myecho "Testing with a not yet valid certificate"
 test_cert $certdir/trusted-certs/trusted_clientfuture_nopass.priv $certdir/trusted-certs/trusted_clientfuture.cert  $FAIL 
 myecho "Test passed"
 myecho "Testing with a certificate that doesn't match the signing policy nor namespace"
 test_cert $certdir/trusted-certs/trusted_clientbaddn_nopass.priv $certdir/trusted-certs/trusted_clientbaddn.cert  $FAIL 
 myecho "Test passed"
+
+
+#namespace tests
+myecho "Testing with a certificates whose subca sets the correct namespace (bug #64516)"
+test_cert $certdir/subsubca-certs/subsubca_client_nopass.priv $certdir/subsubca-certs/subsubca_client.cert  $SUCCESS
+myecho "Test passed"
+myecho "Testing with a certificates whose subca sets the correct namespace, and certificate has a bad dn"
+test_cert $certdir/subsubca-certs/subsubca_clientbaddn_nopass.priv $certdir/subsubca-certs/subsubca_clientbaddn.cert  $FAIL
+myecho "Test passed"
+myecho "Testing with a certificates whose subca sets the correct namespace, and the certificate contains the full CA path"
+test_cert $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy  $SUCCESS $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy
+myecho "Test passed"
+
+myecho "Copying over new namespace files"
+cp -f $certdir/grid-security/certificates-rootwithpolicy/*.namespaces /etc/grid-security/certificates/
+cp -f $certdir/grid-security/certificates-rootwithpolicy/*.signing_policy /etc/grid-security/certificates/
+
+myecho "Restarting tomcat"
+service $TOMCAT_SERVICE restart
+sleep 15
+
+myecho "Confirming that tomcat came up properly"
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+
+if [ $? -ne 0 ] ; then 
+ myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
+ myexit 1
+fi
+
+myecho "Testing with a certificates whose root ca sets the correct namespace"
+test_cert $certdir/subsubca-certs/subsubca_client_nopass.priv $certdir/subsubca-certs/subsubca_client.cert $SUCCESS
+myecho "Test passed"
+myecho "Testing with a certificates whose root ca sets the correct namespace, and certificate has a bad dn"
+test_cert $certdir/subsubca-certs/subsubca_clientbaddn_nopass.priv $certdir/subsubca-certs/subsubca_clientbaddn.cert  $FAIL
+myecho "Test passed"
+myecho "Testing with a certificates whose root ca sets the correct namespace, and the certificate contains the full CA path"
+test_cert $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy  $SUCCESS $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy
+myecho "Test passed"
+
+
+myecho "Copying over new namespace files"
+cp -f $certdir/grid-security/certificates-rootallowsubsubdeny/*.namespaces /etc/grid-security/certificates/
+cp -f $certdir/grid-security/certificates-rootallowsubsubdeny/*.signing_policy /etc/grid-security/certificates/
+
+myecho "Restarting tomcat"
+service $TOMCAT_SERVICE restart
+sleep 15
+
+myecho "Confirming that tomcat came up properly"
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+
+if [ $? -ne 0 ] ; then 
+ myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
+ myexit 1
+fi
+
+
+myecho "Testing with a certificates whose subsub ca denies the namespace"
+test_cert $certdir/subsubca-certs/subsubca_client_nopass.priv $certdir/subsubca-certs/subsubca_client.cert  $FAIL
+myecho "Test passed"
+myecho "Testing with a certificates whose subsub ca denies the namespace, and certificate has a bad dn"
+test_cert $certdir/subsubca-certs/subsubca_clientbaddn_nopass.priv $certdir/subsubca-certs/subsubca_clientbaddn.cert  $FAIL
+myecho "Test passed"
+myecho "Testing with a certificates whose subsub ca denies the namespace, and the certificate contains the full CA path"
+test_cert $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy  $FAIL $certdir/subsubca-certs/subsubca_fullchainclient.proxy.grid_proxy
+myecho "Test passed"
+
+myecho "Restoring original namespace files"
+cp -f $certdir/grid-security/certificates/*.namespaces /etc/grid-security/certificates/
+cp -f $certdir/grid-security/certificates/*.signing_policy /etc/grid-security/certificates/
+
+myecho "Restarting tomcat"
+service $TOMCAT_SERVICE restart
+sleep 15
+
+myecho "Confirming that tomcat came up properly"
+wget --no-check-certificate --certificate  $certdir/trusted-certs/trusted_client.cert --private-key $certdir/trusted-certs/trusted_client_nopass.priv https://$HOST/glite-security-trustmanager/servlet/EchoSecurity -O /dev/null
+
+if [ $? -ne 0 ] ; then 
+ myecho "Tomcat didn't seem to come up properly. Please check tomcat logs"
+ myexit 1
+fi
+
 
 echo ""
 myecho "Please run the certificate-tests+1h.sh in an hour"
