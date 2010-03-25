@@ -18,14 +18,12 @@ limitations under the License.
 
 END LICENSE */
 
-#ifndef GLITE_WMS_ICE_ICECOMMANDDELEGRENEWAL_H
-#define GLITE_WMS_ICE_ICECOMMANDDELEGRENEWAL_H
+#ifndef GLITE_WMS_ICE_ICECOMMANDLBLOGGING_H
+#define GLITE_WMS_ICE_ICECOMMANDLBLOGGING_H
 
 #include "iceAbsCommand.h"
 #include "creamJob.h"
 #include <boost/scoped_ptr.hpp>
-
-#include "glite/security/proxyrenewal/renewal_core.h"
 
 #include<string>
 #include<list>
@@ -39,20 +37,22 @@ namespace glite {
     namespace ice {
       namespace util {
 	
-	class iceCommandDelegationRenewal : public iceAbsCommand {
-	  log4cpp::Category* m_log_dev;
-	  glite_renewal_core_context m_ctx;
-
-	  iceCommandDelegationRenewal( const iceCommandDelegationRenewal& ) : iceAbsCommand("", "") {}
+	class iceLBLogger;
+	
+	class iceCommandLBLogging : public iceAbsCommand {
 	  
-	  void renewAllDelegations( void ) throw();
+	  log4cpp::Category			*m_log_dev;
+	  std::list<CreamJob> 			 m_jobs_to_remove;
+	  glite::wms::ice::util::iceLBLogger    *m_lb_logger;
+	  
+	  iceCommandLBLogging( const iceCommandLBLogging& ) : iceAbsCommand("", "") {}
+	  
+	  //void renewAllDelegations( void ) throw();
 
 	public:
 
-	  //const int DELEGATION_EXPIRATION_THRESHOLD_TIME;
-
-	  iceCommandDelegationRenewal( );
-	  virtual ~iceCommandDelegationRenewal( );
+	  iceCommandLBLogging( const std::list<CreamJob>& );
+	  virtual ~iceCommandLBLogging( );
 	  void execute( const std::string& ) throw();
 	  
 	  std::string get_grid_job_id() const;// { return ""; }

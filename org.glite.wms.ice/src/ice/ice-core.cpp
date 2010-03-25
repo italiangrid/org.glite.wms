@@ -230,9 +230,9 @@ Ice::Ice( ) throw(iceInit_ex&) :
    else
      poll_tnum = 2;
 
-   m_requests_pool = new util::iceThreadPool("ICE Submission Pool", thread_num );
+   m_requests_pool     = new util::iceThreadPool("ICE Submission Pool", thread_num );
    m_ice_commands_pool = new util::iceThreadPool( "ICE Poller Pool", poll_tnum);
-   
+   m_ice_lblog_pool    = new util::iceThreadPool( "ICE LB Loggin Pool", 2);
 
     try {
 
@@ -957,7 +957,7 @@ throw()
        cream_api::job_statuses::ABORTED == st ) {
     // WARNING: the next line removes the job from the job cache!
     
-    purge_job( /*it*/tmp_job, "Job purged by ICE" );
+    purge_job( /*it*/tmp_job, "Job purged by ICE" );// this method also decrement user's proxy
     
     return true; // notify to the caller (EventQuery that the job has been removed
                  // from ICE's database

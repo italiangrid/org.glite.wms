@@ -137,7 +137,7 @@ namespace ice {
         //
         glite::wms::ice::util::iceThreadPool* m_requests_pool; ///< This pool is used to process submission/cancellation requests coming from the input queue
         glite::wms::ice::util::iceThreadPool* m_ice_commands_pool; ///< This pool is used to process ICE internal commands (proxy renewal, lease updates and so on)
-
+	glite::wms::ice::util::iceThreadPool* m_ice_lblog_pool; ///< This pool is used to process async log to lb
 
         static glite::wms::ice::Ice* s_instance; ///< Singleton instance of this class
        
@@ -262,6 +262,8 @@ namespace ice {
          */
         glite::wms::ice::util::iceThreadPool* get_ice_commands_pool( void ) { return m_ice_commands_pool; };
         
+	glite::wms::ice::util::iceThreadPool* get_ice_lblog_pool( void ) { return m_ice_lblog_pool; };
+	
 	std::string getHostName( void ) const throw() { return m_myname; }
 
     }; // class ice

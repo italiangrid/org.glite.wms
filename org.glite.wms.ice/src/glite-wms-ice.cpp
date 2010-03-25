@@ -323,6 +323,7 @@ int main(int argc, char*argv[])
      */
     iceUtil::iceThreadPool* threadPool( iceManager->get_requests_pool() );
     iceUtil::iceThreadPool* threadPool_ice_cmds( iceManager->get_ice_commands_pool() ); 
+    iceUtil::iceThreadPool* threadPool_lb_cmds( iceManager->get_ice_lblog_pool( ) );
     /*****************************************************************************
      * Main loop that fetch requests from input filelist, submit/cancel the jobs,
      * removes requests from input filelist.
@@ -455,6 +456,7 @@ int main(int argc, char*argv[])
 	    iceManager->stopAllThreads(); // this return only when all threads have finished
 	    threadPool->stopAllThreads();
 	    threadPool_ice_cmds->stopAllThreads();
+	    threadPool_lb_cmds->stopAllThreads();
 
 	    CREAM_SAFE_LOG( log_dev->fatalStream()
 			    << method_name

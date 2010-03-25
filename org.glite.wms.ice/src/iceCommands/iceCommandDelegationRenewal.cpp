@@ -24,6 +24,7 @@ END LICENSE */
 #include "DNProxyManager.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
+#include "iceDb/GetJobs.h"
 #include "iceDb/GetJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJobByGid.h"
@@ -73,6 +74,17 @@ iceCommandDelegationRenewal::iceCommandDelegationRenewal( ) :
 iceCommandDelegationRenewal::~iceCommandDelegationRenewal( )
 {
 }
+
+//______________________________________________________________________________
+string iceCommandDelegationRenewal::get_grid_job_id( ) const
+{
+  ostringstream randid( "" );
+  struct timeval T;
+  gettimeofday( &T, 0 );
+  randid << T.tv_sec << "." << T.tv_usec;
+  return randid.str();
+}
+
 
 //______________________________________________________________________________
 void iceCommandDelegationRenewal::execute( const std::string& tid ) throw()
@@ -343,6 +355,18 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	  Delegation_manager::instance()->removeDelegation( thisDelegID );
 	  
 	  DNProxyManager::getInstance()->removeBetterProxy( thisUserDN, thisMyPR );
+	  
+	  list<CreamJob> toRemove;
+	  {
+	    list<pair<string, string> > clause;
+	    clause.push_back( make_pair("userdn", thisUserDN) );
+	    clause.push_back( make_pair("myproxyurl", thisMyPR) );
+	    db::GetJobs getter( clause, toRemove, "iceCommandDelegationRenewal::renewAllDelegations" );
+	    db::Transaction tnx(false, false);
+	    tnx.execute( &getter );
+	  }
+	  
+	  //Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
 	  
 	  // TODO: Bisogna loggare un aborted per tutti i job relativi a questa delega
 	  // che non verra' piu' rinnovata ed e' stata rimossa dal DB di ICE.
