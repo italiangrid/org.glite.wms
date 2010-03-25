@@ -18,11 +18,13 @@ limitations under the License.
 
 END LICENSE */
 
+#include "iceCommandLBLogging.h"
 #include "iceCommandDelegationRenewal.h"
 #include "Delegation_manager.h"
 #include "CreamProxyMethod.h"
 #include "DNProxyManager.h"
 #include "iceConfManager.h"
+#include "ice-core.h"
 #include "iceUtils.h"
 #include "iceDb/GetJobs.h"
 #include "iceDb/GetJobByGid.h"
@@ -366,7 +368,19 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
 	    tnx.execute( &getter );
 	  }
 	  
-	  //Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+	  list<CreamJob>::iterator jobit = toRemove.begin();
+	  while( jobit != toRemove.end() ) {
+  
+    	    jobit->set_status( cream_api::job_statuses::ABORTED );
+    	    jobit->set_failure_reason( "Proxy expired" );
+	    
+	  }
+	  
+	  
+	  while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+	    sleep(2);
+	  
+	  Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
 	  
 	  // TODO: Bisogna loggare un aborted per tutti i job relativi a questa delega
 	  // che non verra' piu' rinnovata ed e' stata rimossa dal DB di ICE.

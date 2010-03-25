@@ -91,10 +91,8 @@ void iceCommandLBLogging::execute( const std::string& tid ) throw()
   // m_job_to_remove
   list<CreamJob>::iterator jobit = m_jobs_to_remove.begin();
   
-  while( jobit != m_jobs_to_remove.end() ) {
-  
-    jobit->set_status( cream_api::job_statuses::ABORTED );
-    jobit->set_failure_reason( "Proxy expired" );
+  while( jobit != m_jobs_to_remove.end() ) {  
+
     iceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );
     if ( ev ) {
       api_util::scoped_timer lbtimer( string("iceCommandLBLogging::execute - TID=[") + getThreadID() + "] LOG TO LB" );
