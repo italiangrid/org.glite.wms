@@ -99,17 +99,22 @@ void iceCommandLBLogging::execute( const std::string& tid ) throw()
       m_lb_logger->logEvent( ev );
     }
     
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandLBLogging::execute - TID=[" << getThreadID() << "] "
-		   << "Removing job [" << jobit->get_grid_jobid( )
-		   << "] because proxy is expired "
-		   );
+    if( cream_api::job_statuses::DONE_OK == jobit->get_status() ||
+        cream_api::job_statuses::DONE_FAILED == jobit->get_status() ||
+	cream_api::job_statuses::CANCELLED == jobit->get_status() ||
+	cream_api::job_statuses::ABORTED == jobit->get_status() )
+    {	
+      CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandLBLogging::execute - TID=[" << getThreadID() << "] "
+	  	     << "Removing job [" << jobit->get_grid_jobid( )
+		     << "] because proxy is expired "
+		     );
     
-    {
-      db::RemoveJobByGid remover( jobit->get_grid_jobid(), "iceCommandLBLogging::execute" );
-      db::Transaction tnx( false, false );
-      tnx.execute( &remover );
+      {
+        db::RemoveJobByGid remover( jobit->get_grid_jobid(), "iceCommandLBLogging::execute" );
+        db::Transaction tnx( false, false );
+        tnx.execute( &remover );
+      }
+    
     }
-    
-  }
 
 }
