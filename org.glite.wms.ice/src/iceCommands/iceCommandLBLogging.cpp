@@ -117,4 +117,5 @@ void iceCommandLBLogging::execute( const std::string& tid ) throw()
     
     }
 
+  }
 }
