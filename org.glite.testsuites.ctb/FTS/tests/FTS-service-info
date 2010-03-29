@@ -107,7 +107,7 @@ function service-info()
 
     echo "6. Check without parameters glite-transfer-service-info"
     glite-transfer-service-info
-    if [ $? == 0 ]; then
+    if [ $? != 0 ]; then
     echo "FTS-service-info - failed"
     return 1
     fi
