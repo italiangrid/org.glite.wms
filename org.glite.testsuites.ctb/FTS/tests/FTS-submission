@@ -190,7 +190,7 @@ echo "Source: $Source_Site"
 echo "Dest: $Destin_Site"
 
 #3.b) Retrieve good SEs from source and destination sites
-#get_good_se_from_site $Source_Site
+get_good_se_from_site $Source_Site
 get_def_se_from_site $Source_Site
 if [ $? -eq 1 ];then
   echo "Failing retrieving default SE from site $Source_Site"
@@ -205,8 +205,14 @@ else
   exit 1
 fi
 
+
 #get_good_se_from_site $Destin_Site
-get_def_se_from_site $Destin_Site $Source_Site
+if [ "$Destin_Site" == "$Source_Site" ]; then
+  #Select an SE different than SE_SOURCE
+  get_def_se_from_site $Destin_Site $SE_SOURCE
+else
+  get_def_se_from_site $Destin_Site
+fi
 if [ $? -eq 1 ];then
   echo "Failing retrieving default SE from site $Destin_Site"
   echo "-TEST FAILED-"
