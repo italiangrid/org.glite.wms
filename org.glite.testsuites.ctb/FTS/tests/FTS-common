@@ -1015,7 +1015,7 @@ function get_se_path()
   #  SE_VOPATH=`ldapsearch -x -h $BDII_HOST -p 2170 -b "mds-vo-name=local,o=grid" -LLL "(&(GlueSALocalID:dn:=$VO_NAME)(GlueSEUniqueID:dn:=$SE_HOST))" GlueSAPath  | grep "GlueSAPath: " | sed -e 's/GlueSAPath: //'`
   #fi
   if [ $? == 0 ]; then
-    SE_VOPATH="/dpm/desy.de/home/dteam"
+    SE_VOPATH="/pnfs/desy.de/data/dteam"
   else
     SE_VOPATH="/dpm/cern.ch/home/dteam"
   fi
