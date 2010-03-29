@@ -27,6 +27,63 @@
 # override the default configuration
 source ../FTS-certconfig #needed to get CERN_SE and DESY_SE
 
+# ... prefixed echo
+function myecho() {
+  echo " ===> $@"
+}
+
+# ... Run command succussfuly or exit with cleanup
+function run_command() {
+  echo ""
+  echo " $" $@
+
+  OUTPUT=$(eval $@ 2>&1)
+  if [ $? -gt 0 ]; then
+    echo "${OUTPUT}"
+    myecho "$1 failed"
+    echo ""
+    myexit 1 $1
+  fi
+  echo "${OUTPUT}"
+  return 0
+}
+
+# Run a command expecting a failure
+function run_failing_command() {
+  echo ""
+  echo " $" $@
+
+  OUTPUT=$(eval $@ 2>&1)
+  if [ $? -eq 0 ]; then
+    echo "${OUTPUT}"
+    myecho "$1 should have failed"
+        echo ""
+    myexit 1 $1
+  fi
+  echo "${OUTPUT}"
+  return 0
+}
+
+function run_function() {
+  echo ""
+  echo " Calling function: " $@
+  $@
+  if [ $? -gt 0 ]; then
+    myexit 1 "Function $1 failed"
+  fi
+  return 0
+}
+
+function myexit() {
+
+if [ "$1" != "0" ]; then
+  echo " *** failed command: $2 *** "
+  exit 1
+fi
+
+}
+
+
 #Functions definitions for FTS tests
 
 #
@@ -681,16 +738,9 @@ function get_channels()
 #  export GLITE_SD_SITE=$SITE_NAME
 #  export LCG_CATALOG_TYPE='lfc'
 
-  Channel_List=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement 2>message`
+  run_command glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement
   
-  result=`cat message|wc -l`
-  if [ $result -gt 0 ]; then
-     echo ""
-     echo ">>> NOTE:  `cat message`."
-     echo "-TEST FAILED-"
-     echo ""
-     return 1
-  fi
+  export Channel_List="$OUTPUT"
   return 0
 }
 
@@ -740,12 +790,15 @@ function is_channel_active()
     local Channel_Name=$1
   fi
 
-  isChannelActive=`glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name | grep "State: Active" |wc -l`
-  if [ $isChannelActive -eq 0 ];then
-    echo "The channel: $Channel_Name is not Active! " 
-    return 1
-  fi
-  return 0
+ run_command glite-transfer-channel-list -s https://$FTS_HOST:8443/glite-data-transfer-fts/services/ChannelManagement $Channel_Name 
+ echo $OUTPUT | grep -q "State: Active"
+ if [ $? -eq 0 ]; then
+   echo "Channel $Channel_Name is active"
+   return 0
+ else 
+   echo "Channel $Channel_Name is not active"
+   return 1
+ fi
 }
 
 # FTS_HOST must be set.
@@ -881,7 +934,7 @@ function get_def_se_from_site()
         SE_HOST=$CERN_SE
     fi
   elif [ $Site_Name == "desycerttb" ]; then
-    if [ ! -z $2 ] && [ ! -z $CERN_SE2 ]; then
+    if [ ! -z $2 ] && [ ! -z $DESY_SE2 ]; then
         SE_HOST=$DESY_SE2
     else
         SE_HOST=$DESY_SE
@@ -949,6 +1002,8 @@ function get_se_path()
   else
     local SE_HOST=$1
   fi
+
+  unset SE_VOPATH
 
   #Need to do two different queries for dcache and dpm
   echo $SE_HOST | grep -q desy
