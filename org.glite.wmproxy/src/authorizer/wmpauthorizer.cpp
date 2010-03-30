@@ -90,7 +90,6 @@ const char* WMPAuthorizer::PEEK_DIRECTORY = "peek";
 const char* WMPAuthorizer::DOCUMENT_ROOT = "DOCUMENT_ROOT";
 const string WMPAuthorizer::VOMS_GACL_FILE = "glite_wms_wmproxy.gacl";
 const char* WMPAuthorizer::VOMS_GACL_VAR = "GRST_CRED_2";
-const string LCMAPS_LOG_FILE = "lcmaps.log";
 const int PROXY_TIME_MISALIGNMENT_TOLERANCE = 5;
 
 #endif
@@ -101,34 +100,6 @@ const std::string FQAN_FIELD_SEPARATOR = "";
 const std::string FQAN_NULL = "null";
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
-WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile_c)
-{
-	edglog_fn("WMPAuthorizer::WMPAuthorizer");
-	this->mapdone = false;
-	this->certfqan = "";
-	if (lcmaps_logfile_c) {
-		this->lcmaps_logfile = string(lcmaps_logfile_c);
-	} else {
-		char * location = getenv("GLITE_LOCATION_LOG");
-		if (!location) {
-				char * location = getenv("GLITE_WMS_LOCATION_VAR");
-				if (!location) {
-					location = getenv("GLITE_LOCATION_VAR");
-				}
-				if (location && wmputilities::fileExists(string(location) + "/log/")) {
-					this->lcmaps_logfile = string(location) + "/log/" + LCMAPS_LOG_FILE;
-				} else {
-					this->lcmaps_logfile = "/tmp/" + LCMAPS_LOG_FILE;
-				}
-		} else {
-			this->lcmaps_logfile = string(location) + "/" + LCMAPS_LOG_FILE;
-		}
-	}
-	edglog(debug) << "LCMAPS log file: " << this->lcmaps_logfile << endl;
-}
-
-WMPAuthorizer::~WMPAuthorizer() throw(){}
-	
 string
 WMPAuthorizer::getUserName()
 {
@@ -227,9 +198,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
 
 	// Initialising structure
-	if (!this->lcmaps_logfile.empty()) {
-		setenv("LCMAPS_LOG_FILE", this->lcmaps_logfile.c_str(), 0);
-	}
+	lcmaps_init(0);
 	lcmaps_account_info_t plcmaps_account;
 	retval = lcmaps_account_info_init(&plcmaps_account);
 	if (retval) {
