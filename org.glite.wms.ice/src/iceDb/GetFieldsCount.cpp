@@ -25,19 +25,12 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
 int fields_count_a;
-
-// GetFieldsCount::GetFieldsCount( const std::list<std::string> fields_to_retrieve, const std::list<std::pair<std::string, std::string> > clause ) :    
-//   AbsDbOperation(),
-//   m_fields_to_retrieve( fields_to_retrieve ),
-//   m_clause( clause ),
-//   m_fields_count( 0 )
-// {
-// }
 
 namespace { // begin local namespace
 
@@ -84,7 +77,11 @@ void GetFieldsCount::execute( sqlite3* db ) throw ( DbOperationException& )
 	   it != m_clause.end();
 	   ++it)
 	{
-	  sqlcmd << it->first << "=\'" << it->second << "\' AND ";
+	  string value( it->second );
+	  
+	  boost::replace_all( value, "'", "''" );
+	  
+	  sqlcmd << it->first << "=\'" << value << "\' AND ";
 	}
 
       string tmp = sqlcmd.str();
@@ -97,9 +94,6 @@ void GetFieldsCount::execute( sqlite3* db ) throw ( DbOperationException& )
     } else {
     sqlcmd << ";";
   }
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, &m_fields_count );
 }

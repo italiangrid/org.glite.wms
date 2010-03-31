@@ -3,7 +3,8 @@
 #include <iostream>
 
 #include "GetEventID.h"
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace std;
 using namespace glite::wms;
 
@@ -27,13 +28,15 @@ namespace {
 void ice::db::GetEventID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
+
+  string dn( m_userdn );
+
+  boost::replace_all( dn, "'", "''" );
+
   sqlcmd << "SELECT eventid FROM event_id WHERE userdn='"
-	 << m_userdn << "' AND ceurl='"
+	 << dn << "' AND ceurl='"
 	 << m_creamurl << "';";
 
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-  
   do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_result );
   
   if(m_result>-1)

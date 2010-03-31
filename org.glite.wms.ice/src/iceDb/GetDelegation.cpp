@@ -26,7 +26,8 @@
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -63,18 +64,18 @@ namespace { // begin local namespace
 void GetDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
+
+  string digest( m_digest );
+
+  boost::replace_all( digest, "'", "''" );
  
   sqlcmd << "SELECT * FROM delegation WHERE digest=\'";
-  sqlcmd << m_digest << "\' AND creamurl=\'";
+  sqlcmd << digest << "\' AND creamurl=\'";
   sqlcmd << m_creamurl << "\' AND myproxyurl=\'";
   sqlcmd << m_myproxyurl << "\';";
 
-  //vector<string> tmp;
   boost::tuple< string, string, time_t, int, string, string, bool, string> tmp;
 
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-  
   do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   
   if( !tmp.get<0>().empty() ) {

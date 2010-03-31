@@ -26,7 +26,8 @@
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -59,9 +60,13 @@ namespace { // begin local namespace
 void GetLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
+
+  string dn( m_userdn );
+
+  boost::replace_all( dn, "'", "''" );
  
   sqlcmd << "SELECT * FROM lease WHERE userdn=\'";
-  sqlcmd << m_userdn << "\' AND creamurl=\'";
+  sqlcmd << dn << "\' AND creamurl=\'";
   sqlcmd << m_creamurl << "\';";
 
   boost::tuple< string, string, time_t, string> tmp;

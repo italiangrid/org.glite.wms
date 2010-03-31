@@ -22,18 +22,12 @@
  */
 
 #include "GetCreamURLUserDN.h"
-//#include "iceUtils/iceConfManager.h"
 
 #include <iostream>
 
-// #include "glite/wms/common/configuration/Configuration.h"
-// #include "glite/wms/common/configuration/ICEConfiguration.h"
-
 using namespace glite::wms::ice::db;
-//using namespace glite::wms::ice::util;
+
 using namespace std;
-//namespace cream_api = glite::ce::cream_client_api;
-//namespace wms_utils  = glite::wms::common::utilities;
 
 namespace { // begin local namespace
 
@@ -54,8 +48,5 @@ void GetCreamURLUserDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   string sqlcmd = "SELECT DISTINCT creamurl,userdn FROM jobs;" ;
   
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
-
   do_query( db, sqlcmd, fetch_creamurluserdn_callback, &m_result );
 }

@@ -24,7 +24,8 @@
 #include "GetCidByCreamURLUserDN.h"
 #include <sstream>
 #include <iostream>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -44,14 +45,16 @@ namespace { // begin local namespace
 void GetCidByCreamURLUserDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd("");
+
+  string dn( m_creamurl_userdn.second );
+
+  boost::replace_all( dn, "'", "''" );
+
   sqlcmd << "SELECT complete_cream_jobid FROM jobs WHERE creamurl=\'" 
          << m_creamurl_userdn.first 
 	 << "\' AND userdn=\'"
-	 << m_creamurl_userdn.second 
+	 << dn
 	 << "\';";
   
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-
   do_query( db, sqlcmd.str(), fetch_cids_callback, &m_result );
 }

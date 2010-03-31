@@ -45,41 +45,13 @@ static int fetch_jdl_callback(void *param, int argc, char **argv, char **azColNa
 
 void GetStatusInfoByCompleteCreamJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    //static const char* method_name = "GetStatusInfoByCompleteCreamJobID::execute() - ";
-
     string sqlcmd = boost::str( boost::format( 
       "select gridjobid,complete_cream_jobid,num_logged_status_changes,status from jobs" \
       " where complete_cream_jobid = \'%1%\';" ) % m_creamjobid );
-    //string serialized_job;
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
     do_query( db, sqlcmd, fetch_jdl_callback, &m_info );
     
     if( !m_info.get<0>().empty() )
       m_found = true;
     
-//     if ( !serialized_job.empty() ) {
-//         try {
-//             istringstream is;
-//             is.str( serialized_job );
-//             {
-//                 boost::archive::text_iarchive ia(is);
-//                 ia >> m_theJob;
-//             }
-//             m_found = true;
-//         } catch( std::exception& ex ) {
-//             CREAM_SAFE_LOG(cream_api::util::creamApiLogger::instance()->getLogger()->fatalStream() << method_name
-//                            << "Deserialization error of the string "
-//                            << serialized_job
-//                            << ". Exception string is  \"" 
-//                            << ex.what() << "\". Aborting."
-//                            );
-//             abort();
-//         }
-//     }
-
-    
-
 }

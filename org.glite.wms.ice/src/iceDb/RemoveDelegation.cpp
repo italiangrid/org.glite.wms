@@ -24,7 +24,8 @@
 #include "RemoveDelegation.h"
 
 #include "boost/format.hpp"
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 #include <iostream>
 
 using namespace glite::wms::ice::db;
@@ -33,12 +34,13 @@ using namespace std;
 //______________________________________________________________________________
 void RemoveDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-    string sqlcmd = boost::str( boost::format( 
-      "DELETE FROM delegation " \
-      " WHERE digest = \'%1%\' AND creamurl = \'%2%\' AND myproxyurl=\'%3%\'; " ) % m_digest % m_creamurl %  m_myproxy );
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
-
-    do_query( db, sqlcmd );
+  string digest( m_digest );
+  
+  boost::replace_all( digest, "'", "''" );
+  
+  string sqlcmd = boost::str( boost::format( 
+					    "DELETE FROM delegation " \
+					    " WHERE digest = \'%1%\' AND creamurl = \'%2%\' AND myproxyurl=\'%3%\'; " ) % digest % m_creamurl %  m_myproxy );
+  
+  do_query( db, sqlcmd );
 }

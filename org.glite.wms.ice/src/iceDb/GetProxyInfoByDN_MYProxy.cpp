@@ -25,7 +25,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -51,14 +52,16 @@ namespace { // begin local namespace
 void GetProxyInfoByDN_MYProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
+
+  string dn( m_userdn );
+
+  boost::replace_all( dn, "'", "''" );
+
  
   sqlcmd << "SELECT proxyfile,exptime,counter FROM proxy WHERE userdn=\'";
-  sqlcmd << m_userdn << "\' AND myproxyurl=\'" << m_myproxy << "\';";
+  sqlcmd << dn << "\' AND myproxyurl=\'" << m_myproxy << "\';";
 
   vector<string> tmp;
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   

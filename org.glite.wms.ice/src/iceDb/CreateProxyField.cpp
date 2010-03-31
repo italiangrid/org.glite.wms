@@ -25,7 +25,8 @@
 
 #include <sstream>
 #include <iostream>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -33,17 +34,20 @@ void CreateProxyField::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
   ostringstream sqlcmd("");
+
+  string dn( m_userdn );
+  boost::replace_all( dn, "'", "''" );
+  string prx( m_proxyfile );
+  boost::replace_all( prx, "'", "''" );
+
   sqlcmd << "INSERT OR REPLACE INTO proxy (" 
          << " userdn,myproxyurl,proxyfile,exptime,counter) VALUES ("
-	 << "\'" << m_userdn << "\',"
+	 << "\'" << dn << "\',"
 	 << "\'" << m_myproxy << "\',"
-	 << "\'" << m_proxyfile << "\',"
+	 << "\'" << prx << "\',"
 	 << "\'" << m_exptime << "\',"
 	 << "\'" << m_counter << "\'"
 	 << ");";
-   
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-			      
+   		      
   do_query( db, sqlcmd.str() );
 }

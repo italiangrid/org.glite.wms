@@ -24,8 +24,12 @@
 #include "RemoveLease.h"
 
 #include "boost/format.hpp"
+#include "boost/algorithm/string.hpp"
 
 #include <iostream>
+
+#include "boost/algorithm/string.hpp"
+#include "boost/regex.hpp"
 
 using namespace glite::wms::ice::db;
 using namespace std;
@@ -33,12 +37,14 @@ using namespace std;
 //______________________________________________________________________________
 void RemoveLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
+
+  string dn( m_userdn );
+
+  boost::replace_all( dn, "'", "''" );
+
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM lease " \
-      " where userdn = \'%1%\' AND creamurl = \'%2%\'; " ) % m_userdn % m_creamurl );
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+      " where userdn = \'%1%\' AND creamurl = \'%2%\'; " ) % dn % m_creamurl );
 
     do_query( db, sqlcmd );
 }

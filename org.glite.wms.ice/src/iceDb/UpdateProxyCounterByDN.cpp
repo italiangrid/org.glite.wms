@@ -32,19 +32,16 @@ using namespace glite::wms::ice::db;
 
 using namespace std;
 
-// UpdateProxyFieldsByDN::UpdateProxyFieldsByDN( const string& dn,
-// 			        const list< pair<string, string> >& nameval_list)
-//  : m_dn( dn ),
-//    m_nameval_list( nameval_list )
-// {
-// }
-
 void UpdateProxyCounterByDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     ostringstream sqlcmd("");
+
+    string dn( m_dn );
+
+    boost::replace_all( dn, "'", "''" );
  
     sqlcmd << "UPDATE proxy SET counter=\'" << m_counter << "\'"
-	   << " WHERE userdn=\'" << m_dn << "\' AND myproxyurl=\'" << m_myproxy << "\';";
+	   << " WHERE userdn=\'" << dn << "\' AND myproxyurl=\'" << m_myproxy << "\';";
     
     do_query( db, sqlcmd.str() );
 }

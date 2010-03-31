@@ -32,13 +32,6 @@ using namespace glite::wms::ice::db;
 
 using namespace std;
 
-// UpdateJobByGid::UpdateJobByGid( const string& gid,
-// 			        const list< pair<string, string> >& nameval_list)
-//  : m_gid( gid ),
-//    m_nameval_list( nameval_list )
-// {
-// }
-
 void UpdateJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 {
 
@@ -52,8 +45,8 @@ void UpdateJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
 	++it)
     {
     
-      string value = it->second;
-      boost::replace_all( value, "'", "`" );
+      string value (it->second);
+      boost::replace_all( value, "'", "''" );
     
       sqlcmd << it->first << "=\'" << value << "\',";
     }
@@ -66,8 +59,5 @@ void UpdateJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
     
     sqlcmd << tmp << " WHERE gridjobid=\'" << m_gid << "\';";
      
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-
     do_query( db, sqlcmd.str() );
 }

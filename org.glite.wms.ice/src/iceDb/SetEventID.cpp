@@ -4,6 +4,9 @@
 
 #include "SetEventID.h"
 
+#include "boost/algorithm/string.hpp"
+#include "boost/regex.hpp"
+
 using namespace std;
 using namespace glite::wms;
 
@@ -11,14 +14,15 @@ using namespace glite::wms;
 void ice::db::SetEventID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
+
+  string dn( m_userdn );
+
+  boost::replace_all( dn, "'", "''" );
+
   sqlcmd << "INSERT OR REPLACE INTO event_id (userdn,ceurl,eventid) VALUES (\'" 
-	 << m_userdn << "\', \'"
+	 << dn << "\', \'"
 	 << m_creamurl << "\',\'"
 	 << m_new_eventid <<"\');";
 
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-  
   do_query( db, sqlcmd.str() );
 }

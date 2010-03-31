@@ -25,7 +25,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -57,14 +58,15 @@ namespace { // begin local namespace
 void GetDelegationByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
+
+  string id( m_id );
+
+  boost::replace_all( id, "'", "''" );
  
   sqlcmd << "SELECT * FROM delegation WHERE delegationid=\'";
-  sqlcmd << m_id << "\';";
+  sqlcmd << id << "\';";
 
   vector<string> tmp;
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   

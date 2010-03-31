@@ -24,6 +24,8 @@
 #include "UpdateDelegationTimesByID.h"
 #include <sstream>
 #include <iostream>
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 
 using namespace glite::wms::ice::db;
 
@@ -32,15 +34,16 @@ using namespace std;
 void UpdateDelegationTimesByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     ostringstream sqlcmd("");
- 
+
+    string did( m_delegid );
+
+    boost::replace_all( did, "'", "''" ); 
+
     sqlcmd << "UPDATE delegation SET exptime=\'"
            << m_exptime << "\',"
 	   << "duration=\'"
 	   << m_duration << "\' WHERE delegationid=\'"
-	   << m_delegid << "\';";
-     
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
+	   << did << "\';";
 
     do_query( db, sqlcmd.str() );
 }

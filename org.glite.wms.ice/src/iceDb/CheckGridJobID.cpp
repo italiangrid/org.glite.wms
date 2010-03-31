@@ -33,14 +33,6 @@ using namespace glite::wms::ice::db;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
-// CheckGridJobID::CheckGridJobID( const string& gid, const std::string& caller  ) :
-//     AbsDbOperation(caller),
-//     m_gridjobid( gid ),
-//     m_found( false )
-// {
-
-// }
-
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
@@ -58,9 +50,6 @@ void CheckGridJobID::execute( sqlite3* db ) throw ( DbOperationException& )
 					    "SELECT gridjobid FROM jobs" \
 					    " WHERE gridjobid = \'%1%\';" ) % m_gridjobid );
   string gid;
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
 
   do_query( db, sqlcmd, fetch_jdl_callback, &gid );
 

@@ -24,7 +24,8 @@
 #include "RemoveJobByUserDN.h"
 
 #include "boost/format.hpp"
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 #include <iostream>
 
 using namespace glite::wms::ice::db;
@@ -32,12 +33,13 @@ using namespace std;
 
 void RemoveJobByUserDN::execute( sqlite3* db ) throw ( DbOperationException& )
 {
+  string dn( m_dn );
+
+  boost::replace_all( dn, "'", "''" );
+
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM jobs " \
-      " WHERE userdn = \'%1%\'; " ) % m_dn );
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+      " WHERE userdn = \'%1%\'; " ) % dn );
 
     do_query( db, sqlcmd );
 }

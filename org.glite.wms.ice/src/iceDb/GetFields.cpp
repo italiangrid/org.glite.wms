@@ -24,7 +24,8 @@
 #include "GetFields.h"
 #include <sstream>
 #include <iostream>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -85,7 +86,12 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
 	   it != m_clause.end();
 	   ++it)
 	{
-	  sqlcmd << it->first << "=\'" << it->second << "\' " ;
+
+  string value( it->second );
+
+  boost::replace_all( value, "'", "''" );
+
+	  sqlcmd << it->first << "=\'" << value << "\' " ;
 	  if(m_use_or)
 	    sqlcmd << "OR ";
 	  else
@@ -103,10 +109,5 @@ void GetFields::execute( sqlite3* db ) throw ( DbOperationException& )
     sqlcmd << ";";
   }
 
-  //if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-  /*std::cout << "Executing query [" << sqlcmd.str() << "] CALLER IS [" 
-	    << m_caller << "]"
-	    << std::endl;
-  */
   do_query( db, sqlcmd.str(), fetch_fields_callback, m_result );
 }

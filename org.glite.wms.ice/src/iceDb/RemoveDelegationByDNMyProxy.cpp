@@ -20,7 +20,8 @@ END LICENSE */
 #include "RemoveDelegationByDNMyProxy.h"
 
 #include "boost/format.hpp"
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 #include <iostream>
 
 using namespace glite::wms::ice::db;
@@ -29,9 +30,14 @@ using namespace std;
 //______________________________________________________________________________
 void RemoveDelegationByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
+  string dn( m_userdn );
+
+  boost::replace_all( dn, "'", "''" );
+
+
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM delegation " \
-      " WHERE userdn = \'%1%\' AND myproxyurl=\'%2%\'; " ) % m_userdn % m_myproxy );
+      " WHERE userdn = \'%1%\' AND myproxyurl=\'%2%\'; " ) % dn % m_myproxy );
 
     do_query( db, sqlcmd );
 }

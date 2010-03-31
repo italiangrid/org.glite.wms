@@ -86,7 +86,12 @@ void GetJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 	 it != m_clause.end();
 	 ++it)
       {
-	sqlcmd << it->first << "=\'" << it->second << "\' " ;
+
+  string value( it->second );
+
+  boost::replace_all( value, "'", "''" );
+
+	sqlcmd << it->first << "=\'" << value << "\' " ;
 	if(m_use_or)
 	  sqlcmd << "OR ";
 	else
@@ -104,12 +109,6 @@ void GetJobs::execute( sqlite3* db ) throw ( DbOperationException& )
     sqlcmd << ";";
   }
   
-  //   sqlcmd << "SELECT " << CreamJob::get_query_fields() 
-  // 	 << " FROM jobs WHERE "
-    
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-
   do_query( db, sqlcmd.str(), fetch_jobs_callback, m_result );
 
 }

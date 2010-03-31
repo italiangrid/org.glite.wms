@@ -22,24 +22,12 @@
  */
 
 #include "GetAllUserDN_MyProxy.h"
-//#include "iceUtils/iceConfManager.h"
 
 #include <iostream>
 
-// #include "glite/wms/common/configuration/Configuration.h"
-// #include "glite/wms/common/configuration/ICEConfiguration.h"
-
 using namespace glite::wms::ice::db;
-//using namespace glite::wms::ice::util;
+
 using namespace std;
-//namespace cream_api = glite::ce::cream_client_api;
-//namespace wms_utils  = glite::wms::common::utilities;
-
-// GetAllUserDN_MyProxy::GetAllUserDN_MyProxy( ) :    
-//   AbsDbOperation()
-// {
-
-// }
 
 namespace { // begin local namespace
 
@@ -56,12 +44,8 @@ namespace { // begin local namespace
 
 void GetAllUserDN_MyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  //static const char* method_name = "GetAllGridJobID::execute() - ";
 
   string sqlcmd = "select userdn,myproxyurl from jobs where proxy_renewable='1';" ;
   
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
-
   do_query( db, sqlcmd, fetch_dnmyproxy_job_id_callback, &m_result );
 }

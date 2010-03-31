@@ -27,7 +27,8 @@
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 using namespace glite::wms::ice::db;
 using namespace std;
 
@@ -60,14 +61,15 @@ namespace { // begin local namespace
 void GetLeaseByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
+
+  string id( m_leaseid );
+
+  boost::replace_all( id, "'", "''" );
  
   sqlcmd << "SELECT * FROM lease WHERE leaseid=\'";
-  sqlcmd << m_leaseid << "\';";
+  sqlcmd << id << "\';";
 
   boost::tuple< string, string, time_t, string> tmp;
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   

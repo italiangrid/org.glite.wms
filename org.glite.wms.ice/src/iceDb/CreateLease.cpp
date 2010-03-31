@@ -22,7 +22,8 @@
  */
 
 #include "CreateLease.h"
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 #include <sstream>
 #include <iostream>
 
@@ -32,16 +33,19 @@ using namespace std;
 void CreateLease::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd("");
+
+  string dn( m_userdn );
+  boost::replace_all( dn, "'", "''" );
+  string lid( m_leaseid );
+  boost::replace_all( lid, "'", "''" );
+
   sqlcmd << "INSERT OR REPLACE INTO lease (" 
 	 << "userdn,creamurl,exptime,leaseid"
          << " ) VALUES ("
-	 << "\'" << m_userdn << "\',"
+	 << "\'" << dn << "\',"
 	 << "\'" << m_creamurl << "\',"
 	 << "\'" << m_exptime << "\',"	
-	 << "\'" << m_leaseid << "\');";
-   
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-
+	 << "\'" << lid << "\');";
+ 
   do_query( db, sqlcmd.str() );
 }

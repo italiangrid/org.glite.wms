@@ -58,9 +58,6 @@ void GetStats::execute( sqlite3* db ) throw ( DbOperationException& )
   	 << " timestamp >= \'" << m_datefrom <<"\'"
 	 << " AND timestamp <= \'" << m_dateto << "\';";
 
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//  cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-
   do_query( db, sqlcmd.str(), fetch_fields_callback, m_target );
   
 }

@@ -59,9 +59,6 @@ void GetJobByGid::execute( sqlite3* db ) throw ( DbOperationException& )
     
     vector<string> field_list;
     
-//    if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//      cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-    
     do_query( db, sqlcmd.str(), fetch_job_callback, &field_list );
     
     if( !field_list.empty() ) {

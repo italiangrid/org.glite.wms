@@ -19,7 +19,8 @@ limitations under the License.
 END LICENSE */
 
 #include "CreateDelegation.h"
-
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 #include <sstream>
 #include <iostream>
 
@@ -29,21 +30,28 @@ using namespace std;
 void CreateDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd("");
+
+  string dig( m_digest );
+  boost::replace_all( dig, "'", "''" );
+  
+  string did( m_delegid );
+  boost::replace_all( did, "'", "''" );
+  
+  string dn( m_userdn );
+  boost::replace_all( dn, "'", "''" );
+
   sqlcmd << "INSERT INTO delegation (" 
 	 << "digest,creamurl,exptime,duration,delegationid,userdn,renewable,myproxyurl"
          << " ) VALUES ("
-	 << "\'" << m_digest << "\',"
+	 << "\'" << dig << "\',"
 	 << "\'" << m_creamurl << "\',"
 	 << "\'" << m_exptime << "\',"
 	 << "\'" << m_duration << "\',"
-	 << "\'" << m_delegid << "\',"
-	 << "\'" << m_userdn << "\',"
+	 << "\'" << did << "\',"
+	 << "\'" << dn << "\',"
 	 << "\'" << ( m_renewable ? "1" : "0" ) << "\',"
 	 << "\'" << m_myproxyurl << "\'"
 	 << ");";
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str() );
 }

@@ -44,6 +44,23 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
   string failreason( m_theJob.get_failure_reason() );
   boost::replace_all( failreason, "'", "''" );
   
+  string prx( m_theJob.get_user_proxy_certificate() );
+  boost::replace_all( prx, "'", "''" );
+
+  string sc( m_theJob.get_sequence_code() );
+  boost::replace_all( sc, "'", "''" );
+
+  string wnsc( m_theJob.get_wn_sequence_code() );
+  boost::replace_all( wnsc, "'", "''" );
+
+  string lid( m_theJob.get_lease_id() );
+  boost::replace_all( lid, "'", "''" );
+
+  string did( m_theJob.get_delegation_id() );
+  boost::replace_all( did, "'", "''" );
+
+  string mjdl( m_theJob.get_modified_jdl() );
+  boost::replace_all( mjdl, "'", "''" );
 
   ostringstream sqlcmd("");
   sqlcmd << "INSERT OR REPLACE INTO jobs ("
@@ -54,7 +71,7 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.get_cream_jobid() <<"\'," 
 	 << "\'"<< m_theJob.get_complete_cream_jobid() <<"\',"
 	 << "\'"<< jdl <<"\',"
-	 << "\'"<< m_theJob.get_user_proxy_certificate() <<"\',"
+	 << "\'"<< prx <<"\',"
 	 << "\'"<< m_theJob.get_ceid() <<"\',"
 	 << "\'"<< m_theJob.get_endpoint() <<"\',"
 	 << "\'"<< m_theJob.get_creamurl() <<"\',"
@@ -63,25 +80,22 @@ void CreateJob::execute( sqlite3* db ) throw ( DbOperationException& )
 	 << "\'"<< m_theJob.get_myproxy_address() <<"\',"
 	 << "\'"<< ( m_theJob.is_proxy_renewable() ? "1" : "0" ) <<"\',"
 	 << "\'"<< failreason <<"\',"
-	 << "\'"<< m_theJob.get_sequence_code() <<"\',"
-	 << "\'"<< m_theJob.get_wn_sequence_code() <<"\',"
+	 << "\'"<< sc <<"\',"
+	 << "\'"<< wnsc <<"\',"
 	 << "\'"<< m_theJob.get_prev_status() <<"\',"
 	 << "\'"<< m_theJob.get_status() <<"\',"
 	 << "\'"<< m_theJob.get_num_logged_status_changes() <<"\',"
-	 << "\'"<< m_theJob.get_lease_id() <<"\',"
+	 << "\'"<< lid <<"\',"
 	 << "\'"<< m_theJob.get_status_poll_retry_count() <<"\',"
 	 << "\'"<< m_theJob.get_exit_code() <<"\',"
 	 << "\'"<< m_theJob.get_worker_node() <<"\',"
 	 << "\'"<< ( m_theJob.is_killed_by_ice() ? "1" : "0" ) <<"\',"
-	 << "\'"<< m_theJob.get_delegation_id() <<"\',"
+	 << "\'"<< did <<"\',"
 	 << "\'"<< time(0) <<"\',"
 	 << "\'"<< time(0) <<"\',"
 	 << "\'"<< time(0) <<"\',"
 	 << "\'"<< m_theJob.get_isbproxy_time_end() <<"\',"
-	 << "\'"<< m_theJob.get_modified_jdl() <<"\')";
+	 << "\'"<< mjdl <<"\')";
   
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-		      
   do_query( db, sqlcmd.str() );
 }

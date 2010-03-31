@@ -33,7 +33,10 @@ void DNHasJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
 
-  sqlcmd << "SELECT gridjobid FROM jobs WHERE userdn=\'" << m_dn << "\' AND creamurl=\'" << m_ce  << "\' LIMIT 1;";
+  string dn( m_dn );
+  boost::replace_all( dn, "'", "''" );
+
+  sqlcmd << "SELECT gridjobid FROM jobs WHERE userdn=\'" << dn << "\' AND creamurl=\'" << m_ce  << "\' LIMIT 1;";
 
   do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_found );
 }

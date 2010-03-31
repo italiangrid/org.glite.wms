@@ -38,7 +38,6 @@ void AbsDbOperation::do_query( sqlite3* db, const string& sqlcmd, sqlite_callbac
     int retry = 0;
     int s = 2;
     
-//    api_util::scoped_timer SQLEXE( string("AbsDbOperation::do_query - CALLER=")+m_caller+" - QUERY=[" + sqlcmd + "]" );
     if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
       cout << "CALLER=[" << get_caller() << "] is executing query ["<<sqlcmd<<"]"<<endl;
 

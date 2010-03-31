@@ -30,9 +30,6 @@ void ice::db::GetDbID::execute( sqlite3* db ) throw ( DbOperationException& )
   sqlcmd << "SELECT db_id FROM ce_dbid WHERE ceurl='"
 	 << m_creamurl << "';";
 
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
-  
   do_query( db, sqlcmd.str(), fetch_jobs_callback, &m_result );
 
   if(m_result>-1)

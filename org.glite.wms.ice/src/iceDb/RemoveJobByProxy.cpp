@@ -24,26 +24,23 @@
 #include "RemoveJobByProxy.h"
 
 #include "boost/format.hpp"
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 
 #include <iostream>
 
 using namespace glite::wms::ice::db;
 using namespace std;
 
-// RemoveJobByProxy::RemoveJobByProxy( const string& proxy ) :
-//     m_proxy( proxy )
-// {
-
-// }
-
 void RemoveJobByProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
+  string prx( m_proxy );
+
+  boost::replace_all( prx, "'", "''" );
+
     string sqlcmd = boost::str( boost::format( 
       "DELETE FROM jobs " \
-      " WHERE userproxy = \'%1%\'; " ) % m_proxy );
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd<<"]"<<endl;
+      " WHERE userproxy = \'%1%\'; " ) % prx );
 
     do_query( db, sqlcmd );
 }

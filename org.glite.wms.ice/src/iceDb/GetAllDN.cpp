@@ -29,13 +29,6 @@
 using namespace glite::wms::ice::db;
 using namespace std;
 
-// GetProxyInfoByDN::GetProxyInfoByDN( const std::string& userdn ) :    
-//   AbsDbOperation(),
-//   m_userdn( userdn ),
-//   m_found( false )
-// {
-// }
-
 namespace { // begin local namespace
 
     // Local helper function: callback for sqlite
@@ -59,9 +52,6 @@ void GetAllDN::execute( sqlite3* db ) throw ( DbOperationException& )
   ostringstream sqlcmd;
  
   sqlcmd << "SELECT userdn FROM proxy;";
-
-//  if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-//    cout << "Executing query ["<<sqlcmd.str()<<"]"<<endl;
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, m_dns );
   
