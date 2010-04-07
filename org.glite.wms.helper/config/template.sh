@@ -296,17 +296,20 @@ retry_copy() # 1 - source, 2 - dest
   # only the scheme specified by the caller is considered. If the caller doesn't specify it, 
   # only the first scheme in the space separated list is considered.
   local transport[0]="gsiftp"
-  local transport[1]="https http"
+  local transport[1]="https"
+  local transport[2]="http"
   local transport_client[0]="globus-url-copy"
   local transport_client[1]="htcp"
-  for uberftp_cmd in $GLOBUS_LOCATION/bin/uberftp 2>/dev/null \
+  local transport_client[2]="htcp"
+  for uberftp_cmd in $GLOBUS_LOCATION/bin/uberftp \
                             `which uberftp 2>/dev/null`; do
     if [ -x "${uberftp_cmd}" ]; then
       break;
     fi
   done
   if [ -n ${uberftp_cmd} ]; then
-    local transport_client[2]="$uberftp_cmd"
+    local transport_client[3]="$uberftp_cmd"
+    local transport[3]="gsiftp"
   fi
 
   local match_index=`expr match "${source}" '[[:alpha:]][[:alnum:]+.-]*://'`
@@ -340,13 +343,9 @@ retry_copy() # 1 - source, 2 - dest
     return 1
   fi    
 
-  local ischeme=0 
+  local ischeme=0
   while [ $ischeme -lt ${#transport[@]} ]; do
-    if [ "x`echo ${transport[$ischeme]}|awk -v sc="${scheme}" '$0 ~ sc {print}'`" != "x" ]; then
-      if [ "x`echo ${transport[$ischeme]}|cut -d' ' -f1`" != "x`echo ${transport[$ischeme]}|cut -d' ' -f2`" ]; then
-        # space separated list matched, select the scheme specified by the caller
-        transport[$ischeme]=`echo "${transport[$ischeme]}"|sed "s/.*\(\\\\${scheme}\).*/\1/"` 
-      fi
+    if [ "x${transport[$ischeme]}" == "x${scheme}" ]; then
       break
     fi
   ischeme=`expr $ischeme + 1`
@@ -356,14 +355,6 @@ retry_copy() # 1 - source, 2 - dest
     push_in_done_reason "Specified transport protocol is not available"
     return 1
   fi 
-  # select first scheme in space separated lists not specified by the caller
-  local i=0
-  while [ $i -lt ${#transport[@]} ]; do
-    if [ "x`echo ${transport[$i]}|cut -d' ' -f1`" != "x`echo ${transport[$i]}|cut -d' ' -f2`" ]; then
-      transport[$i]=`echo "${transport[$i]}"|cut -d' ' -f1`
-    fi
-    i=`expr $i + 1`
-  done
 
   while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
