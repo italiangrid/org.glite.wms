@@ -75,9 +75,11 @@ END LICENSE */
 #include <boost/algorithm/string.hpp>
 #include "classad_distribution.h"
 
+#include <sys/time.h>
 #include <exception>
 #include <unistd.h>
 #include <cstdlib>
+#include <cstdio>
 using namespace std;
 using namespace glite::wms::ice;
 
@@ -86,12 +88,11 @@ namespace cream_api = glite::ce::cream_client_api;
 namespace soap_proxy = glite::ce::cream_client_api::soap_proxy;
 namespace config_ns = glite::wms::common::configuration;
 
-Ice* Ice::s_instance = 0;
-boost::recursive_mutex Ice::ClassAd_Mutex;
-boost::recursive_mutex Ice::s_mutex;
-//
-// Begin Inner class definitions
-//
+Ice                     *Ice::s_instance = 0;
+boost::recursive_mutex  Ice::ClassAd_Mutex;
+boost::recursive_mutex  Ice::s_mutex;
+boost::recursive_mutex  Ice::s_mutex_tmpname;
+string                  Ice::s_tmpname = "";
 
 //____________________________________________________________________________
 Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
@@ -145,6 +146,8 @@ void Ice::IceThreadHelper::stop( void )
                        
                        );
     }
+    
+
 }
 
 //
@@ -159,6 +162,7 @@ Ice* Ice::instance( void )
     if ( 0 == s_instance ) {
         try {
             s_instance = new Ice( ); // may throw iceInit_ex
+
         } catch(iceInit_ex& ex) {
             CREAM_SAFE_LOG(
                            m_log_dev->fatalStream() 
@@ -179,6 +183,31 @@ Ice* Ice::instance( void )
         s_instance->init();    
     }
     return s_instance;
+}
+
+//____________________________________________________________________________
+string 
+Ice::get_tmp_name( void ) 
+{
+  boost::recursive_mutex::scoped_lock M( Ice::s_mutex_tmpname );
+  if( s_tmpname.empty() ) {
+      	    char *ptr = ::tmpnam( 0 );
+	    ostringstream tmp;
+	    tmp<< "START_GLITEWMSICE_SQL_STRING_TAG_";
+	    if(ptr)
+	      tmp << ptr;
+
+	    struct timeval T;
+	    gettimeofday( &T, 0 );
+	    
+	    tmp << "_" << T.tv_sec << "_" << T.tv_usec;
+	    
+	    s_tmpname = tmp.str();
+
+	    boost::replace_all( s_tmpname, "'", "_" );
+  }
+
+  return s_tmpname;
 }
 
 //____________________________________________________________________________

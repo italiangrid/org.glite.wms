@@ -1,15 +1,33 @@
+## LICENSE:
+## Copyright (c) Members of the EGEE Collaboration. 2010. 
+## See http://www.eu-egee.org/partners/ for details on the copyright
+## holders.  
+
+## Licensed under the Apache License, Version 2.0 (the "License"); 
+## you may not use this file except in compliance with the License. 
+## You may obtain a copy of the License at 
+
+##   http://www.apache.org/licenses/LICENSE-2.0 
+
+## Unless required by applicable law or agreed to in writing, software 
+## distributed under the License is distributed on an "AS IS" BASIS, 
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+## implied. 
+## See the License for the specific language governing permissions and 
+## limitations under the License.
+
+## END LICENSE */
 
 SUBDIRS = sqlite
 
 lib_LTLIBRARIES = libglite_wms_iceDb.la
 
 libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
+				GetCEUrl.cpp \
 				AbsDbOperation.cpp \
 				CheckGridJobID.cpp \
 				CheckDelegationByID.cpp \
-				GetAllUserDN.cpp \
 				GetAllProxyByDN.cpp \
-				GetAllUserDN_MyProxy.cpp \
 				GetDelegation.cpp \
 				GetDelegationByID.cpp \
 				GetAllDelegation.cpp \
@@ -18,9 +36,9 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetProxyInfoByDN_MYProxy.cpp \
 				GetLease.cpp \
 				GetLeaseByID.cpp \
-				GetAllProxyInfo.cpp \
 				GetTerminatedJobs.cpp \
 				CreateJob.cpp \
+				GetAllProxyInfo.cpp \
 				CreateProxyField.cpp \
 				CreateDelegation.cpp \
 				CreateLease.cpp \
@@ -31,7 +49,6 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				UpdateDelegationTimesByID.cpp \
 				RemoveJobByGid.cpp \
 				RemoveJobByCid.cpp \
-				RemoveJobByProxy.cpp \
 				RemoveProxyByDN.cpp \
 				RemoveDelegationByID.cpp \
 				RemoveDelegationByDNMyProxy.cpp \
@@ -44,15 +61,12 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				GetAllGridJobID.cpp \
 				GetCreamURLUserDN.cpp \
 				GetCidByCreamURLUserDN.cpp \
-				GetStatusInfoByCompleteCreamJobID.cpp \
-				GetAllDNCE.cpp \
 				GetFields.cpp \
 				GetJobsByDbID.cpp \
 				GetEventID.cpp \
 				SetEventID.cpp \
 				GetDbID.cpp \
 				SetDbID.cpp \
-				GetCEUrl.cpp \
 				GetAllDN.cpp \
 				RemoveJobsByDbID.cpp \
 				InsertStat.cpp \
@@ -64,6 +78,9 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
 		-I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceDb/sqlite \
+		-I$(top_srcdir)/src/ice \
+		-I$(top_srcdir)/src/iceUtils \
+		-I$(top_srcdir)/src/iceThreads \
 		$(GLITE_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \

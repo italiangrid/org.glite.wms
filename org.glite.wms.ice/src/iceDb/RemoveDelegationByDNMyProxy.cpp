@@ -18,26 +18,30 @@ limitations under the License.
 
 END LICENSE */
 #include "RemoveDelegationByDNMyProxy.h"
+#include "ice-core.h"
 
-#include "boost/format.hpp"
-#include "boost/algorithm/string.hpp"
-#include "boost/format.hpp"
-#include <iostream>
+#include <sstream>
 
-using namespace glite::wms::ice::db;
+using namespace glite::wms::ice;
 using namespace std;
 
 //______________________________________________________________________________
-void RemoveDelegationByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::RemoveDelegationByDNMyProxy::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string dn( m_userdn );
+  ostringstream sqlcmd( "" );
+  sqlcmd << "DELETE FROM delegation WHERE userdn="
+	 << Ice::get_tmp_name()
+	 << m_userdn
+	 << Ice::get_tmp_name()
+	 << " AND myproxyurl="
+	 << Ice::get_tmp_name()
+	 << m_myproxy
+	 << Ice::get_tmp_name()
+	 << ";";
 
-  boost::replace_all( dn, "'", "''" );
+  //    string sqlcmd = boost::str( boost::format( 
+  //   "DELETE FROM delegation " 
+  //    " WHERE userdn = \'%1%\' AND myproxyurl=\'%2%\'; " ) % dn % m_myproxy );
 
-
-    string sqlcmd = boost::str( boost::format( 
-      "DELETE FROM delegation " \
-      " WHERE userdn = \'%1%\' AND myproxyurl=\'%2%\'; " ) % dn % m_myproxy );
-
-    do_query( db, sqlcmd );
+  do_query( db, sqlcmd.str() );
 }

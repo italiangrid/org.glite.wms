@@ -18,12 +18,13 @@ limitations under the License.
 
 END LICENSE */
 #include "GetStats.h"
+#include "ice-core.h"
+
 #include <sstream>
-#include <iostream>
 #include <vector>
 #include <cstdlib>
 
-using namespace glite::wms::ice::db;
+using namespace glite::wms::ice;
 using namespace std;
 
 namespace { // begin local namespace
@@ -44,19 +45,24 @@ namespace { // begin local namespace
 
 } // end local namespace
 
-GetStats::GetStats( vector< pair< time_t, int > >& target, const time_t datefrom, const time_t dateto,const string& caller )
+db::GetStats::GetStats( vector< pair< time_t, int > >& target, const time_t datefrom, const time_t dateto,const string& caller )
 : AbsDbOperation( caller ), m_target(&target), m_datefrom( datefrom ), m_dateto( dateto )
 {
-//  cout << "ciao" << endl;
 }
 
-void GetStats::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetStats::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
  
   sqlcmd << "SELECT timestamp,status FROM stats WHERE"
-  	 << " timestamp >= \'" << m_datefrom <<"\'"
-	 << " AND timestamp <= \'" << m_dateto << "\';";
+  	 << " timestamp >= "
+	 << Ice::get_tmp_name() 
+	 << m_datefrom 
+	 << Ice::get_tmp_name()
+	 << " AND timestamp <= "
+	 << Ice::get_tmp_name() 
+	 << m_dateto 
+	 << Ice::get_tmp_name() << ";";
 
   do_query( db, sqlcmd.str(), fetch_fields_callback, m_target );
   

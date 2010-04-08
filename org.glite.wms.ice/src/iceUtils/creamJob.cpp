@@ -154,7 +154,8 @@ CreamJob::CreamJob( const std::string& gid,
 }
 
 //______________________________________________________________________________
-void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
+void CreamJob::set_jdl( const string& j, const string& cmdtype ) 
+ throw( ClassadSyntax_ex& )
 {
   /**
    * Classad-mutex protected region
@@ -164,7 +165,7 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
   classad::ClassAd *jdlAd = parser.ParseClassAd( j );
   
   if ( 0 == jdlAd ) {
-    throw ClassadSyntax_ex( string("unable to parse jdl=[") + j + string("]") );
+    throw ClassadSyntax_ex( string("unable to parse jdl=[") + j + "]" );
   }
   
   boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdlAd );
@@ -224,6 +225,7 @@ void CreamJob::set_jdl( const string& j ) throw( ClassadSyntax_ex& )
   // modified by the L&B calls, and we have to pass to CREAM the
   // "last" sequence code as the job wrapper will need to log
   // the "really running" event.
+  //if( boost::algorithm::iequals( cmdtype, "submit" ) )
   creamJdlHelper( this->get_jdl(), m_modified_jdl );// can throw ClassadSyntax_ex
   
   // release of Classad-mutex

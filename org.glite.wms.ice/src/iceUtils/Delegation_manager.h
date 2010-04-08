@@ -193,7 +193,7 @@ namespace util {
          */	
         void redelegate( const std::string& certfile,
                          const std::string& delegation_url,
-                         const std::string& delegation_id );
+                         const std::string& delegation_id ) throw( std::exception& );
 
 	/**
          * Get all entries from the delegation cache. Each entry is a tuple
@@ -209,17 +209,17 @@ namespace util {
          */
 //       void getDelegationEntries( std::vector<boost::tuple<std::string, std::string, std::string, time_t, int, bool, std::string> >& target, const bool only_renewable = false); 
 
-	int getDelegationEntries( std::vector< table_entry >& target, const bool only_renewable = false );
+	int getDelegationEntries( std::vector< table_entry >& target, const bool only_renewable = false ) throw( std::exception& );
 	
-	table_entry getDelegation( const std::string& userdn, const std::string& ceurl, const std::string& myproxy );
+	table_entry getDelegation( const std::string& userdn, const std::string& ceurl, const std::string& myproxy ) throw( std::exception& );
 
       /**
 	 < delegID, cream_url, exp_time, user_dn, 
       */
-      void updateDelegation( const boost::tuple<std::string, time_t, int>& newDeleg );
+      void updateDelegation( const boost::tuple<std::string, time_t, int>& newDeleg ) throw( std::exception& );
       
-      void removeDelegation( const std::string& delegToRemove );
-      void removeDelegation( const std::string& userDN, const std::string& myproxyurl );
+      void removeDelegation( const std::string& delegToRemove ) throw( std::exception& );
+      void removeDelegation( const std::string& userDN, const std::string& myproxyurl ) throw( std::exception& );
       
     };
 

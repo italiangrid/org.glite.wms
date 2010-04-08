@@ -1,20 +1,35 @@
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
 
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
+
+#include "ice-core.h"
 #include "GetJobsByDbID.h"
 #include "iceUtils/iceConfManager.h"
 
-#include "boost/algorithm/string.hpp"
-#include "boost/format.hpp"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
-#include <iostream>
 #include <sstream>
 #include <cstdlib>
 
-using namespace glite::wms::ice::db;
-using namespace glite::wms::ice::util;
+using namespace glite::wms::ice;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
@@ -25,7 +40,7 @@ namespace { // begin local namespace
     //    string* serialized = (string*)param;
     //list< vector<string> > *jobs = (list<vector<string> >*)param;
     
-    list<CreamJob>* jobs = (list<CreamJob>*)param;
+    list<util::CreamJob>* jobs = (list<util::CreamJob>*)param;
     
     if( argv && argv[0] ) {
       vector<string> fields;
@@ -36,7 +51,7 @@ namespace { // begin local namespace
 	  fields.push_back( "" );
       }
 
-      CreamJob tmpJob(fields.at(0),
+      util::CreamJob tmpJob(fields.at(0),
 		      fields.at(1),
 		      fields.at(2),
 		      fields.at(3),
@@ -74,12 +89,14 @@ namespace { // begin local namespace
   
 } // end local namespace
 
-void GetJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetJobsByDbID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
-  sqlcmd << "SELECT " << CreamJob::get_query_fields() 
-	 << " FROM jobs WHERE (dbid not null) AND ( dbid= '"
-	 << m_dbid <<"') ;";
+  sqlcmd << "SELECT " << util::CreamJob::get_query_fields() 
+	 << " FROM jobs WHERE (dbid not null) AND ( dbid="
+	 << Ice::get_tmp_name()
+	 << m_dbid 
+	 << Ice::get_tmp_name() << ") ;";
     
   do_query( db, sqlcmd.str(), fetch_jobs_callback, m_result );
 

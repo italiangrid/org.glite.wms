@@ -1,21 +1,23 @@
-/*
- * Copyright (c) 2004 on behalf of the EU EGEE Project:
- * The European Organization for Nuclear Research (CERN),
- * Istituto Nazionale di Fisica Nucleare (INFN), Italy
- * Datamat Spa, Italy
- * Centre National de la Recherche Scientifique (CNRS), France
- * CS Systeme d'Information (CSSI), France
- * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
- * Universiteit van Amsterdam (UvA), Netherlands
- * University of Helsinki (UH.HIP), Finland
- * University of Bergen (UiB), Norway
- * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
- *
- * ICE LB Logger
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
+
 
 #include "iceLBLogger.h"
 #include "iceLBContext.h"
@@ -135,7 +137,7 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
     if ( _tmp_seqcode ) { // update the sequence code only if it is non null
         new_seq_code = _tmp_seqcode;
 	free( _tmp_seqcode );
-        { // Lock the job cache
+        try { // Lock the job cache
 	  //#ifdef ICE_PROFILE_ENABLE
 	  // 	  api_util::scoped_timer T( "iceLBLogger::logEvent - ICE Mutex acquisition" );//126
 	  //#endif
@@ -154,7 +156,16 @@ CreamJob iceLBLogger::logEvent( iceLBEvent* ev )
 	  tnx.execute( &updater );
 	  return theJob;
 	  
-        } 
+        } catch( db::DbOperationException& ex ) {
+	  
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+			 << method_name
+			 << "Error setting new sequence code for job ["
+			 << ev->getJob().describe()
+			 << "]: "
+			 << ex.what()
+			 );
+	}
     } else {
       return ev->getJob(); // Make the compiler happy
     }

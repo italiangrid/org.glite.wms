@@ -1,35 +1,32 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * Get lease info
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
 
 #include "GetLeaseByID.h"
-#include <iostream>
+#include "ice-core.h"
+
 #include <sstream>
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
-#include "boost/algorithm/string.hpp"
-#include "boost/format.hpp"
-using namespace glite::wms::ice::db;
+
+using namespace glite::wms::ice;
 using namespace std;
 
 namespace { // begin local namespace
@@ -58,16 +55,18 @@ namespace { // begin local namespace
 } // end local namespace
 
 //______________________________________________________________________________
-void GetLeaseByID::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetLeaseByID::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd;
 
-  string id( m_leaseid );
+//   string id( m_leaseid );
 
-  boost::replace_all( id, "'", "''" );
+//   boost::replace_all( id, "'", "''" );
  
-  sqlcmd << "SELECT * FROM lease WHERE leaseid=\'";
-  sqlcmd << id << "\';";
+  sqlcmd << "SELECT * FROM lease WHERE leaseid="
+	 << Ice::get_tmp_name()
+	 << m_leaseid 
+	 << Ice::get_tmp_name() << ";";
 
   boost::tuple< string, string, time_t, string> tmp;
 

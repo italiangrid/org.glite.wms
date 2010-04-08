@@ -119,7 +119,7 @@ Delegation_manager::delegate( const CreamJob& job,
 
     bool found = false;
     table_entry deleg_info("", "", 0, 0, "", "", 0, "");
-    {
+    try {
       db::GetDelegation getter( str_sha1_digest, cream_url, myproxy_address, method_name );
       db::Transaction tnx(false, false);
       //tnx.begin();
@@ -127,14 +127,19 @@ Delegation_manager::delegate( const CreamJob& job,
       found = getter.found();
       if(found)
 	deleg_info = getter.get_delegation();
+    } catch( db::DbOperationException& ex ) {
+      throw runtime_error( string("Delegation failed: ") + ex.what() );
     }
     
     if( force && found ) {
-      {
+      try {
 	db::RemoveDelegation remover( str_sha1_digest, cream_url, myproxy_address, method_name );
 	db::Transaction tnx(false, false);
 	tnx.execute( &remover );
+      } catch( db::DbOperationException& ex ) {
+	throw runtime_error( string("Delegation failed: ") + ex.what() );
       }
+
       found = false;
     }
 
@@ -216,7 +221,7 @@ Delegation_manager::delegate( const CreamJob& job,
 	/**
 	   if USE_NEW is true it means that we're using the new delegation mechanism because the user set the MYPROXYSERVER
 	*/
-	{
+	try {
 	  db::CreateDelegation creator( str_sha1_digest, 
 					cream_url, 
 					expiration_time, 
@@ -228,6 +233,8 @@ Delegation_manager::delegate( const CreamJob& job,
 					method_name);
 	  db::Transaction tnx(false, false);
 	  tnx.execute( &creator );
+	} catch( db::DbOperationException& ex ) {
+	  throw runtime_error( string("Delegation failed: ") + ex.what() );
 	}
 
     } else { // if( !found )
@@ -273,7 +280,8 @@ Delegation_manager::delegate( const CreamJob& job,
 
 //______________________________________________________________________________
 void 
-Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& newDeleg ) 
+Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& newDeleg )
+  throw( std::exception& )
 {
   const char* method_name = "Delegation_manager::updateDelegation() - ";
 
@@ -281,7 +289,7 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
   
   bool found = false;
   table_entry tb;
-  {
+  try {
     db::GetDelegationByID getter( newDeleg.get<0>(), method_name );
     db::Transaction tnx(false, false);
     //tnx.begin();
@@ -289,6 +297,8 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
     found = getter.found();
     if(found)
       tb = getter.get_delegation();
+  } catch( db::DbOperationException& ex ) {
+    throw runtime_error( string("Delegation failed: ") + ex.what() );
   }
 
   if( found )
@@ -310,17 +320,21 @@ Delegation_manager::updateDelegation( const boost::tuple<string, time_t, int>& n
 		      << time_t_to_string(newDeleg.get<1>()) << "] CEUrl=["
 		      << tb.m_cream_url << "]"
 		      );
-      
-      db::UpdateDelegationTimesByID updater( newDeleg.get<0>(), newDeleg.get<1>(), newDeleg.get<2>(), method_name );
-      db::Transaction tnx(false, false);
-      //tnx.begin_exclusive( );
-      tnx.execute( &updater );
+      try {
+	db::UpdateDelegationTimesByID updater( newDeleg.get<0>(), newDeleg.get<1>(), newDeleg.get<2>(), method_name );
+	db::Transaction tnx(false, false);
+	//tnx.begin_exclusive( );
+	tnx.execute( &updater );
+      } catch( db::DbOperationException& ex ) {
+	throw runtime_error( string("Delegation failed: ") + ex.what() );
+      }
     }
   
 }
 
 //______________________________________________________________________________
 void Delegation_manager::removeDelegation( const string& delegToRemove )
+  throw( std::exception& )
 {
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
@@ -330,17 +344,21 @@ void Delegation_manager::removeDelegation( const string& delegToRemove )
 		  << delegToRemove << "]"
 		  );
 
-  {
+  try {
     db::RemoveDelegationByID remover( delegToRemove, "Delegation_manager::removeDelegation" );
     db::Transaction tnx(false, false);
     //tnx.begin_exclusive();
     tnx.execute( &remover );
+  } catch( db::DbOperationException& ex ) {
+    throw runtime_error( string("Delegation failed: ") + ex.what() );
   }
   
 }
 
 //______________________________________________________________________________
-void Delegation_manager::removeDelegation( const string& userDN, const string& myproxyurl )
+void Delegation_manager::removeDelegation( const string& userDN, 
+					   const string& myproxyurl )
+  throw( std::exception& )
 {
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
@@ -351,27 +369,34 @@ void Delegation_manager::removeDelegation( const string& userDN, const string& m
 		  << myproxyurl << "]"
 		  );
 
-  {
+  try {
     db::RemoveDelegationByDNMyProxy remover( userDN, myproxyurl, "Delegation_manager::removeDelegation" );
     db::Transaction tnx(false, false);
     //tnx.begin_exclusive();
     tnx.execute( &remover );
+  } catch( db::DbOperationException& ex ) {
+    throw runtime_error( string("Delegation failed: ") + ex.what() );
   }
   
 }
 
 //______________________________________________________________________________
-int Delegation_manager::getDelegationEntries( vector< table_entry >& target, const bool only_renewable )
+int Delegation_manager::getDelegationEntries( vector< table_entry >& target, 
+					      const bool only_renewable )
+  throw( std::exception& )
 {
   boost::recursive_mutex::scoped_lock L( s_mutex );
 
   vector< table_entry > allDelegations;
-  {
+  try {
     db::GetAllDelegation getter( only_renewable,  "Delegation_manager::getDelegationEntries" );
     db::Transaction tnx(false, false);
     tnx.execute( &getter );
     allDelegations = getter.get_delegations();
+  } catch( db::DbOperationException& ex ) {
+    throw runtime_error( string("Delegation failed: ") + ex.what() );
   }
+
   int counter = 0; 
   for(vector< table_entry >::const_iterator it=allDelegations.begin();
       it != allDelegations.end();
@@ -387,7 +412,8 @@ int Delegation_manager::getDelegationEntries( vector< table_entry >& target, con
 //----------------------------------------------------------------------------
 void Delegation_manager::redelegate( const string& certfile, 
                                      const string& delegation_url,
-                                     const string& delegation_id ) 
+                                     const string& delegation_id )
+  throw( std::exception& )
 {
     boost::recursive_mutex::scoped_lock L( s_mutex );
 
@@ -395,12 +421,14 @@ void Delegation_manager::redelegate( const string& certfile,
 
 
     bool found = false;
-    {
+    try {
       db::CheckDelegationByID checker( delegation_id, method_name );
       db::Transaction tnx(false, false);
       //tnx.begin();
       tnx.execute( &checker );
       found = checker.found();
+    } catch( db::DbOperationException& ex ) {
+      throw runtime_error( string("Delegation failed: ") + ex.what() );
     }
 
     if(!found) {
@@ -443,12 +471,15 @@ void Delegation_manager::redelegate( const string& certfile,
 
 //----------------------------------------------------------------------------
 Delegation_manager::table_entry
-Delegation_manager::getDelegation( const string& userdn, const string& ceurl, const string& myproxy )
+Delegation_manager::getDelegation( const string& userdn, 
+				   const string& ceurl, 
+				   const string& myproxy ) 
+  throw( std::exception& )
 {  
   bool found = false;
   table_entry deleg_info("", "", 0, 0, "", "", 0, "");
 
-  {
+  try {
     db::GetDelegation getter( userdn, ceurl, myproxy, "Delegation_manager::getDelegation" );
     db::Transaction tnx(false, false);
     tnx.execute( &getter );
@@ -456,6 +487,8 @@ Delegation_manager::getDelegation( const string& userdn, const string& ceurl, co
     found = getter.found();
     if(found)
       deleg_info = getter.get_delegation();
+  } catch( db::DbOperationException& ex ) {
+    throw runtime_error( string("Delegation failed: ") + ex.what() );
   }
   
   //if( deleg_info.m_sha1_digest != "" ) {

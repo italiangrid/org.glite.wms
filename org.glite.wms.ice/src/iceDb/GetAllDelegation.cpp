@@ -1,32 +1,30 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * Get all user proxies
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
 
 #include "GetAllDelegation.h"
+#include "ice-core.h"
+
 #include <string>
 #include <vector>
-#include <iostream>
 
-using namespace glite::wms::ice::db;
+using namespace glite::wms::ice;
 using namespace std;
 
 namespace { // begin local namespace
@@ -55,17 +53,20 @@ namespace { // begin local namespace
 
 } // end local namespace
 
-void GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetAllDelegation::execute( sqlite3* db ) throw ( DbOperationException& )
 {
-  string sqlcmd;
+  ostringstream sqlcmd( "" );
   if( m_only_renewable)
-    sqlcmd = "SELECT * FROM delegation WHERE renewable=\'1\';";
+    sqlcmd << "SELECT * FROM delegation WHERE renewable="
+	   << Ice::get_tmp_name()
+	   << "1"
+	   << Ice::get_tmp_name() << ";";
   else
-    sqlcmd = "SELECT * FROM delegation;";
+    sqlcmd << "SELECT * FROM delegation;";
 
   list<vector<string> > tmp;
 
-  do_query( db, sqlcmd, fetch_fields_callback, &tmp );
+  do_query( db, sqlcmd.str(), fetch_fields_callback, &tmp );
   
   if( tmp.size() ) {
     for(list<vector<string> >::const_iterator it = tmp.begin();

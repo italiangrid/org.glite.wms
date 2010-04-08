@@ -1,40 +1,33 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * Get jobs to poll
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
 
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
+
+#include "ice-core.h"
 #include "GetAllJobs.h"
 #include "iceUtils/iceConfManager.h"
-
-#include "boost/archive/text_iarchive.hpp"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
-#include <iostream>
-
 namespace api = glite::ce::cream_client_api;
-using namespace glite::wms::ice::db;
-using namespace glite::wms::ice::util;
+using namespace glite::wms::ice;
 using namespace std;
 
 //______________________________________________________________________________
@@ -45,7 +38,7 @@ namespace { // begin local namespace
 
     //list< vector<string> > *jobs = (list<vector<string> >*)param;
 
-    list<CreamJob>* jobs = (list<CreamJob>*)param;
+    list<util::CreamJob>* jobs = (list<util::CreamJob>*)param;
 
     
     if( argv && argv[0] ) {
@@ -57,7 +50,7 @@ namespace { // begin local namespace
 	  fields.push_back( "" );
       }
       
-      CreamJob tmpJob(fields.at(0),
+      util::CreamJob tmpJob(fields.at(0),
 		      fields.at(1),
 		      fields.at(2),
 		      fields.at(3),
@@ -93,25 +86,42 @@ namespace { // begin local namespace
   }
 } // end local namespace
 
-void GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetAllJobs::execute( sqlite3* db ) throw ( DbOperationException& )
 {
   ostringstream sqlcmd( "" );
   if(m_only_active)
-    sqlcmd << "SELECT " << CreamJob::get_query_fields() << " FROM jobs WHERE status=\'"
+    sqlcmd << "SELECT " 
+	   << util::CreamJob::get_query_fields() 
+	   << " FROM jobs WHERE status="
+	   << Ice::get_tmp_name()
 	   << api::job_statuses::REGISTERED 
-	   << "\' OR status=\'"
+	   << Ice::get_tmp_name()
+	   << " OR status="
+	   << Ice::get_tmp_name()
 	   << api::job_statuses::PENDING 
-	   << "\' OR status=\'"
+	   << Ice::get_tmp_name()
+	   << " OR status="
+	   << Ice::get_tmp_name()
 	   << api::job_statuses::IDLE
-	   << "\' OR status=\'"
+	   << Ice::get_tmp_name()
+	   << " OR status="
+	   << Ice::get_tmp_name()
 	   << api::job_statuses::RUNNING
-	   << "\' OR status=\'"
+	   << Ice::get_tmp_name()
+	   << " OR status="
+	   << Ice::get_tmp_name()
 	   << api::job_statuses::REALLY_RUNNING
-	   << "\' OR status=\'"
+	   << Ice::get_tmp_name()
+	   << " OR status="
+	   << Ice::get_tmp_name()
 	   << api::job_statuses::HELD
-	   << "\' AND is_killed_byice=\'0\'";
+	   << Ice::get_tmp_name() 
+	   << " AND is_killed_byice="
+	   << Ice::get_tmp_name()
+	   << "0"
+	   << Ice::get_tmp_name();
   else
-    sqlcmd << "SELECT " << CreamJob::get_query_fields()  << " FROM jobs";
+    sqlcmd << "SELECT " << util::CreamJob::get_query_fields()  << " FROM jobs";
 
   if( m_limit > 0 ) {
   	sqlcmd << " LIMIT " << m_limit << " OFFSET " << m_offset << ";"; 

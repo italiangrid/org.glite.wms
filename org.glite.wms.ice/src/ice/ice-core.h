@@ -33,6 +33,7 @@ END LICENSE */
 #include <list>
 
 #include <boost/shared_ptr.hpp>
+#include "boost/thread/recursive_mutex.hpp"
 
 namespace boost {
   class thread;
@@ -60,7 +61,12 @@ namespace ice {
     
     class Ice {
         
+      static std::string s_tmpname;
+      static boost::recursive_mutex s_mutex_tmpname;
+      
     public:
+
+      static std::string get_tmp_name( void );// { return s_tmpname; }
 
       static boost::recursive_mutex ClassAd_Mutex;
       static boost::recursive_mutex s_mutex;

@@ -96,6 +96,25 @@ namespace glite {
 	      throw JobRequest_ex( boost::str( boost::format( "full_request_unparse: wrong command parsed: %1%" ) % commandStr ) );
 	    }
 	    
+            if( boost::algorithm::iequals( commandStr, "cancel" ) ) {
+ 
+	      return;
+		/*
+	      try {
+                theJob.set_jdl( request->to_string(), commandStr ); // this puts another mutex
+                theJob.set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
+              } catch( ClassadSyntax_ex& ex ) {
+
+                CREAM_SAFE_LOG(
+                           api_util::creamApiLogger::instance()->getLogger()->errorStream()
+                           << "full_request_unparse() - Cannot instantiate a job from jdl=[" << jdl
+                           << "] due to classad excaption: " << ex.what()
+                           );
+                throw( ClassadSyntax_ex( ex.what() ) );
+              }*/
+ 
+	    }
+ 
 	    // Parse the "version" attribute
 	    if ( !classad_safe_ptr->EvaluateAttrString( "Protocol", protocolStr ) ) {
 	      throw JobRequest_ex("attribute \"Protocol\" not found or is not a string");
@@ -110,11 +129,13 @@ namespace glite {
 	    if ( !classad_safe_ptr->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
 	      throw JobRequest_ex("attribute 'arguments' not found or is not a classad");
 	    }
-	    
+
 	    classad::ClassAd *adAD = 0; // no need to free this
-	    // Look for "JobAd" attribute inside "arguments"
-	    if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
-	      throw JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
+	    if( boost::algorithm::iequals( commandStr, "submit" ) ) {
+	      // Look for "JobAd" attribute inside "arguments"
+	      if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
+	        throw JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
+	      }
 	    }
 	    
 	    // initializes the m_jdl attribute
@@ -124,8 +145,8 @@ namespace glite {
 	  } // end classad-mutex protected regions
 	  
 	  try {
-	    theJob.set_jdl( jdl ); // this puts another mutex
-	    theJob.set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
+	      theJob.set_jdl( jdl, commandStr ); // this puts another mutex
+	      theJob.set_status( glite::ce::cream_client_api::job_statuses::UNKNOWN );
 	  } catch( ClassadSyntax_ex& ex ) {
 	    
 	    CREAM_SAFE_LOG(
@@ -160,22 +181,23 @@ namespace glite {
 	  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
 	  
 	  string ceid;
-	  if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", ceid ) ) {
-	    throw ClassadSyntax_ex( "ce_id attribute not found" );
-	  }
-	  boost::trim_if( ceid, boost::is_any_of("\"") );
+          //if( boost::algorithm::iequals( commandStr, "submit" ) ) {
+	    if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", ceid ) ) {
+	      throw ClassadSyntax_ex( "ce_id attribute not found" );
+	    }
+	    boost::trim_if( ceid, boost::is_any_of("\"") );
 	  
-	  vector<string> ceid_pieces;
-	  ceurl_util::parseCEID( ceid, ceid_pieces );
-	  string bsname = ceid_pieces[2];
-	  string qname = ceid_pieces[3];
+	    vector<string> ceid_pieces;
+	    ceurl_util::parseCEID( ceid, ceid_pieces );
+	    string bsname = ceid_pieces[2];
+	    string qname = ceid_pieces[3];
 	  
-	  // Update jdl to insert two new attributes needed by cream:
-	  // QueueName and BatchSystem.
+	    // Update jdl to insert two new attributes needed by cream:
+	    // QueueName and BatchSystem.
 	  
-	  classad_safe_ptr->InsertAttr( "QueueName", qname );
-	  classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
-	  
+	    classad_safe_ptr->InsertAttr( "QueueName", qname );
+	    classad_safe_ptr->InsertAttr( "BatchSystem", bsname );
+	  //}
 	  if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) && WM_conf ) {
 	    classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", WM_conf->max_output_sandbox_size());
 	  }

@@ -36,7 +36,8 @@ END LICENSE */
 
 #include "ice-core.h"
 #include "iceAbsCommand.h"
-#include "iceCommandFactory.h"
+#include "iceCommandCancel.h"
+#include "iceCommandSubmit.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/Transaction.h"
 #include "iceCommandFatal_ex.h"
@@ -289,7 +290,6 @@ int main(int argc, char*argv[])
     /*****************************************************************************
      * Initializes the database by invoking a fake query, and the ice manager
      ****************************************************************************/
-    
     {
       list<pair<string, string> > params;
       params.push_back( make_pair("failure_reason", "" ));
@@ -297,6 +297,7 @@ int main(int argc, char*argv[])
       glite::wms::ice::db::Transaction tnx( false, true );
       tnx.execute( &updater );
     }
+
  
     glite::wms::ice::Ice* iceManager( glite::wms::ice::Ice::instance( ) );
 
@@ -394,7 +395,14 @@ int main(int argc, char*argv[])
 		glite::wms::ice::util::full_request_unparse( *it,
 							     theJob,
 							     cmdtype );
-		
+
+		glite::wms::ice::iceAbsCommand* cmd = 0;	
+                if( boost::algorithm::iequals( cmdtype, "cancel" ) ) {
+		  cmd = new glite::wms::ice::iceCommandCancel( *it ); 
+		  threadPool->add_request( cmd );
+		  continue;
+		}
+	
 		cream_api::VOMSWrapper V( theJob.get_user_proxy_certificate(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
 		if( !V.IsValid( ) ) {
 		  CREAM_SAFE_LOG( log_dev->errorStream()
@@ -413,13 +421,16 @@ int main(int argc, char*argv[])
 		theJob.set_userdn( V.getDNFQAN() );
 		theJob.set_isbproxy_time_end( V.getProxyTimeEnd() );
 
-		glite::wms::ice::iceAbsCommand* cmd 
+//		glite::wms::ice::iceAbsCommand* cmd 
+
+		cmd = new glite::wms::ice::iceCommandSubmit( *it, theJob );
+/*
 		  = glite::wms::ice::iceCommandFactory::mkCommand( *it,
 								   theJob,
 								   cmdtype
 								   );
 
-		
+*/		
 		
 		threadPool->add_request( cmd );
 

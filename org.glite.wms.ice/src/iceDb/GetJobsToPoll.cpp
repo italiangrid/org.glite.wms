@@ -1,42 +1,35 @@
-/* 
- * Copyright (c) Members of the EGEE Collaboration. 2004. 
- * See http://www.eu-egee.org/partners/ for details on the copyright
- * holders.  
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *    http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- * Get jobs to poll
- *
- * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
- *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
- */
+/* LICENSE:
+Copyright (c) Members of the EGEE Collaboration. 2010. 
+See http://www.eu-egee.org/partners/ for details on the copyright
+holders.  
 
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at 
+
+   http://www.apache.org/licenses/LICENSE-2.0 
+
+Unless required by applicable law or agreed to in writing, software 
+distributed under the License is distributed on an "AS IS" BASIS, 
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. 
+See the License for the specific language governing permissions and 
+limitations under the License.
+
+END LICENSE */
+
+#include "ice-core.h"
 #include "GetJobsToPoll.h"
 #include "iceUtils/iceConfManager.h"
 
-#include "boost/algorithm/string.hpp"
-#include "boost/format.hpp"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
 
-#include <iostream>
 #include <sstream>
 #include <cstdlib>
 
-using namespace glite::wms::ice::db;
-using namespace glite::wms::ice::util;
+using namespace glite::wms::ice;
 using namespace std;
 namespace cream_api = glite::ce::cream_client_api;
 
@@ -45,7 +38,7 @@ namespace { // begin local namespace
   // Local helper function: callback for sqlite
   static int fetch_jobs_callback(void *param, int argc, char **argv, char **azColName){
     
-    list<CreamJob>* jobs = (list<CreamJob>*)param;
+    list<util::CreamJob>* jobs = (list<util::CreamJob>*)param;
     
     if( argv && argv[0] ) {
       vector<string> fields;
@@ -56,7 +49,7 @@ namespace { // begin local namespace
 	  fields.push_back( "" );
       }
 
-      CreamJob tmpJob(fields.at(0),
+      util::CreamJob tmpJob(fields.at(0),
 		      fields.at(1),
 		      fields.at(2),
 		      fields.at(3),
@@ -94,11 +87,11 @@ namespace { // begin local namespace
   
 } // end local namespace
 
-void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
+void db::GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 {
     time_t 
-        threshold( iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
-        empty_threshold( iceConfManager::getInstance()->getConfiguration()->ice()->ice_empty_threshold() );
+      threshold( util::iceConfManager::getInstance()->getConfiguration()->ice()->poller_status_threshold_time() ),
+      empty_threshold( util::iceConfManager::getInstance()->getConfiguration()->ice()->ice_empty_threshold() );
 
 
         //
@@ -119,35 +112,57 @@ void GetJobsToPoll::execute( sqlite3* db ) throw ( DbOperationException& )
 
     ostringstream sqlcmd;
 
-  string dn( m_userdn );
-
-  boost::replace_all( dn, "'", "''" );
-
     if ( m_poll_all_jobs ) {
-      sqlcmd << "SELECT " << CreamJob::get_query_fields() 
-	     << " FROM jobs WHERE (creamjobid not null) AND ( creamjobid != '' ) AND (last_poller_visited not null) " 
-	     << " AND creamurl='" 
+      sqlcmd << "SELECT " << util::CreamJob::get_query_fields() 
+	     << " FROM jobs WHERE (creamjobid not null) "
+	     << " AND ( creamjobid != "
+	     << Ice::get_tmp_name()
+	     << Ice::get_tmp_name()
+	     << " ) AND (last_poller_visited not null) " 
+	     << " AND creamurl="
+	     << Ice::get_tmp_name()
 	     << m_creamurl 
-	     << "' AND userdn='" 
-	     << dn << "' ORDER BY last_poller_visited ASC";
-
+	     << Ice::get_tmp_name() 
+	     << " AND userdn=" 
+	     << Ice::get_tmp_name()
+	     << m_userdn 
+	     << Ice::get_tmp_name() 
+	     << " ORDER BY last_poller_visited ASC";
+      
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";
       } else {
 	sqlcmd << ";";
       }
- 
+      
     } else {
-       time_t t_now( time(NULL) );
-      sqlcmd << "SELECT "<< CreamJob::get_query_fields() 
+      time_t t_now( time(NULL) );
+      sqlcmd << "SELECT "<< util::CreamJob::get_query_fields() 
 	     << " FROM jobs"					
-	     << " WHERE ( creamjobid not null ) AND ( creamjobid != '' ) AND (last_poller_visited not null)"	
-	     << " AND userdn='" << dn << "'"
-	     << " AND creamurl='" << m_creamurl << "' AND ("
+	     << " WHERE ( creamjobid not null ) "
+	     << " AND ( creamjobid != "
+	     << Ice::get_tmp_name()
+	     << Ice::get_tmp_name()
+	     << " ) AND (last_poller_visited not null)"	
+	     << " AND userdn=" 
+	     << Ice::get_tmp_name()
+	     << m_userdn 
+	     << Ice::get_tmp_name() 
+	     << " AND creamurl=" 
+	     << Ice::get_tmp_name()
+	     << m_creamurl 
+	     << Ice::get_tmp_name() 
+	     << " AND ("
 	     << "       (  ( " 
-	     <<t_now<<" - last_seen >= "<<threshold<<" ) ) "
+	     << t_now
+	     << " - last_seen >= "
+	     << threshold
+	     << " ) ) "
 	     << "  OR   (  ( "
-	     <<t_now<<" - last_empty_notification > "<<empty_threshold<<" ) )"
+	     << t_now
+	     << " - last_empty_notification > "
+	     << empty_threshold
+	     << " ) )"
 	     << ") ORDER BY last_poller_visited ASC";
       if( m_limit ) {
 	sqlcmd << " LIMIT " << m_limit << ";";

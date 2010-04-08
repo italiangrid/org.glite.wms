@@ -144,43 +144,25 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
 
     Request_source_purger r( m_request );
     wms_utils::scope_guard remove_request_guard( r );
-    
-//    boost::recursive_mutex::scoped_lock M( glite::wms::ice::util::CreamJob::s_GlobalICEMutex );
-    db::Transaction tnx(false, false);
-    //tnx.Begin( );
     db::GetJobByGid get( m_gridJobId, "iceCommandCancel::execute" );
-    tnx.execute( &get );
-
-    // Lookup the job in the jobCache
-    //util::jobCache::iterator it = util::jobCache::getInstance()->lookupByGridJobID( m_gridJobId );
-    
-//     if ( it == util::jobCache::getInstance()->end() ) {
-//         CREAM_SAFE_LOG( 
-//                        m_log_dev->errorStream()
-//                        << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
-//                        << m_gridJobId 
-//                        << "] in the jobCache. Giving up"
-                       
-//                        );
-
-//         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") 
-// 				  + m_gridJobId 
-// 				  + string("], as the job does not appear to exist") );
-//     }
-
-    if( !get.found() ) {
-      CREAM_SAFE_LOG( 
-		     m_log_dev->errorStream()
-		     << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
-		     << m_gridJobId 
-		     << "] in the database. Giving up"
-		     );
+    {
+      db::Transaction tnx(false, false);
+      tnx.execute( &get );
       
-
-      throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") 
-				+ m_gridJobId 
-				+ string("], as the job does not appear to exist") );
-      
+      if( !get.found() ) {
+	CREAM_SAFE_LOG( 
+		       m_log_dev->errorStream()
+		       << "iceCommandCancel::execute() - Cancel operation cannot locate jobid=["
+		       << m_gridJobId 
+		       << "] in the database. Giving up"
+		       );
+	
+	
+	throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") 
+				  + m_gridJobId 
+				  + string("], as the job does not appear to exist") );
+	
+      }
     }
 
     // According to the following mail, the sequence from a cancel
@@ -196,24 +178,12 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
     // request. Then, ReallyRunning appears to be logically following
     // cancellation. It should not do that.
 
-    // if ( ! m_sequence_code.empty() )  
-    // it->setSequenceCode( m_sequence_code );
-
     util::CreamJob theJob( get.get_job() );
 
     // Log cancel request event
     theJob = m_lb_logger->logEvent( new util::cream_cancel_request_event( theJob, string("Cancel request issued by user") ) );    
 
-    //vector<string> url_jid(1);   
-    //url_jid[0] = theJob.getCreamJobID();
     string jobdesc( theJob.describe()  );
-//     CREAM_SAFE_LOG(
-//                    m_log_dev->infoStream()
-//                    << "iceCommandCancel::execute() - Removing job [" 
-//                    << jobdesc
-//                    << "]"
-                   
-//                    );
 
     CREAM_SAFE_LOG(    
                    m_log_dev->infoStream()
@@ -248,72 +218,71 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
       if( !V.IsValid( ) ) {
         throw cream_api::auth_ex( V.getErrorMessage() );
       }
-
+      
       theJob.set_failure_reason( "Aborted by user" );
-      //db::Transaction tnx2;
       list< pair<string, string> > params;
       params.push_back( make_pair("failure_reason", "Aborted by user" ));
-      //      db::UpdateJobFailureReason updater( theJob.getGridJobID(), "Aborted by user" );//CreateJob aJob( theJob );
-      db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceCommandCancel::cancel" );
-      tnx.execute( &updater );
-      //        util::jobCache::getInstance()->put( theJob );
-
-	vector<cream_api::JobIdWrapper> toCancel;
-	toCancel.push_back( cream_api::JobIdWrapper(theJob.get_cream_jobid(), 
-						    theJob.get_creamurl(), 
-						    std::vector<cream_api::JobPropertyWrapper>())
-			    );
-
-	cream_api::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
-	cream_api::ResultWrapper res;
-
-        util::CreamProxy_Cancel( theJob.get_creamurl(), betterproxy, &req, &res ).execute( 3 );
-
-	list< pair<cream_api::JobIdWrapper, string> > tmp;
-
-	res.getNotExistingJobs( tmp );
-	res.getNotMatchingStatusJobs( tmp );
-	res.getNotMatchingDateJobs( tmp );
-	res.getNotMatchingProxyDelegationIdJobs( tmp );
-	res.getNotMatchingLeaseIdJobs( tmp );
-	
-	// We tried to cancel only one job.
-	// Then if the operation went wrong
-	// tmp contains only one element, the first one!
-	if( !tmp.empty() )
-	  {
+      {
+	db::Transaction tnx( false, false );
+	db::UpdateJobByGid updater( theJob.get_grid_jobid(), params, "iceCommandCancel::cancel" );
+	tnx.execute( &updater );
+      }
+      vector<cream_api::JobIdWrapper> toCancel;
+      toCancel.push_back( cream_api::JobIdWrapper(theJob.get_cream_jobid(), 
+						  theJob.get_creamurl(), 
+						  std::vector<cream_api::JobPropertyWrapper>())
+			  );
+      
+      cream_api::JobFilterWrapper req( toCancel, vector<string>(), -1, -1, "", "");
+      cream_api::ResultWrapper res;
+      
+      util::CreamProxy_Cancel( theJob.get_creamurl(), betterproxy, &req, &res ).execute( 3 );
+      
+      list< pair<cream_api::JobIdWrapper, string> > tmp;
+      
+      res.getNotExistingJobs( tmp );
+      res.getNotMatchingStatusJobs( tmp );
+      res.getNotMatchingDateJobs( tmp );
+      res.getNotMatchingProxyDelegationIdJobs( tmp );
+      res.getNotMatchingLeaseIdJobs( tmp );
+      
+      // We tried to cancel only one job.
+      // Then if the operation went wrong
+      // tmp contains only one element, the first one!
+      if( !tmp.empty() )
+	{
 	  
-	    // let's get only the first element of the array
-	    // because we Cancel one job by one
-	    // it is safe to dereference the .begin() because 
-	    // the list is not empty
-	    pair<cream_api::JobIdWrapper, string> errorJob = *(tmp.begin());
-	    
-	    string errMex = "iceCommandCancel::execute() - Cancellation of the [";
-	    errMex += jobdesc + "] went wrong: [";
-	    errMex += errorJob.second + "]";
-	    
-	    CREAM_SAFE_LOG(    
-			   m_log_dev->errorStream()
-			   << errMex
-			   
-			   );
-	    
-	    m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
-	    throw iceCommandFatal_ex( errMex );
-	  }
+	  // let's get only the first element of the array
+	  // because we Cancel one job by one
+	  // it is safe to dereference the .begin() because 
+	  // the list is not empty
+	  pair<cream_api::JobIdWrapper, string> errorJob = *(tmp.begin());
+	  
+	  string errMex = "iceCommandCancel::execute() - Cancellation of the [";
+	  errMex += jobdesc + "] went wrong: [";
+	  errMex += errorJob.second + "]";
+	  
+	  CREAM_SAFE_LOG(    
+			 m_log_dev->errorStream()
+			 << errMex
+			 
+			 );
+	  
+	  m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Error: ") + errMex ) );
+	  throw iceCommandFatal_ex( errMex );
+	}
     } catch(cream_api::auth_ex& ex) {
-        m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Authentication Exception: ") + ex.what() ) );
-        throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("Authentication Exception: ") + ex.what() ) );
+      throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
     } catch(cream_api::soap_ex& ex) {
-        m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("SOAP Exception: ") + ex.what() ) );
-        throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("SOAP Exception: ") + ex.what() ) );
+      throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
     } catch(cream_ex::BaseException& base) {
-        m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("BaseException: ") + base.what() ) );
-        throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("BaseException: ") + base.what() ) );
+      throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
     } catch(cream_ex::InternalException& intern) {
-        m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ) );
-        throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
+      m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ) );
+      throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
     }
-
+    
 }

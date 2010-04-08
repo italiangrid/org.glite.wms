@@ -38,7 +38,7 @@ END LICENSE */
 #include "iceDb/InsertStat.h"
 #include "iceDb/RemoveJobByCid.h"
 #include "iceDb/RemoveJobByGid.h"
-#include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
+//#include "iceDb/GetStatusInfoByCompleteCreamJobID.h"
 #include "iceDb/Transaction.h"
 #include "iceDb/UpdateJobByGid.h"
 #include "iceDb/RemoveJobByUserDN.h"
