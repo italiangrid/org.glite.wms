@@ -55,8 +55,6 @@ END LICENSE */
 #include <ctime>
 #include <cerrno>
 
-//extern int errno;
-
 namespace cream_api = glite::ce::cream_client_api;
 
 using namespace std;
@@ -373,7 +371,7 @@ void iceCommandDelegationRenewal::renewAllDelegations( void ) throw()
   
     	    jobit->set_status( cream_api::job_statuses::ABORTED );
     	    jobit->set_failure_reason( "Proxy expired" );
-	    
+	    ++jobit;
 	  }
 	  
 	  

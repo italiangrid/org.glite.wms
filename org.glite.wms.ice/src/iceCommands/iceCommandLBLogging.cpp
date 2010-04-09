@@ -38,9 +38,9 @@ END LICENSE */
  */
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "glite/ce/cream-client-api-c/CEUrl.h"
-//#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+
+#include "DNProxyManager.h"
 
 /**
  *
@@ -92,7 +92,7 @@ void iceCommandLBLogging::execute( const std::string& tid ) throw()
   list<CreamJob>::iterator jobit = m_jobs_to_remove.begin();
   
   while( jobit != m_jobs_to_remove.end() ) {  
-
+    
     iceLBEvent* ev = iceLBEventFactory::mkEvent( *jobit );
     if ( ev ) {
       api_util::scoped_timer lbtimer( string("iceCommandLBLogging::execute - TID=[") + getThreadID() + "] LOG TO LB" );
@@ -103,19 +103,21 @@ void iceCommandLBLogging::execute( const std::string& tid ) throw()
         cream_api::job_statuses::DONE_FAILED == jobit->get_status() ||
 	cream_api::job_statuses::CANCELLED == jobit->get_status() ||
 	cream_api::job_statuses::ABORTED == jobit->get_status() )
-    {	
-      CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandLBLogging::execute - TID=[" << getThreadID() << "] "
-	  	     << "Removing job [" << jobit->get_grid_jobid( )
-		     << "] because proxy is expired "
-		     );
-    
-      {
-        db::RemoveJobByGid remover( jobit->get_grid_jobid(), "iceCommandLBLogging::execute" );
-        db::Transaction tnx( false, false );
-        tnx.execute( &remover );
+      {	
+	CREAM_SAFE_LOG(m_log_dev->debugStream() << "iceCommandLBLogging::execute - TID=[" << getThreadID() << "] "
+		       << "Removing job [" << jobit->get_grid_jobid( )
+		       << "] from ICE's database"
+		       );
+	
+	{
+	  db::RemoveJobByGid remover( jobit->get_grid_jobid(), "iceCommandLBLogging::execute" );
+	  db::Transaction tnx( false, false );
+	  tnx.execute( &remover );
+	  if( jobit->is_proxy_renewable() )
+	    glite::wms::ice::util::DNProxyManager::getInstance()->decrementUserProxyCounter( jobit->get_user_dn(), jobit->get_myproxy_address());
+	}
+	
       }
-    
-    }
-
+    ++jobit; 
   }
 }

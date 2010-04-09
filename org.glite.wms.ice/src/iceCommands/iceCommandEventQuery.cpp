@@ -27,6 +27,7 @@ END LICENSE */
 
 #include "iceCommandStatusPoller.h"
 #include "iceCommandEventQuery.h"
+#include "iceCommandLBLogging.h"
 #include "iceLBEventFactory.h"
 #include "CreamProxyMethod.h"
 #include "DNProxyManager.h"
@@ -125,17 +126,7 @@ void ice::util::iceCommandEventQuery::execute( const std::string& tid) throw()
 		   << m_dn << "] and ce url ["
 		   << m_ce << "]..."
 		   );
-		   
-//     sleep(10);
-//     
-//     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name << " TID=[" << getThreadID() << "] "
-// 		   << "Ended EventQuery for userdn ["
-// 		   << m_dn << "] and ce url ["
-// 		   << m_ce << "]..."
-// 		   );
-//     
-//     return;
-    
+
     long long thisEventID = this->getEventID( m_dn, m_ce );
     
     if( thisEventID == -1 ) {
@@ -300,22 +291,38 @@ states.push_back( make_pair("STATUS", "IDLE") );
 
       CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
 		     << "*** CREAM HAS PROBABLY BEEN SCRATCHED. GOING TO ERASE"
-		     << "ALL JOBS RELATED TO OLD DB_ID ["
+		     << " ALL JOBS RELATED TO OLD DB_ID ["
 		     << olddbid << "] ***"
 		     );
 
-//       list<CreamJob> jobs;
-//       this->getJobsByDbID( jobs, dbid );
-      /**
-	 TODO
-	 Must enqueue them to log to LB
-	 and then delete all of them.
-      */
+      list<CreamJob> toRemove;
       {
-	db::RemoveJobsByDbID remover( olddbid, "iceCommandEventQuery::execute" );
+	list<pair<string, string> > clause;
+	db::GetJobsByDbID getter( toRemove, olddbid, 
+				  "iceCommandDelegationRenewal::renewAllDelegations" );
 	db::Transaction tnx(false, false);
-	tnx.execute( &remover );
+	tnx.execute( &getter );
       }
+      
+      list<CreamJob>::iterator jobit = toRemove.begin();
+      while( jobit != toRemove.end() ) {
+	
+	jobit->set_status( cream_api::job_statuses::ABORTED );
+	jobit->set_failure_reason( "CREAM'S database has been scratched and all its jobs have been lost" );
+/*        CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
+                     << "*** CREAM SCRATHCED: WILL ABORT AND ERASE JOB ["
+		     << jobit->describe()
+                     << "]"
+                     );	 */
+	++jobit;
+      }
+      
+      
+      while( Ice::instance()->get_ice_lblog_pool()->get_command_count() > 2 )
+	sleep(2);
+      
+      Ice::instance()->get_ice_lblog_pool()->add_request( new iceCommandLBLogging( toRemove ) );
+      
       {
 	db::SetEventID setter( m_dn, m_ce, 0, "iceCommandEventQuery::execute" );
 	db::Transaction tnx(false, false);
