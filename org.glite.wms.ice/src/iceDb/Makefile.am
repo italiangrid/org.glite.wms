@@ -75,7 +75,7 @@ libglite_wms_iceDb_la_SOURCES = Transaction.cpp \
 				UpdateProxyCounterByDN.cpp \
 				RemoveJobByUserDN.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
+AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceDb/sqlite \
 		-I$(top_srcdir)/src/ice \

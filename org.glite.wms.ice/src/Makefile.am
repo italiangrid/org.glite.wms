@@ -234,7 +234,7 @@ glite_wms_ice_proxy_renew_LDADD = -L$(GLITE_LOCATION)/lib \
 
 ### -L$(top_srcdir)/../repository/externals/sqlite/3.5.6/slc4_ia32_gcc346/lib
 
-AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen  \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/iceThreads \
 		-I$(top_srcdir)/src/iceCommands \

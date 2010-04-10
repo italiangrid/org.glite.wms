@@ -35,7 +35,7 @@ libglite_wms_iceCommands_la_SOURCES = \
 	iceCommandEventQuery.cpp \
 	iceCommandLBLogging.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \
 		-I$(top_srcdir)/src/iceDb/sqlite \

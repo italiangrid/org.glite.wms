@@ -40,7 +40,7 @@ libglite_wms_iceUtils_la_SOURCES = \
 				Lease_manager.cpp \
 				CEBlackList.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
+AM_CPPFLAGS =  \
 		-I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \

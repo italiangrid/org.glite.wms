@@ -37,7 +37,7 @@ libglite_wms_iceThreads_la_SOURCES = eventStatusListener.cpp \
 					proxyRenewal.cpp \
 					leaseUpdater.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/../org.glite.ce.cream-client-api-c/build/src/autogen \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/iceUtils \
 		-I$(top_srcdir)/src/ice \
 		-I$(top_srcdir)/src/iceDb/sqlite \

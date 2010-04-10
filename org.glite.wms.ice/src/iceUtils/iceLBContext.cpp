@@ -44,7 +44,7 @@ namespace fs = boost::filesystem;
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/ICEConfiguration.h"
-
+#include "glite/wms/common/configuration/CommonConfiguration.h"
 // #include "jobCache.h"
 #include "iceUtils.h"
 
@@ -63,7 +63,7 @@ const char *iceLBContext::el_s_OK = "OK";
 const char *iceLBContext::el_s_failed = "Failed";
 const char *iceLBContext::el_s_succesfully = "Job Terminated Successfully";
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
+//#ifdef GLITE_WMS_HAVE_LBPROXY
 
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -92,7 +92,7 @@ namespace {
 
 }
 
-#endif
+//#endif
 //////////////////////////////////////////////////////////////////////////////
 //
 // iceLogger Exception
@@ -333,13 +333,15 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     boost::tuple<string, time_t, long long int> result = DNProxyManager::getInstance()->getAnyBetterProxyByDN(theJob.get_user_dn());
 
     if ( !theJob.get_sequence_code().empty() ) {
-#ifdef GLITE_WMS_HAVE_LBPROXY
-      string const user_dn( get_proxy_subject( result.get<0>()) );
+      if(iceConfManager::getInstance()->getConfiguration()->common()->lbproxy()) {
+//#ifdef GLITE_WMS_HAVE_LBPROXY
+        string const user_dn( get_proxy_subject( result.get<0>()) );
 
         res |= edg_wll_SetLoggingJobProxy( *el_context, id, theJob.get_sequence_code().c_str(), user_dn.c_str(), EDG_WLL_SEQ_NORMAL );
-#else
+      } else 
+//#else
         res |= edg_wll_SetLoggingJob( *el_context, id, theJob.get_sequence_code().c_str(), EDG_WLL_SEQ_NORMAL );
-#endif
+//#endif
     }
 
     edg_wlc_JobIdFree( id );
