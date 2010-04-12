@@ -12,16 +12,19 @@
 #                                                       #
 #########################################################
 
+
+source ./FTS-common
+
 showUsage ()
 {
- echo "Usage:  FTS-basic --fts <fts hostname> [ --bdii <bdii hostname> ]       "
+ echo "Usage:  FTS-basic --fts <fts hostname> [ --bdii <bdii hostname> ] [ --shortinfo] [--longinfo ] "
  echo "Options:    "
  echo "	 obligatory:    								"
  echo "	         --fts   <fts  hostname>				"
  echo "		         The name of the FTS server.		"
  echo "	 optional:									  "
  echo "	         --bdii  <bdii hostname>  				"
- echo "		          The name of the top level BDII. The default is lcg-bdii.cern.ch "
+ echo "		          The name of the top level BDII. The default is $BDII_HOST "
 }
 
 if [ -z "$1" ]; then
@@ -36,23 +39,34 @@ do
   case "$1" in
    
      --fts)
-           if [ -z "$2" ]; then
-                shift 1
- 	   else
-                FTS_HOST=$2
-                shift 2
-           fi
+      if [ -z "$2" ]; then
+        shift 1
+ 	  else
+        FTS_HOST=$2
+        shift 2
+      fi
     ;;
 
     --bdii)
 	   if [ -z "$2" ]; then
-               shift 1 
+           shift 1 
  	   else
 	       BDII_HOST=$2
  	       shift 2
            fi
     ;;
-
+    --shortinfo )
+      echo "FTS basic services availability"
+      exit 0
+    ;;
+    --longinfo )
+      echo "FTS basic services availability:"
+      echo "  - ping FTS server"
+      echo "  - basic ldap query to FTS BDII"
+      echo "  - basic ldap query to site/top leavel BDII"
+      echo "  - nmap query to check if Tomcart port is open"
+      exit 0
+    ;;
     *)
         showUsage
         exit 2
@@ -69,17 +83,18 @@ fi
 
 if [ -z "$BDII_HOST" ]; then
     echo ""
-    echo "BDII hostname is not specified. Option --bdii <bdii hostname> is obligatory!"
+    echo "BDII hostname is not specified. Use --bdii <bdii hostname> or \$BDII_HOST"
     showUsage
     exit 2
 fi
 
-######################################################################
-# >>>> NOTE:  Hardcoded ports for FTS BDII and top level BDII !!! <<<<
-######################################################################
+#################################################################################
+# >>>> NOTE:  Hardcoded ports for FTS BDII site/top level BDII and Tomcat!!! <<<<
+#################################################################################
 
 BDII_PORT=2170
 FTS_BDII_PORT=2170
+FTS_TOMCAT_PORT=8443
 
 #####################
 # Exporting variables
@@ -95,68 +110,29 @@ export GLITE_SD_PLUGIN=bdii
 function test_ping
 {
   echo " Testing ping to $FTS_HOST" 
-  echo ""
-  result=`ping -c 5 $FTS_HOST 2>/dev/null | grep Unreachable | wc -l`
-
-  if [ $result -gt 0 ]; then
-    echo ""
-    echo ">>> NOTE: The $FTS_HOST is not accessible! <<<"
-    echo ""
-    echo "FTS Basic -TEST FAILED-"
-    echo ""
-    exit 1
-  fi
+  run_command "ping -c 5 $FTS_HOST 2>/dev/null | grep Unreachable | wc -l" || return 1
+  return 0
 }
 
 function test_ldap
 {
   echo " Testing connection to LDAP server on $FTS_HOST"
-  echo ""  
-  result=`ldapsearch -x -H ldap://$FTS_HOST:$FTS_BDII_PORT -b Mds-vo-name=resource,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l`
-
-  if [ $result -eq 0 ]; then
-     echo ""
-     echo ">>> NOTE: LDAP Test: Failed. <<<"
-     echo ""
-     echo "FTS Basic -TEST FAILED-"
-     echo ""
-     exit 1	
-  fi
+  run_command "ldapsearch -x -H ldap://$FTS_HOST:$FTS_BDII_PORT -b Mds-vo-name=resource,o=Grid 2>/dev/null | tail -n 6 | grep Success | wc -l" || return 1
+  return 0
 }
 
 function test_bdii
 {
   echo " Testing if there is information for $FTS_HOST on $BDII_HOST"
-  echo ""
-
-  result=`ldapsearch -x -H ldap://$BDII_HOST:$BDII_PORT -b Mds-vo-name=local,o=Grid 2>/dev/null | grep $FTS_HOST | wc -l`
-
-  if [ $result -eq 0 ]; then
-    echo ""
-    echo ">>> NOTE: No entries found for FTS Server: $FTS_HOST on the top level BDII: $BDII_HOST! <<<"
-    echo ""
-    echo "FTS Basic -TEST FAILED-"
-    echo ""
-    exit 1
-  fi
+  run_command "ldapsearch -x -H ldap://$BDII_HOST:$BDII_PORT -b Mds-vo-name=local,o=Grid 2>/dev/null | grep $FTS_HOST | wc -l" || return 1
+  return 0
 }
 
 function test_tomcat
 {
   echo " Testing connection to Tomcat server on $FTS_HOST "
-  echo ""
-
-  result=`nmap -p $1 $FTS_HOST 2>/dev/null | grep open | wc -l`
-
-  if [ $result -eq 0 ]; then
-    echo ""
-    echo ">>> NOTE: The Tomcat server on $FTS_HOST is not accessible! <<<"
-    echo ">>> NOTE: Tomcat Test: Failed. <<<"
-    echo ""
-    echo "FTS Basic -TEST FAILED-"
-    echo ""
-    exit 1
-  fi
+  run_command "nmap -p $1 $FTS_HOST 2>/dev/null | grep open | wc -l" || return 1
+  return 0
 }
 
 ################
@@ -169,25 +145,24 @@ echo ""
 echo "Using BDII: $BDII_HOST"
 echo ""
 echo "Testing...."
-echo ""
 
 ###########################################
 # Checking if the service is up and running
 ###########################################
 
-test_ping
+run_function test_ping
 
 #####################################################
 # Checking if LDAP Server on FTS is working properely
 #####################################################
 
-test_ldap
+run_function test_ldap
 
-###################################################################
-# Checking if there is information for FTS Server on top level BDII
-##################################################################
+########################################################################
+# Checking if there is information for FTS Server on site/top level BDII
+########################################################################
 
-#test_bdii
+run_function test_bdii
 
 #####################################################################
 # Getting Tomcart Port for FTS Server from top level BDII: $BDII_HOST
@@ -206,10 +181,10 @@ FTS_TOMCAT_PORT=8443
 # Checking if Tomcat Server on FTS is working properely
 #######################################################
 
-test_tomcat $FTS_TOMCAT_PORT
+run_function test_tomcat $FTS_TOMCAT_PORT
 
 echo ""
-echo "FTS Basic Test: Passed."
+echo "FTS basic service availability: Passed"
 echo ""
 exit 0
 
