@@ -179,7 +179,9 @@ namespace glite {
 	  }
 	  
 	  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( root );
-	  
+
+	  classad_safe_ptr->InsertAttr( "WMSHostname", Ice::instance()->getHostName() );
+
 	  string ceid;
           //if( boost::algorithm::iequals( commandStr, "submit" ) ) {
 	    if ( !classad_safe_ptr->EvaluateAttrString( "ce_id", ceid ) ) {
@@ -201,6 +203,8 @@ namespace glite {
 	  if ( 0 == classad_safe_ptr->Lookup( "maxOutputSandboxSize" ) && WM_conf ) {
 	    classad_safe_ptr->InsertAttr( "maxOutputSandboxSize", WM_conf->max_output_sandbox_size());
 	  }
+
+	  
 	  
 	  updateIsbList( classad_safe_ptr.get() );
 	  updateOsbList( classad_safe_ptr.get() );
