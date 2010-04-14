@@ -627,7 +627,7 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
 		    << V.getErrorMessage()
 		    );
 
-    the_job.set_failure_reason( "Input sandbox's proxy is missing. Cannot resubmit job" );
+    the_job.set_failure_reason( string("Cannot resubmit job because of a problem with input sandbox's proxy: ") + V.getErrorMessage() );
     m_lb_logger->logEvent( new ice_util::job_aborted_event( the_job ) );
 
     return;
