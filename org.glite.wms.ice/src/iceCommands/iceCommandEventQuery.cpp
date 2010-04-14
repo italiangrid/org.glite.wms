@@ -689,6 +689,10 @@ ice::util::iceCommandEventQuery::deleteJobsByDN( void ) throw( )
     if ( ev ) {
       m_lb_logger->logEvent( ev );
     }
+    
+    if( jit->is_proxy_renewable() )
+      DNProxyManager::getInstance()->decrementUserProxyCounter( jit->get_user_dn(), jit->get_myproxy_address() );
+    
     ++jit;
   }
 
