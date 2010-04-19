@@ -68,7 +68,7 @@ function getroles()
     echo "FTS-getroles - Failed"
     return 1
     fi
-    grep "The user is authorised " message > /dev/null
+    egrep "((The)|(This)) user is authorised " message > /dev/null
     if [ $? != 0 ]; then
     echo "FTS-getroles - failed"
     cat message
@@ -81,7 +81,7 @@ function getroles()
     echo "FTS-getroles - failed"
     return 1
     fi
-    grep "This user is not authorised" message > /dev/null
+    egrep "((The)|(This)) user is not authorised" message > /dev/null
     if [ $? != 0 ]; then
     echo "FTS-getroles - failed"
     return 1
@@ -111,7 +111,7 @@ function getroles()
     fi
     echo "glite-transfer-getroles -q"
     glite-transfer-getroles -q
-    if [ $? == 0 ]; then
+    if [ $? != 0 ]; then
     echo "FTS-getroles -q  -- failed"
     return 1
     fi
