@@ -114,7 +114,7 @@ function special_file_transfer_list()
     echo "6.1. Check without -s   parameter" 
     echo "glite-transfer-list -q"
     glite-transfer-list -q
-    if [ $? == 0 ]; then
+    if [ $? != 0 ]; then
     echo "glite-transfer-list command - failed"
     return 1
     fi
