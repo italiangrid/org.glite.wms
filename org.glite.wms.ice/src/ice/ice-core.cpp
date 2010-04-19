@@ -708,16 +708,16 @@ void Ice::purge_job( const util::CreamJob& theJob ,
 	 - return
       */
       CREAM_SAFE_LOG(m_log_dev->infoStream() << method_name
-		     << "JobPurge is DISABLED. Removing job ["
-		     << jobdesc << "] from ICE database."
+		     << "JobPurge is DISABLED, will not Purge job ["
+		     << jobdesc << "]."
 		     );
-      if(theJob.is_proxy_renewable())
-	ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
-      {
-	db::RemoveJobByGid remover( _gid, "Ice::purge_job" );
-	db::Transaction tnx(false, false);
-	tnx.execute( &remover );
-      }
+//       if(theJob.is_proxy_renewable())
+// 	ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
+//       {
+// 	db::RemoveJobByGid remover( _gid, "Ice::purge_job" );
+// 	db::Transaction tnx(false, false);
+// 	tnx.execute( &remover );
+//       }
       return;
     }
       
@@ -853,17 +853,17 @@ void Ice::purge_job( const util::CreamJob& theJob ,
        decrement the job counter of the 'super' better
        proxy.
     */
-    CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
-		   << "Removing purged job [" << jobdesc
-		   << "] from ICE's database"
-		   );
-    if(theJob.is_proxy_renewable())
-      ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
-    {
-      db::RemoveJobByGid remover( _gid, "Ice::purge_job" );
-      db::Transaction tnx(false, false);
-      tnx.execute( &remover );
-    }
+//     CREAM_SAFE_LOG(m_log_dev->debugStream() << method_name
+// 		   << "Removing purged job [" << jobdesc
+// 		   << "] from ICE's database"
+// 		   );
+//     if(theJob.is_proxy_renewable())
+//       ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( theJob.get_user_dn(), theJob.get_myproxy_address() );
+//     {
+//       db::RemoveJobByGid remover( _gid, "Ice::purge_job" );
+//       db::Transaction tnx(false, false);
+//       tnx.execute( &remover );
+//     }
 }
 
 
@@ -966,13 +966,18 @@ bool Ice::resubmit_or_purge_job( util::CreamJob& tmp_job )
 throw() 
 {
   cream_api::job_statuses::job_status st = tmp_job.get_status();
-
+  
+  bool ok = false;
+  
   if ( cream_api::job_statuses::CANCELLED == st ||
        cream_api::job_statuses::DONE_OK == st ) {
     
     deregister_proxy_renewal( tmp_job );
     
   }
+  
+
+  
   if ( ( cream_api::job_statuses::DONE_FAILED == st ||
 	 cream_api::job_statuses::ABORTED == st ) &&
        !tmp_job.is_killed_by_ice() ) {
@@ -980,23 +985,47 @@ throw()
     resubmit_job( tmp_job, "Job resubmitted by ICE" );
     
   }        
+  
+  /**
+    Remove job from DB. If the job is the last one of current
+    DN, the JobPurge may fail because the super better proxy
+    is removed (if the were not another better proxy non 'super'.
+  */
+  if( cream_api::job_statuses::DONE_OK == st ||
+       cream_api::job_statuses::CANCELLED == st ||
+       cream_api::job_statuses::DONE_FAILED == st ||
+       cream_api::job_statuses::ABORTED == st ) 
+  {
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << "Ice::resubmit_or_purge_job() - "
+ 	  	   << "Removing purged job [" << tmp_job.describe()
+ 		   << "] from ICE's database"
+ 		   );
+
+    if(tmp_job.is_proxy_renewable())
+      ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.get_user_dn(), tmp_job.get_myproxy_address() );
+    {
+      db::RemoveJobByGid remover( tmp_job.get_grid_jobid(), "Ice::purge_job" );
+      db::Transaction tnx(false, false);
+      tnx.execute( &remover );
+    }
+    ok = true;// notify to the caller (EventQuery that the job has been removed from ICE's DB
+  }
+  
   if ( cream_api::job_statuses::DONE_OK == st ||
        cream_api::job_statuses::CANCELLED == st ||
        cream_api::job_statuses::DONE_FAILED == st ||
        cream_api::job_statuses::ABORTED == st ) {
-    // WARNING: the next line removes the job from the job cache!
     
     purge_job( /*it*/tmp_job, "Job purged by ICE" );// this method also decrement user's proxy
     
-    return true; // notify to the caller (EventQuery that the job has been removed
-                 // from ICE's database
-
   }
+  
+  
   if ( cream_api::job_statuses::CANCELLED == st ) {
     
     purge_wms_storage( tmp_job );
     
   }
-  return false;
+  return ok;
 }
 

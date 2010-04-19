@@ -309,11 +309,7 @@ states.push_back( make_pair("STATUS", "IDLE") );
 	
 	jobit->set_status( cream_api::job_statuses::ABORTED );
 	jobit->set_failure_reason( "CREAM'S database has been scratched and all its jobs have been lost" );
-/*        CREAM_SAFE_LOG(m_log_dev->warnStream() << method_name << " TID=[" << getThreadID() << "] "
-                     << "*** CREAM SCRATHCED: WILL ABORT AND ERASE JOB ["
-		     << jobit->describe()
-                     << "]"
-                     );	 */
+
 	++jobit;
       }
       
