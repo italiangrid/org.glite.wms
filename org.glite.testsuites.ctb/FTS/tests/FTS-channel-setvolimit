@@ -96,7 +96,7 @@ function channel-setvolimit()
 
     echo "6. glite-transfer-channel-list -q"
     glite-transfer-channel-list -q
-    if [ $? == 0 ]; then
+    if [ $? != 0 ]; then
         echo "glite-transfer-channel-list -q  - failure"
         return 1
     fi
