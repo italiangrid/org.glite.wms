@@ -84,7 +84,7 @@ function special_cancel_transfer()
     echo "3.1.  Check without -s   parameter" 
     echo "glite-transfer-cancel -v"
     glite-transfer-list -v
-    if [ $? == 0 ]; then
+    if [ $? != 0 ]; then
     echo "glite-transfer-cancel command - failed"
     return 1
     fi
