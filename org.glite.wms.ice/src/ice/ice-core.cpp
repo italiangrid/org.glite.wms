@@ -678,6 +678,8 @@ void Ice::resubmit_job( ice_util::CreamJob& the_job, const string& reason ) thro
                          );
 
         m_lb_logger->logEvent( new ice_util::ns_enqueued_fail_event( the_job, m_wms_input_queue->get_name(), ex.what() ) );
+	the_job.set_failure_reason( string("resubmission failed: ") + ex.what() );
+	m_lb_logger->logEvent( new ice_util::job_aborted_event( the_job ) );
     }
 }
 
@@ -976,16 +978,6 @@ throw()
     
   }
   
-
-  
-  if ( ( cream_api::job_statuses::DONE_FAILED == st ||
-	 cream_api::job_statuses::ABORTED == st ) &&
-       !tmp_job.is_killed_by_ice() ) {
-    
-    resubmit_job( tmp_job, "Job resubmitted by ICE" );
-    
-  }        
-  
   /**
     Remove job from DB. If the job is the last one of current
     DN, the JobPurge may fail because the super better proxy
@@ -1004,12 +996,22 @@ throw()
     if(tmp_job.is_proxy_renewable())
       ice_util::DNProxyManager::getInstance()->decrementUserProxyCounter( tmp_job.get_user_dn(), tmp_job.get_myproxy_address() );
     {
-      db::RemoveJobByGid remover( tmp_job.get_grid_jobid(), "Ice::purge_job" );
+      db::RemoveJobByGid remover( tmp_job.get_grid_jobid(), "Ice::resubmit_or_purge_job" );
       db::Transaction tnx(false, false);
       tnx.execute( &remover );
     }
     ok = true;// notify to the caller (EventQuery that the job has been removed from ICE's DB
   }
+  
+  if ( ( cream_api::job_statuses::DONE_FAILED == st ||
+	 cream_api::job_statuses::ABORTED == st ) &&
+       !tmp_job.is_killed_by_ice() ) {
+    
+    resubmit_job( tmp_job, "Job resubmitted by ICE" );
+    
+  }        
+  
+
   
   if ( cream_api::job_statuses::DONE_OK == st ||
        cream_api::job_statuses::CANCELLED == st ||

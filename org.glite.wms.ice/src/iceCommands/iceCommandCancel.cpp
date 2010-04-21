@@ -283,6 +283,7 @@ void iceCommandCancel::execute( const std::string& tid ) throw ( iceCommandFatal
     } catch(cream_ex::InternalException& intern) {
       m_lb_logger->logEvent( new util::cream_cancel_refuse_event( theJob, string("InternalException: ") + intern.what() ) );
       throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
+    } catch( ConnectionTimeoutException& ex) {
+      throw iceCommandTransient_ex( boost::str( boost::format( "CREAM Cancel raised a ConnectionTimeoutException %1%") % ex.what() ) ) ;
     }
-    
 }
