@@ -22,7 +22,7 @@ END LICENSE */
 #include "ice-core.h"
 #include "boost/format.hpp"
 #include "boost/algorithm/string.hpp"
-
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/scoped_timer.h"
 
 #include <iostream>
@@ -45,12 +45,19 @@ void db::AbsDbOperation::do_query( sqlite3* db, const string& _sqlcmd, sqlite_ca
     int s = 2;
     
     if(::getenv("GLITE_WMS_ICE_PRINT_QUERY") )
-      cout << "CALLER=[" 
-	   << get_caller() 
-	   << "] is executing query ["
-	   <<encoded_sql
-	   <<"]"
-	   <<endl;
+    	CREAM_SAFE_LOG(
+		 	api_util::creamApiLogger::instance()->getLogger()->debugStream()
+			<< "AbsDbOperation::do_query - "
+			<< "CALLER=["
+			<< get_caller()
+			<< "] is executing query ["
+			<< encoded_sql << "]");
+//       cout << "CALLER=[" 
+// 	   << get_caller() 
+// 	   << "] is executing query ["
+// 	   <<encoded_sql
+// 	   <<"]"
+// 	   <<endl;
 
     while(1) {
       int rc = sqlite3_exec(db, encoded_sql.c_str(), callback, param, &errMsg);
