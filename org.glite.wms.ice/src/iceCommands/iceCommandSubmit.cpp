@@ -277,10 +277,12 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
 	  db::Transaction tnx(false, false);
 	  tnx.execute( &updater );
 	}
-
+	
+	
         m_theJob = m_lb_logger->logEvent( new iceUtil::job_aborted_event( m_theJob ) );
 	
-	iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
+	if( m_theJob.is_proxy_renewable( ) )
+	  iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
 	
         throw( iceCommandFatal_ex( /*ex.what()*/ reason ) );
     } catch( const iceCommandTransient_ex& ex ) {
@@ -309,7 +311,8 @@ void iceCommandSubmit::execute( const std::string& tid ) throw( iceCommandFatal_
       m_theJob = m_lb_logger->logEvent( new iceUtil::job_done_failed_event( m_theJob ) );
       m_theIce->resubmit_job( m_theJob, boost::str( boost::format( "Resubmitting because of exception %1% CEUrl [%2%]" ) % ex.what() % m_theJob.get_creamurl() ) ); // Try to resubmit
       
-      iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
+      if( m_theJob.is_proxy_renewable( ) )
+        iceUtil::DNProxyManager::getInstance()->decrementUserProxyCounter(m_theJob.get_user_dn(), m_theJob.get_myproxy_address() );
       
       throw( iceCommandFatal_ex( string("Error submitting job to CE [") + m_theJob.get_creamurl() + "]: " + ex.what() ) ); // Yes, we throw an iceCommandFatal_ex in both cases
 
