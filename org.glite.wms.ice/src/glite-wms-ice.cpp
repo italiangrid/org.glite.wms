@@ -47,6 +47,9 @@ END LICENSE */
 #include "iceThreadPool.h"
 #include "DNProxyManager.h"
 #include "Request.h"
+#include "iceLBEvent.h"
+#include "iceLBLogger.h"
+#include "iceLBEventFactory.h"
 
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
@@ -413,8 +416,25 @@ int main(int argc, char*argv[])
 				  << theJob.get_user_proxy_certificate() 
 				  << "] is not valid: "
 				  << V.getErrorMessage()
-				  << ". Skipping processing of this job..."
+				  << ". Skipping processing of this job. "
+				  << "Loggin an abort and removing request from filelist/jobdir"
 				  );
+			
+		  theJob.set_failure_reason( "Input sandbos's proxyfile is EXPIRED!" );
+		  theJob.set_status( glite::ce::cream_client_api::job_statuses::ABORTED ); 
+		  glite::wms::ice::util::iceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
+  		  if ( ev ) {
+    		    //api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
+    		    theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev );
+  		  } else {
+		    CREAM_SAFE_LOG( log_dev->errorStream()
+				  << method_name
+				  << "For job ["
+				  << theJob.get_grid_jobid() 
+				  << "Couldn't log abort event."
+				  );
+		  }
+		  iceManager->removeRequest( *it );
 		  continue;
 		}
 
