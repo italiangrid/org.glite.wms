@@ -78,7 +78,7 @@ AC_DEFUN([AC_PROXYRENEWALCORE],
 [ 
   with_renewalcore_prefix=$GLITE_LOCATION
 
-  if test "x$host_cpu" = "xx86_64"; then
+  if test -d "${with_renewalcore_prefix}/lib64"; then
      library_path="lib64"
   else
      library_path="lib"
