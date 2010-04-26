@@ -151,21 +151,23 @@ fi
 BDII_PORT=2170
 
 #0.1) Check for valid proxy
-ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
-ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+if [ $FTS_HOST != "localhost" ]; then
+  ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+  ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
 
-if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
-         echo ""
-         echo "Using proxy from: $X509_USER_PROXY"
-else
-         echo ""
-         echo ">>> NOTE: Valid proxy is needed for this test!"
-         echo ""
-         if [ $ProxyExpired -gt 0 ]; then
-            echo ">>> NOTE: Proxy credential expired!"
-         fi
-         echo "-TEST FAILED-"
-         exit 1
+  if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+           echo ""
+           echo "Using proxy from: $X509_USER_PROXY"
+  else
+           echo ""
+           echo ">>> NOTE: Valid proxy is needed for this test!"
+           echo ""
+           if [ $ProxyExpired -gt 0 ]; then
+              echo ">>> NOTE: Proxy credential expired!"
+           fi
+           echo "-TEST FAILED-"
+           exit 1
+  fi
 fi
 
 #1) Test if channel exists

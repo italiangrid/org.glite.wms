@@ -74,7 +74,7 @@ done
 echo "Retrieving channels list..."
 get_channels
 
-if [ "x$Channel_List" != "x" -a $? = 0 ]; then 
+if [ $? == 0 ]; then 
   echo "Channels retrieved:"
   echo $Channel_List
 else

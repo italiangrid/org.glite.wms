@@ -25,9 +25,11 @@
 showUsage ()
 {
  echo "                                           "
- echo "Usage:  FTS-certtest.sh  [-f <config file>] [--fts <FTS HOST>]"
+ echo "Usage:  FTS-certtest.sh  [-f <config file>] [--fts <FTS HOST>] [--test <TEST SET>]"
  echo "  <config file> Configuration file, default is FTS-certconfig"
  echo "  <FTS HOST> FTS host, override the one in the config file"
+ echo "  <TEST SET> If set to node, only those that can be run locally will be executed"
+ echo "             Otherwise, all the tests specified in FTS-certconfig will be executed."
  echo "                                           "
 }
 
@@ -62,6 +64,11 @@ while [ $# -ne 0 ]; do
     '--fts')
       shift
       FTS_HOST_ARG=$1
+      shift
+      ;;
+    '--test')
+      shift
+      TEST_FILTER=$1
       shift
       ;;
     *|'')
@@ -204,6 +211,14 @@ fi
 
 declare -a tests_failed
 failed=no
+
+# Check wich test we must run
+if [ "x$TEST_FILTER" == "xnode" ]; then
+  BASIC="no"
+  CHECKSUM="no"
+  SPACE="no"
+  NODE="yes"
+fi
 
 #########
 # BASIC #
@@ -469,6 +484,38 @@ if [ "x${GRIDFTP}" = "xyes" ]; then
 else
   echo "*GRIDFTP tests skipped (EXPERIMENTAL)"
 fi
+
+########
+# NODE #
+########
+if [ "x${NODE}" = "xyes" ]; then
+  echo "*Running local (node) tests"
+
+  testdir=./tests
+  declare -a tests_list
+  tests_list=("${tests_list[@]}" "FTS-TODO")
+  pushd $testdir >> /dev/null
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf $loglocation/${item}_result.txt
+    echo "Executing $item"
+    echo "./$item" > $loglocation/${item}_result.txt
+    ./$item 2>1 >> $loglocation/${item}_result.txt
+    res=$?
+    grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
+    if [ "$?" = 0 -o "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+
+  popd >>/dev/null
+fi
+
 
 #######
 # END #

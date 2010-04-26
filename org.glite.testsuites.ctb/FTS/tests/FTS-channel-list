@@ -35,14 +35,6 @@ showUsage()
  echo "Options: "
  echo "          --fts  <fts hostname> "
  echo "                   The name of the FTS host."
- echo "          --channel  <channel name> "
- echo "                   The channel to use for submitting a file transfer"
- echo "          --bdii  <bdii hostname> "
- echo "                   The top-level BDII hostname"
- echo "          --vo  <VO name> "
- echo "                   VO name"
- echo "          --timeout  <timeout> "
- echo "                   timeout in seconds"
 }
 
 function special-check-channel-list()
@@ -143,14 +135,30 @@ function special-check-channel-list()
 
 
 
-if [ $# -ne 10 ];then
+if [ $# -ne 2 ];then
   showUsage
   echo
   echo "-TEST FAILED-"
   exit 2
 fi
 
-CHANNEL=$1
+until [ -z "$1" ] 
+do
+  case "$1" in
+     --fts)
+           if [ -z "$2" ]; then
+                shift 1
+           else
+                FTS_HOST=$2
+                shift 2
+           fi
+     ;;
+          *)
+           showUsage
+           exit 2
+    ;;
+  esac
+done
 
 
 #1) Test if channel exists
@@ -162,7 +170,7 @@ get_channels
 echo "List=$Channel_List"
 if [ "x$Channel_List" == "x" ]; then
   echo "No channels retrieved"
-  exit 1
+  exit 0
 fi
 
 found=0

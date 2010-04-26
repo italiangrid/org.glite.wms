@@ -33,6 +33,7 @@ NFILES=10
 BASIC="yes"
 CHECKSUM="no"
 SPACE="no"
+NODE="no"
 
 #TEST WITH GRIDFTP URLS
 #NOTE: This feature is under development. Do NOT use it for certification yet
