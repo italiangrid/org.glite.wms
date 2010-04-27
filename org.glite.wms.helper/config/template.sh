@@ -895,7 +895,7 @@ if [ -n "${__shallow_resubmission_token}" ]; then
                             `which glite-gridftp-rm 2>/dev/null` \
                             $EDG_LOCATION/bin/edg-gridftp-rm \
                             `which edg-gridftp-rm 2>/dev/null` \
-                            $GLOBUS_LOCATION/bin/uberftp 2>/dev/null \
+                            $GLOBUS_LOCATION/bin/uberftp \
                             `which uberftp 2>/dev/null`; do
     if [ -x "${gridftp_rm_command}" ]; then
       break;
