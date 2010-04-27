@@ -178,6 +178,25 @@ else
   echo "Log files will be stored in $loglocation"
 fi
 
+###############################################################
+# Put /opt/glite/bin in the PATH (necessay for local testing) #
+###############################################################
+if [ -z `echo $PATH | grep /opt/glite/bin` ]; then
+  export PATH=$PATH:/opt/glite/bin
+fi
+
+#################
+# Local testing #
+#################
+if [ "x$TEST_FILTER" == "xnode" ]; then
+  BASIC="no"
+  CHECKSUM="no"
+  SPACE="no"
+  NODE="yes"
+  FTS_HOST=localhost
+  hostname=localhost
+fi
+
 #########
 # START #
 #########
@@ -187,22 +206,26 @@ echo "------------------------------------------------"
 echo "FTS HOST: $hostname"
 
 ############################
-# check valid proxy #
+# check valid proxy        #
 ############################
 
-ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
+if [ "x$TEST_FILTER" != "xnode" ]; then
+  ProxyExist=`voms-proxy-info 2>/dev/null | grep timeleft | wc -l`
 
-ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
+  ProxyExpired=`voms-proxy-info 2>/dev/null | grep  "timeleft  : 0:00:00" | wc -l`
 
-if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
-  #nop
-  :
-else
-  echo "Valid proxy is needed for this test!"
-  if [ $ProxyExpired -gt 0 ]; then
-    echo "Proxy credential expired!"
+  if [ $ProxyExist -gt 0 -a $ProxyExpired -eq 0 ]; then
+    #nop
+    :
+  else
+    echo "Valid proxy is needed for this test!"
+    if [ $ProxyExpired -gt 0 ]; then
+      echo "Proxy credential expired!"
+    fi
+    exitFailure
   fi
-  exitFailure
+else
+  echo "Proxy is not needed for local testing"
 fi
 
 ########################
@@ -211,14 +234,6 @@ fi
 
 declare -a tests_failed
 failed=no
-
-# Check wich test we must run
-if [ "x$TEST_FILTER" == "xnode" ]; then
-  BASIC="no"
-  CHECKSUM="no"
-  SPACE="no"
-  NODE="yes"
-fi
 
 #########
 # BASIC #
@@ -493,16 +508,33 @@ if [ "x${NODE}" = "xyes" ]; then
 
   testdir=./tests
   declare -a tests_list
-  tests_list=("${tests_list[@]}" "FTS-TODO")
+  tests_list=("${tests_list[@]}" "FTS-channels")
+  tests_list=("${tests_list[@]}" "FTS-channel-add")
+  tests_list=("${tests_list[@]}" "FTS-channel-audit")
+  tests_list=("${tests_list[@]}" "FTS-channel-drop")
+  tests_list=("${tests_list[@]}" "FTS-channel-list")
+  tests_list=("${tests_list[@]}" "FTS-channel-managers")
+  tests_list=("${tests_list[@]}" "FTS-channel-set")
+  tests_list=("${tests_list[@]}" "FTS-channel-setvolimit")
   pushd $testdir >> /dev/null
 
   for item in ${tests_list[*]}
   do
     rm -rf $loglocation/${item}_result.txt
-    echo "Executing $item"
+    echo "Executing $item --fts localhost"
     echo "./$item" > $loglocation/${item}_result.txt
-    ./$item 2>1 >> $loglocation/${item}_result.txt
-    res=$?
+
+   if [ $item = "FTS-channel-add" ] || [ $item = "FTS-channel-audit" ] || [ $item = "FTS-channel-drop" ] ||
+      [ $item = "FTS-channel-managers" ] || [ $item = "FTS-channel-set" ] || [ $item = "FTS-channel-setvolimit" ] ||
+      [ $item = "FTS-service-info" ] || [ $item = "FTS-vomanagers" ] || [ $item = "FTS-getroles" ]; then
+      echo "./$item --fts localhost --channel FAKE" 2>1 >> $loglocation/${item}_result.txt
+      ./$item --fts localhost --channel FAKE 2>1 >> $loglocation/${item}_result.txt
+      res=$?
+    else
+      ./$item --fts localhost 2>1 >> $loglocation/${item}_result.txt
+      res=$?
+    fi
+
     grep '\-TEST FAILED\-' $loglocation/${item}_result.txt >> /dev/null
     if [ "$?" = 0 -o "$res" != 0 ]; then
       echo "$item FAILED"
