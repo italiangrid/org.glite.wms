@@ -707,7 +707,7 @@ OSB_transfer()
       local remaining_dest=${d:${#scheme_dest}:${#d}-${#scheme_dest}}
       local hostname=${remaining_dest:0:`expr match "$remaining_dest" '[[:alnum:]_.~!$&()-]*'`}
 
-      if [ ${max_osb_size} -ge 0 ]; then
+      if [[ ${max_osb_size} -ge 0 ]] && [[ $hostname == $__broker_hostname ]]; then
         # TODO
         #if hostname=wms
           file_size=`stat -t $s | awk '{print $2}'`
@@ -716,7 +716,7 @@ OSB_transfer()
           fi
           file_size_acc=`expr $file_size_acc + $file_size`
         #fi
-        if [[ $file_size_acc -le ${max_osb_size} ]] || [[ $hostname != $__broker_hostname ]]; then
+        if [[ $file_size_acc -le ${max_osb_size} ]]; then
           retry_copy "file://$s" "$d"
         else
           error="OSB quota exceeded for $s, truncating needed"
