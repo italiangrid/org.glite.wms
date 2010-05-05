@@ -52,8 +52,8 @@ END LICENSE */
 #include "iceLBEventFactory.h"
 
 #define RUN_ON_LINUX
-#include "abrt_handler.h"
-//#include "segv_handler.h"
+//#include "abrt_handler.h"
+#include "segv_handler.h"
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
 
