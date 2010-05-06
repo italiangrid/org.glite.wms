@@ -194,9 +194,10 @@ int main(int argc, char*argv[])
   std::list< iceUtil::CreamJob >::iterator jit;
   jit = jobList.begin( );
   while( jit != jobList.end( ) ) {
-
-    jit->set_failure_reason( "Cancel request by Admin through glite-wms-ice-rm" );
-    lb_logger->logEvent( new iceUtil::job_aborted_event( *jit /*, string("Cancel request by Admin through glite-wms-ice-rm") */) ); 
+    if(log_abort) {
+      jit->set_failure_reason( abort_reason );
+      lb_logger->logEvent( new iceUtil::job_aborted_event( *jit /*, string("Cancel request by Admin through glite-wms-ice-rm") */) ); 
+    }
     vector<cream_api::JobIdWrapper> toCancel;
     toCancel.push_back( cream_api::JobIdWrapper(jit->get_cream_jobid(), 
 						jit->get_creamurl(), 
@@ -220,7 +221,6 @@ int main(int argc, char*argv[])
 	   << "] is not valid: "
 	   << V.getErrorMessage()
 	   << ". Skipping cancellation of this job. "
-	   << "Logged an abort anyway..."
 	   << endl;
     } else {
       iceUtil::CreamProxy_Cancel( jit->get_creamurl(), jit->get_user_proxy_certificate( ), &req, &res ).execute( 3 );
