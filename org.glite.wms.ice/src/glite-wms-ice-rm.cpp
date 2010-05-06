@@ -48,6 +48,7 @@ END LICENSE */
 
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
+#include "glite/ce/cream-client-api-c/VOMSWrapper.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/program_options.hpp>
@@ -168,9 +169,9 @@ int main(int argc, char*argv[])
       }
     }
   }
-
+  
   //  return 0;
-
+  
   if( cancel_all ) {     
     iceDb::GetAllJobs getter( &jobList, 0, 0, "glite-wms-ice-rm::main", false);
     iceDb::Transaction tnx( false, false );
@@ -190,10 +191,12 @@ int main(int argc, char*argv[])
     }
   }
   
-  std::list< iceUtil::CreamJob >::const_iterator jit;
+  std::list< iceUtil::CreamJob >::iterator jit;
   jit = jobList.begin( );
   while( jit != jobList.end( ) ) {
-    lb_logger->logEvent( new iceUtil::cream_cancel_request_event( *jit, string("Cancel request by Admin through glite-wms-ice-rm") ) ); 
+
+    jit->set_failure_reason( "Cancel request by Admin through glite-wms-ice-rm" );
+    lb_logger->logEvent( new iceUtil::job_aborted_event( *jit /*, string("Cancel request by Admin through glite-wms-ice-rm") */) ); 
     vector<cream_api::JobIdWrapper> toCancel;
     toCancel.push_back( cream_api::JobIdWrapper(jit->get_cream_jobid(), 
 						jit->get_creamurl(), 
@@ -206,11 +209,24 @@ int main(int argc, char*argv[])
     cout << "Sending JobCancel to CREAM for job [" 
 	 << jit->get_grid_jobid( ) << "] -> ["
 	 << jit->get_complete_cream_jobid( ) << "]" << endl;
+    
+    cream_api::VOMSWrapper V( jit->get_user_proxy_certificate(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
 
-    iceUtil::CreamProxy_Cancel( jit->get_creamurl(), jit->get_user_proxy_certificate( ), &req, &res ).execute( 3 );
+    if( !V.IsValid( ) ) {
+      cerr <<"For job ["
+	   << jit->get_grid_jobid() << "]"
+	   << " the proxyfile ["
+	   << jit->get_user_proxy_certificate() 
+	   << "] is not valid: "
+	   << V.getErrorMessage()
+	   << ". Skipping cancellation of this job. "
+	   << "Logged an abort anyway..."
+	   << endl;
+    } else {
+      iceUtil::CreamProxy_Cancel( jit->get_creamurl(), jit->get_user_proxy_certificate( ), &req, &res ).execute( 3 );
+    }
+    
     ++jit;
-  }
-  
-  
+  } 
   return 0;
 }
