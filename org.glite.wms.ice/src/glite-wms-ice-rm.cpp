@@ -36,8 +36,8 @@ END LICENSE */
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include "iceUtils/creamJob.h"
-#include "iceDb/GetAllJobs.h"
-#include "iceDb/GetJobByGid.h"
+//#include "iceDb/GetAllJobs.h"
+#include "iceDb/GetFields.h"
 #include "iceDb/Transaction.h"
 #include "CreamProxyMethod.h"
 #include "iceConfManager.h"
@@ -66,6 +66,9 @@ namespace po        = boost::program_options;
 namespace fs        = boost::filesystem;
 namespace api_util  = glite::ce::cream_client_api::util;
 namespace cream_api = glite::ce::cream_client_api::soap_proxy;
+
+bool get_job( const string& gid, vector<string>& );
+void get_all_jobs( list<vector<string> >& jobs );
 
 int main(int argc, char*argv[]) 
 {
@@ -139,7 +142,7 @@ int main(int argc, char*argv[])
     exit(1);
   }
   
-  std::list< iceUtil::CreamJob > jobList;
+  std::list< vector<string> > jobList;
   iceUtil::iceLBLogger *lb_logger( iceUtil::iceLBLogger::instance() );
   
   /**
@@ -157,50 +160,43 @@ int main(int argc, char*argv[])
     fclose( in );
     ifstream is(inputlist.c_str(), ios_base::in );
     string linestring;
+    
     while( is >> linestring ) {
-      //      cout << "gridjobid = [" << linestring << "]" << endl;
-      iceDb::GetJobByGid getter( linestring, "glite-wms-ice-rm::main" );
-      iceDb::Transaction tnx( false, false );
-      tnx.execute( &getter );       
-      if( getter.found( ) )
-	jobList.push_back( getter.get_job( ) );
-      else {
-	cerr << "GriJobID ["<< linestring << "] is not found in the ICE database. Skipping cancel for it..." << endl;
-      }
+    
+      vector<string> aJob;
+      if( get_job( linestring, aJob ) )
+        jobList.push_back( aJob );
+      else
+        cerr << "GriJobID ["<< linestring
+	     << "] is not found in the ICE database. Skipping cancel for it..."
+	     << endl;
     }
   }
   
-  //  return 0;
-  
-  if( cancel_all ) {     
-    iceDb::GetAllJobs getter( &jobList, 0, 0, "glite-wms-ice-rm::main", false);
-    iceDb::Transaction tnx( false, false );
-    tnx.execute( &getter );       
+  if( cancel_all ) {   
+    get_all_jobs( jobList );       
   } 
 
   if( !gridjobid.empty() ) {
-    
-    iceDb::GetJobByGid getter( gridjobid, "glite-wms-ice-rm::main" );
-    iceDb::Transaction tnx( false, false );
-    tnx.execute( &getter );       
-    if( getter.found( ) )
-      jobList.push_back( getter.get_job( ) );
+    vector<string> aJob;
+    if( get_job( gridjobid, aJob ) )
+      jobList.push_back( aJob );
     else {
       cerr << "GriJobid "<< gridjobid << " is not found in the ICE database." << endl;
       return 1;
     }
   }
   
-  std::list< iceUtil::CreamJob >::iterator jit;
+  std::list< vector<string> >::iterator jit;
   jit = jobList.begin( );
   while( jit != jobList.end( ) ) {
-    if(log_abort) {
-      jit->set_failure_reason( abort_reason );
-      lb_logger->logEvent( new iceUtil::job_aborted_event( *jit /*, string("Cancel request by Admin through glite-wms-ice-rm") */) ); 
-    }
+//     if(log_abort) {
+//       jit->set_failure_reason( abort_reason );
+//       // lb_logger->logEvent( new iceUtil::job_aborted_event( *jit /*, string("Cancel request by Admin through glite-wms-ice-rm") */) ); 
+//     }
     vector<cream_api::JobIdWrapper> toCancel;
-    toCancel.push_back( cream_api::JobIdWrapper(jit->get_cream_jobid(), 
-						jit->get_creamurl(), 
+    toCancel.push_back( cream_api::JobIdWrapper(jit->at(0)/*get_cream_jobid()*/, 
+						jit->at(1)/*get_creamurl()*/, 
 						std::vector<cream_api::JobPropertyWrapper>())
 			);
     
@@ -208,25 +204,81 @@ int main(int argc, char*argv[])
     cream_api::ResultWrapper res;
 
     cout << "Sending JobCancel to CREAM for job [" 
-	 << jit->get_grid_jobid( ) << "] -> ["
-	 << jit->get_complete_cream_jobid( ) << "]" << endl;
+	 << jit->at(3) << "] -> [" << jit->at(1) + "/" + jit->at(0) << "]" << endl;
     
-    cream_api::VOMSWrapper V( jit->get_user_proxy_certificate(),  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
+    cream_api::VOMSWrapper V( jit->at(2)/*get_user_proxy_certificate()*/,  !::getenv("GLITE_WMS_ICE_DISABLE_ACVER") );
 
     if( !V.IsValid( ) ) {
-      cerr <<"For job ["
-	   << jit->get_grid_jobid() << "]"
+      cerr <<"*** For job [" << jit->at(3) << "] -> ["
+	   << jit->at(1) + "/" + jit->at(0)/*get_grid_jobid()*/ << "]"
 	   << " the proxyfile ["
-	   << jit->get_user_proxy_certificate() 
+	   << jit->at(2)/*get_user_proxy_certificate()*/ 
 	   << "] is not valid: "
 	   << V.getErrorMessage()
 	   << ". Skipping cancellation of this job. "
 	   << endl;
     } else {
-      iceUtil::CreamProxy_Cancel( jit->get_creamurl(), jit->get_user_proxy_certificate( ), &req, &res ).execute( 3 );
+      try {
+        iceUtil::CreamProxy_Cancel( jit->at(1), jit->at(2), &req, &res ).execute( 3 );
+	cout << "CANCELLED JOB ["<< jit->at(3) << "]" << endl;
+      } catch(exception& ex) {
+        cerr << "*** Error cancelling job [" << jit->at(3) << "]: " << ex.what() << endl;
+      }
     }
     
     ++jit;
   } 
   return 0;
+}
+
+//_______________________________________________________________________________
+bool get_job( const string& gid, vector<string>& target )
+{
+  list<string> fields_to_get;
+  list<vector<string> > result;
+  list<pair<string, string> > clause;
+  
+  fields_to_get.push_back("creamjobid");	//0
+  fields_to_get.push_back("creamurl");          //1
+  fields_to_get.push_back("userproxy");		//2
+  fields_to_get.push_back("gridjobid");         //3
+  
+  clause.push_back( make_pair("gridjobid", gid ) );
+  
+  iceDb::GetFields getter( fields_to_get, clause, result, "glite-wms-ice-rm::get_job" );
+  iceDb::Transaction tnx( false, false );
+  tnx.execute( &getter );
+  
+  if(result.begin() == result.end()) return false;
+  
+  target = *result.begin( );
+  
+  return true;
+}
+
+//_______________________________________________________________________________
+void get_all_jobs( list<vector<string> >& jobs )
+{
+  list<string> fields_to_get;
+  list<vector<string> > result;
+  
+  fields_to_get.push_back("creamjobid");	//0
+  fields_to_get.push_back("creamurl");          //1
+  fields_to_get.push_back("userproxy");		//2
+  fields_to_get.push_back("gridjobid");		//3
+  
+  
+  iceDb::GetFields getter( fields_to_get, list<pair<string,string> >(), result, "glite-wms-ice-rm::get_all_jobs" );
+  iceDb::Transaction tnx( false, false );
+  tnx.execute( &getter );
+  
+  if(result.begin() == result.end()) return;
+  
+  list<vector<string> >::iterator jit = result.begin( );
+  while( jit != result.end( ) )
+  {
+    jobs.push_back( *jit );
+    
+    ++jit;
+  }
 }
