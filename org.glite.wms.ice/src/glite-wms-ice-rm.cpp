@@ -36,15 +36,14 @@ END LICENSE */
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include "iceUtils/creamJob.h"
-//#include "iceDb/GetAllJobs.h"
 #include "iceDb/GetFields.h"
 #include "iceDb/Transaction.h"
 #include "CreamProxyMethod.h"
 #include "iceConfManager.h"
 #include "iceUtils.h"
-#include "iceLBEvent.h"
-#include "iceLBLogger.h"
-#include "iceLBEventFactory.h"
+// #include "iceLBEvent.h"
+// #include "iceLBLogger.h"
+// #include "iceLBEventFactory.h"
 
 #include "glite/ce/cream-client-api-c/JobFilterWrapper.h"
 #include "glite/ce/cream-client-api-c/ResultWrapper.h"
@@ -143,7 +142,7 @@ int main(int argc, char*argv[])
   }
   
   std::list< vector<string> > jobList;
-  iceUtil::iceLBLogger *lb_logger( iceUtil::iceLBLogger::instance() );
+  //iceUtil::iceLBLogger *lb_logger( iceUtil::iceLBLogger::instance() );
   
   /**
      If specified by the user
