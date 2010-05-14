@@ -100,6 +100,11 @@ const std::string FQAN_FIELD_SEPARATOR = "";
 const std::string FQAN_NULL = "null";
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
+
+WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile) {}
+
+WMPAuthorizer::~WMPAuthorizer() throw() {}
+
 string
 WMPAuthorizer::getUserName()
 {
