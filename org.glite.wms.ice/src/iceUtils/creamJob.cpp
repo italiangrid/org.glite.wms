@@ -53,7 +53,6 @@ END LICENSE */
  *
  */
 #include <boost/filesystem/operations.hpp>
-//#include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
 //#include <boost/regex.hpp>
@@ -289,10 +288,12 @@ void CreamJob::set_sequence_code( const std::string& seq )
   
   m_sequence_code = seq;
   string old_jdl( m_jdl );
+  string old_mod_jdl( m_modified_jdl );
   
   // Update the jdl
   classad::ClassAdParser parser;
   classad::ClassAd* jdl_ad = parser.ParseClassAd( m_jdl );
+  classad::ClassAd* mod_jdl_ad = parser.ParseClassAd( m_modified_jdl );
   
   if (!jdl_ad) {
     CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
@@ -304,10 +305,16 @@ void CreamJob::set_sequence_code( const std::string& seq )
   }
   
   boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdl_ad );
+  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr2( mod_jdl_ad );
   
   jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
+  mod_jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
   
   classad::ClassAdUnParser unparser;
+  
   m_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
+  m_modified_jdl.clear( );
+  
   unparser.Unparse( m_jdl, jdl_ad );
+  unparser.Unparse( m_modified_jdl, mod_jdl_ad );
 }

@@ -52,7 +52,6 @@ END LICENSE */
 #include "iceLBEventFactory.h"
 
 #define RUN_ON_LINUX
-//#include "abrt_handler.h"
 #include "segv_handler.h"
 
 #include "glite/ce/cream-client-api-c/certUtil.h"
@@ -88,7 +87,6 @@ void sigusr2_handle(int x) {
 }
 
 void sigpipe_handle(int x) { 
-  //std::cerr << "glite-wms-ice::sigpipe_handle - PIPE handled; argument x=[" << x << "]" << std::endl;
   CREAM_SAFE_LOG(util::creamApiLogger::instance()->getLogger()->debugStream() 
 		 << "glite-wms-ice::sigpipe_handle: Captured SIGPIPE. x argument=["
 		 << x 
@@ -427,7 +425,6 @@ int main(int argc, char*argv[])
 		  theJob.set_status( glite::ce::cream_client_api::job_statuses::ABORTED ); 
 		  glite::wms::ice::util::iceLBEvent* ev = glite::wms::ice::util::iceLBEventFactory::mkEvent( theJob );
   		  if ( ev ) {
-    		    //api_util::scoped_timer lbtimer( string("iceCommandEventQuery::processSingleEvent - TID=[") + getThreadID() + "] LOG TO LB" );
     		    theJob = glite::wms::ice::util::iceLBLogger::instance()->logEvent( ev );
   		  } else {
 		    CREAM_SAFE_LOG( log_dev->errorStream()
