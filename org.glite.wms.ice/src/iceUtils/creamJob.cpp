@@ -284,37 +284,69 @@ void CreamJob::set_sequence_code( const std::string& seq )
    * mutex-protected region: REM that ClassAd is not
    * thread-safe
    */
-  boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
+  {
+    boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
   
-  m_sequence_code = seq;
-  string old_jdl( m_jdl );
-  string old_mod_jdl( m_modified_jdl );
+    m_sequence_code = seq;
+    string old_jdl( m_jdl );
+    //string old_mod_jdl( m_modified_jdl );
   
-  // Update the jdl
-  classad::ClassAdParser parser;
-  classad::ClassAd* jdl_ad = parser.ParseClassAd( m_jdl );
-  classad::ClassAd* mod_jdl_ad = parser.ParseClassAd( m_modified_jdl );
+    // Update the jdl
+    classad::ClassAdParser parser;
+    classad::ClassAd* jdl_ad = parser.ParseClassAd( m_jdl );
+    //classad::ClassAd* mod_jdl_ad = parser.ParseClassAd( m_modified_jdl );
   
-  if (!jdl_ad) {
-    CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
-		   << "CreamJob::set_sequencecode() - ClassAdParser::ParseClassAd() "
-		   << "returned a NULL pointer while parsing the jdl=["
-		   << m_jdl << "]. STOP!"
-		   );
-    abort();
+    if (!jdl_ad) {
+      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
+		     << "CreamJob::set_sequencecode() - ClassAdParser::ParseClassAd() "
+		     << "returned a NULL pointer while parsing the jdl=["
+		     << m_jdl << "]. STOP!"
+		     );
+      abort();
+    }
+  
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdl_ad );
+    //boost::scoped_ptr< classad::ClassAd > classad_safe_ptr2( mod_jdl_ad );
+  
+    jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
+    //mod_jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
+  
+    classad::ClassAdUnParser unparser;
+  
+    m_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
+    //m_modified_jdl.clear( );
+  
+    unparser.Unparse( m_jdl, jdl_ad );
+    //unparser.Unparse( m_modified_jdl, mod_jdl_ad );
   }
+
+  {
+    boost::recursive_mutex::scoped_lock M_classad( Ice::ClassAd_Mutex );
   
-  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdl_ad );
-  boost::scoped_ptr< classad::ClassAd > classad_safe_ptr2( mod_jdl_ad );
+    string old_jdl( m_modified_jdl );
+
   
-  jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
-  mod_jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
+    // Update the jdl
+    classad::ClassAdParser parser;
+    classad::ClassAd* jdl_ad = parser.ParseClassAd( m_modified_jdl );
   
-  classad::ClassAdUnParser unparser;
+    if (!jdl_ad) {
+      CREAM_SAFE_LOG(api_util::creamApiLogger::instance()->getLogger()->fatalStream()
+		     << "CreamJob::set_sequencecode() - ClassAdParser::ParseClassAd() "
+		     << "returned a NULL pointer while parsing the jdl=["
+		     << m_modified_jdl << "]. STOP!"
+		     );
+      abort();
+    }
   
-  m_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
-  m_modified_jdl.clear( );
+    boost::scoped_ptr< classad::ClassAd > classad_safe_ptr( jdl_ad );
   
-  unparser.Unparse( m_jdl, jdl_ad );
-  unparser.Unparse( m_modified_jdl, mod_jdl_ad );
+    jdl_ad->InsertAttr( "LB_sequence_code", m_sequence_code );
+  
+    classad::ClassAdUnParser unparser;
+  
+    m_modified_jdl.clear(); // This is necessary because apparently unparser.Unparse *appends* the serialization of jdl_ad to m_jdl
+  
+    unparser.Unparse( m_modified_jdl, jdl_ad );
+  }
 }

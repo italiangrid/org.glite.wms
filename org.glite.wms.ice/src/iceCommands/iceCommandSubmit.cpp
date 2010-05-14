@@ -33,7 +33,6 @@ END LICENSE */
 #include "Request.h"
 #include "Request_source_purger.h"
 #include "iceUtils.h"
-//#include "eventStatusPoller.h" // for the proxymutex
 
 #include "iceDb/RemoveJobByGid.h"
 #include "iceDb/GetFields.h"
@@ -361,9 +360,25 @@ void iceCommandSubmit::try_to_submit( const bool only_start ) throw( iceCommandF
     m_theJob = m_lb_logger->logEvent( new iceUtil::wms_dequeued_event( m_theJob, m_configuration->ice()->input() ) );
     m_theJob = m_lb_logger->logEvent( new iceUtil::cream_transfer_start_event( m_theJob ) );
     
+    /**
+      logEvent modified jdl and "modified_jdl" that need to be saved on the DB
+    */
+    {
+      list< pair<string, string> > params;
+      params.push_back( make_pair("jdl", m_theJob.get_jdl( )) );
+      params.push_back( make_pair("modified_jdl", m_theJob.get_modified_jdl( )) );
+      db::UpdateJobByGid updater( m_theJob.get_grid_jobid( ), params, "iceCommandSubmit::execute" );
+      db::Transaction tnx(false, false);
+      tnx.execute( &updater );
+    }
     
     
     string _ceurl( m_theJob.get_creamurl() );
+    
+    // this put the new sequence code, obtained
+    // from the logging to LB, into the JDL that will be sent
+    // to the CE
+    //m_theJob.update_seq_code( );
     
     CREAM_SAFE_LOG(
                    m_log_dev->debugStream() 
