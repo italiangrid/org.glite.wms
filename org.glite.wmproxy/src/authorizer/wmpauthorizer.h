@@ -53,12 +53,12 @@ public:
 	/**
 	 * Constructor
 	 */
-	WMPAuthorizer(char * lcmaps_logfile = NULL);
+	  WMPAuthorizer(char * lcmaps_logfile = NULL);
 	
 	/**
 	 * Destructor
 	 */
-    virtual ~WMPAuthorizer() throw();
+    ~WMPAuthorizer();
 
    
    	/**
