@@ -183,7 +183,7 @@ function channel-set()
 }
 
 
-if [ $# -ne 4 ];then
+if [ $# -lt 4 ];then
   showUsage
   echo
   echo "-TEST FAILED-"
