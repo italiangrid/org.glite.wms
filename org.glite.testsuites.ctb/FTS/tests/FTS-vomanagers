@@ -180,7 +180,7 @@ function special-check-vomanagers()
 }
 
 
-if [ $# -ne 4 ];then
+if [ $# -lt 4 ];then
   showUsage
   echo
   echo "-TEST FAILED-"
@@ -206,9 +206,16 @@ do
                 shift 2
            fi
      ;;
-          *)
-           showUsage
-           exit 2
+     --vo)
+	  if [ -z "$2" ]; then
+                shift 1
+          else
+                VO_NAME=$2
+	        shift 2
+          fi
+     ;;
+      *)
+	 shift 1
     ;;
   esac
 done

@@ -142,7 +142,7 @@ function channel-add()
     return 0
 }
 
-if [ $# -ne 4 ];then
+if [ $# -lt 4 ];then
   showUsage
   echo
   echo "-TEST FAILED-"
@@ -168,10 +168,9 @@ do
                 shift 2
            fi
      ;;
-          *)
-           showUsage
-           exit 2
-    ;;
+     *)
+          shift 1
+     ;;
   esac
 done
 echo $FTS_HOST

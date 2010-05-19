@@ -154,8 +154,7 @@ do
            fi
      ;;
           *)
-           showUsage
-           exit 2
+           shift 1
     ;;
   esac
 done
