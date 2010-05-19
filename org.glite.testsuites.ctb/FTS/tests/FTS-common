@@ -467,7 +467,7 @@ function file_transfer_with_checksum()
 
     if [ "x$OPTION" == "x" ]; then
       echo "Retrieving the checksum for $SURL"
-      CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk $AWK_PARAMETER
+      CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk "$AWK_PARAMETER"`
       echo "Creating the submission file with $ALGO:$CHECKSUM in $SUB_FILE_LOC"
       i=0
       echo "" > $SUB_FILE_LOC
@@ -519,7 +519,7 @@ function file_transfer_with_checksum()
       fi
     else
       echo "Retrieving the checksum for $SURL"
-      CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk $AWK_PARAMETER
+      CHECKSUM=`lcg-get-checksum --checksum-type $ALGO $SURL | awk "$AWK_PARAMETER"`
       echo "Creating the submission file with $ALGO:$CHECKSUM in $SUB_FILE_LOC"
       i=0
       echo "" > $SUB_FILE_LOC
