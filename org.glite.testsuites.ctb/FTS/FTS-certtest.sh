@@ -332,6 +332,7 @@ if [ "x${CHECKSUM}" = "xyes" ]; then
     tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-1.sh")
     tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-2.sh")
     tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-3.sh")
+    tests_list=("${tests_list[@]}" "FTS-submission-with-checksum-case.sh")
     pushd $testdir >> /dev/null
     touch testfile 2> /dev/null
     for item in ${tests_list[*]}
