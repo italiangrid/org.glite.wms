@@ -1,0 +1,43 @@
+#Configuration variables for FTS testing scripts
+
+#If LOGSLOCATON is not specified logs will be in the tests directory
+LOGSLOCATION="/tmp"
+
+FTS_HOST="lxbra2310.cern.ch"
+
+#The name of the top level BDII
+BDII_HOST="lxbra2305.cern.ch"
+#The hostname of the LCG File Catalog
+LFC_HOST="lxb7608v3.cern.ch"
+#The name of the site as it stored in the GOC DB and information system.
+SITE_NAME="cert-tb-cern"
+#Name of VO to use
+VO="dteam"
+#VO="org.glite.voms-test"
+#Space separated list of channels to use for submitting file transfers
+CHANNELS="CERN-CERN"
+#export CERN_SE="lxb7608v1.cern.ch"
+CERN_SE="lxbra1910.cern.ch"
+CERN_SE2="lxb7608v1.cern.ch"
+DESY_SE="galway.desy.de"
+DESY_SE2="swords.desy.de"
+
+SE_SOURCE=$CERN_SE
+SE_DEST=$DESY_SE
+
+#Timeout for waiting the job to finish. Default is 100 sec.
+TIMEOUT=300
+#The number of jobs to be submitted. Default is 10
+NJOBS=10
+#The number of files per job. Default is 10
+NFILES=10
+
+#TESTS TO RUN (BASIC, CHECKSUM, SPACE)
+BASIC="yes"
+CHECKSUM="no"
+SPACE="no"
+
+#TEST WITH GRIDFTP URLS
+#NOTE: This feature is under development. Do NOT use it for certification yet
+GRIDFTP="no"
+
