@@ -249,6 +249,7 @@ if [ "x${BASIC}" = "xyes" ]; then
   tests_list=("${tests_list[@]}" "FTS-submission-same")
   tests_list=("${tests_list[@]}" "FTS-submission")
   tests_list=("${tests_list[@]}" "FTS-cancel")
+	tests_list=("${tests_list[@]}" "FTS-corrupt")
   tests_list=("${tests_list[@]}" "FTS-channel-add")
   tests_list=("${tests_list[@]}" "FTS-channel-audit")
   tests_list=("${tests_list[@]}" "FTS-channel-drop")
@@ -290,7 +291,7 @@ if [ "x${BASIC}" = "xyes" ]; then
       echo "./$item --fts $hostname" > $loglocation/${item}_result.txt
       ./$item --fts $hostname 2>1 >> $loglocation/${item}_result.txt
       res=$?
-    elif [ $item = "FTS-submission" ] || [ $item = "FTS-submission-same" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-channel-signal" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
+    elif [ $item = "FTS-submission" ] || [ $item = "FTS-submission-same" ] || [ $item = "FTS-cancel" ] || [ $item = "FTS-corrupt" ] || [ $item = "FTS-channel-signal" ] || [ $item = "FTS-joblist" ] || [ $item = "FTS-setpriority" ] || [ $item = "FTS-status" ]; then
       for channel in $channels
       do
         echo "./$item --fts $hostname --bdii $bdiihost --channel $channel --vo $voname --timeout $time" 2>1 >> $loglocation/${item}_result.txt

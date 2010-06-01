@@ -1,3 +1,34 @@
+/**
+ * @file corrupt.c
+ * @author Alejandro Álvarez Ayllón, CERN
+ * @version 0.1
+ *
+ * @section LICENSE
+ *
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://www.eu-egee.org/partners/ for details on the copyright
+ * holders.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS
+ * OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @section DESCRIPTION
+ *
+ * This small program receives a DPNS path of a file, and alter its checksum
+ * so we "corrupt" the file. This is useful to force corrupted transmisions, for testing.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -50,6 +81,9 @@ const char *get_error_string(unsigned code)
 
 /**
  * Main function
+ * @param argn The number of arguments
+ * @param argv An array of strings containing the arguments
+ * @return 0 if success, otherwise, an error code
  */
 int main(int argn, char **argv)
 {
@@ -75,7 +109,7 @@ int main(int argn, char **argv)
 				printf("Usage:");
 				printf("\t%s [--verbose|-v] [(--dpns|-d) <DPNS host>] [--help|-h] <GUID>\n",
 							 argv[0]);
-				exit(0);
+				return 0;
 				break;
       case 'v':
         verbose_flag = 1;
@@ -89,21 +123,21 @@ int main(int argn, char **argv)
       case 0: case '?':
         break;
       default:
-        abort();
+        return -1;
     }
   }
 
   // The path is mandatory
   if(!path) {
     fprintf(stderr, "A file must be specified\n");
-		abort();
+		return -1;
 	}
 
   // If the DPNS is not set, try to get it from the environment
   dpns_host = getenv("DPNS_HOST");
   if(!dpns_host) {
     fprintf(stderr, "The DPNS host was not specified, and is not defined in the environment\n");
-		abort();
+		return -1;
 	}
 
   // VERBOSE
@@ -117,7 +151,7 @@ int main(int argn, char **argv)
   {
     fprintf(stderr, "The session could not be started\n");
     fputs(get_error_string(serrno), stderr);
-    abort();
+    return -2;
   }
 
   // Get file information
@@ -129,7 +163,7 @@ int main(int argn, char **argv)
 	if(dpns_statg(path, 0x00, &file_stat) != 0) {
 		fprintf(stderr, "The file information could not be recovered\n");
 		fputs(get_error_string(serrno), stderr);
-		abort();
+		return -2;
 	}
 
 	if(verbose_flag) {
@@ -146,6 +180,12 @@ int main(int argn, char **argv)
 		printf("\tChecksum Value:\t%s\n", file_stat.csumvalue);
 	}
 
+	// If there is no hash set, cancel
+	if(file_stat.csumvalue[0] == '\0') {
+		fprintf(stderr, "The checksum of the file is not set. Can not be corrupted\n");
+		return -3;
+	}
+
   // Alter hash (something simple is enough)
 	if(file_stat.csumvalue[0] == '0')
 		file_stat.csumvalue[0] = '1';
@@ -160,7 +200,7 @@ int main(int argn, char **argv)
                 file_stat.csumtype, file_stat.csumvalue) != 0) {
 		fprintf(stderr, "The checksum could not be modified");
 		fputs(get_error_string(serrno), stderr);
-		abort();
+		return -2;
 	}
 	
 	printf("Checksum modified!!\n");
@@ -170,7 +210,7 @@ int main(int argn, char **argv)
   {
     fprintf(stderr, "The session could not be properly closed\n");
     fputs(get_error_string(serrno), stderr);
-    abort();
+    return -2;
   }
 }
 

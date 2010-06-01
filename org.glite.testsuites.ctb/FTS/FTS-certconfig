@@ -3,7 +3,7 @@
 #If LOGSLOCATON is not specified logs will be in the tests directory
 LOGSLOCATION="/tmp"
 
-FTS_HOST="lxbra2310.cern.ch"
+FTS_HOST="vtb-generic-97.cern.ch"
 
 #The name of the top level BDII
 BDII_HOST="lxbra2305.cern.ch"
