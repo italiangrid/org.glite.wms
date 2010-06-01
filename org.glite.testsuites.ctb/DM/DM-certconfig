@@ -15,6 +15,7 @@ DPM_HOST="lxb7608v1.cern.ch"
 #TEST TO RUN (yes/no)
 LCG_UTILS=yes
 SAME=yes
+NODE=no
 
 #LOG FILES
 export LOGLOCATION=/tmp

@@ -25,11 +25,12 @@
 showUsage ()
 {
 cat <<EOF
-Usage:  DM-certtest.sh [-f <conf.file>] [--dpm <DPM HOST>] [--dcache <DCACHE HOST] [--lfc <LFC HOST>]
+Usage:  DM-certtest.sh [-f <conf.file>] [--dpm <DPM HOST>] [--dcache <DCACHE HOST] [--lfc <LFC HOST>]  [--test <TEST SET>]
   <conf.file> Configuration file, default is DM-certconfig
   <DPM HOST> = specify a DPM SE, defaults to the CTB one
   <DCACHE HOST> = specify a DCACHE SE, defaults to the CTB one
   <LFC HOST> = specify an LFC host, defaults to the CTB one
+  <TEST SET> If set to node, only those that can be run locally will be executed
 EOF
 }
 
@@ -70,6 +71,11 @@ while [ $# -ne 0 ]; do
     '--lfc')
       shift
       LFC_HOST_ARG=$1
+      shift
+      ;;
+    '--test')
+      shift
+      TEST_FILTER=$1
       shift
       ;;
     *|'')
@@ -164,6 +170,17 @@ fi
 if [ -z "$VO" ]; then
   echo "You need to set VO in order to run this script"
   exitFailure
+fi
+
+#################
+# Local testing #
+#################
+if [ "x$TEST_FILTER" == "xnode" ]; then
+	LCG_UTILS=no
+	SAME=no
+	NODE=yes
+  LFC_HOST=localhost
+  hostname=localhost
 fi
 
 #########
@@ -305,7 +322,15 @@ if [ "$SAME" = "yes" ]; then
   popd >> /dev/null
 else 
   echo "*SAME tests skipped" 
-fi  
+fi
+
+##############
+# NODE tests #
+##############
+if [ "$SAME" = "yes" ]; then
+  echo "**Running NODE tests**"
+
+fi
 
 #########################
 # Analyse tests outcome #
