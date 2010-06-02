@@ -1,0 +1,192 @@
+#!/bin/bash
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# AUTHORS: Dimitar Shiyachki <Dimitar.Shiyachki@cern.ch>
+#
+##############################################################################
+
+source helperFunctions
+
+error=0
+
+export DPNS_HOME="/dpm/$CFG_DPNS_DOMAIN/$CFG_DPNS_BASEDIR/$CFG_VO"
+TEST_DIR=d`date +%s%N`
+TEST_SUBDIR1=s1`date +%s%N`
+TEST_SUBDIR2=s2`date +%s%N`
+DUMMY_USERNAME=u`date +%s`
+G1=g1`date +%s`
+G2=g2`date +%s`
+TOKEN=t1`date +%s`
+
+POOLNAME=pool`date +%s`
+
+STD_OUT=/tmp/stdout-`date +%s%N`
+STD_ERR=/tmp/stderr-`date +%s%N`
+
+TEMP_FILE=/tmp/_dpm_test_temp`date +%s%N`
+TEST_RESULT="SUCCESS"
+
+testName="Test 1:Reserve public space of type P and ~15.68M size"
+
+dpm-reservespace --gspace 15678000 --s_type P --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+ret=$?
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-reservespace returned $ret:FAILURE"
+   reportOutput dpm-reservespace $STD_OUT $STD_ERR
+   error=1
+else
+   dpm-listspaces --reservation $TOKEN >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-listspaces returned $ret:FAILURE"
+      reportOutput dpm-listspaces $STD_OUT $STD_ERR
+      error=1
+   else
+      if (grep -q "CAPACITY: 15.68M" $STD_OUT) && (grep -q "Space Type: Permanent" $STD_OUT); then
+         reportComponent "$testName:dpm-reservespace OK and space size/type confirmed:SUCCESS"
+      else
+         reportComponent "$testName:dpm-reservespace OK and space size/type not confirmed:FAILURE"
+         error=1
+      fi
+   fi
+fi
+dpm-releasespace --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+
+testName="Test 2:Reserve public space in a specific empty pool with size 10M"
+
+dpm-addpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+ret=$?
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-addpool returned $ret:FAILURE"
+   reportOutput dpm-addpool $STD_OUT $STD_ERR
+   error=1
+else
+   dpm-reservespace --gspace 10000000 --poolname $POOLNAME --s_type - --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ] && grep -q "No space left on device" $STD_ERR; then
+      reportComponent "$testName:dpm-reservespace returned $ret, no space:SUCCESS"
+   else
+      reportComponent "$testName:dpm-reservespace returned 0:FAILURE"
+      error=1
+   fi
+fi
+dpm-releasespace --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+dpm-rmpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+
+testName="Test 3:Reserve public space in a specific non-empty pool with size 10M"
+
+dpm-addpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+ret=$?
+r_current=0
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-addpool returned $ret:FAILURE"
+   reportOutput dpm-addpool $STD_OUT $STD_ERR
+   r_current=1
+fi
+
+if [ $r_current -ne 1 ]; then
+   dpm-addfs --poolname $POOLNAME --server $DPM_HOST --fs /tmp >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+       reportComponent "$testName:dpm-addfs returned $ret:FAILURE"
+       reportOutput dpm-addfs $STD_OUT $STD_ERR
+       r_current=1
+   fi
+fi
+
+if [ $r_current -ne 1 ]; then
+   dpm-reservespace --gspace 10000000 --poolname $POOLNAME --s_type - --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-reservespace returned $ret:FAILURE"
+      reportOutput dpm-reservespace $STD_OUT $STD_ERR
+      r_current=1
+   fi
+fi
+
+if [ $r_current -ne 1 ]; then
+   dpm-listspaces --reservation $TOKEN >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+      reportComponent "$testName:dpm-listspaces returned $ret:FAILURE"
+      reportOutput dpm-listspaces $STD_OUT $STD_ERR
+      r_current=1
+   else
+      if (grep -q "CAPACITY: 10.00M" $STD_OUT) && (grep -q "Pool: $POOLNAME" $STD_OUT); then
+         reportComponent "$testName:dpm-reservespace returned 0 and space props confirmed:SUCCESS"
+      else
+         reportComponent "$testName:dpm-reservespace returned 0 but space props not confirmed:FAILURE"
+         reportOutput dpm-listspaces $STD_OUT $STD_ERR
+         r_current=1
+      fi
+   fi
+fi
+
+if [ $r_current -eq 1 ]; then
+   error=1
+fi
+dpm-releasespace --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+dpm-rmfs --server $DPM_HOST --fs /tmp >$STD_OUT 2>$STD_ERR
+dpm-rmpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+
+testName="Test 4:Reserve public space in a specific non-empty pool but disabled fs with size 10M"
+
+dpm-addpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+ret=$?
+r_current=0
+if [ $ret -ne 0 ]; then
+   reportComponent "$testName:dpm-addpool returned $ret:FAILURE"
+   reportOutput dpm-addpool $STD_OUT $STD_ERR
+   r_current=1
+fi
+
+if [ $r_current -ne 1 ]; then
+   dpm-addfs --poolname $POOLNAME --server $DPM_HOST --fs /tmp --st 1 >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ]; then
+       reportComponent "$testName:dpm-addfs returned $ret:FAILURE"
+       reportOutput dpm-addfs $STD_OUT $STD_ERR
+       r_current=1
+   fi
+fi
+
+if [ $r_current -ne 1 ]; then
+   dpm-reservespace --gspace 10000000 --poolname $POOLNAME --s_type - --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+   ret=$?
+   if [ $ret -ne 0 ] && grep -q "No space left on device" $STD_ERR; then
+      reportComponent "$testName:dpm-reservespace returned $ret, no space on device:SUCCESS"
+   else
+      reportComponent "$testName:dpm-reservespace returned 0 for disabled fs:FAILURE"
+      reportOutput dpm-reservespace $STD_OUT $STD_ERR
+      r_current=1
+   fi
+fi
+
+if [ $r_current -eq 1 ]; then
+   error=1
+fi
+dpm-releasespace --token_desc $TOKEN >$STD_OUT 2>$STD_ERR
+dpm-rmfs --server $DPM_HOST --fs /tmp >$STD_OUT 2>$STD_ERR
+dpm-rmpool --poolname $POOLNAME >$STD_OUT 2>$STD_ERR
+
+
+rm -f $STD_OUT
+rm -f $STD_ERR
+
