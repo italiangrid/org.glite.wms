@@ -1,31 +1,27 @@
 
-TESTSUITE_LOCATION="/home/shoo/dpm/tests"
+TESTSUITE_LOCATION="/home/shoo/DPM/tests"
 
 SECONDARY_PROXY=/home/shoo/test_user_2.proxy
 
 CFG_BDII_HOST=ctb-generic-4.cern.ch
 CFG_BDII_PORT=2170
-
-CFG_VO="email"
-
+CFG_VO="org.glite.voms-test"
 CFG_LFC_HOST="lfc64m.cern.ch"
-
-CFG_DPM_HOST="head64.cern.ch"
+CFG_DPM_HOST="head5.cern.ch"
 
 # If the DPNS service is running on a separate
 # machine, set the following variable appropriately
 
 CFG_DPNS_HOST=$DPM_HOST
-
 CFG_DPNS_DOMAIN="cern.ch"
-
 CFG_DPNS_BASEDIR="home"
 
 # Tests to run
-CFG_PING_TESTS="no"
-CFG_DPNS_CLI="no"
+CFG_PING_TESTS="yes"
+CFG_DPNS_CLI="yes"
 CFG_DPNS_API_C="yes"
-CFG_DPNS_API_PYTHON="no"
-CFG_RFIO_CLI="no"
-CFG_DPM_INFOSYS="no"
+CFG_DPM_CLI="yes"
+CFG_DPNS_API_PYTHON="yes"
+CFG_RFIO_CLI="yes"
+CFG_DPM_INFOSYS="yes"
 

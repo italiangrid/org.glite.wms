@@ -88,7 +88,7 @@ int main (int argc, char** argv)
         if ( envvar == NULL )
         {
             error = 1;
-            reportComponent (testdesc, "Cannot find second proxy location in X509_USER_PROXY", "", 1);
+            reportComponent (testdesc, "Cannot find secondary proxy location in X509_USER_PROXY_2", "", 1);
             goto test1_end;
         }
         strcpy (cert2, envvar);

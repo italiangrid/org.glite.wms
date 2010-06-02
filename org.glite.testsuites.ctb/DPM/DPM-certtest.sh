@@ -190,9 +190,9 @@ if [ x$CFG_DPNS_CLI == "xyes" ]; then
   testdir=./tests/dpns-cli/
 
   pushd $testdir >> /dev/null
-  tests_list=( CLI-dpns-chgrp  CLI-dpns-chown  CLI-dpns-mkdir CLI-dpns-chmod  CLI-dpns-ls CLI-dpns-ln CLI-dpns-rm CLI-dpns-rename CLI-dpns-getacl CLI-dpns-setacl CLI-dpns-usrmap CLI-dpns-grpmap CLI-dpns-ping )
-
-#  tests_list=( CLI-dpns-getacl )
+  tests_list=( CLI-dpns-chgrp  CLI-dpns-chown  CLI-dpns-mkdir CLI-dpns-chmod \
+               CLI-dpns-ls CLI-dpns-ln CLI-dpns-rm CLI-dpns-rename CLI-dpns-getacl \
+               CLI-dpns-setacl CLI-dpns-usrmap CLI-dpns-grpmap CLI-dpns-ping )
 
   touch testfile 2> /dev/null
   if [ $? -ne 0 ]; then
@@ -235,12 +235,87 @@ fi
 
 echo "--------------------------------------------------------------"
 
+if [ x$CFG_DPM_CLI == "xyes" ]; then
+
+  echo "*Executing DPM CLI tests"
+  testdir=./tests/dpm-cli/
+
+  pushd $testdir >> /dev/null
+  tests_list=( dpm-drain dpm-addfs dpm-getspacetokens dpm-modifypool \
+               dpm-reservespace dpm-rmpool dpm-addpool dpm-getspacemd \
+               dpm-modifyfs dpm-releasespace dpm-rmfs dpm-updatespace )
+
+  local_list=":dpm-drain:"
+
+  touch testfile 2> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "DPM CLI test directory is not writable, if you are on AFS be sure to have a valid token"
+    exitFailure
+  fi
+
+  for item in ${tests_list[*]}
+  do
+    rm -rf ${item}_result.txt testfile
+    echo
+    echo "Executing $item"
+    if echo $local_list | grep -q ":${item}:"; then
+       ./${item} >> ${item}_result.txt 2>&1
+    else
+       scp $item root@"$DPM_HOST":/tmp >/dev/null 2>/dev/null
+       scp helperFunctions root@"$DPM_HOST":/tmp >/dev/null 2>/dev/null
+       ssh root@"$DPM_HOST" "export DPM_HOST=$DPM_HOST;                 \
+                             export DPNS_HOST=$DPNS_HOST;               \
+                             export CFG_DPNS_DOMAIN=$CFG_DPNS_DOMAIN;   \
+                             export CFG_DPNS_BASEDIR=$CFG_DPNS_BASEDIR; \
+                             export CFG_VO=$CFG_VO;                     \
+                             export PATH=/opt/lcg/bin:$PATH;            \
+                             chmod +x /tmp/${item}; cd /tmp; ./${item}" \
+           >> ${item}_result.txt 2>&1
+    fi
+    res=$?
+    if [ "$res" != 0 ]; then
+      echo "$item FAILED"
+      failed=yes
+      tests_failed=( "${tests_failed[@]}" "$item" )
+    else
+      echo "$item PASSED"
+    fi
+  done
+  popd >> /dev/null
+
+  if [ $failed = "yes" ]; then
+
+     echo "OVERALL RESULT: FAILURE"
+     echo
+     echo "The following tests have failed:"
+     for item in ${tests_failed[*]}
+     do
+       echo "$item: results in tests/dpm-cli/${item}_result.txt"
+     done
+   else
+     echo "OVERALL RESULT: SUCCESS"
+   fi
+else
+ echo "*WARNING: DPM CLI tests skipped"
+fi
+
+echo "--------------------------------------------------------------"
+
 if [ x$CFG_DPNS_API_C == "xyes" ]; then
 
    echo "*Executing DPNS-API-C tests"
+   export X509_USER_PROXY_2=$SECONDARY_PROXY
    testdir=./tests/dpns-api-c
    pushd $testdir >> /dev/null
-   tests_list=(DPNS_aborttrans DPNS_addreplica DPNS_chdir DPNS_chmod DPNS_chown DPNS_closedir DPNS_delreplica DPNS_endtrans DPNS_getacl DPNS_opendir DPNS_readdir DPNS_rewinddir DPNS_session DPNS_setacl DPNS_setatime DPNS_setfsize DPNS_setfsizec DPNS_setptime DPNS_setratime DPNS_setrltime DPNS_setrstatus DPNS_setrtype DPNS_symlink DPNS_umask DPNS_utime)
+
+# DPNS_chown
+
+   tests_list=( DPNS_aborttrans DPNS_rewinddir DPNS_addreplica DPNS_chdir \
+                DPNS_chmod DPNS_closedir DPNS_delreplica DPNS_endtrans \
+                DPNS_getacl DPNS_opendir DPNS_readdir DPNS_session DPNS_setacl \
+                DPNS_setatime DPNS_setfsize DPNS_setfsizec DPNS_setptime \
+                DPNS_setratime DPNS_setrltime DPNS_setrstatus DPNS_setrtype \
+                DPNS_symlink DPNS_umask DPNS_utime)
 
    touch testfile 2> /dev/null
    if [ $? -ne 0 ]; then
@@ -263,7 +338,7 @@ if [ x$CFG_DPNS_API_C == "xyes" ]; then
       chmod +x $item
 
       echo "Executing $item"
-      ./$item "$CFG_DPNS_HOST" "$api_test_dir" >> ${item}_result.txt 2>&1
+      ./$item "$CFG_DPNS_HOST" "$api_test_dir" >${item}_result.txt 2>&1
 
       res=$?
       if [ "$res" != 0 ]; then
@@ -275,7 +350,9 @@ if [ x$CFG_DPNS_API_C == "xyes" ]; then
       fi
 
       echo
-      cat ${item}_result.txt
+
+#      cat ${item}_result.txt
+
     done
     dpns-rm -r $api_test_dir
   else

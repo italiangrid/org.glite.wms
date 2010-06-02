@@ -52,6 +52,7 @@ int main (int argc, char** argv)
     }
 
     dir = dpns_opendir (dirname);
+printf ("%d\n", dir->fileid);
     if ( dir == NULL )
     {
         printf ("%s:dpns_opendir returns NULL:%s:FAILURE\n", testdesc, sstrerror(serrno));
@@ -75,9 +76,10 @@ int main (int argc, char** argv)
         }
         else
         {
-            dpns_rewinddir (dir);
+//            dpns_rewinddir (dir);
             cnt = 0;
             while ( dentry = dpns_readdir (dir) ) { ++cnt; } 
+printf ("%d\n", dir->fileid);
 
             if ( cnt != 20 )
             {
@@ -88,7 +90,7 @@ int main (int argc, char** argv)
             else 
             {
                 dpns_rewinddir (dir);
-
+printf ("%d\n", dir->fileid);
                 cnt = 0;
                 serrno = 0;
                 int unexpected = 0;
